@@ -14,7 +14,10 @@ import { useMayUse } from '../components/SessionProvider';
 import { useLabel } from '../components/LabelsProvider';
 import { pickNoun } from '../lib/nouns';
 import {
+  IconAnalytics,
+  IconCheck,
   IconChevronDown,
+  IconChevronRight,
   IconDownload,
   IconPackages,
   IconProducts,
@@ -22,6 +25,7 @@ import {
   IconRupee,
   IconSearch,
   IconServices,
+  IconUserPlus,
 } from '../components/icons';
 import { csvLines } from '../lib/csv';
 import { clampSalesDateRange, MAX_SALES_DATE_YEARS, MAX_SALES_EXPORT_ROWS } from './sales-helpers';
@@ -436,6 +440,101 @@ export function computeSalesKpis(rows: readonly SaleRow[]): SalesKpis {
   };
 }
 
+export function computeDeltaPct(curr: number, prev: number): number | null {
+  if (prev <= 0) return null;
+  return Math.round(((curr - prev) / prev) * 100);
+}
+
+export interface SalesQuickStats {
+  avgBillMinor: number;
+  avgBillDeltaPct: number | null;
+  clientsCount: number;
+  clientsDeltaPct: number | null;
+  topService: { name: string; count: number } | null;
+  topProduct: { name: string; units: number } | null;
+}
+
+export function computeSalesQuickStats(
+  rows: readonly SaleRow[],
+  prevRows: readonly SaleRow[] = [],
+): SalesQuickStats {
+  const totalSalesMinor = rows.reduce((sum, r) => sum + r.totalMinor, 0);
+  const avgBillMinor = rows.length > 0 ? Math.round(totalSalesMinor / rows.length) : 0;
+
+  const prevTotalMinor = prevRows.reduce((sum, r) => sum + r.totalMinor, 0);
+  const prevAvgMinor = prevRows.length > 0 ? Math.round(prevTotalMinor / prevRows.length) : 0;
+  const avgBillDeltaPct = computeDeltaPct(avgBillMinor, prevAvgMinor);
+
+  const clientsCount = new Set(rows.map((r) => clientKeyOf(r))).size;
+  const prevClientsCount = new Set(prevRows.map((r) => clientKeyOf(r))).size;
+  const clientsDeltaPct = computeDeltaPct(clientsCount, prevClientsCount);
+
+  const srvCounts = new Map<string, number>();
+  const prdCounts = new Map<string, number>();
+  for (const r of rows) {
+    for (const s of r.serviceNames) {
+      srvCounts.set(s, (srvCounts.get(s) ?? 0) + 1);
+    }
+    for (const p of r.products) {
+      prdCounts.set(p.name, (prdCounts.get(p.name) ?? 0) + p.qty);
+    }
+  }
+
+  let topService: { name: string; count: number } | null = null;
+  for (const [name, count] of srvCounts.entries()) {
+    if (!topService || count > topService.count || (count === topService.count && name.localeCompare(topService.name) < 0)) {
+      topService = { name, count };
+    }
+  }
+
+  let topProduct: { name: string; units: number } | null = null;
+  for (const [name, units] of prdCounts.entries()) {
+    if (!topProduct || units > topProduct.units || (units === topProduct.units && name.localeCompare(topProduct.name) < 0)) {
+      topProduct = { name, units };
+    }
+  }
+
+  return {
+    avgBillMinor,
+    avgBillDeltaPct,
+    clientsCount,
+    clientsDeltaPct,
+    topService,
+    topProduct,
+  };
+}
+
+export function formatAxisRupees(minor: number): string {
+  const rupees = Math.round(minor / 100);
+  if (rupees <= 0) return '₹0';
+  if (rupees >= 100_000) {
+    const lakhs = rupees / 100_000;
+    return `₹${Number.isInteger(lakhs) ? lakhs : lakhs.toFixed(1)}L`;
+  }
+  if (rupees >= 1_000) {
+    const k = rupees / 1_000;
+    return `₹${Number.isInteger(k) ? k : k.toFixed(1)}K`;
+  }
+  return `₹${rupees}`;
+}
+
+function computeChartYAxis(maxTotalMinor: number): {
+  yMaxMinor: number;
+  yTicks: { valueMinor: number; label: string }[];
+} {
+  const maxRupees = Math.max(0, Math.ceil(maxTotalMinor / 100));
+  const targetRupees = Math.max(400, Math.ceil(maxRupees * 1.1));
+  const rawStep = targetRupees / 4;
+  const steps = [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000];
+  const stepRupees = steps.find((s) => s >= rawStep) ?? Math.ceil(rawStep / 500000) * 500000;
+  const yMaxMinor = stepRupees * 4 * 100;
+  const yTicks = [4, 3, 2, 1, 0].map((mult) => {
+    const valueMinor = mult * stepRupees * 100;
+    return { valueMinor, label: formatAxisRupees(valueMinor) };
+  });
+  return { yMaxMinor, yTicks };
+}
+
 export interface SalesChartBucket {
   key: string;
   label: string;
@@ -451,6 +550,8 @@ export interface SalesChartData {
   rangeLabel: string;
   buckets: SalesChartBucket[];
   maxTotalMinor: number;
+  yMaxMinor: number;
+  yTicks: { valueMinor: number; label: string }[];
   peakIndex: number;
 }
 
@@ -491,7 +592,8 @@ export function buildSalesChart(
         peakIndex = i;
       }
     }
-    return { mode, rangeLabel, buckets, maxTotalMinor, peakIndex };
+    const { yMaxMinor, yTicks } = computeChartYAxis(maxTotalMinor);
+    return { mode, rangeLabel, buckets, maxTotalMinor, yMaxMinor, yTicks, peakIndex };
   };
 
   const startMs = Date.parse(`${start}T00:00:00Z`);
@@ -689,6 +791,7 @@ export function SalesClient({
   const branch = useBranch();
   const mayRecordPayment = useMayUse('visit.recordPayment');
   const providerWord = pickNoun(locale, useLabel('provider', 'Staff'), tn('staffTitle'));
+  const fromInputRef = useRef<HTMLInputElement>(null);
 
   const initialBounds = useMemo(
     () => clampSalesDateRange(initialFrom ?? todayISO, initialTo ?? todayISO, todayISO),
@@ -752,7 +855,30 @@ export function SalesClient({
 
   const showServicesCol = filter !== 'products';
   const showProductsCol = filter !== 'services';
-  const showStaffCol = filter === 'services';
+  const showStaffCol = filter !== 'products';
+
+  const todayMs = useMemo(() => Date.parse(`${todayISO}T00:00:00Z`), [todayISO]);
+  const sevenDaysAgoISO = useMemo(
+    () => clampSalesDateRange(new Date(todayMs - 6 * 86_400_000).toISOString().slice(0, 10), todayISO, todayISO).fromISO,
+    [todayMs, todayISO],
+  );
+  const thirtyDaysAgoISO = useMemo(
+    () => clampSalesDateRange(new Date(todayMs - 29 * 86_400_000).toISOString().slice(0, 10), todayISO, todayISO).fromISO,
+    [todayMs, todayISO],
+  );
+  const monthStartISO = useMemo(
+    () => clampSalesDateRange(`${todayISO.slice(0, 7)}-01`, todayISO, todayISO).fromISO,
+    [todayISO],
+  );
+
+  const activeRangePreset: 'last_7_days' | 'last_30_days' | 'this_month' | 'custom' = useMemo(() => {
+    if (toDate === todayISO) {
+      if (fromDate === sevenDaysAgoISO) return 'last_7_days';
+      if (fromDate === thirtyDaysAgoISO) return 'last_30_days';
+      if (fromDate === monthStartISO) return 'this_month';
+    }
+    return 'custom';
+  }, [fromDate, toDate, todayISO, sevenDaysAgoISO, thirtyDaysAgoISO, monthStartISO]);
 
   const applyDates = (rawFrom: string, rawTo: string, changed?: 'from' | 'to') => {
     const isoRe = /^\d{4}-\d{2}-\d{2}$/;
@@ -767,7 +893,12 @@ export function SalesClient({
     api
       .appointments(safeFrom, safeTo, undefined, undefined, { includeSales: true })
       .then((rows) => {
-        if (fetchSeqRef.current === seq) setLoadedAppointments(rows);
+        if (fetchSeqRef.current !== seq) return;
+        setLoadedAppointments((prev) => {
+          const map = new Map(prev.map((a) => [a.id, a]));
+          for (const a of rows) map.set(a.id, a);
+          return [...map.values()];
+        });
       })
       .catch(() => {});
     const params = new URLSearchParams();
@@ -785,6 +916,20 @@ export function SalesClient({
     () => filterSalesByDateRange(allSaleRows, fromDate, toDate, effectiveBranches),
     [allSaleRows, fromDate, toDate, effectiveBranches],
   );
+
+  const selectedDayCount = useMemo(() => {
+    const s = Date.parse(`${fromDate}T00:00:00Z`);
+    const e = Date.parse(`${toDate}T00:00:00Z`);
+    return Number.isFinite(s) && Number.isFinite(e) ? Math.max(1, Math.round((e - s) / 86_400_000) + 1) : 1;
+  }, [fromDate, toDate]);
+
+  const prevWindowRows = useMemo(() => {
+    const s = Date.parse(`${fromDate}T00:00:00Z`);
+    if (!Number.isFinite(s)) return [];
+    const prevFromISO = new Date(s - selectedDayCount * 86_400_000).toISOString().slice(0, 10);
+    const prevToISO = new Date(s - 86_400_000).toISOString().slice(0, 10);
+    return filterSalesByDateRange(allSaleRows, prevFromISO, prevToISO, effectiveBranches);
+  }, [allSaleRows, fromDate, selectedDayCount, effectiveBranches]);
 
   const branchOptions = useMemo(() => {
     const list = [...branch.branches].sort((a, b) => a.name.localeCompare(b.name));
@@ -846,6 +991,19 @@ export function SalesClient({
     [windowRows, search, selectedClients, selectedServices, selectedProducts, clientQuery, serviceQuery, productQuery],
   );
 
+  const prevToolbarRows = useMemo(
+    () =>
+      filterSalesRows(prevWindowRows, 'all', search, {
+        selectedClients,
+        selectedServices,
+        selectedProducts,
+        clientQuery,
+        serviceQuery,
+        productQuery,
+      }),
+    [prevWindowRows, search, selectedClients, selectedServices, selectedProducts, clientQuery, serviceQuery, productQuery],
+  );
+
   const counts = useMemo(
     () => ({
       all: windowRows.length,
@@ -856,6 +1014,24 @@ export function SalesClient({
   );
 
   const kpis = useMemo(() => computeSalesKpis(toolbarRows), [toolbarRows]);
+  const prevKpis = useMemo(() => computeSalesKpis(prevToolbarRows), [prevToolbarRows]);
+  const quickStats = useMemo(
+    () => computeSalesQuickStats(toolbarRows, prevToolbarRows),
+    [toolbarRows, prevToolbarRows],
+  );
+
+  const totalSalesDelta = useMemo(
+    () => computeDeltaPct(kpis.totalSalesMinor, prevKpis.totalSalesMinor),
+    [kpis.totalSalesMinor, prevKpis.totalSalesMinor],
+  );
+  const servicesDelta = useMemo(
+    () => computeDeltaPct(kpis.servicesRevenueMinor, prevKpis.servicesRevenueMinor),
+    [kpis.servicesRevenueMinor, prevKpis.servicesRevenueMinor],
+  );
+  const productsDelta = useMemo(
+    () => computeDeltaPct(kpis.productsRevenueMinor, prevKpis.productsRevenueMinor),
+    [kpis.productsRevenueMinor, prevKpis.productsRevenueMinor],
+  );
 
   const filteredRows = useMemo(
     () =>
@@ -874,6 +1050,41 @@ export function SalesClient({
     () => buildSalesChart(filteredRows, fromDate, toDate, timezone, filter, locale),
     [filteredRows, fromDate, toDate, timezone, filter, locale],
   );
+
+  const paymentDonut = useMemo(() => {
+    const total =
+      kpis.byMode.upi + kpis.byMode.cash + kpis.byMode.card + kpis.byMode.other + kpis.byMode.notRecorded;
+    const modes: { key: 'upi' | 'cash' | 'card'; label: string; amountMinor: number; pct: number; cls: string }[] = [
+      {
+        key: 'upi',
+        label: tc('pay.upi'),
+        amountMinor: kpis.byMode.upi,
+        pct: total > 0 ? Math.round((kpis.byMode.upi / total) * 100) : 0,
+        cls: 'is-upi',
+      },
+      {
+        key: 'cash',
+        label: tc('pay.cash'),
+        amountMinor: kpis.byMode.cash,
+        pct: total > 0 ? Math.round((kpis.byMode.cash / total) * 100) : 0,
+        cls: 'is-cash',
+      },
+      {
+        key: 'card',
+        label: tc('pay.card'),
+        amountMinor: kpis.byMode.card,
+        pct: total > 0 ? Math.round((kpis.byMode.card / total) * 100) : 0,
+        cls: 'is-card',
+      },
+    ];
+    let offset = 0;
+    const segments = modes.map((m) => {
+      const seg = { ...m, dashOffset: 100 - offset };
+      offset += m.pct;
+      return seg;
+    });
+    return { total, segments };
+  }, [kpis.byMode, tc]);
 
   const pageCount = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
@@ -996,6 +1207,7 @@ export function SalesClient({
             <label className="sls-date-field">
               <span className="sls-date-label">{t('from')}</span>
               <input
+                ref={fromInputRef}
                 type="date"
                 className="sls-date-input"
                 aria-label={t('from')}
@@ -1300,195 +1512,381 @@ export function SalesClient({
           </div>
         </div>
 
-        {/* 4 Summary KPI Cards */}
+        {/* 4 Pastel-Tinted Summary KPI Cards */}
         <div className="sls-kpis">
           <button
             type="button"
-            className={`sls-kpi sls-kpi-tap ${filter === 'all' ? 'is-selected' : ''}`}
+            className={`sls-kpi sls-kpi-tap sls-kpi-green ${filter === 'all' ? 'is-selected' : ''}`}
             aria-pressed={filter === 'all'}
             onClick={() => {
               setFilter('all');
               setPage(1);
             }}
           >
-            <div className="sls-kpi-head">
-              <span className="sls-kpi-icon sls-icon-green">
-                <IconRupee />
+            <div className="sls-kpi-body">
+              <div className="sls-kpi-copy">
+                <div className="sls-kpi-head">
+                  <span className="sls-kpi-icon sls-icon-green">
+                    <IconRupee />
+                  </span>
+                  <span className="sls-kpi-label">{t('kpi.totalSales')}</span>
+                </div>
+                <strong className="sls-kpi-value">{formatMoney(String(kpis.totalSalesMinor))}</strong>
+                <div className="sls-kpi-foot">
+                  {totalSalesDelta !== null ? (
+                    <span className={`sls-kpi-delta ${totalSalesDelta < 0 ? 'is-down' : 'is-up'}`}>
+                      <b>{totalSalesDelta >= 0 ? '↑' : '↓'}</b>{' '}
+                      {t('kpi.vsPrevDays', { pct: Math.abs(totalSalesDelta), n: selectedDayCount })}
+                    </span>
+                  ) : (
+                    <span className="sls-kpi-sub">{t('kpi.billsCount', { n: kpis.billsCount })}</span>
+                  )}
+                </div>
+              </div>
+              <span className="sls-kpi-spark sls-spark-green" aria-hidden="true">
+                <i style={{ height: '34%' }} />
+                <i style={{ height: '52%' }} />
+                <i style={{ height: '72%' }} />
+                <i style={{ height: '96%' }} />
               </span>
-              <span className="sls-kpi-label">{t('kpi.totalSales')}</span>
-            </div>
-            <div className="sls-kpi-main">
-              <strong className="sls-kpi-value">{formatMoney(String(kpis.totalSalesMinor))}</strong>
-              <span className="sls-kpi-sub">{t('kpi.billsCount', { n: kpis.billsCount })}</span>
             </div>
           </button>
 
           <button
             type="button"
-            className={`sls-kpi sls-kpi-tap ${filter === 'services' ? 'is-selected' : ''}`}
+            className={`sls-kpi sls-kpi-tap sls-kpi-blue ${filter === 'services' ? 'is-selected' : ''}`}
             aria-pressed={filter === 'services'}
             onClick={() => {
               setFilter(filter === 'services' ? 'all' : 'services');
               setPage(1);
             }}
           >
-            <div className="sls-kpi-head">
-              <span className="sls-kpi-icon sls-icon-blue">
-                <IconServices />
+            <div className="sls-kpi-body">
+              <div className="sls-kpi-copy">
+                <div className="sls-kpi-head">
+                  <span className="sls-kpi-icon sls-icon-blue">
+                    <IconServices />
+                  </span>
+                  <span className="sls-kpi-label">{t('kpi.servicesSold')}</span>
+                </div>
+                <strong className="sls-kpi-value">{formatMoney(String(kpis.servicesRevenueMinor))}</strong>
+                <div className="sls-kpi-foot">
+                  {servicesDelta !== null ? (
+                    <span className={`sls-kpi-delta ${servicesDelta < 0 ? 'is-down' : 'is-up'}`}>
+                      <b>{servicesDelta >= 0 ? '↑' : '↓'}</b>{' '}
+                      {t('kpi.vsPrevDays', { pct: Math.abs(servicesDelta), n: selectedDayCount })}
+                    </span>
+                  ) : (
+                    <span className="sls-kpi-sub">{t('kpi.servicesCount', { n: kpis.servicesCount })}</span>
+                  )}
+                </div>
+              </div>
+              <span className="sls-kpi-spark sls-spark-blue" aria-hidden="true">
+                <i style={{ height: '30%' }} />
+                <i style={{ height: '48%' }} />
+                <i style={{ height: '68%' }} />
+                <i style={{ height: '94%' }} />
               </span>
-              <span className="sls-kpi-label">{t('kpi.servicesSold')}</span>
-            </div>
-            <div className="sls-kpi-main">
-              <strong className="sls-kpi-value">{formatMoney(String(kpis.servicesRevenueMinor))}</strong>
-              <span className="sls-kpi-sub">{t('kpi.servicesCount', { n: kpis.servicesCount })}</span>
             </div>
           </button>
 
           <button
             type="button"
-            className={`sls-kpi sls-kpi-tap ${filter === 'products' ? 'is-selected' : ''}`}
+            className={`sls-kpi sls-kpi-tap sls-kpi-amber ${filter === 'products' ? 'is-selected' : ''}`}
             aria-pressed={filter === 'products'}
             onClick={() => {
               setFilter(filter === 'products' ? 'all' : 'products');
               setPage(1);
             }}
           >
-            <div className="sls-kpi-head">
-              <span className="sls-kpi-icon sls-icon-amber">
-                <IconProducts />
+            <div className="sls-kpi-body">
+              <div className="sls-kpi-copy">
+                <div className="sls-kpi-head">
+                  <span className="sls-kpi-icon sls-icon-amber">
+                    <IconProducts />
+                  </span>
+                  <span className="sls-kpi-label">{t('kpi.productsSold')}</span>
+                </div>
+                <strong className="sls-kpi-value">{formatMoney(String(kpis.productsRevenueMinor))}</strong>
+                <div className="sls-kpi-foot">
+                  {productsDelta !== null ? (
+                    <span className={`sls-kpi-delta ${productsDelta < 0 ? 'is-down' : 'is-up'}`}>
+                      <b>{productsDelta >= 0 ? '↑' : '↓'}</b>{' '}
+                      {t('kpi.vsPrevDays', { pct: Math.abs(productsDelta), n: selectedDayCount })}
+                    </span>
+                  ) : (
+                    <span className="sls-kpi-sub">{t('kpi.unitsCount', { n: kpis.productUnitsCount })}</span>
+                  )}
+                </div>
+              </div>
+              <span className="sls-kpi-spark sls-spark-amber" aria-hidden="true">
+                <i style={{ height: '28%' }} />
+                <i style={{ height: '46%' }} />
+                <i style={{ height: '66%' }} />
+                <i style={{ height: '92%' }} />
               </span>
-              <span className="sls-kpi-label">{t('kpi.productsSold')}</span>
-            </div>
-            <div className="sls-kpi-main">
-              <strong className="sls-kpi-value">{formatMoney(String(kpis.productsRevenueMinor))}</strong>
-              <span className="sls-kpi-sub">{t('kpi.unitsCount', { n: kpis.productUnitsCount })}</span>
             </div>
           </button>
 
-          <div className="sls-kpi">
+          <div className="sls-kpi sls-kpi-purple">
             <div className="sls-kpi-head">
               <span className="sls-kpi-icon sls-icon-purple">
                 <IconReceipt />
               </span>
               <span className="sls-kpi-label">{t('kpi.paymentSplit')}</span>
             </div>
-            <div className="sls-pay-modes">
-              {(['upi', 'cash', 'card'] as const).map((m) => (
-                <div key={m} className="sls-pay-line">
-                  <span>{tc(`pay.${m}`)}</span>
-                  <strong>{formatMoney(String(kpis.byMode[m]))}</strong>
-                </div>
-              ))}
-              {kpis.byMode.other > 0 ? (
-                <div className="sls-pay-line">
-                  <span>{tc('pay.other')}</span>
-                  <strong>{formatMoney(String(kpis.byMode.other))}</strong>
-                </div>
-              ) : null}
-              {kpis.byMode.notRecorded > 0 ? (
-                <div className="sls-pay-line">
-                  <span>{t('notRecorded')}</span>
-                  <strong>{formatMoney(String(kpis.byMode.notRecorded))}</strong>
-                </div>
-              ) : null}
+            <div className="sls-pay-donut-row">
+              <svg className="sls-pay-donut" viewBox="0 0 42 42" aria-hidden="true">
+                <circle className="sls-donut-track" cx="21" cy="21" r="15.9155" />
+                {paymentDonut.total > 0
+                  ? paymentDonut.segments.map((seg) =>
+                      seg.pct > 0 ? (
+                        <circle
+                          key={seg.key}
+                          className={`sls-donut-seg ${seg.cls}`}
+                          cx="21"
+                          cy="21"
+                          r="15.9155"
+                          strokeDasharray={`${seg.pct} ${100 - seg.pct}`}
+                          strokeDashoffset={seg.dashOffset}
+                        />
+                      ) : null,
+                    )
+                  : null}
+              </svg>
+              <div className="sls-pay-modes">
+                {paymentDonut.segments.map((seg) => (
+                  <div key={seg.key} className="sls-pay-line">
+                    <span className={`sls-pay-dot ${seg.cls}`} aria-hidden="true" />
+                    <span className="sls-pay-name">{seg.label}</span>
+                    <strong>{formatMoney(String(seg.amountMinor))}</strong>
+                    <span className="sls-pay-pct">{seg.pct}%</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Collapsible Sales Trend Chart */}
-        <section className="sls-chart-card" aria-label={t('chart.title')}>
-          <div className="sls-chart-head">
-            <div className="sls-chart-title-wrap">
-              <h2 className="sls-chart-title">{t('chart.title')}</h2>
-              <span className="sls-chart-mode">
-                {chartData.rangeLabel} · {t(`chart.${chartData.mode}`)}
-              </span>
+        {/* Middle Split: Sales Trend Chart + Quick Stats */}
+        <div className="sls-mid-grid">
+          <section className="sls-chart-card" aria-label={t('chart.title')}>
+            <div className="sls-chart-head">
+              <div className="sls-chart-title-wrap">
+                <h2 className="sls-chart-title">{t('chart.title')}</h2>
+                <div className="sls-chart-presets" role="group" aria-label={t('chart.title')}>
+                  <button
+                    type="button"
+                    className={`sls-preset-pill ${activeRangePreset === 'last_7_days' ? 'is-on' : ''}`}
+                    aria-pressed={activeRangePreset === 'last_7_days'}
+                    onClick={() => applyDates(sevenDaysAgoISO, todayISO)}
+                  >
+                    {t('ranges.last_7_days')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`sls-preset-pill ${activeRangePreset === 'last_30_days' ? 'is-on' : ''}`}
+                    aria-pressed={activeRangePreset === 'last_30_days'}
+                    onClick={() => applyDates(thirtyDaysAgoISO, todayISO)}
+                  >
+                    {t('ranges.last_30_days')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`sls-preset-pill ${activeRangePreset === 'this_month' ? 'is-on' : ''}`}
+                    aria-pressed={activeRangePreset === 'this_month'}
+                    onClick={() => applyDates(monthStartISO, todayISO)}
+                  >
+                    {t('ranges.this_month')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`sls-preset-pill ${activeRangePreset === 'custom' ? 'is-on' : ''}`}
+                    aria-pressed={activeRangePreset === 'custom'}
+                    onClick={() => fromInputRef.current?.focus()}
+                  >
+                    {t('ranges.custom')}
+                  </button>
+                </div>
+                <span className="sls-chart-mode">
+                  {chartData.rangeLabel} · {t(`chart.${chartData.mode}`)}
+                </span>
+              </div>
+
+              <div className="sls-chart-controls">
+                {chartOpen ? (
+                  <div className="sls-chart-legend" aria-hidden="true">
+                    {filter !== 'products' ? (
+                      <span className="sls-legend-item">
+                        <span className="sls-legend-dot sls-dot-srv" />
+                        {t('itemFilterServices')}
+                      </span>
+                    ) : null}
+                    {filter !== 'services' ? (
+                      <span className="sls-legend-item">
+                        <span className="sls-legend-dot sls-dot-prd" />
+                        {t('itemFilterProducts')}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm sls-chart-toggle"
+                  aria-expanded={chartOpen}
+                  onClick={() => setChartOpen((v) => !v)}
+                >
+                  <span>{chartOpen ? t('chart.hide') : t('chart.show')}</span>
+                  <IconChevronDown />
+                </button>
+              </div>
             </div>
 
-            <div className="sls-chart-controls">
-              {chartOpen ? (
-                <div className="sls-chart-legend" aria-hidden="true">
-                  {filter !== 'products' ? (
-                    <span className="sls-legend-item">
-                      <span className="sls-legend-dot sls-dot-srv" />
-                      {t('itemFilterServices')}
-                    </span>
-                  ) : null}
-                  {filter !== 'services' ? (
-                    <span className="sls-legend-item">
-                      <span className="sls-legend-dot sls-dot-prd" />
-                      {t('itemFilterProducts')}
+            {chartOpen ? (
+              chartData.maxTotalMinor === 0 ? (
+                <p className="sls-chart-empty">{t(`empty.${filter}`)}</p>
+              ) : (
+                <div className="sls-chart-plot">
+                  <div className="sls-chart-yaxis" aria-hidden="true">
+                    {chartData.yTicks.map((tick) => (
+                      <span key={tick.valueMinor}>{tick.label}</span>
+                    ))}
+                  </div>
+                  <div className="sls-chart-stage">
+                    <div className="sls-chart-gridlines" aria-hidden="true">
+                      {chartData.yTicks.map((tick) => (
+                        <span key={tick.valueMinor} className="sls-chart-gridline" />
+                      ))}
+                    </div>
+                    <div className="sls-chart-bars" role="list" aria-label={t('chart.title')}>
+                      {chartData.buckets.map((b, idx) => {
+                        const pct =
+                          b.totalMinor > 0
+                            ? Math.max(6, Math.min(96, Math.round((b.totalMinor / chartData.yMaxMinor) * 100)))
+                            : 2;
+                        const isPeak = idx === chartData.peakIndex;
+                        const srvShare = b.totalMinor > 0 ? Math.round((b.servicesMinor / b.totalMinor) * 100) : 0;
+                        const prdShare = b.totalMinor > 0 ? 100 - srvShare : 0;
+                        const tipText = `${b.fullLabel} · ${formatMoney(String(b.totalMinor))} (${t('kpi.billsCount', { n: b.billsCount })})`;
+                        return (
+                          <div
+                            key={b.key}
+                            role="listitem"
+                            aria-label={tipText}
+                            title={tipText}
+                            className={`sls-chart-col ${isPeak ? 'is-peak' : ''} ${b.totalMinor === 0 ? 'is-zero' : ''}`}
+                          >
+                            <div className="sls-chart-track">
+                              {isPeak ? (
+                                <span className="sls-chart-peak" style={{ bottom: `calc(${pct}% + 5px)` }}>
+                                  {formatMoney(String(b.totalMinor))}
+                                </span>
+                              ) : b.totalMinor > 0 ? (
+                                <span
+                                  className={`sls-chart-val ${chartData.buckets.length <= 10 ? 'is-always' : ''}`}
+                                  style={{ bottom: `calc(${pct}% + 4px)` }}
+                                >
+                                  {formatMoney(String(b.totalMinor))}
+                                </span>
+                              ) : null}
+                              <span className="sls-chart-stack" style={{ height: `${pct}%` }}>
+                                {prdShare > 0 ? (
+                                  <span className="sls-bar-seg sls-bar-prd" style={{ height: `${prdShare}%` }} />
+                                ) : null}
+                                {srvShare > 0 ? (
+                                  <span className="sls-bar-seg sls-bar-srv" style={{ height: `${srvShare}%` }} />
+                                ) : null}
+                              </span>
+                            </div>
+                            <span className="sls-chart-lbl">{b.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )
+            ) : null}
+          </section>
+
+          <aside className="sls-quick-card" aria-label={t('quickStats.title')}>
+            <div className="sls-quick-head">
+              <h2 className="sls-quick-title">{t('quickStats.title')}</h2>
+              <a href="/reports" className="sls-quick-link">
+                <span>{t('quickStats.viewAll')}</span>
+                <IconChevronRight />
+              </a>
+            </div>
+            <div className="sls-quick-list">
+              <div className="sls-quick-row">
+                <span className="sls-quick-icon">
+                  <IconAnalytics />
+                </span>
+                <span className="sls-quick-label">{t('quickStats.avgBill')}</span>
+                <div className="sls-quick-right">
+                  <strong className="sls-quick-val">{formatMoney(String(quickStats.avgBillMinor))}</strong>
+                  {quickStats.avgBillDeltaPct !== null ? (
+                    <span className={`sls-quick-pill ${quickStats.avgBillDeltaPct < 0 ? 'is-down' : 'is-up'}`}>
+                      {quickStats.avgBillDeltaPct >= 0 ? '↑' : '↓'} {Math.abs(quickStats.avgBillDeltaPct)}%
                     </span>
                   ) : null}
                 </div>
-              ) : null}
-
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm sls-chart-toggle"
-                aria-expanded={chartOpen}
-                onClick={() => setChartOpen((v) => !v)}
-              >
-                <span>{chartOpen ? t('chart.hide') : t('chart.show')}</span>
-                <IconChevronDown />
-              </button>
-            </div>
-          </div>
-
-          {chartOpen ? (
-            chartData.maxTotalMinor === 0 ? (
-              <p className="sls-chart-empty">{t(`empty.${filter}`)}</p>
-            ) : (
-              <div className="sls-chart-bars" role="list" aria-label={t('chart.title')}>
-                {chartData.buckets.map((b, idx) => {
-                  const pct =
-                    b.totalMinor > 0
-                      ? Math.max(8, Math.round((b.totalMinor / chartData.maxTotalMinor) * 78))
-                      : 3;
-                  const isPeak = idx === chartData.peakIndex;
-                  const srvShare = b.totalMinor > 0 ? Math.round((b.servicesMinor / b.totalMinor) * 100) : 0;
-                  const prdShare = b.totalMinor > 0 ? 100 - srvShare : 0;
-                  const tipText = `${b.fullLabel} · ${formatMoney(String(b.totalMinor))} (${t('kpi.billsCount', { n: b.billsCount })})`;
-                  return (
-                    <div
-                      key={b.key}
-                      role="listitem"
-                      aria-label={tipText}
-                      title={tipText}
-                      className={`sls-chart-col ${isPeak ? 'is-peak' : ''} ${b.totalMinor === 0 ? 'is-zero' : ''}`}
-                    >
-                      <div className="sls-chart-track">
-                        {isPeak ? (
-                          <span className="sls-chart-peak" style={{ bottom: `calc(${pct}% + 5px)` }}>
-                            {formatMoney(String(b.totalMinor))}
-                          </span>
-                        ) : b.totalMinor > 0 ? (
-                          <span
-                            className={`sls-chart-val ${chartData.buckets.length <= 10 ? 'is-always' : ''}`}
-                            style={{ bottom: `calc(${pct}% + 4px)` }}
-                          >
-                            {formatMoney(String(b.totalMinor))}
-                          </span>
-                        ) : null}
-                        <span className="sls-chart-stack" style={{ height: `${pct}%` }}>
-                          {prdShare > 0 ? (
-                            <span className="sls-bar-seg sls-bar-prd" style={{ height: `${prdShare}%` }} />
-                          ) : null}
-                          {srvShare > 0 ? (
-                            <span className="sls-bar-seg sls-bar-srv" style={{ height: `${srvShare}%` }} />
-                          ) : null}
-                        </span>
-                      </div>
-                      <span className="sls-chart-lbl">{b.label}</span>
-                    </div>
-                  );
-                })}
               </div>
-            )
-          ) : null}
-        </section>
 
-        {/* Filter Tabs + Top-Right Export CSV */}
+              <div className="sls-quick-row">
+                <span className="sls-quick-icon">
+                  <IconUserPlus />
+                </span>
+                <span className="sls-quick-label">{t('quickStats.clientsServed')}</span>
+                <div className="sls-quick-right">
+                  <strong className="sls-quick-val">{quickStats.clientsCount}</strong>
+                  {quickStats.clientsDeltaPct !== null ? (
+                    <span className={`sls-quick-pill ${quickStats.clientsDeltaPct < 0 ? 'is-down' : 'is-up'}`}>
+                      {quickStats.clientsDeltaPct >= 0 ? '↑' : '↓'} {Math.abs(quickStats.clientsDeltaPct)}%
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="sls-quick-row">
+                <span className="sls-quick-icon">
+                  <IconServices />
+                </span>
+                <span className="sls-quick-label">{t('quickStats.topService')}</span>
+                <div className="sls-quick-stack">
+                  <strong className="sls-quick-name">
+                    {quickStats.topService ? quickStats.topService.name : t('quickStats.noneYet')}
+                  </strong>
+                  {quickStats.topService ? (
+                    <span className="sls-quick-sub">
+                      {t('quickStats.bookingsCount', { n: quickStats.topService.count })}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="sls-quick-row">
+                <span className="sls-quick-icon">
+                  <IconProducts />
+                </span>
+                <span className="sls-quick-label">{t('quickStats.topProduct')}</span>
+                <div className="sls-quick-stack">
+                  <strong className="sls-quick-name">
+                    {quickStats.topProduct ? quickStats.topProduct.name : t('quickStats.noneYet')}
+                  </strong>
+                  {quickStats.topProduct ? (
+                    <span className="sls-quick-sub">
+                      {t('kpi.unitsCount', { n: quickStats.topProduct.units })}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        {/* Filter Tabs + Search + Export CSV */}
         <div className="sls-table-head-bar">
           <div className="sls-chips" role="group" aria-label={t('title')}>
             {SALES_FILTERS.map((f) => (
@@ -1507,20 +1905,36 @@ export function SalesClient({
             ))}
           </div>
 
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm sls-export-btn"
-            disabled={filteredRows.length === 0}
-            title={
-              filteredRows.length > MAX_SALES_EXPORT_ROWS
-                ? t('exportCsvLimit', { max: MAX_SALES_EXPORT_ROWS })
-                : t('exportCsv')
-            }
-            onClick={exportCsv}
-          >
-            <IconDownload />
-            <span>{t('exportCsv')}</span>
-          </button>
+          <div className="sls-table-actions">
+            <label className="search-wrap sls-table-search">
+              <IconSearch />
+              <input
+                type="search"
+                className="search-input search-input-bare"
+                placeholder={t('searchPlaceholder')}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </label>
+
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm sls-export-btn"
+              disabled={filteredRows.length === 0}
+              title={
+                filteredRows.length > MAX_SALES_EXPORT_ROWS
+                  ? t('exportCsvLimit', { max: MAX_SALES_EXPORT_ROWS })
+                  : t('exportCsv')
+              }
+              onClick={exportCsv}
+            >
+              <IconDownload />
+              <span>{t('exportCsv')}</span>
+            </button>
+          </div>
         </div>
 
         {/* Empty State or Sales Table / Cards */}
@@ -1540,11 +1954,20 @@ export function SalesClient({
                   <tr>
                     <th>{t('cols.when')}</th>
                     <th>{t('cols.client')}</th>
-                    {showServicesCol ? <th>{t('cols.services')}</th> : null}
-                    {showProductsCol ? <th>{t('cols.products')}</th> : null}
+                    {showServicesCol ? (
+                      <th>
+                        {t('cols.services')} <span className="sls-th-sub">{t('cols.countSuffix')}</span>
+                      </th>
+                    ) : null}
+                    {showProductsCol ? (
+                      <th>
+                        {t('cols.products')} <span className="sls-th-sub">{t('cols.countSuffix')}</span>
+                      </th>
+                    ) : null}
                     {showStaffCol ? <th>{providerWord}</th> : null}
                     <th>{t('cols.payment')}</th>
                     <th className="is-num">{t('cols.total')}</th>
+                    <th>{t('cols.status')}</th>
                     <th className="is-action">{t('cols.action')}</th>
                   </tr>
                 </thead>
@@ -1552,6 +1975,7 @@ export function SalesClient({
                   {pageRows.map((row) => {
                     const shownProducts = row.products.slice(0, MAX_ROW_PRODUCTS);
                     const hiddenProducts = row.products.length - shownProducts.length;
+                    const primaryMode = row.paymentModes[0] ?? 'other';
                     return (
                       <tr key={row.key}>
                         <td className="sls-col-when">{formatWhen(row)}</td>
@@ -1583,8 +2007,7 @@ export function SalesClient({
                                 {shownProducts.map((p, i) => (
                                   <span key={`${p.productId ?? p.name}-${i}`} className="sls-badge sls-badge-prd">
                                     <IconProducts />
-                                    {p.qty > 1 ? `${p.name} × ${p.qty}` : p.name}
-                                    <b className="sls-prd-price">{formatMoney(p.paidMinor)}</b>
+                                    {p.qty > 1 ? `${p.name} (${p.qty})` : `${p.name} (1)`}
                                   </span>
                                 ))}
                                 {hiddenProducts > 0 ? (
@@ -1604,13 +2027,29 @@ export function SalesClient({
                         ) : null}
                         {showStaffCol ? (
                           <td className="sls-col-staff">
-                            {row.staffNames.length > 0 ? row.staffNames.join(', ') : <span className="sls-muted">{t('noStaff')}</span>}
+                            {row.staffNames.length > 0 ? (
+                              <div className="sls-staff-cell">
+                                <span className="sls-staff-avatar">{initials(row.staffNames[0]!)}</span>
+                                <span>{row.staffNames.join(', ')}</span>
+                              </div>
+                            ) : (
+                              <span className="sls-muted">{t('noStaff')}</span>
+                            )}
                           </td>
                         ) : null}
                         <td>
-                          <span className="sls-pay-pill">{formatPaymentMode(row.paymentModes)}</span>
+                          <span className={`sls-pay-pill is-${primaryMode}`}>
+                            <span className="sls-pay-pill-dot" aria-hidden="true" />
+                            {formatPaymentMode(row.paymentModes)}
+                          </span>
                         </td>
                         <td className="is-num sls-col-total">{formatMoney(String(rowAmountMinor(row)))}</td>
+                        <td>
+                          <span className="sls-status-pill">
+                            <IconCheck />
+                            <span>{t('completedStatus')}</span>
+                          </span>
+                        </td>
                         <td className="is-action">
                           <button
                             type="button"
@@ -1673,7 +2112,7 @@ export function SalesClient({
                           {shownProducts.map((p, i) => (
                             <span key={`${p.productId ?? p.name}-${i}`} className="sls-badge sls-badge-prd">
                               <IconProducts />
-                              {p.qty > 1 ? `${p.name} × ${p.qty}` : p.name} ({formatMoney(p.paidMinor)})
+                              {p.qty > 1 ? `${p.name} (${p.qty})` : `${p.name} (1)`}
                             </span>
                           ))}
                           {hiddenProducts > 0 ? (

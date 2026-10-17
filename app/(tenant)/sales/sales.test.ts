@@ -7,9 +7,12 @@ import {
   buildSalesChart,
   buildSalesCsv,
   clampSalesDateRange,
+  computeDeltaPct,
   computeSalesKpis,
+  computeSalesQuickStats,
   filterSalesByWindow,
   filterSalesRows,
+  formatAxisRupees,
   MAX_ROW_PRODUCTS,
   MAX_SALES_DATE_YEARS,
   MAX_SALES_EXPORT_ROWS,
@@ -395,7 +398,7 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(client).toContain('services: windowRows.reduce((sum, r) => sum + r.serviceNames.length, 0)');
     expect(client).toContain("const showServicesCol = filter !== 'products'");
     expect(client).toContain("const showProductsCol = filter !== 'services'");
-    expect(client).toContain("const showStaffCol = filter === 'services'");
+    expect(client).toContain("const showStaffCol = filter !== 'products'");
     expect(client).toContain('row.products.slice(0, MAX_ROW_PRODUCTS)');
     expect(client).toContain("t('moreProducts', { n: hiddenProducts })");
     expect(client).toContain('summarizeServices(row.serviceNames, locale)');
@@ -473,6 +476,20 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(daily.buckets.reduce((s, b) => s + b.servicesMinor, 0)).toBe(kpis.servicesRevenueMinor);
     expect(daily.buckets.reduce((s, b) => s + b.productsMinor, 0)).toBe(kpis.productsRevenueMinor);
     expect(daily.peakIndex).toBe(2);
+    expect(daily.yTicks).toHaveLength(5);
+    expect(daily.yMaxMinor).toBeGreaterThanOrEqual(daily.maxTotalMinor);
+    expect(formatAxisRupees(2000000)).toBe('₹20K');
+    expect(formatAxisRupees(0)).toBe('₹0');
+
+    // Quick stats computation
+    const qs = computeSalesQuickStats(rows, rows.slice(1));
+    expect(qs.avgBillMinor).toBe(110000);
+    expect(qs.avgBillDeltaPct).toBe(10);
+    expect(qs.clientsCount).toBe(1);
+    expect(qs.topService).toEqual({ name: 'Haircut', count: 2 });
+    expect(qs.topProduct).toEqual({ name: 'Serum', units: 1 });
+    expect(computeDeltaPct(110, 100)).toBe(10);
+    expect(computeDeltaPct(100, 0)).toBeNull();
 
     // 3. 32..92 days (up to 3 months) -> weekly mode (7-day chunks bounded to [From, To])
     const weekly = buildSalesChart(rows, '2026-08-01', '2026-10-17', 'Asia/Kolkata', 'all', 'en');
@@ -498,9 +515,10 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(yearly.buckets.map((b) => b.key)).toEqual(['2023', '2024', '2025', '2026']);
     expect(yearly.buckets[3]?.totalMinor).toBe(220000);
 
-    // Source pins for collapsible chart card, From/To fetch sync, and toolbarRows KPI sync
+    // Source pins for collapsible chart card, Quick stats card, From/To fetch sync, and toolbarRows KPI sync
     const client = here('./SalesClient.tsx');
     expect(client).toContain('className="sls-chart-card"');
+    expect(client).toContain('className="sls-quick-card"');
     expect(client).toContain('aria-expanded={chartOpen}');
     expect(client).toContain('computeSalesKpis(toolbarRows)');
     expect(client).toContain('.appointments(safeFrom, safeTo, undefined, undefined, { includeSales: true })');

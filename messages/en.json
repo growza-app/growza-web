@@ -3177,7 +3177,9 @@
     "ranges": {
       "today": "Today",
       "last_7_days": "Last 7 days",
-      "last_30_days": "Last 30 days"
+      "last_30_days": "Last 30 days",
+      "this_month": "This month",
+      "custom": "Custom"
     },
     "filters": {
       "all": "All bills ({n})",
@@ -3205,7 +3207,8 @@
       "productsSold": "Products sold",
       "unitsCount": "{n, plural, =0 {No units} one {# unit sold} other {# units sold}}",
       "paymentSplit": "How they paid",
-      "noPayments": "No payments yet"
+      "noPayments": "No payments yet",
+      "vsPrevDays": "{pct}% vs. previous {n, plural, one {day} other {# days}}"
     },
     "cols": {
       "when": "When",
@@ -3213,11 +3216,14 @@
       "phone": "Phone",
       "services": "Services",
       "products": "Products",
+      "countSuffix": "(count)",
       "staff": "Staff",
       "payment": "Payment",
       "total": "Total",
-      "action": "Bill"
+      "status": "Status",
+      "action": "Invoice"
     },
+    "completedStatus": "Completed",
     "view": "View bill",
     "moreProducts": "+{n} more",
     "noProducts": "—",
@@ -3231,7 +3237,7 @@
       "hint": "Try a longer date range, or ring up a bill from Record payment."
     },
     "recordPayment": "Record payment",
-    "exportCsv": "Export CSV",
+    "exportCsv": "Export",
     "exportCsvLimit": "Exporting up to {max} rows",
     "paginationNoun": "bills",
     "loadFailed": "Could not load sales for this period. Try again.",
@@ -3246,6 +3252,16 @@
       "show": "Show chart",
       "hide": "Hide chart",
       "peak": "Peak"
+    },
+    "quickStats": {
+      "title": "Quick stats",
+      "viewAll": "View all",
+      "avgBill": "Average bill value",
+      "clientsServed": "Clients served",
+      "topService": "Top service",
+      "topProduct": "Top product",
+      "bookingsCount": "{n, plural, =0 {No bookings} one {# booking} other {# bookings}}",
+      "noneYet": "—"
     }
   }
 }

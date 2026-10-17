@@ -74,7 +74,12 @@ export default async function SalesPage({
         : todayISO;
   const { fromISO: initialFrom, toISO: initialTo } = clampSalesDateRange(rawFrom, rawTo, todayISO);
 
-  const fetchFrom = initialFrom < thirtyDaysAgoISO ? initialFrom : thirtyDaysAgoISO;
+  const sixtyDaysAgoISO = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(
+    new Date(now.getTime() - 59 * 86_400_000),
+  );
+  const spanMs = Math.max(86_400_000, Date.parse(`${initialTo}T00:00:00Z`) - Date.parse(`${initialFrom}T00:00:00Z`) + 86_400_000);
+  const prevStartISO = new Date(Date.parse(`${initialFrom}T00:00:00Z`) - spanMs).toISOString().slice(0, 10);
+  const fetchFrom = prevStartISO < sixtyDaysAgoISO ? prevStartISO : sixtyDaysAgoISO;
   const fetchTo = initialTo > todayISO ? initialTo : todayISO;
 
   let appointments: Appointment[] = [];
