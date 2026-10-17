@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
+import { IconNote, IconWhatsApp } from './icons';
 import { formatMoney } from '../lib/format';
 import { sendDocumentOnWhatsApp } from '../lib/share-document';
 
@@ -141,17 +142,20 @@ export function DocumentAction({ visitKey }: { visitKey: string }) {
     <div className="pf-doc">
       {issued ? (
         <>
-          <a className="btn btn-ghost pf-go-alt" href={`/documents/${issued.id}`}>
+          <a className="btn btn-ghost" href={`/documents/${issued.id}`}>
+            <IconNote />
             {t('view', { title })} · {issued.number}
           </a>
           {summary ? (
-            <button type="button" className="btn btn-ghost pf-go-alt" disabled={sharing} onClick={() => void send()}>
-              {sharing ? t('sharing') : t('share')}
+            <button type="button" className="btn btn-ghost" disabled={sharing} onClick={() => void send()}>
+              <IconWhatsApp />
+              {sharing ? t('sharing') : t('shareTitle', { title })}
             </button>
           ) : null}
         </>
       ) : (
-        <button type="button" className="btn btn-ghost pf-go-alt" disabled={busy} onClick={() => void issue()}>
+        <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void issue()}>
+          <IconNote />
           {busy ? t('making') : t('make', { title })}
         </button>
       )}

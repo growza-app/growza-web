@@ -428,7 +428,8 @@ describe('Record payment in three taps', () => {
 
   it('fits the done screen on one phone: the bill is shown, capped, and scrolls in place', () => {
     // 232px of tick-above-amount plus 284px of bill put Next customer — pressed after every sale — below the fold.
-    expect(done).toMatch(/<ReceiptShare bill=\{bill\} phone=\{phone\} compactPreview/);
+    // Multi-line since GRW-582 added a slot (`afterSend`) to the call; what is pinned is unchanged: the bill is capped.
+    expect(done).toMatch(/<ReceiptShare\s+bill=\{bill\}\s+phone=\{phone\}\s+compactPreview/);
     expect(receipt).toMatch(/compactPreview \? 'wi-receipt-paper-short' : ''/);
     expect(walkInCss).toMatch(/\.wi-receipt-paper-short \{[\s\S]{0,120}max-height: 12rem;[\s\S]{0,60}overflow-y: auto;/);
     // Still shown, never folded away: the desk reads the bill before it sends it.

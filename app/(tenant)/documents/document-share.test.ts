@@ -56,6 +56,38 @@ describe('opening WhatsApp', () => {
   });
 });
 
+describe('where on the Done screen the invoice button sits', () => {
+  const done = readFileSync(resolve(__dirname, '../components/PaymentDone.tsx'), 'utf8');
+  const receipt = readFileSync(resolve(__dirname, '../components/ReceiptShare.tsx'), 'utf8');
+
+  it('under Send on WhatsApp and above Print, in the receipt’s own column — not in the grid under Next customer', () => {
+    expect(done).toMatch(/afterSend=\{<DocumentAction visitKey=\{appointmentId\} \/>\}/);
+    // It was half a button wide in the Done / Fix-a-mistake grid, under the fold on a phone: present and not findable.
+    const minor = done.slice(done.indexOf('pf-done-minor'), done.indexOf('pf-sound'));
+    expect(minor).not.toContain('<DocumentAction');
+    // The slot sits after the hint under Send and before the Print/Share row.
+    const hint = receipt.indexOf('<p className="wi-receipt-hint">');
+    const slot = receipt.indexOf('{afterSend}');
+    const more = receipt.indexOf('className="wi-receipt-more"');
+    expect(hint).toBeGreaterThan(-1);
+    expect(slot).toBeGreaterThan(hint);
+    expect(more).toBeGreaterThan(slot);
+  });
+
+  it('says which document it sends, so it is not a second "Send on WhatsApp" beside the receipt’s', () => {
+    expect(action).toContain("t('shareTitle', { title })");
+    expect(en.documents.shareTitle).toContain('{title}');
+    expect(hi.documents.shareTitle).toContain('{title}');
+  });
+
+  it('is full width at the weight of Print, not a half-width ghost', () => {
+    expect(action).not.toContain('pf-go-alt');
+    const css = readFileSync(resolve(__dirname, '../styles/99-document.css'), 'utf8');
+    expect(css).toMatch(/\.pf-doc \{[^}]*flex-direction: column/);
+    expect(css).toMatch(/\.pf-doc \.btn \{[^}]*min-height: 3rem[^}]*justify-content: center/);
+  });
+});
+
 describe('where it is offered', () => {
   it('on the Done screen, once the document exists and its details are known', () => {
     expect(action).toContain('sendDocumentOnWhatsApp');
