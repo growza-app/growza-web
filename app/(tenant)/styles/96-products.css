@@ -1005,3 +1005,220 @@
   width: 0.875rem;
   height: 0.875rem;
 }
+
+/* ---------- 0123 — Stock take: count a branch's shelf in one pass ---------- */
+.prd-st-tools.prd-st-tools {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.prd-st-tools .prd-st-search {
+  max-width: none;
+}
+
+.prd-st-bar-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.prd-st-note-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.prd-st-note-input.prd-st-note-input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.prd-st-summary {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.prd-st-summary-diff {
+  color: var(--accent-deep);
+}
+
+.prd-st-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.prd-st-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 3.5rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.prd-st-row .prd-photo {
+  flex: none;
+  grid-area: auto;
+}
+
+.prd-st-row .prd-name {
+  grid-area: auto;
+}
+
+.prd-st-row-diff {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+}
+
+.prd-st-row-invalid {
+  border-color: var(--danger-line);
+  background: var(--danger-soft);
+}
+
+.prd-st-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.prd-st-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.prd-st-code {
+  font-variant-numeric: tabular-nums;
+}
+
+.prd-st-field {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.prd-st-field-l {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Two classes on purpose: `input[type="text"] { min-width: 180px }` in 01-controls.css is (0,1,1) and would hold a single class at 180px. */
+.prd-st-input.prd-st-input {
+  width: 4.75rem;
+  min-width: 0;
+  min-height: 2.5rem;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.prd-st-cell-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+.prd-st-save svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+@media (max-width: 860px) {
+  /* Text-only header actions (Sell product, Count stock, Cancel, Save counts / Saved) keep their words and wrap cleanly on a 344px phone. */
+  .topbar .btn:not(:has(svg)),
+  .topbar .btn.prd-st-save {
+    font-size: 0.875rem;
+    padding: 0 var(--sp-3);
+  }
+
+  .topbar .topbar-lead:has(.hbp-line) {
+    min-width: 150px;
+  }
+
+  .topbar-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .prd-st-field-l {
+    display: none;
+  }
+
+  .prd-st-input.prd-st-input {
+    min-height: 2.75rem;
+  }
+}
+
+@media (min-width: 1101px) {
+  .prd-desk-grid.prd-st-desk-grid {
+    grid-template-columns: minmax(11rem, 13rem) minmax(0, 1fr);
+  }
+
+  .prd-st-desk-tools {
+    flex-wrap: wrap;
+  }
+
+  .prd-st-desk-tools .prd-st-search {
+    flex: 1 1 14rem;
+    max-width: 22rem;
+  }
+
+  .prd-st-desk-tools .prd-st-bar-note {
+    flex: 2 1 20rem;
+  }
+
+  .prd-st-tr.prd-st-row-diff td {
+    background: var(--accent-soft);
+  }
+
+  .prd-st-tr.prd-st-row-diff td:first-child {
+    box-shadow: inset 3px 0 0 var(--accent-deep);
+  }
+
+  .prd-st-tr.prd-st-row-invalid td {
+    background: var(--danger-soft);
+  }
+
+  .prd-st-tr.prd-st-row-invalid td:first-child {
+    box-shadow: inset 3px 0 0 var(--danger);
+  }
+}
+
+
+

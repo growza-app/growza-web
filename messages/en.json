@@ -3150,6 +3150,18 @@
       "allTime": "{n} sold all time.",
       "none": "Nothing sold in the last 30 days.",
       "loadFailed": "The sales did not load. Close this and open it again."
+    },
+    "stockTake": {
+      "open": "Count stock",
+      "title": "Count stock",
+      "subtitle": "Type what is on the shelf. Products that match keep their history untouched; only the ones that differ get a Counted line.",
+      "save": "Save counts",
+      "counted": "Counted",
+      "countedAria": "Counted for {name}",
+      "systemStock": "On shelf: {n}",
+      "notePlaceholder": "e.g. Monthly shelf count",
+      "allMatch": "All counts match",
+      "changedCount": "{n, plural, one {# product differs} other {# products differ}}"
     }
   },
   "sales": {

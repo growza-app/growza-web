@@ -84,5 +84,8 @@ describe('Tenant Home v2 redesign', () => {
     expect(sellClient).toContain('productsOnly');
     expect(payFlow).toContain('<DeskProductCategories');
     expect(deskGrid).toContain("useState<'services' | 'packages' | 'products'>(productsOnly ? 'products' : (initialTab ?? 'services'))");
+    // Every React hook in PayFlow must run before the first early return (`step === 'done'`), so transitioning to `done`, `qr`, or `how` never changes hook count.
+    const afterFirstReturn = payFlow.slice(payFlow.indexOf("if (step === 'done' && sale)"));
+    expect(afterFirstReturn).not.toMatch(/\buse(State|Effect|Memo|Ref|Callback|Translations|Locale)\b/);
   });
 });

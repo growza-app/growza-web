@@ -255,7 +255,16 @@ export interface StockMovement {
   visitKey: string | null;
   /** 0122 — pairs `transfer_out` at the sending branch with `transfer_in` at the receiving branch. */
   transferId?: string | null;
+  /** 0123 — ties the `adjusted` lines written by one stock take pass. */
+  stockTakeId?: string | null;
   createdAt: string;
+}
+
+/** 0123 — what saving a stock take pass hands back. */
+export interface StockTakeResult {
+  stockTakeId: string;
+  adjusted: number;
+  products: Product[];
 }
 
 /** A catalogue row as the Services screen edits it — Service plus the fields booking flows never need. */
