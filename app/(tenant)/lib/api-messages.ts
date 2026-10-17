@@ -81,6 +81,8 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That product is sold at another branch': 'वह सामान दूसरी ब्रांच में बिकता है',
   'A product by that name is already on the shelf': 'इस नाम का सामान शेल्फ़ पर पहले से है',
   'This plan does not sell products over the counter.': 'इस प्लान में काउंटर पर सामान बेचना शामिल नहीं है।',
+  'The sales register is not open to your role': 'बिक्री का रजिस्टर आपकी भूमिका के लिए खुला नहीं है',
+  'There is not enough stock at this branch to move that many': 'इस ब्रांच में इतना स्टॉक नहीं है कि इतना भेजा जा सके',
   // QA, 2026-10-17 — what the product routes answer with a 400 or 404.
   'Product not found': 'सामान नहीं मिला',
   'Category not found': 'श्रेणी नहीं मिली',

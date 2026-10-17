@@ -76,6 +76,8 @@ export interface DaySummary {
    * list mixes them. Absent on a branch's own summary and on the no-stylist row.
    */
   staff: Array<{ id: string; name: string; bookings: number; revenueMinor: number; key?: 'unassigned'; locationId?: string | null }>;
+  /** What the day's bills took for products (with a visit or alone); the staff rows are services only. Absent from an older API. */
+  productsMinor?: number;
   /** Jira GRW-222 — who the day was for. */
   clients: {
     served: number;

@@ -9,7 +9,7 @@ import { api, BookingConflictError, type ServiceAdmin, type ServiceCategory, typ
 import { pickNoun } from '../lib/nouns';
 import { PaginatedTable } from '../components/PaginatedTable';
 import { PAGE_SIZE, Pagination } from '../components/Pagination';
-import { byStatus, DESK_SORTS, DESK_STATUSES, sortDesk, type DeskSort, type DeskStatus } from './services-desk-sort';
+import { deskScope, DESK_SORTS, DESK_STATUSES, sortDesk, type DeskSort, type DeskStatus } from './services-desk-sort';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
 import { IconPlus, IconSearch } from '../components/icons';
@@ -378,16 +378,18 @@ export function ServicesTable({
   /** The services the tab in view lists — what the search looks through, and the only things it may offer. */
   const inTab = useMemo(() => servicesOnTab(services, tab), [services, tab]);
 
-  const filtered = useMemo(() => {
+  // Jira GRW-375 — the same matching the walk-in sheet uses, so a service
+  // found by "phacial" at the desk is found by "phacial" here too. One call, for the list and the wide table both.
+  const searchIn = (rows: readonly ServiceAdmin[]): ServiceAdmin[] => {
     const q = search.trim();
-    if (q.length < MIN_CHARS) return inTab;
-    // Jira GRW-375 — the same matching the walk-in sheet uses, so a service
-    // found by "phacial" at the desk is found by "phacial" here too.
+    if (q.length < MIN_CHARS) return [...rows];
     return matchItems(
-      inTab.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''], priceMinor: asMinor(s.priceMinor) })),
+      rows.map((s) => ({ item: s, text: [s.name, s.categoryName ?? ''], priceMinor: asMinor(s.priceMinor) })),
       q,
     );
-  }, [inTab, search]);
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const filtered = useMemo(() => searchIn(inTab), [inTab, search]);
 
   /**
    * Jira GRW-449 — and the half of that search the screen never had: what the typed words MEAN.
@@ -431,9 +433,10 @@ export function ServicesTable({
   const [deskStatus, setDeskStatus] = useState<DeskStatus>('all');
   const [deskPage, setDeskPage] = useState(1);
   const deskRows = useMemo(() => {
-    const statused = byStatus(filtered, deskStatus);
+    const statused = searchIn(deskScope(services, tab, deskStatus, inTab));
     return search.trim().length >= MIN_CHARS ? statused : sortDesk(statused, deskSort);
-  }, [filtered, deskStatus, deskSort, search]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [services, tab, inTab, deskStatus, deskSort, search]);
   const deskPageCount = Math.max(1, Math.ceil(deskRows.length / PAGE_SIZE));
   const deskPageShown = Math.min(deskPage, deskPageCount);
   const deskPageRows = useMemo(() => deskRows.slice((deskPageShown - 1) * PAGE_SIZE, deskPageShown * PAGE_SIZE), [deskRows, deskPageShown]);

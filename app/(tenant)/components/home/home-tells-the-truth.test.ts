@@ -43,10 +43,12 @@ describe('the owner Home shows only what was counted', () => {
     expect(home).not.toMatch(/startBooking|startedSet/);
   });
 
-  it('calls a cancelled booking Cancelled, and says how many rows a tab holds', () => {
+  it('calls a cancelled booking Cancelled, and scrolls the whole tab in a fixed box instead of cutting it at four rows', () => {
     expect(home).toMatch(/st === 'cancelled'\s*\?\s*t\.cancelledLabel/);
     expect(copy).toMatch(/cancelledLabel: S\('Cancelled'/);
-    expect(home).toMatch(/t\.showingOf\(shownRows, matchingRows\)/);
+    expect(home).not.toMatch(/maxApptRows|showingOf/);
+    expect(home).toMatch(/slice\(0, MAX_TABLE_ROWS\)/);
+    expect(home).toMatch(/className="hm-v3-table-wrap" ref=\{tableWrapRef\}/);
   });
 
   it('keeps the revenue trend a label, so it cannot change the headline card\'s period', () => {
@@ -71,3 +73,16 @@ describe('the desk Products panel lets the keyboard out (QA, 2026-10-17)', () =>
     expect(src).toMatch(/useDialog\(sheetRef, \{[^}]*active: !inline/);
   });
 });
+
+describe('the Bookings today tile counts bookings, not the queue (QA, 2026-10-17)', () => {
+  const home = readFileSync(path.join(here, 'OwnerHome.tsx'), 'utf8');
+
+  it('shows the bookings, and keeps waiting tokens out of "upcoming"', () => {
+    expect(home).toMatch(/const bookingsCount = allListGroups\.length;/);
+    expect(home).toMatch(/<strong className="hm-v3-kpi-value">\{bookingsCount\}<\/strong>/);
+    expect(home).toMatch(/const upcomingCount = allListGroups\.filter\(\(g\) => rowState\(g\) === 'later'\)\.length;/);
+    // The table's own Upcoming tab still lists the tokens, so its count adds them.
+    expect(home).toMatch(/count: upcomingCount \+ waitingQueue\.length/);
+  });
+});
+

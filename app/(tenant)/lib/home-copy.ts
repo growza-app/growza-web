@@ -129,7 +129,6 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     noShowLabel: S('No show', 'नहीं आए'),
     cancelledLabel: S('Cancelled', 'रद्द'),
     /** The Home table shows a few rows; this says how many the tab holds, so four never reads as the whole list. */
-    showingOf: (shown: number, total: number) => S(`Showing ${shown} of ${total}`, `${total} में से ${shown} दिख रहे हैं`),
     allFilterLabel: S('All', 'सभी'),
     todaysAppointments: S("Today's appointments", 'आज की बुकिंग'),
     viewCalendar: S('View calendar', 'कैलेंडर देखें'),
@@ -240,6 +239,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     staffTodaySub: S('Work and money for each person', 'हर व्यक्ति का काम और पैसा'),
     staffBookings: (n: number) => `${n} ${bookingWord(n)}`,
     nobodyWorked: S('No work done yet today.', 'आज अभी कोई काम नहीं हुआ।'),
+    // The staff list is each person's own services; this row is what the day's bills took for products, so the rows add up.
+    productsRow: S('Products sold', 'बिके हुए प्रोडक्ट्स'),
     close: S('Close', 'बंद करें'),
     // Day summary — clients (Jira GRW-222). Plain words on purpose: the owner's
     // rule is that the people reading this may not be confident readers, so

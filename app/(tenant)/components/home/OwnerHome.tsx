@@ -89,6 +89,8 @@ import { useMinuteClock } from './useMinuteClock';
  */
 
 const HOME_BOOKINGS_SHOWN = 6;
+/** The desk table scrolls, so it is not capped at a handful; this only stops a runaway day from drawing thousands of rows. */
+const MAX_TABLE_ROWS = 300;
 
 /**
  * Jira GRW-222 — the laptop Home is one screen, no scroll.
@@ -538,10 +540,13 @@ export function OwnerHome(p: OwnerHomeProps) {
     const s = rowState(g);
     return s === 'in_service' || s === 'needs_answer';
   }).length;
-  const upcomingCount = allListGroups.filter((g) => rowState(g) === 'later').length + waitingQueue.length;
+  /** Bookings still to come. A waiting token is a person in the queue, not a booking, so it is not in this number. */
+  const upcomingCount = allListGroups.filter((g) => rowState(g) === 'later').length;
   const doneTodayCount = allListGroups.filter((g) => rowState(g) === 'done').length;
   const noShowCount = allListGroups.filter((g) => rowState(g) === 'no_show').length;
+  /** Rows the table lists: the bookings and the tokens waiting. The KPI tiles below count bookings only (`bookingsCount`). */
   const totalAppointmentsCount = allListGroups.length + waitingQueue.length;
+  const bookingsCount = allListGroups.length;
   const activeClientsCount = clientStats?.segments.find((s) => s.key === 'active')?.count ?? 0;
 
   const filteredWaitingQueue = useMemo(
@@ -549,16 +554,17 @@ export function OwnerHome(p: OwnerHomeProps) {
     [apptFilter, waitingQueue],
   );
 
-  /** The rows the table draws and how many the tab holds, so a cap of four never reads as the whole list. */
+  /**
+   * Every row the tab holds — the table is a fixed-height box that scrolls, so nothing is left behind a link — and, on
+   * All, which row is the one happening now, so the box can open there instead of at 9am.
+   */
   const tableView = useMemo(() => {
-    const maxApptRows = Math.max(1, 4 - filteredWaitingQueue.length);
     if (apptFilter === 'all') {
       const firstActive = allListGroups.findIndex((g) => {
         const s = rowState(g);
         return s === 'in_service' || s === 'needs_answer' || s === 'later';
       });
-      const from = firstActive > 0 ? firstActive - 1 : 0;
-      return { rows: allListGroups.slice(from, from + maxApptRows), total: allListGroups.length };
+      return { rows: allListGroups.slice(0, MAX_TABLE_ROWS), total: allListGroups.length, nowIdx: firstActive };
     }
     const matching = allListGroups.filter((g) => {
       const st = rowState(g);
@@ -568,12 +574,27 @@ export function OwnerHome(p: OwnerHomeProps) {
       if (apptFilter === 'no_show') return st === 'no_show';
       return true;
     });
-    return { rows: matching.slice(0, maxApptRows), total: matching.length };
+    return { rows: matching.slice(0, MAX_TABLE_ROWS), total: matching.length, nowIdx: -1 };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allListGroups, apptFilter, now, filteredWaitingQueue.length]);
+  }, [allListGroups, apptFilter, now]);
   const filteredTableGroups = tableView.rows;
-  const shownRows = filteredTableGroups.length + filteredWaitingQueue.length;
-  const matchingRows = tableView.total + filteredWaitingQueue.length;
+  /** Open the box at the visit happening now (one row of context above it), whenever the tab or the day changes. */
+  const tableWrapRef = useRef<HTMLDivElement>(null);
+  const scrolledFor = useRef('');
+  const nowIdx = tableView.nowIdx;
+  // After every render, but it moves the box only when the tab, the "now" row or the row count changed: the box is
+  // drawn a moment after the rows are known (the desk layout mounts on a media query), so an effect keyed on the
+  // rows alone ran before there was a box to scroll.
+  useEffect(() => {
+    const wrap = tableWrapRef.current;
+    if (!wrap) return;
+    const key = `${apptFilter}|${nowIdx}|${filteredTableGroups.length}`;
+    if (scrolledFor.current === key) return;
+    scrolledFor.current = key;
+    const row = nowIdx > 0 ? wrap.querySelector<HTMLElement>('tr[data-now="true"]') : null;
+    const head = wrap.querySelector<HTMLElement>('thead')?.offsetHeight ?? 0;
+    wrap.scrollTop = row ? Math.max(row.offsetTop - head - row.offsetHeight, 0) : 0;
+  });
 
   /** The period's own product lines, from the API. Null from an older API: the card then shows a dash, not a guess. */
   const productTake = data?.money.products ?? null;
@@ -825,7 +846,7 @@ export function OwnerHome(p: OwnerHomeProps) {
               <div className="hm-v3-kpi-body">
                 <div className="hm-v3-kpi-main">
                   <div className="hm-v3-kpi-num-row">
-                    <strong className="hm-v3-kpi-value">{totalAppointmentsCount}</strong>
+                    <strong className="hm-v3-kpi-value">{bookingsCount}</strong>
                   </div>
                   <span className="hm-v3-kpi-sub">
                     {doneTodayCount} {t.completedLabel.toLowerCase()} · {upcomingCount} {t.upcomingLabel.toLowerCase()}
@@ -920,7 +941,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                   {(
                     [
                       { key: 'all', label: t.allFilterLabel, count: totalAppointmentsCount },
-                      { key: 'upcoming', label: t.upcomingLabel, count: upcomingCount },
+                      { key: 'upcoming', label: t.upcomingLabel, count: upcomingCount + waitingQueue.length },
                       { key: 'in_progress', label: t.inProgressLabel, count: inServiceCount },
                       { key: 'completed', label: t.completedLabel, count: doneTodayCount },
                       { key: 'no_show', label: t.noShowLabel, count: noShowCount },
@@ -945,7 +966,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                 </a>
               </div>
 
-              <div className="hm-v3-table-wrap">
+              <div className="hm-v3-table-wrap" ref={tableWrapRef}>
                 {listGroups === null ? (
                   <CardError t={t} />
                 ) : filteredTableGroups.length === 0 && filteredWaitingQueue.length === 0 ? (
@@ -1056,7 +1077,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                         const pId = g.appointments[0]?.providerId ?? pName;
                         const staffProv = p.providers.find((pr) => pr.id === g.appointments[0]?.providerId);
                         return (
-                          <tr key={g.key}>
+                          <tr key={g.key} data-now={rowIdx === nowIdx ? 'true' : undefined}>
                             <td className="hm-v3-td-time">
                               <span className={`hm-v3-tl-dot is-${dotTone}`} />
                               <strong>{formatTime(g.startAt, p.timezone)}</strong>
@@ -1125,7 +1146,6 @@ export function OwnerHome(p: OwnerHomeProps) {
               </div>
 
               <div className="hm-v3-card-foot">
-                {matchingRows > shownRows ? <span className="hm-v3-foot-count">{t.showingOf(shownRows, matchingRows)}</span> : null}
                 <a className="hm-v3-foot-link" href="/appointments">
                   {t.viewAllAppointments} →
                 </a>

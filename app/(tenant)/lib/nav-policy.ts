@@ -50,11 +50,18 @@ const ALWAYS_OPEN: ReadonlySet<string> = new Set(['/help']);
 /** May this role see this destination — and, until the business is live, is it one of the setup ones? */
 export function canSee(href: string, role?: MemberRole | null, reportTabs?: readonly string[], live = true): boolean {
   if (ALWAYS_OPEN.has(href)) return true;
-  // Until the pin moves to @growza-app/shared 1.0.10 (which names '/sales' and '/products/sell' for a receptionist),
-  // the Sales register borrows Clients' answer. Delete this line, and point the Sell product page's guard at its own
-  // address, when the pin moves.
-  const roleHref = href.startsWith('/sales') ? '/customers' : href;
-  return (live || isSetupDestination(href)) && roleCanSee(roleHref, role, reportTabs);
+  // The `sales` entry of `reportTabs` is the owner opening the Sales register to a receptionist; it is not a Reports
+  // tab, so it must not make Reports itself appear (and, for everything else, is simply left out of the list).
+  const tabs = reportTabs?.filter((t) => t !== 'sales');
+  if (href.startsWith('/sales')) {
+    if (!(live || isSetupDestination(href))) return false;
+    // A receptionist sees the register only when the salon has opened it; the others follow Clients' answer as before.
+    if (role === 'receptionist') return Boolean(reportTabs?.includes('sales'));
+    // Until the pin moves to @growza-app/shared 1.0.10 (which no longer lists '/sales' for a receptionist) the register
+    // borrows Clients' answer for owner, manager and stylist. Delete this alias when the pin moves.
+    return roleCanSee('/customers', role, tabs);
+  }
+  return (live || isSetupDestination(href)) && roleCanSee(href, role, tabs);
 }
 
 export function visibleItems<T extends { href: string }>(items: readonly T[], role?: MemberRole | null, reportTabs?: readonly string[], live = true): T[] {

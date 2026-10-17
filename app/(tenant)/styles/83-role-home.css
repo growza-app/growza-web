@@ -3843,14 +3843,26 @@ button.hm-now-count {
   text-decoration: none;
 }
 
+/*
+ * A fixed-height box that scrolls: the same size on a quiet morning and a day with a hundred bookings, with the column
+ * headings held at the top. It used to grow with its rows (the card and the page under it with them) and then, once
+ * capped at four rows, hid the rest behind a link.
+ */
 .hm-v3-table-wrap {
-  flex: 1;
-  overflow-x: auto;
+  flex: 0 0 auto;
+  height: 22rem;
+  overflow: auto;
 }
 .hm-v3-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+}
+.hm-v3-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface);
 }
 .hm-v3-table th {
   padding: 8px;
@@ -4246,11 +4258,6 @@ button.hm-now-count {
 }
 .hm-v3-chart-box.is-plain {
   grid-template-columns: minmax(0, 1fr);
-}
-.hm-v3-foot-count {
-  margin-right: auto;
-  font-size: 0.75rem;
-  color: var(--hm-muted);
 }
 .hm-v3-trend-summary {
   display: flex;

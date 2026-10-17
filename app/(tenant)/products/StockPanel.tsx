@@ -73,7 +73,6 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
   const [toBranchId, setToBranchId] = useState('');
   const [qty, setQty] = useState('');
   const [note, setNote] = useState('');
-  const [warnNegative, setWarnNegative] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -95,21 +94,19 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
   const reasonOptions = activeGroup === 'add' ? ADD_KINDS : activeGroup === 'remove' ? REMOVE_KINDS : null;
 
   const n = Math.trunc(Number(qty));
+  // QA, 2026-10-17 — a move cannot exceed what is on this shelf (the till may go below zero; a move may not). The server
+  // refuses it too; saying so here means the button is off and the sentence is already on the screen.
+  const tooMany = kind === 'transfer' && Number.isFinite(n) && n > Math.max(product.stock, 0);
   const canGo =
     kind !== null &&
     qty.trim() !== '' &&
     Number.isFinite(n) &&
     (kind === 'adjusted' ? n >= 0 : n > 0) &&
-    (kind !== 'transfer' || toBranchId !== '');
-  const transferAfter = product.stock - n;
-  const leavesNegative = kind === 'transfer' && canGo && transferAfter < 0;
+    (kind !== 'transfer' || toBranchId !== '') &&
+    !tooMany;
 
   const go = async () => {
     if (!kind || !canGo || busy) return;
-    if (kind === 'transfer' && leavesNegative && !warnNegative) {
-      setWarnNegative(true);
-      return;
-    }
     setBusy(true);
     setError(null);
     try {
@@ -131,7 +128,6 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
       setKind(null);
       setQty('');
       setNote('');
-      setWarnNegative(false);
       await load();
     } catch (err) {
       setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
@@ -149,13 +145,6 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
   });
   const afterCount =
     kind === 'adjusted' ? n : kind === 'received' || kind === 'returned' ? product.stock + n : product.stock - n;
-  const negativeText =
-    leavesNegative
-      ? hereName
-        ? t('transfer.leavesNegativeAt', { n: `−${Math.abs(transferAfter)}`, branch: hereName })
-        : t('transfer.leavesNegative', { n: `−${Math.abs(transferAfter)}` })
-      : '';
-
   return (
     <div className="sheet-body prd-stock">
       <div className={`prd-count prd-count-${tone}`}>
@@ -174,7 +163,6 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
             setGroup(closing ? null : 'add');
             setKind(closing ? null : 'received');
             setQty('');
-            setWarnNegative(false);
             setError(null);
           }}
         >
@@ -192,7 +180,6 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
             setGroup(closing ? null : 'remove');
             setKind(closing ? null : 'used');
             setQty('');
-            setWarnNegative(false);
             setError(null);
           }}
         >
@@ -214,7 +201,6 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
                 setToBranchId((prev) => (otherBranches.some((b) => b.id === prev) ? prev : (otherBranches[0]?.id ?? '')));
               }
               setQty('');
-              setWarnNegative(false);
               setError(null);
             }}
           >
@@ -242,7 +228,6 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
                       if (r === 'adjusted') setQty(String(product.stock));
                       else if (kind === 'adjusted') setQty('');
                       setKind(r);
-                      setWarnNegative(false);
                       setError(null);
                     }}
                   >
@@ -263,7 +248,6 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
                   value={toBranchId}
                   onChange={(e) => {
                     setToBranchId(e.target.value);
-                    setWarnNegative(false);
                     setError(null);
                   }}
                 >
@@ -288,10 +272,7 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
                 min={kind === 'adjusted' ? 0 : 1}
                 step={1}
                 value={qty}
-                onChange={(e) => {
-                  setQty(e.target.value);
-                  setWarnNegative(false);
-                }}
+                onChange={(e) => setQty(e.target.value)}
                 autoFocus={autoFocusField(true)}
               />
             </div>
@@ -305,11 +286,11 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
             </div>
           </div>
           <div className="prd-move-go">
-            <span className={`prd-move-after ${leavesNegative ? 'prd-move-after-warn' : ''}`} role={warnNegative ? 'alert' : undefined}>
-              {canGo ? (leavesNegative ? negativeText : t('after', { n: afterCount })) : ''}
+            <span className={`prd-move-after ${tooMany ? 'prd-move-after-warn' : ''}`} role={tooMany ? 'alert' : undefined}>
+              {tooMany ? t('transfer.tooMany', { n: Math.max(product.stock, 0) }) : canGo ? t('after', { n: afterCount }) : ''}
             </span>
             <button type="button" className="btn" disabled={!canGo || busy} onClick={() => void go()}>
-              {busy ? tc('working') : warnNegative && leavesNegative ? t('transfer.confirmAnyway') : t('confirm')}
+              {busy ? tc('working') : t('confirm')}
             </button>
           </div>
           {error ? (
