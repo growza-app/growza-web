@@ -494,13 +494,20 @@ export function buildSalesChart(
     let maxH = 21;
 
     for (const r of rows) {
+      if (r.dayISO !== start) continue;
+      if (filter === 'products' && r.products.length === 0) continue;
+      if (filter === 'services' && r.serviceNames.length === 0) continue;
+      const srv = filter !== 'products' ? r.servicesMinor : 0;
+      const prd = filter !== 'services' ? r.productsMinor : 0;
       const hRaw = Number(hourFmt.formatToParts(new Date(r.startAt)).find((p) => p.type === 'hour')?.value ?? 0);
       const h = Number.isFinite(hRaw) ? hRaw % 24 : 0;
-      if (h < minH) minH = h;
-      if (h > maxH) maxH = h;
+      if (srv + prd > 0) {
+        if (h < minH) minH = h;
+        if (h > maxH) maxH = h;
+      }
       const cur = byHour.get(h) ?? { srv: 0, prd: 0, count: 0 };
-      if (filter !== 'products') cur.srv += r.servicesMinor;
-      if (filter !== 'services') cur.prd += r.productsMinor;
+      cur.srv += srv;
+      cur.prd += prd;
       cur.count += 1;
       byHour.set(h, cur);
     }
@@ -535,6 +542,8 @@ export function buildSalesChart(
   if (dayCount <= 31) {
     const byDay = new Map<string, { srv: number; prd: number; count: number }>();
     for (const r of rows) {
+      if (filter === 'products' && r.products.length === 0) continue;
+      if (filter === 'services' && r.serviceNames.length === 0) continue;
       const cur = byDay.get(r.dayISO) ?? { srv: 0, prd: 0, count: 0 };
       if (filter !== 'products') cur.srv += r.servicesMinor;
       if (filter !== 'services') cur.prd += r.productsMinor;
@@ -568,6 +577,9 @@ export function buildSalesChart(
 
   const byMonth = new Map<string, { srv: number; prd: number; count: number }>();
   for (const r of rows) {
+    if (r.dayISO < start || r.dayISO > end) continue;
+    if (filter === 'products' && r.products.length === 0) continue;
+    if (filter === 'services' && r.serviceNames.length === 0) continue;
     const ym = r.dayISO.slice(0, 7);
     const cur = byMonth.get(ym) ?? { srv: 0, prd: 0, count: 0 };
     if (filter !== 'products') cur.srv += r.servicesMinor;
@@ -762,6 +774,19 @@ export function SalesClient({
     return list.filter((p) => p.toLowerCase().includes(pq));
   }, [windowRows, productQuery]);
 
+  const toolbarRows = useMemo(
+    () =>
+      filterSalesRows(windowRows, 'all', search, {
+        selectedClients,
+        selectedServices,
+        selectedProducts,
+        clientQuery,
+        serviceQuery,
+        productQuery,
+      }),
+    [windowRows, search, selectedClients, selectedServices, selectedProducts, clientQuery, serviceQuery, productQuery],
+  );
+
   const counts = useMemo(
     () => ({
       all: windowRows.length,
@@ -771,7 +796,7 @@ export function SalesClient({
     [windowRows],
   );
 
-  const kpis = useMemo(() => computeSalesKpis(windowRows), [windowRows]);
+  const kpis = useMemo(() => computeSalesKpis(toolbarRows), [toolbarRows]);
 
   const filteredRows = useMemo(
     () =>
@@ -1374,6 +1399,13 @@ export function SalesClient({
                       <div className="sls-chart-track">
                         {isPeak ? (
                           <span className="sls-chart-peak" style={{ bottom: `calc(${pct}% + 5px)` }}>
+                            {formatMoney(String(b.totalMinor))}
+                          </span>
+                        ) : b.totalMinor > 0 ? (
+                          <span
+                            className={`sls-chart-val ${chartData.buckets.length <= 10 ? 'is-always' : ''}`}
+                            style={{ bottom: `calc(${pct}% + 4px)` }}
+                          >
                             {formatMoney(String(b.totalMinor))}
                           </span>
                         ) : null}

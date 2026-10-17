@@ -552,15 +552,41 @@
   z-index: 2;
 }
 
-.sls-chart-col:first-child .sls-chart-peak {
+.sls-chart-col:first-child .sls-chart-peak,
+.sls-chart-col:first-child .sls-chart-val {
   left: 0;
   transform: none;
 }
 
-.sls-chart-col:last-child .sls-chart-peak {
+.sls-chart-col:last-child .sls-chart-peak,
+.sls-chart-col:last-child .sls-chart-val {
   left: auto;
   right: 0;
   transform: none;
+}
+
+.sls-chart-val {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 1;
+}
+
+@media (min-width: 721px) {
+  .sls-chart-val.is-always {
+    opacity: 1;
+  }
+}
+
+.sls-chart-col:hover .sls-chart-val {
+  opacity: 1;
+  color: var(--text);
 }
 
 .sls-chart-lbl {

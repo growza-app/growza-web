@@ -457,16 +457,21 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
       billsCount: 1,
     });
 
-    // Filter = products only counts product revenue
-    const hourlyProducts = buildSalesChart(singleDayRows, '2026-10-16', '2026-10-16', 'Asia/Kolkata', 'products', 'en');
+    // Filter = products only counts product revenue and product bills
+    const hourlyProducts = buildSalesChart(rows, '2026-10-16', '2026-10-16', 'Asia/Kolkata', 'products', 'en');
     expect(hourlyProducts.maxTotalMinor).toBe(40000);
     expect(hourlyProducts.buckets.find((b) => b.key === 'h-10')?.servicesMinor).toBe(0);
+    expect(hourlyProducts.buckets.reduce((s, b) => s + b.billsCount, 0)).toBe(1);
 
-    // 2. Multi-day (<= 31 days) -> daily mode
+    // 2. Multi-day (<= 31 days) -> daily mode, bucket sum === KPI total
+    const kpis = computeSalesKpis(rows);
     const daily = buildSalesChart(rows, '2026-10-15', '2026-10-17', 'Asia/Kolkata', 'all', 'en');
     expect(daily.mode).toBe('daily');
     expect(daily.buckets).toHaveLength(3);
     expect(daily.buckets.map((b) => b.totalMinor)).toEqual([0, 100000, 120000]);
+    expect(daily.buckets.reduce((s, b) => s + b.totalMinor, 0)).toBe(kpis.totalSalesMinor);
+    expect(daily.buckets.reduce((s, b) => s + b.servicesMinor, 0)).toBe(kpis.servicesRevenueMinor);
+    expect(daily.buckets.reduce((s, b) => s + b.productsMinor, 0)).toBe(kpis.productsRevenueMinor);
     expect(daily.peakIndex).toBe(2);
 
     // 3. Long range (> 31 days) -> monthly mode
@@ -475,10 +480,11 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(monthly.buckets.map((b) => b.key)).toEqual(['2026-08', '2026-09', '2026-10']);
     expect(monthly.buckets[2]?.totalMinor).toBe(220000);
 
-    // Source pins for collapsible chart card
+    // Source pins for collapsible chart card and toolbarRows KPI sync
     const client = here('./SalesClient.tsx');
     expect(client).toContain('className="sls-chart-card"');
     expect(client).toContain('aria-expanded={chartOpen}');
+    expect(client).toContain('computeSalesKpis(toolbarRows)');
     expect(client).toContain('buildSalesChart(filteredRows, fromDate, toDate, timezone, filter, locale)');
   });
 });
