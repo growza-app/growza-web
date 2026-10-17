@@ -426,8 +426,8 @@
 }
 
 .sls-chip.is-on {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
   color: var(--surface);
 }
 
@@ -451,6 +451,10 @@
     z-index: 1;
   }
 
+}
+
+/* Name and number side by side only where the table has room for it; below that they stack, as on a phone. */
+@media (min-width: 1400px) {
   .sls-table .sls-client-meta {
     flex-direction: row;
     align-items: baseline;
@@ -589,8 +593,13 @@
   gap: 4px;
 }
 
+/*
+ * QA, 2026-10-17 — a bill with two products drew its chips on one unbroken line (344px), so at 1024–1280 the table was
+ * wider than its card and Payment, Total and Bill sat past the edge. The chips wrap inside a capped column instead.
+ */
 .sls-table .sls-product-chips {
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  max-width: 15rem;
 }
 
 .sls-badge {
@@ -783,5 +792,24 @@
 
   .sls-kpi-value {
     font-size: 1.125rem;
+  }
+}
+
+/* QA, 2026-10-17 — at 861–1100px (an iPad held sideways) the seven columns need 840px and the card gives 727: Payment, Total
+   and Bill were hidden. Tighter cells, and the date and name may wrap, bring it inside the card. */
+@media (min-width: 861px) and (max-width: 1100px) {
+  .sls-table th,
+  .sls-table td {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .sls-table .sls-product-chips {
+    max-width: 11rem;
+  }
+
+  .sls-col-when,
+  .sls-table .sls-client-name {
+    white-space: normal;
   }
 }
