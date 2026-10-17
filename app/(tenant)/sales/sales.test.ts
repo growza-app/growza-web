@@ -421,20 +421,20 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(hbpCss).toMatch(/\.pf-head-stack \.hbp-line \{\s*display: inline-flex;/);
   });
 
-  it('builds stacked Sales trend buckets by hour on a single day, by day up to 31 days, and by month beyond 31 days', () => {
+  it('builds stacked Sales trend buckets synced with [fromISO, toISO] by day up to 31 days and by month beyond 31 days', () => {
     const rows = buildSaleRows(
       [
         mkAppointment({
           id: 'ch-1',
           bookingGroupId: 'g-ch-1',
-          startAt: '2026-10-16T05:25:00.000Z', // 10:55 AM IST (hour 10)
+          startAt: '2026-10-16T05:25:00.000Z',
           paidAmountMinor: '60000',
           products: [{ productId: 'p1', name: 'Serum', priceMinor: '40000', qty: 1, paidMinor: '40000' }],
         }),
         mkAppointment({
           id: 'ch-2',
           bookingGroupId: 'g-ch-2',
-          startAt: '2026-10-17T08:00:00.000Z', // 1:30 PM IST (hour 13)
+          startAt: '2026-10-17T08:00:00.000Z',
           paidAmountMinor: '120000',
           products: [],
         }),
@@ -442,15 +442,14 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
       'Asia/Kolkata',
     );
 
-    // 1. Single day -> hourly mode
-    const singleDayRows = rows.filter((r) => r.dayISO === '2026-10-16');
-    const hourly = buildSalesChart(singleDayRows, '2026-10-16', '2026-10-16', 'Asia/Kolkata', 'all', 'en');
-    expect(hourly.mode).toBe('hourly');
-    expect(hourly.buckets).toHaveLength(13); // 9a..9p
-    expect(hourly.maxTotalMinor).toBe(100000);
-    const h10 = hourly.buckets.find((b) => b.key === 'h-10');
-    expect(h10).toMatchObject({
-      label: '10a',
+    // 1. Single day (From === To) -> daily mode for that date with matching rangeLabel
+    const singleDay = buildSalesChart(rows, '2026-10-16', '2026-10-16', 'Asia/Kolkata', 'all', 'en');
+    expect(singleDay.mode).toBe('daily');
+    expect(singleDay.rangeLabel).toBe('16 Oct');
+    expect(singleDay.buckets).toHaveLength(1);
+    expect(singleDay.buckets[0]).toMatchObject({
+      key: '2026-10-16',
+      label: '16 Oct',
       servicesMinor: 60000,
       productsMinor: 40000,
       totalMinor: 100000,
@@ -458,16 +457,17 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     });
 
     // Filter = products only counts product revenue and product bills
-    const hourlyProducts = buildSalesChart(rows, '2026-10-16', '2026-10-16', 'Asia/Kolkata', 'products', 'en');
-    expect(hourlyProducts.maxTotalMinor).toBe(40000);
-    expect(hourlyProducts.buckets.find((b) => b.key === 'h-10')?.servicesMinor).toBe(0);
-    expect(hourlyProducts.buckets.reduce((s, b) => s + b.billsCount, 0)).toBe(1);
+    const singleDayProducts = buildSalesChart(rows, '2026-10-16', '2026-10-16', 'Asia/Kolkata', 'products', 'en');
+    expect(singleDayProducts.maxTotalMinor).toBe(40000);
+    expect(singleDayProducts.buckets[0]?.servicesMinor).toBe(0);
+    expect(singleDayProducts.buckets.reduce((s, b) => s + b.billsCount, 0)).toBe(1);
 
     // 2. Multi-day (<= 31 days) -> daily mode, bucket sum === KPI total
     const kpis = computeSalesKpis(rows);
     const daily = buildSalesChart(rows, '2026-10-15', '2026-10-17', 'Asia/Kolkata', 'all', 'en');
     expect(daily.mode).toBe('daily');
-    expect(daily.buckets).toHaveLength(3);
+    expect(daily.rangeLabel).toBe('15 Oct – 17 Oct');
+    expect(daily.buckets.map((b) => b.label)).toEqual(['15 Oct', '16 Oct', '17 Oct']);
     expect(daily.buckets.map((b) => b.totalMinor)).toEqual([0, 100000, 120000]);
     expect(daily.buckets.reduce((s, b) => s + b.totalMinor, 0)).toBe(kpis.totalSalesMinor);
     expect(daily.buckets.reduce((s, b) => s + b.servicesMinor, 0)).toBe(kpis.servicesRevenueMinor);
@@ -477,14 +477,16 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     // 3. Long range (> 31 days) -> monthly mode
     const monthly = buildSalesChart(rows, '2026-08-01', '2026-10-17', 'Asia/Kolkata', 'all', 'en');
     expect(monthly.mode).toBe('monthly');
+    expect(monthly.rangeLabel).toBe('1 Aug – 17 Oct');
     expect(monthly.buckets.map((b) => b.key)).toEqual(['2026-08', '2026-09', '2026-10']);
     expect(monthly.buckets[2]?.totalMinor).toBe(220000);
 
-    // Source pins for collapsible chart card and toolbarRows KPI sync
+    // Source pins for collapsible chart card, From/To fetch sync, and toolbarRows KPI sync
     const client = here('./SalesClient.tsx');
     expect(client).toContain('className="sls-chart-card"');
     expect(client).toContain('aria-expanded={chartOpen}');
     expect(client).toContain('computeSalesKpis(toolbarRows)');
+    expect(client).toContain('.appointments(safeFrom, safeTo, undefined, undefined, { includeSales: true })');
     expect(client).toContain('buildSalesChart(filteredRows, fromDate, toDate, timezone, filter, locale)');
   });
 });
