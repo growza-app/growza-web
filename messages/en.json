@@ -247,6 +247,18 @@
     "whichBranch": "Which branch",
     "deskPick": "Pick a {noun} to see their story, or add a new one."
   },
+  "tax": {
+    "title": "Tax",
+    "notSet": "Not set",
+    "gstRate": "GST rate",
+    "hsn": "HSN code",
+    "sac": "SAC code",
+    "hint": "Both optional. The {code} is 4 to 8 digits. A GST tax invoice needs both.",
+    "pricesInclude": "Your prices include GST, so a client pays the price you set.",
+    "pricesExclude": "Your prices do not include GST, so it is added on top of the price you set.",
+    "includedIn": "Includes {tax} GST at {rate}%. The client pays {total}.",
+    "addedTo": "Adds {tax} GST at {rate}%. The client pays {total}."
+  },
   "documents": {
     "type": {
       "tax_invoice": "tax invoice",
@@ -3103,12 +3115,7 @@
       "codesHint": "Both optional. The SKU is your own short code, like ARG-100. On the till's Products tab, scan a barcode and press Enter to add it.",
       "barcodeSpaces": "Type the barcode as it is printed, with no spaces.",
       "skuTaken": "{name} already has this SKU at this branch.",
-      "barcodeTaken": "{name} already has this barcode at this branch.",
-      "tax": "Tax",
-      "taxNotSet": "Not set",
-      "gstRate": "GST rate",
-      "hsn": "HSN code",
-      "taxHint": "Both optional. Prices include tax — these are kept on the product and are not printed on a receipt yet."
+      "barcodeTaken": "{name} already has this barcode at this branch."
     },
     "searchPlaceholder": "Search the shelf",
     "noMatch": "Nothing on the shelf is called \"{q}\".",
