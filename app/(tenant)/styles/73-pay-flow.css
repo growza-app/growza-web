@@ -437,6 +437,17 @@
   color: var(--accent-deep);
 }
 
+/*
+ * QA, 2026-10-17 — the line under a price ("4 left", "30 min") was styled only from the laptop's breakpoint up, so on a
+ * phone it ran into the price on the same line: ₹459 and "4 left" read as "₹4594 left". On its own line everywhere.
+ */
+.pf-tile-mins {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
 
 
 
