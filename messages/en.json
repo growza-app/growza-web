@@ -259,6 +259,7 @@
     "couldNotMake": "That could not be made. Try again.",
     "print": "Print",
     "download": "Download PDF",
+    "shareTitle": "Send {title} on WhatsApp",
     "sharing": "Getting the link…",
     "shareLine": "View it here: {link}\n(This link works for {days, plural, one {# day} other {# days}}.)",
     "share": "Send on WhatsApp",

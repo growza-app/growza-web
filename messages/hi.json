@@ -259,6 +259,7 @@
     "couldNotMake": "यह नहीं बन सका। दोबारा कोशिश करें।",
     "print": "प्रिंट करें",
     "download": "PDF डाउनलोड करें",
+    "shareTitle": "{title} WhatsApp पर भेजें",
     "sharing": "लिंक बन रहा है…",
     "shareLine": "यहाँ देखें: {link}\n(यह लिंक {days, plural, one {# दिन} other {# दिन}} तक चलेगा।)",
     "share": "WhatsApp पर भेजें",

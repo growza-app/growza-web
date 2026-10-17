@@ -71,9 +71,27 @@
   font-size: 1.125rem;
 }
 
-/* The Done screen's two document buttons — see it, send it — one under the other, as the rest of that screen stacks. */
+/*
+ * The Done screen's document buttons — see it, send it — full width, in the receipt's own column under Send on
+ * WhatsApp. Same weight and icon size as Print and Share beside them, because they are the same kind of act.
+ */
 .pf-doc {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
+}
+
+.pf-doc .btn {
+  min-height: 3rem;
+  justify-content: center;
+  gap: var(--sp-2);
+}
+
+.pf-doc a.btn {
+  text-decoration: none;
+}
+
+.pf-doc .btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
 }
