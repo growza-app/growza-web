@@ -30,9 +30,10 @@ describe('the Give to stylist sheet', () => {
     expect(sheet).toMatch(/if \(all\[0\]\) setPicked\(\[all\[0\]\.id\]\);/);
   });
 
-  it('keeps They left and Record payment in the footer', () => {
+  it('keeps Client left and Record payment in the footer', () => {
     expect(sheet).toMatch(/<div className="hm-give-foot hm-sheet-close">/);
     expect(sheet).toMatch(/\{t\.theyLeft\}/);
+    expect(read('../../lib/home-copy.ts')).toContain("theyLeft: S('Client left', 'ग्राहक चले गए')");
   });
 
   it('a long "busy with" client name gives way, not the stylist row, and highlights the selected stylist row', () => {
