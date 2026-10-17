@@ -64,3 +64,10 @@ describe('the owner Home shows only what was counted', () => {
     expect(home).toMatch(/if \(!branchContext\.ready \|\| !deskHome\) return;/);
   });
 });
+
+describe('the desk Products panel lets the keyboard out (QA, 2026-10-17)', () => {
+  it('does not trap focus when drawn inline, like every sibling inline panel', () => {
+    const src = readFileSync(path.join(here, '../../products/ProductSheet.tsx'), 'utf8');
+    expect(src).toMatch(/useDialog\(sheetRef, \{[^}]*active: !inline/);
+  });
+});
