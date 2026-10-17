@@ -1,9 +1,9 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { formatMoney, formatTime, type Appointment } from '../lib/api';
+import { api, formatMoney, formatTime, type Appointment } from '../lib/api';
 import { formatDateShort } from '../lib/format';
 import { bookingBill, clientNameLabel, groupBookings, initials, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { PageHeader } from '../components/PageHeader';
@@ -447,28 +447,31 @@ export interface SalesChartBucket {
 }
 
 export interface SalesChartData {
-  mode: 'hourly' | 'daily' | 'monthly';
+  mode: 'daily' | 'monthly';
+  rangeLabel: string;
   buckets: SalesChartBucket[];
   maxTotalMinor: number;
   peakIndex: number;
 }
 
 /**
- * Builds time-ordered stacked revenue buckets (Services + Products) for the Sales trend chart:
- * - `fromISO === toISO`: hourly buckets (`9a..9p`, widened if sales fall earlier/later)
- * - `2..31` days: daily buckets (`YYYY-MM-DD`)
- * - `> 31` days: monthly buckets (`YYYY-MM`)
+ * Builds date-ordered stacked revenue buckets (Services + Products) synced with `[fromISO, toISO]`:
+ * - `1..31` days (including `fromISO === toISO`): daily date buckets (`YYYY-MM-DD`)
+ * - `> 31` days: monthly buckets (`YYYY-MM`) bounded to `[fromISO, toISO]`
  */
 export function buildSalesChart(
   rows: readonly SaleRow[],
   fromISO: string,
   toISO: string,
-  timezone: string,
+  _timezone: string,
   filter: SalesFilter = 'all',
   locale = 'en',
 ): SalesChartData {
   const start = fromISO || '0000-01-01';
   const end = toISO && toISO >= start ? toISO : start;
+  const startShort = formatDateShort(new Date(`${start}T12:00:00Z`), 'UTC', locale);
+  const endShort = formatDateShort(new Date(`${end}T12:00:00Z`), 'UTC', locale);
+  const rangeLabel = start === end ? startShort : `${startShort} – ${endShort}`;
 
   const finalize = (mode: SalesChartData['mode'], buckets: SalesChartBucket[]): SalesChartData => {
     let maxTotalMinor = 0;
@@ -480,57 +483,8 @@ export function buildSalesChart(
         peakIndex = i;
       }
     }
-    return { mode, buckets, maxTotalMinor, peakIndex };
+    return { mode, rangeLabel, buckets, maxTotalMinor, peakIndex };
   };
-
-  if (start === end) {
-    const hourFmt = new Intl.DateTimeFormat('en-US', {
-      timeZone: timezone,
-      hour: 'numeric',
-      hour12: false,
-    });
-    const byHour = new Map<number, { srv: number; prd: number; count: number }>();
-    let minH = 9;
-    let maxH = 21;
-
-    for (const r of rows) {
-      if (r.dayISO !== start) continue;
-      if (filter === 'products' && r.products.length === 0) continue;
-      if (filter === 'services' && r.serviceNames.length === 0) continue;
-      const srv = filter !== 'products' ? r.servicesMinor : 0;
-      const prd = filter !== 'services' ? r.productsMinor : 0;
-      const hRaw = Number(hourFmt.formatToParts(new Date(r.startAt)).find((p) => p.type === 'hour')?.value ?? 0);
-      const h = Number.isFinite(hRaw) ? hRaw % 24 : 0;
-      if (srv + prd > 0) {
-        if (h < minH) minH = h;
-        if (h > maxH) maxH = h;
-      }
-      const cur = byHour.get(h) ?? { srv: 0, prd: 0, count: 0 };
-      cur.srv += srv;
-      cur.prd += prd;
-      cur.count += 1;
-      byHour.set(h, cur);
-    }
-
-    const buckets: SalesChartBucket[] = [];
-    for (let h = minH; h <= maxH; h++) {
-      const cur = byHour.get(h);
-      const servicesMinor = cur?.srv ?? 0;
-      const productsMinor = cur?.prd ?? 0;
-      const label = h === 0 ? '12a' : h < 12 ? `${h}a` : h === 12 ? '12p' : `${h - 12}p`;
-      const fullLabel = h === 0 ? '12:00 AM' : h < 12 ? `${h}:00 AM` : h === 12 ? '12:00 PM' : `${h - 12}:00 PM`;
-      buckets.push({
-        key: `h-${h}`,
-        label,
-        fullLabel,
-        servicesMinor,
-        productsMinor,
-        totalMinor: servicesMinor + productsMinor,
-        billsCount: cur?.count ?? 0,
-      });
-    }
-    return finalize('hourly', buckets);
-  }
 
   const startMs = Date.parse(`${start}T00:00:00Z`);
   const endMs = Date.parse(`${end}T00:00:00Z`);
@@ -542,6 +496,7 @@ export function buildSalesChart(
   if (dayCount <= 31) {
     const byDay = new Map<string, { srv: number; prd: number; count: number }>();
     for (const r of rows) {
+      if (r.dayISO < start || r.dayISO > end) continue;
       if (filter === 'products' && r.products.length === 0) continue;
       if (filter === 'services' && r.serviceNames.length === 0) continue;
       const cur = byDay.get(r.dayISO) ?? { srv: 0, prd: 0, count: 0 };
@@ -558,13 +513,9 @@ export function buildSalesChart(
       const servicesMinor = cur?.srv ?? 0;
       const productsMinor = cur?.prd ?? 0;
       const fullLabel = formatDateShort(new Date(`${dayISO}T12:00:00Z`), 'UTC', locale);
-      const label =
-        dayCount <= 10 || i === 0 || i === dayCount - 1 || dayISO.endsWith('-01')
-          ? fullLabel
-          : String(Number(dayISO.slice(8, 10)));
       buckets.push({
         key: dayISO,
-        label,
+        label: fullLabel,
         fullLabel,
         servicesMinor,
         productsMinor,
@@ -654,6 +605,8 @@ export function SalesClient({
   );
   const minDateISO = initialBounds.minISO;
 
+  const [loadedAppointments, setLoadedAppointments] = useState<Appointment[]>(appointments);
+  const fetchSeqRef = useRef(0);
   const [fromDate, setFromDate] = useState<string>(initialBounds.fromISO);
   const [toDate, setToDate] = useState<string>(initialBounds.toISO);
   const [filter, setFilter] = useState<SalesFilter>(initialFilter);
@@ -672,6 +625,10 @@ export function SalesClient({
   const [chartOpen, setChartOpen] = useState(true);
   const [page, setPage] = useState(1);
   const [openBooking, setOpenBooking] = useState<BookingGroup | null>(null);
+
+  useEffect(() => {
+    setLoadedAppointments(appointments);
+  }, [appointments]);
 
   useEffect(() => {
     setFromDate(initialBounds.fromISO);
@@ -706,11 +663,22 @@ export function SalesClient({
   const showProductsCol = filter !== 'services';
   const showStaffCol = filter === 'services';
 
-  const applyDates = (nextFrom: string, nextTo: string) => {
+  const applyDates = (rawFrom: string, rawTo: string, changed?: 'from' | 'to') => {
+    const isoRe = /^\d{4}-\d{2}-\d{2}$/;
+    if (!isoRe.test(rawFrom) || !isoRe.test(rawTo)) return;
+    const nextFrom = changed === 'to' && rawTo < rawFrom ? rawTo : rawFrom;
+    const nextTo = changed === 'from' && rawFrom > rawTo ? rawFrom : rawTo;
     const { fromISO: safeFrom, toISO: safeTo } = clampSalesDateRange(nextFrom, nextTo, todayISO);
     setFromDate(safeFrom);
     setToDate(safeTo);
     setPage(1);
+    const seq = ++fetchSeqRef.current;
+    api
+      .appointments(safeFrom, safeTo, undefined, undefined, { includeSales: true })
+      .then((rows) => {
+        if (fetchSeqRef.current === seq) setLoadedAppointments(rows);
+      })
+      .catch(() => {});
     const params = new URLSearchParams();
     params.set('date', safeFrom);
     params.set('to', safeTo);
@@ -718,7 +686,7 @@ export function SalesClient({
     router.replace(`/sales?${params.toString()}`, { scroll: false });
   };
 
-  const allSaleRows = useMemo(() => buildSaleRows(appointments, timezone), [appointments, timezone]);
+  const allSaleRows = useMemo(() => buildSaleRows(loadedAppointments, timezone), [loadedAppointments, timezone]);
 
   const effectiveBranches = branch.pinned ? branch.choice : selectedBranches;
 
@@ -943,7 +911,7 @@ export function SalesClient({
                 value={fromDate}
                 min={minDateISO}
                 max={todayISO}
-                onChange={(e) => applyDates(e.target.value, toDate)}
+                onChange={(e) => applyDates(e.target.value, toDate, 'from')}
               />
             </label>
             <label className="sls-date-field">
@@ -953,9 +921,9 @@ export function SalesClient({
                 className="sls-date-input"
                 aria-label={t('to')}
                 value={toDate}
-                min={fromDate >= minDateISO ? fromDate : minDateISO}
+                min={minDateISO}
                 max={todayISO}
-                onChange={(e) => applyDates(fromDate, e.target.value)}
+                onChange={(e) => applyDates(fromDate, e.target.value, 'to')}
               />
             </label>
           </div>
@@ -1341,7 +1309,9 @@ export function SalesClient({
           <div className="sls-chart-head">
             <div className="sls-chart-title-wrap">
               <h2 className="sls-chart-title">{t('chart.title')}</h2>
-              <span className="sls-chart-mode">{t(`chart.${chartData.mode}`)}</span>
+              <span className="sls-chart-mode">
+                {chartData.rangeLabel} · {t(`chart.${chartData.mode}`)}
+              </span>
             </div>
 
             <div className="sls-chart-controls">
