@@ -585,7 +585,7 @@
     flex: 1;
     min-height: 0;
     grid-template-rows: minmax(0, 1fr);
-    grid-template-columns: minmax(11rem, 13rem) minmax(0, 1fr) minmax(20rem, 24rem);
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
     align-items: stretch;
   }
 
@@ -602,38 +602,8 @@
     overflow: hidden;
   }
 
-  /* The three numbers as compact rows, not the phone's tiles: a column 11rem wide has no room for tiles. */
-  .prd-desk-left .prd-strip {
-    grid-template-columns: 1fr;
-    gap: 2px;
-    margin-bottom: var(--sp-3);
-    padding-bottom: var(--sp-3);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .prd-desk-left .prd-stat {
-    flex-direction: row-reverse;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--sp-2) var(--sp-3);
-    border: 0;
-    background: transparent;
-  }
-
-  .prd-desk-left .prd-stat-low {
-    background: var(--danger-soft);
-  }
-
-  .prd-desk-left .prd-stat-n {
-    font-size: 0.9375rem;
-  }
-
-  .prd-desk-left .prd-stat-l {
-    font-size: 0.875rem;
-    color: var(--text);
-  }
-
   .prd-desk-mid {
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: var(--sp-3);
@@ -1016,32 +986,12 @@
   max-width: none;
 }
 
-.prd-st-bar-note {
+.prd-st-filter-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: var(--sp-2);
-  min-width: 0;
-}
-
-.prd-st-note-label {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-.prd-st-note-input.prd-st-note-input {
-  flex: 1 1 12rem;
-  min-width: 0;
-  min-height: 2.75rem;
-  padding: 0 var(--sp-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  font-size: 1rem;
+  flex-wrap: wrap;
 }
 
 .prd-st-summary {
@@ -1053,6 +1003,116 @@
 
 .prd-st-summary-diff {
   color: var(--accent-deep);
+}
+
+/* ---------- Top KPI band + Sales graph + multi-select Categories dropdown ---------- */
+.prd-top-band {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.prd-top-band .prd-strip {
+  margin-bottom: 0;
+}
+
+.prd-sales-card.prd-sales-card {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.prd-sales-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.prd-sales-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.prd-sales-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.prd-sales-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.prd-sales-bar-row {
+  display: grid;
+  grid-template-columns: minmax(4.5rem, 8.5rem) minmax(2.5rem, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 0.8125rem;
+  line-height: 1.25;
+}
+
+.prd-sales-bar-name {
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prd-sales-bar-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--slate-soft);
+  overflow: hidden;
+}
+
+.prd-sales-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent-deep);
+}
+
+.prd-sales-bar-val {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.prd-selects .prd-cat-dd .sls-dd-btn {
+  width: 100%;
+}
+
+.prd-cat-dd-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.prd-cat-dd-row .sls-check-row {
+  flex: 1;
+  min-width: 0;
+}
+
+.prd-cat-dd-foot {
+  border-top: 1px solid var(--border);
+  padding-top: var(--sp-2);
 }
 
 .prd-st-list {
@@ -1186,8 +1246,16 @@
 }
 
 @media (min-width: 1101px) {
-  .prd-desk-grid.prd-st-desk-grid {
-    grid-template-columns: minmax(11rem, 13rem) minmax(0, 1fr);
+  .prd-top-band {
+    flex: none;
+    display: grid;
+    grid-template-columns: minmax(22rem, 1.15fr) minmax(20rem, 1fr);
+    gap: var(--sp-3);
+    align-items: stretch;
+  }
+
+  .prd-top-band .prd-stat {
+    justify-content: center;
   }
 
   .prd-st-desk-tools {
@@ -1196,11 +1264,11 @@
 
   .prd-st-desk-tools .prd-st-search {
     flex: 1 1 14rem;
-    max-width: 22rem;
+    max-width: 24rem;
   }
 
-  .prd-st-desk-tools .prd-st-bar-note {
-    flex: 2 1 20rem;
+  .prd-st-desk-tools .prd-st-summary {
+    margin-left: auto;
   }
 
   .prd-st-tr.prd-st-row-diff td {

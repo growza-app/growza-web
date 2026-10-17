@@ -217,14 +217,17 @@ describe("StockTake — count a branch's shelf in one pass (GRW-574 part 4)", ()
     expect(parseStockTakeCount('1000001', 7)).toBeNull();
   });
 
-  it('offers Stock take in the Products header for owner/manager when live products exist, and posts once to /api/v1/products/stock-take', () => {
+  it('offers Stock take in the Products header for owner/manager when live products exist, and posts once to /api/v1/products/stock-take without a note field', () => {
     const css = readFileSync(resolve(__dirname, '../styles/96-products.css'), 'utf8');
     expect(list).toMatch(/live\.length > 0 && canStockTake \? \([\s\S]*setStockTakeOpen\(true\)/);
     expect(list).toMatch(/<StockTake[\s\S]*branchId=\{branchId\}/);
+    expect(list).toMatch(/className="card prd-sales-card"/);
+    expect(list).toMatch(/<ProductCategoriesDropdown[\s\S]*selected=\{selectedCategories\}/);
     expect(take).toMatch(/api\s*\.stockTakeProducts\(branchId\)/);
-    expect(take).toMatch(/await api\.saveStockTake\(branchId, \{/);
+    expect(take).toMatch(/await api\.saveStockTake\(branchId, \{\s*counts: payload,\s*\}\);/);
+    expect(take).not.toContain('prd-st-note');
     expect(take).toMatch(/matchItems\(pool\.map\(productMatchable\), q\)/);
-    expect(take).toMatch(/<DeskProductCategories[\s\S]*picked=\{category\}/);
+    expect(take).toMatch(/<ProductCategoriesDropdown[\s\S]*selected=\{selectedCategories\}/);
     expect(take).toMatch(/className="prd-table prd-st-table"/);
     expect(take).toMatch(/prd-st-row-diff/);
     expect(take).toMatch(/setSaved\(true\)/);

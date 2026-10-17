@@ -3133,6 +3133,9 @@
       "title": "Categories",
       "all": "All products",
       "none": "No category",
+      "searchPlaceholder": "Search categories",
+      "clear": "Clear",
+      "noMatch": "No matching category",
       "addRow": "Add a category",
       "addPlaceholder": "e.g. Hair care",
       "add": "Add",
@@ -3145,6 +3148,8 @@
       "failed": "That did not save. Try again."
     },
     "sales": {
+      "topSellers": "Top sellers",
+      "noneEver": "Nothing sold yet.",
       "sold": "Sold in {days} days",
       "money": "Money taken",
       "margin": "Margin",
