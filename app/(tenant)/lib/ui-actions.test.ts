@@ -378,6 +378,12 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
      * this into a screen reading anything role-scoped fails here, which is
      * the moment it would owe shared a proper entry.
      */
+    /*
+     * QA, 2026-10-17 — the retail till is open to the FRONT DESK; the catalogue it sits under is not (cost prices,
+     * delete, moving stock between branches are the owner's). So it guards its own address rather than its segment's,
+     * and `canSee('/products/sell', …)` is what answers for it.
+     */
+    '/products/sell': /await guardScreen\('\/products\/sell'\);/,
     // `me.support` as a whole since the page lists options (each its own number): it reads the contacts
     // off /me, which every role may call, and nothing role-scoped.
     '/help': /const me = await api\.me\(\);[\s\S]*support = me\.support;/,

@@ -230,7 +230,14 @@ describe("StockTake — count a branch's shelf in one pass (GRW-574 part 4)", ()
     expect(take).toMatch(/className="prd-table prd-st-table"/);
     expect(take).toMatch(/prd-st-row-diff/);
     expect(take).toMatch(/setSaved\(true\)/);
-    expect(take).toMatch(/const canSave = shelf\.length > 0 && !hasInvalid && !busy && !showSaved;/);
+    expect(take).toMatch(/const canSave = shelf\.length > 0 && counted && !hasInvalid && !busy && !showSaved;/);
+    /*
+     * QA, 2026-10-17 — a stock take writes ONLY the rows somebody counted. It used to send an absolute count for
+     * every product, falling back to the number read when the screen opened, so a sale that landed while the sheet
+     * was open was written back out of existence.
+     */
+    expect(take).toMatch(/\.filter\(\(p\) => touchedRef\.current\.has\(p\.id\)\)/);
+    expect(take).not.toMatch(/const payload = shelf\.map/);
     expect(take).toMatch(/hasInvalid\s*\?\s*t\('stockTake\.sayCount'\)/);
     expect(take).toMatch(/<IconCheck \/> \{t\('form\.saved'\)\}/);
     expect(list).toMatch(/const worth = useMemo\(\(\) => shelfWorthMinor\(inCategory\), \[inCategory\]\);/);

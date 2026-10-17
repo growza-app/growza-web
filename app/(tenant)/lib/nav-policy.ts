@@ -53,6 +53,16 @@ export function canSee(href: string, role?: MemberRole | null, reportTabs?: read
   // The `sales` entry of `reportTabs` is the owner opening the Sales register to a receptionist; it is not a Reports
   // tab, so it must not make Reports itself appear (and, for everything else, is simply left out of the list).
   const tabs = reportTabs?.filter((t) => t !== 'sales');
+  /*
+   * The retail till. @growza-app/shared 1.0.11 names '/products/sell' for a receptionist; the pin here is behind it,
+   * so the answer is given locally. Delete this block when the pin reaches 1.0.11 — `roleCanSee` then answers it.
+   * It is NOT '/products': the catalogue (cost prices, delete, transfer between branches) stays the owner's.
+   */
+  if (href.startsWith('/products/sell')) {
+    if (!(live || isSetupDestination(href))) return false;
+    if (role === 'receptionist') return true;
+    return roleCanSee('/products', role, tabs);
+  }
   if (href.startsWith('/sales')) {
     if (!(live || isSetupDestination(href))) return false;
     // A receptionist sees the register only when the salon has opened it; the others follow Clients' answer as before.

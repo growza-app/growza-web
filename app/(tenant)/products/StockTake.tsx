@@ -145,7 +145,13 @@ export function StockTake({
   }, [shelf, parsedByProduct]);
 
   const showSaved = saved && diffCount === 0 && !hasInvalid;
-  const canSave = shelf.length > 0 && !hasInvalid && !busy && !showSaved;
+  /*
+   * Nothing counted, nothing to save: Save no longer writes the whole shelf back at the numbers it was opened with,
+   * so pressing it before typing anything would send an empty pass. `touchedRef` is read during render, which is
+   * safe here because every row that adds to it also calls `setCounts` and so re-renders.
+   */
+  const counted = touchedRef.current.size > 0;
+  const canSave = shelf.length > 0 && counted && !hasInvalid && !busy && !showSaved;
 
   const setRowCount = (productId: string, raw: string) => {
     touchedRef.current.add(productId);
@@ -159,10 +165,20 @@ export function StockTake({
     setBusy(true);
     setError(null);
     try {
-      const payload = shelf.map((p) => ({
-        productId: p.id,
-        count: parsedByProduct.get(p.id) ?? p.stock,
-      }));
+      /*
+       * QA, 2026-10-17 — ONLY the rows somebody actually counted.
+       *
+       * This sent an absolute count for every product on the shelf, falling back to the count read when the screen
+       * opened. A sale, a breakage or a delivery landing while the sheet was open was written straight back out of
+       * existence: open at 10:00, the till sells two at 10:05, count one other product, save — and the server was
+       * told the sold product still had its 10:00 number. `touchedRef` already knows which rows were typed in.
+       */
+      const payload = shelf
+        .filter((p) => touchedRef.current.has(p.id))
+        .map((p) => ({
+          productId: p.id,
+          count: parsedByProduct.get(p.id) ?? p.stock,
+        }));
       const res = await api.saveStockTake(branchId, {
         counts: payload,
       });

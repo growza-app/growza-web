@@ -2442,7 +2442,8 @@
       "visits_5_to_9": "5–9 visits",
       "visits_2_to_4": "2–4 visits",
       "visits_once": "Just once",
-      "visits_never": "Never been in"
+      "visits_never": "Never been in",
+      "products": "Products"
     },
     "bookingsCount": "{n, plural, one {# {one}} other {# {other}}}",
     "duration": {

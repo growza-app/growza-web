@@ -2442,7 +2442,8 @@
       "visits_5_to_9": "5–9 विज़िट",
       "visits_2_to_4": "2–4 विज़िट",
       "visits_once": "बस एक बार",
-      "visits_never": "कभी नहीं आए"
+      "visits_never": "कभी नहीं आए",
+      "products": "सामान"
     },
     "bookingsCount": "{n, plural, one {# {one}} other {# {other}}}",
     "duration": {

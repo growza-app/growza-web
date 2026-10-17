@@ -83,10 +83,11 @@ export function GiveToStaffSheet({
       // Jira GRW-379 — what is sold at the branch they are waiting at.
       .services(entry.locationId)
       .then((all) => {
-        if (!cancelled) {
-          setServices(all);
-          if (all[0]) setPicked([all[0].id]);
-        }
+        // QA, 2026-10-17 — NOT `setPicked([all[0].id])`. The picker below went away with the two-step sheet and this
+        // auto-pick stayed behind, so a token issued by name alone started on whatever service the API happened to
+        // list first — never shown, impossible to change, and the wrong duration and bill. The desk says what they
+        // are having, as it always did.
+        if (!cancelled) setServices(all);
       })
       .catch(() => {
         // Jira GRW-451 — an empty list, not a permanent spinner: the sentence below is the honest answer
@@ -158,6 +159,31 @@ export function GiveToStaffSheet({
         {error ? <div className="hm-error" role="alert">{error}</div> : null}
         {needsServices && services === null ? <p className="hm-empty">{t.loadingServicesHere}</p> : null}
         {needsServices && services !== null && services.length === 0 ? <p className="hm-empty">{t.noServicesHere}</p> : null}
+        {needsServices && services !== null && services.length > 0 ? (
+          <div className="hm-give-services">
+            <div className="wi-section-label">{t.servicesLabel}</div>
+            <div className="wi-chips">
+              {services.map((sv) => {
+                const on = picked.includes(sv.id);
+                return (
+                  <button
+                    key={sv.id}
+                    type="button"
+                    className={`wi-chip ${on ? 'wi-chip-on' : ''}`}
+                    aria-pressed={on}
+                    disabled={saving !== null}
+                    onClick={() => {
+                      setPicked((cur) => (on ? cur.filter((id) => id !== sv.id) : [...cur, sv.id]));
+                      setError(null);
+                    }}
+                  >
+                    {sv.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
         <ul className="hm-rows hm-pick">
           {ordered.map((p) => {
             const b = busy.get(p.id);

@@ -9,10 +9,10 @@ const sheet = code('./GiveToStaffSheet.tsx');
 const css = read('../../styles/83-role-home.css');
 
 describe('the Give to stylist sheet', () => {
-  it('opens on the stylists, by name, with no services screen when a stylist is clicked', () => {
-    expect(sheet).not.toMatch(/hm-give-services/);
-    expect(sheet).not.toMatch(/wi-chip/);
+  it('opens on the stylists, by name, with no second screen when a stylist is clicked', () => {
     expect(sheet).toMatch(/<ul className="hm-rows hm-pick">/);
+    // One screen still: the services sit above the stylist list, not behind a step of their own.
+    expect(sheet).not.toMatch(/chosen \? \(/);
   });
 
   it('clicking a stylist selects them first, and the Start button starts the visit', () => {
@@ -26,8 +26,17 @@ describe('the Give to stylist sheet', () => {
     expect(sheet).toMatch(/\{chosen \? `\$\{t\.startBtn\} · \$\{chosen\.displayName\}` : t\.startBtn\}/);
   });
 
-  it('when a token was issued with no services, pre-selects the branch default service so Start works in one step', () => {
-    expect(sheet).toMatch(/if \(all\[0\]\) setPicked\(\[all\[0\]\.id\]\);/);
+  /**
+   * QA, 2026-10-17 — this used to assert `if (all[0]) setPicked([all[0].id])`, which started the visit on whatever
+   * service the API listed first: never shown, impossible to change, wrong duration and wrong bill. A token issued
+   * by name alone asks what they are having.
+   */
+  it('when a token was issued with no services, the desk picks them — nothing is chosen for it', () => {
+    expect(sheet).not.toMatch(/setPicked\(\[all\[0\]/);
+    expect(sheet).toMatch(/\{needsServices && services !== null && services\.length > 0 \? \(/);
+    expect(sheet).toMatch(/className=\{`wi-chip \$\{on \? 'wi-chip-on' : ''\}`\}/);
+    // And Start stays shut until one is picked.
+    expect(sheet).toMatch(/\(needsServices && picked\.length === 0\)\}/);
   });
 
   it('keeps Client left and Record payment in the footer', () => {
