@@ -127,6 +127,9 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     upcomingLabel: S('Upcoming', 'आने वाले'),
     waitingLabel: S('Waiting', 'इंतज़ार में'),
     noShowLabel: S('No show', 'नहीं आए'),
+    cancelledLabel: S('Cancelled', 'रद्द'),
+    /** The Home table shows a few rows; this says how many the tab holds, so four never reads as the whole list. */
+    showingOf: (shown: number, total: number) => S(`Showing ${shown} of ${total}`, `${total} में से ${shown} दिख रहे हैं`),
     allFilterLabel: S('All', 'सभी'),
     todaysAppointments: S("Today's appointments", 'आज की बुकिंग'),
     viewCalendar: S('View calendar', 'कैलेंडर देखें'),

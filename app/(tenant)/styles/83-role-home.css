@@ -4004,6 +4004,10 @@ button.hm-now-count {
   margin-top: 4px;
   border-top: 1px solid var(--hm-line);
   text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 /* Right Column: Stacked Staff status + Quick actions */
@@ -4215,6 +4219,17 @@ button.hm-now-count {
   font-weight: 700;
   color: var(--hm-ink);
   cursor: pointer;
+}
+.hm-v3-period-pill.is-static {
+  cursor: default;
+}
+.hm-v3-chart-box.is-plain {
+  grid-template-columns: minmax(0, 1fr);
+}
+.hm-v3-foot-count {
+  margin-right: auto;
+  font-size: 0.75rem;
+  color: var(--hm-muted);
 }
 .hm-v3-trend-summary {
   display: flex;

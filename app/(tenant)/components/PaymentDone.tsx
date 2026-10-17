@@ -60,7 +60,8 @@ export function PaymentDone({
    * Defaulted to the bare list so a caller that cannot name the visit still has a way back, which is what
    * every caller used to get: twenty-five rows and a hunt for the one that went in wrong.
    */
-  fixHref?: string;
+  /** Null where there is no booking to fix (a product-only sale has no appointment to open). */
+  fixHref?: string | null;
   totalMinor: number;
   mode: PaymentMode;
   /** How `mode` reads in the current language ("Cash", "UPI"). */
@@ -173,9 +174,11 @@ export function PaymentDone({
             the one the desk has this second got wrong. `?open=` already opens a booking by id (Search uses
             it), and the day goes with it because the list shows today and a late visit may not be.
           */}
-          <Link href={fixHref} className="btn btn-ghost pf-go-alt">
-            {t('mistake')}
-          </Link>
+          {fixHref === null ? null : (
+            <Link href={fixHref} className="btn btn-ghost pf-go-alt">
+              {t('mistake')}
+            </Link>
+          )}
         </div>
         <button type="button" className="pf-sound" aria-pressed={sound} onClick={toggleSound}>
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

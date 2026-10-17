@@ -27,6 +27,8 @@ export interface HomeOverview {
     newCustomers: number;
     cameBackPct: number | null;
     byPaymentMode: PaymentModeSlice[];
+    /** What the period's bills took for products. Optional so an older API does not break the Home. */
+    products?: { revenueMinor: number; units: number; topName: string | null; topUnits: number };
   };
   /** The graph's span follows the period: this week for Today and Week, this month for Month. */
   week: { span: 'week' | 'month'; revenueMinor: number; days: Array<{ date: string; weekday: string; revenueMinor: number; future: boolean }> };

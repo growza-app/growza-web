@@ -61,6 +61,8 @@ interface Sale {
   summary: string;
   /** The visit's own day in the salon's zone — what "Fix a mistake" needs to find it in the list. */
   day: string;
+  /** Only products were sold: the id is a sale's, not a booking's, so there is nothing in Bookings to open. */
+  productOnly: boolean;
 }
 
 /**
@@ -786,6 +788,7 @@ export function PayFlow({
         phone: token?.customerPhone ?? visit?.appointment.customerPhone ?? (client.kind === 'existing' ? client.phone : null),
         summary: [tokenNo !== null ? nv.token(tokenNo) : null, paidBy, names, stylist].filter(Boolean).join(' · '),
         day: new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(result.startAt)),
+        productOnly: !lines.some((l) => !l.product),
       });
       clearSplit();
       setStep('done');
@@ -895,7 +898,7 @@ export function PayFlow({
     return (
       <PaymentDone
         appointmentId={sale.appointmentId}
-        fixHref={fixVisitHref(sale.appointmentId, sale.day)}
+        fixHref={sale.productOnly ? null : fixVisitHref(sale.appointmentId, sale.day)}
         totalMinor={sale.totalMinor}
         mode={sale.mode}
         modeLabel={sale.paidBy}

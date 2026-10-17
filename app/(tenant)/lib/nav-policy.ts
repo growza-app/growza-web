@@ -50,6 +50,9 @@ const ALWAYS_OPEN: ReadonlySet<string> = new Set(['/help']);
 /** May this role see this destination — and, until the business is live, is it one of the setup ones? */
 export function canSee(href: string, role?: MemberRole | null, reportTabs?: readonly string[], live = true): boolean {
   if (ALWAYS_OPEN.has(href)) return true;
+  // Until the pin moves to @growza-app/shared 1.0.10 (which names '/sales' and '/products/sell' for a receptionist),
+  // the Sales register borrows Clients' answer. Delete this line, and point the Sell product page's guard at its own
+  // address, when the pin moves.
   const roleHref = href.startsWith('/sales') ? '/customers' : href;
   return (live || isSetupDestination(href)) && roleCanSee(roleHref, role, reportTabs);
 }
