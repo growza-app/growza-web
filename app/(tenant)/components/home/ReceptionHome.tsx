@@ -152,7 +152,7 @@ export function ReceptionHome(p: ReceptionHomeProps) {
             // Jira GRW-404 — Record payment moved up beside New token; Walk-in now (start a visit with a stylist straight
             // away) keeps a way in on a laptop, where the phone's centre button is not.
             ...(mayBook ? [{ href: '/appointments/new?mode=now', label: t.walkInShort, icon: <IconScissors />, tone: 'green' as const }] : []),
-            ...(canSee('/products', 'receptionist') ? [{ href: '/products', label: t.nav.products, icon: <IconProducts />, tone: 'slate' as const }] : []),
+            ...(canSee('/products/sell', 'receptionist') ? [{ href: '/products/sell', label: t.sellProductAction, icon: <IconProducts />, tone: 'slate' as const }] : []),
             { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
             // `/customers` search, not `/search`: the global search route is not
             // on the receptionist's allowlist (GRW-199), the client list's is.

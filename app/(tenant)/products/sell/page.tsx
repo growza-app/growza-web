@@ -21,7 +21,8 @@ export default async function SellProductPage({
 }: {
   searchParams: Promise<{ from?: string }>;
 }) {
-  await guardScreen('/products');
+  // The till sells from the shelf; the Products catalogue is a different screen with a different answer per role.
+  await guardScreen('/products/sell');
   await guardLive('/appointments/new');
   const params = await searchParams;
 

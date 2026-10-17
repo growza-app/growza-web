@@ -16,8 +16,10 @@ describe('Tenant Home v2 redesign', () => {
 
   it('includes Products in Owner and Reception quick links, gated by canSee', () => {
     expect(owner).toContain("{ href: '/products', label: t.nav.products, icon: <IconProducts />, tone: 'blue' }");
-    expect(reception).toContain("canSee('/products', 'receptionist')");
-    expect(reception).toContain("href: '/products', label: t.nav.products, icon: <IconProducts />");
+    // The front desk sells from the shelf; the catalogue stays the owner's (QA, 2026-10-17 — this asked
+    // `canSee('/products', 'receptionist')`, which is always false, so the desk had no tile at all).
+    expect(reception).toContain("canSee('/products/sell', 'receptionist')");
+    expect(reception).toContain("href: '/products/sell', label: t.sellProductAction, icon: <IconProducts />");
   });
 
   it('applies .is-clear to zero-count attention rows and tiles so calm states do not look like alerts', () => {
@@ -83,7 +85,7 @@ describe('Tenant Home v2 redesign', () => {
     const deskGrid = code('../../appointments/new/DeskServiceGrid.tsx');
     expect(owner).toContain('href="/products/sell"');
     expect(productsList).toContain('href="/products/sell?from=products"');
-    expect(sellPage).toContain("await guardScreen('/products');");
+    expect(sellPage).toContain("await guardScreen('/products/sell');");
     expect(sellPage).toContain("await guardLive('/appointments/new');");
     expect(sellClient).toContain('productsOnly');
     expect(payFlow).toContain('<DeskProductCategories');
