@@ -436,6 +436,188 @@ export function computeSalesKpis(rows: readonly SaleRow[]): SalesKpis {
   };
 }
 
+export interface SalesChartBucket {
+  key: string;
+  label: string;
+  fullLabel: string;
+  servicesMinor: number;
+  productsMinor: number;
+  totalMinor: number;
+  billsCount: number;
+}
+
+export interface SalesChartData {
+  mode: 'hourly' | 'daily' | 'monthly';
+  buckets: SalesChartBucket[];
+  maxTotalMinor: number;
+  peakIndex: number;
+}
+
+/**
+ * Builds time-ordered stacked revenue buckets (Services + Products) for the Sales trend chart:
+ * - `fromISO === toISO`: hourly buckets (`9a..9p`, widened if sales fall earlier/later)
+ * - `2..31` days: daily buckets (`YYYY-MM-DD`)
+ * - `> 31` days: monthly buckets (`YYYY-MM`)
+ */
+export function buildSalesChart(
+  rows: readonly SaleRow[],
+  fromISO: string,
+  toISO: string,
+  timezone: string,
+  filter: SalesFilter = 'all',
+  locale = 'en',
+): SalesChartData {
+  const start = fromISO || '0000-01-01';
+  const end = toISO && toISO >= start ? toISO : start;
+
+  const finalize = (mode: SalesChartData['mode'], buckets: SalesChartBucket[]): SalesChartData => {
+    let maxTotalMinor = 0;
+    let peakIndex = -1;
+    for (let i = 0; i < buckets.length; i++) {
+      const b = buckets[i]!;
+      if (b.totalMinor > maxTotalMinor) {
+        maxTotalMinor = b.totalMinor;
+        peakIndex = i;
+      }
+    }
+    return { mode, buckets, maxTotalMinor, peakIndex };
+  };
+
+  if (start === end) {
+    const hourFmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      hour: 'numeric',
+      hour12: false,
+    });
+    const byHour = new Map<number, { srv: number; prd: number; count: number }>();
+    let minH = 9;
+    let maxH = 21;
+
+    for (const r of rows) {
+      if (r.dayISO !== start) continue;
+      if (filter === 'products' && r.products.length === 0) continue;
+      if (filter === 'services' && r.serviceNames.length === 0) continue;
+      const srv = filter !== 'products' ? r.servicesMinor : 0;
+      const prd = filter !== 'services' ? r.productsMinor : 0;
+      const hRaw = Number(hourFmt.formatToParts(new Date(r.startAt)).find((p) => p.type === 'hour')?.value ?? 0);
+      const h = Number.isFinite(hRaw) ? hRaw % 24 : 0;
+      if (srv + prd > 0) {
+        if (h < minH) minH = h;
+        if (h > maxH) maxH = h;
+      }
+      const cur = byHour.get(h) ?? { srv: 0, prd: 0, count: 0 };
+      cur.srv += srv;
+      cur.prd += prd;
+      cur.count += 1;
+      byHour.set(h, cur);
+    }
+
+    const buckets: SalesChartBucket[] = [];
+    for (let h = minH; h <= maxH; h++) {
+      const cur = byHour.get(h);
+      const servicesMinor = cur?.srv ?? 0;
+      const productsMinor = cur?.prd ?? 0;
+      const label = h === 0 ? '12a' : h < 12 ? `${h}a` : h === 12 ? '12p' : `${h - 12}p`;
+      const fullLabel = h === 0 ? '12:00 AM' : h < 12 ? `${h}:00 AM` : h === 12 ? '12:00 PM' : `${h - 12}:00 PM`;
+      buckets.push({
+        key: `h-${h}`,
+        label,
+        fullLabel,
+        servicesMinor,
+        productsMinor,
+        totalMinor: servicesMinor + productsMinor,
+        billsCount: cur?.count ?? 0,
+      });
+    }
+    return finalize('hourly', buckets);
+  }
+
+  const startMs = Date.parse(`${start}T00:00:00Z`);
+  const endMs = Date.parse(`${end}T00:00:00Z`);
+  const dayCount =
+    Number.isFinite(startMs) && Number.isFinite(endMs)
+      ? Math.max(1, Math.round((endMs - startMs) / 86_400_000) + 1)
+      : 1;
+
+  if (dayCount <= 31) {
+    const byDay = new Map<string, { srv: number; prd: number; count: number }>();
+    for (const r of rows) {
+      if (filter === 'products' && r.products.length === 0) continue;
+      if (filter === 'services' && r.serviceNames.length === 0) continue;
+      const cur = byDay.get(r.dayISO) ?? { srv: 0, prd: 0, count: 0 };
+      if (filter !== 'products') cur.srv += r.servicesMinor;
+      if (filter !== 'services') cur.prd += r.productsMinor;
+      cur.count += 1;
+      byDay.set(r.dayISO, cur);
+    }
+
+    const buckets: SalesChartBucket[] = [];
+    for (let i = 0; i < dayCount; i++) {
+      const dayISO = new Date(startMs + i * 86_400_000).toISOString().slice(0, 10);
+      const cur = byDay.get(dayISO);
+      const servicesMinor = cur?.srv ?? 0;
+      const productsMinor = cur?.prd ?? 0;
+      const fullLabel = formatDateShort(new Date(`${dayISO}T12:00:00Z`), 'UTC', locale);
+      const label =
+        dayCount <= 10 || i === 0 || i === dayCount - 1 || dayISO.endsWith('-01')
+          ? fullLabel
+          : String(Number(dayISO.slice(8, 10)));
+      buckets.push({
+        key: dayISO,
+        label,
+        fullLabel,
+        servicesMinor,
+        productsMinor,
+        totalMinor: servicesMinor + productsMinor,
+        billsCount: cur?.count ?? 0,
+      });
+    }
+    return finalize('daily', buckets);
+  }
+
+  const byMonth = new Map<string, { srv: number; prd: number; count: number }>();
+  for (const r of rows) {
+    if (r.dayISO < start || r.dayISO > end) continue;
+    if (filter === 'products' && r.products.length === 0) continue;
+    if (filter === 'services' && r.serviceNames.length === 0) continue;
+    const ym = r.dayISO.slice(0, 7);
+    const cur = byMonth.get(ym) ?? { srv: 0, prd: 0, count: 0 };
+    if (filter !== 'products') cur.srv += r.servicesMinor;
+    if (filter !== 'services') cur.prd += r.productsMinor;
+    cur.count += 1;
+    byMonth.set(ym, cur);
+  }
+
+  const monthFmt = new Intl.DateTimeFormat(locale === 'hi' ? 'hi-IN' : 'en-IN', {
+    month: 'short',
+    year: '2-digit',
+    timeZone: 'UTC',
+  });
+  const [sy = 2026, sm = 1] = start.slice(0, 7).split('-').map(Number);
+  const [ey = 2026, em = 1] = end.slice(0, 7).split('-').map(Number);
+  const totalMonths = Math.min(60, Math.max(1, (ey - sy) * 12 + (em - sm) + 1));
+
+  const buckets: SalesChartBucket[] = [];
+  for (let i = 0; i < totalMonths; i++) {
+    const d = new Date(Date.UTC(sy, sm - 1 + i, 15));
+    const ym = d.toISOString().slice(0, 7);
+    const cur = byMonth.get(ym);
+    const servicesMinor = cur?.srv ?? 0;
+    const productsMinor = cur?.prd ?? 0;
+    const label = monthFmt.format(d);
+    buckets.push({
+      key: ym,
+      label,
+      fullLabel: label,
+      servicesMinor,
+      productsMinor,
+      totalMinor: servicesMinor + productsMinor,
+      billsCount: cur?.count ?? 0,
+    });
+  }
+  return finalize('monthly', buckets);
+}
+
 export function SalesClient({
   appointments,
   timezone,
@@ -487,6 +669,7 @@ export function SalesClient({
   const [serviceQuery, setServiceQuery] = useState('');
   const [productQuery, setProductQuery] = useState('');
   const [openDropdown, setOpenDropdown] = useState<'branches' | 'clients' | 'services' | 'products' | null>(null);
+  const [chartOpen, setChartOpen] = useState(true);
   const [page, setPage] = useState(1);
   const [openBooking, setOpenBooking] = useState<BookingGroup | null>(null);
 
@@ -591,6 +774,19 @@ export function SalesClient({
     return list.filter((p) => p.toLowerCase().includes(pq));
   }, [windowRows, productQuery]);
 
+  const toolbarRows = useMemo(
+    () =>
+      filterSalesRows(windowRows, 'all', search, {
+        selectedClients,
+        selectedServices,
+        selectedProducts,
+        clientQuery,
+        serviceQuery,
+        productQuery,
+      }),
+    [windowRows, search, selectedClients, selectedServices, selectedProducts, clientQuery, serviceQuery, productQuery],
+  );
+
   const counts = useMemo(
     () => ({
       all: windowRows.length,
@@ -600,7 +796,7 @@ export function SalesClient({
     [windowRows],
   );
 
-  const kpis = useMemo(() => computeSalesKpis(windowRows), [windowRows]);
+  const kpis = useMemo(() => computeSalesKpis(toolbarRows), [toolbarRows]);
 
   const filteredRows = useMemo(
     () =>
@@ -613,6 +809,11 @@ export function SalesClient({
         productQuery,
       }),
     [windowRows, filter, search, selectedClients, selectedServices, selectedProducts, clientQuery, serviceQuery, productQuery],
+  );
+
+  const chartData = useMemo(
+    () => buildSalesChart(filteredRows, fromDate, toDate, timezone, filter, locale),
+    [filteredRows, fromDate, toDate, timezone, filter, locale],
   );
 
   const pageCount = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
@@ -1134,6 +1335,97 @@ export function SalesClient({
             </div>
           </div>
         </div>
+
+        {/* Collapsible Sales Trend Chart */}
+        <section className="sls-chart-card" aria-label={t('chart.title')}>
+          <div className="sls-chart-head">
+            <div className="sls-chart-title-wrap">
+              <h2 className="sls-chart-title">{t('chart.title')}</h2>
+              <span className="sls-chart-mode">{t(`chart.${chartData.mode}`)}</span>
+            </div>
+
+            <div className="sls-chart-controls">
+              {chartOpen ? (
+                <div className="sls-chart-legend" aria-hidden="true">
+                  {filter !== 'products' ? (
+                    <span className="sls-legend-item">
+                      <span className="sls-legend-dot sls-dot-srv" />
+                      {t('itemFilterServices')}
+                    </span>
+                  ) : null}
+                  {filter !== 'services' ? (
+                    <span className="sls-legend-item">
+                      <span className="sls-legend-dot sls-dot-prd" />
+                      {t('itemFilterProducts')}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm sls-chart-toggle"
+                aria-expanded={chartOpen}
+                onClick={() => setChartOpen((v) => !v)}
+              >
+                <span>{chartOpen ? t('chart.hide') : t('chart.show')}</span>
+                <IconChevronDown />
+              </button>
+            </div>
+          </div>
+
+          {chartOpen ? (
+            chartData.maxTotalMinor === 0 ? (
+              <p className="sls-chart-empty">{t(`empty.${filter}`)}</p>
+            ) : (
+              <div className="sls-chart-bars" role="list" aria-label={t('chart.title')}>
+                {chartData.buckets.map((b, idx) => {
+                  const pct =
+                    b.totalMinor > 0
+                      ? Math.max(8, Math.round((b.totalMinor / chartData.maxTotalMinor) * 78))
+                      : 3;
+                  const isPeak = idx === chartData.peakIndex;
+                  const srvShare = b.totalMinor > 0 ? Math.round((b.servicesMinor / b.totalMinor) * 100) : 0;
+                  const prdShare = b.totalMinor > 0 ? 100 - srvShare : 0;
+                  const tipText = `${b.fullLabel} · ${formatMoney(String(b.totalMinor))} (${t('kpi.billsCount', { n: b.billsCount })})`;
+                  return (
+                    <div
+                      key={b.key}
+                      role="listitem"
+                      aria-label={tipText}
+                      title={tipText}
+                      className={`sls-chart-col ${isPeak ? 'is-peak' : ''} ${b.totalMinor === 0 ? 'is-zero' : ''}`}
+                    >
+                      <div className="sls-chart-track">
+                        {isPeak ? (
+                          <span className="sls-chart-peak" style={{ bottom: `calc(${pct}% + 5px)` }}>
+                            {formatMoney(String(b.totalMinor))}
+                          </span>
+                        ) : b.totalMinor > 0 ? (
+                          <span
+                            className={`sls-chart-val ${chartData.buckets.length <= 10 ? 'is-always' : ''}`}
+                            style={{ bottom: `calc(${pct}% + 4px)` }}
+                          >
+                            {formatMoney(String(b.totalMinor))}
+                          </span>
+                        ) : null}
+                        <span className="sls-chart-stack" style={{ height: `${pct}%` }}>
+                          {prdShare > 0 ? (
+                            <span className="sls-bar-seg sls-bar-prd" style={{ height: `${prdShare}%` }} />
+                          ) : null}
+                          {srvShare > 0 ? (
+                            <span className="sls-bar-seg sls-bar-srv" style={{ height: `${srvShare}%` }} />
+                          ) : null}
+                        </span>
+                      </div>
+                      <span className="sls-chart-lbl">{b.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          ) : null}
+        </section>
 
         {/* Filter Tabs + Top-Right Export CSV */}
         <div className="sls-table-head-bar">

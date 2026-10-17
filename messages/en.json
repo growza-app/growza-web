@@ -3235,6 +3235,15 @@
     "exportCsvLimit": "Exporting up to {max} rows",
     "paginationNoun": "bills",
     "loadFailed": "Could not load sales for this period. Try again.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "chart": {
+      "title": "Sales trend",
+      "hourly": "By hour",
+      "daily": "By day",
+      "monthly": "By month",
+      "show": "Show chart",
+      "hide": "Hide chart",
+      "peak": "Peak"
+    }
   }
 }
