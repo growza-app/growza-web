@@ -90,6 +90,16 @@ describe('Bookings on a desk', () => {
       const m = JSON.parse(readFileSync(join(__dirname, `../../../messages/${lang}.json`), 'utf8'));
       expect(m.bookings.deskPick, lang).toMatch(/\{noun\}/);
       expect(typeof m.bookings.deskNew, lang).toBe('string');
+      expect(typeof m.bookings.viewTable, lang).toBe('string');
     }
   });
+
+  it('defaults to the Table view on a desk with direct Complete and View row actions alongside Timeline and List', () => {
+    expect(list).toMatch(/useState<'table' \| 'timeline' \| 'list'>\('timeline'\)/);
+    expect(list).toMatch(/if \(!viewInitRef\.current && mq\.matches\) \{\s*viewInitRef\.current = true;\s*setView\('table'\);\s*\}/);
+    expect(list).toMatch(/<table className="hm-v3-table bk-table">/);
+    expect(list).toMatch(/router\.push\(payVisitHref\(\{ appointmentId: b\.appointments\[0\]!\.id, startAt: b\.startAt \}, timezone, 'bookings'\)\)/);
+    expect(css).toMatch(/\.bk-table tbody tr\.is-selected td \{/);
+  });
 });
+

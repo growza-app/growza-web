@@ -16,7 +16,7 @@ import {
   type ReportServiceRow,
   type TokenBoard as TokenBoardData,
 } from '../../lib/api';
-import { clientNameLabel, formatDuration, groupBookings, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
+import { clientNameLabel, groupBookings, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
 import { liveState, minutesBetween } from '../../lib/live-state';
 import { hasLiveWork, TokenBoard } from './TokenBoard';
 import { useTokenWords } from './token-words';
@@ -46,14 +46,11 @@ import {
   IconWallet,
 } from '../icons';
 import { AutopayRenewalNotice } from '../AutopayRenewalNotice';
-import { BookingSheet } from '../BookingSheet';
 import { BookingSummary } from '../BookingSummary';
-import { payTokenHref, payVisitHref } from '../../lib/pay-token';
 import { DaySummarySheet } from './DaySummarySheet';
-import { GiveToStaffSheet } from './GiveToStaffSheet';
 import { MoneyHero } from './MoneyHero';
 import { BranchCarousel } from './BranchCarousel';
-import { AttentionList, Avatar, avatarKey, BookingRows, Card, CardError, HomeHeader, QuickTiles, rupees, Segmented, SegmentCards, StatusPill } from './parts';
+import { AttentionList, Avatar, BookingRows, Card, CardError, HomeHeader, QuickTiles, rupees, Segmented, SegmentCards } from './parts';
 import { RightNow } from './RightNow';
 import { useMinuteClock } from './useMinuteClock';
 
@@ -89,8 +86,6 @@ import { useMinuteClock } from './useMinuteClock';
  */
 
 const HOME_BOOKINGS_SHOWN = 6;
-/** The desk table scrolls, so it is not capped at a handful; this only stops a runaway day from drawing thousands of rows. */
-const MAX_TABLE_ROWS = 300;
 
 /**
  * Jira GRW-222 — the laptop Home is one screen, no scroll.
@@ -400,8 +395,6 @@ export function OwnerHome(p: OwnerHomeProps) {
   // LIVE work only — see `hasLiveWork`. A board of paid tokens needs nobody and costs the one-screen fit.
   const showBoard = p.board !== null && hasLiveWork(boardTokens);
 
-  const [actionBooking, setActionBooking] = useState<BookingGroup | null>(null);
-  const [givingEntry, setGivingEntry] = useState<QueueEntry | null>(null);
   const rowState = (g: BookingGroup) => liveState(g, now);
 
   /** providerId → who is in their chair, for the give sheet's free/busy pills. Same derivation the desk's Home makes. */
@@ -492,7 +485,6 @@ export function OwnerHome(p: OwnerHomeProps) {
   const attentionTotal = attention.reduce((sum, a) => sum + a.count, 0);
 
   // Desktop v3 Command Center state & data.
-  const [apptFilter, setApptFilter] = useState<'all' | 'upcoming' | 'in_progress' | 'completed' | 'no_show'>('all');
   const [topServices, setTopServices] = useState<ReportServiceRow[]>([]);
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
 
@@ -529,13 +521,6 @@ export function OwnerHome(p: OwnerHomeProps) {
   }, [branchContext.ready, deskHome, branch, serverSig, p.role, p.reportTabs]);
 
   const allListGroups = listGroups ?? [];
-  const waitingQueue = useMemo(
-    () =>
-      listIsTomorrow || !queue
-        ? []
-        : [...queue].sort((a, b) => (a.tokenNo ?? Number.MAX_SAFE_INTEGER) - (b.tokenNo ?? Number.MAX_SAFE_INTEGER)),
-    [queue, listIsTomorrow],
-  );
   const inServiceCount = allListGroups.filter((g) => {
     const s = rowState(g);
     return s === 'in_service' || s === 'needs_answer';
@@ -543,58 +528,8 @@ export function OwnerHome(p: OwnerHomeProps) {
   /** Bookings still to come. A waiting token is a person in the queue, not a booking, so it is not in this number. */
   const upcomingCount = allListGroups.filter((g) => rowState(g) === 'later').length;
   const doneTodayCount = allListGroups.filter((g) => rowState(g) === 'done').length;
-  const noShowCount = allListGroups.filter((g) => rowState(g) === 'no_show').length;
-  /** Rows the table lists: the bookings and the tokens waiting. The KPI tiles below count bookings only (`bookingsCount`). */
-  const totalAppointmentsCount = allListGroups.length + waitingQueue.length;
   const bookingsCount = allListGroups.length;
   const activeClientsCount = clientStats?.segments.find((s) => s.key === 'active')?.count ?? 0;
-
-  const filteredWaitingQueue = useMemo(
-    () => (apptFilter === 'all' || apptFilter === 'upcoming' ? waitingQueue : []),
-    [apptFilter, waitingQueue],
-  );
-
-  /**
-   * Every row the tab holds — the table is a fixed-height box that scrolls, so nothing is left behind a link — and, on
-   * All, which row is the one happening now, so the box can open there instead of at 9am.
-   */
-  const tableView = useMemo(() => {
-    if (apptFilter === 'all') {
-      const firstActive = allListGroups.findIndex((g) => {
-        const s = rowState(g);
-        return s === 'in_service' || s === 'needs_answer' || s === 'later';
-      });
-      return { rows: allListGroups.slice(0, MAX_TABLE_ROWS), total: allListGroups.length, nowIdx: firstActive };
-    }
-    const matching = allListGroups.filter((g) => {
-      const st = rowState(g);
-      if (apptFilter === 'upcoming') return st === 'later';
-      if (apptFilter === 'in_progress') return st === 'in_service' || st === 'needs_answer';
-      if (apptFilter === 'completed') return st === 'done';
-      if (apptFilter === 'no_show') return st === 'no_show';
-      return true;
-    });
-    return { rows: matching.slice(0, MAX_TABLE_ROWS), total: matching.length, nowIdx: -1 };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allListGroups, apptFilter, now]);
-  const filteredTableGroups = tableView.rows;
-  /** Open the box at the visit happening now (one row of context above it), whenever the tab or the day changes. */
-  const tableWrapRef = useRef<HTMLDivElement>(null);
-  const scrolledFor = useRef('');
-  const nowIdx = tableView.nowIdx;
-  // After every render, but it moves the box only when the tab, the "now" row or the row count changed: the box is
-  // drawn a moment after the rows are known (the desk layout mounts on a media query), so an effect keyed on the
-  // rows alone ran before there was a box to scroll.
-  useEffect(() => {
-    const wrap = tableWrapRef.current;
-    if (!wrap) return;
-    const key = `${apptFilter}|${nowIdx}|${filteredTableGroups.length}`;
-    if (scrolledFor.current === key) return;
-    scrolledFor.current = key;
-    const row = nowIdx > 0 ? wrap.querySelector<HTMLElement>('tr[data-now="true"]') : null;
-    const head = wrap.querySelector<HTMLElement>('thead')?.offsetHeight ?? 0;
-    wrap.scrollTop = row ? Math.max(row.offsetTop - head - row.offsetHeight, 0) : 0;
-  });
 
   /** The period's own product lines, from the API. Null from an older API: the card then shows a dash, not a guess. */
   const productTake = data?.money.products ?? null;
@@ -927,333 +862,8 @@ export function OwnerHome(p: OwnerHomeProps) {
             </a>
           </div>
 
-          {/* ROW 2 — Today's Appointments Table (Left) + Staff Status & Quick Actions (Right) */}
+          {/* ROW 2 — Revenue Trend + Top Services + Quick Actions */}
           <div className="hm-v3-mid">
-            <section className="hm-v3-card hm-v3-appts-card">
-              <div className="hm-v3-card-head">
-                <h2>
-                  {t.todaysAppointments} <span className="hm-v3-count">({totalAppointmentsCount})</span>
-                </h2>
-              </div>
-
-              <div className="hm-v3-filter-bar">
-                <div className="hm-v3-tabs" role="tablist" aria-label={t.todaysAppointments}>
-                  {(
-                    [
-                      { key: 'all', label: t.allFilterLabel, count: totalAppointmentsCount },
-                      { key: 'upcoming', label: t.upcomingLabel, count: upcomingCount + waitingQueue.length },
-                      { key: 'in_progress', label: t.inProgressLabel, count: inServiceCount },
-                      { key: 'completed', label: t.completedLabel, count: doneTodayCount },
-                      { key: 'no_show', label: t.noShowLabel, count: noShowCount },
-                    ] as const
-                  ).map((tab) => (
-                    <button
-                      key={tab.key}
-                      type="button"
-                      role="tab"
-                      aria-selected={apptFilter === tab.key}
-                      className={`hm-v3-tab ${apptFilter === tab.key ? 'is-on' : ''}`}
-                      onClick={() => setApptFilter(tab.key)}
-                    >
-                      <span>{tab.label}</span>
-                      <b className="hm-v3-tab-count">{tab.count}</b>
-                    </button>
-                  ))}
-                </div>
-                <a className="hm-v3-btn-outline" href="/appointments">
-                  <IconCalendar />
-                  <span>{t.viewCalendar}</span>
-                </a>
-              </div>
-
-              <div className="hm-v3-table-wrap" ref={tableWrapRef}>
-                {listGroups === null ? (
-                  <CardError t={t} />
-                ) : filteredTableGroups.length === 0 && filteredWaitingQueue.length === 0 ? (
-                  <p className="hm-empty">{listIsTomorrow ? t.nothingTomorrow : t.nothingToday}</p>
-                ) : (
-                  <table className="hm-v3-table">
-                    <thead>
-                      <tr>
-                        <th>{t.colTime}</th>
-                        <th>{t.colClient}</th>
-                        <th>{t.colService}</th>
-                        <th>{t.colStaff}</th>
-                        <th>{t.colStatus}</th>
-                        <th>{t.colActions}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredWaitingQueue.map((q) => {
-                        const sName = q.serviceNames.length > 0 ? summarizeServices(q.serviceNames, p.lang) : t.whatHaving;
-                        return (
-                          <tr key={`q-${q.id}`}>
-                            <td className="hm-v3-td-time">
-                              <span className="hm-v3-tl-dot is-amber" />
-                              <strong>{formatTime(q.addedAt, p.timezone)}</strong>
-                            </td>
-                            <td className="hm-v3-td-client">
-                              <div className="hm-v3-person">
-                                <Avatar name={q.customerName} id={q.customerId ?? q.id} size={36} />
-                                <div className="hm-v3-person-meta">
-                                  <strong>
-                                    {q.customerName}
-                                    {q.tokenNo !== null ? ` · #${q.tokenNo}` : ''}
-                                  </strong>
-                                  <span>{q.customerPhone || '—'}</span>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="hm-v3-td-service">
-                              <strong>{sName}</strong>
-                              <span>{t.waitingLabel}</span>
-                            </td>
-                            <td className="hm-v3-td-staff">
-                              <div className="hm-v3-staff-cell">
-                                <span>—</span>
-                              </div>
-                            </td>
-                            <td className="hm-v3-td-status">
-                              <span className="hm-pill hm-pill-amber">
-                                <i />
-                                {t.waitingLabel}
-                              </span>
-                            </td>
-                            <td className="hm-v3-td-act">
-                              <div className="hm-v3-act-wrap">
-                                <button
-                                  type="button"
-                                  className="hm-v3-row-btn is-start"
-                                  onClick={() => setGivingEntry(q)}
-                                >
-                                  {t.startBtn}
-                                </button>
-                                <button
-                                  type="button"
-                                  className="hm-v3-row-dots"
-                                  onClick={() => setGivingEntry(q)}
-                                  aria-label={t.viewBtn}
-                                >
-                                  ⋮
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                      {filteredTableGroups.map((g, rowIdx) => {
-                        const st = rowState(g);
-                        const dotTone =
-                          st === 'done'
-                            ? 'green'
-                            : st === 'in_service' || st === 'needs_answer'
-                              ? 'amber'
-                              : st === 'no_show' || st === 'cancelled'
-                                ? 'rose'
-                                : rowIdx % 2 === 0
-                                  ? 'blue'
-                                  : 'green';
-                        const pillTone =
-                          st === 'done'
-                            ? 'green'
-                            : st === 'in_service' || st === 'needs_answer'
-                              ? 'amber'
-                              : st === 'no_show' || st === 'cancelled'
-                                ? 'rose'
-                                : 'blue';
-                        const pillLabel =
-                          st === 'done'
-                            ? t.completedLabel
-                            : st === 'in_service' || st === 'needs_answer'
-                              ? t.inProgressLabel
-                              : st === 'cancelled'
-                                ? t.cancelledLabel
-                                : st === 'no_show'
-                                  ? t.noShowLabel
-                                  : t.upcomingLabel;
-                        const cName = clientNameLabel(g) ?? t.walkInAction;
-                        const sName = summarizeServices(g.serviceNames, p.lang);
-                        const pName = g.providerNames[0] ?? '—';
-                        const pId = g.appointments[0]?.providerId ?? pName;
-                        const staffProv = p.providers.find((pr) => pr.id === g.appointments[0]?.providerId);
-                        return (
-                          <tr key={g.key} data-now={rowIdx === nowIdx ? 'true' : undefined}>
-                            <td className="hm-v3-td-time">
-                              <span className={`hm-v3-tl-dot is-${dotTone}`} />
-                              <strong>{formatTime(g.startAt, p.timezone)}</strong>
-                            </td>
-                            <td className="hm-v3-td-client">
-                              <div className="hm-v3-person">
-                                <Avatar name={cName} id={avatarKey(g)} size={36} />
-                                <div className="hm-v3-person-meta">
-                                  <strong>{cName}</strong>
-                                  <span>{g.customerPhone || '—'}</span>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="hm-v3-td-service">
-                              <strong>{sName}</strong>
-                              <span>{formatDuration(g.totalMin)}</span>
-                            </td>
-                            <td className="hm-v3-td-staff">
-                              <div className="hm-v3-staff-cell">
-                                <Avatar name={pName} id={pId} size={30} photoUrl={staffProv?.photoUrl} />
-                                <span>{pName}</span>
-                              </div>
-                            </td>
-                            <td className="hm-v3-td-status">
-                              <span className={`hm-pill hm-pill-${pillTone}`}>
-                                <i />
-                                {pillLabel}
-                              </span>
-                            </td>
-                            <td className="hm-v3-td-act">
-                              <div className="hm-v3-act-wrap">
-                                <button
-                                  type="button"
-                                  className={st === 'in_service' || st === 'needs_answer' ? 'hm-v3-row-btn is-start' : 'hm-v3-row-btn'}
-                                  onClick={() => {
-                                    if (st === 'in_service' || st === 'needs_answer') {
-                                      const appt = g.appointments[0];
-                                      if (appt) {
-                                        router.push(payVisitHref({ appointmentId: appt.id, startAt: g.startAt }, p.timezone, 'bookings'));
-                                      }
-                                    } else if (st === 'done') {
-                                      setOpenBooking(g);
-                                    } else {
-                                      setActionBooking(g);
-                                    }
-                                  }}
-                                >
-                                  {st === 'in_service' || st === 'needs_answer' ? t.completeBtn : t.viewBtn}
-                                </button>
-                                <button
-                                  type="button"
-                                  className="hm-v3-row-dots"
-                                  onClick={() => (st === 'done' ? setOpenBooking(g) : setActionBooking(g))}
-                                  aria-label={t.viewBtn}
-                                >
-                                  ⋮
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-
-              <div className="hm-v3-card-foot">
-                <a className="hm-v3-foot-link" href="/appointments">
-                  {t.viewAllAppointments} →
-                </a>
-              </div>
-            </section>
-
-            <div className="hm-v3-right-col">
-              {/* Quick actions card — placed first in the right column so primary actions sit at eye level */}
-              <section className="hm-v3-card hm-v3-quick-card">
-                <div className="hm-v3-card-head">
-                  <h2>{t.quickActionsTitle}</h2>
-                </div>
-                <div className="hm-v3-qgrid">
-                  {mayRecordPayment ? (
-                    <a className="hm-v3-qbtn is-primary" href="/appointments/new?purpose=payment">
-                      <span className="hm-v3-qicon">
-                        <IconReceipt />
-                      </span>
-                      <strong>{t.recordPayment}</strong>
-                    </a>
-                  ) : null}
-                  {mayBook ? (
-                    <a className="hm-v3-qbtn is-green" href="/appointments/new">
-                      <span className="hm-v3-qicon">
-                        <IconCalendarPlus />
-                      </span>
-                      <strong>{t.nav.newBooking}</strong>
-                    </a>
-                  ) : null}
-                  {mayRecordPayment ? (
-                    <a className="hm-v3-qbtn is-amber" href="/products/sell">
-                      <span className="hm-v3-qicon">
-                        <IconProducts />
-                      </span>
-                      <strong>{t.sellProductAction}</strong>
-                    </a>
-                  ) : null}
-                  {mayBook ? (
-                    <a className="hm-v3-qbtn is-mint" href="/appointments/new?mode=now">
-                      <span className="hm-v3-qicon">
-                        <IconStaff />
-                      </span>
-                      <strong>{t.walkInAction}</strong>
-                    </a>
-                  ) : null}
-                  <a className="hm-v3-qbtn is-purple" href="/customers?add=1">
-                    <span className="hm-v3-qicon">
-                      <IconStaff />
-                    </span>
-                    <strong>{t.addClientAction}</strong>
-                  </a>
-                  <a className="hm-v3-qbtn is-blue" href="/packages">
-                    <span className="hm-v3-qicon">
-                      <IconPackages />
-                    </span>
-                    <strong>{t.nav.packages}</strong>
-                  </a>
-                </div>
-              </section>
-
-              {/* Staff status card */}
-              <section className="hm-v3-card hm-v3-staff-card">
-                <div className="hm-v3-card-head">
-                  <h2>
-                    {t.staffStatusTitle} <span className="hm-v3-count">({branchProviders.length})</span>
-                  </h2>
-                  {canSee('/providers', p.role, p.reportTabs) ? (
-                    <a className="hm-v3-head-link" href="/providers">
-                      {t.viewAll} →
-                    </a>
-                  ) : null}
-                </div>
-                {branchProviders.length === 0 ? (
-                  <p className="hm-empty">{t.teamEmpty}</p>
-                ) : (
-                  <div className="hm-v3-staff-strip">
-                    {branchProviders.map((prov) => {
-                      const inChair = busy.get(prov.id);
-                      const isAbsent = absentSet.has(prov.id);
-                      const statusKey = inChair ? 'busy' : isAbsent ? 'absent' : 'available';
-                      const statusLabel = inChair ? t.busyLabel : isAbsent ? t.absentLabel : t.availableNow;
-                      const inAtISO = p.staffInAt?.[prov.id] ?? null;
-                      const inTimeLabel = inAtISO ? formatTime(inAtISO, p.timezone) : null;
-                      return (
-                        <a key={prov.id} className="hm-v3-staff-item" href="/providers">
-                          <span className={`hm-v3-staff-ring is-${statusKey}`}>
-                            <Avatar name={prov.displayName} id={prov.id} size={36} photoUrl={prov.photoUrl} />
-                          </span>
-                          <strong className="hm-v3-staff-name">{prov.displayName.split(' ')[0]}</strong>
-                          <span className="hm-v3-staff-role">{t.providerRoleWord}</span>
-                          <span className={`hm-v3-staff-pill is-${statusKey}`}>
-                            <i />
-                            {statusLabel}
-                          </span>
-                          <span className={`hm-v3-staff-in ${inTimeLabel ? 'is-in' : ''}`}>
-                            {inTimeLabel ? t.staffInTime(inTimeLabel) : t.staffNotInYet}
-                          </span>
-                        </a>
-                      );
-                    })}
-                  </div>
-                )}
-              </section>
-            </div>
-          </div>
-
-          {/* ROW 3 — Revenue Trend + Top Services + Recent Activity */}
-          <div className="hm-v3-bot">
             {/* 1. Revenue trend */}
             <section className="hm-v3-card hm-v3-trend-card">
               <div className="hm-v3-card-head">
@@ -1339,6 +949,121 @@ export function OwnerHome(p: OwnerHomeProps) {
                   })}
                 </ol>
               )}
+            </section>
+
+            {/* 3. Quick actions */}
+            <section className="hm-v3-card hm-v3-quick-card">
+              <div className="hm-v3-card-head">
+                <h2>{t.quickActionsTitle}</h2>
+              </div>
+              <div className="hm-v3-qgrid">
+                {mayRecordPayment ? (
+                  <a className="hm-v3-qbtn is-primary" href="/appointments/new?purpose=payment">
+                    <span className="hm-v3-qicon">
+                      <IconReceipt />
+                    </span>
+                    <strong>{t.recordPayment}</strong>
+                  </a>
+                ) : null}
+                {mayBook ? (
+                  <a className="hm-v3-qbtn is-green" href="/appointments/new">
+                    <span className="hm-v3-qicon">
+                      <IconCalendarPlus />
+                    </span>
+                    <strong>{t.nav.newBooking}</strong>
+                  </a>
+                ) : null}
+                {mayRecordPayment ? (
+                  <a className="hm-v3-qbtn is-amber" href="/products/sell">
+                    <span className="hm-v3-qicon">
+                      <IconProducts />
+                    </span>
+                    <strong>{t.sellProductAction}</strong>
+                  </a>
+                ) : null}
+                {mayBook ? (
+                  <a className="hm-v3-qbtn is-mint" href="/appointments/new?mode=now">
+                    <span className="hm-v3-qicon">
+                      <IconStaff />
+                    </span>
+                    <strong>{t.walkInAction}</strong>
+                  </a>
+                ) : null}
+                <a className="hm-v3-qbtn is-purple" href="/customers?add=1">
+                  <span className="hm-v3-qicon">
+                    <IconStaff />
+                  </span>
+                  <strong>{t.addClientAction}</strong>
+                </a>
+                <a className="hm-v3-qbtn is-blue" href="/packages">
+                  <span className="hm-v3-qicon">
+                    <IconPackages />
+                  </span>
+                  <strong>{t.nav.packages}</strong>
+                </a>
+              </div>
+            </section>
+          </div>
+
+          {/* ROW 3 — Staff Status + Needs Your Attention + Recent Activity */}
+          <div className="hm-v3-bot">
+            {/* 1. Staff status */}
+            <section className="hm-v3-card hm-v3-staff-card">
+              <div className="hm-v3-card-head">
+                <h2>
+                  {t.staffStatusTitle} <span className="hm-v3-count">({branchProviders.length})</span>
+                </h2>
+                {canSee('/providers', p.role, p.reportTabs) ? (
+                  <a className="hm-v3-head-link" href="/providers">
+                    {t.viewAll} →
+                  </a>
+                ) : null}
+              </div>
+              {branchProviders.length === 0 ? (
+                <p className="hm-empty">{t.teamEmpty}</p>
+              ) : (
+                <div className="hm-v3-staff-strip">
+                  {branchProviders.map((prov) => {
+                    const inChair = busy.get(prov.id);
+                    const isAbsent = absentSet.has(prov.id);
+                    const statusKey = inChair ? 'busy' : isAbsent ? 'absent' : 'available';
+                    const statusLabel = inChair ? t.busyLabel : isAbsent ? t.absentLabel : t.availableNow;
+                    const inAtISO = p.staffInAt?.[prov.id] ?? null;
+                    const inTimeLabel = inAtISO ? formatTime(inAtISO, p.timezone) : null;
+                    return (
+                      <a key={prov.id} className="hm-v3-staff-item" href="/providers">
+                        <span className={`hm-v3-staff-ring is-${statusKey}`}>
+                          <Avatar name={prov.displayName} id={prov.id} size={36} photoUrl={prov.photoUrl} />
+                        </span>
+                        <strong className="hm-v3-staff-name">{prov.displayName.split(' ')[0]}</strong>
+                        <span className="hm-v3-staff-role">{t.providerRoleWord}</span>
+                        <span className={`hm-v3-staff-pill is-${statusKey}`}>
+                          <i />
+                          {statusLabel}
+                        </span>
+                        <span className={`hm-v3-staff-in ${inTimeLabel ? 'is-in' : ''}`}>
+                          {inTimeLabel ? t.staffInTime(inTimeLabel) : t.staffNotInYet}
+                        </span>
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            {/* 2. Needs your attention */}
+            <section className="hm-v3-card hm-v3-attention-card">
+              <div className="hm-v3-card-head">
+                <h2>{t.needsYourAttention}</h2>
+                {canSee('/reports', p.role, p.reportTabs) ? (
+                  <a className="hm-v3-head-link" href="/reports">
+                    {t.whatToDoLink} →
+                  </a>
+                ) : attentionTotal === 0 && !failed ? (
+                  <span className="hm-pill hm-pill-green">{t.allClear}</span>
+                ) : null}
+              </div>
+              {failed && !dataIsForBranch ? <CardError t={t} /> : <AttentionList items={attention} />}
             </section>
 
             {/* 3. Recent activity */}
@@ -1490,30 +1215,6 @@ export function OwnerHome(p: OwnerHomeProps) {
       </div>
 
       {openBooking ? <BookingSummary booking={openBooking} timezone={p.timezone} onClose={() => setOpenBooking(null)} /> : null}
-      {actionBooking ? (
-        <BookingSheet
-          appointment={actionBooking.appointments.find((a) => a.status === actionBooking.status) ?? actionBooking.appointments[0]!}
-          timezone={p.timezone}
-          onClose={() => setActionBooking(null)}
-          comboServiceNames={actionBooking.isCombo ? actionBooking.serviceNames : undefined}
-          comboTotalMin={actionBooking.totalMin}
-          comboLegs={actionBooking.isCombo ? actionBooking.appointments : undefined}
-        />
-      ) : null}
-      {givingEntry ? (
-        <GiveToStaffSheet
-          t={t}
-          entry={givingEntry}
-          providers={p.providers}
-          busy={busy}
-          onClose={() => setGivingEntry(null)}
-          onRecordPayment={() => {
-            const entry = givingEntry;
-            setGivingEntry(null);
-            router.push(payTokenHref(entry));
-          }}
-        />
-      ) : null}
 
       {summaryOpen ? (
         <DaySummarySheet
