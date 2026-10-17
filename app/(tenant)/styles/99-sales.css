@@ -1113,14 +1113,23 @@
 
 .sls-table-search {
   min-height: 38px;
-  width: 240px;
+  width: 340px;
   background: var(--surface);
+  border: 1px solid #c9d0cb;
+  border-radius: 10px;
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(9, 20, 15, 0.04);
+}
+
+.sls-table-search:hover {
+  border-color: var(--accent);
 }
 
 .sls-table-search svg {
-  width: 0.875rem;
-  height: 0.875rem;
+  width: 1rem;
+  height: 1rem;
   flex-shrink: 0;
+  color: var(--text);
 }
 
 .sls-export-btn {
@@ -1617,7 +1626,7 @@
 
   .sls-pay-line {
     gap: 4px;
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
   }
 }
 

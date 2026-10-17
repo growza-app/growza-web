@@ -3212,7 +3212,7 @@
       "vsPrevDays": "{pct}% vs. previous {n, plural, one {day} other {# days}}"
     },
     "cols": {
-      "when": "When",
+      "when": "Date",
       "client": "Client",
       "phone": "Phone",
       "services": "Services",
