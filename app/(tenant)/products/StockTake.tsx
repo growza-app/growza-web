@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError, formatMoney } from '../lib/api';
 import type { Product, ProductCategory } from '../lib/api-types';
 import { PageHeader } from '../components/PageHeader';
-import { IconSearch } from '../components/icons';
+import { IconCheck, IconSearch } from '../components/icons';
 import { productPhotoUrl } from '../lib/service-photos';
 import { matchItems } from '../lib/service-match';
 import { productMatchable } from '../lib/product-match';
@@ -59,6 +59,7 @@ export function StockTake({
   const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState<string>(initialCategory);
   const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [desk, setDesk] = useState<boolean | null>(null);
 
@@ -128,11 +129,13 @@ export function StockTake({
     return n;
   }, [shelf, parsedByProduct]);
 
+  const showSaved = saved && diffCount === 0 && !hasInvalid;
   const canSave = shelf.length > 0 && !hasInvalid && !busy;
 
   const setRowCount = (productId: string, raw: string) => {
     touchedRef.current.add(productId);
     setCounts((prev) => ({ ...prev, [productId]: raw }));
+    if (saved) setSaved(false);
     if (error) setError(null);
   };
 
@@ -149,6 +152,12 @@ export function StockTake({
         counts: payload,
         note: note.trim() || undefined,
       });
+      const active = res.products.filter((p) => p.active).sort((a, b) => a.name.localeCompare(b.name));
+      touchedRef.current.clear();
+      setShelf(active);
+      setCounts(Object.fromEntries(active.map((p) => [p.id, String(p.stock)])));
+      setNote('');
+      setSaved(true);
       onSaved(res.products, res.adjusted);
     } catch (err) {
       setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
@@ -164,10 +173,24 @@ export function StockTake({
       actions={
         <>
           <button type="button" className="btn btn-ghost" onClick={onCancel} disabled={busy}>
-            {t('form.cancel')}
+            {showSaved ? t('form.done') : t('form.cancel')}
           </button>
-          <button type="button" className="btn" onClick={() => void save()} disabled={!canSave}>
-            {busy ? t('form.saving') : t('stockTake.save')}
+          <button
+            type="button"
+            className={`btn prd-st-save ${showSaved ? 'is-saved' : ''}`}
+            aria-live="polite"
+            onClick={() => void save()}
+            disabled={!canSave}
+          >
+            {busy ? (
+              t('form.saving')
+            ) : showSaved ? (
+              <>
+                <IconCheck /> {t('form.saved')}
+              </>
+            ) : (
+              t('stockTake.save')
+            )}
           </button>
         </>
       }
@@ -216,7 +239,10 @@ export function StockTake({
         maxLength={200}
         placeholder={t('stockTake.notePlaceholder')}
         value={note}
-        onChange={(e) => setNote(e.target.value)}
+        onChange={(e) => {
+          setNote(e.target.value);
+          if (saved) setSaved(false);
+        }}
       />
       <span className={`prd-st-summary ${diffCount > 0 ? 'prd-st-summary-diff' : ''}`} aria-live="polite">
         {diffCount > 0 ? t('stockTake.changedCount', { n: diffCount }) : t('stockTake.allMatch')}
