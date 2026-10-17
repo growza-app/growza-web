@@ -256,6 +256,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/settings/branch-reset',
     'POST /api/v1/settings/apply-to-all',
     'PATCH /api/v1/settings/profile',
+    // Jira GRW-582 — Settings › GST and invoices. Owner-only like the rest of Settings, which is the gate.
+    'PATCH /api/v1/settings/gst',
     'POST /api/v1/settings/branches/:id/close',
     'POST /api/v1/settings/branches/:id/make-main',
     'PATCH /api/v1/settings/branches/:id',
@@ -278,6 +280,14 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   '/availability': ['POST /api/v1/holds', 'POST /api/v1/appointments'],
   // The Clients screen's "Add client" (the desk's Home links to it with ?add=1).
   '/customers': ['POST /api/v1/customers'],
+  /*
+   * Jira GRW-582 — the customer's receipt or GST invoice, offered on the Done screen at the end of taking a
+   * payment. Classified by its SCREEN rather than as a control of its own: whoever may settle the bill may hand
+   * over the document for it, which is the same gate `visit.recordPayment` already applies to the screen it sits
+   * on. (It belongs in that action in shared too; the pin here is what this repo can check today, since the
+   * installed @growza-app/shared is behind the API's source.)
+   */
+  '/appointments/new': ['POST /api/v1/bills/:visitKey/document', 'POST /api/v1/documents/:id/share'],
 };
 
 /** Every signed-in person's own: the session says whose, and no role can widen it. */
@@ -353,6 +363,12 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
    * its own address, in its page or its segment's layout.
    */
   const OWN_GATE: Record<string, RegExp> = {
+    /*
+     * Jira GRW-582 — a customer's document is the same thing the Sales register is: a record of what a bill took.
+     * It is gated as `/sales` rather than inventing a second answer to the same question, so a business that has
+     * opened the register to its receptionist has opened the documents behind it too.
+     */
+    '/documents': /await guardScreen\('\/sales'\);/,
     // The header's control and this page ask the same action.
     '/search': /if \(!mayUse\(role, 'search'\)\) redirect\(/,
     // Its own tab gate (GRW-197): a tab they cannot open lands on one they can, none says so plainly.

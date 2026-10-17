@@ -680,6 +680,53 @@ export const api = {
   removePaymentQr: () => del<PaymentQrState>('/api/v1/settings/payment-qr'),
   uploadBranchPaymentQr: (id: string, file: File) => uploadFile<PaymentQrState>(`/api/v1/settings/branches/${id}/payment-qr`, 'qr', file),
   removeBranchPaymentQr: (id: string) => del<PaymentQrState>(`/api/v1/settings/branches/${id}/payment-qr`),
+  /** Jira GRW-582 — the summary the document screen's chrome needs; the document itself comes from /html. */
+  document: (id: string) =>
+    get<{
+      id: string;
+      number: string;
+      docType: 'tax_invoice' | 'bill_of_supply' | 'receipt';
+      status: 'issued' | 'cancelled';
+      grandTotalMinor: number;
+      businessName: string;
+      customerName: string;
+      customerPhone: string | null;
+      /** False when the server has no PDF renderer, so the screen does not offer a Download that cannot work. */
+      pdfAvailable?: boolean;
+    }>(`/api/v1/documents/${id}`),
+
+  /** Jira GRW-582 — what the document for this bill would be. Asked before the button is offered, never after. */
+  documentPreview: (visitKey: string) =>
+    get<{ docType: 'tax_invoice' | 'bill_of_supply' | 'receipt'; showsTax: boolean; issued: { id: string; number: string } | null }>(
+      `/api/v1/bills/${visitKey}/document/preview`,
+    ),
+  /** Idempotent per bill: a second call answers with the document already issued. */
+  issueDocument: (visitKey: string) =>
+    post<{ id: string; number: string; docType: string }>(`/api/v1/bills/${visitKey}/document`, {}),
+
+  /**
+   * Jira GRW-582 — a link the customer can open with no account. The token comes back once and only its hash is kept,
+   * so asking again makes a new link; the ones already sent keep working until they run out on their own.
+   */
+  shareDocument: (id: string) => post<{ token: string; expiresAt: string }>(`/api/v1/documents/${id}/share`, {}),
+
+  /** Jira GRW-582 — Settings › GST. One Save; the API decides what belongs to the business and what to the branch. */
+  updateGstSettings: (
+    body: {
+      status?: 'regular' | 'composition' | 'unregistered';
+      gstin?: string;
+      legalName?: string;
+      registeredAddress?: string;
+      invoicePrefix?: string;
+      invoiceFooter?: string;
+      pricesIncludeTax?: boolean;
+      branchState?: string;
+      branchStateCode?: string;
+      branchGstin?: string;
+    },
+    location?: string | null,
+  ) => patch<SettingsSummary>(`/api/v1/settings/gst${atBranch(location)}`, body),
+
   updateBookingRules: (body: {
     slotGranularityMin?: number;
     slotPolicy?: 'fixed_grid' | 'gap_packed';

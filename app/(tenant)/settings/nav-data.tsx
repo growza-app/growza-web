@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 import {
   IconReports,
+  IconRupee,
   IconBell,
   IconCalendarPlus,
   IconClock,
@@ -31,6 +32,7 @@ export type SettingsRowKey =
   | 'appearance'
   | 'privacy'
   | 'reportAccess'
+  | 'gst'
   | 'billing'
   | 'account'
   | 'logOut';
@@ -115,6 +117,17 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       { href: '/settings/notifications', key: 'notifications', icon: IconBell, whatsappOnly: true },
       // Jira GRW-563 — where this branch is, for a stylist's "I'm in" from her phone.
       { href: '/settings/check-in', key: 'checkIn', icon: IconMapPin },
+      /*
+       * Jira GRW-582 — the details that turn a receipt into a tax invoice.
+       *
+       * In the BRANCH group, not the business one, because the state this branch supplies from is on it, and that
+       * state is what decides whether a bill shows CGST and SGST or IGST. The registration above it is the whole
+       * business's and says so. Settings has no picker of its own: the branch is the header's, as everywhere else.
+       *
+       * Asked here and not at enrolment (owner, 2026-10-17): most businesses do not have the number to hand on
+       * their first day, and a guess typed to get past a signup form would be printed on real documents.
+       */
+      { href: '/settings/gst', key: 'gst', icon: IconRupee },
     ],
   },
   {

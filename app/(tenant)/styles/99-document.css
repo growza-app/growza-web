@@ -1,0 +1,79 @@
+/*
+ * Jira GRW-582 · ADR-17 — the screen around a customer's document.
+ *
+ * Deliberately almost nothing: the document is an A4 page drawn by the API inside the frame, and the only job here
+ * is to give it room and put three buttons above it. Styling the document itself from this sheet would be the
+ * second rendering the ADR exists to prevent.
+ */
+.doc-screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.doc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.doc-actions .btn {
+  min-height: 2.75rem;
+}
+
+/* What the document is, in four facts, so the owner knows what they are about to send before they send it. */
+.doc-card {
+  margin: 0;
+}
+
+.doc-kind {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.doc-number {
+  margin: 2px 0 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.doc-void {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.doc-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-5);
+  margin: var(--sp-4) 0 0;
+}
+
+.doc-facts dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.doc-facts dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+}
+
+.doc-amount {
+  font-size: 1.125rem;
+}
+
+/* The Done screen's two document buttons — see it, send it — one under the other, as the rest of that screen stacks. */
+.pf-doc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}

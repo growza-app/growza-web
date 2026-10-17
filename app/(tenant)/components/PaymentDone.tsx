@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { DocumentAction } from './DocumentAction';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
@@ -179,6 +180,12 @@ export function PaymentDone({
               {t('mistake')}
             </Link>
           )}
+          {/*
+            Jira GRW-582 — the customer's receipt or GST invoice, beside the way back rather than in front of
+            Next customer: the counter's own button stays the big one. It draws nothing at all until the server
+            has said what this bill's document would be, so a business that has never touched GST sees no change.
+          */}
+          <DocumentAction visitKey={appointmentId} />
         </div>
         <button type="button" className="pf-sound" aria-pressed={sound} onClick={toggleSound}>
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
