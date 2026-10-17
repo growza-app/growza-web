@@ -168,9 +168,13 @@ export function ProductsList({ products, categories: initialCategories, branchId
   }, []);
 
   const live = useMemo(() => rows.filter((p) => p.active), [rows]);
-  const lowCount = useMemo(() => live.filter((p) => stockTone(p) !== 'ok').length, [live]);
-  const worth = useMemo(() => shelfWorthMinor(rows), [rows]);
+  const liveCategories = useMemo(
+    () => categories.map((c) => ({ ...c, count: live.filter((p) => p.categoryId === c.id).length })),
+    [categories, live],
+  );
   const inCategory = useMemo(() => filterShelf(rows, 'all', '', selectedCategories), [rows, selectedCategories]);
+  const lowCount = useMemo(() => inCategory.filter((p) => stockTone(p) !== 'ok').length, [inCategory]);
+  const worth = useMemo(() => shelfWorthMinor(inCategory), [inCategory]);
   const shown = useMemo(
     () => sortShelf(filterShelf(rows, filter, search, selectedCategories), sort, sortDir),
     [rows, filter, search, selectedCategories, sort, sortDir],
@@ -309,7 +313,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
   const strip = (
     <div className="prd-strip" role="list">
       <div className="prd-stat" role="listitem">
-        <span className="prd-stat-n">{live.length}</span>
+        <span className="prd-stat-n">{inCategory.length}</span>
         <span className="prd-stat-l">{t('strip.products')}</span>
       </div>
       <div className="prd-stat" role="listitem">
@@ -318,7 +322,12 @@ export function ProductsList({ products, categories: initialCategories, branchId
       </div>
       {/* The listitem is the wrapper: a role on the button itself would strip its button role for a screen reader. */}
       <div role="listitem" className="prd-stat-cell">
-        <button type="button" className={`prd-stat prd-stat-tap ${lowCount > 0 ? 'prd-stat-low' : ''}`} onClick={() => pick(() => setFilter(lowCount > 0 ? 'low' : 'all'))}>
+        <button
+          type="button"
+          className={`prd-stat prd-stat-tap ${lowCount > 0 ? 'prd-stat-low' : ''} ${filter === 'low' ? 'is-on' : ''}`}
+          aria-pressed={filter === 'low'}
+          onClick={() => pick(() => setFilter((cur) => (cur === 'low' || lowCount === 0 ? 'all' : 'low')))}
+        >
           <span className="prd-stat-n">{lowCount}</span>
           <span className="prd-stat-l">{t('strip.low')}</span>
         </button>
@@ -332,10 +341,10 @@ export function ProductsList({ products, categories: initialCategories, branchId
     </label>
   );
   const categoriesDropdown =
-    categories.length > 0 || noneCount > 0 || writable ? (
+    liveCategories.length > 0 || noneCount > 0 || writable ? (
       <ProductCategoriesDropdown
         selected={selectedCategories}
-        categories={categories}
+        categories={liveCategories}
         noneCount={noneCount}
         onToggle={toggleCategory}
         onClear={clearCategories}
@@ -493,7 +502,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
         key={editing === 'new' ? 'new' : editing.id}
         product={editing === 'new' ? null : editing}
         branchId={branchId}
-        categories={categories}
+        categories={liveCategories}
         onSaved={saved}
         onDelete={(p) => setDeleting(p)}
         onClose={() => setEditing(null)}
@@ -542,7 +551,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
         key={branchId}
         branchId={branchId}
         initialProducts={rows}
-        categories={categories}
+        categories={liveCategories}
         initialCategories={selectedCategories}
         initialSearch={search}
         onSaved={stockTakeSaved}

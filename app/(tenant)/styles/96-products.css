@@ -158,6 +158,16 @@
   color: var(--danger);
 }
 
+.prd-stat-tap.is-on {
+  border-color: var(--accent-deep);
+  box-shadow: inset 0 0 0 1px var(--accent-deep);
+}
+
+.prd-stat-low.prd-stat-tap.is-on {
+  border-color: var(--danger);
+  box-shadow: inset 0 0 0 1px var(--danger);
+}
+
 .prd-tools {
   display: flex;
   flex-direction: column;
@@ -1011,6 +1021,10 @@
   color: var(--accent-deep);
 }
 
+.prd-st-summary-invalid {
+  color: var(--danger);
+}
+
 /* ---------- Multi-select Categories dropdown ---------- */
 .prd-selects .prd-cat-dd .sls-dd-btn {
   width: 100%;
@@ -1153,6 +1167,10 @@
   align-items: center;
   justify-content: flex-end;
   gap: var(--sp-2);
+}
+
+.prd-st-save.is-saved {
+  opacity: 1;
 }
 
 .prd-st-save svg {

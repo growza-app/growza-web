@@ -57,6 +57,7 @@ export function StockTake({
   const touchedRef = useRef<Set<string>>(new Set());
   const [search, setSearch] = useState(initialSearch);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => [...initialCategories]);
+  const [lowOnly, setLowOnly] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,19 +93,6 @@ export function StockTake({
     };
   }, [branchId]);
 
-  const noneCount = useMemo(() => shelf.filter((p) => p.categoryId === null).length, [shelf]);
-  const lowCount = useMemo(() => shelf.filter((p) => stockTone(p) !== 'ok').length, [shelf]);
-  const worth = useMemo(() => shelfWorthMinor(shelf), [shelf]);
-  const toggleCategory = (id: string) =>
-    setSelectedCategories((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-  const clearCategories = () => setSelectedCategories([]);
-
-  const shown = useMemo(() => {
-    const pool = shelf.filter((p) => matchesCategories(p, selectedCategories));
-    const q = search.trim();
-    return q.length >= 2 ? matchItems(pool.map(productMatchable), q) : pool;
-  }, [shelf, selectedCategories, search]);
-
   const parsedByProduct = useMemo(() => {
     const map = new Map<string, number | null>();
     for (const p of shelf) {
@@ -112,6 +100,33 @@ export function StockTake({
     }
     return map;
   }, [shelf, counts]);
+
+  const liveCategories = useMemo(
+    () => categories.map((c) => ({ ...c, count: shelf.filter((p) => p.categoryId === c.id).length })),
+    [categories, shelf],
+  );
+  const noneCount = useMemo(() => shelf.filter((p) => p.categoryId === null).length, [shelf]);
+  const inCategory = useMemo(() => shelf.filter((p) => matchesCategories(p, selectedCategories)), [shelf, selectedCategories]);
+  const countedInCategory = useMemo(
+    () => inCategory.map((p) => ({ ...p, stock: parsedByProduct.get(p.id) ?? p.stock })),
+    [inCategory, parsedByProduct],
+  );
+  const lowCount = useMemo(() => countedInCategory.filter((p) => stockTone(p) !== 'ok').length, [countedInCategory]);
+  const worth = useMemo(() => shelfWorthMinor(countedInCategory), [countedInCategory]);
+  const toggleCategory = (id: string) =>
+    setSelectedCategories((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const clearCategories = () => setSelectedCategories([]);
+
+  const shown = useMemo(() => {
+    const pool = inCategory.filter(
+      (p) =>
+        !lowOnly ||
+        stockTone(p) !== 'ok' ||
+        stockTone({ ...p, stock: parsedByProduct.get(p.id) ?? p.stock }) !== 'ok',
+    );
+    const q = search.trim();
+    return q.length >= 2 ? matchItems(pool.map(productMatchable), q) : pool;
+  }, [inCategory, lowOnly, parsedByProduct, search]);
 
   const hasInvalid = useMemo(() => {
     for (const p of shelf) {
@@ -130,7 +145,7 @@ export function StockTake({
   }, [shelf, parsedByProduct]);
 
   const showSaved = saved && diffCount === 0 && !hasInvalid;
-  const canSave = shelf.length > 0 && !hasInvalid && !busy;
+  const canSave = shelf.length > 0 && !hasInvalid && !busy && !showSaved;
 
   const setRowCount = (productId: string, raw: string) => {
     touchedRef.current.add(productId);
@@ -198,16 +213,23 @@ export function StockTake({
   const strip = (
     <div className="prd-strip" role="list">
       <div className="prd-stat" role="listitem">
-        <span className="prd-stat-n">{shelf.length}</span>
+        <span className="prd-stat-n">{inCategory.length}</span>
         <span className="prd-stat-l">{t('strip.products')}</span>
       </div>
       <div className="prd-stat" role="listitem">
         <span className="prd-stat-n">{formatMoney(worth)}</span>
         <span className="prd-stat-l">{t('strip.worth')}</span>
       </div>
-      <div className={`prd-stat ${lowCount > 0 ? 'prd-stat-low' : ''}`} role="listitem">
-        <span className="prd-stat-n">{lowCount}</span>
-        <span className="prd-stat-l">{t('strip.low')}</span>
+      <div role="listitem" className="prd-stat-cell">
+        <button
+          type="button"
+          className={`prd-stat prd-stat-tap ${lowCount > 0 ? 'prd-stat-low' : ''} ${lowOnly ? 'is-on' : ''}`}
+          aria-pressed={lowOnly}
+          onClick={() => setLowOnly((cur) => (cur || lowCount === 0 ? false : true))}
+        >
+          <span className="prd-stat-n">{lowCount}</span>
+          <span className="prd-stat-l">{t('strip.low')}</span>
+        </button>
       </div>
     </div>
   );
@@ -226,10 +248,10 @@ export function StockTake({
   );
 
   const categoriesDropdown =
-    categories.length > 0 || noneCount > 0 ? (
+    liveCategories.length > 0 || noneCount > 0 ? (
       <ProductCategoriesDropdown
         selected={selectedCategories}
-        categories={categories}
+        categories={liveCategories}
         noneCount={noneCount}
         onToggle={toggleCategory}
         onClear={clearCategories}
@@ -237,13 +259,22 @@ export function StockTake({
     ) : null;
 
   const summaryPill = (
-    <span className={`prd-st-summary ${diffCount > 0 ? 'prd-st-summary-diff' : ''}`} aria-live="polite">
-      {diffCount > 0 ? t('stockTake.changedCount', { n: diffCount }) : t('stockTake.allMatch')}
+    <span
+      className={`prd-st-summary ${hasInvalid ? 'prd-st-summary-invalid' : diffCount > 0 ? 'prd-st-summary-diff' : ''}`}
+      aria-live="polite"
+    >
+      {hasInvalid
+        ? t('stockTake.sayCount')
+        : diffCount > 0
+          ? t('stockTake.changedCount', { n: diffCount })
+          : t('stockTake.allMatch')}
     </span>
   );
 
   const nothing = (
-    <div className="empty">{search.trim().length >= 2 ? t('noMatch', { q: search.trim() }) : t('filters.none.all')}</div>
+    <div className="empty">
+      {search.trim().length >= 2 ? t('noMatch', { q: search.trim() }) : t(`filters.none.${lowOnly ? 'low' : 'all'}`)}
+    </div>
   );
 
   if (desk === null) {
