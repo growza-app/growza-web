@@ -615,7 +615,7 @@ export function StaffClient({
               </dl>
               <ul className="pf-wide-tabs" role="tablist">
                 {tabs.map((tb) => (
-                  <li key={tb.key}>
+                  <li key={tb.key} role="presentation">
                     <button
                       type="button"
                       role="tab"

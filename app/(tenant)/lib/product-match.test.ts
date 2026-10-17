@@ -175,11 +175,11 @@ describe('StockPanel — Move to another branch (GRW-574 part 3)', () => {
     expect(hi.reason).toBeTruthy();
   });
 
-  it('warns and asks for a second confirmation when the transfer leaves negative stock at the source branch (AC-04)', () => {
-    expect(panel).toMatch(/const transferAfter = product\.stock - n;/);
-    expect(panel).toMatch(/const leavesNegative = kind === 'transfer' && canGo && transferAfter < 0;/);
-    expect(panel).toMatch(/if \(kind === 'transfer' && leavesNegative && !warnNegative\) \{\s*setWarnNegative\(true\);\s*return;\s*\}/);
-    expect(panel).toMatch(/warnNegative && leavesNegative \? t\('transfer\.confirmAnyway'\) : t\('confirm'\)/);
+  it('does not let a transfer exceed what the source branch holds, and says how many are there (QA, 2026-10-17)', () => {
+    expect(panel).toMatch(/const tooMany = kind === 'transfer' && Number\.isFinite\(n\) && n > Math\.max\(product\.stock, 0\);/);
+    expect(panel).toMatch(/\(kind !== 'transfer' \|\| toBranchId !== ''\) &&\s*!tooMany;/);
+    expect(panel).toMatch(/t\('transfer\.tooMany', \{ n: Math\.max\(product\.stock, 0\) \}\)/);
+    expect(panel).not.toMatch(/warnNegative|confirmAnyway/);
   });
 
   it('ships transfer_out, transfer_in, and transfer copy in English and Hindi', async () => {
@@ -187,7 +187,7 @@ describe('StockPanel — Move to another branch (GRW-574 part 3)', () => {
     expect(en.kind.transfer_in).toBe('Moved in');
     expect(hi.kind.transfer_out).toBeTruthy();
     expect(hi.kind.transfer_in).toBeTruthy();
-    for (const k of ['open', 'toBranch', 'leavesNegativeAt', 'leavesNegative', 'confirmAnyway']) {
+    for (const k of ['open', 'toBranch', 'tooMany']) {
       expect(en.transfer[k], k).toBeTruthy();
       expect(hi.transfer[k], k).toBeTruthy();
     }

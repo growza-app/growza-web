@@ -598,7 +598,7 @@
   },
   "settingsReports": {
     "title": "Who can see Reports",
-    "hint": "You, and any managers, always see every report. Tick what each person can see. Tick nothing and they can’t open Reports.",
+    "hint": "You, and any managers, always see every report. Tick what each person can see. Tick nothing and they can’t open Reports or the Sales register.",
     "roles": {
       "receptionist": {
         "label": "Receptionist",
@@ -612,7 +612,8 @@
       "customers": "Clients",
       "staff": "Staff performance",
       "bookings": "Bookings",
-      "services": "Services"
+      "services": "Services",
+      "sales": "Sales register"
     },
     "showsMoney": "shows money",
     "save": "Save changes",
@@ -3099,9 +3100,7 @@
       "transfer": {
         "open": "Move to another branch",
         "toBranch": "To branch",
-        "leavesNegativeAt": "That leaves {n} at {branch}",
-        "leavesNegative": "That leaves {n}",
-        "confirmAnyway": "Move anyway"
+        "tooMany": "Only {n} here to move"
       },
       "after": "Count will be {n}",
       "confirm": "Confirm",

@@ -448,6 +448,18 @@
 }
 
 /*
+ * QA, 2026-10-17 — the Category column was dropped only up to 1300px, but the middle panel is still narrower than the
+ * table's 623px at 1366 and 1440: Status read "Statu" and the ⋮ column sat off the edge. The category is already the
+ * highlighted row on the left, so the column goes until the panel has room for it (about 1600px).
+ */
+@media (min-width: 1301px) and (max-width: 1600px) {
+  .svc-desk-table th:nth-child(2),
+  .svc-desk-table td:nth-child(2) {
+    display: none;
+  }
+}
+
+/*
  * Owner, 2026-10-14 — the categories dialog on a desk (`DeskCategoriesDialog`): one state, controls on hover.
  * Reached only from the wide screen, so the media query is belt and braces.
  */

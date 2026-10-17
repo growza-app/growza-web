@@ -1232,7 +1232,7 @@ export function BookingsList({
           {!loadFailed && (
             <ul className="pf-wide-tabs" role="tablist" aria-label={t('statusLabel')}>
               {TABS.map((seg) => (
-                <li key={seg}>
+                <li key={seg} role="presentation">
                   <button
                     type="button"
                     role="tab"

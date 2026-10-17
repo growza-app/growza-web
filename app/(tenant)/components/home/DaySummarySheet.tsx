@@ -255,7 +255,7 @@ export function DaySummarySheet({
               </p>
             </section>
 
-            <StaffToday t={t} staff={data.staff} branches={data.branches} />
+            <StaffToday t={t} staff={data.staff} branches={data.branches} productsMinor={data.productsMinor} />
           </div>
         )}
 
@@ -271,7 +271,7 @@ export function DaySummarySheet({
  * Who worked today, with their bookings and money. Its own component (Jira GRW-363) so the rows
  * render in a test without the sheet's fetch.
  */
-export function StaffToday({ t, staff, branches }: { t: HomeCopy; staff: DaySummary['staff']; branches?: DaySummary['branches'] }) {
+export function StaffToday({ t, staff, branches, productsMinor = 0 }: { t: HomeCopy; staff: DaySummary['staff']; branches?: DaySummary['branches']; productsMinor?: number }) {
   const noProvider = useNoProvider();
   return (
     <section className="hm-card hm-sheet-wide">
@@ -280,7 +280,7 @@ export function StaffToday({ t, staff, branches }: { t: HomeCopy; staff: DaySumm
           {t.staffToday} <small>{t.staffTodaySub}</small>
         </h2>
       </div>
-      {staff.length === 0 ? (
+      {staff.length === 0 && productsMinor === 0 ? (
         <p className="hm-empty">{t.nobodyWorked}</p>
       ) : (
         <ul className="hm-rows">
@@ -303,6 +303,15 @@ export function StaffToday({ t, staff, branches }: { t: HomeCopy; staff: DaySumm
               </li>
             );
           })}
+          {productsMinor > 0 ? (
+            <li className="hm-row">
+              <Avatar name={t.productsRow} id="products" size={34} nobody />
+              <span className="hm-row-main">
+                <span className="hm-row-name">{t.productsRow}</span>
+              </span>
+              <span className="hm-row-money">{rupees(productsMinor)}</span>
+            </li>
+          ) : null}
         </ul>
       )}
     </section>

@@ -11,7 +11,7 @@ import { WriteOnly } from '../components/WriteOnly';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useSession, useWritable } from '../components/SessionProvider';
-import { IconPlus, IconSearch, IconSort } from '../components/icons';
+import { IconCart, IconPlus, IconSearch, IconSort } from '../components/icons';
 import { productPhotoUrl } from '../lib/service-photos';
 import { matchItems } from '../lib/service-match';
 import { productMatchable } from '../lib/product-match';
@@ -284,7 +284,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
         <WriteOnly>
           {live.length > 0 ? (
             <Link className="btn btn-ghost" href="/products/sell?from=products">
-              {t('sell')}
+              <IconCart /> {t('sell')}
             </Link>
           ) : null}
           {live.length > 0 && canStockTake ? (

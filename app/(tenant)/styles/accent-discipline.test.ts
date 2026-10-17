@@ -32,7 +32,6 @@ const KNOWN = new Set([
   '15-whatsapp-chat-simulator-try-whatsapp.css: #dcf8c6',
   '17-notification-bell.css: #1e7b3a',
   '17-notification-bell.css: #2952cc',
-  '17-notification-bell.css: #d84a3c',
   '19-range-toggle-week-month-bar-chart.css: #14663c',
   '19-range-toggle-week-month-bar-chart.css: #17427f',
   '19-range-toggle-week-month-bar-chart.css: #5be08a',
