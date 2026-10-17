@@ -17,14 +17,14 @@ import { matchItems } from '../lib/service-match';
 import { productMatchable } from '../lib/product-match';
 import { ProductSheet } from './ProductSheet';
 import { StockTake } from './StockTake';
-import { ALL_CATEGORIES, DeskProductCategories, NO_CATEGORY } from './DeskProductCategories';
+import { ALL_CATEGORIES, NO_CATEGORY, ProductCategoriesDropdown } from './DeskProductCategories';
 
 /**
  * Owner, 2026-10-14 — the shelf, the way a stock screen is read.
  *
- * Phone: three numbers, a search, a category picker and the status chips, then a row per product with a green /
- * amber / red stock pill; tapping a row opens the sheet. Wide desk (≥1101px): three panels — categories on the
- * left (0117), a table in the middle with sort and pages, the product on the right as the sheet drawn in place.
+ * Phone & wide desk: horizontal KPI strip + Top sellers sales graph across the top, then a toolbar with Search,
+ * multi-select Categories dropdown, Sort, and status chips. Wide desk (≥1101px) shows the sortable table on the left
+ * and the product sheet drawn in place on the right.
  *
  * Nothing here names a kind of business: the same screen sells a clinic's consumables and a gym's protein.
  */
@@ -43,13 +43,31 @@ export const stockTone = (p: Pick<Product, 'stock' | 'lowStockAt' | 'active'>): 
 export const shelfWorthMinor = (rows: readonly Pick<Product, 'stock' | 'priceMinor' | 'active'>[]): number =>
   rows.reduce((sum, p) => sum + (p.active && p.stock > 0 ? p.stock * Number(p.priceMinor) : 0), 0);
 
+export function matchesCategories(
+  p: Pick<Product, 'categoryId'>,
+  category: string | readonly string[] = ALL_CATEGORIES,
+): boolean {
+  if (Array.isArray(category)) {
+    if (category.length === 0) return true;
+    return category.some((c) => (c === NO_CATEGORY ? p.categoryId === null : p.categoryId === c));
+  }
+  if (category === ALL_CATEGORIES) return true;
+  if (category === NO_CATEGORY) return p.categoryId === null;
+  return p.categoryId === category;
+}
+
 /**
  * The category first, the chip second, then the search — the same spelling-tolerant matcher the till uses (GRW-375), from the second letter.
  * Jira GRW-574 — the search also finds a product by its SKU or barcode, whole or from the start.
  */
-export function filterShelf(rows: readonly Product[], filter: ShelfFilter, search: string, category: string = ALL_CATEGORIES): Product[] {
+export function filterShelf(
+  rows: readonly Product[],
+  filter: ShelfFilter,
+  search: string,
+  category: string | readonly string[] = ALL_CATEGORIES,
+): Product[] {
   const pool = rows.filter((p) => {
-    if (category === NO_CATEGORY ? p.categoryId !== null : category !== ALL_CATEGORIES && p.categoryId !== category) return false;
+    if (!matchesCategories(p, category)) return false;
     if (filter === 'retired') return !p.active;
     if (!p.active) return false;
     const tone = stockTone(p);
@@ -127,7 +145,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
     session?.role === null || session?.role === undefined || session?.role === 'owner' || session?.role === 'manager';
   const [rows, setRows] = useState(products);
   const [categories, setCategories] = useState(initialCategories);
-  const [category, setCategory] = useState<string>(ALL_CATEGORIES);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [filter, setFilter] = useState<ShelfFilter>('all');
   const [sort, setSort] = useState<ShelfSort>('name');
   const [sortDir, setSortDir] = useState<ShelfSortDir>('asc');
@@ -140,7 +158,6 @@ export function ProductsList({ products, categories: initialCategories, branchId
   const [deletingCategory, setDeletingCategory] = useState<ProductCategory | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /** The wide screen is three panels — categories · the shelf · the product — the way Services and the till are. `null` until the width is known. */
   const [desk, setDesk] = useState<boolean | null>(null);
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1101px)');
@@ -151,16 +168,23 @@ export function ProductsList({ products, categories: initialCategories, branchId
   }, []);
 
   const live = useMemo(() => rows.filter((p) => p.active), [rows]);
-  const lowCount = useMemo(() => live.filter((p) => stockTone(p) !== 'ok').length, [live]);
-  const worth = useMemo(() => shelfWorthMinor(rows), [rows]);
-  const inCategory = useMemo(() => filterShelf(rows, 'all', '', category), [rows, category]);
-  const shown = useMemo(() => sortShelf(filterShelf(rows, filter, search, category), sort, sortDir), [rows, filter, search, category, sort, sortDir]);
+  const liveCategories = useMemo(
+    () => categories.map((c) => ({ ...c, count: live.filter((p) => p.categoryId === c.id).length })),
+    [categories, live],
+  );
+  const inCategory = useMemo(() => filterShelf(rows, 'all', '', selectedCategories), [rows, selectedCategories]);
+  const lowCount = useMemo(() => inCategory.filter((p) => stockTone(p) !== 'ok').length, [inCategory]);
+  const worth = useMemo(() => shelfWorthMinor(inCategory), [inCategory]);
+  const shown = useMemo(
+    () => sortShelf(filterShelf(rows, filter, search, selectedCategories), sort, sortDir),
+    [rows, filter, search, selectedCategories, sort, sortDir],
+  );
   const counts: Record<ShelfFilter, number> = {
     all: inCategory.length,
     inStock: inCategory.filter((p) => stockTone(p) === 'ok').length,
     low: inCategory.filter((p) => stockTone(p) !== 'ok').length,
     out: inCategory.filter((p) => p.stock <= 0).length,
-    retired: rows.filter((p) => !p.active && (category === ALL_CATEGORIES || (category === NO_CATEGORY ? p.categoryId === null : p.categoryId === category))).length,
+    retired: rows.filter((p) => !p.active && matchesCategories(p, selectedCategories)).length,
   };
   const noneCount = live.filter((p) => p.categoryId === null).length;
   const pageCount = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
@@ -169,6 +193,11 @@ export function ProductsList({ products, categories: initialCategories, branchId
     f();
     setPage(1);
   };
+  const toggleCategory = (id: string) =>
+    pick(() =>
+      setSelectedCategories((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])),
+    );
+  const clearCategories = () => pick(() => setSelectedCategories([]));
   const pickColumnSort = (col: ShelfSort) =>
     pick(() => {
       if (sort === col) setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
@@ -227,7 +256,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
       await api.deleteProductCategory(branchId, deletingCategory.id);
       setCategories((prev) => prev.filter((c) => c.id !== deletingCategory.id));
       setRows((prev) => prev.map((p) => (p.categoryId === deletingCategory.id ? { ...p, categoryId: null, categoryName: null } : p)));
-      if (category === deletingCategory.id) setCategory(ALL_CATEGORIES);
+      setSelectedCategories((prev) => prev.filter((id) => id !== deletingCategory.id));
       setDeletingCategory(null);
       router.refresh();
     } catch (err) {
@@ -284,7 +313,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
   const strip = (
     <div className="prd-strip" role="list">
       <div className="prd-stat" role="listitem">
-        <span className="prd-stat-n">{live.length}</span>
+        <span className="prd-stat-n">{inCategory.length}</span>
         <span className="prd-stat-l">{t('strip.products')}</span>
       </div>
       <div className="prd-stat" role="listitem">
@@ -293,7 +322,12 @@ export function ProductsList({ products, categories: initialCategories, branchId
       </div>
       {/* The listitem is the wrapper: a role on the button itself would strip its button role for a screen reader. */}
       <div role="listitem" className="prd-stat-cell">
-        <button type="button" className={`prd-stat prd-stat-tap ${lowCount > 0 ? 'prd-stat-low' : ''}`} onClick={() => pick(() => setFilter(lowCount > 0 ? 'low' : 'all'))}>
+        <button
+          type="button"
+          className={`prd-stat prd-stat-tap ${lowCount > 0 ? 'prd-stat-low' : ''} ${filter === 'low' ? 'is-on' : ''}`}
+          aria-pressed={filter === 'low'}
+          onClick={() => pick(() => setFilter((cur) => (cur === 'low' || lowCount === 0 ? 'all' : 'low')))}
+        >
           <span className="prd-stat-n">{lowCount}</span>
           <span className="prd-stat-l">{t('strip.low')}</span>
         </button>
@@ -306,6 +340,18 @@ export function ProductsList({ products, categories: initialCategories, branchId
       <input type="text" className="search-input search-input-bare" placeholder={t('searchPlaceholder')} value={search} onChange={(e) => pick(() => setSearch(e.target.value))} />
     </label>
   );
+  const categoriesDropdown =
+    liveCategories.length > 0 || noneCount > 0 || writable ? (
+      <ProductCategoriesDropdown
+        selected={selectedCategories}
+        categories={liveCategories}
+        noneCount={noneCount}
+        onToggle={toggleCategory}
+        onClear={clearCategories}
+        onAdd={writable ? addCategory : undefined}
+        onDelete={writable ? (c) => setDeletingCategory(c) : undefined}
+      />
+    ) : null;
   const chips = (
     <div className="prd-chips" role="group" aria-label={t('filters.label')}>
       {SHELF_FILTERS.map((f) => (
@@ -345,20 +391,6 @@ export function ProductsList({ products, categories: initialCategories, branchId
             {t(`sort.${s}`)}
           </option>
         ))}
-      </select>
-    </label>
-  );
-  const categorySelect = (
-    <label className="prd-sort">
-      <span className="prd-sort-l">{t('categories.title')}</span>
-      <select value={category} onChange={(e) => pick(() => setCategory(e.target.value))}>
-        <option value={ALL_CATEGORIES}>{t('categories.all')}</option>
-        {categories.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name} ({c.count})
-          </option>
-        ))}
-        {noneCount > 0 ? <option value={NO_CATEGORY}>{t('categories.none')}</option> : null}
       </select>
     </label>
   );
@@ -470,7 +502,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
         key={editing === 'new' ? 'new' : editing.id}
         product={editing === 'new' ? null : editing}
         branchId={branchId}
-        categories={categories}
+        categories={liveCategories}
         onSaved={saved}
         onDelete={(p) => setDeleting(p)}
         onClose={() => setEditing(null)}
@@ -519,8 +551,8 @@ export function ProductsList({ products, categories: initialCategories, branchId
         key={branchId}
         branchId={branchId}
         initialProducts={rows}
-        categories={categories}
-        initialCategory={category}
+        categories={liveCategories}
+        initialCategories={selectedCategories}
         initialSearch={search}
         onSaved={stockTakeSaved}
         onCancel={() => setStockTakeOpen(false)}
@@ -542,22 +574,12 @@ export function ProductsList({ products, categories: initialCategories, branchId
       <>
         {header}
         <div className="page-body prd-desk">
+          {strip}
           <div className="pf-wide-grid prd-desk-grid">
-            <aside className="pf-wide-left prd-desk-left" aria-label={t('categories.title')}>
-              {strip}
-              <DeskProductCategories
-                picked={category}
-                categories={categories}
-                allCount={live.length}
-                noneCount={noneCount}
-                onPick={(id) => pick(() => setCategory(id))}
-                onAdd={writable ? addCategory : undefined}
-                onDelete={writable ? (c) => setDeletingCategory(c) : undefined}
-              />
-            </aside>
             <section className="pf-wide-mid prd-desk-mid" aria-label={t('title')}>
               <div className="prd-desk-tools">
                 {searchBox}
+                {categoriesDropdown}
                 {sortBox}
               </div>
               {chips}
@@ -596,9 +618,9 @@ export function ProductsList({ products, categories: initialCategories, branchId
             {strip}
             <div className="prd-tools">
               {searchBox}
-              {categories.length > 0 ? (
+              {categoriesDropdown ? (
                 <div className="prd-selects">
-                  {categorySelect}
+                  {categoriesDropdown}
                   {sortBox}
                 </div>
               ) : (
@@ -616,3 +638,4 @@ export function ProductsList({ products, categories: initialCategories, branchId
     </>
   );
 }
+

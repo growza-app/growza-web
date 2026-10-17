@@ -3132,6 +3132,9 @@
       "title": "Categories",
       "all": "All products",
       "none": "No category",
+      "searchPlaceholder": "Search categories",
+      "clear": "Clear",
+      "noMatch": "No matching category",
       "addRow": "Add a category",
       "addPlaceholder": "e.g. Hair care",
       "add": "Add",
@@ -3161,7 +3164,8 @@
       "systemStock": "On shelf: {n}",
       "notePlaceholder": "e.g. Monthly shelf count",
       "allMatch": "All counts match",
-      "changedCount": "{n, plural, one {# product differs} other {# products differ}}"
+      "changedCount": "{n, plural, one {# product differs} other {# products differ}}",
+      "sayCount": "Say what the count is"
     }
   },
   "sales": {

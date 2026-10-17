@@ -9,16 +9,16 @@ import { IconCheck, IconSearch } from '../components/icons';
 import { productPhotoUrl } from '../lib/service-photos';
 import { matchItems } from '../lib/service-match';
 import { productMatchable } from '../lib/product-match';
-import { ALL_CATEGORIES, DeskProductCategories, NO_CATEGORY } from './DeskProductCategories';
-import { shelfWorthMinor, stockTone } from './ProductsList';
+import { ProductCategoriesDropdown } from './DeskProductCategories';
+import { matchesCategories, shelfWorthMinor, stockTone } from './ProductsList';
 
 /**
  * Jira GRW-574 (part 4 · 0123) — count a branch's shelf in one pass.
  *
- * Uses the same Products layout (left categories + table on a wide desk, compact rows on a phone), a number field per
- * active product ("Counted"), a highlight when what was counted differs from what the database says, an optional shared
- * note, and one Save that writes an `adjusted` movement row only for the products that differ, tied together by
- * `stock_take_id`.
+ * Uses the same Products layout (horizontal KPI strip at the top, Search + multi-select Categories filter in the
+ * toolbar, table on a wide desk, compact rows on a phone), a number field per active product ("Counted"), a highlight
+ * when what was counted differs from what the database says, and one Save that writes an `adjusted` movement row only
+ * for the products that differ, tied together by `stock_take_id`.
  */
 export function parseStockTakeCount(raw: string | undefined, fallback: number): number | null {
   if (raw === undefined) return fallback;
@@ -33,7 +33,7 @@ export function StockTake({
   branchId,
   initialProducts,
   categories,
-  initialCategory = ALL_CATEGORIES,
+  initialCategories = [],
   initialSearch = '',
   onSaved,
   onCancel,
@@ -41,7 +41,7 @@ export function StockTake({
   branchId: string;
   initialProducts: Product[];
   categories: ProductCategory[];
-  initialCategory?: string;
+  initialCategories?: readonly string[];
   initialSearch?: string;
   onSaved: (updated: Product[], adjusted: number) => void;
   onCancel: () => void;
@@ -55,9 +55,9 @@ export function StockTake({
     Object.fromEntries(initialProducts.filter((p) => p.active).map((p) => [p.id, String(p.stock)])),
   );
   const touchedRef = useRef<Set<string>>(new Set());
-  const [note, setNote] = useState('');
   const [search, setSearch] = useState(initialSearch);
-  const [category, setCategory] = useState<string>(initialCategory);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(() => [...initialCategories]);
+  const [lowOnly, setLowOnly] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,18 +93,6 @@ export function StockTake({
     };
   }, [branchId]);
 
-  const noneCount = useMemo(() => shelf.filter((p) => p.categoryId === null).length, [shelf]);
-  const lowCount = useMemo(() => shelf.filter((p) => stockTone(p) !== 'ok').length, [shelf]);
-  const worth = useMemo(() => shelfWorthMinor(shelf), [shelf]);
-
-  const shown = useMemo(() => {
-    const pool = shelf.filter((p) =>
-      category === NO_CATEGORY ? p.categoryId === null : category === ALL_CATEGORIES || p.categoryId === category,
-    );
-    const q = search.trim();
-    return q.length >= 2 ? matchItems(pool.map(productMatchable), q) : pool;
-  }, [shelf, category, search]);
-
   const parsedByProduct = useMemo(() => {
     const map = new Map<string, number | null>();
     for (const p of shelf) {
@@ -112,6 +100,33 @@ export function StockTake({
     }
     return map;
   }, [shelf, counts]);
+
+  const liveCategories = useMemo(
+    () => categories.map((c) => ({ ...c, count: shelf.filter((p) => p.categoryId === c.id).length })),
+    [categories, shelf],
+  );
+  const noneCount = useMemo(() => shelf.filter((p) => p.categoryId === null).length, [shelf]);
+  const inCategory = useMemo(() => shelf.filter((p) => matchesCategories(p, selectedCategories)), [shelf, selectedCategories]);
+  const countedInCategory = useMemo(
+    () => inCategory.map((p) => ({ ...p, stock: parsedByProduct.get(p.id) ?? p.stock })),
+    [inCategory, parsedByProduct],
+  );
+  const lowCount = useMemo(() => countedInCategory.filter((p) => stockTone(p) !== 'ok').length, [countedInCategory]);
+  const worth = useMemo(() => shelfWorthMinor(countedInCategory), [countedInCategory]);
+  const toggleCategory = (id: string) =>
+    setSelectedCategories((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const clearCategories = () => setSelectedCategories([]);
+
+  const shown = useMemo(() => {
+    const pool = inCategory.filter(
+      (p) =>
+        !lowOnly ||
+        stockTone(p) !== 'ok' ||
+        stockTone({ ...p, stock: parsedByProduct.get(p.id) ?? p.stock }) !== 'ok',
+    );
+    const q = search.trim();
+    return q.length >= 2 ? matchItems(pool.map(productMatchable), q) : pool;
+  }, [inCategory, lowOnly, parsedByProduct, search]);
 
   const hasInvalid = useMemo(() => {
     for (const p of shelf) {
@@ -130,7 +145,7 @@ export function StockTake({
   }, [shelf, parsedByProduct]);
 
   const showSaved = saved && diffCount === 0 && !hasInvalid;
-  const canSave = shelf.length > 0 && !hasInvalid && !busy;
+  const canSave = shelf.length > 0 && !hasInvalid && !busy && !showSaved;
 
   const setRowCount = (productId: string, raw: string) => {
     touchedRef.current.add(productId);
@@ -150,13 +165,11 @@ export function StockTake({
       }));
       const res = await api.saveStockTake(branchId, {
         counts: payload,
-        note: note.trim() || undefined,
       });
       const active = res.products.filter((p) => p.active).sort((a, b) => a.name.localeCompare(b.name));
       touchedRef.current.clear();
       setShelf(active);
       setCounts(Object.fromEntries(active.map((p) => [p.id, String(p.stock)])));
-      setNote('');
       setSaved(true);
       onSaved(res.products, res.adjusted);
     } catch (err) {
@@ -200,16 +213,23 @@ export function StockTake({
   const strip = (
     <div className="prd-strip" role="list">
       <div className="prd-stat" role="listitem">
-        <span className="prd-stat-n">{shelf.length}</span>
+        <span className="prd-stat-n">{inCategory.length}</span>
         <span className="prd-stat-l">{t('strip.products')}</span>
       </div>
       <div className="prd-stat" role="listitem">
         <span className="prd-stat-n">{formatMoney(worth)}</span>
         <span className="prd-stat-l">{t('strip.worth')}</span>
       </div>
-      <div className={`prd-stat ${lowCount > 0 ? 'prd-stat-low' : ''}`} role="listitem">
-        <span className="prd-stat-n">{lowCount}</span>
-        <span className="prd-stat-l">{t('strip.low')}</span>
+      <div role="listitem" className="prd-stat-cell">
+        <button
+          type="button"
+          className={`prd-stat prd-stat-tap ${lowCount > 0 ? 'prd-stat-low' : ''} ${lowOnly ? 'is-on' : ''}`}
+          aria-pressed={lowOnly}
+          onClick={() => setLowOnly((cur) => (cur || lowCount === 0 ? false : true))}
+        >
+          <span className="prd-stat-n">{lowCount}</span>
+          <span className="prd-stat-l">{t('strip.low')}</span>
+        </button>
       </div>
     </div>
   );
@@ -227,31 +247,34 @@ export function StockTake({
     </label>
   );
 
-  const noteBar = (
-    <div className="prd-st-bar-note">
-      <label className="prd-st-note-label" htmlFor="prd-st-note">
-        {t('ledger.note')}
-      </label>
-      <input
-        id="prd-st-note"
-        type="text"
-        className="prd-st-note-input"
-        maxLength={200}
-        placeholder={t('stockTake.notePlaceholder')}
-        value={note}
-        onChange={(e) => {
-          setNote(e.target.value);
-          if (saved) setSaved(false);
-        }}
+  const categoriesDropdown =
+    liveCategories.length > 0 || noneCount > 0 ? (
+      <ProductCategoriesDropdown
+        selected={selectedCategories}
+        categories={liveCategories}
+        noneCount={noneCount}
+        onToggle={toggleCategory}
+        onClear={clearCategories}
       />
-      <span className={`prd-st-summary ${diffCount > 0 ? 'prd-st-summary-diff' : ''}`} aria-live="polite">
-        {diffCount > 0 ? t('stockTake.changedCount', { n: diffCount }) : t('stockTake.allMatch')}
-      </span>
-    </div>
+    ) : null;
+
+  const summaryPill = (
+    <span
+      className={`prd-st-summary ${hasInvalid ? 'prd-st-summary-invalid' : diffCount > 0 ? 'prd-st-summary-diff' : ''}`}
+      aria-live="polite"
+    >
+      {hasInvalid
+        ? t('stockTake.sayCount')
+        : diffCount > 0
+          ? t('stockTake.changedCount', { n: diffCount })
+          : t('stockTake.allMatch')}
+    </span>
   );
 
   const nothing = (
-    <div className="empty">{search.trim().length >= 2 ? t('noMatch', { q: search.trim() }) : t('filters.none.all')}</div>
+    <div className="empty">
+      {search.trim().length >= 2 ? t('noMatch', { q: search.trim() }) : t(`filters.none.${lowOnly ? 'low' : 'all'}`)}
+    </div>
   );
 
   if (desk === null) {
@@ -273,97 +296,87 @@ export function StockTake({
               {error}
             </div>
           ) : null}
-          <div className="pf-wide-grid prd-desk-grid prd-st-desk-grid">
-            <aside className="pf-wide-left prd-desk-left" aria-label={t('categories.title')}>
-              {strip}
-              <DeskProductCategories
-                picked={category}
-                categories={categories}
-                allCount={shelf.length}
-                noneCount={noneCount}
-                onPick={setCategory}
-              />
-            </aside>
-            <section className="pf-wide-mid prd-desk-mid" aria-label={t('stockTake.title')}>
-              <div className="prd-desk-tools prd-st-desk-tools">
-                {searchBox}
-                {noteBar}
-              </div>
-              <div className="card prd-desk-card">
-                {shown.length === 0 ? (
-                  nothing
-                ) : (
-                  <div className="table-scroll">
-                    <table className="prd-table prd-st-table" aria-label={t('stockTake.title')}>
-                      <thead>
-                        <tr>
-                          <th>{t('cols.product')}</th>
-                          <th className="prd-td-num">{t('cols.price')}</th>
-                          <th className="prd-td-num">{t('cols.cost')}</th>
-                          <th className="prd-td-num">{t('cols.stock')}</th>
-                          <th className="prd-td-num">{t('stockTake.counted')}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {shown.map((p) => {
-                          const raw = counts[p.id] ?? String(p.stock);
-                          const parsed = parsedByProduct.get(p.id) ?? null;
-                          const invalid = parsed === null;
-                          const delta = parsed !== null ? parsed - p.stock : 0;
-                          const differs = !invalid && delta !== 0;
-                          return (
-                            <tr
-                              key={p.id}
-                              className={`prd-st-tr ${differs ? 'prd-st-row-diff' : ''} ${invalid ? 'prd-st-row-invalid' : ''}`}
-                            >
-                              <td>
-                                <div className="prd-cell-name">
-                                  <img className="prd-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
-                                  <span className="prd-name">
-                                    {p.name}
-                                    <span className="prd-name-cat">
-                                      {p.categoryName ?? t('categories.none')}
-                                      {p.sku ? ` · ${p.sku}` : ''}
-                                    </span>
+          {strip}
+          <section className="pf-wide-mid prd-desk-mid" aria-label={t('stockTake.title')}>
+            <div className="prd-desk-tools prd-st-desk-tools">
+              {searchBox}
+              {categoriesDropdown}
+              {summaryPill}
+            </div>
+            <div className="card prd-desk-card">
+              {shown.length === 0 ? (
+                nothing
+              ) : (
+                <div className="table-scroll">
+                  <table className="prd-table prd-st-table" aria-label={t('stockTake.title')}>
+                    <thead>
+                      <tr>
+                        <th>{t('cols.product')}</th>
+                        <th className="prd-td-num">{t('cols.price')}</th>
+                        <th className="prd-td-num">{t('cols.cost')}</th>
+                        <th className="prd-td-num">{t('cols.stock')}</th>
+                        <th className="prd-td-num">{t('stockTake.counted')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {shown.map((p) => {
+                        const raw = counts[p.id] ?? String(p.stock);
+                        const parsed = parsedByProduct.get(p.id) ?? null;
+                        const invalid = parsed === null;
+                        const delta = parsed !== null ? parsed - p.stock : 0;
+                        const differs = !invalid && delta !== 0;
+                        return (
+                          <tr
+                            key={p.id}
+                            className={`prd-st-tr ${differs ? 'prd-st-row-diff' : ''} ${invalid ? 'prd-st-row-invalid' : ''}`}
+                          >
+                            <td>
+                              <div className="prd-cell-name">
+                                <img className="prd-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
+                                <span className="prd-name">
+                                  {p.name}
+                                  <span className="prd-name-cat">
+                                    {p.categoryName ?? t('categories.none')}
+                                    {p.sku ? ` · ${p.sku}` : ''}
                                   </span>
-                                </div>
-                              </td>
-                              <td className="prd-td-num">{formatMoney(p.priceMinor)}</td>
-                              <td className="prd-td-num prd-td-muted">
-                                {p.costMinor != null ? formatMoney(p.costMinor) : '—'}
-                              </td>
-                              <td className="prd-td-num">
-                                <span className={`prd-td-stock prd-td-stock-${stockTone(p)}`}>{p.stock}</span>
-                              </td>
-                              <td className="prd-td-num prd-st-td-count">
-                                <div className="prd-st-cell-count">
-                                  {differs ? (
-                                    <span className={`prd-pill ${delta > 0 ? '' : 'prd-pill-out'}`}>
-                                      {delta > 0 ? `+${delta}` : String(delta)}
-                                    </span>
-                                  ) : null}
-                                  <input
-                                    id={`prd-st-count-${p.id}`}
-                                    type="text"
-                                    inputMode="numeric"
-                                    className="prd-st-input"
-                                    aria-label={t('stockTake.countedAria', { name: p.name })}
-                                    aria-invalid={invalid ? 'true' : undefined}
-                                    value={raw}
-                                    onChange={(e) => setRowCount(p.id, e.target.value)}
-                                  />
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </section>
-          </div>
+                                </span>
+                              </div>
+                            </td>
+                            <td className="prd-td-num">{formatMoney(p.priceMinor)}</td>
+                            <td className="prd-td-num prd-td-muted">
+                              {p.costMinor != null ? formatMoney(p.costMinor) : '—'}
+                            </td>
+                            <td className="prd-td-num">
+                              <span className={`prd-td-stock prd-td-stock-${stockTone(p)}`}>{p.stock}</span>
+                            </td>
+                            <td className="prd-td-num prd-st-td-count">
+                              <div className="prd-st-cell-count">
+                                {differs ? (
+                                  <span className={`prd-pill ${delta > 0 ? '' : 'prd-pill-out'}`}>
+                                    {delta > 0 ? `+${delta}` : String(delta)}
+                                  </span>
+                                ) : null}
+                                <input
+                                  id={`prd-st-count-${p.id}`}
+                                  type="text"
+                                  inputMode="numeric"
+                                  className="prd-st-input"
+                                  aria-label={t('stockTake.countedAria', { name: p.name })}
+                                  aria-invalid={invalid ? 'true' : undefined}
+                                  value={raw}
+                                  onChange={(e) => setRowCount(p.id, e.target.value)}
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </section>
         </div>
       </>
     );
@@ -379,23 +392,14 @@ export function StockTake({
           </div>
         ) : null}
 
+        {strip}
+
         <div className="prd-tools prd-st-tools">
           {searchBox}
-          {categories.length > 0 ? (
-            <label className="prd-sort prd-st-cat">
-              <span className="prd-sort-l">{t('categories.title')}</span>
-              <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                <option value={ALL_CATEGORIES}>{t('categories.all')}</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.count})
-                  </option>
-                ))}
-                {noneCount > 0 ? <option value={NO_CATEGORY}>{t('categories.none')}</option> : null}
-              </select>
-            </label>
-          ) : null}
-          {noteBar}
+          <div className="prd-st-filter-row">
+            {categoriesDropdown}
+            {summaryPill}
+          </div>
         </div>
 
         {shown.length === 0 ? (
@@ -450,3 +454,4 @@ export function StockTake({
     </>
   );
 }
+

@@ -2,13 +2,14 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { filterShelf, SHELF_FILTERS, sortShelf } from './ProductsList';
+import { NO_CATEGORY } from './DeskProductCategories';
 import type { Product } from '../lib/api-types';
 
 const p = (
   name: string,
   stock = 5,
   active = true,
-  codes: { sku?: string; barcode?: string; priceMinor?: string; costMinor?: string | null; lowStockAt?: number } = {},
+  codes: { sku?: string; barcode?: string; priceMinor?: string; costMinor?: string | null; lowStockAt?: number; categoryId?: string | null } = {},
 ): Product => ({
   id: name,
   name,
@@ -21,7 +22,7 @@ const p = (
   sold: 0,
   costMinor: codes.costMinor ?? null,
   lowStockAt: codes.lowStockAt ?? 0,
-  categoryId: null,
+  categoryId: codes.categoryId ?? null,
   categoryName: null,
   sku: codes.sku ?? null,
   barcode: codes.barcode ?? null,
@@ -42,6 +43,28 @@ describe('the Products screen finds a product however it is spelled (GRW-375 mat
   it('the chip narrows first: a retired product is found only under Retired', () => {
     expect(filterShelf(shelf, 'all', 'serum')).toEqual([]);
     expect(filterShelf(shelf, 'retired', 'serum').map((x) => x.name)).toEqual(['Old Serum']);
+  });
+  it('filters by multiple selected categories or No category when an array of category IDs is passed', () => {
+    const catShelf = [
+      p('Keratin Shampoo', 5, true, { categoryId: 'cat-hair' }),
+      p('Face Wash', 5, true, { categoryId: 'cat-skin' }),
+      p('Beard Oil', 5, true, { categoryId: 'cat-beard' }),
+      p('Plain Comb', 5, true, { categoryId: null }),
+    ];
+    expect(filterShelf(catShelf, 'all', '', []).map((x) => x.name)).toEqual([
+      'Keratin Shampoo',
+      'Face Wash',
+      'Beard Oil',
+      'Plain Comb',
+    ]);
+    expect(filterShelf(catShelf, 'all', '', ['cat-hair', 'cat-beard']).map((x) => x.name)).toEqual([
+      'Keratin Shampoo',
+      'Beard Oil',
+    ]);
+    expect(filterShelf(catShelf, 'all', '', ['cat-skin', NO_CATEGORY]).map((x) => x.name)).toEqual([
+      'Face Wash',
+      'Plain Comb',
+    ]);
   });
 });
 
@@ -107,3 +130,4 @@ describe('Products status filter, column sorting, and save confirmation', () => 
     expect(sheetSrc).toMatch(/<IconCheck \/> \{t\('saved'\)\}/);
   });
 });
+
