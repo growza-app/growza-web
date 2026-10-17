@@ -243,7 +243,7 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
 
     expect(sidebar.indexOf("href: '/appointments'")).toBeLessThan(sidebar.indexOf("href: '/sales'"));
     expect(sidebar.indexOf("href: '/sales'")).toBeLessThan(sidebar.indexOf("href: '/customers'"));
-    expect(ownerHome).toContain('href="/sales?filter=products"');
+    expect(ownerHome).toContain('/sales?filter=products&${salesQuerySuffix}');
     expect(summary).toContain("t('products')");
   });
 

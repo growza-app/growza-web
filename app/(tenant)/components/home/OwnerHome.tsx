@@ -1,5 +1,6 @@
 'use client';
 
+import { DateTime } from 'luxon';
 import { useRouter } from 'next/navigation';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -13,11 +14,11 @@ import {
   type HomePeriod,
   type Provider,
   type QueueEntry,
-  type ReportServiceRow,
   type TokenBoard as TokenBoardData,
 } from '../../lib/api';
-import { clientNameLabel, groupBookings, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
+import { bookingBill, clientNameLabel, formatDuration, groupBookings, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
 import { liveState, minutesBetween } from '../../lib/live-state';
+import { buildSaleRows, computeSalesKpis, filterSalesByDateRange, formatAxisRupees } from '../../sales/SalesClient';
 import { hasLiveWork, TokenBoard } from './TokenBoard';
 import { useTokenWords } from './token-words';
 import { atBranch } from '../../lib/right-now';
@@ -50,7 +51,7 @@ import { BookingSummary } from '../BookingSummary';
 import { DaySummarySheet } from './DaySummarySheet';
 import { MoneyHero } from './MoneyHero';
 import { BranchCarousel } from './BranchCarousel';
-import { AttentionList, Avatar, BookingRows, Card, CardError, HomeHeader, QuickTiles, rupees, Segmented, SegmentCards } from './parts';
+import { AttentionList, Avatar, avatarKey, BookingRows, Card, CardError, HomeHeader, QuickTiles, rupees, Segmented, SegmentCards } from './parts';
 import { RightNow } from './RightNow';
 import { useMinuteClock } from './useMinuteClock';
 
@@ -485,13 +486,31 @@ export function OwnerHome(p: OwnerHomeProps) {
   const attentionTotal = attention.reduce((sum, a) => sum + a.count, 0);
 
   // Desktop v3 Command Center state & data.
-  const [topServices, setTopServices] = useState<ReportServiceRow[]>([]);
+  const [salesAppointments, setSalesAppointments] = useState<Appointment[] | null>(null);
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
 
   /*
-   * Release review, 2026-10-17 — the Command Center is the laptop's Home. Its three extra reads (top services, recent
-   * activity) are made only where it is drawn: a phone used to make them on every load and every branch switch for a
-   * block it never shows. Read in an effect, so the server and the first client render agree.
+   * Period bounds in the business's own timezone, matching `/api/v1/home`'s `periodBounds` (`src/modules/analytics/home.ts`):
+   * - `today`: `todayISO..todayISO`
+   * - `week`: 7 days ending today (`today - 6 days..todayISO`)
+   * - `month`: start of current month (`monthStartISO..todayISO`)
+   */
+  const { todayISO, weekStartISO, monthStartISO, fetchStartISO } = useMemo(() => {
+    const dt = DateTime.fromISO(p.nowISO, { zone: p.timezone });
+    const tISO = dt.toISODate() ?? p.nowISO.slice(0, 10);
+    const wISO = dt.minus({ days: 6 }).toISODate() ?? tISO;
+    const mISO = dt.startOf('month').toISODate() ?? tISO;
+    const fISO = wISO < mISO ? wISO : mISO;
+    return { todayISO: tISO, weekStartISO: wISO, monthStartISO: mISO, fetchStartISO: fISO };
+  }, [p.nowISO, p.timezone]);
+
+  const periodStartISO = period === 'today' ? todayISO : period === 'week' ? weekStartISO : monthStartISO;
+  const salesQuerySuffix = `date=${encodeURIComponent(periodStartISO)}&to=${encodeURIComponent(todayISO)}`;
+
+  /*
+   * Release review, 2026-10-17 — the Command Center is the laptop's Home. Its extra reads are made only where it is
+   * drawn: a phone used to make them on every load and every branch switch for a block it never shows. Read in an
+   * effect, so the server and the first client render agree.
    */
   const [deskHome, setDeskHome] = useState(false);
   useEffect(() => {
@@ -505,12 +524,10 @@ export function OwnerHome(p: OwnerHomeProps) {
   useEffect(() => {
     if (!branchContext.ready || !deskHome) return;
     let cancelled = false;
-    if (canSee('/reports', p.role, p.reportTabs)) {
-      api
-        .reportsServices('last_7_days', false, undefined, undefined, undefined, branch)
-        .then((res) => !cancelled && setTopServices(res.rows.slice(0, 5)))
-        .catch(() => !cancelled && setTopServices([]));
-    }
+    api
+      .appointments(fetchStartISO, todayISO, undefined, undefined, { includeSales: true })
+      .then((res) => !cancelled && setSalesAppointments(res))
+      .catch(() => !cancelled && setSalesAppointments(null));
     api
       .notifications(6, branch)
       .then((res) => !cancelled && setActivities(res))
@@ -518,7 +535,7 @@ export function OwnerHome(p: OwnerHomeProps) {
     return () => {
       cancelled = true;
     };
-  }, [branchContext.ready, deskHome, branch, serverSig, p.role, p.reportTabs]);
+  }, [branchContext.ready, deskHome, branch, serverSig, fetchStartISO, todayISO]);
 
   const allListGroups = listGroups ?? [];
   const inServiceCount = allListGroups.filter((g) => {
@@ -529,37 +546,78 @@ export function OwnerHome(p: OwnerHomeProps) {
   const upcomingCount = allListGroups.filter((g) => rowState(g) === 'later').length;
   const doneTodayCount = allListGroups.filter((g) => rowState(g) === 'done').length;
   const bookingsCount = allListGroups.length;
+  const cancelledCount = data?.attention.cancelledToday ?? 0;
   const activeClientsCount = clientStats?.segments.find((s) => s.key === 'active')?.count ?? 0;
+  const totalClientsCount = clientStats?.total ?? activeClientsCount;
 
   /** The period's own product lines, from the API. Null from an older API: the card then shows a dash, not a guess. */
   const productTake = data?.money.products ?? null;
 
+  /*
+   * Exact parity with `/sales` (`SalesClient.tsx`): build completed sale rows from the fetched window
+   * (or fall back to `p.appointments` on first paint for `today`), narrowed to `[periodStartISO, todayISO]`
+   * and the header's `branch`.
+   */
+  const allSaleRows = useMemo(
+    () => buildSaleRows(salesAppointments ?? p.appointments ?? [], p.timezone),
+    [salesAppointments, p.appointments, p.timezone],
+  );
+  const periodSaleRows = useMemo(
+    () => filterSalesByDateRange(allSaleRows, periodStartISO, todayISO, branch),
+    [allSaleRows, periodStartISO, todayISO, branch],
+  );
+  const periodSalesKpis = useMemo(() => computeSalesKpis(periodSaleRows), [periodSaleRows]);
+  const periodBillsCount = periodSalesKpis.billsCount;
+  const periodAvgBillMinor =
+    periodBillsCount > 0
+      ? Math.round((data?.money.revenueMinor ?? periodSalesKpis.totalSalesMinor) / periodBillsCount / 100) * 100
+      : 0;
+
   const rankedServices = useMemo(() => {
-    if (topServices.length > 0) {
-      return topServices.slice(0, 4).map((r) => ({
-        id: r.id,
-        name: r.name,
-        bookings: r.bookings,
-        revenueMinor: Math.round(r.revenueMinor / 100) * 100,
-      }));
-    }
     const byName = new Map<string, { id: string; name: string; bookings: number; revenueMinor: number }>();
-    for (const g of todayGroups ?? []) {
-      for (const a of g.appointments) {
-        const key = a.serviceName || t.nav.services;
+    for (const r of periodSaleRows) {
+      const completedLegs = r.group.appointments.filter((a) => a.status === 'completed' && Boolean(a.serviceName));
+      if (completedLegs.length === 0) continue;
+      const rawLegRevs = completedLegs.map((a) => Number(a.paidAmountMinor ?? a.priceMinor ?? 0));
+      const rawSum = rawLegRevs.reduce((s, v) => s + v, 0);
+      completedLegs.forEach((a, i) => {
+        const key = a.serviceName;
         const cur = byName.get(key) ?? { id: a.serviceId || key, name: key, bookings: 0, revenueMinor: 0 };
         cur.bookings += 1;
-        cur.revenueMinor += Number(a.paidAmountMinor ?? a.priceMinor ?? 0);
+        const legShare =
+          completedLegs.length === 1
+            ? r.servicesMinor
+            : rawSum > 0
+              ? Math.round((r.servicesMinor * rawLegRevs[i]!) / rawSum)
+              : Number(a.paidAmountMinor ?? a.priceMinor ?? 0);
+        cur.revenueMinor += legShare;
+        byName.set(key, cur);
+      });
+    }
+    return [...byName.values()]
+      .sort((a, b) => b.bookings - a.bookings || b.revenueMinor - a.revenueMinor || a.name.localeCompare(b.name))
+      .slice(0, 5);
+  }, [periodSaleRows]);
+
+  const maxServiceBookings = Math.max(...rankedServices.map((s) => s.bookings), 1);
+
+  const rankedProducts = useMemo(() => {
+    const byName = new Map<string, { id: string; name: string; units: number; revenueMinor: number }>();
+    for (const r of periodSaleRows) {
+      for (const pr of r.products) {
+        const key = pr.name;
+        const cur = byName.get(key) ?? { id: pr.productId || key, name: key, units: 0, revenueMinor: 0 };
+        cur.units += Number(pr.qty || 0);
+        cur.revenueMinor += Number(pr.paidMinor || 0);
         byName.set(key, cur);
       }
     }
     return [...byName.values()]
-      .sort((a, b) => b.bookings - a.bookings)
-      .slice(0, 4)
-      .map((r) => ({ ...r, revenueMinor: Math.round(r.revenueMinor / 100) * 100 }));
-  }, [topServices, todayGroups]);
+      .sort((a, b) => b.units - a.units || b.revenueMinor - a.revenueMinor || a.name.localeCompare(b.name))
+      .slice(0, 5);
+  }, [periodSaleRows]);
 
-  const maxServiceBookings = Math.max(...rankedServices.map((s) => s.bookings), 1);
+  const maxProductUnits = Math.max(...rankedProducts.map((pr) => pr.units), 1);
 
   const recentFeed = useMemo(() => {
     const items: Array<{ id: string; tone: 'green' | 'blue' | 'amber' | 'rose'; text: string; time: string; href: string }> = [];
@@ -597,14 +655,89 @@ export function OwnerHome(p: OwnerHomeProps) {
     return bestIdx;
   }, [weekDays]);
 
+  const kpiSparkDays = useMemo(() => {
+    const days = weekDays.slice(-7);
+    const byDate = new Map<string, { bookings: number; units: number }>();
+    for (const r of allSaleRows) {
+      if (branch && r.locationId !== branch) continue;
+      const cur = byDate.get(r.dayISO) ?? { bookings: 0, units: 0 };
+      if (r.serviceNames.length > 0) cur.bookings += 1;
+      cur.units += r.productUnits;
+      byDate.set(r.dayISO, cur);
+    }
+    return days.map((d) => ({
+      date: d.date,
+      revenueMinor: d.revenueMinor,
+      bookings: byDate.get(d.date)?.bookings ?? 0,
+      units: byDate.get(d.date)?.units ?? 0,
+    }));
+  }, [weekDays, allSaleRows, branch]);
+  const maxSparkBookings = Math.max(...kpiSparkDays.map((d) => d.bookings), 1);
+  const maxSparkUnits = Math.max(...kpiSparkDays.map((d) => d.units), 1);
+
+  const trendChart = useMemo(() => {
+    const days = weekDays.slice(-7);
+    const maxRupees = Math.max(0, Math.ceil(maxWeekDayRev / 100));
+    const targetRupees = Math.max(300, Math.ceil(maxRupees * 1.15));
+    const rawStep = targetRupees / 3;
+    const steps = [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000];
+    const stepRupees = steps.find((s) => s >= rawStep) ?? Math.ceil(rawStep / 250000) * 250000;
+    const yMaxMinor = stepRupees * 3 * 100;
+    const ticks = [3, 2, 1, 0].map((m) => (m === 0 ? '0' : formatAxisRupees(m * stepRupees * 100)));
+    const dateFmt = new Intl.DateTimeFormat(p.lang === 'hi' ? 'hi-IN' : 'en-IN', {
+      day: 'numeric',
+      month: 'short',
+      timeZone: 'UTC',
+    });
+    const n = Math.max(days.length, 1);
+    const gapPct = 2.0;
+    const colPct = (100 - gapPct * Math.max(0, n - 1)) / n;
+    const points = days.map((d, idx) => {
+      const pct = d.revenueMinor > 0 ? Math.min(96, Math.max(6, Math.round((d.revenueMinor / yMaxMinor) * 100))) : 4;
+      const x = idx * (colPct + gapPct) + colPct / 2;
+      const y = 100 - pct;
+      const parsed = Date.parse(`${d.date}T12:00:00Z`);
+      const dateShort = Number.isFinite(parsed) ? dateFmt.format(new Date(parsed)) : d.weekday || d.date.slice(5);
+      return { ...d, pct, x, y, dateShort, isPeak: idx === peakWeekIdx };
+    });
+    const polyPoints = points.map((pt) => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ');
+    return { yMaxMinor, ticks, points, polyPoints };
+  }, [weekDays, maxWeekDayRev, peakWeekIdx, p.lang]);
+
   const paymentModes = useMemo(() => {
     const byMode = new Map((data?.money.byPaymentMode ?? []).map((s) => [s.mode, s.revenueMinor]));
+    const otherAmt = (byMode.get('other') ?? 0) + (byMode.get('not_recorded') ?? 0);
     return [
       { key: 'upi' as const, label: t.payment.upi, amount: byMode.get('upi') ?? 0, tone: 'upi' },
       { key: 'cash' as const, label: t.payment.cash, amount: byMode.get('cash') ?? 0, tone: 'cash' },
       { key: 'card' as const, label: t.payment.card, amount: byMode.get('card') ?? 0, tone: 'card' },
+      ...(otherAmt > 0 ? [{ key: 'other' as const, label: t.payment.other, amount: otherAmt, tone: 'other' }] : []),
     ];
   }, [data, t]);
+
+  const paymentDonut = useMemo(() => {
+    const total = paymentModes.reduce((s, pm) => s + pm.amount, 0);
+    const r = 44;
+    const c = 2 * Math.PI * r;
+    let offset = 0;
+    const slices = paymentModes.map((pm) => {
+      const pct = total > 0 ? Math.round((pm.amount / total) * 100) : 0;
+      const frac = total > 0 ? pm.amount / total : 0;
+      const len = frac * c;
+      const dashOffset = -offset;
+      offset += len;
+      return { ...pm, pct, len, dashOffset };
+    });
+    return { total, r, c, slices };
+  }, [paymentModes]);
+
+  /** Today's (or tomorrow's after close) visits for the full-width Recent bookings table at the bottom of desktop Home. */
+  const recentBookingRows = useMemo(() => {
+    const all = allListGroups;
+    const firstLive = all.findIndex((g) => new Date(g.endAt).getTime() > now.getTime());
+    const from = listIsTomorrow || firstLive < 0 ? 0 : Math.max(0, firstLive - 2);
+    return all.slice(from, from + 6);
+  }, [allListGroups, listIsTomorrow, now]);
 
   const totalBookingBar = Math.max(doneTodayCount + upcomingCount + inServiceCount, 1);
 
@@ -708,19 +841,19 @@ export function OwnerHome(p: OwnerHomeProps) {
           </button>
         </div>
 
-        {/* Desktop v3 Command Center — 3-row workspace matching the owner's reference design */}
+        {/* Desktop Command Center — 4-row workspace matching the owner's Option A reference design */}
         <div className={`hm-desk-v3 hm-desktop ${hideUntilBranch ? 'is-settling' : ''}`}>
-          {/* ROW 1 — 4 Equal KPI Cards */}
+          {/* ROW 1 — 4 Equal Light KPI Cards */}
           <div className="hm-v3-kpis">
-            {/* 1. Today's revenue (Dark green card) */}
+            {/* 1. Today's revenue */}
             <section className="hm-v3-kpi hm-v3-kpi-dark">
               <div className="hm-v3-kpi-head">
                 <span className="hm-v3-kpi-icon hm-v3-icon-dark" aria-hidden>
                   <span className="hm-v3-rupee-glyph">₹</span>
                 </span>
-                <span className="hm-v3-kpi-title">
+                <a className="hm-v3-kpi-title hm-v3-kpi-title-link" href={`/sales?${salesQuerySuffix}`}>
                   {period === 'today' ? t.todaysRevenue : period === 'week' ? t.moneyWeek : t.moneyMonth}
-                </span>
+                </a>
                 <button
                   type="button"
                   className="hm-v3-kpi-period"
@@ -738,31 +871,33 @@ export function OwnerHome(p: OwnerHomeProps) {
                 <div className="hm-v3-kpi-main">
                   <div className="hm-v3-kpi-num-row">
                     <strong className="hm-v3-kpi-amount">{rupees(data?.money.revenueMinor ?? 0)}</strong>
+                  </div>
+                  <div className="hm-v3-kpi-delta-row">
                     {data?.money.deltaPct !== null && data?.money.deltaPct !== undefined ? (
                       <span className="hm-v3-delta-pill">
                         {data.money.deltaPct >= 0 ? '↑' : '↓'} {Math.abs(data.money.deltaPct)}%
                       </span>
                     ) : null}
+                    <span className="hm-v3-kpi-vs">
+                      {selected?.name ? `${selected.name} · ` : ''}
+                      {period === 'today' ? t.vsYesterday : period === 'week' ? t.vsLastWeek : t.vsLastMonth}
+                    </span>
                   </div>
-                  <span className="hm-v3-kpi-vs">
-                    {selected?.name ? `${selected.name} · ` : ''}
-                    {period === 'today' ? t.vsYesterday : period === 'week' ? t.vsLastWeek : t.vsLastMonth}
-                  </span>
                 </div>
-                {weekDays.some((d) => d.revenueMinor > 0) ? (
+                {kpiSparkDays.length > 0 ? (
                   <div className="hm-v3-mini-bars" aria-hidden>
-                    {weekDays.map((d, idx) => (
+                    {kpiSparkDays.map((d, idx) => (
                       <span
                         key={d.date}
                         className={idx === peakWeekIdx ? 'is-peak' : ''}
-                        style={{ height: `${d.revenueMinor > 0 ? Math.max(12, Math.round((d.revenueMinor / maxWeekDayRev) * 100)) : 6}%` }}
+                        style={{ height: `${d.revenueMinor > 0 ? Math.max(18, Math.round((d.revenueMinor / maxWeekDayRev) * 100)) : 12}%` }}
                       />
                     ))}
                   </div>
                 ) : null}
               </div>
               <div className="hm-v3-kpi-foot hm-v3-split-foot">
-                {paymentModes.map((pm) => (
+                {paymentModes.slice(0, 3).map((pm) => (
                   <span key={pm.key} className="hm-v3-split-item">
                     {pm.label} <b>{rupees(pm.amount)}</b>
                   </span>
@@ -771,7 +906,7 @@ export function OwnerHome(p: OwnerHomeProps) {
             </section>
 
             {/* 2. Bookings today */}
-            <a className="hm-v3-kpi hm-v3-kpi-link" href="/appointments">
+            <a className="hm-v3-kpi hm-v3-kpi-link hm-v3-kpi-blue" href="/appointments">
               <div className="hm-v3-kpi-head">
                 <span className="hm-v3-kpi-icon hm-v3-icon-blue">
                   <IconCalendar />
@@ -783,10 +918,23 @@ export function OwnerHome(p: OwnerHomeProps) {
                   <div className="hm-v3-kpi-num-row">
                     <strong className="hm-v3-kpi-value">{bookingsCount}</strong>
                   </div>
-                  <span className="hm-v3-kpi-sub">
-                    {doneTodayCount} {t.completedLabel.toLowerCase()} · {upcomingCount} {t.upcomingLabel.toLowerCase()}
-                  </span>
+                  <div className="hm-v3-kpi-delta-row">
+                    <span className="hm-v3-kpi-sub">
+                      {doneTodayCount} {t.completedLabel.toLowerCase()} · {upcomingCount} {t.upcomingLabel.toLowerCase()}
+                    </span>
+                  </div>
                 </div>
+                {kpiSparkDays.length > 0 ? (
+                  <div className="hm-v3-mini-bars is-blue" aria-hidden>
+                    {kpiSparkDays.map((d, idx) => (
+                      <span
+                        key={d.date}
+                        className={idx === kpiSparkDays.length - 1 ? 'is-peak' : ''}
+                        style={{ height: `${d.bookings > 0 ? Math.max(20, Math.round((d.bookings / maxSparkBookings) * 100)) : 12}%` }}
+                      />
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <div className="hm-v3-prog-track" aria-hidden>
                 <span className="is-deep" style={{ width: `${(doneTodayCount / totalBookingBar) * 100}%` }} />
@@ -798,16 +946,16 @@ export function OwnerHome(p: OwnerHomeProps) {
                   {t.completedLabel} <b>{doneTodayCount}</b>
                 </span>
                 <span className="hm-v3-split-item">
-                  {t.upcomingLabel} <b>{upcomingCount}</b>
+                  {t.inProgressLabel} <b>{inServiceCount}</b>
                 </span>
                 <span className="hm-v3-split-item">
-                  {t.inProgressLabel} <b>{inServiceCount}</b>
+                  {t.cancelledLabel} <b>{cancelledCount}</b>
                 </span>
               </div>
             </a>
 
             {/* 3. New clients */}
-            <a className="hm-v3-kpi hm-v3-kpi-link" href="/customers">
+            <a className="hm-v3-kpi hm-v3-kpi-link hm-v3-kpi-purple" href="/customers">
               <div className="hm-v3-kpi-head">
                 <span className="hm-v3-kpi-icon hm-v3-icon-green">
                   <IconStaff />
@@ -819,23 +967,36 @@ export function OwnerHome(p: OwnerHomeProps) {
                   <div className="hm-v3-kpi-num-row">
                     <strong className="hm-v3-kpi-value">{data?.money.newCustomers ?? 0}</strong>
                   </div>
-                  <span className="hm-v3-kpi-sub">
-                    {period === 'today' ? t.todayWord : period === 'week' ? t.week : t.month}
-                  </span>
+                  <div className="hm-v3-kpi-delta-row">
+                    <span className="hm-v3-kpi-sub">
+                      {period === 'today' ? t.todayWord : period === 'week' ? t.week : t.month}
+                    </span>
+                  </div>
                 </div>
+                {kpiSparkDays.length > 0 ? (
+                  <div className="hm-v3-mini-bars is-purple" aria-hidden>
+                    {kpiSparkDays.map((d, idx) => (
+                      <span
+                        key={d.date}
+                        className={idx === kpiSparkDays.length - 1 ? 'is-peak' : ''}
+                        style={{ height: `${d.bookings > 0 ? Math.max(20, Math.round((d.bookings / maxSparkBookings) * 100)) : 12}%` }}
+                      />
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <div className="hm-v3-kpi-foot hm-v3-split-foot">
                 <span className="hm-v3-split-item">
-                  {t.returningLabel} <b>{activeClientsCount}</b>
+                  {t.totalClientsLabel} <b>{totalClientsCount}</b>
                 </span>
                 <span className="hm-v3-split-item">
-                  {t.newLabel} <b>{data?.money.newCustomers ?? 0}</b>
+                  {t.returningLabel} <b>{activeClientsCount}</b>
                 </span>
               </div>
             </a>
 
             {/* 4. Products sold */}
-            <a className="hm-v3-kpi hm-v3-kpi-link" href="/sales?filter=products">
+            <a className="hm-v3-kpi hm-v3-kpi-link hm-v3-kpi-amber" href={`/sales?filter=products&${salesQuerySuffix}`}>
               <div className="hm-v3-kpi-head">
                 <span className="hm-v3-kpi-icon hm-v3-icon-amber">
                   <IconProducts />
@@ -847,22 +1008,38 @@ export function OwnerHome(p: OwnerHomeProps) {
                   <div className="hm-v3-kpi-num-row">
                     <strong className="hm-v3-kpi-value">{productTake ? productTake.units : '—'}</strong>
                   </div>
-                  <span className="hm-v3-kpi-sub">
-                    {productTake ? rupees(productTake.revenueMinor) : '—'} {t.revenueWord}
-                  </span>
+                  <div className="hm-v3-kpi-delta-row">
+                    <span className="hm-v3-kpi-sub">
+                      {productTake ? rupees(productTake.revenueMinor) : '—'} {t.revenueWord}
+                    </span>
+                  </div>
                 </div>
+                {kpiSparkDays.length > 0 ? (
+                  <div className="hm-v3-mini-bars is-amber" aria-hidden>
+                    {kpiSparkDays.map((d, idx) => (
+                      <span
+                        key={d.date}
+                        className={idx === kpiSparkDays.length - 1 ? 'is-peak' : ''}
+                        style={{ height: `${d.units > 0 ? Math.max(20, Math.round((d.units / maxSparkUnits) * 100)) : 12}%` }}
+                      />
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <div className="hm-v3-kpi-foot hm-v3-prod-foot">
-                <span className="hm-v3-prod-meta">
-                  <span>{t.topProductLabel}</span>
-                  <b>{productTake?.topName ?? t.nav.products}</b>
+                <span className="hm-v3-prod-inline">
+                  <span>{t.topProductLabel}</span>{' '}
+                  <b>
+                    {productTake?.topName
+                      ? `${productTake.topName} (${productTake.topUnits ?? 0})`
+                      : '—'}
+                  </b>
                 </span>
-                <span className="hm-v3-prod-sold">{t.soldCount(productTake?.topUnits ?? 0)}</span>
               </div>
             </a>
           </div>
 
-          {/* ROW 2 — Revenue Trend + Top Services + Quick Actions */}
+          {/* ROW 2 — Revenue Trend + Sales by Payment Method + Quick Actions */}
           <div className="hm-v3-mid">
             {/* 1. Revenue trend */}
             <section className="hm-v3-card hm-v3-trend-card">
@@ -872,83 +1049,87 @@ export function OwnerHome(p: OwnerHomeProps) {
                     changed that card's period underneath it. */}
                 <span className="hm-v3-period-pill is-static">{data?.week.span === 'month' ? t.thisMonth : t.thisWeek}</span>
               </div>
-              <div className="hm-v3-trend-summary">
-                <strong className="hm-v3-trend-total">{rupees(data?.week.revenueMinor ?? 0)}</strong>
-                <div className="hm-v3-trend-delta">
-                  {data?.money.deltaPct !== null && data?.money.deltaPct !== undefined ? (
-                    <>
-                      <span className="hm-v3-badge-green">
-                        {data.money.deltaPct >= 0 ? '↑' : '↓'} {Math.abs(data.money.deltaPct)}%
-                      </span>
-                      <span className="hm-v3-trend-vs">{period === 'today' ? t.vsYesterday : period === 'week' ? t.vsLastWeek : t.vsLastMonth}</span>
-                    </>
-                  ) : null}
-                </div>
-              </div>
-              {weekDays.length === 0 || !weekDays.some((d) => d.revenueMinor > 0) ? (
+              {trendChart.points.length === 0 ? (
                 <p className="hm-empty">{t.nothingToday}</p>
               ) : (
-                <div className="hm-v3-chart-box is-plain">
-                  <div className="hm-v3-bars">
-                    {weekDays.map((d, idx) => {
-                      const pct = d.revenueMinor > 0 ? Math.max(8, Math.round((d.revenueMinor / maxWeekDayRev) * 76)) : 3;
-                      const isPeak = idx === peakWeekIdx;
-                      return (
-                        <div key={d.date} className={`hm-v3-bar-col ${isPeak ? 'is-peak' : ''}`}>
+                <div className="hm-v3-chart-box">
+                  <div className="hm-v3-yaxis" aria-hidden>
+                    {trendChart.ticks.map((lbl, idx) => (
+                      <span key={idx}>{lbl}</span>
+                    ))}
+                  </div>
+                  <div className="hm-v3-chart-plot">
+                    <div className="hm-v3-grid-lines" aria-hidden>
+                      <span />
+                      <span />
+                      <span />
+                      <span />
+                    </div>
+                    <svg className="hm-v3-trend-line-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+                      <polyline className="hm-v3-trend-poly" points={trendChart.polyPoints} vectorEffect="non-scaling-stroke" />
+                    </svg>
+                    <div className="hm-v3-bars">
+                      {trendChart.points.map((d) => (
+                        <div key={d.date} className={`hm-v3-bar-col ${d.isPeak ? 'is-peak' : ''}`}>
                           <div className="hm-v3-bar-track">
-                            {isPeak ? (
-                              <span className="hm-v3-bar-tip" style={{ bottom: `calc(${pct}% + 6px)` }}>
+                            {d.isPeak ? (
+                              <span className="hm-v3-bar-tip" style={{ bottom: `calc(${d.pct}% + 10px)` }}>
                                 {rupees(d.revenueMinor)}
                               </span>
                             ) : null}
-                            <span className="hm-v3-bar-fill" style={{ height: `${pct}%` }} />
+                            <span className="hm-v3-bar-dot" style={{ bottom: `calc(${d.pct}% - 4px)` }} aria-hidden />
+                            <span className="hm-v3-bar-fill" style={{ height: `${d.pct}%` }} />
                           </div>
-                          <span className="hm-v3-bar-day">{d.weekday || d.date.slice(0, 3)}</span>
+                          <span className="hm-v3-bar-day">{d.dateShort}</span>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
             </section>
 
-            {/* 2. Top services */}
-            <section className="hm-v3-card hm-v3-services-card">
+            {/* 2. Sales by payment method */}
+            <section className="hm-v3-card hm-v3-payment-card">
               <div className="hm-v3-card-head">
-                <h2>
-                  {t.topServicesTitle} <span className="hm-v3-count">({t.thisWeek})</span>
-                </h2>
-                {canSee('/reports', p.role, p.reportTabs) ? (
-                  <a className="hm-v3-head-link" href="/reports?tab=services">
-                    {t.viewAll} →
-                  </a>
-                ) : null}
+                <h2>{t.salesByPaymentTitle}</h2>
               </div>
-              {rankedServices.length === 0 ? (
-                <p className="hm-empty">{t.nothingToday}</p>
-              ) : (
-                <ol className="hm-v3-srv-rows">
-                  {rankedServices.map((srv, idx) => {
-                    const pct = Math.max(18, Math.round((srv.bookings / maxServiceBookings) * 100));
-                    return (
-                      <li key={srv.id} className="hm-v3-srv-row">
-                        <span className="hm-v3-srv-rank">{idx + 1}</span>
-                        <Avatar name={srv.name} id={srv.id} size={32} />
-                        <div className="hm-v3-srv-main">
-                          <strong className="hm-v3-srv-name">{srv.name}</strong>
-                          <div className="hm-v3-srv-bar">
-                            <span style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-                        <span className="hm-v3-srv-bk">
-                          {srv.bookings} {t.bookingWord(srv.bookings)}
-                        </span>
-                        <strong className="hm-v3-srv-rev">{rupees(srv.revenueMinor)}</strong>
-                      </li>
-                    );
-                  })}
-                </ol>
-              )}
+              <div className="hm-v3-donut-wrap">
+                <div className="hm-v3-donut-box">
+                  <svg className="hm-v3-donut-svg" viewBox="0 0 116 116" aria-hidden>
+                    <circle className="hm-v3-donut-track" cx="58" cy="58" r={paymentDonut.r} />
+                    {paymentDonut.total > 0
+                      ? paymentDonut.slices.map((sl) =>
+                          sl.len > 0 ? (
+                            <circle
+                              key={sl.key}
+                              className={`hm-v3-donut-seg is-${sl.tone}`}
+                              cx="58"
+                              cy="58"
+                              r={paymentDonut.r}
+                              strokeDasharray={`${sl.len} ${paymentDonut.c}`}
+                              strokeDashoffset={sl.dashOffset}
+                            />
+                          ) : null,
+                        )
+                      : null}
+                  </svg>
+                  <div className="hm-v3-donut-center">
+                    <strong>{rupees(paymentDonut.total)}</strong>
+                    <span>{t.totalLabel}</span>
+                  </div>
+                </div>
+                <ul className="hm-v3-donut-legend">
+                  {paymentDonut.slices.map((sl) => (
+                    <li key={sl.key} className="hm-v3-donut-row">
+                      <span className={`hm-v3-donut-dot is-${sl.tone}`} aria-hidden />
+                      <span className="hm-v3-donut-label">{sl.label}</span>
+                      <span className="hm-v3-donut-pct">{sl.pct}%</span>
+                      <strong className="hm-v3-donut-amt">{rupees(sl.amount)}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </section>
 
             {/* 3. Quick actions */}
@@ -1005,9 +1186,89 @@ export function OwnerHome(p: OwnerHomeProps) {
             </section>
           </div>
 
-          {/* ROW 3 — Staff Status + Needs Your Attention + Recent Activity */}
+          {/* ROW 3 — Top Services + Top Products + Staff Status */}
           <div className="hm-v3-bot">
-            {/* 1. Staff status */}
+            {/* 1. Top services */}
+            <section className="hm-v3-card hm-v3-services-card">
+              <div className="hm-v3-card-head">
+                <h2>
+                  {t.topServicesTitle}{' '}
+                  <span className="hm-v3-count">
+                    ({period === 'today' ? t.today : period === 'week' ? t.thisWeek : t.thisMonth})
+                  </span>
+                </h2>
+                <a className="hm-v3-head-link" href={`/sales?filter=services&${salesQuerySuffix}`}>
+                  {t.viewAll} →
+                </a>
+              </div>
+              {rankedServices.length === 0 ? (
+                <p className="hm-empty">{t.noServicesSold}</p>
+              ) : (
+                <ol className="hm-v3-srv-rows">
+                  {rankedServices.map((srv, idx) => {
+                    const pct = Math.max(18, Math.round((srv.bookings / maxServiceBookings) * 100));
+                    return (
+                      <li key={srv.id} className="hm-v3-srv-row">
+                        <span className="hm-v3-srv-rank">{idx + 1}</span>
+                        <Avatar name={srv.name} id={srv.id} size={32} />
+                        <div className="hm-v3-srv-main">
+                          <strong className="hm-v3-srv-name">{srv.name}</strong>
+                          <div className="hm-v3-srv-bar">
+                            <span style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                        <span className="hm-v3-srv-bk">
+                          {srv.bookings} {t.bookingWord(srv.bookings)}
+                        </span>
+                        <strong className="hm-v3-srv-rev">{rupees(srv.revenueMinor)}</strong>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </section>
+
+            {/* 2. Top products */}
+            <section className="hm-v3-card hm-v3-products-card">
+              <div className="hm-v3-card-head">
+                <h2>
+                  {t.topProductsTitle}{' '}
+                  <span className="hm-v3-count">
+                    ({period === 'today' ? t.today : period === 'week' ? t.thisWeek : t.thisMonth})
+                  </span>
+                </h2>
+                <a className="hm-v3-head-link" href={`/sales?filter=products&${salesQuerySuffix}`}>
+                  {t.viewAll} →
+                </a>
+              </div>
+              {rankedProducts.length === 0 ? (
+                <p className="hm-empty">{t.noProductsSold}</p>
+              ) : (
+                <ol className="hm-v3-srv-rows">
+                  {rankedProducts.map((pr, idx) => {
+                    const pct = Math.max(18, Math.round((pr.units / maxProductUnits) * 100));
+                    return (
+                      <li key={pr.id} className="hm-v3-srv-row">
+                        <span className="hm-v3-srv-rank">{idx + 1}</span>
+                        <Avatar name={pr.name} id={pr.id} size={32} />
+                        <div className="hm-v3-srv-main">
+                          <strong className="hm-v3-srv-name">{pr.name}</strong>
+                          <div className="hm-v3-srv-bar">
+                            <span style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                        <span className="hm-v3-srv-bk">
+                          {pr.units} {t.unitWord(pr.units)}
+                        </span>
+                        <strong className="hm-v3-srv-rev">{rupees(pr.revenueMinor)}</strong>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </section>
+
+            {/* 3. Staff status */}
             <section className="hm-v3-card hm-v3-staff-card">
               <div className="hm-v3-card-head">
                 <h2>
@@ -1022,7 +1283,7 @@ export function OwnerHome(p: OwnerHomeProps) {
               {branchProviders.length === 0 ? (
                 <p className="hm-empty">{t.teamEmpty}</p>
               ) : (
-                <div className="hm-v3-staff-strip">
+                <div className="hm-v3-staff-strip hm-v3-staff-list">
                   {branchProviders.map((prov) => {
                     const inChair = busy.get(prov.id);
                     const isAbsent = absentSet.has(prov.id);
@@ -1033,16 +1294,16 @@ export function OwnerHome(p: OwnerHomeProps) {
                     return (
                       <a key={prov.id} className="hm-v3-staff-item" href="/providers">
                         <span className={`hm-v3-staff-ring is-${statusKey}`}>
-                          <Avatar name={prov.displayName} id={prov.id} size={36} photoUrl={prov.photoUrl} />
+                          <Avatar name={prov.displayName} id={prov.id} size={30} photoUrl={prov.photoUrl} />
                         </span>
                         <strong className="hm-v3-staff-name">{prov.displayName.split(' ')[0]}</strong>
                         <span className="hm-v3-staff-role">{t.providerRoleWord}</span>
+                        <span className={`hm-v3-staff-in ${inTimeLabel ? 'is-in' : ''}`}>
+                          {inTimeLabel ? t.staffInTime(inTimeLabel) : t.staffNotInYet}
+                        </span>
                         <span className={`hm-v3-staff-pill is-${statusKey}`}>
                           <i />
                           {statusLabel}
-                        </span>
-                        <span className={`hm-v3-staff-in ${inTimeLabel ? 'is-in' : ''}`}>
-                          {inTimeLabel ? t.staffInTime(inTimeLabel) : t.staffNotInYet}
                         </span>
                       </a>
                     );
@@ -1050,57 +1311,118 @@ export function OwnerHome(p: OwnerHomeProps) {
                 </div>
               )}
             </section>
-
-            {/* 2. Needs your attention */}
-            <section className="hm-v3-card hm-v3-attention-card">
-              <div className="hm-v3-card-head">
-                <h2>{t.needsYourAttention}</h2>
-                {canSee('/reports', p.role, p.reportTabs) ? (
-                  <a className="hm-v3-head-link" href="/reports">
-                    {t.whatToDoLink} →
-                  </a>
-                ) : attentionTotal === 0 && !failed ? (
-                  <span className="hm-pill hm-pill-green">{t.allClear}</span>
-                ) : null}
-              </div>
-              {failed && !dataIsForBranch ? <CardError t={t} /> : <AttentionList items={attention} />}
-            </section>
-
-            {/* 3. Recent activity */}
-            <section className="hm-v3-card hm-v3-activity-card">
-              <div className="hm-v3-card-head">
-                <h2>{t.recentActivityTitle}</h2>
-                <a className="hm-v3-head-link" href="/appointments">
-                  {t.viewAll} →
-                </a>
-              </div>
-              {recentFeed.length === 0 ? (
-                <p className="hm-empty">{t.nothingToday}</p>
-              ) : (
-                <ul className="hm-v3-feed-rows">
-                  {recentFeed.map((item) => (
-                    <li key={item.id}>
-                      <a className="hm-v3-feed-row" href={item.href}>
-                        <span className={`hm-v3-feed-icon is-${item.tone}`}>
-                          {item.tone === 'blue' ? (
-                            <IconReceipt />
-                          ) : item.tone === 'amber' ? (
-                            <IconProducts />
-                          ) : item.tone === 'rose' ? (
-                            <IconBan />
-                          ) : (
-                            <IconCalendar />
-                          )}
-                        </span>
-                        <span className="hm-v3-feed-text">{item.text}</span>
-                        <span className="hm-v3-feed-time">{item.time}</span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
           </div>
+
+          {/* ROW 4 — Recent Bookings (Full-width Table Card) */}
+          <section className="hm-v3-card hm-v3-recent-card">
+            <div className="hm-v3-card-head">
+              <h2>
+                {t.recentBookingsTitle}{' '}
+                <span className="hm-v3-count">({listIsTomorrow ? t.bookingsTomorrow : t.today})</span>
+              </h2>
+              <a className="hm-v3-head-link" href="/appointments">
+                {t.viewAll} →
+              </a>
+            </div>
+            {recentBookingRows.length === 0 ? (
+              <p className="hm-empty">{listIsTomorrow ? t.nothingTomorrow : t.nothingToday}</p>
+            ) : (
+              <div className="hm-v3-recent-wrap">
+                <table className="hm-v3-recent-table">
+                  <thead>
+                    <tr>
+                      <th>{t.colTime}</th>
+                      <th>{t.colClient}</th>
+                      <th>{t.colService}</th>
+                      <th>{t.colStaff}</th>
+                      <th>{t.colAmount}</th>
+                      <th>{t.colStatus}</th>
+                      <th>{t.colActions}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentBookingRows.map((b) => {
+                      const timeStr = formatTime(b.startAt, p.timezone);
+                      const cName = clientNameLabel(b) ?? b.customerName ?? '—';
+                      const svcLabel = summarizeServices(b.serviceNames, p.lang);
+                      const staffName = b.providerNames.length > 0 ? b.providerNames.join(', ') : '—';
+                      const { totalMinor: servicesBillMinor } = bookingBill(b.appointments);
+                      const productsBillMinor = (b.products ?? []).reduce((s, pr) => s + Number(pr.paidMinor || 0), 0);
+                      const billMinor = servicesBillMinor + productsBillMinor;
+                      const st = rowState(b);
+                      const isActive = st === 'in_service' || st === 'needs_answer';
+                      const pillTone = isActive ? 'blue' : st === 'done' ? 'green' : st === 'later' ? 'amber' : 'rose';
+                      const statusLabel = isActive
+                        ? t.inProgressLabel
+                        : st === 'done'
+                          ? t.completedLabel
+                          : st === 'later'
+                            ? t.upcomingLabel
+                            : st === 'cancelled'
+                              ? t.cancelledLabel
+                              : t.noShowLabel;
+                      return (
+                        <tr key={b.key} onClick={() => setOpenBooking(b)}>
+                          <td className="hm-v3-td-time">
+                            <strong>{timeStr}</strong>
+                          </td>
+                          <td className="hm-v3-td-client">
+                            <div className="hm-v3-person">
+                              <Avatar name={cName} id={avatarKey(b)} size={28} />
+                              <div className="hm-v3-person-meta">
+                                <strong>{cName}</strong>
+                                <span>{b.customerPhone ? b.customerPhone : formatDuration(b.totalMin, p.lang)}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="hm-v3-td-service">
+                            <strong>{svcLabel}</strong>
+                          </td>
+                          <td className="hm-v3-td-staff">
+                            <div className="hm-v3-staff-cell">
+                              {b.providerNames[0] ? <Avatar name={b.providerNames[0]} id={b.providerNames[0]} size={24} /> : null}
+                              <span>{staffName}</span>
+                            </div>
+                          </td>
+                          <td className="hm-v3-td-amount">
+                            <strong>{rupees(billMinor)}</strong>
+                          </td>
+                          <td>
+                            <span className={`hm-pill hm-pill-${pillTone}`}>{statusLabel}</span>
+                          </td>
+                          <td className="hm-v3-td-actions">
+                            <div className="hm-v3-act-wrap">
+                              <button
+                                type="button"
+                                className="hm-v3-row-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenBooking(b);
+                                }}
+                              >
+                                {t.viewBtn}
+                              </button>
+                              <button
+                                type="button"
+                                className="hm-v3-row-dots"
+                                aria-label={t.viewBtn}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenBooking(b);
+                                }}
+                              >
+                                ⋮
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
         </div>
 
         <div className={`hm-owner-grid ${hideUntilBranch ? 'is-settling' : ''}`} aria-busy={hideUntilBranch || undefined}>

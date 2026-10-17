@@ -3360,10 +3360,10 @@ button.hm-now-count {
   }
 }
 
-/* ---------- 3. Row 1: 4 KPI Cards with Wider Money Hero (.hm-v3-kpis) ---------- */
+/* ---------- 3. Row 1: 4 Equal Light KPI Cards (.hm-v3-kpis) ---------- */
 .hm-v3-kpis {
   display: grid;
-  grid-template-columns: minmax(320px, 1.38fr) minmax(260px, 1.15fr) repeat(2, minmax(0, 0.9fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   align-items: stretch;
 }
@@ -3376,8 +3376,8 @@ button.hm-now-count {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 6px;
-  padding: 10px 14px;
+  gap: 8px;
+  padding: 12px 16px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--hm-line);
   background: var(--surface);
@@ -3399,13 +3399,21 @@ button.hm-now-count {
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
   text-decoration: none;
 }
+/* Soft tinted borders matching the 4-card reference design */
 .hm-v3-kpi-dark {
-  padding: 12px 18px;
-  gap: 6px;
-  background: linear-gradient(140deg, var(--hm-hero-a) 0%, var(--hm-hero-b) 100%);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: var(--surface);
-  box-shadow: 0 6px 18px rgba(9, 32, 20, 0.16);
+  background: var(--surface);
+  border-color: var(--accent-soft);
+  color: var(--hm-ink);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+.hm-v3-kpi-blue {
+  border-color: var(--blue-soft);
+}
+.hm-v3-kpi-purple {
+  border-color: var(--purple-soft);
+}
+.hm-v3-kpi-amber {
+  border-color: var(--amber-soft);
 }
 .hm-v3-kpi-head {
   display: flex;
@@ -3432,20 +3440,20 @@ button.hm-now-count {
   line-height: 1;
 }
 .hm-v3-icon-dark {
-  background: rgba(134, 239, 172, 0.18);
-  color: var(--accent-soft);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
 }
 .hm-v3-icon-blue {
   background: var(--blue-soft);
   color: var(--blue);
 }
 .hm-v3-icon-green {
-  background: var(--accent-soft);
-  color: var(--accent-deep);
+  background: var(--purple-soft);
+  color: var(--purple-deep);
 }
 .hm-v3-icon-amber {
   background: var(--amber-soft);
-  color: var(--amber);
+  color: var(--amber-ink);
 }
 .hm-v3-kpi-title {
   flex: 1;
@@ -3457,26 +3465,36 @@ button.hm-now-count {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.hm-v3-kpi-title-link {
+  text-decoration: none;
+  color: var(--hm-ink);
+}
+.hm-v3-kpi-title-link:hover {
+  color: var(--accent-deep);
+  text-decoration: underline;
+}
 .hm-v3-kpi-dark .hm-v3-kpi-title {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--hm-ink);
 }
 .hm-v3-kpi-period {
   display: inline-flex;
   align-items: center;
   padding: 3px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--hm-line);
+  background: var(--page-bg);
+  color: var(--hm-ink);
   font: inherit;
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
 }
 .hm-v3-kpi-period:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+  color: var(--accent-deep);
 }
 .hm-v3-kpi-body {
   display: flex;
@@ -3498,11 +3516,12 @@ button.hm-now-count {
   flex-wrap: nowrap;
 }
 .hm-v3-kpi-amount {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.025em;
   font-variant-numeric: tabular-nums;
+  color: var(--hm-ink);
 }
 .hm-v3-kpi-value {
   font-size: 1.5rem;
@@ -3512,13 +3531,20 @@ button.hm-now-count {
   font-variant-numeric: tabular-nums;
   color: var(--hm-ink);
 }
+.hm-v3-kpi-delta-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  flex-wrap: nowrap;
+}
 .hm-v3-delta-pill {
   display: inline-flex;
   align-items: center;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(134, 239, 172, 0.22);
-  color: var(--accent-soft);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
   font-size: 0.75rem;
   font-weight: 700;
   white-space: nowrap;
@@ -3526,7 +3552,7 @@ button.hm-now-count {
 .hm-v3-kpi-vs {
   font-size: 0.75rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.76);
+  color: var(--hm-muted);
   white-space: nowrap;
 }
 .hm-v3-kpi-sub {
@@ -3554,30 +3580,42 @@ button.hm-now-count {
 .hm-v3-mini-bars {
   display: flex;
   align-items: flex-end;
-  gap: 4px;
-  height: 38px;
-  width: 84px;
+  gap: 3px;
+  height: 36px;
+  width: 72px;
   flex-shrink: 0;
 }
 .hm-v3-mini-bars span {
   flex: 1;
   border-radius: 3px 3px 0 0;
-  background: rgba(134, 239, 172, 0.34);
+  background: var(--accent-soft);
   min-height: 5px;
 }
 .hm-v3-mini-bars span.is-peak {
-  background: rgba(134, 239, 172, 0.95);
+  background: var(--accent-deep);
+}
+.hm-v3-mini-bars.is-blue span {
+  background: var(--blue-soft);
+}
+.hm-v3-mini-bars.is-blue span.is-peak {
+  background: var(--blue);
+}
+.hm-v3-mini-bars.is-purple span {
+  background: var(--purple-soft);
+}
+.hm-v3-mini-bars.is-purple span.is-peak {
+  background: var(--purple-deep);
 }
 .hm-v3-mini-bars.is-amber {
-  height: 34px;
-  width: 68px;
+  height: 36px;
+  width: 72px;
   gap: 3px;
 }
 .hm-v3-mini-bars.is-amber span {
-  background: var(--accent-soft);
+  background: var(--amber-soft);
 }
 .hm-v3-mini-bars.is-amber span.is-peak {
-  background: var(--accent);
+  background: var(--amber);
 }
 
 /* Smooth area sparkline inside New clients KPI card */
@@ -3633,35 +3671,56 @@ button.hm-now-count {
 }
 .hm-v3-kpi-dark .hm-v3-kpi-foot {
   padding-top: 6px;
-  border-top-color: rgba(255, 255, 255, 0.14);
+  border-top-color: var(--hm-line);
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.84);
+  color: var(--hm-muted);
 }
 .hm-v3-kpi-dark .hm-v3-kpi-foot b {
-  color: var(--surface);
+  color: var(--hm-ink);
 }
 .hm-v3-split-foot {
-  flex-wrap: nowrap;
-  white-space: nowrap;
-  overflow: hidden;
+  flex-wrap: wrap;
+  row-gap: 2px;
+  column-gap: 6px;
 }
 .hm-v3-split-item {
   display: inline-flex;
   align-items: center;
   gap: 3px;
+  white-space: nowrap;
 }
 .hm-v3-split-item + .hm-v3-split-item {
-  margin-left: 4px;
-  padding-left: 4px;
+  padding-left: 6px;
   border-left: 1px solid var(--hm-line);
 }
 .hm-v3-kpi-dark .hm-v3-split-item + .hm-v3-split-item {
-  border-left-color: rgba(255, 255, 255, 0.16);
+  border-left-color: var(--hm-line);
 }
 .hm-v3-prod-foot {
   justify-content: space-between;
   align-items: center;
   gap: 6px;
+}
+.hm-v3-prod-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+  min-width: 0;
+}
+.hm-v3-prod-inline span {
+  font-size: 0.75rem;
+  color: var(--hm-muted);
+  white-space: nowrap;
+}
+.hm-v3-prod-inline b {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--hm-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .hm-v3-prod-meta {
   display: flex;
@@ -3693,7 +3752,7 @@ button.hm-now-count {
 .hm-v3-card {
   display: flex;
   flex-direction: column;
-  padding: 12px 16px;
+  padding: 14px 16px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--hm-line);
   background: var(--surface);
@@ -3705,7 +3764,7 @@ button.hm-now-count {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 .hm-v3-card-head h2 {
   margin: 0;
@@ -3761,18 +3820,29 @@ button.hm-now-count {
   opacity: 0.94;
 }
 
-/* ---------- 5. Row 2: Revenue Trend + Top Services + Quick Actions ---------- */
-.hm-v3-mid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  align-items: stretch;
+/* Compact top Needs your attention strip on desktop */
+.hm-v3-attention-card {
+  padding: 10px 14px;
+}
+.hm-v3-attention-card.is-calm {
+  display: none;
+}
+.hm-v3-attention-card .hm-v3-card-head {
+  margin-bottom: 6px;
 }
 .hm-v3-attention-card .hm-attention {
   flex: 1;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 8px;
+}
+
+/* ---------- 5. Row 2: Revenue Trend + Payment Donut + Quick Actions ---------- */
+.hm-v3-mid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 0.9fr);
+  gap: 12px;
+  align-items: stretch;
 }
 .hm-v3-filter-bar {
   display: flex;
@@ -3851,6 +3921,127 @@ button.hm-now-count {
   text-decoration: none;
 }
 
+/* Sales by payment method donut + legend (shades of green matching reference) */
+.hm-v3-donut-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 0;
+}
+.hm-v3-donut-box {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+}
+.hm-v3-donut-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.hm-v3-donut-track {
+  fill: none;
+  stroke: var(--page-bg);
+  stroke-width: 14;
+}
+.hm-v3-donut-seg {
+  fill: none;
+  stroke-width: 14;
+  transition: stroke-dasharray 0.24s ease;
+}
+.hm-v3-donut-seg.is-upi {
+  stroke: var(--accent-deep);
+}
+.hm-v3-donut-seg.is-cash {
+  stroke: var(--accent);
+}
+.hm-v3-donut-seg.is-card {
+  stroke: var(--accent-soft);
+}
+.hm-v3-donut-seg.is-other {
+  stroke: var(--blue);
+}
+.hm-v3-donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  gap: 1px;
+}
+.hm-v3-donut-center strong {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--hm-ink);
+  font-variant-numeric: tabular-nums;
+}
+.hm-v3-donut-center span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--hm-muted);
+}
+.hm-v3-donut-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.hm-v3-donut-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 0.8125rem;
+}
+.hm-v3-donut-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.hm-v3-donut-dot.is-upi {
+  background: var(--accent-deep);
+}
+.hm-v3-donut-dot.is-cash {
+  background: var(--accent);
+}
+.hm-v3-donut-dot.is-card {
+  background: var(--accent-soft);
+}
+.hm-v3-donut-dot.is-other {
+  background: var(--blue);
+}
+.hm-v3-donut-label {
+  flex: 1;
+  min-width: 38px;
+  font-weight: 600;
+  color: var(--hm-ink);
+  white-space: nowrap;
+}
+.hm-v3-donut-pct {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--hm-muted);
+  font-variant-numeric: tabular-nums;
+}
+.hm-v3-donut-amt {
+  min-width: 58px;
+  text-align: right;
+  font-weight: 800;
+  color: var(--hm-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /*
  * A fixed-height box that scrolls: the same size on a quiet morning and a day with a hundred bookings, with the column
  * headings held at the top. It used to grow with its rows (the card and the page under it with them) and then, once
@@ -3861,43 +4052,57 @@ button.hm-now-count {
   height: 22rem;
   overflow: auto;
 }
-.hm-v3-table {
+.hm-v3-table,
+.hm-v3-recent-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
 }
-.hm-v3-table thead th {
+.hm-v3-table thead th,
+.hm-v3-recent-table thead th {
   position: sticky;
   top: 0;
   z-index: 2;
   background: var(--surface);
 }
-.hm-v3-table th {
+.hm-v3-table th,
+.hm-v3-recent-table th {
   padding: 8px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--hm-muted);
   border-bottom: 1px solid var(--hm-line);
   white-space: nowrap;
 }
-.hm-v3-table td {
+.hm-v3-table td,
+.hm-v3-recent-table td {
   padding: 10px 8px;
   border-bottom: 1px solid var(--hm-line);
   vertical-align: middle;
   font-size: 0.875rem;
 }
-.hm-v3-table tbody tr:last-child td {
+.hm-v3-table tbody tr:last-child td,
+.hm-v3-recent-table tbody tr:last-child td {
   border-bottom: none;
 }
-.hm-v3-table tbody tr:hover td {
+.hm-v3-table tbody tr:hover td,
+.hm-v3-recent-table tbody tr:hover td {
   background: var(--page-bg);
+}
+.hm-v3-recent-table tbody tr {
+  cursor: pointer;
+}
+.hm-v3-recent-wrap {
+  overflow-x: auto;
 }
 .hm-v3-td-time {
   position: relative;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-.hm-v3-td-time::before {
+.hm-v3-table .hm-v3-td-time::before {
   content: '';
   position: absolute;
   left: 14px;
@@ -3946,13 +4151,20 @@ button.hm-now-count {
  * long unbroken value now stops at a width and shows "…" there, so the row's buttons never leave the screen.
  */
 .hm-v3-td-client {
-  max-width: 9rem;
+  max-width: 11rem;
 }
 .hm-v3-td-service {
-  max-width: 8rem;
+  max-width: 12rem;
 }
 .hm-v3-td-staff {
-  max-width: 7rem;
+  max-width: 9rem;
+}
+.hm-v3-td-amount strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--hm-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .hm-v3-td-service strong {
   overflow: hidden;
@@ -4051,7 +4263,7 @@ button.hm-now-count {
   gap: 12px;
 }
 
-/* Right Column: Stacked Staff status + Quick actions */
+/* Staff status — clean 4-column rows inside Row 3 (.hm-v3-staff-list) */
 .hm-v3-right-col {
   display: flex;
   flex-direction: column;
@@ -4060,40 +4272,40 @@ button.hm-now-count {
 }
 .hm-v3-staff-strip {
   display: flex;
-  align-items: stretch;
-  gap: 8px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 2px;
-  scroll-snap-type: x proximity;
+  flex-direction: column;
+  gap: 0;
+  max-height: 248px;
+  overflow-y: auto;
   scrollbar-width: thin;
-  text-align: center;
 }
 .hm-v3-staff-item {
-  flex: 1 0 92px;
-  min-width: 92px;
-  scroll-snap-align: start;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto auto auto;
   align-items: center;
-  gap: 2px;
-  padding: 5px 4px;
-  border-radius: var(--radius);
-  border: 1px solid var(--hm-line);
-  background: var(--page-bg);
+  gap: 6px;
+  padding: 6px 2px;
+  border-bottom: 1px solid var(--hm-line);
+  background: transparent;
   color: var(--hm-ink);
   text-decoration: none;
 }
+.hm-v3-staff-item:last-child {
+  border-bottom: none;
+}
 .hm-v3-staff-item:hover {
-  border-color: var(--border-strong);
-  background: var(--surface);
+  background: var(--page-bg);
   text-decoration: none;
 }
 .hm-v3-staff-ring {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: 2px solid var(--hm-line);
   overflow: hidden;
+  flex-shrink: 0;
 }
 .hm-v3-staff-ring.is-available {
   border-color: var(--accent);
@@ -4103,7 +4315,7 @@ button.hm-now-count {
 }
 .hm-v3-staff-name {
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--hm-ink);
   max-width: 100%;
   white-space: nowrap;
@@ -4113,20 +4325,25 @@ button.hm-now-count {
 .hm-v3-staff-role {
   font-size: 0.75rem;
   color: var(--hm-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .hm-v3-staff-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  padding: 1px 6px;
+  padding: 2px 8px;
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 .hm-v3-staff-pill i {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: currentColor;
 }
@@ -4139,11 +4356,10 @@ button.hm-now-count {
   color: var(--danger);
 }
 .hm-v3-staff-pill.is-absent {
-  background: var(--surface);
+  background: var(--page-bg);
   color: var(--hm-muted);
 }
 .hm-v3-staff-in {
-  margin-top: 1px;
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--hm-muted);
@@ -4155,13 +4371,14 @@ button.hm-now-count {
   color: var(--hm-ink);
 }
 
-/* Quick Actions — 3 columns × 2 rows at the top of the right column */
+/* Quick Actions — 2 columns × 3 rows inside Row 2 matching reference */
 .hm-v3-staff-card {
   flex: 1;
 }
 .hm-v3-qgrid {
+  flex: 1;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 .hm-v3-qbtn {
@@ -4170,9 +4387,9 @@ button.hm-now-count {
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 4px;
+  gap: 5px;
   min-height: 52px;
-  padding: 6px 4px;
+  padding: 7px 6px;
   border-radius: var(--radius);
   border: 1px solid var(--hm-line);
   background: var(--page-bg);
@@ -4216,8 +4433,8 @@ button.hm-now-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: var(--radius-sm);
   flex-shrink: 0;
 }
@@ -4243,7 +4460,7 @@ button.hm-now-count {
   color: var(--amber);
 }
 
-/* ---------- 6. Row 3: 3 Equal Bottom Insights Cards (.hm-v3-bot) ---------- */
+/* ---------- 6. Row 3: 3 Equal Cards (.hm-v3-bot: Top Services · Top Products · Staff Status) ---------- */
 .hm-v3-bot {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -4267,33 +4484,10 @@ button.hm-now-count {
 .hm-v3-chart-box.is-plain {
   grid-template-columns: minmax(0, 1fr);
 }
-.hm-v3-trend-summary {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.hm-v3-trend-total {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--hm-ink);
-  font-variant-numeric: tabular-nums;
-}
-.hm-v3-trend-delta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-}
-.hm-v3-trend-vs {
-  font-size: 0.75rem;
-  color: var(--hm-muted);
-}
 .hm-v3-chart-box {
   flex: 1;
   display: grid;
-  grid-template-columns: 26px minmax(0, 1fr);
+  grid-template-columns: 36px minmax(0, 1fr);
   gap: 8px;
   align-items: stretch;
   padding-top: 14px;
@@ -4302,17 +4496,58 @@ button.hm-now-count {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding-bottom: 20px;
+  padding-bottom: 22px;
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--hm-muted);
   text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.hm-v3-chart-plot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 164px;
+  min-width: 0;
+}
+.hm-v3-grid-lines {
+  position: absolute;
+  inset: 0 0 22px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.hm-v3-grid-lines span {
+  display: block;
+  width: 100%;
+  border-bottom: 1px dashed var(--hm-line);
+}
+.hm-v3-trend-line-svg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 8.875rem;
+  width: 100%;
+  pointer-events: none;
+  z-index: 2;
+  overflow: visible;
+}
+.hm-v3-trend-poly {
+  fill: none;
+  stroke: var(--accent-deep);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .hm-v3-bars {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 8px;
-  height: 136px;
+  column-gap: 2%;
+  height: 164px;
   align-items: end;
 }
 .hm-v3-bar-col {
@@ -4332,17 +4567,29 @@ button.hm-now-count {
 }
 .hm-v3-bar-fill {
   width: 100%;
-  max-width: 28px;
+  max-width: 30px;
   border-radius: 5px 5px 2px 2px;
-  background: var(--accent-soft);
+  background: var(--accent);
+  opacity: 0.72;
   transition: height 0.2s ease;
 }
 .hm-v3-bar-col.is-peak .hm-v3-bar-fill {
   background: var(--accent-deep);
+  opacity: 1;
+}
+.hm-v3-bar-dot {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--accent-deep);
+  z-index: 3;
+  pointer-events: none;
 }
 .hm-v3-bar-tip {
   position: absolute;
-  bottom: calc(76% + 6px);
+  bottom: calc(78% + 10px);
   padding: 2px 8px;
   border-radius: var(--radius-sm);
   background: var(--hm-ink);
@@ -4351,18 +4598,20 @@ button.hm-now-count {
   font-weight: 700;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+  z-index: 4;
 }
 .hm-v3-bar-day {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--hm-muted);
+  white-space: nowrap;
 }
 .hm-v3-bar-col.is-peak .hm-v3-bar-day {
   font-weight: 800;
   color: var(--hm-ink);
 }
 
-/* Top Services Ranked List */
+/* Top Services & Top Products Ranked List */
 .hm-v3-srv-rows {
   list-style: none;
   margin: 0;
@@ -4417,6 +4666,9 @@ button.hm-now-count {
   border-radius: 999px;
   background: var(--accent-deep);
 }
+.hm-v3-srv-bar.is-amber span {
+  background: var(--amber);
+}
 .hm-v3-srv-bk {
   font-size: 0.75rem;
   color: var(--hm-muted);
@@ -4439,6 +4691,9 @@ button.hm-now-count {
   padding: 0;
   display: flex;
   flex-direction: column;
+}
+.hm-v3-feed-rows.is-hidden {
+  display: none;
 }
 .hm-v3-feed-rows li + li {
   border-top: 1px solid var(--hm-line);
