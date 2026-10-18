@@ -22,6 +22,17 @@ describe('Tenant Home v2 redesign', () => {
     expect(reception).toContain("href: '/products/sell', label: t.sellProductAction, icon: <IconProducts />");
   });
 
+  it('has no Billing tile in the Owner quick links (owner, 2026-10-19) — the bill is still one tap away in Settings', () => {
+    expect(owner).not.toContain("'/settings/billing'");
+    expect(owner).not.toContain('IconWallet');
+    expect(owner).toContain("{ href: '/settings', label: t.nav.settings, icon: <IconSettings />, tone: 'slate' }");
+  });
+
+  it('has Sell product in the Owner quick links where Offers was, gated by canSee', () => {
+    expect(owner).toContain("{ href: '/products/sell', label: t.sellProductAction, icon: <IconCart />, tone: 'blue' }");
+    expect(owner).not.toContain("href: '/offers'");
+  });
+
   it('applies .is-clear to zero-count attention rows and tiles so calm states do not look like alerts', () => {
     expect(parts).toContain('className={`hm-att hm-tone-${a.tone}${a.count === 0 ? \' is-clear\' : \'\'}`}');
     expect(reception).toContain('className={`hm-att-tile hm-tone-${a.tone}${a.count === 0 ? \' is-clear\' : \'\'}`}');
