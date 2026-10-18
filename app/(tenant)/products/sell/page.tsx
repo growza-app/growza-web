@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic';
 export default async function SellProductPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; scan?: string }>;
 }) {
   // The till sells from the shelf; the Products catalogue is a different screen with a different answer per role.
   await guardScreen('/products/sell');
@@ -45,7 +45,12 @@ export default async function SellProductPage({
 
   return (
     <div className="page-body">
-      <SellProductClient timezone={timezone} backTo={params.from === 'products' ? '/products' : undefined} />
+      <SellProductClient
+        timezone={timezone}
+        backTo={params.from === 'products' ? '/products' : params.from === 'sales' ? '/sales' : undefined}
+        // A bottle scanned on the Sales screen: it lands on this bill as if it had been scanned here.
+        scanCode={typeof params.scan === 'string' ? params.scan.slice(0, 80) : undefined}
+      />
     </div>
   );
 }

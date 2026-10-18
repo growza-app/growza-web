@@ -133,6 +133,7 @@ export function PayFlow({
   wide = false,
   initialTab,
   productsOnly = false,
+  scanCode,
 }: {
   /** A waiting token being paid: its client, branch and services are the answer to ①. */
   token?: QueueEntry;
@@ -153,7 +154,7 @@ export function PayFlow({
   /** The signed-in person's own chair, when they have one: the stylist ① starts on. */
   providerId: string | null;
   timezone: string;
-  backTo?: '/appointments' | '/products';
+  backTo?: '/appointments' | '/products' | '/sales';
   /**
    * Jira GRW-572 — a laptop ≥1101px: the same till laid out in three panels (who · what · the bill), with the
    * payment tiles beside the bill so ② is not a screen of its own. Same state, same `pay()`, same two writes.
@@ -163,6 +164,8 @@ export function PayFlow({
   initialTab?: 'products';
   /** Retail / Sell product page (`/products/sell`): client + product categories on the left, product shelf in the middle, bill + payment on the right. */
   productsOnly?: boolean;
+  /** A barcode scanned on the Sales screen, to put on this bill once the shelf has loaded. */
+  scanCode?: string;
 }) {
   const t = useTranslations('payFlow');
   const tcr = useTranslations('chrome');
@@ -551,8 +554,7 @@ export function PayFlow({
     const id = window.setTimeout(() => setScanNote(null), 5000);
     return () => window.clearTimeout(id);
   }, [scanNote]);
-  // Only on the screen where products are picked: on 'how', 'qr' and 'done' a scan would change a bill being paid.
-  useBarcodeScan(productsOnly && productsLoaded && step === 'what', (code) => {
+  const onScan = (code: string) => {
     const hit = productByCode(products, code);
     if (!hit) {
       felt(BUZZ.tooMany);
@@ -567,7 +569,18 @@ export function PayFlow({
     }
     setScanNote(null);
     addProduct(hit);
-  });
+  };
+  // Only on the screen where products are picked: on 'how', 'qr' and 'done' a scan would change a bill being paid.
+  useBarcodeScan(productsOnly && productsLoaded && step === 'what', onScan);
+  // The scan that brought the cashier here from the Sales screen, put on the bill once, then dropped from the address.
+  const scanTaken = useRef(false);
+  useEffect(() => {
+    if (!productsOnly || !productsLoaded || !scanCode || scanTaken.current) return;
+    scanTaken.current = true;
+    onScan(scanCode);
+    router.replace(backTo === '/sales' ? '/products/sell?from=sales' : backTo === '/products' ? '/products/sell?from=products' : '/products/sell', { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productsOnly, productsLoaded, scanCode]);
   // No buzz on the way down: the count and the total both drop, and a removal that felt like an addition is a lie.
   const oneLess = (key: string) => {
     setLines((prev) => {

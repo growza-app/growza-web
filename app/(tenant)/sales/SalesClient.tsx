@@ -30,6 +30,7 @@ import {
   IconUserPlus,
 } from '../components/icons';
 import { csvLines } from '../lib/csv';
+import { useBarcodeScan } from '../lib/barcode-scan';
 import { ReturnProductSheet } from './ReturnProductSheet';
 import {
   clampSalesDateRange,
@@ -888,32 +889,13 @@ export function SalesClient({
     setSelectedBranches(branch.choice ? [branch.choice] : []);
   }, [branch.choice]);
 
-  useEffect(() => {
-    if (!mayRecordPayment || returnSheet.open || openBooking) return;
-    let buf = '';
-    let lastTs = 0;
-    const onKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
-      const now = performance.now();
-      if (e.key === 'Enter') {
-        if (buf.length >= 3 && now - lastTs < 120) {
-          e.preventDefault();
-          const code = buf.trim();
-          if (code) setReturnSheet({ open: true, bill: null, scannedCode: code });
-        }
-        buf = '';
-        return;
-      }
-      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (now - lastTs > 80) buf = '';
-        buf += e.key;
-        lastTs = now;
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [mayRecordPayment, returnSheet.open, openBooking]);
+  /*
+   * Owner, 2026-10-19 — a return is only ever started with the Return button; a scan here is a sale. The scan used to
+   * open the Return sheet, so a bottle that had been returned and was scanned to sell again opened the old bill.
+   */
+  useBarcodeScan(mayRecordPayment && !returnSheet.open && !openBooking, (code) => {
+    router.push(`/products/sell?scan=${encodeURIComponent(code)}&from=sales`);
+  });
 
   useEffect(() => {
     if (!openDropdown) return;
@@ -2094,19 +2076,6 @@ export function SalesClient({
                 onChange={(e) => {
                   setSearch(e.target.value);
                   setPage(1);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && mayRecordPayment) {
-                    const code = search.trim();
-                    if (
-                      code.length >= 2 &&
-                      branchScopedRows.some((r) => Boolean(findProductLineByCode(r.products, code)))
-                    ) {
-                      e.preventDefault();
-                      setSearch('');
-                      setReturnSheet({ open: true, bill: null, scannedCode: code });
-                    }
-                  }
                 }}
               />
             </label>
