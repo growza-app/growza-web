@@ -255,9 +255,7 @@
     "sac": "SAC code",
     "hint": "Both optional. The {code} is 4 to 8 digits. A GST tax invoice needs both.",
     "pricesInclude": "Your prices include GST, so a client pays the price you set.",
-    "pricesExclude": "Your prices do not include GST, so it is added on top of the price you set.",
-    "includedIn": "Includes {tax} GST at {rate}%. The client pays {total}.",
-    "addedTo": "Adds {tax} GST at {rate}%. The client pays {total}."
+    "includedIn": "Includes {tax} GST at {rate}%. The client pays {total}."
   },
   "documents": {
     "type": {
@@ -690,9 +688,8 @@
     "prefixHint": "Your invoices will be numbered like {example}. Leave it blank for {plain}.",
     "footerLabel": "Note at the bottom of every invoice",
     "footerHint": "Your terms, or a thank you. It is printed on every document.",
-    "pricesIncludeTaxLabel": "My prices already include tax",
+    "pricesIncludeTaxLabel": "Your prices include GST",
     "pricesIncludeTaxOn": "₹300 on the menu is ₹300 to pay, with the tax inside it.",
-    "pricesIncludeTaxOff": "Tax is added to the price at the till, so ₹300 becomes more.",
     "branchTitle": "This branch",
     "branchHint": "Where this branch supplies from. It decides whether a bill shows CGST and SGST, or IGST.",
     "stateLabel": "State",
