@@ -45,7 +45,6 @@ import {
   IconServices,
   IconSettings,
   IconStaff,
-  IconWallet,
 } from '../icons';
 import { AutopayRenewalNotice } from '../AutopayRenewalNotice';
 import { BookingSummary } from '../BookingSummary';
@@ -817,8 +816,6 @@ export function OwnerHome(p: OwnerHomeProps) {
     { href: '/offers', label: t.nav.offers, icon: <IconOffers />, tone: 'violet' },
     { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
     { href: '/reports', label: t.nav.reports, icon: <IconReports />, tone: 'amber' },
-    // The bill is what an owner has to find fastest when it is overdue; free times are still one tap away in More.
-    { href: '/settings/billing', label: t.nav.billing, icon: <IconWallet />, tone: 'amber' },
     { href: '/settings', label: t.nav.settings, icon: <IconSettings />, tone: 'slate' },
   ].filter((l) => canSee(l.href, p.role, p.reportTabs));
 
