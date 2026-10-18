@@ -4685,11 +4685,6 @@ button.hm-now-count {
 }
 
 /* Row 3 Attention Cards (Needs your attention & Products needing attention) */
-.hm-v3-desk-attention .hm-attention {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 .hm-v3-prod-att-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4724,6 +4719,11 @@ button.hm-now-count {
   border-color: var(--amber-soft);
   background: var(--amber-soft);
   color: var(--amber-ink);
+}
+.hm-v3-prod-att-chip.is-blue {
+  border-color: var(--blue-soft);
+  background: var(--blue-soft);
+  color: var(--blue);
 }
 .hm-v3-prod-att-chip.is-clear {
   border-color: var(--hm-line);
