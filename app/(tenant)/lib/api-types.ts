@@ -206,6 +206,28 @@ export interface Product {
   hsn: string | null;
 }
 
+/** Owner, 2026-10-18 — one row of a product list on its way onto the shelf. An update carries only the fields the file filled, and never the count. */
+export interface ProductImportItem {
+  mode: 'create' | 'update';
+  existingId?: string;
+  name?: string;
+  priceMinor?: number;
+  stock?: number;
+  costMinor?: number;
+  lowStockAt?: number;
+  categoryName?: string;
+  sku?: string;
+  barcode?: string;
+  gstRateBp?: number;
+  hsn?: string;
+}
+
+export interface ProductImportResult {
+  created: number;
+  updated: number;
+  categoriesCreated: number;
+}
+
 /** 0117 — a shelf of the shelf: the owner's own grouping at one branch, with how many live products it holds. */
 export interface ProductCategory {
   id: string;
