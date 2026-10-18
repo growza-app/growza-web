@@ -177,7 +177,9 @@
     "waitingShowAll": "सभी {count} प्रतीक्षा में दिखाएँ",
     "waitingShowFewer": "कम दिखाएँ (अगले 2)",
     "payShort": "भुगतान",
-    "servicesAtPayment": "सेवाएँ भुगतान के समय चुनी जाएँगी"
+    "servicesAtPayment": "सेवाएँ भुगतान के समय चुनी जाएँगी",
+    "editBooking": "बदलें",
+    "moreActionsFor": "{name} के लिए और विकल्प"
   },
   "nouns": {
     "customers": "ग्राहक",

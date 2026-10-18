@@ -1,13 +1,14 @@
 'use client';
 
-import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { formatMoney, formatTime, type Appointment, type MyEarnings, type Provider, type QueueEntry } from '../lib/api';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { api, formatMoney, formatTime, type Appointment, type MyEarnings, type Provider, type QueueEntry, type Service } from '../lib/api';
 import { useTranslations, useLocale } from 'next-intl';
 import { countsAsNotMarked, liveState, minutesBetween } from '../lib/live-state';
 import { bookingBill, clientNameLabel, formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { formatDateWithWeekday } from '../lib/format';
 import { BookingSheet, bookingRef, dialable } from '../components/BookingSheet';
 import { BookingSummary } from '../components/BookingSummary';
+import { CorrectBookingSheet } from '../components/CorrectBookingSheet';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useBranch } from '../components/BranchProvider';
 import { useLabels } from '../components/LabelsProvider';
@@ -20,12 +21,14 @@ import { useRouter } from 'next/navigation';
 import { payTokenHref, payVisitHref } from '../lib/pay-token';
 import { homeCopy } from '../lib/home-copy';
 import { atBranch, wholeMinutes } from '../lib/right-now';
+import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import {
   IconCalendar,
   IconCheck,
   IconChevronDown,
   IconClock,
   IconDashboard,
+  IconEdit,
   IconFilter,
   IconMenu,
   IconPackages,
@@ -242,6 +245,12 @@ export function BookingsList({
   }, []);
   const mayBook = useMayUse('visit.new');
   const mayCheckout = useMayUse('booking.checkout');
+  const mayCorrect = useMayUse('booking.correct');
+  const [openMenuKey, setOpenMenuKey] = useState<string | null>(null);
+  const closeRowMenu = useCallback(() => setOpenMenuKey(null), []);
+  const rowMenu = useAnchoredPanel(openMenuKey !== null, closeRowMenu);
+  const [editServices, setEditServices] = useState<Service[] | null>(null);
+  const [correctingKey, setCorrectingKey] = useState<string | null>(null);
   const [waitingShown, setWaitingShown] = useState(SHOW_STEP);
   const [waitingExpanded, setWaitingExpanded] = useState(false);
   // Owner, 2026-10-07 — paying a waiting token opens the Record payment page, not an overlay of the old form.
@@ -604,16 +613,71 @@ export function BookingsList({
    */
   const liveOpen = open ? (bookings.find((g) => g.key === open.key) ?? null) : null;
   const picked = liveOpen && (!desk || filtered.some((g) => g.key === liveOpen.key)) ? liveOpen : null;
+  const liveCorrecting = correctingKey ? (bookings.find((g) => g.key === correctingKey) ?? null) : null;
+
+  const canCorrectBooking = (b: BookingGroup) =>
+    mayCorrect &&
+    b.status === 'completed' &&
+    b.appointments.some((a) => a.status === 'completed') &&
+    b.appointments.some((a) => Boolean(a.serviceId || a.serviceName));
+
+  const startEditBooking = async (b: BookingGroup) => {
+    setOpenMenuKey(null);
+    try {
+      const list = editServices ?? (await api.services());
+      setEditServices(list);
+      setOpen(null);
+      setCorrectingKey(b.key);
+    } catch {
+      openBooking(b);
+    }
+  };
+
+  const renderRowMenu = (b: BookingGroup, cName: string) =>
+    canCorrectBooking(b) ? (
+      <div
+        className="dropdown-anchor bk-row-menu"
+        ref={openMenuKey === b.key ? rowMenu.anchorRef : undefined}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          className="hm-v3-row-dots bk-row-dots"
+          aria-label={t('moreActionsFor', { name: cName })}
+          aria-expanded={openMenuKey === b.key}
+          onClick={() => setOpenMenuKey(openMenuKey === b.key ? null : b.key)}
+        >
+          ⋮
+        </button>
+        {openMenuKey === b.key && (
+          <div
+            className="dropdown-panel dropdown-panel-sm dropdown-panel-right bk-row-dropdown"
+            ref={rowMenu.panelRef}
+            style={rowMenu.style}
+            onMouseLeave={closeRowMenu}
+          >
+            <button
+              type="button"
+              className="dropdown-item dropdown-item-plain"
+              onClick={() => void startEditBooking(b)}
+            >
+              <IconEdit />
+              {t('editBooking')}
+            </button>
+          </div>
+        )}
+      </div>
+    ) : null;
 
   useEffect(() => {
-    if (!desk || !picked || giving) return;
+    if (!desk || !picked || giving || liveCorrecting) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented) return;
       setOpen(null);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [desk, picked, giving]);
+  }, [desk, picked, giving, liveCorrecting]);
 
   /**
    * GRW-166 — a salon can withhold the client's identity from its staff, and
@@ -624,6 +688,7 @@ export function BookingsList({
   const actionFor = (b: BookingGroup) => {
     const st = liveState(b, now);
     const canComplete = mayCheckout && (st === 'in_service' || st === 'needs_answer');
+    const cName = clientNameLabel(b) ?? bookingRef(b.appointments[0]!.id);
     return (
       <div className="bk-card-actions">
         {canComplete && (
@@ -660,6 +725,7 @@ export function BookingsList({
             {t('details')}
           </button>
         )}
+        {renderRowMenu(b, cName)}
       </div>
     );
   };
@@ -1324,6 +1390,7 @@ export function BookingsList({
                           >
                             {hc.viewBtn}
                           </button>
+                          {renderRowMenu(b, cName)}
                         </div>
                       </td>
                     </tr>
@@ -1410,6 +1477,15 @@ export function BookingsList({
 
   const giveSheet = (
     <>
+      {liveCorrecting && editServices ? (
+        <CorrectBookingSheet
+          appointment={liveCorrecting.appointments[0]!}
+          legs={liveCorrecting.appointments.filter((a) => a.status === 'completed')}
+          services={editServices}
+          timezone={timezone}
+          onClose={() => setCorrectingKey(null)}
+        />
+      ) : null}
       {/*
         Jira GRW-489 — the token's three answers, in the desk's own sheets.
 
