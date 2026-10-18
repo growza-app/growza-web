@@ -529,6 +529,8 @@ export interface Appointment {
   products?: VisitProductLine[];
   /** Jira GRW-581 — split payment lines for this visit (`visit_payment`). */
   payments?: VisitPaymentLine[];
+  /** Product returns on this visit and how each was paid out (`product_return`); absent from an API that predates it. */
+  refunds?: VisitPaymentLine[];
 }
 
 export interface VisitProductLine {
@@ -547,6 +549,12 @@ export interface VisitProductLine {
 export interface ReturnSaleProductsResponse {
   visitKey: string;
   refundMinor: number;
+  /** How the money went back — cash out of the drawer, or UPI/card sent back. */
+  refundMode: 'cash' | 'card' | 'upi' | 'other';
+  /** The issued document this return leaves uncorrected, when the desk went ahead past the warning. */
+  documentNumber: string | null;
+  /** True when this answers a request already made (a retry): nothing new was returned. */
+  replayed: boolean;
   restocked: boolean;
   items: Array<{
     productId: string;

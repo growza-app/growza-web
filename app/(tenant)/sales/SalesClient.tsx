@@ -450,23 +450,28 @@ export function computeSalesKpis(rows: readonly SaleRow[]): SalesKpis {
     productsRevenueMinor += r.productsMinor;
     productUnitsCount += r.productUnits;
 
+    const modeOf = (m: string) => (m === 'upi' || m === 'cash' || m === 'card' ? m : 'other');
     const payments = r.group.payments ?? [];
+    // Owner review, 2026-10-19 — what came in is what was paid; what went out is the way each refund was paid out
+    // (`refunds`, from the API's product_return rows), so a UPI sale refunded in cash is UPI in and cash out, which is
+    // what the drawer shows. An API that predates `refunds` sends none, and then the refund is taken off the ways in
+    // the order they are listed, as before.
+    const refunds = r.group.refunds;
+    const refundedMinor = (refunds ?? []).reduce((sum, rf) => sum + Math.max(0, Number(rf.amountMinor || 0)), 0);
     if (payments.length > 0) {
-      let remRefund = r.returnedMinor;
+      let remRefund = refunds === undefined ? r.returnedMinor : 0;
       for (const pm of payments) {
-        const mode = pm.mode === 'upi' || pm.mode === 'cash' || pm.mode === 'card' ? pm.mode : 'other';
         const rawAmt = Math.max(0, Number(pm.amountMinor || 0));
         const deduct = Math.min(rawAmt, remRefund);
         remRefund -= deduct;
-        byMode[mode] += rawAmt - deduct;
+        byMode[modeOf(pm.mode)] += rawAmt - deduct;
       }
     } else if (r.paymentModes[0]) {
-      const m = r.paymentModes[0];
-      const mode = m === 'upi' || m === 'cash' || m === 'card' ? m : 'other';
-      byMode[mode] += r.totalMinor;
+      byMode[modeOf(r.paymentModes[0])] += r.totalMinor + refundedMinor;
     } else {
-      byMode.notRecorded += r.totalMinor;
+      byMode.notRecorded += r.totalMinor + refundedMinor;
     }
+    for (const rf of refunds ?? []) byMode[modeOf(rf.mode)] -= Math.max(0, Number(rf.amountMinor || 0));
   }
 
   return {
@@ -2414,12 +2419,14 @@ export function SalesClient({
           returnWindowDays={returnWindowDays}
           onClose={() => setReturnSheet({ open: false, bill: null, scannedCode: '' })}
           onReturned={(res) => {
+            // A replay answers a request already made: its units are in the list the refresh brings, not new ones.
             setLoadedAppointments((prev) =>
               prev.map((a) => {
                 const visitKey = a.bookingGroupId ?? a.id;
-                if (visitKey === res.visitKey && a.products) {
+                if (visitKey === res.visitKey && a.products && !res.replayed) {
                   return {
                     ...a,
+                    refunds: [...(a.refunds ?? []), { mode: res.refundMode, amountMinor: String(res.refundMinor) }],
                     products: a.products.map((p) => {
                       const ret = res.items.find((it) => it.productId === lineReturnId(p));
                       if (!ret) return p;

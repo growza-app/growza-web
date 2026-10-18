@@ -19,11 +19,15 @@ import {
 } from '../components/icons';
 import {
   computeReturnWindow,
+  defaultRefundMode,
   findProductLineByCode,
   lineRefundMinorForQty,
   lineRemainingQty,
   lineReturnId,
+  REFUND_MODES,
+  requestIdFor,
   visitKeyFromGroupKey,
+  type RefundMode,
 } from './sales-helpers';
 
 export interface ReturnableSaleBill {
@@ -35,6 +39,8 @@ export interface ReturnableSaleBill {
   clientPhone: string | null;
   products: VisitProductLine[];
   totalMinor: number;
+  /** How the bill was paid, for the refund's default. */
+  paymentModes?: string[];
 }
 
 function buildInitialQtyMap(bill: ReturnableSaleBill | null, initialScannedCode?: string): Record<string, number> {
@@ -92,7 +98,16 @@ export function ReturnProductSheet({
     buildInitialQtyMap(selectedBill, initialScannedCode),
   );
   const [restock, setRestock] = useState(true);
+  const [refundMode, setRefundMode] = useState<RefundMode>(() => defaultRefundMode(selectedBill?.paymentModes));
   const [reason, setReason] = useState('');
+  // The invoice already handed over for this bill, once the server has said so: the desk is asked before going ahead.
+  const [issuedDocument, setIssuedDocument] = useState<string | null>(null);
+  const requestRef = useRef<{ sig: string; id: string } | null>(null);
+  const warningRef = useRef<HTMLDivElement>(null);
+  // The warning sits under the lines in a scrolling sheet: bring it into view, or the press of Confirm looks like it did nothing.
+  useEffect(() => {
+    if (issuedDocument !== null) warningRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [issuedDocument]);
   const [scanNotice, setScanNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -120,6 +135,8 @@ export function ReturnProductSheet({
 
   const selectBill = (bill: ReturnableSaleBill, scannedCode?: string) => {
     setSelectedBill(bill);
+    setRefundMode(defaultRefundMode(bill.paymentModes));
+    setIssuedDocument(null);
     setQtyByLine(buildInitialQtyMap(bill, scannedCode));
     setScanNotice(null);
     setError(null);
@@ -241,7 +258,7 @@ export function ReturnProductSheet({
     setError(null);
   };
 
-  const submitReturn = async () => {
+  const submitReturn = async (acknowledgeIssuedDocument = false) => {
     if (!selectedBill || totalSelectedUnits <= 0 || !billWindow.eligible || busy) return;
     setBusy(true);
     setError(null);
@@ -252,14 +269,30 @@ export function ReturnProductSheet({
           qty: Math.min(lineRemainingQty(p), Math.max(0, qtyByLine[lineReturnId(p)] ?? 0)),
         }))
         .filter((it) => it.qty > 0);
+      // One id per return as the desk has it on screen: pressing Return again (or a retry after a lost answer) sends the
+      // same id and the server returns nothing more; changing a line, the condition, the way or the note makes a new one.
+      requestRef.current = requestIdFor(
+        requestRef.current,
+        JSON.stringify({ bill: selectedBill.key, items, restock, refundMode, reason: reason.trim() }),
+      );
       const res = await api.returnSaleProducts(visitKeyFromGroupKey(selectedBill.key), {
         items,
         restock,
+        refundMode,
         reason: reason.trim() || undefined,
+        idempotencyKey: requestRef.current.id,
+        ...(acknowledgeIssuedDocument ? { acknowledgeIssuedDocument: true } : {}),
       });
+      requestRef.current = null;
       onReturned(res);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : tc('sheet.saveFailed'));
+      if (err instanceof ApiError && err.code === 'document_issued') {
+        // An issued invoice is not changed by a return: say so, and let the desk decide.
+        const number = (err.body as { documentNumber?: unknown } | undefined)?.documentNumber;
+        setIssuedDocument(typeof number === 'string' ? number : '');
+      } else {
+        setError(err instanceof ApiError ? err.message : tc('sheet.saveFailed'));
+      }
     } finally {
       setBusy(false);
     }
@@ -521,6 +554,27 @@ export function ReturnProductSheet({
                 </div>
               </div>
 
+              <div className="sls-ret-condition">
+                <span className="sls-ret-sec-title">{t('refundModeLabel')}</span>
+                <div className="sls-ret-cond-grid" role="radiogroup" aria-label={t('refundModeLabel')}>
+                  {REFUND_MODES.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      role="radio"
+                      aria-checked={refundMode === m}
+                      className={`sls-ret-cond-opt ${refundMode === m ? 'is-on' : ''}`}
+                      onClick={() => {
+                        setRefundMode(m);
+                        setIssuedDocument(null);
+                      }}
+                    >
+                      <strong>{t(`refundModes.${m}`)}</strong>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <label className="sls-ret-reason-field">
                 <span className="sls-ret-sec-title">{t('reasonLabel')}</span>
                 <input
@@ -532,6 +586,15 @@ export function ReturnProductSheet({
                   onChange={(e) => setReason(e.target.value)}
                 />
               </label>
+
+              {issuedDocument !== null ? (
+                <div className="sls-ret-error" role="alert" ref={warningRef}>
+                  <p>{issuedDocument ? t('documentIssuedBody', { number: issuedDocument }) : t('documentIssuedBodyNoNumber')}</p>
+                  <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => void submitReturn(true)}>
+                    {t('documentIssuedGo')}
+                  </button>
+                </div>
+              ) : null}
 
               {error ? (
                 <div className="sls-ret-error" role="alert">
@@ -561,7 +624,7 @@ export function ReturnProductSheet({
                 type="button"
                 className="btn"
                 disabled={totalSelectedUnits <= 0 || !billWindow.eligible || busy}
-                onClick={submitReturn}
+                onClick={() => void submitReturn()}
               >
                 {busy
                   ? t('saving')

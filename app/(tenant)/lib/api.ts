@@ -735,7 +735,17 @@ export const api = {
   /** 0127 — return one or more products against a settled bill within the business's return window. */
   returnSaleProducts: (
     visitKey: string,
-    body: { items: Array<{ productId: string; qty: number }>; restock?: boolean; reason?: string },
+    body: {
+      items: Array<{ productId: string; qty: number }>;
+      restock?: boolean;
+      reason?: string;
+      /** How the refund was paid out. Required: the drawer has to balance. */
+      refundMode: 'cash' | 'card' | 'upi' | 'other';
+      /** Stable for one return, so a retry after a lost response returns nothing more. */
+      idempotencyKey?: string;
+      /** The desk has been told an issued invoice is not changed by this return. */
+      acknowledgeIssuedDocument?: boolean;
+    },
   ) => post<ReturnSaleProductsResponse>(`/api/v1/sales/${encodeURIComponent(visitKey)}/returns`, body),
 
   updateBookingRules: (body: {

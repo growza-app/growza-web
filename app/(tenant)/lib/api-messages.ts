@@ -209,6 +209,10 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Each product may only be listed once per return': 'एक वापसी में हर सामान एक ही बार चुना जा सकता है',
   'Pick at least one product to return': 'वापस करने के लिए कम से कम एक सामान चुनें',
   'Keep the note to 240 characters': 'नोट 240 अक्षरों तक रखें',
+  'That request id was already used for a different bill': 'यह रिक्वेस्ट आईडी पहले किसी दूसरे बिल के लिए इस्तेमाल हो चुकी है',
+  'Say how the refund was paid': 'बताएँ कि रिफ़ंड कैसे दिया गया',
+  'Request id is too short': 'रिक्वेस्ट आईडी बहुत छोटी है',
+  'Request id is too long': 'रिक्वेस्ट आईडी बहुत लंबी है',
   'Products can only be returned on the day of sale': 'सामान सिर्फ़ बिक्री के दिन ही वापस किया जा सकता है',
 };
 

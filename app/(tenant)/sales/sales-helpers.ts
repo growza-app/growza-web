@@ -108,6 +108,29 @@ export function lineRefundMinorForQty(p: VisitProductLine, returnQty: number): n
   return Math.max(0, Math.round((remMinor * clamped) / remaining));
 }
 
+export type RefundMode = 'cash' | 'card' | 'upi' | 'other';
+export const REFUND_MODES: readonly RefundMode[] = ['cash', 'upi', 'card', 'other'];
+
+/** The way a refund most likely goes back: the way the bill was paid, when it was paid one way we know; otherwise cash. */
+export function defaultRefundMode(paymentModes: readonly string[] | undefined): RefundMode {
+  const first = paymentModes?.[0];
+  return first === 'cash' || first === 'upi' || first === 'card' ? first : first ? 'other' : 'cash';
+}
+
+/** A request id for one return. `crypto.randomUUID` needs a secure context; the fallback is only ever for an http dev box. */
+export function newRequestId(): string {
+  const c = typeof globalThis !== 'undefined' ? (globalThis as { crypto?: { randomUUID?: () => string } }).crypto : undefined;
+  return c?.randomUUID ? c.randomUUID() : `ret-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
+/**
+ * The id a return is sent under. The same return (same bill, lines, condition, way and note) keeps its id across
+ * presses and retries, so a lost response cannot return twice; changing anything makes it a different return.
+ */
+export function requestIdFor(current: { sig: string; id: string } | null, sig: string): { sig: string; id: string } {
+  return current && current.sig === sig ? current : { sig, id: newRequestId() };
+}
+
 /** Finds a product line on a bill matching a scanned or typed barcode/SKU. */
 export function findProductLineByCode(
   products: readonly VisitProductLine[],
