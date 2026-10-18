@@ -1646,3 +1646,688 @@
     white-space: normal;
   }
 }
+
+/* ---------- Product Return Flow (Header, Table, Mobile Cards, Receipt & ReturnProductSheet) ---------- */
+
+.sls-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.sls-top-return-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sls-top-return-btn svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.sls-row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.sls-return-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  padding: 0 var(--sp-2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--amber-ink);
+  border-color: color-mix(in srgb, var(--amber) 32%, var(--border));
+  background: var(--amber-soft);
+}
+
+.sls-return-btn svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex-shrink: 0;
+}
+
+.sls-return-btn:hover:not(:disabled) {
+  border-color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 18%, var(--amber-soft));
+}
+
+.sls-status-pill.is-part-returned {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+.sls-status-pill.is-returned {
+  background: var(--slate-soft);
+  color: var(--muted);
+}
+
+.sls-badge-prd.is-returned {
+  background: var(--slate-soft);
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.sls-card-wrap {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.sls-card-wrap > .sls-card {
+  border: 0;
+  border-radius: 0;
+}
+
+.sls-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--border);
+  background: var(--page-bg);
+}
+
+.summary-returned-tag {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.summary-refund {
+  color: var(--amber-ink);
+  font-weight: 600;
+}
+
+.sheet.sls-return-sheet {
+  display: flex;
+  flex-direction: column;
+  max-width: 560px;
+  max-height: min(88dvh, 720px);
+  padding: 0;
+  overflow: hidden;
+}
+
+.sls-ret-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+
+.sls-ret-head-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  flex-shrink: 0;
+}
+
+.sls-ret-head-icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.sls-ret-head-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sls-ret-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.sls-ret-sub {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.sls-ret-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.sls-ret-scan-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--border));
+}
+
+.sls-ret-scan-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.sls-ret-scan-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.sls-ret-scan-ready {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.sls-ret-scan-ready svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.sls-ret-search {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-height: 40px;
+}
+
+.sls-ret-scan-notice {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-deep);
+}
+
+.sls-ret-sec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.sls-ret-sec-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.sls-ret-bulk-btns {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.sls-ret-link-btn {
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sls-ret-link-btn.is-muted {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--muted);
+}
+
+.sls-ret-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.sls-ret-empty {
+  padding: var(--sp-4);
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  background: var(--page-bg);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+.sls-ret-bill-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.sls-ret-bill-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+.sls-ret-bill-card:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--page-bg);
+}
+
+.sls-ret-bill-card.is-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sls-ret-bill-main {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.sls-ret-bill-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.sls-ret-bill-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 0.8125rem;
+  color: var(--text);
+}
+
+.sls-ret-bill-when {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.sls-ret-bill-prds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.sls-ret-bill-right {
+  flex-shrink: 0;
+}
+
+.sls-ret-win-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sls-ret-win-pill svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.sls-ret-win-pill.is-ok {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.sls-ret-win-pill.is-expired {
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+}
+
+.sls-ret-win-pill.is-muted {
+  background: var(--slate-soft);
+  color: var(--muted);
+}
+
+.sls-ret-selected-bill {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: 12px;
+  background: var(--page-bg);
+  border: 1px solid var(--border);
+}
+
+.sls-ret-selected-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+  font-size: 0.8125rem;
+}
+
+.sls-ret-selected-meta span {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.sls-ret-change-btn {
+  min-height: 30px;
+  padding: 0 var(--sp-2);
+  font-size: 0.75rem;
+}
+
+.sls-ret-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.sls-ret-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.sls-ret-line.is-picked {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 32%, var(--surface));
+}
+
+.sls-ret-line.is-exhausted {
+  opacity: 0.65;
+  background: var(--page-bg);
+}
+
+.sls-ret-line-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.sls-ret-line-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sls-ret-line-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.sls-ret-code-pill {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--slate-soft);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.sls-ret-line-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.sls-ret-already-tag {
+  color: var(--amber-ink);
+  font-weight: 600;
+}
+
+.sls-ret-line-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-shrink: 0;
+}
+
+.sls-ret-stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.sls-ret-step-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.sls-ret-step-btn svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.sls-ret-step-btn:hover:not(:disabled) {
+  background: var(--page-bg);
+}
+
+.sls-ret-step-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.sls-ret-step-val {
+  min-width: 28px;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.sls-ret-line-refund {
+  min-width: 68px;
+  text-align: right;
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.sls-ret-condition {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.sls-ret-cond-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+.sls-ret-cond-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+.sls-ret-cond-opt strong {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.sls-ret-cond-opt span {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.sls-ret-cond-opt.is-on {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+}
+
+.sls-ret-cond-opt.is-on strong {
+  color: var(--accent-deep);
+}
+
+.sls-ret-cond-opt.is-on.is-damaged {
+  border-color: var(--amber);
+  background: var(--amber-soft);
+}
+
+.sls-ret-cond-opt.is-on.is-damaged strong {
+  color: var(--amber-ink);
+}
+
+.sls-ret-reason-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sls-ret-reason-input {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.875rem;
+}
+
+.sls-ret-error {
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: 10px;
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.sheet .modal-actions.sls-ret-foot {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4) calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  flex: none;
+}
+
+.sls-ret-foot-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sls-ret-foot-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.sls-ret-foot-amount {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.sls-ret-foot-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.sls-ret-foot-btns {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-left: auto;
+}
+
+@media (max-width: 860px) {
+  .sls-return-btn,
+  .sls-ret-link-btn,
+  .sls-ret-change-btn {
+    min-height: 44px;
+  }
+
+  .sls-ret-step-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .sls-ret-reason-input {
+    min-height: 44px;
+    font-size: 1rem;
+  }
+
+  .sls-ret-cond-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+

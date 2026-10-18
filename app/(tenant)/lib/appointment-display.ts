@@ -121,6 +121,8 @@ export interface BookingGroup {
   products?: VisitProductLine[];
   /** Jira GRW-581 — split payment lines (`visit_payment`). */
   payments?: VisitPaymentLine[];
+  /** How each product return was paid out (`product_return`). */
+  refunds?: VisitPaymentLine[];
 }
 
 /**
@@ -163,6 +165,7 @@ export function groupBookings(appointments: Appointment[]): BookingGroup[] {
     );
     const products = sorted.find((a) => a.products && a.products.length > 0)?.products ?? first.products;
     const payments = sorted.find((a) => a.payments && a.payments.length > 0)?.payments ?? first.payments;
+    const refunds = sorted.find((a) => a.refunds && a.refunds.length > 0)?.refunds ?? first.refunds;
     return {
       key,
       appointments: sorted,
@@ -187,6 +190,7 @@ export function groupBookings(appointments: Appointment[]): BookingGroup[] {
       movedTo: sorted.every((a) => a.status === 'cancelled' && a.movedTo) ? first.movedTo! : null,
       ...(products !== undefined ? { products } : {}),
       ...(payments !== undefined ? { payments } : {}),
+      ...(refunds !== undefined ? { refunds } : {}),
     };
   });
 

@@ -23,15 +23,41 @@ import {
   IconPackages,
   IconProducts,
   IconReceipt,
+  IconReturn,
   IconRupee,
   IconSearch,
   IconServices,
   IconUserPlus,
 } from '../components/icons';
 import { csvLines } from '../lib/csv';
-import { clampSalesDateRange, MAX_SALES_DATE_YEARS, MAX_SALES_EXPORT_ROWS } from './sales-helpers';
+import { ReturnProductSheet } from './ReturnProductSheet';
+import {
+  clampSalesDateRange,
+  computeReturnWindow,
+  DEFAULT_PRODUCT_RETURN_WINDOW_DAYS,
+  findProductLineByCode,
+  lineNetPaidMinor,
+  lineRefundMinorForQty,
+  lineRemainingQty,
+  lineReturnId,
+  MAX_SALES_DATE_YEARS,
+  MAX_SALES_EXPORT_ROWS,
+  visitKeyFromGroupKey,
+} from './sales-helpers';
 
-export { clampSalesDateRange, MAX_SALES_DATE_YEARS, MAX_SALES_EXPORT_ROWS };
+export {
+  clampSalesDateRange,
+  computeReturnWindow,
+  DEFAULT_PRODUCT_RETURN_WINDOW_DAYS,
+  findProductLineByCode,
+  lineNetPaidMinor,
+  lineRefundMinorForQty,
+  lineRemainingQty,
+  lineReturnId,
+  MAX_SALES_DATE_YEARS,
+  MAX_SALES_EXPORT_ROWS,
+  visitKeyFromGroupKey,
+};
 
 export type SalesFilter = 'all' | 'products' | 'services';
 export const SALES_FILTERS: readonly SalesFilter[] = ['all', 'products', 'services'];
@@ -141,10 +167,12 @@ export interface SaleRow {
   offerTitle: string | null;
   products: NonNullable<BookingGroup['products']>;
   productUnits: number;
+  returnedUnits: number;
   staffNames: string[];
   paymentModes: string[];
   servicesMinor: number;
   productsMinor: number;
+  returnedMinor: number;
   totalMinor: number;
 }
 
@@ -167,9 +195,11 @@ export function buildSaleRows(appointments: readonly Appointment[], timezone: st
     if (completedLegs.length === 0 && products.length === 0) continue;
 
     const { totalMinor: servicesMinor } = completedLegs.length > 0 ? bookingBill(completedLegs) : { totalMinor: 0 };
-    const productsMinor = products.reduce((sum, p) => sum + Number(p.paidMinor || 0), 0);
+    const productsMinor = products.reduce((sum, p) => sum + lineNetPaidMinor(p), 0);
+    const returnedMinor = products.reduce((sum, p) => sum + Math.max(0, Number(p.returnedMinor || 0)), 0);
     const totalMinor = servicesMinor + productsMinor;
-    const productUnits = products.reduce((sum, p) => sum + Number(p.qty || 0), 0);
+    const productUnits = products.reduce((sum, p) => sum + lineRemainingQty(p), 0);
+    const returnedUnits = products.reduce((sum, p) => sum + Math.max(0, Number(p.returnedQty || 0)), 0);
 
     const serviceNames = completedLegs.map((a) => a.serviceName).filter(Boolean);
     const offerTitles = [...new Set(completedLegs.map((a) => a.offerTitle).filter((t): t is string => Boolean(t)))];
@@ -202,10 +232,12 @@ export function buildSaleRows(appointments: readonly Appointment[], timezone: st
       offerTitle: offerTitles.length > 0 ? offerTitles.join(' + ') : g.offerTitle,
       products,
       productUnits,
+      returnedUnits,
       staffNames: [...staffSet],
       paymentModes,
       servicesMinor,
       productsMinor,
+      returnedMinor,
       totalMinor,
     });
   }
@@ -326,7 +358,10 @@ export function filterSalesRows(
       const pq = extra.productQuery.trim().toLowerCase();
       const pTokens = pq.split(/\s+/).filter(Boolean);
       pool = pool.filter((r) => {
-        const prdFields = r.products.map((p) => p.name.toLowerCase());
+        const prdFields = r.products
+          .flatMap((p) => [p.name, p.sku ?? '', p.barcode ?? ''])
+          .filter(Boolean)
+          .map((s) => s.toLowerCase());
         return pTokens.every((tok) => prdFields.some((f) => f.includes(tok)));
       });
     }
@@ -346,7 +381,7 @@ export function filterSalesRows(
     pool = pool.filter((r) => {
       const itemFields = [
         ...(filter !== 'products' ? [...r.serviceNames, r.offerTitle ?? ''] : []),
-        ...(filter !== 'services' ? r.products.map((p) => p.name) : []),
+        ...(filter !== 'services' ? r.products.flatMap((p) => [p.name, p.sku ?? '', p.barcode ?? '']) : []),
       ]
         .filter(Boolean)
         .map((f) => f.toLowerCase());
@@ -365,7 +400,7 @@ export function filterSalesRows(
       r.clientName,
       r.clientPhone ?? '',
       ...(filter !== 'products' ? [...r.serviceNames, r.offerTitle ?? ''] : []),
-      ...(filter !== 'services' ? r.products.map((p) => p.name) : []),
+      ...(filter !== 'services' ? r.products.flatMap((p) => [p.name, p.sku ?? '', p.barcode ?? '']) : []),
       ...(filter === 'services' ? r.staffNames : []),
     ]
       .filter(Boolean)
@@ -415,19 +450,28 @@ export function computeSalesKpis(rows: readonly SaleRow[]): SalesKpis {
     productsRevenueMinor += r.productsMinor;
     productUnitsCount += r.productUnits;
 
+    const modeOf = (m: string) => (m === 'upi' || m === 'cash' || m === 'card' ? m : 'other');
     const payments = r.group.payments ?? [];
+    // Owner review, 2026-10-19 — what came in is what was paid; what went out is the way each refund was paid out
+    // (`refunds`, from the API's product_return rows), so a UPI sale refunded in cash is UPI in and cash out, which is
+    // what the drawer shows. An API that predates `refunds` sends none, and then the refund is taken off the ways in
+    // the order they are listed, as before.
+    const refunds = r.group.refunds;
+    const refundedMinor = (refunds ?? []).reduce((sum, rf) => sum + Math.max(0, Number(rf.amountMinor || 0)), 0);
     if (payments.length > 0) {
+      let remRefund = refunds === undefined ? r.returnedMinor : 0;
       for (const pm of payments) {
-        const mode = pm.mode === 'upi' || pm.mode === 'cash' || pm.mode === 'card' ? pm.mode : 'other';
-        byMode[mode] += Number(pm.amountMinor || 0);
+        const rawAmt = Math.max(0, Number(pm.amountMinor || 0));
+        const deduct = Math.min(rawAmt, remRefund);
+        remRefund -= deduct;
+        byMode[modeOf(pm.mode)] += rawAmt - deduct;
       }
     } else if (r.paymentModes[0]) {
-      const m = r.paymentModes[0];
-      const mode = m === 'upi' || m === 'cash' || m === 'card' ? m : 'other';
-      byMode[mode] += r.totalMinor;
+      byMode[modeOf(r.paymentModes[0])] += r.totalMinor + refundedMinor;
     } else {
-      byMode.notRecorded += r.totalMinor;
+      byMode.notRecorded += r.totalMinor + refundedMinor;
     }
+    for (const rf of refunds ?? []) byMode[modeOf(rf.mode)] -= Math.max(0, Number(rf.amountMinor || 0));
   }
 
   return {
@@ -477,7 +521,10 @@ export function computeSalesQuickStats(
       srvCounts.set(s, (srvCounts.get(s) ?? 0) + 1);
     }
     for (const p of r.products) {
-      prdCounts.set(p.name, (prdCounts.get(p.name) ?? 0) + p.qty);
+      const netUnits = lineRemainingQty(p);
+      if (netUnits > 0) {
+        prdCounts.set(p.name, (prdCounts.get(p.name) ?? 0) + netUnits);
+      }
     }
   }
 
@@ -767,6 +814,7 @@ export function SalesClient({
   appointments,
   timezone,
   todayISO,
+  returnWindowDays = DEFAULT_PRODUCT_RETURN_WINDOW_DAYS,
   initialFrom,
   initialTo,
   initialFilter,
@@ -777,6 +825,7 @@ export function SalesClient({
   appointments: Appointment[];
   timezone: string;
   todayISO: string;
+  returnWindowDays?: number;
   initialFrom?: string;
   initialTo?: string;
   initialFilter: SalesFilter;
@@ -820,6 +869,11 @@ export function SalesClient({
   const [chartOpen, setChartOpen] = useState(true);
   const [page, setPage] = useState(1);
   const [openBooking, setOpenBooking] = useState<BookingGroup | null>(null);
+  const [returnSheet, setReturnSheet] = useState<{ open: boolean; bill: SaleRow | null; scannedCode: string }>({
+    open: false,
+    bill: null,
+    scannedCode: '',
+  });
 
   useEffect(() => {
     setLoadedAppointments(appointments);
@@ -833,6 +887,33 @@ export function SalesClient({
   useEffect(() => {
     setSelectedBranches(branch.choice ? [branch.choice] : []);
   }, [branch.choice]);
+
+  useEffect(() => {
+    if (!mayRecordPayment || returnSheet.open || openBooking) return;
+    let buf = '';
+    let lastTs = 0;
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      const now = performance.now();
+      if (e.key === 'Enter') {
+        if (buf.length >= 3 && now - lastTs < 120) {
+          e.preventDefault();
+          const code = buf.trim();
+          if (code) setReturnSheet({ open: true, bill: null, scannedCode: code });
+        }
+        buf = '';
+        return;
+      }
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (now - lastTs > 80) buf = '';
+        buf += e.key;
+        lastTs = now;
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [mayRecordPayment, returnSheet.open, openBooking]);
 
   useEffect(() => {
     if (!openDropdown) return;
@@ -1218,6 +1299,11 @@ export function SalesClient({
     URL.revokeObjectURL(url);
   };
 
+  const branchScopedRows = useMemo(
+    () => filterSalesByDateRange(allSaleRows, minDateISO, todayISO, effectiveBranches),
+    [allSaleRows, minDateISO, todayISO, effectiveBranches],
+  );
+
   return (
     <>
       <PageHeader
@@ -1226,17 +1312,27 @@ export function SalesClient({
         menu
         actions={
           mayRecordPayment ? (
-            <a
-              className="btn"
-              href="/appointments/new?purpose=payment"
-              onClick={() => {
-                if (!branch.pinned && selectedBranches.length === 1) {
-                  branch.setBranch(selectedBranches[0]!);
-                }
-              }}
-            >
-              <IconReceipt /> {t('recordPayment')}
-            </a>
+            <div className="sls-header-actions">
+              <button
+                type="button"
+                className="btn btn-ghost sls-top-return-btn"
+                onClick={() => setReturnSheet({ open: true, bill: null, scannedCode: '' })}
+              >
+                <IconReturn />
+                <span>{t('returnProduct')}</span>
+              </button>
+              <a
+                className="btn"
+                href="/appointments/new?purpose=payment"
+                onClick={() => {
+                  if (!branch.pinned && selectedBranches.length === 1) {
+                    branch.setBranch(selectedBranches[0]!);
+                  }
+                }}
+              >
+                <IconReceipt /> {t('recordPayment')}
+              </a>
+            </div>
           ) : null
         }
       />
@@ -1999,6 +2095,19 @@ export function SalesClient({
                   setSearch(e.target.value);
                   setPage(1);
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && mayRecordPayment) {
+                    const code = search.trim();
+                    if (
+                      code.length >= 2 &&
+                      branchScopedRows.some((r) => Boolean(findProductLineByCode(r.products, code)))
+                    ) {
+                      e.preventDefault();
+                      setSearch('');
+                      setReturnSheet({ open: true, bill: null, scannedCode: code });
+                    }
+                  }
+                }}
               />
             </label>
 
@@ -2058,6 +2167,12 @@ export function SalesClient({
                     const shownProducts = row.products.slice(0, MAX_ROW_PRODUCTS);
                     const hiddenProducts = row.products.length - shownProducts.length;
                     const primaryMode = row.paymentModes[0] ?? 'other';
+                    const canReturnRow =
+                      mayRecordPayment &&
+                      row.productUnits > 0 &&
+                      computeReturnWindow(row.dayISO, todayISO, returnWindowDays).eligible;
+                    const fullyReturned = row.returnedUnits > 0 && row.productUnits === 0 && row.serviceNames.length === 0;
+                    const partReturned = row.returnedUnits > 0 && !fullyReturned;
                     return (
                       <tr key={row.key}>
                         <td className="sls-col-when">{formatWhen(row)}</td>
@@ -2087,7 +2202,10 @@ export function SalesClient({
                             {row.products.length > 0 ? (
                               <div className="sls-product-chips">
                                 {shownProducts.map((p, i) => (
-                                  <span key={`${p.productId ?? p.name}-${i}`} className="sls-badge sls-badge-prd">
+                                  <span
+                                    key={`${p.productId ?? p.name}-${i}`}
+                                    className={`sls-badge sls-badge-prd ${lineRemainingQty(p) === 0 ? 'is-returned' : ''}`}
+                                  >
                                     <IconProducts />
                                     {p.qty > 1 ? `${p.name} (${p.qty})` : `${p.name} (1)`}
                                   </span>
@@ -2127,19 +2245,43 @@ export function SalesClient({
                         </td>
                         <td className="is-num sls-col-total">{formatMoney(String(rowAmountMinor(row)))}</td>
                         <td>
-                          <span className="sls-status-pill">
-                            <IconCheck />
-                            <span>{t('completedStatus')}</span>
-                          </span>
+                          {fullyReturned ? (
+                            <span className="sls-status-pill is-returned">
+                              <IconReturn />
+                              <span>{t('returnedStatus')}</span>
+                            </span>
+                          ) : partReturned ? (
+                            <span className="sls-status-pill is-part-returned">
+                              <IconReturn />
+                              <span>{t('partReturnedStatus')}</span>
+                            </span>
+                          ) : (
+                            <span className="sls-status-pill">
+                              <IconCheck />
+                              <span>{t('completedStatus')}</span>
+                            </span>
+                          )}
                         </td>
                         <td className="is-action">
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm sls-view-btn"
-                            onClick={() => setOpenBooking(row.group)}
-                          >
-                            {t('view')}
-                          </button>
+                          <div className="sls-row-actions">
+                            {canReturnRow ? (
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm sls-return-btn"
+                                onClick={() => setReturnSheet({ open: true, bill: row, scannedCode: '' })}
+                              >
+                                <IconReturn />
+                                <span>{t('returnBtn')}</span>
+                              </button>
+                            ) : null}
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm sls-view-btn"
+                              onClick={() => setOpenBooking(row.group)}
+                            >
+                              {t('view')}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -2153,59 +2295,79 @@ export function SalesClient({
               {pageRows.map((row) => {
                 const shownProducts = row.products.slice(0, MAX_ROW_PRODUCTS);
                 const hiddenProducts = row.products.length - shownProducts.length;
+                const canReturnRow =
+                  mayRecordPayment &&
+                  row.productUnits > 0 &&
+                  computeReturnWindow(row.dayISO, todayISO, returnWindowDays).eligible;
                 return (
-                  <button
-                    key={row.key}
-                    type="button"
-                    className="sls-card"
-                    onClick={() => setOpenBooking(row.group)}
-                  >
-                    <div className="sls-card-top">
-                      <div className="sls-client">
-                        <span className="sls-avatar">{initials(row.clientName)}</span>
-                        <div className="sls-client-meta">
-                          <strong className="sls-client-name">{row.clientName}</strong>
-                          <span className="sls-client-phone">
-                            {formatWhen(row)}
-                            {showStaffCol
-                              ? ` · ${row.staffNames.length > 0 ? row.staffNames.join(', ') : t('noStaff')}`
-                              : ''}
+                  <div key={row.key} className="sls-card-wrap">
+                    <button
+                      type="button"
+                      className="sls-card"
+                      onClick={() => setOpenBooking(row.group)}
+                    >
+                      <div className="sls-card-top">
+                        <div className="sls-client">
+                          <span className="sls-avatar">{initials(row.clientName)}</span>
+                          <div className="sls-client-meta">
+                            <strong className="sls-client-name">{row.clientName}</strong>
+                            <span className="sls-client-phone">
+                              {formatWhen(row)}
+                              {showStaffCol
+                                ? ` · ${row.staffNames.length > 0 ? row.staffNames.join(', ') : t('noStaff')}`
+                                : ''}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="sls-card-right">
+                          <strong className="sls-card-total">{formatMoney(String(rowAmountMinor(row)))}</strong>
+                          <span className="sls-pay-pill">{formatPaymentMode(row.paymentModes)}</span>
+                        </div>
+                      </div>
+                      <div className="sls-card-items">
+                        {showServicesCol && row.offerTitle ? (
+                          <span className="sls-badge sls-badge-pkg">
+                            <IconPackages /> {row.offerTitle}
                           </span>
-                        </div>
+                        ) : null}
+                        {showServicesCol && row.serviceNames.length > 0 ? (
+                          <div className="sls-card-line">
+                            <span className="sls-service-list">{summarizeServices(row.serviceNames, locale)}</span>
+                          </div>
+                        ) : null}
+                        {showProductsCol && row.products.length > 0 ? (
+                          <div className="sls-product-chips">
+                            {shownProducts.map((p, i) => (
+                              <span
+                                key={`${p.productId ?? p.name}-${i}`}
+                                className={`sls-badge sls-badge-prd ${lineRemainingQty(p) === 0 ? 'is-returned' : ''}`}
+                              >
+                                <IconProducts />
+                                {p.qty > 1 ? `${p.name} (${p.qty})` : `${p.name} (1)`}
+                              </span>
+                            ))}
+                            {hiddenProducts > 0 ? (
+                              <span className="sls-badge sls-badge-more">
+                                {t('moreProducts', { n: hiddenProducts })}
+                              </span>
+                            ) : null}
+                          </div>
+                        ) : null}
                       </div>
-                      <div className="sls-card-right">
-                        <strong className="sls-card-total">{formatMoney(String(rowAmountMinor(row)))}</strong>
-                        <span className="sls-pay-pill">{formatPaymentMode(row.paymentModes)}</span>
+                    </button>
+                    {canReturnRow ? (
+                      <div className="sls-card-foot">
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm sls-return-btn"
+                          onClick={() => setReturnSheet({ open: true, bill: row, scannedCode: '' })}
+                        >
+                          <IconReturn />
+                          <span>{t('returnBtn')}</span>
+                        </button>
                       </div>
-                    </div>
-                    <div className="sls-card-items">
-                      {showServicesCol && row.offerTitle ? (
-                        <span className="sls-badge sls-badge-pkg">
-                          <IconPackages /> {row.offerTitle}
-                        </span>
-                      ) : null}
-                      {showServicesCol && row.serviceNames.length > 0 ? (
-                        <div className="sls-card-line">
-                          <span className="sls-service-list">{summarizeServices(row.serviceNames, locale)}</span>
-                        </div>
-                      ) : null}
-                      {showProductsCol && row.products.length > 0 ? (
-                        <div className="sls-product-chips">
-                          {shownProducts.map((p, i) => (
-                            <span key={`${p.productId ?? p.name}-${i}`} className="sls-badge sls-badge-prd">
-                              <IconProducts />
-                              {p.qty > 1 ? `${p.name} (${p.qty})` : `${p.name} (1)`}
-                            </span>
-                          ))}
-                          {hiddenProducts > 0 ? (
-                            <span className="sls-badge sls-badge-more">
-                              {t('moreProducts', { n: hiddenProducts })}
-                            </span>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </div>
-                  </button>
+                    ) : null}
+                  </div>
                 );
               })}
             </div>
@@ -2225,8 +2387,61 @@ export function SalesClient({
         <BookingSummary
           booking={openBooking}
           timezone={timezone}
+          onReturnProducts={(() => {
+            const openRow = allSaleRows.find((r) => r.key === openBooking.key);
+            if (
+              !openRow ||
+              !mayRecordPayment ||
+              openRow.productUnits <= 0 ||
+              !computeReturnWindow(openRow.dayISO, todayISO, returnWindowDays).eligible
+            ) {
+              return undefined;
+            }
+            return () => {
+              setOpenBooking(null);
+              setReturnSheet({ open: true, bill: openRow, scannedCode: '' });
+            };
+          })()}
           onClose={() => {
             setOpenBooking(null);
+            router.refresh();
+          }}
+        />
+      ) : null}
+
+      {returnSheet.open ? (
+        <ReturnProductSheet
+          bills={branchScopedRows}
+          initialBill={returnSheet.bill}
+          initialScannedCode={returnSheet.scannedCode}
+          timezone={timezone}
+          todayISO={todayISO}
+          returnWindowDays={returnWindowDays}
+          onClose={() => setReturnSheet({ open: false, bill: null, scannedCode: '' })}
+          onReturned={(res) => {
+            // A replay answers a request already made: its units are in the list the refresh brings, not new ones.
+            setLoadedAppointments((prev) =>
+              prev.map((a) => {
+                const visitKey = a.bookingGroupId ?? a.id;
+                if (visitKey === res.visitKey && a.products && !res.replayed) {
+                  return {
+                    ...a,
+                    refunds: [...(a.refunds ?? []), { mode: res.refundMode, amountMinor: String(res.refundMinor) }],
+                    products: a.products.map((p) => {
+                      const ret = res.items.find((it) => it.productId === lineReturnId(p));
+                      if (!ret) return p;
+                      return {
+                        ...p,
+                        returnedQty: Number(p.returnedQty || 0) + ret.qty,
+                        returnedMinor: String(Number(p.returnedMinor || 0) + ret.refundMinor),
+                      };
+                    }),
+                  };
+                }
+                return a;
+              }),
+            );
+            setReturnSheet({ open: false, bill: null, scannedCode: '' });
             router.refresh();
           }}
         />

@@ -1859,7 +1859,10 @@
       "subtotal": "Subtotal",
       "combo": "{title} package",
       "total": "Total paid",
-      "paidBy": "Paid by"
+      "paidBy": "Paid by",
+      "returnedBadge": "{n} returned",
+      "returnProducts": "Return product",
+      "refunded": "Refunded"
     },
     "daySchedule": {
       "seeAll": "See all {count} bookings"
@@ -3466,6 +3469,59 @@
       "topProduct": "Top product",
       "bookingsCount": "{n, plural, =0 {No bookings} one {# booking} other {# bookings}}",
       "noneYet": "—"
+    },
+    "returnProduct": "Return product",
+    "returnBtn": "Return",
+    "returnedStatus": "Returned",
+    "partReturnedStatus": "Part returned",
+    "returnedBadge": "{n} returned",
+    "returnSheet": {
+      "title": "Return product",
+      "subtitle": "Scan a product barcode or pick the bill it was sold on.",
+      "scanLabel": "Scan barcode or search bill",
+      "scanPlaceholder": "Scan barcode, or type client, phone or product…",
+      "scanReady": "Scanner ready",
+      "matchingBills": "Matching bills",
+      "recentProductBills": "Recent product bills",
+      "noMatchingBills": "No product bill matches \"{q}\".",
+      "noProductBills": "No bills with products in this period.",
+      "windowDaysLeft": "{left, plural, =0 {Last day of {window}d return window} one {#d left in {window}d window} other {#d left in {window}d window}}",
+      "windowEnded": "Return window ended ({window}d)",
+      "allReturned": "All returned",
+      "changeBill": "Change bill",
+      "productsOnBill": "Products on this bill",
+      "returnAll": "Return all products",
+      "clearSelection": "Clear",
+      "soldQty": "Sold: {n}",
+      "alreadyReturned": "{n} already returned",
+      "eachPrice": "{price} each",
+      "lessAria": "Return one less {name}",
+      "moreAria": "Return one more {name}",
+      "conditionLabel": "Returned item condition",
+      "restockShelf": "Put back on shelf",
+      "restockShelfHint": "Adds returned units back to sellable stock",
+      "damagedOpened": "Damaged / opened",
+      "damagedOpenedHint": "Logs return + damage; sellable stock stays unchanged",
+      "reasonLabel": "Reason (optional)",
+      "reasonPlaceholder": "e.g. Wrong item, seal broken, client exchanged…",
+      "refundTotal": "Refund to client",
+      "unitsSelected": "{n, plural, =0 {Select items to return} one {# unit selected} other {# units selected}}",
+      "confirm": "Confirm return",
+      "confirmWithAmount": "Confirm return · {amount}",
+      "saving": "Recording return…",
+      "scannedAdded": "Scanned {name} (+1 to return)",
+      "scannedMaxReached": "All {n} sold units of {name} are already selected.",
+      "scannedNotFound": "No product with barcode \"{code}\" on this bill.",
+      "refundModeLabel": "How was the refund paid?",
+      "refundModes": {
+        "cash": "Cash",
+        "upi": "UPI",
+        "card": "Card",
+        "other": "Other"
+      },
+      "documentIssuedBody": "Invoice {number} was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?",
+      "documentIssuedBodyNoNumber": "An invoice was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?",
+      "documentIssuedGo": "Return anyway"
     }
   }
 }

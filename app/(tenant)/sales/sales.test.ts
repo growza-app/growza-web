@@ -8,16 +8,24 @@ import {
   buildSalesCsv,
   clampSalesDateRange,
   computeDeltaPct,
+  computeReturnWindow,
   computeSalesKpis,
   computeSalesQuickStats,
+  DEFAULT_PRODUCT_RETURN_WINDOW_DAYS,
   filterSalesByWindow,
   filterSalesRows,
+  findProductLineByCode,
   formatAxisRupees,
+  lineNetPaidMinor,
+  lineRefundMinorForQty,
+  lineRemainingQty,
   MAX_ROW_PRODUCTS,
   MAX_SALES_DATE_YEARS,
   MAX_SALES_EXPORT_ROWS,
+  visitKeyFromGroupKey,
 } from './SalesClient';
 import { PAGE_SIZE } from '../components/Pagination';
+import { defaultRefundMode, newRequestId, requestIdFor } from './sales-helpers';
 
 const here = (p: string) => readFileSync(resolve(__dirname, p), 'utf8');
 
@@ -533,5 +541,190 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(client).toContain('computeSalesKpis(toolbarRows)');
     expect(client).toContain('.appointments(safeFrom, safeTo, undefined, undefined, { includeSales: true })');
     expect(client).toContain('buildSalesChart(filteredRows, fromDate, toDate, timezone, filter, locale)');
+  });
+
+  it('computes product return window eligibility, proportional + remainder refund math, barcode matching, and netted KPIs', () => {
+    expect(DEFAULT_PRODUCT_RETURN_WINDOW_DAYS).toBe(7);
+    expect(visitKeyFromGroupKey('single:abc-123')).toBe('abc-123');
+    expect(visitKeyFromGroupKey('grp-456')).toBe('grp-456');
+
+    // Return window check: within 7 days, on day 7 boundary, and expired on day 8
+    expect(computeReturnWindow('2026-10-16', '2026-10-19', 7)).toEqual({
+      eligible: true,
+      daysElapsed: 3,
+      daysLeft: 4,
+      windowDays: 7,
+    });
+    expect(computeReturnWindow('2026-10-12', '2026-10-19', 7)).toEqual({
+      eligible: true,
+      daysElapsed: 7,
+      daysLeft: 0,
+      windowDays: 7,
+    });
+    expect(computeReturnWindow('2026-10-11', '2026-10-19', 7)).toEqual({
+      eligible: false,
+      daysElapsed: 8,
+      daysLeft: 0,
+      windowDays: 7,
+    });
+    // Same-day-only window (0 days)
+    expect(computeReturnWindow('2026-10-19', '2026-10-19', 0).eligible).toBe(true);
+    expect(computeReturnWindow('2026-10-18', '2026-10-19', 0).eligible).toBe(false);
+
+    // Proportional + remainder refund math without rounding drift (3 units sold for 10000 paise)
+    const oddLine = {
+      id: 'vp-1',
+      productId: 'prd-odd',
+      name: 'Vitamin C Serum',
+      sku: 'VIT-C-30',
+      barcode: '8901234560012',
+      priceMinor: '3333',
+      qty: 3,
+      paidMinor: '10000',
+      returnedQty: 0,
+      returnedMinor: '0',
+    };
+    expect(lineRemainingQty(oddLine)).toBe(3);
+    expect(lineNetPaidMinor(oddLine)).toBe(10000);
+    expect(lineRefundMinorForQty(oddLine, 1)).toBe(3333);
+    expect(lineRefundMinorForQty(oddLine, 2)).toBe(6667);
+    expect(lineRefundMinorForQty(oddLine, 3)).toBe(10000);
+
+    const afterOneReturned = { ...oddLine, returnedQty: 1, returnedMinor: '3333' };
+    expect(lineRemainingQty(afterOneReturned)).toBe(2);
+    expect(lineNetPaidMinor(afterOneReturned)).toBe(6667);
+    expect(lineRefundMinorForQty(afterOneReturned, 1)).toBe(3334);
+    expect(lineRefundMinorForQty(afterOneReturned, 2)).toBe(6667);
+
+    // Barcode / SKU lookup
+    expect(findProductLineByCode([oddLine], '8901234560012')?.productId).toBe('prd-odd');
+    expect(findProductLineByCode([oddLine], 'vit-c-30')?.productId).toBe('prd-odd');
+    expect(findProductLineByCode([oddLine], '99999999')).toBeNull();
+
+    // Netted SaleRow, KPIs, and QuickStats after partial return
+    const rows = buildSaleRows(
+      [
+        mkAppointment({
+          id: 'ret-1',
+          bookingGroupId: 'g-ret-1',
+          paidAmountMinor: '50000',
+          paymentMode: 'upi',
+          products: [
+            {
+              id: 'vp-10',
+              productId: 'prd-1',
+              name: 'Argan Oil 100ml',
+              sku: 'ARG-100',
+              barcode: '8901112223334',
+              priceMinor: '45000',
+              qty: 2,
+              paidMinor: '90000',
+              returnedQty: 1,
+              returnedMinor: '45000',
+            },
+          ],
+          payments: [{ mode: 'upi', amountMinor: '140000' }],
+        }),
+      ],
+      'Asia/Kolkata',
+    );
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!).toMatchObject({
+      servicesMinor: 50000,
+      productsMinor: 45000,
+      returnedMinor: 45000,
+      totalMinor: 95000,
+      productUnits: 1,
+      returnedUnits: 1,
+    });
+
+    const kpis = computeSalesKpis(rows);
+    expect(kpis.totalSalesMinor).toBe(95000);
+    expect(kpis.productsRevenueMinor).toBe(45000);
+    expect(kpis.productUnitsCount).toBe(1);
+    expect(kpis.byMode.upi).toBe(95000);
+
+    const qs = computeSalesQuickStats(rows);
+    expect(qs.topProduct).toEqual({ name: 'Argan Oil 100ml', units: 1 });
+    expect(filterSalesRows(rows, 'all', '8901112223334').map((r) => r.key)).toEqual(['g-ret-1']);
+    expect(filterSalesRows(rows, 'all', 'ARG-100').map((r) => r.key)).toEqual(['g-ret-1']);
+
+    // Source pins for top Return button, per-row Return button, barcode gun listener, and ReturnProductSheet
+    const client = here('./SalesClient.tsx');
+    const sheet = here('./ReturnProductSheet.tsx');
+    const summary = here('../components/BookingSummary.tsx');
+    expect(client).toContain('sls-top-return-btn');
+    expect(client).toContain('sls-return-btn');
+    expect(client).toContain('<ReturnProductSheet');
+    expect(sheet).toContain('api.returnSaleProducts(visitKeyFromGroupKey(selectedBill.key)');
+    expect(sheet).toContain("t('returnAll')");
+    expect(sheet).toContain("t('restockShelf')");
+    expect(sheet).toContain("t('damagedOpened')");
+    expect(summary).toContain('onReturnProducts');
+  });
+});
+
+/**
+ * Owner review, 2026-10-19 — a refund says how it was paid out (the drawer has to balance), is sent under one id per
+ * return (so a retry returns nothing more), and an invoice already given is flagged before the desk goes ahead.
+ */
+describe('a refund is paid out one way, sent once, and warns about an issued invoice', () => {
+  const line = { id: 'vp-1', productId: 'prd-1', name: 'Argan Oil', priceMinor: '45000', qty: 2, paidMinor: '90000', returnedQty: 1, returnedMinor: '45000' };
+  const bill = (extra: Partial<Appointment>) =>
+    buildSaleRows([mkAppointment({ id: 'r-1', bookingGroupId: 'g-r', paidAmountMinor: '50000', products: [line], ...extra })], 'Asia/Kolkata');
+
+  it('a UPI sale refunded in cash is UPI in and cash out, and the ways still add up to the net total', () => {
+    const rows = bill({ paymentMode: 'upi', payments: [{ mode: 'upi', amountMinor: '140000' }], refunds: [{ mode: 'cash', amountMinor: '45000' }] });
+    const kpis = computeSalesKpis(rows);
+    expect(kpis.byMode.upi).toBe(140000);
+    expect(kpis.byMode.cash).toBe(-45000);
+    expect(kpis.byMode.upi + kpis.byMode.cash).toBe(kpis.totalSalesMinor);
+  });
+
+  it('a bill paid one way (no payment lines) does the same from its net total', () => {
+    const rows = bill({ paymentMode: 'upi', refunds: [{ mode: 'cash', amountMinor: '45000' }] });
+    const kpis = computeSalesKpis(rows);
+    expect(kpis.byMode.upi).toBe(95000 + 45000);
+    expect(kpis.byMode.cash).toBe(-45000);
+    expect(kpis.byMode.upi + kpis.byMode.cash).toBe(kpis.totalSalesMinor);
+  });
+
+  it('a refund paid out the way it came in leaves that way net of it', () => {
+    const rows = bill({ paymentMode: 'upi', payments: [{ mode: 'upi', amountMinor: '140000' }], refunds: [{ mode: 'upi', amountMinor: '45000' }] });
+    expect(computeSalesKpis(rows).byMode.upi).toBe(95000);
+  });
+
+  it('an API that sends no refunds keeps the old behaviour: the refund comes off the ways in order', () => {
+    const rows = bill({ paymentMode: 'upi', payments: [{ mode: 'upi', amountMinor: '140000' }] });
+    expect(computeSalesKpis(rows).byMode.upi).toBe(95000);
+  });
+
+  it('the refund defaults to the way the bill was paid, and to cash when that is unknown', () => {
+    expect(defaultRefundMode(['upi'])).toBe('upi');
+    expect(defaultRefundMode(['card', 'cash'])).toBe('card');
+    expect(defaultRefundMode(['wallet'])).toBe('other');
+    expect(defaultRefundMode([])).toBe('cash');
+    expect(defaultRefundMode(undefined)).toBe('cash');
+  });
+
+  it('the same return keeps its request id across presses, and a changed one gets a new id', () => {
+    const first = requestIdFor(null, 'a');
+    expect(requestIdFor(first, 'a')).toBe(first);
+    const changed = requestIdFor(first, 'b');
+    expect(changed.id).not.toBe(first.id);
+    expect(newRequestId()).not.toBe(newRequestId());
+    expect(first.id.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it('the sheet sends the way, the id, and the acknowledgement; and asks before going past an issued invoice', () => {
+    const sheet = here('./ReturnProductSheet.tsx');
+    expect(sheet).toContain('refundMode,');
+    expect(sheet).toContain('idempotencyKey: requestRef.current.id,');
+    expect(sheet).toContain('acknowledgeIssuedDocument: true');
+    expect(sheet).toContain("err.code === 'document_issued'");
+    expect(sheet).toContain('requestRef.current = null;');
+    // The id is dropped only after the server answered: a failure keeps it, so the retry is the same request.
+    expect(sheet.indexOf('requestRef.current = null;')).toBeGreaterThan(sheet.indexOf('await api.returnSaleProducts'));
   });
 });
