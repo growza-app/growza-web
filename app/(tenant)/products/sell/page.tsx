@@ -45,7 +45,7 @@ export default async function SellProductPage({
 
   return (
     <div className="page-body">
-      <SellProductClient timezone={timezone} backTo={params.from === 'products' ? '/products' : undefined} />
+      <SellProductClient timezone={timezone} backTo={params.from === 'products' ? '/products' : params.from === 'sales' ? '/sales' : undefined} />
     </div>
   );
 }

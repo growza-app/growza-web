@@ -4,13 +4,14 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, formatMoney, formatTime, type Appointment } from '../lib/api';
+import type { Product } from '../lib/api-types';
 import { formatDateShort } from '../lib/format';
 import { bookingBill, clientNameLabel, groupBookings, initials, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { PageHeader } from '../components/PageHeader';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { BookingSummary } from '../components/BookingSummary';
 import { useBranch } from '../components/BranchProvider';
-import { useMayUse } from '../components/SessionProvider';
+import { useMayUse, useSession } from '../components/SessionProvider';
 import { useLabel } from '../components/LabelsProvider';
 import { pickNoun } from '../lib/nouns';
 import {
@@ -30,6 +31,9 @@ import {
   IconUserPlus,
 } from '../components/icons';
 import { csvLines } from '../lib/csv';
+import { useBarcodeScan } from '../lib/barcode-scan';
+import { productByCode } from '../lib/product-match';
+import { queueScan, SCAN_RUN_END_MS } from '../lib/scan-queue';
 import { ReturnProductSheet } from './ReturnProductSheet';
 import {
   clampSalesDateRange,
@@ -869,10 +873,9 @@ export function SalesClient({
   const [chartOpen, setChartOpen] = useState(true);
   const [page, setPage] = useState(1);
   const [openBooking, setOpenBooking] = useState<BookingGroup | null>(null);
-  const [returnSheet, setReturnSheet] = useState<{ open: boolean; bill: SaleRow | null; scannedCode: string }>({
+  const [returnSheet, setReturnSheet] = useState<{ open: boolean; bill: SaleRow | null }>({
     open: false,
     bill: null,
-    scannedCode: '',
   });
 
   useEffect(() => {
@@ -888,33 +891,51 @@ export function SalesClient({
     setSelectedBranches(branch.choice ? [branch.choice] : []);
   }, [branch.choice]);
 
+  /*
+   * Owner, 2026-10-19 — a return is only ever started with the Return button; a scan here is a sale. The scan used to
+   * open the Return sheet, so a bottle that had been returned and was scanned to sell again opened the old bill.
+   *
+   * Sales has no till, so a code that names a product on this branch's shelf is queued and the sell page is opened;
+   * it puts every queued code on the bill, in the order scanned. Anything else — a loyalty card, a bill's QR, a bottle
+   * that is not stocked — is said here and leaves this screen as it was, filters and all.
+   */
+  const session = useSession();
+  const sellReachable = mayRecordPayment && session?.live !== false;
+  const shelfRef = useRef<{ branch: string | null; shelf: Promise<Product[] | null> } | null>(null);
+  const leaving = useRef(false);
+  const leaveTimer = useRef<number | undefined>(undefined);
+  const [scanNote, setScanNote] = useState<string | null>(null);
   useEffect(() => {
-    if (!mayRecordPayment || returnSheet.open || openBooking) return;
-    let buf = '';
-    let lastTs = 0;
-    const onKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
-      const now = performance.now();
-      if (e.key === 'Enter') {
-        if (buf.length >= 3 && now - lastTs < 120) {
-          e.preventDefault();
-          const code = buf.trim();
-          if (code) setReturnSheet({ open: true, bill: null, scannedCode: code });
-        }
-        buf = '';
-        return;
-      }
-      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (now - lastTs > 80) buf = '';
-        buf += e.key;
-        lastTs = now;
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [mayRecordPayment, returnSheet.open, openBooking]);
-
+    if (!scanNote) return;
+    const id = window.setTimeout(() => setScanNote(null), 5000);
+    return () => window.clearTimeout(id);
+  }, [scanNote]);
+  useBarcodeScan(sellReachable && !returnSheet.open && !openBooking, async (code) => {
+    const at = branch.choice ?? null;
+    if (shelfRef.current?.branch !== at) shelfRef.current = { branch: at, shelf: api.products(at).catch(() => null) };
+    // The shelf is read once and kept: every scan of a quick run waits on the same answer, so they stay in order.
+    const shelf = await shelfRef.current.shelf;
+    // A shelf that would not load cannot say no; the sell page will.
+    if (shelf && !productByCode(shelf, code)) {
+      setScanNote(code);
+      return;
+    }
+    if (!queueScan(code)) return;
+    setScanNote(null);
+    // Wait for the run to end before leaving: scans that arrive mid-navigation have no screen to land on.
+    window.clearTimeout(leaveTimer.current);
+    leaveTimer.current = window.setTimeout(sellPage, SCAN_RUN_END_MS);
+  });
+  const sellPage = () => {
+    if (leaving.current) return;
+    leaving.current = true;
+    router.push('/products/sell?from=sales');
+  };
+  /** Not on the shelf: the sell page opens with the code in its search box, to be typed over with a name. */
+  const searchByName = (code: string) => {
+    if (queueScan(code)) sellPage();
+  };
+  useEffect(() => () => window.clearTimeout(leaveTimer.current), []);
   useEffect(() => {
     if (!openDropdown) return;
     const onOutside = (e: MouseEvent | PointerEvent) => {
@@ -1316,7 +1337,7 @@ export function SalesClient({
               <button
                 type="button"
                 className="btn btn-ghost sls-top-return-btn"
-                onClick={() => setReturnSheet({ open: true, bill: null, scannedCode: '' })}
+                onClick={() => setReturnSheet({ open: true, bill: null })}
               >
                 <IconReturn />
                 <span>{t('returnProduct')}</span>
@@ -2083,6 +2104,14 @@ export function SalesClient({
             ))}
           </div>
 
+          {scanNote ? (
+            <div role="status" className="pf-error" style={{ marginBottom: 'var(--sp-3)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 'var(--sp-3)' }}>
+              <span>{t('scanUnknown', { code: scanNote })}</span>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => searchByName(scanNote)}>
+                {t('scanSearch')}
+              </button>
+            </div>
+          ) : null}
           <div className="sls-table-actions">
             <label className="search-wrap sls-table-search">
               <IconSearch />
@@ -2094,19 +2123,6 @@ export function SalesClient({
                 onChange={(e) => {
                   setSearch(e.target.value);
                   setPage(1);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && mayRecordPayment) {
-                    const code = search.trim();
-                    if (
-                      code.length >= 2 &&
-                      branchScopedRows.some((r) => Boolean(findProductLineByCode(r.products, code)))
-                    ) {
-                      e.preventDefault();
-                      setSearch('');
-                      setReturnSheet({ open: true, bill: null, scannedCode: code });
-                    }
-                  }
                 }}
               />
             </label>
@@ -2268,7 +2284,7 @@ export function SalesClient({
                               <button
                                 type="button"
                                 className="btn btn-ghost btn-sm sls-return-btn"
-                                onClick={() => setReturnSheet({ open: true, bill: row, scannedCode: '' })}
+                                onClick={() => setReturnSheet({ open: true, bill: row })}
                               >
                                 <IconReturn />
                                 <span>{t('returnBtn')}</span>
@@ -2360,7 +2376,7 @@ export function SalesClient({
                         <button
                           type="button"
                           className="btn btn-ghost btn-sm sls-return-btn"
-                          onClick={() => setReturnSheet({ open: true, bill: row, scannedCode: '' })}
+                          onClick={() => setReturnSheet({ open: true, bill: row })}
                         >
                           <IconReturn />
                           <span>{t('returnBtn')}</span>
@@ -2399,7 +2415,7 @@ export function SalesClient({
             }
             return () => {
               setOpenBooking(null);
-              setReturnSheet({ open: true, bill: openRow, scannedCode: '' });
+              setReturnSheet({ open: true, bill: openRow });
             };
           })()}
           onClose={() => {
@@ -2413,11 +2429,10 @@ export function SalesClient({
         <ReturnProductSheet
           bills={branchScopedRows}
           initialBill={returnSheet.bill}
-          initialScannedCode={returnSheet.scannedCode}
           timezone={timezone}
           todayISO={todayISO}
           returnWindowDays={returnWindowDays}
-          onClose={() => setReturnSheet({ open: false, bill: null, scannedCode: '' })}
+          onClose={() => setReturnSheet({ open: false, bill: null })}
           onReturned={(res) => {
             // A replay answers a request already made: its units are in the list the refresh brings, not new ones.
             setLoadedAppointments((prev) =>
@@ -2441,7 +2456,7 @@ export function SalesClient({
                 return a;
               }),
             );
-            setReturnSheet({ open: false, bill: null, scannedCode: '' });
+            setReturnSheet({ open: false, bill: null });
             router.refresh();
           }}
         />

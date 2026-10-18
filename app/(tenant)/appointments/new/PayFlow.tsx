@@ -29,7 +29,8 @@ import { BillCard, BillRows, lineKey, lineMinor, type BillLine as Line } from '.
 import { DeskServiceGrid } from './DeskServiceGrid';
 import { DeskUnpaid } from './DeskUnpaid';
 import { useBarcodeScan } from '../../lib/barcode-scan';
-import { productByCode } from '../../lib/product-match';
+import { planScans, type ScanProblem } from '../../lib/scan-plan';
+import { queueScan, takeScans } from '../../lib/scan-queue';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
 import { PaymentDone } from '../../components/PaymentDone';
 
@@ -153,7 +154,7 @@ export function PayFlow({
   /** The signed-in person's own chair, when they have one: the stylist ① starts on. */
   providerId: string | null;
   timezone: string;
-  backTo?: '/appointments' | '/products';
+  backTo?: '/appointments' | '/products' | '/sales';
   /**
    * Jira GRW-572 — a laptop ≥1101px: the same till laid out in three panels (who · what · the bill), with the
    * payment tiles beside the bill so ② is not a screen of its own. Same state, same `pay()`, same two writes.
@@ -217,6 +218,7 @@ export function PayFlow({
   /** Owner, 2026-10-14 — the branch's shelf (migration 0115): the Products tab on the desk, a chip in the phone's sheet. */
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoaded, setProductsLoaded] = useState(false);
+  const [productsFailed, setProductsFailed] = useState(false);
   const [productCategories, setProductCategories] = useState<ProductCategory[]>([]);
   const [productCategory, setProductCategory] = useState<string>(ALL_CATEGORIES);
   const [client, setClient] = useState<Client>({ kind: 'none' });
@@ -259,6 +261,7 @@ export function PayFlow({
   useEffect(() => {
     let gone = false;
     setProductsLoaded(false);
+    setProductsFailed(false);
     setProductCategory(ALL_CATEGORIES);
     void api
       .products(location)
@@ -271,6 +274,7 @@ export function PayFlow({
       .catch(() => {
         if (!gone) {
           setProducts([]);
+          setProductsFailed(true);
           setProductsLoaded(true);
         }
       });
@@ -546,28 +550,44 @@ export function PayFlow({
    * rather than doing nothing, because a silent miss at the counter reads as "the scanner is broken".
    */
   const [scanNote, setScanNote] = useState<string | null>(null);
+  // A code that matched nothing goes into the search box: a person can edit it into a name and sell it by hand.
+  const [searchSeed, setSearchSeed] = useState<{ text: string; n: number } | null>(null);
   useEffect(() => {
     if (!scanNote) return;
     const id = window.setTimeout(() => setScanNote(null), 5000);
     return () => window.clearTimeout(id);
   }, [scanNote]);
+  const scanWords = (p: ScanProblem) => (p.kind === 'miss' ? t('desk.scanMiss', { code: p.code }) : p.kind === 'stock' ? t('desk.scanNoStock', { name: p.name }) : t('desk.scanFull'));
+  /** One scan or a queue of them: each that can go on does, and the last that cannot is said out loud. */
+  const onScans = (codes: readonly string[]) => {
+    const { add, problem } = planScans(codes, products, productCountOf, lines.length, MAX_LINES);
+    // addProduct would refuse these quietly; a scan has no tile to show why, so it says.
+    if (problem) felt(BUZZ.tooMany);
+    setScanNote(problem ? scanWords(problem) : null);
+    if (problem?.kind === 'miss') {
+      setSearchSeed((prev) => ({ text: problem.code, n: (prev?.n ?? 0) + 1 }));
+      if (!wide) setMenuOpen(true);
+    }
+    for (const p of add) addProduct(p);
+  };
   // Only on the screen where products are picked: on 'how', 'qr' and 'done' a scan would change a bill being paid.
-  useBarcodeScan(productsOnly && productsLoaded && step === 'what', (code) => {
-    const hit = productByCode(products, code);
-    if (!hit) {
-      felt(BUZZ.tooMany);
-      setScanNote(t('desk.scanMiss', { code }));
-      return;
-    }
-    // addProduct refuses these quietly; a scan has no tile to show why, so it says.
-    if (full || hit.stock <= 0 || productCountOf(hit.id) >= hit.stock) {
-      felt(BUZZ.tooMany);
-      setScanNote(full ? t('desk.scanFull') : t('desk.scanNoStock', { name: hit.name }));
-      return;
-    }
-    setScanNote(null);
-    addProduct(hit);
+  // Listening from the first moment, not from when the shelf is in: a bottle scanned while it loads waits in the queue.
+  useBarcodeScan(productsOnly && step === 'what', (code) => {
+    if (productsLoaded) onScans([code]);
+    else queueScan(code);
   });
+  // Codes scanned on the Sales screen wait in the browser: put them on the bill once, in the order scanned.
+  const scansTaken = useRef(false);
+  useEffect(() => {
+    if (!productsOnly || !productsLoaded || scansTaken.current) return;
+    scansTaken.current = true;
+    const waiting = takeScans();
+    if (waiting.length === 0) return;
+    // A shelf that failed to load is empty, not a shelf with nothing on it: say so rather than call each bottle unknown.
+    if (productsFailed) setScanNote(t('desk.scanShelfFailed'));
+    else onScans(waiting);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productsOnly, productsLoaded]);
   // No buzz on the way down: the count and the total both drop, and a removal that felt like an addition is a lie.
   const oneLess = (key: string) => {
     setLines((prev) => {
@@ -1304,6 +1324,7 @@ export function PayFlow({
               initialTab={initialTab}
               productsOnly={productsOnly}
               productCategory={productCategory}
+              searchSeed={searchSeed}
             />
           )}
           <aside className="pf-wide-right">
@@ -1752,12 +1773,17 @@ export function PayFlow({
           onPickProduct={(p) => {
             addProduct(p);
             setMenuOpen(false);
+            setSearchSeed(null);
           }}
-          onClose={() => setMenuOpen(false)}
+          onClose={() => {
+            setMenuOpen(false);
+            setSearchSeed(null);
+          }}
           packageCountOf={packageCountOf}
           onLessPackage={oneLessPackage}
           initialKind={productsOnly ? 'products' : initialTab}
           productsOnly={productsOnly}
+          initialTerm={searchSeed?.text ?? ''}
         />
       ) : null}
       {keypad !== null ? (

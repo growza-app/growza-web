@@ -15,7 +15,7 @@ export function SellProductClient({
   backTo,
 }: {
   timezone: string;
-  backTo?: '/products';
+  backTo?: '/products' | '/sales';
 }) {
   const [ready, setReady] = useState(false);
   const [wide, setWide] = useState(false);

@@ -177,7 +177,7 @@ describe('the till wires the scan in', () => {
   const src = readFileSync(resolve(__dirname, '../appointments/new/PayFlow.tsx'), 'utf8');
 
   it('listens only on the screen where products are picked', () => {
-    expect(src).toMatch(/useBarcodeScan\(productsOnly && productsLoaded && step === 'what'/);
+    expect(src).toMatch(/useBarcodeScan\(productsOnly && step === 'what'/);
   });
 
   it('says why a scan added nothing, instead of buzzing alone', () => {
