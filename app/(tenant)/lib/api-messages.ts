@@ -161,6 +161,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
   // Hindi still met in English. The admin portal is English by decision and is not here; neither are the
   // billing notes nobody outside Growza reads, nor the chat replies, which are not the dashboard.
   // ---- phone check-in (Jira GRW-563)
+  'That time has not happened yet': 'वह समय अभी आया नहीं है',
   'Mark yourself in first.': 'पहले अपनी हाज़िरी लगाएँ।',
   'You are already marked in today.': 'आज आपकी हाज़िरी पहले ही लग चुकी है।',
   'You are already marked out today.': 'आज आपका जाना पहले ही दर्ज हो चुका है।',

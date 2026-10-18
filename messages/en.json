@@ -1763,7 +1763,8 @@
         "save": "Could not save that.",
         "markAll": "Could not mark everyone. Some rows may have saved.",
         "note": "Could not save that note.",
-        "undo": "Could not undo that."
+        "undo": "Could not undo that.",
+        "futureTime": "That time has not happened yet."
       },
       "saved": "{name} saved.",
       "markedPresent": "{count} marked present.",
