@@ -18,7 +18,7 @@ import {
   type TokenBoard as TokenBoardData,
 } from '../../lib/api';
 import { bookingBill, clientNameLabel, formatDuration, groupBookings, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
-import { liveState, minutesBetween } from '../../lib/live-state';
+import { countsAsNotMarked, liveState, minutesBetween } from '../../lib/live-state';
 import { buildSaleRows, computeSalesKpis, filterSalesByDateRange, formatAxisRupees } from '../../sales/SalesClient';
 import { hasLiveWork, TokenBoard } from './TokenBoard';
 import { useTokenWords } from './token-words';
@@ -579,50 +579,19 @@ export function OwnerHome(p: OwnerHomeProps) {
       ? Math.round((data?.money.revenueMinor ?? periodSalesKpis.totalSalesMinor) / periodBillsCount / 100) * 100
       : 0;
 
-  const rankedServices = useMemo(() => {
-    const byName = new Map<string, { id: string; name: string; bookings: number; revenueMinor: number }>();
-    for (const r of periodSaleRows) {
-      const completedLegs = r.group.appointments.filter((a) => a.status === 'completed' && Boolean(a.serviceName));
-      if (completedLegs.length === 0) continue;
-      const rawLegRevs = completedLegs.map((a) => Number(a.paidAmountMinor ?? a.priceMinor ?? 0));
-      const rawSum = rawLegRevs.reduce((s, v) => s + v, 0);
-      completedLegs.forEach((a, i) => {
-        const key = a.serviceName;
-        const cur = byName.get(key) ?? { id: a.serviceId || key, name: key, bookings: 0, revenueMinor: 0 };
-        cur.bookings += 1;
-        const legShare =
-          completedLegs.length === 1
-            ? r.servicesMinor
-            : rawSum > 0
-              ? Math.round((r.servicesMinor * rawLegRevs[i]!) / rawSum)
-              : Number(a.paidAmountMinor ?? a.priceMinor ?? 0);
-        cur.revenueMinor += legShare;
-        byName.set(key, cur);
-      });
-    }
-    return [...byName.values()]
-      .sort((a, b) => b.bookings - a.bookings || b.revenueMinor - a.revenueMinor || a.name.localeCompare(b.name))
-      .slice(0, 5);
-  }, [periodSaleRows]);
-
   const deskAttention = useMemo(() => {
-    const overdueGroups = (todayGroups ?? []).filter((g) => liveState(g, now) === 'needs_answer');
+    const overdueGroups = (todayGroups ?? []).filter((g) => countsAsNotMarked(g, now));
     const waitingTokens = boardTokens.filter((tk) => tk.state === 'waiting');
-    const unmarkedCount = Math.max(data?.attention.notMarkedDone ?? 0, overdueGroups.length);
+    const branchAtt = dataIsForBranch ? data?.attention : null;
+    const unmarkedCount = Math.max(branchAtt?.notMarkedDone ?? 0, overdueGroups.length);
     const bookingCount = unmarkedCount + waitingTokens.length;
 
     const unmarkedStaff = (p.staffNotMarkedIn ?? [])
       .map((id) => p.providers.find((x) => x.id === id))
       .filter((x): x is Provider => x !== undefined && (!branch || x.locationId === branch));
-    const unmarkedStaffCount = p.staffNotMarkedIn
-      ? branch
-        ? unmarkedStaff.length
-        : p.staffNotMarkedIn.length
-      : 0;
+    const unmarkedStaffCount = unmarkedStaff.length;
     const staffCount = pendingAttendance + unmarkedStaffCount;
-
-    const cancelledCount = data?.attention.cancelledToday ?? 0;
-    const totalCount = bookingCount + staffCount + cancelledCount;
+    const totalCount = bookingCount + staffCount;
 
     const rows: Array<{
       id: string;
@@ -661,14 +630,15 @@ export function OwnerHome(p: OwnerHomeProps) {
     }
     for (const tk of waitingTokens) {
       const who = tk.customerName || t.walkInAction;
+      const svc = tk.serviceNames.length > 0 ? summarizeServices(tk.serviceNames, t.lang) : w.servicesAtPayment;
       rows.push({
         id: `wait-${tk.id}`,
         name: who,
         avatarId: tk.customerId ?? tk.id,
-        sub: `#${tk.tokenNo} · ${summarizeServices(tk.serviceNames, t.lang)}`,
+        sub: `#${tk.tokenNo} · ${svc}`,
         pill: t.waitingPill,
         tone: 'amber',
-        href: '/appointments',
+        href: `/appointments${branch ? `?location=${encodeURIComponent(branch)}` : ''}`,
       });
     }
     if (pendingAttendance > 0) {
@@ -694,17 +664,6 @@ export function OwnerHome(p: OwnerHomeProps) {
         href: '/attendance',
       });
     }
-    if (cancelledCount > 0) {
-      rows.push({
-        id: 'att-cancelled',
-        name: `${cancelledCount} ${t.cancelledTodayShort}`,
-        avatarId: 'att-cancelled',
-        sub: t.todayWord,
-        pill: t.todayWord,
-        tone: 'rose',
-        href: `/appointments?status=cancelled${branch ? `&location=${encodeURIComponent(branch)}` : ''}`,
-      });
-    }
 
     return {
       bookingCount,
@@ -712,7 +671,7 @@ export function OwnerHome(p: OwnerHomeProps) {
       totalCount,
       rows: rows.slice(0, 5),
     };
-  }, [todayGroups, now, boardTokens, data, p.staffNotMarkedIn, p.providers, branch, pendingAttendance, t, p.timezone, unmarkedHref]);
+  }, [todayGroups, now, boardTokens, dataIsForBranch, data, p.staffNotMarkedIn, p.providers, branch, pendingAttendance, t, w, p.timezone, unmarkedHref]);
 
   const productAttention = useMemo(() => {
     const list = (shelfProducts ?? []).filter((pr) => pr.active);

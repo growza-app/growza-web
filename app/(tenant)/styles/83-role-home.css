@@ -4685,11 +4685,6 @@ button.hm-now-count {
 }
 
 /* Row 3 Attention Cards (Needs your attention & Products needing attention) */
-.hm-v3-desk-attention .hm-attention {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 .hm-v3-prod-att-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
