@@ -4,6 +4,7 @@ import Link from '../../shared/AppLink';
 import { useRef } from 'react';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { formatMoney } from '../lib/api';
+import { IconScissors } from '../components/icons';
 import { useNewVisitCopy } from '../lib/use-copy';
 
 /**
@@ -23,8 +24,8 @@ export function PackageOverview({
   onClose,
 }: {
   title: string;
-  /** `photo` is the service's picture URL — its own upload, else the pack's, else a placeholder (servicePhotoUrl). */
-  services: { id: string; name: string; priceMinor: string | null; photo?: string }[];
+  /** `photo` is the service's picture URL — its own upload, else the pack's, else null and an empty tile (servicePhotoUrl). */
+  services: { id: string; name: string; priceMinor: string | null; photo?: string | null }[];
   priceMinor: string | null;
   /** Set when a service in the package has been deleted: the sums below would be over a part of it, so they are left out. */
   missingNote: string | null;
@@ -57,15 +58,20 @@ export function PackageOverview({
           <ul className="pkg-details-list">
             {services.map((s) => (
               <li key={s.id} className="pkg-details-row">
-                {s.photo && (
-                  /*
-                   * The same 36px square the builder, the picker and the services list draw: a fixed box with
-                   * `object-fit: cover`, so a tall or wide upload is cropped to it and never stretched. Width and
-                   * height are attributes too, so the row has its size before the picture does and nothing jumps.
-                   * Lazy: the modal is already open, but a long package's lower rows are off screen until scrolled to.
-                   */
+                {/*
+                 * The same 36px square the builder, the picker and the services list draw: a fixed box with
+                 * `object-fit: cover`, so a tall or wide upload is cropped to it and never stretched. Width and
+                 * height are attributes too, so the row has its size before the picture does and nothing jumps.
+                 * Lazy: the modal is already open, but a long package's lower rows are off screen until scrolled to.
+                 * No photo: an empty tile of the same size, so the names still line up.
+                 */}
+                {s.photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img className="picker-row-thumb" src={s.photo} alt="" width={36} height={36} loading="lazy" decoding="async" />
+                ) : (
+                  <span className="picker-row-thumb photo-none" style={{ width: 36, height: 36 }} aria-hidden="true">
+                    <IconScissors />
+                  </span>
                 )}
                 <span className="pkg-details-name">{s.name}</span>
                 <span className="pkg-details-price">{formatMoney(s.priceMinor)}</span>

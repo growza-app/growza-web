@@ -6,7 +6,7 @@ import { formatMoney } from '../lib/api';
 import type { Offer, Product, Service } from '../lib/api-types';
 import { asMinor, matchItems } from '../lib/service-match';
 import { productByCode, productMatchable } from '../lib/product-match';
-import { servicePhotoUrl } from '../lib/service-photos';
+import { ServicePhoto } from './ServicePhoto';
 import { ProductPhoto } from './ProductPhoto';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -241,7 +241,7 @@ export function ServiceSheet({
               return (
                 <li key={o.id}>
                   <button type="button" className={`pf-client-match pf-menu-row ${on ? 'pf-menu-row-on' : ''}`} onClick={() => onPickPackage?.(o)}>
-                    {first ? <img className="pf-menu-photo" src={servicePhotoUrl(first)} alt="" loading="lazy" /> : <span className="pf-menu-photo" aria-hidden="true" />}
+                    {first ? <ServicePhoto className="pf-menu-photo" service={first} /> : <span className="pf-menu-photo" aria-hidden="true" />}
                     <span className="pf-client-match-name">{o.title}</span>
                     <span className="pf-client-match-sub">{o.comboPriceMinor ? formatMoney(o.comboPriceMinor) : nv.comboServices(o.serviceIds.length)}</span>
                   </button>
@@ -261,7 +261,7 @@ export function ServiceSheet({
               return (
                 <li key={s.id}>
                   <button type="button" className={`pf-client-match pf-menu-row ${n > 0 ? 'pf-menu-row-on' : ''}`} onClick={() => onPick(s)}>
-                    <img className="pf-menu-photo" src={servicePhotoUrl(s)} alt="" loading="lazy" />
+                    <ServicePhoto className="pf-menu-photo" service={s} />
                     <span className="pf-client-match-name">{s.name}</span>
                     <span className="pf-client-match-sub">{formatMoney(s.priceMinor)}</span>
                     {n > 0 ? (

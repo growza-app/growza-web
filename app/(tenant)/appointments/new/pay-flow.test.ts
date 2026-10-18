@@ -113,7 +113,7 @@ describe('Record payment in three taps', () => {
   });
 
   it('draws the menu as photo tiles two across, each the height of a thumb and a half', () => {
-    expect(flow).toMatch(/<img className="pf-tile-photo" src=\{servicePhotoUrl\(s\)\}/);
+    expect(flow).toMatch(/<ServicePhoto className="pf-tile-photo" service=\{s\} \/>/);
     expect(css).toMatch(/\.pf-tiles \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
     expect(css).toMatch(/\.pf-tile \{[^}]*min-height: 9\.5rem;/);
     // A tap adds one. Once something is on the bill the tile wears − n +, so a second one is a visible choice
@@ -173,7 +173,7 @@ describe('Record payment in three taps', () => {
     expect(flow).toMatch(/className="pf-who-search pf-find-service" onClick=\{\(\) => setMenuOpen\(true\)\}/);
     expect(flow).not.toMatch(/pf-tile-more/);
     expect(menu).toMatch(/matchItems\(\s*pool\.map/); // the same spelling tolerance the full form has
-    expect(menu).toMatch(/servicePhotoUrl\(s\)/);
+    expect(menu).toMatch(/<ServicePhoto className="pf-menu-photo" service=\{s\} \/>/);
   });
 
   it('never moves a tile the finger is already on', () => {

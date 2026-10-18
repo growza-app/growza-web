@@ -167,13 +167,14 @@ export function ServiceRowMenu({ service, actions, t }: { service: ServiceAdmin;
 function NameCell({ service, t }: { service: ServiceAdmin; t: T }) {
   // Jira GRW-482 — the business's own word, so a clinic reads "No doctor".
   const providerWord = useLabel('provider', 'stylist');
+  const photo = servicePhotoUrl(service);
   return (
     <span className="svc-name-cell">
       {/* Jira GRW-560 — the owner's own photo, else the pack's for this concept, else an empty tile.
           Never a stock placeholder here: a list of thirty services would be thirty photographs of
           somebody else's salon, which reads worse than nothing. */}
-      {hasServicePhoto(service) ? (
-        <img className="svc-thumb" src={servicePhotoUrl(service)} alt="" width={42} height={42} loading="lazy" decoding="async" />
+      {photo ? (
+        <img className="svc-thumb" src={photo} alt="" width={42} height={42} loading="lazy" decoding="async" />
       ) : (
         <span className="svc-thumb svc-thumb-empty" aria-hidden="true" />
       )}

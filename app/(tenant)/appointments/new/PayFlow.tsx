@@ -10,7 +10,7 @@ import type { Appointment, Offer, PaymentMode, Product, ProductCategory, Provide
 import type { QueueEntry } from '../../lib/home-types';
 import { receiptRows, type ReceiptRow } from '../../lib/receipt-text';
 import { displayPhone } from '../../lib/phone';
-import { servicePhotoUrl } from '../../lib/service-photos';
+import { ServicePhoto } from '../../components/ServicePhoto';
 import { ProductPhoto } from '../../components/ProductPhoto';
 import { ALL_CATEGORIES, DeskProductCategories, NO_CATEGORY } from '../../products/DeskProductCategories';
 import { useNewVisitCopy } from '../../lib/use-copy';
@@ -1599,7 +1599,7 @@ export function PayFlow({
                   onClick={() => addOne(s)}
                   disabled={full && count === 0}
                 >
-                  <img className="pf-tile-photo" src={servicePhotoUrl(s)} alt="" loading="lazy" />
+                  <ServicePhoto className="pf-tile-photo" service={s} />
                   <span className="pf-tile-name">{s.name}</span>
                   <span className="pf-tile-price">{money(Number(s.priceMinor ?? 0))}</span>
                 </button>

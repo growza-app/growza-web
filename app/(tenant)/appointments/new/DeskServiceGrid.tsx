@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboa
 import type { Offer, Product, Service } from '../../lib/api-types';
 import { asMinor, matchItems } from '../../lib/service-match';
 import { productByCode, productMatchable } from '../../lib/product-match';
-import { servicePhotoUrl } from '../../lib/service-photos';
+import { ServicePhoto } from '../../components/ServicePhoto';
 import { ProductPhoto } from '../../components/ProductPhoto';
 import { IconInfo, IconMinus, IconPlus, IconSearch } from '../../components/icons';
 import { PackageSheet } from '../../components/PackageSheet';
@@ -300,7 +300,7 @@ export function DeskServiceGrid({
                     aria-pressed={on}
                     onClick={() => onPickPackage?.(o)}
                   >
-                    {first ? <img className="pf-tile-photo" src={servicePhotoUrl(first)} alt="" loading="lazy" /> : <span className="pf-tile-photo" aria-hidden="true" />}
+                    {first ? <ServicePhoto className="pf-tile-photo" service={first} /> : <span className="pf-tile-photo" aria-hidden="true" />}
                     <span className="pf-tile-name">{o.title}</span>
                     <span className="pf-tile-price">
                       {money(Number(o.comboPriceMinor ?? 0))}
@@ -345,7 +345,7 @@ export function DeskServiceGrid({
                   onClick={() => onMore(s)}
                   disabled={full && count === 0}
                 >
-                  <img className="pf-tile-photo" src={servicePhotoUrl(s)} alt="" loading="lazy" />
+                  <ServicePhoto className="pf-tile-photo" service={s} />
                   <span className="pf-tile-name">{s.name}</span>
                   <span className="pf-tile-price">
                     {money(price)}
