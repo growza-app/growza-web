@@ -73,7 +73,7 @@ export function filterShelf(
     if (!p.active) return false;
     const tone = stockTone(p);
     if (filter === 'inStock') return tone === 'ok';
-    if (filter === 'low') return tone !== 'ok';
+    if (filter === 'low') return tone === 'low';
     if (filter === 'out') return tone === 'out';
     return true;
   });
@@ -186,7 +186,7 @@ export function ProductsList({
     [categories, live],
   );
   const inCategory = useMemo(() => filterShelf(rows, 'all', '', selectedCategories), [rows, selectedCategories]);
-  const lowCount = useMemo(() => inCategory.filter((p) => stockTone(p) !== 'ok').length, [inCategory]);
+  const lowCount = useMemo(() => inCategory.filter((p) => stockTone(p) === 'low').length, [inCategory]);
   const worth = useMemo(() => shelfWorthMinor(inCategory), [inCategory]);
   const shown = useMemo(
     () => sortShelf(filterShelf(rows, filter, search, selectedCategories), sort, sortDir),
@@ -195,7 +195,7 @@ export function ProductsList({
   const counts: Record<ShelfFilter, number> = {
     all: inCategory.length,
     inStock: inCategory.filter((p) => stockTone(p) === 'ok').length,
-    low: inCategory.filter((p) => stockTone(p) !== 'ok').length,
+    low: lowCount,
     out: inCategory.filter((p) => p.stock <= 0).length,
     retired: rows.filter((p) => !p.active && matchesCategories(p, selectedCategories)).length,
   };

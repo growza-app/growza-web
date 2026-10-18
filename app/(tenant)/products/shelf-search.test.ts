@@ -99,10 +99,10 @@ describe('Products status filter, column sorting, and save confirmation', () => 
     p('Old Tonic', 8, false, { priceMinor: '30000', costMinor: '15000' }),
   ];
 
-  it('the In stock filter lists only live products above their warning line', () => {
+  it('the In stock, Low, and Out filters partition live products without overlap', () => {
     expect(SHELF_FILTERS).toEqual(['all', 'inStock', 'low', 'out', 'retired']);
     expect(filterShelf(mixed, 'inStock', '').map((x) => x.name)).toEqual(['Argan Oil']);
-    expect(filterShelf(mixed, 'low', '').map((x) => x.name)).toEqual(['Face Wash', 'Beard Oil']);
+    expect(filterShelf(mixed, 'low', '').map((x) => x.name)).toEqual(['Face Wash']);
     expect(filterShelf(mixed, 'out', '').map((x) => x.name)).toEqual(['Beard Oil']);
   });
 
