@@ -65,3 +65,40 @@ describe('a service with no photo (owner, 2026-10-18)', () => {
     expect(renderToStaticMarkup(createElement(ServicePhoto, { className: 'x', service: { imageUrl: '/uploads/a.webp', catalogKey: 'haircut' } }))).toContain('src="/uploads/a.webp"');
   });
 });
+
+/**
+ * Owner, 2026-10-19 — the empty tile moves a little. It has to stay cheap and stay quiet: finite, off for reduced
+ * motion, compositor-only, drawn from code (no image file, so nothing per business), and in a sheet of its own that
+ * loads after the screens' photo classes.
+ */
+describe('the empty tile\'s animation', () => {
+  const css = readFileSync(new URL('../styles/99-photo-none.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+
+  it('plays a few times and stops — never infinite', () => {
+    expect(css).toMatch(/animation:\s*photo-sweep\b[^;]*\s\d+;/);
+    expect(css).not.toMatch(/animation:[^;]*infinite/);
+  });
+
+  it('has an answer for reduced motion', () => {
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.photo-none::after \{\s*animation: none;/);
+  });
+
+  it('moves only transform, so nothing is laid out again', () => {
+    const frames = /@keyframes photo-sweep \{([\s\S]*?)\n\}/.exec(css)?.[1] ?? '';
+    const props = [...frames.matchAll(/^\s*([a-z-]+):/gm)].map((m) => m[1] ?? '').filter((p) => !['to', 'from'].includes(p));
+    expect([...new Set(props)]).toEqual(['transform']);
+  });
+
+  it('is an inline icon, not a file: the component never names an image path', () => {
+    for (const f of ['../components/ProductPhoto.tsx', '../components/ServicePhoto.tsx']) {
+      expect(readFileSync(new URL(f, import.meta.url), 'utf8')).not.toMatch(/\.(png|jpe?g|gif|webp|svg)['"]/);
+    }
+  });
+
+  it('is loaded after every screen sheet, so its display:flex beats a photo class that says display:block', () => {
+    const globals = readFileSync(new URL('../globals.css', import.meta.url), 'utf8');
+    const imports = [...globals.matchAll(/@import '\.\/styles\/([^']+)';/g)].map((m) => m[1]);
+    expect(imports.at(-1)).toBe('99-photo-none.css');
+    expect(readFileSync(new URL('../styles/96-products.css', import.meta.url), 'utf8')).not.toContain('.photo-none');
+  });
+});
