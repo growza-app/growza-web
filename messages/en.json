@@ -3288,6 +3288,11 @@
       "filterSkipped": "Skipped",
       "noPrice": "No price",
       "stockShort": "{n} in stock",
+      "stockAddShort": "+{n} to stock",
+      "stockModeLabel": "Stock numbers for products you already have",
+      "stockModeLeave": "Leave counts as they are",
+      "stockModeAdd": "Add to stock",
+      "stockModeAddNote": "{count, plural, =0 {No stock to add.} one {# product gets {units} more in stock, written to its stock history as received.} other {# products get {units} more in stock, written to their stock history as received.}}",
       "unnamed": "(no name)",
       "haveIt": "On your shelf at {price} — will be updated",
       "retiredHaveIt": "Retired, at {price} — will be updated and stay retired",
@@ -3299,7 +3304,7 @@
       "importFailed": "Import failed — nothing was saved.",
       "correctionOnly": "A product already on your shelf keeps its name and its stock count",
       "rowCell": "Row {n}, {field}",
-      "done": "{created, plural, =0 {} one {# product added. } other {# products added. }}{updated, plural, =0 {} one {# product updated.} other {# products updated.}}",
+      "done": "{created, plural, =0 {} one {# product added. } other {# products added. }}{updated, plural, =0 {} one {# product updated.} other {# products updated.}}{stockAdded, plural, =0 {} one { Stock added to # product.} other { Stock added to # products.}}",
       "fields": {
         "name": "Product name",
         "price": "Price (₹)",
@@ -3310,7 +3315,8 @@
         "gst": "GST %",
         "hsn": "HSN code",
         "cost": "Cost (₹)",
-        "lowStock": "Low-stock alert at"
+        "lowStock": "Low-stock alert at",
+        "addStock": "Add to stock"
       },
       "problems": {
         "needsName": "Needs a name",
@@ -3329,7 +3335,8 @@
         "barcodeTaken": "Another product has this barcode",
         "skuTaken": "Another product has this SKU",
         "negative": "Can't be negative",
-        "tooLarge": "That number is too large"
+        "tooLarge": "That number is too large",
+        "stockTooLarge": "Adding this would take the stock past 1,000,000"
       },
       "skipped": {
         "negativePrice": "Not imported — the price is negative",
@@ -3347,6 +3354,7 @@
       "doneTitle": "Import finished",
       "doneAdded": "{count, plural, one {# product added} other {# products added}}",
       "doneUpdated": "{count, plural, one {# product updated} other {# products updated}}",
+      "doneStockAdded": "{count, plural, one {Stock added to # product} other {Stock added to # products}} — {units} in all",
       "doneNothing": "Nothing was added or changed.",
       "doneCategories": "New categories: {names}",
       "notImportedTitle": "{count, plural, one {# row was not imported} other {# rows were not imported}}",

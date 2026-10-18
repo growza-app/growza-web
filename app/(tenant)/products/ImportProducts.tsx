@@ -41,6 +41,8 @@ export function ImportProducts({
   const [rows, setRows] = useState<string[][]>([]);
   const [map, setMap] = useState<ColumnMap | null>(null);
   const [drafts, setDrafts] = useState<ProductDraft[]>([]);
+  // Off unless the owner turns it on: a file that carries the counts as they stand would otherwise be counted twice.
+  const [addStock, setAddStock] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -125,6 +127,8 @@ export function ImportProducts({
             shelf={shelf}
             categories={categories.map((c) => c.name)}
             branchId={branchId}
+            addStock={addStock}
+            setAddStock={setAddStock}
             onBack={() => setStep('map')}
             onImported={(r) => {
               setResult(r);
@@ -134,7 +138,7 @@ export function ImportProducts({
           />
         )}
 
-        {step === 'done' && result && map && <ImportProductDone result={result} drafts={drafts} headers={headers} map={map} onClose={onClose} />}
+        {step === 'done' && result && map && <ImportProductDone result={result} drafts={drafts} addStock={addStock} headers={headers} map={map} onClose={onClose} />}
 
         {step !== 'review' && step !== 'done' && error && (
           <div role="alert" className="field-error" style={{ marginTop: 12 }}>

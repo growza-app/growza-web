@@ -212,6 +212,8 @@ export interface ProductImportItem {
   /** Its number in the owner's file — what a refusal names. */
   row?: number;
   existingId?: string;
+  /** An update only: units that arrived. Added to the count and written to its history as received. */
+  addStock?: number;
   name?: string;
   priceMinor?: number;
   stock?: number;
@@ -227,6 +229,9 @@ export interface ProductImportItem {
 export interface ProductImportResult {
   created: number;
   updated: number;
+  /** Products whose count went up, and the units added in all. */
+  stockAdded: number;
+  unitsAdded: number;
   categoriesCreated: number;
   /** The categories the file made, so the owner sees what appeared on their shelf. */
   categoryNames: string[];

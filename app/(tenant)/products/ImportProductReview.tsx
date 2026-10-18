@@ -7,12 +7,14 @@ import type { Product, ProductImportResult } from '../lib/api-types';
 import { IconChevronRight } from '../components/icons';
 import {
   countDrafts,
+  hasStockToChoose,
   matchExisting,
   MAX_NEW_CATEGORIES,
   newCategoryNames,
   reviewProblems,
   rupeeText,
   stockNotApplied,
+  stockToAdd,
   toItems,
   type ProductDraft,
   type ProductProblem,
@@ -48,6 +50,8 @@ export function ImportProductReview({
   shelf,
   categories,
   branchId,
+  addStock,
+  setAddStock,
   onBack,
   onImported,
 }: {
@@ -57,6 +61,9 @@ export function ImportProductReview({
   /** The names of the categories the branch already has. */
   categories: string[];
   branchId: string;
+  /** Add the file's counts to the shelf's for products already on it, instead of leaving those counts alone. */
+  addStock: boolean;
+  setAddStock: (on: boolean) => void;
   onBack: () => void;
   onImported: (result: ProductImportResult) => void;
 }) {
@@ -67,11 +74,13 @@ export function ImportProductReview({
   const [editing, setEditing] = useState<number | null>(null);
   const rowRefs = useRef(new Map<number, HTMLLIElement>());
 
-  const problems = useMemo(() => reviewProblems(drafts, shelf), [drafts, shelf]);
+  const problems = useMemo(() => reviewProblems(drafts, shelf, addStock), [drafts, shelf, addStock]);
   const counts = countDrafts(drafts, problems);
   const newCategories = useMemo(() => newCategoryNames(drafts, categories), [drafts, categories]);
   const tooManyCategories = newCategories.length > MAX_NEW_CATEGORIES;
-  const stockUnused = stockNotApplied(drafts);
+  const stockUnused = stockNotApplied(drafts, addStock);
+  const stockChoice = hasStockToChoose(drafts);
+  const stockAdding = stockToAdd(drafts);
   const chipCount: Record<Filter, number> = { all: drafts.length, fix: counts.fix, existing: counts.update, skipped: counts.skipped };
   // A filter whose rows have all been fixed would show an empty list; go back to the whole one instead.
   const shown: Filter = filter !== 'all' && chipCount[filter] === 0 ? 'all' : filter;
@@ -101,7 +110,7 @@ export function ImportProductReview({
     setBusy(true);
     setError(null);
     try {
-      onImported(await api.importProducts(branchId, toItems(drafts)));
+      onImported(await api.importProducts(branchId, toItems(drafts, addStock)));
     } catch (err) {
       setError(err instanceof ApiError && err.status < 500 ? err.message : t('importFailed'));
       // The API names the row of the file it objected to; take the owner to it rather than leave them to hunt.
@@ -139,7 +148,19 @@ export function ImportProductReview({
             : t('newCategories', { count: newCategories.length, names: newCategories.join(', ') })}
         </p>
       )}
-      {stockUnused > 0 && <p className="confirm-body">{t('stockNotApplied', { count: stockUnused })}</p>}
+      {stockChoice && (
+        <>
+          <div className="rv-chips" role="group" aria-label={t('stockModeLabel')}>
+            <button type="button" className="rv-chip" aria-pressed={!addStock} onClick={() => setAddStock(false)}>
+              {t('stockModeLeave')}
+            </button>
+            <button type="button" className="rv-chip" aria-pressed={addStock} onClick={() => setAddStock(true)}>
+              {t('stockModeAdd')}
+            </button>
+          </div>
+          <p className="confirm-body">{addStock ? t('stockModeAddNote', { count: stockAdding.count, units: stockAdding.units }) : t('stockNotApplied', { count: stockUnused })}</p>
+        </>
+      )}
       {counts.skipped > 0 && <p className="confirm-body">{t('willSkip', { count: counts.skipped })}</p>}
       <div className="rv-chips" role="group" aria-label={t('filterLabel')}>
         {chips
@@ -158,6 +179,7 @@ export function ImportProductReview({
             const meta = [
               d.price.trim() ? rupeeText(d.price) : d.existing ? formatMoney(d.existing.priceMinor, d.existing.currency) : t('noPrice'),
               !d.existing && d.stock.trim() ? t('stockShort', { n: d.stock }) : null,
+              addStock && d.existing && Number(d.stock) > 0 ? t('stockAddShort', { n: d.stock }) : null,
               d.barcode.trim() || null,
             ]
               .filter(Boolean)
@@ -201,17 +223,17 @@ export function ImportProductReview({
                   <div className="rv-edit">
                     {EDITABLE.map((f) => {
                       // A correction never renames a product or moves its count; the cell is shown, not editable.
-                      const locked = !!d.existing && (f.key === 'name' || f.key === 'stock');
+                      const locked = !!d.existing && (f.key === 'name' || (f.key === 'stock' && !addStock));
                       return (
                         <label key={f.key} className={`field ${f.key === 'name' ? 'rv-field-name' : ''}`}>
-                          <span className="field-label">{t(`fields.${f.field}`)}</span>
+                          <span className="field-label">{f.key === 'stock' && d.existing && addStock ? t('fields.addStock') : t(`fields.${f.field}`)}</span>
                           <input
                             type="text"
                             inputMode={f.numeric}
                             value={locked && f.key === 'name' ? d.existing!.name : (d[f.key] as string)}
                             readOnly={locked}
                             title={locked ? t('correctionOnly') : undefined}
-                            aria-label={t('rowCell', { n: d.row, field: t(`fields.${f.field}`) })}
+                            aria-label={t('rowCell', { n: d.row, field: t(f.key === 'stock' && d.existing && addStock ? 'fields.addStock' : `fields.${f.field}`) })}
                             onChange={(e) => update(i, { [f.key]: e.target.value } as Partial<ProductDraft>)}
                           />
                         </label>

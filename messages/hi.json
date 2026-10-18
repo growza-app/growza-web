@@ -3288,6 +3288,11 @@
       "filterSkipped": "छोड़ी गईं",
       "noPrice": "कीमत नहीं",
       "stockShort": "{n} स्टॉक में",
+      "stockAddShort": "+{n} स्टॉक में जुड़ेंगे",
+      "stockModeLabel": "जो प्रोडक्ट पहले से हैं उनका स्टॉक",
+      "stockModeLeave": "गिनती जैसी है वैसी रहे",
+      "stockModeAdd": "स्टॉक में जोड़ें",
+      "stockModeAddNote": "{count, plural, =0 {जोड़ने के लिए कोई स्टॉक नहीं।} other {{count} प्रोडक्ट के स्टॉक में कुल {units} जुड़ेंगे, स्टॉक इतिहास में \"आया\" लिखे जाएँगे।}}",
       "unnamed": "(नाम नहीं)",
       "haveIt": "शेल्फ़ पर {price} में है — अपडेट होगा",
       "retiredHaveIt": "बंद है, {price} में — अपडेट होगा और बंद ही रहेगा",
@@ -3299,7 +3304,7 @@
       "importFailed": "इंपोर्ट नहीं हुआ — कुछ भी सेव नहीं हुआ।",
       "correctionOnly": "शेल्फ़ पर पहले से मौजूद प्रोडक्ट का नाम और स्टॉक नहीं बदलता",
       "rowCell": "पंक्ति {n}, {field}",
-      "done": "{created} प्रोडक्ट जुड़े, {updated} अपडेट हुए।",
+      "done": "{created} प्रोडक्ट जुड़े, {updated} अपडेट हुए।{stockAdded, plural, =0 {} other { {stockAdded} प्रोडक्ट में स्टॉक जुड़ा।}}",
       "fields": {
         "name": "प्रोडक्ट का नाम",
         "price": "कीमत (₹)",
@@ -3310,7 +3315,8 @@
         "gst": "GST %",
         "hsn": "HSN कोड",
         "cost": "लागत (₹)",
-        "lowStock": "कम स्टॉक की चेतावनी"
+        "lowStock": "कम स्टॉक की चेतावनी",
+        "addStock": "स्टॉक में जोड़ें"
       },
       "problems": {
         "needsName": "नाम चाहिए",
@@ -3329,7 +3335,8 @@
         "barcodeTaken": "यह बारकोड किसी और प्रोडक्ट का है",
         "skuTaken": "यह SKU किसी और प्रोडक्ट का है",
         "negative": "ऋणात्मक नहीं हो सकता",
-        "tooLarge": "यह संख्या बहुत बड़ी है"
+        "tooLarge": "यह संख्या बहुत बड़ी है",
+        "stockTooLarge": "इतना जोड़ने पर स्टॉक 10,00,000 से ऊपर चला जाएगा"
       },
       "skipped": {
         "negativePrice": "इंपोर्ट नहीं हुआ — कीमत ऋणात्मक है",
@@ -3347,6 +3354,7 @@
       "doneTitle": "इंपोर्ट पूरा हुआ",
       "doneAdded": "{count} प्रोडक्ट जुड़े",
       "doneUpdated": "{count} प्रोडक्ट अपडेट हुए",
+      "doneStockAdded": "{count} प्रोडक्ट के स्टॉक में जोड़ा गया — कुल {units}",
       "doneNothing": "कुछ भी जोड़ा या बदला नहीं गया।",
       "doneCategories": "नई श्रेणियाँ: {names}",
       "notImportedTitle": "{count} पंक्तियाँ इंपोर्ट नहीं हुईं",

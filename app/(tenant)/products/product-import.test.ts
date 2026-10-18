@@ -6,7 +6,7 @@ import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
 import type { Product } from '../lib/api-types';
 import { ImportProductColumns } from './ImportProductColumns';
-import { buildDrafts, fieldAt, FIELDS, mappingSummary, matchedAll, matchExisting, missingRequired, newCategoryNames, notImported, plainCode, plainNumber, plainPercent, reviewProblems, rowProblem, rupeeText, SAMPLE_CSV, stockNotApplied, suggest, toItems, withColumnAs, type ProductDraft } from './product-import';
+import { buildDrafts, fieldAt, FIELDS, mappingSummary, matchedAll, matchExisting, missingRequired, newCategoryNames, notImported, plainCode, plainNumber, plainPercent, reviewProblems, rowProblem, rupeeText, SAMPLE_CSV, stockNotApplied, stockToAdd, suggest, toItems, withColumnAs, type ProductDraft } from './product-import';
 
 /**
  * Owner, 2026-10-18 — a shelf loaded from a spreadsheet. What goes wrong is quiet: a column read as the wrong thing
@@ -118,6 +118,21 @@ describe('a row of the file', () => {
     const [d] = buildDrafts([['Whatever', '111', '500', '99', '', '']], map, shelf);
     expect(d?.existing?.id).toBe('a');
     expect(toItems([d!])).toEqual([{ mode: 'update', row: 1, existingId: 'a', priceMinor: 50000, barcode: '111' }]);
+  });
+
+  it('adds the file\'s count to a product already on the shelf only when asked, and never to a new one', () => {
+    const shelf = [product({ id: 'a', barcode: '111', stock: 5 })];
+    const drafts = buildDrafts([['Whatever', '111', '500', '12', '', ''], ['Brand new', '222', '10', '3', '', '']], map, shelf);
+    expect(toItems(drafts)[0]).not.toHaveProperty('addStock');
+    expect(toItems(drafts, true)[0]).toMatchObject({ mode: 'update', existingId: 'a', addStock: 12 });
+    expect(toItems(drafts, true)[1]).toMatchObject({ mode: 'create', stock: 3 });
+    expect(toItems(drafts, true)[1]).not.toHaveProperty('addStock');
+  });
+
+  it('sends no addStock for a zero or an empty count', () => {
+    const shelf = [product({ id: 'a', barcode: '111' }), product({ id: 'b', name: 'B', barcode: '222' })];
+    const drafts = buildDrafts([['A', '111', '', '0', '', ''], ['B', '222', '', '', '', '']], map, shelf);
+    for (const item of toItems(drafts, true)) expect(item).not.toHaveProperty('addStock');
   });
 
   it('starts the repeat of a product skipped, but not the first of it', () => {
@@ -312,6 +327,25 @@ describe('what the review and the report tell the owner', () => {
   it('counts the stock numbers that will not be used because the product is already on the shelf', () => {
     const drafts = [draft({ stock: '5', existing: product({}) }), draft({ stock: '', existing: product({}) }), draft({ stock: '5' }), draft({ stock: '5', existing: product({}), skip: true })];
     expect(stockNotApplied(drafts)).toBe(1);
+  });
+
+  it('totals the stock a delivery would add, skipping rows that carry none or are skipped', () => {
+    const drafts = [
+      draft({ stock: '5', existing: product({}) }),
+      draft({ stock: '7', existing: product({ id: 'p2' }) }),
+      draft({ stock: '0', existing: product({ id: 'p3' }) }),
+      draft({ stock: '9', existing: product({ id: 'p4' }), skip: true }),
+      draft({ stock: '4' }),
+    ];
+    expect(stockToAdd(drafts)).toEqual({ count: 2, units: 12 });
+    expect(stockNotApplied(drafts, true)).toBe(0);
+  });
+
+  it('refuses a delivery that would take a count past a million, and only when adding', () => {
+    const d = draft({ stock: '600000', existing: product({ stock: 500_000 }) });
+    expect(rowProblem(d)).toBeNull();
+    expect(rowProblem(d, true)).toBe('stockTooLarge');
+    expect(rowProblem(draft({ stock: '5', existing: product({ stock: 10 }) }), true)).toBeNull();
   });
 
   it('says which column became what, and which were not used', () => {

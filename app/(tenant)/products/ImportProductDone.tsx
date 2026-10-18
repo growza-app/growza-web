@@ -18,19 +18,21 @@ const LISTED = 50;
 export function ImportProductDone({
   result,
   drafts,
+  addStock,
   headers,
   map,
   onClose,
 }: {
   result: ProductImportResult;
   drafts: ProductDraft[];
+  addStock: boolean;
   headers: string[];
   map: ColumnMap;
   onClose: () => void;
 }) {
   const t = useTranslations('products.import');
   const skipped = notImported(drafts);
-  const stockUnused = stockNotApplied(drafts);
+  const stockUnused = stockNotApplied(drafts, addStock);
   const { used, unused } = mappingSummary(headers, map);
   const column = (name: string, i: number) => name || t('column', { n: i + 1 });
 
@@ -47,7 +49,12 @@ export function ImportProductDone({
             <span className="import-matched-col">{t('doneUpdated', { count: result.updated })}</span>
           </li>
         )}
-        {result.created === 0 && result.updated === 0 && (
+        {result.stockAdded > 0 && (
+          <li>
+            <span className="import-matched-col">{t('doneStockAdded', { count: result.stockAdded, units: result.unitsAdded })}</span>
+          </li>
+        )}
+        {result.created === 0 && result.updated === 0 && result.stockAdded === 0 && (
           <li>
             <span className="import-matched-col">{t('doneNothing')}</span>
           </li>

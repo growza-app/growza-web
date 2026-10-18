@@ -396,6 +396,13 @@
   margin-top: 2px;
 }
 
+/* "On your shelf at ₹1,250 — will be updated" is a sentence, not a tag: at 344px it wraps instead of running off the card. */
+.rv-flag.chip {
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+}
+
 .rv-include {
   flex: none;
   min-height: 44px;
