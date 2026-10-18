@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '../../shared/AppLink';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { Icon } from '../icons';
 import { oklch } from '../tokens';

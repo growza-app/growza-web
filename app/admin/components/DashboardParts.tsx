@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '../../shared/AppLink';
 import { Icon } from '../icons';
 import { inr, oklch } from '../tokens';
 

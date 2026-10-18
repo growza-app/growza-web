@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState, useCallback } from 'react';
 import { formatDate } from '../lib/format';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import Link from '../../shared/AppLink';
 import { api, ApiError, BookingConflictError, formatMoney, type Offer, type Service } from '../lib/api';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';

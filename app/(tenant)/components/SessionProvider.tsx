@@ -54,6 +54,12 @@ export interface SessionInfo {
   pendingAttendance?: number;
   /** Jira GRW-563 — whether a stylist's own branch offers phone check-in. Absent reads as not offered. */
   selfCheckIn?: boolean;
+  /**
+   * The business's timezone, from the `/api/v1/me` the layout already read for this page. The bell and the
+   * Notifications screen used to ask for `/me` again from the browser just to learn it — a whole tenant summary (five
+   * queries) on every page load, for one string the server already held.
+   */
+  timezone?: string;
 }
 
 const SessionContext = createContext<SessionInfo | null>(null);

@@ -17,8 +17,9 @@ import { PaymentLine } from './MoneyHero';
  * so the total the hero used to give is still the first thing read.
  *
  * `/api/v1/home` already answers for one branch (`?location=`), so each slide reads its own; nothing new is asked of
- * the API. The amount is on the slide at once, from the overview Home already holds; the rest fills in as each branch's
- * answer arrives, and a branch whose read fails keeps its amount and simply has no more.
+ * the API. The amount is on the slide at once, from the overview Home already holds; the rest is read for the slide on
+ * screen and its neighbours only (see the effect below), and a branch whose read fails keeps its amount and simply has
+ * no more.
  */
 type Slide = { key: string; id: string | null; name: string; revenueMinor: number };
 type Figures = HomeOverview['money'];
@@ -43,32 +44,51 @@ export function BranchCarousel({
   ];
   const [figures, setFigures] = useState<Record<string, Figures>>({});
   const ids = data.branches.map((b) => b.id).join(',');
+  // The slide on screen. Moved up from the scroll handler below: what is read now depends on it.
+  const [at, setAt] = useState(0);
 
   /*
-   * A new period or branch list starts empty; a refresh keeps the old figures on screen until the new arrive.
-   * Either way a read the next one has overtaken is dropped (`live`), so a late answer cannot show the wrong period.
+   * Only the slides on screen, and the one beside each, are read — not every branch at once.
+   *
+   * It used to read every branch's whole `/api/v1/home` on every Home load AND on every live refresh: a business with
+   * three branches ran the overview's heaviest queries three more times, four with the page's own, for slides nobody
+   * had scrolled to — and a ten-branch business ran ten. The first slide is the whole business and needs no read (it is
+   * `data` already); the next one is read at once so the swipe has something to show; each further one is read as it
+   * comes within a card of the screen.
+   *
+   * A new period or branch list starts empty; a refresh re-reads only what is in the window and keeps the old figures
+   * on screen until the new arrive. An answer for a period or branch list that has since changed is dropped, so a late
+   * one cannot show the wrong figures; moving the window does not drop anything in flight.
    */
+  const branchIds = ids.split(',').filter(Boolean);
+  const wanted = branchIds.filter((_, i) => Math.abs(i + 1 - at) <= 1);
+  const wantedKey = wanted.join(',');
   const shownFor = useRef('');
+  const stamp = useRef('');
+  const read = useRef(new Set<string>());
   useEffect(() => {
-    let live = true;
-    const key = `${period}|${ids}`;
-    if (shownFor.current !== key) {
-      shownFor.current = key;
+    const base = `${period}|${ids}`;
+    if (shownFor.current !== base) {
+      shownFor.current = base;
+      read.current = new Set();
       setFigures({});
     }
-    for (const id of ids.split(',').filter(Boolean)) {
+    const refreshed = stamp.current !== `${base}|${refreshKey}`;
+    stamp.current = `${base}|${refreshKey}`;
+    for (const id of wantedKey.split(',').filter(Boolean)) {
+      if (!refreshed && read.current.has(id)) continue;
+      read.current.add(id);
       api
         .home(period, id)
-        .then((d) => live && setFigures((f) => ({ ...f, [id]: d.money })))
-        .catch(() => undefined);
+        .then((d) => shownFor.current === base && setFigures((f) => ({ ...f, [id]: d.money })))
+        .catch(() => {
+          // Let the next look at this slide try again rather than leave it empty for good.
+          read.current.delete(id);
+        });
     }
-    return () => {
-      live = false;
-    };
-  }, [period, ids, refreshKey]);
+  }, [period, ids, refreshKey, wantedKey]);
 
   const track = useRef<HTMLDivElement>(null);
-  const [at, setAt] = useState(0);
   const onScroll = () => {
     const el = track.current;
     const first = el?.firstElementChild as HTMLElement | null;

@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '../../../shared/AppLink';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';

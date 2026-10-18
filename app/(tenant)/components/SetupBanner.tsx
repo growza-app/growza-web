@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '../../shared/AppLink';
 import { useLayoutEffect, useState, type ReactNode } from 'react';
 import { setupCopy, setupHref } from '../lib/setup-copy';
 import type { Lang } from '../lib/lang';

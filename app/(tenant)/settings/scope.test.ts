@@ -7,8 +7,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  */
 let answers: Record<string, { ok: unknown } | { fail: unknown }> = {};
 const asked: string[] = [];
+/** What `/me` says: null (could not be read) unless a test gives it a tenant, which most of these do not. */
+let meSays: unknown = null;
 vi.mock('../lib/api', () => ({
   api: {
+    me: () => (meSays === null ? Promise.reject(new Error('no /me')) : Promise.resolve(meSays)),
     settings: (branch?: string) => {
       asked.push(branch ?? '');
       const next = answers[branch ?? ''] ?? { fail: new Error('not found') };
@@ -32,6 +35,38 @@ describe('loadScopedSettings', () => {
   beforeEach(() => {
     answers = {};
     asked.length = 0;
+    meSays = null;
+  });
+
+  /** Performance audit — the main branch is already in `/me`, so the business view is not read just to find it. */
+  describe('when /me already names the main branch', () => {
+    const meOf = (branchCount: number) => ({ tenant: { locationId: MAIN, branchCount } });
+
+    it('asks once, for that branch', async () => {
+      meSays = meOf(3);
+      answers = { [MAIN]: { ok: summary(MAIN, 3) } };
+      const r = await loadScopedSettings(Promise.resolve({}));
+      expect(asked).toEqual([MAIN]);
+      expect(r.settings?.scope.locationId).toBe(MAIN);
+      expect(r.branchName).toBe('MG Road');
+    });
+
+    it('does not do it for a one-branch business, which has only the business view', async () => {
+      meSays = meOf(1);
+      answers = { '': { ok: summary(null, 1) } };
+      await loadScopedSettings(Promise.resolve({}));
+      expect(asked).toEqual(['']);
+    });
+
+    it('falls back to the two-step read when the direct one fails', async () => {
+      meSays = meOf(3);
+      answers = { '': { ok: summary(null, 3) }, [MAIN]: { fail: down } };
+      const r = await loadScopedSettings(Promise.resolve({}));
+      expect(asked).toEqual([MAIN, '', MAIN]);
+      // The branch cannot be read either way here, so the screen says so — the point is that it still tried the old path.
+      expect(r.settings).toBeNull();
+      expect(r.loadError).not.toBeNull();
+    });
   });
 
   it('a one-branch business gets the business’s own settings', async () => {
