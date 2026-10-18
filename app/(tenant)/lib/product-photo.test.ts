@@ -65,3 +65,34 @@ describe('a service with no photo (owner, 2026-10-18)', () => {
     expect(renderToStaticMarkup(createElement(ServicePhoto, { className: 'x', service: { imageUrl: '/uploads/a.webp', catalogKey: 'haircut' } }))).toContain('src="/uploads/a.webp"');
   });
 });
+
+/**
+ * Owner, 2026-10-19 — the empty tile moves a little. It has to stay cheap and stay quiet: finite, off for reduced
+ * motion, compositor-only, and drawn from code (no image file, so nothing per business).
+ */
+describe('the empty tile\'s animation', () => {
+  const css = readFileSync(new URL('../styles/96-products.css', import.meta.url), 'utf8');
+  const block = css.slice(css.indexOf('.photo-none {'));
+
+  it('plays a few times and stops — never infinite', () => {
+    expect(block).toMatch(/animation: photo-breathe 1\.8s ease-in-out 3;/);
+    expect(block).toMatch(/animation: photo-sweep 1\.8s ease-in-out 3;/);
+    expect(block).not.toMatch(/animation:[^;]*infinite/);
+  });
+
+  it('has an answer for reduced motion', () => {
+    expect(block).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.photo-none svg,\s*\.photo-none::after \{\s*animation: none;/);
+  });
+
+  it('moves only transform and opacity, so nothing is laid out again', () => {
+    const frames = [...block.matchAll(/@keyframes photo-(?:sweep|breathe) \{([\s\S]*?)\n\}/g)].map((m) => m[1] ?? '').join('\n');
+    const props = [...frames.matchAll(/^\s*([a-z-]+):/gm)].map((m) => m[1] ?? '').filter((p) => !['to', 'from'].includes(p));
+    expect([...new Set(props)].sort()).toEqual(['opacity', 'transform']);
+  });
+
+  it('is an inline icon, not a file: the component never names an image path', () => {
+    for (const f of ['../components/ProductPhoto.tsx', '../components/ServicePhoto.tsx']) {
+      expect(readFileSync(new URL(f, import.meta.url), 'utf8')).not.toMatch(/\.(png|jpe?g|gif|webp|svg)['"]/);
+    }
+  });
+});
