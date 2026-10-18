@@ -7,7 +7,7 @@ import { useDialog } from '../../shared/a11y/useDialog';
 import { asMinor, matchItems, MIN_CHARS } from '../lib/service-match';
 import { extraSuggestions } from '../lib/service-suggest';
 import { useServiceSuggestions } from '../lib/useServiceSuggestions';
-import { servicePhotoUrl } from '../lib/service-photos';
+import { ServicePhoto } from '../components/ServicePhoto';
 import { DeskServiceGrid } from '../appointments/new/DeskServiceGrid';
 
 /**
@@ -168,7 +168,7 @@ export function ServicePickerSheet({
                     onClick={() => onToggle(s.id)}
                   >
                     { }
-                    <img className="picker-row-thumb" src={servicePhotoUrl(s)} alt="" width={36} height={36} />
+                    <ServicePhoto className="picker-row-thumb" service={s} size={36} />
                     <span className="svc-pick-main">
                       <span className="picker-row-name">{s.name}</span>
                       <span className="picker-row-meta">{tm('minutes', { count: s.durationMin })}</span>

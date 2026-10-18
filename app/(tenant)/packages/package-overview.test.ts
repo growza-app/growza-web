@@ -85,8 +85,9 @@ describe('the package overview shows each service\'s picture', () => {
   const overview = readFileSync(join(__dirname, 'PackageOverview.tsx'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   const list = readFileSync(join(__dirname, 'PackagesList.tsx'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 
-  it('draws a fixed 36px square, lazy, and only when there is a picture', () => {
-    expect(overview).toMatch(/\{s\.photo && \(/);
+  it('draws a fixed 36px square, lazy, and an empty tile of the same size when there is no picture', () => {
+    expect(overview).toMatch(/\{s\.photo \? \(/);
+    expect(overview).toMatch(/className="picker-row-thumb photo-none" style=\{\{ width: 36, height: 36 \}\}/);
     expect(overview).toMatch(/className="picker-row-thumb"[^>]*width=\{36\} height=\{36\} loading="lazy" decoding="async"/);
   });
 

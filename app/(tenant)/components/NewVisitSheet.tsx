@@ -85,6 +85,7 @@ import {
   IconSearch,
   IconUser,
 } from './icons';
+import { ServicePhoto } from './ServicePhoto';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useNoProvider } from '../lib/use-no-provider';
@@ -2064,7 +2065,7 @@ export function NewVisitSheet({
                       disabled={busy || linesLocked}
                     />
                     <span className="wi-card-photo" aria-hidden="true">
-                      {first ? <img src={servicePhotoUrl(first)} alt="" width={44} height={44} /> : null}
+                      {first ? <ServicePhoto service={first} size={44} /> : null}
                     </span>
                     <span className="wi-card-text">
                       <span className="picker-row-name" aria-hidden="true">
@@ -2133,7 +2134,7 @@ export function NewVisitSheet({
                         disabled={busy || linesLocked || (count === 0 && full)}
                       >
                         <span className="wi-card-photo">
-                          <img src={servicePhotoUrl(s)} alt="" width={44} height={44} />
+                          <ServicePhoto service={s} size={44} />
                         </span>
                         <span className="wi-card-text">
                           <span className="picker-row-name">{s.name}</span>

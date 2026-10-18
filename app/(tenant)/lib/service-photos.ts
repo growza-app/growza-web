@@ -12,19 +12,19 @@ import type { Service } from './api';
  * copy per tenant would pay S3 to hold the same bytes a thousand times and pay
  * the API box to serve what Next already serves with a hashed, immutable cache.
  *
- * The order is: **the owner's own upload, then the pack, then a placeholder.**
+ * The order is: **the owner's own upload, then the pack, then nothing** (an empty tile).
  * An upload always wins; it is the one picture that is actually of this salon.
  */
 
 /**
  * The concepts a photograph exists for — 40 of the API's 45. The five with no
  * picture (`head-shave`, `head-massage`, `foot-reflexology`, `nail-extensions`,
- * `saree-draping`) fall through to the placeholder, which is the right answer
+ * `saree-draping`) fall through to the empty tile, which is the right answer
  * until somebody makes them.
  *
  * Written out rather than globbed because a `src` built from a server-supplied
  * string is a path, and a path should only ever be one of these. A key the API
- * knows and this list does not simply falls through to the placeholder, which
+ * knows and this list does not simply falls through to the empty tile, which
  * is what should happen while the API is a deploy ahead.
  *
  * One file per key, deliberately. Several concepts could share one photograph —
@@ -39,7 +39,7 @@ import type { Service } from './api';
  * A key that is internally consistent and WRONG relative to the API's `CONCEPTS`
  * passes everything: write `hair-color` here and name the file to match, and the
  * suite is green while `hair-colour` — which is what the API actually sends, on
- * the commonest service a salon sells — silently falls to the placeholder and the
+ * the commonest service a salon sells — silently falls to the empty tile and the
  * file ships as weight nothing requests. Nothing in either repo can catch that
  * today, because `CONCEPTS` lives in `growza` and is not published in
  * `@growza-app/shared`. Moving it there is the fix; until then, check a new key's
@@ -90,23 +90,6 @@ export const PACK_KEYS: ReadonlySet<string> = new Set([
   'waxing',
 ]);
 
-/**
- * Local placeholders (public/service-photos/, free-license Pexels photos) for a
- * service the pack has no concept for. Generic by category, not by vertical: a
- * garage or a dentist adds its own category names here, with no code branch per
- * business type.
- *
- * These go when the pack covers the category generics — they are the stock
- * photography GRW-560 exists to stop relying on.
- */
-const CATEGORY_PLACEHOLDERS: Record<string, string> = {
-  Hair: '/service-photos/hair.jpg',
-  Skin: '/service-photos/skin.jpg',
-  Nails: '/service-photos/nails.jpg',
-};
-
-const DEFAULT_PLACEHOLDER = '/service-photos/default.jpg';
-
 /** The concepts an owner can pick from, in the order the pack lists them — for the "Choose a photo" sheet. */
 export const PACK_KEY_LIST: readonly string[] = [...PACK_KEYS];
 
@@ -115,25 +98,14 @@ export function packPhotoUrl(catalogKey: string | null | undefined): string | nu
   return catalogKey && PACK_KEYS.has(catalogKey) ? `/catalog/${catalogKey}.webp` : null;
 }
 
-type PhotoFields = Pick<Service, 'imageUrl' | 'categoryName'> & { catalogKey?: string | null };
+type PhotoFields = Pick<Service, 'imageUrl'> & { catalogKey?: string | null };
 
-/**
- * Is there a real picture of this service — the owner's own, or the pack's?
- *
- * The Services list draws an empty tile rather than a placeholder, so it needs
- * to know the difference between "we have a picture" and "we have a stock
- * photo of somebody else's salon".
- */
+/** Is there a real picture of this service — the owner's own, or the pack's? Drives the "Add a photo" / "Change photo" wording. */
 export function hasServicePhoto(service: PhotoFields): boolean {
-  return Boolean(service.imageUrl) || packPhotoUrl(service.catalogKey) !== null;
+  return servicePhotoUrl(service) !== null;
 }
 
-/** The owner's own upload wins; then the pack; then a per-category placeholder. */
-export function servicePhotoUrl(service: PhotoFields): string {
-  return (
-    service.imageUrl ??
-    packPhotoUrl(service.catalogKey) ??
-    CATEGORY_PLACEHOLDERS[service.categoryName ?? ''] ??
-    DEFAULT_PLACEHOLDER
-  );
+/** The owner's own upload wins; then the pack. Null when there is neither — the screen draws an empty tile (ServicePhoto), never a stock photograph. */
+export function servicePhotoUrl(service: PhotoFields): string | null {
+  return service.imageUrl ?? packPhotoUrl(service.catalogKey);
 }

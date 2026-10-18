@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError, type ServiceAdmin, type ServiceCategory } from '../lib/api';
 import { useDialog } from '../../shared/a11y/useDialog';
-import { packPhotoUrl, servicePhotoUrl } from '../lib/service-photos';
+import { packPhotoUrl } from '../lib/service-photos';
+import { ServicePhoto } from '../components/ServicePhoto';
 import { PackPhotoSheet } from './PackPhotoSheet';
 import { CLEANUP, DURATION, canStep, clamp, isDirty, slotMinutes, step, type Bounds, type SheetValues } from './service-sheet';
 import { durationPhrase, type DurationWords } from '../lib/duration-words';
@@ -322,7 +323,7 @@ export function ServiceForm({
         {service ? (
           <>
             <div className="svc-sheet-id">
-              <img className="svc-sheet-photo" src={servicePhotoUrl(service)} alt="" />
+              <ServicePhoto className="svc-sheet-photo" service={service} eager />
               <span className="svc-sheet-id-text">
                 <span className="svc-sheet-name">{service.name}</span>
                 <span className="svc-sheet-tags">
@@ -349,12 +350,12 @@ export function ServiceForm({
             {photo ? (
               <img className="sheet-photo-img" src={URL.createObjectURL(photo)} alt="" />
             ) : imageUrl ? (
-              <img className="sheet-photo-img" src={servicePhotoUrl({ imageUrl, categoryName: null } as ServiceAdmin)} alt="" />
+              <img className="sheet-photo-img" src={imageUrl} alt="" />
             ) : imageUrl === null && pickedKey ? (
               <img className="sheet-photo-img" src={packPhotoUrl(pickedKey) ?? ''} alt="" />
             ) : service ? (
               /* The list shows the supplied pack picture when there is no upload; the sheet showed an empty box for the same service. */
-              <img className="sheet-photo-img" src={servicePhotoUrl(service)} alt="" />
+              <ServicePhoto className="sheet-photo-img" service={service} eager />
             ) : (
               <span className="sheet-photo-img sheet-photo-empty" aria-hidden="true" />
             )}
