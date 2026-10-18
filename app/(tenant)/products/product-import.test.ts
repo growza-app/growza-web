@@ -229,8 +229,8 @@ describe('the columns step, in both languages', () => {
   });
 
   it('asks about the columns when the price is missing, and says so in Hindi too', () => {
-    expect(view('en', ['Product name', 'Qty'])).toContain('Choose which column holds the price.');
-    expect(view('hi', ['Product name', 'Qty'])).toContain('कीमत किस कॉलम में है');
+    expect(view('en', ['Product name', 'Qty'])).toContain('Choose which column holds the sell price.');
+    expect(view('hi', ['Product name', 'Qty'])).toContain('बिक्री दाम किस कॉलम में है');
   });
 
   it('has every message key in Hindi that it has in English', () => {
