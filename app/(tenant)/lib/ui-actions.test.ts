@@ -224,6 +224,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   // Owner, 2026-10-14 — the shelf: owner-only, closed whole by `guardScreen`.
   '/products': [
     'POST /api/v1/products',
+    'POST /api/v1/products/import',
+    'POST /api/v1/products/import/parse',
     'PATCH /api/v1/products/:id',
     'DELETE /api/v1/products/:id',
     'POST /api/v1/products/:id/photo',

@@ -343,7 +343,9 @@
   background: var(--amber-soft);
 }
 
-.rv-row.is-skipped .rv-main {
+/* The name and figures fade; the reason a row is skipped does not — it is the one thing on the line the owner must read. */
+.rv-row.is-skipped .rv-name,
+.rv-row.is-skipped .rv-meta {
   opacity: 0.5;
 }
 

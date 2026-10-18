@@ -104,6 +104,8 @@ import type {
   SettingsSummary,
   SortDirection,
   Product,
+  ProductImportItem,
+  ProductImportResult,
   ProductCategory,
   ProductInput,
   ProductSales,
@@ -468,6 +470,9 @@ export const api = {
   createProduct: (location: string, body: ProductInput) => post<Product>('/api/v1/products', { ...body, locationId: location }),
   updateProduct: (id: string, body: Partial<ProductInput>) => patch<Product>(`/api/v1/products/${id}`, body),
   deleteProduct: (id: string) => del<void>(`/api/v1/products/${id}`),
+  parseProductSheet: (file: File) => uploadFile<{ headers: string[]; rows: string[][] }>('/api/v1/products/import/parse', 'file', file),
+  importProducts: (location: string, items: ProductImportItem[]) =>
+    post<ProductImportResult>('/api/v1/products/import', { items, locationId: location }),
   uploadProductPhoto: (id: string, file: File) => uploadFile<Product>(`/api/v1/products/${id}/photo`, 'photo', file),
   removeProductPhoto: (id: string) => del<Product>(`/api/v1/products/${id}/photo`),
   /** 0117 — the shelf's categories at a branch, each with its count, empty ones included. */

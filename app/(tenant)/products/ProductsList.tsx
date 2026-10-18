@@ -5,17 +5,18 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from '../../shared/AppLink';
 import { useRouter } from 'next/navigation';
 import { api, ApiError, formatMoney } from '../lib/api';
-import type { Product, ProductCategory } from '../lib/api-types';
+import type { Product, ProductCategory, ProductImportResult } from '../lib/api-types';
 import { PageHeader } from '../components/PageHeader';
 import { WriteOnly } from '../components/WriteOnly';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useSession, useWritable } from '../components/SessionProvider';
-import { IconCart, IconPlus, IconSearch, IconSort } from '../components/icons';
+import { IconCart, IconPlus, IconSearch, IconSort, IconUpload } from '../components/icons';
 import { productPhotoUrl } from '../lib/service-photos';
 import { matchItems } from '../lib/service-match';
 import { productMatchable } from '../lib/product-match';
 import { ProductSheet } from './ProductSheet';
+import { ImportProducts } from './ImportProducts';
 import { StockTake } from './StockTake';
 import { ALL_CATEGORIES, NO_CATEGORY, ProductCategoriesDropdown } from './DeskProductCategories';
 
@@ -164,6 +165,8 @@ export function ProductsList({
   const [editing, setEditing] = useState<Product | 'new' | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [stockTakeOpen, setStockTakeOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importNote, setImportNote] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [deletingCategory, setDeletingCategory] = useState<ProductCategory | null>(null);
   const [busy, setBusy] = useState(false);
@@ -235,6 +238,19 @@ export function ProductsList({
     setEditing((cur) => (cur && cur !== 'new' && cur.id === p.id ? p : cur === 'new' ? p : cur));
     void refreshCategories();
     router.refresh();
+  };
+  /**
+   * Owner, 2026-10-18 — a file landed: read the shelf again (a hundred products arrived at once) and say what happened.
+   * The dialog stays open on its own report; closing it is the owner's.
+   */
+  const imported = async (result: ProductImportResult) => {
+    setImportNote(t('import.done', { created: result.created, updated: result.updated }));
+    try {
+      setRows(await api.productsAll(branchId));
+    } catch {
+      router.refresh();
+    }
+    void refreshCategories();
   };
   const fail = (err: unknown) => setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
   const remove = async () => {
@@ -505,6 +521,20 @@ export function ProductsList({
         </table>
       </div>
     );
+  /*
+   * Owner, 2026-10-18 — under the list, not in the header: Sell, Count stock and Add already fill a 344px header
+   * (a fourth button pushed the avatar and the Add button off the screen), and loading a file is a set-up job, not a
+   * daily one. An empty shelf puts the same button where the owner is looking.
+   */
+  const importRow =
+    canStockTake && writable ? (
+      <div className="prd-import-row">
+        <p>{t('import.footer')}</p>
+        <button type="button" className="btn btn-ghost" onClick={() => setImportOpen(true)}>
+          <IconUpload /> {t('import.open')}
+        </button>
+      </div>
+    ) : null;
   const pages = shown.length > PAGE_SIZE ? <Pagination page={Math.min(page, pageCount)} total={shown.length} pageSize={PAGE_SIZE} noun={t('noun')} onChange={setPage} /> : null;
   const sheet = (inline: boolean) =>
     editing ? (
@@ -520,8 +550,14 @@ export function ProductsList({
         initialSaved={editing !== 'new' && savedId === editing.id}
       />
     ) : null;
+  const note = importNote ? (
+    <div className="banner" role="status">
+      {importNote}
+    </div>
+  ) : null;
   const dialogs = (
     <>
+      {importOpen ? <ImportProducts shelf={rows} categories={categories} branchId={branchId} onClose={() => setImportOpen(false)} onImported={(r) => void imported(r)} /> : null}
       {deleting ? (
         <ConfirmDialog
           title={t('delete')}
@@ -584,6 +620,7 @@ export function ProductsList({
       <>
         {header}
         <div className="page-body prd-desk">
+          {note}
           {strip}
           <div className="pf-wide-grid prd-desk-grid">
             <section className="pf-wide-mid prd-desk-mid" aria-label={t('title')}>
@@ -596,6 +633,7 @@ export function ProductsList({
               <div className="card prd-desk-card">
                 {table}
                 {pages}
+                {importRow}
               </div>
             </section>
             <aside className="pf-wide-right prd-desk-right" aria-label={t('form.titleEdit')}>
@@ -618,10 +656,16 @@ export function ProductsList({
     <>
       {header}
       <div className="page-body prd-page">
+        {note}
         {rows.length === 0 ? (
           <div className="empty prd-empty">
             <p>{t('empty')}</p>
             <p className="prd-empty-hint">{t('emptyHint')}</p>
+            {canStockTake && writable ? (
+              <button type="button" className="btn btn-ghost" onClick={() => setImportOpen(true)}>
+                {t('import.open')}
+              </button>
+            ) : null}
           </div>
         ) : (
           <>
@@ -640,6 +684,7 @@ export function ProductsList({
             </div>
             {list}
             {pages}
+            {importRow}
           </>
         )}
       </div>

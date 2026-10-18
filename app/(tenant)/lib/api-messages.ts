@@ -15,6 +15,14 @@
  * run the test.
  */
 export const API_MESSAGES_HI: Record<string, string> = {
+  // ---- Owner, 2026-10-18 — loading products from a spreadsheet
+  'Upload a .xlsx or .csv file.': '.xlsx या .csv फ़ाइल अपलोड करें।',
+  'That file has no rows in it.': 'उस फ़ाइल में कोई पंक्ति नहीं है।',
+  'That file has column headings but nothing under them.': 'उस फ़ाइल में सिर्फ़ कॉलम के नाम हैं, उनके नीचे कुछ नहीं है।',
+  'That is the older .xls format — re-save it as .xlsx or .csv and try again.': 'यह पुराना .xls फ़ॉर्मेट है — इसे .xlsx या .csv में फिर से सेव करके दोबारा कोशिश करें।',
+  "That product is not on this branch's shelf": 'वह प्रोडक्ट इस ब्रांच की शेल्फ़ पर नहीं है',
+  'Give the product a name': 'प्रोडक्ट को एक नाम दें',
+  'Give the product a price': 'प्रोडक्ट की कीमत डालें',
   // ---- Jira GRW-478 (U-3) — sentences added by the GRW-463 fixes
   'A name must be text, 80 characters or fewer': 'नाम 80 अक्षरों तक का टेक्स्ट होना चाहिए',
   'A note must be text, 500 characters or fewer': 'नोट 500 अक्षरों तक का टेक्स्ट होना चाहिए',
@@ -199,7 +207,13 @@ export const API_MESSAGES_HI: Record<string, string> = {
 
 /** The sentence in the visitor's language when it is known; otherwise exactly what the server said. */
 export function localiseApiMessage(message: string, lang: string): string {
-  return lang === 'hi' ? (API_MESSAGES_HI[message] ?? message) : message;
+  if (lang !== 'hi') return message;
+  const known = API_MESSAGES_HI[message];
+  if (known) return known;
+  // "Row 12: An HSN code is 4 to 8 digits" — a spreadsheet import names the row, then says why. The "why" is one of the
+  // sentences above, so it is translated on its own and the row keeps its number.
+  const row = /^Row (\d+): (.+)$/s.exec(message);
+  return row ? `पंक्ति ${row[1]}: ${API_MESSAGES_HI[row[2]!] ?? row[2]}` : message;
 }
 
 /**
