@@ -73,8 +73,13 @@ export const matchedAll = (map: ColumnMap): boolean => missingRequired(map).leng
 
 /* ------------------------------------------------------------------ drafts */
 
+/** Why a row is not going onto the shelf — a key of `products.import.skipped`, said in the owner's language after the import too. */
+export type SkipReason = 'negativePrice' | 'negativeStock' | 'negativeCost' | 'negativeLowStock' | 'negativeGst' | 'repeat' | 'owner';
+
 /** One row of the file on its way onto the shelf. Every cell is the text the owner can see and fix. */
 export interface ProductDraft {
+  /** Its number among the file's rows (the header is not one) — what the owner finds in their spreadsheet and what an error names. */
+  row: number;
   name: string;
   price: string;
   stock: string;
@@ -89,16 +94,31 @@ export interface ProductDraft {
   /** The product already on this branch's shelf that this row is, or null for a new one. */
   existing: Product | null;
   skip: boolean;
+  /** Set whenever `skip` is, so the owner is told why the row is not going in. */
+  skipReason: SkipReason | null;
 }
 
-/** Strips "₹", commas and spaces so "₹1,250" reads as 1250. */
-export const plainNumber = (raw: string): string => raw.replace(/[^\d.]/g, '');
+/**
+ * A number as typed in a cell: "₹1,250" is 1250, "12 pcs" is 12, "-3" and "(3)" are negative, and text with no number
+ * in it is kept as typed so the row says "must be a number" rather than "needs a price". The minus sign is kept ON
+ * PURPOSE: stripping it turned a stock of -3 into 3 and imported it. "Rs 99/-" is Indian for "99 only", not negative.
+ */
+export function plainNumber(raw: string): string {
+  const t = raw.trim();
+  if (!t || /^[-−–—]$/.test(t) || /^n\/?a$/i.test(t)) return '';
+  const digits = t.replace(/[^\d.]/g, '');
+  if (!digits) return t;
+  const negative = /^[^\d.]*[-−–]\s*[\d.]/.test(t) || /^\(.*\d.*\)$/.test(t);
+  return negative ? `-${digits}` : digits;
+}
 
-/** "18", "18%", " 18 % " → "18"; anything else is left for the problem check to name. */
-export const plainPercent = (raw: string): string => raw.replace(/[%\s]/g, '');
+/** "18", "18%", " 18 % " → "18"; a minus sign and anything else are left for the problem check to name. */
+export const plainPercent = (raw: string): string => raw.replace(/[%\s]/g, '').replace(/[−–]/g, '-');
+
+const isNegative = (s: string) => /^-\s*\d/.test(s.trim());
 
 export function blankDraft(): ProductDraft {
-  return { name: '', price: '', stock: '', barcode: '', sku: '', category: '', gst: '', hsn: '', cost: '', lowStock: '', existing: null, skip: false };
+  return { row: 0, name: '', price: '', stock: '', barcode: '', sku: '', category: '', gst: '', hsn: '', cost: '', lowStock: '', existing: null, skip: false, skipReason: null };
 }
 
 /** The shelf's own lookup: a barcode first (the surest), then a SKU, then the name. Retired products are found by name only — their codes are free. */
@@ -117,12 +137,27 @@ export function matchExisting(d: Pick<ProductDraft, 'name' | 'barcode' | 'sku'>,
   return name ? (shelf.find((p) => p.name.trim().toLowerCase() === name) ?? null) : null;
 }
 
-/** The file's rows as drafts. A product named twice in the file starts skipped for its repeat: the owner can still tick it. */
+/** The negative cell that keeps a row off the shelf, in the order the owner would read the row. */
+function negativeReason(d: ProductDraft): SkipReason | null {
+  if (isNegative(d.price)) return 'negativePrice';
+  if (isNegative(d.stock)) return 'negativeStock';
+  if (isNegative(d.cost)) return 'negativeCost';
+  if (isNegative(d.lowStock)) return 'negativeLowStock';
+  if (isNegative(d.gst)) return 'negativeGst';
+  return null;
+}
+
+/**
+ * The file's rows as drafts. A row with a negative number is NOT imported — it starts skipped, with the reason, and
+ * is listed after the import; the owner can include it and fix the number. A product named twice starts skipped for
+ * its repeat.
+ */
 export function buildDrafts(rows: string[][], map: ColumnMap, shelf: readonly Product[]): ProductDraft[] {
   const at = (r: string[], key: Field) => (map[key] >= 0 ? (r[map[key]] ?? '').trim() : '');
   const seen = new Set<string>();
-  return rows.map((r) => {
+  return rows.map((r, index) => {
     const draft: ProductDraft = {
+      row: index + 1,
       name: at(r, 'name'),
       price: plainNumber(at(r, 'price')),
       stock: plainNumber(at(r, 'stock')),
@@ -135,11 +170,21 @@ export function buildDrafts(rows: string[][], map: ColumnMap, shelf: readonly Pr
       lowStock: plainNumber(at(r, 'lowStock')),
       existing: null,
       skip: false,
+      skipReason: null,
     };
     draft.existing = matchExisting(draft, shelf);
+    const negative = negativeReason(draft);
+    if (negative) {
+      draft.skip = true;
+      draft.skipReason = negative;
+      return draft;
+    }
     const key = draft.existing?.id ?? `new:${draft.name.toLowerCase()}`;
     if (draft.name || draft.existing) {
-      draft.skip = seen.has(key);
+      if (seen.has(key)) {
+        draft.skip = true;
+        draft.skipReason = 'repeat';
+      }
       seen.add(key);
     }
     return draft;
@@ -162,6 +207,8 @@ export type ProductProblem =
   | 'barcodeSpaces'
   | 'barcodeScientific'
   | 'tooLong'
+  | 'tooLarge'
+  | 'negative'
   | 'twice'
   | 'barcodeTaken'
   | 'skuTaken';
@@ -171,10 +218,15 @@ const isWhole = (s: string) => /^\d+$/.test(s);
 /** Excel turns a 13-digit barcode into 8.9012E+12 when it saves a CSV — the digits are gone, and no reader can get them back. */
 const SCIENTIFIC = /^\d(\.\d+)?e\+?\d+$/i;
 
+/** The most the API takes: a price or cost of ₹10,00,000 and a count of 1,000,000 (the same limits as the product sheet). */
+const MAX_RUPEES = 1_000_000;
+const MAX_COUNT = 1_000_000;
+
 /** What is wrong with one row on its own, or null. */
 export function rowProblem(d: ProductDraft): ProductProblem | null {
   if (!d.existing && !d.name.trim()) return 'needsName';
   if (d.name.trim().length > 120 || d.category.trim().length > 60 || d.sku.trim().length > 40 || d.barcode.trim().length > 64) return 'tooLong';
+  if ([d.price, d.stock, d.cost, d.lowStock, d.gst].some(isNegative)) return 'negative';
   if (d.price.trim() === '') {
     if (!d.existing) return 'needsPrice';
   } else if (!isNumber(d.price.trim())) return 'priceNotNumber';
@@ -185,6 +237,7 @@ export function rowProblem(d: ProductDraft): ProductProblem | null {
     if (!isNumber(d.gst.trim())) return 'gstNotNumber';
     if (Number(d.gst) > 28) return 'gstRange';
   }
+  if (Number(d.price) > MAX_RUPEES || Number(d.cost) > MAX_RUPEES || Number(d.stock) > MAX_COUNT || Number(d.lowStock) > MAX_COUNT) return 'tooLarge';
   if (d.hsn.trim() && !/^\d{4,8}$/.test(d.hsn.trim())) return 'hsnDigits';
   if (SCIENTIFIC.test(d.barcode.trim())) return 'barcodeScientific';
   if (d.barcode.trim() && !/^[!-~]+$/.test(d.barcode.trim())) return 'barcodeSpaces';
@@ -193,31 +246,39 @@ export function rowProblem(d: ProductDraft): ProductProblem | null {
 
 /**
  * Every row's problem, with the ones that only show across rows: the same product twice, or a code another product
- * already holds. A skipped row is not going to be saved, so it neither has a problem nor causes one.
+ * already holds. A skipped row is not going to be saved, so it neither has a problem nor causes one. The same
+ * bookkeeping as the API's: a retired product holds no code, and a row that moves a product off a code frees it
+ * for the rows after.
  */
 export function reviewProblems(drafts: readonly ProductDraft[], shelf: readonly Product[]): (ProductProblem | null)[] {
   const ownerOf = { barcode: new Map<string, string>(), sku: new Map<string, string>() };
+  const held = new Map<string, { barcode: string | null; sku: string | null }>();
   for (const p of shelf) {
     if (!p.active) continue;
+    held.set(p.id, { barcode: p.barcode?.toLowerCase() ?? null, sku: p.sku?.toLowerCase() ?? null });
     if (p.barcode) ownerOf.barcode.set(p.barcode.toLowerCase(), p.id);
     if (p.sku) ownerOf.sku.set(p.sku.toLowerCase(), p.id);
   }
   const seenProduct = new Set<string>();
-  const seenCode = { barcode: new Set<string>(), sku: new Set<string>() };
-  return drafts.map((d) => {
+  return drafts.map((d, index) => {
     if (d.skip) return null;
     const alone = rowProblem(d);
     if (alone) return alone;
     const key = d.existing?.id ?? `new:${d.name.trim().toLowerCase()}`;
     if (seenProduct.has(key)) return 'twice';
     seenProduct.add(key);
+    // A retired product holds no code, so correcting one neither clashes nor claims.
+    if (d.existing && !held.has(d.existing.id)) return null;
+    const self = d.existing?.id ?? `row-${index}`;
     for (const code of ['barcode', 'sku'] as const) {
       const value = d[code].trim().toLowerCase();
       if (!value) continue;
       const holder = ownerOf[code].get(value);
-      if (holder && holder !== d.existing?.id) return code === 'barcode' ? 'barcodeTaken' : 'skuTaken';
-      if (seenCode[code].has(value)) return code === 'barcode' ? 'barcodeTaken' : 'skuTaken';
-      seenCode[code].add(value);
+      if (holder && holder !== self) return code === 'barcode' ? 'barcodeTaken' : 'skuTaken';
+      const old = d.existing ? held.get(d.existing.id)?.[code] : null;
+      if (old && old !== value) ownerOf[code].delete(old);
+      ownerOf[code].set(value, self);
+      if (d.existing) held.get(d.existing.id)![code] = value;
     }
     return null;
   });
@@ -232,7 +293,7 @@ export function toItems(drafts: readonly ProductDraft[]): ProductImportItem[] {
   return drafts
     .filter((d) => !d.skip)
     .map((d): ProductImportItem => {
-      const item: ProductImportItem = d.existing ? { mode: 'update', existingId: d.existing.id } : { mode: 'create', name: d.name.trim() };
+      const item: ProductImportItem = d.existing ? { mode: 'update', row: d.row, existingId: d.existing.id } : { mode: 'create', row: d.row, name: d.name.trim() };
       if (d.price.trim()) item.priceMinor = minor(d.price.trim());
       if (d.cost.trim()) item.costMinor = minor(d.cost.trim());
       if (d.lowStock.trim()) item.lowStockAt = Number(d.lowStock);
@@ -260,6 +321,43 @@ export function countDrafts(drafts: readonly ProductDraft[], problems: readonly 
     skipped: drafts.filter((d) => d.skip).length,
     fix: problems.filter((p) => p !== null).length,
   };
+}
+
+/** Most new categories one file may make — the API refuses more, so the review says so first. */
+export const MAX_NEW_CATEGORIES = 50;
+
+/** The categories this file would make, in the order it first names them; one that is already on the shelf is not new. */
+export function newCategoryNames(drafts: readonly ProductDraft[], existing: readonly string[]): string[] {
+  const known = new Set(existing.map((n) => n.trim().toLowerCase()));
+  const out = new Map<string, string>();
+  for (const d of drafts) {
+    const name = d.category.trim();
+    const key = name.toLowerCase();
+    if (d.skip || !name || known.has(key) || out.has(key)) continue;
+    out.set(key, name);
+  }
+  return [...out.values()];
+}
+
+/** Rows that match a product already on the shelf and carry a stock number: the number is not used, and the owner is told. */
+export const stockNotApplied = (drafts: readonly ProductDraft[]): number => drafts.filter((d) => !d.skip && d.existing && d.stock.trim() !== '').length;
+
+/** The rows that did not go in, with why — shown while reviewing and again after the import. */
+export function notImported(drafts: readonly ProductDraft[]): { row: number; name: string; reason: SkipReason }[] {
+  return drafts.filter((d) => d.skip && d.skipReason).map((d) => ({ row: d.row, name: d.name.trim() || d.existing?.name || '', reason: d.skipReason! }));
+}
+
+/** How the owner's columns were read, for the check after the import: each column with what it became, and the ones not used. */
+export function mappingSummary(headers: readonly string[], map: ColumnMap): { used: { column: string; field: Field }[]; unused: string[] } {
+  const label = (i: number) => headers[i] || '';
+  const used: { column: string; field: Field }[] = [];
+  const unused: string[] = [];
+  headers.forEach((_, i) => {
+    const field = fieldAt(map, i);
+    if (field) used.push({ column: label(i), field });
+    else unused.push(label(i));
+  });
+  return { used, unused };
 }
 
 /** A starter file: the headers the importer recognises, and one row to show how a line looks. */

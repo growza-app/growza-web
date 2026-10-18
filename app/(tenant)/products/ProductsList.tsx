@@ -239,17 +239,18 @@ export function ProductsList({
     void refreshCategories();
     router.refresh();
   };
-  /** Owner, 2026-10-18 — a file landed: read the shelf again (a hundred products arrived at once) and say what happened. */
+  /**
+   * Owner, 2026-10-18 — a file landed: read the shelf again (a hundred products arrived at once) and say what happened.
+   * The dialog stays open on its own report; closing it is the owner's.
+   */
   const imported = async (result: ProductImportResult) => {
-    setImportOpen(false);
     setImportNote(t('import.done', { created: result.created, updated: result.updated }));
     try {
       setRows(await api.productsAll(branchId));
     } catch {
-      /* router.refresh() below brings the new list in */
+      router.refresh();
     }
     void refreshCategories();
-    router.refresh();
   };
   const fail = (err: unknown) => setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
   const remove = async () => {
@@ -547,7 +548,7 @@ export function ProductsList({
   ) : null;
   const dialogs = (
     <>
-      {importOpen ? <ImportProducts shelf={rows} branchId={branchId} onClose={() => setImportOpen(false)} onImported={(r) => void imported(r)} /> : null}
+      {importOpen ? <ImportProducts shelf={rows} categories={categories} branchId={branchId} onClose={() => setImportOpen(false)} onImported={(r) => void imported(r)} /> : null}
       {deleting ? (
         <ConfirmDialog
           title={t('delete')}

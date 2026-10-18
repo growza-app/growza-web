@@ -3316,8 +3316,39 @@
         "tooLong": "Something here is too long",
         "twice": "This product is in the file twice",
         "barcodeTaken": "Another product has this barcode",
-        "skuTaken": "Another product has this SKU"
-      }
+        "skuTaken": "Another product has this SKU",
+        "negative": "Can't be negative",
+        "tooLarge": "That number is too large"
+      },
+      "skipped": {
+        "negativePrice": "Not imported — the price is negative",
+        "negativeStock": "Not imported — the stock count is negative",
+        "negativeCost": "Not imported — the cost is negative",
+        "negativeLowStock": "Not imported — the low-stock alert is negative",
+        "negativeGst": "Not imported — the GST % is negative",
+        "repeat": "Not imported — this product is already in the file above",
+        "owner": "Not imported — you skipped it"
+      },
+      "newCategories": "{count, plural, one {# new category will be made: {names}} other {# new categories will be made: {names}}}",
+      "tooManyCategories": "This would make {count} new categories — more than {max}. Go back and check which column is the Category.",
+      "stockNotApplied": "{count, plural, one {# product is} other {# products are}} already on your shelf, so the stock in your file is not used for {count, plural, one {it} other {them}}. Change a count with Count stock.",
+      "willSkip": "{count, plural, one {# row will not be imported} other {# rows will not be imported}} — see Skipped.",
+      "doneTitle": "Import finished",
+      "doneAdded": "{count, plural, one {# product added} other {# products added}}",
+      "doneUpdated": "{count, plural, one {# product updated} other {# products updated}}",
+      "doneNothing": "Nothing was added or changed.",
+      "doneCategories": "New categories: {names}",
+      "notImportedTitle": "{count, plural, one {# row was not imported} other {# rows were not imported}}",
+      "notImportedRow": "Row {row} · {name}",
+      "notImportedMore": "…and {count} more",
+      "mappingTitle": "How we read your columns",
+      "mappingRow": "{column} → {field}",
+      "mappingCheck": "Something read wrong? Fix the file and import it again with the columns changed — products already on your shelf are updated, not copied.",
+      "close": "Done",
+      "leaveTitle": "Leave without importing?",
+      "leaveBody": "The fixes you made to this list will be lost.",
+      "leaveStay": "Keep reviewing",
+      "leaveGo": "Leave"
     }
   },
   "sales": {

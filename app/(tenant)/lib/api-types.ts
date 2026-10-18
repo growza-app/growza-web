@@ -209,6 +209,8 @@ export interface Product {
 /** Owner, 2026-10-18 — one row of a product list on its way onto the shelf. An update carries only the fields the file filled, and never the count. */
 export interface ProductImportItem {
   mode: 'create' | 'update';
+  /** Its number in the owner's file — what a refusal names. */
+  row?: number;
   existingId?: string;
   name?: string;
   priceMinor?: number;
@@ -226,6 +228,8 @@ export interface ProductImportResult {
   created: number;
   updated: number;
   categoriesCreated: number;
+  /** The categories the file made, so the owner sees what appeared on their shelf. */
+  categoryNames: string[];
 }
 
 /** 0117 — a shelf of the shelf: the owner's own grouping at one branch, with how many live products it holds. */

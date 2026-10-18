@@ -5,7 +5,17 @@ import { useMemo, useRef, useState } from 'react';
 import { api, ApiError, formatMoney } from '../lib/api';
 import type { Product, ProductImportResult } from '../lib/api-types';
 import { IconChevronRight } from '../components/icons';
-import { countDrafts, matchExisting, reviewProblems, toItems, type ProductDraft, type ProductProblem } from './product-import';
+import {
+  countDrafts,
+  matchExisting,
+  MAX_NEW_CATEGORIES,
+  newCategoryNames,
+  reviewProblems,
+  stockNotApplied,
+  toItems,
+  type ProductDraft,
+  type ProductProblem,
+} from './product-import';
 
 type Filter = 'all' | 'fix' | 'existing' | 'skipped';
 
@@ -27,11 +37,15 @@ const EDITABLE: { key: keyof ProductDraft & string; field: 'name' | 'price' | 's
  * Review by exception, as the price-list import does it: a long list is mostly right, so a row is one line of text
  * and only opens into fields when something is wrong with it or the owner taps it. The count on the button is the
  * count of rows that block it, and the button takes you to the first.
+ *
+ * A row that is not going in — a negative number, a repeat, one the owner skipped — says so on its line, and is
+ * listed again after the import.
  */
 export function ImportProductReview({
   drafts,
   setDrafts,
   shelf,
+  categories,
   branchId,
   onBack,
   onImported,
@@ -39,6 +53,8 @@ export function ImportProductReview({
   drafts: ProductDraft[];
   setDrafts: (fn: (prev: ProductDraft[]) => ProductDraft[]) => void;
   shelf: Product[];
+  /** The names of the categories the branch already has. */
+  categories: string[];
   branchId: string;
   onBack: () => void;
   onImported: (result: ProductImportResult) => void;
@@ -52,6 +68,9 @@ export function ImportProductReview({
 
   const problems = useMemo(() => reviewProblems(drafts, shelf), [drafts, shelf]);
   const counts = countDrafts(drafts, problems);
+  const newCategories = useMemo(() => newCategoryNames(drafts, categories), [drafts, categories]);
+  const tooManyCategories = newCategories.length > MAX_NEW_CATEGORIES;
+  const stockUnused = stockNotApplied(drafts);
   const chipCount: Record<Filter, number> = { all: drafts.length, fix: counts.fix, existing: counts.update, skipped: counts.skipped };
   // A filter whose rows have all been fixed would show an empty list; go back to the whole one instead.
   const shown: Filter = filter !== 'all' && chipCount[filter] === 0 ? 'all' : filter;
@@ -71,6 +90,12 @@ export function ImportProductReview({
       }),
     );
 
+  const reveal = (index: number) => {
+    setFilter('all');
+    setEditing(index);
+    window.setTimeout(() => rowRefs.current.get(index)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 0);
+  };
+
   const apply = async () => {
     setBusy(true);
     setError(null);
@@ -78,6 +103,10 @@ export function ImportProductReview({
       onImported(await api.importProducts(branchId, toItems(drafts)));
     } catch (err) {
       setError(err instanceof ApiError && err.status < 500 ? err.message : t('importFailed'));
+      // The API names the row of the file it objected to; take the owner to it rather than leave them to hunt.
+      const row = err instanceof ApiError ? (err.body as { row?: unknown } | undefined)?.row : undefined;
+      const at = typeof row === 'number' ? drafts.findIndex((d) => d.row === row) : -1;
+      if (at >= 0) reveal(at);
     } finally {
       setBusy(false);
     }
@@ -102,6 +131,15 @@ export function ImportProductReview({
   return (
     <>
       <p className="confirm-body">{t('summary', { create: counts.create, update: counts.update })}</p>
+      {newCategories.length > 0 && (
+        <p className={tooManyCategories ? 'field-error' : 'confirm-body'} role={tooManyCategories ? 'alert' : undefined}>
+          {tooManyCategories
+            ? t('tooManyCategories', { count: newCategories.length, max: MAX_NEW_CATEGORIES })
+            : t('newCategories', { count: newCategories.length, names: newCategories.join(', ') })}
+        </p>
+      )}
+      {stockUnused > 0 && <p className="confirm-body">{t('stockNotApplied', { count: stockUnused })}</p>}
+      {counts.skipped > 0 && <p className="confirm-body">{t('willSkip', { count: counts.skipped })}</p>}
       <div className="rv-chips" role="group" aria-label={t('filterLabel')}>
         {chips
           .filter((c) => c.key === 'all' || chipCount[c.key] > 0)
@@ -137,7 +175,9 @@ export function ImportProductReview({
                     <span className="rv-main">
                       <span className="rv-name">{d.name.trim() || d.existing?.name || t('unnamed')}</span>
                       <span className="rv-meta">{meta}</span>
-                      {problem ? (
+                      {d.skip && d.skipReason ? (
+                        <span className="import-issue rv-flag">{t(`skipped.${d.skipReason}`)}</span>
+                      ) : problem ? (
                         <span className="import-issue rv-flag">{problemText(problem)}</span>
                       ) : d.existing ? (
                         <span className="chip chip-reminder rv-flag">{t(d.existing.active ? 'haveIt' : 'retiredHaveIt', { price: formatMoney(d.existing.priceMinor, d.existing.currency) })}</span>
@@ -150,7 +190,7 @@ export function ImportProductReview({
                     )}
                   </button>
                   {d.skip && (
-                    <button type="button" className="btn btn-ghost rv-include" onClick={() => update(i, { skip: false })}>
+                    <button type="button" className="btn btn-ghost rv-include" onClick={() => update(i, { skip: false, skipReason: null })}>
                       {t('include')}
                     </button>
                   )}
@@ -170,13 +210,13 @@ export function ImportProductReview({
                             value={locked && f.key === 'name' ? d.existing!.name : (d[f.key] as string)}
                             readOnly={locked}
                             title={locked ? t('correctionOnly') : undefined}
-                            aria-label={t('rowCell', { n: i + 1, field: t(`fields.${f.field}`) })}
+                            aria-label={t('rowCell', { n: d.row, field: t(`fields.${f.field}`) })}
                             onChange={(e) => update(i, { [f.key]: e.target.value } as Partial<ProductDraft>)}
                           />
                         </label>
                       );
                     })}
-                    <button type="button" className="btn btn-ghost rv-skip" onClick={() => update(i, { skip: true })}>
+                    <button type="button" className="btn btn-ghost rv-skip" onClick={() => update(i, { skip: true, skipReason: 'owner' })}>
                       {t('skip')}
                     </button>
                   </div>
@@ -196,10 +236,12 @@ export function ImportProductReview({
         <button type="button" className="btn btn-ghost" disabled={busy} onClick={onBack}>
           {t('back')}
         </button>
-        <button type="button" className="btn" disabled={busy || toSave === 0} onClick={counts.fix > 0 ? goToProblem : apply}>
+        <button type="button" className="btn" disabled={busy || toSave === 0 || tooManyCategories} onClick={counts.fix > 0 ? goToProblem : apply}>
           {busy ? t('importing') : counts.fix > 0 ? t('fixFirst', { count: counts.fix }) : t('importN', { count: toSave })}
         </button>
       </div>
     </>
   );
 }
+
+

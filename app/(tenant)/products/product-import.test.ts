@@ -6,7 +6,7 @@ import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
 import type { Product } from '../lib/api-types';
 import { ImportProductColumns } from './ImportProductColumns';
-import { buildDrafts, fieldAt, FIELDS, matchedAll, matchExisting, missingRequired, reviewProblems, rowProblem, SAMPLE_CSV, suggest, toItems, withColumnAs, type ProductDraft } from './product-import';
+import { buildDrafts, fieldAt, FIELDS, mappingSummary, matchedAll, matchExisting, missingRequired, newCategoryNames, notImported, plainNumber, reviewProblems, rowProblem, SAMPLE_CSV, stockNotApplied, suggest, toItems, withColumnAs, type ProductDraft } from './product-import';
 
 /**
  * Owner, 2026-10-18 — a shelf loaded from a spreadsheet. What goes wrong is quiet: a column read as the wrong thing
@@ -34,7 +34,7 @@ const product = (over: Partial<Product>): Product => ({
   ...over,
 });
 
-const draft = (over: Partial<ProductDraft>): ProductDraft => ({ name: 'X', price: '10', stock: '', barcode: '', sku: '', category: '', gst: '', hsn: '', cost: '', lowStock: '', existing: null, skip: false, ...over });
+const draft = (over: Partial<ProductDraft>): ProductDraft => ({ row: 1, skipReason: null, name: 'X', price: '10', stock: '', barcode: '', sku: '', category: '', gst: '', hsn: '', cost: '', lowStock: '', existing: null, skip: false, ...over });
 
 describe('which column is which', () => {
   it('reads the headers of the sample file, each to its own field', () => {
@@ -90,7 +90,7 @@ describe('a row of the file', () => {
   it('strips ₹ and commas from money and the % from a rate', () => {
     const [d] = buildDrafts([['Argan Oil', '890', '₹1,250.50', '12 pcs', '18 %', '33059090']], map, []);
     expect(d).toMatchObject({ price: '1250.50', stock: '12', gst: '18', barcode: '890', hsn: '33059090' });
-    expect(toItems([d!])).toEqual([{ mode: 'create', name: 'Argan Oil', priceMinor: 125050, stock: 12, barcode: '890', gstRateBp: 1800, hsn: '33059090' }]);
+    expect(toItems([d!])).toEqual([{ mode: 'create', row: 1, name: 'Argan Oil', priceMinor: 125050, stock: 12, barcode: '890', gstRateBp: 1800, hsn: '33059090' }]);
   });
 
   it('keeps 0% GST as an answer, and a blank as no answer', () => {
@@ -117,7 +117,7 @@ describe('a row of the file', () => {
     const shelf = [product({ id: 'a', barcode: '111' })];
     const [d] = buildDrafts([['Whatever', '111', '500', '99', '', '']], map, shelf);
     expect(d?.existing?.id).toBe('a');
-    expect(toItems([d!])).toEqual([{ mode: 'update', existingId: 'a', priceMinor: 50000, barcode: '111' }]);
+    expect(toItems([d!])).toEqual([{ mode: 'update', row: 1, existingId: 'a', priceMinor: 50000, barcode: '111' }]);
   });
 
   it('starts the repeat of a product skipped, but not the first of it', () => {
@@ -133,7 +133,14 @@ describe('what blocks a row', () => {
     [{ name: ' ' }, 'needsName'],
     [{ price: '' }, 'needsPrice'],
     [{ price: 'abc' }, 'priceNotNumber'],
-    [{ price: '-5' }, 'priceNotNumber'],
+    [{ price: '-5' }, 'negative'],
+    [{ stock: '-3' }, 'negative'],
+    [{ gst: '-5' }, 'negative'],
+    [{ price: 'abc' }, 'priceNotNumber'],
+    [{ price: '1000001' }, 'tooLarge'],
+    [{ price: '1000000' }, null],
+    [{ stock: '1000001' }, 'tooLarge'],
+    [{ cost: '2000000' }, 'tooLarge'],
     [{ stock: '1.5' }, 'stockNotWhole'],
     [{ cost: 'x' }, 'costNotNumber'],
     [{ lowStock: '2.5' }, 'lowNotWhole'],
@@ -171,6 +178,17 @@ describe('what blocks a row', () => {
     expect(reviewProblems(drafts, shelf)).toEqual([null, 'barcodeTaken', 'barcodeTaken', 'skuTaken', 'twice', null, null]);
   });
 
+  it('lets a row take a code an earlier row has just let go of, and does not count a retired product as holding one', () => {
+    const shelf = [product({ id: 'a', barcode: '111' }), product({ id: 'r', name: 'Retired', barcode: '444', active: false }), product({ id: 'l', name: 'Live', barcode: '333' })];
+    const drafts = [
+      draft({ name: 'Argan Oil', barcode: '222', existing: shelf[0]! }),
+      draft({ name: 'New', barcode: '111' }),
+      draft({ name: 'Retired', barcode: '333', existing: shelf[1]! }),
+      draft({ name: 'Newer', barcode: '444' }),
+    ];
+    expect(reviewProblems(drafts, shelf)).toEqual([null, null, null, null]);
+  });
+
   it('lets a retired product\'s barcode be used again', () => {
     const shelf = [product({ id: 'r', barcode: '111', active: false })];
     expect(reviewProblems([draft({ name: 'New', barcode: '111' })], shelf)).toEqual([null]);
@@ -204,5 +222,79 @@ describe('the columns step, in both languages', () => {
     const keys = (o: unknown, p = ''): string[] =>
       Object.entries(o as Record<string, unknown>).flatMap(([k, v]) => (typeof v === 'object' && v ? keys(v, `${p}${k}.`) : [`${p}${k}`]));
     expect(keys(hi.products.import).sort()).toEqual(keys(en.products.import).sort());
+  });
+});
+
+
+describe('a negative number is never imported, and the owner is told', () => {
+  const headers = ['Name', 'Price', 'Qty', 'Cost'];
+  const map = suggest(headers);
+
+  it('keeps the minus sign instead of stripping it', () => {
+    expect(plainNumber('-3')).toBe('-3');
+    expect(plainNumber('₹ -50')).toBe('-50');
+    expect(plainNumber('(25)')).toBe('-25');
+    expect(plainNumber('−4')).toBe('-4');
+    expect(plainNumber('Rs 99/-')).toBe('99');
+    expect(plainNumber('₹1,250.50')).toBe('1250.50');
+    expect(plainNumber('N/A')).toBe('');
+    expect(plainNumber('abc')).toBe('abc');
+  });
+
+  it('starts a row with a negative price, stock or cost skipped, with the reason, and sends it nowhere', () => {
+    const drafts = buildDrafts([['Fine', '100', '5', '10'], ['Minus stock', '100', '-3', ''], ['Minus price', '-100', '5', ''], ['Minus cost', '100', '', '-1']], map, []);
+    expect(drafts.map((d) => [d.row, d.skip, d.skipReason])).toEqual([
+      [1, false, null],
+      [2, true, 'negativeStock'],
+      [3, true, 'negativePrice'],
+      [4, true, 'negativeCost'],
+    ]);
+    expect(toItems(drafts).map((i) => i.name)).toEqual(['Fine']);
+    expect(notImported(drafts)).toEqual([
+      { row: 2, name: 'Minus stock', reason: 'negativeStock' },
+      { row: 3, name: 'Minus price', reason: 'negativePrice' },
+      { row: 4, name: 'Minus cost', reason: 'negativeCost' },
+    ]);
+  });
+
+  it('does not count a negative row as the first of a product, so a good repeat of it still goes in', () => {
+    const drafts = buildDrafts([['Gel', '-5', '', ''], ['Gel', '5', '', '']], map, []);
+    expect(drafts.map((d) => d.skip)).toEqual([true, false]);
+  });
+
+  it('puts a negative row back as a problem to fix if the owner includes it, rather than importing it', () => {
+    const [d] = buildDrafts([['Minus stock', '100', '-3', '']], map, []);
+    const included = { ...d!, skip: false, skipReason: null };
+    expect(reviewProblems([included], [])).toEqual(['negative']);
+  });
+
+  it('lists a repeat and a row the owner skipped with their own reasons', () => {
+    const drafts = buildDrafts([['Gel', '5', '', ''], ['gel', '6', '', '']], map, []);
+    drafts.push(draft({ row: 3, name: 'Mine', skip: true, skipReason: 'owner' }));
+    expect(notImported(drafts).map((r) => r.reason)).toEqual(['repeat', 'owner']);
+  });
+});
+
+describe('what the review and the report tell the owner', () => {
+  it('names the categories a file would make, once each, and not the ones the branch has', () => {
+    const drafts = [draft({ category: 'Hair care' }), draft({ category: 'hair care ' }), draft({ category: 'Tools' }), draft({ category: 'Skin' }), draft({ category: 'Nope', skip: true }), draft({ category: '' })];
+    expect(newCategoryNames(drafts, ['skin'])).toEqual(['Hair care', 'Tools']);
+  });
+
+  it('counts the stock numbers that will not be used because the product is already on the shelf', () => {
+    const drafts = [draft({ stock: '5', existing: product({}) }), draft({ stock: '', existing: product({}) }), draft({ stock: '5' }), draft({ stock: '5', existing: product({}), skip: true })];
+    expect(stockNotApplied(drafts)).toBe(1);
+  });
+
+  it('says which column became what, and which were not used', () => {
+    const headers = ['Product name', 'MRP', 'Notes', 'Qty'];
+    expect(mappingSummary(headers, suggest(headers))).toEqual({
+      used: [
+        { column: 'Product name', field: 'name' },
+        { column: 'MRP', field: 'price' },
+        { column: 'Qty', field: 'stock' },
+      ],
+      unused: ['Notes'],
+    });
   });
 });
