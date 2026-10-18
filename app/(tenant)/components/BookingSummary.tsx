@@ -9,7 +9,7 @@ import { formatDateWithWeekday } from '../lib/format';
 import { bookingBill, clientNameLabel, formatDuration, type BookingGroup } from '../lib/appointment-display';
 import { dialable } from './BookingSheet';
 import { CorrectBookingSheet } from './CorrectBookingSheet';
-import { IconCheck, IconEdit, IconPackages, IconPhone } from './icons';
+import { IconCheck, IconClose, IconEdit, IconPackages, IconPhone } from './icons';
 import { useMayUse } from './SessionProvider';
 import { useLabel } from './LabelsProvider';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -138,6 +138,11 @@ export function BookingSummary({
               </div>
             )}
           </div>
+          {inline && (
+            <button type="button" className="icon-btn bk-sheet-close" onClick={onClose} aria-label={tc('close')}>
+              <IconClose />
+            </button>
+          )}
         </div>
 
         {/*
