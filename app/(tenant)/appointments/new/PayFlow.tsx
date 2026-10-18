@@ -28,6 +28,8 @@ import { ServiceSheet } from '../../components/ServiceSheet';
 import { BillCard, BillRows, lineKey, lineMinor, type BillLine as Line } from './BillCard';
 import { DeskServiceGrid } from './DeskServiceGrid';
 import { DeskUnpaid } from './DeskUnpaid';
+import { useBarcodeScan } from '../../lib/barcode-scan';
+import { productByCode } from '../../lib/product-match';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
 import { PaymentDone } from '../../components/PaymentDone';
 
@@ -539,6 +541,27 @@ export function PayFlow({
     setLines((prev) => [...prev, { serviceId: '', name: p.name, priceMinor: Number(p.priceMinor ?? 0), product: { id: p.id } }]);
     setOverride(null);
   };
+  /**
+   * Owner, 2026-10-19 — a scan adds the product wherever the cursor is. A code that names no single product says so
+   * rather than doing nothing, because a silent miss at the counter reads as "the scanner is broken".
+   */
+  const [scanMiss, setScanMiss] = useState<string | null>(null);
+  useEffect(() => {
+    if (!scanMiss) return;
+    const id = window.setTimeout(() => setScanMiss(null), 5000);
+    return () => window.clearTimeout(id);
+  }, [scanMiss]);
+  useBarcodeScan(productsOnly && productsLoaded, (code) => {
+    const hit = productByCode(products, code);
+    if (!hit) {
+      felt(BUZZ.tooMany);
+      setScanMiss(code);
+      return false;
+    }
+    setScanMiss(null);
+    addProduct(hit);
+    return true;
+  });
   // No buzz on the way down: the count and the total both drop, and a removal that felt like an addition is a lie.
   const oneLess = (key: string) => {
     setLines((prev) => {
@@ -1215,6 +1238,7 @@ export function PayFlow({
           */}
           <span className="pf-head-gap" aria-hidden="true" />
         </header>
+        {scanMiss ? <div role="status" className="pf-error">{t('desk.scanMiss', { code: scanMiss })}</div> : null}
         {tokenGone ? (
           <div role="alert" className="pf-error">
             {nv.tokenGone}
@@ -1396,16 +1420,19 @@ export function PayFlow({
         so they were the one thing on the line that no owner needed.
       */}
       {productsOnly ? (
-        <header className="pf-head">
-          <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
-            <IconArrowLeft />
-          </button>
-          <span className="pf-head-stack">
-            <h1 className="pf-title">{t('sellTitle')}</h1>
-            <HeaderBranchPicker variant="line" />
-          </span>
-          <span className="pf-head-gap" aria-hidden="true" />
-        </header>
+        <>
+          <header className="pf-head">
+            <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
+              <IconArrowLeft />
+            </button>
+            <span className="pf-head-stack">
+              <h1 className="pf-title">{t('sellTitle')}</h1>
+              <HeaderBranchPicker variant="line" />
+            </span>
+            <span className="pf-head-gap" aria-hidden="true" />
+          </header>
+          {scanMiss ? <div role="status" className="pf-error">{t('desk.scanMiss', { code: scanMiss })}</div> : null}
+        </>
       ) : (
         <header className="pf-head">
           <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>

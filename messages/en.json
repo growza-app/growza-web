@@ -2782,7 +2782,8 @@
       "noPackages": "No priced package yet. Make one on the Packages screen.",
       "noProducts": "Nothing on the shelf yet. Add products on the Products screen.",
       "searchProducts": "Search {count} products or scan barcode",
-      "emptyProductBill": "Tap a product to start the bill."
+      "emptyProductBill": "Tap a product to start the bill.",
+      "scanMiss": "No product has the code {code}. Check the bottle or search by name."
     },
     "sellTitle": "Sell product",
     "pickProduct": "Select a product",
