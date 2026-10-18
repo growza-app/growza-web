@@ -585,12 +585,9 @@ export function OwnerHome(p: OwnerHomeProps) {
     const unmarkedCount = Math.max(branchAtt?.notMarkedDone ?? 0, overdueGroups.length);
     const bookingCount = unmarkedCount + waitingTokens.length;
 
-    const unmarkedStaff = (p.staffNotMarkedIn ?? [])
-      .map((id) => p.providers.find((x) => x.id === id))
-      .filter((x): x is Provider => x !== undefined && (!branch || x.locationId === branch));
-    const unmarkedStaffCount = unmarkedStaff.length;
-    const staffCount = pendingAttendance + unmarkedStaffCount;
-    const totalCount = bookingCount + staffCount;
+    // Owner, 2026-10-19 — who has not marked in is the Staff status card's job, one card to the right; only what has
+    // to be decided (attendance to approve) stays here.
+    const totalCount = bookingCount + pendingAttendance;
 
     const rows: Array<{
       id: string;
@@ -651,26 +648,12 @@ export function OwnerHome(p: OwnerHomeProps) {
         href: '/attendance',
       });
     }
-    for (const prov of unmarkedStaff) {
-      rows.push({
-        id: `staff-${prov.id}`,
-        name: prov.displayName,
-        avatarId: prov.id,
-        photoUrl: prov.photoUrl,
-        sub: t.notMarkedInSub,
-        pill: t.markAttendancePill,
-        tone: 'blue',
-        href: '/attendance',
-      });
-    }
-
     return {
       bookingCount,
-      staffCount,
       totalCount,
       rows: rows.slice(0, 5),
     };
-  }, [todayGroups, now, boardTokens, dataIsForBranch, data, p.staffNotMarkedIn, p.providers, branch, pendingAttendance, t, w, p.timezone, unmarkedHref]);
+  }, [todayGroups, now, boardTokens, dataIsForBranch, data, branch, pendingAttendance, t, w, p.timezone, unmarkedHref]);
 
   const productAttention = useMemo(() => {
     const list = (shelfProducts ?? []).filter((pr) => pr.active);
@@ -1279,13 +1262,6 @@ export function OwnerHome(p: OwnerHomeProps) {
                     >
                       <strong>{deskAttention.bookingCount}</strong>
                       <span>{t.bookingsAttentionChip}</span>
-                    </a>
-                    <a
-                      className={`hm-v3-prod-att-chip is-blue ${deskAttention.staffCount === 0 ? 'is-clear' : ''}`}
-                      href="/attendance"
-                    >
-                      <strong>{deskAttention.staffCount}</strong>
-                      <span>{t.staffAttentionChip}</span>
                     </a>
                   </div>
                   {deskAttention.rows.length === 0 ? (

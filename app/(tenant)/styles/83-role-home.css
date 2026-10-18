@@ -4691,6 +4691,10 @@ button.hm-now-count {
   gap: 8px;
   margin-bottom: 10px;
 }
+/* Bookings & queue is the only chip on Needs your attention: it takes the row. */
+.hm-v3-desk-attention .hm-v3-prod-att-summary {
+  grid-template-columns: minmax(0, 1fr);
+}
 .hm-v3-prod-att-chip {
   display: flex;
   align-items: center;
