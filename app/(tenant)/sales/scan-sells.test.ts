@@ -16,11 +16,17 @@ describe('a scan on the Sales screen sells', () => {
     expect(sales).toContain('queueScan(code)');
     expect(sales).toContain("router.push('/products/sell?from=sales')");
     expect(sales).toContain('if (leaving.current) return;');
-    expect(sales).toContain('}, SCAN_RUN_END_MS);');
+    expect(sales).toContain('window.setTimeout(sellPage, SCAN_RUN_END_MS)');
   });
 
   it('says a code that is not on the shelf instead of leaving the screen', () => {
-    expect(sales).toContain("setScanNote(t('scanUnknown', { code }))");
+    expect(sales).toContain('setScanNote(code);');
+    expect(sales).toContain("t('scanUnknown', { code: scanNote })");
+  });
+
+  it('offers to search by name when the code is not on the shelf', () => {
+    expect(sales).toContain("t('scanSearch')");
+    expect(sales).toContain('searchByName(scanNote)');
   });
 
   it('listens only where the sell page can be reached', () => {
@@ -51,6 +57,15 @@ describe('the sell page takes the queued scans', () => {
   it('listens from the first moment and queues a scan that arrives while the shelf loads', () => {
     expect(flow).toContain("useBarcodeScan(productsOnly && step === 'what'");
     expect(flow).toContain('else queueScan(code);');
+  });
+
+  it('puts a code that matched nothing in the search box, desktop and phone', () => {
+    expect(flow).toContain("setSearchSeed((prev) => ({ text: problem.code, n: (prev?.n ?? 0) + 1 }));");
+    expect(flow).toContain('if (!wide) setMenuOpen(true);');
+    expect(flow).toContain('searchSeed={searchSeed}');
+    expect(flow).toContain("initialTerm={searchSeed?.text ?? ''}");
+    expect(read('../appointments/new/DeskServiceGrid.tsx')).toContain('setTerm(searchSeed.text);');
+    expect(read('../components/ServiceSheet.tsx')).toContain('useState(initialTerm)');
   });
 
   it('does not call each bottle unknown when the shelf failed to load', () => {

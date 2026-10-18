@@ -3381,6 +3381,7 @@
   },
   "sales": {
     "scanUnknown": "No product has the code {code}. Check the bottle.",
+    "scanSearch": "Search by name",
     "title": "Sales",
     "subtitle": "Every completed bill — what services were done, what products were sold, who paid, and how.",
     "from": "From",

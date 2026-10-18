@@ -917,19 +917,24 @@ export function SalesClient({
     const shelf = await shelfRef.current.shelf;
     // A shelf that would not load cannot say no; the sell page will.
     if (shelf && !productByCode(shelf, code)) {
-      setScanNote(t('scanUnknown', { code }));
+      setScanNote(code);
       return;
     }
     if (!queueScan(code)) return;
     setScanNote(null);
     // Wait for the run to end before leaving: scans that arrive mid-navigation have no screen to land on.
     window.clearTimeout(leaveTimer.current);
-    leaveTimer.current = window.setTimeout(() => {
-      if (leaving.current) return;
-      leaving.current = true;
-      router.push('/products/sell?from=sales');
-    }, SCAN_RUN_END_MS);
+    leaveTimer.current = window.setTimeout(sellPage, SCAN_RUN_END_MS);
   });
+  const sellPage = () => {
+    if (leaving.current) return;
+    leaving.current = true;
+    router.push('/products/sell?from=sales');
+  };
+  /** Not on the shelf: the sell page opens with the code in its search box, to be typed over with a name. */
+  const searchByName = (code: string) => {
+    if (queueScan(code)) sellPage();
+  };
   useEffect(() => () => window.clearTimeout(leaveTimer.current), []);
   useEffect(() => {
     if (!openDropdown) return;
@@ -2100,8 +2105,11 @@ export function SalesClient({
           </div>
 
           {scanNote ? (
-            <div role="status" className="pf-error" style={{ marginBottom: 'var(--sp-3)' }}>
-              {scanNote}
+            <div role="status" className="pf-error" style={{ marginBottom: 'var(--sp-3)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 'var(--sp-3)' }}>
+              <span>{t('scanUnknown', { code: scanNote })}</span>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => searchByName(scanNote)}>
+                {t('scanSearch')}
+              </button>
             </div>
           ) : null}
           <div className="sls-table-actions">

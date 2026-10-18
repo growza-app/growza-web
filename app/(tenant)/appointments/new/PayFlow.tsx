@@ -550,6 +550,8 @@ export function PayFlow({
    * rather than doing nothing, because a silent miss at the counter reads as "the scanner is broken".
    */
   const [scanNote, setScanNote] = useState<string | null>(null);
+  // A code that matched nothing goes into the search box: a person can edit it into a name and sell it by hand.
+  const [searchSeed, setSearchSeed] = useState<{ text: string; n: number } | null>(null);
   useEffect(() => {
     if (!scanNote) return;
     const id = window.setTimeout(() => setScanNote(null), 5000);
@@ -562,6 +564,10 @@ export function PayFlow({
     // addProduct would refuse these quietly; a scan has no tile to show why, so it says.
     if (problem) felt(BUZZ.tooMany);
     setScanNote(problem ? scanWords(problem) : null);
+    if (problem?.kind === 'miss') {
+      setSearchSeed((prev) => ({ text: problem.code, n: (prev?.n ?? 0) + 1 }));
+      if (!wide) setMenuOpen(true);
+    }
     for (const p of add) addProduct(p);
   };
   // Only on the screen where products are picked: on 'how', 'qr' and 'done' a scan would change a bill being paid.
@@ -1318,6 +1324,7 @@ export function PayFlow({
               initialTab={initialTab}
               productsOnly={productsOnly}
               productCategory={productCategory}
+              searchSeed={searchSeed}
             />
           )}
           <aside className="pf-wide-right">
@@ -1766,12 +1773,17 @@ export function PayFlow({
           onPickProduct={(p) => {
             addProduct(p);
             setMenuOpen(false);
+            setSearchSeed(null);
           }}
-          onClose={() => setMenuOpen(false)}
+          onClose={() => {
+            setMenuOpen(false);
+            setSearchSeed(null);
+          }}
           packageCountOf={packageCountOf}
           onLessPackage={oneLessPackage}
           initialKind={productsOnly ? 'products' : initialTab}
           productsOnly={productsOnly}
+          initialTerm={searchSeed?.text ?? ''}
         />
       ) : null}
       {keypad !== null ? (

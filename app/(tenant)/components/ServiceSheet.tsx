@@ -46,6 +46,7 @@ export function ServiceSheet({
   productCounts,
   onPickProduct,
   initialKind,
+  initialTerm = '',
   productsOnly = false,
 }: {
   services: Service[];
@@ -63,6 +64,8 @@ export function ServiceSheet({
   productCounts?: Map<string, number>;
   onPickProduct?: (p: Product) => void;
   initialKind?: 'products';
+  /** A scanned code that matched nothing, so the box opens with it and the cashier can edit it into a name. */
+  initialTerm?: string;
   productsOnly?: boolean;
 }) {
   const t = useTranslations('payFlow');
@@ -77,7 +80,7 @@ export function ServiceSheet({
   /** The chip that lists combos rather than one kind of service. Not a category name anyone can type. */
   const PACKAGES = '\u0000packages';
   const PRODUCTS = '\u0000products';
-  const [term, setTerm] = useState('');
+  const [term, setTerm] = useState(initialTerm);
   const [kind, setKind] = useState(productsOnly || initialKind === 'products' ? PRODUCTS : '');
   const offers = packages ?? [];
   const shelf = products ?? [];

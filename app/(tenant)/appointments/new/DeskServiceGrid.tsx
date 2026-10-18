@@ -42,6 +42,7 @@ export function DeskServiceGrid({
   initialTab,
   productsOnly = false,
   productCategory = '',
+  searchSeed,
 }: {
   /** In display order: most sold first. */
   services: Service[];
@@ -66,10 +67,19 @@ export function DeskServiceGrid({
   /** Retail / Sell product screen: hides the Services/Packages/Products tabs and filters by the left panel's category. */
   productsOnly?: boolean;
   productCategory?: string;
+  /** A scanned code that matched nothing, put in the box so the cashier can edit it into a name. `n` makes a repeat count. */
+  searchSeed?: { text: string; n: number } | null;
 }) {
   const t = useTranslations('payFlow');
   const nv = useNewVisitCopy();
   const [term, setTerm] = useState('');
+  const searchBox = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!searchSeed) return;
+    setTerm(searchSeed.text);
+    searchBox.current?.focus({ preventScroll: true });
+    searchBox.current?.select();
+  }, [searchSeed]);
   const [tab, setTab] = useState<'services' | 'packages' | 'products'>(productsOnly ? 'products' : (initialTab ?? 'services'));
   /** Owner, 2026-10-14 — a category chip row under the search, as the phone's sheet has: '' is All. */
   const [kind, setKind] = useState('');
@@ -194,6 +204,7 @@ export function DeskServiceGrid({
         <label className="pf-wide-search">
           <IconSearch />
           <input
+            ref={searchBox}
             type="search"
             value={term}
             onChange={(e) => setTerm(e.target.value)}
