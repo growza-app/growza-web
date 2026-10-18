@@ -83,11 +83,13 @@ describe('Tenant Home v2 redesign', () => {
     expect(owner).toContain('const branchAtt = dataIsForBranch ? data?.attention : null;');
     expect(owner).toContain('const svc = tk.serviceNames.length > 0 ? summarizeServices(tk.serviceNames, t.lang) : w.servicesAtPayment;');
     expect(owner).toContain('deskAttention.bookingCount');
-    expect(owner).toContain('deskAttention.staffCount');
+    // Who has not marked in is the Staff status card's job; Needs your attention no longer repeats it (2026-10-19).
+    expect(owner).not.toContain('deskAttention.staffCount');
+    expect(owner).not.toContain('staffAttentionChip');
+    expect(owner).not.toContain('unmarkedStaff');
     expect(owner).toContain('deskAttention.rows.map');
     const clinicEn = homeCopy('en', { appointments: 'Consultations', providers: 'Doctors' });
     expect(clinicEn.bookingsAttentionChip).toBe('Consultations & queue');
-    expect(clinicEn.staffAttentionChip).toBe('Doctors & attendance');
     expect(owner).toContain('className="hm-v3-staff-strip hm-v3-staff-list"');
     expect(owner).toContain('className="hm-v3-recent-table"');
     expect(owner).toContain('className="hm-v3-qgrid"');
