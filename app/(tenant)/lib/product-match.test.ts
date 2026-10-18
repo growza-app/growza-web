@@ -175,8 +175,10 @@ describe('StockPanel — Move to another branch (GRW-574 part 3)', () => {
     expect(hi.reason).toBeTruthy();
   });
 
-  it('does not let a transfer exceed what the source branch holds, and says how many are there (QA, 2026-10-17)', () => {
-    expect(panel).toMatch(/const tooMany = kind === 'transfer' && Number\.isFinite\(n\) && n > Math\.max\(product\.stock, 0\);/);
+  it('does not let a removal or transfer exceed what the source branch holds, and says how many are there (QA, 2026-10-17)', () => {
+    expect(panel).toMatch(
+      /const tooMany = \(kind === 'transfer' \|\| kind === 'used' \|\| kind === 'damaged'\) && Number\.isFinite\(n\) && n > shelfStock;/,
+    );
     expect(panel).toMatch(/\(kind !== 'transfer' \|\| toBranchId !== ''\) &&\s*!tooMany;/);
     expect(panel).toMatch(/t\('transfer\.tooMany', \{ n: Math\.max\(product\.stock, 0\) \}\)/);
     expect(panel).not.toMatch(/warnNegative|confirmAnyway/);
@@ -202,12 +204,12 @@ describe("StockTake — count a branch's shelf in one pass (GRW-574 part 4)", ()
   const en = JSON.parse(readFileSync(resolve(__dirname, '../../../messages/en.json'), 'utf8')).products.stockTake;
   const hi = JSON.parse(readFileSync(resolve(__dirname, '../../../messages/hi.json'), 'utf8')).products.stockTake;
 
-  it('parses integer counts within -100,000..1,000,000 and rejects blanks, decimals, or out-of-range values', async () => {
+  it('parses integer counts within 0..1,000,000 and rejects blanks, decimals, negatives, or out-of-range values', async () => {
     const { parseStockTakeCount } = await import('../products/StockTake');
     expect(parseStockTakeCount(undefined, 7)).toBe(7);
     expect(parseStockTakeCount(' 12 ', 7)).toBe(12);
     expect(parseStockTakeCount('0', 7)).toBe(0);
-    expect(parseStockTakeCount('-3', 7)).toBe(-3);
+    expect(parseStockTakeCount('-3', 7)).toBeNull();
     expect(parseStockTakeCount('-0', 7)).toBe(0);
     expect(Object.is(parseStockTakeCount('-0', 7), -0)).toBe(false);
     expect(parseStockTakeCount('', 7)).toBeNull();

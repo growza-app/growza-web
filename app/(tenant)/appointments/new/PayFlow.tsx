@@ -530,7 +530,7 @@ export function PayFlow({
   };
   /** Owner, 2026-10-14 — a product on the bill: one line per unit, so "tap again for a second one" holds. */
   const addProduct = (p: Product) => {
-    if (full) {
+    if (full || p.stock <= 0 || productCountOf(p.id) >= p.stock) {
       felt(BUZZ.tooMany);
       return;
     }

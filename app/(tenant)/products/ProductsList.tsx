@@ -440,7 +440,7 @@ export function ProductsList({
                   {p.active ? (
                     <span className={`prd-pill prd-pill-${tone}`}>{tone === 'out' ? t('outOfStock') : tone === 'low' ? t('lowStock', { n: p.stock }) : t('stock', { n: p.stock })}</span>
                   ) : (
-                    <span className="prd-pill prd-pill-off">{t('stock', { n: p.stock })}</span>
+                    <span className="prd-pill prd-pill-off">{t('stock', { n: Math.max(0, p.stock) })}</span>
                   )}
                   <span className="prd-sold">{t('sold', { n: p.sold })}</span>
                 </span>
@@ -495,7 +495,7 @@ export function ProductsList({
                 <td className="prd-td-num">{formatMoney(p.priceMinor)}</td>
                 <td className="prd-td-num prd-td-muted">{p.costMinor != null ? formatMoney(p.costMinor) : '—'}</td>
                 <td className="prd-td-num">
-                  <span className={`prd-td-stock prd-td-stock-${stockTone(p)}`}>{p.stock}</span>
+                  <span className={`prd-td-stock prd-td-stock-${stockTone(p)}`}>{Math.max(0, p.stock)}</span>
                   <span className="prd-td-sold">{t('sold', { n: p.sold })}</span>
                 </td>
                 <td>{pill(p)}</td>

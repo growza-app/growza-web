@@ -94,9 +94,10 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
   const reasonOptions = activeGroup === 'add' ? ADD_KINDS : activeGroup === 'remove' ? REMOVE_KINDS : null;
 
   const n = Math.trunc(Number(qty));
-  // QA, 2026-10-17 — a move cannot exceed what is on this shelf (the till may go below zero; a move may not). The server
-  // refuses it too; saying so here means the button is off and the sentence is already on the screen.
-  const tooMany = kind === 'transfer' && Number.isFinite(n) && n > Math.max(product.stock, 0);
+  const shelfStock = Math.max(product.stock, 0);
+  // A removal or branch transfer cannot exceed what is on this shelf. The server refuses it too; saying so here means
+  // the button is off and the sentence is already on the screen.
+  const tooMany = (kind === 'transfer' || kind === 'used' || kind === 'damaged') && Number.isFinite(n) && n > shelfStock;
   const canGo =
     kind !== null &&
     qty.trim() !== '' &&
@@ -144,11 +145,11 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
     minute: '2-digit',
   });
   const afterCount =
-    kind === 'adjusted' ? n : kind === 'received' || kind === 'returned' ? product.stock + n : product.stock - n;
+    kind === 'adjusted' ? n : kind === 'received' || kind === 'returned' ? shelfStock + n : Math.max(0, shelfStock - n);
   return (
     <div className="sheet-body prd-stock">
       <div className={`prd-count prd-count-${tone}`}>
-        <span className="prd-count-n">{product.stock}</span>
+        <span className="prd-count-n">{shelfStock}</span>
         <span className="prd-count-l">{tone === 'out' ? t('outNow') : tone === 'low' ? t('lowNow', { at: product.lowStockAt }) : t('onShelf')}</span>
       </div>
 
@@ -225,7 +226,7 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
                     disabled={busy}
                     onClick={() => {
                       if (r === kind) return;
-                      if (r === 'adjusted') setQty(String(product.stock));
+                      if (r === 'adjusted') setQty(String(shelfStock));
                       else if (kind === 'adjusted') setQty('');
                       setKind(r);
                       setError(null);

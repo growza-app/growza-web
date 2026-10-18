@@ -249,7 +249,7 @@ export function DeskServiceGrid({
                     aria-label={t('tileA11y', { name: p.name, price: money(price) })}
                     aria-pressed={count > 0}
                     onClick={() => onMoreProduct?.(p)}
-                    disabled={full && count === 0}
+                    disabled={(full && count === 0) || p.stock <= 0 || count >= p.stock}
                   >
                     <img className="pf-tile-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
                     <span className="pf-tile-name">{p.name}</span>
@@ -266,7 +266,7 @@ export function DeskServiceGrid({
                       <span className="pf-qty-n" aria-live="polite">
                         {count}
                       </span>
-                      <button type="button" className="pf-qty-btn" aria-label={t('oneMore', { name: p.name })} onClick={() => onMoreProduct?.(p)} aria-disabled={full || undefined}>
+                      <button type="button" className="pf-qty-btn" aria-label={t('oneMore', { name: p.name })} onClick={() => onMoreProduct?.(p)} aria-disabled={full || count >= p.stock || undefined}>
                         <IconPlus />
                       </button>
                     </span>

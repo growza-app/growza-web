@@ -1318,7 +1318,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                           <Avatar name={pr.name} id={pr.id} size={30} photoUrl={pr.imageUrl} />
                           <div className="hm-v3-srv-main">
                             <strong className="hm-v3-srv-name">{pr.name}</strong>
-                            <span className="hm-v3-prod-att-sub">{t.stockLeftSub(pr.stock, pr.lowStockAt)}</span>
+                            <span className="hm-v3-prod-att-sub">{t.stockLeftSub(Math.max(0, pr.stock), pr.lowStockAt)}</span>
                           </div>
                           <span className={`hm-pill hm-pill-${isOut ? 'rose' : 'amber'}`}>
                             {isOut ? t.outOfStockLabel : t.lowStockLabel}

@@ -98,7 +98,7 @@ export function ProductSheet({
   /** The API's own rule (printable characters, no spaces), said here so the owner is told before Save, in their language. */
   const barcodeBad = barcode.trim() !== '' && !/^[!-~]+$/.test(barcode.trim());
   const valid =
-    name.trim().length > 0 && price.trim() !== '' && Number.isFinite(rupees) && rupees >= 0 && (costRupees === null || (Number.isFinite(costRupees) && costRupees >= 0)) && !barcodeBad;
+    name.trim().length > 0 && price.trim() !== '' && Number.isFinite(rupees) && rupees >= 0 && (costRupees === null || (Number.isFinite(costRupees) && costRupees >= 0)) && (!product ? stock.trim() === '' || (Number.isFinite(Number(stock)) && Number(stock) >= 0) : true) && !barcodeBad;
   const dirty = target
     ? name.trim() !== target.name ||
       Math.round(rupees * 100) !== Number(target.priceMinor) ||
@@ -150,7 +150,7 @@ export function ProductSheet({
         ? await api.updateProduct(target.id, body)
         : await api.createProduct(branchId, {
             ...body,
-            stock: Math.trunc(Number(stock)) || 0,
+            stock: Math.max(0, Math.trunc(Number(stock)) || 0),
           });
       if (photo) {
         try {
@@ -420,7 +420,7 @@ export function ProductSheet({
                   {t('stock')}
                 </label>
                 <div className="sheet-row-value">
-                  <input id="prd-stock" type="number" inputMode="numeric" step={1} value={stock} onChange={(e) => setStock(e.target.value)} />
+                  <input id="prd-stock" type="number" inputMode="numeric" min={0} step={1} value={stock} onChange={(e) => setStock(e.target.value)} />
                 </div>
               </div>
             ) : null}
