@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '../../shared/AppLink';
 import { useRef } from 'react';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { formatMoney } from '../lib/api';

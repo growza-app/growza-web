@@ -314,6 +314,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             whatsappLive,
             pendingAttendance,
             selfCheckIn,
+            timezone,
           }}
         >
         <BranchProvider branches={branches} role={role ?? null} memberLocationId={memberLocationId} workBranchName={workBranchName}>

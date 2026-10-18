@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '../../shared/AppLink';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { formatDateOnly } from '../lib/format';
 import { Card, EmptyState, SecondaryButton, SectionTitle, StatusPill, Table, TableRow } from '../components/primitives';
