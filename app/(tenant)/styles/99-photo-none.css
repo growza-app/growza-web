@@ -1,0 +1,49 @@
+/*
+ * A product or service nobody has photographed (ProductPhoto.tsx, ServicePhoto.tsx): the screen's own photo class
+ * gives the size and the radius, this gives the tile its face. One rule for the whole app — the icon is inline, so
+ * there is no file to download and no copy per business.
+ *
+ * Its own sheet, loaded last: several of those photo classes (`.picker-row-thumb`, `.preview-photo-avatar`) say
+ * `display: block`, and this has to win over them to centre the icon.
+ *
+ * It moves a little so an empty tile reads as "no picture yet" and not as "broken": a soft light passes across. Three
+ * times, then it holds still — twenty tiles moving for ever is noise, and costs a phone's battery. Only transform
+ * changes, so the compositor does it and nothing is laid out again; and it is off for anyone who asked their device
+ * for less motion.
+ */
+.photo-none {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: var(--muted);
+  background: var(--slate-soft);
+}
+
+.photo-none svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.photo-none::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.65) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: photo-sweep 1.8s ease-in-out 3;
+}
+
+@keyframes photo-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo-none::after {
+    animation: none;
+  }
+}
