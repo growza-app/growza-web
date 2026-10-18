@@ -106,4 +106,13 @@ describe('Bookings on a desk', () => {
     expect(list).toMatch(/router\.push\(payVisitHref\(\{ appointmentId: b\.appointments\[0\]!\.id, startAt: b\.startAt \}, timezone, 'bookings'\)\)/);
     expect(css).toMatch(/\.bk-table tbody tr\.is-selected td \{/);
   });
+
+  it('shows a three-dots Edit menu beside View on completed bookings for roles that may correct bookings', () => {
+    expect(list).toContain("useMayUse('booking.correct')");
+    expect(list).toContain("b.status === 'completed'");
+    expect(list).toContain('className="hm-v3-row-dots bk-row-dots"');
+    expect(list).toContain("t('editBooking')");
+    expect(list).toContain('<CorrectBookingSheet');
+  });
 });
+

@@ -177,7 +177,9 @@
     "waitingShowAll": "Show all {count} waiting",
     "waitingShowFewer": "Show fewer (next 2)",
     "payShort": "Pay",
-    "servicesAtPayment": "Services picked at payment"
+    "servicesAtPayment": "Services picked at payment",
+    "editBooking": "Edit",
+    "moreActionsFor": "More actions for {name}"
   },
   "nouns": {
     "customers": "clients",
