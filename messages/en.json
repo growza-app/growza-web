@@ -3348,7 +3348,8 @@
       "leaveTitle": "Leave without importing?",
       "leaveBody": "The fixes you made to this list will be lost.",
       "leaveStay": "Keep reviewing",
-      "leaveGo": "Leave"
+      "leaveGo": "Leave",
+      "footer": "Have your products in a spreadsheet? Load them in one go."
     }
   },
   "sales": {

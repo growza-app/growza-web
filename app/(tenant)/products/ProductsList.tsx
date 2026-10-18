@@ -11,7 +11,7 @@ import { WriteOnly } from '../components/WriteOnly';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useSession, useWritable } from '../components/SessionProvider';
-import { IconCart, IconPlus, IconSearch, IconSort } from '../components/icons';
+import { IconCart, IconPlus, IconSearch, IconSort, IconUpload } from '../components/icons';
 import { productPhotoUrl } from '../lib/service-photos';
 import { matchItems } from '../lib/service-match';
 import { productMatchable } from '../lib/product-match';
@@ -329,11 +329,6 @@ export function ProductsList({
               {t('stockTake.open')}
             </button>
           ) : null}
-          {canStockTake ? (
-            <button type="button" className="btn btn-ghost" onClick={() => setImportOpen(true)}>
-              {t('import.open')}
-            </button>
-          ) : null}
           <button type="button" className="btn" onClick={() => setEditing('new')}>
             <IconPlus /> {t('add')}
           </button>
@@ -526,6 +521,20 @@ export function ProductsList({
         </table>
       </div>
     );
+  /*
+   * Owner, 2026-10-18 — under the list, not in the header: Sell, Count stock and Add already fill a 344px header
+   * (a fourth button pushed the avatar and the Add button off the screen), and loading a file is a set-up job, not a
+   * daily one. An empty shelf puts the same button where the owner is looking.
+   */
+  const importRow =
+    canStockTake && writable ? (
+      <div className="prd-import-row">
+        <p>{t('import.footer')}</p>
+        <button type="button" className="btn btn-ghost" onClick={() => setImportOpen(true)}>
+          <IconUpload /> {t('import.open')}
+        </button>
+      </div>
+    ) : null;
   const pages = shown.length > PAGE_SIZE ? <Pagination page={Math.min(page, pageCount)} total={shown.length} pageSize={PAGE_SIZE} noun={t('noun')} onChange={setPage} /> : null;
   const sheet = (inline: boolean) =>
     editing ? (
@@ -624,6 +633,7 @@ export function ProductsList({
               <div className="card prd-desk-card">
                 {table}
                 {pages}
+                {importRow}
               </div>
             </section>
             <aside className="pf-wide-right prd-desk-right" aria-label={t('form.titleEdit')}>
@@ -674,6 +684,7 @@ export function ProductsList({
             </div>
             {list}
             {pages}
+            {importRow}
           </>
         )}
       </div>

@@ -6,7 +6,7 @@ import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
 import type { Product } from '../lib/api-types';
 import { ImportProductColumns } from './ImportProductColumns';
-import { buildDrafts, fieldAt, FIELDS, mappingSummary, matchedAll, matchExisting, missingRequired, newCategoryNames, notImported, plainNumber, reviewProblems, rowProblem, SAMPLE_CSV, stockNotApplied, suggest, toItems, withColumnAs, type ProductDraft } from './product-import';
+import { buildDrafts, fieldAt, FIELDS, mappingSummary, matchedAll, matchExisting, missingRequired, newCategoryNames, notImported, plainCode, plainNumber, plainPercent, reviewProblems, rowProblem, rupeeText, SAMPLE_CSV, stockNotApplied, suggest, toItems, withColumnAs, type ProductDraft } from './product-import';
 
 /**
  * Owner, 2026-10-18 — a shelf loaded from a spreadsheet. What goes wrong is quiet: a column read as the wrong thing
@@ -238,7 +238,30 @@ describe('a negative number is never imported, and the owner is told', () => {
     expect(plainNumber('Rs 99/-')).toBe('99');
     expect(plainNumber('₹1,250.50')).toBe('1250.50');
     expect(plainNumber('N/A')).toBe('');
+    expect(plainNumber('Rs. 99')).toBe('99');
+    expect(plainNumber('Rs.99')).toBe('99');
+    expect(plainNumber('INR 1,25,000/-')).toBe('125000');
+    expect(plainNumber('Rs. -50')).toBe('-50');
+    expect(plainNumber('.5')).toBe('.5');
+    expect(plainNumber('12.0')).toBe('12');
+    expect(plainNumber('12.50')).toBe('12.50');
     expect(plainNumber('abc')).toBe('abc');
+  });
+
+  it('reads a percent the way the owner wrote it', () => {
+    expect(plainPercent('18%')).toBe('18');
+    expect(plainPercent(' 18 % ')).toBe('18');
+    expect(plainPercent('GST 18%')).toBe('18');
+    expect(plainPercent('5.0')).toBe('5');
+    expect(plainPercent('-5%')).toBe('-5');
+    expect(plainPercent('eighteen')).toBe('eighteen');
+  });
+
+  it('turns a code a spreadsheet wrote with a decimal back into the code', () => {
+    expect(plainCode('8901234567890.0')).toBe('8901234567890');
+    expect(plainCode(' 33059090.00 ')).toBe('33059090');
+    expect(plainCode('AB-1.0')).toBe('AB-1.0');
+    expect(plainCode('012345678905')).toBe('012345678905');
   });
 
   it('starts a row with a negative price, stock or cost skipped, with the reason, and sends it nowhere', () => {
@@ -260,6 +283,11 @@ describe('a negative number is never imported, and the owner is told', () => {
   it('does not count a negative row as the first of a product, so a good repeat of it still goes in', () => {
     const drafts = buildDrafts([['Gel', '-5', '', ''], ['Gel', '5', '', '']], map, []);
     expect(drafts.map((d) => d.skip)).toEqual([true, false]);
+  });
+
+  it('writes a negative amount as -₹100, not ₹-100', () => {
+    expect(rupeeText('-100')).toBe('-₹100');
+    expect(rupeeText('1250.50')).toBe('₹1250.50');
   });
 
   it('puts a negative row back as a problem to fix if the owner includes it, rather than importing it', () => {

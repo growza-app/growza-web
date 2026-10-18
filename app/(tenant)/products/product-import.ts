@@ -99,21 +99,30 @@ export interface ProductDraft {
 }
 
 /**
- * A number as typed in a cell: "₹1,250" is 1250, "12 pcs" is 12, "-3" and "(3)" are negative, and text with no number
- * in it is kept as typed so the row says "must be a number" rather than "needs a price". The minus sign is kept ON
- * PURPOSE: stripping it turned a stock of -3 into 3 and imported it. "Rs 99/-" is Indian for "99 only", not negative.
+ * A number as typed in a cell: "₹1,250", "Rs. 99" and "Rs.99/-" are 1250 and 99, "12 pcs" is 12, "-3" and "(3)" are
+ * negative, and text with no number in it is kept as typed so the row says "must be a number" rather than "needs a
+ * price". The minus sign is kept ON PURPOSE: stripping it turned a stock of -3 into 3 and imported it. "99/-" is
+ * Indian for "99 only", not negative. A whole number a spreadsheet wrote with a decimal ("12.0") is that number.
  */
 export function plainNumber(raw: string): string {
   const t = raw.trim();
   if (!t || /^[-−–—]$/.test(t) || /^n\/?a$/i.test(t)) return '';
-  const digits = t.replace(/[^\d.]/g, '');
-  if (!digits) return t;
-  const negative = /^[^\d.]*[-−–]\s*[\d.]/.test(t) || /^\(.*\d.*\)$/.test(t);
-  return negative ? `-${digits}` : digits;
+  // "Rs." and "INR" are currency, not part of the number: left in, the dot of "Rs.99" made it ".99".
+  const bare = t.replace(/\b(?:rs|inr|rupees?)\b\.?/gi, '').replace(/[₹$€£]/g, '');
+  const digits = bare.replace(/[^\d.]/g, '');
+  if (!/\d/.test(digits)) return t;
+  const negative = /^[^\d.]*[-−–]\s*[\d.]/.test(bare) || /^\(.*\d.*\)$/.test(bare.trim());
+  return `${negative ? '-' : ''}${digits.replace(/^(\d+)\.0+$/, '$1')}`;
 }
 
-/** "18", "18%", " 18 % " → "18"; a minus sign and anything else are left for the problem check to name. */
-export const plainPercent = (raw: string): string => raw.replace(/[%\s]/g, '').replace(/[−–]/g, '-');
+/** A percent as typed: "18", "18%", "GST 18 %" are 18; a minus sign and anything with no number in it are left for the problem check to name. */
+export const plainPercent = (raw: string): string => plainNumber(raw.replace(/%/g, ''));
+
+/** A code a spreadsheet may have turned into a number with a decimal: "8901234567890.0" is the barcode 8901234567890. */
+export const plainCode = (raw: string): string => raw.trim().replace(/^(\d+)\.0+$/, '$1');
+
+/** A rupee amount for a line of text: -₹100, not ₹-100. */
+export const rupeeText = (amount: string): string => (amount.startsWith('-') ? `-₹${amount.slice(1)}` : `₹${amount}`);
 
 const isNegative = (s: string) => /^-\s*\d/.test(s.trim());
 
@@ -161,11 +170,11 @@ export function buildDrafts(rows: string[][], map: ColumnMap, shelf: readonly Pr
       name: at(r, 'name'),
       price: plainNumber(at(r, 'price')),
       stock: plainNumber(at(r, 'stock')),
-      barcode: at(r, 'barcode'),
-      sku: at(r, 'sku'),
+      barcode: plainCode(at(r, 'barcode')),
+      sku: plainCode(at(r, 'sku')),
       category: at(r, 'category'),
       gst: plainPercent(at(r, 'gst')),
-      hsn: at(r, 'hsn'),
+      hsn: plainCode(at(r, 'hsn')),
       cost: plainNumber(at(r, 'cost')),
       lowStock: plainNumber(at(r, 'lowStock')),
       existing: null,

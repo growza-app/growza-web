@@ -11,6 +11,7 @@ import {
   MAX_NEW_CATEGORIES,
   newCategoryNames,
   reviewProblems,
+  rupeeText,
   stockNotApplied,
   toItems,
   type ProductDraft,
@@ -155,7 +156,7 @@ export function ImportProductReview({
           {visible.map(({ draft: d, index: i, problem }) => {
             const open = !d.skip && (editing === i || problem !== null);
             const meta = [
-              d.price.trim() ? `₹${d.price}` : d.existing ? formatMoney(d.existing.priceMinor, d.existing.currency) : t('noPrice'),
+              d.price.trim() ? rupeeText(d.price) : d.existing ? formatMoney(d.existing.priceMinor, d.existing.currency) : t('noPrice'),
               !d.existing && d.stock.trim() ? t('stockShort', { n: d.stock }) : null,
               d.barcode.trim() || null,
             ]

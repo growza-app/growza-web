@@ -1239,3 +1239,31 @@
 
 
 
+
+/* Owner, 2026-10-18 — the way into "load products from a file", under the list. */
+.prd-import-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-3);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+}
+
+.prd-import-row p {
+  margin: 0;
+  flex: 1 1 14rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.prd-import-row .btn {
+  flex: 0 0 auto;
+}
+
+/* On the wide desk the list is a card; the row sits inside it, so it takes the card's own inset. */
+.prd-desk .prd-import-row {
+  padding: var(--sp-3);
+}
