@@ -1,4 +1,6 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
@@ -25,17 +27,20 @@ describe('a product with no photo', () => {
   });
 
   it('is the only way a product picture is drawn: no screen reaches for the placeholder file', () => {
-    const files = [
-      '../appointments/new/DeskServiceGrid.tsx',
-      '../appointments/new/PayFlow.tsx',
-      '../components/ServiceSheet.tsx',
-      '../products/ProductsList.tsx',
-      '../products/ProductSheet.tsx',
-      '../products/StockTake.tsx',
-    ];
-    for (const f of files) {
-      const src = readFileSync(new URL(f, import.meta.url), 'utf8');
-      expect(src, f).not.toMatch(/productPhotoUrl|default\.jpg/);
-    }
+    // Every source file under app/, not a list of the ones that exist today: a new screen is covered the day it lands.
+    const root = fileURLToPath(new URL('../..', import.meta.url));
+    const walk = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+        const full = join(dir, e.name);
+        if (e.isDirectory()) return e.name === 'node_modules' || e.name === '.next' ? [] : walk(full);
+        return /\.tsx?$/.test(e.name) && !/\.test\.ts$/.test(e.name) ? [full] : [];
+      });
+    const offenders = walk(root).filter((f) => !f.endsWith(join('lib', 'service-photos.ts')) && !f.endsWith('ProductPhoto.tsx') && /productPhotoUrl|default\.jpg/.test(readFileSync(f, 'utf8')));
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps the product sheet\'s header picture eager, since it is on screen when the sheet opens', () => {
+    const html = renderToStaticMarkup(createElement(ProductPhoto, { className: 'prd-sheet-photo', product: { imageUrl: '/uploads/p/a.webp' }, eager: true }));
+    expect(html).toContain('loading="eager"');
   });
 });

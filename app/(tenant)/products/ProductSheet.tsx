@@ -231,7 +231,7 @@ export function ProductSheet({
 
       {product ? (
         <div className="prd-sheet-id">
-          <ProductPhoto className="prd-sheet-photo" product={product} />
+          <ProductPhoto className="prd-sheet-photo" product={product} eager />
           <span className="prd-sheet-id-text">
             <span className="prd-sheet-name">{product.name}</span>
             <span className="prd-sheet-tags">

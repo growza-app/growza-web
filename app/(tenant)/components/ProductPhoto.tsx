@@ -9,10 +9,11 @@ import { IconProducts } from './icons';
  * product has no pack and no category photo to fall back on; an honest empty tile says "no picture yet".
  *
  * `className` is the screen's own photo class (it carries the size and the radius), so the empty tile and the
- * picture take exactly the same room.
+ * picture take exactly the same room. Lists and tiles load their pictures lazily; a header that is on screen the
+ * moment its sheet opens passes `eager`.
  */
-export function ProductPhoto({ product, className }: { product: Pick<Product, 'imageUrl'>; className: string }) {
-  if (product.imageUrl) return <img className={className} src={product.imageUrl} alt="" loading="lazy" />;
+export function ProductPhoto({ product, className, eager = false }: { product: Pick<Product, 'imageUrl'>; className: string; eager?: boolean }) {
+  if (product.imageUrl) return <img className={className} src={product.imageUrl} alt="" loading={eager ? 'eager' : 'lazy'} />;
   return (
     <span className={`${className} photo-none`} aria-hidden="true">
       <IconProducts />
