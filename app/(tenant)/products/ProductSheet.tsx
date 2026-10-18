@@ -8,7 +8,7 @@ import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { IconCheck } from '../components/icons';
 import { GstInPrice, TaxFields } from '../components/TaxFields';
-import { productPhotoUrl } from '../lib/service-photos';
+import { ProductPhoto } from '../components/ProductPhoto';
 import { codeHolder } from '../lib/product-match';
 import { StockPanel } from './StockPanel';
 import { SalesPanel } from './SalesPanel';
@@ -231,7 +231,7 @@ export function ProductSheet({
 
       {product ? (
         <div className="prd-sheet-id">
-          <img className="prd-sheet-photo" src={productPhotoUrl(product)} alt="" />
+          <ProductPhoto className="prd-sheet-photo" product={product} />
           <span className="prd-sheet-id-text">
             <span className="prd-sheet-name">{product.name}</span>
             <span className="prd-sheet-tags">
@@ -267,7 +267,7 @@ export function ProductSheet({
             {photo ? (
               <img className="sheet-photo-img" src={photoPreview ?? ''} alt="" />
             ) : imageUrl ? (
-              <img className="sheet-photo-img" src={productPhotoUrl({ imageUrl })} alt="" />
+              <img className="sheet-photo-img" src={imageUrl} alt="" />
             ) : (
               <span className="sheet-photo-img sheet-photo-empty" aria-hidden="true" />
             )}

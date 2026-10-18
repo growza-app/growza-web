@@ -1267,3 +1267,21 @@
 .prd-desk .prd-import-row {
   padding: var(--sp-3);
 }
+
+/*
+ * A product nobody has photographed: the screen's own photo class gives the size and the radius, this gives the
+ * tile its face. A bottle, not a stock photograph of somebody else's room (ProductPhoto.tsx).
+ */
+.photo-none {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: var(--muted);
+  background: var(--slate-soft);
+}
+
+.photo-none svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}

@@ -6,7 +6,8 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboa
 import type { Offer, Product, Service } from '../../lib/api-types';
 import { asMinor, matchItems } from '../../lib/service-match';
 import { productByCode, productMatchable } from '../../lib/product-match';
-import { productPhotoUrl, servicePhotoUrl } from '../../lib/service-photos';
+import { servicePhotoUrl } from '../../lib/service-photos';
+import { ProductPhoto } from '../../components/ProductPhoto';
 import { IconInfo, IconMinus, IconPlus, IconSearch } from '../../components/icons';
 import { PackageSheet } from '../../components/PackageSheet';
 import { MENU_SORTS, sortMenu, type MenuSort } from '../../lib/menu-sort';
@@ -251,7 +252,7 @@ export function DeskServiceGrid({
                     onClick={() => onMoreProduct?.(p)}
                     disabled={(full && count === 0) || p.stock <= 0 || count >= p.stock}
                   >
-                    <img className="pf-tile-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
+                    <ProductPhoto className="pf-tile-photo" product={p} />
                     <span className="pf-tile-name">{p.name}</span>
                     <span className="pf-tile-price">
                       {money(price)}

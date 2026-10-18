@@ -137,8 +137,3 @@ export function servicePhotoUrl(service: PhotoFields): string {
     DEFAULT_PLACEHOLDER
   );
 }
-
-/** Owner, 2026-10-14 — a product's picture: its upload, else the plain placeholder. No pack and no category for a bottle. */
-export function productPhotoUrl(product: { imageUrl: string | null }): string {
-  return product.imageUrl ?? DEFAULT_PLACEHOLDER;
-}
