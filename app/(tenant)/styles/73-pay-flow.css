@@ -604,6 +604,7 @@
   color: var(--danger-deep);
   font-size: 1rem;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 /*

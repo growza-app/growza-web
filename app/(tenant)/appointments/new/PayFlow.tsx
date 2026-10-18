@@ -28,6 +28,8 @@ import { ServiceSheet } from '../../components/ServiceSheet';
 import { BillCard, BillRows, lineKey, lineMinor, type BillLine as Line } from './BillCard';
 import { DeskServiceGrid } from './DeskServiceGrid';
 import { DeskUnpaid } from './DeskUnpaid';
+import { useBarcodeScan } from '../../lib/barcode-scan';
+import { productByCode } from '../../lib/product-match';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
 import { PaymentDone } from '../../components/PaymentDone';
 
@@ -539,6 +541,33 @@ export function PayFlow({
     setLines((prev) => [...prev, { serviceId: '', name: p.name, priceMinor: Number(p.priceMinor ?? 0), product: { id: p.id } }]);
     setOverride(null);
   };
+  /**
+   * Owner, 2026-10-19 — a scan adds the product wherever the cursor is. A code that names no single product says so
+   * rather than doing nothing, because a silent miss at the counter reads as "the scanner is broken".
+   */
+  const [scanNote, setScanNote] = useState<string | null>(null);
+  useEffect(() => {
+    if (!scanNote) return;
+    const id = window.setTimeout(() => setScanNote(null), 5000);
+    return () => window.clearTimeout(id);
+  }, [scanNote]);
+  // Only on the screen where products are picked: on 'how', 'qr' and 'done' a scan would change a bill being paid.
+  useBarcodeScan(productsOnly && productsLoaded && step === 'what', (code) => {
+    const hit = productByCode(products, code);
+    if (!hit) {
+      felt(BUZZ.tooMany);
+      setScanNote(t('desk.scanMiss', { code }));
+      return;
+    }
+    // addProduct refuses these quietly; a scan has no tile to show why, so it says.
+    if (full || hit.stock <= 0 || productCountOf(hit.id) >= hit.stock) {
+      felt(BUZZ.tooMany);
+      setScanNote(full ? t('desk.scanFull') : t('desk.scanNoStock', { name: hit.name }));
+      return;
+    }
+    setScanNote(null);
+    addProduct(hit);
+  });
   // No buzz on the way down: the count and the total both drop, and a removal that felt like an addition is a lie.
   const oneLess = (key: string) => {
     setLines((prev) => {
@@ -1215,6 +1244,7 @@ export function PayFlow({
           */}
           <span className="pf-head-gap" aria-hidden="true" />
         </header>
+        {scanNote ? <div role="status" className="pf-error">{scanNote}</div> : null}
         {tokenGone ? (
           <div role="alert" className="pf-error">
             {nv.tokenGone}
@@ -1396,16 +1426,19 @@ export function PayFlow({
         so they were the one thing on the line that no owner needed.
       */}
       {productsOnly ? (
-        <header className="pf-head">
-          <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
-            <IconArrowLeft />
-          </button>
-          <span className="pf-head-stack">
-            <h1 className="pf-title">{t('sellTitle')}</h1>
-            <HeaderBranchPicker variant="line" />
-          </span>
-          <span className="pf-head-gap" aria-hidden="true" />
-        </header>
+        <>
+          <header className="pf-head">
+            <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
+              <IconArrowLeft />
+            </button>
+            <span className="pf-head-stack">
+              <h1 className="pf-title">{t('sellTitle')}</h1>
+              <HeaderBranchPicker variant="line" />
+            </span>
+            <span className="pf-head-gap" aria-hidden="true" />
+          </header>
+          {scanNote ? <div role="status" className="pf-error">{scanNote}</div> : null}
+        </>
       ) : (
         <header className="pf-head">
           <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
