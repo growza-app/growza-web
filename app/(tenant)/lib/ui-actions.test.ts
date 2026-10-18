@@ -290,6 +290,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
    * installed @growza-app/shared is behind the API's source.)
    */
   '/appointments/new': ['POST /api/v1/bills/:visitKey/document', 'POST /api/v1/documents/:id/share'],
+  // 0127 — returning a product against a settled bill on the Sales register (/sales is gated by guardScreen('/sales')).
+  '/sales': ['POST /api/v1/sales/:visitKey/returns'],
 };
 
 /** Every signed-in person's own: the session says whose, and no role can widen it. */

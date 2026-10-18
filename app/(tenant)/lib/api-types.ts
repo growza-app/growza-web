@@ -14,7 +14,7 @@
 
 export interface Me {
   /** Jira GRW-556 — `status` is the business's lifecycle: while `provisioning` only the setup screens are offered. Absent from an older API. */
-  tenant: { id: string; name: string; timezone: string; locationName: string | null; /** The main branch (Jira GRW-582 perf) — the API has always sent it. */ locationId?: string | null; branchCount?: number; status?: string } | null;
+  tenant: { id: string; name: string; timezone: string; locationName: string | null; /** The main branch (Jira GRW-582 perf) — the API has always sent it. */ locationId?: string | null; branchCount?: number; status?: string; productReturnWindowDays?: number } | null;
   /**
    * Jira GRW-235 — open branches, main first.
    *
@@ -532,11 +532,30 @@ export interface Appointment {
 }
 
 export interface VisitProductLine {
+  id?: string;
   productId: string | null;
   name: string;
   priceMinor: string;
   qty: number;
+  returnedQty?: number;
   paidMinor: string;
+  returnedMinor?: string;
+  sku?: string | null;
+  barcode?: string | null;
+}
+
+export interface ReturnSaleProductsResponse {
+  visitKey: string;
+  refundMinor: number;
+  restocked: boolean;
+  items: Array<{
+    productId: string;
+    name: string;
+    qty: number;
+    refundMinor: number;
+    restocked: boolean;
+    stockAfter: number | null;
+  }>;
 }
 
 export interface VisitPaymentLine {
@@ -568,6 +587,8 @@ export interface SettingsSummary {
     staffSeesClientContact: boolean;
     /** GRW-170 — grace minutes before an arrival reads as "came late". */
     attendanceLateGraceMin: number;
+    /** 0127 — days after a sale during which a product may be returned (0 = day of sale only). */
+    productReturnWindowDays?: number;
     /** Jira GRW-248 — closed days at this scope (a branch: its own). */
     closedDates?: string[];
     /** Jira GRW-248 — the business's closed days, which close every branch. */

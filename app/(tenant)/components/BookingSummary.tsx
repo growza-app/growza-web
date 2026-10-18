@@ -9,7 +9,7 @@ import { formatDateWithWeekday } from '../lib/format';
 import { bookingBill, clientNameLabel, formatDuration, type BookingGroup } from '../lib/appointment-display';
 import { dialable } from './BookingSheet';
 import { CorrectBookingSheet } from './CorrectBookingSheet';
-import { IconCheck, IconClose, IconEdit, IconPackages, IconPhone } from './icons';
+import { IconCheck, IconClose, IconEdit, IconPackages, IconPhone, IconReturn } from './icons';
 import { useMayUse } from './SessionProvider';
 import { useLabel } from './LabelsProvider';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -27,12 +27,15 @@ export function BookingSummary({
   timezone,
   onClose,
   inline = false,
+  onReturnProducts,
 }: {
   booking: BookingGroup;
   timezone: string;
   onClose: () => void;
   /** Owner, 2026-10-14 — drawn in place in the Bookings desk's right panel: no backdrop, no focus trap. */
   inline?: boolean;
+  /** Optional handler to open the product return sheet for this bill from the Sales register. */
+  onReturnProducts?: () => void;
 }) {
   const t = useTranslations('chrome.summary');
   const tc = useTranslations('chrome');
@@ -63,10 +66,14 @@ export function BookingSummary({
   // combo's discount only where it has not already gone into a paid amount (see `bookingBill`).
   const { totalMinor: servicesPaid, savingsMinor: savings } = bookingBill(booking.appointments);
   const products = booking.products ?? [];
-  const productsPaid = products.reduce((sum, p) => sum + Number(p.paidMinor || 0), 0);
+  const productsRefunded = products.reduce((sum, p) => sum + Math.max(0, Number(p.returnedMinor || 0)), 0);
+  const productsPaid = products.reduce(
+    (sum, p) => sum + Math.max(0, Number(p.paidMinor || 0) - Number(p.returnedMinor || 0)),
+    0,
+  );
   const totalPaid = servicesPaid + productsPaid;
   const paymentMode = booking.appointments.find((a) => a.paymentMode)?.paymentMode ?? null;
-  const subtotal = totalPaid + savings;
+  const subtotal = totalPaid + savings + productsRefunded;
   const pricesShown =
     booking.appointments.some((a) => a.priceMinor != null || a.paidAmountMinor != null) || products.length > 0;
   const paidOf = (a: Appointment) => a.paidAmountMinor ?? a.priceMinor ?? '0';
@@ -177,31 +184,48 @@ export function BookingSummary({
         {products.length > 0 && (
           <>
             <div className="summary-section-label">{t('products')}</div>
-            {products.map((p, idx) => (
-              <div className="summary-row" key={`${p.productId ?? p.name}-${idx}`}>
-                <span className="summary-avatar">{p.name.slice(0, 1).toUpperCase()}</span>
-                <div className="summary-info">
-                  <div className="summary-service">{p.qty > 1 ? `${p.name} × ${p.qty}` : p.name}</div>
+            {products.map((p, idx) => {
+              const retQty = Math.max(0, Number(p.returnedQty || 0));
+              const netMinor = Math.max(0, Number(p.paidMinor || 0) - Number(p.returnedMinor || 0));
+              return (
+                <div className="summary-row" key={`${p.productId ?? p.name}-${idx}`}>
+                  <span className="summary-avatar">{p.name.slice(0, 1).toUpperCase()}</span>
+                  <div className="summary-info">
+                    <div className="summary-service">
+                      {p.qty > 1 ? `${p.name} × ${p.qty}` : p.name}
+                      {retQty > 0 ? (
+                        <span className="summary-returned-tag">
+                          {t('returnedBadge', { n: retQty })}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                  {pricesShown ? <span className="summary-price">{formatMoney(String(netMinor))}</span> : null}
                 </div>
-                {pricesShown ? <span className="summary-price">{formatMoney(p.paidMinor)}</span> : null}
-              </div>
-            ))}
+              );
+            })}
           </>
         )}
 
         {pricesShown && (
         <div className="summary-totals">
+          {(savings > 0 || productsRefunded > 0) && (
+            <div className="summary-line">
+              <span>{t('subtotal')}</span>
+              <span>{formatMoney(String(subtotal))}</span>
+            </div>
+          )}
           {savings > 0 && (
-            <>
-              <div className="summary-line">
-                <span>{t('subtotal')}</span>
-                <span>{formatMoney(String(subtotal))}</span>
-              </div>
-              <div className="summary-line">
-                <span><IconPackages /> {t('combo', { title: booking.offerTitle ?? '' })}</span>
-                <span className="summary-discount">− {formatMoney(String(savings))}</span>
-              </div>
-            </>
+            <div className="summary-line">
+              <span><IconPackages /> {t('combo', { title: booking.offerTitle ?? '' })}</span>
+              <span className="summary-discount">− {formatMoney(String(savings))}</span>
+            </div>
+          )}
+          {productsRefunded > 0 && (
+            <div className="summary-line">
+              <span>{t('refunded')}</span>
+              <span className="summary-refund">− {formatMoney(String(productsRefunded))}</span>
+            </div>
           )}
           <div className="summary-line summary-line-total">
             <span>{t('total')}</span>
@@ -264,6 +288,12 @@ export function BookingSummary({
         </div>
 
         <div className="modal-actions summary-actions">
+          {onReturnProducts ? (
+            <button type="button" className="btn btn-ghost" onClick={onReturnProducts}>
+              <IconReturn />
+              {t('returnProducts')}
+            </button>
+          ) : null}
           {mayCorrect && booking.appointments.some((a) => a.status === 'completed') && serviceLegs.length > 0 && (
             <button type="button" className="btn btn-ghost" onClick={openCorrect}>
               <IconEdit />

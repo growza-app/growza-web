@@ -1858,7 +1858,10 @@
       "subtotal": "उप-योग",
       "combo": "{title} पैकेज",
       "total": "कुल भुगतान",
-      "paidBy": "भुगतान का तरीका"
+      "paidBy": "भुगतान का तरीका",
+      "returnedBadge": "{n} वापस",
+      "returnProducts": "सामान वापस लें",
+      "refunded": "वापस किए"
     },
     "daySchedule": {
       "seeAll": "सभी {count} बुकिंग देखें"
@@ -3465,6 +3468,49 @@
       "topProduct": "सबसे ज़्यादा सामान",
       "bookingsCount": "{n, plural, =0 {कोई बुकिंग नहीं} one {# बुकिंग} other {# बुकिंग}}",
       "noneYet": "—"
+    },
+    "returnProduct": "सामान वापस लें",
+    "returnBtn": "वापस लें",
+    "returnedStatus": "वापस हुआ",
+    "partReturnedStatus": "आंशिक वापसी",
+    "returnedBadge": "{n} वापस",
+    "returnSheet": {
+      "title": "सामान वापस लें",
+      "subtitle": "सामान का बारकोड स्कैन करें या वह बिल चुनें जिस पर वह बिका था।",
+      "scanLabel": "बारकोड स्कैन करें या बिल खोजें",
+      "scanPlaceholder": "बारकोड स्कैन करें, या ग्राहक, फ़ोन या सामान लिखें…",
+      "scanReady": "स्कैनर तैयार",
+      "matchingBills": "मिलते-जुलते बिल",
+      "recentProductBills": "हाल के सामान वाले बिल",
+      "noMatchingBills": "\"{q}\" से कोई सामान वाला बिल नहीं मिला।",
+      "noProductBills": "इस समय में सामान वाला कोई बिल नहीं है।",
+      "windowDaysLeft": "{left, plural, =0 {{window} दिन की वापसी सीमा का आख़िरी दिन} one {{window} दिन की सीमा में # दिन बाकी} other {{window} दिन की सीमा में # दिन बाकी}}",
+      "windowEnded": "वापसी की समय-सीमा ख़त्म ({window} दिन)",
+      "allReturned": "सब वापस हो चुका",
+      "changeBill": "दूसरा बिल चुनें",
+      "productsOnBill": "इस बिल का सामान",
+      "returnAll": "सारा सामान वापस लें",
+      "clearSelection": "हटाएँ",
+      "soldQty": "बिके: {n}",
+      "alreadyReturned": "{n} पहले ही वापस",
+      "eachPrice": "{price} प्रति नग",
+      "lessAria": "{name} एक कम वापस लें",
+      "moreAria": "{name} एक और वापस लें",
+      "conditionLabel": "वापस आए सामान की स्थिति",
+      "restockShelf": "शेल्फ़ पर वापस रखें",
+      "restockShelfHint": "वापस आए नगों को फिर से बिकने वाले स्टॉक में जोड़ता है",
+      "damagedOpened": "ख़राब / खुला हुआ",
+      "damagedOpenedHint": "वापसी और ख़राब दर्ज करता है; बिकने वाला स्टॉक नहीं बढ़ता",
+      "reasonLabel": "वजह (वैकल्पिक)",
+      "reasonPlaceholder": "जैसे: ग़लत सामान, सील टूटी थी, ग्राहक ने बदला…",
+      "refundTotal": "ग्राहक को वापसी रकम",
+      "unitsSelected": "{n, plural, =0 {वापस लेने के लिए सामान चुनें} one {# नग चुना गया} other {# नग चुने गए}}",
+      "confirm": "वापसी पक्की करें",
+      "confirmWithAmount": "वापसी पक्की करें · {amount}",
+      "saving": "वापसी दर्ज हो रही है…",
+      "scannedAdded": "{name} स्कैन हुआ (वापसी में +1 जुड़ा)",
+      "scannedMaxReached": "{name} के बिके हुए सभी {n} नग पहले ही चुने जा चुके हैं।",
+      "scannedNotFound": "इस बिल पर बारकोड \"{code}\" वाला कोई सामान नहीं है।"
     }
   }
 }

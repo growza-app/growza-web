@@ -203,6 +203,13 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Could not reach the sign-in service. This is not a problem with your session — please try again shortly.': 'साइन इन सेवा तक नहीं पहुंच सके। यह आपके सेशन की गड़बड़ी नहीं है — कृपया थोड़ी देर में फिर कोशिश करें।',
   'This is an impersonated support session. It can view this account but not change it.': 'यह सपोर्ट का देखने वाला सेशन है। यह इस अकाउंट को देख सकता है, बदल नहीं सकता।',
   'This is not an impersonated session.': 'यह सपोर्ट का सेशन नहीं है।',
+  // ---- product returns against a sale (0127)
+  'Bill not found': 'बिल नहीं मिला',
+  'That product is not on this bill': 'वह सामान इस बिल में नहीं है',
+  'Each product may only be listed once per return': 'एक वापसी में हर सामान एक ही बार चुना जा सकता है',
+  'Pick at least one product to return': 'वापस करने के लिए कम से कम एक सामान चुनें',
+  'Keep the note to 240 characters': 'नोट 240 अक्षरों तक रखें',
+  'Products can only be returned on the day of sale': 'सामान सिर्फ़ बिक्री के दिन ही वापस किया जा सकता है',
 };
 
 /** The sentence in the visitor's language when it is known; otherwise exactly what the server said. */

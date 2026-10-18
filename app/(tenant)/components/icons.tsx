@@ -714,3 +714,19 @@ export const IconInfo = () => (
     <path d="M12 11v5M12 8h.01" />
   </svg>
 );
+
+/** Feather `rotate-ccw` — return a product against a completed sale. */
+export const IconReturn = () => (
+  <svg {...base}>
+    <polyline points="1 4 1 10 7 10" />
+    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+  </svg>
+);
+
+/** Vertical barcode stripes — scan or type a barcode to return a product. */
+export const IconBarcode = () => (
+  <svg {...base}>
+    <path d="M3 5v14M7 5v14M10 5v14M14 5v14M17 5v14M21 5v14" />
+  </svg>
+);
+

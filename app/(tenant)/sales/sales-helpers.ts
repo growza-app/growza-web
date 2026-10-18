@@ -1,11 +1,14 @@
+import type { VisitProductLine } from '../lib/api-types';
+
 /**
- * Date range and CSV export helpers for the Sales register (/sales).
- * Extracted into a plain module so both the Server Component (`page.tsx`)
- * and the Client Component (`SalesClient.tsx`) can import them cleanly.
+ * Date range, CSV export, and Product Return helpers for the Sales register (/sales).
+ * Extracted into a plain module so Server Components (`page.tsx`), Client Components
+ * (`SalesClient.tsx`, `ReturnProductSheet.tsx`), and unit tests can share them cleanly.
  */
 
 export const MAX_SALES_DATE_YEARS = 5;
 export const MAX_SALES_EXPORT_ROWS = 5000;
+export const DEFAULT_PRODUCT_RETURN_WINDOW_DAYS = 7;
 
 /**
  * Computes the earliest selectable date (`minISO`, 5 calendar years before `todayISO`)
@@ -33,4 +36,90 @@ export function clampSalesDateRange(
   if (safeTo > maxISO) safeTo = maxISO;
 
   return { fromISO: safeFrom, toISO: safeTo, minISO, maxISO };
+}
+
+export interface ReturnWindowState {
+  eligible: boolean;
+  daysElapsed: number;
+  daysLeft: number;
+  windowDays: number;
+}
+
+/**
+ * Checks whether a bill from `saleDayISO` (`YYYY-MM-DD`) is within the business's
+ * configurable product return window (`windowDays`, default 7 days) relative to `todayISO`.
+ */
+export function computeReturnWindow(
+  saleDayISO: string,
+  todayISO: string,
+  windowDays = DEFAULT_PRODUCT_RETURN_WINDOW_DAYS,
+): ReturnWindowState {
+  const safeWindow = Math.max(0, Math.trunc(windowDays));
+  const saleMs = Date.parse(`${saleDayISO}T00:00:00Z`);
+  const todayMs = Date.parse(`${todayISO}T00:00:00Z`);
+  const daysElapsed =
+    Number.isFinite(saleMs) && Number.isFinite(todayMs)
+      ? Math.max(0, Math.floor((todayMs - saleMs) / 86_400_000))
+      : 0;
+  const eligible = daysElapsed <= safeWindow;
+  const daysLeft = eligible ? Math.max(0, safeWindow - daysElapsed) : 0;
+  return { eligible, daysElapsed, daysLeft, windowDays: safeWindow };
+}
+
+/** Converts a `BookingGroup.key` (`<groupId>` or `single:<appointmentId>`) to the API `visitKey` UUID. */
+export function visitKeyFromGroupKey(key: string): string {
+  return key.startsWith('single:') ? key.slice(7) : key;
+}
+
+/** Stable identifier for a `visit_product` line when calling `POST /api/v1/sales/:visitKey/returns`. */
+export function lineReturnId(p: VisitProductLine): string {
+  return p.productId ?? p.id ?? p.name;
+}
+
+/** Remaining returnable units on a `visit_product` line (`qty - returnedQty`). */
+export function lineRemainingQty(p: VisitProductLine): number {
+  const sold = Math.max(0, Number(p.qty || 0));
+  const returned = Math.max(0, Number(p.returnedQty || 0));
+  return Math.max(0, sold - returned);
+}
+
+/** Net amount (in paise) still kept on a `visit_product` line (`paidMinor - returnedMinor`). */
+export function lineNetPaidMinor(p: VisitProductLine): number {
+  const paid = Math.max(0, Number(p.paidMinor || 0));
+  const returned = Math.max(0, Number(p.returnedMinor || 0));
+  return Math.max(0, paid - returned);
+}
+
+/**
+ * Computes the exact refund in paise for returning `returnQty` units of `p`,
+ * matching the API's proportional + exact-remainder math in `src/modules/booking/product-return.ts`.
+ */
+export function lineRefundMinorForQty(p: VisitProductLine, returnQty: number): number {
+  const qty = Math.max(0, Math.trunc(returnQty));
+  const remaining = lineRemainingQty(p);
+  if (qty <= 0 || remaining <= 0) return 0;
+  const clamped = Math.min(qty, remaining);
+  const paidMinor = Math.max(0, Number(p.paidMinor || 0));
+  const prevReturnedMinor = Math.max(0, Number(p.returnedMinor || 0));
+  const remMinor = Math.max(0, paidMinor - prevReturnedMinor);
+  if (clamped === remaining) {
+    return remMinor;
+  }
+  return Math.max(0, Math.round((remMinor * clamped) / remaining));
+}
+
+/** Finds a product line on a bill matching a scanned or typed barcode/SKU. */
+export function findProductLineByCode(
+  products: readonly VisitProductLine[],
+  rawCode: string,
+): VisitProductLine | null {
+  const code = rawCode.trim().toLowerCase();
+  if (!code) return null;
+  const matches = products.filter(
+    (p) =>
+      (p.barcode && p.barcode.trim().toLowerCase() === code) ||
+      (p.sku && p.sku.trim().toLowerCase() === code),
+  );
+  if (matches.length === 0) return null;
+  return matches.find((p) => lineRemainingQty(p) > 0) ?? matches[0]!;
 }

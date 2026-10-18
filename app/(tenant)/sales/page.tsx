@@ -6,7 +6,7 @@ import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { guardScreen } from '../lib/screen-guard';
 import { SalesClient, type SalesFilter, type SalesRange } from './SalesClient';
-import { clampSalesDateRange } from './sales-helpers';
+import { clampSalesDateRange, DEFAULT_PRODUCT_RETURN_WINDOW_DAYS } from './sales-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +47,7 @@ export default async function SalesPage({
   }
 
   const timezone = me.tenant?.timezone ?? 'Asia/Kolkata';
+  const returnWindowDays = me.tenant?.productReturnWindowDays ?? DEFAULT_PRODUCT_RETURN_WINDOW_DAYS;
   const now = new Date();
   const todayISO = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(now);
   const thirtyDaysAgoISO = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(
@@ -75,7 +76,7 @@ export default async function SalesPage({
   const { fromISO: initialFrom, toISO: initialTo } = clampSalesDateRange(rawFrom, rawTo, todayISO);
 
   const sixtyDaysAgoISO = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(
-    new Date(now.getTime() - 59 * 86_400_000),
+    new Date(now.getTime() - Math.max(59, returnWindowDays) * 86_400_000),
   );
   const spanMs = Math.max(86_400_000, Date.parse(`${initialTo}T00:00:00Z`) - Date.parse(`${initialFrom}T00:00:00Z`) + 86_400_000);
   const prevStartISO = new Date(Date.parse(`${initialFrom}T00:00:00Z`) - spanMs).toISOString().slice(0, 10);
@@ -95,6 +96,7 @@ export default async function SalesPage({
       appointments={appointments}
       timezone={timezone}
       todayISO={todayISO}
+      returnWindowDays={returnWindowDays}
       initialFrom={initialFrom}
       initialTo={initialTo}
       initialFilter={initialFilter}

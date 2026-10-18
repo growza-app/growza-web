@@ -109,6 +109,7 @@ import type {
   ProductCategory,
   ProductInput,
   ProductSales,
+  ReturnSaleProductsResponse,
   StockMovement,
   StockTakeResult,
   MovementKind,
@@ -731,6 +732,12 @@ export const api = {
     location?: string | null,
   ) => patch<SettingsSummary>(`/api/v1/settings/gst${atBranch(location)}`, body),
 
+  /** 0127 — return one or more products against a settled bill within the business's return window. */
+  returnSaleProducts: (
+    visitKey: string,
+    body: { items: Array<{ productId: string; qty: number }>; restock?: boolean; reason?: string },
+  ) => post<ReturnSaleProductsResponse>(`/api/v1/sales/${encodeURIComponent(visitKey)}/returns`, body),
+
   updateBookingRules: (body: {
     slotGranularityMin?: number;
     slotPolicy?: 'fixed_grid' | 'gap_packed';
@@ -739,6 +746,7 @@ export const api = {
     cancellationCutoffMin?: number;
     staffSeesClientContact?: boolean;
     attendanceLateGraceMin?: number;
+    productReturnWindowDays?: number;
     reportAccess?: Record<string, string[]>;
     closedDates?: string[];
     /** Jira GRW-397 — every branch's closed days, a day at a time (business only). */
