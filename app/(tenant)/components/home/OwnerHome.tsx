@@ -15,7 +15,6 @@ import {
   type Product,
   type Provider,
   type QueueEntry,
-  type Service,
   type TokenBoard as TokenBoardData,
 } from '../../lib/api';
 import { bookingBill, clientNameLabel, formatDuration, groupBookings, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
@@ -490,7 +489,6 @@ export function OwnerHome(p: OwnerHomeProps) {
   // Desktop v3 Command Center state & data.
   const [salesAppointments, setSalesAppointments] = useState<Appointment[] | null>(null);
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
-  const [catalogServices, setCatalogServices] = useState<Service[] | null>(null);
   const [shelfProducts, setShelfProducts] = useState<Product[] | null>(null);
 
   /*
@@ -536,10 +534,6 @@ export function OwnerHome(p: OwnerHomeProps) {
       .notifications(6, branch)
       .then((res) => !cancelled && setActivities(res))
       .catch(() => !cancelled && setActivities([]));
-    api
-      .services(branch ?? undefined)
-      .then((res) => !cancelled && setCatalogServices(res))
-      .catch(() => !cancelled && setCatalogServices(null));
     api
       .products(branch)
       .then((res) => !cancelled && setShelfProducts(res))
@@ -611,62 +605,114 @@ export function OwnerHome(p: OwnerHomeProps) {
       .slice(0, 5);
   }, [periodSaleRows]);
 
-  const quietServices = useMemo(() => {
-    if (!catalogServices) return [];
-    const bookedIds = new Set<string>();
-    const bookedNames = new Set<string>();
-    for (const r of periodSaleRows) {
-      for (const a of r.group.appointments) {
-        if (a.status === 'cancelled') continue;
-        if (a.serviceId) bookedIds.add(a.serviceId);
-        if (a.serviceName) bookedNames.add(a.serviceName.toLowerCase());
-      }
-    }
-    if (period === 'today') {
-      for (const g of allListGroups) {
-        for (const a of g.appointments) {
-          if (a.status === 'cancelled') continue;
-          if (a.serviceId) bookedIds.add(a.serviceId);
-          if (a.serviceName) bookedNames.add(a.serviceName.toLowerCase());
-        }
-      }
-    }
-    const seenNames = new Set<string>();
-    const out: Service[] = [];
-    for (const s of catalogServices) {
-      const lower = s.name.toLowerCase();
-      if (bookedIds.has(s.id) || bookedNames.has(lower)) continue;
-      if (!branch && seenNames.has(lower)) continue;
-      seenNames.add(lower);
-      out.push(s);
-    }
-    return out;
-  }, [catalogServices, periodSaleRows, period, allListGroups, branch]);
+  const deskAttention = useMemo(() => {
+    const overdueGroups = (todayGroups ?? []).filter((g) => liveState(g, now) === 'needs_answer');
+    const waitingTokens = boardTokens.filter((tk) => tk.state === 'waiting');
+    const unmarkedCount = Math.max(data?.attention.notMarkedDone ?? 0, overdueGroups.length);
+    const bookingCount = unmarkedCount + waitingTokens.length;
 
-  const deskAttentionItems = useMemo(() => {
-    const periodLabel = period === 'today' ? t.today : period === 'week' ? t.thisWeek : t.thisMonth;
-    const quietSub =
-      quietServices.length > 0
-        ? `${periodLabel} · ${quietServices
-            .slice(0, 2)
-            .map((s) => s.name)
-            .join(', ')}${quietServices.length > 2 ? ` +${quietServices.length - 2}` : ''}`
-        : periodLabel;
-    return [
-      ...attention,
-      {
-        key: 'quiet-services',
-        count: quietServices.length,
-        label: t.quietServicesLabel,
-        sub: quietSub,
-        tone: 'violet' as const,
-        href: `/services${branch ? `?branch=${encodeURIComponent(branch)}` : ''}`,
-        icon: <IconServices />,
-      },
-    ];
-  }, [attention, quietServices, period, t, branch]);
+    const unmarkedStaff = (p.staffNotMarkedIn ?? [])
+      .map((id) => p.providers.find((x) => x.id === id))
+      .filter((x): x is Provider => x !== undefined && (!branch || x.locationId === branch));
+    const unmarkedStaffCount = p.staffNotMarkedIn
+      ? branch
+        ? unmarkedStaff.length
+        : p.staffNotMarkedIn.length
+      : 0;
+    const staffCount = pendingAttendance + unmarkedStaffCount;
 
-  const deskAttentionTotal = attentionTotal + (quietServices.length > 0 ? 1 : 0);
+    const cancelledCount = data?.attention.cancelledToday ?? 0;
+    const totalCount = bookingCount + staffCount + cancelledCount;
+
+    const rows: Array<{
+      id: string;
+      name: string;
+      avatarId: string;
+      photoUrl?: string | null;
+      sub: string;
+      pill: string;
+      tone: 'amber' | 'blue' | 'rose';
+      href: string;
+    }> = [];
+
+    for (const g of overdueGroups) {
+      const who = clientNameLabel(g) ?? t.walkInAction;
+      rows.push({
+        id: `overdue-${g.key}`,
+        name: who,
+        avatarId: avatarKey(g),
+        sub: `${summarizeServices(g.serviceNames, t.lang)} · ${formatTime(g.startAt, p.timezone)}`,
+        pill: t.settlePill,
+        tone: 'amber',
+        href: unmarkedHref,
+      });
+    }
+    if (unmarkedCount > overdueGroups.length) {
+      const extra = unmarkedCount - overdueGroups.length;
+      rows.push({
+        id: 'overdue-summary',
+        name: `${extra} ${t.notMarkedDone}`,
+        avatarId: 'overdue-summary',
+        sub: t.fromToday,
+        pill: t.settlePill,
+        tone: 'amber',
+        href: unmarkedHref,
+      });
+    }
+    for (const tk of waitingTokens) {
+      const who = tk.customerName || t.walkInAction;
+      rows.push({
+        id: `wait-${tk.id}`,
+        name: who,
+        avatarId: tk.customerId ?? tk.id,
+        sub: `#${tk.tokenNo} · ${summarizeServices(tk.serviceNames, t.lang)}`,
+        pill: t.waitingPill,
+        tone: 'amber',
+        href: '/appointments',
+      });
+    }
+    if (pendingAttendance > 0) {
+      rows.push({
+        id: 'att-approve',
+        name: `${pendingAttendance} ${t.attendanceToApprove}`,
+        avatarId: 'att-approve',
+        sub: t.attendanceWord,
+        pill: t.approvePill,
+        tone: 'amber',
+        href: '/attendance',
+      });
+    }
+    for (const prov of unmarkedStaff) {
+      rows.push({
+        id: `staff-${prov.id}`,
+        name: prov.displayName,
+        avatarId: prov.id,
+        photoUrl: prov.photoUrl,
+        sub: t.notMarkedInSub,
+        pill: t.markAttendancePill,
+        tone: 'blue',
+        href: '/attendance',
+      });
+    }
+    if (cancelledCount > 0) {
+      rows.push({
+        id: 'att-cancelled',
+        name: `${cancelledCount} ${t.cancelledTodayShort}`,
+        avatarId: 'att-cancelled',
+        sub: t.todayWord,
+        pill: t.todayWord,
+        tone: 'rose',
+        href: `/appointments?status=cancelled${branch ? `&location=${encodeURIComponent(branch)}` : ''}`,
+      });
+    }
+
+    return {
+      bookingCount,
+      staffCount,
+      totalCount,
+      rows: rows.slice(0, 5),
+    };
+  }, [todayGroups, now, boardTokens, data, p.staffNotMarkedIn, p.providers, branch, pendingAttendance, t, p.timezone, unmarkedHref]);
 
   const productAttention = useMemo(() => {
     const list = (shelfProducts ?? []).filter((pr) => pr.active);
@@ -1250,25 +1296,60 @@ export function OwnerHome(p: OwnerHomeProps) {
 
           {/* ROW 3 — Needs your attention (Bookings, Services & Attendance) + Products needing attention + Staff Status */}
           <div className="hm-v3-bot">
-            {/* 1. Needs your attention (Bookings, Services & Attendance) */}
+            {/* 1. Needs your attention (Bookings, Queue & Attendance) */}
             <section className="hm-v3-card hm-v3-services-card hm-v3-desk-attention">
               <div className="hm-v3-card-head">
                 <h2>
                   {t.needsYourAttention}{' '}
-                  <span className="hm-v3-count">({deskAttentionTotal})</span>
+                  <span className="hm-v3-count">({deskAttention.totalCount})</span>
                 </h2>
                 {canSee('/reports', p.role, p.reportTabs) ? (
                   <a className="hm-v3-head-link" href="/reports">
                     {t.whatToDoLink} →
                   </a>
-                ) : deskAttentionTotal === 0 && !failed ? (
+                ) : deskAttention.totalCount === 0 && !failed ? (
                   <span className="hm-pill hm-pill-green">{t.allClear}</span>
                 ) : null}
               </div>
               {failed && !dataIsForBranch ? (
                 <CardError t={t} />
               ) : (
-                <AttentionList items={deskAttentionItems} />
+                <>
+                  <div className="hm-v3-prod-att-summary">
+                    <a
+                      className={`hm-v3-prod-att-chip is-amber ${deskAttention.bookingCount === 0 ? 'is-clear' : ''}`}
+                      href={unmarkedHref}
+                    >
+                      <strong>{deskAttention.bookingCount}</strong>
+                      <span>{t.bookingsAttentionChip}</span>
+                    </a>
+                    <a
+                      className={`hm-v3-prod-att-chip is-blue ${deskAttention.staffCount === 0 ? 'is-clear' : ''}`}
+                      href="/attendance"
+                    >
+                      <strong>{deskAttention.staffCount}</strong>
+                      <span>{t.staffAttentionChip}</span>
+                    </a>
+                  </div>
+                  {deskAttention.rows.length === 0 ? (
+                    <p className="hm-empty">{t.allCaughtUpToday}</p>
+                  ) : (
+                    <ul className="hm-v3-srv-rows hm-v3-prod-att-rows">
+                      {deskAttention.rows.map((row) => (
+                        <li key={row.id}>
+                          <a className="hm-v3-srv-row hm-v3-prod-att-row" href={row.href}>
+                            <Avatar name={row.name} id={row.avatarId} size={30} photoUrl={row.photoUrl} />
+                            <div className="hm-v3-srv-main">
+                              <strong className="hm-v3-srv-name">{row.name}</strong>
+                              <span className="hm-v3-prod-att-sub">{row.sub}</span>
+                            </div>
+                            <span className={`hm-pill hm-pill-${row.tone}`}>{row.pill}</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
               )}
             </section>
 

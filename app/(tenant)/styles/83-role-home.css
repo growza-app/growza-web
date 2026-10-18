@@ -4725,6 +4725,11 @@ button.hm-now-count {
   background: var(--amber-soft);
   color: var(--amber-ink);
 }
+.hm-v3-prod-att-chip.is-blue {
+  border-color: var(--blue-soft);
+  background: var(--blue-soft);
+  color: var(--blue);
+}
 .hm-v3-prod-att-chip.is-clear {
   border-color: var(--hm-line);
   background: var(--page-bg);
