@@ -6,7 +6,8 @@ import { formatMoney } from '../lib/api';
 import type { Offer, Product, Service } from '../lib/api-types';
 import { asMinor, matchItems } from '../lib/service-match';
 import { productByCode, productMatchable } from '../lib/product-match';
-import { productPhotoUrl, servicePhotoUrl } from '../lib/service-photos';
+import { servicePhotoUrl } from '../lib/service-photos';
+import { ProductPhoto } from './ProductPhoto';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { IconInfo, IconSearch } from './icons';
@@ -213,7 +214,7 @@ export function ServiceSheet({
                 return (
                   <li key={p.id}>
                     <button type="button" className={`pf-client-match pf-menu-row ${n > 0 ? 'pf-menu-row-on' : ''}`} onClick={() => onPickProduct?.(p)}>
-                      <img className="pf-menu-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
+                      <ProductPhoto className="pf-menu-photo" product={p} />
                       <span className="pf-client-match-name">{p.name}</span>
                       <span className="pf-client-match-sub">
                         {formatMoney(p.priceMinor)} · {p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}

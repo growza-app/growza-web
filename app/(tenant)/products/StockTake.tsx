@@ -6,7 +6,7 @@ import { api, ApiError, formatMoney } from '../lib/api';
 import type { Product, ProductCategory } from '../lib/api-types';
 import { PageHeader } from '../components/PageHeader';
 import { IconCheck, IconSearch } from '../components/icons';
-import { productPhotoUrl } from '../lib/service-photos';
+import { ProductPhoto } from '../components/ProductPhoto';
 import { matchItems } from '../lib/service-match';
 import { productMatchable } from '../lib/product-match';
 import { ProductCategoriesDropdown } from './DeskProductCategories';
@@ -348,7 +348,7 @@ export function StockTake({
                           >
                             <td>
                               <div className="prd-cell-name">
-                                <img className="prd-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
+                                <ProductPhoto className="prd-photo" product={p} />
                                 <span className="prd-name">
                                   {p.name}
                                   <span className="prd-name-cat">
@@ -433,7 +433,7 @@ export function StockTake({
                   key={p.id}
                   className={`prd-st-row ${differs ? 'prd-st-row-diff' : ''} ${invalid ? 'prd-st-row-invalid' : ''}`}
                 >
-                  <img className="prd-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
+                  <ProductPhoto className="prd-photo" product={p} />
                   <div className="prd-st-info">
                     <span className="prd-name">{p.name}</span>
                     <span className="prd-st-meta">

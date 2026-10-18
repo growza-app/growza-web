@@ -12,7 +12,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useSession, useWritable } from '../components/SessionProvider';
 import { IconCart, IconPlus, IconSearch, IconSort, IconUpload } from '../components/icons';
-import { productPhotoUrl } from '../lib/service-photos';
+import { ProductPhoto } from '../components/ProductPhoto';
 import { matchItems } from '../lib/service-match';
 import { productMatchable } from '../lib/product-match';
 import { ProductSheet } from './ProductSheet';
@@ -446,7 +446,7 @@ export function ProductsList({
                 onClick={() => (writable ? setEditing(p) : undefined)}
                 disabled={!writable}
               >
-                <img className="prd-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
+                <ProductPhoto className="prd-photo" product={p} />
                 <span className="prd-name">
                   {p.name}
                   {p.categoryName ? <span className="prd-name-cat">{p.categoryName}</span> : null}
@@ -501,7 +501,7 @@ export function ProductsList({
                       if (writable) setEditing(p);
                     }}
                   >
-                    <img className="prd-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
+                    <ProductPhoto className="prd-photo" product={p} />
                     <span className="prd-name">
                       {p.name}
                       <span className="prd-name-cat">{p.categoryName ?? t('categories.none')}</span>
