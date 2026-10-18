@@ -21,11 +21,11 @@ import { matchesCategories, shelfWorthMinor, stockTone } from './ProductsList';
  * for the products that differ, tied together by `stock_take_id`.
  */
 export function parseStockTakeCount(raw: string | undefined, fallback: number): number | null {
-  if (raw === undefined) return fallback;
+  if (raw === undefined) return Math.max(0, fallback);
   const trimmed = raw.trim();
   if (trimmed === '' || !/^-?\d+$/.test(trimmed)) return null;
   const n = Number(trimmed);
-  if (!Number.isSafeInteger(n) || n < -100_000 || n > 1_000_000) return null;
+  if (!Number.isSafeInteger(n) || n < 0 || n > 1_000_000) return null;
   return n === 0 ? 0 : n;
 }
 
@@ -52,7 +52,7 @@ export function StockTake({
     initialProducts.filter((p) => p.active).sort((a, b) => a.name.localeCompare(b.name)),
   );
   const [counts, setCounts] = useState<Record<string, string>>(() =>
-    Object.fromEntries(initialProducts.filter((p) => p.active).map((p) => [p.id, String(p.stock)])),
+    Object.fromEntries(initialProducts.filter((p) => p.active).map((p) => [p.id, String(Math.max(0, p.stock))])),
   );
   const touchedRef = useRef<Set<string>>(new Set());
   const [search, setSearch] = useState(initialSearch);
@@ -82,7 +82,7 @@ export function StockTake({
         setCounts((prev) => {
           const next = { ...prev };
           for (const p of active) {
-            if (!touchedRef.current.has(p.id)) next[p.id] = String(p.stock);
+            if (!touchedRef.current.has(p.id)) next[p.id] = String(Math.max(0, p.stock));
           }
           return next;
         });
@@ -96,7 +96,7 @@ export function StockTake({
   const parsedByProduct = useMemo(() => {
     const map = new Map<string, number | null>();
     for (const p of shelf) {
-      map.set(p.id, parseStockTakeCount(counts[p.id], p.stock));
+      map.set(p.id, parseStockTakeCount(counts[p.id], Math.max(0, p.stock)));
     }
     return map;
   }, [shelf, counts]);

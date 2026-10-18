@@ -135,7 +135,17 @@ function SortableTh({
   );
 }
 
-export function ProductsList({ products, categories: initialCategories, branchId }: { products: Product[]; categories: ProductCategory[]; branchId: string }) {
+export function ProductsList({
+  products,
+  categories: initialCategories,
+  branchId,
+  initialFilter = 'all',
+}: {
+  products: Product[];
+  categories: ProductCategory[];
+  branchId: string;
+  initialFilter?: ShelfFilter;
+}) {
   const t = useTranslations('products');
   const tc = useTranslations('common');
   const router = useRouter();
@@ -146,7 +156,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
   const [rows, setRows] = useState(products);
   const [categories, setCategories] = useState(initialCategories);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [filter, setFilter] = useState<ShelfFilter>('all');
+  const [filter, setFilter] = useState<ShelfFilter>(initialFilter);
   const [sort, setSort] = useState<ShelfSort>('name');
   const [sortDir, setSortDir] = useState<ShelfSortDir>('asc');
   const [search, setSearch] = useState('');
@@ -430,7 +440,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
                   {p.active ? (
                     <span className={`prd-pill prd-pill-${tone}`}>{tone === 'out' ? t('outOfStock') : tone === 'low' ? t('lowStock', { n: p.stock }) : t('stock', { n: p.stock })}</span>
                   ) : (
-                    <span className="prd-pill prd-pill-off">{t('stock', { n: p.stock })}</span>
+                    <span className="prd-pill prd-pill-off">{t('stock', { n: Math.max(0, p.stock) })}</span>
                   )}
                   <span className="prd-sold">{t('sold', { n: p.sold })}</span>
                 </span>
@@ -485,7 +495,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
                 <td className="prd-td-num">{formatMoney(p.priceMinor)}</td>
                 <td className="prd-td-num prd-td-muted">{p.costMinor != null ? formatMoney(p.costMinor) : '—'}</td>
                 <td className="prd-td-num">
-                  <span className={`prd-td-stock prd-td-stock-${stockTone(p)}`}>{p.stock}</span>
+                  <span className={`prd-td-stock prd-td-stock-${stockTone(p)}`}>{Math.max(0, p.stock)}</span>
                   <span className="prd-td-sold">{t('sold', { n: p.sold })}</span>
                 </td>
                 <td>{pill(p)}</td>
