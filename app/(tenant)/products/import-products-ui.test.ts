@@ -47,7 +47,7 @@ describe('the review', () => {
 
   it('flags a row that is not a number and blocks the import until it is fixed', () => {
     const html = review('en', drafts);
-    expect(html).toContain('Price must be a number');
+    expect(html).toContain('Sell price must be a number');
     expect(html).toContain('Fix 1 row first');
   });
 
@@ -85,7 +85,7 @@ describe('the review', () => {
   it('says all of it in Hindi too', () => {
     const html = review('hi', drafts);
     expect(html).toContain('इंपोर्ट नहीं हुआ — स्टॉक ऋणात्मक है');
-    expect(html).toContain('कीमत एक संख्या होनी चाहिए');
+    expect(html).toContain('बिक्री दाम एक संख्या होनी चाहिए');
   });
 });
 
@@ -111,7 +111,7 @@ describe('the report after the import', () => {
   it('shows how each column was read, and which were not used, so a wrong guess is caught now', () => {
     const html = done('en');
     expect(html).toContain('How we read your columns');
-    expect(html).toMatch(/MRP<\/span><span[^>]*>Price \(₹\)/);
+    expect(html).toMatch(/MRP<\/span><span[^>]*>Sell price \(₹\)/);
     expect(html).toContain('Not used: Notes');
   });
 
