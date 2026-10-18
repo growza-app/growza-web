@@ -3,7 +3,6 @@
 import { useTranslations } from 'next-intl';
 import { formatMoney } from '../lib/format';
 import { gstInPrice } from '../lib/gst-in-price';
-import { usePricesIncludeTax } from '../lib/prices-include-tax';
 
 /**
  * Jira GRW-582 — what a service or a product is, for tax: its GST rate and its classification code.
@@ -46,8 +45,6 @@ export function TaxFields({
   savedRateBp?: number | null;
 }) {
   const t = useTranslations('tax');
-  const includesTax = usePricesIncludeTax();
-
   const slabs =
     savedRateBp != null && !GST_SLABS_BP.includes(savedRateBp as (typeof GST_SLABS_BP)[number])
       ? [...GST_SLABS_BP, savedRateBp].sort((a, b) => a - b)
@@ -107,7 +104,7 @@ export function TaxFields({
       </div>
       {open ? (
         <div id={`${idPrefix}-tax-hint`} className="sheet-foot">
-          {t('hint', { code: codeWord })} {includesTax ? t('pricesInclude') : t('pricesExclude')}
+          {t('hint', { code: codeWord })} {t('pricesInclude')}
         </div>
       ) : null}
     </>
@@ -120,17 +117,12 @@ export function TaxFields({
  */
 export function GstInPrice({ priceMinor, rateBp }: { priceMinor: number; rateBp: string }) {
   const t = useTranslations('tax');
-  const includesTax = usePricesIncludeTax();
   const rate = rateBp === '' ? null : Number(rateBp);
-  const parts = gstInPrice(priceMinor, rate, includesTax);
+  const parts = gstInPrice(priceMinor, rate);
   if (!parts || rate === null) return null;
   return (
     <div className="sheet-foot" role="status">
-      {t(includesTax ? 'includedIn' : 'addedTo', {
-        tax: formatMoney(parts.taxMinor),
-        rate: rate / 100,
-        total: formatMoney(parts.totalMinor),
-      })}
+      {t('includedIn', { tax: formatMoney(parts.taxMinor), rate: rate / 100, total: formatMoney(priceMinor) })}
     </div>
   );
 }

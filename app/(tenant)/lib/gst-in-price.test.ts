@@ -1,27 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { gstInPrice } from './gst-in-price';
 
-/** Jira GRW-582 — "does the price I typed have GST in it, and how much?" */
-describe('GST in a price that includes it (the default)', () => {
-  it('carves it out: ₹118 at 18% holds ₹18, and the client still pays ₹118', () => {
-    expect(gstInPrice(11800, 1800, true)).toEqual({ taxMinor: 1800, totalMinor: 11800 });
+/** Jira GRW-582 — "does the price I typed have GST in it, and how much?" Prices always include GST. */
+describe('GST in a price', () => {
+  it('carves it out: ₹118 at 18% holds ₹18', () => {
+    expect(gstInPrice(11800, 1800)).toEqual({ taxMinor: 1800 });
   });
 
   it('is the same arithmetic the invoice does for one line: ₹300 at 18% holds ₹45.76', () => {
     // 300 × 18 ÷ 118 = 45.7627… — the ₹254.24 taxable + ₹45.76 tax the QA invoice printed.
-    expect(gstInPrice(30000, 1800, true)).toEqual({ taxMinor: 4576, totalMinor: 30000 });
+    expect(gstInPrice(30000, 1800)).toEqual({ taxMinor: 4576 });
   });
 
   it('rounds to the paisa', () => {
-    const r = gstInPrice(9999, 500, true)!;
-    expect(Number.isInteger(r.taxMinor)).toBe(true);
-    expect(r.totalMinor).toBe(9999);
+    expect(Number.isInteger(gstInPrice(9999, 500)!.taxMinor)).toBe(true);
   });
-});
 
-describe('GST on a price that excludes it', () => {
-  it('adds it on top: ₹100 at 18% is ₹18 more, ₹118 in all', () => {
-    expect(gstInPrice(10000, 1800, false)).toEqual({ taxMinor: 1800, totalMinor: 11800 });
+  it('never adds to the price: there is no "plus GST" mode, because the till never charges one', () => {
+    // The function returns only the tax inside the price. A total larger than the price would be a promise the till
+    // does not keep — the reason the "prices exclude GST" switch was removed.
+    expect(Object.keys(gstInPrice(10000, 1800)!)).toEqual(['taxMinor']);
   });
 });
 
@@ -33,7 +31,6 @@ describe('nothing to say', () => {
     ['a negative price', -100, 1800],
     ['a price that is not a number', Number.NaN, 1800],
   ])('says nothing for %s', (_why, price, rate) => {
-    expect(gstInPrice(price, rate, true)).toBeNull();
-    expect(gstInPrice(price, rate, false)).toBeNull();
+    expect(gstInPrice(price, rate)).toBeNull();
   });
 });

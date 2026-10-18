@@ -34,7 +34,6 @@ export function GstForm({ initial, branchName }: { initial: SettingsSummary; bra
   const [registeredAddress, setRegisteredAddress] = useState(initial.gst.registeredAddress);
   const [invoicePrefix, setInvoicePrefix] = useState(initial.gst.invoicePrefix);
   const [invoiceFooter, setInvoiceFooter] = useState(initial.gst.invoiceFooter);
-  const [pricesIncludeTax, setPricesIncludeTax] = useState(initial.gst.pricesIncludeTax);
   const [branchState, setBranchState] = useState(initial.gst.branchState);
   const [branchStateCode, setBranchStateCode] = useState(initial.gst.branchStateCode);
   const [branchGstin, setBranchGstin] = useState(initial.gst.branchGstin);
@@ -64,7 +63,6 @@ export function GstForm({ initial, branchName }: { initial: SettingsSummary; bra
         registeredAddress,
         invoicePrefix,
         invoiceFooter,
-        pricesIncludeTax,
         branchState,
         branchStateCode,
         branchGstin,
@@ -77,7 +75,6 @@ export function GstForm({ initial, branchName }: { initial: SettingsSummary; bra
       setRegisteredAddress(fresh.gst.registeredAddress);
       setInvoicePrefix(fresh.gst.invoicePrefix);
       setInvoiceFooter(fresh.gst.invoiceFooter);
-      setPricesIncludeTax(fresh.gst.pricesIncludeTax);
       setBranchState(fresh.gst.branchState);
       setBranchStateCode(fresh.gst.branchStateCode);
       setBranchGstin(fresh.gst.branchGstin);
@@ -238,30 +235,17 @@ export function GstForm({ initial, branchName }: { initial: SettingsSummary; bra
                 <span className="field-hint">{t('footerHint')}</span>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginTop: 4 }}>
-                <label className="switch" style={{ marginTop: 2 }}>
-                  <input
-                    type="checkbox"
-                    aria-labelledby="gst-inclusive-label"
-                    checked={pricesIncludeTax}
-                    disabled={busy}
-                    onChange={() => {
-                      setPricesIncludeTax(!pricesIncludeTax);
-                      touched();
-                    }}
-                  />
-                  <span className="switch-track">
-                    <span className="switch-thumb" />
-                  </span>
-                </label>
-                <div style={{ flex: 1 }}>
-                  <div id="gst-inclusive-label" style={{ fontWeight: 620, fontSize: 14 }}>
-                    {t('pricesIncludeTaxLabel')}
-                  </div>
-                  <span className="field-hint" style={{ margin: '4px 0 0' }}>
-                    {pricesIncludeTax ? t('pricesIncludeTaxOn') : t('pricesIncludeTaxOff')}
-                  </span>
-                </div>
+              {/*
+                Not a choice. Prices include GST: the till charges the price that was typed and never adds tax on top,
+                so a switch for "tax is added at the till" promised something the till does not do, and an invoice
+                built on it would have totalled more than was collected. Said plainly instead, so an owner knows what
+                a price on the menu means.
+              */}
+              <div id="gst-inclusive-note" style={{ marginTop: 4 }}>
+                <div style={{ fontWeight: 620, fontSize: 14 }}>{t('pricesIncludeTaxLabel')}</div>
+                <span className="field-hint" style={{ margin: '4px 0 0' }}>
+                  {t('pricesIncludeTaxOn')}
+                </span>
               </div>
             </>
           )}

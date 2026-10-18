@@ -61,7 +61,7 @@ describe('the shared tax fields', () => {
 });
 
 describe('the words', () => {
-  const keys = ['title', 'notSet', 'gstRate', 'hsn', 'sac', 'hint', 'pricesInclude', 'pricesExclude', 'includedIn', 'addedTo'] as const;
+  const keys = ['title', 'notSet', 'gstRate', 'hsn', 'sac', 'hint', 'pricesInclude', 'includedIn'] as const;
 
   it.each([
     ['en', en.tax],
@@ -74,11 +74,28 @@ describe('the words', () => {
     ['en', en.tax],
     ['hi', hi.tax],
   ] as const)('%s: the price line names the GST, the rate and what the client pays', (_lang, group) => {
-    for (const k of ['includedIn', 'addedTo'] as const) {
-      expect(group[k]).toContain('{tax}');
-      expect(group[k]).toContain('{rate}');
-      expect(group[k]).toContain('{total}');
-    }
+    expect(group.includedIn).toContain('{tax}');
+    expect(group.includedIn).toContain('{rate}');
+    expect(group.includedIn).toContain('{total}');
     expect(group.hint).toContain('{code}');
+  });
+});
+
+describe('prices include GST, and that is not a switch', () => {
+  const gst = readFileSync(resolve(__dirname, '../settings/gst/GstForm.tsx'), 'utf8');
+
+  it('Settings › GST says so and offers no switch: the till charges the typed price and never adds tax on top', () => {
+    expect(gst).not.toContain('setPricesIncludeTax');
+    expect(gst).not.toMatch(/className="switch"[^]*gst-inclusive/);
+    expect(gst).toContain("t('pricesIncludeTaxLabel')");
+    // And it never sends the field, so a save cannot turn it off.
+    expect(gst).not.toMatch(/pricesIncludeTax,\n/);
+  });
+
+  it('the price lines never promise a total above the price', () => {
+    expect(fields).not.toContain('addedTo');
+    expect(fields).not.toContain('usePricesIncludeTax');
+    expect(en.tax).not.toHaveProperty('addedTo');
+    expect(hi.tax).not.toHaveProperty('addedTo');
   });
 });
