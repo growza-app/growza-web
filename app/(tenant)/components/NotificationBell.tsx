@@ -5,12 +5,12 @@ import { useEffect, useRef, useState, type ComponentType, type CSSProperties } f
 import Link from '../../shared/AppLink';
 import { DateTime } from 'luxon';
 import { useSession } from './SessionProvider';
+import { feedDue, onLiveTick } from '../lib/live-signal';
 import { api, formatMoney, type ActivityEvent } from '../lib/api';
 import { IconAlert, IconBan, IconBell, IconCalendarPlus, IconChat, IconClipboardCheck, IconClose, IconMoveTime, IconPercent, IconReceipt, IconRepeat, IconRupee, IconUserPlus } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useBranch } from './BranchProvider';
 
-const POLL_MS = 15_000;
 const TOAST_MS = 6_000;
 const STORAGE_KEY = 'wa-booking:notifLastSeenId';
 const CLEARED_KEY = 'wa-booking:notifClearedBeforeId';
@@ -384,10 +384,14 @@ export function NotificationBell() {
     };
 
     load();
-    const id = setInterval(load, POLL_MS);
+    // No timer of its own: `LiveRefresh` asks once for the whole tab, and the feed is re-read when that says something moved
+    // (and every few ticks regardless — see `live-signal.ts`).
+    const stopTicks = onLiveTick((t) => {
+      if (feedDue(t)) void load();
+    });
     document.addEventListener('visibilitychange', load);
     return () => {
-      clearInterval(id);
+      stopTicks();
       document.removeEventListener('visibilitychange', load);
       if (toastTimer.current) clearTimeout(toastTimer.current);
     };

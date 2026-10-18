@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { decideTick, FORCE_EVERY_TICKS, shouldPoll } from './LiveRefresh';
+import { FEED_SAFETY_TICKS, feedDue } from '../lib/live-signal';
 
 /**
- * Which screens keep a standing 15-second timer.
+ * Which screens REDRAW on the live check (every screen runs the check; see `live-signal.ts`).
  *
  * `router.refresh()` re-renders the whole route on the server, so a poll
  * costs whatever that page costs — 27 queries for one refresh of the Reports
@@ -65,14 +66,15 @@ describe('what a tick does', () => {
     expect(tick(2, 'b', 'a')).toEqual({ refresh: true, baseline: 'b' });
   });
 
-  it('every fortieth tick — ten minutes — redraws regardless, so clock-driven state still moves', () => {
-    // Owner-app audit 2026-10-10 — it was every fourth (a minute), a full Home render per tab per minute.
-    expect(FORCE_EVERY_TICKS).toBe(40);
+  it('every twentieth tick — ten minutes at 30 seconds — redraws regardless, so clock-driven state still moves', () => {
+    // Owner-app audit 2026-10-10 — it was every fourth (a minute), a full Home render per tab per minute. The tick moved
+    // from 15 to 30 seconds in the performance audit, so forty became twenty to keep the ten minutes.
+    expect(FORCE_EVERY_TICKS).toBe(20);
     expect(tick(4, 'a', 'a')).toEqual({ refresh: false, baseline: 'a' });
-    expect(tick(40, 'a', 'a')).toEqual({ refresh: true, baseline: 'a' });
-    expect(tick(80, 'a', 'a').refresh).toBe(true);
+    expect(tick(20, 'a', 'a')).toEqual({ refresh: true, baseline: 'a' });
+    expect(tick(40, 'a', 'a').refresh).toBe(true);
     // ...and it re-baselines on what it saw.
-    expect(tick(40, 'b', 'a')).toEqual({ refresh: true, baseline: 'b' });
+    expect(tick(20, 'b', 'a')).toEqual({ refresh: true, baseline: 'b' });
   });
 
   it('a failed check (rate limited, offline) redraws nothing and keeps the baseline', () => {
@@ -81,10 +83,10 @@ describe('what a tick does', () => {
   });
 
   it('a failed check on a forced tick still redraws once, keeping the baseline', () => {
-    expect(tick(40, null, 'a')).toEqual({ refresh: true, baseline: 'a' });
+    expect(tick(20, null, 'a')).toEqual({ refresh: true, baseline: 'a' });
   });
 
-  it('over ten quiet minutes that is one redraw in forty ticks, not forty', () => {
+  it('over ten quiet minutes that is one redraw in twenty ticks, not twenty', () => {
     let baseline: string | null = null;
     let redraws = 0;
     for (let n = 1; n <= FORCE_EVERY_TICKS; n += 1) {
@@ -145,5 +147,52 @@ describe('what a tick compares against, and how it can go wrong', () => {
     expect(live).toMatch(/const thisTick = tick\.current;/);
     expect(live).toMatch(/if \(mine !== generation\.current\) return;/);
     expect(live).toMatch(/decideTick\(\{ tick: thisTick,/);
+  });
+});
+
+/**
+ * Performance audit — one timer for the tab, not three. An open, untouched Home cost ~35 statements a minute because the
+ * live check, the desktop bell and the phone's unread badge each polled the same question on their own.
+ */
+describe('one poll for the whole tab', () => {
+  const read = (p: string) => readFileSync(resolve(__dirname, p), 'utf8');
+
+  it('the check runs every 30 seconds, on every screen — a screen that does not redraw still tells the others', () => {
+    const live = read('LiveRefresh.tsx');
+    expect(live).toMatch(/const POLL_MS = 30_000;/);
+    expect(live).toMatch(/\}, POLL_MS\);/);
+    expect(live).not.toMatch(/isLive \? POLL_MS : null/);
+    expect(live).toMatch(/announceLiveTick\(\{ tick: thisTick, changed: next\.refresh \}\);/);
+    // Only a live screen redraws itself on the answer.
+    expect(live).toMatch(/if \(next\.refresh && isLive\) router\.refresh\(\);/);
+  });
+
+  it.each([
+    ['the desktop bell', 'NotificationBell.tsx'],
+    ['the phone’s unread badge', 'useUnreadNotifications.ts'],
+  ])('%s has no timer of its own: it listens, and re-reads the feed when the tick says so', (_who, file) => {
+    const src = read(file);
+    expect(src).not.toMatch(/setInterval/);
+    expect(src).not.toMatch(/POLL_MS/);
+    expect(src).toMatch(/onLiveTick\(\(t\) => \{\s*if \(feedDue\(t\)\) void load\(\);/);
+    // The two reads that are not timers stay: on mount, and when the tab comes back.
+    expect(src).toMatch(/addEventListener\('visibilitychange', load\)/);
+  });
+});
+
+describe('when the feed is re-read', () => {
+  it('when something moved, and every fourth tick (two minutes) regardless', () => {
+    expect(FEED_SAFETY_TICKS).toBe(4);
+    expect(feedDue({ tick: 1, changed: true })).toBe(true);
+    expect(feedDue({ tick: 1, changed: false })).toBe(false);
+    expect(feedDue({ tick: 3, changed: false })).toBe(false);
+    expect(feedDue({ tick: 4, changed: false })).toBe(true);
+    expect(feedDue({ tick: 8, changed: false })).toBe(true);
+  });
+
+  it('over ten quiet minutes the feed is read five times, not forty', () => {
+    // 20 ticks at 30 seconds, nothing changing. Before: one read per 15 seconds, so 40.
+    const quiet = Array.from({ length: 20 }, (_, i) => feedDue({ tick: i + 1, changed: false })).filter(Boolean).length;
+    expect(quiet).toBe(5);
   });
 });
