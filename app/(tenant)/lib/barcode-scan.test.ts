@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
-import { createScanReader, isTypingTarget, SCAN_MAX_GAP_MS } from './barcode-scan';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createScanListener, createScanReader, isTypingTarget, SCAN_IDLE_MS, SCAN_MAX_GAP_MS, type ScanKey } from './barcode-scan';
 
 const type = (r: ReturnType<typeof createScanReader>, text: string, start: number, gap: number) => {
   let at = start;
@@ -77,5 +79,114 @@ describe('isTypingTarget', () => {
     expect(isTypingTarget({ tagName: 'INPUT', type: 'checkbox' })).toBe(false);
     expect(isTypingTarget({ tagName: 'BUTTON' })).toBe(false);
     expect(isTypingTarget(null)).toBe(false);
+  });
+});
+
+describe('scan listener', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  const setup = (blocked = false) => {
+    const codes: string[] = [];
+    const state = { blocked };
+    const listener = createScanListener({ blocked: () => state.blocked, onCode: (c) => codes.push(c) });
+    let at = 0;
+    const prevented: boolean[] = [];
+    const press = (key: string, extra: Partial<ScanKey> = {}) => {
+      let stopped = false;
+      listener.onKey({ key, timeStamp: (at += 5), isComposing: false, ctrlKey: false, metaKey: false, altKey: false, repeat: false, preventDefault: () => (stopped = true), ...extra });
+      if (key === 'Enter') prevented.push(stopped);
+    };
+    const scan = (code: string) => {
+      for (const ch of code) press(ch);
+      press('Enter');
+    };
+    return { codes, state, press, scan, prevented };
+  };
+
+  it('delivers a scan and swallows its Enter', () => {
+    const { codes, scan, prevented } = setup();
+    scan('8901234567890');
+    expect(codes).toEqual(['8901234567890']);
+    expect(prevented).toEqual([true]);
+  });
+
+  it('swallows the Enter of a scan whatever the handler does with the code', () => {
+    // A code that matches nothing is still a scan: its Enter must not press the button the last tap left focused.
+    const { codes, scan, prevented } = setup();
+    scan('0000111122');
+    expect(codes).toEqual(['0000111122']);
+    expect(prevented).toEqual([true]);
+  });
+
+  it('leaves a plain Enter alone', () => {
+    const { codes, press, prevented } = setup();
+    press('Enter');
+    expect(codes).toEqual([]);
+    expect(prevented).toEqual([false]);
+  });
+
+  it('ignores everything while a field has focus or a dialog is open', () => {
+    const { codes, state, scan } = setup(true);
+    scan('8901234567890');
+    state.blocked = false;
+    scan('ABC1234');
+    expect(codes).toEqual(['ABC1234']);
+  });
+
+  it('forgets a half-read code when the page becomes blocked mid-way', () => {
+    const { codes, state, press } = setup();
+    for (const ch of '89012') press(ch);
+    state.blocked = true;
+    press('3');
+    state.blocked = false;
+    press('Enter');
+    expect(codes).toEqual([]);
+  });
+
+  it('ignores shortcuts, auto-repeat and IME composition', () => {
+    const { codes, press } = setup();
+    for (const extra of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }, { repeat: true }, { isComposing: true }]) {
+      for (const ch of 'ABCDEF') press(ch, extra);
+      press('Enter', extra);
+    }
+    expect(codes).toEqual([]);
+  });
+
+  it('delivers a scan that sends no Enter after it goes quiet, once', () => {
+    const { codes, press } = setup();
+    for (const ch of '8901234567890') press(ch);
+    expect(codes).toEqual([]);
+    vi.advanceTimersByTime(SCAN_IDLE_MS + 1);
+    expect(codes).toEqual(['8901234567890']);
+    vi.advanceTimersByTime(1000);
+    expect(codes).toEqual(['8901234567890']);
+  });
+
+  it('does not deliver the quiet-scan code after dispose', () => {
+    const codes: string[] = [];
+    const l = createScanListener({ blocked: () => false, onCode: (c) => codes.push(c) });
+    for (const ch of 'ABC1234') l.onKey({ key: ch, timeStamp: 1, isComposing: false, ctrlKey: false, metaKey: false, altKey: false, repeat: false, preventDefault: () => {} });
+    l.dispose();
+    vi.advanceTimersByTime(1000);
+    expect(codes).toEqual([]);
+  });
+});
+
+describe('the till wires the scan in', () => {
+  const src = readFileSync(resolve(__dirname, '../appointments/new/PayFlow.tsx'), 'utf8');
+
+  it('listens only on the screen where products are picked', () => {
+    expect(src).toMatch(/useBarcodeScan\(productsOnly && productsLoaded && step === 'what'/);
+  });
+
+  it('says why a scan added nothing, instead of buzzing alone', () => {
+    expect(src).toContain("t('desk.scanMiss'");
+    expect(src).toContain("t('desk.scanNoStock'");
+    expect(src).toContain("t('desk.scanFull')");
+  });
+
+  it('calls the hook above the early returns', () => {
+    expect(src.indexOf('useBarcodeScan(')).toBeLessThan(src.indexOf("  if (step === 'done' && sale) {"));
   });
 });

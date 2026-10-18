@@ -545,22 +545,28 @@ export function PayFlow({
    * Owner, 2026-10-19 — a scan adds the product wherever the cursor is. A code that names no single product says so
    * rather than doing nothing, because a silent miss at the counter reads as "the scanner is broken".
    */
-  const [scanMiss, setScanMiss] = useState<string | null>(null);
+  const [scanNote, setScanNote] = useState<string | null>(null);
   useEffect(() => {
-    if (!scanMiss) return;
-    const id = window.setTimeout(() => setScanMiss(null), 5000);
+    if (!scanNote) return;
+    const id = window.setTimeout(() => setScanNote(null), 5000);
     return () => window.clearTimeout(id);
-  }, [scanMiss]);
-  useBarcodeScan(productsOnly && productsLoaded, (code) => {
+  }, [scanNote]);
+  // Only on the screen where products are picked: on 'how', 'qr' and 'done' a scan would change a bill being paid.
+  useBarcodeScan(productsOnly && productsLoaded && step === 'what', (code) => {
     const hit = productByCode(products, code);
     if (!hit) {
       felt(BUZZ.tooMany);
-      setScanMiss(code);
-      return false;
+      setScanNote(t('desk.scanMiss', { code }));
+      return;
     }
-    setScanMiss(null);
+    // addProduct refuses these quietly; a scan has no tile to show why, so it says.
+    if (full || hit.stock <= 0 || productCountOf(hit.id) >= hit.stock) {
+      felt(BUZZ.tooMany);
+      setScanNote(full ? t('desk.scanFull') : t('desk.scanNoStock', { name: hit.name }));
+      return;
+    }
+    setScanNote(null);
     addProduct(hit);
-    return true;
   });
   // No buzz on the way down: the count and the total both drop, and a removal that felt like an addition is a lie.
   const oneLess = (key: string) => {
@@ -1238,7 +1244,7 @@ export function PayFlow({
           */}
           <span className="pf-head-gap" aria-hidden="true" />
         </header>
-        {scanMiss ? <div role="status" className="pf-error">{t('desk.scanMiss', { code: scanMiss })}</div> : null}
+        {scanNote ? <div role="status" className="pf-error">{scanNote}</div> : null}
         {tokenGone ? (
           <div role="alert" className="pf-error">
             {nv.tokenGone}
@@ -1431,7 +1437,7 @@ export function PayFlow({
             </span>
             <span className="pf-head-gap" aria-hidden="true" />
           </header>
-          {scanMiss ? <div role="status" className="pf-error">{t('desk.scanMiss', { code: scanMiss })}</div> : null}
+          {scanNote ? <div role="status" className="pf-error">{scanNote}</div> : null}
         </>
       ) : (
         <header className="pf-head">

@@ -59,33 +59,55 @@ export function isTypingTarget(el: unknown): boolean {
   return !['button', 'checkbox', 'radio', 'submit', 'reset', 'file', 'range', 'color', 'image'].includes(type);
 }
 
+/** The few things the listener needs from the page, so it can be tested without one. */
+export type ScanListenerEnv = {
+  /** True where a scan is not ours: a field has focus, or a dialog is open. */
+  blocked: () => boolean;
+  onCode: (code: string) => void;
+};
+
+export type ScanKey = Pick<KeyboardEvent, 'key' | 'timeStamp' | 'isComposing' | 'ctrlKey' | 'metaKey' | 'altKey' | 'repeat' | 'preventDefault'>;
+
+/**
+ * The keydown handler. A burst that ends in Enter is a scan whether or not the code matches anything, so its Enter is
+ * always swallowed: left alone, it would press whichever button the last tap left focused (another unit, or Next).
+ */
+export function createScanListener(env: ScanListenerEnv) {
+  const reader = createScanReader();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const onKey = (e: ScanKey) => {
+    clearTimeout(timer);
+    if (e.isComposing || e.ctrlKey || e.metaKey || e.altKey || e.repeat || env.blocked()) return reader.reset();
+    const code = reader.key(e.key, e.timeStamp);
+    if (code) {
+      e.preventDefault();
+      return env.onCode(code);
+    }
+    timer = setTimeout(() => {
+      const late = reader.idle();
+      if (late) env.onCode(late);
+    }, SCAN_IDLE_MS);
+  };
+  return { onKey, dispose: () => clearTimeout(timer) };
+}
+
 /**
  * Calls `onCode` for every scan while `enabled`. Skipped while a dialog is open (the sheet it opened has its own
- * scan handling) and while a field is focused. Returns true from `onCode` when the code was a product, so the Enter
- * is swallowed — otherwise it would also press whichever button the last tap left focused.
+ * scan handling) and while a field is focused.
  */
-export function useBarcodeScan(enabled: boolean, onCode: (code: string) => boolean) {
+export function useBarcodeScan(enabled: boolean, onCode: (code: string) => void) {
   const handler = useRef(onCode);
   handler.current = onCode;
   useEffect(() => {
     if (!enabled) return;
-    const reader = createScanReader();
-    let timer: number | undefined;
-    const fire = (code: string | null, event?: KeyboardEvent) => {
-      if (code && handler.current(code) && event) event.preventDefault();
-    };
-    const onKey = (e: KeyboardEvent) => {
-      window.clearTimeout(timer);
-      if (e.isComposing || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return reader.reset();
-      if (isTypingTarget(document.activeElement) || document.querySelector('[role="dialog"][aria-modal="true"]')) return reader.reset();
-      const code = reader.key(e.key, e.timeStamp);
-      if (code) return fire(code, e);
-      timer = window.setTimeout(() => fire(reader.idle()), SCAN_IDLE_MS);
-    };
-    window.addEventListener('keydown', onKey, true);
+    const listener = createScanListener({
+      blocked: () => isTypingTarget(document.activeElement) || document.querySelector('[role="dialog"][aria-modal="true"]') !== null,
+      onCode: (code) => handler.current(code),
+    });
+    window.addEventListener('keydown', listener.onKey, true);
     return () => {
-      window.removeEventListener('keydown', onKey, true);
-      window.clearTimeout(timer);
+      window.removeEventListener('keydown', listener.onKey, true);
+      listener.dispose();
     };
   }, [enabled]);
 }
