@@ -3086,8 +3086,8 @@
     "outOfStock": "Out of stock",
     "sold": "{n} sold",
     "retired": "Retired",
-    "retire": "Take off the till",
-    "bringBack": "Put back on the till",
+    "retire": "Stop selling",
+    "bringBack": "Sell again",
     "delete": "Delete",
     "deleteAsk": "Delete {name}? Bills that sold it keep their own copy.",
     "form": {
