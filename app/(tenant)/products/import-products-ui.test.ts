@@ -32,8 +32,8 @@ const shelf = [shelfProduct({})];
 const inIntl = (locale: 'en' | 'hi', child: ReactElement) =>
   renderToStaticMarkup(createElement(NextIntlClientProvider, { locale, messages: locale === 'en' ? en : hi, timeZone: 'UTC', children: child }));
 
-const review = (locale: 'en' | 'hi', drafts: ProductDraft[], categories: string[] = []) =>
-  inIntl(locale, createElement(ImportProductReview, { drafts, setDrafts: () => {}, shelf, categories, branchId: 'loc', onBack: () => {}, onImported: () => {} }));
+const review = (locale: 'en' | 'hi', drafts: ProductDraft[], categories: string[] = [], addStock = false) =>
+  inIntl(locale, createElement(ImportProductReview, { drafts, setDrafts: () => {}, shelf, categories, branchId: 'loc', addStock, setAddStock: () => {}, onBack: () => {}, onImported: () => {} }));
 
 describe('the review', () => {
   const drafts = buildDrafts(rows, map, shelf);
@@ -67,6 +67,21 @@ describe('the review', () => {
     expect(review('en', drafts)).toContain('is already on your shelf, so the stock in your file is not used');
   });
 
+  it('offers to add the file\'s counts instead, and says what that does before it is chosen', () => {
+    const html = review('en', drafts);
+    expect(html).toContain('Leave counts as they are');
+    expect(html).toContain('Add to stock');
+    expect(html).toMatch(/aria-pressed="true"[^>]*>Leave counts as they are/);
+  });
+
+  it('with Add to stock chosen, says how many products get how many units, and lets the row show it', () => {
+    const html = review('en', drafts, [], true);
+    expect(html).toMatch(/aria-pressed="true"[^>]*>Add to stock/);
+    expect(html).toContain('1 product gets 9 more in stock');
+    expect(html).toContain('+9 to stock');
+    expect(html).not.toContain('the stock in your file is not used');
+  });
+
   it('says all of it in Hindi too', () => {
     const html = review('hi', drafts);
     expect(html).toContain('इंपोर्ट नहीं हुआ — स्टॉक ऋणात्मक है');
@@ -76,8 +91,8 @@ describe('the review', () => {
 
 describe('the report after the import', () => {
   const drafts = buildDrafts(rows, map, shelf);
-  const result: ProductImportResult = { created: 1, updated: 1, categoriesCreated: 2, categoryNames: ['Hair care', 'Tools'] };
-  const done = (locale: 'en' | 'hi', r = result) => inIntl(locale, createElement(ImportProductDone, { result: r, drafts, headers, map, onClose: () => {} }));
+  const result: ProductImportResult = { created: 1, updated: 1, stockAdded: 0, unitsAdded: 0, categoriesCreated: 2, categoryNames: ['Hair care', 'Tools'] };
+  const done = (locale: 'en' | 'hi', r = result, addStock = false) => inIntl(locale, createElement(ImportProductDone, { result: r, drafts, addStock, headers, map, onClose: () => {} }));
 
   it('gives the counts and the categories the file made', () => {
     const html = done('en');
@@ -100,8 +115,14 @@ describe('the report after the import', () => {
     expect(html).toContain('Not used: Notes');
   });
 
+  it('reports the stock that was added, and stops saying the file\'s counts were not used', () => {
+    const html = done('en', { ...result, stockAdded: 2, unitsAdded: 14 }, true);
+    expect(html).toContain('Stock added to 2 products — 14 in all');
+    expect(html).not.toContain('the stock in your file is not used');
+  });
+
   it('says so plainly when nothing was added or changed', () => {
-    expect(done('en', { created: 0, updated: 0, categoriesCreated: 0, categoryNames: [] })).toContain('Nothing was added or changed.');
+    expect(done('en', { created: 0, updated: 0, stockAdded: 0, unitsAdded: 0, categoriesCreated: 0, categoryNames: [] })).toContain('Nothing was added or changed.');
   });
 
   it('has the same report in Hindi', () => {

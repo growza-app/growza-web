@@ -217,6 +217,7 @@ export type ProductProblem =
   | 'barcodeScientific'
   | 'tooLong'
   | 'tooLarge'
+  | 'stockTooLarge'
   | 'negative'
   | 'twice'
   | 'barcodeTaken'
@@ -231,8 +232,8 @@ const SCIENTIFIC = /^\d(\.\d+)?e\+?\d+$/i;
 const MAX_RUPEES = 1_000_000;
 const MAX_COUNT = 1_000_000;
 
-/** What is wrong with one row on its own, or null. */
-export function rowProblem(d: ProductDraft): ProductProblem | null {
+/** What is wrong with one row on its own, or null. `addStock`: the owner chose to add the file's counts to the shelf's. */
+export function rowProblem(d: ProductDraft, addStock = false): ProductProblem | null {
   if (!d.existing && !d.name.trim()) return 'needsName';
   if (d.name.trim().length > 120 || d.category.trim().length > 60 || d.sku.trim().length > 40 || d.barcode.trim().length > 64) return 'tooLong';
   if ([d.price, d.stock, d.cost, d.lowStock, d.gst].some(isNegative)) return 'negative';
@@ -247,6 +248,7 @@ export function rowProblem(d: ProductDraft): ProductProblem | null {
     if (Number(d.gst) > 28) return 'gstRange';
   }
   if (Number(d.price) > MAX_RUPEES || Number(d.cost) > MAX_RUPEES || Number(d.stock) > MAX_COUNT || Number(d.lowStock) > MAX_COUNT) return 'tooLarge';
+  if (addStock && d.existing && d.stock.trim() && Number(d.stock) + d.existing.stock > MAX_COUNT) return 'stockTooLarge';
   if (d.hsn.trim() && !/^\d{4,8}$/.test(d.hsn.trim())) return 'hsnDigits';
   if (SCIENTIFIC.test(d.barcode.trim())) return 'barcodeScientific';
   if (d.barcode.trim() && !/^[!-~]+$/.test(d.barcode.trim())) return 'barcodeSpaces';
@@ -259,7 +261,7 @@ export function rowProblem(d: ProductDraft): ProductProblem | null {
  * bookkeeping as the API's: a retired product holds no code, and a row that moves a product off a code frees it
  * for the rows after.
  */
-export function reviewProblems(drafts: readonly ProductDraft[], shelf: readonly Product[]): (ProductProblem | null)[] {
+export function reviewProblems(drafts: readonly ProductDraft[], shelf: readonly Product[], addStock = false): (ProductProblem | null)[] {
   const ownerOf = { barcode: new Map<string, string>(), sku: new Map<string, string>() };
   const held = new Map<string, { barcode: string | null; sku: string | null }>();
   for (const p of shelf) {
@@ -271,7 +273,7 @@ export function reviewProblems(drafts: readonly ProductDraft[], shelf: readonly 
   const seenProduct = new Set<string>();
   return drafts.map((d, index) => {
     if (d.skip) return null;
-    const alone = rowProblem(d);
+    const alone = rowProblem(d, addStock);
     if (alone) return alone;
     const key = d.existing?.id ?? `new:${d.name.trim().toLowerCase()}`;
     if (seenProduct.has(key)) return 'twice';
@@ -297,8 +299,11 @@ export function reviewProblems(drafts: readonly ProductDraft[], shelf: readonly 
 
 const minor = (rupees: string) => Math.round(Number(rupees) * 100);
 
-/** What goes to the API. A correction carries only the cells the file filled, and never the count: a count changes through the ledger. */
-export function toItems(drafts: readonly ProductDraft[]): ProductImportItem[] {
+/**
+ * What goes to the API. A correction carries only the cells the file filled, and its count only when the owner chose
+ * to add the file's numbers to the shelf's — then as units that arrived, which the API writes to the ledger.
+ */
+export function toItems(drafts: readonly ProductDraft[], addStock = false): ProductImportItem[] {
   return drafts
     .filter((d) => !d.skip)
     .map((d): ProductImportItem => {
@@ -312,6 +317,7 @@ export function toItems(drafts: readonly ProductDraft[]): ProductImportItem[] {
       if (d.gst.trim()) item.gstRateBp = Math.round(Number(d.gst) * 100);
       if (d.hsn.trim()) item.hsn = d.hsn.trim();
       if (!d.existing && d.stock.trim()) item.stock = Number(d.stock);
+      if (addStock && d.existing && Number(d.stock) > 0) item.addStock = Number(d.stock);
       return item;
     });
 }
@@ -348,8 +354,20 @@ export function newCategoryNames(drafts: readonly ProductDraft[], existing: read
   return [...out.values()];
 }
 
-/** Rows that match a product already on the shelf and carry a stock number: the number is not used, and the owner is told. */
-export const stockNotApplied = (drafts: readonly ProductDraft[]): number => drafts.filter((d) => !d.skip && d.existing && d.stock.trim() !== '').length;
+/** Rows that match a product already on the shelf and carry a stock number. */
+const stockOnShelfRows = (drafts: readonly ProductDraft[]) => drafts.filter((d) => !d.skip && d.existing && d.stock.trim() !== '');
+
+/** Those rows when the owner left the counts alone: the number is not used, and the owner is told. */
+export const stockNotApplied = (drafts: readonly ProductDraft[], addStock = false): number => (addStock ? 0 : stockOnShelfRows(drafts).length);
+
+/** How many products would get stock added, and how many units in all — what the owner is shown before choosing and told after. */
+export function stockToAdd(drafts: readonly ProductDraft[]): { count: number; units: number } {
+  const rows = stockOnShelfRows(drafts).filter((d) => Number(d.stock) > 0);
+  return { count: rows.length, units: rows.reduce((sum, d) => sum + Number(d.stock), 0) };
+}
+
+/** Whether the file has any count the owner could choose to add: the choice is only offered then. */
+export const hasStockToChoose = (drafts: readonly ProductDraft[]): boolean => stockOnShelfRows(drafts).length > 0;
 
 /** The rows that did not go in, with why — shown while reviewing and again after the import. */
 export function notImported(drafts: readonly ProductDraft[]): { row: number; name: string; reason: SkipReason }[] {

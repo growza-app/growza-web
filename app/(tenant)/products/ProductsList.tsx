@@ -244,7 +244,7 @@ export function ProductsList({
    * The dialog stays open on its own report; closing it is the owner's.
    */
   const imported = async (result: ProductImportResult) => {
-    setImportNote(t('import.done', { created: result.created, updated: result.updated }));
+    setImportNote(t('import.done', { created: result.created, updated: result.updated, stockAdded: result.stockAdded }));
     try {
       setRows(await api.productsAll(branchId));
     } catch {
