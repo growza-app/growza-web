@@ -80,9 +80,12 @@ export function ImportProducts({
             <p className="confirm-body">{t('pickBody')}</p>
             <p className="confirm-body">{t('pickColumns')}</p>
             <input ref={fileRef} type="file" accept=".xlsx,.csv" style={{ display: 'none' }} onChange={(e) => pick(e.target.files?.[0])} />
+            <button type="button" className="btn btn-ghost import-change" disabled={busy} onClick={downloadSample}>
+              {t('sample')}
+            </button>
             <div className="modal-actions">
-              <button type="button" className="btn btn-ghost" disabled={busy} onClick={downloadSample}>
-                {t('sample')}
+              <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose}>
+                {t('cancel')}
               </button>
               <button type="button" className="btn" disabled={busy} onClick={() => fileRef.current?.click()}>
                 {busy ? t('reading') : t('chooseFile')}
@@ -112,13 +115,6 @@ export function ImportProducts({
         {step !== 'review' && error && (
           <div role="alert" className="field-error" style={{ marginTop: 12 }}>
             {error}
-          </div>
-        )}
-        {step === 'pick' && (
-          <div className="modal-actions">
-            <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose}>
-              {t('cancel')}
-            </button>
           </div>
         )}
       </div>
