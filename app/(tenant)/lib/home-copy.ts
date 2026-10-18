@@ -181,6 +181,15 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     /** Jira GRW-563 — self-marked days the phone could not place; the owner says yes or no. */
     attendanceToApprove: S('Attendance to approve', 'हाज़िरी मंज़ूर करनी है'),
     attendanceWord: S('Attendance', 'हाज़िरी'),
+    productsAttentionTitle: S('Products needing attention', 'ध्यान देने वाले प्रोडक्ट्स'),
+    quietServicesLabel: S('Services with 0 bookings', 'बिना बुकिंग वाली सर्विसेज़'),
+    outOfStockLabel: S('Out of stock', 'स्टॉक ख़त्म'),
+    lowStockLabel: S('Low stock', 'कम स्टॉक'),
+    stockLeftSub: (n: number, lowAt: number) =>
+      n <= 0
+        ? S(`${n} in stock · restock needed`, `${n} स्टॉक में · मंगवाने की ज़रूरत`)
+        : S(`${n} left (alert at ${lowAt})`, `${n} बचे हैं (अलर्ट ${lowAt} पर)`),
+    allStockHealthy: S('All products are well stocked.', 'सभी प्रोडक्ट्स का स्टॉक पूरा है।'),
 
     quickLinks: S('Quick links', 'शॉर्टकट'),
     /** The money card's branch line (Jira GRW-312); the "Your branches" card it was named after is gone (Jira GRW-348). */

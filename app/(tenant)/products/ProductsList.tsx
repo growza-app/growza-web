@@ -135,7 +135,17 @@ function SortableTh({
   );
 }
 
-export function ProductsList({ products, categories: initialCategories, branchId }: { products: Product[]; categories: ProductCategory[]; branchId: string }) {
+export function ProductsList({
+  products,
+  categories: initialCategories,
+  branchId,
+  initialFilter = 'all',
+}: {
+  products: Product[];
+  categories: ProductCategory[];
+  branchId: string;
+  initialFilter?: ShelfFilter;
+}) {
   const t = useTranslations('products');
   const tc = useTranslations('common');
   const router = useRouter();
@@ -146,7 +156,7 @@ export function ProductsList({ products, categories: initialCategories, branchId
   const [rows, setRows] = useState(products);
   const [categories, setCategories] = useState(initialCategories);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [filter, setFilter] = useState<ShelfFilter>('all');
+  const [filter, setFilter] = useState<ShelfFilter>(initialFilter);
   const [sort, setSort] = useState<ShelfSort>('name');
   const [sortDir, setSortDir] = useState<ShelfSortDir>('asc');
   const [search, setSearch] = useState('');

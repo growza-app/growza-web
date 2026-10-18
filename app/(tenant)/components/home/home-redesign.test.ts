@@ -54,7 +54,7 @@ describe('Tenant Home v2 redesign', () => {
     expect(boardCss).toMatch(/\.tb-col\[data-col='paid'\]\s*\{\s*border-top:\s*3px solid var\(--accent\);/);
   });
 
-  it('renders the Desktop Command Center with 4 light KPI cards, Revenue trend + Sales by payment method donut + Quick actions, Top services + Top products + vertical Staff status, and Recent bookings table synced with /sales', () => {
+  it('renders the Desktop Command Center with 4 light KPI cards, Revenue trend + Sales by payment method donut + Quick actions, Needs your attention (Bookings, Services & Attendance) + Products needing attention + vertical Staff status, and Recent bookings table synced with /sales', () => {
     const bookingsList = code('../../appointments/BookingsList.tsx');
     expect(owner).toContain('className={`hm-desk-v3 hm-desktop');
     expect(owner).toContain('className="hm-v3-kpis"');
@@ -64,13 +64,14 @@ describe('Tenant Home v2 redesign', () => {
     expect(bookingsList).toContain('className="hm-v3-table bk-table"');
     expect(owner).toContain('className="hm-v3-card hm-v3-payment-card"');
     expect(owner).toContain('className="hm-v3-donut-svg"');
-    expect(owner).toContain('className="hm-v3-card hm-v3-products-card"');
+    expect(owner).toContain('className="hm-v3-card hm-v3-services-card hm-v3-desk-attention"');
+    expect(owner).toContain('className="hm-v3-card hm-v3-products-card hm-v3-prod-attention"');
+    expect(owner).toContain('<AttentionList items={deskAttentionItems} />');
     expect(owner).toContain('className="hm-v3-staff-strip hm-v3-staff-list"');
     expect(owner).toContain('className="hm-v3-recent-table"');
     expect(owner).toContain('className="hm-v3-qgrid"');
     expect(owner).toContain('className="hm-v3-bot"');
     expect(owner).toContain('className="hm-v3-bars"');
-    expect(owner).toContain('className="hm-v3-srv-rows"');
     expect(owner).toContain('filterSalesByDateRange(allSaleRows, periodStartISO, todayISO, branch)');
     expect(homeCss).toMatch(/\.hm-v3-kpis\s*\{/);
     expect(homeCss).toMatch(/\.hm-v3-mid\s*\{/);

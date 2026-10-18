@@ -17,11 +17,15 @@ export const dynamic = 'force-dynamic';
  * One branch at a time, as Services is (a bottle is on one shelf, GRW-376): the branch in the address, else the
  * main one. The list is the screen; adding and editing is a sheet over it.
  */
-export default async function ProductsPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
+export default async function ProductsPage({ searchParams }: { searchParams: Promise<{ branch?: string; filter?: string }> }) {
   // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on controls that answer 403.
   await guardScreen('/products');
   const t = await getTranslations('products');
   const params = await searchParams;
+  const initialFilter =
+    params.filter === 'inStock' || params.filter === 'low' || params.filter === 'out' || params.filter === 'retired'
+      ? params.filter
+      : 'all';
 
   let me: Awaited<ReturnType<typeof api.me>>;
   try {
@@ -63,7 +67,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     <>
       <BranchUrlSync />
       {branchId ? (
-        <ProductsList key={branchId} products={products} categories={categories} branchId={branchId} />
+        <ProductsList key={branchId} products={products} categories={categories} branchId={branchId} initialFilter={initialFilter} />
       ) : (
         <>
           <PageHeader title={t('title')} subtitle={t('subtitle')} />

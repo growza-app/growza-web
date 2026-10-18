@@ -4684,6 +4684,77 @@ button.hm-now-count {
   white-space: nowrap;
 }
 
+/* Row 3 Attention Cards (Needs your attention & Products needing attention) */
+.hm-v3-desk-attention .hm-attention {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hm-v3-prod-att-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.hm-v3-prod-att-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--hm-line);
+  background: var(--page-bg);
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--hm-ink);
+}
+.hm-v3-prod-att-chip strong {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.hm-v3-prod-att-chip.is-rose {
+  border-color: var(--danger-soft);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.hm-v3-prod-att-chip.is-amber {
+  border-color: var(--amber-soft);
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+.hm-v3-prod-att-chip.is-clear {
+  border-color: var(--hm-line);
+  background: var(--page-bg);
+  color: var(--hm-muted);
+}
+.hm-v3-prod-att-chip:hover {
+  text-decoration: none;
+  opacity: 0.92;
+}
+.hm-v3-prod-att-rows {
+  gap: 6px;
+}
+.hm-v3-prod-att-row {
+  padding: 5px 6px;
+  border-radius: var(--radius);
+  color: var(--hm-ink);
+  text-decoration: none;
+}
+.hm-v3-prod-att-row:hover {
+  background: var(--page-bg);
+  text-decoration: none;
+}
+.hm-v3-prod-att-sub {
+  font-size: 0.75rem;
+  color: var(--hm-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Recent Activity Feed */
 .hm-v3-feed-rows {
   list-style: none;

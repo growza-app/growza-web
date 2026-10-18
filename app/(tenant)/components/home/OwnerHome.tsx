@@ -12,8 +12,10 @@ import {
   type CustomerStats,
   type HomeOverview,
   type HomePeriod,
+  type Product,
   type Provider,
   type QueueEntry,
+  type Service,
   type TokenBoard as TokenBoardData,
 } from '../../lib/api';
 import { bookingBill, clientNameLabel, formatDuration, groupBookings, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
@@ -488,6 +490,8 @@ export function OwnerHome(p: OwnerHomeProps) {
   // Desktop v3 Command Center state & data.
   const [salesAppointments, setSalesAppointments] = useState<Appointment[] | null>(null);
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
+  const [catalogServices, setCatalogServices] = useState<Service[] | null>(null);
+  const [shelfProducts, setShelfProducts] = useState<Product[] | null>(null);
 
   /*
    * Period bounds in the business's own timezone, matching `/api/v1/home`'s `periodBounds` (`src/modules/analytics/home.ts`):
@@ -532,6 +536,14 @@ export function OwnerHome(p: OwnerHomeProps) {
       .notifications(6, branch)
       .then((res) => !cancelled && setActivities(res))
       .catch(() => !cancelled && setActivities([]));
+    api
+      .services(branch ?? undefined)
+      .then((res) => !cancelled && setCatalogServices(res))
+      .catch(() => !cancelled && setCatalogServices(null));
+    api
+      .products(branch)
+      .then((res) => !cancelled && setShelfProducts(res))
+      .catch(() => !cancelled && setShelfProducts(null));
     return () => {
       cancelled = true;
     };
@@ -599,25 +611,75 @@ export function OwnerHome(p: OwnerHomeProps) {
       .slice(0, 5);
   }, [periodSaleRows]);
 
-  const maxServiceBookings = Math.max(...rankedServices.map((s) => s.bookings), 1);
-
-  const rankedProducts = useMemo(() => {
-    const byName = new Map<string, { id: string; name: string; units: number; revenueMinor: number }>();
+  const quietServices = useMemo(() => {
+    if (!catalogServices) return [];
+    const bookedIds = new Set<string>();
+    const bookedNames = new Set<string>();
     for (const r of periodSaleRows) {
-      for (const pr of r.products) {
-        const key = pr.name;
-        const cur = byName.get(key) ?? { id: pr.productId || key, name: key, units: 0, revenueMinor: 0 };
-        cur.units += Number(pr.qty || 0);
-        cur.revenueMinor += Number(pr.paidMinor || 0);
-        byName.set(key, cur);
+      for (const a of r.group.appointments) {
+        if (a.status === 'cancelled') continue;
+        if (a.serviceId) bookedIds.add(a.serviceId);
+        if (a.serviceName) bookedNames.add(a.serviceName.toLowerCase());
       }
     }
-    return [...byName.values()]
-      .sort((a, b) => b.units - a.units || b.revenueMinor - a.revenueMinor || a.name.localeCompare(b.name))
-      .slice(0, 5);
-  }, [periodSaleRows]);
+    if (period === 'today') {
+      for (const g of allListGroups) {
+        for (const a of g.appointments) {
+          if (a.status === 'cancelled') continue;
+          if (a.serviceId) bookedIds.add(a.serviceId);
+          if (a.serviceName) bookedNames.add(a.serviceName.toLowerCase());
+        }
+      }
+    }
+    const seenNames = new Set<string>();
+    const out: Service[] = [];
+    for (const s of catalogServices) {
+      const lower = s.name.toLowerCase();
+      if (bookedIds.has(s.id) || bookedNames.has(lower)) continue;
+      if (!branch && seenNames.has(lower)) continue;
+      seenNames.add(lower);
+      out.push(s);
+    }
+    return out;
+  }, [catalogServices, periodSaleRows, period, allListGroups, branch]);
 
-  const maxProductUnits = Math.max(...rankedProducts.map((pr) => pr.units), 1);
+  const deskAttentionItems = useMemo(() => {
+    const periodLabel = period === 'today' ? t.today : period === 'week' ? t.thisWeek : t.thisMonth;
+    const quietSub =
+      quietServices.length > 0
+        ? `${periodLabel} · ${quietServices
+            .slice(0, 2)
+            .map((s) => s.name)
+            .join(', ')}${quietServices.length > 2 ? ` +${quietServices.length - 2}` : ''}`
+        : periodLabel;
+    return [
+      ...attention,
+      {
+        key: 'quiet-services',
+        count: quietServices.length,
+        label: t.quietServicesLabel,
+        sub: quietSub,
+        tone: 'violet' as const,
+        href: `/services${branch ? `?branch=${encodeURIComponent(branch)}` : ''}`,
+        icon: <IconServices />,
+      },
+    ];
+  }, [attention, quietServices, period, t, branch]);
+
+  const deskAttentionTotal = attentionTotal + (quietServices.length > 0 ? 1 : 0);
+
+  const productAttention = useMemo(() => {
+    const list = (shelfProducts ?? []).filter((pr) => pr.active);
+    const out = list.filter((pr) => pr.stock <= 0);
+    const low = list.filter((pr) => pr.stock > 0 && pr.lowStockAt > 0 && pr.stock <= pr.lowStockAt);
+    const flagged = [...out, ...low].sort((a, b) => a.stock - b.stock || a.name.localeCompare(b.name));
+    return {
+      outCount: out.length,
+      lowCount: low.length,
+      totalCount: out.length + low.length,
+      items: flagged.slice(0, 5),
+    };
+  }, [shelfProducts]);
 
   const recentFeed = useMemo(() => {
     const items: Array<{ id: string; tone: 'green' | 'blue' | 'amber' | 'rose'; text: string; time: string; href: string }> = [];
@@ -1186,85 +1248,86 @@ export function OwnerHome(p: OwnerHomeProps) {
             </section>
           </div>
 
-          {/* ROW 3 — Top Services + Top Products + Staff Status */}
+          {/* ROW 3 — Needs your attention (Bookings, Services & Attendance) + Products needing attention + Staff Status */}
           <div className="hm-v3-bot">
-            {/* 1. Top services */}
-            <section className="hm-v3-card hm-v3-services-card">
+            {/* 1. Needs your attention (Bookings, Services & Attendance) */}
+            <section className="hm-v3-card hm-v3-services-card hm-v3-desk-attention">
               <div className="hm-v3-card-head">
                 <h2>
-                  {t.topServicesTitle}{' '}
-                  <span className="hm-v3-count">
-                    ({period === 'today' ? t.today : period === 'week' ? t.thisWeek : t.thisMonth})
-                  </span>
+                  {t.needsYourAttention}{' '}
+                  <span className="hm-v3-count">({deskAttentionTotal})</span>
                 </h2>
-                <a className="hm-v3-head-link" href={`/sales?filter=services&${salesQuerySuffix}`}>
-                  {t.viewAll} →
-                </a>
+                {canSee('/reports', p.role, p.reportTabs) ? (
+                  <a className="hm-v3-head-link" href="/reports">
+                    {t.whatToDoLink} →
+                  </a>
+                ) : deskAttentionTotal === 0 && !failed ? (
+                  <span className="hm-pill hm-pill-green">{t.allClear}</span>
+                ) : null}
               </div>
-              {rankedServices.length === 0 ? (
-                <p className="hm-empty">{t.noServicesSold}</p>
+              {failed && !dataIsForBranch ? (
+                <CardError t={t} />
               ) : (
-                <ol className="hm-v3-srv-rows">
-                  {rankedServices.map((srv, idx) => {
-                    const pct = Math.max(18, Math.round((srv.bookings / maxServiceBookings) * 100));
-                    return (
-                      <li key={srv.id} className="hm-v3-srv-row">
-                        <span className="hm-v3-srv-rank">{idx + 1}</span>
-                        <Avatar name={srv.name} id={srv.id} size={32} />
-                        <div className="hm-v3-srv-main">
-                          <strong className="hm-v3-srv-name">{srv.name}</strong>
-                          <div className="hm-v3-srv-bar">
-                            <span style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-                        <span className="hm-v3-srv-bk">
-                          {srv.bookings} {t.bookingWord(srv.bookings)}
-                        </span>
-                        <strong className="hm-v3-srv-rev">{rupees(srv.revenueMinor)}</strong>
-                      </li>
-                    );
-                  })}
-                </ol>
+                <AttentionList items={deskAttentionItems} />
               )}
             </section>
 
-            {/* 2. Top products */}
-            <section className="hm-v3-card hm-v3-products-card">
+            {/* 2. Products needing attention (Out of stock & Low stock) */}
+            <section className="hm-v3-card hm-v3-products-card hm-v3-prod-attention">
               <div className="hm-v3-card-head">
                 <h2>
-                  {t.topProductsTitle}{' '}
-                  <span className="hm-v3-count">
-                    ({period === 'today' ? t.today : period === 'week' ? t.thisWeek : t.thisMonth})
-                  </span>
+                  {t.productsAttentionTitle}{' '}
+                  <span className="hm-v3-count">({productAttention.totalCount})</span>
                 </h2>
-                <a className="hm-v3-head-link" href={`/sales?filter=products&${salesQuerySuffix}`}>
+                <a
+                  className="hm-v3-head-link"
+                  href={`/products?filter=${productAttention.outCount > 0 ? 'out' : 'low'}${branch ? `&branch=${encodeURIComponent(branch)}` : ''}`}
+                >
                   {t.viewAll} →
                 </a>
               </div>
-              {rankedProducts.length === 0 ? (
-                <p className="hm-empty">{t.noProductsSold}</p>
+              <div className="hm-v3-prod-att-summary">
+                <a
+                  className={`hm-v3-prod-att-chip is-rose ${productAttention.outCount === 0 ? 'is-clear' : ''}`}
+                  href={`/products?filter=out${branch ? `&branch=${encodeURIComponent(branch)}` : ''}`}
+                >
+                  <strong>{productAttention.outCount}</strong>
+                  <span>{t.outOfStockLabel}</span>
+                </a>
+                <a
+                  className={`hm-v3-prod-att-chip is-amber ${productAttention.lowCount === 0 ? 'is-clear' : ''}`}
+                  href={`/products?filter=low${branch ? `&branch=${encodeURIComponent(branch)}` : ''}`}
+                >
+                  <strong>{productAttention.lowCount}</strong>
+                  <span>{t.lowStockLabel}</span>
+                </a>
+              </div>
+              {productAttention.items.length === 0 ? (
+                <p className="hm-empty">{t.allStockHealthy}</p>
               ) : (
-                <ol className="hm-v3-srv-rows">
-                  {rankedProducts.map((pr, idx) => {
-                    const pct = Math.max(18, Math.round((pr.units / maxProductUnits) * 100));
+                <ul className="hm-v3-srv-rows hm-v3-prod-att-rows">
+                  {productAttention.items.map((pr) => {
+                    const isOut = pr.stock <= 0;
+                    const filterKey = isOut ? 'out' : 'low';
                     return (
-                      <li key={pr.id} className="hm-v3-srv-row">
-                        <span className="hm-v3-srv-rank">{idx + 1}</span>
-                        <Avatar name={pr.name} id={pr.id} size={32} />
-                        <div className="hm-v3-srv-main">
-                          <strong className="hm-v3-srv-name">{pr.name}</strong>
-                          <div className="hm-v3-srv-bar">
-                            <span style={{ width: `${pct}%` }} />
+                      <li key={pr.id}>
+                        <a
+                          className="hm-v3-srv-row hm-v3-prod-att-row"
+                          href={`/products?filter=${filterKey}${branch ? `&branch=${encodeURIComponent(branch)}` : ''}`}
+                        >
+                          <Avatar name={pr.name} id={pr.id} size={30} photoUrl={pr.imageUrl} />
+                          <div className="hm-v3-srv-main">
+                            <strong className="hm-v3-srv-name">{pr.name}</strong>
+                            <span className="hm-v3-prod-att-sub">{t.stockLeftSub(pr.stock, pr.lowStockAt)}</span>
                           </div>
-                        </div>
-                        <span className="hm-v3-srv-bk">
-                          {pr.units} {t.unitWord(pr.units)}
-                        </span>
-                        <strong className="hm-v3-srv-rev">{rupees(pr.revenueMinor)}</strong>
+                          <span className={`hm-pill hm-pill-${isOut ? 'rose' : 'amber'}`}>
+                            {isOut ? t.outOfStockLabel : t.lowStockLabel}
+                          </span>
+                        </a>
                       </li>
                     );
                   })}
-                </ol>
+                </ul>
               )}
             </section>
 

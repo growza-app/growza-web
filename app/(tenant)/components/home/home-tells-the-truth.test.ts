@@ -32,10 +32,10 @@ describe('the owner Home shows only what was counted', () => {
     expect(home).toMatch(/\}, \[activities, p\.timezone, t\]\);/);
   });
 
-  it('reads the products card from the period (money.products), not from the shelf\'s lifetime counts', () => {
+  it('reads the products KPI card from the period (money.products), not from the shelf\'s lifetime counts, and reads shelf stock only for stock alerts', () => {
     expect(home).toMatch(/const productTake = data\?\.money\.products \?\? null;/);
     expect(home).not.toMatch(/pr\.sold \?\? 0\) \* Number\(pr\.priceMinor/);
-    expect(home).not.toMatch(/api\s*\.products\(branch\)/);
+    expect(home).toMatch(/const out = list\.filter\(\(pr\) => pr\.stock <= 0\);/);
   });
 
   it('has no Start that only one browser tab knows about', () => {
