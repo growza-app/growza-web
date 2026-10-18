@@ -2788,7 +2788,8 @@
       "emptyProductBill": "Tap a product to start the bill.",
       "scanMiss": "No product has the code {code}. Check the bottle or search by name.",
       "scanNoStock": "No more {name} in stock.",
-      "scanFull": "The bill is full. Take payment, then start another."
+      "scanFull": "The bill is full. Take payment, then start another.",
+      "scanShelfFailed": "The product list did not load, so the scan was not added. Refresh and scan again."
     },
     "sellTitle": "Sell product",
     "pickProduct": "Select a product",
@@ -3379,6 +3380,7 @@
     }
   },
   "sales": {
+    "scanUnknown": "No product has the code {code}. Check the bottle.",
     "title": "Sales",
     "subtitle": "Every completed bill — what services were done, what products were sold, who paid, and how.",
     "from": "From",

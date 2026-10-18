@@ -13,11 +13,9 @@ import { PayFlow } from '../../appointments/new/PayFlow';
 export function SellProductClient({
   timezone,
   backTo,
-  scanCode,
 }: {
   timezone: string;
   backTo?: '/products' | '/sales';
-  scanCode?: string;
 }) {
   const [ready, setReady] = useState(false);
   const [wide, setWide] = useState(false);
@@ -29,5 +27,5 @@ export function SellProductClient({
 
   if (!ready) return <div className="pf" aria-busy="true" />;
 
-  return <PayFlow tokenGone={false} providerId={null} timezone={timezone} backTo={backTo} wide={wide} productsOnly scanCode={scanCode} />;
+  return <PayFlow tokenGone={false} providerId={null} timezone={timezone} backTo={backTo} wide={wide} productsOnly />;
 }

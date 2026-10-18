@@ -43,10 +43,10 @@ export interface ReturnableSaleBill {
   paymentModes?: string[];
 }
 
-function buildInitialQtyMap(bill: ReturnableSaleBill | null, initialScannedCode?: string): Record<string, number> {
+function buildInitialQtyMap(bill: ReturnableSaleBill | null, scannedCode?: string): Record<string, number> {
   if (!bill) return {};
-  if (initialScannedCode) {
-    const matched = findProductLineByCode(bill.products, initialScannedCode);
+  if (scannedCode) {
+    const matched = findProductLineByCode(bill.products, scannedCode);
     if (matched && lineRemainingQty(matched) > 0) return { [lineReturnId(matched)]: 1 };
   }
   const returnable = bill.products.filter((p) => lineRemainingQty(p) > 0);
@@ -59,7 +59,6 @@ function buildInitialQtyMap(bill: ReturnableSaleBill | null, initialScannedCode?
 export function ReturnProductSheet({
   bills,
   initialBill = null,
-  initialScannedCode = '',
   timezone,
   todayISO,
   returnWindowDays,
@@ -68,7 +67,6 @@ export function ReturnProductSheet({
 }: {
   bills: readonly ReturnableSaleBill[];
   initialBill?: ReturnableSaleBill | null;
-  initialScannedCode?: string;
   timezone: string;
   todayISO: string;
   returnWindowDays: number;
@@ -81,22 +79,9 @@ export function ReturnProductSheet({
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialog(dialogRef, { onClose });
 
-  const [selectedBill, setSelectedBill] = useState<ReturnableSaleBill | null>(() => {
-    if (initialBill) return initialBill;
-    const code = initialScannedCode.trim();
-    if (!code) return null;
-    const codeMatches = bills.filter((b) => {
-      const win = computeReturnWindow(b.dayISO, todayISO, returnWindowDays);
-      const line = findProductLineByCode(b.products, code);
-      return win.eligible && Boolean(line && lineRemainingQty(line) > 0);
-    });
-    return codeMatches.length === 1 ? codeMatches[0]! : null;
-  });
-
-  const [query, setQuery] = useState<string>(() => (selectedBill ? '' : initialScannedCode));
-  const [qtyByLine, setQtyByLine] = useState<Record<string, number>>(() =>
-    buildInitialQtyMap(selectedBill, initialScannedCode),
-  );
+  const [selectedBill, setSelectedBill] = useState<ReturnableSaleBill | null>(initialBill);
+  const [query, setQuery] = useState<string>('');
+  const [qtyByLine, setQtyByLine] = useState<Record<string, number>>(() => buildInitialQtyMap(initialBill));
   const [restock, setRestock] = useState(true);
   const [refundMode, setRefundMode] = useState<RefundMode>(() => defaultRefundMode(selectedBill?.paymentModes));
   const [reason, setReason] = useState('');
