@@ -21,7 +21,7 @@ function newAttemptKey(): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-import Link from 'next/link';
+import Link from '../../shared/AppLink';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useLocale, useTranslations } from 'next-intl';
 import { formatDateWithWeekday } from '../lib/format';

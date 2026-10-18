@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '../../shared/AppLink';
 import { useRouter } from 'next/navigation';
 import { api, ApiError, formatMoney } from '../lib/api';
 import type { Product, ProductCategory, ProductImportResult } from '../lib/api-types';

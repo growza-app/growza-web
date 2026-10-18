@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '../shared/AppLink';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminFetch, AdminApiError } from './lib/api';

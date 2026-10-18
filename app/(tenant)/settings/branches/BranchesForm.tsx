@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '../../../shared/AppLink';
 import { bookingLinkUrl, whatsappDigits } from '@growza-app/shared';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';

@@ -5,7 +5,7 @@ import { BranchRowActions } from '../../components/BranchRowActions';
 import { BranchPlaces } from '../../components/BranchPlaces';
 import { stylistsProblem } from '../../lib/enrol-validation';
 import { GEO_PROBLEM, pinFromText } from '../../lib/geo-link';
-import Link from 'next/link';
+import Link from '../../../shared/AppLink';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../../lib/api';

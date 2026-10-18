@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
+import Link from '../../../shared/AppLink';
 import { adminFetch, AdminApiError } from '../../lib/api';
 import { formatDateTime } from '../../lib/format';
 import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, TextInput, Toggle } from '../../components/primitives';

@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
-import Link from 'next/link';
+import Link from '../../shared/AppLink';
 import { useRouter } from 'next/navigation';
 import { api } from '../lib/api';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';

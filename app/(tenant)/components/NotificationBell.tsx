@@ -2,8 +2,9 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type ComponentType, type CSSProperties } from 'react';
-import Link from 'next/link';
+import Link from '../../shared/AppLink';
 import { DateTime } from 'luxon';
+import { useSession } from './SessionProvider';
 import { api, formatMoney, type ActivityEvent } from '../lib/api';
 import { IconAlert, IconBan, IconBell, IconCalendarPlus, IconChat, IconClipboardCheck, IconClose, IconMoveTime, IconPercent, IconReceipt, IconRepeat, IconRupee, IconUserPlus } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -336,7 +337,8 @@ export function NotificationBell() {
   const [lastSeenId, setLastSeenId] = useState(0);
   const [clearedBeforeId, setClearedBeforeId] = useState(0);
   const [toastEvent, setToastEvent] = useState<ActivityEvent | null>(null);
-  const [timezone, setTimezone] = useState('Asia/Kolkata');
+  // From the layout's own read of /me: no request of its own (it used to ask for /me again on every page).
+  const timezone = useSession()?.timezone ?? 'Asia/Kolkata';
   const feed = useFeedBranch();
   // On mobile the dropdown is viewport-centered (position: fixed), so it can't
   // just inherit "top" from where the bell happens to sit in the header the
@@ -355,9 +357,6 @@ export function NotificationBell() {
   useEffect(() => {
     setLastSeenId(readLastSeenId());
     setClearedBeforeId(readClearedBeforeId());
-    api.me().then((me) => {
-      if (me.tenant?.timezone) setTimezone(me.tenant.timezone);
-    }).catch(() => {});
   }, []);
 
   useEffect(() => {

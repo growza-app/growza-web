@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server';
-import Link from 'next/link';
+import Link from '../../shared/AppLink';
 import { screenTitle } from '../lib/page-title';
 import { api } from '../lib/api';
 import { PageHeader } from '../components/PageHeader';

@@ -724,7 +724,6 @@ export const api = {
       registeredAddress?: string;
       invoicePrefix?: string;
       invoiceFooter?: string;
-      pricesIncludeTax?: boolean;
       branchState?: string;
       branchStateCode?: string;
       branchGstin?: string;

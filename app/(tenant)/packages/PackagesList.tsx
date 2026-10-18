@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
+import Link from '../../shared/AppLink';
 import { useRouter } from 'next/navigation';
 import { api, ApiError, BookingConflictError, formatMoney, type Offer, type Service } from '../lib/api';
 import { ConfirmDialog } from '../components/ConfirmDialog';
