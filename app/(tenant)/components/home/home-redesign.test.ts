@@ -28,6 +28,11 @@ describe('Tenant Home v2 redesign', () => {
     expect(owner).toContain("{ href: '/settings', label: t.nav.settings, icon: <IconSettings />, tone: 'slate' }");
   });
 
+  it('has Sell product in the Owner quick links where Offers was, gated by canSee', () => {
+    expect(owner).toContain("{ href: '/products/sell', label: t.sellProductAction, icon: <IconCart />, tone: 'blue' }");
+    expect(owner).not.toContain("href: '/offers'");
+  });
+
   it('applies .is-clear to zero-count attention rows and tiles so calm states do not look like alerts', () => {
     expect(parts).toContain('className={`hm-att hm-tone-${a.tone}${a.count === 0 ? \' is-clear\' : \'\'}`}');
     expect(reception).toContain('className={`hm-att-tile hm-tone-${a.tone}${a.count === 0 ? \' is-clear\' : \'\'}`}');

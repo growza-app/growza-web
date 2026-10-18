@@ -33,11 +33,11 @@ import {
   IconBan,
   IconCalendar,
   IconCalendarPlus,
+  IconCart,
   IconChevronRight,
   IconClipboardCheck,
   IconClock,
   IconDaySummary,
-  IconOffers,
   IconPackages,
   IconProducts,
   IconReceipt,
@@ -813,7 +813,8 @@ export function OwnerHome(p: OwnerHomeProps) {
     // Jira GRW-438 — a quick link of its own, asked for alongside the screen.
     { href: '/packages', label: t.nav.packages, icon: <IconPackages />, tone: 'green' },
     { href: '/products', label: t.nav.products, icon: <IconProducts />, tone: 'blue' },
-    { href: '/offers', label: t.nav.offers, icon: <IconOffers />, tone: 'violet' },
+    // Owner, 2026-10-19 — Sell product takes Offers' place in the phone quick links; Offers is one tap away in the menu.
+    { href: '/products/sell', label: t.sellProductAction, icon: <IconCart />, tone: 'blue' },
     { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
     { href: '/reports', label: t.nav.reports, icon: <IconReports />, tone: 'amber' },
     { href: '/settings', label: t.nav.settings, icon: <IconSettings />, tone: 'slate' },
