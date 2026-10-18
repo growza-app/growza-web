@@ -67,4 +67,8 @@ describe('the sidebar folds (owner, 2026-10-15)', () => {
     expect(side).toMatch(/folds\[item\.label\] \?\? current/);
     expect(side).toMatch(/if \(arrivedAt\.current === pathname\) return;/);
   });
+  it('clicking an expandable parent option opens/closes its child options instead of navigating directly', () => {
+    expect(side).toMatch(/if \(expandable\) \{\s*e\.preventDefault\(\);\s*remember\(\{ \.\.\.folds, \[item\.label\]: !expanded \}\);\s*return;\s*\}/);
+  });
 });
+
