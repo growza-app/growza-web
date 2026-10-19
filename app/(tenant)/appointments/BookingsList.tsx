@@ -37,7 +37,6 @@ import {
   IconSearch,
   IconSort,
   IconStaff,
-  IconUserPlus,
 } from '../components/icons';
 
 /**
@@ -1775,9 +1774,6 @@ export function BookingsList({
               </div>
               {mayBook && (
                 <div className="bk-cmd-create-btns">
-                  <a className="btn bk-cmd-walkin-btn" href="/appointments/new?mode=now">
-                    <IconUserPlus /> {t('walkInBtn')}
-                  </a>
                   <a className="btn btn-primary bk-cmd-new-btn" href="/appointments/new?mode=later">
                     <IconPlus /> {t('deskNew')}
                   </a>

@@ -171,7 +171,6 @@
     "kpiCollectedSub": "{amount} collected",
     "tomorrow": "Tomorrow",
     "thisWeek": "This week",
-    "walkInBtn": "Walk-in",
     "waitingNextUp": "Next up: {tokens} · +{more} more in queue · Longest wait {wait}",
     "waitingLongest": "Longest wait {wait}",
     "waitingShowAll": "Show all {count} waiting",
