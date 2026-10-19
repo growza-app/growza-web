@@ -53,7 +53,7 @@ export function DeskWhenCard({
   labels: { today: string; tomorrow: string; otherDay: string; bookingTime: string; anyTime: string; cont: string; close: string };
   busy: boolean;
   onContinue: () => void;
-  /** Leaves the booking altogether. */
+  /** A click outside, or Escape: puts the card away and keeps the answer as it stands. */
   onClose: () => void;
 }) {
   const panel = useRef<HTMLDivElement>(null);
@@ -63,7 +63,7 @@ export function DeskWhenCard({
   const other = day !== today && day !== tomorrow;
 
   return (
-    <div className="modal-backdrop">
+    <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal wi-when-card" role="dialog" aria-modal="true" aria-label={title} ref={panel}>
         <h2 className="wi-when-card-title">{title}</h2>
         <div className="wi-when-list" role="radiogroup" aria-label={title}>

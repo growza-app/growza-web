@@ -3602,7 +3602,8 @@ export function NewVisitSheet({
             labels={{ today: nv.today, tomorrow: nv.deskTomorrow, otherDay: nv.deskOtherDay, bookingTime: nv.bookingTime, anyTime: nv.anyTime, cont: nv.deskContinue, close: nv.close }}
             busy={busy}
             onContinue={() => setWhenAsked(true)}
-            onClose={goBack ?? onClose}
+            // Outside the card, or Escape, puts it away and keeps the answer as it stands (the pill reopens it); Back leaves.
+            onClose={() => setWhenAsked(true)}
           />
         ) : null}
         <div className="walk-in-page wi-desk wi-desk2">

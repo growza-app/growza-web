@@ -59,6 +59,9 @@ describe('New booking on a wide desk', () => {
     expect(sheet).toContain('const [whenAsked, setWhenAsked] = useState(!askWhenFirst);');
     // Now and Waiting are whole answers (one press, card closes); Pick a time still has a day and a time to give.
     expect(d).toMatch(/pickWhen\(what\);[\s\S]*?if \(what !== 'pick'\) setWhenAsked\(true\);/);
+    // A click outside, or Escape, puts the card away with the answer as it stands; it does not leave the booking.
+    expect(d).toContain('onClose={() => setWhenAsked(true)}');
+    expect(here('./DeskWhenCard.tsx')).toContain('onClick={(e) => e.target === e.currentTarget && onClose()}');
     // The answer stays on screen as a line that reopens the card.
     expect(d).toMatch(/onClick=\{\(\) => setWhenAsked\(false\)\}/);
     // Only `?mode=now` (Walk-in) skips the card; New booking and a bare link ask.
