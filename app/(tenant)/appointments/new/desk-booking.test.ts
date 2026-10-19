@@ -65,6 +65,9 @@ describe('New booking on a wide desk', () => {
   it('asks when with Starts now, Waiting, a date and a time — nothing between — and Starts now already chosen', () => {
     const d = desk();
     for (const piece of ["'now', !queueing && !later", "'queue', queueing", 'type="date"', 'id="wi-desk-time"']) expect(d).toContain(piece);
+    // All four on one line (it wraps only when the window is too narrow for it).
+    expect(d).toContain('wi-desk2-whenrow');
+    expect(css).toMatch(/\.wi-desk2-whenrow \{\s*display: flex;/);
     // No Later today / Tomorrow shortcuts.
     expect(d).not.toContain("'today'");
     expect(d).not.toContain("'tomorrow'");

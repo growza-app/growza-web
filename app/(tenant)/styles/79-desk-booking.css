@@ -152,7 +152,7 @@
 
   .wi-desk2-top {
     display: grid;
-    grid-template-columns: minmax(16rem, 26rem) minmax(0, 1fr);
+    grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
     gap: var(--sp-3);
     align-items: start;
   }
@@ -161,10 +161,17 @@
     min-width: 0;
   }
 
-  /* The answers to "when", all in view: one tap each, Starts now already chosen. */
-  .wi-desk2-whenlist {
+  /* The answers to "when" on one line: Starts now, Waiting, the date and the time. It wraps only when the window is too narrow for it. */
+  .wi-desk2-whenrow {
     display: flex;
     flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--sp-2);
+  }
+
+  .wi-desk2-whenlist {
+    display: flex;
+    flex-wrap: nowrap;
     align-items: center;
     gap: var(--sp-2);
   }
@@ -265,18 +272,10 @@
     margin: 0 0 var(--sp-1);
   }
 
-  /* A date and a time, side by side under the two quick answers. */
-  .wi-desk2-fields {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--sp-2);
-    margin-top: var(--sp-2);
-  }
-
   .wi-desk2-field {
     margin: 0;
-    flex: 1 1 10rem;
-    max-width: 14rem;
+    flex: 0 1 9rem;
+    min-width: 8rem;
   }
 
   /* A tile focused by keyboard scrolls clear of the bottom bar, whatever height the bar has (free times, lines). */

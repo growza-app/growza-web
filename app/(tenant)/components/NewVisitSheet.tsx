@@ -3603,6 +3603,7 @@ export function NewVisitSheet({
             </section>
             <section className="wi-desk2-step">
               <h2 className="pf-wide-h" id="wi-desk-when">{nv.deskWhenLabel}</h2>
+              <div className="wi-desk2-whenrow">
               <div className="wi-desk2-whenlist" role="radiogroup" aria-labelledby="wi-desk-when">
                 {/* Jira GRW-456 — nobody on the branch, or nobody who does this: starting is the one it cannot honour. */}
                 {whenChip('now', !queueing && !later, nv.whenNow, () => pickWhen('now'), noStaffHere || noOneCanDoIt)}
@@ -3613,7 +3614,6 @@ export function NewVisitSheet({
                 given); the exact free time is then chosen in the bar once a service is on the visit, starting from the
                 one asked for, or the earliest.
               */}
-              <div className="wi-desk2-fields">
                 <div className="field wi-desk2-field">
                   <label htmlFor="wi-desk-date">{nv.bookingDate}</label>
                   <input
