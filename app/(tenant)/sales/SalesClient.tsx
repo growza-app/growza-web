@@ -2175,19 +2175,24 @@ export function SalesClient({
                     <th>{t('cols.payment')}</th>
                     <th className="is-num">{t('cols.total')}</th>
                     <th>{t('cols.status')}</th>
+                    {showProductsCol ? <th>{t('cols.returnWindow')}</th> : null}
                     <th className="is-action">{t('cols.action')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pageRows.map((row) => {
                     const shownProducts = row.products.slice(0, MAX_ROW_PRODUCTS);
-                    const tableProducts = row.products.length > MAX_ROW_PRODUCTS ? row.products.slice(0, 1) : shownProducts;
+                    const sortedForPreview = [...row.products].sort(
+                      (a, b) => (lineRemainingQty(b) > 0 ? 1 : 0) - (lineRemainingQty(a) > 0 ? 1 : 0),
+                    );
+                    const tableProducts = row.products.length > 1 ? sortedForPreview.slice(0, 1) : shownProducts;
                     const hiddenProducts = row.products.length - tableProducts.length;
                     const primaryMode = row.paymentModes[0] ?? 'other';
+                    const rowWin = computeReturnWindow(row.dayISO, todayISO, returnWindowDays);
                     const canReturnRow =
                       mayRecordPayment &&
                       row.productUnits > 0 &&
-                      computeReturnWindow(row.dayISO, todayISO, returnWindowDays).eligible;
+                      rowWin.eligible;
                     const fullyReturned = row.returnedUnits > 0 && row.productUnits === 0 && row.serviceNames.length === 0;
                     const partReturned = row.returnedUnits > 0 && !fullyReturned;
                     return (
@@ -2203,7 +2208,7 @@ export function SalesClient({
                           </div>
                         </td>
                         {showServicesCol ? (
-                          <td>
+                          <td className="sls-col-services">
                             <div className="sls-items">
                               {row.offerTitle ? (
                                 <span className="sls-badge sls-badge-pkg">
@@ -2283,6 +2288,21 @@ export function SalesClient({
                             </span>
                           )}
                         </td>
+                        {showProductsCol ? (
+                          <td className="sls-col-ret-win">
+                            {row.products.length === 0 ? (
+                              <span className="sls-muted">{t('noProducts')}</span>
+                            ) : rowWin.eligible && row.productUnits > 0 ? (
+                              <span className="sls-ret-win-pill is-ok">
+                                {t('returnWindowOpen', { days: rowWin.daysLeft })}
+                              </span>
+                            ) : (
+                              <span className="sls-ret-win-pill is-expired">
+                                {t('returnWindowClosed')}
+                              </span>
+                            )}
+                          </td>
+                        ) : null}
                         <td className="is-action">
                           <div className="sls-row-actions">
                             {canReturnRow ? (

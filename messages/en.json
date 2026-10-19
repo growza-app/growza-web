@@ -3445,6 +3445,7 @@
       "payment": "Payment",
       "total": "Total",
       "status": "Status",
+      "returnWindow": "Return window",
       "action": "Invoice"
     },
     "completedStatus": "Completed",
@@ -3492,6 +3493,8 @@
     "returnedStatus": "Returned",
     "partReturnedStatus": "Part returned",
     "returnedBadge": "{n} returned",
+    "returnWindowOpen": "Open · {days, plural, =0 {Last day} one {#d left} other {#d left}}",
+    "returnWindowClosed": "Closed",
     "returnSheet": {
       "title": "Return product",
       "subtitle": "Find the bill and select items to return.",

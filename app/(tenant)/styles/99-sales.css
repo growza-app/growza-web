@@ -1219,7 +1219,7 @@
 
 .sls-table th {
   text-align: left;
-  padding: 6px var(--sp-3);
+  padding: 6px 8px;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -1237,7 +1237,7 @@
 }
 
 .sls-table td {
-  padding: 6px var(--sp-3);
+  padding: 6px 8px;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
   color: var(--text);
@@ -1272,7 +1272,8 @@
   font-weight: 600;
 }
 
-.sls-col-staff {
+.sls-col-staff,
+.sls-col-ret-win {
   white-space: nowrap;
   font-size: 0.8125rem;
 }
@@ -1353,8 +1354,12 @@
   color: var(--text);
 }
 
+.sls-col-services {
+  max-width: 10.5rem;
+}
+
 .sls-col-products {
-  max-width: 14.5rem;
+  max-width: 11.5rem;
 }
 
 .sls-product-chips {
@@ -1372,7 +1377,7 @@
 .sls-table .sls-product-chips {
   flex-direction: column;
   align-items: flex-start;
-  max-width: 14rem;
+  max-width: 11rem;
   overflow: hidden;
 }
 
@@ -1651,21 +1656,23 @@
 @media (min-width: 861px) and (max-width: 1440px) {
   .sls-table th,
   .sls-table td {
-    padding-left: 6px;
-    padding-right: 6px;
+    padding-left: 5px;
+    padding-right: 5px;
   }
 
+  .sls-col-products,
   .sls-table .sls-product-chips {
-    max-width: 10.5rem;
+    max-width: 9.75rem;
   }
 
+  .sls-col-services,
   .sls-table .sls-service-list {
-    max-width: 12rem;
+    max-width: 8.75rem;
   }
 
   .sls-col-when {
     white-space: normal;
-    max-width: 6.5rem;
+    max-width: 5.5rem;
   }
 
   .sls-table .sls-client-name {

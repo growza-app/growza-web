@@ -3445,6 +3445,7 @@
       "payment": "भुगतान",
       "total": "कुल",
       "status": "स्थिति",
+      "returnWindow": "वापसी समय",
       "action": "बिल"
     },
     "completedStatus": "पूरा हुआ",
@@ -3492,6 +3493,8 @@
     "returnedStatus": "वापस हुआ",
     "partReturnedStatus": "आंशिक वापसी",
     "returnedBadge": "{n} वापस",
+    "returnWindowOpen": "खुला · {days, plural, =0 {आख़िरी दिन} one {# दिन बाकी} other {# दिन बाकी}}",
+    "returnWindowClosed": "बंद",
     "returnSheet": {
       "title": "सामान वापस लें",
       "subtitle": "बिल खोजें और वापस लेने वाला सामान चुनें।",
