@@ -2379,6 +2379,7 @@ button.sls-ret-step-pill:not(:disabled) {
   color: var(--muted);
   font-size: 0.75rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .sls-ret-exhausted-pill {
