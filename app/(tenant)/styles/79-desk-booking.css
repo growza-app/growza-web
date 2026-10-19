@@ -194,10 +194,22 @@
   }
 
 
+  /* The word "Stylist" sits level with the middle of the chips beside it, not at their top. */
   .wi-desk2 .wi-stylist-bar {
     flex-direction: row;
     flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
     margin: 0;
+  }
+
+  .wi-desk2 .wi-stylist-chips-label {
+    margin: 0;
+    line-height: 1;
+  }
+
+  .wi-desk2 .wi-stylist-chips {
+    align-items: center;
   }
 
   /* Along the bottom of the window while the menu scrolls under it. */

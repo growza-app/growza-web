@@ -71,6 +71,8 @@ describe('New booking on a wide desk', () => {
     // One height and one start line for the client box and every control on the line; the date and time keep their words for a screen reader.
     expect(css).toMatch(/\.wi-desk2 \.wi-desk2-field input,\s*\.wi-desk2 \.wi-desk2-field select \{[^}]*height: 2\.75rem;/);
     expect(d).toContain('htmlFor="wi-desk-date" className="sr-only"');
+    // The word Stylist is level with the middle of its chips.
+    expect(css).toMatch(/\.wi-desk2 \.wi-stylist-bar \{[^}]*align-items: center;/);
     // No Later today / Tomorrow shortcuts.
     expect(d).not.toContain("'today'");
     expect(d).not.toContain("'tomorrow'");
