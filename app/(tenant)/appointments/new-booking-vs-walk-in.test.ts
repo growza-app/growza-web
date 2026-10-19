@@ -29,7 +29,8 @@ describe('New booking opens on Pick a time, Walk-in on Starts now', () => {
   });
 
   it('every Walk-in link asks for now', () => {
-    expect(bookings).toContain('className="btn bk-cmd-walkin-btn" href="/appointments/new?mode=now"');
+    // Owner, 2026-10-19 — the Bookings toolbar has one button: the page's own Starts now / Pick a time switch covers both.
+    expect(bookings).not.toContain('bk-cmd-walkin-btn');
     expect(owner).toContain('className="hm-v3-qbtn is-mint" href="/appointments/new?mode=now"');
     expect(reception).toContain("href: '/appointments/new?mode=now', label: t.walkInShort");
   });
