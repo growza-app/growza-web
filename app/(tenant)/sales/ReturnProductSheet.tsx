@@ -261,6 +261,15 @@ export function ReturnProductSheet({
     setError(null);
   };
 
+  const clearSelectedProducts = () => {
+    setQtyByLine({});
+    setScanNotice(null);
+    setError(null);
+  };
+
+  const allEligibleSelected = returnableLines.length > 0 && selectedItemsCount === returnableLines.length;
+  const someEligibleSelected = selectedItemsCount > 0 && !allEligibleSelected;
+
   const goToReviewStep = () => {
     if (!selectedBill || totalSelectedUnits <= 0 || !billWindow.eligible) return;
     setError(null);
@@ -503,7 +512,11 @@ export function ReturnProductSheet({
                         {billWindow.eligible && returnableLines.length > 0 ? (
                           <>
                             {totalSelectedUnits > 0 ? (
-                              <button type="button" className="sls-ret-link-btn is-muted" onClick={() => setQtyByLine({})}>
+                              <button
+                                type="button"
+                                className="sls-ret-link-btn is-muted"
+                                onClick={clearSelectedProducts}
+                              >
                                 {t('clearSelection')}
                               </button>
                             ) : null}
@@ -545,7 +558,25 @@ export function ReturnProductSheet({
                       <table className="sls-ret-table">
                         <thead>
                           <tr>
-                            <th>{t('colProduct')}</th>
+                            <th>
+                              <label className="sls-ret-th-check">
+                                <input
+                                  type="checkbox"
+                                  className="sls-ret-checkbox"
+                                  aria-label={t('returnAll')}
+                                  disabled={!billWindow.eligible || returnableLines.length === 0 || busy}
+                                  checked={allEligibleSelected}
+                                  ref={(el) => {
+                                    if (el) el.indeterminate = someEligibleSelected;
+                                  }}
+                                  onChange={() => {
+                                    if (allEligibleSelected) clearSelectedProducts();
+                                    else selectAllProducts();
+                                  }}
+                                />
+                                <span>{t('colProduct')}</span>
+                              </label>
+                            </th>
                             <th>{t('colSku')}</th>
                             <th className="is-num">{t('colPurchased')}</th>
                             <th className="is-num">{t('colAlreadyReturned')}</th>
@@ -561,6 +592,7 @@ export function ReturnProductSheet({
                             const selectedQty = Math.min(remaining, Math.max(0, qtyByLine[id] ?? 0));
                             const lineRefund = lineRefundMinorForQty(p, selectedQty);
                             const skuOrCode = p.sku ?? p.barcode ?? '—';
+                            const canPickRow = billWindow.eligible && remaining > 0 && !busy;
                             return (
                               <tr
                                 key={`${id}-${idx}`}
@@ -570,6 +602,20 @@ export function ReturnProductSheet({
                               >
                                 <td data-label={t('colProduct')}>
                                   <div className="sls-ret-prd-cell">
+                                    <input
+                                      type="checkbox"
+                                      className="sls-ret-checkbox"
+                                      aria-label={p.name}
+                                      disabled={!canPickRow}
+                                      checked={selectedQty > 0}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setLineQty(p, remaining);
+                                        } else {
+                                          setLineQty(p, 0);
+                                        }
+                                      }}
+                                    />
                                     <span className="sls-ret-prd-thumb" aria-hidden="true">
                                       <IconProducts />
                                     </span>

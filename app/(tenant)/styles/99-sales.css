@@ -2317,6 +2317,27 @@ button.sls-ret-step-pill:not(:disabled) {
   color: var(--muted);
 }
 
+.sls-ret-th-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.sls-ret-checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent-deep);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sls-ret-checkbox:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .sls-ret-prd-cell {
   display: flex;
   align-items: center;
