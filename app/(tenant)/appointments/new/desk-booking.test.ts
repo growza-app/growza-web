@@ -85,7 +85,7 @@ describe('New booking on a wide desk', () => {
   });
 
   it('has its words in both languages', () => {
-    for (const key of ['deskToday', 'deskOnVisit', 'deskEmpty', 'deskNobodyToday', 'deskWhenTitle', 'deskTomorrow', 'deskOtherDay', 'deskContinue', 'deskChange', 'deskAround']) {
+    for (const key of ['deskToday', 'deskOnVisit', 'deskEmpty', 'deskNobodyToday', 'deskWhenTitle', 'deskTomorrow', 'deskOtherDay', 'deskContinue', 'deskWhenLabel', 'deskAround']) {
       expect((en.newVisit as Record<string, string>)[key]).toBeTruthy();
       expect((hi.newVisit as Record<string, string>)[key]).toBeTruthy();
     }

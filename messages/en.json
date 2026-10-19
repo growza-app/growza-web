@@ -2071,7 +2071,7 @@
     "deskTomorrow": "Tomorrow",
     "deskOtherDay": "Another day",
     "deskContinue": "Continue",
-    "deskChange": "Change",
+    "deskWhenLabel": "When",
     "deskAround": "around {time}",
     "deskNobodyToday": "Nobody in yet today.",
     "noServiceMatch": "No service matches that.",

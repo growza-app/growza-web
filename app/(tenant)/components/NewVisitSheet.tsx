@@ -3630,9 +3630,10 @@ export function NewVisitSheet({
               </div>
             </div>
             <div className="wi-desk2-when">
-              <button type="button" className="wi-when-pill" onClick={() => setWhenAsked(false)} disabled={busy} aria-label={`${nv.whatNow}: ${whenSummary}`}>
+              <button type="button" className="wi-when-pill" onClick={() => setWhenAsked(false)} disabled={busy} aria-label={`${nv.deskWhenLabel}: ${whenSummary}`}>
+                <span className="wi-when-pill-label">{nv.deskWhenLabel}</span>
                 <span>{whenSummary}</span>
-                <span className="wi-when-pill-change">{nv.deskChange}</span>
+                <IconChevronDown />
               </button>
               {/* A token has no stylist: the question only exists once the answer is Starts now or Pick a time. */}
               {queueing ? null : <div className="wi-desk-stylist">{stylistField}</div>}

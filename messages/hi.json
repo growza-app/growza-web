@@ -2071,7 +2071,7 @@
     "deskTomorrow": "कल",
     "deskOtherDay": "दूसरा दिन",
     "deskContinue": "आगे बढ़ें",
-    "deskChange": "बदलें",
+    "deskWhenLabel": "कब",
     "deskAround": "लगभग {time}",
     "deskNobodyToday": "आज अभी तक कोई नहीं आया।",
     "noServiceMatch": "ऐसी कोई सेवा नहीं मिली।",

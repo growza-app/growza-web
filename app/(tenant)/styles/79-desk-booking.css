@@ -197,10 +197,16 @@
     cursor: pointer;
   }
 
-  .wi-when-pill-change {
+  /* "When" before the answer, a chevron after it: it reads as a choice, not as a sentence with a link in it. */
+  .wi-when-pill-label {
     font-size: 0.8125rem;
     font-weight: 500;
-    text-decoration: underline;
+  }
+
+  .wi-when-pill svg {
+    width: 1rem;
+    height: 1rem;
+    flex: none;
   }
 
   /* Along the bottom of the window while the menu scrolls under it. */
