@@ -1778,7 +1778,7 @@ export function BookingsList({
                   <a className="btn bk-cmd-walkin-btn" href="/appointments/new?mode=now">
                     <IconUserPlus /> {t('walkInBtn')}
                   </a>
-                  <a className="btn btn-primary bk-cmd-new-btn" href="/appointments/new">
+                  <a className="btn btn-primary bk-cmd-new-btn" href="/appointments/new?mode=later">
                     <IconPlus /> {t('deskNew')}
                   </a>
                 </div>
