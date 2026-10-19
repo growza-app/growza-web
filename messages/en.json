@@ -2613,7 +2613,15 @@
       },
       "empty": "Nothing to do this week.",
       "emptyHint": "Your clients are coming in and nobody is slipping away.",
-      "checked": "Checked against your bookings, not guessed."
+      "checked": "Checked against your bookings, not guessed.",
+      "homeCard": {
+        "title": "Clients due back",
+        "loading": "Looking for clients who are due…",
+        "failed": "Could not load clients.",
+        "retry": "Try again",
+        "none": "Nobody is overdue. Your regulars are coming in.",
+        "seeAll": "See all {n}"
+      }
     }
   },
   "autopayRenewal": {
