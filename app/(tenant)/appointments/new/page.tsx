@@ -127,6 +127,8 @@ export default async function NewBookingPage({
       {/* Owner, 2026-10-09 — on a phone, Record payment is three screens (`PayFlow`); `?full=1` keeps the one-page form there. */}
       <NewBookingClient
         mode={mode}
+        // Owner, 2026-10-19 — a laptop asks WHEN first unless the link already answered it (Walk-in is `?mode=now`).
+        askWhen={params.mode !== 'now'}
         purpose={paying ? 'payment' : 'visit'}
         token={token}
         tokenGone={tokenGone}

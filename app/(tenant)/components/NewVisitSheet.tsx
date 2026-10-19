@@ -62,7 +62,7 @@ import { PackageDetails } from './PackageDetails';
 import { fixVisitHref, payVisitHref } from '../lib/pay-token';
 import { ServiceSheet } from './ServiceSheet';
 import { DeskServiceGrid } from '../appointments/new/DeskServiceGrid';
-import { DeskUnpaid } from '../appointments/new/DeskUnpaid';
+import { DeskWhenCard, type WhenValue } from '../appointments/new/DeskWhenCard';
 import { BillRows, type BillLine } from '../appointments/new/BillCard';
 import { autoFocusField, useAutoFocusField } from '../../shared/a11y/soft-keyboard';
 import { ReceiptShare } from './ReceiptShare';
@@ -296,6 +296,7 @@ export function NewVisitSheet({
   token,
   tokenGone = false,
   desk = false,
+  askWhenFirst = false,
 }: {
   onClose: () => void;
   /** Next customer on the payment done screen: a fresh form. Without it, Next customer closes like Done. */
@@ -331,6 +332,12 @@ export function NewVisitSheet({
    * when on the right. The same state and the same three writes; nothing here is a second booking form.
    */
   desk?: boolean;
+  /**
+   * Owner, 2026-10-19 — at a desk, New booking opens by asking WHEN, in a card over the screen, before anything else:
+   * Starts now and Waiting answer it in one press, Pick a time asks the day and the time. A link that has already
+   * answered it (Walk-in, `?mode=now`) leaves this off and opens on the booking itself.
+   */
+  askWhenFirst?: boolean;
 }) {
   const tmin = useTranslations('services');
   const nv = useNewVisitCopy();
@@ -379,6 +386,10 @@ export function NewVisitSheet({
   const deskForm = bookForm && desk;
   /** Which question is open over the form. `null` is the form itself. */
   const [asking, setAsking] = useState<'services' | null>(null);
+  /** The desk's When card has been answered (or was never needed): the booking screen is open to work on. */
+  const [whenAsked, setWhenAsked] = useState(!askWhenFirst);
+  /** The desk's bottom bar shows the lines of the bill on demand, so the screen is menu first. */
+  const [detailsOpen, setDetailsOpen] = useState(false);
   /**
    * Both routed pages — New booking and Record payment — pick services the same way (owner, 2026-10-07).
    *
@@ -2848,6 +2859,49 @@ export function NewVisitSheet({
     return askedMatch.slot ? nv.timeMoved(asked, clockTime(askedMatch.slot.utc)) : nv.timeNoneAfter(asked);
   })();
 
+  /** The free times for the day, or why there are none — drawn in the When column's grid and in the desk's bottom bar. */
+  const slotsBlock = (
+    <>
+    {picked.length === 0 ? (
+      <div className="empty">{nv.servicesMissing}</div>
+    ) : (
+      <>
+        {slotError && <div role="alert" className="wi-error">{slotError}</div>}
+        <h3 className="wi-section-label">{nv.whichTime}</h3>
+        {loadingSlots ? (
+          <div className="empty">{nv.loadingTimes}</div>
+        ) : !slots || slots.slotCount === 0 ? (
+          <div className="empty" id="wi-no-times">
+            {nv.noTimes}
+          </div>
+        ) : timeMoved ? (
+          <div className="wi-time-moved" role="status" id="wi-time-moved">
+            {timeMoved}
+          </div>
+        ) : null}
+        {!loadingSlots && slots && slots.slotCount > 0 ? (
+          <div className="wi-slot-grid" role="group" aria-label={nv.whichTime}>
+            {slots.sections.flatMap((sec) =>
+              sec.slots.map((slot) => (
+                <button
+                  key={slot.utc}
+                  type="button"
+                  aria-pressed={slotUtc === slot.utc}
+                  className={`wi-slot ${slotUtc === slot.utc ? 'wi-slot-on' : ''}`}
+                  onClick={() => setSlotUtc(slot.utc)}
+                  disabled={busy}
+                >
+                  {slot.local}
+                </button>
+              )),
+            )}
+          </div>
+        ) : null}
+      </>
+    )}
+    </>
+  );
+
   const whenChoices = (
     <>
       <h2 className="wi-section-label" id="wi-whatnow">{nv.whatNow}</h2>
@@ -2909,44 +2963,7 @@ export function NewVisitSheet({
               </select>
             </div>
           </div>
-          {/* The grid needs a duration to fit, so it waits for the first service — and says so rather than sitting empty. */}
-          {picked.length === 0 ? (
-            <div className="empty">{nv.servicesMissing}</div>
-          ) : (
-            <>
-              {slotError && <div role="alert" className="wi-error">{slotError}</div>}
-              <h3 className="wi-section-label">{nv.whichTime}</h3>
-              {loadingSlots ? (
-                <div className="empty">{nv.loadingTimes}</div>
-              ) : !slots || slots.slotCount === 0 ? (
-                <div className="empty" id="wi-no-times">
-                  {nv.noTimes}
-                </div>
-              ) : timeMoved ? (
-                <div className="wi-time-moved" role="status" id="wi-time-moved">
-                  {timeMoved}
-                </div>
-              ) : null}
-              {!loadingSlots && slots && slots.slotCount > 0 ? (
-                <div className="wi-slot-grid" role="group" aria-label={nv.whichTime}>
-                  {slots.sections.flatMap((sec) =>
-                    sec.slots.map((slot) => (
-                      <button
-                        key={slot.utc}
-                        type="button"
-                        aria-pressed={slotUtc === slot.utc}
-                        className={`wi-slot ${slotUtc === slot.utc ? 'wi-slot-on' : ''}`}
-                        onClick={() => setSlotUtc(slot.utc)}
-                        disabled={busy}
-                      >
-                        {slot.local}
-                      </button>
-                    )),
-                  )}
-                </div>
-              ) : null}
-            </>
-          )}
+          {slotsBlock}
         </>
       ) : null}
     </>
@@ -3539,10 +3556,56 @@ export function NewVisitSheet({
     : picked.map((p) => ({ serviceId: p.serviceId, name: p.name, priceMinor: Number(p.priceMinor ?? 0) }));
   const deskListMinor = everything.reduce((sum, p) => sum + Number(p.priceMinor ?? 0), 0);
   if (deskForm && onForm) {
+    /*
+     * Owner, 2026-10-19 — two panels and a bar, not three panels. WHEN is asked first, in a card over the screen
+     * (`DeskWhenCard`); what is left is who and what. Who sits above the menu (with the stylist, once the answer is not
+     * Waiting), the menu takes the width, and what was chosen, the free times (they need the services) and Book are
+     * a bar along the bottom. The lines of the bill open from the bar instead of holding a column of their own.
+     */
+    const chooseWhen = (what: WhenValue) => {
+      pickWhen(what);
+      // Now and Waiting are whole answers; Pick a time still has a day and a time to give.
+      if (what !== 'pick') setWhenAsked(true);
+    };
+    const dayLabel = days.find((d) => d.iso === day)?.label ?? day;
+    const wishLabel = timeOptions.find((o) => o.value === timeWanted)?.label ?? timeWanted;
+    const whenSummary = queueing
+      ? nv.whenWaiting
+      : !later
+        ? nv.whenNow
+        : `${dayLabel} · ${slotUtc ? clockTime(slotUtc) : timeWanted ? nv.deskAround(wishLabel) : nv.anyTime}`;
     return (
       <>
         {largeAmountDialog}
-        <div className="walk-in-page wi-desk">
+        {!whenAsked ? (
+          <DeskWhenCard
+            title={nv.deskWhenTitle}
+            choices={[
+              ...(canQueue ? [{ value: 'queue' as const, label: nv.whenWaiting, on: queueing }] : []),
+              { value: 'now' as const, label: nv.whenNow, on: !queueing && !later, off: noStaffHere || noOneCanDoIt },
+              { value: 'pick' as const, label: nv.whenPick, on: !queueing && later },
+            ]}
+            onChoose={chooseWhen}
+            picking={!queueing && later}
+            days={days}
+            day={day}
+            onDay={(iso) => {
+              setDay(iso);
+              // "Pick a time" is the answer being given: even today's date is "later today".
+              setDateChosen(true);
+              // Jira GRW-535 — a morning time asked for tomorrow is dropped when the day comes back to today and it has passed.
+              if (iso === todayIso && timeWanted && timeWanted < nowHm) setTimeWanted('');
+            }}
+            timeValue={timeWanted}
+            timeOptions={timeOptions}
+            onTime={setTimeWanted}
+            labels={{ today: nv.today, tomorrow: nv.deskTomorrow, otherDay: nv.deskOtherDay, bookingTime: nv.bookingTime, anyTime: nv.anyTime, cont: nv.deskContinue, close: nv.close }}
+            busy={busy}
+            onContinue={() => setWhenAsked(true)}
+            onClose={goBack ?? onClose}
+          />
+        ) : null}
+        <div className="walk-in-page wi-desk wi-desk2">
           <div className="sheet-head">
             {goBack ? (
               <button type="button" className="wi-back" aria-label={nv.back} onClick={goBack}>
@@ -3557,79 +3620,85 @@ export function NewVisitSheet({
             <span className="wi-close-gap" aria-hidden="true" />
             {pageHead}
           </div>
-          <div className="pf-wide-grid wi-desk-grid">
-            <aside className="pf-wide-left">
-              <h2 className="pf-wide-h">{clientNoun}</h2>
+
+          <div className="wi-desk2-top">
+            <div className="wi-desk2-who">
               {clientCombo}
               <div className="wi-new-person" ref={addNewRef}>
                 {clientFields}
               </div>
-              <DeskUnpaid location={listBranch} timezone={timezone} title={nv.deskToday} empty={nv.deskNobodyToday} still />
-            </aside>
-            {services === null ? (
-              <section className="pf-wide-mid" aria-busy="true">
-                <div className="pf-tiles pf-wide-tiles">
-                  {Array.from({ length: 8 }, (_, i) => (
-                    <div key={i} className="pf-tile pf-tile-wait" />
-                  ))}
-                </div>
-              </section>
-            ) : services.length === 0 ? (
-              <section className="pf-wide-mid">
-                <div className="empty">{nv.noServicesYet}</div>
-              </section>
-            ) : (
-              <DeskServiceGrid
-                services={services}
-                countOf={countOnBill}
-                onMore={addOneMore}
-                onLess={removeOneOf}
-                full={billCount >= BILL_MAX_LINES}
-                money={(minor) => formatMoney(String(minor))}
-                packages={combos}
-                packageCountOf={(id) => (id === offerId ? 1 : 0)}
-                onPickPackage={(o) => (offerId === o.id ? removeCombo() : applyCombo(o))}
-              />
-            )}
-            <aside className="pf-wide-right">
-              <h2 className="pf-wide-h">{nv.deskOnVisit}</h2>
-              {showServicesError ? (
-                <div role="alert" className="field-error">
-                  {nv.servicesMissing}
-                </div>
-              ) : null}
-              {billFull ? (
-                <div role="alert" className="field-error">
-                  {nv.billFull(BILL_MAX_LINES)}
-                </div>
-              ) : null}
-              {billCount === 0 ? (
-                <p className="pf-wide-empty">{nv.deskEmpty}</p>
-              ) : (
+            </div>
+            <div className="wi-desk2-when">
+              <button type="button" className="wi-when-pill" onClick={() => setWhenAsked(false)} disabled={busy} aria-label={`${nv.whatNow}: ${whenSummary}`}>
+                <span>{whenSummary}</span>
+                <span className="wi-when-pill-change">{nv.deskChange}</span>
+              </button>
+              {/* A token has no stylist: the question only exists once the answer is Starts now or Pick a time. */}
+              {queueing ? null : <div className="wi-desk-stylist">{stylistField}</div>}
+            </div>
+          </div>
+
+          {services === null ? (
+            <section className="pf-wide-mid" aria-busy="true">
+              <div className="pf-tiles pf-wide-tiles">
+                {Array.from({ length: 8 }, (_, i) => (
+                  <div key={i} className="pf-tile pf-tile-wait" />
+                ))}
+              </div>
+            </section>
+          ) : services.length === 0 ? (
+            <section className="pf-wide-mid">
+              <div className="empty">{nv.noServicesYet}</div>
+            </section>
+          ) : (
+            <DeskServiceGrid
+              services={services}
+              countOf={countOnBill}
+              onMore={addOneMore}
+              onLess={removeOneOf}
+              full={billCount >= BILL_MAX_LINES}
+              money={(minor) => formatMoney(String(minor))}
+              packages={combos}
+              packageCountOf={(id) => (id === offerId ? 1 : 0)}
+              onPickPackage={(o) => (offerId === o.id ? removeCombo() : applyCombo(o))}
+            />
+          )}
+
+          <div className="wi-desk2-bar">
+            {detailsOpen && billCount > 0 ? (
+              <div className="wi-desk2-lines">
                 <BillRows
                   lines={deskLines}
                   listMinor={deskListMinor}
                   totalMinor={Number(bookTotalMinor)}
                   onLess={(key) => (comboActive && key === offerId ? removeCombo() : removeOneOf(key))}
                 />
-              )}
-              {/*
-                Owner, 2026-10-14 — the stylist sits under What now?, not in the left column: a token has no stylist
-                (`queueIt` never sends one), so the question only exists once the answer is Starts now or Pick a time,
-                and a question that comes and goes belongs beside the answer that decides it. The left column never
-                changes because of a tap on the right.
-              */}
-              <div className="wi-desk-when">
-                {whenChoices}
-                {queueing ? null : <div className="wi-desk-stylist">{stylistField}</div>}
               </div>
-              {stage.step === 'error' ? (
-                <div role="alert" className="wi-error">
-                  {stage.message}
-                </div>
-              ) : null}
+            ) : null}
+            {/* The free times need the services (how long they take), so they appear once there is one. */}
+            {later && !queueing && picked.length > 0 ? <div className="wi-desk2-slots">{slotsBlock}</div> : null}
+            {showServicesError ? (
+              <div role="alert" className="field-error">
+                {nv.servicesMissing}
+              </div>
+            ) : null}
+            {billFull ? (
+              <div role="alert" className="field-error">
+                {nv.billFull(BILL_MAX_LINES)}
+              </div>
+            ) : null}
+            {stage.step === 'error' ? (
+              <div role="alert" className="wi-error">
+                {stage.message}
+              </div>
+            ) : null}
+            <div className="wi-desk2-row">
+              <button type="button" className="wi-desk2-sum" onClick={() => setDetailsOpen((o) => !o)} disabled={billCount === 0} aria-expanded={detailsOpen && billCount > 0}>
+                <span>{billCount > 0 ? nv.rowPicked(billCount, formatMoney(bookTotalMinor)) : nv.deskEmpty}</span>
+                {billCount > 0 ? <IconChevronDown /> : null}
+              </button>
               <div className="wi-desk-go">{goButton}</div>
-            </aside>
+            </div>
           </div>
         </div>
       </>

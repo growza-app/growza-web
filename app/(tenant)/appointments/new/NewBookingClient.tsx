@@ -11,6 +11,7 @@ import { PayFlow } from './PayFlow';
 /** Jira GRW-297 — `onClose` on a page presentation navigates back rather than unmounting an overlay. */
 export function NewBookingClient({
   mode,
+  askWhen = false,
   purpose = 'visit',
   token,
   tokenGone = false,
@@ -22,6 +23,8 @@ export function NewBookingClient({
   visitGone = false,
 }: {
   mode: VisitMode;
+  /** A laptop opens New booking on the When card; false when the link already said (Walk-in). */
+  askWhen?: boolean;
   purpose?: VisitPurpose;
   /** A waiting token being paid. */
   token?: QueueEntry;
@@ -131,6 +134,7 @@ export function NewBookingClient({
       tokenGone={tokenGone}
       timezone={timezone}
       desk={purpose !== 'payment' && wide && layout === 'desk'}
+      askWhenFirst={askWhen}
       onClose={() => router.push(backTo ?? (purpose === 'payment' ? '/' : '/appointments'))}
     />
   );
