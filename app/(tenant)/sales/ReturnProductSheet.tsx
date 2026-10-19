@@ -81,11 +81,27 @@ export function ReturnProductSheet({
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialog(dialogRef, { onClose });
 
-  const [selectedBill, setSelectedBill] = useState<ReturnableSaleBill | null>(initialBill);
+  const productBills = useMemo(() => bills.filter((b) => b.products.length > 0), [bills]);
+
+  const defaultBill = useMemo(
+    () =>
+      initialBill ??
+      productBills.find(
+        (b) =>
+          computeReturnWindow(b.dayISO, todayISO, returnWindowDays).eligible &&
+          b.products.some((p) => lineRemainingQty(p) > 0),
+      ) ??
+      productBills[0] ??
+      null,
+    [initialBill, productBills, todayISO, returnWindowDays],
+  );
+
+  const [selectedBill, setSelectedBill] = useState<ReturnableSaleBill | null>(defaultBill);
+  const [mobileStep, setMobileStep] = useState<'list' | 'bill'>(initialBill ? 'bill' : 'list');
   const [query, setQuery] = useState<string>('');
-  const [qtyByLine, setQtyByLine] = useState<Record<string, number>>(() => buildInitialQtyMap(initialBill));
+  const [qtyByLine, setQtyByLine] = useState<Record<string, number>>(() => buildInitialQtyMap(defaultBill));
   const [restock, setRestock] = useState(true);
-  const [refundMode, setRefundMode] = useState<RefundMode>(() => defaultRefundMode(selectedBill?.paymentModes));
+  const [refundMode, setRefundMode] = useState<RefundMode>(() => defaultRefundMode(defaultBill?.paymentModes));
   const [reason, setReason] = useState('');
   // The invoice already handed over for this bill, once the server has said so: the desk is asked before going ahead.
   const [issuedDocument, setIssuedDocument] = useState<string | null>(null);
@@ -98,8 +114,6 @@ export function ReturnProductSheet({
   const [scanNotice, setScanNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  const productBills = useMemo(() => bills.filter((b) => b.products.length > 0), [bills]);
 
   const matchingBills = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -122,6 +136,7 @@ export function ReturnProductSheet({
 
   const selectBill = (bill: ReturnableSaleBill, scannedCode?: string) => {
     setSelectedBill(bill);
+    setMobileStep('bill');
     setRefundMode(defaultRefundMode(bill.paymentModes));
     setIssuedDocument(null);
     setQtyByLine(buildInitialQtyMap(bill, scannedCode));
@@ -157,7 +172,7 @@ export function ReturnProductSheet({
   const takeCode = (raw: string): boolean => {
     const code = raw.trim();
     if (!code) return false;
-    if (selectedBill) {
+    if (selectedBill && findProductLineByCode(selectedBill.products, code)) {
       applyBarcodeToSelectedBill(code);
       return true;
     }
@@ -168,6 +183,10 @@ export function ReturnProductSheet({
     });
     if (exactEligible.length === 1) {
       selectBill(exactEligible[0]!, code);
+      return true;
+    }
+    if (selectedBill) {
+      applyBarcodeToSelectedBill(code);
       return true;
     }
     setQuery(code);
@@ -270,8 +289,7 @@ export function ReturnProductSheet({
   };
 
   const goBackToPicker = () => {
-    setSelectedBill(null);
-    setQtyByLine({});
+    setMobileStep('list');
     setIssuedDocument(null);
     setScanNotice(null);
     setError(null);
@@ -283,10 +301,16 @@ export function ReturnProductSheet({
   return (
     <>
       <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet sls-return-sheet" role="dialog" aria-modal="true" aria-label={t('title')} ref={dialogRef}>
+      <div
+        className={`sheet sls-return-sheet is-mobile-${mobileStep}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('title')}
+        ref={dialogRef}
+      >
         <div className="sheet-grab" />
         <div className="sls-ret-head">
-          {selectedBill ? (
+          {mobileStep === 'bill' ? (
             <button
               type="button"
               className="icon-btn sls-ret-back-btn"
@@ -296,360 +320,319 @@ export function ReturnProductSheet({
             >
               <IconArrowLeft />
             </button>
-          ) : (
-            <span className="sls-ret-head-icon" aria-hidden="true">
-              <IconReturn />
-            </span>
-          )}
+          ) : null}
+          <span className="sls-ret-head-icon" aria-hidden="true">
+            <IconReturn />
+          </span>
           <div className="sls-ret-head-copy">
             <h2 className="sls-ret-title">{t('title')}</h2>
             <p className="sls-ret-sub">{t('subtitle')}</p>
           </div>
+          <span className="sls-ret-scan-ready">
+            <IconBarcode />
+            <span>{t('scanReady')}</span>
+          </span>
           <button type="button" className="icon-btn" onClick={onClose} aria-label={tc('close')}>
             <IconClose />
           </button>
         </div>
 
-        <div className="sls-ret-scroll">
-          {!selectedBill ? (
-            <>
-              <div className="sls-ret-scan-box">
-                <div className="sls-ret-scan-top">
-                  <span className="sls-ret-scan-label">{t('scanLabel')}</span>
-                  <span className="sls-ret-scan-ready">
-                    <IconBarcode />
-                    <span>{t('scanReady')}</span>
-                  </span>
-                </div>
-                <label className="search-wrap sls-ret-search">
-                  <IconSearch />
-                  <input
-                    type="search"
-                    className="search-input search-input-bare"
-                    placeholder={t('scanPlaceholder')}
-                    value={query}
-                    autoFocus={autoFocusField()}
-                    onChange={(e) => {
-                      setQuery(e.target.value);
-                      setScanNotice(null);
-                    }}
-                    onKeyDown={handleSearchKeyDown}
-                  />
-                </label>
-                {scanNotice ? (
-                  <div className="sls-ret-scan-notice" role="status">
-                    {scanNotice}
-                  </div>
-                ) : null}
-              </div>
+        <div className="sls-ret-split">
+          {/* Left column: Bill search + recent product bills */}
+          <div className="sls-ret-left">
+            <div className="sls-ret-search-box">
+              <label className="search-wrap sls-ret-search">
+                <IconSearch />
+                <input
+                  type="search"
+                  className="search-input search-input-bare"
+                  placeholder={t('scanPlaceholder')}
+                  value={query}
+                  autoFocus={autoFocusField()}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setScanNotice(null);
+                  }}
+                  onKeyDown={handleSearchKeyDown}
+                />
+              </label>
+            </div>
 
-              <div className="sls-ret-picker">
-                <div className="sls-ret-sec-head">
-                  <span className="sls-ret-sec-title">{query.trim() ? t('matchingBills') : t('recentProductBills')}</span>
-                  <span className="sls-ret-sec-meta">{t('windowPolicy', { window: returnWindowDays })}</span>
-                </div>
-                {matchingBills.length === 0 ? (
-                  <div className="sls-ret-empty">
-                    {query.trim() ? t('noMatchingBills', { q: query.trim() }) : t('noProductBills')}
-                  </div>
-                ) : (
-                  <div className="sls-ret-bill-list">
-                    {matchingBills.map((b) => {
-                      const win = computeReturnWindow(b.dayISO, todayISO, returnWindowDays);
-                      const remUnits = b.products.reduce((s, p) => s + lineRemainingQty(p), 0);
-                      const prdPaidMinor = b.products.reduce((s, p) => s + Number(p.paidMinor || 0), 0);
-                      const disabled = !win.eligible || remUnits <= 0;
-                      return (
-                        <button
-                          key={b.key}
-                          type="button"
-                          className={`sls-ret-bill-card ${disabled ? 'is-disabled' : ''}`}
-                          disabled={disabled}
-                          onClick={() => selectBill(b, query.trim())}
-                        >
-                          <div className="sls-ret-bill-main">
-                            <span className="sls-avatar">{initials(b.clientName)}</span>
-                            <div className="sls-ret-bill-meta">
-                              <div className="sls-ret-bill-title-row">
-                                <strong>{b.clientName}</strong>
-                                <span className="sls-ret-bill-when">{formatBillWhen(b)}</span>
-                              </div>
-                              <div className="sls-ret-bill-prds">
-                                {b.products.map((p, idx) => (
-                                  <span
-                                    key={`${lineReturnId(p)}-${idx}`}
-                                    className={`sls-badge sls-badge-prd ${lineRemainingQty(p) === 0 ? 'is-returned' : ''}`}
-                                  >
-                                    <IconProducts />
-                                    {p.name} ({p.qty})
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="sls-ret-bill-right">
-                            <strong className="sls-ret-bill-amt">{formatMoney(String(prdPaidMinor))}</strong>
-                            <span
-                              className={`sls-ret-win-pill ${
-                                remUnits <= 0 ? 'is-muted' : win.eligible ? 'is-ok' : 'is-expired'
-                              }`}
-                            >
-                              {remUnits <= 0
-                                ? t('allReturned')
-                                : win.eligible
-                                  ? t('windowDaysShort', { left: win.daysLeft })
-                                  : t('windowEnded', { window: win.windowDays })}
-                            </span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="sls-ret-selected-bill">
-                <span className="sls-avatar">{initials(selectedBill.clientName)}</span>
-                <div className="sls-ret-selected-meta">
-                  <strong>{selectedBill.clientName}</strong>
-                  <span>{formatBillWhen(selectedBill)}</span>
-                </div>
-                <span className={`sls-ret-win-pill ${billWindow.eligible ? 'is-ok' : 'is-expired'}`}>
-                  {billWindow.eligible ? (
-                    <>
-                      <IconCheck />
-                      <span>{t('windowDaysLeft', { left: billWindow.daysLeft, window: billWindow.windowDays })}</span>
-                    </>
-                  ) : (
-                    <span>{t('windowEnded', { window: billWindow.windowDays })}</span>
-                  )}
-                </span>
-                {billWindow.eligible && returnableLines.length > 0 ? (
-                  <span className="sls-ret-scan-ready">
-                    <IconBarcode />
-                    <span>{t('scanReady')}</span>
-                  </span>
-                ) : null}
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm sls-ret-change-btn"
-                  onClick={goBackToPicker}
-                  disabled={busy}
-                >
-                  {t('changeBill')}
-                </button>
-              </div>
+            <div className="sls-ret-sec-head sls-ret-left-head">
+              <span className="sls-ret-sec-title">{query.trim() ? t('matchingBills') : t('recentProductBills')}</span>
+              <span className="sls-ret-sec-meta">{t('windowPolicy', { window: returnWindowDays })}</span>
+            </div>
 
-              {scanNotice ? (
-                <div className="sls-ret-scan-notice" role="status">
-                  {scanNotice}
-                </div>
-              ) : null}
-
-              <div className="sls-ret-sec-head">
-                <span className="sls-ret-sec-title">{t('productsOnBill')}</span>
-                {billWindow.eligible && returnableLines.length > 0 ? (
-                  <div className="sls-ret-bulk-btns">
-                    {totalSelectedUnits > 0 ? (
-                      <button type="button" className="sls-ret-link-btn is-muted" onClick={() => setQtyByLine({})}>
-                        {t('clearSelection')}
-                      </button>
-                    ) : null}
-                    <button type="button" className="sls-ret-link-btn" onClick={selectAllProducts}>
-                      {t('returnAll')}
-                    </button>
-                  </div>
-                ) : null}
+            {matchingBills.length === 0 ? (
+              <div className="sls-ret-empty">
+                {query.trim() ? t('noMatchingBills', { q: query.trim() }) : t('noProductBills')}
               </div>
-
-              <div className="sls-ret-lines">
-                {selectedBill.products.map((p, idx) => {
-                  const id = lineReturnId(p);
-                  const remaining = lineRemainingQty(p);
-                  const alreadyRet = Number(p.returnedQty || 0);
-                  const selectedQty = Math.min(remaining, Math.max(0, qtyByLine[id] ?? 0));
-                  const lineRefund = lineRefundMinorForQty(p, selectedQty);
-                  const unitMinor = Math.round(Number(p.paidMinor || 0) / Math.max(1, Number(p.qty || 1)));
+            ) : (
+              <div className="sls-ret-bill-list">
+                {matchingBills.map((b) => {
+                  const win = computeReturnWindow(b.dayISO, todayISO, returnWindowDays);
+                  const remUnits = b.products.reduce((s, p) => s + lineRemainingQty(p), 0);
+                  const prdPaidMinor = b.products.reduce((s, p) => s + Number(p.paidMinor || 0), 0);
+                  const disabled = !win.eligible || remUnits <= 0;
+                  const active = selectedBill?.key === b.key;
                   return (
-                    <div
-                      key={`${id}-${idx}`}
-                      className={`sls-ret-line ${selectedQty > 0 ? 'is-picked' : ''} ${
-                        remaining <= 0 ? 'is-exhausted' : ''
-                      }`}
+                    <button
+                      key={b.key}
+                      type="button"
+                      className={`sls-ret-bill-card ${active ? 'is-selected' : ''} ${disabled ? 'is-disabled' : ''}`}
+                      onClick={() => selectBill(b, query.trim())}
                     >
-                      <div className="sls-ret-line-info">
-                        <div className="sls-ret-line-name-row">
-                          <strong className="sls-ret-line-name">{p.name}</strong>
-                          {p.sku || p.barcode ? <span className="sls-ret-code-pill">{p.sku ?? p.barcode}</span> : null}
-                        </div>
-                        <div className="sls-ret-line-sub">
-                          <span>{t('soldQty', { n: p.qty })}</span>
-                          <span>·</span>
-                          <span>{t('eachPrice', { price: formatMoney(String(unitMinor)) })}</span>
-                          {alreadyRet > 0 ? (
-                            <>
-                              <span>·</span>
-                              <span className="sls-ret-already-tag">{t('alreadyReturned', { n: alreadyRet })}</span>
-                            </>
-                          ) : null}
-                        </div>
+                      <div className="sls-ret-bill-row1">
+                        <strong className="sls-ret-bill-client">{b.clientName}</strong>
+                        <strong className="sls-ret-bill-amt">{formatMoney(String(prdPaidMinor))}</strong>
                       </div>
-
-                      {remaining <= 0 ? (
-                        <span className="sls-ret-win-pill is-muted">{t('allReturned')}</span>
-                      ) : billWindow.eligible ? (
-                        <div className="sls-ret-line-controls">
-                          <div className="sls-ret-stepper">
-                            <button
-                              type="button"
-                              className="sls-ret-step-btn"
-                              aria-label={t('lessAria', { name: p.name })}
-                              disabled={selectedQty <= 0 || busy}
-                              onClick={() => setLineQty(p, selectedQty - 1)}
-                            >
-                              <IconMinus />
-                            </button>
-                            <span className="sls-ret-step-val" aria-live="polite">
-                              {selectedQty}
-                            </span>
-                            <button
-                              type="button"
-                              className="sls-ret-step-btn"
-                              aria-label={t('moreAria', { name: p.name })}
-                              disabled={selectedQty >= remaining || busy}
-                              onClick={() => setLineQty(p, selectedQty + 1)}
-                            >
-                              <IconPlus />
-                            </button>
-                          </div>
-                          <strong className="sls-ret-line-refund">
-                            {selectedQty > 0 ? `−${formatMoney(String(lineRefund))}` : formatMoney('0')}
-                          </strong>
-                        </div>
-                      ) : null}
-                    </div>
+                      <div className="sls-ret-bill-row2">
+                        <span className="sls-ret-bill-when">{formatBillWhen(b)}</span>
+                        <span
+                          className={`sls-ret-win-pill ${
+                            remUnits <= 0 ? 'is-muted' : win.eligible ? 'is-ok' : 'is-expired'
+                          }`}
+                        >
+                          {remUnits <= 0
+                            ? t('allReturned')
+                            : win.eligible
+                              ? t('windowDaysShort', { left: win.daysLeft })
+                              : t('windowEnded', { window: win.windowDays })}
+                        </span>
+                      </div>
+                      <div className="sls-ret-bill-prds">
+                        {b.products.map((p, idx) => (
+                          <span
+                            key={`${lineReturnId(p)}-${idx}`}
+                            className={`sls-badge sls-badge-prd ${lineRemainingQty(p) === 0 ? 'is-returned' : ''}`}
+                          >
+                            <IconProducts />
+                            {p.name} ({p.qty})
+                          </span>
+                        ))}
+                      </div>
+                    </button>
                   );
                 })}
               </div>
+            )}
+          </div>
 
-              <div className="sls-ret-condition">
-                <span className="sls-ret-sec-title">{t('conditionLabel')}</span>
-                <div className="sls-ret-cond-grid" role="radiogroup" aria-label={t('conditionLabel')}>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={restock}
-                    className={`sls-ret-cond-opt ${restock ? 'is-on' : ''}`}
-                    onClick={() => setRestock(true)}
-                  >
-                    <strong>{t('restockShelf')}</strong>
-                    <span>{t('restockShelfHint')}</span>
-                  </button>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={!restock}
-                    className={`sls-ret-cond-opt ${!restock ? 'is-on is-damaged' : ''}`}
-                    onClick={() => setRestock(false)}
-                  >
-                    <strong>{t('damagedOpened')}</strong>
-                    <span>{t('damagedOpenedHint')}</span>
-                  </button>
-                </div>
+          {/* Right column: Selected bill return form */}
+          <div className="sls-ret-right">
+            {!selectedBill ? (
+              <div className="sls-ret-right-empty">
+                <p>{t('noProductBills')}</p>
               </div>
+            ) : (
+              <>
+                <div className="sls-ret-scroll">
+                  <div className="sls-ret-selected-bill">
+                    <span className="sls-avatar">{initials(selectedBill.clientName)}</span>
+                    <div className="sls-ret-selected-meta">
+                      <strong>{selectedBill.clientName}</strong>
+                      <span>
+                        {formatBillWhen(selectedBill)} ·{' '}
+                        {billWindow.eligible
+                          ? t('windowDaysLeft', { left: billWindow.daysLeft, window: billWindow.windowDays })
+                          : t('windowEnded', { window: billWindow.windowDays })}
+                      </span>
+                    </div>
+                    {billWindow.eligible && returnableLines.length > 0 ? (
+                      <div className="sls-ret-bulk-btns">
+                        {totalSelectedUnits > 0 ? (
+                          <button type="button" className="sls-ret-link-btn is-muted" onClick={() => setQtyByLine({})}>
+                            {t('clearSelection')}
+                          </button>
+                        ) : null}
+                        <button type="button" className="sls-ret-link-btn" onClick={selectAllProducts}>
+                          {t('returnAll')}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
 
-              <div className="sls-ret-condition">
-                <span className="sls-ret-sec-title">{t('refundModeLabel')}</span>
-                <div className="sls-ret-mode-grid" role="radiogroup" aria-label={t('refundModeLabel')}>
-                  {REFUND_MODES.map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      role="radio"
-                      aria-checked={refundMode === m}
-                      className={`sls-ret-mode-opt ${refundMode === m ? 'is-on' : ''}`}
-                      onClick={() => {
-                        setRefundMode(m);
-                        setIssuedDocument(null);
-                      }}
-                    >
-                      <strong>{t(`refundModes.${m}`)}</strong>
+                  {scanNotice ? (
+                    <div className="sls-ret-scan-notice" role="status">
+                      {scanNotice}
+                    </div>
+                  ) : null}
+
+                  <div className="sls-ret-lines">
+                    {selectedBill.products.map((p, idx) => {
+                      const id = lineReturnId(p);
+                      const remaining = lineRemainingQty(p);
+                      const alreadyRet = Number(p.returnedQty || 0);
+                      const selectedQty = Math.min(remaining, Math.max(0, qtyByLine[id] ?? 0));
+                      const lineRefund = lineRefundMinorForQty(p, selectedQty);
+                      const unitMinor = Math.round(Number(p.paidMinor || 0) / Math.max(1, Number(p.qty || 1)));
+                      return (
+                        <div
+                          key={`${id}-${idx}`}
+                          className={`sls-ret-line ${selectedQty > 0 ? 'is-picked' : ''} ${
+                            remaining <= 0 ? 'is-exhausted' : ''
+                          }`}
+                        >
+                          <div className="sls-ret-line-info">
+                            <div className="sls-ret-line-name-row">
+                              <strong className="sls-ret-line-name">{p.name}</strong>
+                              {p.sku || p.barcode ? <span className="sls-ret-code-pill">{p.sku ?? p.barcode}</span> : null}
+                            </div>
+                            <div className="sls-ret-line-sub">
+                              <span>{t('soldQty', { n: p.qty })}</span>
+                              <span>·</span>
+                              <span>{t('eachPrice', { price: formatMoney(String(unitMinor)) })}</span>
+                              {alreadyRet > 0 ? (
+                                <>
+                                  <span>·</span>
+                                  <span className="sls-ret-already-tag">{t('alreadyReturned', { n: alreadyRet })}</span>
+                                </>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          {remaining <= 0 ? (
+                            <span className="sls-ret-win-pill is-muted">{t('allReturned')}</span>
+                          ) : billWindow.eligible ? (
+                            <div className="sls-ret-line-controls">
+                              <div className="sls-ret-stepper">
+                                <button
+                                  type="button"
+                                  className="sls-ret-step-btn"
+                                  aria-label={t('lessAria', { name: p.name })}
+                                  disabled={selectedQty <= 0 || busy}
+                                  onClick={() => setLineQty(p, selectedQty - 1)}
+                                >
+                                  <IconMinus />
+                                </button>
+                                <span className="sls-ret-step-val" aria-live="polite">
+                                  {selectedQty}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="sls-ret-step-btn"
+                                  aria-label={t('moreAria', { name: p.name })}
+                                  disabled={selectedQty >= remaining || busy}
+                                  onClick={() => setLineQty(p, selectedQty + 1)}
+                                >
+                                  <IconPlus />
+                                </button>
+                              </div>
+                              <strong className="sls-ret-line-refund">
+                                {selectedQty > 0 ? `−${formatMoney(String(lineRefund))}` : formatMoney('0')}
+                              </strong>
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="sls-ret-options-grid">
+                    <div className="sls-ret-condition">
+                      <span className="sls-ret-sec-title">{t('conditionLabel')}</span>
+                      <div className="sls-ret-seg-grid is-2" role="radiogroup" aria-label={t('conditionLabel')}>
+                        <button
+                          type="button"
+                          role="radio"
+                          aria-checked={restock}
+                          className={`sls-ret-seg-btn ${restock ? 'is-on' : ''}`}
+                          onClick={() => setRestock(true)}
+                        >
+                          <strong>{t('restockShelf')}</strong>
+                        </button>
+                        <button
+                          type="button"
+                          role="radio"
+                          aria-checked={!restock}
+                          className={`sls-ret-seg-btn ${!restock ? 'is-on is-damaged' : ''}`}
+                          onClick={() => setRestock(false)}
+                        >
+                          <strong>{t('damagedOpened')}</strong>
+                        </button>
+                      </div>
+                      <span className="sls-ret-cond-hint">
+                        {restock ? t('restockShelfHint') : t('damagedOpenedHint')}
+                      </span>
+                    </div>
+
+                    <div className="sls-ret-condition">
+                      <span className="sls-ret-sec-title">{t('refundModeLabel')}</span>
+                      <div className="sls-ret-mode-grid sls-ret-seg-grid is-4" role="radiogroup" aria-label={t('refundModeLabel')}>
+                        {REFUND_MODES.map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            role="radio"
+                            aria-checked={refundMode === m}
+                            className={`sls-ret-seg-btn ${refundMode === m ? 'is-on' : ''}`}
+                            onClick={() => {
+                              setRefundMode(m);
+                              setIssuedDocument(null);
+                            }}
+                          >
+                            <strong>{t(`refundModes.${m}`)}</strong>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <label className="sls-ret-reason-field">
+                    <span className="sls-ret-sec-title">{t('reasonLabel')}</span>
+                    <input
+                      type="text"
+                      className="sls-ret-reason-input"
+                      placeholder={t('reasonPlaceholder')}
+                      maxLength={240}
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                    />
+                  </label>
+
+                  {issuedDocument !== null ? (
+                    <div className="sls-ret-error" role="alert" ref={warningRef}>
+                      <p>{issuedDocument ? t('documentIssuedBody', { number: issuedDocument }) : t('documentIssuedBodyNoNumber')}</p>
+                      <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => void submitReturn(true)}>
+                        {t('documentIssuedGo')}
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {error ? (
+                    <div className="sls-ret-error" role="alert">
+                      {error}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="modal-actions sls-ret-foot">
+                  <div className="sls-ret-foot-summary">
+                    <span className="sls-ret-foot-label">
+                      {t('refundTotal')} · {t('unitsSelected', { n: totalSelectedUnits })}
+                    </span>
+                    <strong className="sls-ret-foot-amount">{formatMoney(String(totalRefundMinor))}</strong>
+                  </div>
+                  <div className="sls-ret-foot-btns">
+                    <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>
+                      {tc('close')}
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={totalSelectedUnits <= 0 || !billWindow.eligible || busy}
+                      onClick={() => void submitReturn()}
+                    >
+                      {busy
+                        ? t('saving')
+                        : totalRefundMinor > 0
+                          ? t('confirmWithAmount', { amount: formatMoney(String(totalRefundMinor)) })
+                          : t('confirm')}
+                    </button>
+                  </div>
                 </div>
-              </div>
-
-              <label className="sls-ret-reason-field">
-                <span className="sls-ret-sec-title">{t('reasonLabel')}</span>
-                <input
-                  type="text"
-                  className="sls-ret-reason-input"
-                  placeholder={t('reasonPlaceholder')}
-                  maxLength={240}
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                />
-              </label>
-
-              {issuedDocument !== null ? (
-                <div className="sls-ret-error" role="alert" ref={warningRef}>
-                  <p>{issuedDocument ? t('documentIssuedBody', { number: issuedDocument }) : t('documentIssuedBodyNoNumber')}</p>
-                  <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => void submitReturn(true)}>
-                    {t('documentIssuedGo')}
-                  </button>
-                </div>
-              ) : null}
-
-              {error ? (
-                <div className="sls-ret-error" role="alert">
-                  {error}
-                </div>
-              ) : null}
-            </>
-          )}
-        </div>
-
-        <div className="modal-actions sls-ret-foot">
-          {selectedBill ? (
-            <div className="sls-ret-foot-summary">
-              <span className="sls-ret-foot-label">{t('refundTotal')}</span>
-              <strong className="sls-ret-foot-amount">{formatMoney(String(totalRefundMinor))}</strong>
-              <span className="sls-ret-foot-sub">{t('unitsSelected', { n: totalSelectedUnits })}</span>
-            </div>
-          ) : (
-            <div />
-          )}
-          <div className="sls-ret-foot-btns">
-            {selectedBill ? (
-              <button
-                type="button"
-                className="btn btn-ghost sls-ret-foot-back"
-                onClick={goBackToPicker}
-                disabled={busy}
-              >
-                <IconArrowLeft />
-                <span>{tc('back')}</span>
-              </button>
-            ) : null}
-            <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>
-              {tc('close')}
-            </button>
-            {selectedBill ? (
-              <button
-                type="button"
-                className="btn"
-                disabled={totalSelectedUnits <= 0 || !billWindow.eligible || busy}
-                onClick={() => void submitReturn()}
-              >
-                {busy
-                  ? t('saving')
-                  : totalRefundMinor > 0
-                    ? t('confirmWithAmount', { amount: formatMoney(String(totalRefundMinor)) })
-                    : t('confirm')}
-              </button>
-            ) : null}
+              </>
+            )}
           </div>
         </div>
       </div>
