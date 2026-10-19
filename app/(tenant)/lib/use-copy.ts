@@ -42,6 +42,8 @@ export function useNewVisitCopy() {
     searchPlaceholder: t('searchPlaceholder'),
     noName: t('noName'),
     noMatch: t('noMatch'),
+    /** In the search list when nobody matched: adds what was typed as a new person. */
+    addAsNew: (name: string) => t('addAsNew', { name }),
     visits: (n: number) => t('visits', { n }),
     bookingDate: t('bookingDate'),
     bookingTime: t('bookingTime'),

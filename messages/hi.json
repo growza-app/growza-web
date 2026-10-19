@@ -2007,6 +2007,7 @@
     "searchPlaceholder": "नाम या फ़ोन नंबर",
     "noName": "नाम नहीं",
     "noMatch": "इस नाम का कोई नहीं मिला।",
+    "addAsNew": "“{name}” को नए ग्राहक के रूप में जोड़ें",
     "visits": "{n, plural, one {# विज़िट} other {# विज़िट}}",
     "bookingDate": "बुकिंग की तारीख",
     "bookingTime": "बुकिंग का समय",

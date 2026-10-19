@@ -2007,6 +2007,7 @@
     "searchPlaceholder": "Name or phone number",
     "noName": "No name",
     "noMatch": "Nobody on file matches that.",
+    "addAsNew": "Add “{name}” as a new client",
     "visits": "{n, plural, one {# visit} other {# visits}}",
     "bookingDate": "Booking date",
     "bookingTime": "Booking time",

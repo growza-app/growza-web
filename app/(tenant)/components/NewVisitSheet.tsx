@@ -3312,7 +3312,30 @@ export function NewVisitSheet({
                       </span>
                     </button>
                   ))}
-                  {!searching && results.length === 0 && elsewhere.length === 0 && <div className="empty">{nv.noMatch}</div>}
+                  {!searching && results.length === 0 && elsewhere.length === 0 && (
+                    <>
+                      <div className="empty">{nv.noMatch}</div>
+                      {/*
+                        Owner, 2026-10-19 — nobody matched, so the way forward is in the list where the search ended: the
+                        Name and Phone number fields were opening underneath it, hidden by it. It puts the typed name in
+                        Name (it already does) and goes to the field still missing.
+                      */}
+                      <button
+                        type="button"
+                        className="picker-row wi-row wi-add-row"
+                        onClick={() => {
+                          setComboOpen(false);
+                          setAddingNew(true);
+                          // A typed number is already in Phone number, so the one still missing is the name.
+                          window.setTimeout(() => document.getElementById(isNumberLike(term.trim()) ? 'wi-name' : 'wi-phone')?.focus(), 0);
+                        }}
+                      >
+                        <span className="picker-row-text">
+                          <span className="picker-row-name">{nv.addAsNew(term.trim())}</span>
+                        </span>
+                      </button>
+                    </>
+                  )}
 
                   {/*
                     Jira GRW-454 — the same search at the other branches, kept apart from this branch's own rows

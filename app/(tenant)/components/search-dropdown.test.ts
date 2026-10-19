@@ -38,7 +38,8 @@ describe('the client search dropdown', () => {
   });
 
   it('still says when nothing matches, and picking goes on as before', () => {
-    expect(sheet).toMatch(/!searching && results\.length === 0 && elsewhere\.length === 0 && <div className="empty">\{nv\.noMatch\}<\/div>/);
+    // Still said, now with the way forward beside it (owner, 2026-10-19): add what was typed as a new client.
+    expect(sheet).toMatch(/!searching && results\.length === 0 && elsewhere\.length === 0 && \(\s*<>\s*<div className="empty">\{nv\.noMatch\}<\/div>/);
     expect(sheet).toMatch(/onClick=\{\(\) => pickClient\(c\)\}/);
   });
 });

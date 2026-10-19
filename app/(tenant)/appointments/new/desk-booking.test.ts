@@ -99,6 +99,13 @@ describe('New booking on a wide desk', () => {
     expect(css).toMatch(/\.wi-desk2 \.pf-tile-tap \{\s*scroll-margin-bottom: 17rem;/);
   });
 
+  it('offers to add a new client in the search list when nobody matches, since the fields open under it, hidden', () => {
+    expect(sheet).toContain('className="picker-row wi-row wi-add-row"');
+    expect(sheet).toContain('{nv.addAsNew(term.trim())}');
+    expect(sheet).toMatch(/setComboOpen\(false\);\s*setAddingNew\(true\);/);
+    for (const lang of [en, hi]) expect((lang.newVisit as Record<string, string>).addAsNew).toContain('{name}');
+  });
+
   it('no longer lists who is in today on New booking; the till keeps its rows and their tap', () => {
     expect(sheet).not.toContain('<DeskUnpaid');
     expect(unpaid).toMatch(/onClick=\{\(\) => router\.push\(r\.href\)\}/);
