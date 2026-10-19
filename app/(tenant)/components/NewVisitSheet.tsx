@@ -459,6 +459,11 @@ export function NewVisitSheet({
   // On the New booking and Record payment PAGES this box is part of the server's HTML, so the keyboard question is
   // asked after hydration through this ref rather than through `autoFocus`, which the two sides would disagree on.
   const searchRef = useAutoFocusField<HTMLInputElement>();
+  // Owner, 2026-10-19 — at a desk, the cursor goes to the client box once When is answered (or was never asked), so a
+  // phone number can be typed straight away.
+  useEffect(() => {
+    if (deskForm && whenAsked) searchRef.current?.focus();
+  }, [deskForm, whenAsked, searchRef]);
   // Jira GRW-520 — the matches are a dropdown under the box: open while typing, closed by a pick, Escape or
   // tapping elsewhere; `activeIdx` is the row the arrow keys are on (-1: none).
   const [comboOpen, setComboOpen] = useState(true);
@@ -1293,6 +1298,12 @@ export function NewVisitSheet({
           const next = r.sections.flatMap((sec) => sec.slots).find((sl) => hm.format(new Date(sl.utc)) >= timeWantedRef.current);
           if (next) setSlotUtc(next.utc);
         }
+        // Owner, 2026-10-19 — at a desk the earliest free time is already chosen, so Book is ready as soon as a service is
+        // on the visit; the free times beside it are there to pick another. The phone still makes the person choose.
+        else if (deskForm) {
+          const first = r.sections.flatMap((sec) => sec.slots)[0];
+          if (first) setSlotUtc(first.utc);
+        }
       })
       .catch(() => {
         if (!cancelled) setSlots(null);
@@ -1303,7 +1314,7 @@ export function NewVisitSheet({
     return () => {
       cancelled = true;
     };
-  }, [later, stage.step, onForm, pageForm, day, picked, extras, schedulableId, listBranch, timezone]);
+  }, [later, stage.step, onForm, pageForm, deskForm, day, picked, extras, schedulableId, listBranch, timezone]);
 
   /**
    * The Booking time, against what is actually free.
@@ -3568,12 +3579,13 @@ export function NewVisitSheet({
       if (what !== 'pick') setWhenAsked(true);
     };
     const dayLabel = days.find((d) => d.iso === day)?.label ?? day;
-    const wishLabel = timeOptions.find((o) => o.value === timeWanted)?.label ?? timeWanted;
     const whenSummary = queueing
       ? nv.whenWaiting
       : !later
         ? nv.whenNow
-        : `${dayLabel} · ${slotUtc ? clockTime(slotUtc) : timeWanted ? nv.deskAround(wishLabel) : nv.anyTime}`;
+        : slotUtc
+          ? `${dayLabel} · ${clockTime(slotUtc)}`
+          : dayLabel;
     return (
       <>
         {largeAmountDialog}
@@ -3590,18 +3602,16 @@ export function NewVisitSheet({
             days={days}
             day={day}
             onDay={(iso) => {
+              // Choosing the day is the whole answer: the card closes, and the earliest free time is picked once a service is on the visit.
+              setWhenAsked(true);
               setDay(iso);
               // "Pick a time" is the answer being given: even today's date is "later today".
               setDateChosen(true);
               // Jira GRW-535 — a morning time asked for tomorrow is dropped when the day comes back to today and it has passed.
               if (iso === todayIso && timeWanted && timeWanted < nowHm) setTimeWanted('');
             }}
-            timeValue={timeWanted}
-            timeOptions={timeOptions}
-            onTime={setTimeWanted}
-            labels={{ today: nv.today, tomorrow: nv.deskTomorrow, otherDay: nv.deskOtherDay, bookingTime: nv.bookingTime, anyTime: nv.anyTime, cont: nv.deskContinue, close: nv.close }}
+            labels={{ today: nv.today, tomorrow: nv.deskTomorrow, otherDay: nv.deskOtherDay }}
             busy={busy}
-            onContinue={() => setWhenAsked(true)}
             // Outside the card, or Escape, puts it away and keeps the answer as it stands (the pill reopens it); Back leaves.
             onClose={() => setWhenAsked(true)}
           />

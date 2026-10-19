@@ -17,10 +17,10 @@ export interface WhenChoice {
  * Owner, 2026-10-19 — the first question of New booking on a laptop: when. An overlay over the booking screen, not a
  * column in it.
  *
- * Starts now and Waiting answer it in one press and the card closes. Pick a time opens the day and the time asked
- * for, and Continue closes it. The exact free time is chosen on the screen behind, once the services are on the
- * visit, because the free times depend on how long the services take. Nothing here owns state: the booking form
- * does, so this card only asks and the form keeps the answer.
+ * Starts now and Waiting answer it in one press and the card closes. Pick a time asks the day, and a tap on the day
+ * closes it. The time is chosen on the screen behind, once the services are on the visit: the free times depend on
+ * how long they take, and the earliest one is already picked. Nothing here owns state: the booking form does, so
+ * this card only asks and the form keeps the answer.
  */
 export function DeskWhenCard({
   title,
@@ -30,12 +30,8 @@ export function DeskWhenCard({
   days,
   day,
   onDay,
-  timeValue,
-  timeOptions,
-  onTime,
   labels,
   busy,
-  onContinue,
   onClose,
 }: {
   title: string;
@@ -47,12 +43,8 @@ export function DeskWhenCard({
   days: { iso: string; label: string }[];
   day: string;
   onDay: (iso: string) => void;
-  timeValue: string;
-  timeOptions: { value: string; label: string }[];
-  onTime: (value: string) => void;
-  labels: { today: string; tomorrow: string; otherDay: string; bookingTime: string; anyTime: string; cont: string; close: string };
+  labels: { today: string; tomorrow: string; otherDay: string };
   busy: boolean;
-  onContinue: () => void;
   /** A click outside, or Escape: puts the card away and keeps the answer as it stands. */
   onClose: () => void;
 }) {
@@ -101,20 +93,6 @@ export function DeskWhenCard({
                 disabled={busy}
               />
             </div>
-            <div className="field wi-when-time">
-              <label htmlFor="wi-when-time">{labels.bookingTime}</label>
-              <select id="wi-when-time" value={timeValue} onChange={(e) => onTime(e.target.value)} disabled={busy}>
-                <option value="">{labels.anyTime}</option>
-                {timeOptions.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button type="button" className="btn wi-when-go" onClick={onContinue} disabled={busy}>
-              {labels.cont}
-            </button>
           </>
         ) : null}
       </div>

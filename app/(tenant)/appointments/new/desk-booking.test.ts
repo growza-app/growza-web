@@ -79,13 +79,27 @@ describe('New booking on a wide desk', () => {
     expect(d).toMatch(/\{later && !queueing && picked\.length > 0 \? <div className="wi-desk2-slots">\{slotsBlock\}<\/div> : null\}/);
   });
 
+  it('cuts the clicks: a tap on the day closes the card, the earliest free time is already picked, the cursor is in the client box', () => {
+    const card = here('./DeskWhenCard.tsx');
+    // The card asks the day only: no time list, no Continue.
+    expect(card).not.toContain('<select');
+    expect(card).not.toContain('onContinue');
+    expect(desk()).toMatch(/onDay=\{\(iso\) => \{[\s\S]*?setWhenAsked\(true\);[\s\S]*?setDay\(iso\);/);
+    // At a desk the first free slot is chosen once the slots load; the phone still makes the person choose.
+    expect(sheet).toMatch(/else if \(deskForm\) \{\s*const first = r\.sections\.flatMap\(\(sec\) => sec\.slots\)\[0\];\s*if \(first\) setSlotUtc\(first\.utc\);/);
+    // The cursor goes to the client box once When is answered, or was never asked.
+    expect(sheet).toMatch(/if \(deskForm && whenAsked\) searchRef\.current\?\.focus\(\);/);
+    // A tile focused by keyboard scrolls clear of the bottom bar.
+    expect(css).toMatch(/\.wi-desk2 \.pf-tile-tap \{\s*scroll-margin-bottom: 17rem;/);
+  });
+
   it('no longer lists who is in today on New booking; the till keeps its rows and their tap', () => {
     expect(sheet).not.toContain('<DeskUnpaid');
     expect(unpaid).toMatch(/onClick=\{\(\) => router\.push\(r\.href\)\}/);
   });
 
   it('has its words in both languages', () => {
-    for (const key of ['deskToday', 'deskOnVisit', 'deskEmpty', 'deskNobodyToday', 'deskWhenTitle', 'deskTomorrow', 'deskOtherDay', 'deskContinue', 'deskWhenLabel', 'deskAround']) {
+    for (const key of ['deskToday', 'deskOnVisit', 'deskEmpty', 'deskNobodyToday', 'deskWhenTitle', 'deskTomorrow', 'deskOtherDay', 'deskWhenLabel']) {
       expect((en.newVisit as Record<string, string>)[key]).toBeTruthy();
       expect((hi.newVisit as Record<string, string>)[key]).toBeTruthy();
     }

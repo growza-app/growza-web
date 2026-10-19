@@ -326,11 +326,8 @@
     border-color: var(--accent-deep);
   }
 
-  .wi-when-time {
-    margin: 0;
-  }
-
-  .wi-when-go {
-    width: 100%;
+  /* A tile focused by keyboard scrolls clear of the bottom bar, whatever height the bar has (free times, lines). */
+  .wi-desk2 .pf-tile-tap {
+    scroll-margin-bottom: 17rem;
   }
 }

@@ -115,9 +115,7 @@ export function useNewVisitCopy() {
     deskWhenTitle: t('deskWhenTitle'),
     deskTomorrow: t('deskTomorrow'),
     deskOtherDay: t('deskOtherDay'),
-    deskContinue: t('deskContinue'),
     deskWhenLabel: t('deskWhenLabel'),
-    deskAround: (time: string) => t('deskAround', { time }),
     deskNobodyToday: t('deskNobodyToday'),
     // Jira GRW-384 — a branch opened with no menu. GRW-399: the vertical's word for what it sells, not "services".
     noServicesAtBranch: (branch: string, services: string) =>
