@@ -15,10 +15,8 @@ import { useMayUse, useSession } from '../components/SessionProvider';
 import { useLabel } from '../components/LabelsProvider';
 import { pickNoun } from '../lib/nouns';
 import {
-  IconAnalytics,
   IconCheck,
   IconChevronDown,
-  IconChevronRight,
   IconClose,
   IconDownload,
   IconPackages,
@@ -28,7 +26,6 @@ import {
   IconRupee,
   IconSearch,
   IconServices,
-  IconUserPlus,
 } from '../components/icons';
 import { csvLines } from '../lib/csv';
 import { useBarcodeScan } from '../lib/barcode-scan';
@@ -900,6 +897,7 @@ export function SalesClient({
    * that is not stocked — is said here and leaves this screen as it was, filters and all.
    */
   const session = useSession();
+  const viewerIsOwner = !session || session.role === null || session.role === 'owner';
   const sellReachable = mayRecordPayment && session?.live !== false;
   const shelfRef = useRef<{ branch: string | null; shelf: Promise<Product[] | null> } | null>(null);
   const leaving = useRef(false);
@@ -1119,10 +1117,6 @@ export function SalesClient({
 
   const kpis = useMemo(() => computeSalesKpis(toolbarRows), [toolbarRows]);
   const prevKpis = useMemo(() => computeSalesKpis(prevToolbarRows), [prevToolbarRows]);
-  const quickStats = useMemo(
-    () => computeSalesQuickStats(toolbarRows, prevToolbarRows),
-    [toolbarRows, prevToolbarRows],
-  );
 
   const totalSalesDelta = useMemo(
     () => computeDeltaPct(kpis.totalSalesMinor, prevKpis.totalSalesMinor),
@@ -2008,81 +2002,6 @@ export function SalesClient({
               )
             ) : null}
           </section>
-
-          <aside className="sls-quick-card" aria-label={t('quickStats.title')}>
-            <div className="sls-quick-head">
-              <h2 className="sls-quick-title">{t('quickStats.title')}</h2>
-              <a href="/reports" className="sls-quick-link">
-                <span>{t('quickStats.viewAll')}</span>
-                <IconChevronRight />
-              </a>
-            </div>
-            <div className="sls-quick-list">
-              <div className="sls-quick-row">
-                <span className="sls-quick-icon">
-                  <IconAnalytics />
-                </span>
-                <span className="sls-quick-label">{t('quickStats.avgBill')}</span>
-                <div className="sls-quick-right">
-                  <strong className="sls-quick-val">{formatMoney(String(quickStats.avgBillMinor))}</strong>
-                  {quickStats.avgBillDeltaPct !== null ? (
-                    <span className={`sls-quick-pill ${quickStats.avgBillDeltaPct < 0 ? 'is-down' : 'is-up'}`}>
-                      {quickStats.avgBillDeltaPct >= 0 ? '↑' : '↓'} {Math.abs(quickStats.avgBillDeltaPct)}%
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="sls-quick-row">
-                <span className="sls-quick-icon">
-                  <IconUserPlus />
-                </span>
-                <span className="sls-quick-label">{t('quickStats.clientsServed')}</span>
-                <div className="sls-quick-right">
-                  <strong className="sls-quick-val">{quickStats.clientsCount}</strong>
-                  {quickStats.clientsDeltaPct !== null ? (
-                    <span className={`sls-quick-pill ${quickStats.clientsDeltaPct < 0 ? 'is-down' : 'is-up'}`}>
-                      {quickStats.clientsDeltaPct >= 0 ? '↑' : '↓'} {Math.abs(quickStats.clientsDeltaPct)}%
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="sls-quick-row">
-                <span className="sls-quick-icon">
-                  <IconServices />
-                </span>
-                <span className="sls-quick-label">{t('quickStats.topService')}</span>
-                <div className="sls-quick-stack">
-                  <strong className="sls-quick-name">
-                    {quickStats.topService ? quickStats.topService.name : t('quickStats.noneYet')}
-                  </strong>
-                  {quickStats.topService ? (
-                    <span className="sls-quick-sub">
-                      {t('quickStats.bookingsCount', { n: quickStats.topService.count })}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="sls-quick-row">
-                <span className="sls-quick-icon">
-                  <IconProducts />
-                </span>
-                <span className="sls-quick-label">{t('quickStats.topProduct')}</span>
-                <div className="sls-quick-stack">
-                  <strong className="sls-quick-name">
-                    {quickStats.topProduct ? quickStats.topProduct.name : t('quickStats.noneYet')}
-                  </strong>
-                  {quickStats.topProduct ? (
-                    <span className="sls-quick-sub">
-                      {t('kpi.unitsCount', { n: quickStats.topProduct.units })}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          </aside>
         </div>
 
         {/* Filter Tabs + Search + Export CSV */}
@@ -2175,57 +2094,88 @@ export function SalesClient({
                     <th>{t('cols.payment')}</th>
                     <th className="is-num">{t('cols.total')}</th>
                     <th>{t('cols.status')}</th>
+                    {showProductsCol ? <th>{t('cols.returnWindow')}</th> : null}
                     <th className="is-action">{t('cols.action')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pageRows.map((row) => {
                     const shownProducts = row.products.slice(0, MAX_ROW_PRODUCTS);
-                    const hiddenProducts = row.products.length - shownProducts.length;
+                    const sortedForPreview = [...row.products].sort(
+                      (a, b) => (lineRemainingQty(b) > 0 ? 1 : 0) - (lineRemainingQty(a) > 0 ? 1 : 0),
+                    );
+                    const tableProducts = row.products.length > 1 ? sortedForPreview.slice(0, 1) : shownProducts;
+                    const hiddenProducts = row.products.length - tableProducts.length;
                     const primaryMode = row.paymentModes[0] ?? 'other';
+                    const rowWin = computeReturnWindow(row.dayISO, todayISO, returnWindowDays);
                     const canReturnRow =
                       mayRecordPayment &&
                       row.productUnits > 0 &&
-                      computeReturnWindow(row.dayISO, todayISO, returnWindowDays).eligible;
+                      (rowWin.eligible || viewerIsOwner);
                     const fullyReturned = row.returnedUnits > 0 && row.productUnits === 0 && row.serviceNames.length === 0;
                     const partReturned = row.returnedUnits > 0 && !fullyReturned;
                     return (
                       <tr key={row.key}>
                         <td className="sls-col-when">{formatWhen(row)}</td>
-                        <td>
+                        <td className="sls-col-client">
                           <div className="sls-client">
                             <span className="sls-avatar">{initials(row.clientName)}</span>
                             <div className="sls-client-meta">
-                              <strong className="sls-client-name">{row.clientName}</strong>
+                              <strong className="sls-client-name" title={row.clientName}>
+                                {row.clientName}
+                              </strong>
                               {row.clientPhone ? <span className="sls-client-phone">{row.clientPhone}</span> : null}
                             </div>
                           </div>
                         </td>
                         {showServicesCol ? (
-                          <td>
-                            <div className="sls-items">
-                              {row.offerTitle ? (
-                                <span className="sls-badge sls-badge-pkg">
-                                  <IconPackages /> {row.offerTitle}
+                          <td className="sls-col-services">
+                            {row.serviceNames.length > 0 ? (
+                              <div className="sls-items">
+                                {row.offerTitle ? (
+                                  <span className="sls-badge sls-badge-pkg" title={row.offerTitle}>
+                                    <IconPackages />
+                                    <span className="sls-badge-text">{row.offerTitle}</span>
+                                  </span>
+                                ) : null}
+                                <span
+                                  className="sls-service-list"
+                                  title={row.serviceNames.join(', ')}
+                                >
+                                  {row.serviceNames[0]}
                                 </span>
-                              ) : null}
-                              <span className="sls-service-list">{summarizeServices(row.serviceNames, locale) || '—'}</span>
-                            </div>
+                                {row.serviceNames.length > 1 ? (
+                                  <button
+                                    type="button"
+                                    className="sls-badge sls-badge-more"
+                                    onClick={() => setOpenBooking(row.group)}
+                                  >
+                                    {t('moreProducts', { n: row.serviceNames.length - 1 })}
+                                  </button>
+                                ) : null}
+                              </div>
+                            ) : (
+                              <span className="sls-muted">{t('noProducts')}</span>
+                            )}
                           </td>
                         ) : null}
                         {showProductsCol ? (
-                          <td>
+                          <td className="sls-col-products">
                             {row.products.length > 0 ? (
                               <div className="sls-product-chips">
-                                {shownProducts.map((p, i) => (
-                                  <span
-                                    key={`${p.productId ?? p.name}-${i}`}
-                                    className={`sls-badge sls-badge-prd ${lineRemainingQty(p) === 0 ? 'is-returned' : ''}`}
-                                  >
-                                    <IconProducts />
-                                    {p.qty > 1 ? `${p.name} (${p.qty})` : `${p.name} (1)`}
-                                  </span>
-                                ))}
+                                {tableProducts.map((p, i) => {
+                                  const label = p.qty > 1 ? `${p.name} (${p.qty})` : `${p.name} (1)`;
+                                  return (
+                                    <span
+                                      key={`${p.productId ?? p.name}-${i}`}
+                                      title={label}
+                                      className={`sls-badge sls-badge-prd ${lineRemainingQty(p) === 0 ? 'is-returned' : ''}`}
+                                    >
+                                      <IconProducts />
+                                      <span className="sls-badge-text">{label}</span>
+                                    </span>
+                                  );
+                                })}
                                 {hiddenProducts > 0 ? (
                                   <button
                                     type="button"
@@ -2278,6 +2228,25 @@ export function SalesClient({
                             </span>
                           )}
                         </td>
+                        {showProductsCol ? (
+                          <td className="sls-col-ret-win">
+                            {row.products.length === 0 ? (
+                              <span className="sls-muted">{t('noProducts')}</span>
+                            ) : row.productUnits === 0 ? (
+                              <span className="sls-ret-win-pill is-muted">
+                                {t('returnedStatus')}
+                              </span>
+                            ) : rowWin.eligible ? (
+                              <span className="sls-ret-win-pill is-ok">
+                                {t('returnWindowOpen', { days: rowWin.daysLeft })}
+                              </span>
+                            ) : (
+                              <span className="sls-ret-win-pill is-expired">
+                                {t('returnWindowClosed')}
+                              </span>
+                            )}
+                          </td>
+                        ) : null}
                         <td className="is-action">
                           <div className="sls-row-actions">
                             {canReturnRow ? (
@@ -2314,7 +2283,7 @@ export function SalesClient({
                 const canReturnRow =
                   mayRecordPayment &&
                   row.productUnits > 0 &&
-                  computeReturnWindow(row.dayISO, todayISO, returnWindowDays).eligible;
+                  (computeReturnWindow(row.dayISO, todayISO, returnWindowDays).eligible || viewerIsOwner);
                 return (
                   <div key={row.key} className="sls-card-wrap">
                     <button
@@ -2359,7 +2328,9 @@ export function SalesClient({
                                 className={`sls-badge sls-badge-prd ${lineRemainingQty(p) === 0 ? 'is-returned' : ''}`}
                               >
                                 <IconProducts />
-                                {p.qty > 1 ? `${p.name} (${p.qty})` : `${p.name} (1)`}
+                                <span className="sls-badge-text">
+                                  {p.qty > 1 ? `${p.name} (${p.qty})` : `${p.name} (1)`}
+                                </span>
                               </span>
                             ))}
                             {hiddenProducts > 0 ? (
@@ -2409,7 +2380,7 @@ export function SalesClient({
               !openRow ||
               !mayRecordPayment ||
               openRow.productUnits <= 0 ||
-              !computeReturnWindow(openRow.dayISO, todayISO, returnWindowDays).eligible
+              !(computeReturnWindow(openRow.dayISO, todayISO, returnWindowDays).eligible || viewerIsOwner)
             ) {
               return undefined;
             }
@@ -2433,6 +2404,13 @@ export function SalesClient({
           todayISO={todayISO}
           returnWindowDays={returnWindowDays}
           onClose={() => setReturnSheet({ open: false, bill: null })}
+          onViewBill={(billKey) => {
+            const found = allSaleRows.find((r) => r.key === billKey);
+            if (found) {
+              setReturnSheet({ open: false, bill: null });
+              setOpenBooking(found.group);
+            }
+          }}
           onReturned={(res) => {
             // A replay answers a request already made: its units are in the list the refresh brings, not new ones.
             setLoadedAppointments((prev) =>
@@ -2456,7 +2434,6 @@ export function SalesClient({
                 return a;
               }),
             );
-            setReturnSheet({ open: false, bill: null });
             router.refresh();
           }}
         />

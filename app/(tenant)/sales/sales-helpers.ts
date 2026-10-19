@@ -146,3 +146,69 @@ export function findProductLineByCode(
   if (matches.length === 0) return null;
   return matches.find((p) => lineRemainingQty(p) > 0) ?? matches[0]!;
 }
+
+/** Short human-readable bill reference derived from a visit key or product barcode. */
+export function formatBillRef(key: string): string {
+  const raw = visitKeyFromGroupKey(key).replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  return raw.slice(0, 8) || 'BILL';
+}
+
+/** Builds a quantity map selecting all remaining returnable units across every line on a bill. */
+export function buildSelectAllQtyMap(products: readonly VisitProductLine[]): Record<string, number> {
+  const next: Record<string, number> = {};
+  for (const p of products) {
+    const rem = lineRemainingQty(p);
+    if (rem > 0) next[lineReturnId(p)] = rem;
+  }
+  return next;
+}
+
+export interface ReturnSelectedLine {
+  line: VisitProductLine;
+  id: string;
+  qty: number;
+  unitMinor: number;
+  refundMinor: number;
+}
+
+export interface ReturnSelectionSummary {
+  selectedItemsCount: number;
+  totalSelectedUnits: number;
+  totalRefundMinor: number;
+  selectedLines: ReturnSelectedLine[];
+}
+
+/**
+ * Computes the return selection summary from a bill's products and the user's `qtyByLine` map.
+ * Clamps each line to `[0, lineRemainingQty(p)]` and excludes zero-quantity products.
+ */
+export function computeReturnSelection(
+  products: readonly VisitProductLine[],
+  qtyByLine: Readonly<Record<string, number>>,
+): ReturnSelectionSummary {
+  let selectedItemsCount = 0;
+  let totalSelectedUnits = 0;
+  let totalRefundMinor = 0;
+  const selectedLines: ReturnSelectedLine[] = [];
+
+  for (const p of products) {
+    const id = lineReturnId(p);
+    const rem = lineRemainingQty(p);
+    const q = Math.min(rem, Math.max(0, Math.trunc(qtyByLine[id] ?? 0)));
+    if (q <= 0) continue;
+    const refundMinor = lineRefundMinorForQty(p, q);
+    const unitMinor = Math.round(Number(p.paidMinor || 0) / Math.max(1, Number(p.qty || 1)));
+    selectedItemsCount += 1;
+    totalSelectedUnits += q;
+    totalRefundMinor += refundMinor;
+    selectedLines.push({ line: p, id, qty: q, unitMinor, refundMinor });
+  }
+
+  return {
+    selectedItemsCount,
+    totalSelectedUnits,
+    totalRefundMinor,
+    selectedLines,
+  };
+}
+
