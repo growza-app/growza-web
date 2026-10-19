@@ -2433,6 +2433,13 @@ export function SalesClient({
           todayISO={todayISO}
           returnWindowDays={returnWindowDays}
           onClose={() => setReturnSheet({ open: false, bill: null })}
+          onViewBill={(billKey) => {
+            const found = allSaleRows.find((r) => r.key === billKey);
+            if (found) {
+              setReturnSheet({ open: false, bill: null });
+              setOpenBooking(found.group);
+            }
+          }}
           onReturned={(res) => {
             // A replay answers a request already made: its units are in the list the refresh brings, not new ones.
             setLoadedAppointments((prev) =>
@@ -2456,7 +2463,6 @@ export function SalesClient({
                 return a;
               }),
             );
-            setReturnSheet({ open: false, bill: null });
             router.refresh();
           }}
         />

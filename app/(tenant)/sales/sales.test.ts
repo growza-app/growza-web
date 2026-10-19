@@ -25,7 +25,14 @@ import {
   visitKeyFromGroupKey,
 } from './SalesClient';
 import { PAGE_SIZE } from '../components/Pagination';
-import { defaultRefundMode, newRequestId, requestIdFor } from './sales-helpers';
+import {
+  buildSelectAllQtyMap,
+  computeReturnSelection,
+  defaultRefundMode,
+  formatBillRef,
+  newRequestId,
+  requestIdFor,
+} from './sales-helpers';
 
 const here = (p: string) => readFileSync(resolve(__dirname, p), 'utf8');
 
@@ -730,4 +737,98 @@ describe('a refund is paid out one way, sent once, and warns about an issued inv
     // The id is dropped only after the server answered: a failure keeps it, so the retry is the same request.
     expect(sheet.indexOf('requestRef.current = null;')).toBeGreaterThan(sheet.indexOf('await api.returnSaleProducts'));
   });
+
+  it('computes 2-step return selections accurately for single item, multi-item, partial qty, select all, clear, and already-returned lines', () => {
+    // Customer purchased: Face Wash (2 @ ₹180 = ₹360), Hair Oil (1 @ ₹250), Comb Pro (1 @ ₹100, already returned)
+    const billProducts = [
+      {
+        id: 'vp-fw',
+        productId: 'prd-fw',
+        name: 'Face Wash',
+        sku: 'FW-001',
+        priceMinor: '18000',
+        qty: 2,
+        paidMinor: '36000',
+        returnedQty: 0,
+        returnedMinor: '0',
+      },
+      {
+        id: 'vp-ho',
+        productId: 'prd-ho',
+        name: 'Hair Oil',
+        sku: 'HO-001',
+        priceMinor: '25000',
+        qty: 1,
+        paidMinor: '25000',
+        returnedQty: 0,
+        returnedMinor: '0',
+      },
+      {
+        id: 'vp-cp',
+        productId: 'prd-cp',
+        name: 'Comb Pro',
+        sku: 'CP-001',
+        priceMinor: '10000',
+        qty: 1,
+        paidMinor: '10000',
+        returnedQty: 0,
+        returnedMinor: '0',
+      },
+    ];
+
+    // Scenario A: Return 1 Face Wash -> ₹180 (18000 paise), zero-quantity items excluded
+    const scenarioA = computeReturnSelection(billProducts, { 'prd-fw': 1, 'prd-ho': 0, 'prd-cp': 0 });
+    expect(scenarioA.selectedItemsCount).toBe(1);
+    expect(scenarioA.totalSelectedUnits).toBe(1);
+    expect(scenarioA.totalRefundMinor).toBe(18000);
+    expect(scenarioA.selectedLines.map((l) => ({ id: l.id, qty: l.qty, refundMinor: l.refundMinor }))).toEqual([
+      { id: 'prd-fw', qty: 1, refundMinor: 18000 },
+    ]);
+
+    // Scenario B: Return 1 Face Wash and 1 Hair Oil -> ₹430 (43000 paise)
+    const scenarioB = computeReturnSelection(billProducts, { 'prd-fw': 1, 'prd-ho': 1 });
+    expect(scenarioB.selectedItemsCount).toBe(2);
+    expect(scenarioB.totalSelectedUnits).toBe(2);
+    expect(scenarioB.totalRefundMinor).toBe(43000);
+
+    // Scenario C: Select all eligible items -> 2 Face Wash + 1 Hair Oil + 1 Comb Pro = ₹710 (71000 paise)
+    const allMap = buildSelectAllQtyMap(billProducts);
+    expect(allMap).toEqual({ 'prd-fw': 2, 'prd-ho': 1, 'prd-cp': 1 });
+    const scenarioC = computeReturnSelection(billProducts, allMap);
+    expect(scenarioC.selectedItemsCount).toBe(3);
+    expect(scenarioC.totalSelectedUnits).toBe(4);
+    expect(scenarioC.totalRefundMinor).toBe(71000);
+
+    // Clamping above available quantity and excluding already-returned items
+    const withReturnedComb = [
+      billProducts[0]!,
+      billProducts[1]!,
+      { ...billProducts[2]!, returnedQty: 1, returnedMinor: '10000' },
+    ];
+    expect(buildSelectAllQtyMap(withReturnedComb)).toEqual({ 'prd-fw': 2, 'prd-ho': 1 });
+    const clamped = computeReturnSelection(withReturnedComb, { 'prd-fw': 99, 'prd-cp': 5 });
+    expect(clamped.selectedItemsCount).toBe(1);
+    expect(clamped.totalSelectedUnits).toBe(2);
+    expect(clamped.totalRefundMinor).toBe(36000);
+
+    // Clear selection -> 0 items, 0 units, ₹0 refund
+    const cleared = computeReturnSelection(withReturnedComb, {});
+    expect(cleared.selectedItemsCount).toBe(0);
+    expect(cleared.totalSelectedUnits).toBe(0);
+    expect(cleared.totalRefundMinor).toBe(0);
+    expect(cleared.selectedLines).toEqual([]);
+
+    expect(formatBillRef('single:89099900-0028-4000-8000-000000000000')).toBe('89099900');
+
+    // Verify 2-step UI structure in ReturnProductSheet.tsx
+    const sheet = here('./ReturnProductSheet.tsx');
+    expect(sheet).toContain("t('stepSelect')");
+    expect(sheet).toContain("t('stepReview')");
+    expect(sheet).toContain('className="sls-ret-table"');
+    expect(sheet).toContain("t('continueBtn')");
+    expect(sheet).toContain("t('itemsBeingReturned'");
+    expect(sheet).toContain("t('doneTitle')");
+    expect(sheet).toContain("t('printReceipt')");
+  });
 });
+
