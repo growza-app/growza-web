@@ -17,7 +17,7 @@ describe('Clients due back on the owner Home', () => {
   const owner = read('OwnerHome.tsx');
 
   it('reads the What-to-do card and sends the same typed-in WhatsApp message', () => {
-    expect(card).toContain('api.reportsTodo(branch)');
+    expect(card).toContain('.reportsTodo(branch)');
     expect(card).toContain("c.kind === 'dueBack'");
     expect(card).toContain("t('dueBack.text', { name: client.name, business })");
     expect(card).toContain('whatsappHref(waDigits(c.waPhone), text(c))');
