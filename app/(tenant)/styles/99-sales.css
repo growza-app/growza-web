@@ -1491,9 +1491,10 @@
 }
 
 .sls-view-btn {
-  min-height: 30px;
-  padding: 0 var(--sp-2);
+  min-height: 28px;
+  padding: 0 8px;
   font-size: 0.75rem;
+  white-space: nowrap;
 }
 
 .sls-muted {
@@ -1630,18 +1631,26 @@
   }
 }
 
-@media (min-width: 861px) and (max-width: 1100px) {
+@media (min-width: 861px) and (max-width: 1440px) {
   .sls-table th,
   .sls-table td {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 6px;
+    padding-right: 6px;
   }
 
   .sls-table .sls-product-chips {
-    max-width: 11rem;
+    max-width: 10.5rem;
   }
 
-  .sls-col-when,
+  .sls-table .sls-service-list {
+    max-width: 12rem;
+  }
+
+  .sls-col-when {
+    white-space: normal;
+    max-width: 6.5rem;
+  }
+
   .sls-table .sls-client-name {
     white-space: normal;
   }
@@ -1672,17 +1681,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 4px;
+  flex-wrap: nowrap;
 }
 
 .sls-return-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  min-height: 30px;
-  padding: 0 var(--sp-2);
+  min-height: 28px;
+  padding: 0 8px;
   font-size: 0.75rem;
   font-weight: 600;
+  white-space: nowrap;
   color: var(--amber-ink);
   border-color: color-mix(in srgb, var(--amber) 32%, var(--border));
   background: var(--amber-soft);
@@ -1758,8 +1769,9 @@
 .sheet.sls-return-sheet {
   display: flex;
   flex-direction: column;
+  width: min(94vw, 560px);
   max-width: 560px;
-  max-height: min(88dvh, 720px);
+  max-height: min(90dvh, 740px);
   padding: 0;
   overflow: hidden;
 }
@@ -1815,7 +1827,7 @@
   overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: 10px;
   padding: var(--sp-3) var(--sp-4);
 }
 
@@ -1853,6 +1865,7 @@
   color: var(--accent-deep);
   font-size: 0.75rem;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .sls-ret-scan-ready svg {
@@ -1868,6 +1881,9 @@
 }
 
 .sls-ret-scan-notice {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--accent-soft);
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--accent-deep);
@@ -1885,6 +1901,12 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.sls-ret-sec-meta {
+  font-size: 0.75rem;
+  font-weight: 600;
   color: var(--muted);
 }
 
@@ -1993,7 +2015,17 @@
 }
 
 .sls-ret-bill-right {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
   flex-shrink: 0;
+}
+
+.sls-ret-bill-amt {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--text);
+  white-space: nowrap;
 }
 
 .sls-ret-win-pill {
@@ -2032,7 +2064,7 @@
   align-items: center;
   gap: var(--sp-2);
   flex-wrap: wrap;
-  padding: var(--sp-2) var(--sp-3);
+  padding: 8px var(--sp-3);
   border-radius: 12px;
   background: var(--page-bg);
   border: 1px solid var(--border);
@@ -2060,7 +2092,7 @@
 .sls-ret-lines {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: 6px;
 }
 
 .sls-ret-line {
@@ -2068,7 +2100,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3);
+  padding: 8px var(--sp-3);
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -2131,7 +2163,7 @@
 .sls-ret-line-controls {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
   flex-shrink: 0;
 }
 
@@ -2148,8 +2180,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border: 0;
   background: transparent;
   color: var(--text);
@@ -2171,7 +2203,7 @@
 }
 
 .sls-ret-step-val {
-  min-width: 28px;
+  min-width: 26px;
   text-align: center;
   font-size: 0.875rem;
   font-weight: 800;
@@ -2179,7 +2211,7 @@
 }
 
 .sls-ret-line-refund {
-  min-width: 68px;
+  min-width: 64px;
   text-align: right;
   font-size: 0.875rem;
   font-weight: 800;
@@ -2189,7 +2221,7 @@
 .sls-ret-condition {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
+  gap: 6px;
 }
 
 .sls-ret-cond-grid {
@@ -2203,7 +2235,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-  padding: var(--sp-2) var(--sp-3);
+  padding: 8px 12px;
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -2220,6 +2252,7 @@
 .sls-ret-cond-opt span {
   font-size: 0.75rem;
   color: var(--muted);
+  line-height: 1.25;
 }
 
 .sls-ret-cond-opt.is-on {
@@ -2240,6 +2273,38 @@
   color: var(--amber-ink);
 }
 
+.sls-ret-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+.sls-ret-mode-opt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 var(--sp-2);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sls-ret-mode-opt:hover:not(.is-on) {
+  border-color: var(--accent);
+  background: var(--page-bg);
+}
+
+.sls-ret-mode-opt.is-on {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
 .sls-ret-reason-field {
   display: flex;
   flex-direction: column;
@@ -2248,7 +2313,7 @@
 
 .sls-ret-reason-input {
   width: 100%;
-  min-height: 38px;
+  min-height: 36px;
   padding: 0 var(--sp-3);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -2312,7 +2377,8 @@
 @media (max-width: 860px) {
   .sls-return-btn,
   .sls-ret-link-btn,
-  .sls-ret-change-btn {
+  .sls-ret-change-btn,
+  .sls-ret-mode-opt {
     min-height: 44px;
   }
 
@@ -2330,4 +2396,17 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+@media (max-width: 480px) {
+  .sls-ret-mode-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sls-ret-bill-right {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+}
+
 

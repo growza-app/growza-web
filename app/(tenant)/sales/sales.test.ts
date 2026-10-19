@@ -661,6 +661,9 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(sheet).toContain("t('returnAll')");
     expect(sheet).toContain("t('restockShelf')");
     expect(sheet).toContain("t('damagedOpened')");
+    expect(sheet).toContain('sls-ret-mode-grid');
+    expect(sheet).toContain("t('windowDaysShort'");
+    expect(sheet).toContain("t('windowPolicy'");
     expect(summary).toContain('onReturnProducts');
   });
 });

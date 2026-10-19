@@ -290,95 +290,103 @@ export function ReturnProductSheet({
         </div>
 
         <div className="sls-ret-scroll">
-          <div className="sls-ret-scan-box">
-            <div className="sls-ret-scan-top">
-              <span className="sls-ret-scan-label">{t('scanLabel')}</span>
-              <span className="sls-ret-scan-ready">
-                <IconBarcode />
-                <span>{t('scanReady')}</span>
-              </span>
-            </div>
-            <label className="search-wrap sls-ret-search">
-              <IconSearch />
-              <input
-                type="search"
-                className="search-input search-input-bare"
-                placeholder={t('scanPlaceholder')}
-                value={query}
-                autoFocus={autoFocusField()}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setScanNotice(null);
-                }}
-                onKeyDown={handleSearchKeyDown}
-              />
-            </label>
-            {scanNotice ? (
-              <div className="sls-ret-scan-notice" role="status">
-                {scanNotice}
-              </div>
-            ) : null}
-          </div>
-
           {!selectedBill ? (
-            <div className="sls-ret-picker">
-              <div className="sls-ret-sec-head">
-                <span className="sls-ret-sec-title">{query.trim() ? t('matchingBills') : t('recentProductBills')}</span>
-              </div>
-              {matchingBills.length === 0 ? (
-                <div className="sls-ret-empty">
-                  {query.trim() ? t('noMatchingBills', { q: query.trim() }) : t('noProductBills')}
+            <>
+              <div className="sls-ret-scan-box">
+                <div className="sls-ret-scan-top">
+                  <span className="sls-ret-scan-label">{t('scanLabel')}</span>
+                  <span className="sls-ret-scan-ready">
+                    <IconBarcode />
+                    <span>{t('scanReady')}</span>
+                  </span>
                 </div>
-              ) : (
-                <div className="sls-ret-bill-list">
-                  {matchingBills.map((b) => {
-                    const win = computeReturnWindow(b.dayISO, todayISO, returnWindowDays);
-                    const remUnits = b.products.reduce((s, p) => s + lineRemainingQty(p), 0);
-                    const disabled = !win.eligible || remUnits <= 0;
-                    return (
-                      <button
-                        key={b.key}
-                        type="button"
-                        className={`sls-ret-bill-card ${disabled ? 'is-disabled' : ''}`}
-                        disabled={disabled}
-                        onClick={() => selectBill(b, query.trim())}
-                      >
-                        <div className="sls-ret-bill-main">
-                          <span className="sls-avatar">{initials(b.clientName)}</span>
-                          <div className="sls-ret-bill-meta">
-                            <div className="sls-ret-bill-title-row">
-                              <strong>{b.clientName}</strong>
-                              <span className="sls-ret-bill-when">{formatBillWhen(b)}</span>
-                            </div>
-                            <div className="sls-ret-bill-prds">
-                              {b.products.map((p, idx) => (
-                                <span key={`${lineReturnId(p)}-${idx}`} className="sls-badge sls-badge-prd">
-                                  <IconProducts />
-                                  {p.name} ({p.qty})
-                                </span>
-                              ))}
+                <label className="search-wrap sls-ret-search">
+                  <IconSearch />
+                  <input
+                    type="search"
+                    className="search-input search-input-bare"
+                    placeholder={t('scanPlaceholder')}
+                    value={query}
+                    autoFocus={autoFocusField()}
+                    onChange={(e) => {
+                      setQuery(e.target.value);
+                      setScanNotice(null);
+                    }}
+                    onKeyDown={handleSearchKeyDown}
+                  />
+                </label>
+                {scanNotice ? (
+                  <div className="sls-ret-scan-notice" role="status">
+                    {scanNotice}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="sls-ret-picker">
+                <div className="sls-ret-sec-head">
+                  <span className="sls-ret-sec-title">{query.trim() ? t('matchingBills') : t('recentProductBills')}</span>
+                  <span className="sls-ret-sec-meta">{t('windowPolicy', { window: returnWindowDays })}</span>
+                </div>
+                {matchingBills.length === 0 ? (
+                  <div className="sls-ret-empty">
+                    {query.trim() ? t('noMatchingBills', { q: query.trim() }) : t('noProductBills')}
+                  </div>
+                ) : (
+                  <div className="sls-ret-bill-list">
+                    {matchingBills.map((b) => {
+                      const win = computeReturnWindow(b.dayISO, todayISO, returnWindowDays);
+                      const remUnits = b.products.reduce((s, p) => s + lineRemainingQty(p), 0);
+                      const prdPaidMinor = b.products.reduce((s, p) => s + Number(p.paidMinor || 0), 0);
+                      const disabled = !win.eligible || remUnits <= 0;
+                      return (
+                        <button
+                          key={b.key}
+                          type="button"
+                          className={`sls-ret-bill-card ${disabled ? 'is-disabled' : ''}`}
+                          disabled={disabled}
+                          onClick={() => selectBill(b, query.trim())}
+                        >
+                          <div className="sls-ret-bill-main">
+                            <span className="sls-avatar">{initials(b.clientName)}</span>
+                            <div className="sls-ret-bill-meta">
+                              <div className="sls-ret-bill-title-row">
+                                <strong>{b.clientName}</strong>
+                                <span className="sls-ret-bill-when">{formatBillWhen(b)}</span>
+                              </div>
+                              <div className="sls-ret-bill-prds">
+                                {b.products.map((p, idx) => (
+                                  <span
+                                    key={`${lineReturnId(p)}-${idx}`}
+                                    className={`sls-badge sls-badge-prd ${lineRemainingQty(p) === 0 ? 'is-returned' : ''}`}
+                                  >
+                                    <IconProducts />
+                                    {p.name} ({p.qty})
+                                  </span>
+                                ))}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="sls-ret-bill-right">
-                          <span
-                            className={`sls-ret-win-pill ${
-                              remUnits <= 0 ? 'is-muted' : win.eligible ? 'is-ok' : 'is-expired'
-                            }`}
-                          >
-                            {remUnits <= 0
-                              ? t('allReturned')
-                              : win.eligible
-                                ? t('windowDaysLeft', { left: win.daysLeft, window: win.windowDays })
-                                : t('windowEnded', { window: win.windowDays })}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                          <div className="sls-ret-bill-right">
+                            <strong className="sls-ret-bill-amt">{formatMoney(String(prdPaidMinor))}</strong>
+                            <span
+                              className={`sls-ret-win-pill ${
+                                remUnits <= 0 ? 'is-muted' : win.eligible ? 'is-ok' : 'is-expired'
+                              }`}
+                            >
+                              {remUnits <= 0
+                                ? t('allReturned')
+                                : win.eligible
+                                  ? t('windowDaysShort', { left: win.daysLeft })
+                                  : t('windowEnded', { window: win.windowDays })}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </>
           ) : (
             <>
               <div className="sls-ret-selected-bill">
@@ -397,6 +405,12 @@ export function ReturnProductSheet({
                     <span>{t('windowEnded', { window: billWindow.windowDays })}</span>
                   )}
                 </span>
+                {billWindow.eligible && returnableLines.length > 0 ? (
+                  <span className="sls-ret-scan-ready">
+                    <IconBarcode />
+                    <span>{t('scanReady')}</span>
+                  </span>
+                ) : null}
                 {!initialBill ? (
                   <button
                     type="button"
@@ -404,6 +418,7 @@ export function ReturnProductSheet({
                     onClick={() => {
                       setSelectedBill(null);
                       setQtyByLine({});
+                      setScanNotice(null);
                       setError(null);
                     }}
                   >
@@ -411,6 +426,12 @@ export function ReturnProductSheet({
                   </button>
                 ) : null}
               </div>
+
+              {scanNotice ? (
+                <div className="sls-ret-scan-notice" role="status">
+                  {scanNotice}
+                </div>
+              ) : null}
 
               <div className="sls-ret-sec-head">
                 <span className="sls-ret-sec-title">{t('productsOnBill')}</span>
@@ -526,14 +547,14 @@ export function ReturnProductSheet({
 
               <div className="sls-ret-condition">
                 <span className="sls-ret-sec-title">{t('refundModeLabel')}</span>
-                <div className="sls-ret-cond-grid" role="radiogroup" aria-label={t('refundModeLabel')}>
+                <div className="sls-ret-mode-grid" role="radiogroup" aria-label={t('refundModeLabel')}>
                   {REFUND_MODES.map((m) => (
                     <button
                       key={m}
                       type="button"
                       role="radio"
                       aria-checked={refundMode === m}
-                      className={`sls-ret-cond-opt ${refundMode === m ? 'is-on' : ''}`}
+                      className={`sls-ret-mode-opt ${refundMode === m ? 'is-on' : ''}`}
                       onClick={() => {
                         setRefundMode(m);
                         setIssuedDocument(null);

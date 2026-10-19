@@ -3503,6 +3503,8 @@
       "noMatchingBills": "No product bill matches \"{q}\".",
       "noProductBills": "No bills with products in this period.",
       "windowDaysLeft": "{left, plural, =0 {Last day of {window}d return window} one {#d left in {window}d window} other {#d left in {window}d window}}",
+      "windowDaysShort": "{left, plural, =0 {Last day} one {#d left} other {#d left}}",
+      "windowPolicy": "{window}-day return window",
       "windowEnded": "Return window ended ({window}d)",
       "allReturned": "All returned",
       "changeBill": "Change bill",

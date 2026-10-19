@@ -3503,6 +3503,8 @@
       "noMatchingBills": "\"{q}\" से कोई सामान वाला बिल नहीं मिला।",
       "noProductBills": "इस समय में सामान वाला कोई बिल नहीं है।",
       "windowDaysLeft": "{left, plural, =0 {{window} दिन की वापसी सीमा का आख़िरी दिन} one {{window} दिन की सीमा में # दिन बाकी} other {{window} दिन की सीमा में # दिन बाकी}}",
+      "windowDaysShort": "{left, plural, =0 {आख़िरी दिन} one {# दिन बाकी} other {# दिन बाकी}}",
+      "windowPolicy": "{window} दिन की वापसी सीमा",
       "windowEnded": "वापसी की समय-सीमा ख़त्म ({window} दिन)",
       "allReturned": "सब वापस हो चुका",
       "changeBill": "दूसरा बिल चुनें",
