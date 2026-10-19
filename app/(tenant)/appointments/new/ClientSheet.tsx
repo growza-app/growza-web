@@ -11,6 +11,7 @@ import { opensSoftKeyboard } from '../../../shared/a11y/soft-keyboard';
 import { useDialog } from '../../../shared/a11y/useDialog';
 import { IconSearch, IconUserPlus } from '../../components/icons';
 import { PhoneField } from '../../components/PhoneField';
+import { SearchClear } from '../../components/SearchClear';
 
 /** What the sheet hands back: a client on file, or the one it just created. */
 export type PickedClient = {
@@ -244,7 +245,7 @@ export function ClientSheet({ location, onPick, onClose, startAdding = false }: 
 
         <div className="pf-client-box">
           <IconSearch />
-          <input ref={box} type="search" value={term} onChange={(e) => setTerm(e.target.value)} placeholder={t('nameOrNumber')} aria-label={t('nameOrNumber')} autoComplete="off" autoCorrect="off" spellCheck={false} />
+          <input ref={box} type="search" value={term} onChange={(e) => setTerm(e.target.value)} placeholder={t('nameOrNumber')} aria-label={t('nameOrNumber')} autoComplete="off" autoCorrect="off" spellCheck={false} /> <SearchClear value={term} onClear={() => { setTerm(''); }} />
         </div>
 
         {matches && matches.length > 0 ? (

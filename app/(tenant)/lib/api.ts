@@ -745,6 +745,8 @@ export const api = {
       idempotencyKey?: string;
       /** The desk has been told an issued invoice is not changed by this return. */
       acknowledgeIssuedDocument?: boolean;
+      /** An owner may accept a return after the business's return window has ended. */
+      overrideReturnWindow?: boolean;
     },
   ) => post<ReturnSaleProductsResponse>(`/api/v1/sales/${encodeURIComponent(visitKey)}/returns`, body),
 

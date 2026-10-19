@@ -42,6 +42,8 @@ export function useNewVisitCopy() {
     searchPlaceholder: t('searchPlaceholder'),
     noName: t('noName'),
     noMatch: t('noMatch'),
+    /** In the search list when nobody matched: adds what was typed as a new person. */
+    addAsNew: (name: string) => t('addAsNew', { name }),
     visits: (n: number) => t('visits', { n }),
     bookingDate: t('bookingDate'),
     bookingTime: t('bookingTime'),
@@ -111,6 +113,9 @@ export function useNewVisitCopy() {
     deskToday: t('deskToday'),
     deskOnVisit: t('deskOnVisit'),
     deskEmpty: t('deskEmpty'),
+    /** The laptop's When card (owner, 2026-10-19), and the line that reopens it. */
+    deskTimesAfter: t('deskTimesAfter'),
+    deskWhenLabel: t('deskWhenLabel'),
     deskNobodyToday: t('deskNobodyToday'),
     // Jira GRW-384 — a branch opened with no menu. GRW-399: the vertical's word for what it sells, not "services".
     noServicesAtBranch: (branch: string, services: string) =>

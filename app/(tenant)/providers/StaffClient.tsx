@@ -16,6 +16,7 @@ import { useWritable } from '../components/SessionProvider';
 import { SavedToast } from '../components/SavedToast';
 import { isWorkingToday, StaffActionSheet, StaffGroup, type RosterActions } from './StaffRoster';
 import { InviteSheet, LoginGroup, WaitingGroup, type InviteTarget } from './TeamLogins';
+import { SearchClear } from '../components/SearchClear';
 
 type Tab = 'all' | 'working' | 'off' | 'inactive';
 
@@ -645,6 +646,7 @@ export function StaffClient({
                   aria-label={t('searchAria', { label: staffLower })}
                   autoComplete="off"
                 />
+                <SearchClear value={search} onClear={() => { setSearch(''); setPage(1); }} />
               </label>
               {error && (
                 <div className="banner" role="alert">
@@ -722,6 +724,7 @@ export function StaffClient({
             }}
             aria-label={t('searchAria', { label: staffLower })}
           />
+          <SearchClear value={search} onClear={() => { setSearch(''); setPage(1); }} />
         </div>
       </div>
 

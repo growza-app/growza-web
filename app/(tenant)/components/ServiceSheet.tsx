@@ -208,7 +208,7 @@ export function ServiceSheet({
         ) : null}
         {productMode ? (
           shownProducts.length === 0 ? (
-            <p className="pf-client-note">{shelf.length === 0 ? t('desk.noProducts') : t('desk.noMatch')}</p>
+            <p className="pf-client-note">{shelf.length === 0 ? t('desk.noProducts') : t('desk.noProductMatch')}</p>
           ) : (
             /* A product reads like a service: its picture, its name, its price, and how many are left. */
             <ul className="pf-client-matches pf-menu-list">

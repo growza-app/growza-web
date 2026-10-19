@@ -22,6 +22,7 @@ import { payTokenHref, payVisitHref } from '../lib/pay-token';
 import { homeCopy } from '../lib/home-copy';
 import { atBranch, wholeMinutes } from '../lib/right-now';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
+import { SearchClear } from '../components/SearchClear';
 import {
   IconCalendar,
   IconCheck,
@@ -37,7 +38,6 @@ import {
   IconSearch,
   IconSort,
   IconStaff,
-  IconUserPlus,
 } from '../components/icons';
 
 /**
@@ -1775,10 +1775,7 @@ export function BookingsList({
               </div>
               {mayBook && (
                 <div className="bk-cmd-create-btns">
-                  <a className="btn bk-cmd-walkin-btn" href="/appointments/new?mode=now">
-                    <IconUserPlus /> {t('walkInBtn')}
-                  </a>
-                  <a className="btn btn-primary bk-cmd-new-btn" href="/appointments/new">
+                  <a className="btn btn-primary bk-cmd-new-btn" href="/appointments/new?mode=later">
                     <IconPlus /> {t('deskNew')}
                   </a>
                 </div>
@@ -1800,6 +1797,7 @@ export function BookingsList({
                 aria-label={t('search')}
                 autoComplete="off"
               />
+              <SearchClear value={query} onClear={() => { setQuery(''); setPage(1); }} />
             </label>
 
             <div className="bk-cmd-filters">

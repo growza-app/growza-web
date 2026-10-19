@@ -138,3 +138,180 @@
     background: transparent;
   }
 }
+
+/*
+ * Owner, 2026-10-19 — New booking on a laptop, when first: the When card over the screen, then who and what above a
+ * menu that takes the width, with what was chosen, the free times and Book in a bar along the bottom. No third panel.
+ */
+@media (min-width: 1101px) {
+  .wi-desk2 {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+  }
+
+  .wi-desk2-top {
+    display: grid;
+    grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
+    gap: var(--sp-3);
+    align-items: start;
+  }
+
+  .wi-desk2-step {
+    min-width: 0;
+  }
+
+  /* The answers to "when" on one line: Starts now, Waiting, the date and the time. It wraps only when the window is too narrow for it. */
+  .wi-desk2-whenrow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+
+  .wi-desk2-whenlist {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+
+  .wi-desk2 .wi-desk2-whenlist .wi-when-opt {
+    min-height: 2.75rem;
+    padding: 0 var(--sp-3);
+    font-size: 0.9375rem;
+  }
+
+  .wi-desk2 .wi-desk-stylist {
+    margin: var(--sp-2) 0 0;
+    min-width: 0;
+  }
+
+  .wi-desk2-hint {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+
+
+  /* The word "Stylist" sits level with the middle of the chips beside it, not at their top. */
+  .wi-desk2 .wi-stylist-bar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 0;
+  }
+
+  .wi-desk2 .wi-stylist-chips-label {
+    margin: 0;
+    line-height: 1;
+  }
+
+  .wi-desk2 .wi-stylist-chips {
+    align-items: center;
+  }
+
+  /* Along the bottom of the window while the menu scrolls under it. */
+  .wi-desk2-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    padding: var(--sp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  .wi-desk2-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+  }
+
+  .wi-desk2-sum {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .wi-desk2-sum:disabled {
+    color: var(--muted);
+    font-weight: 400;
+    cursor: default;
+  }
+
+  .wi-desk2-sum svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .wi-desk2 .wi-desk-go .btn {
+    width: auto;
+    min-width: 12rem;
+    margin: 0;
+  }
+
+  .wi-desk2-lines {
+    max-height: 7rem;
+    overflow-y: auto;
+  }
+
+  /* The sum beside Book already says the total; the lines are only what it is made of. */
+  .wi-desk2-lines .pf-bill-total {
+    display: none;
+  }
+
+  .wi-desk2-slots .wi-slot-grid {
+    grid-template-columns: repeat(auto-fill, minmax(5rem, 1fr));
+    max-height: 5.25rem;
+  }
+
+  .wi-desk2-slots .wi-section-label {
+    margin: 0 0 var(--sp-1);
+  }
+
+  /*
+   * Every control on the When line, and the client box beside it, is the same height and starts on the same line:
+   * the date and the time carry their words for a screen reader only, since "When" above them says it.
+   */
+  .wi-desk2-field {
+    margin: 0;
+    flex: 0 1 9.5rem;
+    min-width: 8.5rem;
+  }
+
+  .wi-desk2 .wi-desk2-field input,
+  .wi-desk2 .wi-desk2-field select {
+    width: 100%;
+    min-width: 0;
+    height: 2.75rem;
+    min-height: 2.75rem;
+    box-sizing: border-box;
+  }
+
+  .wi-desk2 .wi-combo .picker-search,
+  .wi-desk2 .wi-combo .wi-search-input {
+    height: 2.75rem;
+    min-height: 2.75rem;
+    box-sizing: border-box;
+  }
+
+  /* A tile focused by keyboard scrolls clear of the bottom bar, whatever height the bar has (free times, lines). */
+  .wi-desk2 .pf-tile-tap {
+    scroll-margin-bottom: 17rem;
+  }
+}

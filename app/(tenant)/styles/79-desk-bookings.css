@@ -190,7 +190,6 @@
     gap: var(--sp-2);
   }
 
-  .bk-cmd-walkin-btn,
   .bk-cmd-new-btn {
     min-height: 36px;
     padding: 0 var(--sp-3);

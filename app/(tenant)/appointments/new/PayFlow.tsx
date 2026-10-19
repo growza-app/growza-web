@@ -1549,7 +1549,8 @@ export function PayFlow({
           ) : null}
         </>
       ) : null}
-      {services && (services.length > TILES || products.length > 0 || offers.length > 0) ? (
+      {/* Owner, 2026-10-19 — Sell product sells from the shelf: no Services row, which only searched the same products again. */}
+      {!productsOnly && services && (services.length > TILES || products.length > 0 || offers.length > 0) ? (
         /*
           A labelled row like Who? and Stylist above it, so the screen reads as three questions down one column
           rather than two questions and a loose bar. The empty span holds the width the + takes on the Who? row,

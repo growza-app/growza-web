@@ -1781,17 +1781,27 @@
 }
 
 /* The phone sheet: search, sort and the stock chip on ONE row (owner, 2026-10-15). */
+/*
+ * QA, 2026-10-19 — at 344px the sort and the stock chip take 242 of the 312px and left the box 30px, while its input
+ * kept its own width and ran under the chip. The box now asks for 10rem and the tools wrap under it when there is no
+ * room; wider phones still get everything on one line.
+ */
 .pf-menu-search-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-2);
   padding: 0 var(--sp-4) var(--sp-2);
 }
 
 .pf-menu-search-row .pf-client-box {
-  flex: 1;
+  flex: 1 1 10rem;
   min-width: 0;
   margin: 0;
+}
+
+.pf-menu-search-row .pf-client-box input {
+  min-width: 0;
 }
 
 .pf-menu-tools {

@@ -77,3 +77,31 @@ describe('the sell page takes the queued scans', () => {
     expect(flow).toContain('planScans(codes, products, productCountOf, lines.length, MAX_LINES)');
   });
 });
+
+describe('the Return sheet listens for a scan itself', () => {
+  const sheet = read('ReturnProductSheet.tsx');
+
+  it('uses the shared listener from the first moment, inside its own dialog', () => {
+    expect(sheet).toContain('useBarcodeScan(step === 1, (code) => void takeCode(code), { insideDialog: true });');
+    expect(sheet).not.toContain("addEventListener('keydown'");
+  });
+
+  it('treats a scan and a typed code the same way', () => {
+    expect(sheet).toContain('const takeCode = (raw: string): boolean => {');
+    expect(sheet).toContain('if (takeCode(code)) setQuery(\'\');');
+  });
+});
+
+describe('the product sheet on a narrow phone', () => {
+  it('lets the sort and stock chip wrap under the search box instead of sitting on it', () => {
+    const css = read('../styles/73-pay-flow.css');
+    expect(css).toMatch(/\.pf-menu-search-row \{[^}]*flex-wrap: wrap;/);
+    expect(css).toMatch(/\.pf-menu-search-row \.pf-client-box \{[^}]*flex: 1 1 10rem;/);
+    expect(css).toMatch(/\.pf-menu-search-row \.pf-client-box input \{[^}]*min-width: 0;/);
+  });
+
+  it('says "No product by that name" for products, not "No service"', () => {
+    expect(read('../components/ServiceSheet.tsx')).toContain("t('desk.noProductMatch')");
+    expect(read('../appointments/new/DeskServiceGrid.tsx')).toContain("t('desk.noProductMatch')");
+  });
+});

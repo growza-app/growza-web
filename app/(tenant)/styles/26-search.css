@@ -165,3 +165,58 @@
   outline: 2px solid var(--accent-deep);
   outline-offset: -2px;
 }
+
+/*
+ * The × inside a search box (components/SearchClear.tsx). It sits on the right edge of the box's wrapper, which
+ * therefore needs to be a positioning parent; the input gets room on the right so typed text never runs under it.
+ * The visible circle is 1.5rem; the tap area is 2.75rem (HIG's 44pt) via the transparent button around it.
+ */
+.pf-wide-search,
+.search-wrap {
+  position: relative;
+}
+
+.search-clear {
+  position: absolute;
+  top: 50%;
+  right: 0.125rem;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+button.search-clear > svg {
+  position: static;
+  pointer-events: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0.3125rem;
+  border-radius: 50%;
+  background: var(--slate-soft);
+}
+
+button.search-clear:hover > svg {
+  background: var(--border);
+  color: var(--text);
+}
+
+.search-clear:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -4px;
+  border-radius: 50%;
+}
+
+input[type='search']:has(+ .search-clear) {
+  padding-right: 2.75rem;
+}
+
+input[type='search']:has(+ .search-clear)::-webkit-search-cancel-button {
+  display: none;
+}
