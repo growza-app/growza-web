@@ -191,6 +191,9 @@ export function ReturnProductSheet({
     setError(null);
   };
 
+  const session = useSession();
+  const viewerIsOwner = !session || session.role === null || session.role === 'owner';
+
   /**
    * What a scanned or typed code does: with a bill open it adds a unit of that product; with none it opens the one
    * bill that sold it, or leaves the code in the box to narrow the list. True when the code was used up.
@@ -205,7 +208,7 @@ export function ReturnProductSheet({
     const exactEligible = productBills.filter((b) => {
       const win = computeReturnWindow(b.dayISO, todayISO, returnWindowDays);
       const line = findProductLineByCode(b.products, code);
-      return win.eligible && Boolean(line && lineRemainingQty(line) > 0);
+      return (win.eligible || viewerIsOwner) && Boolean(line && lineRemainingQty(line) > 0);
     });
     if (exactEligible.length === 1) {
       selectBill(exactEligible[0]!, code);
@@ -237,8 +240,6 @@ export function ReturnProductSheet({
         : { eligible: true, daysElapsed: 0, daysLeft: returnWindowDays, windowDays: returnWindowDays },
     [selectedBill, todayISO, returnWindowDays],
   );
-  const session = useSession();
-  const viewerIsOwner = !session || session.role === null || session.role === 'owner';
   const mayReturnBill = billWindow.eligible || viewerIsOwner;
 
   const returnableLines = useMemo(
@@ -403,10 +404,12 @@ export function ReturnProductSheet({
             </div>
           </div>
 
-          <span className="sls-ret-scan-ready">
-            <IconBarcode />
-            <span>{t('scanReady')}</span>
-          </span>
+          {step === 1 ? (
+            <span className="sls-ret-scan-ready">
+              <IconBarcode />
+              <span>{t('scanReady')}</span>
+            </span>
+          ) : null}
           <button type="button" className="icon-btn" onClick={onClose} aria-label={tc('close')}>
             <IconClose />
           </button>

@@ -2232,7 +2232,11 @@ export function SalesClient({
                           <td className="sls-col-ret-win">
                             {row.products.length === 0 ? (
                               <span className="sls-muted">{t('noProducts')}</span>
-                            ) : rowWin.eligible && row.productUnits > 0 ? (
+                            ) : row.productUnits === 0 ? (
+                              <span className="sls-ret-win-pill is-muted">
+                                {t('returnedStatus')}
+                              </span>
+                            ) : rowWin.eligible ? (
                               <span className="sls-ret-win-pill is-ok">
                                 {t('returnWindowOpen', { days: rowWin.daysLeft })}
                               </span>

@@ -82,7 +82,7 @@ describe('the Return sheet listens for a scan itself', () => {
   const sheet = read('ReturnProductSheet.tsx');
 
   it('uses the shared listener from the first moment, inside its own dialog', () => {
-    expect(sheet).toContain('useBarcodeScan(true, (code) => void takeCode(code), { insideDialog: true });');
+    expect(sheet).toContain('useBarcodeScan(step === 1, (code) => void takeCode(code), { insideDialog: true });');
     expect(sheet).not.toContain("addEventListener('keydown'");
   });
 
