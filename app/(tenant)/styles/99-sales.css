@@ -1769,18 +1769,25 @@
 .sheet.sls-return-sheet {
   display: flex;
   flex-direction: column;
-  width: min(94vw, 560px);
-  max-width: 560px;
-  max-height: min(90dvh, 740px);
+  width: min(720px, calc(100vw - 48px));
+  max-width: 720px;
+  max-height: min(90dvh, 760px);
   padding: 0;
   overflow: hidden;
+}
+
+@media (min-width: 861px) {
+  .sheet-backdrop + .sheet.sls-return-sheet {
+    width: min(720px, calc(100vw - 48px));
+    max-width: 720px;
+  }
 }
 
 .sls-ret-head {
   display: flex;
   align-items: flex-start;
   gap: var(--sp-3);
-  padding: var(--sp-3) var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
   border-bottom: 1px solid var(--border);
   flex: none;
 }
@@ -1789,8 +1796,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
   background: var(--amber-soft);
   color: var(--amber-ink);
@@ -1809,14 +1816,14 @@
 
 .sls-ret-title {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.0625rem;
   font-weight: 800;
   color: var(--text);
 }
 
 .sls-ret-sub {
   margin: 2px 0 0;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 
@@ -1827,8 +1834,8 @@
   overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: var(--sp-3) var(--sp-4);
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
 }
 
 .sls-ret-scan-box {
@@ -2333,7 +2340,7 @@
 
 .sheet .modal-actions.sls-ret-foot {
   margin: 0;
-  padding: var(--sp-3) var(--sp-4) calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
+  padding: var(--sp-3) var(--sp-5) calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--border);
   background: var(--surface);
   display: flex;
@@ -2375,6 +2382,18 @@
 }
 
 @media (max-width: 860px) {
+  .sheet.sls-return-sheet {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .sls-ret-head,
+  .sls-ret-scroll,
+  .sheet .modal-actions.sls-ret-foot {
+    padding-left: var(--sp-4);
+    padding-right: var(--sp-4);
+  }
+
   .sls-return-btn,
   .sls-ret-link-btn,
   .sls-ret-change-btn,
