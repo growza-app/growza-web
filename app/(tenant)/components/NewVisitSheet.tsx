@@ -62,7 +62,6 @@ import { PackageDetails } from './PackageDetails';
 import { fixVisitHref, payVisitHref } from '../lib/pay-token';
 import { ServiceSheet } from './ServiceSheet';
 import { DeskServiceGrid } from '../appointments/new/DeskServiceGrid';
-import { DeskUnpaid } from '../appointments/new/DeskUnpaid';
 import { BillRows, type BillLine } from '../appointments/new/BillCard';
 import { autoFocusField, useAutoFocusField } from '../../shared/a11y/soft-keyboard';
 import { ReceiptShare } from './ReceiptShare';
@@ -379,6 +378,8 @@ export function NewVisitSheet({
   const deskForm = bookForm && desk;
   /** Which question is open over the form. `null` is the form itself. */
   const [asking, setAsking] = useState<'services' | null>(null);
+  /** The desk's bottom bar shows the lines of the bill on demand, so the screen is menu first. */
+  const [detailsOpen, setDetailsOpen] = useState(false);
   /**
    * Both routed pages — New booking and Record payment — pick services the same way (owner, 2026-10-07).
    *
@@ -1282,6 +1283,12 @@ export function NewVisitSheet({
           const next = r.sections.flatMap((sec) => sec.slots).find((sl) => hm.format(new Date(sl.utc)) >= timeWantedRef.current);
           if (next) setSlotUtc(next.utc);
         }
+        // Owner, 2026-10-19 — at a desk the earliest free time is already chosen, so Book is ready as soon as a service is
+        // on the visit; the free times beside it are there to pick another. The phone still makes the person choose.
+        else if (deskForm) {
+          const first = r.sections.flatMap((sec) => sec.slots)[0];
+          if (first) setSlotUtc(first.utc);
+        }
       })
       .catch(() => {
         if (!cancelled) setSlots(null);
@@ -1292,7 +1299,7 @@ export function NewVisitSheet({
     return () => {
       cancelled = true;
     };
-  }, [later, stage.step, onForm, pageForm, day, picked, extras, schedulableId, listBranch, timezone]);
+  }, [later, stage.step, onForm, pageForm, deskForm, day, picked, extras, schedulableId, listBranch, timezone]);
 
   /**
    * The Booking time, against what is actually free.
@@ -2848,6 +2855,49 @@ export function NewVisitSheet({
     return askedMatch.slot ? nv.timeMoved(asked, clockTime(askedMatch.slot.utc)) : nv.timeNoneAfter(asked);
   })();
 
+  /** The free times for the day, or why there are none — drawn in the When column's grid and in the desk's bottom bar. */
+  const slotsBlock = (
+    <>
+    {picked.length === 0 ? (
+      <div className="empty">{nv.servicesMissing}</div>
+    ) : (
+      <>
+        {slotError && <div role="alert" className="wi-error">{slotError}</div>}
+        <h3 className="wi-section-label">{nv.whichTime}</h3>
+        {loadingSlots ? (
+          <div className="empty">{nv.loadingTimes}</div>
+        ) : !slots || slots.slotCount === 0 ? (
+          <div className="empty" id="wi-no-times">
+            {nv.noTimes}
+          </div>
+        ) : timeMoved ? (
+          <div className="wi-time-moved" role="status" id="wi-time-moved">
+            {timeMoved}
+          </div>
+        ) : null}
+        {!loadingSlots && slots && slots.slotCount > 0 ? (
+          <div className="wi-slot-grid" role="group" aria-label={nv.whichTime}>
+            {slots.sections.flatMap((sec) =>
+              sec.slots.map((slot) => (
+                <button
+                  key={slot.utc}
+                  type="button"
+                  aria-pressed={slotUtc === slot.utc}
+                  className={`wi-slot ${slotUtc === slot.utc ? 'wi-slot-on' : ''}`}
+                  onClick={() => setSlotUtc(slot.utc)}
+                  disabled={busy}
+                >
+                  {slot.local}
+                </button>
+              )),
+            )}
+          </div>
+        ) : null}
+      </>
+    )}
+    </>
+  );
+
   const whenChoices = (
     <>
       <h2 className="wi-section-label" id="wi-whatnow">{nv.whatNow}</h2>
@@ -2909,44 +2959,7 @@ export function NewVisitSheet({
               </select>
             </div>
           </div>
-          {/* The grid needs a duration to fit, so it waits for the first service — and says so rather than sitting empty. */}
-          {picked.length === 0 ? (
-            <div className="empty">{nv.servicesMissing}</div>
-          ) : (
-            <>
-              {slotError && <div role="alert" className="wi-error">{slotError}</div>}
-              <h3 className="wi-section-label">{nv.whichTime}</h3>
-              {loadingSlots ? (
-                <div className="empty">{nv.loadingTimes}</div>
-              ) : !slots || slots.slotCount === 0 ? (
-                <div className="empty" id="wi-no-times">
-                  {nv.noTimes}
-                </div>
-              ) : timeMoved ? (
-                <div className="wi-time-moved" role="status" id="wi-time-moved">
-                  {timeMoved}
-                </div>
-              ) : null}
-              {!loadingSlots && slots && slots.slotCount > 0 ? (
-                <div className="wi-slot-grid" role="group" aria-label={nv.whichTime}>
-                  {slots.sections.flatMap((sec) =>
-                    sec.slots.map((slot) => (
-                      <button
-                        key={slot.utc}
-                        type="button"
-                        aria-pressed={slotUtc === slot.utc}
-                        className={`wi-slot ${slotUtc === slot.utc ? 'wi-slot-on' : ''}`}
-                        onClick={() => setSlotUtc(slot.utc)}
-                        disabled={busy}
-                      >
-                        {slot.local}
-                      </button>
-                    )),
-                  )}
-                </div>
-              ) : null}
-            </>
-          )}
+          {slotsBlock}
         </>
       ) : null}
     </>
@@ -3299,7 +3312,30 @@ export function NewVisitSheet({
                       </span>
                     </button>
                   ))}
-                  {!searching && results.length === 0 && elsewhere.length === 0 && <div className="empty">{nv.noMatch}</div>}
+                  {!searching && results.length === 0 && elsewhere.length === 0 && (
+                    <>
+                      <div className="empty">{nv.noMatch}</div>
+                      {/*
+                        Owner, 2026-10-19 — nobody matched, so the way forward is in the list where the search ended: the
+                        Name and Phone number fields were opening underneath it, hidden by it. It puts the typed name in
+                        Name (it already does) and goes to the field still missing.
+                      */}
+                      <button
+                        type="button"
+                        className="picker-row wi-row wi-add-row"
+                        onClick={() => {
+                          setComboOpen(false);
+                          setAddingNew(true);
+                          // A typed number is already in Phone number, so the one still missing is the name.
+                          window.setTimeout(() => document.getElementById(isNumberLike(term.trim()) ? 'wi-name' : 'wi-phone')?.focus(), 0);
+                        }}
+                      >
+                        <span className="picker-row-text">
+                          <span className="picker-row-name">{nv.addAsNew(term.trim())}</span>
+                        </span>
+                      </button>
+                    </>
+                  )}
 
                   {/*
                     Jira GRW-454 — the same search at the other branches, kept apart from this branch's own rows
@@ -3539,10 +3575,32 @@ export function NewVisitSheet({
     : picked.map((p) => ({ serviceId: p.serviceId, name: p.name, priceMinor: Number(p.priceMinor ?? 0) }));
   const deskListMinor = everything.reduce((sum, p) => sum + Number(p.priceMinor ?? 0), 0);
   if (deskForm && onForm) {
+    /*
+     * Owner, 2026-10-19 — one screen, read in the order it is done: WHO (the client box, first and in view), WHEN
+     * (Starts now is already chosen; one tap for anything else), then WHAT (the menu, the full width). What was
+     * chosen, the free times (they need the services) and Book are a bar along the bottom, and the lines of the bill
+     * open from it instead of holding a column of their own.
+     *
+     * The DAY is chosen before the services but the exact time cannot be: the free times depend on how long the
+     * services take. So the earliest free time is picked for you once a service is on the visit.
+     */
+    /** A date is the whole answer: "later" on that day, and the earliest free time is picked once there is a service. */
+    const chooseDay = (iso: string) => {
+      setOutcomeWanted('start');
+      setDay(iso);
+      setDateChosen(true);
+      // Jira GRW-535 — a morning time asked for tomorrow is dropped when the day comes back to today and it has passed.
+      if (iso === todayIso && timeWanted && timeWanted < nowHm) setTimeWanted('');
+    };
+    const whenChip = (key: string, on: boolean, label: string, onPress: () => void, off = false) => (
+      <button key={key} type="button" role="radio" aria-checked={on} className={`wi-when-opt ${on ? 'wi-when-opt-on' : ''}`} onClick={onPress} disabled={busy || off}>
+        {label}
+      </button>
+    );
     return (
       <>
         {largeAmountDialog}
-        <div className="walk-in-page wi-desk">
+        <div className="walk-in-page wi-desk wi-desk2">
           <div className="sheet-head">
             {goBack ? (
               <button type="button" className="wi-back" aria-label={nv.back} onClick={goBack}>
@@ -3557,79 +3615,126 @@ export function NewVisitSheet({
             <span className="wi-close-gap" aria-hidden="true" />
             {pageHead}
           </div>
-          <div className="pf-wide-grid wi-desk-grid">
-            <aside className="pf-wide-left">
+
+          <div className="wi-desk2-top">
+            <section className="wi-desk2-step">
               <h2 className="pf-wide-h">{clientNoun}</h2>
               {clientCombo}
               <div className="wi-new-person" ref={addNewRef}>
                 {clientFields}
               </div>
-              <DeskUnpaid location={listBranch} timezone={timezone} title={nv.deskToday} empty={nv.deskNobodyToday} still />
-            </aside>
-            {services === null ? (
-              <section className="pf-wide-mid" aria-busy="true">
-                <div className="pf-tiles pf-wide-tiles">
-                  {Array.from({ length: 8 }, (_, i) => (
-                    <div key={i} className="pf-tile pf-tile-wait" />
-                  ))}
+            </section>
+            <section className="wi-desk2-step">
+              <h2 className="pf-wide-h" id="wi-desk-when">{nv.deskWhenLabel}</h2>
+              <div className="wi-desk2-whenrow">
+              <div className="wi-desk2-whenlist" role="radiogroup" aria-labelledby="wi-desk-when">
+                {/* Jira GRW-456 — nobody on the branch, or nobody who does this: starting is the one it cannot honour. */}
+                {whenChip('now', !queueing && !later, nv.whenNow, () => pickWhen('now'), noStaffHere || noOneCanDoIt)}
+                {canQueue ? whenChip('queue', queueing, nv.whenWaiting, () => pickWhen('queue')) : null}
+              </div>
+              {/*
+                A date and a time, nothing between. Either one makes it a booking for later (today, if only a time is
+                given); the exact free time is then chosen in the bar once a service is on the visit, starting from the
+                one asked for, or the earliest.
+              */}
+                <div className="field wi-desk2-field">
+                  <label htmlFor="wi-desk-date" className="sr-only">{nv.bookingDate}</label>
+                  <input
+                    id="wi-desk-date"
+                    type="date"
+                    min={todayIso}
+                    value={later && !queueing ? day : ''}
+                    onChange={(e) => e.target.value && chooseDay(e.target.value)}
+                    disabled={busy}
+                  />
                 </div>
-              </section>
-            ) : services.length === 0 ? (
-              <section className="pf-wide-mid">
-                <div className="empty">{nv.noServicesYet}</div>
-              </section>
-            ) : (
-              <DeskServiceGrid
-                services={services}
-                countOf={countOnBill}
-                onMore={addOneMore}
-                onLess={removeOneOf}
-                full={billCount >= BILL_MAX_LINES}
-                money={(minor) => formatMoney(String(minor))}
-                packages={combos}
-                packageCountOf={(id) => (id === offerId ? 1 : 0)}
-                onPickPackage={(o) => (offerId === o.id ? removeCombo() : applyCombo(o))}
-              />
-            )}
-            <aside className="pf-wide-right">
-              <h2 className="pf-wide-h">{nv.deskOnVisit}</h2>
-              {showServicesError ? (
-                <div role="alert" className="field-error">
-                  {nv.servicesMissing}
+                <div className="field wi-desk2-field">
+                  <label htmlFor="wi-desk-time" className="sr-only">{nv.bookingTime}</label>
+                  <select
+                    id="wi-desk-time"
+                    value={timeWanted}
+                    onChange={(e) => {
+                      setOutcomeWanted('start');
+                      setTimeWanted(e.target.value);
+                    }}
+                    disabled={busy}
+                  >
+                    <option value="">{nv.anyTime}</option>
+                    {timeOptions.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              ) : null}
-              {billFull ? (
-                <div role="alert" className="field-error">
-                  {nv.billFull(BILL_MAX_LINES)}
-                </div>
-              ) : null}
-              {billCount === 0 ? (
-                <p className="pf-wide-empty">{nv.deskEmpty}</p>
-              ) : (
+              </div>
+              {/* A token has no stylist: the question only exists once the answer is Starts now or a later day. */}
+              {queueing ? null : <div className="wi-desk-stylist">{stylistField}</div>}
+            </section>
+          </div>
+
+          {services === null ? (
+            <section className="pf-wide-mid" aria-busy="true">
+              <div className="pf-tiles pf-wide-tiles">
+                {Array.from({ length: 8 }, (_, i) => (
+                  <div key={i} className="pf-tile pf-tile-wait" />
+                ))}
+              </div>
+            </section>
+          ) : services.length === 0 ? (
+            <section className="pf-wide-mid">
+              <div className="empty">{nv.noServicesYet}</div>
+            </section>
+          ) : (
+            <DeskServiceGrid
+              services={services}
+              countOf={countOnBill}
+              onMore={addOneMore}
+              onLess={removeOneOf}
+              full={billCount >= BILL_MAX_LINES}
+              money={(minor) => formatMoney(String(minor))}
+              packages={combos}
+              packageCountOf={(id) => (id === offerId ? 1 : 0)}
+              onPickPackage={(o) => (offerId === o.id ? removeCombo() : applyCombo(o))}
+            />
+          )}
+
+          <div className="wi-desk2-bar">
+            {detailsOpen && billCount > 0 ? (
+              <div className="wi-desk2-lines">
                 <BillRows
                   lines={deskLines}
                   listMinor={deskListMinor}
                   totalMinor={Number(bookTotalMinor)}
                   onLess={(key) => (comboActive && key === offerId ? removeCombo() : removeOneOf(key))}
                 />
-              )}
-              {/*
-                Owner, 2026-10-14 — the stylist sits under What now?, not in the left column: a token has no stylist
-                (`queueIt` never sends one), so the question only exists once the answer is Starts now or Pick a time,
-                and a question that comes and goes belongs beside the answer that decides it. The left column never
-                changes because of a tap on the right.
-              */}
-              <div className="wi-desk-when">
-                {whenChoices}
-                {queueing ? null : <div className="wi-desk-stylist">{stylistField}</div>}
               </div>
-              {stage.step === 'error' ? (
-                <div role="alert" className="wi-error">
-                  {stage.message}
-                </div>
-              ) : null}
+            ) : null}
+            {/* The free times need the services (how long they take), so they appear once there is one. */}
+            {later && !queueing && picked.length > 0 ? <div className="wi-desk2-slots">{slotsBlock}</div> : null}
+            {later && !queueing && picked.length === 0 ? <p className="wi-desk2-hint">{nv.deskTimesAfter}</p> : null}
+            {showServicesError ? (
+              <div role="alert" className="field-error">
+                {nv.servicesMissing}
+              </div>
+            ) : null}
+            {billFull ? (
+              <div role="alert" className="field-error">
+                {nv.billFull(BILL_MAX_LINES)}
+              </div>
+            ) : null}
+            {stage.step === 'error' ? (
+              <div role="alert" className="wi-error">
+                {stage.message}
+              </div>
+            ) : null}
+            <div className="wi-desk2-row">
+              <button type="button" className="wi-desk2-sum" onClick={() => setDetailsOpen((o) => !o)} disabled={billCount === 0} aria-expanded={detailsOpen && billCount > 0}>
+                <span>{billCount > 0 ? nv.rowPicked(billCount, formatMoney(bookTotalMinor)) : nv.deskEmpty}</span>
+                {billCount > 0 ? <IconChevronDown /> : null}
+              </button>
               <div className="wi-desk-go">{goButton}</div>
-            </aside>
+            </div>
           </div>
         </div>
       </>

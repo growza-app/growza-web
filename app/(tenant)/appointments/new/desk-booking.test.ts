@@ -5,11 +5,12 @@ import en from '../../../../messages/en.json';
 import hi from '../../../../messages/hi.json';
 
 /**
- * Jira GRW-572 — New booking in three panels on a wide desk.
+ * Jira GRW-572 — New booking on a wide desk; reshaped by the owner on 2026-10-19 into one screen read in the order it
+ * is done (client, when, menu) with a Book bar along the bottom.
  *
  * It is the one-column form with room, not a second booking form: the same hooks, the same `submit` /
- * `queueIt`, the same client block and When controls, drawn side by side. These pin the seams that make that
- * true, and the width rule that keeps phones and narrow laptops exactly as they were.
+ * `queueIt`, the same client block and When state. These pin the seams that make that true, and the width rule
+ * that keeps phones and narrow laptops exactly as they were.
  */
 const here = (p: string) => readFileSync(resolve(__dirname, p), 'utf8');
 const wrapper = here('./NewBookingClient.tsx');
@@ -30,40 +31,88 @@ describe('New booking on a wide desk', () => {
     expect(globals.indexOf('79-desk-booking.css')).toBeGreaterThan(globals.indexOf('79-desk-till.css'));
   });
 
+  const desk = () => sheet.slice(sheet.indexOf('if (deskForm && onForm) {'), sheet.indexOf('return (\n    <>\n      {/* Jira GRW-478'));
+
   it('draws the phone form\'s own pieces, and the till\'s grid, with no second save path', () => {
-    const desk = sheet.slice(sheet.indexOf('if (deskForm && onForm) {'), sheet.indexOf('return (\n    <>\n      {/* Jira GRW-478'));
-    expect(desk.length).toBeGreaterThan(0);
-    for (const piece of ['{clientCombo}', '{clientFields}', 'stylistField', '{whenChoices}', '{goButton}', '{pageHead}']) expect(desk).toContain(piece);
-    for (const cls of ['pf-wide-grid', 'pf-wide-left', 'pf-wide-right']) expect(desk).toContain(cls);
+    const d = desk();
+    expect(d.length).toBeGreaterThan(0);
+    for (const piece of ['{clientCombo}', '{clientFields}', '{stylistField}', '{slotsBlock}', '{goButton}', '{pageHead}']) expect(d).toContain(piece);
+    // No third panel: the right-hand column is gone.
+    for (const cls of ['pf-wide-grid', 'pf-wide-left', 'pf-wide-right']) expect(d).not.toContain(cls);
+    for (const cls of ['wi-desk2-top', 'wi-desk2-bar']) expect(d).toContain(cls);
     // The menu is the till's tiles, driven by the one-column form's own counters.
-    expect(desk).toMatch(/<DeskServiceGrid\s+services=\{services\}\s+countOf=\{countOnBill\}\s+onMore=\{addOneMore\}\s+onLess=\{removeOneOf\}/);
-    expect(desk).toMatch(/onPickPackage=\{\(o\) => \(offerId === o\.id \? removeCombo\(\) : applyCombo\(o\)\)\}/);
+    expect(d).toMatch(/<DeskServiceGrid\s+services=\{services\}\s+countOf=\{countOnBill\}\s+onMore=\{addOneMore\}\s+onLess=\{removeOneOf\}/);
+    expect(d).toMatch(/onPickPackage=\{\(o\) => \(offerId === o\.id \? removeCombo\(\) : applyCombo\(o\)\)\}/);
     // The lines are the till's rows: a package is one row, and taking it off takes the whole package.
-    expect(desk).toMatch(/onLess=\{\(key\) => \(comboActive && key === offerId \? removeCombo\(\) : removeOneOf\(key\)\)\}/);
+    expect(d).toMatch(/onLess=\{\(key\) => \(comboActive && key === offerId \? removeCombo\(\) : removeOneOf\(key\)\)\}/);
     // Nothing in the desk block calls the API itself: the writes stay in `submit` and `queueIt`.
-    expect(desk).not.toMatch(/api\./);
+    expect(d).not.toMatch(/api\./);
     // The one column and the desk share ONE button; the tray no longer builds its own.
     expect((sheet.match(/const goButton = \(/g) ?? []).length).toBe(1);
     expect(sheet).toMatch(/\{trayTotal \? <div className="wi-tray-row">\{trayTotal\}\{goButton\}<\/div> : goButton\}/);
   });
 
-  it('asks the stylist under What now?, so a tap on the right never changes the left column', () => {
-    const desk = sheet.slice(sheet.indexOf('if (deskForm && onForm) {'), sheet.indexOf('return (\n    <>\n      {/* Jira GRW-478'));
-    const left = desk.slice(desk.indexOf('<aside className="pf-wide-left">'), desk.indexOf('</aside>'));
-    expect(left).not.toContain('stylistField');
-    expect(desk).toMatch(/\{whenChoices\}\s*\{queueing \? null : <div className="wi-desk-stylist">\{stylistField\}<\/div>\}/);
-    expect(css).toMatch(/\.wi-desk \.wi-desk-stylist \{\s*order: 1;/);
+  it('reads in the order it is done: client first and in view, then when, then the menu', () => {
+    const d = desk();
+    expect(d.indexOf('{clientCombo}')).toBeGreaterThan(-1);
+    expect(d.indexOf('{clientCombo}')).toBeLessThan(d.indexOf('wi-desk2-whenlist'));
+    expect(d.indexOf('wi-desk2-whenlist')).toBeLessThan(d.indexOf('<DeskServiceGrid'));
+    // No card in the way, and no pill to reopen one.
+    expect(d).not.toContain('DeskWhenCard');
+    expect(sheet).not.toContain('askWhenFirst');
   });
 
-  it('lists who is in today as rows that only say, so a half-filled booking is never lost to a tap', () => {
-    expect(sheet).toMatch(/<DeskUnpaid location=\{listBranch\} timezone=\{timezone\} title=\{nv\.deskToday\} empty=\{nv\.deskNobodyToday\} still \/>/);
-    expect(unpaid).toMatch(/still \? \(\s*<div className="pf-wide-row pf-wide-row-still">/);
-    // The till keeps its tap: its rows still open the sale.
+  it('asks when with Starts now, Waiting, a date and a time — nothing between — and Starts now already chosen', () => {
+    const d = desk();
+    for (const piece of ["'now', !queueing && !later", "'queue', queueing", 'type="date"', 'id="wi-desk-time"']) expect(d).toContain(piece);
+    // All four on one line (it wraps only when the window is too narrow for it).
+    expect(d).toContain('wi-desk2-whenrow');
+    expect(css).toMatch(/\.wi-desk2-whenrow \{\s*display: flex;/);
+    // One height and one start line for the client box and every control on the line; the date and time keep their words for a screen reader.
+    expect(css).toMatch(/\.wi-desk2 \.wi-desk2-field input,\s*\.wi-desk2 \.wi-desk2-field select \{[^}]*height: 2\.75rem;/);
+    expect(d).toContain('htmlFor="wi-desk-date" className="sr-only"');
+    // The word Stylist is level with the middle of its chips.
+    expect(css).toMatch(/\.wi-desk2 \.wi-stylist-bar \{[^}]*align-items: center;/);
+    // No Later today / Tomorrow shortcuts.
+    expect(d).not.toContain("'today'");
+    expect(d).not.toContain("'tomorrow'");
+    // A time alone is a booking for later today: the time is a wish the free times start from.
+    expect(d).toMatch(/onChange=\{\(e\) => \{\s*setOutcomeWanted\('start'\);\s*setTimeWanted\(e\.target\.value\);/);
+    // Starts now is the default: nothing is later and nobody is queueing until a tap says so.
+    expect(sheet).toContain("const [dateChosen, setDateChosen] = useState(!forPayment && initialMode === 'later');");
+    // A day is the whole answer: later on that day. The earliest free time is picked once a service is on the visit.
+    expect(d).toMatch(/const chooseDay = \(iso: string\) => \{\s*setOutcomeWanted\('start'\);\s*setDay\(iso\);\s*setDateChosen\(true\);/);
+    expect(sheet).toMatch(/else if \(deskForm\) \{\s*const first = r\.sections\.flatMap\(\(sec\) => sec\.slots\)\[0\];\s*if \(first\) setSlotUtc\(first\.utc\);/);
+  });
+
+  it('keeps the stylist under the answer to when, and leaves it out while the answer is Waiting', () => {
+    const d = desk();
+    expect(d).toMatch(/\{queueing \? null : <div className="wi-desk-stylist">\{stylistField\}<\/div>\}/);
+  });
+
+  it('shows the free times in the bottom bar once there is a service, since they depend on how long it takes', () => {
+    const d = desk();
+    expect(d).toMatch(/\{later && !queueing && picked\.length > 0 \? <div className="wi-desk2-slots">\{slotsBlock\}<\/div> : null\}/);
+  });
+
+  it('menu tiles scroll clear of the bottom bar when reached by keyboard', () => {
+    expect(css).toMatch(/\.wi-desk2 \.pf-tile-tap \{\s*scroll-margin-bottom: 17rem;/);
+  });
+
+  it('offers to add a new client in the search list when nobody matches, since the fields open under it, hidden', () => {
+    expect(sheet).toContain('className="picker-row wi-row wi-add-row"');
+    expect(sheet).toContain('{nv.addAsNew(term.trim())}');
+    expect(sheet).toMatch(/setComboOpen\(false\);\s*setAddingNew\(true\);/);
+    for (const lang of [en, hi]) expect((lang.newVisit as Record<string, string>).addAsNew).toContain('{name}');
+  });
+
+  it('no longer lists who is in today on New booking; the till keeps its rows and their tap', () => {
+    expect(sheet).not.toContain('<DeskUnpaid');
     expect(unpaid).toMatch(/onClick=\{\(\) => router\.push\(r\.href\)\}/);
   });
 
   it('has its words in both languages', () => {
-    for (const key of ['deskToday', 'deskOnVisit', 'deskEmpty', 'deskNobodyToday']) {
+    for (const key of ['deskToday', 'deskOnVisit', 'deskEmpty', 'deskNobodyToday', 'deskWhenLabel', 'deskTimesAfter']) {
       expect((en.newVisit as Record<string, string>)[key]).toBeTruthy();
       expect((hi.newVisit as Record<string, string>)[key]).toBeTruthy();
     }
