@@ -9,6 +9,7 @@ import { initials } from '../lib/appointment-display';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import {
+  IconArrowLeft,
   IconBarcode,
   IconCheck,
   IconClose,
@@ -268,6 +269,14 @@ export function ReturnProductSheet({
     }
   };
 
+  const goBackToPicker = () => {
+    setSelectedBill(null);
+    setQtyByLine({});
+    setIssuedDocument(null);
+    setScanNotice(null);
+    setError(null);
+  };
+
   const formatBillWhen = (b: ReturnableSaleBill) =>
     `${formatDateShort(new Date(`${b.dayISO}T12:00:00`), undefined, locale)} · ${formatTime(b.startAt, timezone)}`;
 
@@ -277,9 +286,21 @@ export function ReturnProductSheet({
       <div className="sheet sls-return-sheet" role="dialog" aria-modal="true" aria-label={t('title')} ref={dialogRef}>
         <div className="sheet-grab" />
         <div className="sls-ret-head">
-          <span className="sls-ret-head-icon" aria-hidden="true">
-            <IconReturn />
-          </span>
+          {selectedBill ? (
+            <button
+              type="button"
+              className="icon-btn sls-ret-back-btn"
+              onClick={goBackToPicker}
+              disabled={busy}
+              aria-label={tc('back')}
+            >
+              <IconArrowLeft />
+            </button>
+          ) : (
+            <span className="sls-ret-head-icon" aria-hidden="true">
+              <IconReturn />
+            </span>
+          )}
           <div className="sls-ret-head-copy">
             <h2 className="sls-ret-title">{t('title')}</h2>
             <p className="sls-ret-sub">{t('subtitle')}</p>
@@ -411,20 +432,14 @@ export function ReturnProductSheet({
                     <span>{t('scanReady')}</span>
                   </span>
                 ) : null}
-                {!initialBill ? (
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm sls-ret-change-btn"
-                    onClick={() => {
-                      setSelectedBill(null);
-                      setQtyByLine({});
-                      setScanNotice(null);
-                      setError(null);
-                    }}
-                  >
-                    {t('changeBill')}
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm sls-ret-change-btn"
+                  onClick={goBackToPicker}
+                  disabled={busy}
+                >
+                  {t('changeBill')}
+                </button>
               </div>
 
               {scanNotice ? (
@@ -607,6 +622,17 @@ export function ReturnProductSheet({
             <div />
           )}
           <div className="sls-ret-foot-btns">
+            {selectedBill ? (
+              <button
+                type="button"
+                className="btn btn-ghost sls-ret-foot-back"
+                onClick={goBackToPicker}
+                disabled={busy}
+              >
+                <IconArrowLeft />
+                <span>{tc('back')}</span>
+              </button>
+            ) : null}
             <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>
               {tc('close')}
             </button>
