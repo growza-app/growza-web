@@ -317,10 +317,14 @@ export function ReturnProductSheet({
       setError(null);
       return;
     }
-    setMobileStep('list');
-    setIssuedDocument(null);
-    setScanNotice(null);
-    setError(null);
+    if (typeof window !== 'undefined' && window.innerWidth <= 860 && mobileStep === 'bill') {
+      setMobileStep('list');
+      setIssuedDocument(null);
+      setScanNotice(null);
+      setError(null);
+      return;
+    }
+    onClose();
   };
 
   const formatBillWhen = (b: ReturnableSaleBill) =>
@@ -338,9 +342,9 @@ export function ReturnProductSheet({
       >
         <div className="sheet-grab" />
 
-        {/* Header with title, 2-step progress indicator, Scanner ready pill, and Close */}
+        {/* Header with Back button, title, 2-step progress indicator, Scanner ready pill, and Close */}
         <div className="sls-ret-head">
-          {(step === 1 && mobileStep === 'bill') || step === 2 ? (
+          {step !== 'done' ? (
             <button
               type="button"
               className="icon-btn sls-ret-back-btn"
@@ -810,7 +814,7 @@ export function ReturnProductSheet({
                 <div className="sls-ret-foot-btns">
                   <button
                     type="button"
-                    className="btn btn-ghost"
+                    className="btn btn-ghost sls-ret-foot-back"
                     disabled={busy}
                     onClick={() => {
                       setError(null);
@@ -818,7 +822,8 @@ export function ReturnProductSheet({
                       setStep(1);
                     }}
                   >
-                    {t('backBtn')}
+                    <IconArrowLeft />
+                    <span>{t('backBtn')}</span>
                   </button>
                   <button
                     type="button"

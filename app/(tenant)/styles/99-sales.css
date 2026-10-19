@@ -1813,7 +1813,9 @@
 }
 
 .sls-ret-back-btn {
-  display: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 38px;
   height: 38px;
   border-radius: 10px;
@@ -2780,6 +2782,18 @@ button.sls-ret-step-pill:not(:disabled) {
   align-items: center;
   gap: var(--sp-2);
   margin-left: auto;
+}
+
+.sls-ret-foot-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sls-ret-foot-back svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
 }
 
 .sls-ret-continue-btn {
