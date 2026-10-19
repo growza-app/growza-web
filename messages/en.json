@@ -2606,7 +2606,7 @@
         "whatsapp": "WhatsApp",
         "call": "Call",
         "noNumber": "Asked not to be contacted",
-        "lastIn": "{n, plural, one {Last in # day ago} other {Last in # days ago}}",
+        "lastIn": "{n, plural, one {Last visit # day ago} other {Last visit # days ago}}",
         "usually": "Usually every {days} days",
         "worth": "{amount} a visit",
         "noPhone": "No number saved"

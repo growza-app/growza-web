@@ -72,7 +72,7 @@ describe('Tenant Home v2 redesign', () => {
     expect(owner).toContain('className={`hm-desk-v3 hm-desktop');
     expect(owner).toContain('className="hm-v3-kpis"');
     expect(owner).toContain('className="hm-v3-kpi hm-v3-kpi-dark"');
-    expect(owner).toContain('className="hm-v3-mid"');
+    expect(owner).toContain('className={`hm-v3-mid${showDueBack');
     expect(owner).not.toContain('className="hm-v3-table"');
     expect(bookingsList).toContain('className="hm-v3-table bk-table"');
     // Owner, 2026-10-19 — Sales by payment method left: Today's revenue already splits money by method.

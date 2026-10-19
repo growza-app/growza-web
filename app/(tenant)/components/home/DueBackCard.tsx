@@ -8,11 +8,9 @@ import { whatsappHref } from '../../lib/receipt-text';
 import { MessageClientsSheet } from '../../reports/MessageClientsSheet';
 import { waDigits } from '../BookingSheet';
 import { IconWhatsApp } from '../icons';
+import { DUE_BACK_DESKTOP_QUERY, DUE_BACK_REFRESH_MS, DUE_BACK_SHOWN, dueBackOf, type DueBack } from './due-back';
 
-/** How many people the card shows before "See all". */
-export const DUE_BACK_SHOWN = 3;
-
-type Load = { state: 'loading' } | { state: 'failed' } | { state: 'ready'; count: number; clients: TodoClient[] };
+type Load = { state: 'loading' } | { state: 'failed' } | ({ state: 'ready' } & DueBack);
 
 /**
  * Owner, 2026-10-19 — "Clients due back" on the owner's laptop Home, in the place Sales by payment method had (today's
@@ -20,29 +18,55 @@ type Load = { state: 'loading' } | { state: 'failed' } | { state: 'ready'; count
  *
  * The same people and the same typed-in WhatsApp message as Reports → What to do, so the owner can act without leaving
  * Home. Nothing is sent by the product: `wa.me` opens the owner's own WhatsApp and they press send.
+ *
+ * Home draws its laptop layout on a phone too (CSS hides it), so the card reads nothing below the laptop breakpoint.
+ * Once read it stays fresh: a failed refresh keeps what is on screen, and a new branch starts clean.
  */
 export function DueBackCard({ branch, business }: { branch: string | null; business: string }) {
   const t = useTranslations('reports.todo');
   const h = useTranslations('reports.todo.homeCard');
   const [load, setLoad] = useState<Load>({ state: 'loading' });
-  const [attempt, setAttempt] = useState(0);
+  const [stamp, setStamp] = useState(0);
   const [open, setOpen] = useState(false);
+  const [desktop, setDesktop] = useState(false);
 
   useEffect(() => {
-    let live = true;
+    const mq = window.matchMedia(DUE_BACK_DESKTOP_QUERY);
+    const sync = () => setDesktop(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
+  // A different branch is a different list: start clean, and never reopen the old sheet on the new people.
+  useEffect(() => {
     setLoad({ state: 'loading' });
+    setOpen(false);
+  }, [branch]);
+
+  useEffect(() => {
+    if (!desktop) return;
+    const refresh = () => setStamp((n) => n + 1);
+    const onVisible = () => document.visibilityState === 'visible' && refresh();
+    const timer = window.setInterval(refresh, DUE_BACK_REFRESH_MS);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [desktop]);
+
+  useEffect(() => {
+    if (!desktop) return;
+    let live = true;
     api
       .reportsTodo(branch)
-      .then((todo) => {
-        if (!live) return;
-        const card = todo.cards.find((c) => c.kind === 'dueBack');
-        setLoad(card && card.kind === 'dueBack' ? { state: 'ready', count: card.count, clients: card.clients } : { state: 'ready', count: 0, clients: [] });
-      })
-      .catch(() => live && setLoad({ state: 'failed' }));
+      .then((todo) => live && setLoad({ state: 'ready', ...dueBackOf(todo) }))
+      .catch(() => live && setLoad((prev) => (prev.state === 'ready' ? prev : { state: 'failed' })));
     return () => {
       live = false;
     };
-  }, [branch, attempt]);
+  }, [branch, stamp, desktop]);
 
   const text = (client: TodoClient) => t('dueBack.text', { name: client.name, business });
   const ready = load.state === 'ready' ? load : null;
@@ -58,7 +82,10 @@ export function DueBackCard({ branch, business }: { branch: string | null; busin
       {load.state === 'failed' && (
         <div className="hm-error" role="alert">
           <span>{h('failed')}</span>
-          <button type="button" onClick={() => setAttempt((n) => n + 1)}>
+          <button type="button" onClick={() => {
+              setLoad({ state: 'loading' });
+              setStamp((n) => n + 1);
+            }}>
             {h('retry')}
           </button>
         </div>

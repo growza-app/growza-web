@@ -3837,12 +3837,15 @@ button.hm-now-count {
   gap: 8px;
 }
 
-/* ---------- 5. Row 2: Revenue Trend + Payment Donut + Quick Actions ---------- */
+/* ---------- 5. Row 2: Revenue Trend + Clients due back + Quick Actions ---------- */
 .hm-v3-mid {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 0.9fr);
   gap: 12px;
   align-items: stretch;
+}
+.hm-v3-mid.hm-v3-mid-two {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.9fr);
 }
 .hm-v3-filter-bar {
   display: flex;

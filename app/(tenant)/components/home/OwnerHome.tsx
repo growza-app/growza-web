@@ -53,6 +53,7 @@ import { DaySummarySheet } from './DaySummarySheet';
 import { MoneyHero } from './MoneyHero';
 import { BranchCarousel } from './BranchCarousel';
 import { DueBackCard } from './DueBackCard';
+import { mayReadDueBack } from './due-back';
 import { AttentionList, Avatar, avatarKey, BookingRows, Card, CardError, HomeHeader, QuickTiles, rupees, Segmented, SegmentCards } from './parts';
 import { RightNow } from './RightNow';
 import { useMinuteClock } from './useMinuteClock';
@@ -766,6 +767,9 @@ export function OwnerHome(p: OwnerHomeProps) {
     ];
   }, [data, t]);
 
+  // The card reads the What-to-do tab, so it needs that tab's grant, not just any Reports tab.
+  const showDueBack = mayReadDueBack(canSee('/reports', p.role, p.reportTabs), p.reportTabs);
+
   /** Today's (or tomorrow's after close) visits for the full-width Recent bookings table at the bottom of desktop Home. */
   const recentBookingRows = useMemo(() => {
     const all = allListGroups;
@@ -1074,7 +1078,7 @@ export function OwnerHome(p: OwnerHomeProps) {
           </div>
 
           {/* ROW 2 — Revenue Trend + Sales by Payment Method + Quick Actions */}
-          <div className="hm-v3-mid">
+          <div className={`hm-v3-mid${showDueBack ? '' : ' hm-v3-mid-two'}`}>
             {/* 1. Revenue trend */}
             <section className="hm-v3-card hm-v3-trend-card">
               <div className="hm-v3-card-head">
@@ -1124,7 +1128,7 @@ export function OwnerHome(p: OwnerHomeProps) {
             </section>
 
             {/* 2. Clients due back — Sales by payment method was here; Today's revenue already splits by method. */}
-            {canSee('/reports', p.role, p.reportTabs) ? <DueBackCard branch={branch} business={p.businessName} /> : null}
+            {showDueBack ? <DueBackCard branch={branch} business={p.businessName} /> : null}
 
             {/* 3. Quick actions */}
             <section className="hm-v3-card hm-v3-quick-card">
