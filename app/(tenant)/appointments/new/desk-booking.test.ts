@@ -5,8 +5,8 @@ import en from '../../../../messages/en.json';
 import hi from '../../../../messages/hi.json';
 
 /**
- * Jira GRW-572 — New booking on a wide desk; reshaped by the owner on 2026-10-19 into WHEN first (a card over the
- * screen), then two panels' worth of who and what with a Book bar along the bottom.
+ * Jira GRW-572 — New booking on a wide desk; reshaped by the owner on 2026-10-19 into one screen read in the order it
+ * is done (client, when, menu) with a Book bar along the bottom.
  *
  * It is the one-column form with room, not a second booking form: the same hooks, the same `submit` /
  * `queueIt`, the same client block and When state. These pin the seams that make that true, and the width rule
@@ -52,24 +52,27 @@ describe('New booking on a wide desk', () => {
     expect(sheet).toMatch(/\{trayTotal \? <div className="wi-tray-row">\{trayTotal\}\{goButton\}<\/div> : goButton\}/);
   });
 
-  it('asks WHEN first in a card, unless the link already answered it', () => {
+  it('reads in the order it is done: client first and in view, then when, then the menu', () => {
     const d = desk();
-    expect(d).toContain('<DeskWhenCard');
-    expect(d).toContain('{!whenAsked ? (');
-    expect(sheet).toContain('const [whenAsked, setWhenAsked] = useState(!askWhenFirst);');
-    // Now and Waiting are whole answers (one press, card closes); Pick a time still has a day and a time to give.
-    expect(d).toMatch(/pickWhen\(what\);[\s\S]*?if \(what !== 'pick'\) setWhenAsked\(true\);/);
-    // A click outside, or Escape, puts the card away with the answer as it stands; it does not leave the booking.
-    expect(d).toContain('onClose={() => setWhenAsked(true)}');
-    expect(here('./DeskWhenCard.tsx')).toContain('onClick={(e) => e.target === e.currentTarget && onClose()}');
-    // The answer stays on screen as a line that reopens the card.
-    expect(d).toMatch(/onClick=\{\(\) => setWhenAsked\(false\)\}/);
-    // Only `?mode=now` (Walk-in) skips the card; New booking and a bare link ask.
-    expect(here('./page.tsx')).toContain("askWhen={params.mode !== 'now'}");
-    expect(wrapper).toContain('askWhenFirst={askWhen}');
+    expect(d.indexOf('{clientCombo}')).toBeGreaterThan(-1);
+    expect(d.indexOf('{clientCombo}')).toBeLessThan(d.indexOf('wi-desk2-whenlist'));
+    expect(d.indexOf('wi-desk2-whenlist')).toBeLessThan(d.indexOf('<DeskServiceGrid'));
+    // No card in the way, and no pill to reopen one.
+    expect(d).not.toContain('DeskWhenCard');
+    expect(sheet).not.toContain('askWhenFirst');
   });
 
-  it('keeps the stylist beside the answer to when, and leaves it out while the answer is Waiting', () => {
+  it('has every answer to when in view, one tap each, with Starts now already chosen', () => {
+    const d = desk();
+    for (const piece of ["'now', !queueing && !later", "'queue', queueing", "'today'", "'tomorrow'", 'type="date"']) expect(d).toContain(piece);
+    // Starts now is the default: nothing is later and nobody is queueing until a tap says so.
+    expect(sheet).toContain("const [dateChosen, setDateChosen] = useState(!forPayment && initialMode === 'later');");
+    // A day is the whole answer: later on that day. The earliest free time is picked once a service is on the visit.
+    expect(d).toMatch(/const chooseDay = \(iso: string\) => \{\s*setOutcomeWanted\('start'\);\s*setDay\(iso\);\s*setDateChosen\(true\);/);
+    expect(sheet).toMatch(/else if \(deskForm\) \{\s*const first = r\.sections\.flatMap\(\(sec\) => sec\.slots\)\[0\];\s*if \(first\) setSlotUtc\(first\.utc\);/);
+  });
+
+  it('keeps the stylist under the answer to when, and leaves it out while the answer is Waiting', () => {
     const d = desk();
     expect(d).toMatch(/\{queueing \? null : <div className="wi-desk-stylist">\{stylistField\}<\/div>\}/);
   });
@@ -79,17 +82,7 @@ describe('New booking on a wide desk', () => {
     expect(d).toMatch(/\{later && !queueing && picked\.length > 0 \? <div className="wi-desk2-slots">\{slotsBlock\}<\/div> : null\}/);
   });
 
-  it('cuts the clicks: a tap on the day closes the card, the earliest free time is already picked, the cursor is in the client box', () => {
-    const card = here('./DeskWhenCard.tsx');
-    // The card asks the day only: no time list, no Continue.
-    expect(card).not.toContain('<select');
-    expect(card).not.toContain('onContinue');
-    expect(desk()).toMatch(/onDay=\{\(iso\) => \{[\s\S]*?setWhenAsked\(true\);[\s\S]*?setDay\(iso\);/);
-    // At a desk the first free slot is chosen once the slots load; the phone still makes the person choose.
-    expect(sheet).toMatch(/else if \(deskForm\) \{\s*const first = r\.sections\.flatMap\(\(sec\) => sec\.slots\)\[0\];\s*if \(first\) setSlotUtc\(first\.utc\);/);
-    // The cursor goes to the client box once When is answered, or was never asked.
-    expect(sheet).toMatch(/if \(deskForm && whenAsked\) searchRef\.current\?\.focus\(\);/);
-    // A tile focused by keyboard scrolls clear of the bottom bar.
+  it('menu tiles scroll clear of the bottom bar when reached by keyboard', () => {
     expect(css).toMatch(/\.wi-desk2 \.pf-tile-tap \{\s*scroll-margin-bottom: 17rem;/);
   });
 
@@ -99,7 +92,7 @@ describe('New booking on a wide desk', () => {
   });
 
   it('has its words in both languages', () => {
-    for (const key of ['deskToday', 'deskOnVisit', 'deskEmpty', 'deskNobodyToday', 'deskWhenTitle', 'deskTomorrow', 'deskOtherDay', 'deskWhenLabel']) {
+    for (const key of ['deskToday', 'deskOnVisit', 'deskEmpty', 'deskNobodyToday', 'deskTomorrow', 'deskOtherDay', 'deskWhenLabel', 'deskLaterToday', 'deskTimesAfter']) {
       expect((en.newVisit as Record<string, string>)[key]).toBeTruthy();
       expect((hi.newVisit as Record<string, string>)[key]).toBeTruthy();
     }

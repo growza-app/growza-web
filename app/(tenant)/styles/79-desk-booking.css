@@ -157,56 +157,40 @@
     align-items: start;
   }
 
-  .wi-desk2-who,
-  .wi-desk2-when {
+  .wi-desk2-step {
     min-width: 0;
   }
 
-  .wi-desk2-when {
+  /* The answers to "when", all in view: one tap each, Starts now already chosen. */
+  .wi-desk2-whenlist {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--sp-2);
   }
 
+  .wi-desk2 .wi-desk2-whenlist .wi-when-opt {
+    min-height: 2.75rem;
+    padding: 0 var(--sp-3);
+    font-size: 0.9375rem;
+  }
+
   .wi-desk2 .wi-desk-stylist {
-    margin: 0;
+    margin: var(--sp-2) 0 0;
     min-width: 0;
   }
+
+  .wi-desk2-hint {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+
 
   .wi-desk2 .wi-stylist-bar {
     flex-direction: row;
     flex-wrap: wrap;
     margin: 0;
-  }
-
-  /* The answer to "when", as a line that reopens the card. */
-  .wi-when-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-2);
-    min-height: 2.75rem;
-    padding: 0 var(--sp-3);
-    border: 1px solid var(--accent-deep);
-    border-radius: var(--radius-sm);
-    background: var(--accent-soft);
-    color: var(--accent-deep);
-    font: inherit;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  /* "When" before the answer, a chevron after it: it reads as a choice, not as a sentence with a link in it. */
-  .wi-when-pill-label {
-    font-size: 0.8125rem;
-    font-weight: 500;
-  }
-
-  .wi-when-pill svg {
-    width: 1rem;
-    height: 1rem;
-    flex: none;
   }
 
   /* Along the bottom of the window while the menu scrolls under it. */
@@ -279,37 +263,6 @@
 
   .wi-desk2-slots .wi-section-label {
     margin: 0 0 var(--sp-1);
-  }
-
-  /* The When card. */
-  .wi-when-card {
-    width: min(26rem, calc(100vw - 2rem));
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-3);
-  }
-
-  .wi-when-card-title {
-    margin: 0;
-    font-size: 1.125rem;
-  }
-
-  .wi-when-card .wi-when-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
-    gap: var(--sp-2);
-  }
-
-  .wi-when-card .wi-when-opt {
-    min-height: 3rem;
-    font-size: 0.9375rem;
-  }
-
-  .wi-when-days {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--sp-2);
   }
 
   .wi-when-other {

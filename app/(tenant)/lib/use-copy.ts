@@ -112,7 +112,8 @@ export function useNewVisitCopy() {
     deskOnVisit: t('deskOnVisit'),
     deskEmpty: t('deskEmpty'),
     /** The laptop's When card (owner, 2026-10-19), and the line that reopens it. */
-    deskWhenTitle: t('deskWhenTitle'),
+    deskLaterToday: t('deskLaterToday'),
+    deskTimesAfter: t('deskTimesAfter'),
     deskTomorrow: t('deskTomorrow'),
     deskOtherDay: t('deskOtherDay'),
     deskWhenLabel: t('deskWhenLabel'),

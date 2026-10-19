@@ -62,7 +62,6 @@ import { PackageDetails } from './PackageDetails';
 import { fixVisitHref, payVisitHref } from '../lib/pay-token';
 import { ServiceSheet } from './ServiceSheet';
 import { DeskServiceGrid } from '../appointments/new/DeskServiceGrid';
-import { DeskWhenCard, type WhenValue } from '../appointments/new/DeskWhenCard';
 import { BillRows, type BillLine } from '../appointments/new/BillCard';
 import { autoFocusField, useAutoFocusField } from '../../shared/a11y/soft-keyboard';
 import { ReceiptShare } from './ReceiptShare';
@@ -296,7 +295,6 @@ export function NewVisitSheet({
   token,
   tokenGone = false,
   desk = false,
-  askWhenFirst = false,
 }: {
   onClose: () => void;
   /** Next customer on the payment done screen: a fresh form. Without it, Next customer closes like Done. */
@@ -332,12 +330,6 @@ export function NewVisitSheet({
    * when on the right. The same state and the same three writes; nothing here is a second booking form.
    */
   desk?: boolean;
-  /**
-   * Owner, 2026-10-19 — at a desk, New booking opens by asking WHEN, in a card over the screen, before anything else:
-   * Starts now and Waiting answer it in one press, Pick a time asks the day and the time. A link that has already
-   * answered it (Walk-in, `?mode=now`) leaves this off and opens on the booking itself.
-   */
-  askWhenFirst?: boolean;
 }) {
   const tmin = useTranslations('services');
   const nv = useNewVisitCopy();
@@ -386,8 +378,6 @@ export function NewVisitSheet({
   const deskForm = bookForm && desk;
   /** Which question is open over the form. `null` is the form itself. */
   const [asking, setAsking] = useState<'services' | null>(null);
-  /** The desk's When card has been answered (or was never needed): the booking screen is open to work on. */
-  const [whenAsked, setWhenAsked] = useState(!askWhenFirst);
   /** The desk's bottom bar shows the lines of the bill on demand, so the screen is menu first. */
   const [detailsOpen, setDetailsOpen] = useState(false);
   /**
@@ -459,11 +449,6 @@ export function NewVisitSheet({
   // On the New booking and Record payment PAGES this box is part of the server's HTML, so the keyboard question is
   // asked after hydration through this ref rather than through `autoFocus`, which the two sides would disagree on.
   const searchRef = useAutoFocusField<HTMLInputElement>();
-  // Owner, 2026-10-19 — at a desk, the cursor goes to the client box once When is answered (or was never asked), so a
-  // phone number can be typed straight away.
-  useEffect(() => {
-    if (deskForm && whenAsked) searchRef.current?.focus();
-  }, [deskForm, whenAsked, searchRef]);
   // Jira GRW-520 — the matches are a dropdown under the box: open while typing, closed by a pick, Escape or
   // tapping elsewhere; `activeIdx` is the row the arrow keys are on (-1: none).
   const [comboOpen, setComboOpen] = useState(true);
@@ -3568,54 +3553,32 @@ export function NewVisitSheet({
   const deskListMinor = everything.reduce((sum, p) => sum + Number(p.priceMinor ?? 0), 0);
   if (deskForm && onForm) {
     /*
-     * Owner, 2026-10-19 — two panels and a bar, not three panels. WHEN is asked first, in a card over the screen
-     * (`DeskWhenCard`); what is left is who and what. Who sits above the menu (with the stylist, once the answer is not
-     * Waiting), the menu takes the width, and what was chosen, the free times (they need the services) and Book are
-     * a bar along the bottom. The lines of the bill open from the bar instead of holding a column of their own.
+     * Owner, 2026-10-19 — one screen, read in the order it is done: WHO (the client box, first and in view), WHEN
+     * (Starts now is already chosen; one tap for anything else), then WHAT (the menu, the full width). What was
+     * chosen, the free times (they need the services) and Book are a bar along the bottom, and the lines of the bill
+     * open from it instead of holding a column of their own.
+     *
+     * The DAY is chosen before the services but the exact time cannot be: the free times depend on how long the
+     * services take. So the earliest free time is picked for you once a service is on the visit.
      */
-    const chooseWhen = (what: WhenValue) => {
-      pickWhen(what);
-      // Now and Waiting are whole answers; Pick a time still has a day and a time to give.
-      if (what !== 'pick') setWhenAsked(true);
+    const tomorrowIso = days[1]?.iso ?? day;
+    /** A day is the whole answer: "later" on that day, and the earliest free time is picked once there is a service. */
+    const chooseDay = (iso: string) => {
+      setOutcomeWanted('start');
+      setDay(iso);
+      setDateChosen(true);
+      // Jira GRW-535 — a morning time asked for tomorrow is dropped when the day comes back to today and it has passed.
+      if (iso === todayIso && timeWanted && timeWanted < nowHm) setTimeWanted('');
     };
-    const dayLabel = days.find((d) => d.iso === day)?.label ?? day;
-    const whenSummary = queueing
-      ? nv.whenWaiting
-      : !later
-        ? nv.whenNow
-        : slotUtc
-          ? `${dayLabel} · ${clockTime(slotUtc)}`
-          : dayLabel;
+    const whenChip = (key: string, on: boolean, label: string, onPress: () => void, off = false) => (
+      <button key={key} type="button" role="radio" aria-checked={on} className={`wi-when-opt ${on ? 'wi-when-opt-on' : ''}`} onClick={onPress} disabled={busy || off}>
+        {label}
+      </button>
+    );
+    const otherDay = later && !queueing && day !== todayIso && day !== tomorrowIso;
     return (
       <>
         {largeAmountDialog}
-        {!whenAsked ? (
-          <DeskWhenCard
-            title={nv.deskWhenTitle}
-            choices={[
-              ...(canQueue ? [{ value: 'queue' as const, label: nv.whenWaiting, on: queueing }] : []),
-              { value: 'now' as const, label: nv.whenNow, on: !queueing && !later, off: noStaffHere || noOneCanDoIt },
-              { value: 'pick' as const, label: nv.whenPick, on: !queueing && later },
-            ]}
-            onChoose={chooseWhen}
-            picking={!queueing && later}
-            days={days}
-            day={day}
-            onDay={(iso) => {
-              // Choosing the day is the whole answer: the card closes, and the earliest free time is picked once a service is on the visit.
-              setWhenAsked(true);
-              setDay(iso);
-              // "Pick a time" is the answer being given: even today's date is "later today".
-              setDateChosen(true);
-              // Jira GRW-535 — a morning time asked for tomorrow is dropped when the day comes back to today and it has passed.
-              if (iso === todayIso && timeWanted && timeWanted < nowHm) setTimeWanted('');
-            }}
-            labels={{ today: nv.today, tomorrow: nv.deskTomorrow, otherDay: nv.deskOtherDay }}
-            busy={busy}
-            // Outside the card, or Escape, puts it away and keeps the answer as it stands (the pill reopens it); Back leaves.
-            onClose={() => setWhenAsked(true)}
-          />
-        ) : null}
         <div className="walk-in-page wi-desk wi-desk2">
           <div className="sheet-head">
             {goBack ? (
@@ -3633,21 +3596,34 @@ export function NewVisitSheet({
           </div>
 
           <div className="wi-desk2-top">
-            <div className="wi-desk2-who">
+            <section className="wi-desk2-step">
+              <h2 className="pf-wide-h">{clientNoun}</h2>
               {clientCombo}
               <div className="wi-new-person" ref={addNewRef}>
                 {clientFields}
               </div>
-            </div>
-            <div className="wi-desk2-when">
-              <button type="button" className="wi-when-pill" onClick={() => setWhenAsked(false)} disabled={busy} aria-label={`${nv.deskWhenLabel}: ${whenSummary}`}>
-                <span className="wi-when-pill-label">{nv.deskWhenLabel}</span>
-                <span>{whenSummary}</span>
-                <IconChevronDown />
-              </button>
-              {/* A token has no stylist: the question only exists once the answer is Starts now or Pick a time. */}
+            </section>
+            <section className="wi-desk2-step">
+              <h2 className="pf-wide-h" id="wi-desk-when">{nv.deskWhenLabel}</h2>
+              <div className="wi-desk2-whenlist" role="radiogroup" aria-labelledby="wi-desk-when">
+                {/* Jira GRW-456 — nobody on the branch, or nobody who does this: starting is the one it cannot honour. */}
+                {whenChip('now', !queueing && !later, nv.whenNow, () => pickWhen('now'), noStaffHere || noOneCanDoIt)}
+                {canQueue ? whenChip('queue', queueing, nv.whenWaiting, () => pickWhen('queue')) : null}
+                {whenChip('today', !queueing && later && day === todayIso, nv.deskLaterToday, () => chooseDay(todayIso))}
+                {whenChip('tomorrow', !queueing && later && day === tomorrowIso, nv.deskTomorrow, () => chooseDay(tomorrowIso))}
+                <input
+                  type="date"
+                  className={`wi-when-other ${otherDay ? 'wi-when-other-on' : ''}`}
+                  aria-label={nv.deskOtherDay}
+                  min={todayIso}
+                  value={otherDay ? day : ''}
+                  onChange={(e) => e.target.value && chooseDay(e.target.value)}
+                  disabled={busy}
+                />
+              </div>
+              {/* A token has no stylist: the question only exists once the answer is Starts now or a later day. */}
               {queueing ? null : <div className="wi-desk-stylist">{stylistField}</div>}
-            </div>
+            </section>
           </div>
 
           {services === null ? (
@@ -3689,6 +3665,7 @@ export function NewVisitSheet({
             ) : null}
             {/* The free times need the services (how long they take), so they appear once there is one. */}
             {later && !queueing && picked.length > 0 ? <div className="wi-desk2-slots">{slotsBlock}</div> : null}
+            {later && !queueing && picked.length === 0 ? <p className="wi-desk2-hint">{nv.deskTimesAfter}</p> : null}
             {showServicesError ? (
               <div role="alert" className="field-error">
                 {nv.servicesMissing}
