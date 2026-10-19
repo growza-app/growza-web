@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { formatMoney, formatTime, type CustomerStats } from '../../lib/api';
 import { clientNameLabel, initials, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
 import type { HomeCopy } from '../../lib/home-copy';
@@ -51,8 +51,33 @@ export function tintFor(key: string) {
  * `nobody` — Jira GRW-363: a row that is not a person (the no-stylist row) gets a neutral dash, not
  * initials made from its phrase ("NS", "कस") in a colour that makes it look like someone.
  */
-export function Avatar({ name, id, size = 38, nobody = false }: { name: string | null; id: string; size?: number; nobody?: boolean }) {
+export function Avatar({
+  name,
+  id,
+  size = 38,
+  nobody = false,
+  photoUrl,
+}: {
+  name: string | null;
+  id: string;
+  size?: number;
+  nobody?: boolean;
+  photoUrl?: string | null;
+}) {
+  const [broken, setBroken] = useState(false);
   const t = nobody ? { bg: 'var(--border)', fg: 'var(--muted)' } : tintFor(id);
+  if (!nobody && photoUrl && !broken) {
+    return (
+      <img
+        className="hm-avatar person-photo"
+        src={photoUrl}
+        alt=""
+        style={{ width: size, height: size, objectFit: 'cover' }}
+        onError={() => setBroken(true)}
+        aria-hidden
+      />
+    );
+  }
   return (
     <span className="hm-avatar" style={{ width: size, height: size, background: t.bg, color: t.fg }} aria-hidden>
       {nobody ? NOBODY_INITIAL : initials(name)}
@@ -188,7 +213,7 @@ export function AttentionList({ items }: { items: Array<{ key: string; count: nu
   return (
     <div className="hm-attention">
       {items.map((a) => (
-        <a key={a.key} className={`hm-att hm-tone-${a.tone}`} href={a.href}>
+        <a key={a.key} className={`hm-att hm-tone-${a.tone}${a.count === 0 ? ' is-clear' : ''}`} href={a.href}>
           <span className="hm-att-icon">{a.icon}</span>
           <span className="hm-att-text">
             <span className="hm-att-line">
@@ -257,9 +282,15 @@ export function SegmentCards({
       <div className="hm-segments">
         {SEGMENT_KEYS.map((key) => {
           const n = bands.get(key)?.count ?? 0;
+          const share = bands.get(key)?.pct ?? 0;
           const seg = t.segments[key];
           return (
-            <a key={key} className={`hm-seg-card hm-seg-${key}`} href={`/customers?status=${key}&branch=${encodeURIComponent(branch ?? 'all')}`}>
+            <a
+              key={key}
+              className={`hm-seg-card hm-seg-${key}`}
+              href={`/customers?status=${key}&branch=${encodeURIComponent(branch ?? 'all')}`}
+              style={{ '--seg-pct': `${share}%` } as CSSProperties}
+            >
               <span className="hm-seg-top">
                 <span className="hm-seg-name">
                   <i />
@@ -269,7 +300,7 @@ export function SegmentCards({
               </span>
               <span className="hm-seg-count">
                 <strong>{n}</strong>
-                <span>{bands.get(key)?.pct ?? 0}%</span>
+                <span>{share}%</span>
               </span>
             </a>
           );

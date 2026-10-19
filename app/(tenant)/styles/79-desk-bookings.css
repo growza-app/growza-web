@@ -1,74 +1,389 @@
 /*
- * Owner, 2026-10-14 — Bookings on a wide desk: the same three panels as Services, Clients and Staff.
+ * Desktop Bookings Command View (≥1101px):
+ *   1. Top 4 KPI summary strip (.bk-cmd-summary) synced with actual booking statuses
+ *   2. Two-row horizontal toolbar (.bk-cmd-toolbar): status tabs + view switcher + actions on row 1;
+ *      search + date presets + From/To range + staff + sort on row 2
+ *   3. Two-column collapsible Waiting Queue panel (.bk-waiting-cmd): shows next 2 tokens by default,
+ *      expands into a 2-column scrollable grid (max 4 rows tall) when "Show all N waiting" is toggled
+ *   4. Full-width schedule table (.bk-table) with slide-over detail drawer (.bk-desk-right) when a row is picked
  *
- *   left   a stylist's own takings (when shown), the All · To do · Completed list with its counts, then the
- *          filter card's fields stacked: From, To, Staff, Status, Order
- *   middle the search, the "not marked" chip, the schedule's head with the Timeline | List switch, and the day
- *          scrolling inside the panel (the people waiting first, as on the page), the pager under it
- *   right  the picked booking in place — `BookingSheet inline` for one still to come, `BookingSummary inline`
- *          for a finished one; "New booking" when nothing is picked
- *
- * Moving a booking and giving a token stay the overlays they are. Only at the desktop tier (≥1101px).
- * `BookingsList` asks the width itself and renders the page below it, so nothing here is reached there; the
- * media query is belt and braces. Scoped to `.bk-desk`.
+ * Moving a booking and giving a token stay the overlays they are. Scoped to `.bk-desk`.
  */
 @media (min-width: 1101px) {
-  /* Bookings scrolls the page (32-customers.css, `.bk-fit`); the desk scrolls the middle panel instead. */
-  .page-body.bk-fit:has(> .bk-desk) {
+  .bk-desk.bk-cmd {
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    gap: var(--sp-4);
+    padding-bottom: var(--sp-5);
   }
 
-  .bk-desk-grid {
-    flex: 1;
-    min-height: 0;
-    /* One row, bounded by the panel's height: left as `auto` the row grows to the tallest column's content
-       and the page clips the bottom of it (the matrix at 1280×720, 2026-10-14). The columns scroll inside. */
-    grid-template-rows: minmax(0, 1fr);
-    grid-template-columns: minmax(10rem, 11rem) minmax(0, 1fr) minmax(20rem, 22rem);
+  /* ---------- 1. Top 4 KPI Strip ---------- */
+  .bk-cmd-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--sp-3);
+  }
+
+  .bk-cmd-stat {
+    appearance: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--sp-3) var(--sp-4);
+    display: flex;
+    flex-direction: column;
     align-items: stretch;
+    gap: var(--sp-1);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
 
-  .bk-desk-left,
-  .bk-desk-right {
-    min-height: 0;
-    overflow-y: auto;
+  .bk-cmd-stat:hover {
+    border-color: var(--accent);
   }
 
-  .bk-desk-right {
-    position: static;
-    max-height: none;
-    padding: 0;
-    overflow: hidden;
+  .bk-cmd-stat.is-active {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
   }
 
-  .bk-desk-mid {
-    min-height: 0;
+  .bk-cmd-stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--muted);
   }
 
-  .bk-desk-scroll {
+  .bk-cmd-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .bk-cmd-dot.is-green {
+    background: var(--accent);
+  }
+
+  .bk-cmd-dot.is-blue {
+    background: var(--blue);
+  }
+
+  .bk-cmd-dot.is-rose {
+    background: var(--danger);
+  }
+
+  .bk-cmd-stat-val {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+  }
+
+  .bk-cmd-stat-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-1);
+    margin-top: 2px;
+  }
+
+  .bk-cmd-stat-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px var(--sp-2);
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  /* ---------- 2. Unified Horizontal Toolbar ---------- */
+  .bk-cmd-toolbar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--sp-3) var(--sp-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+  }
+
+  .bk-cmd-toolbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    flex-wrap: wrap;
+  }
+
+  .bk-cmd-segs,
+  .bk-cmd-presets {
+    display: inline-flex;
+    align-items: center;
+    background: var(--page-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .bk-cmd-seg {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .bk-cmd-seg:hover {
+    color: var(--text);
+  }
+
+  .bk-cmd-seg.is-active {
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  .bk-cmd-seg-cnt {
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--border);
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bk-cmd-seg.is-active .bk-cmd-seg-cnt {
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+  }
+
+  .bk-cmd-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+
+  .bk-cmd-create-btns {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+
+  .bk-cmd-walkin-btn,
+  .bk-cmd-new-btn {
+    min-height: 36px;
+    padding: 0 var(--sp-3);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+
+  .bk-cmd-search {
     flex: 1;
-    min-height: 0;
+    min-width: 14rem;
+    max-width: 22rem;
+    margin: 0;
+  }
+
+  .bk-cmd-filters {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+  }
+
+  .bk-cmd-date-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .bk-cmd-date-input,
+  .bk-cmd-select {
+    height: 36px;
+    padding: 0 var(--sp-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  .bk-cmd-date-sep {
+    color: var(--muted);
+    font-size: 0.8125rem;
+  }
+
+  /* ---------- 3. 2-Column Collapsible Waiting Queue Panel ---------- */
+  .bk-waiting.bk-waiting-cmd {
+    margin: 0;
+    background: var(--amber-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--sp-3) var(--sp-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
+
+  .bk-waiting-cmd-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+  }
+
+  .bk-waiting-cmd-left {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+  }
+
+  .bk-waiting-tag {
+    background: var(--amber);
+    color: var(--surface);
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .bk-waiting-summary {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--amber-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bk-waiting-toggle {
+    appearance: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--amber-ink);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: var(--radius-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .bk-waiting-toggle svg {
+    width: 0.875rem;
+    height: 0.875rem;
+    flex-shrink: 0;
+  }
+
+  .bk-waiting-toggle[aria-expanded='true'] svg {
+    transform: rotate(180deg);
+  }
+
+  .bk-waiting-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-2);
+  }
+
+  .bk-waiting-grid.is-expanded {
+    max-height: 220px;
     overflow-y: auto;
-    padding-right: 2px;
+    padding-right: 4px;
   }
 
-  .bk-desk-mid .bk-sched-head,
-  .bk-desk-mid .bk-unmarked-chip,
-  .bk-desk-mid .bk-waiting {
-    margin-top: 0;
+  .bk-waiting-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: var(--sp-2) var(--sp-3);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    min-height: 52px;
   }
 
-  .bk-desk-mid .bk-waiting {
-    margin-bottom: var(--sp-3);
+  .bk-waiting-card-info {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+  }
+
+  .bk-waiting-card-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .bk-waiting-pay-btn,
+  .bk-waiting-start-btn {
+    appearance: none;
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .bk-waiting-pay-btn {
+    background: var(--amber-soft);
+    border: 1px solid var(--border);
+    color: var(--amber-ink);
+  }
+
+  .bk-waiting-start-btn {
+    background: var(--accent-deep);
+    border: 1px solid var(--accent-deep);
+    color: var(--surface);
+  }
+
+  /* ---------- 4. Full-Width Schedule & Slide-Over Detail Drawer ---------- */
+  .bk-cmd-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
   }
 
   .bk-desk .bk-card {
     cursor: pointer;
   }
 
-  /* The card is the control, so its Details button is the same tap twice; at 1180 it also sat on the price. */
   .bk-desk .bk-card .bk-details {
     display: none;
   }
@@ -78,56 +393,30 @@
     box-shadow: inset 3px 0 0 var(--accent);
   }
 
-  /* ---------- left: takings, the segments (`.pf-wide-tabs`, 79-desk-till.css), the filters stacked ---------- */
-  .bk-desk-left .bk-earnings {
-    margin: 0 0 var(--sp-3);
+  .bk-desk-backdrop {
+    z-index: 60;
   }
 
-  .bk-desk-left .bk-earnings-figures {
-    flex-direction: column;
-    gap: var(--sp-2);
-  }
-
-  /* The filter card is not a card here: the panel is. Its fields stack, one under the other, labels kept. */
-  .bk-desk-left .bk-filter-card {
-    margin: 0;
+  .bk-desk-right {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 24rem;
+    max-width: 90vw;
+    max-height: none;
+    z-index: 61;
+    background: var(--surface);
+    border-top: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 1px solid var(--border);
+    border-radius: 0;
+    box-shadow: 0 12px 32px rgba(20, 32, 27, 0.14);
     padding: 0;
-    border: 0;
-    box-shadow: none;
-    background: transparent;
-    /*
-     * Release review, 2026-10-16 — it keeps its own height. The card is `overflow: hidden` and a flex child, so on a
-     * short laptop window it SHRANK to fit the panel and cut its last field off (9px at 1280x720, 1101 to 1280 wide):
-     * unreachable rather than scrollable. The panel scrolls instead.
-     */
-    flex: none;
-    overflow: visible;
+    overflow-y: auto;
   }
 
-  .bk-desk-left .bk-filters {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--sp-3);
-    padding: 0;
-  }
-
-  .bk-desk-left .bk-field {
-    flex: none;
-  }
-
-  /* The search is the middle panel's; the left has no room for a second one. */
-  .bk-desk-left .bk-field-search {
-    display: none;
-  }
-
-  /* A date box in an 11rem column: the control's own width, not the page's 14px either side. */
-  .bk-desk-left .bk-field input,
-  .bk-desk-left .bk-field select {
-    padding: 0 var(--sp-2);
-    font-size: 0.875rem;
-  }
-
-  /* ---------- right: the sheet in place ---------- */
   .bk-sheet-inline {
     display: flex;
     flex-direction: column;
@@ -146,35 +435,168 @@
   .bk-sheet-close {
     flex: none;
   }
-
-  .bk-desk-nothing {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--sp-3);
-    padding: var(--sp-4);
-  }
-
-  .bk-desk-nothing p {
-    margin: 0;
-    font-size: 0.875rem;
-    color: var(--muted);
-  }
 }
 
-/* The narrow end of the tier (1101–1300px): side panels at their floors, the card's phone line goes. */
-@media (min-width: 1101px) and (max-width: 1300px) {
-  .bk-desk-grid {
-    grid-template-columns: 10rem minmax(0, 1fr) 20rem;
-    gap: var(--sp-3);
-  }
-
-  .bk-desk-left {
-    padding: var(--sp-3);
-  }
-
-  .bk-desk .bk-card-phone {
-    display: none;
-  }
+/* ---------- Bookings Table view & direct row actions ---------- */
+.bk-table-wrap,
+.bk-card-actions {
+  --hm-ink: var(--text);
+  --hm-muted: var(--muted);
+  --hm-line: var(--border);
 }
+
+.bk-table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
+
+.hm-v3-table.bk-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.hm-v3-table.bk-table th,
+.hm-v3-table.bk-table td {
+  padding: 12px 16px;
+}
+
+.hm-v3-table.bk-table th:first-child,
+.hm-v3-table.bk-table td:first-child {
+  padding-left: 18px;
+}
+
+.hm-v3-table.bk-table th:last-child,
+.hm-v3-table.bk-table td:last-child {
+  padding-right: 18px;
+  text-align: right;
+}
+
+.hm-v3-table.bk-table .hm-v3-td-time::before {
+  left: 21px;
+}
+
+.hm-v3-table.bk-table .hm-v3-td-time strong {
+  font-size: 0.8125rem;
+}
+
+.hm-v3-table.bk-table .hm-v3-tl-dot {
+  margin-right: 8px;
+}
+
+.hm-v3-table.bk-table .hm-v3-person {
+  gap: 10px;
+}
+
+.hm-v3-table.bk-table .hm-v3-staff-cell {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--page-bg);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.bk-td-amount {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.hm-v3-table.bk-table .hm-pill {
+  padding: 3px 10px;
+  font-size: 0.75rem;
+}
+
+.hm-v3-table.bk-table .hm-v3-row-btn {
+  min-width: 0;
+  padding: 5px 10px;
+  font-size: 0.75rem;
+}
+
+.bk-table tbody tr {
+  cursor: pointer;
+}
+
+.bk-table tbody tr:hover td {
+  background: var(--page-bg);
+}
+
+.bk-table tbody tr.is-selected td {
+  background: var(--accent-soft);
+}
+
+.bk-table tbody tr.is-selected td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.bk-table-day-row td {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  background: var(--page-bg);
+  padding: var(--sp-2) var(--sp-4);
+}
+
+.bk-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.bk-row-dots {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  padding: 0;
+  line-height: 1;
+}
+
+.bk-row-dots:hover {
+  background: var(--page-bg);
+  color: var(--text);
+}
+
+.bk-row-dropdown .dropdown-item {
+  align-items: center;
+}
+
+.bk-row-dropdown .dropdown-item svg {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  flex-shrink: 0;
+}
+
+.bk-desk-backdrop:has(+ .bk-desk-right .modal-backdrop) {
+  display: none;
+}
+
+.bk-desk-right:has(.modal-backdrop) {
+  width: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.bk-waiting-cta {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-deep);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+

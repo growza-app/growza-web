@@ -1,16 +1,18 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '../../../shared/AppLink';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError, formatMoney } from '../../lib/api';
-import { fixVisitHref } from '../../lib/pay-token';
-import type { Appointment, Offer, PaymentMode, Product, Provider, Service } from '../../lib/api-types';
+import { fixVisitHref, nextCustomerHref } from '../../lib/pay-token';
+import type { Appointment, Offer, PaymentMode, Product, ProductCategory, Provider, Service } from '../../lib/api-types';
 import type { QueueEntry } from '../../lib/home-types';
 import { receiptRows, type ReceiptRow } from '../../lib/receipt-text';
 import { displayPhone } from '../../lib/phone';
-import { servicePhotoUrl } from '../../lib/service-photos';
+import { ServicePhoto } from '../../components/ServicePhoto';
+import { ProductPhoto } from '../../components/ProductPhoto';
+import { ALL_CATEGORIES, DeskProductCategories, NO_CATEGORY } from '../../products/DeskProductCategories';
 import { useNewVisitCopy } from '../../lib/use-copy';
 import { useBranch } from '../../components/BranchProvider';
 import { HeaderBranchPicker } from '../../components/HeaderBranchPicker';
@@ -26,6 +28,9 @@ import { ServiceSheet } from '../../components/ServiceSheet';
 import { BillCard, BillRows, lineKey, lineMinor, type BillLine as Line } from './BillCard';
 import { DeskServiceGrid } from './DeskServiceGrid';
 import { DeskUnpaid } from './DeskUnpaid';
+import { useBarcodeScan } from '../../lib/barcode-scan';
+import { planScans, type ScanProblem } from '../../lib/scan-plan';
+import { queueScan, takeScans } from '../../lib/scan-queue';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
 import { PaymentDone } from '../../components/PaymentDone';
 
@@ -60,6 +65,8 @@ interface Sale {
   summary: string;
   /** The visit's own day in the salon's zone — what "Fix a mistake" needs to find it in the list. */
   day: string;
+  /** Only products were sold: the id is a sale's, not a booking's, so there is nothing in Bookings to open. */
+  productOnly: boolean;
 }
 
 /**
@@ -125,6 +132,8 @@ export function PayFlow({
   timezone,
   backTo,
   wide = false,
+  initialTab,
+  productsOnly = false,
 }: {
   /** A waiting token being paid: its client, branch and services are the answer to ①. */
   token?: QueueEntry;
@@ -145,12 +154,16 @@ export function PayFlow({
   /** The signed-in person's own chair, when they have one: the stylist ① starts on. */
   providerId: string | null;
   timezone: string;
-  backTo?: '/appointments';
+  backTo?: '/appointments' | '/products' | '/sales';
   /**
    * Jira GRW-572 — a laptop ≥1101px: the same till laid out in three panels (who · what · the bill), with the
    * payment tiles beside the bill so ② is not a screen of its own. Same state, same `pay()`, same two writes.
    */
   wide?: boolean;
+  /** Open directly on the Products tab (desk) or Products sheet chip (phone), e.g. from Home's Sell product button. */
+  initialTab?: 'products';
+  /** Retail / Sell product page (`/products/sell`): client + product categories on the left, product shelf in the middle, bill + payment on the right. */
+  productsOnly?: boolean;
 }) {
   const t = useTranslations('payFlow');
   const tcr = useTranslations('chrome');
@@ -194,7 +207,7 @@ export function PayFlow({
    */
   const [qrBroken, setQrBroken] = useState(false);
   const [step, setStep] = useState<'what' | 'how' | 'qr' | 'done'>('what');
-  const [services, setServices] = useState<Service[] | null>(null);
+  const [services, setServices] = useState<Service[] | null>(productsOnly ? [] : null);
   const [ranked, setRanked] = useState<string[] | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
   /** Whether the branch's people have come back yet — an empty list means nothing until they have. */
@@ -204,6 +217,10 @@ export function PayFlow({
   const [offers, setOffers] = useState<Offer[]>([]);
   /** Owner, 2026-10-14 — the branch's shelf (migration 0115): the Products tab on the desk, a chip in the phone's sheet. */
   const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoaded, setProductsLoaded] = useState(false);
+  const [productsFailed, setProductsFailed] = useState(false);
+  const [productCategories, setProductCategories] = useState<ProductCategory[]>([]);
+  const [productCategory, setProductCategory] = useState<string>(ALL_CATEGORIES);
   const [client, setClient] = useState<Client>({ kind: 'none' });
   const [stylistId, setStylistId] = useState<string | null>(null);
   const [override, setOverride] = useState<number | null>(null);
@@ -211,7 +228,7 @@ export function PayFlow({
   /** Owner, 2026-10-14 — the bill row the keypad is pricing; null means it is pricing the whole total. */
   const [keypadFor, setKeypadFor] = useState<{ key: string; name: string; list: number } | null>(null);
   const [whoOpen, setWhoOpen] = useState<false | 'find' | 'add'>(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(initialTab === 'products' && !wide && !productsOnly);
   const [billOpen, setBillOpen] = useState(false);
   const [saving, setSaving] = useState<PaymentMode | null>(null);
   /*
@@ -243,6 +260,43 @@ export function PayFlow({
   // The menu, the people, the latest clients — three reads, all at once, none blocking the others.
   useEffect(() => {
     let gone = false;
+    setProductsLoaded(false);
+    setProductsFailed(false);
+    setProductCategory(ALL_CATEGORIES);
+    void api
+      .products(location)
+      .then((rows) => {
+        if (!gone) {
+          setProducts(rows);
+          setProductsLoaded(true);
+        }
+      })
+      .catch(() => {
+        if (!gone) {
+          setProducts([]);
+          setProductsFailed(true);
+          setProductsLoaded(true);
+        }
+      });
+    if (productsOnly && location) {
+      void api
+        .productCategories(location)
+        .then((rows) => {
+          if (!gone) setProductCategories(rows);
+        })
+        .catch(() => {
+          if (!gone) setProductCategories([]);
+        });
+    } else if (productsOnly) {
+      setProductCategories([]);
+    }
+    if (productsOnly) {
+      setServices([]);
+      setProvidersKnown(true);
+      return () => {
+        gone = true;
+      };
+    }
     void api
       .services(location ?? undefined)
       .then((rows) => {
@@ -250,14 +304,6 @@ export function PayFlow({
       })
       .catch(() => {
         if (!gone) setServices([]);
-      });
-    void api
-      .products(location)
-      .then((rows) => {
-        if (!gone) setProducts(rows);
-      })
-      .catch(() => {
-        if (!gone) setProducts([]);
       });
     if (wide && !visit) {
       void api
@@ -294,7 +340,7 @@ export function PayFlow({
     return () => {
       gone = true;
     };
-  }, [location, token, wide, visit]);
+  }, [location, token, wide, visit, productsOnly]);
 
   /*
    * Who did it: the booking's own stylist, else the phone's last answer, else the signed-in person's chair.
@@ -448,8 +494,28 @@ export function PayFlow({
   // A package's legs are not the tiles' count: − on a tile must not take a leg out of a package.
   const countOf = (serviceId: string) => lines.filter((l) => l.serviceId === serviceId && !l.pkg && !l.product).length;
   const productCountOf = (productId: string) => lines.filter((l) => l.product?.id === productId).length;
-  /** Owner, 2026-10-14 — a bill is still a visit: it needs a service. A product alone cannot be rung up yet. */
-  const hasService = lines.some((l) => !l.product);
+  // Hooks stay above every early return below (done, qr, how): a sale that ends on one of them must not change the hook count.
+  const noneCount = useMemo(() => products.filter((p) => p.categoryId === null).length, [products]);
+  const phoneProducts = useMemo(() => {
+    if (!productsOnly) return [];
+    const byCat = productCategory
+      ? products.filter((p) => (productCategory === NO_CATEGORY ? p.categoryId === null : p.categoryId === productCategory))
+      : products;
+    const inStock = byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0);
+    const shown = (inStock.length > 0 ? inStock : byCat).slice(0, TILES);
+    const drawn = new Set(shown.map((p) => p.id));
+    const byId = new Map(products.map((p) => [p.id, p]));
+    for (const l of lines) {
+      if (!l.product || drawn.has(l.product.id)) continue;
+      const p = byId.get(l.product.id);
+      if (!p) continue;
+      shown.push(p);
+      drawn.add(p.id);
+    }
+    return shown;
+  }, [productsOnly, products, productCategory, lines]);
+  /** Jira GRW-576 — a walk-in can buy a product alone; settling a booking or token still needs a service. */
+  const hasService = (visit || token) ? lines.some((l) => !l.product) : lines.length > 0;
   const full = lines.length >= MAX_LINES;
 
   /*
@@ -471,7 +537,7 @@ export function PayFlow({
   };
   /** Owner, 2026-10-14 — a product on the bill: one line per unit, so "tap again for a second one" holds. */
   const addProduct = (p: Product) => {
-    if (full) {
+    if (full || p.stock <= 0 || productCountOf(p.id) >= p.stock) {
       felt(BUZZ.tooMany);
       return;
     }
@@ -479,6 +545,49 @@ export function PayFlow({
     setLines((prev) => [...prev, { serviceId: '', name: p.name, priceMinor: Number(p.priceMinor ?? 0), product: { id: p.id } }]);
     setOverride(null);
   };
+  /**
+   * Owner, 2026-10-19 — a scan adds the product wherever the cursor is. A code that names no single product says so
+   * rather than doing nothing, because a silent miss at the counter reads as "the scanner is broken".
+   */
+  const [scanNote, setScanNote] = useState<string | null>(null);
+  // A code that matched nothing goes into the search box: a person can edit it into a name and sell it by hand.
+  const [searchSeed, setSearchSeed] = useState<{ text: string; n: number } | null>(null);
+  useEffect(() => {
+    if (!scanNote) return;
+    const id = window.setTimeout(() => setScanNote(null), 5000);
+    return () => window.clearTimeout(id);
+  }, [scanNote]);
+  const scanWords = (p: ScanProblem) => (p.kind === 'miss' ? t('desk.scanMiss', { code: p.code }) : p.kind === 'stock' ? t('desk.scanNoStock', { name: p.name }) : t('desk.scanFull'));
+  /** One scan or a queue of them: each that can go on does, and the last that cannot is said out loud. */
+  const onScans = (codes: readonly string[]) => {
+    const { add, problem } = planScans(codes, products, productCountOf, lines.length, MAX_LINES);
+    // addProduct would refuse these quietly; a scan has no tile to show why, so it says.
+    if (problem) felt(BUZZ.tooMany);
+    setScanNote(problem ? scanWords(problem) : null);
+    if (problem?.kind === 'miss') {
+      setSearchSeed((prev) => ({ text: problem.code, n: (prev?.n ?? 0) + 1 }));
+      if (!wide) setMenuOpen(true);
+    }
+    for (const p of add) addProduct(p);
+  };
+  // Only on the screen where products are picked: on 'how', 'qr' and 'done' a scan would change a bill being paid.
+  // Listening from the first moment, not from when the shelf is in: a bottle scanned while it loads waits in the queue.
+  useBarcodeScan(productsOnly && step === 'what', (code) => {
+    if (productsLoaded) onScans([code]);
+    else queueScan(code);
+  });
+  // Codes scanned on the Sales screen wait in the browser: put them on the bill once, in the order scanned.
+  const scansTaken = useRef(false);
+  useEffect(() => {
+    if (!productsOnly || !productsLoaded || scansTaken.current) return;
+    scansTaken.current = true;
+    const waiting = takeScans();
+    if (waiting.length === 0) return;
+    // A shelf that failed to load is empty, not a shelf with nothing on it: say so rather than call each bottle unknown.
+    if (productsFailed) setScanNote(t('desk.scanShelfFailed'));
+    else onScans(waiting);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productsOnly, productsLoaded]);
   // No buzz on the way down: the count and the total both drop, and a removal that felt like an addition is a lie.
   const oneLess = (key: string) => {
     setLines((prev) => {
@@ -668,7 +777,7 @@ export function PayFlow({
             };
             const r = await guard((confirmed) =>
               api.recordCounterSale(
-                stylistId
+                stylistId && legs.length > 0
                   ? { ...common, schedulableId: stylistId, ...(confirmed ? { confirmLargeAmount: true } : {}) }
                   : { ...common, noStylist: true, ...(confirmed ? { confirmLargeAmount: true } : {}) },
               ),
@@ -749,6 +858,7 @@ export function PayFlow({
         phone: token?.customerPhone ?? visit?.appointment.customerPhone ?? (client.kind === 'existing' ? client.phone : null),
         summary: [tokenNo !== null ? nv.token(tokenNo) : null, paidBy, names, stylist].filter(Boolean).join(' · '),
         day: new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(result.startAt)),
+        productOnly: !lines.some((l) => !l.product),
       });
       clearSplit();
       setStep('done');
@@ -770,8 +880,12 @@ export function PayFlow({
     setError(null);
     setAttemptKey(newAttemptKey());
     clearSplit();
+    void api.products(location).then(setProducts).catch(() => {});
+    if (productsOnly && location) void api.productCategories(location).then(setProductCategories).catch(() => {});
     tokenFilled.current = true; // a token has been paid: a second sale from this page is a plain one
-    if (token) router.replace('/appointments/new?purpose=payment');
+    // The address names the bill being left. After a payment the refresh has already dropped `token` / `visit`, so the
+    // "gone" flags are what say the address still carries one: without them the banner stays up over a fresh till.
+    if (token || tokenGone || visit || visitGone) router.replace(nextCustomerHref({ from: backTo ? 'bookings' : undefined }));
     setStep('what');
   };
 
@@ -798,6 +912,7 @@ export function PayFlow({
     setLines([]);
     setOverride(null);
     setStylistId(null);
+    setProductCategory(ALL_CATEGORIES);
     setError(null);
     setFirstWay(null);
     setSplitting(false);
@@ -853,7 +968,7 @@ export function PayFlow({
     return (
       <PaymentDone
         appointmentId={sale.appointmentId}
-        fixHref={fixVisitHref(sale.appointmentId, sale.day)}
+        fixHref={sale.productOnly ? null : fixVisitHref(sale.appointmentId, sale.day)}
         totalMinor={sale.totalMinor}
         mode={sale.mode}
         modeLabel={sale.paidBy}
@@ -1134,7 +1249,7 @@ export function PayFlow({
             <IconArrowLeft />
           </button>
           <span className="pf-head-stack">
-            <h1 className="pf-title">{t('whatTitle')}</h1>
+            <h1 className="pf-title">{productsOnly ? t('sellTitle') : t('whatTitle')}</h1>
             {token ? (
               branchName ? <span className="pf-at">{t('at', { branch: branchName })}</span> : null
             ) : (
@@ -1149,6 +1264,7 @@ export function PayFlow({
           */}
           <span className="pf-head-gap" aria-hidden="true" />
         </header>
+        {scanNote ? <div role="status" className="pf-error">{scanNote}</div> : null}
         {tokenGone ? (
           <div role="alert" className="pf-error">
             {nv.tokenGone}
@@ -1162,10 +1278,22 @@ export function PayFlow({
         <div className="pf-wide-grid">
           <aside className="pf-wide-left">
             {who}
-            {stylists}
-            <DeskUnpaid location={location} timezone={timezone} currentTokenId={token?.id ?? null} currentVisitId={visit?.appointment.id ?? null} />
+            {productsOnly ? (
+              <DeskProductCategories
+                picked={productCategory}
+                categories={productCategories}
+                allCount={products.length}
+                noneCount={noneCount}
+                onPick={setProductCategory}
+              />
+            ) : (
+              <>
+                {stylists}
+                <DeskUnpaid location={location} timezone={timezone} currentTokenId={token?.id ?? null} currentVisitId={visit?.appointment.id ?? null} />
+              </>
+            )}
           </aside>
-          {services === null ? (
+          {(productsOnly ? !productsLoaded : services === null) ? (
             <section className="pf-wide-mid" aria-busy="true">
               <div className="pf-tiles pf-wide-tiles">
                 {Array.from({ length: 8 }, (_, i) => (
@@ -1173,7 +1301,7 @@ export function PayFlow({
                 ))}
               </div>
             </section>
-          ) : services.length === 0 ? (
+          ) : !productsOnly && services!.length === 0 && initialTab !== 'products' ? (
             <section className="pf-wide-mid">
               <div className="empty">{nv.noServicesYet}</div>
             </section>
@@ -1185,7 +1313,7 @@ export function PayFlow({
               onLess={oneLess}
               full={full}
               money={money}
-              packages={offers.filter((o) => o.serviceIds.every((id) => services.some((s) => s.id === id)))}
+              packages={offers.filter((o) => o.serviceIds.every((id) => (services ?? []).some((s) => s.id === id)))}
               packageCountOf={packageCountOf}
               onLessPackage={oneLessPackage}
               onPickPackage={pickPackage}
@@ -1193,6 +1321,10 @@ export function PayFlow({
               productCountOf={productCountOf}
               onMoreProduct={addProduct}
               onLessProduct={(id) => oneLess(`p:${id}`)}
+              initialTab={initialTab}
+              productsOnly={productsOnly}
+              productCategory={productCategory}
+              searchSeed={searchSeed}
             />
           )}
           <aside className="pf-wide-right">
@@ -1205,13 +1337,19 @@ export function PayFlow({
                 </button>
               ) : null}
             </div>
-            {badService ? (
+            {productsOnly ? (
+              badService ? (
+                <p className="pf-miss pf-miss-wide" role="alert">
+                  {t('pickProduct')}
+                </p>
+              ) : null
+            ) : badService ? (
               <p className="pf-miss pf-miss-wide" role="alert">
                 {lines.length > 0 ? t('needService') : t('pickOne')}
               </p>
             ) : null}
             {lines.length === 0 ? (
-              <p className="pf-wide-empty">{t('desk.emptyBill')}</p>
+              <p className="pf-wide-empty">{productsOnly ? t('desk.emptyProductBill') : t('desk.emptyBill')}</p>
             ) : (
               <BillRows lines={lines} listMinor={listMinor} totalMinor={totalMinor} onLess={oneLess} onPrice={openRowKeypad} />
             )}
@@ -1308,22 +1446,38 @@ export function PayFlow({
         it is ("Record payment", "How did they pay?", "₹600 received") and whose button says what comes next,
         so they were the one thing on the line that no owner needed.
       */}
-      <header className="pf-head">
-        <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
-          <IconArrowLeft />
-        </button>
-        <span className="pf-head-stack">
-          <h1 className="pf-title">{t('whatTitle')}</h1>
-          {token ? (
-            branchName ? <span className="pf-at">{t('at', { branch: branchName })}</span> : null
-          ) : (
-            <HeaderBranchPicker variant="line" />
-          )}
-        </span>
-        {/* The ☰ that used to live here was the way to the full form: an icon that looked like a menu, did
-            something else, and had no way back. The labelled switch takes its corner. */}
-        <FormModeSwitch now="simple" simpleHref={simpleForm} advancedHref={fullForm} />
-      </header>
+      {productsOnly ? (
+        <>
+          <header className="pf-head">
+            <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
+              <IconArrowLeft />
+            </button>
+            <span className="pf-head-stack">
+              <h1 className="pf-title">{t('sellTitle')}</h1>
+              <HeaderBranchPicker variant="line" />
+            </span>
+            <span className="pf-head-gap" aria-hidden="true" />
+          </header>
+          {scanNote ? <div role="status" className="pf-error">{scanNote}</div> : null}
+        </>
+      ) : (
+        <header className="pf-head">
+          <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
+            <IconArrowLeft />
+          </button>
+          <span className="pf-head-stack">
+            <h1 className="pf-title">{t('whatTitle')}</h1>
+            {token ? (
+              branchName ? <span className="pf-at">{t('at', { branch: branchName })}</span> : null
+            ) : (
+              <HeaderBranchPicker variant="line" />
+            )}
+          </span>
+          {/* The ☰ that used to live here was the way to the full form: an icon that looked like a menu, did
+              something else, and had no way back. The labelled switch takes its corner. */}
+          <FormModeSwitch now="simple" simpleHref={simpleForm} advancedHref={fullForm} />
+        </header>
+      )}
       {tokenGone ? (
         <div role="alert" className="pf-error">
           {nv.tokenGone}
@@ -1340,7 +1494,7 @@ export function PayFlow({
         </div>
       ) : null}
       {who}
-      {stylists}
+      {productsOnly ? null : stylists}
 
       {/*
         The whole menu, under the two rows that name people and above the tiles it searches (owner, 2026-10-10).
@@ -1348,6 +1502,53 @@ export function PayFlow({
         scrolling past everything it exists to shortcut. A bar reads as "type what you are looking for"; the
         tiles below it stay the fast path for what is sold all day.
       */}
+      {productsOnly && products.length > 0 ? (
+        <>
+          <div className="pf-row" role="group" aria-label={t('desk.products')}>
+            <span className="pf-row-label">{t('desk.products')}</span>
+            <div className="pf-who-bar">
+              <button type="button" className="pf-who-search pf-find-service" onClick={() => setMenuOpen(true)}>
+                <IconSearch />
+                {t('desk.searchProducts', { count: products.length })}
+              </button>
+              <span className="pf-who-add pf-who-gap" aria-hidden="true" />
+            </div>
+          </div>
+          {productCategories.length > 0 ? (
+            <div className="pf-chips">
+              <button
+                type="button"
+                className={`pf-chip ${productCategory === ALL_CATEGORIES ? 'pf-chip-on' : ''}`}
+                aria-pressed={productCategory === ALL_CATEGORIES}
+                onClick={() => setProductCategory(ALL_CATEGORIES)}
+              >
+                {t('allCategories')}
+              </button>
+              {productCategories.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`pf-chip ${productCategory === c.id ? 'pf-chip-on' : ''}`}
+                  aria-pressed={productCategory === c.id}
+                  onClick={() => setProductCategory(c.id)}
+                >
+                  {c.name}
+                </button>
+              ))}
+              {noneCount > 0 ? (
+                <button
+                  type="button"
+                  className={`pf-chip ${productCategory === NO_CATEGORY ? 'pf-chip-on' : ''}`}
+                  aria-pressed={productCategory === NO_CATEGORY}
+                  onClick={() => setProductCategory(NO_CATEGORY)}
+                >
+                  {t('noCategory')}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </>
+      ) : null}
       {services && (services.length > TILES || products.length > 0 || offers.length > 0) ? (
         /*
           A labelled row like Who? and Stylist above it, so the screen reads as three questions down one column
@@ -1366,12 +1567,71 @@ export function PayFlow({
         </div>
       ) : null}
 
-      {badService ? (
-        <p className="pf-miss pf-miss-wide" role="alert">
-          {lines.length > 0 ? t('needService') : t('pickOne')}
-        </p>
-      ) : null}
-      {services === null ? (
+      {productsOnly ? (
+        badService ? (
+          <p className="pf-miss pf-miss-wide" role="alert">
+            {t('pickProduct')}
+          </p>
+        ) : null
+      ) : (
+        <>
+          {badService ? (
+            <p className="pf-miss pf-miss-wide" role="alert">
+              {lines.length > 0 ? t('needService') : t('pickOne')}
+            </p>
+          ) : null}
+        </>
+      )}
+      {productsOnly ? (
+        !productsLoaded ? (
+          <div className="pf-tiles" aria-busy="true">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="pf-tile pf-tile-wait" />
+            ))}
+          </div>
+        ) : phoneProducts.length === 0 ? (
+          <div className="empty">{products.length === 0 ? t('desk.noProducts') : t('desk.noMatch')}</div>
+        ) : (
+          <div className="pf-tiles">
+            {phoneProducts.map((p) => {
+              const count = productCountOf(p.id);
+              const price = Number(p.priceMinor ?? 0);
+              return (
+                <div key={p.id} className={`pf-tile ${count > 0 ? 'pf-tile-on' : ''}`}>
+                  <button
+                    type="button"
+                    className="pf-tile-tap"
+                    aria-label={t('tileA11y', { name: p.name, price: money(price) })}
+                    aria-pressed={count > 0}
+                    onClick={() => addProduct(p)}
+                    disabled={full && count === 0}
+                  >
+                    <ProductPhoto className="pf-tile-photo" product={p} />
+                    <span className="pf-tile-name">{p.name}</span>
+                    <span className="pf-tile-price">
+                      {money(price)}
+                      <span className={`pf-tile-mins ${p.stock <= 0 ? 'pf-tile-out' : ''}`}>{p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}</span>
+                    </span>
+                  </button>
+                  {count > 0 ? (
+                    <span className="pf-tile-qty" role="group" aria-label={t('onBill', { count })}>
+                      <button type="button" className="pf-qty-btn" aria-label={t('oneLess', { name: p.name })} onClick={() => oneLess(`p:${p.id}`)}>
+                        <IconMinus />
+                      </button>
+                      <span className="pf-qty-n" aria-live="polite">
+                        {count}
+                      </span>
+                      <button type="button" className="pf-qty-btn" aria-label={t('oneMore', { name: p.name })} onClick={() => addProduct(p)} aria-disabled={full || undefined}>
+                        <IconPlus />
+                      </button>
+                    </span>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        )
+      ) : services === null ? (
         <div className="pf-tiles" aria-busy="true">
           {Array.from({ length: 4 }, (_, i) => (
             <div key={i} className="pf-tile pf-tile-wait" />
@@ -1393,7 +1653,7 @@ export function PayFlow({
                   onClick={() => addOne(s)}
                   disabled={full && count === 0}
                 >
-                  <img className="pf-tile-photo" src={servicePhotoUrl(s)} alt="" loading="lazy" />
+                  <ServicePhoto className="pf-tile-photo" service={s} />
                   <span className="pf-tile-name">{s.name}</span>
                   <span className="pf-tile-price">{money(Number(s.priceMinor ?? 0))}</span>
                 </button>
@@ -1500,10 +1760,10 @@ export function PayFlow({
           onClose={() => setBillOpen(false)}
         />
       ) : null}
-      {menuOpen && services ? (
+      {menuOpen && (services || productsOnly) ? (
         <ServiceSheet
-          services={services}
-          counts={new Map(services.map((s) => [s.id, countOf(s.id)]))}
+          services={services ?? []}
+          counts={new Map((services ?? []).map((s) => [s.id, countOf(s.id)]))}
           onPick={(s) => {
             addOne(s);
             setMenuOpen(false);
@@ -1513,10 +1773,17 @@ export function PayFlow({
           onPickProduct={(p) => {
             addProduct(p);
             setMenuOpen(false);
+            setSearchSeed(null);
           }}
-          onClose={() => setMenuOpen(false)}
+          onClose={() => {
+            setMenuOpen(false);
+            setSearchSeed(null);
+          }}
           packageCountOf={packageCountOf}
           onLessPackage={oneLessPackage}
+          initialKind={productsOnly ? 'products' : initialTab}
+          productsOnly={productsOnly}
+          initialTerm={searchSeed?.text ?? ''}
         />
       ) : null}
       {keypad !== null ? (

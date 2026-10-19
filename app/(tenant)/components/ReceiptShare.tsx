@@ -8,6 +8,7 @@ import { displayPhone, fromStoredPhone, toStoredPhone } from '../lib/phone';
 import { rowsToText, whatsappHref, type ReceiptRow } from '../lib/receipt-text';
 import { waDigits } from './BookingSheet';
 import { PhoneField } from './PhoneField';
+import type { ReactNode } from 'react';
 import { IconPrint, IconShare, IconWhatsApp } from './icons';
 
 /** One row of the bill as WhatsApp will draw it: the same segments the text is written from. */
@@ -42,6 +43,7 @@ export function ReceiptShare({
   kind = 'bill',
   onNumberGiven,
   compactPreview = false,
+  afterSend,
 }: {
   bill: ReceiptRow[];
   phone: string | null;
@@ -67,6 +69,12 @@ export function ReceiptShare({
    * the bill is still THERE, still read without a tap, and the rest of the screen fits above the fold.
    */
   compactPreview?: boolean;
+  /**
+   * Something that belongs with the receipt but is not the receipt — drawn directly under Send on WhatsApp and above
+   * Print/Share (Jira GRW-582: the customer's tax invoice). A slot rather than a second component of its own, so the
+   * desk's one column of "things you hand the customer" stays one column, in one order, above the fold.
+   */
+  afterSend?: ReactNode;
 }) {
   const text = useMemo(() => rowsToText(bill), [bill]);
   const nv = useNewVisitCopy();
@@ -194,6 +202,7 @@ export function ReceiptShare({
         </button>
       )}
       <p className="wi-receipt-hint">{words.hint}</p>
+      {afterSend}
 
       {canShare || canPrint ? (
         <div className="wi-receipt-more">

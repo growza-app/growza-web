@@ -2,13 +2,16 @@
 
 import { useTranslations } from 'next-intl';
 import { useNewVisitCopy } from '../../lib/use-copy';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { Offer, Product, Service } from '../../lib/api-types';
 import { asMinor, matchItems } from '../../lib/service-match';
-import { productPhotoUrl, servicePhotoUrl } from '../../lib/service-photos';
+import { productByCode, productMatchable } from '../../lib/product-match';
+import { ServicePhoto } from '../../components/ServicePhoto';
+import { ProductPhoto } from '../../components/ProductPhoto';
 import { IconInfo, IconMinus, IconPlus, IconSearch } from '../../components/icons';
 import { PackageSheet } from '../../components/PackageSheet';
 import { MENU_SORTS, sortMenu, type MenuSort } from '../../lib/menu-sort';
+import { NO_CATEGORY } from '../../products/DeskProductCategories';
 
 /**
  * Jira GRW-572 — the middle panel of the wide till: the whole menu as tiles, with a search box above it.
@@ -36,6 +39,10 @@ export function DeskServiceGrid({
   productCountOf = () => 0,
   onMoreProduct,
   onLessProduct,
+  initialTab,
+  productsOnly = false,
+  productCategory = '',
+  searchSeed,
 }: {
   /** In display order: most sold first. */
   services: Service[];
@@ -56,11 +63,24 @@ export function DeskServiceGrid({
   productCountOf?: (productId: string) => number;
   onMoreProduct?: (p: Product) => void;
   onLessProduct?: (productId: string) => void;
+  initialTab?: 'services' | 'packages' | 'products';
+  /** Retail / Sell product screen: hides the Services/Packages/Products tabs and filters by the left panel's category. */
+  productsOnly?: boolean;
+  productCategory?: string;
+  /** A scanned code that matched nothing, put in the box so the cashier can edit it into a name. `n` makes a repeat count. */
+  searchSeed?: { text: string; n: number } | null;
 }) {
   const t = useTranslations('payFlow');
   const nv = useNewVisitCopy();
   const [term, setTerm] = useState('');
-  const [tab, setTab] = useState<'services' | 'packages' | 'products'>('services');
+  const searchBox = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!searchSeed) return;
+    setTerm(searchSeed.text);
+    searchBox.current?.focus({ preventScroll: true });
+    searchBox.current?.select();
+  }, [searchSeed]);
+  const [tab, setTab] = useState<'services' | 'packages' | 'products'>(productsOnly ? 'products' : (initialTab ?? 'services'));
   /** Owner, 2026-10-14 — a category chip row under the search, as the phone's sheet has: '' is All. */
   const [kind, setKind] = useState('');
   /** Owner, 2026-10-15 — sort beside the search, and the shelf hides what is out of stock unless asked. */
@@ -113,7 +133,10 @@ export function DeskServiceGrid({
   }, [packages, term, byId, sort]);
 
   const shownProducts = useMemo(() => {
-    const pool = inStockOnly ? products.filter((p) => p.stock > 0 || productCountOf(p.id) > 0) : products;
+    const byCat = productCategory
+      ? products.filter((p) => (productCategory === NO_CATEGORY ? p.categoryId === null : p.categoryId === productCategory))
+      : products;
+    const pool = inStockOnly ? byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0) : byCat;
     const q = term.trim();
     if (!q)
       return sortMenu(
@@ -122,11 +145,23 @@ export function DeskServiceGrid({
         (p) => p.name,
         (p) => asMinor(p.priceMinor),
       );
-    return matchItems(
-      pool.map((p) => ({ item: p, text: [p.name, p.categoryName ?? ''], priceMinor: asMinor(p.priceMinor) })),
-      q,
-    );
-  }, [products, term, sort, inStockOnly, productCountOf]);
+    return matchItems(pool.map(productMatchable), q);
+  }, [products, productCategory, term, sort, inStockOnly, productCountOf]);
+
+  /**
+   * Jira GRW-574 (AC-07) — a barcode scanned, or a code typed, then Enter on the Products tab: that product goes on
+   * the bill once and the box clears for the next scan. A scanner is a keyboard that types fast and presses Enter.
+   * Anything that is not exactly one product's code is left alone, so Enter after a name does what it did before.
+   */
+  const onSearchKey = (e: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter' || e.nativeEvent.isComposing || tab !== 'products' || !onMoreProduct) return;
+    const hit = productByCode(products, e.currentTarget.value);
+    if (!hit) return;
+    e.preventDefault();
+    if (full) return;
+    onMoreProduct(hit);
+    setTerm('');
+  };
 
   const shown = useMemo(() => {
     const pool = kind ? services.filter((s) => s.categoryName === kind) : services;
@@ -145,33 +180,37 @@ export function DeskServiceGrid({
   }, [services, term, kind, sort]);
 
   return (
-    <section className="pf-wide-mid" aria-label={t('services')}>
+    <section className="pf-wide-mid" aria-label={productsOnly ? t('desk.products') : t('services')}>
       {/*
         Owner, 2026-10-14 — three tabs, always: what a till sells. Products is the one that is not here yet; it is
         shown greyed so the shape the owner will learn is the shape that is there now, and so nobody looks for it
         in a menu. A bill holds services, a package and (later) products together: the tabs only change the grid.
       */}
-      <div className="pf-chips pf-wide-menu-tabs" role="tablist" aria-label={t('services')}>
-        <button type="button" role="tab" aria-selected={tab === 'services'} className={`pf-chip ${tab === 'services' ? 'pf-chip-on' : ''}`} onClick={() => setTab('services')}>
-          {t('services')}
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'packages'} className={`pf-chip ${tab === 'packages' ? 'pf-chip-on' : ''}`} onClick={() => setTab('packages')}>
-          {t('desk.packages', { n: packages.length })}
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'products'} className={`pf-chip ${tab === 'products' ? 'pf-chip-on' : ''}`} onClick={() => setTab('products')}>
-          {t('desk.products')}
-          <span className="pf-wide-kind-n">{products.length}</span>
-        </button>
-      </div>
+      {!productsOnly ? (
+        <div className="pf-chips pf-wide-menu-tabs" role="tablist" aria-label={t('services')}>
+          <button type="button" role="tab" aria-selected={tab === 'services'} className={`pf-chip ${tab === 'services' ? 'pf-chip-on' : ''}`} onClick={() => setTab('services')}>
+            {t('services')}
+          </button>
+          <button type="button" role="tab" aria-selected={tab === 'packages'} className={`pf-chip ${tab === 'packages' ? 'pf-chip-on' : ''}`} onClick={() => setTab('packages')}>
+            {t('desk.packages', { n: packages.length })}
+          </button>
+          <button type="button" role="tab" aria-selected={tab === 'products'} className={`pf-chip ${tab === 'products' ? 'pf-chip-on' : ''}`} onClick={() => setTab('products')}>
+            {t('desk.products')}
+            <span className="pf-wide-kind-n">{products.length}</span>
+          </button>
+        </div>
+      ) : null}
       <div className="pf-wide-tools">
         <label className="pf-wide-search">
           <IconSearch />
           <input
+            ref={searchBox}
             type="search"
             value={term}
             onChange={(e) => setTerm(e.target.value)}
-            placeholder={t('desk.search', { count: services.length })}
-            aria-label={t('desk.search', { count: services.length })}
+            onKeyDown={onSearchKey}
+            placeholder={productsOnly ? t('desk.searchProducts', { count: products.length }) : t('desk.search', { count: services.length })}
+            aria-label={productsOnly ? t('desk.searchProducts', { count: products.length }) : t('desk.search', { count: services.length })}
             autoComplete="off"
           />
         </label>
@@ -222,9 +261,9 @@ export function DeskServiceGrid({
                     aria-label={t('tileA11y', { name: p.name, price: money(price) })}
                     aria-pressed={count > 0}
                     onClick={() => onMoreProduct?.(p)}
-                    disabled={full && count === 0}
+                    disabled={(full && count === 0) || p.stock <= 0 || count >= p.stock}
                   >
-                    <img className="pf-tile-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
+                    <ProductPhoto className="pf-tile-photo" product={p} />
                     <span className="pf-tile-name">{p.name}</span>
                     <span className="pf-tile-price">
                       {money(price)}
@@ -239,7 +278,7 @@ export function DeskServiceGrid({
                       <span className="pf-qty-n" aria-live="polite">
                         {count}
                       </span>
-                      <button type="button" className="pf-qty-btn" aria-label={t('oneMore', { name: p.name })} onClick={() => onMoreProduct?.(p)} aria-disabled={full || undefined}>
+                      <button type="button" className="pf-qty-btn" aria-label={t('oneMore', { name: p.name })} onClick={() => onMoreProduct?.(p)} aria-disabled={full || count >= p.stock || undefined}>
                         <IconPlus />
                       </button>
                     </span>
@@ -272,7 +311,7 @@ export function DeskServiceGrid({
                     aria-pressed={on}
                     onClick={() => onPickPackage?.(o)}
                   >
-                    {first ? <img className="pf-tile-photo" src={servicePhotoUrl(first)} alt="" loading="lazy" /> : <span className="pf-tile-photo" aria-hidden="true" />}
+                    {first ? <ServicePhoto className="pf-tile-photo" service={first} /> : <span className="pf-tile-photo" aria-hidden="true" />}
                     <span className="pf-tile-name">{o.title}</span>
                     <span className="pf-tile-price">
                       {money(Number(o.comboPriceMinor ?? 0))}
@@ -317,7 +356,7 @@ export function DeskServiceGrid({
                   onClick={() => onMore(s)}
                   disabled={full && count === 0}
                 >
-                  <img className="pf-tile-photo" src={servicePhotoUrl(s)} alt="" loading="lazy" />
+                  <ServicePhoto className="pf-tile-photo" service={s} />
                   <span className="pf-tile-name">{s.name}</span>
                   <span className="pf-tile-price">
                     {money(price)}

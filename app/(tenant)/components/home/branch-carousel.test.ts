@@ -21,7 +21,8 @@ describe('the branch carousel on Home', () => {
 
   it('shows the amount at once and fills the rest in as each branch answers; a failed read keeps the amount', () => {
     expect(carousel).toMatch(/\{rupees\(s\.revenueMinor\)\}/);
-    expect(carousel).toMatch(/\.catch\(\(\) => undefined\)/);
+    // A failed read keeps the amount and lets the next look at the slide try again (performance audit).
+    expect(carousel).toMatch(/\.catch\(\(\) => \{[^}]*read\.current\.delete\(id\);/);
     expect(carousel).toMatch(/<div className="bc-wait"/);
   });
 

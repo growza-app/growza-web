@@ -33,6 +33,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
   const S = (en: string, h: string) => (hi ? h : en);
   const bookingsWord = hi ? 'बुकिंग' : (labels.appointments ?? copy.nav.appointments).toLowerCase();
   const clientsWord = hi ? 'ग्राहक' : (labels.customers ?? copy.nav.customers);
+  const staffWord = hi ? 'स्टाफ़' : (labels.providers ?? copy.nav.staff);
   /*
    * "1 booking", not "1 bookings". The vertical carries both forms
    * (`appointment` / `appointments`, `customer` / `customers`); Hindi uses one
@@ -99,6 +100,76 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
 
     needsYourAttention: S('Needs your attention', 'आपके ध्यान की ज़रूरत'),
     needsAttention: S('Needs attention', 'ध्यान देने वाली बातें'),
+    whatToDoLink: S('What to do', 'क्या करें'),
+    allClear: S('All clear', 'सब ठीक है'),
+    avgTicketLabel: S('Avg. ticket', 'औसत बिल'),
+    activeNowBadge: (n: number) => S(`${n} active now`, `${n} अभी चल रहे`),
+    upcomingShort: (n: number) => S(`${n} upcoming`, `${n} आने वाले`),
+    doneShort: (n: number) => S(`${n} completed`, `${n} पूरे हुए`),
+    checkedInShort: (n: number, of: number) => S(`${n} of ${of} checked in`, `${of} में से ${n} हाज़िर`),
+    teamTodayTitle: S(`${staffWord} today`, `आज का ${staffWord}`),
+    teamEmpty: S(`No active ${staffWord.toLowerCase()} added yet.`, `अभी कोई ${staffWord} नहीं जोड़ा गया।`),
+    availableNow: S('Available', 'उपलब्ध'),
+    notCheckedIn: S('Not marked in', 'हाज़िरी बाकी'),
+    inSessionWith: (who: string) => S(`With ${who}`, `${who} के साथ`),
+    workspaceModulesTitle: S('Workspace & modules', 'वर्कस्पेस और मॉड्यूल'),
+    workspaceModulesSub: S('Jump straight to your catalogue, inventory, team, and reports', 'कैटलॉग, प्रोडक्ट्स, स्टाफ़ और रिपोर्ट्स पर जाएँ'),
+    todaysRevenue: S("Today's revenue", 'आज की कमाई'),
+    newClientsTitle: S('New clients', 'नए ग्राहक'),
+    productsSoldTitle: S('Products sold', 'बिके हुए प्रोडक्ट्स'),
+    topProductLabel: S('Top product', 'सबसे ज़्यादा बिका'),
+    soldCount: (n: number) => S(`${n} sold`, `${n} बिके`),
+    revenueWord: S('revenue', 'कमाई'),
+    returningLabel: S('Returning', 'पुराने'),
+    newLabel: S('New', 'नए'),
+    inProgressLabel: S('In progress', 'चल रहे'),
+    completedLabel: S('Completed', 'पूरे हुए'),
+    upcomingLabel: S('Upcoming', 'आने वाले'),
+    waitingLabel: S('Waiting', 'इंतज़ार में'),
+    noShowLabel: S('No show', 'नहीं आए'),
+    cancelledLabel: S('Cancelled', 'रद्द'),
+    /** The Home table shows a few rows; this says how many the tab holds, so four never reads as the whole list. */
+    allFilterLabel: S('All', 'सभी'),
+    todaysAppointments: S("Today's appointments", 'आज की बुकिंग'),
+    viewCalendar: S('View calendar', 'कैलेंडर देखें'),
+    viewAllAppointments: S('View all appointments', 'सभी बुकिंग देखें'),
+    colTime: S('Time', 'समय'),
+    colClient: S('Client', 'ग्राहक'),
+    colService: S('Service', 'सर्विस'),
+    colStaff: staffWord,
+    colStatus: S('Status', 'स्थिति'),
+    colActions: S('Actions', 'एक्शन'),
+    startBtn: S('Start', 'शुरू करें'),
+    completeBtn: S('Complete', 'पूरा करें'),
+    viewBtn: S('View', 'देखें'),
+    staffStatusTitle: S(`${staffWord} status`, `${staffWord} स्थिति`),
+    providerRoleWord: S(labels.provider ?? 'Specialist', 'स्टाफ़'),
+    busyLabel: S('Busy', 'व्यस्त'),
+    absentLabel: S('Absent', 'गैरहाज़िर'),
+    staffInTime: (time: string) => S(`In ${time}`, `आए ${time}`),
+    staffNotInYet: S('Not marked', 'दर्ज नहीं'),
+    quickActionsTitle: S('Quick actions', 'त्वरित एक्शन'),
+    walkInAction: S('Walk-in', 'वॉक-इन'),
+    addClientAction: S('Add client', 'ग्राहक जोड़ें'),
+    sellProductAction: S('Sell product', 'प्रोडक्ट बेचें'),
+    revenueTrendTitle: S('Revenue trend', 'कमाई का रुझान'),
+    salesByPaymentTitle: S('Sales by payment method', 'पेमेंट के तरीके से बिक्री'),
+    topServicesTitle: S('Top services', 'टॉप सर्विसेज़'),
+    topProductsTitle: S('Top products', 'टॉप प्रोडक्ट्स'),
+    recentBookingsTitle: S(`Recent ${bookingsWord}`, 'हाल की बुकिंग'),
+    recentActivityTitle: S('Recent activity', 'हाल की गतिविधि'),
+    colAmount: S('Amount', 'रकम'),
+    totalLabel: S('Total', 'कुल'),
+    billsLabel: S('Bills', 'बिल'),
+    avgBillLabel: S('Avg bill', 'औसत बिल'),
+    totalClientsLabel: S(`Total ${clientsWord.toLowerCase()}`, `कुल ${clientsWord}`),
+    unitWord: (n: number) => (hi ? 'यूनिट' : n === 1 ? 'unit' : 'units'),
+    noProductsSold: S('No products sold in this period.', 'इस अवधि में कोई प्रोडक्ट नहीं बिका।'),
+    noServicesSold: S('No completed services in this period.', 'इस अवधि में कोई सर्विस पूरी नहीं हुई।'),
+    actNewBooking: (who: string) => S(`New booking by ${who}`, `${who} की नई बुकिंग`),
+    actPaymentReceived: (amt: string) => S(`Payment received ${amt}`, `${amt} भुगतान मिला`),
+    actProductSold: (name: string) => S(`Product sold: ${name}`, `प्रोडक्ट बिका: ${name}`),
+    actCancelled: (who: string) => S(`Booking cancelled: ${who}`, `बुकिंग रद्द: ${who}`),
     notMarkedDone: S('Not marked done yet', 'अभी पूरे नहीं हुए'),
     /** Everything came in one way: "All cash", "All UPI". A capital only where the word is an acronym. */
     allPaidBy: (label: string, mode: string) => (hi ? `सब ${label}` : `All ${mode === 'upi' ? label : label.toLowerCase()}`),
@@ -110,6 +181,19 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     /** Jira GRW-563 — self-marked days the phone could not place; the owner says yes or no. */
     attendanceToApprove: S('Attendance to approve', 'हाज़िरी मंज़ूर करनी है'),
     attendanceWord: S('Attendance', 'हाज़िरी'),
+    productsAttentionTitle: S('Products needing attention', 'ध्यान देने वाले प्रोडक्ट्स'),
+    bookingsAttentionChip: S(`${labels.appointments ?? 'Bookings'} & queue`, 'बुकिंग और कतार'),
+    settlePill: S('Not marked done', 'पूरा नहीं हुआ'),
+    waitingPill: S('Waiting', 'इंतज़ार में'),
+    approvePill: S('Approve', 'मंज़ूर करें'),
+    allCaughtUpToday: S('All caught up for today.', 'आज का सारा काम पूरा है।'),
+    outOfStockLabel: S('Out of stock', 'स्टॉक ख़त्म'),
+    lowStockLabel: S('Low stock', 'कम स्टॉक'),
+    stockLeftSub: (n: number, lowAt: number) =>
+      n <= 0
+        ? S(`${n} in stock · restock needed`, `${n} स्टॉक में · मंगवाने की ज़रूरत`)
+        : S(`${n} left (alert at ${lowAt})`, `${n} बचे हैं (अलर्ट ${lowAt} पर)`),
+    allStockHealthy: S('All products are well stocked.', 'सभी प्रोडक्ट्स का स्टॉक पूरा है।'),
 
     quickLinks: S('Quick links', 'शॉर्टकट'),
     /** The money card's branch line (Jira GRW-312); the "Your branches" card it was named after is gone (Jira GRW-348). */
@@ -179,6 +263,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     staffTodaySub: S('Work and money for each person', 'हर व्यक्ति का काम और पैसा'),
     staffBookings: (n: number) => `${n} ${bookingWord(n)}`,
     nobodyWorked: S('No work done yet today.', 'आज अभी कोई काम नहीं हुआ।'),
+    // The staff list is each person's own services; this row is what the day's bills took for products, so the rows add up.
+    productsRow: S('Products sold', 'बिके हुए प्रोडक्ट्स'),
     close: S('Close', 'बंद करें'),
     // Day summary — clients (Jira GRW-222). Plain words on purpose: the owner's
     // rule is that the people reading this may not be confident readers, so
@@ -256,7 +342,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     giveTitle: (name: string) => S(`Give ${name} to…`, `${name} को किसे दें…`),
     free: S('Free', 'खाली'),
     busyWith: (client: string, min: number) => S(`Busy · ${client} · ${min} min`, `व्यस्त · ${client} · ${min} मिनट`),
-    theyLeft: S('They left', 'चले गए'),
+    theyLeft: S('Client left', 'ग्राहक चले गए'),
     // Jira GRW-284 — a token issued by name alone.
     whatHaving: S('Select services', 'सेवा चुनें'),
     // The give sheet's second step (Jira-less, owner 2026-10-05): back to the stylists, the two groups, and the one button.
@@ -305,6 +391,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     nav: {
       home: S('Home', 'होम'),
       bookings: hi ? 'बुकिंग' : (labels.appointments ?? copy.nav.appointments),
+      sales: S('Sales', 'बिक्री'),
       schedule: S('My schedule', 'मेरा काम'),
       clients: hi ? 'ग्राहक' : (labels.customers ?? copy.nav.customers),
       staff: hi ? 'स्टाफ़' : (labels.providers ?? copy.nav.staff),

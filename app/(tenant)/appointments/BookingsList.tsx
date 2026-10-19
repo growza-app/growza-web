@@ -1,29 +1,34 @@
 'use client';
 
-import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { formatMoney, formatTime, type Appointment, type MyEarnings, type Provider, type QueueEntry } from '../lib/api';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { api, formatMoney, formatTime, type Appointment, type MyEarnings, type Provider, type QueueEntry, type Service } from '../lib/api';
 import { useTranslations, useLocale } from 'next-intl';
 import { countsAsNotMarked, liveState, minutesBetween } from '../lib/live-state';
 import { bookingBill, clientNameLabel, formatDuration, groupBookings, statusChip, summarizeServices, type BookingGroup } from '../lib/appointment-display';
 import { formatDateWithWeekday } from '../lib/format';
 import { BookingSheet, bookingRef, dialable } from '../components/BookingSheet';
 import { BookingSummary } from '../components/BookingSummary';
+import { CorrectBookingSheet } from '../components/CorrectBookingSheet';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useBranch } from '../components/BranchProvider';
 import { useLabels } from '../components/LabelsProvider';
 import { useMayUse } from '../components/SessionProvider';
 import { GiveToStaffSheet } from '../components/home/GiveToStaffSheet';
+import { Avatar, avatarKey } from '../components/home/parts';
 import { SHOW_STEP } from '../components/home/use-visible-rows';
 import { usePhoneLayout } from '../components/home/use-phone-layout';
 import { useRouter } from 'next/navigation';
-import { payTokenHref } from '../lib/pay-token';
+import { payTokenHref, payVisitHref } from '../lib/pay-token';
 import { homeCopy } from '../lib/home-copy';
 import { atBranch, wholeMinutes } from '../lib/right-now';
+import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import {
   IconCalendar,
   IconCheck,
   IconChevronDown,
   IconClock,
+  IconDashboard,
+  IconEdit,
   IconFilter,
   IconMenu,
   IconPackages,
@@ -194,7 +199,8 @@ export function BookingsList({
   const ts = useTranslations('status');
   const te = useTranslations('errors');
   const [page, setPage] = useState(1);
-  const [view, setView] = useState<'timeline' | 'list'>('timeline');
+  const [view, setView] = useState<'table' | 'timeline' | 'list'>('timeline');
+  const viewInitRef = useRef(false);
   // Jira-free, owner's call (2026-10-04): on a phone the filter card folds away behind a button.
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -226,13 +232,27 @@ export function BookingsList({
   const [desk, setDesk] = useState<boolean | null>(null);
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1101px)');
-    const apply = () => setDesk(mq.matches);
+    const apply = () => {
+      setDesk(mq.matches);
+      if (!viewInitRef.current && mq.matches) {
+        viewInitRef.current = true;
+        setView('table');
+      }
+    };
     apply();
     mq.addEventListener('change', apply);
     return () => mq.removeEventListener('change', apply);
   }, []);
   const mayBook = useMayUse('visit.new');
+  const mayCheckout = useMayUse('booking.checkout');
+  const mayCorrect = useMayUse('booking.correct');
+  const [openMenuKey, setOpenMenuKey] = useState<string | null>(null);
+  const closeRowMenu = useCallback(() => setOpenMenuKey(null), []);
+  const rowMenu = useAnchoredPanel(openMenuKey !== null, closeRowMenu);
+  const [editServices, setEditServices] = useState<Service[] | null>(null);
+  const [correctingKey, setCorrectingKey] = useState<string | null>(null);
   const [waitingShown, setWaitingShown] = useState(SHOW_STEP);
+  const [waitingExpanded, setWaitingExpanded] = useState(false);
   // Owner, 2026-10-07 — paying a waiting token opens the Record payment page, not an overlay of the old form.
   const router = useRouter();
   const payToken = (entry: QueueEntry) => router.push(payTokenHref(entry, 'bookings'));
@@ -533,6 +553,57 @@ export function BookingsList({
   // filter gains nothing from a heading, so it stays off there.
   const multiDay = useMemo(() => new Set(filtered.map((b) => dayKeyOf(b.startAt))).size > 1, [filtered, dayKeyOf]);
 
+  const anyPricesShown = !viewerIsStaff || bookings.some(pricesShown);
+  const countInCancelled = inView.filter((b) => b.status === 'cancelled' && !b.movedTo).length;
+  const inProgressCount = inView.filter(
+    (b) => b.status === 'confirmed' && (liveState(b, now) === 'in_service' || liveState(b, now) === 'needs_answer'),
+  ).length;
+  const upcomingCount = Math.max(0, countIn('confirmed') - inProgressCount);
+  const scheduledMinor = inView
+    .filter((b) => b.status === 'confirmed' || b.status === 'completed')
+    .reduce((sum, b) => sum + bookingTotalMinor(b), 0);
+  const collectedMinor = inView
+    .filter((b) => b.status === 'completed')
+    .reduce((sum, b) => sum + bookingTotalMinor(b), 0);
+
+  const todayDateStr = useMemo(() => dayKeyOf(nowISO), [dayKeyOf, nowISO]);
+  const tomorrowDateStr = useMemo(() => {
+    const d = new Date(`${todayDateStr}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + 1);
+    return d.toISOString().slice(0, 10);
+  }, [todayDateStr]);
+  const weekEndDateStr = useMemo(() => {
+    const d = new Date(`${todayDateStr}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + 6);
+    return d.toISOString().slice(0, 10);
+  }, [todayDateStr]);
+  const isTodayPreset = !customerId && date === todayDateStr && toDate === todayDateStr;
+  const isTomorrowPreset = !customerId && date === tomorrowDateStr && toDate === tomorrowDateStr;
+  const isWeekPreset = !customerId && date === todayDateStr && toDate === weekEndDateStr;
+  const pushDateRange = (fromStr: string, toStr: string) => {
+    const sp = new URLSearchParams();
+    sp.set('date', fromStr);
+    sp.set('to', toStr);
+    if (customerId) sp.set('customerId', customerId);
+    if (query) sp.set('q', query);
+    if (staffFilter !== 'Everyone') sp.set('staff', staffFilter);
+    if (statusFilter) sp.set('status', statusFilter);
+    if (branch) sp.set('location', branch.id);
+    if (sort !== 'asc') sp.set('sort', sort);
+    router.push(`/appointments?${sp.toString()}`);
+  };
+
+  const waitingFiltered = useMemo(() => {
+    if (!waiting) return null;
+    if (!q) return waiting;
+    return waiting.filter((w) => {
+      const tokenStr = w.tokenNo === null ? '' : `#${w.tokenNo} ${w.tokenNo}`;
+      return [tokenStr, w.customerName, w.customerPhone ?? '', ...w.serviceNames].some((f) =>
+        f.toLowerCase().includes(q),
+      );
+    });
+  }, [waiting, q]);
+
   const openBooking = (b: BookingGroup) => setOpen(b);
   /*
    * The pick, read fresh each render: `open` is the group as it was when tapped, and the list under it is redrawn
@@ -542,6 +613,71 @@ export function BookingsList({
    */
   const liveOpen = open ? (bookings.find((g) => g.key === open.key) ?? null) : null;
   const picked = liveOpen && (!desk || filtered.some((g) => g.key === liveOpen.key)) ? liveOpen : null;
+  const liveCorrecting = correctingKey ? (bookings.find((g) => g.key === correctingKey) ?? null) : null;
+
+  const canCorrectBooking = (b: BookingGroup) =>
+    mayCorrect &&
+    b.status === 'completed' &&
+    b.appointments.some((a) => a.status === 'completed') &&
+    b.appointments.some((a) => Boolean(a.serviceId || a.serviceName));
+
+  const startEditBooking = async (b: BookingGroup) => {
+    setOpenMenuKey(null);
+    try {
+      const list = editServices ?? (await api.services());
+      setEditServices(list);
+      setOpen(null);
+      setCorrectingKey(b.key);
+    } catch {
+      openBooking(b);
+    }
+  };
+
+  const renderRowMenu = (b: BookingGroup, cName: string) =>
+    canCorrectBooking(b) ? (
+      <div
+        className="dropdown-anchor bk-row-menu"
+        ref={openMenuKey === b.key ? rowMenu.anchorRef : undefined}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          className="hm-v3-row-dots bk-row-dots"
+          aria-label={t('moreActionsFor', { name: cName })}
+          aria-expanded={openMenuKey === b.key}
+          onClick={() => setOpenMenuKey(openMenuKey === b.key ? null : b.key)}
+        >
+          ⋮
+        </button>
+        {openMenuKey === b.key && (
+          <div
+            className="dropdown-panel dropdown-panel-sm dropdown-panel-right bk-row-dropdown"
+            ref={rowMenu.panelRef}
+            style={rowMenu.style}
+            onMouseLeave={closeRowMenu}
+          >
+            <button
+              type="button"
+              className="dropdown-item dropdown-item-plain"
+              onClick={() => void startEditBooking(b)}
+            >
+              <IconEdit />
+              {t('editBooking')}
+            </button>
+          </div>
+        )}
+      </div>
+    ) : null;
+
+  useEffect(() => {
+    if (!desk || !picked || giving || liveCorrecting) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      setOpen(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [desk, picked, giving, liveCorrecting]);
 
   /**
    * GRW-166 — a salon can withhold the client's identity from its staff, and
@@ -549,29 +685,50 @@ export function BookingsList({
    * that dials an empty `tel:` is worse than none, because it looks like the
    * product is broken rather than like the owner made a choice.
    */
-  const actionFor = (b: BookingGroup) =>
-    b.status === 'confirmed' && b.customerPhone ? (
-      <a
-        className="call"
-        href={`tel:${dialable(b.customerPhone)}`}
-        aria-label={t('callName', { name: b.customerName ?? t('customer') })}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <IconPhone />
-      </a>
-    ) : (
-      <button
-        type="button"
-        className="btn btn-ghost bk-details"
-        onClick={(e) => {
-          e.stopPropagation();
-          openBooking(b);
-        }}
-      >
-        <IconCalendar />
-        {t('details')}
-      </button>
+  const actionFor = (b: BookingGroup) => {
+    const st = liveState(b, now);
+    const canComplete = mayCheckout && (st === 'in_service' || st === 'needs_answer');
+    const cName = clientNameLabel(b) ?? bookingRef(b.appointments[0]!.id);
+    return (
+      <div className="bk-card-actions">
+        {canComplete && (
+          <button
+            type="button"
+            className="hm-v3-row-btn is-start"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(payVisitHref({ appointmentId: b.appointments[0]!.id, startAt: b.startAt }, timezone, 'bookings'));
+            }}
+          >
+            {hc.completeBtn}
+          </button>
+        )}
+        {b.status === 'confirmed' && b.customerPhone ? (
+          <a
+            className="call"
+            href={`tel:${dialable(b.customerPhone)}`}
+            aria-label={t('callName', { name: b.customerName ?? t('customer') })}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <IconPhone />
+          </a>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-ghost bk-details"
+            onClick={(e) => {
+              e.stopPropagation();
+              openBooking(b);
+            }}
+          >
+            <IconCalendar />
+            {t('details')}
+          </button>
+        )}
+        {renderRowMenu(b, cName)}
+      </div>
     );
+  };
 
   /** Where a moved booking is now: the time alone on the same day, the date too when it moved to another. */
   const movedLine = (movedTo: string, from: string) => {
@@ -1009,6 +1166,7 @@ export function BookingsList({
                     onClick={() => (mayGive ? setGiving(w) : payToken(w))}
                   >
                     {waitingRow(w)}
+                    <span className="bk-waiting-cta">{hc.startBtn} →</span>
                   </button>
                 ) : (
                   <a className="bk-waiting-row" href={branch ? `/?location=${encodeURIComponent(branch.id)}#hm-queue` : '/#hm-queue'}>
@@ -1076,10 +1234,18 @@ export function BookingsList({
           {isToday ? t('scheduleToday') : t('scheduleOn', { day: dayLabel })}
           <span className="bk-sched-count">{t('bookingCount', { count: filtered.length })}</span>
         </h2>
-        {/* Segmented Timeline | List, both always visible with the active one
-            highlighted (per the mock) — the old single pill toggled blind, so
-            you couldn't see which view you'd land in until after tapping. */}
+        {/* Segmented Table | Timeline | List, always visible with the active one
+            highlighted — desktop defaults to Table for high-density scan and
+            direct row actions, while phone defaults to Timeline. */}
         <div className="bk-view">
+          <button
+            type="button"
+            className={`bk-view-tab ${view === 'table' ? 'is-active' : ''}`}
+            onClick={() => setView('table')}
+          >
+            <IconDashboard />
+            {t('viewTable')}
+          </button>
           <button
             type="button"
             className={`bk-view-tab ${view === 'timeline' ? 'is-active' : ''}`}
@@ -1107,6 +1273,132 @@ export function BookingsList({
         <div className="bk-no-matches">
           <div className="bk-no-matches-title">{t('noneFound')}</div>
           <div className="bk-no-matches-sub">{t('noneFoundHint')}</div>
+        </div>
+      ) : view === 'table' ? (
+        <div className="bk-table-wrap">
+          <table className="hm-v3-table bk-table">
+            <thead>
+              <tr>
+                <th>{hc.colTime}</th>
+                <th>{hc.colClient}</th>
+                <th>{hc.colService}</th>
+                <th>{hc.colStaff}</th>
+                {anyPricesShown && <th>{hc.colAmount}</th>}
+                <th>{hc.colStatus}</th>
+                <th>{hc.colActions}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((b, i) => {
+                const startsNewDay = multiDay && dayKeyOf(b.startAt) !== (rows[i - 1] && dayKeyOf(rows[i - 1]!.startAt));
+                const timeStr = formatTime(b.startAt, timezone);
+                const cName = clientNameLabel(b) ?? bookingRef(b.appointments[0]!.id);
+                const svcLabel = summarizeServices(b.serviceNames, locale);
+                const staffName = b.providerNames.length > 0 ? b.providerNames.join(', ') : '—';
+                const st = liveState(b, now);
+                const isActive = st === 'in_service' || st === 'needs_answer';
+                const canComplete = mayCheckout && isActive;
+                const dotTone =
+                  isActive
+                    ? 'green'
+                    : st === 'done'
+                      ? 'blue'
+                      : st === 'later'
+                        ? 'amber'
+                        : 'rose';
+                const pillTone =
+                  isActive
+                    ? 'green'
+                    : st === 'done'
+                      ? 'blue'
+                      : st === 'later'
+                        ? 'amber'
+                        : 'rose';
+                const statusLabel =
+                  isActive
+                    ? hc.inProgressLabel
+                    : st === 'done'
+                      ? hc.completedLabel
+                      : st === 'later'
+                        ? hc.upcomingLabel
+                        : st === 'cancelled'
+                          ? hc.cancelledLabel
+                          : hc.noShowLabel;
+                return (
+                  <Fragment key={b.key}>
+                    {startsNewDay && (
+                      <tr className="bk-table-day-row">
+                        <td colSpan={anyPricesShown ? 7 : 6}>{formatDateWithWeekday(b.startAt, timezone, { locale })}</td>
+                      </tr>
+                    )}
+                    <tr
+                      className={`${b.appointments.some((a) => a.id === justGiven) ? 'bk-card-just-given' : ''} ${desk && picked?.key === b.key ? 'is-selected' : ''}`}
+                      aria-current={desk && picked?.key === b.key ? 'true' : undefined}
+                      data-appt={b.appointments.map((a) => a.id).join(' ')}
+                      onClick={() => openBooking(b)}
+                    >
+                      <td className="hm-v3-td-time">
+                        <span className={`hm-v3-tl-dot is-${dotTone}`} />
+                        <strong>{timeStr}</strong>
+                      </td>
+                      <td className="hm-v3-td-client">
+                        <div className="hm-v3-person">
+                          <Avatar name={cName} id={avatarKey(b)} size={24} />
+                          <div className="hm-v3-person-meta">
+                            <strong>{cName}</strong>
+                            <span>{b.customerPhone ? b.customerPhone : formatDuration(b.totalMin, locale)}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="hm-v3-td-service">
+                        <strong>{svcLabel}</strong>
+                        <span>{formatDuration(b.totalMin, locale)}</span>
+                        {b.movedTo ? <div className="bk-card-moved">{movedLine(b.movedTo, b.startAt)}</div> : null}
+                      </td>
+                      <td className="hm-v3-td-staff">
+                        <div className="hm-v3-staff-cell">{staffName}</div>
+                      </td>
+                      {anyPricesShown && (
+                        <td className="bk-td-amount">
+                          {pricesShown(b) ? formatMoney(String(bookingTotalMinor(b))) : '—'}
+                        </td>
+                      )}
+                      <td>
+                        <span className={`hm-pill hm-pill-${pillTone}`}>{statusLabel}</span>
+                      </td>
+                      <td className="bk-td-actions">
+                        <div className="hm-v3-act-wrap">
+                          {canComplete && (
+                            <button
+                              type="button"
+                              className="hm-v3-row-btn is-start"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(payVisitHref({ appointmentId: b.appointments[0]!.id, startAt: b.startAt }, timezone, 'bookings'));
+                              }}
+                            >
+                              {hc.completeBtn}
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="hm-v3-row-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openBooking(b);
+                            }}
+                          >
+                            {hc.viewBtn}
+                          </button>
+                          {renderRowMenu(b, cName)}
+                        </div>
+                      </td>
+                    </tr>
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       ) : view === 'timeline' ? (
         <div className="bk-timeline">
@@ -1185,6 +1477,15 @@ export function BookingsList({
 
   const giveSheet = (
     <>
+      {liveCorrecting && editServices ? (
+        <CorrectBookingSheet
+          appointment={liveCorrecting.appointments[0]!}
+          legs={liveCorrecting.appointments.filter((a) => a.status === 'completed')}
+          services={editServices}
+          timezone={timezone}
+          onClose={() => setCorrectingKey(null)}
+        />
+      ) : null}
       {/*
         Jira GRW-489 — the token's three answers, in the desk's own sheets.
 
@@ -1224,82 +1525,395 @@ export function BookingsList({
     </>
   );
 
-  if (desk) {
-    return (
-      <div className="bk-desk pf-wide-grid bk-desk-grid">
-        <aside className="pf-wide-left bk-desk-left" aria-label={t('filters')}>
-          {earningsCard}
-          {!loadFailed && (
-            <ul className="pf-wide-tabs" role="tablist" aria-label={t('statusLabel')}>
-              {TABS.map((seg) => (
-                <li key={seg}>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={tab === seg}
-                    className={`pf-wide-tab ${tab === seg ? 'is-on' : ''}`}
-                    onClick={() => {
-                      setStatusFilter(seg === 'todo' ? 'confirmed' : seg === 'completed' ? 'completed' : '');
-                      setPage(1);
-                    }}
-                  >
-                    <span className="pf-wide-tab-name">{t(`tab_${seg}`)}</span>
-                    <span className="pf-wide-n">{tabCount(seg)}</span>
-                  </button>
+  const deskStatusTabs = [
+    { key: '', label: t('tab_all'), count: inView.length },
+    { key: 'confirmed', label: ts('confirmed'), count: countIn('confirmed') },
+    { key: 'completed', label: ts('done'), count: countIn('completed') },
+    { key: 'cancelled', label: ts('cancelled'), count: countInCancelled },
+    { key: 'no_show', label: ts('didNotCome'), count: countIn('no_show') },
+  ] as const;
+
+  const waitingDeskBlock = (
+    <>
+      {isToday && waiting === null && (
+        <div className="bk-waiting bk-waiting-error" role="status">
+          {t('queueUnreadable')}
+        </div>
+      )}
+      {isToday && waitingFiltered !== null && waitingFiltered.length > 0 && (statusFilter === '' || statusFilter === 'confirmed') && (() => {
+        const maxWaitMin = Math.max(...waitingFiltered.map((w) => wholeMinutes(w.addedAt, now)));
+        const shownTokens = waitingExpanded ? waitingFiltered : waitingFiltered.slice(0, 2);
+        return (
+          <section className="bk-waiting bk-waiting-cmd" aria-label={t('waitingTitle')}>
+            <div className="bk-waiting-cmd-head">
+              <div className="bk-waiting-cmd-left">
+                <span className="bk-waiting-tag">
+                  {t('waitingTitle')} · {waitingFiltered.length}
+                </span>
+                <span className="bk-waiting-summary">
+                  {!waitingExpanded && waitingFiltered.length > 2
+                    ? t('waitingNextUp', {
+                        tokens: waitingFiltered
+                          .slice(0, 2)
+                          .map((w) => (w.tokenNo === null ? '—' : `#${w.tokenNo}`))
+                          .join(', '),
+                        more: waitingFiltered.length - 2,
+                        wait: t('waitingMin', { count: maxWaitMin }),
+                      })
+                    : t('waitingLongest', { wait: t('waitingMin', { count: maxWaitMin }) })}
+                </span>
+              </div>
+              {waitingFiltered.length > 2 && (
+                <button
+                  type="button"
+                  className="bk-waiting-toggle"
+                  aria-expanded={waitingExpanded}
+                  onClick={() => setWaitingExpanded((v) => !v)}
+                >
+                  {waitingExpanded ? t('waitingShowFewer') : t('waitingShowAll', { count: waitingFiltered.length })}
+                  <IconChevronDown />
+                </button>
+              )}
+            </div>
+            <ul className={`bk-waiting-grid ${waitingExpanded ? 'is-expanded' : ''}`}>
+              {shownTokens.map((w) => (
+                <li key={w.id} className="bk-waiting-card">
+                  <div className="bk-waiting-card-info">
+                    <span className="bk-waiting-token">{w.tokenNo === null ? '—' : `#${w.tokenNo}`}</span>
+                    <span className="bk-waiting-who">
+                      <span className="bk-waiting-name">{w.customerName}</span>
+                      <span className="bk-waiting-svc">
+                        {w.serviceNames.length > 0 ? w.serviceNames.join(' · ') : t('servicesAtPayment')} ·{' '}
+                        {t('waitingMin', { count: wholeMinutes(w.addedAt, now) })}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="bk-waiting-card-actions">
+                    {mayRecordPayment && (
+                      <button type="button" className="bk-waiting-pay-btn" onClick={() => payToken(w)}>
+                        {t('payShort')}
+                      </button>
+                    )}
+                    {mayGive ? (
+                      <button
+                        type="button"
+                        className="bk-waiting-start-btn"
+                        aria-label={hc.giveTitle(w.customerName)}
+                        onClick={() => setGiving(w)}
+                      >
+                        {hc.startBtn} →
+                      </button>
+                    ) : !mayRecordPayment ? (
+                      <a
+                        className="bk-waiting-pay-btn"
+                        href={branch ? `/?location=${encodeURIComponent(branch.id)}#hm-queue` : '/#hm-queue'}
+                      >
+                        {t('details')}
+                      </a>
+                    ) : null}
+                  </div>
                 </li>
               ))}
             </ul>
-          )}
-          {filterCard}
-        </aside>
+          </section>
+        );
+      })()}
+    </>
+  );
 
-        <section className="pf-wide-mid bk-desk-mid" aria-label={isToday ? t('scheduleToday') : t('scheduleOn', { day: dayLabel })}>
-          <label className="pf-wide-search">
-            <IconSearch />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
+  if (desk) {
+    return (
+      <div className="bk-desk bk-cmd">
+        {earningsCard}
+
+        {!loadFailed && (
+          <div className="bk-cmd-summary" role="region" aria-label={t('kpiBookings')}>
+            <button
+              type="button"
+              aria-pressed={statusFilter === '' && !unmarkedOnly}
+              className={`bk-cmd-stat ${statusFilter === '' && !unmarkedOnly ? 'is-active' : ''}`}
+              onClick={() => {
+                setStatusFilter('');
+                setUnmarkedOnly(false);
                 setPage(1);
               }}
-              placeholder={t('searchHint')}
-              aria-label={t('search')}
-              autoComplete="off"
-            />
-          </label>
-          {unmarkedChip}
-          {bookings.length === 0 ? (
-            <div className="bk-scroll bk-desk-scroll">
-              {waitingBlock}
-              {emptyCard}
+            >
+              <div className="bk-cmd-stat-top">
+                <span>{t('kpiTotalBookings')}</span>
+                <span className="bk-cmd-dot is-green" />
+              </div>
+              <div className="bk-cmd-stat-val">{inView.length}</div>
+              <div className="bk-cmd-stat-sub">
+                <span>
+                  {anyPricesShown
+                    ? t('kpiScheduledSub', { amount: formatMoney(String(scheduledMinor)) })
+                    : `${countIn('confirmed')} ${ts('confirmed').toLowerCase()} · ${countIn('completed')} ${ts('done').toLowerCase()}`}
+                </span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              aria-pressed={statusFilter === 'confirmed' && !unmarkedOnly}
+              className={`bk-cmd-stat ${statusFilter === 'confirmed' && !unmarkedOnly ? 'is-active' : ''}`}
+              onClick={() => {
+                setStatusFilter('confirmed');
+                setUnmarkedOnly(false);
+                setPage(1);
+              }}
+            >
+              <div className="bk-cmd-stat-top">
+                <span>{ts('confirmed')}</span>
+                <span className="bk-cmd-dot is-green" />
+              </div>
+              <div className="bk-cmd-stat-val">{countIn('confirmed')}</div>
+              <div className="bk-cmd-stat-sub">
+                <span className="bk-cmd-stat-badge">
+                  {inProgressCount} {hc.inProgressLabel.toLowerCase()} · {upcomingCount} {hc.upcomingLabel.toLowerCase()}
+                </span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              aria-pressed={statusFilter === 'completed'}
+              className={`bk-cmd-stat ${statusFilter === 'completed' ? 'is-active' : ''}`}
+              onClick={() => {
+                setStatusFilter('completed');
+                setUnmarkedOnly(false);
+                setPage(1);
+              }}
+            >
+              <div className="bk-cmd-stat-top">
+                <span>{ts('done')}</span>
+                <span className="bk-cmd-dot is-blue" />
+              </div>
+              <div className="bk-cmd-stat-val">{countIn('completed')}</div>
+              <div className="bk-cmd-stat-sub">
+                <span>
+                  {anyPricesShown
+                    ? t('kpiCollectedSub', { amount: formatMoney(String(collectedMinor)) })
+                    : t('bookingCount', { count: countIn('completed') })}
+                </span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              aria-pressed={statusFilter === 'cancelled'}
+              className={`bk-cmd-stat ${statusFilter === 'cancelled' ? 'is-active' : ''}`}
+              onClick={() => {
+                setStatusFilter('cancelled');
+                setUnmarkedOnly(false);
+                setPage(1);
+              }}
+            >
+              <div className="bk-cmd-stat-top">
+                <span>{ts('cancelled')}</span>
+                <span className="bk-cmd-dot is-rose" />
+              </div>
+              <div className="bk-cmd-stat-val">{countInCancelled}</div>
+              <div className="bk-cmd-stat-sub">
+                <span>
+                  {countIn('no_show')} {ts('didNotComeCount')}
+                </span>
+              </div>
+            </button>
+          </div>
+        )}
+
+        <div className="bk-cmd-toolbar">
+          <div className="bk-cmd-toolbar-row">
+            {!loadFailed && (
+              <div className="bk-cmd-segs" role="tablist" aria-label={t('statusLabel')}>
+                {deskStatusTabs.map((item) => (
+                  <button
+                    key={item.key || 'all'}
+                    type="button"
+                    role="tab"
+                    aria-selected={statusFilter === item.key}
+                    className={`bk-cmd-seg ${statusFilter === item.key ? 'is-active' : ''}`}
+                    onClick={() => {
+                      setStatusFilter(item.key);
+                      setUnmarkedOnly(false);
+                      setPage(1);
+                    }}
+                  >
+                    <span>{item.label}</span>
+                    <span className="bk-cmd-seg-cnt">{item.count}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="bk-cmd-toolbar-actions">
+              <div className="bk-view">
+                <button
+                  type="button"
+                  className={`bk-view-tab ${view === 'table' ? 'is-active' : ''}`}
+                  onClick={() => setView('table')}
+                >
+                  <IconDashboard />
+                  {t('viewTable')}
+                </button>
+                <button
+                  type="button"
+                  className={`bk-view-tab ${view === 'timeline' ? 'is-active' : ''}`}
+                  onClick={() => setView('timeline')}
+                >
+                  <IconClock />
+                  {t('viewTimeline')}
+                </button>
+                <button
+                  type="button"
+                  className={`bk-view-tab ${view === 'list' ? 'is-active' : ''}`}
+                  onClick={() => setView('list')}
+                >
+                  <IconMenu />
+                  {t('viewList')}
+                </button>
+              </div>
+              {mayBook && (
+                <div className="bk-cmd-create-btns">
+                  <a className="btn bk-cmd-walkin-btn" href="/appointments/new?mode=now">
+                    <IconUserPlus /> {t('walkInBtn')}
+                  </a>
+                  <a className="btn btn-primary bk-cmd-new-btn" href="/appointments/new">
+                    <IconPlus /> {t('deskNew')}
+                  </a>
+                </div>
+              )}
             </div>
+          </div>
+
+          <div className="bk-cmd-toolbar-row">
+            <label className="pf-wide-search bk-cmd-search">
+              <IconSearch />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setPage(1);
+                }}
+                placeholder={t('searchHint')}
+                aria-label={t('search')}
+                autoComplete="off"
+              />
+            </label>
+
+            <div className="bk-cmd-filters">
+              <div className="bk-cmd-presets" role="group" aria-label={t('from')}>
+                <button
+                  type="button"
+                  aria-pressed={isTodayPreset}
+                  className={`bk-cmd-seg ${isTodayPreset ? 'is-active' : ''}`}
+                  onClick={() => pushDateRange(todayDateStr, todayDateStr)}
+                >
+                  {t('today')}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={isTomorrowPreset}
+                  className={`bk-cmd-seg ${isTomorrowPreset ? 'is-active' : ''}`}
+                  onClick={() => pushDateRange(tomorrowDateStr, tomorrowDateStr)}
+                >
+                  {t('tomorrow')}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={isWeekPreset}
+                  className={`bk-cmd-seg ${isWeekPreset ? 'is-active' : ''}`}
+                  onClick={() => pushDateRange(todayDateStr, weekEndDateStr)}
+                >
+                  {t('thisWeek')}
+                </button>
+              </div>
+
+              <form method="get" className="bk-cmd-date-form">
+                {customerId && <input type="hidden" name="customerId" value={customerId} />}
+                {query && <input type="hidden" name="q" value={query} />}
+                {staffFilter !== 'Everyone' && <input type="hidden" name="staff" value={staffFilter} />}
+                {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
+                {branch && <input type="hidden" name="location" value={branch.id} />}
+                {sort !== 'asc' && <input type="hidden" name="sort" value={sort} />}
+                <input
+                  key={`from-${date}`}
+                  aria-label={t('from')}
+                  name="date"
+                  type="date"
+                  defaultValue={date}
+                  className="bk-cmd-date-input"
+                  onChange={(e) => e.currentTarget.form?.requestSubmit()}
+                />
+                <span className="bk-cmd-date-sep">–</span>
+                <input
+                  key={`to-${toDate}`}
+                  aria-label={t('to')}
+                  name="to"
+                  type="date"
+                  defaultValue={toDate}
+                  className="bk-cmd-date-input"
+                  onChange={(e) => e.currentTarget.form?.requestSubmit()}
+                />
+              </form>
+
+              {!viewerIsStaff && (
+                <select
+                  aria-label={t('staff')}
+                  className="bk-cmd-select"
+                  value={staffFilter}
+                  onChange={(e) => {
+                    setStaffFilter(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  {staffChipNames.map((name) => (
+                    <option key={name} value={name}>
+                      {name === 'Everyone' ? `${t('staff')}: ${t('staffEveryone')}` : `${t('staff')}: ${name}`}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              <select
+                aria-label={t('sort')}
+                className="bk-cmd-select"
+                value={sort}
+                onChange={(e) => {
+                  setSort(e.target.value as typeof sort);
+                  setPage(1);
+                }}
+              >
+                <option value="asc">{t('oldestFirst')}</option>
+                <option value="desc">{t('newestFirst')}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {unmarkedChip}
+        {waitingDeskBlock}
+
+        <section className="bk-cmd-body" aria-label={isToday ? t('scheduleToday') : t('scheduleOn', { day: dayLabel })}>
+          {bookings.length === 0 ? (
+            emptyCard
           ) : (
             <>
-              {schedHead}
-              <div className="bk-scroll bk-desk-scroll">
-                {waitingBlock}
-                {schedBody}
-              </div>
+              <div className="bk-scroll bk-desk-scroll">{schedBody}</div>
               {pager}
             </>
           )}
         </section>
 
-        <aside className="pf-wide-right bk-desk-right" aria-label={noun}>
-          {picked ? (
-            openSheet(true)
-          ) : (
-            <div className="bk-desk-nothing">
-              <p>{t('deskPick', { noun })}</p>
-              {mayBook && (
-                <a className="btn" href="/appointments/new">
-                  <IconPlus /> {t('deskNew')}
-                </a>
-              )}
-            </div>
-          )}
-        </aside>
+        {picked && (
+          <>
+            <div className="sheet-backdrop bk-desk-backdrop" onClick={() => setOpen(null)} />
+            <aside className="pf-wide-right bk-desk-right" aria-label={noun}>
+              {openSheet(true)}
+            </aside>
+          </>
+        )}
         {giveSheet}
       </div>
     );

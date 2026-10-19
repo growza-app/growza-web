@@ -15,7 +15,7 @@ const packDir = resolve(__dirname, '../../../public/catalog');
 const onDisk = readdirSync(packDir).filter((f) => f.endsWith('.webp'));
 
 const svc = (over: Partial<Parameters<typeof servicePhotoUrl>[0]> = {}) =>
-  ({ imageUrl: null, categoryName: null, catalogKey: null, ...over }) as Parameters<typeof servicePhotoUrl>[0];
+  ({ imageUrl: null, catalogKey: null, ...over }) as Parameters<typeof servicePhotoUrl>[0];
 
 describe('the pack on disk', () => {
   it('is not empty', () => {
@@ -62,19 +62,20 @@ describe('the pack on disk', () => {
 
 describe('which picture a service gets', () => {
   it("prefers the owner's own upload over everything", () => {
-    expect(servicePhotoUrl(svc({ imageUrl: '/uploads/t/services/x.webp', catalogKey: 'haircut', categoryName: 'Hair' }))).toBe(
+    expect(servicePhotoUrl(svc({ imageUrl: '/uploads/t/services/x.webp', catalogKey: 'haircut' }))).toBe(
       '/uploads/t/services/x.webp',
     );
   });
 
   it('falls back to the pack for the concept the API matched', () => {
-    expect(servicePhotoUrl(svc({ catalogKey: 'haircut', categoryName: 'Hair' }))).toBe('/catalog/haircut.webp');
+    expect(servicePhotoUrl(svc({ catalogKey: 'haircut' }))).toBe('/catalog/haircut.webp');
   });
 
   /** The API is deployed first and may know concepts whose photograph is not made yet. */
-  it('falls through to the placeholder for a concept with no photograph', () => {
+  it('has no picture at all for a concept with no photograph: the screen draws an empty tile, never a stock photo', () => {
     expect(packPhotoUrl('saree-draping')).toBeNull();
-    expect(servicePhotoUrl(svc({ catalogKey: 'saree-draping', categoryName: 'Hair' }))).toBe('/service-photos/hair.jpg');
+    expect(servicePhotoUrl(svc({ catalogKey: 'saree-draping' }))).toBeNull();
+    expect(servicePhotoUrl(svc({}))).toBeNull();
   });
 
   it('never builds a path out of something the pack does not list', () => {
@@ -90,7 +91,7 @@ describe('which picture a service gets', () => {
   it('knows the difference between a real picture and a placeholder', () => {
     expect(hasServicePhoto(svc({ catalogKey: 'haircut' }))).toBe(true);
     expect(hasServicePhoto(svc({ imageUrl: '/uploads/t/services/x.webp' }))).toBe(true);
-    expect(hasServicePhoto(svc({ categoryName: 'Hair' }))).toBe(false);
+    expect(hasServicePhoto(svc({}))).toBe(false);
     expect(hasServicePhoto(svc({ catalogKey: 'saree-draping' }))).toBe(false);
   });
 });

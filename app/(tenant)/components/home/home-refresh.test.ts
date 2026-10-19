@@ -49,10 +49,10 @@ describe('Home follows the server refresh', () => {
 
   it('the branch carousel re-reads in place on the same signal, and drops overtaken answers', () => {
     expect(home).toMatch(/refreshKey=\{serverSig\}/);
-    expect(carousel).toMatch(/\}, \[period, ids, refreshKey\]\);/);
-    expect(carousel).toMatch(/live && setFigures/);
+    expect(carousel).toMatch(/\}, \[period, ids, refreshKey, wantedKey\]\);/);
+    expect(carousel).toMatch(/shownFor\.current === base && setFigures/);
     // Cleared only for a new period or branch list, so a refresh does not blank the slides.
-    expect(carousel).toMatch(/if \(shownFor\.current !== key\) \{\s*shownFor\.current = key;\s*setFigures\(\{\}\);/);
+    expect(carousel).toMatch(/if \(shownFor\.current !== base\) \{\s*shownFor\.current = base;\s*read\.current = new Set\(\);\s*setFigures\(\{\}\);/);
   });
 
   it('adds no timer of its own', () => {

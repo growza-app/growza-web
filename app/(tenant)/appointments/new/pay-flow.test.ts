@@ -113,7 +113,7 @@ describe('Record payment in three taps', () => {
   });
 
   it('draws the menu as photo tiles two across, each the height of a thumb and a half', () => {
-    expect(flow).toMatch(/<img className="pf-tile-photo" src=\{servicePhotoUrl\(s\)\}/);
+    expect(flow).toMatch(/<ServicePhoto className="pf-tile-photo" service=\{s\} \/>/);
     expect(css).toMatch(/\.pf-tiles \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
     expect(css).toMatch(/\.pf-tile \{[^}]*min-height: 9\.5rem;/);
     // A tap adds one. Once something is on the bill the tile wears − n +, so a second one is a visible choice
@@ -173,7 +173,7 @@ describe('Record payment in three taps', () => {
     expect(flow).toMatch(/className="pf-who-search pf-find-service" onClick=\{\(\) => setMenuOpen\(true\)\}/);
     expect(flow).not.toMatch(/pf-tile-more/);
     expect(menu).toMatch(/matchItems\(\s*pool\.map/); // the same spelling tolerance the full form has
-    expect(menu).toMatch(/servicePhotoUrl\(s\)/);
+    expect(menu).toMatch(/<ServicePhoto className="pf-menu-photo" service=\{s\} \/>/);
   });
 
   it('never moves a tile the finger is already on', () => {
@@ -428,7 +428,8 @@ describe('Record payment in three taps', () => {
 
   it('fits the done screen on one phone: the bill is shown, capped, and scrolls in place', () => {
     // 232px of tick-above-amount plus 284px of bill put Next customer — pressed after every sale — below the fold.
-    expect(done).toMatch(/<ReceiptShare bill=\{bill\} phone=\{phone\} compactPreview/);
+    // Multi-line since GRW-582 added a slot (`afterSend`) to the call; what is pinned is unchanged: the bill is capped.
+    expect(done).toMatch(/<ReceiptShare\s+bill=\{bill\}\s+phone=\{phone\}\s+compactPreview/);
     expect(receipt).toMatch(/compactPreview \? 'wi-receipt-paper-short' : ''/);
     expect(walkInCss).toMatch(/\.wi-receipt-paper-short \{[\s\S]{0,120}max-height: 12rem;[\s\S]{0,60}overflow-y: auto;/);
     // Still shown, never folded away: the desk reads the bill before it sends it.

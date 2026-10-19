@@ -133,8 +133,9 @@ describe('the desk grid shows what a till sells', () => {
     // Grouped for the route: which, how many, what the line came to — and never among the service legs.
     expect(flow).toMatch(/const legs = lines\.flatMap\(\(l, i\) => \(l\.product \? \[\] : \[\{ serviceId: l\.serviceId, paidAmountMinor: amounts\[i\]!, \.\.\.\(l\.pkg \? \{ offerId: l\.pkg\.id \} : \{\}\) \}\]\)\);/);
     expect((flow.match(/\.\.\.soldProducts,/g) ?? []).length).toBe(2);
-    // A bill is still a visit: a product alone is told to add a service, not refused in silence.
-    expect(flow).toMatch(/const hasService = lines\.some\(\(l\) => !l\.product\);/);
+    // Jira GRW-576 — a walk-in can buy a product alone (sent with noStylist); settling a booking or token still needs a service.
+    expect(flow).toMatch(/const hasService = \(visit \|\| token\) \? lines\.some\(\(l\) => !l\.product\) : lines\.length > 0;/);
+    expect(flow).toMatch(/stylistId && legs\.length > 0/);
     expect(flow).toMatch(/\{lines\.length > 0 \? t\('needService'\) : t\('pickOne'\)\}/);
     // A row across the menu, not the desks' vertical `.pf-wide-tabs` list (#250) the grid once borrowed.
     expect(grid).toMatch(/className="pf-chips pf-wide-menu-tabs" role="tablist"/);

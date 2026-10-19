@@ -104,11 +104,16 @@ import type {
   SettingsSummary,
   SortDirection,
   Product,
+  ProductImportItem,
+  ProductImportResult,
   ProductCategory,
   ProductInput,
   ProductSales,
+  ReturnSaleProductsResponse,
   StockMovement,
+  StockTakeResult,
   MovementKind,
+  ManualMovementKind,
 } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
@@ -466,6 +471,9 @@ export const api = {
   createProduct: (location: string, body: ProductInput) => post<Product>('/api/v1/products', { ...body, locationId: location }),
   updateProduct: (id: string, body: Partial<ProductInput>) => patch<Product>(`/api/v1/products/${id}`, body),
   deleteProduct: (id: string) => del<void>(`/api/v1/products/${id}`),
+  parseProductSheet: (file: File) => uploadFile<{ headers: string[]; rows: string[][] }>('/api/v1/products/import/parse', 'file', file),
+  importProducts: (location: string, items: ProductImportItem[]) =>
+    post<ProductImportResult>('/api/v1/products/import', { items, locationId: location }),
   uploadProductPhoto: (id: string, file: File) => uploadFile<Product>(`/api/v1/products/${id}/photo`, 'photo', file),
   removeProductPhoto: (id: string) => del<Product>(`/api/v1/products/${id}/photo`),
   /** 0117 — the shelf's categories at a branch, each with its count, empty ones included. */
@@ -478,7 +486,14 @@ export const api = {
   /** 0116 — the ledger behind a product's count, newest first. */
   productMovements: (id: string) => get<StockMovement[]>(`/api/v1/products/${id}/movements`),
   /** A delivery, a breakage, one used by the business, one brought back, or a recount. `qty` is how many; the kind gives the sign. */
-  moveStock: (id: string, body: { kind: Exclude<MovementKind, 'sold'>; qty?: number; /** A recount: the count itself, set on the server (a sale since the sheet opened is not lost). */ count?: number; note?: string }) => post<Product>(`/api/v1/products/${id}/movements`, body),
+  moveStock: (id: string, body: { kind: ManualMovementKind; qty?: number; /** A recount: the count itself, set on the server (a sale since the sheet opened is not lost). */ count?: number; note?: string }) => post<Product>(`/api/v1/products/${id}/movements`, body),
+  /** Jira GRW-574 (0122) — move N of a product to another branch: transfer_out here, transfer_in there, one transfer_id. */
+  transferProduct: (id: string, body: { toLocationId: string; qty: number; note?: string }) =>
+    post<{ transferId: string; from: Product; to: Product }>(`/api/v1/products/${id}/transfer`, body),
+  /** Jira GRW-574 (0123) — the branch's shelf for a stock take pass, and saving the pass in one transaction. */
+  stockTakeProducts: (location: string) => get<Product[]>(`/api/v1/products/stock-take?location=${encodeURIComponent(location)}`),
+  saveStockTake: (location: string, body: { counts: { productId: string; count: number }[]; note?: string }) =>
+    post<StockTakeResult>('/api/v1/products/stock-take', { ...body, locationId: location }),
   /**
    * Jira GRW-375 — services closest in MEANING to what was typed. 503 means
    * embeddings are not configured (prod today) or the provider is away; the
@@ -552,12 +567,19 @@ export const api = {
   capacity: (date: string, to?: string) =>
     get<Capacity>(`/api/v1/capacity?date=${encodeURIComponent(date)}${to ? `&to=${encodeURIComponent(to)}` : ''}`),
   /** `date` alone = one day; `date` + `to` = an inclusive day range (the Bookings From/To filter). */
-  appointments: (date?: string, to?: string, providerId?: string, customerId?: string) => {
+  appointments: (
+    date?: string,
+    to?: string,
+    providerId?: string,
+    customerId?: string,
+    opts?: { includeSales?: boolean },
+  ) => {
     const params = new URLSearchParams();
     if (date) params.set('date', date);
     if (to) params.set('to', to);
     if (providerId) params.set('providerId', providerId);
     if (customerId) params.set('customerId', customerId);
+    if (opts?.includeSales) params.set('includeSales', '1');
     const qs = params.toString();
     return get<Appointment[]>(`/api/v1/appointments${qs ? `?${qs}` : ''}`);
   },
@@ -664,6 +686,68 @@ export const api = {
   removePaymentQr: () => del<PaymentQrState>('/api/v1/settings/payment-qr'),
   uploadBranchPaymentQr: (id: string, file: File) => uploadFile<PaymentQrState>(`/api/v1/settings/branches/${id}/payment-qr`, 'qr', file),
   removeBranchPaymentQr: (id: string) => del<PaymentQrState>(`/api/v1/settings/branches/${id}/payment-qr`),
+  /** Jira GRW-582 — the summary the document screen's chrome needs; the document itself comes from /html. */
+  document: (id: string) =>
+    get<{
+      id: string;
+      number: string;
+      docType: 'tax_invoice' | 'bill_of_supply' | 'receipt';
+      status: 'issued' | 'cancelled';
+      grandTotalMinor: number;
+      businessName: string;
+      customerName: string;
+      customerPhone: string | null;
+      /** False when the server has no PDF renderer, so the screen does not offer a Download that cannot work. */
+      pdfAvailable?: boolean;
+    }>(`/api/v1/documents/${id}`),
+
+  /** Jira GRW-582 — what the document for this bill would be. Asked before the button is offered, never after. */
+  documentPreview: (visitKey: string) =>
+    get<{ docType: 'tax_invoice' | 'bill_of_supply' | 'receipt'; showsTax: boolean; issued: { id: string; number: string } | null }>(
+      `/api/v1/bills/${visitKey}/document/preview`,
+    ),
+  /** Idempotent per bill: a second call answers with the document already issued. */
+  issueDocument: (visitKey: string) =>
+    post<{ id: string; number: string; docType: string }>(`/api/v1/bills/${visitKey}/document`, {}),
+
+  /**
+   * Jira GRW-582 — a link the customer can open with no account. The token comes back once and only its hash is kept,
+   * so asking again makes a new link; the ones already sent keep working until they run out on their own.
+   */
+  shareDocument: (id: string) => post<{ token: string; expiresAt: string }>(`/api/v1/documents/${id}/share`, {}),
+
+  /** Jira GRW-582 — Settings › GST. One Save; the API decides what belongs to the business and what to the branch. */
+  updateGstSettings: (
+    body: {
+      status?: 'regular' | 'composition' | 'unregistered';
+      gstin?: string;
+      legalName?: string;
+      registeredAddress?: string;
+      invoicePrefix?: string;
+      invoiceFooter?: string;
+      branchState?: string;
+      branchStateCode?: string;
+      branchGstin?: string;
+    },
+    location?: string | null,
+  ) => patch<SettingsSummary>(`/api/v1/settings/gst${atBranch(location)}`, body),
+
+  /** 0127 — return one or more products against a settled bill within the business's return window. */
+  returnSaleProducts: (
+    visitKey: string,
+    body: {
+      items: Array<{ productId: string; qty: number }>;
+      restock?: boolean;
+      reason?: string;
+      /** How the refund was paid out. Required: the drawer has to balance. */
+      refundMode: 'cash' | 'card' | 'upi' | 'other';
+      /** Stable for one return, so a retry after a lost response returns nothing more. */
+      idempotencyKey?: string;
+      /** The desk has been told an issued invoice is not changed by this return. */
+      acknowledgeIssuedDocument?: boolean;
+    },
+  ) => post<ReturnSaleProductsResponse>(`/api/v1/sales/${encodeURIComponent(visitKey)}/returns`, body),
+
   updateBookingRules: (body: {
     slotGranularityMin?: number;
     slotPolicy?: 'fixed_grid' | 'gap_packed';
@@ -672,6 +756,7 @@ export const api = {
     cancellationCutoffMin?: number;
     staffSeesClientContact?: boolean;
     attendanceLateGraceMin?: number;
+    productReturnWindowDays?: number;
     reportAccess?: Record<string, string[]>;
     closedDates?: string[];
     /** Jira GRW-397 — every branch's closed days, a day at a time (business only). */

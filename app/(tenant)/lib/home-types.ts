@@ -27,6 +27,8 @@ export interface HomeOverview {
     newCustomers: number;
     cameBackPct: number | null;
     byPaymentMode: PaymentModeSlice[];
+    /** What the period's bills took for products. Optional so an older API does not break the Home. */
+    products?: { revenueMinor: number; units: number; topName: string | null; topUnits: number };
   };
   /** The graph's span follows the period: this week for Today and Week, this month for Month. */
   week: { span: 'week' | 'month'; revenueMinor: number; days: Array<{ date: string; weekday: string; revenueMinor: number; future: boolean }> };
@@ -74,6 +76,8 @@ export interface DaySummary {
    * list mixes them. Absent on a branch's own summary and on the no-stylist row.
    */
   staff: Array<{ id: string; name: string; bookings: number; revenueMinor: number; key?: 'unassigned'; locationId?: string | null }>;
+  /** What the day's bills took for products (with a visit or alone); the staff rows are services only. Absent from an older API. */
+  productsMinor?: number;
   /** Jira GRW-222 — who the day was for. */
   clients: {
     served: number;

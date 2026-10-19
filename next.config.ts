@@ -104,6 +104,12 @@ const nextConfig: NextConfig = {
     return [
       { source: '/api/:path*', destination: `${API_ORIGIN}/api/:path*` },
       { source: '/uploads/:path*', destination: `${API_ORIGIN}/uploads/:path*` },
+      /*
+       * Jira GRW-582 — the link a business sends a customer for their invoice. Short, because it is typed into a
+       * WhatsApp message; public, because the person opening it has no account; and answered by the API, which draws
+       * the document from the record on every visit. No page of the dashboard is involved.
+       */
+      { source: '/d/:token', destination: `${API_ORIGIN}/api/v1/share/:token` },
     ];
   },
 };

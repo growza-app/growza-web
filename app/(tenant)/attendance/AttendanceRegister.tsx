@@ -84,6 +84,11 @@ function initialsOf(name: string): string {
     .toUpperCase();
 }
 
+/** The salon's wall clock right now, as the "HH:mm" the time fields hold. */
+function wallClockNow(timezone: string): string {
+  return new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
+}
+
 /** An instant back to the salon's own wall clock — the same "HH:mm" the desk typed. */
 function toLocalTime(iso: string | null, timezone: string): string {
   if (!iso) return '';
@@ -272,6 +277,12 @@ export function AttendanceRegister({
    * record cannot be late for it, so they read present.
    */
   function timeChanged(row: AttendanceRow, field: 'inTime' | 'outTime', value: string) {
+    // Owner, 2026-10-19 — a time that has not happened yet is not a record. The field is capped at now, but a typed
+    // value gets past a cap, so it is refused here too, before the server has to.
+    if (isToday && value && value > wallClockNow(tz)) {
+      setError(t('errors.futureTime'));
+      return;
+    }
     const view = viewOf(row);
     const next: Draft = { ...view, [field]: value };
     if (field === 'inTime' && value && !view.status) {
@@ -285,10 +296,7 @@ export function AttendanceRegister({
   }
 
   function setNow(row: AttendanceRow, field: 'inTime' | 'outTime') {
-    const now = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false }).format(
-      new Date(),
-    );
-    timeChanged(row, field, now);
+    timeChanged(row, field, wallClockNow(tz));
   }
 
   /**
@@ -620,6 +628,7 @@ export function AttendanceRegister({
                     <span className="att-timeset">
                       <input
                         type="time"
+                        max={isToday ? wallClockNow(tz) : undefined}
                         value={view.inTime}
                         disabled={busy || away || !writable}
                         onChange={(e) => timeChanged(row, 'inTime', e.target.value)}
@@ -635,6 +644,7 @@ export function AttendanceRegister({
                     <span className="att-timeset">
                       <input
                         type="time"
+                        max={isToday ? wallClockNow(tz) : undefined}
                         value={view.outTime}
                         disabled={busy || away || !writable}
                         onChange={(e) => timeChanged(row, 'outTime', e.target.value)}

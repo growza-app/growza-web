@@ -18,7 +18,7 @@ import { IconCalendar, IconClock, IconUser } from '../components/icons';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { OfferBranchField, useDefaultOfferBranch } from '../offers/OfferBranchField';
 import { useBranch } from '../components/BranchProvider';
-import { servicePhotoUrl } from '../lib/service-photos';
+import { ServicePhoto } from '../components/ServicePhoto';
 import { weekdayNames } from '../lib/weekday-names';
 import { clampPercentInput, percentOff, pricedMinor, type PriceMode } from './packages-logic';
 import { durationPhrase } from '../lib/duration-words';
@@ -105,7 +105,7 @@ function PreviewCard({
               ),
               <span key={s.id} className="preview-photo-item">
                 { }
-                <img className="preview-photo-avatar" src={servicePhotoUrl(s)} alt="" width={44} height={44} />
+                <ServicePhoto className="preview-photo-avatar" service={s} size={44} />
                 <span className="preview-photo-name">{s.name}</span>
               </span>,
             ])}
@@ -591,7 +591,7 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
                   </button>
                 </div>
                 { }
-                <img className="picker-row-thumb" src={servicePhotoUrl(s)} alt="" width={36} height={36} />
+                <ServicePhoto className="picker-row-thumb" service={s} size={36} />
                 <div className="picked-row-main">
                   <div className="picker-row-name">{s.name}</div>
                   <div className="picker-row-meta">{tm('minutes', { count: s.durationMin })}</div>

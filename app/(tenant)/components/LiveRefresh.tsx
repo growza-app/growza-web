@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { api } from '../lib/api';
+import { announceLiveTick } from '../lib/live-signal';
 import { useVisibleInterval, type VisibleReason } from './useVisibleInterval';
 
 /**
@@ -12,7 +13,11 @@ import { useVisibleInterval, type VisibleReason } from './useVisibleInterval';
  * changed, so without this an owner sees a stale "Today" screen until they
  * manually reload.
  */
-const POLL_MS = 15_000;
+/**
+ * Thirty seconds, not fifteen (performance audit). A booking arriving on WhatsApp shows up within half a minute, which is
+ * still "live" to someone looking at a schedule, and the check is the one cheap query every screen now shares with the bell.
+ */
+const POLL_MS = 30_000;
 
 /**
  * Routes that show what is happening *now*, and are the only ones that poll.
@@ -33,7 +38,10 @@ const POLL_MS = 15_000;
 const LIVE_ROUTES = ['/', '/appointments', '/availability'];
 
 /**
- * Whether this route keeps a standing timer.
+ * Whether this route REDRAWS when the check says something changed.
+ *
+ * Every route runs the check now (the bell and the unread badge listen to it — `live-signal.ts`), but only these redraw
+ * on its answer. The old name for it was "keeps a standing timer".
  *
  * Exported so it can be tested directly: whether a screen polls is a cost
  * decision, and a browser cannot prove it either way — an automation pane
@@ -53,7 +61,7 @@ export function shouldPoll(pathname: string): boolean {
  * happened. The change signal (`/live-version`) already covers every booking, hold and payment; what the forced
  * tick keeps moving is wording that changes by the quarter hour, and ten minutes is soon enough for that.
  */
-export const FORCE_EVERY_TICKS = 40;
+export const FORCE_EVERY_TICKS = 20;
 
 /**
  * Jira GRW-310 — what a timer tick does.
@@ -130,11 +138,13 @@ export function LiveRefresh({ initialVersion = null }: { initialVersion?: string
       if (mine !== generation.current) return;
       const next = decideTick({ tick: thisTick, version, baseline: baseline.current });
       baseline.current = next.baseline;
-      if (next.refresh) router.refresh();
+      // Told to the bell and the badge on every screen; only a live screen redraws itself.
+      announceLiveTick({ tick: thisTick, changed: next.refresh });
+      if (next.refresh && isLive) router.refresh();
     } finally {
       busy.current = false;
     }
-  }, isLive ? POLL_MS : null);
+  }, POLL_MS);
 
   return null;
 }

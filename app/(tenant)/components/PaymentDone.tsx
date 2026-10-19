@@ -1,6 +1,7 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '../../shared/AppLink';
+import { DocumentAction } from './DocumentAction';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
@@ -60,7 +61,8 @@ export function PaymentDone({
    * Defaulted to the bare list so a caller that cannot name the visit still has a way back, which is what
    * every caller used to get: twenty-five rows and a hunt for the one that went in wrong.
    */
-  fixHref?: string;
+  /** Null where there is no booking to fix (a product-only sale has no appointment to open). */
+  fixHref?: string | null;
   totalMinor: number;
   mode: PaymentMode;
   /** How `mode` reads in the current language ("Cash", "UPI"). */
@@ -149,7 +151,20 @@ export function PaymentDone({
         </h1>
         <p className="pf-done-sub">{summary}</p>
       </div>
-      <ReceiptShare bill={bill} phone={phone} compactPreview onNumberGiven={givenPhone ? undefined : keepClient} />
+      {/*
+        Jira GRW-582 — the customer's receipt or GST invoice, directly under Send on WhatsApp and above Print: it is
+        one more thing handed to the customer, so it sits with the others, above the fold. It was first drawn in the
+        grid below Next customer, where it was half a button wide and under the fold on a phone — present, and not
+        findable. It draws nothing at all until the server has said what this bill's document would be, so a business
+        that has never touched GST sees no change.
+      */}
+      <ReceiptShare
+        bill={bill}
+        phone={phone}
+        compactPreview
+        onNumberGiven={givenPhone ? undefined : keepClient}
+        afterSend={<DocumentAction visitKey={appointmentId} />}
+      />
       {kept ? (
         <p className={kept === 'failed' ? 'pf-error pf-kept' : 'pf-kept'} role="status">
           {kept === 'failed' ? t('clientNotKept') : kept === 'saving' ? t('keepingClient') : t('clientKept')}
@@ -173,9 +188,11 @@ export function PaymentDone({
             the one the desk has this second got wrong. `?open=` already opens a booking by id (Search uses
             it), and the day goes with it because the list shows today and a late visit may not be.
           */}
-          <Link href={fixHref} className="btn btn-ghost pf-go-alt">
-            {t('mistake')}
-          </Link>
+          {fixHref === null ? null : (
+            <Link href={fixHref} className="btn btn-ghost pf-go-alt">
+              {t('mistake')}
+            </Link>
+          )}
         </div>
         <button type="button" className="pf-sound" aria-pressed={sound} onClick={toggleSound}>
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

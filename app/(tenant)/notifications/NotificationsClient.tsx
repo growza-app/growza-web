@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { api, type ActivityEvent } from '../lib/api';
 import { loadErrorKind, type LoadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
+import { useSession } from '../components/SessionProvider';
 import {
   NotifRow,
   countUnread,
@@ -48,15 +49,13 @@ export function NotificationsClient() {
   const [retryCount, setRetryCount] = useState(0);
   const [lastSeenId, setLastSeenId] = useState(0);
   const [clearedBeforeId, setClearedBeforeId] = useState(0);
-  const [timezone, setTimezone] = useState('Asia/Kolkata');
+  // From the layout's own read of /me: no request of its own.
+  const timezone = useSession()?.timezone ?? 'Asia/Kolkata';
   const feed = useFeedBranch();
 
   useEffect(() => {
     setLastSeenId(readLastSeenId());
     setClearedBeforeId(readClearedBeforeId());
-    api.me().then((me) => {
-      if (me.tenant?.timezone) setTimezone(me.tenant.timezone);
-    }).catch(() => {});
   }, []);
 
   useEffect(() => {

@@ -6,7 +6,7 @@ import { PersonPhotoField } from '../../components/PersonPhotoField';
 import { useState } from 'react';
 import { PhoneField } from '../../components/PhoneField';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import Link from '../../../shared/AppLink';
 import { DateTime } from 'luxon';
 import {
   api,

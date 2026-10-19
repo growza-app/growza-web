@@ -92,6 +92,10 @@
   color: var(--muted);
 }
 
+.prd-sheet .sheet-group ~ .sheet-group {
+  margin-top: var(--sp-2);
+}
+
 .prd-sheet-actions {
   display: flex;
   gap: var(--sp-2);
@@ -116,9 +120,9 @@
 .prd-stat {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
-  padding: var(--sp-3);
+  padding: 6px var(--sp-3);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
@@ -132,9 +136,9 @@
 }
 
 .prd-stat-n {
-  font-size: 1.25rem;
+  font-size: 1.0625rem;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -152,6 +156,16 @@
 
 .prd-stat-low .prd-stat-n {
   color: var(--danger);
+}
+
+.prd-stat-tap.is-on {
+  border-color: var(--accent-deep);
+  box-shadow: inset 0 0 0 1px var(--accent-deep);
+}
+
+.prd-stat-low.prd-stat-tap.is-on {
+  border-color: var(--danger);
+  box-shadow: inset 0 0 0 1px var(--danger);
 }
 
 .prd-tools {
@@ -350,6 +364,10 @@
   margin-top: var(--sp-3);
 }
 
+.prd-moves-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .prd-move {
   min-height: 2.75rem;
   padding: 0 var(--sp-3);
@@ -362,14 +380,91 @@
   cursor: pointer;
 }
 
-.prd-move.is-on {
-  border-color: var(--accent-deep);
+.prd-move-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 5.5rem;
+  padding: var(--sp-3) var(--sp-2);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  line-height: 1.2;
+  font-size: 0.875rem;
+}
+
+.prd-tile-icon {
+  width: 1.875rem;
+  height: 1.875rem;
+  flex: none;
+}
+
+.prd-move-add {
+  border-color: transparent;
   background: var(--accent-soft);
   color: var(--accent-ink);
 }
 
-.prd-move-adjusted {
-  grid-column: 1 / -1;
+.prd-move-add .prd-tile-icon {
+  color: var(--accent-deep);
+}
+
+.prd-move-add.is-on {
+  border-color: var(--accent-deep);
+  box-shadow: inset 0 0 0 1px var(--accent-deep);
+}
+
+.prd-move-remove {
+  border-color: transparent;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.prd-move-remove.is-on {
+  border-color: var(--danger);
+  box-shadow: inset 0 0 0 1px var(--danger);
+}
+
+.prd-move-transfer {
+  border-color: transparent;
+  background: var(--slate-soft);
+  color: var(--text);
+}
+
+.prd-move-transfer.is-on {
+  border-color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--text);
+}
+
+.prd-reason-row {
+  align-items: center;
+}
+
+.prd-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  justify-content: flex-end;
+}
+
+.prd-reason-chip {
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.prd-reason-chip.is-on {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
 }
 
 .prd-move-form {
@@ -387,6 +482,11 @@
 .prd-move-after {
   font-size: 0.875rem;
   color: var(--muted);
+}
+
+.prd-move-after-warn {
+  color: var(--danger);
+  font-weight: 600;
 }
 
 .prd-ledger-h {
@@ -465,19 +565,17 @@
 @media (min-width: 861px) {
   .prd-tools {
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
   }
 
-  .prd-search {
-    max-width: 20rem;
+  .prd-tools .prd-search {
+    flex: 1 1 16rem;
+    max-width: 22rem;
   }
 
-  .prd-moves {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-
-  .prd-move-adjusted {
-    grid-column: auto;
+  .prd-tools .prd-chips {
+    flex: 1 1 100%;
   }
 }
 
@@ -503,7 +601,7 @@
     flex: 1;
     min-height: 0;
     grid-template-rows: minmax(0, 1fr);
-    grid-template-columns: minmax(11rem, 13rem) minmax(0, 1fr) minmax(20rem, 24rem);
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
     align-items: stretch;
   }
 
@@ -520,38 +618,8 @@
     overflow: hidden;
   }
 
-  /* The three numbers as compact rows, not the phone's tiles: a column 11rem wide has no room for tiles. */
-  .prd-desk-left .prd-strip {
-    grid-template-columns: 1fr;
-    gap: 2px;
-    margin-bottom: var(--sp-3);
-    padding-bottom: var(--sp-3);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .prd-desk-left .prd-stat {
-    flex-direction: row-reverse;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--sp-2) var(--sp-3);
-    border: 0;
-    background: transparent;
-  }
-
-  .prd-desk-left .prd-stat-low {
-    background: var(--danger-soft);
-  }
-
-  .prd-desk-left .prd-stat-n {
-    font-size: 0.9375rem;
-  }
-
-  .prd-desk-left .prd-stat-l {
-    font-size: 0.875rem;
-    color: var(--text);
-  }
-
   .prd-desk-mid {
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: var(--sp-3);
@@ -738,6 +806,10 @@
     flex: none;
   }
 
+  .prd-desk-mid .prd-chips .prd-chip {
+    margin-left: 0;
+  }
+
   /* The shelf as a table in a card that scrolls itself, as the Services desk has it. */
   .prd-desk-card {
     flex: 1;
@@ -769,11 +841,25 @@
 
   .prd-table th,
   .prd-table td {
-    padding: 8px 12px;
+    padding: 8px 8px;
     border-bottom: 1px solid var(--border);
     text-align: left;
     vertical-align: middle;
     font-size: 0.875rem;
+    white-space: nowrap;
+    width: 1%;
+  }
+
+  .prd-table th:first-child,
+  .prd-table td:first-child {
+    padding-left: 12px;
+    width: 100%;
+    max-width: 0;
+  }
+
+  .prd-table th:last-child,
+  .prd-table td:last-child {
+    padding-right: 12px;
   }
 
   .prd-table thead th {
@@ -784,6 +870,27 @@
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--muted);
+  }
+
+  .prd-table th.th-sortable {
+    padding: 0;
+  }
+
+  .prd-table th.th-sortable button {
+    gap: 4px;
+    padding: 8px 8px;
+  }
+
+  .prd-table th.th-sortable:first-child button {
+    padding-left: 12px;
+  }
+
+  .prd-table th.th-sortable:last-child button {
+    padding-right: 12px;
+  }
+
+  .prd-table th.prd-td-num button {
+    justify-content: flex-end;
   }
 
   .prd-tr {
@@ -805,7 +912,7 @@
   .prd-cell-name {
     display: flex;
     align-items: center;
-    gap: var(--sp-3);
+    gap: var(--sp-2);
     min-width: 0;
   }
 
@@ -866,4 +973,297 @@
 /* The low-stock tile sits in a listitem wrapper so the button keeps its own role. */
 .prd-stat-cell {
   display: contents;
+}
+
+.prd-sheet .sheet-head-save.is-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 2rem;
+  padding: 0 var(--sp-3);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  opacity: 1;
+}
+
+.prd-sheet .sheet-head-save.is-saved svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* ---------- 0123 — Stock take: count a branch's shelf in one pass ---------- */
+.prd-st-tools.prd-st-tools {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.prd-st-tools .prd-st-search {
+  max-width: none;
+}
+
+.prd-st-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.prd-st-summary {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.prd-st-summary-diff {
+  color: var(--accent-deep);
+}
+
+.prd-st-summary-invalid {
+  color: var(--danger);
+}
+
+/* ---------- Multi-select Categories dropdown ---------- */
+.prd-selects .prd-cat-dd .sls-dd-btn {
+  width: 100%;
+}
+
+.prd-cat-dd-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.prd-cat-dd-row .sls-check-row {
+  flex: 1;
+  min-width: 0;
+}
+
+.prd-cat-dd-foot {
+  border-top: 1px solid var(--border);
+  padding-top: var(--sp-2);
+}
+
+.prd-cat-dd-foot .svc-desk-addrow {
+  margin-top: 0;
+}
+
+.prd-cat-dd-foot .svc-desk-addcat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-top: 0;
+  border-top: 0;
+}
+
+.prd-cat-dd-foot .svc-desk-addcat input[type="text"] {
+  width: 100%;
+  min-width: 0;
+}
+
+.prd-cat-dd-foot .svc-desk-addcat-actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.prd-cat-dd-foot .svc-desk-addcat-actions .btn {
+  flex: 1;
+}
+
+.prd-st-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.prd-st-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 3.5rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.prd-st-row .prd-photo {
+  flex: none;
+  grid-area: auto;
+}
+
+.prd-st-row .prd-name {
+  grid-area: auto;
+}
+
+.prd-st-row-diff {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+}
+
+.prd-st-row-invalid {
+  border-color: var(--danger-line);
+  background: var(--danger-soft);
+}
+
+.prd-st-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.prd-st-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.prd-st-code {
+  font-variant-numeric: tabular-nums;
+}
+
+.prd-st-field {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.prd-st-field-l {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Two classes on purpose: `input[type="text"] { min-width: 180px }` in 01-controls.css is (0,1,1) and would hold a single class at 180px. */
+.prd-st-input.prd-st-input {
+  width: 4.75rem;
+  min-width: 0;
+  min-height: 2.5rem;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.prd-st-cell-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+.prd-st-save.is-saved {
+  opacity: 1;
+}
+
+.prd-st-save svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+@media (max-width: 860px) {
+  /* Text-only header actions (Sell product, Count stock, Cancel, Save counts / Saved) keep their words and wrap cleanly on a 344px phone. */
+  .topbar .btn:not(:has(svg)),
+  .topbar .btn.prd-st-save {
+    font-size: 0.875rem;
+    padding: 0 var(--sp-3);
+  }
+
+  .topbar .topbar-lead:has(.hbp-line) {
+    min-width: 150px;
+  }
+
+  .topbar-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .prd-st-field-l {
+    display: none;
+  }
+
+  .prd-st-input.prd-st-input {
+    min-height: 2.75rem;
+  }
+}
+
+@media (min-width: 1101px) {
+  .prd-st-desk-tools {
+    flex-wrap: wrap;
+  }
+
+  .prd-st-desk-tools .prd-st-search {
+    flex: 1 1 14rem;
+    max-width: 24rem;
+  }
+
+  .prd-st-desk-tools .prd-st-summary {
+    margin-left: auto;
+  }
+
+  .prd-st-tr.prd-st-row-diff td {
+    background: var(--accent-soft);
+  }
+
+  .prd-st-tr.prd-st-row-diff td:first-child {
+    box-shadow: inset 3px 0 0 var(--accent-deep);
+  }
+
+  .prd-st-tr.prd-st-row-invalid td {
+    background: var(--danger-soft);
+  }
+
+  .prd-st-tr.prd-st-row-invalid td:first-child {
+    box-shadow: inset 3px 0 0 var(--danger);
+  }
+}
+
+
+
+
+/* Owner, 2026-10-18 — the way into "load products from a file", under the list. */
+.prd-import-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-3);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+}
+
+.prd-import-row p {
+  margin: 0;
+  flex: 1 1 14rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.prd-import-row .btn {
+  flex: 0 0 auto;
+}
+
+/* On the wide desk the list is a card; the row sits inside it, so it takes the card's own inset. */
+.prd-desk .prd-import-row {
+  padding: var(--sp-3);
 }

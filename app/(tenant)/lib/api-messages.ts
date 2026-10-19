@@ -15,6 +15,14 @@
  * run the test.
  */
 export const API_MESSAGES_HI: Record<string, string> = {
+  // ---- Owner, 2026-10-18 — loading products from a spreadsheet
+  'Upload a .xlsx or .csv file.': '.xlsx या .csv फ़ाइल अपलोड करें।',
+  'That file has no rows in it.': 'उस फ़ाइल में कोई पंक्ति नहीं है।',
+  'That file has column headings but nothing under them.': 'उस फ़ाइल में सिर्फ़ कॉलम के नाम हैं, उनके नीचे कुछ नहीं है।',
+  'That is the older .xls format — re-save it as .xlsx or .csv and try again.': 'यह पुराना .xls फ़ॉर्मेट है — इसे .xlsx या .csv में फिर से सेव करके दोबारा कोशिश करें।',
+  "That product is not on this branch's shelf": 'वह प्रोडक्ट इस ब्रांच की शेल्फ़ पर नहीं है',
+  'Give the product a name': 'प्रोडक्ट को एक नाम दें',
+  'Give the product a price': 'प्रोडक्ट की कीमत डालें',
   // ---- Jira GRW-478 (U-3) — sentences added by the GRW-463 fixes
   'A name must be text, 80 characters or fewer': 'नाम 80 अक्षरों तक का टेक्स्ट होना चाहिए',
   'A note must be text, 500 characters or fewer': 'नोट 500 अक्षरों तक का टेक्स्ट होना चाहिए',
@@ -76,10 +84,47 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That service is not available': 'वह सेवा उपलब्ध नहीं है',
   'That staff member is not available': 'वह स्टाफ़ सदस्य उपलब्ध नहीं है',
   // Owner, 2026-10-14 — the till sells products.
+  'Pick at least one service or product': 'कम से कम एक सेवा या सामान चुनें',
   'That product is not on the shelf': 'वह सामान शेल्फ़ पर नहीं है',
   'That product is sold at another branch': 'वह सामान दूसरी ब्रांच में बिकता है',
   'A product by that name is already on the shelf': 'इस नाम का सामान शेल्फ़ पर पहले से है',
   'This plan does not sell products over the counter.': 'इस प्लान में काउंटर पर सामान बेचना शामिल नहीं है।',
+  'The sales register is not open to your role': 'बिक्री का रजिस्टर आपकी भूमिका के लिए खुला नहीं है',
+  'There is not enough stock at this branch to move that many': 'इस ब्रांच में इतना स्टॉक नहीं है कि इतना भेजा जा सके',
+  // QA, 2026-10-17 — what the product routes answer with a 400 or 404.
+  'Product not found': 'सामान नहीं मिला',
+  'Category not found': 'श्रेणी नहीं मिली',
+  'No such category at this branch': 'इस ब्रांच में ऐसी कोई श्रेणी नहीं है',
+  'Send the branch’s categories in the order you want them': 'ब्रांच की श्रेणियाँ उसी क्रम में भेजें जिसमें आप उन्हें चाहते हैं',
+  'That is not this branch’s list of categories': 'यह इस ब्रांच की श्रेणियों की सूची नहीं है',
+  // Release review, 2026-10-17 — sentences the product, transfer and till routes can send.
+  'Choose a branch': 'एक ब्रांच चुनें',
+  'A count goes with a recount only': 'गिनती सिर्फ़ दोबारा गिनने के साथ दी जा सकती है',
+  'That amount is too large': 'यह रकम बहुत बड़ी है',
+  'Description must be text': 'विवरण लिखा हुआ होना चाहिए',
+  'Description must be 200 characters or fewer': 'विवरण ज़्यादा से ज़्यादा 200 अक्षर का हो सकता है',
+  'Name the package on the request or on its lines, not both': 'पैकेज का नाम पूरे बिल पर लिखें या उसकी लाइनों पर, दोनों पर नहीं',
+  // Jira GRW-574 — a product's SKU, barcode (0119), GST rate and HSN (0120).
+  'Another product at this branch has that SKU': 'इस ब्रांच में किसी दूसरे सामान का यही SKU है',
+  'Another product at this branch has that barcode': 'इस ब्रांच में किसी दूसरे सामान का यही बारकोड है',
+  'Type the barcode as it is printed, with no spaces': 'बारकोड वैसे ही लिखें जैसा छपा है, बीच में जगह न छोड़ें',
+  'A SKU is 40 characters at most': 'SKU ज़्यादा से ज़्यादा 40 अक्षर का हो सकता है',
+  'A barcode is 64 characters at most': 'बारकोड ज़्यादा से ज़्यादा 64 अक्षर का हो सकता है',
+  'GST rate must be between 0% and 28%': 'GST दर 0% से 28% के बीच होनी चाहिए',
+  'An HSN code is 4 to 8 digits': 'HSN कोड 4 से 8 अंकों का होना चाहिए',
+  'A SAC code is 4 to 8 digits': 'SAC कोड 4 से 8 अंकों का होना चाहिए',
+  'Choose another branch': 'कोई दूसरी ब्रांच चुनें',
+  'No such branch': 'ऐसी कोई ब्रांच नहीं है',
+  'Say how many': 'बताएँ कितने',
+  'That count is too large': 'वह गिनती बहुत बड़ी है',
+  'That note is too long': 'वह नोट बहुत लंबा है',
+  'Only the owner can move stock between branches.': 'ब्रांचों के बीच स्टॉक सिर्फ़ मालिक भेज सकता है।',
+  'Only the owner can count stock.': 'स्टॉक की गिनती सिर्फ़ मालिक कर सकता है।',
+  'Say what the count is': 'बताएँ गिनती क्या है',
+  'That count is too small': 'वह गिनती बहुत छोटी है',
+  'Count at least one product': 'कम से कम एक सामान की गिनती करें',
+  'Too many products to count at once': 'एक बार में इतने सामान की गिनती नहीं हो सकती',
+  'Each product can be counted once': 'हर सामान की गिनती एक ही बार हो सकती है',
   'One of those services does not exist.': 'उनमें से एक सेवा मौजूद नहीं है।',
   'Appointment not found': 'बुकिंग नहीं मिली',
   'No such booking': 'ऐसी कोई बुकिंग नहीं',
@@ -116,6 +161,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
   // Hindi still met in English. The admin portal is English by decision and is not here; neither are the
   // billing notes nobody outside Growza reads, nor the chat replies, which are not the dashboard.
   // ---- phone check-in (Jira GRW-563)
+  'That time has not happened yet': 'वह समय अभी आया नहीं है',
   'Mark yourself in first.': 'पहले अपनी हाज़िरी लगाएँ।',
   'You are already marked in today.': 'आज आपकी हाज़िरी पहले ही लग चुकी है।',
   'You are already marked out today.': 'आज आपका जाना पहले ही दर्ज हो चुका है।',
@@ -142,6 +188,14 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That client belongs to another branch. Search for them here, or add them as a client of this branch.': 'वह ग्राहक दूसरी ब्रांच का है। उन्हें यहाँ खोजें, या इस ब्रांच के ग्राहक के तौर पर जोड़ें।',
   'That category belongs to another branch': 'वह श्रेणी दूसरी ब्रांच की है',
   'Could not find a location in that link.': 'उस लिंक में कोई जगह नहीं मिली।',
+  // ---- receipts and GST invoices (Jira GRW-582)
+  'That bill was not found': 'वह बिल नहीं मिला',
+  'That document was not found': 'वह दस्तावेज़ नहीं मिला',
+  'There is nothing on this bill to put on a document': 'इस बिल में दस्तावेज़ पर डालने के लिए कुछ नहीं है',
+  'Add the client to this bill first': 'पहले इस बिल में ग्राहक जोड़ें',
+  'This bill has not been paid yet. Take payment first, then make the document.': 'इस बिल का भुगतान अभी नहीं हुआ है। पहले भुगतान लें, फिर दस्तावेज़ बनाएँ।',
+  'This document was cancelled, so it cannot be sent': 'यह दस्तावेज़ रद्द हो चुका है, इसलिए भेजा नहीं जा सकता',
+  'A PDF cannot be made on this server yet. Open the document and use Print to save it.': 'इस सर्वर पर अभी PDF नहीं बन सकता। दस्तावेज़ खोलें और प्रिंट से सेव करें।',
   // ---- team, invites and the session
   'That number is already on this team.': 'यह नंबर पहले से इस टीम में है।',
   'This business cannot add people right now. Ask whoever invited you to contact Growza support.': 'यह बिज़नेस अभी लोग नहीं जोड़ सकता। जिसने आपको बुलाया है, उनसे Growza सपोर्ट से बात करने को कहें।',
@@ -150,11 +204,28 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Could not reach the sign-in service. This is not a problem with your session — please try again shortly.': 'साइन इन सेवा तक नहीं पहुंच सके। यह आपके सेशन की गड़बड़ी नहीं है — कृपया थोड़ी देर में फिर कोशिश करें।',
   'This is an impersonated support session. It can view this account but not change it.': 'यह सपोर्ट का देखने वाला सेशन है। यह इस अकाउंट को देख सकता है, बदल नहीं सकता।',
   'This is not an impersonated session.': 'यह सपोर्ट का सेशन नहीं है।',
+  // ---- product returns against a sale (0127)
+  'Bill not found': 'बिल नहीं मिला',
+  'That product is not on this bill': 'वह सामान इस बिल में नहीं है',
+  'Each product may only be listed once per return': 'एक वापसी में हर सामान एक ही बार चुना जा सकता है',
+  'Pick at least one product to return': 'वापस करने के लिए कम से कम एक सामान चुनें',
+  'Keep the note to 240 characters': 'नोट 240 अक्षरों तक रखें',
+  'That request id was already used for a different bill': 'यह रिक्वेस्ट आईडी पहले किसी दूसरे बिल के लिए इस्तेमाल हो चुकी है',
+  'Say how the refund was paid': 'बताएँ कि रिफ़ंड कैसे दिया गया',
+  'Request id is too short': 'रिक्वेस्ट आईडी बहुत छोटी है',
+  'Request id is too long': 'रिक्वेस्ट आईडी बहुत लंबी है',
+  'Products can only be returned on the day of sale': 'सामान सिर्फ़ बिक्री के दिन ही वापस किया जा सकता है',
 };
 
 /** The sentence in the visitor's language when it is known; otherwise exactly what the server said. */
 export function localiseApiMessage(message: string, lang: string): string {
-  return lang === 'hi' ? (API_MESSAGES_HI[message] ?? message) : message;
+  if (lang !== 'hi') return message;
+  const known = API_MESSAGES_HI[message];
+  if (known) return known;
+  // "Row 12: An HSN code is 4 to 8 digits" — a spreadsheet import names the row, then says why. The "why" is one of the
+  // sentences above, so it is translated on its own and the row keeps its number.
+  const row = /^Row (\d+): (.+)$/s.exec(message);
+  return row ? `पंक्ति ${row[1]}: ${API_MESSAGES_HI[row[2]!] ?? row[2]}` : message;
 }
 
 /**

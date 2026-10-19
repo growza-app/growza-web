@@ -5,7 +5,7 @@ import { useRef } from 'react';
 import type { Offer, Service } from '../lib/api-types';
 import { formatMoney } from '../lib/api';
 import { useDialog } from '../../shared/a11y/useDialog';
-import { servicePhotoUrl } from '../lib/service-photos';
+import { ServicePhoto } from './ServicePhoto';
 
 /**
  * Owner, 2026-10-15 — what is inside a package, before it goes on the bill.
@@ -73,7 +73,7 @@ export function PackageSheet({
         <ul className="pf-client-matches pf-menu-list pf-pkg-list">
           {inside.map((s) => (
             <li key={s.id} className="pf-pkg-row">
-              <img className="pf-menu-photo" src={servicePhotoUrl(s)} alt="" loading="lazy" />
+              <ServicePhoto className="pf-menu-photo" service={s} />
               <span className="pf-client-match-name">{s.name}</span>
               <span className="pf-client-match-sub">
                 {s.durationMin ? `${t('eachMins', { n: s.durationMin })} · ` : ''}

@@ -6,7 +6,10 @@ import { api, ApiError } from '../lib/api';
 import type { Product, ProductCategory } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
-import { productPhotoUrl } from '../lib/service-photos';
+import { IconCheck } from '../components/icons';
+import { GstInPrice, TaxFields } from '../components/TaxFields';
+import { ProductPhoto } from '../components/ProductPhoto';
+import { codeHolder } from '../lib/product-match';
 import { StockPanel } from './StockPanel';
 import { SalesPanel } from './SalesPanel';
 import { stockTone } from './ProductsList';
@@ -21,6 +24,7 @@ import { stockTone } from './ProductsList';
  */
 type Part = 'details' | 'stock' | 'sales';
 
+
 export function ProductSheet({
   product,
   branchId,
@@ -29,6 +33,7 @@ export function ProductSheet({
   onDelete,
   onClose,
   inline = false,
+  initialSaved = false,
 }: {
   product: Product | null;
   branchId: string;
@@ -39,6 +44,8 @@ export function ProductSheet({
   onClose: () => void;
   /** The wide desk draws the sheet in its right panel: no backdrop, no dialog, and a save keeps it open. */
   inline?: boolean;
+  /** True when a newly created product on the wide desk mounts in place right after Save. */
+  initialSaved?: boolean;
 }) {
   const t = useTranslations('products.form');
   const tp = useTranslations('products');
@@ -51,10 +58,18 @@ export function ProductSheet({
   const [cost, setCost] = useState(product?.costMinor != null ? String(Number(product.costMinor) / 100) : '');
   const [lowAt, setLowAt] = useState(product && product.lowStockAt > 0 ? String(product.lowStockAt) : '');
   const [categoryId, setCategoryId] = useState<string>(product?.categoryId ?? '');
+  /** Jira GRW-574 (0119) — the business's own code, and what a scanner reads off the pack. */
+  const [sku, setSku] = useState(product?.sku ?? '');
+  const [barcode, setBarcode] = useState(product?.barcode ?? '');
+  /** Jira GRW-574 (0120) — optional GST rate (basis points; 0 is 0%, '' is not set) and HSN code, shown when set or opened. */
+  const [gstRateBp, setGstRateBp] = useState<string>(product?.gstRateBp != null ? String(product.gstRateBp) : '');
+  const [hsn, setHsn] = useState(product?.hsn ?? '');
+  const [taxOpen, setTaxOpen] = useState(Boolean(product && (product.gstRateBp != null || product.hsn)));
   const [stock, setStock] = useState('0');
   const [photo, setPhoto] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl ?? null);
   const [busy, setBusy] = useState(false);
+  const [justSaved, setJustSaved] = useState(initialSaved);
   const [error, setError] = useState<string | null>(null);
   /**
    * Review, 2026-10-15 — a save that made the product but could not upload its photo. The product now exists, so a
@@ -67,7 +82,7 @@ export function ProductSheet({
     if (pending) onSaved(pending);
     onClose();
   };
-  useDialog(sheetRef, { onClose: busy || inline ? undefined : close });
+  useDialog(sheetRef, { onClose: busy || inline ? undefined : close, active: !inline });
 
   // One object URL per picked file, released when the file changes or the sheet closes (not one per render).
   const photoPreview = useMemo(() => (photo ? URL.createObjectURL(photo) : null), [photo]);
@@ -80,10 +95,34 @@ export function ProductSheet({
 
   const rupees = Number(price);
   const costRupees = cost.trim() === '' ? null : Number(cost);
-  const canSave = name.trim().length > 0 && price.trim() !== '' && Number.isFinite(rupees) && rupees >= 0 && (costRupees === null || (Number.isFinite(costRupees) && costRupees >= 0));
+  /** The API's own rule (printable characters, no spaces), said here so the owner is told before Save, in their language. */
+  const barcodeBad = barcode.trim() !== '' && !/^[!-~]+$/.test(barcode.trim());
+  const valid =
+    name.trim().length > 0 && price.trim() !== '' && Number.isFinite(rupees) && rupees >= 0 && (costRupees === null || (Number.isFinite(costRupees) && costRupees >= 0)) && (!product ? stock.trim() === '' || (Number.isFinite(Number(stock)) && Number(stock) >= 0) : true) && !barcodeBad;
+  const dirty = target
+    ? name.trim() !== target.name ||
+      Math.round(rupees * 100) !== Number(target.priceMinor) ||
+      (costRupees === null ? null : Math.round(costRupees * 100)) !== (target.costMinor == null ? null : Number(target.costMinor)) ||
+      (lowAt.trim() === '' ? 0 : Math.max(0, Math.trunc(Number(lowAt)) || 0)) !== target.lowStockAt ||
+      (categoryId || null) !== target.categoryId ||
+      (sku.trim() || null) !== (target.sku ?? null) ||
+      (barcode.trim() || null) !== (target.barcode ?? null) ||
+      (gstRateBp === '' ? null : Number(gstRateBp)) !== (target.gstRateBp ?? null) ||
+      (hsn.trim() || null) !== (target.hsn ?? null) ||
+      photo !== null
+    : true;
+  const canSave = valid && dirty;
+  useEffect(() => {
+    if (dirty && justSaved) setJustSaved(false);
+  }, [dirty, justSaved]);
+  const showSaved = justSaved && !dirty && !busy;
   const marginPct = costRupees !== null && rupees > 0 && Number.isFinite(costRupees) ? Math.round(((rupees - costRupees) / rupees) * 100) : null;
 
-  const fail = (err: unknown) => setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
+  const fail = (err: unknown) => {
+    const holder = codeHolder(err);
+    if (holder) setError(t(holder.field === 'sku' ? 'skuTaken' : 'barcodeTaken', { name: holder.name }));
+    else setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
+  };
 
   const submit = async () => {
     if (!canSave || busy) return;
@@ -96,23 +135,40 @@ export function ProductSheet({
         costMinor: costRupees === null ? null : Math.round(costRupees * 100),
         lowStockAt: lowAt.trim() === '' ? 0 : Math.max(0, Math.trunc(Number(lowAt)) || 0),
         categoryId: categoryId || null,
+        sku: sku.trim() || null,
+        barcode: barcode.trim() || null,
+        gstRateBp: gstRateBp === '' ? null : Number(gstRateBp),
+        hsn: hsn.trim() || null,
       };
       let saved = target
         ? await api.updateProduct(target.id, body)
         : await api.createProduct(branchId, {
             ...body,
-            stock: Math.trunc(Number(stock)) || 0,
+            stock: Math.max(0, Math.trunc(Number(stock)) || 0),
           });
       if (photo) {
         try {
           saved = await api.uploadProductPhoto(saved.id, photo);
+          setPhoto(null);
+          setImageUrl(saved.imageUrl);
+          if (photoRef.current) photoRef.current.value = '';
         } catch (err) {
           setPending(saved);
           setError(err instanceof ApiError && err.status < 500 ? err.message : t('photoFailed'));
           return;
         }
       }
+      setName(saved.name);
+      setPrice(String(Number(saved.priceMinor) / 100));
+      setCost(saved.costMinor != null ? String(Number(saved.costMinor) / 100) : '');
+      setLowAt(saved.lowStockAt > 0 ? String(saved.lowStockAt) : '');
+      setCategoryId(saved.categoryId ?? '');
+      setSku(saved.sku ?? '');
+      setBarcode(saved.barcode ?? '');
+      setGstRateBp(saved.gstRateBp != null ? String(saved.gstRateBp) : '');
+      setHsn(saved.hsn ?? '');
       setPending(null);
+      setJustSaved(true);
       onSaved(saved);
       if (!inline) onClose();
     } catch (err) {
@@ -151,8 +207,22 @@ export function ProductSheet({
         </button>
         <span className="sheet-head-title">{title}</span>
         {part === 'details' ? (
-          <button type="button" className="sheet-head-save" disabled={busy || !canSave} onClick={() => void submit()}>
-            {busy ? t('saving') : t('save')}
+          <button
+            type="button"
+            className={`sheet-head-save ${showSaved ? 'is-saved' : ''}`}
+            disabled={busy || !canSave}
+            aria-live="polite"
+            onClick={() => void submit()}
+          >
+            {busy ? (
+              t('saving')
+            ) : showSaved ? (
+              <>
+                <IconCheck /> {t('saved')}
+              </>
+            ) : (
+              t('save')
+            )}
           </button>
         ) : (
           <span className="prd-head-spacer" aria-hidden="true" />
@@ -161,7 +231,7 @@ export function ProductSheet({
 
       {product ? (
         <div className="prd-sheet-id">
-          <img className="prd-sheet-photo" src={productPhotoUrl(product)} alt="" />
+          <ProductPhoto className="prd-sheet-photo" product={product} eager />
           <span className="prd-sheet-id-text">
             <span className="prd-sheet-name">{product.name}</span>
             <span className="prd-sheet-tags">
@@ -197,7 +267,7 @@ export function ProductSheet({
             {photo ? (
               <img className="sheet-photo-img" src={photoPreview ?? ''} alt="" />
             ) : imageUrl ? (
-              <img className="sheet-photo-img" src={productPhotoUrl({ imageUrl })} alt="" />
+              <img className="sheet-photo-img" src={imageUrl} alt="" />
             ) : (
               <span className="sheet-photo-img sheet-photo-empty" aria-hidden="true" />
             )}
@@ -284,6 +354,59 @@ export function ProductSheet({
             </div>
           </div>
           <div className="sheet-foot">{t('costHint')}</div>
+          <GstInPrice priceMinor={Math.round(rupees * 100)} rateBp={gstRateBp} />
+
+          {/* Jira GRW-574 — the codes the shelf and the till can find the product by. Both optional, blank clears. */}
+          <div className="sheet-group">
+            <div className="sheet-row">
+              <label className="sheet-row-label" htmlFor="prd-sku">
+                {t('sku')}
+              </label>
+              <div className="sheet-row-value">
+                <input
+                  id="prd-sku"
+                  type="text"
+                  value={sku}
+                  placeholder={tc('optional')}
+                  maxLength={40}
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  autoComplete="off"
+                  spellCheck={false}
+                  aria-describedby={barcodeBad ? undefined : 'prd-codes-hint'}
+                  onChange={(e) => setSku(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="sheet-row">
+              <label className="sheet-row-label" htmlFor="prd-barcode">
+                {t('barcode')}
+              </label>
+              <div className="sheet-row-value">
+                <input
+                  id="prd-barcode"
+                  type="text"
+                  value={barcode}
+                  placeholder={tc('optional')}
+                  maxLength={64}
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  autoComplete="off"
+                  spellCheck={false}
+                  aria-invalid={barcodeBad || undefined}
+                  aria-describedby={barcodeBad ? 'prd-barcode-error' : 'prd-codes-hint'}
+                  onChange={(e) => setBarcode(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+          {barcodeBad ? (
+            <div id="prd-barcode-error" className="sheet-foot sheet-foot-error">
+              {t('barcodeSpaces')}
+            </div>
+          ) : (
+            <div id="prd-codes-hint" className="sheet-foot">{t('codesHint')}</div>
+          )}
 
           <div className="sheet-group">
             {!product ? (
@@ -292,7 +415,7 @@ export function ProductSheet({
                   {t('stock')}
                 </label>
                 <div className="sheet-row-value">
-                  <input id="prd-stock" type="number" inputMode="numeric" step={1} value={stock} onChange={(e) => setStock(e.target.value)} />
+                  <input id="prd-stock" type="number" inputMode="numeric" min={0} step={1} value={stock} onChange={(e) => setStock(e.target.value)} />
                 </div>
               </div>
             ) : null}
@@ -306,6 +429,19 @@ export function ProductSheet({
             </div>
           </div>
           <div className="sheet-foot">{product ? t('lowAtHint') : t('stockHint')}</div>
+
+          {/* Jira GRW-574 (0120) — optional GST rate and HSN code, collapsed unless set or opened. */}
+          <TaxFields
+            idPrefix="prd"
+            kind="product"
+            rateBp={gstRateBp}
+            onRateBp={setGstRateBp}
+            code={hsn}
+            onCode={setHsn}
+            open={taxOpen}
+            onToggle={() => setTaxOpen((o) => !o)}
+            savedRateBp={target?.gstRateBp}
+          />
           {error ? (
             <div role="alert" className="sheet-foot sheet-foot-error">
               {error}

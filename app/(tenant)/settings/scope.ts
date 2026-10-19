@@ -28,6 +28,20 @@ export async function loadScopedSettings(
   const asked = branch && branch !== 'all' ? await api.settings(branch).catch(failed) : null;
   if (asked && asked.branchCount > 1) return done(asked);
 
+  /*
+   * No branch named: a business with several shows its main branch. `/me` — which this page's layout has already read,
+   * so it costs nothing — says how many branches there are and which is the main one, so ask for that branch directly.
+   * This used to ask for the business view first only to read the main branch's id out of it, then ask again for the
+   * branch: two full settings reads (a tenant summary, the branch's rules, its rates) where one answers. A page the
+   * layout could not read `/me` for falls through to the two-step path below, unchanged.
+   */
+  const me = await api.me().catch(() => null);
+  const mainId = me?.tenant?.locationId;
+  if (mainId && (me?.tenant?.branchCount ?? 0) > 1) {
+    const direct = await api.settings(mainId).catch(failed);
+    if (direct && direct.branchCount > 1) return done(direct);
+  }
+
   const business = await api.settings().catch(failed);
   if (!business || business.branchCount <= 1 || !business.location) return done(business);
   // The business view names the main branch as its `location`.

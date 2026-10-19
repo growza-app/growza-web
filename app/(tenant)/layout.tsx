@@ -11,6 +11,7 @@ import { LanguageSync } from './components/LanguageSync';
 import { ViewportHeight } from './components/ViewportHeight';
 import { InstallBanner } from '../shared/install/InstallBanner';
 import { InstallPromptCapture } from '../shared/install/InstallPromptCapture';
+import { NumberWheelGuard } from '../shared/NumberWheelGuard';
 import { BrowserGate } from './components/BrowserGate';
 import { LiveRefresh } from './components/LiveRefresh';
 import { SessionRefresh } from './components/SessionRefresh';
@@ -289,6 +290,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <BrowserGate />
         <InstallPromptCapture />
         <PwaRegister />
+        <NumberWheelGuard />
         <ViewportHeight />
         <LanguageSync stored={storedLang} rendered={lang} />
         <LiveRefresh initialVersion={liveVersionAtRender} />
@@ -314,6 +316,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             whatsappLive,
             pendingAttendance,
             selfCheckIn,
+            timezone,
           }}
         >
         <BranchProvider branches={branches} role={role ?? null} memberLocationId={memberLocationId} workBranchName={workBranchName}>

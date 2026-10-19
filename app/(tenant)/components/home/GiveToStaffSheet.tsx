@@ -72,26 +72,21 @@ export function GiveToStaffSheet({
    * than sending the desk back to re-add the client.
    */
   const needsServices = entry.serviceIds.length === 0;
-  /** Jira GRW-451 — `null` is "still loading", which an empty branch menu is not. */
   const [services, setServices] = useState<Service[] | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
-  /** The stylist tapped, while the services are still to be asked; null is the first step. */
+  /** The stylist selected from the list before pressing Start. */
   const [chosen, setChosen] = useState<Provider | null>(null);
-  /** Packages that fill in their services in one tap; none is fine, they are only a shortcut. */
-  const [packages, setPackages] = useState<Offer[]>([]);
   useEffect(() => {
     if (!needsServices) return;
     let cancelled = false;
     void api
-      .offers(entry.locationId)
-      .then((all) => {
-        if (!cancelled) setPackages(all.filter((o) => o.active && o.comboPriceMinor !== null && o.serviceIds.length > 0));
-      })
-      .catch(() => undefined);
-    void api
       // Jira GRW-379 — what is sold at the branch they are waiting at.
       .services(entry.locationId)
       .then((all) => {
+        // QA, 2026-10-17 — NOT `setPicked([all[0].id])`. The picker below went away with the two-step sheet and this
+        // auto-pick stayed behind, so a token issued by name alone started on whatever service the API happened to
+        // list first — never shown, impossible to change, and the wrong duration and bill. The desk says what they
+        // are having, as it always did.
         if (!cancelled) setServices(all);
       })
       .catch(() => {
@@ -129,23 +124,11 @@ export function GiveToStaffSheet({
     }
   };
 
-  /** First step: a token with services goes straight to the stylist; one without asks for them next. */
+  /** Select a stylist row first; the Start button below starts the visit. */
   const choose = (p: Provider) => {
-    if (needsServices) {
-      setChosen(p);
-      setError(null);
-    } else {
-      void give(p.id);
-    }
-  };
-
-  /** A package is its services: tap to add them all, tap again to take them off. A package whose services the branch lacks is not offered. */
-  const togglePackage = (o: Offer) => {
-    const all = o.serviceIds.every((id) => picked.includes(id));
-    setPicked((cur) => (all ? cur.filter((id) => !o.serviceIds.includes(id)) : [...new Set([...cur, ...o.serviceIds])]));
+    setChosen(p);
     setError(null);
   };
-  const offeredPackages = packages.filter((o) => (services ?? []).length > 0 && o.serviceIds.every((id) => (services ?? []).some((sv) => sv.id === id)));
 
   const left = async () => {
     setSaving('left');
@@ -159,23 +142,14 @@ export function GiveToStaffSheet({
     }
   };
 
-  const second = needsServices && chosen !== null;
-
   return (
     <div className="hm-overlay" role="presentation" onClick={onClose}>
       <div className="hm-sheet hm-sheet-narrow" role="dialog" aria-modal="true" aria-labelledby="hm-give-title" ref={dialogRef} onClick={(e) => e.stopPropagation()}>
         <div className="hm-sheet-head">
-          {second ? (
-            <button type="button" className="hm-icon-btn" aria-label={t.changeStylist} disabled={saving !== null} onClick={() => setChosen(null)}>
-              <IconArrowLeft />
-            </button>
-          ) : null}
           <div className="hm-give-title">
-            <h2 id="hm-give-title">{second ? t.whatHaving : t.giveTitle(entry.customerName)}</h2>
+            <h2 id="hm-give-title">{t.giveTitle(entry.customerName)}</h2>
             <p>
-              {second
-                ? `${chosen.displayName} · ${entry.customerName}`
-                : [entry.tokenNo ? `#${entry.tokenNo}` : null, entry.serviceNames.join(' + ')].filter(Boolean).join(' · ')}
+              {[entry.tokenNo ? `#${entry.tokenNo}` : null, entry.serviceNames.join(' + ')].filter(Boolean).join(' · ')}
             </p>
           </div>
           <button type="button" className="hm-icon-btn" aria-label={t.close} onClick={onClose}>
@@ -183,71 +157,59 @@ export function GiveToStaffSheet({
           </button>
         </div>
         {error ? <div className="hm-error" role="alert">{error}</div> : null}
-        {second ? (
-          <>
-            <div className="hm-give-services">
-              {/* Jira GRW-451 — a branch whose menu is empty says so, rather than a blank row above a button that cannot work. */}
-              {services === null ? <p className="hm-empty">{t.loadingServicesHere}</p> : null}
-              {services !== null && services.length === 0 ? <p className="hm-empty">{t.noServicesHere}</p> : null}
-              {offeredPackages.length > 0 ? (
-                <>
-                  <div className="wi-section-label">{t.packagesLabel}</div>
-                  <div className="wi-chips">
-                    {offeredPackages.map((o) => {
-                      const on = o.serviceIds.every((id) => picked.includes(id));
-                      return (
-                        <button key={o.id} type="button" className={`wi-chip ${on ? 'wi-chip-on' : ''}`} aria-pressed={on} onClick={() => togglePackage(o)}>
-                          {o.title}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </>
-              ) : null}
-              {(services ?? []).length > 0 ? <div className="wi-section-label">{t.servicesLabel}</div> : null}
-              <div className="wi-chips">
-                {(services ?? []).map((sv) => {
-                  const on = picked.includes(sv.id);
-                  return (
-                    <button
-                      key={sv.id}
-                      type="button"
-                      className={`wi-chip ${on ? 'wi-chip-on' : ''}`}
-                      aria-pressed={on}
-                      onClick={() => {
-                        setPicked((cur) => (on ? cur.filter((id) => id !== sv.id) : [...cur, sv.id]));
-                        setError(null);
-                      }}
-                    >
-                      {sv.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <button type="button" className="btn hm-give-go" disabled={saving !== null || picked.length === 0} onClick={() => void give(chosen.id)}>
-              {t.giveToName(chosen.displayName)}
-            </button>
-          </>
-        ) : (
-          <ul className="hm-rows hm-pick">
-            {ordered.map((p) => {
-              const b = busy.get(p.id);
-              return (
-                <li key={p.id} className="hm-row hm-row-button">
-                  <button type="button" disabled={saving !== null} onClick={() => choose(p)}>
-                    <Avatar name={p.displayName} id={p.id} size={38} />
-                    <span className="hm-row-main">
-                      <span className="hm-row-name">{p.displayName}</span>
-                    </span>
-                    {b ? <span className="hm-pill hm-pill-amber">{t.busyWith(b.client, b.min)}</span> : <span className="hm-pill hm-pill-green">{t.free}</span>}
+        {needsServices && services === null ? <p className="hm-empty">{t.loadingServicesHere}</p> : null}
+        {needsServices && services !== null && services.length === 0 ? <p className="hm-empty">{t.noServicesHere}</p> : null}
+        {needsServices && services !== null && services.length > 0 ? (
+          <div className="hm-give-services">
+            <div className="wi-section-label">{t.servicesLabel}</div>
+            <div className="wi-chips">
+              {services.map((sv) => {
+                const on = picked.includes(sv.id);
+                return (
+                  <button
+                    key={sv.id}
+                    type="button"
+                    className={`wi-chip ${on ? 'wi-chip-on' : ''}`}
+                    aria-pressed={on}
+                    disabled={saving !== null}
+                    onClick={() => {
+                      setPicked((cur) => (on ? cur.filter((id) => id !== sv.id) : [...cur, sv.id]));
+                      setError(null);
+                    }}
+                  >
+                    {sv.name}
                   </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-        {second ? null : <div className="hm-give-foot hm-sheet-close">
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+        <ul className="hm-rows hm-pick">
+          {ordered.map((p) => {
+            const b = busy.get(p.id);
+            const isSelected = chosen?.id === p.id;
+            return (
+              <li key={p.id} className={`hm-row hm-row-button ${isSelected ? 'is-selected' : ''}`}>
+                <button type="button" aria-pressed={isSelected} disabled={saving !== null} onClick={() => choose(p)}>
+                  <Avatar name={p.displayName} id={p.id} size={38} photoUrl={p.photoUrl} />
+                  <span className="hm-row-main">
+                    <span className="hm-row-name">{p.displayName}</span>
+                  </span>
+                  {b ? <span className="hm-pill hm-pill-amber">{t.busyWith(b.client, b.min)}</span> : <span className="hm-pill hm-pill-green">{t.free}</span>}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        <button
+          type="button"
+          className="btn hm-give-go"
+          disabled={saving !== null || chosen === null || (needsServices && picked.length === 0)}
+          onClick={() => chosen && void give(chosen.id)}
+        >
+          {chosen ? `${t.startBtn} · ${chosen.displayName}` : t.startBtn}
+        </button>
+        <div className="hm-give-foot hm-sheet-close">
           {onRecordPayment ? (
             <button type="button" className="hm-btn hm-btn-quiet" disabled={saving !== null} onClick={onRecordPayment}>
               {t.recordPayment}
@@ -256,7 +218,7 @@ export function GiveToStaffSheet({
           <button type="button" className="hm-btn hm-btn-quiet" disabled={saving !== null} onClick={() => void left()}>
             {t.theyLeft}
           </button>
-        </div>}
+        </div>
       </div>
     </div>
   );

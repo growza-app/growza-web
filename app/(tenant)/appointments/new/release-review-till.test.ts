@@ -10,8 +10,17 @@ const stock = read('../../products/StockPanel.tsx');
 
 describe('release review, 2026-10-16 — the till', () => {
   it('a different token or booking is a different bill: PayFlow is keyed on what it is for', () => {
-    expect(client).toMatch(/const billKey = token\?\.id \?\? visit\?\.appointment\.id \?\? 'walk-in';/);
+    expect(client).toMatch(/const billKey = billKeyOf\(searchParams\);/);
+    // Not the resolved token: paying refreshes the route, the token is gone, and a key built from it remounts the Paid screen away.
+    expect(client).not.toMatch(/const billKey = token\?\./);
     expect((client.match(/<PayFlow key=\{billKey\}/g) ?? []).length).toBe(2);
+  });
+  it('Next customer drops the paid bill\'s address even though the refresh already cleared the token', () => {
+    const next = flow.slice(flow.indexOf('const nextCustomer = () => {'), flow.indexOf('A sale needs somebody'));
+    expect(next).toMatch(/if \(token \|\| tokenGone \|\| visit \|\| visitGone\) router\.replace\(nextCustomerHref\(\{ from: backTo \? 'bookings' : undefined \}\)\);/);
+  });
+  it('the one-page form\'s Next customer drops the paid token\'s address too', () => {
+    expect(client).toMatch(/if \(token \|\| tokenGone\) router\.replace\(nextCustomerHref\(\{ full, from: backTo \? 'bookings' : undefined \}\)\);/);
   });
   it('the large-amount question is drawn on the UPI QR screen too', () => {
     const qr = flow.slice(flow.indexOf("if (step === 'qr' && paymentQr)"), flow.indexOf('The four payment tiles'));

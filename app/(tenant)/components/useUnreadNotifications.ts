@@ -2,15 +2,14 @@
 
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { api } from '../lib/api';
+import { feedDue, onLiveTick } from '../lib/live-signal';
 import { NOTIF_READ_EVENT, countUnread, knownEvents, readClearedBeforeId, readLastSeenId, useFeedBranch } from './NotificationBell';
-
-const POLL_MS = 15_000;
 
 /**
  * Jira GRW-338 — how many notifications are waiting: the number on the phone's Notifications tab.
  *
  * Same feed and same read cursor as the desktop bell and the Notifications page, so the three never disagree.
- * Polls like the bell does (paused while the tab is hidden), and re-counts at once when the cursor moves on
+ * Re-reads like the bell does — on `LiveRefresh`'s tick, not a timer of its own (paused while the tab is hidden) — and re-counts at once when the cursor moves on
  * this tab, so "Mark all read" clears the badge without waiting for the next poll.
  *
  * `hostRef` is the element that carries the badge. On a laptop the bottom bar is `display: none` and the bell
@@ -37,13 +36,15 @@ export function useUnreadNotifications(hostRef: RefObject<HTMLElement | null>): 
     };
 
     load();
-    const timer = setInterval(load, POLL_MS);
+    const stopTicks = onLiveTick((t) => {
+      if (feedDue(t)) void load();
+    });
     document.addEventListener('visibilitychange', load);
     window.addEventListener(NOTIF_READ_EVENT, readCursors);
     window.addEventListener('storage', readCursors);
     return () => {
       alive.current = false;
-      clearInterval(timer);
+      stopTicks();
       document.removeEventListener('visibilitychange', load);
       window.removeEventListener(NOTIF_READ_EVENT, readCursors);
       window.removeEventListener('storage', readCursors);

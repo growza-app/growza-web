@@ -19,6 +19,7 @@ import {
   IconOffers,
   IconPackages,
   IconProducts,
+  IconReceipt,
   IconReports,
   IconServices,
   IconSettings,
@@ -139,6 +140,7 @@ export function Sidebar({
       icon: <IconAppointments />,
       children: [{ href: '/availability', label: t.nav.freeTimes }],
     },
+    { href: '/sales', label: t.nav.sales, icon: <IconReceipt /> },
     { href: '/customers', label: t.nav.clients, icon: <IconUserPlus /> },
     {
       href: '',
@@ -276,7 +278,19 @@ export function Sidebar({
             return (
               <div key={item.label} className={`nav-group ${item.className ?? ''}`}>
                 <div className="nav-row">
-                  <a href={item.href} className={current ? 'active' : ''} aria-current={current && (!expandable || !expanded) ? 'page' : undefined} onClick={close}>
+                  <a
+                    href={item.href}
+                    className={current ? 'active' : ''}
+                    aria-current={current && (!expandable || !expanded) ? 'page' : undefined}
+                    onClick={(e) => {
+                      if (expandable) {
+                        e.preventDefault();
+                        remember({ ...folds, [item.label]: !expanded });
+                        return;
+                      }
+                      close();
+                    }}
+                  >
                     {item.icon}
                     {item.label}
                     {item.pill ? <span className="nav-pill">{item.pill}</span> : null}

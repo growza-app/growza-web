@@ -108,23 +108,26 @@ export function receiptRows(input: ReceiptInput, copy: ReceiptCopy, money: (mino
   line({ t: `📅 ${input.when}` });
   const who = [input.tokenNo ? copy.token(input.tokenNo) : null, input.stylist ? copy.stylist(plain(input.stylist)) : null].filter(Boolean);
   if (who.length > 0) line({ t: `${input.tokenNo ? '🎟 ' : ''}${who.join(' · ')}` });
-  gap();
-  line({ t: copy.services, bold: true });
-
-  for (const g of grouped(input.singles.map((x) => ({ ...x, name: plain(x.name) })))) {
-    line({ t: `${g.name}${g.count > 1 ? ` × ${g.count}` : ''} — ${money(g.amountMinor)}` });
-  }
-
-  let saving = 0;
-  for (const pkg of [...(input.pkg ? [input.pkg] : []), ...(input.pkgs ?? [])]) {
-    const saved = Math.max(0, pkg.separateMinor - pkg.paidMinor);
-    saving += saved;
-    line({ t: `${copy.packageName(plain(pkg.title))} — ${money(pkg.paidMinor)}` });
-    if (pkg.services.length > 0) line({ t: '  ' }, { t: pkg.services.map(plain).join(', '), italic: true });
-    if (saved > 0) line({ t: '  ' }, { t: copy.separately(money(pkg.separateMinor), money(saved)), italic: true });
-  }
-
+  const pkgs = [...(input.pkg ? [input.pkg] : []), ...(input.pkgs ?? [])];
   const products = input.products ?? [];
+  let saving = 0;
+  if (input.singles.length > 0 || pkgs.length > 0 || products.length === 0) {
+    gap();
+    line({ t: copy.services, bold: true });
+
+    for (const g of grouped(input.singles.map((x) => ({ ...x, name: plain(x.name) })))) {
+      line({ t: `${g.name}${g.count > 1 ? ` × ${g.count}` : ''} — ${money(g.amountMinor)}` });
+    }
+
+    for (const pkg of pkgs) {
+      const saved = Math.max(0, pkg.separateMinor - pkg.paidMinor);
+      saving += saved;
+      line({ t: `${copy.packageName(plain(pkg.title))} — ${money(pkg.paidMinor)}` });
+      if (pkg.services.length > 0) line({ t: '  ' }, { t: pkg.services.map(plain).join(', '), italic: true });
+      if (saved > 0) line({ t: '  ' }, { t: copy.separately(money(pkg.separateMinor), money(saved)), italic: true });
+    }
+  }
+
   if (products.length > 0) {
     gap();
     line({ t: copy.products ?? copy.services, bold: true });

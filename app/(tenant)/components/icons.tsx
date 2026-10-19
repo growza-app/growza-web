@@ -195,6 +195,15 @@ export const IconPlus = () => (
   </svg>
 );
 
+/** Feather `shopping-cart` — sell a product over the counter. The phone header shows a button's icon and hides its words. */
+export const IconCart = () => (
+  <svg {...base}>
+    <circle cx="9" cy="21" r="1" />
+    <circle cx="20" cy="21" r="1" />
+    <path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6" />
+  </svg>
+);
+
 /** IconPlus without its upright: the "one fewer" half of a quantity counter. */
 export const IconMinus = () => (
   <svg {...base}>
@@ -509,6 +518,14 @@ export const IconDownload = () => (
   </svg>
 );
 
+export const IconUpload = () => (
+  <svg {...base}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="17 8 12 3 7 8" />
+    <line x1="12" y1="3" x2="12" y2="15" />
+  </svg>
+);
+
 export const IconRupee = () => (
   <svg {...base}>
     <path d="M6 3h12M6 8h12M9.5 21 6 13h3a5 5 0 0 0 0-10" />
@@ -697,3 +714,19 @@ export const IconInfo = () => (
     <path d="M12 11v5M12 8h.01" />
   </svg>
 );
+
+/** Feather `rotate-ccw` — return a product against a completed sale. */
+export const IconReturn = () => (
+  <svg {...base}>
+    <polyline points="1 4 1 10 7 10" />
+    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+  </svg>
+);
+
+/** Vertical barcode stripes — scan or type a barcode to return a product. */
+export const IconBarcode = () => (
+  <svg {...base}>
+    <path d="M3 5v14M7 5v14M10 5v14M14 5v14M17 5v14M21 5v14" />
+  </svg>
+);
+

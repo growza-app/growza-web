@@ -9,7 +9,7 @@ import { formatDateWithWeekday } from '../lib/format';
 import { bookingBill, clientNameLabel, formatDuration, type BookingGroup } from '../lib/appointment-display';
 import { dialable } from './BookingSheet';
 import { CorrectBookingSheet } from './CorrectBookingSheet';
-import { IconCheck, IconEdit, IconPackages, IconPhone } from './icons';
+import { IconCheck, IconClose, IconEdit, IconPackages, IconPhone, IconReturn } from './icons';
 import { useMayUse } from './SessionProvider';
 import { useLabel } from './LabelsProvider';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -27,12 +27,15 @@ export function BookingSummary({
   timezone,
   onClose,
   inline = false,
+  onReturnProducts,
 }: {
   booking: BookingGroup;
   timezone: string;
   onClose: () => void;
   /** Owner, 2026-10-14 — drawn in place in the Bookings desk's right panel: no backdrop, no focus trap. */
   inline?: boolean;
+  /** Optional handler to open the product return sheet for this bill from the Sales register. */
+  onReturnProducts?: () => void;
 }) {
   const t = useTranslations('chrome.summary');
   const tc = useTranslations('chrome');
@@ -43,7 +46,8 @@ export function BookingSummary({
   const [correcting, setCorrecting] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [corrections, setCorrections] = useState<BookingCorrection[]>([]);
-  const firstId = booking.appointments[0]?.id;
+  const serviceLegs = booking.appointments.filter((a) => Boolean(a.serviceId || a.serviceName));
+  const firstId = serviceLegs[0]?.id;
   // The owner sees what was changed on a finished visit, so a figure that moved is never a mystery. A failed read
   // just shows nothing: the receipt above is still right.
   useEffect(() => {
@@ -60,10 +64,18 @@ export function BookingSummary({
   const providerWord = pickNoun(locale, useLabel('provider', 'Staff member'), tn('staff'));
   // Jira GRW-314 — what the customer actually paid, less anything cancelled at the till, with the
   // combo's discount only where it has not already gone into a paid amount (see `bookingBill`).
-  const { totalMinor: totalPaid, savingsMinor: savings } = bookingBill(booking.appointments);
+  const { totalMinor: servicesPaid, savingsMinor: savings } = bookingBill(booking.appointments);
+  const products = booking.products ?? [];
+  const productsRefunded = products.reduce((sum, p) => sum + Math.max(0, Number(p.returnedMinor || 0)), 0);
+  const productsPaid = products.reduce(
+    (sum, p) => sum + Math.max(0, Number(p.paidMinor || 0) - Number(p.returnedMinor || 0)),
+    0,
+  );
+  const totalPaid = servicesPaid + productsPaid;
   const paymentMode = booking.appointments.find((a) => a.paymentMode)?.paymentMode ?? null;
-  const subtotal = totalPaid + savings;
-  const pricesShown = booking.appointments.some((a) => a.priceMinor != null || a.paidAmountMinor != null);
+  const subtotal = totalPaid + savings + productsRefunded;
+  const pricesShown =
+    booking.appointments.some((a) => a.priceMinor != null || a.paidAmountMinor != null) || products.length > 0;
   const paidOf = (a: Appointment) => a.paidAmountMinor ?? a.priceMinor ?? '0';
   const dateLine = formatDateWithWeekday(booking.startAt, timezone, { locale });
 
@@ -124,7 +136,8 @@ export function BookingSummary({
               </a>
             </div>
             <div className="summary-sub">
-              {t('finished')} · {dateLine} · {formatTime(booking.startAt, timezone)} · {formatDuration(booking.totalMin, locale)}
+              {t('finished')} · {dateLine} · {formatTime(booking.startAt, timezone)}
+              {booking.totalMin > 0 ? ` · ${formatDuration(booking.totalMin, locale)}` : ''}
             </div>
             {booking.offerTitle && (
               <div className="summary-combo">
@@ -132,6 +145,11 @@ export function BookingSummary({
               </div>
             )}
           </div>
+          {inline && (
+            <button type="button" className="icon-btn bk-sheet-close" onClick={onClose} aria-label={tc('close')}>
+              <IconClose />
+            </button>
+          )}
         </div>
 
         {/*
@@ -142,42 +160,91 @@ export function BookingSummary({
         */}
         <div className="summary-scroll">
         {/* Jira GRW-480 (Q-1) — the API sends no prices to a stylist the owner keeps off the money. */}
-        <div className="summary-section-label">{t('services')}</div>
-        {booking.appointments.map((a) => (
-          <div className="summary-row" key={a.id}>
-            <span className="summary-avatar">{a.serviceName.slice(0, 1).toUpperCase()}</span>
-            <div className="summary-info">
-              <div className="summary-service">{a.serviceName}</div>
-              <div className="summary-stylist">{a.providerName ?? t('noStaff', { label: providerWord.toLowerCase() })}</div>
-            </div>
-            {/* Jira GRW-314 — a service cancelled at the till is listed, but is not on the bill. */}
-            {a.status === 'cancelled' ? (
-              <span className="summary-price">{t('cancelled')}</span>
-            ) : pricesShown ? (
-              <span className="summary-price">{formatMoney(paidOf(a))}</span>
-            ) : null}
-          </div>
-        ))}
+        {serviceLegs.length > 0 && (
+          <>
+            <div className="summary-section-label">{t('services')}</div>
+            {serviceLegs.map((a) => (
+              <div className="summary-row" key={a.id}>
+                <span className="summary-avatar">{a.serviceName.slice(0, 1).toUpperCase()}</span>
+                <div className="summary-info">
+                  <div className="summary-service">{a.serviceName}</div>
+                  <div className="summary-stylist">{a.providerName ?? t('noStaff', { label: providerWord.toLowerCase() })}</div>
+                </div>
+                {/* Jira GRW-314 — a service cancelled at the till is listed, but is not on the bill. */}
+                {a.status === 'cancelled' ? (
+                  <span className="summary-price">{t('cancelled')}</span>
+                ) : pricesShown ? (
+                  <span className="summary-price">{formatMoney(paidOf(a))}</span>
+                ) : null}
+              </div>
+            ))}
+          </>
+        )}
+
+        {products.length > 0 && (
+          <>
+            <div className="summary-section-label">{t('products')}</div>
+            {products.map((p, idx) => {
+              const retQty = Math.max(0, Number(p.returnedQty || 0));
+              const netMinor = Math.max(0, Number(p.paidMinor || 0) - Number(p.returnedMinor || 0));
+              return (
+                <div className="summary-row" key={`${p.productId ?? p.name}-${idx}`}>
+                  <span className="summary-avatar">{p.name.slice(0, 1).toUpperCase()}</span>
+                  <div className="summary-info">
+                    <div className="summary-service">
+                      {p.qty > 1 ? `${p.name} × ${p.qty}` : p.name}
+                      {retQty > 0 ? (
+                        <span className="summary-returned-tag">
+                          {t('returnedBadge', { n: retQty })}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                  {pricesShown ? <span className="summary-price">{formatMoney(String(netMinor))}</span> : null}
+                </div>
+              );
+            })}
+          </>
+        )}
 
         {pricesShown && (
         <div className="summary-totals">
+          {(savings > 0 || productsRefunded > 0) && (
+            <div className="summary-line">
+              <span>{t('subtotal')}</span>
+              <span>{formatMoney(String(subtotal))}</span>
+            </div>
+          )}
           {savings > 0 && (
-            <>
-              <div className="summary-line">
-                <span>{t('subtotal')}</span>
-                <span>{formatMoney(String(subtotal))}</span>
-              </div>
-              <div className="summary-line">
-                <span><IconPackages /> {t('combo', { title: booking.offerTitle ?? '' })}</span>
-                <span className="summary-discount">− {formatMoney(String(savings))}</span>
-              </div>
-            </>
+            <div className="summary-line">
+              <span><IconPackages /> {t('combo', { title: booking.offerTitle ?? '' })}</span>
+              <span className="summary-discount">− {formatMoney(String(savings))}</span>
+            </div>
+          )}
+          {productsRefunded > 0 && (
+            <div className="summary-line">
+              <span>{t('refunded')}</span>
+              <span className="summary-refund">− {formatMoney(String(productsRefunded))}</span>
+            </div>
           )}
           <div className="summary-line summary-line-total">
             <span>{t('total')}</span>
             <span className="summary-total-value">{formatMoney(String(totalPaid))}</span>
           </div>
-          {paymentMode && (
+          {booking.payments && booking.payments.length > 1 ? (
+            <div className="summary-line">
+              <span>{t('paidBy')}</span>
+              <span>
+                {booking.payments
+                  .map((pm) =>
+                    (PAYMENT_MODE_KEYS as readonly string[]).includes(pm.mode)
+                      ? `${tc(`pay.${pm.mode as (typeof PAYMENT_MODE_KEYS)[number]}`)} (${formatMoney(pm.amountMinor)})`
+                      : pm.mode,
+                  )
+                  .join(' + ')}
+              </span>
+            </div>
+          ) : paymentMode && (
             <div className="summary-line">
               <span>{t('paidBy')}</span>
               <span>{(PAYMENT_MODE_KEYS as readonly string[]).includes(paymentMode) ? tc(`pay.${paymentMode as (typeof PAYMENT_MODE_KEYS)[number]}`) : paymentMode}</span>
@@ -221,7 +288,13 @@ export function BookingSummary({
         </div>
 
         <div className="modal-actions summary-actions">
-          {mayCorrect && booking.appointments.some((a) => a.status === 'completed') && (
+          {onReturnProducts ? (
+            <button type="button" className="btn btn-ghost" onClick={onReturnProducts}>
+              <IconReturn />
+              {t('returnProducts')}
+            </button>
+          ) : null}
+          {mayCorrect && booking.appointments.some((a) => a.status === 'completed') && serviceLegs.length > 0 && (
             <button type="button" className="btn btn-ghost" onClick={openCorrect}>
               <IconEdit />
               {tfix('item')}

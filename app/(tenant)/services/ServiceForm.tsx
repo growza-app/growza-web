@@ -4,12 +4,14 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError, type ServiceAdmin, type ServiceCategory } from '../lib/api';
 import { useDialog } from '../../shared/a11y/useDialog';
-import { packPhotoUrl, servicePhotoUrl } from '../lib/service-photos';
+import { packPhotoUrl } from '../lib/service-photos';
+import { ServicePhoto } from '../components/ServicePhoto';
 import { PackPhotoSheet } from './PackPhotoSheet';
 import { CLEANUP, DURATION, canStep, clamp, isDirty, slotMinutes, step, type Bounds, type SheetValues } from './service-sheet';
 import { durationPhrase, type DurationWords } from '../lib/duration-words';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { useLabel } from '../components/LabelsProvider';
+import { GstInPrice, TaxFields } from '../components/TaxFields';
 
 /** Owner, 2026-10-15 — the form's parts for an existing service. A new one is a single page. */
 type Part = 'details' | 'pricing' | 'staff';
@@ -163,6 +165,10 @@ export function ServiceForm({
   const [cleanupMin, setCleanupMin] = useState(service?.bufferAfterMin ?? 0);
   const [price, setPrice] = useState(fromMinor(service?.priceMinor ?? null));
   const [description, setDescription] = useState(service?.description ?? '');
+  // Jira GRW-582 — the service's tax classification: GST rate (basis points as text, '' = not set) and SAC.
+  const [gstRateBp, setGstRateBp] = useState(service?.gstRateBp != null ? String(service.gstRateBp) : '');
+  const [sac, setSac] = useState(service?.sac ?? '');
+  const [taxOpen, setTaxOpen] = useState(Boolean(service && (service.gstRateBp != null || service.sac)));
   const [part, setPart] = useState<Part>('details');
   const providerWord = useLabel('provider', 'stylist');
 
@@ -189,6 +195,8 @@ export function ServiceForm({
     cleanupMin !== (service?.bufferAfterMin ?? 0) ||
     price !== fromMinor(service?.priceMinor ?? null) ||
     description !== (service?.description ?? '') ||
+    gstRateBp !== (service?.gstRateBp != null ? String(service.gstRateBp) : '') ||
+    sac !== (service?.sac ?? '') ||
     photo !== null ||
     pickedKey !== undefined;
 
@@ -207,7 +215,11 @@ export function ServiceForm({
   };
   const current: SheetValues = { name, categoryId, durationMin, cleanupMin, price, hasNewPhoto: photo !== null || pickedKey !== undefined };
   // On create there is nothing to compare against, so Save waits only on a name.
-  const canSave = service ? isDirty(current, original) || description !== (service.description ?? '') : name.trim().length > 0;
+  const taxChanged =
+    gstRateBp !== (service?.gstRateBp != null ? String(service.gstRateBp) : '') || sac !== (service?.sac ?? '');
+  const canSave = service
+    ? isDirty(current, original) || description !== (service.description ?? '') || taxChanged
+    : name.trim().length > 0;
 
   /**
    * Only the two that the steppers cannot already guarantee. Duration and cleanup are clamped by construction
@@ -241,6 +253,8 @@ export function ServiceForm({
       bufferAfterMin: cleanupMin,
       priceMinor: toMinor(price),
       description: description.trim() || null,
+      gstRateBp: gstRateBp === '' ? null : Number(gstRateBp),
+      sac: sac.trim() || null,
     };
     try {
       let saved = service
@@ -309,7 +323,7 @@ export function ServiceForm({
         {service ? (
           <>
             <div className="svc-sheet-id">
-              <img className="svc-sheet-photo" src={servicePhotoUrl(service)} alt="" />
+              <ServicePhoto className="svc-sheet-photo" service={service} eager />
               <span className="svc-sheet-id-text">
                 <span className="svc-sheet-name">{service.name}</span>
                 <span className="svc-sheet-tags">
@@ -336,12 +350,12 @@ export function ServiceForm({
             {photo ? (
               <img className="sheet-photo-img" src={URL.createObjectURL(photo)} alt="" />
             ) : imageUrl ? (
-              <img className="sheet-photo-img" src={servicePhotoUrl({ imageUrl, categoryName: null } as ServiceAdmin)} alt="" />
+              <img className="sheet-photo-img" src={imageUrl} alt="" />
             ) : imageUrl === null && pickedKey ? (
               <img className="sheet-photo-img" src={packPhotoUrl(pickedKey) ?? ''} alt="" />
             ) : service ? (
               /* The list shows the supplied pack picture when there is no upload; the sheet showed an empty box for the same service. */
-              <img className="sheet-photo-img" src={servicePhotoUrl(service)} alt="" />
+              <ServicePhoto className="sheet-photo-img" service={service} eager />
             ) : (
               <span className="sheet-photo-img sheet-photo-empty" aria-hidden="true" />
             )}
@@ -486,6 +500,18 @@ export function ServiceForm({
           </div>
           {fieldErrors.price && <div role="alert" className="sheet-foot sheet-foot-error">{fieldErrors.price}</div>}
           {service && !fieldErrors.price && <div className="sheet-foot">{t('priceHint')}</div>}
+          <GstInPrice priceMinor={toMinor(price) ?? 0} rateBp={gstRateBp} />
+          <TaxFields
+            idPrefix="svc"
+            kind="service"
+            rateBp={gstRateBp}
+            onRateBp={setGstRateBp}
+            code={sac}
+            onCode={setSac}
+            open={taxOpen}
+            onToggle={() => setTaxOpen((o) => !o)}
+            savedRateBp={service?.gstRateBp}
+          />
           </>
           ) : null}
 

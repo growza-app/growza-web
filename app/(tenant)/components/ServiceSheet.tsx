@@ -1,11 +1,13 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { formatMoney } from '../lib/api';
 import type { Offer, Product, Service } from '../lib/api-types';
 import { asMinor, matchItems } from '../lib/service-match';
-import { productPhotoUrl, servicePhotoUrl } from '../lib/service-photos';
+import { productByCode, productMatchable } from '../lib/product-match';
+import { ServicePhoto } from './ServicePhoto';
+import { ProductPhoto } from './ProductPhoto';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { IconInfo, IconSearch } from './icons';
@@ -43,6 +45,9 @@ export function ServiceSheet({
   products,
   productCounts,
   onPickProduct,
+  initialKind,
+  initialTerm = '',
+  productsOnly = false,
 }: {
   services: Service[];
   counts: Map<string, number>;
@@ -58,6 +63,10 @@ export function ServiceSheet({
   products?: Product[];
   productCounts?: Map<string, number>;
   onPickProduct?: (p: Product) => void;
+  initialKind?: 'products';
+  /** A scanned code that matched nothing, so the box opens with it and the cashier can edit it into a name. */
+  initialTerm?: string;
+  productsOnly?: boolean;
 }) {
   const t = useTranslations('payFlow');
   const nv = useNewVisitCopy();
@@ -68,11 +77,11 @@ export function ServiceSheet({
     box.current?.focus({ preventScroll: true });
   }, []);
 
-  const [term, setTerm] = useState('');
-  const [kind, setKind] = useState('');
   /** The chip that lists combos rather than one kind of service. Not a category name anyone can type. */
   const PACKAGES = '\u0000packages';
   const PRODUCTS = '\u0000products';
+  const [term, setTerm] = useState(initialTerm);
+  const [kind, setKind] = useState(productsOnly || initialKind === 'products' ? PRODUCTS : '');
   const offers = packages ?? [];
   const shelf = products ?? [];
   const packageMode = kind === PACKAGES;
@@ -87,10 +96,7 @@ export function ServiceSheet({
     const pool = inStockOnly ? shelf.filter((p) => p.stock > 0 || (productCounts?.get(p.id) ?? 0) > 0) : shelf;
     const q = term.trim();
     return q
-      ? matchItems(
-          pool.map((p) => ({ item: p, text: [p.name, p.categoryName ?? ''], priceMinor: asMinor(p.priceMinor) })),
-          q,
-        )
+      ? matchItems(pool.map(productMatchable), q)
       : sortMenu(
           pool,
           sort,
@@ -98,6 +104,15 @@ export function ServiceSheet({
           (p) => asMinor(p.priceMinor),
         );
   }, [shelf, productMode, term, sort, inStockOnly, productCounts]);
+  /** Jira GRW-574 — under Products, Enter on exactly one product's barcode or SKU picks it, as the desk till does. */
+  const onSearchKey = (e: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter' || e.nativeEvent.isComposing || !productMode || !onPickProduct) return;
+    const hit = productByCode(shelf, e.currentTarget.value);
+    if (!hit) return;
+    e.preventDefault();
+    onPickProduct(hit);
+    setTerm('');
+  };
   const shown = useMemo(() => {
     if (packageMode || productMode) return [];
     const pool = kind ? services.filter((s) => s.categoryName === kind) : services;
@@ -133,11 +148,13 @@ export function ServiceSheet({
   }, [offers, packageMode, term, services, sort]);
 
   // A tap on the dimmed area closes it, as every other sheet in the app does (`sheet-backdrop`).
+  const sheetTitle = productsOnly ? t('desk.products') : t('allServices', { count: services.length });
+  const searchLabel = productsOnly ? t('desk.searchProducts', { count: shelf.length }) : t('searchServices');
   return (
     <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={ref} className="pf-keypad pf-client pf-menu" role="dialog" aria-modal="true" aria-label={t('allServices', { count: services.length })} tabIndex={-1}>
+      <div ref={ref} className="pf-keypad pf-client pf-menu" role="dialog" aria-modal="true" aria-label={sheetTitle} tabIndex={-1}>
         <div className="pf-keypad-head">
-          <span className="pf-keypad-title">{t('allServices', { count: services.length })}</span>
+          <span className="pf-keypad-title">{sheetTitle}</span>
           <button type="button" className="pf-keypad-clear" onClick={onClose}>
             {nv.close}
           </button>
@@ -150,8 +167,9 @@ export function ServiceSheet({
               type="search"
               value={term}
               onChange={(e) => setTerm(e.target.value)}
-              placeholder={t('searchServices')}
-              aria-label={t('searchServices')}
+              onKeyDown={onSearchKey}
+              placeholder={searchLabel}
+              aria-label={searchLabel}
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
@@ -179,9 +197,9 @@ export function ServiceSheet({
           uncategorised and combos on sale is exactly one chip plus Packages, and that arithmetic hid the only
           door to the combos (review, 2026-10-11). Packages earns the row on its own.
         */}
-        {kinds.length > 1 || offers.length > 0 || shelf.length > 0 ? (
+        {!productsOnly && (kinds.length > 1 || offers.length > 0 || shelf.length > 0 || initialKind === 'products') ? (
           <div className="pf-chips pf-menu-kinds" role="group" aria-label={nv.serviceKinds}>
-            {['', ...kinds, ...(offers.length > 0 ? [PACKAGES] : []), ...(shelf.length > 0 ? [PRODUCTS] : [])].map((k) => (
+            {['', ...kinds, ...(offers.length > 0 ? [PACKAGES] : []), ...(shelf.length > 0 || initialKind === 'products' ? [PRODUCTS] : [])].map((k) => (
               <button key={k || 'all'} type="button" className={`pf-chip ${kind === k ? 'pf-chip-on' : ''}`} aria-pressed={kind === k} onClick={() => setKind(k)}>
                 {k === PACKAGES ? nv.packagesChip : k === PRODUCTS ? t('productsChip') : k || nv.allServices}
               </button>
@@ -189,28 +207,32 @@ export function ServiceSheet({
           </div>
         ) : null}
         {productMode ? (
-          /* A product reads like a service: its picture, its name, its price, and how many are left. */
-          <ul className="pf-client-matches pf-menu-list">
-            {shownProducts.map((p) => {
-              const n = productCounts?.get(p.id) ?? 0;
-              return (
-                <li key={p.id}>
-                  <button type="button" className={`pf-client-match pf-menu-row ${n > 0 ? 'pf-menu-row-on' : ''}`} onClick={() => onPickProduct?.(p)}>
-                    <img className="pf-menu-photo" src={productPhotoUrl(p)} alt="" loading="lazy" />
-                    <span className="pf-client-match-name">{p.name}</span>
-                    <span className="pf-client-match-sub">
-                      {formatMoney(p.priceMinor)} · {p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}
-                    </span>
-                    {n > 0 ? (
-                      <span className="pf-menu-count" aria-label={t('onBill', { count: n })}>
-                        {n}
+          shownProducts.length === 0 ? (
+            <p className="pf-client-note">{shelf.length === 0 ? t('desk.noProducts') : t('desk.noMatch')}</p>
+          ) : (
+            /* A product reads like a service: its picture, its name, its price, and how many are left. */
+            <ul className="pf-client-matches pf-menu-list">
+              {shownProducts.map((p) => {
+                const n = productCounts?.get(p.id) ?? 0;
+                return (
+                  <li key={p.id}>
+                    <button type="button" className={`pf-client-match pf-menu-row ${n > 0 ? 'pf-menu-row-on' : ''}`} onClick={() => onPickProduct?.(p)}>
+                      <ProductPhoto className="pf-menu-photo" product={p} />
+                      <span className="pf-client-match-name">{p.name}</span>
+                      <span className="pf-client-match-sub">
+                        {formatMoney(p.priceMinor)} · {p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}
                       </span>
-                    ) : null}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+                      {n > 0 ? (
+                        <span className="pf-menu-count" aria-label={t('onBill', { count: n })}>
+                          {n}
+                        </span>
+                      ) : null}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )
         ) : packageMode ? (
           /* A combo reads like a service: its picture, its name, what it costs. Tapping the one already on
              the bill takes it off, which is the row's own toggle on the full form too. */
@@ -222,7 +244,7 @@ export function ServiceSheet({
               return (
                 <li key={o.id}>
                   <button type="button" className={`pf-client-match pf-menu-row ${on ? 'pf-menu-row-on' : ''}`} onClick={() => onPickPackage?.(o)}>
-                    {first ? <img className="pf-menu-photo" src={servicePhotoUrl(first)} alt="" loading="lazy" /> : <span className="pf-menu-photo" aria-hidden="true" />}
+                    {first ? <ServicePhoto className="pf-menu-photo" service={first} /> : <span className="pf-menu-photo" aria-hidden="true" />}
                     <span className="pf-client-match-name">{o.title}</span>
                     <span className="pf-client-match-sub">{o.comboPriceMinor ? formatMoney(o.comboPriceMinor) : nv.comboServices(o.serviceIds.length)}</span>
                   </button>
@@ -242,7 +264,7 @@ export function ServiceSheet({
               return (
                 <li key={s.id}>
                   <button type="button" className={`pf-client-match pf-menu-row ${n > 0 ? 'pf-menu-row-on' : ''}`} onClick={() => onPick(s)}>
-                    <img className="pf-menu-photo" src={servicePhotoUrl(s)} alt="" loading="lazy" />
+                    <ServicePhoto className="pf-menu-photo" service={s} />
                     <span className="pf-client-match-name">{s.name}</span>
                     <span className="pf-client-match-sub">{formatMoney(s.priceMinor)}</span>
                     {n > 0 ? (

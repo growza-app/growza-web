@@ -343,7 +343,9 @@
   background: var(--amber-soft);
 }
 
-.rv-row.is-skipped .rv-main {
+/* The name and figures fade; the reason a row is skipped does not — it is the one thing on the line the owner must read. */
+.rv-row.is-skipped .rv-name,
+.rv-row.is-skipped .rv-meta {
   opacity: 0.5;
 }
 
@@ -392,6 +394,13 @@
 .rv-flag {
   justify-self: start;
   margin-top: 2px;
+}
+
+/* "On your shelf at ₹1,250 — will be updated" is a sentence, not a tag: at 344px it wraps instead of running off the card. */
+.rv-flag.chip {
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
 }
 
 .rv-include {

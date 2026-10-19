@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import Link from '../../../shared/AppLink';
 import { formatTime, type AttendanceRegister, type AttendanceRow } from '../../lib/api';
 import { intlLocale, isFutureMonth, monthLabel, shiftMonth } from './month';
 import { weekdayNames } from '../../lib/weekday-names';

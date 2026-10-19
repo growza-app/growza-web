@@ -14,7 +14,7 @@
 
 export interface Me {
   /** Jira GRW-556 — `status` is the business's lifecycle: while `provisioning` only the setup screens are offered. Absent from an older API. */
-  tenant: { id: string; name: string; timezone: string; locationName: string | null; branchCount?: number; status?: string } | null;
+  tenant: { id: string; name: string; timezone: string; locationName: string | null; /** The main branch (Jira GRW-582 perf) — the API has always sent it. */ locationId?: string | null; branchCount?: number; status?: string; productReturnWindowDays?: number } | null;
   /**
    * Jira GRW-235 — open branches, main first.
    *
@@ -198,6 +198,43 @@ export interface Product {
   /** 0117 — the shelf's own category. Null for none. */
   categoryId: string | null;
   categoryName: string | null;
+  /** Jira GRW-574 (0119) — the business's own code and what a scanner reads off the product. Null until said. */
+  sku: string | null;
+  barcode: string | null;
+  /** Jira GRW-574 (0120) — optional GST rate in basis points (0..2800; 0 is 0%, null is not set) and HSN code. */
+  gstRateBp: number | null;
+  hsn: string | null;
+}
+
+/** Owner, 2026-10-18 — one row of a product list on its way onto the shelf. An update carries only the fields the file filled, and never the count. */
+export interface ProductImportItem {
+  mode: 'create' | 'update';
+  /** Its number in the owner's file — what a refusal names. */
+  row?: number;
+  existingId?: string;
+  /** An update only: units that arrived. Added to the count and written to its history as received. */
+  addStock?: number;
+  name?: string;
+  priceMinor?: number;
+  stock?: number;
+  costMinor?: number;
+  lowStockAt?: number;
+  categoryName?: string;
+  sku?: string;
+  barcode?: string;
+  gstRateBp?: number;
+  hsn?: string;
+}
+
+export interface ProductImportResult {
+  created: number;
+  updated: number;
+  /** Products whose count went up, and the units added in all. */
+  stockAdded: number;
+  unitsAdded: number;
+  categoriesCreated: number;
+  /** The categories the file made, so the owner sees what appeared on their shelf. */
+  categoryNames: string[];
 }
 
 /** 0117 — a shelf of the shelf: the owner's own grouping at one branch, with how many live products it holds. */
@@ -226,10 +263,17 @@ export interface ProductInput {
   active?: boolean;
   costMinor?: number | null;
   lowStockAt?: number;
+  /** 0119 — null clears it; one live, active product per branch may hold each. */
+  sku?: string | null;
+  barcode?: string | null;
+  /** 0120 — null clears it; 0 is 0% GST (kept apart from null). */
+  gstRateBp?: number | null;
+  hsn?: string | null;
 }
 
-/** 0116 — why a product's count changed. Six words, the same for every kind of business. */
-export type MovementKind = 'received' | 'sold' | 'adjusted' | 'damaged' | 'used' | 'returned';
+/** 0116 · 0122 — why a product's count changed. */
+export type MovementKind = 'received' | 'sold' | 'adjusted' | 'damaged' | 'used' | 'returned' | 'transfer_out' | 'transfer_in';
+export type ManualMovementKind = Exclude<MovementKind, 'sold' | 'transfer_out' | 'transfer_in'>;
 
 export interface StockMovement {
   id: string;
@@ -240,7 +284,18 @@ export interface StockMovement {
   note: string | null;
   byName: string | null;
   visitKey: string | null;
+  /** 0122 — pairs `transfer_out` at the sending branch with `transfer_in` at the receiving branch. */
+  transferId?: string | null;
+  /** 0123 — ties the `adjusted` lines written by one stock take pass. */
+  stockTakeId?: string | null;
   createdAt: string;
+}
+
+/** 0123 — what saving a stock take pass hands back. */
+export interface StockTakeResult {
+  stockTakeId: string;
+  adjusted: number;
+  products: Product[];
 }
 
 /** A catalogue row as the Services screen edits it — Service plus the fields booking flows never need. */
@@ -256,6 +311,10 @@ export interface ServiceAdmin extends Service {
    * API will not send it, and a missing count must not be read as a warning.
    */
   providerCount?: number;
+  /** Jira GRW-582 — GST rate in basis points (1800 = 18%); null is "not set", which is not 0%. Optional for an older API. */
+  gstRateBp?: number | null;
+  /** Jira GRW-582 — the service's SAC, 4 to 8 digits; null until entered. */
+  sac?: string | null;
 }
 
 export interface ServiceCategory {
@@ -326,6 +385,9 @@ export interface ServiceInput {
   description?: string | null;
   /** A picture picked from the pack, or null to go back to matching on the name. Update only. */
   catalogKey?: string | null;
+  /** Jira GRW-582 — tax details, both optional; null clears. */
+  gstRateBp?: number | null;
+  sac?: string | null;
 }
 
 export interface Provider {
@@ -463,6 +525,50 @@ export interface Appointment {
   locationId?: string;
   /** Jira GRW-405 — booked ahead, not a walk-in recorded as it happened. Optional for an older API. */
   bookedAhead?: boolean;
+  /** Jira GRW-581 — products sold on this visit (`visit_product`). */
+  products?: VisitProductLine[];
+  /** Jira GRW-581 — split payment lines for this visit (`visit_payment`). */
+  payments?: VisitPaymentLine[];
+  /** Product returns on this visit and how each was paid out (`product_return`); absent from an API that predates it. */
+  refunds?: VisitPaymentLine[];
+}
+
+export interface VisitProductLine {
+  id?: string;
+  productId: string | null;
+  name: string;
+  priceMinor: string;
+  qty: number;
+  returnedQty?: number;
+  paidMinor: string;
+  returnedMinor?: string;
+  sku?: string | null;
+  barcode?: string | null;
+}
+
+export interface ReturnSaleProductsResponse {
+  visitKey: string;
+  refundMinor: number;
+  /** How the money went back — cash out of the drawer, or UPI/card sent back. */
+  refundMode: 'cash' | 'card' | 'upi' | 'other';
+  /** The issued document this return leaves uncorrected, when the desk went ahead past the warning. */
+  documentNumber: string | null;
+  /** True when this answers a request already made (a retry): nothing new was returned. */
+  replayed: boolean;
+  restocked: boolean;
+  items: Array<{
+    productId: string;
+    name: string;
+    qty: number;
+    refundMinor: number;
+    restocked: boolean;
+    stockAfter: number | null;
+  }>;
+}
+
+export interface VisitPaymentLine {
+  mode: string;
+  amountMinor: string;
 }
 
 export interface SettingsSummary {
@@ -489,10 +595,31 @@ export interface SettingsSummary {
     staffSeesClientContact: boolean;
     /** GRW-170 — grace minutes before an arrival reads as "came late". */
     attendanceLateGraceMin: number;
+    /** 0127 — days after a sale during which a product may be returned (0 = day of sale only). */
+    productReturnWindowDays?: number;
     /** Jira GRW-248 — closed days at this scope (a branch: its own). */
     closedDates?: string[];
     /** Jira GRW-248 — the business's closed days, which close every branch. */
     businessClosedDates?: string[];
+  };
+  /**
+   * Jira GRW-582 — what a business needs on file to give a customer a GST document.
+   *
+   * `status` is `unregistered` until an owner says otherwise, which is most businesses. The three `branch*` fields
+   * belong to the branch this Settings is scoped to, because a business registered in two states holds one
+   * registration per state.
+   */
+  gst: {
+    status: 'regular' | 'composition' | 'unregistered';
+    gstin: string;
+    legalName: string;
+    registeredAddress: string;
+    invoicePrefix: string;
+    invoiceFooter: string;
+    pricesIncludeTax: boolean;
+    branchState: string;
+    branchStateCode: string;
+    branchGstin: string;
   };
   /** GRW-197 — report tabs granted per limited role; `{}` means none. */
   reportAccess: Record<string, string[]>;

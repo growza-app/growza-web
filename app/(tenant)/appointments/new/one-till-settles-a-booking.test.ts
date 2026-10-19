@@ -129,7 +129,7 @@ describe('one till settles a booking too', () => {
     // The day goes too: a visit settled just after midnight is not in today's list.
     expect(lib).toMatch(/q\.set\('date', day\);\s*\n\s*q\.set\('to', day\);/);
     // Both done screens name the visit; neither is left on the bare list.
-    expect(flow).toMatch(/fixHref=\{fixVisitHref\(sale\.appointmentId, sale\.day\)\}/);
+    expect(flow).toMatch(/fixHref=\{sale\.productOnly \? null : fixVisitHref\(sale\.appointmentId, sale\.day\)\}/);
     expect(sheet).toMatch(/fixHref=\{fixVisitHref\(stage\.result\.appointmentId,/);
   });
 

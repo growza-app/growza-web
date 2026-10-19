@@ -21,7 +21,7 @@ function newAttemptKey(): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-import Link from 'next/link';
+import Link from '../../shared/AppLink';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useLocale, useTranslations } from 'next-intl';
 import { formatDateWithWeekday } from '../lib/format';
@@ -85,6 +85,7 @@ import {
   IconSearch,
   IconUser,
 } from './icons';
+import { ServicePhoto } from './ServicePhoto';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useNoProvider } from '../lib/use-no-provider';
@@ -2064,7 +2065,7 @@ export function NewVisitSheet({
                       disabled={busy || linesLocked}
                     />
                     <span className="wi-card-photo" aria-hidden="true">
-                      {first ? <img src={servicePhotoUrl(first)} alt="" width={44} height={44} /> : null}
+                      {first ? <ServicePhoto service={first} size={44} /> : null}
                     </span>
                     <span className="wi-card-text">
                       <span className="picker-row-name" aria-hidden="true">
@@ -2133,7 +2134,7 @@ export function NewVisitSheet({
                         disabled={busy || linesLocked || (count === 0 && full)}
                       >
                         <span className="wi-card-photo">
-                          <img src={servicePhotoUrl(s)} alt="" width={44} height={44} />
+                          <ServicePhoto service={s} size={44} />
                         </span>
                         <span className="wi-card-text">
                           <span className="picker-row-name">{s.name}</span>

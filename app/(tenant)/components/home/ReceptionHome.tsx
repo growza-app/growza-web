@@ -7,7 +7,8 @@ import { clientNameLabel, groupBookings, summarizeServices } from '../../lib/app
 import { homeCopy } from '../../lib/home-copy';
 import type { Lang } from '../../lib/lang';
 import { countsAsNotMarked, liveState, minutesBetween } from '../../lib/live-state';
-import { IconBan, IconCalendarPlus, IconChevronRight, IconClipboardCheck, IconClock, IconMenu, IconPlus, IconReceipt, IconScissors, IconSearch, IconUserPlus } from '../icons';
+import { canSee } from '../../lib/nav-policy';
+import { IconBan, IconCalendarPlus, IconChevronRight, IconClipboardCheck, IconClock, IconMenu, IconPlus, IconProducts, IconReceipt, IconScissors, IconSearch, IconUserPlus } from '../icons';
 import { useBranch } from '../BranchProvider';
 import { useMayUse, useWritable } from '../SessionProvider';
 import { BookedToday, bookedNotOnBoard } from './BookedToday';
@@ -130,7 +131,7 @@ export function ReceptionHome(p: ReceptionHomeProps) {
           <h2 className="hm-section-title">{t.needsAttention}</h2>
           <div className="hm-att-tiles">
             {attention.map((a) => (
-              <a key={a.key} className={`hm-att-tile hm-tone-${a.tone}`} href={a.href}>
+              <a key={a.key} className={`hm-att-tile hm-tone-${a.tone}${a.count === 0 ? ' is-clear' : ''}`} href={a.href}>
                 <span className="hm-att-icon">{a.icon}</span>
                 <strong className="hm-att-count">{a.count}</strong>
                 <IconChevronRight />
@@ -151,6 +152,7 @@ export function ReceptionHome(p: ReceptionHomeProps) {
             // Jira GRW-404 — Record payment moved up beside New token; Walk-in now (start a visit with a stylist straight
             // away) keeps a way in on a laptop, where the phone's centre button is not.
             ...(mayBook ? [{ href: '/appointments/new?mode=now', label: t.walkInShort, icon: <IconScissors />, tone: 'green' as const }] : []),
+            ...(canSee('/products/sell', 'receptionist') ? [{ href: '/products/sell', label: t.sellProductAction, icon: <IconProducts />, tone: 'slate' as const }] : []),
             { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
             // `/customers` search, not `/search`: the global search route is not
             // on the receptionist's allowlist (GRW-199), the client list's is.
