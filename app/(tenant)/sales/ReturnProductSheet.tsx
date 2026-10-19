@@ -619,7 +619,9 @@ export function ReturnProductSheet({
                                     <span className="sls-ret-prd-thumb" aria-hidden="true">
                                       <IconProducts />
                                     </span>
-                                    <strong className="sls-ret-line-name">{p.name}</strong>
+                                    <strong className="sls-ret-line-name" title={p.name}>
+                                      {p.name}
+                                    </strong>
                                   </div>
                                 </td>
                                 <td data-label={t('colSku')} className="sls-ret-sku-cell">

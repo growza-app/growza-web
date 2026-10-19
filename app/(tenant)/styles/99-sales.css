@@ -1345,13 +1345,24 @@
 .sls-items {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: flex-start;
+  gap: 4px;
+  max-width: 10.5rem;
+  overflow: hidden;
 }
 
 .sls-service-list {
   font-size: 0.8125rem;
   font-weight: 700;
   color: var(--text);
+}
+
+.sls-table .sls-service-list {
+  display: block;
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sls-col-services {
@@ -1399,6 +1410,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+}
+
+.sls-table .sls-badge-text {
+  display: inline-block;
+  max-width: 9.25rem;
 }
 
 .sls-badge svg {
@@ -1666,8 +1682,9 @@
   }
 
   .sls-col-services,
+  .sls-items,
   .sls-table .sls-service-list {
-    max-width: 8.75rem;
+    max-width: 9.75rem;
   }
 
   .sls-col-when {
@@ -2397,6 +2414,12 @@ button.sls-ret-step-pill:not(:disabled) {
   font-size: 0.875rem;
   font-weight: 700;
   color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  max-width: 14rem;
 }
 
 .sls-ret-sku-cell {

@@ -2209,14 +2209,33 @@ export function SalesClient({
                         </td>
                         {showServicesCol ? (
                           <td className="sls-col-services">
-                            <div className="sls-items">
-                              {row.offerTitle ? (
-                                <span className="sls-badge sls-badge-pkg">
-                                  <IconPackages /> {row.offerTitle}
+                            {row.serviceNames.length > 0 ? (
+                              <div className="sls-items">
+                                {row.offerTitle ? (
+                                  <span className="sls-badge sls-badge-pkg" title={row.offerTitle}>
+                                    <IconPackages />
+                                    <span className="sls-badge-text">{row.offerTitle}</span>
+                                  </span>
+                                ) : null}
+                                <span
+                                  className="sls-service-list"
+                                  title={row.serviceNames.join(', ')}
+                                >
+                                  {row.serviceNames[0]}
                                 </span>
-                              ) : null}
-                              <span className="sls-service-list">{summarizeServices(row.serviceNames, locale) || '—'}</span>
-                            </div>
+                                {row.serviceNames.length > 1 ? (
+                                  <button
+                                    type="button"
+                                    className="sls-badge sls-badge-more"
+                                    onClick={() => setOpenBooking(row.group)}
+                                  >
+                                    {t('moreProducts', { n: row.serviceNames.length - 1 })}
+                                  </button>
+                                ) : null}
+                              </div>
+                            ) : (
+                              <span className="sls-muted">{t('noProducts')}</span>
+                            )}
                           </td>
                         ) : null}
                         {showProductsCol ? (
