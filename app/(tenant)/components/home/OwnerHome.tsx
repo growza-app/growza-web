@@ -41,6 +41,7 @@ import {
   IconPackages,
   IconProducts,
   IconReceipt,
+  IconRupee,
   IconReports,
   IconServices,
   IconSettings,
@@ -1194,12 +1195,12 @@ export function OwnerHome(p: OwnerHomeProps) {
                     <strong>{t.recordPayment}</strong>
                   </a>
                 ) : null}
-                {mayBook ? (
-                  <a className="hm-v3-qbtn is-green" href="/appointments/new?mode=later">
+                {mayRecordPayment ? (
+                  <a className="hm-v3-qbtn is-green" href="/sales">
                     <span className="hm-v3-qicon">
-                      <IconCalendarPlus />
+                      <IconRupee />
                     </span>
-                    <strong>{t.nav.newBooking}</strong>
+                    <strong>{t.nav.sales}</strong>
                   </a>
                 ) : null}
                 {mayRecordPayment ? (

@@ -4381,6 +4381,10 @@ button.hm-now-count {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
+/* An odd count leaves a hole beside the last tile; let it take the whole row. */
+.hm-v3-qgrid > .hm-v3-qbtn:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
 .hm-v3-qbtn {
   display: flex;
   flex-direction: column;

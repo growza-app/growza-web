@@ -19,8 +19,13 @@ describe('New booking opens on Pick a time, Walk-in on Starts now', () => {
   it('every New booking link asks for a time', () => {
     expect(bookings).toContain('className="btn btn-primary bk-cmd-new-btn" href="/appointments/new?mode=later"');
     expect(owner).toContain('href="/appointments/new?mode=later" className="hm-action hm-action-dark"');
-    expect(owner).toContain('className="hm-v3-qbtn is-green" href="/appointments/new?mode=later"');
     expect(reception).toContain('href="/appointments/new?mode=later" className="hm-action tb-new-booking hm-desktop"');
+  });
+
+  it('the Quick actions card has Walk-in and Sales, no second New booking (the header button is the one)', () => {
+    const card = owner.slice(owner.indexOf('hm-v3-qgrid'), owner.indexOf('Needs your attention (Bookings, Queue'));
+    expect(card).not.toContain('t.nav.newBooking');
+    expect(owner).toContain('className="hm-v3-qbtn is-green" href="/sales"');
   });
 
   it('every Walk-in link asks for now', () => {
