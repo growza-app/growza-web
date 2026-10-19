@@ -540,10 +540,10 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(yearly.buckets.map((b) => b.key)).toEqual(['2023', '2024', '2025', '2026']);
     expect(yearly.buckets[3]?.totalMinor).toBe(220000);
 
-    // Source pins for collapsible chart card, Quick stats card, From/To fetch sync, and toolbarRows KPI sync
+    // Source pins for collapsible full-width chart card, From/To fetch sync, and toolbarRows KPI sync
     const client = here('./SalesClient.tsx');
     expect(client).toContain('className="sls-chart-card"');
-    expect(client).toContain('className="sls-quick-card"');
+    expect(client).not.toContain('className="sls-quick-card"');
     expect(client).toContain('aria-expanded={chartOpen}');
     expect(client).toContain('computeSalesKpis(toolbarRows)');
     expect(client).toContain('.appointments(safeFrom, safeTo, undefined, undefined, { includeSales: true })');

@@ -15,10 +15,8 @@ import { useMayUse, useSession } from '../components/SessionProvider';
 import { useLabel } from '../components/LabelsProvider';
 import { pickNoun } from '../lib/nouns';
 import {
-  IconAnalytics,
   IconCheck,
   IconChevronDown,
-  IconChevronRight,
   IconClose,
   IconDownload,
   IconPackages,
@@ -28,7 +26,6 @@ import {
   IconRupee,
   IconSearch,
   IconServices,
-  IconUserPlus,
 } from '../components/icons';
 import { csvLines } from '../lib/csv';
 import { useBarcodeScan } from '../lib/barcode-scan';
@@ -1119,10 +1116,6 @@ export function SalesClient({
 
   const kpis = useMemo(() => computeSalesKpis(toolbarRows), [toolbarRows]);
   const prevKpis = useMemo(() => computeSalesKpis(prevToolbarRows), [prevToolbarRows]);
-  const quickStats = useMemo(
-    () => computeSalesQuickStats(toolbarRows, prevToolbarRows),
-    [toolbarRows, prevToolbarRows],
-  );
 
   const totalSalesDelta = useMemo(
     () => computeDeltaPct(kpis.totalSalesMinor, prevKpis.totalSalesMinor),
@@ -2008,81 +2001,6 @@ export function SalesClient({
               )
             ) : null}
           </section>
-
-          <aside className="sls-quick-card" aria-label={t('quickStats.title')}>
-            <div className="sls-quick-head">
-              <h2 className="sls-quick-title">{t('quickStats.title')}</h2>
-              <a href="/reports" className="sls-quick-link">
-                <span>{t('quickStats.viewAll')}</span>
-                <IconChevronRight />
-              </a>
-            </div>
-            <div className="sls-quick-list">
-              <div className="sls-quick-row">
-                <span className="sls-quick-icon">
-                  <IconAnalytics />
-                </span>
-                <span className="sls-quick-label">{t('quickStats.avgBill')}</span>
-                <div className="sls-quick-right">
-                  <strong className="sls-quick-val">{formatMoney(String(quickStats.avgBillMinor))}</strong>
-                  {quickStats.avgBillDeltaPct !== null ? (
-                    <span className={`sls-quick-pill ${quickStats.avgBillDeltaPct < 0 ? 'is-down' : 'is-up'}`}>
-                      {quickStats.avgBillDeltaPct >= 0 ? '↑' : '↓'} {Math.abs(quickStats.avgBillDeltaPct)}%
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="sls-quick-row">
-                <span className="sls-quick-icon">
-                  <IconUserPlus />
-                </span>
-                <span className="sls-quick-label">{t('quickStats.clientsServed')}</span>
-                <div className="sls-quick-right">
-                  <strong className="sls-quick-val">{quickStats.clientsCount}</strong>
-                  {quickStats.clientsDeltaPct !== null ? (
-                    <span className={`sls-quick-pill ${quickStats.clientsDeltaPct < 0 ? 'is-down' : 'is-up'}`}>
-                      {quickStats.clientsDeltaPct >= 0 ? '↑' : '↓'} {Math.abs(quickStats.clientsDeltaPct)}%
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="sls-quick-row">
-                <span className="sls-quick-icon">
-                  <IconServices />
-                </span>
-                <span className="sls-quick-label">{t('quickStats.topService')}</span>
-                <div className="sls-quick-stack">
-                  <strong className="sls-quick-name">
-                    {quickStats.topService ? quickStats.topService.name : t('quickStats.noneYet')}
-                  </strong>
-                  {quickStats.topService ? (
-                    <span className="sls-quick-sub">
-                      {t('quickStats.bookingsCount', { n: quickStats.topService.count })}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="sls-quick-row">
-                <span className="sls-quick-icon">
-                  <IconProducts />
-                </span>
-                <span className="sls-quick-label">{t('quickStats.topProduct')}</span>
-                <div className="sls-quick-stack">
-                  <strong className="sls-quick-name">
-                    {quickStats.topProduct ? quickStats.topProduct.name : t('quickStats.noneYet')}
-                  </strong>
-                  {quickStats.topProduct ? (
-                    <span className="sls-quick-sub">
-                      {t('kpi.unitsCount', { n: quickStats.topProduct.units })}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          </aside>
         </div>
 
         {/* Filter Tabs + Search + Export CSV */}

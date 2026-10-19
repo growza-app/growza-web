@@ -591,7 +591,7 @@
 
 .sls-mid-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-3);
   align-items: stretch;
 }
