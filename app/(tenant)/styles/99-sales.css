@@ -1353,11 +1353,16 @@
   color: var(--text);
 }
 
+.sls-col-products {
+  max-width: 14.5rem;
+}
+
 .sls-product-chips {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 4px;
+  min-width: 0;
 }
 
 /*
@@ -1365,19 +1370,30 @@
  * wider than its card and Payment, Total and Bill sat past the edge. The chips wrap inside a capped column instead.
  */
 .sls-table .sls-product-chips {
-  flex-wrap: wrap;
-  max-width: 15rem;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 14rem;
+  overflow: hidden;
 }
 
 .sls-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  max-width: 100%;
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
+  overflow: hidden;
+}
+
+.sls-badge-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .sls-badge svg {
@@ -1403,15 +1419,16 @@
 }
 
 .sls-badge-more {
-  background: var(--page-bg);
-  border: 1px solid var(--border);
-  color: var(--text);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  color: var(--accent-deep);
+  font-weight: 700;
   cursor: pointer;
 }
 
 .sls-badge-more:hover {
-  border-color: var(--accent);
-  color: var(--accent-deep);
+  border-color: var(--accent-deep);
+  text-decoration: underline;
 }
 
 .sls-pay-pill {

@@ -2181,7 +2181,8 @@ export function SalesClient({
                 <tbody>
                   {pageRows.map((row) => {
                     const shownProducts = row.products.slice(0, MAX_ROW_PRODUCTS);
-                    const hiddenProducts = row.products.length - shownProducts.length;
+                    const tableProducts = row.products.length > MAX_ROW_PRODUCTS ? row.products.slice(0, 1) : shownProducts;
+                    const hiddenProducts = row.products.length - tableProducts.length;
                     const primaryMode = row.paymentModes[0] ?? 'other';
                     const canReturnRow =
                       mayRecordPayment &&
@@ -2214,18 +2215,22 @@ export function SalesClient({
                           </td>
                         ) : null}
                         {showProductsCol ? (
-                          <td>
+                          <td className="sls-col-products">
                             {row.products.length > 0 ? (
                               <div className="sls-product-chips">
-                                {shownProducts.map((p, i) => (
-                                  <span
-                                    key={`${p.productId ?? p.name}-${i}`}
-                                    className={`sls-badge sls-badge-prd ${lineRemainingQty(p) === 0 ? 'is-returned' : ''}`}
-                                  >
-                                    <IconProducts />
-                                    {p.qty > 1 ? `${p.name} (${p.qty})` : `${p.name} (1)`}
-                                  </span>
-                                ))}
+                                {tableProducts.map((p, i) => {
+                                  const label = p.qty > 1 ? `${p.name} (${p.qty})` : `${p.name} (1)`;
+                                  return (
+                                    <span
+                                      key={`${p.productId ?? p.name}-${i}`}
+                                      title={label}
+                                      className={`sls-badge sls-badge-prd ${lineRemainingQty(p) === 0 ? 'is-returned' : ''}`}
+                                    >
+                                      <IconProducts />
+                                      <span className="sls-badge-text">{label}</span>
+                                    </span>
+                                  );
+                                })}
                                 {hiddenProducts > 0 ? (
                                   <button
                                     type="button"
@@ -2359,7 +2364,9 @@ export function SalesClient({
                                 className={`sls-badge sls-badge-prd ${lineRemainingQty(p) === 0 ? 'is-returned' : ''}`}
                               >
                                 <IconProducts />
-                                {p.qty > 1 ? `${p.name} (${p.qty})` : `${p.name} (1)`}
+                                <span className="sls-badge-text">
+                                  {p.qty > 1 ? `${p.name} (${p.qty})` : `${p.name} (1)`}
+                                </span>
                               </span>
                             ))}
                             {hiddenProducts > 0 ? (

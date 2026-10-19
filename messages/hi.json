@@ -3449,7 +3449,7 @@
     },
     "completedStatus": "पूरा हुआ",
     "view": "बिल देखें",
-    "moreProducts": "+{n} और",
+    "moreProducts": "+{n} और · विवरण देखें",
     "noProducts": "—",
     "noStaff": "तय नहीं",
     "notRecorded": "दर्ज नहीं",

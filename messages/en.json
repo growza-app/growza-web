@@ -3449,7 +3449,7 @@
     },
     "completedStatus": "Completed",
     "view": "View bill",
-    "moreProducts": "+{n} more",
+    "moreProducts": "+{n} more · View details",
     "noProducts": "—",
     "noStaff": "Unassigned",
     "notRecorded": "Not recorded",
