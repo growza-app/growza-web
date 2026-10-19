@@ -12,6 +12,7 @@ import { IconInfo, IconMinus, IconPlus, IconSearch } from '../../components/icon
 import { PackageSheet } from '../../components/PackageSheet';
 import { MENU_SORTS, sortMenu, type MenuSort } from '../../lib/menu-sort';
 import { NO_CATEGORY } from '../../products/DeskProductCategories';
+import { SearchClear } from '../../components/SearchClear';
 
 /**
  * Jira GRW-572 — the middle panel of the wide till: the whole menu as tiles, with a search box above it.
@@ -213,6 +214,7 @@ export function DeskServiceGrid({
             aria-label={productsOnly ? t('desk.searchProducts', { count: products.length }) : t('desk.search', { count: services.length })}
             autoComplete="off"
           />
+          <SearchClear value={term} onClear={() => { setTerm(''); }} />
         </label>
         <label className="pf-sort">
           <span className="pf-sort-l">{t('sort.label')}</span>
