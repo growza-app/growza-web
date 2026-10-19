@@ -165,7 +165,7 @@
   .wi-desk2-whenrow {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-end;
+    align-items: center;
     gap: var(--sp-2);
   }
 
@@ -272,10 +272,30 @@
     margin: 0 0 var(--sp-1);
   }
 
+  /*
+   * Every control on the When line, and the client box beside it, is the same height and starts on the same line:
+   * the date and the time carry their words for a screen reader only, since "When" above them says it.
+   */
   .wi-desk2-field {
     margin: 0;
-    flex: 0 1 9rem;
-    min-width: 8rem;
+    flex: 0 1 9.5rem;
+    min-width: 8.5rem;
+  }
+
+  .wi-desk2 .wi-desk2-field input,
+  .wi-desk2 .wi-desk2-field select {
+    width: 100%;
+    min-width: 0;
+    height: 2.75rem;
+    min-height: 2.75rem;
+    box-sizing: border-box;
+  }
+
+  .wi-desk2 .wi-combo .picker-search,
+  .wi-desk2 .wi-combo .wi-search-input {
+    height: 2.75rem;
+    min-height: 2.75rem;
+    box-sizing: border-box;
   }
 
   /* A tile focused by keyboard scrolls clear of the bottom bar, whatever height the bar has (free times, lines). */

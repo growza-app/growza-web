@@ -3615,7 +3615,7 @@ export function NewVisitSheet({
                 one asked for, or the earliest.
               */}
                 <div className="field wi-desk2-field">
-                  <label htmlFor="wi-desk-date">{nv.bookingDate}</label>
+                  <label htmlFor="wi-desk-date" className="sr-only">{nv.bookingDate}</label>
                   <input
                     id="wi-desk-date"
                     type="date"
@@ -3626,7 +3626,7 @@ export function NewVisitSheet({
                   />
                 </div>
                 <div className="field wi-desk2-field">
-                  <label htmlFor="wi-desk-time">{nv.bookingTime}</label>
+                  <label htmlFor="wi-desk-time" className="sr-only">{nv.bookingTime}</label>
                   <select
                     id="wi-desk-time"
                     value={timeWanted}
