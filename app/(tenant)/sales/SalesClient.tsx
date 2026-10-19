@@ -897,6 +897,7 @@ export function SalesClient({
    * that is not stocked — is said here and leaves this screen as it was, filters and all.
    */
   const session = useSession();
+  const viewerIsOwner = !session || session.role === null || session.role === 'owner';
   const sellReachable = mayRecordPayment && session?.live !== false;
   const shelfRef = useRef<{ branch: string | null; shelf: Promise<Product[] | null> } | null>(null);
   const leaving = useRef(false);
@@ -2110,7 +2111,7 @@ export function SalesClient({
                     const canReturnRow =
                       mayRecordPayment &&
                       row.productUnits > 0 &&
-                      rowWin.eligible;
+                      (rowWin.eligible || viewerIsOwner);
                     const fullyReturned = row.returnedUnits > 0 && row.productUnits === 0 && row.serviceNames.length === 0;
                     const partReturned = row.returnedUnits > 0 && !fullyReturned;
                     return (
@@ -2278,7 +2279,7 @@ export function SalesClient({
                 const canReturnRow =
                   mayRecordPayment &&
                   row.productUnits > 0 &&
-                  computeReturnWindow(row.dayISO, todayISO, returnWindowDays).eligible;
+                  (computeReturnWindow(row.dayISO, todayISO, returnWindowDays).eligible || viewerIsOwner);
                 return (
                   <div key={row.key} className="sls-card-wrap">
                     <button
@@ -2375,7 +2376,7 @@ export function SalesClient({
               !openRow ||
               !mayRecordPayment ||
               openRow.productUnits <= 0 ||
-              !computeReturnWindow(openRow.dayISO, todayISO, returnWindowDays).eligible
+              !(computeReturnWindow(openRow.dayISO, todayISO, returnWindowDays).eligible || viewerIsOwner)
             ) {
               return undefined;
             }

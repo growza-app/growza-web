@@ -831,6 +831,8 @@ describe('a refund is paid out one way, sent once, and warns about an issued inv
     expect(sheet).toContain("t('printReceipt')");
     expect(sheet).toContain('className="sls-ret-checkbox"');
     expect(sheet).toContain('className="sls-ret-th-check"');
+    expect(sheet).toContain('overrideReturnWindow');
+    expect(sheet).toContain("t('ownerOverrideBanner'");
   });
 });
 

@@ -2307,6 +2307,19 @@ button.sls-ret-step-pill:not(:disabled) {
   color: var(--accent-deep);
 }
 
+.sls-ret-owner-override {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--amber-soft);
+  border: 1px solid color-mix(in srgb, var(--amber) 35%, var(--border));
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--amber-ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* STEP 1: ITEMS TABLE */
 .sls-ret-table-wrap {
   border: 1px solid var(--border);

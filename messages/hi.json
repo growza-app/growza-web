@@ -3513,6 +3513,7 @@
       "windowDaysShort": "{left, plural, =0 {आख़िरी दिन} one {# दिन बाकी} other {# दिन बाकी}}",
       "windowPolicy": "{window} दिन की वापसी सीमा",
       "windowEnded": "वापसी की समय-सीमा ख़त्म ({window} दिन)",
+      "ownerOverrideBanner": "इस बिल की {window} दिन की वापसी सीमा ख़त्म हो गई है — मालिक के तौर पर आप फिर भी वापसी ले सकते हैं।",
       "allReturned": "सब वापस हो चुका",
       "changeBill": "दूसरा बिल चुनें",
       "productsOnBill": "इस बिल का सामान",

@@ -6,6 +6,7 @@ import { api, ApiError, formatMoney, formatTime, type ReturnSaleProductsResponse
 import { formatDate } from '../lib/format';
 import { useBarcodeScan } from '../lib/barcode-scan';
 import { initials } from '../lib/appointment-display';
+import { useSession } from '../components/SessionProvider';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import {
@@ -236,6 +237,9 @@ export function ReturnProductSheet({
         : { eligible: true, daysElapsed: 0, daysLeft: returnWindowDays, windowDays: returnWindowDays },
     [selectedBill, todayISO, returnWindowDays],
   );
+  const session = useSession();
+  const viewerIsOwner = !session || session.role === null || session.role === 'owner';
+  const mayReturnBill = billWindow.eligible || viewerIsOwner;
 
   const returnableLines = useMemo(
     () => (selectedBill ? selectedBill.products.filter((p) => lineRemainingQty(p) > 0) : []),
@@ -271,14 +275,14 @@ export function ReturnProductSheet({
   const someEligibleSelected = selectedItemsCount > 0 && !allEligibleSelected;
 
   const goToReviewStep = () => {
-    if (!selectedBill || totalSelectedUnits <= 0 || !billWindow.eligible) return;
+    if (!selectedBill || totalSelectedUnits <= 0 || !mayReturnBill) return;
     setError(null);
     setIssuedDocument(null);
     setStep(2);
   };
 
   const submitReturn = async (acknowledgeIssuedDocument = false) => {
-    if (!selectedBill || totalSelectedUnits <= 0 || !billWindow.eligible || busy) return;
+    if (!selectedBill || totalSelectedUnits <= 0 || !mayReturnBill || busy) return;
     setBusy(true);
     setError(null);
     try {
@@ -288,11 +292,12 @@ export function ReturnProductSheet({
           qty: Math.min(lineRemainingQty(p), Math.max(0, qtyByLine[lineReturnId(p)] ?? 0)),
         }))
         .filter((it) => it.qty > 0);
+      const overrideReturnWindow = !billWindow.eligible && viewerIsOwner;
       // One id per return as the desk has it on screen: pressing Return again (or a retry after a lost answer) sends the
       // same id and the server returns nothing more; changing a line, the condition, the way or the note makes a new one.
       requestRef.current = requestIdFor(
         requestRef.current,
-        JSON.stringify({ bill: selectedBill.key, items, restock, refundMode, reason: reason.trim() }),
+        JSON.stringify({ bill: selectedBill.key, items, restock, refundMode, reason: reason.trim(), overrideReturnWindow }),
       );
       const res = await api.returnSaleProducts(visitKeyFromGroupKey(selectedBill.key), {
         items,
@@ -301,6 +306,7 @@ export function ReturnProductSheet({
         reason: reason.trim() || undefined,
         idempotencyKey: requestRef.current.id,
         ...(acknowledgeIssuedDocument ? { acknowledgeIssuedDocument: true } : {}),
+        ...(overrideReturnWindow ? { overrideReturnWindow: true } : {}),
       });
       requestRef.current = null;
       setCompletedResult(res);
@@ -450,7 +456,7 @@ export function ReturnProductSheet({
                     const remUnits = b.products.reduce((s, p) => s + lineRemainingQty(p), 0);
                     const totalUnits = b.products.reduce((s, p) => s + Number(p.qty || 0), 0);
                     const prdPaidMinor = b.products.reduce((s, p) => s + Number(p.paidMinor || 0), 0);
-                    const disabled = !win.eligible || remUnits <= 0;
+                    const disabled = (!win.eligible && !viewerIsOwner) || remUnits <= 0;
                     const active = selectedBill?.key === b.key;
                     const billRef = formatBillRef(b.key);
                     return (
@@ -509,7 +515,7 @@ export function ReturnProductSheet({
                         </span>
                       </div>
                       <div className="sls-ret-bulk-btns">
-                        {billWindow.eligible && returnableLines.length > 0 ? (
+                        {mayReturnBill && returnableLines.length > 0 ? (
                           <>
                             {totalSelectedUnits > 0 ? (
                               <button
@@ -548,6 +554,13 @@ export function ReturnProductSheet({
                       </div>
                     </div>
 
+                    {!billWindow.eligible && viewerIsOwner && returnableLines.length > 0 ? (
+                      <div className="sls-ret-owner-override" role="status">
+                        <IconAlert />
+                        <span>{t('ownerOverrideBanner', { window: billWindow.windowDays })}</span>
+                      </div>
+                    ) : null}
+
                     {scanNotice ? (
                       <div className="sls-ret-scan-notice" role="status">
                         {scanNotice}
@@ -564,7 +577,7 @@ export function ReturnProductSheet({
                                   type="checkbox"
                                   className="sls-ret-checkbox"
                                   aria-label={t('returnAll')}
-                                  disabled={!billWindow.eligible || returnableLines.length === 0 || busy}
+                                  disabled={!mayReturnBill || returnableLines.length === 0 || busy}
                                   checked={allEligibleSelected}
                                   ref={(el) => {
                                     if (el) el.indeterminate = someEligibleSelected;
@@ -592,7 +605,7 @@ export function ReturnProductSheet({
                             const selectedQty = Math.min(remaining, Math.max(0, qtyByLine[id] ?? 0));
                             const lineRefund = lineRefundMinorForQty(p, selectedQty);
                             const skuOrCode = p.sku ?? p.barcode ?? '—';
-                            const canPickRow = billWindow.eligible && remaining > 0 && !busy;
+                            const canPickRow = mayReturnBill && remaining > 0 && !busy;
                             return (
                               <tr
                                 key={`${id}-${idx}`}
@@ -639,7 +652,7 @@ export function ReturnProductSheet({
                                       <IconMinus />
                                       <span>{t('allReturned')}</span>
                                     </span>
-                                  ) : billWindow.eligible ? (
+                                  ) : mayReturnBill ? (
                                     <div className="sls-ret-stepper">
                                       <button
                                         type="button"
@@ -694,7 +707,7 @@ export function ReturnProductSheet({
                       <button
                         type="button"
                         className="btn sls-ret-continue-btn"
-                        disabled={totalSelectedUnits <= 0 || !billWindow.eligible || busy}
+                        disabled={totalSelectedUnits <= 0 || !mayReturnBill || busy}
                         onClick={goToReviewStep}
                       >
                         {t('continueBtn')}
@@ -876,7 +889,7 @@ export function ReturnProductSheet({
                   <button
                     type="button"
                     className="btn"
-                    disabled={totalSelectedUnits <= 0 || !billWindow.eligible || busy}
+                    disabled={totalSelectedUnits <= 0 || !mayReturnBill || busy}
                     onClick={() => void submitReturn()}
                   >
                     {busy

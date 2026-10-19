@@ -3513,6 +3513,7 @@
       "windowDaysShort": "{left, plural, =0 {Last day} one {#d left} other {#d left}}",
       "windowPolicy": "{window}-day return window",
       "windowEnded": "Return window ended ({window}d)",
+      "ownerOverrideBanner": "The {window}-day return window has ended — you can still return this bill as the owner.",
       "allReturned": "All returned",
       "changeBill": "Change bill",
       "productsOnBill": "Products on this bill",
