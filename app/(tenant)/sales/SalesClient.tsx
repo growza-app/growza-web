@@ -2198,11 +2198,13 @@ export function SalesClient({
                     return (
                       <tr key={row.key}>
                         <td className="sls-col-when">{formatWhen(row)}</td>
-                        <td>
+                        <td className="sls-col-client">
                           <div className="sls-client">
                             <span className="sls-avatar">{initials(row.clientName)}</span>
                             <div className="sls-client-meta">
-                              <strong className="sls-client-name">{row.clientName}</strong>
+                              <strong className="sls-client-name" title={row.clientName}>
+                                {row.clientName}
+                              </strong>
                               {row.clientPhone ? <span className="sls-client-phone">{row.clientPhone}</span> : null}
                             </div>
                           </div>

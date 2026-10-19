@@ -1202,15 +1202,6 @@
 
 }
 
-/* Name and number side by side only where the table has room for it; below that they stack, as on a phone. */
-@media (min-width: 1400px) {
-  .sls-table .sls-client-meta {
-    flex-direction: row;
-    align-items: baseline;
-    gap: 6px;
-  }
-}
-
 .sls-table {
   width: 100%;
   border-collapse: collapse;
@@ -1300,10 +1291,14 @@
   flex-shrink: 0;
 }
 
+.sls-col-client {
+  max-width: 9rem;
+}
+
 .sls-client {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: 6px;
   min-width: 0;
 }
 
@@ -1337,9 +1332,15 @@
   text-overflow: ellipsis;
 }
 
+.sls-table .sls-client-name {
+  display: block;
+  max-width: 7rem;
+}
+
 .sls-client-phone {
   font-size: 0.75rem;
   color: var(--muted);
+  white-space: nowrap;
 }
 
 .sls-items {
@@ -1690,10 +1691,6 @@
   .sls-col-when {
     white-space: normal;
     max-width: 5.5rem;
-  }
-
-  .sls-table .sls-client-name {
-    white-space: normal;
   }
 }
 
