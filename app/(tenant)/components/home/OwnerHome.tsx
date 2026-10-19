@@ -870,7 +870,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                   </button>
                 ) : null}
                 {mayBook ? (
-                  <a href="/appointments/new" className="hm-action hm-action-dark">
+                  <a href="/appointments/new?mode=later" className="hm-action hm-action-dark">
                     <IconCalendarPlus />
                     <strong>{t.nav.newBooking}</strong>
                   </a>
@@ -1195,7 +1195,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                   </a>
                 ) : null}
                 {mayBook ? (
-                  <a className="hm-v3-qbtn is-green" href="/appointments/new">
+                  <a className="hm-v3-qbtn is-green" href="/appointments/new?mode=later">
                     <span className="hm-v3-qicon">
                       <IconCalendarPlus />
                     </span>
