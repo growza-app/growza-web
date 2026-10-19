@@ -93,15 +93,16 @@ export function createScanListener(env: ScanListenerEnv) {
 
 /**
  * Calls `onCode` for every scan while `enabled`. Skipped while a dialog is open (the sheet it opened has its own
- * scan handling) and while a field is focused.
+ * scan handling) and while a field is focused. A sheet that IS the scan's destination passes `insideDialog`.
  */
-export function useBarcodeScan(enabled: boolean, onCode: (code: string) => void) {
+export function useBarcodeScan(enabled: boolean, onCode: (code: string) => void, opts: { insideDialog?: boolean } = {}) {
   const handler = useRef(onCode);
   handler.current = onCode;
+  const insideDialog = opts.insideDialog === true;
   useEffect(() => {
     if (!enabled) return;
     const listener = createScanListener({
-      blocked: () => isTypingTarget(document.activeElement) || document.querySelector('[role="dialog"][aria-modal="true"]') !== null,
+      blocked: () => isTypingTarget(document.activeElement) || (!insideDialog && document.querySelector('[role="dialog"][aria-modal="true"]') !== null),
       onCode: (code) => handler.current(code),
     });
     window.addEventListener('keydown', listener.onKey, true);
@@ -109,5 +110,5 @@ export function useBarcodeScan(enabled: boolean, onCode: (code: string) => void)
       window.removeEventListener('keydown', listener.onKey, true);
       listener.dispose();
     };
-  }, [enabled]);
+  }, [enabled, insideDialog]);
 }

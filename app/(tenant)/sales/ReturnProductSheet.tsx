@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { api, ApiError, formatMoney, formatTime, type ReturnSaleProductsResponse, type VisitProductLine } from '../lib/api';
 import { formatDateShort } from '../lib/format';
+import { useBarcodeScan } from '../lib/barcode-scan';
 import { initials } from '../lib/appointment-display';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
@@ -148,45 +149,16 @@ export function ReturnProductSheet({
     setError(null);
   };
 
-  const applyBarcodeRef = useRef(applyBarcodeToSelectedBill);
-  applyBarcodeRef.current = applyBarcodeToSelectedBill;
-
-  const hasSelectedBill = Boolean(selectedBill);
-  useEffect(() => {
-    if (!hasSelectedBill) return;
-    let buf = '';
-    let lastTs = 0;
-    const onKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
-      const now = performance.now();
-      if (e.key === 'Enter') {
-        if (buf.length >= 3 && now - lastTs < 120) {
-          e.preventDefault();
-          applyBarcodeRef.current(buf);
-        }
-        buf = '';
-        return;
-      }
-      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (now - lastTs > 80) buf = '';
-        buf += e.key;
-        lastTs = now;
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [hasSelectedBill]);
-
-  const handleSearchKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== 'Enter') return;
-    const code = query.trim();
-    if (!code) return;
-    e.preventDefault();
+  /**
+   * What a scanned or typed code does: with a bill open it adds a unit of that product; with none it opens the one
+   * bill that sold it, or leaves the code in the box to narrow the list. True when the code was used up.
+   */
+  const takeCode = (raw: string): boolean => {
+    const code = raw.trim();
+    if (!code) return false;
     if (selectedBill) {
       applyBarcodeToSelectedBill(code);
-      setQuery('');
-      return;
+      return true;
     }
     const exactEligible = productBills.filter((b) => {
       const win = computeReturnWindow(b.dayISO, todayISO, returnWindowDays);
@@ -195,8 +167,21 @@ export function ReturnProductSheet({
     });
     if (exactEligible.length === 1) {
       selectBill(exactEligible[0]!, code);
-      setQuery('');
+      return true;
     }
+    setQuery(code);
+    return false;
+  };
+  // The scanner types wherever focus is. On a phone the box is not focused (that would raise the keyboard), so the
+  // sheet listens itself rather than wait for a tap into the box. The "Scanner ready" badge is true because of this.
+  useBarcodeScan(true, (code) => void takeCode(code), { insideDialog: true });
+
+  const handleSearchKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') return;
+    const code = query.trim();
+    if (!code) return;
+    e.preventDefault();
+    if (takeCode(code)) setQuery('');
   };
 
   const billWindow = useMemo(

@@ -246,7 +246,7 @@ export function DeskServiceGrid({
       ) : null}
       {tab === 'products' ? (
         shownProducts.length === 0 ? (
-          <p className="pf-wide-empty">{products.length === 0 ? t('desk.noProducts') : t('desk.noMatch')}</p>
+          <p className="pf-wide-empty">{products.length === 0 ? t('desk.noProducts') : t('desk.noProductMatch')}</p>
         ) : (
           /* A product reads like a service: its picture, its name, its price — and how many are left instead of minutes. */
           <div className="pf-tiles pf-wide-tiles">
