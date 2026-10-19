@@ -31,6 +31,7 @@ import { ServiceCards, ServiceTableRows, type RowActions } from './ServiceRows';
 import { HeldByPackagesDialog } from './HeldByPackagesDialog';
 import { packagesInRefusal, type HeldPackage } from './held-by-packages';
 import { categoryTotals, copyName, orderedByCategory } from './services-groups';
+import { SearchClear } from '../components/SearchClear';
 
 /**
  * The catalogue screen. Until now this was read-only apart from photos, which
@@ -782,6 +783,7 @@ export function ServicesTable({
                     aria-label={t('searchAria')}
                     autoComplete="off"
                   />
+                  <SearchClear value={search} onClear={() => { setSearch(''); }} />
                 </label>
                 <label className="svc-desk-sel">
                   <select value={deskStatus} aria-label={t('desk.filter')} title={t('desk.filter')} onChange={(e) => setDeskStatus(e.target.value as DeskStatus)}>
@@ -931,6 +933,7 @@ export function ServicesTable({
             onChange={(e) => setSearch(e.target.value)}
             aria-label={t('searchAria')}
           />
+          <SearchClear value={search} onClear={() => { setSearch(''); }} />
         </div>
         {/* Jira GRW-428 — beside Export and not in the header: the header's slot is for creating a service.
             Jira GRW-556 (follow-up) — the sheet it opens only adds, renames, reorders and deletes categories. */}

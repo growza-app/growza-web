@@ -466,6 +466,7 @@
     "addOwn": "Add its own"
   },
   "common": {
+    "clearSearch": "Clear search",
     "actionFailed": "That didn't work. Please try again.",
     "optional": "optional",
     "confirm": "Confirm",

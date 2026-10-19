@@ -89,6 +89,7 @@ import { servicePhotoUrl } from '../lib/service-photos';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useNoProvider } from '../lib/use-no-provider';
 import { SEARCH_DEBOUNCE_MS, SEARCH_MIN_CHARS } from '../lib/search-tuning';
+import { SearchClear } from './SearchClear';
 
 /**
  * Jira GRW-199 · GRW-219 — the walk-in sheet: client first, then the booking.
@@ -2007,6 +2008,7 @@ export function NewVisitSheet({
                 onChange={(e) => setServiceTerm(e.target.value)}
                 disabled={busy || linesLocked}
               />
+              <SearchClear value={serviceTerm} onClear={() => { setServiceTerm(''); }} />
             </div>
             {showServicesError ? (
               <div role="alert" className="field-error">

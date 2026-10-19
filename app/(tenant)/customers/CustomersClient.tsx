@@ -43,6 +43,7 @@ import { toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
 import { SEARCH_DEBOUNCE_MS, worthSearching } from '../lib/search-tuning';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
+import { SearchClear } from '../components/SearchClear';
 
 /**
  * Chips only where they say something. "Active" on every row was the original
@@ -483,6 +484,7 @@ export function CustomersClient({
                     aria-label={t('searchPlaceholder', { noun: lower })}
                     autoComplete="off"
                   />
+                  <SearchClear value={search} onClear={() => { setSearch(''); setPageIndex(0); }} />
                 </label>
                 <button type="button" className="btn btn-ghost" onClick={exportCsv} disabled={page.rows.length === 0}>
                   {t('export')}

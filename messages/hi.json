@@ -466,6 +466,7 @@
     "addOwn": "अपना QR जोड़ें"
   },
   "common": {
+    "clearSearch": "खोज हटाएँ",
     "actionFailed": "यह नहीं हुआ। कृपया फिर से कोशिश करें।",
     "optional": "वैकल्पिक",
     "confirm": "पक्का करें",

@@ -32,6 +32,7 @@ import { useBarcodeScan } from '../lib/barcode-scan';
 import { productByCode } from '../lib/product-match';
 import { queueScan, SCAN_RUN_END_MS } from '../lib/scan-queue';
 import { ReturnProductSheet } from './ReturnProductSheet';
+import { SearchClear } from '../components/SearchClear';
 import {
   clampSalesDateRange,
   computeReturnWindow,
@@ -2044,6 +2045,7 @@ export function SalesClient({
                   setPage(1);
                 }}
               />
+              <SearchClear value={search} onClear={() => { setSearch(''); setPage(1); }} />
             </label>
 
             <button
