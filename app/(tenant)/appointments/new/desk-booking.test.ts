@@ -62,9 +62,14 @@ describe('New booking on a wide desk', () => {
     expect(sheet).not.toContain('askWhenFirst');
   });
 
-  it('has every answer to when in view, one tap each, with Starts now already chosen', () => {
+  it('asks when with Starts now, Waiting, a date and a time — nothing between — and Starts now already chosen', () => {
     const d = desk();
-    for (const piece of ["'now', !queueing && !later", "'queue', queueing", "'today'", "'tomorrow'", 'type="date"']) expect(d).toContain(piece);
+    for (const piece of ["'now', !queueing && !later", "'queue', queueing", 'type="date"', 'id="wi-desk-time"']) expect(d).toContain(piece);
+    // No Later today / Tomorrow shortcuts.
+    expect(d).not.toContain("'today'");
+    expect(d).not.toContain("'tomorrow'");
+    // A time alone is a booking for later today: the time is a wish the free times start from.
+    expect(d).toMatch(/onChange=\{\(e\) => \{\s*setOutcomeWanted\('start'\);\s*setTimeWanted\(e\.target\.value\);/);
     // Starts now is the default: nothing is later and nobody is queueing until a tap says so.
     expect(sheet).toContain("const [dateChosen, setDateChosen] = useState(!forPayment && initialMode === 'later');");
     // A day is the whole answer: later on that day. The earliest free time is picked once a service is on the visit.
@@ -92,7 +97,7 @@ describe('New booking on a wide desk', () => {
   });
 
   it('has its words in both languages', () => {
-    for (const key of ['deskToday', 'deskOnVisit', 'deskEmpty', 'deskNobodyToday', 'deskTomorrow', 'deskOtherDay', 'deskWhenLabel', 'deskLaterToday', 'deskTimesAfter']) {
+    for (const key of ['deskToday', 'deskOnVisit', 'deskEmpty', 'deskNobodyToday', 'deskWhenLabel', 'deskTimesAfter']) {
       expect((en.newVisit as Record<string, string>)[key]).toBeTruthy();
       expect((hi.newVisit as Record<string, string>)[key]).toBeTruthy();
     }

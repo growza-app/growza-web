@@ -112,10 +112,7 @@ export function useNewVisitCopy() {
     deskOnVisit: t('deskOnVisit'),
     deskEmpty: t('deskEmpty'),
     /** The laptop's When card (owner, 2026-10-19), and the line that reopens it. */
-    deskLaterToday: t('deskLaterToday'),
     deskTimesAfter: t('deskTimesAfter'),
-    deskTomorrow: t('deskTomorrow'),
-    deskOtherDay: t('deskOtherDay'),
     deskWhenLabel: t('deskWhenLabel'),
     deskNobodyToday: t('deskNobodyToday'),
     // Jira GRW-384 — a branch opened with no menu. GRW-399: the vertical's word for what it sells, not "services".

@@ -265,18 +265,18 @@
     margin: 0 0 var(--sp-1);
   }
 
-  .wi-when-other {
-    min-height: 2.5rem;
-    padding: 0 var(--sp-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    color: var(--text);
-    font: inherit;
+  /* A date and a time, side by side under the two quick answers. */
+  .wi-desk2-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin-top: var(--sp-2);
   }
 
-  .wi-when-other-on {
-    border-color: var(--accent-deep);
+  .wi-desk2-field {
+    margin: 0;
+    flex: 1 1 10rem;
+    max-width: 14rem;
   }
 
   /* A tile focused by keyboard scrolls clear of the bottom bar, whatever height the bar has (free times, lines). */

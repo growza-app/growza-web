@@ -3561,8 +3561,7 @@ export function NewVisitSheet({
      * The DAY is chosen before the services but the exact time cannot be: the free times depend on how long the
      * services take. So the earliest free time is picked for you once a service is on the visit.
      */
-    const tomorrowIso = days[1]?.iso ?? day;
-    /** A day is the whole answer: "later" on that day, and the earliest free time is picked once there is a service. */
+    /** A date is the whole answer: "later" on that day, and the earliest free time is picked once there is a service. */
     const chooseDay = (iso: string) => {
       setOutcomeWanted('start');
       setDay(iso);
@@ -3575,7 +3574,6 @@ export function NewVisitSheet({
         {label}
       </button>
     );
-    const otherDay = later && !queueing && day !== todayIso && day !== tomorrowIso;
     return (
       <>
         {largeAmountDialog}
@@ -3609,17 +3607,43 @@ export function NewVisitSheet({
                 {/* Jira GRW-456 — nobody on the branch, or nobody who does this: starting is the one it cannot honour. */}
                 {whenChip('now', !queueing && !later, nv.whenNow, () => pickWhen('now'), noStaffHere || noOneCanDoIt)}
                 {canQueue ? whenChip('queue', queueing, nv.whenWaiting, () => pickWhen('queue')) : null}
-                {whenChip('today', !queueing && later && day === todayIso, nv.deskLaterToday, () => chooseDay(todayIso))}
-                {whenChip('tomorrow', !queueing && later && day === tomorrowIso, nv.deskTomorrow, () => chooseDay(tomorrowIso))}
-                <input
-                  type="date"
-                  className={`wi-when-other ${otherDay ? 'wi-when-other-on' : ''}`}
-                  aria-label={nv.deskOtherDay}
-                  min={todayIso}
-                  value={otherDay ? day : ''}
-                  onChange={(e) => e.target.value && chooseDay(e.target.value)}
-                  disabled={busy}
-                />
+              </div>
+              {/*
+                A date and a time, nothing between. Either one makes it a booking for later (today, if only a time is
+                given); the exact free time is then chosen in the bar once a service is on the visit, starting from the
+                one asked for, or the earliest.
+              */}
+              <div className="wi-desk2-fields">
+                <div className="field wi-desk2-field">
+                  <label htmlFor="wi-desk-date">{nv.bookingDate}</label>
+                  <input
+                    id="wi-desk-date"
+                    type="date"
+                    min={todayIso}
+                    value={later && !queueing ? day : ''}
+                    onChange={(e) => e.target.value && chooseDay(e.target.value)}
+                    disabled={busy}
+                  />
+                </div>
+                <div className="field wi-desk2-field">
+                  <label htmlFor="wi-desk-time">{nv.bookingTime}</label>
+                  <select
+                    id="wi-desk-time"
+                    value={timeWanted}
+                    onChange={(e) => {
+                      setOutcomeWanted('start');
+                      setTimeWanted(e.target.value);
+                    }}
+                    disabled={busy}
+                  >
+                    <option value="">{nv.anyTime}</option>
+                    {timeOptions.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               {/* A token has no stylist: the question only exists once the answer is Starts now or a later day. */}
               {queueing ? null : <div className="wi-desk-stylist">{stylistField}</div>}
