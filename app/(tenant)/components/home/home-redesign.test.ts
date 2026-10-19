@@ -67,16 +67,18 @@ describe('Tenant Home v2 redesign', () => {
     expect(boardCss).toMatch(/\.tb-col\[data-col='paid'\]\s*\{\s*border-top:\s*3px solid var\(--accent\);/);
   });
 
-  it('renders the Desktop Command Center with 4 light KPI cards, Revenue trend + Sales by payment method donut + Quick actions, Needs your attention (Bookings, Services & Attendance) + Products needing attention + vertical Staff status, and Recent bookings table synced with /sales', () => {
+  it('renders the Desktop Command Center with 4 light KPI cards, Revenue trend + Clients due back + Quick actions, Needs your attention (Bookings, Services & Attendance) + Products needing attention + vertical Staff status, and Recent bookings table synced with /sales', () => {
     const bookingsList = code('../../appointments/BookingsList.tsx');
     expect(owner).toContain('className={`hm-desk-v3 hm-desktop');
     expect(owner).toContain('className="hm-v3-kpis"');
     expect(owner).toContain('className="hm-v3-kpi hm-v3-kpi-dark"');
-    expect(owner).toContain('className="hm-v3-mid"');
+    expect(owner).toContain('className={`hm-v3-mid${showDueBack');
     expect(owner).not.toContain('className="hm-v3-table"');
     expect(bookingsList).toContain('className="hm-v3-table bk-table"');
-    expect(owner).toContain('className="hm-v3-card hm-v3-payment-card"');
-    expect(owner).toContain('className="hm-v3-donut-svg"');
+    // Owner, 2026-10-19 — Sales by payment method left: Today's revenue already splits money by method.
+    expect(owner).toContain('<DueBackCard branch={branch} business={p.businessName} />');
+    expect(owner).not.toContain('hm-v3-payment-card');
+    expect(owner).not.toContain('hm-v3-donut');
     expect(owner).toContain('className="hm-v3-card hm-v3-services-card hm-v3-desk-attention"');
     expect(owner).toContain('className="hm-v3-card hm-v3-products-card hm-v3-prod-attention"');
     expect(owner).toContain('const overdueGroups = (todayGroups ?? []).filter((g) => countsAsNotMarked(g, now));');
@@ -99,7 +101,7 @@ describe('Tenant Home v2 redesign', () => {
     expect(homeCss).toMatch(/\.hm-v3-kpis\s*\{/);
     expect(homeCss).toMatch(/\.hm-v3-mid\s*\{/);
     expect(homeCss).toMatch(/\.hm-v3-bot\s*\{/);
-    expect(homeCss).toMatch(/\.hm-v3-donut-wrap\s*\{/);
+    expect(homeCss).toMatch(/\.hm-v3-dueback-card\s*\{/);
     expect(homeCss).toMatch(/\.hm-v3-recent-table\s*\{/);
   });
 

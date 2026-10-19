@@ -3837,12 +3837,15 @@ button.hm-now-count {
   gap: 8px;
 }
 
-/* ---------- 5. Row 2: Revenue Trend + Payment Donut + Quick Actions ---------- */
+/* ---------- 5. Row 2: Revenue Trend + Clients due back + Quick Actions ---------- */
 .hm-v3-mid {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 0.9fr);
   gap: 12px;
   align-items: stretch;
+}
+.hm-v3-mid.hm-v3-mid-two {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.9fr);
 }
 .hm-v3-filter-bar {
   display: flex;
@@ -3921,125 +3924,33 @@ button.hm-now-count {
   text-decoration: none;
 }
 
-/* Sales by payment method donut + legend (shades of green matching reference) */
-.hm-v3-donut-wrap {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 6px 0;
-}
-.hm-v3-donut-box {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  flex-shrink: 0;
-}
-.hm-v3-donut-svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-.hm-v3-donut-track {
-  fill: none;
-  stroke: var(--page-bg);
-  stroke-width: 14;
-}
-.hm-v3-donut-seg {
-  fill: none;
-  stroke-width: 14;
-  transition: stroke-dasharray 0.24s ease;
-}
-.hm-v3-donut-seg.is-upi {
-  stroke: var(--accent-deep);
-}
-.hm-v3-donut-seg.is-cash {
-  stroke: var(--accent);
-}
-.hm-v3-donut-seg.is-card {
-  stroke: var(--accent-soft);
-}
-.hm-v3-donut-seg.is-other {
-  stroke: var(--blue);
-}
-.hm-v3-donut-center {
-  position: absolute;
-  inset: 0;
+/* Clients due back — the people and their WhatsApp button, in the place the payment donut had. */
+.hm-v3-dueback-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  pointer-events: none;
-  gap: 1px;
+  min-width: 0;
 }
-.hm-v3-donut-center strong {
-  font-size: 0.875rem;
-  font-weight: 800;
-  color: var(--hm-ink);
-  font-variant-numeric: tabular-nums;
+.hm-v3-dueback-hint {
+  margin: 0 0 6px;
+  font-size: 0.8125rem;
+  color: var(--hm-muted, var(--muted));
 }
-.hm-v3-donut-center span {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--hm-muted);
-}
-.hm-v3-donut-legend {
-  list-style: none;
+.hm-v3-dueback-list {
+  flex: 1;
   margin: 0;
   padding: 0;
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  list-style: none;
 }
-.hm-v3-donut-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
+.hm-v3-dueback-all {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
   font-size: 0.8125rem;
-}
-.hm-v3-donut-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.hm-v3-donut-dot.is-upi {
-  background: var(--accent-deep);
-}
-.hm-v3-donut-dot.is-cash {
-  background: var(--accent);
-}
-.hm-v3-donut-dot.is-card {
-  background: var(--accent-soft);
-}
-.hm-v3-donut-dot.is-other {
-  background: var(--blue);
-}
-.hm-v3-donut-label {
-  flex: 1;
-  min-width: 38px;
   font-weight: 600;
-  color: var(--hm-ink);
-  white-space: nowrap;
-}
-.hm-v3-donut-pct {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--hm-muted);
-  font-variant-numeric: tabular-nums;
-}
-.hm-v3-donut-amt {
-  min-width: 58px;
-  text-align: right;
-  font-weight: 800;
-  color: var(--hm-ink);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 
 /*

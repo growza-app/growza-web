@@ -52,6 +52,8 @@ import { BookingSummary } from '../BookingSummary';
 import { DaySummarySheet } from './DaySummarySheet';
 import { MoneyHero } from './MoneyHero';
 import { BranchCarousel } from './BranchCarousel';
+import { DueBackCard } from './DueBackCard';
+import { mayReadDueBack } from './due-back';
 import { AttentionList, Avatar, avatarKey, BookingRows, Card, CardError, HomeHeader, QuickTiles, rupees, Segmented, SegmentCards } from './parts';
 import { RightNow } from './RightNow';
 import { useMinuteClock } from './useMinuteClock';
@@ -765,21 +767,8 @@ export function OwnerHome(p: OwnerHomeProps) {
     ];
   }, [data, t]);
 
-  const paymentDonut = useMemo(() => {
-    const total = paymentModes.reduce((s, pm) => s + pm.amount, 0);
-    const r = 44;
-    const c = 2 * Math.PI * r;
-    let offset = 0;
-    const slices = paymentModes.map((pm) => {
-      const pct = total > 0 ? Math.round((pm.amount / total) * 100) : 0;
-      const frac = total > 0 ? pm.amount / total : 0;
-      const len = frac * c;
-      const dashOffset = -offset;
-      offset += len;
-      return { ...pm, pct, len, dashOffset };
-    });
-    return { total, r, c, slices };
-  }, [paymentModes]);
+  // The card reads the What-to-do tab, so it needs that tab's grant, not just any Reports tab.
+  const showDueBack = mayReadDueBack(canSee('/reports', p.role, p.reportTabs), p.reportTabs);
 
   /** Today's (or tomorrow's after close) visits for the full-width Recent bookings table at the bottom of desktop Home. */
   const recentBookingRows = useMemo(() => {
@@ -1089,7 +1078,7 @@ export function OwnerHome(p: OwnerHomeProps) {
           </div>
 
           {/* ROW 2 — Revenue Trend + Sales by Payment Method + Quick Actions */}
-          <div className="hm-v3-mid">
+          <div className={`hm-v3-mid${showDueBack ? '' : ' hm-v3-mid-two'}`}>
             {/* 1. Revenue trend */}
             <section className="hm-v3-card hm-v3-trend-card">
               <div className="hm-v3-card-head">
@@ -1138,48 +1127,8 @@ export function OwnerHome(p: OwnerHomeProps) {
               )}
             </section>
 
-            {/* 2. Sales by payment method */}
-            <section className="hm-v3-card hm-v3-payment-card">
-              <div className="hm-v3-card-head">
-                <h2>{t.salesByPaymentTitle}</h2>
-              </div>
-              <div className="hm-v3-donut-wrap">
-                <div className="hm-v3-donut-box">
-                  <svg className="hm-v3-donut-svg" viewBox="0 0 116 116" aria-hidden>
-                    <circle className="hm-v3-donut-track" cx="58" cy="58" r={paymentDonut.r} />
-                    {paymentDonut.total > 0
-                      ? paymentDonut.slices.map((sl) =>
-                          sl.len > 0 ? (
-                            <circle
-                              key={sl.key}
-                              className={`hm-v3-donut-seg is-${sl.tone}`}
-                              cx="58"
-                              cy="58"
-                              r={paymentDonut.r}
-                              strokeDasharray={`${sl.len} ${paymentDonut.c}`}
-                              strokeDashoffset={sl.dashOffset}
-                            />
-                          ) : null,
-                        )
-                      : null}
-                  </svg>
-                  <div className="hm-v3-donut-center">
-                    <strong>{rupees(paymentDonut.total)}</strong>
-                    <span>{t.totalLabel}</span>
-                  </div>
-                </div>
-                <ul className="hm-v3-donut-legend">
-                  {paymentDonut.slices.map((sl) => (
-                    <li key={sl.key} className="hm-v3-donut-row">
-                      <span className={`hm-v3-donut-dot is-${sl.tone}`} aria-hidden />
-                      <span className="hm-v3-donut-label">{sl.label}</span>
-                      <span className="hm-v3-donut-pct">{sl.pct}%</span>
-                      <strong className="hm-v3-donut-amt">{rupees(sl.amount)}</strong>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
+            {/* 2. Clients due back — Sales by payment method was here; Today's revenue already splits by method. */}
+            {showDueBack ? <DueBackCard branch={branch} business={p.businessName} /> : null}
 
             {/* 3. Quick actions */}
             <section className="hm-v3-card hm-v3-quick-card">
