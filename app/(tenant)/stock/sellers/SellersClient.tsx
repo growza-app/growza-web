@@ -117,8 +117,11 @@ export function SellersClient({ timezone }: { timezone: string }) {
   const since = (iso: string | null): string => {
     if (!iso) return t('neverSold');
     const d = new Date(iso);
-    const sameYear = new Intl.DateTimeFormat('en', { year: 'numeric', timeZone: timezone }).format(d) === new Intl.DateTimeFormat('en', { year: 'numeric', timeZone: timezone }).format(new Date());
-    return t('notSoldSince', { when: new Intl.DateTimeFormat(locale, { month: 'long', ...(sameYear ? {} : { year: 'numeric' }), timeZone: timezone }).format(d) });
+    const year = (x: Date) => new Intl.DateTimeFormat('en', { year: 'numeric', timeZone: timezone }).format(x);
+    // The day, not only the month: "since October" is no help on a "last 7 days" view that is itself in October.
+    return t('notSoldSince', {
+      when: new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'long', ...(year(d) === year(new Date()) ? {} : { year: 'numeric' }), timeZone: timezone }).format(d),
+    });
   };
 
   return (
@@ -177,8 +180,8 @@ export function SellersClient({ timezone }: { timezone: string }) {
         ) : (
           <>
             <section className="srp-totals" aria-label={t('totalsLabel')}>
-              <p className="srp-worth-label">{best.window.label}</p>
-              <p className="srp-worth">{t('soldLine', { units: count(best.totals.units) })}</p>
+              <p className="srp-worth-label">{t(`range.${range}`)}</p>
+              <p className="srp-worth">{t('sold', { units: best.totals.units })}</p>
               <p className="srp-hint">{t('bestTotals', { sizes: best.totals.sizes, value: money(best.totals.valueMinor) })}</p>
               {!best.lastYear.hasData ? <p className="srp-hint">{t('noLastYear')}</p> : null}
             </section>
@@ -187,7 +190,7 @@ export function SellersClient({ timezone }: { timezone: string }) {
                 <li key={r.id} className="srp-card">
                   <div className="srp-head">
                     <h2 className="srp-name">{nameOf(r.name, r.sizeLabel)}</h2>
-                    <p className="srp-value">{t('sold', { units: count(r.units) })}</p>
+                    <p className="srp-value">{t('sold', { units: r.units })}</p>
                   </div>
                   <p className="srp-hint">
                     {money(r.valueMinor)}
