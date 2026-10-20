@@ -63,6 +63,9 @@ import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
   OrderDetail,
+  HeldPage,
+  ReleaseResult,
+  SizeToMap,
   ImportSummary,
   MarketplaceCodesPage,
   SaveCodesBody,
@@ -643,6 +646,20 @@ export const api = {
   importOrdersFile: (channel: 'flipkart' | 'amazon', file: File, idempotencyKey: string) =>
     uploadFile<ImportSummary>(`/api/v1/marketplace-imports?channel=${channel}&idempotencyKey=${encodeURIComponent(idempotencyKey)}`, 'file', file),
   importOrdersText: (channel: 'flipkart' | 'amazon', text: string, idempotencyKey: string) => post<ImportSummary>('/api/v1/marketplace-imports', { channel, text, idempotencyKey }),
+  /** Jira GRW-620 — the codes holding marketplace orders back, grouped by code and paged on the server. */
+  heldCodes: (q: { channel?: 'flipkart' | 'amazon'; q?: string; page?: number; pageSize?: number }) => {
+    const p = new URLSearchParams();
+    if (q.channel) p.set('channel', q.channel);
+    if (q.q?.trim()) p.set('q', q.q.trim());
+    p.set('page', String(q.page ?? 1));
+    p.set('pageSize', String(q.pageSize ?? 10));
+    return get<HeldPage>(`/api/v1/marketplace-imports/held?${p.toString()}`);
+  },
+  releaseHeld: (channel: 'flipkart' | 'amazon', codes?: string[]) => post<ReleaseResult>('/api/v1/marketplace-imports/held/release', { channel, codes }),
+  dismissHeld: (channel: 'flipkart' | 'amazon', code: string, reason: string) =>
+    post<ReleaseResult & { dismissedLines: number; closedOrders: number }>('/api/v1/marketplace-imports/held/dismiss', { channel, code, reason }),
+  /** The shelf's sizes whose product name contains `q`, to pick the one a code points at — searched on the server, a page at a time. */
+  sizesToMap: (channel: 'flipkart' | 'amazon', q: string) => get<{ rows: SizeToMap[]; total: number }>(`/api/v1/marketplace-codes/unmapped?channel=${channel}&all=1&q=${encodeURIComponent(q)}&pageSize=8`),
   /** Jira GRW-618 — a marketplace's own codes: one page, by channel and product. A product's codes are few, so the screen pages through them. */
   marketplaceCodes: (q: { channel?: 'flipkart' | 'amazon'; productId?: string; page?: number; pageSize?: number }) => {
     const p = new URLSearchParams();

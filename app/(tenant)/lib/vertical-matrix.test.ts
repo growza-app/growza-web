@@ -40,6 +40,7 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/offers': 'diary',
   '/orders': 'shop',
   '/orders/[id]': 'shop',
+  '/orders/held': 'shop',
   '/orders/import': 'shop',
   '/orders/new': 'shop',
   '/packages': 'diary',

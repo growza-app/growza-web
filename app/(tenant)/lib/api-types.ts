@@ -1382,6 +1382,8 @@ export interface SaveCodesResult {
   created: number;
   updated: number;
   unchanged: number;
+  /** Jira GRW-620 — the orders that were waiting on these codes and became real orders. */
+  released?: ReleaseResult;
 }
 
 /** Jira GRW-619 — what importing an order report did, in plain counts. */
@@ -1401,4 +1403,41 @@ export interface ImportSummary {
   /** Rows that could not be read, by their row in the file (the heading is row 1). */
   problems: Array<{ row: number; why: string }>;
   replayed: boolean;
+}
+
+/** Jira GRW-620 — one code holding marketplace orders back: what is waiting on it, and why. */
+export interface HeldCode {
+  channel: 'flipkart' | 'amazon';
+  code: string;
+  lines: number;
+  orders: number;
+  units: number;
+  nameInReport: string | null;
+  since: string;
+  fileName: string | null;
+  /** 'unmapped': no size yet. 'retired': mapped to a size no longer sold. 'ready': mapped to a size on sale — the release has just not run. */
+  reason: 'unmapped' | 'retired' | 'ready';
+  mappedTo: string | null;
+}
+export interface HeldPage {
+  rows: HeldCode[];
+  total: number;
+  /** Orders waiting in all, for the headline. */
+  orders: number;
+  page: number;
+  pageSize: number;
+}
+export interface ReleaseResult {
+  orders: number;
+  lines: number;
+  shortUnits: number;
+  stillHeld: number;
+}
+/** A size (or a product with no sizes) a code could be mapped to. */
+export interface SizeToMap {
+  productId: string;
+  variantId: string | null;
+  productName: string;
+  size: string | null;
+  label: string;
 }

@@ -1,0 +1,37 @@
+import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
+import { api } from '../../lib/api';
+import { PageHeader } from '../../components/PageHeader';
+import { screenTitle } from '../../lib/page-title';
+import { guardScreen } from '../../lib/screen-guard';
+import { HeldClient } from './HeldClient';
+
+export const dynamic = 'force-dynamic';
+export const metadata = screenTitle('Waiting for a size');
+
+/**
+ * Jira GRW-620 — the worklist of codes holding marketplace orders back, with the one tap that fixes each.
+ *
+ * Owner and manager only, as the API is; the front desk is bounced to the Orders list. The list itself is read by the client (it is
+ * paged and searched on the server, and re-read after every fix).
+ */
+export default async function HeldOrdersPage() {
+  await guardScreen('/orders');
+  const t = await getTranslations('orders.held');
+  let allowed = true;
+  try {
+    const role = (await api.me()).member?.role;
+    allowed = role === undefined || role === 'owner' || role === 'manager';
+  } catch {
+    allowed = true;
+  }
+  if (!allowed) redirect('/orders');
+  return (
+    <>
+      <PageHeader title={t('title')} />
+      <div className="page-body held-page">
+        <HeldClient />
+      </div>
+    </>
+  );
+}
