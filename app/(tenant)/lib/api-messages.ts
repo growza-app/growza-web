@@ -138,6 +138,10 @@ export const API_MESSAGES_HI: Record<string, string> = {
    */
   'There is no such order.': 'ऐसा कोई ऑर्डर नहीं है।',
   'This order belongs to another branch.': 'यह ऑर्डर दूसरी ब्रांच का है।',
+  // Jira GRW-613 — a marketplace buyer who is not in the client list, and attaching a client the owner recognises.
+  'This order already has a client.': 'इस ऑर्डर में पहले से ग्राहक जुड़ा है।',
+  'That client is not available.': 'वह ग्राहक उपलब्ध नहीं है।',
+  'There is no such branch.': 'ऐसी कोई ब्रांच नहीं है।',
   'No such client': 'ऐसा कोई ग्राहक नहीं',
   'That client record is not available': 'वह ग्राहक रिकॉर्ड उपलब्ध नहीं है',
   'That client asked to be deleted': 'उस ग्राहक ने हटाने को कहा था',

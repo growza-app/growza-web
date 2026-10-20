@@ -51,9 +51,26 @@ describe('UX-07 — every state and channel has a word in both languages', () =>
     expect(en.states!.returned).toBe('Came back');
   });
 
+  it('Jira GRW-613 — the buyer has a word in both languages, and the note that says they are not a client', () => {
+    for (const lang of ['en', 'hi'] as const) {
+      const buyer = (messages(lang).orders as { buyer?: Record<string, string> }).buyer;
+      expect(Object.keys(buyer ?? {}).sort(), lang).toEqual(['notAClient', 'plural', 'title']);
+      for (const [key, word] of Object.entries(buyer!)) expect(word, `${lang} ${key}`).toBeTruthy();
+    }
+    expect((messages('hi').orders as { buyer: Record<string, string> }).buyer.title).toMatch(/[ऀ-ॿ]/);
+    // UX-03 — the owner reads "Buyer" for an online order; "customer" is the counter's word and never appears here.
+    expect(JSON.stringify((messages('en').orders as { buyer: unknown }).buyer)).not.toMatch(/customer/i);
+  });
+
   it('the refusal a move can be sent has its Hindi too', () => {
     const dict = readFileSync(path.resolve(import.meta.dirname, 'api-messages.ts'), 'utf8');
-    for (const sentence of ['There is no such order.', 'This order belongs to another branch.']) {
+    for (const sentence of [
+      'There is no such order.',
+      'This order belongs to another branch.',
+      'This order already has a client.',
+      'That client is not available.',
+      'There is no such branch.',
+    ]) {
       expect(dict, sentence).toContain(`'${sentence}':`);
     }
   });

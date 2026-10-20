@@ -3592,6 +3592,11 @@
       "counter": "Counter",
       "flipkart": "Flipkart",
       "amazon": "Amazon"
+    },
+    "buyer": {
+      "title": "Buyer",
+      "plural": "Buyers",
+      "notAClient": "Not in your client list"
     }
   }
 }
