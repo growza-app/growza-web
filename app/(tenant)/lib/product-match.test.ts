@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Product } from './api-types';
-import { productByCode, productMatchable } from './product-match';
+import { productByCode, productMatchable, sizeWords } from './product-match';
 import { matchItems } from './service-match';
 
 /**
@@ -294,3 +294,31 @@ describe('Jira GRW-599 — a size’s own code finds its product', () => {
   });
 });
 
+
+describe('a size is a word a style is found by (GRW-604 BR-03)', () => {
+  const size = (id: string, option1: string, option2: string | null = null, stock = 3) => ({ id, option1, option2, priceMinor: null, sku: null, barcode: null, stock });
+  const shirt: Product = { ...p('Half-Sleeve Shirt'), sizes: [size('1', '28', 'White'), size('2', '28', 'Sky blue'), size('3', '30', 'White', 0)] };
+  const kurta: Product = { ...p('Cotton Kurta'), sizes: [size('4', '40'), size('5', '42')] };
+  const mug = p('Steel Mug');
+  const list = [shirt, kurta, mug];
+
+  it('lists each size and colour word once, in the owner’s order', () => {
+    expect(sizeWords(shirt)).toEqual(['28', 'White', 'Sky blue', '30']);
+    expect(sizeWords(mug)).toEqual([]);
+  });
+
+  it('"30" finds the styles that stock size 30 — and returns styles, not sizes', () => {
+    const found = matchItems(list.map(productMatchable), '30');
+    expect(found.map((x) => x.id)).toEqual(['Half-Sleeve Shirt']);
+  });
+
+  it('a colour finds the style, and a size that is out of stock still does (the owner is looking for the style)', () => {
+    expect(matchItems(list.map(productMatchable), 'sky blue').map((x) => x.id)).toEqual(['Half-Sleeve Shirt']);
+    const onlyOut: Product = { ...p('Last Shirt'), sizes: [size('9', '32', null, 0)] };
+    expect(matchItems([onlyOut].map(productMatchable), '32').map((x) => x.id)).toEqual(['Last Shirt']);
+  });
+
+  it('a product with no sizes is found exactly as before', () => {
+    expect(matchItems(list.map(productMatchable), 'mug').map((x) => x.id)).toEqual(['Steel Mug']);
+  });
+});
