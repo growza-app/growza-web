@@ -185,6 +185,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Keep the reason to 240 characters': 'कारण 240 अक्षरों तक रखें',
   'The marketplace return id is empty': 'मार्केटप्लेस वापसी की आईडी खाली है',
   'The marketplace return id is too long': 'मार्केटप्लेस वापसी की आईडी बहुत लंबी है',
+  'The marketplace return id must be 1 to 120 characters': 'मार्केटप्लेस वापसी की आईडी 1 से 120 अक्षर की होनी चाहिए',
   'There is no such category.': 'ऐसी कोई श्रेणी नहीं है।',
   'This business has no stock report.': 'इस कारोबार में स्टॉक रिपोर्ट नहीं है।',
   'This business has no marketplace codes.': 'इस कारोबार में मार्केटप्लेस कोड नहीं हैं।',

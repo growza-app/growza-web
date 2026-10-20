@@ -1308,7 +1308,7 @@ export interface OrderDetail {
   canSwap: boolean;
   history: OrderHistoryEntry[];
   /** Jira GRW-635 — the returns recorded against the order, each with its reason; a parcel that came back undelivered is its own kind. */
-  returns: OrderReturn[];
+  returns?: OrderReturn[];
   moves: { primary: string | null; more: string[] };
   payments?: Array<{ mode: string; amountMinor: number }>;
   totalMinor?: number;

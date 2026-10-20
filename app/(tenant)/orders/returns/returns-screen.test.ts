@@ -45,10 +45,21 @@ describe('a reason, never a missing word', () => {
     expect(sheet).toContain('setReasonCode((cur) => (cur === c ? null : c))');
     expect(sheet).toContain("(reasonCode === 'other' && !reason.trim())");
     expect(sheet).toContain('...(reasonCode ? { reasonCode,');
+    // Every way to confirm stops without the words, "Return anyway" included; a chip change drops the invoice warning; the note is the reason's words only for "other".
+    expect(sheet).toContain("if (reasonCode === 'other' && !reason.trim()) return;");
+    expect(sheet).toContain("disabled={busy || (reasonCode === 'other' && !reason.trim())}");
+    expect(sheet).toContain("reasonCode === 'other' && reason.trim() ? { reasonText");
+    expect(sheet).toContain('sls-ret-why');
   });
 });
 
 describe('who sees it, and the words', () => {
+  it('an older API that sends no returns does not crash the order, and a failed lookup does not let the desk in', () => {
+    expect(order).toContain('(order.returns ?? [])');
+    expect(page).toContain('let allowed = false;');
+    expect(readFileSync(path.resolve(import.meta.dirname, '../OrdersScreen.tsx'), 'utf8')).toContain('const mayReadReturns = me ? ');
+  });
+
   it('the front desk is sent back to Orders', () => {
     expect(page).toContain("role === undefined || role === 'owner' || role === 'manager'");
     expect(page).toContain("redirect('/orders')");
@@ -65,7 +76,7 @@ describe('who sees it, and the words', () => {
       const w = messages(lang).returnReasons as Record<string, string>;
       for (const k of ['size', 'not_as_described', 'faulty', 'wrong_item', 'changed_mind', 'other', 'not_said']) expect(w[k], `${lang}.${k}`).toBeTruthy();
     }
-    expect(Object.keys(messages('hi').returns).sort()).toEqual(Object.keys(messages('en').returns).sort());
+    expect(Object.keys(messages('hi').returns ?? {}).sort()).toEqual(Object.keys(messages('en').returns ?? {}).sort());
   });
 
   it('every word the Returns screen uses exists in English and Hindi', () => {

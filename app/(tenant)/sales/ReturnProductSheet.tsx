@@ -290,6 +290,8 @@ export function ReturnProductSheet({
 
   const submitReturn = async (acknowledgeIssuedDocument = false) => {
     if (!selectedBill || totalSelectedUnits <= 0 || !mayReturnBill || busy) return;
+    // "Something else" is a reason only with words; every way to confirm (including "Return anyway") stops here without them.
+    if (reasonCode === 'other' && !reason.trim()) return;
     setBusy(true);
     setError(null);
     try {
@@ -312,7 +314,8 @@ export function ReturnProductSheet({
         refundMode,
         reason: reason.trim() || undefined,
         // "Other" is a reason only with words: the note is them.
-        ...(reasonCode ? { reasonCode, ...(reason.trim() ? { reasonText: reason.trim() } : {}) } : {}),
+        // The note is the reason's words only for "something else"; for the others it stays the shopkeeper's own note.
+        ...(reasonCode ? { reasonCode, ...(reasonCode === 'other' && reason.trim() ? { reasonText: reason.trim() } : {}) } : {}),
         idempotencyKey: requestRef.current.id,
         ...(acknowledgeIssuedDocument ? { acknowledgeIssuedDocument: true } : {}),
         ...(overrideReturnWindow ? { overrideReturnWindow: true } : {}),
@@ -846,9 +849,12 @@ export function ReturnProductSheet({
 
                 <div className="sls-ret-condition">
                   <span className="sls-ret-field-title">{t('whyLabel')}</span>
-                  <div className="pf-chips" role="group" aria-label={t('whyLabel')}>
+                  <div className="pf-chips sls-ret-why" role="group" aria-label={t('whyLabel')}>
                     {RETURN_REASONS.map((c) => (
-                      <button key={c} type="button" className={`pf-chip ${reasonCode === c ? 'pf-chip-on' : ''}`} aria-pressed={reasonCode === c} disabled={busy} onClick={() => setReasonCode((cur) => (cur === c ? null : c))}>
+                      <button key={c} type="button" className={`pf-chip ${reasonCode === c ? 'pf-chip-on' : ''}`} aria-pressed={reasonCode === c} disabled={busy} onClick={() => {
+                          setReasonCode((cur) => (cur === c ? null : c));
+                          setIssuedDocument(null);
+                        }}>
                         {tReasons(c)}
                       </button>
                     ))}
@@ -879,7 +885,7 @@ export function ReturnProductSheet({
                     <button
                       type="button"
                       className="btn btn-ghost btn-sm"
-                      disabled={busy}
+                      disabled={busy || (reasonCode === 'other' && !reason.trim())}
                       onClick={() => void submitReturn(true)}
                     >
                       {t('documentIssuedGo')}

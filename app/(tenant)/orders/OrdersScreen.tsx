@@ -38,7 +38,7 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
   // Jira GRW-619 — importing a marketplace's order report is the owner's and the manager's, as the API is (the desk packs the parcels).
   const role = me?.member?.role;
   // Jira GRW-635 — what came back and why is the owner's and the manager's to read, as the API is; reading it needs no write.
-  const mayReadReturns = role === undefined || role === 'owner' || role === 'manager';
+  const mayReadReturns = me ? role === undefined || role === 'owner' || role === 'manager' : false;
   const tOrders = await getTranslations('orders');
   const mayImport = me ? (role === undefined || role === 'owner' || role === 'manager') && isWritable(me.tenant?.status) : false;
 

@@ -252,11 +252,11 @@ export function OrderClient({
           )}
         </section>
 
-        {order.returns.length > 0 ? (
+        {(order.returns ?? []).length > 0 ? (
           <section className="ord-d-block" aria-label={t('detail.returnsTitle')}>
             <h2>{t('detail.returnsTitle')}</h2>
             <ul className="ord-d-lines">
-              {order.returns.map((r) => (
+              {(order.returns ?? []).map((r) => (
                 <li key={`${r.at}-${r.kind}-${r.reasonCode ?? ''}-${r.units}`}>
                   <span className="ord-d-line-name">
                     {r.kind === 'undelivered' ? t('detail.undelivered') : t('detail.customerReturn')}

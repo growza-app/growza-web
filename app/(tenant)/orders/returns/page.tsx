@@ -15,13 +15,14 @@ export const metadata = screenTitle('What came back');
 export default async function ReturnsPage() {
   await guardScreen('/orders');
   const t = await getTranslations('orders.returns');
-  let allowed = true;
+  // Not signed in as someone who may read it — or not able to tell — is not "allowed": the front desk is sent back to Orders.
+  let allowed = false;
   try {
     const me = await api.me();
     const role = me.member?.role;
     allowed = role === undefined || role === 'owner' || role === 'manager';
   } catch {
-    allowed = true;
+    allowed = false;
   }
   if (!allowed) redirect('/orders');
   return (

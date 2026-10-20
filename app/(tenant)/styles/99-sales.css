@@ -2973,3 +2973,9 @@ button.sls-ret-step-pill:not(:disabled) {
   }
 }
 
+
+/* Jira GRW-635 — the reasons a return can have: six chips that WRAP (a row that scrolls sideways hides "Something else", the one that needs the note, off the edge at 344px). */
+.sls-ret-why {
+  flex-wrap: wrap;
+  overflow: visible;
+}
