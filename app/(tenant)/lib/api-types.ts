@@ -1606,3 +1606,24 @@ export interface ReorderQuery {
   page?: number;
   pageSize?: number;
 }
+
+/** Jira GRW-634 — where the money came from, by channel. */
+export interface ChannelRow {
+  channel: string;
+  billedMinor: string;
+  orders: number;
+  averageMinor: number | null;
+  returnedOrders: number;
+  cancelledOrders: number;
+  previous: { billedMinor: string; orders: number } | null;
+  changePct: number | null;
+}
+export interface ByChannelPage {
+  window: { key: string; label: string; startISO: string; endExclusiveISO: string };
+  previous: { startISO: string; endExclusiveISO: string; hasData: boolean };
+  channels: ChannelRow[];
+  totals: { billedMinor: string; orders: number; returnedOrders: number; previousBilledMinor: string | null; changePct: number | null };
+  trend: Array<{ label: string; startISO: string; endExclusiveISO: string; billedMinor: Record<string, string> }>;
+  anyOrders: boolean;
+  caveat: string;
+}

@@ -74,6 +74,7 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/settings/working-hours': 'both',
   '/stock': 'shop',
   '/stock/report': 'shop',
+  '/stock/channels': 'shop',
   '/stock/order': 'shop',
   '/stock/sellers': 'shop',
   '/try-whatsapp': 'both',

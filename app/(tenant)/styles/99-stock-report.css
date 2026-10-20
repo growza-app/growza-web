@@ -240,3 +240,39 @@
 .ro-rule-actions .btn {
   min-height: 2.75rem;
 }
+
+/*
+ * Jira GRW-634 — sales by channel. Cards stacked at 344px; the trend is bars with the same numbers in a list under them (the chart is never the
+ * only way to read a figure); the fee caveat is plain text at a legible size, never behind a tooltip.
+ */
+.ch-bars {
+  width: 100%;
+  height: 4rem;
+  color: var(--accent);
+}
+.ch-trend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.ch-trend li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.ch-trend-sum {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.ch-caveat {
+  margin: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}

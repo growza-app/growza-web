@@ -67,6 +67,8 @@ import type {
   SetChannelBranchResult,
   HeldPage,
   StockReportPage,
+  ByChannelPage,
+  SellersRange,
   ReorderPage,
   ReorderQuery,
   ReorderRule,
@@ -691,6 +693,8 @@ export const api = {
   /** Jira GRW-641 — which branch each marketplace sells from, and the branches it could. */
   channelBranches: () => get<ChannelBranches>('/api/v1/channels'),
   setChannelBranch: (channel: 'flipkart' | 'amazon', locationId: string) => put<SetChannelBranchResult>(`/api/v1/channels/${channel}/branch`, { locationId }),
+  /** Jira GRW-634 — what was billed on each channel over a range, beside the period before; billed, not received. */
+  byChannel: (q: { range: SellersRange; location?: string }) => get<ByChannelPage>(`/api/v1/reports/by-channel?${sellersParams({ range: q.range, location: q.location })}`),
   /** Jira GRW-633 — what to order before the season, size by size: last year's sales in the same days, less the shelf. */
   reorder: (q: ReorderQuery) => get<ReorderPage>(`/api/v1/reports/reorder?${reorderParams(q)}`),
   /** Jira GRW-633 — the owner's own number over a suggestion (null clears it). */

@@ -3574,7 +3574,8 @@
       "units": "{units} on the shelf",
       "sizesLabel": "Sizes of {name}",
       "toSellers": "What sells and what sits",
-      "toOrder": "What to order"
+      "toOrder": "What to order",
+      "toChannels": "Where the money came from"
     },
     "sellers": {
       "title": "What sells",
@@ -3651,6 +3652,36 @@
       "useDefaults": "Use the usual days",
       "toSellers": "What sells and what sits",
       "fixBeforeExport": "Some numbers have not been saved. Fix them or try again before you export."
+    },
+    "channels": {
+      "title": "Where the money came from",
+      "rangeLabel": "Period",
+      "range": {
+        "last_7_days": "Last 7 days",
+        "this_month": "This month",
+        "last_month": "Last month",
+        "last_3_months": "Last 3 months",
+        "this_year": "This year"
+      },
+      "loading": "Loading",
+      "loadError": "Could not load. Check your connection and try again.",
+      "retry": "Try again",
+      "noSales": "No sales in this period",
+      "noSalesHint": "Sales from the counter and from each marketplace show here once there are some.",
+      "totalsLabel": "Totals for this period",
+      "billed": "Billed in this period",
+      "ordersLine": "{orders, plural, one {1 order} other {# orders}}",
+      "average": "{amount} each",
+      "cameBack": "{count, plural, one {1 order came back} other {# orders came back}}",
+      "cancelled": "{count, plural, one {1 order was cancelled} other {# orders were cancelled}}",
+      "counter": "Counter",
+      "flipkart": "Flipkart",
+      "amazon": "Amazon",
+      "up": "Up {pct}% on the period before",
+      "down": "Down {pct}% on the period before",
+      "noPrevious": "No sales in the period before to compare with.",
+      "nothingBefore": "Nothing was sold here in the period before.",
+      "trendTitle": "Across the period"
     }
   },
   "sales": {

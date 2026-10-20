@@ -144,6 +144,9 @@ export function StockReportClient() {
       <AppLink className="btn srp-export" href="/stock/order">
         {t('toOrder')}
       </AppLink>
+      <AppLink className="btn srp-export" href="/stock/channels">
+        {t('toChannels')}
+      </AppLink>
 
       <label className="search-wrap srp-search">
         <input
