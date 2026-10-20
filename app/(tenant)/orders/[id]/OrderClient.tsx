@@ -161,6 +161,9 @@ export function OrderClient({
           products: order.lines.map((l) => ({
             id: l.id,
             productId: l.productId,
+            // A sized line is named by its own id (lineReturnId), which needs the size here: without it a sized line was named by its
+            // product and the server refused it — and after a swap the old and new lines would have shared that one id.
+            variantId: l.variantId,
             name: l.name,
             priceMinor: l.priceMinor!,
             qty: l.qty,
@@ -344,6 +347,8 @@ export function OrderClient({
             setSwapping(null);
             void refresh();
           }}
+          // A swap whose answer was lost may have happened: redraw from the server so the sheet never offers units already swapped.
+          onUnsure={() => void refresh()}
         />
       ) : null}
 

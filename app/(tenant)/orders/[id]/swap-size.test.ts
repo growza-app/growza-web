@@ -30,8 +30,13 @@ describe('the server owns every number (BR-02, FR-04)', () => {
   });
 
   it('a difference is settled before the swap can be confirmed: no way chosen, no swap', () => {
-    expect(sheet).toContain('const settled = quote !== null && (difference === 0 || MODES.includes(mode))');
-    expect(sheet).toContain('...(difference === 0 ? {} : { settlementMode: mode })');
+    expect(sheet).toContain('const settled = quote !== null && (difference === 0 || mode !== null)');
+    expect(sheet).toContain('...(difference === 0 ? {} : { settlementMode: mode! })');
+  });
+
+  it('no way of paying is pre-chosen: a UPI top-up is never recorded as cash because nobody looked at the chip', () => {
+    expect(sheet).toContain('useState<Mode | null>(null)');
+    expect(sheet).not.toMatch(/useState<Mode>\('cash'\)/);
   });
 });
 
@@ -47,6 +52,19 @@ describe('BR-04 — a double tap swaps once', () => {
   it('the newest quote wins, so a slow answer for a size already moved off cannot draw over the right one', () => {
     expect(sheet).toContain('const seq = ++quoteSeq.current');
     expect(sheet).toContain('if (seq === quoteSeq.current) setQuote(q)');
+  });
+});
+
+describe('a swap whose answer was lost', () => {
+  it('is said to be unconfirmed and the order redraws from the server, so a second swap is never invited for units already swapped', () => {
+    expect(sheet).toContain("setNotice(t('unsure'))");
+    expect(sheet).toContain('onUnsure();');
+    expect(sheet).toContain('error.status >= 500');
+    expect(client).toContain('onUnsure={() => void refresh()}');
+  });
+
+  it('Escape does not close the sheet while a swap is out, as the Close button and the backdrop do not', () => {
+    expect(sheet).toContain('inFlight.current ? undefined : onClose()');
   });
 });
 
@@ -98,6 +116,10 @@ describe('the order screen', () => {
     expect(client).toContain("h.kind === 'exchange'");
   });
 
+  it('names a sized line by its own size to the Return sheet, which the server needs to find it (and which keeps a swapped line and its replacement apart)', () => {
+    expect(client).toContain('variantId: l.variantId,');
+  });
+
   it('is reached from the line it swaps — one tap — and refreshes the order from the server when it is done', () => {
     expect(client).toContain('setSwapping(l.id)');
     expect(client).toMatch(/onSwapped=\{\(\) => \{\s*setSwapping\(null\);\s*void refresh\(\);/);
@@ -138,6 +160,8 @@ describe('UX — words, tokens, motion', () => {
   it('has a loading state that reserves the grid, an empty state, and an error with a retry', () => {
     expect(sheet).toContain('swp-skeleton');
     expect(sheet).toContain("t('noOther')");
+    // A colour with no other size says so, rather than showing a blank grid.
+    expect(sheet).toContain('visible.length === 0');
     expect(sheet).toContain("t('loadError')");
     expect(sheet).toContain("t('retry')");
   });

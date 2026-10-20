@@ -32,6 +32,7 @@ export function SwapSizeSheet({
   windowDays,
   onClose,
   onSwapped,
+  onUnsure,
 }: {
   order: OrderDetail;
   line: Line;
@@ -42,12 +43,16 @@ export function SwapSizeSheet({
   windowDays: number;
   onClose: () => void;
   onSwapped: (result: ExchangeResult) => void;
+  /** The answer to a swap was lost, so it may have happened: the screen redraws from the server. */
+  onUnsure: () => void;
 }) {
   const t = useTranslations('orders.detail.swap');
   const tm = useTranslations('orders.detail.modes');
   const locale = useLocale();
   const ref = useRef<HTMLDivElement>(null);
-  useDialog(ref, { onClose, initialFocus: 'container' });
+  const inFlight = useRef(false);
+  // Escape must not close the sheet on a swap that is out: its answer, and its error, would have nowhere to be shown.
+  useDialog(ref, { onClose: () => (inFlight.current ? undefined : onClose()), initialFocus: 'container' });
 
   const remaining = line.qty - line.returnedQty;
   const [sizes, setSizes] = useState<Size[] | null>(null);
@@ -60,13 +65,13 @@ export function SwapSizeSheet({
   const [qty, setQty] = useState(1);
   const [quote, setQuote] = useState<ExchangeResult | null>(null);
   const [quoting, setQuoting] = useState(false);
-  const [mode, setMode] = useState<Mode>('cash');
+  // No way is pre-chosen: a top-up taken by UPI must not be recorded as cash because nobody looked at the chip.
+  const [mode, setMode] = useState<Mode | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [documentNumber, setDocumentNumber] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // One request id for as long as the choice is the same: a retry after a lost answer is the same swap, not a second.
   const request = useRef<{ id: string; signature: string } | null>(null);
-  const inFlight = useRef(false);
   // The newest quote asked for wins: a slow answer for a size the person has already moved off must not draw over it.
   const quoteSeq = useRef(0);
 
@@ -83,7 +88,12 @@ export function SwapSizeSheet({
       const used = new Set(live.map((v) => (v.option2 ?? '').toLowerCase()));
       const offered = second ? second.values.filter((v) => used.has(v.toLowerCase())) : [];
       setColours(offered);
-      setColour((now) => now ?? all.variants.find((v) => v.id === line.variantId)?.option2 ?? offered[0] ?? null);
+      setColour((now) => {
+        if (now !== null) return now;
+        // The colour the child has, when it can still be chosen; else the first colour that has a size to swap to.
+        const mine = all.variants.find((v) => v.id === line.variantId)?.option2;
+        return mine && offered.some((o) => o.toLowerCase() === mine.toLowerCase()) ? mine : (offered[0] ?? null);
+      });
       setSizes(live.filter((v) => v.id !== line.variantId));
     } catch {
       setLoadFailed(true);
@@ -143,7 +153,7 @@ export function SwapSizeSheet({
   };
 
   const difference = quote?.differenceMinor ?? 0;
-  const settled = quote !== null && (difference === 0 || MODES.includes(mode));
+  const settled = quote !== null && (difference === 0 || mode !== null);
   const canConfirm = chosen !== null && quote !== null && !quoting && !busy && settled && !blockedByWindow;
 
   const confirm = async (acknowledge = false) => {
@@ -163,7 +173,7 @@ export function SwapSizeSheet({
       const result = await api.exchangeOrder(order.id, {
         ...body(chosen, qty),
         acknowledgeIssuedDocument: acknowledge || undefined,
-        ...(difference === 0 ? {} : { settlementMode: mode }),
+        ...(difference === 0 ? {} : { settlementMode: mode! }),
         expectedDifferenceMinor: difference,
         idempotencyKey: request.current.id,
       });
@@ -183,8 +193,13 @@ export function SwapSizeSheet({
         setChosen(null);
         setQuote(null);
         void loadSizes();
+      } else if (!(error instanceof ApiError) || error.status >= 500) {
+        // No answer, or a server fault: the swap may have gone through. Say so, and redraw from the server instead of
+        // inviting a second swap of units that are already swapped.
+        setNotice(t('unsure'));
+        onUnsure();
       } else {
-        setNotice(error instanceof ApiError ? error.message : t('failed'));
+        setNotice(error.message);
       }
     } finally {
       inFlight.current = false;
@@ -192,16 +207,21 @@ export function SwapSizeSheet({
     }
   };
 
+  // One colour at a time when a product has two options; a colour with no other size says so instead of showing a blank grid.
+  const visible = (sizes ?? []).filter((s) => colour === null || colours.length < 2 || (s.option2 ?? '').toLowerCase() === colour.toLowerCase());
+
   const confirmLabel = !chosen
     ? t('confirmPick')
-    : difference > 0
-      ? t('confirmTake', { amount: money(difference), size: sizeLabel(chosen) })
-      : difference < 0
-        ? t('confirmGive', {
-            amount: money(difference),
-            size: sizeLabel(chosen),
-          })
-        : t('confirmSame', { size: sizeLabel(chosen) });
+    : !quote
+      ? t('working')
+      : difference > 0
+        ? t('confirmTake', { amount: money(difference), size: sizeLabel(chosen) })
+        : difference < 0
+          ? t('confirmGive', {
+              amount: money(difference),
+              size: sizeLabel(chosen),
+            })
+          : t('confirmSame', { size: sizeLabel(chosen) });
 
   return (
     <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && !busy && onClose()}>
@@ -259,6 +279,8 @@ export function SwapSizeSheet({
                   // A size chosen in another colour is not on this grid any more; ask again rather than confirm what is out of sight.
                   setChosen(null);
                   setQuote(null);
+                  setNotice(null);
+                  setDocumentNumber(null);
                   quoteSeq.current++;
                   setQuoting(false);
                 }}
@@ -281,37 +303,35 @@ export function SwapSizeSheet({
               <span key={i} className="psz-cell swp-skeleton-cell" />
             ))}
           </div>
-        ) : sizes.length === 0 ? (
+        ) : visible.length === 0 ? (
           <p className="psz-note">{t('noOther')}</p>
         ) : (
           <div className="psz-grid" role="group" aria-label={t('pick')}>
-            {sizes
-              .filter((s) => colour === null || colours.length < 2 || (s.option2 ?? '').toLowerCase() === colour.toLowerCase())
-              .map((size) => {
-                const out = size.stock <= 0;
-                const on = chosen?.id === size.id;
-                return (
-                  <button
-                    key={size.id}
-                    type="button"
-                    className={`psz-cell ${on ? 'is-on' : ''} ${out ? 'is-out' : ''}`}
-                    aria-pressed={on}
-                    aria-label={
-                      out
-                        ? t('cellOut', { size: sizeLabel(size) })
-                        : t('cellLeft', {
-                            size: sizeLabel(size),
-                            n: size.stock,
-                          })
-                    }
-                    disabled={out || busy || blockedByWindow}
-                    onClick={() => choose(size)}
-                  >
-                    <span className="psz-label">{colours.length > 1 ? size.option1 : sizeLabel(size)}</span>
-                    <span className="psz-left">{out ? t('out') : t('left', { n: size.stock })}</span>
-                  </button>
-                );
-              })}
+            {visible.map((size) => {
+              const out = size.stock <= 0;
+              const on = chosen?.id === size.id;
+              return (
+                <button
+                  key={size.id}
+                  type="button"
+                  className={`psz-cell ${on ? 'is-on' : ''} ${out ? 'is-out' : ''}`}
+                  aria-pressed={on}
+                  aria-label={
+                    out
+                      ? t('cellOut', { size: sizeLabel(size) })
+                      : t('cellLeft', {
+                          size: sizeLabel(size),
+                          n: size.stock,
+                        })
+                  }
+                  disabled={out || busy || blockedByWindow}
+                  onClick={() => choose(size)}
+                >
+                  <span className="psz-label">{colours.length > 1 ? size.option1 : sizeLabel(size)}</span>
+                  <span className="psz-left">{out ? t('out') : t('left', { n: size.stock })}</span>
+                </button>
+              );
+            })}
           </div>
         )}
 

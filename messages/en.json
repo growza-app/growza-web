@@ -3822,7 +3822,8 @@
         "swapped": "{count} swapped",
         "swappedFrom": "swapped from {name}",
         "history": "Size swapped: {from} to {to}",
-        "colour": "Colour"
+        "colour": "Colour",
+        "unsure": "We could not confirm the swap. Check the order before trying again."
       }
     }
   }
