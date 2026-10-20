@@ -67,6 +67,9 @@ import type {
   SetChannelBranchResult,
   HeldPage,
   StockReportPage,
+  BestSellersPage,
+  DeadStockPage,
+  SellersQuery,
   StockReportQuery,
   ReleaseResult,
   SizeToMap,
@@ -297,6 +300,16 @@ function stockReportParams(q: StockReportQuery): string {
   if (q.location) p.set('location', q.location);
   if (q.categoryId) p.set('categoryId', q.categoryId);
   if (q.q?.trim()) p.set('q', q.q.trim());
+  if (q.page !== undefined) p.set('page', String(q.page));
+  if (q.pageSize !== undefined) p.set('pageSize', String(q.pageSize));
+  return p.toString();
+}
+
+/** Jira GRW-632 — the filters of the two sales views, as a query string. */
+function sellersParams(q: SellersQuery): string {
+  const p = new URLSearchParams({ range: q.range });
+  if (q.location) p.set('location', q.location);
+  if (q.categoryId) p.set('categoryId', q.categoryId);
   if (q.page !== undefined) p.set('page', String(q.page));
   if (q.pageSize !== undefined) p.set('pageSize', String(q.pageSize));
   return p.toString();
@@ -664,6 +677,10 @@ export const api = {
   /** Jira GRW-641 — which branch each marketplace sells from, and the branches it could. */
   channelBranches: () => get<ChannelBranches>('/api/v1/channels'),
   setChannelBranch: (channel: 'flipkart' | 'amazon', locationId: string) => put<SetChannelBranchResult>(`/api/v1/channels/${channel}/branch`, { locationId }),
+  /** Jira GRW-632 — the sizes that sold in a window, beside the same window a year earlier. */
+  bestSellers: (q: SellersQuery) => get<BestSellersPage>(`/api/v1/reports/best-sellers?${sellersParams(q)}`),
+  /** Jira GRW-632 — the sizes on the shelf that did not sell in a window, the longest-unsold first. */
+  deadStock: (q: SellersQuery) => get<DeadStockPage>(`/api/v1/reports/dead-stock?${sellersParams(q)}`),
   /** Jira GRW-631 — the shelf size by size with its worth at cost; one page of styles, the totals over all of them. */
   stockReport: (q: StockReportQuery) => get<StockReportPage>(`/api/v1/reports/stock?${stockReportParams(q)}`),
   /** Jira GRW-631 — the same report as a file: the server writes it, so the file can never be a second answer. */

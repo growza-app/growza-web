@@ -138,6 +138,10 @@ export function StockReportClient() {
     <div className="srp">
       {data ? <Totals data={data} money={money} count={count} /> : null}
 
+      <AppLink className="btn srp-export" href="/stock/sellers">
+        {t('toSellers')}
+      </AppLink>
+
       <label className="search-wrap srp-search">
         <input
           type="search"

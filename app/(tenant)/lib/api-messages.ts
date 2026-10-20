@@ -154,6 +154,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'There is no such code.': 'ऐसा कोई कोड नहीं है।',
   'Search must be one piece of text.': 'खोज एक ही टेक्स्ट होनी चाहिए।',
   'That is too many styles for one file. Pick a branch or a category and try again.': 'एक फ़ाइल के लिए स्टाइल बहुत ज़्यादा हैं। कोई ब्रांच या श्रेणी चुनें और फिर कोशिश करें।',
+  'This business has no sales reports for a shop.': 'इस कारोबार के लिए दुकान की बिक्री रिपोर्ट नहीं है।',
   'There is no such category.': 'ऐसी कोई श्रेणी नहीं है।',
   'This business has no stock report.': 'इस कारोबार में स्टॉक रिपोर्ट नहीं है।',
   'This business has no marketplace codes.': 'इस कारोबार में मार्केटप्लेस कोड नहीं हैं।',

@@ -1512,3 +1512,53 @@ export interface StockReportQuery {
   page?: number;
   pageSize?: number;
 }
+
+/** Jira GRW-632 — what sells and what sits. */
+export type SellersRange = 'last_7_days' | 'this_month' | 'last_month' | 'last_3_months' | 'this_year';
+export interface SellersWindow {
+  key: string;
+  label: string;
+  startISO: string;
+  endExclusiveISO: string;
+}
+export interface BestSellerRow {
+  id: string;
+  productId: string;
+  name: string;
+  sizeLabel: string | null;
+  units: number;
+  valueMinor: string;
+  lastYearUnits: number | null;
+  lastYearValueMinor: string | null;
+}
+export interface BestSellersPage {
+  window: SellersWindow;
+  lastYear: { startISO: string; endExclusiveISO: string; hasData: boolean };
+  rows: BestSellerRow[];
+  totals: { sizes: number; units: number; valueMinor: string };
+  page: number;
+  pageSize: number;
+}
+export interface DeadStockRow {
+  id: string;
+  productId: string;
+  name: string;
+  sizeLabel: string | null;
+  stock: number;
+  lastSoldAt: string | null;
+  valueMinor: string | null;
+}
+export interface DeadStockPage {
+  window: SellersWindow;
+  rows: DeadStockRow[];
+  totals: { sizes: number; units: number; valueMinor: string; sizesWithoutCost: number };
+  page: number;
+  pageSize: number;
+}
+export interface SellersQuery {
+  range: SellersRange;
+  location?: string;
+  categoryId?: string;
+  page?: number;
+  pageSize?: number;
+}
