@@ -131,6 +131,13 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'One of those services does not exist.': 'उनमें से एक सेवा मौजूद नहीं है।',
   'Appointment not found': 'बुकिंग नहीं मिली',
   'No such booking': 'ऐसी कोई बुकिंग नहीं',
+  /*
+   * Jira GRW-612 — an order's state. The refusal that names the state and the moves it has is built from
+   * `moveRefusal` in @growza-app/shared and arrives as one sentence; the words inside it ("Delivered", "Came back")
+   * are the state names, whose Hindi is in `messages/*.json` under `orders.states` for the screens to use.
+   */
+  'There is no such order.': 'ऐसा कोई ऑर्डर नहीं है।',
+  'This order belongs to another branch.': 'यह ऑर्डर दूसरी ब्रांच का है।',
   'No such client': 'ऐसा कोई ग्राहक नहीं',
   'That client record is not available': 'वह ग्राहक रिकॉर्ड उपलब्ध नहीं है',
   'That client asked to be deleted': 'उस ग्राहक ने हटाने को कहा था',

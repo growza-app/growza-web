@@ -3577,5 +3577,21 @@
       "documentIssuedBodyNoNumber": "An invoice was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?",
       "documentIssuedGo": "Return anyway"
     }
+  },
+  "orders": {
+    "states": {
+      "done": "Done",
+      "new": "New",
+      "packed": "Packed",
+      "sent": "Sent",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "returned": "Came back"
+    },
+    "channels": {
+      "counter": "Counter",
+      "flipkart": "Flipkart",
+      "amazon": "Amazon"
+    }
   }
 }
