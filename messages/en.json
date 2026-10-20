@@ -3967,6 +3967,7 @@
     "inFlight": "{count, plural, one {1 order not yet sent stays at {branch} and is still to be sent from there.} other {# orders not yet sent stay at {branch} and are still to be sent from there.}}",
     "unchanged": "{channel} already sells from {branch}.",
     "failed": "Could not save. Nothing changed. Try again.",
-    "choose": "Choose a shop"
+    "choose": "Choose a shop",
+    "followsMain": "Until you choose, it follows your main shop."
   }
 }

@@ -18,6 +18,8 @@ export function ChannelsForm({ initial }: { initial: ChannelBranches }) {
   const writable = useWritable();
   const [data, setData] = useState(initial);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  // What the person just chose, shown while the request is out: the select does not snap back to the old shop under their thumb.
+  const [pending, setPending] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const inFlight = useRef(false);
@@ -27,6 +29,7 @@ export function ChannelsForm({ initial }: { initial: ChannelBranches }) {
     if (inFlight.current || locationId === '' || locationId === row.locationId) return;
     inFlight.current = true;
     setBusy(row.channel);
+    setPending((p) => ({ ...p, [row.channel]: locationId }));
     setErrors((e) => ({ ...e, [row.channel]: '' }));
     setNotes((n) => ({ ...n, [row.channel]: '' }));
     try {
@@ -40,6 +43,7 @@ export function ChannelsForm({ initial }: { initial: ChannelBranches }) {
     } finally {
       inFlight.current = false;
       setBusy(null);
+      setPending((p) => ({ ...p, [row.channel]: '' }));
     }
   };
 
@@ -53,7 +57,7 @@ export function ChannelsForm({ initial }: { initial: ChannelBranches }) {
               {t('sellsFrom', { channel: word(row.channel) })}
             </label>
             {row.changeable && writable ? (
-              <select id={`stc-${row.channel}`} className="input stc-select" value={row.locationId ?? ''} disabled={busy !== null} onChange={(e) => void choose(row, e.target.value)}>
+              <select id={`stc-${row.channel}`} className="input stc-select" value={pending[row.channel] || (row.locationId ?? '')} disabled={busy !== null} onChange={(e) => void choose(row, e.target.value)}>
                 {row.locationId === null ? <option value="">{t('choose')}</option> : null}
                 {data.branches.map((b) => (
                   <option key={b.id} value={b.id}>
@@ -64,7 +68,7 @@ export function ChannelsForm({ initial }: { initial: ChannelBranches }) {
             ) : (
               <p className="stc-fixed">{row.branchName ?? '—'}</p>
             )}
-            <p className="stc-hint">{row.changeable ? t('explain') : t('single')}</p>
+            <p className="stc-hint">{row.changeable ? (row.source === 'default' && !row.gone ? `${t('explain')} ${t('followsMain')}` : t('explain')) : t('single')}</p>
             {row.gone ? (
               <p className="stc-warn" role="alert">
                 {t('gone', { channel: word(row.channel), branch: row.branchName ?? '' })}

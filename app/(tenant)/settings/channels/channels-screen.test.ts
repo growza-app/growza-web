@@ -48,6 +48,13 @@ describe('the change says what it did', () => {
   });
 });
 
+describe('review of GRW-641', () => {
+  it('shows the shop just chosen while the request is out instead of snapping back, and says an unchosen channel follows the main shop', () => {
+    expect(form).toContain("value={pending[row.channel] || (row.locationId ?? '')}");
+    expect(form).toContain("t('followsMain')");
+  });
+});
+
 describe('the order says which shop it is booked at', () => {
   it('a marketplace order shows its branch as a quiet line — not a badge competing with the state; a counter sale does not', () => {
     const order = readFileSync(path.resolve(import.meta.dirname, '../../orders/[id]/OrderClient.tsx'), 'utf8');

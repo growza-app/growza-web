@@ -39,6 +39,7 @@
 }
 .stc-fixed {
   margin: 0;
+  overflow-wrap: anywhere;
   min-height: 2.75rem;
   display: flex;
   align-items: center;
