@@ -3684,7 +3684,7 @@
       "trendTitle": "Across the period",
       "same": "Same as the period before",
       "weekOf": "Week of {date}",
-      "refunded": "{count, plural, one {Refunded on 1 order: {amount}} other {Refunded on # orders: {amount}}}"
+      "refunded": "{count, plural, one {Refunded once: {amount}} other {Refunded # times: {amount}}}"
     }
   },
   "sales": {
@@ -4170,7 +4170,9 @@
       "exporting": "Making the file…",
       "exportFailed": "Could not make the file. Try again.",
       "recordNote": "These are records of refunds that were made, so you can match them against the marketplace’s statement. Nothing here is refunded from Growza.",
-      "toReturns": "What came back"
+      "toReturns": "What came back",
+      "nothingOnChannel": "No {channel} refunds in this period",
+      "openOrder": "Open the order"
     }
   },
   "settingsChannels": {

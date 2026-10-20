@@ -33,6 +33,13 @@ describe('a record, never an instruction (BR-01)', () => {
     expect(client).not.toMatch(/\.reduce\(/);
   });
 
+  it('the channel chips come from the last read that was not narrowed, so tapping one never removes the others or itself, and every row links to its order', () => {
+    expect(client).toContain("if (channel === '') setChannelList(");
+    expect(client).toContain('channelList.includes(channel)');
+    expect(client).toContain("t('openOrder')");
+    expect(client).toContain("t('nothingOnChannel'");
+  });
+
   it('a change of branch, period or channel starts the page over in the same render — one read', () => {
     expect(client).toContain('const stale = scope !== scopeNow;');
     expect(client).toContain('const livePage = stale ? 1 : page;');

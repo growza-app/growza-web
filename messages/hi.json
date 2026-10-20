@@ -3684,7 +3684,7 @@
       "trendTitle": "पूरी अवधि में",
       "same": "पिछली अवधि जितना ही",
       "weekOf": "{date} वाला सप्ताह",
-      "refunded": "{count} ऑर्डर पर रिफ़ंड: {amount}"
+      "refunded": "{count} बार रिफ़ंड: {amount}"
     }
   },
   "sales": {
@@ -4170,7 +4170,9 @@
       "exporting": "फ़ाइल बन रही है…",
       "exportFailed": "फ़ाइल नहीं बन सकी। फिर कोशिश करें।",
       "recordNote": "ये हो चुके रिफ़ंड के रिकॉर्ड हैं, ताकि आप इन्हें मार्केटप्लेस के स्टेटमेंट से मिला सकें। यहाँ से Growza कोई रिफ़ंड नहीं करता।",
-      "toReturns": "क्या वापस आया"
+      "toReturns": "क्या वापस आया",
+      "nothingOnChannel": "इस अवधि में {channel} का कोई रिफ़ंड नहीं",
+      "openOrder": "ऑर्डर खोलें"
     }
   },
   "settingsChannels": {

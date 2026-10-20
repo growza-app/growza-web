@@ -284,9 +284,10 @@ export function OrderClient({
                 <li key={f.id}>
                   <span className="ord-d-line-name">
                     {f.refundedBy === 'marketplace' ? t('detail.marketplaceRefunded', { channel: refundChannelWord(f.channel), date: refundDay(f.refundedAt) }) : t('detail.shopRefunded', { date: refundDay(f.refundedAt) })}
-                    <span className="ord-d-quiet"> · {order.lines.find((l) => l.id === f.lineId)?.name ?? ''}</span>
+                    {order.lines.find((l) => l.id === f.lineId)?.name ? <span className="ord-d-quiet"> · {order.lines.find((l) => l.id === f.lineId)?.name}</span> : null}
                     <span className="ord-d-quiet"> · {t('detail.refundRef', { ref: f.externalRef })}</span>
                   </span>
+                  <span className="ord-d-line-qty" aria-hidden="true" />
                   <span className="ord-d-line-amount">{money(f.amountMinor)}</span>
                 </li>
               ))}

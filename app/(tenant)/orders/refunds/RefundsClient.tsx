@@ -38,6 +38,9 @@ export function RefundsClient() {
   const livePage = stale ? 1 : page;
   const [data, setData] = useState<RefundsReportPage | null>(null);
   const [failed, setFailed] = useState(false);
+  // The channels there are, from the last read that was NOT narrowed to one: the chips are built from this, so tapping one never removes the others
+  // (or itself) while the next read is on its way.
+  const [channelList, setChannelList] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const seq = useRef(0);
@@ -54,7 +57,10 @@ export function RefundsClient() {
       const res = await api.refundsReport({ range, channel: channel || undefined, location: branch || undefined, page: livePage, pageSize: PAGE_SIZE });
       if (mine !== seq.current) return;
       if (res.rows.length === 0 && res.totals.count > 0 && livePage > 1) setPage(Math.max(1, Math.ceil(res.totals.count / PAGE_SIZE)));
-      else setData(res);
+      else {
+        setData(res);
+        if (channel === '') setChannelList(res.totals.byChannel.map((c) => c.channel));
+      }
     } catch {
       if (mine === seq.current) setFailed(true);
     }
@@ -92,7 +98,7 @@ export function RefundsClient() {
     }
   };
 
-  const channels = data?.totals.byChannel ?? [];
+  const channels = channelList.includes(channel) || channel === '' ? channelList : [...channelList, channel];
   return (
     <div className="srp">
       <select className="input srp-select" aria-label={t('rangeLabel')} value={range} onChange={(e) => setRange(e.target.value as SellersRange)}>
@@ -102,9 +108,9 @@ export function RefundsClient() {
           </option>
         ))}
       </select>
-      {channels.length > 1 || channel ? (
+      {channels.length > 1 ? (
         <div className="pf-chips sls-ret-why" role="group" aria-label={t('channelLabel')}>
-          {['', ...channels.map((c) => c.channel)].map((c) => (
+          {['', ...channels].map((c) => (
             <button key={c || 'all'} type="button" className={`pf-chip ${channel === c ? 'pf-chip-on' : ''}`} aria-pressed={channel === c} onClick={() => setChannel(c)}>
               {c === '' ? t('allChannels') : word(c)}
             </button>
@@ -127,7 +133,7 @@ export function RefundsClient() {
         </ul>
       ) : data.totals.count === 0 ? (
         <div className="srp-empty" role="status">
-          <p className="srp-empty-title">{t('nothing')}</p>
+          <p className="srp-empty-title">{channel ? t('nothingOnChannel', { channel: word(channel) }) : t('nothing')}</p>
           <p className="srp-hint">{t('nothingHint')}</p>
         </div>
       ) : (
@@ -148,8 +154,8 @@ export function RefundsClient() {
                 </div>
                 <p className="srp-hint">{r.lineName}</p>
                 <p className="srp-hint">
-                  {r.orderRef ? <AppLink href={`/orders/${r.saleId}`}>{t('orderRef', { ref: r.orderRef })}</AppLink> : null}
-                  {r.orderRef ? ' · ' : ''}
+                  <AppLink href={`/orders/${r.saleId}`}>{r.orderRef ? t('orderRef', { ref: r.orderRef }) : t('openOrder')}</AppLink>
+                  {' · '}
                   {t('reference', { ref: r.externalRef })}
                 </p>
               </li>
