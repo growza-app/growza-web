@@ -23,7 +23,7 @@ const PAGE_SIZE = 10;
  *
  * Laid out at 344px: every row stacks — code, what it was called, how many are waiting, the action — the actions a thumb tall.
  */
-export function HeldClient() {
+export function HeldClient({ timezone }: { timezone: string }) {
   const t = useTranslations('orders.held');
   const writable = useWritable();
   const [channel, setChannel] = useState<Channel | ''>('');
@@ -34,6 +34,8 @@ export function HeldClient() {
   const [failed, setFailed] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const seq = useRef(0);
+  // A fix finishes by reloading the list the person is looking at NOW, not the one the render that started it was looking at.
+  const loadNow = useRef<() => Promise<void>>(async () => undefined);
 
   const load = useCallback(async () => {
     const mine = ++seq.current;
@@ -48,6 +50,7 @@ export function HeldClient() {
       if (mine === seq.current) setFailed(true);
     }
   }, [channel, q, page]);
+  loadNow.current = load;
   useEffect(() => {
     void load();
   }, [load]);
@@ -64,13 +67,23 @@ export function HeldClient() {
 
   const fixed = async (message: string) => {
     setNote(message);
-    await load();
+    await loadNow.current();
   };
 
   return (
     <div className="held">
       <label className="search-wrap held-search">
-        <input type="search" className="search-input search-input-bare" placeholder={t('searchPlaceholder')} aria-label={t('searchLabel')} value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
+        <input
+          type="search"
+          className="search-input search-input-bare"
+          placeholder={t('searchPlaceholder')}
+          aria-label={t('searchLabel')}
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
+          autoComplete="off"
+          autoCapitalize="characters"
+          spellCheck={false}
+        />
         <SearchClear value={typed} onClear={() => setTyped('')} />
       </label>
       <div className="pf-chips" role="group" aria-label={t('channelGroup')}>
@@ -81,6 +94,7 @@ export function HeldClient() {
             className={`pf-chip ${channel === c ? 'pf-chip-on' : ''}`}
             aria-pressed={channel === c}
             onClick={() => {
+              if (c === channel) return;
               setChannel(c);
               setPage(1);
               setData(null);
@@ -118,11 +132,11 @@ export function HeldClient() {
       ) : (
         <>
           <p className="held-headline" role="status">
-            {t('headline', { orders: data.orders, codes: data.total })}
+            {q ? t('headlineSearch', { codes: data.total }) : t('headline', { orders: data.orders, codes: data.total })}
           </p>
           <ul className="held-list">
             {data.rows.map((row) => (
-              <Row key={`${row.channel}:${row.code}`} row={row} writable={writable} onFixed={fixed} />
+              <Row key={`${row.channel}:${row.code}`} row={row} writable={writable} timezone={timezone} onFixed={fixed} />
             ))}
           </ul>
           <Pagination page={page} total={data.total} pageSize={PAGE_SIZE} noun={t('nounCodes')} onChange={setPage} />
@@ -132,15 +146,17 @@ export function HeldClient() {
   );
 }
 
-function Row({ row, writable, onFixed }: { row: HeldCode; writable: boolean; onFixed: (message: string) => Promise<void> }) {
+function Row({ row, writable, timezone, onFixed }: { row: HeldCode; writable: boolean; timezone: string; onFixed: (message: string) => Promise<void> }) {
   const t = useTranslations('orders.held');
   const locale = useLocale();
-  const day = (iso: string): string => new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(iso));
+  const day = (iso: string): string => new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: timezone }).format(new Date(iso));
   const [open, setOpen] = useState<'match' | 'dismiss' | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [find, setFind] = useState('');
   const [choices, setChoices] = useState<SizeToMap[] | null>(null);
+  const [findFailed, setFindFailed] = useState(false);
+  const [findTick, setFindTick] = useState(0);
   const [reason, setReason] = useState('');
   const inFlight = useRef(false);
   const lookup = useRef(0);
@@ -152,17 +168,20 @@ function Row({ row, writable, onFixed }: { row: HeldCode; writable: boolean; onF
   useEffect(() => {
     if (open !== 'match' || find.trim().length < 2) {
       setChoices(null);
+      setFindFailed(false);
       return;
     }
+    setFindFailed(false);
     const mine = ++lookup.current;
     const id = setTimeout(() => {
       api
         .sizesToMap(row.channel, find.trim())
         .then((res) => mine === lookup.current && setChoices(res.rows))
-        .catch(() => mine === lookup.current && setChoices([]));
+        // A failed search is not "no size matches": say it failed, and let the person try again.
+        .catch(() => mine === lookup.current && setFindFailed(true));
     }, 250);
     return () => clearTimeout(id);
-  }, [find, open, row.channel]);
+  }, [find, open, row.channel, findTick]);
 
   const run = async (work: () => Promise<string>) => {
     if (inFlight.current) return;
@@ -179,16 +198,22 @@ function Row({ row, writable, onFixed }: { row: HeldCode; writable: boolean; onF
     }
   };
 
-  const released = (n: number, still: number): string => (n > 0 ? t('releasedNote', { orders: n, code: row.code }) : still > 0 ? t('stillNote', { code: row.code }) : t('mappedNote', { code: row.code }));
+  const released = (n: number, still: number): string =>
+    n > 0 ? t('releasedNote', { orders: n, code: row.code }) : still > 0 ? t('stillNote', { code: row.code }) : t('mappedNote', { code: row.code });
 
   const match = (size: SizeToMap) =>
     run(async () => {
       try {
-        const res = await api.saveMarketplaceCodes({ channel: row.channel, rows: [size.variantId ? { code: row.code, variantId: size.variantId } : { code: row.code, productId: size.productId }], replace: row.reason === 'retired' ? true : undefined });
+        const res = await api.saveMarketplaceCodes({
+          channel: row.channel,
+          rows: [size.variantId ? { code: row.code, variantId: size.variantId } : { code: row.code, productId: size.productId }],
+          replace: row.reason === 'retired' ? true : undefined,
+        });
         return released(res.released?.orders ?? 0, res.released?.stillHeld ?? 0);
       } catch (e) {
         // Already mapped by someone else meanwhile: the server released the waiting orders against THAT mapping; say so, naming the size.
-        if (e instanceof ApiError && e.code === 'code_taken') {
+        // Only a refusal that names the size it points at (and released against it): a race refusal carries neither and keeps the server's own words.
+        if (e instanceof ApiError && e.code === 'code_taken' && typeof (e.body as { takenBy?: unknown } | undefined)?.takenBy === 'string') {
           const body = e.body as { released?: { orders?: number } } | undefined;
           return t('takenNote', { code: row.code, size: (e.body as { takenBy?: string } | undefined)?.takenBy ?? '', orders: body?.released?.orders ?? 0 });
         }
@@ -239,8 +264,27 @@ function Row({ row, writable, onFixed }: { row: HeldCode; writable: boolean; onF
 
       {open === 'match' ? (
         <div className="held-pick">
-          <input className="input held-input" value={find} onChange={(e) => setFind(e.target.value)} placeholder={t('findPlaceholder')} aria-label={t('findLabel', { code: row.code })} autoFocus={autoFocusField()} autoComplete="off" />
-          {choices === null ? <p className="held-hint">{find.trim().length < 2 ? t('findHint') : t('searching')}</p> : choices.length === 0 ? <p className="held-hint">{t('noSizes')}</p> : null}
+          <input
+            className="input held-input"
+            value={find}
+            onChange={(e) => setFind(e.target.value)}
+            placeholder={t('findPlaceholder')}
+            aria-label={t('findLabel', { code: row.code })}
+            autoFocus={autoFocusField()}
+            autoComplete="off"
+          />
+          {findFailed ? (
+            <p className="held-warn" role="alert">
+              {t('findFailed')}{' '}
+              <button type="button" className="btn" onClick={() => setFindTick((n) => n + 1)}>
+                {t('retry')}
+              </button>
+            </p>
+          ) : choices === null ? (
+            <p className="held-hint">{find.trim().length < 2 ? t('findHint') : t('searching')}</p>
+          ) : choices.length === 0 ? (
+            <p className="held-hint">{t('noSizes')}</p>
+          ) : null}
           {choices && choices.length > 0 ? (
             <ul className="held-choices">
               {choices.map((s) => (
@@ -258,7 +302,15 @@ function Row({ row, writable, onFixed }: { row: HeldCode; writable: boolean; onF
       {open === 'dismiss' ? (
         <div className="held-pick">
           <p className="held-hint">{t('dismissHint', { count: row.lines })}</p>
-          <textarea className="input held-input" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('reasonPlaceholder')} aria-label={t('reasonLabel')} maxLength={240} />
+          <textarea
+            className="input held-input"
+            rows={2}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder={t('reasonPlaceholder')}
+            aria-label={t('reasonLabel')}
+            maxLength={240}
+          />
           <button type="button" className="btn btn-primary" disabled={busy || reason.trim() === ''} onClick={() => void dismiss()}>
             {t('dismissConfirm')}
           </button>

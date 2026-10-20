@@ -19,8 +19,11 @@ export default async function HeldOrdersPage() {
   await guardScreen('/orders');
   const t = await getTranslations('orders.held');
   let allowed = true;
+  let timezone = 'Asia/Kolkata';
   try {
-    const role = (await api.me()).member?.role;
+    const me = await api.me();
+    timezone = me.tenant?.timezone ?? timezone;
+    const role = me.member?.role;
     allowed = role === undefined || role === 'owner' || role === 'manager';
   } catch {
     allowed = true;
@@ -30,7 +33,7 @@ export default async function HeldOrdersPage() {
     <>
       <PageHeader title={t('title')} />
       <div className="page-body held-page">
-        <HeldClient />
+        <HeldClient timezone={timezone} />
       </div>
     </>
   );

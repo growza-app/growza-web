@@ -659,7 +659,7 @@ export const api = {
   dismissHeld: (channel: 'flipkart' | 'amazon', code: string, reason: string) =>
     post<ReleaseResult & { dismissedLines: number; closedOrders: number }>('/api/v1/marketplace-imports/held/dismiss', { channel, code, reason }),
   /** The shelf's sizes whose product name contains `q`, to pick the one a code points at — searched on the server, a page at a time. */
-  sizesToMap: (channel: 'flipkart' | 'amazon', q: string) => get<{ rows: SizeToMap[]; total: number }>(`/api/v1/marketplace-codes/unmapped?channel=${channel}&all=1&q=${encodeURIComponent(q)}&pageSize=8`),
+  sizesToMap: (channel: 'flipkart' | 'amazon', q: string) => get<{ rows: SizeToMap[]; total: number }>(`/api/v1/marketplace-codes/unmapped?channel=${channel}&all=1&q=${encodeURIComponent(q)}&pageSize=12`),
   /** Jira GRW-618 — a marketplace's own codes: one page, by channel and product. A product's codes are few, so the screen pages through them. */
   marketplaceCodes: (q: { channel?: 'flipkart' | 'amazon'; productId?: string; page?: number; pageSize?: number }) => {
     const p = new URLSearchParams();

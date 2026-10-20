@@ -59,6 +59,31 @@ describe('the fix is the owner’s, never a guess (BR-01)', () => {
   });
 });
 
+describe('review of GRW-620 — stale fixes, a skeleton that never ends, an honest failure', () => {
+  it('a fix reloads the list the person is looking at NOW (through a ref), not the one the tap started on', () => {
+    expect(client).toContain('loadNow.current = load;');
+    expect(client).toContain('await loadNow.current();');
+  });
+
+  it('tapping the chip that is already chosen does nothing — it never blanks the list for a skeleton that no effect will end', () => {
+    expect(client).toContain('if (c === channel) return;');
+  });
+
+  it('a failed size search says it failed, with a retry — it is not "no size matches"', () => {
+    expect(client).toContain('setFindFailed(true)');
+    expect(client).toContain("t('findFailed')");
+  });
+
+  it('a refusal that names no size (a race, or a code just removed) keeps the server’s own words instead of an empty "matched to"', () => {
+    expect(client).toContain("e.code === 'code_taken' && typeof (e.body as { takenBy?: unknown } | undefined)?.takenBy === 'string'");
+  });
+
+  it('with a search on, the headline counts the codes that match, not the orders waiting overall; dates are the business’s own day', () => {
+    expect(client).toContain("q ? t('headlineSearch'");
+    expect(client).toContain('timeZone: timezone');
+  });
+});
+
 describe('states and who sees it', () => {
   it('has a loading skeleton, a plain "nothing waiting", and an error with a retry', () => {
     expect(client).toContain('held-skeleton');

@@ -3930,7 +3930,7 @@
       "dismiss": "Dismiss",
       "findPlaceholder": "Type the product’s name",
       "findLabel": "Find the size for {code}",
-      "findHint": "Type at least two letters of the product’s name.",
+      "findHint": "Type the product’s name, and the size if you know it, such as shirt 32.",
       "searching": "Looking…",
       "noSizes": "No size matches that name.",
       "dismissHint": "{count, plural, one {The 1 waiting item will not be fulfilled.} other {The # waiting items will not be fulfilled.}} No stock moves. Say why.",
@@ -3941,7 +3941,9 @@
       "stillNote": "{code} matched. Its orders still wait for another code.",
       "mappedNote": "{code} matched.",
       "takenNote": "{code} was already matched to {size}. {orders, plural, one {1 order was} other {# orders were}} released against that.",
-      "dismissedNote": "{code} dismissed: {count, plural, one {1 item} other {# items}}."
+      "dismissedNote": "{code} dismissed: {count, plural, one {1 item} other {# items}}.",
+      "headlineSearch": "{codes, plural, one {1 code matches.} other {# codes match.}}",
+      "findFailed": "Could not search. Check your connection."
     }
   }
 }
