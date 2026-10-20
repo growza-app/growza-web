@@ -250,6 +250,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'PATCH /api/v1/product-categories/:id',
     'DELETE /api/v1/product-categories/:id',
   ],
+  // Jira GRW-633 — the reorder worklist: the owner's own numbers and each category's lead time, on a page of its own under Stock. Owner and manager only, closed whole by `guardScreen`.
+  '/stock/order': ['PUT /api/v1/reports/reorder/override', 'PUT /api/v1/reports/reorder/rules'],
   '/providers': [
     'POST /api/v1/providers',
     'PATCH /api/v1/providers/:id',
