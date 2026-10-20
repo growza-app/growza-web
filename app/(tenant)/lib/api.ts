@@ -63,6 +63,8 @@ import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
   OrderDetail,
+  ChannelBranches,
+  SetChannelBranchResult,
   HeldPage,
   ReleaseResult,
   SizeToMap,
@@ -646,6 +648,9 @@ export const api = {
   importOrdersFile: (channel: 'flipkart' | 'amazon', file: File, idempotencyKey: string) =>
     uploadFile<ImportSummary>(`/api/v1/marketplace-imports?channel=${channel}&idempotencyKey=${encodeURIComponent(idempotencyKey)}`, 'file', file),
   importOrdersText: (channel: 'flipkart' | 'amazon', text: string, idempotencyKey: string) => post<ImportSummary>('/api/v1/marketplace-imports', { channel, text, idempotencyKey }),
+  /** Jira GRW-641 — which branch each marketplace sells from, and the branches it could. */
+  channelBranches: () => get<ChannelBranches>('/api/v1/channels'),
+  setChannelBranch: (channel: 'flipkart' | 'amazon', locationId: string) => put<SetChannelBranchResult>(`/api/v1/channels/${channel}/branch`, { locationId }),
   /** Jira GRW-620 — the codes holding marketplace orders back, grouped by code and paged on the server. */
   heldCodes: (q: { channel?: 'flipkart' | 'amazon'; q?: string; page?: number; pageSize?: number }) => {
     const p = new URLSearchParams();

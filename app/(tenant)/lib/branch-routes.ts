@@ -30,7 +30,7 @@ const BRANCH_IN_ADDRESS = ['/customers', '/services', '/products', '/reports', '
  * Payments is here although a QR can be a branch's: the screen shows the business's and EVERY branch's at
  * once, so it is not looking at one branch and a picker would narrow nothing.
  */
-const WHOLE_BUSINESS = ['/settings/business', '/settings/branches', '/settings/payments', '/settings/report-access', '/settings/billing'];
+const WHOLE_BUSINESS = ['/settings/business', '/settings/branches', '/settings/payments', '/settings/report-access', '/settings/billing', '/settings/channels'];
 
 function matches(pathname: string, route: string): boolean {
   return pathname === route || pathname.startsWith(`${route}/`);

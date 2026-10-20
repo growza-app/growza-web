@@ -436,6 +436,10 @@
       "logOut": {
         "label": "Log out",
         "sub": "Sign out from this device"
+      },
+      "channels": {
+        "label": "Online selling",
+        "sub": "Which shop Flipkart and Amazon sell from"
       }
     }
   },
@@ -3865,7 +3869,8 @@
         "history": "Size swapped: {from} to {to}",
         "colour": "Colour",
         "unsure": "We could not confirm the swap. Check the order before trying again."
-      }
+      },
+      "bookedAt": "Booked at {branch}"
     },
     "import": {
       "title": "Import orders",
@@ -3945,5 +3950,23 @@
       "headlineSearch": "{codes, plural, one {1 code matches.} other {# codes match.}}",
       "findFailed": "Could not search. Check your connection."
     }
+  },
+  "settingsChannels": {
+    "title": "Online selling",
+    "intro": "Choose the shop whose shelves each marketplace sells from. An online order comes off that shop’s shelves.",
+    "flipkart": "Flipkart",
+    "amazon": "Amazon",
+    "sellsFrom": "{channel} sells from",
+    "loading": "Loading",
+    "loadError": "Could not load. Check your connection and try again.",
+    "retry": "Try again",
+    "explain": "Online orders come off this shop’s shelves.",
+    "single": "You have one shop, so this is already set.",
+    "gone": "The shop chosen for {channel}, {branch}, is closed. Choose another, or its online orders will wait.",
+    "saved": "Saved. {channel} now sells from {branch}.",
+    "inFlight": "{count, plural, one {1 order not yet sent stays at {branch} and is still to be sent from there.} other {# orders not yet sent stay at {branch} and are still to be sent from there.}}",
+    "unchanged": "{channel} already sells from {branch}.",
+    "failed": "Could not save. Nothing changed. Try again.",
+    "choose": "Choose a shop"
   }
 }

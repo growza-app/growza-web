@@ -1275,6 +1275,8 @@ export interface OrderHistoryEntry {
 export interface OrderDetail {
   id: string;
   locationId: string;
+  /** Jira GRW-641 — the branch the order is booked against, by name. */
+  branchName: string | null;
   status: string;
   known: boolean;
   channel: string;
@@ -1440,4 +1442,30 @@ export interface SizeToMap {
   productName: string;
   size: string | null;
   label: string;
+}
+
+/** Jira GRW-641 — which branch a marketplace sells from. */
+export interface ChannelBranch {
+  channel: 'flipkart' | 'amazon';
+  /** The branch it sells from now; null when the one chosen has been closed. */
+  locationId: string | null;
+  branchName: string | null;
+  /** 'chosen' by the owner, or the 'default' main open branch. */
+  source: 'chosen' | 'default';
+  gone: boolean;
+  /** More than one branch to choose between: a one-branch shop sees its branch and cannot change it. */
+  changeable: boolean;
+}
+export interface ChannelBranches {
+  channels: ChannelBranch[];
+  branches: Array<{ id: string; name: string }>;
+}
+export interface SetChannelBranchResult {
+  channel: 'flipkart' | 'amazon';
+  locationId: string;
+  branchName: string;
+  previous: { locationId: string | null; branchName: string | null };
+  /** Online orders from this channel not yet dispatched that stay at the old branch. */
+  inFlightAtOld: number;
+  changed: boolean;
 }

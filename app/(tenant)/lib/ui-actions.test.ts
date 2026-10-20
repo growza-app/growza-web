@@ -262,6 +262,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'DELETE /api/v1/providers/:id/photo',
   ],
   '/settings': [
+    // Jira GRW-641 — which branch a marketplace sells from, on Settings › Online selling (a shop's, owner and manager's).
+    'PUT /api/v1/channels/:id/branch',
     'POST /api/v1/billing/autopay',
     'POST /api/v1/team/invites',
     'PATCH /api/v1/team/members/:userId',
