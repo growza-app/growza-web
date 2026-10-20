@@ -1,5 +1,6 @@
 import type { Lang } from './lang';
 import { copy } from './copy';
+import { nounInSentence } from './nouns';
 
 /**
  * Jira GRW-222 — every word on the three Homes, the header and the navigation,
@@ -384,6 +385,31 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     myMoneyToday: S('My money today', 'आज मेरा पैसा'),
 
     retry: S('Try again', 'फिर से कोशिश करें'),
+
+    /**
+     * Jira GRW-609 — a shop's Home. The noun for an order is the vertical's (`labels.order`/`orders`) in English and the
+     * generic Hindi word otherwise, like every other noun here (Jira GRW-315).
+     */
+    shop: {
+      takings: S('Takings', 'कमाई'),
+      today: S('Today', 'आज'),
+      yesterday: S('Yesterday', 'कल'),
+      /** "1 order", "11 orders" — the singular and the plural are the vertical's own words. */
+      orderCount: (n: number) => (hi ? `${n} ऑर्डर` : `${n} ${nounInSentence(n === 1 ? (labels.order ?? 'Order') : (labels.orders ?? 'Orders'))}`),
+      ordersTitle: S(labels.orders ?? 'Orders', 'ऑर्डर'),
+      viewOrders: S('View all', 'सभी देखें'),
+      noOrdersTitle: S('No orders yet', 'अभी कोई ऑर्डर नहीं'),
+      noOrdersBody: S('Your first sale will show up here.', 'आपकी पहली बिक्री यहाँ दिखेगी।'),
+      takeOrder: S('Take an order', 'ऑर्डर लें'),
+      noOrdersToday: S('No orders today yet.', 'आज अभी कोई ऑर्डर नहीं।'),
+      runningOut: S('Running out', 'ख़त्म होने वाला'),
+      notCounted: S("You haven't counted your stock yet.", 'आपने अभी स्टॉक की गिनती नहीं की है।'),
+      countStock: S('Count your stock', 'स्टॉक गिनें'),
+      nothingLow: S('Nothing is running low.', 'कुछ भी कम नहीं है।'),
+      left: (n: number) => (n <= 0 ? S('None left', 'ख़त्म') : S(`${n} left`, `${n} बचे`)),
+      sizeWord: (size: string) => S(`size ${size}`, `साइज़ ${size}`),
+      viewAll: (n: number) => S(`View all (${n})`, `सभी देखें (${n})`),
+    },
     couldNotLoad: S('Could not load this. Check your connection and try again.', 'यह लोड नहीं हुआ। इंटरनेट देखें और फिर से कोशिश करें।'),
 
     nav: {

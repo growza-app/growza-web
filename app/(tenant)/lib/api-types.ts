@@ -1134,3 +1134,22 @@ export interface BookingCorrection {
     afterMinor: number;
   }>;
 }
+
+/**
+ * Jira GRW-609 — a shop's Home, from one read. The money keys (`takingsMinor`) are ABSENT for the front desk: the API
+ * omits them, the screen does not hide them.
+ */
+export interface ShopHome {
+  timezone: string;
+  today: { orders: number; takingsMinor?: number };
+  yesterday: { orders: number; takingsMinor?: number };
+  /** Has the shop ever sold anything. False: Home invites the first order. */
+  anyOrders: boolean;
+  running: {
+    /** Has the shelf ever been counted. False: Home says so instead of listing zeros. */
+    counted: boolean;
+    /** Everything at or under its line — the "View all (n)" beside the few listed. */
+    total: number;
+    items: Array<{ productId: string; name: string; /** "30" or "30 / White"; null for a product with no sizes. */ size: string | null; left: number }>;
+  };
+}

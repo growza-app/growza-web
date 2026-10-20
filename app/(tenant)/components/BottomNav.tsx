@@ -283,7 +283,8 @@ export function BottomNav({
             tabIndex={away ? -1 : undefined}
             aria-hidden={away || undefined}
             onClick={menu ? () => setMenuOpen((o) => !o) : onCentre}
-            aria-label={role === 'receptionist' ? t.walkInShort : t.nav.newBooking}
+            // Jira GRW-609 — a shop's plus is the till: it says so.
+            aria-label={areas.shop ? t.shop.takeOrder : role === 'receptionist' ? t.walkInShort : t.nav.newBooking}
             aria-haspopup={menu ? 'menu' : undefined}
             aria-expanded={menu ? menuOpen : undefined}
             aria-controls={menu ? 'bn-menu' : undefined}

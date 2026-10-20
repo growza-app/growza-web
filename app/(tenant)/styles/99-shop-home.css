@@ -1,0 +1,134 @@
+/*
+ * Jira GRW-609 — a shop's Home (components/home/ShopHome.tsx).
+ *
+ * Plain CSS on the system's tokens, laid out at 344px: one column, every tap target at least 2.75rem, the money first.
+ * It sits on the Home cards (`.hm-card`), so nothing here restyles a card a salon's Home draws.
+ */
+
+.shp-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.shp-money {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: end;
+}
+.shp-figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+.shp-figure-label {
+  font-size: 0.8125rem;
+  color: var(--hm-muted);
+}
+.shp-figure-value {
+  font-size: 1.75rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.shp-figure-quiet .shp-figure-value {
+  font-size: 1.25rem;
+  color: var(--hm-muted);
+}
+.shp-figure-sub {
+  font-size: 0.8125rem;
+  color: var(--hm-muted);
+}
+
+.shp-orders {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin: 0;
+}
+.shp-orders strong {
+  font-size: 1.75rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.shp-orders span {
+  color: var(--hm-muted);
+}
+
+.shp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  color: var(--hm-muted);
+}
+.shp-empty strong {
+  color: var(--text);
+}
+.shp-cta {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  margin-top: var(--sp-1);
+}
+.shp-plain {
+  margin: 0;
+  color: var(--hm-muted);
+}
+
+.shp-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-2);
+  color: var(--accent-deep);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.shp-running {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.shp-running li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 2.75rem;
+  border-top: 1px solid var(--hm-line-soft);
+}
+.shp-running li:first-child {
+  border-top: 0;
+}
+.shp-running-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.shp-running-size {
+  color: var(--hm-muted);
+}
+.shp-running-left {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  color: var(--amber-ink);
+}
+.shp-running-left.is-out {
+  color: var(--danger);
+}
+
+@media (min-width: 861px) {
+  .shp-page {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  .shp-page > .hm-tiles {
+    grid-column: 1 / -1;
+  }
+}

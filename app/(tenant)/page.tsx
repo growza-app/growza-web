@@ -10,6 +10,8 @@ import { OwnerHome } from './components/home/OwnerHome';
 import { ReceptionHome } from './components/home/ReceptionHome';
 import { StylistHome } from './components/home/StylistHome';
 import { NotLiveHome } from './components/home/NotLiveHome';
+import { ShopHome } from './components/home/ShopHome';
+import { areasOf } from './lib/areas';
 import { isLive } from './lib/go-live';
 
 export const dynamic = 'force-dynamic';
@@ -118,6 +120,24 @@ export default async function DashboardPage() {
         reportTabs={me.reportTabs}
         // One branch: say which salon. Several: naming one of them on a screen about all of them is a lie.
         locationName={(me.tenant?.branchCount ?? 1) > 1 ? null : (me.member?.locationName ?? me.tenant?.locationName ?? null)}
+      />
+    );
+  }
+
+  /*
+   * Jira GRW-609 — a shop has its own Home, chosen here with the others and before any of the diary's reads: the owner's
+   * and the front desk's both are `ShopHome`, which reads one endpoint and draws the takings only when the response
+   * carries them. A stylist is not a shop role; the stylist Home below is unchanged.
+   */
+  if (areasOf(me).shop && kind !== 'stylist') {
+    const initial = await soft(api.shopHome());
+    return (
+      <ShopHome
+        {...common}
+        role={role}
+        reportTabs={me.reportTabs}
+        locationName={(me.tenant?.branchCount ?? 1) > 1 && kind === 'owner' ? null : (me.member?.locationName ?? me.tenant?.locationName ?? null)}
+        initial={initial}
       />
     );
   }
