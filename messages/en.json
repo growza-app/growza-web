@@ -3683,7 +3683,8 @@
       "nothingBefore": "Nothing was sold here in the period before.",
       "trendTitle": "Across the period",
       "same": "Same as the period before",
-      "weekOf": "Week of {date}"
+      "weekOf": "Week of {date}",
+      "refunded": "{count, plural, one {Refunded on 1 order: {amount}} other {Refunded on # orders: {amount}}}"
     }
   },
   "sales": {
@@ -4021,7 +4022,11 @@
       "customerReturn": "Sent back",
       "undelivered": "Came back undelivered",
       "notRestocked": "not put back on the shelf",
-      "saleableAssumed": "taken as fit to sell again"
+      "saleableAssumed": "taken as fit to sell again",
+      "refundsTitle": "Refunds",
+      "marketplaceRefunded": "{channel} refunded on {date}",
+      "shopRefunded": "The shop refunded on {date}",
+      "refundRef": "reference {ref}"
     },
     "import": {
       "title": "Import orders",
@@ -4130,9 +4135,43 @@
       "unitsCount": "{count, plural, one {1 item} other {# items}}",
       "undeliveredTitle": "Came back undelivered",
       "undeliveredNone": "No parcels came back undelivered.",
-      "undeliveredNote": "These never reached the customer. They are counted apart, not as returns."
+      "undeliveredNote": "These never reached the customer. They are counted apart, not as returns.",
+      "toRefunds": "What was refunded"
     },
-    "returnsLink": "What came back"
+    "returnsLink": "What came back",
+    "refunds": {
+      "title": "What was refunded",
+      "rangeLabel": "Period",
+      "range": {
+        "last_7_days": "Last 7 days",
+        "this_month": "This month",
+        "last_month": "Last month",
+        "last_3_months": "Last 3 months",
+        "this_year": "This year"
+      },
+      "channelLabel": "Channel",
+      "allChannels": "All",
+      "flipkart": "Flipkart",
+      "amazon": "Amazon",
+      "loading": "Loading",
+      "loadError": "Could not load. Check your connection and try again.",
+      "retry": "Try again",
+      "nothing": "No refunds in this period",
+      "nothingHint": "A refund shows here once it has been recorded against an order.",
+      "totalsLabel": "Totals for this period",
+      "total": "Refunded in this period",
+      "countLine": "{count, plural, one {1 refund} other {# refunds}}",
+      "marketplaceRefunded": "{channel} refunded on {date}",
+      "shopRefunded": "The shop refunded on {date}",
+      "orderRef": "Order {ref}",
+      "reference": "Reference {ref}",
+      "nounRefunds": "refunds",
+      "export": "Export to a file",
+      "exporting": "Making the file…",
+      "exportFailed": "Could not make the file. Try again.",
+      "recordNote": "These are records of refunds that were made, so you can match them against the marketplace’s statement. Nothing here is refunded from Growza.",
+      "toReturns": "What came back"
+    }
   },
   "settingsChannels": {
     "title": "Online selling",

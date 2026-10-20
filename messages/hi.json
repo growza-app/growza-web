@@ -3683,7 +3683,8 @@
       "nothingBefore": "पिछली अवधि में यहाँ कुछ नहीं बिका।",
       "trendTitle": "पूरी अवधि में",
       "same": "पिछली अवधि जितना ही",
-      "weekOf": "{date} वाला सप्ताह"
+      "weekOf": "{date} वाला सप्ताह",
+      "refunded": "{count} ऑर्डर पर रिफ़ंड: {amount}"
     }
   },
   "sales": {
@@ -4021,7 +4022,11 @@
       "customerReturn": "वापस भेजा",
       "undelivered": "बिना पहुँचे लौट आया",
       "notRestocked": "शेल्फ़ पर वापस नहीं रखा",
-      "saleableAssumed": "दोबारा बिकने लायक माना गया"
+      "saleableAssumed": "दोबारा बिकने लायक माना गया",
+      "refundsTitle": "रिफ़ंड",
+      "marketplaceRefunded": "{channel} ने {date} को रिफ़ंड किया",
+      "shopRefunded": "दुकान ने {date} को रिफ़ंड किया",
+      "refundRef": "रेफ़रेंस {ref}"
     },
     "import": {
       "title": "ऑर्डर इम्पोर्ट करें",
@@ -4130,9 +4135,43 @@
       "unitsCount": "{count} सामान",
       "undeliveredTitle": "बिना पहुँचे लौट आया",
       "undeliveredNone": "कोई पार्सल बिना पहुँचे नहीं लौटा।",
-      "undeliveredNote": "ये ग्राहक तक पहुँचे ही नहीं। इन्हें वापसी में नहीं, अलग गिना जाता है।"
+      "undeliveredNote": "ये ग्राहक तक पहुँचे ही नहीं। इन्हें वापसी में नहीं, अलग गिना जाता है।",
+      "toRefunds": "क्या रिफ़ंड हुआ"
     },
-    "returnsLink": "क्या वापस आया"
+    "returnsLink": "क्या वापस आया",
+    "refunds": {
+      "title": "क्या रिफ़ंड हुआ",
+      "rangeLabel": "अवधि",
+      "range": {
+        "last_7_days": "पिछले 7 दिन",
+        "this_month": "इस महीने",
+        "last_month": "पिछले महीने",
+        "last_3_months": "पिछले 3 महीने",
+        "this_year": "इस साल"
+      },
+      "channelLabel": "चैनल",
+      "allChannels": "सभी",
+      "flipkart": "फ्लिपकार्ट",
+      "amazon": "अमेज़न",
+      "loading": "लोड हो रहा है",
+      "loadError": "लोड नहीं हो सका। कनेक्शन जाँचें और फिर कोशिश करें।",
+      "retry": "फिर कोशिश करें",
+      "nothing": "इस अवधि में कोई रिफ़ंड नहीं",
+      "nothingHint": "किसी ऑर्डर के नाम रिफ़ंड दर्ज होते ही वह यहाँ दिखेगा।",
+      "totalsLabel": "इस अवधि के कुल",
+      "total": "इस अवधि में रिफ़ंड",
+      "countLine": "{count} रिफ़ंड",
+      "marketplaceRefunded": "{channel} ने {date} को रिफ़ंड किया",
+      "shopRefunded": "दुकान ने {date} को रिफ़ंड किया",
+      "orderRef": "ऑर्डर {ref}",
+      "reference": "रेफ़रेंस {ref}",
+      "nounRefunds": "रिफ़ंड",
+      "export": "फ़ाइल में निकालें",
+      "exporting": "फ़ाइल बन रही है…",
+      "exportFailed": "फ़ाइल नहीं बन सकी। फिर कोशिश करें।",
+      "recordNote": "ये हो चुके रिफ़ंड के रिकॉर्ड हैं, ताकि आप इन्हें मार्केटप्लेस के स्टेटमेंट से मिला सकें। यहाँ से Growza कोई रिफ़ंड नहीं करता।",
+      "toReturns": "क्या वापस आया"
+    }
   },
   "settingsChannels": {
     "title": "ऑनलाइन बिक्री",

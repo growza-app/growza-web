@@ -1311,6 +1311,8 @@ export interface OrderDetail {
   history: OrderHistoryEntry[];
   /** Jira GRW-635 — the returns recorded against the order, each with its reason; a parcel that came back undelivered is its own kind. */
   returns?: OrderReturn[];
+  /** Jira GRW-637 — the refunds recorded against it (money: empty for a viewer who may not see money). */
+  refunds?: OrderRefund[];
   moves: { primary: string | null; more: string[] };
   payments?: Array<{ mode: string; amountMinor: number }>;
   totalMinor?: number;
@@ -1619,6 +1621,9 @@ export interface ChannelRow {
   averageMinor: number | null;
   returnedOrders: number;
   cancelledOrders: number;
+  /** Jira GRW-637 — what was refunded on this channel's orders in these days, as recorded; NOT taken off the billed amount again. */
+  refundedMinor?: string;
+  refundedCount?: number;
   previous: { billedMinor: string; orders: number } | null;
   changePct: number | null;
 }
@@ -1649,4 +1654,33 @@ export interface ReturnsReportPage {
   customer: { returns: number; units: number };
   undelivered: { returns: number; units: number };
   anyReturns: boolean;
+}
+
+/** Jira GRW-637 — what the marketplace (or the shop) refunded on an online order, as recorded. */
+export interface OrderRefund {
+  id: string;
+  lineId: string;
+  channel: string;
+  refundedBy: 'marketplace' | 'shop';
+  amountMinor: string;
+  refundedAt: string;
+  externalRef: string;
+}
+export interface RefundRow {
+  id: string;
+  saleId: string;
+  orderRef: string | null;
+  channel: string;
+  lineName: string;
+  amountMinor: string;
+  refundedBy: 'marketplace' | 'shop';
+  refundedAt: string;
+  externalRef: string;
+}
+export interface RefundsReportPage {
+  window: { key: string; label: string; startISO: string; endExclusiveISO: string };
+  rows: RefundRow[];
+  totals: { count: number; amountMinor: string; byChannel: Array<{ channel: string; count: number; amountMinor: string }> };
+  page: number;
+  pageSize: number;
 }

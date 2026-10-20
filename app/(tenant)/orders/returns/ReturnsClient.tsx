@@ -6,6 +6,7 @@ import { api } from '../../lib/api';
 import type { ReturnsReportPage, SellersRange } from '../../lib/api-types';
 import { intlLocale } from '../../lib/format';
 import { returnReasonKey } from '../../lib/return-reasons';
+import AppLink from '../../../shared/AppLink';
 import { useBranch } from '../../components/BranchProvider';
 import { useSession } from '../../components/SessionProvider';
 
@@ -108,6 +109,9 @@ export function ReturnsClient() {
           </section>
         </>
       )}
+      <AppLink className="btn srp-export" href="/orders/refunds">
+        {t('toRefunds')}
+      </AppLink>
     </div>
   );
 }

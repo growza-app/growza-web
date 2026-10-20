@@ -69,6 +69,7 @@ import type {
   StockReportPage,
   ByChannelPage,
   ReturnsReportPage,
+  RefundsReportPage,
   SellersRange,
   ReorderPage,
   ReorderQuery,
@@ -694,6 +695,21 @@ export const api = {
   /** Jira GRW-641 — which branch each marketplace sells from, and the branches it could. */
   channelBranches: () => get<ChannelBranches>('/api/v1/channels'),
   setChannelBranch: (channel: 'flipkart' | 'amazon', locationId: string) => put<SetChannelBranchResult>(`/api/v1/channels/${channel}/branch`, { locationId }),
+  /** Jira GRW-637 — the refunds recorded on online orders, one row per refund; a record, never an instruction. */
+  refundsReport: (q: { range: SellersRange; channel?: string; location?: string; page?: number; pageSize?: number }) => {
+    const p = new URLSearchParams(sellersParams({ range: q.range, location: q.location, page: q.page, pageSize: q.pageSize }));
+    if (q.channel) p.set('channel', q.channel);
+    return get<RefundsReportPage>(`/api/v1/reports/refunds?${p.toString()}`);
+  },
+  /** Jira GRW-637 — the same refunds as a file; the server writes it. */
+  refundsCsv: async (q: { range: SellersRange; channel?: string; location?: string }): Promise<string> => {
+    const p = new URLSearchParams(sellersParams({ range: q.range, location: q.location }));
+    if (q.channel) p.set('channel', q.channel);
+    const path = `/api/v1/reports/refunds/export?${p.toString()}`;
+    const res = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
+    if (!res.ok) throw await apiError(res, path);
+    return res.text();
+  },
   /** Jira GRW-635 — what came back and why, by reason, with a parcel that never arrived apart. */
   returnsReport: (q: { range: SellersRange; location?: string }) => get<ReturnsReportPage>(`/api/v1/reports/returns?${sellersParams({ range: q.range, location: q.location })}`),
   /** Jira GRW-634 — what was billed on each channel over a range, beside the period before; billed, not received. */

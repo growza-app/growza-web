@@ -11,6 +11,7 @@ import { KNOWN_STATES } from '../../lib/orders-filter';
 import { useSession, useWritable } from '../../components/SessionProvider';
 import { computeReturnWindow } from '../../sales/sales-helpers';
 import { returnReasonKey } from '../../lib/return-reasons';
+import { intlLocale } from '../../lib/format';
 import { SwapSizeSheet } from './SwapSizeSheet';
 
 /**
@@ -92,6 +93,9 @@ export function OrderClient({
   const modeWords: Record<string, string> = { cash: t('detail.modes.cash'), card: t('detail.modes.card'), upi: t('detail.modes.upi'), other: t('detail.modes.other') };
 
   const when = (iso: string) => new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: timezone }).format(new Date(iso));
+  // Jira GRW-637 — "Flipkart refunded ₹450 on 12 May": the marketplace's name as the owner reads it, and the day in the shop's own timezone.
+  const refundChannelWord = (c: string) => (c === 'flipkart' ? t('refunds.flipkart') : c === 'amazon' ? t('refunds.amazon') : c.charAt(0).toUpperCase() + c.slice(1));
+  const refundDay = (iso: string) => new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', timeZone: timezone }).format(new Date(iso));
   const money = (minor: string | number | undefined): string | null => (minor === undefined ? null : formatMoney(minor, 'INR', locale));
 
   const move = async (to: string) => {
@@ -266,6 +270,24 @@ export function OrderClient({
                     {r.saleableDefaulted ? <span className="ord-d-quiet"> · {t('detail.saleableAssumed')}</span> : null}
                   </span>
                   <span className="ord-d-line-qty">{t('detail.times', { count: r.units })}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {(order.refunds ?? []).length > 0 ? (
+          <section className="ord-d-block" aria-label={t('detail.refundsTitle')}>
+            <h2>{t('detail.refundsTitle')}</h2>
+            <ul className="ord-d-lines">
+              {(order.refunds ?? []).map((f) => (
+                <li key={f.id}>
+                  <span className="ord-d-line-name">
+                    {f.refundedBy === 'marketplace' ? t('detail.marketplaceRefunded', { channel: refundChannelWord(f.channel), date: refundDay(f.refundedAt) }) : t('detail.shopRefunded', { date: refundDay(f.refundedAt) })}
+                    <span className="ord-d-quiet"> · {order.lines.find((l) => l.id === f.lineId)?.name ?? ''}</span>
+                    <span className="ord-d-quiet"> · {t('detail.refundRef', { ref: f.externalRef })}</span>
+                  </span>
+                  <span className="ord-d-line-amount">{money(f.amountMinor)}</span>
                 </li>
               ))}
             </ul>
