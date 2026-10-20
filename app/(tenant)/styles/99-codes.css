@@ -1,0 +1,161 @@
+/*
+ * Jira GRW-618 — a product's marketplace codes, size by size.
+ *
+ * Laid out at 344px: every row is a size with its codes stacked under it, never a table that scrolls sideways. The codes are
+ * chips that wrap; the field to add one and its button share a row, the field never narrower than what a code needs and the
+ * button a thumb tall (44px, 8px apart). Type is rem; 16px on the fields so iOS does not zoom them.
+ */
+.mpc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.mpc-channels {
+  flex-wrap: wrap;
+}
+.mpc-hint {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+.mpc-trade {
+  font-size: var(--fs-2);
+}
+.mpc-summary {
+  margin: 0;
+  font-weight: 600;
+}
+.mpc-summary.is-missing {
+  color: var(--text);
+}
+.mpc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.mpc-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.mpc-skeleton {
+  min-height: 6rem;
+  background: var(--surface-2, var(--border));
+  border-color: transparent;
+}
+.mpc-size {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+.mpc-size-name {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+/* "No code yet" is the loud thing on a size's card: said in words and in a border, never by colour alone. */
+.mpc-none {
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+.mpc-row:has(.mpc-none) {
+  border-style: dashed;
+}
+.mpc-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.mpc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 2.75rem;
+  padding: 0 0 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2, var(--surface));
+}
+.mpc-chip-code {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.mpc-chip-x {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-5);
+  cursor: pointer;
+}
+.mpc-add {
+  display: flex;
+  gap: var(--sp-2);
+}
+.mpc-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 2.75rem;
+  font-size: 16px;
+}
+.mpc-add .btn {
+  min-height: 2.75rem;
+  flex: none;
+}
+.mpc-problem {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  font-size: var(--fs-3);
+}
+.mpc-problem p {
+  margin: 0;
+}
+.mpc-ok {
+  margin: 0;
+  font-weight: 600;
+}
+.mpc-orphans h2 {
+  margin: 0;
+  font-size: var(--fs-4);
+}
+.mpc-paste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: flex-start;
+}
+.mpc-paste .btn {
+  min-height: 2.75rem;
+}
+.mpc-paste-box {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.mpc-textarea {
+  width: 100%;
+  min-height: 8rem;
+  font-size: 16px;
+  font-family: inherit;
+  resize: vertical;
+}
+.mpc-save {
+  width: 100%;
+  min-height: 3rem;
+}

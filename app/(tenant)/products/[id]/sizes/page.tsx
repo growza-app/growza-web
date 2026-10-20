@@ -1,3 +1,4 @@
+import AppLink from '../../../../shared/AppLink';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { api } from '../../../lib/api';
@@ -40,6 +41,10 @@ export default async function ProductSizesPage({ params }: { params: Promise<{ i
         <PageHeader title={t('title')} subtitle={sizes.product.name} mobileSubtitle />
         <div className="page-body">
           <SizesGrid key={sizes.version} sizes={sizes} />
+          {/* Jira GRW-618 — the marketplace codes that point at these sizes. */}
+          <AppLink className="btn" href={`/products/${id}/codes`}>
+            {t('codesLink')}
+          </AppLink>
         </div>
       </>
     );

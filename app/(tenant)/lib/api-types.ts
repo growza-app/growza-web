@@ -1347,3 +1347,39 @@ export interface ExchangeResult {
   settlementMode: string | null;
   replayed: boolean;
 }
+
+/** Jira GRW-618 — a marketplace's own code, and the one size (or product with no sizes) it points at. */
+export interface MarketplaceCode {
+  id: string;
+  channel: 'flipkart' | 'amazon';
+  code: string;
+  productId: string;
+  variantId: string | null;
+  /** "School Shirt (30 / White)" — what it points at, by the names the owner gave. */
+  label: string;
+  productName: string;
+  size: string | null;
+  /** The size was retired after the code was mapped: the listing points at something that is not on sale. */
+  retired: boolean;
+}
+
+export interface MarketplaceCodesPage {
+  rows: MarketplaceCode[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface SaveCodesBody {
+  channel: 'flipkart' | 'amazon';
+  productId?: string;
+  rows: Array<{ code: string; size?: string; variantId?: string; productId?: string }>;
+  /** True to repoint a code that is already mapped elsewhere instead of being refused. */
+  replace?: boolean;
+}
+
+export interface SaveCodesResult {
+  created: number;
+  updated: number;
+  unchanged: number;
+}

@@ -3476,7 +3476,8 @@
       "saveFailed": "Could not save the sizes. Nothing was changed.",
       "backToProduct": "Back to products",
       "countHead": "How many",
-      "secondBlocked": "These sizes were made with one option, so a second option cannot be added to them."
+      "secondBlocked": "These sizes were made with one option, so a second option cannot be added to them.",
+      "codesLink": "Marketplace codes"
     },
     "moveSizes": {
       "open": "Move to another branch",
@@ -3498,6 +3499,43 @@
       "sendIdle": "Send",
       "sending": "Sending…",
       "done": "Sent {n} to {branch}."
+    },
+    "codes": {
+      "title": "Marketplace codes",
+      "channel": "Marketplace",
+      "flipkart": "Flipkart",
+      "amazon": "Amazon",
+      "flipkartTrade": "called FSN on Flipkart",
+      "amazonTrade": "called ASIN or seller SKU on Amazon",
+      "whatIs": "The {channel} code for each size, as {channel} lists it.",
+      "loading": "Loading codes",
+      "loadError": "Could not load the codes. Check your connection and try again.",
+      "retry": "Try again",
+      "failed": "Could not save. Nothing changed. Try again.",
+      "noneYet": "No {channel} codes yet. Add one under each size, or paste them all below.",
+      "allMapped": "Every size has a {channel} code.",
+      "someMissing": "{count} of {total} sizes have no {channel} code yet.",
+      "noCode": "No code yet",
+      "remove": "Remove {code}",
+      "add": "Add",
+      "addPlaceholder": "{channel} code",
+      "addFor": "Add a code for {size}",
+      "moveHere": "Move it to this size",
+      "retiredTitle": "Pointing at a size that is no longer sold",
+      "retiredHint": "These codes were kept so you do not lose them. Remove them, or add the same code to a size that is sold.",
+      "retiredBadge": "Not sold any more",
+      "paste": {
+        "title": "Paste many codes",
+        "hintSized": "One line per size: the {channel} code, then the size. Copy two columns from a sheet and paste.",
+        "hintPlain": "One {channel} code per line.",
+        "exampleSized": "FSNABC123, 30\nFSNABC124, 32",
+        "examplePlain": "FSNABC123",
+        "save": "Save codes",
+        "empty": "Paste at least one code.",
+        "badLines": "Each line needs a code and a size. Check line {lines}.",
+        "refused": "Line {line}: {why}",
+        "done": "{created} added, {same} already there."
+      }
     }
   },
   "sales": {

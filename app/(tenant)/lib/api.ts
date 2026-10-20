@@ -63,6 +63,9 @@ import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
   OrderDetail,
+  MarketplaceCodesPage,
+  SaveCodesBody,
+  SaveCodesResult,
   ExchangeBody,
   ExchangeResult,
   OrdersPage,
@@ -635,6 +638,18 @@ export const api = {
    */
   moveOrder: (id: string, status: string, expected: string) =>
     patch<{ id: string; status: string; moved: boolean }>(`/api/v1/orders/${encodeURIComponent(id)}/status`, { status, expected }),
+  /** Jira GRW-618 — a marketplace's own codes: one page, by channel and product. A product's codes are few, so the screen pages through them. */
+  marketplaceCodes: (q: { channel?: 'flipkart' | 'amazon'; productId?: string; page?: number; pageSize?: number }) => {
+    const p = new URLSearchParams();
+    if (q.channel) p.set('channel', q.channel);
+    if (q.productId) p.set('productId', q.productId);
+    p.set('page', String(q.page ?? 1));
+    p.set('pageSize', String(q.pageSize ?? 100));
+    return get<MarketplaceCodesPage>(`/api/v1/marketplace-codes?${p.toString()}`);
+  },
+  /** Add, repoint or paste many — one request, one transaction: all of it or none. */
+  saveMarketplaceCodes: (body: SaveCodesBody) => put<SaveCodesResult>('/api/v1/marketplace-codes', body),
+  deleteMarketplaceCode: (id: string) => del<{ id: string; deleted: boolean }>(`/api/v1/marketplace-codes/${encodeURIComponent(id)}`),
   /** Jira GRW-617 — swap a size on an order. The quote runs the whole swap and rolls it back: the sheet states the server's difference, never its own. */
   exchangeQuote: (id: string, body: ExchangeBody) => post<ExchangeResult>(`/api/v1/orders/${encodeURIComponent(id)}/exchange/quote`, body),
   exchangeOrder: (id: string, body: ExchangeBody) => post<ExchangeResult>(`/api/v1/orders/${encodeURIComponent(id)}/exchange`, body),

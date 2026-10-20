@@ -243,6 +243,9 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'DELETE /api/v1/products/stock-take/draft',
     // Jira GRW-598 — the sizes grid, one save, from a page of its own under Products.
     'PUT /api/v1/products/:id/variants',
+    // Jira GRW-618 — the marketplace codes that point at those sizes, on a page of their own under Products.
+    'PUT /api/v1/marketplace-codes',
+    'DELETE /api/v1/marketplace-codes/:id',
     'POST /api/v1/product-categories',
     'PATCH /api/v1/product-categories/:id',
     'DELETE /api/v1/product-categories/:id',
