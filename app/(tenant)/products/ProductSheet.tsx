@@ -12,6 +12,7 @@ import { useSizesOn } from '../components/SessionProvider';
 import { GstInPrice, TaxFields } from '../components/TaxFields';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { codeHolder } from '../lib/product-match';
+import { MoveSizesEntry } from './MoveSizesEntry';
 import { StockPanel } from './StockPanel';
 import { SalesPanel } from './SalesPanel';
 import { stockTone } from './ProductsList';
@@ -272,6 +273,7 @@ export function ProductSheet({
               {ts('stockOnSizesOpen')}
             </AppLink>
           ) : null}
+          <MoveSizesEntry product={product} onChanged={onSaved} />
         </div>
       ) : part === 'stock' && product ? (
         <StockPanel product={product} onChanged={onSaved} />

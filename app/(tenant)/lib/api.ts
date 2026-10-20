@@ -493,6 +493,9 @@ export const api = {
   /** Jira GRW-574 (0122) — move N of a product to another branch: transfer_out here, transfer_in there, one transfer_id. */
   transferProduct: (id: string, body: { toLocationId: string; qty: number; note?: string }) =>
     post<{ transferId: string; from: Product; to: Product }>(`/api/v1/products/${id}/transfer`, body),
+  /** Jira GRW-601 — move sizes of a product to another branch: a number for each size, one transfer, both ledgers naming the size. */
+  transferSizes: (id: string, body: { toLocationId: string; sizes: Array<{ variantId: string; qty: number }>; note?: string }) =>
+    post<{ transferId: string; from: Product; to: Product; moved: Array<{ variantId: string; label: string; qty: number }> }>(`/api/v1/products/${id}/transfer`, body),
   /** Jira GRW-598 — a product's options and sizes, in one read, with the `version` the next save sends back. */
   productSizes: (id: string) => get<ProductSizes>(`/api/v1/products/${id}/sizes`),
   /**

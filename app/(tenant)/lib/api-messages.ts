@@ -215,6 +215,46 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Request id is too short': 'रिक्वेस्ट आईडी बहुत छोटी है',
   'Request id is too long': 'रिक्वेस्ट आईडी बहुत लंबी है',
   'Products can only be returned on the day of sale': 'सामान सिर्फ़ बिक्री के दिन ही वापस किया जा सकता है',
+  // ---- Jira GRW-595 — a product's sizes (0130). The sentences that name a size travel with a `combination` field instead.
+  'Set up the sizes for this product first': 'पहले इस सामान के साइज़ तय करें',
+  'Name this option': 'इस विकल्प का नाम लिखें',
+  'A value cannot be blank': 'कोई भी मान खाली नहीं हो सकता',
+  'Add at least one value': 'कम से कम एक मान जोड़ें',
+  'That is too many values': 'मान बहुत ज़्यादा हैं',
+  'Send the options as a list': 'विकल्प सूची के रूप में भेजें',
+  'A product can have two options at most, such as size and colour': 'एक सामान में ज़्यादा से ज़्यादा दो विकल्प हो सकते हैं, जैसे साइज़ और रंग',
+  'The two options need different names': 'दोनों विकल्पों के नाम अलग-अलग होने चाहिए',
+  'Each value can be listed once': 'हर मान सिर्फ़ एक बार लिखा जा सकता है',
+  'Choose a value': 'एक मान चुनें',
+  "That is not one of this product's values": 'यह इस सामान का मान नहीं है',
+  'This product has no second option': 'इस सामान में दूसरा विकल्प नहीं है',
+  'Size not found': 'साइज़ नहीं मिला',
+  // Jira GRW-598 — the sizes grid, and the switch that hides it.
+  'Sizes are not switched on for this business.': 'इस बिज़नेस के लिए साइज़ चालू नहीं हैं।',
+  'The sizes were changed while you were editing': 'आपके बदलाव करते समय साइज़ किसी और ने बदल दिए',
+  'Add at least one size': 'कम से कम एक साइज़ जोड़ें',
+  'Send the sizes as a list': 'साइज़ सूची के रूप में भेजें',
+  'That is too many sizes for one product': 'एक सामान के लिए साइज़ बहुत ज़्यादा हैं',
+  'That size was not valid.': 'वह साइज़ सही नहीं है।',
+  'That size is in the grid twice': 'यह साइज़ ग्रिड में दो बार है',
+  'Stock cannot be negative': 'स्टॉक शून्य से कम नहीं हो सकता',
+  // Jira GRW-597 (0132) — the count of a size.
+  'Choose a size for this product': 'इस सामान का साइज़ चुनें',
+  'This product has sizes, so count each size instead': 'इस सामान के साइज़ हैं, इसलिए हर साइज़ की गिनती करें',
+  'Set the stock of this product to 0 first, then count each size': 'पहले इस सामान का स्टॉक 0 करें, फिर हर साइज़ की गिनती करें',
+  // Jira GRW-601 — moving sizes between branches.
+  'This product has sizes, so choose which sizes to move': 'इस सामान के साइज़ हैं, इसलिए चुनें कि कौन से साइज़ भेजने हैं',
+  'This product has no sizes, so say how many to move': 'इस सामान के साइज़ नहीं हैं, इसलिए बताएँ कितने भेजने हैं',
+  'That size is not on this product': 'यह साइज़ इस सामान का नहीं है',
+  'There is not enough of that size at this branch to move that many': 'इस ब्रांच में उस साइज़ के इतने नहीं हैं कि भेजे जा सकें',
+  'The other branch already has this product with different sizes. Make them match first': 'दूसरी ब्रांच में यह सामान पहले से अलग साइज़ के साथ है। पहले उन्हें एक जैसा करें',
+  // Jira GRW-596 (0131) — a size's SKU and barcode.
+  'Another size at this branch has that SKU': 'इस ब्रांच में किसी दूसरे साइज़ का यही SKU है',
+  'Another size at this branch has that barcode': 'इस ब्रांच में किसी दूसरे साइज़ का यही बारकोड है',
+  'That name is too long': 'वह नाम बहुत लंबा है',
+  'That value is too long': 'वह मान बहुत लंबा है',
+  'Price cannot be negative': 'क़ीमत शून्य से कम नहीं हो सकती',
+  'That price is too large': 'वह क़ीमत बहुत ज़्यादा है',
 };
 
 /** The sentence in the visitor's language when it is known; otherwise exactly what the server said. */

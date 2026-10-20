@@ -3453,6 +3453,27 @@
       "backToProduct": "Back to products",
       "countHead": "How many",
       "secondBlocked": "These sizes were made with one option, so a second option cannot be added to them."
+    },
+    "moveSizes": {
+      "open": "Move to another branch",
+      "title": "Move sizes",
+      "close": "Close",
+      "toBranch": "Send to",
+      "chooseBranch": "Choose a branch",
+      "here": "{n} here",
+      "leftAfter": "{n} left here",
+      "none": "None here",
+      "less": "Send fewer {name}",
+      "more": "Send more {name}",
+      "loading": "Loading sizes",
+      "loadFailed": "The sizes did not load.",
+      "retry": "Try again",
+      "nothing": "Nothing to move",
+      "nothingWhy": "Every size here is at zero, so there is nothing to send.",
+      "send": "Send {n} to {branch}",
+      "sendIdle": "Send",
+      "sending": "Sending…",
+      "done": "Sent {n} to {branch}."
     }
   },
   "sales": {
