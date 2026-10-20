@@ -229,6 +229,9 @@ export function SellersClient({ timezone }: { timezone: string }) {
         )
       ) : null}
 
+      <AppLink className="btn srp-export" href="/stock/order">
+        {t('toOrder')}
+      </AppLink>
       <AppLink className="btn srp-export" href="/stock/report">
         {t('toReport')}
       </AppLink>

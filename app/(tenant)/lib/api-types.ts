@@ -1562,3 +1562,47 @@ export interface SellersQuery {
   page?: number;
   pageSize?: number;
 }
+
+/** Jira GRW-633 — what to order before the season. */
+export interface ReorderRow {
+  id: string;
+  productId: string;
+  name: string;
+  sizeLabel: string | null;
+  branchName: string;
+  stock: number;
+  soldLastYear: number | null;
+  suggested: number | null;
+  override: number | null;
+  order: number | null;
+  soldOutLastYear: boolean;
+  season: string;
+  from: string;
+  to: string;
+  lastYearFrom: string;
+  lastYearTo: string;
+}
+export interface ReorderPage {
+  rows: ReorderRow[];
+  totals: { sizes: number; toOrder: number; withoutBasis: number; edited: number };
+  page: number;
+  pageSize: number;
+}
+export interface ReorderRule {
+  categoryId: string;
+  name: string;
+  leadDays: number | null;
+  coverDays: number | null;
+  effectiveLeadDays: number;
+  effectiveCoverDays: number;
+}
+export interface ReorderRules {
+  defaults: { leadDays: number; coverDays: number };
+  rules: ReorderRule[];
+}
+export interface ReorderQuery {
+  location?: string;
+  categoryId?: string;
+  page?: number;
+  pageSize?: number;
+}

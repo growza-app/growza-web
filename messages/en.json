@@ -3573,7 +3573,8 @@
       "noCostShort": "no cost",
       "units": "{units} on the shelf",
       "sizesLabel": "Sizes of {name}",
-      "toSellers": "What sells and what sits"
+      "toSellers": "What sells and what sits",
+      "toOrder": "What to order"
     },
     "sellers": {
       "title": "What sells",
@@ -3611,7 +3612,44 @@
       "onShelf": "{units} on the shelf",
       "neverSold": "never sold",
       "notSoldSince": "not sold since {when}",
-      "toReport": "Stock report"
+      "toReport": "Stock report",
+      "toOrder": "What to order"
+    },
+    "reorder": {
+      "title": "What to order",
+      "howFarAhead": "How far ahead",
+      "categoryLabel": "Category",
+      "allCategories": "All categories",
+      "loading": "Loading",
+      "loadError": "Could not load. Check your connection and try again.",
+      "retry": "Try again",
+      "nothing": "Nothing to order yet",
+      "nothingHint": "This list needs last year’s sales, or counted stock. Sizes show here once there is something to go on.",
+      "model": "Each number is what you sold in the same days last year, less what is on the shelf now. It is a suggestion: change any number and it is kept.",
+      "withoutBasis": "{count, plural, one {1 size has no sales last year to compare, so it has no suggestion.} other {# sizes have no sales last year to compare, so they have no suggestion.}}",
+      "sizeOf": "{name} · size {size}",
+      "basis": "Sold {sold} from {from} to {to} last year · {stock} on the shelf",
+      "noBasis": "Nothing to compare with last year · {stock} on the shelf",
+      "soldOut": "It sold out last year, so it may have sold more.",
+      "suggestedWas": "Suggested {n}",
+      "orderLabel": "Order",
+      "orderFor": "How many to order: {name}",
+      "saved": "Saved",
+      "unsaved": "Not saved yet",
+      "wholeNumber": "Type a whole number.",
+      "saveFailed": "Could not save. Your number is still here. Try again.",
+      "nounSizes": "sizes",
+      "total": "{units} to order across {sizes, plural, one {1 size} other {# sizes}}",
+      "export": "Export the list",
+      "exporting": "Making the file…",
+      "exportFailed": "Could not make the file. Try again.",
+      "rulesHint": "How many days an order takes to arrive, and how many days of selling it has to last. Where you set nothing, {lead} days and {cover} days are used.",
+      "noCategories": "This branch has no categories yet, so {lead} days to arrive and {cover} days of selling are used for every size.",
+      "leadLabel": "Days to arrive",
+      "coverLabel": "Days to cover",
+      "saveRule": "Save",
+      "useDefaults": "Use the usual days",
+      "toSellers": "What sells and what sits"
     }
   },
   "sales": {

@@ -428,6 +428,7 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     '/products': /<ProductsScreen[^>]*guard="\/products"|await guardScreen\('\/products'\);/,
     // Jira GRW-631 — the stock report is its own page under the shelf's address; it guards itself under the same one.
     '/stock/report': /await guardScreen\('\/stock'\);/,
+    '/stock/order': /await guardScreen\('\/stock'\);/,
     '/stock/sellers': /await guardScreen\('\/stock'\);/,
     '/stock': /<ProductsScreen[^>]*guard="\/stock"/,
     '/sales': /<SalesScreen[^>]*guard="\/sales"/,

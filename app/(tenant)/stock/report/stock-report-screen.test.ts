@@ -79,7 +79,8 @@ describe('laid out for a thumb at 344px', () => {
   it('every control is 44px tall and type is in rem', () => {
     expect(css).toContain('min-height: 2.75rem');
     expect(css).not.toMatch(/font-size:\s*\d+px(?!;)/);
-    expect(css.match(/font-size:\s*\d+px/g) ?? []).toEqual(['font-size: 16px']);
+    // Only the 16px that stops iOS zooming a field on focus (the filter selects, and the reorder worklist's number fields).
+    expect((css.match(/font-size:\s*\d+px/g) ?? []).every((x) => x === 'font-size: 16px')).toBe(true);
   });
 
   it('the sizes wrap, never scroll sideways', () => {
