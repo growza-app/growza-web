@@ -605,6 +605,8 @@ export interface Appointment {
 export interface VisitProductLine {
   id?: string;
   productId: string | null;
+  /** Jira GRW-603 — the size this line sold; absent or null for a product with no sizes. */
+  variantId?: string | null;
   name: string;
   priceMinor: string;
   qty: number;
