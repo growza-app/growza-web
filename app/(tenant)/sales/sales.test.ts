@@ -411,7 +411,7 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(MAX_ROW_PRODUCTS).toBe(2);
     expect(client).toContain('products: windowRows.reduce((sum, r) => sum + r.productUnits, 0)');
     expect(client).toContain('services: windowRows.reduce((sum, r) => sum + r.serviceNames.length, 0)');
-    expect(client).toContain("const showServicesCol = filter !== 'products'");
+    expect(client).toContain("const showServicesCol = servicesOn && filter !== 'products'");
     expect(client).toContain("const showProductsCol = filter !== 'services'");
     expect(client).toContain("const showStaffCol = filter !== 'products'");
     expect(client).toContain('row.products.slice(0, MAX_ROW_PRODUCTS)');

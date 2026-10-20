@@ -400,6 +400,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       viewOrders: S('View all', 'सभी देखें'),
       noOrdersTitle: S('No orders yet', 'अभी कोई ऑर्डर नहीं'),
       noOrdersBody: S('Your first sale will show up here.', 'आपकी पहली बिक्री यहाँ दिखेगी।'),
+      /** Nothing can be sold from a shelf nobody has counted (a count of zero cannot be sold), so the first step is the count. */
+      countFirst: S('Count your stock first, then ring up your first sale.', 'पहले अपना स्टॉक गिनें, फिर पहली बिक्री करें।'),
       takeOrder: S('Take an order', 'ऑर्डर लें'),
       noOrdersToday: S('No orders today yet.', 'आज अभी कोई ऑर्डर नहीं।'),
       runningOut: S('Running out', 'ख़त्म होने वाला'),

@@ -129,10 +129,13 @@ export function ShopHome({
               ) : (
                 <div className="shp-empty">
                   <strong>{s.noOrdersTitle}</strong>
-                  <span>{s.noOrdersBody}</span>
-                  <a className="btn btn-primary shp-cta" href="/products/sell">
-                    {s.takeOrder}
-                  </a>
+                  {/* A shelf nobody has counted has nothing to sell, so the first step is the count (below), not the till. */}
+                  <span>{data.running.counted ? s.noOrdersBody : s.countFirst}</span>
+                  {data.running.counted ? (
+                    <a className="btn btn-primary shp-cta" href="/products/sell">
+                      {s.takeOrder}
+                    </a>
+                  ) : null}
                 </div>
               )}
             </Card>

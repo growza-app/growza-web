@@ -141,11 +141,14 @@ export function ProductsList({
   categories: initialCategories,
   branchId,
   initialFilter = 'all',
+  heading,
 }: {
   products: Product[];
   categories: ProductCategory[];
   branchId: string;
   initialFilter?: ShelfFilter;
+  /** Jira GRW-610 — the screen's own name when it is opened under another address (a shop's Stock); absent is "Products". */
+  heading?: string;
 }) {
   const t = useTranslations('products');
   const tc = useTranslations('common');
@@ -308,7 +311,7 @@ export function ProductsList({
 
   const header = (
     <PageHeader
-      title={t('title')}
+      title={heading ?? t('title')}
       subtitle={t('subtitle')}
       actions={
         <WriteOnly>

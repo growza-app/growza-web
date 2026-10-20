@@ -4,6 +4,8 @@ import { PageHeader } from '../components/PageHeader';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { guardScreen } from '../lib/screen-guard';
+import { homeCopy } from '../lib/home-copy';
+import { serverLang } from '../lib/lang';
 import { SalesClient, type SalesFilter, type SalesRange } from './SalesClient';
 import { clampSalesDateRange, DEFAULT_PRODUCT_RETURN_WINDOW_DAYS } from './sales-helpers';
 
@@ -102,6 +104,7 @@ export async function SalesScreen({ searchParams, guard }: { searchParams: Promi
       initialRange={initialRange}
       initialQuery={params.q ?? ''}
       loadFailed={loadFailed}
+      heading={guard === '/orders' ? homeCopy(await serverLang(), me.labels).nav.orders : undefined}
     />
   );
 }

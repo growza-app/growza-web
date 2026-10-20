@@ -41,16 +41,17 @@ export function areasOf(me: MeAreas | null | undefined): Areas {
 const under = (href: string, route: string): boolean => href === route || href.startsWith(`${route}/`);
 
 /** Screens that exist only for a business with a diary. */
-const BOOKING_ROUTES = ['/appointments', '/availability'] as const;
+const BOOKING_ROUTES = ['/appointments', '/availability', '/settings/booking'] as const;
 /** Screens that exist only for a business with a menu of services. */
 const SERVICE_ROUTES = ['/services', '/packages', '/offers'] as const;
 /** The shop's own screens. */
 const SHOP_ROUTES = ['/orders', '/stock'] as const;
 /**
  * What a shop does NOT have beside the diary and the menu: the sales register (Orders is its register), and the staff
- * rota and attendance (it keeps no chairs and no stylists' calendars). Its nav is short on purpose.
+ * rota and attendance, with the setting that lets staff mark themselves in (it keeps no chairs and no stylists'
+ * calendars). Its nav is short on purpose.
  */
-const NOT_IN_A_SHOP = ['/sales', '/providers', '/attendance'] as const;
+const NOT_IN_A_SHOP = ['/sales', '/providers', '/attendance', '/settings/check-in'] as const;
 
 /** May a business with these areas be offered this address? True for everything a screen's own rules do not close. */
 export function areaAllows(href: string, areas: Areas = DIARY_AREAS): boolean {

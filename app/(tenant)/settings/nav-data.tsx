@@ -59,6 +59,12 @@ interface SettingsRowBase {
    */
   whatsappOnly?: boolean;
   /**
+   * Jira GRW-610 — listed only for a business that takes bookings. A shop has no diary, so Booking settings (times and
+   * closed days) and Location check-in (staff marking themselves in at a chair) set up something it does not have:
+   * absent for it, never an empty form. `areas.ts` closes the same two addresses to it.
+   */
+  diaryOnly?: boolean;
+  /**
    * Listed only once the business is live.
    *
    * Payments is the one row like this. Settings is open before go-live so an
@@ -113,10 +119,10 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
        * "Cancellation policy" used to be a second row here opening this same page, for the one field on it that
        * names a cancel (owner, 2026-10-10). Two rows, one destination, and the owner tapped both to find out.
        */
-      { href: '/settings/booking', key: 'bookingSettings', icon: IconCalendarPlus },
+      { href: '/settings/booking', key: 'bookingSettings', diaryOnly: true, icon: IconCalendarPlus },
       { href: '/settings/notifications', key: 'notifications', icon: IconBell, whatsappOnly: true },
       // Jira GRW-563 — where this branch is, for a stylist's "I'm in" from her phone.
-      { href: '/settings/check-in', key: 'checkIn', icon: IconMapPin },
+      { href: '/settings/check-in', key: 'checkIn', diaryOnly: true, icon: IconMapPin },
       /*
        * Jira GRW-582 — the details that turn a receipt into a tax invoice.
        *

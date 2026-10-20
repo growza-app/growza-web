@@ -6,6 +6,8 @@ import { loadErrorKind } from '../lib/load-error';
 import { BranchUrlSync } from '../components/BranchUrlSync';
 import { resolveBranchState } from '../lib/branch-context';
 import { guardScreen } from '../lib/screen-guard';
+import { homeCopy } from '../lib/home-copy';
+import { serverLang } from '../lib/lang';
 import { ProductsList } from './ProductsList';
 
 /**
@@ -71,7 +73,7 @@ export async function ProductsScreen({ searchParams, guard }: { searchParams: Pr
     <>
       <BranchUrlSync />
       {branchId ? (
-        <ProductsList key={branchId} products={products} categories={categories} branchId={branchId} initialFilter={initialFilter} />
+        <ProductsList key={branchId} products={products} categories={categories} branchId={branchId} initialFilter={initialFilter} heading={guard === '/stock' ? homeCopy(await serverLang(), me.labels).nav.stock : undefined} />
       ) : (
         <>
           <PageHeader title={t('title')} subtitle={t('subtitle')} />
