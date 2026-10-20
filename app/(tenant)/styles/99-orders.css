@@ -72,6 +72,24 @@
   flex-direction: column;
   gap: var(--sp-2);
 }
+/* The whole card is the link on a phone; the item is just the list's row. */
+.ord-card-item {
+  display: block;
+}
+a.ord-card {
+  color: inherit;
+  text-decoration: none;
+}
+a.ord-card:focus-visible,
+.ord-row-link:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+.ord-row-link {
+  color: var(--accent-deep);
+  text-decoration: none;
+  font-weight: 600;
+}
 .ord-card {
   display: flex;
   flex-direction: column;
@@ -215,5 +233,209 @@
   .ord-search {
     flex: 1 1 18rem;
     max-width: 24rem;
+  }
+}
+
+/* ── An order's own screen (orders/[id]/OrderClient.tsx, Jira GRW-615) ──────────────────────────────────────────── */
+.ord-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.ord-d-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+.ord-d-meta {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.ord-d-notice {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: 0.75rem;
+  background: var(--amber-soft, var(--slate-soft));
+  color: var(--amber-ink);
+}
+.ord-d-block {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  min-width: 0;
+}
+.ord-d-block h2 {
+  margin: 0 0 var(--sp-2);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+.ord-d-name {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.ord-d-quiet {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+.ord-d-address {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: var(--sp-2) 0 0;
+  overflow-wrap: anywhere;
+}
+.ord-d-label {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+.ord-d-warn {
+  margin: var(--sp-2) 0 0;
+  color: var(--amber-ink);
+}
+
+.ord-d-lines,
+.ord-d-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ord-d-lines li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: var(--sp-3);
+  min-height: 2.75rem;
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--hm-line-soft, var(--border));
+}
+.ord-d-lines li:first-child {
+  border-top: 0;
+}
+.ord-d-line-name {
+  overflow-wrap: anywhere;
+}
+.ord-d-line-qty,
+.ord-d-line-amount {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+.ord-d-line-amount {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.ord-d-money {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+}
+.ord-d-money > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.ord-d-money dt {
+  color: var(--muted);
+}
+.ord-d-money dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.ord-d-money > div:first-child dd {
+  font-weight: 700;
+}
+.ord-d-paper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+.ord-d-paper .btn {
+  min-height: 2.75rem;
+}
+
+.ord-d-history li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-3);
+  min-height: 2.75rem;
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--hm-line-soft, var(--border));
+}
+.ord-d-history li:first-child {
+  border-top: 0;
+}
+
+/*
+ * The next move: one full-width button in a bar that stays in reach.
+ *
+ * `.page-body` is the scroller, and the floating bottom nav is NOT inside it: the scroller already ends above the nav.
+ * Chrome pins a sticky box INSIDE the scroll container's padding, and the page keeps 84px of bottom padding for content
+ * to scroll past the nav with — so a sticky `bottom: 0` floated 84px up, mid-screen, over the items (found in the browser
+ * at 344px, twice: the first draft added its own offset on top and floated 196px up).
+ *
+ * The screen with a bar therefore gives up that padding (the bar is the last thing, and it stands where the padding was),
+ * and the bar pins to the scroller's bottom edge, hugging the nav. At the end of the content the bar is in its natural
+ * place below the last block, so nothing is ever covered by it and it does not jump.
+ */
+.ord-detail.has-bar {
+  padding-bottom: 0;
+}
+.ord-d-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0 var(--sp-3);
+  background: var(--page-bg);
+}
+.ord-d-bar-row {
+  display: flex;
+  gap: var(--sp-2);
+}
+.ord-d-primary {
+  flex: 1 1 auto;
+  min-height: 3rem;
+}
+.ord-d-more-btn {
+  min-height: 3rem;
+}
+.ord-d-more {
+  list-style: none;
+  margin: 0;
+  padding: var(--sp-1);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+.ord-d-more-item {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  color: var(--danger);
+  cursor: pointer;
+}
+.ord-d-more-item:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -2px;
+}
+
+@media (min-width: 861px) {
+  .ord-detail {
+    max-width: 40rem;
   }
 }

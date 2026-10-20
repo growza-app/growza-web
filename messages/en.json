@@ -3639,6 +3639,48 @@
       "nounOrders": "orders",
       "allChannels": "Anywhere",
       "allStates": "Any state"
+    },
+    "detail": {
+      "client": "Client",
+      "forTitle": "For",
+      "address": "Delivery address",
+      "contact": "Contact",
+      "noAddress": "No address yet, so this order cannot be sent.",
+      "detailsRemoved": "The buyer’s details were removed.",
+      "itemsTitle": "Items",
+      "times": "× {count}",
+      "cameBack": "{count} came back",
+      "noLines": "This order has no items. That should not happen — tell support.",
+      "moneyTitle": "Money",
+      "total": "Total",
+      "givenBack": "Given back",
+      "paidBy": "Paid by {mode}",
+      "modes": {
+        "cash": "cash",
+        "card": "card",
+        "upi": "UPI",
+        "other": "other"
+      },
+      "historyTitle": "What happened",
+      "placed": "Placed on {channel}",
+      "movedTo": "{state}",
+      "by": "by {name}",
+      "clientAttached": "Matched to a client",
+      "buyerErased": "Buyer’s details removed",
+      "more": "More",
+      "moves": {
+        "packed": "Mark as packed",
+        "sent": "Mark as sent",
+        "delivered": "Mark as delivered",
+        "cancelled": "Cancel this order",
+        "returned": "Mark as came back"
+      },
+      "movedOn": "This order has already moved on: it is now {state}.",
+      "moveFailed": "Could not update the order. Check your connection and try again.",
+      "returnItems": "Return items",
+      "notFound": "There is no such order.",
+      "loadError": "Could not load this order. Check your connection and try again.",
+      "backToOrders": "Back to orders"
     }
   }
 }

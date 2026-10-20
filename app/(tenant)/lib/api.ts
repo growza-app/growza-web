@@ -62,6 +62,7 @@ import { bareRefusalMessage, genericFailureMessage, localiseApiMessage } from '.
 import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
+  OrderDetail,
   OrdersPage,
   ShopHome,
   ActivityEvent,
@@ -605,6 +606,14 @@ export const api = {
     const qs = params.toString();
     return get<OrdersPage>(`/api/v1/orders${qs ? `?${qs}` : ''}`);
   },
+  /** Jira GRW-615 — one order, whole: its lines, its history, who it is for, and the moves it may be offered. */
+  order: (id: string) => get<OrderDetail>(`/api/v1/orders/${encodeURIComponent(id)}`),
+  /**
+   * Jira GRW-615 — move an order along. `expected` is the state this screen believes the order is in: when the order has
+   * moved on elsewhere the API refuses with 409 and says where it is now, instead of overwriting the other desk.
+   */
+  moveOrder: (id: string, status: string, expected: string) =>
+    patch<{ id: string; status: string; moved: boolean }>(`/api/v1/orders/${encodeURIComponent(id)}/status`, { status, expected }),
   /** Jira GRW-222 — the walk-in queue. Adding is the arrival; giving to staff is the start. */
   // Jira GRW-244 — `location`: one branch's queue (owner); a receptionist's is their own.
   walkInQueue: (location?: string | null) => get<QueueEntry[]>(`/api/v1/walk-in-queue${atBranch(location)}`),

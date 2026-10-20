@@ -1183,3 +1183,59 @@ export interface OrdersPage {
   page: number;
   pageSize: number;
 }
+
+/** Jira GRW-615 — one thing that happened to an order after it was placed. Says THAT, never what (no buyer value). */
+export interface OrderHistoryEntry {
+  kind: 'status_change' | 'client_attached' | 'buyer_erased';
+  at: string;
+  from: string | null;
+  to: string | null;
+  by: string | null;
+}
+
+/**
+ * Jira GRW-615 — an order's own screen, from ONE read. Every price, payment and total is ABSENT (not zero) for a front
+ * desk the owner has not opened the sales tab to: the API omits the keys, so this screen has nothing to hide.
+ *
+ * `moves` is what the screen may offer, computed by the API from the state machine and sent with the order — the screen
+ * never decides what can follow what (BR-01), and an older `@growza-app/shared` cannot make it offer a move the API
+ * would refuse.
+ */
+export interface OrderDetail {
+  id: string;
+  locationId: string;
+  status: string;
+  known: boolean;
+  channel: string;
+  externalRef: string | null;
+  soldAt: string;
+  buyer: { name: string | null; contact: string | null; address: string | null } | null;
+  buyerRedactedAt: string | null;
+  client: { id: string; name: string | null } | null;
+  lines: Array<{
+    id: string;
+    productId: string | null;
+    variantId: string | null;
+    name: string;
+    qty: number;
+    returnedQty: number;
+    sku: string | null;
+    barcode: string | null;
+    priceMinor?: string;
+    paidMinor?: string;
+    returnedMinor?: string;
+  }>;
+  history: OrderHistoryEntry[];
+  moves: { primary: string | null; more: string[] };
+  payments?: Array<{ mode: string; amountMinor: number }>;
+  totalMinor?: number;
+  refundedMinor?: number;
+}
+
+/** The answer to a move that was refused because the order is no longer where the screen thought. */
+export interface OrderMoveRefusal {
+  error: string;
+  detail: string;
+  status?: string;
+  allowed?: string[];
+}

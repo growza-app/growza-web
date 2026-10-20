@@ -3639,6 +3639,48 @@
       "nounOrders": "ऑर्डर",
       "allChannels": "कहीं से भी",
       "allStates": "कोई भी स्थिति"
+    },
+    "detail": {
+      "client": "ग्राहक",
+      "forTitle": "किसका",
+      "address": "भेजने का पता",
+      "contact": "संपर्क",
+      "noAddress": "अभी पता नहीं है, इसलिए यह ऑर्डर भेजा नहीं जा सकता।",
+      "detailsRemoved": "ख़रीदार की जानकारी हटा दी गई है।",
+      "itemsTitle": "सामान",
+      "times": "× {count}",
+      "cameBack": "{count} वापस आए",
+      "noLines": "इस ऑर्डर में कोई सामान नहीं है। ऐसा नहीं होना चाहिए, सपोर्ट को बताएँ।",
+      "moneyTitle": "पैसा",
+      "total": "कुल",
+      "givenBack": "लौटाया",
+      "paidBy": "{mode} से भुगतान",
+      "modes": {
+        "cash": "नकद",
+        "card": "कार्ड",
+        "upi": "UPI",
+        "other": "दूसरा तरीका"
+      },
+      "historyTitle": "क्या-क्या हुआ",
+      "placed": "{channel} पर ऑर्डर आया",
+      "movedTo": "{state}",
+      "by": "{name} ने",
+      "clientAttached": "ग्राहक से जोड़ा गया",
+      "buyerErased": "ख़रीदार की जानकारी हटाई गई",
+      "more": "और",
+      "moves": {
+        "packed": "पैक हो गया",
+        "sent": "भेज दिया",
+        "delivered": "पहुँच गया",
+        "cancelled": "ऑर्डर रद्द करें",
+        "returned": "वापस आया"
+      },
+      "movedOn": "यह ऑर्डर पहले ही आगे बढ़ चुका है: अब यह {state} है।",
+      "moveFailed": "ऑर्डर बदला नहीं जा सका। इंटरनेट देखें और फिर से कोशिश करें।",
+      "returnItems": "सामान वापस लें",
+      "notFound": "ऐसा कोई ऑर्डर नहीं है।",
+      "loadError": "यह ऑर्डर लोड नहीं हुआ। इंटरनेट देखें और फिर से कोशिश करें।",
+      "backToOrders": "ऑर्डर पर वापस"
     }
   }
 }

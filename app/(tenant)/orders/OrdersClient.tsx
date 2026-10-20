@@ -25,8 +25,7 @@ import { IconSearch } from '../components/icons';
  * can be linked to, bookmarked, and linked INTO — Home's counts do (FR-06). A chip is a new place to be and pushes, so
  * Back undoes it; typing and paging refine the same view and replace, so Back does not walk through every keystroke.
  *
- * Rows are not links yet: the order's own screen is Jira GRW-615, and a row that opened a 404 would be worse than one
- * that does not open.
+ * A row opens the order's own screen (Jira GRW-615): the whole card on a phone, the date and code in the table.
  */
 export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery: OrdersQuery; initial: OrdersPage | null; timezone: string }) {
   const t = useTranslations('orders');
@@ -205,7 +204,8 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
         <>
           <ul className="ord-cards">
             {rows.map((r) => (
-              <li key={r.id} className="ord-card">
+              <li key={r.id} className="ord-card-item">
+                <a className="ord-card" href={`/orders/${r.id}`}>
                 <div className="ord-card-top">
                   <span className="ord-who">{whoOf(r)}</span>
                   {showMoney && r.amountMinor !== undefined ? <span className="ord-amount">{formatMoney(r.amountMinor, 'INR', locale)}</span> : null}
@@ -221,6 +221,7 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
                   <span className="ord-code">{t('list.orderCode', { code: r.code.toUpperCase() })}</span>
                   <span className={`ord-state-chip ord-s-${r.known ? r.status : 'unknown'}`}>{stateWord(r.status)}</span>
                 </div>
+                </a>
               </li>
             ))}
           </ul>
@@ -240,7 +241,9 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
               {rows.map((r) => (
                 <tr key={r.id}>
                   <td>
-                    {when(r.soldAt)}
+                    <a className="ord-row-link" href={`/orders/${r.id}`}>
+                      {when(r.soldAt)}
+                    </a>
                     <div className="ord-code">{t('list.orderCode', { code: r.code.toUpperCase() })}</div>
                   </td>
                   <td>{channelWord(r.channel)}</td>
