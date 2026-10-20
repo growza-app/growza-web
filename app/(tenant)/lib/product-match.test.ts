@@ -280,4 +280,17 @@ describe("StockTake — count a branch's shelf in one pass (GRW-574 part 4)", ()
   });
 });
 
+describe('Jira GRW-599 — a size’s own code finds its product', () => {
+  const shirt = { ...p('Shirt'), sizes: [{ id: 's30', option1: '30', option2: null, priceMinor: null, sku: 'SHIRT-30', barcode: '8900000000303', stock: 2 }] } as Product;
+  const shelf = [shirt, p('Oil', { barcode: '8901111111111' })];
+
+  it('typing a size’s barcode or SKU finds the shirt (the till then opens its sizes)', () => {
+    expect(matchItems(shelf.map(productMatchable), '8900000000303')[0]!.id).toBe('Shirt');
+    expect(matchItems(shelf.map(productMatchable), 'SHIRT-30')[0]!.id).toBe('Shirt');
+  });
+
+  it('a plain product’s code still finds only it', () => {
+    expect(matchItems(shelf.map(productMatchable), '8901111111111').map((m) => m.id)).toEqual(['Oil']);
+  });
+});
 

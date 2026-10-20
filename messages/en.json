@@ -2840,6 +2840,19 @@
       "onBill": "On the bill",
       "remove": "Take off the bill",
       "addAnother": "Add one more (on the bill × {n})"
+    },
+    "size": {
+      "title": "Choose a size",
+      "close": "Done",
+      "cellLeft": "{size}, {n} left",
+      "cellOut": "{size}, out of stock",
+      "cellOn": "{size}, {count} on the bill",
+      "onThisBill": "On this bill",
+      "noSizes": "No sizes of this product are on the shelf.",
+      "full": "The bill is full. Take something off to add more.",
+      "changed": "A size changed while you were selling. The sizes shown are the ones on the shelf now.",
+      "sizeMore": "One more {name}",
+      "sizeLess": "One less {name}"
     }
   },
   "help": {

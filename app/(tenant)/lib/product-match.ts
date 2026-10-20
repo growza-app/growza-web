@@ -11,7 +11,8 @@ export const productMatchable = (p: Product): Matchable<Product> => ({
   item: p,
   text: [p.name, p.categoryName ?? ''],
   priceMinor: asMinor(p.priceMinor),
-  codes: [p.barcode, p.sku],
+  // Jira GRW-599 — a size's own codes find its product too (the till then opens its sizes).
+  codes: [p.barcode, p.sku, ...(p.sizes ?? []).flatMap((s) => [s.barcode, s.sku])],
 });
 
 /**

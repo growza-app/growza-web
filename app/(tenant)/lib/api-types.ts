@@ -210,6 +210,22 @@ export interface Product {
   optionAxes?: SizeAxis[];
   /** How many sizes it has. For a product with sizes, `stock` is their total. */
   variantCount?: number;
+  /**
+   * Jira GRW-599 — on the till's list only, and only for a product with sizes: every live, active size in the owner's
+   * order with its count, price and codes, so tapping a product never costs a request to learn its sizes.
+   */
+  sizes?: TillSize[];
+}
+
+/** Jira GRW-599 — one size as the till holds it. `priceMinor` null = the product's own price. */
+export interface TillSize {
+  id: string;
+  option1: string;
+  option2: string | null;
+  priceMinor: string | null;
+  sku: string | null;
+  barcode: string | null;
+  stock: number;
 }
 
 /** Jira GRW-595 — one option of a product and its values, in the owner's order. */
