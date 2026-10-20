@@ -314,15 +314,16 @@ export function ProductsList({
       title={heading ?? t('title')}
       subtitle={t('subtitle')}
       actions={
-        <WriteOnly>
+        <>
+          {heading !== undefined && canStockTake ? (
+            <Link className="btn btn-ghost" href="/stock/report">
+              {t('stockReport.open')}
+            </Link>
+          ) : null}
+          <WriteOnly>
           {live.length > 0 ? (
             <Link className="btn btn-ghost" href="/products/sell?from=products">
               <IconCart /> {t('sell')}
-            </Link>
-          ) : null}
-          {heading !== undefined && live.length > 0 && canStockTake ? (
-            <Link className="btn btn-ghost" href="/stock/report">
-              {t('stockReport.open')}
             </Link>
           ) : null}
           {live.length > 0 && canStockTake ? (
@@ -340,7 +341,8 @@ export function ProductsList({
           <button type="button" className="btn" onClick={() => setEditing('new')}>
             <IconPlus /> {t('add')}
           </button>
-        </WriteOnly>
+          </WriteOnly>
+        </>
       }
     />
   );

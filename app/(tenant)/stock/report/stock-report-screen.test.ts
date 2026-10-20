@@ -19,13 +19,13 @@ const messages = (lang: 'en' | 'hi') => JSON.parse(readFileSync(path.resolve(imp
 
 describe('one answer, on the screen and in the file (BR-04)', () => {
   it('reads one page of styles at a time from the server, with the totals the server worked out over all of them', () => {
-    expect(client).toContain('api.stockReport({ location: branch || undefined, categoryId: categoryId || undefined, q, page, pageSize: PAGE_SIZE })');
-    expect(client).toContain('<Pagination page={page} total={data.totals.styles}');
+    expect(client).toContain('api.stockReport({ location: branch || undefined, categoryId: liveCategory || undefined, q, page: livePage, pageSize: PAGE_SIZE })');
+    expect(client).toContain('<Pagination page={livePage} total={data.totals.styles}');
     expect(client).not.toMatch(/\.reduce\(/);
   });
 
   it('the file is the server’s own, made with the same filters — not built from the page in hand', () => {
-    expect(client).toContain('api.stockReportCsv({ location: branch || undefined, categoryId: categoryId || undefined, q })');
+    expect(client).toContain('api.stockReportCsv({ location: branch || undefined, categoryId: liveCategory || undefined, q })');
     expect(api).toContain('/api/v1/reports/stock/export?');
     expect(api).toContain('/api/v1/reports/stock?');
   });
@@ -40,7 +40,7 @@ describe('what is missing is said, what is below zero is shown (AC-02, AC-03)', 
   it('says how many sizes are left out of the worth for want of a cost price, per style and in total, and never shows a worth for a style with none', () => {
     expect(client).toContain("t('withoutCost'");
     // A shelf with no cost price anywhere is not "worth ₹0".
-    expect(client).toContain("totals.valueMinor === '0' && totals.sizesWithoutCost > 0 ? t('noCost')");
+    expect(client).toContain("totals.sizesWithCost === 0 ? t('noCost')");
     expect(client).toContain("style.valueMinor === null ? t('noCost') : money(style.valueMinor)");
     expect(client).toContain("t('noCostShort')");
   });
@@ -52,7 +52,7 @@ describe('what is missing is said, what is below zero is shown (AC-02, AC-03)', 
   });
 
   it('a shelf nobody has counted says so rather than listing zeros', () => {
-    expect(client).toContain('data.neverCounted');
+    expect(client).toContain('data.totals.styles === 0 || data.neverCounted');
     expect(client).toContain("t('neverCounted')");
   });
 });
@@ -64,7 +64,7 @@ describe('who sees it, and where', () => {
   });
 
   it('is offered from the shop’s Stock screen only, to the owner and manager', () => {
-    expect(list).toContain('heading !== undefined && live.length > 0 && canStockTake');
+    expect(list).toContain('heading !== undefined && canStockTake');
     expect(list).toContain('href="/stock/report"');
   });
 

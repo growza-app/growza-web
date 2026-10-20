@@ -3572,7 +3572,6 @@
       "noCost": "No cost price",
       "noCostShort": "no cost",
       "units": "{units} on the shelf",
-      "someWithoutCost": "{count, plural, one {1 size has no cost} other {# sizes have no cost}}",
       "sizesLabel": "Sizes of {name}"
     }
   },

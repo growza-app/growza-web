@@ -1495,6 +1495,7 @@ export interface StockReportTotals {
   units: number;
   valueMinor: string;
   sizesWithoutCost: number;
+  sizesWithCost: number;
   negativeSizes: number;
 }
 export interface StockReportPage {

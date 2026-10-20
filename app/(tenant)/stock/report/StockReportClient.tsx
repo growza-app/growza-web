@@ -38,6 +38,11 @@ export function StockReportClient() {
   const [typed, setTyped] = useState('');
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
+  // The branch the page number and the category were chosen under: a change of branch starts them over in the SAME render, so there is one read.
+  const [scope, setScope] = useState(branch);
+  const stale = scope !== branch;
+  const livePage = stale ? 1 : page;
+  const liveCategory = stale ? '' : categoryId;
   const [data, setData] = useState<StockReportPage | null>(null);
   const [failed, setFailed] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -53,10 +58,10 @@ export function StockReportClient() {
     const mine = ++seq.current;
     setFailed(false);
     try {
-      const res = await api.stockReport({ location: branch || undefined, categoryId: categoryId || undefined, q, page, pageSize: PAGE_SIZE });
+      const res = await api.stockReport({ location: branch || undefined, categoryId: liveCategory || undefined, q, page: livePage, pageSize: PAGE_SIZE });
       if (mine !== seq.current) return;
       // A page that emptied under the person (a filter narrowed it) steps back rather than showing nothing.
-      if (res.styles.length === 0 && res.totals.styles > 0 && page > 1) setPage(Math.max(1, Math.ceil(res.totals.styles / PAGE_SIZE)));
+      if (res.styles.length === 0 && res.totals.styles > 0 && livePage > 1) setPage(Math.max(1, Math.ceil(res.totals.styles / PAGE_SIZE)));
       else setData(res);
     } catch (e) {
       // A category that was removed meanwhile is the server's plain sentence, not a fault: drop the filter and read again.
@@ -64,7 +69,7 @@ export function StockReportClient() {
       if (e instanceof ApiError && e.field === 'categoryId') setCategoryId('');
       else setFailed(true);
     }
-  }, [ready, branch, categoryId, q, page]);
+  }, [ready, branch, liveCategory, q, livePage]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -82,12 +87,15 @@ export function StockReportClient() {
 
   // Categories belong to a branch: they are offered when exactly one branch is in view (the only one, or the one chosen).
   useEffect(() => {
+    if (scope === branch) return;
+    setScope(branch);
     setPage(1);
+    setCategoryId('');
+    setCategories([]);
     setData(null);
-  }, [branch]);
+  }, [scope, branch]);
   const oneBranch = branch || (branches.length === 1 ? (branches[0]?.id ?? '') : '');
   useEffect(() => {
-    setCategoryId('');
     if (!oneBranch) {
       setCategories([]);
       return;
@@ -108,8 +116,8 @@ export function StockReportClient() {
     setExporting(true);
     setExportError(null);
     try {
-      const csv = await api.stockReportCsv({ location: branch || undefined, categoryId: categoryId || undefined, q });
-      const url = URL.createObjectURL(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }));
+      const csv = await api.stockReportCsv({ location: branch || undefined, categoryId: liveCategory || undefined, q });
+      const url = URL.createObjectURL(new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' }));
       const link = document.createElement('a');
       link.href = url;
       link.download = 'stock-on-the-shelf.csv';
@@ -125,7 +133,7 @@ export function StockReportClient() {
     }
   };
 
-  const filtered = q !== '' || categoryId !== '';
+  const filtered = q !== '' || liveCategory !== '';
   return (
     <div className="srp">
       {data ? <Totals data={data} money={money} count={count} /> : null}
@@ -176,12 +184,12 @@ export function StockReportClient() {
             <li key={i} className="srp-card srp-skeleton" />
           ))}
         </ul>
-      ) : data.styles.length === 0 ? (
+      ) : data.totals.styles === 0 || data.neverCounted ? (
         <div className="srp-empty" role="status">
-          <p className="srp-empty-title">{filtered || branch ? t('noMatch') : data.neverCounted ? t('neverCounted') : t('nothing')}</p>
-          {!filtered && !branch ? (
+          <p className="srp-empty-title">{data.totals.styles === 0 ? (filtered ? t('noMatch') : t('nothing')) : t('neverCounted')}</p>
+          {!filtered ? (
             <>
-              <p className="srp-hint">{data.neverCounted ? t('neverCountedHint') : t('nothingHint')}</p>
+              <p className="srp-hint">{data.totals.styles === 0 ? t('nothingHint') : t('neverCountedHint')}</p>
               <AppLink className="btn" href="/stock">
                 {t('goToStock')}
               </AppLink>
@@ -195,7 +203,7 @@ export function StockReportClient() {
               <StyleCard key={s.id} style={s} showBranch={branches.length > 1 && !branch} money={money} count={count} />
             ))}
           </ul>
-          <Pagination page={page} total={data.totals.styles} pageSize={PAGE_SIZE} noun={t('nounStyles')} onChange={setPage} />
+          <Pagination page={livePage} total={data.totals.styles} pageSize={PAGE_SIZE} noun={t('nounStyles')} onChange={setPage} />
           <div className="srp-bar">
             {exportError ? (
               <p className="srp-error" role="alert">
@@ -215,11 +223,11 @@ export function StockReportClient() {
 function Totals({ data, money, count }: { data: StockReportPage; money: (m: string | number | null) => string; count: (n: number) => string }) {
   const t = useTranslations('products.stockReport');
   const { totals } = data;
-  if (data.neverCounted && totals.styles === 0) return null;
+  if (data.neverCounted || totals.styles === 0) return null;
   return (
     <section className="srp-totals" aria-label={t('totalsLabel')}>
       <p className="srp-worth-label">{t('worth')}</p>
-      <p className="srp-worth">{totals.valueMinor === '0' && totals.sizesWithoutCost > 0 ? t('noCost') : money(totals.valueMinor)}</p>
+      <p className="srp-worth">{totals.sizesWithCost === 0 ? t('noCost') : money(totals.valueMinor)}</p>
       <p className="srp-hint">{t('totalsLine', { styles: totals.styles, sizes: totals.sizes, units: count(totals.units) })}</p>
       {totals.sizesWithoutCost > 0 ? <p className="srp-warn">{t('withoutCost', { count: totals.sizesWithoutCost })}</p> : null}
       {totals.negativeSizes > 0 ? <p className="srp-warn">{t('negative', { count: totals.negativeSizes })}</p> : null}
@@ -238,7 +246,6 @@ function StyleCard({ style, showBranch, money, count }: { style: StockReportStyl
       <p className="srp-hint">
         {showBranch ? `${style.branchName} · ` : ''}
         {t('units', { count: style.units, units: count(style.units) })}
-        {style.valueMinor !== null && style.sizesWithoutCost > 0 ? ` · ${t('someWithoutCost', { count: style.sizesWithoutCost })}` : ''}
       </p>
       {style.sizes.length > 1 || style.sizes[0]?.label !== style.name ? (
         <ul className="srp-sizes" aria-label={t('sizesLabel', { name: style.name })}>
@@ -246,7 +253,7 @@ function StyleCard({ style, showBranch, money, count }: { style: StockReportStyl
             <li key={z.id} className={`srp-size ${z.stock < 0 ? 'srp-size-negative' : z.stock === 0 ? 'srp-size-zero' : ''}`}>
               <span className="srp-size-label">{z.label}</span>
               <span className="srp-size-count">{count(z.stock)}</span>
-              {z.costMinor === null ? <span className="srp-size-flag">{t('noCostShort')}</span> : null}
+              {z.costMinor === null && z.stock !== 0 ? <span className="srp-size-flag">{t('noCostShort')}</span> : null}
             </li>
           ))}
         </ul>
