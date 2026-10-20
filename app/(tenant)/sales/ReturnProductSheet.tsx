@@ -618,20 +618,22 @@ export function ReturnProductSheet({
                               >
                                 <td data-label={t('colProduct')}>
                                   <div className="sls-ret-prd-cell">
-                                    <input
-                                      type="checkbox"
-                                      className="sls-ret-checkbox"
-                                      aria-label={p.name}
-                                      disabled={!canPickRow}
-                                      checked={selectedQty > 0}
-                                      onChange={(e) => {
-                                        if (e.target.checked) {
-                                          setLineQty(p, remaining);
-                                        } else {
-                                          setLineQty(p, 0);
-                                        }
-                                      }}
-                                    />
+                                    <label className="sls-ret-pick">
+                                      <input
+                                        type="checkbox"
+                                        className="sls-ret-checkbox"
+                                        aria-label={p.name}
+                                        disabled={!canPickRow}
+                                        checked={selectedQty > 0}
+                                        onChange={(e) => {
+                                          if (e.target.checked) {
+                                            setLineQty(p, remaining);
+                                          } else {
+                                            setLineQty(p, 0);
+                                          }
+                                        }}
+                                      />
+                                    </label>
                                     <span className="sls-ret-prd-thumb" aria-hidden="true">
                                       <IconProducts />
                                     </span>
