@@ -8,7 +8,7 @@ import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
 import { useAreas } from '../SessionProvider';
-import { IconNavClients, IconNavOrders, IconNavStock, IconReports } from '../icons';
+import { IconNavClients, IconNavOrders, IconNavStock } from '../icons';
 import { Card, CardError, HomeHeader, QuickTiles, rupees } from './parts';
 
 /**
@@ -78,12 +78,16 @@ export function ShopHome({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [branch]);
 
-  const filterBranch = branch ? `&branch=${encodeURIComponent(branch)}` : '';
+  /*
+   * Jira GRW-611 review — no Reports tile. Every report there is built from bookings, so `/reports` answers a shop
+   * with the "not yet" sentence (Jira GRW-610) whose only two buttons are Orders and Stock — two of these tiles. A
+   * door onto that is a door onto nothing; it opens when a shop has reports of its own, Jira GRW-591.
+   */
+  const stockBranch = branch ? `?branch=${encodeURIComponent(branch)}` : '';
   const tiles = [
     { href: '/products/sell', label: s.takeOrder, icon: <IconNavOrders />, tone: 'green' },
     { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'blue' },
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
-    { href: '/reports', label: t.nav.reports, icon: <IconReports />, tone: 'violet' },
   ].filter((l) => canSee(l.href, role, reportTabs, true, areas));
 
   return (
@@ -140,7 +144,13 @@ export function ShopHome({
               )}
             </Card>
 
-            <Card title={s.runningOut} action={data.running.total > data.running.items.length ? <a className="shp-link" href={`/stock?filter=low${filterBranch}`}>{s.viewAll(data.running.total)}</a> : undefined}>
+            {/*
+              Jira GRW-611 review — "View all" opens the SHELF, not its `low` filter. That filter answers the Stock
+              screen's question per style (a sized style's count is the sum of its sizes) and this list is per size,
+              so the filter could hold none of the rows just listed: a uniform with ten sizes at one each counts as
+              twenty in stock. The shelf holds every one of them. A per-size low filter is Jira GRW-591's.
+            */}
+            <Card title={s.runningOut} action={data.running.total > data.running.items.length ? <a className="shp-link" href={`/stock${stockBranch}`}>{s.viewAll(data.running.total)}</a> : undefined}>
               {!data.running.counted ? (
                 <div className="shp-empty">
                   <span>{s.notCounted}</span>

@@ -74,6 +74,35 @@ describe('BR-04 — a salon’s rendering of every audited screen is unchanged',
     }
   });
 
+  /*
+   * Jira GRW-611 review — every surface that filters by `canSee` passes the business's `areas`.
+   *
+   * NotLiveHome did not, so a shop being set up was offered Staff and Services (both closed to it, both bouncing back
+   * here) and not the shelf, while the tab bar below it offered exactly the opposite. A tile that cannot open is the
+   * failure this whole module exists to stop, so the pin is on the argument, not on the tiles.
+   */
+  it('every Home that filters destinations asks with the business’s areas, so no tile can open on a bounce', () => {
+    const notLive = read('components/home/NotLiveHome.tsx');
+    expect(notLive).toContain('const areas = useAreas();');
+    expect(notLive).toContain('canSee(l.href, role, reportTabs, false, areas)');
+    // And a shop being set up is offered its own setup screen there, as the tab bar is.
+    expect(notLive).toMatch(/href: '\/stock'/);
+    expect(canSee('/stock', 'owner', undefined, false, SHOP)).toBe(true);
+    expect(canSee('/providers', 'owner', undefined, false, SHOP)).toBe(false);
+    expect(canSee('/services', 'owner', undefined, false, SHOP)).toBe(false);
+    // A salon's three are untouched: the shelf is not offered to it at all.
+    expect(canSee('/stock', 'owner', undefined, false, SALON)).toBe(false);
+    for (const href of ['/providers', '/services', '/settings']) expect(canSee(href, 'owner', undefined, false, SALON), href).toBe(true);
+  });
+
+  it('a shop’s Home offers no door onto a screen that answers it with "not yet"', () => {
+    const home = read('components/home/ShopHome.tsx');
+    expect(home, 'the Reports tile lands on the GRW-610 placeholder').not.toMatch(/href: '\/reports'/);
+    // And "View all" opens the shelf, not a filter that answers per style what this list says per size.
+    expect(home).toContain('href={`/stock${stockBranch}`}');
+    expect(home).not.toContain('filter=low');
+  });
+
   it('the shared screens take their shop heading ONLY under the shop’s own address', () => {
     expect(read('products/ProductsScreen.tsx')).toContain("heading={guard === '/stock' ? homeCopy(await serverLang(), me.labels).nav.stock : undefined}");
     expect(read('sales/SalesScreen.tsx')).toContain("heading={guard === '/orders' ? homeCopy(await serverLang(), me.labels).nav.orders : undefined}");

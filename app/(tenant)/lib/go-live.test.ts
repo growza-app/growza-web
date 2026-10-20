@@ -211,7 +211,8 @@ describe('every surface that offers a destination follows the flag', () => {
 
   it("Home: the owner gets the setup links, the others a plain sentence — and OwnerHome no longer asks", () => {
     const notLive = code('components/home/NotLiveHome.tsx');
-    expect(notLive).toMatch(/canSee\(l\.href, role, reportTabs, false\)/);
+    // Jira GRW-611 review — asked with the business's areas too, so a shop's setup tiles are a shop's (zero-diary.test.ts).
+    expect(notLive).toMatch(/canSee\(l\.href, role, reportTabs, false, areas\)/);
     expect(notLive).toMatch(/links\.length > 0 \?/);
     expect(notLive).toMatch(/c\.staffHome\}/);
     // The day's Home is only ever drawn for a live business now, so it has no flag to read.

@@ -60,12 +60,18 @@ export function canSee(href: string, role?: MemberRole | null, reportTabs?: read
   if (!areaAllows(href, areas)) return false;
   /*
    * The shop's own screens (Jira GRW-608). Neither is a route @growza-app/shared lists for any role, so the answer is
-   * given here: the owner and manager open both (the answer for the shelf), the front desk opens Orders — it takes them
-   * — and no one else opens either. `areaAllows` above already refused a business that is not a shop.
+   * given here: the owner and manager open both (the answer for the shelf), and no one else opens Stock.
+   * `areaAllows` above already refused a business that is not a shop.
+   *
+   * Jira GRW-611 review — Orders is the REGISTER under a shop's own name, the same screen `/sales` is, so it takes the
+   * same answer: a front desk opens it only where the owner has granted the `sales` tab. Offered unconditionally it was
+   * a nav tab that could not work — the register's only read is `GET /api/v1/appointments?includeSales=true`, which
+   * `maySeeSales` refuses that role, so the screen loaded empty with an error every time. A shop's front desk takes an
+   * order at the till (`/products/sell`), which is theirs; the day's bills are the shop's figures.
    */
   if (isShopRoute(href)) {
     if (!(live || isSetupDestination(href))) return false;
-    if (role === 'receptionist') return href.startsWith('/orders');
+    if (role === 'receptionist') return href.startsWith('/orders') && Boolean(reportTabs?.includes('sales'));
     return roleCanSee('/products', role, reportTabs?.filter((t) => t !== 'sales'));
   }
   // The `sales` entry of `reportTabs` is the owner opening the Sales register to a receptionist; it is not a Reports

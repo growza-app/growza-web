@@ -79,13 +79,28 @@ describe('boundaries — unknown vertical, a limited role, a clinic that keeps i
     expect(offered(undefined)).toEqual(offered(DIARY_AREAS));
   });
 
-  it('a limited role keeps the existing role rules on the shop’s screens: the front desk takes orders, nobody but the owner and manager opens Stock', () => {
-    expect(canSee('/orders', 'receptionist', undefined, true, SHOP)).toBe(true);
-    expect(canSee('/stock', 'receptionist', undefined, true, SHOP)).toBe(false);
+  it('a limited role keeps the existing role rules on the shop’s screens: nobody but the owner and manager opens Stock', () => {
     expect(canSee('/orders', 'staff', undefined, true, SHOP)).toBe(false);
     expect(canSee('/stock', 'staff', undefined, true, SHOP)).toBe(false);
+    expect(canSee('/stock', 'receptionist', undefined, true, SHOP)).toBe(false);
     expect(canSee('/orders', 'manager', undefined, true, SHOP)).toBe(true);
     expect(canSee('/stock', 'manager', undefined, true, SHOP)).toBe(true);
+  });
+
+  /*
+   * Jira GRW-611 review — Orders IS the register (`/orders` renders SalesScreen), so it takes the register's own
+   * answer for a front desk: only where the owner has granted the `sales` tab. Offered unconditionally it was a tab
+   * that could not work, because the register's only read is refused to that role by `maySeeSales`.
+   */
+  it('a shop’s front desk opens Orders only where the register has been opened to it, exactly as /sales is', () => {
+    expect(canSee('/orders', 'receptionist', undefined, true, SHOP)).toBe(false);
+    expect(canSee('/orders', 'receptionist', [], true, SHOP)).toBe(false);
+    expect(canSee('/orders', 'receptionist', ['overview'], true, SHOP)).toBe(false);
+    expect(canSee('/orders', 'receptionist', ['sales'], true, SHOP)).toBe(true);
+    // The same answer the salon's register gives that role, asked the same way.
+    expect(canSee('/orders', 'receptionist', ['sales'], true, SHOP)).toBe(canSee('/sales', 'receptionist', ['sales'], true, DIARY_AREAS));
+    // And the till stays theirs: taking an order is not reading the day's figures.
+    expect(canSee('/products/sell', 'receptionist', undefined, true, SHOP)).toBe(true);
   });
 
   it('a limited role is still not offered what it never was, in a shop', () => {
