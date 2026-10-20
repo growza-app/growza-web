@@ -426,6 +426,8 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     // address it is guarded under, and the screen (`*Screen.tsx`) is what calls `guardScreen(guard)` (pinned in areas.test.ts).
     // …and a page UNDER it that is not the shelf (the sizes grid, Jira GRW-598) guards itself under the same address.
     '/products': /<ProductsScreen[^>]*guard="\/products"|await guardScreen\('\/products'\);/,
+    // Jira GRW-631 — the stock report is its own page under the shelf's address; it guards itself under the same one.
+    '/stock/report': /await guardScreen\('\/stock'\);/,
     '/stock': /<ProductsScreen[^>]*guard="\/stock"/,
     '/sales': /<SalesScreen[^>]*guard="\/sales"/,
     // Jira GRW-614 — Orders is its own screen, guarded at the page like the rest.

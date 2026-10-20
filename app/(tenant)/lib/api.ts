@@ -66,6 +66,8 @@ import type {
   ChannelBranches,
   SetChannelBranchResult,
   HeldPage,
+  StockReportPage,
+  StockReportQuery,
   ReleaseResult,
   SizeToMap,
   ImportSummary,
@@ -288,6 +290,17 @@ async function extractError(
   };
 }
 
+
+/** Jira GRW-631 — the filters of the stock report, as a query string (nothing for a filter that is not set). */
+function stockReportParams(q: StockReportQuery): string {
+  const p = new URLSearchParams();
+  if (q.location) p.set('location', q.location);
+  if (q.categoryId) p.set('categoryId', q.categoryId);
+  if (q.q?.trim()) p.set('q', q.q.trim());
+  if (q.page !== undefined) p.set('page', String(q.page));
+  if (q.pageSize !== undefined) p.set('pageSize', String(q.pageSize));
+  return p.toString();
+}
 
 /* ---- Reports (GRW-48) ------------------------------------------------- */
 
@@ -651,6 +664,15 @@ export const api = {
   /** Jira GRW-641 — which branch each marketplace sells from, and the branches it could. */
   channelBranches: () => get<ChannelBranches>('/api/v1/channels'),
   setChannelBranch: (channel: 'flipkart' | 'amazon', locationId: string) => put<SetChannelBranchResult>(`/api/v1/channels/${channel}/branch`, { locationId }),
+  /** Jira GRW-631 — the shelf size by size with its worth at cost; one page of styles, the totals over all of them. */
+  stockReport: (q: StockReportQuery) => get<StockReportPage>(`/api/v1/reports/stock?${stockReportParams(q)}`),
+  /** Jira GRW-631 — the same report as a file: the server writes it, so the file can never be a second answer. */
+  stockReportCsv: async (q: Omit<StockReportQuery, 'page' | 'pageSize'>): Promise<string> => {
+    const path = `/api/v1/reports/stock/export?${stockReportParams(q)}`;
+    const res = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
+    if (!res.ok) throw await apiError(res, path);
+    return res.text();
+  },
   /** Jira GRW-620 — the codes holding marketplace orders back, grouped by code and paged on the server. */
   heldCodes: (q: { channel?: 'flipkart' | 'amazon'; q?: string; page?: number; pageSize?: number }) => {
     const p = new URLSearchParams();

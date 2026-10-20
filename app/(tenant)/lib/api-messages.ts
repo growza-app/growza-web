@@ -152,6 +152,8 @@ export const API_MESSAGES_HI: Record<string, string> = {
   // Jira GRW-618 — a marketplace's own codes for the shop's sizes.
   'That product is not valid': 'यह प्रोडक्ट सही नहीं है',
   'There is no such code.': 'ऐसा कोई कोड नहीं है।',
+  'There is no such category.': 'ऐसी कोई श्रेणी नहीं है।',
+  'This business has no stock report.': 'इस कारोबार में स्टॉक रिपोर्ट नहीं है।',
   'This business has no marketplace codes.': 'इस कारोबार में मार्केटप्लेस कोड नहीं हैं।',
   // Jira GRW-614 — the Orders list.
   'This business has no Orders screen.': 'इस कारोबार में ऑर्डर वाली स्क्रीन नहीं है।',

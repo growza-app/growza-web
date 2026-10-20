@@ -3543,6 +3543,37 @@
         "hintTwo": "Write the size as it is named, such as 30 / White."
       },
       "noSizes": "No sizes are on sale for this product, so there is nothing to add a code to."
+    },
+    "stockReport": {
+      "title": "Stock report",
+      "open": "Stock report",
+      "searchPlaceholder": "Search by name",
+      "searchLabel": "Search the styles by name",
+      "categoryLabel": "Category",
+      "allCategories": "All categories",
+      "loading": "Loading",
+      "loadError": "Could not load. Check your connection and try again.",
+      "retry": "Try again",
+      "noMatch": "Nothing on the shelf matches that.",
+      "neverCounted": "No stock counted yet",
+      "neverCountedHint": "Count your shelf, or receive a delivery, and its worth shows here.",
+      "nothing": "Nothing on the shelf",
+      "nothingHint": "Add products to Stock and they show here.",
+      "goToStock": "Go to Stock",
+      "nounStyles": "styles",
+      "export": "Export to a file",
+      "exporting": "Making the file…",
+      "exportFailed": "Could not make the file. Try again.",
+      "totalsLabel": "What the shelf is worth",
+      "worth": "Worth at cost",
+      "totalsLine": "{styles, plural, one {1 style} other {# styles}} · {sizes, plural, one {1 size} other {# sizes}} · {units} on the shelf",
+      "withoutCost": "{count, plural, one {1 size has no cost price, so it is not in this worth.} other {# sizes have no cost price, so they are not in this worth.}}",
+      "negative": "{count, plural, one {1 size is below zero. Count it again.} other {# sizes are below zero. Count them again.}}",
+      "noCost": "No cost price",
+      "noCostShort": "no cost",
+      "units": "{units} on the shelf",
+      "someWithoutCost": "{count, plural, one {1 size has no cost} other {# sizes have no cost}}",
+      "sizesLabel": "Sizes of {name}"
     }
   },
   "sales": {

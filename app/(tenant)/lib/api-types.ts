@@ -1469,3 +1469,45 @@ export interface SetChannelBranchResult {
   inFlightAtOld: number;
   changed: boolean;
 }
+
+/** Jira GRW-631 — what is on the shelf, size by size, and what it is worth at cost. */
+export interface StockReportSize {
+  id: string;
+  label: string;
+  stock: number;
+  costMinor: string | null;
+  valueMinor: string | null;
+}
+export interface StockReportStyle {
+  id: string;
+  name: string;
+  categoryId: string | null;
+  branchId: string;
+  branchName: string;
+  units: number;
+  valueMinor: string | null;
+  sizesWithoutCost: number;
+  sizes: StockReportSize[];
+}
+export interface StockReportTotals {
+  styles: number;
+  sizes: number;
+  units: number;
+  valueMinor: string;
+  sizesWithoutCost: number;
+  negativeSizes: number;
+}
+export interface StockReportPage {
+  styles: StockReportStyle[];
+  totals: StockReportTotals;
+  neverCounted: boolean;
+  page: number;
+  pageSize: number;
+}
+export interface StockReportQuery {
+  location?: string;
+  categoryId?: string;
+  q?: string;
+  page?: number;
+  pageSize?: number;
+}

@@ -320,6 +320,11 @@ export function ProductsList({
               <IconCart /> {t('sell')}
             </Link>
           ) : null}
+          {heading !== undefined && live.length > 0 && canStockTake ? (
+            <Link className="btn btn-ghost" href="/stock/report">
+              {t('stockReport.open')}
+            </Link>
+          ) : null}
           {live.length > 0 && canStockTake ? (
             <button
               type="button"
