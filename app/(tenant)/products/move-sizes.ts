@@ -11,7 +11,6 @@ import type { Size } from '../lib/api-types';
 /** The sizes worth listing: on sale, in the owner's order (the server sends them that way). */
 export const movableSizes = (sizes: readonly Size[]): Size[] => sizes.filter((s) => s.active);
 
-export const labelOf = (s: Pick<Size, 'option1' | 'option2'>): string => (s.option2 ? `${s.option1} / ${s.option2}` : s.option1);
 
 /** A quantity held to what this shelf has, whole, never below zero. */
 export const clampQty = (s: Pick<Size, 'stock'>, n: number): number => Math.max(0, Math.min(Math.max(s.stock, 0), Math.trunc(Number.isFinite(n) ? n : 0)));

@@ -2,8 +2,9 @@
 
 import { useTranslations } from 'next-intl';
 import { useRef } from 'react';
-import type { Product, TillSize } from '../lib/api-types';
+import type { Product } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { sizeLabel } from '../lib/till-sizes';
 import { countedOf, readTypedSize, sizeGap, sizesOf, uncountedOf } from './count-sizes';
 
 /**
@@ -33,7 +34,6 @@ export function CountSizesSheet({
 
   const sizes = sizesOf(product);
   const left = uncountedOf(product, typed);
-  const label = (s: TillSize) => (s.option2 ? `${s.option1} / ${s.option2}` : s.option1);
 
   return (
     <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
@@ -58,7 +58,7 @@ export function CountSizesSheet({
                 return (
                   <li key={s.id} className={`pcs-row ${gap !== null && gap !== 0 ? 'is-diff' : ''} ${kind === 'invalid' ? 'is-invalid' : ''}`}>
                     <span className="pcs-size">
-                      <span className="pcs-label">{label(s)}</span>
+                      <span className="pcs-label">{sizeLabel(s)}</span>
                       <span className="pcs-recorded">{t('recorded', { n: s.stock })}</span>
                     </span>
                     {gap !== null && gap !== 0 ? <span className={`prd-pill ${gap > 0 ? '' : 'prd-pill-out'}`}>{gap > 0 ? `+${gap}` : String(gap)}</span> : null}
@@ -71,7 +71,7 @@ export function CountSizesSheet({
                       // i18n-ok: a keyboard hint (the Enter key's label), not text the owner reads
                       enterKeyHint={i === sizes.length - 1 ? 'done' : 'next'}
                       className="pcs-input"
-                      aria-label={t('sizeAria', { name: product.name, size: label(s) })}
+                      aria-label={t('sizeAria', { name: product.name, size: sizeLabel(s) })}
                       aria-invalid={kind === 'invalid' ? 'true' : undefined}
                       value={raw}
                       onChange={(e) => onType(s.id, e.target.value)}

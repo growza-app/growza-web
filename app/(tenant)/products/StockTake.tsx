@@ -203,12 +203,26 @@ export function StockTake({
    * back, so opening the screen can never overwrite a walk in progress with an empty one.
    */
   const draftNow = useRef<() => Promise<void>>(async () => {});
+  /*
+   * Review of GRW-585 — Save must be the LAST word. The commit clears the server's draft; a draft write still pending
+   * (the timer) or still on the wire when Save goes would land after it and bring the committed numbers back as a
+   * "restored" walk, which a later Save would set again over every sale since. So Save stops the timer, waits for a
+   * write in flight, and no draft is written while it runs.
+   */
+  const draftTimerRef = useRef<number | null>(null);
+  const draftInFlightRef = useRef<Promise<void> | null>(null);
+  const committingRef = useRef(false);
   draftNow.current = async () => {
-    if (!dirtyRef.current) return;
+    if (!dirtyRef.current || committingRef.current) return;
     dirtyRef.current = false;
     setDraftState('saving');
+    const write = api.saveStockTakeDraft(branchId, draftOf(counts, touchedRef.current, sizeCounts));
+    draftInFlightRef.current = write.then(
+      () => undefined,
+      () => undefined,
+    );
     try {
-      await api.saveStockTakeDraft(branchId, draftOf(counts, touchedRef.current, sizeCounts));
+      await write;
       setDraftState('kept');
     } catch {
       dirtyRef.current = true;
@@ -218,6 +232,7 @@ export function StockTake({
   useEffect(() => {
     if (!draftLoadedRef.current || !dirtyRef.current) return;
     const timer = window.setTimeout(() => void draftNow.current(), 1200);
+    draftTimerRef.current = timer;
     return () => window.clearTimeout(timer);
   }, [counts, sizeCounts]);
   // Leaving the screen within that moment still keeps the last numbers.
@@ -242,6 +257,12 @@ export function StockTake({
     if (!canSave) return;
     setBusy(true);
     setError(null);
+    // No draft write may land after the commit (see `draftNow`): stop the pending one, and wait out one on the wire.
+    committingRef.current = true;
+    if (draftTimerRef.current !== null) window.clearTimeout(draftTimerRef.current);
+    const wasDirty = dirtyRef.current;
+    dirtyRef.current = false;
+    await draftInFlightRef.current;
     try {
       /*
        * QA, 2026-10-17 — ONLY the rows somebody actually counted.
@@ -275,7 +296,12 @@ export function StockTake({
       onSaved(res.products, res.adjusted);
     } catch (err) {
       setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
+      // Not committed: the numbers on the screen are still the walk, so they are kept on the server again.
+      committingRef.current = false;
+      dirtyRef.current = wasDirty || dirtyRef.current;
+      void draftNow.current();
     } finally {
+      committingRef.current = false;
       setBusy(false);
     }
   };

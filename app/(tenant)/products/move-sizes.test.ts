@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Size } from '../lib/api-types';
-import { clampQty, labelOf, leftAfter, linesToSend, movableSizes, nothingToMove, totalMoving } from './move-sizes';
+import { sizeLabel } from '../lib/till-sizes';
+import { clampQty, leftAfter, linesToSend, movableSizes, nothingToMove, totalMoving } from './move-sizes';
 
 const size = (id: string, option1: string, stock: number, extra: Partial<Size> = {}): Size => ({
   id,
@@ -23,8 +24,8 @@ describe('moving sizes between branches (GRW-601)', () => {
   });
 
   it('names a size by its words, with the second option after a slash', () => {
-    expect(labelOf(size('x', '30', 1))).toBe('30');
-    expect(labelOf(size('x', '30', 1, { option2: 'White' }))).toBe('30 / White');
+    expect(sizeLabel(size('x', '30', 1))).toBe('30');
+    expect(sizeLabel(size('x', '30', 1, { option2: 'White' }))).toBe('30 / White');
   });
 
   it('holds a quantity to what is on the shelf: whole, never negative, never a number the shelf cannot cover', () => {

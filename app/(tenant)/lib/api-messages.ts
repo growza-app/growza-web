@@ -240,6 +240,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Stock cannot be negative': 'स्टॉक शून्य से कम नहीं हो सकता',
   // Jira GRW-597 (0132) — the count of a size.
   'Choose a size for this product': 'इस सामान का साइज़ चुनें',
+  'That size is sold out or no longer on sale': 'वह साइज़ ख़त्म हो गया है या अब बिक्री में नहीं है',
   'This product has sizes, so count each size instead': 'इस सामान के साइज़ हैं, इसलिए हर साइज़ की गिनती करें',
   'Set the stock of this product to 0 first, then count each size': 'पहले इस सामान का स्टॉक 0 करें, फिर हर साइज़ की गिनती करें',
   // Jira GRW-601 — moving sizes between branches.

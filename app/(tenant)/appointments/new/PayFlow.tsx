@@ -881,8 +881,9 @@ export function PayFlow({
       if (e instanceof LargeAmountDeclined) setError(nv.amountNotSaved);
       else {
         // Jira GRW-599 — a size sold out or retired elsewhere while this bill was open: said plainly (a size changed — look at the
-        // sizes), and the shelf is read again so the sizes shown are the ones that are really there.
-        const sizeRefused = e instanceof ApiError && e.field === 'products' && lines.some((l) => l.product?.variantId);
+        // sizes), and the shelf is read again so the sizes shown are the ones that are really there. Only when the server
+        // named a SIZE (its `variantId`): any other refusal about a product keeps its own words (review of GRW-585).
+        const sizeRefused = e instanceof ApiError && e.field === 'products' && typeof (e.body as { variantId?: unknown } | undefined)?.variantId === 'string';
         setError(sizeRefused ? ts('changed') : e instanceof ApiError ? e.message : nv.saveUnknown);
         if (e instanceof ApiError && e.field === 'products') void api.products(location).then(setProducts).catch(() => {});
       }

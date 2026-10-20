@@ -95,9 +95,9 @@ describe('a product with no sizes is not changed (FR-06)', () => {
 });
 
 describe('a size sold out or retired meanwhile (AC-02)', () => {
-  it('and says a size changed, in the shopkeeper’s words, when the bill carried a size', () => {
+  it('and says a size changed, in the shopkeeper’s words, when the server named the size', () => {
     expect(payFlow).toContain("ts('changed')");
-    expect(payFlow).toMatch(/lines\.some\(\(l\) => l\.product\?\.variantId\)/);
+    expect(payFlow).toContain('?.variantId === \'string\'');
   });
 
   it('a refusal on products reads the shelf again, so the sizes shown are the ones there', () => {
@@ -117,5 +117,12 @@ describe('words, in both languages', () => {
 
   it('the shopkeeper reads "size", never "variant" or "SKU"', () => {
     for (const text of Object.values(en.payFlow.size)) expect(text).not.toMatch(/variant|SKU/i);
+  });
+});
+
+describe('review of GRW-585 — "a size changed" only when the server named a size', () => {
+  it('the till keys the size sentence on the variantId of the refusal, not on whether the bill holds a size', () => {
+    expect(payFlow).toContain("typeof (e.body as { variantId?: unknown } | undefined)?.variantId === 'string'");
+    expect(payFlow).not.toMatch(/e\.field === 'products' && lines\.some\(/);
   });
 });

@@ -1,4 +1,5 @@
 import type { ProductSizes, Size, SizeAxis, SizeGridCell } from '../../../lib/api-types';
+import { sizeLabel } from '../../../lib/till-sizes';
 
 /**
  * Jira GRW-598 — the sizes grid, as plain data and pure functions.
@@ -51,7 +52,7 @@ export const cellKey = (option1: string, option2: string | null): string => `${n
 export const rowKey = (option1: string): string => norm(option1);
 
 /** "30 / White" — what a message calls a size. */
-export const cellLabel = (option1: string, option2: string | null): string => (option2 ? `${option1} / ${option2}` : option1);
+export const cellLabel = (option1: string, option2: string | null): string => sizeLabel({ option1, option2 });
 
 /** A list the owner typed or pasted — "24, 26, 28" or one per line — as values, in the order typed, each once. */
 export function parseValues(text: string): { values: string[]; repeats: number } {

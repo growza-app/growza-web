@@ -89,3 +89,28 @@ describe('words, in both languages', () => {
     for (const k of keys) expect(en.products.stockTake[k]).not.toMatch(/variant|SKU/i);
   });
 });
+
+describe('review of GRW-585 — Save is the last word on the draft', () => {
+  const save = take.slice(take.indexOf('const save = async () => {'));
+  const commitAt = save.indexOf('api.saveStockTake(');
+
+  it('Save stops the pending draft write and waits out one on the wire BEFORE it commits', () => {
+    expect(save.indexOf('committingRef.current = true')).toBeGreaterThan(-1);
+    expect(save.indexOf('committingRef.current = true')).toBeLessThan(commitAt);
+    expect(save.indexOf('window.clearTimeout(draftTimerRef.current)')).toBeLessThan(commitAt);
+    expect(save.indexOf('await draftInFlightRef.current')).toBeLessThan(commitAt);
+  });
+
+  it('no draft is written while a commit runs, and a failed commit keeps the walk again', () => {
+    expect(take).toMatch(/if \(!dirtyRef\.current \|\| committingRef\.current\) return;/);
+    expect(save).toMatch(/catch \(err\) \{[\s\S]*?void draftNow\.current\(\);[\s\S]*?\} finally \{\s*committingRef\.current = false;/);
+  });
+});
+
+describe('review of GRW-585 — a size is named by one helper', () => {
+  it('no screen builds "30 / White" by hand: they all call sizeLabel', () => {
+    for (const file of ['app/(tenant)/products/CountSizesSheet.tsx', 'app/(tenant)/products/MoveSizesSheet.tsx', 'app/(tenant)/products/move-sizes.ts', 'app/(tenant)/products/[id]/sizes/grid-model.ts']) {
+      expect(read(file), file).not.toMatch(/option2 \? `/);
+    }
+  });
+});

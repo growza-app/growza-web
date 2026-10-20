@@ -7,7 +7,8 @@ import type { Product, Size } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { IconMinus, IconPlus } from '../components/icons';
 import { useSession } from '../components/SessionProvider';
-import { clampQty, labelOf, leftAfter, linesToSend, movableSizes, nothingToMove, totalMoving } from './move-sizes';
+import { sizeLabel } from '../lib/till-sizes';
+import { clampQty, leftAfter, linesToSend, movableSizes, nothingToMove, totalMoving } from './move-sizes';
 
 /**
  * Jira GRW-601 — move sizes of a product to another branch, in one bottom sheet.
@@ -113,11 +114,11 @@ export function MoveSizesSheet({ product, onMoved, onClose }: { product: Product
             {rows.map((s) => {
               const n = clampQty(s, qtys[s.id] ?? 0);
               const out = s.stock <= 0;
-              const name = `${product.name} ${labelOf(s)}`;
+              const name = `${product.name} ${sizeLabel(s)}`;
               return (
                 <li key={s.id} className={`pmv-row ${out ? 'is-out' : ''} ${n > 0 ? 'is-on' : ''}`}>
                   <span className="pmv-size">
-                    <span className="pmv-label">{labelOf(s)}</span>
+                    <span className="pmv-label">{sizeLabel(s)}</span>
                     <span className="pmv-count">{out ? t('none') : n > 0 ? t('leftAfter', { n: leftAfter(s, n) }) : t('here', { n: s.stock })}</span>
                   </span>
                   <span className="pmv-step" role="group" aria-label={name}>
