@@ -406,7 +406,10 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
      * delete, moving stock between branches are the owner's). So it guards its own address rather than its segment's,
      * and `canSee('/products/sell', …)` is what answers for it.
      */
-    '/products/sell': /await guardScreen\('\/products\/sell'\);/,
+    // Jira GRW-616 — the till has two addresses over one screen, as the shelf does: the page names the address it is guarded
+    // under, and `SellProductScreen` calls `guardScreen(guard)` (pinned below).
+    '/products/sell': /<SellProductScreen[^>]*guard="\/products\/sell"/,
+    '/orders/new': /<SellProductScreen[^>]*guard="\/orders\/new"/,
     // Jira GRW-608 — the shelf and the register each have two addresses over one implementation: the page names the
     // address it is guarded under, and the screen (`*Screen.tsx`) is what calls `guardScreen(guard)` (pinned in areas.test.ts).
     '/products': /<ProductsScreen[^>]*guard="\/products"/,

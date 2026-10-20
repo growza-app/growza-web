@@ -3,6 +3,8 @@ import { PageHeader } from '../components/PageHeader';
 import { homeCopy } from '../lib/home-copy';
 import { serverLang } from '../lib/lang';
 import { ORDERS_PAGE_SIZE, readQuery } from '../lib/orders-filter';
+import { mayUse } from '../lib/nav-policy';
+import { isWritable } from '../lib/read-only';
 import { OrdersClient } from './OrdersClient';
 
 /**
@@ -28,7 +30,10 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
     me = null;
   }
   const lang = await serverLang();
-  const heading = homeCopy(lang, me?.labels ?? {}).nav.orders;
+  const copy = homeCopy(lang, me?.labels ?? {});
+  const heading = copy.nav.orders;
+  // Jira GRW-616 — taking an order is the list's one create action, for whoever stands at the till and may record a sale.
+  const mayTake = me ? mayUse(me.member?.role, 'visit.recordPayment', isWritable(me.tenant?.status)) : false;
 
   // The whole business on arrival; a branch the header picker has chosen is applied by the client, which re-reads.
   const initial = await api.orders({ channel: query.channel, status: query.status, q: query.q.trim(), page: query.page, pageSize: ORDERS_PAGE_SIZE }).catch((error: unknown) => ({
@@ -37,7 +42,16 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
 
   return (
     <>
-      <PageHeader title={heading} />
+      <PageHeader
+        title={heading}
+        actions={
+          mayTake ? (
+            <a className="btn btn-primary" href="/orders/new">
+              {copy.shop.takeOrder}
+            </a>
+          ) : undefined
+        }
+      />
       <div className="page-body ord-page">
         <OrdersClient
           initialQuery={query}

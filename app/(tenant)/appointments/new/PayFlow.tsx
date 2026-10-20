@@ -134,6 +134,7 @@ export function PayFlow({
   wide = false,
   initialTab,
   productsOnly = false,
+  heading,
 }: {
   /** A waiting token being paid: its client, branch and services are the answer to ①. */
   token?: QueueEntry;
@@ -154,7 +155,7 @@ export function PayFlow({
   /** The signed-in person's own chair, when they have one: the stylist ① starts on. */
   providerId: string | null;
   timezone: string;
-  backTo?: '/appointments' | '/products' | '/sales';
+  backTo?: '/appointments' | '/products' | '/sales' | '/orders';
   /**
    * Jira GRW-572 — a laptop ≥1101px: the same till laid out in three panels (who · what · the bill), with the
    * payment tiles beside the bill so ② is not a screen of its own. Same state, same `pay()`, same two writes.
@@ -164,6 +165,11 @@ export function PayFlow({
   initialTab?: 'products';
   /** Retail / Sell product page (`/products/sell`): client + product categories on the left, product shelf in the middle, bill + payment on the right. */
   productsOnly?: boolean;
+  /**
+   * Jira GRW-616 — the till's own name when it is opened under another address: a shop's `/orders/new` says what a shop
+   * says. Absent is "Sell product" (`payFlow.sellTitle`), so every address that has always opened this till reads as it did.
+   */
+  heading?: string;
 }) {
   const t = useTranslations('payFlow');
   const tcr = useTranslations('chrome');
@@ -1249,7 +1255,7 @@ export function PayFlow({
             <IconArrowLeft />
           </button>
           <span className="pf-head-stack">
-            <h1 className="pf-title">{productsOnly ? t('sellTitle') : t('whatTitle')}</h1>
+            <h1 className="pf-title">{productsOnly ? (heading ?? t('sellTitle')) : t('whatTitle')}</h1>
             {token ? (
               branchName ? <span className="pf-at">{t('at', { branch: branchName })}</span> : null
             ) : (

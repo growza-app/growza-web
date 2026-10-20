@@ -21,7 +21,7 @@ describe('the centre button opens the visit sheet on Walk-in now', () => {
   it('AC-01/AC-02 — for every role that can book, with no role deciding it', () => {
     // Jira GRW-523 — a next screen again (the page), no longer a sheet over the current one (GRW-512).
     // Jira GRW-609 — and for a shop, which has no diary, the same plus takes an order at the till instead.
-    expect(chrome).toMatch(/\? \(\) => router\.push\(areas\.shop \? '\/products\/sell' : '\/appointments\/new\?mode=now'\) : undefined/);
+    expect(chrome).toMatch(/\? \(\) => router\.push\(areas\.shop \? '\/orders\/new' : '\/appointments\/new\?mode=now'\) : undefined/);
     expect(chrome).not.toMatch(/mode=later/);
     expect(chrome).not.toMatch(/<NewVisitSheet|setBookingOpen/);
   });

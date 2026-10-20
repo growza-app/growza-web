@@ -86,7 +86,7 @@ export function ShopHome({
    */
   const stockBranch = branch ? `?branch=${encodeURIComponent(branch)}` : '';
   const tiles = [
-    { href: '/products/sell', label: s.takeOrder, icon: <IconNavOrders />, tone: 'green' },
+    { href: '/orders/new', label: s.takeOrder, icon: <IconNavOrders />, tone: 'green' },
     { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'blue' },
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
   ].filter((l) => canSee(l.href, role, reportTabs, true, areas));
@@ -149,7 +149,7 @@ export function ShopHome({
                   {/* A shelf nobody has counted has nothing to sell, so the first step is the count (below), not the till. */}
                   <span>{data.running.counted ? s.noOrdersBody : s.countFirst}</span>
                   {data.running.counted ? (
-                    <a className="btn btn-primary shp-cta" href="/products/sell">
+                    <a className="btn btn-primary shp-cta" href="/orders/new">
                       {s.takeOrder}
                     </a>
                   ) : null}
