@@ -68,6 +68,7 @@ import type {
   HeldPage,
   StockReportPage,
   ByChannelPage,
+  ReturnsReportPage,
   SellersRange,
   ReorderPage,
   ReorderQuery,
@@ -693,6 +694,8 @@ export const api = {
   /** Jira GRW-641 — which branch each marketplace sells from, and the branches it could. */
   channelBranches: () => get<ChannelBranches>('/api/v1/channels'),
   setChannelBranch: (channel: 'flipkart' | 'amazon', locationId: string) => put<SetChannelBranchResult>(`/api/v1/channels/${channel}/branch`, { locationId }),
+  /** Jira GRW-635 — what came back and why, by reason, with a parcel that never arrived apart. */
+  returnsReport: (q: { range: SellersRange; location?: string }) => get<ReturnsReportPage>(`/api/v1/reports/returns?${sellersParams({ range: q.range, location: q.location })}`),
   /** Jira GRW-634 — what was billed on each channel over a range, beside the period before; billed, not received. */
   byChannel: (q: { range: SellersRange; location?: string }) => get<ByChannelPage>(`/api/v1/reports/by-channel?${sellersParams({ range: q.range, location: q.location })}`),
   /** Jira GRW-633 — what to order before the season, size by size: last year's sales in the same days, less the shelf. */
@@ -904,6 +907,9 @@ export const api = {
       items: Array<{ productId: string; qty: number }>;
       restock?: boolean;
       reason?: string;
+      /** Jira GRW-635 — why it came back, from the small set; "other" needs the words in `reasonText`. Optional at the counter. */
+      reasonCode?: 'size' | 'not_as_described' | 'faulty' | 'wrong_item' | 'changed_mind' | 'other';
+      reasonText?: string;
       /** How the refund was paid out. Required: the drawer has to balance. */
       refundMode: 'cash' | 'card' | 'upi' | 'other';
       /** Stable for one return, so a retry after a lost response returns nothing more. */

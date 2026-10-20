@@ -2,7 +2,10 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { api, ApiError, formatMoney, formatTime, type ReturnSaleProductsResponse, type VisitProductLine } from '../lib/api';
+import { api, ApiError, formatMoney, formatTime, type ReturnReason, type ReturnSaleProductsResponse, type VisitProductLine } from '../lib/api';
+
+/** Jira GRW-635 — the small set a return's reason is chosen from (the words are `orders.returnReasons`). */
+const RETURN_REASONS: readonly ReturnReason[] = ['size', 'not_as_described', 'faulty', 'wrong_item', 'changed_mind', 'other'];
 import { formatDate } from '../lib/format';
 import { useBarcodeScan } from '../lib/barcode-scan';
 import { initials } from '../lib/appointment-display';
@@ -98,6 +101,7 @@ export function ReturnProductSheet({
   onReturned: (res: ReturnSaleProductsResponse) => void;
 }) {
   const t = useTranslations('sales.returnSheet');
+  const tReasons = useTranslations('orders.returnReasons');
   const tc = useTranslations('chrome');
   const locale = useLocale();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -126,6 +130,8 @@ export function ReturnProductSheet({
   const [restock, setRestock] = useState(true);
   const [refundMode, setRefundMode] = useState<RefundMode>(() => defaultRefundMode(defaultBill?.paymentModes));
   const [reason, setReason] = useState('');
+  // Jira GRW-635 — why it came back, from the small set. Optional at the counter, where the shopkeeper is standing in front of the customer.
+  const [reasonCode, setReasonCode] = useState<ReturnReason | null>(null);
   const [completedResult, setCompletedResult] = useState<ReturnSaleProductsResponse | null>(null);
   // The invoice already handed over for this bill, once the server has said so: the desk is asked before going ahead.
   const [issuedDocument, setIssuedDocument] = useState<string | null>(null);
@@ -298,13 +304,15 @@ export function ReturnProductSheet({
       // same id and the server returns nothing more; changing a line, the condition, the way or the note makes a new one.
       requestRef.current = requestIdFor(
         requestRef.current,
-        JSON.stringify({ bill: selectedBill.key, items, restock, refundMode, reason: reason.trim(), overrideReturnWindow }),
+        JSON.stringify({ bill: selectedBill.key, items, restock, refundMode, reason: reason.trim(), reasonCode, overrideReturnWindow }),
       );
       const res = await api.returnSaleProducts(visitKeyFromGroupKey(selectedBill.key), {
         items,
         restock,
         refundMode,
         reason: reason.trim() || undefined,
+        // "Other" is a reason only with words: the note is them.
+        ...(reasonCode ? { reasonCode, ...(reason.trim() ? { reasonText: reason.trim() } : {}) } : {}),
         idempotencyKey: requestRef.current.id,
         ...(acknowledgeIssuedDocument ? { acknowledgeIssuedDocument: true } : {}),
         ...(overrideReturnWindow ? { overrideReturnWindow: true } : {}),
@@ -836,6 +844,18 @@ export function ReturnProductSheet({
                   </div>
                 </div>
 
+                <div className="sls-ret-condition">
+                  <span className="sls-ret-field-title">{t('whyLabel')}</span>
+                  <div className="pf-chips" role="group" aria-label={t('whyLabel')}>
+                    {RETURN_REASONS.map((c) => (
+                      <button key={c} type="button" className={`pf-chip ${reasonCode === c ? 'pf-chip-on' : ''}`} aria-pressed={reasonCode === c} disabled={busy} onClick={() => setReasonCode((cur) => (cur === c ? null : c))}>
+                        {tReasons(c)}
+                      </button>
+                    ))}
+                  </div>
+                  {reasonCode === 'other' && !reason.trim() ? <span className="sls-ret-reason-count">{t('whyOtherNeeds')}</span> : null}
+                </div>
+
                 <label className="sls-ret-reason-field">
                   <span className="sls-ret-field-title">{t('reasonLabel')}</span>
                   <textarea
@@ -892,7 +912,7 @@ export function ReturnProductSheet({
                   <button
                     type="button"
                     className="btn"
-                    disabled={totalSelectedUnits <= 0 || !mayReturnBill || busy}
+                    disabled={totalSelectedUnits <= 0 || !mayReturnBill || busy || (reasonCode === 'other' && !reason.trim())}
                     onClick={() => void submitReturn()}
                   >
                     {busy

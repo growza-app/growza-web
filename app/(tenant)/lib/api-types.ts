@@ -1307,6 +1307,8 @@ export interface OrderDetail {
   /** Jira GRW-617 — may this viewer swap a size? Decided by the server with the function that would refuse the swap. */
   canSwap: boolean;
   history: OrderHistoryEntry[];
+  /** Jira GRW-635 — the returns recorded against the order, each with its reason; a parcel that came back undelivered is its own kind. */
+  returns: OrderReturn[];
   moves: { primary: string | null; more: string[] };
   payments?: Array<{ mode: string; amountMinor: number }>;
   totalMinor?: number;
@@ -1626,4 +1628,23 @@ export interface ByChannelPage {
   trend: Array<{ label: string; startISO: string; endExclusiveISO: string; billedMinor: Record<string, string> }>;
   anyOrders: boolean;
   caveat: string;
+}
+
+/** Jira GRW-635 — a return's reason, from the small set returns are grouped by. */
+export type ReturnReason = 'size' | 'not_as_described' | 'faulty' | 'wrong_item' | 'changed_mind' | 'other';
+export interface OrderReturn {
+  at: string;
+  kind: 'customer' | 'undelivered';
+  reasonCode: string | null;
+  reasonText: string | null;
+  units: number;
+  restocked: boolean;
+  saleableDefaulted: boolean;
+}
+export interface ReturnsReportPage {
+  window: { key: string; label: string; startISO: string; endExclusiveISO: string };
+  byReason: Array<{ reason: string; returns: number; units: number }>;
+  customer: { returns: number; units: number };
+  undelivered: { returns: number; units: number };
+  anyReturns: boolean;
 }

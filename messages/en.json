@@ -3866,7 +3866,9 @@
       },
       "documentIssuedBody": "Invoice {number} was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?",
       "documentIssuedBodyNoNumber": "An invoice was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?",
-      "documentIssuedGo": "Return anyway"
+      "documentIssuedGo": "Return anyway",
+      "whyLabel": "Why did it come back? (optional)",
+      "whyOtherNeeds": "Write what the reason was in the note."
     }
   },
   "orders": {
@@ -4011,7 +4013,12 @@
         "colour": "Colour",
         "unsure": "We could not confirm the swap. Check the order before trying again."
       },
-      "bookedAt": "Booked at {branch}"
+      "bookedAt": "Booked at {branch}",
+      "returnsTitle": "Returns",
+      "customerReturn": "Sent back",
+      "undelivered": "Came back undelivered",
+      "notRestocked": "not put back on the shelf",
+      "saleableAssumed": "taken as fit to sell again"
     },
     "import": {
       "title": "Import orders",
@@ -4090,7 +4097,39 @@
       "dismissedNote": "{code} dismissed: {count, plural, one {1 item} other {# items}}.",
       "headlineSearch": "{codes, plural, one {1 code matches.} other {# codes match.}}",
       "findFailed": "Could not search. Check your connection."
-    }
+    },
+    "returnReasons": {
+      "size": "Size did not fit",
+      "not_as_described": "Not as described",
+      "faulty": "Damaged or faulty",
+      "wrong_item": "Wrong item sent",
+      "changed_mind": "Changed their mind",
+      "other": "Something else",
+      "not_said": "No reason given"
+    },
+    "returns": {
+      "title": "What came back",
+      "rangeLabel": "Period",
+      "range": {
+        "last_7_days": "Last 7 days",
+        "this_month": "This month",
+        "last_month": "Last month",
+        "last_3_months": "Last 3 months",
+        "this_year": "This year"
+      },
+      "loading": "Loading",
+      "loadError": "Could not load. Check your connection and try again.",
+      "retry": "Try again",
+      "nothing": "Nothing has come back",
+      "nothingHint": "Returns show here, grouped by the reason, once there are some.",
+      "customerTitle": "Sent back by customers",
+      "returnsCount": "{count, plural, one {1 return} other {# returns}}",
+      "unitsCount": "{count, plural, one {1 item} other {# items}}",
+      "undeliveredTitle": "Came back undelivered",
+      "undeliveredNone": "No parcels came back undelivered.",
+      "undeliveredNote": "These never reached the customer. They are counted apart, not as returns."
+    },
+    "returnsLink": "What came back"
   },
   "settingsChannels": {
     "title": "Online selling",

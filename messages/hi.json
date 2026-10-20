@@ -3866,7 +3866,9 @@
       },
       "documentIssuedBody": "इस ग्राहक को इनवॉइस {number} पहले ही दिया जा चुका है। वापसी से वह बदलता नहीं — आपको उन्हें क्रेडिट नोट देना होगा। फिर भी वापस करें?",
       "documentIssuedBodyNoNumber": "इस ग्राहक को इनवॉइस पहले ही दिया जा चुका है। वापसी से वह बदलता नहीं — आपको उन्हें क्रेडिट नोट देना होगा। फिर भी वापस करें?",
-      "documentIssuedGo": "फिर भी वापस करें"
+      "documentIssuedGo": "फिर भी वापस करें",
+      "whyLabel": "क्यों वापस आया? (वैकल्पिक)",
+      "whyOtherNeeds": "नोट में लिखें कि कारण क्या था।"
     }
   },
   "orders": {
@@ -4011,7 +4013,12 @@
         "colour": "रंग",
         "unsure": "साइज़ बदलने की पुष्टि नहीं हो सकी। फिर कोशिश करने से पहले ऑर्डर देख लें।"
       },
-      "bookedAt": "{branch} पर बुक हुआ"
+      "bookedAt": "{branch} पर बुक हुआ",
+      "returnsTitle": "वापसियाँ",
+      "customerReturn": "वापस भेजा",
+      "undelivered": "बिना पहुँचे लौट आया",
+      "notRestocked": "शेल्फ़ पर वापस नहीं रखा",
+      "saleableAssumed": "दोबारा बिकने लायक माना गया"
     },
     "import": {
       "title": "ऑर्डर इम्पोर्ट करें",
@@ -4090,7 +4097,39 @@
       "dismissedNote": "{code} हटाया गया: {count} आइटम।",
       "headlineSearch": "{codes} कोड मेल खाते हैं।",
       "findFailed": "खोज नहीं हो सकी। कनेक्शन जाँचें।"
-    }
+    },
+    "returnReasons": {
+      "size": "साइज़ ठीक नहीं आया",
+      "not_as_described": "जैसा बताया था वैसा नहीं",
+      "faulty": "खराब या टूटा हुआ",
+      "wrong_item": "गलत सामान गया",
+      "changed_mind": "मन बदल गया",
+      "other": "कुछ और",
+      "not_said": "कारण नहीं बताया"
+    },
+    "returns": {
+      "title": "क्या वापस आया",
+      "rangeLabel": "अवधि",
+      "range": {
+        "last_7_days": "पिछले 7 दिन",
+        "this_month": "इस महीने",
+        "last_month": "पिछले महीने",
+        "last_3_months": "पिछले 3 महीने",
+        "this_year": "इस साल"
+      },
+      "loading": "लोड हो रहा है",
+      "loadError": "लोड नहीं हो सका। कनेक्शन जाँचें और फिर कोशिश करें।",
+      "retry": "फिर कोशिश करें",
+      "nothing": "कुछ वापस नहीं आया",
+      "nothingHint": "वापसियाँ होते ही यहाँ कारण के हिसाब से दिखेंगी।",
+      "customerTitle": "ग्राहकों ने वापस भेजा",
+      "returnsCount": "{count} वापसी",
+      "unitsCount": "{count} सामान",
+      "undeliveredTitle": "बिना पहुँचे लौट आया",
+      "undeliveredNone": "कोई पार्सल बिना पहुँचे नहीं लौटा।",
+      "undeliveredNote": "ये ग्राहक तक पहुँचे ही नहीं। इन्हें वापसी में नहीं, अलग गिना जाता है।"
+    },
+    "returnsLink": "क्या वापस आया"
   },
   "settingsChannels": {
     "title": "ऑनलाइन बिक्री",

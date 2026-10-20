@@ -10,6 +10,7 @@ import { ReturnProductSheet, type ReturnableSaleBill } from '../../sales/ReturnP
 import { KNOWN_STATES } from '../../lib/orders-filter';
 import { useSession, useWritable } from '../../components/SessionProvider';
 import { computeReturnWindow } from '../../sales/sales-helpers';
+import { returnReasonKey } from '../../lib/return-reasons';
 import { SwapSizeSheet } from './SwapSizeSheet';
 
 /**
@@ -250,6 +251,26 @@ export function OrderClient({
             </ul>
           )}
         </section>
+
+        {order.returns.length > 0 ? (
+          <section className="ord-d-block" aria-label={t('detail.returnsTitle')}>
+            <h2>{t('detail.returnsTitle')}</h2>
+            <ul className="ord-d-lines">
+              {order.returns.map((r) => (
+                <li key={`${r.at}-${r.kind}-${r.reasonCode ?? ''}-${r.units}`}>
+                  <span className="ord-d-line-name">
+                    {r.kind === 'undelivered' ? t('detail.undelivered') : t('detail.customerReturn')}
+                    {r.kind === 'customer' ? <span className="ord-d-quiet"> · {t(`returnReasons.${returnReasonKey(r.reasonCode)}`)}</span> : null}
+                    {r.reasonText && r.reasonCode === 'other' ? <span className="ord-d-quiet"> · {r.reasonText}</span> : null}
+                    {!r.restocked ? <span className="ord-d-quiet"> · {t('detail.notRestocked')}</span> : null}
+                    {r.saleableDefaulted ? <span className="ord-d-quiet"> · {t('detail.saleableAssumed')}</span> : null}
+                  </span>
+                  <span className="ord-d-line-qty">{t('detail.times', { count: r.units })}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         {hasMoney ? (
           <section className="ord-d-block" aria-label={t('detail.moneyTitle')}>
