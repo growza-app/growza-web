@@ -1576,7 +1576,7 @@ export interface ReorderRow {
   override: number | null;
   order: number | null;
   soldOutLastYear: boolean;
-  season: string;
+  /** The days this order has to cover: what the owner's number is kept against. */
   from: string;
   to: string;
   lastYearFrom: string;

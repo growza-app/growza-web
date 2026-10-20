@@ -3649,7 +3649,8 @@
       "coverLabel": "Days to cover",
       "saveRule": "Save",
       "useDefaults": "Use the usual days",
-      "toSellers": "What sells and what sits"
+      "toSellers": "What sells and what sits",
+      "fixBeforeExport": "Some numbers have not been saved. Fix them or try again before you export."
     }
   },
   "sales": {

@@ -40,14 +40,14 @@ describe('the basis is on the row (BR-01), and nothing is invented (BR-03)', () 
 
 describe('the owner’s number is kept, and never silently reverted (BR-02)', () => {
   it('is saved as the field is left, to the server, against the season it was typed for', () => {
-    expect(client).toContain('onBlur={(e) => void save(r, e.target.value)}');
-    expect(client).toContain('api.setReorderOverride({ keyId: r.id, season: r.season, qty })');
+    expect(client).toContain('onBlur={(e) => void save(r.id, e.target.value)}');
+    expect(client).toContain('api.setReorderOverride({ keyId: id, from: r.from, to: r.to, qty })');
   });
 
   it('a number that did not save stays in the field with its reason and a retry', () => {
     expect(client).toContain("status: 'failed'");
     expect(client).toContain("t('saveFailed')");
-    expect(client).toContain('onClick={() => void save(r, edit.text)}');
+    expect(client).toContain('onClick={() => void save(r.id, edit.text)}');
   });
 
   it('a number that is not whole is refused on the row and is not sent', () => {
@@ -56,7 +56,20 @@ describe('the owner’s number is kept, and never silently reverted (BR-02)', ()
   });
 
   it('typing the suggestion again, or emptying the field, keeps nothing of the owner’s — the suggestion shows', () => {
-    expect(client).toContain('typed === null || typed === r.suggested ? null : typed');
+    expect(client).toContain('typed === null ? null : typed === r.order ? r.override : typed === r.suggested ? null : typed');
+  });
+
+  it('leaving a field as it was clears nothing, one save per row is in flight at a time, and a slow save never writes over newer typing', () => {
+    expect(client).toContain('if (inFlight.current.has(id))');
+    expect(client).toContain('queued.current.set(id, text)');
+    expect(client).toContain('clearEdit(id, text)');
+    // What goes on the order is worked out from the row as it is when the answer lands, never from the render that started the save.
+    expect(client).toContain('delta = (order ?? 0) - (x.order ?? 0);');
+  });
+
+  it('the export waits for what is still being saved, and says so when a number could not be', () => {
+    expect(client).toContain('await Promise.allSettled([...saves.current]);');
+    expect(client).toContain("t('fixBeforeExport')");
   });
 });
 

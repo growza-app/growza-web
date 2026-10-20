@@ -12,7 +12,7 @@ import { useSession, useWritable } from '../../components/SessionProvider';
 
 const PAGE_SIZE = 20;
 /** A row's own state: what is typed, and whether it has reached the server. */
-type Edit = { text: string; status: 'saving' | 'saved' | 'failed' | 'invalid'; message?: string };
+type Edit = { text: string; status: 'typing' | 'saving' | 'failed' | 'invalid'; message?: string };
 
 /**
  * Jira GRW-633 — what to order before the season, as a worklist.
@@ -50,8 +50,18 @@ export function OrderClient() {
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Ids whose "Saved" flag is showing: a brief confirmation, never a number kept in the field.
+  const [justSaved, setJustSaved] = useState<Record<string, true>>({});
   const seq = useRef(0);
   const exportBusy = useRef(false);
+  // One save per row at a time: what is typed while one is in flight is queued and sent when it lands, from the row as it is THEN.
+  const inFlight = useRef(new Set<string>());
+  const queued = useRef(new Map<string, string>());
+  const saves = useRef(new Set<Promise<void>>());
+  const dataRef = useRef<ReorderPage | null>(null);
+  dataRef.current = data;
+  const editsRef = useRef(edits);
+  editsRef.current = edits;
 
   const count = (n: number) => new Intl.NumberFormat(intlLocale(locale)).format(n);
   const day = (iso: string) => new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${iso}T12:00:00Z`));
@@ -103,39 +113,82 @@ export function OrderClient() {
 
   const shown = (r: ReorderRow): string => edits[r.id]?.text ?? (r.order === null ? '' : String(r.order));
 
-  /** Keep what the owner typed: a number is saved, an empty field clears theirs and brings the suggestion back. */
-  const save = async (r: ReorderRow, text: string) => {
+  /**
+   * Keep what the owner typed: a number is saved, an empty field clears theirs and brings the suggestion back. Reads the row as it is NOW
+   * (not as the render that started it saw it), sends one save per row at a time, and never writes over what has been typed since.
+   */
+  const save = (id: string, text: string): Promise<void> => {
+    if (inFlight.current.has(id)) {
+      queued.current.set(id, text);
+      return Promise.resolve();
+    }
+    const work = (async () => {
+      let next: string | undefined = text;
+      while (next !== undefined) {
+        const typedText: string = next;
+        next = undefined;
+        inFlight.current.add(id);
+        try {
+          await saveOnce(id, typedText);
+        } finally {
+          inFlight.current.delete(id);
+        }
+        next = queued.current.get(id);
+        queued.current.delete(id);
+      }
+    })();
+    saves.current.add(work);
+    void work.finally(() => saves.current.delete(work));
+    return work;
+  };
+
+  const clearEdit = (id: string, onlyIfText?: string) =>
+    setEdits((e) => {
+      if (!(id in e) || (onlyIfText !== undefined && e[id]!.text !== onlyIfText)) return e;
+      const { [id]: _gone, ...rest } = e;
+      return rest;
+    });
+
+  const saveOnce = async (id: string, text: string) => {
+    const r = dataRef.current?.rows.find((x) => x.id === id);
+    if (!r) return;
     const trimmed = text.trim();
-    const had = r.override;
     if (trimmed !== '' && !/^\d{1,7}$/.test(trimmed)) {
-      setEdits((e) => ({ ...e, [r.id]: { text, status: 'invalid', message: t('wholeNumber') } }));
+      setEdits((e) => ({ ...e, [id]: { text, status: 'invalid', message: t('wholeNumber') } }));
       return;
     }
     const typed = trimmed === '' ? null : Number(trimmed);
-    // What is kept: nothing when the field is empty or says what the suggestion already says; a number only when it differs from it.
-    const qty = typed === null || typed === r.suggested ? null : typed;
-    // Nothing changes when there was no number of the owner's and there is none to keep, or it is the number already kept.
-    if (qty === had) {
-      setEdits((e) => {
-        const { [r.id]: _gone, ...rest } = e;
-        return rest;
-      });
+    // What is kept: nothing when the field is emptied or says what the suggestion says; a number only when it differs from it. Leaving a field
+    // as it was (the number already shown) changes nothing — it must not clear an override whose suggestion has since moved to meet it.
+    const qty = typed === null ? null : typed === r.order ? r.override : typed === r.suggested ? null : typed;
+    if (qty === r.override) {
+      clearEdit(id);
       return;
     }
-    setEdits((e) => ({ ...e, [r.id]: { text, status: 'saving' } }));
+    setEdits((e) => ({ ...e, [id]: { text, status: 'saving' } }));
     try {
-      await api.setReorderOverride({ keyId: r.id, season: r.season, qty });
+      await api.setReorderOverride({ keyId: id, from: r.from, to: r.to, qty });
+      // The change in what goes on the order is worked out from the row as it is when the answer lands, so two quick saves cannot count the same
+      // old number twice.
       setData((d) => {
         if (!d) return d;
-        const rows = d.rows.map((x) => (x.id === r.id ? { ...x, override: qty, order: qty ?? x.suggested } : x));
-        const before = r.order ?? 0;
-        const after = qty ?? r.suggested ?? 0;
-        const edited = d.totals.edited + (qty !== null ? 1 : 0) - (had !== null ? 1 : 0);
-        return { ...d, rows, totals: { ...d.totals, toOrder: d.totals.toOrder - before + after, edited } };
+        let delta = 0;
+        let edited = d.totals.edited;
+        const rows = d.rows.map((x) => {
+          if (x.id !== id) return x;
+          const order = qty ?? x.suggested;
+          delta = (order ?? 0) - (x.order ?? 0);
+          edited += (qty !== null ? 1 : 0) - (x.override !== null ? 1 : 0);
+          return { ...x, override: qty, order };
+        });
+        return { ...d, rows, totals: { ...d.totals, toOrder: d.totals.toOrder + delta, edited } };
       });
-      setEdits((e) => ({ ...e, [r.id]: { text: qty === null ? (r.suggested === null ? '' : String(r.suggested)) : String(qty), status: 'saved' } }));
+      // The number now lives in the row; the field shows it from there. What was typed is dropped only if nothing newer has been typed.
+      clearEdit(id, text);
+      setJustSaved((j) => ({ ...j, [id]: true }));
+      setTimeout(() => setJustSaved(({ [id]: _gone, ...rest }) => rest), 2000);
     } catch (e) {
-      setEdits((cur) => ({ ...cur, [r.id]: { text, status: 'failed', message: e instanceof ApiError && e.status < 500 ? e.message : t('saveFailed') } }));
+      setEdits((cur) => ({ ...cur, [id]: { text, status: 'failed', message: e instanceof ApiError && e.status < 500 ? e.message : t('saveFailed') } }));
     }
   };
 
@@ -145,6 +198,13 @@ export function OrderClient() {
     setExporting(true);
     setExportError(null);
     try {
+      // The file carries what the owner has typed, so what is still on its way is waited for first — and a number that could not be saved is said
+      // so, rather than left out of the file without a word.
+      await Promise.allSettled([...saves.current]);
+      if (Object.values(editsRef.current).some((x) => x.status === 'failed' || x.status === 'invalid')) {
+        setExportError(t('fixBeforeExport'));
+        return;
+      }
       const csv = await api.reorderCsv({ location: branch || undefined, categoryId: liveCategory || undefined });
       const url = URL.createObjectURL(new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' }));
       const link = document.createElement('a');
@@ -232,7 +292,7 @@ export function OrderClient() {
                         {edit.status === 'failed' ? (
                           <>
                             {' '}
-                            <button type="button" className="ro-retry" onClick={() => void save(r, edit.text)}>
+                            <button type="button" className="ro-retry" onClick={() => void save(r.id, edit.text)}>
                               {t('retry')}
                             </button>
                           </>
@@ -251,14 +311,14 @@ export function OrderClient() {
                       disabled={!writable}
                       aria-label={t('orderFor', { name: nameOf(r) })}
                       aria-invalid={edit?.status === 'invalid' || edit?.status === 'failed'}
-                      onChange={(e) => setEdits((cur) => ({ ...cur, [r.id]: { text: e.target.value.replace(/[^\d]/g, ''), status: 'saving' } }))}
-                      onBlur={(e) => void save(r, e.target.value)}
+                      onChange={(e) => setEdits((cur) => ({ ...cur, [r.id]: { text: e.target.value.replace(/[^\d]/g, ''), status: 'typing' } }))}
+                      onBlur={(e) => void save(r.id, e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') e.currentTarget.blur();
                       }}
                     />
                     <span className="ro-state" aria-live="polite">
-                      {edit?.status === 'saved' ? t('saved') : edit?.status === 'saving' ? t('unsaved') : ''}
+                      {edit?.status === 'typing' || edit?.status === 'saving' ? t('unsaved') : justSaved[r.id] ? t('saved') : ''}
                     </span>
                   </label>
                 </li>
@@ -301,9 +361,18 @@ function Rules({ branchId, writable, onChanged }: { branchId: string; writable: 
       .catch(() => setFailed(true));
   }, [branchId]);
   useEffect(() => {
+    // The newest answer wins: a slower reply for the branch that was left must not show its categories under the one now in view.
+    let live = true;
     setRules(null);
-    load();
-  }, [load]);
+    setFailed(false);
+    api
+      .reorderRules(branchId)
+      .then((res) => live && setRules(res))
+      .catch(() => live && setFailed(true));
+    return () => {
+      live = false;
+    };
+  }, [branchId]);
   if (failed)
     return (
       <div className="ord-state" role="alert">

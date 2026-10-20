@@ -694,7 +694,7 @@ export const api = {
   /** Jira GRW-633 — what to order before the season, size by size: last year's sales in the same days, less the shelf. */
   reorder: (q: ReorderQuery) => get<ReorderPage>(`/api/v1/reports/reorder?${reorderParams(q)}`),
   /** Jira GRW-633 — the owner's own number over a suggestion (null clears it). */
-  setReorderOverride: (body: { keyId: string; season: string; qty: number | null }) => put<{ keyId: string; season: string; qty: number | null }>('/api/v1/reports/reorder/override', body),
+  setReorderOverride: (body: { keyId: string; from: string; to: string; qty: number | null }) => put<{ keyId: string; qty: number | null }>('/api/v1/reports/reorder/override', body),
   /** Jira GRW-633 — each category's lead time and coverage at one branch. */
   reorderRules: (location: string) => get<ReorderRules>(`/api/v1/reports/reorder/rules?location=${encodeURIComponent(location)}`),
   setReorderRule: (body: { categoryId: string; leadDays: number | null; coverDays: number | null }) => put<ReorderRule>('/api/v1/reports/reorder/rules', body),
