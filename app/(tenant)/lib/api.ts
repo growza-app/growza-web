@@ -109,6 +109,9 @@ import type {
   ProductCategory,
   ProductInput,
   ProductSales,
+  ProductSizes,
+  SizeAxis,
+  SizeGridCell,
   ReturnSaleProductsResponse,
   StockMovement,
   StockTakeResult,
@@ -490,6 +493,13 @@ export const api = {
   /** Jira GRW-574 (0122) — move N of a product to another branch: transfer_out here, transfer_in there, one transfer_id. */
   transferProduct: (id: string, body: { toLocationId: string; qty: number; note?: string }) =>
     post<{ transferId: string; from: Product; to: Product }>(`/api/v1/products/${id}/transfer`, body),
+  /** Jira GRW-598 — a product's options and sizes, in one read, with the `version` the next save sends back. */
+  productSizes: (id: string) => get<ProductSizes>(`/api/v1/products/${id}/sizes`),
+  /**
+   * Jira GRW-598 — the whole sizes grid in ONE save: the options and every size, all or none. A size with no cell is
+   * retired, a blank cell makes nothing, and a save from a screen that is out of date is refused (409, with what is there now).
+   */
+  saveSizeGrid: (id: string, body: { axes: SizeAxis[]; cells: SizeGridCell[]; version?: string }) => put<ProductSizes>(`/api/v1/products/${id}/variants`, body),
   /** Jira GRW-574 (0123) — the branch's shelf for a stock take pass, and saving the pass in one transaction. */
   stockTakeProducts: (location: string) => get<Product[]>(`/api/v1/products/stock-take?location=${encodeURIComponent(location)}`),
   saveStockTake: (location: string, body: { counts: { productId: string; count: number }[]; note?: string }) =>

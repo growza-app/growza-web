@@ -150,6 +150,8 @@ export interface Me {
     staffLeaderboard: boolean;
     /** Owner, 2026-10-14 — `catalog.products`: whether this business sells things over the counter. Absent reads as yes. */
     products?: boolean;
+    /** Jira GRW-598 — whether sizes are switched on for this business (the `sizes` flag). Absent reads as no: it ships off. */
+    sizes?: boolean;
     providerSelection: boolean;
     maxProviders: number;
   };
@@ -204,6 +206,50 @@ export interface Product {
   /** Jira GRW-574 (0120) — optional GST rate in basis points (0..2800; 0 is 0%, null is not set) and HSN code. */
   gstRateBp: number | null;
   hsn: string | null;
+  /** Jira GRW-595 — the options this product is sold in, in the owner's order ("Size", "Colour"). Empty for a product with no sizes. Absent on an API a deploy behind. */
+  optionAxes?: SizeAxis[];
+  /** How many sizes it has. For a product with sizes, `stock` is their total. */
+  variantCount?: number;
+}
+
+/** Jira GRW-595 — one option of a product and its values, in the owner's order. */
+export interface SizeAxis {
+  name: string;
+  values: string[];
+}
+
+/** Jira GRW-595–597 — one size of a product: a combination of its options, with its own count, price and codes. */
+export interface Size {
+  id: string;
+  productId: string;
+  option1: string;
+  option2: string | null;
+  /** Null = the product's own price. */
+  priceMinor: string | null;
+  sku: string | null;
+  barcode: string | null;
+  active: boolean;
+  stock: number;
+}
+
+/** Jira GRW-598 — a product's options and every size on it, with the token the next save sends back. */
+export interface ProductSizes {
+  /** Whose sizes these are. */
+  product: { id: string; name: string; priceMinor: string };
+  axes: SizeAxis[];
+  variants: Size[];
+  version: string;
+}
+
+/** Jira GRW-598 — one cell of the grid as the server takes it. What a cell leaves out is left alone; what it sends as null is cleared. */
+export interface SizeGridCell {
+  option1: string;
+  option2?: string | null;
+  stock?: number;
+  priceMinor?: number | null;
+  sku?: string | null;
+  barcode?: string | null;
+  active?: boolean;
 }
 
 /** Owner, 2026-10-18 — one row of a product list on its way onto the shelf. An update carries only the fields the file filled, and never the count. */

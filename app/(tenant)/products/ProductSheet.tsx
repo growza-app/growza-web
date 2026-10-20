@@ -1,12 +1,14 @@
 'use client';
 
+import AppLink from '../../shared/AppLink';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import type { Product, ProductCategory } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
-import { IconCheck } from '../components/icons';
+import { IconCheck, IconChevronRight } from '../components/icons';
+import { useSizesOn } from '../components/SessionProvider';
 import { GstInPrice, TaxFields } from '../components/TaxFields';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { codeHolder } from '../lib/product-match';
@@ -50,6 +52,10 @@ export function ProductSheet({
   const t = useTranslations('products.form');
   const tp = useTranslations('products');
   const tc = useTranslations('common');
+  const ts = useTranslations('products.sizes');
+  /** Jira GRW-598 — sizes are a switch, off for every business until it is turned on; nothing below is drawn while it is off. */
+  const sizesOn = useSizesOn();
+  const sizeCount = product?.variantCount ?? 0;
   const sheetRef = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
   const [part, setPart] = useState<Part>('details');
@@ -257,7 +263,17 @@ export function ProductSheet({
         </div>
       ) : null}
 
-      {part === 'stock' && product ? (
+      {part === 'stock' && product && sizeCount > 0 ? (
+        // The count of a product with sizes lives on each size; the style has no count of its own to move.
+        <div className="sheet-body">
+          <p className="sheet-foot prd-sizes-note">{ts('stockOnSizes')}</p>
+          {sizesOn ? (
+            <AppLink className="btn prd-sizes-open" href={`/products/${product.id}/sizes`}>
+              {ts('stockOnSizesOpen')}
+            </AppLink>
+          ) : null}
+        </div>
+      ) : part === 'stock' && product ? (
         <StockPanel product={product} onChanged={onSaved} />
       ) : part === 'sales' && product ? (
         <SalesPanel product={product} />
@@ -355,6 +371,19 @@ export function ProductSheet({
           </div>
           <div className="sheet-foot">{t('costHint')}</div>
           <GstInPrice priceMinor={Math.round(rupees * 100)} rateBp={gstRateBp} />
+
+          {/* Jira GRW-598 — only while sizes are switched on, and only for a product that exists: its own page. */}
+          {product && sizesOn ? (
+            <div className="sheet-group">
+              <AppLink className="sheet-row prd-sizes-row" href={`/products/${product.id}/sizes`}>
+                <span className="sheet-row-label">{ts('openRow')}</span>
+                <span className="sheet-row-value prd-sizes-value">
+                  {sizeCount > 0 ? ts('openRowCount', { count: sizeCount }) : ts('openRowNone')}
+                  <IconChevronRight aria-hidden="true" />
+                </span>
+              </AppLink>
+            </div>
+          ) : null}
 
           {/* Jira GRW-574 — the codes the shelf and the till can find the product by. Both optional, blank clears. */}
           <div className="sheet-group">

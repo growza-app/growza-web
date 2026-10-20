@@ -233,6 +233,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/products/:id/movements',
     'POST /api/v1/products/:id/transfer',
     'POST /api/v1/products/stock-take',
+    // Jira GRW-598 — the sizes grid, one save, from a page of its own under Products.
+    'PUT /api/v1/products/:id/variants',
     'POST /api/v1/product-categories',
     'PATCH /api/v1/product-categories/:id',
     'DELETE /api/v1/product-categories/:id',

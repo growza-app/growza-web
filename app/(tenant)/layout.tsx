@@ -144,6 +144,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let writable = true;
   /** Jira GRW-556 (follow-up) — `me.capabilities.walkIn`; only an explicit false hides the queue's and the token board's controls. */
   let walkIn = true;
+  /** Jira GRW-598 — `me.capabilities.sizes`; only an explicit true draws the Sizes button. */
+  let sizes = false;
   /**
    * GRW-165 — whether WhatsApp is live for this business.
    *
@@ -209,6 +211,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     live = isLive(me.tenant?.status);
     writable = isWritable(me.tenant?.status);
     walkIn = me.capabilities?.walkIn !== false;
+    sizes = me.capabilities?.sizes === true;
     whatsappLive = me.whatsapp?.booking ?? false;
     whatsappDemo = me.whatsapp?.demo ?? false;
     products = me.capabilities?.products !== false;
@@ -310,6 +313,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             businessName: tenantName ?? null,
             branches,
             lang,
+            sizes,
             live,
             writable,
             walkIn,
