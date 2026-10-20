@@ -639,6 +639,8 @@ export interface ReturnSaleProductsResponse {
     refundMinor: number;
     restocked: boolean;
     stockAfter: number | null;
+    /** Jira GRW-636 — the size was removed since the sale: the unit was counted on its own (retired) row, and the owner is told. */
+    sizeRemoved?: boolean;
   }>;
 }
 

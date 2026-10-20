@@ -53,6 +53,21 @@ describe('a reason, never a missing word', () => {
   });
 });
 
+describe('Jira GRW-636 — the choice says what happens to which size', () => {
+  it('names the sizes beside the choice (put back or written off), and tells the owner when a size was removed since the sale', () => {
+    expect(sheet).toContain("t('puttingBack'");
+    expect(sheet).toContain("t('writingOff'");
+    expect(sheet).toContain('it.sizeRemoved');
+    expect(sheet).toContain("t('sizeRemovedNote')");
+  });
+
+  it('puts the two options in plain words: can be sold again, damaged and cannot be', () => {
+    const en = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '../../../../messages/en.json'), 'utf8')).sales.returnSheet as Record<string, string>;
+    expect(en.restockShelf).toBe('Can be sold again');
+    expect(en.damagedOpened).toBe('Damaged, cannot be sold');
+  });
+});
+
 describe('who sees it, and the words', () => {
   it('an older API that sends no returns does not crash the order, and a failed lookup does not let the desk in', () => {
     expect(order).toContain('(order.returns ?? [])');

@@ -823,6 +823,10 @@ export function ReturnProductSheet({
                       </div>
                     </button>
                   </div>
+                  {/* The size beside the choice, so nobody puts back — or writes off — the wrong one (the line's name carries its size). */}
+                  <span className="sls-ret-reason-count" role="status">
+                    {restock ? t('puttingBack', { items: selectedLines.map(({ line, qty }) => `${line.name} × ${qty}`).join(', ') }) : t('writingOff', { items: selectedLines.map(({ line, qty }) => `${line.name} × ${qty}`).join(', ') })}
+                  </span>
                 </div>
 
                 <div className="sls-ret-condition">
@@ -964,6 +968,11 @@ export function ReturnProductSheet({
                   </div>
                 ))}
               </div>
+              {completedResult.items.some((it) => it.sizeRemoved) ? (
+                <p className="sls-ret-reason-count" role="status">
+                  {t('sizeRemovedNote')}
+                </p>
+              ) : null}
             </div>
 
             <div className="modal-actions sls-ret-foot is-step-2-foot">

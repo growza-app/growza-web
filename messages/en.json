@@ -3821,10 +3821,10 @@
       "lessAria": "Return one less {name}",
       "moreAria": "Return one more {name}",
       "conditionLabel": "Returned item condition",
-      "restockShelf": "Put back on shelf",
-      "restockShelfHint": "Adds returned units back to sellable stock",
-      "damagedOpened": "Damaged / opened",
-      "damagedOpenedHint": "Will not be added to sellable stock",
+      "restockShelf": "Can be sold again",
+      "restockShelfHint": "Adds the units back to that size’s count",
+      "damagedOpened": "Damaged, cannot be sold",
+      "damagedOpenedHint": "Not added to the count; written off",
       "reasonLabel": "Reason (optional)",
       "reasonPlaceholder": "e.g. Wrong item, seal broken, client exchanged…",
       "refundTotal": "Refund total",
@@ -3868,7 +3868,10 @@
       "documentIssuedBodyNoNumber": "An invoice was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?",
       "documentIssuedGo": "Return anyway",
       "whyLabel": "Why did it come back? (optional)",
-      "whyOtherNeeds": "Write what the reason was in the note."
+      "whyOtherNeeds": "Write what the reason was in the note.",
+      "puttingBack": "Goes back on the count of: {items}",
+      "writingOff": "Written off, not put back: {items}",
+      "sizeRemovedNote": "One of these sizes has been removed from the shelf since the sale. The unit was counted on that size’s own record."
     }
   },
   "orders": {
