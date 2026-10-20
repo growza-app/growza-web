@@ -3866,6 +3866,41 @@
         "colour": "Colour",
         "unsure": "We could not confirm the swap. Check the order before trying again."
       }
+    },
+    "import": {
+      "title": "Import orders",
+      "stepChannel": "Where are the orders from?",
+      "flipkart": "Flipkart",
+      "amazon": "Amazon",
+      "chooseFirst": "Choose Flipkart or Amazon first. Nothing can be imported until you do.",
+      "whereFlipkart": "In Flipkart Seller Hub, open Orders and download the order report.",
+      "whereAmazon": "In Amazon Seller Central, open Orders and download the order report.",
+      "stepReport": "Your order report",
+      "modeFile": "Upload a file",
+      "modePaste": "Paste the rows",
+      "dropHere": "Choose your {channel} report (.csv, .tsv or .xlsx)",
+      "pastePlaceholder": "Paste the report here, including its first line of column names.",
+      "go": "Import {channel} orders",
+      "chooseFirstButton": "Choose a marketplace first",
+      "working": "Importing… a big report can take a minute. Please wait.",
+      "failed": "Could not import. Nothing was lost: try again.",
+      "summaryTitle": "What happened",
+      "nothingRead": "No order could be read from this file.",
+      "created": "{count, plural, one {new order added} other {new orders added}}",
+      "alreadyThere": "already in Growza",
+      "held": "{count, plural, one {order waiting for a size} other {orders waiting for a size}}",
+      "replayed": "This is the answer to the same upload you sent before. Nothing was added again.",
+      "short": "{count, plural, one {1 item was more than you have on the shelf.} other {# items were more than you have on the shelf.}} Their stock is now zero: check your count.",
+      "heldTitle": "Waiting for a size",
+      "heldHint": "These codes are not matched to a size yet, so their orders are waiting. Nothing was taken off your shelf for them.",
+      "heldLines": "{count, plural, one {1 item waiting} other {# items waiting}}",
+      "heldRetired": "{count, plural, one {1 item waiting: its size is no longer sold} other {# items waiting: its size is no longer sold}}",
+      "fixHeld": "Match them to sizes",
+      "problemsTitle": "Rows that could not be read",
+      "row": "Row {row}",
+      "more": "and {count} more rows like these",
+      "seeOrders": "See the orders",
+      "dropHereAny": "Choose your report (.csv, .tsv or .xlsx)"
     }
   }
 }

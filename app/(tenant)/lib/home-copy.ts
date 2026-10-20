@@ -403,6 +403,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       /** Nothing can be sold from a shelf nobody has counted (a count of zero cannot be sold), so the first step is the count. */
       countFirst: S('Count your stock first, then ring up your first sale.', 'पहले अपना स्टॉक गिनें, फिर पहली बिक्री करें।'),
       takeOrder: S('Take an order', 'ऑर्डर लें'),
+      // Jira GRW-619 — the owner's way in for the order report downloaded from a marketplace.
+      importOrders: S('Import orders', 'ऑर्डर इम्पोर्ट करें'),
       noOrdersToday: S('No orders today yet.', 'आज अभी कोई ऑर्डर नहीं।'),
       /** Jira GRW-614 — the work waiting, which opens the Orders list already filtered to it. */
       toSend: (n: number) => S(`${n} to send`, `${n} भेजने हैं`),

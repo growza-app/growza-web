@@ -1383,3 +1383,22 @@ export interface SaveCodesResult {
   updated: number;
   unchanged: number;
 }
+
+/** Jira GRW-619 — what importing an order report did, in plain counts. */
+export interface ImportSummary {
+  importId: string;
+  channel: 'flipkart' | 'amazon';
+  /** Orders that became real orders. */
+  created: number;
+  /** Orders already in Growza from an earlier import: nothing changed for them. */
+  alreadyThere: number;
+  /** Orders waiting for a size: a line's code is not mapped yet. */
+  held: number;
+  /** Units the shelf did not have (the count was taken to zero). */
+  shortUnits: number;
+  lines: { created: number; alreadyThere: number; held: number };
+  heldCodes: Array<{ code: string; lines: number; reason: 'unmapped' | 'retired' }>;
+  /** Rows that could not be read, by their row in the file (the heading is row 1). */
+  problems: Array<{ row: number; why: string }>;
+  replayed: boolean;
+}

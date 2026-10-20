@@ -63,6 +63,7 @@ import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
   OrderDetail,
+  ImportSummary,
   MarketplaceCodesPage,
   SaveCodesBody,
   SaveCodesResult,
@@ -638,6 +639,10 @@ export const api = {
    */
   moveOrder: (id: string, status: string, expected: string) =>
     patch<{ id: string; status: string; moved: boolean }>(`/api/v1/orders/${encodeURIComponent(id)}/status`, { status, expected }),
+  /** Jira GRW-619 — import an order report: the marketplace is chosen by the owner and sent with it; one request, whole orders, importing it twice changes nothing. */
+  importOrdersFile: (channel: 'flipkart' | 'amazon', file: File, idempotencyKey: string) =>
+    uploadFile<ImportSummary>(`/api/v1/marketplace-imports?channel=${channel}&idempotencyKey=${encodeURIComponent(idempotencyKey)}`, 'file', file),
+  importOrdersText: (channel: 'flipkart' | 'amazon', text: string, idempotencyKey: string) => post<ImportSummary>('/api/v1/marketplace-imports', { channel, text, idempotencyKey }),
   /** Jira GRW-618 — a marketplace's own codes: one page, by channel and product. A product's codes are few, so the screen pages through them. */
   marketplaceCodes: (q: { channel?: 'flipkart' | 'amazon'; productId?: string; page?: number; pageSize?: number }) => {
     const p = new URLSearchParams();
