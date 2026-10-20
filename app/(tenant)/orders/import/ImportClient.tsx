@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { api, ApiError } from '../../lib/api';
 import type { ImportSummary } from '../../lib/api-types';
 import AppLink from '../../../shared/AppLink';
+import { newRequestId } from '../../sales/sales-helpers';
 import { useWritable } from '../../components/SessionProvider';
 
 type Channel = 'flipkart' | 'amazon';
@@ -45,7 +46,7 @@ export function ImportClient() {
     setError(null);
     setSummary(null);
     const signature = JSON.stringify({ channel, mode, file: file ? [file.name, file.size, file.lastModified] : null, text: mode === 'paste' ? text : null });
-    if (request.current?.signature !== signature) request.current = { id: `import-${crypto.randomUUID()}`, signature };
+    if (request.current?.signature !== signature) request.current = { id: `import-${newRequestId()}`, signature };
     try {
       setSummary(mode === 'file' && file ? await api.importOrdersFile(channel, file, request.current.id) : await api.importOrdersText(channel, text, request.current.id));
       request.current = null;
@@ -153,6 +154,7 @@ function Summary({ summary }: { summary: ImportSummary }) {
               </li>
             ))}
           </ul>
+          {summary.heldCodes.length > SHOWN ? <p className="imp-hint">{t('moreCodes', { count: summary.heldCodes.length - SHOWN })}</p> : null}
           <AppLink className="btn" href="/orders/held">
             {t('fixHeld')}
           </AppLink>

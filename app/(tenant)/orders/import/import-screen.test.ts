@@ -60,6 +60,18 @@ describe('the answer is plain counts, and what needs the owner is named', () => 
   });
 });
 
+describe('a retry, and a plain http box', () => {
+  it('makes its request id with the one helper that works without a secure context, never crypto.randomUUID directly', () => {
+    expect(client).toContain("`import-${newRequestId()}`");
+    expect(client).not.toContain('crypto.randomUUID');
+    expect(here('../[id]/SwapSizeSheet.tsx')).not.toContain('crypto.randomUUID');
+  });
+
+  it('says when there are more held codes than it lists, as it does for rows', () => {
+    expect(client).toContain("t('moreCodes'");
+  });
+});
+
 describe('who sees it', () => {
   it('is the owner’s and the manager’s, as the API is: the page bounces the desk to the list, and the list offers the button only to them', () => {
     expect(page).toContain("role === 'owner' || role === 'manager'");

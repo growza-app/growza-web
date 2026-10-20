@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { api, ApiError, formatMoney } from '../../lib/api';
 import type { ExchangeBody, ExchangeResult, OrderDetail, Size } from '../../lib/api-types';
 import { sizeLabel } from '../../lib/till-sizes';
+import { newRequestId } from '../../sales/sales-helpers';
 import { useDialog } from '../../../shared/a11y/useDialog';
 
 type Line = OrderDetail['lines'][number];
@@ -168,7 +169,7 @@ export function SwapSizeSheet({
       difference,
       mode: difference === 0 ? null : mode,
     });
-    if (request.current?.signature !== signature) request.current = { id: `swap-${crypto.randomUUID()}`, signature };
+    if (request.current?.signature !== signature) request.current = { id: `swap-${newRequestId()}`, signature };
     try {
       const result = await api.exchangeOrder(order.id, {
         ...body(chosen, qty),

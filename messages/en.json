@@ -3898,9 +3898,10 @@
       "fixHeld": "Match them to sizes",
       "problemsTitle": "Rows that could not be read",
       "row": "Row {row}",
-      "more": "and {count} more rows like these",
+      "more": "{count, plural, one {and 1 more row like these} other {and # more rows like these}}",
       "seeOrders": "See the orders",
-      "dropHereAny": "Choose your report (.csv, .tsv or .xlsx)"
+      "dropHereAny": "Choose your report (.csv, .tsv or .xlsx)",
+      "moreCodes": "{count, plural, one {and 1 more code. Open the list to see them all.} other {and # more codes. Open the list to see them all.}}"
     }
   }
 }
