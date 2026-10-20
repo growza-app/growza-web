@@ -112,8 +112,12 @@ import type {
   ProductCategory,
   ProductInput,
   ProductSales,
+  ProductSizes,
+  SizeAxis,
+  SizeGridCell,
   ReturnSaleProductsResponse,
   StockMovement,
+  StockTakeDraft,
   StockTakeResult,
   MovementKind,
   ManualMovementKind,
@@ -493,10 +497,25 @@ export const api = {
   /** Jira GRW-574 (0122) — move N of a product to another branch: transfer_out here, transfer_in there, one transfer_id. */
   transferProduct: (id: string, body: { toLocationId: string; qty: number; note?: string }) =>
     post<{ transferId: string; from: Product; to: Product }>(`/api/v1/products/${id}/transfer`, body),
+  /** Jira GRW-601 — move sizes of a product to another branch: a number for each size, one transfer, both ledgers naming the size. */
+  transferSizes: (id: string, body: { toLocationId: string; sizes: Array<{ variantId: string; qty: number }>; note?: string }) =>
+    post<{ transferId: string; from: Product; to: Product; moved: Array<{ variantId: string; label: string; qty: number }> }>(`/api/v1/products/${id}/transfer`, body),
+  /** Jira GRW-598 — a product's options and sizes, in one read, with the `version` the next save sends back. */
+  productSizes: (id: string) => get<ProductSizes>(`/api/v1/products/${id}/sizes`),
+  /**
+   * Jira GRW-598 — the whole sizes grid in ONE save: the options and every size, all or none. A size with no cell is
+   * retired, a blank cell makes nothing, and a save from a screen that is out of date is refused (409, with what is there now).
+   */
+  saveSizeGrid: (id: string, body: { axes: SizeAxis[]; cells: SizeGridCell[]; version?: string }) => put<ProductSizes>(`/api/v1/products/${id}/variants`, body),
   /** Jira GRW-574 (0123) — the branch's shelf for a stock take pass, and saving the pass in one transaction. */
   stockTakeProducts: (location: string) => get<Product[]>(`/api/v1/products/stock-take?location=${encodeURIComponent(location)}`),
-  saveStockTake: (location: string, body: { counts: { productId: string; count: number }[]; note?: string }) =>
+  saveStockTake: (location: string, body: { counts: { productId: string; count: number }[]; sizes?: { variantId: string; count: number }[]; note?: string }) =>
     post<StockTakeResult>('/api/v1/products/stock-take', { ...body, locationId: location }),
+  /** Jira GRW-602 (0134) — the numbers typed into this branch's stock take and not yet committed, kept on the server. */
+  stockTakeDraft: (location: string) => get<StockTakeDraft>(`/api/v1/products/stock-take/draft?location=${encodeURIComponent(location)}`),
+  saveStockTakeDraft: (location: string, body: { products: Record<string, string>; sizes: Record<string, string> }) =>
+    put<void>(`/api/v1/products/stock-take/draft?location=${encodeURIComponent(location)}`, body),
+  clearStockTakeDraft: (location: string) => del<void>(`/api/v1/products/stock-take/draft?location=${encodeURIComponent(location)}`),
   /**
    * Jira GRW-375 — services closest in MEANING to what was typed. 503 means
    * embeddings are not configured (prod today) or the provider is away; the

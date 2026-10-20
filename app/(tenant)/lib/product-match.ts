@@ -7,11 +7,30 @@ import { asMinor, exactCode, type Matchable } from './service-match';
  * Products tab, the phone till's sheet): its name and category by spelling, its price exactly, and its barcode and
  * SKU whole or from their start. One place, so the three searches never disagree about what a code finds.
  */
+/** Each distinct size and colour word of a product, once, in the owner's order. */
+export function sizeWords(p: Product): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const s of p.sizes ?? []) {
+    for (const word of [s.option1, s.option2]) {
+      if (!word) continue;
+      const key = word.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(word);
+    }
+  }
+  return out;
+}
+
 export const productMatchable = (p: Product): Matchable<Product> => ({
   item: p,
-  text: [p.name, p.categoryName ?? ''],
+  // Jira GRW-604 — the sizes a style stocks are words it is found by too ("30" finds the shirts that come in 30), each
+  // once however many colours carry it. A size that is out still counts: the owner is looking for the style.
+  text: [p.name, p.categoryName ?? '', ...sizeWords(p)],
   priceMinor: asMinor(p.priceMinor),
-  codes: [p.barcode, p.sku],
+  // Jira GRW-599 — a size's own codes find its product too (the till then opens its sizes).
+  codes: [p.barcode, p.sku, ...(p.sizes ?? []).flatMap((s) => [s.barcode, s.sku])],
 });
 
 /**

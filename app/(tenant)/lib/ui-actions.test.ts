@@ -236,6 +236,11 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/products/:id/movements',
     'POST /api/v1/products/:id/transfer',
     'POST /api/v1/products/stock-take',
+    // Jira GRW-602 — the numbers typed into a stock take are kept as the owner walks the shelf.
+    'PUT /api/v1/products/stock-take/draft',
+    'DELETE /api/v1/products/stock-take/draft',
+    // Jira GRW-598 — the sizes grid, one save, from a page of its own under Products.
+    'PUT /api/v1/products/:id/variants',
     'POST /api/v1/product-categories',
     'PATCH /api/v1/product-categories/:id',
     'DELETE /api/v1/product-categories/:id',
@@ -412,7 +417,8 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     '/orders/new': /<SellProductScreen[^>]*guard="\/orders\/new"/,
     // Jira GRW-608 — the shelf and the register each have two addresses over one implementation: the page names the
     // address it is guarded under, and the screen (`*Screen.tsx`) is what calls `guardScreen(guard)` (pinned in areas.test.ts).
-    '/products': /<ProductsScreen[^>]*guard="\/products"/,
+    // …and a page UNDER it that is not the shelf (the sizes grid, Jira GRW-598) guards itself under the same address.
+    '/products': /<ProductsScreen[^>]*guard="\/products"|await guardScreen\('\/products'\);/,
     '/stock': /<ProductsScreen[^>]*guard="\/stock"/,
     '/sales': /<SalesScreen[^>]*guard="\/sales"/,
     // Jira GRW-614 — Orders is its own screen, guarded at the page like the rest.

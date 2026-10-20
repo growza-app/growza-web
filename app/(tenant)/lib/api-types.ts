@@ -155,6 +155,8 @@ export interface Me {
     /** Jira GRW-607 — whether the business takes bookings, and whether it sells services. Absent reads as yes: only an explicit false takes a diary area away. */
     bookings?: boolean;
     services?: boolean;
+    /** Jira GRW-598 — whether sizes are switched on for this business (the `sizes` flag). Absent reads as no: it ships off. */
+    sizes?: boolean;
     providerSelection: boolean;
     maxProviders: number;
   };
@@ -209,6 +211,66 @@ export interface Product {
   /** Jira GRW-574 (0120) — optional GST rate in basis points (0..2800; 0 is 0%, null is not set) and HSN code. */
   gstRateBp: number | null;
   hsn: string | null;
+  /** Jira GRW-595 — the options this product is sold in, in the owner's order ("Size", "Colour"). Empty for a product with no sizes. Absent on an API a deploy behind. */
+  optionAxes?: SizeAxis[];
+  /** How many sizes it has. For a product with sizes, `stock` is their total. */
+  variantCount?: number;
+  /**
+   * Jira GRW-599 — on the till's list only, and only for a product with sizes: every live, active size in the owner's
+   * order with its count, price and codes, so tapping a product never costs a request to learn its sizes.
+   */
+  sizes?: TillSize[];
+}
+
+/** Jira GRW-599 — one size as the till holds it. `priceMinor` null = the product's own price. */
+export interface TillSize {
+  id: string;
+  option1: string;
+  option2: string | null;
+  priceMinor: string | null;
+  sku: string | null;
+  barcode: string | null;
+  stock: number;
+}
+
+/** Jira GRW-595 — one option of a product and its values, in the owner's order. */
+export interface SizeAxis {
+  name: string;
+  values: string[];
+}
+
+/** Jira GRW-595–597 — one size of a product: a combination of its options, with its own count, price and codes. */
+export interface Size {
+  id: string;
+  productId: string;
+  option1: string;
+  option2: string | null;
+  /** Null = the product's own price. */
+  priceMinor: string | null;
+  sku: string | null;
+  barcode: string | null;
+  active: boolean;
+  stock: number;
+}
+
+/** Jira GRW-598 — a product's options and every size on it, with the token the next save sends back. */
+export interface ProductSizes {
+  /** Whose sizes these are. */
+  product: { id: string; name: string; priceMinor: string };
+  axes: SizeAxis[];
+  variants: Size[];
+  version: string;
+}
+
+/** Jira GRW-598 — one cell of the grid as the server takes it. What a cell leaves out is left alone; what it sends as null is cleared. */
+export interface SizeGridCell {
+  option1: string;
+  option2?: string | null;
+  stock?: number;
+  priceMinor?: number | null;
+  sku?: string | null;
+  barcode?: string | null;
+  active?: boolean;
 }
 
 /** Owner, 2026-10-18 — one row of a product list on its way onto the shelf. An update carries only the fields the file filled, and never the count. */
@@ -294,6 +356,13 @@ export interface StockMovement {
   /** 0123 — ties the `adjusted` lines written by one stock take pass. */
   stockTakeId?: string | null;
   createdAt: string;
+}
+
+/** Jira GRW-602 (0134) — what an owner typed into a stock take and has not committed: typed text by product and by size. `updatedAt` is null when no walk has been started. */
+export interface StockTakeDraft {
+  products: Record<string, string>;
+  sizes: Record<string, string>;
+  updatedAt: string | null;
 }
 
 /** 0123 — what saving a stock take pass hands back. */
@@ -541,6 +610,8 @@ export interface Appointment {
 export interface VisitProductLine {
   id?: string;
   productId: string | null;
+  /** Jira GRW-603 — the size this line sold; absent or null for a product with no sizes. */
+  variantId?: string | null;
   name: string;
   priceMinor: string;
   qty: number;

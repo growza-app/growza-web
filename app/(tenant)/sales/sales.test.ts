@@ -17,6 +17,7 @@ import {
   findProductLineByCode,
   formatAxisRupees,
   lineNetPaidMinor,
+  lineReturnId,
   lineRefundMinorForQty,
   lineRemainingQty,
   MAX_ROW_PRODUCTS,
@@ -836,3 +837,29 @@ describe('a refund is paid out one way, sent once, and warns about an issued inv
   });
 });
 
+
+describe('Jira GRW-603 — a line that sold a size is returned by its own id', () => {
+  const line = (over: Record<string, unknown> = {}) => ({ id: 'line-1', productId: 'style-1', name: 'Shirt (28)', priceMinor: '45000', qty: 2, paidMinor: '90000', ...over });
+
+  it('a sized line is named by the line, never by the style: the server refuses "the shirt"', () => {
+    expect(lineReturnId(line({ variantId: 'size-28' }))).toBe('line-1');
+  });
+
+  it('a line with no sizes is named by its product, exactly as before', () => {
+    expect(lineReturnId(line())).toBe('style-1');
+    expect(lineReturnId(line({ variantId: null }))).toBe('style-1');
+    expect(lineReturnId(line({ productId: null }))).toBe('line-1');
+  });
+
+  it('two sizes of one style on one bill are two different lines on the screen', () => {
+    const a = line({ id: 'l-a', variantId: 's28' });
+    const b = line({ id: 'l-b', variantId: 's30', name: 'Shirt (30)' });
+    expect(lineReturnId(a)).not.toBe(lineReturnId(b));
+  });
+
+  it('a scan of a size’s own barcode finds that size’s line', () => {
+    const a = line({ id: 'l-a', variantId: 's28', barcode: 'SZ-28' });
+    const b = line({ id: 'l-b', variantId: 's30', name: 'Shirt (30)', barcode: 'SZ-30' });
+    expect(findProductLineByCode([a, b] as never, 'sz-30')?.id).toBe('l-b');
+  });
+});

@@ -45,6 +45,7 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/packages/[id]/edit': 'diary',
   '/packages/new': 'diary',
   '/products': 'both',
+  '/products/[id]/sizes': 'both',
   '/products/sell': 'both',
   '/providers': 'diary',
   '/providers/[id]': 'diary',
