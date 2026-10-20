@@ -1481,7 +1481,7 @@ export function PayFlow({
               <IconArrowLeft />
             </button>
             <span className="pf-head-stack">
-              <h1 className="pf-title">{t('sellTitle')}</h1>
+              <h1 className="pf-title">{heading ?? t('sellTitle')}</h1>
               <HeaderBranchPicker variant="line" />
             </span>
             <span className="pf-head-gap" aria-hidden="true" />
