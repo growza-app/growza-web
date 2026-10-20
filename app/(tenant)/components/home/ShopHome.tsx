@@ -5,6 +5,7 @@ import { api } from '../../lib/api';
 import type { ShopHome as ShopHomeData } from '../../lib/api-types';
 import { homeCopy } from '../../lib/home-copy';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
+import { ordersHref } from '../../lib/orders-filter';
 import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
 import { useAreas } from '../SessionProvider';
@@ -126,10 +127,22 @@ export function ShopHome({
 
             <Card title={s.ordersTitle} action={data.anyOrders ? <a className="shp-link" href="/orders">{s.viewOrders}</a> : undefined}>
               {data.anyOrders ? (
-                <p className="shp-orders">
-                  <strong>{data.today.orders}</strong>
-                  <span>{data.today.orders === 0 ? s.noOrdersToday : s.orderCount(data.today.orders)}</span>
-                </p>
+                <>
+                  <p className="shp-orders">
+                    <strong>{data.today.orders}</strong>
+                    <span>{data.today.orders === 0 ? s.noOrdersToday : s.orderCount(data.today.orders)}</span>
+                  </p>
+                  {/*
+                    Jira GRW-614 (FR-06) — the work waiting. It opens the Orders list already filtered to exactly the states
+                    this count is of (`new,packed`), so the number on Home and the rows behind it cannot disagree. Absent
+                    when nothing is waiting: a "0 to send" is a line of noise on the screen opened most often.
+                  */}
+                  {data.toSend > 0 ? (
+                    <a className="shp-link shp-tosend" href={ordersHref({ status: 'new,packed' })}>
+                      {s.toSend(data.toSend)}
+                    </a>
+                  ) : null}
+                </>
               ) : (
                 <div className="shp-empty">
                   <strong>{s.noOrdersTitle}</strong>

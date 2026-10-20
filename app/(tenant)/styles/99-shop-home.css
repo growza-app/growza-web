@@ -88,6 +88,13 @@
   text-decoration: none;
 }
 
+/* Jira GRW-614 — the waiting count under today's orders: the one warm line on Home, a full-width tap target. */
+.shp-tosend {
+  color: var(--amber-ink);
+  font-weight: 600;
+  padding-left: 0;
+}
+
 .shp-running {
   list-style: none;
   margin: 0;

@@ -404,6 +404,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       countFirst: S('Count your stock first, then ring up your first sale.', 'पहले अपना स्टॉक गिनें, फिर पहली बिक्री करें।'),
       takeOrder: S('Take an order', 'ऑर्डर लें'),
       noOrdersToday: S('No orders today yet.', 'आज अभी कोई ऑर्डर नहीं।'),
+      /** Jira GRW-614 — the work waiting, which opens the Orders list already filtered to it. */
+      toSend: (n: number) => S(`${n} to send`, `${n} भेजने हैं`),
       runningOut: S('Running out', 'ख़त्म होने वाला'),
       notCounted: S("You haven't counted your stock yet.", 'आपने अभी स्टॉक की गिनती नहीं की है।'),
       countStock: S('Count your stock', 'स्टॉक गिनें'),

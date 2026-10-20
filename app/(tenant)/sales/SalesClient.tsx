@@ -823,7 +823,6 @@ export function SalesClient({
   initialRange: _initialRange,
   initialQuery,
   loadFailed,
-  heading,
 }: {
   appointments: Appointment[];
   timezone: string;
@@ -835,8 +834,6 @@ export function SalesClient({
   initialRange: SalesRange;
   initialQuery: string;
   loadFailed: boolean;
-  /** Jira GRW-610 — the screen's own name when it is opened under another address (a shop's Orders); absent is "Sales". */
-  heading?: string;
 }) {
   const t = useTranslations('sales');
   const tc = useTranslations('chrome');
@@ -1329,7 +1326,7 @@ export function SalesClient({
   return (
     <>
       <PageHeader
-        title={heading ?? t('title')}
+        title={t('title')}
         subtitle={t('subtitle')}
         menu
         actions={

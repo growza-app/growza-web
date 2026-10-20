@@ -409,7 +409,8 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     '/products': /<ProductsScreen[^>]*guard="\/products"/,
     '/stock': /<ProductsScreen[^>]*guard="\/stock"/,
     '/sales': /<SalesScreen[^>]*guard="\/sales"/,
-    '/orders': /<SalesScreen[^>]*guard="\/orders"/,
+    // Jira GRW-614 — Orders is its own screen, guarded at the page like the rest.
+    '/orders': /await guardScreen\('\/orders'\);/,
     // `me.support` as a whole since the page lists options (each its own number): it reads the contacts
     // off /me, which every role may call, and nothing role-scoped.
     '/help': /const me = await api\.me\(\);[\s\S]*support = me\.support;/,

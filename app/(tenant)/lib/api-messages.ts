@@ -142,6 +142,10 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'This order already has a client.': 'इस ऑर्डर में पहले से ग्राहक जुड़ा है।',
   'That client is not available.': 'वह ग्राहक उपलब्ध नहीं है।',
   'There is no such branch.': 'ऐसी कोई ब्रांच नहीं है।',
+  // Jira GRW-614 — the Orders list.
+  'This business has no Orders screen.': 'इस कारोबार में ऑर्डर वाली स्क्रीन नहीं है।',
+  'Page must be a whole number from 1.': 'पेज 1 से शुरू होने वाली पूरी संख्या होना चाहिए।',
+  'Search with some text.': 'खोजने के लिए कुछ लिखें।',
   'No such client': 'ऐसा कोई ग्राहक नहीं',
   'That client record is not available': 'वह ग्राहक रिकॉर्ड उपलब्ध नहीं है',
   'That client asked to be deleted': 'उस ग्राहक ने हटाने को कहा था',

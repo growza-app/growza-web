@@ -1145,6 +1145,8 @@ export interface ShopHome {
   yesterday: { orders: number; takingsMinor?: number };
   /** Has the shop ever sold anything. False: Home invites the first order. */
   anyOrders: boolean;
+  /** Jira GRW-614 — orders still to send (new or packed). Home's count of what is waiting, linking into the filtered list. */
+  toSend: number;
   running: {
     /** Has the shelf ever been counted. False: Home says so instead of listing zeros. */
     counted: boolean;
@@ -1152,4 +1154,32 @@ export interface ShopHome {
     total: number;
     items: Array<{ productId: string; name: string; /** "30" or "30 / White"; null for a product with no sizes. */ size: string | null; left: number }>;
   };
+}
+
+/**
+ * Jira GRW-614 — one row of the Orders list. Money (`amountMinor`) is ABSENT, not zero, for a front desk the owner has
+ * not opened the sales tab to: the API omits the key, so this screen has nothing to hide.
+ */
+export interface OrderListRow {
+  id: string;
+  /** The short code the row shows and the search finds. */
+  code: string;
+  soldAt: string;
+  channel: string;
+  status: string;
+  /** False for a state this build has never heard of: shown as the data spells it, never crashing the list. */
+  known: boolean;
+  externalRef: string | null;
+  locationId: string;
+  /** The client if it has one, else the buyer. */
+  who: { kind: 'client' | 'buyer'; name: string | null } | null;
+  items: number;
+  amountMinor?: number;
+}
+
+export interface OrdersPage {
+  rows: OrderListRow[];
+  total: number;
+  page: number;
+  pageSize: number;
 }

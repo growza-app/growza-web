@@ -3597,6 +3597,48 @@
       "title": "Buyer",
       "plural": "Buyers",
       "notAClient": "Not in your client list"
+    },
+    "list": {
+      "searchPlaceholder": "Order number or name",
+      "searchLabel": "Search orders",
+      "filtersLabel": "Filter orders",
+      "channelGroup": "Where from",
+      "stateGroup": "State",
+      "stateChips": {
+        "toSend": "To send",
+        "sent": "Sent",
+        "delivered": "Delivered",
+        "cancelled": "Cancelled",
+        "returned": "Came back"
+      },
+      "cols": {
+        "when": "When",
+        "from": "From",
+        "who": "For",
+        "items": "Items",
+        "amount": "Amount",
+        "state": "State"
+      },
+      "itemCount": "{count, plural, one {# item} other {# items}}",
+      "orderCode": "Order #{code}",
+      "noName": "No name",
+      "empty": {
+        "title": "No orders yet",
+        "body": "Your first sale or online order will show up here."
+      },
+      "noMatch": {
+        "title": "Nothing matches that",
+        "body": "Try another word, or take a filter off.",
+        "clear": "Clear filters"
+      },
+      "error": {
+        "body": "Could not load orders. Check your connection and try again.",
+        "retry": "Try again"
+      },
+      "unknownState": "Unknown",
+      "nounOrders": "orders",
+      "allChannels": "Anywhere",
+      "allStates": "Any state"
     }
   }
 }

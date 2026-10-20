@@ -62,6 +62,7 @@ import { bareRefusalMessage, genericFailureMessage, localiseApiMessage } from '.
 import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
+  OrdersPage,
   ShopHome,
   ActivityEvent,
   Appointment,
@@ -589,6 +590,21 @@ export const api = {
     get<HomeOverview>(`/api/v1/home?period=${period}${location ? `&location=${encodeURIComponent(location)}` : ''}`),
   /** Jira GRW-609 — a shop's Home in one read. `location` null or absent means every branch (the owner); the front desk's is its own. */
   shopHome: (location?: string | null) => get<ShopHome>(`/api/v1/home/shop${location ? `?location=${encodeURIComponent(location)}` : ''}`),
+  /**
+   * Jira GRW-614 — the Orders list: one page, filtered and searched by the SERVER. `channel` and `status` are the API's
+   * own values, comma-separated for several (`new,packed` is "still to send"); `location` absent is every branch.
+   */
+  orders: (args: { channel?: string; status?: string; q?: string; page?: number; pageSize?: number; location?: string | null } = {}) => {
+    const params = new URLSearchParams();
+    if (args.channel) params.set('channel', args.channel);
+    if (args.status) params.set('status', args.status);
+    if (args.q) params.set('q', args.q);
+    if (args.page && args.page > 1) params.set('page', String(args.page));
+    if (args.pageSize != null) params.set('pageSize', String(args.pageSize));
+    if (args.location) params.set('location', args.location);
+    const qs = params.toString();
+    return get<OrdersPage>(`/api/v1/orders${qs ? `?${qs}` : ''}`);
+  },
   /** Jira GRW-222 — the walk-in queue. Adding is the arrival; giving to staff is the start. */
   // Jira GRW-244 — `location`: one branch's queue (owner); a receptionist's is their own.
   walkInQueue: (location?: string | null) => get<QueueEntry[]>(`/api/v1/walk-in-queue${atBranch(location)}`),

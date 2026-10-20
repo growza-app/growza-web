@@ -3597,6 +3597,48 @@
       "title": "ख़रीदार",
       "plural": "ख़रीदार",
       "notAClient": "आपकी ग्राहक सूची में नहीं"
+    },
+    "list": {
+      "searchPlaceholder": "ऑर्डर नंबर या नाम",
+      "searchLabel": "ऑर्डर खोजें",
+      "filtersLabel": "ऑर्डर छाँटें",
+      "channelGroup": "कहाँ से",
+      "stateGroup": "स्थिति",
+      "stateChips": {
+        "toSend": "भेजना है",
+        "sent": "भेज दिया",
+        "delivered": "पहुँच गया",
+        "cancelled": "रद्द",
+        "returned": "वापस आया"
+      },
+      "cols": {
+        "when": "कब",
+        "from": "कहाँ से",
+        "who": "किसका",
+        "items": "सामान",
+        "amount": "रकम",
+        "state": "स्थिति"
+      },
+      "itemCount": "{count, plural, one {# सामान} other {# सामान}}",
+      "orderCode": "ऑर्डर #{code}",
+      "noName": "नाम नहीं",
+      "empty": {
+        "title": "अभी कोई ऑर्डर नहीं",
+        "body": "आपकी पहली बिक्री या ऑनलाइन ऑर्डर यहाँ दिखेगा।"
+      },
+      "noMatch": {
+        "title": "इससे कुछ नहीं मिला",
+        "body": "कोई और शब्द आज़माएँ, या कोई फ़िल्टर हटा दें।",
+        "clear": "फ़िल्टर हटाएँ"
+      },
+      "error": {
+        "body": "ऑर्डर लोड नहीं हुए। इंटरनेट देखें और फिर से कोशिश करें।",
+        "retry": "फिर से कोशिश करें"
+      },
+      "unknownState": "अज्ञात",
+      "nounOrders": "ऑर्डर",
+      "allChannels": "कहीं से भी",
+      "allStates": "कोई भी स्थिति"
     }
   }
 }
