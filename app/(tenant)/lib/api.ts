@@ -63,6 +63,8 @@ import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
   OrderDetail,
+  ExchangeBody,
+  ExchangeResult,
   OrdersPage,
   ShopHome,
   ActivityEvent,
@@ -633,6 +635,9 @@ export const api = {
    */
   moveOrder: (id: string, status: string, expected: string) =>
     patch<{ id: string; status: string; moved: boolean }>(`/api/v1/orders/${encodeURIComponent(id)}/status`, { status, expected }),
+  /** Jira GRW-617 — swap a size on an order. The quote runs the whole swap and rolls it back: the sheet states the server's difference, never its own. */
+  exchangeQuote: (id: string, body: ExchangeBody) => post<ExchangeResult>(`/api/v1/orders/${encodeURIComponent(id)}/exchange/quote`, body),
+  exchangeOrder: (id: string, body: ExchangeBody) => post<ExchangeResult>(`/api/v1/orders/${encodeURIComponent(id)}/exchange`, body),
   /** Jira GRW-222 — the walk-in queue. Adding is the arrival; giving to staff is the start. */
   // Jira GRW-244 — `location`: one branch's queue (owner); a receptionist's is their own.
   walkInQueue: (location?: string | null) => get<QueueEntry[]>(`/api/v1/walk-in-queue${atBranch(location)}`),

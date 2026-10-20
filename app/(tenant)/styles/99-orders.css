@@ -439,3 +439,71 @@ a.ord-card:focus-visible,
     max-width: 40rem;
   }
 }
+
+/*
+ * Jira GRW-617 — "Swap size". The button sits under its line, a full row of its own so it stays a thumb tall without
+ * crowding the name and the amount; the sheet is the till's size sheet (the same cells, the same shell) with the line
+ * being swapped named above the grid and the difference, in money, between the grid and the confirm bar.
+ */
+.ord-d-lines li .ord-d-line-swap {
+  grid-column: 1 / -1;
+  justify-self: start;
+  min-height: 2.75rem;
+}
+
+.swp-line {
+  margin: 0;
+}
+.swp-line-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.swp-h {
+  margin: 0;
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--muted);
+}
+.swp-qty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.swp-warn {
+  color: var(--text);
+}
+.swp-skeleton-cell {
+  background: var(--surface-2, var(--border));
+  border-color: transparent;
+}
+.swp-diff {
+  min-height: 1.5rem;
+}
+.swp-diff-line {
+  font-weight: 600;
+}
+.swp-how {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.swp-how-q {
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+/* The confirm bar stays at the foot of the sheet's scroll, above the home indicator, so the grid and the difference scroll under it. */
+/* The sheet's own bottom padding would let the grid show under a sticky bar (the bar pins inside the padding), so the bar owns it. */
+.swp-sheet.pf-keypad {
+  padding-bottom: 0;
+}
+.swp-bar {
+  position: sticky;
+  bottom: 0;
+  padding: var(--sp-2) 0 calc(var(--sp-2) + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+}
+.swp-confirm {
+  width: 100%;
+  min-height: 3rem;
+}

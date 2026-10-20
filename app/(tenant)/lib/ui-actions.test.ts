@@ -197,7 +197,9 @@ describe('2b — the controls, each behind its own action', () => {
 const SCREEN_WRITES: Record<string, readonly string[]> = {
   // Jira GRW-615 — an order's own screen moves it along: the one next move, and the rarer ones behind More. Same screen,
   // same gate: a role the nav does not offer /orders is bounced Home by the page, so it never reaches the button.
-  '/orders': ['PATCH /api/v1/orders/:id/status'],
+  // Jira GRW-617 — and swaps a size. The desk is offered this screen but takes no returns, so it takes no swaps: the control is
+  // drawn from `order.canSwap`, which the API computes with the very function that would refuse the swap.
+  '/orders': ['PATCH /api/v1/orders/:id/status', 'POST /api/v1/orders/:id/exchange', 'POST /api/v1/orders/:id/exchange/quote'],
   // Jira GRW-563 (shared 1.0.5) — `assign-client` moved into `visit.recordPayment`, where it belonged.
   '/services': [
     'POST /api/v1/services',

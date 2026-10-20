@@ -8,7 +8,9 @@ import { PageHeader } from '../../components/PageHeader';
 import { DocumentAction } from '../../components/DocumentAction';
 import { ReturnProductSheet, type ReturnableSaleBill } from '../../sales/ReturnProductSheet';
 import { KNOWN_STATES } from '../../lib/orders-filter';
-import { useWritable } from '../../components/SessionProvider';
+import { useSession, useWritable } from '../../components/SessionProvider';
+import { computeReturnWindow } from '../../sales/sales-helpers';
+import { SwapSizeSheet } from './SwapSizeSheet';
 
 /**
  * Jira GRW-615 — an order's own screen.
@@ -24,6 +26,9 @@ import { useWritable } from '../../components/SessionProvider';
  *
  * Nothing animates: the state chip simply changes (UX-08).
  */
+/** "Shirt (28)" → "28": a sized line's name carries its size in the last brackets, so a note on the line can say just which. */
+const sizeIn = (name: string): string => /\(([^()]*)\)\s*$/.exec(name)?.[1] ?? name;
+
 export function OrderClient({
   id,
   initial,
@@ -39,6 +44,7 @@ export function OrderClient({
   const t = useTranslations('orders');
   const locale = useLocale();
   const writable = useWritable();
+  const session = useSession();
 
   const [order, setOrder] = useState<OrderDetail | null>(initial);
   const [failed, setFailed] = useState(initial === null);
@@ -46,6 +52,8 @@ export function OrderClient({
   const [notice, setNotice] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const [returning, setReturning] = useState(false);
+  // Jira GRW-617 — the line whose size is being swapped.
+  const [swapping, setSwapping] = useState<string | null>(null);
   // One move at a time, however fast the button is tapped. `busy` is state and so is stale until the next render: two taps
   // inside the same frame both saw it false, and the second went out with the old state and was refused as "moved on" —
   // a refusal of the person's OWN first tap (found in the browser). A ref is what the second tap reads.
@@ -131,6 +139,12 @@ export function OrderClient({
   const offerPrimary = writable && order.moves.primary !== null && moveWords[order.moves.primary] !== undefined;
   const more = writable ? order.moves.more.filter((m) => moveWords[m] !== undefined) : [];
   const hasBar = offerPrimary || more.length > 0;
+  // The server says who may swap (the very function that would refuse it); the screen also holds it while the business is read-only.
+  const canSwap = writable && order.canSwap;
+  const swapLine = swapping ? order.lines.find((l) => l.id === swapping) : undefined;
+  const soldDayISO = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(order.soldAt));
+  const windowExpired = !computeReturnWindow(soldDayISO, new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date()), returnWindowDays).eligible;
+  const isOwner = !session || session.role === null || session.role === 'owner';
   // An online order that is still to send and has nowhere to go says so, plainly, instead of showing an empty block.
   const toSend = order.status === 'new' || order.status === 'packed';
   const noAddress = !isCounter && toSend && !order.buyer?.address;
@@ -215,10 +229,17 @@ export function OrderClient({
                 <li key={l.id}>
                   <span className="ord-d-line-name">
                     {l.name}
-                    {l.returnedQty > 0 ? <span className="ord-d-quiet"> · {t('detail.cameBack', { count: l.returnedQty })}</span> : null}
+                    {l.returnedQty - l.swappedQty > 0 ? <span className="ord-d-quiet"> · {t('detail.cameBack', { count: l.returnedQty - l.swappedQty })}</span> : null}
+                    {l.swappedQty > 0 ? <span className="ord-d-quiet"> · {t('detail.swap.swapped', { count: l.swappedQty })}</span> : null}
+                    {l.swappedFromId ? <span className="ord-d-quiet"> · {t('detail.swap.swappedFrom', { name: sizeIn(order.lines.find((o) => o.id === l.swappedFromId)?.name ?? '') })}</span> : null}
                   </span>
                   <span className="ord-d-line-qty">{t('detail.times', { count: l.qty })}</span>
                   {l.paidMinor !== undefined ? <span className="ord-d-line-amount">{money(l.paidMinor)}</span> : null}
+                  {canSwap && l.swappable ? (
+                    <button type="button" className="btn ord-d-line-swap" onClick={() => setSwapping(l.id)}>
+                      {t('detail.swap.action')}
+                    </button>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -267,7 +288,13 @@ export function OrderClient({
             {order.history.map((h, i) => (
               <li key={i}>
                 <span>
-                  {h.kind === 'status_change' ? t('detail.movedTo', { state: stateWord(h.to ?? '') }) : h.kind === 'client_attached' ? t('detail.clientAttached') : t('detail.buyerErased')}
+                  {h.kind === 'status_change'
+                    ? t('detail.movedTo', { state: stateWord(h.to ?? '') })
+                    : h.kind === 'client_attached'
+                      ? t('detail.clientAttached')
+                      : h.kind === 'exchange'
+                        ? t('detail.swap.history', { from: h.from ?? '', to: h.to ?? '' })
+                        : t('detail.buyerErased')}
                   {h.by ? <span className="ord-d-quiet"> · {t('detail.by', { name: h.by })}</span> : null}
                 </span>
                 <span className="ord-d-quiet">{when(h.at)}</span>
@@ -304,6 +331,21 @@ export function OrderClient({
           </div>
         ) : null}
       </div>
+
+      {swapLine ? (
+        <SwapSizeSheet
+          order={order}
+          line={swapLine}
+          isOwner={isOwner}
+          windowExpired={windowExpired}
+          windowDays={returnWindowDays}
+          onClose={() => setSwapping(null)}
+          onSwapped={() => {
+            setSwapping(null);
+            void refresh();
+          }}
+        />
+      ) : null}
 
       {returning && returnable ? (
         <ReturnProductSheet

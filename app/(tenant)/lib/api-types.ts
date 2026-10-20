@@ -339,8 +339,8 @@ export interface ProductInput {
 }
 
 /** 0116 · 0122 — why a product's count changed. */
-export type MovementKind = 'received' | 'sold' | 'adjusted' | 'damaged' | 'used' | 'returned' | 'transfer_out' | 'transfer_in';
-export type ManualMovementKind = Exclude<MovementKind, 'sold' | 'transfer_out' | 'transfer_in'>;
+export type MovementKind = 'received' | 'sold' | 'adjusted' | 'damaged' | 'used' | 'returned' | 'transfer_out' | 'transfer_in' | 'exchange';
+export type ManualMovementKind = Exclude<MovementKind, 'sold' | 'transfer_out' | 'transfer_in' | 'exchange'>;
 
 export interface StockMovement {
   id: string;
@@ -1257,7 +1257,7 @@ export interface OrdersPage {
 
 /** Jira GRW-615 — one thing that happened to an order after it was placed. Says THAT, never what (no buyer value). */
 export interface OrderHistoryEntry {
-  kind: 'status_change' | 'client_attached' | 'buyer_erased';
+  kind: 'status_change' | 'client_attached' | 'buyer_erased' | 'exchange';
   at: string;
   from: string | null;
   to: string | null;
@@ -1290,12 +1290,20 @@ export interface OrderDetail {
     name: string;
     qty: number;
     returnedQty: number;
+    /** Jira GRW-617 — the line this one replaced in a size swap, or null. */
+    swappedFromId: string | null;
+    /** How many of this line's units were swapped for another size (counted in `returnedQty`, but nothing was refunded for them). */
+    swappedQty: number;
+    /** Can a swap start from this line? Decided by the server. */
+    swappable: boolean;
     sku: string | null;
     barcode: string | null;
     priceMinor?: string;
     paidMinor?: string;
     returnedMinor?: string;
   }>;
+  /** Jira GRW-617 — may this viewer swap a size? Decided by the server with the function that would refuse the swap. */
+  canSwap: boolean;
   history: OrderHistoryEntry[];
   moves: { primary: string | null; more: string[] };
   payments?: Array<{ mode: string; amountMinor: number }>;
@@ -1309,4 +1317,33 @@ export interface OrderMoveRefusal {
   detail: string;
   status?: string;
   allowed?: string[];
+}
+
+/** Jira GRW-617 — what a size swap sends. The quote takes the same body and writes nothing. */
+export interface ExchangeBody {
+  lineId: string;
+  toVariantId: string;
+  qty?: number;
+  /** How a non-zero difference was paid, or given back. */
+  settlementMode?: 'cash' | 'card' | 'upi' | 'other';
+  /** The difference the screen showed; the server refuses the swap, with the amount it is now, if that is no longer true. */
+  expectedDifferenceMinor?: number;
+  idempotencyKey?: string;
+  acknowledgeIssuedDocument?: boolean;
+  overrideReturnWindow?: boolean;
+}
+
+/** Jira GRW-617 — a swap, or the quote of one. `differenceMinor` is new less old: positive is taken, negative is given back. */
+export interface ExchangeResult {
+  exchangeId: string;
+  fromLineId: string;
+  toLineId: string;
+  fromName: string;
+  toName: string;
+  qty: number;
+  newUnitMinor: number;
+  oldPaidMinor: number;
+  differenceMinor: number;
+  settlementMode: string | null;
+  replayed: boolean;
 }

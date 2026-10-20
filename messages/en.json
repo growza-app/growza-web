@@ -3209,7 +3209,8 @@
         "returned": "Returned",
         "adjusted": "Counted",
         "transfer_out": "Moved out",
-        "transfer_in": "Moved in"
+        "transfer_in": "Moved in",
+        "exchange": "Size swapped"
       },
       "howMany": "How many",
       "countIs": "The count is",
@@ -3784,7 +3785,45 @@
       "returnItems": "Return items",
       "notFound": "There is no such order.",
       "loadError": "Could not load this order. Check your connection and try again.",
-      "backToOrders": "Back to orders"
+      "backToOrders": "Back to orders",
+      "swap": {
+        "action": "Swap size",
+        "title": "Swap size",
+        "close": "Close",
+        "pick": "Choose the new size",
+        "howMany": "How many",
+        "less": "One less",
+        "more": "One more",
+        "loading": "Loading sizes",
+        "loadError": "Could not load the sizes.",
+        "retry": "Try again",
+        "noOther": "This product has no other size to swap to.",
+        "cellLeft": "{size}, {n} left",
+        "cellOut": "{size}, out of stock",
+        "left": "{n} left",
+        "out": "Out of stock",
+        "working": "Working out the difference…",
+        "same": "Same price. Nothing to pay.",
+        "pays": "The customer pays {amount} more",
+        "gets": "Give {amount} back to the customer",
+        "howPaid": "How was the {amount} paid?",
+        "howGiven": "How was the {amount} given back?",
+        "confirmPick": "Choose a size",
+        "confirmSame": "Swap to {size}",
+        "confirmTake": "Take {amount} and swap to {size}",
+        "confirmGive": "Give back {amount} and swap to {size}",
+        "priceMoved": "The price changed. Check the new amount.",
+        "sizeGone": "That size just ran out. Choose another.",
+        "failed": "Could not swap. Nothing changed. Try again.",
+        "documentIssued": "Invoice {number} was already given to the customer. A swap does not change it.",
+        "swapAnyway": "Swap anyway",
+        "windowOwner": "This bill is past the {days}-day window. As the owner you can still swap it.",
+        "windowNo": "This bill is past the {days}-day window. Only the owner can swap it now.",
+        "swapped": "{count} swapped",
+        "swappedFrom": "swapped from {name}",
+        "history": "Size swapped: {from} to {to}",
+        "colour": "Colour"
+      }
     }
   }
 }
