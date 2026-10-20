@@ -229,7 +229,7 @@ describe("StockTake — count a branch's shelf in one pass (GRW-574 part 4)", ()
     expect(list).toMatch(/<StockTake[\s\S]*branchId=\{branchId\}/);
     expect(list).toMatch(/<ProductCategoriesDropdown[\s\S]*selected=\{selectedCategories\}/);
     expect(take).toMatch(/api\s*\.stockTakeProducts\(branchId\)/);
-    expect(take).toMatch(/await api\.saveStockTake\(branchId, \{\s*counts: payload,\s*\}\);/);
+    expect(take).toMatch(/await api\.saveStockTake\(branchId, \{\s*counts: payload,\s*sizes: sizeLines\(shelf, sizeCounts\),\s*\}\);/);
     expect(take).not.toContain('prd-st-note');
     expect(take).toMatch(/matchItems\(pool\.map\(productMatchable\), q\)/);
     expect(take).toMatch(/<ProductCategoriesDropdown[\s\S]*selected=\{selectedCategories\}/);
@@ -242,7 +242,7 @@ describe("StockTake — count a branch's shelf in one pass (GRW-574 part 4)", ()
      * every product, falling back to the number read when the screen opened, so a sale that landed while the sheet
      * was open was written back out of existence.
      */
-    expect(take).toMatch(/\.filter\(\(p\) => touchedRef\.current\.has\(p\.id\)\)/);
+    expect(take).toMatch(/\.filter\(\(p\) => touchedRef\.current\.has\(p\.id\) && !isSizedProduct\(p\)\)/);
     expect(take).not.toMatch(/const payload = shelf\.map/);
     expect(take).toMatch(/hasInvalid\s*\?\s*t\('stockTake\.sayCount'\)/);
     expect(take).toMatch(/<IconCheck \/> \{t\('form\.saved'\)\}/);

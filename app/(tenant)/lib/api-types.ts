@@ -353,6 +353,13 @@ export interface StockMovement {
   createdAt: string;
 }
 
+/** Jira GRW-602 (0134) — what an owner typed into a stock take and has not committed: typed text by product and by size. `updatedAt` is null when no walk has been started. */
+export interface StockTakeDraft {
+  products: Record<string, string>;
+  sizes: Record<string, string>;
+  updatedAt: string | null;
+}
+
 /** 0123 — what saving a stock take pass hands back. */
 export interface StockTakeResult {
   stockTakeId: string;

@@ -1,8 +1,9 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError, formatMoney } from '../lib/api';
+import { intlLocale } from '../lib/format';
 import type { Product, ProductCategory } from '../lib/api-types';
 import { PageHeader } from '../components/PageHeader';
 import { IconCheck, IconSearch } from '../components/icons';
@@ -10,6 +11,8 @@ import { ProductPhoto } from '../components/ProductPhoto';
 import { matchItems } from '../lib/service-match';
 import { productMatchable } from '../lib/product-match';
 import { ProductCategoriesDropdown } from './DeskProductCategories';
+import { CountSizesSheet, sizesCountedLine } from './CountSizesSheet';
+import { anySizeCounted, anySizeInvalid, changedSizes, draftOf, isSizedProduct, restorable, sizeGap, sizeLines, sizesOf } from './count-sizes';
 import { matchesCategories, shelfWorthMinor, stockTone } from './ProductsList';
 
 /**
@@ -48,6 +51,7 @@ export function StockTake({
 }) {
   const t = useTranslations('products');
   const tc = useTranslations('common');
+  const locale = useLocale();
   const [shelf, setShelf] = useState<Product[]>(() =>
     initialProducts.filter((p) => p.active).sort((a, b) => a.name.localeCompare(b.name)),
   );
@@ -55,6 +59,15 @@ export function StockTake({
     Object.fromEntries(initialProducts.filter((p) => p.active).map((p) => [p.id, String(Math.max(0, p.stock))])),
   );
   const touchedRef = useRef<Set<string>>(new Set());
+  // Jira GRW-602 — what has been typed into each size (text), the style whose sheet is open, and the draft kept on the server.
+  const [sizeCounts, setSizeCounts] = useState<Record<string, string>>({});
+  const [sizing, setSizing] = useState<string | null>(null);
+  const [shelfFresh, setShelfFresh] = useState(false);
+  const [draftState, setDraftState] = useState<'idle' | 'saving' | 'kept' | 'failed'>('idle');
+  const [restoredAt, setRestoredAt] = useState<string | null>(null);
+  const [askClear, setAskClear] = useState(false);
+  const dirtyRef = useRef(false);
+  const draftLoadedRef = useRef(false);
   const [search, setSearch] = useState(initialSearch);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => [...initialCategories]);
   const [lowOnly, setLowOnly] = useState(false);
@@ -73,21 +86,33 @@ export function StockTake({
 
   useEffect(() => {
     let cancelled = false;
-    api
-      .stockTakeProducts(branchId)
-      .then((fresh) => {
+    // The shelf (with each style's sizes) and what was typed and kept the last time, in the same breath.
+    void Promise.all([api.stockTakeProducts(branchId), api.stockTakeDraft(branchId).catch(() => null)])
+      .then(([fresh, draft]) => {
         if (cancelled) return;
         const active = fresh.filter((p) => p.active).sort((a, b) => a.name.localeCompare(b.name));
         setShelf(active);
+        setShelfFresh(true);
+        const back = draft && draft.updatedAt ? restorable(draft, active) : null;
+        if (back) {
+          for (const id of Object.keys(back.products)) touchedRef.current.add(id);
+          setSizeCounts((prev) => ({ ...back.sizes, ...prev }));
+          if (Object.keys(back.products).length + Object.keys(back.sizes).length > 0) setRestoredAt(draft!.updatedAt);
+        }
         setCounts((prev) => {
           const next = { ...prev };
           for (const p of active) {
-            if (!touchedRef.current.has(p.id)) next[p.id] = String(Math.max(0, p.stock));
+            if (back?.products[p.id] !== undefined && !touchedRef.current.has(p.id)) touchedRef.current.add(p.id);
+            if (back?.products[p.id] !== undefined) next[p.id] = back.products[p.id]!;
+            else if (!touchedRef.current.has(p.id)) next[p.id] = String(Math.max(0, p.stock));
           }
           return next;
         });
+        draftLoadedRef.current = true;
       })
-      .catch(() => {});
+      .catch(() => {
+        draftLoadedRef.current = true;
+      });
     return () => {
       cancelled = true;
     };
@@ -96,6 +121,8 @@ export function StockTake({
   const parsedByProduct = useMemo(() => {
     const map = new Map<string, number | null>();
     for (const p of shelf) {
+      // A style with sizes has no count of its own; its sizes are counted in the sheet.
+      if (isSizedProduct(p)) continue;
       map.set(p.id, parseStockTakeCount(counts[p.id], Math.max(0, p.stock)));
     }
     return map;
@@ -132,10 +159,10 @@ export function StockTake({
     for (const p of shelf) {
       if (parsedByProduct.get(p.id) === null) return true;
     }
-    return false;
-  }, [shelf, parsedByProduct]);
+    return anySizeInvalid(shelf, sizeCounts);
+  }, [shelf, parsedByProduct, sizeCounts]);
 
-  const diffCount = useMemo(() => {
+  const plainDiff = useMemo(() => {
     let n = 0;
     for (const p of shelf) {
       const val = parsedByProduct.get(p.id);
@@ -143,6 +170,8 @@ export function StockTake({
     }
     return n;
   }, [shelf, parsedByProduct]);
+  const sizeDiff = useMemo(() => changedSizes(shelf, sizeCounts), [shelf, sizeCounts]);
+  const diffCount = plainDiff + sizeDiff;
 
   const showSaved = saved && diffCount === 0 && !hasInvalid;
   /*
@@ -150,14 +179,63 @@ export function StockTake({
    * so pressing it before typing anything would send an empty pass. `touchedRef` is read during render, which is
    * safe here because every row that adds to it also calls `setCounts` and so re-renders.
    */
-  const counted = touchedRef.current.size > 0;
+  const counted = touchedRef.current.size > 0 || anySizeCounted(shelf, sizeCounts);
   const canSave = shelf.length > 0 && counted && !hasInvalid && !busy && !showSaved;
 
+  const setSizeCount = (variantId: string, raw: string) => {
+    dirtyRef.current = true;
+    setSizeCounts((prev) => ({ ...prev, [variantId]: raw }));
+    if (saved) setSaved(false);
+    if (error) setError(null);
+  };
+
   const setRowCount = (productId: string, raw: string) => {
+    dirtyRef.current = true;
     touchedRef.current.add(productId);
     setCounts((prev) => ({ ...prev, [productId]: raw }));
     if (saved) setSaved(false);
     if (error) setError(null);
+  };
+
+  /*
+   * Jira GRW-602 — the walk survives a closed tab: what is typed is kept on the server a moment after the last keystroke.
+   * Nothing is counted by it; only Save changes a count. The draft is written only after the saved one has been read
+   * back, so opening the screen can never overwrite a walk in progress with an empty one.
+   */
+  const draftNow = useRef<() => Promise<void>>(async () => {});
+  draftNow.current = async () => {
+    if (!dirtyRef.current) return;
+    dirtyRef.current = false;
+    setDraftState('saving');
+    try {
+      await api.saveStockTakeDraft(branchId, draftOf(counts, touchedRef.current, sizeCounts));
+      setDraftState('kept');
+    } catch {
+      dirtyRef.current = true;
+      setDraftState('failed');
+    }
+  };
+  useEffect(() => {
+    if (!draftLoadedRef.current || !dirtyRef.current) return;
+    const timer = window.setTimeout(() => void draftNow.current(), 1200);
+    return () => window.clearTimeout(timer);
+  }, [counts, sizeCounts]);
+  // Leaving the screen within that moment still keeps the last numbers.
+  useEffect(() => () => void draftNow.current(), []);
+
+  const startOver = async () => {
+    setAskClear(false);
+    try {
+      await api.clearStockTakeDraft(branchId);
+    } catch {
+      /* the screen is cleared either way; a draft the server still holds is replaced by the next keystroke */
+    }
+    touchedRef.current.clear();
+    dirtyRef.current = false;
+    setSizeCounts({});
+    setCounts(Object.fromEntries(shelf.map((p) => [p.id, String(Math.max(0, p.stock))])));
+    setRestoredAt(null);
+    setDraftState('idle');
   };
 
   const save = async () => {
@@ -174,16 +252,23 @@ export function StockTake({
        * told the sold product still had its 10:00 number. `touchedRef` already knows which rows were typed in.
        */
       const payload = shelf
-        .filter((p) => touchedRef.current.has(p.id))
+        .filter((p) => touchedRef.current.has(p.id) && !isSizedProduct(p))
         .map((p) => ({
           productId: p.id,
           count: parsedByProduct.get(p.id) ?? p.stock,
         }));
       const res = await api.saveStockTake(branchId, {
         counts: payload,
+        sizes: sizeLines(shelf, sizeCounts),
       });
-      const active = res.products.filter((p) => p.active).sort((a, b) => a.name.localeCompare(b.name));
+      // The shelf again, with each style's sizes as they are now (the commit's own answer carries styles only).
+      const fresh = await api.stockTakeProducts(branchId).catch(() => res.products);
+      const active = fresh.filter((p) => p.active).sort((a, b) => a.name.localeCompare(b.name));
       touchedRef.current.clear();
+      dirtyRef.current = false;
+      setSizeCounts({});
+      setRestoredAt(null);
+      setDraftState('idle');
       setShelf(active);
       setCounts(Object.fromEntries(active.map((p) => [p.id, String(p.stock)])));
       setSaved(true);
@@ -274,6 +359,54 @@ export function StockTake({
       />
     ) : null;
 
+  /** Jira GRW-602 — a style with sizes shows one button where the count box would be, and the sheet counts its sizes. */
+  const changedIn = (p: Product) => sizesOf(p).filter((sz) => (sizeGap(sz, sizeCounts[sz.id]) ?? 0) !== 0).length;
+  const sizedCell = (p: Product) => {
+    const { n, m } = sizesCountedLine(p, sizeCounts);
+    return (
+      <button
+        type="button"
+        className="pcs-open"
+        disabled={!shelfFresh || m === 0}
+        aria-label={t('stockTake.sizesTitle', { name: p.name })}
+        onClick={() => setSizing(p.id)}
+      >
+        <span>{t('stockTake.countSizes')}</span>
+        <span className="pcs-open-sub">{!shelfFresh || m === 0 ? t('stockTake.sizesNone') : t('stockTake.sizesCounted', { n, m })}</span>
+      </button>
+    );
+  };
+  const sizingProduct = sizing ? (shelf.find((p) => p.id === sizing) ?? null) : null;
+  const sizeSheet = sizingProduct ? <CountSizesSheet product={sizingProduct} typed={sizeCounts} onType={setSizeCount} onClose={() => setSizing(null)} /> : null;
+
+  /** The walk is kept on the server; say so, and say when a walk from before has come back. */
+  const restoredBanner = restoredAt ? (
+    <div className="banner pcs-restored" role="status">
+      <span>{t('stockTake.restored', { date: new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(restoredAt)) })}</span>
+      {askClear ? (
+        <>
+          <span>{t('stockTake.startOverAsk')}</span>
+          <button type="button" className="btn" onClick={() => void startOver()}>
+            {t('stockTake.startOverYes')}
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={() => setAskClear(false)}>
+            {t('stockTake.startOverNo')}
+          </button>
+        </>
+      ) : (
+        <button type="button" className="btn btn-ghost" onClick={() => setAskClear(true)}>
+          {t('stockTake.startOver')}
+        </button>
+      )}
+    </div>
+  ) : null;
+  const keptLine =
+    draftState === 'idle' ? null : (
+      <span className="pcs-kept" role="status">
+        {draftState === 'saving' ? t('stockTake.keptSaving') : draftState === 'failed' ? t('stockTake.keptFailed') : t('stockTake.kept')}
+      </span>
+    );
+
   const summaryPill = (
     <span
       className={`prd-st-summary ${hasInvalid ? 'prd-st-summary-invalid' : diffCount > 0 ? 'prd-st-summary-diff' : ''}`}
@@ -282,7 +415,7 @@ export function StockTake({
       {hasInvalid
         ? t('stockTake.sayCount')
         : diffCount > 0
-          ? t('stockTake.changedCount', { n: diffCount })
+          ? [plainDiff > 0 ? t('stockTake.changedCount', { n: plainDiff }) : null, sizeDiff > 0 ? t('stockTake.sizedChanged', { n: sizeDiff }) : null].filter(Boolean).join(' · ')
           : t('stockTake.allMatch')}
     </span>
   );
@@ -312,12 +445,14 @@ export function StockTake({
               {error}
             </div>
           ) : null}
+          {restoredBanner}
           {strip}
           <section className="pf-wide-mid prd-desk-mid" aria-label={t('stockTake.title')}>
             <div className="prd-desk-tools prd-st-desk-tools">
               {searchBox}
               {categoriesDropdown}
               {summaryPill}
+              {keptLine}
             </div>
             <div className="card prd-desk-card">
               {shown.length === 0 ? (
@@ -336,11 +471,12 @@ export function StockTake({
                     </thead>
                     <tbody>
                       {shown.map((p) => {
+                        const sized = isSizedProduct(p);
                         const raw = counts[p.id] ?? String(p.stock);
-                        const parsed = parsedByProduct.get(p.id) ?? null;
+                        const parsed = sized ? p.stock : (parsedByProduct.get(p.id) ?? null);
                         const invalid = parsed === null;
                         const delta = parsed !== null ? parsed - p.stock : 0;
-                        const differs = !invalid && delta !== 0;
+                        const differs = sized ? changedIn(p) > 0 : !invalid && delta !== 0;
                         return (
                           <tr
                             key={p.id}
@@ -367,21 +503,29 @@ export function StockTake({
                             </td>
                             <td className="prd-td-num prd-st-td-count">
                               <div className="prd-st-cell-count">
-                                {differs ? (
+                                {sized ? (
+                                  <>
+                                    {differs ? <span className="prd-pill">{t('stockTake.sizedChanged', { n: changedIn(p) })}</span> : null}
+                                    {sizedCell(p)}
+                                  </>
+                                ) : null}
+                                {sized ? null : differs ? (
                                   <span className={`prd-pill ${delta > 0 ? '' : 'prd-pill-out'}`}>
                                     {delta > 0 ? `+${delta}` : String(delta)}
                                   </span>
                                 ) : null}
-                                <input
-                                  id={`prd-st-count-${p.id}`}
-                                  type="text"
-                                  inputMode="numeric"
-                                  className="prd-st-input"
-                                  aria-label={t('stockTake.countedAria', { name: p.name })}
-                                  aria-invalid={invalid ? 'true' : undefined}
-                                  value={raw}
-                                  onChange={(e) => setRowCount(p.id, e.target.value)}
-                                />
+                                {sized ? null : (
+                                  <input
+                                    id={`prd-st-count-${p.id}`}
+                                    type="text"
+                                    inputMode="numeric"
+                                    className="prd-st-input"
+                                    aria-label={t('stockTake.countedAria', { name: p.name })}
+                                    aria-invalid={invalid ? 'true' : undefined}
+                                    value={raw}
+                                    onChange={(e) => setRowCount(p.id, e.target.value)}
+                                  />
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -394,6 +538,7 @@ export function StockTake({
             </div>
           </section>
         </div>
+        {sizeSheet}
       </>
     );
   }
@@ -408,6 +553,7 @@ export function StockTake({
           </div>
         ) : null}
 
+        {restoredBanner}
         {strip}
 
         <div className="prd-tools prd-st-tools">
@@ -416,6 +562,7 @@ export function StockTake({
             {categoriesDropdown}
             {summaryPill}
           </div>
+          {keptLine}
         </div>
 
         {shown.length === 0 ? (
@@ -423,11 +570,12 @@ export function StockTake({
         ) : (
           <ul className="prd-st-list" aria-label={t('stockTake.title')}>
             {shown.map((p) => {
+              const sized = isSizedProduct(p);
               const raw = counts[p.id] ?? String(p.stock);
-              const parsed = parsedByProduct.get(p.id) ?? null;
+              const parsed = sized ? p.stock : (parsedByProduct.get(p.id) ?? null);
               const invalid = parsed === null;
               const delta = parsed !== null ? parsed - p.stock : 0;
-              const differs = !invalid && delta !== 0;
+              const differs = sized ? changedIn(p) > 0 : !invalid && delta !== 0;
               return (
                 <li
                   key={p.id}
@@ -439,7 +587,9 @@ export function StockTake({
                     <span className="prd-st-meta">
                       <span>{t('stockTake.systemStock', { n: p.stock })}</span>
                       {p.sku ? <span className="prd-st-code">{p.sku}</span> : null}
-                      {differs ? (
+                      {sized ? (
+                        differs ? <span className="prd-pill">{t('stockTake.sizedChanged', { n: changedIn(p) })}</span> : null
+                      ) : differs ? (
                         <span className={`prd-pill ${delta > 0 ? '' : 'prd-pill-out'}`}>
                           {delta > 0 ? `+${delta}` : String(delta)}
                         </span>
@@ -447,19 +597,25 @@ export function StockTake({
                     </span>
                   </div>
                   <div className="prd-st-field">
-                    <label className="prd-st-field-l" htmlFor={`prd-st-count-${p.id}`}>
-                      {t('stockTake.counted')}
-                    </label>
-                    <input
-                      id={`prd-st-count-${p.id}`}
-                      type="text"
-                      inputMode="numeric"
-                      className="prd-st-input"
-                      aria-label={t('stockTake.countedAria', { name: p.name })}
-                      aria-invalid={invalid ? 'true' : undefined}
-                      value={raw}
-                      onChange={(e) => setRowCount(p.id, e.target.value)}
-                    />
+                    {sized ? (
+                      sizedCell(p)
+                    ) : (
+                      <>
+                        <label className="prd-st-field-l" htmlFor={`prd-st-count-${p.id}`}>
+                          {t('stockTake.counted')}
+                        </label>
+                        <input
+                          id={`prd-st-count-${p.id}`}
+                          type="text"
+                          inputMode="numeric"
+                          className="prd-st-input"
+                          aria-label={t('stockTake.countedAria', { name: p.name })}
+                          aria-invalid={invalid ? 'true' : undefined}
+                          value={raw}
+                          onChange={(e) => setRowCount(p.id, e.target.value)}
+                        />
+                      </>
+                    )}
                   </div>
                 </li>
               );
@@ -467,6 +623,7 @@ export function StockTake({
           </ul>
         )}
       </div>
+      {sizeSheet}
     </>
   );
 }

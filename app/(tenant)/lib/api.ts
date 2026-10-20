@@ -114,6 +114,7 @@ import type {
   SizeGridCell,
   ReturnSaleProductsResponse,
   StockMovement,
+  StockTakeDraft,
   StockTakeResult,
   MovementKind,
   ManualMovementKind,
@@ -505,8 +506,13 @@ export const api = {
   saveSizeGrid: (id: string, body: { axes: SizeAxis[]; cells: SizeGridCell[]; version?: string }) => put<ProductSizes>(`/api/v1/products/${id}/variants`, body),
   /** Jira GRW-574 (0123) — the branch's shelf for a stock take pass, and saving the pass in one transaction. */
   stockTakeProducts: (location: string) => get<Product[]>(`/api/v1/products/stock-take?location=${encodeURIComponent(location)}`),
-  saveStockTake: (location: string, body: { counts: { productId: string; count: number }[]; note?: string }) =>
+  saveStockTake: (location: string, body: { counts: { productId: string; count: number }[]; sizes?: { variantId: string; count: number }[]; note?: string }) =>
     post<StockTakeResult>('/api/v1/products/stock-take', { ...body, locationId: location }),
+  /** Jira GRW-602 (0134) — the numbers typed into this branch's stock take and not yet committed, kept on the server. */
+  stockTakeDraft: (location: string) => get<StockTakeDraft>(`/api/v1/products/stock-take/draft?location=${encodeURIComponent(location)}`),
+  saveStockTakeDraft: (location: string, body: { products: Record<string, string>; sizes: Record<string, string> }) =>
+    put<void>(`/api/v1/products/stock-take/draft?location=${encodeURIComponent(location)}`, body),
+  clearStockTakeDraft: (location: string) => del<void>(`/api/v1/products/stock-take/draft?location=${encodeURIComponent(location)}`),
   /**
    * Jira GRW-375 — services closest in MEANING to what was typed. 503 means
    * embeddings are not configured (prod today) or the provider is away; the

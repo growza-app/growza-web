@@ -1,0 +1,132 @@
+/*
+ * Jira GRW-602 — counting a style's sizes, in the bottom sheet the till already uses.
+ *
+ * Phone first (344px), one hand, an hour at a stretch: a row per size — the size and the recorded number on the left,
+ * the gap and a 44px field on the right — and a bar at the bottom that says how many sizes are still to count and holds
+ * Done. A size that differs from the record is marked by a border and a +/− pill, never by colour alone.
+ */
+.pcs-sheet > * {
+  flex: none;
+}
+
+.pcs-note {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+
+.pcs-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.pcs-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 3.5rem;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.pcs-row.is-diff {
+  border: 2px solid var(--accent-deep);
+  background: var(--accent-soft);
+}
+
+.pcs-row.is-invalid {
+  border: 2px solid var(--danger);
+}
+
+.pcs-size {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pcs-label {
+  font-size: var(--fs-5);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.pcs-recorded {
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+/* Two classes on purpose, as the stock take's own field: `input[type="text"] { min-width }` would hold a single class wide. */
+.pcs-input.pcs-input {
+  width: 4.75rem;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  /* 16px stops iOS zooming the field on focus. */
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.pcs-bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-top: var(--sp-3);
+  background: var(--surface);
+}
+
+.pcs-left {
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+
+/* The style's row on the shelf list: one button where the count box would be. */
+.pcs-open {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-height: 2.75rem;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font: inherit;
+  color: var(--accent-deep);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pcs-open-sub {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.pcs-kept {
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.pcs-restored {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
