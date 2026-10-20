@@ -3534,8 +3534,11 @@
         "empty": "Paste at least one code.",
         "badLines": "Each line needs a code and a size. Check line {lines}.",
         "refused": "Line {line}: {why}",
-        "done": "{created} added, {same} already there."
-      }
+        "done": "{created} added, {same} already there.",
+        "duplicate": "{code} is on lines {first} and {second}. A code can be listed once.",
+        "hintTwo": "Write the size as it is named, such as 30 / White."
+      },
+      "noSizes": "No sizes are on sale for this product, so there is nothing to add a code to."
     }
   },
   "sales": {

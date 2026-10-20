@@ -23,12 +23,16 @@ export default async function ProductCodesPage({ params }: { params: Promise<{ i
   const t = await getTranslations('products.codes');
 
   let sizesOn = false;
+  let shop = true;
   try {
-    sizesOn = (await api.me()).capabilities?.sizes === true;
+    const me = await api.me();
+    sizesOn = me.capabilities?.sizes === true;
+    // The API answers a business with a diary 404 for every one of these routes: bounce it rather than show a screen that cannot load.
+    shop = me.surface === 'shop';
   } catch {
     sizesOn = true;
   }
-  if (!sizesOn) redirect('/products');
+  if (!sizesOn || !shop) redirect('/products');
 
   try {
     const sizes = await api.productSizes(id);

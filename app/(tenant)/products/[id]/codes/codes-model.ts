@@ -24,6 +24,8 @@ export interface PasteResult {
   rows: PasteRow[];
   /** The lines that cannot be a row: with sizes, a line must say which size its code is for. */
   badLines: number[];
+  /** A code pasted twice, by the lines it is on — named in the person's own line numbers, which the server cannot know. */
+  duplicates: Array<{ code: string; lines: [number, number] }>;
 }
 
 /** The words a header row starts with, in either language of the seller panels. */
@@ -36,6 +38,8 @@ const HEADER_CODE = new Set(['code', 'fsn', 'asin', 'sku', 'seller sku', 'listin
 export function parsePaste(text: string, sized: boolean): PasteResult {
   const rows: PasteRow[] = [];
   const badLines: number[] = [];
+  const duplicates: PasteResult['duplicates'] = [];
+  const seen = new Map<string, number>();
   text.split(/\r?\n/).forEach((raw, i) => {
     const line = i + 1;
     const trimmed = raw.trim();
@@ -49,9 +53,12 @@ export function parsePaste(text: string, sized: boolean): PasteResult {
       badLines.push(line);
       return;
     }
+    const first = seen.get(code.toLowerCase());
+    if (first !== undefined) duplicates.push({ code, lines: [first, line] });
+    else seen.set(code.toLowerCase(), line);
     rows.push({ code, size: sized ? size : null, line });
   });
-  return { rows, badLines };
+  return { rows, badLines, duplicates };
 }
 
 export interface SizeRow {
@@ -70,7 +77,9 @@ export function arrange(sizes: readonly Size[], codes: readonly MarketplaceCode[
   const shown = new Set(live.map((s) => s.id));
   return {
     rows: live.map((size) => ({ size, codes: byVariant.get(size.id) ?? [] })),
-    orphans: codes.filter((c) => c.variantId !== null && !shown.has(c.variantId)),
+    // A code on a size that is retired — or on the PRODUCT, mapped before it had sizes — points at nothing a size card can show.
+    // It is kept and listed here, never dropped: it still resolves orders, so it must stay visible and removable.
+    orphans: codes.filter((c) => c.variantId === null || !shown.has(c.variantId)),
   };
 }
 

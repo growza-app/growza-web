@@ -38,7 +38,14 @@ describe('parsePaste — "code, size" lines, tidied', () => {
   });
 
   it('empty text is no rows and no bad lines', () => {
-    expect(parsePaste('  \n\n', true)).toEqual({ rows: [], badLines: [] });
+    expect(parsePaste('  \n\n', true)).toEqual({ rows: [], badLines: [], duplicates: [] });
+  });
+});
+
+describe('parsePaste — a code pasted twice is named by the lines the person can see', () => {
+  it('names the two lines, past a header and blank lines, without regard to case', () => {
+    const r = parsePaste('code, size\nFSN1, 28\n\nfsn1, 30', true);
+    expect(r.duplicates).toEqual([{ code: 'fsn1', lines: [2, 4] }]);
   });
 });
 
@@ -50,5 +57,10 @@ describe('arrange — each size with its codes, and the codes left pointing at a
     // A code on a retired size is not lost: it is listed apart so it can be repointed or removed (FR-06).
     expect(orphans.map((c) => c.code)).toEqual(['Z']);
     expect(unmappedCount(rows)).toBe(1);
+  });
+
+  it('a code on the PRODUCT, mapped before it had sizes, is listed apart too — still live, so still visible and removable', () => {
+    const { orphans } = arrange([size('a', '28')], [code('1', 'OLD', null), code('2', 'NEW', 'a')]);
+    expect(orphans.map((c) => c.code)).toEqual(['OLD']);
   });
 });
