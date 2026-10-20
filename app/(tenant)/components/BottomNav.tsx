@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
-import { useLive } from './SessionProvider';
+import { useAreas, useLive } from './SessionProvider';
 import { homeCopy } from '../lib/home-copy';
 import type { Lang } from '../lib/lang';
 import { useUnreadNotifications } from './useUnreadNotifications';
@@ -14,6 +14,8 @@ import {
   IconNavAttendance,
   IconNavBookings,
   IconNavClients,
+  IconNavOrders,
+  IconNavStock,
   IconRupee,
   IconNavHome,
   IconPlus,
@@ -77,6 +79,8 @@ export function BottomNav({
   const stylist = role === 'staff';
   // Jira GRW-556 — until the business is live, the bar is the setup: Home, the menu, the people, the settings.
   const live = useLive();
+  // Jira GRW-608 — a shop's bar is Home, Orders, Stock, Clients and the bell; a salon's is unchanged.
+  const areas = useAreas();
 
   // Jira GRW-300 — "More" moved into the hamburger drawer (Sidebar, doubling
   // as the mobile nav — see MobileChrome/Sidebar): it was the 6th element
@@ -88,6 +92,8 @@ export function BottomNav({
         { href: '/', label: t.nav.home, icon: <IconNavHome /> },
         { href: '/services', label: t.nav.services, icon: <IconServices /> },
         { href: '/providers', label: t.nav.staff, icon: <IconStaff /> },
+        // Jira GRW-608 — for a shop, counting the shelf is setting up. Hidden for every other business.
+        { href: '/stock', label: t.nav.stock, icon: <IconNavStock /> },
         { href: '/settings', label: t.nav.settings, icon: <IconSettings /> },
       ]
     : stylist
@@ -100,11 +106,14 @@ export function BottomNav({
     : [
         { href: '/', label: t.nav.home, icon: <IconNavHome /> },
         { href: '/appointments', label: t.nav.bookings, icon: <IconNavBookings /> },
+        // Jira GRW-608 — offered only to a business that runs the shop's screens; `canSee` hides them for every other.
+        { href: '/orders', label: t.nav.orders, icon: <IconNavOrders /> },
+        { href: '/stock', label: t.nav.stock, icon: <IconNavStock /> },
         { href: '/customers', label: t.nav.clients, icon: <IconNavClients /> },
         { href: '/notifications', label: t.nav.notifications, icon: <IconBell /> },
       ];
 
-  const visible = visibleItems(items, role, reportTabs, live);
+  const visible = visibleItems(items, role, reportTabs, live, areas);
   // Owner, 2026-10-15 — the plus is Home's. Elsewhere it sat on the corner of every list and form, so it is not drawn
   // there at all; New booking is one tap from Home, and the screens that need it have their own button.
   const centre = !stylist && onCentre && pathname === '/';

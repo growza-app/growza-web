@@ -114,7 +114,7 @@ describe('Tenant Home v2 redesign', () => {
     expect(owner).toContain('href="/products/sell"');
     expect(productsList).toContain('href="/products/sell?from=products"');
     expect(sellPage).toContain("await guardScreen('/products/sell');");
-    expect(sellPage).toContain("await guardLive('/appointments/new');");
+    expect(sellPage).toContain("await guardLive('/products/sell');");
     expect(sellClient).toContain('productsOnly');
     expect(payFlow).toContain('<DeskProductCategories');
     expect(deskGrid).toContain("useState<'services' | 'packages' | 'products'>(productsOnly ? 'products' : (initialTab ?? 'services'))");

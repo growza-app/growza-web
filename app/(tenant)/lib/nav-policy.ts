@@ -15,6 +15,7 @@
  */
 import { canSee as roleCanSee, visibleItems as roleVisibleItems, type MemberRole } from '@growza-app/shared';
 import { isSetupDestination } from './go-live';
+import { areaAllows, isShopRoute, type Areas } from './areas';
 
 export {
   canSeeReports,
@@ -47,9 +48,26 @@ export {
 const ALWAYS_OPEN: ReadonlySet<string> = new Set(['/help']);
 
 
-/** May this role see this destination — and, until the business is live, is it one of the setup ones? */
-export function canSee(href: string, role?: MemberRole | null, reportTabs?: readonly string[], live = true): boolean {
+/**
+ * May this role see this destination — and, until the business is live, is it one of the setup ones?
+ *
+ * Jira GRW-608 — and has this business that AREA? `areas` is the fifth question and the only new one: a business with
+ * no diary is not offered the diary's screens, one with no menu is not offered the menu, and a shop is offered Orders
+ * and Stock. Absent means the salon's full set, so every existing caller is unchanged until it passes one.
+ */
+export function canSee(href: string, role?: MemberRole | null, reportTabs?: readonly string[], live = true, areas?: Areas): boolean {
   if (ALWAYS_OPEN.has(href)) return true;
+  if (!areaAllows(href, areas)) return false;
+  /*
+   * The shop's own screens (Jira GRW-608). Neither is a route @growza-app/shared lists for any role, so the answer is
+   * given here: the owner and manager open both (the answer for the shelf), the front desk opens Orders — it takes them
+   * — and no one else opens either. `areaAllows` above already refused a business that is not a shop.
+   */
+  if (isShopRoute(href)) {
+    if (!(live || isSetupDestination(href))) return false;
+    if (role === 'receptionist') return href.startsWith('/orders');
+    return roleCanSee('/products', role, reportTabs?.filter((t) => t !== 'sales'));
+  }
   // The `sales` entry of `reportTabs` is the owner opening the Sales register to a receptionist; it is not a Reports
   // tab, so it must not make Reports itself appear (and, for everything else, is simply left out of the list).
   const tabs = reportTabs?.filter((t) => t !== 'sales');
@@ -74,6 +92,6 @@ export function canSee(href: string, role?: MemberRole | null, reportTabs?: read
   return (live || isSetupDestination(href)) && roleCanSee(href, role, tabs);
 }
 
-export function visibleItems<T extends { href: string }>(items: readonly T[], role?: MemberRole | null, reportTabs?: readonly string[], live = true): T[] {
-  return items.filter((item) => canSee(item.href, role, reportTabs, live));
+export function visibleItems<T extends { href: string }>(items: readonly T[], role?: MemberRole | null, reportTabs?: readonly string[], live = true, areas?: Areas): T[] {
+  return items.filter((item) => canSee(item.href, role, reportTabs, live, areas));
 }

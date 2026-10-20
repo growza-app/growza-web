@@ -1,3 +1,4 @@
+import { areasOf, DIARY_AREAS, type Areas } from '../lib/areas';
 import { screenTitle } from '../lib/page-title';
 import type { ReactNode } from 'react';
 import { getTranslations } from 'next-intl/server';
@@ -39,8 +40,11 @@ export default async function MorePage() {
   let reportTabs: string[] | undefined;
   // Jira GRW-556 — false while the business is being set up; the menu then lists the setup screens only.
   let live = true;
+  // Jira GRW-608 — which areas this business has; the salon's full set when the API cannot say.
+  let areas: Areas = DIARY_AREAS;
   try {
     const me = await api.me();
+    areas = areasOf(me);
     labels = me.labels;
     role = (me.member?.role as MemberRole | undefined) ?? null;
     whatsappLive = me.whatsapp?.booking ?? false;
@@ -104,7 +108,7 @@ export default async function MorePage() {
       <PageHeader title={tn('moreTitle')} />
       <div className="page-body">
         <div className="menu-list">
-          {visibleItems(items, role, reportTabs, live).map((item) => (
+          {visibleItems(items, role, reportTabs, live, areas).map((item) => (
             <a className="menu-row" key={item.href} href={item.href}>
               {item.icon}
               {item.label}

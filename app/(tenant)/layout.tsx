@@ -1,3 +1,4 @@
+import { areasOf, DIARY_AREAS, type Areas } from './lib/areas';
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
@@ -157,6 +158,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let whatsappDemo = false;
   /** Owner, 2026-10-14 — `me.capabilities.products`; only an explicit false takes the shelf off the nav. */
   let products = true;
+  /** Jira GRW-608 — which areas of the app this business has; the salon's full set until `/me` says otherwise. */
+  let areas: Areas = DIARY_AREAS;
   /** Jira GRW-66 · GRW-157 — absent means owner (BR-03): a degraded session must not hide the product from the person who owns it. */
   let role: MemberRole | null = null;
   /**
@@ -212,6 +215,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     whatsappLive = me.whatsapp?.booking ?? false;
     whatsappDemo = me.whatsapp?.demo ?? false;
     products = me.capabilities?.products !== false;
+    areas = areasOf(me);
     pendingAttendance = me.attendance?.pending ?? 0;
     selfCheckIn = me.attendance?.selfCheckIn ?? false;
     role = (me.member?.role as MemberRole | undefined) ?? null;
@@ -313,6 +317,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             live,
             writable,
             walkIn,
+            areas,
             whatsappLive,
             pendingAttendance,
             selfCheckIn,

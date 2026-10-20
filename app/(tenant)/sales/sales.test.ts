@@ -263,7 +263,7 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
   });
 
   it('Jira GRW-576 — includes product-only sales on /sales and renders them with zero servicesMinor', () => {
-    const salesPage = here('./page.tsx');
+    const salesPage = here('./SalesScreen.tsx');
     const summary = here('../components/BookingSummary.tsx');
     expect(salesPage).toContain('{ includeSales: true }');
     expect(summary).toContain('serviceLegs.length > 0');
@@ -403,7 +403,7 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
 
   it('paginates auto-compact table after PAGE_SIZE (10) rows, places Export CSV on top-right of table, and shows branch picker on Record payment at all widths', () => {
     const client = here('./SalesClient.tsx');
-    const page = here('./page.tsx');
+    const page = here('./SalesScreen.tsx');
     const css = here('../styles/99-sales.css');
     const hbpCss = here('../styles/94-header-branch-picker.css');
 

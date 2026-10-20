@@ -404,6 +404,12 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
      * and `canSee('/products/sell', …)` is what answers for it.
      */
     '/products/sell': /await guardScreen\('\/products\/sell'\);/,
+    // Jira GRW-608 — the shelf and the register each have two addresses over one implementation: the page names the
+    // address it is guarded under, and the screen (`*Screen.tsx`) is what calls `guardScreen(guard)` (pinned in areas.test.ts).
+    '/products': /<ProductsScreen[^>]*guard="\/products"/,
+    '/stock': /<ProductsScreen[^>]*guard="\/stock"/,
+    '/sales': /<SalesScreen[^>]*guard="\/sales"/,
+    '/orders': /<SalesScreen[^>]*guard="\/orders"/,
     // `me.support` as a whole since the page lists options (each its own number): it reads the contacts
     // off /me, which every role may call, and nothing role-scoped.
     '/help': /const me = await api\.me\(\);[\s\S]*support = me\.support;/,

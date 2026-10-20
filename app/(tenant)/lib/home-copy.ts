@@ -390,6 +390,9 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       home: S('Home', 'होम'),
       bookings: hi ? 'बुकिंग' : (labels.appointments ?? copy.nav.appointments),
       sales: S('Sales', 'बिक्री'),
+      /** Jira GRW-608 — the shop's two screens. The vertical's own word in English; Hindi uses the generic one (Jira GRW-315). */
+      orders: hi ? 'ऑर्डर' : (labels.orders ?? 'Orders'),
+      stock: hi ? 'स्टॉक' : (labels.stock ?? 'Stock'),
       schedule: S('My schedule', 'मेरा काम'),
       clients: hi ? 'ग्राहक' : (labels.customers ?? copy.nav.customers),
       staff: hi ? 'स्टाफ़' : (labels.providers ?? copy.nav.staff),

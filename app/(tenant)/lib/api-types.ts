@@ -55,6 +55,8 @@ export interface Me {
   /** Jira GRW-556 (follow-up) — a payment the provider recorded in the last two hours; Home says it arrived. Owner only. */
   paymentReceived?: { amountMinor: number; currency: string; paidOn: string } | null;
   labels: Record<string, string>;
+  /** Jira GRW-608 — which set of screens this business runs, from its vertical: `diary` (a salon's) or `shop`. Absent reads as the diary. */
+  surface?: 'diary' | 'shop';
   /**
    * Jira GRW-66 · GRW-157 — who is signed in.
    *
@@ -150,6 +152,9 @@ export interface Me {
     staffLeaderboard: boolean;
     /** Owner, 2026-10-14 — `catalog.products`: whether this business sells things over the counter. Absent reads as yes. */
     products?: boolean;
+    /** Jira GRW-607 — whether the business takes bookings, and whether it sells services. Absent reads as yes: only an explicit false takes a diary area away. */
+    bookings?: boolean;
+    services?: boolean;
     providerSelection: boolean;
     maxProviders: number;
   };
