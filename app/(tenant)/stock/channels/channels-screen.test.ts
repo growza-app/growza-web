@@ -35,6 +35,12 @@ describe('a comparison that is not there is absent, a quiet channel is a true ze
     expect(client).toContain('pct === null');
   });
 
+  it('no change at all is said as "the same", not "up 0%"; and the trend’s dates are the owner’s language, a week named as one', () => {
+    expect(client).toContain("pct === 0 ? t('same')");
+    expect(client).toContain("t('weekOf'");
+    expect(client).not.toContain('{b.label}');
+  });
+
   it('every channel the server lists is a card, whatever it sold — the server decides which exist', () => {
     expect(client).toContain('data.channels.map((c) =>');
     expect(client).not.toMatch(/\.filter\(\(c\) =>/);

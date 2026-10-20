@@ -3672,8 +3672,8 @@
       "billed": "इस अवधि में बिल",
       "ordersLine": "{orders} ऑर्डर",
       "average": "{amount} प्रति ऑर्डर",
-      "cameBack": "{count} ऑर्डर वापस आए",
-      "cancelled": "{count} ऑर्डर रद्द हुए",
+      "cameBack": "{count, plural, one {# ऑर्डर वापस आया} other {# ऑर्डर वापस आए}}",
+      "cancelled": "{count, plural, one {# ऑर्डर रद्द हुआ} other {# ऑर्डर रद्द हुए}}",
       "counter": "काउंटर",
       "flipkart": "फ्लिपकार्ट",
       "amazon": "अमेज़न",
@@ -3681,7 +3681,9 @@
       "down": "पिछली अवधि से {pct}% नीचे",
       "noPrevious": "पिछली अवधि में मिलाने को कोई बिक्री नहीं।",
       "nothingBefore": "पिछली अवधि में यहाँ कुछ नहीं बिका।",
-      "trendTitle": "पूरी अवधि में"
+      "trendTitle": "पूरी अवधि में",
+      "same": "पिछली अवधि जितना ही",
+      "weekOf": "{date} वाला सप्ताह"
     }
   },
   "sales": {

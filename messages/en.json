@@ -3681,7 +3681,9 @@
       "down": "Down {pct}% on the period before",
       "noPrevious": "No sales in the period before to compare with.",
       "nothingBefore": "Nothing was sold here in the period before.",
-      "trendTitle": "Across the period"
+      "trendTitle": "Across the period",
+      "same": "Same as the period before",
+      "weekOf": "Week of {date}"
     }
   },
   "sales": {

@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { api } from '../../lib/api';
 import { localiseApiMessage } from '../../lib/api-messages';
 import type { ByChannelPage, ChannelRow, SellersRange } from '../../lib/api-types';
-import { formatMoney } from '../../lib/format';
+import { formatMoney, intlLocale } from '../../lib/format';
 import { useBranch } from '../../components/BranchProvider';
 import { useSession } from '../../components/SessionProvider';
 
@@ -112,7 +112,7 @@ function Compare({ previous, pct }: { previous: boolean; pct: number | null }) {
   const t = useTranslations('products.channels');
   if (!previous) return <p className="srp-hint">{t('noPrevious')}</p>;
   if (pct === null) return <p className="srp-hint">{t('nothingBefore')}</p>;
-  return <p className="srp-hint">{pct >= 0 ? t('up', { pct: Math.abs(pct) }) : t('down', { pct: Math.abs(pct) })}</p>;
+  return <p className="srp-hint">{pct === 0 ? t('same') : pct > 0 ? t('up', { pct }) : t('down', { pct: Math.abs(pct) })}</p>;
 }
 
 function Card({ row, name, money, hasPrevious }: { row: ChannelRow; name: string; money: (m: string | number | null) => string; hasPrevious: boolean }) {
@@ -138,6 +138,16 @@ function Card({ row, name, money, hasPrevious }: { row: ChannelRow; name: string
 /** The same numbers twice: bars to see the shape, and a list to read each one. */
 function Trend({ data, word, money }: { data: ByChannelPage; word: (c: string) => string; money: (m: string | number | null) => string }) {
   const t = useTranslations('products.channels');
+  const locale = useLocale();
+  const intl = intlLocale(locale);
+  // The bucket's own calendar day, read from the ISO text (its offset is the shop's), so no browser timezone moves it a day.
+  const at = (iso: string) => new Date(`${iso.slice(0, 10)}T12:00:00Z`);
+  const bucketWord = (startISO: string, endISO: string): string => {
+    const days = Math.round((at(endISO).getTime() - at(startISO).getTime()) / 86_400_000);
+    if (days <= 1) return new Intl.DateTimeFormat(intl, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(at(startISO));
+    if (days <= 8) return t('weekOf', { date: new Intl.DateTimeFormat(intl, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(at(startISO)) });
+    return new Intl.DateTimeFormat(intl, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(at(startISO));
+  };
   const totals = data.trend.map((b) => Object.values(b.billedMinor).reduce((a, v) => a + Number(v), 0));
   const max = Math.max(1, ...totals);
   if (data.trend.length === 0) return null;
@@ -152,7 +162,7 @@ function Trend({ data, word, money }: { data: ByChannelPage; word: (c: string) =
       <ul className="ch-trend">
         {data.trend.map((b, i) => (
           <li key={b.startISO}>
-            <span className="srp-hint">{b.label}</span>
+            <span className="srp-hint">{bucketWord(b.startISO, b.endExclusiveISO)}</span>
             <span className="ch-trend-sum">{money(totals[i]!)}</span>
             <span className="sr-only">
               {Object.entries(b.billedMinor)
