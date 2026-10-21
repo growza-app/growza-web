@@ -88,7 +88,7 @@ describe('the screen', () => {
   });
 
   it('shows Save only when the number changed, and never sends one the browser can already tell is wrong', () => {
-    expect(stock).toContain('const changed = draft.trim() !== String(conn.stock.buffer)');
+    expect(stock).toContain('const changed = parseBuffer(draft) !== conn.stock.buffer');
     expect(stock).toMatch(/\{changed \? \(/);
     expect(stock).toContain('parseBuffer(draft)');
     expect(stock).toContain("setProblem('invalid')");
@@ -105,8 +105,18 @@ describe('the screen', () => {
     expect(stock).toContain("t('bufferReadOnly'");
   });
 
-  it('sits under the keys, only while their form is closed, and reloads the status after a save', () => {
-    expect(keys).toContain('{!open ? <ChannelStock key={conn.channel} conn={conn} name={name} onChanged={() => load(true)} /> : null}');
+  it('sits under the keys and stays mounted while their form is open, so a number typed and not saved is not thrown away; reloads after a save', () => {
+    expect(keys).toContain('<ChannelStock key={conn.channel} conn={conn} name={name} onChanged={() => load(true)} />');
+    expect(keys).not.toContain('{!open ? <ChannelStock');
+  });
+
+  it('follows the server: the field is re-set from what is saved, and "01" over a saved 1 is not a change', () => {
+    expect(stock).toContain('useEffect(() => setDraft(String(conn.stock.buffer)), [conn.stock.buffer]);');
+    expect(stock).toContain('setDraft(String(n));');
+  });
+
+  it('calls only the server’s 400 "not a number in range"; a refused role or a dropped session is a failed save, not a wrong number', () => {
+    expect(stock).toContain("e instanceof ApiError && e.status === 400 ? 'invalid' : 'failed'");
   });
 
   it('a business with several shops that has not said which one sells here is told in our words, pointing at the row above', () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { api, ApiError } from '../../lib/api';
 import type { ChannelConnection } from '../../lib/api-types';
@@ -40,7 +40,11 @@ export function ChannelStock({ conn, name, onChanged }: { conn: ChannelConnectio
         nothing: t('stockNone', { channel: name }),
       }[primary.key];
 
-  const changed = draft.trim() !== String(conn.stock.buffer);
+  // What the server holds is the truth: when it changes (our own save read back, or another device) the field follows it.
+  useEffect(() => setDraft(String(conn.stock.buffer)), [conn.stock.buffer]);
+
+  // Compared as numbers, so "01" typed over a saved 1 is not a change, and text that is not a number always is (Save then says why).
+  const changed = parseBuffer(draft) !== conn.stock.buffer;
 
   const save = async () => {
     if (inFlight.current) return;
@@ -55,10 +59,13 @@ export function ChannelStock({ conn, name, onChanged }: { conn: ChannelConnectio
     setSaved(false);
     try {
       await api.setStockBuffer(conn.channel, n);
+      setDraft(String(n));
       setSaved(true);
       onChanged();
     } catch (e) {
-      setProblem(e instanceof ApiError && e.status < 500 ? 'invalid' : 'failed');
+      // "Not a number in range" is the server's 400 and nothing else: a refused role, a missing screen or a dropped session is not the
+      // owner's number being wrong, and saying so would send them looking for a mistake that is not there.
+      setProblem(e instanceof ApiError && e.status === 400 ? 'invalid' : 'failed');
     } finally {
       inFlight.current = false;
       setBusy(false);

@@ -329,7 +329,8 @@ export function ChannelKeys({ channel, name }: { channel: Channel; name: string 
         </>
       )}
 
-      {!open ? <ChannelStock key={conn.channel} conn={conn} name={name} onChanged={() => load(true)} /> : null}
+      {/* Always mounted: opening the keys form must not throw away a number typed and not yet saved. */}
+      <ChannelStock key={conn.channel} conn={conn} name={name} onChanged={() => load(true)} />
 
       <p className={`stc-live ${checked === 'working' || saved ? 'stc-note' : 'stc-hint'}`} role="status" aria-live="polite">
         {live}
