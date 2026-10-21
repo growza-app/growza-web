@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/api';
-import type { ShopHome as ShopHomeData } from '../../lib/api-types';
+import type { AttendanceRegister, ShopHome as ShopHomeData } from '../../lib/api-types';
 import { homeCopy } from '../../lib/home-copy';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import type { Lang } from '../../lib/lang';
@@ -10,6 +10,7 @@ import { useBranch } from '../BranchProvider';
 import { useAreas } from '../SessionProvider';
 import { IconNavClients, IconNavOrders, IconNavStock } from '../icons';
 import { Card, CardError, HomeHeader, QuickTiles, rupees } from './parts';
+import { CheckInCard } from './CheckInCard';
 
 /**
  * Jira GRW-609 — a shop's Home: the money, the orders waiting to go out, and the sizes running out before the season.
@@ -34,6 +35,8 @@ export function ShopHome({
   role,
   reportTabs,
   initial,
+  timezone,
+  attendanceMonth = null,
 }: {
   lang: Lang;
   labels: Record<string, string>;
@@ -45,6 +48,9 @@ export function ShopHome({
   reportTabs?: string[];
   /** The whole-business read the server made; null when it failed. */
   initial: ShopHomeData | null;
+  timezone?: string;
+  /** Jira GRW-76 — a staff-kind role holder's own month, for the check-in card; null for everyone else. */
+  attendanceMonth?: AttendanceRegister | null;
 }) {
   const t = homeCopy(lang, labels);
   const s = t.shop;
@@ -103,6 +109,8 @@ export function ShopHome({
         dateLabel={dateLabel}
       />
       <div className="page-body hm-page shp-page" aria-busy={loading || undefined}>
+        {/* Jira GRW-76 — a staff-kind role holder's own "I'm in", first, as a stylist's is; the card draws only where their branch offers it. */}
+        {attendanceMonth && timezone ? <CheckInCard today={attendanceMonth.rows.find((r) => r.onDate === attendanceMonth.today) ?? null} timezone={timezone} /> : null}
         {failed || !data ? (
           <Card>
             <CardError t={t} onRetry={() => load(branch)} />

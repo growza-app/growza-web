@@ -190,3 +190,17 @@ describe('Jira GRW-76 review — the screen-level rule reaches every control, an
     expect(gridCanSee('/reports?range=week', { reports: 'none' })).toBe(false);
   });
 });
+
+describe('Jira GRW-76 — a shop has an Attendance screen, so its Staff role has something to open', () => {
+  const read = (p: string) => readFileSync(join(__dirname, '..', p), 'utf8');
+  it('Attendance and the check-in setting are open to a shop by address, and the Staff role (Attendance See) is offered Attendance', () => {
+    const SHOPAREAS = { bookings: false, services: false, shop: true };
+    expect(canSee('/attendance', 'owner', undefined, true, SHOPAREAS)).toBe(true);
+    expect(canSee('/attendance', 'staff', undefined, true, { ...SHOPAREAS, pages: { attendance: 'view' } })).toBe(true);
+    expect(canSee('/attendance', 'staff', undefined, true, { ...SHOPAREAS, pages: { clients: 'manage' } })).toBe(false);
+  });
+  it('a staff-kind role holder’s Home carries the check-in card, fed with their own month', () => {
+    expect(read('page.tsx')).toContain("kind === 'stylist' ? soft(api.attendance(today.startOf('month').toISODate()!, today.toISODate()!))");
+    expect(read('components/home/ShopHome.tsx')).toContain('<CheckInCard today=');
+  });
+});

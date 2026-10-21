@@ -44,12 +44,14 @@ describe('AC-01 — a shop sees a shop’s app', () => {
   it('the owner is offered Home, Orders, Stock, Clients, Reports and Settings — and Bookings, Free times and Services are absent', () => {
     const shop = offered(SHOP);
     for (const must of ['/', '/orders', '/stock', '/customers', '/reports', '/settings']) expect(shop, must).toContain(must);
-    for (const gone of ['/appointments', '/appointments/new', '/availability', '/services', '/packages', '/offers', '/sales', '/providers', '/attendance']) expect(shop, gone).not.toContain(gone);
+    for (const gone of ['/appointments', '/appointments/new', '/availability', '/services', '/packages', '/offers', '/sales', '/providers']) expect(shop, gone).not.toContain(gone);
+    // Jira GRW-76 — Attendance is a shop's: its staff are the role that is "only for attendance".
+    expect(shop).toContain('/attendance');
   });
 
   it('the pinned route set per vertical: salon and shop', () => {
     expect(offered(DIARY_AREAS)).toEqual(['/', '/appointments', '/appointments/new', '/availability', '/sales', '/customers', '/services', '/packages', '/products', '/products/sell', '/offers', '/providers', '/attendance', '/reports', '/notifications', '/try-whatsapp', '/settings', '/more', '/help']);
-    expect(offered(SHOP)).toEqual(['/', '/customers', '/products', '/products/sell', '/reports', '/notifications', '/try-whatsapp', '/settings', '/more', '/help', '/orders', '/stock']);
+    expect(offered(SHOP)).toEqual(['/', '/customers', '/products', '/products/sell', '/attendance', '/reports', '/notifications', '/try-whatsapp', '/settings', '/more', '/help', '/orders', '/stock']);
   });
 
   it('the shelf’s own screens stay open to a shop by address (its Stock links into them), though only Stock is offered', () => {

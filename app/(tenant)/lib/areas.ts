@@ -62,11 +62,14 @@ const SERVICE_ROUTES = ['/services', '/packages', '/offers'] as const;
 /** The shop's own screens. */
 const SHOP_ROUTES = ['/orders', '/stock'] as const;
 /**
- * What a shop does NOT have beside the diary and the menu: the sales register (Orders is its register), and the staff
- * rota and attendance, with the setting that lets staff mark themselves in (it keeps no chairs and no stylists'
- * calendars). Its nav is short on purpose.
+ * What a shop does NOT have beside the diary and the menu: the sales register (Orders is its register) and the staff roster's wizard (a shop's staff are
+ * added from Settings › Roles). Its nav is short on purpose.
+ *
+ * Jira GRW-76 (owner's decision, 2026-10-21) — Attendance and Settings › Location check-in ARE a shop's now. They were listed here because the register was
+ * thought of as a stylist's rota, but a shop's staff are the one role the owner said is "only for attendance": without these screens the Staff role could
+ * open nothing but Home. The register, a person's own month, and the branch pin that lets them check themselves in are generic; nothing in them is a diary.
  */
-const NOT_IN_A_SHOP = ['/sales', '/providers', '/attendance', '/settings/check-in'] as const;
+const NOT_IN_A_SHOP = ['/sales', '/providers'] as const;
 
 /** Jira GRW-72 — Settings screens that exist only for a shop. (Not `SHOP_ROUTES`: the role rules read that list as "the shop's own work".) */
 const SHOP_SETTINGS = ['/settings/roles'] as const;

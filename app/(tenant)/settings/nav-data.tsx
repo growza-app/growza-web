@@ -128,7 +128,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       { href: '/settings/booking', key: 'bookingSettings', diaryOnly: true, icon: IconCalendarPlus },
       { href: '/settings/notifications', key: 'notifications', icon: IconBell, whatsappOnly: true },
       // Jira GRW-563 — where this branch is, for a stylist's "I'm in" from her phone.
-      { href: '/settings/check-in', key: 'checkIn', diaryOnly: true, icon: IconMapPin },
+      { href: '/settings/check-in', key: 'checkIn', icon: IconMapPin },
       /*
        * Jira GRW-582 — the details that turn a receipt into a tax invoice.
        *

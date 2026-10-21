@@ -19,7 +19,7 @@ describe('FR-05, FR-06 — chosen with the other Homes, before any of the diary�
     expect(at).toBeGreaterThan(page.indexOf('<NotLiveHome'));
     expect(at).toBeLessThan(page.indexOf("if (kind === 'stylist')"));
     expect(at).toBeLessThan(page.indexOf("api.home('today')"));
-    expect(page).toMatch(/if \(areasOf\(me\)\.shop && \(kind !== 'stylist' \|\| areasOf\(me\)\.pages\)\) \{\n\s*const initial = await soft\(api\.shopHome\(\)\);/);
+    expect(page).toMatch(/if \(areasOf\(me\)\.shop && \(kind !== 'stylist' \|\| areasOf\(me\)\.pages\)\) \{\n[^\n]*\n\s*const \[initial, attendanceMonth\] = await Promise\.all\(\[\n\s*soft\(api\.shopHome\(\)\),/);
   });
 
   it('the one read it makes is the shop’s own; none of the diary’s is imported', () => {
