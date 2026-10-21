@@ -1476,6 +1476,30 @@ export interface SetChannelBranchResult {
   changed: boolean;
 }
 
+/**
+ * Jira GRW-621 — a marketplace's seller keys, as the screen may know them: which fields are SET and what the last Check said. Never a
+ * value — the API cannot read them back, so neither can this.
+ */
+export interface ChannelConnection {
+  channel: 'flipkart' | 'amazon';
+  /** False until the server has an encryption key: then keys cannot be kept at all, and the form is not offered. */
+  keysSetUp: boolean;
+  saved: boolean;
+  savedAt: string | null;
+  fields: Array<{ key: string; label: string; secret: boolean; set: boolean }>;
+  /** What the marketplace said at the last Check; null = never checked, or the keys were replaced since. */
+  lastCheck: { at: string; ok: boolean; reason: 'rejected' | 'unreachable' | null } | null;
+  lastUsedAt: string | null;
+  /** Whether tapping Check would ask the marketplace anything. False until that marketplace's adapter exists. */
+  canCheck: boolean;
+}
+export type ChannelCheckResult = { result: 'working' | 'rejected' | 'unreachable' | 'unavailable'; detail: string };
+export interface SaveChannelKeysResult {
+  saved: true;
+  replaced: boolean;
+  connection: Omit<ChannelConnection, 'canCheck'>;
+}
+
 /** Jira GRW-631 — what is on the shelf, size by size, and what it is worth at cost. */
 export interface StockReportSize {
   id: string;

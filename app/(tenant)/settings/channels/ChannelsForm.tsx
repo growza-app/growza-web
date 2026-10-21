@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { api, ApiError } from '../../lib/api';
 import type { ChannelBranch, ChannelBranches } from '../../lib/api-types';
 import { useWritable } from '../../components/SessionProvider';
+import { ChannelKeys } from './ChannelKeys';
 
 /**
  * Jira GRW-641 — one row per marketplace: "Flipkart sells from [shop]".
@@ -84,6 +85,8 @@ export function ChannelsForm({ initial }: { initial: ChannelBranches }) {
                 {errors[row.channel]}
               </p>
             ) : null}
+            {/* Jira GRW-621 — the keys to this marketplace, beside which shop it sells from. */}
+            <ChannelKeys channel={row.channel} name={word(row.channel)} />
           </li>
         ))}
       </ul>

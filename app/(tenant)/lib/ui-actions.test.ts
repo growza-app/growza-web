@@ -266,6 +266,9 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   '/settings': [
     // Jira GRW-641 — which branch a marketplace sells from, on Settings › Online selling (a shop's, owner and manager's).
     'PUT /api/v1/channels/:id/branch',
+    // Jira GRW-621 — a marketplace's seller keys, on the same screen and under the same gate (owner and manager).
+    'PUT /api/v1/channels/:id/credentials',
+    'POST /api/v1/channels/:id/check',
     'POST /api/v1/billing/autopay',
     'POST /api/v1/team/invites',
     'PATCH /api/v1/team/members/:userId',

@@ -65,6 +65,9 @@ import type {
   OrderDetail,
   ChannelBranches,
   SetChannelBranchResult,
+  ChannelConnection,
+  ChannelCheckResult,
+  SaveChannelKeysResult,
   HeldPage,
   StockReportPage,
   ByChannelPage,
@@ -695,6 +698,10 @@ export const api = {
   /** Jira GRW-641 — which branch each marketplace sells from, and the branches it could. */
   channelBranches: () => get<ChannelBranches>('/api/v1/channels'),
   setChannelBranch: (channel: 'flipkart' | 'amazon', locationId: string) => put<SetChannelBranchResult>(`/api/v1/channels/${channel}/branch`, { locationId }),
+  // Jira GRW-621 — a marketplace's seller keys. Write-only: nothing here can read a value back.
+  channelKeys: (channel: 'flipkart' | 'amazon') => get<ChannelConnection>(`/api/v1/channels/${channel}/status`),
+  saveChannelKeys: (channel: 'flipkart' | 'amazon', fields: Record<string, string>) => put<SaveChannelKeysResult>(`/api/v1/channels/${channel}/credentials`, { fields }),
+  checkChannelKeys: (channel: 'flipkart' | 'amazon') => post<ChannelCheckResult>(`/api/v1/channels/${channel}/check`, {}),
   /** Jira GRW-637 — the refunds recorded on online orders, one row per refund; a record, never an instruction. */
   refundsReport: (q: { range: SellersRange; channel?: string; location?: string; page?: number; pageSize?: number }) => {
     const p = new URLSearchParams(sellersParams({ range: q.range, location: q.location, page: q.page, pageSize: q.pageSize }));

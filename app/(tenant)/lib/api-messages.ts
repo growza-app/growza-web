@@ -102,6 +102,9 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That is not this branch’s list of categories': 'यह इस ब्रांच की श्रेणियों की सूची नहीं है',
   // Release review, 2026-10-17 — sentences the product, transfer and till routes can send.
   'Choose a branch': 'एक ब्रांच चुनें',
+  // Jira GRW-621 — a marketplace's seller keys.
+  'Paste the keys': 'चाबियाँ चिपकाएँ',
+  'Saving keys is not set up on this server yet.': 'इस सर्वर पर चाबियाँ सहेजना अभी सेट नहीं है।',
   'A count goes with a recount only': 'गिनती सिर्फ़ दोबारा गिनने के साथ दी जा सकती है',
   'That amount is too large': 'यह रकम बहुत बड़ी है',
   'Description must be text': 'विवरण लिखा हुआ होना चाहिए',
