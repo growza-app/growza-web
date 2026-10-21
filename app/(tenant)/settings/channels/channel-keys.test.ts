@@ -108,9 +108,11 @@ describe('the state line says what is true', () => {
     expect(keys).toContain("{!conn.keysSetUp ? <p className=\"stc-warn\">{t('keysNotSetUp')}</p> : null}");
   });
 
-  it('says plainly when checking is not open yet — in a line, with no button to tap into a dead end', () => {
-    expect(keys).toContain('conn.saved && canCheck ?');
-    expect(keys).toContain('checkLine.unavailable');
+  it('Check is offered whenever keys are saved; with no adapter built a tap says plainly that checking opens later, instead of pretending', () => {
+    expect(keys).toContain('{conn.saved ? (');
+    expect(keys).not.toMatch(/[&|]{2} \(?(conn\.)?canCheck/);
+    expect(keys).toContain("unavailable: t('keysCheckUnavailable'");
+    expect(keys).toContain("if (res.result !== 'unavailable') load(true);");
   });
 
   it('a 503 on save means the server lost its key since the page loaded: the form closes and says so', () => {

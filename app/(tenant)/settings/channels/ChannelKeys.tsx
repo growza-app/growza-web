@@ -189,8 +189,6 @@ export function ChannelKeys({ channel, name }: { channel: Channel; name: string 
   const last = conn.lastCheck;
   const when = last ? new Date(last.at).toLocaleString(locale, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '';
   const mayEdit = mayEditKeys(conn, writable);
-  // Check opens when the marketplace is connected; until then there is nothing for a tap to ask, so the owner is told instead of invited.
-  const canCheck = conn.canCheck;
 
   const checkLine: Record<ChannelCheckResult['result'], string> = {
     working: t('keysCheckWorking', { channel: name }),
@@ -219,7 +217,7 @@ export function ChannelKeys({ channel, name }: { channel: Channel; name: string 
     }
   };
   // One live region, always mounted: a region that appears already holding its text is often not announced.
-  const live = saved ? t('keysSavedNote') : checked ? checkLine[checked] : canCheck || !conn.saved ? '' : checkLine.unavailable;
+  const live = saved ? t('keysSavedNote') : checked ? checkLine[checked] : '';
 
   return (
     <div className="stc-keys">
@@ -313,7 +311,7 @@ export function ChannelKeys({ channel, name }: { channel: Channel; name: string 
                   {conn.saved ? t('keysReplace') : t('keysAdd')}
                 </button>
               ) : null}
-              {conn.saved && canCheck ? (
+              {conn.saved ? (
                 <button type="button" className="btn btn-ghost stc-btn" aria-disabled={busy !== null} onClick={() => void check()}>
                   {busy === 'checking' ? t('keysChecking') : t('keysCheck')}
                 </button>
