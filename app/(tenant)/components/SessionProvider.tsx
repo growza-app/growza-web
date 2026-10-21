@@ -90,8 +90,10 @@ export function useSession(): SessionInfo | null {
  */
 export function useMayUse(action: UiAction): boolean {
   const session = useSession();
+  // Jira GRW-76 — the screen's own read-only-ness counts too: a control that writes is not drawn on a screen its role holds at See.
+  const writable = useWritable();
   if (session?.walkIn === false && WALK_IN_ONLY.includes(action)) return false;
-  return mayUse(session?.role, action, session?.writable ?? true);
+  return mayUse(session?.role, action, writable);
 }
 
 /**
@@ -101,6 +103,11 @@ export function useMayUse(action: UiAction): boolean {
 const WALK_IN_ONLY: readonly UiAction[] = ['queue.give', 'token.arrive'];
 
 /** Jira GRW-556 (follow-up) — may the business change anything? False only while it is suspended for non-payment. */
+/** The business may change things at all (false only while suspended). Not the screen's: the till's "+" belongs to Bookings, wherever it is drawn. */
+export function useBusinessWritable(): boolean {
+  return useSession()?.writable ?? true;
+}
+
 export function useWritable(): boolean {
   const screenWritable = useContext(ScreenWritableContext);
   return (useSession()?.writable ?? true) && screenWritable;

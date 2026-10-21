@@ -169,3 +169,24 @@ describe('Jira GRW-76 — a sheet that rises stays centred on a laptop', () => {
     expect(css).toMatch(/@keyframes sheet-fade-up-centred \{[\s\S]*?translate\(-50%, -50%\)/);
   });
 });
+
+describe('Jira GRW-76 review — the screen-level rule reaches every control, and the till is judged by its own pages', () => {
+  const read = (p: string) => readFileSync(join(__dirname, '..', p), 'utf8');
+  it('useMayUse counts the screen too, so Record payment and Return product are not drawn on Orders at See', () => {
+    const provider = read('components/SessionProvider.tsx');
+    const body = provider.slice(provider.indexOf('export function useMayUse'));
+    expect(body.slice(0, body.indexOf('\n}'))).toContain('const writable = useWritable();');
+  });
+
+  it('the floating plus belongs to Bookings, so it asks the business and not the screen (it is drawn on Customers at Bookings Change)', () => {
+    const chrome = read('components/MobileChrome.tsx');
+    expect(chrome).toContain('const writable = useBusinessWritable();');
+    expect(chrome).not.toMatch(/const writable = useWritable\(\)/);
+  });
+
+  it('an address with a query string is judged by its path', () => {
+    expect(gridCanSee('/appointments/new?mode=now', { bookings: 'view' })).toBe(false);
+    expect(gridCanSee('/appointments/new?mode=now', { bookings: 'manage' })).toBe(true);
+    expect(gridCanSee('/reports?range=week', { reports: 'none' })).toBe(false);
+  });
+});

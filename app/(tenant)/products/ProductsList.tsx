@@ -10,7 +10,8 @@ import { PageHeader } from '../components/PageHeader';
 import { WriteOnly } from '../components/WriteOnly';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
-import { useSession, useWritable } from '../components/SessionProvider';
+import { useAreas, useBusinessWritable, useSession, useWritable } from '../components/SessionProvider';
+import { canSee, type MemberRole } from '../lib/nav-policy';
 import { IconCart, IconPlus, IconSearch, IconSort, IconUpload } from '../components/icons';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { matchItems } from '../lib/service-match';
@@ -155,6 +156,9 @@ export function ProductsList({
   const router = useRouter();
   const session = useSession();
   const writable = useWritable();
+  // Jira GRW-76 — the till is not this screen's page: it opens for a role that holds Orders and Stock Change, and a business that may write.
+  const areas = useAreas();
+  const tillOpen = useBusinessWritable() && canSee('/products/sell', session?.role as MemberRole | null | undefined, undefined, true, areas);
   const canStockTake =
     session?.role === null || session?.role === undefined || session?.role === 'owner' || session?.role === 'manager';
   const [rows, setRows] = useState(products);
@@ -314,12 +318,14 @@ export function ProductsList({
       title={heading ?? t('title')}
       subtitle={t('subtitle')}
       actions={
-        <WriteOnly>
-          {live.length > 0 ? (
+        <>
+          {/* The till is Bookings' and Stock's, not this screen's page: drawn when the role may open it, and the business may write. */}
+          {live.length > 0 && tillOpen ? (
             <Link className="btn btn-ghost" href="/products/sell?from=products">
               <IconCart /> {t('sell')}
             </Link>
           ) : null}
+        <WriteOnly>
           {live.length > 0 && canStockTake ? (
             <button
               type="button"
@@ -336,6 +342,7 @@ export function ProductsList({
             <IconPlus /> {t('add')}
           </button>
         </WriteOnly>
+        </>
       }
     />
   );

@@ -112,7 +112,9 @@ export function gridCanChange(href: string, grid: PageGrid): boolean {
 }
 
 /** Does the member's role open this destination? `none` hides it; a page it does not belong to is open. */
-export function gridCanSee(href: string, grid: PageGrid): boolean {
+export function gridCanSee(rawHref: string, grid: PageGrid): boolean {
+  // A query string is not part of the address the grid is asked about.
+  const href = rawHref.split('?')[0]!;
   if (NEEDS_CHANGE_TO_OPEN.some((p) => href === p || href.startsWith(`${p}/`)) && !gridCanChange(href, grid)) return false;
   if (OWNER_ONLY_HREF.some((p) => href === p || href.startsWith(`${p}/`))) return false;
   const extra = ALSO_NEEDS.find(([prefix]) => href === prefix || href.startsWith(`${prefix}/`));
