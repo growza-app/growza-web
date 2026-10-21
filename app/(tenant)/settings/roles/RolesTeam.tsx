@@ -9,6 +9,7 @@ import { InviteShell, InviteSheet, WaitingGroup } from '../../providers/TeamLogi
 import { PhoneField } from '../../components/PhoneField';
 import { toStoredPhone } from '../../lib/phone';
 import { usePhoneProblem } from '../../lib/use-phone-problem';
+import { rolesForMember, rolesToGive } from './role-choices';
 
 /**
  * Jira GRW-73 — the people on a shop's team, and the role each holds.
@@ -48,7 +49,7 @@ export function RolesTeam({
   // Roles that can be given: any that works like a manager, a desk or staff (a role that works like nothing is refused by the API).
   // A staff-like login belongs to a person on the roster, and a shop has no screen to put one there: without anyone on it, only desk roles are offered.
   const rosterPeople = providers.filter((p) => p.active);
-  const giveable = roles.filter((r) => r.worksLike === 'manager' || r.worksLike === 'receptionist' || (r.worksLike === 'staff' && rosterPeople.length > 0));
+  const giveable = rolesToGive(roles, rosterPeople.length);
   const people = members.filter((m) => m.role !== 'owner');
 
   const refresh = async () => {
@@ -97,7 +98,7 @@ export function RolesTeam({
             {people.map((m) => {
               const name = m.name ?? m.providerName ?? m.phone ?? t('unnamed');
               // Only roles of the same kind as this login — and the one they hold, so the select never shows a blank for it.
-              const options = roles.filter((r) => ((r.worksLike === 'manager' || r.worksLike === 'receptionist' || r.worksLike === 'staff') && r.worksLike === m.role) || r.id === m.tenantRoleId);
+              const options = rolesForMember(roles, m);
               return (
                 <div key={m.userId} className="login-row roles-person">
                   <PersonPhoto name={m.name ?? m.providerName ?? name} />

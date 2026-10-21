@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { areaAllows, DIARY_AREAS } from '../../lib/areas';
+import { rolesForMember, rolesToGive } from './role-choices';
 
 /**
  * Jira GRW-72 — Settings › Roles. This repo has no component-rendering setup, so these pin the source: the grid has every page the API
@@ -68,16 +69,23 @@ describe('Jira GRW-73 — the people beside the roles', () => {
   const team = read('app/(tenant)/settings/roles/RolesTeam.tsx');
   const invite = read('app/(tenant)/providers/TeamLogins.tsx');
 
+  const R = (id: string, worksLike: string) => ({ id, worksLike });
+  const roles = [R('m', 'manager'), R('d', 'receptionist'), R('s', 'staff'), R('x', 'nothing')];
+
   it('offers a person only the roles that work like what they already are, plus the one they hold', () => {
-    expect(team).toContain("r.worksLike === m.role) || r.id === m.tenantRoleId");
-    expect(team).toContain("r.worksLike === 'manager' || r.worksLike === 'receptionist' || r.worksLike === 'staff'");
-    // A staff-like role is offered to an invitation only when someone is on the roster to be that login (a shop has no screen to add one).
-    expect(team).toContain("r.worksLike === 'staff' && rosterPeople.length > 0");
+    expect(rolesForMember(roles, { role: 'receptionist' }).map((r) => r.id)).toEqual(['d']);
+    expect(rolesForMember(roles, { role: 'staff' }).map((r) => r.id)).toEqual(['s']);
+    expect(rolesForMember(roles, { role: 'receptionist', tenantRoleId: 'x' }).map((r) => r.id)).toEqual(['d', 'x']);
+    expect(rolesForMember(roles, { role: 'owner' })).toEqual([]);
   });
 
-  it('gives manager-like, desk-like and staff-like roles to an invitation, and never an owner', () => {
-    expect(team).toContain("r.worksLike === 'manager' || r.worksLike === 'receptionist' || (r.worksLike === 'staff' && rosterPeople.length > 0)");
-    expect(team).toContain("m.role !== 'owner'");
+  it('gives manager-like, desk-like and staff-like roles to an invitation, staff-like only when someone is on the roster to be that login', () => {
+    expect(rolesToGive(roles, 0).map((r) => r.id)).toEqual(['m', 'd']);
+    expect(rolesToGive(roles, 2).map((r) => r.id)).toEqual(['m', 'd', 's']);
+  });
+
+  it('keeps the owner out of the list of people who can be given a role', () => {
+    expect(read('app/(tenant)/settings/roles/RolesTeam.tsx')).toContain("m.role !== 'owner'");
   });
 
   it('the invite sheet sends the role only when it was given roles, so a salon invites exactly as before', () => {
