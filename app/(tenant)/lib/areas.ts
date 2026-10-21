@@ -17,7 +17,15 @@ export interface Areas {
   services: boolean;
   /** `me.surface === 'shop'` — it runs the shop's screens: Orders and Stock. */
   shop: boolean;
+  /**
+   * Jira GRW-74 — the pages a member's ROLE grants, only for a member who holds one. Absent for the owner and for everyone with no role, who are
+   * offered what they always were. It travels here because every nav surface and screen guard already carries this object to `canSee`.
+   */
+  pages?: PageGrid | null;
 }
+
+export type PageLevel = 'none' | 'view' | 'manage';
+export type PageGrid = Partial<Record<'bookings' | 'clients' | 'services' | 'offers' | 'staff' | 'attendance' | 'reports' | 'settings', PageLevel>>;
 
 /** The salon's app: every diary screen, none of the shop's. What an absent answer means. */
 export const DIARY_AREAS: Areas = { bookings: true, services: true, shop: false };
@@ -26,14 +34,19 @@ export const DIARY_AREAS: Areas = { bookings: true, services: true, shop: false 
 export interface MeAreas {
   capabilities?: { bookings?: boolean; services?: boolean } | null;
   surface?: string | null;
+  member?: { role?: string; tenantRoleId?: string | null } | null;
+  permissions?: PageGrid | null;
 }
 
 /** The areas a `/me` describes. Only an explicit `false` takes a diary area away, and only `shop` adds the shop's. */
 export function areasOf(me: MeAreas | null | undefined): Areas {
+  // Only a member who holds a role is offered by the grid; the owner and everyone with no role are not (and carry no `pages` key at all).
+  const pages = me?.member && me.member.role !== 'owner' && me.member.tenantRoleId ? me.permissions : undefined;
   return {
     bookings: me?.capabilities?.bookings !== false,
     services: me?.capabilities?.services !== false,
     shop: me?.surface === 'shop',
+    ...(pages ? { pages } : {}),
   };
 }
 

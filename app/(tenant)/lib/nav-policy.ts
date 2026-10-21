@@ -15,7 +15,7 @@
  */
 import { canSee as roleCanSee, visibleItems as roleVisibleItems, type MemberRole } from '@growza-app/shared';
 import { isSetupDestination } from './go-live';
-import { areaAllows, isShopRoute, type Areas } from './areas';
+import { areaAllows, isShopRoute, type Areas, type PageGrid } from './areas';
 
 export {
   canSeeReports,
@@ -49,6 +49,37 @@ const ALWAYS_OPEN: ReadonlySet<string> = new Set(['/help']);
 
 
 /**
+ * Jira GRW-74 — which page of the role grid each destination belongs to. A destination not listed (Home, the menu, notifications, help) is open to
+ * every member. The same mapping the API's route table makes, written out for addresses; `@growza-app/shared` carries the routes (1.0.19, not yet in the
+ * pin), so this is local until the pin moves.
+ */
+const PAGE_OF_HREF: ReadonlyArray<readonly [string, keyof PageGrid]> = [
+  ['/appointments', 'bookings'],
+  ['/availability', 'bookings'],
+  ['/orders', 'bookings'],
+  ['/sales', 'bookings'],
+  ['/documents', 'bookings'],
+  ['/products/sell', 'bookings'],
+  ['/customers', 'clients'],
+  ['/search', 'clients'],
+  ['/services', 'services'],
+  ['/products', 'services'],
+  ['/stock', 'services'],
+  ['/packages', 'offers'],
+  ['/offers', 'offers'],
+  ['/providers', 'staff'],
+  ['/attendance', 'attendance'],
+  ['/reports', 'reports'],
+  ['/settings', 'settings'],
+];
+
+/** Does the member's role open this destination? `none` hides it; a page it does not belong to is open. */
+export function gridCanSee(href: string, grid: PageGrid): boolean {
+  const hit = PAGE_OF_HREF.find(([prefix]) => href === prefix || href.startsWith(`${prefix}/`));
+  return hit ? (grid[hit[1]] ?? 'none') !== 'none' : true;
+}
+
+/**
  * May this role see this destination — and, until the business is live, is it one of the setup ones?
  *
  * Jira GRW-608 — and has this business that AREA? `areas` is the fifth question and the only new one: a business with
@@ -58,6 +89,8 @@ const ALWAYS_OPEN: ReadonlySet<string> = new Set(['/help']);
 export function canSee(href: string, role?: MemberRole | null, reportTabs?: readonly string[], live = true, areas?: Areas): boolean {
   if (ALWAYS_OPEN.has(href)) return true;
   if (!areaAllows(href, areas)) return false;
+  // Jira GRW-74 — a member who holds a role is offered what the role grants, and nothing is asked of the fixed role they work like.
+  if (areas?.pages) return (live || isSetupDestination(href)) && gridCanSee(href, areas.pages);
   /*
    * The shop's own screens (Jira GRW-608). Neither is a route @growza-app/shared lists for any role, so the answer is
    * given here: the owner and manager open both (the answer for the shelf), and no one else opens Stock.

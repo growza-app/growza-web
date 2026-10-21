@@ -72,6 +72,8 @@ export interface Me {
     phone?: string | null;
     /** The name they go by — their own, else their stylist profile's. Null until set (or from an older API). */
     name?: string | null;
+    /** Jira GRW-74 — the role they hold, if any; the grid below applies only to a member who has one. */
+    tenantRoleId?: string | null;
     /** Jira GRW-237 — a receptionist's own branch; null means every branch. */
     locationId?: string | null;
     locationName?: string | null;
@@ -94,6 +96,8 @@ export interface Me {
    * absent reads as "every tab", which is the pre-GRW-197 behaviour for the
    * only roles that could reach the screen back then.
    */
+  /** Jira GRW-74 — the pages the signed-in member's role grants, by level. Meaningful for a member who holds a role (`member.tenantRoleId`). */
+  permissions?: Record<string, 'none' | 'view' | 'manage'>;
   reportTabs?: string[];
   /**
    * Jira GRW-90 · GRW-137 — a platform admin is looking at this account.
