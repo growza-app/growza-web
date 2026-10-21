@@ -216,6 +216,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/service-categories/reorder',
   ],
   '/offers': ['POST /api/v1/offers', 'PATCH /api/v1/offers/:id', 'DELETE /api/v1/offers/:id'],
+  // Jira GRW-72 — a shop's roles: owner-only, closed whole by `guardScreen` and again by the handler.
+  '/settings/roles': ['POST /api/v1/roles', 'PATCH /api/v1/roles/:id', 'DELETE /api/v1/roles/:id'],
   /*
    * Jira GRW-438 — the same three writes, now reachable from two owner-only screens. Both are closed whole by
    * `guardScreen`, so listing them twice is the honest answer rather than a sign one of them is ungated.

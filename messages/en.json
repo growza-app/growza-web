@@ -436,6 +436,10 @@
       "logOut": {
         "label": "Log out",
         "sub": "Sign out from this device"
+      },
+      "roles": {
+        "label": "Roles",
+        "sub": "What each person on your team can open"
       }
     }
   },
@@ -3576,6 +3580,59 @@
       "documentIssuedBody": "Invoice {number} was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?",
       "documentIssuedBodyNoNumber": "An invoice was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?",
       "documentIssuedGo": "Return anyway"
+    }
+  },
+  "settingsRoles": {
+    "title": "Roles",
+    "intro": "A role says what a person on your team can open. Make one, then give it to someone.",
+    "todayNote": "Today a role's “Works like” setting decides what a person can open. The table below is kept for when it takes over.",
+    "builtIn": "Built in",
+    "people": "{count, plural, =0 {Nobody has this role} one {# person} other {# people}}",
+    "ownDays": "Own days only",
+    "empty": "No roles yet. Make one to give to your team.",
+    "newRole": "New role",
+    "startFrom": "Start from",
+    "blank": "Blank — no access",
+    "name": "Role name",
+    "namePlaceholder": "For example, Cashier",
+    "worksLike": "Works like",
+    "worksLikeHint": "Today this sets what the person can open.",
+    "worksLikeOptions": {
+      "none": "Not set",
+      "manager": "Manager",
+      "receptionist": "Desk",
+      "staff": "Staff"
+    },
+    "ownSchedule": "Sees only their own days",
+    "ownScheduleHint": "Not the whole team's.",
+    "pagesTitle": "What this role can open",
+    "pages": {
+      "bookings": "Orders",
+      "clients": "Clients",
+      "services": "Stock",
+      "offers": "Offers",
+      "staff": "Staff",
+      "attendance": "Attendance",
+      "reports": "Reports",
+      "settings": "Settings"
+    },
+    "levels": {
+      "none": "None",
+      "view": "See",
+      "manage": "Change"
+    },
+    "save": "Save role",
+    "saving": "Saving…",
+    "back": "Back to roles",
+    "remove": "Remove role",
+    "removeTitle": "Remove {name}?",
+    "removeBody": "This role will be deleted. This cannot be undone.",
+    "removeConfirm": "Remove",
+    "removeBlocked": "Still held by {names}{more, plural, =0 {} other { and # more}}. Give them another role first.",
+    "errors": {
+      "saveFailed": "Could not save the role. Try again.",
+      "removeFailed": "Could not remove the role. Try again.",
+      "nameNeeded": "Give the role a name"
     }
   }
 }

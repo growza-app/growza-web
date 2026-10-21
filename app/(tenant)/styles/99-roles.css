@@ -1,0 +1,176 @@
+/*
+ * Jira GRW-72 — Settings › Roles. Laid out at 344px first: one column, every target 44px, the three choices of a page share a row and
+ * wrap under its name rather than run off the card. Type is rem; the 16px on fields stops iOS zooming the page on focus.
+ */
+.roles-card input[type='text'],
+.roles-card select {
+  width: 100%;
+  min-height: 44px;
+  font-size: 1rem;
+}
+
+.roles-intro {
+  margin: 0 0 var(--sp-3);
+}
+
+.roles-field {
+  margin-bottom: var(--sp-4);
+}
+
+.roles-empty {
+  margin: var(--sp-4) 0;
+  color: var(--muted);
+  font-size: var(--fs-4);
+}
+
+.roles-list {
+  list-style: none;
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.roles-list li + li {
+  border-top: 1px solid var(--border);
+}
+
+.roles-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px var(--sp-3);
+  align-items: center;
+  width: 100%;
+  min-height: 56px;
+  padding: var(--sp-3) var(--sp-4);
+  border: 0;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.roles-item:hover {
+  background: var(--slate-soft);
+}
+
+.roles-item-name {
+  font-size: var(--fs-5);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.roles-item-sub {
+  grid-column: 1;
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.roles-badge {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--slate-soft);
+  color: var(--muted);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.roles-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  min-height: 44px;
+  margin-bottom: var(--sp-4);
+  font-size: var(--fs-4);
+  cursor: pointer;
+}
+
+.roles-check input {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 2px;
+}
+
+.roles-check-hint {
+  display: block;
+  margin-top: 0;
+}
+
+/* The grid sits in its own fieldset: nothing here can push the card wider than the screen. */
+.roles-grid {
+  min-width: 0;
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+  border: 0;
+}
+
+.roles-row {
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--border);
+}
+
+.roles-row-name {
+  display: block;
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-4);
+  font-weight: 600;
+}
+
+.roles-levels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+.roles-level {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.roles-level.is-on {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-deep);
+}
+
+/* The radio stays in the page for keyboards and screen readers; the label is what is drawn. */
+.roles-level input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.roles-level:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.roles-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+
+.roles-actions .btn {
+  min-height: 44px;
+}

@@ -63,6 +63,7 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/settings/payments': 'both',
   '/settings/profile': 'both',
   '/settings/report-access': 'both',
+  '/settings/roles': 'shop',
   '/settings/team': 'both',
   '/settings/working-hours': 'both',
   '/stock': 'shop',

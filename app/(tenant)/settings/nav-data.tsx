@@ -32,6 +32,7 @@ export type SettingsRowKey =
   | 'appearance'
   | 'privacy'
   | 'reportAccess'
+  | 'roles'
   | 'gst'
   | 'billing'
   | 'account'
@@ -64,6 +65,11 @@ interface SettingsRowBase {
    * absent for it, never an empty form. `areas.ts` closes the same two addresses to it.
    */
   diaryOnly?: boolean;
+  /**
+   * Jira GRW-72 — listed only for a shop, and only for its owner. A salon keeps its fixed roles and is shown nothing about
+   * this; the API answers 404 to it all the same, so a typed address is not a way in.
+   */
+  shopOwnerOnly?: boolean;
   /**
    * Listed only once the business is live.
    *
@@ -144,6 +150,8 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       // The QR the till shows a customer. Live-day: see `liveOnly` above.
       { href: '/settings/payments', key: 'payments', icon: IconPayUpi, liveOnly: true },
       { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
+      // Jira GRW-72 — what each role on a shop's team can open.
+      { href: '/settings/roles', key: 'roles', icon: IconLock, shopOwnerOnly: true },
       // Jira GRW-243 — what the owner pays Growza, each branch, the next bill and past bills.
       { href: '/settings/billing', key: 'billing', icon: IconWallet },
     ],

@@ -53,12 +53,16 @@ const SHOP_ROUTES = ['/orders', '/stock'] as const;
  */
 const NOT_IN_A_SHOP = ['/sales', '/providers', '/attendance', '/settings/check-in'] as const;
 
+/** Jira GRW-72 — Settings screens that exist only for a shop. (Not `SHOP_ROUTES`: the role rules read that list as "the shop's own work".) */
+const SHOP_SETTINGS = ['/settings/roles'] as const;
+
 /** May a business with these areas be offered this address? True for everything a screen's own rules do not close. */
 export function areaAllows(href: string, areas: Areas = DIARY_AREAS): boolean {
   if (!areas.bookings && BOOKING_ROUTES.some((r) => under(href, r))) return false;
   if (!areas.services && SERVICE_ROUTES.some((r) => under(href, r))) return false;
   if (areas.shop && NOT_IN_A_SHOP.some((r) => under(href, r))) return false;
   if (!areas.shop && SHOP_ROUTES.some((r) => under(href, r))) return false;
+  if (!areas.shop && SHOP_SETTINGS.some((r) => under(href, r))) return false;
   return true;
 }
 

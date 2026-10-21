@@ -166,6 +166,37 @@ import type {
  * "no active conversation" meaning restart, vs. a generic failure meaning
  * just show an error) can check `.status` instead of string-matching text.
  */
+/** Jira GRW-72 — the pages a role grants, and how far. Mirrors `platform/permissions.ts` in the API. */
+export type RolePageKey = 'bookings' | 'clients' | 'services' | 'offers' | 'staff' | 'attendance' | 'reports' | 'settings';
+export type RoleLevel = 'none' | 'view' | 'manage';
+export type RoleWorksLike = 'manager' | 'receptionist' | 'staff';
+export interface ShopRole {
+  id: string;
+  name: string;
+  memberCount: number;
+  scheduleScoped: boolean;
+  isBuiltin: boolean;
+  worksLike: RoleWorksLike | null;
+  permissions: Record<RolePageKey, RoleLevel>;
+}
+export interface RoleTemplate {
+  name: string;
+  works_like: RoleWorksLike;
+  schedule_scoped?: boolean;
+  grants: Partial<Record<RolePageKey, RoleLevel>>;
+}
+export interface RolesPayload {
+  pages: Array<{ key: RolePageKey; label: string }>;
+  roles: ShopRole[];
+  templates: RoleTemplate[];
+}
+export interface RoleBody {
+  name: string;
+  scheduleScoped: boolean;
+  worksLike: RoleWorksLike | null;
+  permissions: Record<RolePageKey, RoleLevel>;
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -632,6 +663,11 @@ export const api = {
   /** Jira GRW-310 — an opaque string that changes when anything the live screens show changes. A timeout in the browser, so a stalled request cannot hold the poll shut. */
   liveVersion: (timeoutMs?: number) =>
     get<{ version: string }>('/api/v1/live-version', timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined).then((r) => r.version),
+  /** Jira GRW-72 — Settings › Roles (a shop's owner). */
+  roles: () => get<RolesPayload>('/api/v1/roles'),
+  createRole: (body: RoleBody) => post<ShopRole>('/api/v1/roles', body),
+  updateRole: (id: string, body: Partial<RoleBody>) => patch<ShopRole>(`/api/v1/roles/${encodeURIComponent(id)}`, body),
+  deleteRole: (id: string) => del<void>(`/api/v1/roles/${encodeURIComponent(id)}`),
   teamInvites: () => get<{ invites: PendingInvite[] }>('/api/v1/team/invites'),
   createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist'; locationId?: string | null; name?: string | null }) =>
     post<CreatedInvite>('/api/v1/team/invites', body),

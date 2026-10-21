@@ -15,6 +15,16 @@
  * run the test.
  */
 export const API_MESSAGES_HI: Record<string, string> = {
+  // ---- Jira GRW-72 — roles
+  'This business has no roles to set up.': 'इस बिज़नेस में सेट करने के लिए कोई रोल नहीं है।',
+  'Only the owner can change roles.': 'रोल सिर्फ़ मालिक बदल सकते हैं।',
+  'There is no such role.': 'ऐसा कोई रोल नहीं है।',
+  'There is no such page.': 'ऐसा कोई पेज नहीं है।',
+  'Give the role a name': 'रोल को एक नाम दें',
+  'Keep the name under 60 letters': 'नाम 60 अक्षरों से कम रखें',
+  'Check the role': 'रोल जाँचें',
+  'You already have a role with this name.': 'इस नाम का रोल पहले से है।',
+  'Some people still have this role. Give them another role first.': 'कुछ लोगों के पास अभी यह रोल है। पहले उन्हें कोई दूसरा रोल दें।',
   // ---- Owner, 2026-10-18 — loading products from a spreadsheet
   'Upload a .xlsx or .csv file.': '.xlsx या .csv फ़ाइल अपलोड करें।',
   'That file has no rows in it.': 'उस फ़ाइल में कोई पंक्ति नहीं है।',
