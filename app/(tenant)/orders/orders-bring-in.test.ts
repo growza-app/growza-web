@@ -16,17 +16,29 @@ const line = here('./OrdersBringIn.tsx');
 const css = readFileSync(path.resolve(import.meta.dirname, '../styles/99-orders.css'), 'utf8');
 const messages = (lang: 'en' | 'hi') => JSON.parse(readFileSync(path.resolve(import.meta.dirname, '../../../messages', `${lang}.json`), 'utf8')).orders.bringIn as Record<string, string>;
 
-const ok = { canPull: true, lastBroughtInAt: '2026-10-21T04:10:00Z', lastRunReason: null } as const;
+const ok = { canPull: true, keysRejected: false, lastBroughtInAt: '2026-10-21T04:10:00Z', lastRunReason: null } as const;
 
 describe('what the line says', () => {
   it('says nothing for a marketplace whose adapter does not exist: a line about something nothing is asking would be a lie', () => {
     expect(bringInLine({ ...ok, canPull: false })).toBeNull();
-    expect(bringInLine({ canPull: false, lastBroughtInAt: null, lastRunReason: 'refused' })).toBeNull();
+    expect(bringInLine({ canPull: false, keysRejected: true, lastBroughtInAt: null, lastRunReason: 'refused' })).toBeNull();
   });
 
   it('says when orders last came in, or that none have', () => {
     expect(bringInLine(ok)).toEqual({ key: 'updated', tone: 'ok' });
     expect(bringInLine({ ...ok, lastBroughtInAt: null })).toEqual({ key: 'nothing', tone: 'idle' });
+  });
+
+  it('keys the marketplace turned down at Check read as refused, whatever the last run said — and never as a green "last brought in"', () => {
+    expect(bringInLine({ ...ok, keysRejected: true })).toEqual({ key: 'refused', tone: 'bad' });
+    expect(bringInLine({ ...ok, keysRejected: true, lastRunReason: 'rate_limited' })).toEqual({ key: 'refused', tone: 'bad' });
+  });
+
+  it('says how many orders could not be read and how many the marketplace has not been told about, beside the main line', () => {
+    expect(line).toContain("l.lastMalformed > 0 ?");
+    expect(line).toContain("t('bringIn.malformed'");
+    expect(line).toContain("l.unacknowledged > 0 ?");
+    expect(line).toContain("t('bringIn.unacknowledged'");
   });
 
   it.each([
@@ -74,7 +86,7 @@ describe('the screen', () => {
 
 describe('every sentence has a Hindi twin, with the same placeholders', () => {
   const ids = Object.keys(messages('en'));
-  it('there are some to check', () => expect(ids.length).toBe(9));
+  it('there are some to check', () => expect(ids.length).toBe(11));
   it.each(ids)('%s', (id) => {
     const en = messages('en')[id]!;
     const hi = messages('hi')[id];

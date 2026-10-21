@@ -34,6 +34,8 @@ export async function OrdersBringIn({ lines, lang, timezone }: { lines: ChannelO
           <li key={l.channel} className={`ord-bringin-row ord-bringin-${line.tone}`}>
             <span>{text}</span>
             {line.tone === 'bad' && l.lastBroughtInAt ? <span className="ord-bringin-last">{t('bringIn.lastWorked', { when: when(l.lastBroughtInAt) })}</span> : null}
+            {l.lastMalformed > 0 ? <span className="ord-bringin-last">{t('bringIn.malformed', { count: l.lastMalformed })}</span> : null}
+            {l.unacknowledged > 0 ? <span className="ord-bringin-last">{t('bringIn.unacknowledged', { channel: name(l.channel), count: l.unacknowledged })}</span> : null}
             {l.held > 0 ? (
               <a className="ord-bringin-link" href="/orders/held">
                 {t('bringIn.held', { count: l.held })}

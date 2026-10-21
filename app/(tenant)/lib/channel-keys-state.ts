@@ -62,8 +62,10 @@ export function stockLine(conn: Pick<ChannelConnection, 'saved' | 'canCheck' | '
  * would be a lie); then a problem if the last run had one, else when orders last came in, else that none have.
  */
 export type BringInKey = 'updated' | 'nothing' | 'refused' | 'unreadable' | 'slow' | 'unreachable';
-export function bringInLine(line: Pick<ChannelOrdersLine, 'canPull' | 'lastBroughtInAt' | 'lastRunReason'>): { key: BringInKey; tone: 'ok' | 'idle' | 'bad' } | null {
+export function bringInLine(line: Pick<ChannelOrdersLine, 'canPull' | 'keysRejected' | 'lastBroughtInAt' | 'lastRunReason'>): { key: BringInKey; tone: 'ok' | 'idle' | 'bad' } | null {
   if (!line.canPull) return null;
+  // Keys the marketplace turned down at Check: nothing is being brought in, whatever the last run said or when it last worked.
+  if (line.keysRejected) return { key: 'refused', tone: 'bad' };
   switch (line.lastRunReason) {
     case 'refused':
       return { key: 'refused', tone: 'bad' };

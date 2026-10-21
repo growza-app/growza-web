@@ -1513,10 +1513,16 @@ export interface ChannelOrdersLine {
   channel: 'flipkart' | 'amazon';
   /** Anything is asked of the marketplace at all: false until its adapter exists, and the screen then says nothing. */
   canPull: boolean;
+  /** The marketplace turned the keys down at the last Check: nothing is brought in until they are replaced. */
+  keysRejected: boolean;
   lastBroughtInAt: string | null;
   lastRunReason: 'rate_limited' | 'unreachable' | 'refused' | 'keys_unreadable' | 'failed' | null;
+  /** Orders the last run could not read or store. */
+  lastMalformed: number;
   /** Orders waiting for a code to be matched to a size. */
   held: number;
+  /** Orders brought in that the marketplace has not yet been told we have. */
+  unacknowledged: number;
 }
 export interface SetStockBufferResult {
   channel: 'flipkart' | 'amazon';

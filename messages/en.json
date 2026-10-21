@@ -4148,7 +4148,9 @@
       "slow": "{channel} asked us to slow down. Orders will come in shortly.",
       "unreachable": "Could not bring in {channel} orders. We will try again.",
       "lastWorked": "Last worked {when}",
-      "held": "{count, plural, one {1 order is waiting for a size} other {# orders are waiting for a size}}"
+      "held": "{count, plural, one {1 order is waiting for a size} other {# orders are waiting for a size}}",
+      "malformed": "{count, plural, one {1 order could not be read} other {# orders could not be read}}",
+      "unacknowledged": "{count, plural, one {1 order not yet confirmed to {channel}} other {# orders not yet confirmed to {channel}}}"
     },
     "refunds": {
       "title": "What was refunded",
