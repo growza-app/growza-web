@@ -62,3 +62,33 @@ describe('the sentences', () => {
     expect(messages('en').removeBlocked).toContain('{names}');
   });
 });
+
+describe('Jira GRW-73 — the people beside the roles', () => {
+  const team = read('app/(tenant)/settings/roles/RolesTeam.tsx');
+  const invite = read('app/(tenant)/providers/TeamLogins.tsx');
+
+  it('offers a person only the roles that work like what they already are, plus the one they hold', () => {
+    expect(team).toContain('r.worksLike === m.role || r.id === m.tenantRoleId');
+  });
+
+  it('gives only desk-like and staff-like roles to an invitation, and never an owner', () => {
+    expect(team).toContain("r.worksLike === 'receptionist' || r.worksLike === 'staff'");
+    expect(team).toContain("m.role !== 'owner'");
+  });
+
+  it('the invite sheet sends the role only when it was given roles, so a salon invites exactly as before', () => {
+    expect(invite).toContain('...(roles ? { tenantRoleId } : {})');
+    expect(invite).toContain('roles?: ShopRole[]');
+  });
+
+  it('a change of role goes through the one api call, with null to take it away', () => {
+    expect(team).toContain('api.setTeamMemberRole(member.userId, tenantRoleId || null)');
+    expect(read('app/(tenant)/lib/api.ts')).toContain('patch<{ ok: true }>(`/api/v1/team/members/${userId}`, { tenantRoleId })');
+  });
+
+  it('each new sentence exists in both languages', () => {
+    for (const k of ['peopleTitle', 'peopleEmpty', 'noRole', 'roleFor', 'invite', 'chooseRole', 'chooseRoleFirst', 'makeRoleFirst']) {
+      for (const lang of ['en', 'hi'] as const) expect(messages(lang)[k], `${lang} · ${k}`).toBeTruthy();
+    }
+  });
+});

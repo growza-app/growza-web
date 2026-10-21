@@ -174,3 +174,25 @@
 .roles-actions .btn {
   min-height: 44px;
 }
+
+/* Jira GRW-73 — the people beside the roles. The row is the Staff screen's own; only the role select is new. */
+.roles-team {
+  margin-top: var(--sp-4);
+}
+
+.roles-person {
+  flex-wrap: wrap;
+}
+
+.roles-person-role {
+  flex: 1 1 100%;
+  min-width: 0;
+  min-height: 44px;
+  font-size: 1rem;
+}
+
+@media (min-width: 640px) {
+  .roles-person-role {
+    flex: 0 1 14rem;
+  }
+}

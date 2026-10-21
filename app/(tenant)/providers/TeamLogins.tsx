@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
-import { api, ApiError, type CreatedInvite, type PendingInvite, type ProviderOverviewRow, type TeamMember } from '../lib/api';
+import { api, ApiError, type CreatedInvite, type PendingInvite, type ProviderOverviewRow, type ShopRole, type TeamMember } from '../lib/api';
 import { PersonPhoto } from '../components/PersonPhoto';
 import { PhoneField } from '../components/PhoneField';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -46,10 +46,16 @@ export function InviteSheet({
   target,
   providers,
   branches,
+  roles,
   onClose,
   onCreated,
 }: {
   target: InviteTarget;
+  /**
+   * Jira GRW-73 — a business that has roles invites INTO one: the role decides which kind of login this is, so the kind picker is
+   * replaced by the roles that can be given. Absent for a diary business, which invites as it always did.
+   */
+  roles?: ShopRole[];
   /** Every stylist who could hold this login — the whole business's, not the branch being looked at. */
   providers: ProviderOverviewRow[];
   branches: Array<{ id: string; name: string }>;
@@ -61,7 +67,9 @@ export function InviteSheet({
   const checkPhone = usePhoneProblem();
   const dialogRef = useRef<HTMLDivElement>(null);
   const multiBranch = branches.length > 1;
+  const tRoles = useTranslations('settingsRoles');
   const [role, setRole] = useState<'staff' | 'receptionist'>(target.role);
+  const [tenantRoleId, setTenantRoleId] = useState('');
   const [providerId, setProviderId] = useState(target.providerId ?? '');
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
@@ -100,6 +108,10 @@ export function InviteSheet({
       setError(t('errors.chooseBranchFirst'));
       return;
     }
+    if (roles && !tenantRoleId) {
+      setError(tRoles('chooseRoleFirst'));
+      return;
+    }
     const e164 = toStoredPhone(phone)!;
 
     setBusy(true);
@@ -115,6 +127,7 @@ export function InviteSheet({
         providerId: role === 'staff' ? providerId : null,
         locationId: role === 'receptionist' && multiBranch ? locationId : null,
         name: role === 'receptionist' && name.trim() ? name.trim() : null,
+        ...(roles ? { tenantRoleId } : {}),
       });
       // The normalised number, not what was typed — it is the one the invite is actually for, and the one they
       // will sign in with.
@@ -201,21 +214,51 @@ export function InviteSheet({
             </div>
           ) : (
             <>
-              <div className="field">
-                <label htmlFor="invite-role">{t('role')}</label>
-                <select
-                  id="invite-role"
-                  value={role}
-                  disabled={busy}
-                  onChange={(e) => {
-                    setRole(e.target.value as typeof role);
-                    setError(null);
-                  }}
-                >
-                  <option value="staff">{t('roleStaff')}</option>
-                  <option value="receptionist">{t('roleReceptionist')}</option>
-                </select>
-              </div>
+              {roles ? (
+                <div className="field">
+                  <label htmlFor="invite-role">{t('role')}</label>
+                  {roles.length === 0 ? (
+                    <p className="field-hint" style={{ margin: 0 }}>
+                      {tRoles('makeRoleFirst')}
+                    </p>
+                  ) : (
+                    <select
+                      id="invite-role"
+                      value={tenantRoleId}
+                      disabled={busy}
+                      onChange={(e) => {
+                        const picked = roles.find((r) => r.id === e.target.value);
+                        setTenantRoleId(e.target.value);
+                        if (picked?.worksLike === 'receptionist' || picked?.worksLike === 'staff') setRole(picked.worksLike);
+                        setError(null);
+                      }}
+                    >
+                      <option value="">{tRoles('chooseRole')}</option>
+                      {roles.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              ) : (
+                <div className="field">
+                  <label htmlFor="invite-role">{t('role')}</label>
+                  <select
+                    id="invite-role"
+                    value={role}
+                    disabled={busy}
+                    onChange={(e) => {
+                      setRole(e.target.value as typeof role);
+                      setError(null);
+                    }}
+                  >
+                    <option value="staff">{t('roleStaff')}</option>
+                    <option value="receptionist">{t('roleReceptionist')}</option>
+                  </select>
+                </div>
+              )}
 
               {/* Only for a stylist. A receptionist runs the whole diary, so a "whose calendar?" question has no
                   answer for them and the API drops the field anyway. */}
@@ -309,7 +352,7 @@ export function InviteSheet({
 
               <button
                 className="btn invite-submit"
-                disabled={busy || !phone.trim() || (role === 'receptionist' && !name.trim())}
+                disabled={busy || !phone.trim() || (role === 'receptionist' && !name.trim()) || (!!roles && !tenantRoleId)}
                 onClick={() => void send()}
               >
                 {busy ? t('creating') : t('createInvite')}
@@ -456,6 +499,7 @@ export function WaitingGroup({
               <div className="login-name">{invite.name ?? invite.phone}</div>
               <div className="login-sub">
                 <span>
+                  {invite.roleName ? `${invite.roleName} · ` : ''}
                   {expiryLabel(invite.expiresAt)}
                   {branchName(invite.locationId) ? ` · ${branchName(invite.locationId)}` : ''}
                 </span>

@@ -13,13 +13,22 @@ export const dynamic = 'force-dynamic';
  */
 export default async function RolesSettingsPage() {
   let payload;
+  let team;
   try {
     payload = await api.roles();
+    // Each swallowed on its own: the roles are what this screen is for, and a team list that cannot load must not take them with it.
+    const [members, invites, overview, branches] = await Promise.all([
+      api.teamMembers().then((r) => r.members, () => []),
+      api.teamInvites().then((r) => r.invites, () => []),
+      api.providersOverview().then((o) => o.providers, () => []),
+      api.branchSettings().then((b) => b.branches.map(({ id, name }) => ({ id, name })), () => []),
+    ]);
+    team = { members, invites, providers: overview, branches };
   } catch (error) {
     if (error instanceof ApiError && (error.status === 404 || error.status === 403)) notFound();
     return <LoadErrorBanner kind={loadErrorKind(error)} />;
   }
-  return <RolesScreen initial={payload} />;
+  return <RolesScreen initial={payload} team={team} />;
 }
 
 export const metadata = screenTitle('Roles');

@@ -3632,7 +3632,17 @@
     "errors": {
       "saveFailed": "Could not save the role. Try again.",
       "removeFailed": "Could not remove the role. Try again.",
-      "nameNeeded": "Give the role a name"
-    }
+      "nameNeeded": "Give the role a name",
+      "roleFailed": "Could not change the role. Try again."
+    },
+    "peopleTitle": "People",
+    "peopleEmpty": "Nobody else is on your team yet.",
+    "unnamed": "Someone",
+    "noRole": "No role",
+    "roleFor": "Role for {name}",
+    "invite": "Invite someone",
+    "chooseRole": "Choose a role",
+    "chooseRoleFirst": "Choose a role first.",
+    "makeRoleFirst": "Make a role first, then invite someone into it."
   }
 }

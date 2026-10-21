@@ -2,7 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { api, ApiError, type RoleBody, type RoleLevel, type RolePageKey, type RoleTemplate, type RoleWorksLike, type RolesPayload, type ShopRole } from '../../lib/api';
+import { api, ApiError, type PendingInvite, type ProviderOverviewRow, type RoleBody, type RoleLevel, type RolePageKey, type RoleTemplate, type RoleWorksLike, type RolesPayload, type ShopRole, type TeamMember } from '../../lib/api';
+import { RolesTeam } from './RolesTeam';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useWritable } from '../../components/SessionProvider';
 
@@ -34,7 +35,14 @@ const fromTemplate = (tpl: RoleTemplate): Pick<Draft, 'worksLike' | 'scheduleSco
   grants: { ...blankGrid(), ...tpl.grants },
 });
 
-export function RolesScreen({ initial }: { initial: RolesPayload }) {
+export interface RolesTeamData {
+  members: TeamMember[];
+  invites: PendingInvite[];
+  providers: ProviderOverviewRow[];
+  branches: Array<{ id: string; name: string }>;
+}
+
+export function RolesScreen({ initial, team }: { initial: RolesPayload; team: RolesTeamData }) {
   const t = useTranslations('settingsRoles');
   const writable = useWritable();
   const [data, setData] = useState<RolesPayload>(initial);
@@ -258,6 +266,7 @@ export function RolesScreen({ initial }: { initial: RolesPayload }) {
   }
 
   return (
+    <>
     <div className="card roles-card">
       <div className="card-head">{t('title')}</div>
       <div className="card-body">
@@ -288,5 +297,7 @@ export function RolesScreen({ initial }: { initial: RolesPayload }) {
         </div>
       </div>
     </div>
+    <RolesTeam roles={data.roles} initialMembers={team.members} initialInvites={team.invites} providers={team.providers} branches={team.branches} onChanged={() => void reload()} />
+    </>
   );
 }
