@@ -16,7 +16,7 @@ import { NumberWheelGuard } from '../shared/NumberWheelGuard';
 import { BrowserGate } from './components/BrowserGate';
 import { LiveRefresh } from './components/LiveRefresh';
 import { SessionRefresh } from './components/SessionRefresh';
-import { SessionProvider } from './components/SessionProvider';
+import { ScreenAccess, SessionProvider } from './components/SessionProvider';
 import { NamePrompt } from './components/NamePrompt';
 import { SessionResume } from './components/SessionResume';
 import { BranchProvider } from './components/BranchProvider';
@@ -324,6 +324,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             timezone,
           }}
         >
+        <ScreenAccess>
         <BranchProvider branches={branches} role={role ?? null} memberLocationId={memberLocationId} workBranchName={workBranchName}>
         <LabelsProvider labels={labels}>
         {impersonation ? null : <NamePrompt />}
@@ -376,6 +377,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </MobileNavProvider>
         </LabelsProvider>
         </BranchProvider>
+        </ScreenAccess>
         </SessionProvider>
         </NextIntlClientProvider>
         <InstallBanner app="salon" />

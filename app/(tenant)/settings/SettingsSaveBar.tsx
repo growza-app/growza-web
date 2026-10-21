@@ -21,6 +21,8 @@
  * is. The ticket's Validations line about a disabled Save describes Business profile's behaviour, not a
  * new requirement for these — noted on GRW-416 rather than quietly implemented.
  */
+import { useWritable } from '../components/SessionProvider';
+
 export function SettingsSaveBar({
   busy,
   saved,
@@ -45,6 +47,8 @@ export function SettingsSaveBar({
    */
   pinned?: boolean;
 }) {
+  // Jira GRW-76 — a role that can only SEE Settings is not offered the button that saves (the way a suspended business is not).
+  if (!useWritable()) return null;
   return (
     <div className={`settings-savebar ${pinned ? 'settings-savebar-pinned' : ''}`}>
       <button className="btn settings-savebar-btn" disabled={busy} onClick={onSave}>

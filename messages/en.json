@@ -3585,7 +3585,7 @@
   "settingsRoles": {
     "title": "Roles",
     "intro": "A role says what a person on your team can open. Make one, then give it to someone.",
-    "todayNote": "Today a role's “Works like” setting decides what a person can open. The table below is kept for when it takes over.",
+    "todayNote": "The pages you tick decide what the person can open. “Works like” says what kind of login they have.",
     "builtIn": "Built in",
     "people": "{count, plural, =0 {Nobody has this role} one {# person} other {# people}}",
     "ownDays": "Own days only",
@@ -3596,7 +3596,7 @@
     "name": "Role name",
     "namePlaceholder": "For example, Cashier",
     "worksLike": "Works like",
-    "worksLikeHint": "Today this sets what the person can open.",
+    "worksLikeHint": "What kind of login this is. A stylist-type login can never open more than a stylist can, whatever you tick.",
     "worksLikeOptions": {
       "none": "Not set",
       "manager": "Manager",

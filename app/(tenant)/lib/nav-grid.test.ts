@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { canSee, gridCanSee, PAGE_OF_HREF } from './nav-policy';
+import { canSee, gridCanChange, gridCanSee, PAGE_OF_HREF } from './nav-policy';
 import { areasOf, DIARY_AREAS, type PageGrid } from './areas';
 
 /**
@@ -121,5 +121,51 @@ describe('Settings follows the role’s pages too', () => {
       expect(src, file).toContain(`await guardScreen('${href}');`);
       expect(src.indexOf('guardScreen('), file).toBeLessThan(src.search(/\bapi\.\w+\(/));
     }
+  });
+});
+
+describe('Jira GRW-76 — a page held at See is read-only, and a write-only screen needs Change', () => {
+  const read = (p: string) => readFileSync(join(__dirname, '..', p), 'utf8');
+  it('a screen of a page at See cannot be changed; at Change it can; one belonging to no page is not the grid’s to limit', () => {
+    expect(gridCanChange('/customers', { clients: 'view' })).toBe(false);
+    expect(gridCanChange('/customers', { clients: 'manage' })).toBe(true);
+    expect(gridCanChange('/stock', { services: 'view' })).toBe(false);
+    expect(gridCanChange('/', {})).toBe(true);
+    expect(gridCanChange('/more', { clients: 'view' })).toBe(true);
+  });
+
+  it('the till, a new booking and Try WhatsApp are not offered at See: there is no read-only version of any of them', () => {
+    for (const href of ['/products/sell', '/appointments/new', '/try-whatsapp']) {
+      expect(gridCanSee(href, { bookings: 'view', services: 'view' }), `${href} at See`).toBe(false);
+      expect(gridCanSee(href, { bookings: 'manage', services: 'manage' }), `${href} at Change`).toBe(true);
+    }
+  });
+
+  it('the layout mounts ScreenAccess, and useWritable reads it (not usePathname itself, which two dozen components would then need a router for)', () => {
+    expect(read('layout.tsx')).toContain('<ScreenAccess>');
+    const provider = read('components/SessionProvider.tsx');
+    expect(provider).toContain('useContext(ScreenWritableContext)');
+    const body = provider.slice(provider.indexOf('export function useWritable'));
+    expect(body.slice(0, body.indexOf('\n}')), 'useWritable').not.toContain('usePathname');
+  });
+
+  it('the Settings Save bars are undrawn on a read-only screen', () => {
+    expect(read('settings/SettingsSaveBar.tsx')).toContain('if (!useWritable()) return null;');
+    expect(read('settings/profile/ProfileForm.tsx')).toContain('{writable ? (');
+  });
+
+  it('the Roles screen sends a role holder Home by its address, and no longer says the grid is "kept for when it takes over"', () => {
+    expect(read('settings/roles/page.tsx')).toContain("await guardScreen('/settings/roles');");
+    const en = JSON.parse(readFileSync(join(__dirname, '../../../messages/en.json'), 'utf8')).settingsRoles;
+    expect(en.todayNote).not.toMatch(/takes over|Today/);
+    expect(en.worksLikeHint).not.toMatch(/Today/);
+  });
+});
+
+describe('Jira GRW-76 — a sheet that rises stays centred on a laptop', () => {
+  it('the rise animation carries the centring, so it cannot replace it', () => {
+    const css = readFileSync(join(__dirname, '../styles/98-service-sheet.css'), 'utf8');
+    expect(css).toMatch(/\.sheet-backdrop \+ \.sheet\.sheet-rise \{\s*animation-name: sheet-fade-up-centred;/);
+    expect(css).toMatch(/@keyframes sheet-fade-up-centred \{[\s\S]*?translate\(-50%, -50%\)/);
   });
 });

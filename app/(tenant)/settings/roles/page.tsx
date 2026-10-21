@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { guardScreen } from '../../lib/screen-guard';
 import { screenTitle } from '../../lib/page-title';
 import { api, ApiError } from '../../lib/api';
 import { LoadErrorBanner } from '../../components/LoadErrorBanner';
@@ -12,6 +13,8 @@ export const dynamic = 'force-dynamic';
  * the same answer the API gives them.
  */
 export default async function RolesSettingsPage() {
+  // Jira GRW-76 — a role holder is sent Home by this address (the grid never opens it); the owner's own 404-for-others below stays for the API's answer.
+  await guardScreen('/settings/roles');
   let payload;
   let team;
   try {

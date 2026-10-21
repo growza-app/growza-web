@@ -91,13 +91,34 @@ const ALSO_NEEDS: ReadonlyArray<readonly [string, keyof PageGrid]> = [
 /** Destinations the grid can never open: the API makes these the owner's alone (billing, branches, team, roles). */
 const OWNER_ONLY_HREF: readonly string[] = ['/settings/billing', '/settings/branches', '/settings/team', '/settings/roles'];
 
+/**
+ * Screens whose whole job is a write: opened at See they would draw a form every control of which the API refuses, so they need Change to be
+ * offered at all (Jira GRW-76). The till and a new booking take an order or a visit; there is no read-only version of either.
+ */
+const NEEDS_CHANGE_TO_OPEN: readonly string[] = ['/products/sell', '/appointments/new', '/try-whatsapp'];
+
+/** The page a destination belongs to, or undefined when it is open to every member. */
+export function pageOfHref(href: string): keyof PageGrid | undefined {
+  return PAGE_OF_HREF.find(([prefix]) => href === prefix || href.startsWith(`${prefix}/`))?.[1];
+}
+
+/**
+ * May the role CHANGE things on the screen at this address? A screen of a page held at See is read-only: the controls that write are left undrawn,
+ * the way a business suspended for non-payment is (`useWritable`). A screen belonging to no page (Home, the menu) is not the grid's to limit.
+ */
+export function gridCanChange(href: string, grid: PageGrid): boolean {
+  const page = pageOfHref(href);
+  return page === undefined || grid[page] === 'manage';
+}
+
 /** Does the member's role open this destination? `none` hides it; a page it does not belong to is open. */
 export function gridCanSee(href: string, grid: PageGrid): boolean {
+  if (NEEDS_CHANGE_TO_OPEN.some((p) => href === p || href.startsWith(`${p}/`)) && !gridCanChange(href, grid)) return false;
   if (OWNER_ONLY_HREF.some((p) => href === p || href.startsWith(`${p}/`))) return false;
   const extra = ALSO_NEEDS.find(([prefix]) => href === prefix || href.startsWith(`${prefix}/`));
   if (extra && (grid[extra[1]] ?? 'none') === 'none') return false;
-  const hit = PAGE_OF_HREF.find(([prefix]) => href === prefix || href.startsWith(`${prefix}/`));
-  return hit ? (grid[hit[1]] ?? 'none') !== 'none' : true;
+  const page = pageOfHref(href);
+  return page ? (grid[page] ?? 'none') !== 'none' : true;
 }
 
 /**

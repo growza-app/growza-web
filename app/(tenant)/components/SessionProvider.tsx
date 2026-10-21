@@ -1,8 +1,9 @@
 'use client';
 
 import { createContext, useContext, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import type { Lang } from '../lib/lang';
-import { mayUse, type UiAction } from '../lib/nav-policy';
+import { gridCanChange, mayUse, type UiAction } from '../lib/nav-policy';
 import { DIARY_AREAS, type Areas } from '../lib/areas';
 
 /**
@@ -101,7 +102,22 @@ const WALK_IN_ONLY: readonly UiAction[] = ['queue.give', 'token.arrive'];
 
 /** Jira GRW-556 (follow-up) — may the business change anything? False only while it is suspended for non-payment. */
 export function useWritable(): boolean {
-  return useSession()?.writable ?? true;
+  const screenWritable = useContext(ScreenWritableContext);
+  return (useSession()?.writable ?? true) && screenWritable;
+}
+
+/**
+ * Jira GRW-76 — may THIS person change things on the screen they are looking at? A role holder whose page is held at See is read-only there: the
+ * controls that write are left undrawn, the way a suspended business's are. Provided once, by the layout, from the address — which is why it is a
+ * context and not a call to `usePathname` inside `useWritable`: that hook is read by two dozen components, and a screen with no router (a test, a
+ * preview) must still draw. Absent (no provider) reads as writable.
+ */
+const ScreenWritableContext = createContext<boolean>(true);
+
+export function ScreenAccess({ children }: { children: ReactNode }) {
+  const pages = useSession()?.areas?.pages;
+  const pathname = usePathname();
+  return <ScreenWritableContext.Provider value={!pages || gridCanChange(pathname, pages)}>{children}</ScreenWritableContext.Provider>;
 }
 
 /** Do clients book through WhatsApp here? False when unknown — see `whatsappLive` above. */

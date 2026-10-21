@@ -557,6 +557,26 @@
   .sheet-backdrop + .sheet > .sheet-grab {
     display: none;
   }
+  /*
+   * A sheet that rises (`.sheet-rise`, Jira GRW-343) animates `transform`, and `fill-mode: both` keeps the last keyframe — so its translateY(0)
+   * REPLACED the translate(-50%, -50%) that centres it here, and the sheet sat with its top-left corner at the middle of the screen: off-centre at
+   * every laptop width and past the right edge from 861 to ~920px (the invite sheet, found by the Jira GRW-76 sweep at 861 and 884). A centred sheet does not
+   * rise from the bottom edge anyway, so on a laptop it fades up in place and the keyframes carry the centring.
+   */
+  .sheet-backdrop + .sheet.sheet-rise {
+    animation-name: sheet-fade-up-centred;
+  }
+}
+
+@keyframes sheet-fade-up-centred {
+  from {
+    transform: translate(-50%, calc(-50% + 16px));
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
 }
 
 /* ── Choosing a picture from the pack ─────────────────────────────────────── */

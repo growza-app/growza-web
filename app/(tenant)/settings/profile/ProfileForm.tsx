@@ -8,6 +8,7 @@ import { fromStoredPhone, toStoredPhone } from '../../lib/phone';
 import { api, ApiError, type SettingsSummary } from '../../lib/api';
 import { usePhoneProblem } from '../../lib/use-phone-problem';
 import { useCloseAfterSave } from '../../lib/close-after-save';
+import { useWritable } from '../../components/SessionProvider';
 
 /**
  * Jira GRW-226 — Business profile, as a form that fits a laptop and a phone.
@@ -71,6 +72,8 @@ export function ProfileForm({
   /** Jira GRW-230 — set when a branch is picked: this is that branch's profile. */
   branchName?: string | null;
 }) {
+  // Jira GRW-76 — a role that can only SEE Settings is not offered the button that saves.
+  const writable = useWritable();
   const t = useTranslations('settingsProfile');
   // Jira GRW-556 (follow-up) — Save finishes the task: back to the list, which says "Saved".
   const closeForm = useCloseAfterSave('/settings');
@@ -410,9 +413,11 @@ export function ProfileForm({
             t('bar.allSaved')
           )}
         </span>
-        <button type="submit" className="btn bp-save" disabled={busy || !dirty}>
-          {busy ? t('bar.saving') : t('bar.save')}
-        </button>
+        {writable ? (
+          <button type="submit" className="btn bp-save" disabled={busy || !dirty}>
+            {busy ? t('bar.saving') : t('bar.save')}
+          </button>
+        ) : null}
       </div>
     </form>
   );
