@@ -1,4 +1,4 @@
-import type { ChannelConnection } from './api-types';
+import type { ChannelConnection, ChannelOrdersLine } from './api-types';
 
 /**
  * Jira GRW-621 — what the state line of a marketplace's keys says, decided in one place so it can be tested without a browser.
@@ -53,6 +53,29 @@ export function stockLine(conn: Pick<ChannelConnection, 'saved' | 'canCheck' | '
   }
   if (stock.lastPushedAt) return { primary: { key: 'updated', tone: 'ok', at: stock.lastPushedAt }, stuck };
   return { primary: stock.waiting > 0 ? { key: 'waiting', tone: 'idle', count: stock.waiting } : { key: 'nothing', tone: 'idle' }, stuck };
+}
+
+/**
+ * Jira GRW-623 — the one line the Orders screen says about orders coming in from a marketplace, decided here so it can be tested without a
+ * browser. Nothing at all until the marketplace's adapter exists (a line that says "no orders yet" about something nothing is asking for
+ * would be a lie); then a problem if the last run had one, else when orders last came in, else that none have.
+ */
+export type BringInKey = 'updated' | 'nothing' | 'refused' | 'unreadable' | 'slow' | 'unreachable';
+export function bringInLine(line: Pick<ChannelOrdersLine, 'canPull' | 'lastBroughtInAt' | 'lastRunReason'>): { key: BringInKey; tone: 'ok' | 'idle' | 'bad' } | null {
+  if (!line.canPull) return null;
+  switch (line.lastRunReason) {
+    case 'refused':
+      return { key: 'refused', tone: 'bad' };
+    case 'keys_unreadable':
+      return { key: 'unreadable', tone: 'bad' };
+    case 'unreachable':
+    case 'failed':
+      return { key: 'unreachable', tone: 'bad' };
+    case 'rate_limited':
+      return { key: 'slow', tone: 'idle' };
+    default:
+      return line.lastBroughtInAt ? { key: 'updated', tone: 'ok' } : { key: 'nothing', tone: 'idle' };
+  }
 }
 
 /** The buffer as typed: a whole number from 0 to 1000, or null. The server checks again; this only saves a round trip. */

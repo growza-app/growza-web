@@ -7,6 +7,7 @@ import { ORDERS_PAGE_SIZE, readQuery } from '../lib/orders-filter';
 import { mayUse } from '../lib/nav-policy';
 import { isWritable } from '../lib/read-only';
 import { OrdersClient } from './OrdersClient';
+import { OrdersBringIn } from './OrdersBringIn';
 
 /**
  * Jira GRW-614 — a shop's Orders: every order, newest first, filtered by where it came from and what state it is in.
@@ -47,6 +48,10 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
     error: error instanceof Error ? error.message : String(error),
   }));
 
+  // Jira GRW-623 — whether orders are coming in by themselves: the owner's and manager's to read, as the API is. A failed read says nothing
+  // rather than failing the screen: the list is what the page is for.
+  const bringIn = mayReadReturns ? await api.channelOrdersStatus().then((r) => r.channels).catch(() => []) : [];
+
   return (
     <>
       <PageHeader
@@ -74,6 +79,7 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
         }
       />
       <div className="page-body ord-page">
+        <OrdersBringIn lines={bringIn} lang={lang} timezone={me?.tenant?.timezone ?? 'Asia/Kolkata'} />
         <OrdersClient initialQuery={query} initial={'rows' in initial ? initial : null} timezone={me?.tenant?.timezone ?? 'Asia/Kolkata'} />
       </div>
     </>

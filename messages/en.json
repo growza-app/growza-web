@@ -4139,6 +4139,17 @@
       "toRefunds": "What was refunded"
     },
     "returnsLink": "What came back",
+    "bringIn": {
+      "title": "Orders from online",
+      "updated": "{channel} orders last brought in {when}",
+      "nothing": "No {channel} orders brought in yet",
+      "refused": "{channel} refused your keys. Replace them in Settings to bring in orders.",
+      "unreadable": "The saved {channel} keys could not be read. Save them again in Settings.",
+      "slow": "{channel} asked us to slow down. Orders will come in shortly.",
+      "unreachable": "Could not bring in {channel} orders. We will try again.",
+      "lastWorked": "Last worked {when}",
+      "held": "{count, plural, one {1 order is waiting for a size} other {# orders are waiting for a size}}"
+    },
     "refunds": {
       "title": "What was refunded",
       "rangeLabel": "Period",

@@ -68,7 +68,7 @@ describe('the buffer is a whole number from 0 to 1000', () => {
 
 describe('the screen', () => {
   it('holds counts and times only: the type has no per-size field', () => {
-    const block = types.slice(types.indexOf('export interface ChannelStock {'), types.indexOf('export interface SetStockBufferResult'));
+    const block = types.slice(types.indexOf('export interface ChannelStock {'), types.indexOf('/** Jira GRW-623 — one marketplace'));
     expect(block).toContain('buffer: number');
     expect(block).toContain('waiting: number');
     expect(block).toContain('stuck: number');
