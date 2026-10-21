@@ -45,6 +45,7 @@ export function stockLine(conn: Pick<ChannelConnection, 'saved' | 'canCheck' | '
     case 'keys_unreadable':
       return { primary: { key: 'unreadable', tone: 'bad' }, stuck };
     case 'unreachable':
+    case 'failed':
       return { primary: { key: 'unreachable', tone: 'bad' }, stuck };
     case 'rate_limited':
       return { primary: { key: 'slow', tone: 'idle' }, stuck };

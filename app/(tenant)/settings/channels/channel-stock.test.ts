@@ -40,6 +40,7 @@ describe('the line under the keys says what is true, in the order an owner needs
   it.each([
     ['keys_unreadable', 'unreadable', 'bad'],
     ['unreachable', 'unreachable', 'bad'],
+    ['failed', 'unreachable', 'bad'],
     ['rate_limited', 'slow', 'idle'],
   ] as const)('a last run that ended on %s reads %s', (reason, key, tone) => {
     expect(stockLine(base({ lastRunReason: reason, lastPushedAt: '2026-10-21T10:05:00Z' })).primary).toMatchObject({ key, tone });

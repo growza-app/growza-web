@@ -1504,7 +1504,7 @@ export interface ChannelStock {
   buffer: number;
   lastPushedAt: string | null;
   /** Why the last run could not finish; null = it finished, or none ran. */
-  lastRunReason: 'rate_limited' | 'unreachable' | 'refused' | 'keys_unreadable' | null;
+  lastRunReason: 'rate_limited' | 'unreachable' | 'refused' | 'keys_unreadable' | 'failed' | null;
   waiting: number;
   stuck: number;
 }
