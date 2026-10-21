@@ -102,12 +102,12 @@ export function useMayUse(action: UiAction): boolean {
  */
 const WALK_IN_ONLY: readonly UiAction[] = ['queue.give', 'token.arrive'];
 
-/** Jira GRW-556 (follow-up) — may the business change anything? False only while it is suspended for non-payment. */
-/** The business may change things at all (false only while suspended). Not the screen's: the till's "+" belongs to Bookings, wherever it is drawn. */
+/** Jira GRW-556 (follow-up) — may the business change anything? False only while it is suspended for non-payment. Not the screen's: the till's "+" belongs to Bookings, wherever it is drawn. */
 export function useBusinessWritable(): boolean {
   return useSession()?.writable ?? true;
 }
 
+/** Jira GRW-76 — may THIS control write here? The business is not suspended (`useBusinessWritable`) AND the screen is not held at See for this role. */
 export function useWritable(): boolean {
   const screenWritable = useContext(ScreenWritableContext);
   return (useSession()?.writable ?? true) && screenWritable;
