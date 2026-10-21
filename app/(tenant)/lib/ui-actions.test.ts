@@ -165,7 +165,7 @@ describe('2b — the controls, each behind its own action', () => {
     const linking = sources().filter((f) => /href="\/search"/.test(readFileSync(f, 'utf8')));
     expect(linking.map((f) => path.relative(tenantDir, f))).toEqual([path.join('components', 'HeaderSearch.tsx')]);
     // Jira GRW-556 — and the business being live: it finds clients and bookings, which a business being set up has none of.
-    expect(read('components/HeaderSearch.tsx')).toMatch(/const mayUseSearch = useMayUse\('search'\);[\s\S]*if \(!mayUseSearch \|\| !live\) return null;/);
+    expect(read('components/HeaderSearch.tsx')).toMatch(/const mayUseSearch = useMayUse\('search'\) && [^;]*;[\s\S]*if \(!mayUseSearch \|\| !live\) return null;/);
   });
 
   const GATES: Array<[file: string, gate: RegExp]> = [

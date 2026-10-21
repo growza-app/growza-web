@@ -129,7 +129,8 @@ export default async function DashboardPage() {
    * and the front desk's both are `ShopHome`, which reads one endpoint and draws the takings only when the response
    * carries them. A stylist is not a shop role; the stylist Home below is unchanged.
    */
-  if (areasOf(me).shop && kind !== 'stylist') {
+  // Jira GRW-74 — a role holder's Home is the shop's whatever fixed role the role works like: the stylist Home reads the diary, which a shop has not got.
+  if (areasOf(me).shop && (kind !== 'stylist' || areasOf(me).pages)) {
     const initial = await soft(api.shopHome());
     return (
       <ShopHome

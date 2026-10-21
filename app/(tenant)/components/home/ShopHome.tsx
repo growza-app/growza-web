@@ -51,7 +51,9 @@ export function ShopHome({
   const areas = useAreas();
   const branchContext = useBranch();
   const branch = branchContext.ready && branchContext.multi ? branchContext.choice : null;
-  const money = canSeeRevenue(role);
+  // The takings follow the role's Reports page for a role holder (the API sends them on the same rule), the fixed role otherwise.
+  const money = areas.pages ? (areas.pages.reports ?? 'none') !== 'none' : canSeeRevenue(role);
+  const can = (href: string) => canSee(href, role, reportTabs, true, areas);
 
   const [data, setData] = useState<ShopHomeData | null>(initial);
   const [failed, setFailed] = useState(initial === null);
@@ -124,7 +126,7 @@ export function ShopHome({
               </Card>
             ) : null}
 
-            <Card title={s.ordersTitle} action={data.anyOrders ? <a className="shp-link" href="/orders">{s.viewOrders}</a> : undefined}>
+            <Card title={s.ordersTitle} action={data.anyOrders && can('/orders') ? <a className="shp-link" href="/orders">{s.viewOrders}</a> : undefined}>
               {data.anyOrders ? (
                 <p className="shp-orders">
                   <strong>{data.today.orders}</strong>
@@ -135,7 +137,7 @@ export function ShopHome({
                   <strong>{s.noOrdersTitle}</strong>
                   {/* A shelf nobody has counted has nothing to sell, so the first step is the count (below), not the till. */}
                   <span>{data.running.counted ? s.noOrdersBody : s.countFirst}</span>
-                  {data.running.counted ? (
+                  {data.running.counted && can('/products/sell') ? (
                     <a className="btn btn-primary shp-cta" href="/products/sell">
                       {s.takeOrder}
                     </a>
@@ -150,13 +152,15 @@ export function ShopHome({
               so the filter could hold none of the rows just listed: a uniform with ten sizes at one each counts as
               twenty in stock. The shelf holds every one of them. A per-size low filter is Jira GRW-591's.
             */}
-            <Card title={s.runningOut} action={data.running.total > data.running.items.length ? <a className="shp-link" href={`/stock${stockBranch}`}>{s.viewAll(data.running.total)}</a> : undefined}>
+            <Card title={s.runningOut} action={data.running.total > data.running.items.length && can('/stock') ? <a className="shp-link" href={`/stock${stockBranch}`}>{s.viewAll(data.running.total)}</a> : undefined}>
               {!data.running.counted ? (
                 <div className="shp-empty">
                   <span>{s.notCounted}</span>
-                  <a className="btn shp-cta" href="/stock">
-                    {s.countStock}
-                  </a>
+                  {can('/stock') ? (
+                    <a className="btn shp-cta" href="/stock">
+                      {s.countStock}
+                    </a>
+                  ) : null}
                 </div>
               ) : data.running.items.length === 0 ? (
                 <p className="shp-plain">{s.nothingLow}</p>

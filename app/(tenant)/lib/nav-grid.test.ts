@@ -14,9 +14,10 @@ const DESK: PageGrid = { bookings: 'manage', clients: 'manage', services: 'manag
 const STAFF: PageGrid = { attendance: 'view' };
 
 describe('the nav follows the role’s pages', () => {
-  it('a Desk role is offered Orders, Clients and Stock, and not Reports or Settings or Offers', () => {
+  it('a Desk role is offered Clients and Stock, and not Orders (the money is Reports’), Reports, Settings or Offers', () => {
     const areas = withGrid(DESK);
-    expect(canSee('/orders', 'receptionist', undefined, true, areas)).toBe(true);
+    expect(canSee('/orders', 'receptionist', undefined, true, areas)).toBe(false);
+    expect(canSee('/orders', 'receptionist', undefined, true, withGrid({ ...DESK, reports: 'view' }))).toBe(true);
     expect(canSee('/customers', 'receptionist', undefined, true, areas)).toBe(true);
     expect(canSee('/stock', 'receptionist', undefined, true, areas)).toBe(true);
     expect(canSee('/reports', 'receptionist', undefined, true, areas)).toBe(false);
@@ -32,7 +33,7 @@ describe('the nav follows the role’s pages', () => {
 
   it('a Staff role (attendance only) still has Home, the menu, notifications and help', () => {
     const areas = withGrid(STAFF);
-    for (const href of ['/', '/more', '/notifications', '/help']) expect(canSee(href, 'staff', undefined, true, areas), href).toBe(true);
+    for (const href of ['/', '/more', '/help']) expect(canSee(href, 'staff', undefined, true, areas), href).toBe(true);
     expect(canSee('/orders', 'staff', undefined, true, areas)).toBe(false);
   });
 
@@ -41,10 +42,16 @@ describe('the nav follows the role’s pages', () => {
     expect(canSee('/settings', 'manager', undefined, true, withGrid({ settings: 'manage' }))).toBe(true);
   });
 
-  it('a sub-screen follows its page (Roles is Settings)', () => {
-    expect(gridCanSee('/settings/roles', { settings: 'view' })).toBe(true);
-    expect(gridCanSee('/products/sell', { bookings: 'manage' })).toBe(true);
+  it('a sub-screen follows its page, the till needs the shelf too, and the owner-only settings never open', () => {
+    expect(gridCanSee('/settings/profile', { settings: 'view' })).toBe(true);
+    for (const href of ['/settings/billing', '/settings/branches', '/settings/team', '/settings/roles']) expect(gridCanSee(href, { settings: 'manage' }), href).toBe(false);
+    expect(gridCanSee('/products/sell', { bookings: 'manage' })).toBe(false);
+    expect(gridCanSee('/products/sell', { bookings: 'manage', services: 'view' })).toBe(true);
     expect(gridCanSee('/products', { bookings: 'manage' })).toBe(false);
+    expect(gridCanSee('/search', { bookings: 'view' })).toBe(true);
+    expect(gridCanSee('/search', { clients: 'manage' })).toBe(false);
+    expect(gridCanSee('/notifications', {})).toBe(false);
+    expect(gridCanSee('/try-whatsapp', { attendance: 'view' })).toBe(false);
   });
 
   it('the business still has to be live: a role does not open a setup-only business', () => {

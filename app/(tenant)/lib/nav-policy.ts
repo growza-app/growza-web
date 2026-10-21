@@ -60,8 +60,11 @@ const PAGE_OF_HREF: ReadonlyArray<readonly [string, keyof PageGrid]> = [
   ['/sales', 'bookings'],
   ['/documents', 'bookings'],
   ['/products/sell', 'bookings'],
+  ['/try-whatsapp', 'bookings'],
   ['/customers', 'clients'],
-  ['/search', 'clients'],
+  // The one-box search finds bookings as well as clients, so it follows the page it reveals more of.
+  ['/search', 'bookings'],
+  ['/notifications', 'bookings'],
   ['/services', 'services'],
   ['/products', 'services'],
   ['/stock', 'services'],
@@ -73,8 +76,26 @@ const PAGE_OF_HREF: ReadonlyArray<readonly [string, keyof PageGrid]> = [
   ['/settings', 'settings'],
 ];
 
+/**
+ * Destinations that need MORE than their own page, because the screen reads from two (the API refuses each read on its own page):
+ * - Orders and the register read the sales, and the money in them is Reports' (`maySeeSales`) — the same rule the fixed receptionist had, where Orders
+ *   opened only once the owner had granted the `sales` tab;
+ * - the till sells from the shelf (Stock) as well as taking the order (Orders).
+ */
+const ALSO_NEEDS: ReadonlyArray<readonly [string, keyof PageGrid]> = [
+  ['/orders', 'reports'],
+  ['/sales', 'reports'],
+  ['/products/sell', 'services'],
+];
+
+/** Destinations the grid can never open: the API makes these the owner's alone (billing, branches, team, roles). */
+const OWNER_ONLY_HREF: readonly string[] = ['/settings/billing', '/settings/branches', '/settings/team', '/settings/roles'];
+
 /** Does the member's role open this destination? `none` hides it; a page it does not belong to is open. */
 export function gridCanSee(href: string, grid: PageGrid): boolean {
+  if (OWNER_ONLY_HREF.some((p) => href === p || href.startsWith(`${p}/`))) return false;
+  const extra = ALSO_NEEDS.find(([prefix]) => href === prefix || href.startsWith(`${prefix}/`));
+  if (extra && (grid[extra[1]] ?? 'none') === 'none') return false;
   const hit = PAGE_OF_HREF.find(([prefix]) => href === prefix || href.startsWith(`${prefix}/`));
   return hit ? (grid[hit[1]] ?? 'none') !== 'none' : true;
 }

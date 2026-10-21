@@ -48,7 +48,7 @@ import { useServiceSuggestions } from '../lib/useServiceSuggestions';
 import { useLabel } from './LabelsProvider';
 import { LargeAmountDeclined, useLargeAmountGuard } from './LargeAmountConfirm';
 import { useBranch } from './BranchProvider';
-import { useSession } from './SessionProvider';
+import { useAreas, useSession } from './SessionProvider';
 import { canSee, type MemberRole } from '../lib/nav-policy';
 import { PhoneField } from './PhoneField';
 import { FormModeSwitch } from '../appointments/new/FormModeSwitch';
@@ -576,6 +576,7 @@ export function NewVisitSheet({
    * is treated as owner, as everywhere else (GRW-157 BR-03).
    */
   const session = useSession();
+  const areas = useAreas();
   const isOwner = (session?.role ?? 'owner') === 'owner';
   const branches = isOwner ? (session?.branches ?? []) : [];
   // Jira GRW-377 — opens on the branch the dashboard is looking at; the chips below change it for this visit only.
@@ -2202,7 +2203,7 @@ export function NewVisitSheet({
                   <div className="empty">
                     {nv.noServicesAtBranch(branchNameOf(listBranch ?? undefined)!, servicesNoun.toLowerCase())}{' '}
                     {/* Jira GRW-409 — a link to the Services screen for whoever the nav offers it to (the shared rule), not `isOwner`. */}
-                    {canSee('/services', session?.role as MemberRole | null | undefined) ? <Link href={`/services?branch=${listBranch}`}>{nv.addOrCopyServices(servicesNoun.toLowerCase())}</Link> : null}
+                    {canSee('/services', session?.role as MemberRole | null | undefined, undefined, true, areas) ? <Link href={`/services?branch=${listBranch}`}>{nv.addOrCopyServices(servicesNoun.toLowerCase())}</Link> : null}
                   </div>
                 ) : (
                   <div className="empty">{nv.noServicesYet}</div>
@@ -2561,7 +2562,7 @@ export function NewVisitSheet({
                   : nv.noStaffYet(providerNoun.toLowerCase())}{' '}
                 {forPayment ? nv.stillTakePayment(noProviderWord.toLowerCase()) : null}{' '}
                 {/* Jira GRW-409 — the Staff screen for whoever the nav offers it to, by the shared rule. */}
-                {canSee('/providers', session?.role as MemberRole | null | undefined) ? (
+                {canSee('/providers', session?.role as MemberRole | null | undefined, undefined, true, areas) ? (
                   <Link href={`/providers?branch=${listBranch}`}>{nv.addStaff(providerNoun.toLowerCase())}</Link>
                 ) : null}
               </div>
@@ -2578,7 +2579,7 @@ export function NewVisitSheet({
               <div className="empty">
                 {nv.noOneDoes(picked[0]?.name ?? '', providerNoun.toLowerCase())}{' '}
                 {forPayment ? nv.stillTakePayment(noProviderWord.toLowerCase()) : null}{' '}
-                {canSee('/providers', session?.role as MemberRole | null | undefined) ? (
+                {canSee('/providers', session?.role as MemberRole | null | undefined, undefined, true, areas) ? (
                   <Link href={`/providers?branch=${listBranch}`}>{nv.whoDoesWhat(providerNoun.toLowerCase())}</Link>
                 ) : null}
               </div>

@@ -2,7 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 import { IconSearch } from './icons';
-import { useLive, useMayUse } from './SessionProvider';
+import { useAreas, useLive, useMayUse } from './SessionProvider';
+import { gridCanSee } from '../lib/nav-policy';
 
 /**
  * Jira GRW-409 · GRW-319 — the header's search, for the people it can answer.
@@ -24,7 +25,9 @@ import { useLive, useMayUse } from './SessionProvider';
  */
 export function HeaderSearch({ wide = false }: { wide?: boolean }) {
   const t = useTranslations('search');
-  const mayUseSearch = useMayUse('search');
+  const areas = useAreas();
+  // Jira GRW-74 — a role holder finds clients only if their role opens Clients; the fixed-role rule is not asked of them.
+  const mayUseSearch = useMayUse('search') && (!areas.pages || gridCanSee('/search', areas.pages));
   // Jira GRW-556 — it finds clients and bookings, and a business being set up has neither.
   const live = useLive();
   if (!mayUseSearch || !live) return null;
