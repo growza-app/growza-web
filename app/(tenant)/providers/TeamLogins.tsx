@@ -29,7 +29,7 @@ import { waDigits } from '../components/BookingSheet';
  */
 
 /** What an invite is being created FOR: a stylist (whose calendar it is) or the front desk. */
-export type InviteTarget = { role: 'staff' | 'receptionist'; providerId?: string };
+export type InviteTarget = { role: 'staff' | 'receptionist' | 'manager'; providerId?: string };
 
 export function daysLeft(iso: string): number {
   return Math.ceil((Date.parse(iso) - Date.now()) / 86_400_000);
@@ -68,7 +68,7 @@ export function InviteSheet({
   const dialogRef = useRef<HTMLDivElement>(null);
   const multiBranch = branches.length > 1;
   const tRoles = useTranslations('settingsRoles');
-  const [role, setRole] = useState<'staff' | 'receptionist'>(target.role);
+  const [role, setRole] = useState<'staff' | 'receptionist' | 'manager'>(target.role);
   const [tenantRoleId, setTenantRoleId] = useState('');
   const [providerId, setProviderId] = useState(target.providerId ?? '');
   const [phone, setPhone] = useState('');
@@ -126,7 +126,7 @@ export function InviteSheet({
         role,
         providerId: role === 'staff' ? providerId : null,
         locationId: role === 'receptionist' && multiBranch ? locationId : null,
-        name: role === 'receptionist' && name.trim() ? name.trim() : null,
+        name: (role === 'receptionist' || role === 'manager') && name.trim() ? name.trim() : null,
         ...(roles ? { tenantRoleId } : {}),
       });
       // The normalised number, not what was typed — it is the one the invite is actually for, and the one they
@@ -229,7 +229,7 @@ export function InviteSheet({
                       onChange={(e) => {
                         const picked = roles.find((r) => r.id === e.target.value);
                         setTenantRoleId(e.target.value);
-                        if (picked?.worksLike === 'receptionist' || picked?.worksLike === 'staff') setRole(picked.worksLike);
+                        if (picked?.worksLike === 'receptionist' || picked?.worksLike === 'staff' || picked?.worksLike === 'manager') setRole(picked.worksLike);
                         setError(null);
                       }}
                     >
@@ -294,7 +294,7 @@ export function InviteSheet({
                 </div>
               )}
 
-              {role === 'receptionist' && (
+              {(role === 'receptionist' || role === 'manager') && (
                 <div className="field">
                   <label htmlFor="invite-name">
                     {t('theirName')}
@@ -352,13 +352,13 @@ export function InviteSheet({
 
               <button
                 className="btn invite-submit"
-                disabled={busy || !phone.trim() || (role === 'receptionist' && !name.trim()) || (!!roles && !tenantRoleId)}
+                disabled={busy || !phone.trim() || ((role === 'receptionist' || role === 'manager') && !name.trim()) || (!!roles && !tenantRoleId)}
                 onClick={() => void send()}
               >
                 {busy ? t('creating') : t('createInvite')}
               </button>
               {/* Why the button would refuse, said before it is pressed rather than after. */}
-              {!busy && phone.trim() && role === 'receptionist' && !name.trim() && <p className="field-hint">{t('errors.nameNeeded')}</p>}
+              {!busy && phone.trim() && (role === 'receptionist' || role === 'manager') && !name.trim() && <p className="field-hint">{t('errors.nameNeeded')}</p>}
               {!busy && phone.trim() && role === 'staff' && !providerId && <p className="field-hint">{t('errors.chooseStylistFirst')}</p>}
               {!busy && phone.trim() && role === 'receptionist' && multiBranch && !locationId && <p className="field-hint">{t('errors.chooseBranchFirst')}</p>}
             </>

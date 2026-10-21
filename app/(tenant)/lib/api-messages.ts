@@ -30,6 +30,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Choose one of your roles.': 'अपने रोल में से कोई चुनें।',
   'This role cannot be given to someone yet. Choose another.': 'यह रोल अभी किसी को दिया नहीं जा सकता। कोई दूसरा चुनें।',
   'Choose a role.': 'एक रोल चुनें।',
+  'Only the owner can give the manager role.': 'मैनेजर का रोल सिर्फ़ मालिक दे सकते हैं।',
   'The owner does not need a role.': 'मालिक को रोल की ज़रूरत नहीं।',
   'This role works differently from what this person does now. Invite them again with the new role.': 'यह रोल इस व्यक्ति के मौजूदा काम से अलग तरह से चलता है। उन्हें नए रोल के साथ फिर से न्योता भेजें।',
   // ---- Owner, 2026-10-18 — loading products from a spreadsheet

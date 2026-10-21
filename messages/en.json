@@ -3634,7 +3634,8 @@
       "removeFailed": "Could not remove the role. Try again.",
       "nameNeeded": "Give the role a name",
       "roleFailed": "Could not change the role. Try again.",
-      "peopleFailed": "Could not load your team. Reload the page to try again."
+      "peopleFailed": "Could not load your team. Reload the page to try again.",
+      "addStaffFailed": "Could not add them. Try again."
     },
     "peopleTitle": "People",
     "peopleEmpty": "Nobody else is on your team yet.",
@@ -3645,6 +3646,16 @@
     "chooseRole": "Choose a role",
     "chooseRoleFirst": "Choose a role first.",
     "makeRoleFirst": "Make a role first, then invite someone into it.",
-    "whichPerson": "Which staff member is this for?"
+    "whichPerson": "Which staff member is this for?",
+    "addStaff": "Add a staff member",
+    "addStaffSub": "They are added to your staff. Then invite them to sign in, with a role.",
+    "staffName": "Name",
+    "staffPhone": "Mobile number",
+    "staffBranch": "Which branch?",
+    "chooseBranch": "Choose a branch",
+    "chooseBranchFirst": "Choose a branch first.",
+    "addStaffSubmit": "Add",
+    "closeSheet": "Close",
+    "staffNeedsRoster": "To invite someone as Staff, add them as a staff member first."
   }
 }

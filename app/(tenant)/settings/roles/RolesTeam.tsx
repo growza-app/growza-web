@@ -1,11 +1,16 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { api, ApiError, type PendingInvite, type ProviderOverviewRow, type ShopRole, type TeamMember } from '../../lib/api';
 import { useWritable } from '../../components/SessionProvider';
 import { PersonPhoto } from '../../components/PersonPhoto';
 import { InviteSheet, WaitingGroup } from '../../providers/TeamLogins';
+import { PhoneField } from '../../components/PhoneField';
+import { useDialog } from '../../../shared/a11y/useDialog';
+import { toStoredPhone } from '../../lib/phone';
+import { usePhoneProblem } from '../../lib/use-phone-problem';
+import { IconClose } from '../../components/icons';
 
 /**
  * Jira GRW-73 — the people on a shop's team, and the role each holds.
@@ -18,7 +23,7 @@ export function RolesTeam({
   roles,
   initialMembers,
   initialInvites,
-  providers,
+  providers: initialProviders,
   branches,
   loadFailed,
   onChanged,
@@ -39,11 +44,13 @@ export function RolesTeam({
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [inviting, setInviting] = useState(false);
+  const [addingStaff, setAddingStaff] = useState(false);
+  const [providers, setProviders] = useState(initialProviders);
 
-  // Roles that can be given today: ones that work like a desk or like staff (a manager-like or unset role is refused by the API).
+  // Roles that can be given: any that works like a manager, a desk or staff (a role that works like nothing is refused by the API).
   // A staff-like login belongs to a person on the roster, and a shop has no screen to put one there: without anyone on it, only desk roles are offered.
   const rosterPeople = providers.filter((p) => p.active);
-  const giveable = roles.filter((r) => r.worksLike === 'receptionist' || (r.worksLike === 'staff' && rosterPeople.length > 0));
+  const giveable = roles.filter((r) => r.worksLike === 'manager' || r.worksLike === 'receptionist' || (r.worksLike === 'staff' && rosterPeople.length > 0));
   const people = members.filter((m) => m.role !== 'owner');
 
   const refresh = async () => {
@@ -92,7 +99,7 @@ export function RolesTeam({
             {people.map((m) => {
               const name = m.name ?? m.providerName ?? m.phone ?? t('unnamed');
               // Only roles of the same kind as this login — and the one they hold, so the select never shows a blank for it.
-              const options = roles.filter((r) => ((r.worksLike === 'receptionist' || r.worksLike === 'staff') && r.worksLike === m.role) || r.id === m.tenantRoleId);
+              const options = roles.filter((r) => ((r.worksLike === 'manager' || r.worksLike === 'receptionist' || r.worksLike === 'staff') && r.worksLike === m.role) || r.id === m.tenantRoleId);
               return (
                 <div key={m.userId} className="login-row roles-person">
                   <PersonPhoto name={m.name ?? m.providerName ?? name} />
@@ -130,12 +137,27 @@ export function RolesTeam({
 
         <WaitingGroup invites={invites} branchName={(id) => branches.find((b) => b.id === id)?.name ?? null} onRevoke={(id) => void revoke(id)} writable={writable} />
 
+        {roles.some((r) => r.worksLike === 'staff') && rosterPeople.length === 0 && <p className="field-hint">{t('staffNeedsRoster')}</p>}
+
         <div className="roles-actions">
           <button type="button" className="btn" disabled={!writable || loadFailed} onClick={() => setInviting(true)}>
             {t('invite')}
           </button>
+          <button type="button" className="btn btn-ghost" disabled={!writable || loadFailed} onClick={() => setAddingStaff(true)}>
+            {t('addStaff')}
+          </button>
         </div>
       </div>
+      {addingStaff && (
+        <AddStaffSheet
+          branches={branches}
+          onClose={() => setAddingStaff(false)}
+          onAdded={async () => {
+            // The new person must be on the roster before a Staff invitation can name them.
+            setProviders(await api.providersOverview().then((o) => o.providers, () => providers));
+          }}
+        />
+      )}
       {inviting && (
         <InviteSheet
           target={{ role: 'receptionist' }}
@@ -147,5 +169,105 @@ export function RolesTeam({
         />
       )}
     </div>
+  );
+}
+
+/**
+ * Jira GRW-73 (follow-up) — add a person to a shop's staff from the Roles screen.
+ *
+ * A shop has no Staff screen, and a Staff login belongs to a person on the roster. So the name and number go here; the person is then on
+ * the roster, ready to be invited to sign in with a role. No stylist wizard, no services, no hours: a shop's staff mark attendance.
+ */
+function AddStaffSheet({ branches, onClose, onAdded }: { branches: Array<{ id: string; name: string }>; onClose: () => void; onAdded: () => Promise<void> }) {
+  const t = useTranslations('settingsRoles');
+  const checkPhone = usePhoneProblem();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const multiBranch = branches.length > 1;
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [locationId, setLocationId] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useDialog(dialogRef, { onClose: busy ? undefined : onClose });
+
+  const add = async () => {
+    const complaint = checkPhone(phone);
+    if (complaint) {
+      setPhoneError(complaint);
+      return;
+    }
+    if (multiBranch && !locationId) {
+      setError(t('chooseBranchFirst'));
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await api.createProvider({ displayName: name.trim(), phone: toStoredPhone(phone)!, ...(multiBranch ? { locationId } : {}) });
+      await onAdded();
+      onClose();
+    } catch (e) {
+      setError(e instanceof ApiError && e.status < 500 ? e.message : t('errors.addStaffFailed'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="sheet-backdrop sheet-backdrop-fade" onClick={busy ? undefined : onClose} />
+      <div className="sheet sheet-rise invite-sheet" role="dialog" aria-modal="true" aria-label={t('addStaff')} ref={dialogRef}>
+        <div className="sheet-grab" />
+        <div className="sheet-head">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="sheet-title">{t('addStaff')}</div>
+            <div className="sheet-sub">{t('addStaffSub')}</div>
+          </div>
+          <button type="button" className="wiz-close" onClick={onClose} aria-label={t('closeSheet')}>
+            <IconClose />
+          </button>
+        </div>
+        <div className="invite-body">
+          <div className="field">
+            <label htmlFor="staff-name">{t('staffName')}</label>
+            <input id="staff-name" type="text" autoComplete="off" maxLength={60} value={name} disabled={busy} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <PhoneField
+            id="staff-phone"
+            label={t('staffPhone')}
+            required
+            value={phone}
+            disabled={busy}
+            error={phoneError}
+            onChange={(v) => {
+              setPhone(v);
+              if (phoneError) setPhoneError(null);
+            }}
+          />
+          {multiBranch && (
+            <div className="field">
+              <label htmlFor="staff-branch">{t('staffBranch')}</label>
+              <select id="staff-branch" value={locationId} disabled={busy} onChange={(e) => setLocationId(e.target.value)}>
+                <option value="">{t('chooseBranch')}</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {error && (
+            <div role="alert" className="field-error">
+              {error}
+            </div>
+          )}
+          <button className="btn invite-submit" disabled={busy || !name.trim() || !phone.trim()} onClick={() => void add()}>
+            {busy ? t('saving') : t('addStaffSubmit')}
+          </button>
+        </div>
+      </div>
+    </>
   );
 }

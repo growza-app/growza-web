@@ -69,12 +69,13 @@ describe('Jira GRW-73 — the people beside the roles', () => {
 
   it('offers a person only the roles that work like what they already are, plus the one they hold', () => {
     expect(team).toContain("r.worksLike === m.role) || r.id === m.tenantRoleId");
+    expect(team).toContain("r.worksLike === 'manager' || r.worksLike === 'receptionist' || r.worksLike === 'staff'");
     // A staff-like role is offered to an invitation only when someone is on the roster to be that login (a shop has no screen to add one).
     expect(team).toContain("r.worksLike === 'staff' && rosterPeople.length > 0");
   });
 
-  it('gives only desk-like and staff-like roles to an invitation, and never an owner', () => {
-    expect(team).toContain("r.worksLike === 'receptionist' || r.worksLike === 'staff'");
+  it('gives manager-like, desk-like and staff-like roles to an invitation, and never an owner', () => {
+    expect(team).toContain("r.worksLike === 'manager' || r.worksLike === 'receptionist' || (r.worksLike === 'staff' && rosterPeople.length > 0)");
     expect(team).toContain("m.role !== 'owner'");
   });
 
@@ -90,6 +91,22 @@ describe('Jira GRW-73 — the people beside the roles', () => {
 
   it('each new sentence exists in both languages', () => {
     for (const k of ['peopleTitle', 'peopleEmpty', 'noRole', 'roleFor', 'invite', 'chooseRole', 'chooseRoleFirst', 'makeRoleFirst']) {
+      for (const lang of ['en', 'hi'] as const) expect(messages(lang)[k], `${lang} · ${k}`).toBeTruthy();
+    }
+  });
+});
+
+describe('adding shop staff from the Roles screen', () => {
+  const team = read('app/(tenant)/settings/roles/RolesTeam.tsx');
+  it('creates a roster person with just a name and a number (and a branch when there are several), then re-reads the roster', () => {
+    expect(team).toContain('api.createProvider({ displayName: name.trim(), phone: toStoredPhone(phone)!, ...(multiBranch ? { locationId } : {}) })');
+    expect(team).toContain('api.providersOverview()');
+  });
+  it('says why Staff is not offered while the roster is empty', () => {
+    expect(team).toContain("rosterPeople.length === 0 && <p className=\"field-hint\">{t('staffNeedsRoster')}</p>");
+  });
+  it('every new sentence exists in both languages', () => {
+    for (const k of ['addStaff', 'addStaffSub', 'staffName', 'staffPhone', 'staffBranch', 'chooseBranch', 'chooseBranchFirst', 'addStaffSubmit', 'closeSheet', 'staffNeedsRoster']) {
       for (const lang of ['en', 'hi'] as const) expect(messages(lang)[k], `${lang} · ${k}`).toBeTruthy();
     }
   });
