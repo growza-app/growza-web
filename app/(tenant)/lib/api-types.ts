@@ -55,6 +55,8 @@ export interface Me {
   /** Jira GRW-556 (follow-up) — a payment the provider recorded in the last two hours; Home says it arrived. Owner only. */
   paymentReceived?: { amountMinor: number; currency: string; paidOn: string } | null;
   labels: Record<string, string>;
+  /** Jira GRW-608 — which set of screens this business runs, from its vertical: `diary` (a salon's) or `shop`. Absent reads as the diary. */
+  surface?: 'diary' | 'shop';
   /**
    * Jira GRW-66 · GRW-157 — who is signed in.
    *
@@ -150,6 +152,9 @@ export interface Me {
     staffLeaderboard: boolean;
     /** Owner, 2026-10-14 — `catalog.products`: whether this business sells things over the counter. Absent reads as yes. */
     products?: boolean;
+    /** Jira GRW-607 — whether the business takes bookings, and whether it sells services. Absent reads as yes: only an explicit false takes a diary area away. */
+    bookings?: boolean;
+    services?: boolean;
     providerSelection: boolean;
     maxProviders: number;
   };
@@ -1128,4 +1133,23 @@ export interface BookingCorrection {
     beforeMinor: number | null;
     afterMinor: number;
   }>;
+}
+
+/**
+ * Jira GRW-609 — a shop's Home, from one read. The money keys (`takingsMinor`) are ABSENT for the front desk: the API
+ * omits them, the screen does not hide them.
+ */
+export interface ShopHome {
+  timezone: string;
+  today: { orders: number; takingsMinor?: number };
+  yesterday: { orders: number; takingsMinor?: number };
+  /** Has the shop ever sold anything. False: Home invites the first order. */
+  anyOrders: boolean;
+  running: {
+    /** Has the shelf ever been counted. False: Home says so instead of listing zeros. */
+    counted: boolean;
+    /** Everything at or under its line — the "View all (n)" beside the few listed. */
+    total: number;
+    items: Array<{ productId: string; name: string; /** "30" or "30 / White"; null for a product with no sizes. */ size: string | null; left: number }>;
+  };
 }

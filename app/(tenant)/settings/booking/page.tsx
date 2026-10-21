@@ -1,4 +1,5 @@
 import { screenTitle } from '../../lib/page-title';
+import { guardScreen } from '../../lib/screen-guard';
 import { LoadErrorBanner } from '../../components/LoadErrorBanner';
 import { loadScopedSettings, scopeKey } from '../scope';
 import { BookingRulesForm } from './BookingRulesForm';
@@ -7,6 +8,8 @@ import { BookingScopeNote } from './BookingScopeNote';
 export const dynamic = 'force-dynamic';
 
 export default async function BookingSettingsPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
+  // Jira GRW-610 — the diary's settings are not a shop's: reached by their address, it lands Home.
+  await guardScreen('/settings/booking');
   // Jira GRW-248 · GRW-396 — the header branch's booking rules and closed days; a one-branch business's own.
   const { settings, branchName, loadError } = await loadScopedSettings(searchParams);
   if (!settings) return <LoadErrorBanner kind={loadError ?? 'down'} />;

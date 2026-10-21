@@ -3,6 +3,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { Lang } from '../lib/lang';
 import { mayUse, type UiAction } from '../lib/nav-policy';
+import { DIARY_AREAS, type Areas } from '../lib/areas';
 
 /**
  * Jira GRW-63 · GRW-203 — who is signed in, for any client component.
@@ -44,6 +45,12 @@ export interface SessionInfo {
    * refusal (`requireFeature('booking.walk_in')`). Absent reads as on: only an explicit `false` hides a control.
    */
   walkIn?: boolean;
+  /**
+   * Jira GRW-608 — which areas of the app this business has (bookings, services, the shop's Orders and Stock), from
+   * `me.capabilities.bookings`, `.services` and `me.surface`. Absent reads as the salon's full set: a session that cannot
+   * say is never shut out of a screen it had.
+   */
+  areas?: Areas;
   /**
    * `me.whatsapp.booking` — whether clients book and cancel through WhatsApp at this business. Settings that only
    * bind a client booking by WhatsApp are left undrawn while it is off (owner, 2026-10-10). Absent reads as OFF, the
@@ -100,6 +107,11 @@ export function useWritable(): boolean {
 /** Do clients book through WhatsApp here? False when unknown — see `whatsappLive` above. */
 export function useWhatsappLive(): boolean {
   return useSession()?.whatsappLive ?? false;
+}
+
+/** Jira GRW-608 — which areas this business has. The salon's full set when unknown (the nav errs open). */
+export function useAreas(): Areas {
+  return useSession()?.areas ?? DIARY_AREAS;
 }
 
 /** Jira GRW-556 — is the business live? False only while it is being set up, when only the setup screens are offered. */

@@ -3,6 +3,7 @@ import { api } from './api';
 import { canSee, type MemberRole } from './nav-policy';
 import { isLive, isSetupDestination } from './go-live';
 import { isWritable } from './read-only';
+import { areaAllows, areasOf, DIARY_AREAS, type Areas } from './areas';
 
 /**
  * Jira GRW-409 · GRW-319 — a screen the nav does not offer a role, reached by
@@ -27,18 +28,22 @@ export async function guardScreen(href: string): Promise<void> {
   let role: MemberRole | null = null;
   let reportTabs: string[] | undefined;
   let live = true;
+  let areas: Areas = DIARY_AREAS;
   try {
     const me = await api.me();
     role = (me.member?.role as MemberRole | undefined) ?? null;
     reportTabs = me.reportTabs;
     live = isLive(me.tenant?.status);
+    // Jira GRW-608 — the same `/me`, asked which areas the business has: a shop reaching the diary by its address,
+    // or a salon reaching Orders, lands Home. No request for the screen's own data has been made yet.
+    areas = areasOf(me);
   } catch {
     return;
   }
   // Outside the try: `redirect()` works by throwing.
   // The role question first, and asked WITHOUT the live flag: the two refusals are different screens, and a role
   // that may never see this one should be told that rather than that it opens later.
-  if (!canSee(href, role, reportTabs)) redirect('/');
+  if (!canSee(href, role, reportTabs, true, areas)) redirect('/');
   if (closedUntilGoLive(live, href)) redirect(NOT_LIVE_PATH);
 }
 
@@ -61,11 +66,16 @@ function closedUntilGoLive(live: boolean, href: string): boolean {
  */
 export async function guardLive(href: string): Promise<void> {
   let live = true;
+  let areas: Areas = DIARY_AREAS;
   try {
-    live = isLive((await api.me()).tenant?.status);
+    const me = await api.me();
+    live = isLive(me.tenant?.status);
+    areas = areasOf(me);
   } catch {
     return;
   }
+  // Jira GRW-608 — a screen of an area the business does not have is Home, not an empty diary.
+  if (!areaAllows(href, areas)) redirect('/');
   if (closedUntilGoLive(live, href)) redirect(NOT_LIVE_PATH);
 }
 

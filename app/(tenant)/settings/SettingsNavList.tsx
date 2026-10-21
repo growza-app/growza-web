@@ -6,7 +6,7 @@ import { IconChevronRight } from '../components/icons';
 import { SETTINGS_GROUPS, type SettingsGroupKey } from './nav-data';
 import { SignOutButton } from '../components/SignOutButton';
 import { useBranch } from '../components/BranchProvider';
-import { useLive, useWhatsappLive } from '../components/SessionProvider';
+import { useAreas, useLive, useWhatsappLive } from '../components/SessionProvider';
 
 /*
  * Jira GRW-229 — the business card that used to open this list is gone.
@@ -37,6 +37,8 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
   const whatsappLive = useWhatsappLive();
   // Jira GRW-556 — a row whose screen only works once the business is live (Payments).
   const live = useLive();
+  // Jira GRW-610 — a business with no diary is not offered the settings of one.
+  const areas = useAreas();
   // Jira GRW-396 — the branch the branch tabs are showing: the address's, else the main one — the same rule
   // the tabs themselves load by (`scope.ts`), so the title and the form never name different branches.
   const { branches } = useBranch();
@@ -83,7 +85,7 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
           </h2>
           <ul className="menu-list">
             {group.rows
-              .filter((row) => (!row.multiBranchOnly || multi) && (!row.whatsappOnly || whatsappLive) && (!row.liveOnly || live))
+              .filter((row) => (!row.multiBranchOnly || multi) && (!row.whatsappOnly || whatsappLive) && (!row.liveOnly || live) && (!row.diaryOnly || areas.bookings))
               .map((row) => {
               const Icon = row.icon;
               const key = multi && row.multiBranchKey ? row.multiBranchKey : row.key;

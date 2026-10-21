@@ -2525,6 +2525,10 @@
     "daysCount": "{days, plural, one {# day} other {# days}}",
     "retiredNote": "retired",
     "notAvailable": "Reports are not available for your role. Ask the owner if you need them.",
+    "shopSoonTitle": "Reports for your shop are on their way",
+    "shopSoonBody": "Sales, what is selling and what is running out are being built. Until then, Orders and Stock show what has happened.",
+    "shopSoonOrders": "See your orders",
+    "shopSoonStock": "See your stock",
     "rows": {
       "everything_else": "Everything else",
       "returning": "Came back",

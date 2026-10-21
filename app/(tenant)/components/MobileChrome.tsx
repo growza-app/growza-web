@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { mayUse, type MemberRole } from '../lib/nav-policy';
 import type { Lang } from '../lib/lang';
-import { useLive, useWritable } from './SessionProvider';
+import { useAreas, useLive, useWritable } from './SessionProvider';
 import { BottomNav } from './BottomNav';
 
 /**
@@ -66,8 +66,10 @@ export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Recor
   const mayBook = mayUse(role, 'visit.new', writable);
   // Jira GRW-556 — no floating "+" until the business is live: there is nothing it could start.
   const live = useLive();
+  // Jira GRW-609 — a shop has no diary to start a visit in: its plus takes an order, at the till (`/products/sell`).
+  const areas = useAreas();
   const onCentre =
-    mayBook && live && PLUS_ROUTE_RE.test(pathname) ? () => router.push('/appointments/new?mode=now') : undefined;
+    mayBook && live && PLUS_ROUTE_RE.test(pathname) ? () => router.push(areas.shop ? '/products/sell' : '/appointments/new?mode=now') : undefined;
 
   /*
    * Owner, 2026-10-06 — the plus offers two things: New booking (the page) and Record payment (a page on a phone,
@@ -75,7 +77,8 @@ export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Recor
    * Whoever may not record a payment gets the plus straight to New booking, as before.
    */
   const mayRecordPayment = mayUse(role, 'visit.recordPayment', writable);
-  const onPayment = onCentre && mayRecordPayment ? () => router.push('/appointments/new?purpose=payment') : undefined;
+  // (A shop's plus is already the till: there is no second thing to offer beside it.)
+  const onPayment = onCentre && mayRecordPayment && !areas.shop ? () => router.push('/appointments/new?purpose=payment') : undefined;
 
   // Jira GRW-526 — New booking is a focused full screen: no tab bar under it, on any of its steps.
   if (NO_BAR_ROUTE_RE.test(pathname)) return null;

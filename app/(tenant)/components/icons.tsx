@@ -606,6 +606,27 @@ export const IconNavAttendance = () => (
   </svg>
 );
 
+/**
+ * Jira GRW-608 — the shop's two tabs, drawn on the same grid and stroke as the set above. Orders is a shopping bag and
+ * Stock a box: what a customer carries away, and what is on the shelf. Drawn from Feather's shopping-bag and package
+ * (MIT, Copyright (c) 2013-2017 Cole Bemis).
+ */
+export const IconNavOrders = () => (
+  <svg {...base}>
+    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+    <line x1="3" y1="6" x2="21" y2="6" />
+    <path d="M16 10a4 4 0 0 1-8 0" />
+  </svg>
+);
+
+export const IconNavStock = () => (
+  <svg {...base}>
+    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+    <line x1="12" y1="22.08" x2="12" y2="12" />
+  </svg>
+);
+
 /** More — an ellipsis in a circle, so it sits as a shape beside four shapes. */
 export const IconNavMore = () => (
   <svg {...base}>

@@ -23,7 +23,7 @@ export default async function SellProductPage({
 }) {
   // The till sells from the shelf; the Products catalogue is a different screen with a different answer per role.
   await guardScreen('/products/sell');
-  await guardLive('/appointments/new');
+  await guardLive('/products/sell');
   const params = await searchParams;
 
   let me;

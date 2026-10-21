@@ -11,7 +11,7 @@ import { PageHeader } from '../components/PageHeader';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { BookingSummary } from '../components/BookingSummary';
 import { useBranch } from '../components/BranchProvider';
-import { useMayUse, useSession } from '../components/SessionProvider';
+import { useMayUse, useSession, useAreas } from '../components/SessionProvider';
 import { useLabel } from '../components/LabelsProvider';
 import { pickNoun } from '../lib/nouns';
 import {
@@ -823,6 +823,7 @@ export function SalesClient({
   initialRange: _initialRange,
   initialQuery,
   loadFailed,
+  heading,
 }: {
   appointments: Appointment[];
   timezone: string;
@@ -834,6 +835,8 @@ export function SalesClient({
   initialRange: SalesRange;
   initialQuery: string;
   loadFailed: boolean;
+  /** Jira GRW-610 — the screen's own name when it is opened under another address (a shop's Orders); absent is "Sales". */
+  heading?: string;
 }) {
   const t = useTranslations('sales');
   const tc = useTranslations('chrome');
@@ -842,6 +845,9 @@ export function SalesClient({
   const router = useRouter();
   const branch = useBranch();
   const mayRecordPayment = useMayUse('visit.recordPayment');
+  // Jira GRW-610 — a business that sells no services (a shop, whose Orders this is) is shown none of the register's
+  // service-only parts: not zeroed, absent. Each is one guard on a part that was already there.
+  const servicesOn = useAreas().services;
   const providerWord = pickNoun(locale, useLabel('provider', 'Staff'), tn('staffTitle'));
   const fromInputRef = useRef<HTMLInputElement>(null);
 
@@ -955,7 +961,7 @@ export function SalesClient({
     };
   }, [openDropdown]);
 
-  const showServicesCol = filter !== 'products';
+  const showServicesCol = servicesOn && filter !== 'products';
   const showProductsCol = filter !== 'services';
   const showStaffCol = filter !== 'products';
 
@@ -1323,7 +1329,7 @@ export function SalesClient({
   return (
     <>
       <PageHeader
-        title={t('title')}
+        title={heading ?? t('title')}
         subtitle={t('subtitle')}
         menu
         actions={
@@ -1723,43 +1729,45 @@ export function SalesClient({
             </div>
           </button>
 
-          <button
-            type="button"
-            className={`sls-kpi sls-kpi-tap sls-kpi-blue ${filter === 'services' ? 'is-selected' : ''}`}
-            aria-pressed={filter === 'services'}
-            onClick={() => {
-              setFilter(filter === 'services' ? 'all' : 'services');
-              setPage(1);
-            }}
-          >
-            <div className="sls-kpi-body">
-              <div className="sls-kpi-copy">
-                <div className="sls-kpi-head">
-                  <span className="sls-kpi-icon sls-icon-blue">
-                    <IconServices />
-                  </span>
-                  <span className="sls-kpi-label">{t('kpi.servicesSold')}</span>
-                </div>
-                <strong className="sls-kpi-value">{formatMoney(String(kpis.servicesRevenueMinor))}</strong>
-                <div className="sls-kpi-foot">
-                  {servicesDelta !== null ? (
-                    <span className={`sls-kpi-delta ${servicesDelta < 0 ? 'is-down' : 'is-up'}`}>
-                      <b>{servicesDelta >= 0 ? '↑' : '↓'}</b>{' '}
-                      {t('kpi.vsPrevDays', { pct: Math.abs(servicesDelta), n: selectedDayCount })}
+          {servicesOn ? (
+            <button
+              type="button"
+              className={`sls-kpi sls-kpi-tap sls-kpi-blue ${filter === 'services' ? 'is-selected' : ''}`}
+              aria-pressed={filter === 'services'}
+              onClick={() => {
+                setFilter(filter === 'services' ? 'all' : 'services');
+                setPage(1);
+              }}
+            >
+              <div className="sls-kpi-body">
+                <div className="sls-kpi-copy">
+                  <div className="sls-kpi-head">
+                    <span className="sls-kpi-icon sls-icon-blue">
+                      <IconServices />
                     </span>
-                  ) : (
-                    <span className="sls-kpi-sub">{t('kpi.servicesCount', { n: kpis.servicesCount })}</span>
-                  )}
+                    <span className="sls-kpi-label">{t('kpi.servicesSold')}</span>
+                  </div>
+                  <strong className="sls-kpi-value">{formatMoney(String(kpis.servicesRevenueMinor))}</strong>
+                  <div className="sls-kpi-foot">
+                    {servicesDelta !== null ? (
+                      <span className={`sls-kpi-delta ${servicesDelta < 0 ? 'is-down' : 'is-up'}`}>
+                        <b>{servicesDelta >= 0 ? '↑' : '↓'}</b>{' '}
+                        {t('kpi.vsPrevDays', { pct: Math.abs(servicesDelta), n: selectedDayCount })}
+                      </span>
+                    ) : (
+                      <span className="sls-kpi-sub">{t('kpi.servicesCount', { n: kpis.servicesCount })}</span>
+                    )}
+                  </div>
                 </div>
+                <span className="sls-kpi-spark sls-spark-blue" aria-hidden="true">
+                  <i style={{ height: '30%' }} />
+                  <i style={{ height: '48%' }} />
+                  <i style={{ height: '68%' }} />
+                  <i style={{ height: '94%' }} />
+                </span>
               </div>
-              <span className="sls-kpi-spark sls-spark-blue" aria-hidden="true">
-                <i style={{ height: '30%' }} />
-                <i style={{ height: '48%' }} />
-                <i style={{ height: '68%' }} />
-                <i style={{ height: '94%' }} />
-              </span>
-            </div>
-          </button>
+            </button>
+          ) : null}
 
           <button
             type="button"
@@ -1895,7 +1903,7 @@ export function SalesClient({
               <div className="sls-chart-controls">
                 {chartOpen ? (
                   <div className="sls-chart-legend" aria-hidden="true">
-                    {filter !== 'products' ? (
+                    {servicesOn && filter !== 'products' ? (
                       <span className="sls-legend-item">
                         <span className="sls-legend-dot sls-dot-srv" />
                         {t('itemFilterServices')}
@@ -2008,7 +2016,7 @@ export function SalesClient({
         {/* Filter Tabs + Search + Export CSV */}
         <div className="sls-table-head-bar">
           <div className="sls-chips" role="group" aria-label={t('title')}>
-            {SALES_FILTERS.map((f) => (
+            {SALES_FILTERS.filter((f) => servicesOn || f !== 'services').map((f) => (
               <button
                 key={f}
                 type="button"
