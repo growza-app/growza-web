@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { api, ApiError, type CreatedInvite, type PendingInvite, type ProviderOverviewRow, type ShopRole, type TeamMember } from '../lib/api';
 import { PersonPhoto } from '../components/PersonPhoto';
 import { PhoneField } from '../components/PhoneField';
@@ -30,6 +30,47 @@ import { waDigits } from '../components/BookingSheet';
 
 /** What an invite is being created FOR: a stylist (whose calendar it is) or the front desk. */
 export type InviteTarget = { role: 'staff' | 'receptionist' | 'manager'; providerId?: string };
+
+/**
+ * The bottom sheet both the invite form and "Add a staff member" sit in: backdrop, grab handle, title, close button, Escape and focus kept in.
+ * `dismiss` is what a tap outside or Escape does; absent while the sheet must not be dismissed (a request in flight, or a link shown once).
+ */
+export function InviteShell({
+  title,
+  sub,
+  closeLabel,
+  onClose,
+  dismiss,
+  children,
+}: {
+  title: string;
+  sub: string;
+  closeLabel: string;
+  onClose: () => void;
+  dismiss?: () => void;
+  children: ReactNode;
+}) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose: dismiss });
+  return (
+    <>
+      <div className="sheet-backdrop sheet-backdrop-fade" onClick={dismiss} />
+      <div className="sheet sheet-rise invite-sheet" role="dialog" aria-modal="true" aria-label={title} ref={dialogRef}>
+        <div className="sheet-grab" />
+        <div className="sheet-head">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="sheet-title">{title}</div>
+            <div className="sheet-sub">{sub}</div>
+          </div>
+          <button type="button" className="wiz-close" onClick={onClose} aria-label={closeLabel}>
+            <IconClose />
+          </button>
+        </div>
+        <div className="invite-body">{children}</div>
+      </div>
+    </>
+  );
+}
 
 export function daysLeft(iso: string): number {
   return Math.ceil((Date.parse(iso) - Date.now()) / 86_400_000);
@@ -65,7 +106,6 @@ export function InviteSheet({
 }) {
   const t = useTranslations('settingsTeam');
   const checkPhone = usePhoneProblem();
-  const dialogRef = useRef<HTMLDivElement>(null);
   const multiBranch = branches.length > 1;
   const tRoles = useTranslations('settingsRoles');
   const [role, setRole] = useState<'staff' | 'receptionist' | 'manager'>(target.role);
@@ -81,7 +121,7 @@ export function InviteSheet({
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   // Only once the link is gone: closing on the backdrop while it is on screen would lose it for good.
-  useDialog(dialogRef, { onClose: busy || created ? undefined : onClose });
+  const dismiss = busy || created ? undefined : onClose;
 
   const linkFor = (token: string) => `${typeof window === 'undefined' ? '' : window.location.origin}/join/${token}`;
 
@@ -145,21 +185,13 @@ export function InviteSheet({
   const stylistName = providers.find((p) => p.id === providerId)?.displayName ?? null;
 
   return (
-    <>
-      <div className="sheet-backdrop sheet-backdrop-fade" onClick={busy || created ? undefined : onClose} />
-      <div className="sheet sheet-rise invite-sheet" role="dialog" aria-modal="true" aria-label={t('inviteTitle')} ref={dialogRef}>
-        <div className="sheet-grab" />
-        <div className="sheet-head">
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="sheet-title">{t('inviteTitle')}</div>
-            <div className="sheet-sub">{stylistName && role === 'staff' ? t('inviteSubFor', { name: stylistName }) : t('intro')}</div>
-          </div>
-          <button type="button" className="wiz-close" onClick={onClose} aria-label={t('closeInvite')}>
-            <IconClose />
-          </button>
-        </div>
-
-        <div className="invite-body">
+    <InviteShell
+      title={t('inviteTitle')}
+      sub={stylistName && role === 'staff' ? t('inviteSubFor', { name: stylistName }) : t('intro')}
+      closeLabel={t('closeInvite')}
+      onClose={onClose}
+      dismiss={dismiss}
+    >
           {created ? (
             <div className="banner banner-info">
               <strong>{created.resent ? t('newLink') : t('ready')}</strong>
@@ -363,9 +395,7 @@ export function InviteSheet({
               {!busy && phone.trim() && role === 'receptionist' && multiBranch && !locationId && <p className="field-hint">{t('errors.chooseBranchFirst')}</p>}
             </>
           )}
-        </div>
-      </div>
-    </>
+    </InviteShell>
   );
 }
 

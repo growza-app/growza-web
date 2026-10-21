@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError, type PendingInvite, type ProviderOverviewRow, type RoleBody, type RoleLevel, type RolePageKey, type RoleTemplate, type RoleWorksLike, type RolesPayload, type ShopRole, type TeamMember } from '../../lib/api';
 import { RolesTeam } from './RolesTeam';
@@ -47,6 +47,7 @@ export interface RolesTeamData {
 export function RolesScreen({ initial, team }: { initial: RolesPayload; team: RolesTeamData }) {
   const t = useTranslations('settingsRoles');
   const writable = useWritable();
+  const locale = useLocale();
   const [data, setData] = useState<RolesPayload>(initial);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [busy, setBusy] = useState(false);
@@ -62,6 +63,10 @@ export function RolesScreen({ initial, team }: { initial: RolesPayload; team: Ro
     if (opened.current) topRef.current?.focus();
     opened.current = true;
   }, [!!draft]);
+
+  // The business's own word for each page (its labels: Orders and Stock for a shop) in English; Hindi has its own table, as the rest of the app does.
+  const pageLabel = (key: RolePageKey): string =>
+    locale === 'hi' ? t(`pages.${key}`) : (data.pages.find((p) => p.key === key)?.label ?? t(`pages.${key}`));
 
   const reload = async () => setData(await api.roles());
 
@@ -208,8 +213,8 @@ export function RolesScreen({ initial, team }: { initial: RolesPayload; team: Ro
             <fieldset className="roles-grid">
               <legend className="field-label">{t('pagesTitle')}</legend>
               {PAGES.map((page) => (
-                <div key={page} className="roles-row" role="radiogroup" aria-label={t(`pages.${page}`)}>
-                  <span className="roles-row-name">{t(`pages.${page}`)}</span>
+                <div key={page} className="roles-row" role="radiogroup" aria-label={pageLabel(page)}>
+                  <span className="roles-row-name">{pageLabel(page)}</span>
                   <span className="roles-levels">
                     {LEVELS.map((level) => (
                       <label key={level} className={`roles-level ${draft.grants[page] === level ? 'is-on' : ''}`}>

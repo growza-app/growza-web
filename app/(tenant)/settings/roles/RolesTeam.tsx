@@ -1,16 +1,14 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { api, ApiError, type PendingInvite, type ProviderOverviewRow, type ShopRole, type TeamMember } from '../../lib/api';
 import { useWritable } from '../../components/SessionProvider';
 import { PersonPhoto } from '../../components/PersonPhoto';
-import { InviteSheet, WaitingGroup } from '../../providers/TeamLogins';
+import { InviteShell, InviteSheet, WaitingGroup } from '../../providers/TeamLogins';
 import { PhoneField } from '../../components/PhoneField';
-import { useDialog } from '../../../shared/a11y/useDialog';
 import { toStoredPhone } from '../../lib/phone';
 import { usePhoneProblem } from '../../lib/use-phone-problem';
-import { IconClose } from '../../components/icons';
 
 /**
  * Jira GRW-73 — the people on a shop's team, and the role each holds.
@@ -181,7 +179,6 @@ export function RolesTeam({
 function AddStaffSheet({ branches, onClose, onAdded }: { branches: Array<{ id: string; name: string }>; onClose: () => void; onAdded: () => Promise<void> }) {
   const t = useTranslations('settingsRoles');
   const checkPhone = usePhoneProblem();
-  const dialogRef = useRef<HTMLDivElement>(null);
   const multiBranch = branches.length > 1;
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -189,7 +186,6 @@ function AddStaffSheet({ branches, onClose, onAdded }: { branches: Array<{ id: s
   const [locationId, setLocationId] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useDialog(dialogRef, { onClose: busy ? undefined : onClose });
 
   const add = async () => {
     const complaint = checkPhone(phone);
@@ -215,20 +211,7 @@ function AddStaffSheet({ branches, onClose, onAdded }: { branches: Array<{ id: s
   };
 
   return (
-    <>
-      <div className="sheet-backdrop sheet-backdrop-fade" onClick={busy ? undefined : onClose} />
-      <div className="sheet sheet-rise invite-sheet" role="dialog" aria-modal="true" aria-label={t('addStaff')} ref={dialogRef}>
-        <div className="sheet-grab" />
-        <div className="sheet-head">
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="sheet-title">{t('addStaff')}</div>
-            <div className="sheet-sub">{t('addStaffSub')}</div>
-          </div>
-          <button type="button" className="wiz-close" onClick={onClose} aria-label={t('closeSheet')}>
-            <IconClose />
-          </button>
-        </div>
-        <div className="invite-body">
+    <InviteShell title={t('addStaff')} sub={t('addStaffSub')} closeLabel={t('closeSheet')} onClose={onClose} dismiss={busy ? undefined : onClose}>
           <div className="field">
             <label htmlFor="staff-name">{t('staffName')}</label>
             <input id="staff-name" type="text" autoComplete="off" maxLength={60} value={name} disabled={busy} onChange={(e) => setName(e.target.value)} />
@@ -266,8 +249,6 @@ function AddStaffSheet({ branches, onClose, onAdded }: { branches: Array<{ id: s
           <button className="btn invite-submit" disabled={busy || !name.trim() || !phone.trim()} onClick={() => void add()}>
             {busy ? t('saving') : t('addStaffSubmit')}
           </button>
-        </div>
-      </div>
-    </>
+    </InviteShell>
   );
 }

@@ -22,9 +22,10 @@ describe('the grid', () => {
     expect(Object.keys(messages('en').pages).sort()).toEqual([...PAGES].sort());
   });
 
-  it('says Orders and Stock, not Bookings and Services — the shop’s own words', () => {
-    expect(messages('en').pages.bookings).toBe('Orders');
-    expect(messages('en').pages.services).toBe('Stock');
+  it('names the pages from the business’s own labels in English (the API sends them), and from its Hindi table in Hindi', () => {
+    const screen = read('app/(tenant)/settings/roles/RolesScreen.tsx');
+    expect(screen).toContain("data.pages.find((p) => p.key === key)?.label");
+    expect(screen).toContain("locale === 'hi' ? t(`pages.${key}`)");
   });
 
   it('offers three plain choices per page, one at a time', () => {
