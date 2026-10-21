@@ -13,6 +13,7 @@ import { computeReturnWindow } from '../../sales/sales-helpers';
 import { returnReasonKey } from '../../lib/return-reasons';
 import { intlLocale } from '../../lib/format';
 import { SwapSizeSheet } from './SwapSizeSheet';
+import { OrderMarketplaceLine } from './OrderMarketplaceLine';
 
 /**
  * Jira GRW-615 — an order's own screen.
@@ -194,6 +195,17 @@ export function OrderClient({
             {order.externalRef ? ` · ${order.externalRef}` : ''}
           </span>
         </section>
+
+        {!isCounter ? (
+          <OrderMarketplaceLine
+            orderId={order.id}
+            channel={channelWord(order.channel)}
+            messages={order.marketplace}
+            canRetry={order.canRetryMarketplace === true}
+            timezone={timezone}
+            onChanged={() => void refresh()}
+          />
+        ) : null}
 
         {!isCounter && order.branchName ? <p className="ord-d-quiet ord-d-branch">{t('detail.bookedAt', { branch: order.branchName })}</p> : null}
 

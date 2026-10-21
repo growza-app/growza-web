@@ -1,4 +1,4 @@
-import type { ChannelConnection, ChannelOrdersLine } from './api-types';
+import type { ChannelConnection, ChannelOrdersLine, OrderMarketplaceMessage } from './api-types';
 
 /**
  * Jira GRW-621 — what the state line of a marketplace's keys says, decided in one place so it can be tested without a browser.
@@ -87,4 +87,29 @@ export function parseBuffer(text: string): number | null {
   if (!/^\d{1,4}$/.test(t)) return null;
   const n = Number(t);
   return n >= 0 && n <= 1000 ? n : null;
+}
+
+/**
+ * Jira GRW-625 — the one quiet line under an order's state about what the marketplace was told, decided here so it can be tested without a
+ * browser. Nothing for a counter sale (no messages). The worst news first: an answer from the marketplace that says no, then "tried and
+ * could not" (needs a person), then "not told yet", then the good news with its time.
+ */
+export type TellKey = 'refused' | 'stuck' | 'pending' | 'accepted';
+export interface TellLine {
+  kind: OrderMarketplaceMessage['kind'];
+  key: TellKey;
+  tone: 'ok' | 'idle' | 'bad';
+  at: string | null;
+  reason: OrderMarketplaceMessage['reason'];
+  /** A person can do something about it: ask again. Never for an accepted one. */
+  retry: boolean;
+}
+
+export function tellLines(messages: readonly OrderMarketplaceMessage[] | undefined): TellLine[] {
+  return (messages ?? []).map((m) => {
+    if (m.state === 'accepted') return { kind: m.kind, key: 'accepted' as const, tone: 'ok' as const, at: m.at, reason: null, retry: false };
+    if (m.state === 'refused') return { kind: m.kind, key: 'refused' as const, tone: 'bad' as const, at: null, reason: m.reason, retry: true };
+    if (m.stuck) return { kind: m.kind, key: 'stuck' as const, tone: 'bad' as const, at: null, reason: null, retry: true };
+    return { kind: m.kind, key: 'pending' as const, tone: 'idle' as const, at: null, reason: null, retry: true };
+  });
 }

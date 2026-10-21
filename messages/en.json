@@ -3935,7 +3935,8 @@
       "unknownState": "Unknown",
       "nounOrders": "orders",
       "allChannels": "Anywhere",
-      "allStates": "Any state"
+      "allStates": "Any state",
+      "notConfirmed": "Not confirmed"
     },
     "detail": {
       "client": "Client",
@@ -4186,6 +4187,23 @@
       "toReturns": "What came back",
       "nothingOnChannel": "No {channel} refunds in this period",
       "openOrder": "Open the order"
+    },
+    "tell": {
+      "title": "What the marketplace was told",
+      "sentAccepted": "{channel} told at {when}",
+      "sentPending": "{channel} not told yet",
+      "cancelledAccepted": "{channel} told it was cancelled, at {when}",
+      "cancelledPending": "{channel} not told about the cancel yet",
+      "stuck": "Could not tell {channel}. Try again.",
+      "refused": {
+        "order_cancelled": "{channel} refused: it cancelled this order itself.",
+        "order_unknown": "{channel} refused: it has no such order.",
+        "not_allowed": "{channel} refused: it does not allow this now.",
+        "other": "{channel} refused this."
+      },
+      "retry": "Try again",
+      "retrying": "Sending…",
+      "retryFailed": "Could not ask again. Try again."
     }
   },
   "settingsChannels": {

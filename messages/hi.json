@@ -3935,7 +3935,8 @@
       "unknownState": "अज्ञात",
       "nounOrders": "ऑर्डर",
       "allChannels": "कहीं से भी",
-      "allStates": "कोई भी स्थिति"
+      "allStates": "कोई भी स्थिति",
+      "notConfirmed": "पुष्टि नहीं हुई"
     },
     "detail": {
       "client": "ग्राहक",
@@ -4186,6 +4187,23 @@
       "toReturns": "क्या वापस आया",
       "nothingOnChannel": "इस अवधि में {channel} का कोई रिफ़ंड नहीं",
       "openOrder": "ऑर्डर खोलें"
+    },
+    "tell": {
+      "title": "मार्केटप्लेस को क्या बताया गया",
+      "sentAccepted": "{channel} को {when} पर बताया गया",
+      "sentPending": "{channel} को अभी नहीं बताया गया",
+      "cancelledAccepted": "{channel} को रद्द होने की बात {when} पर बताई गई",
+      "cancelledPending": "{channel} को रद्द होने की बात अभी नहीं बताई गई",
+      "stuck": "{channel} को बता नहीं सके। फिर कोशिश करें।",
+      "refused": {
+        "order_cancelled": "{channel} ने मना किया: उसने यह ऑर्डर खुद रद्द कर दिया है।",
+        "order_unknown": "{channel} ने मना किया: उसके पास ऐसा कोई ऑर्डर नहीं है।",
+        "not_allowed": "{channel} ने मना किया: वह अभी इसकी इजाज़त नहीं देता।",
+        "other": "{channel} ने इसे मना कर दिया।"
+      },
+      "retry": "फिर कोशिश करें",
+      "retrying": "भेज रहे हैं…",
+      "retryFailed": "दोबारा कह नहीं सके। फिर कोशिश करें।"
     }
   },
   "settingsChannels": {

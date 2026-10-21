@@ -140,6 +140,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
    * are the state names, whose Hindi is in `messages/*.json` under `orders.states` for the screens to use.
    */
   'There is no such order.': 'ऐसा कोई ऑर्डर नहीं है।',
+  'This order was not placed on a marketplace.': 'यह ऑर्डर किसी मार्केटप्लेस पर नहीं आया था।',
   'This order belongs to another branch.': 'यह ऑर्डर दूसरी ब्रांच का है।',
   // Jira GRW-613 — a marketplace buyer who is not in the client list, and attaching a client the owner recognises.
   'This order already has a client.': 'इस ऑर्डर में पहले से ग्राहक जुड़ा है।',

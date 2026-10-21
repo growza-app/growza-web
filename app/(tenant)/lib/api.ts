@@ -691,6 +691,8 @@ export const api = {
    * Jira GRW-615 — move an order along. `expected` is the state this screen believes the order is in: when the order has
    * moved on elsewhere the API refuses with 409 and says where it is now, instead of overwriting the other desk.
    */
+  /** Jira GRW-625 — try again to tell the marketplace what the shop decided about an order. One attempt, safe to repeat. */
+  tellMarketplaceAgain: (id: string) => post<{ queued: number }>(`/api/v1/orders/${id}/tell-marketplace`, {}),
   moveOrder: (id: string, status: string, expected: string) =>
     patch<{ id: string; status: string; moved: boolean }>(`/api/v1/orders/${encodeURIComponent(id)}/status`, { status, expected }),
   /** Jira GRW-619 — import an order report: the marketplace is chosen by the owner and sent with it; one request, whole orders, importing it twice changes nothing. */

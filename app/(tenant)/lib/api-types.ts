@@ -1248,6 +1248,8 @@ export interface OrderListRow {
   who: { kind: 'client' | 'buyer'; name: string | null } | null;
   items: number;
   amountMinor?: number;
+  /** Jira GRW-625 — the marketplace has not yet accepted what the shop told it (sent, cancelled): a glance finds these. */
+  marketplaceUnconfirmed?: boolean;
 }
 
 export interface OrdersPage {
@@ -1274,6 +1276,19 @@ export interface OrderHistoryEntry {
  * never decides what can follow what (BR-01), and an older `@growza-app/shared` cannot make it offer a move the API
  * would refuse.
  */
+/**
+ * Jira GRW-625 — what the shop told the marketplace about an order, and whether it was taken. `pending` is "not told yet" (waiting, or
+ * trying again); `stuck` is "tried and could not, needs a person"; `refused` is the marketplace's own answer, with a reason from a closed set.
+ */
+export interface OrderMarketplaceMessage {
+  kind: 'dispatch' | 'cancel';
+  state: 'pending' | 'accepted' | 'refused';
+  stuck: boolean;
+  /** When it was accepted; null until then. */
+  at: string | null;
+  reason: 'order_cancelled' | 'order_unknown' | 'not_allowed' | 'other' | null;
+}
+
 export interface OrderDetail {
   id: string;
   locationId: string;
@@ -1308,6 +1323,10 @@ export interface OrderDetail {
   }>;
   /** Jira GRW-617 — may this viewer swap a size? Decided by the server with the function that would refuse the swap. */
   canSwap: boolean;
+  /** Jira GRW-625 — what the marketplace was told about this order. Empty for a counter sale. */
+  marketplace?: OrderMarketplaceMessage[];
+  /** May this viewer ask for a message to be sent again? Decided by the server with the route's own role check. */
+  canRetryMarketplace?: boolean;
   history: OrderHistoryEntry[];
   /** Jira GRW-635 — the returns recorded against the order, each with its reason; a parcel that came back undelivered is its own kind. */
   returns?: OrderReturn[];
