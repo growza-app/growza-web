@@ -128,8 +128,12 @@ export function queueHead(s: Pick<ChannelQueueSummary, 'keysRejected' | 'needsAt
   return { key: 'allClear', tone: 'ok' };
 }
 
-/** Whether "Try again" can do anything: not when the only trouble is keys it cannot fix, and not when nothing is stopped or waiting on a backoff. */
-export const mayTryAgain = (s: Pick<ChannelQueueSummary, 'needsAttention' | 'holdUntil' | 'messages'>): boolean => s.needsAttention > 0 || s.holdUntil !== null || s.messages.waiting > 0;
+/**
+ * Whether "Try again" can do anything: not when the keys were turned down (it cannot fix them, and the API refuses), not for a wait the marketplace
+ * asked for (asking again early is how a seller gets throttled), and not for what is merely waiting its turn. Only what stopped, or is waiting on
+ * its own backoff after a failure.
+ */
+export const mayTryAgain = (s: Pick<ChannelQueueSummary, 'needsAttention' | 'backingOff' | 'keysRejected'>): boolean => !s.keysRejected && (s.needsAttention > 0 || s.backingOff > 0);
 
 /** The words key for one row: what is wrong with it, in the screen's own plain terms. */
 export type QueueItemKey = 'sizeStuck' | 'orderWaiting' | 'orderStuck' | 'orderRefused';

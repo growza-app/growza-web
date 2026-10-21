@@ -144,7 +144,17 @@ export function QueueClient({ channel, timezone }: { channel: Channel; timezone:
               );
             })}
           </ul>
-          <Pagination page={page} total={data.total} pageSize={PAGE_SIZE} noun={t('nounItems')} onChange={setPage} />
+          <Pagination
+            page={page}
+            total={data.total}
+            pageSize={PAGE_SIZE}
+            noun={t('nounItems')}
+            onChange={(p) => {
+              // What a retry said belongs to the page it was on.
+              setResult(null);
+              setPage(p);
+            }}
+          />
         </>
       )}
 

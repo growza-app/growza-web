@@ -1550,6 +1550,8 @@ export interface ChannelQueueSummary {
   messages: { waiting: number; refused: number; stuck: number };
   ordersIn: { lastBroughtInAt: string | null; reason: string | null; unreadable: number };
   keysRejected: boolean;
+  /** Sizes and messages waiting on their own backoff after a failure: what Try again can send now. */
+  backingOff: number;
   /** Until when the marketplace has asked us to wait, if it has. */
   holdUntil: string | null;
   needsAttention: number;

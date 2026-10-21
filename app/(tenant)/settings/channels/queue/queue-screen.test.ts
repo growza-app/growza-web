@@ -24,6 +24,7 @@ const summary = (over: Partial<ChannelQueueSummary> = {}): ChannelQueueSummary =
   messages: { waiting: 0, refused: 0, stuck: 0 },
   ordersIn: { lastBroughtInAt: null, reason: null, unreadable: 0 },
   keysRejected: false,
+  backingOff: 0,
   holdUntil: null,
   needsAttention: 0,
   ...over,
@@ -43,14 +44,17 @@ describe('the headline says the one thing that matters', () => {
 });
 
 describe('Try again is offered only when it can do something', () => {
-  it('not when nothing is stopped or waiting on a backoff, and not for sizes that are merely waiting their turn', () => {
+  it('not when nothing is stopped or backing off, not for sizes merely waiting their turn, and not for a wait the marketplace asked for', () => {
     expect(mayTryAgain(summary())).toBe(false);
     expect(mayTryAgain(summary({ sizes: { waiting: 3000, stuck: 0 } }))).toBe(false);
+    expect(mayTryAgain(summary({ holdUntil: '2026-10-21T10:00:00Z', messages: { waiting: 4, refused: 0, stuck: 0 } }))).toBe(false);
   });
-  it('when something stopped, a message waits, or the marketplace asked us to wait', () => {
+  it('when something stopped, or is waiting on its own backoff after a failure', () => {
     expect(mayTryAgain(summary({ needsAttention: 1 }))).toBe(true);
-    expect(mayTryAgain(summary({ messages: { waiting: 2, refused: 0, stuck: 0 } }))).toBe(true);
-    expect(mayTryAgain(summary({ holdUntil: '2026-10-21T10:00:00Z' }))).toBe(true);
+    expect(mayTryAgain(summary({ backingOff: 3 }))).toBe(true);
+  });
+  it('never when the keys were turned down: asking again cannot fix them, and the API refuses', () => {
+    expect(mayTryAgain(summary({ keysRejected: true, needsAttention: 3, backingOff: 2 }))).toBe(false);
   });
 });
 
@@ -102,6 +106,7 @@ describe('the screen', () => {
 
   it('keys the marketplace turned down get a way to replace them, not a retry that cannot work', () => {
     expect(client).toContain('s.keysRejected ? (');
+    expect(client).toContain('mayTryAgain(s)');
     expect(client).toContain('href="/settings/channels"');
   });
 
@@ -121,6 +126,16 @@ describe('the screen', () => {
   it('prints times in the shop’s zone and the reader’s language', () => {
     expect(client).toContain('timeZone: timezone');
     expect(client).toContain('intlLocale(locale)');
+  });
+});
+
+describe('Hindi plurals: a literal 1 in a `one` branch reads "1" for none', () => {
+  // CLDR puts 0 in Hindi's `one` category (i = 0 or n = 1), so `one {1 …}` is what the reader sees when there are none.
+  const hiAll = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '../../../../../messages/hi.json'), 'utf8')) as Record<string, unknown>;
+  const strings = (o: unknown, p = ''): Array<[string, string]> => (typeof o === 'string' ? [[p, o]] : o && typeof o === 'object' ? Object.entries(o).flatMap(([k, v]) => strings(v, `${p}${k}.`)) : []);
+  const mine = [...strings(hiAll.settingsChannelQueue, 'settingsChannelQueue.'), ...strings(hiAll.settingsChannels, 'settingsChannels.'), ...strings((hiAll.orders as Record<string, unknown>).bringIn, 'orders.bringIn.'), ...strings((hiAll.orders as Record<string, unknown>).tell, 'orders.tell.')];
+  it.each(mine.filter(([, v]) => v.includes('one {')))('%s uses # in its one-branch', (_id, v) => {
+    for (const branch of v.matchAll(/one \{([^{}]*)\}/g)) expect(branch[1]).not.toMatch(/(?<![\w#])1(?![\w])/);
   });
 });
 
