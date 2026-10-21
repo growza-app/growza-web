@@ -1,4 +1,4 @@
-import type { ChannelConnection, ChannelOrdersLine, OrderMarketplaceMessage } from './api-types';
+import type { ChannelConnection, ChannelOrdersLine, ChannelQueueItem, ChannelQueueSummary, OrderMarketplaceMessage } from './api-types';
 
 /**
  * Jira GRW-621 — what the state line of a marketplace's keys says, decided in one place so it can be tested without a browser.
@@ -113,3 +113,29 @@ export function tellLines(messages: readonly OrderMarketplaceMessage[] | undefin
     return { kind: m.kind, key: 'pending' as const, tone: 'idle' as const, at: null, reason: null, retry: true };
   });
 }
+
+/**
+ * Jira GRW-626 — the queue screen's headline, decided here so it can be tested without a browser. Keys the marketplace turned down come first:
+ * nothing else on the page can be fixed by asking again until they are replaced. Then the owner's own work (what stopped or was refused), then
+ * a wait the marketplace asked for, and only then the good news.
+ */
+export type QueueHeadKey = 'keysRejected' | 'needsAttention' | 'holding' | 'waiting' | 'allClear';
+export function queueHead(s: Pick<ChannelQueueSummary, 'keysRejected' | 'needsAttention' | 'holdUntil' | 'sizes' | 'messages'>): { key: QueueHeadKey; tone: 'ok' | 'idle' | 'bad' } {
+  if (s.keysRejected) return { key: 'keysRejected', tone: 'bad' };
+  if (s.needsAttention > 0) return { key: 'needsAttention', tone: 'bad' };
+  if (s.holdUntil) return { key: 'holding', tone: 'idle' };
+  if (s.sizes.waiting + s.messages.waiting > 0) return { key: 'waiting', tone: 'idle' };
+  return { key: 'allClear', tone: 'ok' };
+}
+
+/** Whether "Try again" can do anything: not when the only trouble is keys it cannot fix, and not when nothing is stopped or waiting on a backoff. */
+export const mayTryAgain = (s: Pick<ChannelQueueSummary, 'needsAttention' | 'holdUntil' | 'messages'>): boolean => s.needsAttention > 0 || s.holdUntil !== null || s.messages.waiting > 0;
+
+/** The words key for one row: what is wrong with it, in the screen's own plain terms. */
+export type QueueItemKey = 'sizeStuck' | 'orderWaiting' | 'orderStuck' | 'orderRefused';
+export const queueItemKey = (i: Pick<ChannelQueueItem, 'area' | 'state'>): QueueItemKey =>
+  i.area === 'stock' ? 'sizeStuck' : i.state === 'refused' ? 'orderRefused' : i.state === 'stuck' ? 'orderStuck' : 'orderWaiting';
+
+/** A reason from the closed sets (a size the marketplace refused, or an order it refused), or "other" for anything this build does not know. */
+const REASONS = new Set(['not_listed', 'invalid', 'order_cancelled', 'order_unknown', 'not_allowed', 'other']);
+export const queueReasonKey = (reason: string | null): string => (reason !== null && REASONS.has(reason) ? reason : 'other');

@@ -71,6 +71,8 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/settings/payments': 'both',
   '/settings/profile': 'both',
   '/settings/channels': 'shop',
+  // Jira GRW-626 — what is waiting for a marketplace; a shop's, like the screen it is linked from.
+  '/settings/channels/queue': 'shop',
   '/settings/report-access': 'both',
   '/settings/team': 'both',
   '/settings/working-hours': 'both',

@@ -1543,6 +1543,34 @@ export interface ChannelOrdersLine {
   /** Orders brought in that the marketplace has not yet been told we have. */
   unacknowledged: number;
 }
+/** Jira GRW-626 — what is waiting for a marketplace, what failed, and what the owner can do about it. */
+export interface ChannelQueueSummary {
+  channel: 'flipkart' | 'amazon';
+  sizes: { waiting: number; stuck: number };
+  messages: { waiting: number; refused: number; stuck: number };
+  ordersIn: { lastBroughtInAt: string | null; reason: string | null; unreadable: number };
+  keysRejected: boolean;
+  /** Until when the marketplace has asked us to wait, if it has. */
+  holdUntil: string | null;
+  needsAttention: number;
+}
+export interface ChannelQueueItem {
+  key: string;
+  area: 'stock' | 'order';
+  kind: 'dispatch' | 'cancel' | null;
+  label: string;
+  state: 'waiting' | 'stuck' | 'refused';
+  /** A short code from a closed set, never the marketplace's own words; the screen puts it in plain language. */
+  reason: string | null;
+  since: string;
+}
+export interface ChannelQueuePage {
+  summary: ChannelQueueSummary;
+  items: ChannelQueueItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 export interface SetStockBufferResult {
   channel: 'flipkart' | 'amazon';
   buffer: number;

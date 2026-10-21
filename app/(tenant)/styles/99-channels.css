@@ -167,3 +167,87 @@
   padding-top: var(--sp-3);
   border-top: 1px solid var(--border);
 }
+
+/* A quiet link, a thumb tall: it takes the owner to the screen that says what is waiting. */
+.stc-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-weight: 600;
+  font-size: var(--fs-3);
+}
+
+/*
+ * Jira GRW-626 — the queue: what is waiting for a marketplace and what failed. A headline that says the one thing that matters, a few counts,
+ * a short list of what needs a person, and one Try again where a thumb is. Laid out at 344px: every row stacks; nothing animates; text, not a
+ * banner, so it reads without colour.
+ */
+.cq {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+/* The skeleton holds the height the screen will have, so nothing jumps when it arrives. */
+.cq-loading {
+  min-height: 14rem;
+}
+.cq-head {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.cq-head-ok,
+.cq-head-idle {
+  color: var(--ink);
+}
+.cq-head-bad {
+  color: var(--danger);
+}
+.cq-counts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+.cq-counts li {
+  overflow-wrap: anywhere;
+}
+.cq-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.cq-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.cq-row-text {
+  overflow-wrap: anywhere;
+}
+.cq-row-since {
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+.cq-empty {
+  margin: 0;
+  color: var(--muted);
+}
+/* Where a thumb is: the one action sits last, full width. */
+.cq-actions {
+  display: flex;
+}
+.cq-actions .stc-btn {
+  flex: 1 1 100%;
+}

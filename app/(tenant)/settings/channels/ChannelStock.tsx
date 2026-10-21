@@ -16,6 +16,7 @@ import { useWritable } from '../../components/SessionProvider';
  */
 export function ChannelStock({ conn, name, onChanged }: { conn: ChannelConnection; name: string; onChanged: () => void }) {
   const t = useTranslations('settingsChannels');
+  const tq = useTranslations('settingsChannelQueue');
   const locale = useLocale();
   const writable = useWritable();
   const [draft, setDraft] = useState(String(conn.stock.buffer));
@@ -123,6 +124,11 @@ export function ChannelStock({ conn, name, onChanged }: { conn: ChannelConnectio
       ) : (
         <p className="stc-hint">{t('bufferReadOnly', { count: conn.stock.buffer })}</p>
       )}
+
+      {/* Jira GRW-626 — what is waiting and what failed, with a way to try again. */}
+      <a className="stc-link" href={`/settings/channels/queue?channel=${conn.channel}`}>
+        {tq('seeQueue')}
+      </a>
 
       <p className={`stc-live ${saved ? 'stc-note' : 'stc-hint'}`} role="status" aria-live="polite">
         {saved ? t('bufferSaved', { channel: name }) : ''}

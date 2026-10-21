@@ -70,6 +70,7 @@ import type {
   SaveChannelKeysResult,
   SetStockBufferResult,
   ChannelOrdersLine,
+  ChannelQueuePage,
   HeldPage,
   StockReportPage,
   ByChannelPage,
@@ -708,6 +709,10 @@ export const api = {
   checkChannelKeys: (channel: 'flipkart' | 'amazon') => post<ChannelCheckResult>(`/api/v1/channels/${channel}/check`, {}),
   /** Jira GRW-623 — when each connected marketplace's orders were last brought in. Owner and manager only. */
   channelOrdersStatus: () => get<{ channels: ChannelOrdersLine[] }>('/api/v1/channels/pull-status'),
+  /** Jira GRW-626 — what is waiting for a marketplace and what failed, one page. Owner and manager only. */
+  channelQueue: (channel: 'flipkart' | 'amazon', page: number, pageSize = 10) => get<ChannelQueuePage>(`/api/v1/channels/${channel}/queue?page=${page}&pageSize=${pageSize}`),
+  /** Jira GRW-626 — try everything that stopped or is waiting on a backoff again. Safe to repeat. */
+  retryChannelQueue: (channel: 'flipkart' | 'amazon') => post<{ sizes: number; messages: number }>(`/api/v1/channels/${channel}/retry`, {}),
   /** Jira GRW-624 — how many of each size to keep back from online orders. */
   setStockBuffer: (channel: 'flipkart' | 'amazon', buffer: number) => put<SetStockBufferResult>(`/api/v1/channels/${channel}/stock-buffer`, { buffer }),
   /** Jira GRW-637 — the refunds recorded on online orders, one row per refund; a record, never an instruction. */

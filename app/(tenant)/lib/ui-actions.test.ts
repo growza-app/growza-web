@@ -272,6 +272,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/channels/:id/check',
     // Jira GRW-624 — how many of each size to keep back from online orders, on the same screen and under the same gate.
     'PUT /api/v1/channels/:id/stock-buffer',
+    // Jira GRW-626 — try again, once, for everything that stopped or is waiting on a backoff (owner and manager).
+    'POST /api/v1/channels/:id/retry',
     'POST /api/v1/billing/autopay',
     'POST /api/v1/team/invites',
     'PATCH /api/v1/team/members/:userId',
