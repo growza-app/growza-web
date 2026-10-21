@@ -3633,7 +3633,8 @@
       "saveFailed": "Could not save the role. Try again.",
       "removeFailed": "Could not remove the role. Try again.",
       "nameNeeded": "Give the role a name",
-      "roleFailed": "Could not change the role. Try again."
+      "roleFailed": "Could not change the role. Try again.",
+      "peopleFailed": "Could not load your team. Reload the page to try again."
     },
     "peopleTitle": "People",
     "peopleEmpty": "Nobody else is on your team yet.",
@@ -3643,6 +3644,7 @@
     "invite": "Invite someone",
     "chooseRole": "Choose a role",
     "chooseRoleFirst": "Choose a role first.",
-    "makeRoleFirst": "Make a role first, then invite someone into it."
+    "makeRoleFirst": "Make a role first, then invite someone into it.",
+    "whichPerson": "Which staff member is this for?"
   }
 }

@@ -68,7 +68,9 @@ describe('Jira GRW-73 — the people beside the roles', () => {
   const invite = read('app/(tenant)/providers/TeamLogins.tsx');
 
   it('offers a person only the roles that work like what they already are, plus the one they hold', () => {
-    expect(team).toContain('r.worksLike === m.role || r.id === m.tenantRoleId');
+    expect(team).toContain("r.worksLike === m.role) || r.id === m.tenantRoleId");
+    // A staff-like role is offered to an invitation only when someone is on the roster to be that login (a shop has no screen to add one).
+    expect(team).toContain("r.worksLike === 'staff' && rosterPeople.length > 0");
   });
 
   it('gives only desk-like and staff-like roles to an invitation, and never an owner', () => {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, ApiError, type PendingInvite, type ProviderOverviewRow, type RoleBody, type RoleLevel, type RolePageKey, type RoleTemplate, type RoleWorksLike, type RolesPayload, type ShopRole, type TeamMember } from '../../lib/api';
 import { RolesTeam } from './RolesTeam';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -36,6 +36,8 @@ const fromTemplate = (tpl: RoleTemplate): Pick<Draft, 'worksLike' | 'scheduleSco
 });
 
 export interface RolesTeamData {
+  /** The team could not be read: say so, rather than draw an empty team as fact. */
+  failed: boolean;
   members: TeamMember[];
   invites: PendingInvite[];
   providers: ProviderOverviewRow[];
@@ -52,6 +54,14 @@ export function RolesScreen({ initial, team }: { initial: RolesPayload; team: Ro
   const [nameError, setNameError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<ShopRole | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
+
+  const topRef = useRef<HTMLDivElement>(null);
+  const opened = useRef(false);
+  // The tapped button is gone when the card swaps; put the reader back at the top of what replaced it.
+  useEffect(() => {
+    if (opened.current) topRef.current?.focus();
+    opened.current = true;
+  }, [!!draft]);
 
   const reload = async () => setData(await api.roles());
 
@@ -84,7 +94,7 @@ export function RolesScreen({ initial, team }: { initial: RolesPayload; team: Ro
     try {
       if (draft.id) await api.updateRole(draft.id, body);
       else await api.createRole(body);
-      await reload();
+      await reload().catch(() => undefined);
       close();
     } catch (e) {
       if (e instanceof ApiError && e.status < 500) {
@@ -102,7 +112,7 @@ export function RolesScreen({ initial, team }: { initial: RolesPayload; team: Ro
     setRemoveError(null);
     try {
       await api.deleteRole(removing.id);
-      await reload();
+      await reload().catch(() => undefined);
       setRemoving(null);
       close();
     } catch (e) {
@@ -117,8 +127,7 @@ export function RolesScreen({ initial, team }: { initial: RolesPayload; team: Ro
     }
   };
 
-  if (draft) {
-    return (
+  const editor = draft ? (
       <>
         <div className="card roles-card">
           <div className="card-head">{draft.id ? draft.name || t('title') : t('newRole')}</div>
@@ -134,7 +143,7 @@ export function RolesScreen({ initial, team }: { initial: RolesPayload; team: Ro
                   disabled={busy}
                   onChange={(e) => {
                     const tpl = data.templates.find((x) => x.name === e.target.value);
-                    setDraft((d) => (d ? { ...d, ...(tpl ? { name: d.name || tpl.name, ...fromTemplate(tpl) } : { worksLike: null, scheduleScoped: false, grants: blankGrid() }) } : d));
+                    setDraft((d) => (d ? { ...d, ...(tpl ? { ...fromTemplate(tpl) } : { worksLike: null, scheduleScoped: false, grants: blankGrid() }) } : d));
                   }}
                 >
                   <option value="">{t('blank')}</option>
@@ -262,11 +271,13 @@ export function RolesScreen({ initial, team }: { initial: RolesPayload; team: Ro
           />
         )}
       </>
-    );
-  }
+  ) : null;
 
   return (
     <>
+    <div ref={topRef} tabIndex={-1} className="roles-top" />
+    {editor}
+    {!draft && (
     <div className="card roles-card">
       <div className="card-head">{t('title')}</div>
       <div className="card-body">
@@ -297,7 +308,11 @@ export function RolesScreen({ initial, team }: { initial: RolesPayload; team: Ro
         </div>
       </div>
     </div>
-    <RolesTeam roles={data.roles} initialMembers={team.members} initialInvites={team.invites} providers={team.providers} branches={team.branches} onChanged={() => void reload()} />
+    )}
+    {/* Mounted for as long as the screen is, hidden while a role is open: unmounting it re-seeded its lists from the page's first load. */}
+    <div hidden={!!draft}>
+      <RolesTeam roles={data.roles} initialMembers={team.members} initialInvites={team.invites} providers={team.providers} branches={team.branches} loadFailed={team.failed} onChanged={() => reload().catch(() => undefined)} />
+    </div>
     </>
   );
 }

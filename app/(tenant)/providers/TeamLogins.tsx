@@ -265,7 +265,7 @@ export function InviteSheet({
               {role === 'staff' && (
                 <div className="field">
                   <label htmlFor="invite-provider">
-                    {t('whoseCalendar')}
+                    {roles ? tRoles('whichPerson') : t('whoseCalendar')}
                     <span className="field-required" aria-hidden="true"> *</span>
                   </label>
                   {providers.length === 0 ? (

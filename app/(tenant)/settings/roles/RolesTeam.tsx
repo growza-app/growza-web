@@ -20,6 +20,7 @@ export function RolesTeam({
   initialInvites,
   providers,
   branches,
+  loadFailed,
   onChanged,
 }: {
   roles: ShopRole[];
@@ -27,6 +28,7 @@ export function RolesTeam({
   initialInvites: PendingInvite[];
   providers: ProviderOverviewRow[];
   branches: Array<{ id: string; name: string }>;
+  loadFailed: boolean;
   /** Roles show how many people hold them; tell the screen above to re-read after a change here. */
   onChanged: () => void;
 }) {
@@ -39,7 +41,9 @@ export function RolesTeam({
   const [inviting, setInviting] = useState(false);
 
   // Roles that can be given today: ones that work like a desk or like staff (a manager-like or unset role is refused by the API).
-  const giveable = roles.filter((r) => r.worksLike === 'receptionist' || r.worksLike === 'staff');
+  // A staff-like login belongs to a person on the roster, and a shop has no screen to put one there: without anyone on it, only desk roles are offered.
+  const rosterPeople = providers.filter((p) => p.active);
+  const giveable = roles.filter((r) => r.worksLike === 'receptionist' || (r.worksLike === 'staff' && rosterPeople.length > 0));
   const people = members.filter((m) => m.role !== 'owner');
 
   const refresh = async () => {
@@ -54,7 +58,8 @@ export function RolesTeam({
     setError(null);
     try {
       await api.setTeamMemberRole(member.userId, tenantRoleId || null);
-      await refresh();
+      // The change is saved; a failed re-read must not be reported as a failed change.
+      await refresh().catch(() => undefined);
     } catch (e) {
       setError(e instanceof ApiError && e.status < 500 ? e.message : t('errors.roleFailed'));
     } finally {
@@ -66,7 +71,7 @@ export function RolesTeam({
     setError(null);
     try {
       await api.revokeTeamInvite(id);
-      await refresh();
+      await refresh().catch(() => undefined);
     } catch (e) {
       setError(e instanceof ApiError && e.status < 500 ? e.message : t('errors.roleFailed'));
     }
@@ -76,14 +81,18 @@ export function RolesTeam({
     <div className="card roles-card roles-team">
       <div className="card-head">{t('peopleTitle')}</div>
       <div className="card-body">
-        {people.length === 0 ? (
+        {loadFailed ? (
+          <div role="alert" className="field-error">
+            {t('errors.peopleFailed')}
+          </div>
+        ) : people.length === 0 ? (
           <p className="roles-empty">{t('peopleEmpty')}</p>
         ) : (
           <div className="login-rows">
             {people.map((m) => {
               const name = m.name ?? m.providerName ?? m.phone ?? t('unnamed');
               // Only roles of the same kind as this login — and the one they hold, so the select never shows a blank for it.
-              const options = roles.filter((r) => r.worksLike === m.role || r.id === m.tenantRoleId);
+              const options = roles.filter((r) => ((r.worksLike === 'receptionist' || r.worksLike === 'staff') && r.worksLike === m.role) || r.id === m.tenantRoleId);
               return (
                 <div key={m.userId} className="login-row roles-person">
                   <PersonPhoto name={m.name ?? m.providerName ?? name} />
@@ -119,10 +128,10 @@ export function RolesTeam({
           </div>
         )}
 
-        <WaitingGroup invites={invites} branchName={() => null} onRevoke={(id) => void revoke(id)} writable={writable} />
+        <WaitingGroup invites={invites} branchName={(id) => branches.find((b) => b.id === id)?.name ?? null} onRevoke={(id) => void revoke(id)} writable={writable} />
 
         <div className="roles-actions">
-          <button type="button" className="btn" disabled={!writable} onClick={() => setInviting(true)}>
+          <button type="button" className="btn" disabled={!writable || loadFailed} onClick={() => setInviting(true)}>
             {t('invite')}
           </button>
         </div>
@@ -131,10 +140,10 @@ export function RolesTeam({
         <InviteSheet
           target={{ role: 'receptionist' }}
           roles={giveable}
-          providers={providers.filter((p) => p.active)}
+          providers={rosterPeople}
           branches={branches}
           onClose={() => setInviting(false)}
-          onCreated={() => void refresh()}
+          onCreated={() => void refresh().catch(() => undefined)}
         />
       )}
     </div>
