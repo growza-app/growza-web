@@ -4227,6 +4227,25 @@
     "fieldClientSecret": "क्लाइंट सीक्रेट",
     "fieldRefreshToken": "रिफ्रेश टोकन",
     "keysFieldRefused": "{field} सहेजा नहीं जा सका। उसे जाँचकर फिर कोशिश करें।",
-    "keysCheckChanged": "जाँच के दौरान आपकी {channel} चाबियाँ बदल गईं। फिर से जाँचें।"
+    "keysCheckChanged": "जाँच के दौरान आपकी {channel} चाबियाँ बदल गईं। फिर से जाँचें।",
+    "stockTitle": "ऑनलाइन स्टॉक",
+    "stockNotYet": "{channel} से जुड़ते ही आपका स्टॉक वहाँ जाएगा।",
+    "stockUpdated": "{channel} पर आखिरी अपडेट: {when}",
+    "stockWaiting": "{count, plural, one {1 साइज़ {channel} पर जाने के लिए रुका है।} other {# साइज़ {channel} पर जाने के लिए रुके हैं।}}",
+    "stockNone": "अभी तक {channel} को कुछ नहीं भेजा गया।",
+    "stockSlow": "{channel} ने रुकने को कहा है। स्टॉक थोड़ी देर में जाएगा।",
+    "stockUnreachable": "{channel} तक नहीं पहुँच सके। हम फिर कोशिश करेंगे।",
+    "stockRefused": "{channel} ने आपकी चाबियाँ मना कर दीं। स्टॉक भेजने के लिए उन्हें बदलें।",
+    "stockUnreadable": "सहेजी हुई {channel} की चाबियाँ पढ़ी नहीं जा सकीं। उन्हें दोबारा सहेजें।",
+    "stockStuck": "{count, plural, one {1 साइज़ {channel} पर अपडेट नहीं हो सका।} other {# साइज़ {channel} पर अपडेट नहीं हो सके।}}",
+    "bufferLabel": "ऑनलाइन ऑर्डर के लिए रोककर रखें",
+    "bufferHint": "ऑनलाइन ऑर्डर से इतने पीस रोककर रखें, ताकि काउंटर पर बिकने वाला साइज़ ऑनलाइन ज़्यादा न बिक जाए।",
+    "bufferReadOnly": "{count, plural, one {1 पीस ऑनलाइन ऑर्डर के लिए रोका गया है।} other {# पीस ऑनलाइन ऑर्डर के लिए रोके गए हैं।}}",
+    "bufferSave": "सहेजें",
+    "bufferSaving": "सहेज रहे हैं…",
+    "bufferSaved": "सहेजा गया। {channel} पर जल्द अपडेट होगा।",
+    "bufferInvalid": "0 से 1000 के बीच पूरी संख्या लिखें।",
+    "bufferFailed": "सहेजा नहीं जा सका। कुछ नहीं बदला। फिर कोशिश करें।",
+    "keysNoBranch": "पहले ऊपर चुनें कि {channel} किस दुकान से बेचता है, फिर चाबियाँ सहेजें।"
   }
 }

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { api, ApiError } from '../../lib/api';
 import type { ChannelCheckResult, ChannelConnection } from '../../lib/api-types';
 import { keysState, mayEditKeys } from '../../lib/channel-keys-state';
+import { ChannelStock } from './ChannelStock';
 import { useWritable } from '../../components/SessionProvider';
 
 /**
@@ -30,7 +31,7 @@ const KNOWN_FIELDS: Record<string, 'fieldApplicationId' | 'fieldApplicationSecre
 };
 
 type Channel = ChannelConnection['channel'];
-type Problem = { id: 'fieldNeeded' | 'fieldRefused' | 'notSetUp' | 'failed' | 'checkNotConnected' | 'checkUnreadable' | 'checkChanged' | 'checkFailed'; field?: string };
+type Problem = { id: 'fieldNeeded' | 'fieldRefused' | 'noBranch' | 'notSetUp' | 'failed' | 'checkNotConnected' | 'checkUnreadable' | 'checkChanged' | 'checkFailed'; field?: string };
 
 /**
  * Keep a password manager out of it. `autocomplete="off"` is ignored for a password field, and a text field followed by a password field
@@ -109,7 +110,9 @@ export function ChannelKeys({ channel, name }: { channel: Channel; name: string 
       const res = await api.saveChannelKeys(channel, Object.fromEntries(conn.fields.map((f) => [f.key, (values[f.key] ?? '').trim()])));
       // A reload that was already out would describe the OLD keys; this answer is newer.
       readSeq.current++;
-      setConn({ ...res.connection, canCheck: conn.canCheck });
+      // The save answers with the keys only; the shop it sells from and the stock line are unchanged by it, and read again below.
+      setConn({ ...res.connection, canCheck: conn.canCheck, branch: conn.branch, stock: conn.stock });
+      load(true);
       setValues({});
       setOpen(false);
       setChecked(null);
@@ -120,6 +123,9 @@ export function ChannelKeys({ channel, name }: { channel: Channel; name: string 
         setConn({ ...conn, keysSetUp: false });
         setOpen(false);
         setProblem({ id: 'notSetUp' });
+      } else if (e instanceof ApiError && e.code === 'no_branch') {
+        // A business with more than one shop says which one sells here before there is anything to sell: the picker is the row above.
+        setProblem({ id: 'noBranch' });
       } else if (e instanceof ApiError && e.status < 500) {
         // The values stay in the fields so a retry does not mean typing them again. The field the server objected to is named, in our words.
         setProblem({ id: 'fieldRefused', field: e.field?.replace(/^fields\./, '') });
@@ -202,6 +208,8 @@ export function ChannelKeys({ channel, name }: { channel: Channel; name: string 
         return t('keysFieldNeeded', { field: labelOf(p.field) });
       case 'fieldRefused':
         return p.field ? t('keysFieldRefused', { field: labelOf(p.field) }) : t('keysFailed');
+      case 'noBranch':
+        return t('keysNoBranch', { channel: name });
       case 'notSetUp':
         return t('keysNotSetUp');
       case 'checkNotConnected':
@@ -320,6 +328,8 @@ export function ChannelKeys({ channel, name }: { channel: Channel; name: string 
           ) : null}
         </>
       )}
+
+      {!open ? <ChannelStock key={conn.channel} conn={conn} name={name} onChanged={() => load(true)} /> : null}
 
       <p className={`stc-live ${checked === 'working' || saved ? 'stc-note' : 'stc-hint'}`} role="status" aria-live="polite">
         {live}

@@ -68,6 +68,7 @@ import type {
   ChannelConnection,
   ChannelCheckResult,
   SaveChannelKeysResult,
+  SetStockBufferResult,
   HeldPage,
   StockReportPage,
   ByChannelPage,
@@ -702,6 +703,8 @@ export const api = {
   channelKeys: (channel: 'flipkart' | 'amazon') => get<ChannelConnection>(`/api/v1/channels/${channel}/status`),
   saveChannelKeys: (channel: 'flipkart' | 'amazon', fields: Record<string, string>) => put<SaveChannelKeysResult>(`/api/v1/channels/${channel}/credentials`, { fields }),
   checkChannelKeys: (channel: 'flipkart' | 'amazon') => post<ChannelCheckResult>(`/api/v1/channels/${channel}/check`, {}),
+  /** Jira GRW-624 — how many of each size to keep back from online orders. */
+  setStockBuffer: (channel: 'flipkart' | 'amazon', buffer: number) => put<SetStockBufferResult>(`/api/v1/channels/${channel}/stock-buffer`, { buffer }),
   /** Jira GRW-637 — the refunds recorded on online orders, one row per refund; a record, never an instruction. */
   refundsReport: (q: { range: SellersRange; channel?: string; location?: string; page?: number; pageSize?: number }) => {
     const p = new URLSearchParams(sellersParams({ range: q.range, location: q.location, page: q.page, pageSize: q.pageSize }));

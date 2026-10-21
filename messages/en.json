@@ -4227,6 +4227,25 @@
     "fieldClientSecret": "Client secret",
     "fieldRefreshToken": "Refresh token",
     "keysFieldRefused": "{field} could not be saved. Check it and try again.",
-    "keysCheckChanged": "Your {channel} keys changed while checking. Check again."
+    "keysCheckChanged": "Your {channel} keys changed while checking. Check again.",
+    "stockTitle": "Stock online",
+    "stockNotYet": "Your stock goes to {channel} once it is connected.",
+    "stockUpdated": "{channel} last updated {when}",
+    "stockWaiting": "{count, plural, one {1 size is waiting to go to {channel}.} other {# sizes are waiting to go to {channel}.}}",
+    "stockNone": "Nothing has gone to {channel} yet.",
+    "stockSlow": "{channel} asked us to slow down. Stock will go shortly.",
+    "stockUnreachable": "Could not reach {channel}. We will try again.",
+    "stockRefused": "{channel} refused your keys. Replace them to send stock.",
+    "stockUnreadable": "The saved {channel} keys could not be read. Save them again.",
+    "stockStuck": "{count, plural, one {1 size could not be updated on {channel}.} other {# sizes could not be updated on {channel}.}}",
+    "bufferLabel": "Keep back from online orders",
+    "bufferHint": "Keep this many back from online orders, so a size that sells at the counter doesn’t oversell online.",
+    "bufferReadOnly": "{count, plural, one {1 is kept back from online orders.} other {# are kept back from online orders.}}",
+    "bufferSave": "Save",
+    "bufferSaving": "Saving…",
+    "bufferSaved": "Saved. {channel} will be updated shortly.",
+    "bufferInvalid": "Enter a whole number from 0 to 1000.",
+    "bufferFailed": "Could not save. Nothing changed. Try again.",
+    "keysNoBranch": "Choose which shop {channel} sells from, above, then save your keys."
   }
 }

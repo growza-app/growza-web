@@ -269,6 +269,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     // Jira GRW-621 — a marketplace's seller keys, on the same screen and under the same gate (owner and manager).
     'PUT /api/v1/channels/:id/credentials',
     'POST /api/v1/channels/:id/check',
+    // Jira GRW-624 — how many of each size to keep back from online orders, on the same screen and under the same gate.
+    'PUT /api/v1/channels/:id/stock-buffer',
     'POST /api/v1/billing/autopay',
     'POST /api/v1/team/invites',
     'PATCH /api/v1/team/members/:userId',

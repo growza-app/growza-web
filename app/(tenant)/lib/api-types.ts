@@ -1492,12 +1492,32 @@ export interface ChannelConnection {
   lastUsedAt: string | null;
   /** Whether tapping Check would ask the marketplace anything. False until that marketplace's adapter exists. */
   canCheck: boolean;
+  /** Jira GRW-641 — the shop it sells from. */
+  branch: { locationId: string | null; name: string | null; source: 'chosen' | 'default'; gone: boolean };
+  /** Jira GRW-624 — the buffer kept back, and how stock going out is doing. */
+  stock: ChannelStock;
+}
+/** Jira GRW-624 — stock going out to a marketplace. Counts and times only: never a number per size. */
+export interface ChannelStock {
+  channel: 'flipkart' | 'amazon';
+  /** How many to keep back from online orders. */
+  buffer: number;
+  lastPushedAt: string | null;
+  /** Why the last run could not finish; null = it finished, or none ran. */
+  lastRunReason: 'rate_limited' | 'unreachable' | 'refused' | 'keys_unreadable' | null;
+  waiting: number;
+  stuck: number;
+}
+export interface SetStockBufferResult {
+  channel: 'flipkart' | 'amazon';
+  buffer: number;
+  changed: boolean;
 }
 export type ChannelCheckResult = { result: 'working' | 'rejected' | 'unreachable' | 'unavailable'; detail: string };
 export interface SaveChannelKeysResult {
   saved: true;
   replaced: boolean;
-  connection: Omit<ChannelConnection, 'canCheck'>;
+  connection: Omit<ChannelConnection, 'canCheck' | 'branch' | 'stock'>;
 }
 
 /** Jira GRW-631 — what is on the shelf, size by size, and what it is worth at cost. */
