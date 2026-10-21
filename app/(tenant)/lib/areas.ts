@@ -1,3 +1,5 @@
+import type { RolePageKey } from './api';
+
 /**
  * Jira GRW-608 — which AREAS of the app a business has: bookings, services, and the shop's own two screens.
  *
@@ -25,7 +27,7 @@ export interface Areas {
 }
 
 export type PageLevel = 'none' | 'view' | 'manage';
-export type PageGrid = Partial<Record<'bookings' | 'clients' | 'services' | 'offers' | 'staff' | 'attendance' | 'reports' | 'settings', PageLevel>>;
+export type PageGrid = Partial<Record<RolePageKey, PageLevel>>;
 
 /** The salon's app: every diary screen, none of the shop's. What an absent answer means. */
 export const DIARY_AREAS: Areas = { bookings: true, services: true, shop: false };

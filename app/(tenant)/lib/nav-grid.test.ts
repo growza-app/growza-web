@@ -1,7 +1,7 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { canSee, gridCanSee } from './nav-policy';
+import { canSee, gridCanSee, PAGE_OF_HREF } from './nav-policy';
 import { areasOf, DIARY_AREAS, type PageGrid } from './areas';
 
 /**
@@ -82,5 +82,44 @@ describe('the direct address', () => {
     expect(guard).toContain("if (areas.pages && !gridCanSee(href, areas.pages)) redirect('/');");
     // guardScreen asks canSee with the same areas object, which carries the grid.
     expect(guard).toContain('canSee(href, role, reportTabs, true, areas)');
+  });
+});
+
+describe('the local page map stays honest about the screens there are', () => {
+  const root = join(__dirname, '..');
+  const screens = readdirSync(root, { withFileTypes: true })
+    .filter((d) => d.isDirectory() && existsSync(join(root, d.name, 'page.tsx')))
+    .map((d) => `/${d.name}`);
+  // Open to every member by design: the menu, help, the page that says a business is being set up, and the catch-all 404.
+  const OPEN_TO_ALL = ['/more', '/help', '/not-live-yet', '/[...rest]'];
+
+  it('walked the screens (a walk that found nothing would pass everything)', () => {
+    expect(screens.length).toBeGreaterThan(15);
+  });
+
+  it('every screen belongs to a page of the grid or is open to all on purpose — a new screen fails here, naming itself', () => {
+    const mapped = new Set(PAGE_OF_HREF.map(([prefix]) => prefix));
+    const loose = screens.filter((s) => !mapped.has(s) && !OPEN_TO_ALL.includes(s));
+    expect(loose, `screen(s) with no page in PAGE_OF_HREF (lib/nav-policy.ts): ${loose.join(', ')} — say which page of the role grid each belongs to, or add it to OPEN_TO_ALL here`).toEqual([]);
+  });
+
+  it('every mapped address is a screen that exists', () => {
+    // A mapped address is a directory of screens (`/documents` holds only `[id]`), so the directory is what has to exist.
+    const missing = PAGE_OF_HREF.map(([prefix]) => prefix).filter((p) => !existsSync(join(root, ...p.slice(1).split('/'))));
+    expect(missing).toEqual([]);
+  });
+});
+
+describe('Settings follows the role’s pages too', () => {
+  const read = (p: string) => readFileSync(join(__dirname, '..', p), 'utf8');
+  it('the hub lists a row only if the role opens its address', () => {
+    expect(read('settings/SettingsNavList.tsx')).toContain('(!areas.pages || !row.href || gridCanSee(row.href, areas.pages))');
+  });
+  it('each owner-only screen sends a role holder Home by its own address, before any data is asked for', () => {
+    for (const [file, href] of [['settings/billing/page.tsx', '/settings/billing'], ['settings/billing/bills/page.tsx', '/settings/billing'], ['settings/billing/bills/[id]/page.tsx', '/settings/billing'], ['settings/branches/page.tsx', '/settings/branches']] as const) {
+      const src = read(file);
+      expect(src, file).toContain(`await guardScreen('${href}');`);
+      expect(src.indexOf('guardScreen('), file).toBeLessThan(src.search(/\bapi\.\w+\(/));
+    }
   });
 });

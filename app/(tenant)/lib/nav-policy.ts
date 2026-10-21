@@ -53,7 +53,7 @@ const ALWAYS_OPEN: ReadonlySet<string> = new Set(['/help']);
  * every member. The same mapping the API's route table makes, written out for addresses; `@growza-app/shared` carries the routes (1.0.19, not yet in the
  * pin), so this is local until the pin moves.
  */
-const PAGE_OF_HREF: ReadonlyArray<readonly [string, keyof PageGrid]> = [
+export const PAGE_OF_HREF: ReadonlyArray<readonly [string, keyof PageGrid]> = [
   ['/appointments', 'bookings'],
   ['/availability', 'bookings'],
   ['/orders', 'bookings'],
