@@ -49,7 +49,7 @@ describe('the screen', () => {
   it('is drawn for a marketplace order only, under the state, and asking again is offered only when the API says this viewer may', () => {
     expect(screen).toContain('!isCounter ? (');
     expect(screen).toContain('canRetry={order.canRetryMarketplace === true}');
-    expect(line).toContain('l.retry && canRetry ?');
+    expect(line).toContain('l.retry && canRetry &&');
   });
 
   it('a busy retry keeps focus (aria-disabled, not disabled), is one at a time, and is announced from one live region', () => {
@@ -79,11 +79,29 @@ describe('the screen', () => {
   });
 });
 
+describe('a waiting message does not leave the line stale', () => {
+  it('reads the order again every few seconds, a bounded number of times, while a message waits; and says "asked again" instead of inviting another tap', () => {
+    expect(line).toContain('const POLL_EVERY_MS = 8_000');
+    expect(line).toContain('const POLL_LIMIT = 8');
+    expect(line).toContain('setInterval(');
+    expect(line).toContain('clearInterval(id)');
+    expect(line).toContain("asked ? t('tell.asked', { channel })");
+    expect(line).toContain("!(asked && l.key === 'pending')");
+  });
+});
+
+describe('the list chip fits at 344px', () => {
+  it('the card foot wraps, so the code, the state and "Not confirmed" never squeeze into one line', () => {
+    expect(css).toMatch(/\.ord-card-foot \{[^}]*flex-wrap: wrap/);
+    expect(css).toMatch(/\.ord-unconfirmed \{[^}]*margin-inline-start/);
+  });
+});
+
 describe('every sentence has a Hindi twin, with the same placeholders', () => {
   const flat = (o: Record<string, unknown>, p = ''): Array<[string, string]> => Object.entries(o).flatMap(([k, v]) => (typeof v === 'string' ? [[`${p}${k}`, v] as [string, string]] : flat(v as Record<string, unknown>, `${p}${k}.`)));
   const en = flat(messages('en').tell);
   const hi = new Map(flat(messages('hi').tell));
-  it('there are some to check', () => expect(en.length).toBe(13));
+  it('there are some to check', () => expect(en.length).toBe(14));
   it.each(en)('%s', (id, text) => {
     const h = hi.get(id);
     expect(h, `hi.json is missing orders.tell.${id}`).toBeTruthy();

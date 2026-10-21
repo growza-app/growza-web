@@ -4203,7 +4203,8 @@
       },
       "retry": "Try again",
       "retrying": "Sending…",
-      "retryFailed": "Could not ask again. Try again."
+      "retryFailed": "Could not ask again. Try again.",
+      "asked": "Asked again. We will tell {channel} shortly."
     }
   },
   "settingsChannels": {

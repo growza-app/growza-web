@@ -103,6 +103,7 @@ a.ord-card:focus-visible,
 .ord-card-top,
 .ord-card-foot {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: baseline;
   gap: var(--sp-3);
@@ -588,6 +589,7 @@ a.ord-card:focus-visible,
 }
 /* On a list row: the marketplace has not taken what the shop told it. Words, so it reads without colour. */
 .ord-unconfirmed {
+  margin-inline-start: var(--sp-2);
   font-size: var(--fs-3);
   font-weight: 600;
   color: var(--danger);
