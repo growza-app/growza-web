@@ -4225,6 +4225,8 @@
     "fieldApplicationSecret": "Application secret",
     "fieldClientId": "Client ID",
     "fieldClientSecret": "Client secret",
-    "fieldRefreshToken": "Refresh token"
+    "fieldRefreshToken": "Refresh token",
+    "keysFieldRefused": "{field} could not be saved. Check it and try again.",
+    "keysCheckChanged": "Your {channel} keys changed while checking. Check again."
   }
 }

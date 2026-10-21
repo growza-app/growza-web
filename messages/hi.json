@@ -4225,6 +4225,8 @@
     "fieldApplicationSecret": "एप्लिकेशन सीक्रेट",
     "fieldClientId": "क्लाइंट आईडी",
     "fieldClientSecret": "क्लाइंट सीक्रेट",
-    "fieldRefreshToken": "रिफ्रेश टोकन"
+    "fieldRefreshToken": "रिफ्रेश टोकन",
+    "keysFieldRefused": "{field} सहेजा नहीं जा सका। उसे जाँचकर फिर कोशिश करें।",
+    "keysCheckChanged": "जाँच के दौरान आपकी {channel} चाबियाँ बदल गईं। फिर से जाँचें।"
   }
 }

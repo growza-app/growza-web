@@ -120,9 +120,27 @@
   gap: var(--sp-3);
   font-size: var(--fs-3);
 }
+/* Both may wrap: a larger system text size (type is in rem) or a longer Hindi label must not push the row past the card. */
+.stc-set-name,
+.stc-set-state {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .stc-set-state {
   color: var(--muted);
-  white-space: pre;
+  text-align: end;
+}
+/*
+ * The one live region stays in the page, empty, so a screen reader announces what is put into it (a region that appears already
+ * holding its text is often not read out). Empty, it takes no space: the negative margin cancels the column's gap.
+ */
+.stc-live:empty {
+  margin-top: calc(-1 * var(--sp-2));
+}
+/* A busy button keeps focus (aria-disabled, not disabled) and says so with its look. */
+.stc-btn[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: progress;
 }
 .stc-actions {
   display: flex;
