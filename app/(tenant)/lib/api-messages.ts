@@ -213,6 +213,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
   // Jira GRW-614 — the Orders list.
   'This business has no Orders screen.': 'इस कारोबार में ऑर्डर वाली स्क्रीन नहीं है।',
   'Page must be a whole number from 1.': 'पेज 1 से शुरू होने वाली पूरी संख्या होना चाहिए।',
+  'Page size must be a whole number from 1 to 100.': 'पेज का आकार 1 से 100 के बीच की पूरी संख्या होना चाहिए।',
   'Search with some text.': 'खोजने के लिए कुछ लिखें।',
   'No such client': 'ऐसा कोई ग्राहक नहीं',
   'That client record is not available': 'वह ग्राहक रिकॉर्ड उपलब्ध नहीं है',
