@@ -33,7 +33,9 @@ describe('the nav follows the role’s pages', () => {
 
   it('a Staff role (attendance only) still has Home, the menu, notifications and help', () => {
     const areas = withGrid(STAFF);
-    for (const href of ['/', '/more', '/help']) expect(canSee(href, 'staff', undefined, true, areas), href).toBe(true);
+    // `/notifications` is in this list because the test is NAMED for it: it was not asserted, and the behaviour it
+    // claims to protect was false for two years of role (review, 2026-10-22).
+    for (const href of ['/', '/more', '/help', '/notifications']) expect(canSee(href, 'staff', undefined, true, areas), href).toBe(true);
     expect(canSee('/orders', 'staff', undefined, true, areas)).toBe(false);
   });
 
@@ -50,7 +52,8 @@ describe('the nav follows the role’s pages', () => {
     expect(gridCanSee('/products', { bookings: 'manage' })).toBe(false);
     expect(gridCanSee('/search', { bookings: 'view' })).toBe(true);
     expect(gridCanSee('/search', { clients: 'manage' })).toBe(false);
-    expect(gridCanSee('/notifications', {})).toBe(false);
+    // Open to every member, grid or no grid — see OPEN_TO_ALL below.
+    expect(gridCanSee('/notifications', {})).toBe(true);
     expect(gridCanSee('/try-whatsapp', { attendance: 'view' })).toBe(false);
   });
 
@@ -91,7 +94,10 @@ describe('the local page map stays honest about the screens there are', () => {
     .filter((d) => d.isDirectory() && existsSync(join(root, d.name, 'page.tsx')))
     .map((d) => `/${d.name}`);
   // Open to every member by design: the menu, help, the page that says a business is being set up, and the catch-all 404.
-  const OPEN_TO_ALL = ['/more', '/help', '/not-live-yet', '/[...rest]'];
+  // Jira GRW-301 opened `GET /api/v1/notifications` to every role on purpose, and the page carries no role check of
+  // its own; it was under `bookings` here, which took the stock keeper's low-stock warning and the Staff role's own
+  // attendance approval away from them (review, 2026-10-22).
+  const OPEN_TO_ALL = ['/more', '/help', '/not-live-yet', '/[...rest]', '/notifications'];
 
   it('walked the screens (a walk that found nothing would pass everything)', () => {
     expect(screens.length).toBeGreaterThan(15);

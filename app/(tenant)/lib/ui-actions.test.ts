@@ -170,8 +170,11 @@ describe('2b — the controls, each behind its own action', () => {
 
   const GATES: Array<[file: string, gate: RegExp]> = [
     ['components/home/parts.tsx', /<HeaderSearch wide \/>/],
-    ['components/MobileChrome.tsx', /const mayBook = mayUse\(role, 'visit\.new', writable\);/],
-    ['components/home/OwnerHome.tsx', /const mayBook = mayUse\(p\.role, 'visit\.new', writable\);[\s\S]*const mayRecordPayment = mayUse\(p\.role, 'visit\.recordPayment', writable\);/],
+    // Jira GRW-74 — both of these also ask the role GRID, which `mayUse` cannot see (review, 2026-10-22): the fixed
+    // word a role works like is not what the owner filled in. MobileChrome asks it directly (it is chrome, not a
+    // screen, so it has no `useWritable`); OwnerHome goes through `useMayUse`, which asks for every control.
+    ['components/MobileChrome.tsx', /const mayBook = mayUse\(role, 'visit\.new', writable\) && \(!areas\.pages \|\| gridMayUse\('visit\.new', areas\.pages\)\);/],
+    ['components/home/OwnerHome.tsx', /const mayBook = useMayUse\('visit\.new'\);[\s\S]*const mayRecordPayment = useMayUse\('visit\.recordPayment'\);/],
     // Jira GRW-404 moved the desk's rows onto the token board, so the give and pay buttons are gated there.
     ['components/home/TokenBoard.tsx', /const mayGive = useMayUse\('queue\.give'\);[\s\S]*\{mayGive \? \(\s*<button type="button" className="hm-give"/],
     ['components/home/BookedToday.tsx', /const mayArrive = useMayUse\('token\.arrive'\);[\s\S]*\{mayArrive \? \(/],

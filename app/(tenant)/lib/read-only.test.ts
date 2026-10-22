@@ -161,7 +161,8 @@ describe('every screen that writes asks whether it may (the list that cannot qui
     ['availability/SlotGrid.tsx', /\{writable && \(\s*<button type="button" className="btn btn-ghost" onClick=\{\(\) => openBooking/],
     ['try-whatsapp/page.tsx', /await guardWritable\('\/'\);/],
     ['attendance/AttendanceRegister.tsx', /disabled=\{busy \|\| !canMarkAll \|\| !writable\}/],
-    ['components/home/ReceptionHome.tsx', /\.\.\.\(writable \? \[\{ href: '\/customers\?add=1'/],
+    // Jira GRW-74 — Add client is the CLIENTS page's write, not just "the business may write" (review, 2026-10-22).
+    ['components/home/ReceptionHome.tsx', /\.\.\.\(mayAddClient \? \[\{ href: '\/customers\?add=1'/],
   ];
   for (const [file, gate] of GATES) {
     it(`${file} — ${gate.source.slice(0, 56)}…`, () => {

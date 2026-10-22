@@ -3,7 +3,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import type { Lang } from '../lib/lang';
-import { gridCanChange, mayUse, type UiAction } from '../lib/nav-policy';
+import { gridCanChange, gridMayUse, mayUse, type UiAction } from '../lib/nav-policy';
 import { DIARY_AREAS, type Areas } from '../lib/areas';
 
 /**
@@ -99,7 +99,17 @@ export function useMayUse(action: UiAction): boolean {
   // Jira GRW-76 — the screen's own read-only-ness counts too: a control that writes is not drawn on a screen its role holds at See.
   const writable = useWritable();
   if (session?.walkIn === false && WALK_IN_ONLY.includes(action)) return false;
-  return mayUse(session?.role, action, writable);
+  /*
+   * Jira GRW-74 — BOTH gates, as migration 0063 asks ("a request must pass BOTH"), so holding a role can only ever
+   * narrow what the fixed role already reached, never widen it.
+   *
+   * The grid is asked about the CONTROL, not about the screen it happens to be drawn on. `useWritable` above answers
+   * for the screen, and Home has no page in that table — Home is every page at once. So until this line a role
+   * holding Bookings at See got `/appointments` read-only, as intended, and then New booking, Record payment and the
+   * token board's give and arrive on Home, every one of which the API refuses (review, 2026-10-22).
+   */
+  const grid = session?.areas?.pages;
+  return mayUse(session?.role, action, writable) && (!grid || gridMayUse(action, grid));
 }
 
 /**

@@ -10,7 +10,7 @@ import { countsAsNotMarked, liveState, minutesBetween } from '../../lib/live-sta
 import { canSee } from '../../lib/nav-policy';
 import { IconBan, IconCalendarPlus, IconChevronRight, IconClipboardCheck, IconClock, IconMenu, IconPlus, IconProducts, IconReceipt, IconScissors, IconSearch, IconUserPlus } from '../icons';
 import { useBranch } from '../BranchProvider';
-import { useMayUse, useWritable } from '../SessionProvider';
+import { useMayUse } from '../SessionProvider';
 import { BookedToday, bookedNotOnBoard } from './BookedToday';
 import { NewTokenSheet } from './NewTokenSheet';
 import { TokenBoard } from './TokenBoard';
@@ -66,8 +66,8 @@ export function ReceptionHome(p: ReceptionHomeProps) {
   // Jira GRW-409 — every action here is the desk's today; each is still asked of the shared rule, so a role that
   // lands on this Home without them is shown no button that answers 403. New token writes a queue entry, so it
   // rides on the same action as a walk-in.
-  const writable = useWritable();
   const mayBook = useMayUse('visit.new');
+  const mayAddClient = useMayUse('client.edit');
   const mayRecordPayment = useMayUse('visit.recordPayment');
 
   // Who is in each chair right now: an unpaid visit whose time has come (GRW-222's "until paid" rule).
@@ -148,7 +148,8 @@ export function ReceptionHome(p: ReceptionHomeProps) {
         <QuickTiles
           items={[
             // Jira GRW-556 (follow-up) — Add client is a write; a suspended business has no Clients form to land on.
-            ...(writable ? [{ href: '/customers?add=1', label: t.addCustomer, icon: <IconUserPlus />, tone: 'blue' as const }] : []),
+            // Jira GRW-74 — and it is the CLIENTS page's write, so a role holding Clients at See is not offered it either.
+            ...(mayAddClient ? [{ href: '/customers?add=1', label: t.addCustomer, icon: <IconUserPlus />, tone: 'blue' as const }] : []),
             // Jira GRW-404 — Record payment moved up beside New token; Walk-in now (start a visit with a stylist straight
             // away) keeps a way in on a laptop, where the phone's centre button is not.
             ...(mayBook ? [{ href: '/appointments/new?mode=now', label: t.walkInShort, icon: <IconScissors />, tone: 'green' as const }] : []),

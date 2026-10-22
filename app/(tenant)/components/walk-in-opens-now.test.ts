@@ -28,7 +28,8 @@ describe('the centre button opens the visit sheet on Walk-in now', () => {
 
   it('AC-03 — a stylist still gets no centre action', () => {
     // Jira GRW-409 — asked of the shared rule, which a stylist fails (no POST /walk-ins or /bookings).
-    expect(chrome).toMatch(/const mayBook = mayUse\(role, 'visit\.new', writable\);/);
+    // Jira GRW-74 — and of the role grid, which `mayUse` cannot see (review, 2026-10-22).
+    expect(chrome).toMatch(/const mayBook = mayUse\(role, 'visit\.new', writable\) && \(!areas\.pages \|\| gridMayUse\('visit\.new', areas\.pages\)\);/);
     expect(chrome).toMatch(/const onCentre =\s*\n?\s*mayBook && /);
   });
 

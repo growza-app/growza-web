@@ -13,7 +13,7 @@
  * and a screen that merely opens later goes to the page that says so. Folding them together would tell an owner
  * their own Offers screen does not exist.
  */
-import { canSee as roleCanSee, visibleItems as roleVisibleItems, type MemberRole } from '@growza-app/shared';
+import { canSee as roleCanSee, visibleItems as roleVisibleItems, type MemberRole, type UiAction } from '@growza-app/shared';
 import { isSetupDestination } from './go-live';
 import { areaAllows, isShopRoute, type Areas, type PageGrid } from './areas';
 
@@ -65,7 +65,14 @@ export const PAGE_OF_HREF: ReadonlyArray<readonly [string, keyof PageGrid]> = [
   ['/customers', 'clients'],
   // The one-box search finds bookings as well as clients, so it follows the page it reveals more of.
   ['/search', 'bookings'],
-  ['/notifications', 'bookings'],
+  /*
+   * NOT `/notifications`. It was here, under `bookings`, which took it away from every role without the diary — a
+   * shop's stock keeper, and the Staff role whose whole job is attendance, neither of whom would ever see the
+   * low-stock warning or the approval addressed to them. It is not a diary screen, and it is not gated anywhere
+   * else either: `GET /api/v1/notifications` answers every role on purpose (Jira GRW-301), which is why the page
+   * carries no role check of its own. (Review, 2026-10-22 — the line above this table always said notifications
+   * were open to every member, and the test that said so never asserted it.)
+   */
   ['/services', 'services'],
   ['/products', 'services'],
   ['/stock', 'services'],
@@ -113,6 +120,48 @@ export function pageOfHref(href: string): keyof PageGrid | undefined {
 export function gridCanChange(href: string, grid: PageGrid): boolean {
   const page = pageOfHref(href);
   return page === undefined || grid[page] === 'manage';
+}
+
+/**
+ * Jira GRW-74 — the grid page each CONTROL belongs to, and whether using it is a change or a read.
+ *
+ * `gridCanChange` above answers for a SCREEN, from its address, and Home has no address in the table — Home is
+ * every page at once. That left Home's controls ungoverned: a role holding Bookings at See got `/appointments`
+ * read-only, as intended, and then New booking, Record payment and the token board's give and arrive on Home,
+ * every one of which the API refuses (review, 2026-10-22). A control is asked about by what it DOES, so it is
+ * answered the same way wherever it is drawn.
+ *
+ * `null` is a control the grid has no opinion on: marking yourself in is your own record (the API offers it from
+ * the branch fence, not from a grant), and Pay now belongs to a route that is the owner's alone whatever the grid
+ * says. Both are left to the gate that already decides them.
+ */
+const PAGE_OF_ACTION: Readonly<Record<UiAction, readonly [keyof PageGrid, 'view' | 'manage'] | null>> = {
+  search: ['bookings', 'view'],
+  'visit.new': ['bookings', 'manage'],
+  'visit.recordPayment': ['bookings', 'manage'],
+  'queue.give': ['bookings', 'manage'],
+  'booking.checkout': ['bookings', 'manage'],
+  'booking.setStatus': ['bookings', 'manage'],
+  'token.arrive': ['bookings', 'manage'],
+  'booking.correct': ['bookings', 'manage'],
+  'booking.reschedule': ['bookings', 'manage'],
+  'clients.list': ['clients', 'view'],
+  'client.profile': ['clients', 'view'],
+  'client.edit': ['clients', 'manage'],
+  'client.delete': ['clients', 'manage'],
+  'attendance.mark': ['attendance', 'manage'],
+  'attendance.self': null,
+  'attendance.approve': ['attendance', 'manage'],
+  'billing.payNow': null,
+};
+
+/** May a role with this grid use this control? A control the grid has no opinion on is left to the gates that do. */
+export function gridMayUse(action: UiAction, grid: PageGrid): boolean {
+  const need = PAGE_OF_ACTION[action];
+  if (!need) return true;
+  const [page, level] = need;
+  const held = grid[page] ?? 'none';
+  return level === 'manage' ? held === 'manage' : held !== 'none';
 }
 
 /** Does the member's role open this destination? `none` hides it; a page it does not belong to is open. */
