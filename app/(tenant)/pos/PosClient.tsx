@@ -57,13 +57,6 @@ export function PosClient({
 
   const enterFullScreen = useCallback(() => {
     setFullScreen(true);
-    try {
-      if (typeof document !== 'undefined' && !document.fullscreenElement) {
-        void document.documentElement.requestFullscreen?.().catch(() => {});
-      }
-    } catch {
-      // Browser fullscreen is optional; CSS full-viewport mode always works.
-    }
   }, []);
 
   const exitFullScreen = useCallback(() => {
@@ -81,11 +74,21 @@ export function PosClient({
     if (!fullScreen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !e.defaultPrevented && !document.querySelector('.sheet-backdrop, .pf-keypad-scrim')) {
+        e.preventDefault();
         exitFullScreen();
       }
     };
+    const onFsChange = () => {
+      if (typeof document !== 'undefined' && !document.fullscreenElement) {
+        setFullScreen(false);
+      }
+    };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.removeEventListener('fullscreenchange', onFsChange);
+    };
   }, [fullScreen, exitFullScreen]);
 
   const openReturn = useCallback(async () => {
