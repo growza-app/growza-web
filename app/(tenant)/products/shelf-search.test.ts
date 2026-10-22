@@ -129,5 +129,19 @@ describe('Products status filter, column sorting, and save confirmation', () => 
     expect(sheetSrc).toMatch(/const showSaved = justSaved && !dirty && !busy;/);
     expect(sheetSrc).toMatch(/<IconCheck \/> \{t\('saved'\)\}/);
   });
+
+  it('expands the desk table to full width when no product is open, renders the 4-card KPI strip, and keeps all product form sections open', () => {
+    const listSrc = readFileSync(join(__dirname, 'ProductsList.tsx'), 'utf8');
+    const sheetSrc = readFileSync(join(__dirname, 'ProductSheet.tsx'), 'utf8');
+    expect(listSrc).toContain('className="prd-strip prd-strip-4"');
+    expect(listSrc).toContain("t('strip.out')");
+    expect(listSrc).toContain("t('cols.category')");
+    expect(listSrc).toContain("t('cols.sku')");
+    expect(listSrc).toContain("className={`pf-wide-grid prd-desk-grid ${editing ? 'has-sheet' : 'is-full'}`}");
+    expect(sheetSrc).toContain('className="prd-form-section"');
+    expect(sheetSrc).toContain('className="prd-field-grid-2"');
+    expect(sheetSrc).toContain('className="prd-sheet-footer"');
+    expect(sheetSrc).toContain('const [taxOpen, setTaxOpen] = useState(true)');
+  });
 });
 

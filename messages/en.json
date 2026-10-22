@@ -3183,7 +3183,13 @@
       "codesHint": "Both optional. The SKU is your own short code, like ARG-100. On the till's Products tab, scan a barcode and press Enter to add it.",
       "barcodeSpaces": "Type the barcode as it is printed, with no spaces.",
       "skuTaken": "{name} already has this SKU at this branch.",
-      "barcodeTaken": "{name} already has this barcode at this branch."
+      "barcodeTaken": "{name} already has this barcode at this branch.",
+      "secBasic": "Basic details",
+      "secPricing": "Pricing & stock",
+      "secCodes": "Codes & tax",
+      "saveAndSizes": "Save & add sizes",
+      "sizesNewHint": "Selling this in multiple sizes (S, M, L or 28, 30, 32)? Save & add sizes to enter each size's stock and online codes.",
+      "stockEditHint": "Current count on the shelf. Open the Stock tab above to add, remove, or move stock."
     },
     "searchPlaceholder": "Search the shelf",
     "noMatch": "Nothing on the shelf is called \"{q}\".",
@@ -3191,7 +3197,8 @@
     "strip": {
       "products": "Products",
       "worth": "Stock value",
-      "low": "Running low"
+      "low": "Running low",
+      "out": "Out of stock"
     },
     "filters": {
       "label": "Show",
@@ -3258,6 +3265,8 @@
     "noun": "products",
     "cols": {
       "product": "Product",
+      "category": "Category",
+      "sku": "SKU",
       "price": "Sell price",
       "cost": "Bought for",
       "stock": "Stock",
