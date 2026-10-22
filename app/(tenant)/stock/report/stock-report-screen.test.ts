@@ -87,6 +87,15 @@ describe('laid out for a thumb at 344px', () => {
     expect(css).toMatch(/\.srp-sizes\s*\{[^}]*flex-wrap: wrap/);
     expect(css).not.toMatch(/overflow-x:\s*(auto|scroll)/);
   });
+
+  it('renders the 4-card KPI strip, quick filter pills, Cards/Table view toggle, and top-aligned style cards', () => {
+    expect(client).toContain('srp-totals srp-kpi-grid');
+    expect(client).toContain('srp-filter-pills');
+    expect(client).toContain('srp-view-toggle');
+    expect(client).toContain('srp-table-card');
+    expect(css).toContain('.srp-card {\n  display: flex;\n  flex-direction: column;\n  justify-content: flex-start;');
+    expect(css).toContain('.srp-value.is-no-cost');
+  });
 });
 
 describe('the words, in both languages', () => {
