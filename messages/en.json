@@ -3395,6 +3395,14 @@
       "footer": "Have your products in a spreadsheet? Load them in one go."
     }
   },
+  "pos": {
+    "modes": "POS",
+    "sell": "Sell",
+    "return": "Return",
+    "loadingBills": "Loading bills…",
+    "billsFailed": "The bills did not load. Check your connection and try again.",
+    "tryAgain": "Try again"
+  },
   "sales": {
     "scanUnknown": "No product has the code {code}. Check the bottle.",
     "scanSearch": "Search by name",

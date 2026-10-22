@@ -1,53 +1,22 @@
 import { redirect } from 'next/navigation';
 import { guardLive, guardScreen } from '../../lib/screen-guard';
 import { screenTitle } from '../../lib/page-title';
-import { api } from '../../lib/api';
-import { LoadErrorBanner } from '../../components/LoadErrorBanner';
-import { loadErrorKind } from '../../lib/load-error';
-import { mayUse } from '../../lib/nav-policy';
-import { isWritable } from '../../lib/read-only';
-import { SellProductClient } from './SellProductClient';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Dedicated counter sale / retail POS screen (`/products/sell`).
+ * `/products/sell` was the till before the POS tab existed. The Products screen, the Sales register, Home's quick
+ * action and a few bookmarks still point here, so the address keeps working and lands on the POS tab — with the
+ * `from` it was given, so the back button still goes where it did.
  *
- * Uses the same `visit.recordPayment` write permission and go-live gate as the Till,
- * and `guardScreen('/products')` for `/products` segment access.
+ * It still asks the questions it always asked before it sends anyone anywhere: someone the till is closed to, or a
+ * business that is not live yet, is told so from the address they typed, not from wherever it forwards to.
  */
-export default async function SellProductPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ from?: string }>;
-}) {
-  // The till sells from the shelf; the Products catalogue is a different screen with a different answer per role.
+export default async function SellProductPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
   await guardScreen('/products/sell');
   await guardLive('/products/sell');
   const params = await searchParams;
-
-  let me;
-  try {
-    me = await api.me();
-  } catch (error) {
-    return (
-      <div className="page-body">
-        <LoadErrorBanner kind={loadErrorKind(error)} />
-      </div>
-    );
-  }
-
-  if (!mayUse(me.member?.role, 'visit.recordPayment', isWritable(me.tenant?.status))) {
-    redirect('/products');
-  }
-
-  const timezone = me.tenant?.timezone ?? 'Asia/Kolkata';
-
-  return (
-    <div className="page-body">
-      <SellProductClient timezone={timezone} backTo={params.from === 'products' ? '/products' : params.from === 'sales' ? '/sales' : undefined} />
-    </div>
-  );
+  redirect(params.from === 'products' || params.from === 'sales' ? `/pos?from=${params.from}` : '/pos');
 }
 
 export const metadata = screenTitle('Sell product');

@@ -404,6 +404,8 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
      * and `canSee('/products/sell', …)` is what answers for it.
      */
     '/products/sell': /await guardScreen\('\/products\/sell'\);/,
+    // The POS tab is that same till under a tab's name (and the old address now forwards to it): same answer, same guard.
+    '/pos': /await guardScreen\('\/pos'\);/,
     // Jira GRW-608 — the shelf and the register each have two addresses over one implementation: the page names the
     // address it is guarded under, and the screen (`*Screen.tsx`) is what calls `guardScreen(guard)` (pinned in areas.test.ts).
     '/products': /<ProductsScreen[^>]*guard="\/products"/,

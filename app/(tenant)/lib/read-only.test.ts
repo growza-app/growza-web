@@ -142,7 +142,7 @@ describe('every screen that writes asks whether it may (the list that cannot qui
     ['packages/[id]/edit/page.tsx', /await guardWritable\('\/packages'\);/],
     // Products
     ['products/ProductsList.tsx', /<WriteOnly>\s*\{live\.length > 0 \? \(\s*<Link className="btn btn-ghost" href="\/products\/sell\?from=products">/],
-    ['products/sell/page.tsx', /!mayUse\(me\.member\?\.role, 'visit\.recordPayment', isWritable\(me\.tenant\?\.status\)\)/],
+    ['pos/page.tsx', /!mayUse\(me\.member\?\.role, 'visit\.recordPayment', isWritable\(me\.tenant\?\.status\)\)/],
     // Staff
     ['providers/StaffClient.tsx', /actions=\{\s*writable \? \(\s*<button type="button" className="btn" onClick=\{\(\) => setCreating\('staff'\)\}/],
     ['providers/StaffRoster.tsx', /disabled=\{disabled \|\| !writable\}/],

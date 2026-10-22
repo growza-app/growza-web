@@ -18,6 +18,7 @@ import {
   IconDashboard,
   IconOffers,
   IconPackages,
+  IconPos,
   IconProducts,
   IconReceipt,
   IconReports,
@@ -136,6 +137,9 @@ export function Sidebar({
   // Owner, 2026-10-15 — grouped by job. Routes are unchanged; a group's children show while one of them is open.
   const groups: NavGroup<ReactNode>[] = [
     { href: '/', label: t.nav.home, icon: <IconDashboard /> },
+    // The till, one tap from Home. `canSee` gives it to whoever may open the till; a business that has turned
+    // Products off has nothing on a shelf to sell, so it is not offered one.
+    ...(products === false ? [] : [{ href: '/pos', label: t.nav.pos, icon: <IconPos /> }]),
     // Jira GRW-608 — a shop's own two screens. Absent for every other business: `canSee` answers false for them.
     { href: '/orders', label: t.nav.orders, icon: <IconReceipt /> },
     { href: '/stock', label: t.nav.stock, icon: <IconProducts /> },

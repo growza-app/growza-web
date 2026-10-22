@@ -9,7 +9,7 @@ import { copy } from '../lib/copy';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { isLive } from '../lib/go-live';
 import { PageHeader } from '../components/PageHeader';
-import { IconAnalytics, IconChat, IconHelp, IconOffers, IconPackages, IconChevronRight, IconLogout, IconReceipt, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
+import { IconAnalytics, IconChat, IconHelp, IconOffers, IconPackages, IconChevronRight, IconLogout, IconPos, IconReceipt, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
 import { SignOutButton } from '../components/SignOutButton';
 
 export const dynamic = 'force-dynamic';
@@ -40,6 +40,8 @@ export default async function MorePage() {
   let reportTabs: string[] | undefined;
   // Jira GRW-556 — false while the business is being set up; the menu then lists the setup screens only.
   let live = true;
+  // Only an explicit false takes the shelf away, as in the layout: the POS row needs something to sell.
+  let products = true;
   // Jira GRW-608 — which areas this business has; the salon's full set when the API cannot say.
   let areas: Areas = DIARY_AREAS;
   try {
@@ -51,6 +53,7 @@ export default async function MorePage() {
     whatsappDemo = me.whatsapp?.demo ?? false;
     reportTabs = me.reportTabs;
     live = isLive(me.tenant?.status);
+    products = me.capabilities?.products !== false;
   } catch {
     // Falls back to the plain-language defaults below, and to the owner nav —
     // a degraded API must not hide the product from the person who owns it.
@@ -63,6 +66,7 @@ export default async function MorePage() {
   const nav = homeCopy(lang, labels);
 
   const items: { href: string; label: string; icon: ReactNode; pill?: string | null }[] = [
+    ...(products ? [{ href: '/pos', label: nav.nav.pos, icon: <IconPos /> }] : []),
     { href: '/sales', label: nav.nav.sales, icon: <IconReceipt /> },
     // GRW-170 — the register lives here on a phone. The bottom bar is five
     // fixed slots and a sixth would break it, so Attendance rides the menu

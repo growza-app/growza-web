@@ -82,7 +82,8 @@ export function canSee(href: string, role?: MemberRole | null, reportTabs?: read
    * so the answer is given locally. Delete this block when the pin reaches 1.0.11 — `roleCanSee` then answers it.
    * It is NOT '/products': the catalogue (cost prices, delete, transfer between branches) stays the owner's.
    */
-  if (href.startsWith('/products/sell')) {
+  // The POS tab IS the till (`/products/sell` now lands on it), so it takes the till's answer exactly.
+  if (href === '/pos' || href.startsWith('/products/sell')) {
     if (!(live || isSetupDestination(href))) return false;
     if (role === 'receptionist') return true;
     return roleCanSee('/products', role, tabs);
