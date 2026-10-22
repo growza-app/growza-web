@@ -3,6 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { fromDashboard } from './dashboard-root';
+// The DASHBOARD's `canSee`, which knows about areas; shared's (below) does not, and cannot answer for a shop.
+import { canSee as navCanSee } from './nav-policy';
 import {
   canSee,
   mayUse,
@@ -197,13 +199,18 @@ describe('2b — the controls, each behind its own action', () => {
  * screen is closed whole by `guardScreen` (section 4), so its buttons are not
  * gated one by one; on a screen a role IS offered, every write must be theirs.
  */
+/** A shop's app, for the screens that exist only there (`/orders`, `/stock`). See `lib/areas.ts`. */
+const SHOP_AREAS = { bookings: false, services: false, shop: true } as const;
+
 const SCREEN_WRITES: Record<string, readonly string[]> = {
   // Jira GRW-615 — an order's own screen moves it along: the one next move, and the rarer ones behind More. Same screen,
   // same gate: a role the nav does not offer /orders is bounced Home by the page, so it never reaches the button.
   // Jira GRW-617 — and swaps a size. The desk is offered this screen but takes no returns, so it takes no swaps: the control is
   // drawn from `order.canSwap`, which the API computes with the very function that would refuse the swap.
   // Jira GRW-625 — asks again to tell the marketplace what the shop decided about an order (owner and manager; the desk is not offered it).
-  '/orders': ['PATCH /api/v1/orders/:id/status', 'POST /api/v1/orders/:id/tell-marketplace', 'POST /api/v1/orders/:id/exchange', 'POST /api/v1/orders/:id/exchange/quote', 'POST /api/v1/marketplace-imports', 'POST /api/v1/marketplace-imports/held/release', 'POST /api/v1/marketplace-imports/held/dismiss'],
+  // Jira GRW-613 — and attaches a client the shop already has to a marketplace buyer (`AttachClientSheet`). The route
+  // had been the desk's since GRW-613 with no control anywhere; this test is what said so (review, 2026-10-22).
+  '/orders': ['PATCH /api/v1/orders/:id/status', 'POST /api/v1/orders/:id/client', 'POST /api/v1/orders/:id/tell-marketplace', 'POST /api/v1/orders/:id/exchange', 'POST /api/v1/orders/:id/exchange/quote', 'POST /api/v1/marketplace-imports', 'POST /api/v1/marketplace-imports/held/release', 'POST /api/v1/marketplace-imports/held/dismiss'],
   // Jira GRW-563 (shared 1.0.5) — `assign-client` moved into `visit.recordPayment`, where it belonged.
   '/services': [
     'POST /api/v1/services',
@@ -497,7 +504,13 @@ describe('the reverse — nothing a limited role may do is left without a contro
 
   for (const [role, allowed] of [['receptionist', RECEPTIONIST_ALLOWED], ['staff', STAFF_ALLOWED]] as const) {
     it(`${role}: every write they are granted has a control they are offered, or is listed`, () => {
-      const offeredScreens = Object.keys(SCREEN_WRITES).filter((s) => canSee(s, role));
+      /*
+       * Asked about a SHOP as well as a diary. `canSee` defaults to the diary's areas, under which `/orders` and
+       * `/stock` do not exist for anybody — so every write that lives only on a shop screen read as "granted and
+       * offered nowhere", however well the control was built. A role's grant is the same in both shapes; which
+       * screens exist is not (review, 2026-10-22).
+       */
+      const offeredScreens = Object.keys(SCREEN_WRITES).filter((s) => canSee(s, role) || navCanSee(s, role, undefined, true, SHOP_AREAS));
       const covered = new Set([
         ...ACTIONS.filter((a) => mayUse(role, a)).flatMap((a) => UI_ACTIONS[a]),
         ...offeredScreens.flatMap((s) => SCREEN_WRITES[s]!),

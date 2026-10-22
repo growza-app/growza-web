@@ -731,6 +731,15 @@ export const api = {
    */
   /** Jira GRW-625 — try again to tell the marketplace what the shop decided about an order. One attempt, safe to repeat. */
   tellMarketplaceAgain: (id: string) => post<{ queued: number }>(`/api/v1/orders/${id}/tell-marketplace`, {}),
+  /**
+   * Jira GRW-613 — this buyer is somebody the shop already knows: attach the client.
+   *
+   * One order at a time and never a match we make for them (BR-02), so the id comes from a person choosing a name.
+   * The route has been there since GRW-613 and nothing called it, which `ui-actions.test.ts` reported as a write the
+   * desk is granted and is offered nowhere (review, 2026-10-22).
+   */
+  attachOrderClient: (id: string, customerId: string) =>
+    post<{ id: string; clientId: string }>(`/api/v1/orders/${encodeURIComponent(id)}/client`, { customerId }),
   moveOrder: (id: string, status: string, expected: string) =>
     patch<{ id: string; status: string; moved: boolean }>(`/api/v1/orders/${encodeURIComponent(id)}/status`, { status, expected }),
   /** Jira GRW-619 — import an order report: the marketplace is chosen by the owner and sent with it; one request, whole orders, importing it twice changes nothing. */

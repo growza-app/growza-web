@@ -4254,6 +4254,17 @@
       "retrying": "Sending…",
       "retryFailed": "Could not ask again. Try again.",
       "asked": "Asked again. We will tell {channel} shortly."
+    },
+    "attach": {
+      "action": "This is a client of ours",
+      "title": "Which client?",
+      "searchLabel": "Search your clients",
+      "searchPlaceholder": "Name or number",
+      "typeMore": "Type two letters or more to search.",
+      "searching": "Looking…",
+      "noneFound": "No client of that name. Check the spelling, or leave it — the order keeps the buyer’s own details either way.",
+      "failed": "Could not attach that client. Please try again.",
+      "close": "Close"
     }
   },
   "settingsChannels": {

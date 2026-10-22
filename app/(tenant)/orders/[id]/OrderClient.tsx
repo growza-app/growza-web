@@ -13,6 +13,7 @@ import { computeReturnWindow } from '../../sales/sales-helpers';
 import { returnReasonKey } from '../../lib/return-reasons';
 import { intlLocale } from '../../lib/format';
 import { SwapSizeSheet } from './SwapSizeSheet';
+import { AttachClientSheet } from './AttachClientSheet';
 import { OrderMarketplaceLine } from './OrderMarketplaceLine';
 
 /**
@@ -57,6 +58,8 @@ export function OrderClient({
   const [returning, setReturning] = useState(false);
   // Jira GRW-617 — the line whose size is being swapped.
   const [swapping, setSwapping] = useState<string | null>(null);
+  // Jira GRW-613 — "This is a client of ours", for a buyer the shop recognises.
+  const [attaching, setAttaching] = useState(false);
   // One move at a time, however fast the button is tapped. `busy` is state and so is stale until the next render: two taps
   // inside the same frame both saw it false, and the second went out with the old state and was refused as "moved on" —
   // a refusal of the person's OWN first tap (found in the browser). A ref is what the second tap reads.
@@ -222,6 +225,16 @@ export function OrderClient({
             <>
               {!order.client ? <p className="ord-d-name">{order.buyer.name ?? t('list.noName')}</p> : null}
               {!order.client ? <p className="ord-d-quiet">{t('buyer.notAClient')}</p> : null}
+              {/*
+                Jira GRW-613 — the buyer is somebody the shop already knows. Offered only where it can do anything:
+                a buyer with no client yet, and a role the API would accept (`useWritable` carries the business's
+                read-only state and the role grid's). Never matched for them (BR-02) — the sheet is a search.
+              */}
+              {!order.client && writable ? (
+                <button type="button" className="ord-d-attach" onClick={() => setAttaching(true)}>
+                  {t('attach.action')}
+                </button>
+              ) : null}
               {order.buyer.address ? (
                 <p className="ord-d-address">
                   <span className="ord-d-label">{t('detail.address')}</span>
@@ -392,6 +405,20 @@ export function OrderClient({
           </div>
         ) : null}
       </div>
+
+      {attaching && order.buyer ? (
+        <AttachClientSheet
+          orderId={order.id}
+          buyerName={order.buyer.name}
+          buyerContact={order.buyer.contact}
+          locationId={order.locationId}
+          onClose={() => setAttaching(false)}
+          onAttached={() => {
+            setAttaching(false);
+            void refresh();
+          }}
+        />
+      ) : null}
 
       {swapLine ? (
         <SwapSizeSheet

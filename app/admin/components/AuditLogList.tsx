@@ -110,6 +110,38 @@ export const KNOWN_ACTIONS = [
   // Jira GRW-563 — the owner's decision on a self-marked day.
   'attendance.approved',
   'attendance.rejected',
+  /*
+   * The retail and roles actions (Jira GRW-612 onward), in the order `AUDIT_ACTIONS` declares them.
+   *
+   * They had been written and audited for days without reaching this filter, so support could read these rows in
+   * the table and not narrow to them — and `audit-fields.test.ts` said so the whole time, from behind a pin that
+   * could not install (review, 2026-10-22). The one-line summaries are shared's own; the full why is beside each
+   * key in `shared/src/audit-actions.ts` rather than copied twice.
+   */
+  // GRW-612 — an order moved along: packed, sent, delivered, cancelled, came back. The only record the parcel left.
+  'order.status_change',
+  // GRW-613 — an owner recognised a marketplace buyer and attached a client they already have.
+  'order.client_attached',
+  // GRW-613 — a buyer's name, contact and address removed from an order on request. Says THAT, never what.
+  'order.buyer_erased',
+  // GRW-617 — a size swapped on a bill: what went back, what went out, the difference.
+  'order.exchange',
+  // GRW-641 — which branch a marketplace sells from, and so whose shelves online orders come off.
+  'channel.branch_set',
+  // GRW-72 — the owner made, changed or removed a role. Names the role, never a person.
+  'role.created',
+  'role.updated',
+  'role.deleted',
+  // GRW-73 — a team member given a role, or had theirs taken away. Names the role, never the person.
+  'team.role_assigned',
+  // GRW-621 — a marketplace's seller keys saved or replaced. Names the fields, never a value.
+  'channel.credentials_saved',
+  // GRW-624 — how many of a size are kept back from online orders.
+  'channel.stock_buffer_set',
+  // GRW-626 — everything stuck or waiting on a marketplace, asked to be tried again.
+  'channel.queue_retried',
+  // GRW-637 — a refund recorded against an online order's returned line.
+  'payment.refund_recorded',
 ] as const;
 
 interface AuditLogRow {
