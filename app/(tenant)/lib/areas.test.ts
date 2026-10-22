@@ -90,19 +90,20 @@ describe('boundaries — unknown vertical, a limited role, a clinic that keeps i
   });
 
   /*
-   * Jira GRW-611 review — Orders IS the register (`/orders` renders SalesScreen), so it takes the register's own
-   * answer for a front desk: only where the owner has granted the `sales` tab. Offered unconditionally it was a tab
-   * that could not work, because the register's only read is refused to that role by `maySeeSales`.
+   * Jira GRW-614 — Orders is the front desk's own list now, not the Sales register under another name, so it is offered
+   * to a desk always: the API serves it without amounts unless the owner has opened the `sales` tab. (Jira GRW-611's
+   * review made it conditional on that tab while `/orders` still rendered the register, whose only read the API refuses
+   * a desk without the tab — a nav entry that could not work. The list is what makes the entry work.)
    */
-  it('a shop’s front desk opens Orders only where the register has been opened to it, exactly as /sales is', () => {
-    expect(canSee('/orders', 'receptionist', undefined, true, SHOP)).toBe(false);
-    expect(canSee('/orders', 'receptionist', [], true, SHOP)).toBe(false);
-    expect(canSee('/orders', 'receptionist', ['overview'], true, SHOP)).toBe(false);
-    expect(canSee('/orders', 'receptionist', ['sales'], true, SHOP)).toBe(true);
-    // The same answer the salon's register gives that role, asked the same way.
-    expect(canSee('/orders', 'receptionist', ['sales'], true, SHOP)).toBe(canSee('/sales', 'receptionist', ['sales'], true, DIARY_AREAS));
-    // And the till stays theirs: taking an order is not reading the day's figures.
+  it('a shop’s front desk is offered Orders, with or without the sales tab — and the till stays theirs', () => {
+    for (const tabs of [undefined, [], ['overview'], ['sales']]) {
+      expect(canSee('/orders', 'receptionist', tabs, true, SHOP), JSON.stringify(tabs)).toBe(true);
+    }
     expect(canSee('/products/sell', 'receptionist', undefined, true, SHOP)).toBe(true);
+    // Stock is the owner's and manager's: counting the shelf is not the desk's job.
+    expect(canSee('/stock', 'receptionist', ['sales'], true, SHOP)).toBe(false);
+    // …and a stylist has no business with either.
+    expect(canSee('/orders', 'staff', ['sales'], true, SHOP)).toBe(false);
   });
 
   it('a limited role is still not offered what it never was, in a shop', () => {
@@ -185,7 +186,8 @@ describe('FR-05, FR-06, BR-04 — no conditional in a shared screen, and no reta
 
   it('the shop’s two pages are a few lines each, over the shared screens — nothing is copied (BR-04)', () => {
     for (const f of ['orders/page.tsx', 'stock/page.tsx']) expect(read(f).split('\n').length, f).toBeLessThan(30);
-    expect(read('orders/page.tsx')).toContain("from '../sales/SalesScreen'");
+    // Orders has its own screen (Jira GRW-614); Stock is still the shelf under another address.
+    expect(read('orders/page.tsx')).toContain("from './OrdersScreen'");
     expect(read('stock/page.tsx')).toContain("from '../products/ProductsScreen'");
   });
 

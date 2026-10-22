@@ -1,5 +1,6 @@
 'use client';
 
+import { hasSizes } from '../../lib/till-sizes';
 import { useTranslations } from 'next-intl';
 import { useNewVisitCopy } from '../../lib/use-copy';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
@@ -272,7 +273,12 @@ export function DeskServiceGrid({
                       <span className={`pf-tile-mins ${p.stock <= 0 ? 'pf-tile-out' : ''}`}>{p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}</span>
                     </span>
                   </button>
-                  {count > 0 ? (
+                  {count > 0 && hasSizes(p) ? (
+                    // Jira GRW-599 — which size to take off is chosen in the size sheet; the tile only says how many are on the bill.
+                    <span className="pf-tile-qty" role="group" aria-label={t('onBill', { count })}>
+                      <span className="pf-qty-n">{count}</span>
+                    </span>
+                  ) : count > 0 ? (
                     <span className="pf-tile-qty" role="group" aria-label={t('onBill', { count })}>
                       <button type="button" className="pf-qty-btn" aria-label={t('oneLess', { name: p.name })} onClick={() => onLessProduct?.(p.id)}>
                         <IconMinus />

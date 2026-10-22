@@ -49,10 +49,10 @@ describe('AC-03 — a brand-new shop: each section says its own plain thing, and
   it('has an empty line for orders, for stock never counted, and for nothing running low', () => {
     expect(shop).toContain('s.noOrdersTitle');
     expect(shop).toContain('s.noOrdersBody');
-    expect(shop).toMatch(/href="\/products\/sell">\s*\{s\.takeOrder\}/);
+    expect(shop).toMatch(/href="\/orders\/new">\s*\{s\.takeOrder\}/);
     // …but only once there is something to sell: a shelf nobody has counted is sent to the count first.
     expect(shop).toContain('data.running.counted ? s.noOrdersBody : s.countFirst');
-    expect(shop).toMatch(/data\.running\.counted && can\('\/products\/sell'\) \? \(\s*<a className="btn btn-primary shp-cta" href="\/products\/sell">/);
+    expect(shop).toMatch(/data\.running\.counted && can\('\/orders\/new'\) \? \(\s*<a className="btn btn-primary shp-cta" href="\/orders\/new">/);
     expect(shop).toContain('!data.running.counted');
     expect(shop).toContain('s.notCounted');
     expect(shop).toContain('s.nothingLow');

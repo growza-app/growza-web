@@ -319,6 +319,11 @@ export function ProductsList({
       subtitle={t('subtitle')}
       actions={
         <>
+          {heading !== undefined && canStockTake ? (
+            <Link className="btn btn-ghost" href="/stock/report">
+              {t('stockReport.open')}
+            </Link>
+          ) : null}
           {/* The till is Bookings' and Stock's, not this screen's page: drawn when the role may open it, and the business may write. */}
           {live.length > 0 && tillOpen ? (
             <Link className="btn btn-ghost" href="/products/sell?from=products">

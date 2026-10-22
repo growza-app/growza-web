@@ -1,0 +1,287 @@
+/*
+ * Jira GRW-598 — the Sizes screen: options, a grid of counts, one Save.
+ *
+ * Phone first (344px): two small cards, then a grid that scrolls INSIDE its own box with the size column pinned, so the
+ * page never scrolls sideways. Same tokens as the Products rows and the Settings save bar; nothing here is a new
+ * component, and nothing is a one-off size.
+ */
+.szg-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+  max-width: 56rem;
+}
+
+.szg-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.szg-title {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: 700;
+}
+
+.szg-label {
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.szg-name-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.szg-card input[type='text'] {
+  min-width: 0;
+  min-height: 2.75rem;
+  font-size: var(--fs-5);
+}
+
+.szg-add {
+  display: flex;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.szg-add input {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+.szg-card .btn {
+  white-space: normal;
+  text-align: center;
+}
+
+.szg-add-btn,
+.szg-remove-option,
+.szg-add-option,
+.szg-arrange-toggle {
+  min-height: 2.75rem;
+}
+
+.szg-add-option,
+.szg-remove-option {
+  align-self: flex-start;
+}
+
+.szg-hint,
+.szg-empty {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.szg-note {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.szg-note-warn {
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+.szg-error {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--danger-line);
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+  font-size: var(--fs-3);
+  font-weight: 600;
+}
+
+.szg-grid-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+/* The grid scrolls in its own box; the page does not. */
+.szg-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  -webkit-overflow-scrolling: touch;
+}
+
+.szg-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.szg-table th,
+.szg-table td {
+  padding: var(--sp-1) var(--sp-2);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  vertical-align: middle;
+  font-size: var(--fs-3);
+  white-space: nowrap;
+}
+
+.szg-table thead th {
+  background: var(--page-bg);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.szg-table tbody tr:last-child th,
+.szg-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* The size column stays put while the colours scroll past it. */
+.szg-corner,
+.szg-rowhead {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 4.5rem;
+  text-align: left;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  font-weight: 600;
+}
+
+.szg-corner {
+  background: var(--page-bg);
+  z-index: 2;
+}
+
+.szg-rowname,
+.szg-colhead {
+  display: block;
+}
+
+.szg-input {
+  width: 4.5rem;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-2);
+  text-align: center;
+  font-size: var(--fs-5);
+}
+
+.szg-price {
+  width: 6.5rem;
+}
+
+.szg-input.is-off {
+  background: var(--slate-soft);
+  color: var(--muted);
+}
+
+.szg-input[aria-invalid='true'] {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+/* Change order: small arrows and a remove, each a full-size target. */
+.szg-arrange {
+  display: inline-flex;
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
+}
+
+.szg-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.szg-icon:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.szg-icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Save: the Settings pattern (a pinned bar on a phone), with the button as wide as the bar. */
+.szg-savebar {
+  margin-top: var(--sp-1);
+}
+
+.szg-save {
+  min-height: 2.875rem;
+  min-width: 8rem;
+}
+
+.szg-save.is-saved {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+@media (max-width: 860px) {
+  .szg-save {
+    width: 100%;
+  }
+
+  /*
+   * The page body is the scroller and keeps 84px of padding under the content to clear the tab bar, and a sticky box
+   * stops at that padding's edge — so on its own the bar floats 84px above the tab bar. Pulled down into the padding
+   * (as Business profile's bar is), it rests 8px above the tab bar instead.
+   */
+  .szg-savebar {
+    bottom: calc(var(--sp-2) - 84px);
+  }
+}
+
+/* The Sizes row in the product sheet: a row like its neighbours, a link in disguise. */
+.prd-sizes-row {
+  min-height: 2.75rem;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.prd-sizes-value {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-1);
+  color: var(--muted);
+  font-size: var(--fs-3);
+}
+
+.prd-sizes-value svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.prd-sizes-open {
+  align-self: flex-start;
+  min-height: 2.75rem;
+  margin: 0 var(--sp-4) var(--sp-4);
+  text-decoration: none;
+}

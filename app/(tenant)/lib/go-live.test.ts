@@ -142,7 +142,7 @@ describe('every screen that opens at go-live is guarded — a new screen cannot 
   };
 
   it('every page below a closed screen asks guardScreen or guardLive before it draws', () => {
-    const unguarded = pages.filter((f) => !runsBefore(f).some((p) => /await guard(Screen|Live)\(|<(Products|Sales)Screen\b[^>]*\bguard=/.test(code(p))));
+    const unguarded = pages.filter((f) => !runsBefore(f).some((p) => /await guard(Screen|Live)\(|<(Products|Sales|SellProduct)Screen\b[^>]*\bguard=/.test(code(p))));
     expect(unguarded).toEqual([]);
   });
 

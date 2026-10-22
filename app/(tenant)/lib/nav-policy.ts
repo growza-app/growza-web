@@ -83,6 +83,8 @@ export const PAGE_OF_HREF: ReadonlyArray<readonly [string, keyof PageGrid]> = [
  * - the till sells from the shelf (Stock) as well as taking the order (Orders).
  */
 const ALSO_NEEDS: ReadonlyArray<readonly [string, keyof PageGrid]> = [
+  // A shop's till is `/products/sell` under another address (Jira GRW-616): the same two pages. Listed BEFORE `/orders`, which would otherwise claim it.
+  ['/orders/new', 'services'],
   ['/orders', 'reports'],
   ['/sales', 'reports'],
   ['/products/sell', 'services'],
@@ -95,7 +97,7 @@ const OWNER_ONLY_HREF: readonly string[] = ['/settings/billing', '/settings/bran
  * Screens whose whole job is a write: opened at See they would draw a form every control of which the API refuses, so they need Change to be
  * offered at all (Jira GRW-76). The till and a new booking take an order or a visit; there is no read-only version of either.
  */
-const NEEDS_CHANGE_TO_OPEN: readonly string[] = ['/products/sell', '/appointments/new', '/try-whatsapp'];
+const NEEDS_CHANGE_TO_OPEN: readonly string[] = ['/products/sell', '/orders/new', '/appointments/new', '/try-whatsapp'];
 
 /** The page a destination belongs to, or undefined when it is open to every member. */
 export function pageOfHref(href: string): keyof PageGrid | undefined {
@@ -137,18 +139,18 @@ export function canSee(href: string, role?: MemberRole | null, reportTabs?: read
   if (areas?.pages) return (live || isSetupDestination(href)) && gridCanSee(href, areas.pages);
   /*
    * The shop's own screens (Jira GRW-608). Neither is a route @growza-app/shared lists for any role, so the answer is
-   * given here: the owner and manager open both (the answer for the shelf), and no one else opens Stock.
-   * `areaAllows` above already refused a business that is not a shop.
+   * given here: the owner and manager open both, and no one else opens Stock. `areaAllows` above already refused a
+   * business that is not a shop.
    *
-   * Jira GRW-611 review — Orders is the REGISTER under a shop's own name, the same screen `/sales` is, so it takes the
-   * same answer: a front desk opens it only where the owner has granted the `sales` tab. Offered unconditionally it was
-   * a nav tab that could not work — the register's only read is `GET /api/v1/appointments?includeSales=true`, which
-   * `maySeeSales` refuses that role, so the screen loaded empty with an error every time. A shop's front desk takes an
-   * order at the till (`/products/sell`), which is theirs; the day's bills are the shop's figures.
+   * ORDERS is the front desk's too (Jira GRW-614). It is where the parcel it is packing is found, and the list the API
+   * serves it carries no amounts unless the owner has opened the `sales` tab — so the screen always works for that role,
+   * and shows the shop's money only to one allowed to see it. (Until this story `/orders` was the Sales register under
+   * another name, whose only read the API refuses a desk without that tab, so the desk was offered it only WITH the tab:
+   * Jira GRW-611's review. A list that works for the desk is what removed the reason for that rule.)
    */
   if (isShopRoute(href)) {
     if (!(live || isSetupDestination(href))) return false;
-    if (role === 'receptionist') return href.startsWith('/orders') && Boolean(reportTabs?.includes('sales'));
+    if (role === 'receptionist') return href.startsWith('/orders');
     return roleCanSee('/products', role, reportTabs?.filter((t) => t !== 'sales'));
   }
   // The `sales` entry of `reportTabs` is the owner opening the Sales register to a receptionist; it is not a Reports

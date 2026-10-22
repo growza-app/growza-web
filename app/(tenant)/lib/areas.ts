@@ -60,7 +60,7 @@ const BOOKING_ROUTES = ['/appointments', '/availability', '/settings/booking'] a
 /** Screens that exist only for a business with a menu of services. */
 const SERVICE_ROUTES = ['/services', '/packages', '/offers'] as const;
 /** The shop's own screens. */
-const SHOP_ROUTES = ['/orders', '/stock'] as const;
+const SHOP_ROUTES = ['/orders', '/stock', '/settings/channels'] as const;
 /**
  * What a shop does NOT have beside the diary and the menu: the sales register (Orders is its register) and the staff roster's wizard (a shop's staff are
  * added from Settings › Roles). Its nav is short on purpose.

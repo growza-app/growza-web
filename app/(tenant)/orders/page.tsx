@@ -1,18 +1,17 @@
 import { screenTitle } from '../lib/page-title';
-import { SalesScreen, type SalesSearch } from '../sales/SalesScreen';
+import { guardScreen } from '../lib/screen-guard';
+import { OrdersScreen, type OrdersSearch } from './OrdersScreen';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Jira GRW-608 — a shop's Orders: its own route, over the same data layer as the salon's register.
- *
- * What an Orders screen holds (states, channels, a buyer who is not a client) is Jira GRW-587's; until then a shop's
- * orders are what the register already lists — every bill, row by row — and this is that register under its own
- * address. The route is the code-splitting boundary: a salon's pages never import this file, and the nav policy
- * (`areas.ts`) offers it to a shop alone and sends anyone else Home.
+ * Jira GRW-614 — a shop's Orders. Its own screen over the order spine (Jira GRW-612), server-paged, filtered and searched;
+ * it replaces the Sales register this address showed from Jira GRW-608 until the real list existed.
  */
-export default function OrdersPage({ searchParams }: { searchParams: Promise<SalesSearch> }) {
-  return <SalesScreen searchParams={searchParams} guard="/orders" />;
+export default async function OrdersPage({ searchParams }: { searchParams: Promise<OrdersSearch> }) {
+  // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on a list that answers 403.
+  await guardScreen('/orders');
+  return <OrdersScreen searchParams={searchParams} />;
 }
 
 export const metadata = screenTitle('Orders');

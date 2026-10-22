@@ -33,6 +33,7 @@ export type SettingsRowKey =
   | 'privacy'
   | 'reportAccess'
   | 'roles'
+  | 'channels'
   | 'gst'
   | 'billing'
   | 'account'
@@ -70,6 +71,12 @@ interface SettingsRowBase {
    * this; the API answers 404 to it all the same, so a typed address is not a way in.
    */
   shopOwnerOnly?: boolean;
+
+  /**
+   * Jira GRW-641 — listed only for a shop. Which branch Flipkart and Amazon sell from means nothing to a business with a diary, which has
+   * no marketplaces: absent for it, never a screen that answers 404.
+   */
+  shopOnly?: boolean;
   /**
    * Listed only once the business is live.
    *
@@ -152,6 +159,8 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
       // Jira GRW-72 — what each role on a shop's team can open.
       { href: '/settings/roles', key: 'roles', icon: IconLock, shopOwnerOnly: true },
+      // Jira GRW-641 — which shop's shelves the marketplaces sell from.
+      { href: '/settings/channels', key: 'channels', icon: IconShop, shopOnly: true },
       // Jira GRW-243 — what the owner pays Growza, each branch, the next bill and past bills.
       { href: '/settings/billing', key: 'billing', icon: IconWallet },
     ],

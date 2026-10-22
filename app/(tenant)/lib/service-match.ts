@@ -155,6 +155,8 @@ function wordScore(q: string, w: string): number {
   // Shorter name wins a tie: typing "mani" offers Manicure before Manicure Premium.
   if (w.startsWith(q)) return 90 - (w.length - q.length) * 0.1;
   if (q.length >= 3 && w.includes(q)) return 70;
+  // Jira GRW-604 — a typed number is a quantity (a size, a pack), not a spelling: "30" is not a typo of "40".
+  if (/^\d+$/.test(q)) return 0;
 
   // One wrong letter in a short word, up to three in a long one. Tighter and
   // "threding" misses Threading; looser and three-letter words match half the

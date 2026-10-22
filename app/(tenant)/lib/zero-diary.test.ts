@@ -106,8 +106,6 @@ describe('BR-04 — a salon’s rendering of every audited screen is unchanged',
 
   it('the shared screens take their shop heading ONLY under the shop’s own address', () => {
     expect(read('products/ProductsScreen.tsx')).toContain("heading={guard === '/stock' ? homeCopy(await serverLang(), me.labels).nav.stock : undefined}");
-    expect(read('sales/SalesScreen.tsx')).toContain("heading={guard === '/orders' ? homeCopy(await serverLang(), me.labels).nav.orders : undefined}");
     expect(read('products/ProductsList.tsx')).toContain("title={heading ?? t('title')}");
-    expect(read('sales/SalesClient.tsx')).toContain("title={heading ?? t('title')}");
   });
 });
