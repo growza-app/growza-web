@@ -8,7 +8,7 @@ import { guardScreen } from '../../lib/screen-guard';
 import { OrderClient } from './OrderClient';
 
 export const dynamic = 'force-dynamic';
-export const metadata = screenTitle('What to order');
+export const metadata = screenTitle('Reorder list');
 
 /**
  * Jira GRW-633 — what to order before the season.

@@ -8,7 +8,7 @@ import { guardScreen } from '../../lib/screen-guard';
 import { SellersClient } from './SellersClient';
 
 export const dynamic = 'force-dynamic';
-export const metadata = screenTitle('What sells');
+export const metadata = screenTitle('Top sellers');
 
 /**
  * Jira GRW-632 — what sells, and what sits.

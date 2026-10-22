@@ -8,7 +8,7 @@ import { guardScreen } from '../../lib/screen-guard';
 import { RefundsClient } from './RefundsClient';
 
 export const dynamic = 'force-dynamic';
-export const metadata = screenTitle('What was refunded');
+export const metadata = screenTitle('Refunds');
 
 /**
  * Jira GRW-637 — what was refunded on online orders, one row per refund. It is money, so the owner's and manager's only, as the API is: the front
