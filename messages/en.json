@@ -2823,6 +2823,7 @@
       "resumeBill": "Resume",
       "discardHeld": "Discard",
       "chargeNow": "Complete sale · {amount}",
+      "needPaymentMode": "Select how they paid",
       "removeLine": "Remove {name}",
       "sizesCount": "{count} sizes",
       "subtotalUnits": "Subtotal ({count})"

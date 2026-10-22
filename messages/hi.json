@@ -2823,6 +2823,7 @@
       "resumeBill": "वापस लाएँ",
       "discardHeld": "हटाएँ",
       "chargeNow": "बिक्री पूरी करें · {amount}",
+      "needPaymentMode": "भुगतान का तरीका चुनें",
       "removeLine": "{name} हटाएँ",
       "sizesCount": "{count} साइज़",
       "subtotalUnits": "उप-योग ({count})"

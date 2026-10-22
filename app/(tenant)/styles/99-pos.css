@@ -696,6 +696,13 @@
     min-height: 2.5rem;
     padding: var(--sp-1) var(--sp-2);
     gap: var(--sp-1);
+    transition: border-color 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+  }
+
+  .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-pay-tile.is-selected {
+    border-color: var(--accent-deep);
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 1.5px var(--accent-deep);
   }
 
   .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-pay-tile::after {

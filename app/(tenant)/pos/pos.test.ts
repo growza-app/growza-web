@@ -149,6 +149,9 @@ describe('the POS screen', () => {
     expect(payFlow).toContain("e.key === 'F9'");
     expect(payFlow).toContain('<PosBillRows');
     expect(payFlow).toContain('pos-charge-cta');
+    expect(payFlow).toContain('completePosSale');
+    expect(payFlow).toContain("t('desk.needPaymentMode')");
+    expect(payFlow).toContain('if (productsOnly) {\n      nextCustomer();\n      return;\n    }');
     expect(posBill).toContain('pos-bill-stepper');
     expect(css).toContain('.pos-shell.is-fullscreen');
     expect(css).toContain('.pos-cat-pills-wrap');

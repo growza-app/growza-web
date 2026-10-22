@@ -253,6 +253,8 @@ export function PayFlow({
   const [splitKeypad, setSplitKeypad] = useState<PaymentMode | null>(null);
   const [splitAmount, setSplitAmount] = useState('');
   const [firstWay, setFirstWay] = useState<{ mode: PaymentMode; minor: number } | null>(null);
+  const [selectedMode, setSelectedMode] = useState<PaymentMode | null>(null);
+  const [badMode, setBadMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** What Next asked for and did not get. Null until Next is tapped; each half clears itself once answered. */
   const [missing, setMissing] = useState<{ client: boolean; service: boolean } | null>(null);
@@ -633,6 +635,8 @@ export function PayFlow({
   const clearBill = () => {
     setLines([]);
     setOverride(null);
+    setSelectedMode(null);
+    setBadMode(false);
   };
   const [heldBills, setHeldBills] = useState<Array<{ id: string; client: Client; lines: Line[]; override: number | null }>>([]);
   const holdBill = () => {
@@ -641,6 +645,8 @@ export function PayFlow({
     setLines([]);
     setOverride(null);
     setClient({ kind: 'none' });
+    setSelectedMode(null);
+    setBadMode(false);
     setMissing(null);
     setError(null);
   };
@@ -651,6 +657,8 @@ export function PayFlow({
     setClient(found.client);
     setLines(found.lines);
     setOverride(found.override);
+    setSelectedMode(null);
+    setBadMode(false);
     setMissing(null);
     setError(null);
   };
@@ -748,6 +756,8 @@ export function PayFlow({
     setSplitKeypad(null);
     setSplitAmount('');
     setFirstWay(null);
+    setSelectedMode(null);
+    setBadMode(false);
   };
 
   /** ② — the tile that was tapped is the payment; this is the save. */
@@ -976,6 +986,8 @@ export function PayFlow({
     setError(null);
     setFirstWay(null);
     setSplitting(false);
+    setSelectedMode(null);
+    setBadMode(false);
   }, [location, token]);
 
   const canGoOn = hasService && (token !== undefined || client.kind !== 'none');
@@ -1017,6 +1029,19 @@ export function PayFlow({
   const badClient = Boolean(missing?.client) && !token && client.kind === 'none';
   const badService = Boolean(missing?.service) && !hasService;
 
+  const completePosSale = () => {
+    if (saving !== null || lines.length === 0) return;
+    const ok = readyToPay();
+    if (!selectedMode) {
+      setBadMode(true);
+      return;
+    }
+    setBadMode(false);
+    if (!ok) return;
+    if (selectedMode === 'upi' && paymentQr && !firstWay) setStep('qr');
+    else void pay(selectedMode);
+  };
+
   useEffect(() => {
     if (!productsOnly || !wide || step !== 'what') return;
     const onKey = (e: KeyboardEvent) => {
@@ -1025,10 +1050,7 @@ export function PayFlow({
         setWhoOpen('find');
       } else if (e.key === 'F8') {
         e.preventDefault();
-        if (saving !== null || lines.length === 0) return;
-        if (!readyToPay()) return;
-        if (paymentQr && !firstWay) setStep('qr');
-        else void pay('upi');
+        completePosSale();
       } else if (e.key === 'F9') {
         e.preventDefault();
         if (lines.length > 0) holdBill();
@@ -1039,7 +1061,13 @@ export function PayFlow({
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  const leave = () => router.push(backTo ?? '/');
+  const leave = () => {
+    if (productsOnly) {
+      nextCustomer();
+      return;
+    }
+    router.push(backTo ?? '/');
+  };
   const payToken = token ? `&token=${encodeURIComponent(token.id)}${token.locationId ? `&location=${encodeURIComponent(token.locationId)}` : ''}` : '';
   const simpleForm = `/appointments/new?purpose=payment${payToken}`;
   const fullForm = `/appointments/new?purpose=payment&full=1${payToken}`;
@@ -1148,7 +1176,8 @@ export function PayFlow({
         <button
           key={mode}
           type="button"
-          className={`pf-pay-tile pf-pay-${mode}`}
+          className={`pf-pay-tile pf-pay-${mode}${productsOnly && wide && selectedMode === mode ? ' is-selected' : ''}`}
+          aria-pressed={productsOnly && wide && !splitting ? selectedMode === mode : undefined}
           /*
            * UPI is the one tile that may not be the save.
            *
@@ -1158,6 +1187,11 @@ export function PayFlow({
            * is in the hand, and the done screen's Fix a mistake is the way back.
            */
           onClick={() => {
+            if (productsOnly && wide && !splitting) {
+              setSelectedMode((prev) => (prev === mode ? null : mode));
+              setBadMode(false);
+              return;
+            }
             if (wide && !readyToPay()) return;
             // "Which way first?" — this tile is the first way; the keypad asks how much came that way.
             if (splitting && !firstWay) {
@@ -1512,17 +1546,18 @@ export function PayFlow({
               </div>
             ) : null}
             <h2 className="pf-wide-h">{t('howTitle')}</h2>
+            {badMode && !selectedMode ? (
+              <p className="pf-miss" role="alert">
+                {t('desk.needPaymentMode')}
+              </p>
+            ) : null}
             {payTiles}
             {productsOnly ? (
               <button
                 type="button"
                 className="btn pos-charge-cta"
                 disabled={saving !== null || lines.length === 0}
-                onClick={() => {
-                  if (!readyToPay()) return;
-                  if (paymentQr && !firstWay) setStep('qr');
-                  else void pay('upi');
-                }}
+                onClick={completePosSale}
               >
                 <span>{t('desk.chargeNow', { amount: money(totalMinor) })}</span>
                 <kbd className="pos-charge-kbd">F8</kbd>
