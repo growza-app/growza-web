@@ -998,6 +998,21 @@
   overflow: hidden;
 }
 
+@media (min-width: 861px) {
+  .acct-scrim:has(+ .name-prompt) {
+    background: rgba(9, 20, 15, 0.35);
+  }
+
+  .acct-menu.name-prompt {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    transform: translate(-50%, -50%);
+    width: 21rem;
+  }
+}
+
 .acct-head {
   padding: 14px 16px;
   border-bottom: 1px solid var(--border);
@@ -1211,6 +1226,10 @@
   /* The role's one-line description is a laptop's; a phone needs the room for the list. */
   .acct-sub {
     display: none;
+  }
+
+  .acct-sub.name-prompt-sub {
+    display: block;
   }
 
   .acct-close {
