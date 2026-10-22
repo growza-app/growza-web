@@ -5,6 +5,9 @@ import { api } from '../lib/api';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { mayUse } from '../lib/nav-policy';
+import { areasOf } from '../lib/areas';
+import { homeCopy } from '../lib/home-copy';
+import { serverLang } from '../lib/lang';
 import { isWritable } from '../lib/read-only';
 import { DEFAULT_PRODUCT_RETURN_WINDOW_DAYS } from '../sales/sales-helpers';
 import { PosClient } from './PosClient';
@@ -41,7 +44,10 @@ export default async function PosPage({ searchParams }: { searchParams: Promise<
 
   const timezone = me.tenant?.timezone ?? 'Asia/Kolkata';
   const todayISO = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date());
-  const canReturn = mayTakeReturns(me.member?.role, me.reportTabs);
+  const areas = areasOf(me);
+  const canReturn = mayTakeReturns(me.member?.role, me.reportTabs, Boolean(areas.pages));
+  // A shop's till says what a shop says ("Take an order", from the vertical's own words), as `/orders/new` does; everyone else keeps "Sell product".
+  const heading = areas.shop ? homeCopy(await serverLang(), me.labels).shop.takeOrder : undefined;
 
   return (
     <div className="page-body pos-page">
@@ -50,6 +56,7 @@ export default async function PosPage({ searchParams }: { searchParams: Promise<
         todayISO={todayISO}
         returnWindowDays={me.tenant?.productReturnWindowDays ?? DEFAULT_PRODUCT_RETURN_WINDOW_DAYS}
         canReturn={canReturn}
+        heading={heading}
         initialMode={posModeOf(params.mode, canReturn)}
         backTo={params.from === 'products' ? '/products' : params.from === 'sales' ? '/sales' : undefined}
       />

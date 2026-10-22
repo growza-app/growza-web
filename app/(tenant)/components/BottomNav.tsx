@@ -76,11 +76,12 @@ export function BottomNav({
   const t = homeCopy(lang, labels);
   const navRef = useRef<HTMLElement>(null);
   const unread = useUnreadNotifications(navRef);
-  const stylist = role === 'staff';
+  // Jira GRW-74 — a role holder's tabs come from their pages (`visibleItems` below), not from the fixed stylist set.
+  const areas = useAreas();
+  const stylist = role === 'staff' && !areas.pages;
   // Jira GRW-556 — until the business is live, the bar is the setup: Home, the menu, the people, the settings.
   const live = useLive();
   // Jira GRW-608 — a shop's bar is Home, Orders, Stock, Clients and the bell; a salon's is unchanged.
-  const areas = useAreas();
 
   // Jira GRW-300 — "More" moved into the hamburger drawer (Sidebar, doubling
   // as the mobile nav — see MobileChrome/Sidebar): it was the 6th element

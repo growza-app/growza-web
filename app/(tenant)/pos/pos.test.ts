@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { canSee } from '../lib/nav-policy';
+import { canSee, gridCanSee } from '../lib/nav-policy';
 import { homeCopy } from '../lib/home-copy';
 import { mayTakeReturns, posModeOf, returnLookbackFrom } from './pos-helpers';
 
@@ -27,6 +27,18 @@ describe('who is offered the POS tab', () => {
   });
 });
 
+describe('the role grid treats POS as the till', () => {
+  const grid = { bookings: 'manage', clients: 'none', services: 'manage', offers: 'none', staff: 'none', attendance: 'none', reports: 'none', settings: 'none' } as const;
+  it('opens for a role holding Bookings and Stock at Change, and for no one without both', () => {
+    expect(gridCanSee('/pos', grid)).toBe(true);
+    expect(gridCanSee('/pos', { ...grid, services: 'none' })).toBe(false);
+    expect(gridCanSee('/pos', { ...grid, bookings: 'none' })).toBe(false);
+  });
+  it('needs Change, not See: there is no read-only till', () => {
+    expect(gridCanSee('/pos', { ...grid, bookings: 'view' })).toBe(false);
+  });
+});
+
 describe('Return mode follows the refund rule the API enforces', () => {
   it('owner, manager and a session with no role may take returns', () => {
     expect(mayTakeReturns('owner')).toBe(true);
@@ -38,6 +50,11 @@ describe('Return mode follows the refund rule the API enforces', () => {
     expect(mayTakeReturns('receptionist')).toBe(false);
     expect(mayTakeReturns('receptionist', ['todo', 'overview'])).toBe(false);
     expect(mayTakeReturns('receptionist', ['sales'])).toBe(true);
+  });
+
+  it('a member who holds a role never may: the grid gives no refund, whatever they work like', () => {
+    expect(mayTakeReturns('manager', undefined, true)).toBe(false);
+    expect(mayTakeReturns('receptionist', ['sales'], true)).toBe(false);
   });
 
   it('a stylist never may', () => {
@@ -81,11 +98,6 @@ describe('the POS tab is wired into every menu', () => {
     const more = src('../more/page.tsx');
     expect(more).toContain("...(products ? [{ href: '/pos', label: nav.nav.pos, icon: <IconPos /> }] : [])");
   });
-
-  it('keeps /products/sell working by landing on the tab, with its back-link', () => {
-    const old = src('../products/sell/page.tsx');
-    expect(old).toContain("redirect(params.from === 'products' || params.from === 'sales' ? `/pos?from=${params.from}` : '/pos')");
-  });
 });
 
 describe('the POS screen', () => {
@@ -98,9 +110,14 @@ describe('the POS screen', () => {
     expect(page).toContain("mayUse(me.member?.role, 'visit.recordPayment'");
   });
 
+  it('names the till as a shop does, from the same heading /orders/new uses', () => {
+    expect(page).toContain('homeCopy(await serverLang(), me.labels).shop.takeOrder');
+    expect(client).toContain('heading={heading}');
+  });
+
   it('draws the Sell | Return tabs only for someone who may take a return', () => {
     expect(client).toContain('{canReturn ? (');
-    expect(page).toContain('mayTakeReturns(me.member?.role, me.reportTabs)');
+    expect(page).toContain('mayTakeReturns(me.member?.role, me.reportTabs, Boolean(areas.pages))');
   });
 
   it('keeps the till mounted under the return sheet so a sale in progress is never lost', () => {

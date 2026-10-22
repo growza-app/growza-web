@@ -2,14 +2,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/api';
-import type { ShopHome as ShopHomeData } from '../../lib/api-types';
+import type { AttendanceRegister, ShopHome as ShopHomeData } from '../../lib/api-types';
 import { homeCopy } from '../../lib/home-copy';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
+import { ordersHref } from '../../lib/orders-filter';
 import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
 import { useAreas } from '../SessionProvider';
 import { IconNavClients, IconNavOrders, IconNavStock } from '../icons';
 import { Card, CardError, HomeHeader, QuickTiles, rupees } from './parts';
+import { CheckInCard } from './CheckInCard';
 
 /**
  * Jira GRW-609 — a shop's Home: the money, the orders waiting to go out, and the sizes running out before the season.
@@ -34,6 +36,8 @@ export function ShopHome({
   role,
   reportTabs,
   initial,
+  timezone,
+  attendanceMonth = null,
 }: {
   lang: Lang;
   labels: Record<string, string>;
@@ -45,13 +49,18 @@ export function ShopHome({
   reportTabs?: string[];
   /** The whole-business read the server made; null when it failed. */
   initial: ShopHomeData | null;
+  timezone?: string;
+  /** Jira GRW-76 — a staff-kind role holder's own month, for the check-in card; null for everyone else. */
+  attendanceMonth?: AttendanceRegister | null;
 }) {
   const t = homeCopy(lang, labels);
   const s = t.shop;
   const areas = useAreas();
   const branchContext = useBranch();
   const branch = branchContext.ready && branchContext.multi ? branchContext.choice : null;
-  const money = canSeeRevenue(role);
+  // The takings follow the role's Reports page for a role holder (the API sends them on the same rule), the fixed role otherwise.
+  const money = areas.pages ? (areas.pages.reports ?? 'none') !== 'none' : canSeeRevenue(role);
+  const can = (href: string) => canSee(href, role, reportTabs, true, areas);
 
   const [data, setData] = useState<ShopHomeData | null>(initial);
   const [failed, setFailed] = useState(initial === null);
@@ -85,7 +94,7 @@ export function ShopHome({
    */
   const stockBranch = branch ? `?branch=${encodeURIComponent(branch)}` : '';
   const tiles = [
-    { href: '/products/sell', label: s.takeOrder, icon: <IconNavOrders />, tone: 'green' },
+    { href: '/orders/new', label: s.takeOrder, icon: <IconNavOrders />, tone: 'green' },
     { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'blue' },
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
   ].filter((l) => canSee(l.href, role, reportTabs, true, areas));
@@ -101,6 +110,8 @@ export function ShopHome({
         dateLabel={dateLabel}
       />
       <div className="page-body hm-page shp-page" aria-busy={loading || undefined}>
+        {/* Jira GRW-76 — a staff-kind role holder's own "I'm in", first, as a stylist's is; the card draws only where their branch offers it. */}
+        {attendanceMonth && timezone ? <CheckInCard today={attendanceMonth.rows.find((r) => r.onDate === attendanceMonth.today) ?? null} timezone={timezone} /> : null}
         {failed || !data ? (
           <Card>
             <CardError t={t} onRetry={() => load(branch)} />
@@ -124,19 +135,31 @@ export function ShopHome({
               </Card>
             ) : null}
 
-            <Card title={s.ordersTitle} action={data.anyOrders ? <a className="shp-link" href="/orders">{s.viewOrders}</a> : undefined}>
+            <Card title={s.ordersTitle} action={data.anyOrders && can('/orders') ? <a className="shp-link" href="/orders">{s.viewOrders}</a> : undefined}>
               {data.anyOrders ? (
-                <p className="shp-orders">
-                  <strong>{data.today.orders}</strong>
-                  <span>{data.today.orders === 0 ? s.noOrdersToday : s.orderCount(data.today.orders)}</span>
-                </p>
+                <>
+                  <p className="shp-orders">
+                    <strong>{data.today.orders}</strong>
+                    <span>{data.today.orders === 0 ? s.noOrdersToday : s.orderCount(data.today.orders)}</span>
+                  </p>
+                  {/*
+                    Jira GRW-614 (FR-06) — the work waiting. It opens the Orders list already filtered to exactly the states
+                    this count is of (`new,packed`), so the number on Home and the rows behind it cannot disagree. Absent
+                    when nothing is waiting: a "0 to send" is a line of noise on the screen opened most often.
+                  */}
+                  {data.toSend > 0 ? (
+                    <a className="shp-link shp-tosend" href={ordersHref({ status: 'new,packed' })}>
+                      {s.toSend(data.toSend)}
+                    </a>
+                  ) : null}
+                </>
               ) : (
                 <div className="shp-empty">
                   <strong>{s.noOrdersTitle}</strong>
                   {/* A shelf nobody has counted has nothing to sell, so the first step is the count (below), not the till. */}
                   <span>{data.running.counted ? s.noOrdersBody : s.countFirst}</span>
-                  {data.running.counted ? (
-                    <a className="btn btn-primary shp-cta" href="/products/sell">
+                  {data.running.counted && can('/orders/new') ? (
+                    <a className="btn btn-primary shp-cta" href="/orders/new">
                       {s.takeOrder}
                     </a>
                   ) : null}
@@ -150,13 +173,15 @@ export function ShopHome({
               so the filter could hold none of the rows just listed: a uniform with ten sizes at one each counts as
               twenty in stock. The shelf holds every one of them. A per-size low filter is Jira GRW-591's.
             */}
-            <Card title={s.runningOut} action={data.running.total > data.running.items.length ? <a className="shp-link" href={`/stock${stockBranch}`}>{s.viewAll(data.running.total)}</a> : undefined}>
+            <Card title={s.runningOut} action={data.running.total > data.running.items.length && can('/stock') ? <a className="shp-link" href={`/stock${stockBranch}`}>{s.viewAll(data.running.total)}</a> : undefined}>
               {!data.running.counted ? (
                 <div className="shp-empty">
                   <span>{s.notCounted}</span>
-                  <a className="btn shp-cta" href="/stock">
-                    {s.countStock}
-                  </a>
+                  {can('/stock') ? (
+                    <a className="btn shp-cta" href="/stock">
+                      {s.countStock}
+                    </a>
+                  ) : null}
                 </div>
               ) : data.running.items.length === 0 ? (
                 <p className="shp-plain">{s.nothingLow}</p>

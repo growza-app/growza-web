@@ -10,8 +10,14 @@ import type { MemberRole } from '../lib/nav-policy';
  */
 export type PosMode = 'sell' | 'return';
 
-/** A session with no role reads as the owner, as everywhere else: a degraded `/me` is not a reason to hide the till. */
-export function mayTakeReturns(role: MemberRole | null | undefined, reportTabs?: readonly string[]): boolean {
+/**
+ * A session with no role reads as the owner, as everywhere else: a degraded `/me` is not a reason to hide the till.
+ *
+ * A member who HOLDS a role (Jira GRW-73) is judged by the role grid, and the grid never grants a refund: `POST /api/v1/sales/:visitKey/returns` is
+ * the owner's alone for a role holder (`route-pages.ts`), however much of Bookings they hold. So `holdsRole` closes it, whatever fixed role they work like.
+ */
+export function mayTakeReturns(role: MemberRole | null | undefined, reportTabs?: readonly string[], holdsRole = false): boolean {
+  if (holdsRole) return false;
   if (role == null || role === 'owner' || role === 'manager') return true;
   if (role === 'receptionist') return Boolean(reportTabs?.includes('sales'));
   return false;

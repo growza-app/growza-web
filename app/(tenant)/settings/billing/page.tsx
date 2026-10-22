@@ -1,3 +1,4 @@
+import { guardScreen } from '../../lib/screen-guard';
 import { screenTitle } from '../../lib/page-title';
 import { formatMoney } from '../../lib/format';
 import { api } from '../../lib/api';
@@ -15,6 +16,8 @@ export const dynamic = 'force-dynamic';
  * a bill belongs to the business, whichever branch is picked in Settings.
  */
 export default async function BillingSettingsPage() {
+  // Jira GRW-74 — a role holder is never offered this screen (the API makes it the owner's alone): by its address it goes Home.
+  await guardScreen('/settings/billing');
   const lang = await serverLang();
   const [billing, me] = await Promise.all([api.billing().catch(() => null), api.me().catch(() => null)]);
   if (!billing) return <div className="banner">{billingCopy(lang).loadError}</div>;

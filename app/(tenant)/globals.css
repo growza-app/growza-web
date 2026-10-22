@@ -130,6 +130,17 @@
 @import './styles/99-category-picker.css';
 @import './styles/99-sales.css';
 @import './styles/99-pos.css';
+@import './styles/99-sizes.css';
+@import './styles/99-size-sheet.css';
+@import './styles/99-move-sizes.css';
+@import './styles/99-count-sizes.css';
 @import './styles/99-document.css';
 @import './styles/99-shop-home.css';
+@import './styles/99-roles.css';
+@import './styles/99-orders.css';
+@import './styles/99-codes.css';
+@import './styles/99-import.css';
+@import './styles/99-held.css';
+@import './styles/99-stock-report.css';
+@import './styles/99-channels.css';
 @import './styles/99-photo-none.css';

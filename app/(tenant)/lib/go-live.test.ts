@@ -142,7 +142,7 @@ describe('every screen that opens at go-live is guarded — a new screen cannot 
   };
 
   it('every page below a closed screen asks guardScreen or guardLive before it draws', () => {
-    const unguarded = pages.filter((f) => !runsBefore(f).some((p) => /await guard(Screen|Live)\(|<(Products|Sales)Screen\b[^>]*\bguard=/.test(code(p))));
+    const unguarded = pages.filter((f) => !runsBefore(f).some((p) => /await guard(Screen|Live)\(|<(Products|Sales|SellProduct)Screen\b[^>]*\bguard=/.test(code(p))));
     expect(unguarded).toEqual([]);
   });
 
@@ -188,7 +188,7 @@ describe('every surface that offers a destination follows the flag', () => {
   });
 
   it('there is no floating "+", no search and no bell until it is live', () => {
-    expect(code('components/MobileChrome.tsx')).toMatch(/mayBook && live && PLUS_ROUTE_RE\.test\(pathname\)/);
+    expect(code('components/MobileChrome.tsx')).toMatch(/mayBook && plusOpens && live && PLUS_ROUTE_RE\.test\(pathname\)/);
     expect(code('components/HeaderSearch.tsx')).toMatch(/!mayUseSearch \|\| !live/);
     expect(code('components/HeaderControls.tsx')).toMatch(/\{live \? <NotificationBell \/> : null\}/);
     expect(code('components/home/parts.tsx')).toMatch(/\{live \? <NotificationBell \/> : null\}/);

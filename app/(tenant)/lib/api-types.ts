@@ -72,6 +72,8 @@ export interface Me {
     phone?: string | null;
     /** The name they go by — their own, else their stylist profile's. Null until set (or from an older API). */
     name?: string | null;
+    /** Jira GRW-74 — the role they hold, if any; the grid below applies only to a member who has one. */
+    tenantRoleId?: string | null;
     /** Jira GRW-237 — a receptionist's own branch; null means every branch. */
     locationId?: string | null;
     locationName?: string | null;
@@ -94,6 +96,8 @@ export interface Me {
    * absent reads as "every tab", which is the pre-GRW-197 behaviour for the
    * only roles that could reach the screen back then.
    */
+  /** Jira GRW-74 — the pages the signed-in member's role grants, by level. Meaningful for a member who holds a role (`member.tenantRoleId`). */
+  permissions?: Record<string, 'none' | 'view' | 'manage'>;
   reportTabs?: string[];
   /**
    * Jira GRW-90 · GRW-137 — a platform admin is looking at this account.
@@ -155,6 +159,8 @@ export interface Me {
     /** Jira GRW-607 — whether the business takes bookings, and whether it sells services. Absent reads as yes: only an explicit false takes a diary area away. */
     bookings?: boolean;
     services?: boolean;
+    /** Jira GRW-598 — whether sizes are switched on for this business (the `sizes` flag). Absent reads as no: it ships off. */
+    sizes?: boolean;
     providerSelection: boolean;
     maxProviders: number;
   };
@@ -209,6 +215,66 @@ export interface Product {
   /** Jira GRW-574 (0120) — optional GST rate in basis points (0..2800; 0 is 0%, null is not set) and HSN code. */
   gstRateBp: number | null;
   hsn: string | null;
+  /** Jira GRW-595 — the options this product is sold in, in the owner's order ("Size", "Colour"). Empty for a product with no sizes. Absent on an API a deploy behind. */
+  optionAxes?: SizeAxis[];
+  /** How many sizes it has. For a product with sizes, `stock` is their total. */
+  variantCount?: number;
+  /**
+   * Jira GRW-599 — on the till's list only, and only for a product with sizes: every live, active size in the owner's
+   * order with its count, price and codes, so tapping a product never costs a request to learn its sizes.
+   */
+  sizes?: TillSize[];
+}
+
+/** Jira GRW-599 — one size as the till holds it. `priceMinor` null = the product's own price. */
+export interface TillSize {
+  id: string;
+  option1: string;
+  option2: string | null;
+  priceMinor: string | null;
+  sku: string | null;
+  barcode: string | null;
+  stock: number;
+}
+
+/** Jira GRW-595 — one option of a product and its values, in the owner's order. */
+export interface SizeAxis {
+  name: string;
+  values: string[];
+}
+
+/** Jira GRW-595–597 — one size of a product: a combination of its options, with its own count, price and codes. */
+export interface Size {
+  id: string;
+  productId: string;
+  option1: string;
+  option2: string | null;
+  /** Null = the product's own price. */
+  priceMinor: string | null;
+  sku: string | null;
+  barcode: string | null;
+  active: boolean;
+  stock: number;
+}
+
+/** Jira GRW-598 — a product's options and every size on it, with the token the next save sends back. */
+export interface ProductSizes {
+  /** Whose sizes these are. */
+  product: { id: string; name: string; priceMinor: string };
+  axes: SizeAxis[];
+  variants: Size[];
+  version: string;
+}
+
+/** Jira GRW-598 — one cell of the grid as the server takes it. What a cell leaves out is left alone; what it sends as null is cleared. */
+export interface SizeGridCell {
+  option1: string;
+  option2?: string | null;
+  stock?: number;
+  priceMinor?: number | null;
+  sku?: string | null;
+  barcode?: string | null;
+  active?: boolean;
 }
 
 /** Owner, 2026-10-18 — one row of a product list on its way onto the shelf. An update carries only the fields the file filled, and never the count. */
@@ -277,8 +343,8 @@ export interface ProductInput {
 }
 
 /** 0116 · 0122 — why a product's count changed. */
-export type MovementKind = 'received' | 'sold' | 'adjusted' | 'damaged' | 'used' | 'returned' | 'transfer_out' | 'transfer_in';
-export type ManualMovementKind = Exclude<MovementKind, 'sold' | 'transfer_out' | 'transfer_in'>;
+export type MovementKind = 'received' | 'sold' | 'adjusted' | 'damaged' | 'used' | 'returned' | 'transfer_out' | 'transfer_in' | 'exchange';
+export type ManualMovementKind = Exclude<MovementKind, 'sold' | 'transfer_out' | 'transfer_in' | 'exchange'>;
 
 export interface StockMovement {
   id: string;
@@ -294,6 +360,13 @@ export interface StockMovement {
   /** 0123 — ties the `adjusted` lines written by one stock take pass. */
   stockTakeId?: string | null;
   createdAt: string;
+}
+
+/** Jira GRW-602 (0134) — what an owner typed into a stock take and has not committed: typed text by product and by size. `updatedAt` is null when no walk has been started. */
+export interface StockTakeDraft {
+  products: Record<string, string>;
+  sizes: Record<string, string>;
+  updatedAt: string | null;
 }
 
 /** 0123 — what saving a stock take pass hands back. */
@@ -541,6 +614,8 @@ export interface Appointment {
 export interface VisitProductLine {
   id?: string;
   productId: string | null;
+  /** Jira GRW-603 — the size this line sold; absent or null for a product with no sizes. */
+  variantId?: string | null;
   name: string;
   priceMinor: string;
   qty: number;
@@ -568,6 +643,8 @@ export interface ReturnSaleProductsResponse {
     refundMinor: number;
     restocked: boolean;
     stockAfter: number | null;
+    /** Jira GRW-636 — the size was removed since the sale: the unit was counted on its own (retired) row, and the owner is told. */
+    sizeRemoved?: boolean;
   }>;
 }
 
@@ -1145,6 +1222,8 @@ export interface ShopHome {
   yesterday: { orders: number; takingsMinor?: number };
   /** Has the shop ever sold anything. False: Home invites the first order. */
   anyOrders: boolean;
+  /** Jira GRW-614 — orders still to send (new or packed). Home's count of what is waiting, linking into the filtered list. */
+  toSend: number;
   running: {
     /** Has the shelf ever been counted. False: Home says so instead of listing zeros. */
     counted: boolean;
@@ -1152,4 +1231,569 @@ export interface ShopHome {
     total: number;
     items: Array<{ productId: string; name: string; /** "30" or "30 / White"; null for a product with no sizes. */ size: string | null; left: number }>;
   };
+}
+
+/**
+ * Jira GRW-614 — one row of the Orders list. Money (`amountMinor`) is ABSENT, not zero, for a front desk the owner has
+ * not opened the sales tab to: the API omits the key, so this screen has nothing to hide.
+ */
+export interface OrderListRow {
+  id: string;
+  /** The short code the row shows and the search finds. */
+  code: string;
+  soldAt: string;
+  channel: string;
+  status: string;
+  /** False for a state this build has never heard of: shown as the data spells it, never crashing the list. */
+  known: boolean;
+  externalRef: string | null;
+  locationId: string;
+  /** The client if it has one, else the buyer. */
+  who: { kind: 'client' | 'buyer'; name: string | null } | null;
+  items: number;
+  amountMinor?: number;
+  /** Jira GRW-625 — the marketplace has not yet accepted what the shop told it (sent, cancelled): a glance finds these. */
+  marketplaceUnconfirmed?: boolean;
+}
+
+export interface OrdersPage {
+  rows: OrderListRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+/** Jira GRW-615 — one thing that happened to an order after it was placed. Says THAT, never what (no buyer value). */
+export interface OrderHistoryEntry {
+  kind: 'status_change' | 'client_attached' | 'buyer_erased' | 'exchange';
+  at: string;
+  from: string | null;
+  to: string | null;
+  by: string | null;
+}
+
+/**
+ * Jira GRW-615 — an order's own screen, from ONE read. Every price, payment and total is ABSENT (not zero) for a front
+ * desk the owner has not opened the sales tab to: the API omits the keys, so this screen has nothing to hide.
+ *
+ * `moves` is what the screen may offer, computed by the API from the state machine and sent with the order — the screen
+ * never decides what can follow what (BR-01), and an older `@growza-app/shared` cannot make it offer a move the API
+ * would refuse.
+ */
+/**
+ * Jira GRW-625 — what the shop told the marketplace about an order, and whether it was taken. `pending` is "not told yet" (waiting, or
+ * trying again); `stuck` is "tried and could not, needs a person"; `refused` is the marketplace's own answer, with a reason from a closed set.
+ */
+export interface OrderMarketplaceMessage {
+  kind: 'dispatch' | 'cancel';
+  state: 'pending' | 'accepted' | 'refused';
+  stuck: boolean;
+  /** When it was accepted; null until then. */
+  at: string | null;
+  reason: 'order_cancelled' | 'order_unknown' | 'not_allowed' | 'other' | null;
+}
+
+export interface OrderDetail {
+  id: string;
+  locationId: string;
+  /** Jira GRW-641 — the branch the order is booked against, by name. */
+  branchName: string | null;
+  status: string;
+  known: boolean;
+  channel: string;
+  externalRef: string | null;
+  soldAt: string;
+  buyer: { name: string | null; contact: string | null; address: string | null } | null;
+  buyerRedactedAt: string | null;
+  client: { id: string; name: string | null } | null;
+  lines: Array<{
+    id: string;
+    productId: string | null;
+    variantId: string | null;
+    name: string;
+    qty: number;
+    returnedQty: number;
+    /** Jira GRW-617 — the line this one replaced in a size swap, or null. */
+    swappedFromId: string | null;
+    /** How many of this line's units were swapped for another size (counted in `returnedQty`, but nothing was refunded for them). */
+    swappedQty: number;
+    /** Can a swap start from this line? Decided by the server. */
+    swappable: boolean;
+    sku: string | null;
+    barcode: string | null;
+    priceMinor?: string;
+    paidMinor?: string;
+    returnedMinor?: string;
+  }>;
+  /** Jira GRW-617 — may this viewer swap a size? Decided by the server with the function that would refuse the swap. */
+  canSwap: boolean;
+  /** Jira GRW-625 — what the marketplace was told about this order. Empty for a counter sale. */
+  marketplace?: OrderMarketplaceMessage[];
+  /** May this viewer ask for a message to be sent again? Decided by the server with the route's own role check. */
+  canRetryMarketplace?: boolean;
+  history: OrderHistoryEntry[];
+  /** Jira GRW-635 — the returns recorded against the order, each with its reason; a parcel that came back undelivered is its own kind. */
+  returns?: OrderReturn[];
+  /** Jira GRW-637 — the refunds recorded against it (money: empty for a viewer who may not see money). */
+  refunds?: OrderRefund[];
+  moves: { primary: string | null; more: string[] };
+  payments?: Array<{ mode: string; amountMinor: number }>;
+  totalMinor?: number;
+  refundedMinor?: number;
+}
+
+/** The answer to a move that was refused because the order is no longer where the screen thought. */
+export interface OrderMoveRefusal {
+  error: string;
+  detail: string;
+  status?: string;
+  allowed?: string[];
+}
+
+/** Jira GRW-617 — what a size swap sends. The quote takes the same body and writes nothing. */
+export interface ExchangeBody {
+  lineId: string;
+  toVariantId: string;
+  qty?: number;
+  /** How a non-zero difference was paid, or given back. */
+  settlementMode?: 'cash' | 'card' | 'upi' | 'other';
+  /** The difference the screen showed; the server refuses the swap, with the amount it is now, if that is no longer true. */
+  expectedDifferenceMinor?: number;
+  idempotencyKey?: string;
+  acknowledgeIssuedDocument?: boolean;
+  overrideReturnWindow?: boolean;
+}
+
+/** Jira GRW-617 — a swap, or the quote of one. `differenceMinor` is new less old: positive is taken, negative is given back. */
+export interface ExchangeResult {
+  exchangeId: string;
+  fromLineId: string;
+  toLineId: string;
+  fromName: string;
+  toName: string;
+  qty: number;
+  newUnitMinor: number;
+  oldPaidMinor: number;
+  differenceMinor: number;
+  settlementMode: string | null;
+  replayed: boolean;
+}
+
+/** Jira GRW-618 — a marketplace's own code, and the one size (or product with no sizes) it points at. */
+export interface MarketplaceCode {
+  id: string;
+  channel: 'flipkart' | 'amazon';
+  code: string;
+  productId: string;
+  variantId: string | null;
+  /** "School Shirt (30 / White)" — what it points at, by the names the owner gave. */
+  label: string;
+  productName: string;
+  size: string | null;
+  /** The size was retired after the code was mapped: the listing points at something that is not on sale. */
+  retired: boolean;
+}
+
+export interface MarketplaceCodesPage {
+  rows: MarketplaceCode[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface SaveCodesBody {
+  channel: 'flipkart' | 'amazon';
+  productId?: string;
+  rows: Array<{ code: string; size?: string; variantId?: string; productId?: string }>;
+  /** True to repoint a code that is already mapped elsewhere instead of being refused. */
+  replace?: boolean;
+}
+
+export interface SaveCodesResult {
+  created: number;
+  updated: number;
+  unchanged: number;
+  /** Jira GRW-620 — the orders that were waiting on these codes and became real orders. */
+  released?: ReleaseResult;
+}
+
+/** Jira GRW-619 — what importing an order report did, in plain counts. */
+export interface ImportSummary {
+  importId: string;
+  channel: 'flipkart' | 'amazon';
+  /** Orders that became real orders. */
+  created: number;
+  /** Orders already in Growza from an earlier import: nothing changed for them. */
+  alreadyThere: number;
+  /** Orders waiting for a size: a line's code is not mapped yet. */
+  held: number;
+  /** Units the shelf did not have (the count was taken to zero). */
+  shortUnits: number;
+  lines: { created: number; alreadyThere: number; held: number };
+  heldCodes: Array<{ code: string; lines: number; reason: 'unmapped' | 'retired' }>;
+  /** Rows that could not be read, by their row in the file (the heading is row 1). */
+  problems: Array<{ row: number; why: string }>;
+  replayed: boolean;
+}
+
+/** Jira GRW-620 — one code holding marketplace orders back: what is waiting on it, and why. */
+export interface HeldCode {
+  channel: 'flipkart' | 'amazon';
+  code: string;
+  lines: number;
+  orders: number;
+  units: number;
+  nameInReport: string | null;
+  since: string;
+  fileName: string | null;
+  /** 'unmapped': no size yet. 'retired': mapped to a size no longer sold. 'ready': mapped to a size on sale — the release has just not run. */
+  reason: 'unmapped' | 'retired' | 'ready';
+  mappedTo: string | null;
+}
+export interface HeldPage {
+  rows: HeldCode[];
+  total: number;
+  /** Orders waiting in all, for the headline. */
+  orders: number;
+  page: number;
+  pageSize: number;
+}
+export interface ReleaseResult {
+  orders: number;
+  lines: number;
+  shortUnits: number;
+  stillHeld: number;
+}
+/** A size (or a product with no sizes) a code could be mapped to. */
+export interface SizeToMap {
+  productId: string;
+  variantId: string | null;
+  productName: string;
+  size: string | null;
+  label: string;
+}
+
+/** Jira GRW-641 — which branch a marketplace sells from. */
+export interface ChannelBranch {
+  channel: 'flipkart' | 'amazon';
+  /** The branch it sells from now; null when the one chosen has been closed. */
+  locationId: string | null;
+  branchName: string | null;
+  /** 'chosen' by the owner, or the 'default' main open branch. */
+  source: 'chosen' | 'default';
+  gone: boolean;
+  /** More than one branch to choose between: a one-branch shop sees its branch and cannot change it. */
+  changeable: boolean;
+}
+export interface ChannelBranches {
+  channels: ChannelBranch[];
+  branches: Array<{ id: string; name: string }>;
+}
+export interface SetChannelBranchResult {
+  channel: 'flipkart' | 'amazon';
+  locationId: string;
+  branchName: string;
+  previous: { locationId: string | null; branchName: string | null };
+  /** Online orders from this channel not yet dispatched that stay at the old branch. */
+  inFlightAtOld: number;
+  changed: boolean;
+}
+
+/**
+ * Jira GRW-621 — a marketplace's seller keys, as the screen may know them: which fields are SET and what the last Check said. Never a
+ * value — the API cannot read them back, so neither can this.
+ */
+export interface ChannelConnection {
+  channel: 'flipkart' | 'amazon';
+  /** False until the server has an encryption key: then keys cannot be kept at all, and the form is not offered. */
+  keysSetUp: boolean;
+  saved: boolean;
+  savedAt: string | null;
+  fields: Array<{ key: string; label: string; secret: boolean; set: boolean }>;
+  /** What the marketplace said at the last Check; null = never checked, or the keys were replaced since. */
+  lastCheck: { at: string; ok: boolean; reason: 'rejected' | 'unreachable' | null } | null;
+  lastUsedAt: string | null;
+  /** Whether tapping Check would ask the marketplace anything. False until that marketplace's adapter exists. */
+  canCheck: boolean;
+  /** Jira GRW-641 — the shop it sells from. */
+  branch: { locationId: string | null; name: string | null; source: 'chosen' | 'default'; gone: boolean };
+  /** Jira GRW-624 — the buffer kept back, and how stock going out is doing. */
+  stock: ChannelStock;
+}
+/** Jira GRW-624 — stock going out to a marketplace. Counts and times only: never a number per size. */
+export interface ChannelStock {
+  channel: 'flipkart' | 'amazon';
+  /** How many to keep back from online orders. */
+  buffer: number;
+  lastPushedAt: string | null;
+  /** Why the last run could not finish; null = it finished, or none ran. */
+  lastRunReason: 'rate_limited' | 'unreachable' | 'refused' | 'keys_unreadable' | 'failed' | null;
+  waiting: number;
+  stuck: number;
+}
+/** Jira GRW-623 — one marketplace's orders coming in: when they last did, why not if they could not, what waits. */
+export interface ChannelOrdersLine {
+  channel: 'flipkart' | 'amazon';
+  /** Anything is asked of the marketplace at all: false until its adapter exists, and the screen then says nothing. */
+  canPull: boolean;
+  /** The marketplace turned the keys down at the last Check: nothing is brought in until they are replaced. */
+  keysRejected: boolean;
+  lastBroughtInAt: string | null;
+  lastRunReason: 'rate_limited' | 'unreachable' | 'refused' | 'keys_unreadable' | 'failed' | null;
+  /** Orders the last run could not read or store. */
+  lastMalformed: number;
+  /** Orders waiting for a code to be matched to a size. */
+  held: number;
+  /** Orders brought in that the marketplace has not yet been told we have. */
+  unacknowledged: number;
+}
+/** Jira GRW-626 — what is waiting for a marketplace, what failed, and what the owner can do about it. */
+export interface ChannelQueueSummary {
+  channel: 'flipkart' | 'amazon';
+  sizes: { waiting: number; stuck: number };
+  messages: { waiting: number; refused: number; stuck: number };
+  ordersIn: { lastBroughtInAt: string | null; reason: string | null; unreadable: number };
+  keysRejected: boolean;
+  /** Sizes and messages waiting on their own backoff after a failure: what Try again can send now. */
+  backingOff: number;
+  /** Until when the marketplace has asked us to wait, if it has. */
+  holdUntil: string | null;
+  needsAttention: number;
+}
+export interface ChannelQueueItem {
+  key: string;
+  area: 'stock' | 'order';
+  kind: 'dispatch' | 'cancel' | null;
+  label: string;
+  state: 'waiting' | 'stuck' | 'refused';
+  /** A short code from a closed set, never the marketplace's own words; the screen puts it in plain language. */
+  reason: string | null;
+  since: string;
+}
+export interface ChannelQueuePage {
+  summary: ChannelQueueSummary;
+  items: ChannelQueueItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+export interface SetStockBufferResult {
+  channel: 'flipkart' | 'amazon';
+  buffer: number;
+  changed: boolean;
+}
+export type ChannelCheckResult = { result: 'working' | 'rejected' | 'unreachable' | 'unavailable'; detail: string };
+export interface SaveChannelKeysResult {
+  saved: true;
+  replaced: boolean;
+  connection: Omit<ChannelConnection, 'canCheck' | 'branch' | 'stock'>;
+}
+
+/** Jira GRW-631 — what is on the shelf, size by size, and what it is worth at cost. */
+export interface StockReportSize {
+  id: string;
+  label: string;
+  stock: number;
+  costMinor: string | null;
+  valueMinor: string | null;
+}
+export interface StockReportStyle {
+  id: string;
+  name: string;
+  categoryId: string | null;
+  branchId: string;
+  branchName: string;
+  units: number;
+  valueMinor: string | null;
+  sizesWithoutCost: number;
+  sizes: StockReportSize[];
+}
+export interface StockReportTotals {
+  styles: number;
+  sizes: number;
+  units: number;
+  valueMinor: string;
+  sizesWithoutCost: number;
+  sizesWithCost: number;
+  negativeSizes: number;
+}
+export interface StockReportPage {
+  styles: StockReportStyle[];
+  totals: StockReportTotals;
+  neverCounted: boolean;
+  page: number;
+  pageSize: number;
+}
+export interface StockReportQuery {
+  location?: string;
+  categoryId?: string;
+  q?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+/** Jira GRW-632 — what sells and what sits. */
+export type SellersRange = 'last_7_days' | 'this_month' | 'last_month' | 'last_3_months' | 'this_year';
+export interface SellersWindow {
+  key: string;
+  label: string;
+  startISO: string;
+  endExclusiveISO: string;
+}
+export interface BestSellerRow {
+  id: string;
+  productId: string;
+  name: string;
+  sizeLabel: string | null;
+  units: number;
+  valueMinor: string;
+  lastYearUnits: number | null;
+  lastYearValueMinor: string | null;
+}
+export interface BestSellersPage {
+  window: SellersWindow;
+  lastYear: { startISO: string; endExclusiveISO: string; hasData: boolean };
+  rows: BestSellerRow[];
+  totals: { sizes: number; units: number; valueMinor: string };
+  page: number;
+  pageSize: number;
+}
+export interface DeadStockRow {
+  id: string;
+  productId: string;
+  name: string;
+  sizeLabel: string | null;
+  stock: number;
+  lastSoldAt: string | null;
+  valueMinor: string | null;
+}
+export interface DeadStockPage {
+  window: SellersWindow;
+  rows: DeadStockRow[];
+  totals: { sizes: number; units: number; valueMinor: string; sizesWithoutCost: number };
+  page: number;
+  pageSize: number;
+}
+export interface SellersQuery {
+  range: SellersRange;
+  location?: string;
+  categoryId?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+/** Jira GRW-633 — what to order before the season. */
+export interface ReorderRow {
+  id: string;
+  productId: string;
+  name: string;
+  sizeLabel: string | null;
+  branchName: string;
+  stock: number;
+  soldLastYear: number | null;
+  suggested: number | null;
+  override: number | null;
+  order: number | null;
+  soldOutLastYear: boolean;
+  /** The days this order has to cover: what the owner's number is kept against. */
+  from: string;
+  to: string;
+  lastYearFrom: string;
+  lastYearTo: string;
+}
+export interface ReorderPage {
+  rows: ReorderRow[];
+  totals: { sizes: number; toOrder: number; withoutBasis: number; edited: number };
+  page: number;
+  pageSize: number;
+}
+export interface ReorderRule {
+  categoryId: string;
+  name: string;
+  leadDays: number | null;
+  coverDays: number | null;
+  effectiveLeadDays: number;
+  effectiveCoverDays: number;
+}
+export interface ReorderRules {
+  defaults: { leadDays: number; coverDays: number };
+  rules: ReorderRule[];
+}
+export interface ReorderQuery {
+  location?: string;
+  categoryId?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+/** Jira GRW-634 — where the money came from, by channel. */
+export interface ChannelRow {
+  channel: string;
+  billedMinor: string;
+  orders: number;
+  averageMinor: number | null;
+  returnedOrders: number;
+  cancelledOrders: number;
+  /** Jira GRW-637 — what was refunded on this channel's orders in these days, as recorded; NOT taken off the billed amount again. */
+  refundedMinor?: string;
+  refundedCount?: number;
+  previous: { billedMinor: string; orders: number } | null;
+  changePct: number | null;
+}
+export interface ByChannelPage {
+  window: { key: string; label: string; startISO: string; endExclusiveISO: string };
+  previous: { startISO: string; endExclusiveISO: string; hasData: boolean };
+  channels: ChannelRow[];
+  totals: { billedMinor: string; orders: number; returnedOrders: number; previousBilledMinor: string | null; changePct: number | null };
+  trend: Array<{ label: string; startISO: string; endExclusiveISO: string; billedMinor: Record<string, string> }>;
+  anyOrders: boolean;
+  caveat: string;
+}
+
+/** Jira GRW-635 — a return's reason, from the small set returns are grouped by. */
+export type ReturnReason = 'size' | 'not_as_described' | 'faulty' | 'wrong_item' | 'changed_mind' | 'other';
+export interface OrderReturn {
+  at: string;
+  kind: 'customer' | 'undelivered';
+  reasonCode: string | null;
+  reasonText: string | null;
+  units: number;
+  restocked: boolean;
+  saleableDefaulted: boolean;
+}
+export interface ReturnsReportPage {
+  window: { key: string; label: string; startISO: string; endExclusiveISO: string };
+  byReason: Array<{ reason: string; returns: number; units: number }>;
+  customer: { returns: number; units: number };
+  undelivered: { returns: number; units: number };
+  anyReturns: boolean;
+}
+
+/** Jira GRW-637 — what the marketplace (or the shop) refunded on an online order, as recorded. */
+export interface OrderRefund {
+  id: string;
+  lineId: string;
+  channel: string;
+  refundedBy: 'marketplace' | 'shop';
+  amountMinor: string;
+  refundedAt: string;
+  externalRef: string;
+}
+export interface RefundRow {
+  id: string;
+  saleId: string;
+  orderRef: string | null;
+  channel: string;
+  lineName: string;
+  amountMinor: string;
+  refundedBy: 'marketplace' | 'shop';
+  refundedAt: string;
+  externalRef: string;
+}
+export interface RefundsReportPage {
+  window: { key: string; label: string; startISO: string; endExclusiveISO: string };
+  rows: RefundRow[];
+  totals: { count: number; amountMinor: string; byChannel: Array<{ channel: string; count: number; amountMinor: string }> };
+  page: number;
+  pageSize: number;
 }

@@ -45,7 +45,7 @@ describe('a branch with nobody on its team', () => {
 
   it('tells Record payment it can go ahead, and offers the Staff screen to whoever may see it', () => {
     expect(code).toMatch(/\{forPayment \? nv\.stillTakePayment\(noProviderWord\.toLowerCase\(\)\) : null\}/);
-    expect(code).toMatch(/canSee\('\/providers', session\?\.role as MemberRole \| null \| undefined\)/);
+    expect(code).toMatch(/canSee\('\/providers', session\?\.role as MemberRole \| null \| undefined, undefined, true, areas\)/);
   });
 
   it('turns off "Start now", which has no answer, and leaves the queue alone', () => {

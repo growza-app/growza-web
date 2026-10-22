@@ -52,15 +52,16 @@ describe('FR-04 — a part that is meaningless for a business is absent, not zer
     expect(messages('hi').reports.shopSoonTitle).toMatch(/[ऀ-ॿ]/);
   });
 
-  it('Settings — the diary’s two rows are listed only for a business that takes bookings, and their addresses are closed to one that does not', () => {
+  it('Settings — the diary’s row is listed only for a business that takes bookings, and their addresses are closed to one that does not', () => {
     const nav = read('settings/nav-data.tsx');
     expect(nav).toMatch(/key: 'bookingSettings', diaryOnly: true/);
-    expect(nav).toMatch(/key: 'checkIn', diaryOnly: true/);
+    // Jira GRW-76 — Location check-in is a shop's too (its staff check themselves in); only Booking settings is the diary's alone.
+    expect(nav).toMatch(/key: 'checkIn', icon/);
     expect(read('settings/SettingsNavList.tsx')).toContain('(!row.diaryOnly || areas.bookings)');
     expect(read('settings/booking/page.tsx')).toContain("await guardScreen('/settings/booking');");
     expect(read('settings/check-in/page.tsx')).toContain("await guardScreen('/settings/check-in');");
     expect(areaAllows('/settings/booking', SHOP)).toBe(false);
-    expect(areaAllows('/settings/check-in', SHOP)).toBe(false);
+    expect(areaAllows('/settings/check-in', SHOP)).toBe(true);
     // The rest of Settings is a shop’s too: its profile, hours, GST, branches, payments and bill.
     for (const ok of ['/settings', '/settings/profile', '/settings/working-hours', '/settings/gst', '/settings/business', '/settings/branches', '/settings/payments', '/settings/billing']) expect(areaAllows(ok, SHOP), ok).toBe(true);
   });
@@ -105,8 +106,6 @@ describe('BR-04 — a salon’s rendering of every audited screen is unchanged',
 
   it('the shared screens take their shop heading ONLY under the shop’s own address', () => {
     expect(read('products/ProductsScreen.tsx')).toContain("heading={guard === '/stock' ? homeCopy(await serverLang(), me.labels).nav.stock : undefined}");
-    expect(read('sales/SalesScreen.tsx')).toContain("heading={guard === '/orders' ? homeCopy(await serverLang(), me.labels).nav.orders : undefined}");
     expect(read('products/ProductsList.tsx')).toContain("title={heading ?? t('title')}");
-    expect(read('sales/SalesClient.tsx')).toContain("title={heading ?? t('title')}");
   });
 });

@@ -32,6 +32,7 @@ export function PosClient({
   returnWindowDays,
   canReturn,
   initialMode,
+  heading,
   backTo,
 }: {
   timezone: string;
@@ -39,6 +40,8 @@ export function PosClient({
   returnWindowDays: number;
   canReturn: boolean;
   initialMode: PosMode;
+  /** A shop's name for the till. Absent is "Sell product". */
+  heading?: string;
   backTo?: '/products' | '/sales';
 }) {
   const t = useTranslations('pos');
@@ -115,7 +118,7 @@ export function PosClient({
         </div>
       ) : null}
 
-      <SellProductClient timezone={timezone} backTo={backTo} />
+      <SellProductClient timezone={timezone} backTo={backTo} heading={heading} />
 
       {mode === 'return' && bills ? (
         <ReturnProductSheet

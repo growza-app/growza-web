@@ -4,8 +4,6 @@ import { PageHeader } from '../components/PageHeader';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { guardScreen } from '../lib/screen-guard';
-import { homeCopy } from '../lib/home-copy';
-import { serverLang } from '../lib/lang';
 import { SalesClient, type SalesFilter, type SalesRange } from './SalesClient';
 import { clampSalesDateRange, DEFAULT_PRODUCT_RETURN_WINDOW_DAYS } from './sales-helpers';
 
@@ -25,10 +23,10 @@ export type SalesSearch = {
 };
 
 /**
- * The register, guarded under whichever address it is reached by (Jira GRW-608): `/sales` for a business that books,
- * `/orders` for a shop, whose register of what was sold is its Orders. One implementation, two addresses.
+ * The register, guarded under the address it is reached by. It served a shop's `/orders` too (Jira GRW-608) until that got
+ * a list of its own (Jira GRW-614); the `guard` argument stays so a page names the address it is guarded under.
  */
-export async function SalesScreen({ searchParams, guard }: { searchParams: Promise<SalesSearch>; guard: '/sales' | '/orders' }) {
+export async function SalesScreen({ searchParams, guard }: { searchParams: Promise<SalesSearch>; guard: '/sales' }) {
   await guardScreen(guard);
   const t = await getTranslations('sales');
   const params = await searchParams;
@@ -104,7 +102,6 @@ export async function SalesScreen({ searchParams, guard }: { searchParams: Promi
       initialRange={initialRange}
       initialQuery={params.q ?? ''}
       loadFailed={loadFailed}
-      heading={guard === '/orders' ? homeCopy(await serverLang(), me.labels).nav.orders : undefined}
     />
   );
 }

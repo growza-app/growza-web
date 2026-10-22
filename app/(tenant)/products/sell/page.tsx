@@ -1,22 +1,16 @@
-import { redirect } from 'next/navigation';
-import { guardLive, guardScreen } from '../../lib/screen-guard';
 import { screenTitle } from '../../lib/page-title';
+import { SellProductScreen, type SellSearch } from './SellProductScreen';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * `/products/sell` was the till before the POS tab existed. The Products screen, the Sales register, Home's quick
- * action and a few bookmarks still point here, so the address keeps working and lands on the POS tab — with the
- * `from` it was given, so the back button still goes where it did.
+ * Dedicated counter sale / retail POS screen for products (`/products/sell`).
  *
- * It still asks the questions it always asked before it sends anyone anywhere: someone the till is closed to, or a
- * business that is not live yet, is told so from the address they typed, not from wherever it forwards to.
+ * The screen itself is `SellProductScreen`, shared with a shop's `/orders/new` (Jira GRW-616); this address is guarded under
+ * its own name, so a role not offered the shelf's till lands where it always did.
  */
-export default async function SellProductPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
-  await guardScreen('/products/sell');
-  await guardLive('/products/sell');
-  const params = await searchParams;
-  redirect(params.from === 'products' || params.from === 'sales' ? `/pos?from=${params.from}` : '/pos');
+export default function SellProductPage({ searchParams }: { searchParams: Promise<SellSearch> }) {
+  return <SellProductScreen searchParams={searchParams} guard="/products/sell" />;
 }
 
 export const metadata = screenTitle('Sell product');

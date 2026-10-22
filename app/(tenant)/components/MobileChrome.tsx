@@ -1,9 +1,9 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { mayUse, type MemberRole } from '../lib/nav-policy';
+import { canSee, mayUse, type MemberRole } from '../lib/nav-policy';
 import type { Lang } from '../lib/lang';
-import { useAreas, useLive, useWritable } from './SessionProvider';
+import { useAreas, useLive, useBusinessWritable } from './SessionProvider';
 import { BottomNav } from './BottomNav';
 
 /**
@@ -62,14 +62,16 @@ export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Recor
    * of them, and one tap on "For later" is still there when they do not.
    */
   // Jira GRW-556 (follow-up) — and the business being allowed to write: a suspended one has nothing to start.
-  const writable = useWritable();
+  const writable = useBusinessWritable();
   const mayBook = mayUse(role, 'visit.new', writable);
   // Jira GRW-556 — no floating "+" until the business is live: there is nothing it could start.
   const live = useLive();
-  // Jira GRW-609 — a shop has no diary to start a visit in: its plus takes an order, at the till (`/products/sell`).
+  // Jira GRW-609 — a shop has no diary to start a visit in: its plus takes an order, at the till (`/orders/new`, Jira GRW-616).
   const areas = useAreas();
+  // Jira GRW-74 — and the role opens what the plus goes to: a shop's till needs Orders and Stock.
+  const plusOpens = !areas.pages || canSee(areas.shop ? '/products/sell' : '/appointments', role, undefined, true, areas);
   const onCentre =
-    mayBook && live && PLUS_ROUTE_RE.test(pathname) ? () => router.push(areas.shop ? '/products/sell' : '/appointments/new?mode=now') : undefined;
+    mayBook && plusOpens && live && PLUS_ROUTE_RE.test(pathname) ? () => router.push(areas.shop ? '/orders/new' : '/appointments/new?mode=now') : undefined;
 
   /*
    * Owner, 2026-10-06 — the plus offers two things: New booking (the page) and Record payment (a page on a phone,

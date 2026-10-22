@@ -129,11 +129,17 @@ export default async function DashboardPage() {
    * and the front desk's both are `ShopHome`, which reads one endpoint and draws the takings only when the response
    * carries them. A stylist is not a shop role; the stylist Home below is unchanged.
    */
-  if (areasOf(me).shop && kind !== 'stylist') {
-    const initial = await soft(api.shopHome());
+  // Jira GRW-74 — a role holder's Home is the shop's whatever fixed role the role works like: the stylist Home reads the diary, which a shop has not got.
+  if (areasOf(me).shop && (kind !== 'stylist' || areasOf(me).pages)) {
+    // Jira GRW-76 — a staff-kind role holder checks themselves in from Home, as a stylist does: their own month, today's row is the card's state.
+    const [initial, attendanceMonth] = await Promise.all([
+      soft(api.shopHome()),
+      kind === 'stylist' ? soft(api.attendance(today.startOf('month').toISODate()!, today.toISODate()!)) : Promise.resolve(null),
+    ]);
     return (
       <ShopHome
         {...common}
+        attendanceMonth={attendanceMonth}
         role={role}
         reportTabs={me.reportTabs}
         locationName={(me.tenant?.branchCount ?? 1) > 1 && kind === 'owner' ? null : (me.member?.locationName ?? me.tenant?.locationName ?? null)}

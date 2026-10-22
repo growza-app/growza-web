@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { api } from './api';
-import { canSee, type MemberRole } from './nav-policy';
+import { canSee, gridCanSee, type MemberRole } from './nav-policy';
 import { isLive, isSetupDestination } from './go-live';
 import { isWritable } from './read-only';
 import { areaAllows, areasOf, DIARY_AREAS, type Areas } from './areas';
@@ -76,6 +76,8 @@ export async function guardLive(href: string): Promise<void> {
   }
   // Jira GRW-608 — a screen of an area the business does not have is Home, not an empty diary.
   if (!areaAllows(href, areas)) redirect('/');
+  // Jira GRW-74 — a page the member's role does not open is Home, the same answer the nav gives, and no request for its data is made.
+  if (areas.pages && !gridCanSee(href, areas.pages)) redirect('/');
   if (closedUntilGoLive(live, href)) redirect(NOT_LIVE_PATH);
 }
 
