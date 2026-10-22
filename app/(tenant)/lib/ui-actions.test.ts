@@ -195,6 +195,11 @@ describe('2b — the controls, each behind its own action', () => {
  * gated one by one; on a screen a role IS offered, every write must be theirs.
  */
 const SCREEN_WRITES: Record<string, readonly string[]> = {
+  // Jira GRW-615 — an order's own screen moves it along: the one next move, and the rarer ones behind More. Same screen,
+  // same gate: a role the nav does not offer /orders is bounced Home by the page, so it never reaches the button.
+  // Jira GRW-617 — and swaps a size. The desk is offered this screen but takes no returns, so it takes no swaps: the control is
+  // drawn from `order.canSwap`, which the API computes with the very function that would refuse the swap.
+  '/orders': ['PATCH /api/v1/orders/:id/status', 'POST /api/v1/orders/:id/exchange', 'POST /api/v1/orders/:id/exchange/quote'],
   // Jira GRW-563 (shared 1.0.5) — `assign-client` moved into `visit.recordPayment`, where it belonged.
   '/services': [
     'POST /api/v1/services',
@@ -233,6 +238,11 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/products/:id/movements',
     'POST /api/v1/products/:id/transfer',
     'POST /api/v1/products/stock-take',
+    // Jira GRW-602 — the numbers typed into a stock take are kept as the owner walks the shelf.
+    'PUT /api/v1/products/stock-take/draft',
+    'DELETE /api/v1/products/stock-take/draft',
+    // Jira GRW-598 — the sizes grid, one save, from a page of its own under Products.
+    'PUT /api/v1/products/:id/variants',
     'POST /api/v1/product-categories',
     'PATCH /api/v1/product-categories/:id',
     'DELETE /api/v1/product-categories/:id',
@@ -403,13 +413,18 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
      * delete, moving stock between branches are the owner's). So it guards its own address rather than its segment's,
      * and `canSee('/products/sell', …)` is what answers for it.
      */
-    '/products/sell': /await guardScreen\('\/products\/sell'\);/,
+    // Jira GRW-616 — the till has two addresses over one screen, as the shelf does: the page names the address it is guarded
+    // under, and `SellProductScreen` calls `guardScreen(guard)` (pinned below).
+    '/products/sell': /<SellProductScreen[^>]*guard="\/products\/sell"/,
+    '/orders/new': /<SellProductScreen[^>]*guard="\/orders\/new"/,
     // Jira GRW-608 — the shelf and the register each have two addresses over one implementation: the page names the
     // address it is guarded under, and the screen (`*Screen.tsx`) is what calls `guardScreen(guard)` (pinned in areas.test.ts).
-    '/products': /<ProductsScreen[^>]*guard="\/products"/,
+    // …and a page UNDER it that is not the shelf (the sizes grid, Jira GRW-598) guards itself under the same address.
+    '/products': /<ProductsScreen[^>]*guard="\/products"|await guardScreen\('\/products'\);/,
     '/stock': /<ProductsScreen[^>]*guard="\/stock"/,
     '/sales': /<SalesScreen[^>]*guard="\/sales"/,
-    '/orders': /<SalesScreen[^>]*guard="\/orders"/,
+    // Jira GRW-614 — Orders is its own screen, guarded at the page like the rest.
+    '/orders': /await guardScreen\('\/orders'\);/,
     // `me.support` as a whole since the page lists options (each its own number): it reads the contacts
     // off /me, which every role may call, and nothing role-scoped.
     '/help': /const me = await api\.me\(\);[\s\S]*support = me\.support;/,

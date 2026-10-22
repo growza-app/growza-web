@@ -13,9 +13,12 @@ import { PayFlow } from '../../appointments/new/PayFlow';
 export function SellProductClient({
   timezone,
   backTo,
+  heading,
 }: {
   timezone: string;
-  backTo?: '/products' | '/sales';
+  backTo?: '/products' | '/sales' | '/orders';
+  /** Jira GRW-616 — the till's name under another address (a shop's "Take an order"). Absent is "Sell product". */
+  heading?: string;
 }) {
   const [ready, setReady] = useState(false);
   const [wide, setWide] = useState(false);
@@ -27,5 +30,5 @@ export function SellProductClient({
 
   if (!ready) return <div className="pf" aria-busy="true" />;
 
-  return <PayFlow tokenGone={false} providerId={null} timezone={timezone} backTo={backTo} wide={wide} productsOnly />;
+  return <PayFlow tokenGone={false} providerId={null} timezone={timezone} backTo={backTo} wide={wide} productsOnly heading={heading} />;
 }

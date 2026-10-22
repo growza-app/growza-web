@@ -155,6 +155,8 @@ export interface Me {
     /** Jira GRW-607 — whether the business takes bookings, and whether it sells services. Absent reads as yes: only an explicit false takes a diary area away. */
     bookings?: boolean;
     services?: boolean;
+    /** Jira GRW-598 — whether sizes are switched on for this business (the `sizes` flag). Absent reads as no: it ships off. */
+    sizes?: boolean;
     providerSelection: boolean;
     maxProviders: number;
   };
@@ -209,6 +211,66 @@ export interface Product {
   /** Jira GRW-574 (0120) — optional GST rate in basis points (0..2800; 0 is 0%, null is not set) and HSN code. */
   gstRateBp: number | null;
   hsn: string | null;
+  /** Jira GRW-595 — the options this product is sold in, in the owner's order ("Size", "Colour"). Empty for a product with no sizes. Absent on an API a deploy behind. */
+  optionAxes?: SizeAxis[];
+  /** How many sizes it has. For a product with sizes, `stock` is their total. */
+  variantCount?: number;
+  /**
+   * Jira GRW-599 — on the till's list only, and only for a product with sizes: every live, active size in the owner's
+   * order with its count, price and codes, so tapping a product never costs a request to learn its sizes.
+   */
+  sizes?: TillSize[];
+}
+
+/** Jira GRW-599 — one size as the till holds it. `priceMinor` null = the product's own price. */
+export interface TillSize {
+  id: string;
+  option1: string;
+  option2: string | null;
+  priceMinor: string | null;
+  sku: string | null;
+  barcode: string | null;
+  stock: number;
+}
+
+/** Jira GRW-595 — one option of a product and its values, in the owner's order. */
+export interface SizeAxis {
+  name: string;
+  values: string[];
+}
+
+/** Jira GRW-595–597 — one size of a product: a combination of its options, with its own count, price and codes. */
+export interface Size {
+  id: string;
+  productId: string;
+  option1: string;
+  option2: string | null;
+  /** Null = the product's own price. */
+  priceMinor: string | null;
+  sku: string | null;
+  barcode: string | null;
+  active: boolean;
+  stock: number;
+}
+
+/** Jira GRW-598 — a product's options and every size on it, with the token the next save sends back. */
+export interface ProductSizes {
+  /** Whose sizes these are. */
+  product: { id: string; name: string; priceMinor: string };
+  axes: SizeAxis[];
+  variants: Size[];
+  version: string;
+}
+
+/** Jira GRW-598 — one cell of the grid as the server takes it. What a cell leaves out is left alone; what it sends as null is cleared. */
+export interface SizeGridCell {
+  option1: string;
+  option2?: string | null;
+  stock?: number;
+  priceMinor?: number | null;
+  sku?: string | null;
+  barcode?: string | null;
+  active?: boolean;
 }
 
 /** Owner, 2026-10-18 — one row of a product list on its way onto the shelf. An update carries only the fields the file filled, and never the count. */
@@ -277,8 +339,8 @@ export interface ProductInput {
 }
 
 /** 0116 · 0122 — why a product's count changed. */
-export type MovementKind = 'received' | 'sold' | 'adjusted' | 'damaged' | 'used' | 'returned' | 'transfer_out' | 'transfer_in';
-export type ManualMovementKind = Exclude<MovementKind, 'sold' | 'transfer_out' | 'transfer_in'>;
+export type MovementKind = 'received' | 'sold' | 'adjusted' | 'damaged' | 'used' | 'returned' | 'transfer_out' | 'transfer_in' | 'exchange';
+export type ManualMovementKind = Exclude<MovementKind, 'sold' | 'transfer_out' | 'transfer_in' | 'exchange'>;
 
 export interface StockMovement {
   id: string;
@@ -294,6 +356,13 @@ export interface StockMovement {
   /** 0123 — ties the `adjusted` lines written by one stock take pass. */
   stockTakeId?: string | null;
   createdAt: string;
+}
+
+/** Jira GRW-602 (0134) — what an owner typed into a stock take and has not committed: typed text by product and by size. `updatedAt` is null when no walk has been started. */
+export interface StockTakeDraft {
+  products: Record<string, string>;
+  sizes: Record<string, string>;
+  updatedAt: string | null;
 }
 
 /** 0123 — what saving a stock take pass hands back. */
@@ -541,6 +610,8 @@ export interface Appointment {
 export interface VisitProductLine {
   id?: string;
   productId: string | null;
+  /** Jira GRW-603 — the size this line sold; absent or null for a product with no sizes. */
+  variantId?: string | null;
   name: string;
   priceMinor: string;
   qty: number;
@@ -1145,6 +1216,8 @@ export interface ShopHome {
   yesterday: { orders: number; takingsMinor?: number };
   /** Has the shop ever sold anything. False: Home invites the first order. */
   anyOrders: boolean;
+  /** Jira GRW-614 — orders still to send (new or packed). Home's count of what is waiting, linking into the filtered list. */
+  toSend: number;
   running: {
     /** Has the shelf ever been counted. False: Home says so instead of listing zeros. */
     counted: boolean;
@@ -1152,4 +1225,125 @@ export interface ShopHome {
     total: number;
     items: Array<{ productId: string; name: string; /** "30" or "30 / White"; null for a product with no sizes. */ size: string | null; left: number }>;
   };
+}
+
+/**
+ * Jira GRW-614 — one row of the Orders list. Money (`amountMinor`) is ABSENT, not zero, for a front desk the owner has
+ * not opened the sales tab to: the API omits the key, so this screen has nothing to hide.
+ */
+export interface OrderListRow {
+  id: string;
+  /** The short code the row shows and the search finds. */
+  code: string;
+  soldAt: string;
+  channel: string;
+  status: string;
+  /** False for a state this build has never heard of: shown as the data spells it, never crashing the list. */
+  known: boolean;
+  externalRef: string | null;
+  locationId: string;
+  /** The client if it has one, else the buyer. */
+  who: { kind: 'client' | 'buyer'; name: string | null } | null;
+  items: number;
+  amountMinor?: number;
+}
+
+export interface OrdersPage {
+  rows: OrderListRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+/** Jira GRW-615 — one thing that happened to an order after it was placed. Says THAT, never what (no buyer value). */
+export interface OrderHistoryEntry {
+  kind: 'status_change' | 'client_attached' | 'buyer_erased' | 'exchange';
+  at: string;
+  from: string | null;
+  to: string | null;
+  by: string | null;
+}
+
+/**
+ * Jira GRW-615 — an order's own screen, from ONE read. Every price, payment and total is ABSENT (not zero) for a front
+ * desk the owner has not opened the sales tab to: the API omits the keys, so this screen has nothing to hide.
+ *
+ * `moves` is what the screen may offer, computed by the API from the state machine and sent with the order — the screen
+ * never decides what can follow what (BR-01), and an older `@growza-app/shared` cannot make it offer a move the API
+ * would refuse.
+ */
+export interface OrderDetail {
+  id: string;
+  locationId: string;
+  status: string;
+  known: boolean;
+  channel: string;
+  externalRef: string | null;
+  soldAt: string;
+  buyer: { name: string | null; contact: string | null; address: string | null } | null;
+  buyerRedactedAt: string | null;
+  client: { id: string; name: string | null } | null;
+  lines: Array<{
+    id: string;
+    productId: string | null;
+    variantId: string | null;
+    name: string;
+    qty: number;
+    returnedQty: number;
+    /** Jira GRW-617 — the line this one replaced in a size swap, or null. */
+    swappedFromId: string | null;
+    /** How many of this line's units were swapped for another size (counted in `returnedQty`, but nothing was refunded for them). */
+    swappedQty: number;
+    /** Can a swap start from this line? Decided by the server. */
+    swappable: boolean;
+    sku: string | null;
+    barcode: string | null;
+    priceMinor?: string;
+    paidMinor?: string;
+    returnedMinor?: string;
+  }>;
+  /** Jira GRW-617 — may this viewer swap a size? Decided by the server with the function that would refuse the swap. */
+  canSwap: boolean;
+  history: OrderHistoryEntry[];
+  moves: { primary: string | null; more: string[] };
+  payments?: Array<{ mode: string; amountMinor: number }>;
+  totalMinor?: number;
+  refundedMinor?: number;
+}
+
+/** The answer to a move that was refused because the order is no longer where the screen thought. */
+export interface OrderMoveRefusal {
+  error: string;
+  detail: string;
+  status?: string;
+  allowed?: string[];
+}
+
+/** Jira GRW-617 — what a size swap sends. The quote takes the same body and writes nothing. */
+export interface ExchangeBody {
+  lineId: string;
+  toVariantId: string;
+  qty?: number;
+  /** How a non-zero difference was paid, or given back. */
+  settlementMode?: 'cash' | 'card' | 'upi' | 'other';
+  /** The difference the screen showed; the server refuses the swap, with the amount it is now, if that is no longer true. */
+  expectedDifferenceMinor?: number;
+  idempotencyKey?: string;
+  acknowledgeIssuedDocument?: boolean;
+  overrideReturnWindow?: boolean;
+}
+
+/** Jira GRW-617 — a swap, or the quote of one. `differenceMinor` is new less old: positive is taken, negative is given back. */
+export interface ExchangeResult {
+  exchangeId: string;
+  fromLineId: string;
+  toLineId: string;
+  fromName: string;
+  toName: string;
+  qty: number;
+  newUnitMinor: number;
+  oldPaidMinor: number;
+  differenceMinor: number;
+  settlementMode: string | null;
+  replayed: boolean;
 }

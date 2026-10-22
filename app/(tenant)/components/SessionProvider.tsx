@@ -52,6 +52,12 @@ export interface SessionInfo {
    */
   areas?: Areas;
   /**
+   * Jira GRW-598 — `me.capabilities.sizes`: sizes are a switch (the `sizes` flag), off for every business until the
+   * platform turns them on for one. Absent reads as OFF, the honest direction: an unknown answer must not draw a button
+   * that opens a screen the server would refuse.
+   */
+  sizes?: boolean;
+  /**
    * `me.whatsapp.booking` — whether clients book and cancel through WhatsApp at this business. Settings that only
    * bind a client booking by WhatsApp are left undrawn while it is off (owner, 2026-10-10). Absent reads as OFF, the
    * honest direction: an unknown answer must not offer a setting that would do nothing.
@@ -98,6 +104,11 @@ export function useMayUse(action: UiAction): boolean {
  * a token). "New visit" and "Record payment" are not here — each also books or settles something that is not a walk-in.
  */
 const WALK_IN_ONLY: readonly UiAction[] = ['queue.give', 'token.arrive'];
+
+/** Jira GRW-598 — are sizes switched on for this business? False when unknown, and for every salon today. */
+export function useSizesOn(): boolean {
+  return useSession()?.sizes ?? false;
+}
 
 /** Jira GRW-556 (follow-up) — may the business change anything? False only while it is suspended for non-payment. */
 export function useWritable(): boolean {

@@ -1,0 +1,135 @@
+/*
+ * Jira GRW-601 — moving sizes to another branch, in the bottom sheet the till already uses.
+ *
+ * Phone first (344px): the branch, then one row per size — the size and what stays here on the left, − n + on the
+ * right, each 44px — and the Send bar last, so the primary action sits at the thumb. A size at zero is dimmed with a
+ * count that still reads, and its buttons are off. Nothing animates.
+ */
+.pmv-sheet > * {
+  flex: none;
+}
+
+.pmv-name {
+  margin: 0;
+  font-size: var(--fs-4);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.pmv-branch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.pmv-branch select {
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  /* 16px stops iOS zooming the field on focus. */
+  font: inherit;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.pmv-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.pmv-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 3.5rem;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.pmv-row.is-on {
+  border: 2px solid var(--accent-deep);
+  background: var(--accent-soft);
+}
+
+.pmv-row.is-out {
+  background: var(--slate-soft);
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.pmv-skel {
+  min-height: 3.5rem;
+  border: none;
+}
+
+.pmv-size {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pmv-label {
+  font-size: var(--fs-5);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.pmv-count {
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.pmv-step {
+  display: grid;
+  grid-template-columns: 2.75rem 2rem 2.75rem;
+  align-items: center;
+  flex: none;
+}
+
+.pmv-note {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+
+.pmv-note strong {
+  color: var(--text);
+  font-size: var(--fs-4);
+}
+
+.pmv-bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-top: var(--sp-3);
+  background: var(--surface);
+}
+
+.pmv-error {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--danger);
+}
+
+.pmv-send {
+  width: 100%;
+  min-height: 2.75rem;
+}

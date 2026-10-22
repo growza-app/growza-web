@@ -62,6 +62,10 @@ import { bareRefusalMessage, genericFailureMessage, localiseApiMessage } from '.
 import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
+  OrderDetail,
+  ExchangeBody,
+  ExchangeResult,
+  OrdersPage,
   ShopHome,
   ActivityEvent,
   Appointment,
@@ -110,8 +114,12 @@ import type {
   ProductCategory,
   ProductInput,
   ProductSales,
+  ProductSizes,
+  SizeAxis,
+  SizeGridCell,
   ReturnSaleProductsResponse,
   StockMovement,
+  StockTakeDraft,
   StockTakeResult,
   MovementKind,
   ManualMovementKind,
@@ -491,10 +499,25 @@ export const api = {
   /** Jira GRW-574 (0122) — move N of a product to another branch: transfer_out here, transfer_in there, one transfer_id. */
   transferProduct: (id: string, body: { toLocationId: string; qty: number; note?: string }) =>
     post<{ transferId: string; from: Product; to: Product }>(`/api/v1/products/${id}/transfer`, body),
+  /** Jira GRW-601 — move sizes of a product to another branch: a number for each size, one transfer, both ledgers naming the size. */
+  transferSizes: (id: string, body: { toLocationId: string; sizes: Array<{ variantId: string; qty: number }>; note?: string }) =>
+    post<{ transferId: string; from: Product; to: Product; moved: Array<{ variantId: string; label: string; qty: number }> }>(`/api/v1/products/${id}/transfer`, body),
+  /** Jira GRW-598 — a product's options and sizes, in one read, with the `version` the next save sends back. */
+  productSizes: (id: string) => get<ProductSizes>(`/api/v1/products/${id}/sizes`),
+  /**
+   * Jira GRW-598 — the whole sizes grid in ONE save: the options and every size, all or none. A size with no cell is
+   * retired, a blank cell makes nothing, and a save from a screen that is out of date is refused (409, with what is there now).
+   */
+  saveSizeGrid: (id: string, body: { axes: SizeAxis[]; cells: SizeGridCell[]; version?: string }) => put<ProductSizes>(`/api/v1/products/${id}/variants`, body),
   /** Jira GRW-574 (0123) — the branch's shelf for a stock take pass, and saving the pass in one transaction. */
   stockTakeProducts: (location: string) => get<Product[]>(`/api/v1/products/stock-take?location=${encodeURIComponent(location)}`),
-  saveStockTake: (location: string, body: { counts: { productId: string; count: number }[]; note?: string }) =>
+  saveStockTake: (location: string, body: { counts: { productId: string; count: number }[]; sizes?: { variantId: string; count: number }[]; note?: string }) =>
     post<StockTakeResult>('/api/v1/products/stock-take', { ...body, locationId: location }),
+  /** Jira GRW-602 (0134) — the numbers typed into this branch's stock take and not yet committed, kept on the server. */
+  stockTakeDraft: (location: string) => get<StockTakeDraft>(`/api/v1/products/stock-take/draft?location=${encodeURIComponent(location)}`),
+  saveStockTakeDraft: (location: string, body: { products: Record<string, string>; sizes: Record<string, string> }) =>
+    put<void>(`/api/v1/products/stock-take/draft?location=${encodeURIComponent(location)}`, body),
+  clearStockTakeDraft: (location: string) => del<void>(`/api/v1/products/stock-take/draft?location=${encodeURIComponent(location)}`),
   /**
    * Jira GRW-375 — services closest in MEANING to what was typed. 503 means
    * embeddings are not configured (prod today) or the provider is away; the
@@ -589,6 +612,32 @@ export const api = {
     get<HomeOverview>(`/api/v1/home?period=${period}${location ? `&location=${encodeURIComponent(location)}` : ''}`),
   /** Jira GRW-609 — a shop's Home in one read. `location` null or absent means every branch (the owner); the front desk's is its own. */
   shopHome: (location?: string | null) => get<ShopHome>(`/api/v1/home/shop${location ? `?location=${encodeURIComponent(location)}` : ''}`),
+  /**
+   * Jira GRW-614 — the Orders list: one page, filtered and searched by the SERVER. `channel` and `status` are the API's
+   * own values, comma-separated for several (`new,packed` is "still to send"); `location` absent is every branch.
+   */
+  orders: (args: { channel?: string; status?: string; q?: string; page?: number; pageSize?: number; location?: string | null } = {}) => {
+    const params = new URLSearchParams();
+    if (args.channel) params.set('channel', args.channel);
+    if (args.status) params.set('status', args.status);
+    if (args.q) params.set('q', args.q);
+    if (args.page && args.page > 1) params.set('page', String(args.page));
+    if (args.pageSize != null) params.set('pageSize', String(args.pageSize));
+    if (args.location) params.set('location', args.location);
+    const qs = params.toString();
+    return get<OrdersPage>(`/api/v1/orders${qs ? `?${qs}` : ''}`);
+  },
+  /** Jira GRW-615 — one order, whole: its lines, its history, who it is for, and the moves it may be offered. */
+  order: (id: string) => get<OrderDetail>(`/api/v1/orders/${encodeURIComponent(id)}`),
+  /**
+   * Jira GRW-615 — move an order along. `expected` is the state this screen believes the order is in: when the order has
+   * moved on elsewhere the API refuses with 409 and says where it is now, instead of overwriting the other desk.
+   */
+  moveOrder: (id: string, status: string, expected: string) =>
+    patch<{ id: string; status: string; moved: boolean }>(`/api/v1/orders/${encodeURIComponent(id)}/status`, { status, expected }),
+  /** Jira GRW-617 — swap a size on an order. The quote runs the whole swap and rolls it back: the sheet states the server's difference, never its own. */
+  exchangeQuote: (id: string, body: ExchangeBody) => post<ExchangeResult>(`/api/v1/orders/${encodeURIComponent(id)}/exchange/quote`, body),
+  exchangeOrder: (id: string, body: ExchangeBody) => post<ExchangeResult>(`/api/v1/orders/${encodeURIComponent(id)}/exchange`, body),
   /** Jira GRW-222 — the walk-in queue. Adding is the arrival; giving to staff is the start. */
   // Jira GRW-244 — `location`: one branch's queue (owner); a receptionist's is their own.
   walkInQueue: (location?: string | null) => get<QueueEntry[]>(`/api/v1/walk-in-queue${atBranch(location)}`),

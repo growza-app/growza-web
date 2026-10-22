@@ -5,6 +5,7 @@ import { api } from '../../lib/api';
 import type { ShopHome as ShopHomeData } from '../../lib/api-types';
 import { homeCopy } from '../../lib/home-copy';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
+import { ordersHref } from '../../lib/orders-filter';
 import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
 import { useAreas } from '../SessionProvider';
@@ -85,7 +86,7 @@ export function ShopHome({
    */
   const stockBranch = branch ? `?branch=${encodeURIComponent(branch)}` : '';
   const tiles = [
-    { href: '/products/sell', label: s.takeOrder, icon: <IconNavOrders />, tone: 'green' },
+    { href: '/orders/new', label: s.takeOrder, icon: <IconNavOrders />, tone: 'green' },
     { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'blue' },
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
   ].filter((l) => canSee(l.href, role, reportTabs, true, areas));
@@ -126,17 +127,29 @@ export function ShopHome({
 
             <Card title={s.ordersTitle} action={data.anyOrders ? <a className="shp-link" href="/orders">{s.viewOrders}</a> : undefined}>
               {data.anyOrders ? (
-                <p className="shp-orders">
-                  <strong>{data.today.orders}</strong>
-                  <span>{data.today.orders === 0 ? s.noOrdersToday : s.orderCount(data.today.orders)}</span>
-                </p>
+                <>
+                  <p className="shp-orders">
+                    <strong>{data.today.orders}</strong>
+                    <span>{data.today.orders === 0 ? s.noOrdersToday : s.orderCount(data.today.orders)}</span>
+                  </p>
+                  {/*
+                    Jira GRW-614 (FR-06) — the work waiting. It opens the Orders list already filtered to exactly the states
+                    this count is of (`new,packed`), so the number on Home and the rows behind it cannot disagree. Absent
+                    when nothing is waiting: a "0 to send" is a line of noise on the screen opened most often.
+                  */}
+                  {data.toSend > 0 ? (
+                    <a className="shp-link shp-tosend" href={ordersHref({ status: 'new,packed' })}>
+                      {s.toSend(data.toSend)}
+                    </a>
+                  ) : null}
+                </>
               ) : (
                 <div className="shp-empty">
                   <strong>{s.noOrdersTitle}</strong>
                   {/* A shelf nobody has counted has nothing to sell, so the first step is the count (below), not the till. */}
                   <span>{data.running.counted ? s.noOrdersBody : s.countFirst}</span>
                   {data.running.counted ? (
-                    <a className="btn btn-primary shp-cta" href="/products/sell">
+                    <a className="btn btn-primary shp-cta" href="/orders/new">
                       {s.takeOrder}
                     </a>
                   ) : null}

@@ -357,3 +357,14 @@ describe('every search box offers the price to match on', () => {
     expect(read('./service-suggest.ts')).toMatch(/if \(priceAsked\(term\) !== null\) return false;/);
   });
 });
+
+describe('a typed number is not a spelling (GRW-604)', () => {
+  const item = (id: string, name: string) => ({ item: id, text: [name] });
+  it('"30" finds 30 and 300ml, never 40 or 31: spelling tolerance is for words', () => {
+    const list = [item('a', '30'), item('b', '300ml Shampoo'), item('c', '40'), item('d', '31'), item('e', '3')];
+    expect(matchItems(list, '30').sort()).toEqual(['a', 'b']);
+  });
+  it('words keep their tolerance', () => {
+    expect(matchItems([item('a', 'Threading')], 'threding')).toEqual(['a']);
+  });
+});

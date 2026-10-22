@@ -71,8 +71,14 @@ export function visitKeyFromGroupKey(key: string): string {
   return key.startsWith('single:') ? key.slice(7) : key;
 }
 
-/** Stable identifier for a `visit_product` line when calling `POST /api/v1/sales/:visitKey/returns`. */
+/**
+ * Stable identifier for a `visit_product` line when calling `POST /api/v1/sales/:visitKey/returns`.
+ *
+ * Jira GRW-603 — a line that sold a SIZE is named by its own id: "the shirt" does not say which size comes back, and the
+ * server refuses the style's id for it. A line for a product with no sizes is named by its product, exactly as before.
+ */
 export function lineReturnId(p: VisitProductLine): string {
+  if (p.variantId) return p.id ?? p.name;
   return p.productId ?? p.id ?? p.name;
 }
 

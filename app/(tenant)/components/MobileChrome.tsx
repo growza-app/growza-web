@@ -66,10 +66,10 @@ export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Recor
   const mayBook = mayUse(role, 'visit.new', writable);
   // Jira GRW-556 — no floating "+" until the business is live: there is nothing it could start.
   const live = useLive();
-  // Jira GRW-609 — a shop has no diary to start a visit in: its plus takes an order, at the till (`/products/sell`).
+  // Jira GRW-609 — a shop has no diary to start a visit in: its plus takes an order, at the till (`/orders/new`, Jira GRW-616).
   const areas = useAreas();
   const onCentre =
-    mayBook && live && PLUS_ROUTE_RE.test(pathname) ? () => router.push(areas.shop ? '/products/sell' : '/appointments/new?mode=now') : undefined;
+    mayBook && live && PLUS_ROUTE_RE.test(pathname) ? () => router.push(areas.shop ? '/orders/new' : '/appointments/new?mode=now') : undefined;
 
   /*
    * Owner, 2026-10-06 — the plus offers two things: New booking (the page) and Record payment (a page on a phone,
