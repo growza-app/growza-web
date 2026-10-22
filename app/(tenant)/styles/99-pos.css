@@ -75,6 +75,14 @@
 }
 
 /* ---------- Full-Screen POS Terminal Mode (Desktop) ---------- */
+.shell:has(.pos-shell.is-fullscreen) {
+  grid-template-columns: 1fr;
+}
+
+.shell:has(.pos-shell.is-fullscreen) > .sidebar {
+  display: none;
+}
+
 .pos-shell.is-fullscreen {
   position: fixed;
   inset: 0;

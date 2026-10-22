@@ -140,8 +140,8 @@ describe('the POS screen', () => {
     expect(client).toContain('pos-fs-bar');
     expect(client).toContain('enterFullScreen');
     expect(client).toContain('exitFullScreen');
+    expect(client).toContain('requestFullscreen');
     expect(client).toContain("document.addEventListener('fullscreenchange', onFsChange)");
-    expect(client).not.toContain('requestFullscreen');
     expect(deskGrid).toContain("e.key === 'F2'");
     expect(deskGrid).toContain('pf-tile-inbill');
     expect(payFlow).toContain("e.key === 'F4'");

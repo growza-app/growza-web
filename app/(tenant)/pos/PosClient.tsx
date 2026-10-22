@@ -57,13 +57,30 @@ export function PosClient({
 
   const enterFullScreen = useCallback(() => {
     setFullScreen(true);
+    try {
+      const el = typeof document !== 'undefined' ? (document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> | void }) : null;
+      if (el && !document.fullscreenElement) {
+        if (typeof el.requestFullscreen === 'function') {
+          void el.requestFullscreen().catch(() => {});
+        } else if (typeof el.webkitRequestFullscreen === 'function') {
+          void el.webkitRequestFullscreen();
+        }
+      }
+    } catch {
+      // CSS full-viewport mode still activates if the browser blocks native fullscreen.
+    }
   }, []);
 
   const exitFullScreen = useCallback(() => {
     setFullScreen(false);
     try {
-      if (typeof document !== 'undefined' && document.fullscreenElement) {
-        void document.exitFullscreen?.().catch(() => {});
+      const doc = typeof document !== 'undefined' ? (document as Document & { webkitFullscreenElement?: Element | null; webkitExitFullscreen?: () => Promise<void> | void }) : null;
+      if (doc && (doc.fullscreenElement || doc.webkitFullscreenElement)) {
+        if (typeof doc.exitFullscreen === 'function') {
+          void doc.exitFullscreen().catch(() => {});
+        } else if (typeof doc.webkitExitFullscreen === 'function') {
+          void doc.webkitExitFullscreen();
+        }
       }
     } catch {
       // Ignore if not in native fullscreen.
@@ -79,15 +96,18 @@ export function PosClient({
       }
     };
     const onFsChange = () => {
-      if (typeof document !== 'undefined' && !document.fullscreenElement) {
+      const doc = typeof document !== 'undefined' ? (document as Document & { webkitFullscreenElement?: Element | null }) : null;
+      if (doc && !doc.fullscreenElement && !doc.webkitFullscreenElement) {
         setFullScreen(false);
       }
     };
     window.addEventListener('keydown', onKey);
     document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
     return () => {
       window.removeEventListener('keydown', onKey);
       document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
     };
   }, [fullScreen, exitFullScreen]);
 
