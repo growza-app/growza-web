@@ -7,11 +7,16 @@ const root = path.resolve(import.meta.dirname, '../../..');
 const read = (rel: string) => readFileSync(path.resolve(root, rel), 'utf8');
 
 describe('Retail Enterprise UI Redesign across all 6 surfaces', () => {
-  it('Surface 1 (Home): renders the 4-card Executive KPI Strip, balanced 2-column desktop stack, and bookings-off header search label', () => {
+  it('Surface 1 (Home): renders the 4-row Salon-style Desktop Command Center (.hm-desk-v3) alongside the mobile KPI strip and bookings-off header search label', () => {
     const shopHome = read('app/(tenant)/components/home/ShopHome.tsx');
     const shopHomeCss = read('app/(tenant)/styles/99-shop-home.css');
     const headerSearch = read('app/(tenant)/components/HeaderSearch.tsx');
 
+    expect(shopHome).toContain('hm-desk-v3 hm-desktop shp-desk-v3');
+    expect(shopHome).toContain('hm-v3-kpis');
+    expect(shopHome).toContain('hm-v3-trend-card');
+    expect(shopHome).toContain('hm-v3-quick-card');
+    expect(shopHome).toContain('hm-v3-recent-table');
     expect(shopHome).toContain('shp-kpi-strip');
     expect(shopHome).toContain('shp-col-stack');
     expect(shopHome).toContain('s.todaysTakings');
@@ -20,6 +25,7 @@ describe('Retail Enterprise UI Redesign across all 6 surfaces', () => {
     expect(shopHome).toContain('s.lowStockLabel');
     expect(shopHomeCss).toContain('.shp-kpi-strip');
     expect(shopHomeCss).toContain('.shp-col-stack');
+    expect(shopHomeCss).toContain('.shp-mobile-stack');
     expect(headerSearch).toContain('areas.bookings === false');
 
     for (const lang of ['en', 'hi'] as const) {
@@ -32,6 +38,10 @@ describe('Retail Enterprise UI Redesign across all 6 surfaces', () => {
       expect(copy.shop.whatToOrderLink).toBeTruthy();
       expect(copy.shop.channelsLink).toBeTruthy();
       expect(copy.shop.stockReportLink).toBeTruthy();
+      expect(copy.shop.salesTrendTitle).toBeTruthy();
+      expect(copy.shop.ordersAttentionTitle).toBeTruthy();
+      expect(copy.shop.stockAttentionTitle).toBeTruthy();
+      expect(copy.shop.recentOrdersTitle).toBeTruthy();
     }
   });
 

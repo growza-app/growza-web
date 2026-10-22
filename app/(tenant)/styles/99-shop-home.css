@@ -280,22 +280,77 @@
   grid-column: 1 / -1;
 }
 
+.shp-mobile-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.shp-desk-toolbar {
+  display: none;
+}
+
+/* Desktop Command Center (`.shp-desk-v3`) rows inside Row 2 & Row 3 */
+.shp-channel-rows {
+  flex: 1;
+  justify-content: space-around;
+}
+
+.shp-channel-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.shp-channel-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.shp-channel-meta {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+  color: var(--hm-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hm-v3-desk-attention.shp-orders-att .hm-v3-prod-att-summary.shp-two-chips {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.shp-desk-v3 .hm-v3-row-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shp-desk-v3 .hm-v3-row-btn:hover {
+  text-decoration: none;
+}
+
+.shp-desk-v3 .hm-v3-bars {
+  column-gap: 1.5%;
+}
+
 @media (min-width: 861px) {
   .shp-page {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--sp-4);
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-3);
     align-items: start;
   }
-  .shp-kpi-strip {
-    grid-column: 1 / -1;
-    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-    gap: var(--sp-3);
-  }
-  .shp-kpi-card:last-child:nth-child(odd) {
-    grid-column: auto;
+  .shp-mobile-stack {
+    display: none;
   }
   .shp-page > .hm-tiles {
-    grid-column: 1 / -1;
+    display: none;
   }
 }
+
