@@ -3194,7 +3194,7 @@
     "lowStock": "{n} left — low",
     "strip": {
       "products": "Products",
-      "worth": "Stock worth",
+      "worth": "Stock value",
       "low": "Running low"
     },
     "filters": {
@@ -3579,11 +3579,11 @@
       "nothingHint": "Add products to Stock and they show here.",
       "goToStock": "Go to Stock",
       "nounStyles": "styles",
-      "export": "Export to a file",
+      "export": "Export CSV",
       "exporting": "Making the file…",
       "exportFailed": "Could not make the file. Try again.",
-      "totalsLabel": "What the shelf is worth",
-      "worth": "Worth at cost",
+      "totalsLabel": "Total stock value",
+      "worth": "Stock value",
       "totalsLine": "{styles, plural, one {1 style} other {# styles}} · {sizes, plural, one {1 size} other {# sizes}} · {units} on the shelf",
       "withoutCost": "{count, plural, one {1 size has no cost price, so it is not in this worth.} other {# sizes have no cost price, so they are not in this worth.}}",
       "negative": "{count, plural, one {1 size is below zero. Count it again.} other {# sizes are below zero. Count them again.}}",
@@ -3591,9 +3591,9 @@
       "noCostShort": "no cost",
       "units": "{units} on the shelf",
       "sizesLabel": "Sizes of {name}",
-      "toSellers": "What sells and what sits",
-      "toOrder": "What to order",
-      "toChannels": "Where the money came from",
+      "toSellers": "Top sellers",
+      "toOrder": "Reorder list",
+      "toChannels": "Sales by channel",
       "kpiUnitsLabel": "Units on the shelf",
       "kpiUnitsSub": "Across {sizes} sizes",
       "kpiStylesLabel": "Styles & sizes",
@@ -3611,14 +3611,14 @@
       "colStyle": "Style",
       "colBranch": "Branch",
       "colUnits": "On the shelf",
-      "colWorth": "Worth at cost",
+      "colWorth": "Stock value",
       "colSizes": "Size breakdown"
     },
     "sellers": {
-      "title": "What sells",
+      "title": "Top sellers",
       "viewGroup": "What to show",
-      "viewBest": "What sells",
-      "viewDead": "Sitting unsold",
+      "viewBest": "Top sellers",
+      "viewDead": "Unsold stock",
       "rangeLabel": "Period",
       "range": {
         "last_7_days": "Last 7 days",
@@ -3651,11 +3651,11 @@
       "neverSold": "never sold",
       "notSoldSince": "not sold since {when}",
       "toReport": "Stock report",
-      "toOrder": "What to order"
+      "toOrder": "Reorder list"
     },
     "reorder": {
-      "title": "What to order",
-      "howFarAhead": "How far ahead",
+      "title": "Reorder list",
+      "howFarAhead": "Delivery & stock days",
       "categoryLabel": "Category",
       "allCategories": "All categories",
       "loading": "Loading",
@@ -3678,7 +3678,7 @@
       "saveFailed": "Could not save. Your number is still here. Try again.",
       "nounSizes": "sizes",
       "total": "{units} to order across {sizes, plural, one {1 size} other {# sizes}}",
-      "export": "Export the list",
+      "export": "Export CSV",
       "exporting": "Making the file…",
       "exportFailed": "Could not make the file. Try again.",
       "rulesHint": "How many days an order takes to arrive, and how many days of selling it has to last. Where you set nothing, {lead} days and {cover} days are used.",
@@ -3687,11 +3687,11 @@
       "coverLabel": "Days to cover",
       "saveRule": "Save",
       "useDefaults": "Use the usual days",
-      "toSellers": "What sells and what sits",
+      "toSellers": "Top sellers",
       "fixBeforeExport": "Some numbers have not been saved. Fix them or try again before you export."
     },
     "channels": {
-      "title": "Where the money came from",
+      "title": "Sales by channel",
       "rangeLabel": "Period",
       "range": {
         "last_7_days": "Last 7 days",
@@ -4170,7 +4170,7 @@
       "not_said": "No reason given"
     },
     "returns": {
-      "title": "What came back",
+      "title": "Returns",
       "rangeLabel": "Period",
       "range": {
         "last_7_days": "Last 7 days",
@@ -4190,9 +4190,9 @@
       "undeliveredTitle": "Came back undelivered",
       "undeliveredNone": "No parcels came back undelivered.",
       "undeliveredNote": "These never reached the customer. They are counted apart, not as returns.",
-      "toRefunds": "What was refunded"
+      "toRefunds": "Refunds"
     },
-    "returnsLink": "What came back",
+    "returnsLink": "Returns",
     "bringIn": {
       "title": "Orders from online",
       "updated": "{channel} orders last brought in {when}",
@@ -4207,7 +4207,7 @@
       "unacknowledged": "{count, plural, one {1 order not yet confirmed to {channel}} other {# orders not yet confirmed to {channel}}}"
     },
     "refunds": {
-      "title": "What was refunded",
+      "title": "Refunds",
       "rangeLabel": "Period",
       "range": {
         "last_7_days": "Last 7 days",
@@ -4233,11 +4233,11 @@
       "orderRef": "Order {ref}",
       "reference": "Reference {ref}",
       "nounRefunds": "refunds",
-      "export": "Export to a file",
+      "export": "Export CSV",
       "exporting": "Making the file…",
       "exportFailed": "Could not make the file. Try again.",
       "recordNote": "These are records of refunds that were made, so you can match them against the marketplace’s statement. Nothing here is refunded from Growza.",
-      "toReturns": "What came back",
+      "toReturns": "Returns",
       "nothingOnChannel": "No {channel} refunds in this period",
       "openOrder": "Open the order"
     },

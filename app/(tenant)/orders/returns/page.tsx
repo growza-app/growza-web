@@ -8,7 +8,7 @@ import { guardScreen } from '../../lib/screen-guard';
 import { ReturnsClient } from './ReturnsClient';
 
 export const dynamic = 'force-dynamic';
-export const metadata = screenTitle('What came back');
+export const metadata = screenTitle('Returns');
 
 /**
  * Jira GRW-635 — what came back, and why. Owner and manager only, as the API is: the front desk is sent back to Orders.

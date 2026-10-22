@@ -8,7 +8,7 @@ import { guardScreen } from '../../lib/screen-guard';
 import { ChannelsClient } from './ChannelsClient';
 
 export const dynamic = 'force-dynamic';
-export const metadata = screenTitle('Where the money came from');
+export const metadata = screenTitle('Sales by channel');
 
 /**
  * Jira GRW-634 — where the money came from: the counter, Flipkart and Amazon side by side.
