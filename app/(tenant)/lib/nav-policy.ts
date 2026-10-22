@@ -218,6 +218,14 @@ export function canSee(href: string, role?: MemberRole | null, reportTabs?: read
     if (role === 'receptionist') return true;
     return roleCanSee('/products', role, tabs);
   }
+  // Jira GRW-582 — a customer's receipt or invoice: open in both a salon and a shop (`areaAllows` above is true for
+  // both, whereas `/sales` is closed in a shop), to the owner, manager and front desk (who settles the bill and hands
+  // the customer their receipt from the Done screen).
+  if (href.startsWith('/documents')) {
+    if (!(live || isSetupDestination(href))) return false;
+    if (role === 'receptionist') return true;
+    return roleCanSee('/customers', role, tabs);
+  }
   if (href.startsWith('/sales')) {
     if (!(live || isSetupDestination(href))) return false;
     // A receptionist sees the register only when the salon has opened it; the others follow Clients' answer as before.
