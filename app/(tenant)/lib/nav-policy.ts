@@ -60,6 +60,7 @@ export const PAGE_OF_HREF: ReadonlyArray<readonly [string, keyof PageGrid]> = [
   ['/sales', 'bookings'],
   ['/documents', 'bookings'],
   ['/products/sell', 'bookings'],
+  ['/pos', 'bookings'],
   ['/try-whatsapp', 'bookings'],
   ['/customers', 'clients'],
   // The one-box search finds bookings as well as clients, so it follows the page it reveals more of.
@@ -85,6 +86,7 @@ export const PAGE_OF_HREF: ReadonlyArray<readonly [string, keyof PageGrid]> = [
 const ALSO_NEEDS: ReadonlyArray<readonly [string, keyof PageGrid]> = [
   // A shop's till is `/products/sell` under another address (Jira GRW-616): the same two pages. Listed BEFORE `/orders`, which would otherwise claim it.
   ['/orders/new', 'services'],
+  ['/pos', 'services'],
   ['/orders', 'reports'],
   ['/sales', 'reports'],
   ['/products/sell', 'services'],
@@ -97,7 +99,7 @@ const OWNER_ONLY_HREF: readonly string[] = ['/settings/billing', '/settings/bran
  * Screens whose whole job is a write: opened at See they would draw a form every control of which the API refuses, so they need Change to be
  * offered at all (Jira GRW-76). The till and a new booking take an order or a visit; there is no read-only version of either.
  */
-const NEEDS_CHANGE_TO_OPEN: readonly string[] = ['/products/sell', '/orders/new', '/appointments/new', '/try-whatsapp'];
+const NEEDS_CHANGE_TO_OPEN: readonly string[] = ['/products/sell', '/orders/new', '/pos', '/appointments/new', '/try-whatsapp'];
 
 /** The page a destination belongs to, or undefined when it is open to every member. */
 export function pageOfHref(href: string): keyof PageGrid | undefined {
@@ -161,7 +163,8 @@ export function canSee(href: string, role?: MemberRole | null, reportTabs?: read
    * so the answer is given locally. Delete this block when the pin reaches 1.0.11 — `roleCanSee` then answers it.
    * It is NOT '/products': the catalogue (cost prices, delete, transfer between branches) stays the owner's.
    */
-  if (href.startsWith('/products/sell')) {
+  // The POS tab IS the till (`/products/sell` now lands on it), so it takes the till's answer exactly.
+  if (href === '/pos' || href.startsWith('/products/sell')) {
     if (!(live || isSetupDestination(href))) return false;
     if (role === 'receptionist') return true;
     return roleCanSee('/products', role, tabs);

@@ -144,6 +144,7 @@ describe('every screen that writes asks whether it may (the list that cannot qui
     // The till link asks the business (`useBusinessWritable`) and the role (`canSee`), not the screen's page: the till is Bookings' and Stock's.
     ['products/ProductsList.tsx', /useBusinessWritable\(\) && canSee\('\/products\/sell'[\s\S]*\{live\.length > 0 && tillOpen \? \(\s*<Link className="btn btn-ghost" href="\/products\/sell\?from=products">/],
     ['products/sell/SellProductScreen.tsx', /!mayUse\(me\.member\?\.role, 'visit\.recordPayment', isWritable\(me\.tenant\?\.status\)\)/],
+    ['pos/page.tsx', /!mayUse\(me\.member\?\.role, 'visit\.recordPayment', isWritable\(me\.tenant\?\.status\)\)/],
     // Staff
     ['providers/StaffClient.tsx', /actions=\{\s*writable \? \(\s*<button type="button" className="btn" onClick=\{\(\) => setCreating\('staff'\)\}/],
     ['providers/StaffRoster.tsx', /disabled=\{disabled \|\| !writable\}/],

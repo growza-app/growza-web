@@ -1,0 +1,39 @@
+/* ---------- POS tab: Sell | Return above the till ---------- */
+
+/*
+ * The mode bar reuses `.page-tabs`, so the only things here are what the till around it needs: the bar sits on one
+ * line with its status note, the two tabs are 44px tall (the phone's tap size), and nothing is a one-off colour.
+ */
+.pos-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.pos-bar .pos-tabs {
+  margin-bottom: 0;
+}
+
+.pos-tabs .page-tab {
+  min-height: 2.75rem;
+  min-width: 5rem;
+}
+
+.pos-note {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.pos-fail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--radius);
+  background: var(--slate-soft);
+  font-size: 0.875rem;
+}

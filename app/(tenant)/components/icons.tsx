@@ -655,6 +655,15 @@ export const IconReceipt = () => (
   </svg>
 );
 
+/** Jira (POS tab) — a till: the screen above, the keys below. Drawn at Feather's weight like the rest. */
+export const IconPos = () => (
+  <svg {...base}>
+    <rect x="6" y="3" width="12" height="6" rx="2" />
+    <rect x="4" y="11" width="16" height="10" rx="2.5" />
+    <path d="M8.5 15h.01M12 15h.01M15.5 15h.01M8.5 18h.01M12 18h.01M15.5 18h.01" />
+  </svg>
+);
+
 export const IconClipboardCheck = () => (
   <svg {...base}>
     <rect x="4.5" y="4.5" width="15" height="16.5" rx="3.5" />

@@ -422,6 +422,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       home: S('Home', 'होम'),
       bookings: hi ? 'बुकिंग' : (labels.appointments ?? copy.nav.appointments),
       sales: S('Sales', 'बिक्री'),
+      /** The till as a tab: sell, print the GST receipt, take a product back. "POS" is the word shop owners already say. */
+      pos: S('POS', 'पीओएस'),
       /** Jira GRW-608 — the shop's two screens. The vertical's own word in English; Hindi uses the generic one (Jira GRW-315). */
       orders: hi ? 'ऑर्डर' : (labels.orders ?? 'Orders'),
       stock: hi ? 'स्टॉक' : (labels.stock ?? 'Stock'),
