@@ -48,7 +48,6 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
   const [locating, setLocating] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
 
   const useHere = async () => {
     setLocating(true);
@@ -91,11 +90,21 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
     if (found) showPin(found);
   };
 
+  /*
+   * Text in the link box that THIS side could not read goes to the API as `geoLink`, and the save is what
+   * looks it up.
+   *
+   * Google's Share button hands out `maps.app.goo.gl/AbC123`, which carries an id and no numbers: one
+   * redirect away from a URL that has them, and that redirect can only be followed by a server. The API
+   * grew that in `306e44a8` and nothing ever called it — this form parsed the text itself, refused what it
+   * could not read, and never sent `geoLink` at all. So the hint on this very box ("Share the branch from
+   * Google Maps and paste the link here") described the one paste that was guaranteed to fail.
+   *
+   * A long maps URL still resolves here, with no request, and is sent as a pin like any other.
+   */
+  const sendsLink = link.trim() !== '' && !pinFromText(link);
+
   const save = async () => {
-    if (link.trim() && !pinFromText(link)) {
-      setError(t('errors.noPlaceInLink'));
-      return;
-    }
     // Half a pair, or a number that is not a place: said here, next to the boxes it is about.
     if ((latText.trim() || lngText.trim()) && !pin) {
       setError(t('errors.badCoords'));
@@ -106,19 +115,32 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
       setError(t('errors.badRadius', { min: RADIUS_MIN_M, max: RADIUS_MAX_M }));
       return;
     }
-    if (enabled && !pin) {
+    // A link waiting to be looked up IS a location, so the switch is not refused for want of one.
+    if (enabled && !pin && !sendsLink) {
       setError(t('errors.pinFirst'));
       return;
     }
     setBusy(true);
     setError(null);
-    setSaved(false);
     try {
-      await api.updateBranch(branch.id, { geoPin: pin, geoRadiusM: radius, geoEnabled: enabled, geoDeskApproves: deskApproves });
-      setSaved(true);
+      /*
+       * `geoLink` wins over `geoPin` at the API, so only one of them is ever sent.
+       */
+      await api.updateBranch(
+        branch.id,
+        sendsLink
+          ? { geoLink: link.trim(), geoRadiusM: radius, geoEnabled: enabled, geoDeskApproves: deskApproves }
+          : { geoPin: pin, geoRadiusM: radius, geoEnabled: enabled, geoDeskApproves: deskApproves },
+      );
       closeForm();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : t('errors.saveFailed'));
+      /*
+       * The API marks a link it could not read with `field: 'geoLink'` (GRW-473). Answered in this form's
+       * own words so that Hindi is Hindi — the server's sentence is written once, in English, and cannot
+       * know who is reading it.
+       */
+      if (err instanceof ApiError && err.field === 'geoLink') setError(t('errors.noPlaceInLink'));
+      else setError(err instanceof ApiError ? err.message : t('errors.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -210,7 +232,11 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
               </label>
             </div>
             <input type="text" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} aria-label={t('linkLabel')} value={link} placeholder={t('linkPlaceholder')} disabled={busy || !writable} onChange={(e) => linkChanged(e.target.value)} />
-            <span className="field-hint">{t('linkHint')}</span>
+            {/*
+              A short link shows nothing back until it is saved — the lookup is the server's. Said plainly,
+              because the status above still reads "Not set yet" and the owner is owed a reason why.
+            */}
+            <span className="field-hint">{sendsLink ? t('linkOnSave') : t('linkHint')}</span>
           </details>
         </div>
 
@@ -253,7 +279,7 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
      * never pinned, it just sat at the end of the form, underneath the floating bottom nav. Measured at
      * 344x882: the nav, not the button, answered a tap at the centre of Save.
      */}
-    <SettingsSaveBar busy={busy} saved={saved} onSave={() => void save()} saveLabel={t('save')} savingLabel={t('saving')} savedLabel={t('savedLabel')} />
+    <SettingsSaveBar busy={busy} onSave={() => void save()} saveLabel={t('save')} savingLabel={t('saving')} />
     </>
   );
 }

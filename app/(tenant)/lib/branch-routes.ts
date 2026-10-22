@@ -14,7 +14,7 @@
  * its services, its stylists and its till all belong to that branch, so "All branches" would name no till the
  * money could go into.
  */
-const ONE_BRANCH_ONLY = ['/services', '/products', '/availability', '/settings', '/appointments/new'];
+const ONE_BRANCH_ONLY = ['/services', '/products', '/pos', '/orders/new', '/availability', '/settings', '/appointments/new'];
 
 /**
  * Screens the server draws from `?branch=` (with `BranchUrlSync`). A new pick is written into their address so
@@ -30,7 +30,7 @@ const BRANCH_IN_ADDRESS = ['/customers', '/services', '/products', '/reports', '
  * Payments is here although a QR can be a branch's: the screen shows the business's and EVERY branch's at
  * once, so it is not looking at one branch and a picker would narrow nothing.
  */
-const WHOLE_BUSINESS = ['/settings/business', '/settings/branches', '/settings/payments', '/settings/report-access', '/settings/billing'];
+const WHOLE_BUSINESS = ['/settings/business', '/settings/branches', '/settings/payments', '/settings/report-access', '/settings/roles', '/settings/billing', '/settings/channels'];
 
 function matches(pathname: string, route: string): boolean {
   return pathname === route || pathname.startsWith(`${route}/`);

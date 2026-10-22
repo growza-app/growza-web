@@ -1,9 +1,9 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { mayUse, type MemberRole } from '../lib/nav-policy';
+import { canSee, gridMayUse, mayUse, type MemberRole } from '../lib/nav-policy';
 import type { Lang } from '../lib/lang';
-import { useLive, useWritable } from './SessionProvider';
+import { useAreas, useLive, useBusinessWritable } from './SessionProvider';
 import { BottomNav } from './BottomNav';
 
 /**
@@ -62,20 +62,32 @@ export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Recor
    * of them, and one tap on "For later" is still there when they do not.
    */
   // Jira GRW-556 (follow-up) — and the business being allowed to write: a suspended one has nothing to start.
-  const writable = useWritable();
-  const mayBook = mayUse(role, 'visit.new', writable);
+  const writable = useBusinessWritable();
   // Jira GRW-556 — no floating "+" until the business is live: there is nothing it could start.
   const live = useLive();
+  // Jira GRW-609 — a shop has no diary to start a visit in: its plus takes an order, at the till (`/orders/new`, Jira GRW-616).
+  const areas = useAreas();
+  /*
+   * Jira GRW-74 — the ROLE GRID as well, which `mayUse` alone cannot see: it knows only the fixed word a role works
+   * like. This is chrome rather than a screen, so `useBusinessWritable` is right above and `useWritable` would be
+   * wrong — but `plusOpens` below asks the grid about `/appointments`, which See satisfies, while the plus goes to
+   * `/appointments/new`, which it does not. Without this the phone's centre button opened a booking form for a role
+   * held at See (review, 2026-10-22).
+   */
+  const mayBook = mayUse(role, 'visit.new', writable) && (!areas.pages || gridMayUse('visit.new', areas.pages));
+  // Jira GRW-74 — and the role opens what the plus goes to: a shop's till needs Orders and Stock.
+  const plusOpens = !areas.pages || canSee(areas.shop ? '/products/sell' : '/appointments', role, undefined, true, areas);
   const onCentre =
-    mayBook && live && PLUS_ROUTE_RE.test(pathname) ? () => router.push('/appointments/new?mode=now') : undefined;
+    mayBook && plusOpens && live && PLUS_ROUTE_RE.test(pathname) ? () => router.push(areas.shop ? '/orders/new' : '/appointments/new?mode=now') : undefined;
 
   /*
    * Owner, 2026-10-06 — the plus offers two things: New booking (the page) and Record payment (a page on a phone,
    * `?purpose=payment`, like New booking).
    * Whoever may not record a payment gets the plus straight to New booking, as before.
    */
-  const mayRecordPayment = mayUse(role, 'visit.recordPayment', writable);
-  const onPayment = onCentre && mayRecordPayment ? () => router.push('/appointments/new?purpose=payment') : undefined;
+  const mayRecordPayment = mayUse(role, 'visit.recordPayment', writable) && (!areas.pages || gridMayUse('visit.recordPayment', areas.pages));
+  // (A shop's plus is already the till: there is no second thing to offer beside it.)
+  const onPayment = onCentre && mayRecordPayment && !areas.shop ? () => router.push('/appointments/new?purpose=payment') : undefined;
 
   // Jira GRW-526 — New booking is a focused full screen: no tab bar under it, on any of its steps.
   if (NO_BAR_ROUTE_RE.test(pathname)) return null;

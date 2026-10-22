@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Product } from './api-types';
-import { productByCode, productMatchable } from './product-match';
+import { productByCode, productMatchable, sizeWords } from './product-match';
 import { matchItems } from './service-match';
 
 /**
@@ -105,9 +105,9 @@ describe('the product sheet carries both codes and the collapsed Tax group', () 
     expect(sheet).toMatch(/&& !barcodeBad;/);
     expect(sheet).toMatch(/aria-describedby=\{barcodeBad \? 'prd-barcode-error' : 'prd-codes-hint'\}/);
   });
-  it('FR-03: Tax is collapsed until set or opened, and 0% GST (0 bp) stays distinct from not set (null)', () => {
+  it('FR-03: Tax is open by default on the product sheet so GST and HSN are never hidden, and 0% GST (0 bp) stays distinct from not set (null)', () => {
     expect(sheet).toMatch(/useState<string>\(product\?\.gstRateBp != null \? String\(product\.gstRateBp\) : ''\)/);
-    expect(sheet).toMatch(/useState\(Boolean\(product && \(product\.gstRateBp != null \|\| product\.hsn\)\)\)/);
+    expect(sheet).toMatch(/const \[taxOpen, setTaxOpen\] = useState\(true\)/);
     expect(sheet).toMatch(/\(gstRateBp === '' \? null : Number\(gstRateBp\)\) !== \(target\.gstRateBp \?\? null\)/);
     expect(sheet).toMatch(/\(hsn\.trim\(\) \|\| null\) !== \(target\.hsn \?\? null\)/);
     expect(sheet).toMatch(/gstRateBp: gstRateBp === '' \? null : Number\(gstRateBp\),\s*hsn: hsn\.trim\(\) \|\| null,/);
@@ -229,7 +229,7 @@ describe("StockTake — count a branch's shelf in one pass (GRW-574 part 4)", ()
     expect(list).toMatch(/<StockTake[\s\S]*branchId=\{branchId\}/);
     expect(list).toMatch(/<ProductCategoriesDropdown[\s\S]*selected=\{selectedCategories\}/);
     expect(take).toMatch(/api\s*\.stockTakeProducts\(branchId\)/);
-    expect(take).toMatch(/await api\.saveStockTake\(branchId, \{\s*counts: payload,\s*\}\);/);
+    expect(take).toMatch(/await api\.saveStockTake\(branchId, \{\s*counts: payload,\s*sizes: sizeLines\(shelf, sizeCounts\),\s*\}\);/);
     expect(take).not.toContain('prd-st-note');
     expect(take).toMatch(/matchItems\(pool\.map\(productMatchable\), q\)/);
     expect(take).toMatch(/<ProductCategoriesDropdown[\s\S]*selected=\{selectedCategories\}/);
@@ -242,7 +242,7 @@ describe("StockTake — count a branch's shelf in one pass (GRW-574 part 4)", ()
      * every product, falling back to the number read when the screen opened, so a sale that landed while the sheet
      * was open was written back out of existence.
      */
-    expect(take).toMatch(/\.filter\(\(p\) => touchedRef\.current\.has\(p\.id\)\)/);
+    expect(take).toMatch(/\.filter\(\(p\) => touchedRef\.current\.has\(p\.id\) && !isSizedProduct\(p\)\)/);
     expect(take).not.toMatch(/const payload = shelf\.map/);
     expect(take).toMatch(/hasInvalid\s*\?\s*t\('stockTake\.sayCount'\)/);
     expect(take).toMatch(/<IconCheck \/> \{t\('form\.saved'\)\}/);
@@ -280,4 +280,45 @@ describe("StockTake — count a branch's shelf in one pass (GRW-574 part 4)", ()
   });
 });
 
+describe('Jira GRW-599 — a size’s own code finds its product', () => {
+  const shirt = { ...p('Shirt'), sizes: [{ id: 's30', option1: '30', option2: null, priceMinor: null, sku: 'SHIRT-30', barcode: '8900000000303', stock: 2 }] } as Product;
+  const shelf = [shirt, p('Oil', { barcode: '8901111111111' })];
 
+  it('typing a size’s barcode or SKU finds the shirt (the till then opens its sizes)', () => {
+    expect(matchItems(shelf.map(productMatchable), '8900000000303')[0]!.id).toBe('Shirt');
+    expect(matchItems(shelf.map(productMatchable), 'SHIRT-30')[0]!.id).toBe('Shirt');
+  });
+
+  it('a plain product’s code still finds only it', () => {
+    expect(matchItems(shelf.map(productMatchable), '8901111111111').map((m) => m.id)).toEqual(['Oil']);
+  });
+});
+
+
+describe('a size is a word a style is found by (GRW-604 BR-03)', () => {
+  const size = (id: string, option1: string, option2: string | null = null, stock = 3) => ({ id, option1, option2, priceMinor: null, sku: null, barcode: null, stock });
+  const shirt: Product = { ...p('Half-Sleeve Shirt'), sizes: [size('1', '28', 'White'), size('2', '28', 'Sky blue'), size('3', '30', 'White', 0)] };
+  const kurta: Product = { ...p('Cotton Kurta'), sizes: [size('4', '40'), size('5', '42')] };
+  const mug = p('Steel Mug');
+  const list = [shirt, kurta, mug];
+
+  it('lists each size and colour word once, in the owner’s order', () => {
+    expect(sizeWords(shirt)).toEqual(['28', 'White', 'Sky blue', '30']);
+    expect(sizeWords(mug)).toEqual([]);
+  });
+
+  it('"30" finds the styles that stock size 30 — and returns styles, not sizes', () => {
+    const found = matchItems(list.map(productMatchable), '30');
+    expect(found.map((x) => x.id)).toEqual(['Half-Sleeve Shirt']);
+  });
+
+  it('a colour finds the style, and a size that is out of stock still does (the owner is looking for the style)', () => {
+    expect(matchItems(list.map(productMatchable), 'sky blue').map((x) => x.id)).toEqual(['Half-Sleeve Shirt']);
+    const onlyOut: Product = { ...p('Last Shirt'), sizes: [size('9', '32', null, 0)] };
+    expect(matchItems([onlyOut].map(productMatchable), '32').map((x) => x.id)).toEqual(['Last Shirt']);
+  });
+
+  it('a product with no sizes is found exactly as before', () => {
+    expect(matchItems(list.map(productMatchable), 'mug').map((x) => x.id)).toEqual(['Steel Mug']);
+  });
+});

@@ -23,6 +23,12 @@ describe('review, 2026-10-15 — a photo that fails after a create does not trap
     expect(sheet).toMatch(/className="sheet-head-cancel"[^>]*onClick=\{close\}/);
     expect(sheet).toMatch(/modal-backdrop" onClick=\{busy \? undefined : close\}/);
   });
+
+  it('picking a photo on an existing product uploads immediately and updates the header thumbnail', () => {
+    expect(sheet).toContain("e.target.value = ''");
+    expect(sheet).toContain('const updated = await api.uploadProductPhoto(target.id, f);');
+    expect(sheet).toContain('product={{ ...product, imageUrl: photoPreview ?? imageUrl }}');
+  });
 });
 
 describe('review, 2026-10-15 — the packages review', () => {

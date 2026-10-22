@@ -1,5 +1,6 @@
 import type { Lang } from './lang';
 import { copy } from './copy';
+import { nounInSentence } from './nouns';
 
 /**
  * Jira GRW-222 — every word on the three Homes, the header and the navigation,
@@ -384,12 +385,106 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     myMoneyToday: S('My money today', 'आज मेरा पैसा'),
 
     retry: S('Try again', 'फिर से कोशिश करें'),
+
+    /**
+     * Jira GRW-609 — a shop's Home. The noun for an order is the vertical's (`labels.order`/`orders`) in English and the
+     * generic Hindi word otherwise, like every other noun here (Jira GRW-315).
+     */
+    shop: {
+      takings: S('Total sales', 'कुल बिक्री'),
+      today: S('Today', 'आज'),
+      yesterday: S('Yesterday', 'कल'),
+      /** "1 order", "11 orders" — the singular and the plural are the vertical's own words. */
+      orderCount: (n: number) => (hi ? `${n} ऑर्डर` : `${n} ${nounInSentence(n === 1 ? (labels.order ?? 'Order') : (labels.orders ?? 'Orders'))}`),
+      ordersTitle: S(labels.orders ?? 'Orders', 'ऑर्डर'),
+      viewOrders: S('View all', 'सभी देखें'),
+      noOrdersTitle: S('No orders yet', 'अभी कोई ऑर्डर नहीं'),
+      noOrdersBody: S('Your first sale will show up here.', 'आपकी पहली बिक्री यहाँ दिखेगी।'),
+      /** Nothing can be sold from a shelf nobody has counted (a count of zero cannot be sold), so the first step is the count. */
+      countFirst: S('Count your stock first, then ring up your first sale.', 'पहले अपना स्टॉक गिनें, फिर पहली बिक्री करें।'),
+      takeOrder: S('Take an order', 'ऑर्डर लें'),
+      // Jira GRW-619 — the owner's way in for the order report downloaded from a marketplace.
+      importOrders: S('Import orders', 'ऑर्डर इम्पोर्ट करें'),
+      noOrdersToday: S('No orders today yet.', 'आज अभी कोई ऑर्डर नहीं।'),
+      /** Jira GRW-614 — the work waiting, which opens the Orders list already filtered to it. */
+      toSend: (n: number) => S(`${n} to send`, `${n} भेजने हैं`),
+      runningOut: S('Running out', 'ख़त्म होने वाला'),
+      notCounted: S("You haven't counted your stock yet.", 'आपने अभी स्टॉक की गिनती नहीं की है।'),
+      countStock: S('Count your stock', 'स्टॉक गिनें'),
+      nothingLow: S('Nothing is running low.', 'कुछ भी कम नहीं है।'),
+      left: (n: number) => (n <= 0 ? S('None left', 'ख़त्म') : S(`${n} left`, `${n} बचे`)),
+      sizeWord: (size: string) => S(`size ${size}`, `साइज़ ${size}`),
+      viewAll: (n: number) => S(`View all (${n})`, `सभी देखें (${n})`),
+      todaysTakings: S("Today's sales", 'आज की बिक्री'),
+      yesterdaysTakings: S("Yesterday's sales", 'कल की बिक्री'),
+      ordersTodayLabel: S('Orders today', 'आज के ऑर्डर'),
+      waitingToSendLabel: S('Waiting to send', 'भेजने बाकी'),
+      allSentSub: S('Nothing waiting to ship', 'भेजने के लिए कुछ बाकी नहीं'),
+      needsDispatchSub: S('Ready to pack and send', 'पैक करके भेजने के लिए तैयार'),
+      lowStockLabel: S('Low stock sizes', 'कम स्टॉक वाले साइज़'),
+      sizesLowSub: (n: number) => (n === 0 ? S('All sizes well stocked', 'सभी साइज़ पर्याप्त हैं') : S(`${n} sizes running low`, `${n} साइज़ कम हो रहे हैं`)),
+      whatSellsLink: S('Top sellers', 'सबसे ज़्यादा बिकने वाले'),
+      whatToOrderLink: S('Reorder list', 'मँगाने की सूची'),
+      channelsLink: S('Sales by channel', 'चैनल के हिसाब से बिक्री'),
+      stockReportLink: S('Stock report', 'स्टॉक रिपोर्ट'),
+      range7d: S('Last 7 days', 'पिछले 7 दिन'),
+      rangeMonth: S('This month', 'इस महीने'),
+      range90d: S('Last 3 months', 'पिछले 3 महीने'),
+      rangeLabel: S('Show figures for', 'इसके आँकड़े दिखाएँ'),
+      counterChannel: S('Counter', 'काउंटर'),
+      flipkartChannel: S('Flipkart', 'फ़्लिपकार्ट'),
+      amazonChannel: S('Amazon', 'अमेज़न'),
+      toSendShort: S('To send', 'भेजने हैं'),
+      returnedShort: S('Returned', 'वापस आए'),
+      unitsSoldTitle: S('Units sold', 'बिकी हुई यूनिट'),
+      acrossSizes: (revenue: string, sizes: number) => S(`${revenue} across ${sizes} sizes`, `${sizes} साइज़ में ${revenue}`),
+      topSellerLabel: S('Top seller', 'सबसे ज़्यादा बिका'),
+      stockWorthTitle: S('Stock value', 'स्टॉक की कीमत'),
+      stylesAndSizes: (styles: number, sizes: number) => S(`${styles} styles · ${sizes} sizes`, `${styles} डिज़ाइन · ${sizes} साइज़`),
+      onShelfShort: S('On shelf', 'दुकान में'),
+      lowStockShort: S('Low stock', 'कम स्टॉक'),
+      salesTrendTitle: S('Sales trend', 'बिक्री का रुझान'),
+      noSalesInRange: S('No sales recorded in this period yet.', 'इस अवधि में अभी कोई बिक्री दर्ज नहीं हुई।'),
+      avgOrderShort: (amt: string) => S(`avg ${amt}`, `औसत ${amt}`),
+      quickActionsTitle: S('Quick actions', 'तुरंत काम'),
+      addCustomerAction: S('Add customer', 'ग्राहक जोड़ें'),
+      ordersAttentionTitle: S('Orders needing attention', 'ध्यान देने वाले ऑर्डर'),
+      cameBackLabel: S('Returns', 'वापसी'),
+      allOrdersDispatched: S('Every order has been packed and sent.', 'सभी ऑर्डर पैक करके भेजे जा चुके हैं।'),
+      stockAttentionTitle: S('Stock needing attention', 'ध्यान देने वाला स्टॉक'),
+      outOfStockChip: S('Out of stock', 'स्टॉक ख़त्म'),
+      runningLowChip: S('Running low', 'कम हो रहा है'),
+      soldCountPill: (n: number) => S(`${n} sold`, `${n} बिके`),
+      recentOrdersTitle: S('Recent orders', 'हाल के ऑर्डर'),
+      colWhen: S('When', 'कब'),
+      colCustomer: S('Customer', 'ग्राहक'),
+      colChannel: S('Channel', 'चैनल'),
+      colItems: S('Items', 'सामान'),
+      colAmount: S('Amount', 'राशि'),
+      colStatus: S('Status', 'स्थिति'),
+      colActions: S('Actions', 'कार्रवाई'),
+      itemCountShort: (n: number) => (n === 1 ? S('1 item', '1 सामान') : S(`${n} items`, `${n} सामान`)),
+      noNameCustomer: S('Walk-in customer', 'दुकान का ग्राहक'),
+      stateDone: S('Done', 'पूरा हुआ'),
+      stateNew: S('New', 'नया'),
+      statePacked: S('Packed', 'पैक किया'),
+      stateSent: S('Sent', 'भेजा गया'),
+      stateDelivered: S('Delivered', 'पहुँच गया'),
+      stateCancelled: S('Cancelled', 'रद्द'),
+      stateReturned: S('Returned', 'वापस आया'),
+      openOrderAction: S('View', 'देखें'),
+    },
     couldNotLoad: S('Could not load this. Check your connection and try again.', 'यह लोड नहीं हुआ। इंटरनेट देखें और फिर से कोशिश करें।'),
 
     nav: {
       home: S('Home', 'होम'),
       bookings: hi ? 'बुकिंग' : (labels.appointments ?? copy.nav.appointments),
       sales: S('Sales', 'बिक्री'),
+      /** The till as a tab: sell, print the GST receipt, take a product back. "POS" is the word shop owners already say. */
+      pos: S('POS', 'पीओएस'),
+      /** Jira GRW-608 — the shop's two screens. The vertical's own word in English; Hindi uses the generic one (Jira GRW-315). */
+      orders: hi ? 'ऑर्डर' : (labels.orders ?? 'Orders'),
+      stock: hi ? 'स्टॉक' : (labels.stock ?? 'Stock'),
       schedule: S('My schedule', 'मेरा काम'),
       clients: hi ? 'ग्राहक' : (labels.customers ?? copy.nav.customers),
       staff: hi ? 'स्टाफ़' : (labels.providers ?? copy.nav.staff),

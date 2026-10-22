@@ -17,6 +17,7 @@ import {
   findProductLineByCode,
   formatAxisRupees,
   lineNetPaidMinor,
+  lineReturnId,
   lineRefundMinorForQty,
   lineRemainingQty,
   MAX_ROW_PRODUCTS,
@@ -263,7 +264,7 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
   });
 
   it('Jira GRW-576 — includes product-only sales on /sales and renders them with zero servicesMinor', () => {
-    const salesPage = here('./page.tsx');
+    const salesPage = here('./SalesScreen.tsx');
     const summary = here('../components/BookingSummary.tsx');
     expect(salesPage).toContain('{ includeSales: true }');
     expect(summary).toContain('serviceLegs.length > 0');
@@ -403,7 +404,7 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
 
   it('paginates auto-compact table after PAGE_SIZE (10) rows, places Export CSV on top-right of table, and shows branch picker on Record payment at all widths', () => {
     const client = here('./SalesClient.tsx');
-    const page = here('./page.tsx');
+    const page = here('./SalesScreen.tsx');
     const css = here('../styles/99-sales.css');
     const hbpCss = here('../styles/94-header-branch-picker.css');
 
@@ -411,7 +412,7 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     expect(MAX_ROW_PRODUCTS).toBe(2);
     expect(client).toContain('products: windowRows.reduce((sum, r) => sum + r.productUnits, 0)');
     expect(client).toContain('services: windowRows.reduce((sum, r) => sum + r.serviceNames.length, 0)');
-    expect(client).toContain("const showServicesCol = filter !== 'products'");
+    expect(client).toContain("const showServicesCol = servicesOn && filter !== 'products'");
     expect(client).toContain("const showProductsCol = filter !== 'services'");
     expect(client).toContain("const showStaffCol = filter !== 'products'");
     expect(client).toContain('row.products.slice(0, MAX_ROW_PRODUCTS)');
@@ -836,3 +837,29 @@ describe('a refund is paid out one way, sent once, and warns about an issued inv
   });
 });
 
+
+describe('Jira GRW-603 — a line that sold a size is returned by its own id', () => {
+  const line = (over: Record<string, unknown> = {}) => ({ id: 'line-1', productId: 'style-1', name: 'Shirt (28)', priceMinor: '45000', qty: 2, paidMinor: '90000', ...over });
+
+  it('a sized line is named by the line, never by the style: the server refuses "the shirt"', () => {
+    expect(lineReturnId(line({ variantId: 'size-28' }))).toBe('line-1');
+  });
+
+  it('a line with no sizes is named by its product, exactly as before', () => {
+    expect(lineReturnId(line())).toBe('style-1');
+    expect(lineReturnId(line({ variantId: null }))).toBe('style-1');
+    expect(lineReturnId(line({ productId: null }))).toBe('line-1');
+  });
+
+  it('two sizes of one style on one bill are two different lines on the screen', () => {
+    const a = line({ id: 'l-a', variantId: 's28' });
+    const b = line({ id: 'l-b', variantId: 's30', name: 'Shirt (30)' });
+    expect(lineReturnId(a)).not.toBe(lineReturnId(b));
+  });
+
+  it('a scan of a size’s own barcode finds that size’s line', () => {
+    const a = line({ id: 'l-a', variantId: 's28', barcode: 'SZ-28' });
+    const b = line({ id: 'l-b', variantId: 's30', name: 'Shirt (30)', barcode: 'SZ-30' });
+    expect(findProductLineByCode([a, b] as never, 'sz-30')?.id).toBe('l-b');
+  });
+});

@@ -9,7 +9,7 @@ import { homeCopy } from '../lib/home-copy';
 import type { Lang } from '../lib/lang';
 import { SignOutButton } from './SignOutButton';
 import { useMobileNav } from './MobileNavProvider';
-import { useLive } from './SessionProvider';
+import { useAreas, useLive } from './SessionProvider';
 import {
   IconAnalytics,
   IconAppointments,
@@ -18,6 +18,7 @@ import {
   IconDashboard,
   IconOffers,
   IconPackages,
+  IconPos,
   IconProducts,
   IconReceipt,
   IconReports,
@@ -131,9 +132,17 @@ export function Sidebar({
   // yet — listing it here would be a link to a 404.
   // Jira GRW-556 — while the business is being set up only the setup screens are offered.
   const live = useLive();
+  // Jira GRW-608 — which areas this business has: a shop is offered Orders and Stock and no diary or menu.
+  const areas = useAreas();
   // Owner, 2026-10-15 — grouped by job. Routes are unchanged; a group's children show while one of them is open.
   const groups: NavGroup<ReactNode>[] = [
     { href: '/', label: t.nav.home, icon: <IconDashboard /> },
+    // The till, one tap from Home. `canSee` gives it to whoever may open the till; a business that has turned
+    // Products off has nothing on a shelf to sell, so it is not offered one.
+    ...(products === false ? [] : [{ href: '/pos', label: t.nav.pos, icon: <IconPos /> }]),
+    // Jira GRW-608 — a shop's own two screens. Absent for every other business: `canSee` answers false for them.
+    { href: '/orders', label: t.nav.orders, icon: <IconReceipt /> },
+    { href: '/stock', label: t.nav.stock, icon: <IconProducts /> },
     {
       href: '/appointments',
       label: role === 'staff' ? t.nav.schedule : t.nav.bookings,
@@ -150,7 +159,8 @@ export function Sidebar({
         { href: '/services', label: t.nav.services },
         { href: '/packages', label: t.nav.packages },
         // Owner, 2026-10-14 — what the till sells that nobody performs.
-        ...(products === false ? [] : [{ href: '/products', label: t.nav.products }]),
+        // A shop's shelf is its Stock row above; the same screen is not offered twice.
+        ...(products === false || areas.shop ? [] : [{ href: '/products', label: t.nav.products }]),
         { href: '/offers', label: t.nav.offers },
       ],
     },
@@ -171,7 +181,7 @@ export function Sidebar({
     ...(whatsappDemo ? [{ href: '/try-whatsapp', label: t.nav.whatsapp, icon: <IconChat />, pill: whatsappLive ? null : t.nav.demo }] : []),
     { href: '/settings', label: t.nav.settings, icon: <IconSettings /> },
   ];
-  const nav = resolveNav(groups, (href) => canSee(href, role, reportTabs, live));
+  const nav = resolveNav(groups, (href) => canSee(href, role, reportTabs, live, areas));
 
   /*
    * Owner, 2026-10-15 — a group folds and unfolds. The open group is unfolded by default; a person's own choice

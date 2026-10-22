@@ -134,6 +134,26 @@
     display: none;
   }
 
+  /* A shop with no bookings has four columns (Name, Phone, Total spent, Last seen), not six: keep Phone and Total spent, and give Last seen its full width. */
+  .cust-desk-table:not(:has(th:nth-child(6))) th:nth-child(2),
+  .cust-desk-table:not(:has(th:nth-child(6))) td:nth-child(2),
+  .cust-desk-table:not(:has(th:nth-child(6))) th:nth-child(3),
+  .cust-desk-table:not(:has(th:nth-child(6))) td:nth-child(3) {
+    display: table-cell;
+  }
+
+  .cust-desk-table:not(:has(th:nth-child(6))) th:nth-child(2) {
+    width: 8.5rem;
+  }
+
+  .cust-desk-table:not(:has(th:nth-child(6))) th:nth-child(3) {
+    width: 6.75rem;
+  }
+
+  .cust-desk-table:not(:has(th:nth-child(6))) th:nth-child(4) {
+    width: 8.5rem;
+  }
+
   .cust-desk-table thead th {
     position: sticky;
     top: 0;
@@ -319,6 +339,11 @@
   .cust-desk-table th,
   .cust-desk-table td {
     padding: 8px 8px;
+  }
+
+  .cust-desk-table:not(:has(th:nth-child(6))) th:nth-child(2),
+  .cust-desk-table:not(:has(th:nth-child(6))) td:nth-child(2) {
+    display: none;
   }
 }
 

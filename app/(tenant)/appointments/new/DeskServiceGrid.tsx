@@ -1,8 +1,9 @@
 'use client';
 
+import { hasSizes } from '../../lib/till-sizes';
 import { useTranslations } from 'next-intl';
 import { useNewVisitCopy } from '../../lib/use-copy';
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import type { Offer, Product, Service } from '../../lib/api-types';
 import { asMinor, matchItems } from '../../lib/service-match';
 import { productByCode, productMatchable } from '../../lib/product-match';
@@ -44,6 +45,7 @@ export function DeskServiceGrid({
   productsOnly = false,
   productCategory = '',
   searchSeed,
+  categoryBar,
 }: {
   /** In display order: most sold first. */
   services: Service[];
@@ -70,6 +72,8 @@ export function DeskServiceGrid({
   productCategory?: string;
   /** A scanned code that matched nothing, put in the box so the cashier can edit it into a name. `n` makes a repeat count. */
   searchSeed?: { text: string; n: number } | null;
+  /** Horizontal category filter pills on the desktop product-only POS terminal. */
+  categoryBar?: ReactNode;
 }) {
   const t = useTranslations('payFlow');
   const nv = useNewVisitCopy();
@@ -81,6 +85,18 @@ export function DeskServiceGrid({
     searchBox.current?.focus({ preventScroll: true });
     searchBox.current?.select();
   }, [searchSeed]);
+  useEffect(() => {
+    if (!productsOnly) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'F2') {
+        e.preventDefault();
+        searchBox.current?.focus({ preventScroll: true });
+        searchBox.current?.select();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [productsOnly]);
   const [tab, setTab] = useState<'services' | 'packages' | 'products'>(productsOnly ? 'products' : (initialTab ?? 'services'));
   /** Owner, 2026-10-14 — a category chip row under the search, as the phone's sheet has: '' is All. */
   const [kind, setKind] = useState('');
@@ -201,7 +217,7 @@ export function DeskServiceGrid({
           </button>
         </div>
       ) : null}
-      <div className="pf-wide-tools">
+      <div className={`pf-wide-tools${productsOnly ? ' pos-wide-tools' : ''}`}>
         <label className="pf-wide-search">
           <IconSearch />
           <input
@@ -214,23 +230,33 @@ export function DeskServiceGrid({
             aria-label={productsOnly ? t('desk.searchProducts', { count: products.length }) : t('desk.search', { count: services.length })}
             autoComplete="off"
           />
+          {productsOnly && !term ? (
+            <kbd className="pos-search-kbd" aria-hidden="true">
+              F2
+            </kbd>
+          ) : null}
           <SearchClear value={term} onClear={() => { setTerm(''); }} />
         </label>
-        <label className="pf-sort">
-          <span className="pf-sort-l">{t('sort.label')}</span>
-          <select value={sort} onChange={(e) => setSort(e.target.value as MenuSort)} aria-label={t('sort.label')}>
-            {MENU_SORTS.map((k) => (
-              <option key={k} value={k}>
-                {t(`sort.${k}`)}
-              </option>
-            ))}
-          </select>
-        </label>
-        {tab === 'products' ? (
-          <button type="button" className={`pf-chip pf-filter-chip ${inStockOnly ? 'pf-chip-on' : ''}`} aria-pressed={inStockOnly} onClick={() => setInStockOnly((v) => !v)}>
-            {t('inStockOnly')}
-          </button>
-        ) : null}
+        <div className="pos-filter-bar">
+          {productsOnly && categoryBar ? <div className="pos-cat-pills-wrap">{categoryBar}</div> : null}
+          <div className="pos-filter-controls">
+            {tab === 'products' ? (
+              <button type="button" className={`pf-chip pf-filter-chip ${inStockOnly ? 'pf-chip-on' : ''}`} aria-pressed={inStockOnly} onClick={() => setInStockOnly((v) => !v)}>
+                {t('inStockOnly')}
+              </button>
+            ) : null}
+            <label className="pf-sort">
+              <span className="pf-sort-l">{t('sort.label')}</span>
+              <select value={sort} onChange={(e) => setSort(e.target.value as MenuSort)} aria-label={t('sort.label')}>
+                {MENU_SORTS.map((k) => (
+                  <option key={k} value={k}>
+                    {t(`sort.${k}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
       </div>
       {tab === 'services' && kinds.length > 1 ? (
         <div className="pf-chips pf-wide-kinds" role="group" aria-label={nv.serviceKinds} ref={kindRow}>
@@ -255,6 +281,9 @@ export function DeskServiceGrid({
             {shownProducts.map((p) => {
               const count = productCountOf(p.id);
               const price = Number(p.priceMinor ?? 0);
+              const metaText = productsOnly
+                ? [hasSizes(p) ? t('desk.sizesCount', { count: p.sizes!.length }) : p.sku ? `SKU: ${p.sku}` : null, p.categoryName].filter(Boolean).join(' · ')
+                : '';
               return (
                 <div key={p.id} className={`pf-tile ${count > 0 ? 'pf-tile-on' : ''}`}>
                   <button
@@ -266,13 +295,24 @@ export function DeskServiceGrid({
                     disabled={(full && count === 0) || p.stock <= 0 || count >= p.stock}
                   >
                     <ProductPhoto className="pf-tile-photo" product={p} />
+                    {productsOnly && count > 0 ? (
+                      <span className="pf-tile-inbill" aria-hidden="true">
+                        {t('desk.inBillBadge', { count })}
+                      </span>
+                    ) : null}
                     <span className="pf-tile-name">{p.name}</span>
+                    {metaText ? <span className="pf-tile-meta">{metaText}</span> : null}
                     <span className="pf-tile-price">
                       {money(price)}
                       <span className={`pf-tile-mins ${p.stock <= 0 ? 'pf-tile-out' : ''}`}>{p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}</span>
                     </span>
                   </button>
-                  {count > 0 ? (
+                  {count > 0 && hasSizes(p) ? (
+                    // Jira GRW-599 — which size to take off is chosen in the size sheet; the tile only says how many are on the bill.
+                    <span className="pf-tile-qty" role="group" aria-label={t('onBill', { count })}>
+                      <span className="pf-qty-n">{count}</span>
+                    </span>
+                  ) : count > 0 ? (
                     <span className="pf-tile-qty" role="group" aria-label={t('onBill', { count })}>
                       <button type="button" className="pf-qty-btn" aria-label={t('oneLess', { name: p.name })} onClick={() => onLessProduct?.(p.id)}>
                         <IconMinus />

@@ -2178,15 +2178,28 @@ button.sls-ret-step-pill:not(:disabled) {
 }
 
 /* STEP 1: ITEMS TABLE */
+/*
+ * From 861px the real table. Just over that width the right-hand pane is ~480px and the six columns want ~590px, so
+ * the wrapper scrolls sideways (the `.table-scroll` pattern) rather than clip the last two columns the way
+ * `overflow: hidden` did. Below 861px the table is stacked and there is nothing to scroll.
+ */
 .sls-ret-table-wrap {
   border: 1px solid var(--border);
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   background: var(--surface);
 }
 
+/*
+ * `min-width: 0` is the point: 10-tables-services-staff-pages.css gives every bare `table` a 560px floor so the
+ * page-wide Services/Staff tables scroll rather than squash. This one lives in a sheet, not a page, and below 861px
+ * it is stacked into one block per product — with the floor left on, the block was 560px wide inside a 344px
+ * sheet, `.sls-ret-table-wrap` (overflow: hidden) cut it off, and only the labels showed.
+ */
 .sls-ret-table {
   width: 100%;
+  min-width: 0;
   border-collapse: collapse;
 }
 
@@ -2264,6 +2277,13 @@ button.sls-ret-step-pill:not(:disabled) {
 .sls-ret-checkbox:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* Wraps a row's checkbox: no size of its own from 861px up, the 44px target below that. */
+.sls-ret-pick {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
 }
 
 .sls-ret-prd-cell {
@@ -2903,23 +2923,40 @@ button.sls-ret-step-pill:not(:disabled) {
     display: none;
   }
 
+  /* One stacked block per product: the name on top, then a label on the left and its value on the right. */
   .sls-ret-table,
   .sls-ret-table tbody,
   .sls-ret-table tr {
     display: block;
     width: 100%;
+    min-width: 0;
   }
 
   .sls-ret-table tr {
-    padding: 10px 12px;
+    padding: var(--sp-2) var(--sp-3);
     border-bottom: 1px solid var(--border);
+  }
+
+  .sls-ret-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  /* The tint goes on the block, not each cell, so it fills the padding too instead of leaving a frame. */
+  .sls-ret-tr.is-picked {
+    background: color-mix(in srgb, var(--accent-soft) 24%, var(--surface));
+  }
+
+  .sls-ret-tr.is-picked td {
+    background: transparent;
   }
 
   .sls-ret-table td {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 4px 0;
+    gap: var(--sp-3);
+    min-height: 2.75rem;
+    padding: var(--sp-1) 0;
     border-bottom: 0;
     border-right: 0;
     text-align: right;
@@ -2933,8 +2970,34 @@ button.sls-ret-step-pill:not(:disabled) {
     text-align: left;
   }
 
+  .sls-ret-table td:first-child {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
   .sls-ret-table td:first-child::before {
     display: none;
+  }
+
+  .sls-ret-prd-cell {
+    flex: 1 1 auto;
+  }
+
+  .sls-ret-line-name {
+    max-width: none;
+    text-align: left;
+  }
+
+  /* A native checkbox ignores padding, so the label around it is the 44px target and the box inside stays 22px. */
+  .sls-ret-pick {
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .sls-ret-checkbox {
+    width: 1.375rem;
+    height: 1.375rem;
   }
 
   .sls-return-btn,
@@ -2973,3 +3036,9 @@ button.sls-ret-step-pill:not(:disabled) {
   }
 }
 
+
+/* Jira GRW-635 — the reasons a return can have: six chips that WRAP (a row that scrolls sideways hides "Something else", the one that needs the note, off the edge at 344px). */
+.sls-ret-why {
+  flex-wrap: wrap;
+  overflow: visible;
+}

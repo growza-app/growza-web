@@ -109,7 +109,7 @@
   }
 }
 
-/* ---------- 0116 — the stock screen: three numbers, a search, four chips, a pill per row ---------- */
+/* ---------- 0116 — the stock screen: four numbers, a search, chips, a pill per row ---------- */
 .prd-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -117,12 +117,22 @@
   margin-bottom: var(--sp-3);
 }
 
+.prd-strip.prd-strip-4 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+  .prd-strip.prd-strip-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 .prd-stat {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
-  padding: 6px var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
@@ -136,9 +146,10 @@
 }
 
 .prd-stat-n {
-  font-size: 1.0625rem;
+  font-size: 1.25rem;
   font-weight: 700;
   line-height: 1.15;
+  font-variant-numeric: tabular-nums;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -146,15 +157,49 @@
 
 .prd-stat-l {
   font-size: 0.75rem;
+  font-weight: 500;
   color: var(--muted);
 }
 
+.prd-stat-products {
+  background: color-mix(in srgb, var(--blue-soft) 50%, var(--surface));
+  border-color: color-mix(in srgb, var(--blue-soft) 90%, var(--border));
+}
+
+.prd-stat-worth {
+  background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent-soft) 90%, var(--border));
+}
+
+.prd-stat-worth .prd-stat-n {
+  color: var(--accent-deep);
+}
+
+.prd-stat-low-card {
+  background: color-mix(in srgb, var(--amber-soft) 65%, var(--surface));
+  border-color: color-mix(in srgb, var(--amber-soft) 95%, var(--border));
+}
+
 .prd-stat-low {
+  border-color: var(--amber);
+  background: var(--amber-soft);
+}
+
+.prd-stat-low .prd-stat-n {
+  color: var(--amber-ink);
+}
+
+.prd-stat-out-card {
+  background: color-mix(in srgb, var(--danger-soft) 60%, var(--surface));
+  border-color: color-mix(in srgb, var(--danger-soft) 95%, var(--border));
+}
+
+.prd-stat-out {
   border-color: var(--danger-line);
   background: var(--danger-soft);
 }
 
-.prd-stat-low .prd-stat-n {
+.prd-stat-out .prd-stat-n {
   color: var(--danger);
 }
 
@@ -164,6 +209,11 @@
 }
 
 .prd-stat-low.prd-stat-tap.is-on {
+  border-color: var(--amber-ink);
+  box-shadow: inset 0 0 0 1px var(--amber-ink);
+}
+
+.prd-stat-out.prd-stat-tap.is-on {
   border-color: var(--danger);
   box-shadow: inset 0 0 0 1px var(--danger);
 }
@@ -594,28 +644,41 @@
   .page-body.prd-desk {
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
   }
 
   .prd-desk-grid {
     flex: 1;
     min-height: 0;
     grid-template-rows: minmax(0, 1fr);
-    grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
-    align-items: stretch;
+    grid-template-columns: minmax(0, 1fr) minmax(26rem, 30rem);
+    align-items: start;
+    gap: var(--sp-4);
+  }
+
+  .prd-desk-grid.is-full {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .prd-desk-left,
   .prd-desk-right {
     min-height: 0;
-    overflow-y: auto;
   }
 
   .prd-desk-right {
-    position: static;
-    max-height: none;
+    position: sticky;
+    top: 0;
+    height: calc(100dvh - 11.5rem);
+    min-height: 28rem;
+    max-height: 46rem;
     padding: 0;
     overflow: hidden;
+  }
+
+  .prd-desk-right .prd-sheet {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
   .prd-desk-mid {
@@ -633,7 +696,7 @@
     min-height: 2.75rem;
     /* `.search-wrap` is page-coloured for sitting inside a white card; here it sits on the page itself. */
     background: var(--surface);
-    border-color: #c9d0cb;
+    border-color: var(--border);
   }
 
   /* The shelf in a card that scrolls itself, as the Services table does. */
@@ -666,6 +729,8 @@
   }
 
   .prd-desk-right .prd-sheet .sheet-body {
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
   }
 }
@@ -790,12 +855,14 @@
 @media (min-width: 1101px) {
   .prd-desk-tools {
     display: flex;
-    gap: var(--sp-3);
+    flex-wrap: wrap;
+    gap: var(--sp-2) var(--sp-3);
     align-items: center;
   }
 
   .prd-desk-tools .prd-search {
-    flex: 1;
+    flex: 1 1 14rem;
+    min-width: 12rem;
   }
 
   .prd-desk-tools .prd-sort select {
@@ -810,10 +877,8 @@
     margin-left: 0;
   }
 
-  /* The shelf as a table in a card that scrolls itself, as the Services desk has it. */
+  /* The shelf as a full-height table card so all 10 rows of the page are visible at once. */
   .prd-desk-card {
-    flex: 1;
-    min-height: 0;
     display: flex;
     flex-direction: column;
     margin: 0;
@@ -822,9 +887,7 @@
   }
 
   .prd-desk-card .table-scroll {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
+    overflow-x: auto;
   }
 
   .prd-desk-card .pagination {
@@ -841,7 +904,7 @@
 
   .prd-table th,
   .prd-table td {
-    padding: 8px 8px;
+    padding: 10px 10px;
     border-bottom: 1px solid var(--border);
     text-align: left;
     vertical-align: middle;
@@ -852,14 +915,26 @@
 
   .prd-table th:first-child,
   .prd-table td:first-child {
-    padding-left: 12px;
+    padding-left: 14px;
     width: 100%;
+    min-width: 12rem;
     max-width: 0;
   }
 
   .prd-table th:last-child,
   .prd-table td:last-child {
-    padding-right: 12px;
+    padding-right: 14px;
+  }
+
+  @media (max-width: 1560px) {
+    .prd-desk-grid.has-sheet .prd-table th:nth-child(2),
+    .prd-desk-grid.has-sheet .prd-table td:nth-child(2),
+    .prd-desk-grid.has-sheet .prd-table th:nth-child(3),
+    .prd-desk-grid.has-sheet .prd-table td:nth-child(3),
+    .prd-desk-grid.has-sheet .prd-table th:nth-child(5),
+    .prd-desk-grid.has-sheet .prd-table td:nth-child(5) {
+      display: none;
+    }
   }
 
   .prd-table thead th {
@@ -1191,6 +1266,9 @@
   }
 
   .topbar-actions {
+    flex-shrink: 1;
+    min-width: 0;
+    max-width: 100%;
     flex-wrap: wrap;
     justify-content: flex-end;
   }
@@ -1266,4 +1344,181 @@
 /* On the wide desk the list is a card; the row sits inside it, so it takes the card's own inset. */
 .prd-desk .prd-import-row {
   padding: var(--sp-3);
+}
+
+.prd-sku-badge {
+  display: inline-block;
+  padding: 2px var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--page-bg);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- v3: structured Add / Edit Product drawer with vertical fields & 2-col grids ---------- */
+.prd-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-bottom: var(--sp-4);
+}
+
+.prd-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.prd-form-sec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.prd-form-sec-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.prd-photo-box.sheet-group {
+  margin: 0;
+  background: var(--page-bg);
+}
+
+.prd-field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.prd-field-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+@media (max-width: 380px) {
+  .prd-field-grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.prd-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.prd-field-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Two classes so `input[type="text"] { min-width: 180px }` in 01-controls.css does not force overflow in a 2-col grid. */
+.prd-input.prd-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  text-align: left;
+}
+
+.prd-form-section > .sheet-foot {
+  margin: 0;
+  padding: 0;
+}
+
+.prd-tax-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border);
+}
+
+.prd-tax-wrap .sheet-group {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--page-bg);
+}
+
+.prd-tax-wrap .sheet-foot {
+  margin: 0;
+  padding: 0;
+}
+
+.prd-sizes-new-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--page-bg);
+}
+
+.prd-sizes-new-copy {
+  flex: 1 1 12rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.prd-sizes-new-copy strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.prd-sizes-new-copy span {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.prd-sheet-footer {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.prd-sheet-footer .btn {
+  min-height: 2.75rem;
+}
+
+.prd-sheet-footer .prd-footer-save {
+  flex: 1;
+  max-width: 14rem;
+}
+
+.prd-sheet-footer .prd-footer-save svg {
+  width: 0.875rem;
+  height: 0.875rem;
 }

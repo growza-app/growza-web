@@ -1,15 +1,19 @@
 'use client';
 
+import AppLink from '../../shared/AppLink';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
 import type { Product, ProductCategory } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
-import { IconCheck } from '../components/icons';
+import { IconCheck, IconChevronRight } from '../components/icons';
+import { useSizesOn } from '../components/SessionProvider';
 import { GstInPrice, TaxFields } from '../components/TaxFields';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { codeHolder } from '../lib/product-match';
+import { MoveSizesEntry } from './MoveSizesEntry';
 import { StockPanel } from './StockPanel';
 import { SalesPanel } from './SalesPanel';
 import { stockTone } from './ProductsList';
@@ -50,6 +54,11 @@ export function ProductSheet({
   const t = useTranslations('products.form');
   const tp = useTranslations('products');
   const tc = useTranslations('common');
+  const ts = useTranslations('products.sizes');
+  const router = useRouter();
+  /** Jira GRW-598 — sizes are a switch, off for every business until it is turned on; nothing below is drawn while it is off. */
+  const sizesOn = useSizesOn();
+  const sizeCount = product?.variantCount ?? 0;
   const sheetRef = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
   const [part, setPart] = useState<Part>('details');
@@ -61,10 +70,10 @@ export function ProductSheet({
   /** Jira GRW-574 (0119) — the business's own code, and what a scanner reads off the pack. */
   const [sku, setSku] = useState(product?.sku ?? '');
   const [barcode, setBarcode] = useState(product?.barcode ?? '');
-  /** Jira GRW-574 (0120) — optional GST rate (basis points; 0 is 0%, '' is not set) and HSN code, shown when set or opened. */
+  /** Jira GRW-574 (0120) — optional GST rate (basis points; 0 is 0%, '' is not set) and HSN code, open by default so tax fields are never hidden. */
   const [gstRateBp, setGstRateBp] = useState<string>(product?.gstRateBp != null ? String(product.gstRateBp) : '');
   const [hsn, setHsn] = useState(product?.hsn ?? '');
-  const [taxOpen, setTaxOpen] = useState(Boolean(product && (product.gstRateBp != null || product.hsn)));
+  const [taxOpen, setTaxOpen] = useState(true);
   const [stock, setStock] = useState('0');
   const [photo, setPhoto] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl ?? null);
@@ -124,7 +133,7 @@ export function ProductSheet({
     else setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
   };
 
-  const submit = async () => {
+  const submit = async (openSizesAfter = false) => {
     if (!canSave || busy) return;
     setBusy(true);
     setError(null);
@@ -170,6 +179,10 @@ export function ProductSheet({
       setPending(null);
       setJustSaved(true);
       onSaved(saved);
+      if (openSizesAfter) {
+        router.push(`/products/${saved.id}/sizes`);
+        return;
+      }
       if (!inline) onClose();
     } catch (err) {
       fail(err);
@@ -231,7 +244,7 @@ export function ProductSheet({
 
       {product ? (
         <div className="prd-sheet-id">
-          <ProductPhoto className="prd-sheet-photo" product={product} eager />
+          <ProductPhoto className="prd-sheet-photo" product={{ ...product, imageUrl: photoPreview ?? imageUrl }} eager />
           <span className="prd-sheet-id-text">
             <span className="prd-sheet-name">{product.name}</span>
             <span className="prd-sheet-tags">
@@ -257,208 +270,338 @@ export function ProductSheet({
         </div>
       ) : null}
 
-      {part === 'stock' && product ? (
+      {part === 'stock' && product && sizeCount > 0 ? (
+        // The count of a product with sizes lives on each size; the style has no count of its own to move.
+        <div className="sheet-body">
+          <p className="sheet-foot prd-sizes-note">{ts('stockOnSizes')}</p>
+          {sizesOn ? (
+            <AppLink className="btn prd-sizes-open" href={`/products/${product.id}/sizes`}>
+              {ts('stockOnSizesOpen')}
+            </AppLink>
+          ) : null}
+          <MoveSizesEntry product={product} onChanged={onSaved} />
+        </div>
+      ) : part === 'stock' && product ? (
         <StockPanel product={product} onChanged={onSaved} />
       ) : part === 'sales' && product ? (
         <SalesPanel product={product} />
       ) : (
-        <div className="sheet-body">
-          <div className="sheet-group sheet-photo">
-            {photo ? (
-              <img className="sheet-photo-img" src={photoPreview ?? ''} alt="" />
-            ) : imageUrl ? (
-              <img className="sheet-photo-img" src={imageUrl} alt="" />
-            ) : (
-              <span className="sheet-photo-img sheet-photo-empty" aria-hidden="true" />
-            )}
-            <input
-              ref={photoRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              style={{ display: 'none' }}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) setPhoto(f);
-              }}
-            />
-            <button type="button" className="sheet-photo-text" onClick={() => photoRef.current?.click()}>
-              <span className="sheet-photo-action">{photo || imageUrl ? t('changePhoto') : t('addPhoto')}</span>
-              <span className="sheet-photo-why">{t('photoHint')}</span>
-            </button>
-            {photo || imageUrl ? (
-              <button
-                type="button"
-                className="sheet-photo-remove"
-                onClick={async () => {
-                  setPhoto(null);
-                  if (photoRef.current) photoRef.current.value = '';
-                  if (target && imageUrl) {
-                    // Only what the server did is shown: a failed removal leaves the picture on screen, with the reason.
-                    try {
-                      const updated = await api.removeProductPhoto(target.id);
-                      setImageUrl(null);
-                      onSaved(updated);
-                    } catch (err) {
-                      fail(err);
+        <>
+          <div className="sheet-body prd-form-body">
+            <div className="prd-form-section">
+              <div className="prd-form-sec-title">{t('secBasic')}</div>
+              <div className="sheet-group sheet-photo prd-photo-box">
+                {photo ? (
+                  <img className="sheet-photo-img" src={photoPreview ?? ''} alt="" />
+                ) : imageUrl ? (
+                  <img className="sheet-photo-img" src={imageUrl} alt="" />
+                ) : (
+                  <span className="sheet-photo-img sheet-photo-empty" aria-hidden="true" />
+                )}
+                <input
+                  ref={photoRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = '';
+                    if (!f) return;
+                    setError(null);
+                    setPhoto(f);
+                    if (target) {
+                      try {
+                        const updated = await api.uploadProductPhoto(target.id, f);
+                        setPhoto(null);
+                        setImageUrl(updated.imageUrl);
+                        setJustSaved(true);
+                        onSaved(updated);
+                      } catch (err) {
+                        setError(err instanceof ApiError && err.status < 500 ? err.message : t('photoFailed'));
+                      }
                     }
-                  }
-                }}
-              >
-                {t('remove')}
-              </button>
-            ) : null}
-          </div>
+                  }}
+                />
+                <button type="button" className="sheet-photo-text" onClick={() => photoRef.current?.click()}>
+                  <span className="sheet-photo-action">{photo || imageUrl ? t('changePhoto') : t('addPhoto')}</span>
+                  <span className="sheet-photo-why">{t('photoHint')}</span>
+                </button>
+                {photo || imageUrl ? (
+                  <button
+                    type="button"
+                    className="sheet-photo-remove"
+                    onClick={async () => {
+                      setPhoto(null);
+                      if (photoRef.current) photoRef.current.value = '';
+                      if (target && imageUrl) {
+                        // Only what the server did is shown: a failed removal leaves the picture on screen, with the reason.
+                        try {
+                          const updated = await api.removeProductPhoto(target.id);
+                          setImageUrl(null);
+                          onSaved(updated);
+                        } catch (err) {
+                          fail(err);
+                        }
+                      }
+                    }}
+                  >
+                    {t('remove')}
+                  </button>
+                ) : null}
+              </div>
 
-          <div className="sheet-group">
-            <div className="sheet-row">
-              <label className="sheet-row-label" htmlFor="prd-name">
-                {t('name')}
-              </label>
-              <div className="sheet-row-value">
-                <input id="prd-name" type="text" value={name} placeholder={t('namePlaceholder')} maxLength={120} onChange={(e) => setName(e.target.value)} autoFocus={autoFocusField(!product)} />
+              <div className="prd-field-stack">
+                <div className="prd-field">
+                  <label className="prd-field-label" htmlFor="prd-name">
+                    {t('name')}
+                  </label>
+                  <input
+                    id="prd-name"
+                    className="prd-input"
+                    type="text"
+                    value={name}
+                    placeholder={t('namePlaceholder')}
+                    maxLength={120}
+                    onChange={(e) => setName(e.target.value)}
+                    autoFocus={autoFocusField(!product)}
+                  />
+                </div>
+                {categories.length > 0 ? (
+                  <div className="prd-field">
+                    <label className="prd-field-label" htmlFor="prd-cat">
+                      {t('category')}
+                    </label>
+                    <select id="prd-cat" className="prd-input" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+                      <option value="">{t('noCategory')}</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
               </div>
             </div>
-            {categories.length > 0 ? (
-              <div className="sheet-row">
-                <label className="sheet-row-label" htmlFor="prd-cat">
-                  {t('category')}
-                </label>
-                <div className="sheet-row-value">
-                  <select id="prd-cat" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-                    <option value="">{t('noCategory')}</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+
+            <div className="prd-form-section">
+              <div className="prd-form-sec-head">
+                <span className="prd-form-sec-title">{t('secPricing')}</span>
+                {marginPct !== null ? (
+                  <span className={`prd-margin ${marginPct < 0 ? 'prd-margin-neg' : ''}`}>{t('margin', { pct: marginPct })}</span>
+                ) : null}
+              </div>
+              <div className="prd-field-grid-2">
+                <div className="prd-field">
+                  <label className="prd-field-label" htmlFor="prd-price">
+                    {t('price')}
+                  </label>
+                  <input
+                    id="prd-price"
+                    className="prd-input"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    step={1}
+                    value={price}
+                    placeholder="0"
+                    onChange={(e) => setPrice(e.target.value)}
+                  />
+                </div>
+                <div className="prd-field">
+                  <label className="prd-field-label" htmlFor="prd-cost">
+                    {t('cost')}
+                  </label>
+                  <input
+                    id="prd-cost"
+                    className="prd-input"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    step={1}
+                    value={cost}
+                    placeholder={tc('optional')}
+                    onChange={(e) => setCost(e.target.value)}
+                  />
                 </div>
               </div>
-            ) : null}
-            <div className="sheet-row">
-              <label className="sheet-row-label" htmlFor="prd-price">
-                {t('price')}
-              </label>
-              <div className="sheet-row-value">
-                <input id="prd-price" type="number" inputMode="numeric" min={0} step={1} value={price} onChange={(e) => setPrice(e.target.value)} />
-              </div>
-            </div>
-            <div className="sheet-row">
-              <label className="sheet-row-label" htmlFor="prd-cost">
-                {t('cost')}
-              </label>
-              <div className="sheet-row-value prd-cost-value">
-                <input id="prd-cost" type="number" inputMode="numeric" min={0} step={1} value={cost} placeholder={tc('optional')} onChange={(e) => setCost(e.target.value)} />
-                {marginPct !== null ? <span className={`prd-margin ${marginPct < 0 ? 'prd-margin-neg' : ''}`}>{t('margin', { pct: marginPct })}</span> : null}
-              </div>
-            </div>
-          </div>
-          <div className="sheet-foot">{t('costHint')}</div>
-          <GstInPrice priceMinor={Math.round(rupees * 100)} rateBp={gstRateBp} />
+              <div className="sheet-foot">{t('costHint')}</div>
+              <GstInPrice priceMinor={Math.round(rupees * 100)} rateBp={gstRateBp} />
 
-          {/* Jira GRW-574 — the codes the shelf and the till can find the product by. Both optional, blank clears. */}
-          <div className="sheet-group">
-            <div className="sheet-row">
-              <label className="sheet-row-label" htmlFor="prd-sku">
-                {t('sku')}
-              </label>
-              <div className="sheet-row-value">
-                <input
-                  id="prd-sku"
-                  type="text"
-                  value={sku}
-                  placeholder={tc('optional')}
-                  maxLength={40}
-                  autoCapitalize="characters"
-                  autoCorrect="off"
-                  autoComplete="off"
-                  spellCheck={false}
-                  aria-describedby={barcodeBad ? undefined : 'prd-codes-hint'}
-                  onChange={(e) => setSku(e.target.value)}
+              <div className={!product ? 'prd-field-grid-2' : 'prd-field-stack'}>
+                {!product ? (
+                  <div className="prd-field">
+                    <label className="prd-field-label" htmlFor="prd-stock">
+                      {t('stock')}
+                    </label>
+                    <input
+                      id="prd-stock"
+                      className="prd-input"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      step={1}
+                      value={stock}
+                      onChange={(e) => setStock(e.target.value)}
+                    />
+                  </div>
+                ) : null}
+                <div className="prd-field">
+                  <label className="prd-field-label" htmlFor="prd-low">
+                    {t('lowAt')}
+                  </label>
+                  <input
+                    id="prd-low"
+                    className="prd-input"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    step={1}
+                    value={lowAt}
+                    placeholder={t('lowAtOff')}
+                    onChange={(e) => setLowAt(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="sheet-foot">{product ? t('lowAtHint') : t('stockHint')}</div>
+
+              {/* Jira GRW-598 — only while sizes are switched on, and only for a product that exists: its own page. */}
+              {product && sizesOn ? (
+                <div className="sheet-group">
+                  <AppLink className="sheet-row prd-sizes-row" href={`/products/${product.id}/sizes`}>
+                    <span className="sheet-row-label">{ts('openRow')}</span>
+                    <span className="sheet-row-value prd-sizes-value">
+                      {sizeCount > 0 ? ts('openRowCount', { count: sizeCount }) : ts('openRowNone')}
+                      <IconChevronRight aria-hidden="true" />
+                    </span>
+                  </AppLink>
+                </div>
+              ) : null}
+              {!product && sizesOn ? (
+                <div className="prd-sizes-new-card">
+                  <div className="prd-sizes-new-copy">
+                    <strong>{ts('openRow')}</strong>
+                    <span>{t('sizesNewHint')}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-ghost prd-save-sizes-btn"
+                    disabled={busy || !canSave}
+                    onClick={() => void submit(true)}
+                  >
+                    {t('saveAndSizes')}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+
+            {/* Jira GRW-574 — the codes the shelf and the till can find the product by. Both optional, blank clears. */}
+            <div className="prd-form-section">
+              <div className="prd-form-sec-title">{t('secCodes')}</div>
+              <div className="prd-field-grid-2">
+                <div className="prd-field">
+                  <label className="prd-field-label" htmlFor="prd-sku">
+                    {t('sku')}
+                  </label>
+                  <input
+                    id="prd-sku"
+                    className="prd-input"
+                    type="text"
+                    value={sku}
+                    placeholder={tc('optional')}
+                    maxLength={40}
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    autoComplete="off"
+                    spellCheck={false}
+                    aria-describedby={barcodeBad ? undefined : 'prd-codes-hint'}
+                    onChange={(e) => setSku(e.target.value)}
+                  />
+                </div>
+                <div className="prd-field">
+                  <label className="prd-field-label" htmlFor="prd-barcode">
+                    {t('barcode')}
+                  </label>
+                  <input
+                    id="prd-barcode"
+                    className="prd-input"
+                    type="text"
+                    value={barcode}
+                    placeholder={tc('optional')}
+                    maxLength={64}
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    autoComplete="off"
+                    spellCheck={false}
+                    aria-invalid={barcodeBad || undefined}
+                    aria-describedby={barcodeBad ? 'prd-barcode-error' : 'prd-codes-hint'}
+                    onChange={(e) => setBarcode(e.target.value)}
+                  />
+                </div>
+              </div>
+              {barcodeBad ? (
+                <div id="prd-barcode-error" className="sheet-foot sheet-foot-error">
+                  {t('barcodeSpaces')}
+                </div>
+              ) : (
+                <div id="prd-codes-hint" className="sheet-foot">{t('codesHint')}</div>
+              )}
+
+              {/* Jira GRW-574 (0120) — optional GST rate and HSN code, always visible on the product sheet. */}
+              <div className="prd-tax-wrap">
+                <TaxFields
+                  idPrefix="prd"
+                  kind="product"
+                  rateBp={gstRateBp}
+                  onRateBp={setGstRateBp}
+                  code={hsn}
+                  onCode={setHsn}
+                  open={taxOpen}
+                  onToggle={() => setTaxOpen((o) => !o)}
+                  savedRateBp={target?.gstRateBp}
                 />
               </div>
             </div>
-            <div className="sheet-row">
-              <label className="sheet-row-label" htmlFor="prd-barcode">
-                {t('barcode')}
-              </label>
-              <div className="sheet-row-value">
-                <input
-                  id="prd-barcode"
-                  type="text"
-                  value={barcode}
-                  placeholder={tc('optional')}
-                  maxLength={64}
-                  autoCapitalize="off"
-                  autoCorrect="off"
-                  autoComplete="off"
-                  spellCheck={false}
-                  aria-invalid={barcodeBad || undefined}
-                  aria-describedby={barcodeBad ? 'prd-barcode-error' : 'prd-codes-hint'}
-                  onChange={(e) => setBarcode(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-          {barcodeBad ? (
-            <div id="prd-barcode-error" className="sheet-foot sheet-foot-error">
-              {t('barcodeSpaces')}
-            </div>
-          ) : (
-            <div id="prd-codes-hint" className="sheet-foot">{t('codesHint')}</div>
-          )}
 
-          <div className="sheet-group">
-            {!product ? (
-              <div className="sheet-row">
-                <label className="sheet-row-label" htmlFor="prd-stock">
-                  {t('stock')}
-                </label>
-                <div className="sheet-row-value">
-                  <input id="prd-stock" type="number" inputMode="numeric" min={0} step={1} value={stock} onChange={(e) => setStock(e.target.value)} />
-                </div>
+            {error ? (
+              <div role="alert" className="sheet-foot sheet-foot-error">
+                {error}
               </div>
             ) : null}
-            <div className="sheet-row">
-              <label className="sheet-row-label" htmlFor="prd-low">
-                {t('lowAt')}
-              </label>
-              <div className="sheet-row-value">
-                <input id="prd-low" type="number" inputMode="numeric" min={0} step={1} value={lowAt} placeholder={t('lowAtOff')} onChange={(e) => setLowAt(e.target.value)} />
+
+            {product ? (
+              <div className="sheet-group prd-sheet-actions">
+                <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void toggleActive()}>
+                  {product.active ? tp('retire') : tp('bringBack')}
+                </button>
+                <button type="button" className="btn btn-ghost btn-danger" disabled={busy} onClick={() => onDelete(product)}>
+                  {tp('delete')}
+                </button>
               </div>
-            </div>
+            ) : null}
           </div>
-          <div className="sheet-foot">{product ? t('lowAtHint') : t('stockHint')}</div>
-
-          {/* Jira GRW-574 (0120) — optional GST rate and HSN code, collapsed unless set or opened. */}
-          <TaxFields
-            idPrefix="prd"
-            kind="product"
-            rateBp={gstRateBp}
-            onRateBp={setGstRateBp}
-            code={hsn}
-            onCode={setHsn}
-            open={taxOpen}
-            onToggle={() => setTaxOpen((o) => !o)}
-            savedRateBp={target?.gstRateBp}
-          />
-          {error ? (
-            <div role="alert" className="sheet-foot sheet-foot-error">
-              {error}
-            </div>
-          ) : null}
-
-          {product ? (
-            <div className="sheet-group prd-sheet-actions">
-              <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void toggleActive()}>
-                {product.active ? tp('retire') : tp('bringBack')}
-              </button>
-              <button type="button" className="btn btn-ghost btn-danger" disabled={busy} onClick={() => onDelete(product)}>
-                {tp('delete')}
-              </button>
-            </div>
-          ) : null}
-        </div>
+          <div className="prd-sheet-footer">
+            <button type="button" className="btn btn-ghost" disabled={busy} onClick={close}>
+              {t('cancel')}
+            </button>
+            <button
+              type="button"
+              className={`btn prd-footer-save ${showSaved ? 'is-saved' : ''}`}
+              disabled={busy || !canSave}
+              onClick={() => void submit()}
+            >
+              {busy ? (
+                t('saving')
+              ) : showSaved ? (
+                <>
+                  <IconCheck /> {t('saved')}
+                </>
+              ) : (
+                t('save')
+              )}
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

@@ -62,6 +62,39 @@ import { bareRefusalMessage, genericFailureMessage, localiseApiMessage } from '.
 import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
+  OrderDetail,
+  ChannelBranches,
+  SetChannelBranchResult,
+  ChannelConnection,
+  ChannelCheckResult,
+  SaveChannelKeysResult,
+  SetStockBufferResult,
+  ChannelOrdersLine,
+  ChannelQueuePage,
+  HeldPage,
+  StockReportPage,
+  ByChannelPage,
+  ReturnsReportPage,
+  RefundsReportPage,
+  SellersRange,
+  ReorderPage,
+  ReorderQuery,
+  ReorderRule,
+  ReorderRules,
+  BestSellersPage,
+  DeadStockPage,
+  SellersQuery,
+  StockReportQuery,
+  ReleaseResult,
+  SizeToMap,
+  ImportSummary,
+  MarketplaceCodesPage,
+  SaveCodesBody,
+  SaveCodesResult,
+  ExchangeBody,
+  ExchangeResult,
+  OrdersPage,
+  ShopHome,
   ActivityEvent,
   Appointment,
   AppointmentStatus,
@@ -109,8 +142,12 @@ import type {
   ProductCategory,
   ProductInput,
   ProductSales,
+  ProductSizes,
+  SizeAxis,
+  SizeGridCell,
   ReturnSaleProductsResponse,
   StockMovement,
+  StockTakeDraft,
   StockTakeResult,
   MovementKind,
   ManualMovementKind,
@@ -165,6 +202,37 @@ import type {
  * "no active conversation" meaning restart, vs. a generic failure meaning
  * just show an error) can check `.status` instead of string-matching text.
  */
+/** Jira GRW-72 — the pages a role grants, and how far. Mirrors `platform/permissions.ts` in the API. */
+export type RolePageKey = 'bookings' | 'clients' | 'services' | 'offers' | 'staff' | 'attendance' | 'reports' | 'settings';
+export type RoleLevel = 'none' | 'view' | 'manage';
+export type RoleWorksLike = 'manager' | 'receptionist' | 'staff';
+export interface ShopRole {
+  id: string;
+  name: string;
+  memberCount: number;
+  scheduleScoped: boolean;
+  isBuiltin: boolean;
+  worksLike: RoleWorksLike | null;
+  permissions: Record<RolePageKey, RoleLevel>;
+}
+export interface RoleTemplate {
+  name: string;
+  works_like: RoleWorksLike;
+  schedule_scoped?: boolean;
+  grants: Partial<Record<RolePageKey, RoleLevel>>;
+}
+export interface RolesPayload {
+  pages: Array<{ key: RolePageKey; label: string }>;
+  roles: ShopRole[];
+  templates: RoleTemplate[];
+}
+export interface RoleBody {
+  name: string;
+  scheduleScoped: boolean;
+  worksLike: RoleWorksLike | null;
+  permissions: Record<RolePageKey, RoleLevel>;
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -270,6 +338,37 @@ async function extractError(
   };
 }
 
+
+/** Jira GRW-631 — the filters of the stock report, as a query string (nothing for a filter that is not set). */
+function stockReportParams(q: StockReportQuery): string {
+  const p = new URLSearchParams();
+  if (q.location) p.set('location', q.location);
+  if (q.categoryId) p.set('categoryId', q.categoryId);
+  if (q.q?.trim()) p.set('q', q.q.trim());
+  if (q.page !== undefined) p.set('page', String(q.page));
+  if (q.pageSize !== undefined) p.set('pageSize', String(q.pageSize));
+  return p.toString();
+}
+
+/** Jira GRW-633 — the filters of the reorder list, as a query string. */
+function reorderParams(q: ReorderQuery): string {
+  const p = new URLSearchParams();
+  if (q.location) p.set('location', q.location);
+  if (q.categoryId) p.set('categoryId', q.categoryId);
+  if (q.page !== undefined) p.set('page', String(q.page));
+  if (q.pageSize !== undefined) p.set('pageSize', String(q.pageSize));
+  return p.toString();
+}
+
+/** Jira GRW-632 — the filters of the two sales views, as a query string. */
+function sellersParams(q: SellersQuery): string {
+  const p = new URLSearchParams({ range: q.range });
+  if (q.location) p.set('location', q.location);
+  if (q.categoryId) p.set('categoryId', q.categoryId);
+  if (q.page !== undefined) p.set('page', String(q.page));
+  if (q.pageSize !== undefined) p.set('pageSize', String(q.pageSize));
+  return p.toString();
+}
 
 /* ---- Reports (GRW-48) ------------------------------------------------- */
 
@@ -411,6 +510,9 @@ export interface PendingInvite {
   /** The name the owner typed when inviting; null for an invite sent before names, or a stylist's. */
   name?: string | null;
   role: string;
+  /** Jira GRW-73 — the role the owner named, by id and name; absent or null when none was. */
+  tenantRoleId?: string | null;
+  roleName?: string | null;
   providerId: string | null;
   /** Jira GRW-237 — the branch a receptionist is invited to; null for one branch or a stylist. */
   locationId?: string | null;
@@ -425,6 +527,9 @@ export interface TeamMember {
   phone: string | null;
   /** Their own name, when they (or the invite) set one. */
   name?: string | null;
+  /** Jira GRW-73 — the role they hold, by id and name; null for everyone from before roles, and for the owner. */
+  tenantRoleId?: string | null;
+  roleName?: string | null;
   providerId: string | null;
   providerName: string | null;
   locationId: string | null;
@@ -490,10 +595,25 @@ export const api = {
   /** Jira GRW-574 (0122) — move N of a product to another branch: transfer_out here, transfer_in there, one transfer_id. */
   transferProduct: (id: string, body: { toLocationId: string; qty: number; note?: string }) =>
     post<{ transferId: string; from: Product; to: Product }>(`/api/v1/products/${id}/transfer`, body),
+  /** Jira GRW-601 — move sizes of a product to another branch: a number for each size, one transfer, both ledgers naming the size. */
+  transferSizes: (id: string, body: { toLocationId: string; sizes: Array<{ variantId: string; qty: number }>; note?: string }) =>
+    post<{ transferId: string; from: Product; to: Product; moved: Array<{ variantId: string; label: string; qty: number }> }>(`/api/v1/products/${id}/transfer`, body),
+  /** Jira GRW-598 — a product's options and sizes, in one read, with the `version` the next save sends back. */
+  productSizes: (id: string) => get<ProductSizes>(`/api/v1/products/${id}/sizes`),
+  /**
+   * Jira GRW-598 — the whole sizes grid in ONE save: the options and every size, all or none. A size with no cell is
+   * retired, a blank cell makes nothing, and a save from a screen that is out of date is refused (409, with what is there now).
+   */
+  saveSizeGrid: (id: string, body: { axes: SizeAxis[]; cells: SizeGridCell[]; version?: string }) => put<ProductSizes>(`/api/v1/products/${id}/variants`, body),
   /** Jira GRW-574 (0123) — the branch's shelf for a stock take pass, and saving the pass in one transaction. */
   stockTakeProducts: (location: string) => get<Product[]>(`/api/v1/products/stock-take?location=${encodeURIComponent(location)}`),
-  saveStockTake: (location: string, body: { counts: { productId: string; count: number }[]; note?: string }) =>
+  saveStockTake: (location: string, body: { counts: { productId: string; count: number }[]; sizes?: { variantId: string; count: number }[]; note?: string }) =>
     post<StockTakeResult>('/api/v1/products/stock-take', { ...body, locationId: location }),
+  /** Jira GRW-602 (0134) — the numbers typed into this branch's stock take and not yet committed, kept on the server. */
+  stockTakeDraft: (location: string) => get<StockTakeDraft>(`/api/v1/products/stock-take/draft?location=${encodeURIComponent(location)}`),
+  saveStockTakeDraft: (location: string, body: { products: Record<string, string>; sizes: Record<string, string> }) =>
+    put<void>(`/api/v1/products/stock-take/draft?location=${encodeURIComponent(location)}`, body),
+  clearStockTakeDraft: (location: string) => del<void>(`/api/v1/products/stock-take/draft?location=${encodeURIComponent(location)}`),
   /**
    * Jira GRW-375 — services closest in MEANING to what was typed. 503 means
    * embeddings are not configured (prod today) or the provider is away; the
@@ -586,6 +706,136 @@ export const api = {
   /** Jira GRW-222 — the owner's Home. `location` null or absent means the whole business. */
   home: (period: HomePeriod = 'today', location?: string | null) =>
     get<HomeOverview>(`/api/v1/home?period=${period}${location ? `&location=${encodeURIComponent(location)}` : ''}`),
+  /** Jira GRW-609 — a shop's Home in one read. `location` null or absent means every branch (the owner); the front desk's is its own. */
+  shopHome: (location?: string | null) => get<ShopHome>(`/api/v1/home/shop${location ? `?location=${encodeURIComponent(location)}` : ''}`),
+  /**
+   * Jira GRW-614 — the Orders list: one page, filtered and searched by the SERVER. `channel` and `status` are the API's
+   * own values, comma-separated for several (`new,packed` is "still to send"); `location` absent is every branch.
+   */
+  orders: (args: { channel?: string; status?: string; q?: string; page?: number; pageSize?: number; location?: string | null } = {}) => {
+    const params = new URLSearchParams();
+    if (args.channel) params.set('channel', args.channel);
+    if (args.status) params.set('status', args.status);
+    if (args.q) params.set('q', args.q);
+    if (args.page && args.page > 1) params.set('page', String(args.page));
+    if (args.pageSize != null) params.set('pageSize', String(args.pageSize));
+    if (args.location) params.set('location', args.location);
+    const qs = params.toString();
+    return get<OrdersPage>(`/api/v1/orders${qs ? `?${qs}` : ''}`);
+  },
+  /** Jira GRW-615 — one order, whole: its lines, its history, who it is for, and the moves it may be offered. */
+  order: (id: string) => get<OrderDetail>(`/api/v1/orders/${encodeURIComponent(id)}`),
+  /**
+   * Jira GRW-615 — move an order along. `expected` is the state this screen believes the order is in: when the order has
+   * moved on elsewhere the API refuses with 409 and says where it is now, instead of overwriting the other desk.
+   */
+  /** Jira GRW-625 — try again to tell the marketplace what the shop decided about an order. One attempt, safe to repeat. */
+  tellMarketplaceAgain: (id: string) => post<{ queued: number }>(`/api/v1/orders/${id}/tell-marketplace`, {}),
+  /**
+   * Jira GRW-613 — this buyer is somebody the shop already knows: attach the client.
+   *
+   * One order at a time and never a match we make for them (BR-02), so the id comes from a person choosing a name.
+   * The route has been there since GRW-613 and nothing called it, which `ui-actions.test.ts` reported as a write the
+   * desk is granted and is offered nowhere (review, 2026-10-22).
+   */
+  attachOrderClient: (id: string, customerId: string) =>
+    post<{ id: string; clientId: string }>(`/api/v1/orders/${encodeURIComponent(id)}/client`, { customerId }),
+  moveOrder: (id: string, status: string, expected: string) =>
+    patch<{ id: string; status: string; moved: boolean }>(`/api/v1/orders/${encodeURIComponent(id)}/status`, { status, expected }),
+  /** Jira GRW-619 — import an order report: the marketplace is chosen by the owner and sent with it; one request, whole orders, importing it twice changes nothing. */
+  importOrdersFile: (channel: 'flipkart' | 'amazon', file: File, idempotencyKey: string) =>
+    uploadFile<ImportSummary>(`/api/v1/marketplace-imports?channel=${channel}&idempotencyKey=${encodeURIComponent(idempotencyKey)}`, 'file', file),
+  importOrdersText: (channel: 'flipkart' | 'amazon', text: string, idempotencyKey: string) => post<ImportSummary>('/api/v1/marketplace-imports', { channel, text, idempotencyKey }),
+  /** Jira GRW-641 — which branch each marketplace sells from, and the branches it could. */
+  channelBranches: () => get<ChannelBranches>('/api/v1/channels'),
+  setChannelBranch: (channel: 'flipkart' | 'amazon', locationId: string) => put<SetChannelBranchResult>(`/api/v1/channels/${channel}/branch`, { locationId }),
+  // Jira GRW-621 — a marketplace's seller keys. Write-only: nothing here can read a value back.
+  channelKeys: (channel: 'flipkart' | 'amazon') => get<ChannelConnection>(`/api/v1/channels/${channel}/status`),
+  saveChannelKeys: (channel: 'flipkart' | 'amazon', fields: Record<string, string>) => put<SaveChannelKeysResult>(`/api/v1/channels/${channel}/credentials`, { fields }),
+  checkChannelKeys: (channel: 'flipkart' | 'amazon') => post<ChannelCheckResult>(`/api/v1/channels/${channel}/check`, {}),
+  /** Jira GRW-623 — when each connected marketplace's orders were last brought in. Owner and manager only. */
+  channelOrdersStatus: () => get<{ channels: ChannelOrdersLine[] }>('/api/v1/channels/pull-status'),
+  /** Jira GRW-626 — what is waiting for a marketplace and what failed, one page. Owner and manager only. */
+  channelQueue: (channel: 'flipkart' | 'amazon', page: number, pageSize = 10) => get<ChannelQueuePage>(`/api/v1/channels/${channel}/queue?page=${page}&pageSize=${pageSize}`),
+  /** Jira GRW-626 — try everything that stopped or is waiting on a backoff again. Safe to repeat. */
+  retryChannelQueue: (channel: 'flipkart' | 'amazon') => post<{ sizes: number; messages: number }>(`/api/v1/channels/${channel}/retry`, {}),
+  /** Jira GRW-624 — how many of each size to keep back from online orders. */
+  setStockBuffer: (channel: 'flipkart' | 'amazon', buffer: number) => put<SetStockBufferResult>(`/api/v1/channels/${channel}/stock-buffer`, { buffer }),
+  /** Jira GRW-637 — the refunds recorded on online orders, one row per refund; a record, never an instruction. */
+  refundsReport: (q: { range: SellersRange; channel?: string; location?: string; page?: number; pageSize?: number }) => {
+    const p = new URLSearchParams(sellersParams({ range: q.range, location: q.location, page: q.page, pageSize: q.pageSize }));
+    if (q.channel) p.set('channel', q.channel);
+    return get<RefundsReportPage>(`/api/v1/reports/refunds?${p.toString()}`);
+  },
+  /** Jira GRW-637 — the same refunds as a file; the server writes it. */
+  refundsCsv: async (q: { range: SellersRange; channel?: string; location?: string }): Promise<string> => {
+    const p = new URLSearchParams(sellersParams({ range: q.range, location: q.location }));
+    if (q.channel) p.set('channel', q.channel);
+    const path = `/api/v1/reports/refunds/export?${p.toString()}`;
+    const res = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
+    if (!res.ok) throw await apiError(res, path);
+    return res.text();
+  },
+  /** Jira GRW-635 — what came back and why, by reason, with a parcel that never arrived apart. */
+  returnsReport: (q: { range: SellersRange; location?: string }) => get<ReturnsReportPage>(`/api/v1/reports/returns?${sellersParams({ range: q.range, location: q.location })}`),
+  /** Jira GRW-634 — what was billed on each channel over a range, beside the period before; billed, not received. */
+  byChannel: (q: { range: SellersRange; location?: string }) => get<ByChannelPage>(`/api/v1/reports/by-channel?${sellersParams({ range: q.range, location: q.location })}`),
+  /** Jira GRW-633 — what to order before the season, size by size: last year's sales in the same days, less the shelf. */
+  reorder: (q: ReorderQuery) => get<ReorderPage>(`/api/v1/reports/reorder?${reorderParams(q)}`),
+  /** Jira GRW-633 — the owner's own number over a suggestion (null clears it). */
+  setReorderOverride: (body: { keyId: string; from: string; to: string; qty: number | null }) => put<{ keyId: string; qty: number | null }>('/api/v1/reports/reorder/override', body),
+  /** Jira GRW-633 — each category's lead time and coverage at one branch. */
+  reorderRules: (location: string) => get<ReorderRules>(`/api/v1/reports/reorder/rules?location=${encodeURIComponent(location)}`),
+  setReorderRule: (body: { categoryId: string; leadDays: number | null; coverDays: number | null }) => put<ReorderRule>('/api/v1/reports/reorder/rules', body),
+  /** Jira GRW-633 — the list as a file, with the owner's own numbers; the server writes it. */
+  reorderCsv: async (q: Omit<ReorderQuery, 'page' | 'pageSize'>): Promise<string> => {
+    const path = `/api/v1/reports/reorder/export?${reorderParams(q)}`;
+    const res = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
+    if (!res.ok) throw await apiError(res, path);
+    return res.text();
+  },
+  /** Jira GRW-632 — the sizes that sold in a window, beside the same window a year earlier. */
+  bestSellers: (q: SellersQuery) => get<BestSellersPage>(`/api/v1/reports/best-sellers?${sellersParams(q)}`),
+  /** Jira GRW-632 — the sizes on the shelf that did not sell in a window, the longest-unsold first. */
+  deadStock: (q: SellersQuery) => get<DeadStockPage>(`/api/v1/reports/dead-stock?${sellersParams(q)}`),
+  /** Jira GRW-631 — the shelf size by size with its worth at cost; one page of styles, the totals over all of them. */
+  stockReport: (q: StockReportQuery) => get<StockReportPage>(`/api/v1/reports/stock?${stockReportParams(q)}`),
+  /** Jira GRW-631 — the same report as a file: the server writes it, so the file can never be a second answer. */
+  stockReportCsv: async (q: Omit<StockReportQuery, 'page' | 'pageSize'>): Promise<string> => {
+    const path = `/api/v1/reports/stock/export?${stockReportParams(q)}`;
+    const res = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
+    if (!res.ok) throw await apiError(res, path);
+    return res.text();
+  },
+  /** Jira GRW-620 — the codes holding marketplace orders back, grouped by code and paged on the server. */
+  heldCodes: (q: { channel?: 'flipkart' | 'amazon'; q?: string; page?: number; pageSize?: number }) => {
+    const p = new URLSearchParams();
+    if (q.channel) p.set('channel', q.channel);
+    if (q.q?.trim()) p.set('q', q.q.trim());
+    p.set('page', String(q.page ?? 1));
+    p.set('pageSize', String(q.pageSize ?? 10));
+    return get<HeldPage>(`/api/v1/marketplace-imports/held?${p.toString()}`);
+  },
+  releaseHeld: (channel: 'flipkart' | 'amazon', codes?: string[]) => post<ReleaseResult>('/api/v1/marketplace-imports/held/release', { channel, codes }),
+  dismissHeld: (channel: 'flipkart' | 'amazon', code: string, reason: string) =>
+    post<ReleaseResult & { dismissedLines: number; closedOrders: number }>('/api/v1/marketplace-imports/held/dismiss', { channel, code, reason }),
+  /** The shelf's sizes whose product name contains `q`, to pick the one a code points at — searched on the server, a page at a time. */
+  sizesToMap: (channel: 'flipkart' | 'amazon', q: string) => get<{ rows: SizeToMap[]; total: number }>(`/api/v1/marketplace-codes/unmapped?channel=${channel}&all=1&q=${encodeURIComponent(q)}&pageSize=12`),
+  /** Jira GRW-618 — a marketplace's own codes: one page, by channel and product. A product's codes are few, so the screen pages through them. */
+  marketplaceCodes: (q: { channel?: 'flipkart' | 'amazon'; productId?: string; page?: number; pageSize?: number }) => {
+    const p = new URLSearchParams();
+    if (q.channel) p.set('channel', q.channel);
+    if (q.productId) p.set('productId', q.productId);
+    p.set('page', String(q.page ?? 1));
+    p.set('pageSize', String(q.pageSize ?? 100));
+    return get<MarketplaceCodesPage>(`/api/v1/marketplace-codes?${p.toString()}`);
+  },
+  /** Add, repoint or paste many — one request, one transaction: all of it or none. */
+  saveMarketplaceCodes: (body: SaveCodesBody) => put<SaveCodesResult>('/api/v1/marketplace-codes', body),
+  deleteMarketplaceCode: (id: string) => del<{ id: string; deleted: boolean }>(`/api/v1/marketplace-codes/${encodeURIComponent(id)}`),
+  /** Jira GRW-617 — swap a size on an order. The quote runs the whole swap and rolls it back: the sheet states the server's difference, never its own. */
+  exchangeQuote: (id: string, body: ExchangeBody) => post<ExchangeResult>(`/api/v1/orders/${encodeURIComponent(id)}/exchange/quote`, body),
+  exchangeOrder: (id: string, body: ExchangeBody) => post<ExchangeResult>(`/api/v1/orders/${encodeURIComponent(id)}/exchange`, body),
   /** Jira GRW-222 — the walk-in queue. Adding is the arrival; giving to staff is the start. */
   // Jira GRW-244 — `location`: one branch's queue (owner); a receptionist's is their own.
   walkInQueue: (location?: string | null) => get<QueueEntry[]>(`/api/v1/walk-in-queue${atBranch(location)}`),
@@ -629,12 +879,19 @@ export const api = {
   /** Jira GRW-310 — an opaque string that changes when anything the live screens show changes. A timeout in the browser, so a stalled request cannot hold the poll shut. */
   liveVersion: (timeoutMs?: number) =>
     get<{ version: string }>('/api/v1/live-version', timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined).then((r) => r.version),
+  /** Jira GRW-72 — Settings › Roles (a shop's owner). */
+  roles: () => get<RolesPayload>('/api/v1/roles'),
+  createRole: (body: RoleBody) => post<ShopRole>('/api/v1/roles', body),
+  updateRole: (id: string, body: Partial<RoleBody>) => patch<ShopRole>(`/api/v1/roles/${encodeURIComponent(id)}`, body),
+  deleteRole: (id: string) => del<void>(`/api/v1/roles/${encodeURIComponent(id)}`),
   teamInvites: () => get<{ invites: PendingInvite[] }>('/api/v1/team/invites'),
-  createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist'; locationId?: string | null; name?: string | null }) =>
+  createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist' | 'manager'; locationId?: string | null; name?: string | null; tenantRoleId?: string }) =>
     post<CreatedInvite>('/api/v1/team/invites', body),
   teamMembers: () => get<{ members: TeamMember[] }>('/api/v1/team/members'),
   setTeamMemberBranch: (userId: string, locationId: string) =>
     patch<{ ok: true }>(`/api/v1/team/members/${userId}`, { locationId }),
+  /** Jira GRW-73 — give a member a role, or take theirs away with null. */
+  setTeamMemberRole: (userId: string, tenantRoleId: string | null) => patch<{ ok: true }>(`/api/v1/team/members/${userId}`, { tenantRoleId }),
   revokeTeamInvite: (id: string) => del<{ ok: true }>(`/api/v1/team/invites/${id}`),
   /** Jira GRW-470 — take a receptionist's or stylist's login away from this business. */
   removeTeamMember: (userId: string) => del<{ ok: true }>(`/api/v1/team/members/${userId}`),
@@ -739,6 +996,9 @@ export const api = {
       items: Array<{ productId: string; qty: number }>;
       restock?: boolean;
       reason?: string;
+      /** Jira GRW-635 — why it came back, from the small set; "other" needs the words in `reasonText`. Optional at the counter. */
+      reasonCode?: 'size' | 'not_as_described' | 'faulty' | 'wrong_item' | 'changed_mind' | 'other';
+      reasonText?: string;
       /** How the refund was paid out. Required: the drawer has to balance. */
       refundMode: 'cash' | 'card' | 'upi' | 'other';
       /** Stable for one return, so a retry after a lost response returns nothing more. */

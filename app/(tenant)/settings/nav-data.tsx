@@ -32,6 +32,8 @@ export type SettingsRowKey =
   | 'appearance'
   | 'privacy'
   | 'reportAccess'
+  | 'roles'
+  | 'channels'
   | 'gst'
   | 'billing'
   | 'account'
@@ -58,6 +60,23 @@ interface SettingsRowBase {
    * nothing else, so with it off the screen sets times for a message that is never sent (owner, 2026-10-10).
    */
   whatsappOnly?: boolean;
+  /**
+   * Jira GRW-610 — listed only for a business that takes bookings. A shop has no diary, so Booking settings (times and
+   * closed days) and Location check-in (staff marking themselves in at a chair) set up something it does not have:
+   * absent for it, never an empty form. `areas.ts` closes the same two addresses to it.
+   */
+  diaryOnly?: boolean;
+  /**
+   * Jira GRW-72 — listed only for a shop, and only for its owner. A salon keeps its fixed roles and is shown nothing about
+   * this; the API answers 404 to it all the same, so a typed address is not a way in.
+   */
+  shopOwnerOnly?: boolean;
+
+  /**
+   * Jira GRW-641 — listed only for a shop. Which branch Flipkart and Amazon sell from means nothing to a business with a diary, which has
+   * no marketplaces: absent for it, never a screen that answers 404.
+   */
+  shopOnly?: boolean;
   /**
    * Listed only once the business is live.
    *
@@ -113,7 +132,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
        * "Cancellation policy" used to be a second row here opening this same page, for the one field on it that
        * names a cancel (owner, 2026-10-10). Two rows, one destination, and the owner tapped both to find out.
        */
-      { href: '/settings/booking', key: 'bookingSettings', icon: IconCalendarPlus },
+      { href: '/settings/booking', key: 'bookingSettings', diaryOnly: true, icon: IconCalendarPlus },
       { href: '/settings/notifications', key: 'notifications', icon: IconBell, whatsappOnly: true },
       // Jira GRW-563 — where this branch is, for a stylist's "I'm in" from her phone.
       { href: '/settings/check-in', key: 'checkIn', icon: IconMapPin },
@@ -138,6 +157,10 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       // The QR the till shows a customer. Live-day: see `liveOnly` above.
       { href: '/settings/payments', key: 'payments', icon: IconPayUpi, liveOnly: true },
       { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
+      // Jira GRW-72 — what each role on a shop's team can open.
+      { href: '/settings/roles', key: 'roles', icon: IconLock, shopOwnerOnly: true },
+      // Jira GRW-641 — which shop's shelves the marketplaces sell from.
+      { href: '/settings/channels', key: 'channels', icon: IconShop, shopOnly: true },
       // Jira GRW-243 — what the owner pays Growza, each branch, the next bill and past bills.
       { href: '/settings/billing', key: 'billing', icon: IconWallet },
     ],

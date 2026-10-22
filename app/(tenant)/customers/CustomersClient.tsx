@@ -19,7 +19,7 @@ import { useAnchoredPanel } from '../lib/useAnchoredPanel';
 import { initials } from '../lib/appointment-display';
 import { waDigits } from '../components/BookingSheet';
 import { PageHeader } from '../components/PageHeader';
-import { useWritable } from '../components/SessionProvider';
+import { useAreas, useWritable } from '../components/SessionProvider';
 import { PaginatedTable } from '../components/PaginatedTable';
 import { PAGE_SIZE } from '../components/Pagination';
 import {
@@ -168,6 +168,8 @@ export function CustomersClient({
   const [direction, setDirection] = useState<SortDirection>(initialDirection ?? 'desc');
   // Jira GRW-556 (follow-up) — a business suspended for non-payment reads its clients and adds none.
   const writable = useWritable();
+  // Jira GRW-610 — a business that takes no bookings has no "last booking" and no "visits" to list: absent, not zero.
+  const bookingsOn = useAreas().bookings;
   /*
    * Owner, 2026-10-14 — Clients on a wide desk, as Services: the bands on the left, the list in the middle, the
    * client's card in place on the right. Decided by the window, not the device: the desktop tier (≥1101px) gets
@@ -342,8 +344,8 @@ export function CustomersClient({
     <tr>
       <SortableTh col="name" label={t('colCustomer')} sort={sort} direction={direction} onSort={setSortColumn} />
       <th>{t('colPhone')}</th>
-      <th>{t('colLastBooking')}</th>
-      <SortableTh col="visits" label={t('visitsColumn')} sort={sort} direction={direction} onSort={setSortColumn} numeric />
+      {bookingsOn ? <th>{t('colLastBooking')}</th> : null}
+      {bookingsOn ? <SortableTh col="visits" label={t('visitsColumn')} sort={sort} direction={direction} onSort={setSortColumn} numeric /> : null}
       <SortableTh col="spent" label={t('colTotalSpent')} sort={sort} direction={direction} onSort={setSortColumn} numeric />
       <SortableTh col="recent" label={t('colLastSeen')} sort={sort} direction={direction} onSort={setSortColumn} />
     </tr>
@@ -379,17 +381,19 @@ export function CustomersClient({
             <span className="muted">—</span>
           )}
         </td>
-        <td>
-          {c.lastBookingAt ? (
-            <>
-              <div>{formatDate(c.lastBookingAt, undefined, locale)}</div>
-              <div className="muted" style={{ fontSize: 13 }}>{c.lastServiceName}</div>
-            </>
-          ) : (
-            <span className="muted">{t('never')}</span>
-          )}
-        </td>
-        <td>{c.totalBookings}</td>
+        {bookingsOn ? (
+          <td>
+            {c.lastBookingAt ? (
+              <>
+                <div>{formatDate(c.lastBookingAt, undefined, locale)}</div>
+                <div className="muted" style={{ fontSize: 13 }}>{c.lastServiceName}</div>
+              </>
+            ) : (
+              <span className="muted">{t('never')}</span>
+            )}
+          </td>
+        ) : null}
+        {bookingsOn ? <td>{c.totalBookings}</td> : null}
         <td>{formatMoney(c.totalSpentMinor)}</td>
         {/* Recency, not a constant. "Active" was true for every row in
             the table, so the column carried no signal at all; how long
@@ -760,7 +764,7 @@ export function CustomersClient({
                     </div>
                   </div>
                   <div className="cust-card-foot">
-                    <span>{t('visitCount', { count: c.totalBookings })}</span>
+                    {bookingsOn ? <span>{t('visitCount', { count: c.totalBookings })}</span> : null}
                     <span>{t('spent', { amount: formatMoney(c.totalSpentMinor) })}</span>
                   </div>
                 </div>

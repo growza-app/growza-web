@@ -3,6 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { fromDashboard } from './dashboard-root';
+// The DASHBOARD's `canSee`, which knows about areas; shared's (below) does not, and cannot answer for a shop.
+import { canSee as navCanSee } from './nav-policy';
 import {
   canSee,
   mayUse,
@@ -165,13 +167,16 @@ describe('2b — the controls, each behind its own action', () => {
     const linking = sources().filter((f) => /href="\/search"/.test(readFileSync(f, 'utf8')));
     expect(linking.map((f) => path.relative(tenantDir, f))).toEqual([path.join('components', 'HeaderSearch.tsx')]);
     // Jira GRW-556 — and the business being live: it finds clients and bookings, which a business being set up has none of.
-    expect(read('components/HeaderSearch.tsx')).toMatch(/const mayUseSearch = useMayUse\('search'\);[\s\S]*if \(!mayUseSearch \|\| !live\) return null;/);
+    expect(read('components/HeaderSearch.tsx')).toMatch(/const mayUseSearch = useMayUse\('search'\) && [^;]*;[\s\S]*if \(!mayUseSearch \|\| !live\) return null;/);
   });
 
   const GATES: Array<[file: string, gate: RegExp]> = [
     ['components/home/parts.tsx', /<HeaderSearch wide \/>/],
-    ['components/MobileChrome.tsx', /const mayBook = mayUse\(role, 'visit\.new', writable\);/],
-    ['components/home/OwnerHome.tsx', /const mayBook = mayUse\(p\.role, 'visit\.new', writable\);[\s\S]*const mayRecordPayment = mayUse\(p\.role, 'visit\.recordPayment', writable\);/],
+    // Jira GRW-74 — both of these also ask the role GRID, which `mayUse` cannot see (review, 2026-10-22): the fixed
+    // word a role works like is not what the owner filled in. MobileChrome asks it directly (it is chrome, not a
+    // screen, so it has no `useWritable`); OwnerHome goes through `useMayUse`, which asks for every control.
+    ['components/MobileChrome.tsx', /const mayBook = mayUse\(role, 'visit\.new', writable\) && \(!areas\.pages \|\| gridMayUse\('visit\.new', areas\.pages\)\);/],
+    ['components/home/OwnerHome.tsx', /const mayBook = useMayUse\('visit\.new'\);[\s\S]*const mayRecordPayment = useMayUse\('visit\.recordPayment'\);/],
     // Jira GRW-404 moved the desk's rows onto the token board, so the give and pay buttons are gated there.
     ['components/home/TokenBoard.tsx', /const mayGive = useMayUse\('queue\.give'\);[\s\S]*\{mayGive \? \(\s*<button type="button" className="hm-give"/],
     ['components/home/BookedToday.tsx', /const mayArrive = useMayUse\('token\.arrive'\);[\s\S]*\{mayArrive \? \(/],
@@ -194,7 +199,18 @@ describe('2b — the controls, each behind its own action', () => {
  * screen is closed whole by `guardScreen` (section 4), so its buttons are not
  * gated one by one; on a screen a role IS offered, every write must be theirs.
  */
+/** A shop's app, for the screens that exist only there (`/orders`, `/stock`). See `lib/areas.ts`. */
+const SHOP_AREAS = { bookings: false, services: false, shop: true } as const;
+
 const SCREEN_WRITES: Record<string, readonly string[]> = {
+  // Jira GRW-615 — an order's own screen moves it along: the one next move, and the rarer ones behind More. Same screen,
+  // same gate: a role the nav does not offer /orders is bounced Home by the page, so it never reaches the button.
+  // Jira GRW-617 — and swaps a size. The desk is offered this screen but takes no returns, so it takes no swaps: the control is
+  // drawn from `order.canSwap`, which the API computes with the very function that would refuse the swap.
+  // Jira GRW-625 — asks again to tell the marketplace what the shop decided about an order (owner and manager; the desk is not offered it).
+  // Jira GRW-613 — and attaches a client the shop already has to a marketplace buyer (`AttachClientSheet`). The route
+  // had been the desk's since GRW-613 with no control anywhere; this test is what said so (review, 2026-10-22).
+  '/orders': ['PATCH /api/v1/orders/:id/status', 'POST /api/v1/orders/:id/client', 'POST /api/v1/orders/:id/tell-marketplace', 'POST /api/v1/orders/:id/exchange', 'POST /api/v1/orders/:id/exchange/quote', 'POST /api/v1/marketplace-imports', 'POST /api/v1/marketplace-imports/held/release', 'POST /api/v1/marketplace-imports/held/dismiss'],
   // Jira GRW-563 (shared 1.0.5) — `assign-client` moved into `visit.recordPayment`, where it belonged.
   '/services': [
     'POST /api/v1/services',
@@ -216,6 +232,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/service-categories/reorder',
   ],
   '/offers': ['POST /api/v1/offers', 'PATCH /api/v1/offers/:id', 'DELETE /api/v1/offers/:id'],
+  // Jira GRW-72 — a shop's roles: owner-only, closed whole by `guardScreen` and again by the handler.
+  '/settings/roles': ['POST /api/v1/roles', 'PATCH /api/v1/roles/:id', 'DELETE /api/v1/roles/:id'],
   /*
    * Jira GRW-438 — the same three writes, now reachable from two owner-only screens. Both are closed whole by
    * `guardScreen`, so listing them twice is the honest answer rather than a sign one of them is ungated.
@@ -233,10 +251,20 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/products/:id/movements',
     'POST /api/v1/products/:id/transfer',
     'POST /api/v1/products/stock-take',
+    // Jira GRW-602 — the numbers typed into a stock take are kept as the owner walks the shelf.
+    'PUT /api/v1/products/stock-take/draft',
+    'DELETE /api/v1/products/stock-take/draft',
+    // Jira GRW-598 — the sizes grid, one save, from a page of its own under Products.
+    'PUT /api/v1/products/:id/variants',
+    // Jira GRW-618 — the marketplace codes that point at those sizes, on a page of their own under Products.
+    'PUT /api/v1/marketplace-codes',
+    'DELETE /api/v1/marketplace-codes/:id',
     'POST /api/v1/product-categories',
     'PATCH /api/v1/product-categories/:id',
     'DELETE /api/v1/product-categories/:id',
   ],
+  // Jira GRW-633 — the reorder worklist: the owner's own numbers and each category's lead time, on a page of its own under Stock. Owner and manager only, closed whole by `guardScreen`.
+  '/stock/order': ['PUT /api/v1/reports/reorder/override', 'PUT /api/v1/reports/reorder/rules'],
   '/providers': [
     'POST /api/v1/providers',
     'PATCH /api/v1/providers/:id',
@@ -249,6 +277,15 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'DELETE /api/v1/providers/:id/photo',
   ],
   '/settings': [
+    // Jira GRW-641 — which branch a marketplace sells from, on Settings › Online selling (a shop's, owner and manager's).
+    'PUT /api/v1/channels/:id/branch',
+    // Jira GRW-621 — a marketplace's seller keys, on the same screen and under the same gate (owner and manager).
+    'PUT /api/v1/channels/:id/credentials',
+    'POST /api/v1/channels/:id/check',
+    // Jira GRW-624 — how many of each size to keep back from online orders, on the same screen and under the same gate.
+    'PUT /api/v1/channels/:id/stock-buffer',
+    // Jira GRW-626 — try again, once, for everything that stopped or is waiting on a backoff (owner and manager).
+    'POST /api/v1/channels/:id/retry',
     'POST /api/v1/billing/autopay',
     'POST /api/v1/team/invites',
     'PATCH /api/v1/team/members/:userId',
@@ -367,12 +404,6 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
    * its own address, in its page or its segment's layout.
    */
   const OWN_GATE: Record<string, RegExp> = {
-    /*
-     * Jira GRW-582 — a customer's document is the same thing the Sales register is: a record of what a bill took.
-     * It is gated as `/sales` rather than inventing a second answer to the same question, so a business that has
-     * opened the register to its receptionist has opened the documents behind it too.
-     */
-    '/documents': /await guardScreen\('\/sales'\);/,
     // The header's control and this page ask the same action.
     '/search': /if \(!mayUse\(role, 'search'\)\) redirect\(/,
     // Its own tab gate (GRW-197): a tab they cannot open lands on one they can, none says so plainly.
@@ -403,7 +434,25 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
      * delete, moving stock between branches are the owner's). So it guards its own address rather than its segment's,
      * and `canSee('/products/sell', …)` is what answers for it.
      */
-    '/products/sell': /await guardScreen\('\/products\/sell'\);/,
+    // Jira GRW-616 — the till has two addresses over one screen, as the shelf does: the page names the address it is guarded
+    // under, and `SellProductScreen` calls `guardScreen(guard)` (pinned below).
+    '/products/sell': /<SellProductScreen[^>]*guard="\/products\/sell"/,
+    '/orders/new': /<SellProductScreen[^>]*guard="\/orders\/new"/,
+    // The POS tab is that same till under a tab's name: same answer, same guard.
+    '/pos': /await guardScreen\('\/pos'\);/,
+    // Jira GRW-608 — the shelf and the register each have two addresses over one implementation: the page names the
+    // address it is guarded under, and the screen (`*Screen.tsx`) is what calls `guardScreen(guard)` (pinned in areas.test.ts).
+    // …and a page UNDER it that is not the shelf (the sizes grid, Jira GRW-598) guards itself under the same address.
+    '/products': /<ProductsScreen[^>]*guard="\/products"|await guardScreen\('\/products'\);/,
+    // Jira GRW-631 — the stock report is its own page under the shelf's address; it guards itself under the same one.
+    '/stock/report': /await guardScreen\('\/stock'\);/,
+    '/stock/channels': /await guardScreen\('\/stock'\);/,
+    '/stock/order': /await guardScreen\('\/stock'\);/,
+    '/stock/sellers': /await guardScreen\('\/stock'\);/,
+    '/stock': /<ProductsScreen[^>]*guard="\/stock"/,
+    '/sales': /<SalesScreen[^>]*guard="\/sales"/,
+    // Jira GRW-614 — Orders is its own screen, guarded at the page like the rest.
+    '/orders': /await guardScreen\('\/orders'\);/,
     // `me.support` as a whole since the page lists options (each its own number): it reads the contacts
     // off /me, which every role may call, and nothing role-scoped.
     '/help': /const me = await api\.me\(\);[\s\S]*support = me\.support;/,
@@ -455,7 +504,13 @@ describe('the reverse — nothing a limited role may do is left without a contro
 
   for (const [role, allowed] of [['receptionist', RECEPTIONIST_ALLOWED], ['staff', STAFF_ALLOWED]] as const) {
     it(`${role}: every write they are granted has a control they are offered, or is listed`, () => {
-      const offeredScreens = Object.keys(SCREEN_WRITES).filter((s) => canSee(s, role));
+      /*
+       * Asked about a SHOP as well as a diary. `canSee` defaults to the diary's areas, under which `/orders` and
+       * `/stock` do not exist for anybody — so every write that lives only on a shop screen read as "granted and
+       * offered nowhere", however well the control was built. A role's grant is the same in both shapes; which
+       * screens exist is not (review, 2026-10-22).
+       */
+      const offeredScreens = Object.keys(SCREEN_WRITES).filter((s) => canSee(s, role) || navCanSee(s, role, undefined, true, SHOP_AREAS));
       const covered = new Set([
         ...ACTIONS.filter((a) => mayUse(role, a)).flatMap((a) => UI_ACTIONS[a]),
         ...offeredScreens.flatMap((s) => SCREEN_WRITES[s]!),

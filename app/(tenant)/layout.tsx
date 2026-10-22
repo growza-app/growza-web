@@ -1,3 +1,4 @@
+import { areasOf, DIARY_AREAS, type Areas } from './lib/areas';
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
@@ -15,7 +16,7 @@ import { NumberWheelGuard } from '../shared/NumberWheelGuard';
 import { BrowserGate } from './components/BrowserGate';
 import { LiveRefresh } from './components/LiveRefresh';
 import { SessionRefresh } from './components/SessionRefresh';
-import { SessionProvider } from './components/SessionProvider';
+import { ScreenAccess, SessionProvider } from './components/SessionProvider';
 import { NamePrompt } from './components/NamePrompt';
 import { SessionResume } from './components/SessionResume';
 import { BranchProvider } from './components/BranchProvider';
@@ -144,6 +145,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let writable = true;
   /** Jira GRW-556 (follow-up) — `me.capabilities.walkIn`; only an explicit false hides the queue's and the token board's controls. */
   let walkIn = true;
+  /** Jira GRW-598 — `me.capabilities.sizes`; only an explicit true draws the Sizes button. */
+  let sizes = false;
   /**
    * GRW-165 — whether WhatsApp is live for this business.
    *
@@ -157,6 +160,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let whatsappDemo = false;
   /** Owner, 2026-10-14 — `me.capabilities.products`; only an explicit false takes the shelf off the nav. */
   let products = true;
+  /** Jira GRW-608 — which areas of the app this business has; the salon's full set until `/me` says otherwise. */
+  let areas: Areas = DIARY_AREAS;
   /** Jira GRW-66 · GRW-157 — absent means owner (BR-03): a degraded session must not hide the product from the person who owns it. */
   let role: MemberRole | null = null;
   /**
@@ -209,9 +214,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     live = isLive(me.tenant?.status);
     writable = isWritable(me.tenant?.status);
     walkIn = me.capabilities?.walkIn !== false;
+    sizes = me.capabilities?.sizes === true;
     whatsappLive = me.whatsapp?.booking ?? false;
     whatsappDemo = me.whatsapp?.demo ?? false;
     products = me.capabilities?.products !== false;
+    areas = areasOf(me);
     pendingAttendance = me.attendance?.pending ?? 0;
     selfCheckIn = me.attendance?.selfCheckIn ?? false;
     role = (me.member?.role as MemberRole | undefined) ?? null;
@@ -310,15 +317,18 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             businessName: tenantName ?? null,
             branches,
             lang,
+            sizes,
             live,
             writable,
             walkIn,
+            areas,
             whatsappLive,
             pendingAttendance,
             selfCheckIn,
             timezone,
           }}
         >
+        <ScreenAccess>
         <BranchProvider branches={branches} role={role ?? null} memberLocationId={memberLocationId} workBranchName={workBranchName}>
         <LabelsProvider labels={labels}>
         {impersonation ? null : <NamePrompt />}
@@ -371,6 +381,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </MobileNavProvider>
         </LabelsProvider>
         </BranchProvider>
+        </ScreenAccess>
         </SessionProvider>
         </NextIntlClientProvider>
         <InstallBanner app="salon" />

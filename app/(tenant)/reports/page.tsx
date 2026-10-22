@@ -13,6 +13,9 @@ import {
 } from '../lib/api';
 import { copy } from '../lib/copy';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
+import { PageHeader } from '../components/PageHeader';
+import { RetailReportsHub, RetailReportsNav } from '../components/RetailReportsNav';
+import { areasOf } from '../lib/areas';
 import { loadErrorKind, type LoadErrorKind } from '../lib/load-error';
 import { ReportsClient, type TabPayload } from './ReportsClient';
 
@@ -107,6 +110,47 @@ export default async function ReportsPage({
       <div className="page-body">
         <LoadErrorBanner kind={loadErrorKind(error)} />
       </div>
+    );
+  }
+
+  /*
+   * Jira GRW-610 — every report here is built from bookings: visits, money from visits, services, the clients a diary
+   * brought. A business that takes none has nothing for them to say, and "Money earned ₹0" under a till full of product
+   * sales would be a lie. They are absent for it, not zeroed; its own reports (sales, stock, what is selling) are Jira
+   * GRW-591's. Until then it is told so plainly, with the two screens that already say what happened.
+   */
+  if (!areasOf(me).bookings) {
+    const role = me.member?.role;
+    const mayOpenShopReports = areasOf(me).shop && (role === undefined || role === 'owner' || role === 'manager');
+    return (
+      <>
+        <PageHeader
+          title={t('title')}
+          actions={
+            areasOf(me).shop ? (
+              <>
+                <a className="btn btn-ghost" href="/orders">{t('shopSoonOrders')}</a>
+                {mayOpenShopReports ? <a className="btn btn-ghost" href="/stock">{t('shopSoonStock')}</a> : null}
+              </>
+            ) : undefined
+          }
+        />
+        <div className="page-body srp-page">
+          {mayOpenShopReports ? (
+            <>
+              <RetailReportsNav active="hub" />
+              <RetailReportsHub />
+            </>
+          ) : (
+            <div className="card">
+              <div className="empty">
+                <p><strong>{t('shopSoonTitle')}</strong></p>
+                <p className="muted">{t('shopSoonBody')}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </>
     );
   }
 

@@ -84,7 +84,8 @@ describe('the floating action', () => {
 
   it('is a plus, named by its aria-label', () => {
     expect(nav).toMatch(/<IconPlus \/>/);
-    expect(nav).toMatch(/aria-label=\{role === 'receptionist' \? t\.walkInShort : t\.nav\.newBooking\}/);
+    // Jira GRW-609 — a shop's plus is the till, and says so; every other business's is as it was.
+    expect(nav).toMatch(/aria-label=\{areas\.shop \? t\.shop\.takeOrder : role === 'receptionist' \? t\.walkInShort : t\.nav\.newBooking\}/);
   });
 
   it('sits above the bar at its right edge, anchored to the bar rather than the viewport', () => {

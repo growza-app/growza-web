@@ -29,4 +29,11 @@ describe('Help in the account menu', () => {
     expect(hi.chrome.account.help).toBeTruthy();
     expect(hi.chrome.account.help).not.toBe(en.chrome.account.help);
   });
+
+  it('positions NamePrompt (.acct-menu.name-prompt) as a centered fixed dialog on desktop so autofocus never scrolls the page past the fold', () => {
+    const css = readFileSync(resolve(here, '../styles/71-attendance-register.css'), 'utf8');
+    expect(css).toContain('.acct-menu.name-prompt');
+    expect(css).toMatch(/\.acct-menu\.name-prompt\s*\{[\s\S]*?position:\s*fixed;[\s\S]*?top:\s*50%;[\s\S]*?left:\s*50%;/);
+    expect(css).toContain('.acct-sub.name-prompt-sub');
+  });
 });

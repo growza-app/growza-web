@@ -141,8 +141,10 @@ describe('every screen that writes asks whether it may (the list that cannot qui
     ['packages/new/page.tsx', /await guardWritable\('\/packages'\);/],
     ['packages/[id]/edit/page.tsx', /await guardWritable\('\/packages'\);/],
     // Products
-    ['products/ProductsList.tsx', /<WriteOnly>\s*\{live\.length > 0 \? \(\s*<Link className="btn btn-ghost" href="\/products\/sell\?from=products">/],
-    ['products/sell/page.tsx', /!mayUse\(me\.member\?\.role, 'visit\.recordPayment', isWritable\(me\.tenant\?\.status\)\)/],
+    // The till link asks the business (`useBusinessWritable`) and the role (`canSee`), not the screen's page: the till is Bookings' and Stock's.
+    ['products/ProductsList.tsx', /useBusinessWritable\(\) && canSee\('\/products\/sell'[\s\S]*\{live\.length > 0 && tillOpen \? \(\s*<Link className="btn btn-ghost" href="\/products\/sell\?from=products">/],
+    ['products/sell/SellProductScreen.tsx', /!mayUse\(me\.member\?\.role, 'visit\.recordPayment', isWritable\(me\.tenant\?\.status\)\)/],
+    ['pos/page.tsx', /!mayUse\(me\.member\?\.role, 'visit\.recordPayment', isWritable\(me\.tenant\?\.status\)\)/],
     // Staff
     ['providers/StaffClient.tsx', /actions=\{\s*writable \? \(\s*<button type="button" className="btn" onClick=\{\(\) => setCreating\('staff'\)\}/],
     ['providers/StaffRoster.tsx', /disabled=\{disabled \|\| !writable\}/],
@@ -159,7 +161,8 @@ describe('every screen that writes asks whether it may (the list that cannot qui
     ['availability/SlotGrid.tsx', /\{writable && \(\s*<button type="button" className="btn btn-ghost" onClick=\{\(\) => openBooking/],
     ['try-whatsapp/page.tsx', /await guardWritable\('\/'\);/],
     ['attendance/AttendanceRegister.tsx', /disabled=\{busy \|\| !canMarkAll \|\| !writable\}/],
-    ['components/home/ReceptionHome.tsx', /\.\.\.\(writable \? \[\{ href: '\/customers\?add=1'/],
+    // Jira GRW-74 — Add client is the CLIENTS page's write, not just "the business may write" (review, 2026-10-22).
+    ['components/home/ReceptionHome.tsx', /\.\.\.\(mayAddClient \? \[\{ href: '\/customers\?add=1'/],
   ];
   for (const [file, gate] of GATES) {
     it(`${file} — ${gate.source.slice(0, 56)}…`, () => {

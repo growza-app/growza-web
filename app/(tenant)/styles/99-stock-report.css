@@ -1,0 +1,680 @@
+/*
+ * Jira GRW-631 — the stock report. A column at 344px: the worth first (it is the question), the filters, then one card per style with
+ * its sizes as small count pairs that wrap. Every control is a thumb tall (44px). Type is rem; 16px on the fields so iOS does not zoom
+ * them. A count below zero is told by its sign and weight, never by colour alone. Nothing animates.
+ */
+.srp-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* ---------- Shared Retail Reports Tab Bar ---------- */
+.srp-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.srp-nav-tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.srp-nav-tab:hover:not(.is-active) {
+  background: var(--page-bg);
+  color: var(--text);
+}
+
+.srp-nav-tab.is-active {
+  background: var(--accent-deep);
+  color: #fff;
+}
+
+.srp-hint a {
+  color: var(--accent-deep);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.srp-hint a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .srp-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .srp-nav-tab {
+    justify-content: center;
+    text-align: center;
+    min-height: 2.75rem;
+    padding: 0 var(--sp-2);
+    font-size: 0.8125rem;
+  }
+}
+
+.srp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.srp-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.srp-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.srp-totals {
+  padding: var(--sp-4);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent-deep);
+  border-radius: var(--radius);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.srp-worth-label,
+.srp-hint {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.srp-worth-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.srp-worth {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.srp-warn {
+  margin: var(--sp-1) 0 0;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--radius-sm);
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  align-self: flex-start;
+  overflow-wrap: anywhere;
+}
+.srp-search {
+  min-height: 2.75rem;
+}
+.srp-select {
+  min-height: 2.75rem;
+  width: 100%;
+  font-size: 16px;
+  font-family: inherit;
+}
+.srp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.srp-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+.srp-skeleton {
+  min-height: 6rem;
+  background: var(--surface-2, var(--border));
+  border-color: transparent;
+}
+.srp-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-3);
+}
+.srp-title-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+  flex: 1 1 10rem;
+}
+.srp-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+}
+.srp-branch-pill,
+.srp-units-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--sp-2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.srp-branch-pill {
+  background: var(--page-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.srp-units-pill {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.srp-name {
+  margin: 0;
+  font-size: var(--fs-4);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.srp-value {
+  margin: 0;
+  font-size: var(--fs-5);
+  font-weight: 800;
+  color: var(--accent-deep);
+  font-variant-numeric: tabular-nums;
+}
+.srp-value.is-no-cost {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px var(--sp-2);
+  border-radius: 999px;
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.srp-sizes {
+  list-style: none;
+  margin: 0;
+  padding: var(--sp-3) 0 0;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+.srp-size {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 3px 6px 3px var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--page-bg);
+  font-size: var(--fs-3);
+  font-variant-numeric: tabular-nums;
+}
+.srp-size-label {
+  color: var(--text);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.srp-size-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-weight: 800;
+  color: var(--accent-deep);
+}
+.srp-size-zero {
+  background: var(--surface);
+  border-style: dashed;
+}
+.srp-size-zero .srp-size-label {
+  color: var(--muted);
+}
+.srp-size-zero .srp-size-count {
+  color: var(--muted);
+  font-weight: 500;
+  background: var(--page-bg);
+}
+.srp-size-negative {
+  border-width: 2px;
+  border-color: var(--danger);
+}
+.srp-size-negative .srp-size-count {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.srp-size-flag {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.srp-totals.srp-kpi-grid {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+.srp-kpi-card.is-primary,
+.srp-kpi-card.is-warn,
+.srp-kpi-card.is-ok {
+  grid-column: 1 / -1;
+}
+.srp-kpi-card {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--sp-1);
+}
+.srp-kpi-card.is-primary {
+  border-left: 4px solid var(--accent-deep);
+}
+.srp-kpi-card.is-warn {
+  border-left: 4px solid var(--amber);
+}
+.srp-kpi-card.is-ok {
+  border-left: 4px solid var(--accent-deep);
+}
+.srp-kpi-num {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.srp-kpi-num.is-ok {
+  font-size: 1.25rem;
+  color: var(--accent-deep);
+}
+.srp-kpi-warns {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.srp-warn-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.srp-toolbar-main,
+.srp-toolbar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.srp-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+.srp-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--page-bg);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.srp-filter-pill.is-active {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  color: #fff;
+}
+.srp-view-toggle {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 3px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--page-bg);
+}
+.srp-view-btn {
+  min-height: 2.5rem;
+  padding: 0 var(--sp-3);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.srp-view-btn.is-active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+.srp-table-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+.srp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-3);
+}
+.srp-table th {
+  text-align: left;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--page-bg);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.srp-table td {
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.srp-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.srp-table .is-num {
+  text-align: right;
+  white-space: nowrap;
+}
+.srp-td-name {
+  min-width: 11rem;
+}
+.srp-td-sizes .srp-sizes {
+  padding-top: 0;
+  border-top: 0;
+}
+.srp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.srp-empty-title {
+  margin: 0;
+  font-weight: 600;
+}
+.srp-empty .btn,
+.srp-export {
+  min-height: 2.75rem;
+  align-self: flex-start;
+}
+.srp-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.srp-error {
+  margin: 0;
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--danger);
+}
+
+/*
+ * Jira GRW-633 — the reorder worklist. A row is two lines at 344px: the size and the reasoning on the left, the number field (44px) on the right;
+ * the bottom bar holds the total and Export and stays in reach of a thumb. 16px on the fields so iOS does not zoom them.
+ */
+.ro-page {
+  padding-bottom: 0;
+}
+.ro-row {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.ro-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.ro-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-1);
+  flex: 0 0 auto;
+}
+.ro-label {
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+.ro-input {
+  width: 5.5rem;
+  min-height: 2.75rem;
+  font-size: 16px;
+  font-family: inherit;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.ro-state {
+  min-height: 1rem;
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+.ro-retry {
+  min-height: 2.75rem;
+  padding: 0 var(--sp-2);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+}
+.ro-bar {
+  z-index: 2;
+  position: sticky;
+  bottom: 0;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.ro-total {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.ro-rule {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border);
+}
+.ro-rule-name {
+  margin: 0;
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
+}
+.ro-rule-fields,
+.ro-rule-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+.ro-rule-fields .ro-field {
+  align-items: flex-start;
+}
+.ro-rule-actions .btn {
+  min-height: 2.75rem;
+}
+
+/*
+ * Jira GRW-634 — sales by channel. Cards stacked at 344px; the trend is bars with the same numbers in a list under them (the chart is never the
+ * only way to read a figure); the fee caveat is plain text at a legible size, never behind a tooltip.
+ */
+.ch-bars {
+  width: 100%;
+  height: 5.5rem;
+  padding: var(--sp-2);
+  background: var(--page-bg);
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+}
+.ch-trend {
+  list-style: none;
+  margin: 0;
+  padding: var(--sp-2) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.ch-trend li {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--radius-sm);
+  background: var(--page-bg);
+  gap: var(--sp-3);
+}
+.ch-trend-sum {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.ch-caveat {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Enterprise Desktop Layout (861px and up) ---------- */
+@media (min-width: 861px) {
+  .srp-totals.srp-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--sp-3);
+  }
+  .srp-kpi-card.is-primary,
+  .srp-kpi-card.is-warn,
+  .srp-kpi-card.is-ok {
+    grid-column: auto;
+  }
+  .srp-toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+  }
+  .srp-toolbar-main {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    flex: 1 1 32rem;
+  }
+  .srp-toolbar-actions {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+  .srp-filter-pill {
+    min-height: 2.25rem;
+  }
+  .srp-search {
+    flex: 1 1 16rem;
+    max-width: 22rem;
+  }
+  .srp-select {
+    width: auto;
+    min-width: 12rem;
+    max-width: 16rem;
+  }
+  .srp-channels .srp-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-3);
+  }
+  .srp-stock .srp-list,
+  .srp-sellers .srp-list,
+  .srp-returns .srp-list,
+  .srp-refunds .srp-list,
+  .ro .srp-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-3);
+  }
+  .ch-trend {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-2);
+  }
+  .ro-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}

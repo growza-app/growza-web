@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError, formatMoney } from '../../lib/api';
 import { fixVisitHref, nextCustomerHref } from '../../lib/pay-token';
-import type { Appointment, Offer, PaymentMode, Product, ProductCategory, Provider, Service } from '../../lib/api-types';
+import type { Appointment, Offer, PaymentMode, Product, ProductCategory, Provider, Service, TillSize } from '../../lib/api-types';
 import type { QueueEntry } from '../../lib/home-types';
 import { receiptRows, type ReceiptRow } from '../../lib/receipt-text';
 import { displayPhone } from '../../lib/phone';
@@ -26,10 +26,13 @@ import { ClientSheet } from './ClientSheet';
 import { Keypad } from './Keypad';
 import { ServiceSheet } from '../../components/ServiceSheet';
 import { BillCard, BillRows, lineKey, lineMinor, type BillLine as Line } from './BillCard';
+import { PosBillRows } from './PosBillRows';
 import { DeskServiceGrid } from './DeskServiceGrid';
 import { DeskUnpaid } from './DeskUnpaid';
 import { useBarcodeScan } from '../../lib/barcode-scan';
 import { planScans, type ScanProblem } from '../../lib/scan-plan';
+import { canAddSize, groupProductLines, hasSizes, productLineKey, sizedName, sizePriceMinor } from '../../lib/till-sizes';
+import { SizeSheet } from './SizeSheet';
 import { queueScan, takeScans } from '../../lib/scan-queue';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
 import { PaymentDone } from '../../components/PaymentDone';
@@ -134,6 +137,7 @@ export function PayFlow({
   wide = false,
   initialTab,
   productsOnly = false,
+  heading,
 }: {
   /** A waiting token being paid: its client, branch and services are the answer to ①. */
   token?: QueueEntry;
@@ -154,7 +158,7 @@ export function PayFlow({
   /** The signed-in person's own chair, when they have one: the stylist ① starts on. */
   providerId: string | null;
   timezone: string;
-  backTo?: '/appointments' | '/products' | '/sales';
+  backTo?: '/appointments' | '/products' | '/sales' | '/orders';
   /**
    * Jira GRW-572 — a laptop ≥1101px: the same till laid out in three panels (who · what · the bill), with the
    * payment tiles beside the bill so ② is not a screen of its own. Same state, same `pay()`, same two writes.
@@ -164,8 +168,14 @@ export function PayFlow({
   initialTab?: 'products';
   /** Retail / Sell product page (`/products/sell`): client + product categories on the left, product shelf in the middle, bill + payment on the right. */
   productsOnly?: boolean;
+  /**
+   * Jira GRW-616 — the till's own name when it is opened under another address: a shop's `/orders/new` says what a shop
+   * says. Absent is "Sell product" (`payFlow.sellTitle`), so every address that has always opened this till reads as it did.
+   */
+  heading?: string;
 }) {
   const t = useTranslations('payFlow');
+  const ts = useTranslations('payFlow.size');
   const tcr = useTranslations('chrome');
   const nv = useNewVisitCopy();
   const locale = useLocale();
@@ -243,6 +253,8 @@ export function PayFlow({
   const [splitKeypad, setSplitKeypad] = useState<PaymentMode | null>(null);
   const [splitAmount, setSplitAmount] = useState('');
   const [firstWay, setFirstWay] = useState<{ mode: PaymentMode; minor: number } | null>(null);
+  const [selectedMode, setSelectedMode] = useState<PaymentMode | null>(null);
+  const [badMode, setBadMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** What Next asked for and did not get. Null until Next is tapped; each half clears itself once answered. */
   const [missing, setMissing] = useState<{ client: boolean; service: boolean } | null>(null);
@@ -493,7 +505,10 @@ export function PayFlow({
   const packageCountOf = (offerId: string) => pkgsOnBill.filter((p) => p.id === offerId).length;
   // A package's legs are not the tiles' count: − on a tile must not take a leg out of a package.
   const countOf = (serviceId: string) => lines.filter((l) => l.serviceId === serviceId && !l.pkg && !l.product).length;
-  const productCountOf = (productId: string) => lines.filter((l) => l.product?.id === productId).length;
+  const productCountOf = (productId: string, variantId?: string) =>
+    lines.filter((l) => l.product?.id === productId && (variantId === undefined || l.product.variantId === variantId)).length;
+  /** Jira GRW-599 — the product whose sizes are open in the size sheet. Its sizes are the ones the till already read. */
+  const [sizing, setSizing] = useState<string | null>(null);
   // Hooks stay above every early return below (done, qr, how): a sale that ends on one of them must not change the hook count.
   const noneCount = useMemo(() => products.filter((p) => p.categoryId === null).length, [products]);
   const phoneProducts = useMemo(() => {
@@ -536,7 +551,22 @@ export function PayFlow({
     setOverride(null);
   };
   /** Owner, 2026-10-14 — a product on the bill: one line per unit, so "tap again for a second one" holds. */
-  const addProduct = (p: Product) => {
+  const addProduct = (p: Product, size?: TillSize) => {
+    // Jira GRW-599 — a product with sizes is not one thing to ring up: the size sheet opens, and a size goes on from there.
+    if (!size && hasSizes(p)) {
+      setSizing(p.id);
+      return;
+    }
+    if (size) {
+      if (full || !canAddSize(size, productCountOf(p.id, size.id))) {
+        felt(BUZZ.tooMany);
+        return;
+      }
+      felt(BUZZ.added);
+      setLines((prev) => [...prev, { serviceId: '', name: sizedName(p, size), priceMinor: sizePriceMinor(p, size), product: { id: p.id, variantId: size.id } }]);
+      setOverride(null);
+      return;
+    }
     if (full || p.stock <= 0 || productCountOf(p.id) >= p.stock) {
       felt(BUZZ.tooMany);
       return;
@@ -568,7 +598,7 @@ export function PayFlow({
       setSearchSeed((prev) => ({ text: problem.code, n: (prev?.n ?? 0) + 1 }));
       if (!wide) setMenuOpen(true);
     }
-    for (const p of add) addProduct(p);
+    for (const a of add) addProduct(a.product, a.size);
   };
   // Only on the screen where products are picked: on 'how', 'qr' and 'done' a scan would change a bill being paid.
   // Listening from the first moment, not from when the shelf is in: a bottle scanned while it loads waits in the queue.
@@ -576,6 +606,19 @@ export function PayFlow({
     if (productsLoaded) onScans([code]);
     else queueScan(code);
   });
+  /*
+   * Owner, 2026-10-23 — and SAYS so on the two screens where it does not.
+   *
+   * Refusing the scan is right: on 'how' and 'qr' the total is already on screen and being paid against, and a
+   * bottle that slipped onto the bill between the number and the money is how a till stops adding up. But the
+   * refusal was silent, and silence at a counter reads as the broken scanner `scanMiss` was written to avoid —
+   * the desk scans again, harder, then looks for the fault in the gun.
+   *
+   * So the same `scanNote` strip the picking screen already uses, with the way out in it: go back and add it.
+   * Nothing is drawn until somebody actually scans, because a line of standing advice about a thing that is not
+   * happening is what people stop reading.
+   */
+  useBarcodeScan(productsOnly && (step === 'how' || step === 'qr'), () => setScanNote(t('desk.scanWhilePaying')));
   // Codes scanned on the Sales screen wait in the browser: put them on the bill once, in the order scanned.
   const scansTaken = useRef(false);
   useEffect(() => {
@@ -597,6 +640,43 @@ export function PayFlow({
       return at < 0 ? prev : [...prev.slice(0, at), ...prev.slice(at + 1)];
     });
     setOverride(null);
+  };
+  const clearLine = (key: string) => {
+    setLines((prev) => prev.filter((l) => (l.pkg ? l.pkg.key !== key : lineKey(l) !== key)));
+    setOverride(null);
+  };
+  const clearBill = () => {
+    setLines([]);
+    setOverride(null);
+    setSelectedMode(null);
+    setBadMode(false);
+  };
+  const [heldBills, setHeldBills] = useState<Array<{ id: string; client: Client; lines: Line[]; override: number | null }>>([]);
+  const holdBill = () => {
+    if (lines.length === 0) return;
+    setHeldBills((prev) => [{ id: newAttemptKey(), client, lines, override }, ...prev]);
+    setLines([]);
+    setOverride(null);
+    setClient({ kind: 'none' });
+    setSelectedMode(null);
+    setBadMode(false);
+    setMissing(null);
+    setError(null);
+  };
+  const resumeHeldBill = (id: string) => {
+    const found = heldBills.find((h) => h.id === id);
+    if (!found) return;
+    setHeldBills((prev) => prev.filter((h) => h.id !== id));
+    setClient(found.client);
+    setLines(found.lines);
+    setOverride(found.override);
+    setSelectedMode(null);
+    setBadMode(false);
+    setMissing(null);
+    setError(null);
+  };
+  const discardHeldBill = (id: string) => {
+    setHeldBills((prev) => prev.filter((h) => h.id !== id));
   };
   /*
    * Owner, 2026-10-14 — a price typed for one row. A single's row may be two of the same service, so the typed
@@ -689,6 +769,8 @@ export function PayFlow({
     setSplitKeypad(null);
     setSplitAmount('');
     setFirstWay(null);
+    setSelectedMode(null);
+    setBadMode(false);
   };
 
   /** ② — the tile that was tapped is the payment; this is the save. */
@@ -700,15 +782,9 @@ export function PayFlow({
     const amounts = spread(baseAmounts.map((priceMinor) => ({ priceMinor })), totalMinor);
     const legs = lines.flatMap((l, i) => (l.product ? [] : [{ serviceId: l.serviceId, paidAmountMinor: amounts[i]!, ...(l.pkg ? { offerId: l.pkg.id } : {}) }]));
     // Owner, 2026-10-14 — the products on the bill, grouped: which, how many, what the line came to.
-    const productLines = new Map<string, { productId: string; qty: number; paidMinor: number }>();
-    lines.forEach((l, i) => {
-      if (!l.product) return;
-      const at = productLines.get(l.product.id) ?? { productId: l.product.id, qty: 0, paidMinor: 0 };
-      at.qty += 1;
-      at.paidMinor += amounts[i]!;
-      productLines.set(l.product.id, at);
-    });
-    const soldProducts = productLines.size > 0 ? { products: [...productLines.values()] } : {};
+    // Jira GRW-599 — one entry per product, and per size of a product that has sizes (the size is what the server takes the unit from).
+    const productLines = groupProductLines(lines, amounts);
+    const soldProducts = productLines.length > 0 ? { products: productLines } : {};
     // Owner, 2026-10-14 — a bill paid two ways goes as `payments`; the legs' one word is the larger way's.
     const ways = waysFor(mode);
     const paidBy = paidByWords(ways);
@@ -785,7 +861,7 @@ export function PayFlow({
             return {
               appointmentId: r.appointmentId,
               // Owner, 2026-10-14 — the legs are the services; the products on the bill are the rest of what was paid.
-              paidMinor: r.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0) + [...productLines.values()].reduce((sum, p) => sum + p.paidMinor, 0),
+              paidMinor: r.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0) + productLines.reduce((sum, p) => sum + p.paidMinor, 0),
               schedulableId: r.schedulableId,
               startAt: r.startAt,
               tokenNo: r.tokenNo ?? null,
@@ -864,7 +940,14 @@ export function PayFlow({
       setStep('done');
     } catch (e) {
       if (e instanceof LargeAmountDeclined) setError(nv.amountNotSaved);
-      else setError(e instanceof ApiError ? e.message : nv.saveUnknown);
+      else {
+        // Jira GRW-599 — a size sold out or retired elsewhere while this bill was open: said plainly (a size changed — look at the
+        // sizes), and the shelf is read again so the sizes shown are the ones that are really there. Only when the server
+        // named a SIZE (its `variantId`): any other refusal about a product keeps its own words (review of GRW-585).
+        const sizeRefused = e instanceof ApiError && e.field === 'products' && typeof (e.body as { variantId?: unknown } | undefined)?.variantId === 'string';
+        setError(sizeRefused ? ts('changed') : e instanceof ApiError ? e.message : nv.saveUnknown);
+        if (e instanceof ApiError && e.field === 'products') void api.products(location).then(setProducts).catch(() => {});
+      }
     } finally {
       setSaving(null);
     }
@@ -916,6 +999,8 @@ export function PayFlow({
     setError(null);
     setFirstWay(null);
     setSplitting(false);
+    setSelectedMode(null);
+    setBadMode(false);
   }, [location, token]);
 
   const canGoOn = hasService && (token !== undefined || client.kind !== 'none');
@@ -957,7 +1042,45 @@ export function PayFlow({
   const badClient = Boolean(missing?.client) && !token && client.kind === 'none';
   const badService = Boolean(missing?.service) && !hasService;
 
-  const leave = () => router.push(backTo ?? '/');
+  const completePosSale = () => {
+    if (saving !== null || lines.length === 0) return;
+    const ok = readyToPay();
+    if (!selectedMode) {
+      setBadMode(true);
+      return;
+    }
+    setBadMode(false);
+    if (!ok) return;
+    if (selectedMode === 'upi' && paymentQr && !firstWay) setStep('qr');
+    else void pay(selectedMode);
+  };
+
+  useEffect(() => {
+    if (!productsOnly || !wide || step !== 'what') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'F4') {
+        e.preventDefault();
+        setWhoOpen('find');
+      } else if (e.key === 'F8') {
+        e.preventDefault();
+        completePosSale();
+      } else if (e.key === 'F9') {
+        e.preventDefault();
+        if (lines.length > 0) holdBill();
+        else if (heldBills.length > 0) resumeHeldBill(heldBills[0]!.id);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
+  const leave = () => {
+    if (productsOnly) {
+      nextCustomer();
+      return;
+    }
+    router.push(backTo ?? '/');
+  };
   const payToken = token ? `&token=${encodeURIComponent(token.id)}${token.locationId ? `&location=${encodeURIComponent(token.locationId)}` : ''}` : '';
   const simpleForm = `/appointments/new?purpose=payment${payToken}`;
   const fullForm = `/appointments/new?purpose=payment&full=1${payToken}`;
@@ -1005,6 +1128,12 @@ export function PayFlow({
           <span className="pf-how-total-label">{t('total')}</span>
           <strong>{money(totalMinor)}</strong>
         </p>
+        {/* Owner, 2026-10-23 — a scan taken here is answered, not ignored. */}
+        {scanNote ? (
+          <div role="status" className="pf-error">
+            {scanNote}
+          </div>
+        ) : null}
         {error ? (
           <div role="alert" className="pf-error">
             {error}
@@ -1066,7 +1195,8 @@ export function PayFlow({
         <button
           key={mode}
           type="button"
-          className={`pf-pay-tile pf-pay-${mode}`}
+          className={`pf-pay-tile pf-pay-${mode}${productsOnly && wide && selectedMode === mode ? ' is-selected' : ''}`}
+          aria-pressed={productsOnly && wide && !splitting ? selectedMode === mode : undefined}
           /*
            * UPI is the one tile that may not be the save.
            *
@@ -1076,6 +1206,11 @@ export function PayFlow({
            * is in the hand, and the done screen's Fix a mistake is the way back.
            */
           onClick={() => {
+            if (productsOnly && wide && !splitting) {
+              setSelectedMode((prev) => (prev === mode ? null : mode));
+              setBadMode(false);
+              return;
+            }
             if (wide && !readyToPay()) return;
             // "Which way first?" — this tile is the first way; the keypad asks how much came that way.
             if (splitting && !firstWay) {
@@ -1150,6 +1285,12 @@ export function PayFlow({
           <span className="pf-how-total-label">{t('total')}</span>
           <strong>{money(totalMinor)}</strong>
         </p>
+        {/* Owner, 2026-10-23 — a scan taken here is answered, not ignored. */}
+        {scanNote ? (
+          <div role="status" className="pf-error">
+            {scanNote}
+          </div>
+        ) : null}
         {error ? (
           <div role="alert" className="pf-error">
             {error}
@@ -1249,7 +1390,7 @@ export function PayFlow({
             <IconArrowLeft />
           </button>
           <span className="pf-head-stack">
-            <h1 className="pf-title">{productsOnly ? t('sellTitle') : t('whatTitle')}</h1>
+            <h1 className="pf-title">{productsOnly ? (heading ?? t('sellTitle')) : t('whatTitle')}</h1>
             {token ? (
               branchName ? <span className="pf-at">{t('at', { branch: branchName })}</span> : null
             ) : (
@@ -1325,16 +1466,53 @@ export function PayFlow({
               productsOnly={productsOnly}
               productCategory={productCategory}
               searchSeed={searchSeed}
+              categoryBar={
+                productsOnly ? (
+                  <DeskProductCategories
+                    picked={productCategory}
+                    categories={productCategories}
+                    allCount={products.length}
+                    noneCount={noneCount}
+                    onPick={setProductCategory}
+                  />
+                ) : null
+              }
             />
           )}
           <aside className="pf-wide-right">
+            {productsOnly ? <div className="pos-bill-client">{who}</div> : null}
+            {productsOnly && heldBills.length > 0 ? (
+              <div className="pos-held-strip" role="status">
+                <span className="pos-held-label">{t('desk.heldBills', { count: heldBills.length })}</span>
+                <div className="pos-held-actions">
+                  <button type="button" className="pos-bill-action pos-bill-resume" onClick={() => resumeHeldBill(heldBills[0]!.id)}>
+                    {t('desk.resumeBill')} <kbd>F9</kbd>
+                  </button>
+                  <button type="button" className="pos-bill-action pos-bill-discard" onClick={() => discardHeldBill(heldBills[0]!.id)}>
+                    {t('desk.discardHeld')}
+                  </button>
+                </div>
+              </div>
+            ) : null}
             {/* Owner, 2026-10-14 — the lines scroll inside the panel on a long bill, so a link opens the whole bill as a card. */}
             <div className="pf-wide-bill-head">
               <h2 className="pf-wide-h">{t('billTitle')}</h2>
               {lines.length > 0 ? (
-                <button type="button" className="pf-wide-link" onClick={() => setBillOpen(true)}>
-                  {t('onBill', { count: lines.length })} · {t('viewDetails')}
-                </button>
+                <div className="pos-bill-head-actions">
+                  {productsOnly ? (
+                    <>
+                      <button type="button" className="pos-bill-action pos-bill-hold" onClick={holdBill}>
+                        {t('desk.holdBill')} <kbd>F9</kbd>
+                      </button>
+                      <button type="button" className="pos-bill-action pos-bill-clear" onClick={clearBill}>
+                        {t('desk.clearBill')}
+                      </button>
+                    </>
+                  ) : null}
+                  <button type="button" className="pf-wide-link" onClick={() => setBillOpen(true)}>
+                    {t('onBill', { count: lines.length })} · {t('viewDetails')}
+                  </button>
+                </div>
               ) : null}
             </div>
             {productsOnly ? (
@@ -1350,6 +1528,18 @@ export function PayFlow({
             ) : null}
             {lines.length === 0 ? (
               <p className="pf-wide-empty">{productsOnly ? t('desk.emptyProductBill') : t('desk.emptyBill')}</p>
+            ) : productsOnly ? (
+              <PosBillRows
+                lines={lines}
+                products={products}
+                listMinor={listMinor}
+                totalMinor={totalMinor}
+                full={full}
+                onLess={oneLess}
+                onMore={addProduct}
+                onClearLine={clearLine}
+                onEditPrice={openRowKeypad}
+              />
             ) : (
               <BillRows lines={lines} listMinor={listMinor} totalMinor={totalMinor} onLess={oneLess} onPrice={openRowKeypad} />
             )}
@@ -1381,11 +1571,37 @@ export function PayFlow({
               </div>
             ) : null}
             <h2 className="pf-wide-h">{t('howTitle')}</h2>
+            {badMode && !selectedMode ? (
+              <p className="pf-miss" role="alert">
+                {t('desk.needPaymentMode')}
+              </p>
+            ) : null}
             {payTiles}
+            {productsOnly ? (
+              <button
+                type="button"
+                className="btn pos-charge-cta"
+                disabled={saving !== null || lines.length === 0}
+                onClick={completePosSale}
+              >
+                <span>{t('desk.chargeNow', { amount: money(totalMinor) })}</span>
+                <kbd className="pos-charge-kbd">F8</kbd>
+              </button>
+            ) : null}
             {splitKeypadEl}
             {dialog}
           </aside>
         </div>
+        {sizing !== null && products.some((p) => p.id === sizing) ? (
+          <SizeSheet
+            product={products.find((p) => p.id === sizing)!}
+            onBill={(variantId) => productCountOf(sizing, variantId)}
+            full={full}
+            onAdd={(size) => addProduct(products.find((p) => p.id === sizing)!, size)}
+            onLess={(size) => oneLess(productLineKey(sizing, size.id))}
+            onClose={() => setSizing(null)}
+          />
+        ) : null}
         {whoOpen ? (
           <ClientSheet
             location={location}
@@ -1453,7 +1669,7 @@ export function PayFlow({
               <IconArrowLeft />
             </button>
             <span className="pf-head-stack">
-              <h1 className="pf-title">{t('sellTitle')}</h1>
+              <h1 className="pf-title">{heading ?? t('sellTitle')}</h1>
               <HeaderBranchPicker variant="line" />
             </span>
             <span className="pf-head-gap" aria-hidden="true" />
@@ -1614,7 +1830,12 @@ export function PayFlow({
                       <span className={`pf-tile-mins ${p.stock <= 0 ? 'pf-tile-out' : ''}`}>{p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}</span>
                     </span>
                   </button>
-                  {count > 0 ? (
+                  {count > 0 && hasSizes(p) ? (
+                    // Jira GRW-599 — which size to take off is chosen in the size sheet; the tile only says how many are on the bill.
+                    <span className="pf-tile-qty" role="group" aria-label={t('onBill', { count })}>
+                      <span className="pf-qty-n">{count}</span>
+                    </span>
+                  ) : count > 0 ? (
                     <span className="pf-tile-qty" role="group" aria-label={t('onBill', { count })}>
                       <button type="button" className="pf-qty-btn" aria-label={t('oneLess', { name: p.name })} onClick={() => oneLess(`p:${p.id}`)}>
                         <IconMinus />
@@ -1759,6 +1980,16 @@ export function PayFlow({
           }}
           onPrice={openRowKeypad}
           onClose={() => setBillOpen(false)}
+        />
+      ) : null}
+      {sizing !== null && products.some((p) => p.id === sizing) ? (
+        <SizeSheet
+          product={products.find((p) => p.id === sizing)!}
+          onBill={(variantId) => productCountOf(sizing, variantId)}
+          full={full}
+          onAdd={(size) => addProduct(products.find((p) => p.id === sizing)!, size)}
+          onLess={(size) => oneLess(productLineKey(sizing, size.id))}
+          onClose={() => setSizing(null)}
         />
       ) : null}
       {menuOpen && (services || productsOnly) ? (

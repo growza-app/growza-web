@@ -113,8 +113,11 @@ describe('Tenant Home v2 redesign', () => {
     const deskGrid = code('../../appointments/new/DeskServiceGrid.tsx');
     expect(owner).toContain('href="/products/sell"');
     expect(productsList).toContain('href="/products/sell?from=products"');
-    expect(sellPage).toContain("await guardScreen('/products/sell');");
-    expect(sellPage).toContain("await guardLive('/appointments/new');");
+    // Jira GRW-616 — the page names its address; the screen it hands to holds the guards, for both of its addresses.
+    expect(sellPage).toContain('guard="/products/sell"');
+    const sellScreen = code('../../products/sell/SellProductScreen.tsx');
+    expect(sellScreen).toContain('await guardScreen(guard);');
+    expect(sellScreen).toContain('await guardLive(guard);');
     expect(sellClient).toContain('productsOnly');
     expect(payFlow).toContain('<DeskProductCategories');
     expect(deskGrid).toContain("useState<'services' | 'packages' | 'products'>(productsOnly ? 'products' : (initialTab ?? 'services'))");

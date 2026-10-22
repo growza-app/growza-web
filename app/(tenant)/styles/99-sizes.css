@@ -1,0 +1,576 @@
+/*
+ * Jira GRW-598 — the Sizes screen: options, a grid of counts, one Save.
+ *
+ * Phone first (344px): two small cards, then a grid that scrolls INSIDE its own box with the size column pinned, so the
+ * page never scrolls sideways. Same tokens as the Products rows and the Settings save bar; nothing here is a new
+ * component, and nothing is a one-off size.
+ */
+.szg-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+@media (max-width: 860px) {
+  .szg-back-btn {
+    display: none;
+  }
+}
+
+.szg-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+  max-width: 72rem;
+}
+
+.szg-summary-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.szg-summary-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.szg-summary-product {
+  font-size: var(--fs-6);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.szg-summary-price {
+  font-size: var(--fs-3);
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.szg-summary-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.szg-summary-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--page-bg);
+  font-size: var(--fs-2);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.szg-summary-pill.is-stock {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.szg-options-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+}
+
+@media (min-width: 861px) {
+  .szg-options-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+}
+
+.szg-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.szg-colours-invite {
+  background: linear-gradient(155deg, var(--surface) 35%, var(--page-bg) 100%);
+  border-style: dashed;
+}
+
+.szg-card-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.szg-colours-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.szg-optional-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: var(--slate-soft);
+  color: var(--muted);
+  font-size: var(--fs-1);
+  font-weight: 600;
+}
+
+.szg-title {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: 700;
+}
+
+.szg-label {
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.szg-name-row {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.szg-card input[type='text'] {
+  min-width: 0;
+  min-height: 2.75rem;
+  font-size: var(--fs-5);
+}
+
+.szg-chips-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  padding: var(--sp-1) 0;
+}
+
+.szg-val-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.25rem;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--page-bg);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.szg-val-chip-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: -0.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.szg-val-chip-del:hover {
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+}
+
+.szg-val-chip-del svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.szg-presets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-top: auto;
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border);
+}
+
+.szg-presets-label {
+  font-size: var(--fs-1);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.szg-presets-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.szg-preset-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-2);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.szg-preset-chip:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.szg-preset-chip.is-added,
+.szg-preset-chip:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.szg-preset-chip svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+/* Colour swatch dots using rgb() so no raw hex is ever used. */
+.szg-swatch {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(15, 23, 42, 0.2);
+  flex-shrink: 0;
+}
+
+.szg-swatch[data-colour='black'] { background: rgb(23, 23, 23); }
+.szg-swatch[data-colour='white'] { background: rgb(255, 255, 255); }
+.szg-swatch[data-colour='brown'] { background: rgb(120, 66, 18); }
+.szg-swatch[data-colour='navy'] { background: rgb(30, 58, 138); }
+.szg-swatch[data-colour='grey'] { background: rgb(115, 115, 115); }
+.szg-swatch[data-colour='blue'] { background: rgb(37, 99, 235); }
+.szg-swatch[data-colour='red'] { background: rgb(220, 38, 38); }
+.szg-swatch[data-colour='green'] { background: rgb(22, 163, 74); }
+.szg-swatch[data-colour='beige'] { background: rgb(214, 197, 169); }
+.szg-swatch[data-colour='pink'] { background: rgb(236, 72, 153); }
+.szg-swatch[data-colour='yellow'] { background: rgb(234, 179, 8); }
+.szg-swatch[data-colour='orange'] { background: rgb(234, 88, 12); }
+.szg-swatch[data-colour='maroon'] { background: rgb(127, 29, 29); }
+.szg-swatch[data-colour='olive'] { background: rgb(77, 124, 15); }
+.szg-swatch[data-colour='cream'] { background: rgb(254, 249, 231); }
+
+.szg-add {
+  display: flex;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.szg-add input {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+.szg-card .btn {
+  white-space: normal;
+  text-align: center;
+}
+
+.szg-add-btn,
+.szg-remove-option,
+.szg-add-option,
+.szg-arrange-toggle {
+  min-height: 2.75rem;
+}
+
+.szg-add-option,
+.szg-remove-option {
+  align-self: flex-start;
+}
+
+.szg-hint,
+.szg-empty {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.szg-note {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.szg-note-warn {
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+.szg-error {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--danger-line);
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+  font-size: var(--fs-3);
+  font-weight: 600;
+}
+
+.szg-grid-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+/* The grid scrolls in its own box; the page does not. */
+.szg-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  -webkit-overflow-scrolling: touch;
+}
+
+.szg-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.szg-table th,
+.szg-table td {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  vertical-align: middle;
+  font-size: var(--fs-3);
+  white-space: nowrap;
+}
+
+.szg-table thead th {
+  background: var(--page-bg);
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-size: var(--fs-1);
+  letter-spacing: 0.04em;
+}
+
+.szg-table tbody tr:hover td,
+.szg-table tbody tr:hover .szg-rowhead {
+  background: var(--page-bg);
+}
+
+/* The size column stays put while the colours scroll past it. */
+.szg-corner,
+.szg-rowhead {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 6.5rem;
+  text-align: left;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  font-weight: 700;
+  font-size: var(--fs-4);
+}
+
+.szg-corner {
+  background: var(--page-bg);
+  z-index: 2;
+}
+
+.szg-rowname {
+  display: block;
+}
+
+.szg-colhead {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+.szg-price-col {
+  border-left: 1px solid var(--border);
+}
+
+.szg-input {
+  width: 5.5rem;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-2);
+  text-align: center;
+  font-size: var(--fs-5);
+  font-variant-numeric: tabular-nums;
+}
+
+.szg-input.is-stocked {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-weight: 700;
+}
+
+.szg-price {
+  width: 9.75rem;
+  font-weight: 500;
+}
+
+.szg-input.is-off {
+  background: var(--slate-soft);
+  color: var(--muted);
+}
+
+.szg-input[aria-invalid='true'] {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.szg-foot-row th,
+.szg-foot-row td {
+  border-bottom: 0;
+  background: var(--page-bg);
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.szg-foot-label {
+  background: var(--page-bg);
+  font-size: var(--fs-3);
+}
+
+/* Change order: small arrows and a remove, each a full-size target. */
+.szg-arrange {
+  display: inline-flex;
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
+}
+
+.szg-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.szg-icon:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.szg-icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Save: the Settings pattern (a pinned bar on a phone), with the button as wide as the bar. */
+.szg-savebar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-3);
+  margin-top: var(--sp-1);
+}
+
+.szg-savebar-meta {
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.szg-save {
+  min-height: 2.875rem;
+  min-width: 9rem;
+}
+
+.szg-save.is-saved {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+@media (max-width: 860px) {
+  .szg-save {
+    width: 100%;
+  }
+
+  /*
+   * The page body is the scroller and keeps 84px of padding under the content to clear the tab bar, and a sticky box
+   * stops at that padding's edge — so on its own the bar floats 84px above the tab bar. Pulled down into the padding
+   * (as Business profile's bar is), it rests 8px above the tab bar instead.
+   */
+  .szg-savebar {
+    bottom: calc(var(--sp-2) - 84px);
+  }
+}
+
+/* The Sizes row in the product sheet: a row like its neighbours, a link in disguise. */
+.prd-sizes-row {
+  min-height: 2.75rem;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.prd-sizes-value {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-1);
+  color: var(--muted);
+  font-size: var(--fs-3);
+}
+
+.prd-sizes-value svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.prd-sizes-open {
+  align-self: flex-start;
+  min-height: 2.75rem;
+  margin: 0 var(--sp-4) var(--sp-4);
+  text-decoration: none;
+}

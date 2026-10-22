@@ -22,9 +22,58 @@
   background: var(--slate-soft);
 }
 
+.photo-none.photo-tone-green {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.photo-none.photo-tone-blue {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.photo-none.photo-tone-amber {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+.photo-none.photo-tone-purple {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.photo-none.photo-tone-rose {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.photo-none[class*='photo-tone-']::before {
+  content: '';
+  position: absolute;
+  width: 65%;
+  height: 65%;
+  right: -18%;
+  bottom: -18%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  pointer-events: none;
+}
+
 .photo-none svg {
+  position: relative;
+  z-index: 1;
   width: 1.5rem;
   height: 1.5rem;
+}
+
+.pf-tile-photo.photo-none svg {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.prd-sheet-photo.photo-none svg {
+  width: 1.75rem;
+  height: 1.75rem;
 }
 
 .photo-none::after {

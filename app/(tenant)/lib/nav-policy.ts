@@ -13,8 +13,9 @@
  * and a screen that merely opens later goes to the page that says so. Folding them together would tell an owner
  * their own Offers screen does not exist.
  */
-import { canSee as roleCanSee, visibleItems as roleVisibleItems, type MemberRole } from '@growza-app/shared';
+import { canSee as roleCanSee, visibleItems as roleVisibleItems, type MemberRole, type UiAction } from '@growza-app/shared';
 import { isSetupDestination } from './go-live';
+import { areaAllows, isShopRoute, type Areas, type PageGrid } from './areas';
 
 export {
   canSeeReports,
@@ -47,9 +48,162 @@ export {
 const ALWAYS_OPEN: ReadonlySet<string> = new Set(['/help']);
 
 
-/** May this role see this destination — and, until the business is live, is it one of the setup ones? */
-export function canSee(href: string, role?: MemberRole | null, reportTabs?: readonly string[], live = true): boolean {
+/**
+ * Jira GRW-74 — which page of the role grid each destination belongs to. A destination not listed (Home, the menu, notifications, help) is open to
+ * every member. The same mapping the API's route table makes, written out for addresses; `@growza-app/shared` carries the routes (1.0.19, not yet in the
+ * pin), so this is local until the pin moves.
+ */
+export const PAGE_OF_HREF: ReadonlyArray<readonly [string, keyof PageGrid]> = [
+  ['/appointments', 'bookings'],
+  ['/availability', 'bookings'],
+  ['/orders', 'bookings'],
+  ['/sales', 'bookings'],
+  ['/documents', 'bookings'],
+  ['/products/sell', 'bookings'],
+  ['/pos', 'bookings'],
+  ['/try-whatsapp', 'bookings'],
+  ['/customers', 'clients'],
+  // The one-box search finds bookings as well as clients, so it follows the page it reveals more of.
+  ['/search', 'bookings'],
+  /*
+   * NOT `/notifications`. It was here, under `bookings`, which took it away from every role without the diary — a
+   * shop's stock keeper, and the Staff role whose whole job is attendance, neither of whom would ever see the
+   * low-stock warning or the approval addressed to them. It is not a diary screen, and it is not gated anywhere
+   * else either: `GET /api/v1/notifications` answers every role on purpose (Jira GRW-301), which is why the page
+   * carries no role check of its own. (Review, 2026-10-22 — the line above this table always said notifications
+   * were open to every member, and the test that said so never asserted it.)
+   */
+  ['/services', 'services'],
+  ['/products', 'services'],
+  ['/stock', 'services'],
+  ['/packages', 'offers'],
+  ['/offers', 'offers'],
+  ['/providers', 'staff'],
+  ['/attendance', 'attendance'],
+  ['/reports', 'reports'],
+  ['/settings', 'settings'],
+];
+
+/**
+ * Destinations that need MORE than their own page, because the screen reads from two (the API refuses each read on its own page):
+ * - Orders and the register read the sales, and the money in them is Reports' (`maySeeSales`) — the same rule the fixed receptionist had, where Orders
+ *   opened only once the owner had granted the `sales` tab;
+ * - the till sells from the shelf (Stock) as well as taking the order (Orders).
+ */
+const ALSO_NEEDS: ReadonlyArray<readonly [string, keyof PageGrid]> = [
+  // A shop's till is `/products/sell` under another address (Jira GRW-616): the same two pages. Listed BEFORE `/orders`, which would otherwise claim it.
+  ['/orders/new', 'services'],
+  ['/pos', 'services'],
+  ['/orders', 'reports'],
+  ['/sales', 'reports'],
+  ['/products/sell', 'services'],
+];
+
+/** Destinations the grid can never open: the API makes these the owner's alone (billing, branches, team, roles). */
+const OWNER_ONLY_HREF: readonly string[] = ['/settings/billing', '/settings/branches', '/settings/team', '/settings/roles'];
+
+/**
+ * Screens whose whole job is a write: opened at See they would draw a form every control of which the API refuses, so they need Change to be
+ * offered at all (Jira GRW-76). The till and a new booking take an order or a visit; there is no read-only version of either.
+ */
+const NEEDS_CHANGE_TO_OPEN: readonly string[] = ['/products/sell', '/orders/new', '/pos', '/appointments/new', '/try-whatsapp'];
+
+/** The page a destination belongs to, or undefined when it is open to every member. */
+export function pageOfHref(href: string): keyof PageGrid | undefined {
+  return PAGE_OF_HREF.find(([prefix]) => href === prefix || href.startsWith(`${prefix}/`))?.[1];
+}
+
+/**
+ * May the role CHANGE things on the screen at this address? A screen of a page held at See is read-only: the controls that write are left undrawn,
+ * the way a business suspended for non-payment is (`useWritable`). A screen belonging to no page (Home, the menu) is not the grid's to limit.
+ */
+export function gridCanChange(href: string, grid: PageGrid): boolean {
+  const page = pageOfHref(href);
+  return page === undefined || grid[page] === 'manage';
+}
+
+/**
+ * Jira GRW-74 — the grid page each CONTROL belongs to, and whether using it is a change or a read.
+ *
+ * `gridCanChange` above answers for a SCREEN, from its address, and Home has no address in the table — Home is
+ * every page at once. That left Home's controls ungoverned: a role holding Bookings at See got `/appointments`
+ * read-only, as intended, and then New booking, Record payment and the token board's give and arrive on Home,
+ * every one of which the API refuses (review, 2026-10-22). A control is asked about by what it DOES, so it is
+ * answered the same way wherever it is drawn.
+ *
+ * `null` is a control the grid has no opinion on: marking yourself in is your own record (the API offers it from
+ * the branch fence, not from a grant), and Pay now belongs to a route that is the owner's alone whatever the grid
+ * says. Both are left to the gate that already decides them.
+ */
+const PAGE_OF_ACTION: Readonly<Record<UiAction, readonly [keyof PageGrid, 'view' | 'manage'] | null>> = {
+  search: ['bookings', 'view'],
+  'visit.new': ['bookings', 'manage'],
+  'visit.recordPayment': ['bookings', 'manage'],
+  'queue.give': ['bookings', 'manage'],
+  'booking.checkout': ['bookings', 'manage'],
+  'booking.setStatus': ['bookings', 'manage'],
+  'token.arrive': ['bookings', 'manage'],
+  'booking.correct': ['bookings', 'manage'],
+  'booking.reschedule': ['bookings', 'manage'],
+  'clients.list': ['clients', 'view'],
+  'client.profile': ['clients', 'view'],
+  'client.edit': ['clients', 'manage'],
+  'client.delete': ['clients', 'manage'],
+  'attendance.mark': ['attendance', 'manage'],
+  'attendance.self': null,
+  'attendance.approve': ['attendance', 'manage'],
+  'billing.payNow': null,
+};
+
+/** May a role with this grid use this control? A control the grid has no opinion on is left to the gates that do. */
+export function gridMayUse(action: UiAction, grid: PageGrid): boolean {
+  const need = PAGE_OF_ACTION[action];
+  if (!need) return true;
+  const [page, level] = need;
+  const held = grid[page] ?? 'none';
+  return level === 'manage' ? held === 'manage' : held !== 'none';
+}
+
+/** Does the member's role open this destination? `none` hides it; a page it does not belong to is open. */
+export function gridCanSee(rawHref: string, grid: PageGrid): boolean {
+  // A query string is not part of the address the grid is asked about.
+  const href = rawHref.split('?')[0]!;
+  if (NEEDS_CHANGE_TO_OPEN.some((p) => href === p || href.startsWith(`${p}/`)) && !gridCanChange(href, grid)) return false;
+  if (OWNER_ONLY_HREF.some((p) => href === p || href.startsWith(`${p}/`))) return false;
+  const extra = ALSO_NEEDS.find(([prefix]) => href === prefix || href.startsWith(`${prefix}/`));
+  if (extra && (grid[extra[1]] ?? 'none') === 'none') return false;
+  const page = pageOfHref(href);
+  return page ? (grid[page] ?? 'none') !== 'none' : true;
+}
+
+/**
+ * May this role see this destination — and, until the business is live, is it one of the setup ones?
+ *
+ * Jira GRW-608 — and has this business that AREA? `areas` is the fifth question and the only new one: a business with
+ * no diary is not offered the diary's screens, one with no menu is not offered the menu, and a shop is offered Orders
+ * and Stock. Absent means the salon's full set, so every existing caller is unchanged until it passes one.
+ */
+export function canSee(href: string, role?: MemberRole | null, reportTabs?: readonly string[], live = true, areas?: Areas): boolean {
   if (ALWAYS_OPEN.has(href)) return true;
+  if (!areaAllows(href, areas)) return false;
+  // Jira GRW-74 — a member who holds a role is offered what the role grants, and nothing is asked of the fixed role they work like.
+  if (areas?.pages) return (live || isSetupDestination(href)) && gridCanSee(href, areas.pages);
+  /*
+   * The shop's own screens (Jira GRW-608). Neither is a route @growza-app/shared lists for any role, so the answer is
+   * given here: the owner and manager open both, and no one else opens Stock. `areaAllows` above already refused a
+   * business that is not a shop.
+   *
+   * ORDERS is the front desk's too (Jira GRW-614). It is where the parcel it is packing is found, and the list the API
+   * serves it carries no amounts unless the owner has opened the `sales` tab — so the screen always works for that role,
+   * and shows the shop's money only to one allowed to see it. (Until this story `/orders` was the Sales register under
+   * another name, whose only read the API refuses a desk without that tab, so the desk was offered it only WITH the tab:
+   * Jira GRW-611's review. A list that works for the desk is what removed the reason for that rule.)
+   */
+  if (isShopRoute(href)) {
+    if (!(live || isSetupDestination(href))) return false;
+    if (role === 'receptionist') return href.startsWith('/orders');
+    return roleCanSee('/products', role, reportTabs?.filter((t) => t !== 'sales'));
+  }
   // The `sales` entry of `reportTabs` is the owner opening the Sales register to a receptionist; it is not a Reports
   // tab, so it must not make Reports itself appear (and, for everything else, is simply left out of the list).
   const tabs = reportTabs?.filter((t) => t !== 'sales');
@@ -58,10 +212,19 @@ export function canSee(href: string, role?: MemberRole | null, reportTabs?: read
    * so the answer is given locally. Delete this block when the pin reaches 1.0.11 — `roleCanSee` then answers it.
    * It is NOT '/products': the catalogue (cost prices, delete, transfer between branches) stays the owner's.
    */
-  if (href.startsWith('/products/sell')) {
+  // The POS tab IS the till (`/products/sell` now lands on it), so it takes the till's answer exactly.
+  if (href === '/pos' || href.startsWith('/products/sell')) {
     if (!(live || isSetupDestination(href))) return false;
     if (role === 'receptionist') return true;
     return roleCanSee('/products', role, tabs);
+  }
+  // Jira GRW-582 — a customer's receipt or invoice: open in both a salon and a shop (`areaAllows` above is true for
+  // both, whereas `/sales` is closed in a shop), to the owner, manager and front desk (who settles the bill and hands
+  // the customer their receipt from the Done screen).
+  if (href.startsWith('/documents')) {
+    if (!(live || isSetupDestination(href))) return false;
+    if (role === 'receptionist') return true;
+    return roleCanSee('/customers', role, tabs);
   }
   if (href.startsWith('/sales')) {
     if (!(live || isSetupDestination(href))) return false;
@@ -74,6 +237,6 @@ export function canSee(href: string, role?: MemberRole | null, reportTabs?: read
   return (live || isSetupDestination(href)) && roleCanSee(href, role, tabs);
 }
 
-export function visibleItems<T extends { href: string }>(items: readonly T[], role?: MemberRole | null, reportTabs?: readonly string[], live = true): T[] {
-  return items.filter((item) => canSee(item.href, role, reportTabs, live));
+export function visibleItems<T extends { href: string }>(items: readonly T[], role?: MemberRole | null, reportTabs?: readonly string[], live = true, areas?: Areas): T[] {
+  return items.filter((item) => canSee(item.href, role, reportTabs, live, areas));
 }

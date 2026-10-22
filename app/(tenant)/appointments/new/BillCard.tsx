@@ -6,6 +6,7 @@ import { formatMoney } from '../../lib/api';
 import { useNewVisitCopy } from '../../lib/use-copy';
 import { useDialog } from '../../../shared/a11y/useDialog';
 import { IconMinus } from '../../components/icons';
+import { productLineKey } from '../../lib/till-sizes';
 
 /** One line of the bill: one leg of the visit, as `POST /counter-sales` takes them. */
 export interface BillLine {
@@ -25,11 +26,12 @@ export interface BillLine {
    * Owner, 2026-10-14 — a product on the bill (migration 0115). One line per unit, like a service rung up twice,
    * so the same count and − work; `serviceId` is '' and the line goes to the route as `products`, grouped by id.
    */
-  product?: { id: string };
+  /** Jira GRW-599 — `variantId` when the line is one size of a product that has sizes: the count and the bill line are that size's. */
+  product?: { id: string; variantId?: string };
 }
 
 /** The bill row's key: a service id, a package id, or `p:` + a product id. */
-export const lineKey = (l: BillLine): string => (l.pkg ? l.pkg.key : l.product ? `p:${l.product.id}` : l.serviceId);
+export const lineKey = (l: BillLine): string => (l.pkg ? l.pkg.key : l.product ? productLineKey(l.product.id, l.product.variantId) : l.serviceId);
 
 /** What a line is worth before the whole-bill total is typed over: its typed price, else its list price. */
 export const lineMinor = (l: BillLine): number => l.paidMinor ?? l.priceMinor;

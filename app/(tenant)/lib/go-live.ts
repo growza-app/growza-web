@@ -14,7 +14,8 @@
 /* Jira GRW-564 — `/help` is a setup destination because the owner most likely
    to be stuck is the one half way through setting up. Sending them from Help
    to "not live yet" would send them away from the only way to ask why. */
-const SETUP_ROOTS = ['/services', '/providers', '/settings', '/more', '/not-live-yet', '/help'] as const;
+// Jira GRW-608 — '/stock': for a shop, counting the shelf IS setting up. No other business is offered it (`areas.ts`).
+const SETUP_ROOTS = ['/services', '/providers', '/settings', '/more', '/not-live-yet', '/help', '/stock'] as const;
 
 export function isSetupDestination(href: string): boolean {
   if (href === '/' || href === '') return true;

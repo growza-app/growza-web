@@ -1,8 +1,10 @@
 'use client';
 
 import { createContext, useContext, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import type { Lang } from '../lib/lang';
-import { mayUse, type UiAction } from '../lib/nav-policy';
+import { gridCanChange, gridMayUse, mayUse, type UiAction } from '../lib/nav-policy';
+import { DIARY_AREAS, type Areas } from '../lib/areas';
 
 /**
  * Jira GRW-63 · GRW-203 — who is signed in, for any client component.
@@ -45,6 +47,18 @@ export interface SessionInfo {
    */
   walkIn?: boolean;
   /**
+   * Jira GRW-608 — which areas of the app this business has (bookings, services, the shop's Orders and Stock), from
+   * `me.capabilities.bookings`, `.services` and `me.surface`. Absent reads as the salon's full set: a session that cannot
+   * say is never shut out of a screen it had.
+   */
+  areas?: Areas;
+  /**
+   * Jira GRW-598 — `me.capabilities.sizes`: sizes are a switch (the `sizes` flag), off for every business until the
+   * platform turns them on for one. Absent reads as OFF, the honest direction: an unknown answer must not draw a button
+   * that opens a screen the server would refuse.
+   */
+  sizes?: boolean;
+  /**
    * `me.whatsapp.booking` — whether clients book and cancel through WhatsApp at this business. Settings that only
    * bind a client booking by WhatsApp are left undrawn while it is off (owner, 2026-10-10). Absent reads as OFF, the
    * honest direction: an unknown answer must not offer a setting that would do nothing.
@@ -82,8 +96,20 @@ export function useSession(): SessionInfo | null {
  */
 export function useMayUse(action: UiAction): boolean {
   const session = useSession();
+  // Jira GRW-76 — the screen's own read-only-ness counts too: a control that writes is not drawn on a screen its role holds at See.
+  const writable = useWritable();
   if (session?.walkIn === false && WALK_IN_ONLY.includes(action)) return false;
-  return mayUse(session?.role, action, session?.writable ?? true);
+  /*
+   * Jira GRW-74 — BOTH gates, as migration 0063 asks ("a request must pass BOTH"), so holding a role can only ever
+   * narrow what the fixed role already reached, never widen it.
+   *
+   * The grid is asked about the CONTROL, not about the screen it happens to be drawn on. `useWritable` above answers
+   * for the screen, and Home has no page in that table — Home is every page at once. So until this line a role
+   * holding Bookings at See got `/appointments` read-only, as intended, and then New booking, Record payment and the
+   * token board's give and arrive on Home, every one of which the API refuses (review, 2026-10-22).
+   */
+  const grid = session?.areas?.pages;
+  return mayUse(session?.role, action, writable) && (!grid || gridMayUse(action, grid));
 }
 
 /**
@@ -92,14 +118,44 @@ export function useMayUse(action: UiAction): boolean {
  */
 const WALK_IN_ONLY: readonly UiAction[] = ['queue.give', 'token.arrive'];
 
-/** Jira GRW-556 (follow-up) — may the business change anything? False only while it is suspended for non-payment. */
-export function useWritable(): boolean {
+/** Jira GRW-598 — are sizes switched on for this business? False when unknown, and for every salon today. */
+export function useSizesOn(): boolean {
+  return useSession()?.sizes ?? false;
+}
+
+/** Jira GRW-556 (follow-up) — may the business change anything? False only while it is suspended for non-payment. Not the screen's: the till's "+" belongs to Bookings, wherever it is drawn. */
+export function useBusinessWritable(): boolean {
   return useSession()?.writable ?? true;
+}
+
+/** Jira GRW-76 — may THIS control write here? The business is not suspended (`useBusinessWritable`) AND the screen is not held at See for this role. */
+export function useWritable(): boolean {
+  const screenWritable = useContext(ScreenWritableContext);
+  return (useSession()?.writable ?? true) && screenWritable;
+}
+
+/**
+ * Jira GRW-76 — may THIS person change things on the screen they are looking at? A role holder whose page is held at See is read-only there: the
+ * controls that write are left undrawn, the way a suspended business's are. Provided once, by the layout, from the address — which is why it is a
+ * context and not a call to `usePathname` inside `useWritable`: that hook is read by two dozen components, and a screen with no router (a test, a
+ * preview) must still draw. Absent (no provider) reads as writable.
+ */
+const ScreenWritableContext = createContext<boolean>(true);
+
+export function ScreenAccess({ children }: { children: ReactNode }) {
+  const pages = useSession()?.areas?.pages;
+  const pathname = usePathname();
+  return <ScreenWritableContext.Provider value={!pages || gridCanChange(pathname, pages)}>{children}</ScreenWritableContext.Provider>;
 }
 
 /** Do clients book through WhatsApp here? False when unknown — see `whatsappLive` above. */
 export function useWhatsappLive(): boolean {
   return useSession()?.whatsappLive ?? false;
+}
+
+/** Jira GRW-608 — which areas this business has. The salon's full set when unknown (the nav errs open). */
+export function useAreas(): Areas {
+  return useSession()?.areas ?? DIARY_AREAS;
 }
 
 /** Jira GRW-556 — is the business live? False only while it is being set up, when only the setup screens are offered. */

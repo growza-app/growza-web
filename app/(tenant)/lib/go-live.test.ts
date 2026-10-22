@@ -142,7 +142,7 @@ describe('every screen that opens at go-live is guarded — a new screen cannot 
   };
 
   it('every page below a closed screen asks guardScreen or guardLive before it draws', () => {
-    const unguarded = pages.filter((f) => !runsBefore(f).some((p) => /await guard(Screen|Live)\(/.test(code(p))));
+    const unguarded = pages.filter((f) => !runsBefore(f).some((p) => /await guard(Screen|Live)\(|<(Products|Sales|SellProduct)Screen\b[^>]*\bguard=/.test(code(p))));
     expect(unguarded).toEqual([]);
   });
 
@@ -165,14 +165,14 @@ describe('every surface that offers a destination follows the flag', () => {
     // `writable` and `walkIn` ride beside it (Jira GRW-556 follow-up), so `live` is no longer last.
     // `whatsappLive` rode last (owner, 2026-10-10); Jira GRW-563 added the approval count and the check-in offer after it;
     // the performance audit added the timezone, so the bell stops asking for /me to learn it.
-    expect(layout).toMatch(/\blive,\n\s*writable,\n\s*walkIn,\n\s*whatsappLive,\n\s*pendingAttendance,\n\s*selfCheckIn,\n\s*timezone,\n\s*\}\}/);
+    expect(layout).toMatch(/\blive,\n\s*writable,\n\s*walkIn,\n\s*areas,\n\s*whatsappLive,\n\s*pendingAttendance,\n\s*selfCheckIn,\n\s*timezone,\n\s*\}\}/);
   });
 
   it('the sidebar, the tab bar and the More menu ask with the flag', () => {
     // The sidebar asks `canSee` of every group and every child (Owner, 2026-10-15: grouped nav), with the flag.
-    expect(code('components/Sidebar.tsx')).toMatch(/resolveNav\(groups, \(href\) => canSee\(href, role, reportTabs, live\)\)/);
-    expect(code('components/BottomNav.tsx')).toMatch(/visibleItems\(items, role, reportTabs, live\)/);
-    expect(code('more/page.tsx')).toMatch(/visibleItems\(items, role, reportTabs, live\)/);
+    expect(code('components/Sidebar.tsx')).toMatch(/resolveNav\(groups, \(href\) => canSee\(href, role, reportTabs, live, areas\)\)/);
+    expect(code('components/BottomNav.tsx')).toMatch(/visibleItems\(items, role, reportTabs, live, areas\)/);
+    expect(code('more/page.tsx')).toMatch(/visibleItems\(items, role, reportTabs, live, areas\)/);
   });
 
   it('the tab bar is Home, Services, Staff and Settings while being set up', () => {
@@ -188,7 +188,7 @@ describe('every surface that offers a destination follows the flag', () => {
   });
 
   it('there is no floating "+", no search and no bell until it is live', () => {
-    expect(code('components/MobileChrome.tsx')).toMatch(/mayBook && live && PLUS_ROUTE_RE\.test\(pathname\)/);
+    expect(code('components/MobileChrome.tsx')).toMatch(/mayBook && plusOpens && live && PLUS_ROUTE_RE\.test\(pathname\)/);
     expect(code('components/HeaderSearch.tsx')).toMatch(/!mayUseSearch \|\| !live/);
     expect(code('components/HeaderControls.tsx')).toMatch(/\{live \? <NotificationBell \/> : null\}/);
     expect(code('components/home/parts.tsx')).toMatch(/\{live \? <NotificationBell \/> : null\}/);
@@ -211,7 +211,8 @@ describe('every surface that offers a destination follows the flag', () => {
 
   it("Home: the owner gets the setup links, the others a plain sentence — and OwnerHome no longer asks", () => {
     const notLive = code('components/home/NotLiveHome.tsx');
-    expect(notLive).toMatch(/canSee\(l\.href, role, reportTabs, false\)/);
+    // Jira GRW-611 review — asked with the business's areas too, so a shop's setup tiles are a shop's (zero-diary.test.ts).
+    expect(notLive).toMatch(/canSee\(l\.href, role, reportTabs, false, areas\)/);
     expect(notLive).toMatch(/links\.length > 0 \?/);
     expect(notLive).toMatch(/c\.staffHome\}/);
     // The day's Home is only ever drawn for a live business now, so it has no flag to read.

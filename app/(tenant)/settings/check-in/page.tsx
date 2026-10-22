@@ -1,4 +1,5 @@
 import { screenTitle } from '../../lib/page-title';
+import { guardScreen } from '../../lib/screen-guard';
 import { api } from '../../lib/api';
 import { LoadErrorBanner } from '../../components/LoadErrorBanner';
 import { loadErrorKind } from '../../lib/load-error';
@@ -14,6 +15,8 @@ export const dynamic = 'force-dynamic';
  * so an owner opening this finds it pre-filled, with the fence still off until they switch it on.
  */
 export default async function CheckInSettingsPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
+  // Jira GRW-610 — the diary's settings are not a shop's: reached by their address, it lands Home.
+  await guardScreen('/settings/check-in');
   const { settings, branchName, loadError } = await loadScopedSettings(searchParams);
   if (!settings) return <LoadErrorBanner kind={loadError ?? 'down'} />;
   let branches;

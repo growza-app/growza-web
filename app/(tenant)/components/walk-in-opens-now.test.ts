@@ -20,14 +20,16 @@ const sheet = readFileSync(resolve(__dirname, 'NewVisitSheet.tsx'), 'utf8');
 describe('the centre button opens the visit sheet on Walk-in now', () => {
   it('AC-01/AC-02 — for every role that can book, with no role deciding it', () => {
     // Jira GRW-523 — a next screen again (the page), no longer a sheet over the current one (GRW-512).
-    expect(chrome).toMatch(/\? \(\) => router\.push\('\/appointments\/new\?mode=now'\) : undefined/);
+    // Jira GRW-609 — and for a shop, which has no diary, the same plus takes an order at the till instead.
+    expect(chrome).toMatch(/\? \(\) => router\.push\(areas\.shop \? '\/orders\/new' : '\/appointments\/new\?mode=now'\) : undefined/);
     expect(chrome).not.toMatch(/mode=later/);
     expect(chrome).not.toMatch(/<NewVisitSheet|setBookingOpen/);
   });
 
   it('AC-03 — a stylist still gets no centre action', () => {
     // Jira GRW-409 — asked of the shared rule, which a stylist fails (no POST /walk-ins or /bookings).
-    expect(chrome).toMatch(/const mayBook = mayUse\(role, 'visit\.new', writable\);/);
+    // Jira GRW-74 — and of the role grid, which `mayUse` cannot see (review, 2026-10-22).
+    expect(chrome).toMatch(/const mayBook = mayUse\(role, 'visit\.new', writable\) && \(!areas\.pages \|\| gridMayUse\('visit\.new', areas\.pages\)\);/);
     expect(chrome).toMatch(/const onCentre =\s*\n?\s*mayBook && /);
   });
 

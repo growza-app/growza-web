@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { ProductPhoto } from '../components/ProductPhoto';
+import { ProductPhoto, resolveProductGraphic } from '../components/ProductPhoto';
 import { ServicePhoto } from '../components/ServicePhoto';
 
 /**
@@ -44,6 +44,28 @@ describe('a product with no photo', () => {
   it('keeps the product sheet\'s header picture eager, since it is on screen when the sheet opens', () => {
     const html = renderToStaticMarkup(createElement(ProductPhoto, { className: 'prd-sheet-photo', product: { imageUrl: '/uploads/p/a.webp' }, eager: true }));
     expect(html).toContain('loading="eager"');
+  });
+
+  it('matches product names and categories to illustrated SVG graphics and soft colour tones when no photo is uploaded', () => {
+    expect(resolveProductGraphic({ name: 'Belt', categoryName: 'Accessories' })).toEqual({ kind: 'belt', tone: 'amber' });
+    expect(resolveProductGraphic({ name: 'Fancy Bag', categoryName: 'Bags' })).toEqual({ kind: 'handbag', tone: 'purple' });
+    expect(resolveProductGraphic({ name: 'School Bag (Junior)', categoryName: 'Bags' })).toEqual({ kind: 'backpack', tone: 'blue' });
+    expect(resolveProductGraphic({ name: 'School Shirt (Half Sleeve)', categoryName: 'Shirts' })).toEqual({ kind: 'shirt', tone: 'green' });
+    expect(resolveProductGraphic({ name: 'School Blazer', categoryName: 'Uniforms' })).toEqual({ kind: 'blazer', tone: 'purple' });
+    expect(resolveProductGraphic({ name: 'School Trousers', categoryName: 'Uniforms' })).toEqual({ kind: 'trousers', tone: 'blue' });
+    expect(resolveProductGraphic({ name: 'School Skirt', categoryName: 'Uniforms' })).toEqual({ kind: 'trousers', tone: 'blue' });
+    expect(resolveProductGraphic({ name: 'School Tie', categoryName: 'Accessories' })).toEqual({ kind: 'tie', tone: 'rose' });
+    expect(resolveProductGraphic({ name: 'Water Bottle', categoryName: 'Accessories' })).toEqual({ kind: 'bottle', tone: 'blue' });
+
+    const beltHtml = renderToStaticMarkup(
+      createElement(ProductPhoto, {
+        className: 'prd-photo',
+        product: { imageUrl: null, name: 'Belt', categoryName: 'Accessories' },
+      }),
+    );
+    expect(beltHtml).toContain('photo-tone-amber');
+    expect(beltHtml).toContain('photo-kind-belt');
+    expect(beltHtml).toContain('<svg');
   });
 });
 
