@@ -66,6 +66,17 @@ import type {
   ChannelBranches,
   SetChannelBranchResult,
   HeldPage,
+  StockReportPage,
+  ByChannelPage,
+  SellersRange,
+  ReorderPage,
+  ReorderQuery,
+  ReorderRule,
+  ReorderRules,
+  BestSellersPage,
+  DeadStockPage,
+  SellersQuery,
+  StockReportQuery,
   ReleaseResult,
   SizeToMap,
   ImportSummary,
@@ -288,6 +299,37 @@ async function extractError(
   };
 }
 
+
+/** Jira GRW-631 — the filters of the stock report, as a query string (nothing for a filter that is not set). */
+function stockReportParams(q: StockReportQuery): string {
+  const p = new URLSearchParams();
+  if (q.location) p.set('location', q.location);
+  if (q.categoryId) p.set('categoryId', q.categoryId);
+  if (q.q?.trim()) p.set('q', q.q.trim());
+  if (q.page !== undefined) p.set('page', String(q.page));
+  if (q.pageSize !== undefined) p.set('pageSize', String(q.pageSize));
+  return p.toString();
+}
+
+/** Jira GRW-633 — the filters of the reorder list, as a query string. */
+function reorderParams(q: ReorderQuery): string {
+  const p = new URLSearchParams();
+  if (q.location) p.set('location', q.location);
+  if (q.categoryId) p.set('categoryId', q.categoryId);
+  if (q.page !== undefined) p.set('page', String(q.page));
+  if (q.pageSize !== undefined) p.set('pageSize', String(q.pageSize));
+  return p.toString();
+}
+
+/** Jira GRW-632 — the filters of the two sales views, as a query string. */
+function sellersParams(q: SellersQuery): string {
+  const p = new URLSearchParams({ range: q.range });
+  if (q.location) p.set('location', q.location);
+  if (q.categoryId) p.set('categoryId', q.categoryId);
+  if (q.page !== undefined) p.set('page', String(q.page));
+  if (q.pageSize !== undefined) p.set('pageSize', String(q.pageSize));
+  return p.toString();
+}
 
 /* ---- Reports (GRW-48) ------------------------------------------------- */
 
@@ -651,6 +693,35 @@ export const api = {
   /** Jira GRW-641 — which branch each marketplace sells from, and the branches it could. */
   channelBranches: () => get<ChannelBranches>('/api/v1/channels'),
   setChannelBranch: (channel: 'flipkart' | 'amazon', locationId: string) => put<SetChannelBranchResult>(`/api/v1/channels/${channel}/branch`, { locationId }),
+  /** Jira GRW-634 — what was billed on each channel over a range, beside the period before; billed, not received. */
+  byChannel: (q: { range: SellersRange; location?: string }) => get<ByChannelPage>(`/api/v1/reports/by-channel?${sellersParams({ range: q.range, location: q.location })}`),
+  /** Jira GRW-633 — what to order before the season, size by size: last year's sales in the same days, less the shelf. */
+  reorder: (q: ReorderQuery) => get<ReorderPage>(`/api/v1/reports/reorder?${reorderParams(q)}`),
+  /** Jira GRW-633 — the owner's own number over a suggestion (null clears it). */
+  setReorderOverride: (body: { keyId: string; from: string; to: string; qty: number | null }) => put<{ keyId: string; qty: number | null }>('/api/v1/reports/reorder/override', body),
+  /** Jira GRW-633 — each category's lead time and coverage at one branch. */
+  reorderRules: (location: string) => get<ReorderRules>(`/api/v1/reports/reorder/rules?location=${encodeURIComponent(location)}`),
+  setReorderRule: (body: { categoryId: string; leadDays: number | null; coverDays: number | null }) => put<ReorderRule>('/api/v1/reports/reorder/rules', body),
+  /** Jira GRW-633 — the list as a file, with the owner's own numbers; the server writes it. */
+  reorderCsv: async (q: Omit<ReorderQuery, 'page' | 'pageSize'>): Promise<string> => {
+    const path = `/api/v1/reports/reorder/export?${reorderParams(q)}`;
+    const res = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
+    if (!res.ok) throw await apiError(res, path);
+    return res.text();
+  },
+  /** Jira GRW-632 — the sizes that sold in a window, beside the same window a year earlier. */
+  bestSellers: (q: SellersQuery) => get<BestSellersPage>(`/api/v1/reports/best-sellers?${sellersParams(q)}`),
+  /** Jira GRW-632 — the sizes on the shelf that did not sell in a window, the longest-unsold first. */
+  deadStock: (q: SellersQuery) => get<DeadStockPage>(`/api/v1/reports/dead-stock?${sellersParams(q)}`),
+  /** Jira GRW-631 — the shelf size by size with its worth at cost; one page of styles, the totals over all of them. */
+  stockReport: (q: StockReportQuery) => get<StockReportPage>(`/api/v1/reports/stock?${stockReportParams(q)}`),
+  /** Jira GRW-631 — the same report as a file: the server writes it, so the file can never be a second answer. */
+  stockReportCsv: async (q: Omit<StockReportQuery, 'page' | 'pageSize'>): Promise<string> => {
+    const path = `/api/v1/reports/stock/export?${stockReportParams(q)}`;
+    const res = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
+    if (!res.ok) throw await apiError(res, path);
+    return res.text();
+  },
   /** Jira GRW-620 — the codes holding marketplace orders back, grouped by code and paged on the server. */
   heldCodes: (q: { channel?: 'flipkart' | 'amazon'; q?: string; page?: number; pageSize?: number }) => {
     const p = new URLSearchParams();

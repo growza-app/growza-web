@@ -1469,3 +1469,161 @@ export interface SetChannelBranchResult {
   inFlightAtOld: number;
   changed: boolean;
 }
+
+/** Jira GRW-631 — what is on the shelf, size by size, and what it is worth at cost. */
+export interface StockReportSize {
+  id: string;
+  label: string;
+  stock: number;
+  costMinor: string | null;
+  valueMinor: string | null;
+}
+export interface StockReportStyle {
+  id: string;
+  name: string;
+  categoryId: string | null;
+  branchId: string;
+  branchName: string;
+  units: number;
+  valueMinor: string | null;
+  sizesWithoutCost: number;
+  sizes: StockReportSize[];
+}
+export interface StockReportTotals {
+  styles: number;
+  sizes: number;
+  units: number;
+  valueMinor: string;
+  sizesWithoutCost: number;
+  sizesWithCost: number;
+  negativeSizes: number;
+}
+export interface StockReportPage {
+  styles: StockReportStyle[];
+  totals: StockReportTotals;
+  neverCounted: boolean;
+  page: number;
+  pageSize: number;
+}
+export interface StockReportQuery {
+  location?: string;
+  categoryId?: string;
+  q?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+/** Jira GRW-632 — what sells and what sits. */
+export type SellersRange = 'last_7_days' | 'this_month' | 'last_month' | 'last_3_months' | 'this_year';
+export interface SellersWindow {
+  key: string;
+  label: string;
+  startISO: string;
+  endExclusiveISO: string;
+}
+export interface BestSellerRow {
+  id: string;
+  productId: string;
+  name: string;
+  sizeLabel: string | null;
+  units: number;
+  valueMinor: string;
+  lastYearUnits: number | null;
+  lastYearValueMinor: string | null;
+}
+export interface BestSellersPage {
+  window: SellersWindow;
+  lastYear: { startISO: string; endExclusiveISO: string; hasData: boolean };
+  rows: BestSellerRow[];
+  totals: { sizes: number; units: number; valueMinor: string };
+  page: number;
+  pageSize: number;
+}
+export interface DeadStockRow {
+  id: string;
+  productId: string;
+  name: string;
+  sizeLabel: string | null;
+  stock: number;
+  lastSoldAt: string | null;
+  valueMinor: string | null;
+}
+export interface DeadStockPage {
+  window: SellersWindow;
+  rows: DeadStockRow[];
+  totals: { sizes: number; units: number; valueMinor: string; sizesWithoutCost: number };
+  page: number;
+  pageSize: number;
+}
+export interface SellersQuery {
+  range: SellersRange;
+  location?: string;
+  categoryId?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+/** Jira GRW-633 — what to order before the season. */
+export interface ReorderRow {
+  id: string;
+  productId: string;
+  name: string;
+  sizeLabel: string | null;
+  branchName: string;
+  stock: number;
+  soldLastYear: number | null;
+  suggested: number | null;
+  override: number | null;
+  order: number | null;
+  soldOutLastYear: boolean;
+  /** The days this order has to cover: what the owner's number is kept against. */
+  from: string;
+  to: string;
+  lastYearFrom: string;
+  lastYearTo: string;
+}
+export interface ReorderPage {
+  rows: ReorderRow[];
+  totals: { sizes: number; toOrder: number; withoutBasis: number; edited: number };
+  page: number;
+  pageSize: number;
+}
+export interface ReorderRule {
+  categoryId: string;
+  name: string;
+  leadDays: number | null;
+  coverDays: number | null;
+  effectiveLeadDays: number;
+  effectiveCoverDays: number;
+}
+export interface ReorderRules {
+  defaults: { leadDays: number; coverDays: number };
+  rules: ReorderRule[];
+}
+export interface ReorderQuery {
+  location?: string;
+  categoryId?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+/** Jira GRW-634 — where the money came from, by channel. */
+export interface ChannelRow {
+  channel: string;
+  billedMinor: string;
+  orders: number;
+  averageMinor: number | null;
+  returnedOrders: number;
+  cancelledOrders: number;
+  previous: { billedMinor: string; orders: number } | null;
+  changePct: number | null;
+}
+export interface ByChannelPage {
+  window: { key: string; label: string; startISO: string; endExclusiveISO: string };
+  previous: { startISO: string; endExclusiveISO: string; hasData: boolean };
+  channels: ChannelRow[];
+  totals: { billedMinor: string; orders: number; returnedOrders: number; previousBilledMinor: string | null; changePct: number | null };
+  trend: Array<{ label: string; startISO: string; endExclusiveISO: string; billedMinor: Record<string, string> }>;
+  anyOrders: boolean;
+  caveat: string;
+}
