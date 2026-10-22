@@ -595,7 +595,6 @@
     "saveHours": "Save hours",
     "saveAttendance": "Save attendance",
     "saving": "Saving…",
-    "saved": "Saved",
     "attendance": "Attendance",
     "attendanceHint": "How many minutes late someone can arrive before they are marked late. It counts from each person’s own start time.",
     "graceLabel": "Can arrive late by",
@@ -634,7 +633,6 @@
     "closedNote": "Nobody can book on these days. Bookings already made are not cancelled.",
     "save": "Save changes",
     "saving": "Saving…",
-    "saved": "Saved",
     "errors": {
       "saveFailed": "Could not save. Please try again."
     },
@@ -652,7 +650,6 @@
     "hoursBefore": "hours before the booking",
     "save": "Save changes",
     "saving": "Saving…",
-    "saved": "Saved",
     "errors": {
       "hoursRange": "Use a whole number of hours, from 1 to 168",
       "saveFailed": "Could not save. Please try again."
@@ -680,14 +677,14 @@
     "showsMoney": "shows money",
     "save": "Save changes",
     "saving": "Saving…",
-    "saved": "Saved",
     "errors": {
       "saveFailed": "Could not save. Please try again."
     },
     "contactTitle": "Client phone numbers",
     "staffSees": "Staff can see client name and number",
     "staffSeesOn": "Your team sees who each booking is for, and can call them.",
-    "staffSeesOff": "Your team sees the time and the service, but not the client’s name or number. You, and any managers, still see everything."
+    "staffSeesOff": "Your team sees the time and the service, but not the client’s name or number. You, and any managers, still see everything.",
+    "saved": "Saved"
   },
   "settingsGst": {
     "title": "GST and invoices",
@@ -724,7 +721,6 @@
     "notRegisteredNote": "Nothing here is needed while you are not registered. Your customers still get a receipt for every payment.",
     "save": "Save changes",
     "saving": "Saving…",
-    "saved": "Saved",
     "errors": {
       "saveFailed": "That did not save. Try again."
     }
@@ -789,7 +785,6 @@
     "deskApprovesHint": "If a phone can’t find its location, the receptionist says yes or no.",
     "save": "Save",
     "saving": "Saving…",
-    "savedLabel": "Saved",
     "errors": {
       "badCoords": "Enter both numbers: latitude and longitude.",
       "noFix": "Could not find your location. Turn on location for this site and try again, or paste a map link.",
@@ -797,7 +792,8 @@
       "pinFirst": "Set the branch location before turning this on.",
       "saveFailed": "Could not save. Please try again.",
       "badRadius": "Type a number between {min} and {max}."
-    }
+    },
+    "linkOnSave": "We will look this link up when you save. Open this screen again to see where it landed."
   },
   "settingsTeam": {
     "title": "Team access",

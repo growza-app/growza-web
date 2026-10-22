@@ -39,14 +39,12 @@ export function GstForm({ initial, branchName }: { initial: SettingsSummary; bra
   const [branchGstin, setBranchGstin] = useState(initial.gst.branchGstin);
 
   const [busy, setBusy] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** Which field the API refused, so the message sits on the box the owner has to change. */
   const [badField, setBadField] = useState<string | null>(null);
 
   const registered = status !== 'unregistered';
   const touched = () => {
-    setSaved(false);
     setError(null);
     setBadField(null);
   };
@@ -78,7 +76,6 @@ export function GstForm({ initial, branchName }: { initial: SettingsSummary; bra
       setBranchState(fresh.gst.branchState);
       setBranchStateCode(fresh.gst.branchStateCode);
       setBranchGstin(fresh.gst.branchGstin);
-      setSaved(true);
       closeForm();
     } catch (e) {
       if (e instanceof ApiError && e.status < 500) {
@@ -330,11 +327,9 @@ export function GstForm({ initial, branchName }: { initial: SettingsSummary; bra
 
       <SettingsSaveBar
         busy={busy}
-        saved={saved}
         onSave={() => void save()}
         saveLabel={t('save')}
         savingLabel={t('saving')}
-        savedLabel={t('saved')}
       />
     </>
   );

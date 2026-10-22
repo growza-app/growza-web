@@ -5,6 +5,10 @@ import { savedHref } from './close-after-save';
 
 /**
  * Jira GRW-556 (follow-up) — a full-page form closes when it saves, back to its list, which says "Saved".
+ *
+ * These were matched as `setSaved(true); closeForm();`, which pinned a line that did nothing. The form is
+ * already navigating away, so the flag it set could never be read: `SettingsSaveBar` has no "Saved" note any
+ * more and the seven forms that fed it have dropped the flag. What is asserted is the half that was true.
  */
 const tenant = path.resolve(__dirname, '..');
 const code = (p: string) => readFileSync(path.resolve(tenant, p), 'utf-8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
@@ -24,6 +28,8 @@ describe('every full-page form closes on Save', () => {
     ['settings/working-hours/WorkingHoursForm.tsx', '/settings'],
     ['settings/notifications/RemindersForm.tsx', '/settings'],
     ['settings/report-access/ReportAccessForm.tsx', '/settings'],
+    ['settings/check-in/CheckInForm.tsx', '/settings'],
+    ['settings/gst/GstForm.tsx', '/settings'],
     // Not Branches: it has no Save any more — each branch is a row that opens its Branch profile (owner, 2026-10-10).
     ['providers/[id]/StaffEditClient.tsx', '/providers'],
   ];
@@ -31,7 +37,7 @@ describe('every full-page form closes on Save', () => {
     it(`${file} → ${parent}`, () => {
       const src = code(file);
       expect(src).toContain(`useCloseAfterSave('${parent}')`);
-      expect(src).toMatch(/setSaved\(true\);\s*(closeForm\(\);|if \()/);
+      expect(src).toMatch(/closeForm\(\);/);
     });
   }
 
@@ -41,7 +47,7 @@ describe('every full-page form closes on Save', () => {
 
   it('stays open only where the save has more to say: WhatsApp not live, skills left to set after a branch move', () => {
     // No exception for a business without WhatsApp: the page is not shown to one (owner, 2026-10-10).
-    expect(code('settings/notifications/RemindersForm.tsx')).toMatch(/setSaved\(true\);\s*closeForm\(\);/);
+    expect(code('settings/notifications/RemindersForm.tsx')).toMatch(/closeForm\(\);/);
     // The staff edit screen's one exception went with the skills card (owner, 2026-10-12): it always closes now.
     expect(code('providers/[id]/StaffEditClient.tsx')).not.toMatch(/unmatchedSkills/);
   });
