@@ -128,6 +128,7 @@ function Card({ row, name, money, hasPrevious }: { row: ChannelRow; name: string
         {row.averageMinor !== null ? ` · ${t('average', { amount: money(row.averageMinor) })}` : ''}
       </p>
       {row.returnedOrders > 0 ? <p className="srp-warn">{t('cameBack', { count: row.returnedOrders })}</p> : null}
+      {row.refundedMinor && row.refundedMinor !== '0' ? <p className="srp-hint">{t('refunded', { amount: money(row.refundedMinor), count: row.refundedCount ?? 0 })}</p> : null}
       {row.cancelledOrders > 0 ? <p className="srp-hint">{t('cancelled', { count: row.cancelledOrders })}</p> : null}
       {/* One line at the top says there is no period before to compare with; it is not repeated on every card. */}
       {hasPrevious ? <Compare previous={row.previous !== null} pct={row.changePct} /> : null}

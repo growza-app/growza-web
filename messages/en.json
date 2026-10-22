@@ -3683,7 +3683,8 @@
       "nothingBefore": "Nothing was sold here in the period before.",
       "trendTitle": "Across the period",
       "same": "Same as the period before",
-      "weekOf": "Week of {date}"
+      "weekOf": "Week of {date}",
+      "refunded": "{count, plural, one {Refunded once: {amount}} other {Refunded # times: {amount}}}"
     }
   },
   "sales": {
@@ -3821,10 +3822,10 @@
       "lessAria": "Return one less {name}",
       "moreAria": "Return one more {name}",
       "conditionLabel": "Returned item condition",
-      "restockShelf": "Put back on shelf",
-      "restockShelfHint": "Adds returned units back to sellable stock",
-      "damagedOpened": "Damaged / opened",
-      "damagedOpenedHint": "Will not be added to sellable stock",
+      "restockShelf": "Can be sold again",
+      "restockShelfHint": "Adds the units back to that size’s count",
+      "damagedOpened": "Damaged, cannot be sold",
+      "damagedOpenedHint": "Not added to the count; written off",
       "reasonLabel": "Reason (optional)",
       "reasonPlaceholder": "e.g. Wrong item, seal broken, client exchanged…",
       "refundTotal": "Refund total",
@@ -3866,7 +3867,12 @@
       },
       "documentIssuedBody": "Invoice {number} was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?",
       "documentIssuedBodyNoNumber": "An invoice was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?",
-      "documentIssuedGo": "Return anyway"
+      "documentIssuedGo": "Return anyway",
+      "whyLabel": "Why did it come back? (optional)",
+      "whyOtherNeeds": "Write what the reason was in the note.",
+      "puttingBack": "Goes back on the count of: {items}",
+      "writingOff": "Written off, not put back: {items}",
+      "sizeRemovedNote": "One of these sizes has been removed from the shelf since the sale. The unit was counted on that size’s own record."
     }
   },
   "orders": {
@@ -4011,7 +4017,16 @@
         "colour": "Colour",
         "unsure": "We could not confirm the swap. Check the order before trying again."
       },
-      "bookedAt": "Booked at {branch}"
+      "bookedAt": "Booked at {branch}",
+      "returnsTitle": "Returns",
+      "customerReturn": "Sent back",
+      "undelivered": "Came back undelivered",
+      "notRestocked": "not put back on the shelf",
+      "saleableAssumed": "taken as fit to sell again",
+      "refundsTitle": "Refunds",
+      "marketplaceRefunded": "{channel} refunded on {date}",
+      "shopRefunded": "The shop refunded on {date}",
+      "refundRef": "reference {ref}"
     },
     "import": {
       "title": "Import orders",
@@ -4090,6 +4105,74 @@
       "dismissedNote": "{code} dismissed: {count, plural, one {1 item} other {# items}}.",
       "headlineSearch": "{codes, plural, one {1 code matches.} other {# codes match.}}",
       "findFailed": "Could not search. Check your connection."
+    },
+    "returnReasons": {
+      "size": "Size did not fit",
+      "not_as_described": "Not as described",
+      "faulty": "Damaged or faulty",
+      "wrong_item": "Wrong item sent",
+      "changed_mind": "Changed their mind",
+      "other": "Something else",
+      "not_said": "No reason given"
+    },
+    "returns": {
+      "title": "What came back",
+      "rangeLabel": "Period",
+      "range": {
+        "last_7_days": "Last 7 days",
+        "this_month": "This month",
+        "last_month": "Last month",
+        "last_3_months": "Last 3 months",
+        "this_year": "This year"
+      },
+      "loading": "Loading",
+      "loadError": "Could not load. Check your connection and try again.",
+      "retry": "Try again",
+      "nothing": "Nothing has come back",
+      "nothingHint": "Returns show here, grouped by the reason, once there are some.",
+      "customerTitle": "Sent back by customers",
+      "returnsCount": "{count, plural, one {1 return} other {# returns}}",
+      "unitsCount": "{count, plural, one {1 item} other {# items}}",
+      "undeliveredTitle": "Came back undelivered",
+      "undeliveredNone": "No parcels came back undelivered.",
+      "undeliveredNote": "These never reached the customer. They are counted apart, not as returns.",
+      "toRefunds": "What was refunded"
+    },
+    "returnsLink": "What came back",
+    "refunds": {
+      "title": "What was refunded",
+      "rangeLabel": "Period",
+      "range": {
+        "last_7_days": "Last 7 days",
+        "this_month": "This month",
+        "last_month": "Last month",
+        "last_3_months": "Last 3 months",
+        "this_year": "This year"
+      },
+      "channelLabel": "Channel",
+      "allChannels": "All",
+      "flipkart": "Flipkart",
+      "amazon": "Amazon",
+      "loading": "Loading",
+      "loadError": "Could not load. Check your connection and try again.",
+      "retry": "Try again",
+      "nothing": "No refunds in this period",
+      "nothingHint": "A refund shows here once it has been recorded against an order.",
+      "totalsLabel": "Totals for this period",
+      "total": "Refunded in this period",
+      "countLine": "{count, plural, one {1 refund} other {# refunds}}",
+      "marketplaceRefunded": "{channel} refunded on {date}",
+      "shopRefunded": "The shop refunded on {date}",
+      "orderRef": "Order {ref}",
+      "reference": "Reference {ref}",
+      "nounRefunds": "refunds",
+      "export": "Export to a file",
+      "exporting": "Making the file…",
+      "exportFailed": "Could not make the file. Try again.",
+      "recordNote": "These are records of refunds that were made, so you can match them against the marketplace’s statement. Nothing here is refunded from Growza.",
+      "toReturns": "What came back",
+      "nothingOnChannel": "No {channel} refunds in this period",
+      "openOrder": "Open the order"
     }
   },
   "settingsChannels": {

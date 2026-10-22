@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { api } from '../lib/api';
 import { PageHeader } from '../components/PageHeader';
 import { homeCopy } from '../lib/home-copy';
@@ -36,6 +37,9 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
   const mayTake = me ? mayUse(me.member?.role, 'visit.recordPayment', isWritable(me.tenant?.status)) : false;
   // Jira GRW-619 — importing a marketplace's order report is the owner's and the manager's, as the API is (the desk packs the parcels).
   const role = me?.member?.role;
+  // Jira GRW-635 — what came back and why is the owner's and the manager's to read, as the API is; reading it needs no write.
+  const mayReadReturns = me ? role === undefined || role === 'owner' || role === 'manager' : false;
+  const tOrders = await getTranslations('orders');
   const mayImport = me ? (role === undefined || role === 'owner' || role === 'manager') && isWritable(me.tenant?.status) : false;
 
   // The whole business on arrival; a branch the header picker has chosen is applied by the client, which re-reads.
@@ -48,8 +52,13 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
       <PageHeader
         title={heading}
         actions={
-          mayTake || mayImport ? (
+          mayTake || mayImport || mayReadReturns ? (
             <>
+              {mayReadReturns ? (
+                <a className="btn btn-ghost" href="/orders/returns">
+                  {tOrders('returnsLink')}
+                </a>
+              ) : null}
               {mayImport ? (
                 <a className="btn" href="/orders/import">
                   {copy.shop.importOrders}
@@ -65,11 +74,7 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
         }
       />
       <div className="page-body ord-page">
-        <OrdersClient
-          initialQuery={query}
-          initial={'rows' in initial ? initial : null}
-          timezone={me?.tenant?.timezone ?? 'Asia/Kolkata'}
-        />
+        <OrdersClient initialQuery={query} initial={'rows' in initial ? initial : null} timezone={me?.tenant?.timezone ?? 'Asia/Kolkata'} />
       </div>
     </>
   );
