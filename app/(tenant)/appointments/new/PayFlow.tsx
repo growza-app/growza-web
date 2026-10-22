@@ -606,6 +606,19 @@ export function PayFlow({
     if (productsLoaded) onScans([code]);
     else queueScan(code);
   });
+  /*
+   * Owner, 2026-10-23 — and SAYS so on the two screens where it does not.
+   *
+   * Refusing the scan is right: on 'how' and 'qr' the total is already on screen and being paid against, and a
+   * bottle that slipped onto the bill between the number and the money is how a till stops adding up. But the
+   * refusal was silent, and silence at a counter reads as the broken scanner `scanMiss` was written to avoid —
+   * the desk scans again, harder, then looks for the fault in the gun.
+   *
+   * So the same `scanNote` strip the picking screen already uses, with the way out in it: go back and add it.
+   * Nothing is drawn until somebody actually scans, because a line of standing advice about a thing that is not
+   * happening is what people stop reading.
+   */
+  useBarcodeScan(productsOnly && (step === 'how' || step === 'qr'), () => setScanNote(t('desk.scanWhilePaying')));
   // Codes scanned on the Sales screen wait in the browser: put them on the bill once, in the order scanned.
   const scansTaken = useRef(false);
   useEffect(() => {
@@ -1115,6 +1128,12 @@ export function PayFlow({
           <span className="pf-how-total-label">{t('total')}</span>
           <strong>{money(totalMinor)}</strong>
         </p>
+        {/* Owner, 2026-10-23 — a scan taken here is answered, not ignored. */}
+        {scanNote ? (
+          <div role="status" className="pf-error">
+            {scanNote}
+          </div>
+        ) : null}
         {error ? (
           <div role="alert" className="pf-error">
             {error}
@@ -1266,6 +1285,12 @@ export function PayFlow({
           <span className="pf-how-total-label">{t('total')}</span>
           <strong>{money(totalMinor)}</strong>
         </p>
+        {/* Owner, 2026-10-23 — a scan taken here is answered, not ignored. */}
+        {scanNote ? (
+          <div role="status" className="pf-error">
+            {scanNote}
+          </div>
+        ) : null}
         {error ? (
           <div role="alert" className="pf-error">
             {error}
