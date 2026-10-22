@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import Link from '../../shared/AppLink';
 import { api, type Appointment } from '../lib/api';
+import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
 import { SellProductClient } from '../products/sell/SellProductClient';
 import { buildSaleRows, type SaleRow } from '../sales/SalesClient';
 import { ReturnProductSheet } from '../sales/ReturnProductSheet';
@@ -46,11 +48,45 @@ export function PosClient({
 }) {
   const t = useTranslations('pos');
   const [mode, setMode] = useState<PosMode>('sell');
+  const [fullScreen, setFullScreen] = useState(false);
   const [bills, setBills] = useState<SaleRow[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(false);
   /** Only the latest open may answer: a slow read from an earlier open must not put old bills under a newer sheet. */
   const opened = useRef(0);
+
+  const enterFullScreen = useCallback(() => {
+    setFullScreen(true);
+    try {
+      if (typeof document !== 'undefined' && !document.fullscreenElement) {
+        void document.documentElement.requestFullscreen?.().catch(() => {});
+      }
+    } catch {
+      // Browser fullscreen is optional; CSS full-viewport mode always works.
+    }
+  }, []);
+
+  const exitFullScreen = useCallback(() => {
+    setFullScreen(false);
+    try {
+      if (typeof document !== 'undefined' && document.fullscreenElement) {
+        void document.exitFullscreen?.().catch(() => {});
+      }
+    } catch {
+      // Ignore if not in native fullscreen.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!fullScreen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !e.defaultPrevented && !document.querySelector('.sheet-backdrop, .pf-keypad-scrim')) {
+        exitFullScreen();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [fullScreen, exitFullScreen]);
 
   const openReturn = useCallback(async () => {
     const mine = ++opened.current;
@@ -90,8 +126,44 @@ export function PosClient({
   }, [initialMode, canReturn, openReturn]);
 
   return (
-    <>
-      {canReturn ? (
+    <div className={fullScreen ? 'pos-shell is-fullscreen' : 'pos-shell'}>
+      {fullScreen ? (
+        <header className="pos-fs-bar">
+          <div className="pos-fs-left">
+            <span className="pos-fs-brand">
+              <span className="pos-fs-logo" aria-hidden="true">G</span>
+              {/* i18n-ok: brand name */}Growza
+            </span>
+            <div className="pos-fs-branch">
+              <HeaderBranchPicker variant="pill" />
+            </div>
+          </div>
+          <div className="pos-fs-shortcuts" aria-hidden="true">
+            <span className="pos-kbd-pill"><kbd>F2</kbd> {t('shortcutSearch')}</span>
+            <span className="pos-kbd-pill"><kbd>F4</kbd> {t('shortcutClient')}</span>
+            <span className="pos-kbd-pill"><kbd>F8</kbd> {t('shortcutCharge')}</span>
+            <span className="pos-kbd-pill"><kbd>F9</kbd> {t('shortcutHold')}</span>
+            <span className="pos-kbd-pill"><kbd>{/* i18n-ok: keyboard keycap */}Esc</kbd> {t('shortcutExit')}</span>
+          </div>
+          <div className="pos-fs-actions">
+            {canReturn ? (
+              <button
+                type="button"
+                className={`pos-fs-btn${mode === 'return' ? ' is-active' : ''}`}
+                onClick={() => (mode === 'return' ? closeReturn() : void openReturn())}
+              >
+                {t('return')}
+              </button>
+            ) : null}
+            <Link href="/orders" className="pos-fs-btn">
+              {t('orders')}
+            </Link>
+            <button type="button" className="pos-fs-btn pos-fs-exit" onClick={exitFullScreen}>
+              {t('exitFullScreen')}
+            </button>
+          </div>
+        </header>
+      ) : canReturn ? (
         <div className="pos-bar">
           <div className="page-tabs pos-tabs" role="tablist" aria-label={t('modes')}>
             <button type="button" role="tab" aria-selected={mode === 'sell'} className={`page-tab${mode === 'sell' ? ' active' : ''}`} onClick={closeReturn}>
@@ -101,13 +173,36 @@ export function PosClient({
               {t('return')}
             </button>
           </div>
-          {loading ? (
-            <span className="pos-note" role="status">
-              {t('loadingBills')}
-            </span>
-          ) : null}
+          <div className="pos-bar-right">
+            {loading ? (
+              <span className="pos-note" role="status">
+                {t('loadingBills')}
+              </span>
+            ) : null}
+            <div className="pos-bar-shortcuts" aria-hidden="true">
+              <span className="pos-kbd-inline"><kbd>F2</kbd> {t('shortcutSearch')}</span>
+              <span className="pos-kbd-inline"><kbd>F4</kbd> {t('shortcutClient')}</span>
+              <span className="pos-kbd-inline"><kbd>F8</kbd> {t('shortcutCharge')}</span>
+              <span className="pos-kbd-inline"><kbd>F9</kbd> {t('shortcutHold')}</span>
+            </div>
+            <button type="button" className="btn btn-ghost pos-fs-toggle" onClick={enterFullScreen}>
+              {t('fullScreen')}
+            </button>
+          </div>
         </div>
-      ) : null}
+      ) : (
+        <div className="pos-bar pos-bar-minimal">
+          <div className="pos-bar-shortcuts" aria-hidden="true">
+            <span className="pos-kbd-inline"><kbd>F2</kbd> {t('shortcutSearch')}</span>
+            <span className="pos-kbd-inline"><kbd>F4</kbd> {t('shortcutClient')}</span>
+            <span className="pos-kbd-inline"><kbd>F8</kbd> {t('shortcutCharge')}</span>
+            <span className="pos-kbd-inline"><kbd>F9</kbd> {t('shortcutHold')}</span>
+          </div>
+          <button type="button" className="btn btn-ghost pos-fs-toggle" onClick={enterFullScreen}>
+            {t('fullScreen')}
+          </button>
+        </div>
+      )}
 
       {failed ? (
         <div className="pos-fail" role="alert">
@@ -118,7 +213,9 @@ export function PosClient({
         </div>
       ) : null}
 
-      <SellProductClient timezone={timezone} backTo={backTo} heading={heading} />
+      <div className="pos-body">
+        <SellProductClient timezone={timezone} backTo={backTo} heading={heading} />
+      </div>
 
       {mode === 'return' && bills ? (
         <ReturnProductSheet
@@ -131,6 +228,6 @@ export function PosClient({
           onReturned={() => {}}
         />
       ) : null}
-    </>
+    </div>
   );
 }

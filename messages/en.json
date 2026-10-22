@@ -2815,7 +2815,17 @@
       "scanMiss": "No product has the code {code}. Check the bottle or search by name.",
       "scanNoStock": "No more {name} in stock.",
       "scanFull": "The bill is full. Take payment, then start another.",
-      "scanShelfFailed": "The product list did not load, so the scan was not added. Refresh and scan again."
+      "scanShelfFailed": "The product list did not load, so the scan was not added. Refresh and scan again.",
+      "inBillBadge": "{count} in bill",
+      "clearBill": "Clear all",
+      "holdBill": "Hold",
+      "heldBills": "Held bills ({count})",
+      "resumeBill": "Resume",
+      "discardHeld": "Discard",
+      "chargeNow": "Charge {amount}",
+      "removeLine": "Remove {name}",
+      "sizesCount": "{count} sizes",
+      "subtotalUnits": "Subtotal ({count})"
     },
     "sellTitle": "Sell product",
     "pickProduct": "Select a product",
@@ -3700,7 +3710,15 @@
     "return": "Return",
     "loadingBills": "Loading bills…",
     "billsFailed": "The bills did not load. Check your connection and try again.",
-    "tryAgain": "Try again"
+    "tryAgain": "Try again",
+    "fullScreen": "Full screen",
+    "exitFullScreen": "Exit full screen",
+    "orders": "Orders",
+    "shortcutSearch": "Search / Scan",
+    "shortcutClient": "Client",
+    "shortcutCharge": "Charge",
+    "shortcutHold": "Hold bill",
+    "shortcutExit": "Exit"
   },
   "sales": {
     "scanUnknown": "No product has the code {code}. Check the bottle.",

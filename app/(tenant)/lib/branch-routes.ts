@@ -14,7 +14,7 @@
  * its services, its stylists and its till all belong to that branch, so "All branches" would name no till the
  * money could go into.
  */
-const ONE_BRANCH_ONLY = ['/services', '/products', '/availability', '/settings', '/appointments/new'];
+const ONE_BRANCH_ONLY = ['/services', '/products', '/pos', '/orders/new', '/availability', '/settings', '/appointments/new'];
 
 /**
  * Screens the server draws from `?branch=` (with `BranchUrlSync`). A new pick is written into their address so

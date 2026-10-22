@@ -1,9 +1,10 @@
-/* ---------- POS tab: Sell | Return above the till ---------- */
+/* ---------- POS tab: Sell | Return above the till & Full-Screen Terminal Mode ---------- */
 
-/*
- * The mode bar reuses `.page-tabs`, so the only things here are what the till around it needs: the bar sits on one
- * line with its status note, the two tabs are 44px tall (the phone's tap size), and nothing is a one-off colour.
- */
+.pos-shell {
+  display: flex;
+  flex-direction: column;
+}
+
 .pos-bar {
   display: flex;
   flex-wrap: wrap;
@@ -15,6 +16,10 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+}
+
+.pos-bar-minimal {
+  justify-content: flex-end;
 }
 
 .pos-bar .pos-tabs {
@@ -37,6 +42,21 @@
   color: #fff;
 }
 
+.pos-bar-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.pos-bar-shortcuts {
+  display: none;
+}
+
+.pos-fs-toggle {
+  display: none;
+}
+
 .pos-note {
   font-size: 0.875rem;
   color: var(--muted);
@@ -54,18 +74,310 @@
   font-size: 0.875rem;
 }
 
-/* ---------- Enterprise Desktop Till Polish (1101px and up, product-only POS only) ---------- */
+/* ---------- Full-Screen POS Terminal Mode (Desktop) ---------- */
+.pos-shell.is-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: var(--page-bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pos-fs-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 3.375rem;
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--accent-deep);
+  color: #fff;
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+
+.pos-fs-left {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.pos-fs-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 1.0625rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.pos-fs-logo {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--accent-deep);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9375rem;
+  font-weight: 800;
+}
+
+.pos-fs-branch .sbp-btn {
+  min-height: 2.125rem;
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.pos-fs-branch .sbp-btn svg {
+  color: #fff;
+}
+
+.pos-fs-shortcuts {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+.pos-kbd-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  opacity: 0.92;
+}
+
+.pos-kbd-pill kbd,
+.pos-kbd-inline kbd,
+.pos-search-kbd,
+.pos-bill-action kbd,
+.pos-charge-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.pos-kbd-pill kbd {
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #fff;
+}
+
+.pos-fs-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.pos-fs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-height: 2.25rem;
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.pos-fs-btn:hover,
+.pos-fs-btn.is-active {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.pos-fs-btn:focus-visible,
+.pos-bill-action:focus-visible,
+.pos-step-btn:focus-visible,
+.pos-bill-del:focus-visible,
+.pos-charge-cta:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+
+.pos-fs-bar .pos-fs-btn:focus-visible {
+  outline-color: #fff;
+}
+
+.pos-shell.is-fullscreen .pos-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.pos-shell.is-fullscreen .pf-head {
+  display: none;
+}
+
+/* ---------- Enterprise Desktop Till Polish (1101px and up, product-only POS) ---------- */
 @media (min-width: 1101px) {
+  .pos-bar-shortcuts {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-3);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .pos-kbd-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .pos-kbd-inline kbd,
+  .pos-search-kbd {
+    background: var(--page-bg);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .pos-fs-toggle {
+    display: inline-flex;
+    min-height: 2.25rem;
+    padding: 0 var(--sp-3);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  /* 2-Column Layout: 70% Product Catalogue on left, 408px Sticky Bill Drawer on right */
+  .pf-wide:has(.prd-cat-li) .pf-wide-grid {
+    grid-template-columns: minmax(0, 1fr) 25.5rem;
+    gap: var(--sp-4);
+    align-items: start;
+  }
+
+  .pf-wide:has(.prd-cat-li) .pf-wide-left {
+    display: none;
+  }
+
+  /* Full-width Search Bar + Horizontal Category Pills Row */
+  .pf-wide:has(.prd-cat-li) .pos-wide-tools {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-2);
+  }
+
+  .pf-wide:has(.prd-cat-li) .pf-wide-search {
+    min-height: 2.75rem;
+    padding: 0 var(--sp-3);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+  }
+
+  .pf-wide:has(.prd-cat-li) .pf-wide-search:focus-within {
+    border-color: var(--accent-deep);
+  }
+
+  .pos-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+  }
+
+  .pos-cat-pills-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pos-cat-pills-wrap .svc-desk-left-head {
+    display: none;
+  }
+
+  .pos-cat-pills-wrap .svc-desk-cats {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .pos-cat-pills-wrap .prd-cat-li {
+    display: inline-flex;
+    width: auto;
+    margin: 0;
+  }
+
+  .pos-cat-pills-wrap .svc-desk-cat {
+    width: auto;
+    min-height: 2.25rem;
+    padding: 0 var(--sp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+
+  .pos-cat-pills-wrap .svc-desk-cat:hover {
+    border-color: var(--accent-deep);
+  }
+
+  .pos-cat-pills-wrap .svc-desk-cat.is-on {
+    background: var(--accent-deep);
+    border-color: var(--accent-deep);
+    color: #fff;
+  }
+
+  .pos-cat-pills-wrap .svc-desk-cat.is-on .svc-desk-n {
+    color: #fff;
+    opacity: 0.85;
+  }
+
+  .pos-filter-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex: none;
+  }
+
+  /* 5-Column Visual Product Grid */
   .pf-wide:has(.prd-cat-li) .pf-wide-tiles {
-    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(10.25rem, 1fr));
     gap: var(--sp-3);
   }
 
   .pf-wide:has(.prd-cat-li) .pf-tile {
-    min-height: 8.25rem;
+    position: relative;
+    min-height: 11.5rem;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--surface);
+    overflow: hidden;
   }
 
   .pf-wide:has(.prd-cat-li) .pf-tile:hover {
@@ -74,27 +386,56 @@
 
   .pf-wide:has(.prd-cat-li) .pf-tile.pf-tile-on {
     border-color: var(--accent-deep);
-    background: var(--accent-soft);
-    box-shadow: inset 0 0 0 1px var(--accent-deep);
+    background: var(--surface);
+    box-shadow: inset 0 0 0 1.5px var(--accent-deep);
   }
 
   .pf-wide:has(.prd-cat-li) .pf-tile-tap {
-    padding: 0 0 var(--sp-3);
-    gap: var(--sp-1);
+    padding: var(--sp-2);
+    gap: 4px;
+    height: 100%;
   }
 
   .pf-wide:has(.prd-cat-li) .pf-tile-photo {
-    aspect-ratio: 16 / 7;
+    aspect-ratio: 16 / 10;
     margin-bottom: var(--sp-1);
-    border-bottom: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    border: 0;
+  }
+
+  .pf-wide:has(.prd-cat-li) .pf-tile-qty {
+    display: none;
+  }
+
+  .pf-tile-inbill {
+    position: absolute;
+    top: var(--sp-3);
+    right: var(--sp-3);
+    padding: 2px var(--sp-2);
+    border-radius: 999px;
+    background: var(--accent-deep);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    z-index: 2;
   }
 
   .pf-wide:has(.prd-cat-li) .pf-tile-name {
+    padding: 0 var(--sp-1);
     font-size: 0.875rem;
-    font-weight: 600;
-    line-height: 1.3;
-    min-height: 2.6em;
-    -webkit-line-clamp: 2;
+    font-weight: 700;
+    line-height: 1.25;
+    min-height: 0;
+    -webkit-line-clamp: 1;
+  }
+
+  .pf-tile-meta {
+    padding: 0 var(--sp-1);
+    font-size: 0.75rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .pf-wide:has(.prd-cat-li) .pf-tile-price {
@@ -103,9 +444,10 @@
     justify-content: space-between;
     gap: var(--sp-2);
     margin-top: auto;
-    padding-top: var(--sp-1);
+    padding: var(--sp-1) var(--sp-1) 0;
     font-size: 1rem;
     font-weight: 800;
+    color: var(--accent-deep);
   }
 
   .pf-wide:has(.prd-cat-li) .pf-tile-mins {
@@ -120,5 +462,284 @@
   .pf-wide:has(.prd-cat-li) .pf-tile-mins.pf-tile-out {
     background: var(--danger-soft);
     color: var(--danger);
+  }
+
+  /* ---------- Sticky Right Current Bill Drawer ---------- */
+  .pf-wide:has(.prd-cat-li) .pf-wide-right {
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 2rem);
+    padding: var(--sp-3);
+    gap: var(--sp-2);
+  }
+
+  .pos-shell.is-fullscreen .pf-wide:has(.prd-cat-li) .pf-wide-right {
+    top: 0;
+    max-height: calc(100vh - 5rem);
+  }
+
+  .pos-bill-client {
+    padding-bottom: var(--sp-2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pos-bill-client .pf-row {
+    grid-template-columns: 1fr;
+    gap: var(--sp-1);
+    margin: 0;
+  }
+
+  .pos-bill-client .pf-who-bar {
+    width: 100%;
+  }
+
+  .pos-held-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--radius-sm);
+    background: var(--amber-soft);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  .pos-held-actions,
+  .pos-bill-head-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-1);
+  }
+
+  .pos-bill-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 1.75rem;
+    padding: 0 var(--sp-2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--page-bg);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .pos-bill-hold {
+    background: var(--amber-soft);
+    border-color: transparent;
+  }
+
+  .pos-bill-clear,
+  .pos-bill-discard {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-color: transparent;
+  }
+
+  .pos-bill-lines {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    max-height: 18rem;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pos-bill-item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--page-bg);
+  }
+
+  .pos-bill-thumb {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radius-sm);
+    flex: none;
+  }
+
+  .pos-bill-item-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .pos-bill-item-top,
+  .pos-bill-item-bot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+  }
+
+  .pos-bill-item-name {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pos-bill-item-amt {
+    font-size: 0.875rem;
+    font-weight: 800;
+    flex: none;
+  }
+
+  .pos-bill-item-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pos-bill-item-ctrl {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    flex: none;
+  }
+
+  .pos-bill-stepper {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+  }
+
+  .pos-step-btn {
+    width: 1.625rem;
+    height: 1.625rem;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .pos-step-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .pos-step-btn svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  .pos-step-val {
+    min-width: 1.375rem;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pos-bill-del {
+    width: 1.625rem;
+    height: 1.625rem;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: var(--danger-soft);
+    color: var(--danger);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .pos-bill-del svg {
+    width: 0.8125rem;
+    height: 0.8125rem;
+  }
+
+  /* Compact 4-column payment mode pills + Primary Charge CTA */
+  .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-pay {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--sp-1);
+  }
+
+  .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-pay-tile {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    padding: var(--sp-1) var(--sp-2);
+    gap: var(--sp-1);
+  }
+
+  .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-pay-tile::after {
+    display: none;
+  }
+
+  .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-pay-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-bottom: 0;
+    flex: none;
+  }
+
+  .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-pay-icon svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-pay-word {
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-split-link {
+    grid-column: 1 / -1;
+    margin-top: 2px;
+    font-size: 0.75rem;
+  }
+
+  .pos-charge-cta {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0 var(--sp-4);
+    border-radius: var(--radius);
+    background: var(--accent-deep);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+  }
+
+  .pos-charge-cta:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .pos-charge-kbd {
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #fff;
   }
 }
