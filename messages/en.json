@@ -2822,7 +2822,8 @@
       "needPaymentMode": "Select how they paid",
       "removeLine": "Remove {name}",
       "sizesCount": "{count} sizes",
-      "subtotalUnits": "Subtotal ({count})"
+      "subtotalUnits": "Subtotal ({count})",
+      "scanWhilePaying": "Not added — this bill is being paid for. Go back to add another item."
     },
     "sellTitle": "Sell product",
     "pickProduct": "Select a product",

@@ -2822,7 +2822,8 @@
       "needPaymentMode": "भुगतान का तरीका चुनें",
       "removeLine": "{name} हटाएँ",
       "sizesCount": "{count} साइज़",
-      "subtotalUnits": "उप-योग ({count})"
+      "subtotalUnits": "उप-योग ({count})",
+      "scanWhilePaying": "नहीं जुड़ा — इस बिल का भुगतान चल रहा है। और सामान जोड़ने के लिए पीछे जाएँ।"
     },
     "sellTitle": "सामान बेचें",
     "pickProduct": "एक सामान चुनें",
