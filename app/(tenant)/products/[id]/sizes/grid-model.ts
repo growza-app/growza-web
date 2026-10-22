@@ -24,6 +24,16 @@ export const MAX_AXES = 2;
 /** Said to the owner as "Size" and "Colour" until they rename them. */
 export const DEFAULT_AXIS_NAMES: readonly [string, string] = ['Size', 'Colour'];
 
+/** Common size sets an owner can add in one tap. */
+export const SIZE_PRESET_GROUPS: ReadonlyArray<{ id: 'alpha' | 'waist' | 'free'; values: readonly string[] }> = [
+  { id: 'alpha', values: ['S', 'M', 'L', 'XL', 'XXL'] },
+  { id: 'waist', values: ['28', '30', '32', '34', '36', '38'] },
+  { id: 'free', values: ['Free size'] },
+];
+
+/** Common colours an owner can tap to add as columns. */
+export const COLOUR_PRESETS: readonly string[] = ['Black', 'White', 'Brown', 'Navy', 'Grey', 'Blue', 'Red', 'Green', 'Beige', 'Pink'];
+
 /** One option as the grid holds it — the same shape the server speaks. */
 export type GridAxis = SizeAxis;
 
@@ -132,9 +142,13 @@ export function layout(state: GridState): { rows: string[]; columns: Array<strin
   return { rows, columns: second && second.values.length > 0 ? second.values : [null] };
 }
 
-/** The sizes that already exist, by cell key — to know what is new, what changed and what a blank retires. */
-function existingByKey(baseline: Baseline): Map<string, Size> {
-  return new Map(baseline.sizes.map((s) => [cellKey(s.option1, s.option2), s]));
+/**
+ * The sizes that already exist, by cell key — to know what is new, what changed and what a blank retires.
+ * When a 1-option product gains a second option (Colour), its existing sizes map to the first colour column.
+ */
+function existingByKey(baseline: Baseline, state?: GridState): Map<string, Size> {
+  const firstCol = state && (state.axes[1]?.values.length ?? 0) > 0 ? state.axes[1]!.values[0]! : null;
+  return new Map(baseline.sizes.map((s) => [cellKey(s.option1, s.option2 ?? firstCol), s]));
 }
 
 export type CellIssue = 'count' | 'price';
@@ -211,27 +225,59 @@ export function removeValue(state: GridState, axisIndex: 0 | 1, value: string): 
 
 /** A second option, empty, named Colour until the owner renames it. */
 export function addSecondAxis(state: GridState): GridState {
+  if (state.axes.length > 1) return state;
   return { ...state, axes: [...state.axes.slice(0, 1), { name: DEFAULT_AXIS_NAMES[1], values: [] }] };
 }
 
-/** Takes the second option away, with every count that was in a colour column. */
-export function removeSecondAxis(state: GridState): GridState {
+/**
+ * Adds values to an option (creating the second option if needed). When the first colour is added to a 1-option grid,
+ * any counts already in the plain size rows move into that first colour column so nothing vanishes.
+ */
+export function addAxisValues(state: GridState, axisIndex: 0 | 1, pasted: string): { state: GridState; repeats: number; tooMany: boolean } {
+  const withAxis = axisIndex === 1 && state.axes.length === 1 ? addSecondAxis(state) : state;
+  const axis = withAxis.axes[axisIndex] ?? { name: DEFAULT_AXIS_NAMES[axisIndex], values: [] };
+  const hadSecondValues = axisIndex === 1 && axis.values.length > 0;
+  const r = addValues(axis.values, pasted);
+  const axes = withAxis.axes.map((a, at) => (at === axisIndex ? { ...a, values: r.values } : a));
+  const counts = { ...withAxis.counts };
+  if (axisIndex === 1 && !hadSecondValues && r.values.length > 0) {
+    const firstCol = r.values[0]!;
+    for (const row of axes[0]?.values ?? []) {
+      const plainKey = cellKey(row, null);
+      const colKey = cellKey(row, firstCol);
+      if ((counts[plainKey] ?? '') !== '' && (counts[colKey] ?? '') === '') {
+        counts[colKey] = counts[plainKey]!;
+        delete counts[plainKey];
+      }
+    }
+  }
+  return { state: { ...withAxis, axes, counts }, repeats: r.repeats, tooMany: r.tooMany };
+}
+
+/** Takes the second option away, with every count that was in a colour column (restoring 1-option baseline counts when present). */
+export function removeSecondAxis(state: GridState, baseline?: Baseline): GridState {
   const counts = Object.fromEntries(Object.entries(state.counts).filter(([key]) => (key.split(GAP)[1] ?? '') === ''));
+  if (baseline && baseline.axes.length === 1) {
+    for (const s of baseline.sizes) {
+      if (s.option2 === null) counts[cellKey(s.option1, null)] = String(s.stock);
+    }
+  }
   return { ...state, axes: state.axes.slice(0, 1), counts };
 }
 
 /**
- * A second option cannot be added once sizes exist with one: the server cannot give those sizes a value for it, and a
- * retired size still holds its place. Said before the owner fills a grid for it.
+ * Whether a second option is blocked. Since saving a second option now upgrades existing 1-option sizes into the first
+ * colour column, a second option can always be added when the product has only one option.
  */
-export const secondOptionBlocked = (state: GridState, baseline: Baseline): boolean => state.axes.length === 1 && baseline.sizes.length > 0;
+export const secondOptionBlocked = (_state: GridState, _baseline: Baseline): boolean => false;
 
 /** Sizes that exist and are on the shelf now but whose cell is blank: saving retires them. */
 export function willRetire(state: GridState, baseline: Baseline): Size[] {
   const stocked = new Set<string>();
   const { rows, columns } = layout(state);
+  const firstCol = (state.axes[1]?.values.length ?? 0) > 0 ? state.axes[1]!.values[0]! : null;
   for (const row of rows) for (const col of columns) if ((state.counts[cellKey(row, col)] ?? '').trim() !== '') stocked.add(cellKey(row, col));
-  return baseline.sizes.filter((s) => s.active && !stocked.has(cellKey(s.option1, s.option2)));
+  return baseline.sizes.filter((s) => s.active && !stocked.has(cellKey(s.option1, s.option2 ?? firstCol)));
 }
 
 /** The axes as the server takes them: named, each value once, in order. */
@@ -245,7 +291,7 @@ function requestAxes(state: GridState): SizeAxis[] {
  * touch is left out, which keeps it retired; a size on the shelf with a blank cell is left out, which retires it.
  */
 export function toRequest(state: GridState, baseline: Baseline): { axes: SizeAxis[]; cells: SizeGridCell[]; version?: string } {
-  const byKey = existingByKey(baseline);
+  const byKey = existingByKey(baseline, state);
   const { rows, columns } = layout(state);
   const cells: SizeGridCell[] = [];
   for (const row of rows) {
@@ -276,7 +322,8 @@ export function isDirty(state: GridState, baseline: Baseline): boolean {
   if (!same(current, baseline.axes)) return true;
   if (Object.keys(state.priceEdited).length > 0) return true;
   const { rows, columns } = layout(state);
-  const byKey = existingByKey(baseline);
+  const byKey = existingByKey(baseline, state);
+  const firstCol = (state.axes[1]?.values.length ?? 0) > 0 ? state.axes[1]!.values[0]! : null;
   const stocked = new Set<string>();
   for (const row of rows) {
     for (const col of columns) {
@@ -287,7 +334,7 @@ export function isDirty(state: GridState, baseline: Baseline): boolean {
       if (typed !== '' && (!was || Number(typed) !== was.stock)) return true;
     }
   }
-  return baseline.sizes.some((s) => s.active && !stocked.has(cellKey(s.option1, s.option2)));
+  return baseline.sizes.some((s) => s.active && !stocked.has(cellKey(s.option1, s.option2 ?? firstCol)));
 }
 
 /** Values that already have a size on them: the owner may not take these out of the option (retire the size instead). */

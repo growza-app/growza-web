@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ProductSizes, Size } from '../../../lib/api-types';
-import { addSecondAxis, addValues, anyStocked, cellKey, cleanCount, countOk, initialState, isDirty, layout, lockedValues, moveValue, parseValues, priceOk, problems, removeSecondAxis, removeValue, rowKey, secondOptionBlocked, setPriceText, toRequest, willRetire, type GridState } from './grid-model';
+import { addAxisValues, addSecondAxis, addValues, anyStocked, cellKey, cleanCount, countOk, initialState, isDirty, layout, lockedValues, moveValue, parseValues, priceOk, problems, removeSecondAxis, removeValue, rowKey, secondOptionBlocked, setPriceText, toRequest, willRetire, type GridState } from './grid-model';
 
 /**
  * Jira GRW-598 — the sizes grid's rules, without a browser.
@@ -346,10 +346,33 @@ describe('taking a value or an option out', () => {
     expect(addSecondAxis(removeSecondAxis(state)).axes[1]).toEqual({ name: 'Colour', values: [] });
   });
 
-  it('a second option is blocked once sizes exist with one option, and open for a new product', () => {
-    const existing = stateOf(sizes([size({ option1: '28' })]));
-    expect(secondOptionBlocked(existing.state, existing.baseline)).toBe(true);
+  it('a second option is open both for a new product and for an existing 1-option product', () => {
+    const existing = stateOf(sizes([size({ option1: '28', stock: 4 }), size({ option1: '30', stock: 6 })]));
+    expect(secondOptionBlocked(existing.state, existing.baseline)).toBe(false);
     const fresh = stateOf(null);
     expect(secondOptionBlocked(fresh.state, fresh.baseline)).toBe(false);
+  });
+
+  it('adding a first colour to a 1-option product moves existing counts into the first colour column and sends the upgraded grid', () => {
+    const existing = stateOf(sizes([size({ option1: '32', stock: 4 }), size({ option1: '34', stock: 6 })]));
+    const withColours = addAxisValues(existing.state, 1, 'Black, Brown');
+    expect(withColours.state.axes).toEqual([
+      { name: 'Size', values: ['32', '34'] },
+      { name: 'Colour', values: ['Black', 'Brown'] },
+    ]);
+    expect(withColours.state.counts[cellKey('32', 'Black')]).toBe('4');
+    expect(withColours.state.counts[cellKey('34', 'Black')]).toBe('6');
+    expect(withColours.state.counts[cellKey('32', 'Brown')]).toBeUndefined();
+    expect(isDirty(withColours.state, existing.baseline)).toBe(true);
+    expect(willRetire(withColours.state, existing.baseline)).toEqual([]);
+    expect(toRequest(withColours.state, existing.baseline).cells).toEqual([
+      { option1: '32', option2: 'Black' },
+      { option1: '34', option2: 'Black' },
+    ]);
+
+    const restored = removeSecondAxis(withColours.state, existing.baseline);
+    expect(restored.axes).toEqual([{ name: 'Size', values: ['32', '34'] }]);
+    expect(restored.counts[cellKey('32', null)]).toBe('4');
+    expect(restored.counts[cellKey('34', null)]).toBe('6');
   });
 });
