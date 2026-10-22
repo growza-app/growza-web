@@ -244,7 +244,7 @@ export function ProductSheet({
 
       {product ? (
         <div className="prd-sheet-id">
-          <ProductPhoto className="prd-sheet-photo" product={product} eager />
+          <ProductPhoto className="prd-sheet-photo" product={{ ...product, imageUrl: photoPreview ?? imageUrl }} eager />
           <span className="prd-sheet-id-text">
             <span className="prd-sheet-name">{product.name}</span>
             <span className="prd-sheet-tags">
@@ -303,9 +303,23 @@ export function ProductSheet({
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
                   style={{ display: 'none' }}
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const f = e.target.files?.[0];
-                    if (f) setPhoto(f);
+                    e.target.value = '';
+                    if (!f) return;
+                    setError(null);
+                    setPhoto(f);
+                    if (target) {
+                      try {
+                        const updated = await api.uploadProductPhoto(target.id, f);
+                        setPhoto(null);
+                        setImageUrl(updated.imageUrl);
+                        setJustSaved(true);
+                        onSaved(updated);
+                      } catch (err) {
+                        setError(err instanceof ApiError && err.status < 500 ? err.message : t('photoFailed'));
+                      }
+                    }
                   }}
                 />
                 <button type="button" className="sheet-photo-text" onClick={() => photoRef.current?.click()}>
