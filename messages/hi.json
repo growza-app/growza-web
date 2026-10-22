@@ -2822,7 +2822,7 @@
       "heldBills": "रोके गए बिल ({count})",
       "resumeBill": "वापस लाएँ",
       "discardHeld": "हटाएँ",
-      "chargeNow": "{amount} लें",
+      "chargeNow": "बिक्री पूरी करें · {amount}",
       "removeLine": "{name} हटाएँ",
       "sizesCount": "{count} साइज़",
       "subtotalUnits": "उप-योग ({count})"
@@ -3716,7 +3716,7 @@
     "orders": "ऑर्डर",
     "shortcutSearch": "खोजें / स्कैन",
     "shortcutClient": "ग्राहक",
-    "shortcutCharge": "भुगतान",
+    "shortcutCharge": "बिक्री पूरी करें",
     "shortcutHold": "बिल रोकें",
     "shortcutExit": "बाहर"
   },

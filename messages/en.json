@@ -2822,7 +2822,7 @@
       "heldBills": "Held bills ({count})",
       "resumeBill": "Resume",
       "discardHeld": "Discard",
-      "chargeNow": "Charge {amount}",
+      "chargeNow": "Complete sale · {amount}",
       "removeLine": "Remove {name}",
       "sizesCount": "{count} sizes",
       "subtotalUnits": "Subtotal ({count})"
@@ -3716,7 +3716,7 @@
     "orders": "Orders",
     "shortcutSearch": "Search / Scan",
     "shortcutClient": "Client",
-    "shortcutCharge": "Charge",
+    "shortcutCharge": "Complete sale",
     "shortcutHold": "Hold bill",
     "shortcutExit": "Exit"
   },
