@@ -1,0 +1,133 @@
+/*
+ * Jira GRW-619 — importing an order report. A column at 344px: the marketplace, the report, the answer, and the one action in a bar
+ * at the bottom. The summary is a short list of three plain numbers, never a table that scrolls sideways; codes and rows that need
+ * the owner wrap and never push the page wide. Type is rem; 16px on the fields so iOS does not zoom them.
+ */
+.imp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.imp-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.imp-step h2,
+.imp-summary h2 {
+  margin: 0;
+  font-size: var(--fs-4);
+}
+.imp-hint {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.imp-file {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+}
+.imp-file input {
+  font-size: 16px;
+  min-height: 2.75rem;
+}
+.imp-text {
+  width: 100%;
+  min-height: 10rem;
+  font-size: 16px;
+  font-family: inherit;
+  resize: vertical;
+}
+.imp-error {
+  margin: 0;
+  font-weight: 600;
+}
+.imp-warn {
+  margin: 0;
+  font-weight: 600;
+}
+.imp-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.imp-counts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.imp-counts li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+.imp-n {
+  min-width: 2.5rem;
+  font-size: var(--fs-5);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.imp-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.imp-block h3 {
+  margin: 0;
+  font-size: var(--fs-3);
+}
+.imp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.imp-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border);
+}
+.imp-code {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.imp-summary .btn {
+  min-height: 2.75rem;
+  align-self: flex-start;
+}
+/*
+ * The one action sits at the foot of the screen, above the bottom nav, where a thumb is. Chrome pins a sticky box inside the
+ * scroller's padding, so the page gives up its own bottom padding (the nav clearance) and the bar pins to the edge — the same
+ * fix the order screen needed. At the end of the content the bar is in its natural place below the last block, so it covers nothing.
+ */
+.imp-page {
+  padding-bottom: 0;
+}
+.imp-bar {
+  z-index: 2;
+  position: sticky;
+  bottom: 0;
+  padding: var(--sp-2) 0 var(--sp-3);
+  background: var(--page-bg);
+}
+.imp-go {
+  width: 100%;
+  min-height: 3rem;
+}

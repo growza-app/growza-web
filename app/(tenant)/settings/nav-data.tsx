@@ -32,6 +32,7 @@ export type SettingsRowKey =
   | 'appearance'
   | 'privacy'
   | 'reportAccess'
+  | 'channels'
   | 'gst'
   | 'billing'
   | 'account'
@@ -64,6 +65,11 @@ interface SettingsRowBase {
    * absent for it, never an empty form. `areas.ts` closes the same two addresses to it.
    */
   diaryOnly?: boolean;
+  /**
+   * Jira GRW-641 — listed only for a shop. Which branch Flipkart and Amazon sell from means nothing to a business with a diary, which has
+   * no marketplaces: absent for it, never a screen that answers 404.
+   */
+  shopOnly?: boolean;
   /**
    * Listed only once the business is live.
    *
@@ -144,6 +150,8 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       // The QR the till shows a customer. Live-day: see `liveOnly` above.
       { href: '/settings/payments', key: 'payments', icon: IconPayUpi, liveOnly: true },
       { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
+      // Jira GRW-641 — which shop's shelves the marketplaces sell from.
+      { href: '/settings/channels', key: 'channels', icon: IconShop, shopOnly: true },
       // Jira GRW-243 — what the owner pays Growza, each branch, the next bill and past bills.
       { href: '/settings/billing', key: 'billing', icon: IconWallet },
     ],

@@ -1,3 +1,4 @@
+import AppLink from '../../../../shared/AppLink';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { api } from '../../../lib/api';
@@ -25,8 +26,11 @@ export default async function ProductSizesPage({ params }: { params: Promise<{ i
   const t = await getTranslations('products.sizes');
 
   let sizesOn = false;
+  let shop = false;
   try {
-    sizesOn = (await api.me()).capabilities?.sizes === true;
+    const me = await api.me();
+    sizesOn = me.capabilities?.sizes === true;
+    shop = me.surface === 'shop';
   } catch {
     // A /me that cannot answer is left to the load below to report.
     sizesOn = true;
@@ -40,6 +44,12 @@ export default async function ProductSizesPage({ params }: { params: Promise<{ i
         <PageHeader title={t('title')} subtitle={sizes.product.name} mobileSubtitle />
         <div className="page-body">
           <SizesGrid key={sizes.version} sizes={sizes} />
+          {/* Jira GRW-618 — the marketplace codes that point at these sizes. */}
+          {shop ? (
+            <AppLink className="btn" href={`/products/${id}/codes`}>
+              {t('codesLink')}
+            </AppLink>
+          ) : null}
         </div>
       </>
     );

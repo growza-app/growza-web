@@ -1275,6 +1275,8 @@ export interface OrderHistoryEntry {
 export interface OrderDetail {
   id: string;
   locationId: string;
+  /** Jira GRW-641 — the branch the order is booked against, by name. */
+  branchName: string | null;
   status: string;
   known: boolean;
   channel: string;
@@ -1346,4 +1348,124 @@ export interface ExchangeResult {
   differenceMinor: number;
   settlementMode: string | null;
   replayed: boolean;
+}
+
+/** Jira GRW-618 — a marketplace's own code, and the one size (or product with no sizes) it points at. */
+export interface MarketplaceCode {
+  id: string;
+  channel: 'flipkart' | 'amazon';
+  code: string;
+  productId: string;
+  variantId: string | null;
+  /** "School Shirt (30 / White)" — what it points at, by the names the owner gave. */
+  label: string;
+  productName: string;
+  size: string | null;
+  /** The size was retired after the code was mapped: the listing points at something that is not on sale. */
+  retired: boolean;
+}
+
+export interface MarketplaceCodesPage {
+  rows: MarketplaceCode[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface SaveCodesBody {
+  channel: 'flipkart' | 'amazon';
+  productId?: string;
+  rows: Array<{ code: string; size?: string; variantId?: string; productId?: string }>;
+  /** True to repoint a code that is already mapped elsewhere instead of being refused. */
+  replace?: boolean;
+}
+
+export interface SaveCodesResult {
+  created: number;
+  updated: number;
+  unchanged: number;
+  /** Jira GRW-620 — the orders that were waiting on these codes and became real orders. */
+  released?: ReleaseResult;
+}
+
+/** Jira GRW-619 — what importing an order report did, in plain counts. */
+export interface ImportSummary {
+  importId: string;
+  channel: 'flipkart' | 'amazon';
+  /** Orders that became real orders. */
+  created: number;
+  /** Orders already in Growza from an earlier import: nothing changed for them. */
+  alreadyThere: number;
+  /** Orders waiting for a size: a line's code is not mapped yet. */
+  held: number;
+  /** Units the shelf did not have (the count was taken to zero). */
+  shortUnits: number;
+  lines: { created: number; alreadyThere: number; held: number };
+  heldCodes: Array<{ code: string; lines: number; reason: 'unmapped' | 'retired' }>;
+  /** Rows that could not be read, by their row in the file (the heading is row 1). */
+  problems: Array<{ row: number; why: string }>;
+  replayed: boolean;
+}
+
+/** Jira GRW-620 — one code holding marketplace orders back: what is waiting on it, and why. */
+export interface HeldCode {
+  channel: 'flipkart' | 'amazon';
+  code: string;
+  lines: number;
+  orders: number;
+  units: number;
+  nameInReport: string | null;
+  since: string;
+  fileName: string | null;
+  /** 'unmapped': no size yet. 'retired': mapped to a size no longer sold. 'ready': mapped to a size on sale — the release has just not run. */
+  reason: 'unmapped' | 'retired' | 'ready';
+  mappedTo: string | null;
+}
+export interface HeldPage {
+  rows: HeldCode[];
+  total: number;
+  /** Orders waiting in all, for the headline. */
+  orders: number;
+  page: number;
+  pageSize: number;
+}
+export interface ReleaseResult {
+  orders: number;
+  lines: number;
+  shortUnits: number;
+  stillHeld: number;
+}
+/** A size (or a product with no sizes) a code could be mapped to. */
+export interface SizeToMap {
+  productId: string;
+  variantId: string | null;
+  productName: string;
+  size: string | null;
+  label: string;
+}
+
+/** Jira GRW-641 — which branch a marketplace sells from. */
+export interface ChannelBranch {
+  channel: 'flipkart' | 'amazon';
+  /** The branch it sells from now; null when the one chosen has been closed. */
+  locationId: string | null;
+  branchName: string | null;
+  /** 'chosen' by the owner, or the 'default' main open branch. */
+  source: 'chosen' | 'default';
+  gone: boolean;
+  /** More than one branch to choose between: a one-branch shop sees its branch and cannot change it. */
+  changeable: boolean;
+}
+export interface ChannelBranches {
+  channels: ChannelBranch[];
+  branches: Array<{ id: string; name: string }>;
+}
+export interface SetChannelBranchResult {
+  channel: 'flipkart' | 'amazon';
+  locationId: string;
+  branchName: string;
+  previous: { locationId: string | null; branchName: string | null };
+  /** Online orders from this channel not yet dispatched that stay at the old branch. */
+  inFlightAtOld: number;
+  changed: boolean;
 }

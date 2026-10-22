@@ -199,7 +199,7 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   // same gate: a role the nav does not offer /orders is bounced Home by the page, so it never reaches the button.
   // Jira GRW-617 — and swaps a size. The desk is offered this screen but takes no returns, so it takes no swaps: the control is
   // drawn from `order.canSwap`, which the API computes with the very function that would refuse the swap.
-  '/orders': ['PATCH /api/v1/orders/:id/status', 'POST /api/v1/orders/:id/exchange', 'POST /api/v1/orders/:id/exchange/quote'],
+  '/orders': ['PATCH /api/v1/orders/:id/status', 'POST /api/v1/orders/:id/exchange', 'POST /api/v1/orders/:id/exchange/quote', 'POST /api/v1/marketplace-imports', 'POST /api/v1/marketplace-imports/held/release', 'POST /api/v1/marketplace-imports/held/dismiss'],
   // Jira GRW-563 (shared 1.0.5) — `assign-client` moved into `visit.recordPayment`, where it belonged.
   '/services': [
     'POST /api/v1/services',
@@ -243,6 +243,9 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'DELETE /api/v1/products/stock-take/draft',
     // Jira GRW-598 — the sizes grid, one save, from a page of its own under Products.
     'PUT /api/v1/products/:id/variants',
+    // Jira GRW-618 — the marketplace codes that point at those sizes, on a page of their own under Products.
+    'PUT /api/v1/marketplace-codes',
+    'DELETE /api/v1/marketplace-codes/:id',
     'POST /api/v1/product-categories',
     'PATCH /api/v1/product-categories/:id',
     'DELETE /api/v1/product-categories/:id',
@@ -259,6 +262,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'DELETE /api/v1/providers/:id/photo',
   ],
   '/settings': [
+    // Jira GRW-641 — which branch a marketplace sells from, on Settings › Online selling (a shop's, owner and manager's).
+    'PUT /api/v1/channels/:id/branch',
     'POST /api/v1/billing/autopay',
     'POST /api/v1/team/invites',
     'PATCH /api/v1/team/members/:userId',

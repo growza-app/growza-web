@@ -1,0 +1,54 @@
+/*
+ * Jira GRW-641 — Settings › Online selling. One card per marketplace: "Flipkart sells from", the picker as a full-width control a thumb
+ * tall (44px, 16px type so iOS does not zoom it), and a quiet sentence under it. Nothing animates.
+ */
+.stc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.stc-hint {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+.stc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.stc-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.stc-label {
+  font-weight: 600;
+}
+.stc-select {
+  width: 100%;
+  min-height: 2.75rem;
+  font-size: 16px;
+}
+.stc-fixed {
+  margin: 0;
+  overflow-wrap: anywhere;
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+.stc-note,
+.stc-warn {
+  margin: 0;
+  font-size: var(--fs-3);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}

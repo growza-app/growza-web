@@ -85,7 +85,7 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
           </h2>
           <ul className="menu-list">
             {group.rows
-              .filter((row) => (!row.multiBranchOnly || multi) && (!row.whatsappOnly || whatsappLive) && (!row.liveOnly || live) && (!row.diaryOnly || areas.bookings))
+              .filter((row) => (!row.multiBranchOnly || multi) && (!row.whatsappOnly || whatsappLive) && (!row.liveOnly || live) && (!row.diaryOnly || areas.bookings) && (!row.shopOnly || areas.shop))
               .map((row) => {
               const Icon = row.icon;
               const key = multi && row.multiBranchKey ? row.multiBranchKey : row.key;

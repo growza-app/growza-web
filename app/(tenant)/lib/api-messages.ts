@@ -142,6 +142,17 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'This order already has a client.': 'इस ऑर्डर में पहले से ग्राहक जुड़ा है।',
   'That client is not available.': 'वह ग्राहक उपलब्ध नहीं है।',
   'There is no such branch.': 'ऐसी कोई ब्रांच नहीं है।',
+  // Jira GRW-617 — swapping a size on a bill.
+  'A size can only be swapped for another size of the same product.': 'साइज़ सिर्फ़ उसी प्रोडक्ट के दूसरे साइज़ से बदला जा सकता है।',
+  'Only a size can be swapped. For a different product, take the return and sell the new one.': 'सिर्फ़ साइज़ बदला जा सकता है। दूसरे प्रोडक्ट के लिए वापसी लें और नया बेचें।',
+  'Request id is missing.': 'रिक्वेस्ट आईडी नहीं मिली।',
+  'That is the size already on the bill. Choose a different size.': 'यही साइज़ बिल पर पहले से है। कोई दूसरा साइज़ चुनें।',
+  'That line is not on this order': 'यह आइटम इस ऑर्डर में नहीं है',
+  'The price changed. Check the new amount.': 'कीमत बदल गई है। नई रकम देखें।',
+  // Jira GRW-618 — a marketplace's own codes for the shop's sizes.
+  'That product is not valid': 'यह प्रोडक्ट सही नहीं है',
+  'There is no such code.': 'ऐसा कोई कोड नहीं है।',
+  'This business has no marketplace codes.': 'इस कारोबार में मार्केटप्लेस कोड नहीं हैं।',
   // Jira GRW-614 — the Orders list.
   'This business has no Orders screen.': 'इस कारोबार में ऑर्डर वाली स्क्रीन नहीं है।',
   'Page must be a whole number from 1.': 'पेज 1 से शुरू होने वाली पूरी संख्या होना चाहिए।',

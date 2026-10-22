@@ -63,6 +63,15 @@ import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
   OrderDetail,
+  ChannelBranches,
+  SetChannelBranchResult,
+  HeldPage,
+  ReleaseResult,
+  SizeToMap,
+  ImportSummary,
+  MarketplaceCodesPage,
+  SaveCodesBody,
+  SaveCodesResult,
   ExchangeBody,
   ExchangeResult,
   OrdersPage,
@@ -635,6 +644,39 @@ export const api = {
    */
   moveOrder: (id: string, status: string, expected: string) =>
     patch<{ id: string; status: string; moved: boolean }>(`/api/v1/orders/${encodeURIComponent(id)}/status`, { status, expected }),
+  /** Jira GRW-619 — import an order report: the marketplace is chosen by the owner and sent with it; one request, whole orders, importing it twice changes nothing. */
+  importOrdersFile: (channel: 'flipkart' | 'amazon', file: File, idempotencyKey: string) =>
+    uploadFile<ImportSummary>(`/api/v1/marketplace-imports?channel=${channel}&idempotencyKey=${encodeURIComponent(idempotencyKey)}`, 'file', file),
+  importOrdersText: (channel: 'flipkart' | 'amazon', text: string, idempotencyKey: string) => post<ImportSummary>('/api/v1/marketplace-imports', { channel, text, idempotencyKey }),
+  /** Jira GRW-641 — which branch each marketplace sells from, and the branches it could. */
+  channelBranches: () => get<ChannelBranches>('/api/v1/channels'),
+  setChannelBranch: (channel: 'flipkart' | 'amazon', locationId: string) => put<SetChannelBranchResult>(`/api/v1/channels/${channel}/branch`, { locationId }),
+  /** Jira GRW-620 — the codes holding marketplace orders back, grouped by code and paged on the server. */
+  heldCodes: (q: { channel?: 'flipkart' | 'amazon'; q?: string; page?: number; pageSize?: number }) => {
+    const p = new URLSearchParams();
+    if (q.channel) p.set('channel', q.channel);
+    if (q.q?.trim()) p.set('q', q.q.trim());
+    p.set('page', String(q.page ?? 1));
+    p.set('pageSize', String(q.pageSize ?? 10));
+    return get<HeldPage>(`/api/v1/marketplace-imports/held?${p.toString()}`);
+  },
+  releaseHeld: (channel: 'flipkart' | 'amazon', codes?: string[]) => post<ReleaseResult>('/api/v1/marketplace-imports/held/release', { channel, codes }),
+  dismissHeld: (channel: 'flipkart' | 'amazon', code: string, reason: string) =>
+    post<ReleaseResult & { dismissedLines: number; closedOrders: number }>('/api/v1/marketplace-imports/held/dismiss', { channel, code, reason }),
+  /** The shelf's sizes whose product name contains `q`, to pick the one a code points at — searched on the server, a page at a time. */
+  sizesToMap: (channel: 'flipkart' | 'amazon', q: string) => get<{ rows: SizeToMap[]; total: number }>(`/api/v1/marketplace-codes/unmapped?channel=${channel}&all=1&q=${encodeURIComponent(q)}&pageSize=12`),
+  /** Jira GRW-618 — a marketplace's own codes: one page, by channel and product. A product's codes are few, so the screen pages through them. */
+  marketplaceCodes: (q: { channel?: 'flipkart' | 'amazon'; productId?: string; page?: number; pageSize?: number }) => {
+    const p = new URLSearchParams();
+    if (q.channel) p.set('channel', q.channel);
+    if (q.productId) p.set('productId', q.productId);
+    p.set('page', String(q.page ?? 1));
+    p.set('pageSize', String(q.pageSize ?? 100));
+    return get<MarketplaceCodesPage>(`/api/v1/marketplace-codes?${p.toString()}`);
+  },
+  /** Add, repoint or paste many — one request, one transaction: all of it or none. */
+  saveMarketplaceCodes: (body: SaveCodesBody) => put<SaveCodesResult>('/api/v1/marketplace-codes', body),
+  deleteMarketplaceCode: (id: string) => del<{ id: string; deleted: boolean }>(`/api/v1/marketplace-codes/${encodeURIComponent(id)}`),
   /** Jira GRW-617 — swap a size on an order. The quote runs the whole swap and rolls it back: the sheet states the server's difference, never its own. */
   exchangeQuote: (id: string, body: ExchangeBody) => post<ExchangeResult>(`/api/v1/orders/${encodeURIComponent(id)}/exchange/quote`, body),
   exchangeOrder: (id: string, body: ExchangeBody) => post<ExchangeResult>(`/api/v1/orders/${encodeURIComponent(id)}/exchange`, body),

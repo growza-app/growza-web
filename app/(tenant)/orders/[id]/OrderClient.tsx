@@ -190,6 +190,8 @@ export function OrderClient({
           </span>
         </section>
 
+        {!isCounter && order.branchName ? <p className="ord-d-quiet ord-d-branch">{t('detail.bookedAt', { branch: order.branchName })}</p> : null}
+
         {notice ? (
           <p className="ord-d-notice" role="alert">
             {notice}

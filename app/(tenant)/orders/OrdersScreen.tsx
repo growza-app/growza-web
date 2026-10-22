@@ -34,6 +34,9 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
   const heading = copy.nav.orders;
   // Jira GRW-616 — taking an order is the list's one create action, for whoever stands at the till and may record a sale.
   const mayTake = me ? mayUse(me.member?.role, 'visit.recordPayment', isWritable(me.tenant?.status)) : false;
+  // Jira GRW-619 — importing a marketplace's order report is the owner's and the manager's, as the API is (the desk packs the parcels).
+  const role = me?.member?.role;
+  const mayImport = me ? (role === undefined || role === 'owner' || role === 'manager') && isWritable(me.tenant?.status) : false;
 
   // The whole business on arrival; a branch the header picker has chosen is applied by the client, which re-reads.
   const initial = await api.orders({ channel: query.channel, status: query.status, q: query.q.trim(), page: query.page, pageSize: ORDERS_PAGE_SIZE }).catch((error: unknown) => ({
@@ -45,10 +48,19 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
       <PageHeader
         title={heading}
         actions={
-          mayTake ? (
-            <a className="btn btn-primary" href="/orders/new">
-              {copy.shop.takeOrder}
-            </a>
+          mayTake || mayImport ? (
+            <>
+              {mayImport ? (
+                <a className="btn" href="/orders/import">
+                  {copy.shop.importOrders}
+                </a>
+              ) : null}
+              {mayTake ? (
+                <a className="btn btn-primary" href="/orders/new">
+                  {copy.shop.takeOrder}
+                </a>
+              ) : null}
+            </>
           ) : undefined
         }
       />
