@@ -355,11 +355,11 @@ export function ProductsList({
   );
   const strip = (
     <div className="prd-strip prd-strip-4" role="list">
-      <div className="prd-stat" role="listitem">
+      <div className="prd-stat prd-stat-products" role="listitem">
         <span className="prd-stat-n">{inCategory.length}</span>
         <span className="prd-stat-l">{t('strip.products')}</span>
       </div>
-      <div className="prd-stat" role="listitem">
+      <div className="prd-stat prd-stat-worth" role="listitem">
         <span className="prd-stat-n">{formatMoney(worth)}</span>
         <span className="prd-stat-l">{t('strip.worth')}</span>
       </div>
@@ -367,7 +367,7 @@ export function ProductsList({
       <div role="listitem" className="prd-stat-cell">
         <button
           type="button"
-          className={`prd-stat prd-stat-tap ${lowCount > 0 ? 'prd-stat-low' : ''} ${filter === 'low' ? 'is-on' : ''}`}
+          className={`prd-stat prd-stat-tap prd-stat-low-card ${lowCount > 0 ? 'prd-stat-low' : ''} ${filter === 'low' ? 'is-on' : ''}`}
           aria-pressed={filter === 'low'}
           onClick={() => pick(() => setFilter((cur) => (cur === 'low' || lowCount === 0 ? 'all' : 'low')))}
         >
@@ -378,7 +378,7 @@ export function ProductsList({
       <div role="listitem" className="prd-stat-cell">
         <button
           type="button"
-          className={`prd-stat prd-stat-tap ${outCount > 0 ? 'prd-stat-out' : ''} ${filter === 'out' ? 'is-on' : ''}`}
+          className={`prd-stat prd-stat-tap prd-stat-out-card ${outCount > 0 ? 'prd-stat-out' : ''} ${filter === 'out' ? 'is-on' : ''}`}
           aria-pressed={filter === 'out'}
           onClick={() => pick(() => setFilter((cur) => (cur === 'out' || outCount === 0 ? 'all' : 'out')))}
         >

@@ -161,6 +161,25 @@
   color: var(--muted);
 }
 
+.prd-stat-products {
+  background: color-mix(in srgb, var(--blue-soft) 50%, var(--surface));
+  border-color: color-mix(in srgb, var(--blue-soft) 90%, var(--border));
+}
+
+.prd-stat-worth {
+  background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent-soft) 90%, var(--border));
+}
+
+.prd-stat-worth .prd-stat-n {
+  color: var(--accent-deep);
+}
+
+.prd-stat-low-card {
+  background: color-mix(in srgb, var(--amber-soft) 65%, var(--surface));
+  border-color: color-mix(in srgb, var(--amber-soft) 95%, var(--border));
+}
+
 .prd-stat-low {
   border-color: var(--amber);
   background: var(--amber-soft);
@@ -168,6 +187,11 @@
 
 .prd-stat-low .prd-stat-n {
   color: var(--amber-ink);
+}
+
+.prd-stat-out-card {
+  background: color-mix(in srgb, var(--danger-soft) 60%, var(--surface));
+  border-color: color-mix(in srgb, var(--danger-soft) 95%, var(--border));
 }
 
 .prd-stat-out {
