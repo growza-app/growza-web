@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic';
  * The document is drawn by the API from the template the PDF is printed from; this page is the chrome around it.
  */
 export default async function DocumentPage({ params }: { params: Promise<{ id: string }> }) {
-  await guardScreen('/sales');
+  await guardScreen('/documents');
   const { id } = await params;
   const t = await getTranslations('documents');
 
@@ -38,7 +38,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
 
   return (
     <>
-      <PageHeader title={title} subtitle={doc.number} menu />
+      <PageHeader title={title} subtitle={doc.number} />
       <div className="page-body">
         <DocumentViewer
           id={doc.id}

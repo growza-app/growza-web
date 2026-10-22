@@ -3,6 +3,8 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
+import { DIARY_AREAS } from '../lib/areas';
+import { canSee } from '../lib/nav-policy';
 import { daysUntil, sharedDocumentUrl } from '../lib/share-document';
 
 /**
@@ -153,5 +155,24 @@ describe('the message', () => {
     expect(d.shareLine).toContain('{link}');
     expect(d.shareLine).toMatch(/\{days, plural,/);
     expect(d.sharing.length).toBeGreaterThan(0);
+  });
+});
+
+describe('opening /documents/[id] from the Done screen in a shop or a salon', () => {
+  const page = readFileSync(resolve(__dirname, '[id]/page.tsx'), 'utf8');
+  const SHOP_AREAS = { bookings: false, services: false, shop: true };
+
+  it('guards /documents (not /sales, which is closed in a shop and redirects the user Home)', () => {
+    expect(page).toContain("await guardScreen('/documents');");
+    expect(page).not.toContain("guardScreen('/sales')");
+  });
+
+  it('allows owner, manager and receptionist in both a shop and a salon, and refuses staff', () => {
+    for (const areas of [SHOP_AREAS, DIARY_AREAS]) {
+      expect(canSee('/documents', 'owner', [], true, areas)).toBe(true);
+      expect(canSee('/documents', 'manager', [], true, areas)).toBe(true);
+      expect(canSee('/documents', 'receptionist', [], true, areas)).toBe(true);
+      expect(canSee('/documents', 'staff', [], true, areas)).toBe(false);
+    }
   });
 });
