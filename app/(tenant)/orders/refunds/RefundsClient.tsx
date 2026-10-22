@@ -100,23 +100,25 @@ export function RefundsClient() {
 
   const channels = channelList.includes(channel) || channel === '' ? channelList : [...channelList, channel];
   return (
-    <div className="srp">
-      <select className="input srp-select" aria-label={t('rangeLabel')} value={range} onChange={(e) => setRange(e.target.value as SellersRange)}>
-        {RANGES.map((r) => (
-          <option key={r} value={r}>
-            {t(`range.${r}`)}
-          </option>
-        ))}
-      </select>
-      {channels.length > 1 ? (
-        <div className="pf-chips sls-ret-why" role="group" aria-label={t('channelLabel')}>
-          {['', ...channels].map((c) => (
-            <button key={c || 'all'} type="button" className={`pf-chip ${channel === c ? 'pf-chip-on' : ''}`} aria-pressed={channel === c} onClick={() => setChannel(c)}>
-              {c === '' ? t('allChannels') : word(c)}
-            </button>
+    <div className="srp srp-refunds">
+      <div className="srp-toolbar">
+        <select className="input srp-select" aria-label={t('rangeLabel')} value={range} onChange={(e) => setRange(e.target.value as SellersRange)}>
+          {RANGES.map((r) => (
+            <option key={r} value={r}>
+              {t(`range.${r}`)}
+            </option>
           ))}
-        </div>
-      ) : null}
+        </select>
+        {channels.length > 1 ? (
+          <div className="pf-chips sls-ret-why" role="group" aria-label={t('channelLabel')}>
+            {['', ...channels].map((c) => (
+              <button key={c || 'all'} type="button" className={`pf-chip ${channel === c ? 'pf-chip-on' : ''}`} aria-pressed={channel === c} onClick={() => setChannel(c)}>
+                {c === '' ? t('allChannels') : word(c)}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
 
       {failed ? (
         <div className="ord-state" role="alert">
@@ -177,9 +179,11 @@ export function RefundsClient() {
       <p className="ch-caveat" role="note">
         {t('recordNote')}
       </p>
-      <AppLink className="btn srp-export" href="/orders/returns">
-        {t('toReturns')}
-      </AppLink>
+      <div className="srp-links">
+        <AppLink className="btn btn-ghost srp-export" href="/orders/returns">
+          {t('toReturns')}
+        </AppLink>
+      </div>
     </div>
   );
 }

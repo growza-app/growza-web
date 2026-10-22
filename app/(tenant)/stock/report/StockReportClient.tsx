@@ -135,51 +135,43 @@ export function StockReportClient() {
 
   const filtered = q !== '' || liveCategory !== '';
   return (
-    <div className="srp">
+    <div className="srp srp-stock">
       {data ? <Totals data={data} money={money} count={count} /> : null}
 
-      <AppLink className="btn srp-export" href="/stock/sellers">
-        {t('toSellers')}
-      </AppLink>
-      <AppLink className="btn srp-export" href="/stock/order">
-        {t('toOrder')}
-      </AppLink>
-      <AppLink className="btn srp-export" href="/stock/channels">
-        {t('toChannels')}
-      </AppLink>
+      <div className="srp-toolbar">
+        <label className="search-wrap srp-search">
+          <input
+            type="search"
+            className="search-input search-input-bare"
+            placeholder={t('searchPlaceholder')}
+            aria-label={t('searchLabel')}
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            autoComplete="off"
+            spellCheck={false}
+          />
+          <SearchClear value={typed} onClear={() => setTyped('')} />
+        </label>
 
-      <label className="search-wrap srp-search">
-        <input
-          type="search"
-          className="search-input search-input-bare"
-          placeholder={t('searchPlaceholder')}
-          aria-label={t('searchLabel')}
-          value={typed}
-          onChange={(e) => setTyped(e.target.value)}
-          autoComplete="off"
-          spellCheck={false}
-        />
-        <SearchClear value={typed} onClear={() => setTyped('')} />
-      </label>
-
-      {categories.length > 0 ? (
-        <select
-          className="input srp-select"
-          aria-label={t('categoryLabel')}
-          value={categoryId}
-          onChange={(e) => {
-            setCategoryId(e.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">{t('allCategories')}</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      ) : null}
+        {categories.length > 0 ? (
+          <select
+            className="input srp-select"
+            aria-label={t('categoryLabel')}
+            value={categoryId}
+            onChange={(e) => {
+              setCategoryId(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">{t('allCategories')}</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        ) : null}
+      </div>
 
       {failed ? (
         <div className="ord-state" role="alert">
@@ -226,6 +218,18 @@ export function StockReportClient() {
           </div>
         </>
       )}
+
+      <div className="srp-links">
+        <AppLink className="btn btn-ghost srp-export" href="/stock/sellers">
+          {t('toSellers')}
+        </AppLink>
+        <AppLink className="btn btn-ghost srp-export" href="/stock/order">
+          {t('toOrder')}
+        </AppLink>
+        <AppLink className="btn btn-ghost srp-export" href="/stock/channels">
+          {t('toChannels')}
+        </AppLink>
+      </div>
     </div>
   );
 }

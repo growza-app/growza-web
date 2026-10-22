@@ -29,6 +29,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 
 .ord-search {
@@ -51,16 +55,44 @@
   color: var(--text);
   font: inherit;
   font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
+}
+.ord-chip:hover:not(.is-on) {
+  background: var(--page-bg);
 }
 .ord-chip.is-on {
   background: var(--accent-deep);
   border-color: var(--accent-deep);
   color: #fff;
+  font-weight: 600;
 }
 .ord-chip:focus-visible {
   outline: 2px solid var(--accent-deep);
   outline-offset: 2px;
+}
+
+.ord-chan-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem var(--sp-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--slate-soft);
+  color: var(--text);
+}
+.ord-chan-counter {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.ord-chan-flipkart {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.ord-chan-amazon {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
 }
 
 /* ── Cards (phone first) ─────────────────────────────────────────────────────────────────────────────────────── */
@@ -201,22 +233,46 @@ a.ord-card:focus-visible,
   display: none;
   width: 100%;
   border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
 }
 .ord-table th,
 .ord-table td {
-  padding: var(--sp-3) var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
   border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+.ord-table th:last-child,
+.ord-table td:last-child {
+  border-right: 0;
+}
+.ord-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.ord-table tbody tr:hover td {
+  background: var(--page-bg);
 }
 .ord-table th {
+  background: var(--page-bg);
   color: var(--muted);
-  font-size: 0.8125rem;
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .ord-table .ord-num {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+.ord-td-who {
+  font-weight: 600;
+}
+.ord-td-amount {
+  font-weight: 700;
 }
 
 @media (min-width: 861px) {
@@ -230,10 +286,39 @@ a.ord-card:focus-visible,
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
   }
   .ord-search {
-    flex: 1 1 18rem;
-    max-width: 24rem;
+    flex: 1 1 20rem;
+    max-width: 28rem;
+  }
+  .ord-chips-channel {
+    padding: 3px;
+    background: var(--page-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    gap: 2px;
+  }
+  .ord-chips-channel .ord-chip {
+    padding: 0 var(--sp-3);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    font-size: 0.8125rem;
+  }
+  .ord-chips-channel .ord-chip.is-on {
+    background: var(--accent-deep);
+    color: #fff;
+  }
+  .ord-chips-state {
+    flex: 1 1 100%;
+    padding-top: var(--sp-2);
+    border-top: 1px solid var(--border);
+  }
+  .ord-chips-state .ord-chip {
+    padding: 0 var(--sp-3);
+    font-size: 0.8125rem;
   }
 }
 

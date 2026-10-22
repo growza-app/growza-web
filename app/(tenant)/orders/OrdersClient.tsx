@@ -154,7 +154,7 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
           />
         </label>
 
-        <div className="ord-chips" role="group" aria-label={t('list.channelGroup')}>
+        <div className="ord-chips ord-chips-channel" role="group" aria-label={t('list.channelGroup')}>
           <button type="button" className={`ord-chip ${query.channel === '' ? 'is-on' : ''}`} aria-pressed={query.channel === ''} onClick={() => pickChannel('')}>
             {t('list.allChannels')}
           </button>
@@ -165,7 +165,7 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
           ))}
         </div>
 
-        <div className="ord-chips" role="group" aria-label={t('list.stateGroup')}>
+        <div className="ord-chips ord-chips-state" role="group" aria-label={t('list.stateGroup')}>
           <button type="button" className={`ord-chip ${query.status === '' ? 'is-on' : ''}`} aria-pressed={query.status === ''} onClick={() => pickState('')}>
             {t('list.allStates')}
           </button>
@@ -247,10 +247,12 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
                     </a>
                     <div className="ord-code">{t('list.orderCode', { code: r.code.toUpperCase() })}</div>
                   </td>
-                  <td>{channelWord(r.channel)}</td>
-                  <td>{whoOf(r)}</td>
+                  <td>
+                    <span className={`ord-chan-badge ord-chan-${r.channel}`}>{channelWord(r.channel)}</span>
+                  </td>
+                  <td className="ord-td-who">{whoOf(r)}</td>
                   <td className="ord-num">{r.items}</td>
-                  {showMoney ? <td className="ord-num">{r.amountMinor !== undefined ? formatMoney(r.amountMinor, 'INR', locale) : ''}</td> : null}
+                  {showMoney ? <td className="ord-num ord-td-amount">{r.amountMinor !== undefined ? formatMoney(r.amountMinor, 'INR', locale) : ''}</td> : null}
                   <td>
                     <span className={`ord-state-chip ord-s-${r.known ? r.status : 'unknown'}`}>{stateWord(r.status)}</span>
                     {r.marketplaceUnconfirmed ? <span className="ord-unconfirmed">{t('list.notConfirmed')}</span> : null}

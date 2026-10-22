@@ -1191,6 +1191,9 @@
   }
 
   .topbar-actions {
+    flex-shrink: 1;
+    min-width: 0;
+    max-width: 100%;
     flex-wrap: wrap;
     justify-content: flex-end;
   }

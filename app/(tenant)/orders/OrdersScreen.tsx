@@ -65,7 +65,7 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
                 </a>
               ) : null}
               {mayImport ? (
-                <a className="btn" href="/orders/import">
+                <a className="btn btn-ghost" href="/orders/import">
                   {copy.shop.importOrders}
                 </a>
               ) : null}
