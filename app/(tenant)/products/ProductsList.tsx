@@ -318,6 +318,7 @@ export function ProductsList({
     <PageHeader
       title={heading ?? t('title')}
       subtitle={heading !== undefined ? t('stockSubtitle') : t('subtitle')}
+      subtitleAsInfo
       actions={
         <>
           {heading !== undefined && canStockTake ? (
