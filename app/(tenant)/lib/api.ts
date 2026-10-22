@@ -65,6 +65,12 @@ import type {
   OrderDetail,
   ChannelBranches,
   SetChannelBranchResult,
+  ChannelConnection,
+  ChannelCheckResult,
+  SaveChannelKeysResult,
+  SetStockBufferResult,
+  ChannelOrdersLine,
+  ChannelQueuePage,
   HeldPage,
   StockReportPage,
   ByChannelPage,
@@ -686,6 +692,8 @@ export const api = {
    * Jira GRW-615 — move an order along. `expected` is the state this screen believes the order is in: when the order has
    * moved on elsewhere the API refuses with 409 and says where it is now, instead of overwriting the other desk.
    */
+  /** Jira GRW-625 — try again to tell the marketplace what the shop decided about an order. One attempt, safe to repeat. */
+  tellMarketplaceAgain: (id: string) => post<{ queued: number }>(`/api/v1/orders/${id}/tell-marketplace`, {}),
   moveOrder: (id: string, status: string, expected: string) =>
     patch<{ id: string; status: string; moved: boolean }>(`/api/v1/orders/${encodeURIComponent(id)}/status`, { status, expected }),
   /** Jira GRW-619 — import an order report: the marketplace is chosen by the owner and sent with it; one request, whole orders, importing it twice changes nothing. */
@@ -695,6 +703,18 @@ export const api = {
   /** Jira GRW-641 — which branch each marketplace sells from, and the branches it could. */
   channelBranches: () => get<ChannelBranches>('/api/v1/channels'),
   setChannelBranch: (channel: 'flipkart' | 'amazon', locationId: string) => put<SetChannelBranchResult>(`/api/v1/channels/${channel}/branch`, { locationId }),
+  // Jira GRW-621 — a marketplace's seller keys. Write-only: nothing here can read a value back.
+  channelKeys: (channel: 'flipkart' | 'amazon') => get<ChannelConnection>(`/api/v1/channels/${channel}/status`),
+  saveChannelKeys: (channel: 'flipkart' | 'amazon', fields: Record<string, string>) => put<SaveChannelKeysResult>(`/api/v1/channels/${channel}/credentials`, { fields }),
+  checkChannelKeys: (channel: 'flipkart' | 'amazon') => post<ChannelCheckResult>(`/api/v1/channels/${channel}/check`, {}),
+  /** Jira GRW-623 — when each connected marketplace's orders were last brought in. Owner and manager only. */
+  channelOrdersStatus: () => get<{ channels: ChannelOrdersLine[] }>('/api/v1/channels/pull-status'),
+  /** Jira GRW-626 — what is waiting for a marketplace and what failed, one page. Owner and manager only. */
+  channelQueue: (channel: 'flipkart' | 'amazon', page: number, pageSize = 10) => get<ChannelQueuePage>(`/api/v1/channels/${channel}/queue?page=${page}&pageSize=${pageSize}`),
+  /** Jira GRW-626 — try everything that stopped or is waiting on a backoff again. Safe to repeat. */
+  retryChannelQueue: (channel: 'flipkart' | 'amazon') => post<{ sizes: number; messages: number }>(`/api/v1/channels/${channel}/retry`, {}),
+  /** Jira GRW-624 — how many of each size to keep back from online orders. */
+  setStockBuffer: (channel: 'flipkart' | 'amazon', buffer: number) => put<SetStockBufferResult>(`/api/v1/channels/${channel}/stock-buffer`, { buffer }),
   /** Jira GRW-637 — the refunds recorded on online orders, one row per refund; a record, never an instruction. */
   refundsReport: (q: { range: SellersRange; channel?: string; location?: string; page?: number; pageSize?: number }) => {
     const p = new URLSearchParams(sellersParams({ range: q.range, location: q.location, page: q.page, pageSize: q.pageSize }));

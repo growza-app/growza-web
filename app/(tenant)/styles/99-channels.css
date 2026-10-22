@@ -52,3 +52,202 @@
   font-weight: 600;
   overflow-wrap: anywhere;
 }
+
+/*
+ * Jira GRW-621 — the keys to a marketplace, under its "sells from" row. A rule above it, a state line the eye finds first, then either
+ * the fields set (dots, never a value) or the form to type them. Fields are full width and a thumb tall with 16px type; nothing animates.
+ */
+.stc-keys {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+}
+/* The skeleton holds the height the section will have, so nothing jumps when the status arrives. */
+.stc-keys-loading {
+  min-height: 7.5rem;
+}
+.stc-keys-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-3);
+}
+.stc-keys-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.stc-state {
+  font-size: var(--fs-3);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.stc-state-ok {
+  color: var(--accent-deep);
+}
+.stc-state-bad {
+  color: var(--danger);
+}
+.stc-state-off,
+.stc-state-idle {
+  color: var(--muted);
+}
+.stc-keys-form,
+.stc-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.stc-input {
+  width: 100%;
+  min-height: 2.75rem;
+  font-size: 16px;
+}
+.stc-set {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.stc-set-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  font-size: var(--fs-3);
+}
+/* Both may wrap: a larger system text size (type is in rem) or a longer Hindi label must not push the row past the card. */
+.stc-set-name,
+.stc-set-state {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.stc-set-state {
+  color: var(--muted);
+  text-align: end;
+}
+/*
+ * The one live region stays in the page, empty, so a screen reader announces what is put into it (a region that appears already
+ * holding its text is often not read out). Empty, it takes no space: the negative margin cancels the column's gap.
+ */
+.stc-live:empty {
+  margin-top: calc(-1 * var(--sp-2));
+}
+/* A busy button keeps focus (aria-disabled, not disabled) and says so with its look. */
+.stc-btn[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: progress;
+}
+.stc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.stc-btn {
+  min-height: 2.75rem;
+}
+/* Side by side when they fit, stacked at 344px. Only in a ROW: in the load-error column a flex-basis would grow the button tall. */
+.stc-actions .stc-btn {
+  flex: 1 1 8rem;
+}
+
+/*
+ * Jira GRW-624 — stock going out, under the keys. The same rule above it as the keys have above them, then the plain news (when it last
+ * went), then the one setting an owner can act on: how many to keep back. A full-width field a thumb tall with 16px type, one hint line.
+ */
+.stc-stock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+}
+
+/* A quiet link, a thumb tall: it takes the owner to the screen that says what is waiting. */
+.stc-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-weight: 600;
+  font-size: var(--fs-3);
+}
+
+/*
+ * Jira GRW-626 — the queue: what is waiting for a marketplace and what failed. A headline that says the one thing that matters, a few counts,
+ * a short list of what needs a person, and one Try again where a thumb is. Laid out at 344px: every row stacks; nothing animates; text, not a
+ * banner, so it reads without colour.
+ */
+.cq {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+/* The skeleton holds the height the screen will have, so nothing jumps when it arrives. */
+.cq-loading {
+  min-height: 14rem;
+}
+.cq-head {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.cq-head-ok,
+.cq-head-idle {
+  color: var(--ink);
+}
+.cq-head-bad {
+  color: var(--danger);
+}
+.cq-counts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+.cq-counts li {
+  overflow-wrap: anywhere;
+}
+.cq-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.cq-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.cq-row-text {
+  overflow-wrap: anywhere;
+}
+.cq-row-since {
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+.cq-empty {
+  margin: 0;
+  color: var(--muted);
+}
+/* Where a thumb is: the one action sits last, full width. */
+.cq-actions {
+  display: flex;
+}
+.cq-actions .stc-btn {
+  flex: 1 1 100%;
+}

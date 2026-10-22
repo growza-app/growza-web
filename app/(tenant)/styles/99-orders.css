@@ -103,6 +103,7 @@ a.ord-card:focus-visible,
 .ord-card-top,
 .ord-card-foot {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: baseline;
   gap: var(--sp-3);
@@ -506,4 +507,91 @@ a.ord-card:focus-visible,
 .swp-confirm {
   width: 100%;
   min-height: 3rem;
+}
+
+/*
+ * Jira GRW-623 — one quiet line per marketplace above the Orders list: when its orders last came in, or why not. Text, not a banner: it
+ * does not compete with the list, and it wraps rather than scrolls at 344px. The link to the held orders is a thumb tall.
+ */
+.ord-bringin {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.ord-bringin-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-3);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+.ord-bringin-ok,
+.ord-bringin-idle,
+.ord-bringin-last {
+  color: var(--muted);
+}
+.ord-bringin-bad {
+  color: var(--danger);
+  font-weight: 600;
+}
+.ord-bringin-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-weight: 600;
+}
+
+/*
+ * Jira GRW-625 — what the marketplace was told about an order, under its state: one quiet line, a button a thumb tall only when asking again
+ * would help. Text, not a banner: a message that is simply queued reads like the ordinary thing it is. Wraps at 344px; nothing animates.
+ */
+.ord-tell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.ord-tell-row {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-3);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+.ord-tell-ok,
+.ord-tell-idle {
+  color: var(--muted);
+}
+.ord-tell-bad {
+  color: var(--danger);
+  font-weight: 600;
+}
+.ord-tell-btn {
+  min-height: 2.75rem;
+}
+.ord-tell-btn[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: progress;
+}
+/* The one live region stays in the page, empty, so a screen reader announces what is put into it; empty, it takes no space. */
+.ord-tell-live {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+.ord-tell-live:empty {
+  margin-top: calc(-1 * var(--sp-1));
+}
+/* On a list row: the marketplace has not taken what the shop told it. Words, so it reads without colour. */
+.ord-unconfirmed {
+  margin-inline-start: var(--sp-2);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--danger);
+  overflow-wrap: anywhere;
 }

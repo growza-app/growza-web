@@ -220,6 +220,7 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
                 <div className="ord-card-foot">
                   <span className="ord-code">{t('list.orderCode', { code: r.code.toUpperCase() })}</span>
                   <span className={`ord-state-chip ord-s-${r.known ? r.status : 'unknown'}`}>{stateWord(r.status)}</span>
+                  {r.marketplaceUnconfirmed ? <span className="ord-unconfirmed">{t('list.notConfirmed')}</span> : null}
                 </div>
                 </a>
               </li>
@@ -252,6 +253,7 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
                   {showMoney ? <td className="ord-num">{r.amountMinor !== undefined ? formatMoney(r.amountMinor, 'INR', locale) : ''}</td> : null}
                   <td>
                     <span className={`ord-state-chip ord-s-${r.known ? r.status : 'unknown'}`}>{stateWord(r.status)}</span>
+                    {r.marketplaceUnconfirmed ? <span className="ord-unconfirmed">{t('list.notConfirmed')}</span> : null}
                   </td>
                 </tr>
               ))}

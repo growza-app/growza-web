@@ -102,6 +102,9 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That is not this branch’s list of categories': 'यह इस ब्रांच की श्रेणियों की सूची नहीं है',
   // Release review, 2026-10-17 — sentences the product, transfer and till routes can send.
   'Choose a branch': 'एक ब्रांच चुनें',
+  // Jira GRW-621 — a marketplace's seller keys.
+  'Paste the keys': 'चाबियाँ चिपकाएँ',
+  'Saving keys is not set up on this server yet.': 'इस सर्वर पर चाबियाँ सहेजना अभी सेट नहीं है।',
   'A count goes with a recount only': 'गिनती सिर्फ़ दोबारा गिनने के साथ दी जा सकती है',
   'That amount is too large': 'यह रकम बहुत बड़ी है',
   'Description must be text': 'विवरण लिखा हुआ होना चाहिए',
@@ -137,6 +140,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
    * are the state names, whose Hindi is in `messages/*.json` under `orders.states` for the screens to use.
    */
   'There is no such order.': 'ऐसा कोई ऑर्डर नहीं है।',
+  'This order was not placed on a marketplace.': 'यह ऑर्डर किसी मार्केटप्लेस पर नहीं आया था।',
   'This order belongs to another branch.': 'यह ऑर्डर दूसरी ब्रांच का है।',
   // Jira GRW-613 — a marketplace buyer who is not in the client list, and attaching a client the owner recognises.
   'This order already has a client.': 'इस ऑर्डर में पहले से ग्राहक जुड़ा है।',
@@ -209,6 +213,8 @@ export const API_MESSAGES_HI: Record<string, string> = {
   // Jira GRW-614 — the Orders list.
   'This business has no Orders screen.': 'इस कारोबार में ऑर्डर वाली स्क्रीन नहीं है।',
   'Page must be a whole number from 1.': 'पेज 1 से शुरू होने वाली पूरी संख्या होना चाहिए।',
+  'The keys were turned down. Replace them first.': 'चाबियाँ मना कर दी गई हैं। पहले उन्हें बदलें।',
+  'Page size must be a whole number from 1 to 100.': 'पेज का आकार 1 से 100 के बीच की पूरी संख्या होना चाहिए।',
   'Search with some text.': 'खोजने के लिए कुछ लिखें।',
   'No such client': 'ऐसा कोई ग्राहक नहीं',
   'That client record is not available': 'वह ग्राहक रिकॉर्ड उपलब्ध नहीं है',

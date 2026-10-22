@@ -199,7 +199,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   // same gate: a role the nav does not offer /orders is bounced Home by the page, so it never reaches the button.
   // Jira GRW-617 — and swaps a size. The desk is offered this screen but takes no returns, so it takes no swaps: the control is
   // drawn from `order.canSwap`, which the API computes with the very function that would refuse the swap.
-  '/orders': ['PATCH /api/v1/orders/:id/status', 'POST /api/v1/orders/:id/exchange', 'POST /api/v1/orders/:id/exchange/quote', 'POST /api/v1/marketplace-imports', 'POST /api/v1/marketplace-imports/held/release', 'POST /api/v1/marketplace-imports/held/dismiss'],
+  // Jira GRW-625 — asks again to tell the marketplace what the shop decided about an order (owner and manager; the desk is not offered it).
+  '/orders': ['PATCH /api/v1/orders/:id/status', 'POST /api/v1/orders/:id/tell-marketplace', 'POST /api/v1/orders/:id/exchange', 'POST /api/v1/orders/:id/exchange/quote', 'POST /api/v1/marketplace-imports', 'POST /api/v1/marketplace-imports/held/release', 'POST /api/v1/marketplace-imports/held/dismiss'],
   // Jira GRW-563 (shared 1.0.5) — `assign-client` moved into `visit.recordPayment`, where it belonged.
   '/services': [
     'POST /api/v1/services',
@@ -266,6 +267,13 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   '/settings': [
     // Jira GRW-641 — which branch a marketplace sells from, on Settings › Online selling (a shop's, owner and manager's).
     'PUT /api/v1/channels/:id/branch',
+    // Jira GRW-621 — a marketplace's seller keys, on the same screen and under the same gate (owner and manager).
+    'PUT /api/v1/channels/:id/credentials',
+    'POST /api/v1/channels/:id/check',
+    // Jira GRW-624 — how many of each size to keep back from online orders, on the same screen and under the same gate.
+    'PUT /api/v1/channels/:id/stock-buffer',
+    // Jira GRW-626 — try again, once, for everything that stopped or is waiting on a backoff (owner and manager).
+    'POST /api/v1/channels/:id/retry',
     'POST /api/v1/billing/autopay',
     'POST /api/v1/team/invites',
     'PATCH /api/v1/team/members/:userId',

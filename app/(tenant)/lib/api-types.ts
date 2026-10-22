@@ -1248,6 +1248,8 @@ export interface OrderListRow {
   who: { kind: 'client' | 'buyer'; name: string | null } | null;
   items: number;
   amountMinor?: number;
+  /** Jira GRW-625 — the marketplace has not yet accepted what the shop told it (sent, cancelled): a glance finds these. */
+  marketplaceUnconfirmed?: boolean;
 }
 
 export interface OrdersPage {
@@ -1274,6 +1276,19 @@ export interface OrderHistoryEntry {
  * never decides what can follow what (BR-01), and an older `@growza-app/shared` cannot make it offer a move the API
  * would refuse.
  */
+/**
+ * Jira GRW-625 — what the shop told the marketplace about an order, and whether it was taken. `pending` is "not told yet" (waiting, or
+ * trying again); `stuck` is "tried and could not, needs a person"; `refused` is the marketplace's own answer, with a reason from a closed set.
+ */
+export interface OrderMarketplaceMessage {
+  kind: 'dispatch' | 'cancel';
+  state: 'pending' | 'accepted' | 'refused';
+  stuck: boolean;
+  /** When it was accepted; null until then. */
+  at: string | null;
+  reason: 'order_cancelled' | 'order_unknown' | 'not_allowed' | 'other' | null;
+}
+
 export interface OrderDetail {
   id: string;
   locationId: string;
@@ -1308,6 +1323,10 @@ export interface OrderDetail {
   }>;
   /** Jira GRW-617 — may this viewer swap a size? Decided by the server with the function that would refuse the swap. */
   canSwap: boolean;
+  /** Jira GRW-625 — what the marketplace was told about this order. Empty for a counter sale. */
+  marketplace?: OrderMarketplaceMessage[];
+  /** May this viewer ask for a message to be sent again? Decided by the server with the route's own role check. */
+  canRetryMarketplace?: boolean;
   history: OrderHistoryEntry[];
   /** Jira GRW-635 — the returns recorded against the order, each with its reason; a parcel that came back undelivered is its own kind. */
   returns?: OrderReturn[];
@@ -1474,6 +1493,96 @@ export interface SetChannelBranchResult {
   /** Online orders from this channel not yet dispatched that stay at the old branch. */
   inFlightAtOld: number;
   changed: boolean;
+}
+
+/**
+ * Jira GRW-621 — a marketplace's seller keys, as the screen may know them: which fields are SET and what the last Check said. Never a
+ * value — the API cannot read them back, so neither can this.
+ */
+export interface ChannelConnection {
+  channel: 'flipkart' | 'amazon';
+  /** False until the server has an encryption key: then keys cannot be kept at all, and the form is not offered. */
+  keysSetUp: boolean;
+  saved: boolean;
+  savedAt: string | null;
+  fields: Array<{ key: string; label: string; secret: boolean; set: boolean }>;
+  /** What the marketplace said at the last Check; null = never checked, or the keys were replaced since. */
+  lastCheck: { at: string; ok: boolean; reason: 'rejected' | 'unreachable' | null } | null;
+  lastUsedAt: string | null;
+  /** Whether tapping Check would ask the marketplace anything. False until that marketplace's adapter exists. */
+  canCheck: boolean;
+  /** Jira GRW-641 — the shop it sells from. */
+  branch: { locationId: string | null; name: string | null; source: 'chosen' | 'default'; gone: boolean };
+  /** Jira GRW-624 — the buffer kept back, and how stock going out is doing. */
+  stock: ChannelStock;
+}
+/** Jira GRW-624 — stock going out to a marketplace. Counts and times only: never a number per size. */
+export interface ChannelStock {
+  channel: 'flipkart' | 'amazon';
+  /** How many to keep back from online orders. */
+  buffer: number;
+  lastPushedAt: string | null;
+  /** Why the last run could not finish; null = it finished, or none ran. */
+  lastRunReason: 'rate_limited' | 'unreachable' | 'refused' | 'keys_unreadable' | 'failed' | null;
+  waiting: number;
+  stuck: number;
+}
+/** Jira GRW-623 — one marketplace's orders coming in: when they last did, why not if they could not, what waits. */
+export interface ChannelOrdersLine {
+  channel: 'flipkart' | 'amazon';
+  /** Anything is asked of the marketplace at all: false until its adapter exists, and the screen then says nothing. */
+  canPull: boolean;
+  /** The marketplace turned the keys down at the last Check: nothing is brought in until they are replaced. */
+  keysRejected: boolean;
+  lastBroughtInAt: string | null;
+  lastRunReason: 'rate_limited' | 'unreachable' | 'refused' | 'keys_unreadable' | 'failed' | null;
+  /** Orders the last run could not read or store. */
+  lastMalformed: number;
+  /** Orders waiting for a code to be matched to a size. */
+  held: number;
+  /** Orders brought in that the marketplace has not yet been told we have. */
+  unacknowledged: number;
+}
+/** Jira GRW-626 — what is waiting for a marketplace, what failed, and what the owner can do about it. */
+export interface ChannelQueueSummary {
+  channel: 'flipkart' | 'amazon';
+  sizes: { waiting: number; stuck: number };
+  messages: { waiting: number; refused: number; stuck: number };
+  ordersIn: { lastBroughtInAt: string | null; reason: string | null; unreadable: number };
+  keysRejected: boolean;
+  /** Sizes and messages waiting on their own backoff after a failure: what Try again can send now. */
+  backingOff: number;
+  /** Until when the marketplace has asked us to wait, if it has. */
+  holdUntil: string | null;
+  needsAttention: number;
+}
+export interface ChannelQueueItem {
+  key: string;
+  area: 'stock' | 'order';
+  kind: 'dispatch' | 'cancel' | null;
+  label: string;
+  state: 'waiting' | 'stuck' | 'refused';
+  /** A short code from a closed set, never the marketplace's own words; the screen puts it in plain language. */
+  reason: string | null;
+  since: string;
+}
+export interface ChannelQueuePage {
+  summary: ChannelQueueSummary;
+  items: ChannelQueueItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+export interface SetStockBufferResult {
+  channel: 'flipkart' | 'amazon';
+  buffer: number;
+  changed: boolean;
+}
+export type ChannelCheckResult = { result: 'working' | 'rejected' | 'unreachable' | 'unavailable'; detail: string };
+export interface SaveChannelKeysResult {
+  saved: true;
+  replaced: boolean;
+  connection: Omit<ChannelConnection, 'canCheck' | 'branch' | 'stock'>;
 }
 
 /** Jira GRW-631 — what is on the shelf, size by size, and what it is worth at cost. */
