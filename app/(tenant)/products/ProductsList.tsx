@@ -194,6 +194,7 @@ export function ProductsList({
   );
   const inCategory = useMemo(() => filterShelf(rows, 'all', '', selectedCategories), [rows, selectedCategories]);
   const lowCount = useMemo(() => inCategory.filter((p) => stockTone(p) === 'low').length, [inCategory]);
+  const outCount = useMemo(() => inCategory.filter((p) => p.stock <= 0).length, [inCategory]);
   const worth = useMemo(() => shelfWorthMinor(inCategory), [inCategory]);
   const shown = useMemo(
     () => sortShelf(filterShelf(rows, filter, search, selectedCategories), sort, sortDir),
@@ -203,7 +204,7 @@ export function ProductsList({
     all: inCategory.length,
     inStock: inCategory.filter((p) => stockTone(p) === 'ok').length,
     low: lowCount,
-    out: inCategory.filter((p) => p.stock <= 0).length,
+    out: outCount,
     retired: rows.filter((p) => !p.active && matchesCategories(p, selectedCategories)).length,
   };
   const noneCount = live.filter((p) => p.categoryId === null).length;
@@ -317,6 +318,7 @@ export function ProductsList({
     <PageHeader
       title={heading ?? t('title')}
       subtitle={heading !== undefined ? t('stockSubtitle') : t('subtitle')}
+      subtitleAsInfo
       actions={
         <>
           {heading !== undefined && canStockTake ? (
@@ -352,12 +354,12 @@ export function ProductsList({
     />
   );
   const strip = (
-    <div className="prd-strip" role="list">
-      <div className="prd-stat" role="listitem">
+    <div className="prd-strip prd-strip-4" role="list">
+      <div className="prd-stat prd-stat-products" role="listitem">
         <span className="prd-stat-n">{inCategory.length}</span>
         <span className="prd-stat-l">{t('strip.products')}</span>
       </div>
-      <div className="prd-stat" role="listitem">
+      <div className="prd-stat prd-stat-worth" role="listitem">
         <span className="prd-stat-n">{formatMoney(worth)}</span>
         <span className="prd-stat-l">{t('strip.worth')}</span>
       </div>
@@ -365,12 +367,23 @@ export function ProductsList({
       <div role="listitem" className="prd-stat-cell">
         <button
           type="button"
-          className={`prd-stat prd-stat-tap ${lowCount > 0 ? 'prd-stat-low' : ''} ${filter === 'low' ? 'is-on' : ''}`}
+          className={`prd-stat prd-stat-tap prd-stat-low-card ${lowCount > 0 ? 'prd-stat-low' : ''} ${filter === 'low' ? 'is-on' : ''}`}
           aria-pressed={filter === 'low'}
           onClick={() => pick(() => setFilter((cur) => (cur === 'low' || lowCount === 0 ? 'all' : 'low')))}
         >
           <span className="prd-stat-n">{lowCount}</span>
           <span className="prd-stat-l">{t('strip.low')}</span>
+        </button>
+      </div>
+      <div role="listitem" className="prd-stat-cell">
+        <button
+          type="button"
+          className={`prd-stat prd-stat-tap prd-stat-out-card ${outCount > 0 ? 'prd-stat-out' : ''} ${filter === 'out' ? 'is-on' : ''}`}
+          aria-pressed={filter === 'out'}
+          onClick={() => pick(() => setFilter((cur) => (cur === 'out' || outCount === 0 ? 'all' : 'out')))}
+        >
+          <span className="prd-stat-n">{outCount}</span>
+          <span className="prd-stat-l">{t('strip.out')}</span>
         </button>
       </div>
     </div>
@@ -490,6 +503,8 @@ export function ProductsList({
           <thead>
             <tr>
               <SortableTh col="name" label={t('cols.product')} sort={sort} dir={sortDir} onSort={pickColumnSort} />
+              <th>{t('cols.category')}</th>
+              <th>{t('cols.sku')}</th>
               <SortableTh col="price" label={t('cols.price')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
               <SortableTh col="cost" label={t('cols.cost')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
               <SortableTh col="stock" label={t('cols.stock')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
@@ -497,41 +512,66 @@ export function ProductsList({
             </tr>
           </thead>
           <tbody>
-            {pageRows.map((p) => (
-              <tr
-                key={p.id}
-                className={`prd-tr ${isOn(p) ? 'is-on' : ''} ${p.active ? '' : 'prd-row-retired'}`}
-                aria-current={isOn(p) ? 'true' : undefined}
-                onClick={() => (writable ? setEditing(p) : undefined)}
-              >
-                <td>
-                  {/* The row opens on a click anywhere; the name is a real button so a keyboard or a screen reader reaches it. */}
-                  <button
-                    type="button"
-                    className="prd-cell-name prd-cell-tap"
-                    disabled={!writable}
-                    aria-current={isOn(p) ? 'true' : undefined}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (writable) setEditing(p);
-                    }}
-                  >
-                    <ProductPhoto className="prd-photo" product={p} />
-                    <span className="prd-name">
-                      {p.name}
-                      <span className="prd-name-cat">{p.categoryName ?? t('categories.none')}</span>
-                    </span>
-                  </button>
-                </td>
-                <td className="prd-td-num">{formatMoney(p.priceMinor)}</td>
-                <td className="prd-td-num prd-td-muted">{p.costMinor != null ? formatMoney(p.costMinor) : '—'}</td>
-                <td className="prd-td-num">
-                  <span className={`prd-td-stock prd-td-stock-${stockTone(p)}`}>{Math.max(0, p.stock)}</span>
-                  <span className="prd-td-sold">{t('sold', { n: p.sold })}</span>
-                </td>
-                <td>{pill(p)}</td>
-              </tr>
-            ))}
+            {pageRows.map((p) => {
+              const priceNum = Number(p.priceMinor);
+              const costNum = p.costMinor != null ? Number(p.costMinor) : null;
+              const marginPct =
+                costNum != null && priceNum > 0 ? Math.round(((priceNum - costNum) / priceNum) * 100) : null;
+              return (
+                <tr
+                  key={p.id}
+                  className={`prd-tr ${isOn(p) ? 'is-on' : ''} ${p.active ? '' : 'prd-row-retired'}`}
+                  aria-current={isOn(p) ? 'true' : undefined}
+                  onClick={() => (writable ? setEditing(p) : undefined)}
+                >
+                  <td>
+                    {/* The row opens on a click anywhere; the name is a real button so a keyboard or a screen reader reaches it. */}
+                    <button
+                      type="button"
+                      className="prd-cell-name prd-cell-tap"
+                      disabled={!writable}
+                      aria-current={isOn(p) ? 'true' : undefined}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (writable) setEditing(p);
+                      }}
+                    >
+                      <ProductPhoto className="prd-photo" product={p} />
+                      <span className="prd-name">
+                        {p.name}
+                        {p.barcode ? <span className="prd-name-cat">{p.barcode}</span> : null}
+                      </span>
+                    </button>
+                  </td>
+                  <td>
+                    {p.categoryName ? (
+                      <span className="prd-pill prd-pill-cat">{p.categoryName}</span>
+                    ) : (
+                      <span className="prd-td-muted">{t('categories.none')}</span>
+                    )}
+                  </td>
+                  <td>
+                    {p.sku ? (
+                      <span className="prd-sku-badge">{p.sku}</span>
+                    ) : (
+                      <span className="prd-td-muted">—</span>
+                    )}
+                  </td>
+                  <td className="prd-td-num">{formatMoney(p.priceMinor)}</td>
+                  <td className="prd-td-num prd-td-muted">
+                    {p.costMinor != null ? formatMoney(p.costMinor) : '—'}
+                    {marginPct != null && marginPct >= 0 ? (
+                      <span className="prd-td-sold">{t('form.margin', { pct: marginPct })}</span>
+                    ) : null}
+                  </td>
+                  <td className="prd-td-num">
+                    <span className={`prd-td-stock prd-td-stock-${stockTone(p)}`}>{Math.max(0, p.stock)}</span>
+                    <span className="prd-td-sold">{t('sold', { n: p.sold })}</span>
+                  </td>
+                  <td>{pill(p)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -637,29 +677,29 @@ export function ProductsList({
         <div className="page-body prd-desk">
           {note}
           {strip}
-          <div className="pf-wide-grid prd-desk-grid">
+          <div className={`pf-wide-grid prd-desk-grid ${editing ? 'has-sheet' : 'is-full'}`}>
             <section className="pf-wide-mid prd-desk-mid" aria-label={t('title')}>
               <div className="prd-desk-tools">
                 {searchBox}
                 {categoriesDropdown}
                 {sortBox}
+                {canStockTake && writable ? (
+                  <button type="button" className="btn btn-ghost prd-import-btn" onClick={() => setImportOpen(true)}>
+                    <IconUpload /> {t('import.open')}
+                  </button>
+                ) : null}
               </div>
               {chips}
               <div className="card prd-desk-card">
                 {table}
                 {pages}
-                {importRow}
               </div>
             </section>
-            <aside className="pf-wide-right prd-desk-right" aria-label={t('form.titleEdit')}>
-              {editing ? (
-                sheet(true)
-              ) : (
-                <div className="svc-desk-nothing">
-                  <p>{t('deskPick')}</p>
-                </div>
-              )}
-            </aside>
+            {editing ? (
+              <aside className="pf-wide-right prd-desk-right" aria-label={editing === 'new' ? t('form.titleAdd') : t('form.titleEdit')}>
+                {sheet(true)}
+              </aside>
+            ) : null}
           </div>
           {dialogs}
         </div>

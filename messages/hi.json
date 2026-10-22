@@ -3183,7 +3183,13 @@
       "codesHint": "दोनों ज़रूरी नहीं। SKU आपका अपना छोटा कोड है, जैसे ARG-100। टिल के सामान टैब पर बारकोड स्कैन करें और Enter दबाएँ — वह बिल में जुड़ जाएगा।",
       "barcodeSpaces": "बारकोड वैसे ही लिखें जैसा छपा है, बीच में जगह न छोड़ें।",
       "skuTaken": "इस ब्रांच में यह SKU पहले से {name} का है।",
-      "barcodeTaken": "इस ब्रांच में यह बारकोड पहले से {name} का है।"
+      "barcodeTaken": "इस ब्रांच में यह बारकोड पहले से {name} का है।",
+      "secBasic": "बुनियादी जानकारी",
+      "secPricing": "दाम और स्टॉक",
+      "secCodes": "कोड और टैक्स",
+      "saveAndSizes": "सहेजें और साइज़ जोड़ें",
+      "sizesNewHint": "क्या यह कई साइज़ (S, M, L या 28, 30, 32) में बिकता है? हर साइज़ का स्टॉक और ऑनलाइन कोड लिखने के लिए 'सहेजें और साइज़ जोड़ें' चुनें।",
+      "stockEditHint": "शेल्फ़ पर अभी की गिनती। स्टॉक जोड़ने, घटाने या भेजने के लिए ऊपर स्टॉक टैब खोलें।"
     },
     "searchPlaceholder": "शेल्फ़ में खोजें",
     "noMatch": "शेल्फ़ पर \"{q}\" नाम का कुछ नहीं है।",
@@ -3191,7 +3197,8 @@
     "strip": {
       "products": "सामान",
       "worth": "स्टॉक की कीमत",
-      "low": "कम हो रहा"
+      "low": "कम हो रहा",
+      "out": "स्टॉक ख़त्म"
     },
     "filters": {
       "label": "दिखाएँ",
@@ -3258,6 +3265,8 @@
     "noun": "सामान",
     "cols": {
       "product": "सामान",
+      "category": "श्रेणी",
+      "sku": "SKU",
       "price": "बिक्री दाम",
       "cost": "खरीद दाम",
       "stock": "स्टॉक",
@@ -3495,7 +3504,24 @@
       "backToProduct": "सामान पर वापस",
       "countHead": "कितने",
       "secondBlocked": "ये साइज़ एक विकल्प के साथ बने हैं, इसलिए इनमें दूसरा विकल्प नहीं जोड़ा जा सकता।",
-      "codesLink": "मार्केटप्लेस कोड"
+      "codesLink": "मार्केटप्लेस कोड",
+      "addColoursPlaceholder": "लिखें या चिपकाएँ: Black, Brown, White",
+      "quickSizesLabel": "तुरंत जोड़ें",
+      "presetAlpha": "S, M, L, XL, XXL",
+      "presetWaist": "28, 30, 32, 34, 36, 38",
+      "presetFree": "Free size",
+      "coloursTitle": "रंग",
+      "coloursOptionalBadge": "ऐच्छिक",
+      "coloursIntro": "क्या यह सामान कई रंगों या शेड्स में बिकता है? नीचे कोई रंग चुनें या अपना लिखें।",
+      "coloursUpgradeHint": "मौजूदा स्टॉक संख्या आपके जोड़े गए पहले रंग में चली जाएगी।",
+      "quickColoursLabel": "आम रंग",
+      "basePriceLabel": "मूल बिक्री क़ीमत: {price}",
+      "summarySizes": "{count, plural, one {# साइज़} other {# साइज़}}",
+      "summaryColours": "{count, plural, one {# रंग} other {# रंग}}",
+      "summaryUnits": "{count} स्टॉक में",
+      "totalRow": "कुल",
+      "unsavedChanges": "बदलाव सेव नहीं हुए",
+      "allSaved": "सभी बदलाव सेव हैं"
     },
     "moveSizes": {
       "open": "दूसरी ब्रांच में भेजें",

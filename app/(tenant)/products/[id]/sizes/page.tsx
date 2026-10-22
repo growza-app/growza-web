@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { api } from '../../../lib/api';
 import { PageHeader } from '../../../components/PageHeader';
+import { IconArrowLeft } from '../../../components/icons';
 import { LoadErrorBanner } from '../../../components/LoadErrorBanner';
 import { loadErrorKind } from '../../../lib/load-error';
 import { screenTitle } from '../../../lib/page-title';
@@ -41,22 +42,42 @@ export default async function ProductSizesPage({ params }: { params: Promise<{ i
     const sizes = await api.productSizes(id);
     return (
       <>
-        <PageHeader title={t('title')} subtitle={sizes.product.name} mobileSubtitle />
+        <PageHeader
+          title={t('title')}
+          subtitle={sizes.product.name}
+          mobileSubtitle
+          actions={
+            <div className="szg-header-actions">
+              <AppLink className="btn btn-ghost szg-back-btn" href="/products">
+                <IconArrowLeft aria-hidden="true" />
+                {t('backToProduct')}
+              </AppLink>
+              {/* Jira GRW-618 — the marketplace codes that point at these sizes. */}
+              {shop ? (
+                <AppLink className="btn btn-ghost" href={`/products/${id}/codes`}>
+                  {t('codesLink')}
+                </AppLink>
+              ) : null}
+            </div>
+          }
+        />
         <div className="page-body">
           <SizesGrid key={sizes.version} sizes={sizes} />
-          {/* Jira GRW-618 — the marketplace codes that point at these sizes. */}
-          {shop ? (
-            <AppLink className="btn" href={`/products/${id}/codes`}>
-              {t('codesLink')}
-            </AppLink>
-          ) : null}
         </div>
       </>
     );
   } catch (error) {
     return (
       <>
-        <PageHeader title={t('title')} />
+        <PageHeader
+          title={t('title')}
+          actions={
+            <AppLink className="btn btn-ghost" href="/products">
+              <IconArrowLeft aria-hidden="true" />
+              {t('backToProduct')}
+            </AppLink>
+          }
+        />
         <div className="page-body">
           <LoadErrorBanner kind={loadErrorKind(error)} />
         </div>

@@ -105,9 +105,9 @@ describe('the product sheet carries both codes and the collapsed Tax group', () 
     expect(sheet).toMatch(/&& !barcodeBad;/);
     expect(sheet).toMatch(/aria-describedby=\{barcodeBad \? 'prd-barcode-error' : 'prd-codes-hint'\}/);
   });
-  it('FR-03: Tax is collapsed until set or opened, and 0% GST (0 bp) stays distinct from not set (null)', () => {
+  it('FR-03: Tax is open by default on the product sheet so GST and HSN are never hidden, and 0% GST (0 bp) stays distinct from not set (null)', () => {
     expect(sheet).toMatch(/useState<string>\(product\?\.gstRateBp != null \? String\(product\.gstRateBp\) : ''\)/);
-    expect(sheet).toMatch(/useState\(Boolean\(product && \(product\.gstRateBp != null \|\| product\.hsn\)\)\)/);
+    expect(sheet).toMatch(/const \[taxOpen, setTaxOpen\] = useState\(true\)/);
     expect(sheet).toMatch(/\(gstRateBp === '' \? null : Number\(gstRateBp\)\) !== \(target\.gstRateBp \?\? null\)/);
     expect(sheet).toMatch(/\(hsn\.trim\(\) \|\| null\) !== \(target\.hsn \?\? null\)/);
     expect(sheet).toMatch(/gstRateBp: gstRateBp === '' \? null : Number\(gstRateBp\),\s*hsn: hsn\.trim\(\) \|\| null,/);

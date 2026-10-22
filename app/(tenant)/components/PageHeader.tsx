@@ -3,6 +3,7 @@ import { HeaderControls } from './HeaderControls';
 import { HeaderBranchPicker } from './HeaderBranchPicker';
 import { BackButton } from './BackButton';
 import { MenuButton } from './MenuButton';
+import { HeaderInfo } from './HeaderInfo';
 
 /**
  * Jira GRW-30 — the one header. Title and subtitle left; the page's primary
@@ -30,6 +31,7 @@ import { MenuButton } from './MenuButton';
 export function PageHeader({
   title,
   subtitle,
+  subtitleAsInfo,
   actions,
   mobileSubtitle,
   onBack,
@@ -38,6 +40,8 @@ export function PageHeader({
 }: {
   title: string;
   subtitle?: string;
+  /** Show `subtitle` inside an `ⓘ` info icon beside the title instead of a paragraph underneath. */
+  subtitleAsInfo?: boolean;
   actions?: ReactNode;
   /** Keep the (short) subtitle visible on mobile too — off by default, since long subtitles eat the screen. */
   mobileSubtitle?: boolean;
@@ -69,15 +73,16 @@ export function PageHeader({
       <div className="topbar-lead">
         {onBack ? null : menu ? <MenuButton /> : <BackButton phoneOnly />}
         <div className="topbar-title">
-          {onBack ? (
+          {onBack || (subtitle && subtitleAsInfo) ? (
             <div className="topbar-title-row">
-              <BackButton onBack={onBack} />
+              {onBack ? <BackButton onBack={onBack} /> : null}
               <h1>{title}</h1>
+              {subtitle && subtitleAsInfo ? <HeaderInfo text={subtitle} label={title} /> : null}
             </div>
           ) : (
             <h1>{title}</h1>
           )}
-          {subtitle && <p>{subtitle}</p>}
+          {subtitle && !subtitleAsInfo && <p>{subtitle}</p>}
           {/* Jira GRW-395 — the branch, on a phone: a line under the title (the laptop's pill is in the controls). */}
           <HeaderBranchPicker variant="line" />
         </div>
