@@ -55,14 +55,16 @@ export function ChannelsClient() {
   const word = (c: string) => (c === 'counter' ? t('counter') : c === 'flipkart' ? t('flipkart') : c === 'amazon' ? t('amazon') : c.charAt(0).toUpperCase() + c.slice(1));
 
   return (
-    <div className="srp">
-      <select className="input srp-select" aria-label={t('rangeLabel')} value={range} onChange={(e) => setRange(e.target.value as SellersRange)}>
-        {RANGES.map((r) => (
-          <option key={r} value={r}>
-            {t(`range.${r}`)}
-          </option>
-        ))}
-      </select>
+    <div className="srp srp-channels">
+      <div className="srp-toolbar">
+        <select className="input srp-select" aria-label={t('rangeLabel')} value={range} onChange={(e) => setRange(e.target.value as SellersRange)}>
+          {RANGES.map((r) => (
+            <option key={r} value={r}>
+              {t(`range.${r}`)}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {failed ? (
         <div className="ord-state" role="alert">

@@ -11,11 +11,93 @@
   gap: var(--sp-3);
 }
 
+.shp-col-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* ---------- Executive KPI Strip ---------- */
+.shp-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+.shp-kpi-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--text);
+  min-width: 0;
+}
+
+.shp-kpi-primary {
+  border-left: 3px solid var(--accent-deep);
+}
+
+.shp-kpi-link:hover {
+  border-color: var(--accent-deep);
+  background: var(--page-bg);
+}
+
+.shp-kpi-warn {
+  border-left: 3px solid var(--amber);
+}
+
+.shp-kpi-alert {
+  border-left: 3px solid var(--danger);
+}
+
+.shp-kpi-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.shp-kpi-val {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.shp-kpi-val-muted {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.shp-kpi-warn .shp-kpi-val {
+  color: var(--amber-ink);
+}
+
+.shp-kpi-alert .shp-kpi-val {
+  color: var(--danger);
+}
+
+.shp-kpi-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* ---------- Takings & Orders Cards ---------- */
 .shp-money {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   gap: var(--sp-4);
   align-items: end;
+  padding: var(--sp-2) 0;
 }
 .shp-figure {
   display: flex;
@@ -25,6 +107,7 @@
 }
 .shp-figure-label {
   font-size: 0.8125rem;
+  font-weight: 600;
   color: var(--hm-muted);
 }
 .shp-figure-value {
@@ -33,6 +116,10 @@
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
+.shp-figure-quiet {
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--border);
+}
 .shp-figure-quiet .shp-figure-value {
   font-size: 1.25rem;
   color: var(--hm-muted);
@@ -40,6 +127,43 @@
 .shp-figure-sub {
   font-size: 0.8125rem;
   color: var(--hm-muted);
+}
+
+.shp-inline-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+}
+
+.shp-pill-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--page-bg);
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.shp-pill-link:hover {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.shp-orders-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
 }
 
 .shp-orders {
@@ -85,16 +209,21 @@
   padding: 0 var(--sp-2);
   color: var(--accent-deep);
   font-size: 0.875rem;
+  font-weight: 600;
   text-decoration: none;
 }
 
 /* Jira GRW-614 — the waiting count under today's orders: the one warm line on Home, a full-width tap target. */
 .shp-tosend {
   color: var(--amber-ink);
+  background: var(--amber-soft);
+  border-radius: var(--radius-sm);
   font-weight: 600;
-  padding-left: 0;
+  padding: 0 var(--sp-3);
+  margin-top: var(--sp-2);
 }
 
+/* ---------- Running Out Watchlist ---------- */
 .shp-running {
   list-style: none;
   margin: 0;
@@ -108,6 +237,7 @@
   align-items: center;
   gap: var(--sp-3);
   min-height: 2.75rem;
+  padding: var(--sp-1) 0;
   border-top: 1px solid var(--hm-line-soft);
 }
 .shp-running li:first-child {
@@ -115,27 +245,112 @@
 }
 .shp-running-name {
   min-width: 0;
+  font-weight: 600;
+  font-size: 0.875rem;
   overflow-wrap: anywhere;
 }
 .shp-running-size {
   color: var(--hm-muted);
+  font-weight: 500;
 }
 .shp-running-left {
   flex: none;
+  font-size: 0.75rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  padding: 2px var(--sp-2);
+  border-radius: 999px;
+  background: var(--amber-soft);
   color: var(--amber-ink);
 }
 .shp-running-left.is-out {
+  background: var(--danger-soft);
   color: var(--danger);
+}
+
+.shp-running-foot {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.shp-kpi-card:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+.shp-mobile-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.shp-desk-toolbar {
+  display: none;
+}
+
+/* Desktop Command Center (`.shp-desk-v3`) rows inside Row 2 & Row 3 */
+.shp-channel-rows {
+  flex: 1;
+  justify-content: space-around;
+}
+
+.shp-channel-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.shp-channel-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.shp-channel-meta {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+  color: var(--hm-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hm-v3-desk-attention.shp-orders-att .hm-v3-prod-att-summary.shp-two-chips {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.shp-desk-v3 .hm-v3-row-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shp-desk-v3 .hm-v3-row-btn:hover {
+  text-decoration: none;
+}
+
+.shp-desk-v3 .hm-v3-bars {
+  column-gap: 1.5%;
 }
 
 @media (min-width: 861px) {
   .shp-page {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-3);
     align-items: start;
   }
+  .shp-mobile-stack {
+    display: none;
+  }
   .shp-page > .hm-tiles {
-    grid-column: 1 / -1;
+    display: none;
   }
 }
+

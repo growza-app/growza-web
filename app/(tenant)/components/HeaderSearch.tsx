@@ -31,10 +31,12 @@ export function HeaderSearch({ wide = false }: { wide?: boolean }) {
   // Jira GRW-556 — it finds clients and bookings, and a business being set up has neither.
   const live = useLive();
   if (!mayUseSearch || !live) return null;
+  const label = areas.bookings === false ? t('shopTitle') : t('title');
+  const prompt = areas.bookings === false ? t('shopPrompt') : t('prompt');
   return (
-    <a className={`hdr-search ${wide ? 'hdr-search-wide' : ''}`} href="/search" aria-label={t('title')}>
+    <a className={`hdr-search ${wide ? 'hdr-search-wide' : ''}`} href="/search" aria-label={label}>
       <IconSearch />
-      {wide && <span>{t('prompt')}</span>}
+      {wide && <span>{prompt}</span>}
     </a>
   );
 }

@@ -3,15 +3,97 @@
  * its sizes as small count pairs that wrap. Every control is a thumb tall (44px). Type is rem; 16px on the fields so iOS does not zoom
  * them. A count below zero is told by its sign and weight, never by colour alone. Nothing animates.
  */
+.srp-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* ---------- Shared Retail Reports Tab Bar ---------- */
+.srp-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.srp-nav-tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.srp-nav-tab:hover:not(.is-active) {
+  background: var(--page-bg);
+  color: var(--text);
+}
+
+.srp-nav-tab.is-active {
+  background: var(--accent-deep);
+  color: #fff;
+}
+
+.srp-hint a {
+  color: var(--accent-deep);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.srp-hint a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .srp-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .srp-nav-tab {
+    justify-content: center;
+    text-align: center;
+    min-height: 2.75rem;
+    padding: 0 var(--sp-2);
+    font-size: 0.8125rem;
+  }
+}
+
 .srp {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
 }
-.srp-totals {
+
+.srp-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
   padding: var(--sp-3);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
+}
+
+.srp-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.srp-totals {
+  padding: var(--sp-4);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent-deep);
+  border-radius: var(--radius);
   background: var(--surface);
   display: flex;
   flex-direction: column;
@@ -24,17 +106,29 @@
   color: var(--muted);
   overflow-wrap: anywhere;
 }
+.srp-worth-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
 .srp-worth {
   margin: 0;
   font-size: 1.75rem;
-  font-weight: 700;
+  font-weight: 800;
+  line-height: 1.15;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 .srp-warn {
-  margin: 0;
+  margin: var(--sp-1) 0 0;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--radius-sm);
+  background: var(--amber-soft);
+  color: var(--amber-ink);
   font-size: var(--fs-3);
   font-weight: 600;
+  align-self: flex-start;
   overflow-wrap: anywhere;
 }
 .srp-search {
@@ -57,10 +151,11 @@
 .srp-card {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: var(--sp-2);
-  padding: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   background: var(--surface);
 }
 .srp-skeleton {
@@ -77,7 +172,7 @@
 }
 .srp-name {
   margin: 0;
-  font-size: var(--fs-2, 1rem);
+  font-size: var(--fs-4);
   font-weight: 700;
   overflow-wrap: anywhere;
   min-width: 0;
@@ -85,13 +180,16 @@
 }
 .srp-value {
   margin: 0;
-  font-weight: 700;
+  font-size: var(--fs-5);
+  font-weight: 800;
+  color: var(--accent-deep);
   font-variant-numeric: tabular-nums;
 }
 .srp-sizes {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: var(--sp-2) 0 0;
+  border-top: 1px solid var(--border);
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-1);
@@ -103,6 +201,7 @@
   padding: var(--sp-1) var(--sp-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  background: var(--page-bg);
   font-size: var(--fs-3);
   font-variant-numeric: tabular-nums;
 }
@@ -113,12 +212,16 @@
 .srp-size-count {
   font-weight: 700;
 }
+.srp-size-zero {
+  background: var(--surface);
+}
 .srp-size-zero .srp-size-count {
   color: var(--muted);
   font-weight: 400;
 }
 .srp-size-negative {
   border-width: 2px;
+  border-color: var(--danger);
 }
 .srp-size-flag {
   font-size: 0.75rem;
@@ -129,7 +232,10 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--sp-2);
-  padding: var(--sp-4) 0;
+  padding: var(--sp-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
 }
 .srp-empty-title {
   margin: 0;
@@ -138,6 +244,7 @@
 .srp-empty .btn,
 .srp-export {
   min-height: 2.75rem;
+  align-self: flex-start;
 }
 .srp-bar {
   display: flex;
@@ -148,6 +255,7 @@
   margin: 0;
   font-size: var(--fs-3);
   font-weight: 600;
+  color: var(--danger);
 }
 
 /*
@@ -208,8 +316,10 @@
   z-index: 2;
   position: sticky;
   bottom: 0;
-  padding: var(--sp-2) 0 var(--sp-3);
-  background: var(--page-bg);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 .ro-total {
   margin: 0;
@@ -225,7 +335,7 @@
 }
 .ro-rule-name {
   margin: 0;
-  font-size: var(--fs-2, 1rem);
+  font-size: var(--fs-4);
   overflow-wrap: anywhere;
 }
 .ro-rule-fields,
@@ -247,13 +357,16 @@
  */
 .ch-bars {
   width: 100%;
-  height: 4rem;
+  height: 5.5rem;
+  padding: var(--sp-2);
+  background: var(--page-bg);
+  border-radius: var(--radius-sm);
   color: var(--accent);
 }
 .ch-trend {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: var(--sp-2) 0 0;
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
@@ -261,18 +374,65 @@
 .ch-trend li {
   display: flex;
   justify-content: space-between;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--radius-sm);
+  background: var(--page-bg);
   gap: var(--sp-3);
 }
 .ch-trend-sum {
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
+  font-weight: 700;
 }
 .ch-caveat {
   margin: 0;
-  padding: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   background: var(--surface);
+  color: var(--muted);
   font-size: var(--fs-3);
   overflow-wrap: anywhere;
+}
+
+/* ---------- Enterprise Desktop Layout (861px and up) ---------- */
+@media (min-width: 861px) {
+  .srp-toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-3);
+  }
+  .srp-search {
+    flex: 1 1 18rem;
+    max-width: 26rem;
+  }
+  .srp-select {
+    width: auto;
+    min-width: 13rem;
+    max-width: 18rem;
+  }
+  .srp-channels .srp-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-3);
+  }
+  .srp-stock .srp-list,
+  .srp-sellers .srp-list,
+  .srp-returns .srp-list,
+  .srp-refunds .srp-list,
+  .ro .srp-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-3);
+  }
+  .ch-trend {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-2);
+  }
+  .ro-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
 }

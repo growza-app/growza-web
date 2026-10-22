@@ -125,41 +125,43 @@ export function SellersClient({ timezone }: { timezone: string }) {
   };
 
   return (
-    <div className="srp">
-      <div className="pf-chips" role="group" aria-label={t('viewGroup')}>
-        {(['best', 'dead'] as const).map((v) => (
-          <button key={v} type="button" className={`pf-chip ${view === v ? 'pf-chip-on' : ''}`} aria-pressed={view === v} onClick={() => setView(v)}>
-            {v === 'best' ? t('viewBest') : t('viewDead')}
-          </button>
-        ))}
-      </div>
+    <div className="srp srp-sellers">
+      <div className="srp-toolbar">
+        <div className="pf-chips" role="group" aria-label={t('viewGroup')}>
+          {(['best', 'dead'] as const).map((v) => (
+            <button key={v} type="button" className={`pf-chip ${view === v ? 'pf-chip-on' : ''}`} aria-pressed={view === v} onClick={() => setView(v)}>
+              {v === 'best' ? t('viewBest') : t('viewDead')}
+            </button>
+          ))}
+        </div>
 
-      <select className="input srp-select" aria-label={t('rangeLabel')} value={range} onChange={(e) => setRange(e.target.value as SellersRange)}>
-        {RANGES.map((r) => (
-          <option key={r} value={r}>
-            {t(`range.${r}`)}
-          </option>
-        ))}
-      </select>
-
-      {categories.length > 0 ? (
-        <select
-          className="input srp-select"
-          aria-label={t('categoryLabel')}
-          value={liveCategory}
-          onChange={(e) => {
-            setCategoryId(e.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">{t('allCategories')}</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
+        <select className="input srp-select" aria-label={t('rangeLabel')} value={range} onChange={(e) => setRange(e.target.value as SellersRange)}>
+          {RANGES.map((r) => (
+            <option key={r} value={r}>
+              {t(`range.${r}`)}
             </option>
           ))}
         </select>
-      ) : null}
+
+        {categories.length > 0 ? (
+          <select
+            className="input srp-select"
+            aria-label={t('categoryLabel')}
+            value={liveCategory}
+            onChange={(e) => {
+              setCategoryId(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">{t('allCategories')}</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        ) : null}
+      </div>
 
       {failed ? (
         <div className="ord-state" role="alert">
@@ -229,12 +231,14 @@ export function SellersClient({ timezone }: { timezone: string }) {
         )
       ) : null}
 
-      <AppLink className="btn srp-export" href="/stock/order">
-        {t('toOrder')}
-      </AppLink>
-      <AppLink className="btn srp-export" href="/stock/report">
-        {t('toReport')}
-      </AppLink>
+      <div className="srp-links">
+        <AppLink className="btn btn-ghost srp-export" href="/stock/order">
+          {t('toOrder')}
+        </AppLink>
+        <AppLink className="btn btn-ghost srp-export" href="/stock/report">
+          {t('toReport')}
+        </AppLink>
+      </div>
     </div>
   );
 }

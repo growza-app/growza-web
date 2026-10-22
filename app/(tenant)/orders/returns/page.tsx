@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { api } from '../../lib/api';
 import { PageHeader } from '../../components/PageHeader';
+import { RetailReportsNav } from '../../components/RetailReportsNav';
 import { screenTitle } from '../../lib/page-title';
 import { guardScreen } from '../../lib/screen-guard';
 import { ReturnsClient } from './ReturnsClient';
@@ -29,6 +30,7 @@ export default async function ReturnsPage() {
     <>
       <PageHeader title={t('title')} />
       <div className="page-body srp-page">
+        <RetailReportsNav active="returns" />
         <ReturnsClient />
       </div>
     </>

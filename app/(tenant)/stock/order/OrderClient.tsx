@@ -228,31 +228,33 @@ export function OrderClient() {
 
   return (
     <div className="srp ro">
-      {oneBranch ? (
-        <button type="button" className="btn btn-ghost srp-export" aria-expanded={settingsOpen} onClick={() => setSettingsOpen((o) => !o)}>
-          {t('howFarAhead')}
-        </button>
-      ) : null}
-      {settingsOpen && oneBranch ? <Rules branchId={oneBranch} writable={writable} onChanged={() => void load()} /> : null}
+      <div className="srp-toolbar">
+        {oneBranch ? (
+          <button type="button" className="btn btn-ghost srp-export" aria-expanded={settingsOpen} onClick={() => setSettingsOpen((o) => !o)}>
+            {t('howFarAhead')}
+          </button>
+        ) : null}
 
-      {categories.length > 0 ? (
-        <select
-          className="input srp-select"
-          aria-label={t('categoryLabel')}
-          value={liveCategory}
-          onChange={(e) => {
-            setCategoryId(e.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">{t('allCategories')}</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      ) : null}
+        {categories.length > 0 ? (
+          <select
+            className="input srp-select"
+            aria-label={t('categoryLabel')}
+            value={liveCategory}
+            onChange={(e) => {
+              setCategoryId(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">{t('allCategories')}</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        ) : null}
+      </div>
+      {settingsOpen && oneBranch ? <Rules branchId={oneBranch} writable={writable} onChanged={() => void load()} /> : null}
 
       {failed ? (
         <div className="ord-state" role="alert">
@@ -341,9 +343,11 @@ export function OrderClient() {
           </div>
         </>
       )}
-      <AppLink className="btn srp-export" href="/stock/sellers">
-        {t('toSellers')}
-      </AppLink>
+      <div className="srp-links">
+        <AppLink className="btn btn-ghost srp-export" href="/stock/sellers">
+          {t('toSellers')}
+        </AppLink>
+      </div>
     </div>
   );
 }

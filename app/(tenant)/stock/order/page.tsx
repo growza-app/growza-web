@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { api } from '../../lib/api';
 import { PageHeader } from '../../components/PageHeader';
+import { RetailReportsNav } from '../../components/RetailReportsNav';
 import { screenTitle } from '../../lib/page-title';
 import { guardScreen } from '../../lib/screen-guard';
 import { OrderClient } from './OrderClient';
@@ -31,6 +32,7 @@ export default async function OrderPage() {
     <>
       <PageHeader title={t('title')} />
       <div className="page-body srp-page ro-page">
+        <RetailReportsNav active="order" />
         <OrderClient />
       </div>
     </>

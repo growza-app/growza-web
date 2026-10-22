@@ -18,6 +18,8 @@
   "search": {
     "title": "Find a client or booking",
     "prompt": "Find a client or booking",
+    "shopTitle": "Find a client",
+    "shopPrompt": "Find a client",
     "placeholder": "Name, phone, or booking ID",
     "customers": "CLIENTS",
     "bookings": "BOOKINGS",
@@ -198,7 +200,7 @@
     "packages": "packages"
   },
   "customers": {
-    "subtitle": "View and manage your {noun}. See their booking history and spend.",
+    "subtitle": "View and manage your {noun}, their history and total spend.",
     "addNoun": "Add {noun}",
     "adding": "Adding…",
     "cancel": "Cancel",
@@ -3122,6 +3124,7 @@
   "products": {
     "title": "Products",
     "subtitle": "Things you sell over the counter. Ring them up on the Record payment screen beside the services; every change to the count is kept here.",
+    "stockSubtitle": "Styles, sizes and stock counts across your shop and online channels. Every change to the count is kept here.",
     "add": "Add a product",
     "sell": "Sell product",
     "empty": "Nothing on the shelf yet.",

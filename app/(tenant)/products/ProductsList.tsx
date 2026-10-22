@@ -316,7 +316,7 @@ export function ProductsList({
   const header = (
     <PageHeader
       title={heading ?? t('title')}
-      subtitle={t('subtitle')}
+      subtitle={heading !== undefined ? t('stockSubtitle') : t('subtitle')}
       actions={
         <>
           {heading !== undefined && canStockTake ? (

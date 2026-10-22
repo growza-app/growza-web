@@ -52,14 +52,16 @@ export function ReturnsClient() {
   }, [load]);
 
   return (
-    <div className="srp">
-      <select className="input srp-select" aria-label={t('rangeLabel')} value={range} onChange={(e) => setRange(e.target.value as SellersRange)}>
-        {RANGES.map((r) => (
-          <option key={r} value={r}>
-            {t(`range.${r}`)}
-          </option>
-        ))}
-      </select>
+    <div className="srp srp-returns">
+      <div className="srp-toolbar">
+        <select className="input srp-select" aria-label={t('rangeLabel')} value={range} onChange={(e) => setRange(e.target.value as SellersRange)}>
+          {RANGES.map((r) => (
+            <option key={r} value={r}>
+              {t(`range.${r}`)}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {failed ? (
         <div className="ord-state" role="alert">
@@ -109,9 +111,11 @@ export function ReturnsClient() {
           </section>
         </>
       )}
-      <AppLink className="btn srp-export" href="/orders/refunds">
-        {t('toRefunds')}
-      </AppLink>
+      <div className="srp-links">
+        <AppLink className="btn btn-ghost srp-export" href="/orders/refunds">
+          {t('toRefunds')}
+        </AppLink>
+      </div>
     </div>
   );
 }
