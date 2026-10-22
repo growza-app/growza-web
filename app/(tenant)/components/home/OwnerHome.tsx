@@ -24,11 +24,11 @@ import { hasLiveWork, TokenBoard } from './TokenBoard';
 import { useTokenWords } from './token-words';
 import { atBranch } from '../../lib/right-now';
 import { useBranch } from '../BranchProvider';
-import { usePendingAttendance, useWritable } from '../SessionProvider';
+import { useMayUse, usePendingAttendance, useWritable } from '../SessionProvider';
 import { homeCopy } from '../../lib/home-copy';
 import { closingTime } from '../../lib/day-summary-view';
 import type { Lang } from '../../lib/lang';
-import { canSee, mayUse, type MemberRole } from '../../lib/nav-policy';
+import { canSee, type MemberRole } from '../../lib/nav-policy';
 import {
   IconBan,
   IconCalendar,
@@ -233,8 +233,13 @@ export function OwnerHome(p: OwnerHomeProps) {
   const writable = useWritable();
   // Jira GRW-563 — the approval queue at the branches this owner sees, from `/me`.
   const pendingAttendance = usePendingAttendance();
-  const mayBook = mayUse(p.role, 'visit.new', writable);
-  const mayRecordPayment = mayUse(p.role, 'visit.recordPayment', writable);
+  /*
+   * Jira GRW-74 — through `useMayUse`, not `mayUse` directly: a manager-LIKE role lands on this Home (`homeKind`
+   * answers 'owner' for manager), and `mayUse` alone knows only the fixed word their role works like, not the grid
+   * the owner actually filled in. Called the same way as every other control in the app (review, 2026-10-22).
+   */
+  const mayBook = useMayUse('visit.new');
+  const mayRecordPayment = useMayUse('visit.recordPayment');
 
   /*
    * Only the newest read may land. A branch or period switch, or a refresh after a payment, can overlap an
