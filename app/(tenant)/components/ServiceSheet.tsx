@@ -9,6 +9,7 @@ import { productByCode, productMatchable } from '../lib/product-match';
 import { ServicePhoto } from './ServicePhoto';
 import { ProductPhoto } from './ProductPhoto';
 import { useNewVisitCopy } from '../lib/use-copy';
+import { useAreas } from './SessionProvider';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { IconInfo, IconSearch } from './icons';
 import { PackageSheet } from './PackageSheet';
@@ -69,6 +70,8 @@ export function ServiceSheet({
   productsOnly?: boolean;
 }) {
   const t = useTranslations('payFlow');
+  // A kitchen keeps no count, so a dish's row is its name and its price (`catalog.stock_counted` off).
+  const counted = useAreas().stock;
   const nv = useNewVisitCopy();
   const ref = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLInputElement>(null);
@@ -208,9 +211,10 @@ export function ServiceSheet({
         ) : null}
         {productMode ? (
           shownProducts.length === 0 ? (
-            <p className="pf-client-note">{shelf.length === 0 ? t('desk.noProducts') : t('desk.noProductMatch')}</p>
+            <p className="pf-client-note">{shelf.length === 0 ? t(counted ? 'desk.noProducts' : 'desk.noDishes') : t(counted ? 'desk.noProductMatch' : 'desk.noDishMatch')}</p>
           ) : (
-            /* A product reads like a service: its picture, its name, its price, and how many are left. */
+            /* A product reads like a service: its picture, its name, its price, and how many are left — the count
+               only where there is one, so a kitchen's dish reads as its name and its price. */
             <ul className="pf-client-matches pf-menu-list">
               {shownProducts.map((p) => {
                 const n = productCounts?.get(p.id) ?? 0;
@@ -220,7 +224,8 @@ export function ServiceSheet({
                       <ProductPhoto className="pf-menu-photo" product={p} />
                       <span className="pf-client-match-name">{p.name}</span>
                       <span className="pf-client-match-sub">
-                        {formatMoney(p.priceMinor)} · {p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}
+                        {formatMoney(p.priceMinor)}
+                        {counted ? <> · {p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}</> : null}
                       </span>
                       {n > 0 ? (
                         <span className="pf-menu-count" aria-label={t('onBill', { count: n })}>

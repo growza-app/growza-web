@@ -17,7 +17,9 @@ export const metadata = screenTitle('Stock report');
  * Stock. The report itself is read by the client — it is paged and filtered on the server and re-read when a filter changes.
  */
 export default async function StockReportPage() {
-  await guardScreen('/stock');
+  // Its OWN address, not the shelf's: this screen is a COUNT, and a business that keeps none (a kitchen) is sent Home
+  // rather than shown a report its API then refuses.
+  await guardScreen('/stock/report');
   const t = await getTranslations('products.stockReport');
   let allowed = true;
   try {

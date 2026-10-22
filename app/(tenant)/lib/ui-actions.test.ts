@@ -200,7 +200,7 @@ describe('2b — the controls, each behind its own action', () => {
  * gated one by one; on a screen a role IS offered, every write must be theirs.
  */
 /** A shop's app, for the screens that exist only there (`/orders`, `/stock`). See `lib/areas.ts`. */
-const SHOP_AREAS = { bookings: false, services: false, shop: true } as const;
+const SHOP_AREAS = { bookings: false, services: false, shop: true, stock: true } as const;
 
 const SCREEN_WRITES: Record<string, readonly string[]> = {
   // Jira GRW-615 — an order's own screen moves it along: the one next move, and the rarer ones behind More. Same screen,
@@ -444,10 +444,12 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     // address it is guarded under, and the screen (`*Screen.tsx`) is what calls `guardScreen(guard)` (pinned in areas.test.ts).
     // …and a page UNDER it that is not the shelf (the sizes grid, Jira GRW-598) guards itself under the same address.
     '/products': /<ProductsScreen[^>]*guard="\/products"|await guardScreen\('\/products'\);/,
-    // Jira GRW-631 — the stock report is its own page under the shelf's address; it guards itself under the same one.
-    '/stock/report': /await guardScreen\('\/stock'\);/,
+    // Jira GRW-631 — the stock report is its own page under the shelf's address. The two that are a COUNT guard
+    // themselves under their OWN address, because a business that keeps none has the shelf screen (its menu) and not
+    // them; the two that read what was BILLED are every shop's, and guard under the shelf's.
+    '/stock/report': /await guardScreen\('\/stock\/report'\);/,
+    '/stock/order': /await guardScreen\('\/stock\/order'\);/,
     '/stock/channels': /await guardScreen\('\/stock'\);/,
-    '/stock/order': /await guardScreen\('\/stock'\);/,
     '/stock/sellers': /await guardScreen\('\/stock'\);/,
     '/stock': /<ProductsScreen[^>]*guard="\/stock"/,
     '/sales': /<SalesScreen[^>]*guard="\/sales"/,

@@ -19,7 +19,7 @@ import { HeaderBranchPicker } from '../../components/HeaderBranchPicker';
 import { PAYMENT_MODES } from '../../lib/payment-modes';
 import { useLabel } from '../../components/LabelsProvider';
 import { LargeAmountDeclined, useLargeAmountGuard } from '../../components/LargeAmountConfirm';
-import { useSession } from '../../components/SessionProvider';
+import { useAreas, useSession } from '../../components/SessionProvider';
 import { IconArrowLeft, IconClose, IconEdit, IconMinus, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch, IconUserPlus } from '../../components/icons';
 import { FormModeSwitch } from './FormModeSwitch';
 import { ClientSheet } from './ClientSheet';
@@ -181,6 +181,9 @@ export function PayFlow({
   const locale = useLocale();
   const router = useRouter();
   const session = useSession();
+  // Is there a count behind what the till sells? False for a kitchen, which cooks a dish when it is ordered: nothing
+  // here is ever refused or hidden for stock, and no tile says how many are left.
+  const counted = useAreas().stock;
   const branch = useBranch();
   const providerNoun = useLabel('provider', 'Staff member');
   const { guard, dialog } = useLargeAmountGuard();
@@ -516,7 +519,8 @@ export function PayFlow({
     const byCat = productCategory
       ? products.filter((p) => (productCategory === NO_CATEGORY ? p.categoryId === null : p.categoryId === productCategory))
       : products;
-    const inStock = byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0);
+    // A kitchen has no shelf to be out of: every dish in the category is offered, in the order the menu reads.
+    const inStock = counted ? byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0) : byCat;
     const shown = (inStock.length > 0 ? inStock : byCat).slice(0, TILES);
     const drawn = new Set(shown.map((p) => p.id));
     const byId = new Map(products.map((p) => [p.id, p]));
@@ -567,7 +571,7 @@ export function PayFlow({
       setOverride(null);
       return;
     }
-    if (full || p.stock <= 0 || productCountOf(p.id) >= p.stock) {
+    if (full || (counted && (p.stock <= 0 || productCountOf(p.id) >= p.stock))) {
       felt(BUZZ.tooMany);
       return;
     }
@@ -590,7 +594,7 @@ export function PayFlow({
   const scanWords = (p: ScanProblem) => (p.kind === 'miss' ? t('desk.scanMiss', { code: p.code }) : p.kind === 'stock' ? t('desk.scanNoStock', { name: p.name }) : t('desk.scanFull'));
   /** One scan or a queue of them: each that can go on does, and the last that cannot is said out loud. */
   const onScans = (codes: readonly string[]) => {
-    const { add, problem } = planScans(codes, products, productCountOf, lines.length, MAX_LINES);
+    const { add, problem } = planScans(codes, products, productCountOf, lines.length, MAX_LINES, counted);
     // addProduct would refuse these quietly; a scan has no tile to show why, so it says.
     if (problem) felt(BUZZ.tooMany);
     setScanNote(problem ? scanWords(problem) : null);
@@ -1720,12 +1724,12 @@ export function PayFlow({
       */}
       {productsOnly && products.length > 0 ? (
         <>
-          <div className="pf-row" role="group" aria-label={t('desk.products')}>
-            <span className="pf-row-label">{t('desk.products')}</span>
+          <div className="pf-row" role="group" aria-label={t(counted ? 'desk.products' : 'desk.menu')}>
+            <span className="pf-row-label">{t(counted ? 'desk.products' : 'desk.menu')}</span>
             <div className="pf-who-bar">
               <button type="button" className="pf-who-search pf-find-service" onClick={() => setMenuOpen(true)}>
                 <IconSearch />
-                {t('desk.searchProducts', { count: products.length })}
+                {t(counted ? 'desk.searchProducts' : 'desk.searchDishes', { count: products.length })}
               </button>
               <span className="pf-who-add pf-who-gap" aria-hidden="true" />
             </div>
@@ -1738,7 +1742,7 @@ export function PayFlow({
                 aria-pressed={productCategory === ALL_CATEGORIES}
                 onClick={() => setProductCategory(ALL_CATEGORIES)}
               >
-                {t('allCategories')}
+                {t(counted ? 'allCategories' : 'allDishes')}
               </button>
               {productCategories.map((c) => (
                 <button
@@ -1827,7 +1831,8 @@ export function PayFlow({
                     <span className="pf-tile-name">{p.name}</span>
                     <span className="pf-tile-price">
                       {money(price)}
-                      <span className={`pf-tile-mins ${p.stock <= 0 ? 'pf-tile-out' : ''}`}>{p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}</span>
+                      {/* How many are left is a count; a kitchen's tile is the dish and its price, and nothing else. */}
+                      {counted ? <span className={`pf-tile-mins ${p.stock <= 0 ? 'pf-tile-out' : ''}`}>{p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}</span> : null}
                     </span>
                   </button>
                   {count > 0 && hasSizes(p) ? (

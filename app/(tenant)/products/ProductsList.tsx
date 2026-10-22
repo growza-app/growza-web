@@ -34,6 +34,17 @@ export type ShelfFilter = 'all' | 'inStock' | 'low' | 'out' | 'retired';
 export const SHELF_FILTERS: readonly ShelfFilter[] = ['all', 'inStock', 'low', 'out', 'retired'];
 export type ShelfSort = 'name' | 'stock' | 'sold' | 'price' | 'cost' | 'status';
 export const SHELF_SORTS: readonly ShelfSort[] = ['name', 'stock', 'sold', 'price', 'cost', 'status'];
+
+/**
+ * The same screen for a business that keeps no count (a kitchen: `catalog.stock_counted` off).
+ *
+ * It is the MENU there, not the shelf — every dish with its price, its category and its photo, and nothing that
+ * reads or changes a number nobody keeps. So three of the five filters, one of the six sorts, two of the four
+ * figures and one of the seven columns are about a count and are left out; everything else is the same screen,
+ * drawn by the same code. Left out rather than shown at nought, which is the rule the whole vertical follows.
+ */
+export const UNCOUNTED_FILTERS: readonly ShelfFilter[] = ['all', 'retired'];
+export const UNCOUNTED_SORTS: readonly ShelfSort[] = ['name', 'sold', 'price', 'cost', 'status'];
 export type ShelfSortDir = 'asc' | 'desc';
 export const defaultSortDir = (sort: ShelfSort): ShelfSortDir =>
   sort === 'name' || sort === 'stock' || sort === 'status' ? 'asc' : 'desc';
@@ -158,13 +169,15 @@ export function ProductsList({
   const writable = useWritable();
   // Jira GRW-76 — the till is not this screen's page: it opens for a role that holds Orders and Stock Change, and a business that may write.
   const areas = useAreas();
+  // Is there a count behind this catalogue at all? False for a kitchen, whose dishes are cooked when they are ordered.
+  const counted = areas.stock;
   const tillOpen = useBusinessWritable() && canSee('/products/sell', session?.role as MemberRole | null | undefined, undefined, true, areas);
   const canStockTake =
     session?.role === null || session?.role === undefined || session?.role === 'owner' || session?.role === 'manager';
   const [rows, setRows] = useState(products);
   const [categories, setCategories] = useState(initialCategories);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [filter, setFilter] = useState<ShelfFilter>(initialFilter);
+  const [filter, setFilter] = useState<ShelfFilter>(counted ? initialFilter : 'all');
   const [sort, setSort] = useState<ShelfSort>('name');
   const [sortDir, setSortDir] = useState<ShelfSortDir>('asc');
   const [search, setSearch] = useState('');
@@ -317,11 +330,11 @@ export function ProductsList({
   const header = (
     <PageHeader
       title={heading ?? t('title')}
-      subtitle={heading !== undefined ? t('stockSubtitle') : t('subtitle')}
+      subtitle={!counted ? t('uncountedSubtitle') : heading !== undefined ? t('stockSubtitle') : t('subtitle')}
       subtitleAsInfo
       actions={
         <>
-          {heading !== undefined && canStockTake ? (
+          {heading !== undefined && canStockTake && counted ? (
             <Link className="btn btn-ghost" href="/stock/report">
               {t('stockReport.open')}
             </Link>
@@ -329,11 +342,11 @@ export function ProductsList({
           {/* The till is Bookings' and Stock's, not this screen's page: drawn when the role may open it, and the business may write. */}
           {live.length > 0 && tillOpen ? (
             <Link className="btn btn-ghost" href="/products/sell?from=products">
-              <IconCart /> {t('sell')}
+              <IconCart /> {t(counted ? 'sell' : 'sellUncounted')}
             </Link>
           ) : null}
         <WriteOnly>
-          {live.length > 0 && canStockTake ? (
+          {live.length > 0 && canStockTake && counted ? (
             <button
               type="button"
               className="btn btn-ghost"
@@ -346,14 +359,33 @@ export function ProductsList({
             </button>
           ) : null}
           <button type="button" className="btn" onClick={() => setEditing('new')}>
-            <IconPlus /> {t('add')}
+            <IconPlus /> {t(counted ? 'add' : 'addUncounted')}
           </button>
         </WriteOnly>
         </>
       }
     />
   );
-  const strip = (
+  /*
+   * A kitchen's two figures. "Stock value" is a count times a price and "Running low" and "Out of stock" are a
+   * count outright, so all three are left out; what is left is what a menu actually tells you — how many dishes
+   * are on it and how many have been taken off.
+   */
+  const uncountedStrip = (
+    <div className="prd-strip prd-strip-2" role="list">
+      <div className="prd-stat prd-stat-products" role="listitem">
+        <span className="prd-stat-n">{live.filter((p) => matchesCategories(p, selectedCategories)).length}</span>
+        <span className="prd-stat-l">{t('strip.onMenu')}</span>
+      </div>
+      <div className="prd-stat" role="listitem">
+        <span className="prd-stat-n">{counts.retired}</span>
+        <span className="prd-stat-l">{t('strip.offMenu')}</span>
+      </div>
+    </div>
+  );
+  const strip = !counted ? (
+    uncountedStrip
+  ) : (
     <div className="prd-strip prd-strip-4" role="list">
       <div className="prd-stat prd-stat-products" role="listitem">
         <span className="prd-stat-n">{inCategory.length}</span>
@@ -391,7 +423,7 @@ export function ProductsList({
   const searchBox = (
     <label className="search-wrap prd-search">
       <IconSearch />
-      <input type="text" className="search-input search-input-bare" placeholder={t('searchPlaceholder')} value={search} onChange={(e) => pick(() => setSearch(e.target.value))} />
+      <input type="text" className="search-input search-input-bare" placeholder={t(counted ? 'searchPlaceholder' : 'searchUncounted')} value={search} onChange={(e) => pick(() => setSearch(e.target.value))} />
     </label>
   );
   const categoriesDropdown =
@@ -408,7 +440,7 @@ export function ProductsList({
     ) : null;
   const chips = (
     <div className="prd-chips" role="group" aria-label={t('filters.label')}>
-      {SHELF_FILTERS.map((f) => (
+      {(counted ? SHELF_FILTERS : UNCOUNTED_FILTERS).map((f) => (
         <button
           key={f}
           type="button"
@@ -440,7 +472,7 @@ export function ProductsList({
             {sort === 'sold' ? t('sort.sold') : t(`cols.${sort === 'name' ? 'product' : sort}`)} ({sortDir === 'desc' ? '↓' : '↑'})
           </option>
         ) : null}
-        {SHELF_SORTS.map((s) => (
+        {(counted ? SHELF_SORTS : UNCOUNTED_SORTS).map((s) => (
           <option key={s} value={s}>
             {t(`sort.${s}`)}
           </option>
@@ -451,13 +483,19 @@ export function ProductsList({
   const isOn = (p: Product) => Boolean(editing && editing !== 'new' && editing.id === p.id);
   const pill = (p: Product) => {
     const tone = stockTone(p);
+    // A kitchen's dish is either on the menu or off it; "out of stock" and "running low" are a count.
+    if (!counted) return <span className={`prd-pill prd-pill-${p.active ? 'ok' : 'off'}`}>{p.active ? t('strip.onMenu') : t('retired')}</span>;
     return p.active ? (
       <span className={`prd-pill prd-pill-${tone}`}>{tone === 'out' ? t('outOfStock') : tone === 'low' ? t('lowStock', { n: p.stock }) : t('inStock')}</span>
     ) : (
       <span className="prd-pill prd-pill-off">{t('retired')}</span>
     );
   };
-  const nothing = <div className="empty">{search.trim().length >= 2 ? t('noMatch', { q: search.trim() }) : t(`filters.none.${filter}`)}</div>;
+  const nothing = (
+    <div className="empty">
+      {search.trim().length >= 2 ? t('noMatch', { q: search.trim() }) : !counted && filter === 'all' ? t('filters.none.uncounted') : t(`filters.none.${filter}`)}
+    </div>
+  );
   const list =
     shown.length === 0 ? (
       nothing
@@ -481,7 +519,12 @@ export function ProductsList({
                 </span>
                 <span className="prd-price">{formatMoney(p.priceMinor)}</span>
                 <span className="prd-meta">
-                  {p.active ? (
+                  {/* No count to show for a kitchen; a dish taken off the menu still says so, because that is not a count. */}
+                  {!counted ? (
+                    p.active ? null : (
+                      <span className="prd-pill prd-pill-off">{t('retired')}</span>
+                    )
+                  ) : p.active ? (
                     <span className={`prd-pill prd-pill-${tone}`}>{tone === 'out' ? t('outOfStock') : tone === 'low' ? t('lowStock', { n: p.stock }) : t('stock', { n: p.stock })}</span>
                   ) : (
                     <span className="prd-pill prd-pill-off">{t('stock', { n: Math.max(0, p.stock) })}</span>
@@ -507,7 +550,7 @@ export function ProductsList({
               <th>{t('cols.sku')}</th>
               <SortableTh col="price" label={t('cols.price')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
               <SortableTh col="cost" label={t('cols.cost')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
-              <SortableTh col="stock" label={t('cols.stock')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
+              {counted ? <SortableTh col="stock" label={t('cols.stock')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric /> : null}
               <SortableTh col="status" label={t('cols.status')} sort={sort} dir={sortDir} onSort={pickColumnSort} />
             </tr>
           </thead>
@@ -564,10 +607,16 @@ export function ProductsList({
                       <span className="prd-td-sold">{t('form.margin', { pct: marginPct })}</span>
                     ) : null}
                   </td>
-                  <td className="prd-td-num">
-                    <span className={`prd-td-stock prd-td-stock-${stockTone(p)}`}>{Math.max(0, p.stock)}</span>
-                    <span className="prd-td-sold">{t('sold', { n: p.sold })}</span>
-                  </td>
+                  {counted ? (
+                    <td className="prd-td-num">
+                      <span className={`prd-td-stock prd-td-stock-${stockTone(p)}`}>{Math.max(0, p.stock)}</span>
+                      <span className="prd-td-sold">{t('sold', { n: p.sold })}</span>
+                    </td>
+                  ) : (
+                    <td className="prd-td-num prd-td-muted">
+                      <span className="prd-td-sold">{t('sold', { n: p.sold })}</span>
+                    </td>
+                  )}
                   <td>{pill(p)}</td>
                 </tr>
               );
@@ -584,13 +633,13 @@ export function ProductsList({
   const importRow =
     canStockTake && writable ? (
       <div className="prd-import-row">
-        <p>{t('import.footer')}</p>
+        <p>{t(counted ? 'import.footer' : 'import.footerUncounted')}</p>
         <button type="button" className="btn btn-ghost" onClick={() => setImportOpen(true)}>
           <IconUpload /> {t('import.open')}
         </button>
       </div>
     ) : null;
-  const pages = shown.length > PAGE_SIZE ? <Pagination page={Math.min(page, pageCount)} total={shown.length} pageSize={PAGE_SIZE} noun={t('noun')} onChange={setPage} /> : null;
+  const pages = shown.length > PAGE_SIZE ? <Pagination page={Math.min(page, pageCount)} total={shown.length} pageSize={PAGE_SIZE} noun={t(counted ? 'noun' : 'nounUncounted')} onChange={setPage} /> : null;
   const sheet = (inline: boolean) =>
     editing ? (
       <ProductSheet

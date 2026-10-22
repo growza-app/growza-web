@@ -9,7 +9,7 @@ const RETURN_REASONS: readonly ReturnReason[] = ['size', 'not_as_described', 'fa
 import { formatDate } from '../lib/format';
 import { useBarcodeScan } from '../lib/barcode-scan';
 import { initials } from '../lib/appointment-display';
-import { useSession } from '../components/SessionProvider';
+import { useAreas, useSession } from '../components/SessionProvider';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import {
@@ -128,6 +128,9 @@ export function ReturnProductSheet({
   const [query, setQuery] = useState<string>('');
   const [qtyByLine, setQtyByLine] = useState<Record<string, number>>(() => buildInitialQtyMap(defaultBill));
   const [restock, setRestock] = useState(true);
+  // A kitchen (`catalog.stock_counted` off) has no shelf: "Put it back" and "Damaged" are the same thing there, so
+  // the choice is not offered and the API ignores it. The refund, the reason and the record are unchanged.
+  const counted = useAreas().stock;
   const [refundMode, setRefundMode] = useState<RefundMode>(() => defaultRefundMode(defaultBill?.paymentModes));
   const [reason, setReason] = useState('');
   // Jira GRW-635 — why it came back, from the small set. Optional at the counter, where the shopkeeper is standing in front of the customer.
@@ -786,7 +789,7 @@ export function ReturnProductSheet({
             {/* Right column: Condition + Refund method + Reason + Confirm footer */}
             <div className="sls-ret-right">
               <div className="sls-ret-scroll">
-                <div className="sls-ret-condition">
+                <div className="sls-ret-condition" hidden={!counted}>
                   <div className="sls-ret-field-head">
                     <span className="sls-ret-field-title">{t('conditionLabel')}</span>
                     <span className="sls-ret-info-icon" aria-hidden="true">

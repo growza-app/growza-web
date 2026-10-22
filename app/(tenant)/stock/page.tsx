@@ -1,4 +1,4 @@
-import { screenTitle } from '../lib/page-title';
+import { labelledTitle } from '../lib/page-title';
 import { ProductsScreen, type ProductsSearch } from '../products/ProductsScreen';
 
 export const dynamic = 'force-dynamic';
@@ -14,4 +14,5 @@ export default function StockPage({ searchParams }: { searchParams: Promise<Prod
   return <ProductsScreen searchParams={searchParams} guard="/stock" />;
 }
 
-export const metadata = screenTitle('Stock');
+// The vertical's own word: Stock to a shop, Menu to a kitchen — the same word the nav and the heading already use.
+export const generateMetadata = () => labelledTitle('stock', 'Stock');

@@ -9,7 +9,7 @@ import type { Product, ProductCategory } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { IconCheck, IconChevronRight } from '../components/icons';
-import { useSizesOn } from '../components/SessionProvider';
+import { useAreas, useSizesOn } from '../components/SessionProvider';
 import { GstInPrice, TaxFields } from '../components/TaxFields';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { codeHolder } from '../lib/product-match';
@@ -58,6 +58,8 @@ export function ProductSheet({
   const router = useRouter();
   /** Jira GRW-598 — sizes are a switch, off for every business until it is turned on; nothing below is drawn while it is off. */
   const sizesOn = useSizesOn();
+  // A kitchen (`catalog.stock_counted` off) has no count behind a dish: no Stock tab, no opening count, no low line.
+  const counted = useAreas().stock;
   const sizeCount = product?.variantCount ?? 0;
   const sheetRef = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
@@ -248,7 +250,9 @@ export function ProductSheet({
           <span className="prd-sheet-id-text">
             <span className="prd-sheet-name">{product.name}</span>
             <span className="prd-sheet-tags">
-              {product.active ? (
+              {!counted ? (
+                <span className={`prd-pill prd-pill-${product.active ? 'ok' : 'off'}`}>{product.active ? tp('strip.onMenu') : tp('retired')}</span>
+              ) : product.active ? (
                 <span className={`prd-pill prd-pill-${stockTone(product)}`}>
                   {stockTone(product) === 'out' ? tp('outOfStock') : stockTone(product) === 'low' ? tp('lowStock', { n: product.stock }) : tp('inStock')}
                 </span>
@@ -261,8 +265,9 @@ export function ProductSheet({
         </div>
       ) : null}
       {product ? (
-        <div className="prd-seg prd-seg-3" role="tablist" aria-label={title}>
-          {(['details', 'stock', 'sales'] as const).map((p) => (
+        // Two tabs where there is no count: what the dish IS, and what it has sold.
+        <div className={`prd-seg prd-seg-${counted ? 3 : 2}`} role="tablist" aria-label={title}>
+          {(counted ? (['details', 'stock', 'sales'] as const) : (['details', 'sales'] as const)).map((p) => (
             <button key={p} type="button" role="tab" aria-selected={part === p} className={part === p ? 'is-on' : ''} onClick={() => setPart(p)}>
               {t(`part.${p}`)}
             </button>
@@ -270,7 +275,7 @@ export function ProductSheet({
         </div>
       ) : null}
 
-      {part === 'stock' && product && sizeCount > 0 ? (
+      {counted && part === 'stock' && product && sizeCount > 0 ? (
         // The count of a product with sizes lives on each size; the style has no count of its own to move.
         <div className="sheet-body">
           <p className="sheet-foot prd-sizes-note">{ts('stockOnSizes')}</p>
@@ -281,7 +286,7 @@ export function ProductSheet({
           ) : null}
           <MoveSizesEntry product={product} onChanged={onSaved} />
         </div>
-      ) : part === 'stock' && product ? (
+      ) : counted && part === 'stock' && product ? (
         <StockPanel product={product} onChanged={onSaved} />
       ) : part === 'sales' && product ? (
         <SalesPanel product={product} />
@@ -428,8 +433,8 @@ export function ProductSheet({
               <div className="sheet-foot">{t('costHint')}</div>
               <GstInPrice priceMinor={Math.round(rupees * 100)} rateBp={gstRateBp} />
 
-              <div className={!product ? 'prd-field-grid-2' : 'prd-field-stack'}>
-                {!product ? (
+              <div className={!product && counted ? 'prd-field-grid-2' : 'prd-field-stack'}>
+                {!product && counted ? (
                   <div className="prd-field">
                     <label className="prd-field-label" htmlFor="prd-stock">
                       {t('stock')}
@@ -446,24 +451,26 @@ export function ProductSheet({
                     />
                   </div>
                 ) : null}
-                <div className="prd-field">
-                  <label className="prd-field-label" htmlFor="prd-low">
-                    {t('lowAt')}
-                  </label>
-                  <input
-                    id="prd-low"
-                    className="prd-input"
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    step={1}
-                    value={lowAt}
-                    placeholder={t('lowAtOff')}
-                    onChange={(e) => setLowAt(e.target.value)}
-                  />
-                </div>
+                {counted ? (
+                  <div className="prd-field">
+                    <label className="prd-field-label" htmlFor="prd-low">
+                      {t('lowAt')}
+                    </label>
+                    <input
+                      id="prd-low"
+                      className="prd-input"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      step={1}
+                      value={lowAt}
+                      placeholder={t('lowAtOff')}
+                      onChange={(e) => setLowAt(e.target.value)}
+                    />
+                  </div>
+                ) : null}
               </div>
-              <div className="sheet-foot">{product ? t('lowAtHint') : t('stockHint')}</div>
+              {counted ? <div className="sheet-foot">{product ? t('lowAtHint') : t('stockHint')}</div> : null}
 
               {/* Jira GRW-598 — only while sizes are switched on, and only for a product that exists: its own page. */}
               {product && sizesOn ? (

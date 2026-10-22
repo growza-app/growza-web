@@ -74,7 +74,8 @@ describe('the sell page takes the queued scans', () => {
   });
 
   it('works out a whole run before applying any of it', () => {
-    expect(flow).toContain('planScans(codes, products, productCountOf, lines.length, MAX_LINES)');
+    // `counted` — a kitchen has no shelf, so a scan there is never refused for stock (only a full bill, or an unknown code).
+    expect(flow).toContain('planScans(codes, products, productCountOf, lines.length, MAX_LINES, counted)');
   });
 });
 
@@ -101,7 +102,7 @@ describe('the product sheet on a narrow phone', () => {
   });
 
   it('says "No product by that name" for products, not "No service"', () => {
-    expect(read('../components/ServiceSheet.tsx')).toContain("t('desk.noProductMatch')");
+    expect(read('../components/ServiceSheet.tsx')).toContain("t(counted ? 'desk.noProductMatch' : 'desk.noDishMatch')");
     expect(read('../appointments/new/DeskServiceGrid.tsx')).toContain("t('desk.noProductMatch')");
   });
 });

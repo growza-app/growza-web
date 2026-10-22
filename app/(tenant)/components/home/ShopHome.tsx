@@ -373,8 +373,8 @@ export function ShopHome({
                 DESKTOP COMMAND CENTER (4-row Salon-style layout from 861px up)
                ===================================================================== */}
             <div className="hm-desk-v3 hm-desktop shp-desk-v3">
-              {/* ROW 1 — 4 Rich Salon-Style KPI Cards */}
-              <div className="hm-v3-kpis">
+              {/* ROW 1 — four rich KPI cards; three where there is no shelf (a kitchen), which drops Stock worth. */}
+              <div className={`hm-v3-kpis${areas.stock ? '' : ' hm-v3-kpis-3'}`}>
                 {/* 1. Takings / Billed Revenue */}
                 {money && data.today.takingsMinor !== undefined ? (
                   <section className="hm-v3-kpi hm-v3-kpi-dark">
@@ -590,7 +590,8 @@ export function ShopHome({
                   </div>
                 </a>
 
-                {/* 4. Stock Worth & Shelf Health */}
+                {/* 4. Stock Worth & Shelf Health — a count, so a kitchen has none of it. */}
+                {!areas.stock ? null : (
                 <a
                   className="hm-v3-kpi hm-v3-kpi-link hm-v3-kpi-purple"
                   href={canReports && can('/stock/report') ? '/stock/report' : `/stock${stockBranch}`}
@@ -643,6 +644,7 @@ export function ShopHome({
                     </span>
                   </div>
                 </a>
+                )}
               </div>
 
               {/* ROW 2 — Sales Trend Chart + Where Money Came From + Quick Actions */}
@@ -785,8 +787,8 @@ export function ShopHome({
                 </section>
               </div>
 
-              {/* ROW 3 — 3 Operational Attention & Top-Seller Cards */}
-              <div className="hm-v3-bot">
+              {/* ROW 3 — three attention cards; two where there is no shelf (a kitchen), which drops the stock one. */}
+              <div className={`hm-v3-bot${areas.stock ? '' : ' hm-v3-bot-2'}`}>
                 {/* 1. Orders needing attention */}
                 <section className="hm-v3-card hm-v3-services-card hm-v3-desk-attention shp-orders-att">
                   <div className="hm-v3-card-head">
@@ -858,7 +860,8 @@ export function ShopHome({
                   )}
                 </section>
 
-                {/* 2. Stock needing attention */}
+                {/* 2. Stock needing attention — a count, so a kitchen has none of it. */}
+                {!areas.stock ? null : (
                 <section className="hm-v3-card hm-v3-products-card hm-v3-prod-attention">
                   <div className="hm-v3-card-head">
                     <h2>
@@ -928,6 +931,7 @@ export function ShopHome({
                     </ul>
                   )}
                 </section>
+                )}
 
                 {/* 3. What sells (Top selling sizes) */}
                 <section className="hm-v3-card hm-v3-staff-card">
@@ -1088,7 +1092,8 @@ export function ShopHome({
                     <span className="shp-kpi-sub">{data.toSend > 0 ? s.needsDispatchSub : s.allSentSub}</span>
                   </div>
                 )}
-                {can('/stock') ? (
+                {/* A low-stock figure is a count, so a kitchen gets three cards here rather than a fourth reading "—". */}
+                {!areas.stock ? null : can('/stock') ? (
                   <a
                     className={`shp-kpi-card shp-kpi-link ${data.running.total > 0 ? 'shp-kpi-alert' : ''}`}
                     href={`/stock${stockBranch}`}
@@ -1176,8 +1181,9 @@ export function ShopHome({
                     <div className="shp-empty">
                       <strong>{s.noOrdersTitle}</strong>
                       {/* A shelf nobody has counted has nothing to sell, so the first step is the count (below), not the till. */}
-                      <span>{data.running.counted ? s.noOrdersBody : s.countFirst}</span>
-                      {data.running.counted && can('/orders/new') ? (
+                      {/* A shelf nobody counted cannot sell; a kitchen has no shelf, so its first step IS the till. */}
+                      <span>{data.running.counted || !areas.stock ? s.noOrdersBody : s.countFirst}</span>
+                      {(data.running.counted || !areas.stock) && can('/orders/new') ? (
                         <a className="btn btn-primary shp-cta" href="/orders/new">
                           {s.takeOrder}
                         </a>
@@ -1193,6 +1199,8 @@ export function ShopHome({
                 so the filter could hold none of the rows just listed: a uniform with ten sizes at one each counts as
                 twenty in stock. The shelf holds every one of them. A per-size low filter is Jira GRW-591's.
               */}
+              {/* Running out — a count, and a kitchen has none. */}
+              {!areas.stock ? null : (
               <Card title={s.runningOut} action={data.running.total > data.running.items.length && can('/stock') ? <a className="shp-link" href={`/stock${stockBranch}`}>{s.viewAll(data.running.total)}</a> : undefined}>
                 {!data.running.counted ? (
                   <div className="shp-empty">
@@ -1228,6 +1236,7 @@ export function ShopHome({
                   </>
                 )}
               </Card>
+              )}
             </div>
           </>
         )}

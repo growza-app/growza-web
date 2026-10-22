@@ -12,7 +12,7 @@ import type { MemberRole } from '@growza-app/shared';
  * What a business is offered is a function of three facts the API sends (`capabilities.bookings`, `capabilities.services`,
  * `surface`), asked at the one chokepoint every nav surface and every screen guard already asks.
  */
-const SHOP: Areas = { bookings: false, services: false, shop: true };
+const SHOP: Areas = { bookings: false, services: false, shop: true, stock: true };
 const tenant = path.resolve(import.meta.dirname, '..');
 const read = (p: string) => readFileSync(path.join(tenant, p), 'utf8');
 
@@ -31,7 +31,7 @@ describe('areasOf — what `/me` says, with the nav erring open', () => {
 
   it('only an explicit false takes a diary area away, and only `shop` adds the shop’s', () => {
     expect(areasOf({ capabilities: { bookings: false, services: false }, surface: 'shop' })).toEqual(SHOP);
-    expect(areasOf({ capabilities: { bookings: false }, surface: 'diary' })).toEqual({ bookings: false, services: true, shop: false });
+    expect(areasOf({ capabilities: { bookings: false }, surface: 'diary' })).toEqual({ bookings: false, services: true, shop: false, stock: true });
     expect(areasOf({ capabilities: { bookings: true, services: true }, surface: 'diary' })).toEqual(DIARY_AREAS);
   });
 
@@ -112,7 +112,7 @@ describe('boundaries — unknown vertical, a limited role, a clinic that keeps i
   });
 
   it('a business that takes no bookings but still sells services keeps its menu (the areas are independent)', () => {
-    const noDiary: Areas = { bookings: false, services: true, shop: false };
+    const noDiary: Areas = { bookings: false, services: true, shop: false, stock: true };
     expect(canSee('/services', 'owner', undefined, true, noDiary)).toBe(true);
     expect(canSee('/appointments', 'owner', undefined, true, noDiary)).toBe(false);
   });

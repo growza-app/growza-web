@@ -8,7 +8,7 @@ import { formatMoney, intlLocale } from '../../lib/format';
 import AppLink from '../../../shared/AppLink';
 import { Pagination } from '../../components/Pagination';
 import { useBranch } from '../../components/BranchProvider';
-import { useSession } from '../../components/SessionProvider';
+import { useAreas, useSession } from '../../components/SessionProvider';
 
 const PAGE_SIZE = 20;
 const RANGES: readonly SellersRange[] = ['last_3_months', 'last_7_days', 'this_month', 'last_month', 'this_year'];
@@ -34,6 +34,8 @@ export function SellersClient({ timezone }: { timezone: string }) {
   const ready = branchContext.ready || branches.length <= 1;
 
   const [view, setView] = useState<View>('best');
+  // A kitchen keeps no count, so there is no unsold stock to list: Top sellers is the whole screen there.
+  const counted = useAreas().stock;
   const [range, setRange] = useState<SellersRange>('last_3_months');
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [categoryId, setCategoryId] = useState('');
@@ -127,8 +129,9 @@ export function SellersClient({ timezone }: { timezone: string }) {
   return (
     <div className="srp srp-sellers">
       <div className="srp-toolbar">
+        {/* "Unsold stock" is what is still ON the shelf and did not sell — a count, so a kitchen has only Top sellers. */}
         <div className="pf-chips" role="group" aria-label={t('viewGroup')}>
-          {(['best', 'dead'] as const).map((v) => (
+          {(counted ? (['best', 'dead'] as const) : (['best'] as const)).map((v) => (
             <button key={v} type="button" className={`pf-chip ${view === v ? 'pf-chip-on' : ''}`} aria-pressed={view === v} onClick={() => setView(v)}>
               {v === 'best' ? t('viewBest') : t('viewDead')}
             </button>

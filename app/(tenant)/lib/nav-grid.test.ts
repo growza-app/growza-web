@@ -8,7 +8,7 @@ import { areasOf, DIARY_AREAS, type PageGrid } from './areas';
  * Jira GRW-74 — the dashboard offers a member who holds a role what the role grants, and nothing is asked of the fixed role they work like.
  * This is the courtesy half (the API is the boundary, `grid-enforcement.integration.test.ts`): a link a role cannot open is absent, not greyed.
  */
-const SHOP = { ...DIARY_AREAS, bookings: false, services: false, shop: true };
+const SHOP = { ...DIARY_AREAS, bookings: false, services: false, shop: true, stock: true };
 const withGrid = (pages: PageGrid) => ({ ...SHOP, pages });
 const DESK: PageGrid = { bookings: 'manage', clients: 'manage', services: 'manage', attendance: 'view' };
 const STAFF: PageGrid = { attendance: 'view' };
@@ -200,7 +200,7 @@ describe('Jira GRW-76 review — the screen-level rule reaches every control, an
 describe('Jira GRW-76 — a shop has an Attendance screen, so its Staff role has something to open', () => {
   const read = (p: string) => readFileSync(join(__dirname, '..', p), 'utf8');
   it('Attendance and the check-in setting are open to a shop by address, and the Staff role (Attendance See) is offered Attendance', () => {
-    const SHOPAREAS = { bookings: false, services: false, shop: true };
+    const SHOPAREAS = { bookings: false, services: false, shop: true, stock: true };
     expect(canSee('/attendance', 'owner', undefined, true, SHOPAREAS)).toBe(true);
     expect(canSee('/attendance', 'staff', undefined, true, { ...SHOPAREAS, pages: { attendance: 'view' } })).toBe(true);
     expect(canSee('/attendance', 'staff', undefined, true, { ...SHOPAREAS, pages: { clients: 'manage' } })).toBe(false);

@@ -3,6 +3,8 @@
 import { useLocale, useTranslations } from 'next-intl';
 import AppLink from '../../shared/AppLink';
 import { homeCopy } from '../lib/home-copy';
+import { areaAllows } from '../lib/areas';
+import { useAreas } from './SessionProvider';
 
 export type RetailReportTab = 'hub' | 'channels' | 'sellers' | 'report' | 'order' | 'returns' | 'refunds';
 
@@ -23,7 +25,10 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
   const tReturns = useTranslations('orders.returns');
   const tRefunds = useTranslations('orders.refunds');
 
-  const tabs: Array<{ key: RetailReportTab; href: string; label: string }> = [
+  // A report the business does not have is not a tab: a kitchen keeps no count, so the stock report and the reorder
+  // list are absent here, exactly as they are in the nav — the guard would bounce either one Home.
+  const areas = useAreas();
+  const allTabs: Array<{ key: RetailReportTab; href: string; label: string }> = [
     { key: 'channels', href: '/stock/channels', label: tChannels('title') },
     { key: 'sellers', href: '/stock/sellers', label: tSellers('title') },
     { key: 'report', href: '/stock/report', label: tReport('title') },
@@ -31,6 +36,7 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
     { key: 'returns', href: '/orders/returns', label: tReturns('title') },
     { key: 'refunds', href: '/orders/refunds', label: tRefunds('title') },
   ];
+  const tabs = allTabs.filter((tab) => areaAllows(tab.href, areas));
 
   return (
     <nav className="srp-nav" aria-label={tReport('title')}>
@@ -57,6 +63,7 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
  */
 export function RetailReportsHub() {
   const locale = useLocale();
+  const areas = useAreas();
   const viewAll = homeCopy(locale === 'hi' ? 'hi' : 'en').shop.viewOrders;
   const tChannels = useTranslations('products.channels');
   const tSellers = useTranslations('products.sellers');
@@ -96,7 +103,7 @@ export function RetailReportsHub() {
       title: tRefunds('title'),
       sub: tRefunds('total'),
     },
-  ];
+  ].filter((c) => areaAllows(c.href, areas));
 
   return (
     <div className="srp srp-stock">

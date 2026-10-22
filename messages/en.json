@@ -2823,7 +2823,11 @@
       "removeLine": "Remove {name}",
       "sizesCount": "{count} sizes",
       "subtotalUnits": "Subtotal ({count})",
-      "scanWhilePaying": "Not added — this bill is being paid for. Go back to add another item."
+      "scanWhilePaying": "Not added — this bill is being paid for. Go back to add another item.",
+      "menu": "Menu",
+      "searchDishes": "Search {count} dishes",
+      "noDishes": "Nothing on the menu yet. Add dishes on the Menu screen.",
+      "noDishMatch": "No dish by that name."
     },
     "sellTitle": "Sell product",
     "pickProduct": "Select a product",
@@ -2875,7 +2879,8 @@
       "changed": "A size changed while you were selling. The sizes shown are the ones on the shelf now.",
       "sizeMore": "One more {name}",
       "sizeLess": "One less {name}"
-    }
+    },
+    "allDishes": "All dishes"
   },
   "help": {
     "title": "Help",
@@ -3199,7 +3204,9 @@
       "products": "Products",
       "worth": "Stock value",
       "low": "Running low",
-      "out": "Out of stock"
+      "out": "Out of stock",
+      "onMenu": "On the menu",
+      "offMenu": "Taken off"
     },
     "filters": {
       "label": "Show",
@@ -3213,7 +3220,8 @@
         "inStock": "Nothing is in stock right now.",
         "low": "Nothing is running low.",
         "out": "Nothing is out of stock.",
-        "retired": "Nothing has been taken off the till."
+        "retired": "Nothing has been taken off the till.",
+        "uncounted": "Nothing on the menu yet."
       }
     },
     "ledger": {
@@ -3453,7 +3461,8 @@
       "leaveBody": "The fixes you made to this list will be lost.",
       "leaveStay": "Keep reviewing",
       "leaveGo": "Leave",
-      "footer": "Have your products in a spreadsheet? Load them in one go."
+      "footer": "Have your products in a spreadsheet? Load them in one go.",
+      "footerUncounted": "Have your menu in a spreadsheet? Load it in one go."
     },
     "sizes": {
       "title": "Sizes",
@@ -3745,7 +3754,12 @@
       "same": "Same as the period before",
       "weekOf": "Week of {date}",
       "refunded": "{count, plural, one {Refunded once: {amount}} other {Refunded # times: {amount}}}"
-    }
+    },
+    "uncountedSubtitle": "Everything on your menu, with its price. A dish is made when it is ordered, so there is no count to keep.",
+    "searchUncounted": "Search the menu",
+    "nounUncounted": "dishes",
+    "sellUncounted": "Sell a dish",
+    "addUncounted": "Add a dish"
   },
   "pos": {
     "modes": "POS",

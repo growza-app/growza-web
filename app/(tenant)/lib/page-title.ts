@@ -39,7 +39,7 @@ export function screenTitle(title: string): Metadata {
 }
 
 /** The nouns a vertical renames. Keys match `ctx.labels`. */
-type LabelKey = 'appointments' | 'providers' | 'services' | 'customers';
+type LabelKey = 'appointments' | 'providers' | 'services' | 'customers' | 'stock' | 'orders';
 
 /**
  * A screen the vertical names for us.
