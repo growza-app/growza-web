@@ -130,4 +130,30 @@ describe('the POS screen', () => {
     expect(client).toContain('opened.current');
     expect(client).toContain('setBills(null)');
   });
+
+  it('supports toggleable full-screen POS terminal mode with keyboard shortcuts and rich bill drawer', () => {
+    const payFlow = src('../appointments/new/PayFlow.tsx');
+    const deskGrid = src('../appointments/new/DeskServiceGrid.tsx');
+    const posBill = src('../appointments/new/PosBillRows.tsx');
+    const css = src('../styles/99-pos.css');
+    expect(client).toContain('pos-shell is-fullscreen');
+    expect(client).toContain('pos-fs-bar');
+    expect(client).toContain('enterFullScreen');
+    expect(client).toContain('exitFullScreen');
+    expect(client).toContain('requestFullscreen');
+    expect(client).toContain("document.addEventListener('fullscreenchange', onFsChange)");
+    expect(deskGrid).toContain("e.key === 'F2'");
+    expect(deskGrid).toContain('pf-tile-inbill');
+    expect(payFlow).toContain("e.key === 'F4'");
+    expect(payFlow).toContain("e.key === 'F8'");
+    expect(payFlow).toContain("e.key === 'F9'");
+    expect(payFlow).toContain('<PosBillRows');
+    expect(payFlow).toContain('pos-charge-cta');
+    expect(payFlow).toContain('completePosSale');
+    expect(payFlow).toContain("t('desk.needPaymentMode')");
+    expect(payFlow).toContain('if (productsOnly) {\n      nextCustomer();\n      return;\n    }');
+    expect(posBill).toContain('pos-bill-stepper');
+    expect(css).toContain('.pos-shell.is-fullscreen');
+    expect(css).toContain('.pos-cat-pills-wrap');
+  });
 });

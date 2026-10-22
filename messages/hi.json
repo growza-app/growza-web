@@ -2815,7 +2815,18 @@
       "scanMiss": "कोड {code} वाला कोई सामान नहीं मिला। बोतल जाँचें या नाम से खोजें।",
       "scanNoStock": "{name} का और स्टॉक नहीं है।",
       "scanFull": "बिल भर गया है। पहले भुगतान लें, फिर नया बिल शुरू करें।",
-      "scanShelfFailed": "सामान की सूची नहीं खुली, इसलिए स्कैन नहीं जुड़ा। पेज रीफ़्रेश करके फिर स्कैन करें।"
+      "scanShelfFailed": "सामान की सूची नहीं खुली, इसलिए स्कैन नहीं जुड़ा। पेज रीफ़्रेश करके फिर स्कैन करें।",
+      "inBillBadge": "बिल में {count}",
+      "clearBill": "सब हटाएँ",
+      "holdBill": "रोकें",
+      "heldBills": "रोके गए बिल ({count})",
+      "resumeBill": "वापस लाएँ",
+      "discardHeld": "हटाएँ",
+      "chargeNow": "बिक्री पूरी करें · {amount}",
+      "needPaymentMode": "भुगतान का तरीका चुनें",
+      "removeLine": "{name} हटाएँ",
+      "sizesCount": "{count} साइज़",
+      "subtotalUnits": "उप-योग ({count})"
     },
     "sellTitle": "सामान बेचें",
     "pickProduct": "एक सामान चुनें",
@@ -3700,7 +3711,15 @@
     "return": "वापसी",
     "loadingBills": "बिल लोड हो रहे हैं…",
     "billsFailed": "बिल लोड नहीं हुए। इंटरनेट देखें और फिर से कोशिश करें।",
-    "tryAgain": "फिर से कोशिश करें"
+    "tryAgain": "फिर से कोशिश करें",
+    "fullScreen": "पूरी स्क्रीन",
+    "exitFullScreen": "पूरी स्क्रीन बंद करें",
+    "orders": "ऑर्डर",
+    "shortcutSearch": "खोजें / स्कैन",
+    "shortcutClient": "ग्राहक",
+    "shortcutCharge": "बिक्री पूरी करें",
+    "shortcutHold": "बिल रोकें",
+    "shortcutExit": "बाहर"
   },
   "sales": {
     "scanUnknown": "कोड {code} वाला कोई सामान नहीं मिला। बोतल जाँचें।",

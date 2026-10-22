@@ -26,6 +26,7 @@ import { ClientSheet } from './ClientSheet';
 import { Keypad } from './Keypad';
 import { ServiceSheet } from '../../components/ServiceSheet';
 import { BillCard, BillRows, lineKey, lineMinor, type BillLine as Line } from './BillCard';
+import { PosBillRows } from './PosBillRows';
 import { DeskServiceGrid } from './DeskServiceGrid';
 import { DeskUnpaid } from './DeskUnpaid';
 import { useBarcodeScan } from '../../lib/barcode-scan';
@@ -252,6 +253,8 @@ export function PayFlow({
   const [splitKeypad, setSplitKeypad] = useState<PaymentMode | null>(null);
   const [splitAmount, setSplitAmount] = useState('');
   const [firstWay, setFirstWay] = useState<{ mode: PaymentMode; minor: number } | null>(null);
+  const [selectedMode, setSelectedMode] = useState<PaymentMode | null>(null);
+  const [badMode, setBadMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** What Next asked for and did not get. Null until Next is tapped; each half clears itself once answered. */
   const [missing, setMissing] = useState<{ client: boolean; service: boolean } | null>(null);
@@ -625,6 +628,43 @@ export function PayFlow({
     });
     setOverride(null);
   };
+  const clearLine = (key: string) => {
+    setLines((prev) => prev.filter((l) => (l.pkg ? l.pkg.key !== key : lineKey(l) !== key)));
+    setOverride(null);
+  };
+  const clearBill = () => {
+    setLines([]);
+    setOverride(null);
+    setSelectedMode(null);
+    setBadMode(false);
+  };
+  const [heldBills, setHeldBills] = useState<Array<{ id: string; client: Client; lines: Line[]; override: number | null }>>([]);
+  const holdBill = () => {
+    if (lines.length === 0) return;
+    setHeldBills((prev) => [{ id: newAttemptKey(), client, lines, override }, ...prev]);
+    setLines([]);
+    setOverride(null);
+    setClient({ kind: 'none' });
+    setSelectedMode(null);
+    setBadMode(false);
+    setMissing(null);
+    setError(null);
+  };
+  const resumeHeldBill = (id: string) => {
+    const found = heldBills.find((h) => h.id === id);
+    if (!found) return;
+    setHeldBills((prev) => prev.filter((h) => h.id !== id));
+    setClient(found.client);
+    setLines(found.lines);
+    setOverride(found.override);
+    setSelectedMode(null);
+    setBadMode(false);
+    setMissing(null);
+    setError(null);
+  };
+  const discardHeldBill = (id: string) => {
+    setHeldBills((prev) => prev.filter((h) => h.id !== id));
+  };
   /*
    * Owner, 2026-10-14 — a price typed for one row. A single's row may be two of the same service, so the typed
    * figure is the row's total, spread over its lines by list price; a package row's figure is the package price.
@@ -716,6 +756,8 @@ export function PayFlow({
     setSplitKeypad(null);
     setSplitAmount('');
     setFirstWay(null);
+    setSelectedMode(null);
+    setBadMode(false);
   };
 
   /** ② — the tile that was tapped is the payment; this is the save. */
@@ -944,6 +986,8 @@ export function PayFlow({
     setError(null);
     setFirstWay(null);
     setSplitting(false);
+    setSelectedMode(null);
+    setBadMode(false);
   }, [location, token]);
 
   const canGoOn = hasService && (token !== undefined || client.kind !== 'none');
@@ -985,7 +1029,45 @@ export function PayFlow({
   const badClient = Boolean(missing?.client) && !token && client.kind === 'none';
   const badService = Boolean(missing?.service) && !hasService;
 
-  const leave = () => router.push(backTo ?? '/');
+  const completePosSale = () => {
+    if (saving !== null || lines.length === 0) return;
+    const ok = readyToPay();
+    if (!selectedMode) {
+      setBadMode(true);
+      return;
+    }
+    setBadMode(false);
+    if (!ok) return;
+    if (selectedMode === 'upi' && paymentQr && !firstWay) setStep('qr');
+    else void pay(selectedMode);
+  };
+
+  useEffect(() => {
+    if (!productsOnly || !wide || step !== 'what') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'F4') {
+        e.preventDefault();
+        setWhoOpen('find');
+      } else if (e.key === 'F8') {
+        e.preventDefault();
+        completePosSale();
+      } else if (e.key === 'F9') {
+        e.preventDefault();
+        if (lines.length > 0) holdBill();
+        else if (heldBills.length > 0) resumeHeldBill(heldBills[0]!.id);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
+  const leave = () => {
+    if (productsOnly) {
+      nextCustomer();
+      return;
+    }
+    router.push(backTo ?? '/');
+  };
   const payToken = token ? `&token=${encodeURIComponent(token.id)}${token.locationId ? `&location=${encodeURIComponent(token.locationId)}` : ''}` : '';
   const simpleForm = `/appointments/new?purpose=payment${payToken}`;
   const fullForm = `/appointments/new?purpose=payment&full=1${payToken}`;
@@ -1094,7 +1176,8 @@ export function PayFlow({
         <button
           key={mode}
           type="button"
-          className={`pf-pay-tile pf-pay-${mode}`}
+          className={`pf-pay-tile pf-pay-${mode}${productsOnly && wide && selectedMode === mode ? ' is-selected' : ''}`}
+          aria-pressed={productsOnly && wide && !splitting ? selectedMode === mode : undefined}
           /*
            * UPI is the one tile that may not be the save.
            *
@@ -1104,6 +1187,11 @@ export function PayFlow({
            * is in the hand, and the done screen's Fix a mistake is the way back.
            */
           onClick={() => {
+            if (productsOnly && wide && !splitting) {
+              setSelectedMode((prev) => (prev === mode ? null : mode));
+              setBadMode(false);
+              return;
+            }
             if (wide && !readyToPay()) return;
             // "Which way first?" — this tile is the first way; the keypad asks how much came that way.
             if (splitting && !firstWay) {
@@ -1353,16 +1441,53 @@ export function PayFlow({
               productsOnly={productsOnly}
               productCategory={productCategory}
               searchSeed={searchSeed}
+              categoryBar={
+                productsOnly ? (
+                  <DeskProductCategories
+                    picked={productCategory}
+                    categories={productCategories}
+                    allCount={products.length}
+                    noneCount={noneCount}
+                    onPick={setProductCategory}
+                  />
+                ) : null
+              }
             />
           )}
           <aside className="pf-wide-right">
+            {productsOnly ? <div className="pos-bill-client">{who}</div> : null}
+            {productsOnly && heldBills.length > 0 ? (
+              <div className="pos-held-strip" role="status">
+                <span className="pos-held-label">{t('desk.heldBills', { count: heldBills.length })}</span>
+                <div className="pos-held-actions">
+                  <button type="button" className="pos-bill-action pos-bill-resume" onClick={() => resumeHeldBill(heldBills[0]!.id)}>
+                    {t('desk.resumeBill')} <kbd>F9</kbd>
+                  </button>
+                  <button type="button" className="pos-bill-action pos-bill-discard" onClick={() => discardHeldBill(heldBills[0]!.id)}>
+                    {t('desk.discardHeld')}
+                  </button>
+                </div>
+              </div>
+            ) : null}
             {/* Owner, 2026-10-14 — the lines scroll inside the panel on a long bill, so a link opens the whole bill as a card. */}
             <div className="pf-wide-bill-head">
               <h2 className="pf-wide-h">{t('billTitle')}</h2>
               {lines.length > 0 ? (
-                <button type="button" className="pf-wide-link" onClick={() => setBillOpen(true)}>
-                  {t('onBill', { count: lines.length })} · {t('viewDetails')}
-                </button>
+                <div className="pos-bill-head-actions">
+                  {productsOnly ? (
+                    <>
+                      <button type="button" className="pos-bill-action pos-bill-hold" onClick={holdBill}>
+                        {t('desk.holdBill')} <kbd>F9</kbd>
+                      </button>
+                      <button type="button" className="pos-bill-action pos-bill-clear" onClick={clearBill}>
+                        {t('desk.clearBill')}
+                      </button>
+                    </>
+                  ) : null}
+                  <button type="button" className="pf-wide-link" onClick={() => setBillOpen(true)}>
+                    {t('onBill', { count: lines.length })} · {t('viewDetails')}
+                  </button>
+                </div>
               ) : null}
             </div>
             {productsOnly ? (
@@ -1378,6 +1503,18 @@ export function PayFlow({
             ) : null}
             {lines.length === 0 ? (
               <p className="pf-wide-empty">{productsOnly ? t('desk.emptyProductBill') : t('desk.emptyBill')}</p>
+            ) : productsOnly ? (
+              <PosBillRows
+                lines={lines}
+                products={products}
+                listMinor={listMinor}
+                totalMinor={totalMinor}
+                full={full}
+                onLess={oneLess}
+                onMore={addProduct}
+                onClearLine={clearLine}
+                onEditPrice={openRowKeypad}
+              />
             ) : (
               <BillRows lines={lines} listMinor={listMinor} totalMinor={totalMinor} onLess={oneLess} onPrice={openRowKeypad} />
             )}
@@ -1409,11 +1546,37 @@ export function PayFlow({
               </div>
             ) : null}
             <h2 className="pf-wide-h">{t('howTitle')}</h2>
+            {badMode && !selectedMode ? (
+              <p className="pf-miss" role="alert">
+                {t('desk.needPaymentMode')}
+              </p>
+            ) : null}
             {payTiles}
+            {productsOnly ? (
+              <button
+                type="button"
+                className="btn pos-charge-cta"
+                disabled={saving !== null || lines.length === 0}
+                onClick={completePosSale}
+              >
+                <span>{t('desk.chargeNow', { amount: money(totalMinor) })}</span>
+                <kbd className="pos-charge-kbd">F8</kbd>
+              </button>
+            ) : null}
             {splitKeypadEl}
             {dialog}
           </aside>
         </div>
+        {sizing !== null && products.some((p) => p.id === sizing) ? (
+          <SizeSheet
+            product={products.find((p) => p.id === sizing)!}
+            onBill={(variantId) => productCountOf(sizing, variantId)}
+            full={full}
+            onAdd={(size) => addProduct(products.find((p) => p.id === sizing)!, size)}
+            onLess={(size) => oneLess(productLineKey(sizing, size.id))}
+            onClose={() => setSizing(null)}
+          />
+        ) : null}
         {whoOpen ? (
           <ClientSheet
             location={location}
