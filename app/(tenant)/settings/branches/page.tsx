@@ -1,3 +1,4 @@
+import { guardScreen } from '../../lib/screen-guard';
 import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
 import { LoadErrorBanner } from '../../components/LoadErrorBanner';
@@ -7,6 +8,8 @@ import { BranchesForm } from './BranchesForm';
 export const dynamic = 'force-dynamic';
 
 export default async function BranchesPage() {
+  // Jira GRW-74 — a role holder is never offered this screen (the API makes it the owner's alone): by its address it goes Home.
+  await guardScreen('/settings/branches');
   let data, settings, me;
   try {
     // Jira GRW-385 — the business's number, for each branch's booking link; the demo, for "Try it".

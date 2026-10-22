@@ -437,6 +437,10 @@
         "label": "Log out",
         "sub": "Sign out from this device"
       },
+      "roles": {
+        "label": "Roles",
+        "sub": "What each person on your team can open"
+      },
       "channels": {
         "label": "Online selling",
         "sub": "Which shop Flipkart and Amazon sell from"
@@ -4321,5 +4325,81 @@
       "not_allowed": "it does not allow this now",
       "other": "it gave no reason we can show"
     }
+  },
+  "settingsRoles": {
+    "title": "Roles",
+    "intro": "A role says what a person on your team can open. Make one, then give it to someone.",
+    "todayNote": "The pages you tick decide what the person can open. “Works like” says what kind of login they have.",
+    "builtIn": "Built in",
+    "people": "{count, plural, =0 {Nobody has this role} one {# person} other {# people}}",
+    "ownDays": "Own days only",
+    "empty": "No roles yet. Make one to give to your team.",
+    "newRole": "New role",
+    "startFrom": "Start from",
+    "blank": "Blank — no access",
+    "name": "Role name",
+    "namePlaceholder": "For example, Cashier",
+    "worksLike": "Works like",
+    "worksLikeHint": "What kind of login this is. A stylist-type login can never open more than a stylist can, whatever you tick.",
+    "worksLikeOptions": {
+      "none": "Not set",
+      "manager": "Manager",
+      "receptionist": "Desk",
+      "staff": "Staff"
+    },
+    "ownSchedule": "Sees only their own days",
+    "ownScheduleHint": "Not the whole team's.",
+    "pagesTitle": "What this role can open",
+    "pages": {
+      "bookings": "Orders",
+      "clients": "Clients",
+      "services": "Stock",
+      "offers": "Offers",
+      "staff": "Staff",
+      "attendance": "Attendance",
+      "reports": "Reports",
+      "settings": "Settings"
+    },
+    "levels": {
+      "none": "None",
+      "view": "See",
+      "manage": "Change"
+    },
+    "save": "Save role",
+    "saving": "Saving…",
+    "back": "Back to roles",
+    "remove": "Remove role",
+    "removeTitle": "Remove {name}?",
+    "removeBody": "This role will be deleted. This cannot be undone.",
+    "removeConfirm": "Remove",
+    "removeBlocked": "Still held by {names}{more, plural, =0 {} other { and # more}}. Give them another role first.",
+    "errors": {
+      "saveFailed": "Could not save the role. Try again.",
+      "removeFailed": "Could not remove the role. Try again.",
+      "nameNeeded": "Give the role a name",
+      "roleFailed": "Could not change the role. Try again.",
+      "peopleFailed": "Could not load your team. Reload the page to try again.",
+      "addStaffFailed": "Could not add them. Try again."
+    },
+    "peopleTitle": "People",
+    "peopleEmpty": "Nobody else is on your team yet.",
+    "unnamed": "Someone",
+    "noRole": "No role",
+    "roleFor": "Role for {name}",
+    "invite": "Invite someone",
+    "chooseRole": "Choose a role",
+    "chooseRoleFirst": "Choose a role first.",
+    "makeRoleFirst": "Make a role first, then invite someone into it.",
+    "whichPerson": "Which staff member is this for?",
+    "addStaff": "Add a staff member",
+    "addStaffSub": "They are added to your staff. Then invite them to sign in, with a role.",
+    "staffName": "Name",
+    "staffPhone": "Mobile number",
+    "staffBranch": "Which branch?",
+    "chooseBranch": "Choose a branch",
+    "chooseBranchFirst": "Choose a branch first.",
+    "addStaffSubmit": "Add",
+    "closeSheet": "Close",
+    "staffNeedsRoster": "To invite someone as Staff, add them as a staff member first."
   }
 }

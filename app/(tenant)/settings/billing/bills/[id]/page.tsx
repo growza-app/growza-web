@@ -1,3 +1,4 @@
+import { guardScreen } from '../../../../lib/screen-guard';
 import { screenTitle } from '../../../../lib/page-title';
 import { formatMoney } from '../../../../lib/format';
 import { api, ApiError } from '../../../../lib/api';
@@ -14,6 +15,8 @@ export const dynamic = 'force-dynamic';
  * stored invoice's plan figures. Prints on one page.
  */
 export default async function BillPage({ params }: { params: Promise<{ id: string }> }) {
+  // Jira GRW-74 — a role holder is never offered this screen (the API makes it the owner's alone): by its address it goes Home.
+  await guardScreen('/settings/billing');
   const lang = await serverLang();
   const t = billingCopy(lang);
   const { id } = await params;

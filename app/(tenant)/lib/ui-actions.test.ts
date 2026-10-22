@@ -165,7 +165,7 @@ describe('2b — the controls, each behind its own action', () => {
     const linking = sources().filter((f) => /href="\/search"/.test(readFileSync(f, 'utf8')));
     expect(linking.map((f) => path.relative(tenantDir, f))).toEqual([path.join('components', 'HeaderSearch.tsx')]);
     // Jira GRW-556 — and the business being live: it finds clients and bookings, which a business being set up has none of.
-    expect(read('components/HeaderSearch.tsx')).toMatch(/const mayUseSearch = useMayUse\('search'\);[\s\S]*if \(!mayUseSearch \|\| !live\) return null;/);
+    expect(read('components/HeaderSearch.tsx')).toMatch(/const mayUseSearch = useMayUse\('search'\) && [^;]*;[\s\S]*if \(!mayUseSearch \|\| !live\) return null;/);
   });
 
   const GATES: Array<[file: string, gate: RegExp]> = [
@@ -222,6 +222,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/service-categories/reorder',
   ],
   '/offers': ['POST /api/v1/offers', 'PATCH /api/v1/offers/:id', 'DELETE /api/v1/offers/:id'],
+  // Jira GRW-72 — a shop's roles: owner-only, closed whole by `guardScreen` and again by the handler.
+  '/settings/roles': ['POST /api/v1/roles', 'PATCH /api/v1/roles/:id', 'DELETE /api/v1/roles/:id'],
   /*
    * Jira GRW-438 — the same three writes, now reachable from two owner-only screens. Both are closed whole by
    * `guardScreen`, so listing them twice is the honest answer rather than a sign one of them is ungated.

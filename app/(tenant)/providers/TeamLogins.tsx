@@ -1,8 +1,8 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
-import { api, ApiError, type CreatedInvite, type PendingInvite, type ProviderOverviewRow, type TeamMember } from '../lib/api';
+import { useRef, useState, type ReactNode } from 'react';
+import { api, ApiError, type CreatedInvite, type PendingInvite, type ProviderOverviewRow, type ShopRole, type TeamMember } from '../lib/api';
 import { PersonPhoto } from '../components/PersonPhoto';
 import { PhoneField } from '../components/PhoneField';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -29,7 +29,48 @@ import { waDigits } from '../components/BookingSheet';
  */
 
 /** What an invite is being created FOR: a stylist (whose calendar it is) or the front desk. */
-export type InviteTarget = { role: 'staff' | 'receptionist'; providerId?: string };
+export type InviteTarget = { role: 'staff' | 'receptionist' | 'manager'; providerId?: string };
+
+/**
+ * The bottom sheet both the invite form and "Add a staff member" sit in: backdrop, grab handle, title, close button, Escape and focus kept in.
+ * `dismiss` is what a tap outside or Escape does; absent while the sheet must not be dismissed (a request in flight, or a link shown once).
+ */
+export function InviteShell({
+  title,
+  sub,
+  closeLabel,
+  onClose,
+  dismiss,
+  children,
+}: {
+  title: string;
+  sub: string;
+  closeLabel: string;
+  onClose: () => void;
+  dismiss?: () => void;
+  children: ReactNode;
+}) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialog(dialogRef, { onClose: dismiss });
+  return (
+    <>
+      <div className="sheet-backdrop sheet-backdrop-fade" onClick={dismiss} />
+      <div className="sheet sheet-rise invite-sheet" role="dialog" aria-modal="true" aria-label={title} ref={dialogRef}>
+        <div className="sheet-grab" />
+        <div className="sheet-head">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="sheet-title">{title}</div>
+            <div className="sheet-sub">{sub}</div>
+          </div>
+          <button type="button" className="wiz-close" onClick={onClose} aria-label={closeLabel}>
+            <IconClose />
+          </button>
+        </div>
+        <div className="invite-body">{children}</div>
+      </div>
+    </>
+  );
+}
 
 export function daysLeft(iso: string): number {
   return Math.ceil((Date.parse(iso) - Date.now()) / 86_400_000);
@@ -46,10 +87,16 @@ export function InviteSheet({
   target,
   providers,
   branches,
+  roles,
   onClose,
   onCreated,
 }: {
   target: InviteTarget;
+  /**
+   * Jira GRW-73 — a business that has roles invites INTO one: the role decides which kind of login this is, so the kind picker is
+   * replaced by the roles that can be given. Absent for a diary business, which invites as it always did.
+   */
+  roles?: ShopRole[];
   /** Every stylist who could hold this login — the whole business's, not the branch being looked at. */
   providers: ProviderOverviewRow[];
   branches: Array<{ id: string; name: string }>;
@@ -59,9 +106,10 @@ export function InviteSheet({
 }) {
   const t = useTranslations('settingsTeam');
   const checkPhone = usePhoneProblem();
-  const dialogRef = useRef<HTMLDivElement>(null);
   const multiBranch = branches.length > 1;
-  const [role, setRole] = useState<'staff' | 'receptionist'>(target.role);
+  const tRoles = useTranslations('settingsRoles');
+  const [role, setRole] = useState<'staff' | 'receptionist' | 'manager'>(target.role);
+  const [tenantRoleId, setTenantRoleId] = useState('');
   const [providerId, setProviderId] = useState(target.providerId ?? '');
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
@@ -73,7 +121,7 @@ export function InviteSheet({
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   // Only once the link is gone: closing on the backdrop while it is on screen would lose it for good.
-  useDialog(dialogRef, { onClose: busy || created ? undefined : onClose });
+  const dismiss = busy || created ? undefined : onClose;
 
   const linkFor = (token: string) => `${typeof window === 'undefined' ? '' : window.location.origin}/join/${token}`;
 
@@ -100,6 +148,10 @@ export function InviteSheet({
       setError(t('errors.chooseBranchFirst'));
       return;
     }
+    if (roles && !tenantRoleId) {
+      setError(tRoles('chooseRoleFirst'));
+      return;
+    }
     const e164 = toStoredPhone(phone)!;
 
     setBusy(true);
@@ -114,7 +166,8 @@ export function InviteSheet({
         role,
         providerId: role === 'staff' ? providerId : null,
         locationId: role === 'receptionist' && multiBranch ? locationId : null,
-        name: role === 'receptionist' && name.trim() ? name.trim() : null,
+        name: (role === 'receptionist' || role === 'manager') && name.trim() ? name.trim() : null,
+        ...(roles ? { tenantRoleId } : {}),
       });
       // The normalised number, not what was typed — it is the one the invite is actually for, and the one they
       // will sign in with.
@@ -132,21 +185,13 @@ export function InviteSheet({
   const stylistName = providers.find((p) => p.id === providerId)?.displayName ?? null;
 
   return (
-    <>
-      <div className="sheet-backdrop sheet-backdrop-fade" onClick={busy || created ? undefined : onClose} />
-      <div className="sheet sheet-rise invite-sheet" role="dialog" aria-modal="true" aria-label={t('inviteTitle')} ref={dialogRef}>
-        <div className="sheet-grab" />
-        <div className="sheet-head">
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="sheet-title">{t('inviteTitle')}</div>
-            <div className="sheet-sub">{stylistName && role === 'staff' ? t('inviteSubFor', { name: stylistName }) : t('intro')}</div>
-          </div>
-          <button type="button" className="wiz-close" onClick={onClose} aria-label={t('closeInvite')}>
-            <IconClose />
-          </button>
-        </div>
-
-        <div className="invite-body">
+    <InviteShell
+      title={t('inviteTitle')}
+      sub={stylistName && role === 'staff' ? t('inviteSubFor', { name: stylistName }) : t('intro')}
+      closeLabel={t('closeInvite')}
+      onClose={onClose}
+      dismiss={dismiss}
+    >
           {created ? (
             <div className="banner banner-info">
               <strong>{created.resent ? t('newLink') : t('ready')}</strong>
@@ -201,28 +246,58 @@ export function InviteSheet({
             </div>
           ) : (
             <>
-              <div className="field">
-                <label htmlFor="invite-role">{t('role')}</label>
-                <select
-                  id="invite-role"
-                  value={role}
-                  disabled={busy}
-                  onChange={(e) => {
-                    setRole(e.target.value as typeof role);
-                    setError(null);
-                  }}
-                >
-                  <option value="staff">{t('roleStaff')}</option>
-                  <option value="receptionist">{t('roleReceptionist')}</option>
-                </select>
-              </div>
+              {roles ? (
+                <div className="field">
+                  <label htmlFor="invite-role">{t('role')}</label>
+                  {roles.length === 0 ? (
+                    <p className="field-hint" style={{ margin: 0 }}>
+                      {tRoles('makeRoleFirst')}
+                    </p>
+                  ) : (
+                    <select
+                      id="invite-role"
+                      value={tenantRoleId}
+                      disabled={busy}
+                      onChange={(e) => {
+                        const picked = roles.find((r) => r.id === e.target.value);
+                        setTenantRoleId(e.target.value);
+                        if (picked?.worksLike === 'receptionist' || picked?.worksLike === 'staff' || picked?.worksLike === 'manager') setRole(picked.worksLike);
+                        setError(null);
+                      }}
+                    >
+                      <option value="">{tRoles('chooseRole')}</option>
+                      {roles.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              ) : (
+                <div className="field">
+                  <label htmlFor="invite-role">{t('role')}</label>
+                  <select
+                    id="invite-role"
+                    value={role}
+                    disabled={busy}
+                    onChange={(e) => {
+                      setRole(e.target.value as typeof role);
+                      setError(null);
+                    }}
+                  >
+                    <option value="staff">{t('roleStaff')}</option>
+                    <option value="receptionist">{t('roleReceptionist')}</option>
+                  </select>
+                </div>
+              )}
 
               {/* Only for a stylist. A receptionist runs the whole diary, so a "whose calendar?" question has no
                   answer for them and the API drops the field anyway. */}
               {role === 'staff' && (
                 <div className="field">
                   <label htmlFor="invite-provider">
-                    {t('whoseCalendar')}
+                    {roles ? tRoles('whichPerson') : t('whoseCalendar')}
                     <span className="field-required" aria-hidden="true"> *</span>
                   </label>
                   {providers.length === 0 ? (
@@ -251,7 +326,7 @@ export function InviteSheet({
                 </div>
               )}
 
-              {role === 'receptionist' && (
+              {(role === 'receptionist' || role === 'manager') && (
                 <div className="field">
                   <label htmlFor="invite-name">
                     {t('theirName')}
@@ -309,20 +384,18 @@ export function InviteSheet({
 
               <button
                 className="btn invite-submit"
-                disabled={busy || !phone.trim() || (role === 'receptionist' && !name.trim())}
+                disabled={busy || !phone.trim() || ((role === 'receptionist' || role === 'manager') && !name.trim()) || (!!roles && !tenantRoleId)}
                 onClick={() => void send()}
               >
                 {busy ? t('creating') : t('createInvite')}
               </button>
               {/* Why the button would refuse, said before it is pressed rather than after. */}
-              {!busy && phone.trim() && role === 'receptionist' && !name.trim() && <p className="field-hint">{t('errors.nameNeeded')}</p>}
+              {!busy && phone.trim() && (role === 'receptionist' || role === 'manager') && !name.trim() && <p className="field-hint">{t('errors.nameNeeded')}</p>}
               {!busy && phone.trim() && role === 'staff' && !providerId && <p className="field-hint">{t('errors.chooseStylistFirst')}</p>}
               {!busy && phone.trim() && role === 'receptionist' && multiBranch && !locationId && <p className="field-hint">{t('errors.chooseBranchFirst')}</p>}
             </>
           )}
-        </div>
-      </div>
-    </>
+    </InviteShell>
   );
 }
 
@@ -456,6 +529,7 @@ export function WaitingGroup({
               <div className="login-name">{invite.name ?? invite.phone}</div>
               <div className="login-sub">
                 <span>
+                  {invite.roleName ? `${invite.roleName} · ` : ''}
                   {expiryLabel(invite.expiresAt)}
                   {branchName(invite.locationId) ? ` · ${branchName(invite.locationId)}` : ''}
                 </span>

@@ -202,6 +202,37 @@ import type {
  * "no active conversation" meaning restart, vs. a generic failure meaning
  * just show an error) can check `.status` instead of string-matching text.
  */
+/** Jira GRW-72 — the pages a role grants, and how far. Mirrors `platform/permissions.ts` in the API. */
+export type RolePageKey = 'bookings' | 'clients' | 'services' | 'offers' | 'staff' | 'attendance' | 'reports' | 'settings';
+export type RoleLevel = 'none' | 'view' | 'manage';
+export type RoleWorksLike = 'manager' | 'receptionist' | 'staff';
+export interface ShopRole {
+  id: string;
+  name: string;
+  memberCount: number;
+  scheduleScoped: boolean;
+  isBuiltin: boolean;
+  worksLike: RoleWorksLike | null;
+  permissions: Record<RolePageKey, RoleLevel>;
+}
+export interface RoleTemplate {
+  name: string;
+  works_like: RoleWorksLike;
+  schedule_scoped?: boolean;
+  grants: Partial<Record<RolePageKey, RoleLevel>>;
+}
+export interface RolesPayload {
+  pages: Array<{ key: RolePageKey; label: string }>;
+  roles: ShopRole[];
+  templates: RoleTemplate[];
+}
+export interface RoleBody {
+  name: string;
+  scheduleScoped: boolean;
+  worksLike: RoleWorksLike | null;
+  permissions: Record<RolePageKey, RoleLevel>;
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -479,6 +510,9 @@ export interface PendingInvite {
   /** The name the owner typed when inviting; null for an invite sent before names, or a stylist's. */
   name?: string | null;
   role: string;
+  /** Jira GRW-73 — the role the owner named, by id and name; absent or null when none was. */
+  tenantRoleId?: string | null;
+  roleName?: string | null;
   providerId: string | null;
   /** Jira GRW-237 — the branch a receptionist is invited to; null for one branch or a stylist. */
   locationId?: string | null;
@@ -493,6 +527,9 @@ export interface TeamMember {
   phone: string | null;
   /** Their own name, when they (or the invite) set one. */
   name?: string | null;
+  /** Jira GRW-73 — the role they hold, by id and name; null for everyone from before roles, and for the owner. */
+  tenantRoleId?: string | null;
+  roleName?: string | null;
   providerId: string | null;
   providerName: string | null;
   locationId: string | null;
@@ -833,12 +870,19 @@ export const api = {
   /** Jira GRW-310 — an opaque string that changes when anything the live screens show changes. A timeout in the browser, so a stalled request cannot hold the poll shut. */
   liveVersion: (timeoutMs?: number) =>
     get<{ version: string }>('/api/v1/live-version', timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined).then((r) => r.version),
+  /** Jira GRW-72 — Settings › Roles (a shop's owner). */
+  roles: () => get<RolesPayload>('/api/v1/roles'),
+  createRole: (body: RoleBody) => post<ShopRole>('/api/v1/roles', body),
+  updateRole: (id: string, body: Partial<RoleBody>) => patch<ShopRole>(`/api/v1/roles/${encodeURIComponent(id)}`, body),
+  deleteRole: (id: string) => del<void>(`/api/v1/roles/${encodeURIComponent(id)}`),
   teamInvites: () => get<{ invites: PendingInvite[] }>('/api/v1/team/invites'),
-  createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist'; locationId?: string | null; name?: string | null }) =>
+  createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist' | 'manager'; locationId?: string | null; name?: string | null; tenantRoleId?: string }) =>
     post<CreatedInvite>('/api/v1/team/invites', body),
   teamMembers: () => get<{ members: TeamMember[] }>('/api/v1/team/members'),
   setTeamMemberBranch: (userId: string, locationId: string) =>
     patch<{ ok: true }>(`/api/v1/team/members/${userId}`, { locationId }),
+  /** Jira GRW-73 — give a member a role, or take theirs away with null. */
+  setTeamMemberRole: (userId: string, tenantRoleId: string | null) => patch<{ ok: true }>(`/api/v1/team/members/${userId}`, { tenantRoleId }),
   revokeTeamInvite: (id: string) => del<{ ok: true }>(`/api/v1/team/invites/${id}`),
   /** Jira GRW-470 — take a receptionist's or stylist's login away from this business. */
   removeTeamMember: (userId: string) => del<{ ok: true }>(`/api/v1/team/members/${userId}`),

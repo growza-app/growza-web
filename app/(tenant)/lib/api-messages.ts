@@ -15,6 +15,25 @@
  * run the test.
  */
 export const API_MESSAGES_HI: Record<string, string> = {
+  // ---- Jira GRW-72 — roles
+  'This business has no roles to set up.': 'इस बिज़नेस में सेट करने के लिए कोई रोल नहीं है।',
+  'Only the owner can change roles.': 'रोल सिर्फ़ मालिक बदल सकते हैं।',
+  'There is no such role.': 'ऐसा कोई रोल नहीं है।',
+  'There is no such page.': 'ऐसा कोई पेज नहीं है।',
+  'Give the role a name': 'रोल को एक नाम दें',
+  'Keep the name under 60 letters': 'नाम 60 अक्षरों से कम रखें',
+  'Check the role': 'रोल जाँचें',
+  'Change the branch and the role one at a time.': 'शाखा और रोल एक-एक करके बदलें।',
+  'You already have a role with this name.': 'इस नाम का रोल पहले से है।',
+  'Some people still have this role. Give them another role first.': 'कुछ लोगों के पास अभी यह रोल है। पहले उन्हें कोई दूसरा रोल दें।',
+  'Some people have this role, so what it works like cannot change.': 'कुछ लोगों के पास यह रोल है, इसलिए इसकी तरह काम करना बदला नहीं जा सकता।',
+  'Choose one of your roles.': 'अपने रोल में से कोई चुनें।',
+  'This role cannot be given to someone yet. Choose another.': 'यह रोल अभी किसी को दिया नहीं जा सकता। कोई दूसरा चुनें।',
+  'Choose a role.': 'एक रोल चुनें।',
+  'Your role does not let you do this.': 'आपका रोल आपको यह करने नहीं देता।',
+  'Only the owner can give the manager role.': 'मैनेजर का रोल सिर्फ़ मालिक दे सकते हैं।',
+  'The owner does not need a role.': 'मालिक को रोल की ज़रूरत नहीं।',
+  'This role works differently from what this person does now. Invite them again with the new role.': 'यह रोल इस व्यक्ति के मौजूदा काम से अलग तरह से चलता है। उन्हें नए रोल के साथ फिर से न्योता भेजें।',
   // ---- Owner, 2026-10-18 — loading products from a spreadsheet
   'Upload a .xlsx or .csv file.': '.xlsx या .csv फ़ाइल अपलोड करें।',
   'That file has no rows in it.': 'उस फ़ाइल में कोई पंक्ति नहीं है।',

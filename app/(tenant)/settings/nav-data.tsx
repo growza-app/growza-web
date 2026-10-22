@@ -32,6 +32,7 @@ export type SettingsRowKey =
   | 'appearance'
   | 'privacy'
   | 'reportAccess'
+  | 'roles'
   | 'channels'
   | 'gst'
   | 'billing'
@@ -65,6 +66,12 @@ interface SettingsRowBase {
    * absent for it, never an empty form. `areas.ts` closes the same two addresses to it.
    */
   diaryOnly?: boolean;
+  /**
+   * Jira GRW-72 — listed only for a shop, and only for its owner. A salon keeps its fixed roles and is shown nothing about
+   * this; the API answers 404 to it all the same, so a typed address is not a way in.
+   */
+  shopOwnerOnly?: boolean;
+
   /**
    * Jira GRW-641 — listed only for a shop. Which branch Flipkart and Amazon sell from means nothing to a business with a diary, which has
    * no marketplaces: absent for it, never a screen that answers 404.
@@ -128,7 +135,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       { href: '/settings/booking', key: 'bookingSettings', diaryOnly: true, icon: IconCalendarPlus },
       { href: '/settings/notifications', key: 'notifications', icon: IconBell, whatsappOnly: true },
       // Jira GRW-563 — where this branch is, for a stylist's "I'm in" from her phone.
-      { href: '/settings/check-in', key: 'checkIn', diaryOnly: true, icon: IconMapPin },
+      { href: '/settings/check-in', key: 'checkIn', icon: IconMapPin },
       /*
        * Jira GRW-582 — the details that turn a receipt into a tax invoice.
        *
@@ -150,6 +157,8 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       // The QR the till shows a customer. Live-day: see `liveOnly` above.
       { href: '/settings/payments', key: 'payments', icon: IconPayUpi, liveOnly: true },
       { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
+      // Jira GRW-72 — what each role on a shop's team can open.
+      { href: '/settings/roles', key: 'roles', icon: IconLock, shopOwnerOnly: true },
       // Jira GRW-641 — which shop's shelves the marketplaces sell from.
       { href: '/settings/channels', key: 'channels', icon: IconShop, shopOnly: true },
       // Jira GRW-243 — what the owner pays Growza, each branch, the next bill and past bills.
