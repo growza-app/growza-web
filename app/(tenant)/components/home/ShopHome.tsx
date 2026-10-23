@@ -86,7 +86,8 @@ export function ShopHome({
   const [data, setData] = useState<ShopHomeData | null>(initial);
   const [failed, setFailed] = useState(initial === null);
   const [loading, setLoading] = useState(false);
-  const [period, setPeriod] = useState<ShopPeriod>('last_3_months');
+  const [period, setPeriod] = useState<ShopPeriod>('last_7_days');
+  const isKitchen = !areas.stock;
 
   // Desktop command-center supplemental state
   const [channelData, setChannelData] = useState<ByChannelPage | null>(null);
@@ -260,11 +261,19 @@ export function ShopHome({
       api
         .bestSellers({ ...w, location: branch ?? undefined, pageSize: 1 })
         .then((res) => {
-          if (mine === phoneReqId.current) setPhoneSellers(res);
+          if (mine === phoneReqId.current && !isKitchen) setPhoneSellers(res);
         })
         .catch(() => {
           if (mine === phoneReqId.current) setPhoneSellers(null);
         });
+      if (isKitchen) {
+        api
+          .bestSellers({ ...w, location: branch ?? undefined, pageSize: 4 })
+          .then((res) => {
+            if (mine === phoneReqId.current) setPhoneSellers(res);
+          })
+          .catch(() => {});
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phone, phonePeriod, branch, canPhoneRange, timezone, phoneRetry]);
@@ -338,10 +347,35 @@ export function ShopHome({
     }
   };
 
+  const formatDateTime = (iso: string) => {
+    try {
+      return new Intl.DateTimeFormat(lang === 'hi' ? 'hi-IN' : 'en-IN', {
+        day: 'numeric',
+        month: 'short',
+        hour: 'numeric',
+        minute: '2-digit',
+        ...(timezone ? { timeZone: timezone } : {}),
+      }).format(new Date(iso));
+    } catch {
+      return formatShortDate(iso);
+    }
+  };
+
   // Build SVG polyline + bar chart from channelData.trend
   const trendChart = useMemo(() => {
     const raw = channelData?.trend ?? [];
-    if (raw.length === 0) return { ticks: [] as string[], points: [], polyPoints: '', maxMinor: 1 };
+    if (raw.length === 0) {
+      return {
+        ticks: [] as string[],
+        points: [],
+        polyPoints: '',
+        areaPoints: '',
+        maxMinor: 1,
+        totalMinor: 0,
+        dailyAvgMinor: 0,
+        peakDay: null as { dateShort: string; revenueMinor: number } | null,
+      };
+    }
     const buckets = raw.slice(-7).map((b) => {
       const revenueMinor = Object.values(b.billedMinor).reduce((sum, v) => sum + Number(v || 0), 0);
       const parsed = Date.parse(`${b.startISO.slice(0, 10)}T12:00:00Z`);
@@ -354,11 +388,15 @@ export function ShopHome({
         : b.label;
       return { key: b.startISO, revenueMinor, dateShort };
     });
+    const totalMinor = buckets.reduce((acc, b) => acc + b.revenueMinor, 0);
+    const dailyAvgMinor = buckets.length > 0 ? Math.round(totalMinor / buckets.length) : 0;
     const maxMinor = Math.max(10000, ...buckets.map((b) => b.revenueMinor));
     let peakIdx = 0;
     buckets.forEach((b, i) => {
       if (b.revenueMinor >= (buckets[peakIdx]?.revenueMinor ?? 0)) peakIdx = i;
     });
+    const peakBucket = buckets[peakIdx];
+    const peakDay = peakBucket && peakBucket.revenueMinor > 0 ? { dateShort: peakBucket.dateShort, revenueMinor: peakBucket.revenueMinor } : null;
     const fmtTick = (minor: number) => {
       const r = Math.round(minor / 100);
       if (r >= 1000) return `₹${(r / 1000).toFixed(r % 1000 === 0 ? 0 : 1)}k`;
@@ -369,13 +407,16 @@ export function ShopHome({
     const gapPct = 2.0;
     const colPct = (100 - gapPct * Math.max(0, n - 1)) / n;
     const points = buckets.map((d, idx) => {
-      const pct = d.revenueMinor > 0 ? Math.min(94, Math.max(8, Math.round((d.revenueMinor / maxMinor) * 100))) : 4;
+      const pct = d.revenueMinor > 0 ? Math.min(92, Math.max(10, Math.round((d.revenueMinor / maxMinor) * 100))) : 0;
       const x = idx * (colPct + gapPct) + colPct / 2;
       const y = 100 - pct;
       return { ...d, pct, x, y, isPeak: idx === peakIdx && d.revenueMinor > 0 };
     });
     const polyPoints = points.map((pt) => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ');
-    return { ticks, points, polyPoints, maxMinor };
+    const firstX = points[0]?.x.toFixed(1) ?? '0';
+    const lastX = points[points.length - 1]?.x.toFixed(1) ?? '100';
+    const areaPoints = points.length > 1 ? `${firstX},100 ${polyPoints} ${lastX},100` : '';
+    return { ticks, points, polyPoints, areaPoints, maxMinor, totalMinor, dailyAvgMinor, peakDay };
   }, [channelData, lang]);
 
   const sparkBars = useMemo(() => {
@@ -384,15 +425,15 @@ export function ShopHome({
     const max = Math.max(1, ...pts.map((p) => p.revenueMinor));
     return pts.map((p, idx) => ({
       key: p.key,
-      pct: p.revenueMinor > 0 ? Math.max(18, Math.round((p.revenueMinor / max) * 100)) : 12,
-      isPeak: idx === pts.length - 1 || p.isPeak,
+      pct: p.revenueMinor > 0 ? Math.max(22, Math.round((p.revenueMinor / max) * 100)) : 6,
+      isPeak: (idx === pts.length - 1 && p.revenueMinor > 0) || p.isPeak,
     }));
   }, [trendChart]);
 
   const channelBreakdown = useMemo(() => {
     const byKey = new Map((channelData?.channels ?? []).map((c) => [c.channel, c]));
     const totalBilled = Math.max(1, Number(channelData?.totals.billedMinor ?? 0));
-    return (['counter', 'flipkart', 'amazon'] as const).map((key) => {
+    const all = (['counter', 'flipkart', 'amazon'] as const).map((key) => {
       const row = byKey.get(key);
       const billed = Number(row?.billedMinor ?? 0);
       const orders = row?.orders ?? 0;
@@ -409,8 +450,9 @@ export function ShopHome({
         sharePct,
       };
     });
+    return isKitchen ? all.filter((ch) => ch.key === 'counter' || ch.orders > 0 || ch.billed > 0) : all;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelData, lang]);
+  }, [channelData, lang, isKitchen]);
 
   const topSeller = sellersData?.rows?.[0] ?? null;
   const totalReturnedOrders =
@@ -510,24 +552,39 @@ export function ShopHome({
           <>
             {/* Top Toolbar (Desktop Command Center period switch & quick primary actions) */}
             <div className="hm-toolbar shp-desk-toolbar">
-              {money && canReports ? (
-                <Segmented
-                  label={s.rangeLabel}
-                  value={period}
-                  options={[
-                    { value: 'last_7_days', label: s.range7d },
-                    { value: 'this_month', label: s.rangeMonth },
-                    { value: 'last_3_months', label: s.range90d },
-                  ]}
-                  onChange={(v) => setPeriod(v)}
-                />
-              ) : <div />}
+              <div className="shp-desk-toolbar-start">
+                {money && canReports ? (
+                  <Segmented
+                    label={s.rangeLabel}
+                    value={period}
+                    options={[
+                      { value: 'last_7_days', label: s.range7d },
+                      { value: 'this_month', label: s.rangeMonth },
+                      { value: 'last_3_months', label: s.range90d },
+                    ]}
+                    onChange={(v) => setPeriod(v)}
+                  />
+                ) : null}
+                {money && data.today.takingsMinor !== undefined ? (
+                  <span className="shp-live-pill">
+                    <i className="shp-live-dot" aria-hidden />
+                    <span>{s.liveTodayLabel}:</span>
+                    <strong>{rupees(data.today.takingsMinor)}</strong>
+                    <span>· {s.orderCount(data.today.orders)}</span>
+                  </span>
+                ) : null}
+              </div>
               <div className="hm-toolbar-end">
                 <div className="hm-primary-actions hm-toolbar-actions hm-desktop">
-                  {can('/orders/import') ? (
+                  {!isKitchen && can('/orders/import') ? (
                     <a href="/orders/import" className="hm-action">
                       <IconUpload />
                       <strong>{s.importOrders}</strong>
+                    </a>
+                  ) : can('/stock') ? (
+                    <a href={`/stock${stockBranch}`} className="hm-action">
+                      <IconNavStock />
+                      <strong>{t.nav.stock}</strong>
                     </a>
                   ) : null}
                   {can('/orders/new') ? (
@@ -619,6 +676,12 @@ export function ShopHome({
                           {ch.label} <b>{rupees(ch.billed)}</b>
                         </span>
                       ))}
+                      {isKitchen && channelData && channelData.totals.orders > 0 ? (
+                        <span className="hm-v3-split-item">
+                          {s.avgBillShort}{' '}
+                          <b>{rupees(Math.round(Number(channelData.totals.billedMinor) / channelData.totals.orders))}</b>
+                        </span>
+                      ) : null}
                     </div>
                   </section>
                 ) : (
@@ -643,7 +706,7 @@ export function ShopHome({
                     </div>
                     <div className="hm-v3-kpi-foot hm-v3-split-foot">
                       <span className="hm-v3-split-item">
-                        {s.toSendShort} <b>{data.toSend}</b>
+                        {isKitchen ? s.yesterday : s.toSendShort} <b>{isKitchen ? data.yesterday.orders : data.toSend}</b>
                       </span>
                     </div>
                   </section>
@@ -669,7 +732,11 @@ export function ShopHome({
                       </div>
                       <div className="hm-v3-kpi-delta-row">
                         <span className="hm-v3-kpi-sub">
-                          {data.toSend > 0 ? `${s.toSend(data.toSend)} · ${s.needsDispatchSub}` : s.allSentSub}
+                          {isKitchen
+                            ? s.ordersInPeriodSub
+                            : data.toSend > 0
+                              ? `${s.toSend(data.toSend)} · ${s.needsDispatchSub}`
+                              : s.allSentSub}
                         </span>
                       </div>
                     </div>
@@ -705,7 +772,7 @@ export function ShopHome({
                       {s.today} <b>{data.today.orders}</b>
                     </span>
                     <span className="hm-v3-split-item">
-                      {s.toSendShort} <b>{data.toSend}</b>
+                      {isKitchen ? s.yesterday : s.toSendShort} <b>{isKitchen ? data.yesterday.orders : data.toSend}</b>
                     </span>
                     <span className="hm-v3-split-item">
                       {s.returnedShort} <b>{totalReturnedOrders}</b>
@@ -713,7 +780,7 @@ export function ShopHome({
                   </div>
                 </a>
 
-                {/* 3. Units Sold & Top Seller */}
+                {/* 3. Units / Dishes Sold & Top Seller */}
                 <a
                   className="hm-v3-kpi hm-v3-kpi-link hm-v3-kpi-amber"
                   href={canReports && can('/stock/sellers') ? '/stock/sellers' : '/orders'}
@@ -722,7 +789,7 @@ export function ShopHome({
                     <span className="hm-v3-kpi-icon hm-v3-icon-amber">
                       <IconProducts />
                     </span>
-                    <span className="hm-v3-kpi-title">{s.unitsSoldTitle}</span>
+                    <span className="hm-v3-kpi-title">{isKitchen ? s.dishesSoldTitle : s.unitsSoldTitle}</span>
                   </div>
                   <div className="hm-v3-kpi-body">
                     <div className="hm-v3-kpi-main">
@@ -732,7 +799,9 @@ export function ShopHome({
                       <div className="hm-v3-kpi-delta-row">
                         <span className="hm-v3-kpi-sub">
                           {sellersData
-                            ? s.acrossSizes(rupees(Number(sellersData.totals.valueMinor)), sellersData.totals.sizes)
+                            ? isKitchen
+                              ? s.acrossDishes(rupees(Number(sellersData.totals.valueMinor)), sellersData.totals.sizes)
+                              : s.acrossSizes(rupees(Number(sellersData.totals.valueMinor)), sellersData.totals.sizes)
                             : periodLabel}
                         </span>
                       </div>
@@ -751,7 +820,7 @@ export function ShopHome({
                   </div>
                   <div className="hm-v3-kpi-foot hm-v3-prod-foot">
                     <span className="hm-v3-prod-inline">
-                      <span>{s.topSellerLabel}</span>{' '}
+                      <span>{isKitchen ? s.topDishLabel : s.topSellerLabel}</span>{' '}
                       <b>
                         {topSeller
                           ? `${topSeller.name}${topSeller.sizeLabel ? ` (${topSeller.sizeLabel})` : ''} · ${topSeller.units}`
@@ -823,7 +892,21 @@ export function ShopHome({
                 {/* 1. Sales Trend SVG Line + Bar Chart */}
                 <section className="hm-v3-card hm-v3-trend-card">
                   <div className="hm-v3-card-head">
-                    <h2>{s.salesTrendTitle}</h2>
+                    <div className="shp-trend-head-main">
+                      <h2>{s.salesTrendTitle}</h2>
+                      {trendChart.totalMinor > 0 ? (
+                        <div className="shp-trend-stats">
+                          <span>
+                            {s.dailyAvgLabel}: <strong>{rupees(trendChart.dailyAvgMinor)}</strong>
+                          </span>
+                          {trendChart.peakDay ? (
+                            <span>
+                              {s.peakDayLabel}: <strong>{trendChart.peakDay.dateShort} ({rupees(trendChart.peakDay.revenueMinor)})</strong>
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
                     <span className="hm-v3-period-pill is-static">{periodLabel}</span>
                   </div>
                   {trendChart.points.length === 0 ? (
@@ -843,6 +926,9 @@ export function ShopHome({
                           <span />
                         </div>
                         <svg className="hm-v3-trend-line-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+                          {trendChart.areaPoints ? (
+                            <polygon className="shp-trend-area" points={trendChart.areaPoints} />
+                          ) : null}
                           <polyline className="hm-v3-trend-poly" points={trendChart.polyPoints} vectorEffect="non-scaling-stroke" />
                         </svg>
                         <div
@@ -850,14 +936,16 @@ export function ShopHome({
                           style={{ gridTemplateColumns: `repeat(${trendChart.points.length}, minmax(0, 1fr))` }}
                         >
                           {trendChart.points.map((d) => (
-                            <div key={d.key} className={`hm-v3-bar-col ${d.isPeak ? 'is-peak' : ''}`}>
+                            <div key={d.key} className={`hm-v3-bar-col ${d.isPeak ? 'is-peak' : ''} ${d.revenueMinor === 0 ? 'is-zero' : ''}`}>
                               <div className="hm-v3-bar-track">
                                 {d.isPeak ? (
                                   <span className="hm-v3-bar-tip" style={{ bottom: `calc(${d.pct}% + 10px)` }}>
                                     {rupees(d.revenueMinor)}
                                   </span>
                                 ) : null}
-                                <span className="hm-v3-bar-dot" style={{ bottom: `calc(${d.pct}% - 4px)` }} aria-hidden />
+                                {d.revenueMinor > 0 ? (
+                                  <span className="hm-v3-bar-dot" style={{ bottom: `calc(${d.pct}% - 4px)` }} aria-hidden />
+                                ) : null}
                                 <span className="hm-v3-bar-fill" style={{ height: `${d.pct}%` }} />
                               </div>
                               <span className="hm-v3-bar-day">{d.dateShort}</span>
@@ -896,6 +984,32 @@ export function ShopHome({
                           </div>
                         </li>
                       ))}
+                      {isKitchen && channelBreakdown.length === 1 && channelData ? (
+                        <>
+                          <li className="shp-channel-row shp-insight-row">
+                            <div className="shp-channel-row-top">
+                              <span className="shp-insight-badge">{s.dishesSoldShort}</span>
+                              <span className="shp-channel-meta">
+                                {sellersData && channelData.totals.orders > 0
+                                  ? s.itemsPerOrder((sellersData.totals.units / channelData.totals.orders).toFixed(1))
+                                  : s.orderCount(channelData.totals.orders)}
+                              </span>
+                              <strong className="hm-v3-srv-rev">
+                                {sellersData ? sellersData.totals.units : '—'}
+                              </strong>
+                            </div>
+                          </li>
+                          <li className="shp-channel-row shp-insight-row">
+                            <div className="shp-channel-row-top">
+                              <span className="shp-insight-badge is-mint">{s.today}</span>
+                              <span className="shp-channel-meta">
+                                {s.yesterday} {rupees(data.yesterday.takingsMinor ?? 0)}
+                              </span>
+                              <strong className="hm-v3-srv-rev">{rupees(data.today.takingsMinor ?? 0)}</strong>
+                            </div>
+                          </li>
+                        </>
+                      ) : null}
                     </ul>
                   </section>
                 ) : null}
@@ -930,7 +1044,7 @@ export function ShopHome({
                         <strong>{t.nav.stock}</strong>
                       </a>
                     ) : null}
-                    {can('/orders/import') ? (
+                    {!isKitchen && can('/orders/import') ? (
                       <a className="hm-v3-qbtn is-mint" href="/orders/import">
                         <span className="hm-v3-qicon">
                           <IconUpload />
@@ -944,6 +1058,22 @@ export function ShopHome({
                           <IconNavClients />
                         </span>
                         <strong>{s.addCustomerAction}</strong>
+                      </a>
+                    ) : null}
+                    {isKitchen && canReports && can('/stock/sellers') ? (
+                      <a className="hm-v3-qbtn is-mint" href="/stock/sellers">
+                        <span className="hm-v3-qicon">
+                          <IconProducts />
+                        </span>
+                        <strong>{s.whatSellsLink}</strong>
+                      </a>
+                    ) : null}
+                    {isKitchen && canReports && can('/orders/returns') ? (
+                      <a className="hm-v3-qbtn is-blue" href="/orders/returns">
+                        <span className="hm-v3-qicon">
+                          <IconReports />
+                        </span>
+                        <strong>{s.cameBackLabel}</strong>
                       </a>
                     ) : null}
                     {canReports && can('/stock/order') ? (
@@ -964,17 +1094,25 @@ export function ShopHome({
                 <section className="hm-v3-card hm-v3-services-card hm-v3-desk-attention shp-orders-att">
                   <div className="hm-v3-card-head">
                     <h2>
-                      {s.ordersAttentionTitle}{' '}
-                      <span className="hm-v3-count">({data.toSend + totalReturnedOrders})</span>
+                      {isKitchen ? s.todaySummaryTitle : s.ordersAttentionTitle}{' '}
+                      <span className="hm-v3-count">({isKitchen ? data.today.orders + totalReturnedOrders : data.toSend + totalReturnedOrders})</span>
                     </h2>
                     {can('/orders') ? (
-                      <a className="hm-v3-head-link" href={ordersHref({ status: 'new,packed' })}>
+                      <a className="hm-v3-head-link" href={data.toSend > 0 ? ordersHref({ status: 'new,packed' }) : '/orders'}>
                         {s.viewOrders} →
                       </a>
                     ) : null}
                   </div>
                   <div className="hm-v3-prod-att-summary shp-two-chips">
-                      {can('/orders') ? (
+                      {isKitchen ? (
+                        <a
+                          className={`hm-v3-prod-att-chip is-blue ${data.today.orders === 0 ? 'is-clear' : ''}`}
+                          href="/orders"
+                        >
+                          <strong>{data.today.orders}</strong>
+                          <span>{s.ordersTodayLabel}</span>
+                        </a>
+                      ) : can('/orders') ? (
                         <a
                           className={`hm-v3-prod-att-chip is-amber ${data.toSend === 0 ? 'is-clear' : ''}`}
                           href={ordersHref({ status: 'new,packed' })}
@@ -1007,7 +1145,43 @@ export function ShopHome({
                       ) : null}
                   </div>
                   {toSendRows.length === 0 ? (
-                    <p className="hm-empty">{s.allOrdersDispatched}</p>
+                    isKitchen && recentOrders.length > 0 ? (
+                      <div className="shp-att-kitchen-body">
+                        <p className="shp-att-status-note">
+                          {totalReturnedOrders > 0 ? s.returnsRecordedSub(totalReturnedOrders) : s.noReturnsSub}
+                        </p>
+                        <ul className="hm-v3-srv-rows hm-v3-prod-att-rows">
+                          {recentOrders.slice(0, 3).map((o) => {
+                            const customerName = o.who?.name?.trim() || s.noNameCustomer;
+                            return (
+                              <li key={o.id}>
+                                <a className="hm-v3-srv-row hm-v3-prod-att-row" href={`/orders/${o.id}`}>
+                                  <Avatar name={customerName} id={o.id} size={30} />
+                                  <div className="hm-v3-srv-main">
+                                    <strong className="hm-v3-srv-name">{customerName}</strong>
+                                    <span className="hm-v3-prod-att-sub">
+                                      #{o.code.toUpperCase()} · {formatShortDate(o.soldAt)} · {s.itemCountShort(o.items)}
+                                    </span>
+                                  </div>
+                                  {o.amountMinor !== undefined ? (
+                                    <strong className="hm-v3-srv-rev">{rupees(o.amountMinor)}</strong>
+                                  ) : null}
+                                  <span className={`hm-pill hm-pill-${stateTone(o.status)}`}>{stateWord(o.status)}</span>
+                                </a>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    ) : (
+                      <p className="hm-empty">
+                        {isKitchen
+                          ? totalReturnedOrders > 0
+                            ? s.returnsRecordedSub(totalReturnedOrders)
+                            : s.noReturnsSub
+                          : s.allOrdersDispatched}
+                      </p>
+                    )
                   ) : (
                     <ul className="hm-v3-srv-rows hm-v3-prod-att-rows">
                       {toSendRows.map((o) => {
@@ -1104,7 +1278,7 @@ export function ShopHome({
                 </section>
                 )}
 
-                {/* 3. What sells (Top selling sizes) */}
+                {/* 3. What sells (Top selling sizes / dishes) */}
                 <section className="hm-v3-card hm-v3-staff-card">
                   <div className="hm-v3-card-head">
                     <h2>
@@ -1121,24 +1295,36 @@ export function ShopHome({
                     <p className="hm-empty">{s.noSalesInRange}</p>
                   ) : (
                     <ul className="hm-v3-srv-rows hm-v3-prod-att-rows">
-                      {sellersData.rows.slice(0, 5).map((item) => (
-                        <li key={item.id}>
-                          <a
-                            className="hm-v3-srv-row hm-v3-prod-att-row"
-                            href={canReports && can('/stock/sellers') ? '/stock/sellers' : `/stock${stockBranch}`}
-                          >
-                            <Avatar name={item.name} id={item.productId} size={30} />
-                            <div className="hm-v3-srv-main">
-                              <strong className="hm-v3-srv-name">
-                                {item.name}
-                                {item.sizeLabel ? ` (${item.sizeLabel})` : ''}
-                              </strong>
-                              <span className="hm-v3-prod-att-sub">{rupees(Number(item.valueMinor))}</span>
-                            </div>
-                            <span className="hm-pill hm-pill-green">{s.soldCountPill(item.units)}</span>
-                          </a>
-                        </li>
-                      ))}
+                      {(() => {
+                        const maxUnits = Math.max(1, ...sellersData.rows.slice(0, 5).map((r) => r.units));
+                        return sellersData.rows.slice(0, 5).map((item, idx) => {
+                          const share = Math.max(10, Math.round((item.units / maxUnits) * 100));
+                          return (
+                            <li key={item.id}>
+                              <a
+                                className="hm-v3-srv-row hm-v3-prod-att-row shp-seller-row"
+                                href={canReports && can('/stock/sellers') ? '/stock/sellers' : `/stock${stockBranch}`}
+                              >
+                                <span className={`hm-v3-srv-rank ${idx === 0 ? 'is-top' : ''}`}>{idx + 1}</span>
+                                <Avatar name={item.name} id={item.productId} size={30} />
+                                <div className="hm-v3-srv-main">
+                                  <div className="shp-seller-top">
+                                    <strong className="hm-v3-srv-name">
+                                      {item.name}
+                                      {item.sizeLabel ? ` (${item.sizeLabel})` : ''}
+                                    </strong>
+                                    <span className="shp-seller-val">{rupees(Number(item.valueMinor))}</span>
+                                  </div>
+                                  <div className="hm-v3-srv-bar">
+                                    <span style={{ width: `${share}%` }} />
+                                  </div>
+                                </div>
+                                <span className="hm-pill hm-pill-green">{s.soldCountPill(item.units)}</span>
+                              </a>
+                            </li>
+                          );
+                        });
+                      })()}
                     </ul>
                   )}
                 </section>
@@ -1179,7 +1365,7 @@ export function ShopHome({
                           return (
                             <tr key={o.id}>
                               <td className="hm-v3-td-time">
-                                <strong>{formatShortDate(o.soldAt)}</strong>
+                                <strong>{formatDateTime(o.soldAt)}</strong>
                               </td>
                               <td className="hm-v3-td-client">
                                 <div className="hm-v3-person">
@@ -1258,7 +1444,7 @@ export function ShopHome({
                       <span className="hm-eyebrow">{phoneFigures.kind === 'today' ? s.takings : phonePeriodWord}</span>
                       {canReports && can('/stock/channels') ? (
                         <a className="shp-hero-link" href="/stock/channels">
-                          {s.channelsLink}
+                          {s.channelsLink} →
                         </a>
                       ) : null}
                     </div>
@@ -1283,7 +1469,16 @@ export function ShopHome({
                           and reads as a screen that failed to load; the sentence reads as an answer.
                         */}
                         {phoneFigures.kind === 'range' && phoneFigures.orders === 0 && phoneFigures.takingsMinor === 0 ? (
-                          <p className="shp-hero-none">{s.noSalesYet}</p>
+                          <>
+                            <p className="shp-hero-none">{s.noSalesYet}</p>
+                            {phonePeriod === 'today' && (data.yesterday.takingsMinor ?? 0) > 0 ? (
+                              <div className="hm-hero-stats">
+                                <span>
+                                  {s.yesterday} <strong>{rupees(data.yesterday.takingsMinor ?? 0)}</strong> · {s.orderCount(data.yesterday.orders)}
+                                </span>
+                              </div>
+                            ) : null}
+                          </>
                         ) : (
                         <div className="hm-hero-stats">
                           <span>
@@ -1334,12 +1529,12 @@ export function ShopHome({
                       <div className="shp-hero-links">
                         {can('/stock/sellers') ? (
                           <a className="shp-hero-pill" href="/stock/sellers">
-                            {phoneTopSeller ? s.topSellerPill(phoneTopSeller.name) : s.whatSellsLink}
+                            {phoneTopSeller ? s.topSellerPill(phoneTopSeller.name) : s.whatSellsLink} →
                           </a>
                         ) : null}
                         {can('/stock/report') ? (
                           <a className="shp-hero-pill" href="/stock/report">
-                            {s.stockReportLink}
+                            {s.stockReportLink} →
                           </a>
                         ) : null}
                       </div>
@@ -1378,12 +1573,17 @@ export function ShopHome({
                     <>
                       <div className="shp-orders-row">
                         {/* The big number says how many; "3 orders" beside a 3 said it twice. Today is what it counts. */}
-                        <p className="shp-orders">
-                          <strong>{data.today.orders}</strong>
-                          <span>{data.today.orders === 0 ? s.noOrdersToday : s.today}</span>
-                        </p>
+                        <div className="shp-orders-summary">
+                          <p className="shp-orders">
+                            <strong>{data.today.orders}</strong>
+                            <span>{data.today.orders === 0 ? s.noOrdersToday : s.today}</span>
+                          </p>
+                          <span className="shp-orders-yesterday">
+                            {s.yesterday}: <b>{data.yesterday.orders}</b>
+                          </span>
+                        </div>
                         {can('/orders/new') ? (
-                          <a className="btn shp-cta" href="/orders/new">
+                          <a className="btn btn-primary shp-cta" href="/orders/new">
                             {s.takeOrder}
                           </a>
                         ) : null}
@@ -1432,22 +1632,28 @@ export function ShopHome({
                   }
                 >
                   <ul className="shp-recent">
-                    {recentOrders.slice(0, 4).map((o) => (
-                      <li key={o.id}>
-                        <a className="shp-recent-row" href={`/orders/${encodeURIComponent(o.id)}`}>
-                          <span className="shp-recent-main">
-                            <span className="shp-recent-code">{o.code}</span>
-                            <span className="shp-recent-meta">
-                              {channelWord(o.channel)} · {formatShortDate(o.soldAt)}
+                    {recentOrders.slice(0, 4).map((o) => {
+                      const customerName = o.who?.name?.trim() || s.noNameCustomer;
+                      return (
+                        <li key={o.id}>
+                          <a className="shp-recent-row" href={`/orders/${encodeURIComponent(o.id)}`}>
+                            <span className="shp-recent-person">
+                              <Avatar name={customerName} id={o.id} size={36} />
+                              <span className="shp-recent-main">
+                                <span className="shp-recent-name">{customerName}</span>
+                                <span className="shp-recent-meta">
+                                  <span className="shp-recent-code">#{o.code.toUpperCase()}</span> · {channelWord(o.channel)} · {formatShortDate(o.soldAt)} · {s.itemCountShort(o.items)}
+                                </span>
+                              </span>
                             </span>
-                          </span>
-                          <span className="shp-recent-end">
-                            {o.amountMinor === undefined ? null : <span className="shp-recent-amount">{rupees(o.amountMinor)}</span>}
-                            <span className={`shp-recent-state is-${stateTone(o.status)}`}>{stateWord(o.status)}</span>
-                          </span>
-                        </a>
-                      </li>
-                    ))}
+                            <span className="shp-recent-end">
+                              {o.amountMinor === undefined ? null : <span className="shp-recent-amount">{rupees(o.amountMinor)}</span>}
+                              <span className={`shp-recent-state is-${stateTone(o.status)}`}>{stateWord(o.status)}</span>
+                            </span>
+                          </a>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </Card>
               ) : null}
@@ -1458,6 +1664,45 @@ export function ShopHome({
                 so the filter could hold none of the rows just listed: a uniform with ten sizes at one each counts as
                 twenty in stock. The shelf holds every one of them. A per-size low filter is Jira GRW-591's.
               */}
+              {isKitchen && canReports && can('/stock/sellers') && (phoneSellers?.rows?.length ?? 0) > 0 ? (
+                <Card
+                  title={s.whatSellsLink}
+                  action={
+                    <a className="shp-link" href="/stock/sellers">
+                      {s.viewOrders}
+                    </a>
+                  }
+                >
+                  <ul className="shp-phone-sellers">
+                    {(() => {
+                      const rows = phoneSellers?.rows ?? [];
+                      const maxUnits = Math.max(1, ...rows.map((r) => r.units));
+                      return rows.slice(0, 4).map((item, idx) => {
+                        const share = Math.max(10, Math.round((item.units / maxUnits) * 100));
+                        return (
+                          <li key={item.id}>
+                            <a className="shp-phone-seller-row" href="/stock/sellers">
+                              <span className={`hm-v3-srv-rank ${idx === 0 ? 'is-top' : ''}`}>{idx + 1}</span>
+                              <Avatar name={item.name} id={item.productId} size={32} />
+                              <span className="shp-phone-seller-main">
+                                <span className="shp-phone-seller-top">
+                                  <strong className="shp-phone-seller-name">{item.name}</strong>
+                                  <span className="shp-seller-val">{rupees(Number(item.valueMinor))}</span>
+                                </span>
+                                <span className="hm-v3-srv-bar">
+                                  <span style={{ width: `${share}%` }} />
+                                </span>
+                              </span>
+                              <span className="shp-recent-state is-green">{s.soldCountPill(item.units)}</span>
+                            </a>
+                          </li>
+                        );
+                      });
+                    })()}
+                  </ul>
+                </Card>
+              ) : null}
+
               {/* Running out — a count, and a kitchen has none. */}
               {!areas.stock ? null : (
               <Card title={s.runningOut} action={data.running.total > data.running.items.length && can('/stock') ? <a className="shp-link" href={`/stock${stockBranch}`}>{s.viewAll(data.running.total)}</a> : undefined}>
