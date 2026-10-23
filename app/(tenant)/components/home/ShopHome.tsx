@@ -1054,63 +1054,6 @@ export function ShopHome({
                 MOBILE STACK (<861px — preserves every source pin & 344px ergonomics)
                ===================================================================== */}
             <div className="shp-mobile-stack">
-              {/* Executive KPI strip across the top of the mobile view */}
-              <div className="shp-kpi-strip">
-                {money && data.today.takingsMinor !== undefined ? (
-                  <>
-                    <div className="shp-kpi-card shp-kpi-primary">
-                      <span className="shp-kpi-label">{s.todaysTakings}</span>
-                      <strong className="shp-kpi-val">{rupees(data.today.takingsMinor)}</strong>
-                      <span className="shp-kpi-sub">{s.orderCount(data.today.orders)} · {s.today}</span>
-                    </div>
-                    <div className="shp-kpi-card">
-                      <span className="shp-kpi-label">{s.yesterdaysTakings}</span>
-                      <strong className="shp-kpi-val shp-kpi-val-muted">{rupees(data.yesterday.takingsMinor ?? 0)}</strong>
-                      <span className="shp-kpi-sub">{s.orderCount(data.yesterday.orders)} · {s.yesterday}</span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="shp-kpi-card">
-                    <span className="shp-kpi-label">{s.ordersTodayLabel}</span>
-                    <strong className="shp-kpi-val">{data.today.orders}</strong>
-                    <span className="shp-kpi-sub">{data.today.orders === 0 ? s.noOrdersToday : s.orderCount(data.today.orders)}</span>
-                  </div>
-                )}
-                {can('/orders') ? (
-                  <a
-                    className={`shp-kpi-card shp-kpi-link ${data.toSend > 0 ? 'shp-kpi-warn' : ''}`}
-                    href={data.toSend > 0 ? ordersHref({ status: 'new,packed' }) : '/orders'}
-                  >
-                    <span className="shp-kpi-label">{s.waitingToSendLabel}</span>
-                    <strong className="shp-kpi-val">{data.toSend}</strong>
-                    <span className="shp-kpi-sub">{data.toSend > 0 ? s.needsDispatchSub : s.allSentSub}</span>
-                  </a>
-                ) : (
-                  <div className={`shp-kpi-card ${data.toSend > 0 ? 'shp-kpi-warn' : ''}`}>
-                    <span className="shp-kpi-label">{s.waitingToSendLabel}</span>
-                    <strong className="shp-kpi-val">{data.toSend}</strong>
-                    <span className="shp-kpi-sub">{data.toSend > 0 ? s.needsDispatchSub : s.allSentSub}</span>
-                  </div>
-                )}
-                {/* A low-stock figure is a count, so a kitchen gets three cards here rather than a fourth reading "—". */}
-                {!areas.stock ? null : can('/stock') ? (
-                  <a
-                    className={`shp-kpi-card shp-kpi-link ${data.running.total > 0 ? 'shp-kpi-alert' : ''}`}
-                    href={`/stock${stockBranch}`}
-                  >
-                    <span className="shp-kpi-label">{s.lowStockLabel}</span>
-                    <strong className="shp-kpi-val">{data.running.counted ? data.running.total : '—'}</strong>
-                    <span className="shp-kpi-sub">{data.running.counted ? s.sizesLowSub(data.running.total) : s.notCounted}</span>
-                  </a>
-                ) : (
-                  <div className={`shp-kpi-card ${data.running.total > 0 ? 'shp-kpi-alert' : ''}`}>
-                    <span className="shp-kpi-label">{s.lowStockLabel}</span>
-                    <strong className="shp-kpi-val">{data.running.counted ? data.running.total : '—'}</strong>
-                    <span className="shp-kpi-sub">{data.running.counted ? s.sizesLowSub(data.running.total) : s.notCounted}</span>
-                  </div>
-                )}
-              </div>
-
               <div className="shp-col-stack">
                 {money && data.today.takingsMinor !== undefined ? (
                   <Card
@@ -1156,9 +1099,10 @@ export function ShopHome({
                   {data.anyOrders ? (
                     <>
                       <div className="shp-orders-row">
+                        {/* The big number says how many; "3 orders" beside a 3 said it twice. Today is what it counts. */}
                         <p className="shp-orders">
                           <strong>{data.today.orders}</strong>
-                          <span>{data.today.orders === 0 ? s.noOrdersToday : s.orderCount(data.today.orders)}</span>
+                          <span>{data.today.orders === 0 ? s.noOrdersToday : s.today}</span>
                         </p>
                         {can('/orders/new') ? (
                           <a className="btn shp-cta" href="/orders/new">
@@ -1241,7 +1185,12 @@ export function ShopHome({
           </>
         )}
 
-        {tiles.length > 0 ? <QuickTiles items={tiles} /> : null}
+
+        {tiles.length > 0 ? (
+          <Card className="hm-area-links hm-mobile shp-links" title={t.quickLinks}>
+            <QuickTiles items={tiles} />
+          </Card>
+        ) : null}
       </div>
     </>
   );

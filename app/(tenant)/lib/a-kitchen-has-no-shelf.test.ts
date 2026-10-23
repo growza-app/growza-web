@@ -122,9 +122,11 @@ describe('Home and the return sheet', () => {
   it('Home drops the Stock worth card and the stock attention card, and the rows close up', () => {
     expect(home).toMatch(/hm-v3-kpis\$\{areas\.stock \? '' : ' hm-v3-kpis-3'\}/);
     expect(home).toMatch(/hm-v3-bot\$\{areas\.stock \? '' : ' hm-v3-bot-2'\}/);
-    // Three: the desk Stock-worth KPI, the desk stock-attention card, and the phone "Running out" card.
+    // Three, unchanged: the desk Stock-worth KPI, the desk stock-attention card, and the phone
+    // "Running out" card. What went on 2026-10-23 is the phone KPI strip — its low-stock figure was
+    // a FOURTH gate (`? can('/stock') ?`), and the strip repeated the money card and this one.
     expect(home.match(/\{!areas\.stock \? null : \(/g) ?? []).toHaveLength(3);
-    expect(home).toMatch(/\{!areas\.stock \? null : can\('\/stock'\) \? \(/);
+    expect(home).not.toContain('shp-kpi-strip');
     expect(home).toMatch(/data\.running\.counted \|\| !areas\.stock \? s\.noOrdersBody : s\.countFirst/);
     const css = src('styles/83-role-home.css');
     expect(css).toMatch(/\.hm-v3-kpis-3 \{\s*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/);

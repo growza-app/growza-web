@@ -67,7 +67,11 @@ describe('AC-03 — a brand-new shop: each section says its own plain thing, and
 describe('error handling — a failed read is one plain line with a retry, and the doors stay', () => {
   it('shows the error card and keeps the quick tiles (and so the nav) usable', () => {
     expect(shop).toMatch(/failed \|\| !data \? \(\s*<Card>\s*<CardError t=\{t\} onRetry=\{\(\) => load\(branch\)\} \/>/);
-    expect(shop).toMatch(/tiles\.length > 0 \? <QuickTiles items=\{tiles\} \/> : null/);
+    // Still OUTSIDE that branch — that is the point of this test — but now with the salon's chrome
+    // around it (`hm-area-links hm-mobile`), which is what keeps its labels off the tab bar.
+    expect(shop).toMatch(/tiles\.length > 0 \? \(\s*<Card className="hm-area-links hm-mobile shp-links" title=\{t\.quickLinks\}>\s*<QuickTiles items=\{tiles\} \/>/);
+    const errorBranch = shop.indexOf('failed || !data ? (');
+    expect(shop.indexOf('<QuickTiles items={tiles} />')).toBeGreaterThan(errorBranch);
   });
 
   it('follows the branch the owner picked, and returns to every branch when they let go', () => {
