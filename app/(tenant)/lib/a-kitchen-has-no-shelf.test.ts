@@ -20,6 +20,7 @@ const home = src('components/home/ShopHome.tsx');
 const ret = src('sales/ReturnProductSheet.tsx');
 const order = src('orders/[id]/OrderClient.tsx');
 const review = src('products/ImportProductReview.tsx');
+const sheet2 = src('products/ProductSheet.tsx');
 
 const KITCHEN: Areas = { bookings: false, services: false, shop: true, stock: false };
 const SHOP: Areas = { ...KITCHEN, stock: true };
@@ -208,5 +209,18 @@ describe('a menu can be imported; a count cannot', () => {
     // No count to decide about, and no count or low-stock cell to edit.
     expect(review).toMatch(/const stockChoice = counted && hasStockToChoose\(rows\);/);
     expect(review).toMatch(/counted \? EDITABLE : EDITABLE\.filter\(\(f\) => f\.key !== 'stock' && f\.key !== 'lowStock'\)/);
+  });
+});
+
+describe('the words a count brings with it', () => {
+  it('no heading or summary says "stock" or "shelf" to a business that keeps neither', () => {
+    expect(sheet2).toMatch(/t\(counted \? 'secPricing' : 'secPricingUncounted'\)/);
+    expect(review).toMatch(/t\(counted \? 'summary' : 'summaryUncounted', \{ create:/);
+    for (const m of [en, hi] as const) {
+      expect(m.products.form.secPricingUncounted.toLowerCase()).not.toContain('stock');
+      expect(m.products.import.summaryUncounted.toLowerCase()).not.toContain('shelf');
+    }
+    expect(en.products.form.secPricingUncounted).toBe('Pricing');
+    expect(en.products.import.summaryUncounted).toContain('on your menu');
   });
 });
