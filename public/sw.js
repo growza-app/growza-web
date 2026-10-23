@@ -20,9 +20,11 @@
 // Only an OK, non-redirected response is ever stored, and every write is held
 // open with event.waitUntil so the worker cannot be stopped mid-write.
 
-// v6 — bumping this is what deletes the logged-in pages the earlier versions
+// v7 — bumping this is what deletes the logged-in pages the earlier versions
 // left on people's devices: `activate` removes every cache but the current one.
-const CACHE_VERSION = 'v6';
+// v7 also replaces the worker itself, which is how Jira GRW-647's `push` and
+// `notificationclick` listeners below reach a device that already has v6.
+const CACHE_VERSION = 'v7';
 const CACHE_NAME = `booking-dashboard-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
@@ -102,4 +104,71 @@ self.addEventListener('fetch', (event) => {
 
   // Anything else — RSC payloads, /api/*, /uploads/* — is not handled here, so
   // the browser goes to the network as if there were no worker.
+});
+
+/*
+ * Jira GRW-647 — phone alerts.
+ *
+ * Both listeners are event-driven: they cost nothing when nothing is being pushed, and they touch neither the
+ * `fetch` handler above nor the caches. A device whose owner has never turned an alert on will never fire them.
+ *
+ * The payload is written by `modules/alerts/deliver.ts` and holds no customer name and no phone number — it
+ * crosses Google's and Apple's servers to get here. `url` opens the app, which then fetches the real detail
+ * over the session's own auth.
+ */
+/** Kept beside the manifest's own entry — if one is renamed, the other must be. */
+const ICON_URL = '/icons/icon-192.efb083ff.png';
+
+self.addEventListener('push', (event) => {
+  // A push with no data, or with something that is not our JSON, is not a reason to show nothing: the browser
+  // REQUIRES a visible notification for every push (userVisibleOnly), and some browsers post their own
+  // "this site has been updated in the background" if we do not. So there is always a fallback.
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    payload = {};
+  }
+
+  const title = typeof payload.title === 'string' ? payload.title : 'Growza';
+  const body = typeof payload.body === 'string' ? payload.body : 'Something happened at your business.';
+  const url = typeof payload.url === 'string' && payload.url.startsWith('/') ? payload.url : '/';
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      // The same file the manifest names. Content-hashed, so it changes when the icon does — and it is already
+      // in this worker's cache, because `isInstallAsset` keeps /icons/.
+      icon: ICON_URL,
+      badge: ICON_URL,
+      // Same tag replaces rather than stacks: a Saturday rush leaves one line in the shade saying the latest,
+      // not forty the owner has to clear one at a time.
+      tag: typeof payload.tag === 'string' ? payload.tag : undefined,
+      data: { url },
+    }),
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = event.notification.data?.url ?? '/';
+
+  /*
+   * Focus the app if it is already open, rather than opening a second copy of it.
+   *
+   * `includeUncontrolled` matters: a tab opened before this worker took control is still the owner's app, and
+   * leaving it out would open a new window beside the one they are looking at.
+   */
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ('focus' in client) {
+          // Navigate the tab they already have, then bring it forward. `navigate` can reject (a cross-origin
+          // tab, an older browser); focusing it is still better than nothing, so the failure is swallowed.
+          return client.navigate ? client.navigate(target).catch(() => client.focus()) : client.focus();
+        }
+      }
+      return self.clients.openWindow(target);
+    }),
+  );
 });
