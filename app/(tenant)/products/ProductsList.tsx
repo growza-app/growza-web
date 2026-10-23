@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useNouns } from '../lib/use-nouns';
 import { useEffect, useMemo, useState } from 'react';
 import Link from '../../shared/AppLink';
 import { useRouter } from 'next/navigation';
@@ -183,6 +184,8 @@ export function ProductsList({
   const areas = useAreas();
   // Is there a count behind this catalogue at all? False for a kitchen, whose dishes are cooked when they are ordered.
   const counted = areas.stock;
+  // Restaurant QA 2026-10-24 — the column and the sheet name one of what is sold in the business's word: Dish, Product.
+  const nouns = useNouns();
   const tillOpen = useBusinessWritable() && canSee('/products/sell', session?.role as MemberRole | null | undefined, undefined, true, areas);
   const canStockTake =
     session?.role === null || session?.role === undefined || session?.role === 'owner' || session?.role === 'manager';
@@ -481,7 +484,7 @@ export function ProductsList({
       >
         {sortReversed ? (
           <option value={`${sort}:${sortDir}`} disabled>
-            {sort === 'sold' ? t('sort.sold') : t(`cols.${sort === 'name' ? 'product' : sort}`)} ({sortDir === 'desc' ? '↓' : '↑'})
+            {sort === 'sold' ? t('sort.sold') : t(`cols.${sort === 'name' ? 'product' : sort}`, { product: nouns.Product })} ({sortDir === 'desc' ? '↓' : '↑'})
           </option>
         ) : null}
         {(counted ? SHELF_SORTS : UNCOUNTED_SORTS).map((s) => (
@@ -549,6 +552,8 @@ export function ProductsList({
         })}
       </ul>
     );
+  // A column of dashes says nothing: the SKU column shows only when something listed here has one (a kitchen's menu rarely does).
+  const showSku = shown.some((p) => Boolean(p.sku));
   const table =
     shown.length === 0 ? (
       nothing
@@ -557,9 +562,9 @@ export function ProductsList({
         <table className="prd-table">
           <thead>
             <tr>
-              <SortableTh col="name" label={t('cols.product')} sort={sort} dir={sortDir} onSort={pickColumnSort} />
+              <SortableTh col="name" label={t('cols.product', { product: nouns.Product })} sort={sort} dir={sortDir} onSort={pickColumnSort} />
               <th>{t('cols.category')}</th>
-              <th>{t('cols.sku')}</th>
+              {showSku ? <th>{t('cols.sku')}</th> : null}
               <SortableTh col="price" label={t('cols.price')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
               <SortableTh col="cost" label={t('cols.cost')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
               {/* Where there is no count, the same column carries what IS there: how many have sold. One header, one cell. */}
@@ -610,13 +615,15 @@ export function ProductsList({
                       <span className="prd-td-muted">{t('categories.none')}</span>
                     )}
                   </td>
-                  <td>
-                    {p.sku ? (
-                      <span className="prd-sku-badge">{p.sku}</span>
-                    ) : (
-                      <span className="prd-td-muted">—</span>
-                    )}
-                  </td>
+                  {showSku ? (
+                    <td>
+                      {p.sku ? (
+                        <span className="prd-sku-badge">{p.sku}</span>
+                      ) : (
+                        <span className="prd-td-muted">—</span>
+                      )}
+                    </td>
+                  ) : null}
                   <td className="prd-td-num">{formatMoney(p.priceMinor)}</td>
                   <td className="prd-td-num prd-td-muted">
                     {p.costMinor != null ? formatMoney(p.costMinor) : '—'}
@@ -767,7 +774,7 @@ export function ProductsList({
               </div>
             </section>
             {editing ? (
-              <aside className="pf-wide-right prd-desk-right" aria-label={editing === 'new' ? t('form.titleAdd') : t('form.titleEdit')}>
+              <aside className="pf-wide-right prd-desk-right" aria-label={editing === 'new' ? t('form.titleAdd', { product: nouns.product }) : t('form.titleEdit', { product: nouns.product })}>
                 {sheet(true)}
               </aside>
             ) : null}

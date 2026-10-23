@@ -13,6 +13,7 @@ import { useAreas, useSizesOn } from '../components/SessionProvider';
 import { GstInPrice, TaxFields } from '../components/TaxFields';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { codeHolder } from '../lib/product-match';
+import { useNouns } from '../lib/use-nouns';
 import { MoveSizesEntry } from './MoveSizesEntry';
 import { StockPanel } from './StockPanel';
 import { SalesPanel } from './SalesPanel';
@@ -55,6 +56,7 @@ export function ProductSheet({
   const tp = useTranslations('products');
   const tc = useTranslations('common');
   const ts = useTranslations('products.sizes');
+  const nouns = useNouns();
   const router = useRouter();
   /** Jira GRW-598 — sizes are a switch, off for every business until it is turned on; nothing below is drawn while it is off. */
   const sizesOn = useSizesOn();
@@ -208,7 +210,7 @@ export function ProductSheet({
     }
   };
 
-  const title = product ? t('titleEdit') : t('titleAdd');
+  const title = product ? t('titleEdit', { product: nouns.product }) : t('titleAdd', { product: nouns.product });
   const sheet = (
     <div
       className={inline ? 'sheet sheet-inline prd-sheet' : 'modal sheet prd-sheet'}

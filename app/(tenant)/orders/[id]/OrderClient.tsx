@@ -16,6 +16,7 @@ import { intlLocale } from '../../lib/format';
 import { SwapSizeSheet } from './SwapSizeSheet';
 import { AttachClientSheet } from './AttachClientSheet';
 import { OrderMarketplaceLine } from './OrderMarketplaceLine';
+import { useNouns } from '../../lib/use-nouns';
 
 /**
  * Jira GRW-615 — an order's own screen.
@@ -49,6 +50,8 @@ export function OrderClient({
   const t = useTranslations('orders');
   const locale = useLocale();
   const writable = useWritable();
+  // Restaurant QA 2026-10-24 — who the order is for, in the business's word (Guest, Customer).
+  const nouns = useNouns();
   const session = useSession();
   // A kitchen keeps no count, so the API answers `restocked: false` for every return for want of a shelf: saying so
   // on the order would read as a write-off of a dish nobody wrote off.
@@ -258,7 +261,7 @@ export function OrderClient({
         ) : null}
 
         <section className="ord-d-block" aria-label={t('detail.forTitle')}>
-          <h2>{order.client ? t('detail.client') : t('buyer.title')}</h2>
+          <h2>{order.client ? t('detail.client', { customer: nouns.Customer }) : t('buyer.title')}</h2>
           {order.client ? <p className="ord-d-name">{order.client.name ?? t('list.noName')}</p> : null}
           {order.buyer ? (
             <>
@@ -395,7 +398,7 @@ export function OrderClient({
           <h2>{t('detail.historyTitle')}</h2>
           <ol className="ord-d-history">
             <li>
-              <span>{t('detail.placed', { channel: channelWord(order.channel) })}</span>
+              <span>{order.channel === 'counter' ? t('detail.placedCounter') : t('detail.placed', { channel: channelWord(order.channel) })}</span>
               <span className="ord-d-quiet">{when(order.soldAt)}</span>
             </li>
             {order.history.map((h, i) => (
@@ -404,7 +407,7 @@ export function OrderClient({
                   {h.kind === 'status_change'
                     ? t('detail.movedTo', { state: stateWord(h.to ?? '') })
                     : h.kind === 'client_attached'
-                      ? t('detail.clientAttached')
+                      ? t('detail.clientAttached', { customer: nouns.customer })
                       : h.kind === 'exchange'
                         ? t('detail.swap.history', { from: h.from ?? '', to: h.to ?? '' })
                         : t('detail.buyerErased')}

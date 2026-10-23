@@ -539,7 +539,7 @@ export const copy = {
    */
   /** The Clients page's own words. Domain nouns still come from ctx.labels. */
   clients: {
-    segmentsTitle: 'How your clients are doing',
+    segmentsTitle: 'How your {noun} are doing',
     segmentsHint: 'Tap one to see just those',
     neverVisited: (n: number, pct: number) => `${n} (${pct}%) have not been in yet, so they are in none of these`,
     /**
