@@ -3295,6 +3295,7 @@
     "categories": {
       "title": "श्रेणियाँ",
       "all": "सारा सामान",
+      "allDishes": "सारे व्यंजन",
       "none": "बिना श्रेणी",
       "searchPlaceholder": "श्रेणी खोजें",
       "clear": "साफ़ करें",

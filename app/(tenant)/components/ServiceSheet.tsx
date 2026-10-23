@@ -91,12 +91,18 @@ export function ServiceSheet({
   const productMode = kind === PRODUCTS;
   /** Owner, 2026-10-15 — sort under the search; the shelf hides what is out of stock unless asked. */
   const [sort, setSort] = useState<MenuSort>('menu');
-  const [inStockOnly, setInStockOnly] = useState(true);
+  /*
+   * Jira GRW-643 — OFF where nothing is counted. A kitchen keeps no stock (`catalog.stock_counted`),
+   * so every dish reads as 0 left; on by default, this filtered the whole menu away and the sheet
+   * answered "No dish by that name." to every search, including the name of a dish listed behind it.
+   * There is no "in stock" to filter by when nothing is counted, which is why the chip is gone too.
+   */
+  const [inStockOnly, setInStockOnly] = useState(counted);
   const [viewing, setViewing] = useState<Offer | null>(null);
   const kinds = useMemo(() => [...new Set(services.map((s) => s.categoryName).filter((c): c is string => Boolean(c)))], [services]);
   const shownProducts = useMemo(() => {
     if (!productMode) return [];
-    const pool = inStockOnly ? shelf.filter((p) => p.stock > 0 || (productCounts?.get(p.id) ?? 0) > 0) : shelf;
+    const pool = inStockOnly && counted ? shelf.filter((p) => p.stock > 0 || (productCounts?.get(p.id) ?? 0) > 0) : shelf;
     const q = term.trim();
     return q
       ? matchItems(pool.map(productMatchable), q)
@@ -106,7 +112,7 @@ export function ServiceSheet({
           (p) => p.name,
           (p) => asMinor(p.priceMinor),
         );
-  }, [shelf, productMode, term, sort, inStockOnly, productCounts]);
+  }, [shelf, productMode, term, sort, inStockOnly, counted, productCounts]);
   /** Jira GRW-574 — under Products, Enter on exactly one product's barcode or SKU picks it, as the desk till does. */
   const onSearchKey = (e: ReactKeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'Enter' || e.nativeEvent.isComposing || !productMode || !onPickProduct) return;
@@ -151,8 +157,10 @@ export function ServiceSheet({
   }, [offers, packageMode, term, services, sort]);
 
   // A tap on the dimmed area closes it, as every other sheet in the app does (`sheet-backdrop`).
-  const sheetTitle = productsOnly ? t('desk.products') : t('allServices', { count: services.length });
-  const searchLabel = productsOnly ? t('desk.searchProducts', { count: shelf.length }) : t('searchServices');
+  const sheetTitle = productsOnly ? t(counted ? 'desk.products' : 'desk.menu') : t('allServices', { count: services.length });
+  const searchLabel = productsOnly
+    ? t(counted ? 'desk.searchProducts' : 'desk.searchDishes', { count: shelf.length })
+    : t('searchServices');
   return (
     <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
       <div ref={ref} className="pf-keypad pf-client pf-menu" role="dialog" aria-modal="true" aria-label={sheetTitle} tabIndex={-1}>
@@ -188,7 +196,7 @@ export function ServiceSheet({
                 ))}
               </select>
             </label>
-            {productMode ? (
+            {productMode && counted ? (
               <button type="button" className={`pf-chip pf-filter-chip ${inStockOnly ? 'pf-chip-on' : ''}`} aria-pressed={inStockOnly} onClick={() => setInStockOnly((v) => !v)}>
                 {t('inStockOnly')}
               </button>
