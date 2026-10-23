@@ -139,3 +139,10 @@
 .psz-qty {
   position: static;
 }
+
+/* QA 2026-10-23 — a size's own price, shown only when the sizes are not all one price. */
+.psz-cell-price {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--text);
+}

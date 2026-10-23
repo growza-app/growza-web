@@ -10,6 +10,7 @@ import { Pagination } from '../components/Pagination';
 import { SearchClear } from '../components/SearchClear';
 import { useBranch } from '../components/BranchProvider';
 import { IconSearch } from '../components/icons';
+import { intlLocale } from '../lib/format';
 
 /**
  * Jira GRW-614 — the Orders list.
@@ -122,7 +123,7 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
   };
   const stateWord = (status: string): string => stateWords[status as keyof typeof stateWords] ?? t('list.unknownState');
   const when = (iso: string) =>
-    new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: timezone }).format(new Date(iso));
+    new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: timezone }).format(new Date(iso));
   const whoOf = (r: OrderListRow) => r.who?.name?.trim() || t('list.noName');
   // A channel this build has no word for is shown as the data spells it.
   const channelWord = (c: string): string => channelWords[c as keyof typeof channelWords] ?? c;

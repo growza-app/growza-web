@@ -227,6 +227,9 @@ export interface Product {
   optionAxes?: SizeAxis[];
   /** How many sizes it has. For a product with sizes, `stock` is their total. */
   variantCount?: number;
+  /** QA 2026-10-23 — sizes at or under the warn line, and sizes with none left (0 for no sizes; absent on an API a deploy behind). */
+  sizesLow?: number;
+  sizesOut?: number;
   /**
    * Jira GRW-599 — on the till's list only, and only for a product with sizes: every live, active size in the owner's
    * order with its count, price and codes, so tapping a product never costs a request to learn its sizes.

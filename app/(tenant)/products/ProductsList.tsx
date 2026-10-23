@@ -50,7 +50,13 @@ export const defaultSortDir = (sort: ShelfSort): ShelfSortDir =>
   sort === 'name' || sort === 'stock' || sort === 'status' ? 'asc' : 'desc';
 
 /** The pill's colour: red at zero, amber at or under the owner's line, green otherwise. Retired products carry no pill. */
-export const stockTone = (p: Pick<Product, 'stock' | 'lowStockAt' | 'active'>): 'ok' | 'low' | 'out' => (p.stock <= 0 ? 'out' : p.lowStockAt > 0 && p.stock <= p.lowStockAt ? 'low' : 'ok');
+/** Sizes of this style that are low or out (QA 2026-10-23): a total of 79 can hide a size that has run out. */
+export const sizesShort = (p: Partial<Pick<Product, 'sizesLow' | 'sizesOut'>>): number => (p.sizesLow ?? 0) + (p.sizesOut ?? 0);
+export const stockTone = (p: Pick<Product, 'stock' | 'lowStockAt' | 'active'> & Partial<Pick<Product, 'sizesLow' | 'sizesOut'>>): 'ok' | 'low' | 'out' =>
+  p.stock <= 0 ? 'out' : (p.lowStockAt > 0 && p.stock <= p.lowStockAt) || sizesShort(p) > 0 ? 'low' : 'ok';
+/** The low pill's words: a style flagged for its sizes says how many sizes, not a comfortable-looking total. */
+const lowWords = (p: Product, t: (k: 'lowStock' | 'sizesShort', v: Record<string, number>) => string): string =>
+  p.lowStockAt > 0 && p.stock <= p.lowStockAt ? t('lowStock', { n: p.stock }) : t('sizesShort', { count: sizesShort(p) });
 
 /** What the shelf is worth at the shelf price, counting only what is actually there. */
 export const shelfWorthMinor = (rows: readonly Pick<Product, 'stock' | 'priceMinor' | 'active'>[]): number =>
@@ -154,6 +160,7 @@ export function ProductsList({
   branchId,
   initialFilter = 'all',
   heading,
+  shownBranchName,
 }: {
   products: Product[];
   categories: ProductCategory[];
@@ -161,6 +168,11 @@ export function ProductsList({
   initialFilter?: ShelfFilter;
   /** Jira GRW-610 — the screen's own name when it is opened under another address (a shop's Stock); absent is "Products". */
   heading?: string;
+  /**
+   * QA 2026-10-23 — the shelf is one branch's (a product belongs to ONE branch, Jira GRW-376), so "All branches" cannot be one list. When the
+   * header says all, the screen says which branch's shelf it is showing instead of letting "All branches" stand over one branch's stock.
+   */
+  shownBranchName?: string | null;
 }) {
   const t = useTranslations('products');
   const tc = useTranslations('common');
@@ -486,7 +498,7 @@ export function ProductsList({
     // A kitchen's dish is either on the menu or off it; "out of stock" and "running low" are a count.
     if (!counted) return <span className={`prd-pill prd-pill-${p.active ? 'ok' : 'off'}`}>{p.active ? t('strip.onMenu') : t('retired')}</span>;
     return p.active ? (
-      <span className={`prd-pill prd-pill-${tone}`}>{tone === 'out' ? t('outOfStock') : tone === 'low' ? t('lowStock', { n: p.stock }) : t('inStock')}</span>
+      <span className={`prd-pill prd-pill-${tone}`}>{tone === 'out' ? t('outOfStock') : tone === 'low' ? lowWords(p, t) : t('inStock')}</span>
     ) : (
       <span className="prd-pill prd-pill-off">{t('retired')}</span>
     );
@@ -525,7 +537,7 @@ export function ProductsList({
                       <span className="prd-pill prd-pill-off">{t('retired')}</span>
                     )
                   ) : p.active ? (
-                    <span className={`prd-pill prd-pill-${tone}`}>{tone === 'out' ? t('outOfStock') : tone === 'low' ? t('lowStock', { n: p.stock }) : t('stock', { n: p.stock })}</span>
+                    <span className={`prd-pill prd-pill-${tone}`}>{tone === 'out' ? t('outOfStock') : tone === 'low' ? lowWords(p, t) : t('stock', { n: p.stock })}</span>
                   ) : (
                     <span className="prd-pill prd-pill-off">{t('stock', { n: Math.max(0, p.stock) })}</span>
                   )}
@@ -659,11 +671,16 @@ export function ProductsList({
         initialSaved={editing !== 'new' && savedId === editing.id}
       />
     ) : null;
-  const note = importNote ? (
-    <div className="banner" role="status">
-      {importNote}
-    </div>
-  ) : null;
+  const note = (
+    <>
+      {shownBranchName ? <div className="banner banner-info prd-branch-note">{t('shownBranch', { branch: shownBranchName })}</div> : null}
+      {importNote ? (
+        <div className="banner" role="status">
+          {importNote}
+        </div>
+      ) : null}
+    </>
+  );
   const dialogs = (
     <>
       {importOpen ? <ImportProducts shelf={rows} categories={categories} branchId={branchId} onClose={() => setImportOpen(false)} onImported={(r) => void imported(r)} /> : null}

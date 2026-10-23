@@ -37,6 +37,7 @@ import {
   computeReturnSelection,
   computeReturnWindow,
   defaultRefundMode,
+  findBillByRef,
   findProductLineByCode,
   formatBillRef,
   lineRefundMinorForQty,
@@ -124,9 +125,15 @@ export function ReturnProductSheet({
 
   const [step, setStep] = useState<1 | 2 | 'done'>(1);
   const [selectedBill, setSelectedBill] = useState<ReturnableSaleBill | null>(defaultBill);
+  /*
+   * Whether somebody CHOSE the open bill (tapped it, scanned or typed into it, or arrived with it). The newest bill is open
+   * beside the list on a wide screen only so the pane is not empty — QA 2026-10-23 found a typed bill number thrown away and
+   * that newest bill's one line ticked for a refund, ready to confirm. A bill nobody chose takes no scan and has nothing ticked.
+   */
+  const [billPicked, setBillPicked] = useState<boolean>(Boolean(initialBill));
   const [mobileStep, setMobileStep] = useState<'list' | 'bill'>(initialBill ? 'bill' : 'list');
   const [query, setQuery] = useState<string>('');
-  const [qtyByLine, setQtyByLine] = useState<Record<string, number>>(() => buildInitialQtyMap(defaultBill));
+  const [qtyByLine, setQtyByLine] = useState<Record<string, number>>(() => buildInitialQtyMap(initialBill));
   const [restock, setRestock] = useState(true);
   // A kitchen (`catalog.stock_counted` off) has no shelf: "Put it back" and "Damaged" are the same thing there, so
   // the choice is not offered and the API ignores it. The refund, the reason and the record are unchanged.
@@ -170,6 +177,7 @@ export function ReturnProductSheet({
 
   const selectBill = (bill: ReturnableSaleBill, scannedCode?: string) => {
     setSelectedBill(bill);
+    setBillPicked(true);
     setStep(1);
     setMobileStep('bill');
     setRefundMode(defaultRefundMode(bill.paymentModes));
@@ -210,7 +218,7 @@ export function ReturnProductSheet({
   const takeCode = (raw: string): boolean => {
     const code = raw.trim();
     if (!code) return false;
-    if (selectedBill && findProductLineByCode(selectedBill.products, code)) {
+    if (selectedBill && billPicked && findProductLineByCode(selectedBill.products, code)) {
       applyBarcodeToSelectedBill(code);
       return true;
     }
@@ -223,7 +231,12 @@ export function ReturnProductSheet({
       selectBill(exactEligible[0]!, code);
       return true;
     }
-    if (selectedBill) {
+    const byRef = findBillByRef(productBills, code);
+    if (byRef) {
+      selectBill(byRef);
+      return true;
+    }
+    if (selectedBill && billPicked) {
       applyBarcodeToSelectedBill(code);
       return true;
     }
@@ -264,6 +277,7 @@ export function ReturnProductSheet({
   const setLineQty = (p: VisitProductLine, next: number) => {
     const clamped = Math.max(0, Math.min(lineRemainingQty(p), Math.trunc(next)));
     setQtyByLine((prev) => ({ ...prev, [lineReturnId(p)]: clamped }));
+    setBillPicked(true);
     setScanNotice(null);
     setError(null);
   };
@@ -271,6 +285,7 @@ export function ReturnProductSheet({
   const selectAllProducts = () => {
     if (!selectedBill) return;
     setQtyByLine(buildSelectAllQtyMap(selectedBill.products));
+    setBillPicked(true);
     setScanNotice(null);
     setError(null);
   };

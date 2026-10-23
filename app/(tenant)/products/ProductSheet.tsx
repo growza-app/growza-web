@@ -108,6 +108,8 @@ export function ProductSheet({
   const costRupees = cost.trim() === '' ? null : Number(cost);
   /** The API's own rule (printable characters, no spaces), said here so the owner is told before Save, in their language. */
   const barcodeBad = barcode.trim() !== '' && !/^[!-~]+$/.test(barcode.trim());
+  // QA 2026-10-23 — a minus sign greyed Save out and said nothing; the sheet says why, where it is.
+  const belowZero = [price, cost, product ? '' : stock].some((v) => v.trim() !== '' && Number(v) < 0);
   const valid =
     name.trim().length > 0 && price.trim() !== '' && Number.isFinite(rupees) && rupees >= 0 && (costRupees === null || (Number.isFinite(costRupees) && costRupees >= 0)) && (!product ? stock.trim() === '' || (Number.isFinite(Number(stock)) && Number(stock) >= 0) : true) && !barcodeBad;
   const dirty = target
@@ -431,7 +433,13 @@ export function ProductSheet({
                   />
                 </div>
               </div>
-              <div className="sheet-foot">{t('costHint')}</div>
+              {belowZero ? (
+                <div className="sheet-foot sheet-foot-error" role="alert">
+                  {t('belowZero')}
+                </div>
+              ) : (
+                <div className="sheet-foot">{t('costHint')}</div>
+              )}
               <GstInPrice priceMinor={Math.round(rupees * 100)} rateBp={gstRateBp} />
 
               <div className={!product && counted ? 'prd-field-grid-2' : 'prd-field-stack'}>

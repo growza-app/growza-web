@@ -73,7 +73,15 @@ export async function ProductsScreen({ searchParams, guard }: { searchParams: Pr
     <>
       <BranchUrlSync />
       {branchId ? (
-        <ProductsList key={branchId} products={products} categories={categories} branchId={branchId} initialFilter={initialFilter} heading={guard === '/stock' ? homeCopy(await serverLang(), me.labels).nav.stock : undefined} />
+        <ProductsList
+          key={branchId}
+          products={products}
+          categories={categories}
+          branchId={branchId}
+          initialFilter={initialFilter}
+          heading={guard === '/stock' ? homeCopy(await serverLang(), me.labels).nav.stock : undefined}
+          shownBranchName={branch.multi && branch.choice === null ? (branch.branches.find((b) => b.id === branchId)?.name ?? null) : null}
+        />
       ) : (
         <>
           <PageHeader title={t('title')} subtitle={t('subtitle')} />

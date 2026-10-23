@@ -496,7 +496,7 @@ export function BookingsList({
       ? countIn('confirmed') + (waiting?.length ?? 0)
       : seg === 'completed'
         ? countIn('completed')
-        : inView.length + (waiting?.length ?? 0);
+        : inView.filter((b) => !b.movedTo).length + (waiting?.length ?? 0);
 
   /**
    * Which segment is showing — DERIVED from the status filter, not a second state beside it.
@@ -555,6 +555,9 @@ export function BookingsList({
 
   const anyPricesShown = !viewerIsStaff || bookings.some(pricesShown);
   const countInCancelled = inView.filter((b) => b.status === 'cancelled' && !b.movedTo).length;
+  // QA 2026-10-23 — a booking moved to another time is history ("Now at 12:30"), listed but not a booking of its own: the
+  // total read 5 over tiles that added to 4, because the moved one was counted once in it and nowhere else.
+  const bookingCount = inView.filter((b) => !b.movedTo).length;
   const inProgressCount = inView.filter(
     (b) => b.status === 'confirmed' && (liveState(b, now) === 'in_service' || liveState(b, now) === 'needs_answer'),
   ).length;
@@ -1526,7 +1529,7 @@ export function BookingsList({
   );
 
   const deskStatusTabs = [
-    { key: '', label: t('tab_all'), count: inView.length },
+    { key: '', label: t('tab_all'), count: bookingCount },
     { key: 'confirmed', label: ts('confirmed'), count: countIn('confirmed') },
     { key: 'completed', label: ts('done'), count: countIn('completed') },
     { key: 'cancelled', label: ts('cancelled'), count: countInCancelled },
@@ -1642,7 +1645,7 @@ export function BookingsList({
                 <span>{t('kpiTotalBookings')}</span>
                 <span className="bk-cmd-dot is-green" />
               </div>
-              <div className="bk-cmd-stat-val">{inView.length}</div>
+              <div className="bk-cmd-stat-val">{bookingCount}</div>
               <div className="bk-cmd-stat-sub">
                 <span>
                   {anyPricesShown

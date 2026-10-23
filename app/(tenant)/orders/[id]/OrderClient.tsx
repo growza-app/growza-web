@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { api, ApiError, formatMoney } from '../../lib/api';
 import type { OrderDetail, ReturnSaleProductsResponse } from '../../lib/api-types';
 import { PageHeader } from '../../components/PageHeader';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { DocumentAction } from '../../components/DocumentAction';
 import { ReturnProductSheet, type ReturnableSaleBill } from '../../sales/ReturnProductSheet';
 import { KNOWN_STATES } from '../../lib/orders-filter';
@@ -58,6 +59,11 @@ export function OrderClient({
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
+  // QA 2026-10-23 — a move that cannot be taken back is asked about first. "Cancel this order" fired on one tap from the
+  // More menu; cancelled and came back are final states, nothing moves an order out of them.
+  const [confirming, setConfirming] = useState<'cancelled' | 'returned' | null>(null);
+  // QA 2026-10-23 — what came back can be sold again (back on the shelf) or not (kept off it): asked with "came back", where there is a shelf.
+  const [saleable, setSaleable] = useState(true);
   const [returning, setReturning] = useState(false);
   // Jira GRW-617 — the line whose size is being swapped.
   const [swapping, setSwapping] = useState<string | null>(null);
@@ -97,22 +103,52 @@ export function OrderClient({
     cancelled: t('detail.moves.cancelled'),
     returned: t('detail.moves.returned'),
   };
+  const confirmWords = {
+    cancelled: {
+      title: t('detail.confirmMove.cancelled.title'),
+      body: t('detail.confirmMove.cancelled.body'),
+      confirm: t('detail.confirmMove.cancelled.confirm'),
+      keep: t('detail.confirmMove.cancelled.keep'),
+    },
+    returned: {
+      title: t('detail.confirmMove.returned.title'),
+      body: t('detail.confirmMove.returned.body'),
+      confirm: t('detail.confirmMove.returned.confirm'),
+      keep: t('detail.confirmMove.returned.keep'),
+      question: t('detail.confirmMove.returned.saleableQuestion'),
+      yes: t('detail.confirmMove.returned.saleableYes'),
+      no: t('detail.confirmMove.returned.saleableNo'),
+    },
+  };
   const modeWords: Record<string, string> = { cash: t('detail.modes.cash'), card: t('detail.modes.card'), upi: t('detail.modes.upi'), other: t('detail.modes.other') };
 
-  const when = (iso: string) => new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: timezone }).format(new Date(iso));
+  const when = (iso: string) => new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: timezone }).format(new Date(iso));
   // Jira GRW-637 — "Flipkart refunded ₹450 on 12 May": the marketplace's name as the owner reads it, and the day in the shop's own timezone.
   const refundChannelWord = (c: string) => (c === 'flipkart' ? t('refunds.flipkart') : c === 'amazon' ? t('refunds.amazon') : c.charAt(0).toUpperCase() + c.slice(1));
   const refundDay = (iso: string) => new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', timeZone: timezone }).format(new Date(iso));
   const money = (minor: string | number | undefined): string | null => (minor === undefined ? null : formatMoney(minor, 'INR', locale));
 
-  const move = async (to: string) => {
+  /** A tap on a move: the two final ones are asked about first, the rest go straight through. */
+  const ask = (to: string) => {
+    if (to === 'cancelled' || to === 'returned') {
+      setMoreOpen(false);
+      setConfirming(to);
+      return;
+    }
+    void move(to);
+  };
+
+  const move = async (to: string, extra: { saleable?: boolean } = {}) => {
     if (!order || inFlight.current) return;
     inFlight.current = true;
     setBusy(true);
     setNotice(null);
     setMoreOpen(false);
     try {
-      await api.moveOrder(order.id, to, order.status);
+      const moved = await api.moveOrder(order.id, to, order.status, extra);
+      const back = moved.cameBack;
+      if (back?.detail) setNotice(t('detail.cameBackResult.notRecorded', { reason: back.detail }));
+      else if (back?.recorded && back.units > 0) setNotice(extra.saleable === false ? t('detail.cameBackResult.writtenOff', { count: back.units }) : t('detail.cameBackResult.back', { count: back.units }));
       await refresh();
     } catch (error) {
       if (error instanceof ApiError && error.code === 'move_not_allowed') {
@@ -386,7 +422,7 @@ export function OrderClient({
               <ul className="ord-d-more" role="menu">
                 {more.map((m) => (
                   <li key={m} role="none">
-                    <button type="button" role="menuitem" className="ord-d-more-item" disabled={busy} onClick={() => void move(m)}>
+                    <button type="button" role="menuitem" className="ord-d-more-item" disabled={busy} onClick={() => ask(m)}>
                       {moveWords[m]}
                     </button>
                   </li>
@@ -400,7 +436,7 @@ export function OrderClient({
                 </button>
               ) : null}
               {offerPrimary ? (
-                <button type="button" className="btn btn-primary ord-d-primary" disabled={busy} onClick={() => void move(order.moves.primary!)}>
+                <button type="button" className="btn btn-primary ord-d-primary" disabled={busy} onClick={() => ask(order.moves.primary!)}>
                   {moveWords[order.moves.primary!]}
                 </button>
               ) : null}
@@ -408,6 +444,37 @@ export function OrderClient({
           </div>
         ) : null}
       </div>
+
+      {confirming ? (
+        <ConfirmDialog
+          title={confirmWords[confirming].title}
+          body={confirmWords[confirming].body}
+          confirmLabel={confirmWords[confirming].confirm}
+          cancelLabel={confirmWords[confirming].keep}
+          tone="danger"
+          busy={busy}
+          onCancel={() => setConfirming(null)}
+          onConfirm={() => {
+            const to = confirming;
+            setConfirming(null);
+            void move(to, to === 'returned' && counted ? { saleable } : {});
+          }}
+        >
+          {confirming === 'returned' && counted ? (
+            <fieldset className="ord-d-saleable">
+              <legend>{confirmWords.returned.question}</legend>
+              <label>
+                <input type="radio" name="saleable" checked={saleable} onChange={() => setSaleable(true)} />
+                {confirmWords.returned.yes}
+              </label>
+              <label>
+                <input type="radio" name="saleable" checked={!saleable} onChange={() => setSaleable(false)} />
+                {confirmWords.returned.no}
+              </label>
+            </fieldset>
+          ) : null}
+        </ConfirmDialog>
+      ) : null}
 
       {attaching && order.buyer ? (
         <AttachClientSheet
