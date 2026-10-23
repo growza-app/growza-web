@@ -163,9 +163,20 @@ self.addEventListener('notificationclick', (event) => {
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       for (const client of clients) {
         if ('focus' in client) {
-          // Navigate the tab they already have, then bring it forward. `navigate` can reject (a cross-origin
-          // tab, an older browser); focusing it is still better than nothing, so the failure is swallowed.
-          return client.navigate ? client.navigate(target).catch(() => client.focus()) : client.focus();
+          /*
+           * Navigate the tab they already have, THEN bring it forward — both paths, which the first version
+           * did not do (review 2026-10-24): it focused only when `navigate` rejected, so on the success path a
+           * background window was navigated and never raised, and from the owner's side the notification
+           * simply vanished.
+           *
+           * `navigate` can reject on an older browser or a cross-origin tab; focusing is still better than
+           * nothing, so that failure falls through to the same focus.
+           */
+          if (!client.navigate) return client.focus();
+          return client
+            .navigate(target)
+            .then((navigated) => (navigated ?? client).focus())
+            .catch(() => client.focus());
         }
       }
       return self.clients.openWindow(target);

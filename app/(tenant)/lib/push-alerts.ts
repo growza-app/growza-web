@@ -26,7 +26,6 @@ export type AlertKind = (typeof ALERT_KINDS)[number];
  */
 export type PushBlocker = 'unsupported' | 'install-first' | 'blocked' | 'not-configured';
 
-/** True when the page is running as an installed app rather than in a browser tab. */
 /**
  * A kind's name in the message files.
  *
@@ -45,6 +44,7 @@ export const ALERT_MESSAGE_KEY = {
   'day.summary': 'daySummary',
 } as const satisfies Record<AlertKind, string>;
 
+/** True when the page is running as an installed app rather than in a browser tab. */
 export function isInstalled(win: Window = window): boolean {
   // `standalone` is Safari's own, and on iOS it is the ONLY one that answers — iOS does not match
   // `display-mode: standalone` reliably, which is why both are asked.

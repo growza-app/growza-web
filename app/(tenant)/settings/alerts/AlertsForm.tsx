@@ -68,17 +68,24 @@ export function AlertsForm({ vapidPublicKey }: { vapidPublicKey: string | null }
   const anyOn = (prefs?.prefs ?? []).some((p) => p.enabled);
 
   /**
-   * Turning a switch on may have to subscribe this device first.
+   * Turning a switch on registers this device first — every time, not only the first time.
    *
-   * The permission prompt comes BEFORE the preference is written, so a refused prompt leaves nothing saved —
-   * the switch stays off and the screen says why, rather than claiming an alert is on that can never arrive.
+   * The permission prompt comes BEFORE the preference is written, so a refused prompt leaves nothing saved: the
+   * switch stays off and the screen says why, rather than claiming an alert is on that can never arrive.
+   *
+   * And the POST is made on every enable, not only when this browser has no subscription yet (review
+   * 2026-10-24). `getSubscription()` is per ORIGIN and knows nothing about who is signed in: on the shop
+   * tablet, where one owner signs out and another signs in, the second person's browser hands back the FIRST
+   * person's subscription. Skipping the POST then left the row owned by somebody who had gone home — their
+   * phone kept buzzing, and the person actually standing there got nothing and had no way to find out. The POST
+   * is an upsert on the endpoint, so making it every time simply moves the device to whoever is signed in.
    */
   const toggle = useCallback(
     async (kind: AlertKind, next: boolean) => {
       setError(null);
       setSaving(kind);
       try {
-        if (next && !thisDevice) {
+        if (next) {
           const result = await subscribeThisDevice(vapidPublicKey ?? '');
           if (typeof result === 'string') {
             setBlocker(result === 'unsupported' && blocker === null ? null : result);
@@ -101,7 +108,7 @@ export function AlertsForm({ vapidPublicKey }: { vapidPublicKey: string | null }
         setSaving(null);
       }
     },
-    [blocker, t, thisDevice, vapidPublicKey],
+    [blocker, t, vapidPublicKey],
   );
 
   /** Stop this phone receiving, without touching what the person asked for — their choices outlive the device. */

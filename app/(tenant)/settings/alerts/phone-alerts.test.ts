@@ -148,6 +148,31 @@ describe('copy', () => {
   });
 });
 
+describe('whoever is signed in owns this device', () => {
+  const form = read('AlertsForm.tsx');
+
+  /**
+   * Review 2026-10-24. `getSubscription()` is per ORIGIN and knows nothing about who is signed in, so on the
+   * shop tablet the second owner's browser hands back the first owner's subscription. Registering only when
+   * the browser has none left the row owned by somebody who had gone home: their phone kept buzzing, and the
+   * person actually standing there got nothing and no way to find out.
+   */
+  it('registers the device on every enable, not only the first', () => {
+    expect(form).toMatch(/if \(next\) \{/);
+    expect(form).not.toMatch(/if \(next && !thisDevice\)/);
+  });
+
+  it('still only registers when switching ON — turning one off asks the browser for nothing', () => {
+    const guard = form.slice(form.indexOf('if (next) {'), form.indexOf('await api.setAlertPref('));
+    expect(guard).toContain('subscribeThisDevice');
+    expect(form.indexOf('if (next) {')).toBeLessThan(form.indexOf('await api.setAlertPref('));
+  });
+
+  it('saves the device before the preference, so a refused prompt leaves nothing behind', () => {
+    expect(form.indexOf('api.saveAlertDevice(')).toBeLessThan(form.indexOf('api.setAlertPref('));
+  });
+});
+
 describe('the switch is big enough to hit', () => {
   const css = readFileSync(path.join(here, '../../styles/96-phone-alerts.css'), 'utf-8');
 
@@ -187,6 +212,16 @@ describe('the service worker', () => {
 
   it('focuses the app the owner already has open rather than opening a second one', () => {
     expect(sw).toContain('includeUncontrolled: true');
+  });
+
+  /**
+   * Review 2026-10-24 — the first version focused only when `navigate` REJECTED, so on the success path a
+   * background window was navigated and never raised: from the owner's side the notification just vanished.
+   */
+  it('brings the window forward on the success path too, not only when navigate fails', () => {
+    const click = sw.slice(sw.indexOf("addEventListener('notificationclick'"));
+    expect(click).toMatch(/\.then\(\(navigated\) => \(navigated \?\? client\)\.focus\(\)\)/);
+    expect(click).toMatch(/\.catch\(\(\) => client\.focus\(\)\)/);
   });
 
   it('leaves the fetch handler alone — caching behaviour does not change', () => {
