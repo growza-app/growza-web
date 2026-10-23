@@ -16,6 +16,7 @@ import { homeCopy } from '../../lib/home-copy';
 import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import { ordersHref } from '../../lib/orders-filter';
+import { channelsOf, sellsOnMarketplaces } from '../../lib/order-channels';
 import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
 import { useAreas } from '../SessionProvider';
@@ -81,6 +82,8 @@ export function ShopHome({
   // The takings follow the role's Reports page for a role holder (the API sends them on the same rule), the fixed role otherwise.
   const money = areas.pages ? (areas.pages.reports ?? 'none') !== 'none' : canSeeRevenue(role);
   const can = (href: string) => canSee(href, role, reportTabs, true, areas);
+  // Owner, 2026-10-24 — a business that sells on no marketplace ships nothing: no "to send", no "packed and sent".
+  const ships = sellsOnMarketplaces(areas);
   const canReports = role === null || role === 'owner' || role === 'manager';
 
   const [data, setData] = useState<ShopHomeData | null>(initial);
@@ -160,12 +163,15 @@ export function ShopHome({
     const range: SellersRange = period;
 
     if (can('/orders')) {
-      api
-        .orders({ status: 'new,packed', pageSize: 5, location: branch })
-        .then((res) => {
-          if (mine === deskReqId.current) setToSendRows(res.rows);
-        })
-        .catch(() => {});
+      // Nothing is ever waiting to be sent where nothing ships (a kitchen): that list is not asked for.
+      if (ships) {
+        api
+          .orders({ status: 'new,packed', pageSize: 5, location: branch })
+          .then((res) => {
+            if (mine === deskReqId.current) setToSendRows(res.rows);
+          })
+          .catch(() => {});
+      }
       api
         .orders({ pageSize: 6, location: branch })
         .then((res) => {
@@ -298,7 +304,11 @@ export function ShopHome({
         ? s.flipkartChannel
         : c === 'amazon'
           ? s.amazonChannel
-          : c.charAt(0).toUpperCase() + c.slice(1);
+          : c === 'swiggy'
+            ? s.swiggyChannel
+            : c === 'zomato'
+              ? s.zomatoChannel
+              : c.charAt(0).toUpperCase() + c.slice(1);
 
   const stateWord = (status: string) =>
     status === 'done'
@@ -392,7 +402,7 @@ export function ShopHome({
   const channelBreakdown = useMemo(() => {
     const byKey = new Map((channelData?.channels ?? []).map((c) => [c.channel, c]));
     const totalBilled = Math.max(1, Number(channelData?.totals.billedMinor ?? 0));
-    return (['counter', 'flipkart', 'amazon'] as const).map((key) => {
+    return channelsOf(areas).map((key) => {
       const row = byKey.get(key);
       const billed = Number(row?.billedMinor ?? 0);
       const orders = row?.orders ?? 0;
@@ -410,7 +420,7 @@ export function ShopHome({
       };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelData, lang]);
+  }, [channelData, lang, areas]);
 
   const topSeller = sellersData?.rows?.[0] ?? null;
   const totalReturnedOrders =
@@ -641,11 +651,13 @@ export function ShopHome({
                         </div>
                       </div>
                     </div>
-                    <div className="hm-v3-kpi-foot hm-v3-split-foot">
-                      <span className="hm-v3-split-item">
-                        {s.toSendShort} <b>{data.toSend}</b>
-                      </span>
-                    </div>
+                    {ships ? (
+                      <div className="hm-v3-kpi-foot hm-v3-split-foot">
+                        <span className="hm-v3-split-item">
+                          {s.toSendShort} <b>{data.toSend}</b>
+                        </span>
+                      </div>
+                    ) : null}
                   </section>
                 )}
 
@@ -669,7 +681,7 @@ export function ShopHome({
                       </div>
                       <div className="hm-v3-kpi-delta-row">
                         <span className="hm-v3-kpi-sub">
-                          {data.toSend > 0 ? `${s.toSend(data.toSend)} · ${s.needsDispatchSub}` : s.allSentSub}
+                          {!ships ? s.ordersInPeriod : data.toSend > 0 ? `${s.toSend(data.toSend)} · ${s.needsDispatchSub}` : s.allSentSub}
                         </span>
                       </div>
                     </div>
@@ -704,9 +716,11 @@ export function ShopHome({
                     <span className="hm-v3-split-item">
                       {s.today} <b>{data.today.orders}</b>
                     </span>
-                    <span className="hm-v3-split-item">
-                      {s.toSendShort} <b>{data.toSend}</b>
-                    </span>
+                    {ships ? (
+                      <span className="hm-v3-split-item">
+                        {s.toSendShort} <b>{data.toSend}</b>
+                      </span>
+                    ) : null}
                     <span className="hm-v3-split-item">
                       {s.returnedShort} <b>{totalReturnedOrders}</b>
                     </span>
@@ -869,7 +883,7 @@ export function ShopHome({
                   )}
                 </section>
 
-                {/* 2. Where Money Came From (Counter · Flipkart · Amazon) */}
+                {/* 2. Where Money Came From (Counter · Flipkart · Amazon, or Counter · Swiggy · Zomato) */}
                 {money && canReports ? (
                   <section className="hm-v3-card shp-channels-card">
                     <div className="hm-v3-card-head">
@@ -965,16 +979,16 @@ export function ShopHome({
                   <div className="hm-v3-card-head">
                     <h2>
                       {s.ordersAttentionTitle}{' '}
-                      <span className="hm-v3-count">({data.toSend + totalReturnedOrders})</span>
+                      <span className="hm-v3-count">({(ships ? data.toSend : 0) + totalReturnedOrders})</span>
                     </h2>
                     {can('/orders') ? (
-                      <a className="hm-v3-head-link" href={ordersHref({ status: 'new,packed' })}>
+                      <a className="hm-v3-head-link" href={ships ? ordersHref({ status: 'new,packed' }) : '/orders'}>
                         {s.viewOrders} →
                       </a>
                     ) : null}
                   </div>
-                  <div className="hm-v3-prod-att-summary shp-two-chips">
-                      {can('/orders') ? (
+                  <div className={`hm-v3-prod-att-summary${ships ? ' shp-two-chips' : ''}`}>
+                      {!ships ? null : can('/orders') ? (
                         <a
                           className={`hm-v3-prod-att-chip is-amber ${data.toSend === 0 ? 'is-clear' : ''}`}
                           href={ordersHref({ status: 'new,packed' })}
@@ -1006,7 +1020,9 @@ export function ShopHome({
                         </a>
                       ) : null}
                   </div>
-                  {toSendRows.length === 0 ? (
+                  {!ships ? (
+                    <p className="hm-empty">{totalReturnedOrders === 0 ? s.noReturnsYet : s.returnsToCheck(totalReturnedOrders)}</p>
+                  ) : toSendRows.length === 0 ? (
                     <p className="hm-empty">{s.allOrdersDispatched}</p>
                   ) : (
                     <ul className="hm-v3-srv-rows hm-v3-prod-att-rows">

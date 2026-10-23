@@ -75,7 +75,7 @@ describe('each screen passes the noun, and says only what can be true', () => {
     expect(sheet).toContain('{showCodes ? <th>');
   });
   it('a counter order was taken at the counter, not "placed on Counter"', () => {
-    expect(src('orders/[id]/OrderClient.tsx')).toContain("order.channel === 'counter' ? t('detail.placedCounter')");
+    expect(src('orders/[id]/OrderClient.tsx')).toMatch(/order\.channel === 'counter'\s*\?\s*t\('detail\.placedCounter'\)/);
   });
   it('the menu hides a column of dashes when nothing listed has a SKU', () => {
     expect(src('products/ProductsList.tsx')).toContain('const showSku = shown.some((p) => Boolean(p.sku));');
