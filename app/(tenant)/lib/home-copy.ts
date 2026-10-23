@@ -441,7 +441,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       unitsSoldTitle: S('Units sold', 'बिकी हुई यूनिट'),
       acrossSizes: (revenue: string, sizes: number) => S(`${revenue} across ${sizes} sizes`, `${sizes} साइज़ में ${revenue}`),
       topSellerLabel: S('Top seller', 'सबसे ज़्यादा बिका'),
-      stockWorthTitle: S('Stock value', 'स्टॉक की कीमत'),
+      stockWorthTitle: S('Stock at cost price', 'लागत दाम पर स्टॉक'),
       stylesAndSizes: (styles: number, sizes: number) => S(`${styles} styles · ${sizes} sizes`, `${styles} डिज़ाइन · ${sizes} साइज़`),
       onShelfShort: S('On shelf', 'दुकान में'),
       lowStockShort: S('Low stock', 'कम स्टॉक'),

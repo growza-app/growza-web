@@ -765,3 +765,32 @@ a.ord-card:focus-visible,
   font-weight: 550;
   color: var(--amber);
 }
+
+/* QA 2026-10-23 — "Can they be sold again?" inside the came-back confirm: two full-width rows, 44px to tap. */
+.ord-d-saleable {
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+.ord-d-saleable legend {
+  padding: 0;
+  margin-bottom: var(--sp-2);
+  font-weight: 600;
+  color: var(--text);
+}
+.ord-d-saleable label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+}
+.ord-d-saleable label:has(input:checked) {
+  border-color: var(--accent-deep);
+}

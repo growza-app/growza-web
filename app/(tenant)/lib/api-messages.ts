@@ -108,6 +108,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Pick at least one service': 'कम से कम एक सेवा चुनें',
   'That is too many services for one booking': 'एक बुकिंग के लिए इतनी सेवाएँ बहुत ज़्यादा हैं',
   'Pick a day and time for the booking': 'बुकिंग के लिए दिन और समय चुनें',
+  'Say how they paid': 'बताएँ कि पैसे कैसे दिए',
   'That product is not on the shelf': 'वह सामान शेल्फ़ पर नहीं है',
   // Jira GRW-607 — a business that takes no bookings, or sells no services (a shop).
   'This business does not take bookings.': 'यह बिज़नेस बुकिंग नहीं लेता।',
