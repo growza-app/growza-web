@@ -67,6 +67,8 @@ interface Sale {
   mode: PaymentMode;
   /** How it was paid, in the owner's words: "Cash", or "Cash ₹800 · UPI ₹499" for a bill paid two ways. */
   paidBy: string;
+  /** Owner, 2026-10-24 — an app's order took no money here: "₹300 order from Swiggy", not "₹300 received". */
+  title?: string;
   bill: ReceiptRow[];
   phone: string | null;
   summary: string;
@@ -977,6 +979,7 @@ export function PayFlow({
       setSale({
         appointmentId: result.appointmentId,
         tokenNo,
+        ...(fromApp ? { title: t('from.doneTitle', { amount: money(paidMinor), app: appWord(fromApp) }) } : {}),
         totalMinor: paidMinor,
         mode: mainMode,
         paidBy,
@@ -1163,6 +1166,7 @@ export function PayFlow({
         totalMinor={sale.totalMinor}
         mode={sale.mode}
         modeLabel={sale.paidBy}
+        title={sale.title}
         summary={sale.summary}
         bill={sale.bill}
         phone={sale.phone}
@@ -1687,7 +1691,7 @@ export function PayFlow({
                 {error}
               </div>
             ) : null}
-            <h2 className="pf-wide-h">{t('howTitle')}</h2>
+            {fromApp ? null : <h2 className="pf-wide-h">{t('howTitle')}</h2>}
             {badMode && !selectedMode ? (
               <p className="pf-miss" role="alert">
                 {t('desk.needPaymentMode')}
@@ -2072,7 +2076,8 @@ export function PayFlow({
           Missing a client opens the sheet as well as saying so — the complaint and the fix in one tap.
         */}
         <button type="button" className="btn pf-go" onClick={onNext} aria-disabled={!canGoOn}>
-          {t('next')}
+          {/* An app's order is saved by this tap (nothing to collect), so it says so. */}
+          {fromApp ? t('from.completeShort') : t('next')}
         </button>
       </div>
       {error ? (

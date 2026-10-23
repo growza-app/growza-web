@@ -264,7 +264,7 @@ export function OrderClient({
           />
         ) : null}
 
-        {!isCounter && order.branchName ? <p className="ord-d-quiet ord-d-branch">{t('detail.bookedAt', { branch: order.branchName })}</p> : null}
+        {!isCounter && order.branchName ? <p className="ord-d-quiet ord-d-branch">{fromApp ? t('detail.takenAt', { branch: order.branchName }) : t('detail.bookedAt', { branch: order.branchName })}</p> : null}
 
         {notice ? (
           <p className="ord-d-notice" role="alert">
@@ -286,7 +286,7 @@ export function OrderClient({
               */}
               {!order.client && writable ? (
                 <button type="button" className="ord-d-attach" onClick={() => setAttaching(true)}>
-                  {t('attach.action')}
+                  {t('attach.action', { customer: nouns.customer })}
                 </button>
               ) : null}
               {order.buyer.address ? (
@@ -390,7 +390,8 @@ export function OrderClient({
               ) : null}
               {(order.payments ?? []).map((p) => (
                 <div key={p.mode}>
-                  <dt>{t('detail.paidBy', { mode: modeWords[p.mode] ?? p.mode })}</dt>
+                  {/* An app's order was paid to the app: "Paid on Swiggy", never "Paid by other". */}
+                  <dt>{fromApp && p.mode === 'other' ? t('detail.paidOn', { channel: channelWord(order.channel) }) : t('detail.paidBy', { mode: modeWords[p.mode] ?? p.mode })}</dt>
                   <dd>{money(p.amountMinor)}</dd>
                 </div>
               ))}

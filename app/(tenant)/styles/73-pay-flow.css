@@ -1963,7 +1963,13 @@
 }
 
 /* Owner, 2026-10-24 — Order from: Counter, or a delivery app (a restaurant's Swiggy and Zomato).
-   The order number sits under the chips, in the content column, and only once an app is chosen. */
+   Three short chips wrap rather than scroll: at 344px a scrolled row hid "Zomato" behind the edge. */
+.pf-from .pf-chips {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+/* The order number sits under the chips, in the content column, and only once an app is chosen. */
 .pf-from-no {
   grid-column: 2;
   display: flex;

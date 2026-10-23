@@ -48,3 +48,42 @@ describe('Order from: Counter or a delivery app', () => {
     }
   });
 });
+
+/** QA of the branch, 2026-10-24 — each defect found in the browser, pinned where it was fixed. */
+const src = (p: string) => readFileSync(join(__dirname, '../..', p), 'utf8');
+
+describe('QA fixes', () => {
+  it('the Flipkart/Amazon screens send a restaurant away, by address too', () => {
+    for (const [f, href] of [['orders/import/page.tsx', '/orders/import'], ['orders/held/page.tsx', '/orders/held']]) {
+      expect(src(f!), f).toContain(`await guardLive('${href}');`);
+    }
+    expect(src('settings/channels/page.tsx')).toContain("if (!areaAllows('/settings/channels', areasOf(me))) redirect('/settings');");
+    expect(src('orders/OrdersScreen.tsx')).toContain("areaAllows('/orders/import', areasOf(me))");
+  });
+
+  it('an app order is not "received", and its page says where it was paid and taken', () => {
+    expect(flow).toContain("t('from.doneTitle', { amount: money(paidMinor), app: appWord(fromApp) })");
+    expect(src('components/PaymentDone.tsx')).toContain("{title ?? t('doneTitle'");
+    expect(flow).toContain("{fromApp ? null : <h2 className=\"pf-wide-h\">{t('howTitle')}</h2>}");
+    expect(flow).toContain("{fromApp ? t('from.completeShort') : t('next')}");
+    const order = src('orders/[id]/OrderClient.tsx');
+    expect(order).toContain("t('detail.paidOn', { channel: channelWord(order.channel) })");
+    expect(order).toContain("t('detail.takenAt', { branch: order.branchName })");
+    expect(order).toContain("t('attach.action', { customer: nouns.customer })");
+    for (const m of [en, hi]) {
+      expect(m.payFlow.from.doneTitle).toContain('{app}');
+      expect(m.orders.detail.paidOn).toContain('{channel}');
+      expect(m.orders.attach.title).toContain('{customer}');
+    }
+  });
+
+  it('a kitchen’s Home counts items, not sizes', () => {
+    expect(src('components/home/ShopHome.tsx')).toContain('(areas.stock ? s.acrossSizes : s.acrossItems)');
+  });
+
+  it('the order-from CSS is whole: the chips wrap at 344px and the number button keeps its own rule', () => {
+    const css = src('styles/73-pay-flow.css');
+    expect(css).toContain('/* The order number sits under the chips, in the content column, and only once an app is chosen. */\n.pf-from-no {');
+    expect(css).toMatch(/\.pf-from \.pf-chips \{\s*flex-wrap: wrap;/);
+  });
+});

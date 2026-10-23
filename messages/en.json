@@ -2734,6 +2734,8 @@
   },
   "payFlow": {
     "from": {
+      "completeShort": "Complete order",
+      "doneTitle": "{amount} order from {app}",
       "label": "Order from",
       "counter": "Counter",
       "apps": {
@@ -4067,6 +4069,8 @@
       "notConfirmed": "Not confirmed"
     },
     "detail": {
+      "paidOn": "Paid on {channel}",
+      "takenAt": "Taken at {branch}",
       "client": "{customer}",
       "forTitle": "For",
       "address": "Delivery address",
@@ -4362,14 +4366,14 @@
       "asked": "Asked again. We will tell {channel} shortly."
     },
     "attach": {
-      "action": "This is a client of ours",
-      "title": "Which client?",
-      "searchLabel": "Search your clients",
+      "action": "This is a {customer} of ours",
+      "title": "Which {customer}?",
+      "searchLabel": "Search your {customers}",
       "searchPlaceholder": "Name or number",
       "typeMore": "Type two letters or more to search.",
       "searching": "Looking…",
-      "noneFound": "No client of that name. Check the spelling, or leave it — the order keeps the buyer’s own details either way.",
-      "failed": "Could not attach that client. Please try again.",
+      "noneFound": "No {customer} of that name. Check the spelling, or leave it — the order keeps the buyer’s own details either way.",
+      "failed": "Could not attach that {customer}. Please try again.",
       "close": "Close"
     }
   },

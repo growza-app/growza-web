@@ -109,7 +109,8 @@ describe('Record payment in three taps', () => {
     expect(flow).toMatch(/\{t\('whatTitle'\)\}/);
     expect(flow).toMatch(/\{t\('howTitle'\)\}/);
     expect(flow).toMatch(/<PaymentDone\s/);
-    expect(done).toMatch(/\{t\('doneTitle', \{ amount: formatMoney\(String\(totalMinor\)\) \}\)\}/);
+    // Owner, 2026-10-24 — a delivery app's order passes its own title ("₹300 order from Swiggy"): no money was taken here.
+    expect(done).toMatch(/\{title \?\? t\('doneTitle', \{ amount: formatMoney\(String\(totalMinor\)\) \}\)\}/);
   });
 
   it('draws the menu as photo tiles two across, each the height of a thumb and a half', () => {
@@ -421,7 +422,7 @@ describe('Record payment in three taps', () => {
   });
 
   it('says the amount out loud on the done screen, and can be told not to', () => {
-    expect(done).toMatch(/new SpeechSynthesisUtterance\(t\('spoken', \{ amount: spokenAmount\(totalMinor, locale\), mode: modeLabel \}\)\)/);
+    expect(done).toMatch(/new SpeechSynthesisUtterance\(title \?\? t\('spoken', \{ amount: spokenAmount\(totalMinor, locale\), mode: modeLabel \}\)\)/);
     expect(done).toMatch(/u\.lang = locale === 'hi' \? 'hi-IN' : 'en-IN';/);
     expect(done).toMatch(/if \(!\(soundProp \?\? soundIsOn\(\)\)\) return;/);
     expect(done).toMatch(/aria-pressed=\{sound\} onClick=\{toggleSound\}/);

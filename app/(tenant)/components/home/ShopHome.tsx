@@ -746,7 +746,7 @@ export function ShopHome({
                       <div className="hm-v3-kpi-delta-row">
                         <span className="hm-v3-kpi-sub">
                           {sellersData
-                            ? s.acrossSizes(rupees(Number(sellersData.totals.valueMinor)), sellersData.totals.sizes)
+                            ? (areas.stock ? s.acrossSizes : s.acrossItems)(rupees(Number(sellersData.totals.valueMinor)), sellersData.totals.sizes)
                             : periodLabel}
                         </span>
                       </div>
