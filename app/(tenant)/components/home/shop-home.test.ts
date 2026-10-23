@@ -123,6 +123,8 @@ describe('UX-01, UX-02, UX-05 — laid out at 344px on the tokens, with 44px doo
   });
 
   it('is one column on a phone and two from 861px', () => {
-    expect(css).toMatch(/@media \(min-width: 861px\) \{\s*\.shp-page \{\s*display: grid;/);
+    // A comment may sit between the query and the selector (GRW-643 explains the missing
+    // `align-items` there); what is pinned is that 861px is where the grid starts.
+    expect(css).toMatch(/@media \(min-width: 861px\) \{[\s\S]*?\.shp-page \{\s*display: grid;/);
   });
 });

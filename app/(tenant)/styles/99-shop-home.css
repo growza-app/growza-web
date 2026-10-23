@@ -340,11 +340,22 @@
 }
 
 @media (min-width: 861px) {
+  /*
+   * Jira GRW-643 — NO `align-items: start` here, and that absence is the whole point.
+   *
+   * This rule's `display: grid` only wins up to 1100px. From 1101px (and a 680px-tall page)
+   * `.page-body.hm-fit` — the salon's fit-to-screen layout, which this page also carries —
+   * sets `display: flex; flex-direction: column` at specificity 0-2-0 and beats `.shp-page`'s
+   * 0-1-0. `align-items` had nothing to beat, so it applied to a FLEX COLUMN, where it governs
+   * the inline axis rather than the block one: every child shrink-wrapped to its content and the
+   * command center sat 935px wide inside 1620px, with a dead strip down the right of every
+   * 1920px screen. In the single-column grid it was never doing anything anyway — auto rows are
+   * content-sized whether items start or stretch — so it is gone rather than re-scoped.
+   */
   .shp-page {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: var(--sp-3);
-    align-items: start;
   }
   .shp-mobile-stack,
   .shp-phone-money {
