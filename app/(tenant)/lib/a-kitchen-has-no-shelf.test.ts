@@ -132,7 +132,16 @@ describe('Home and the return sheet', () => {
 
   it('a return still refunds and is still recorded; only "put it back or write it off" is not asked', () => {
     expect(ret).toMatch(/const counted = useAreas\(\)\.stock;/);
-    expect(ret).toMatch(/<div className="sls-ret-condition" hidden=\{!counted\}>/);
+    /*
+     * NOT the `hidden` attribute, which this test used to assert and which did not work: `.sls-ret-condition`
+     * sets `display: flex`, and a class beats the user agent's `[hidden] { display: none }`. The attribute was
+     * there, the test passed, and the block was on the screen. A guard that a stylesheet can undo is not a guard.
+     */
+    expect(ret).toMatch(/\{!counted \? null : \(\s*<div className="sls-ret-condition">/);
+    // On the ELEMENT, not in the comment above it that explains why it is gone.
+    expect(ret).not.toMatch(/<div className="sls-ret-condition" hidden=/);
+    // The rule that caused it, pinned: if this ever stops setting `display`, the reason above still holds.
+    expect(src('styles/99-sales.css')).toMatch(/\.sls-ret-condition \{[^}]*display:/);
     // The refund method and the reason are NOT a count, and are still asked for.
     expect(ret).toMatch(/refundModeLabel/);
     expect(ret).toMatch(/reasonCode/);
