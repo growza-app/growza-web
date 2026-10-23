@@ -150,3 +150,11 @@ describe('a shop is offered only the grant that does something there (R5)', () =
     }
   });
 });
+
+describe('a switch that moves nothing is not offered (R5)', () => {
+  it('Client phone numbers is not shown to a shop, which has no bookings for it to hide', () => {
+    const page = src('settings/report-access/page.tsx');
+    expect(page).toContain("shop = (await api.me()).surface === 'shop';");
+    expect(page).toContain('{shop ? null : <ClientContactForm initial={settings} />}');
+  });
+});
