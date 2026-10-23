@@ -436,6 +436,12 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       counterChannel: S('Counter', 'काउंटर'),
       flipkartChannel: S('Flipkart', 'फ़्लिपकार्ट'),
       amazonChannel: S('Amazon', 'अमेज़न'),
+      swiggyChannel: S('Swiggy', 'स्विगी'),
+      zomatoChannel: S('Zomato', 'ज़ोमैटो'),
+      /** Owner, 2026-10-24 — a business that ships nothing (a kitchen): what its Orders card says instead of "Nothing waiting to ship". */
+      ordersInPeriod: S('Orders in this period', 'इस अवधि के ऑर्डर'),
+      noReturnsYet: S('Nothing has come back.', 'कुछ भी वापस नहीं आया।'),
+      returnsToCheck: (n: number) => S(`${n} came back. Open Returns to see them.`, `${n} वापस आए। देखने के लिए वापसी खोलें।`),
       toSendShort: S('To send', 'भेजने हैं'),
       returnedShort: S('Returned', 'वापस आए'),
       unitsSoldTitle: S('Units sold', 'बिकी हुई यूनिट'),

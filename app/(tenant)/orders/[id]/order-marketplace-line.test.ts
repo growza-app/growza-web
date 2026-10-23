@@ -47,7 +47,8 @@ describe('what the line says', () => {
 
 describe('the screen', () => {
   it('is drawn for a marketplace order only, under the state, and asking again is offered only when the API says this viewer may', () => {
-    expect(screen).toContain('!isCounter ? (');
+    // Owner, 2026-10-24 — and not for a delivery app's order, which has no marketplace to tell.
+    expect(screen).toContain('!isCounter && !fromApp ? (');
     expect(screen).toContain('canRetry={order.canRetryMarketplace === true}');
     expect(line).toContain('l.retry && canRetry &&');
   });

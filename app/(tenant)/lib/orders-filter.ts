@@ -8,8 +8,12 @@
  * read by the server component on arrival and is what Home links into (FR-06).
  */
 
-/** Channels a chip is offered for. The words live in `messages/*.json` under `orders.channels`. */
-export const CHANNEL_CHIPS = ['counter', 'flipkart', 'amazon'] as const;
+/**
+ * Every channel a chip can be offered for. The words live in `messages/*.json` under `orders.channels`. Which of them a
+ * business is OFFERED is its own (`channelsOf` in lib/order-channels): a shop the marketplaces, a restaurant its
+ * delivery apps (owner, 2026-10-24).
+ */
+export const CHANNEL_CHIPS = ['counter', 'flipkart', 'amazon', 'swiggy', 'zomato'] as const;
 export type ChannelChip = (typeof CHANNEL_CHIPS)[number];
 
 /**

@@ -3764,6 +3764,8 @@
       "counter": "Counter",
       "flipkart": "Flipkart",
       "amazon": "Amazon",
+      "swiggy": "Swiggy",
+      "zomato": "Zomato",
       "up": "Up {pct}% on the period before",
       "down": "Down {pct}% on the period before",
       "noPrevious": "No sales in the period before to compare with.",
@@ -3996,12 +3998,15 @@
     "channels": {
       "counter": "Counter",
       "flipkart": "Flipkart",
-      "amazon": "Amazon"
+      "amazon": "Amazon",
+      "swiggy": "Swiggy",
+      "zomato": "Zomato"
     },
     "buyer": {
       "title": "Buyer",
       "plural": "Buyers",
-      "notAClient": "Not in your client list"
+      "notAClient": "Not in your client list",
+      "fromApp": "A {channel} order. Not in your list."
     },
     "list": {
       "searchPlaceholder": "Order number or name",
@@ -4026,6 +4031,7 @@
       },
       "itemCount": "{count, plural, one {# item} other {# items}}",
       "orderCode": "Order #{code}",
+      "appOrder": "App order {ref}",
       "noName": "No name",
       "empty": {
         "title": "No orders yet",
@@ -4158,7 +4164,9 @@
       "marketplaceRefunded": "{channel} refunded on {date}",
       "shopRefunded": "The shop refunded on {date}",
       "refundRef": "reference {ref}",
-      "placedCounter": "Taken at the counter"
+      "placedCounter": "Taken at the counter",
+      "placedApp": "Taken from {channel}",
+      "appOrderRef": "order {ref}"
     },
     "import": {
       "title": "Import orders",
@@ -4298,6 +4306,8 @@
       "allChannels": "All",
       "flipkart": "Flipkart",
       "amazon": "Amazon",
+      "swiggy": "Swiggy",
+      "zomato": "Zomato",
       "loading": "Loading",
       "loadError": "Could not load. Check your connection and try again.",
       "retry": "Try again",

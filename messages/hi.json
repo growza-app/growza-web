@@ -3764,6 +3764,8 @@
       "counter": "काउंटर",
       "flipkart": "फ्लिपकार्ट",
       "amazon": "अमेज़न",
+      "swiggy": "स्विगी",
+      "zomato": "ज़ोमैटो",
       "up": "पिछली अवधि से {pct}% ऊपर",
       "down": "पिछली अवधि से {pct}% नीचे",
       "noPrevious": "पिछली अवधि में मिलाने को कोई बिक्री नहीं।",
@@ -3996,12 +3998,15 @@
     "channels": {
       "counter": "काउंटर",
       "flipkart": "फ़्लिपकार्ट",
-      "amazon": "अमेज़न"
+      "amazon": "अमेज़न",
+      "swiggy": "स्विगी",
+      "zomato": "ज़ोमैटो"
     },
     "buyer": {
       "title": "ख़रीदार",
       "plural": "ख़रीदार",
-      "notAClient": "आपकी ग्राहक सूची में नहीं"
+      "notAClient": "आपकी ग्राहक सूची में नहीं",
+      "fromApp": "{channel} का ऑर्डर। आपकी सूची में नहीं।"
     },
     "list": {
       "searchPlaceholder": "ऑर्डर नंबर या नाम",
@@ -4026,6 +4031,7 @@
       },
       "itemCount": "{count, plural, one {# सामान} other {# सामान}}",
       "orderCode": "ऑर्डर #{code}",
+      "appOrder": "ऐप ऑर्डर {ref}",
       "noName": "नाम नहीं",
       "empty": {
         "title": "अभी कोई ऑर्डर नहीं",
@@ -4158,7 +4164,9 @@
       "marketplaceRefunded": "{channel} ने {date} को रिफ़ंड किया",
       "shopRefunded": "दुकान ने {date} को रिफ़ंड किया",
       "refundRef": "रेफ़रेंस {ref}",
-      "placedCounter": "काउंटर पर ऑर्डर लिया गया"
+      "placedCounter": "काउंटर पर ऑर्डर लिया गया",
+      "placedApp": "{channel} से ऑर्डर आया",
+      "appOrderRef": "ऑर्डर {ref}"
     },
     "import": {
       "title": "ऑर्डर इम्पोर्ट करें",
@@ -4298,6 +4306,8 @@
       "allChannels": "सभी",
       "flipkart": "फ्लिपकार्ट",
       "amazon": "अमेज़न",
+      "swiggy": "स्विगी",
+      "zomato": "ज़ोमैटो",
       "loading": "लोड हो रहा है",
       "loadError": "लोड नहीं हो सका। कनेक्शन जाँचें और फिर कोशिश करें।",
       "retry": "फिर कोशिश करें",
