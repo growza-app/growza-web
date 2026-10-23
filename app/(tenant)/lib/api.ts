@@ -367,6 +367,9 @@ function sellersParams(q: SellersQuery): string {
   if (q.categoryId) p.set('categoryId', q.categoryId);
   if (q.page !== undefined) p.set('page', String(q.page));
   if (q.pageSize !== undefined) p.set('pageSize', String(q.pageSize));
+  // Jira GRW-643 — only `range: 'custom'` carries these; the route refuses a custom window missing either.
+  if (q.from) p.set('from', q.from);
+  if (q.to) p.set('to', q.to);
   return p.toString();
 }
 
@@ -779,7 +782,8 @@ export const api = {
   /** Jira GRW-635 — what came back and why, by reason, with a parcel that never arrived apart. */
   returnsReport: (q: { range: SellersRange; location?: string }) => get<ReturnsReportPage>(`/api/v1/reports/returns?${sellersParams({ range: q.range, location: q.location })}`),
   /** Jira GRW-634 — what was billed on each channel over a range, beside the period before; billed, not received. */
-  byChannel: (q: { range: SellersRange; location?: string }) => get<ByChannelPage>(`/api/v1/reports/by-channel?${sellersParams({ range: q.range, location: q.location })}`),
+  byChannel: (q: { range: ReportRangeKey; location?: string; from?: string; to?: string }) =>
+    get<ByChannelPage>(`/api/v1/reports/by-channel?${sellersParams({ range: q.range, location: q.location, from: q.from, to: q.to })}`),
   /** Jira GRW-633 — what to order before the season, size by size: last year's sales in the same days, less the shelf. */
   reorder: (q: ReorderQuery) => get<ReorderPage>(`/api/v1/reports/reorder?${reorderParams(q)}`),
   /** Jira GRW-633 — the owner's own number over a suggestion (null clears it). */

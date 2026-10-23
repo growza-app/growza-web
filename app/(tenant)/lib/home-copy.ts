@@ -475,6 +475,27 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       stateCancelled: S('Cancelled', 'रद्द'),
       stateReturned: S('Returned', 'वापस आया'),
       openOrderAction: S('View', 'देखें'),
+
+      /* ---- Jira GRW-643 — the phone Home's own period filter and the figures it moves ---- */
+      /** The four windows the phone offers. "This week" is the calendar week to date, Monday first — `homeWindow`'s meaning of the word. */
+      periodToday: S('Today', 'आज'),
+      periodYesterday: S('Yesterday', 'कल'),
+      periodWeek: S('This week', 'इस हफ़्ते'),
+      periodMonth: S('This month', 'इस महीने'),
+      periodLabel: S('Show sales for', 'इसकी बिक्री दिखाएँ'),
+      /** The comparison the API returns, drawn only when it has a period to compare against. */
+      vsPrevious: S('vs. previous', 'पिछले की तुलना में'),
+      /**
+       * The orders in this window that came back in full, shown BESIDE the count rather than folded
+       * into it. `by-channel` counts what was billed, and an order returned in full was not; the Orders
+       * card below counts every order taken. Both are right, and without this line they read as two
+       * answers to one question — "2 orders" above "3 Today". Said out loud, they add up.
+       */
+      cameBack: (n: number) => (n === 1 ? S('1 came back', '1 वापस आया') : S(`${n} came back`, `${n} वापस आए`)),
+      /** The hero's top-seller pill once the window has one; it falls back to `whatSellsLink` before then. */
+      topSellerPill: (name: string) => S(`Top: ${name}`, `सबसे ज़्यादा: ${name}`),
+      noSalesYet: S('No sales in this period yet.', 'इस अवधि में अभी कोई बिक्री नहीं।'),
+      loadingFigures: S('Loading…', 'लोड हो रहा है…'),
     },
     couldNotLoad: S('Could not load this. Check your connection and try again.', 'यह लोड नहीं हुआ। इंटरनेट देखें और फिर से कोशिश करें।'),
 

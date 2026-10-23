@@ -13,6 +13,7 @@ import type {
   StockReportPage,
 } from '../../lib/api-types';
 import { homeCopy } from '../../lib/home-copy';
+import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import { ordersHref } from '../../lib/orders-filter';
 import type { Lang } from '../../lib/lang';
@@ -33,6 +34,8 @@ import { Avatar, Card, CardError, HomeHeader, QuickTiles, Segmented, rupees } fr
 import { CheckInCard } from './CheckInCard';
 
 type ShopPeriod = 'last_7_days' | 'this_month' | 'last_3_months';
+
+
 
 /**
  * Jira GRW-609 — a shop's Home: the money, the orders waiting to go out, and the sizes running out before the season.
@@ -97,6 +100,31 @@ export function ShopHome({
   const loadedFor = useRef<string | null>(null);
   const deskReqId = useRef(0);
 
+  /*
+   * Jira GRW-643 — which Home is actually on screen. 860px is the SAME edge `.shp-mobile-stack` is hidden at
+   * (99-shop-home.css), so `phone === true` is exactly "the mobile stack is the one being looked at". It starts
+   * null — nothing is known before mount — and neither feed runs on a guess.
+   *
+   * This is what keeps the period filter from costing anything: a laptop makes none of the phone's reads, and a
+   * phone makes none of the command center's five, which it has never been able to see.
+   */
+  const [phone, setPhone] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 860px)');
+    const read = () => setPhone(mq.matches);
+    read();
+    mq.addEventListener('change', read);
+    return () => mq.removeEventListener('change', read);
+  }, []);
+
+  const [phonePeriod, setPhonePeriod] = useState<PhonePeriod>('today');
+  const [phoneChannel, setPhoneChannel] = useState<ByChannelPage | null>(null);
+  const [phoneSellers, setPhoneSellers] = useState<BestSellersPage | null>(null);
+  const [phoneBusy, setPhoneBusy] = useState(false);
+  /** Bumped by the hero's "Try again": the window has not changed, so only a new dep re-runs the read. */
+  const [phoneRetry, setPhoneRetry] = useState(0);
+  const phoneReqId = useRef(0);
+
   const load = (location: string | null) => {
     setLoading(true);
     api
@@ -118,6 +146,15 @@ export function ShopHome({
 
   // Load desktop command-center feeds whenever branch or period changes
   useEffect(() => {
+    /*
+     * Jira GRW-643 — not on a phone: every one of these five feeds only the command center, which is
+     * `display:none` below 861px. It used to run there and throw the answers away.
+     *
+     * `!== false`, not `=== true`: `phone` is null until the media query is read on mount, and a guard
+     * that let null through would run this whole set once on null and again on false — a second round of
+     * five requests on every laptop load. Waiting one tick for the answer costs nothing and asks once.
+     */
+    if (phone !== false) return;
     const mine = ++deskReqId.current;
     const loc = branch ?? undefined;
     const range: SellersRange = period;
@@ -172,7 +209,65 @@ export function ShopHome({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [branch, period, money, canReports]);
+  }, [branch, period, money, canReports, phone]);
+
+  /*
+   * Jira GRW-643 — the phone's own read, one window at a time.
+   *
+   * The money a phone shows used to be `shopHome`'s fixed today/yesterday pair, which no filter could move.
+   * `by-channel` answers any of the report ranges with the billed total, the order count AND the comparison
+   * against the equal-length period before it, so the filter moves real figures rather than relabelling one.
+   *
+   * It runs only where it is read (`phone === true`) and only where the owner may see both the money and the
+   * channel report — the same two gates the hero itself is behind. An owner who may see takings but not that
+   * report keeps the hero exactly as it was: today's figure, no filter (see `phoneFigures` below).
+   */
+  const canPhoneRange = money && canReports && can('/stock/channels');
+  useEffect(() => {
+    if (phone !== true) return;
+    const mine = ++phoneReqId.current;
+    const w = phoneWindow(phonePeriod, timezone, new Date());
+
+    // The rows the Recent orders card below the hero lists. The command center's own `api.orders` read no
+    // longer runs on a phone, so the phone asks for its own six — NOT narrowed to the window, because
+    // "recent" means the last six orders, which is not a question the period filter asks.
+    if (can('/orders')) {
+      api
+        .orders({ pageSize: 6, location: branch })
+        .then((res) => {
+          if (mine === phoneReqId.current) setRecentOrders(res.rows);
+        })
+        .catch(() => {});
+    }
+
+    // Everything below is the hero's window, and is behind the hero's own two gates.
+    if (!canPhoneRange) return;
+    setPhoneBusy(true);
+    api
+      .byChannel({ ...w, location: branch ?? undefined })
+      .then((res) => {
+        if (mine === phoneReqId.current) setPhoneChannel(res);
+      })
+      .catch(() => {
+        if (mine === phoneReqId.current) setPhoneChannel(null);
+      })
+      .finally(() => {
+        if (mine === phoneReqId.current) setPhoneBusy(false);
+      });
+    // The top seller is read for the SAME window as the money above it. Asked for the command center's
+    // range instead, the hero would name last quarter's best dish under today's takings.
+    if (can('/stock/sellers')) {
+      api
+        .bestSellers({ ...w, location: branch ?? undefined, pageSize: 1 })
+        .then((res) => {
+          if (mine === phoneReqId.current) setPhoneSellers(res);
+        })
+        .catch(() => {
+          if (mine === phoneReqId.current) setPhoneSellers(null);
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phone, phonePeriod, branch, canPhoneRange, timezone, phoneRetry]);
 
   /*
    * Jira GRW-611 review — no Reports tile. Every report there is built from bookings, so `/reports` answers a shop
@@ -322,6 +417,72 @@ export function ShopHome({
     (returnsData ? returnsData.customer.returns + returnsData.undelivered.returns : null) ??
     channelData?.totals.returnedOrders ??
     0;
+
+  /*
+   * Jira GRW-643 — the figures the phone hero draws, for the window the filter is on.
+   *
+   * `kind` is the honest part. `'range'` means by-channel answered and every number below belongs to the
+   * chosen window. `'today'` means this owner has no channel report, so the hero stays exactly the screen
+   * they had before this change: `shopHome`'s today, and no filter above it to suggest otherwise. `'busy'`
+   * and `'failed'` draw their own line rather than leaving the previous window's money under a new label —
+   * a stale figure that looks current is worse on this screen than no figure.
+   */
+  const phoneFigures = useMemo(() => {
+    if (!canPhoneRange) {
+      if (!money || data?.today.takingsMinor === undefined) return { kind: 'none' as const };
+      return {
+        kind: 'today' as const,
+        takingsMinor: data.today.takingsMinor,
+        orders: data.today.orders,
+        previousMinor: data.yesterday.takingsMinor ?? 0,
+      };
+    }
+    if (!phoneChannel) return { kind: phoneBusy ? ('busy' as const) : ('failed' as const) };
+    const takingsMinor = Number(phoneChannel.totals.billedMinor || 0);
+    const orders = phoneChannel.totals.orders;
+    return {
+      kind: 'range' as const,
+      takingsMinor,
+      orders,
+      // Absent, not zero, when there is no comparable period — the API says so with `previous.hasData`.
+      changePct: phoneChannel.previous.hasData ? phoneChannel.totals.changePct : null,
+      // Said beside the count, never subtracted from it — see `cameBack` in home-copy.
+      returnedOrders: phoneChannel.totals.returnedOrders,
+      // An average over no orders is not 0, it is nothing; the card draws a dash.
+      avgMinor: orders > 0 ? Math.round(takingsMinor / orders) : null,
+      busy: phoneBusy,
+    };
+  }, [canPhoneRange, money, data, phoneChannel, phoneBusy]);
+
+  /*
+   * The hero's bars: one per day of the chosen window, from the same response as the money above them.
+   * Fewer than two buckets is not a trend (a single day is one bar saying nothing), and a window with no
+   * sales at all is drawn as nothing rather than a flat row of stubs pretending to be a reading.
+   */
+  const phoneSpark = useMemo(() => {
+    const raw = phoneChannel?.trend ?? [];
+    if (raw.length < 2) return [];
+    const buckets = raw.slice(-14).map((b) => ({
+      key: b.startISO,
+      minor: Object.values(b.billedMinor).reduce((sum, v) => sum + Number(v || 0), 0),
+    }));
+    const max = Math.max(...buckets.map((b) => b.minor));
+    // Two days that SOLD, not two days in the window. A month with one busy day drew 22 hairlines and one
+    // block, which reads as a broken chart rather than as "you sold on one day" — and the Home says that
+    // already, in the figure above. One point is not a trend.
+    if (max <= 0 || buckets.filter((b) => b.minor > 0).length < 2) return [];
+    return buckets.map((b) => ({ key: b.key, pct: b.minor > 0 ? Math.max(8, Math.round((b.minor / max) * 100)) : 3 }));
+  }, [phoneChannel]);
+
+  const phoneTopSeller = phoneSellers?.rows?.[0] ?? null;
+
+  const phonePeriodOptions: Array<{ value: PhonePeriod; label: string }> = [
+    { value: 'today', label: s.periodToday },
+    { value: 'yesterday', label: s.periodYesterday },
+    { value: 'this_week', label: s.periodWeek },
+    { value: 'this_month', label: s.periodMonth },
+  ];
+  const phonePeriodWord = phonePeriodOptions.find((o) => o.value === phonePeriod)?.label ?? s.periodToday;
 
   const outOfStockCount = stockData
     ? stockData.styles.reduce((acc, st) => acc + st.sizes.filter((sz) => sz.stock <= 0).length, 0)
@@ -1072,30 +1233,107 @@ export function ShopHome({
                   that skin exactly rather than a second one drifting beside it — a shop's figures are
                   different from a salon's, the way they are shown should not be.
                 */}
-                {money && data.today.takingsMinor !== undefined ? (
-                  <section className="hm-hero shp-hero">
+                {/*
+                  Jira GRW-643 — the filter sits ABOVE the hero, not inside it: it governs the money, the two
+                  figures under it and the top seller, and a control that governs a card is not part of one.
+                  Only an owner whose figures it can actually move is offered it (`kind === 'none'` and the
+                  unchanged `'today'` hero have nothing to filter).
+                */}
+                {phoneFigures.kind === 'range' || phoneFigures.kind === 'busy' || phoneFigures.kind === 'failed' ? (
+                  <div className="shp-period">
+                    <Segmented
+                      value={phonePeriod}
+                      options={phonePeriodOptions}
+                      onChange={setPhonePeriod}
+                      label={s.periodLabel}
+                      className="shp-period-seg"
+                    />
+                  </div>
+                ) : null}
+
+                {phoneFigures.kind === 'none' ? null : (
+                  <section className="hm-hero shp-hero" aria-busy={phoneFigures.kind === 'busy' || (phoneFigures.kind === 'range' && phoneFigures.busy)}>
                     <div className="hm-hero-top">
-                      <span className="hm-eyebrow">{s.takings}</span>
+                      <span className="hm-eyebrow">{phoneFigures.kind === 'today' ? s.takings : phonePeriodWord}</span>
                       {canReports && can('/stock/channels') ? (
                         <a className="shp-hero-link" href="/stock/channels">
                           {s.channelsLink}
                         </a>
                       ) : null}
                     </div>
-                    <div className="hm-hero-amount">{rupees(data.today.takingsMinor)}</div>
-                    <div className="hm-hero-stats">
-                      <span>
-                        <strong>{data.today.orders}</strong> {s.orderWord(data.today.orders)}
-                      </span>
-                      <span>
-                        {s.yesterday} <strong>{rupees(data.yesterday.takingsMinor ?? 0)}</strong>
-                      </span>
-                    </div>
+
+                    {phoneFigures.kind === 'busy' ? (
+                      // A shaped block, not a spinner: the hero keeps its height so nothing below it jumps when the figure lands.
+                      <div className="shp-hero-skeleton" role="status" aria-live="polite">
+                        <span className="sr-only">{s.loadingFigures}</span>
+                      </div>
+                    ) : phoneFigures.kind === 'failed' ? (
+                      <div className="shp-hero-failed" role="status">
+                        <span>{t.couldNotLoad}</span>
+                        <button type="button" className="shp-hero-pill" onClick={() => setPhoneRetry((n) => n + 1)}>
+                          {t.retry}
+                        </button>
+                      </div>
+                    ) : phoneFigures.kind === 'today' || phoneFigures.kind === 'range' ? (
+                      <>
+                        <div className="hm-hero-amount">{rupees(phoneFigures.takingsMinor)}</div>
+                        {/*
+                          A window that sold nothing says so in words. "₹0" with "0 orders" under it is true
+                          and reads as a screen that failed to load; the sentence reads as an answer.
+                        */}
+                        {phoneFigures.kind === 'range' && phoneFigures.orders === 0 && phoneFigures.takingsMinor === 0 ? (
+                          <p className="shp-hero-none">{s.noSalesYet}</p>
+                        ) : (
+                        <div className="hm-hero-stats">
+                          <span>
+                            <strong>{phoneFigures.orders}</strong> {s.orderWord(phoneFigures.orders)}
+                          </span>
+                          {/*
+                            `orders` above is what was BILLED. An order returned in full was not, and the
+                            Orders card below counts it, so without this the two cards answer one question
+                            twice and differently. It is drawn only when there is one to draw.
+                          */}
+                          {phoneFigures.kind === 'range' && phoneFigures.returnedOrders > 0 ? (
+                            <span>{s.cameBack(phoneFigures.returnedOrders)}</span>
+                          ) : null}
+                          {phoneFigures.kind === 'today' ? (
+                            <span>
+                              {s.yesterday} <strong>{rupees(phoneFigures.previousMinor)}</strong>
+                            </span>
+                          ) : phoneFigures.changePct !== null && phoneFigures.changePct !== undefined ? (
+                            // Never colour alone: the arrow and the sign carry it for anyone who cannot tell green from red.
+                            <span className={`shp-delta ${phoneFigures.changePct < 0 ? 'is-down' : 'is-up'}`}>
+                              {phoneFigures.changePct < 0 ? '↓' : '↑'} {Math.abs(phoneFigures.changePct)}% {s.vsPrevious}
+                            </span>
+                          ) : null}
+                          {/*
+                            The average order, the one figure of the mock-up's KPI row that is not already on
+                            this screen. It sits in the hero's own stats line rather than in a strip below it:
+                            a strip would have had to carry the order count too to look like a row, and that
+                            count is printed two lines above — which is what the strip removed on 2026-10-23
+                            was doing, and why `retail-ui-redesign.test.ts` holds it gone.
+                          */}
+                          {phoneFigures.kind === 'range' && phoneFigures.avgMinor !== null ? (
+                            <span>{s.avgOrderShort(rupees(phoneFigures.avgMinor))}</span>
+                          ) : null}
+                        </div>
+                        )}
+                        {phoneSpark.length > 0 ? (
+                          // Decoration would be a lie here, so it is drawn only from the window's own daily totals.
+                          <div className="shp-spark" aria-hidden="true">
+                            {phoneSpark.map((b) => (
+                              <i key={b.key} style={{ height: `${b.pct}%` }} />
+                            ))}
+                          </div>
+                        ) : null}
+                      </>
+                    ) : null}
+
                     {canReports && (can('/stock/sellers') || can('/stock/report')) ? (
                       <div className="shp-hero-links">
                         {can('/stock/sellers') ? (
                           <a className="shp-hero-pill" href="/stock/sellers">
-                            {s.whatSellsLink}
+                            {phoneTopSeller ? s.topSellerPill(phoneTopSeller.name) : s.whatSellsLink}
                           </a>
                         ) : null}
                         {can('/stock/report') ? (
@@ -1106,7 +1344,7 @@ export function ShopHome({
                       </div>
                     ) : null}
                   </section>
-                ) : null}
+                )}
 
                 <Card title={s.ordersTitle} action={data.anyOrders && can('/orders') ? <a className="shp-link" href="/orders">{s.viewOrders}</a> : undefined}>
                   {data.anyOrders ? (
@@ -1149,6 +1387,43 @@ export function ShopHome({
                   )}
                 </Card>
               </div>
+
+              {/*
+                Jira GRW-643 — Recent orders, the one card on this phone screen whose rows were already being
+                read and thrown away: the command center has listed them since GRW-614, below 861px nothing did.
+                Each row says what the Orders list says — its code, its channel, its state and its money — and
+                the state is a WORD, never a colour on its own. Money is omitted per row when the API omits it
+                (a front desk without the sales tab), the same rule the Orders list follows.
+               */}
+              {can('/orders') && data.anyOrders && recentOrders.length > 0 ? (
+                <Card
+                  title={s.recentOrdersTitle}
+                  action={
+                    <a className="shp-link" href="/orders">
+                      {s.viewOrders}
+                    </a>
+                  }
+                >
+                  <ul className="shp-recent">
+                    {recentOrders.slice(0, 4).map((o) => (
+                      <li key={o.id}>
+                        <a className="shp-recent-row" href={`/orders/${encodeURIComponent(o.id)}`}>
+                          <span className="shp-recent-main">
+                            <span className="shp-recent-code">{o.code}</span>
+                            <span className="shp-recent-meta">
+                              {channelWord(o.channel)} · {formatShortDate(o.soldAt)}
+                            </span>
+                          </span>
+                          <span className="shp-recent-end">
+                            {o.amountMinor === undefined ? null : <span className="shp-recent-amount">{rupees(o.amountMinor)}</span>}
+                            <span className={`shp-recent-state is-${stateTone(o.status)}`}>{stateWord(o.status)}</span>
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              ) : null}
 
               {/*
                 Jira GRW-611 review — "View all" opens the SHELF, not its `low` filter. That filter answers the Stock
