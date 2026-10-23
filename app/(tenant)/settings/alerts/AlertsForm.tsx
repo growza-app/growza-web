@@ -6,6 +6,7 @@ import { api, type AlertPrefs } from '../../lib/api';
 import { useWritable } from '../../components/SessionProvider';
 import {
   ALERT_KINDS,
+  ALERT_MESSAGE_KEY,
   currentDevice,
   pushBlocker,
   subscribeThisDevice,
@@ -167,9 +168,9 @@ export function AlertsForm({ vapidPublicKey }: { vapidPublicKey: string | null }
                 </label>
                 <div>
                   <div id={`${id}-label`} className="al-row-title">
-                    {t(`kinds.${kind}.title`)}
+                    {t(`kinds.${ALERT_MESSAGE_KEY[kind]}.title`)}
                   </div>
-                  <span className="field-hint">{t(`kinds.${kind}.hint`)}</span>
+                  <span className="field-hint">{t(`kinds.${ALERT_MESSAGE_KEY[kind]}.hint`)}</span>
                 </div>
               </li>
             );

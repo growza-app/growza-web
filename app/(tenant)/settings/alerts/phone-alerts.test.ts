@@ -3,7 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import en from '../../../../messages/en.json';
 import hi from '../../../../messages/hi.json';
-import { ALERT_KINDS } from '../../lib/push-alerts';
+import { ALERT_KINDS, ALERT_MESSAGE_KEY } from '../../lib/push-alerts';
 import { SETTINGS_GROUPS } from '../nav-data';
 import { wholeBusiness } from '../../lib/branch-routes';
 
@@ -93,10 +93,42 @@ describe('copy', () => {
     for (const kind of ALERT_KINDS) {
       for (const [lang, messages] of [['en', en], ['hi', hi]] as const) {
         const copy = copyFor(messages);
-        expect(copy.kinds[kind]?.title, `${lang} title for ${kind}`).toBeTruthy();
-        expect(copy.kinds[kind]?.hint, `${lang} hint for ${kind}`).toBeTruthy();
+        const key = ALERT_MESSAGE_KEY[kind];
+        expect(copy.kinds[key]?.title, `${lang} title for ${kind}`).toBeTruthy();
+        expect(copy.kinds[key]?.hint, `${lang} hint for ${kind}`).toBeTruthy();
       }
     }
+  });
+
+  /**
+   * The bug this test did not catch the first time, found by looking at the screen at 344px.
+   *
+   * next-intl reads `.` in a key as a NAMESPACE separator, so `t('kinds.booking.new.title')` goes looking for
+   * `kinds → booking → new → title` and renders the raw key when it finds nothing. The first version of this
+   * file read the JSON with `copy.kinds[kind]` — a direct property lookup, which happily found the literal
+   * `"booking.new"` key that next-intl never would. Four labels shipped as `settingsAlerts.kinds.booking.new.title`
+   * on screen with a green test suite.
+   */
+  it('has no dot in any key under settingsAlerts — next-intl would read it as a namespace', () => {
+    const dotted: string[] = [];
+    const walk = (node: unknown, path: string) => {
+      if (typeof node !== 'object' || node === null) return;
+      for (const [key, value] of Object.entries(node)) {
+        if (key.includes('.')) dotted.push(`${path}${key}`);
+        walk(value, `${path}${key}.`);
+      }
+    };
+    for (const [lang, messages] of [['en', en], ['hi', hi]] as const) {
+      dotted.length = 0;
+      walk(copyFor(messages), 'settingsAlerts.');
+      expect(dotted, `${lang} keys next-intl cannot reach`).toEqual([]);
+    }
+  });
+
+  it('every kind has a message key, and they are all distinct', () => {
+    const keys = ALERT_KINDS.map((k) => ALERT_MESSAGE_KEY[k]);
+    expect(keys.filter(Boolean)).toHaveLength(ALERT_KINDS.length);
+    expect(new Set(keys).size).toBe(ALERT_KINDS.length);
   });
 
   it('explains every blocker in both languages — each one has a different next step', () => {
@@ -113,6 +145,23 @@ describe('copy', () => {
     expect(rows.notifications?.sub).not.toMatch(/alert/i);
     expect(rows.notifications?.sub).toMatch(/WhatsApp/);
     expect(rows.phoneAlerts?.label).toBe('Phone alerts');
+  });
+});
+
+describe('the switch is big enough to hit', () => {
+  const css = readFileSync(path.join(here, '../../styles/96-phone-alerts.css'), 'utf-8');
+
+  /**
+   * `90-accessibility.css` excludes `.switch` from the 44px rule it gives every other checkbox label
+   * (`label:not(.switch)`), because the shared switch is also used inline in tight rows. This screen is a list
+   * of four with room to spare, so it pays the padding and keeps the target. Measured at 344px: 44x56.
+   */
+  it('pads the 21px track out to a 44px target without moving it', () => {
+    const rule = css.slice(css.indexOf('.al-row .switch {'));
+    expect(rule).toMatch(/box-sizing: content-box;/);
+    expect(rule).toMatch(/padding: 10px;/);
+    // The negative margin is what keeps the row's layout identical to the unpadded version.
+    expect(rule).toMatch(/margin: -10px;/);
   });
 });
 

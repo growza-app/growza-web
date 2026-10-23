@@ -809,19 +809,19 @@
       "not-configured": "Alerts are not set up on this server yet. Nothing is wrong with your phone."
     },
     "kinds": {
-      "booking.new": {
+      "bookingNew": {
         "title": "New booking",
         "hint": "Someone books a time"
       },
-      "booking.cancelled": {
+      "bookingCancelled": {
         "title": "Booking cancelled",
         "hint": "Someone calls off a time they had booked"
       },
-      "walkin.waiting": {
+      "walkinWaiting": {
         "title": "Someone is waiting",
         "hint": "A walk-in joins the queue at the shop"
       },
-      "day.summary": {
+      "daySummary": {
         "title": "How today went",
         "hint": "One message in the evening: bookings done and money taken"
       }

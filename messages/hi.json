@@ -809,19 +809,19 @@
       "not-configured": "इस सर्वर पर सूचनाएँ अभी सेट नहीं हैं। आपके फ़ोन में कोई गड़बड़ी नहीं है।"
     },
     "kinds": {
-      "booking.new": {
+      "bookingNew": {
         "title": "नई बुकिंग",
         "hint": "कोई समय बुक करता है"
       },
-      "booking.cancelled": {
+      "bookingCancelled": {
         "title": "बुकिंग रद्द",
         "hint": "कोई अपनी बुकिंग रद्द करता है"
       },
-      "walkin.waiting": {
+      "walkinWaiting": {
         "title": "कोई इंतज़ार में है",
         "hint": "दुकान पर कोई लाइन में लगता है"
       },
-      "day.summary": {
+      "daySummary": {
         "title": "आज कैसा रहा",
         "hint": "शाम को एक संदेश: कितनी बुकिंग हुईं और कितने पैसे आए"
       }

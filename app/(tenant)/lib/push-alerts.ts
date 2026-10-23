@@ -27,6 +27,24 @@ export type AlertKind = (typeof ALERT_KINDS)[number];
 export type PushBlocker = 'unsupported' | 'install-first' | 'blocked' | 'not-configured';
 
 /** True when the page is running as an installed app rather than in a browser tab. */
+/**
+ * A kind's name in the message files.
+ *
+ * next-intl reads `.` in a key as a NAMESPACE separator, so `t('kinds.booking.new.title')` looks for
+ * `kinds → booking → new → title` and finds nothing — it renders the raw key on screen. Found at 344px, not by
+ * a test: the test read the JSON directly and never went through next-intl. The kinds keep their dotted names,
+ * because that is what the database's CHECK constraint and the outbox payload say; only the message keys differ.
+ */
+// `as const satisfies`, not an annotation: the values must stay LITERAL so `kinds.${ALERT_MESSAGE_KEY[kind]}.title`
+// resolves to a key next-intl's types know. Widened to `string` it compiles to `kinds.${string}.title`, which they
+// reject — and that rejection is the second guard against this bug, after the test.
+export const ALERT_MESSAGE_KEY = {
+  'booking.new': 'bookingNew',
+  'booking.cancelled': 'bookingCancelled',
+  'walkin.waiting': 'walkinWaiting',
+  'day.summary': 'daySummary',
+} as const satisfies Record<AlertKind, string>;
+
 export function isInstalled(win: Window = window): boolean {
   // `standalone` is Safari's own, and on iOS it is the ONLY one that answers — iOS does not match
   // `display-mode: standalone` reliably, which is why both are asked.

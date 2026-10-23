@@ -20,6 +20,7 @@
 .al-row {
   display: flex;
   align-items: flex-start;
+  /* The switch's own tap padding eats 10px of this, which is why the gap looks smaller than it reads. */
   gap: var(--sp-3);
   padding: var(--sp-3) 0;
 }
@@ -29,12 +30,23 @@
   border-top: 1px solid var(--line);
 }
 
+/*
+ * A 44px tap target around a 21px track, drawn where the 21px track was.
+ *
+ * `90-accessibility.css` excludes `.switch` from the rule that gives a checkbox's label 44px
+ * (`label:not(.switch)`), because the shared switch is used inline in tight rows like the offers list where it
+ * could not have it. This screen is a list of four with room to spare, so there is no reason to inherit the
+ * compromise: the padding makes the target 44px tall and the negative margin hands the row back its layout, the
+ * same trick `.rp-tip-btn` uses for the "i" button. Nothing moves on screen; the switch is simply hittable.
+ */
 .al-row .switch {
   /* The track centres on the title's line, so four rows line up however long their hints wrap. */
   flex: none;
   align-self: flex-start;
   height: 1.5rem;
-  margin: 0;
+  box-sizing: content-box;
+  padding: 10px;
+  margin: -10px;
 }
 
 .al-row > div {
