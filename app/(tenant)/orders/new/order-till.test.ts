@@ -50,10 +50,11 @@ describe('one implementation, two addresses — nothing copied (NFR-06)', () => 
 
   it('the till’s own name is an optional prop with the old default, so every address that opened it reads as it did', () => {
     const flow = read('appointments/new/PayFlow.tsx');
-    expect(flow).toContain("{productsOnly ? (heading ?? t('sellTitle')) : t('whatTitle')}");
-    expect(flow).toContain("<h1 className=\"pf-title\">{heading ?? t('sellTitle')}</h1>");
-    // The default is still the same word: a salon that opens /products/sell sees "Sell product".
-    expect(JSON.parse(read('../../messages/en.json')).payFlow.sellTitle).toBe('Sell product');
+    expect(flow).toContain("{productsOnly ? (heading ?? t('sellTitle', { product: nouns.product })) : t('whatTitle')}");
+    expect(flow).toContain("<h1 className=\"pf-title\">{heading ?? t('sellTitle', { product: nouns.product })}</h1>");
+    // The default is still the same word: a salon or a shop that opens /products/sell sees "Sell product" (their
+    // product noun is Product); a kitchen sees its own word (Restaurant QA 2026-10-24).
+    expect(JSON.parse(read('../../messages/en.json')).payFlow.sellTitle.replace('{product}', 'product')).toBe('Sell product');
   });
 
   it('a shop’s till says what a shop says — from the vertical’s own words, in both languages — and nobody else’s changes', () => {

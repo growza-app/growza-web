@@ -1,6 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
+import { useNouns } from '../lib/use-nouns';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError, formatMoney } from '../lib/api';
 import { intlLocale } from '../lib/format';
@@ -51,6 +52,7 @@ export function StockTake({
 }) {
   const t = useTranslations('products');
   const tc = useTranslations('common');
+  const nouns = useNouns();
   const locale = useLocale();
   const [shelf, setShelf] = useState<Product[]>(() =>
     initialProducts.filter((p) => p.active).sort((a, b) => a.name.localeCompare(b.name)),
@@ -488,7 +490,7 @@ export function StockTake({
                   <table className="prd-table prd-st-table" aria-label={t('stockTake.title')}>
                     <thead>
                       <tr>
-                        <th>{t('cols.product')}</th>
+                        <th>{t('cols.product', { product: nouns.Product })}</th>
                         <th className="prd-td-num">{t('cols.price')}</th>
                         <th className="prd-td-num">{t('cols.cost')}</th>
                         <th className="prd-td-num">{t('cols.stock')}</th>

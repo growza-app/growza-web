@@ -19,6 +19,7 @@ import { HeaderBranchPicker } from '../../components/HeaderBranchPicker';
 import { PAYMENT_MODES } from '../../lib/payment-modes';
 import { useLabel } from '../../components/LabelsProvider';
 import { nounInSentence, pickNoun } from '../../lib/nouns';
+import { useNouns } from '../../lib/use-nouns';
 import { LargeAmountDeclined, useLargeAmountGuard } from '../../components/LargeAmountConfirm';
 import { useAreas, useSession } from '../../components/SessionProvider';
 import { IconArrowLeft, IconClose, IconEdit, IconMinus, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch, IconUserPlus } from '../../components/icons';
@@ -191,6 +192,8 @@ export function PayFlow({
   // The person paying, in the vertical's own word — Guest at a restaurant, Customer at a shop.
   const clientNoun = pickNoun(locale, useLabel('customer', 'Client'), tNouns('customer'));
   const productsNoun = useLabel('products', 'Products');
+  // Restaurant QA 2026-10-24 — one of what the till sells, in the business's word: "Tap a dish", "Sell dish".
+  const nouns = useNouns();
   const { guard, dialog } = useLargeAmountGuard();
 
   // The branch this sale lands at: the token's, else the one the header has chosen, else the only one.
@@ -1402,7 +1405,7 @@ export function PayFlow({
             <IconArrowLeft />
           </button>
           <span className="pf-head-stack">
-            <h1 className="pf-title">{productsOnly ? (heading ?? t('sellTitle')) : t('whatTitle')}</h1>
+            <h1 className="pf-title">{productsOnly ? (heading ?? t('sellTitle', { product: nouns.product })) : t('whatTitle')}</h1>
             {token ? (
               branchName ? <span className="pf-at">{t('at', { branch: branchName })}</span> : null
             ) : (
@@ -1539,7 +1542,7 @@ export function PayFlow({
               </p>
             ) : null}
             {lines.length === 0 ? (
-              <p className="pf-wide-empty">{productsOnly ? t('desk.emptyProductBill') : t('desk.emptyBill')}</p>
+              <p className="pf-wide-empty">{productsOnly ? t('desk.emptyProductBill', { product: nouns.product }) : t('desk.emptyBill')}</p>
             ) : productsOnly ? (
               <PosBillRows
                 lines={lines}
@@ -1681,7 +1684,7 @@ export function PayFlow({
               <IconArrowLeft />
             </button>
             <span className="pf-head-stack">
-              <h1 className="pf-title">{heading ?? t('sellTitle')}</h1>
+              <h1 className="pf-title">{heading ?? t('sellTitle', { product: nouns.product })}</h1>
               <HeaderBranchPicker variant="line" />
             </span>
             <span className="pf-head-gap" aria-hidden="true" />

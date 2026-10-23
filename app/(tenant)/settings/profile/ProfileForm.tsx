@@ -9,6 +9,7 @@ import { api, ApiError, type SettingsSummary } from '../../lib/api';
 import { usePhoneProblem } from '../../lib/use-phone-problem';
 import { useCloseAfterSave } from '../../lib/close-after-save';
 import { useWritable } from '../../components/SessionProvider';
+import { useNouns } from '../../lib/use-nouns';
 
 /**
  * Jira GRW-226 — Business profile, as a form that fits a laptop and a phone.
@@ -75,6 +76,7 @@ export function ProfileForm({
   // Jira GRW-76 — a role that can only SEE Settings is not offered the button that saves.
   const writable = useWritable();
   const t = useTranslations('settingsProfile');
+  const { customers } = useNouns();
   // Jira GRW-556 (follow-up) — Save finishes the task: back to the list, which says "Saved".
   const closeForm = useCloseAfterSave('/settings');
   const tCommon = useTranslations('common');
@@ -196,7 +198,7 @@ export function ProfileForm({
         <h2 className="bp-title">
           {branchId ? (branchName ? t('branchTitleNamed', { name: branchName }) : t('branchTitleUnnamed')) : businessOnly ? t('titleBusinessOnly') : t('title')}
         </h2>
-        <p className="bp-sub">{branchId ? t('subBranch') : businessOnly ? t('subBusinessOnly') : t('sub')}</p>
+        <p className="bp-sub">{branchId ? t('subBranch', { customers }) : businessOnly ? t('subBusinessOnly') : t('sub', { customers })}</p>
       </div>
 
       <div className="bp-columns">

@@ -221,7 +221,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     /** BR-12 — the queue could not be read, so the card cannot say that nobody is waiting. */
     queueUnread: S('Could not check who is waiting.', 'इंतज़ार कौन कर रहा है, यह नहीं देख पाए।'),
 
-    clientsDoingTitle: hi ? 'आपके ग्राहक कैसे हैं' : copy.clients.segmentsTitle,
+    clientsDoingTitle: hi ? 'आपके ग्राहक कैसे हैं' : copy.clients.segmentsTitle.replace('{noun}', nounInSentence(clientsWord)),
     clientsDoingHint: hi ? 'किसी एक पर टैप करें' : copy.clients.segmentsHint,
     neverVisited: (n: number, pct: number) =>
       hi ? `${n} (${pct}%) ग्राहक अभी तक नहीं आए, इसलिए वे किसी में नहीं हैं` : copy.clients.neverVisited(n, pct),
@@ -449,7 +449,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       noSalesInRange: S('No sales recorded in this period yet.', 'इस अवधि में अभी कोई बिक्री दर्ज नहीं हुई।'),
       avgOrderShort: (amt: string) => S(`avg ${amt}`, `औसत ${amt}`),
       quickActionsTitle: S('Quick actions', 'तुरंत काम'),
-      addCustomerAction: S('Add customer', 'ग्राहक जोड़ें'),
+      // Restaurant QA 2026-10-24 — the shop's own word for who buys: "Add guest" at a restaurant.
+      addCustomerAction: S(`Add ${nounInSentence(labels.customer ?? 'Customer')}`, 'ग्राहक जोड़ें'),
       ordersAttentionTitle: S('Orders needing attention', 'ध्यान देने वाले ऑर्डर'),
       cameBackLabel: S('Returns', 'वापसी'),
       allOrdersDispatched: S('Every order has been packed and sent.', 'सभी ऑर्डर पैक करके भेजे जा चुके हैं।'),
@@ -459,7 +460,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       soldCountPill: (n: number) => S(`${n} sold`, `${n} बिके`),
       recentOrdersTitle: S('Recent orders', 'हाल के ऑर्डर'),
       colWhen: S('When', 'कब'),
-      colCustomer: S('Customer', 'ग्राहक'),
+      colCustomer: S(labels.customer ?? 'Customer', 'ग्राहक'),
       colChannel: S('Channel', 'चैनल'),
       colItems: S('Items', 'सामान'),
       colAmount: S('Amount', 'राशि'),
