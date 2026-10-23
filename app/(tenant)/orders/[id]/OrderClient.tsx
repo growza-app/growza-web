@@ -8,7 +8,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { DocumentAction } from '../../components/DocumentAction';
 import { ReturnProductSheet, type ReturnableSaleBill } from '../../sales/ReturnProductSheet';
 import { KNOWN_STATES } from '../../lib/orders-filter';
-import { useSession, useWritable } from '../../components/SessionProvider';
+import { useAreas, useSession, useWritable } from '../../components/SessionProvider';
 import { computeReturnWindow } from '../../sales/sales-helpers';
 import { returnReasonKey } from '../../lib/return-reasons';
 import { intlLocale } from '../../lib/format';
@@ -49,6 +49,9 @@ export function OrderClient({
   const locale = useLocale();
   const writable = useWritable();
   const session = useSession();
+  // A kitchen keeps no count, so the API answers `restocked: false` for every return for want of a shelf: saying so
+  // on the order would read as a write-off of a dish nobody wrote off.
+  const counted = useAreas().stock;
 
   const [order, setOrder] = useState<OrderDetail | null>(initial);
   const [failed, setFailed] = useState(initial === null);
@@ -291,7 +294,7 @@ export function OrderClient({
                     {r.kind === 'undelivered' ? t('detail.undelivered') : t('detail.customerReturn')}
                     {r.kind === 'customer' ? <span className="ord-d-quiet"> · {t(`returnReasons.${returnReasonKey(r.reasonCode)}`)}</span> : null}
                     {r.reasonText && r.reasonCode === 'other' ? <span className="ord-d-quiet"> · {r.reasonText}</span> : null}
-                    {!r.restocked ? <span className="ord-d-quiet"> · {t('detail.notRestocked')}</span> : null}
+                    {counted && !r.restocked ? <span className="ord-d-quiet"> · {t('detail.notRestocked')}</span> : null}
                     {r.saleableDefaulted ? <span className="ord-d-quiet"> · {t('detail.saleableAssumed')}</span> : null}
                   </span>
                   <span className="ord-d-line-qty">{t('detail.times', { count: r.units })}</span>

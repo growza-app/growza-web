@@ -9,7 +9,7 @@ const RETURN_REASONS: readonly ReturnReason[] = ['size', 'not_as_described', 'fa
 import { formatDate } from '../lib/format';
 import { useBarcodeScan } from '../lib/barcode-scan';
 import { initials } from '../lib/appointment-display';
-import { useSession } from '../components/SessionProvider';
+import { useAreas, useSession } from '../components/SessionProvider';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import {
@@ -128,6 +128,9 @@ export function ReturnProductSheet({
   const [query, setQuery] = useState<string>('');
   const [qtyByLine, setQtyByLine] = useState<Record<string, number>>(() => buildInitialQtyMap(defaultBill));
   const [restock, setRestock] = useState(true);
+  // A kitchen (`catalog.stock_counted` off) has no shelf: "Put it back" and "Damaged" are the same thing there, so
+  // the choice is not offered and the API ignores it. The refund, the reason and the record are unchanged.
+  const counted = useAreas().stock;
   const [refundMode, setRefundMode] = useState<RefundMode>(() => defaultRefundMode(defaultBill?.paymentModes));
   const [reason, setReason] = useState('');
   // Jira GRW-635 — why it came back, from the small set. Optional at the counter, where the shopkeeper is standing in front of the customer.
@@ -786,6 +789,14 @@ export function ReturnProductSheet({
             {/* Right column: Condition + Refund method + Reason + Confirm footer */}
             <div className="sls-ret-right">
               <div className="sls-ret-scroll">
+                {/*
+                  * NOT `hidden={!counted}`: `.sls-ret-condition { display: flex }` in 99-sales.css outranks the user
+                  * agent's `[hidden] { display: none }`, so the attribute was set and the block drawn anyway — a
+                  * kitchen was still asked to put a dish back on a shelf it does not have, and a source-reading
+                  * test for the attribute passed the whole time. Found by opening the sheet. Not rendered at all,
+                  * which is what the rest of this vertical does and what no stylesheet can undo.
+                  */}
+                {!counted ? null : (
                 <div className="sls-ret-condition">
                   <div className="sls-ret-field-head">
                     <span className="sls-ret-field-title">{t('conditionLabel')}</span>
@@ -830,6 +841,7 @@ export function ReturnProductSheet({
                     {restock ? t('puttingBack', { items: selectedLines.map(({ line, qty }) => `${line.name} × ${qty}`).join(', ') }) : t('writingOff', { items: selectedLines.map(({ line, qty }) => `${line.name} × ${qty}`).join(', ') })}
                   </span>
                 </div>
+                )}
 
                 <div className="sls-ret-condition">
                   <span className="sls-ret-field-title">{t('refundModeLabel')}</span>
@@ -963,7 +975,10 @@ export function ReturnProductSheet({
                     <div>
                       <strong>{it.name}</strong>
                       <span>
-                        {t('qtyShort', { n: it.qty })} · {it.restocked ? t('restockShelf') : t('damagedOpened')}
+                        {t('qtyShort', { n: it.qty })}
+                        {/* The condition is a count's word. A kitchen was never asked it, and the API answers
+                            `restocked: false` for want of a shelf — saying "Damaged" there would be untrue. */}
+                        {counted ? <> · {it.restocked ? t('restockShelf') : t('damagedOpened')}</> : null}
                       </span>
                     </div>
                     <strong>{formatMoney(String(it.refundMinor))}</strong>

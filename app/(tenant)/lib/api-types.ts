@@ -12,6 +12,8 @@
  * being buried in the transport layer.
  */
 
+import type { ReportRangeKey } from './report-types';
+
 export interface Me {
   /** Jira GRW-556 — `status` is the business's lifecycle: while `provisioning` only the setup screens are offered. Absent from an older API. */
   tenant: { id: string; name: string; timezone: string; locationName: string | null; /** The main branch (Jira GRW-582 perf) — the API has always sent it. */ locationId?: string | null; branchCount?: number; status?: string; productReturnWindowDays?: number } | null;
@@ -159,6 +161,12 @@ export interface Me {
     /** Jira GRW-607 — whether the business takes bookings, and whether it sells services. Absent reads as yes: only an explicit false takes a diary area away. */
     bookings?: boolean;
     services?: boolean;
+    /**
+     * `catalog.stock_counted` — whether there is a count behind the catalogue. False for a kitchen, whose dishes are
+     * cooked when they are ordered. Absent reads as yes, the same way the two above do: an API a deploy behind must
+     * leave a shop the shelf it has.
+     */
+    stockCounted?: boolean;
     /** Jira GRW-598 — whether sizes are switched on for this business (the `sizes` flag). Absent reads as no: it ships off. */
     sizes?: boolean;
     providerSelection: boolean;
@@ -1634,6 +1642,7 @@ export interface StockReportQuery {
 
 /** Jira GRW-632 — what sells and what sits. */
 export type SellersRange = 'last_7_days' | 'this_month' | 'last_month' | 'last_3_months' | 'this_year';
+
 export interface SellersWindow {
   key: string;
   label: string;
@@ -1674,12 +1683,20 @@ export interface DeadStockPage {
   page: number;
   pageSize: number;
 }
+/**
+ * Jira GRW-643 — `range` is `ReportRangeKey`, not `SellersRange`: the report routes have always taken the whole of
+ * `RANGE_KEYS` (`src/modules/analytics/range.ts`), and `SellersRange` is only the subset the sellers SCREEN offers.
+ * A Home period filter asking for "Today" or a named week is asking for keys the API already answers.
+ */
 export interface SellersQuery {
-  range: SellersRange;
+  range: ReportRangeKey;
   location?: string;
   categoryId?: string;
   page?: number;
   pageSize?: number;
+  /** Only with `range: 'custom'` — inclusive ISO dates in the business's zone. */
+  from?: string;
+  to?: string;
 }
 
 /** Jira GRW-633 — what to order before the season. */

@@ -14,6 +14,7 @@ import { PackageSheet } from '../../components/PackageSheet';
 import { MENU_SORTS, sortMenu, type MenuSort } from '../../lib/menu-sort';
 import { NO_CATEGORY } from '../../products/DeskProductCategories';
 import { SearchClear } from '../../components/SearchClear';
+import { useAreas } from '../../components/SessionProvider';
 
 /**
  * Jira GRW-572 — the middle panel of the wide till: the whole menu as tiles, with a search box above it.
@@ -100,9 +101,16 @@ export function DeskServiceGrid({
   const [tab, setTab] = useState<'services' | 'packages' | 'products'>(productsOnly ? 'products' : (initialTab ?? 'services'));
   /** Owner, 2026-10-14 — a category chip row under the search, as the phone's sheet has: '' is All. */
   const [kind, setKind] = useState('');
+  // A kitchen keeps no count, so a dish is its name and its price (`catalog.stock_counted` off).
+  const counted = useAreas().stock;
   /** Owner, 2026-10-15 — sort beside the search, and the shelf hides what is out of stock unless asked. */
   const [sort, setSort] = useState<MenuSort>('menu');
-  const [inStockOnly, setInStockOnly] = useState(true);
+  /*
+   * Jira GRW-643 — OFF where nothing is counted, as the phone's sheet is. On by default it filtered a
+   * restaurant's whole menu away: every dish reads as 0 left, so the wide till showed an empty grid and
+   * "No product by that name." under category chips counting 72 of them. Nothing could be sold at all.
+   */
+  const [inStockOnly, setInStockOnly] = useState(counted);
   const [viewing, setViewing] = useState<Offer | null>(null);
   const kindRow = useRef<HTMLDivElement>(null);
   // The chosen chip stays in view, and a wheel over the row moves it sideways (a laptop has no sideways wheel).
@@ -153,7 +161,7 @@ export function DeskServiceGrid({
     const byCat = productCategory
       ? products.filter((p) => (productCategory === NO_CATEGORY ? p.categoryId === null : p.categoryId === productCategory))
       : products;
-    const pool = inStockOnly ? byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0) : byCat;
+    const pool = inStockOnly && counted ? byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0) : byCat;
     const q = term.trim();
     if (!q)
       return sortMenu(
@@ -163,7 +171,7 @@ export function DeskServiceGrid({
         (p) => asMinor(p.priceMinor),
       );
     return matchItems(pool.map(productMatchable), q);
-  }, [products, productCategory, term, sort, inStockOnly, productCountOf]);
+  }, [products, productCategory, term, sort, inStockOnly, counted, productCountOf]);
 
   /**
    * Jira GRW-574 (AC-07) — a barcode scanned, or a code typed, then Enter on the Products tab: that product goes on
@@ -197,7 +205,7 @@ export function DeskServiceGrid({
   }, [services, term, kind, sort]);
 
   return (
-    <section className="pf-wide-mid" aria-label={productsOnly ? t('desk.products') : t('services')}>
+    <section className="pf-wide-mid" aria-label={productsOnly ? t(counted ? 'desk.products' : 'desk.menu') : t('services')}>
       {/*
         Owner, 2026-10-14 — three tabs, always: what a till sells. Products is the one that is not here yet; it is
         shown greyed so the shape the owner will learn is the shape that is there now, and so nobody looks for it
@@ -212,7 +220,7 @@ export function DeskServiceGrid({
             {t('desk.packages', { n: packages.length })}
           </button>
           <button type="button" role="tab" aria-selected={tab === 'products'} className={`pf-chip ${tab === 'products' ? 'pf-chip-on' : ''}`} onClick={() => setTab('products')}>
-            {t('desk.products')}
+            {t(counted ? 'desk.products' : 'desk.menu')}
             <span className="pf-wide-kind-n">{products.length}</span>
           </button>
         </div>
@@ -226,8 +234,8 @@ export function DeskServiceGrid({
             value={term}
             onChange={(e) => setTerm(e.target.value)}
             onKeyDown={onSearchKey}
-            placeholder={productsOnly ? t('desk.searchProducts', { count: products.length }) : t('desk.search', { count: services.length })}
-            aria-label={productsOnly ? t('desk.searchProducts', { count: products.length }) : t('desk.search', { count: services.length })}
+            placeholder={productsOnly ? t(counted ? 'desk.searchProducts' : 'desk.searchDishes', { count: products.length }) : t('desk.search', { count: services.length })}
+            aria-label={productsOnly ? t(counted ? 'desk.searchProducts' : 'desk.searchDishes', { count: products.length }) : t('desk.search', { count: services.length })}
             autoComplete="off"
           />
           {productsOnly && !term ? (
@@ -240,7 +248,7 @@ export function DeskServiceGrid({
         <div className="pos-filter-bar">
           {productsOnly && categoryBar ? <div className="pos-cat-pills-wrap">{categoryBar}</div> : null}
           <div className="pos-filter-controls">
-            {tab === 'products' ? (
+            {tab === 'products' && counted ? (
               <button type="button" className={`pf-chip pf-filter-chip ${inStockOnly ? 'pf-chip-on' : ''}`} aria-pressed={inStockOnly} onClick={() => setInStockOnly((v) => !v)}>
                 {t('inStockOnly')}
               </button>
@@ -274,7 +282,7 @@ export function DeskServiceGrid({
       ) : null}
       {tab === 'products' ? (
         shownProducts.length === 0 ? (
-          <p className="pf-wide-empty">{products.length === 0 ? t('desk.noProducts') : t('desk.noProductMatch')}</p>
+          <p className="pf-wide-empty">{products.length === 0 ? t(counted ? 'desk.noProducts' : 'desk.noDishes') : t(counted ? 'desk.noProductMatch' : 'desk.noDishMatch')}</p>
         ) : (
           /* A product reads like a service: its picture, its name, its price — and how many are left instead of minutes. */
           <div className="pf-tiles pf-wide-tiles">
@@ -292,7 +300,7 @@ export function DeskServiceGrid({
                     aria-label={t('tileA11y', { name: p.name, price: money(price) })}
                     aria-pressed={count > 0}
                     onClick={() => onMoreProduct?.(p)}
-                    disabled={(full && count === 0) || p.stock <= 0 || count >= p.stock}
+                    disabled={(full && count === 0) || (counted && (p.stock <= 0 || count >= p.stock))}
                   >
                     <ProductPhoto className="pf-tile-photo" product={p} />
                     {productsOnly && count > 0 ? (
@@ -304,7 +312,9 @@ export function DeskServiceGrid({
                     {metaText ? <span className="pf-tile-meta">{metaText}</span> : null}
                     <span className="pf-tile-price">
                       {money(price)}
-                      <span className={`pf-tile-mins ${p.stock <= 0 ? 'pf-tile-out' : ''}`}>{p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}</span>
+                      {counted ? (
+                        <span className={`pf-tile-mins ${p.stock <= 0 ? 'pf-tile-out' : ''}`}>{p.stock <= 0 ? t('outOfStock') : t('left', { n: p.stock })}</span>
+                      ) : null}
                     </span>
                   </button>
                   {count > 0 && hasSizes(p) ? (

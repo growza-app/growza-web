@@ -44,7 +44,7 @@ describe('who is offered it', () => {
 
   it('a diary business is closed out of the address; a shop is let in', () => {
     expect(areaAllows('/settings/roles', DIARY_AREAS)).toBe(false);
-    expect(areaAllows('/settings/roles', { bookings: false, services: false, shop: true })).toBe(true);
+    expect(areaAllows('/settings/roles', { bookings: false, services: false, shop: true, stock: true })).toBe(true);
   });
 
   it('the page answers a refusal with not-found, as the API does', () => {

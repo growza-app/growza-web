@@ -129,7 +129,7 @@ describe('Record payment in three taps', () => {
   it('asks who is paying with a bar that looks like search and a plus beside it', () => {
     // Owner, 2026-10-09 — the row was one small chip in an empty row; a bar says "type a name here" wordlessly.
     expect(flow).toMatch(/className="pf-who-search" onClick=\{\(\) => setWhoOpen\('find'\)\}/);
-    expect(flow).toMatch(/className="pf-who-add" aria-label=\{t\('addClient'\)\} onClick=\{\(\) => setWhoOpen\('add'\)\}/);
+    expect(flow).toMatch(/className="pf-who-add" aria-label=\{t\('addClient', \{ client: nounInSentence\(clientNoun\) \}\)\} onClick=\{\(\) => setWhoOpen\('add'\)\}/);
     // Nobody named IS the walk-in, and nobody picked for the stylist is nobody: neither gets a chip saying so.
     expect(flow).not.toMatch(/t\('walkIn'\)|t\('nobody'\)/);
     // A picked client is a card with the way back to a walk-in on it.
@@ -520,7 +520,7 @@ describe('Record payment in three taps', () => {
     expect(receipt).toMatch(/if \(onNumberGiven && !phone\) onNumberGiven\(toStoredPhone\(typed\)!\);/);
     // The bill never waits on it, and a failure says so without taking the screen.
     expect(done).toMatch(/\.catch\(\(\) => setKept\('failed'\)\)/);
-    expect(done).toMatch(/kept === 'failed' \? t\('clientNotKept'\)/);
+    expect(done).toMatch(/kept === 'failed'\s*\n?\s*\? t\('clientNotKept', \{ clients:/);
     // Each sale's screen is a fresh mount, so its kept state cannot carry into the next sale.
     expect(flow).toMatch(/appointmentId=\{sale\.appointmentId\}/);
     const en = enMessages.payFlow as unknown as Record<string, string>;

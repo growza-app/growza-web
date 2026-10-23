@@ -51,8 +51,9 @@ describe('AC-03 — a brand-new shop: each section says its own plain thing, and
     expect(shop).toContain('s.noOrdersBody');
     expect(shop).toMatch(/href="\/orders\/new">\s*\{s\.takeOrder\}/);
     // …but only once there is something to sell: a shelf nobody has counted is sent to the count first.
-    expect(shop).toContain('data.running.counted ? s.noOrdersBody : s.countFirst');
-    expect(shop).toMatch(/data\.running\.counted && can\('\/orders\/new'\) \? \(\s*<a className="btn btn-primary shp-cta" href="\/orders\/new">/);
+    // `|| !areas.stock` — a kitchen has no shelf to count first, so its first step is the till itself.
+    expect(shop).toContain('data.running.counted || !areas.stock ? s.noOrdersBody : s.countFirst');
+    expect(shop).toMatch(/\(data\.running\.counted \|\| !areas\.stock\) && can\('\/orders\/new'\) \? \(\s*<a className="btn btn-primary shp-cta" href="\/orders\/new">/);
     expect(shop).toContain('!data.running.counted');
     expect(shop).toContain('s.notCounted');
     expect(shop).toContain('s.nothingLow');
@@ -66,7 +67,11 @@ describe('AC-03 — a brand-new shop: each section says its own plain thing, and
 describe('error handling — a failed read is one plain line with a retry, and the doors stay', () => {
   it('shows the error card and keeps the quick tiles (and so the nav) usable', () => {
     expect(shop).toMatch(/failed \|\| !data \? \(\s*<Card>\s*<CardError t=\{t\} onRetry=\{\(\) => load\(branch\)\} \/>/);
-    expect(shop).toMatch(/tiles\.length > 0 \? <QuickTiles items=\{tiles\} \/> : null/);
+    // Still OUTSIDE that branch — that is the point of this test — but now with the salon's chrome
+    // around it (`hm-area-links hm-mobile`), which is what keeps its labels off the tab bar.
+    expect(shop).toMatch(/tiles\.length > 0 \? \(\s*<Card className="hm-area-links hm-mobile shp-links" title=\{t\.quickLinks\}>\s*<QuickTiles items=\{tiles\} \/>/);
+    const errorBranch = shop.indexOf('failed || !data ? (');
+    expect(shop.indexOf('<QuickTiles items={tiles} />')).toBeGreaterThan(errorBranch);
   });
 
   it('follows the branch the owner picked, and returns to every branch when they let go', () => {
@@ -118,6 +123,8 @@ describe('UX-01, UX-02, UX-05 — laid out at 344px on the tokens, with 44px doo
   });
 
   it('is one column on a phone and two from 861px', () => {
-    expect(css).toMatch(/@media \(min-width: 861px\) \{\s*\.shp-page \{\s*display: grid;/);
+    // A comment may sit between the query and the selector (GRW-643 explains the missing
+    // `align-items` there); what is pinned is that 861px is where the grid starts.
+    expect(css).toMatch(/@media \(min-width: 861px\) \{[\s\S]*?\.shp-page \{\s*display: grid;/);
   });
 });

@@ -340,13 +340,25 @@
 }
 
 @media (min-width: 861px) {
+  /*
+   * Jira GRW-643 — NO `align-items: start` here, and that absence is the whole point.
+   *
+   * This rule's `display: grid` only wins up to 1100px. From 1101px (and a 680px-tall page)
+   * `.page-body.hm-fit` — the salon's fit-to-screen layout, which this page also carries —
+   * sets `display: flex; flex-direction: column` at specificity 0-2-0 and beats `.shp-page`'s
+   * 0-1-0. `align-items` had nothing to beat, so it applied to a FLEX COLUMN, where it governs
+   * the inline axis rather than the block one: every child shrink-wrapped to its content and the
+   * command center sat 935px wide inside 1620px, with a dead strip down the right of every
+   * 1920px screen. In the single-column grid it was never doing anything anyway — auto rows are
+   * content-sized whether items start or stretch — so it is gone rather than re-scoped.
+   */
   .shp-page {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: var(--sp-3);
-    align-items: start;
   }
-  .shp-mobile-stack {
+  .shp-mobile-stack,
+  .shp-phone-money {
     display: none;
   }
   .shp-page > .hm-tiles {
@@ -354,3 +366,184 @@
   }
 }
 
+
+/* =====================================================================
+   Jira GRW-643 — the phone Home's period filter, and the figures it moves.
+   Everything here is inside `.shp-mobile-stack`, which is `display:none`
+   from 861px up, so none of it can reach the command center.
+   ===================================================================== */
+
+/* The four windows. `Segmented` ships a tab row AND a native select; the salon's
+   phone Home takes the select, this one keeps the tabs — four short words fit in a
+   4-up grid at 344px, and a filter the owner changes all day should be one tap, not
+   two. The grid (not the inline-flex default) is what makes them fit: equal tracks
+   that shrink together instead of a row that overflows. */
+.shp-period .hm-seg {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 100%;
+  padding: 3px;
+  gap: 2px;
+}
+.shp-period .hm-seg button {
+  min-height: 2.75rem;
+  padding: 0 2px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shp-period .hm-seg-select {
+  display: none;
+}
+
+/* On the dark hero: the comparison the API returned. The arrow and the sign carry the
+   meaning; the colour only reinforces it, so neither tone needs to pass alone. */
+.shp-delta {
+  font-variant-numeric: tabular-nums;
+}
+.shp-delta.is-up {
+  color: rgb(255 255 255 / 92%);
+}
+.shp-delta.is-down {
+  color: rgb(255 255 255 / 72%);
+}
+
+/* One bar per day of the chosen window. Drawn only when the window has two or more
+   days AND something was sold in it — see `phoneSpark`. */
+.shp-spark {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 34px;
+  margin-top: var(--sp-2);
+}
+.shp-spark i {
+  flex: 1;
+  min-width: 2px;
+  border-radius: 2px 2px 0 0;
+  background: rgb(255 255 255 / 45%);
+}
+.shp-spark i:last-child {
+  background: rgb(255 255 255 / 85%);
+}
+
+/* The hero keeps its height while the window loads, so the cards below it do not jump. */
+.shp-hero-skeleton {
+  height: 3.5rem;
+  margin: var(--sp-1) 0;
+  border-radius: var(--radius);
+  background: rgb(255 255 255 / 16%);
+}
+.shp-hero-failed {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+  color: rgb(255 255 255 / 88%);
+  font-size: 0.875rem;
+}
+/* The retry is a button wearing the pill; a button brings its own chrome, so it is cleared. */
+button.shp-hero-pill {
+  background: none;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+
+/* ---------- Recent orders ---------- */
+.shp-recent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.shp-recent li + li {
+  border-top: 1px solid var(--border);
+}
+.shp-recent-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 2.75rem;
+  padding: var(--sp-2) 0;
+  text-decoration: none;
+  color: var(--text);
+}
+.shp-recent-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.shp-recent-code {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.shp-recent-meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.shp-recent-end {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.shp-recent-amount {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+}
+/* The state is a WORD first — the tone only backs it up, so nothing is said by colour alone. */
+.shp-recent-state {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.shp-recent-state.is-green {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.shp-recent-state.is-amber {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+.shp-recent-state.is-blue {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.shp-recent-state.is-rose {
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+}
+
+/* A window that sold nothing, said in words rather than as a row of zeros. */
+.shp-hero-none {
+  margin: 0;
+  padding-top: var(--sp-1);
+  color: rgb(255 255 255 / 82%);
+  font-size: 0.875rem;
+}
+
+
+/* The filter and the hero as one block, so Quick links can follow them in the SOURCE
+   (see ShopHome.tsx) rather than be moved past them with `order`. Hidden from 861px up
+   with `.shp-mobile-stack`, since the command center states the money its own way. */
+.shp-phone-money {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}

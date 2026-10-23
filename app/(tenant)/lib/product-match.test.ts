@@ -225,7 +225,8 @@ describe("StockTake — count a branch's shelf in one pass (GRW-574 part 4)", ()
 
   it('offers Stock take in the Products header for owner/manager when live products exist, and posts once to /api/v1/products/stock-take without a note field', () => {
     const css = readFileSync(resolve(__dirname, '../styles/96-products.css'), 'utf8');
-    expect(list).toMatch(/live\.length > 0 && canStockTake \? \([\s\S]*setStockTakeOpen\(true\)/);
+    // `&& counted` — a kitchen keeps no count, so there is nothing to count; every other business is unchanged.
+    expect(list).toMatch(/live\.length > 0 && canStockTake && counted \? \([\s\S]*setStockTakeOpen\(true\)/);
     expect(list).toMatch(/<StockTake[\s\S]*branchId=\{branchId\}/);
     expect(list).toMatch(/<ProductCategoriesDropdown[\s\S]*selected=\{selectedCategories\}/);
     expect(take).toMatch(/api\s*\.stockTakeProducts\(branchId\)/);

@@ -127,7 +127,7 @@ describe('the wide till', () => {
 describe('the desk grid shows what a till sells', () => {
   it('Products is the third tab: the same tiles, how many are left instead of minutes, one line per unit on the bill', () => {
     const grid = here('DeskServiceGrid.tsx');
-    expect(grid).toMatch(/onClick=\{\(\) => setTab\('products'\)\}>\s*\{t\('desk\.products'\)\}/);
+    expect(grid).toMatch(/onClick=\{\(\) => setTab\('products'\)\}>\s*\{t\(counted \? 'desk\.products' : 'desk\.menu'\)\}/);
     expect(grid).toMatch(/\{p\.stock <= 0 \? t\('outOfStock'\) : t\('left', \{ n: p\.stock \}\)\}/);
     expect(flow).toMatch(/products=\{products\}\s+productCountOf=\{productCountOf\}\s+onMoreProduct=\{addProduct\}\s+onLessProduct=\{\(id\) => oneLess\(`p:\$\{id\}`\)\}/);
     // Grouped for the route: which, how many, what the line came to — and never among the service legs.

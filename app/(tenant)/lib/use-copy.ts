@@ -1,6 +1,6 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo } from 'react';
-import { pickNoun } from './nouns';
+import { nounInSentence, pickNoun } from './nouns';
 
 /**
   * Jira GRW-362 — the New booking flow's words, in the owner's language.
@@ -43,7 +43,7 @@ export function useNewVisitCopy() {
     noName: t('noName'),
     noMatch: t('noMatch'),
     /** In the search list when nobody matched: adds what was typed as a new person. */
-    addAsNew: (name: string) => t('addAsNew', { name }),
+    addAsNew: (name: string, client: string) => t('addAsNew', { name, client: nounInSentence(pickNoun(locale, client, tn('customer'))) }),
     visits: (n: number) => t('visits', { n }),
     bookingDate: t('bookingDate'),
     bookingTime: t('bookingTime'),
@@ -78,7 +78,7 @@ export function useNewVisitCopy() {
     sendingTo: t('sendingTo'),
     changeNumber: t('changeNumber'),
     useClientNumber: (number: string) => t('useClientNumber', { number }),
-    clientWhatsapp: t('clientWhatsapp'),
+    clientWhatsapp: (client: string) => t('clientWhatsapp', { client: pickNoun(locale, client, tn('customer')) }),
     sendOnWhatsapp: t('sendOnWhatsapp'),
     sendHint: t('sendHint'),
     shareBill: t('shareBill'),

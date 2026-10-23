@@ -21,7 +21,7 @@ import type { Areas, PageGrid } from './areas';
  * check of its own, so the grid was the only thing closing it.
  */
 const read = (p: string) => readFileSync(join(__dirname, '..', p), 'utf8');
-const withGrid = (pages: PageGrid): Areas => ({ bookings: true, services: true, shop: false, pages });
+const withGrid = (pages: PageGrid): Areas => ({ bookings: true, services: true, shop: false, stock: true, pages });
 
 describe('the grid reaches the controls, not just the screens', () => {
   it('asks for Change where the control writes, and See where it only reads', () => {
@@ -73,7 +73,7 @@ describe('notifications belong to no page', () => {
     // The Staff role: attendance only, and still told when its own mark is approved.
     expect(canSee('/notifications', 'staff', undefined, true, withGrid({ attendance: 'manage' }))).toBe(true);
     // A shop's stock keeper: no diary at all, and still told what is running out.
-    expect(canSee('/notifications', 'staff', undefined, true, { bookings: false, services: true, shop: true, pages: { services: 'manage' } })).toBe(true);
+    expect(canSee('/notifications', 'staff', undefined, true, { bookings: false, services: true, shop: true, stock: true, pages: { services: 'manage' } })).toBe(true);
   });
 
   it('did not take the rest of the table with it', () => {

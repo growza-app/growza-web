@@ -1,11 +1,13 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
 import type { Customer } from '../../lib/api-types';
 import { displayPhone, toNationalDigits, toStoredPhone } from '../../lib/phone';
 import { useNewVisitCopy } from '../../lib/use-copy';
+import { useLabel } from '../../components/LabelsProvider';
+import { nounInSentence, pickNoun } from '../../lib/nouns';
 import { usePhoneProblem } from '../../lib/use-phone-problem';
 import { opensSoftKeyboard } from '../../../shared/a11y/soft-keyboard';
 import { useDialog } from '../../../shared/a11y/useDialog';
@@ -39,6 +41,10 @@ const NAME_ID = 'pf-client-name';
  */
 export function ClientSheet({ location, onPick, onClose, startAdding = false }: { location: string | null; onPick: (c: PickedClient) => void; onClose: () => void; /** Open with the add row already expanded (the + beside the search bar). */ startAdding?: boolean }) {
   const t = useTranslations('payFlow');
+  const tNouns = useTranslations('nouns');
+  const locale = useLocale();
+  // Guest at a restaurant, Customer at a shop, Client at a salon — lower-cased where it sits inside a sentence.
+  const clientNoun = nounInSentence(pickNoun(locale, useLabel('customer', 'Client'), tNouns('customer')));
   const nv = useNewVisitCopy();
   const checkPhone = usePhoneProblem();
   const ref = useRef<HTMLDivElement>(null);
@@ -265,7 +271,7 @@ export function ClientSheet({ location, onPick, onClose, startAdding = false }: 
         ) : null}
 
         {enough && matches === null ? <p className="pf-client-note">{t('looking')}</p> : null}
-        {nobody && !adding ? <p className="pf-client-note">{t('noMatch')}</p> : null}
+        {nobody && !adding ? <p className="pf-client-note">{t('noMatch', { client: clientNoun })}</p> : null}
 
         {adding ? (
           /* The add row, opened in place under the matches: two small fields and Save. Not a second screen. */
@@ -319,14 +325,14 @@ export function ClientSheet({ location, onPick, onClose, startAdding = false }: 
                 </button>
               ) : null}
               <button type="button" className="btn pf-go pf-client-save" onClick={() => void save()} disabled={saving || !named || problem !== null}>
-                {saving ? t('saving') : t('saveClient')}
+                {saving ? t('saving') : t('saveClient', { client: clientNoun })}
               </button>
             </div>
           </div>
         ) : (
           <button type="button" className={nobody ? 'btn pf-go pf-client-add' : 'pf-mistake pf-client-add'} onClick={openAdd}>
             <IconUserPlus />
-            {nobody && typed ? t('addTyped', { what: typed }) : t('addClient')}
+            {nobody && typed ? t('addTyped', { what: typed }) : t('addClient', { client: clientNoun })}
           </button>
         )}
       </div>

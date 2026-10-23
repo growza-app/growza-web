@@ -4,6 +4,8 @@ import Link from '../../shared/AppLink';
 import { DocumentAction } from './DocumentAction';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
+import { useLabel } from './LabelsProvider';
+import { nounInSentence, pickNoun } from '../lib/nouns';
 import { useEffect, useRef, useState } from 'react';
 import { api, formatMoney } from '../lib/api';
 import type { PaymentMode } from '../lib/api-types';
@@ -79,8 +81,13 @@ export function PaymentDone({
   onToggleSound?: () => void;
 }) {
   const t = useTranslations('payFlow');
+  const tn = useTranslations('nouns');
   const nv = useNewVisitCopy();
   const locale = useLocale();
+  // "Next customer" is the salon's word; a restaurant seats a guest and a shop serves a customer.
+  const clientNoun = pickNoun(locale, useLabel('customer', 'Client'), tn('customer'));
+  // The SCREEN they are added on, named as this vertical names it: Guests, Customers, Clients.
+  const clientsNoun = useLabel('customers', 'Clients');
   const router = useRouter();
 
   const [ownSound, setOwnSound] = useState(true);
@@ -167,12 +174,16 @@ export function PaymentDone({
       />
       {kept ? (
         <p className={kept === 'failed' ? 'pf-error pf-kept' : 'pf-kept'} role="status">
-          {kept === 'failed' ? t('clientNotKept') : kept === 'saving' ? t('keepingClient') : t('clientKept')}
+          {kept === 'failed'
+            ? t('clientNotKept', { clients: pickNoun(locale, clientsNoun, tn('customersTitle')) })
+            : kept === 'saving'
+              ? t('keepingClient')
+              : t('clientKept', { client: nounInSentence(clientNoun) })}
         </p>
       ) : null}
       <div className="pf-done-actions">
         <button type="button" className="btn pf-go" onClick={onNextCustomer}>
-          {t('nextCustomer')}
+          {t('nextCustomer', { client: nounInSentence(clientNoun) })}
         </button>
         {/*
           Next customer is the button of the three that gets pressed after every sale, so it keeps the width.

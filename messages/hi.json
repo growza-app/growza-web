@@ -2014,7 +2014,7 @@
     "searchPlaceholder": "नाम या फ़ोन नंबर",
     "noName": "नाम नहीं",
     "noMatch": "इस नाम का कोई नहीं मिला।",
-    "addAsNew": "“{name}” को नए ग्राहक के रूप में जोड़ें",
+    "addAsNew": "“{name}” को नए {client} के रूप में जोड़ें",
     "visits": "{n, plural, one {# विज़िट} other {# विज़िट}}",
     "bookingDate": "बुकिंग की तारीख",
     "bookingTime": "बुकिंग का समय",
@@ -2041,7 +2041,7 @@
     "sendingTo": "इस नंबर पर",
     "changeNumber": "बदलें",
     "useClientNumber": "फिर से {number} चुनें",
-    "clientWhatsapp": "ग्राहक का WhatsApp नंबर",
+    "clientWhatsapp": "{client} का WhatsApp नंबर",
     "sendOnWhatsapp": "WhatsApp पर भेजें",
     "sendHint": "WhatsApp में बिल लिखा हुआ खुलेगा। भेजें आप दबाएँ।",
     "shareBill": "शेयर करें",
@@ -2727,7 +2727,7 @@
     "whatTitle": "पेमेंट दर्ज करें",
     "howTitle": "पैसे कैसे दिए?",
     "doneTitle": "{amount} मिले",
-    "who": "ग्राहक",
+    "who": "{client}",
     "oneLess": "{name} एक कम",
     "tileA11y": "{name}, {price}",
     "onBill": "बिल में {count}",
@@ -2745,7 +2745,7 @@
     "qrPaid": "पैसे मिल गए",
     "saving": "सहेज रहे हैं…",
     "spoken": "{amount} रुपये मिले। {mode}।",
-    "nextCustomer": "अगला ग्राहक",
+    "nextCustomer": "अगला {client}",
     "mistake": "गलती सुधारें",
     "soundOn": "आवाज़ चालू",
     "soundOff": "आवाज़ बंद",
@@ -2756,13 +2756,13 @@
     "at": "{branch} पर",
     "whoPays": "कौन दे रहा है?",
     "looking": "खोज रहे हैं…",
-    "noMatch": "कोई ग्राहक नहीं मिला",
+    "noMatch": "कोई {client} नहीं मिला",
     "fromContacts": "फ़ोन के संपर्कों से",
     "nameOptional": "नाम",
-    "saveClient": "ग्राहक सहेजें",
+    "saveClient": "{client} सहेजें",
     "noName": "बिना नाम",
-    "addClient": "नया ग्राहक जोड़ें",
-    "findClient": "ग्राहक खोजें",
+    "addClient": "नया {client} जोड़ें",
+    "findClient": "{client} खोजें",
     "nameOrNumber": "नाम या नंबर",
     "phoneNumber": "फ़ोन नंबर (ज़रूरी नहीं)",
     "allServices": "सभी {count} सेवाएँ",
@@ -2776,8 +2776,8 @@
     "billExtra": "अतिरिक्त",
     "oneMore": "{name} एक और",
     "keepingClient": "नंबर सेव हो रहा है…",
-    "clientKept": "नंबर सेव हो गया। अगली बार यह क्लाइंट दिखेगा।",
-    "clientNotKept": "बिल चला गया, पर नंबर सेव नहीं हुआ। क्लाइंट में जोड़ें।",
+    "clientKept": "नंबर सहेजा गया। यह {client} अगली बार दिखेगा।",
+    "clientNotKept": "बिल चला गया, पर नंबर सहेजा नहीं गया। उन्हें {clients} में जोड़ें।",
     "sub": {
       "cash": "काउंटर पर नकद",
       "upi": "कोई भी UPI ऐप या QR",
@@ -2823,7 +2823,11 @@
       "removeLine": "{name} हटाएँ",
       "sizesCount": "{count} साइज़",
       "subtotalUnits": "उप-योग ({count})",
-      "scanWhilePaying": "नहीं जुड़ा — इस बिल का भुगतान चल रहा है। और सामान जोड़ने के लिए पीछे जाएँ।"
+      "scanWhilePaying": "नहीं जुड़ा — इस बिल का भुगतान चल रहा है। और सामान जोड़ने के लिए पीछे जाएँ।",
+      "menu": "मेन्यू",
+      "searchDishes": "{count} डिश में खोजें",
+      "noDishes": "अभी मेन्यू में कुछ नहीं है। मेन्यू स्क्रीन पर डिश जोड़ें।",
+      "noDishMatch": "इस नाम की कोई डिश नहीं।"
     },
     "sellTitle": "सामान बेचें",
     "pickProduct": "एक सामान चुनें",
@@ -2875,7 +2879,8 @@
       "changed": "बिक्री के दौरान कोई साइज़ बदल गया। जो साइज़ दिख रहे हैं वे अभी शेल्फ़ पर हैं।",
       "sizeMore": "{name} एक और",
       "sizeLess": "{name} एक कम"
-    }
+    },
+    "allDishes": "सारी डिश"
   },
   "help": {
     "title": "मदद",
@@ -3187,6 +3192,7 @@
       "barcodeTaken": "इस ब्रांच में यह बारकोड पहले से {name} का है।",
       "secBasic": "बुनियादी जानकारी",
       "secPricing": "दाम और स्टॉक",
+      "secPricingUncounted": "दाम",
       "secCodes": "कोड और टैक्स",
       "saveAndSizes": "सहेजें और साइज़ जोड़ें",
       "sizesNewHint": "क्या यह कई साइज़ (S, M, L या 28, 30, 32) में बिकता है? हर साइज़ का स्टॉक और ऑनलाइन कोड लिखने के लिए 'सहेजें और साइज़ जोड़ें' चुनें।",
@@ -3199,7 +3205,9 @@
       "products": "सामान",
       "worth": "स्टॉक की कीमत",
       "low": "कम हो रहा",
-      "out": "स्टॉक ख़त्म"
+      "out": "स्टॉक ख़त्म",
+      "onMenu": "मेन्यू में",
+      "offMenu": "हटाई गई"
     },
     "filters": {
       "label": "दिखाएँ",
@@ -3213,7 +3221,8 @@
         "inStock": "अभी कुछ भी स्टॉक में नहीं है।",
         "low": "कुछ भी कम नहीं है।",
         "out": "कुछ भी ख़त्म नहीं है।",
-        "retired": "कुछ भी टिल से नहीं हटाया गया।"
+        "retired": "कुछ भी टिल से नहीं हटाया गया।",
+        "uncounted": "अभी मेन्यू में कुछ नहीं है।"
       }
     },
     "ledger": {
@@ -3271,6 +3280,7 @@
       "price": "बिक्री दाम",
       "cost": "खरीद दाम",
       "stock": "स्टॉक",
+      "sold": "बिके",
       "status": "हाल"
     },
     "sort": {
@@ -3285,6 +3295,7 @@
     "categories": {
       "title": "श्रेणियाँ",
       "all": "सारा सामान",
+      "allDishes": "सारे व्यंजन",
       "none": "बिना श्रेणी",
       "searchPlaceholder": "श्रेणी खोजें",
       "clear": "साफ़ करें",
@@ -3366,6 +3377,7 @@
       "check": "{count} पंक्तियाँ जाँचें",
       "reviewTitle": "{count} प्रोडक्ट जाँचें",
       "summary": "{create} नए प्रोडक्ट · {update} आपकी शेल्फ़ पर पहले से हैं, उन्हें अपडेट किया जाएगा",
+      "summaryUncounted": "{create} नई डिश · {update} आपके मेन्यू में पहले से हैं, उन्हें अपडेट किया जाएगा",
       "filterLabel": "दिखाएँ",
       "filterAll": "सभी",
       "filterFix": "ठीक करना है",
@@ -3453,7 +3465,8 @@
       "leaveBody": "इस सूची में आपके किए सुधार खो जाएँगे।",
       "leaveStay": "जाँच जारी रखें",
       "leaveGo": "बाहर जाएँ",
-      "footer": "प्रोडक्ट की लिस्ट स्प्रेडशीट में है? एक साथ जोड़ लें।"
+      "footer": "प्रोडक्ट की लिस्ट स्प्रेडशीट में है? एक साथ जोड़ लें।",
+      "footerUncounted": "मेन्यू स्प्रेडशीट में है? एक बार में लोड करें।"
     },
     "sizes": {
       "title": "साइज़",
@@ -3745,7 +3758,12 @@
       "same": "पिछली अवधि जितना ही",
       "weekOf": "{date} वाला सप्ताह",
       "refunded": "{count} बार रिफ़ंड: {amount}"
-    }
+    },
+    "uncountedSubtitle": "आपके मेन्यू की हर चीज़, दाम के साथ। डिश ऑर्डर पर बनती है, इसलिए गिनती रखने की ज़रूरत नहीं।",
+    "searchUncounted": "मेन्यू में खोजें",
+    "nounUncounted": "डिश",
+    "sellUncounted": "डिश बेचें",
+    "addUncounted": "डिश जोड़ें"
   },
   "pos": {
     "modes": "पीओएस",

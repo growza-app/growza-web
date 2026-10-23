@@ -101,7 +101,7 @@ describe('New booking on a wide desk', () => {
 
   it('offers to add a new client in the search list when nobody matches, since the fields open under it, hidden', () => {
     expect(sheet).toContain('className="picker-row wi-row wi-add-row"');
-    expect(sheet).toContain('{nv.addAsNew(term.trim())}');
+    expect(sheet).toContain('{nv.addAsNew(term.trim(), clientNoun)}');
     expect(sheet).toMatch(/setComboOpen\(false\);\s*setAddingNew\(true\);/);
     for (const lang of [en, hi]) expect((lang.newVisit as Record<string, string>).addAsNew).toContain('{name}');
   });

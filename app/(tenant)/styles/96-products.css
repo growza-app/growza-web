@@ -121,6 +121,12 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+/* The menu's two figures (a business that keeps no count), side by side at every width rather than
+   two thirds of the three-column default with a hole where the third would be. */
+.prd-strip.prd-strip-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 @media (min-width: 640px) {
   .prd-strip.prd-strip-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
