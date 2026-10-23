@@ -1368,6 +1368,10 @@ export const api = {
       products?: { productId: string; qty: number; paidMinor: number }[];
       idempotencyKey?: string;
       location?: string;
+      /** Owner, 2026-10-24 — a delivery app's order (Swiggy, Zomato): paid to the app, no way of paying asked, no client needed. */
+      channel?: string;
+      /** The app's own order number, when typed. */
+      externalRef?: string;
       // The route refuses to guess: exactly one of these (GRW-293). A named stylist only when paying a token (GRW-403).
     } & ({ noStylist: true; schedulableId?: never } | { schedulableId: string; noStylist?: never }),
   ) =>
@@ -1376,7 +1380,8 @@ export const api = {
       /** Jira GRW-403 — the token paid, or the one this sale was given. */
       tokenNo: number | null;
       bookingGroupId: string | null;
-      customerId: string;
+      /** Null for a delivery app's order rung up without a client (owner, 2026-10-24). */
+      customerId: string | null;
       schedulableId: string | null;
       stylistUnassigned: boolean;
       startAt: string;

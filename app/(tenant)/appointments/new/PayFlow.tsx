@@ -35,6 +35,7 @@ import { useBarcodeScan } from '../../lib/barcode-scan';
 import { planScans, type ScanProblem } from '../../lib/scan-plan';
 import { canAddSize, groupProductLines, hasSizes, productLineKey, sizedName, sizePriceMinor } from '../../lib/till-sizes';
 import { SizeSheet } from './SizeSheet';
+import { AppOrderNoSheet } from './AppOrderNoSheet';
 import { queueScan, takeScans } from '../../lib/scan-queue';
 import { heldBillsKey, heldStamp, loadHeldBills, saveHeldBills } from '../../lib/held-bills';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
@@ -187,7 +188,20 @@ export function PayFlow({
   const session = useSession();
   // Is there a count behind what the till sells? False for a kitchen, which cooks a dish when it is ordered: nothing
   // here is ever refused or hidden for stock, and no tile says how many are left.
-  const counted = useAreas().stock;
+  const areas = useAreas();
+  const counted = areas.stock;
+  /*
+   * Owner, 2026-10-24 — where this order came from: the counter, or one of the business's delivery apps (Swiggy and
+   * Zomato for a restaurant; none for anyone else, so nothing below shows). An app's order is paid to the app, so the
+   * till asks no way of paying and needs no guest; the app's order number is kept with it when the desk types it.
+   */
+  const apps = productsOnly ? (areas.deliveryApps ?? []) : [];
+  const [orderFrom, setOrderFrom] = useState<string>('counter');
+  const [appOrderNo, setAppOrderNo] = useState('');
+  const [orderNoOpen, setOrderNoOpen] = useState(false);
+  const fromApp = apps.includes(orderFrom) ? orderFrom : null;
+  /** "Swiggy", "Zomato" — the app's own name, which is the same in every language. */
+  const appWord = (app: string) => (app === 'swiggy' || app === 'zomato' ? t(`from.apps.${app}`) : app);
   const branch = useBranch();
   const providerNoun = useLabel('provider', 'Staff member');
   // The person paying, in the vertical's own word — Guest at a restaurant, Customer at a shop.
@@ -668,7 +682,7 @@ export function PayFlow({
    * Restaurant QA 2026-10-24 — held bills are kept in the tab (`lib/held-bills`) under this branch and this person,
    * so a reload, or a look at Orders, no longer throws away a table's order that was put on hold.
    */
-  type HeldBill = { id: string; heldAt: number; client: Client; lines: Line[]; override: number | null };
+  type HeldBill = { id: string; heldAt: number; client: Client; lines: Line[]; override: number | null; from?: string; orderNo?: string };
   const heldKey = heldBillsKey(location, session?.phone ?? null);
   const [heldBills, setHeldBillsState] = useState<HeldBill[]>([]);
   useEffect(() => {
@@ -682,7 +696,9 @@ export function PayFlow({
     });
   const holdBill = () => {
     if (lines.length === 0) return;
-    setHeldBills((prev) => [{ id: newAttemptKey(), heldAt: heldStamp(), client, lines, override }, ...prev]);
+    setHeldBills((prev) => [{ id: newAttemptKey(), heldAt: heldStamp(), client, lines, override, from: orderFrom, orderNo: appOrderNo }, ...prev]);
+    setOrderFrom('counter');
+    setAppOrderNo('');
     setLines([]);
     setOverride(null);
     setClient({ kind: 'none' });
@@ -698,6 +714,8 @@ export function PayFlow({
     setClient(found.client);
     setLines(found.lines);
     setOverride(found.override);
+    setOrderFrom(found.from ?? 'counter');
+    setAppOrderNo(found.orderNo ?? '');
     setSelectedMode(null);
     setBadMode(false);
     setMissing(null);
@@ -815,7 +833,8 @@ export function PayFlow({
     const soldProducts = productLines.length > 0 ? { products: productLines } : {};
     // Owner, 2026-10-14 — a bill paid two ways goes as `payments`; the legs' one word is the larger way's.
     const ways = waysFor(mode);
-    const paidBy = paidByWords(ways);
+    // On the receipt this reads "Paid by Swiggy"; on the done screen, the app's name where a way of paying would be.
+    const paidBy = fromApp ? appWord(fromApp) : paidByWords(ways);
     const mainMode = ways.reduce((best, w) => (w.amountMinor > best.amountMinor ? w : best), ways[0]!).mode;
     const howPaid = ways.length > 1 ? { paymentMode: mainMode, payments: ways } : { paymentMode: mode };
     try {
@@ -870,11 +889,15 @@ export function PayFlow({
             };
           })()
         : await (async () => {
-            const who = token ? { queueEntryId: token.id } : client.kind === 'existing' ? { customerId: client.id } : { customerName: (client as { name: string }).name };
+            // No client is only ever an app's order (the guest is the app's); every other sale names one before it gets here.
+            const who = token ? { queueEntryId: token.id } : client.kind === 'existing' ? { customerId: client.id } : client.kind === 'none' ? {} : { customerName: (client as { name: string }).name };
+            const appOrder = fromApp ? { channel: fromApp, ...(appOrderNo.trim() ? { externalRef: appOrderNo.trim() } : {}) } : null;
             const common = {
               ...who,
               services: legs,
               ...howPaid,
+              // An app's order is paid to the app: the till says where it came from (the server takes it as "other").
+              ...(appOrder ?? {}),
               ...soldProducts,
               idempotencyKey: attemptKey,
               ...(token || !location ? {} : { location }),
@@ -993,6 +1016,8 @@ export function PayFlow({
     setLines([]);
     setOverride(null);
     setClient({ kind: 'none' });
+    setOrderFrom('counter');
+    setAppOrderNo('');
     setSale(null);
     setError(null);
     setAttemptKey(newAttemptKey());
@@ -1037,7 +1062,7 @@ export function PayFlow({
     setBadMode(false);
   }, [location, token]);
 
-  const canGoOn = hasService && (token !== undefined || client.kind !== 'none');
+  const canGoOn = hasService && (token !== undefined || client.kind !== 'none' || fromApp !== null);
   /*
    * Both complaints at once (owner, 2026-10-10).
    *
@@ -1047,7 +1072,7 @@ export function PayFlow({
    */
   const onNext = () => {
     const service = !hasService;
-    const client_ = !token && client.kind === 'none';
+    const client_ = !token && client.kind === 'none' && !fromApp;
     if (service || client_) {
       setMissing({ client: client_, service });
       // The sheet opens over the screen, so it may only open when the client is the ONE thing missing —
@@ -1056,13 +1081,18 @@ export function PayFlow({
       return;
     }
     setMissing(null);
+    // An app's order has nothing to collect: no "how did they pay" step.
+    if (fromApp) {
+      void pay('other');
+      return;
+    }
     setStep('how');
   };
 
   /** Jira GRW-572 — the wide till has no Next: a payment tile does Next's check first, and marks what is missing. */
   const readyToPay = () => {
     const service = !hasService;
-    const client_ = !token && client.kind === 'none';
+    const client_ = !token && client.kind === 'none' && !fromApp;
     if (service || client_) {
       setMissing({ client: client_, service });
       if (client_ && !service) setWhoOpen('add');
@@ -1073,12 +1103,16 @@ export function PayFlow({
   };
 
   // Marked only while still true, so answering one clears its own mark without clearing the other's.
-  const badClient = Boolean(missing?.client) && !token && client.kind === 'none';
+  const badClient = Boolean(missing?.client) && !token && client.kind === 'none' && !fromApp;
   const badService = Boolean(missing?.service) && !hasService;
 
   const completePosSale = () => {
     if (saving !== null || lines.length === 0) return;
     const ok = readyToPay();
+    if (fromApp) {
+      if (ok) void pay('other');
+      return;
+    }
     if (!selectedMode) {
       setBadMode(true);
       return;
@@ -1207,7 +1241,8 @@ export function PayFlow({
    * bill. One element, so UPI's QR rule and the save are written once.
    */
   const restMinor = firstWay ? Math.max(0, totalMinor - firstWay.minor) : 0;
-  const payTiles = (
+  // An app's order has nothing to collect: no tiles (its note is drawn in their place).
+  const payTiles = fromApp ? null : (
     <div className="pf-pay" role="group" aria-label={t('howTitle')}>
       {firstWay ? (
         /* The first way, held, and what the next tile is for. × puts the bill back to one way. */
@@ -1346,6 +1381,48 @@ export function PayFlow({
       </div>
     );
   }
+
+  /*
+   * Owner, 2026-10-24 — Order from: Counter, or one of the business's delivery apps. Shown only where the business
+   * has an app (a restaurant). Chips, not a select: two or three choices, each one tap, the chosen one plainly on.
+   */
+  const fromRow =
+    apps.length > 0 && !token ? (
+      <div className="pf-row pf-from" role="group" aria-label={t('from.label')}>
+        <span className="pf-row-label">{t('from.label')}</span>
+        <div className="pf-chips">
+          {['counter', ...apps].map((key) => (
+            <button
+              key={key}
+              type="button"
+              className={`pf-chip${(fromApp ?? 'counter') === key ? ' pf-chip-on' : ''}`}
+              aria-pressed={(fromApp ?? 'counter') === key}
+              disabled={saving !== null}
+              onClick={() => setOrderFrom(key)}
+            >
+              {key === 'counter' ? t('from.counter') : appWord(key)}
+            </button>
+          ))}
+        </div>
+        {fromApp ? (
+          <button type="button" className="pf-from-no" onClick={() => setOrderNoOpen(true)} disabled={saving !== null}>
+            <span className="pf-from-no-label">{t('from.orderNo', { app: appWord(fromApp) })}</span>
+            <span className="pf-from-optional">{appOrderNo.trim() ? appOrderNo.trim() : t('from.addOrderNo')}</span>
+          </button>
+        ) : null}
+        {fromApp && orderNoOpen ? (
+          <AppOrderNoSheet
+            app={appWord(fromApp)}
+            value={appOrderNo}
+            onDone={(no) => {
+              setAppOrderNo(no);
+              setOrderNoOpen(false);
+            }}
+            onClose={() => setOrderNoOpen(false)}
+          />
+        ) : null}
+      </div>
+    ) : null;
 
   /* ---------- ① What did they get? ---------- */
   const who = token ? (
@@ -1515,7 +1592,12 @@ export function PayFlow({
             />
           )}
           <aside className="pf-wide-right">
-            {productsOnly ? <div className="pos-bill-client">{who}</div> : null}
+            {productsOnly ? (
+              <div className="pos-bill-client">
+                {fromRow}
+                {who}
+              </div>
+            ) : null}
             {productsOnly && heldBills.length > 0 ? (
               <div className="pos-held-strip" role="status">
                 <span className="pos-held-label">{t('desk.heldBills', { count: heldBills.length })}</span>
@@ -1611,6 +1693,11 @@ export function PayFlow({
                 {t('desk.needPaymentMode')}
               </p>
             ) : null}
+            {fromApp ? (
+              <p className="pf-from-paid" role="status">
+                {t('from.nothingToCollect', { app: appWord(fromApp) })}
+              </p>
+            ) : null}
             {payTiles}
             {productsOnly ? (
               <button
@@ -1619,7 +1706,7 @@ export function PayFlow({
                 disabled={saving !== null || lines.length === 0}
                 onClick={completePosSale}
               >
-                <span>{t('desk.chargeNow', { amount: money(totalMinor) })}</span>
+                <span>{fromApp ? t('from.complete', { amount: money(totalMinor) }) : t('desk.chargeNow', { amount: money(totalMinor) })}</span>
                 <kbd className="pos-charge-kbd">F8</kbd>
               </button>
             ) : null}
@@ -1744,6 +1831,7 @@ export function PayFlow({
           {nv.visitGone}
         </div>
       ) : null}
+      {fromRow}
       {who}
       {productsOnly ? null : stylists}
 

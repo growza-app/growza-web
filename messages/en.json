@@ -2733,6 +2733,20 @@
     "remove": "Remove"
   },
   "payFlow": {
+    "from": {
+      "label": "Order from",
+      "counter": "Counter",
+      "apps": {
+        "swiggy": "Swiggy",
+        "zomato": "Zomato"
+      },
+      "orderNo": "{app} order number",
+      "optional": "optional",
+      "save": "Done",
+      "addOrderNo": "Add (optional)",
+      "nothingToCollect": "Paid on {app}. Nothing to collect here.",
+      "complete": "Complete order · {amount}"
+    },
     "step": "Step {n} of 3",
     "whatTitle": "Record payment",
     "howTitle": "How did they pay?",

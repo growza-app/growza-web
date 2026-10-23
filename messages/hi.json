@@ -2733,6 +2733,20 @@
     "remove": "हटाएँ"
   },
   "payFlow": {
+    "from": {
+      "label": "ऑर्डर कहाँ से",
+      "counter": "काउंटर",
+      "apps": {
+        "swiggy": "स्विगी",
+        "zomato": "ज़ोमैटो"
+      },
+      "orderNo": "{app} ऑर्डर नंबर",
+      "optional": "ज़रूरी नहीं",
+      "save": "हो गया",
+      "addOrderNo": "जोड़ें (ज़रूरी नहीं)",
+      "nothingToCollect": "{app} पर भुगतान हो चुका है। यहाँ कुछ नहीं लेना है।",
+      "complete": "ऑर्डर पूरा करें · {amount}"
+    },
     "step": "चरण {n} / 3",
     "whatTitle": "पेमेंट दर्ज करें",
     "howTitle": "पैसे कैसे दिए?",
