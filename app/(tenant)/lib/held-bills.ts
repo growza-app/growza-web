@@ -21,6 +21,9 @@ const store = (): Storage | null => {
   }
 };
 
+/** When a bill is put on hold. Here, not in the till: the till's keys come from counters, never the clock. */
+export const heldStamp = (): number => Date.now();
+
 /** Null when there is no branch to keep them under: nothing is kept, as before. */
 export function heldBillsKey(locationId: string | null, who: string | null): string | null {
   return locationId ? `${PREFIX}${locationId}.${who ?? 'anyone'}` : null;

@@ -36,7 +36,7 @@ import { planScans, type ScanProblem } from '../../lib/scan-plan';
 import { canAddSize, groupProductLines, hasSizes, productLineKey, sizedName, sizePriceMinor } from '../../lib/till-sizes';
 import { SizeSheet } from './SizeSheet';
 import { queueScan, takeScans } from '../../lib/scan-queue';
-import { heldBillsKey, loadHeldBills, saveHeldBills } from '../../lib/held-bills';
+import { heldBillsKey, heldStamp, loadHeldBills, saveHeldBills } from '../../lib/held-bills';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
 import { PaymentDone } from '../../components/PaymentDone';
 
@@ -682,7 +682,7 @@ export function PayFlow({
     });
   const holdBill = () => {
     if (lines.length === 0) return;
-    setHeldBills((prev) => [{ id: newAttemptKey(), heldAt: Date.now(), client, lines, override }, ...prev]);
+    setHeldBills((prev) => [{ id: newAttemptKey(), heldAt: heldStamp(), client, lines, override }, ...prev]);
     setLines([]);
     setOverride(null);
     setClient({ kind: 'none' });
