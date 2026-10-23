@@ -3334,7 +3334,7 @@ export function NewVisitSheet({
                         }}
                       >
                         <span className="picker-row-text">
-                          <span className="picker-row-name">{nv.addAsNew(term.trim())}</span>
+                          <span className="picker-row-name">{nv.addAsNew(term.trim(), clientNoun)}</span>
                         </span>
                       </button>
                     </>
