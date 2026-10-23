@@ -206,3 +206,18 @@ describe('UX-07 — English and Hindi for every new line', () => {
     expect(hi.topSellerPill('x')).not.toBe(en.topSellerPill('x'));
   });
 });
+
+describe('the command center fills the width it is given', () => {
+  it('the desktop rule sets no `align-items`, which is what used to shrink-wrap it', () => {
+    /*
+     * `.shp-page`'s `display: grid` only wins up to 1100px. From 1101px (and 680px tall)
+     * `.page-body.hm-fit` — the salon's fit-to-screen layout, which this page also carries —
+     * sets `display: flex; flex-direction: column` at 0-2-0 and beats `.shp-page`'s 0-1-0.
+     * `align-items: start` had nothing to beat, so it applied to a FLEX COLUMN, where it governs
+     * the INLINE axis: the command center sat 935px wide inside 1620px on a 1920px screen.
+     * In a single-column grid it was doing nothing anyway — auto rows are content-sized either way.
+     */
+    expect(deskBlock).toMatch(/\.shp-page \{[^}]*display: grid;/);
+    expect(deskBlock).not.toMatch(/\.shp-page \{[^}]*align-items:/);
+  });
+});
