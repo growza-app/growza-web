@@ -1348,12 +1348,29 @@ export function ShopHome({
                 )}
 
             </div>
+          </>
+        )}
 
-            {/* =====================================================================
-                MOBILE STACK — the lists, which sit BELOW Quick links (see `order` in
-                99-shop-home.css). Quick links itself cannot move into this branch: it
-                is the nav's last door and has to survive a failed read.
-               ===================================================================== */}
+        {/* =====================================================================
+            Jira GRW-643 — Quick links, between the money and the lists.
+
+            It is written HERE rather than placed here by CSS `order`. The salon's own Home
+            (components/home/, the diary one) already states the rule this follows: on a phone
+            the cards are laid out in the order they are READ, and nothing reorders them. `order` would have left a keyboard tabbing
+            from the hero, down through the Orders, Recent orders and Running out cards, and
+            then BACK UP to the shortcuts sitting second on screen (WCAG 2.4.3).
+
+            Being outside the branch below is also what keeps it alive when the read fails:
+            the error card replaces the money and the lists, and the nav's last door stays.
+            It is `.hm-mobile`, so a laptop never draws it and its position cannot matter there.
+           ===================================================================== */}
+        {tiles.length > 0 ? (
+          <Card className="hm-area-links hm-mobile shp-links" title={t.quickLinks}>
+            <QuickTiles items={tiles} />
+          </Card>
+        ) : null}
+
+        {failed || !data ? null : (
             <div className="shp-mobile-stack">
               <div className="shp-col-stack">
                 <Card title={s.ordersTitle} action={data.anyOrders && can('/orders') ? <a className="shp-link" href="/orders">{s.viewOrders}</a> : undefined}>
@@ -1480,15 +1497,7 @@ export function ShopHome({
               </Card>
               )}
             </div>
-          </>
         )}
-
-
-        {tiles.length > 0 ? (
-          <Card className="hm-area-links hm-mobile shp-links" title={t.quickLinks}>
-            <QuickTiles items={tiles} />
-          </Card>
-        ) : null}
       </div>
     </>
   );

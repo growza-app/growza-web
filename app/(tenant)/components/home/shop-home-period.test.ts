@@ -148,21 +148,26 @@ describe('the phone running order: the money, Quick links, then the lists', () =
     expect(deskBlock).toMatch(/\.shp-mobile-stack,\s*\n\s*\.shp-phone-money \{\s*\n\s*display: none;/);
   });
 
-  it('Quick links sits between them by `order`, because it may not move in the source', () => {
+  it('Quick links is written between them, not moved there by `order`', () => {
     /*
-     * It is the nav's last door: `shop-home.test.ts` holds it OUTSIDE the branch a failed read
-     * replaces with one error line, so it cannot be written between the hero and the Orders card.
-     * Fragments add no element, so all three are siblings of a column flexbox on a phone.
+     * `OwnerHome` already states the rule: on a phone the cards are laid out in the order
+     * they are READ. `order` would have left a keyboard tabbing from the hero down through
+     * three cards and then BACK UP to the shortcuts sitting second on screen (WCAG 2.4.3).
      */
-    expect(css).toMatch(/@media \(max-width: 860px\)[\s\S]*\.shp-phone-money \{[\s\S]*?order: 1;/);
-    expect(css).toMatch(/@media \(max-width: 860px\)[\s\S]*\.shp-page > \.shp-links \{\s*\n\s*order: 2;/);
-    expect(css).toMatch(/@media \(max-width: 860px\)[\s\S]*\.shp-mobile-stack \{\s*\n\s*order: 3;/);
-    // Still outside the data branch — the whole reason for the `order` rules above.
-    expect(shop.indexOf('hm-area-links hm-mobile shp-links')).toBeGreaterThan(shop.lastIndexOf('</div>\n          </>\n        )}'));
+    const money = shop.indexOf('<div className="shp-phone-money">');
+    const links = shop.indexOf('hm-area-links hm-mobile shp-links');
+    const stack = shop.indexOf('<div className="shp-mobile-stack">');
+    expect(money).toBeGreaterThan(-1);
+    expect(links).toBeGreaterThan(money);
+    expect(stack).toBeGreaterThan(links);
+    expect(css).not.toMatch(/order: [123];/);
   });
 
-  it('the order is phone-only: from 861px `.shp-page` is a grid, which honours `order` too', () => {
-    expect(deskBlock).not.toMatch(/order: [123];/);
+  it('and still outside the branch a failed read replaces, so the last door stays', () => {
+    // The error card takes the money AND the lists; Quick links is in neither conditional.
+    expect(shop).toMatch(/\{failed \|\| !data \? \(\s*\n\s*<Card>/);
+    expect(shop).toMatch(/\{failed \|\| !data \? null : \(\s*\n\s*<div className="shp-mobile-stack">/);
+    expect(shop.indexOf('hm-area-links hm-mobile shp-links')).toBeLessThan(shop.indexOf('{failed || !data ? null : ('));
   });
 });
 

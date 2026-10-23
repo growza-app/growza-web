@@ -527,28 +527,12 @@ button.shp-hero-pill {
   font-size: 0.875rem;
 }
 
-/* ---------- Phone running order (2026-10-23) ----------
-   The filter and the money, then Quick links, then the lists.
 
-   It is done with `order` rather than by moving the markup because Quick links is the
-   nav's last door: `shop-home.test.ts` holds it OUTSIDE the branch that a failed read
-   replaces with one error line, so it cannot be written between the hero and the Orders
-   card in the source. React fragments add no element, so all three ARE siblings of
-   `.shp-page`, and on a phone that is a column flexbox — which is all `order` needs.
-
-   Scoped to the phone on purpose: from 861px `.shp-page` is a grid, which honours `order`
-   too, and the command center's own running order is not this one. */
-@media (max-width: 860px) {
-  .shp-phone-money {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-3);
-    order: 1;
-  }
-  .shp-page > .shp-links {
-    order: 2;
-  }
-  .shp-mobile-stack {
-    order: 3;
-  }
+/* The filter and the hero as one block, so Quick links can follow them in the SOURCE
+   (see ShopHome.tsx) rather than be moved past them with `order`. Hidden from 861px up
+   with `.shp-mobile-stack`, since the command center states the money its own way. */
+.shp-phone-money {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
 }
