@@ -3155,7 +3155,7 @@
       "titleAdd": "Add a product",
       "titleEdit": "Edit product",
       "name": "Name",
-      "namePlaceholder": "e.g. Argan Oil 100ml",
+      "namePlaceholder": "e.g. Water bottle 1 litre",
       "price": "Sell price",
       "stock": "Opening count",
       "stockHint": "How many are on the shelf today. Later changes go on the Stock tab, with a reason.",
@@ -4066,6 +4066,20 @@
         "delivered": "Mark as delivered",
         "cancelled": "Cancel this order",
         "returned": "Mark as came back"
+      },
+      "confirmMove": {
+        "cancelled": {
+          "title": "Cancel this order?",
+          "body": "A cancelled order cannot be opened again.",
+          "confirm": "Cancel order",
+          "keep": "Keep the order"
+        },
+        "returned": {
+          "title": "Mark as came back?",
+          "body": "It will no longer count in your sales. This cannot be undone.",
+          "confirm": "Mark as came back",
+          "keep": "Not now"
+        }
       },
       "movedOn": "This order has already moved on: it is now {state}.",
       "moveFailed": "Could not update the order. Check your connection and try again.",

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { api, ApiError, formatMoney } from '../../lib/api';
 import type { OrderDetail, ReturnSaleProductsResponse } from '../../lib/api-types';
 import { PageHeader } from '../../components/PageHeader';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { DocumentAction } from '../../components/DocumentAction';
 import { ReturnProductSheet, type ReturnableSaleBill } from '../../sales/ReturnProductSheet';
 import { KNOWN_STATES } from '../../lib/orders-filter';
@@ -58,6 +59,9 @@ export function OrderClient({
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
+  // QA 2026-10-23 — a move that cannot be taken back is asked about first. "Cancel this order" fired on one tap from the
+  // More menu; cancelled and came back are final states, nothing moves an order out of them.
+  const [confirming, setConfirming] = useState<'cancelled' | 'returned' | null>(null);
   const [returning, setReturning] = useState(false);
   // Jira GRW-617 — the line whose size is being swapped.
   const [swapping, setSwapping] = useState<string | null>(null);
@@ -97,6 +101,20 @@ export function OrderClient({
     cancelled: t('detail.moves.cancelled'),
     returned: t('detail.moves.returned'),
   };
+  const confirmWords = {
+    cancelled: {
+      title: t('detail.confirmMove.cancelled.title'),
+      body: t('detail.confirmMove.cancelled.body'),
+      confirm: t('detail.confirmMove.cancelled.confirm'),
+      keep: t('detail.confirmMove.cancelled.keep'),
+    },
+    returned: {
+      title: t('detail.confirmMove.returned.title'),
+      body: t('detail.confirmMove.returned.body'),
+      confirm: t('detail.confirmMove.returned.confirm'),
+      keep: t('detail.confirmMove.returned.keep'),
+    },
+  };
   const modeWords: Record<string, string> = { cash: t('detail.modes.cash'), card: t('detail.modes.card'), upi: t('detail.modes.upi'), other: t('detail.modes.other') };
 
   const when = (iso: string) => new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: timezone }).format(new Date(iso));
@@ -104,6 +122,16 @@ export function OrderClient({
   const refundChannelWord = (c: string) => (c === 'flipkart' ? t('refunds.flipkart') : c === 'amazon' ? t('refunds.amazon') : c.charAt(0).toUpperCase() + c.slice(1));
   const refundDay = (iso: string) => new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', timeZone: timezone }).format(new Date(iso));
   const money = (minor: string | number | undefined): string | null => (minor === undefined ? null : formatMoney(minor, 'INR', locale));
+
+  /** A tap on a move: the two final ones are asked about first, the rest go straight through. */
+  const ask = (to: string) => {
+    if (to === 'cancelled' || to === 'returned') {
+      setMoreOpen(false);
+      setConfirming(to);
+      return;
+    }
+    void move(to);
+  };
 
   const move = async (to: string) => {
     if (!order || inFlight.current) return;
@@ -386,7 +414,7 @@ export function OrderClient({
               <ul className="ord-d-more" role="menu">
                 {more.map((m) => (
                   <li key={m} role="none">
-                    <button type="button" role="menuitem" className="ord-d-more-item" disabled={busy} onClick={() => void move(m)}>
+                    <button type="button" role="menuitem" className="ord-d-more-item" disabled={busy} onClick={() => ask(m)}>
                       {moveWords[m]}
                     </button>
                   </li>
@@ -400,7 +428,7 @@ export function OrderClient({
                 </button>
               ) : null}
               {offerPrimary ? (
-                <button type="button" className="btn btn-primary ord-d-primary" disabled={busy} onClick={() => void move(order.moves.primary!)}>
+                <button type="button" className="btn btn-primary ord-d-primary" disabled={busy} onClick={() => ask(order.moves.primary!)}>
                   {moveWords[order.moves.primary!]}
                 </button>
               ) : null}
@@ -408,6 +436,23 @@ export function OrderClient({
           </div>
         ) : null}
       </div>
+
+      {confirming ? (
+        <ConfirmDialog
+          title={confirmWords[confirming].title}
+          body={confirmWords[confirming].body}
+          confirmLabel={confirmWords[confirming].confirm}
+          cancelLabel={confirmWords[confirming].keep}
+          tone="danger"
+          busy={busy}
+          onCancel={() => setConfirming(null)}
+          onConfirm={() => {
+            const to = confirming;
+            setConfirming(null);
+            void move(to);
+          }}
+        />
+      ) : null}
 
       {attaching && order.buyer ? (
         <AttachClientSheet
