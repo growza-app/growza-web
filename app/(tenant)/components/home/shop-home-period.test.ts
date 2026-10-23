@@ -16,6 +16,17 @@ import { phoneWindow } from '../../lib/phone-window';
 const here = (p: string) => readFileSync(resolve(__dirname, p), 'utf8');
 const shop = here('./ShopHome.tsx');
 const css = here('../../styles/99-shop-home.css');
+/*
+ * The `@media (min-width: 861px)` block ALONE — not the rest of the file after it. The phone's
+ * own `@media (max-width: 860px)` block is written below it, so slicing to end of file would
+ * have read the phone's rules as the laptop's and passed a test that proves nothing.
+ */
+const deskBlock = (() => {
+  const at = css.indexOf('@media (min-width: 861px)');
+  expect(at).toBeGreaterThan(-1);
+  const next = css.indexOf('@media', at + 1);
+  return next === -1 ? css.slice(at) : css.slice(at, next);
+})();
 
 const IST = 'Asia/Kolkata';
 /** 2026-10-23 is a Friday. 01:30 UTC is 07:00 IST the SAME day — the zone has to be honoured, not the clock. */
@@ -62,7 +73,7 @@ describe('each Home pays only for its own reads', () => {
   it('the command center’s five feeds do not run below 861px', () => {
     expect(shop).toContain("const mq = window.matchMedia('(max-width: 860px)');");
     // The same edge `.shp-mobile-stack` is hidden at, so `phone === true` IS "the mobile stack is on screen".
-    expect(css).toMatch(/@media \(min-width: 861px\)[\s\S]*\.shp-mobile-stack \{\s*display: none;/);
+    expect(deskBlock).toMatch(/\.shp-mobile-stack,\s*\n\s*\.shp-phone-money \{\s*\n\s*display: none;/);
     expect(shop).toMatch(/if \(phone !== false\) return;\s*\n\s*const mine = \+\+deskReqId\.current;/);
   });
 
@@ -128,6 +139,30 @@ describe('nothing on the hero is invented, and nothing stale is left under a new
   it('the KPI strip stays gone: the average joins the hero’s own stats line instead', () => {
     expect(shop).not.toContain('shp-kpi-strip');
     expect(shop).toContain('{s.avgOrderShort(rupees(phoneFigures.avgMinor))}');
+  });
+});
+
+describe('the phone running order: the money, Quick links, then the lists', () => {
+  it('the money is its own block, hidden from 861px exactly as the stack is', () => {
+    expect(shop).toContain('<div className="shp-phone-money">');
+    expect(deskBlock).toMatch(/\.shp-mobile-stack,\s*\n\s*\.shp-phone-money \{\s*\n\s*display: none;/);
+  });
+
+  it('Quick links sits between them by `order`, because it may not move in the source', () => {
+    /*
+     * It is the nav's last door: `shop-home.test.ts` holds it OUTSIDE the branch a failed read
+     * replaces with one error line, so it cannot be written between the hero and the Orders card.
+     * Fragments add no element, so all three are siblings of a column flexbox on a phone.
+     */
+    expect(css).toMatch(/@media \(max-width: 860px\)[\s\S]*\.shp-phone-money \{[\s\S]*?order: 1;/);
+    expect(css).toMatch(/@media \(max-width: 860px\)[\s\S]*\.shp-page > \.shp-links \{\s*\n\s*order: 2;/);
+    expect(css).toMatch(/@media \(max-width: 860px\)[\s\S]*\.shp-mobile-stack \{\s*\n\s*order: 3;/);
+    // Still outside the data branch — the whole reason for the `order` rules above.
+    expect(shop.indexOf('hm-area-links hm-mobile shp-links')).toBeGreaterThan(shop.lastIndexOf('</div>\n          </>\n        )}'));
+  });
+
+  it('the order is phone-only: from 861px `.shp-page` is a grid, which honours `order` too', () => {
+    expect(deskBlock).not.toMatch(/order: [123];/);
   });
 });
 

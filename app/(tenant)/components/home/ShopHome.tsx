@@ -1222,10 +1222,11 @@ export function ShopHome({
             </div>
 
             {/* =====================================================================
-                MOBILE STACK (<861px — preserves every source pin & 344px ergonomics)
+                PHONE MONEY (<861px) — the filter and the hero, in a block of their own
+                so Quick links can sit between them and the lists without being moved
+                inside this branch. Hidden from 861px up, exactly as the stack below is.
                ===================================================================== */}
-            <div className="shp-mobile-stack">
-              <div className="shp-col-stack">
+            <div className="shp-phone-money">
                 {/*
                   The money, as the salon's Home states it: one dark hero that anchors the screen,
                   not a white card the same weight as every other. Written with the salon's own class
@@ -1346,6 +1347,15 @@ export function ShopHome({
                   </section>
                 )}
 
+            </div>
+
+            {/* =====================================================================
+                MOBILE STACK — the lists, which sit BELOW Quick links (see `order` in
+                99-shop-home.css). Quick links itself cannot move into this branch: it
+                is the nav's last door and has to survive a failed read.
+               ===================================================================== */}
+            <div className="shp-mobile-stack">
+              <div className="shp-col-stack">
                 <Card title={s.ordersTitle} action={data.anyOrders && can('/orders') ? <a className="shp-link" href="/orders">{s.viewOrders}</a> : undefined}>
                   {data.anyOrders ? (
                     <>
