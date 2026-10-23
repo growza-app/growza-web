@@ -391,7 +391,8 @@ export function ProductSheet({
 
             <div className="prd-form-section">
               <div className="prd-form-sec-head">
-                <span className="prd-form-sec-title">{t('secPricing')}</span>
+                {/* "& stock" only where there is one: a kitchen's dish has a price and nothing to count. */}
+                <span className="prd-form-sec-title">{t(counted ? 'secPricing' : 'secPricingUncounted')}</span>
                 {marginPct !== null ? (
                   <span className={`prd-margin ${marginPct < 0 ? 'prd-margin-neg' : ''}`}>{t('margin', { pct: marginPct })}</span>
                 ) : null}

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useLabel } from './LabelsProvider';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { usePhoneProblem } from '../lib/use-phone-problem';
 import { displayPhone, fromStoredPhone, toStoredPhone } from '../lib/phone';
@@ -78,6 +79,8 @@ export function ReceiptShare({
 }) {
   const text = useMemo(() => rowsToText(bill), [bill]);
   const nv = useNewVisitCopy();
+  // The vertical's own word for the person paying: Guest to a restaurant, Customer to a shop, Client to a salon.
+  const clientNoun = useLabel('customer', 'Client');
   const words =
     kind === 'bill'
       ? { preview: nv.billPreview, send: nv.sendOnWhatsapp, hint: nv.sendHint, share: nv.shareBill }
@@ -145,7 +148,7 @@ export function ReceiptShare({
         <>
           <PhoneField
             id="wi-receipt-phone"
-            label={nv.clientWhatsapp}
+            label={nv.clientWhatsapp(clientNoun)}
             required
             value={typed}
             onChange={(v) => {

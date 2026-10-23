@@ -789,7 +789,15 @@ export function ReturnProductSheet({
             {/* Right column: Condition + Refund method + Reason + Confirm footer */}
             <div className="sls-ret-right">
               <div className="sls-ret-scroll">
-                <div className="sls-ret-condition" hidden={!counted}>
+                {/*
+                  * NOT `hidden={!counted}`: `.sls-ret-condition { display: flex }` in 99-sales.css outranks the user
+                  * agent's `[hidden] { display: none }`, so the attribute was set and the block drawn anyway — a
+                  * kitchen was still asked to put a dish back on a shelf it does not have, and a source-reading
+                  * test for the attribute passed the whole time. Found by opening the sheet. Not rendered at all,
+                  * which is what the rest of this vertical does and what no stylesheet can undo.
+                  */}
+                {!counted ? null : (
+                <div className="sls-ret-condition">
                   <div className="sls-ret-field-head">
                     <span className="sls-ret-field-title">{t('conditionLabel')}</span>
                     <span className="sls-ret-info-icon" aria-hidden="true">
@@ -833,6 +841,7 @@ export function ReturnProductSheet({
                     {restock ? t('puttingBack', { items: selectedLines.map(({ line, qty }) => `${line.name} × ${qty}`).join(', ') }) : t('writingOff', { items: selectedLines.map(({ line, qty }) => `${line.name} × ${qty}`).join(', ') })}
                   </span>
                 </div>
+                )}
 
                 <div className="sls-ret-condition">
                   <span className="sls-ret-field-title">{t('refundModeLabel')}</span>

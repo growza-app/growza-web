@@ -152,7 +152,8 @@ export function ImportProductReview({
 
   return (
     <>
-      <p className="confirm-body">{t('summary', { create: counts.create, update: counts.update })}</p>
+      {/* A kitchen has a menu, not a shelf, and dishes on it rather than products. */}
+      <p className="confirm-body">{t(counted ? 'summary' : 'summaryUncounted', { create: counts.create, update: counts.update })}</p>
       {newCategories.length > 0 && (
         <p className={tooManyCategories ? 'field-error' : 'confirm-body'} role={tooManyCategories ? 'alert' : undefined}>
           {tooManyCategories

@@ -18,6 +18,7 @@ import { useBranch } from '../../components/BranchProvider';
 import { HeaderBranchPicker } from '../../components/HeaderBranchPicker';
 import { PAYMENT_MODES } from '../../lib/payment-modes';
 import { useLabel } from '../../components/LabelsProvider';
+import { nounInSentence, pickNoun } from '../../lib/nouns';
 import { LargeAmountDeclined, useLargeAmountGuard } from '../../components/LargeAmountConfirm';
 import { useAreas, useSession } from '../../components/SessionProvider';
 import { IconArrowLeft, IconClose, IconEdit, IconMinus, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch, IconUserPlus } from '../../components/icons';
@@ -179,6 +180,7 @@ export function PayFlow({
   const tcr = useTranslations('chrome');
   const nv = useNewVisitCopy();
   const locale = useLocale();
+  const tNouns = useTranslations('nouns');
   const router = useRouter();
   const session = useSession();
   // Is there a count behind what the till sells? False for a kitchen, which cooks a dish when it is ordered: nothing
@@ -186,6 +188,9 @@ export function PayFlow({
   const counted = useAreas().stock;
   const branch = useBranch();
   const providerNoun = useLabel('provider', 'Staff member');
+  // The person paying, in the vertical's own word — Guest at a restaurant, Customer at a shop.
+  const clientNoun = pickNoun(locale, useLabel('customer', 'Client'), tNouns('customer'));
+  const productsNoun = useLabel('products', 'Products');
   const { guard, dialog } = useLargeAmountGuard();
 
   // The branch this sale lands at: the token's, else the one the header has chosen, else the only one.
@@ -908,7 +913,9 @@ export function PayFlow({
           title: nv.receiptTitle,
           thanks: nv.receiptThanks,
           services: nv.receiptServices,
-          products: nv.receiptProducts,
+          // The vertical's own word for what was sold: Menu to a restaurant, Products to a shop. The receipt is
+          // the one piece of this the GUEST reads, so it least of all should carry another trade's noun.
+          products: pickNoun(locale, productsNoun, nv.receiptProducts),
           token: nv.token,
           stylist: (name) => nv.receiptStylist(providerNoun, name),
           packageName: nv.receiptPackage,
@@ -1323,8 +1330,8 @@ export function PayFlow({
       {token.customerName}
     </p>
   ) : (
-    <div className="pf-row" role="group" aria-label={t('who')}>
-      <span className="pf-row-label">{t('who')}</span>
+    <div className="pf-row" role="group" aria-label={t('who', { client: clientNoun })}>
+      <span className="pf-row-label">{t('who', { client: clientNoun })}</span>
       {client.kind !== 'none' ? (
         /* Who it is, and the way to change it. A client on file shows their number; a name typed just now has none. */
         <div className="pf-who-picked">
@@ -1348,7 +1355,7 @@ export function PayFlow({
             <IconSearch />
             {t('nameOrNumber')}
           </button>
-          <button type="button" className="pf-who-add" aria-label={t('addClient')} onClick={() => setWhoOpen('add')}>
+          <button type="button" className="pf-who-add" aria-label={t('addClient', { client: nounInSentence(clientNoun) })} onClick={() => setWhoOpen('add')}>
             <IconPlus />
           </button>
         </div>
