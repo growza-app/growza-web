@@ -4796,3 +4796,39 @@ button.hm-now-count {
   background: var(--seg, var(--accent));
 }
 
+
+/* ---------- The shop's money hero on a phone (2026-10-23) ----------
+   It borrows `.hm-hero` whole — the salon's gradient, radius and white text — so the two Homes
+   cannot drift apart. Only the two things a shop has and a salon does not are added here: the
+   channel link in the hero's top row, and the report pills under it. Both sit ON the dark card,
+   so they are drawn in white at low opacity rather than the page's green-on-white link. */
+.shp-hero-link {
+  margin-left: auto;
+  color: rgb(255 255 255 / 85%);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.shp-hero-link:hover {
+  color: #fff;
+}
+.shp-hero-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: auto;
+  padding-top: var(--sp-3);
+}
+.shp-hero-pill {
+  padding: 6px 12px;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 999px;
+  color: rgb(255 255 255 / 92%);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.shp-hero-pill:hover {
+  border-color: rgb(255 255 255 / 55%);
+  color: #fff;
+}

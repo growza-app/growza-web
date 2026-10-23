@@ -17,13 +17,17 @@ describe('Retail Enterprise UI Redesign across all 6 surfaces', () => {
     expect(shopHome).toContain('hm-v3-trend-card');
     expect(shopHome).toContain('hm-v3-quick-card');
     expect(shopHome).toContain('hm-v3-recent-table');
-    expect(shopHome).toContain('shp-kpi-strip');
+    /*
+     * The phone's KPI strip is gone (2026-10-23). Every figure on it was already on a card below —
+     * takings today and yesterday with the channel split on the money card, what is waiting on the
+     * Orders card, what is running low on its own card — so Home printed the same two numbers three
+     * times and ran off the bottom of the screen. The phone now follows the salon's Home: the money,
+     * then Quick links as a titled card, then the lists. The DESKTOP command centre above is
+     * untouched, which is what the rest of this test is about.
+     */
+    expect(shopHome).not.toContain('shp-kpi-strip');
     expect(shopHome).toContain('shp-col-stack');
-    expect(shopHome).toContain('s.todaysTakings');
-    expect(shopHome).toContain('s.yesterdaysTakings');
-    expect(shopHome).toContain('s.waitingToSendLabel');
-    expect(shopHome).toContain('s.lowStockLabel');
-    expect(shopHomeCss).toContain('.shp-kpi-strip');
+    expect(shopHome).toContain('hm-area-links hm-mobile');
     expect(shopHomeCss).toContain('.shp-col-stack');
     expect(shopHomeCss).toContain('.shp-mobile-stack');
     expect(headerSearch).toContain('areas.bookings === false');

@@ -3295,6 +3295,7 @@
     "categories": {
       "title": "Categories",
       "all": "All products",
+      "allDishes": "All dishes",
       "none": "No category",
       "searchPlaceholder": "Search categories",
       "clear": "Clear",

@@ -103,6 +103,7 @@ describe('the product sheet on a narrow phone', () => {
 
   it('says "No product by that name" for products, not "No service"', () => {
     expect(read('../components/ServiceSheet.tsx')).toContain("t(counted ? 'desk.noProductMatch' : 'desk.noDishMatch')");
-    expect(read('../appointments/new/DeskServiceGrid.tsx')).toContain("t('desk.noProductMatch')");
+    // Jira GRW-643 — and "No dish by that name" to a kitchen, which the wide till used not to say either.
+    expect(read('../appointments/new/DeskServiceGrid.tsx')).toContain("t(counted ? 'desk.noProductMatch' : 'desk.noDishMatch')");
   });
 });

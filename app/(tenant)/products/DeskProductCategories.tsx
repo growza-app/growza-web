@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import type { ProductCategory } from '../lib/api-types';
 import { IconChevronDown, IconPlus, IconSearch } from '../components/icons';
+import { useAreas } from '../components/SessionProvider';
 
 export const ALL_CATEGORIES = '';
 export const NO_CATEGORY = '\u0000none';
@@ -32,6 +33,7 @@ export function DeskProductCategories({
 }) {
   const t = useTranslations('products.categories');
   const [addOpen, setAddOpen] = useState(false);
+  const counted = useAreas().stock;
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState('');
   const [busy, setBusy] = useState(false);
@@ -84,7 +86,8 @@ export function DeskProductCategories({
         ) : null}
       </div>
       <ul className="svc-desk-cats">
-        {row(ALL_CATEGORIES, t('all'), allCount)}
+        {/* A kitchen's categories hold dishes, not products (`catalog.stock_counted` off). */}
+        {row(ALL_CATEGORIES, t(counted ? 'all' : 'allDishes'), allCount)}
         {categories.map((c) => row(c.id, c.name, c.count, c))}
         {noneCount > 0 ? row(NO_CATEGORY, t('none'), noneCount) : null}
       </ul>
