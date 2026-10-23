@@ -575,6 +575,8 @@ export interface ProviderStats {
 }
 
 export interface Appointment {
+  /** Owner, 2026-10-24 — a product-only bill's channel (`counter`, `swiggy`, `zomato`, …); absent on a booking and from an older API. */
+  channel?: string;
   id: string;
   startAt: string;
   endAt: string;

@@ -87,3 +87,10 @@ describe('QA fixes', () => {
     expect(css).toMatch(/\.pf-from \.pf-chips \{\s*flex-wrap: wrap;/);
   });
 });
+
+describe('No return of an app order (owner, 2026-10-24)', () => {
+  it('the till’s Return leaves Swiggy and Zomato bills out, and the order page offers none', () => {
+    expect(src('pos/PosClient.tsx')).toContain("buildSaleRows(rows.filter((r) => !isDeliveryApp(r.channel ?? 'counter')), timezone)");
+    expect(src('lib/api-messages.ts')).toContain("'An order from a delivery app is returned and refunded by the app, not here.':");
+  });
+});
