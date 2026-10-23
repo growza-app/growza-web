@@ -19,9 +19,11 @@ import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
 import { useAreas } from '../SessionProvider';
 import {
+  IconClipboardCheck,
   IconNavClients,
   IconNavOrders,
   IconNavStock,
+  IconSettings,
   IconPos,
   IconProducts,
   IconReports,
@@ -178,10 +180,18 @@ export function ShopHome({
    * door onto that is a door onto nothing; it opens when a shop has reports of its own, Jira GRW-591.
    */
   const stockBranch = branch ? `?branch=${encodeURIComponent(branch)}` : '';
+  /*
+   * The salon's Quick links are eight tiles, four across, two rows — enough that the grid reads as a
+   * pad of shortcuts rather than three icons with a gap beside them. A shop has the same screens to
+   * reach; it was only ever offered three of them.
+   */
   const tiles = [
     { href: '/orders/new', label: s.takeOrder, icon: <IconNavOrders />, tone: 'green' },
-    { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'blue' },
+    { href: '/orders', label: t.nav.orders, icon: <IconNavOrders />, tone: 'blue' },
+    { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'green' },
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
+    { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
+    { href: '/settings', label: t.nav.settings, icon: <IconSettings />, tone: 'slate' },
   ].filter((l) => canSee(l.href, role, reportTabs, true, areas));
 
   const periodLabel = period === 'last_7_days' ? s.range7d : period === 'this_month' ? s.rangeMonth : s.range90d;
@@ -1055,44 +1065,47 @@ export function ShopHome({
                ===================================================================== */}
             <div className="shp-mobile-stack">
               <div className="shp-col-stack">
+                {/*
+                  The money, as the salon's Home states it: one dark hero that anchors the screen,
+                  not a white card the same weight as every other. Written with the salon's own class
+                  names (`hm-hero`, `hm-hero-amount`, `hm-hero-stats`, `hm-line-foot`) so it inherits
+                  that skin exactly rather than a second one drifting beside it — a shop's figures are
+                  different from a salon's, the way they are shown should not be.
+                */}
                 {money && data.today.takingsMinor !== undefined ? (
-                  <Card
-                    title={s.takings}
-                    action={
-                      canReports && can('/stock/channels') ? (
-                        <a className="shp-link" href="/stock/channels">
+                  <section className="hm-hero shp-hero">
+                    <div className="hm-hero-top">
+                      <span className="hm-eyebrow">{s.takings}</span>
+                      {canReports && can('/stock/channels') ? (
+                        <a className="shp-hero-link" href="/stock/channels">
                           {s.channelsLink}
                         </a>
-                      ) : undefined
-                    }
-                  >
-                    <div className="shp-money">
-                      <div className="shp-figure">
-                        <span className="shp-figure-label">{s.today}</span>
-                        <strong className="shp-figure-value">{rupees(data.today.takingsMinor)}</strong>
-                        <span className="shp-figure-sub">{s.orderCount(data.today.orders)}</span>
-                      </div>
-                      <div className="shp-figure shp-figure-quiet">
-                        <span className="shp-figure-label">{s.yesterday}</span>
-                        <strong className="shp-figure-value">{rupees(data.yesterday.takingsMinor ?? 0)}</strong>
-                        <span className="shp-figure-sub">{s.orderCount(data.yesterday.orders)}</span>
-                      </div>
+                      ) : null}
+                    </div>
+                    <div className="hm-hero-amount">{rupees(data.today.takingsMinor)}</div>
+                    <div className="hm-hero-stats">
+                      <span>
+                        <strong>{data.today.orders}</strong> {s.orderWord(data.today.orders)}
+                      </span>
+                      <span>
+                        {s.yesterday} <strong>{rupees(data.yesterday.takingsMinor ?? 0)}</strong>
+                      </span>
                     </div>
                     {canReports && (can('/stock/sellers') || can('/stock/report')) ? (
-                      <div className="shp-inline-links">
+                      <div className="shp-hero-links">
                         {can('/stock/sellers') ? (
-                          <a className="shp-pill-link" href="/stock/sellers">
+                          <a className="shp-hero-pill" href="/stock/sellers">
                             {s.whatSellsLink}
                           </a>
                         ) : null}
                         {can('/stock/report') ? (
-                          <a className="shp-pill-link" href="/stock/report">
+                          <a className="shp-hero-pill" href="/stock/report">
                             {s.stockReportLink}
                           </a>
                         ) : null}
                       </div>
                     ) : null}
-                  </Card>
+                  </section>
                 ) : null}
 
                 <Card title={s.ordersTitle} action={data.anyOrders && can('/orders') ? <a className="shp-link" href="/orders">{s.viewOrders}</a> : undefined}>

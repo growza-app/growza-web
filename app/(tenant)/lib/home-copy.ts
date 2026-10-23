@@ -396,6 +396,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       yesterday: S('Yesterday', 'कल'),
       /** "1 order", "11 orders" — the singular and the plural are the vertical's own words. */
       orderCount: (n: number) => (hi ? `${n} ऑर्डर` : `${n} ${nounInSentence(n === 1 ? (labels.order ?? 'Order') : (labels.orders ?? 'Orders'))}`),
+      /** The noun alone, for a hero that prints the number itself — `bookingWord`'s shape, for a shop. */
+      orderWord: (n: number) => (hi ? 'ऑर्डर' : nounInSentence(n === 1 ? (labels.order ?? 'Order') : (labels.orders ?? 'Orders'))),
       ordersTitle: S(labels.orders ?? 'Orders', 'ऑर्डर'),
       viewOrders: S('View all', 'सभी देखें'),
       noOrdersTitle: S('No orders yet', 'अभी कोई ऑर्डर नहीं'),
