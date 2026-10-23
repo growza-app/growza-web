@@ -14,6 +14,7 @@ import { useBranch } from '../components/BranchProvider';
 import { useMayUse, useSession, useAreas } from '../components/SessionProvider';
 import { useLabel } from '../components/LabelsProvider';
 import { pickNoun } from '../lib/nouns';
+import { useNouns } from '../lib/use-nouns';
 import {
   IconCheck,
   IconChevronDown,
@@ -841,6 +842,7 @@ export function SalesClient({
   const locale = useLocale();
   const router = useRouter();
   const branch = useBranch();
+  const nouns = useNouns();
   const mayRecordPayment = useMayUse('visit.recordPayment');
   // Jira GRW-610 — a business that sells no services (a shop, whose Orders this is) is shown none of the register's
   // service-only parts: not zeroed, absent. Each is one guard on a part that was already there.
@@ -1338,7 +1340,7 @@ export function SalesClient({
                 onClick={() => setReturnSheet({ open: true, bill: null })}
               >
                 <IconReturn />
-                <span>{t('returnProduct')}</span>
+                <span>{t('returnProduct', { product: nouns.product })}</span>
               </button>
               <a
                 className="btn"

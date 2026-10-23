@@ -12,6 +12,7 @@ import { CorrectBookingSheet } from './CorrectBookingSheet';
 import { IconCheck, IconClose, IconEdit, IconPackages, IconPhone, IconReturn } from './icons';
 import { useMayUse } from './SessionProvider';
 import { useLabel } from './LabelsProvider';
+import { useNouns } from '../lib/use-nouns';
 import { useDialog } from '../../shared/a11y/useDialog';
 
 const PAYMENT_MODE_KEYS = ['cash', 'card', 'upi', 'other'] as const;
@@ -41,6 +42,7 @@ export function BookingSummary({
   const tc = useTranslations('chrome');
   const tn = useTranslations('nouns');
   const tfix = useTranslations('chrome.correct');
+  const { product } = useNouns();
   const mayCorrect = useMayUse('booking.correct');
   const [services, setServices] = useState<Service[] | null>(null);
   const [correcting, setCorrecting] = useState(false);
@@ -291,7 +293,7 @@ export function BookingSummary({
           {onReturnProducts ? (
             <button type="button" className="btn btn-ghost" onClick={onReturnProducts}>
               <IconReturn />
-              {t('returnProducts')}
+              {t('returnProducts', { product })}
             </button>
           ) : null}
           {mayCorrect && booking.appointments.some((a) => a.status === 'completed') && serviceLegs.length > 0 && (

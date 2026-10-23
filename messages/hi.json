@@ -18,8 +18,8 @@
   "search": {
     "title": "ग्राहक या बुकिंग खोजें",
     "prompt": "ग्राहक या बुकिंग खोजें",
-    "shopTitle": "ग्राहक खोजें",
-    "shopPrompt": "ग्राहक खोजें",
+    "shopTitle": "{customer} खोजें",
+    "shopPrompt": "{customer} खोजें",
     "placeholder": "नाम, फ़ोन या बुकिंग ID",
     "customers": "ग्राहक",
     "bookings": "बुकिंग",
@@ -37,7 +37,7 @@
     "markAllRead": "सब पढ़ा हुआ करें",
     "clearAll": "सब हटाएँ",
     "loading": "लोड हो रहा है…",
-    "empty": "अभी कुछ नहीं — नई बुकिंग यहाँ दिखेंगी।",
+    "empty": "अभी कुछ नहीं — नई गतिविधि यहाँ दिखेगी।",
     "feed": {
       "topics": {
         "newBooking": "नई बुकिंग",
@@ -197,7 +197,9 @@
     "bookingsTitle": "बुकिंग",
     "booking": "बुकिंग",
     "bookings": "बुकिंग",
-    "packages": "पैकेज"
+    "packages": "पैकेज",
+    "product": "सामान",
+    "products": "सामान"
   },
   "customers": {
     "subtitle": "अपने {noun}, उनका रिकॉर्ड और कुल खर्च देखें और संभालें।",
@@ -214,7 +216,7 @@
     "kpiReturningSub": "एक से ज़्यादा बार बुकिंग की",
     "kpiRepeat": "दोबारा आने की दर",
     "kpiRepeatSub": "दोबारा आए ÷ कुल {noun}",
-    "segmentsTitle": "आपके ग्राहक कैसे चल रहे हैं",
+    "segmentsTitle": "आपके {noun} कैसे चल रहे हैं",
     "segmentsHint": "सिर्फ़ वही देखने के लिए एक पर टैप करें",
     "neverVisited": "{count} ({pct}%) अभी तक आए ही नहीं, इसलिए ये इनमें से किसी में नहीं हैं",
     "neverVisitedShort": "{count} ({pct}%) कभी नहीं आए",
@@ -246,7 +248,7 @@
     "allNoun": "सभी {noun}",
     "noMatch": "आपकी खोज से कोई {noun} नहीं मिला।",
     "loading": "लोड हो रहा है…",
-    "colCustomer": "ग्राहक",
+    "colCustomer": "{customer}",
     "colPhone": "फ़ोन / WhatsApp",
     "colLastBooking": "आख़िरी बुकिंग",
     "colTotalSpent": "कुल खर्च",
@@ -260,7 +262,8 @@
     "namePlaceholder": "जैसे प्रिया शर्मा",
     "couldNotAdd": "{noun} नहीं जोड़ सके।",
     "whichBranch": "कौन सी शाखा",
-    "deskPick": "किसी {noun} की पूरी कहानी देखने के लिए उसे चुनें, या नया जोड़ें।"
+    "deskPick": "किसी {noun} की पूरी कहानी देखने के लिए उसे चुनें, या नया जोड़ें।",
+    "noneYet": "यहाँ अभी कोई {noun} नहीं।"
   },
   "tax": {
     "title": "टैक्स",
@@ -269,7 +272,7 @@
     "hsn": "HSN कोड",
     "sac": "SAC कोड",
     "hint": "दोनों ज़रूरी नहीं। {code} 4 से 8 अंकों का होता है। GST टैक्स इनवॉइस के लिए दोनों चाहिए।",
-    "pricesInclude": "आपकी क़ीमतों में GST शामिल है, इसलिए ग्राहक वही क़ीमत देता है जो आपने रखी है।",
+    "pricesInclude": "आपकी क़ीमतों में GST शामिल है, इसलिए {customer} वही क़ीमत देता है जो आपने रखी है।",
     "includedIn": "इसमें {tax} GST शामिल है ({rate}%)। ग्राहक {total} देता है।"
   },
   "documents": {
@@ -358,7 +361,7 @@
     "largeCancel": "फिर से जाँचें"
   },
   "settingsHub": {
-    "subtitle": "आपका बिज़नेस और बुकिंग कैसे काम करते हैं।",
+    "subtitle": "आपका बिज़नेस कैसे काम करता है।",
     "emptyPane": "शुरू करने के लिए सूची से कोई सेक्शन चुनें।",
     "back": "सेटिंग्स पर वापस",
     "comingSoon": "जल्द आ रहा है",
@@ -520,8 +523,8 @@
     "titleBusinessOnly": "बिज़नेस का नाम और लोगो",
     "branchTitleNamed": "{name} की प्रोफ़ाइल",
     "branchTitleUnnamed": "ब्रांच की प्रोफ़ाइल",
-    "sub": "आपके ग्राहक बुकिंग करते समय आपके बारे में यह देखते हैं।",
-    "subBranch": "इस ब्रांच के ग्राहक बुकिंग करते समय यह देखते हैं।",
+    "sub": "आपके {customers} आपके बिज़नेस के बारे में यह देखते हैं।",
+    "subBranch": "इस ब्रांच के {customers} यह देखते हैं।",
     "cards": {
       "thisBranch": "यह ब्रांच",
       "yourBusiness": "आपका बिज़नेस",
@@ -588,7 +591,7 @@
     "title": "काम के घंटे",
     "branchTitleNamed": "{name} के घंटे",
     "branchTitleUnnamed": "ब्रांच के घंटे",
-    "hintBusiness": "आपका सैलून कब खुला रहता है। स्टाफ़ इन्हीं घंटों में काम करता है, जब तक आप उन्हें अलग घंटे न दें।",
+    "hintBusiness": "आपका बिज़नेस कब खुला रहता है। स्टाफ़ इन्हीं घंटों में काम करता है, जब तक आप उन्हें अलग घंटे न दें।",
     "hintBranchNamed": "{name} कब खुली रहती है। {name} का स्टाफ़ इन्हीं घंटों में काम करता है, जब तक आप उन्हें अलग घंटे न दें।",
     "hintBranchUnnamed": "यह ब्रांच कब खुली रहती है। इसका स्टाफ़ इन्हीं घंटों में काम करता है, जब तक आप उन्हें अलग घंटे न दें।",
     "save": "बदलाव सेव करें",
@@ -656,6 +659,11 @@
     }
   },
   "settingsReports": {
+    "shopTitle": "काउंटर क्या कर सकता है",
+    "shopHint": "आप और मैनेजर हमेशा सब कुछ कर सकते हैं। टिक करें ताकि काउंटर सामान वापस ले सके और पैसे लौटा सके।",
+    "shopTabs": {
+      "sales": "सामान वापस लेना और पैसे लौटाना"
+    },
     "title": "रिपोर्ट कौन देख सकता है",
     "hint": "आप और कोई भी मैनेजर हमेशा हर रिपोर्ट देखते हैं। टिक करें कि कौन क्या देख सकता है। कुछ टिक न करें तो वे रिपोर्ट या बिक्री का रजिस्टर नहीं खोल पाएँगे।",
     "roles": {
@@ -1867,7 +1875,7 @@
       "total": "कुल भुगतान",
       "paidBy": "भुगतान का तरीका",
       "returnedBadge": "{n} वापस",
-      "returnProducts": "सामान वापस लें",
+      "returnProducts": "{product} वापस लें",
       "refunded": "वापस किए"
     },
     "daySchedule": {
@@ -2034,6 +2042,8 @@
     "receiptPackage": "{title} (पैकेज)",
     "receiptSeparately": "अलग-अलग {was} · आपकी बचत {saved}",
     "receiptTotal": "कुल भुगतान: {amount}",
+    "receiptDiscount": "छूट: −{amount}",
+    "receiptExtra": "बिल में जोड़ा गया: {amount}",
     "receiptSaved": "पैकेज से आपने {amount} बचाए",
     "receiptPaidBy": "भुगतान: {mode}",
     "receiptSeeYou": "फिर मिलेंगे!",
@@ -2807,7 +2817,7 @@
       "noProducts": "शेल्फ़ पर अभी कुछ नहीं। सामान स्क्रीन पर जोड़ें।",
       "noProductMatch": "इस नाम का कोई सामान नहीं है।",
       "searchProducts": "{count} सामान खोजें या बारकोड स्कैन करें",
-      "emptyProductBill": "बिल शुरू करने के लिए कोई सामान चुनें।",
+      "emptyProductBill": "बिल शुरू करने के लिए कोई {product} चुनें।",
       "scanMiss": "कोड {code} वाला कोई सामान नहीं मिला। बोतल जाँचें या नाम से खोजें।",
       "scanNoStock": "{name} का और स्टॉक नहीं है।",
       "scanFull": "बिल भर गया है। पहले भुगतान लें, फिर नया बिल शुरू करें।",
@@ -2829,7 +2839,7 @@
       "noDishes": "अभी मेन्यू में कुछ नहीं है। मेन्यू स्क्रीन पर डिश जोड़ें।",
       "noDishMatch": "इस नाम की कोई डिश नहीं।"
     },
-    "sellTitle": "सामान बेचें",
+    "sellTitle": "{product} बेचें",
     "pickProduct": "एक सामान चुनें",
     "allCategories": "सारा सामान",
     "noCategory": "बिना श्रेणी",
@@ -3155,8 +3165,8 @@
     "delete": "मिटाएँ",
     "deleteAsk": "{name} मिटाएँ? जिन बिलों में यह बिका, वे अपनी कॉपी रखते हैं।",
     "form": {
-      "titleAdd": "सामान जोड़ें",
-      "titleEdit": "सामान बदलें",
+      "titleAdd": "{product} जोड़ें",
+      "titleEdit": "{product} बदलें",
       "name": "नाम",
       "namePlaceholder": "जैसे पानी की बोतल 1 लीटर",
       "price": "बिक्री दाम",
@@ -3190,7 +3200,7 @@
       "photoFailed": "सहेज लिया, पर फ़ोटो अपलोड नहीं हुई। फ़ोटो फिर चुनें और सहेजें।",
       "sku": "SKU",
       "barcode": "बारकोड",
-      "codesHint": "दोनों ज़रूरी नहीं। SKU आपका अपना छोटा कोड है, जैसे ARG-100। टिल के सामान टैब पर बारकोड स्कैन करें और Enter दबाएँ — वह बिल में जुड़ जाएगा।",
+      "codesHint": "दोनों ज़रूरी नहीं। SKU आपका अपना छोटा कोड है, जैसे A-100। टिल पर बारकोड स्कैन करें और Enter दबाएँ — वह बिल में जुड़ जाएगा।",
       "barcodeSpaces": "बारकोड वैसे ही लिखें जैसा छपा है, बीच में जगह न छोड़ें।",
       "skuTaken": "इस ब्रांच में यह SKU पहले से {name} का है।",
       "barcodeTaken": "इस ब्रांच में यह बारकोड पहले से {name} का है।",
@@ -3278,7 +3288,7 @@
     "inStock": "स्टॉक में",
     "noun": "सामान",
     "cols": {
-      "product": "सामान",
+      "product": "{product}",
       "category": "श्रेणी",
       "sku": "SKU",
       "price": "बिक्री दाम",
@@ -3780,7 +3790,7 @@
     "exitFullScreen": "पूरी स्क्रीन बंद करें",
     "orders": "ऑर्डर",
     "shortcutSearch": "खोजें / स्कैन",
-    "shortcutClient": "ग्राहक",
+    "shortcutClient": "{customer}",
     "shortcutCharge": "बिक्री पूरी करें",
     "shortcutHold": "बिल रोकें",
     "shortcutExit": "बाहर"
@@ -3883,7 +3893,7 @@
       "bookingsCount": "{n, plural, =0 {कोई बुकिंग नहीं} one {# बुकिंग} other {# बुकिंग}}",
       "noneYet": "—"
     },
-    "returnProduct": "सामान वापस लें",
+    "returnProduct": "{product} वापस लें",
     "returnBtn": "वापस लें",
     "returnedStatus": "वापस हुआ",
     "partReturnedStatus": "आंशिक वापसी",
@@ -3891,7 +3901,7 @@
     "returnWindowOpen": "खुला · {days, plural, =0 {आख़िरी दिन} one {# दिन बाकी} other {# दिन बाकी}}",
     "returnWindowClosed": "बंद",
     "returnSheet": {
-      "title": "सामान वापस लें",
+      "title": "{product} वापस लें",
       "subtitle": "बिल खोजें और वापस लेने वाला सामान चुनें।",
       "subtitleReview": "सामान की जाँच करें और रिफ़ंड पूरा करें।",
       "subtitleDone": "वापसी दर्ज हो गई और रिफ़ंड पूरा हुआ।",
@@ -3932,7 +3942,7 @@
       "itemsCount": "{n, plural, one {# सामान} other {# सामान}}",
       "billPrefix": "बिल #{ref}",
       "viewBill": "बिल देखें",
-      "colProduct": "सामान",
+      "colProduct": "{product}",
       "colSku": "SKU",
       "colPurchased": "ख़रीदे",
       "colAlreadyReturned": "पहले वापस",
@@ -4037,7 +4047,7 @@
       "notConfirmed": "पुष्टि नहीं हुई"
     },
     "detail": {
-      "client": "ग्राहक",
+      "client": "{customer}",
       "forTitle": "किसका",
       "address": "भेजने का पता",
       "contact": "संपर्क",
@@ -4061,7 +4071,7 @@
       "placed": "{channel} पर ऑर्डर आया",
       "movedTo": "{state}",
       "by": "{name} ने",
-      "clientAttached": "ग्राहक से जोड़ा गया",
+      "clientAttached": "{customer} से जोड़ा गया",
       "buyerErased": "ख़रीदार की जानकारी हटाई गई",
       "more": "और",
       "moves": {
@@ -4147,7 +4157,8 @@
       "refundsTitle": "रिफ़ंड",
       "marketplaceRefunded": "{channel} ने {date} को रिफ़ंड किया",
       "shopRefunded": "दुकान ने {date} को रिफ़ंड किया",
-      "refundRef": "रेफ़रेंस {ref}"
+      "refundRef": "रेफ़रेंस {ref}",
+      "placedCounter": "काउंटर पर ऑर्डर लिया गया"
     },
     "import": {
       "title": "ऑर्डर इम्पोर्ट करें",
@@ -4231,7 +4242,7 @@
       "size": "साइज़ ठीक नहीं आया",
       "not_as_described": "जैसा बताया था वैसा नहीं",
       "faulty": "खराब या टूटा हुआ",
-      "wrong_item": "गलत सामान गया",
+      "wrong_item": "गलत सामान",
       "changed_mind": "मन बदल गया",
       "other": "कुछ और",
       "not_said": "कारण नहीं बताया"

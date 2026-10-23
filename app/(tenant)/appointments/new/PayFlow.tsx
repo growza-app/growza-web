@@ -19,6 +19,7 @@ import { HeaderBranchPicker } from '../../components/HeaderBranchPicker';
 import { PAYMENT_MODES } from '../../lib/payment-modes';
 import { useLabel } from '../../components/LabelsProvider';
 import { nounInSentence, pickNoun } from '../../lib/nouns';
+import { useNouns } from '../../lib/use-nouns';
 import { LargeAmountDeclined, useLargeAmountGuard } from '../../components/LargeAmountConfirm';
 import { useAreas, useSession } from '../../components/SessionProvider';
 import { IconArrowLeft, IconClose, IconEdit, IconMinus, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch, IconUserPlus } from '../../components/icons';
@@ -35,6 +36,7 @@ import { planScans, type ScanProblem } from '../../lib/scan-plan';
 import { canAddSize, groupProductLines, hasSizes, productLineKey, sizedName, sizePriceMinor } from '../../lib/till-sizes';
 import { SizeSheet } from './SizeSheet';
 import { queueScan, takeScans } from '../../lib/scan-queue';
+import { heldBillsKey, heldStamp, loadHeldBills, saveHeldBills } from '../../lib/held-bills';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
 import { PaymentDone } from '../../components/PaymentDone';
 
@@ -191,6 +193,8 @@ export function PayFlow({
   // The person paying, in the vertical's own word — Guest at a restaurant, Customer at a shop.
   const clientNoun = pickNoun(locale, useLabel('customer', 'Client'), tNouns('customer'));
   const productsNoun = useLabel('products', 'Products');
+  // Restaurant QA 2026-10-24 — one of what the till sells, in the business's word: "Tap a dish", "Sell dish".
+  const nouns = useNouns();
   const { guard, dialog } = useLargeAmountGuard();
 
   // The branch this sale lands at: the token's, else the one the header has chosen, else the only one.
@@ -660,10 +664,25 @@ export function PayFlow({
     setSelectedMode(null);
     setBadMode(false);
   };
-  const [heldBills, setHeldBills] = useState<Array<{ id: string; client: Client; lines: Line[]; override: number | null }>>([]);
+  /*
+   * Restaurant QA 2026-10-24 — held bills are kept in the tab (`lib/held-bills`) under this branch and this person,
+   * so a reload, or a look at Orders, no longer throws away a table's order that was put on hold.
+   */
+  type HeldBill = { id: string; heldAt: number; client: Client; lines: Line[]; override: number | null };
+  const heldKey = heldBillsKey(location, session?.phone ?? null);
+  const [heldBills, setHeldBillsState] = useState<HeldBill[]>([]);
+  useEffect(() => {
+    setHeldBillsState(loadHeldBills<HeldBill>(heldKey));
+  }, [heldKey]);
+  const setHeldBills = (next: (prev: HeldBill[]) => HeldBill[]) =>
+    setHeldBillsState((prev) => {
+      const out = next(prev);
+      saveHeldBills(heldKey, out);
+      return out;
+    });
   const holdBill = () => {
     if (lines.length === 0) return;
-    setHeldBills((prev) => [{ id: newAttemptKey(), client, lines, override }, ...prev]);
+    setHeldBills((prev) => [{ id: newAttemptKey(), heldAt: heldStamp(), client, lines, override }, ...prev]);
     setLines([]);
     setOverride(null);
     setClient({ kind: 'none' });
@@ -897,16 +916,18 @@ export function PayFlow({
           when,
           tokenNo,
           stylist,
-          singles: lines.map((l, i) => ({ name: l.name, amountMinor: amounts[i]! })).filter((_, i) => !lines[i]!.pkg && !lines[i]!.product),
-          products: lines.map((l, i) => ({ name: l.name, amountMinor: amounts[i]! })).filter((_, i) => lines[i]!.product),
+          // Each line at its own price; a whole-bill figure is the one Discount (or Added) row below them.
+          singles: lines.map((l, i) => ({ name: l.name, amountMinor: baseAmounts[i]! })).filter((_, i) => !lines[i]!.pkg && !lines[i]!.product),
+          products: lines.map((l, i) => ({ name: l.name, amountMinor: baseAmounts[i]! })).filter((_, i) => lines[i]!.product),
           pkg: null,
           pkgs: pkgsOnBill.map((pkg) => ({
             title: pkg.title,
             services: lines.filter((l) => l.pkg?.key === pkg.key).map((l) => l.name),
-            paidMinor: amounts.reduce((sum, a, i) => sum + (lines[i]!.pkg?.key === pkg.key ? a : 0), 0),
+            paidMinor: baseAmounts.reduce((sum, a, i) => sum + (lines[i]!.pkg?.key === pkg.key ? a : 0), 0),
             separateMinor: lines.filter((l) => l.pkg?.key === pkg.key).reduce((sum, l) => sum + l.priceMinor, 0),
           })),
           totalMinor: paidMinor,
+          adjustMinor: totalMinor - listMinor,
           paidBy,
         },
         {
@@ -921,6 +942,8 @@ export function PayFlow({
           packageName: nv.receiptPackage,
           separately: nv.receiptSeparately,
           total: nv.receiptTotal,
+          discount: nv.receiptDiscount,
+          extra: nv.receiptExtra,
           saved: nv.receiptSaved,
           paidBy: nv.receiptPaidBy,
           seeYou: nv.receiptSeeYou,
@@ -1402,7 +1425,7 @@ export function PayFlow({
             <IconArrowLeft />
           </button>
           <span className="pf-head-stack">
-            <h1 className="pf-title">{productsOnly ? (heading ?? t('sellTitle')) : t('whatTitle')}</h1>
+            <h1 className="pf-title">{productsOnly ? (heading ?? t('sellTitle', { product: nouns.product })) : t('whatTitle')}</h1>
             {token ? (
               branchName ? <span className="pf-at">{t('at', { branch: branchName })}</span> : null
             ) : (
@@ -1539,7 +1562,7 @@ export function PayFlow({
               </p>
             ) : null}
             {lines.length === 0 ? (
-              <p className="pf-wide-empty">{productsOnly ? t('desk.emptyProductBill') : t('desk.emptyBill')}</p>
+              <p className="pf-wide-empty">{productsOnly ? t('desk.emptyProductBill', { product: nouns.product }) : t('desk.emptyBill')}</p>
             ) : productsOnly ? (
               <PosBillRows
                 lines={lines}
@@ -1681,7 +1704,7 @@ export function PayFlow({
               <IconArrowLeft />
             </button>
             <span className="pf-head-stack">
-              <h1 className="pf-title">{heading ?? t('sellTitle')}</h1>
+              <h1 className="pf-title">{heading ?? t('sellTitle', { product: nouns.product })}</h1>
               <HeaderBranchPicker variant="line" />
             </span>
             <span className="pf-head-gap" aria-hidden="true" />
