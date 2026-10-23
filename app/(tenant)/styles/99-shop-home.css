@@ -541,9 +541,14 @@ button.shp-hero-pill {
 
 /* The filter and the hero as one block, so Quick links can follow them in the SOURCE
    (see ShopHome.tsx) rather than be moved past them with `order`. Hidden from 861px up
-   with `.shp-mobile-stack`, since the command center states the money its own way. */
-.shp-phone-money {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
+   with `.shp-mobile-stack`, since the command center states the money its own way.
+   Restaurant QA 2026-10-24 — scoped to the phone, because this rule comes AFTER the 861px block that hides
+   it: at equal specificity the later `display: flex` won, and every laptop showed the phone's money card
+   with "Could not load this", since the phone's reads never run there. */
+@media (max-width: 860px) {
+  .shp-phone-money {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+  }
 }

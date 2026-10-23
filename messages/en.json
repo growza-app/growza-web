@@ -656,6 +656,11 @@
     }
   },
   "settingsReports": {
+    "shopTitle": "What the counter can do",
+    "shopHint": "You, and any managers, can always do everything. Tick it to let the counter take a return and give the refund.",
+    "shopTabs": {
+      "sales": "Take returns and give refunds"
+    },
     "title": "Who can see Reports",
     "hint": "You, and any managers, always see every report. Tick what each person can see. Tick nothing and they can’t open Reports or the Sales register.",
     "roles": {
@@ -2034,6 +2039,8 @@
     "receiptPackage": "{title} (package)",
     "receiptSeparately": "Separately {was} · You save {saved}",
     "receiptTotal": "Total paid: {amount}",
+    "receiptDiscount": "Discount: −{amount}",
+    "receiptExtra": "Added to the bill: {amount}",
     "receiptSaved": "You saved {amount} with the package",
     "receiptPaidBy": "Paid by {mode}",
     "receiptSeeYou": "See you again soon!",

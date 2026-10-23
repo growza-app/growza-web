@@ -35,6 +35,7 @@ import { planScans, type ScanProblem } from '../../lib/scan-plan';
 import { canAddSize, groupProductLines, hasSizes, productLineKey, sizedName, sizePriceMinor } from '../../lib/till-sizes';
 import { SizeSheet } from './SizeSheet';
 import { queueScan, takeScans } from '../../lib/scan-queue';
+import { heldBillsKey, loadHeldBills, saveHeldBills } from '../../lib/held-bills';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
 import { PaymentDone } from '../../components/PaymentDone';
 
@@ -660,10 +661,25 @@ export function PayFlow({
     setSelectedMode(null);
     setBadMode(false);
   };
-  const [heldBills, setHeldBills] = useState<Array<{ id: string; client: Client; lines: Line[]; override: number | null }>>([]);
+  /*
+   * Restaurant QA 2026-10-24 — held bills are kept in the tab (`lib/held-bills`) under this branch and this person,
+   * so a reload, or a look at Orders, no longer throws away a table's order that was put on hold.
+   */
+  type HeldBill = { id: string; heldAt: number; client: Client; lines: Line[]; override: number | null };
+  const heldKey = heldBillsKey(location, session?.phone ?? null);
+  const [heldBills, setHeldBillsState] = useState<HeldBill[]>([]);
+  useEffect(() => {
+    setHeldBillsState(loadHeldBills<HeldBill>(heldKey));
+  }, [heldKey]);
+  const setHeldBills = (next: (prev: HeldBill[]) => HeldBill[]) =>
+    setHeldBillsState((prev) => {
+      const out = next(prev);
+      saveHeldBills(heldKey, out);
+      return out;
+    });
   const holdBill = () => {
     if (lines.length === 0) return;
-    setHeldBills((prev) => [{ id: newAttemptKey(), client, lines, override }, ...prev]);
+    setHeldBills((prev) => [{ id: newAttemptKey(), heldAt: Date.now(), client, lines, override }, ...prev]);
     setLines([]);
     setOverride(null);
     setClient({ kind: 'none' });
@@ -897,16 +913,18 @@ export function PayFlow({
           when,
           tokenNo,
           stylist,
-          singles: lines.map((l, i) => ({ name: l.name, amountMinor: amounts[i]! })).filter((_, i) => !lines[i]!.pkg && !lines[i]!.product),
-          products: lines.map((l, i) => ({ name: l.name, amountMinor: amounts[i]! })).filter((_, i) => lines[i]!.product),
+          // Each line at its own price; a whole-bill figure is the one Discount (or Added) row below them.
+          singles: lines.map((l, i) => ({ name: l.name, amountMinor: baseAmounts[i]! })).filter((_, i) => !lines[i]!.pkg && !lines[i]!.product),
+          products: lines.map((l, i) => ({ name: l.name, amountMinor: baseAmounts[i]! })).filter((_, i) => lines[i]!.product),
           pkg: null,
           pkgs: pkgsOnBill.map((pkg) => ({
             title: pkg.title,
             services: lines.filter((l) => l.pkg?.key === pkg.key).map((l) => l.name),
-            paidMinor: amounts.reduce((sum, a, i) => sum + (lines[i]!.pkg?.key === pkg.key ? a : 0), 0),
+            paidMinor: baseAmounts.reduce((sum, a, i) => sum + (lines[i]!.pkg?.key === pkg.key ? a : 0), 0),
             separateMinor: lines.filter((l) => l.pkg?.key === pkg.key).reduce((sum, l) => sum + l.priceMinor, 0),
           })),
           totalMinor: paidMinor,
+          adjustMinor: totalMinor - listMinor,
           paidBy,
         },
         {
@@ -921,6 +939,8 @@ export function PayFlow({
           packageName: nv.receiptPackage,
           separately: nv.receiptSeparately,
           total: nv.receiptTotal,
+          discount: nv.receiptDiscount,
+          extra: nv.receiptExtra,
           saved: nv.receiptSaved,
           paidBy: nv.receiptPaidBy,
           seeYou: nv.receiptSeeYou,
