@@ -19,6 +19,7 @@ const sheet = src('products/ProductSheet.tsx');
 const home = src('components/home/ShopHome.tsx');
 const ret = src('sales/ReturnProductSheet.tsx');
 const order = src('orders/[id]/OrderClient.tsx');
+const review = src('products/ImportProductReview.tsx');
 
 const KITCHEN: Areas = { bookings: false, services: false, shop: true, stock: false };
 const SHOP: Areas = { ...KITCHEN, stock: true };
@@ -182,5 +183,21 @@ describe('the food graphics do not reach into another vertical', () => {
     expect(resolveProductGraphic({ name: 'Chicken Tikka', categoryName: 'Starters' }).kind).toBe('bowl');
     expect(resolveProductGraphic({ name: 'Masala Chai', categoryName: 'Beverages' }).kind).toBe('drink');
     expect(resolveProductGraphic({ name: 'Veg Hakka Noodles', categoryName: 'Chinese' }).kind).toBe('rice');
+  });
+});
+
+describe('a menu can be imported; a count cannot', () => {
+  it('the file lands, and its Stock column is dropped in one place before anything reads it', () => {
+    // Import itself stays open — a menu is exactly what a kitchen would upload.
+    expect(list).toMatch(/canStockTake && writable \? \(\s*<div className="prd-import-row">/);
+    expect(review).toMatch(/const counted = useAreas\(\)\.stock;/);
+    expect(review).toMatch(/const rows = useMemo\(\(\) => \(counted \? drafts : drafts\.map\(\(d\) => \(\{ \.\.\.d, stock: '' \}\)\)\), \[counted, drafts\]\);/);
+    expect(review).toMatch(/const adding = counted && addStock;/);
+    // Everything downstream reads the dropped copy, not the raw drafts — the review, the counts and what is sent.
+    expect(review).toMatch(/reviewProblems\(rows, shelf, adding\)/);
+    expect(review).toMatch(/toItems\(rows, adding\)/);
+    // No count to decide about, and no count or low-stock cell to edit.
+    expect(review).toMatch(/const stockChoice = counted && hasStockToChoose\(rows\);/);
+    expect(review).toMatch(/counted \? EDITABLE : EDITABLE\.filter\(\(f\) => f\.key !== 'stock' && f\.key !== 'lowStock'\)/);
   });
 });
