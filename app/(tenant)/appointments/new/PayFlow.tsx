@@ -1233,7 +1233,8 @@ export function PayFlow({
             if (mode === 'upi' && paymentQr && !firstWay) setStep('qr');
             else void pay(mode);
           }}
-          disabled={saving !== null}
+          // QA 2026-10-23 — the second way cannot be the first one again: the tile says so instead of a tap that does nothing.
+          disabled={saving !== null || firstWay?.mode === mode}
           aria-busy={saving === mode}
         >
           <span className="pf-pay-icon" aria-hidden="true">

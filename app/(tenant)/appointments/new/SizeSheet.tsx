@@ -58,7 +58,11 @@ export function SizeSheet({
 
   const sizes = sizesFor(product, colour);
   const chosen = (product.sizes ?? []).filter((s) => onBill(s.id) > 0);
-  const priceFrom = product.sizes && product.sizes.length > 0 ? Math.min(...product.sizes.map((s) => sizePriceMinor(product, s))) : Number(product.priceMinor ?? 0);
+  const prices = (product.sizes ?? []).map((s) => sizePriceMinor(product, s));
+  const priceFrom = prices.length > 0 ? Math.min(...prices) : Number(product.priceMinor ?? 0);
+  // QA 2026-10-23 — sizes priced differently say so: the header is "from" the lowest, and each size shows its own price, so ₹520 is not
+  // discovered on the bill after ₹400 was read at the top.
+  const pricesDiffer = new Set(prices).size > 1;
 
   return (
     <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
@@ -66,7 +70,7 @@ export function SizeSheet({
         <div className="pf-keypad-head">
           <span className="pf-keypad-title">
             {product.name}
-            <span className="psz-price">{formatMoney(priceFrom)}</span>
+            <span className="psz-price">{pricesDiffer ? ts('from', { price: formatMoney(priceFrom) }) : formatMoney(priceFrom)}</span>
           </span>
           <button type="button" className="pf-keypad-clear" onClick={onClose}>
             {ts('close')}
@@ -108,6 +112,7 @@ export function SizeSheet({
                   onClick={() => tap(size)}
                 >
                   <span className="psz-label">{label}</span>
+                  {pricesDiffer ? <span className="psz-cell-price">{formatMoney(sizePriceMinor(product, size))}</span> : null}
                   <span className="psz-left">{out ? t('outOfStock') : t('left', { n: size.stock })}</span>
                   {n > 0 ? (
                     <span className="psz-badge" aria-hidden="true">

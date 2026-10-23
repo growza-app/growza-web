@@ -8,6 +8,7 @@ import { autoFocusField } from '../../../shared/a11y/soft-keyboard';
 import { Pagination } from '../../components/Pagination';
 import { SearchClear } from '../../components/SearchClear';
 import { useWritable } from '../../components/SessionProvider';
+import { intlLocale } from '../../lib/format';
 
 type Channel = 'flipkart' | 'amazon';
 const PAGE_SIZE = 10;
@@ -149,7 +150,7 @@ export function HeldClient({ timezone }: { timezone: string }) {
 function Row({ row, writable, timezone, onFixed }: { row: HeldCode; writable: boolean; timezone: string; onFixed: (message: string) => Promise<void> }) {
   const t = useTranslations('orders.held');
   const locale = useLocale();
-  const day = (iso: string): string => new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: timezone }).format(new Date(iso));
+  const day = (iso: string): string => new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', year: 'numeric', timeZone: timezone }).format(new Date(iso));
   const [open, setOpen] = useState<'match' | 'dismiss' | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -42,6 +42,7 @@ const NAME_ID = 'pf-client-name';
 export function ClientSheet({ location, onPick, onClose, startAdding = false }: { location: string | null; onPick: (c: PickedClient) => void; onClose: () => void; /** Open with the add row already expanded (the + beside the search bar). */ startAdding?: boolean }) {
   const t = useTranslations('payFlow');
   const tNouns = useTranslations('nouns');
+  const tc = useTranslations('common');
   const locale = useLocale();
   // Guest at a restaurant, Customer at a shop, Client at a salon — lower-cased where it sits inside a sentence.
   const clientNoun = nounInSentence(pickNoun(locale, useLabel('customer', 'Client'), tNouns('customer')));
@@ -303,7 +304,8 @@ export function ClientSheet({ location, onPick, onClose, startAdding = false }: 
               <PhoneField
                 id={PHONE_ID}
                 label={t('phoneNumber')}
-                required
+                // QA 2026-10-23 — a number is not needed to take a payment, and the field said "(optional)" beside a required star.
+                optionalLabel={tc('optional')}
                 value={newPhone}
                 onChange={(digits) => {
                   ownFields.current = true;

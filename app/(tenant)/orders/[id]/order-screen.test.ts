@@ -39,7 +39,7 @@ describe('BR-01 — the screen never invents a move; it offers what the API sent
 
 describe('AC-02 — a move that has already happened elsewhere', () => {
   it('sends the state this screen BELIEVES the order is in, so a stale tap is refused instead of overwriting', () => {
-    expect(client).toContain('api.moveOrder(order.id, to, order.status)');
+    expect(client).toContain('api.moveOrder(order.id, to, order.status, extra)');
   });
 
   it('on a refusal says where the order is NOW, and redraws from the truth', () => {

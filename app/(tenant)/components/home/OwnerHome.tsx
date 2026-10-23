@@ -558,6 +558,8 @@ export function OwnerHome(p: OwnerHomeProps) {
   /** Bookings still to come. A waiting token is a person in the queue, not a booking, so it is not in this number. */
   const upcomingCount = allListGroups.filter((g) => rowState(g) === 'later').length;
   const doneTodayCount = allListGroups.filter((g) => rowState(g) === 'done').length;
+  // QA 2026-10-23 — "19 bookings" over tiles that added to 13: the six who did not come had no tile of their own.
+  const noShowCount = allListGroups.filter((g) => rowState(g) === 'no_show').length;
   const bookingsCount = allListGroups.length;
   const cancelledCount = data?.attention.cancelledToday ?? 0;
   const activeClientsCount = clientStats?.segments.find((s) => s.key === 'active')?.count ?? 0;
@@ -991,6 +993,11 @@ export function OwnerHome(p: OwnerHomeProps) {
                 <span className="hm-v3-split-item">
                   {t.inProgressLabel} <b>{inServiceCount}</b>
                 </span>
+                {noShowCount > 0 ? (
+                  <span className="hm-v3-split-item">
+                    {t.noShowLabel} <b>{noShowCount}</b>
+                  </span>
+                ) : null}
                 <span className="hm-v3-split-item">
                   {t.cancelledLabel} <b>{cancelledCount}</b>
                 </span>

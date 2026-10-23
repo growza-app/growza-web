@@ -388,8 +388,11 @@ describe('Record payment in three taps', () => {
     for (const m of [enMessages, hiMessages]) {
       const w = m.payFlow as unknown as Record<string, string>;
       expect(w.needClient).toBeTruthy();
-      expect(w.phoneNumber).toMatch(/\(|\u0928\u0939/);
+      expect(w.phoneNumber).toBeTruthy();
     }
+    // QA 2026-10-23 — the field reads optional the one way the app says it (PhoneField's word), never beside a required star.
+    expect(client).toContain("optionalLabel={tc('optional')}");
+    expect(client).not.toMatch(/label=\{t\('phoneNumber'\)\}\s*required/);
   });
 
   it('refuses for both reasons at once, each marked where its answer goes', () => {

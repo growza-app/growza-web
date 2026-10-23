@@ -743,8 +743,12 @@ export const api = {
    */
   attachOrderClient: (id: string, customerId: string) =>
     post<{ id: string; clientId: string }>(`/api/v1/orders/${encodeURIComponent(id)}/client`, { customerId }),
-  moveOrder: (id: string, status: string, expected: string) =>
-    patch<{ id: string; status: string; moved: boolean }>(`/api/v1/orders/${encodeURIComponent(id)}/status`, { status, expected }),
+  /** QA 2026-10-23 — `saleable` (came back only): what came back is returned too, back on the shelf or kept off it as damaged. */
+  moveOrder: (id: string, status: string, expected: string, extra: { saleable?: boolean } = {}) =>
+    patch<{ id: string; status: string; moved: boolean; cameBack?: { recorded: boolean; units: number; detail?: string } }>(
+      `/api/v1/orders/${encodeURIComponent(id)}/status`,
+      { status, expected, ...extra },
+    ),
   /** Jira GRW-619 — import an order report: the marketplace is chosen by the owner and sent with it; one request, whole orders, importing it twice changes nothing. */
   importOrdersFile: (channel: 'flipkart' | 'amazon', file: File, idempotencyKey: string) =>
     uploadFile<ImportSummary>(`/api/v1/marketplace-imports?channel=${channel}&idempotencyKey=${encodeURIComponent(idempotencyKey)}`, 'file', file),

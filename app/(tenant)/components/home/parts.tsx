@@ -22,9 +22,14 @@ import { HeaderSearch } from '../HeaderSearch';
  * would make "the status pill looks wrong" a search again.
  */
 
-/** Minor units as rupees, whole. `formatMoney` takes the API's string shape. */
+/**
+ * Minor units as rupees, whole. `formatMoney` takes the API's string shape.
+ *
+ * QA 2026-10-23 — "whole" was the promise and not the code: a day whose bills carried paise drew "₹27,127.37" on the
+ * revenue chart beside "₹25K". A Home figure is read at a glance; the paise are on the bill.
+ */
 export function rupees(minor: number): string {
-  return formatMoney(String(minor));
+  return formatMoney(String(Math.round(minor / 100) * 100));
 }
 
 /**

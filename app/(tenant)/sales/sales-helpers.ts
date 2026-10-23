@@ -159,6 +159,21 @@ export function formatBillRef(key: string): string {
   return raw.slice(0, 8) || 'BILL';
 }
 
+/**
+ * The one bill whose number was typed or scanned (`#5B0628C5`, `5b0628c5`, or the whole id), or null.
+ *
+ * QA 2026-10-23: the Return box says "Search by bill number", but Enter only ever matched a product's barcode or SKU, so
+ * a typed bill number fell through to the bill already open and was thrown away. Eight characters or more, so a short
+ * product code can never be read as a bill.
+ */
+export function findBillByRef<T extends { key: string }>(bills: readonly T[], rawCode: string): T | null {
+  const typed = rawCode.trim().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  if (typed.length < 8) return null;
+  const ref = typed.slice(0, 8);
+  const matches = bills.filter((b) => formatBillRef(b.key) === ref);
+  return matches.length === 1 ? matches[0]! : null;
+}
+
 /** Builds a quantity map selecting all remaining returnable units across every line on a bill. */
 export function buildSelectAllQtyMap(products: readonly VisitProductLine[]): Record<string, number> {
   const next: Record<string, number> = {};

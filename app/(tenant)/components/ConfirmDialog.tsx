@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
@@ -21,6 +21,7 @@ export function ConfirmDialog({
   tone = 'default',
   busy = false,
   error,
+  children,
   onConfirm,
   onCancel,
 }: {
@@ -42,18 +43,25 @@ export function ConfirmDialog({
    * somewhere else would be worse: the owner loses the thing they were deciding about.
    */
   error?: string | null;
+  /** A choice the action needs before it goes ahead (QA 2026-10-23 — "can they be sold again?"), drawn under the body. */
+  children?: ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
   const t = useTranslations('common');
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   // Jira GRW-342 — Escape, Tab kept inside, focus back on the button that opened it. Declared first so the
   // confirm button below is what ends up focused.
   useDialog(dialogRef, { onClose: busy ? undefined : onCancel });
 
+  // QA 2026-10-23 — a destructive dialog opens on the way OUT: Enter, or a stray tap of the key, must not do the thing that cannot be undone.
+  // Apple's HIG says the same — the default button of a destructive alert is never the destructive one.
   useEffect(() => {
-    confirmRef.current?.focus();
+    (tone === 'danger' ? cancelRef : confirmRef).current?.focus();
+    // Focus once, when the dialog opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -70,6 +78,7 @@ export function ConfirmDialog({
         <div className="modal-body">
           <p className="confirm-body">{body}</p>
           {detail && <p className="confirm-detail">{detail}</p>}
+          {children}
           {/* `alert` so a refusal that appears after the dialog is already open is announced, not just painted. */}
           {error && (
             <p className="confirm-error" role="alert">
@@ -78,7 +87,7 @@ export function ConfirmDialog({
           )}
         </div>
         <div className="modal-actions">
-          <button type="button" className="btn btn-ghost" disabled={busy} onClick={onCancel}>
+          <button ref={cancelRef} type="button" className="btn btn-ghost" disabled={busy} onClick={onCancel}>
             {cancelLabel ?? t('cancel')}
           </button>
           <button

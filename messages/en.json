@@ -2764,7 +2764,7 @@
     "addClient": "Add new {client}",
     "findClient": "Find {client}",
     "nameOrNumber": "Name or number",
-    "phoneNumber": "Phone number (optional)",
+    "phoneNumber": "Phone number",
     "allServices": "All {count} services",
     "searchServices": "Search services",
     "searchCount": "Search services",
@@ -2869,6 +2869,7 @@
     },
     "size": {
       "title": "Choose a size",
+      "from": "from {price}",
       "close": "Done",
       "cellLeft": "{size}, {n} left",
       "cellOut": "{size}, out of stock",
@@ -3135,6 +3136,8 @@
     }
   },
   "products": {
+    "sizesShort": "{count, plural, one {1 size} other {# sizes}} low or out",
+    "shownBranch": "Stock is kept branch by branch. Showing {branch} — pick another branch at the top to see its stock.",
     "title": "Products",
     "subtitle": "Things you sell over the counter. Ring them up on the Record payment screen beside the services; every change to the count is kept here.",
     "stockSubtitle": "Styles, sizes and stock counts across your shop and online channels. Every change to the count is kept here.",
@@ -3155,7 +3158,7 @@
       "titleAdd": "Add a product",
       "titleEdit": "Edit product",
       "name": "Name",
-      "namePlaceholder": "e.g. Argan Oil 100ml",
+      "namePlaceholder": "e.g. Water bottle 1 litre",
       "price": "Sell price",
       "stock": "Opening count",
       "stockHint": "How many are on the shelf today. Later changes go on the Stock tab, with a reason.",
@@ -3176,6 +3179,7 @@
         "sales": "Sales"
       },
       "cost": "Bought for",
+      "belowZero": "A price or count cannot be below zero.",
       "costHint": "What you paid for one. Only you see this. It shows your margin.",
       "margin": "{pct}% margin",
       "lowAt": "Warn me at",
@@ -3203,7 +3207,7 @@
     "lowStock": "{n} left — low",
     "strip": {
       "products": "Products",
-      "worth": "Stock value",
+      "worth": "Worth at selling price",
       "low": "Running low",
       "out": "Out of stock",
       "onMenu": "On the menu",
@@ -3619,7 +3623,7 @@
       "exporting": "Making the file…",
       "exportFailed": "Could not make the file. Try again.",
       "totalsLabel": "Total stock value",
-      "worth": "Stock value",
+      "worth": "Stock at cost price",
       "totalsLine": "{styles, plural, one {1 style} other {# styles}} · {sizes, plural, one {1 size} other {# sizes}} · {units} on the shelf",
       "withoutCost": "{count, plural, one {1 size has no cost price, so it is not in this worth.} other {# sizes have no cost price, so they are not in this worth.}}",
       "negative": "{count, plural, one {1 size is below zero. Count it again.} other {# sizes are below zero. Count them again.}}",
@@ -3647,7 +3651,7 @@
       "colStyle": "Style",
       "colBranch": "Branch",
       "colUnits": "On the shelf",
-      "colWorth": "Stock value",
+      "colWorth": "At cost price",
       "colSizes": "Size breakdown"
     },
     "sellers": {
@@ -4066,6 +4070,28 @@
         "delivered": "Mark as delivered",
         "cancelled": "Cancel this order",
         "returned": "Mark as came back"
+      },
+      "confirmMove": {
+        "cancelled": {
+          "title": "Cancel this order?",
+          "body": "A cancelled order cannot be opened again.",
+          "confirm": "Cancel order",
+          "keep": "Keep the order"
+        },
+        "returned": {
+          "title": "Mark as came back?",
+          "body": "It will no longer count in your sales. This cannot be undone.",
+          "confirm": "Mark as came back",
+          "keep": "Not now",
+          "saleableQuestion": "Can they be sold again?",
+          "saleableYes": "Yes — put them back on the shelf",
+          "saleableNo": "No — damaged, keep them off the shelf"
+        }
+      },
+      "cameBackResult": {
+        "back": "{count, plural, one {1 item is} other {# items are}} back on the shelf.",
+        "writtenOff": "{count, plural, one {1 item was} other {# items were}} kept off the shelf as damaged.",
+        "notRecorded": "The order is marked came back, but what came back could not be recorded: {reason}"
       },
       "movedOn": "This order has already moved on: it is now {state}.",
       "moveFailed": "Could not update the order. Check your connection and try again.",

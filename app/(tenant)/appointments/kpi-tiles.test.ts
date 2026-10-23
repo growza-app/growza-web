@@ -40,7 +40,8 @@ describe('the segments filter the list', () => {
   it('carries its count, so the row says how the day divides before you press anything', () => {
     expect(list).toMatch(/<span className="page-tab-count">\{tabCount\(seg\)\}<\/span>/);
     // "All" is the whole day — the visits in view AND the people waiting, who are part of today.
-    expect(list).toMatch(/: inView\.length \+ \(waiting\?\.length \?\? 0\)/);
+    // QA 2026-10-23 — a booking moved to another time is history, not a booking of its own: out of the count.
+    expect(list).toMatch(/: inView\.filter\(\(b\) => !b\.movedTo\)\.length \+ \(waiting\?\.length \?\? 0\)/);
   });
 
   it('says which one is chosen, to the eye and to a screen reader', () => {
