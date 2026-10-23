@@ -14,14 +14,23 @@ import type { MemberRole } from '@growza-app/shared';
  * every route under every vertical, one row per vertical file — lives in the API repo's
  * test/integration/vertical-matrix.integration.test.ts.
  */
-const SHOP: Areas = { bookings: false, services: false, shop: true };
-const SHAPES: Array<{ name: string; areas: Areas }> = [
-  { name: 'diary (salon, clinic, spa, garage, dental)', areas: DIARY_AREAS },
-  { name: 'shop (retail)', areas: SHOP },
+const SHOP: Areas = { bookings: false, services: false, shop: true, stock: true };
+/** The shop's app with no count behind it (`catalog.stock_counted` off): the restaurant. */
+const KITCHEN: Areas = { ...SHOP, stock: false };
+type Shape = 'diary' | 'shop' | 'kitchen';
+const SHAPES: Array<{ name: string; shape: Shape; areas: Areas }> = [
+  { name: 'diary (salon, clinic, spa, garage, dental)', shape: 'diary', areas: DIARY_AREAS },
+  { name: 'shop (retail)', shape: 'shop', areas: SHOP },
+  { name: 'kitchen (restaurant)', shape: 'kitchen', areas: KITCHEN },
 ];
 const ROLES: Array<MemberRole | null> = ['owner', 'manager', 'receptionist', 'staff', null];
 
-type Who = 'both' | 'diary' | 'shop';
+/**
+ * Who has a screen. `shop` is every shop, a kitchen among them; `counted` is the narrower set — a shop that keeps a
+ * count. A restaurant's menu lives at `/stock` like any shop's shelf, so that screen is `shop`; what the shelf is
+ * WORTH and what to re-order are `counted`, and a kitchen has neither.
+ */
+type Who = 'both' | 'diary' | 'shop' | 'counted';
 /** The screen → who has it. The one hand-written thing here; everything else is derived or asked. */
 const SCREENS: Readonly<Record<string, Who>> = {
   '/': 'both',
@@ -79,9 +88,9 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/settings/team': 'both',
   '/settings/working-hours': 'both',
   '/stock': 'shop',
-  '/stock/report': 'shop',
+  '/stock/report': 'counted',
   '/stock/channels': 'shop',
-  '/stock/order': 'shop',
+  '/stock/order': 'counted',
   '/stock/sellers': 'shop',
   '/try-whatsapp': 'both',
 };
@@ -103,7 +112,8 @@ function discover(dir = tenant, route = ''): string[] {
 
 /** A concrete address for a dynamic route, as the nav would be asked about it. */
 const concrete = (route: string) => route.replace(/\[\.\.\.[^\]]+\]/g, 'x').replace(/\[[^\]]+\]/g, 'x');
-const hasIt = (who: Who, shape: 'diary' | 'shop') => who === 'both' || who === shape;
+const hasIt = (who: Who, shape: Shape): boolean =>
+  who === 'both' || (who === 'diary' ? shape === 'diary' : who === 'shop' ? shape !== 'diary' : shape === 'shop');
 
 describe('every screen on disk is named, and every name is a screen', () => {
   const onDisk = discover().sort();
@@ -125,8 +135,7 @@ describe('every screen on disk is named, and every name is a screen', () => {
 });
 
 describe('FR-01 … FR-03 — each kind of business is offered exactly the screens that are its own', () => {
-  for (const { name, areas } of SHAPES) {
-    const shape = areas.shop ? 'shop' : 'diary';
+  for (const { name, shape, areas } of SHAPES) {
     it(`${name}: a screen it has is allowed, a screen it lacks is closed — by address, for every role`, () => {
       const wrong: string[] = [];
       for (const [route, who] of Object.entries(SCREENS)) {
@@ -155,7 +164,15 @@ describe('FR-01 … FR-03 — each kind of business is offered exactly the scree
     }
   });
 
-  it('a sixth shape is one entry: a screen added with who=both is allowed in every shape', () => {
+  it('another shape is one entry: a screen added with who=both is allowed in every shape', () => {
     for (const { areas } of SHAPES) expect(areaAllows('/a-new-shared-screen', areas)).toBe(true);
+  });
+
+  it('a kitchen is a shop in everything but the count: only the two count screens differ', () => {
+    const differ = Object.keys(SCREENS).filter((r) => areaAllows(concrete(r), SHOP) !== areaAllows(concrete(r), KITCHEN));
+    expect(differ.sort()).toEqual(['/stock/order', '/stock/report']);
+    // …and the menu itself is NOT one of them: that is where a restaurant's dishes live.
+    expect(areaAllows('/stock', KITCHEN)).toBe(true);
+    expect(areaAllows('/orders/new', KITCHEN)).toBe(true);
   });
 });

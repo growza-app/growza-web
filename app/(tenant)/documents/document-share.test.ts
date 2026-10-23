@@ -160,7 +160,7 @@ describe('the message', () => {
 
 describe('opening /documents/[id] from the Done screen in a shop or a salon', () => {
   const page = readFileSync(resolve(__dirname, '[id]/page.tsx'), 'utf8');
-  const SHOP_AREAS = { bookings: false, services: false, shop: true };
+  const SHOP_AREAS = { bookings: false, services: false, shop: true, stock: true };
 
   it('guards /documents (not /sales, which is closed in a shop and redirects the user Home)', () => {
     expect(page).toContain("await guardScreen('/documents');");

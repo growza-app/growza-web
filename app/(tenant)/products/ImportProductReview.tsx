@@ -5,6 +5,7 @@ import { useMemo, useRef, useState } from 'react';
 import { api, ApiError, formatMoney } from '../lib/api';
 import type { Product, ProductImportResult } from '../lib/api-types';
 import { IconChevronRight } from '../components/icons';
+import { useAreas } from '../components/SessionProvider';
 import {
   countDrafts,
   hasStockToChoose,
@@ -74,17 +75,28 @@ export function ImportProductReview({
   const [editing, setEditing] = useState<number | null>(null);
   const rowRefs = useRef(new Map<number, HTMLLIElement>());
 
-  const problems = useMemo(() => reviewProblems(drafts, shelf, addStock), [drafts, shelf, addStock]);
-  const counts = countDrafts(drafts, problems);
-  const newCategories = useMemo(() => newCategoryNames(drafts, categories), [drafts, categories]);
+  /*
+   * A kitchen (`catalog.stock_counted` off) imports its MENU: the names, the prices, the categories are the whole
+   * point of a file. A Stock column in one is read and then dropped, here in ONE place rather than at each of the
+   * six things below that would otherwise honour it — so no count is offered, none is asked about, none is sent,
+   * and a silly number in that column cannot block a menu that is otherwise fine. The API drops it too
+   * (`importProducts`), which is the boundary; this is so the owner is never shown a count to decide about.
+   */
+  const counted = useAreas().stock;
+  const rows = useMemo(() => (counted ? drafts : drafts.map((d) => ({ ...d, stock: '' }))), [counted, drafts]);
+  const adding = counted && addStock;
+
+  const problems = useMemo(() => reviewProblems(rows, shelf, adding), [rows, shelf, adding]);
+  const counts = countDrafts(rows, problems);
+  const newCategories = useMemo(() => newCategoryNames(rows, categories), [rows, categories]);
   const tooManyCategories = newCategories.length > MAX_NEW_CATEGORIES;
-  const stockUnused = stockNotApplied(drafts, addStock);
-  const stockChoice = hasStockToChoose(drafts);
-  const stockAdding = stockToAdd(drafts);
-  const chipCount: Record<Filter, number> = { all: drafts.length, fix: counts.fix, existing: counts.update, skipped: counts.skipped };
+  const stockUnused = stockNotApplied(rows, adding);
+  const stockChoice = counted && hasStockToChoose(rows);
+  const stockAdding = stockToAdd(rows);
+  const chipCount: Record<Filter, number> = { all: rows.length, fix: counts.fix, existing: counts.update, skipped: counts.skipped };
   // A filter whose rows have all been fixed would show an empty list; go back to the whole one instead.
   const shown: Filter = filter !== 'all' && chipCount[filter] === 0 ? 'all' : filter;
-  const visible = drafts
+  const visible = rows
     .map((draft, index) => ({ draft, index, problem: problems[index] ?? null }))
     .filter(({ draft, problem }) => (shown === 'fix' ? problem !== null : shown === 'existing' ? !draft.skip && !!draft.existing : shown === 'skipped' ? draft.skip : true));
   const toSave = counts.create + counts.update;
@@ -110,12 +122,12 @@ export function ImportProductReview({
     setBusy(true);
     setError(null);
     try {
-      onImported(await api.importProducts(branchId, toItems(drafts, addStock)));
+      onImported(await api.importProducts(branchId, toItems(rows, adding)));
     } catch (err) {
       setError(err instanceof ApiError && err.status < 500 ? err.message : t('importFailed'));
       // The API names the row of the file it objected to; take the owner to it rather than leave them to hunt.
       const row = err instanceof ApiError ? (err.body as { row?: unknown } | undefined)?.row : undefined;
-      const at = typeof row === 'number' ? drafts.findIndex((d) => d.row === row) : -1;
+      const at = typeof row === 'number' ? rows.findIndex((d) => d.row === row) : -1;
       if (at >= 0) reveal(at);
     } finally {
       setBusy(false);
@@ -158,7 +170,7 @@ export function ImportProductReview({
               {t('stockModeAdd')}
             </button>
           </div>
-          <p className="confirm-body">{addStock ? t('stockModeAddNote', { count: stockAdding.count, units: stockAdding.units }) : t('stockNotApplied', { count: stockUnused })}</p>
+          <p className="confirm-body">{adding ? t('stockModeAddNote', { count: stockAdding.count, units: stockAdding.units }) : t('stockNotApplied', { count: stockUnused })}</p>
         </>
       )}
       {counts.skipped > 0 && <p className="confirm-body">{t('willSkip', { count: counts.skipped })}</p>}
@@ -179,7 +191,7 @@ export function ImportProductReview({
             const meta = [
               d.price.trim() ? rupeeText(d.price) : d.existing ? formatMoney(d.existing.priceMinor, d.existing.currency) : t('noPrice'),
               !d.existing && d.stock.trim() ? t('stockShort', { n: d.stock }) : null,
-              addStock && d.existing && Number(d.stock) > 0 ? t('stockAddShort', { n: d.stock }) : null,
+              adding && d.existing && Number(d.stock) > 0 ? t('stockAddShort', { n: d.stock }) : null,
               d.barcode.trim() || null,
             ]
               .filter(Boolean)
@@ -221,19 +233,19 @@ export function ImportProductReview({
 
                 {open && (
                   <div className="rv-edit">
-                    {EDITABLE.map((f) => {
+                    {(counted ? EDITABLE : EDITABLE.filter((f) => f.key !== 'stock' && f.key !== 'lowStock')).map((f) => {
                       // A correction never renames a product or moves its count; the cell is shown, not editable.
-                      const locked = !!d.existing && (f.key === 'name' || (f.key === 'stock' && !addStock));
+                      const locked = !!d.existing && (f.key === 'name' || (f.key === 'stock' && !adding));
                       return (
                         <label key={f.key} className={`field ${f.key === 'name' ? 'rv-field-name' : ''}`}>
-                          <span className="field-label">{f.key === 'stock' && d.existing && addStock ? t('fields.addStock') : t(`fields.${f.field}`)}</span>
+                          <span className="field-label">{f.key === 'stock' && d.existing && adding ? t('fields.addStock') : t(`fields.${f.field}`)}</span>
                           <input
                             type="text"
                             inputMode={f.numeric}
                             value={locked && f.key === 'name' ? d.existing!.name : (d[f.key] as string)}
                             readOnly={locked}
                             title={locked ? t('correctionOnly') : undefined}
-                            aria-label={t('rowCell', { n: d.row, field: t(f.key === 'stock' && d.existing && addStock ? 'fields.addStock' : `fields.${f.field}`) })}
+                            aria-label={t('rowCell', { n: d.row, field: t(f.key === 'stock' && d.existing && adding ? 'fields.addStock' : `fields.${f.field}`) })}
                             onChange={(e) => update(i, { [f.key]: e.target.value } as Partial<ProductDraft>)}
                           />
                         </label>

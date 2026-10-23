@@ -3372,6 +3372,15 @@ button.hm-now-count {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+/* Three where there is no shelf to be worth anything (a kitchen): the row fills, rather than leaving a gap. */
+.hm-v3-kpis-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (min-width: 861px) and (max-width: 1180px) {
+  .hm-v3-kpis-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .hm-v3-kpi {
   display: flex;
   flex-direction: column;
@@ -4381,6 +4390,10 @@ button.hm-now-count {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   align-items: stretch;
+}
+/* Two where there is no shelf to need attention (a kitchen): the row fills, rather than leaving a gap. */
+.hm-v3-bot-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .hm-v3-period-pill {
   padding: 4px 10px;

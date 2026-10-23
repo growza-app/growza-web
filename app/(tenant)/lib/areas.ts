@@ -20,6 +20,16 @@ export interface Areas {
   /** `me.surface === 'shop'` — it runs the shop's screens: Orders and Stock. */
   shop: boolean;
   /**
+   * `me.capabilities.stockCounted` — there is a COUNT behind what it sells. False for a kitchen, which cooks a dish
+   * when it is ordered.
+   *
+   * This is not "has a catalogue": a restaurant has a full menu with prices, categories and photos, and sells from
+   * it at the same till. It is the count alone — so the screens that exist only to read or change one (the stock
+   * worth report, the reorder list) are absent, and the ones that merely SHOW a count beside a thing (the Menu
+   * list, the till) draw the thing without it.
+   */
+  stock: boolean;
+  /**
    * Jira GRW-74 — the pages a member's ROLE grants, only for a member who holds one. Absent for the owner and for everyone with no role, who are
    * offered what they always were. It travels here because every nav surface and screen guard already carries this object to `canSee`.
    */
@@ -30,17 +40,17 @@ export type PageLevel = 'none' | 'view' | 'manage';
 export type PageGrid = Partial<Record<RolePageKey, PageLevel>>;
 
 /** The salon's app: every diary screen, none of the shop's. What an absent answer means. */
-export const DIARY_AREAS: Areas = { bookings: true, services: true, shop: false };
+export const DIARY_AREAS: Areas = { bookings: true, services: true, shop: false, stock: true };
 
 /** The slice of `/me` this reads — typed loosely, because an older API sends less. */
 export interface MeAreas {
-  capabilities?: { bookings?: boolean; services?: boolean } | null;
+  capabilities?: { bookings?: boolean; services?: boolean; stockCounted?: boolean } | null;
   surface?: string | null;
   member?: { role?: string; tenantRoleId?: string | null } | null;
   permissions?: PageGrid | null;
 }
 
-/** The areas a `/me` describes. Only an explicit `false` takes a diary area away, and only `shop` adds the shop's. */
+/** The areas a `/me` describes. Only an explicit `false` takes an area away, and only `shop` adds the shop's. */
 export function areasOf(me: MeAreas | null | undefined): Areas {
   // Only a member who holds a role is offered by the grid; the owner and everyone with no role are not (and carry no `pages` key at all).
   const pages = me?.member && me.member.role !== 'owner' && me.member.tenantRoleId ? me.permissions : undefined;
@@ -48,6 +58,7 @@ export function areasOf(me: MeAreas | null | undefined): Areas {
     bookings: me?.capabilities?.bookings !== false,
     services: me?.capabilities?.services !== false,
     shop: me?.surface === 'shop',
+    stock: me?.capabilities?.stockCounted !== false,
     ...(pages ? { pages } : {}),
   };
 }
@@ -61,6 +72,15 @@ const BOOKING_ROUTES = ['/appointments', '/availability', '/settings/booking'] a
 const SERVICE_ROUTES = ['/services', '/packages', '/offers'] as const;
 /** The shop's own screens. */
 const SHOP_ROUTES = ['/orders', '/stock', '/settings/channels'] as const;
+/**
+ * Screens that exist only where a count does.
+ *
+ * `/stock` itself is NOT here, and that is the whole subtlety: it is the shop's CATALOGUE screen (the same
+ * `ProductsScreen` the Products link opens), reached at the address a shop's nav uses. A kitchen keeps its menu
+ * there. What it does not keep is what the shelf is worth (`/stock/report`) or what to order before it runs out
+ * (`/stock/order`) — both of which are a count and nothing else.
+ */
+const COUNT_ROUTES = ['/stock/report', '/stock/order'] as const;
 /**
  * What a shop does NOT have beside the diary and the menu: the sales register (Orders is its register) and the staff roster's wizard (a shop's staff are
  * added from Settings › Roles). Its nav is short on purpose.
@@ -81,6 +101,7 @@ export function areaAllows(href: string, areas: Areas = DIARY_AREAS): boolean {
   if (areas.shop && NOT_IN_A_SHOP.some((r) => under(href, r))) return false;
   if (!areas.shop && SHOP_ROUTES.some((r) => under(href, r))) return false;
   if (!areas.shop && SHOP_SETTINGS.some((r) => under(href, r))) return false;
+  if (!areas.stock && COUNT_ROUTES.some((r) => under(href, r))) return false;
   return true;
 }
 

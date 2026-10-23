@@ -159,6 +159,12 @@ export interface Me {
     /** Jira GRW-607 — whether the business takes bookings, and whether it sells services. Absent reads as yes: only an explicit false takes a diary area away. */
     bookings?: boolean;
     services?: boolean;
+    /**
+     * `catalog.stock_counted` — whether there is a count behind the catalogue. False for a kitchen, whose dishes are
+     * cooked when they are ordered. Absent reads as yes, the same way the two above do: an API a deploy behind must
+     * leave a shop the shelf it has.
+     */
+    stockCounted?: boolean;
     /** Jira GRW-598 — whether sizes are switched on for this business (the `sizes` flag). Absent reads as no: it ships off. */
     sizes?: boolean;
     providerSelection: boolean;

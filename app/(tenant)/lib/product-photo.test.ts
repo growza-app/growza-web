@@ -124,3 +124,58 @@ describe('the empty tile\'s animation', () => {
     expect(readFileSync(new URL('../styles/96-products.css', import.meta.url), 'utf8')).not.toContain('.photo-none');
   });
 });
+
+describe('a kitchen reads sixty-nine rows a day, so a dish gets a dish', () => {
+  const kindOf = (name: string, categoryName?: string) => resolveProductGraphic({ name, categoryName }).kind;
+
+  it('matches each course to its own graphic', () => {
+    expect(kindOf('Dal Makhani (Full)', 'Main course')).toBe('bowl');
+    expect(kindOf('Butter Naan', 'Breads')).toBe('bread');
+    expect(kindOf('Masala Dosa', 'South Indian')).toBe('bread');
+    expect(kindOf('Chicken Biryani', 'Rice & biryani')).toBe('rice');
+    expect(kindOf('Veg Hakka Noodles', 'Chinese')).toBe('rice');
+    expect(kindOf('Masala Chai', 'Beverages')).toBe('drink');
+    expect(kindOf('Gulab Jamun (2 pc)', 'Desserts')).toBe('dessert');
+    expect(kindOf('Vanilla Ice Cream', 'Desserts')).toBe('dessert');
+    expect(kindOf('Paneer Tikka', 'Starters')).toBe('bowl');
+  });
+
+  /*
+   * A sample of the shipped starter menu, one per course and the awkward ones. Named here rather than read from
+   * `restaurant.v1.json`, which lives in the OTHER repo: a test that reaches across the two-repo split passes on one
+   * machine and fails in CI.
+   */
+  it('every course of the shipped starter menu gets something better than the fallback', () => {
+    const menu: Array<[string, string]> = [
+      ['Paneer Tikka', 'Starters'],
+      ['French Fries', 'Starters'],
+      ['Malai Kofta', 'Main course'],
+      ['Mutton Rogan Josh', 'Main course'],
+      ['Veg Pulao', 'Rice & biryani'],
+      ['Curd Rice', 'Rice & biryani'],
+      ['Lachha Paratha', 'Breads'],
+      ['Idli Sambar', 'South Indian'],
+      ['Veg Fried Rice', 'Chinese'],
+      ['Gajar Halwa', 'Desserts'],
+      ['Brownie with Ice Cream', 'Desserts'],
+      ['Sweet Lassi', 'Beverages'],
+      ['Fresh Lime Soda', 'Beverages'],
+      ['Mineral Water (1 L)', 'Beverages'],
+      ['Soft Drink (300 ml)', 'Beverages'],
+    ];
+    const plain = menu.filter(([name, category]) => resolveProductGraphic({ name, categoryName: category }).kind === 'bottle');
+    expect(plain.map(([name]) => name), 'dishes still drawn with a bottle').toEqual([]);
+  });
+
+  it('a shop is untouched: the words that mean one thing to a kitchen and another to a shop still mean the shop\'s', () => {
+    // `cream` is a face cream to a salon, and `water` is a water bottle to a uniform shop.
+    expect(kindOf('Argan Oil', 'Hair')).toBe('bottle');
+    expect(kindOf('Night Cream', 'Skin')).toBe('bottle');
+    expect(kindOf('Water Bottle', 'Stationery')).toBe('bottle');
+    expect(kindOf('School Shirt (Half Sleeve)', 'School uniforms')).toBe('shirt');
+    expect(kindOf('School Bag (Junior)', 'School bags')).toBe('backpack');
+    expect(kindOf('School Shoes', 'Shoes')).toBe('shoes');
+    // (A belt, not a tie — the category is read too and `belt` is matched first. Unchanged by any of this.)
+    expect(kindOf('School Tie', 'Belts, ties & socks')).toBe('belt');
+  });
+});

@@ -17,7 +17,9 @@ export const metadata = screenTitle('Reorder list');
  * on the server, and the owner's numbers are saved as they type them).
  */
 export default async function OrderPage() {
-  await guardScreen('/stock');
+  // Its OWN address, not the shelf's: this screen is a COUNT, and a business that keeps none (a kitchen) is sent Home
+  // rather than shown a report its API then refuses.
+  await guardScreen('/stock/order');
   const t = await getTranslations('products.reorder');
   let allowed = true;
   try {
