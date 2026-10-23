@@ -550,7 +550,12 @@ export function ProductsList({
               <th>{t('cols.sku')}</th>
               <SortableTh col="price" label={t('cols.price')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
               <SortableTh col="cost" label={t('cols.cost')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
-              {counted ? <SortableTh col="stock" label={t('cols.stock')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric /> : null}
+              {/* Where there is no count, the same column carries what IS there: how many have sold. One header, one cell. */}
+              {counted ? (
+                <SortableTh col="stock" label={t('cols.stock')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
+              ) : (
+                <SortableTh col="sold" label={t('cols.sold')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
+              )}
               <SortableTh col="status" label={t('cols.status')} sort={sort} dir={sortDir} onSort={pickColumnSort} />
             </tr>
           </thead>

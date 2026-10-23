@@ -3279,6 +3279,7 @@
       "price": "Sell price",
       "cost": "Bought for",
       "stock": "Stock",
+      "sold": "Sold",
       "status": "Status"
     },
     "sort": {

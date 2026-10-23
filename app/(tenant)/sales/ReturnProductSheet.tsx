@@ -966,7 +966,10 @@ export function ReturnProductSheet({
                     <div>
                       <strong>{it.name}</strong>
                       <span>
-                        {t('qtyShort', { n: it.qty })} · {it.restocked ? t('restockShelf') : t('damagedOpened')}
+                        {t('qtyShort', { n: it.qty })}
+                        {/* The condition is a count's word. A kitchen was never asked it, and the API answers
+                            `restocked: false` for want of a shelf — saying "Damaged" there would be untrue. */}
+                        {counted ? <> · {it.restocked ? t('restockShelf') : t('damagedOpened')}</> : null}
                       </span>
                     </div>
                     <strong>{formatMoney(String(it.refundMinor))}</strong>

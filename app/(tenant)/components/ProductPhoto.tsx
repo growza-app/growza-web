@@ -28,9 +28,11 @@ const TONES: readonly ProductGraphicTone[] = ['green', 'blue', 'amber', 'purple'
  * Vertical-neutral: covers apparel, bags, accessories, footwear, bottles/cosmetics, food, and general retail.
  *
  * Food was added with the restaurant vertical, whose Menu screen is sixty-nine rows a kitchen reads every day: a
- * bottle beside "Aloo Gobi" is the opposite of scannable. Order matters twice over — `ice cream` is matched BEFORE
- * the bottle rule, whose `cream` means a face cream to a salon; and `water` is matched AFTER it, so a uniform
- * shop's "Water Bottle" is still a bottle. Everything else about this function is unchanged.
+ * bottle beside "Aloo Gobi" is the opposite of scannable. Order matters three times over — `ice cream` is matched
+ * BEFORE the bottle rule, whose `cream` means a face cream to a salon; `water` is matched AFTER it, so a uniform
+ * shop's "Water Bottle" is still a bottle; and the savoury rules come after the APPAREL rule, because `chinese`,
+ * `tikka` and `tea` are all words a clothes or jewellery shop uses ("Chinese Collar Shirt", a maang tikka, a tea
+ * towel) and the garment is what it means there. Everything else about this function is unchanged.
  */
 export function resolveProductGraphic(product: {
   name?: string | null;
@@ -53,6 +55,7 @@ export function resolveProductGraphic(product: {
   if (/\b(bottle|flask|sipper|shampoo|conditioner|serum|oil|cream|lotion|wash|gel|spray|toner|mask)s?\b/.test(hay)) {
     return { kind: 'bottle', tone: 'blue' };
   }
+  if (/\b(shirt|t-shirt|tee|top|kurta|kurti|blouse|tunic|polo|jersey|uniform)s?\b/.test(hay)) return { kind: 'shirt', tone: 'green' };
   // After it, so a uniform shop's "Water Bottle" stays a bottle while a kitchen's "Mineral Water" is a drink.
   if (/\b(chai|tea|coffee|latte|lassi|juice|soda|shake|smoothie|chaas|buttermilk|cola|drink|mocktail|water|beverage)s?\b/.test(hay)) {
     return { kind: 'drink', tone: 'amber' };
@@ -66,7 +69,6 @@ export function resolveProductGraphic(product: {
   if (/\b(curry|masala|dal|daal|gravy|soup|kofta|chole|chana|sabzi|sabji|korma|rogan|josh|paneer|tikka|kabab|kebab|manchurian|thali|platter|starter|main\s*course|chinese|fries|roll|momo|wrap|salad)s?\b/.test(hay)) {
     return { kind: 'bowl', tone: 'green' };
   }
-  if (/\b(shirt|t-shirt|tee|top|kurta|kurti|blouse|tunic|polo|jersey|uniform)s?\b/.test(hay)) return { kind: 'shirt', tone: 'green' };
 
   // Deterministic colour fallback from the product's name so unphotographed items stay distinct
   let hash = 0;

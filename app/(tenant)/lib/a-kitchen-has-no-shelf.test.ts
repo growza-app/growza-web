@@ -18,6 +18,7 @@ const list = src('products/ProductsList.tsx');
 const sheet = src('products/ProductSheet.tsx');
 const home = src('components/home/ShopHome.tsx');
 const ret = src('sales/ReturnProductSheet.tsx');
+const order = src('orders/[id]/OrderClient.tsx');
 
 const KITCHEN: Areas = { bookings: false, services: false, shop: true, stock: false };
 const SHOP: Areas = { ...KITCHEN, stock: true };
@@ -85,7 +86,7 @@ describe('the Menu screen draws a dish without a count', () => {
   });
 
   it('drops the Stock column from the desk table and the count pill from the phone row', () => {
-    expect(list).toMatch(/\{counted \? <SortableTh col="stock"/);
+    expect(list).toMatch(/\{counted \? \(\s*<SortableTh col="stock"/);
     expect(list).toMatch(/if \(!counted\) return <span className=\{`prd-pill prd-pill-\$\{p\.active \? 'ok' : 'off'\}`\}/);
   });
 
@@ -134,5 +135,52 @@ describe('Home and the return sheet', () => {
     // The refund method and the reason are NOT a count, and are still asked for.
     expect(ret).toMatch(/refundModeLabel/);
     expect(ret).toMatch(/reasonCode/);
+  });
+});
+
+/*
+ * Code review, 2026-10-23. Five things the first cut of this vertical got wrong, each with the test that would
+ * have caught it. Four are about drawing a kitchen's screen; the fifth is a retail regression.
+ */
+describe('what the review found', () => {
+  it('the Menu table has one header per cell — the Stock column becomes Sold, it does not vanish', () => {
+    // The body ALWAYS renders a cell in that position, in BOTH arms of its ternary, so a header dropped
+    // outright leaves one more cell than headings and shifts every row left by one under the wrong word.
+    const head = list.slice(list.indexOf('<thead>'), list.indexOf('</thead>'));
+    const body = list.slice(list.indexOf('<tbody>'), list.indexOf('</tbody>'));
+    expect(head).toMatch(/\{counted \? \(\s*<SortableTh col="stock"/);
+    expect(head).toMatch(/\) : \(\s*<SortableTh col="sold" label=\{t\('cols\.sold'\)\}/);
+    expect(body).toMatch(/\{counted \? \(\s*<td className="prd-td-num">/);
+    expect(body).toMatch(/\) : \(\s*<td className="prd-td-num prd-td-muted">/);
+    // Neither arm of either ternary may be `null`: that is the shape the review caught.
+    expect(head).not.toMatch(/\{counted \? <SortableTh col="stock"[^}]*\/> : null\}/);
+    expect(en.products.cols.sold).toBe('Sold');
+    expect(hi.products.cols.sold.length).toBeGreaterThan(0);
+  });
+
+  it('the Menu strip of two has a rule of its own, not the three-column default', () => {
+    const css = src('styles/96-products.css');
+    expect(list).toMatch(/className="prd-strip prd-strip-2"/);
+    expect(css).toMatch(/\.prd-strip\.prd-strip-2 \{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
+  });
+
+  it('a kitchen\'s return is never called damaged: the API says `restocked: false` for want of a shelf, not for damage', () => {
+    expect(ret).toMatch(/\{counted \? <> · \{it\.restocked \? t\('restockShelf'\) : t\('damagedOpened'\)\}<\/> : null\}/);
+    expect(order).toMatch(/const counted = useAreas\(\)\.stock;/);
+    expect(order).toMatch(/\{counted && !r\.restocked \? <span className="ord-d-quiet"> · \{t\('detail\.notRestocked'\)\}<\/span> : null\}/);
+  });
+});
+
+describe('the food graphics do not reach into another vertical', () => {
+  it('a garment is a garment: the savoury rules come after the apparel rule', async () => {
+    const { resolveProductGraphic } = await import('../components/ProductPhoto');
+    // Each of these is a real retail name carrying a word the restaurant rules claim.
+    expect(resolveProductGraphic({ name: 'Chinese Collar Shirt', categoryName: 'Shirts' }).kind).toBe('shirt');
+    expect(resolveProductGraphic({ name: 'Tea Rose Top', categoryName: 'Tops' }).kind).toBe('shirt');
+    expect(resolveProductGraphic({ name: 'Masala Tikka Kurta', categoryName: 'Kurtas' }).kind).toBe('shirt');
+    // And the kitchen still gets its own, because a dish is not named after a garment.
+    expect(resolveProductGraphic({ name: 'Chicken Tikka', categoryName: 'Starters' }).kind).toBe('bowl');
+    expect(resolveProductGraphic({ name: 'Masala Chai', categoryName: 'Beverages' }).kind).toBe('drink');
+    expect(resolveProductGraphic({ name: 'Veg Hakka Noodles', categoryName: 'Chinese' }).kind).toBe('rice');
   });
 });
