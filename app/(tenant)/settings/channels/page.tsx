@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
+import { areaAllows, areasOf } from '../../lib/areas';
 import { LoadErrorBanner } from '../../components/LoadErrorBanner';
 import { loadErrorKind } from '../../lib/load-error';
 import { ChannelsForm } from './ChannelsForm';
@@ -17,6 +18,8 @@ export default async function ChannelsSettingsPage() {
   try {
     const me = await api.me();
     if (me.surface !== 'shop') redirect('/settings');
+    // Owner, 2026-10-24 — nor a shop with no marketplaces (a restaurant: its online orders come from delivery apps).
+    if (!areaAllows('/settings/channels', areasOf(me))) redirect('/settings');
   } catch (error) {
     // `redirect` throws its own control-flow signal: let it through, and report only a real failure to read.
     if (error && typeof error === 'object' && 'digest' in error) throw error;

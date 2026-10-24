@@ -5,6 +5,7 @@ import AppLink from '../../shared/AppLink';
 import { homeCopy } from '../lib/home-copy';
 import { areaAllows } from '../lib/areas';
 import { useAreas } from './SessionProvider';
+import { sellsOnMarketplaces } from '../lib/order-channels';
 
 export type RetailReportTab = 'hub' | 'channels' | 'sellers' | 'report' | 'order' | 'returns' | 'refunds';
 
@@ -81,7 +82,8 @@ export function RetailReportsHub() {
     {
       href: '/stock/sellers',
       title: tSellers('title'),
-      sub: `${tSellers('viewBest')} · ${tSellers('viewDead')}`,
+      // Unsold stock is a count's report: a kitchen (no count) is offered the best sellers alone.
+      sub: areas.stock ? `${tSellers('viewBest')} · ${tSellers('viewDead')}` : tSellers('viewBest'),
     },
     {
       href: '/stock/report',
@@ -96,7 +98,8 @@ export function RetailReportsHub() {
     {
       href: '/orders/returns',
       title: tReturns('title'),
-      sub: `${tReturns('customerTitle')} · ${tReturns('undeliveredTitle')}`,
+      // Owner, 2026-10-24 — a parcel comes back undelivered only from a marketplace; where nothing ships, there is none.
+      sub: sellsOnMarketplaces(areas) ? `${tReturns('customerTitle')} · ${tReturns('undeliveredTitle')}` : tReturns('customerTitle'),
     },
     {
       href: '/orders/refunds',

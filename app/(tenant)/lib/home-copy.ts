@@ -221,7 +221,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     /** BR-12 — the queue could not be read, so the card cannot say that nobody is waiting. */
     queueUnread: S('Could not check who is waiting.', 'इंतज़ार कौन कर रहा है, यह नहीं देख पाए।'),
 
-    clientsDoingTitle: hi ? 'आपके ग्राहक कैसे हैं' : copy.clients.segmentsTitle,
+    clientsDoingTitle: hi ? 'आपके ग्राहक कैसे हैं' : copy.clients.segmentsTitle.replace('{noun}', nounInSentence(clientsWord)),
     clientsDoingHint: hi ? 'किसी एक पर टैप करें' : copy.clients.segmentsHint,
     neverVisited: (n: number, pct: number) =>
       hi ? `${n} (${pct}%) ग्राहक अभी तक नहीं आए, इसलिए वे किसी में नहीं हैं` : copy.clients.neverVisited(n, pct),
@@ -436,10 +436,18 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       counterChannel: S('Counter', 'काउंटर'),
       flipkartChannel: S('Flipkart', 'फ़्लिपकार्ट'),
       amazonChannel: S('Amazon', 'अमेज़न'),
+      swiggyChannel: S('Swiggy', 'स्विगी'),
+      zomatoChannel: S('Zomato', 'ज़ोमैटो'),
+      /** Owner, 2026-10-24 — a business that ships nothing (a kitchen): what its Orders card says instead of "Nothing waiting to ship". */
+      ordersInPeriod: S('Orders in this period', 'इस अवधि के ऑर्डर'),
+      noReturnsYet: S('Nothing has come back.', 'कुछ भी वापस नहीं आया।'),
+      returnsToCheck: (n: number) => S(`${n} came back. Open Returns to see them.`, `${n} वापस आए। देखने के लिए वापसी खोलें।`),
       toSendShort: S('To send', 'भेजने हैं'),
       returnedShort: S('Returned', 'वापस आए'),
       unitsSoldTitle: S('Units sold', 'बिकी हुई यूनिट'),
       acrossSizes: (revenue: string, sizes: number) => S(`${revenue} across ${sizes} sizes`, `${sizes} साइज़ में ${revenue}`),
+      // Owner, 2026-10-24 — a kitchen sells dishes, not sizes.
+      acrossItems: (revenue: string, items: number) => S(`${revenue} from ${items} ${items === 1 ? 'item' : 'items'}`, `${items} चीज़ों से ${revenue}`),
       topSellerLabel: S('Top seller', 'सबसे ज़्यादा बिका'),
       stockWorthTitle: S('Stock at cost price', 'लागत दाम पर स्टॉक'),
       stylesAndSizes: (styles: number, sizes: number) => S(`${styles} styles · ${sizes} sizes`, `${styles} डिज़ाइन · ${sizes} साइज़`),
@@ -449,7 +457,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       noSalesInRange: S('No sales recorded in this period yet.', 'इस अवधि में अभी कोई बिक्री दर्ज नहीं हुई।'),
       avgOrderShort: (amt: string) => S(`avg ${amt}`, `औसत ${amt}`),
       quickActionsTitle: S('Quick actions', 'तुरंत काम'),
-      addCustomerAction: S('Add customer', 'ग्राहक जोड़ें'),
+      // Restaurant QA 2026-10-24 — the shop's own word for who buys: "Add guest" at a restaurant.
+      addCustomerAction: S(`Add ${nounInSentence(labels.customer ?? 'Customer')}`, 'ग्राहक जोड़ें'),
       ordersAttentionTitle: S('Orders needing attention', 'ध्यान देने वाले ऑर्डर'),
       cameBackLabel: S('Returns', 'वापसी'),
       allOrdersDispatched: S('Every order has been packed and sent.', 'सभी ऑर्डर पैक करके भेजे जा चुके हैं।'),
@@ -459,7 +468,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       soldCountPill: (n: number) => S(`${n} sold`, `${n} बिके`),
       recentOrdersTitle: S('Recent orders', 'हाल के ऑर्डर'),
       colWhen: S('When', 'कब'),
-      colCustomer: S('Customer', 'ग्राहक'),
+      colCustomer: S(labels.customer ?? 'Customer', 'ग्राहक'),
       colChannel: S('Channel', 'चैनल'),
       colItems: S('Items', 'सामान'),
       colAmount: S('Amount', 'राशि'),

@@ -30,6 +30,14 @@ export interface Areas {
    */
   stock: boolean;
   /**
+   * Owner, 2026-10-24 — `me.capabilities.marketplaces`: the business sells on Flipkart and Amazon, so it has their
+   * screens (importing orders, the orders held for a size, Settings › Online selling). False for a restaurant, whose
+   * online orders come from delivery apps. Optional: absent is true, as every shop had them before.
+   */
+  marketplaces?: boolean;
+  /** Owner, 2026-10-24 — `me.deliveryApps`: the apps whose orders the till rings up (Swiggy, Zomato). Absent: none. */
+  deliveryApps?: readonly string[];
+  /**
    * Jira GRW-74 — the pages a member's ROLE grants, only for a member who holds one. Absent for the owner and for everyone with no role, who are
    * offered what they always were. It travels here because every nav surface and screen guard already carries this object to `canSee`.
    */
@@ -44,8 +52,9 @@ export const DIARY_AREAS: Areas = { bookings: true, services: true, shop: false,
 
 /** The slice of `/me` this reads — typed loosely, because an older API sends less. */
 export interface MeAreas {
-  capabilities?: { bookings?: boolean; services?: boolean; stockCounted?: boolean } | null;
+  capabilities?: { bookings?: boolean; services?: boolean; stockCounted?: boolean; marketplaces?: boolean } | null;
   surface?: string | null;
+  deliveryApps?: readonly string[] | null;
   member?: { role?: string; tenantRoleId?: string | null } | null;
   permissions?: PageGrid | null;
 }
@@ -59,6 +68,9 @@ export function areasOf(me: MeAreas | null | undefined): Areas {
     services: me?.capabilities?.services !== false,
     shop: me?.surface === 'shop',
     stock: me?.capabilities?.stockCounted !== false,
+    // Said only when they differ from what every business had before, so the areas of a salon or a shop read as they did.
+    ...(me?.capabilities?.marketplaces === false ? { marketplaces: false } : {}),
+    ...(me?.deliveryApps && me.deliveryApps.length > 0 ? { deliveryApps: me.deliveryApps } : {}),
     ...(pages ? { pages } : {}),
   };
 }
@@ -91,6 +103,13 @@ const COUNT_ROUTES = ['/stock/report', '/stock/order'] as const;
  */
 const NOT_IN_A_SHOP = ['/sales', '/providers'] as const;
 
+/**
+ * Owner, 2026-10-24 — screens that exist only for a business that sells on Flipkart and Amazon: importing their order
+ * files, the orders held for a size they did not name, and their keys and branch (Settings › Online selling). Sales by
+ * channel (`/stock/channels`) is NOT here: it is how a restaurant reads its Swiggy and Zomato orders too.
+ */
+const MARKETPLACE_ROUTES = ['/orders/import', '/orders/held', '/settings/channels'] as const;
+
 /** Jira GRW-72 — Settings screens that exist only for a shop. (Not `SHOP_ROUTES`: the role rules read that list as "the shop's own work".) */
 const SHOP_SETTINGS = ['/settings/roles'] as const;
 
@@ -102,6 +121,7 @@ export function areaAllows(href: string, areas: Areas = DIARY_AREAS): boolean {
   if (!areas.shop && SHOP_ROUTES.some((r) => under(href, r))) return false;
   if (!areas.shop && SHOP_SETTINGS.some((r) => under(href, r))) return false;
   if (!areas.stock && COUNT_ROUTES.some((r) => under(href, r))) return false;
+  if (areas.marketplaces === false && MARKETPLACE_ROUTES.some((r) => under(href, r))) return false;
   return true;
 }
 

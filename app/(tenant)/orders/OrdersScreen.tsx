@@ -6,6 +6,7 @@ import { serverLang } from '../lib/lang';
 import { ORDERS_PAGE_SIZE, readQuery } from '../lib/orders-filter';
 import { mayUse } from '../lib/nav-policy';
 import { isWritable } from '../lib/read-only';
+import { areaAllows, areasOf } from '../lib/areas';
 import { OrdersClient } from './OrdersClient';
 import { OrdersBringIn } from './OrdersBringIn';
 
@@ -41,7 +42,8 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
   // Jira GRW-635 — what came back and why is the owner's and the manager's to read, as the API is; reading it needs no write.
   const mayReadReturns = me ? role === undefined || role === 'owner' || role === 'manager' : false;
   const tOrders = await getTranslations('orders');
-  const mayImport = me ? (role === undefined || role === 'owner' || role === 'manager') && isWritable(me.tenant?.status) : false;
+  // Owner, 2026-10-24 — and only where there is a marketplace to import from (not a restaurant's Swiggy and Zomato).
+  const mayImport = me ? (role === undefined || role === 'owner' || role === 'manager') && isWritable(me.tenant?.status) && areaAllows('/orders/import', areasOf(me)) : false;
 
   // The whole business on arrival; a branch the header picker has chosen is applied by the client, which re-reads.
   const initial = await api.orders({ channel: query.channel, status: query.status, q: query.q.trim(), page: query.page, pageSize: ORDERS_PAGE_SIZE }).catch((error: unknown) => ({

@@ -59,6 +59,8 @@ export interface Me {
   labels: Record<string, string>;
   /** Jira GRW-608 — which set of screens this business runs, from its vertical: `diary` (a salon's) or `shop`. Absent reads as the diary. */
   surface?: 'diary' | 'shop';
+  /** Owner, 2026-10-24 — the delivery apps the till takes orders from (`swiggy`, `zomato` for a restaurant). Absent: none. */
+  deliveryApps?: string[];
   /**
    * Jira GRW-66 · GRW-157 — who is signed in.
    *
@@ -167,6 +169,8 @@ export interface Me {
      * leave a shop the shelf it has.
      */
     stockCounted?: boolean;
+    /** Owner, 2026-10-24 — whether the Flipkart/Amazon screens exist. False for a restaurant; absent reads as true. */
+    marketplaces?: boolean;
     /** Jira GRW-598 — whether sizes are switched on for this business (the `sizes` flag). Absent reads as no: it ships off. */
     sizes?: boolean;
     providerSelection: boolean;
@@ -571,6 +575,8 @@ export interface ProviderStats {
 }
 
 export interface Appointment {
+  /** Owner, 2026-10-24 — a product-only bill's channel (`counter`, `swiggy`, `zomato`, …); absent on a booking and from an older API. */
+  channel?: string;
   id: string;
   startAt: string;
   endAt: string;

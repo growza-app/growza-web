@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { formatMoney } from '../lib/format';
 import { gstInPrice } from '../lib/gst-in-price';
+import { useNouns } from '../lib/use-nouns';
 
 /**
  * Jira GRW-582 — what a service or a product is, for tax: its GST rate and its classification code.
@@ -45,6 +46,7 @@ export function TaxFields({
   savedRateBp?: number | null;
 }) {
   const t = useTranslations('tax');
+  const { customer } = useNouns();
   const slabs =
     savedRateBp != null && !GST_SLABS_BP.includes(savedRateBp as (typeof GST_SLABS_BP)[number])
       ? [...GST_SLABS_BP, savedRateBp].sort((a, b) => a - b)
@@ -104,7 +106,7 @@ export function TaxFields({
       </div>
       {open ? (
         <div id={`${idPrefix}-tax-hint`} className="sheet-foot">
-          {t('hint', { code: codeWord })} {t('pricesInclude')}
+          {t('hint', { code: codeWord })} {t('pricesInclude', { customer })}
         </div>
       ) : null}
     </>

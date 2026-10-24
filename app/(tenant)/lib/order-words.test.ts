@@ -15,7 +15,8 @@ import { describe, expect, it } from 'vitest';
  * ORDER_STATES and drop the literal.
  */
 const STATES = ['done', 'new', 'packed', 'sent', 'delivered', 'cancelled', 'returned'] as const;
-const CHANNELS = ['counter', 'flipkart', 'amazon'] as const;
+// Owner, 2026-10-24 — the delivery apps a restaurant takes orders from are channels too (the API's ORDER_CHANNELS).
+const CHANNELS = ['counter', 'flipkart', 'amazon', 'swiggy', 'zomato'] as const;
 
 const messages = (lang: 'en' | 'hi') =>
   JSON.parse(readFileSync(path.resolve(import.meta.dirname, '../../../messages', `${lang}.json`), 'utf8')) as {
@@ -54,7 +55,7 @@ describe('UX-07 — every state and channel has a word in both languages', () =>
   it('Jira GRW-613 — the buyer has a word in both languages, and the note that says they are not a client', () => {
     for (const lang of ['en', 'hi'] as const) {
       const buyer = (messages(lang).orders as { buyer?: Record<string, string> }).buyer;
-      expect(Object.keys(buyer ?? {}).sort(), lang).toEqual(['notAClient', 'plural', 'title']);
+      expect(Object.keys(buyer ?? {}).sort(), lang).toEqual(['fromApp', 'notAClient', 'plural', 'title']);
       for (const [key, word] of Object.entries(buyer!)) expect(word, `${lang} ${key}`).toBeTruthy();
     }
     expect((messages('hi').orders as { buyer: Record<string, string> }).buyer.title).toMatch(/[ऀ-ॿ]/);

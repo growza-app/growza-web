@@ -37,6 +37,7 @@ import {
 import { useTranslations, useLocale } from 'next-intl';
 import { copy } from '../lib/copy';
 import { pickNoun } from '../lib/nouns';
+import { useNouns } from '../lib/use-nouns';
 import { ClientProfileCard } from '../components/ClientProfileCard';
 import { PhoneField } from '../components/PhoneField';
 import { toStoredPhone } from '../lib/phone';
@@ -132,6 +133,8 @@ export function CustomersClient({
   // Jira GRW-478 (U-3) — the vertical's word in English, the generic one in Hindi, as every other screen does.
   const lower = pickNoun(locale, label.toLowerCase(), tn('customers'));
   const singular = lower.replace(/s$/, '');
+  // Restaurant QA 2026-10-24 — the column says who is listed in the business's own word (Guest, Client, Patient).
+  const { Customer } = useNouns();
   const statusLabel = (s: Exclude<CustomerStatusFilter, 'all'>) =>
     s === 'never' ? t('statusNever') : s === 'lapsed' ? t('statusLapsed') : t(`segments.${s}.label`);
   // Jira GRW-392 — on "All", each row says whose client it is: the same person at two branches is two rows.
@@ -342,7 +345,7 @@ export function CustomersClient({
 
   const tableHead = (
     <tr>
-      <SortableTh col="name" label={t('colCustomer')} sort={sort} direction={direction} onSort={setSortColumn} />
+      <SortableTh col="name" label={t('colCustomer', { customer: Customer })} sort={sort} direction={direction} onSort={setSortColumn} />
       <th>{t('colPhone')}</th>
       {bookingsOn ? <th>{t('colLastBooking')}</th> : null}
       {bookingsOn ? <SortableTh col="visits" label={t('visitsColumn')} sort={sort} direction={direction} onSort={setSortColumn} numeric /> : null}
@@ -438,14 +441,14 @@ export function CustomersClient({
         <PageHeader title={label} menu subtitle={t('subtitle', { noun: lower })} actions={addButton} />
         <div className="page-body cust-desk">
           <div className="pf-wide-grid cust-desk-grid">
-            <aside className="pf-wide-left cust-desk-left" aria-label={t('segmentsTitle')}>
+            <aside className="pf-wide-left cust-desk-left" aria-label={t('segmentsTitle', { noun: lower })}>
               <dl className="cust-desk-kpis">
                 <div><dt>{t('kpiTotal', { noun: lower })}</dt><dd>{stats.total}</dd></div>
                 <div><dt>{t('kpiNew')}</dt><dd>{stats.newThisMonth}</dd></div>
                 <div><dt>{t('kpiReturning', { noun: lower })}</dt><dd>{stats.returning}</dd></div>
                 <div><dt>{t('kpiRepeat')}</dt><dd>{stats.repeatRatePct}%</dd></div>
               </dl>
-              <h2 className="pf-wide-h">{t('segmentsTitle')}</h2>
+              <h2 className="pf-wide-h">{t('segmentsTitle', { noun: lower })}</h2>
               <ul className="cust-desk-bands">
                 {bands.map((s) => {
                   const on = status === s;
@@ -496,7 +499,7 @@ export function CustomersClient({
               </div>
               <div className="card cust-desk-table">
                 {page.rows.length === 0 ? (
-                  <div className="empty">{loading ? t('loading') : t('noMatch', { noun: lower })}</div>
+                  <div className="empty">{loading ? t('loading') : search.trim() ? t('noMatch', { noun: lower }) : t('noneYet', { noun: lower })}</div>
                 ) : (
                   <div className="table-scroll">
                     <table>
@@ -577,13 +580,13 @@ export function CustomersClient({
           onClick={() => setSegmentsOpen((v) => !v)}
         >
           <IconPercent />
-          <span>{t('segmentsTitle')}</span>
+          <span>{t('segmentsTitle', { noun: lower })}</span>
           {onSegment && <span className="cust-segments-on">{t(`segments.${onSegment.key}.label`)}</span>}
           <IconChevronDown />
         </button>
         <div id="cust-segments" className={`card cust-segments ${segmentsOpen ? 'is-open' : ''}`}>
           <div className="cust-segments-head">
-            <h2>{t('segmentsTitle')}</h2>
+            <h2>{t('segmentsTitle', { noun: lower })}</h2>
             {/*
               Two versions of the same aside, one per screen size — not one
               string left to wrap. On a phone the full sentence ran to eleven
@@ -706,7 +709,7 @@ export function CustomersClient({
           </div>
 
           {page.rows.length === 0 ? (
-            <div className="empty">{loading ? t('loading') : t('noMatch', { noun: lower })}</div>
+            <div className="empty">{loading ? t('loading') : search.trim() ? t('noMatch', { noun: lower }) : t('noneYet', { noun: lower })}</div>
           ) : (
             <PaginatedTable
               noun={lower}
