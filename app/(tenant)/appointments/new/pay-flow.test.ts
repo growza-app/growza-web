@@ -65,7 +65,8 @@ describe('one done screen for both Record payment forms (owner, 2026-10-10)', ()
 describe('Record payment in three taps', () => {
   it('is the phone flow only; a desk and ?full=1 keep the one-page form', () => {
     expect(wrapper).toMatch(/const quick = purpose === 'payment' && !full;/);
-    expect(wrapper).toMatch(/window\.matchMedia\('\(max-width: 860px\)'\)\.matches \? 'phone' : 'desk'/);
+    expect(wrapper).toContain("const phoneMq = window.matchMedia('(max-width: 860px)');");
+    expect(wrapper).toMatch(/phoneMq\.matches \? 'phone' : 'desk'/);
     // Nothing is drawn until the browser has said which — not a form that flashes up and is replaced.
     expect(wrapper).toMatch(/if \(quick && !settlingBooking && layout === 'unknown'\) return <div className="pf" aria-busy="true" \/>;/);
     /*
