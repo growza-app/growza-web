@@ -408,7 +408,11 @@
       },
       "notifications": {
         "label": "Notifications",
-        "sub": "Manage alerts and reminders"
+        "sub": "Reminder times for your customers on WhatsApp"
+      },
+      "phoneAlerts": {
+        "label": "Phone alerts",
+        "sub": "What your phone tells you"
       },
       "checkIn": {
         "label": "Location check-in",
@@ -802,6 +806,41 @@
       "badRadius": "Type a number between {min} and {max}."
     },
     "linkOnSave": "We will look this link up when you save. Open this screen again to see where it landed."
+  },
+  "settingsAlerts": {
+    "intro": "Your phone can tell you when something happens at the shop, even when this app is closed. Nothing is sent until you switch it on.",
+    "cannot": "Alerts can't be switched on here",
+    "blockers": {
+      "unsupported": "This browser can't show alerts. Try Chrome on Android, or add this app to your iPhone's Home Screen.",
+      "install-first": "Add Growza to your Home Screen first, then open it from there. On an iPhone, alerts only work in the installed app.",
+      "blocked": "You have blocked notifications for this site. Allow them again in your browser's settings for this site, then come back here.",
+      "not-configured": "Alerts are not set up on this server yet. Nothing is wrong with your phone."
+    },
+    "kinds": {
+      "bookingNew": {
+        "title": "New booking",
+        "hint": "Someone books a time"
+      },
+      "bookingCancelled": {
+        "title": "Booking cancelled",
+        "hint": "Someone calls off a time they had booked"
+      },
+      "walkinWaiting": {
+        "title": "Someone is waiting",
+        "hint": "A walk-in joins the queue at the shop"
+      },
+      "daySummary": {
+        "title": "How today went",
+        "hint": "One message in the evening: bookings done and money taken"
+      }
+    },
+    "deviceOn": "This phone will get them.",
+    "deviceOff": "This phone will not get them.",
+    "otherDevices": "{count, plural, one {1 other device also gets them.} other {# other devices also get them.}}",
+    "stopOnThisPhone": "Stop on this phone",
+    "blocked": "Your browser blocked the request. Allow notifications for this site and try again.",
+    "saveFailed": "That didn't save. Try again.",
+    "loadFailed": "We couldn't load your alerts. Try again in a moment."
   },
   "settingsTeam": {
     "title": "Team access",

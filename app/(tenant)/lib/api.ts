@@ -4,6 +4,8 @@
 // it to the API. One origin means the app works identically over localhost, a
 // LAN IP, or an HTTPS tunnel, with no port juggling or mixed-content blocking
 // (the latter is what a PWA install over HTTPS requires).
+import type { AlertKind, DeviceSubscription } from './push-alerts';
+
 const API_URL = typeof window !== 'undefined' ? '' : (process.env.API_URL ?? 'http://localhost:3001');
 
 /**
@@ -473,6 +475,8 @@ const patch = <T>(path: string, body: unknown) => send<T>('PATCH', path, body);
 // same request twice has to mean the same thing (GRW-170).
 const put = <T>(path: string, body: unknown) => send<T>('PUT', path, body);
 const del = <T>(path: string) => send<T>('DELETE', path);
+/** Jira GRW-647 — a DELETE that names what to forget in its body: a push endpoint is too long for a query string. */
+const delWith = <T>(path: string, body: unknown) => send<T>('DELETE', path, body);
 
 /**
  * Multipart upload — deliberately not routed through send(), the browser needs to set its own boundary'd Content-Type, not JSON.
@@ -551,8 +555,24 @@ export interface CreatedInvite {
   resent: boolean;
 }
 
+/** Jira GRW-647 — what `GET /alerts/prefs` answers: all four kinds, and how many devices are signed in. */
+export interface AlertPrefs {
+  prefs: Array<{ kind: AlertKind; enabled: boolean }>;
+  devices: number;
+}
+
 export const api = {
   me: () => (typeof window === 'undefined' ? meThisRender() : get<Me>('/api/v1/me')),
+  /**
+   * Jira GRW-647 — phone alerts: this person's four switches, their devices, and the key a browser needs to
+   * subscribe. Everything here is the SIGNED-IN person's own; there is no way to read or set anybody else's.
+   */
+  alertPrefs: () => get<AlertPrefs>('/api/v1/alerts/prefs'),
+  setAlertPref: (kind: AlertKind, enabled: boolean) => put<{ kind: AlertKind; enabled: boolean }>('/api/v1/alerts/prefs', { kind, enabled }),
+  /** `null` when this deployment has no VAPID keys — the screen then says alerts are not set up. */
+  vapidKey: () => get<{ publicKey: string | null }>('/api/v1/alerts/vapid-key'),
+  saveAlertDevice: (device: DeviceSubscription) => post<void>('/api/v1/alerts/subscriptions', device),
+  forgetAlertDevice: (endpoint: string) => delWith<void>('/api/v1/alerts/subscriptions', { endpoint }),
   /** GRW-202 — change your own password. Needs the current one; the session says who you are. */
   changePassword: (body: { currentPassword: string; newPassword: string }) =>
     post<{ ok: true }>('/api/v1/auth/change-password', body),

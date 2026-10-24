@@ -203,6 +203,14 @@ describe('2b — the controls, each behind its own action', () => {
 const SHOP_AREAS = { bookings: false, services: false, shop: true, stock: true } as const;
 
 const SCREEN_WRITES: Record<string, readonly string[]> = {
+  /*
+   * Jira GRW-647 — a switch and a device registration, both the signed-in person's own.
+   *
+   * Gated by the screen, not by a `UI_ACTIONS` control: there is nothing here one role may do and another may
+   * not WITHIN the screen. The screen itself is the owner's — the nav row carries `ownerOnly`, the page
+   * redirects, and all five routes are `owner` in shared's route table.
+   */
+  '/settings/alerts': ['PUT /api/v1/alerts/prefs', 'POST /api/v1/alerts/subscriptions', 'DELETE /api/v1/alerts/subscriptions'],
   // Jira GRW-615 — an order's own screen moves it along: the one next move, and the rarer ones behind More. Same screen,
   // same gate: a role the nav does not offer /orders is bounced Home by the page, so it never reaches the button.
   // Jira GRW-617 — and swaps a size. The desk is offered this screen but takes no returns, so it takes no swaps: the control is
@@ -342,10 +350,14 @@ const EVERY_ROLE = [
 /** The writes the dashboard's API client can make, read from the client itself. */
 function clientWrites(): Set<string> {
   const src = read('lib/api.ts');
-  const verb: Record<string, string> = { post: 'POST', patch: 'PATCH', put: 'PUT', del: 'DELETE', uploadFile: 'POST' };
+  // Jira GRW-647 — `delWith` is a DELETE that carries a body (a push endpoint is too long for a query string).
+  // It is listed BEFORE `del` in the alternation below: regex alternation is first-match, so `del` would
+  // otherwise match the first three letters of `delWith`, fail on the `(` that is not there, and the call
+  // would be invisible to this parser — a write with no gate that this very test exists to catch.
+  const verb: Record<string, string> = { post: 'POST', patch: 'PATCH', put: 'PUT', delWith: 'DELETE', del: 'DELETE', uploadFile: 'POST' };
   const found = new Set<string>();
   // `[^()]` in the generic: a match cannot run from `function post<T>(path…` on into some later call's URL.
-  for (const m of src.matchAll(/\b(post|patch|put|del|uploadFile)(?:<[^()]*?>)?\(\s*[`'](\/api\/v1\/[^`'?]*)/g)) {
+  for (const m of src.matchAll(/\b(post|patch|put|delWith|del|uploadFile)(?:<[^()]*?>)?\(\s*[`'](\/api\/v1\/[^`'?]*)/g)) {
     const pattern = m[2]!
       .split('/')
       // `${id}` is a parameter; `profile${atBranch(location)}` is a path with a query appended.
