@@ -836,6 +836,7 @@
     },
     "deviceOn": "This phone will get them.",
     "deviceOff": "This phone will not get them.",
+    "useThisPhone": "Get them on this phone",
     "otherDevices": "{count, plural, one {1 other device also gets them.} other {# other devices also get them.}}",
     "stopOnThisPhone": "Stop on this phone",
     "blocked": "Your browser blocked the request. Allow notifications for this site and try again.",

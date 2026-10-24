@@ -173,6 +173,38 @@ describe('whoever is signed in owns this device', () => {
   });
 });
 
+describe('this phone can be registered without changing a switch', () => {
+  const form = read('AlertsForm.tsx');
+
+  /**
+   * Owner, 2026-10-24 — the evening summary is on by default, so a switch is no longer always the way in. A
+   * fresh owner arrives to find it already on and this phone not registered; without this button that is a
+   * true sentence with nothing to do about it.
+   */
+  it('offers a way in when this phone is not registered', () => {
+    expect(form).toContain('useThisPhone');
+    expect(form).toMatch(/thisDevice \? t\('stopOnThisPhone'\) : t\('useThisPhone'\)/);
+  });
+
+  it('never leaves the device line without a button', () => {
+    // It used to render one only when `thisDevice` was true. The other branch was the dead end.
+    expect(form).not.toMatch(/\{thisDevice \? \(\s*<button/);
+    expect(form).toMatch(/onClick=\{thisDevice \? forgetDevice : useThisPhone\}/);
+  });
+
+  it('registers the device and changes nobody\'s preferences', () => {
+    const fn = form.slice(form.indexOf('const useThisPhone'), form.indexOf('const forgetDevice'));
+    expect(fn).toContain('api.saveAlertDevice');
+    expect(fn).not.toContain('api.setAlertPref');
+  });
+
+  it('is worded in both languages', () => {
+    for (const [lang, messages] of [['en', en], ['hi', hi]] as const) {
+      expect((messages as { settingsAlerts: { useThisPhone?: string } }).settingsAlerts.useThisPhone, lang).toBeTruthy();
+    }
+  });
+});
+
 describe('the switch is big enough to hit', () => {
   const css = readFileSync(path.join(here, '../../styles/96-phone-alerts.css'), 'utf-8');
 

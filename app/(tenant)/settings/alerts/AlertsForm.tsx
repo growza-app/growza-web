@@ -111,6 +111,31 @@ export function AlertsForm({ vapidPublicKey }: { vapidPublicKey: string | null }
     [blocker, t, vapidPublicKey],
   );
 
+  /**
+   * Let this phone receive, without changing a single switch.
+   *
+   * Needed once the evening summary is on by default (owner, 2026-10-24). Before that, a switch was always the
+   * way in: you turned one on, and registering the device came with it. Now a fresh owner arrives to find
+   * "How today went" already on and this phone not registered — a true statement with nothing to do about it,
+   * which is the dead end the blocker messages exist to avoid.
+   */
+  const useThisPhone = useCallback(async () => {
+    setError(null);
+    try {
+      const result = await subscribeThisDevice(vapidPublicKey ?? '');
+      if (typeof result === 'string') {
+        setBlocker(result === 'unsupported' && blocker === null ? null : result);
+        if (result === 'blocked') setError(t('blocked'));
+        return;
+      }
+      await api.saveAlertDevice(result);
+      setThisDevice(true);
+      setPrefs((current) => (current ? { ...current, devices: current.devices + 1 } : current));
+    } catch {
+      setError(t('saveFailed'));
+    }
+  }, [blocker, t, vapidPublicKey]);
+
   /** Stop this phone receiving, without touching what the person asked for — their choices outlive the device. */
   const forgetDevice = useCallback(async () => {
     setError(null);
@@ -200,11 +225,14 @@ export function AlertsForm({ vapidPublicKey }: { vapidPublicKey: string | null }
               {thisDevice ? t('deviceOn') : t('deviceOff')}
               {prefs && prefs.devices > 1 ? ` ${t('otherDevices', { count: prefs.devices - 1 })}` : ''}
             </p>
-            {thisDevice ? (
-              <button type="button" className="btn btn-quiet" onClick={forgetDevice} disabled={!writable}>
-                {t('stopOnThisPhone')}
-              </button>
-            ) : null}
+            <button
+              type="button"
+              className="btn btn-quiet"
+              onClick={thisDevice ? forgetDevice : useThisPhone}
+              disabled={!writable}
+            >
+              {thisDevice ? t('stopOnThisPhone') : t('useThisPhone')}
+            </button>
           </div>
         ) : null}
       </div>
