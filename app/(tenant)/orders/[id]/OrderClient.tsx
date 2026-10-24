@@ -17,6 +17,7 @@ import { SwapSizeSheet } from './SwapSizeSheet';
 import { AttachClientSheet } from './AttachClientSheet';
 import { OrderMarketplaceLine } from './OrderMarketplaceLine';
 import { useNouns } from '../../lib/use-nouns';
+import { isDeliveryApp } from '../../lib/order-channels';
 
 /**
  * Jira GRW-615 — an order's own screen.
@@ -97,7 +98,13 @@ export function OrderClient({
     returned: t('states.returned'),
   };
   const stateWord = (s: string): string => stateWords[s as keyof typeof stateWords] ?? t('list.unknownState');
-  const channelWords: Record<string, string> = { counter: t('channels.counter'), flipkart: t('channels.flipkart'), amazon: t('channels.amazon') };
+  const channelWords: Record<string, string> = {
+    counter: t('channels.counter'),
+    flipkart: t('channels.flipkart'),
+    amazon: t('channels.amazon'),
+    swiggy: t('channels.swiggy'),
+    zomato: t('channels.zomato'),
+  };
   const channelWord = (c: string): string => channelWords[c] ?? c;
   const moveWords: Record<string, string> = {
     packed: t('detail.moves.packed'),
@@ -127,7 +134,7 @@ export function OrderClient({
 
   const when = (iso: string) => new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: timezone }).format(new Date(iso));
   // Jira GRW-637 — "Flipkart refunded ₹450 on 12 May": the marketplace's name as the owner reads it, and the day in the shop's own timezone.
-  const refundChannelWord = (c: string) => (c === 'flipkart' ? t('refunds.flipkart') : c === 'amazon' ? t('refunds.amazon') : c.charAt(0).toUpperCase() + c.slice(1));
+  const refundChannelWord = (c: string) => (c === 'flipkart' ? t('refunds.flipkart') : c === 'amazon' ? t('refunds.amazon') : (channelWords[c] ?? c.charAt(0).toUpperCase() + c.slice(1)));
   const refundDay = (iso: string) => new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', timeZone: timezone }).format(new Date(iso));
   const money = (minor: string | number | undefined): string | null => (minor === undefined ? null : formatMoney(minor, 'INR', locale));
 
@@ -186,6 +193,11 @@ export function OrderClient({
 
   const code = order.id.slice(0, 8).toUpperCase();
   const isCounter = order.channel === 'counter';
+  /*
+   * Owner, 2026-10-24 — an order a delivery app brought (Swiggy, Zomato). Rung up at the till and done when the rider took
+   * it: there is no marketplace to tell anything, no parcel, and its guest is the app's (kept on the order, not in the list).
+   */
+  const fromApp = isDeliveryApp(order.channel);
   const hasMoney = order.totalMinor !== undefined;
   const offerPrimary = writable && order.moves.primary !== null && moveWords[order.moves.primary] !== undefined;
   const more = writable ? order.moves.more.filter((m) => moveWords[m] !== undefined) : [];
@@ -237,11 +249,11 @@ export function OrderClient({
           <span className={`ord-state-chip ord-s-${order.known ? order.status : 'unknown'}`}>{stateWord(order.status)}</span>
           <span className="ord-d-meta">
             {when(order.soldAt)} · {channelWord(order.channel)}
-            {order.externalRef ? ` · ${order.externalRef}` : ''}
+            {order.externalRef ? ` · ${fromApp ? t('detail.appOrderRef', { ref: order.externalRef }) : order.externalRef}` : ''}
           </span>
         </section>
 
-        {!isCounter ? (
+        {!isCounter && !fromApp ? (
           <OrderMarketplaceLine
             orderId={order.id}
             channel={channelWord(order.channel)}
@@ -252,7 +264,7 @@ export function OrderClient({
           />
         ) : null}
 
-        {!isCounter && order.branchName ? <p className="ord-d-quiet ord-d-branch">{t('detail.bookedAt', { branch: order.branchName })}</p> : null}
+        {!isCounter && order.branchName ? <p className="ord-d-quiet ord-d-branch">{fromApp ? t('detail.takenAt', { branch: order.branchName }) : t('detail.bookedAt', { branch: order.branchName })}</p> : null}
 
         {notice ? (
           <p className="ord-d-notice" role="alert">
@@ -261,12 +273,12 @@ export function OrderClient({
         ) : null}
 
         <section className="ord-d-block" aria-label={t('detail.forTitle')}>
-          <h2>{order.client ? t('detail.client', { customer: nouns.Customer }) : t('buyer.title')}</h2>
+          <h2>{order.client ? t('detail.client', { customer: nouns.Customer }) : fromApp ? nouns.Customer : t('buyer.title')}</h2>
           {order.client ? <p className="ord-d-name">{order.client.name ?? t('list.noName')}</p> : null}
           {order.buyer ? (
             <>
               {!order.client ? <p className="ord-d-name">{order.buyer.name ?? t('list.noName')}</p> : null}
-              {!order.client ? <p className="ord-d-quiet">{t('buyer.notAClient')}</p> : null}
+              {!order.client ? <p className="ord-d-quiet">{fromApp ? t('buyer.fromApp', { channel: channelWord(order.channel) }) : t('buyer.notAClient')}</p> : null}
               {/*
                 Jira GRW-613 — the buyer is somebody the shop already knows. Offered only where it can do anything:
                 a buyer with no client yet, and a role the API would accept (`useWritable` carries the business's
@@ -274,7 +286,7 @@ export function OrderClient({
               */}
               {!order.client && writable ? (
                 <button type="button" className="ord-d-attach" onClick={() => setAttaching(true)}>
-                  {t('attach.action')}
+                  {t('attach.action', { customer: nouns.customer })}
                 </button>
               ) : null}
               {order.buyer.address ? (
@@ -378,7 +390,8 @@ export function OrderClient({
               ) : null}
               {(order.payments ?? []).map((p) => (
                 <div key={p.mode}>
-                  <dt>{t('detail.paidBy', { mode: modeWords[p.mode] ?? p.mode })}</dt>
+                  {/* An app's order was paid to the app: "Paid on Swiggy", never "Paid by other". */}
+                  <dt>{fromApp && p.mode === 'other' ? t('detail.paidOn', { channel: channelWord(order.channel) }) : t('detail.paidBy', { mode: modeWords[p.mode] ?? p.mode })}</dt>
                   <dd>{money(p.amountMinor)}</dd>
                 </div>
               ))}
@@ -398,7 +411,13 @@ export function OrderClient({
           <h2>{t('detail.historyTitle')}</h2>
           <ol className="ord-d-history">
             <li>
-              <span>{order.channel === 'counter' ? t('detail.placedCounter') : t('detail.placed', { channel: channelWord(order.channel) })}</span>
+              <span>
+                {order.channel === 'counter'
+                  ? t('detail.placedCounter')
+                  : fromApp
+                    ? t('detail.placedApp', { channel: channelWord(order.channel) })
+                    : t('detail.placed', { channel: channelWord(order.channel) })}
+              </span>
               <span className="ord-d-quiet">{when(order.soldAt)}</span>
             </li>
             {order.history.map((h, i) => (

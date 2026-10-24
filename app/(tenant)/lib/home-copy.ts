@@ -436,10 +436,18 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       counterChannel: S('Counter', 'काउंटर'),
       flipkartChannel: S('Flipkart', 'फ़्लिपकार्ट'),
       amazonChannel: S('Amazon', 'अमेज़न'),
+      swiggyChannel: S('Swiggy', 'स्विगी'),
+      zomatoChannel: S('Zomato', 'ज़ोमैटो'),
+      /** Owner, 2026-10-24 — a business that ships nothing (a kitchen): what its Orders card says instead of "Nothing waiting to ship". */
+      ordersInPeriod: S('Orders in this period', 'इस अवधि के ऑर्डर'),
+      noReturnsYet: S('Nothing has come back.', 'कुछ भी वापस नहीं आया।'),
+      returnsToCheck: (n: number) => S(`${n} came back. Open Returns to see them.`, `${n} वापस आए। देखने के लिए वापसी खोलें।`),
       toSendShort: S('To send', 'भेजने हैं'),
       returnedShort: S('Returned', 'वापस आए'),
       unitsSoldTitle: S('Units sold', 'बिकी हुई यूनिट'),
       acrossSizes: (revenue: string, sizes: number) => S(`${revenue} across ${sizes} sizes`, `${sizes} साइज़ में ${revenue}`),
+      // Owner, 2026-10-24 — a kitchen sells dishes, not sizes.
+      acrossItems: (revenue: string, items: number) => S(`${revenue} from ${items} ${items === 1 ? 'item' : 'items'}`, `${items} चीज़ों से ${revenue}`),
       topSellerLabel: S('Top seller', 'सबसे ज़्यादा बिका'),
       stockWorthTitle: S('Stock at cost price', 'लागत दाम पर स्टॉक'),
       stylesAndSizes: (styles: number, sizes: number) => S(`${styles} styles · ${sizes} sizes`, `${styles} डिज़ाइन · ${sizes} साइज़`),

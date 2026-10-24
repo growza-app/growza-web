@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { api } from '../../lib/api';
 import { PageHeader } from '../../components/PageHeader';
 import { screenTitle } from '../../lib/page-title';
-import { guardScreen } from '../../lib/screen-guard';
+import { guardLive, guardScreen } from '../../lib/screen-guard';
 import { getTranslations } from 'next-intl/server';
 import { ImportClient } from './ImportClient';
 
@@ -17,6 +17,8 @@ export const metadata = screenTitle('Import orders');
  */
 export default async function ImportOrdersPage() {
   await guardScreen('/orders');
+  // Owner, 2026-10-24 — a Flipkart/Amazon screen: a business with no marketplaces (a restaurant) is sent Home, not shown it.
+  await guardLive('/orders/import');
   const t = await getTranslations('orders.import');
   let allowed = true;
   try {

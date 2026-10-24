@@ -2733,6 +2733,22 @@
     "remove": "हटाएँ"
   },
   "payFlow": {
+    "from": {
+      "completeShort": "ऑर्डर पूरा करें",
+      "doneTitle": "{app} से {amount} का ऑर्डर",
+      "label": "ऑर्डर कहाँ से",
+      "counter": "काउंटर",
+      "apps": {
+        "swiggy": "स्विगी",
+        "zomato": "ज़ोमैटो"
+      },
+      "orderNo": "{app} ऑर्डर नंबर",
+      "optional": "ज़रूरी नहीं",
+      "save": "हो गया",
+      "addOrderNo": "जोड़ें (ज़रूरी नहीं)",
+      "nothingToCollect": "{app} पर भुगतान हो चुका है। यहाँ कुछ नहीं लेना है।",
+      "complete": "ऑर्डर पूरा करें · {amount}"
+    },
     "step": "चरण {n} / 3",
     "whatTitle": "पेमेंट दर्ज करें",
     "howTitle": "पैसे कैसे दिए?",
@@ -3764,6 +3780,8 @@
       "counter": "काउंटर",
       "flipkart": "फ्लिपकार्ट",
       "amazon": "अमेज़न",
+      "swiggy": "स्विगी",
+      "zomato": "ज़ोमैटो",
       "up": "पिछली अवधि से {pct}% ऊपर",
       "down": "पिछली अवधि से {pct}% नीचे",
       "noPrevious": "पिछली अवधि में मिलाने को कोई बिक्री नहीं।",
@@ -3996,12 +4014,15 @@
     "channels": {
       "counter": "काउंटर",
       "flipkart": "फ़्लिपकार्ट",
-      "amazon": "अमेज़न"
+      "amazon": "अमेज़न",
+      "swiggy": "स्विगी",
+      "zomato": "ज़ोमैटो"
     },
     "buyer": {
       "title": "ख़रीदार",
       "plural": "ख़रीदार",
-      "notAClient": "आपकी ग्राहक सूची में नहीं"
+      "notAClient": "आपकी ग्राहक सूची में नहीं",
+      "fromApp": "{channel} का ऑर्डर। आपकी सूची में नहीं।"
     },
     "list": {
       "searchPlaceholder": "ऑर्डर नंबर या नाम",
@@ -4026,6 +4047,7 @@
       },
       "itemCount": "{count, plural, one {# सामान} other {# सामान}}",
       "orderCode": "ऑर्डर #{code}",
+      "appOrder": "ऐप ऑर्डर {ref}",
       "noName": "नाम नहीं",
       "empty": {
         "title": "अभी कोई ऑर्डर नहीं",
@@ -4047,6 +4069,8 @@
       "notConfirmed": "पुष्टि नहीं हुई"
     },
     "detail": {
+      "paidOn": "{channel} पर भुगतान",
+      "takenAt": "{branch} पर लिया गया",
       "client": "{customer}",
       "forTitle": "किसका",
       "address": "भेजने का पता",
@@ -4158,7 +4182,9 @@
       "marketplaceRefunded": "{channel} ने {date} को रिफ़ंड किया",
       "shopRefunded": "दुकान ने {date} को रिफ़ंड किया",
       "refundRef": "रेफ़रेंस {ref}",
-      "placedCounter": "काउंटर पर ऑर्डर लिया गया"
+      "placedCounter": "काउंटर पर ऑर्डर लिया गया",
+      "placedApp": "{channel} से ऑर्डर आया",
+      "appOrderRef": "ऑर्डर {ref}"
     },
     "import": {
       "title": "ऑर्डर इम्पोर्ट करें",
@@ -4298,6 +4324,8 @@
       "allChannels": "सभी",
       "flipkart": "फ्लिपकार्ट",
       "amazon": "अमेज़न",
+      "swiggy": "स्विगी",
+      "zomato": "ज़ोमैटो",
       "loading": "लोड हो रहा है",
       "loadError": "लोड नहीं हो सका। कनेक्शन जाँचें और फिर कोशिश करें।",
       "retry": "फिर कोशिश करें",
@@ -4338,14 +4366,14 @@
       "asked": "दोबारा कहा गया। हम जल्द ही {channel} को बताएँगे।"
     },
     "attach": {
-      "action": "यह हमारा ग्राहक है",
-      "title": "कौन सा ग्राहक?",
-      "searchLabel": "अपने ग्राहक खोजें",
+      "action": "यह हमारा {customer} है",
+      "title": "कौन सा {customer}?",
+      "searchLabel": "अपने {customers} खोजें",
       "searchPlaceholder": "नाम या नंबर",
       "typeMore": "खोजने के लिए दो या ज़्यादा अक्षर लिखें।",
       "searching": "देख रहे हैं…",
-      "noneFound": "इस नाम का कोई ग्राहक नहीं मिला। वर्तनी देखें, या रहने दें — ऑर्डर पर खरीदार का अपना ब्यौरा वैसे भी रहेगा।",
-      "failed": "ग्राहक नहीं जोड़ सके। फिर से कोशिश करें।",
+      "noneFound": "इस नाम का कोई {customer} नहीं मिला। वर्तनी देखें, या रहने दें — ऑर्डर पर खरीदार का अपना ब्यौरा वैसे भी रहेगा।",
+      "failed": "{customer} नहीं जोड़ सके। फिर से कोशिश करें।",
       "close": "बंद करें"
     }
   },

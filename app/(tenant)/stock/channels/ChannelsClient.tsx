@@ -52,7 +52,12 @@ export function ChannelsClient() {
     void load();
   }, [load]);
 
-  const word = (c: string) => (c === 'counter' ? t('counter') : c === 'flipkart' ? t('flipkart') : c === 'amazon' ? t('amazon') : c.charAt(0).toUpperCase() + c.slice(1));
+  const word = (c: string) =>
+    c === 'counter'
+      ? t('counter')
+      : c === 'flipkart' || c === 'amazon' || c === 'swiggy' || c === 'zomato'
+        ? t(c)
+        : c.charAt(0).toUpperCase() + c.slice(1);
 
   return (
     <div className="srp srp-channels">

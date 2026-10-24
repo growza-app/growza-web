@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { api } from '../../lib/api';
 import { PageHeader } from '../../components/PageHeader';
 import { screenTitle } from '../../lib/page-title';
-import { guardScreen } from '../../lib/screen-guard';
+import { guardLive, guardScreen } from '../../lib/screen-guard';
 import { HeldClient } from './HeldClient';
 
 export const dynamic = 'force-dynamic';
@@ -17,6 +17,8 @@ export const metadata = screenTitle('Waiting for a size');
  */
 export default async function HeldOrdersPage() {
   await guardScreen('/orders');
+  // Owner, 2026-10-24 — a Flipkart/Amazon screen: a business with no marketplaces (a restaurant) is sent Home, not shown it.
+  await guardLive('/orders/held');
   const t = await getTranslations('orders.held');
   let allowed = true;
   let timezone = 'Asia/Kolkata';

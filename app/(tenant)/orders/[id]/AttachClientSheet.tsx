@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useNouns } from '../../lib/use-nouns';
 import { api, ApiError } from '../../lib/api';
 import type { Customer } from '../../lib/api-types';
 import { useDialog } from '../../../shared/a11y/useDialog';
@@ -37,6 +38,8 @@ export function AttachClientSheet({
   onAttached: () => void;
 }) {
   const t = useTranslations('orders');
+  // Restaurant QA 2026-10-24 — Guest at a restaurant, Customer at a shop, Client at a salon.
+  const nouns = useNouns();
   const ref = useRef<HTMLDivElement>(null);
   useDialog(ref, { onClose });
 
@@ -86,16 +89,16 @@ export function AttachClientSheet({
       onAttached();
     } catch (err) {
       // The API's own sentence: "already has a client", "that client is not available", said where it happened.
-      setError(err instanceof ApiError && err.status >= 400 && err.status < 500 ? err.message : t('attach.failed'));
+      setError(err instanceof ApiError && err.status >= 400 && err.status < 500 ? err.message : t('attach.failed', { customer: nouns.customer }));
       setBusy(false);
     }
   };
 
   return (
     <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && !busy && onClose()}>
-      <div ref={ref} className="pf-keypad psz-sheet atc-sheet" role="dialog" aria-modal="true" aria-label={t('attach.title')} tabIndex={-1}>
+      <div ref={ref} className="pf-keypad psz-sheet atc-sheet" role="dialog" aria-modal="true" aria-label={t('attach.title', { customer: nouns.customer })} tabIndex={-1}>
         <div className="pf-keypad-head">
-          <span className="pf-keypad-title">{t('attach.title')}</span>
+          <span className="pf-keypad-title">{t('attach.title', { customer: nouns.customer })}</span>
           <button type="button" className="pf-keypad-clear" onClick={onClose} disabled={busy}>
             {t('attach.close')}
           </button>
@@ -108,7 +111,7 @@ export function AttachClientSheet({
         </p>
 
         <label className="atc-field">
-          <span className="ci-mini-label">{t('attach.searchLabel')}</span>
+          <span className="ci-mini-label">{t('attach.searchLabel', { customers: nouns.customers })}</span>
           <input
             type="text"
             autoComplete="off"
@@ -130,7 +133,7 @@ export function AttachClientSheet({
             {t('attach.searching')}
           </p>
         ) : rows && rows.length === 0 ? (
-          <p className="atc-note">{t('attach.noneFound')}</p>
+          <p className="atc-note">{t('attach.noneFound', { customer: nouns.customer })}</p>
         ) : (
           <ul className="atc-list">
             {(rows ?? []).map((c) => (

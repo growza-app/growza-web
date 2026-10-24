@@ -54,7 +54,10 @@ export function PaymentDone({
   fixHref = '/appointments',
   sound: soundProp,
   onToggleSound,
+  title,
 }: {
+  /** Owner, 2026-10-24 — said instead of "₹300 received" when no money was taken here (a delivery app's order). */
+  title?: string;
   /** The sale, so a number typed on this screen can be kept as its client. */
   appointmentId: string;
   /**
@@ -114,7 +117,7 @@ export function PaymentDone({
     buzz(BUZZ.done);
     chime();
     try {
-      const u = new SpeechSynthesisUtterance(t('spoken', { amount: spokenAmount(totalMinor, locale), mode: modeLabel }));
+      const u = new SpeechSynthesisUtterance(title ?? t('spoken', { amount: spokenAmount(totalMinor, locale), mode: modeLabel }));
       u.lang = locale === 'hi' ? 'hi-IN' : 'en-IN';
       window.speechSynthesis?.cancel();
       window.speechSynthesis?.speak(u);
@@ -154,7 +157,7 @@ export function PaymentDone({
           <IconCheck />
         </span>
         <h1 className="pf-done-title" aria-live="assertive">
-          {t('doneTitle', { amount: formatMoney(String(totalMinor)) })}
+          {title ?? t('doneTitle', { amount: formatMoney(String(totalMinor)) })}
         </h1>
         <p className="pf-done-sub">{summary}</p>
       </div>

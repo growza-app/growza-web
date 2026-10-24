@@ -92,7 +92,7 @@ describe('BR-03 / money — drawn only where it was sent', () => {
 describe('FR-04 / UI states — who it is for, and the plain lines', () => {
   it('a buyer is "Buyer" with the note that they are not in the client list; a client is "Client"', () => {
     // The client's heading is the business's own word (Guest, Customer) — Restaurant QA 2026-10-24.
-    expect(client).toContain("order.client ? t('detail.client', { customer: nouns.Customer }) : t('buyer.title')");
+    expect(client).toContain("order.client ? t('detail.client', { customer: nouns.Customer }) : fromApp ? nouns.Customer : t('buyer.title')");
     expect(client).toContain("t('buyer.notAClient')");
   });
 

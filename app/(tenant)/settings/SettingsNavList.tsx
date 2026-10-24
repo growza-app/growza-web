@@ -4,6 +4,7 @@ import type { SettingsSummary } from '../lib/api';
 import { withBranch } from './branch-link';
 import { IconChevronRight } from '../components/icons';
 import { gridCanSee } from '../lib/nav-policy';
+import { areaAllows } from '../lib/areas';
 import { SETTINGS_GROUPS, type SettingsGroupKey } from './nav-data';
 import { SignOutButton } from '../components/SignOutButton';
 import { useBranch } from '../components/BranchProvider';
@@ -87,7 +88,7 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
           </h2>
           <ul className="menu-list">
             {group.rows
-              .filter((row) => (!row.multiBranchOnly || multi) && (!row.whatsappOnly || whatsappLive) && (!row.liveOnly || live) && (!row.diaryOnly || areas.bookings) && (!row.shopOwnerOnly || (areas.shop && role === 'owner')) && (!areas.pages || !row.href || gridCanSee(row.href, areas.pages)) && (!row.shopOnly || areas.shop))
+              .filter((row) => (!row.multiBranchOnly || multi) && (!row.whatsappOnly || whatsappLive) && (!row.liveOnly || live) && (!row.diaryOnly || areas.bookings) && (!row.shopOwnerOnly || (areas.shop && role === 'owner')) && (!areas.pages || !row.href || gridCanSee(row.href, areas.pages)) && (!row.shopOnly || areas.shop) && (!row.href || areaAllows(row.href, areas)))
               .map((row) => {
               const Icon = row.icon;
               const key = multi && row.multiBranchKey ? row.multiBranchKey : row.key;

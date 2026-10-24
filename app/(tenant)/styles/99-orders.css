@@ -94,6 +94,16 @@
   background: var(--amber-soft);
   color: var(--amber-ink);
 }
+/* Owner, 2026-10-24 — the delivery apps a restaurant takes orders from. Never beside Amazon on one screen (a business has
+   one kind or the other), so Swiggy may share its amber; Zomato takes the red it is known by. */
+.ord-chan-swiggy {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+.ord-chan-zomato {
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+}
 
 /* ── Cards (phone first) ─────────────────────────────────────────────────────────────────────────────────────── */
 .ord-cards {
