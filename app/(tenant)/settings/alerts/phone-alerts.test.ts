@@ -198,6 +198,12 @@ describe('this phone can be registered without changing a switch', () => {
     expect(fn).not.toContain('api.setAlertPref');
   });
 
+  /** The switch and the notification must say the same thing, or nobody can find the switch again. */
+  it('names the summary the same on the switch as in the notification', () => {
+    const copy = (en as { settingsAlerts: { kinds: Record<string, { title: string }> } }).settingsAlerts;
+    expect(copy.kinds.daySummary!.title).toBe('Day summary');
+  });
+
   it('is worded in both languages', () => {
     for (const [lang, messages] of [['en', en], ['hi', hi]] as const) {
       expect((messages as { settingsAlerts: { useThisPhone?: string } }).settingsAlerts.useThisPhone, lang).toBeTruthy();

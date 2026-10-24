@@ -830,7 +830,7 @@
         "hint": "A walk-in joins the queue at the shop"
       },
       "daySummary": {
-        "title": "How today went",
+        "title": "Day summary",
         "hint": "One message in the evening: bookings done and money taken"
       }
     },
