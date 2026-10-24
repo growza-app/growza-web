@@ -180,6 +180,7 @@ import type {
   StockTakeResult,
   MovementKind,
   ManualMovementKind,
+  VisitRewards,
 } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
@@ -583,6 +584,43 @@ export interface CreatedInvite {
 }
 
 /** Jira GRW-647 — what `GET /alerts/prefs` answers: all four kinds, and how many devices are signed in. */
+/**
+ * Jira GRW-648 — one client's reward balance, and what this bill could take off.
+ *
+ * `enabled` false is a business that does not give points: everything else is zero and no screen draws
+ * anything. `maxRedeemable` and `discountMinor` are the till's offer and are 0 unless a `billMinor` was asked
+ * against — the cap is a share of a bill, so without one there is no answer to give.
+ */
+export interface CustomerRewards {
+  enabled: boolean;
+  balance: number;
+  pointValueMinor: number;
+  minRedeemPoints: number;
+  maxRedeemable: number;
+  discountMinor: number;
+  /** The next lot to die, and when. Null when nothing of theirs expires. */
+  expiring: { points: number; at: string } | null;
+}
+
+/** Jira GRW-648 — Settings › Reward points, and what the till and the client card read from the same numbers. */
+export interface RewardSettings {
+  enabled: boolean;
+  /** Basis points of a bill: 200 is 2%. The screen shows a percent; the capability keeps the unit it is stored in. */
+  earnBps: number;
+  /** 0 means points never die. */
+  expiryDays: number;
+  pointValueMinor: number;
+  minRedeemPoints: number;
+  redeemCapBps: number;
+  /** The most the platform allows, as this business's vertical leaves it. */
+  maxEarnBps: number;
+  maxExpiryDays: number;
+  /** False where points are not permitted at all — the switch is not drawn. */
+  available: boolean;
+  /** False between subscriptions: there is nowhere for the choice to live. */
+  changeable: boolean;
+}
+
 export interface AlertPrefs {
   prefs: Array<{ kind: AlertKind; enabled: boolean }>;
   devices: number;
@@ -594,6 +632,24 @@ export const api = {
    * Jira GRW-647 — phone alerts: this person's four switches, their devices, and the key a browser needs to
    * subscribe. Everything here is the SIGNED-IN person's own; there is no way to read or set anybody else's.
    */
+  /**
+   * Jira GRW-648 — what this business's reward points do, and the ceilings the screen says "up to" against.
+   *
+   * `changeable` is false between subscriptions: the choice is stored as an override on the live one, so
+   * there is nowhere to put it and the screen says that rather than pretending to save.
+   */
+  /**
+   * What this client has in points — and, with a bill, the most of it this bill may take.
+   *
+   * One route for both readers on purpose: the card's figure and the till's offer must be the same number,
+   * and two routes would be two chances for them not to be.
+   */
+  customerRewards: (customerId: string, billMinor?: number) =>
+    get<CustomerRewards>(`/api/v1/customers/${customerId}/rewards${billMinor === undefined ? '' : `?billMinor=${billMinor}`}`),
+  rewardSettings: () => get<RewardSettings>('/api/v1/settings/rewards'),
+  /** Any of the three. Answers with what was WRITTEN — a rate over the platform's ceiling comes back clamped. */
+  saveRewardSettings: (body: { enabled?: boolean; earnBps?: number; expiryDays?: number }) =>
+    patch<RewardSettings>('/api/v1/settings/rewards', body),
   alertPrefs: () => get<AlertPrefs>('/api/v1/alerts/prefs'),
   setAlertPref: (kind: AlertKind, enabled: boolean) => put<{ kind: AlertKind; enabled: boolean }>('/api/v1/alerts/prefs', { kind, enabled }),
   /** `null` when this deployment has no VAPID keys — the screen then says alerts are not set up. */
@@ -1435,6 +1491,8 @@ export const api = {
       endAt: string;
       overlapping: boolean;
       legs: { appointmentId: string; serviceId: string; paidAmountMinor: number; startAt: string; endAt: string }[];
+      /** Jira GRW-648 — what this bill did to the client's reward balance. Absent when the business has rewards off. */
+      rewards?: VisitRewards;
     }>('/api/v1/counter-sales', input),
   /**
    * The number the client gave when the bill was handed over, kept.

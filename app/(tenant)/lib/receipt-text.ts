@@ -46,6 +46,18 @@ export interface ReceiptInput {
    * than every line carrying an odd share of it ("Paneer Tikka — ₹218.18") and nothing saying a discount was given.
    */
   adjustMinor?: number;
+  /**
+   * Jira GRW-648 — points the client spent on this bill, and what they took off it.
+   *
+   * Its own row rather than part of `adjustMinor`, which is the desk typing over the total. A client reading
+   * this has to be able to see that a hundred of their points went, and the bill is the only place they ever
+   * will: the lines are stored net of it (the owner's decision, 2026-10-24), so without this row the total is
+   * simply smaller than the lines with nothing saying why.
+   */
+  rewardPoints?: number;
+  rewardMinor?: number;
+  /** What this bill EARNED them, for the line under the total. The reason to come back, in six words. */
+  earnedPoints?: number;
   paidBy: string;
 }
 
@@ -62,6 +74,10 @@ export interface ReceiptCopy {
   total: (amount: string) => string;
   discount?: (amount: string) => string;
   extra?: (amount: string) => string;
+  /** "Reward points used: 100 (−₹100)". Absent means the bill never mentions points. */
+  rewardUsed?: (points: number, amount: string) => string;
+  /** "You earned 38 points towards your next visit." */
+  earned?: (points: number) => string;
   saved: (amount: string) => string;
   paidBy: (mode: string) => string;
   seeYou: string;
@@ -148,7 +164,12 @@ export function receiptRows(input: ReceiptInput, copy: ReceiptCopy, money: (mino
   const adjust = input.adjustMinor ?? 0;
   if (adjust < 0 && copy.discount) line({ t: copy.discount(money(-adjust)) });
   if (adjust > 0 && copy.extra) line({ t: copy.extra(money(adjust)) });
+  // Above the total, where every other thing that changed it sits.
+  if (input.rewardPoints && input.rewardMinor && copy.rewardUsed) {
+    line({ t: copy.rewardUsed(input.rewardPoints, money(input.rewardMinor)) });
+  }
   line({ t: copy.total(money(input.totalMinor)), bold: true });
+  if (input.earnedPoints && copy.earned) line({ t: `⭐ ${copy.earned(input.earnedPoints)}` });
   if (saving > 0) line({ t: `🎉 ${copy.saved(money(saving))}` });
   line({ t: copy.paidBy(input.paidBy) });
   gap();

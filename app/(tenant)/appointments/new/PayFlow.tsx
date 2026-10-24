@@ -4,7 +4,7 @@ import Link from '../../../shared/AppLink';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { api, ApiError, formatMoney } from '../../lib/api';
+import { api, ApiError, formatMoney, type CustomerRewards } from '../../lib/api';
 import { fixVisitHref, nextCustomerHref } from '../../lib/pay-token';
 import type { Appointment, Offer, PaymentMode, Product, ProductCategory, Provider, Service, TillSize } from '../../lib/api-types';
 import type { QueueEntry } from '../../lib/home-types';
@@ -260,6 +260,15 @@ export function PayFlow({
   const [productCategories, setProductCategories] = useState<ProductCategory[]>([]);
   const [productCategory, setProductCategory] = useState<string>(ALL_CATEGORIES);
   const [client, setClient] = useState<Client>({ kind: 'none' });
+  /*
+   * Jira GRW-648 — what this client has in reward points, and whether the desk is spending them.
+   *
+   * Null covers every case where there is nothing to offer: no client named yet, a business with points
+   * switched off, a client with too few to spend on this bill, or a read that failed. All four draw nothing,
+   * which is what the till looked like yesterday.
+   */
+  const [rewards, setRewards] = useState<CustomerRewards | null>(null);
+  const [usePoints, setUsePoints] = useState(false);
   const [stylistId, setStylistId] = useState<string | null>(null);
   const [override, setOverride] = useState<number | null>(null);
   const [keypad, setKeypad] = useState<string | null>(null);
@@ -463,6 +472,7 @@ export function PayFlow({
     setClient({ kind: 'named', name: visit.appointment.customerName ?? '' });
   }, [visit]);
 
+
   /*
    * The grid does not move once it is drawn (owner, 2026-10-10).
    *
@@ -524,6 +534,63 @@ export function PayFlow({
   }, [lines]);
   const listMinor = baseAmounts.reduce((sum, m) => sum + m, 0);
   const totalMinor = override ?? listMinor;
+
+  /*
+   * Jira GRW-648 — the points, and what is left to collect once they come off.
+   *
+   * `totalMinor` stays the BILL: it is what the lines come to, it is what goes to the API (which does its own
+   * netting, line by line), and it is what the bill card shows. `dueMinor` is the money that crosses the
+   * counter, and it is what every way of paying has to add up to.
+   *
+   * Whose points: the client named on this sale, or — settling a booking — the one the booking was made for.
+   * `customerId` is absent rather than null for a staff session the salon withholds client identity from, so
+   * there is nothing to look up and nothing is offered, which is the right answer for that person.
+   */
+  const clientId = client.kind === 'existing' ? client.id : (visit?.appointment.customerId ?? null);
+  const discountMinor = usePoints && rewards ? rewards.discountMinor : 0;
+  const dueMinor = Math.max(0, totalMinor - discountMinor);
+
+  /*
+   * Jira GRW-648 — what this client may take off THIS bill, asked of the one route that answers it.
+   *
+   * Asked with the bill rather than worked out here: the cap is a share of the bill and the floor is a number
+   * of points, and both are the business's settings. A second copy of that arithmetic in the browser is a
+   * second place for the till and the client's card to disagree about the same person.
+   *
+   * Debounced, because the bill changes with every tile tapped and this is a round trip per change otherwise.
+   * 300ms is below the pause between adding a line and reaching for the payment tiles.
+   */
+  useEffect(() => {
+    if (!clientId || totalMinor <= 0) {
+      setRewards(null);
+      setUsePoints(false);
+      return;
+    }
+    let live = true;
+    const timer = setTimeout(() => {
+      api
+        .customerRewards(clientId, totalMinor)
+        .then((answer) => {
+          if (!live) return;
+          // Nothing to offer is the same as no answer: rewards off, or fewer points than this business takes.
+          setRewards(answer.enabled && answer.maxRedeemable > 0 ? answer : null);
+          if (!answer.enabled || answer.maxRedeemable <= 0) setUsePoints(false);
+        })
+        .catch(() => {
+          if (!live) return;
+          /*
+           * A failed read leaves the bill alone. The desk can still take the money, which is the thing that
+           * matters at a counter with somebody standing at it; the points are still theirs tomorrow.
+           */
+          setRewards(null);
+          setUsePoints(false);
+        });
+    }, 300);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [clientId, totalMinor]);
   /** Owner, 2026-10-15 — every package on the bill, one entry per time it was rung up, in the order picked. */
   const pkgsOnBill = useMemo(() => {
     const seen = new Map<string, NonNullable<Line['pkg']>>();
@@ -803,11 +870,13 @@ export function PayFlow({
   const money = (minor: number) => formatMoney(String(minor));
   const modeWord = (mode: PaymentMode) => (PAYMENT_MODES.some((m) => m.value === mode) ? tcr(`pay.${mode}`) : mode);
   /** The ways this bill is paid when the tile `mode` is tapped: two when a first way is held and differs, else one. */
+  // Jira GRW-648 — `dueMinor`, not `totalMinor`: the ways of paying add up to the money that crossed the
+  // counter, and points are not one of them. With no points on the bill the two are the same number.
   const waysFor = (mode: PaymentMode): Array<{ mode: PaymentMode; amountMinor: number }> => {
-    if (!firstWay || firstWay.mode === mode || firstWay.minor >= totalMinor) return [{ mode, amountMinor: totalMinor }];
+    if (!firstWay || firstWay.mode === mode || firstWay.minor >= dueMinor) return [{ mode, amountMinor: dueMinor }];
     return [
       { mode: firstWay.mode, amountMinor: firstWay.minor },
-      { mode, amountMinor: totalMinor - firstWay.minor },
+      { mode, amountMinor: dueMinor - firstWay.minor },
     ];
   };
   const paidByWords = (ways: Array<{ mode: PaymentMode; amountMinor: number }>) =>
@@ -828,6 +897,8 @@ export function PayFlow({
     setSaving(mode);
     setError(null);
     const amounts = spread(baseAmounts.map((priceMinor) => ({ priceMinor })), totalMinor);
+    // Jira GRW-648 — how many points this bill spends: all the till offered, or none.
+    const redeemPoints = usePoints && rewards ? rewards.maxRedeemable : 0;
     const legs = lines.flatMap((l, i) => (l.product ? [] : [{ serviceId: l.serviceId, paidAmountMinor: amounts[i]!, ...(l.pkg ? { offerId: l.pkg.id } : {}) }]));
     // Owner, 2026-10-14 — the products on the bill, grouped: which, how many, what the line came to.
     // Jira GRW-599 — one entry per product, and per size of a product that has sizes (the size is what the server takes the unit from).
@@ -879,15 +950,19 @@ export function PayFlow({
                 ...(extraServices.length ? { extraServices } : {}),
                 ...(groupMembers.length ? { groupMembers } : {}),
                 ...(cancelMemberIds.length ? { cancelMemberIds } : {}),
+                // Jira GRW-648 — the points, with the GROSS lines: the API takes them off the lines itself.
+                ...(redeemPoints > 0 ? { redeemPoints } : {}),
                 ...(confirmed ? { confirmLargeAmount: true } : {}),
               }),
             );
             return {
               appointmentId: r.appointmentId,
-              paidMinor: totalMinor,
+              // What the customer handed over. With points on the bill that is less than the lines come to.
+              paidMinor: dueMinor,
               schedulableId: stylistId,
               startAt: visit.appointment.startAt,
               tokenNo: null as number | null,
+              earnedPoints: r.rewards?.earnedPoints ?? 0,
             };
           })()
         : await (async () => {
@@ -901,6 +976,7 @@ export function PayFlow({
               // An app's order is paid to the app: the till says where it came from (the server takes it as "other").
               ...(appOrder ?? {}),
               ...soldProducts,
+              ...(redeemPoints > 0 ? { redeemPoints } : {}),
               idempotencyKey: attemptKey,
               ...(token || !location ? {} : { location }),
             };
@@ -913,11 +989,18 @@ export function PayFlow({
             );
             return {
               appointmentId: r.appointmentId,
-              // Owner, 2026-10-14 — the legs are the services; the products on the bill are the rest of what was paid.
-              paidMinor: r.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0) + productLines.reduce((sum, p) => sum + p.paidMinor, 0),
+              /*
+               * Owner, 2026-10-14 — the legs are the services; the products on the bill are the rest of what was paid.
+               *
+               * Jira GRW-648 — and `dueMinor` when points came off, because these two are not the same thing
+               * any more: the legs come back NET of the reward discount and the product lines are the gross
+               * figures this request sent, so adding them would count the discount once and not the other.
+               */
+              paidMinor: redeemPoints > 0 ? dueMinor : r.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0) + productLines.reduce((sum, p) => sum + p.paidMinor, 0),
               schedulableId: r.schedulableId,
               startAt: r.startAt,
               tokenNo: r.tokenNo ?? null,
+              earnedPoints: r.rewards?.earnedPoints ?? 0,
             };
           })();
       const result = settled;
@@ -953,6 +1036,9 @@ export function PayFlow({
           })),
           totalMinor: paidMinor,
           adjustMinor: totalMinor - listMinor,
+          // Jira GRW-648 — the points this bill spent, and the ones it just earned them.
+          ...(redeemPoints > 0 ? { rewardPoints: redeemPoints, rewardMinor: discountMinor } : {}),
+          ...(result.earnedPoints > 0 ? { earnedPoints: result.earnedPoints } : {}),
           paidBy,
         },
         {
@@ -970,6 +1056,8 @@ export function PayFlow({
           discount: nv.receiptDiscount,
           extra: nv.receiptExtra,
           saved: nv.receiptSaved,
+          rewardUsed: (points, amount) => t('rewards.receiptUsed', { points, amount }),
+          earned: (points) => t('rewards.receiptEarned', { points }),
           paidBy: nv.receiptPaidBy,
           seeYou: nv.receiptSeeYou,
         },
@@ -992,7 +1080,17 @@ export function PayFlow({
          * up empty for a client who has a number on file. The booking has it; take it from there.
          */
         phone: token?.customerPhone ?? visit?.appointment.customerPhone ?? (client.kind === 'existing' ? client.phone : null),
-        summary: [tokenNo !== null ? nv.token(tokenNo) : null, paidBy, names, stylist].filter(Boolean).join(' · '),
+        /* Jira GRW-648 — and what it earned them, because "that earned her 38 points" is the sentence the
+           desk says out loud, and the one reason a client cares that any of this exists. */
+        summary: [
+          tokenNo !== null ? nv.token(tokenNo) : null,
+          paidBy,
+          names,
+          stylist,
+          result.earnedPoints > 0 ? t('rewards.earnedDone', { points: result.earnedPoints }) : null,
+        ]
+          .filter(Boolean)
+          .join(' · '),
         day: new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(result.startAt)),
         productOnly: !lines.some((l) => !l.product),
       });
@@ -1178,6 +1276,51 @@ export function PayFlow({
     );
   }
 
+  /*
+   * Jira GRW-648 — the points, where the money is decided.
+   *
+   * One switch and one figure, drawn only when this client has enough for this bill: no client, no scheme, or
+   * too few points and there is nothing here at all, which is what the till looked like before. It sits with
+   * the ways of paying rather than with the bill, because that is what it is — part of how this bill is being
+   * settled, not a line of what was bought (the lines keep their own prices; the API takes the discount off
+   * them, and the receipt says so).
+   *
+   * Tapping it spends the most this bill allows. There is no box to type a number into: the cap, the floor
+   * and the balance already decide the answer, and a till is not the place to do arithmetic at somebody.
+   */
+  const redeemRow =
+    rewards && rewards.maxRedeemable > 0 ? (
+      <div className="pf-redeem">
+        <label className="switch">
+          <input
+            type="checkbox"
+            aria-labelledby="pf-redeem-label"
+            checked={usePoints}
+            disabled={saving !== null}
+            onChange={() => setUsePoints(!usePoints)}
+          />
+          <span className="switch-track">
+            <span className="switch-thumb" />
+          </span>
+        </label>
+        <span id="pf-redeem-label" className="pf-redeem-label">
+          {t('rewards.offer', { points: rewards.maxRedeemable })}
+        </span>
+        <strong className="pf-redeem-off">{t('rewards.off', { amount: money(rewards.discountMinor) })}</strong>
+      </div>
+    ) : null;
+
+  /** The amount to collect, and — when points are coming off — the bill it was before they did. */
+  const dueLine = (
+    <p className="pf-how-total">
+      <span className="pf-how-total-label">{t('total')}</span>
+      <strong>{money(dueMinor)}</strong>
+      {discountMinor > 0 ? (
+        <span className="pf-how-total-off">{t('rewards.wasOff', { bill: money(totalMinor), amount: money(discountMinor) })}</span>
+      ) : null}
+    </p>
+  );
+
   /* ---------- ②b Let them scan ---------- */
   /*
    * The owner's own QR, as big as the phone will draw it (owner, 2026-10-11).
@@ -1196,10 +1339,8 @@ export function PayFlow({
           <h1 className="pf-title">{t('qrTitle')}</h1>
           <span className="pf-head-gap" aria-hidden="true" />
         </header>
-        <p className="pf-how-total">
-          <span className="pf-how-total-label">{t('total')}</span>
-          <strong>{money(totalMinor)}</strong>
-        </p>
+        {/* The figure the customer types into their own app, so it is what is left to pay, not the bill. */}
+        {dueLine}
         {/* Owner, 2026-10-23 — a scan taken here is answered, not ignored. */}
         {scanNote ? (
           <div role="status" className="pf-error">
@@ -1244,7 +1385,7 @@ export function PayFlow({
    * The four payment tiles. On a phone they are ② — a screen of their own; on the wide till they sit under the
    * bill. One element, so UPI's QR rule and the save are written once.
    */
-  const restMinor = firstWay ? Math.max(0, totalMinor - firstWay.minor) : 0;
+  const restMinor = firstWay ? Math.max(0, dueMinor - firstWay.minor) : 0;
   // An app's order has nothing to collect: no tiles (its note is drawn in their place).
   const payTiles = fromApp ? null : (
     <div className="pf-pay" role="group" aria-label={t('howTitle')}>
@@ -1330,7 +1471,7 @@ export function PayFlow({
           setSplitAmount('');
           setSplitting(false);
           if (minor <= 0) return;
-          if (minor >= totalMinor) {
+          if (minor >= dueMinor) {
             setFirstWay(null);
             void pay(mode);
             return;
@@ -1355,10 +1496,8 @@ export function PayFlow({
           <h1 className="pf-title">{t('howTitle')}</h1>
           <span className="pf-head-gap" aria-hidden="true" />
         </header>
-        <p className="pf-how-total">
-          <span className="pf-how-total-label">{t('total')}</span>
-          <strong>{money(totalMinor)}</strong>
-        </p>
+        {dueLine}
+        {redeemRow}
         {/* Owner, 2026-10-23 — a scan taken here is answered, not ignored. */}
         {scanNote ? (
           <div role="status" className="pf-error">
@@ -1691,6 +1830,14 @@ export function PayFlow({
                 {error}
               </div>
             ) : null}
+            {/* Jira GRW-648 — between what the bill comes to and how it is being paid, which is what it is. */}
+            {redeemRow}
+            {discountMinor > 0 ? (
+              <p className="pf-wide-due">
+                <span>{t('total')}</span>
+                <strong>{money(dueMinor)}</strong>
+              </p>
+            ) : null}
             {fromApp ? null : <h2 className="pf-wide-h">{t('howTitle')}</h2>}
             {badMode && !selectedMode ? (
               <p className="pf-miss" role="alert">
@@ -1710,7 +1857,7 @@ export function PayFlow({
                 disabled={saving !== null || lines.length === 0}
                 onClick={completePosSale}
               >
-                <span>{fromApp ? t('from.complete', { amount: money(totalMinor) }) : t('desk.chargeNow', { amount: money(totalMinor) })}</span>
+                <span>{fromApp ? t('from.complete', { amount: money(dueMinor) }) : t('desk.chargeNow', { amount: money(dueMinor) })}</span>
                 <kbd className="pos-charge-kbd">F8</kbd>
               </button>
             ) : null}

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { api, ApiError, formatMoney, type ClientProfile, type ClientProfileRow } from '../lib/api';
+import { api, ApiError, formatMoney, type ClientProfile, type ClientProfileRow, type CustomerRewards } from '../lib/api';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useClientCardCopy } from '../lib/use-copy';
 import { formatPhone } from '../lib/format';
@@ -42,6 +42,15 @@ export function ClientProfileCard({
 }) {
   const [profile, setProfile] = useState<ClientProfile | null>(null);
   const [failed, setFailed] = useState(false);
+  /*
+   * Jira GRW-648 — what this client has in reward points.
+   *
+   * Its own request, and its own failure. The balance comes from the ledger rather than from the figures
+   * above it, which are derived from bookings — a card that waited for both would show nothing at all when a
+   * business has no reward scheme, which is most of them. Null means "no points here": either rewards are
+   * off, or the read failed, and in both cases the right thing to draw is nothing.
+   */
+  const [rewards, setRewards] = useState<CustomerRewards | null>(null);
   /*
    * Jira GRW-218 — the card stops being read-only for the ONE thing the front
    * desk needs to fix: a mistyped name or number.
@@ -89,10 +98,17 @@ export function ClientProfileCard({
     setSaveError(null);
     setDeletedFor(null);
     setConfirmDelete(false);
+    setRewards(null);
     api
       .clientProfile(clientId)
       .then((p) => live && setProfile(p))
       .catch(() => live && setFailed(true));
+    // Silent on failure: a business with points switched off answers `enabled: false`, and a card that
+    // announced a reward error would be announcing a feature most businesses do not have.
+    api
+      .customerRewards(clientId)
+      .then((r) => live && r.enabled && setRewards(r))
+      .catch(() => undefined);
     return () => {
       live = false;
     };
@@ -329,6 +345,26 @@ export function ClientProfileCard({
         <div className="cpc-body">
           {profile && (
             <>
+              {/*
+                Jira GRW-648 — points, above the derived figures and below the money.
+                A balance is a fact about what this person is owed, not an insight drawn from their history,
+                and it is the one line on this card the desk reads out loud to them.
+              */}
+              {rewards && (
+                <>
+                  <h3 className="cpc-section">{c.points}</h3>
+                  <div className="cpc-row cpc-points">
+                    <span>
+                      {c.pointsWorth(formatMoney(String(rewards.balance * rewards.pointValueMinor)))}
+                      {rewards.expiring && (
+                        <em>{c.pointsExpire(rewards.expiring.points, new Date(rewards.expiring.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }))}</em>
+                      )}
+                    </span>
+                    <strong>{c.pointsCount(rewards.balance)}</strong>
+                  </div>
+                </>
+              )}
+
               <h3 className="cpc-section">{c.insight}</h3>
               {profile.rows.map((row) => (
                 <div className="cpc-row" key={row.label}>
