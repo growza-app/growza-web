@@ -40,15 +40,42 @@ const SESSION_COOKIE = 'growza_session';
 async function authHeaders(): Promise<Record<string, string>> {
   if (typeof window !== 'undefined') return {};
   try {
-    const { cookies } = await import('next/headers');
+    const { cookies, headers } = await import('next/headers');
     const token = (await cookies()).get(SESSION_COOKIE)?.value;
-    return token ? { cookie: `${SESSION_COOKIE}=${token}` } : {};
+    const forwardedFor = (await headers()).get('x-forwarded-for');
+    return serverSideHeaders({ token, forwardedFor });
   } catch {
     // `cookies()` throws outside a request scope (a build-time render, say).
     // No cookie is the honest answer there, and the caller's 401 handling is
     // already correct for it.
     return {};
   }
+}
+
+/**
+ * Jira GRW-650 — the visitor's address travels with the server-side call.
+ *
+ * The API rate-limits unauthenticated callers per IP, keyed on `request.ip`,
+ * which under its `TRUST_PROXY=1` is the last entry of `X-Forwarded-For`.
+ * Caddy writes that header on the way in. The browser's own calls carry it
+ * through the rewrite untouched — but a `fetch` made HERE, by the Next server
+ * on the visitor's behalf, used to carry only the cookie, so every visitor's
+ * page renders reached the API from this container's address. One bucket for
+ * the whole platform, spent by whoever loaded a page.
+ *
+ * Forwarded verbatim, not rewritten: Caddy has already appended the true
+ * client address LAST, so a visitor who sends a forged header produces
+ * `forged, real` and the API keys on `real`. Rewriting it here could only
+ * make that worse. Absent locally, where nothing sits in front of Next, and
+ * then not sent at all — the API falls back to the socket peer, as before.
+ *
+ * Exported for its test; nothing else should call it.
+ */
+export function serverSideHeaders(input: { token?: string | null; forwardedFor?: string | null }): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (input.token) out.cookie = `${SESSION_COOKIE}=${input.token}`;
+  if (input.forwardedFor) out['x-forwarded-for'] = input.forwardedFor;
+  return out;
 }
 
 // GRW-171 — the shapes moved to their own files; re-exported so every
