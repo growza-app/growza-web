@@ -1747,7 +1747,7 @@ export function NewVisitSheet({
           client,
           result: {
             appointmentId: result.appointmentId,
-            customerId: result.customerId,
+            customerId: result.customerId!, // a client is always named here: this sheet never sends a delivery app
             legIds: result.legs.map((l) => l.appointmentId),
             schedulableId: result.schedulableId,
             startAt: result.startAt,
@@ -1785,7 +1785,7 @@ export function NewVisitSheet({
           client,
           result: {
             appointmentId: result.appointmentId,
-            customerId: result.customerId,
+            customerId: result.customerId!,
             legIds: result.legs.map((l) => l.appointmentId),
             schedulableId: null,
             startAt: result.startAt,

@@ -408,7 +408,11 @@
       },
       "notifications": {
         "label": "Notifications",
-        "sub": "Manage alerts and reminders"
+        "sub": "Reminder times for your customers on WhatsApp"
+      },
+      "phoneAlerts": {
+        "label": "Phone alerts",
+        "sub": "What your phone tells you"
       },
       "checkIn": {
         "label": "Location check-in",
@@ -802,6 +806,41 @@
       "badRadius": "Type a number between {min} and {max}."
     },
     "linkOnSave": "We will look this link up when you save. Open this screen again to see where it landed."
+  },
+  "settingsAlerts": {
+    "intro": "Your phone can tell you when something happens at the shop, even when this app is closed. Nothing is sent until you switch it on.",
+    "cannot": "Alerts can't be switched on here",
+    "blockers": {
+      "unsupported": "This browser can't show alerts. Try Chrome on Android, or add this app to your iPhone's Home Screen.",
+      "install-first": "Add Growza to your Home Screen first, then open it from there. On an iPhone, alerts only work in the installed app.",
+      "blocked": "You have blocked notifications for this site. Allow them again in your browser's settings for this site, then come back here.",
+      "not-configured": "Alerts are not set up on this server yet. Nothing is wrong with your phone."
+    },
+    "kinds": {
+      "bookingNew": {
+        "title": "New booking",
+        "hint": "Someone books a time"
+      },
+      "bookingCancelled": {
+        "title": "Booking cancelled",
+        "hint": "Someone calls off a time they had booked"
+      },
+      "walkinWaiting": {
+        "title": "Someone is waiting",
+        "hint": "A walk-in joins the queue at the shop"
+      },
+      "daySummary": {
+        "title": "How today went",
+        "hint": "One message in the evening: bookings done and money taken"
+      }
+    },
+    "deviceOn": "This phone will get them.",
+    "deviceOff": "This phone will not get them.",
+    "otherDevices": "{count, plural, one {1 other device also gets them.} other {# other devices also get them.}}",
+    "stopOnThisPhone": "Stop on this phone",
+    "blocked": "Your browser blocked the request. Allow notifications for this site and try again.",
+    "saveFailed": "That didn't save. Try again.",
+    "loadFailed": "We couldn't load your alerts. Try again in a moment."
   },
   "settingsTeam": {
     "title": "Team access",
@@ -2733,6 +2772,22 @@
     "remove": "Remove"
   },
   "payFlow": {
+    "from": {
+      "completeShort": "Complete order",
+      "doneTitle": "{amount} order from {app}",
+      "label": "Order from",
+      "counter": "Counter",
+      "apps": {
+        "swiggy": "Swiggy",
+        "zomato": "Zomato"
+      },
+      "orderNo": "{app} order number",
+      "optional": "optional",
+      "save": "Done",
+      "addOrderNo": "Add (optional)",
+      "nothingToCollect": "Paid on {app}. Nothing to collect here.",
+      "complete": "Complete order · {amount}"
+    },
     "step": "Step {n} of 3",
     "whatTitle": "Record payment",
     "howTitle": "How did they pay?",
@@ -3764,6 +3819,8 @@
       "counter": "Counter",
       "flipkart": "Flipkart",
       "amazon": "Amazon",
+      "swiggy": "Swiggy",
+      "zomato": "Zomato",
       "up": "Up {pct}% on the period before",
       "down": "Down {pct}% on the period before",
       "noPrevious": "No sales in the period before to compare with.",
@@ -3996,12 +4053,15 @@
     "channels": {
       "counter": "Counter",
       "flipkart": "Flipkart",
-      "amazon": "Amazon"
+      "amazon": "Amazon",
+      "swiggy": "Swiggy",
+      "zomato": "Zomato"
     },
     "buyer": {
       "title": "Buyer",
       "plural": "Buyers",
-      "notAClient": "Not in your client list"
+      "notAClient": "Not in your client list",
+      "fromApp": "A {channel} order. Not in your list."
     },
     "list": {
       "searchPlaceholder": "Order number or name",
@@ -4026,6 +4086,7 @@
       },
       "itemCount": "{count, plural, one {# item} other {# items}}",
       "orderCode": "Order #{code}",
+      "appOrder": "App order {ref}",
       "noName": "No name",
       "empty": {
         "title": "No orders yet",
@@ -4047,6 +4108,8 @@
       "notConfirmed": "Not confirmed"
     },
     "detail": {
+      "paidOn": "Paid on {channel}",
+      "takenAt": "Taken at {branch}",
       "client": "{customer}",
       "forTitle": "For",
       "address": "Delivery address",
@@ -4158,7 +4221,9 @@
       "marketplaceRefunded": "{channel} refunded on {date}",
       "shopRefunded": "The shop refunded on {date}",
       "refundRef": "reference {ref}",
-      "placedCounter": "Taken at the counter"
+      "placedCounter": "Taken at the counter",
+      "placedApp": "Taken from {channel}",
+      "appOrderRef": "order {ref}"
     },
     "import": {
       "title": "Import orders",
@@ -4298,6 +4363,8 @@
       "allChannels": "All",
       "flipkart": "Flipkart",
       "amazon": "Amazon",
+      "swiggy": "Swiggy",
+      "zomato": "Zomato",
       "loading": "Loading",
       "loadError": "Could not load. Check your connection and try again.",
       "retry": "Try again",
@@ -4338,14 +4405,14 @@
       "asked": "Asked again. We will tell {channel} shortly."
     },
     "attach": {
-      "action": "This is a client of ours",
-      "title": "Which client?",
-      "searchLabel": "Search your clients",
+      "action": "This is a {customer} of ours",
+      "title": "Which {customer}?",
+      "searchLabel": "Search your {customers}",
       "searchPlaceholder": "Name or number",
       "typeMore": "Type two letters or more to search.",
       "searching": "Looking…",
-      "noneFound": "No client of that name. Check the spelling, or leave it — the order keeps the buyer’s own details either way.",
-      "failed": "Could not attach that client. Please try again.",
+      "noneFound": "No {customer} of that name. Check the spelling, or leave it — the order keeps the buyer’s own details either way.",
+      "failed": "Could not attach that {customer}. Please try again.",
       "close": "Close"
     }
   },

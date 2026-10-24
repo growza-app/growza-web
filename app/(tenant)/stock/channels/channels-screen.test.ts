@@ -80,7 +80,7 @@ describe('states, who sees it, and the words', () => {
     }
     expect(Object.keys(messages('hi')).sort()).toEqual(Object.keys(messages('en')).sort());
     expect(readFileSync(path.resolve(import.meta.dirname, '../../lib/api-messages.ts'), 'utf8')).toContain(
-      "'Marketplace fees are not taken off these numbers. This is what was billed, not what you were paid.'",
+      "'Fees kept by a marketplace or a delivery app are not taken off these numbers. This is what was billed, not what you were paid.'",
     );
   });
 });

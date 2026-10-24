@@ -436,6 +436,12 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       counterChannel: S('Counter', 'काउंटर'),
       flipkartChannel: S('Flipkart', 'फ़्लिपकार्ट'),
       amazonChannel: S('Amazon', 'अमेज़न'),
+      swiggyChannel: S('Swiggy', 'स्विगी'),
+      zomatoChannel: S('Zomato', 'ज़ोमैटो'),
+      /** Owner, 2026-10-24 — a business that ships nothing (a kitchen): what its Orders card says instead of "Nothing waiting to ship". */
+      ordersInPeriod: S('Orders in this period', 'इस अवधि के ऑर्डर'),
+      noReturnsYet: S('Nothing has come back.', 'कुछ भी वापस नहीं आया।'),
+      returnsToCheck: (n: number) => S(`${n} came back. Open Returns to see them.`, `${n} वापस आए। देखने के लिए वापसी खोलें।`),
       toSendShort: S('To send', 'भेजने हैं'),
       returnedShort: S('Returned', 'वापस आए'),
       completedShort: S('Completed', 'पूरे हुए'),
@@ -445,6 +451,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       unitsSoldTitle: S('Units sold', 'बिकी हुई यूनिट'),
       dishesSoldTitle: S('Dishes sold', 'बिके हुए पकवान'),
       acrossSizes: (revenue: string, sizes: number) => S(`${revenue} across ${sizes} sizes`, `${sizes} साइज़ में ${revenue}`),
+      // Owner, 2026-10-24 — a kitchen sells dishes, not sizes.
+      acrossItems: (revenue: string, items: number) => S(`${revenue} from ${items} ${items === 1 ? 'item' : 'items'}`, `${items} चीज़ों से ${revenue}`),
       acrossDishes: (revenue: string, dishes: number) => S(`${revenue} across ${dishes} ${dishes === 1 ? 'dish' : 'dishes'}`, `${dishes} पकवानों में ${revenue}`),
       topSellerLabel: S('Top seller', 'सबसे ज़्यादा बिका'),
       topDishLabel: S('Top dish', 'सबसे ज़्यादा बिका'),

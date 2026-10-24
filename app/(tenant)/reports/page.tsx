@@ -122,6 +122,8 @@ export default async function ReportsPage({
   if (!areasOf(me).bookings) {
     const role = me.member?.role;
     const mayOpenShopReports = areasOf(me).shop && (role === undefined || role === 'owner' || role === 'manager');
+    // "See your stock" is a count's link: a kitchen keeps none, and its menu is already in the nav.
+    const counted = areasOf(me).stock;
     return (
       <>
         <PageHeader
@@ -130,7 +132,7 @@ export default async function ReportsPage({
             areasOf(me).shop ? (
               <>
                 <a className="btn btn-ghost" href="/orders">{t('shopSoonOrders')}</a>
-                {mayOpenShopReports ? <a className="btn btn-ghost" href="/stock">{t('shopSoonStock')}</a> : null}
+                {mayOpenShopReports && counted ? <a className="btn btn-ghost" href="/stock">{t('shopSoonStock')}</a> : null}
               </>
             ) : undefined
           }

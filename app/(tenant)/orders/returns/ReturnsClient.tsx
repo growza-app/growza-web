@@ -8,7 +8,8 @@ import { intlLocale } from '../../lib/format';
 import { returnReasonKey } from '../../lib/return-reasons';
 import AppLink from '../../../shared/AppLink';
 import { useBranch } from '../../components/BranchProvider';
-import { useSession } from '../../components/SessionProvider';
+import { useAreas, useSession } from '../../components/SessionProvider';
+import { sellsOnMarketplaces } from '../../lib/order-channels';
 
 const RANGES: readonly SellersRange[] = ['last_3_months', 'last_7_days', 'this_month', 'last_month', 'this_year'];
 
@@ -21,6 +22,7 @@ const RANGES: readonly SellersRange[] = ['last_3_months', 'last_7_days', 'this_m
  * plain: nothing here is called by the trade's short name for an undelivered parcel.
  */
 export function ReturnsClient() {
+  const ships = sellsOnMarketplaces(useAreas());
   const t = useTranslations('orders.returns');
   const tr = useTranslations('orders.returnReasons');
   const locale = useLocale();
@@ -103,12 +105,15 @@ export function ReturnsClient() {
             </ul>
           ) : null}
 
-          <section className="srp-totals" aria-label={t('undeliveredTitle')}>
-            <p className="srp-worth-label">{t('undeliveredTitle')}</p>
-            <p className="srp-worth">{t('returnsCount', { count: data.undelivered.returns })}</p>
-            <p className="srp-hint">{data.undelivered.returns > 0 ? t('unitsCount', { count: data.undelivered.units }) : t('undeliveredNone')}</p>
-            <p className="srp-hint">{t('undeliveredNote')}</p>
-          </section>
+          {/* Owner, 2026-10-24 — only a parcel comes back undelivered: where nothing ships (a kitchen), there is no such block. */}
+          {ships ? (
+            <section className="srp-totals" aria-label={t('undeliveredTitle')}>
+              <p className="srp-worth-label">{t('undeliveredTitle')}</p>
+              <p className="srp-worth">{t('returnsCount', { count: data.undelivered.returns })}</p>
+              <p className="srp-hint">{data.undelivered.returns > 0 ? t('unitsCount', { count: data.undelivered.units }) : t('undeliveredNone')}</p>
+              <p className="srp-hint">{t('undeliveredNote')}</p>
+            </section>
+          ) : null}
         </>
       )}
       <div className="srp-links">

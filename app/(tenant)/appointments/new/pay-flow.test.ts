@@ -109,7 +109,8 @@ describe('Record payment in three taps', () => {
     expect(flow).toMatch(/\{t\('whatTitle'\)\}/);
     expect(flow).toMatch(/\{t\('howTitle'\)\}/);
     expect(flow).toMatch(/<PaymentDone\s/);
-    expect(done).toMatch(/\{t\('doneTitle', \{ amount: formatMoney\(String\(totalMinor\)\) \}\)\}/);
+    // Owner, 2026-10-24 — a delivery app's order passes its own title ("₹300 order from Swiggy"): no money was taken here.
+    expect(done).toMatch(/\{title \?\? t\('doneTitle', \{ amount: formatMoney\(String\(totalMinor\)\) \}\)\}/);
   });
 
   it('draws the menu as photo tiles two across, each the height of a thumb and a half', () => {
@@ -374,7 +375,9 @@ describe('Record payment in three taps', () => {
     // Owner, 2026-10-10, said twice: a salon should know who it served. The shared anonymous row is gone.
     expect(flow).not.toMatch(/WALK_IN_CLIENT|walkInClient/);
     // Owner, 2026-10-14 — a service, not just a line: a product alone cannot be rung up yet.
-    expect(flow).toMatch(/const canGoOn = hasService && \(token !== undefined \|\| client\.kind !== 'none'\);/);
+    // Owner, 2026-10-24 — the one exception: a delivery app's order (Swiggy, Zomato), whose guest is the app's. It is
+    // kept on the order as its buyer, never as nobody.
+    expect(flow).toMatch(/const canGoOn = hasService && \(token !== undefined \|\| client\.kind !== 'none' \|\| fromApp !== null\);/);
     // The refusal says what is missing, and opens the sheet that fixes it when the client is all that is.
     expect(flow).toMatch(/if \(client_ && !service\) setWhoOpen\('add'\);/);
     // A token already carries its client, so it is never asked.
@@ -402,7 +405,7 @@ describe('Record payment in three taps', () => {
      */
     expect(flow).toMatch(/setMissing\(\{ client: client_, service \}\);/);
     // Each mark is tied to the thing still missing, so answering one does not clear the other's.
-    expect(flow).toMatch(/const badClient = Boolean\(missing\?\.client\) && !token && client\.kind === 'none';/);
+    expect(flow).toMatch(/const badClient = Boolean\(missing\?\.client\) && !token && client\.kind === 'none' && !fromApp;/);
     expect(flow).toMatch(/const badService = Boolean\(missing\?\.service\) && !hasService;/);
     // Beside the control, not one sentence in the tray a thumb's length from the fix.
     expect(flow).toMatch(/\{badClient \? \(\s*<p className="pf-miss" role="alert">\s*\{t\('needClient'\)\}/);
@@ -419,7 +422,7 @@ describe('Record payment in three taps', () => {
   });
 
   it('says the amount out loud on the done screen, and can be told not to', () => {
-    expect(done).toMatch(/new SpeechSynthesisUtterance\(t\('spoken', \{ amount: spokenAmount\(totalMinor, locale\), mode: modeLabel \}\)\)/);
+    expect(done).toMatch(/new SpeechSynthesisUtterance\(title \?\? t\('spoken', \{ amount: spokenAmount\(totalMinor, locale\), mode: modeLabel \}\)\)/);
     expect(done).toMatch(/u\.lang = locale === 'hi' \? 'hi-IN' : 'en-IN';/);
     expect(done).toMatch(/if \(!\(soundProp \?\? soundIsOn\(\)\)\) return;/);
     expect(done).toMatch(/aria-pressed=\{sound\} onClick=\{toggleSound\}/);

@@ -10,6 +10,7 @@ import { buildSaleRows, type SaleRow } from '../sales/SalesClient';
 import { ReturnProductSheet } from '../sales/ReturnProductSheet';
 import { returnLookbackFrom, type PosMode } from './pos-helpers';
 import { useNouns } from '../lib/use-nouns';
+import { isDeliveryApp } from '../lib/order-channels';
 
 /**
  * The POS tab: the till, and the way a product comes back onto the shelf, on one screen.
@@ -125,7 +126,8 @@ export function PosClient({
         includeSales: true,
       });
       if (mine !== opened.current) return;
-      setBills(buildSaleRows(rows, timezone));
+      // Owner, 2026-10-24 — "No return": a Swiggy or Zomato order is returned and refunded by the app, so it is not offered here.
+      setBills(buildSaleRows(rows.filter((r) => !isDeliveryApp(r.channel ?? 'counter')), timezone));
     } catch {
       if (mine !== opened.current) return;
       setBills(null);

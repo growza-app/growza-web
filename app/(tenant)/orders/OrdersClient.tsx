@@ -11,6 +11,8 @@ import { SearchClear } from '../components/SearchClear';
 import { useBranch } from '../components/BranchProvider';
 import { IconSearch } from '../components/icons';
 import { intlLocale } from '../lib/format';
+import { useAreas } from '../components/SessionProvider';
+import { channelsOf, isDeliveryApp, sellsOnMarketplaces } from '../lib/order-channels';
 
 /**
  * Jira GRW-614 — the Orders list.
@@ -101,6 +103,13 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
+  /*
+   * Owner, 2026-10-24 — the chips are this business's own channels: a shop's marketplaces, a restaurant's delivery
+   * apps. The states (to send, sent, delivered, came back) are a parcel's: where nothing ships there are none to pick.
+   */
+  const areas = useAreas();
+  const offered = channelsOf(areas).filter((c): c is (typeof CHANNEL_CHIPS)[number] => (CHANNEL_CHIPS as readonly string[]).includes(c));
+  const ships = sellsOnMarketplaces(areas);
   const pickChannel = (channel: string) => go({ ...query, channel, page: 1 }, 'push');
   const pickState = (status: string) => go({ ...query, status, page: 1 }, 'push');
   const clearAll = () => go({ ...EMPTY_QUERY }, 'push');
@@ -120,6 +129,8 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
     counter: t('channels.counter'),
     flipkart: t('channels.flipkart'),
     amazon: t('channels.amazon'),
+    swiggy: t('channels.swiggy'),
+    zomato: t('channels.zomato'),
   };
   const stateWord = (status: string): string => stateWords[status as keyof typeof stateWords] ?? t('list.unknownState');
   const when = (iso: string) =>
@@ -159,13 +170,14 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
           <button type="button" className={`ord-chip ${query.channel === '' ? 'is-on' : ''}`} aria-pressed={query.channel === ''} onClick={() => pickChannel('')}>
             {t('list.allChannels')}
           </button>
-          {CHANNEL_CHIPS.map((c) => (
+          {offered.map((c) => (
             <button key={c} type="button" className={`ord-chip ${query.channel === c ? 'is-on' : ''}`} aria-pressed={query.channel === c} onClick={() => pickChannel(c)}>
               {channelWords[c]}
             </button>
           ))}
         </div>
 
+        {ships ? (
         <div className="ord-chips ord-chips-state" role="group" aria-label={t('list.stateGroup')}>
           <button type="button" className={`ord-chip ${query.status === '' ? 'is-on' : ''}`} aria-pressed={query.status === ''} onClick={() => pickState('')}>
             {t('list.allStates')}
@@ -176,6 +188,7 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
             </button>
           ))}
         </div>
+        ) : null}
       </div>
 
       {failed ? (
@@ -220,6 +233,7 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
                 </div>
                 <div className="ord-card-foot">
                   <span className="ord-code">{t('list.orderCode', { code: r.code.toUpperCase() })}</span>
+                  {isDeliveryApp(r.channel) && r.externalRef ? <span className="ord-code">{t('list.appOrder', { ref: r.externalRef })}</span> : null}
                   <span className={`ord-state-chip ord-s-${r.known ? r.status : 'unknown'}`}>{stateWord(r.status)}</span>
                   {r.marketplaceUnconfirmed ? <span className="ord-unconfirmed">{t('list.notConfirmed')}</span> : null}
                 </div>
@@ -247,6 +261,7 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
                       {when(r.soldAt)}
                     </a>
                     <div className="ord-code">{t('list.orderCode', { code: r.code.toUpperCase() })}</div>
+                    {isDeliveryApp(r.channel) && r.externalRef ? <div className="ord-code">{t('list.appOrder', { ref: r.externalRef })}</div> : null}
                   </td>
                   <td>
                     <span className={`ord-chan-badge ord-chan-${r.channel}`}>{channelWord(r.channel)}</span>
