@@ -48,6 +48,14 @@ export function CorrectBookingSheet({
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Jira GRW-648 — reward points the save moved, held so the sheet can say so before it closes.
+   *
+   * `null` is every correction that moved none, which is nearly all of them, and those close as they always
+   * did. A correction that DID move points is the one case worth a tap: the owner changed an amount and a
+   * client's balance changed with it, which nothing else on this screen would ever tell them.
+   */
+  const [pointsMoved, setPointsMoved] = useState<number | null>(null);
 
   /** The branch's own menu, plus whatever the booking already has — a retired service must stay selectable. */
   const optionsFor = (leg: Appointment): Array<{ id: string; name: string }> => {
@@ -77,7 +85,7 @@ export function CorrectBookingSheet({
     setBusy(true);
     setError(null);
     try {
-      await guard((confirmed) =>
+      const saved = await guard((confirmed) =>
         api.correctBooking(appointment.id, {
           legs: changed.map((row) => {
             const leg = legs.find((l) => l.id === row.id)!;
@@ -92,6 +100,11 @@ export function CorrectBookingSheet({
         }),
       );
       router.refresh();
+      if (saved.pointsMoved !== 0) {
+        setBusy(false);
+        setPointsMoved(saved.pointsMoved);
+        return;
+      }
       onClose();
     } catch (err) {
       setBusy(false);
@@ -99,6 +112,41 @@ export function CorrectBookingSheet({
       setError(t('saveFailed'));
     }
   };
+
+  if (pointsMoved !== null) {
+    return (
+      <div className="modal-backdrop" onClick={onClose}>
+        <div
+          className="modal sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('title')}
+          ref={sheetRef}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="sheet-head">
+            {/* The middle column is centred between two, and there is nothing to cancel any more. */}
+            <span />
+            <span className="sheet-head-title">{t('title')}</span>
+            <button type="button" className="sheet-head-save" onClick={onClose}>
+              {t('done')}
+            </button>
+          </div>
+          <div className="sheet-body">
+            <div className="sheet-group">
+              <div className="sheet-row">
+                <span className="sheet-row-label">{t('pointsTitle')}</span>
+                <span className="sheet-row-value" role="status">
+                  {pointsMoved < 0 ? t('pointsTakenBack', { n: -pointsMoved }) : t('pointsAdded', { n: pointsMoved })}
+                </span>
+              </div>
+            </div>
+            <div className="sheet-foot">{t('pointsWhy')}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
