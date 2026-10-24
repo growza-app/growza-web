@@ -18,8 +18,8 @@
   "search": {
     "title": "Find a client or booking",
     "prompt": "Find a client or booking",
-    "shopTitle": "Find a client",
-    "shopPrompt": "Find a client",
+    "shopTitle": "Find a {customer}",
+    "shopPrompt": "Find a {customer}",
     "placeholder": "Name, phone, or booking ID",
     "customers": "CLIENTS",
     "bookings": "BOOKINGS",
@@ -37,7 +37,7 @@
     "markAllRead": "Mark all read",
     "clearAll": "Clear all",
     "loading": "Loading…",
-    "empty": "Nothing yet — new bookings will show up here.",
+    "empty": "Nothing yet — new activity will show up here.",
     "feed": {
       "topics": {
         "newBooking": "New booking",
@@ -197,7 +197,9 @@
     "bookingsTitle": "Bookings",
     "booking": "booking",
     "bookings": "bookings",
-    "packages": "packages"
+    "packages": "packages",
+    "product": "product",
+    "products": "products"
   },
   "customers": {
     "subtitle": "View and manage your {noun}, their history and total spend.",
@@ -214,7 +216,7 @@
     "kpiReturningSub": "Booked more than once",
     "kpiRepeat": "Repeat rate",
     "kpiRepeatSub": "Returning ÷ total {noun}",
-    "segmentsTitle": "How your clients are doing",
+    "segmentsTitle": "How your {noun} are doing",
     "segmentsHint": "Tap one to see just those",
     "neverVisited": "{count} ({pct}%) have not been in yet, so they are in none of these",
     "neverVisitedShort": "{count} ({pct}%) never been in",
@@ -246,7 +248,7 @@
     "allNoun": "All {noun}",
     "noMatch": "No {noun} match your search.",
     "loading": "Loading…",
-    "colCustomer": "Client",
+    "colCustomer": "{customer}",
     "colPhone": "Phone / WhatsApp",
     "colLastBooking": "Last booking",
     "colTotalSpent": "Total spent",
@@ -260,7 +262,8 @@
     "namePlaceholder": "e.g. Priya Sharma",
     "couldNotAdd": "Could not add the {noun}.",
     "whichBranch": "Which branch",
-    "deskPick": "Pick a {noun} to see their story, or add a new one."
+    "deskPick": "Pick a {noun} to see their story, or add a new one.",
+    "noneYet": "No {noun} here yet."
   },
   "tax": {
     "title": "Tax",
@@ -269,7 +272,7 @@
     "hsn": "HSN code",
     "sac": "SAC code",
     "hint": "Both optional. The {code} is 4 to 8 digits. A GST tax invoice needs both.",
-    "pricesInclude": "Your prices include GST, so a client pays the price you set.",
+    "pricesInclude": "Your prices include GST, so a {customer} pays the price you set.",
     "includedIn": "Includes {tax} GST at {rate}%. The client pays {total}."
   },
   "documents": {
@@ -358,7 +361,7 @@
     "largeCancel": "Check again"
   },
   "settingsHub": {
-    "subtitle": "How your business and bookings work.",
+    "subtitle": "How your business works.",
     "emptyPane": "Pick a section from the list to get started.",
     "back": "Back to Settings",
     "comingSoon": "Coming soon",
@@ -405,7 +408,11 @@
       },
       "notifications": {
         "label": "Notifications",
-        "sub": "Manage alerts and reminders"
+        "sub": "Reminder times for your customers on WhatsApp"
+      },
+      "phoneAlerts": {
+        "label": "Phone alerts",
+        "sub": "What your phone tells you"
       },
       "checkIn": {
         "label": "Location check-in",
@@ -520,8 +527,8 @@
     "titleBusinessOnly": "Business name and logo",
     "branchTitleNamed": "{name} profile",
     "branchTitleUnnamed": "Branch profile",
-    "sub": "What your clients see when they book with you.",
-    "subBranch": "What clients of this branch see when they book.",
+    "sub": "What your {customers} see about your business.",
+    "subBranch": "What {customers} of this branch see.",
     "cards": {
       "thisBranch": "This branch",
       "yourBusiness": "Your business",
@@ -588,7 +595,7 @@
     "title": "Working hours",
     "branchTitleNamed": "{name} hours",
     "branchTitleUnnamed": "Branch hours",
-    "hintBusiness": "When your salon is open. Staff work these hours unless you give them their own.",
+    "hintBusiness": "When your business is open. Staff work these hours unless you give them their own.",
     "hintBranchNamed": "When {name} is open. Staff at {name} work these hours unless you give them their own.",
     "hintBranchUnnamed": "When this branch is open. Its staff work these hours unless you give them their own.",
     "save": "Save changes",
@@ -656,6 +663,11 @@
     }
   },
   "settingsReports": {
+    "shopTitle": "What the counter can do",
+    "shopHint": "You, and any managers, can always do everything. Tick it to let the counter take a return and give the refund.",
+    "shopTabs": {
+      "sales": "Take returns and give refunds"
+    },
     "title": "Who can see Reports",
     "hint": "You, and any managers, always see every report. Tick what each person can see. Tick nothing and they can’t open Reports or the Sales register.",
     "roles": {
@@ -794,6 +806,41 @@
       "badRadius": "Type a number between {min} and {max}."
     },
     "linkOnSave": "We will look this link up when you save. Open this screen again to see where it landed."
+  },
+  "settingsAlerts": {
+    "intro": "Your phone can tell you when something happens at the shop, even when this app is closed. Nothing is sent until you switch it on.",
+    "cannot": "Alerts can't be switched on here",
+    "blockers": {
+      "unsupported": "This browser can't show alerts. Try Chrome on Android, or add this app to your iPhone's Home Screen.",
+      "install-first": "Add Growza to your Home Screen first, then open it from there. On an iPhone, alerts only work in the installed app.",
+      "blocked": "You have blocked notifications for this site. Allow them again in your browser's settings for this site, then come back here.",
+      "not-configured": "Alerts are not set up on this server yet. Nothing is wrong with your phone."
+    },
+    "kinds": {
+      "bookingNew": {
+        "title": "New booking",
+        "hint": "Someone books a time"
+      },
+      "bookingCancelled": {
+        "title": "Booking cancelled",
+        "hint": "Someone calls off a time they had booked"
+      },
+      "walkinWaiting": {
+        "title": "Someone is waiting",
+        "hint": "A walk-in joins the queue at the shop"
+      },
+      "daySummary": {
+        "title": "How today went",
+        "hint": "One message in the evening: bookings done and money taken"
+      }
+    },
+    "deviceOn": "This phone will get them.",
+    "deviceOff": "This phone will not get them.",
+    "otherDevices": "{count, plural, one {1 other device also gets them.} other {# other devices also get them.}}",
+    "stopOnThisPhone": "Stop on this phone",
+    "blocked": "Your browser blocked the request. Allow notifications for this site and try again.",
+    "saveFailed": "That didn't save. Try again.",
+    "loadFailed": "We couldn't load your alerts. Try again in a moment."
   },
   "settingsTeam": {
     "title": "Team access",
@@ -1867,7 +1914,7 @@
       "total": "Total paid",
       "paidBy": "Paid by",
       "returnedBadge": "{n} returned",
-      "returnProducts": "Return product",
+      "returnProducts": "Return {product}",
       "refunded": "Refunded"
     },
     "daySchedule": {
@@ -2034,6 +2081,8 @@
     "receiptPackage": "{title} (package)",
     "receiptSeparately": "Separately {was} · You save {saved}",
     "receiptTotal": "Total paid: {amount}",
+    "receiptDiscount": "Discount: −{amount}",
+    "receiptExtra": "Added to the bill: {amount}",
     "receiptSaved": "You saved {amount} with the package",
     "receiptPaidBy": "Paid by {mode}",
     "receiptSeeYou": "See you again soon!",
@@ -2723,6 +2772,22 @@
     "remove": "Remove"
   },
   "payFlow": {
+    "from": {
+      "completeShort": "Complete order",
+      "doneTitle": "{amount} order from {app}",
+      "label": "Order from",
+      "counter": "Counter",
+      "apps": {
+        "swiggy": "Swiggy",
+        "zomato": "Zomato"
+      },
+      "orderNo": "{app} order number",
+      "optional": "optional",
+      "save": "Done",
+      "addOrderNo": "Add (optional)",
+      "nothingToCollect": "Paid on {app}. Nothing to collect here.",
+      "complete": "Complete order · {amount}"
+    },
     "step": "Step {n} of 3",
     "whatTitle": "Record payment",
     "howTitle": "How did they pay?",
@@ -2807,7 +2872,7 @@
       "noProducts": "Nothing on the shelf yet. Add products on the Products screen.",
       "noProductMatch": "No product by that name.",
       "searchProducts": "Search {count} products or scan barcode",
-      "emptyProductBill": "Tap a product to start the bill.",
+      "emptyProductBill": "Tap a {product} to start the bill.",
       "scanMiss": "No product has the code {code}. Check the bottle or search by name.",
       "scanNoStock": "No more {name} in stock.",
       "scanFull": "The bill is full. Take payment, then start another.",
@@ -2829,7 +2894,7 @@
       "noDishes": "Nothing on the menu yet. Add dishes on the Menu screen.",
       "noDishMatch": "No dish by that name."
     },
-    "sellTitle": "Sell product",
+    "sellTitle": "Sell {product}",
     "pickProduct": "Select a product",
     "allCategories": "All products",
     "noCategory": "No category",
@@ -3155,8 +3220,8 @@
     "delete": "Delete",
     "deleteAsk": "Delete {name}? Bills that sold it keep their own copy.",
     "form": {
-      "titleAdd": "Add a product",
-      "titleEdit": "Edit product",
+      "titleAdd": "Add a {product}",
+      "titleEdit": "Edit {product}",
       "name": "Name",
       "namePlaceholder": "e.g. Water bottle 1 litre",
       "price": "Sell price",
@@ -3190,7 +3255,7 @@
       "photoFailed": "Saved, but the photo did not upload. Choose it again and save.",
       "sku": "SKU",
       "barcode": "Barcode",
-      "codesHint": "Both optional. The SKU is your own short code, like ARG-100. On the till's Products tab, scan a barcode and press Enter to add it.",
+      "codesHint": "Both optional. The SKU is your own short code, like A-100. On the till, scan a barcode and press Enter to add it.",
       "barcodeSpaces": "Type the barcode as it is printed, with no spaces.",
       "skuTaken": "{name} already has this SKU at this branch.",
       "barcodeTaken": "{name} already has this barcode at this branch.",
@@ -3278,7 +3343,7 @@
     "inStock": "In stock",
     "noun": "products",
     "cols": {
-      "product": "Product",
+      "product": "{product}",
       "category": "Category",
       "sku": "SKU",
       "price": "Sell price",
@@ -3754,6 +3819,8 @@
       "counter": "Counter",
       "flipkart": "Flipkart",
       "amazon": "Amazon",
+      "swiggy": "Swiggy",
+      "zomato": "Zomato",
       "up": "Up {pct}% on the period before",
       "down": "Down {pct}% on the period before",
       "noPrevious": "No sales in the period before to compare with.",
@@ -3780,7 +3847,7 @@
     "exitFullScreen": "Exit full screen",
     "orders": "Orders",
     "shortcutSearch": "Search / Scan",
-    "shortcutClient": "Client",
+    "shortcutClient": "{customer}",
     "shortcutCharge": "Complete sale",
     "shortcutHold": "Hold bill",
     "shortcutExit": "Exit"
@@ -3883,7 +3950,7 @@
       "bookingsCount": "{n, plural, =0 {No bookings} one {# booking} other {# bookings}}",
       "noneYet": "—"
     },
-    "returnProduct": "Return product",
+    "returnProduct": "Return {product}",
     "returnBtn": "Return",
     "returnedStatus": "Returned",
     "partReturnedStatus": "Part returned",
@@ -3891,7 +3958,7 @@
     "returnWindowOpen": "Open · {days, plural, =0 {Last day} one {#d left} other {#d left}}",
     "returnWindowClosed": "Closed",
     "returnSheet": {
-      "title": "Return product",
+      "title": "Return {product}",
       "subtitle": "Find the bill and select items to return.",
       "subtitleReview": "Review the items and complete the refund.",
       "subtitleDone": "Return recorded and refund completed.",
@@ -3932,7 +3999,7 @@
       "itemsCount": "{n, plural, one {# item} other {# items}}",
       "billPrefix": "Bill #{ref}",
       "viewBill": "View bill",
-      "colProduct": "Product",
+      "colProduct": "{product}",
       "colSku": "SKU",
       "colPurchased": "Purchased",
       "colAlreadyReturned": "Already returned",
@@ -3986,12 +4053,15 @@
     "channels": {
       "counter": "Counter",
       "flipkart": "Flipkart",
-      "amazon": "Amazon"
+      "amazon": "Amazon",
+      "swiggy": "Swiggy",
+      "zomato": "Zomato"
     },
     "buyer": {
       "title": "Buyer",
       "plural": "Buyers",
-      "notAClient": "Not in your client list"
+      "notAClient": "Not in your client list",
+      "fromApp": "A {channel} order. Not in your list."
     },
     "list": {
       "searchPlaceholder": "Order number or name",
@@ -4016,6 +4086,7 @@
       },
       "itemCount": "{count, plural, one {# item} other {# items}}",
       "orderCode": "Order #{code}",
+      "appOrder": "App order {ref}",
       "noName": "No name",
       "empty": {
         "title": "No orders yet",
@@ -4037,7 +4108,9 @@
       "notConfirmed": "Not confirmed"
     },
     "detail": {
-      "client": "Client",
+      "paidOn": "Paid on {channel}",
+      "takenAt": "Taken at {branch}",
+      "client": "{customer}",
       "forTitle": "For",
       "address": "Delivery address",
       "contact": "Contact",
@@ -4061,7 +4134,7 @@
       "placed": "Placed on {channel}",
       "movedTo": "{state}",
       "by": "by {name}",
-      "clientAttached": "Matched to a client",
+      "clientAttached": "Matched to a {customer}",
       "buyerErased": "Buyer’s details removed",
       "more": "More",
       "moves": {
@@ -4147,7 +4220,10 @@
       "refundsTitle": "Refunds",
       "marketplaceRefunded": "{channel} refunded on {date}",
       "shopRefunded": "The shop refunded on {date}",
-      "refundRef": "reference {ref}"
+      "refundRef": "reference {ref}",
+      "placedCounter": "Taken at the counter",
+      "placedApp": "Taken from {channel}",
+      "appOrderRef": "order {ref}"
     },
     "import": {
       "title": "Import orders",
@@ -4231,7 +4307,7 @@
       "size": "Size did not fit",
       "not_as_described": "Not as described",
       "faulty": "Damaged or faulty",
-      "wrong_item": "Wrong item sent",
+      "wrong_item": "Wrong item",
       "changed_mind": "Changed their mind",
       "other": "Something else",
       "not_said": "No reason given"
@@ -4287,6 +4363,8 @@
       "allChannels": "All",
       "flipkart": "Flipkart",
       "amazon": "Amazon",
+      "swiggy": "Swiggy",
+      "zomato": "Zomato",
       "loading": "Loading",
       "loadError": "Could not load. Check your connection and try again.",
       "retry": "Try again",
@@ -4327,14 +4405,14 @@
       "asked": "Asked again. We will tell {channel} shortly."
     },
     "attach": {
-      "action": "This is a client of ours",
-      "title": "Which client?",
-      "searchLabel": "Search your clients",
+      "action": "This is a {customer} of ours",
+      "title": "Which {customer}?",
+      "searchLabel": "Search your {customers}",
       "searchPlaceholder": "Name or number",
       "typeMore": "Type two letters or more to search.",
       "searching": "Looking…",
-      "noneFound": "No client of that name. Check the spelling, or leave it — the order keeps the buyer’s own details either way.",
-      "failed": "Could not attach that client. Please try again.",
+      "noneFound": "No {customer} of that name. Check the spelling, or leave it — the order keeps the buyer’s own details either way.",
+      "failed": "Could not attach that {customer}. Please try again.",
       "close": "Close"
     }
   },

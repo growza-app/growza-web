@@ -9,6 +9,8 @@ import { SellProductClient } from '../products/sell/SellProductClient';
 import { buildSaleRows, type SaleRow } from '../sales/SalesClient';
 import { ReturnProductSheet } from '../sales/ReturnProductSheet';
 import { returnLookbackFrom, type PosMode } from './pos-helpers';
+import { useNouns } from '../lib/use-nouns';
+import { isDeliveryApp } from '../lib/order-channels';
 
 /**
  * The POS tab: the till, and the way a product comes back onto the shelf, on one screen.
@@ -47,6 +49,7 @@ export function PosClient({
   backTo?: '/products' | '/sales';
 }) {
   const t = useTranslations('pos');
+  const { Customer } = useNouns();
   const [mode, setMode] = useState<PosMode>('sell');
   const [fullScreen, setFullScreen] = useState(false);
   const [bills, setBills] = useState<SaleRow[] | null>(null);
@@ -123,7 +126,8 @@ export function PosClient({
         includeSales: true,
       });
       if (mine !== opened.current) return;
-      setBills(buildSaleRows(rows, timezone));
+      // Owner, 2026-10-24 — "No return": a Swiggy or Zomato order is returned and refunded by the app, so it is not offered here.
+      setBills(buildSaleRows(rows.filter((r) => !isDeliveryApp(r.channel ?? 'counter')), timezone));
     } catch {
       if (mine !== opened.current) return;
       setBills(null);
@@ -163,7 +167,7 @@ export function PosClient({
           </div>
           <div className="pos-fs-shortcuts" aria-hidden="true">
             <span className="pos-kbd-pill"><kbd>F2</kbd> {t('shortcutSearch')}</span>
-            <span className="pos-kbd-pill"><kbd>F4</kbd> {t('shortcutClient')}</span>
+            <span className="pos-kbd-pill"><kbd>F4</kbd> {t('shortcutClient', { customer: Customer })}</span>
             <span className="pos-kbd-pill"><kbd>F8</kbd> {t('shortcutCharge')}</span>
             <span className="pos-kbd-pill"><kbd>F9</kbd> {t('shortcutHold')}</span>
             <span className="pos-kbd-pill"><kbd>{/* i18n-ok: keyboard keycap */}Esc</kbd> {t('shortcutExit')}</span>
@@ -204,7 +208,7 @@ export function PosClient({
             ) : null}
             <div className="pos-bar-shortcuts" aria-hidden="true">
               <span className="pos-kbd-inline"><kbd>F2</kbd> {t('shortcutSearch')}</span>
-              <span className="pos-kbd-inline"><kbd>F4</kbd> {t('shortcutClient')}</span>
+              <span className="pos-kbd-inline"><kbd>F4</kbd> {t('shortcutClient', { customer: Customer })}</span>
               <span className="pos-kbd-inline"><kbd>F8</kbd> {t('shortcutCharge')}</span>
               <span className="pos-kbd-inline"><kbd>F9</kbd> {t('shortcutHold')}</span>
             </div>
@@ -217,7 +221,7 @@ export function PosClient({
         <div className="pos-bar pos-bar-minimal">
           <div className="pos-bar-shortcuts" aria-hidden="true">
             <span className="pos-kbd-inline"><kbd>F2</kbd> {t('shortcutSearch')}</span>
-            <span className="pos-kbd-inline"><kbd>F4</kbd> {t('shortcutClient')}</span>
+            <span className="pos-kbd-inline"><kbd>F4</kbd> {t('shortcutClient', { customer: Customer })}</span>
             <span className="pos-kbd-inline"><kbd>F8</kbd> {t('shortcutCharge')}</span>
             <span className="pos-kbd-inline"><kbd>F9</kbd> {t('shortcutHold')}</span>
           </div>

@@ -1,0 +1,88 @@
+/*
+ * Jira GRW-647 — Settings › Phone alerts.
+ *
+ * An inset grouped list of four switches, laid out at 344px first. It borrows the switch row from
+ * `88-check-in.css` rather than inventing a second one — same shape, same 44px target, same alignment of the
+ * track to the first line of the title — because two screens that show a column of switches should not look
+ * like two different products.
+ */
+
+.al-intro {
+  margin: 0 0 var(--sp-4);
+}
+
+.al-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.al-row {
+  display: flex;
+  align-items: flex-start;
+  /* The switch's own tap padding eats 10px of this, which is why the gap looks smaller than it reads. */
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+}
+
+/* Hairlines between, not around: the card already draws the outer edge. */
+.al-row + .al-row {
+  border-top: 1px solid var(--line);
+}
+
+/*
+ * A 44px tap target around a 21px track, drawn where the 21px track was.
+ *
+ * `90-accessibility.css` excludes `.switch` from the rule that gives a checkbox's label 44px
+ * (`label:not(.switch)`), because the shared switch is used inline in tight rows like the offers list where it
+ * could not have it. This screen is a list of four with room to spare, so there is no reason to inherit the
+ * compromise: the padding makes the target 44px tall and the negative margin hands the row back its layout, the
+ * same trick `.rp-tip-btn` uses for the "i" button. Nothing moves on screen; the switch is simply hittable.
+ */
+.al-row .switch {
+  /* The track centres on the title's line, so four rows line up however long their hints wrap. */
+  flex: none;
+  align-self: flex-start;
+  height: 1.5rem;
+  box-sizing: content-box;
+  padding: 10px;
+  margin: -10px;
+}
+
+.al-row > div {
+  min-width: 0;
+}
+
+.al-row-title,
+.al-blocked-title {
+  font-weight: 650;
+  /* 15px. The type floor on this product is 12px and body is 16px; a row title sits just under body. */
+  font-size: 0.9375rem;
+  color: var(--text);
+}
+
+.al-blocked-title {
+  margin: 0 0 var(--sp-2);
+}
+
+.al-error {
+  margin: var(--sp-3) 0 0;
+  font-size: 0.875rem;
+  color: var(--danger);
+}
+
+.al-devices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+
+.al-devices .btn {
+  /* 44px, like every other target on a phone. */
+  min-height: 44px;
+}

@@ -8,6 +8,7 @@ import { api, ApiError, formatMoney, formatTime, type ReturnReason, type ReturnS
 const RETURN_REASONS: readonly ReturnReason[] = ['size', 'not_as_described', 'faulty', 'wrong_item', 'changed_mind', 'other'];
 import { formatDate } from '../lib/format';
 import { useBarcodeScan } from '../lib/barcode-scan';
+import { useNouns } from '../lib/use-nouns';
 import { initials } from '../lib/appointment-display';
 import { useAreas, useSession } from '../components/SessionProvider';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -104,6 +105,8 @@ export function ReturnProductSheet({
   const t = useTranslations('sales.returnSheet');
   const tReasons = useTranslations('orders.returnReasons');
   const tc = useTranslations('chrome');
+  // Restaurant QA 2026-10-24 — "Return dish" at a kitchen, "Return product" at a shop.
+  const nouns = useNouns();
   const locale = useLocale();
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialog(dialogRef, { onClose });
@@ -142,6 +145,12 @@ export function ReturnProductSheet({
   const [reason, setReason] = useState('');
   // Jira GRW-635 — why it came back, from the small set. Optional at the counter, where the shopkeeper is standing in front of the customer.
   const [reasonCode, setReasonCode] = useState<ReturnReason | null>(null);
+  /*
+   * Restaurant QA 2026-10-24 — a reason is offered where it can be true: "Size did not fit" only on a bill that sold a size,
+   * and the code column only when a line on the bill has a code. A kitchen's bill has neither, and showed both.
+   */
+  const billHasSizes = Boolean(selectedBill?.products.some((p) => p.variantId));
+  const showCodes = Boolean(selectedBill?.products.some((p) => p.sku || p.barcode));
   const [completedResult, setCompletedResult] = useState<ReturnSaleProductsResponse | null>(null);
   // The invoice already handed over for this bill, once the server has said so: the desk is asked before going ahead.
   const [issuedDocument, setIssuedDocument] = useState<string | null>(null);
@@ -382,7 +391,7 @@ export function ReturnProductSheet({
         className={`sheet sls-return-sheet is-step-${step} is-mobile-${mobileStep}`}
         role="dialog"
         aria-modal="true"
-        aria-label={t('title')}
+        aria-label={t('title', { product: nouns.product })}
         ref={dialogRef}
       >
         <div className="sheet-grab" />
@@ -404,13 +413,13 @@ export function ReturnProductSheet({
             <IconReturn />
           </span>
           <div className="sls-ret-head-copy">
-            <h2 className="sls-ret-title">{t('title')}</h2>
+            <h2 className="sls-ret-title">{t('title', { product: nouns.product })}</h2>
             <p className="sls-ret-sub">
               {step === 2 ? t('subtitleReview') : step === 'done' ? t('subtitleDone') : t('subtitle')}
             </p>
           </div>
 
-          <div className="sls-ret-steps" aria-label={t('title')}>
+          <div className="sls-ret-steps" aria-label={t('title', { product: nouns.product })}>
             <button
               type="button"
               className={`sls-ret-step-pill ${step === 1 ? 'is-active' : 'is-done'}`}
@@ -619,10 +628,10 @@ export function ReturnProductSheet({
                                     else selectAllProducts();
                                   }}
                                 />
-                                <span>{t('colProduct')}</span>
+                                <span>{t('colProduct', { product: nouns.Product })}</span>
                               </label>
                             </th>
-                            <th>{t('colSku')}</th>
+                            {showCodes ? <th>{t('colSku')}</th> : null}
                             <th className="is-num">{t('colPurchased')}</th>
                             <th className="is-num">{t('colAlreadyReturned')}</th>
                             <th className="is-center">{t('colReturnNow')}</th>
@@ -645,7 +654,7 @@ export function ReturnProductSheet({
                                   remaining <= 0 ? 'is-exhausted' : ''
                                 }`}
                               >
-                                <td data-label={t('colProduct')}>
+                                <td data-label={t('colProduct', { product: nouns.Product })}>
                                   <div className="sls-ret-prd-cell">
                                     <label className="sls-ret-pick">
                                       <input
@@ -671,9 +680,11 @@ export function ReturnProductSheet({
                                     </strong>
                                   </div>
                                 </td>
-                                <td data-label={t('colSku')} className="sls-ret-sku-cell">
-                                  {skuOrCode}
-                                </td>
+                                {showCodes ? (
+                                  <td data-label={t('colSku')} className="sls-ret-sku-cell">
+                                    {skuOrCode}
+                                  </td>
+                                ) : null}
                                 <td data-label={t('colPurchased')} className="is-num">
                                   {p.qty}
                                 </td>
@@ -883,7 +894,7 @@ export function ReturnProductSheet({
                 <div className="sls-ret-condition">
                   <span className="sls-ret-field-title">{t('whyLabel')}</span>
                   <div className="pf-chips sls-ret-why" role="group" aria-label={t('whyLabel')}>
-                    {RETURN_REASONS.map((c) => (
+                    {RETURN_REASONS.filter((c) => c !== 'size' || billHasSizes || reasonCode === 'size').map((c) => (
                       <button key={c} type="button" className={`pf-chip ${reasonCode === c ? 'pf-chip-on' : ''}`} aria-pressed={reasonCode === c} disabled={busy} onClick={() => {
                           setReasonCode((cur) => (cur === c ? null : c));
                           setIssuedDocument(null);

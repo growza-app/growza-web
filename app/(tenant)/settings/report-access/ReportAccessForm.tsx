@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { api, ApiError, type SettingsSummary } from '../../lib/api';
 import { SettingsSaveBar } from '../SettingsSaveBar';
 import { useCloseAfterSave } from '../../lib/close-after-save';
+import { useAreas } from '../../components/SessionProvider';
 
 /**
  * Jira GRW-63 · GRW-197 — who else may open Reports, and which tabs.
@@ -42,8 +43,19 @@ const TABS = [
   { key: 'sales', money: true },
 ] as const;
 
+/**
+ * Restaurant QA 2026-10-24 — a shop's Reports are not these tabs. Its Reports screen is sales by channel, top sellers,
+ * returns and refunds, and none of the seven tabs above opens any of them: ticking "Bookings" for a restaurant's
+ * counter only put a Reports link in their menu that opened onto errors. The one grant that does something in a shop
+ * is `sales` — it lets the counter take a return and give the refund — so that is the one a shop is offered, named
+ * for what it does there.
+ */
+const SHOP_TABS = TABS.filter((tab) => tab.key === 'sales');
+
 export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
   const t = useTranslations('settingsReports');
+  const shop = useAreas().shop;
+  const tabs = shop ? SHOP_TABS : TABS;
   // Jira GRW-556 (follow-up) — Save finishes the task: back to the list, which says "Saved".
   const closeForm = useCloseAfterSave('/settings');
   const [granted, setGranted] = useState<Record<string, string[]>>(() => ({ ...initial.reportAccess }));
@@ -65,7 +77,9 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
     setError(null);
     try {
       // Only the roles this form offers: a key left over from before (a stored `staff`) would fail the save.
-      const reportAccess = Object.fromEntries(ROLES.map((role) => [role, granted[role] ?? []]));
+      // A shop sends only what it is shown: a salon tab ticked before would keep opening a Reports link to nothing.
+      const shown = new Set<string>(tabs.map((tab) => tab.key));
+      const reportAccess = Object.fromEntries(ROLES.map((role) => [role, (granted[role] ?? []).filter((tab) => shown.has(tab))]));
       const fresh = await api.updateBookingRules({ reportAccess });
       // Taken from the server's answer rather than kept locally: it drops a
       // role granted nothing, and the screen should show what was stored.
@@ -81,7 +95,7 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
   return (
     <>
     <div className="card">
-      <div className="card-head">{t('title')}</div>
+      <div className="card-head">{shop ? t('shopTitle') : t('title')}</div>
       <div className="card-body">
         {/*
           * NOT `settings-card-hint` (Jira GRW-229 review): that class is dropped on a window 859px
@@ -92,7 +106,7 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
           * padding instead; see 85-settings-fit.css.
           */}
         <p className="field-hint" style={{ marginTop: 0, marginBottom: 16 }}>
-          {t('hint')}
+          {shop ? t('shopHint') : t('hint')}
         </p>
 
         {ROLES.map((role) => (
@@ -102,7 +116,7 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
               <span className="ra-role-sub">{t(`roles.${role}.sub`)}</span>
             </div>
             <div className="ra-tabs">
-              {TABS.map((tab) => (
+              {tabs.map((tab) => (
                 <label key={tab.key} className={`ra-tab ${has(role, tab.key) ? 'is-on' : ''}`}>
                   <input
                     type="checkbox"
@@ -110,7 +124,7 @@ export function ReportAccessForm({ initial }: { initial: SettingsSummary }) {
                     disabled={busy}
                     onChange={() => toggle(role, tab.key)}
                   />
-                  <span>{t(`tabs.${tab.key}`)}</span>
+                  <span>{shop ? t('shopTabs.sales') : t(`tabs.${tab.key}`)}</span>
                   {/* Named, not hidden: an owner ticking "Overview" should know
                       it carries the day's takings before they tick it. */}
                   {tab.money && <span className="ra-money">{t('showsMoney')}</span>}

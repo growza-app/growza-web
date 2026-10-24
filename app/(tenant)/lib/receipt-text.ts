@@ -40,6 +40,12 @@ export interface ReceiptInput {
   /** Owner, 2026-10-14 — products sold with the visit, one line per unit; grouped like the singles. */
   products?: ReceiptLine[];
   totalMinor: number;
+  /**
+   * Restaurant QA 2026-10-24 — the whole bill typed to a different figure: the total minus what the lines come to
+   * (below nought is a discount). The lines then show their own prices and this one row says what changed, rather
+   * than every line carrying an odd share of it ("Paneer Tikka — ₹218.18") and nothing saying a discount was given.
+   */
+  adjustMinor?: number;
   paidBy: string;
 }
 
@@ -54,6 +60,8 @@ export interface ReceiptCopy {
   packageName: (title: string) => string;
   separately: (was: string, saved: string) => string;
   total: (amount: string) => string;
+  discount?: (amount: string) => string;
+  extra?: (amount: string) => string;
   saved: (amount: string) => string;
   paidBy: (mode: string) => string;
   seeYou: string;
@@ -137,6 +145,9 @@ export function receiptRows(input: ReceiptInput, copy: ReceiptCopy, money: (mino
   }
 
   gap();
+  const adjust = input.adjustMinor ?? 0;
+  if (adjust < 0 && copy.discount) line({ t: copy.discount(money(-adjust)) });
+  if (adjust > 0 && copy.extra) line({ t: copy.extra(money(adjust)) });
   line({ t: copy.total(money(input.totalMinor)), bold: true });
   if (saving > 0) line({ t: `🎉 ${copy.saved(money(saving))}` });
   line({ t: copy.paidBy(input.paidBy) });

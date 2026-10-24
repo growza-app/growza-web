@@ -1961,3 +1961,50 @@
   gap: var(--sp-2);
   padding: var(--sp-3) var(--sp-4) var(--sp-4);
 }
+
+/* Owner, 2026-10-24 — Order from: Counter, or a delivery app (a restaurant's Swiggy and Zomato).
+   Three short chips wrap rather than scroll: at 344px a scrolled row hid "Zomato" behind the edge. */
+.pf-from .pf-chips {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+/* The order number sits under the chips, in the content column, and only once an app is chosen. */
+.pf-from-no {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pf-from-no-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pf-from-optional {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* In place of the payment tiles: the app took the money, so there is nothing to choose. */
+.pf-from-paid {
+  margin: 0;
+  padding: var(--sp-3);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: 1rem;
+  font-weight: 500;
+}

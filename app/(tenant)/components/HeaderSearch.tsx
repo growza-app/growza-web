@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { IconSearch } from './icons';
 import { useAreas, useLive, useMayUse } from './SessionProvider';
 import { gridCanSee } from '../lib/nav-policy';
+import { useNouns } from '../lib/use-nouns';
 
 /**
  * Jira GRW-409 · GRW-319 — the header's search, for the people it can answer.
@@ -30,9 +31,11 @@ export function HeaderSearch({ wide = false }: { wide?: boolean }) {
   const mayUseSearch = useMayUse('search') && (!areas.pages || gridCanSee('/search', areas.pages));
   // Jira GRW-556 — it finds clients and bookings, and a business being set up has neither.
   const live = useLive();
+  // Restaurant QA 2026-10-24 — a shop finds its own people: "Find a guest" at a restaurant, "Find a customer" at a shop.
+  const { customer } = useNouns();
   if (!mayUseSearch || !live) return null;
-  const label = areas.bookings === false ? t('shopTitle') : t('title');
-  const prompt = areas.bookings === false ? t('shopPrompt') : t('prompt');
+  const label = areas.bookings === false ? t('shopTitle', { customer }) : t('title');
+  const prompt = areas.bookings === false ? t('shopPrompt', { customer }) : t('prompt');
   return (
     <a className={`hdr-search ${wide ? 'hdr-search-wide' : ''}`} href="/search" aria-label={label}>
       <IconSearch />

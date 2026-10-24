@@ -47,7 +47,7 @@ export function RefundsClient() {
   const exportBusy = useRef(false);
   const money = (minor: string | number | null) => formatMoney(minor, 'INR', locale);
   const day = (iso: string) => new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', timeZone: session?.timezone ?? 'Asia/Kolkata' }).format(new Date(iso));
-  const word = (c: string) => (c === 'flipkart' ? t('flipkart') : c === 'amazon' ? t('amazon') : c.charAt(0).toUpperCase() + c.slice(1));
+  const word = (c: string) => (c === 'flipkart' || c === 'amazon' || c === 'swiggy' || c === 'zomato' ? t(c) : c.charAt(0).toUpperCase() + c.slice(1));
 
   const load = useCallback(async () => {
     if (!ready) return;

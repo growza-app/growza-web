@@ -76,6 +76,8 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/settings/branches': 'both',
   '/settings/business': 'both',
   '/settings/check-in': 'both',
+  // Jira GRW-647 — a salon owner and a shop owner both have a phone.
+  '/settings/alerts': 'both',
   '/settings/gst': 'both',
   '/settings/notifications': 'both',
   '/settings/payments': 'both',

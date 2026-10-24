@@ -28,6 +28,7 @@ export type SettingsRowKey =
   | 'payments'
   | 'whatsapp'
   | 'notifications'
+  | 'phoneAlerts'
   | 'checkIn'
   | 'appearance'
   | 'privacy'
@@ -77,6 +78,14 @@ interface SettingsRowBase {
    * no marketplaces: absent for it, never a screen that answers 404.
    */
   shopOnly?: boolean;
+  /**
+   * Jira GRW-647 — listed for the owner alone.
+   *
+   * Not `shopOwnerOnly`: that one also wants a shop. Phone alerts are every vertical's, and only the owner is
+   * sent anything today — a row that showed a stylist four switches which change nothing would be the
+   * written-displayed-never-read control this codebase has been caught by three times.
+   */
+  ownerOnly?: boolean;
   /**
    * Listed only once the business is live.
    *
@@ -156,6 +165,14 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       { href: '/settings/branches', key: 'branches', icon: IconMapPin, multiBranchOnly: true },
       // The QR the till shows a customer. Live-day: see `liveOnly` above.
       { href: '/settings/payments', key: 'payments', icon: IconPayUpi, liveOnly: true },
+      /*
+       * Jira GRW-647 — which events reach the owner's own phone.
+       *
+       * In the business group, not the branch one, and that is the whole reason it is not a section of
+       * Settings › Notifications: a phone belongs to a person, not to a branch, and there is nothing here to
+       * set differently at MG Road than at Koramangala.
+       */
+      { href: '/settings/alerts', key: 'phoneAlerts', icon: IconBell, ownerOnly: true },
       { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
       // Jira GRW-72 — what each role on a shop's team can open.
       { href: '/settings/roles', key: 'roles', icon: IconLock, shopOwnerOnly: true },
