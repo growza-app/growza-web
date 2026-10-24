@@ -830,12 +830,13 @@
         "hint": "A walk-in joins the queue at the shop"
       },
       "daySummary": {
-        "title": "How today went",
+        "title": "Day summary",
         "hint": "One message in the evening: bookings done and money taken"
       }
     },
     "deviceOn": "This phone will get them.",
     "deviceOff": "This phone will not get them.",
+    "useThisPhone": "Get them on this phone",
     "otherDevices": "{count, plural, one {1 other device also gets them.} other {# other devices also get them.}}",
     "stopOnThisPhone": "Stop on this phone",
     "blocked": "Your browser blocked the request. Allow notifications for this site and try again.",
