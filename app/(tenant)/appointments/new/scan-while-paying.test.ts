@@ -33,8 +33,13 @@ describe('a scan while taking payment is answered, not swallowed', () => {
   });
 
   it("is drawn on both of those screens, under the total where the eye already is", () => {
-    // Two `<p className="pf-how-total">` blocks — the 'how' screen and the 'qr' screen — each followed by the strip.
-    const after = flow.split('<p className="pf-how-total">').slice(1);
+    /*
+     * The two screens that show what is being collected — 'how' and 'qr' — each followed by the strip.
+     *
+     * Jira GRW-648 — both now draw the same `dueLine` element (the total, less any reward points), so the two
+     * places are its two uses rather than two copies of the same markup.
+     */
+    const after = flow.split('{dueLine}').slice(1);
     expect(after).toHaveLength(2);
     for (const block of after) expect(block.slice(0, 400)).toMatch(/\{scanNote \? \(/);
   });

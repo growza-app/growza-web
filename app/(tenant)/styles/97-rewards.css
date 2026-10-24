@@ -1,0 +1,158 @@
+/*
+ * Jira GRW-648 — Settings › Reward points, and the points line on a client's card.
+ *
+ * Laid out at 344px first. The switch row is `96-phone-alerts.css`'s, to the pixel: two settings screens that
+ * show a switch over a hint should not look like two different products, and the 44px target it builds around
+ * a 21px track is the reason that file explains itself at length.
+ */
+
+.rw-intro {
+  margin: 0 0 var(--sp-4);
+}
+
+.rw-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+}
+
+.rw-row .switch {
+  flex: none;
+  align-self: flex-start;
+  height: 1.5rem;
+  box-sizing: content-box;
+  padding: 10px;
+  margin: -10px;
+}
+
+.rw-row > div {
+  min-width: 0;
+}
+
+.rw-row-title,
+.rw-blocked-title {
+  font-weight: 650;
+  font-size: 0.9375rem;
+  color: var(--text);
+}
+
+.rw-blocked-title {
+  margin: 0 0 var(--sp-2);
+}
+
+/* The two fields belong to the switch above them, so the hairline says where the choice ends. */
+.rw-row + .field {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line);
+}
+
+/*
+ * A per-cent sign inside the box rather than beside it.
+ *
+ * The owner is typing a rate, not a number — and a label to the right of a full-width input is the first thing
+ * to fall off the edge at 344px. The span sits in the flow and the input takes what is left.
+ */
+.rw-suffixed {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.rw-suffixed input {
+  /* Four characters is the whole field ("2.75"), so it does not stretch to the width of the card. */
+  width: 6rem;
+  min-width: 0;
+}
+
+.rw-suffixed span {
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.rw-till {
+  margin: var(--sp-4) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+
+.rw-error {
+  margin: var(--sp-3) 0 0;
+  font-size: 0.875rem;
+  color: var(--danger);
+}
+
+/*
+ * The points line on a client's card.
+ *
+ * `.cpc-row`'s own shape, with the balance given the weight of the figures at the top of the card: it is a
+ * number the desk reads out to the person standing in front of them, not another derived statistic.
+ */
+.cpc-points > strong {
+  /* 15px against the row's 13px: the weight of the figures at the top of the card, not the accent colour —
+     the accent is the app's one green and a balance is not an action. */
+  font-size: 0.9375rem;
+}
+
+/*
+ * The till's redeem row.
+ *
+ * One line: a switch, what it spends, and what that takes off. It sits with the ways of paying, not with the
+ * bill, so it is drawn like a choice about the payment rather than like another line item.
+ */
+.pf-redeem {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card, #fff);
+}
+
+.pf-redeem .switch {
+  /* The same 44px target the settings switches build around the shared 21px track. */
+  flex: none;
+  height: 1.5rem;
+  box-sizing: content-box;
+  padding: 10px;
+  margin: -10px;
+}
+
+.pf-redeem-label {
+  flex: 1;
+  min-width: 0;
+  font-weight: 650;
+  font-size: 0.9375rem;
+}
+
+.pf-redeem-off {
+  flex: none;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* "₹1,000 less ₹100 in points", under the figure being collected. */
+.pf-how-total-off {
+  display: block;
+  width: 100%;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+/* The wide till keeps its bill total where it was and says what is left to collect under the switch. */
+.pf-wide-due {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+}
+
+.pf-wide-due strong {
+  font-size: 1.125rem;
+  font-weight: 800;
+}

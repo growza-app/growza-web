@@ -414,6 +414,10 @@
         "label": "Phone alerts",
         "sub": "What your phone tells you"
       },
+      "rewards": {
+        "label": "Reward points",
+        "sub": "Points clients earn and spend"
+      },
       "checkIn": {
         "label": "Location check-in",
         "sub": "Staff mark themselves in from their phone"
@@ -842,6 +846,31 @@
     "blocked": "Your browser blocked the request. Allow notifications for this site and try again.",
     "saveFailed": "That didn't save. Try again.",
     "loadFailed": "We couldn't load your alerts. Try again in a moment."
+  },
+  "settingsRewards": {
+    "intro": "Clients earn points on what they spend, and take them off a later bill. Nothing changes for them until you switch it on.",
+    "cannot": "Reward points can't be set up here",
+    "notAvailable": "Reward points are not available for this kind of business yet.",
+    "noSubscription": "Reward points come with a live plan. Once your subscription is active you can switch them on here.",
+    "switchLabel": "Reward points",
+    "switchHint": "On, every bill earns points and the till can take them off the next one.",
+    "rateLabel": "What a bill earns",
+    "rateHint": "A {bill} bill earns {points} points — {off} off a later bill.",
+    "rateMax": "Up to {max}%.",
+    "rateBad": "Type a rate between 0 and {max}%.",
+    "expiryLabel": "Points last for",
+    "expiryHint": "Each bill’s points die on their own date, and the oldest are always spent first.",
+    "expiry": {
+      "180": "6 months",
+      "365": "1 year",
+      "730": "2 years",
+      "never": "Never"
+    },
+    "tillRule": "At the till, points can take off up to {cap}% of a bill, {floor} points at a time, and each one is worth {worth}.",
+    "save": "Save",
+    "saving": "Saving…",
+    "saveFailed": "That did not save. Try again.",
+    "loadFailed": "Could not load your reward settings. Try again in a moment."
   },
   "settingsTeam": {
     "title": "Team access",
@@ -2257,6 +2286,10 @@
     "totalSpent": "Total spent",
     "totalVisits": "Visits",
     "insight": "What we know",
+    "points": "Reward points",
+    "pointsCount": "{n, plural, one {# point} other {# points}}",
+    "pointsWorth": "Worth {worth} off a bill",
+    "pointsExpire": "{n, plural, one {# point expires} other {# points expire}} on {on}",
     "recent": "Last few visits",
     "daysAgo": "{n, plural, =0 {today} one {yesterday} other {# days ago}}",
     "days": "{n, plural, one {# day} other {# days}}",
@@ -2947,7 +2980,16 @@
       "sizeMore": "One more {name}",
       "sizeLess": "One less {name}"
     },
-    "allDishes": "All dishes"
+    "allDishes": "All dishes",
+    "rewards": {
+      "offer": "Use {points, plural, one {# point} other {# points}}",
+      "off": "{amount} off",
+      "none": "No points to use on this bill",
+      "wasOff": "{bill} less {amount} in points",
+      "receiptUsed": "Reward points used: {points} (−{amount})",
+      "receiptEarned": "You earned {points, plural, one {# point} other {# points}} towards your next visit.",
+      "earnedDone": "{points, plural, one {# point} other {# points}} earned"
+    }
   },
   "help": {
     "title": "Help",

@@ -40,15 +40,42 @@ const SESSION_COOKIE = 'growza_session';
 async function authHeaders(): Promise<Record<string, string>> {
   if (typeof window !== 'undefined') return {};
   try {
-    const { cookies } = await import('next/headers');
+    const { cookies, headers } = await import('next/headers');
     const token = (await cookies()).get(SESSION_COOKIE)?.value;
-    return token ? { cookie: `${SESSION_COOKIE}=${token}` } : {};
+    const forwardedFor = (await headers()).get('x-forwarded-for');
+    return serverSideHeaders({ token, forwardedFor });
   } catch {
     // `cookies()` throws outside a request scope (a build-time render, say).
     // No cookie is the honest answer there, and the caller's 401 handling is
     // already correct for it.
     return {};
   }
+}
+
+/**
+ * Jira GRW-650 — the visitor's address travels with the server-side call.
+ *
+ * The API rate-limits unauthenticated callers per IP, keyed on `request.ip`,
+ * which under its `TRUST_PROXY=1` is the last entry of `X-Forwarded-For`.
+ * Caddy writes that header on the way in. The browser's own calls carry it
+ * through the rewrite untouched — but a `fetch` made HERE, by the Next server
+ * on the visitor's behalf, used to carry only the cookie, so every visitor's
+ * page renders reached the API from this container's address. One bucket for
+ * the whole platform, spent by whoever loaded a page.
+ *
+ * Forwarded verbatim, not rewritten: Caddy has already appended the true
+ * client address LAST, so a visitor who sends a forged header produces
+ * `forged, real` and the API keys on `real`. Rewriting it here could only
+ * make that worse. Absent locally, where nothing sits in front of Next, and
+ * then not sent at all — the API falls back to the socket peer, as before.
+ *
+ * Exported for its test; nothing else should call it.
+ */
+export function serverSideHeaders(input: { token?: string | null; forwardedFor?: string | null }): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (input.token) out.cookie = `${SESSION_COOKIE}=${input.token}`;
+  if (input.forwardedFor) out['x-forwarded-for'] = input.forwardedFor;
+  return out;
 }
 
 // GRW-171 — the shapes moved to their own files; re-exported so every
@@ -153,6 +180,7 @@ import type {
   StockTakeResult,
   MovementKind,
   ManualMovementKind,
+  VisitRewards,
 } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
@@ -556,6 +584,43 @@ export interface CreatedInvite {
 }
 
 /** Jira GRW-647 — what `GET /alerts/prefs` answers: all four kinds, and how many devices are signed in. */
+/**
+ * Jira GRW-648 — one client's reward balance, and what this bill could take off.
+ *
+ * `enabled` false is a business that does not give points: everything else is zero and no screen draws
+ * anything. `maxRedeemable` and `discountMinor` are the till's offer and are 0 unless a `billMinor` was asked
+ * against — the cap is a share of a bill, so without one there is no answer to give.
+ */
+export interface CustomerRewards {
+  enabled: boolean;
+  balance: number;
+  pointValueMinor: number;
+  minRedeemPoints: number;
+  maxRedeemable: number;
+  discountMinor: number;
+  /** The next lot to die, and when. Null when nothing of theirs expires. */
+  expiring: { points: number; at: string } | null;
+}
+
+/** Jira GRW-648 — Settings › Reward points, and what the till and the client card read from the same numbers. */
+export interface RewardSettings {
+  enabled: boolean;
+  /** Basis points of a bill: 200 is 2%. The screen shows a percent; the capability keeps the unit it is stored in. */
+  earnBps: number;
+  /** 0 means points never die. */
+  expiryDays: number;
+  pointValueMinor: number;
+  minRedeemPoints: number;
+  redeemCapBps: number;
+  /** The most the platform allows, as this business's vertical leaves it. */
+  maxEarnBps: number;
+  maxExpiryDays: number;
+  /** False where points are not permitted at all — the switch is not drawn. */
+  available: boolean;
+  /** False between subscriptions: there is nowhere for the choice to live. */
+  changeable: boolean;
+}
+
 export interface AlertPrefs {
   prefs: Array<{ kind: AlertKind; enabled: boolean }>;
   devices: number;
@@ -567,6 +632,24 @@ export const api = {
    * Jira GRW-647 — phone alerts: this person's four switches, their devices, and the key a browser needs to
    * subscribe. Everything here is the SIGNED-IN person's own; there is no way to read or set anybody else's.
    */
+  /**
+   * Jira GRW-648 — what this business's reward points do, and the ceilings the screen says "up to" against.
+   *
+   * `changeable` is false between subscriptions: the choice is stored as an override on the live one, so
+   * there is nowhere to put it and the screen says that rather than pretending to save.
+   */
+  /**
+   * What this client has in points — and, with a bill, the most of it this bill may take.
+   *
+   * One route for both readers on purpose: the card's figure and the till's offer must be the same number,
+   * and two routes would be two chances for them not to be.
+   */
+  customerRewards: (customerId: string, billMinor?: number) =>
+    get<CustomerRewards>(`/api/v1/customers/${customerId}/rewards${billMinor === undefined ? '' : `?billMinor=${billMinor}`}`),
+  rewardSettings: () => get<RewardSettings>('/api/v1/settings/rewards'),
+  /** Any of the three. Answers with what was WRITTEN — a rate over the platform's ceiling comes back clamped. */
+  saveRewardSettings: (body: { enabled?: boolean; earnBps?: number; expiryDays?: number }) =>
+    patch<RewardSettings>('/api/v1/settings/rewards', body),
   alertPrefs: () => get<AlertPrefs>('/api/v1/alerts/prefs'),
   setAlertPref: (kind: AlertKind, enabled: boolean) => put<{ kind: AlertKind; enabled: boolean }>('/api/v1/alerts/prefs', { kind, enabled }),
   /** `null` when this deployment has no VAPID keys — the screen then says alerts are not set up. */
@@ -1408,6 +1491,8 @@ export const api = {
       endAt: string;
       overlapping: boolean;
       legs: { appointmentId: string; serviceId: string; paidAmountMinor: number; startAt: string; endAt: string }[];
+      /** Jira GRW-648 — what this bill did to the client's reward balance. Absent when the business has rewards off. */
+      rewards?: VisitRewards;
     }>('/api/v1/counter-sales', input),
   /**
    * The number the client gave when the bill was handed over, kept.

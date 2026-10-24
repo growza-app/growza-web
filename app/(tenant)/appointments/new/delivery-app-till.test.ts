@@ -34,7 +34,8 @@ describe('Order from: Counter or a delivery app', () => {
   });
 
   it('the order number is typed in a sheet of its own, never on the till', () => {
-    expect(flow).not.toMatch(/<input/);
+    // Jira GRW-648 — the only input on the till is the reward switch, which is a checkbox.
+    for (const tag of flow.match(/<input[\s\S]*?\/>/g) ?? []) expect(tag).toMatch(/type="checkbox"/);
     expect(sheet).toContain('<input id="pf-app-order-no"');
   });
 

@@ -78,6 +78,8 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/settings/check-in': 'both',
   // Jira GRW-647 — a salon owner and a shop owner both have a phone.
   '/settings/alerts': 'both',
+  // Jira GRW-648 — a salon's stamp card and a shop's points are the same engine; neither vertical is named in it.
+  '/settings/rewards': 'both',
   '/settings/gst': 'both',
   '/settings/notifications': 'both',
   '/settings/payments': 'both',
