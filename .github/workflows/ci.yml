@@ -21,6 +21,20 @@ on:
     branches: [main, develop]
   pull_request:
 
+# One run per branch, and it is the latest one.
+#
+# 2026-10-24: 1,020 runs in a month, ~2.1 minutes each — 2,002 minutes, which is most of the account's Actions
+# usage. The runs were not slow; there were too many. A feature branch collected seven to sixteen of them, one
+# per push, and every run but the last was already answering a commit nobody would merge.
+#
+# `cancel-in-progress` ends those the moment the next push arrives. It is safe on every branch here because this
+# workflow only reads: it typechecks, builds and tests, and deploys nothing. A cancelled run leaves nothing
+# half-done. (A deploy workflow would need `cancel-in-progress: false` — stopping a deploy halfway is how a box
+# ends up on neither version.)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # `packages: read` is what lets GITHUB_TOKEN pull @growza-app/shared.
 permissions:
   contents: read
