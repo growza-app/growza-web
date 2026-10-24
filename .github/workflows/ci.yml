@@ -16,10 +16,22 @@
 # Packages → @growza-app/shared → Manage Actions access → add growza-web.
 name: CI
 
+# `paths-ignore` is repeated under BOTH triggers, because GitHub applies it per trigger: listing it once under
+# `push` would leave every pull_request running the full build for a typo in a comment.
+#
+# Only files that cannot change what the app does. Not `public/**` — the service worker lives there, and a stale
+# one is exactly the bug CACHE_VERSION exists to fix. Not `messages/**` — the tests read those, and a missing key
+# renders on screen as its own name (GRW-647 shipped that for half a day).
 on:
   push:
     branches: [main, develop]
+    paths-ignore: &prose
+      - '**/*.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - 'docs/**'
   pull_request:
+    paths-ignore: *prose
 
 # One run per branch, and it is the latest one.
 #
