@@ -109,7 +109,8 @@ describe('the wide till', () => {
   });
 
   it('keeps the phone keyboard rule: the search box lives in the grid file, not in PayFlow', () => {
-    expect(flow).not.toMatch(/<input/);
+    // Jira GRW-648 — a checkbox (the reward switch) raises no keyboard; a text field is what this forbids.
+    for (const tag of flow.match(/<input[\s\S]*?\/>/g) ?? []) expect(tag).toMatch(/type="checkbox"/);
     expect((grid.match(/<input/g) ?? []).length).toBe(1);
     expect(grid).not.toMatch(/autoFocus/);
   });

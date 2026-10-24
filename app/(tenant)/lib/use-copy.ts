@@ -297,6 +297,11 @@ export function useClientCardCopy() {
     totalSpent: t('totalSpent'),
     totalVisits: t('totalVisits'),
     insight: t('insight'),
+    // Jira GRW-648 — the reward balance, which the desk reads out to the client standing there.
+    points: t('points'),
+    pointsCount: (n: number) => t('pointsCount', { n }),
+    pointsWorth: (worth: string) => t('pointsWorth', { worth }),
+    pointsExpire: (n: number, on: string) => t('pointsExpire', { n, on }),
     rows: {visits: t('rows.visits'), spent: t('rows.spent'), avgSpend: t('rows.avgSpend'), lastVisit: t('rows.lastVisit'), favourite: t('rows.favourite'), topProvider: t('rows.topProvider'), interval: t('rows.interval'), cancelRate: t('rows.cancelRate'), since: t('rows.since'), nextVisit: t('rows.nextVisit') },
     recent: t('recent'),
     daysAgo: (n: number) => t('daysAgo', { n }),
