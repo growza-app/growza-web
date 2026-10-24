@@ -198,6 +198,43 @@ describe('this phone can be registered without changing a switch', () => {
     expect(fn).not.toContain('api.setAlertPref');
   });
 
+  /**
+   * Review 2026-10-24 — the way out must outlive the switches.
+   *
+   * `anyOn` alone was right while a device could only exist because a switch was on. "Get them on this phone"
+   * breaks that: register this phone, then switch the summary off, and the device line — the only place in the
+   * app that can unregister a phone — used to vanish, leaving a live subscription nothing could remove.
+   */
+  it('keeps the device line while this phone is registered, whatever the switches say', () => {
+    expect(form).toContain('{anyOn || thisDevice ? (');
+    expect(form).not.toContain('{anyOn ? (');
+  });
+
+  /**
+   * The button sets no `saving`, and where permission is already granted there is no prompt — so the whole
+   * action is one POST and a second tap lands before the first returns.
+   */
+  it('cannot be tapped twice while it is working', () => {
+    expect(form).toContain('disabled={!writable || onDevice}');
+    const fn = form.slice(form.indexOf('const useThisPhone'), form.indexOf('const forgetDevice'));
+    expect(fn).toContain('setOnDevice(true)');
+    expect(fn).toContain('setOnDevice(false)');
+  });
+
+  /** The POST upserts on the endpoint, so it does not always add a row — a `+ 1` claimed phones that never existed. */
+  it('re-reads the device count instead of guessing at it', () => {
+    const fn = form.slice(form.indexOf('const useThisPhone'), form.indexOf('const forgetDevice'));
+    expect(fn).toContain('api.alertPrefs()');
+    expect(fn).not.toContain('devices: current.devices + 1');
+  });
+
+  /** The comment explaining this button must name the label that ships, or it sends the next reader hunting. */
+  it('is explained in the words the screen actually uses', () => {
+    const fn = form.slice(form.indexOf('Let this phone receive'), form.indexOf('const useThisPhone'));
+    expect(fn).toContain('"Day summary"');
+    expect(form).not.toContain('How today went');
+  });
+
   /** The switch and the notification must say the same thing, or nobody can find the switch again. */
   it('names the summary the same on the switch as in the notification', () => {
     const copy = (en as { settingsAlerts: { kinds: Record<string, { title: string }> } }).settingsAlerts;

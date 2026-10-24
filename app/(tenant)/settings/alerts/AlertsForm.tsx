@@ -37,6 +37,14 @@ export function AlertsForm({ vapidPublicKey }: { vapidPublicKey: string | null }
   const [blocker, setBlocker] = useState<PushBlocker | null | 'checking'>('checking');
   const [thisDevice, setThisDevice] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * The device button is mid-flight.
+   *
+   * Review 2026-10-24 — its only `disabled` condition was `!writable`, and unlike a switch it sets no `saving`.
+   * Where permission is already granted there is no prompt, so the whole action is one POST: on a slow
+   * connection a second tap landed before the first returned, and the count below counted both.
+   */
+  const [onDevice, setOnDevice] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -116,11 +124,12 @@ export function AlertsForm({ vapidPublicKey }: { vapidPublicKey: string | null }
    *
    * Needed once the evening summary is on by default (owner, 2026-10-24). Before that, a switch was always the
    * way in: you turned one on, and registering the device came with it. Now a fresh owner arrives to find
-   * "How today went" already on and this phone not registered — a true statement with nothing to do about it,
+   * "Day summary" already on and this phone not registered — a true statement with nothing to do about it,
    * which is the dead end the blocker messages exist to avoid.
    */
   const useThisPhone = useCallback(async () => {
     setError(null);
+    setOnDevice(true);
     try {
       const result = await subscribeThisDevice(vapidPublicKey ?? '');
       if (typeof result === 'string') {
@@ -130,15 +139,31 @@ export function AlertsForm({ vapidPublicKey }: { vapidPublicKey: string | null }
       }
       await api.saveAlertDevice(result);
       setThisDevice(true);
-      setPrefs((current) => (current ? { ...current, devices: current.devices + 1 } : current));
+      /*
+       * Re-read the count rather than adding one to it (review 2026-10-24).
+       *
+       * The POST is an upsert on the endpoint, so it does not always create a row. This browser may already
+       * have a subscription the mount effect missed — `currentDevice()` asks `getRegistration()`, which answers
+       * `undefined` while the service worker is still installing, whereas `subscribeThisDevice` waits on
+       * `.ready` and finds it. A `+ 1` there claimed a second phone that does not exist, and the line then read
+       * "1 other device also gets them."
+       *
+       * A failed re-read is left alone rather than guessed at: the sentence that matters comes from
+       * `thisDevice`, which is already right, and `otherDevices` is detail that the next load will correct.
+       */
+      const fresh = await api.alertPrefs().catch(() => null);
+      if (fresh) setPrefs(fresh);
     } catch {
       setError(t('saveFailed'));
+    } finally {
+      setOnDevice(false);
     }
   }, [blocker, t, vapidPublicKey]);
 
   /** Stop this phone receiving, without touching what the person asked for — their choices outlive the device. */
   const forgetDevice = useCallback(async () => {
     setError(null);
+    setOnDevice(true);
     try {
       const device = await unsubscribeThisDevice();
       if (device) await api.forgetAlertDevice(device.endpoint);
@@ -146,6 +171,8 @@ export function AlertsForm({ vapidPublicKey }: { vapidPublicKey: string | null }
       setPrefs((current) => (current ? { ...current, devices: Math.max(current.devices - 1, 0) } : current));
     } catch {
       setError(t('saveFailed'));
+    } finally {
+      setOnDevice(false);
     }
   }, [t]);
 
@@ -216,10 +243,18 @@ export function AlertsForm({ vapidPublicKey }: { vapidPublicKey: string | null }
         ) : null}
 
         {/*
-          The device line, and only once something is on. Before that there is no device and nothing to say,
-          and a "0 devices" line on a screen where nothing has been switched on reads like a fault.
+          The device line — once something is on, OR while this phone is registered.
+
+          `anyOn` alone was right while a device could only come into being by turning a switch on. It cannot
+          any more (review 2026-10-24): "Get them on this phone" registers one on its own, so somebody could
+          register this phone, switch the summary off, and watch the only "Stop on this phone" button in the
+          whole app disappear — leaving a live subscription and a `push_subscription` row with nothing anywhere
+          that could remove them. The second clause is what keeps the way out open.
+
+          Still hidden for the common case it was written for: nothing on and no device here means there is
+          nothing to say, and a "0 devices" line on an untouched screen reads like a fault.
         */}
-        {anyOn ? (
+        {anyOn || thisDevice ? (
           <div className="al-devices">
             <p className="field-hint" aria-live="polite">
               {thisDevice ? t('deviceOn') : t('deviceOff')}
@@ -229,7 +264,7 @@ export function AlertsForm({ vapidPublicKey }: { vapidPublicKey: string | null }
               type="button"
               className="btn btn-quiet"
               onClick={thisDevice ? forgetDevice : useThisPhone}
-              disabled={!writable}
+              disabled={!writable || onDevice}
             >
               {thisDevice ? t('stopOnThisPhone') : t('useThisPhone')}
             </button>
