@@ -113,3 +113,83 @@ describe('its words', () => {
     }
   });
 });
+
+/**
+ * Owner, 2026-10-25 — the rule, where the rule is set.
+ *
+ * Every number on this screen is one part of a single rule, and an owner reading them one at a time cannot
+ * see it: a rate that means nothing without the point's worth, an expiry that decides which points go first,
+ * a cap that lives at the till and is not set here at all. The tips are where that rule is written down, in
+ * the only place somebody is already thinking about it.
+ *
+ * Held here because copy is exactly what a later edit drops silently — a tip whose words are gone renders a
+ * button that opens an empty bubble.
+ */
+describe('the rule, in the info tips', () => {
+  const TIPS = ['how', 'earning', 'expiry', 'spending'] as const;
+
+  it('is offered on the switch, the rate, the expiry and the till line', () => {
+    for (const tip of TIPS) expect(form).toContain(`{t('tips.${tip}')}`);
+    // Four bubbles, four things that have a rule — not one giant one on the heading.
+    expect(form.match(/<InfoTip/g) ?? []).toHaveLength(4);
+  });
+
+  it('names what each one explains, so a screen reader announces more than "info"', () => {
+    for (const key of ['switchLabel', 'rateLabel', 'expiryLabel', 'tillLabel'] as const) {
+      expect(form).toContain(`<InfoTip ask="infoTipHow" label={t('${key}')}>`);
+    }
+  });
+
+  it('asks how it works, not what it counts — nothing on this screen counts anything', () => {
+    // Reports' own wording turns into "How does What a bill earns work?" here, which is not a sentence.
+    expect(form).not.toMatch(/<InfoTip(?! ask="infoTipHow")/);
+    for (const messages of [en, hi]) {
+      const chrome = messages.chrome as unknown as { infoTipHow: string };
+      expect(chrome.infoTipHow).toContain('{label}');
+    }
+  });
+
+  for (const [lang, messages] of [['English', en], ['Hindi', hi]] as const) {
+    it(`has ${lang} words for all four, and a label for the till line`, () => {
+      const rewards = messages.settingsRewards as unknown as { tips: Record<string, string>; tillLabel: string };
+      expect(rewards.tillLabel.length).toBeGreaterThan(0);
+      for (const tip of TIPS) {
+        expect({ tip, long: (rewards.tips[tip] ?? '').length > 60 }).toEqual({ tip, long: true });
+      }
+    });
+  }
+
+  it('says the things an owner cannot work out from the fields', () => {
+    const tips = (en.settingsRewards as unknown as { tips: Record<string, string> }).tips;
+    // Earned on what was really paid, and rounded down — neither is visible anywhere on the screen.
+    expect(tips.earning).toMatch(/discount/i);
+    expect(tips.earning).toMatch(/rounded down/i);
+    // Oldest first is the whole reason each bill keeps its own date.
+    expect(tips.expiry).toMatch(/oldest/i);
+    // What a return and a correction do to points is decided two screens away and nowhere else written down.
+    expect(tips.spending).toMatch(/comes? back/i);
+    expect(tips.spending).toMatch(/fix|correct/i);
+  });
+
+  /**
+   * Owner, 2026-10-25 — and it is said SIMPLY.
+   *
+   * The first draft of these explained the scheme correctly in sentences of twenty-odd words with a dash in
+   * the middle of each, and the owner sent it back twice. The people reading this screen may not read English
+   * confidently; a true sentence they give up on is worth nothing.
+   *
+   * So the rule is a rule, not a hope: short sentences, and none of the punctuation that joins two thoughts
+   * into one. A writer who needs a longer thought writes two sentences.
+   */
+  it('is written plainly — short sentences, and no clause stitched onto another', () => {
+    const tips = (en.settingsRewards as unknown as { tips: Record<string, string> }).tips;
+    for (const [name, text] of Object.entries(tips)) {
+      const sentences = text.split(/(?<=[.!?])\s+/).filter(Boolean);
+      const longest = Math.max(...sentences.map((s) => s.split(/\s+/).length));
+      expect({ name, longest: longest <= 14 }).toEqual({ name, longest: true });
+      expect({ name, joined: /[—;:]/.test(text) }).toEqual({ name, joined: false });
+      // Four or more sentences means the thought really was broken up, not just punctuated differently.
+      expect({ name, enough: sentences.length >= 4 }).toEqual({ name, enough: true });
+    }
+  });
+});

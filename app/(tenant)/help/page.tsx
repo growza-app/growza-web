@@ -1,4 +1,4 @@
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { screenTitle } from '../lib/page-title';
 import { api } from '../lib/api';
 import type { Me } from '../lib/api-types';
@@ -6,6 +6,7 @@ import { PageHeader } from '../components/PageHeader';
 import { IconPhone, IconWhatsApp } from '../components/icons';
 import { helpOptions, isHelpRole, ROLE_KEY, supportIntro } from './links';
 import { QuickFixes } from './QuickFixes';
+import { WhatsNew } from './WhatsNew';
 
 export const dynamic = 'force-dynamic';
 
@@ -88,6 +89,8 @@ export default async function HelpPage() {
    * compile time. quick-fixes.test.ts checks every one of them exists, in both languages, instead.
    */
   const fixText = (key: string) => (t as unknown as (k: string) => string)(`fixes.${key}`);
+  const newText = (key: string) => (t as unknown as (k: string) => string)(`new.${key}`);
+  const locale = await getLocale();
 
   return (
     <>
@@ -136,6 +139,9 @@ export default async function HelpPage() {
 
         {/* The same page, below the people: what to try before ringing anybody. */}
         <QuickFixes role={isHelpRole(role) ? role : null} t={fixText} />
+
+        {/* And last, because somebody opening Help usually has a problem rather than an appetite for news. */}
+        <WhatsNew role={isHelpRole(role) ? role : null} t={newText} locale={locale} />
       </div>
     </>
   );

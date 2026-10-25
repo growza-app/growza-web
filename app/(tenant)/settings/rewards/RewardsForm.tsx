@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { api, ApiError, formatMoney, type RewardSettings } from '../../lib/api';
 import { SettingsSaveBar } from '../SettingsSaveBar';
+import { InfoTip } from '../../components/InfoTip';
 import { useCloseAfterSave } from '../../lib/close-after-save';
 
 /**
@@ -137,6 +138,11 @@ export function RewardsForm({ initial }: { initial: RewardSettings | null }) {
             <div>
               <div id="rw-switch-label" className="rw-row-title">
                 {t('switchLabel')}
+                {/*
+                  Jira GRW-648 (owner, 2026-10-25) — the whole scheme in one bubble, because every number on
+                  this screen is part of one rule and an owner reading them one at a time cannot see it.
+                */}
+                <InfoTip ask="infoTipHow" label={t('switchLabel')}>{t('tips.how')}</InfoTip>
               </div>
               <span className="field-hint">{t('switchHint')}</span>
             </div>
@@ -148,6 +154,7 @@ export function RewardsForm({ initial }: { initial: RewardSettings | null }) {
               <div className="field">
                 <label className="field-label" htmlFor="rw-rate">
                   {t('rateLabel')}
+                  <InfoTip ask="infoTipHow" label={t('rateLabel')}>{t('tips.earning')}</InfoTip>
                 </label>
                 <div className="rw-suffixed">
                   <input
@@ -182,6 +189,7 @@ export function RewardsForm({ initial }: { initial: RewardSettings | null }) {
               <div className="field">
                 <label className="field-label" htmlFor="rw-expiry">
                   {t('expiryLabel')}
+                  <InfoTip ask="infoTipHow" label={t('expiryLabel')}>{t('tips.expiry')}</InfoTip>
                 </label>
                 {/*
                   A short list rather than a box for a number of days: nobody has an opinion about 400 days,
@@ -213,7 +221,11 @@ export function RewardsForm({ initial }: { initial: RewardSettings | null }) {
                   cap: initial.redeemCapBps / 100,
                   floor: initial.minRedeemPoints,
                   worth: formatMoney(String(initial.pointValueMinor)),
-                })}
+                })}{' '}
+                {/* After the sentence, not before it: leading a paragraph, the icon reads as a bullet. */}
+                <InfoTip ask="infoTipHow" label={t('tillLabel')}>
+                  {t('tips.spending')}
+                </InfoTip>
               </p>
             </>
           )}
