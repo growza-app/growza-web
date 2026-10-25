@@ -58,8 +58,21 @@ export function NewBookingClient({
   useEffect(() => {
     // Both in one effect, so React paints them together: no one-page form flashing up before the wide till.
     // Jira GRW-572 — asked for every purpose now: New booking has a wide layout of its own (`desk` below).
-    setWide(window.matchMedia('(min-width: 1101px)').matches);
-    setLayout(window.matchMedia('(max-width: 860px)').matches ? 'phone' : 'desk');
+    // Followed, not read once (prod QA, 2026-10-24): a width that changes after load — a tablet turned, split view, a
+    // narrowed window — kept the layout chosen at load, and the wide one has no styles below 1101px.
+    const wideMq = window.matchMedia('(min-width: 1101px)');
+    const phoneMq = window.matchMedia('(max-width: 860px)');
+    const update = () => {
+      setWide(wideMq.matches);
+      setLayout(phoneMq.matches ? 'phone' : 'desk');
+    };
+    update();
+    wideMq.addEventListener('change', update);
+    phoneMq.addEventListener('change', update);
+    return () => {
+      wideMq.removeEventListener('change', update);
+      phoneMq.removeEventListener('change', update);
+    };
   }, []);
 
   /*
