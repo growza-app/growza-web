@@ -135,11 +135,18 @@ describe('the rule, in the info tips', () => {
   });
 
   it('names what each one explains, so a screen reader announces more than "info"', () => {
-    expect(form).toContain("<InfoTip label={t('switchLabel')}>");
-    expect(form).toContain("<InfoTip label={t('rateLabel')}>");
-    expect(form).toContain("<InfoTip label={t('expiryLabel')}>");
-    // The till line is a paragraph with no label of its own, so it is given one.
-    expect(form).toContain("<InfoTip label={t('tillLabel')}>");
+    for (const key of ['switchLabel', 'rateLabel', 'expiryLabel', 'tillLabel'] as const) {
+      expect(form).toContain(`<InfoTip ask="infoTipHow" label={t('${key}')}>`);
+    }
+  });
+
+  it('asks how it works, not what it counts — nothing on this screen counts anything', () => {
+    // Reports' own wording turns into "How does What a bill earns work?" here, which is not a sentence.
+    expect(form).not.toMatch(/<InfoTip(?! ask="infoTipHow")/);
+    for (const messages of [en, hi]) {
+      const chrome = messages.chrome as unknown as { infoTipHow: string };
+      expect(chrome.infoTipHow).toContain('{label}');
+    }
   });
 
   for (const [lang, messages] of [['English', en], ['Hindi', hi]] as const) {

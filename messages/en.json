@@ -2006,7 +2006,8 @@
       "pointsWhy": "Points follow the amount, so this client keeps only what the visit really earned."
     },
     "foldGroup": "Fold {name}",
-    "unfoldGroup": "Unfold {name}"
+    "unfoldGroup": "Unfold {name}",
+    "infoTipHow": "How this works: {label}"
   },
   "auth": {
     "metaTitle": "Sign in",

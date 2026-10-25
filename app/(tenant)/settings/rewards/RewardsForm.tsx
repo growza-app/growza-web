@@ -142,7 +142,7 @@ export function RewardsForm({ initial }: { initial: RewardSettings | null }) {
                   Jira GRW-648 (owner, 2026-10-25) — the whole scheme in one bubble, because every number on
                   this screen is part of one rule and an owner reading them one at a time cannot see it.
                 */}
-                <InfoTip label={t('switchLabel')}>{t('tips.how')}</InfoTip>
+                <InfoTip ask="infoTipHow" label={t('switchLabel')}>{t('tips.how')}</InfoTip>
               </div>
               <span className="field-hint">{t('switchHint')}</span>
             </div>
@@ -154,7 +154,7 @@ export function RewardsForm({ initial }: { initial: RewardSettings | null }) {
               <div className="field">
                 <label className="field-label" htmlFor="rw-rate">
                   {t('rateLabel')}
-                  <InfoTip label={t('rateLabel')}>{t('tips.earning')}</InfoTip>
+                  <InfoTip ask="infoTipHow" label={t('rateLabel')}>{t('tips.earning')}</InfoTip>
                 </label>
                 <div className="rw-suffixed">
                   <input
@@ -189,7 +189,7 @@ export function RewardsForm({ initial }: { initial: RewardSettings | null }) {
               <div className="field">
                 <label className="field-label" htmlFor="rw-expiry">
                   {t('expiryLabel')}
-                  <InfoTip label={t('expiryLabel')}>{t('tips.expiry')}</InfoTip>
+                  <InfoTip ask="infoTipHow" label={t('expiryLabel')}>{t('tips.expiry')}</InfoTip>
                 </label>
                 {/*
                   A short list rather than a box for a number of days: nobody has an opinion about 400 days,
@@ -217,12 +217,15 @@ export function RewardsForm({ initial }: { initial: RewardSettings | null }) {
 
               {/* What the till will do with the points, which this screen does not set but the owner has to know. */}
               <p className="field-hint rw-till">
-                <InfoTip label={t('tillLabel')}>{t('tips.spending')}</InfoTip>
                 {t('tillRule', {
                   cap: initial.redeemCapBps / 100,
                   floor: initial.minRedeemPoints,
                   worth: formatMoney(String(initial.pointValueMinor)),
-                })}
+                })}{' '}
+                {/* After the sentence, not before it: leading a paragraph, the icon reads as a bullet. */}
+                <InfoTip ask="infoTipHow" label={t('tillLabel')}>
+                  {t('tips.spending')}
+                </InfoTip>
               </p>
             </>
           )}

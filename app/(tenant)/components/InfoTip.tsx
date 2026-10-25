@@ -24,7 +24,18 @@ const MAX_WIDTH = 300;
 const EDGE = 8;
 const GAP = 6;
 
-export function InfoTip({ label, children }: { label: string; children: string }) {
+/**
+ * What the button is CALLED, which is not always the Reports question.
+ *
+ * "What does Average spend count?" is exactly right on a figure and wrong on a setting — Settings › Reward
+ * points counts nothing, it decides something (QA 2026-10-25). Nor does the question survive being asked of a
+ * field name: "How does What a bill earns work?" is not a sentence, so the other phrasing is a label rather
+ * than a question. A union and not a free string, so both stay in the messages in both languages and a third
+ * cannot be invented at a call site.
+ */
+export type InfoTipAsk = 'infoTip' | 'infoTipHow';
+
+export function InfoTip({ label, children, ask = 'infoTip' }: { label: string; children: string; ask?: InfoTipAsk }) {
   const tc = useTranslations('chrome');
   const [open, setOpen] = useState(false);
   const [place, setPlace] = useState<{ top: number; left: number; width: number } | null>(null);
@@ -102,7 +113,7 @@ export function InfoTip({ label, children }: { label: string; children: string }
         ref={btn}
         type="button"
         className="rp-tip-btn"
-        aria-label={tc('infoTip', { label })}
+        aria-label={tc(ask, { label })}
         aria-expanded={open}
         aria-describedby={open ? id : undefined}
         onClick={(e) => {
