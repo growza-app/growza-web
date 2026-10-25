@@ -113,3 +113,54 @@ describe('its words', () => {
     }
   });
 });
+
+/**
+ * Owner, 2026-10-25 — the rule, where the rule is set.
+ *
+ * Every number on this screen is one part of a single rule, and an owner reading them one at a time cannot
+ * see it: a rate that means nothing without the point's worth, an expiry that decides which points go first,
+ * a cap that lives at the till and is not set here at all. The tips are where that rule is written down, in
+ * the only place somebody is already thinking about it.
+ *
+ * Held here because copy is exactly what a later edit drops silently — a tip whose words are gone renders a
+ * button that opens an empty bubble.
+ */
+describe('the rule, in the info tips', () => {
+  const TIPS = ['how', 'earning', 'expiry', 'spending'] as const;
+
+  it('is offered on the switch, the rate, the expiry and the till line', () => {
+    for (const tip of TIPS) expect(form).toContain(`{t('tips.${tip}')}`);
+    // Four bubbles, four things that have a rule — not one giant one on the heading.
+    expect(form.match(/<InfoTip/g) ?? []).toHaveLength(4);
+  });
+
+  it('names what each one explains, so a screen reader announces more than "info"', () => {
+    expect(form).toContain("<InfoTip label={t('switchLabel')}>");
+    expect(form).toContain("<InfoTip label={t('rateLabel')}>");
+    expect(form).toContain("<InfoTip label={t('expiryLabel')}>");
+    // The till line is a paragraph with no label of its own, so it is given one.
+    expect(form).toContain("<InfoTip label={t('tillLabel')}>");
+  });
+
+  for (const [lang, messages] of [['English', en], ['Hindi', hi]] as const) {
+    it(`has ${lang} words for all four, and a label for the till line`, () => {
+      const rewards = messages.settingsRewards as unknown as { tips: Record<string, string>; tillLabel: string };
+      expect(rewards.tillLabel.length).toBeGreaterThan(0);
+      for (const tip of TIPS) {
+        expect({ tip, long: (rewards.tips[tip] ?? '').length > 60 }).toEqual({ tip, long: true });
+      }
+    });
+  }
+
+  it('says the things an owner cannot work out from the fields', () => {
+    const tips = (en.settingsRewards as unknown as { tips: Record<string, string> }).tips;
+    // Earned on what was really paid, and rounded down — neither is visible anywhere on the screen.
+    expect(tips.earning).toMatch(/after any discount/i);
+    expect(tips.earning).toMatch(/rounded down/i);
+    // Oldest first is the whole reason each bill keeps its own date.
+    expect(tips.expiry).toMatch(/oldest/i);
+    // What a return and a correction do to points is decided two screens away and nowhere else written down.
+    expect(tips.spending).toMatch(/come back/i);
+    expect(tips.spending).toMatch(/correct/i);
+  });
+});

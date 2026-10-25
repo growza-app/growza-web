@@ -870,7 +870,14 @@
     "save": "Save",
     "saving": "Saving…",
     "saveFailed": "That did not save. Try again.",
-    "loadFailed": "Could not load your reward settings. Try again in a moment."
+    "loadFailed": "Could not load your reward settings. Try again in a moment.",
+    "tillLabel": "At the till",
+    "tips": {
+      "how": "A bill is paid, and the client earns points on it. The points sit against their name until they come back. At the till you can take those points off the new bill as a discount. Nobody is sent anything — you tell them, or they see it on their bill.",
+      "earning": "Points are worked out on what the client really paid, after any discount — never on the full price. Always rounded down, so a bill never earns part of a point. A bill paid partly with points earns only on the money.",
+      "expiry": "The clock starts the day the points are earned, not the day they last came in. Each bill's points have their own date. When a client spends, the oldest points go first, so the rest keep their own dates. Points that die are taken off, and the till never offers them.",
+      "spending": "Points can only take off part of a bill, so every visit still brings money in. A client needs the smallest number before they can use any. If goods come back, the points come back too: what that bill earned is taken off, and what it spent is handed back. If you correct a bill's amount later, the points follow the new amount."
+    }
   },
   "settingsTeam": {
     "title": "Team access",
@@ -3254,6 +3261,53 @@
             "s1": "Open “Settings” → “Billing”.",
             "s2": "Your bills are listed there. Tap one to open it."
           }
+        }
+      }
+    },
+    "new": {
+      "heading": "What's new",
+      "lede": "Things we have added lately. Nothing here changes on its own.",
+      "open": "Added lately",
+      "items": {
+        "rewards": {
+          "title": "Reward points",
+          "body": "Clients earn points on what they spend and take them off a later bill. Off until you switch it on.",
+          "go": "Settings › Reward points"
+        },
+        "phone-alerts": {
+          "title": "Alerts on your phone",
+          "body": "Your phone can buzz when a booking comes in, even with the app closed. You choose which ones.",
+          "go": "Settings › Phone alerts"
+        },
+        "day-summary": {
+          "title": "Your day, at 9pm",
+          "body": "One message each night with what the day took. It comes with phone alerts."
+        },
+        "delivery-apps": {
+          "title": "Swiggy and Zomato orders",
+          "body": "If you take orders from a delivery app, ring them up at the till under the app's name and order number."
+        },
+        "restaurant": {
+          "title": "Screens for a kitchen",
+          "body": "If you run a restaurant or cafe, your menu, your counter and your Home screen now read like one."
+        },
+        "returns-why": {
+          "title": "A return says why",
+          "body": "When something comes back, say what was wrong with it and whether it goes back on the shelf."
+        },
+        "stock-reports": {
+          "title": "What sold, and what is left",
+          "body": "Reports now cover the shelf as well as the diary: what went out, what came back, what to order.",
+          "go": "Reports"
+        },
+        "marketplace": {
+          "title": "Amazon and Flipkart orders",
+          "body": "If you sell online, give each product its marketplace code and bring the day's orders in from a report."
+        },
+        "sizes": {
+          "title": "Sizes on a product",
+          "body": "One product can hold its own sizes, each counted on its own. Nothing can go below zero.",
+          "go": "Products"
         }
       }
     }

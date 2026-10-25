@@ -285,3 +285,65 @@ details[open] > summary > .help-chevron {
   line-height: 1.45;
   color: var(--text);
 }
+
+/* ---------- What's new: one line each, under the quick fixes ---------- */
+
+/*
+ * The section borrows `help-fixes` wholesale — same title, same lede, same collapsed card — because it is the
+ * same kind of thing one row further down, and a second visual language on one screen is how a help page
+ * starts looking like a website.
+ */
+.help-new-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: var(--sp-1) var(--sp-4) var(--sp-3);
+  list-style: none;
+}
+
+.help-new-item + .help-new-item {
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+}
+
+.help-new-when {
+  margin: 0 0 2px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.help-new-what {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.help-new-why {
+  margin: 2px 0 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* 44px of tappable row, with the padding inside the link rather than around it. */
+.help-new-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  margin-top: 2px;
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: var(--accent-deep);
+  text-decoration: none;
+}
+
+.help-new-go svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
