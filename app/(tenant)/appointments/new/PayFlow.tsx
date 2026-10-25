@@ -144,6 +144,8 @@ export function PayFlow({
   initialTab,
   productsOnly = false,
   heading,
+  nextTokenNo,
+  onSaleCompleted,
 }: {
   /** A waiting token being paid: its client, branch and services are the answer to ①. */
   token?: QueueEntry;
@@ -179,6 +181,10 @@ export function PayFlow({
    * says. Absent is "Sell product" (`payFlow.sellTitle`), so every address that has always opened this till reads as it did.
    */
   heading?: string;
+  /** Daily sequential token number for today's POS queue. */
+  nextTokenNo?: number | null;
+  /** Notifies the POS shell when a sale completes so the live token queue updates immediately. */
+  onSaleCompleted?: (saleId: string) => void;
 }) {
   const t = useTranslations('payFlow');
   const ts = useTranslations('payFlow.size');
@@ -566,6 +572,11 @@ export function PayFlow({
       setUsePoints(false);
       return;
     }
+    if (fromApp) {
+      setRewards(null);
+      setUsePoints(false);
+      return;
+    }
     let live = true;
     const timer = setTimeout(() => {
       api
@@ -590,7 +601,7 @@ export function PayFlow({
       live = false;
       clearTimeout(timer);
     };
-  }, [clientId, totalMinor]);
+  }, [clientId, totalMinor, fromApp]);
   /** Owner, 2026-10-15 — every package on the bill, one entry per time it was rung up, in the order picked. */
   const pkgsOnBill = useMemo(() => {
     const seen = new Map<string, NonNullable<Line['pkg']>>();
@@ -1016,7 +1027,8 @@ export function PayFlow({
         minute: '2-digit',
         hour12: true,
       }).format(new Date(result.startAt));
-      const tokenNo = result.tokenNo ?? token?.tokenNo ?? null;
+      const tokenNo = result.tokenNo ?? token?.tokenNo ?? nextTokenNo ?? null;
+      onSaleCompleted?.(result.appointmentId);
       const bill = receiptRows(
         {
           businessName: session?.businessName ?? null,
@@ -1207,6 +1219,15 @@ export function PayFlow({
   const badClient = Boolean(missing?.client) && !token && client.kind === 'none' && !fromApp;
   const badService = Boolean(missing?.service) && !hasService;
 
+  // Progressive step guidance on the wide POS order card:
+  // 1) Dishes added → highlight Guest input (`guideClient`)
+  // 2) Guest picked → highlight Payment mode tiles (`guideMode`)
+  // 3) Payment mode picked (or delivery app order) → light up Complete sale (`guideReady`)
+  const hasWho = Boolean(token) || client.kind !== 'none';
+  const guideClient = Boolean(productsOnly && wide && lines.length > 0 && !hasWho && !fromApp && !badClient);
+  const guideMode = Boolean(productsOnly && wide && lines.length > 0 && hasWho && !fromApp && !selectedMode && !splitting && !firstWay);
+  const guideReady = Boolean(productsOnly && wide && lines.length > 0 && (fromApp !== null || (hasWho && (selectedMode !== null || firstWay !== null))));
+
   const completePosSale = () => {
     if (saving !== null || lines.length === 0) return;
     const ok = readyToPay();
@@ -1388,7 +1409,7 @@ export function PayFlow({
   const restMinor = firstWay ? Math.max(0, dueMinor - firstWay.minor) : 0;
   // An app's order has nothing to collect: no tiles (its note is drawn in their place).
   const payTiles = fromApp ? null : (
-    <div className="pf-pay" role="group" aria-label={t('howTitle')}>
+    <div className="pf-pay" data-step={guideMode ? 'next' : badMode && !selectedMode ? 'bad' : undefined} role="group" aria-label={t('howTitle')}>
       {firstWay ? (
         /* The first way, held, and what the next tile is for. × puts the bill back to one way. */
         <p className="pf-split-held" role="status">
@@ -1594,7 +1615,7 @@ export function PayFlow({
          * most of the width was empty; a bar says "type a name here" without a word of instruction, and the plus
          * is the one thing it cannot say — adding somebody who is not in the list yet. Both open the same sheet.
          */
-        <div className={`pf-who-bar ${badClient ? 'pf-bad' : ''}`} ref={whoChips}>
+        <div className={`pf-who-bar ${badClient ? 'pf-bad' : ''}`} data-step={guideClient ? 'next' : undefined} ref={whoChips}>
           <button type="button" className="pf-who-search" onClick={() => setWhoOpen('find')}>
             <IconSearch />
             {t('nameOrNumber')}
@@ -1854,6 +1875,7 @@ export function PayFlow({
               <button
                 type="button"
                 className="btn pos-charge-cta"
+                data-step={guideReady ? 'ready' : lines.length > 0 ? 'waiting' : undefined}
                 disabled={saving !== null || lines.length === 0}
                 onClick={completePosSale}
               >

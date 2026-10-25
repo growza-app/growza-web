@@ -1782,6 +1782,344 @@ input.wi-search-input-plain {
   height: var(--sp-2);
 }
 
+.wi-receipt-paper.is-graphic-card {
+  padding: 0;
+  border-radius: var(--radius);
+  overflow-x: hidden;
+}
+
+@media (min-width: 760px) {
+  .wi-receipt-paper-short.is-graphic-card {
+    max-height: 24rem;
+  }
+}
+
+.wi-rc-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.wi-rc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--accent-deep);
+  color: #fff;
+}
+
+.wi-rc-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.wi-rc-logo {
+  width: 2.375rem;
+  height: 2.375rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--accent-deep);
+  font-size: 1.125rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.wi-rc-brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wi-rc-biz {
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wi-rc-sub {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.84);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wi-rc-token-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--accent-deep);
+  flex: none;
+}
+
+.wi-rc-token-lbl {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  line-height: 1;
+}
+
+.wi-rc-token-num {
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--accent-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+.wi-rc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--page-bg);
+  border-bottom: 1px dashed var(--border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.wi-rc-chan-pill {
+  padding: 2px var(--sp-2);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.wi-rc-body {
+  padding: var(--sp-3) var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.wi-rc-sec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.wi-rc-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wi-rc-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wi-rc-item-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  font-size: 0.8125rem;
+}
+
+.wi-rc-item-left {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.wi-rc-qty {
+  min-width: 1.5rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--accent-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+.wi-rc-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.wi-rc-amt {
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.wi-rc-item-detail {
+  padding-left: 2rem;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.wi-rc-totals {
+  margin-top: var(--sp-1);
+  padding-top: var(--sp-2);
+  border-top: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wi-rc-adj {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.wi-rc-adj.is-discount {
+  color: var(--accent-deep);
+  font-weight: 700;
+}
+
+.wi-rc-total-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+}
+
+.wi-rc-total-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wi-rc-total-lbl {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent-deep);
+}
+
+.wi-rc-paid-by {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-deep);
+}
+
+.wi-rc-total-val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--accent-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+.wi-rc-rewards {
+  margin: 0 var(--sp-4) var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--amber-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.wi-rc-rewards-left {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.wi-rc-star {
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: var(--radius-sm);
+  background: var(--amber);
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.wi-rc-rewards-title {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.wi-rc-rewards-sub {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.wi-rc-rewards-bal {
+  text-align: right;
+  flex: none;
+}
+
+.wi-rc-rewards-bal-lbl {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.wi-rc-rewards-bal-val {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.wi-rc-footer {
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--page-bg);
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
 /* "Sending to" over the number, and Change at the end of the number's line: at 344px the three on one line wrap. */
 .wi-receipt-to {
   display: grid;
@@ -1834,13 +2172,20 @@ input.wi-search-input-plain {
 
 .wi-receipt-more {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-2);
+}
+
+.wi-receipt-more > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
 }
 
 .wi-receipt-more .btn {
   justify-content: center;
-  gap: var(--sp-2);
+  gap: var(--sp-1);
+  padding: 0 var(--sp-2);
+  font-size: 0.8125rem;
+  white-space: nowrap;
 }
 
 /* Back to the client's own number, under the field Change opened. */

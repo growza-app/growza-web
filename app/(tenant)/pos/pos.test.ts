@@ -3,7 +3,8 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { canSee, gridCanSee } from '../lib/nav-policy';
 import { homeCopy } from '../lib/home-copy';
-import { mayTakeReturns, posModeOf, returnLookbackFrom } from './pos-helpers';
+import { buildDailyTokens, formatTokenNo, mayTakeReturns, posModeOf, posQueueStorageKey, returnLookbackFrom } from './pos-helpers';
+import type { Appointment } from '../lib/api-types';
 
 const src = (rel: string) => readFileSync(resolve(__dirname, rel), 'utf8');
 
@@ -150,10 +151,97 @@ describe('the POS screen', () => {
     expect(payFlow).toContain('<PosBillRows');
     expect(payFlow).toContain('pos-charge-cta');
     expect(payFlow).toContain('completePosSale');
+    expect(payFlow).toContain('guideClient');
+    expect(payFlow).toContain('guideMode');
+    expect(payFlow).toContain('guideReady');
     expect(payFlow).toContain("t('desk.needPaymentMode')");
     expect(payFlow).toContain('if (productsOnly) {\n      nextCustomer();\n      return;\n    }');
     expect(posBill).toContain('pos-bill-stepper');
     expect(css).toContain('.pos-shell.is-fullscreen');
     expect(css).toContain('.pos-cat-pills-wrap');
+    expect(css).toContain('@keyframes pos-step-pulse');
+  });
+
+  it('provides Option C daily resetting token numbers, live queue strip above the till, and two-column Queue board', () => {
+    const css = src('../styles/99-pos.css');
+    expect(posModeOf('queue', true)).toBe('queue');
+    expect(posModeOf('queue', false)).toBe('queue');
+    expect(formatTokenNo(1)).toBe('#01');
+    expect(formatTokenNo(14)).toBe('#14');
+    expect(posQueueStorageKey('loc-1', '2026-10-24')).toBe('growza.pos.queue.loc-1.2026-10-24');
+
+    const nowMs = Date.parse('2026-10-24T13:00:00Z');
+    const sampleRows: Appointment[] = [
+      {
+        id: 'sale-1',
+        startAt: '2026-10-24T11:30:00Z',
+        endAt: '2026-10-24T11:30:00Z',
+        status: 'completed',
+        createdVia: 'dashboard',
+        channel: 'counter',
+        customerName: 'Vikram Negi',
+        customerPhone: null,
+        serviceId: null,
+        serviceName: '',
+        priceMinor: null,
+        paidAmountMinor: null,
+        paymentMode: 'upi',
+        providerId: null,
+        providerName: null,
+        bookingGroupId: null,
+        offerTitle: null,
+        comboPriceMinor: null,
+        locationId: 'loc-1',
+        bookedAhead: false,
+        movedTo: null,
+        reminderSent: false,
+        customerIsNew: false,
+        products: [{ id: 'vp-1', productId: 'p-1', name: 'County Tikka', priceMinor: '25000', qty: 2, paidMinor: '50000', returnedQty: 0, returnedMinor: '0' }],
+        payments: [],
+        refunds: [],
+      },
+      {
+        id: 'sale-2',
+        startAt: '2026-10-24T12:55:00Z',
+        endAt: '2026-10-24T12:55:00Z',
+        status: 'completed',
+        createdVia: 'dashboard',
+        channel: 'swiggy',
+        customerName: 'Karan Rawat',
+        customerPhone: null,
+        serviceId: null,
+        serviceName: '',
+        priceMinor: null,
+        paidAmountMinor: null,
+        paymentMode: 'other',
+        providerId: null,
+        providerName: null,
+        bookingGroupId: null,
+        offerTitle: null,
+        comboPriceMinor: null,
+        locationId: 'loc-1',
+        bookedAhead: false,
+        movedTo: null,
+        reminderSent: false,
+        customerIsNew: false,
+        products: [{ id: 'vp-2', productId: 'p-2', name: 'Chicken Roll', priceMinor: '15000', qty: 1, paidMinor: '15000', returnedQty: 0, returnedMinor: '0' }],
+        payments: [],
+        refunds: [],
+      },
+    ];
+
+    const tokens = buildDailyTokens(sampleRows, 'loc-1', {}, nowMs);
+    expect(tokens.map((t) => [t.tokenLabel, t.state, t.itemsSummary])).toEqual([
+      ['#01', 'completed', '2× County Tikka'],
+      ['#02', 'preparing', 'Chicken Roll'],
+    ]);
+
+    const overridden = buildDailyTokens(sampleRows, 'loc-1', { 'sale-2': 'completed' }, nowMs);
+    expect(overridden[1]?.state).toBe('completed');
+
+    expect(client).toContain('pos-token-strip');
+    expect(client).toContain('pos-queue-board');
+    expect(css).toContain('.pos-token-strip');
+    expect(css).toContain('.pos-queue-board');
   });
 });

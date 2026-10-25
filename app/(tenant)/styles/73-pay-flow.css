@@ -998,12 +998,26 @@
   gap: var(--sp-3);
 }
 
+.pf-done-minor > :only-child {
+  grid-column: 1 / -1;
+}
+
 .pf-done-minor .pf-go-alt {
   font-size: 0.9375rem;
+  font-weight: 700;
   text-align: center;
   justify-content: center;
   /* One of the two is a link; in a row of buttons it must not be the only underlined thing. */
   text-decoration: none;
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  color: var(--accent-deep);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.pf-done-minor .pf-go-alt:hover {
+  border-color: var(--accent-deep);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
 }
 
 .pf-done-actions {
