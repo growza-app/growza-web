@@ -276,6 +276,21 @@ export function BookingSummary({
                     </span>
                   </div>
                 ))}
+                {/*
+                  * Jira GRW-648 — and what it did to the client's points, which moved without anybody asking
+                  * for them to. Absent when a correction moved none, and on every correction made before
+                  * they started following the money.
+                  */}
+                {c.pointsMoved !== 0 && (
+                  <div className="summary-line">
+                    <span>{tfix('pointsTitle')}</span>
+                    <span>
+                      {c.pointsMoved < 0
+                        ? tfix('pointsTakenBack', { n: -c.pointsMoved })
+                        : tfix('pointsAdded', { n: c.pointsMoved })}
+                    </span>
+                  </div>
+                )}
                 {c.reason && <div className="summary-correction-reason">{c.reason}</div>}
               </div>
             ))}

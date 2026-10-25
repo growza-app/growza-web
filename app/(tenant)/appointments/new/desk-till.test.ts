@@ -20,7 +20,10 @@ const globals = here('../../globals.css');
 
 describe('the wide till', () => {
   it('is asked for only at the desktop tier, and decided in the same effect as the phone rule', () => {
-    expect(wrapper).toMatch(/setWide\(window\.matchMedia\('\(min-width: 1101px\)'\)\.matches\);\s*setLayout\(window\.matchMedia\('\(max-width: 860px\)'\)/);
+    // Prod QA 2026-10-24 — followed on change, still decided together in one update.
+    expect(wrapper).toContain("const wideMq = window.matchMedia('(min-width: 1101px)');");
+    expect(wrapper).toContain("const phoneMq = window.matchMedia('(max-width: 860px)');");
+    expect(wrapper).toMatch(/setWide\(wideMq\.matches\);\s*setLayout\(phoneMq\.matches/);
     expect(wrapper).toMatch(/if \(quick && layout === 'desk' && wide\) \{\s*return <PayFlow [^>]*wide \/>;/);
     // A booking settles on the wide till too, at the same width, and on the phone's flow below it.
     expect(wrapper).toMatch(/wide=\{wide && layout === 'desk'\}/);

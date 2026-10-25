@@ -30,12 +30,17 @@ export function SellProductClient({
   const [wide, setWide] = useState(false);
 
   useEffect(() => {
-    const mql = window.matchMedia('(min-width: 1101px)');
-    const onChange = (e: MediaQueryListEvent) => setWide(e.matches);
-    setWide(mql.matches);
+    /*
+     * Followed, not read once (prod QA, 2026-10-24): the till decided its layout at load, so a tablet turned on its side,
+     * iPad split view or a laptop window narrowed kept drawing the wide till below 1101px — where none of its styles apply:
+     * "Categories" twice, bare buttons, and a search icon the width of the screen.
+     */
+    const mq = window.matchMedia('(min-width: 1101px)');
+    const update = () => setWide(mq.matches);
+    update();
     setReady(true);
-    mql.addEventListener?.('change', onChange);
-    return () => mql.removeEventListener?.('change', onChange);
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
   }, []);
 
   if (!ready) return <div className="pf" aria-busy="true" />;
