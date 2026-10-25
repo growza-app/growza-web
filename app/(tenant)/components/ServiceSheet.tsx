@@ -14,6 +14,10 @@ import { useDialog } from '../../shared/a11y/useDialog';
 import { IconInfo, IconSearch } from './icons';
 import { PackageSheet } from './PackageSheet';
 import { MENU_SORTS, sortMenu, type MenuSort } from '../lib/menu-sort';
+import { SearchClear } from './SearchClear';
+import { useBranch } from './BranchProvider';
+import { extraSuggestions } from '../lib/service-suggest';
+import { useServiceSuggestions } from '../lib/useServiceSuggestions';
 
 /**
  * "More…" — the whole menu, in the flow (owner, 2026-10-09: the tile used to leave for the full form).
@@ -70,8 +74,10 @@ export function ServiceSheet({
   productsOnly?: boolean;
 }) {
   const t = useTranslations('payFlow');
+  const tc = useTranslations('common');
   // A kitchen keeps no count, so a dish's row is its name and its price (`catalog.stock_counted` off).
   const counted = useAreas().stock;
+  const branchId = useBranch().one;
   const nv = useNewVisitCopy();
   const ref = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLInputElement>(null);
@@ -156,6 +162,23 @@ export function ServiceSheet({
     );
   }, [offers, packageMode, term, services, sort]);
 
+  const remote = useServiceSuggestions(term, branchId);
+  const productPool = useMemo(
+    () => (inStockOnly && counted ? shelf.filter((p) => p.stock > 0 || (productCounts?.get(p.id) ?? 0) > 0) : shelf),
+    [shelf, inStockOnly, counted, productCounts],
+  );
+  const productById = useMemo(() => new Map(productPool.map((p) => [p.id, p])), [productPool]);
+  const servicePool = useMemo(() => (kind && !packageMode && !productMode ? services.filter((s) => s.categoryName === kind) : services), [services, kind, packageMode, productMode]);
+  const serviceById = useMemo(() => new Map(servicePool.map((s) => [s.id, s])), [servicePool]);
+  const alsoTryProducts = useMemo(
+    () => (productMode ? extraSuggestions(shownProducts, remote, term, (id) => productById.get(id)) : []),
+    [productMode, shownProducts, remote, term, productById],
+  );
+  const alsoTryServices = useMemo(
+    () => (!productMode && !packageMode ? extraSuggestions(shown, remote, term, (id) => serviceById.get(id)) : []),
+    [productMode, packageMode, shown, remote, term, serviceById],
+  );
+
   // A tap on the dimmed area closes it, as every other sheet in the app does (`sheet-backdrop`).
   const sheetTitle = productsOnly ? t(counted ? 'desk.products' : 'desk.menu') : t('allServices', { count: services.length });
   const searchLabel = productsOnly
@@ -185,6 +208,7 @@ export function ServiceSheet({
               autoCorrect="off"
               spellCheck={false}
             />
+            <SearchClear value={term} onClear={() => setTerm('')} onVoice={setTerm} />
           </div>
           <div className="pf-menu-tools">
             <label className="pf-sort">
@@ -215,6 +239,30 @@ export function ServiceSheet({
                 {k === PACKAGES ? nv.packagesChip : k === PRODUCTS ? t('productsChip') : k || nv.allServices}
               </button>
             ))}
+          </div>
+        ) : null}
+        {productMode && alsoTryProducts.length > 0 ? (
+          <div className="also-try">
+            <span className="also-try-label">{tc('alsoTry')}</span>
+            <div className="also-try-chips">
+              {alsoTryProducts.map((p) => (
+                <button key={p.id} type="button" className="also-try-chip" onClick={() => setTerm(p.name)}>
+                  {p.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {!productMode && !packageMode && alsoTryServices.length > 0 ? (
+          <div className="also-try">
+            <span className="also-try-label">{tc('alsoTry')}</span>
+            <div className="also-try-chips">
+              {alsoTryServices.map((s) => (
+                <button key={s.id} type="button" className="also-try-chip" onClick={() => setTerm(s.name)}>
+                  {s.name}
+                </button>
+              ))}
+            </div>
           </div>
         ) : null}
         {productMode ? (

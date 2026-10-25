@@ -124,7 +124,7 @@ describe('one ring and one clear button in the search box', () => {
   });
 
   it("hides Chrome's own × only in this bar, which has a clear button of its own", () => {
-    expect(client).toMatch(/aria-label=\{t\('clear'\)\}/);
+    expect(client).toMatch(/<SearchClear\b[^>]*onClear=/);
     expect(searchCss).toMatch(/\.search-bar input\[type='search'\]::-webkit-search-cancel-button\s*\{[^}]*display:\s*none;/);
   });
 

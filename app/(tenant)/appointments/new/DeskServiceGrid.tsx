@@ -15,6 +15,9 @@ import { MENU_SORTS, sortMenu, type MenuSort } from '../../lib/menu-sort';
 import { NO_CATEGORY } from '../../products/DeskProductCategories';
 import { SearchClear } from '../../components/SearchClear';
 import { useAreas } from '../../components/SessionProvider';
+import { useBranch } from '../../components/BranchProvider';
+import { extraSuggestions } from '../../lib/service-suggest';
+import { useServiceSuggestions } from '../../lib/useServiceSuggestions';
 
 /**
  * Jira GRW-572 — the middle panel of the wide till: the whole menu as tiles, with a search box above it.
@@ -77,8 +80,11 @@ export function DeskServiceGrid({
   categoryBar?: ReactNode;
 }) {
   const t = useTranslations('payFlow');
+  const tc = useTranslations('common');
   const nv = useNewVisitCopy();
+  const branchId = useBranch().one;
   const [term, setTerm] = useState('');
+  const remote = useServiceSuggestions(term, branchId);
   const searchBox = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (!searchSeed) return;
@@ -204,6 +210,26 @@ export function DeskServiceGrid({
     );
   }, [services, term, kind, sort]);
 
+  const productPool = useMemo(() => {
+    const byCat = productCategory
+      ? products.filter((p) => (productCategory === NO_CATEGORY ? p.categoryId === null : p.categoryId === productCategory))
+      : products;
+    return inStockOnly && counted ? byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0) : byCat;
+  }, [products, productCategory, inStockOnly, counted, productCountOf]);
+
+  const productById = useMemo(() => new Map(productPool.map((p) => [p.id, p])), [productPool]);
+  const servicePool = useMemo(() => (kind ? services.filter((s) => s.categoryName === kind) : services), [services, kind]);
+  const serviceById = useMemo(() => new Map(servicePool.map((s) => [s.id, s])), [servicePool]);
+
+  const alsoTryProducts = useMemo(
+    () => (tab === 'products' ? extraSuggestions(shownProducts, remote, term, (id) => productById.get(id)) : []),
+    [tab, shownProducts, remote, term, productById],
+  );
+  const alsoTryServices = useMemo(
+    () => (tab === 'services' ? extraSuggestions(shown, remote, term, (id) => serviceById.get(id)) : []),
+    [tab, shown, remote, term, serviceById],
+  );
+
   return (
     <section className="pf-wide-mid" aria-label={productsOnly ? t(counted ? 'desk.products' : 'desk.menu') : t('services')}>
       {/*
@@ -243,7 +269,7 @@ export function DeskServiceGrid({
               F2
             </kbd>
           ) : null}
-          <SearchClear value={term} onClear={() => { setTerm(''); }} />
+          <SearchClear value={term} onClear={() => { setTerm(''); }} onVoice={setTerm} />
         </label>
         <div className="pos-filter-bar">
           {productsOnly && categoryBar ? <div className="pos-cat-pills-wrap">{categoryBar}</div> : null}
@@ -266,6 +292,30 @@ export function DeskServiceGrid({
           </div>
         </div>
       </div>
+      {tab === 'products' && alsoTryProducts.length > 0 ? (
+        <div className="also-try">
+          <span className="also-try-label">{tc('alsoTry')}</span>
+          <div className="also-try-chips">
+            {alsoTryProducts.map((p) => (
+              <button key={p.id} type="button" className="also-try-chip" onClick={() => setTerm(p.name)}>
+                {p.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {tab === 'services' && alsoTryServices.length > 0 ? (
+        <div className="also-try">
+          <span className="also-try-label">{tc('alsoTry')}</span>
+          <div className="also-try-chips">
+            {alsoTryServices.map((s) => (
+              <button key={s.id} type="button" className="also-try-chip" onClick={() => setTerm(s.name)}>
+                {s.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
       {tab === 'services' && kinds.length > 1 ? (
         <div className="pf-chips pf-wide-kinds" role="group" aria-label={nv.serviceKinds} ref={kindRow}>
           <button type="button" className={`pf-chip ${kind === '' ? 'pf-chip-on' : ''}`} aria-pressed={kind === ''} onClick={() => setKind('')}>

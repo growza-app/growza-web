@@ -488,6 +488,11 @@
   },
   "common": {
     "clearSearch": "खोज हटाएँ",
+    "voiceSearch": "बोलकर खोजें",
+    "stopVoiceSearch": "बोलकर खोजना रोकें",
+    "voiceListening": "सुन रहे हैं… अब बोलें",
+    "voicePermissionDenied": "ब्राउज़र में माइक की अनुमति बंद है",
+    "alsoTry": "ये भी देखें",
     "actionFailed": "यह नहीं हुआ। कृपया फिर से कोशिश करें।",
     "optional": "वैकल्पिक",
     "confirm": "पक्का करें",

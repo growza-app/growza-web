@@ -171,6 +171,7 @@
  * therefore needs to be a positioning parent; the input gets room on the right so typed text never runs under it.
  * The visible circle is 1.5rem; the tap area is 2.75rem (HIG's 44pt) via the transparent button around it.
  */
+.pf-client-box,
 .pf-wide-search,
 .search-wrap {
   position: relative;
@@ -194,6 +195,7 @@
 
 button.search-clear > svg {
   position: static;
+  transform: none;
   pointer-events: none;
   width: 1.5rem;
   height: 1.5rem;
@@ -213,10 +215,88 @@ button.search-clear:hover > svg {
   border-radius: 50%;
 }
 
-input[type='search']:has(+ .search-clear) {
+input[type='search']:has(+ .search-clear),
+input[type='search']:has(+ .search-mic),
+input[type='search']:has(~ .search-clear),
+input[type='search']:has(~ .search-mic) {
   padding-right: 2.75rem;
 }
 
-input[type='search']:has(+ .search-clear)::-webkit-search-cancel-button {
+input[type='search']:has(+ .search-clear)::-webkit-search-cancel-button,
+input[type='search']:has(+ .search-mic)::-webkit-search-cancel-button,
+input[type='search']:has(~ .search-clear)::-webkit-search-cancel-button,
+input[type='search']:has(~ .search-mic)::-webkit-search-cancel-button {
   display: none;
+}
+
+.pf-wide-search:has(.search-mic) .pos-search-kbd {
+  margin-right: 2.25rem;
+}
+
+/* Jira GRW-651 — free browser voice-to-text microphone inside empty search boxes. */
+.search-mic {
+  position: absolute;
+  top: 50%;
+  right: 0.125rem;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+button.search-mic > svg {
+  position: static;
+  transform: none;
+  pointer-events: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0.25rem;
+  border-radius: 50%;
+  background: transparent;
+  transition: background-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+}
+
+button.search-mic:hover > svg {
+  background: var(--slate-soft);
+  color: var(--text);
+}
+
+button.search-mic.search-mic-listening > svg,
+button.search-mic.is-listening > svg {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  box-shadow: 0 0 0 2px var(--accent-deep);
+}
+
+button.search-mic.search-mic-denied > svg {
+  color: var(--danger);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes search-mic-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 2px var(--accent-deep);
+    }
+    50% {
+      box-shadow: 0 0 0 5px var(--accent-soft);
+    }
+  }
+
+  button.search-mic.search-mic-listening > svg,
+  button.search-mic.is-listening > svg {
+    animation: search-mic-pulse 1.3s ease-in-out infinite;
+  }
+}
+
+.search-mic:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -4px;
+  border-radius: 50%;
 }

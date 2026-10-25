@@ -488,6 +488,11 @@
   },
   "common": {
     "clearSearch": "Clear search",
+    "voiceSearch": "Search by voice",
+    "stopVoiceSearch": "Stop voice search",
+    "voiceListening": "Listening… speak now",
+    "voicePermissionDenied": "Microphone access is blocked in your browser",
+    "alsoTry": "Also try",
     "actionFailed": "That didn't work. Please try again.",
     "optional": "optional",
     "confirm": "Confirm",
