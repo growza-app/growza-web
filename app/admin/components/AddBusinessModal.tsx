@@ -6,7 +6,7 @@ import { oklch } from '../tokens';
 import { ERROR_COLOR, Field, PrimaryButton, SecondaryButton, Select, TextInput } from './primitives';
 import { BranchFields, emptyBranch, type Branch } from './BranchFields';
 import { pinFromText } from '../lib/geo-link';
-import { DIAL_CODES, EMPTY_ENROL_DISCOUNT, enrolDiscountBody, validate, type EnrolDiscountValues } from '../lib/enrol-validation';
+import { DIAL_CODES, EMPTY_ENROL_DISCOUNT, enrolDiscountBody, phoneAsTyped, validate, type EnrolDiscountValues } from '../lib/enrol-validation';
 import { EnrolDiscountFields } from './EnrolDiscountFields';
 import { useDialog } from '../../shared/a11y/useDialog';
 
@@ -53,6 +53,8 @@ interface BusinessType {
   code: string;
   name: string;
   versions: number[];
+  /** What this vertical calls its providers, plural. Labels the per-branch cap; see `BranchFields`. */
+  providersLabel: string | null;
 }
 
 interface PlanOption {
@@ -373,6 +375,7 @@ export function AddBusinessModal({
           <BranchFields
             branches={visibleBranches}
             multiBranch={multiBranch}
+            providersLabel={selectedType?.providersLabel ?? null}
             errorFor={errorFor}
             onToggle={() => {
               const next = !multiBranch;
@@ -448,13 +451,7 @@ export function AddBusinessModal({
                   autoComplete="tel-national"
                   aria-label={dialCode ? `Owner's phone number, ${dialCode}` : "Owner's phone number"}
                   onChange={(e) => {
-                    // Digits only, and a pasted +91…/91…/0… reduces to the same
-                    // national number rather than being rejected.
-                    let digits = e.target.value.replace(/\D/g, '');
-                    const bare = dialCode?.replace('+', '');
-                    if (bare && digits.startsWith(bare) && digits.length > bare.length) digits = digits.slice(bare.length);
-                    if (dialCode === '+91' && digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
-                    setNationalNumber(digits.slice(0, 15));
+                    setNationalNumber(phoneAsTyped(e.target.value, dialCode));
                     clear('owner.phone');
                   }}
                   placeholder={dialCode === '+91' ? '9876543210' : 'Phone number'}

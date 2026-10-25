@@ -35,6 +35,8 @@ interface BusinessDetail {
   name: string;
   status: string;
   vertical: string;
+  /** What this vertical calls its providers, plural — "Staff", "Doctors". Labels the branch cap. */
+  providersLabel: string | null;
   planCode: string;
   planName: string;
   planListPriceMinor: number;
@@ -433,6 +435,7 @@ function BusinessDetailInner() {
           businessId={params.id}
           businessName={business.name}
           locations={business.locations}
+          providersLabel={business.providersLabel ?? null}
           placesDefault={business.placesDefault ?? null}
           canManage={canManage}
           onChanged={() => setRetryToken((n) => n + 1)}
@@ -764,11 +767,16 @@ function UsersTab({ members }: { members: BusinessDetail['members'] }) {
   );
 }
 
-const BRANCHES_COLUMNS: TableColumn[] = [
+/*
+ * Jira GRW-557 — active providers against the branch's own number.
+ *
+ * QA 2026-10-25 — the heading said "Stylists" whatever the business was, so a restaurant's branches were
+ * counted in stylists. It is the vertical's own plural noun now, the same one the enrolment form uses.
+ */
+const branchesColumns = (providersLabel: string | null): TableColumn[] => [
   { label: 'Branch', width: '2fr' },
   { label: 'Status', width: '1fr' },
-  // Jira GRW-557 — active stylists against the branch's own number.
-  { label: 'Stylists', width: '1.4fr' },
+  { label: providersLabel || 'Staff', width: '1.4fr' },
   { label: '', width: '1.6fr' },
 ];
 
@@ -785,6 +793,7 @@ function BranchesTab({
   businessId,
   businessName,
   locations,
+  providersLabel,
   placesDefault,
   canManage,
   onChanged,
@@ -792,6 +801,8 @@ function BranchesTab({
   businessId: string;
   businessName: string;
   locations: BusinessDetail['locations'];
+  /** The vertical's own plural word for its providers; see `branchesColumns`. */
+  providersLabel: string | null;
   placesDefault: number | null;
   canManage: boolean;
   onChanged: () => void;
@@ -890,10 +901,10 @@ function BranchesTab({
         <EmptyState icon="businesses" title="No branches yet" sub="This business has no locations set up." />
       ) : (
         <Table
-          columns={BRANCHES_COLUMNS}
+          columns={branchesColumns(providersLabel)}
           minWidthPx={480}
           rows={locations.map((l) => (
-            <TableRow key={l.id} columns={BRANCHES_COLUMNS}>
+            <TableRow key={l.id} columns={branchesColumns(providersLabel)}>
               <div className="admin-name" style={{ fontSize: 13.5, fontWeight: 600, color: oklch.text }}>
                 {l.name}
                 {l.isMain ? (
@@ -963,7 +974,7 @@ function BranchesTab({
             A Google or Apple Maps link, or lat, lng. Pre-fills the owner&rsquo;s Location check-in setting; they switch it on.
           </span>
           <label htmlFor="add-branch-stylists" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
-            Stylists at most
+            {providersLabel || 'Staff'} at most
           </label>
           <TextInput
             id="add-branch-stylists"

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { DIAL_CODES, validate } from './enrol-validation';
+import { DIAL_CODES, phoneAsTyped, validate } from './enrol-validation';
 
 /**
  * Jira GRW-138 · GRW-175 — the Add Business form's rules.
@@ -213,5 +213,52 @@ describe('Jira GRW-557 — an API error always lands somewhere visible', () => {
   it('maps a branch address field to the form field, and anything without a field to the banner', () => {
     expect(modal).toMatch(/\.replace\(\/\^locations\\\.\(\\d\+\)\\\.\(\?:address\\\.\)\?\/, 'branch\.\$1\.'\)/);
     expect(modal).toMatch(/if \(field && SHOWN_FIELD\.test\(field\)\) setErrors/);
+  });
+});
+
+/**
+ * QA 2026-10-25 — a number that begins with the country code's own digits.
+ *
+ * `9123456789` is an ordinary Indian mobile. The box used to strip any leading "91", so the third keystroke
+ * turned it into "2" and the admin watched their own typing disappear. What makes the two cases different is
+ * not the prefix, which is identical, but the LENGTH: twelve digits beginning 91 is a number with its code
+ * on the front; ten is a number that merely starts with a 9 and a 1.
+ */
+describe('the phone box as somebody types', () => {
+  const typing = (whole: string, dial = '+91') => {
+    let box = '';
+    // One keystroke at a time, each one appended to whatever the box already holds — which is what makes
+    // this a regression test rather than a test of a single paste.
+    for (const ch of whole) box = phoneAsTyped(box + ch, dial);
+    return box;
+  };
+
+  it('keeps every digit of a number that starts with 91', () => {
+    expect(typing('9123456789')).toBe('9123456789');
+  });
+
+  it('keeps the other numbers that used to survive, one keystroke at a time', () => {
+    expect(typing('9876543210')).toBe('9876543210');
+    expect(typing('6123456789')).toBe('6123456789');
+  });
+
+  it('still takes the country code off a pasted international number', () => {
+    expect(phoneAsTyped('+91 91234 56789', '+91')).toBe('9123456789');
+    expect(phoneAsTyped('919876543210', '+91')).toBe('9876543210');
+    expect(phoneAsTyped('+971 50 123 4567', '+971')).toBe('501234567');
+  });
+
+  it('still drops a trunk zero', () => {
+    expect(phoneAsTyped('09876543210', '+91')).toBe('9876543210');
+  });
+
+  it('leaves a country whose national length nobody has written down alone', () => {
+    // +94 has no NATIONAL_DIGITS entry, so there is no length to decide by and nothing is stripped.
+    expect(phoneAsTyped('94771234567', '+94')).toBe('94771234567');
+  });
+
+  it('keeps digits only, and never more than fifteen', () => {
+    expect(phoneAsTyped('(987) 654-3210', '+91')).toBe('9876543210');
+    expect(phoneAsTyped('1'.repeat(20), '+91')).toHaveLength(15);
   });
 });
