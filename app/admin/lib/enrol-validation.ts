@@ -41,6 +41,32 @@ export const DIAL_CODES: Record<string, string> = {
 /** National-number length per dial code, where it is a fixed, well-known rule. */
 export const NATIONAL_DIGITS: Record<string, number> = { '+91': 10, '+971': 9, '+65': 8, '+1': 10 };
 
+/**
+ * What the phone box should hold after somebody has typed or pasted into it.
+ *
+ * Digits only, and a pasted `+91…`, `91…` or `0…` reduces to the same national number rather than being
+ * rejected. The country code only comes off when what is LEFT is a whole national number.
+ *
+ * That last clause is the fix (QA 2026-10-25). It used to strip the code whenever the digits merely began
+ * with it, which ate the first two digits of every Indian number starting 91 — and `9123456789` is a real
+ * mobile. Typing it went `9`, `91`, then `2` as the third keystroke tripped the rule, and the form ended up
+ * refusing a number the admin had typed correctly. A prefix cannot be both the country code and the start of
+ * the number; only the length tells them apart.
+ *
+ * Pure, so the behaviour can be asked of it directly rather than through a rendered input.
+ */
+export function phoneAsTyped(raw: string, dialCode: string | null): string {
+  let digits = raw.replace(/\D/g, '');
+  const bare = dialCode?.replace('+', '');
+  const national = dialCode ? NATIONAL_DIGITS[dialCode] : undefined;
+  if (bare && national && digits.length === bare.length + national && digits.startsWith(bare)) {
+    digits = digits.slice(bare.length);
+  }
+  // A trunk '0' is never part of an Indian mobile, so a pasted 0XXXXXXXXXX loses it.
+  if (dialCode === '+91' && digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
+  return digits.slice(0, 15);
+}
+
 const hasLetterOrDigit = (v: string) => /[\p{L}\p{N}]/u.test(v);
 
 /**
