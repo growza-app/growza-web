@@ -93,3 +93,32 @@ describe('what’s new', () => {
     }
   });
 });
+
+/**
+ * Owner, 2026-10-25 — and it is said simply.
+ *
+ * The same rule the reward tips are held to, and it came from the same place: the first draft of both was
+ * true and too long, and the people reading this screen may not read English confidently. A line somebody
+ * gives up on halfway is worth nothing, however accurate it is.
+ */
+describe('the English', () => {
+  const words = block(en);
+
+  it('is short sentences, with no clause stitched onto another', () => {
+    for (const thing of WHATS_NEW) {
+      const item = words.items[thing.id]!;
+      const sentences = item.body.split(/(?<=[.!?])\s+/).filter(Boolean);
+      const longest = Math.max(...sentences.map((s) => s.split(/\s+/).length));
+      expect({ id: thing.id, longest: longest <= 14 }).toEqual({ id: thing.id, longest: true });
+      expect({ id: thing.id, joined: /[—;:]/.test(item.body) }).toEqual({ id: thing.id, joined: false });
+    }
+  });
+
+  it('keeps a title to a handful of words, because it is a name and not a sentence', () => {
+    for (const thing of WHATS_NEW) {
+      const title = words.items[thing.id]!.title;
+      expect({ id: thing.id, short: title.split(/\s+/).length <= 6 }).toEqual({ id: thing.id, short: true });
+      expect({ id: thing.id, stop: title.endsWith('.') }).toEqual({ id: thing.id, stop: false });
+    }
+  });
+});

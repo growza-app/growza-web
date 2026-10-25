@@ -162,12 +162,34 @@ describe('the rule, in the info tips', () => {
   it('says the things an owner cannot work out from the fields', () => {
     const tips = (en.settingsRewards as unknown as { tips: Record<string, string> }).tips;
     // Earned on what was really paid, and rounded down — neither is visible anywhere on the screen.
-    expect(tips.earning).toMatch(/after any discount/i);
+    expect(tips.earning).toMatch(/discount/i);
     expect(tips.earning).toMatch(/rounded down/i);
     // Oldest first is the whole reason each bill keeps its own date.
     expect(tips.expiry).toMatch(/oldest/i);
     // What a return and a correction do to points is decided two screens away and nowhere else written down.
-    expect(tips.spending).toMatch(/come back/i);
-    expect(tips.spending).toMatch(/correct/i);
+    expect(tips.spending).toMatch(/comes? back/i);
+    expect(tips.spending).toMatch(/fix|correct/i);
+  });
+
+  /**
+   * Owner, 2026-10-25 — and it is said SIMPLY.
+   *
+   * The first draft of these explained the scheme correctly in sentences of twenty-odd words with a dash in
+   * the middle of each, and the owner sent it back twice. The people reading this screen may not read English
+   * confidently; a true sentence they give up on is worth nothing.
+   *
+   * So the rule is a rule, not a hope: short sentences, and none of the punctuation that joins two thoughts
+   * into one. A writer who needs a longer thought writes two sentences.
+   */
+  it('is written plainly — short sentences, and no clause stitched onto another', () => {
+    const tips = (en.settingsRewards as unknown as { tips: Record<string, string> }).tips;
+    for (const [name, text] of Object.entries(tips)) {
+      const sentences = text.split(/(?<=[.!?])\s+/).filter(Boolean);
+      const longest = Math.max(...sentences.map((s) => s.split(/\s+/).length));
+      expect({ name, longest: longest <= 14 }).toEqual({ name, longest: true });
+      expect({ name, joined: /[—;:]/.test(text) }).toEqual({ name, joined: false });
+      // Four or more sentences means the thought really was broken up, not just punctuated differently.
+      expect({ name, enough: sentences.length >= 4 }).toEqual({ name, enough: true });
+    }
   });
 });
