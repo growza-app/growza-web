@@ -8,7 +8,7 @@ import { api, ApiError } from '../lib/api';
 import type { Product, ProductCategory } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
-import { IconCheck, IconChevronRight } from '../components/icons';
+import { IconCheck, IconChevronRight, IconTrash } from '../components/icons';
 import { useAreas, useSizesOn } from '../components/SessionProvider';
 import { GstInPrice, TaxFields } from '../components/TaxFields';
 import { ProductPhoto } from '../components/ProductPhoto';
@@ -250,7 +250,14 @@ export function ProductSheet({
 
       {product ? (
         <div className="prd-sheet-id">
-          <ProductPhoto className="prd-sheet-photo" product={{ ...product, imageUrl: photoPreview ?? imageUrl }} eager />
+          <button
+            type="button"
+            className="prd-sheet-photo-btn"
+            onClick={() => photoRef.current?.click()}
+            title={photo || imageUrl ? t('changePhoto') : t('addPhoto')}
+          >
+            <ProductPhoto className="prd-sheet-photo" product={{ ...product, imageUrl: photoPreview ?? imageUrl }} eager />
+          </button>
           <span className="prd-sheet-id-text">
             <span className="prd-sheet-name">{product.name}</span>
             <span className="prd-sheet-tags">
@@ -264,6 +271,30 @@ export function ProductSheet({
                 <span className="prd-pill prd-pill-off">{tp('retired')}</span>
               )}
               {product.categoryName ? <span className="prd-pill prd-pill-cat">{product.categoryName}</span> : null}
+              <button type="button" className="prd-id-photo-link" onClick={() => photoRef.current?.click()}>
+                {photo || imageUrl ? t('changePhoto') : t('addPhoto')}
+              </button>
+              {photo || imageUrl ? (
+                <button
+                  type="button"
+                  className="prd-id-photo-link is-danger"
+                  onClick={async () => {
+                    setPhoto(null);
+                    if (photoRef.current) photoRef.current.value = '';
+                    if (target && imageUrl) {
+                      try {
+                        const updated = await api.removeProductPhoto(target.id);
+                        setImageUrl(null);
+                        onSaved(updated);
+                      } catch (err) {
+                        fail(err);
+                      }
+                    }
+                  }}
+                >
+                  {t('remove')}
+                </button>
+              ) : null}
             </span>
           </span>
         </div>
@@ -359,7 +390,7 @@ export function ProductSheet({
                 ) : null}
               </div>
 
-              <div className="prd-field-stack">
+              <div className={categories.length > 0 ? 'prd-field-grid-2 prd-basic-grid' : 'prd-field-stack'}>
                 <div className="prd-field">
                   <label className="prd-field-label" htmlFor="prd-name">
                     {t('name')}
@@ -588,13 +619,34 @@ export function ProductSheet({
             ) : null}
 
             {product ? (
-              <div className="sheet-group prd-sheet-actions">
-                <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void toggleActive()}>
-                  {product.active ? tp('retire') : tp('bringBack')}
-                </button>
-                <button type="button" className="btn btn-ghost btn-danger" disabled={busy} onClick={() => onDelete(product)}>
-                  {tp('delete')}
-                </button>
+              <div className="prd-form-section prd-sheet-actions">
+                <div className="prd-form-sec-title">{counted ? tp('secAvailability') : tp('secMenuStatus')}</div>
+                <div className="prd-action-row">
+                  <div className="prd-action-copy">
+                    <strong>{product.active ? (counted ? tp('inStock') : tp('strip.onMenu')) : tp('retired')}</strong>
+                    <span>
+                      {product.active
+                        ? counted
+                          ? tp('hideProductHint')
+                          : tp('hideDishHint')
+                        : counted
+                          ? tp('restoreProductHint')
+                          : tp('restoreDishHint')}
+                    </span>
+                  </div>
+                  <button type="button" className="btn btn-ghost prd-action-btn" disabled={busy} onClick={() => void toggleActive()}>
+                    {product.active ? tp('retire') : tp('bringBack')}
+                  </button>
+                </div>
+                <div className="prd-action-row prd-action-row-danger">
+                  <div className="prd-action-copy">
+                    <strong>{tp('delete')} {nouns.product}</strong>
+                    <span>{tp('deletePermanentHint')}</span>
+                  </div>
+                  <button type="button" className="btn btn-ghost btn-danger prd-delete-btn" disabled={busy} onClick={() => onDelete(product)}>
+                    <IconTrash /> {tp('delete')}
+                  </button>
+                </div>
               </div>
             ) : null}
           </div>

@@ -325,7 +325,7 @@
   padding: 0 var(--sp-3);
   border-radius: 999px;
   background: var(--accent-soft);
-  border: 1px solid #ccebd8;
+  border: 1px solid var(--border);
   color: var(--accent-deep);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -403,7 +403,7 @@
 }
 .shp-insight-badge.is-mint {
   background: var(--accent-soft);
-  border-color: #ccebd8;
+  border-color: var(--border);
   color: var(--accent-deep);
 }
 
@@ -525,17 +525,17 @@
   }
   .shp-desk-v3 .hm-v3-kpi-dark {
     background: linear-gradient(140deg, var(--hm-hero-a), var(--hm-hero-b));
-    border-color: #16462b;
+    border-color: var(--accent-deep);
     color: #fff;
     box-shadow: 0 6px 18px rgb(15 48 30 / 14%);
   }
   .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-icon-dark {
     background: rgb(255 255 255 / 14%);
-    color: #8fdcae;
+    color: var(--accent-soft);
   }
   .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-kpi-title,
   .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-kpi-title-link {
-    color: #bfe6cf;
+    color: var(--accent-soft);
   }
   .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-kpi-amount {
     color: #fff;
@@ -546,7 +546,7 @@
   }
   .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-delta-pill {
     background: rgb(255 255 255 / 16%);
-    color: #8fdcae;
+    color: var(--accent-soft);
   }
   .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-kpi-period {
     background: rgb(255 255 255 / 12%);
@@ -557,7 +557,7 @@
     background: rgb(255 255 255 / 28%);
   }
   .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-mini-bars span.is-peak {
-    background: #8fdcae;
+    background: var(--accent-soft);
   }
   .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-kpi-foot {
     border-top-color: rgb(255 255 255 / 14%);

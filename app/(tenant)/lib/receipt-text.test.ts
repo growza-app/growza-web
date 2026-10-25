@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   confirmRows,
+  formatStructuredWhatsappText,
+  parseReceiptCard,
   receiptRows,
   receiptText,
   rowsToText,
@@ -227,5 +229,61 @@ describe('the WhatsApp confirmation', () => {
 
   it('a salon called Glam*Studio cannot turn its own message bold', () => {
     expect(text({ ...booked, businessName: 'Glam*Studio' }).split('\n')[0]).toBe('*Glam Studio* · MG Road');
+  });
+});
+
+describe('Graphic Receipt Card model, structured WhatsApp text, and optional Rewards support', () => {
+  it('parses POS order rows into a structured graphic card model and safe BMP WhatsApp text', () => {
+    const rows = receiptRows(
+      {
+        businessName: 'County Chicken',
+        branchName: 'Main Outlet',
+        when: '24 Oct 2026, 11:21 pm',
+        tokenNo: 15,
+        stylist: null,
+        singles: [],
+        pkg: null,
+        products: [
+          { name: 'Chicken Drumstick (2 pcs)', amountMinor: 14000 },
+          { name: 'Chicken Gharwala (Full - 6 pcs)', amountMinor: 30000 },
+        ],
+        totalMinor: 34000,
+        paidBy: 'Cash',
+        rewards: {
+          redeemedPoints: 100,
+          redeemedMinor: 10000,
+          earnedPoints: 34,
+          balancePoints: 420,
+        },
+      },
+      { ...copy, products: 'Menu' },
+      money,
+    );
+
+    const card = parseReceiptCard(rows);
+    expect(card.businessName).toBe('County Chicken');
+    expect(card.branchName).toBe('Main Outlet');
+    expect(card.tokenLabel).toBe('#15');
+    expect(card.totalItemsCount).toBe(2);
+    expect(card.items[0]).toEqual({
+      qty: 1,
+      name: 'Chicken Drumstick (2 pcs)',
+      amount: '₹140',
+      details: [],
+    });
+    expect(card.rewardsEarned).toBe('+34 Reward Points earned');
+    expect(card.rewardsBalance).toBe('420 pts');
+
+    const waText = formatStructuredWhatsappText(rows);
+    expect(waText).toContain('*County Chicken · Main Outlet*');
+    expect(waText).toContain('Payment receipt · *Token #15*');
+    expect(waText).toContain('*Your Order (2 items)*');
+    expect(waText).toContain('• 1 × Chicken Drumstick (2 pcs) — *₹140*');
+    expect(waText).toContain('*Total paid: ₹340*');
+    expect(waText).toContain('✓ Paid by Cash');
+    expect(waText).toContain('*Rewards*');
+    expect(waText).toContain('★ +34 Reward Points earned');
+    expect(waText).toContain('Available balance: *420 pts*');
+    expect(waText).not.toMatch(/📅|🎟|🙏|🎉/);
   });
 });

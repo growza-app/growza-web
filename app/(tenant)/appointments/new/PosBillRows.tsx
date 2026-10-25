@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { formatMoney } from '../../lib/api';
 import type { Product, TillSize } from '../../lib/api-types';
+import { useAreas } from '../../components/SessionProvider';
 import { ProductPhoto } from '../../components/ProductPhoto';
 import { IconMinus, IconPlus, IconTrash } from '../../components/icons';
 import { canAddSize, hasSizes } from '../../lib/till-sizes';
@@ -35,6 +36,7 @@ export function PosBillRows({
   onEditPrice?: (key: string) => void;
 }) {
   const t = useTranslations('payFlow');
+  const counted = useAreas().stock;
   const productById = new Map(products.map((p) => [p.id, p]));
 
   const rows: Array<{
@@ -82,7 +84,7 @@ export function PosBillRows({
           const canAddMore = p
             ? r.size
               ? !full && canAddSize(r.size, r.count)
-              : !full && p.stock > r.count
+              : !full && (!counted || p.stock > r.count)
             : false;
           const metaParts: string[] = [];
           if (r.count > 1) metaParts.push(`${money(Math.round(r.minor / r.count))} × ${r.count}`);
@@ -92,59 +94,57 @@ export function PosBillRows({
             <li key={r.key} className="pos-bill-item">
               {p ? <ProductPhoto className="pos-bill-thumb" product={p} /> : null}
               <div className="pos-bill-item-body">
-                <div className="pos-bill-item-top">
-                  <span className="pos-bill-item-name">{r.name}</span>
-                  {onEditPrice ? (
+                <span className="pos-bill-item-name" title={r.name}>
+                  {r.name}
+                </span>
+                {metaParts.length > 0 ? <span className="pos-bill-item-sub">{metaParts.join(' · ')}</span> : null}
+              </div>
+              <div className="pos-bill-item-ctrl">
+                <span className="pos-bill-stepper" role="group" aria-label={t('onBill', { count: r.count })}>
+                  <button
+                    type="button"
+                    className="pos-step-btn"
+                    aria-label={t('oneLess', { name: r.name })}
+                    onClick={() => onLess(r.key)}
+                  >
+                    <IconMinus />
+                  </button>
+                  <span className="pos-step-val" aria-live="polite">
+                    {r.count}
+                  </span>
+                  {p ? (
                     <button
                       type="button"
-                      className="pf-bill-amount pf-bill-amount-tap pos-bill-item-amt"
-                      aria-label={t('desk.priceFor', { name: r.name })}
-                      onClick={() => onEditPrice(r.key)}
+                      className="pos-step-btn"
+                      aria-label={t('oneMore', { name: r.name })}
+                      onClick={() => onMore(p, r.size)}
+                      disabled={!canAddMore}
                     >
-                      {r.minor !== r.list ? <s className="pf-bill-was">{money(r.list)}</s> : null}
-                      {money(r.minor)}
+                      <IconPlus />
                     </button>
-                  ) : (
-                    <span className="pf-bill-amount pos-bill-item-amt">{money(r.minor)}</span>
-                  )}
-                </div>
-                <div className="pos-bill-item-bot">
-                  <span className="pos-bill-item-sub">{metaParts.join(' · ')}</span>
-                  <div className="pos-bill-item-ctrl">
-                    <span className="pos-bill-stepper" role="group" aria-label={t('onBill', { count: r.count })}>
-                      <button
-                        type="button"
-                        className="pos-step-btn"
-                        aria-label={t('oneLess', { name: r.name })}
-                        onClick={() => onLess(r.key)}
-                      >
-                        <IconMinus />
-                      </button>
-                      <span className="pos-step-val" aria-live="polite">
-                        {r.count}
-                      </span>
-                      {p ? (
-                        <button
-                          type="button"
-                          className="pos-step-btn"
-                          aria-label={t('oneMore', { name: r.name })}
-                          onClick={() => onMore(p, r.size)}
-                          disabled={!canAddMore}
-                        >
-                          <IconPlus />
-                        </button>
-                      ) : null}
-                    </span>
-                    <button
-                      type="button"
-                      className="pos-bill-del"
-                      aria-label={t('desk.removeLine', { name: r.name })}
-                      onClick={() => onClearLine(r.key)}
-                    >
-                      <IconTrash />
-                    </button>
-                  </div>
-                </div>
+                  ) : null}
+                </span>
+                {onEditPrice ? (
+                  <button
+                    type="button"
+                    className="pf-bill-amount pf-bill-amount-tap pos-bill-item-amt"
+                    aria-label={t('desk.priceFor', { name: r.name })}
+                    onClick={() => onEditPrice(r.key)}
+                  >
+                    {r.minor !== r.list ? <s className="pf-bill-was">{money(r.list)}</s> : null}
+                    {money(r.minor)}
+                  </button>
+                ) : (
+                  <span className="pf-bill-amount pos-bill-item-amt">{money(r.minor)}</span>
+                )}
+                <button
+                  type="button"
+                  className="pos-bill-del"
+                  aria-label={t('desk.removeLine', { name: r.name })}
+                  onClick={() => onClearLine(r.key)}
+                >
+                  <IconTrash />
+                </button>
               </div>
             </li>
           );
