@@ -288,6 +288,18 @@ describe('the phone box as somebody types', () => {
     expect(phoneAsTyped('+91 98765 00001', '+91')).toBe('9876500001');
   });
 
+  /**
+   * QA 2026-10-25 — `00` is how half of India writes a `+`.
+   *
+   * It was wrong before the ten-digit cap as well, and the cap is what made it dangerous: `0091 98765 43210`
+   * used to survive as fourteen digits and be refused on save, which was ugly but safe. Capped to ten it
+   * became `0091987654` — ten digits, the right shape, somebody else's number, and nothing left to refuse.
+   */
+  it('understands 0091 as +91, and not as the first four digits', () => {
+    expect(phoneAsTyped('0091 9876543210', '+91')).toBe('9876543210');
+    expect(phoneAsTyped('00919876543210', '+91')).toBe('9876543210');
+  });
+
   it('still allows fifteen where nobody has written the length down', () => {
     // E.164's own ceiling, for a country with no entry in NATIONAL_DIGITS.
     expect(phoneAsTyped('9'.repeat(20), '+94')).toHaveLength(15);

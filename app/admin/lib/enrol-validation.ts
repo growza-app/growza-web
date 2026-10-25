@@ -63,6 +63,15 @@ export const NATIONAL_DIGITS: Record<string, number> = { '+91': 10, '+971': 9, '
  */
 export function phoneAsTyped(raw: string, dialCode: string | null): string {
   let digits = raw.replace(/\D/g, '');
+  /*
+   * `00` is how half of India writes a `+` (QA 2026-10-25), and it has to come off before the country code
+   * is looked for, or the code is never recognised.
+   *
+   * This was wrong before the length cap too, and the cap is what made it dangerous: `0091 98765 43210` used
+   * to survive as fourteen digits and be refused on save, which was ugly but safe. Capped to ten it became
+   * `0091987654` — ten digits, the right shape, somebody else's number, and nothing to refuse.
+   */
+  if (digits.startsWith('00')) digits = digits.slice(2);
   const bare = dialCode?.replace('+', '');
   const national = dialCode ? NATIONAL_DIGITS[dialCode] : undefined;
   if (bare && national && digits.length === bare.length + national && digits.startsWith(bare)) {
