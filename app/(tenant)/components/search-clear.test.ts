@@ -7,7 +7,7 @@ const read = (p: string) => readFileSync(join(tenant, p), 'utf8');
 
 // The search boxes people use every day, and how many of their `type="search"` inputs must carry the × and mic.
 const BOXES: Array<[string, number]> = [
-  ['customers/CustomersClient.tsx', 1],
+  ['customers/CustomersClient.tsx', 2],
   ['appointments/BookingsList.tsx', 1],
   ['sales/SalesClient.tsx', 1],
   ['appointments/new/DeskServiceGrid.tsx', 1],
