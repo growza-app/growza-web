@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import en from '../../../../messages/en.json';
 import hi from '../../../../messages/hi.json';
@@ -7,7 +8,10 @@ import { ALERT_KINDS, ALERT_MESSAGE_KEY } from '../../lib/push-alerts';
 import { SETTINGS_GROUPS } from '../nav-data';
 import { wholeBusiness } from '../../lib/branch-routes';
 
-const here = path.dirname(new URL(import.meta.url).pathname);
+// `fileURLToPath`, not `.pathname`: a URL keeps the path percent-encoded, so a checkout under a folder with a
+// space in its name — "Whatapp Project" on the author's own Mac — looked for "Whatapp%20Project" and found
+// nothing. CI's path has no space, so this file failed for one person and nobody else (QA 2026-10-25).
+const here = path.dirname(fileURLToPath(import.meta.url));
 const read = (p: string) => readFileSync(path.join(here, p), 'utf-8');
 
 /**
