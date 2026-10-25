@@ -35,6 +35,7 @@ export const emptyBranch = (stylists = ''): Branch => ({ name: '', line1: '', ci
 export function BranchFields({
   branches,
   multiBranch,
+  providersLabel,
   errorFor,
   onToggle,
   onChange,
@@ -43,6 +44,15 @@ export function BranchFields({
 }: {
   branches: Branch[];
   multiBranch: boolean;
+  /**
+   * What the chosen vertical calls its providers, plural — "Staff", "Doctors", "Mechanics".
+   *
+   * QA 2026-10-25: this field said "Stylists at most" to everybody, including a restaurant. The number it
+   * sets is `limits.max_providers`, which is a PROVIDER cap and has never been a salon word; the label now
+   * comes from the vertical definition like every other customer-facing noun. The fallback is the generic
+   * word, not the salon one, so a type whose labels cannot be read says something true rather than wrong.
+   */
+  providersLabel: string | null;
   errorFor: (field: string) => string | undefined;
   onToggle: () => void;
   onChange: (index: number, patch: Partial<Branch>, field: keyof Branch) => void;
@@ -141,7 +151,7 @@ export function BranchFields({
 
           {/* Jira GRW-557 — each branch's own number: a few for a small branch, more for a large one. */}
           <Field
-            label="Stylists at most"
+            label={`${providersLabel || 'Staff'} at most`}
             hint="Starts at the plan's number. Can be changed later from the business page."
             error={errorFor(`branch.${index}.stylists`)}
           >

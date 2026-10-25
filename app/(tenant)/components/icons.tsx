@@ -254,6 +254,16 @@ export const IconSearch = () => (
   </svg>
 );
 
+/** Feather `mic` — Jira GRW-651: speak a dish, product or client name into a search box. */
+export const IconMic = () => (
+  <svg {...base}>
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+    <line x1="12" y1="19" x2="12" y2="23" />
+    <line x1="8" y1="23" x2="16" y2="23" />
+  </svg>
+);
+
 export const IconMoveTime = () => (
   <svg {...base}>
     <rect x="3" y="5" width="18" height="16" rx="2" />

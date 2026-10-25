@@ -8,9 +8,10 @@ import { api, formatTime, type SearchResult } from '../lib/api';
 import { initials, statusChip } from '../lib/appointment-display';
 import { bookingRef, dialable } from '../components/BookingSheet';
 import { ClientProfileCard } from '../components/ClientProfileCard';
-import { IconArrowLeft, IconClose, IconPhone, IconSearch } from '../components/icons';
+import { IconArrowLeft, IconPhone, IconSearch } from '../components/icons';
 import { SEARCH_DEBOUNCE_MS, SEARCH_MIN_CHARS } from '../lib/search-tuning';
 import { useBranch } from '../components/BranchProvider';
+import { SearchClear } from '../components/SearchClear';
 
 const EMPTY: SearchResult = { customers: [], bookings: [] };
 
@@ -103,7 +104,7 @@ export function SearchClient({ timezone, showBranch = false }: { timezone: strin
           <a className="icon-btn" href="/" aria-label={t('back')}>
             <IconArrowLeft />
           </a>
-          <div className="search-bar" style={{ flex: 1 }}>
+          <div className="search-bar" style={{ flex: 1, position: 'relative' }}>
             <IconSearch />
             <input
               ref={inputRef}
@@ -113,16 +114,7 @@ export function SearchClient({ timezone, showBranch = false }: { timezone: strin
               placeholder={t('placeholder')}
               aria-label={t('placeholder')}
             />
-            {q && (
-              <button
-                type="button"
-                onClick={() => setQ('')}
-                aria-label={t('clear')}
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 0, display: 'grid' }}
-              >
-                <IconClose />
-              </button>
-            )}
+            <SearchClear value={q} onClear={() => setQ('')} onVoice={setQ} />
           </div>
         </div>
 

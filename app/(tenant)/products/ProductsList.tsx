@@ -21,6 +21,9 @@ import { ProductSheet } from './ProductSheet';
 import { ImportProducts } from './ImportProducts';
 import { StockTake } from './StockTake';
 import { ALL_CATEGORIES, NO_CATEGORY, ProductCategoriesDropdown } from './DeskProductCategories';
+import { SearchClear } from '../components/SearchClear';
+import { extraSuggestions } from '../lib/service-suggest';
+import { useServiceSuggestions } from '../lib/useServiceSuggestions';
 
 /**
  * Owner, 2026-10-14 — the shelf, the way a stock screen is read.
@@ -228,6 +231,16 @@ export function ProductsList({
   const shown = useMemo(
     () => sortShelf(filterShelf(rows, filter, search, selectedCategories), sort, sortDir),
     [rows, filter, search, selectedCategories, sort, sortDir],
+  );
+  const remote = useServiceSuggestions(search, branchId);
+  const inFilterScope = useMemo(
+    () => filterShelf(rows, filter, '', selectedCategories),
+    [rows, filter, selectedCategories],
+  );
+  const byIdInScope = useMemo(() => new Map(inFilterScope.map((p) => [p.id, p])), [inFilterScope]);
+  const alsoTry = useMemo(
+    () => extraSuggestions(shown, remote, search, (id) => byIdInScope.get(id)),
+    [shown, remote, search, byIdInScope],
   );
   const counts: Record<ShelfFilter, number> = {
     all: inCategory.length,
@@ -486,9 +499,29 @@ export function ProductsList({
   const searchBox = (
     <label className="search-wrap prd-search">
       <IconSearch />
-      <input type="text" className="search-input search-input-bare" placeholder={t(counted ? 'searchPlaceholder' : 'searchUncounted')} value={search} onChange={(e) => pick(() => setSearch(e.target.value))} />
+      <input
+        type="search"
+        className="search-input search-input-bare"
+        placeholder={t(counted ? 'searchPlaceholder' : 'searchUncounted')}
+        value={search}
+        onChange={(e) => pick(() => setSearch(e.target.value))}
+      />
+      <SearchClear value={search} onClear={() => pick(() => setSearch(''))} onVoice={(val) => pick(() => setSearch(val))} />
     </label>
   );
+  const alsoTryRow =
+    alsoTry.length > 0 ? (
+      <div className="also-try">
+        <span className="also-try-label">{tc('alsoTry')}</span>
+        <div className="also-try-chips">
+          {alsoTry.map((p) => (
+            <button key={p.id} type="button" className="also-try-chip" onClick={() => pick(() => setSearch(p.name))}>
+              {p.name}
+            </button>
+          ))}
+        </div>
+      </div>
+    ) : null;
   const categoriesDropdown =
     liveCategories.length > 0 || noneCount > 0 || writable ? (
       <ProductCategoriesDropdown
@@ -944,6 +977,7 @@ export function ProductsList({
                 ) : null}
               </div>
               {!counted ? menuCategoryBar : chips}
+              {alsoTryRow}
               {!counted && menuView === 'cards' ? (
                 <div className="prd-menu-cards-wrap">
                   {menuCards}
@@ -998,6 +1032,7 @@ export function ProductsList({
               )}
               {!counted ? menuCategoryBar : chips}
             </div>
+            {alsoTryRow}
             {!counted ? menuCards : list}
             {pages}
             {importRow}

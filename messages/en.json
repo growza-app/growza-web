@@ -488,6 +488,11 @@
   },
   "common": {
     "clearSearch": "Clear search",
+    "voiceSearch": "Search by voice",
+    "stopVoiceSearch": "Stop voice search",
+    "voiceListening": "Listening… speak now",
+    "voicePermissionDenied": "Microphone access is blocked in your browser",
+    "alsoTry": "Also try",
     "actionFailed": "That didn't work. Please try again.",
     "optional": "optional",
     "confirm": "Confirm",
@@ -870,7 +875,14 @@
     "save": "Save",
     "saving": "Saving…",
     "saveFailed": "That did not save. Try again.",
-    "loadFailed": "Could not load your reward settings. Try again in a moment."
+    "loadFailed": "Could not load your reward settings. Try again in a moment.",
+    "tillLabel": "At the till",
+    "tips": {
+      "how": "The client pays a bill. They get points for it. Next time they come, those points make their bill smaller. We do not message them. You tell them, or they see it on the bill.",
+      "earning": "Points come from what the client really paid. Not the full price. If you gave a discount, the points are on the smaller amount. Part points are never given. The number is always rounded down.",
+      "expiry": "Points start counting from the day you give them. Not from the last visit. Every bill's points have their own end date. When a client uses points, the oldest ones go first. Points past their date are gone. The till will not offer them.",
+      "spending": "Points cover only part of a bill. So every visit still brings in money. A client needs a few points before they can use any. If something comes back, the points come back too. What that bill gave is taken away. What the client spent is given back. If you fix a bill's amount later, the points change with it."
+    }
   },
   "settingsTeam": {
     "title": "Team access",
@@ -1999,7 +2011,8 @@
       "pointsWhy": "Points follow the amount, so this client keeps only what the visit really earned."
     },
     "foldGroup": "Fold {name}",
-    "unfoldGroup": "Unfold {name}"
+    "unfoldGroup": "Unfold {name}",
+    "infoTipHow": "How this works: {label}"
   },
   "auth": {
     "metaTitle": "Sign in",
@@ -3254,6 +3267,53 @@
             "s1": "Open “Settings” → “Billing”.",
             "s2": "Your bills are listed there. Tap one to open it."
           }
+        }
+      }
+    },
+    "new": {
+      "heading": "What's new",
+      "lede": "Things we have added lately. Nothing here changes on its own.",
+      "open": "Added lately",
+      "items": {
+        "rewards": {
+          "title": "Reward points",
+          "body": "Clients earn points on what they spend. Those points can make a later bill smaller. It is off until you switch it on.",
+          "go": "Settings › Reward points"
+        },
+        "phone-alerts": {
+          "title": "Alerts on your phone",
+          "body": "Your phone can buzz when a booking comes in. It works with the app closed. You choose which alerts you want.",
+          "go": "Settings › Phone alerts"
+        },
+        "day-summary": {
+          "title": "Your day, at 9pm",
+          "body": "One message each night with what the day took. It comes with phone alerts."
+        },
+        "delivery-apps": {
+          "title": "Swiggy and Zomato orders",
+          "body": "Take orders from a delivery app? Ring them up at the till. Pick the app, and put in the order number."
+        },
+        "restaurant": {
+          "title": "Screens for a kitchen",
+          "body": "Run a restaurant or cafe? Your menu, your counter and your Home screen now go together."
+        },
+        "returns-why": {
+          "title": "A return says why",
+          "body": "Something came back? Say what was wrong with it. Then say if it goes back on the shelf."
+        },
+        "stock-reports": {
+          "title": "What sold, and what is left",
+          "body": "Reports now cover the shelf too. See what went out, what came back, and what to order.",
+          "go": "Reports"
+        },
+        "marketplace": {
+          "title": "Amazon and Flipkart orders",
+          "body": "Sell online? Give each product its marketplace code. Then bring the day's orders in from a report."
+        },
+        "sizes": {
+          "title": "Sizes on a product",
+          "body": "One product can hold its own sizes. Each size is counted on its own. None can go below zero.",
+          "go": "Products"
         }
       }
     }

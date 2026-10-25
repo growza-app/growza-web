@@ -660,15 +660,17 @@ export function CustomersClient({
             <label className="search-wrap">
               <IconSearch />
               <input
-                type="text"
+                type="search"
                 className="search-input search-input-bare"
                 placeholder={t('searchPlaceholder', { noun: lower })}
+                aria-label={t('searchPlaceholder', { noun: lower })}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
                   setPageIndex(0);
                 }}
               />
+              <SearchClear value={search} onClear={() => { setSearch(''); setPageIndex(0); }} />
             </label>
             <div className="dropdown-anchor" ref={filterMenu.anchorRef}>
               <button type="button" className="btn btn-ghost" onClick={() => setFilterOpen((v) => !v)}>

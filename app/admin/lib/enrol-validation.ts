@@ -41,6 +41,47 @@ export const DIAL_CODES: Record<string, string> = {
 /** National-number length per dial code, where it is a fixed, well-known rule. */
 export const NATIONAL_DIGITS: Record<string, number> = { '+91': 10, '+971': 9, '+65': 8, '+1': 10 };
 
+/**
+ * What the phone box should hold after somebody has typed or pasted into it.
+ *
+ * Digits only, and a pasted `+91…`, `91…` or `0…` reduces to the same national number rather than being
+ * rejected. The country code only comes off when what is LEFT is a whole national number.
+ *
+ * That last clause is the fix (QA 2026-10-25). It used to strip the code whenever the digits merely began
+ * with it, which ate the first two digits of every Indian number starting 91 — and `9123456789` is a real
+ * mobile. Typing it went `9`, `91`, then `2` as the third keystroke tripped the rule, and the form ended up
+ * refusing a number the admin had typed correctly. A prefix cannot be both the country code and the start of
+ * the number; only the length tells them apart.
+ *
+ * It also stops at the country's own length — ten digits for India (owner, 2026-10-25). The box used to take
+ * fifteen, so an eleventh digit went in silently and the number was only refused on save, by which time the
+ * admin had moved on to the next field. The cap is the LAST thing done, after the country code and any trunk
+ * zero have come off, or a pasted `+919876543210` would be cut to ten digits that still had the code on the
+ * front. Fifteen remains the ceiling for a country whose length nobody has written down (E.164's own limit).
+ *
+ * Pure, so the behaviour can be asked of it directly rather than through a rendered input.
+ */
+export function phoneAsTyped(raw: string, dialCode: string | null): string {
+  let digits = raw.replace(/\D/g, '');
+  /*
+   * `00` is how half of India writes a `+` (QA 2026-10-25), and it has to come off before the country code
+   * is looked for, or the code is never recognised.
+   *
+   * This was wrong before the length cap too, and the cap is what made it dangerous: `0091 98765 43210` used
+   * to survive as fourteen digits and be refused on save, which was ugly but safe. Capped to ten it became
+   * `0091987654` — ten digits, the right shape, somebody else's number, and nothing to refuse.
+   */
+  if (digits.startsWith('00')) digits = digits.slice(2);
+  const bare = dialCode?.replace('+', '');
+  const national = dialCode ? NATIONAL_DIGITS[dialCode] : undefined;
+  if (bare && national && digits.length === bare.length + national && digits.startsWith(bare)) {
+    digits = digits.slice(bare.length);
+  }
+  // A trunk '0' is never part of an Indian mobile, so a pasted 0XXXXXXXXXX loses it.
+  if (dialCode === '+91' && digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
+  return digits.slice(0, national ?? 15);
+}
+
 const hasLetterOrDigit = (v: string) => /[\p{L}\p{N}]/u.test(v);
 
 /**
