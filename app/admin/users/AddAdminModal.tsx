@@ -166,7 +166,21 @@ export function AddAdminModal({
           </div>
           <div>
             <FieldLabel htmlFor={`${ids}-phone`}>Mobile number</FieldLabel>
-            <TextInput id={`${ids}-phone`} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 98765 43210" disabled={saving} />
+            <TextInput
+              id={`${ids}-phone`}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+91 98765 43210"
+              disabled={saving}
+              /*
+               * Owner, 2026-10-25 — the same keypad the enrolment form asks for, and for the same reason: a
+               * field with no `type` is a text field, so the keyboard opens on letters for a number nobody
+               * can type with letters. No length here, because this one takes the WHOLE international
+               * number rather than ten national digits.
+               */
+              type="tel"
+              inputMode="tel"
+            />
           </div>
           <div>
             <FieldLabel htmlFor={`${ids}-password`}>Starting password</FieldLabel>

@@ -257,8 +257,73 @@ describe('the phone box as somebody types', () => {
     expect(phoneAsTyped('94771234567', '+94')).toBe('94771234567');
   });
 
-  it('keeps digits only, and never more than fifteen', () => {
+  it('keeps digits only', () => {
     expect(phoneAsTyped('(987) 654-3210', '+91')).toBe('9876543210');
-    expect(phoneAsTyped('1'.repeat(20), '+91')).toHaveLength(15);
+  });
+
+  /**
+   * Owner, 2026-10-25 — it stops at the country's own length.
+   *
+   * The box took fifteen, so an eleventh digit went in without a murmur and the number was refused only on
+   * save, by which time the admin had moved on. Ten is ten.
+   */
+  it('stops at ten digits for India, and at each other country’s own length', () => {
+    expect(typing('98765432109999')).toBe('9876543210');
+    expect(phoneAsTyped('1'.repeat(20), '+91')).toHaveLength(10);
+    expect(phoneAsTyped('5'.repeat(20), '+971')).toHaveLength(9);
+    expect(phoneAsTyped('8'.repeat(20), '+65')).toHaveLength(8);
+  });
+
+  it('cuts to length only AFTER the country code comes off, never before', () => {
+    // Capped first, a pasted +91 number would lose its last two digits and keep the code on the front.
+    expect(phoneAsTyped('+919876543210', '+91')).toBe('9876543210');
+    expect(phoneAsTyped('09876543210', '+91')).toBe('9876543210');
+  });
+
+  it('survives the autofill that corrupted the tenant app’s field', () => {
+    // `maxLength={10}` there turned "+919876500001" into "+919876500" — nine digits and somebody else's
+    // number — because the browser cuts the raw string before any code sees it. Cutting after the prefixes
+    // come off is the only order that can be right.
+    expect(phoneAsTyped('+919876500001', '+91')).toBe('9876500001');
+    expect(phoneAsTyped('+91 98765 00001', '+91')).toBe('9876500001');
+  });
+
+  it('still allows fifteen where nobody has written the length down', () => {
+    // E.164's own ceiling, for a country with no entry in NATIONAL_DIGITS.
+    expect(phoneAsTyped('9'.repeat(20), '+94')).toHaveLength(15);
+  });
+});
+
+/**
+ * Owner, 2026-10-25 — the keyboard that opens, and the eleventh digit that cannot be typed.
+ *
+ * `inputMode` is a hint, and a field with no `type` is a text field, so some keyboards opened with letters on
+ * them. `type="tel"` is the one browsers act on. Asked of the source because neither is visible in behaviour
+ * until somebody is standing in a salon with a tablet.
+ */
+describe('the phone box itself', () => {
+  const modal = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../components/AddBusinessModal.tsx'), 'utf8');
+
+  it('asks for a phone keypad in both the ways that matter', () => {
+    expect(modal).toContain('type="tel"');
+    expect(modal).toContain('inputMode="numeric"');
+  });
+
+  /**
+   * The eleventh digit is stopped in the change handler, and there is deliberately no `maxLength`.
+   *
+   * The tenant app tried `maxLength={10}` and it corrupted the number it was meant to protect: the browser
+   * truncates the raw string before React sees it, so an autofilled `+919876500001` arrived as `+919876500`
+   * — the `+91` having eaten three of the ten allowed characters — leaving nine digits and somebody else's
+   * number. `PhoneField` carries that scar in a comment; this is the same field one plane up.
+   */
+  it('stops the eleventh digit in JavaScript, never with maxLength', () => {
+    // The phone input's own attributes, with the comments taken out — one of them says the word.
+    const start = modal.indexOf('value={nationalNumber}');
+    const attributes = modal.slice(start, modal.indexOf('/>', start)).replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(attributes).not.toContain('maxLength');
+    expect(attributes).toContain('type="tel"');
+    // And the handler is what holds the length, on every path a keystroke or a paste can take.
+    expect(modal).toContain('setNationalNumber(phoneAsTyped(e.target.value, dialCode))');
   });
 });

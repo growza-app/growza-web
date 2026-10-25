@@ -53,6 +53,12 @@ export const NATIONAL_DIGITS: Record<string, number> = { '+91': 10, '+971': 9, '
  * refusing a number the admin had typed correctly. A prefix cannot be both the country code and the start of
  * the number; only the length tells them apart.
  *
+ * It also stops at the country's own length — ten digits for India (owner, 2026-10-25). The box used to take
+ * fifteen, so an eleventh digit went in silently and the number was only refused on save, by which time the
+ * admin had moved on to the next field. The cap is the LAST thing done, after the country code and any trunk
+ * zero have come off, or a pasted `+919876543210` would be cut to ten digits that still had the code on the
+ * front. Fifteen remains the ceiling for a country whose length nobody has written down (E.164's own limit).
+ *
  * Pure, so the behaviour can be asked of it directly rather than through a rendered input.
  */
 export function phoneAsTyped(raw: string, dialCode: string | null): string {
@@ -64,7 +70,7 @@ export function phoneAsTyped(raw: string, dialCode: string | null): string {
   }
   // A trunk '0' is never part of an Indian mobile, so a pasted 0XXXXXXXXXX loses it.
   if (dialCode === '+91' && digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
-  return digits.slice(0, 15);
+  return digits.slice(0, national ?? 15);
 }
 
 const hasLetterOrDigit = (v: string) => /[\p{L}\p{N}]/u.test(v);

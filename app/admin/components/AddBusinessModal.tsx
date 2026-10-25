@@ -447,6 +447,22 @@ export function AddBusinessModal({
                   id={`${ids}-owner-phone`}
                   value={nationalNumber}
                   invalid={!!errorFor('owner.phone')}
+                  /*
+                   * Owner, 2026-10-25 — a phone keypad, and ten digits.
+                   *
+                   * `inputMode` alone was not enough: it is a HINT, and a field with no `type` is a text
+                   * field, so some keyboards opened with letters on them. `type="tel"` is the one browsers
+                   * act on. Both, because between them they cover every device this is used on.
+                   *
+                   * And deliberately NO `maxLength`, however obviously right it looks. The tenant app tried
+                   * exactly that and it CORRUPTED the number it was meant to protect: the browser truncates
+                   * the raw string before React sees it, so an autofilled `+919876500001` arrived as
+                   * `+919876500` — the `+91` having eaten three of the ten allowed characters — leaving nine
+                   * digits and somebody else's number. See `PhoneField`'s own comment; the device sweep is
+                   * what caught it there. The length is `phoneAsTyped`'s job, after the prefixes come off,
+                   * which is the only order that can be right.
+                   */
+                  type="tel"
                   inputMode="numeric"
                   autoComplete="tel-national"
                   aria-label={dialCode ? `Owner's phone number, ${dialCode}` : "Owner's phone number"}
