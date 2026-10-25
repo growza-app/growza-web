@@ -1242,6 +1242,12 @@ export interface OwnerBill extends Omit<OwnerBillRow, never> {
 export interface BookingCorrection {
   at: string;
   reason: string | null;
+  /**
+   * Jira GRW-648 — reward points this correction moved: negative where the bill turned out smaller than the
+   * one the client earned on, positive where it was bigger. 0 for a correction that moved none, and for
+   * every one made before corrections touched the ledger at all.
+   */
+  pointsMoved: number;
   changes: Array<{
     appointmentId: string;
     beforeService: string | null;

@@ -1991,7 +1991,12 @@
       "item": "Correct amount or service",
       "loadFailed": "Could not load services. Check the connection and try again.",
       "notePackage": "A service in a package keeps its service; you can fix its amount. The old amount stays in the activity log.",
-      "historyTitle": "Corrected"
+      "historyTitle": "Corrected",
+      "done": "Done",
+      "pointsTitle": "Reward points",
+      "pointsTakenBack": "{n, plural, one {# point taken back} other {# points taken back}}",
+      "pointsAdded": "{n, plural, one {# point added} other {# points added}}",
+      "pointsWhy": "Points follow the amount, so this client keeps only what the visit really earned."
     },
     "foldGroup": "Fold {name}",
     "unfoldGroup": "Unfold {name}"

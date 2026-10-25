@@ -1318,7 +1318,7 @@ export const api = {
   correctBooking: (
     appointmentId: string,
     args: { legs: { appointmentId: string; serviceId?: string; paidAmountMinor: number }[]; reason?: string; confirmLargeAmount?: boolean },
-  ) => post<{ bookingGroupId: string | null }>(`/api/v1/appointments/${appointmentId}/correct`, args),
+  ) => post<{ bookingGroupId: string | null; pointsMoved: number }>(`/api/v1/appointments/${appointmentId}/correct`, args),
   /** Jira GRW-318 — `wholeBooking` applies a cancel or a no-show to every still-confirmed service of the visit. */
   updateAppointmentStatus: (id: string, status: AppointmentStatus, wholeBooking = false) =>
     patch<{ id: string; status: AppointmentStatus }>(`/api/v1/appointments/${id}/status`, wholeBooking ? { status, wholeBooking: true } : { status }),
