@@ -14,7 +14,11 @@ type Translate = (key: string) => string;
  * is one line each — what it does, in the reader's own words, and a way in where there is one.
  *
  * The month, not the date. "25 October" invites the reader to work out whether that was before or after
- * something went wrong for them; the month is as precise as this needs to be.
+ * something went wrong for them, and the month is as precise as this needs to be.
+ *
+ * And the month only where it CHANGES (QA 2026-10-25). Everything shipped lately shipped lately, so nine
+ * entries carried nine identical "OCTOBER 2026" labels — a word repeated on every line stops being read and
+ * starts being noise. Printed once, it is a heading; printed nine times, it is wallpaper.
  */
 export function WhatsNew({ role, t, locale }: { role: HelpRole | null; t: Translate; locale: string }) {
   const things = whatsNewFor(role);
@@ -43,9 +47,9 @@ export function WhatsNew({ role, t, locale }: { role: HelpRole | null; t: Transl
         </summary>
         <div className="help-cat-body">
           <ul className="help-new-list">
-            {things.map((thing) => (
+            {things.map((thing, i) => (
               <li key={thing.id} className="help-new-item">
-                <p className="help-new-when">{month(thing)}</p>
+                {i === 0 || month(thing) !== month(things[i - 1]!) ? <p className="help-new-when">{month(thing)}</p> : null}
                 <p className="help-new-what">{t(`items.${thing.id}.title`)}</p>
                 <p className="help-new-why">{t(`items.${thing.id}.body`)}</p>
                 {/* Only where there is somewhere to go: a line with no link is a thing that happens by itself. */}

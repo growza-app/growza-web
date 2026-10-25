@@ -101,6 +101,21 @@ describe('what’s new', () => {
  * true and too long, and the people reading this screen may not read English confidently. A line somebody
  * gives up on halfway is worth nothing, however accurate it is.
  */
+describe('the month', () => {
+  const component = readFileSync(resolve(here, 'WhatsNew.tsx'), 'utf8');
+
+  it('is printed once per month, not once per entry', () => {
+    // QA 2026-10-25 — everything shipped lately shipped lately, so nine entries carried nine identical
+    // "OCTOBER 2026" labels. A word on every line stops being read and starts being wallpaper.
+    expect(component).toContain("i === 0 || month(thing) !== month(things[i - 1]!)");
+  });
+
+  it('is a month and a year, never a day — a date invites arithmetic nobody needs to do', () => {
+    expect(component).toContain("month: 'long', year: 'numeric'");
+    expect(component).not.toMatch(/day: '(numeric|2-digit)'/);
+  });
+});
+
 describe('the English', () => {
   const words = block(en);
 
