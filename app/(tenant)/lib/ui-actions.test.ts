@@ -211,6 +211,14 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
    * redirects, and all five routes are `owner` in shared's route table.
    */
   '/settings/alerts': ['PUT /api/v1/alerts/prefs', 'POST /api/v1/alerts/subscriptions', 'DELETE /api/v1/alerts/subscriptions'],
+  /*
+   * Jira GRW-648 — whether this business gives reward points, and how generous it is.
+   *
+   * Gated by the screen for the same reason as the alerts above: nothing on it is one role's and not
+   * another's. The nav row carries `ownerOnly`, the page redirects a role that types the address, and both
+   * routes are `owner` in shared's route table.
+   */
+  '/settings/rewards': ['PATCH /api/v1/settings/rewards'],
   // Jira GRW-615 — an order's own screen moves it along: the one next move, and the rarer ones behind More. Same screen,
   // same gate: a role the nav does not offer /orders is bounced Home by the page, so it never reaches the button.
   // Jira GRW-617 — and swaps a size. The desk is offered this screen but takes no returns, so it takes no swaps: the control is

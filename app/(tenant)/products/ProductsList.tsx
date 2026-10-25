@@ -197,6 +197,7 @@ export function ProductsList({
   const [sortDir, setSortDir] = useState<ShelfSortDir>('asc');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [menuView, setMenuView] = useState<'cards' | 'table'>('cards');
   const [editing, setEditing] = useState<Product | 'new' | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [stockTakeOpen, setStockTakeOpen] = useState(false);
@@ -236,8 +237,22 @@ export function ProductsList({
     retired: rows.filter((p) => !p.active && matchesCategories(p, selectedCategories)).length,
   };
   const noneCount = live.filter((p) => p.categoryId === null).length;
-  const pageCount = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
-  const pageRows = shown.slice((Math.min(page, pageCount) - 1) * PAGE_SIZE, Math.min(page, pageCount) * PAGE_SIZE);
+  const effectivePageSize = !counted && menuView === 'cards' ? 24 : PAGE_SIZE;
+  const pageCount = Math.max(1, Math.ceil(shown.length / effectivePageSize));
+  const pageRows = shown.slice((Math.min(page, pageCount) - 1) * effectivePageSize, Math.min(page, pageCount) * effectivePageSize);
+  const topSeller = useMemo(
+    () =>
+      [...live]
+        .filter((p) => !/roti|bread|steam rice/i.test(p.name))
+        .sort((a, b) => b.sold - a.sold)[0] ??
+      [...live].sort((a, b) => b.sold - a.sold)[0] ??
+      null,
+    [live],
+  );
+  const totalSold = useMemo(
+    () => rows.reduce((sum, p) => sum + (p.sold ?? 0), 0),
+    [rows],
+  );
   const pick = (f: () => void) => {
     f();
     setPage(1);
@@ -388,13 +403,46 @@ export function ProductsList({
    */
   const uncountedStrip = (
     <div className="prd-strip prd-strip-2" role="list">
-      <div className="prd-stat prd-stat-products" role="listitem">
-        <span className="prd-stat-n">{live.filter((p) => matchesCategories(p, selectedCategories)).length}</span>
-        <span className="prd-stat-l">{t('strip.onMenu')}</span>
+      <div role="listitem" className="prd-stat-cell">
+        <button
+          type="button"
+          className={`prd-stat prd-stat-tap prd-stat-products ${filter === 'all' ? 'is-on' : ''}`}
+          aria-pressed={filter === 'all'}
+          onClick={() => pick(() => setFilter('all'))}
+        >
+          <span className="prd-stat-n">{live.filter((p) => matchesCategories(p, selectedCategories)).length}</span>
+          <span className="prd-stat-l">{t('strip.onMenu')}</span>
+          <span className="prd-stat-sub">{t('activeOnPos')}</span>
+        </button>
       </div>
-      <div className="prd-stat" role="listitem">
-        <span className="prd-stat-n">{counts.retired}</span>
-        <span className="prd-stat-l">{t('strip.offMenu')}</span>
+      <div className="prd-stat prd-stat-cats" role="listitem">
+        <span className="prd-stat-n">{liveCategories.length}</span>
+        <span className="prd-stat-l">{t('menuSections')}</span>
+        <span className="prd-stat-sub">
+          {liveCategories
+            .slice(0, 3)
+            .map((c) => c.name)
+            .join(' · ') || t('allDishes')}
+        </span>
+      </div>
+      <div className="prd-stat prd-stat-worth" role="listitem">
+        <span className="prd-stat-n">{topSeller ? topSeller.name : totalSold}</span>
+        <span className="prd-stat-l">{topSeller ? t('topSeller') : t('cols.sold')}</span>
+        <span className="prd-stat-sub">
+          {topSeller ? `${t('sold', { n: topSeller.sold })} · ${formatMoney(topSeller.priceMinor)}` : t('soldAcrossMenu', { sold: t('sold', { n: totalSold }) })}
+        </span>
+      </div>
+      <div role="listitem" className="prd-stat-cell">
+        <button
+          type="button"
+          className={`prd-stat prd-stat-tap ${filter === 'retired' ? 'is-on' : ''}`}
+          aria-pressed={filter === 'retired'}
+          onClick={() => pick(() => setFilter((cur) => (cur === 'retired' ? 'all' : 'retired')))}
+        >
+          <span className="prd-stat-n">{counts.retired}</span>
+          <span className="prd-stat-l">{t('strip.offMenu')}</span>
+          <span className="prd-stat-sub">{t('hiddenFromPos')}</span>
+        </button>
       </div>
     </div>
   );
@@ -663,7 +711,78 @@ export function ProductsList({
         </button>
       </div>
     ) : null;
-  const pages = shown.length > PAGE_SIZE ? <Pagination page={Math.min(page, pageCount)} total={shown.length} pageSize={PAGE_SIZE} noun={t(counted ? 'noun' : 'nounUncounted')} onChange={setPage} /> : null;
+  const pages = shown.length > effectivePageSize ? <Pagination page={Math.min(page, pageCount)} total={shown.length} pageSize={effectivePageSize} noun={t(counted ? 'noun' : 'nounUncounted')} onChange={setPage} /> : null;
+  const menuCategoryBar =
+    !counted && liveCategories.length > 0 ? (
+      <div className="prd-cat-bar" role="group" aria-label={t('cols.category')}>
+        <button
+          type="button"
+          className={`prd-cat-pill ${selectedCategories.length === 0 ? 'is-on' : ''}`}
+          aria-pressed={selectedCategories.length === 0}
+          onClick={clearCategories}
+        >
+          <span>{t('filters.all')}</span>
+          <span className="prd-cat-pill-n">{live.length}</span>
+        </button>
+        {liveCategories.map((c) => {
+          const active = selectedCategories.includes(c.id);
+          return (
+            <button
+              key={c.id}
+              type="button"
+              className={`prd-cat-pill ${active ? 'is-on' : ''}`}
+              aria-pressed={active}
+              onClick={() =>
+                pick(() =>
+                  setSelectedCategories((prev) => (prev.length === 1 && prev[0] === c.id ? [] : [c.id])),
+                )
+              }
+            >
+              <span>{c.name}</span>
+              <span className="prd-cat-pill-n">{c.count}</span>
+            </button>
+          );
+        })}
+      </div>
+    ) : null;
+  const menuCards =
+    shown.length === 0 ? (
+      nothing
+    ) : (
+      <div className="prd-menu-grid">
+        {pageRows.map((p) => {
+          const isBestSeller = topSeller !== null && topSeller.id === p.id && p.sold > 0;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              className={`prd-menu-card ${isOn(p) ? 'is-on' : ''} ${p.active ? '' : 'is-retired'}`}
+              aria-current={isOn(p) ? 'true' : undefined}
+              disabled={!writable}
+              onClick={() => (writable ? setEditing(p) : undefined)}
+            >
+              <div className="prd-menu-card-media">
+                <ProductPhoto className="prd-menu-card-photo" product={p} />
+                {p.categoryName ? <span className="prd-menu-card-cat">{p.categoryName}</span> : null}
+                <span className={`prd-menu-card-status ${p.active ? 'is-ok' : 'is-off'}`}>
+                  {p.active ? t('strip.onMenu') : t('retired')}
+                </span>
+              </div>
+              <div className="prd-menu-card-body">
+                <div className="prd-menu-card-title-row">
+                  <span className="prd-menu-card-name">{p.name}</span>
+                  {isBestSeller ? <span className="prd-menu-card-bestseller">{t('bestseller')}</span> : null}
+                </div>
+                <div className="prd-menu-card-foot">
+                  <span className="prd-menu-card-price">{formatMoney(p.priceMinor)}</span>
+                  <span className="prd-menu-card-sold">{t('sold', { n: p.sold })}</span>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    );
   const sheet = (inline: boolean) =>
     editing ? (
       <ProductSheet
@@ -693,9 +812,9 @@ export function ProductsList({
       {importOpen ? <ImportProducts shelf={rows} categories={categories} branchId={branchId} onClose={() => setImportOpen(false)} onImported={(r) => void imported(r)} /> : null}
       {deleting ? (
         <ConfirmDialog
-          title={t('delete')}
+          title={`${t('delete')} ${nouns.product.toLowerCase()}`}
           body={t('deleteAsk', { name: deleting.name })}
-          confirmLabel={t('delete')}
+          confirmLabel={t('deletePermanently', { action: t('delete') })}
           tone="danger"
           busy={busy}
           error={error}
@@ -704,7 +823,44 @@ export function ProductsList({
             setDeleting(null);
             setError(null);
           }}
-        />
+        >
+          <div className="prd-delete-preview">
+            <ProductPhoto className="prd-delete-preview-photo" product={deleting} />
+            <div className="prd-delete-preview-info">
+              <strong>{deleting.name}</strong>
+              <span>
+                {[deleting.categoryName, formatMoney(deleting.priceMinor), t('sold', { n: deleting.sold })]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </span>
+            </div>
+          </div>
+          {deleting.active ? (
+            <div className="prd-delete-alt">
+              <span>{t('hideInsteadHint')}</span>
+              <button
+                type="button"
+                className="btn btn-ghost prd-delete-alt-btn"
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  setError(null);
+                  try {
+                    const updated = await api.updateProduct(deleting.id, { active: false });
+                    saved(updated);
+                    setDeleting(null);
+                  } catch (err) {
+                    fail(err);
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                {t('retireInstead', { action: t('retire') })}
+              </button>
+            </div>
+          ) : null}
+        </ConfirmDialog>
       ) : null}
       {deletingCategory ? (
         <ConfirmDialog
@@ -761,17 +917,44 @@ export function ProductsList({
                 {searchBox}
                 {categoriesDropdown}
                 {sortBox}
+                {!counted ? (
+                  <div className="prd-view-seg" role="group" aria-label={t('menuViewAria')}>
+                    <button
+                      type="button"
+                      className={`prd-view-btn ${menuView === 'cards' ? 'is-on' : ''}`}
+                      aria-pressed={menuView === 'cards'}
+                      onClick={() => pick(() => setMenuView('cards'))}
+                    >
+                      {t('viewCards')}
+                    </button>
+                    <button
+                      type="button"
+                      className={`prd-view-btn ${menuView === 'table' ? 'is-on' : ''}`}
+                      aria-pressed={menuView === 'table'}
+                      onClick={() => pick(() => setMenuView('table'))}
+                    >
+                      {t('viewTable')}
+                    </button>
+                  </div>
+                ) : null}
                 {canStockTake && writable ? (
                   <button type="button" className="btn btn-ghost prd-import-btn" onClick={() => setImportOpen(true)}>
                     <IconUpload /> {t('import.open')}
                   </button>
                 ) : null}
               </div>
-              {chips}
-              <div className="card prd-desk-card">
-                {table}
-                {pages}
-              </div>
+              {!counted ? menuCategoryBar : chips}
+              {!counted && menuView === 'cards' ? (
+                <div className="prd-menu-cards-wrap">
+                  {menuCards}
+                  {pages}
+                </div>
+              ) : (
+                <div className="card prd-desk-card">
+                  {table}
+                  {pages}
+                </div>
+              )}
             </section>
             {editing ? (
               <aside className="pf-wide-right prd-desk-right" aria-label={editing === 'new' ? t('form.titleAdd', { product: nouns.product }) : t('form.titleEdit', { product: nouns.product })}>
@@ -813,9 +996,9 @@ export function ProductsList({
               ) : (
                 sortBox
               )}
-              {chips}
+              {!counted ? menuCategoryBar : chips}
             </div>
-            {list}
+            {!counted ? menuCards : list}
             {pages}
             {importRow}
           </>

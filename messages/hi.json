@@ -414,6 +414,10 @@
         "label": "फ़ोन पर सूचना",
         "sub": "आपका फ़ोन आपको क्या बताए"
       },
+      "rewards": {
+        "label": "रिवॉर्ड पॉइंट",
+        "sub": "ग्राहक जो पॉइंट कमाते और खर्च करते हैं"
+      },
       "checkIn": {
         "label": "लोकेशन से हाज़िरी",
         "sub": "स्टाफ़ अपने फ़ोन से हाज़िरी लगाए"
@@ -830,17 +834,43 @@
         "hint": "दुकान पर कोई लाइन में लगता है"
       },
       "daySummary": {
-        "title": "आज कैसा रहा",
+        "title": "दिन का सारांश",
         "hint": "शाम को एक संदेश: कितनी बुकिंग हुईं और कितने पैसे आए"
       }
     },
     "deviceOn": "इस फ़ोन पर आएँगी।",
     "deviceOff": "इस फ़ोन पर नहीं आएँगी।",
+    "useThisPhone": "इस फ़ोन पर पाएँ",
     "otherDevices": "{count, plural, one {1 और डिवाइस पर भी आती हैं।} other {# और डिवाइसों पर भी आती हैं।}}",
     "stopOnThisPhone": "इस फ़ोन पर बंद करें",
     "blocked": "आपके ब्राउज़र ने रोक दिया। इस साइट की सूचनाएँ चालू करके फिर कोशिश करें।",
     "saveFailed": "सेव नहीं हुआ। फिर कोशिश करें।",
     "loadFailed": "आपकी सूचनाएँ नहीं खुल सकीं। थोड़ी देर में फिर देखें।"
+  },
+  "settingsRewards": {
+    "intro": "ग्राहक अपने खर्च पर पॉइंट कमाते हैं और अगले बिल में उनका इस्तेमाल करते हैं। जब तक आप इसे चालू नहीं करते, उनके लिए कुछ नहीं बदलता।",
+    "cannot": "रिवॉर्ड पॉइंट यहाँ चालू नहीं किए जा सकते",
+    "notAvailable": "इस तरह के कारोबार के लिए रिवॉर्ड पॉइंट अभी उपलब्ध नहीं हैं।",
+    "noSubscription": "रिवॉर्ड पॉइंट चालू प्लान के साथ आते हैं। सब्सक्रिप्शन चालू होते ही आप इन्हें यहाँ ऑन कर सकते हैं।",
+    "switchLabel": "रिवॉर्ड पॉइंट",
+    "switchHint": "ऑन करने पर हर बिल पॉइंट कमाता है और टिल अगले बिल में उन्हें घटा सकता है।",
+    "rateLabel": "एक बिल कितने पॉइंट देता है",
+    "rateHint": "{bill} के बिल पर {points} पॉइंट — अगले बिल में {off} की छूट।",
+    "rateMax": "ज़्यादा से ज़्यादा {max}%।",
+    "rateBad": "0 से {max}% के बीच दर लिखें।",
+    "expiryLabel": "पॉइंट कब तक चलेंगे",
+    "expiryHint": "हर बिल के पॉइंट की अपनी तारीख होती है, और सबसे पुराने पहले खर्च होते हैं।",
+    "expiry": {
+      "180": "6 महीने",
+      "365": "1 साल",
+      "730": "2 साल",
+      "never": "कभी नहीं"
+    },
+    "tillRule": "टिल पर पॉइंट एक बिल का ज़्यादा से ज़्यादा {cap}% घटा सकते हैं, एक बार में {floor} पॉइंट, और हर पॉइंट {worth} का है।",
+    "save": "सेव करें",
+    "saving": "सेव हो रहा है…",
+    "saveFailed": "सेव नहीं हुआ। दोबारा कोशिश करें।",
+    "loadFailed": "रिवॉर्ड सेटिंग लोड नहीं हो पाईं। थोड़ी देर में दोबारा देखें।"
   },
   "settingsTeam": {
     "title": "टीम की पहुंच",
@@ -1961,7 +1991,12 @@
       "item": "रकम या सेवा सुधारें",
       "loadFailed": "सेवाएँ लोड नहीं हो सकीं। कनेक्शन देखकर फिर कोशिश करें।",
       "notePackage": "पैकेज की सेवा नहीं बदली जा सकती, सिर्फ़ उसकी रकम सुधारी जा सकती है। पुरानी रकम गतिविधि लॉग में रहेगी।",
-      "historyTitle": "सुधार"
+      "historyTitle": "सुधार",
+      "done": "हो गया",
+      "pointsTitle": "रिवॉर्ड पॉइंट",
+      "pointsTakenBack": "{n, plural, one {# पॉइंट वापस लिया} other {# पॉइंट वापस लिए}}",
+      "pointsAdded": "{n, plural, one {# पॉइंट जोड़ा} other {# पॉइंट जोड़े}}",
+      "pointsWhy": "पॉइंट रकम के हिसाब से चलते हैं, इसलिए क्लाइंट के पास उतने ही रहते हैं जितने इस विज़िट ने सच में दिए।"
     },
     "foldGroup": "{name} समेटें",
     "unfoldGroup": "{name} खोलें"
@@ -2095,6 +2130,16 @@
     "sendHint": "WhatsApp में बिल लिखा हुआ खुलेगा। भेजें आप दबाएँ।",
     "shareBill": "शेयर करें",
     "printBill": "प्रिंट करें",
+    "copyCard": "रसीद कार्ड कॉपी करें",
+    "cardCopied": "रसीद कार्ड कॉपी हो गया",
+    "copyText": "टेक्स्ट कॉपी करें",
+    "textCopied": "टेक्स्ट कॉपी हो गया",
+    "rcTokenLabel": "टोकन",
+    "rcYourOrder": "आपका ऑर्डर ({count})",
+    "rcAmount": "राशि",
+    "rcVerified": "सत्यापित रसीद",
+    "rcRewardSub": "अगली बार अपने पॉइंट्स इस्तेमाल करें",
+    "rcRewardBalance": "बैलेंस",
     "billFull": "एक बिल में ज़्यादा से ज़्यादा {max} लाइनें हो सकती हैं। और जोड़ने के लिए कुछ हटाएँ।",
     "qtyOnBill": "{name}: बिल में {count}",
     "oneMore": "एक और {name}",
@@ -2256,6 +2301,10 @@
     "totalSpent": "कुल खर्च",
     "totalVisits": "विज़िट",
     "insight": "हम क्या जानते हैं",
+    "points": "रिवॉर्ड पॉइंट",
+    "pointsCount": "{n, plural, one {# पॉइंट} other {# पॉइंट}}",
+    "pointsWorth": "बिल में {worth} की छूट के बराबर",
+    "pointsExpire": "{on} को {n, plural, one {# पॉइंट} other {# पॉइंट}} खत्म हो रहे हैं",
     "recent": "पिछली कुछ विज़िट",
     "daysAgo": "{n, plural, =0 {आज} one {कल} other {# दिन पहले}}",
     "days": "{n, plural, one {# दिन} other {# दिन}}",
@@ -2946,7 +2995,16 @@
       "sizeMore": "{name} एक और",
       "sizeLess": "{name} एक कम"
     },
-    "allDishes": "सारी डिश"
+    "allDishes": "सारी डिश",
+    "rewards": {
+      "offer": "{points, plural, one {# पॉइंट} other {# पॉइंट}} इस्तेमाल करें",
+      "off": "{amount} की छूट",
+      "none": "इस बिल पर इस्तेमाल करने लायक पॉइंट नहीं हैं",
+      "wasOff": "{bill} में से {amount} पॉइंट से",
+      "receiptUsed": "इस्तेमाल किए गए रिवॉर्ड पॉइंट: {points} (−{amount})",
+      "receiptEarned": "आपने अगली विज़िट के लिए {points, plural, one {# पॉइंट} other {# पॉइंट}} कमाए।",
+      "earnedDone": "{points, plural, one {# पॉइंट} other {# पॉइंट}} मिले"
+    }
   },
   "help": {
     "title": "मदद",
@@ -3834,11 +3892,32 @@
     "searchUncounted": "मेन्यू में खोजें",
     "nounUncounted": "डिश",
     "sellUncounted": "डिश बेचें",
-    "addUncounted": "डिश जोड़ें"
+    "addUncounted": "डिश जोड़ें",
+    "activeOnPos": "पीओएस काउंटर पर उपलब्ध",
+    "menuSections": "मेन्यू सेक्शन",
+    "allDishes": "सभी डिश",
+    "topSeller": "सबसे ज़्यादा बिकने वाला",
+    "soldAcrossMenu": "पूरे मेन्यू में {sold}",
+    "hiddenFromPos": "पीओएस से छुपाया गया",
+    "bestseller": "लोकप्रिय",
+    "deletePermanently": "{action} (हमेशा के लिए)",
+    "hideInsteadHint": "हटाने के बजाय क्या इसे कुछ समय के लिए पीओएस से छुपाना चाहते हैं?",
+    "retireInstead": "इसके बजाय {action}",
+    "menuViewAria": "मेन्यू दृश्य",
+    "viewCards": "कार्ड",
+    "viewTable": "तालिका",
+    "secAvailability": "उपलब्धता और हटाना",
+    "secMenuStatus": "मेन्यू स्थिति और हटाना",
+    "hideProductHint": "बिना मिटाए पीओएस काउंटर से अस्थायी रूप से छुपाएँ।",
+    "hideDishHint": "इस डिश को पीओएस मेन्यू से अस्थायी रूप से हटाएँ। आप कभी भी वापस जोड़ सकते हैं।",
+    "restoreProductHint": "इस सामान को काउंटर पर फिर से बिक्री के लिए रखें।",
+    "restoreDishHint": "इस डिश को सक्रिय पीओएस मेन्यू में वापस रखें।",
+    "deletePermanentHint": "कैटलॉग से हमेशा के लिए हटा देता है। पुराने बिलों में इसका रिकॉर्ड बना रहेगा।"
   },
   "pos": {
     "modes": "पीओएस",
     "sell": "बेचें",
+    "queue": "कतार",
     "return": "वापसी",
     "loadingBills": "बिल लोड हो रहे हैं…",
     "billsFailed": "बिल लोड नहीं हुए। इंटरनेट देखें और फिर से कोशिश करें।",
@@ -3850,7 +3929,36 @@
     "shortcutClient": "{customer}",
     "shortcutCharge": "बिक्री पूरी करें",
     "shortcutHold": "बिल रोकें",
-    "shortcutExit": "बाहर"
+    "shortcutExit": "बाहर",
+    "nextToken": "अगला टोकन {token}",
+    "inQueueLabel": "कतार में ({count})",
+    "completedLabel": "आज पूरे हुए ({count})",
+    "allDoneStrip": "सभी टोकन दिए गए — अगला ऑर्डर {token}",
+    "markReady": "पूरा",
+    "markCompleted": "पूरा हुआ चिह्नित करें",
+    "recallToQueue": "वापस कतार में",
+    "openQueue": "कतार ({count})",
+    "backToSell": "नया ऑर्डर",
+    "elapsedJustNow": "अभी",
+    "elapsedMin": "{min} मि॰ पहले",
+    "elapsedMinShort": "{min} मि॰",
+    "kpiLastToken": "आज का आखिरी टोकन",
+    "kpiInQueue": "कतार में · बन रहे हैं",
+    "kpiCompletedToday": "आज पूरे हुए",
+    "kpiTotalOrders": "आज के कुल ऑर्डर",
+    "preparingColTitle": "कतार में · बन रहे हैं",
+    "preparingColSub": "किचन में बन रहे सक्रिय टोकन जिन्हें देना बाकी है",
+    "completedColTitle": "आज पूरे हुए",
+    "completedColSub": "आज दिए गए ऑर्डर — कल #01 से फिर शुरू होंगे",
+    "emptyPreparing": "सब पूरे हो गए — आज के सभी टोकन दिए जा चुके हैं।",
+    "emptyCompleted": "आज अभी तक कोई टोकन पूरा नहीं चिह्नित किया गया।",
+    "statusPreparing": "बन रहा है",
+    "statusCompleted": "पूरा हुआ",
+    "channelCounter": "काउंटर",
+    "channelSwiggy": "स्विगी",
+    "channelZomato": "ज़ोमैटो",
+    "walkInGuest": "काउंटर अतिथि",
+    "noneIssuedYet": "अभी कोई नहीं"
   },
   "sales": {
     "scanUnknown": "कोड {code} वाला कोई सामान नहीं मिला। बोतल जाँचें।",

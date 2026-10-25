@@ -65,7 +65,8 @@ describe('one done screen for both Record payment forms (owner, 2026-10-10)', ()
 describe('Record payment in three taps', () => {
   it('is the phone flow only; a desk and ?full=1 keep the one-page form', () => {
     expect(wrapper).toMatch(/const quick = purpose === 'payment' && !full;/);
-    expect(wrapper).toMatch(/window\.matchMedia\('\(max-width: 860px\)'\)\.matches \? 'phone' : 'desk'/);
+    expect(wrapper).toContain("const phoneMq = window.matchMedia('(max-width: 860px)');");
+    expect(wrapper).toMatch(/phoneMq\.matches \? 'phone' : 'desk'/);
     // Nothing is drawn until the browser has said which — not a form that flashes up and is replaced.
     expect(wrapper).toMatch(/if \(quick && !settlingBooking && layout === 'unknown'\) return <div className="pf" aria-busy="true" \/>;/);
     /*
@@ -84,8 +85,12 @@ describe('Record payment in three taps', () => {
   });
 
   it('has no text field on its screens: the keyboard never comes up by itself', () => {
+    /*
+     * Jira GRW-648 — the reward switch is a checkbox, and a checkbox raises no keyboard. The rule this test
+     * protects is about TEXT fields, so it is spelled as one: every input on these screens is a checkbox.
+     */
     for (const src of [flow, keypad]) {
-      expect(src).not.toMatch(/<input/);
+      for (const tag of src.match(/<input[\s\S]*?\/>/g) ?? []) expect(tag).toMatch(/type="checkbox"/);
       expect(src).not.toMatch(/<textarea/);
       expect(src).not.toMatch(/contentEditable/);
     }
@@ -607,7 +612,9 @@ describe('a bill paid two ways', () => {
     expect(flow).toMatch(/if \(splitting && !firstWay\) \{\s*setSplitKeypad\(mode\);/);
     expect(flow).toMatch(/title=\{t\('split\.howMuch', \{ mode: modeWord\(splitKeypad\) \}\)\}/);
     // Enough for the whole bill is a bill paid one way: no split is held, the tap just pays.
-    expect(flow).toMatch(/if \(minor >= totalMinor\) \{\s*setFirstWay\(null\);\s*void pay\(mode\);/);
+    // Jira GRW-648 — against what is DUE, not what the bill comes to: reward points are not a way of paying,
+    // so a first way that covers everything left is still the whole of it.
+    expect(flow).toMatch(/if \(minor >= dueMinor\) \{\s*setFirstWay\(null\);\s*void pay\(mode\);/);
   });
   it('goes to the API as `payments`, the legs\' one word being the larger way, and the done screen says both', () => {
     expect(flow).toMatch(/const howPaid = ways\.length > 1 \? \{ paymentMode: mainMode, payments: ways \} : \{ paymentMode: mode \};/);

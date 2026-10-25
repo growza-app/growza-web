@@ -11,6 +11,7 @@ import {
   IconPalette,
   IconPayUpi,
   IconShop,
+  IconStar,
   IconUser,
   IconUserPlus,
   IconWallet,
@@ -29,6 +30,7 @@ export type SettingsRowKey =
   | 'whatsapp'
   | 'notifications'
   | 'phoneAlerts'
+  | 'rewards'
   | 'checkIn'
   | 'appearance'
   | 'privacy'
@@ -173,6 +175,17 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
        * set differently at MG Road than at Koramangala.
        */
       { href: '/settings/alerts', key: 'phoneAlerts', icon: IconBell, ownerOnly: true },
+      /*
+       * Jira GRW-648 — whether this business gives reward points, and how generous it is.
+       *
+       * The business group, not the branch one: points earned at MG Road are spendable at Koramangala (the
+       * owner's decision, and the ledger is keyed on the person rather than the branch record), so there is
+       * nothing here to set differently per branch.
+       *
+       * Owner only, like Phone alerts and for a plainer reason: an earn rate is a standing promise to every
+       * client the business has, and it is the owner who pays for it.
+       */
+      { href: '/settings/rewards', key: 'rewards', icon: IconStar, ownerOnly: true },
       { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
       // Jira GRW-72 — what each role on a shop's team can open.
       { href: '/settings/roles', key: 'roles', icon: IconLock, shopOwnerOnly: true },

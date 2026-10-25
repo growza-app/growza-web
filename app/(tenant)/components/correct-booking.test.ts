@@ -74,3 +74,38 @@ describe('the correction sheet', () => {
     expect(sheet).toMatch(/reason\.trim\(\)\s*\?\s*\{ reason: reason\.trim\(\) \}\s*:\s*\{\}/);
   });
 });
+
+/**
+ * Jira GRW-648 — a correction moves the client's reward points with the amount, and the owner is told.
+ *
+ * The movement is the one thing on this screen nobody asked for: the owner fixed a figure, and somebody's
+ * balance changed. It is said twice on purpose — once before the sheet closes, because the owner is standing
+ * there, and once in the visit's own history, because a flash is not a record.
+ */
+describe('what a correction did to the points', () => {
+  it('holds the sheet open to say it, and only when something actually moved', () => {
+    expect(sheet).toMatch(/const saved = await guard\(/);
+    expect(sheet).toMatch(/if \(saved\.pointsMoved !== 0\) \{[\s\S]*?setPointsMoved\(saved\.pointsMoved\);[\s\S]*?return;/);
+    // Everything else closes the moment it saves, exactly as it did before.
+    expect(sheet).toMatch(/setPointsMoved\(saved\.pointsMoved\);\s*return;\s*\}\s*onClose\(\);/);
+  });
+
+  it('says which way they went, and leaves nothing to cancel once they have', () => {
+    expect(sheet).toMatch(/pointsMoved < 0 \? t\('pointsTakenBack', \{ n: -pointsMoved \}\) : t\('pointsAdded', \{ n: pointsMoved \}\)/);
+    expect(sheet).toContain("t('done')");
+    // The confirmation replaces the form: no Save, and no amount left looking editable after it was saved.
+    const confirmation = sheet.slice(sheet.indexOf('if (pointsMoved !== null)'), sheet.indexOf('<div className="modal-backdrop" onClick={onClose}>', sheet.indexOf('if (pointsMoved !== null)') + 100));
+    expect(confirmation).not.toMatch(/<input/);
+    expect(confirmation).not.toContain("t('save')");
+  });
+
+  it('announces it, rather than only drawing it', () => {
+    expect(sheet).toMatch(/role="status"/);
+  });
+
+  it('keeps it in the visit\'s history too, and leaves the line out when nothing moved', () => {
+    expect(summary).toMatch(/c\.pointsMoved !== 0 && \(/);
+    expect(summary).toContain("tfix('pointsTakenBack', { n: -c.pointsMoved })");
+    expect(summary).toContain("tfix('pointsAdded', { n: c.pointsMoved })");
+  });
+});

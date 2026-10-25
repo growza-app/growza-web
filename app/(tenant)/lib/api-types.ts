@@ -592,6 +592,14 @@ export interface Appointment {
    * compiler point at each one.
    */
   customerPhone: string | null;
+  /**
+   * Jira GRW-648 — WHICH client, so the till can ask what they have in reward points before settling the bill.
+   *
+   * Absent — not null — for a staff session a salon withholds client identity from, exactly as the name and
+   * the number above are: the key is deleted rather than emptied, because "you may not see this" and "there
+   * is nobody on this visit" are different facts. Null is the second one.
+   */
+  customerId?: string | null;
   /** GRW-219 — what the move sheet asks the availability endpoint about. NULL once the service has been deleted: the booking keeps its own name and price. */
   serviceId: string | null;
   serviceName: string;
@@ -957,11 +965,25 @@ export interface CheckoutGroupMemberInput {
   schedulableId?: string;
 }
 
+/**
+ * Jira GRW-648 — what a settled bill did to the client's reward balance.
+ *
+ * Absent when the business has rewards off, which is most of them. `balanceAfter` is null when nothing was
+ * spent — the bill earned points without ever needing to read what they already had.
+ */
+export interface VisitRewards {
+  redeemedPoints: number;
+  discountMinor: number;
+  earnedPoints: number;
+  balanceAfter: number | null;
+}
+
 export interface CheckoutResponse {
   appointmentId: string;
   originalCancelled: boolean;
   bookingGroupId: string;
   extraAppointmentIds: string[];
+  rewards?: VisitRewards;
 }
 
 /**
@@ -1220,6 +1242,12 @@ export interface OwnerBill extends Omit<OwnerBillRow, never> {
 export interface BookingCorrection {
   at: string;
   reason: string | null;
+  /**
+   * Jira GRW-648 — reward points this correction moved: negative where the bill turned out smaller than the
+   * one the client earned on, positive where it was bigger. 0 for a correction that moved none, and for
+   * every one made before corrections touched the ledger at all.
+   */
+  pointsMoved: number;
   changes: Array<{
     appointmentId: string;
     beforeService: string | null;

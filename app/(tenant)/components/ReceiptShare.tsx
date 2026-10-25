@@ -6,11 +6,18 @@ import { useLabel } from './LabelsProvider';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { usePhoneProblem } from '../lib/use-phone-problem';
 import { displayPhone, fromStoredPhone, toStoredPhone } from '../lib/phone';
-import { rowsToText, whatsappHref, type ReceiptRow } from '../lib/receipt-text';
+import {
+  formatStructuredWhatsappText,
+  parseReceiptCard,
+  renderReceiptCardBlob,
+  rowsToText,
+  whatsappHref,
+  type ReceiptRow,
+} from '../lib/receipt-text';
 import { waDigits } from './BookingSheet';
 import { PhoneField } from './PhoneField';
 import type { ReactNode } from 'react';
-import { IconPrint, IconShare, IconWhatsApp } from './icons';
+import { IconCheck, IconPrint, IconShare, IconWhatsApp } from './icons';
 
 /** One row of the bill as WhatsApp will draw it: the same segments the text is written from. */
 function Row({ row }: { row: ReceiptRow }) {
@@ -77,7 +84,9 @@ export function ReceiptShare({
    */
   afterSend?: ReactNode;
 }) {
-  const text = useMemo(() => rowsToText(bill), [bill]);
+  const text = useMemo(() => (kind === 'bill' ? formatStructuredWhatsappText(bill) : rowsToText(bill)), [bill, kind]);
+  const card = useMemo(() => (kind === 'bill' ? parseReceiptCard(bill) : null), [bill, kind]);
+  const hasGraphicCard = Boolean(card && (card.items.length > 0 || card.totalAmount));
   const nv = useNewVisitCopy();
   // The vertical's own word for the person paying: Guest to a restaurant, Customer to a shop, Client to a salon.
   const clientNoun = useLabel('customer', 'Client');
@@ -97,6 +106,7 @@ export function ReceiptShare({
   const [editing, setEditing] = useState(!phone);
   const [typed, setTyped] = useState(fromStoredPhone(phone));
   const [touched, setTouched] = useState(false);
+  const [copiedKind, setCopiedKind] = useState<'card' | 'text' | null>(null);
   /*
    * Share is a phone's: a touch screen whose browser can hand text to another app. Desktop Safari and Edge have
    * `navigator.share` too, and there it opens an OS panel beside the Send on WhatsApp right above it. Asked after
@@ -115,6 +125,43 @@ export function ReceiptShare({
     setEditing(false);
   };
 
+  const copyCardToClipboard = async () => {
+    if (!card) return;
+    try {
+      const blob = await renderReceiptCardBlob(card);
+      if (blob && typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        setCopiedKind('card');
+        window.setTimeout(() => setCopiedKind((prev) => (prev === 'card' ? null : prev)), 3000);
+        return;
+      }
+      if (blob && typeof navigator.share === 'function') {
+        const file = new File([blob], 'receipt.png', { type: 'image/png' });
+        await navigator.share({ files: [file], text });
+        return;
+      }
+    } catch {
+      // Fallback to copying structured text if the browser blocks image clipboard write
+    }
+    try {
+      await navigator.clipboard?.writeText(text);
+      setCopiedKind('text');
+      window.setTimeout(() => setCopiedKind((prev) => (prev === 'text' ? null : prev)), 3000);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const copyTextToClipboard = async () => {
+    try {
+      await navigator.clipboard?.writeText(text);
+      setCopiedKind('text');
+      window.setTimeout(() => setCopiedKind((prev) => (prev === 'text' ? null : prev)), 3000);
+    } catch {
+      /* ignore */
+    }
+  };
+
   const problem = checkPhone(typed, { required: true });
   const digits = problem ? '' : waDigits(toStoredPhone(typed));
   const shownProblem = touched ? problem : null;
@@ -123,10 +170,107 @@ export function ReceiptShare({
     <section className="wi-receipt-share" aria-label={words.preview}>
       <h2 className="wi-section-label">{words.preview}</h2>
       {/* `tabIndex` when it scrolls: a scrollable region a mouse can reach has to be reachable by keyboard too. */}
-      <div className={`wi-receipt-paper ${compactPreview ? 'wi-receipt-paper-short' : ''}`} tabIndex={compactPreview ? 0 : undefined} role={compactPreview ? 'group' : undefined}>
-        {bill.map((row, i) => (
-          <Row key={i} row={row} />
-        ))}
+      <div className={`wi-receipt-paper ${compactPreview ? 'wi-receipt-paper-short' : ''}${hasGraphicCard ? ' is-graphic-card' : ''}`} tabIndex={compactPreview ? 0 : undefined} role={compactPreview ? 'group' : undefined}>
+        {hasGraphicCard && card ? (
+          <div className="wi-rc-card">
+            <div className="wi-rc-header">
+              <div className="wi-rc-brand">
+                <span className="wi-rc-logo" aria-hidden="true">
+                  {(card.businessName.trim()[0] ?? 'G').toUpperCase()}
+                </span>
+                <div className="wi-rc-brand-text">
+                  <strong className="wi-rc-biz">{card.businessName}</strong>
+                  <span className="wi-rc-sub">
+                    {[card.branchName, card.title].filter(Boolean).join(' · ')}
+                  </span>
+                </div>
+              </div>
+              {card.tokenLabel ? (
+                <div className="wi-rc-token-box">
+                  <span className="wi-rc-token-lbl">{nv.rcTokenLabel}</span>
+                  <strong className="wi-rc-token-num">{card.tokenLabel}</strong>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="wi-rc-meta">
+              <span>{card.when ?? card.title}</span>
+              <span className="wi-rc-chan-pill">{card.stylist ?? nv.rcVerified}</span>
+            </div>
+
+            <div className="wi-rc-body">
+              <div className="wi-rc-sec-head">
+                <span>{nv.rcYourOrder(card.totalItemsCount)}</span>
+                <span>{nv.rcAmount}</span>
+              </div>
+              <ul className="wi-rc-items">
+                {card.items.map((it, idx) => (
+                  <li key={idx} className="wi-rc-item">
+                    <div className="wi-rc-item-row">
+                      <div className="wi-rc-item-left">
+                        <span className="wi-rc-qty">{it.qty}×</span>
+                        <span className="wi-rc-name">{it.name}</span>
+                      </div>
+                      <span className="wi-rc-amt">{it.amount}</span>
+                    </div>
+                    {it.details.map((d, di) => (
+                      <div key={di} className="wi-rc-item-detail">
+                        {d}
+                      </div>
+                    ))}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="wi-rc-totals">
+                {card.adjustments.map((adj, ai) => (
+                  <div key={ai} className={`wi-rc-adj${adj.isDiscount ? ' is-discount' : ''}`}>
+                    <span>{adj.label}</span>
+                    <span>{adj.amount}</span>
+                  </div>
+                ))}
+                {card.savedLine ? (
+                  <div className="wi-rc-adj is-discount">
+                    <span>★ {card.savedLine}</span>
+                  </div>
+                ) : null}
+                <div className="wi-rc-total-bar">
+                  <div className="wi-rc-total-left">
+                    <span className="wi-rc-total-lbl">{card.totalLabel}</span>
+                    {card.paidBy ? <span className="wi-rc-paid-by">✓ {card.paidBy}</span> : null}
+                  </div>
+                  <strong className="wi-rc-total-val">{card.totalAmount}</strong>
+                </div>
+              </div>
+            </div>
+
+            {card.rewardsEarned || card.rewardsBalance ? (
+              <div className="wi-rc-rewards">
+                <div className="wi-rc-rewards-left">
+                  <span className="wi-rc-star" aria-hidden="true">★</span>
+                  <div>
+                    <strong className="wi-rc-rewards-title">{card.rewardsEarned}</strong>
+                    <span className="wi-rc-rewards-sub">{nv.rcRewardSub}</span>
+                  </div>
+                </div>
+                {card.rewardsBalance ? (
+                  <div className="wi-rc-rewards-bal">
+                    <span className="wi-rc-rewards-bal-lbl">{nv.rcRewardBalance}</span>
+                    <strong className="wi-rc-rewards-bal-val">{card.rewardsBalance}</strong>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {card.thanks || card.seeYou ? (
+              <div className="wi-rc-footer">
+                {[card.thanks, card.seeYou].filter(Boolean).join(' ')}
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          bill.map((row, i) => <Row key={i} row={row} />)
+        )}
       </div>
       {/*
         What Print prints: a copy of the bill as a direct child of <body>, so the print stylesheet can take every
@@ -187,6 +331,7 @@ export function ReceiptShare({
            */
           onClick={() => {
             if (onNumberGiven && !phone) onNumberGiven(toStoredPhone(typed)!);
+            if (hasGraphicCard) void copyCardToClipboard();
           }}
         >
           <IconWhatsApp />
@@ -209,6 +354,26 @@ export function ReceiptShare({
 
       {canShare || canPrint ? (
         <div className="wi-receipt-more">
+          {hasGraphicCard ? (
+            <button
+              type="button"
+              className="btn btn-ghost wi-act-alt"
+              onClick={() => void copyCardToClipboard()}
+            >
+              {copiedKind === 'card' ? <IconCheck /> : <IconShare />}
+              {copiedKind === 'card' ? nv.cardCopied : nv.copyCard}
+            </button>
+          ) : null}
+          {canPrint ? (
+            <button
+              type="button"
+              className="btn btn-ghost wi-act-alt"
+              onClick={() => void copyTextToClipboard()}
+            >
+              <IconCheck />
+              {copiedKind === 'text' ? nv.textCopied : nv.copyText}
+            </button>
+          ) : null}
           {canShare ? (
             <button
               type="button"

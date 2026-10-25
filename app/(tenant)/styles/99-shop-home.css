@@ -166,10 +166,17 @@
   gap: var(--sp-3);
 }
 
+.shp-orders-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
 .shp-orders {
   display: flex;
   align-items: baseline;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
   margin: 0;
 }
 .shp-orders strong {
@@ -179,6 +186,19 @@
 }
 .shp-orders span {
   color: var(--hm-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.shp-orders-yesterday {
+  font-size: 0.75rem;
+  color: var(--hm-muted);
+  font-weight: 500;
+}
+.shp-orders-yesterday b {
+  color: var(--text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .shp-empty {
@@ -290,7 +310,70 @@
   display: none;
 }
 
+.shp-desk-toolbar-start {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.shp-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 2.25rem;
+  padding: 0 var(--sp-3);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  color: var(--accent-deep);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.shp-live-pill strong {
+  font-weight: 800;
+}
+.shp-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgb(22 163 74 / 20%);
+}
+
 /* Desktop Command Center (`.shp-desk-v3`) rows inside Row 2 & Row 3 */
+.shp-trend-head-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.shp-trend-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  font-size: 0.75rem;
+  color: var(--hm-muted);
+  font-variant-numeric: tabular-nums;
+}
+.shp-trend-stats strong {
+  color: var(--hm-ink);
+  font-weight: 700;
+}
+
+.shp-trend-area {
+  fill: var(--accent-soft);
+  opacity: 0.65;
+}
+
+.hm-v3-bar-col.is-zero .hm-v3-bar-fill {
+  min-height: 2px;
+  background: var(--hm-line);
+  opacity: 1;
+}
+
 .shp-channel-rows {
   flex: 1;
   justify-content: space-around;
@@ -300,6 +383,28 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
+}
+
+.shp-insight-row {
+  padding-top: var(--sp-2);
+  border-top: 1px dashed var(--hm-line);
+}
+
+.shp-insight-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--page-bg);
+  border: 1px solid var(--hm-line);
+  color: var(--hm-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.shp-insight-badge.is-mint {
+  background: var(--accent-soft);
+  border-color: var(--border);
+  color: var(--accent-deep);
 }
 
 .shp-channel-row-top {
@@ -318,6 +423,47 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.shp-att-kitchen-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.shp-att-status-note {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--page-bg);
+  color: var(--hm-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.shp-seller-row {
+  gap: 10px;
+}
+
+.shp-seller-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.shp-seller-val {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--hm-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.hm-v3-srv-rank.is-top {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
 }
 
 .hm-v3-desk-attention.shp-orders-att .hm-v3-prod-att-summary.shp-two-chips {
@@ -364,6 +510,65 @@
   .shp-page > .hm-tiles {
     display: none;
   }
+  .shp-page.hm-page > .shp-desk-toolbar {
+    display: flex;
+    padding: var(--sp-2) var(--sp-3);
+    background: var(--surface);
+    border: 1px solid var(--hm-line);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 2px rgb(15 23 42 / 3%);
+  }
+
+  /* Deep Forest Signature Anchor for Desktop KPI Card 1 */
+  .shp-desk-v3 .hm-v3-kpi {
+    padding: var(--sp-4);
+  }
+  .shp-desk-v3 .hm-v3-kpi-dark {
+    background: linear-gradient(140deg, var(--hm-hero-a), var(--hm-hero-b));
+    border-color: var(--accent-deep);
+    color: #fff;
+    box-shadow: 0 6px 18px rgb(15 48 30 / 14%);
+  }
+  .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-icon-dark {
+    background: rgb(255 255 255 / 14%);
+    color: var(--accent-soft);
+  }
+  .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-kpi-title,
+  .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-kpi-title-link {
+    color: var(--accent-soft);
+  }
+  .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-kpi-amount {
+    color: #fff;
+    font-size: 1.75rem;
+  }
+  .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-kpi-vs {
+    color: rgb(255 255 255 / 78%);
+  }
+  .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-delta-pill {
+    background: rgb(255 255 255 / 16%);
+    color: var(--accent-soft);
+  }
+  .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-kpi-period {
+    background: rgb(255 255 255 / 12%);
+    border-color: rgb(255 255 255 / 20%);
+    color: #fff;
+  }
+  .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-mini-bars span {
+    background: rgb(255 255 255 / 28%);
+  }
+  .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-mini-bars span.is-peak {
+    background: var(--accent-soft);
+  }
+  .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-kpi-foot {
+    border-top-color: rgb(255 255 255 / 14%);
+    color: rgb(255 255 255 / 78%);
+  }
+  .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-kpi-foot b {
+    color: #fff;
+  }
+  .shp-desk-v3 .hm-v3-kpi-dark .hm-v3-split-item + .hm-v3-split-item {
+    border-left-color: rgb(255 255 255 / 18%);
+  }
 }
 
 
@@ -395,6 +600,41 @@
 }
 .shp-period .hm-seg-select {
   display: none;
+}
+
+.shp-hero-link {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 12%);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.shp-hero-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+
+.shp-hero-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0 var(--sp-3);
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 24%);
+  background: rgb(255 255 255 / 10%);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
 }
 
 /* On the dark hero: the comparison the API returned. The arrow and the sign carry the
@@ -473,18 +713,31 @@ button.shp-hero-pill {
   text-decoration: none;
   color: var(--text);
 }
+.shp-recent-person {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+  flex: 1;
+}
 .shp-recent-main {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
 }
-.shp-recent-code {
+.shp-recent-name {
   font-weight: 700;
   font-size: 0.9375rem;
+  color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.shp-recent-code {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--hm-ink);
 }
 .shp-recent-meta {
   font-size: 0.75rem;
@@ -530,6 +783,46 @@ button.shp-hero-pill {
   color: var(--danger-deep);
 }
 
+/* ---------- Phone Top Sellers (Kitchen) ---------- */
+.shp-phone-sellers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.shp-phone-sellers li + li {
+  border-top: 1px solid var(--border);
+}
+.shp-phone-seller-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 2.75rem;
+  padding: var(--sp-2) 0;
+  text-decoration: none;
+  color: var(--text);
+}
+.shp-phone-seller-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  flex: 1;
+  min-width: 0;
+}
+.shp-phone-seller-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.shp-phone-seller-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* A window that sold nothing, said in words rather than as a row of zeros. */
 .shp-hero-none {
   margin: 0;
@@ -550,5 +843,14 @@ button.shp-hero-pill {
     display: flex;
     flex-direction: column;
     gap: var(--sp-3);
+  }
+  .shp-page {
+    padding-bottom: calc(var(--sp-8) + 4.5rem);
+  }
+  .shp-mobile-stack {
+    padding-bottom: 4.5rem;
+  }
+  .shp-links .hm-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

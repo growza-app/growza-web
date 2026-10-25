@@ -303,7 +303,7 @@ export function DeskServiceGrid({
                     disabled={(full && count === 0) || (counted && (p.stock <= 0 || count >= p.stock))}
                   >
                     <ProductPhoto className="pf-tile-photo" product={p} />
-                    {productsOnly && count > 0 ? (
+                    {productsOnly && count > 0 && hasSizes(p) ? (
                       <span className="pf-tile-inbill" aria-hidden="true">
                         {t('desk.inBillBadge', { count })}
                       </span>
@@ -330,7 +330,7 @@ export function DeskServiceGrid({
                       <span className="pf-qty-n" aria-live="polite">
                         {count}
                       </span>
-                      <button type="button" className="pf-qty-btn" aria-label={t('oneMore', { name: p.name })} onClick={() => onMoreProduct?.(p)} aria-disabled={full || count >= p.stock || undefined}>
+                      <button type="button" className="pf-qty-btn" aria-label={t('oneMore', { name: p.name })} onClick={() => onMoreProduct?.(p)} aria-disabled={full || (counted && count >= p.stock) || undefined}>
                         <IconPlus />
                       </button>
                     </span>
