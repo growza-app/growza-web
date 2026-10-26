@@ -16,6 +16,7 @@ export function SellProductClient({
   heading,
   nextTokenNo,
   onSaleCompleted,
+  reloadKey,
 }: {
   timezone: string;
   backTo?: '/products' | '/sales' | '/orders';
@@ -25,6 +26,8 @@ export function SellProductClient({
   nextTokenNo?: number | null;
   /** Called when a sale is recorded on POS so the live token queue updates immediately. */
   onSaleCompleted?: (saleId: string) => void;
+  /** Incremented after a return or exchange on POS so the product shelf refreshes its live stock counts without unmounting the till. */
+  reloadKey?: number;
 }) {
   const [ready, setReady] = useState(false);
   const [wide, setWide] = useState(false);
@@ -56,6 +59,7 @@ export function SellProductClient({
       heading={heading}
       nextTokenNo={nextTokenNo}
       onSaleCompleted={onSaleCompleted}
+      reloadKey={reloadKey}
     />
   );
 }
