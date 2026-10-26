@@ -553,12 +553,17 @@
       "aboutBusiness": "आपके बिज़नेस के बारे में",
       "businessName": "बिज़नेस का नाम",
       "timezone": "टाइमज़ोन",
-      "businessPhone": "बिज़नेस का फ़ोन"
+      "businessPhone": "बिज़नेस का फ़ोन",
+      "googleReviewUrl": "Google रिव्यू लिंक"
     },
     "placeholders": {
       "address": "दुकान नंबर, गली, इलाका",
       "description": "जैसे: बाल, त्वचा और ब्राइडल मेकअप का यूनिसेक्स सैलून",
-      "branchName": "जैसे: एमजी रोड"
+      "branchName": "जैसे: एमजी रोड",
+      "googleReviewUrl": "https://g.page/r/..."
+    },
+    "hints": {
+      "googleReviewUrl": "WhatsApp रसीद के नीचे अपने आप जुड़ जाएगा ताकि {customers} एक टैप में रिव्यू दे सकें।"
     },
     "logo": {
       "title": "बिज़नेस लोगो",
@@ -2163,6 +2168,7 @@
     "receiptSaved": "पैकेज से आपने {amount} बचाए",
     "receiptPaidBy": "भुगतान: {mode}",
     "receiptSeeYou": "फिर मिलेंगे!",
+    "receiptReviewPrompt": "Google पर हमें रिव्यू दें:",
     "billPreview": "बिल",
     "sendingTo": "इस नंबर पर",
     "changeNumber": "बदलें",

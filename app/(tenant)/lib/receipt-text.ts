@@ -72,6 +72,8 @@ export interface ReceiptInput {
   paidBy: string;
   /** Optional loyalty / reward points earned, redeemed, and remaining balance on this bill. */
   rewards?: ReceiptRewards | null;
+  /** Optional Google review link for the branch or business, appended at the foot of the receipt. */
+  googleReviewUrl?: string | null;
 }
 
 export interface ReceiptCopy {
@@ -94,6 +96,7 @@ export interface ReceiptCopy {
   saved: (amount: string) => string;
   paidBy: (mode: string) => string;
   seeYou: string;
+  reviewPrompt?: string;
   rewardsTitle?: string;
   rewardRedeemed?: (points: number, amount: string) => string;
   rewardEarned?: (points: number) => string;
@@ -207,6 +210,12 @@ export function receiptRows(input: ReceiptInput, copy: ReceiptCopy, money: (mino
   }
   gap();
   line({ t: `${copy.seeYou} 🙏` });
+  const reviewUrl = input.googleReviewUrl?.trim();
+  if (reviewUrl && /^https:\/\//i.test(reviewUrl)) {
+    gap();
+    line({ t: `★ ${copy.reviewPrompt ?? 'Leave us a Google review:'}` });
+    line({ t: reviewUrl });
+  }
   return rows;
 }
 
@@ -294,6 +303,7 @@ export interface ReceiptCardItem {
   name: string;
   amount: string;
   details: string[];
+  section?: string;
 }
 
 export interface ReceiptCardAdjustment {
@@ -310,6 +320,8 @@ export interface ReceiptCardModel {
   when: string | null;
   tokenLabel: string | null;
   stylist: string | null;
+  itemsHeading: string;
+  isOrder: boolean;
   items: ReceiptCardItem[];
   totalItemsCount: number;
   adjustments: ReceiptCardAdjustment[];
@@ -320,6 +332,8 @@ export interface ReceiptCardModel {
   rewardsEarned: string | null;
   rewardsBalance: string | null;
   seeYou: string;
+  reviewPrompt?: string | null;
+  googleReviewUrl?: string | null;
 }
 
 /**
@@ -341,6 +355,8 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
   let when: string | null = null;
   let tokenLabel: string | null = null;
   let stylist: string | null = null;
+  let itemsHeading = 'Services';
+  let currentItemSection = 'Services';
   const items: ReceiptCardItem[] = [];
   const adjustments: ReceiptCardAdjustment[] = [];
   let totalLabel = 'Total paid';
@@ -350,6 +366,8 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
   let rewardsEarned: string | null = null;
   let rewardsBalance: string | null = null;
   let seeYou = '';
+  let reviewPrompt: string | null = null;
+  let googleReviewUrl: string | null = null;
 
   let idx = 0;
   // Header row(s)
@@ -403,27 +421,27 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
       continue;
     }
 
-    if (row.bold && section !== 'totals') {
-      if (/^(Rewards|रिवॉर्ड)/i.test(t)) {
-        section = 'rewards';
-      } else {
-        section = 'items';
-      }
-      continue;
-    }
-
-    if (row.bold && section === 'totals') {
+    if (row.bold) {
       if (/^(Rewards|रिवॉर्ड)/i.test(t)) {
         section = 'rewards';
         continue;
       }
-      const sep = t.lastIndexOf(':');
-      if (sep > -1) {
-        totalLabel = t.slice(0, sep).trim();
-        totalAmount = t.slice(sep + 1).trim();
-      } else {
-        totalAmount = t;
+      // A bold row with a colon or currency sign is the Total row; any other bold row (`Services`, `Products`, `Menu`)
+      // starts or resumes an items section (even after a blank line between Services and Products).
+      if (t.includes(':') || t.includes('₹')) {
+        section = 'totals';
+        const sep = t.lastIndexOf(':');
+        if (sep > -1) {
+          totalLabel = t.slice(0, sep).trim();
+          totalAmount = t.slice(sep + 1).trim();
+        } else {
+          totalAmount = t;
+        }
+        continue;
       }
+      currentItemSection = t;
+      if (items.length === 0) itemsHeading = t;
+      section = 'items';
       continue;
     }
 
@@ -443,6 +461,7 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
             name: qtyMatch[1]!.trim(),
             amount,
             details: [],
+            section: currentItemSection,
           });
         } else {
           items.push({
@@ -450,6 +469,7 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
             name: left,
             amount,
             details: [],
+            section: currentItemSection,
           });
         }
         continue;
@@ -477,7 +497,17 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
       continue;
     }
 
-    if (raw.endsWith('🙏') || i === flat.length - 1) {
+    if (/^https:\/\//i.test(t)) {
+      googleReviewUrl = t;
+      continue;
+    }
+
+    if (t.startsWith('★') && section !== 'rewards') {
+      reviewPrompt = t.replace(/^★\s*/, '').trim();
+      continue;
+    }
+
+    if (raw.endsWith('🙏') || (!seeYou && i === flat.length - 1)) {
       seeYou = raw.replace(/\s*🙏\s*$/, '').trim();
       continue;
     }
@@ -499,6 +529,7 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
   }
 
   const totalItemsCount = items.reduce((sum, it) => sum + it.qty, 0);
+  const isOrder = /^(Menu|मेनू|Your Order)/i.test(itemsHeading);
 
   return {
     businessName,
@@ -508,6 +539,8 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
     when,
     tokenLabel,
     stylist,
+    itemsHeading,
+    isOrder,
     items,
     totalItemsCount,
     adjustments,
@@ -518,6 +551,8 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
     rewardsEarned,
     rewardsBalance,
     seeYou,
+    reviewPrompt,
+    googleReviewUrl,
   };
 }
 
@@ -539,19 +574,37 @@ export function formatStructuredWhatsappText(rows: ReceiptRow[]): string {
   const head = c.branchName ? `*${c.businessName} · ${c.branchName}*` : `*${c.businessName}*`;
   out.push(head);
 
-  const subParts = [c.title, c.tokenLabel ? `*Token ${c.tokenLabel}*` : null, c.stylist].filter(Boolean);
+  const subParts = [c.title, c.tokenLabel ? `*Token ${c.tokenLabel}*` : null].filter(Boolean);
   out.push(subParts.join(' · '));
-  if (c.when) out.push(c.when);
+  const metaParts = [c.stylist, c.when].filter(Boolean);
+  if (metaParts.length > 0) out.push(metaParts.join(' · '));
 
   out.push('');
-  const countLabel = c.totalItemsCount === 1 ? '1 item' : `${c.totalItemsCount} items`;
-  out.push(`*Your Order (${countLabel})*`);
-  out.push('───────────────');
-
-  for (const item of c.items) {
-    out.push(`• ${item.qty} × ${item.name} — *${item.amount}*`);
-    for (const d of item.details) {
-      out.push(`  _${d}_`);
+  if (c.isOrder) {
+    const countLabel = c.totalItemsCount === 1 ? '1 item' : `${c.totalItemsCount} items`;
+    out.push(`*Your Order (${countLabel})*`);
+    out.push('───────────────');
+    for (const item of c.items) {
+      out.push(`• ${item.qty} × ${item.name} — *${item.amount}*`);
+      for (const d of item.details) {
+        out.push(`  _${d}_`);
+      }
+    }
+  } else {
+    let lastSection = '';
+    for (const item of c.items) {
+      const sec = item.section ?? c.itemsHeading;
+      if (sec !== lastSection) {
+        if (lastSection) out.push('');
+        out.push(`*${sec}*`);
+        out.push('───────────────');
+        lastSection = sec;
+      }
+      const label = item.qty > 1 ? `${item.name} × ${item.qty}` : item.name;
+      out.push(`• ${label} — *${item.amount}*`);
+      for (const d of item.details) {
+        out.push(`  _${d}_`);
+      }
     }
   }
 
@@ -573,6 +626,12 @@ export function formatStructuredWhatsappText(rows: ReceiptRow[]): string {
   out.push('');
   const closing = [c.thanks, c.seeYou].filter(Boolean).join(' ');
   if (closing) out.push(closing);
+
+  if (c.googleReviewUrl) {
+    out.push('');
+    out.push(`★ ${c.reviewPrompt || 'Leave us a Google review:'}`);
+    out.push(c.googleReviewUrl);
+  }
 
   return out.join('\n');
 }
@@ -686,13 +745,14 @@ export async function renderReceiptCardBlob(card: ReceiptCardModel): Promise<Blo
   ctx.textAlign = 'center';
   ctx.fillText(badgeText, W - 20 - bw / 2, 102);
 
-  // Section header: YOUR ORDER (N ITEMS) / AMOUNT
+  // Section header: YOUR ORDER (N ITEMS) or SERVICES / PRODUCTS / AMOUNT
   let y = 144;
   ctx.textAlign = 'left';
   ctx.fillStyle = '#64786c';
   ctx.font = `800 11px ${font}`;
   const countWords = card.totalItemsCount === 1 ? '1 ITEM' : `${card.totalItemsCount} ITEMS`;
-  ctx.fillText(`YOUR ORDER (${countWords})`, 20, y);
+  const secHeader = card.isOrder ? `YOUR ORDER (${countWords})` : card.itemsHeading.toUpperCase();
+  ctx.fillText(secHeader, 20, y);
   ctx.textAlign = 'right';
   ctx.fillText('AMOUNT', W - 20, y);
 
@@ -706,15 +766,19 @@ export async function renderReceiptCardBlob(card: ReceiptCardModel): Promise<Blo
 
   // Item rows
   for (const item of card.items) {
+    const showQty = card.isOrder || item.qty > 1;
+    const nameX = showQty ? 48 : 20;
     ctx.textAlign = 'left';
-    ctx.fillStyle = '#14532d';
-    ctx.font = `800 12.5px ${font}`;
-    ctx.fillText(`${item.qty}×`, 20, y);
+    if (showQty) {
+      ctx.fillStyle = '#14532d';
+      ctx.font = `800 12.5px ${font}`;
+      ctx.fillText(`${item.qty}×`, 20, y);
+    }
 
     ctx.fillStyle = '#1c2921';
     ctx.font = `600 13.5px ${font}`;
     const maxName = item.name.length > 34 ? `${item.name.slice(0, 32)}…` : item.name;
-    ctx.fillText(maxName, 48, y);
+    ctx.fillText(maxName, nameX, y);
 
     ctx.textAlign = 'right';
     ctx.font = `800 13.5px ${font}`;
@@ -725,7 +789,7 @@ export async function renderReceiptCardBlob(card: ReceiptCardModel): Promise<Blo
       ctx.textAlign = 'left';
       ctx.fillStyle = '#64786c';
       ctx.font = `italic 500 11.5px ${font}`;
-      ctx.fillText(d.slice(0, 48), 48, y - 6);
+      ctx.fillText(d.slice(0, 48), nameX, y - 6);
       y += 18;
     }
   }

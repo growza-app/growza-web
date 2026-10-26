@@ -553,12 +553,17 @@
       "aboutBusiness": "About your business",
       "businessName": "Business name",
       "timezone": "Timezone",
-      "businessPhone": "Business phone"
+      "businessPhone": "Business phone",
+      "googleReviewUrl": "Google review link"
     },
     "placeholders": {
       "address": "Shop number, street, area",
       "description": "e.g. Unisex salon for hair, skin and bridal makeup",
-      "branchName": "e.g. MG Road"
+      "branchName": "e.g. MG Road",
+      "googleReviewUrl": "https://g.page/r/..."
+    },
+    "hints": {
+      "googleReviewUrl": "Included at the bottom of WhatsApp receipts so {customers} can leave a review in one tap."
     },
     "logo": {
       "title": "Business logo",
@@ -2163,6 +2168,7 @@
     "receiptSaved": "You saved {amount} with the package",
     "receiptPaidBy": "Paid by {mode}",
     "receiptSeeYou": "See you again soon!",
+    "receiptReviewPrompt": "Leave us a Google review:",
     "billPreview": "The bill",
     "sendingTo": "Sending to",
     "changeNumber": "Change",

@@ -25,7 +25,7 @@ export interface Me {
    * the salon's QR up to a customer) and from an API a deploy behind, which is
    * why the till treats it as "no QR" rather than as an error.
    */
-  branches?: Array<{ id: string; name: string; paymentQrUrl?: string | null }>;
+  branches?: Array<{ id: string; name: string; paymentQrUrl?: string | null; googleReviewUrl?: string | null }>;
   /**
    * The owner's own billing state, or null when there is nothing to say
    * (GRW-122). Null is the healthy case AND the case where the state could
@@ -692,6 +692,7 @@ export interface SettingsSummary {
     phone: string;
     description: string;
     logoUrl: string | null;
+    googleReviewUrl?: string;
   };
   location: { id: string; name: string; timezone: string | null; addressLine1: string; addressCity: string } | null;
   /** Jira GRW-227 — active branches; more than one shows Settings › Branches. */
