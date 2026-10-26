@@ -280,6 +280,12 @@ export function ReceiptShare({
               </div>
             ) : null}
 
+            {card.googleReviewUrl ? (
+              <div className="wi-rc-footer">
+                ★ {card.reviewPrompt ?? nv.receiptReviewPrompt}: {card.googleReviewUrl}
+              </div>
+            ) : null}
+
             {card.thanks || card.seeYou ? (
               <div className="wi-rc-footer">
                 {[card.thanks, card.seeYou].filter(Boolean).join(' ')}
