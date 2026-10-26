@@ -948,12 +948,10 @@
   }
 
   @media (max-width: 1560px) {
-    .prd-desk-grid.has-sheet .prd-table th:nth-child(2),
-    .prd-desk-grid.has-sheet .prd-table td:nth-child(2),
-    .prd-desk-grid.has-sheet .prd-table th:nth-child(3),
-    .prd-desk-grid.has-sheet .prd-table td:nth-child(3),
-    .prd-desk-grid.has-sheet .prd-table th:nth-child(5),
-    .prd-desk-grid.has-sheet .prd-table td:nth-child(5) {
+    .prd-desk-grid.has-sheet .prd-table th:nth-child(3):nth-last-child(5),
+    .prd-desk-grid.has-sheet .prd-table td:nth-child(3):nth-last-child(5),
+    .prd-desk-grid.has-sheet .prd-table th:nth-last-child(3),
+    .prd-desk-grid.has-sheet .prd-table td:nth-last-child(3) {
       display: none;
     }
   }

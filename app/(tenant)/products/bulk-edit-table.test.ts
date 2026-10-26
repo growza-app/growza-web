@@ -47,6 +47,7 @@ describe('Option 1 — Edit / Delete Big Spreadsheet Table for Products/Menu and
     expect(css).toContain('.bulk-cell-input');
     expect(css).toMatch(/\.page-body\.prd-desk\s*\{[\s\S]*?overflow:\s*hidden;/);
     expect(css).toMatch(/\.prd-menu-cards-wrap\s*\{[\s\S]*?overflow-y:\s*auto;/);
+    expect(css).toContain('.prd-desk-grid.has-sheet .prd-table th:nth-last-child(3)');
     expect(productsList).toContain("activeEl?.scrollIntoView({ block: 'nearest' })");
   });
 
