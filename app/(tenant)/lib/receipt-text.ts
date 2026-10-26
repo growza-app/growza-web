@@ -704,7 +704,8 @@ export async function renderReceiptCardBlob(card: ReceiptCardModel): Promise<Blo
   const itemRowsH = card.items.reduce((acc, it) => acc + 28 + it.details.length * 18, 0);
   const adjH = card.adjustments.length * 24 + (card.savedLine ? 24 : 0);
   const rewardsH = card.rewardsEarned || card.rewardsBalance ? 68 : 0;
-  const H = 82 + 40 + 48 + itemRowsH + 24 + adjH + 68 + rewardsH + 44;
+  const reviewH = card.googleReviewUrl ? 68 : 0;
+  const H = 82 + 40 + 48 + itemRowsH + 24 + adjH + 68 + rewardsH + reviewH + 44;
 
   const canvas = document.createElement('canvas');
   const scale = 2;
@@ -927,6 +928,34 @@ export async function renderReceiptCardBlob(card: ReceiptCardModel): Promise<Blo
       ctx.font = `900 14.5px ${font}`;
       ctx.fillText(card.rewardsBalance, W - 32, y + 35);
     }
+    y += 68;
+  }
+
+  // Optional Google Review banner
+  if (card.googleReviewUrl) {
+    ctx.fillStyle = '#fef3c7';
+    roundRect(ctx, 20, y, W - 40, 52, 10);
+    ctx.fill();
+    ctx.strokeStyle = '#fde68a';
+    ctx.stroke();
+
+    ctx.fillStyle = '#f59e0b';
+    roundRect(ctx, 32, y + 10, 32, 32, 8);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.font = `900 16px ${font}`;
+    ctx.fillText('★', 48, y + 27);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#78350f';
+    ctx.font = `800 12.5px ${font}`;
+    const promptLabel = (card.reviewPrompt || 'Leave us a Google review').replace(/:+\s*$/, '');
+    ctx.fillText(promptLabel, 74, y + 20);
+
+    ctx.fillStyle = '#92400e';
+    ctx.font = `600 11px ${font}`;
+    ctx.fillText(card.googleReviewUrl.slice(0, 52), 74, y + 36);
     y += 68;
   }
 
