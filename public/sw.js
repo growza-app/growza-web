@@ -24,7 +24,7 @@
 // left on people's devices: `activate` removes every cache but the current one.
 // v7 also replaces the worker itself, which is how Jira GRW-647's `push` and
 // `notificationclick` listeners below reach a device that already has v6.
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v8';
 const CACHE_NAME = `booking-dashboard-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 

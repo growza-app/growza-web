@@ -185,8 +185,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   // Jira GRW-395 — where a member held to a branch works, at a business with several (null otherwise): the header says it.
   let workBranchName: string | null = null;
   let branchCount = 1;
-  // `paymentQrUrl` rides along to the till through BranchProvider (the QR screen on Record payment).
-  let branches: Array<{ id: string; name: string; paymentQrUrl?: string | null }> = [];
+  // `paymentQrUrl` and `googleReviewUrl` ride along to the till through BranchProvider.
+  let branches: Array<{ id: string; name: string; paymentQrUrl?: string | null; googleReviewUrl?: string | null }> = [];
   /** Jira GRW-377 — the member's own branch; fixes a receptionist or stylist to it everywhere. */
   let memberLocationId: string | null = null;
   /** Jira GRW-563 — the owner's approval queue, and whether a stylist is offered phone check-in. */

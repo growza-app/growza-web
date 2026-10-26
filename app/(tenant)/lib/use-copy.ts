@@ -76,6 +76,7 @@ export function useNewVisitCopy() {
     receiptSaved: (amount: string) => t('receiptSaved', { amount }),
     receiptPaidBy: (mode: string) => t('receiptPaidBy', { mode }),
     receiptSeeYou: t('receiptSeeYou'),
+    receiptReviewPrompt: t('receiptReviewPrompt'),
     billPreview: t('billPreview'),
     sendingTo: t('sendingTo'),
     changeNumber: t('changeNumber'),

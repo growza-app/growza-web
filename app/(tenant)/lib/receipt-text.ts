@@ -72,6 +72,8 @@ export interface ReceiptInput {
   paidBy: string;
   /** Optional loyalty / reward points earned, redeemed, and remaining balance on this bill. */
   rewards?: ReceiptRewards | null;
+  /** Optional Google review link for the branch or business, appended at the foot of the receipt. */
+  googleReviewUrl?: string | null;
 }
 
 export interface ReceiptCopy {
@@ -94,6 +96,7 @@ export interface ReceiptCopy {
   saved: (amount: string) => string;
   paidBy: (mode: string) => string;
   seeYou: string;
+  reviewPrompt?: string;
   rewardsTitle?: string;
   rewardRedeemed?: (points: number, amount: string) => string;
   rewardEarned?: (points: number) => string;
@@ -207,7 +210,60 @@ export function receiptRows(input: ReceiptInput, copy: ReceiptCopy, money: (mino
   }
   gap();
   line({ t: `${copy.seeYou} 🙏` });
+  const reviewUrl = input.googleReviewUrl ? cleanGoogleReviewUrl(input.googleReviewUrl).trim() : '';
+  if (reviewUrl && /^https:\/\//i.test(reviewUrl)) {
+    gap();
+    line({ t: `★ ${copy.reviewPrompt ?? 'Leave us a Google review:'}` });
+    line({ t: reviewUrl });
+  }
   return rows;
+}
+
+/**
+ * Shortens long Google Search / Google Maps review URLs so WhatsApp receipts never print
+ * multi-line session/tracking strings:
+ * - Converts `0x<hex1>:0x<hex2>` feature IDs (`#lrd=0x...:0x...` or `!1s0x...:0x...`) to
+ *   `https://maps.google.com/?cid=<decimal>` (49 chars).
+ * - Strips all tracking query params (`sxsrf`, `sca_esv`, `rlz`, etc.) and `#sv=...` state
+ *   fragments from `google.com/search` URLs, keeping only `q` (or `kgmid`).
+ */
+export function cleanGoogleReviewUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return raw;
+  try {
+    const u = new URL(trimmed);
+    if (/(^|\.)google\./i.test(u.hostname)) {
+      const fidMatch = decodedOrRaw(trimmed).match(/0x[0-9a-fA-F]+:0x([0-9a-fA-F]{8,16})/);
+      if (fidMatch?.[1]) {
+        const cid = BigInt(`0x${fidMatch[1]}`).toString(10);
+        return `https://maps.google.com/?cid=${cid}`;
+      }
+      if (u.pathname === '/search') {
+        const q = u.searchParams.get('q');
+        const kgmid = u.searchParams.get('kgmid');
+        u.search = '';
+        if (q) u.searchParams.set('q', q);
+        else if (kgmid) u.searchParams.set('kgmid', kgmid);
+        if (u.hash && !u.hash.startsWith('#lrd=')) {
+          u.hash = '';
+        } else if (u.hash.startsWith('#lrd=')) {
+          u.hash = u.hash.replace(/,+$/, '');
+        }
+        return u.toString();
+      }
+    }
+    return trimmed;
+  } catch {
+    return raw;
+  }
+}
+
+function decodedOrRaw(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
 }
 
 /** The rows as WhatsApp text: `*bold*`, `_italic_`, one row per line. */
@@ -294,6 +350,7 @@ export interface ReceiptCardItem {
   name: string;
   amount: string;
   details: string[];
+  section?: string;
 }
 
 export interface ReceiptCardAdjustment {
@@ -310,6 +367,8 @@ export interface ReceiptCardModel {
   when: string | null;
   tokenLabel: string | null;
   stylist: string | null;
+  itemsHeading: string;
+  isOrder: boolean;
   items: ReceiptCardItem[];
   totalItemsCount: number;
   adjustments: ReceiptCardAdjustment[];
@@ -320,6 +379,8 @@ export interface ReceiptCardModel {
   rewardsEarned: string | null;
   rewardsBalance: string | null;
   seeYou: string;
+  reviewPrompt?: string | null;
+  googleReviewUrl?: string | null;
 }
 
 /**
@@ -341,6 +402,8 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
   let when: string | null = null;
   let tokenLabel: string | null = null;
   let stylist: string | null = null;
+  let itemsHeading = 'Services';
+  let currentItemSection = 'Services';
   const items: ReceiptCardItem[] = [];
   const adjustments: ReceiptCardAdjustment[] = [];
   let totalLabel = 'Total paid';
@@ -350,6 +413,8 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
   let rewardsEarned: string | null = null;
   let rewardsBalance: string | null = null;
   let seeYou = '';
+  let reviewPrompt: string | null = null;
+  let googleReviewUrl: string | null = null;
 
   let idx = 0;
   // Header row(s)
@@ -403,27 +468,27 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
       continue;
     }
 
-    if (row.bold && section !== 'totals') {
-      if (/^(Rewards|रिवॉर्ड)/i.test(t)) {
-        section = 'rewards';
-      } else {
-        section = 'items';
-      }
-      continue;
-    }
-
-    if (row.bold && section === 'totals') {
+    if (row.bold) {
       if (/^(Rewards|रिवॉर्ड)/i.test(t)) {
         section = 'rewards';
         continue;
       }
-      const sep = t.lastIndexOf(':');
-      if (sep > -1) {
-        totalLabel = t.slice(0, sep).trim();
-        totalAmount = t.slice(sep + 1).trim();
-      } else {
-        totalAmount = t;
+      // A bold row with a colon or currency sign is the Total row; any other bold row (`Services`, `Products`, `Menu`)
+      // starts or resumes an items section (even after a blank line between Services and Products).
+      if (t.includes(':') || t.includes('₹')) {
+        section = 'totals';
+        const sep = t.lastIndexOf(':');
+        if (sep > -1) {
+          totalLabel = t.slice(0, sep).trim();
+          totalAmount = t.slice(sep + 1).trim();
+        } else {
+          totalAmount = t;
+        }
+        continue;
       }
+      currentItemSection = t;
+      if (items.length === 0) itemsHeading = t;
+      section = 'items';
       continue;
     }
 
@@ -443,6 +508,7 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
             name: qtyMatch[1]!.trim(),
             amount,
             details: [],
+            section: currentItemSection,
           });
         } else {
           items.push({
@@ -450,6 +516,7 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
             name: left,
             amount,
             details: [],
+            section: currentItemSection,
           });
         }
         continue;
@@ -477,7 +544,17 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
       continue;
     }
 
-    if (raw.endsWith('🙏') || i === flat.length - 1) {
+    if (/^https:\/\//i.test(t)) {
+      googleReviewUrl = cleanGoogleReviewUrl(t);
+      continue;
+    }
+
+    if (t.startsWith('★') && section !== 'rewards') {
+      reviewPrompt = t.replace(/^★\s*/, '').trim();
+      continue;
+    }
+
+    if (raw.endsWith('🙏') || (!seeYou && i === flat.length - 1)) {
       seeYou = raw.replace(/\s*🙏\s*$/, '').trim();
       continue;
     }
@@ -499,6 +576,7 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
   }
 
   const totalItemsCount = items.reduce((sum, it) => sum + it.qty, 0);
+  const isOrder = /^(Menu|मेनू|Your Order)/i.test(itemsHeading);
 
   return {
     businessName,
@@ -508,6 +586,8 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
     when,
     tokenLabel,
     stylist,
+    itemsHeading,
+    isOrder,
     items,
     totalItemsCount,
     adjustments,
@@ -518,6 +598,8 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
     rewardsEarned,
     rewardsBalance,
     seeYou,
+    reviewPrompt,
+    googleReviewUrl,
   };
 }
 
@@ -539,19 +621,37 @@ export function formatStructuredWhatsappText(rows: ReceiptRow[]): string {
   const head = c.branchName ? `*${c.businessName} · ${c.branchName}*` : `*${c.businessName}*`;
   out.push(head);
 
-  const subParts = [c.title, c.tokenLabel ? `*Token ${c.tokenLabel}*` : null, c.stylist].filter(Boolean);
+  const subParts = [c.title, c.tokenLabel ? `*Token ${c.tokenLabel}*` : null].filter(Boolean);
   out.push(subParts.join(' · '));
-  if (c.when) out.push(c.when);
+  const metaParts = [c.stylist, c.when].filter(Boolean);
+  if (metaParts.length > 0) out.push(metaParts.join(' · '));
 
   out.push('');
-  const countLabel = c.totalItemsCount === 1 ? '1 item' : `${c.totalItemsCount} items`;
-  out.push(`*Your Order (${countLabel})*`);
-  out.push('───────────────');
-
-  for (const item of c.items) {
-    out.push(`• ${item.qty} × ${item.name} — *${item.amount}*`);
-    for (const d of item.details) {
-      out.push(`  _${d}_`);
+  if (c.isOrder) {
+    const countLabel = c.totalItemsCount === 1 ? '1 item' : `${c.totalItemsCount} items`;
+    out.push(`*Your Order (${countLabel})*`);
+    out.push('───────────────');
+    for (const item of c.items) {
+      out.push(`• ${item.qty} × ${item.name} — *${item.amount}*`);
+      for (const d of item.details) {
+        out.push(`  _${d}_`);
+      }
+    }
+  } else {
+    let lastSection = '';
+    for (const item of c.items) {
+      const sec = item.section ?? c.itemsHeading;
+      if (sec !== lastSection) {
+        if (lastSection) out.push('');
+        out.push(`*${sec}*`);
+        out.push('───────────────');
+        lastSection = sec;
+      }
+      const label = item.qty > 1 ? `${item.name} × ${item.qty}` : item.name;
+      out.push(`• ${label} — *${item.amount}*`);
+      for (const d of item.details) {
+        out.push(`  _${d}_`);
+      }
     }
   }
 
@@ -573,6 +673,12 @@ export function formatStructuredWhatsappText(rows: ReceiptRow[]): string {
   out.push('');
   const closing = [c.thanks, c.seeYou].filter(Boolean).join(' ');
   if (closing) out.push(closing);
+
+  if (c.googleReviewUrl) {
+    out.push('');
+    out.push(`★ ${c.reviewPrompt || 'Leave us a Google review:'}`);
+    out.push(c.googleReviewUrl);
+  }
 
   return out.join('\n');
 }
@@ -598,7 +704,8 @@ export async function renderReceiptCardBlob(card: ReceiptCardModel): Promise<Blo
   const itemRowsH = card.items.reduce((acc, it) => acc + 28 + it.details.length * 18, 0);
   const adjH = card.adjustments.length * 24 + (card.savedLine ? 24 : 0);
   const rewardsH = card.rewardsEarned || card.rewardsBalance ? 68 : 0;
-  const H = 82 + 40 + 48 + itemRowsH + 24 + adjH + 68 + rewardsH + 44;
+  const reviewH = card.googleReviewUrl ? 68 : 0;
+  const H = 82 + 40 + 48 + itemRowsH + 24 + adjH + 68 + rewardsH + reviewH + 44;
 
   const canvas = document.createElement('canvas');
   const scale = 2;
@@ -686,13 +793,14 @@ export async function renderReceiptCardBlob(card: ReceiptCardModel): Promise<Blo
   ctx.textAlign = 'center';
   ctx.fillText(badgeText, W - 20 - bw / 2, 102);
 
-  // Section header: YOUR ORDER (N ITEMS) / AMOUNT
+  // Section header: YOUR ORDER (N ITEMS) or SERVICES / PRODUCTS / AMOUNT
   let y = 144;
   ctx.textAlign = 'left';
   ctx.fillStyle = '#64786c';
   ctx.font = `800 11px ${font}`;
   const countWords = card.totalItemsCount === 1 ? '1 ITEM' : `${card.totalItemsCount} ITEMS`;
-  ctx.fillText(`YOUR ORDER (${countWords})`, 20, y);
+  const secHeader = card.isOrder ? `YOUR ORDER (${countWords})` : card.itemsHeading.toUpperCase();
+  ctx.fillText(secHeader, 20, y);
   ctx.textAlign = 'right';
   ctx.fillText('AMOUNT', W - 20, y);
 
@@ -706,15 +814,19 @@ export async function renderReceiptCardBlob(card: ReceiptCardModel): Promise<Blo
 
   // Item rows
   for (const item of card.items) {
+    const showQty = card.isOrder || item.qty > 1;
+    const nameX = showQty ? 48 : 20;
     ctx.textAlign = 'left';
-    ctx.fillStyle = '#14532d';
-    ctx.font = `800 12.5px ${font}`;
-    ctx.fillText(`${item.qty}×`, 20, y);
+    if (showQty) {
+      ctx.fillStyle = '#14532d';
+      ctx.font = `800 12.5px ${font}`;
+      ctx.fillText(`${item.qty}×`, 20, y);
+    }
 
     ctx.fillStyle = '#1c2921';
     ctx.font = `600 13.5px ${font}`;
     const maxName = item.name.length > 34 ? `${item.name.slice(0, 32)}…` : item.name;
-    ctx.fillText(maxName, 48, y);
+    ctx.fillText(maxName, nameX, y);
 
     ctx.textAlign = 'right';
     ctx.font = `800 13.5px ${font}`;
@@ -725,7 +837,7 @@ export async function renderReceiptCardBlob(card: ReceiptCardModel): Promise<Blo
       ctx.textAlign = 'left';
       ctx.fillStyle = '#64786c';
       ctx.font = `italic 500 11.5px ${font}`;
-      ctx.fillText(d.slice(0, 48), 48, y - 6);
+      ctx.fillText(d.slice(0, 48), nameX, y - 6);
       y += 18;
     }
   }
@@ -816,6 +928,34 @@ export async function renderReceiptCardBlob(card: ReceiptCardModel): Promise<Blo
       ctx.font = `900 14.5px ${font}`;
       ctx.fillText(card.rewardsBalance, W - 32, y + 35);
     }
+    y += 68;
+  }
+
+  // Optional Google Review banner
+  if (card.googleReviewUrl) {
+    ctx.fillStyle = '#fef3c7';
+    roundRect(ctx, 20, y, W - 40, 52, 10);
+    ctx.fill();
+    ctx.strokeStyle = '#fde68a';
+    ctx.stroke();
+
+    ctx.fillStyle = '#f59e0b';
+    roundRect(ctx, 32, y + 10, 32, 32, 8);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.font = `900 16px ${font}`;
+    ctx.fillText('★', 48, y + 27);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#78350f';
+    ctx.font = `800 12.5px ${font}`;
+    const promptLabel = (card.reviewPrompt || 'Leave us a Google review').replace(/:+\s*$/, '');
+    ctx.fillText(promptLabel, 74, y + 20);
+
+    ctx.fillStyle = '#92400e';
+    ctx.font = `600 11px ${font}`;
+    ctx.fillText(card.googleReviewUrl.slice(0, 52), 74, y + 36);
     y += 68;
   }
 

@@ -14,6 +14,7 @@
 /* ---------- the field ---------- */
 select,
 input[type='text'],
+input[type='url'],
 input[type='date'],
 input[type='search'],
 input[type='tel'],

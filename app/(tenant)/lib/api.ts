@@ -682,6 +682,18 @@ export const api = {
   createProduct: (location: string, body: ProductInput) => post<Product>('/api/v1/products', { ...body, locationId: location }),
   updateProduct: (id: string, body: Partial<ProductInput>) => patch<Product>(`/api/v1/products/${id}`, body),
   deleteProduct: (id: string) => del<void>(`/api/v1/products/${id}`),
+  deleteProducts: async (location: string, productIds: string[]) => {
+    let deleted = 0;
+    for (let i = 0; i < productIds.length; i += 100) {
+      const chunk = productIds.slice(i, i + 100);
+      const id = chunk[0]!;
+      const res = await del<{ ok: true; deleted: number }>(
+        `/api/v1/products/${id}?location=${encodeURIComponent(location)}&ids=${chunk.map(encodeURIComponent).join(',')}`,
+      );
+      deleted += res.deleted;
+    }
+    return { ok: true as const, deleted };
+  },
   parseProductSheet: (file: File) => uploadFile<{ headers: string[]; rows: string[][] }>('/api/v1/products/import/parse', 'file', file),
   importProducts: (location: string, items: ProductImportItem[]) =>
     post<ProductImportResult>('/api/v1/products/import', { items, locationId: location }),
@@ -691,7 +703,10 @@ export const api = {
   productCategories: (location: string) => get<ProductCategory[]>(`/api/v1/product-categories?location=${encodeURIComponent(location)}`),
   createProductCategory: (location: string, name: string) => post<ProductCategory>('/api/v1/product-categories', { name, locationId: location }),
   renameProductCategory: (location: string, id: string, name: string) => patch<ProductCategory>(`/api/v1/product-categories/${id}?location=${encodeURIComponent(location)}`, { name }),
-  deleteProductCategory: (location: string, id: string) => del<{ released: number }>(`/api/v1/product-categories/${id}?location=${encodeURIComponent(location)}`),
+  deleteProductCategory: (location: string, id: string, opts?: { deleteProducts?: boolean }) =>
+    del<{ released: number; deleted?: number }>(
+      `/api/v1/product-categories/${id}?location=${encodeURIComponent(location)}${opts?.deleteProducts ? '&deleteProducts=true' : ''}`,
+    ),
   /** What a product sold in the last 30 days, by day. */
   productSales: (id: string, days = 30) => get<ProductSales>(`/api/v1/products/${id}/sales?days=${days}`),
   /** 0116 — the ledger behind a product's count, newest first. */
@@ -1018,6 +1033,7 @@ export const api = {
     timezone?: string;
     phone?: string;
     description?: string;
+    googleReviewUrl?: string;
     locationName?: string;
     addressLine1?: string;
     addressCity?: string;

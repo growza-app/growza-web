@@ -234,19 +234,35 @@ export function ImportProductReview({
 
                 {open && (
                   <div className="rv-edit">
-                    {(counted ? EDITABLE : EDITABLE.filter((f) => f.key !== 'stock' && f.key !== 'lowStock')).map((f) => {
+                    {(counted
+                      ? EDITABLE
+                      : EDITABLE.filter(
+                          (f) =>
+                            f.key !== 'stock' &&
+                            f.key !== 'lowStock' &&
+                            f.key !== 'barcode' &&
+                            f.key !== 'sku' &&
+                            f.key !== 'hsn',
+                        )
+                    ).map((f) => {
                       // A correction never renames a product or moves its count; the cell is shown, not editable.
                       const locked = !!d.existing && (f.key === 'name' || (f.key === 'stock' && !adding));
+                      const fieldLabel =
+                        f.key === 'stock' && d.existing && adding
+                          ? t('fields.addStock')
+                          : !counted && f.field === 'name'
+                            ? t('fields.nameUncounted')
+                            : t(`fields.${f.field}`);
                       return (
                         <label key={f.key} className={`field ${f.key === 'name' ? 'rv-field-name' : ''}`}>
-                          <span className="field-label">{f.key === 'stock' && d.existing && adding ? t('fields.addStock') : t(`fields.${f.field}`)}</span>
+                          <span className="field-label">{fieldLabel}</span>
                           <input
                             type="text"
                             inputMode={f.numeric}
                             value={locked && f.key === 'name' ? d.existing!.name : (d[f.key] as string)}
                             readOnly={locked}
                             title={locked ? t('correctionOnly') : undefined}
-                            aria-label={t('rowCell', { n: d.row, field: t(f.key === 'stock' && d.existing && adding ? 'fields.addStock' : `fields.${f.field}`) })}
+                            aria-label={t('rowCell', { n: d.row, field: fieldLabel })}
                             onChange={(e) => update(i, { [f.key]: e.target.value } as Partial<ProductDraft>)}
                           />
                         </label>
@@ -273,7 +289,7 @@ export function ImportProductReview({
           {t('back')}
         </button>
         <button type="button" className="btn" disabled={busy || toSave === 0 || tooManyCategories} onClick={counts.fix > 0 ? goToProblem : apply}>
-          {busy ? t('importing') : counts.fix > 0 ? t('fixFirst', { count: counts.fix }) : t('importN', { count: toSave })}
+          {busy ? t('importing') : counts.fix > 0 ? t('fixFirst', { count: counts.fix }) : t(counted ? 'importN' : 'importNUncounted', { count: toSave })}
         </button>
       </div>
     </>

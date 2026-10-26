@@ -6,7 +6,7 @@ import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
 import type { Product } from '../lib/api-types';
 import { ImportProductColumns } from './ImportProductColumns';
-import { buildDrafts, fieldAt, FIELDS, mappingSummary, matchedAll, matchExisting, missingRequired, newCategoryNames, notImported, plainCode, plainNumber, plainPercent, reviewProblems, rowProblem, rupeeText, SAMPLE_CSV, stockNotApplied, stockToAdd, suggest, toItems, withColumnAs, type ProductDraft } from './product-import';
+import { buildDrafts, fieldAt, FIELDS, mappingSummary, matchedAll, matchExisting, missingRequired, newCategoryNames, notImported, plainCode, plainNumber, plainPercent, reviewProblems, rowProblem, rupeeText, SAMPLE_CSV, SAMPLE_MENU_CSV, stockNotApplied, stockToAdd, suggest, toItems, withColumnAs, type ProductDraft } from './product-import';
 
 /**
  * Owner, 2026-10-18 — a shelf loaded from a spreadsheet. What goes wrong is quiet: a column read as the wrong thing
@@ -53,6 +53,29 @@ describe('which column is which', () => {
       cost: 'Cost',
       lowStock: 'Low stock',
     });
+  });
+
+  it('reads the headers of the restaurant menu sample file (SAMPLE_MENU_CSV)', () => {
+    const lines = SAMPLE_MENU_CSV.trim().split('\n');
+    const headers = lines[0]!.split(',');
+    const map = suggest(headers);
+    expect({
+      name: headers[map.name],
+      category: headers[map.category],
+      price: headers[map.price],
+      gst: headers[map.gst],
+      cost: headers[map.cost],
+    }).toEqual({
+      name: 'Dish name',
+      category: 'Category',
+      price: 'Price',
+      gst: 'GST %',
+      cost: 'Cost',
+    });
+    expect(map.barcode).toBe(-1);
+    expect(map.stock).toBe(-1);
+    expect(map.sku).toBe(-1);
+    expect(map.lowStock).toBe(-1);
   });
 
   it('gives "Cost Price" to the cost and "Selling Price" to the price, whichever comes first', () => {

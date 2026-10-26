@@ -20,6 +20,7 @@ import { productMatchable } from '../lib/product-match';
 import { ProductSheet } from './ProductSheet';
 import { ImportProducts } from './ImportProducts';
 import { StockTake } from './StockTake';
+import { BulkEditProductsModal } from './BulkEditProductsModal';
 import { ALL_CATEGORIES, NO_CATEGORY, ProductCategoriesDropdown } from './DeskProductCategories';
 import { SearchClear } from '../components/SearchClear';
 import { extraSuggestions } from '../lib/service-suggest';
@@ -204,6 +205,7 @@ export function ProductsList({
   const [editing, setEditing] = useState<Product | 'new' | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [stockTakeOpen, setStockTakeOpen] = useState(false);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importNote, setImportNote] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
@@ -218,6 +220,12 @@ export function ProductsList({
     mq.addEventListener('change', read);
     return () => mq.removeEventListener('change', read);
   }, []);
+
+  useEffect(() => {
+    if (!desk || !editing || editing === 'new') return;
+    const activeEl = document.querySelector<HTMLElement>('.prd-menu-card.is-on, .prd-row-on');
+    activeEl?.scrollIntoView({ block: 'nearest' });
+  }, [desk, editing]);
 
   const live = useMemo(() => rows.filter((p) => p.active), [rows]);
   const liveCategories = useMemo(
@@ -338,14 +346,18 @@ export function ProductsList({
     const c = await api.createProductCategory(branchId, name);
     setCategories((prev) => [...prev, c]);
   };
-  const removeCategory = async () => {
+  const removeCategory = async (deleteProducts = false) => {
     if (!deletingCategory) return;
     setBusy(true);
     setError(null);
     try {
-      await api.deleteProductCategory(branchId, deletingCategory.id);
+      await api.deleteProductCategory(branchId, deletingCategory.id, { deleteProducts });
       setCategories((prev) => prev.filter((c) => c.id !== deletingCategory.id));
-      setRows((prev) => prev.map((p) => (p.categoryId === deletingCategory.id ? { ...p, categoryId: null, categoryName: null } : p)));
+      if (deleteProducts) {
+        setRows((prev) => prev.filter((p) => p.categoryId !== deletingCategory.id));
+      } else {
+        setRows((prev) => prev.map((p) => (p.categoryId === deletingCategory.id ? { ...p, categoryId: null, categoryName: null } : p)));
+      }
       setSelectedCategories((prev) => prev.filter((id) => id !== deletingCategory.id));
       setDeletingCategory(null);
       router.refresh();
@@ -745,39 +757,6 @@ export function ProductsList({
       </div>
     ) : null;
   const pages = shown.length > effectivePageSize ? <Pagination page={Math.min(page, pageCount)} total={shown.length} pageSize={effectivePageSize} noun={t(counted ? 'noun' : 'nounUncounted')} onChange={setPage} /> : null;
-  const menuCategoryBar =
-    !counted && liveCategories.length > 0 ? (
-      <div className="prd-cat-bar" role="group" aria-label={t('cols.category')}>
-        <button
-          type="button"
-          className={`prd-cat-pill ${selectedCategories.length === 0 ? 'is-on' : ''}`}
-          aria-pressed={selectedCategories.length === 0}
-          onClick={clearCategories}
-        >
-          <span>{t('filters.all')}</span>
-          <span className="prd-cat-pill-n">{live.length}</span>
-        </button>
-        {liveCategories.map((c) => {
-          const active = selectedCategories.includes(c.id);
-          return (
-            <button
-              key={c.id}
-              type="button"
-              className={`prd-cat-pill ${active ? 'is-on' : ''}`}
-              aria-pressed={active}
-              onClick={() =>
-                pick(() =>
-                  setSelectedCategories((prev) => (prev.length === 1 && prev[0] === c.id ? [] : [c.id])),
-                )
-              }
-            >
-              <span>{c.name}</span>
-              <span className="prd-cat-pill-n">{c.count}</span>
-            </button>
-          );
-        })}
-      </div>
-    ) : null;
   const menuCards =
     shown.length === 0 ? (
       nothing
@@ -842,6 +821,24 @@ export function ProductsList({
   );
   const dialogs = (
     <>
+      {bulkEditOpen && canStockTake && writable ? (
+        <BulkEditProductsModal
+          branchId={branchId}
+          counted={counted}
+          products={rows}
+          categories={liveCategories}
+          onProductsChange={(next) => {
+            setRows(next);
+            void refreshCategories();
+            router.refresh();
+          }}
+          onCategoriesChange={(next) => {
+            setCategories(next);
+            router.refresh();
+          }}
+          onClose={() => setBulkEditOpen(false)}
+        />
+      ) : null}
       {importOpen ? <ImportProducts shelf={rows} categories={categories} branchId={branchId} onClose={() => setImportOpen(false)} onImported={(r) => void imported(r)} /> : null}
       {deleting ? (
         <ConfirmDialog
@@ -898,17 +895,38 @@ export function ProductsList({
       {deletingCategory ? (
         <ConfirmDialog
           title={t('categories.delete')}
-          body={t('categories.deleteAsk', { name: deletingCategory.name, n: deletingCategory.count })}
-          confirmLabel={t('categories.delete')}
+          body={
+            deletingCategory.count > 0
+              ? t('categories.deleteWithProductsAsk', { name: deletingCategory.name, n: deletingCategory.count })
+              : t('categories.deleteAsk', { name: deletingCategory.name, n: 0 })
+          }
+          confirmLabel={
+            deletingCategory.count > 0
+              ? t('categories.deleteWithProducts', { name: deletingCategory.name, n: deletingCategory.count })
+              : t('categories.delete')
+          }
           tone="danger"
           busy={busy}
           error={error}
-          onConfirm={() => void removeCategory()}
+          onConfirm={() => void removeCategory(deletingCategory.count > 0)}
           onCancel={() => {
             setDeletingCategory(null);
             setError(null);
           }}
-        />
+        >
+          {deletingCategory.count > 0 ? (
+            <div className="prd-delete-alt">
+              <button
+                type="button"
+                className="btn btn-ghost prd-delete-alt-btn"
+                disabled={busy}
+                onClick={() => void removeCategory(false)}
+              >
+                {t('categories.keepProductsUnassigned', { n: deletingCategory.count })}
+              </button>
+            </div>
+          ) : null}
+        </ConfirmDialog>
       ) : null}
     </>
   );
@@ -971,12 +989,17 @@ export function ProductsList({
                   </div>
                 ) : null}
                 {canStockTake && writable ? (
+                  <button type="button" className="btn btn-ghost prd-bulk-edit-btn" onClick={() => setBulkEditOpen(true)}>
+                    {t('bulkTable.open')}
+                  </button>
+                ) : null}
+                {canStockTake && writable ? (
                   <button type="button" className="btn btn-ghost prd-import-btn" onClick={() => setImportOpen(true)}>
                     <IconUpload /> {t('import.open')}
                   </button>
                 ) : null}
               </div>
-              {!counted ? menuCategoryBar : chips}
+              {counted ? chips : null}
               {alsoTryRow}
               {!counted && menuView === 'cards' ? (
                 <div className="prd-menu-cards-wrap">
@@ -1026,11 +1049,23 @@ export function ProductsList({
                 <div className="prd-selects">
                   {categoriesDropdown}
                   {sortBox}
+                  {canStockTake && writable ? (
+                    <button type="button" className="btn btn-ghost prd-bulk-edit-btn" onClick={() => setBulkEditOpen(true)}>
+                      {t('bulkTable.open')}
+                    </button>
+                  ) : null}
                 </div>
               ) : (
-                sortBox
+                <div className="prd-selects">
+                  {sortBox}
+                  {canStockTake && writable ? (
+                    <button type="button" className="btn btn-ghost prd-bulk-edit-btn" onClick={() => setBulkEditOpen(true)}>
+                      {t('bulkTable.open')}
+                    </button>
+                  ) : null}
+                </div>
               )}
-              {!counted ? menuCategoryBar : chips}
+              {counted ? chips : null}
             </div>
             {alsoTryRow}
             {!counted ? menuCards : list}
