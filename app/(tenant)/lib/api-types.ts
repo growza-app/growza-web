@@ -47,7 +47,11 @@ export interface Me {
    * Jira GRW-516 — what a business still being set up is waiting on, one row per thing, met or not. Null once it is live
    * (and when the API could not say).
    */
-  setup?: { items: Array<{ key: string; met: boolean; branchName?: string }> } | null;
+  /**
+   * `setup` = not switched on yet, the whole checklist. `attention` = live, and ONLY what has since gone
+   * missing (owner, 2026-10-26). An older API that sends no `mode` is read as `setup`, which is what it was.
+   */
+  setup?: { mode?: 'setup' | 'attention'; items: Array<{ key: string; met: boolean; branchName?: string }> } | null;
   /**
    * Jira GRW-242 — owner only: the next bill has outgrown the AutoPay amount
    * they approved, and they are asked to approve the new one before the

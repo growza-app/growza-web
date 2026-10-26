@@ -73,6 +73,7 @@ export function PosClient({
   const [todayRows, setTodayRows] = useState<Appointment[]>([]);
   const [tokenOverrides, setTokenOverrides] = useState<Record<string, PosTokenState>>({});
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
+  const [reloadKey, setReloadKey] = useState(0);
   /** Only the latest open may answer: a slow read from an earlier open must not put old bills under a newer sheet. */
   const opened = useRef(0);
 
@@ -306,12 +307,12 @@ export function PosClient({
             <li key={i} className="pos-qcard-item">
               <span className="pos-qcard-item-qty">{item.qty}×</span>
               <span className="pos-qcard-item-name">{item.name}</span>
-              <span className="pos-qcard-item-amt">{formatMoney(String(item.paidMinor))}</span>
+              {canReturn ? <span className="pos-qcard-item-amt">{formatMoney(String(item.paidMinor))}</span> : null}
             </li>
           ))}
         </ul>
         <div className="pos-qcard-foot">
-          <strong className="pos-qcard-total">{formatMoney(String(tk.totalMinor))}</strong>
+          {canReturn ? <strong className="pos-qcard-total">{formatMoney(String(tk.totalMinor))}</strong> : <span />}
           {isPreparing ? (
             <button
               type="button"
@@ -508,6 +509,7 @@ export function PosClient({
           heading={heading}
           nextTokenNo={nextTokenNo}
           onSaleCompleted={handleSaleCompleted}
+          reloadKey={reloadKey}
         />
       </div>
 
@@ -532,7 +534,7 @@ export function PosClient({
             <div className="pos-queue-kpi">
               <span className="pos-queue-kpi-label">{t('kpiTotalOrders')}</span>
               <strong className="pos-queue-kpi-val">{dailyTokens.length}</strong>
-              <span className="pos-queue-kpi-sub">{formatMoney(String(todayTotalMinor))}</span>
+              {canReturn ? <span className="pos-queue-kpi-sub">{formatMoney(String(todayTotalMinor))}</span> : null}
             </div>
           </div>
 
@@ -594,8 +596,11 @@ export function PosClient({
           todayISO={todayISO}
           returnWindowDays={returnWindowDays}
           onClose={closeReturn}
-          // The sheet keeps its own "return recorded" step on screen; the next open reads the bills again.
-          onReturned={() => {}}
+          // The sheet keeps its own "return recorded" step on screen; refresh shelf stock and queue totals in place.
+          onReturned={() => {
+            setReloadKey((k) => k + 1);
+            void loadTodayTokens();
+          }}
         />
       ) : null}
     </div>

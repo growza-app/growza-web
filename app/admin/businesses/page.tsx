@@ -43,6 +43,12 @@ interface BusinessRow {
   branchCount: number;
   userCount: number;
   createdAt: string;
+  /**
+   * Owner, 2026-10-26 — `true` when a provisioning business has finished its checklist and is waiting on
+   * somebody here to press Activate. `null` for every other status: a live business has no checklist, and a
+   * `false` on one would read as a fault rather than as "does not apply".
+   */
+  ready: boolean | null;
 }
 
 interface BusinessStatusCount {
@@ -412,8 +418,30 @@ function AdminBusinessesInner() {
                   <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{b.branchCount}</div>
                   <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{b.userCount}</div>
                   <div style={{ fontSize: 13.5, fontWeight: 600, color: 'oklch(0.36 0.02 155)' }}>{b.planName}</div>
-                  <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     <StatusPill status={statusLabel(b.status)} />
+                    {/*
+                      * Nothing used to tell anybody here that an owner had finished setting up — readiness was
+                      * computed on the one-business page only, so it meant opening each Provisioning row in turn.
+                      * A business that finished on Friday could stay switched off until somebody looked.
+                      */}
+                    {b.ready ? (
+                      <span
+                        title="This business has finished its setup checklist and can be activated."
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          padding: '2px 7px',
+                          borderRadius: 999,
+                          whiteSpace: 'nowrap',
+                          color: 'oklch(0.42 0.13 150)',
+                          background: 'oklch(0.95 0.04 150)',
+                          border: '1px solid oklch(0.86 0.07 150)',
+                        }}
+                      >
+                        Ready
+                      </span>
+                    ) : null}
                   </div>
                   <div>
                     <NotYetAvailable reason="Bookings aren't counted yet — lands with the usage metering epic (GRW-85)." />
