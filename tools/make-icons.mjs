@@ -1,11 +1,10 @@
 /**
  * The Growza app icon, generated from the brand mark.
  *
- * The mark's three paths and `#0E7A4F` are copied verbatim out of the design
- * canvas export ("Growza Logo.html", the "Growza — App icon" artboard) — a
- * chat bubble with a growth arrow breaking out of a ring. Nothing here is
- * redrawn by hand, so a change to the artboard is a change to these constants
- * and nothing else.
+ * Renders the bold white `G` ring + upward-right growth arrow directly on the
+ * emerald gradient squircle (`#159360` -> `#0B613E`), without the outer speech
+ * bubble wrapper that previously shrank the inner `G`-arrow to ~25% of the
+ * mobile home-screen icon.
  *
  *   node tools/make-icons.mjs
  *
@@ -30,43 +29,35 @@ import sharp from 'sharp';
 import { createHash } from 'node:crypto';
 import { readFile, readdir, rm, writeFile } from 'node:fs/promises';
 
-const BUBBLE = 'M34 8 H62 A26 26 0 0 1 88 34 V58 A26 26 0 0 1 62 84 H40 L16 95 Q12 96.5 13 92 L17 76 A26 26 0 0 1 8 58 V34 A26 26 0 0 1 34 8 Z';
-const ARC = 'M51.47 26.3 A20 20 0 1 0 67.7 49.47';
-const ARROW = 'M47 49 L73 28 M62 28 H73 V39';
-const BRAND = '#0E7A4F';
+const G_ARC = 'M 61.2 44.2 A 31 31 0 1 0 95.8 78.8';
+const G_ARROW = 'M 65 75 L 104 36 M 82 36 H 104 V 58';
+const GRAD_START = '#159360';
+const GRAD_END = '#0B613E';
 
 /**
- * `inset` is the mark's width as a fraction of the icon's edge:
+ * The mark sits in a 140x140 coordinate space where the outer stroke box is
+ * 83x83 centered at (70, 70).
  *
- *   0.60  the artboard's own ratio, for an icon shown as drawn
- *   0.46  maskable — Android may crop to a circle of 80% of the edge, so the
- *         mark sits inside it and the corners are given away
- *   0.86  the 32px favicon, which is also the one that drops `ring`
- *
- * `ring` draws the arc the arrow breaks out of. It is off for the favicon and
- * nowhere else: at 32px the arc is under a pixel wide and the whole mark
- * collapses into a blob — rendered side by side, the bubble, the ring and the
- * arrow are one shape. A bubble with a growth arrow in it reads at that size
- * and says the same thing, so the favicon keeps the idea and loses a stroke
- * rather than keeping every stroke and losing the idea.
- *
- * `arrowWidth` goes up to 10 with the ring gone, because the arrow is then
- * carrying the mark by itself and 7 is thin against white at 32px.
+ * `scale` adjusts the mark relative to the 140x140 box:
+ *   1.00  standard icon (`appleTouch`, `192`, `512`) — ~60% of the icon width
+ *   0.90  maskable — sits comfortably inside Android's 80% safe circle
+ *   1.12  32px favicon — slightly larger and thicker so both strokes stay crisp
  */
-function icon({ size, inset, radius, ring = true, arrowWidth = 7 }) {
-  const m = size * inset;
-  const x = (size - m) / 2;
-  const y = (size - (m * 100) / 96) / 2; // the mark's box is 96×100, not square
-  const s = m / 96;
+function icon({ size, scale = 1, radius, arcWidth = 14.5, arrowWidth = 13.5 }) {
+  const s = (size / 140) * scale;
+  const offset = (size * (1 - scale)) / 2;
   return Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
-      `<rect width="${size}" height="${size}" rx="${radius}" ry="${radius}" fill="${BRAND}"/>` +
-      `<g transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${s.toFixed(5)})">` +
-      `<path d="${BUBBLE}" fill="#FFFFFF"/>` +
-      (ring
-        ? `<path d="${ARC}" fill="none" stroke="${BRAND}" stroke-width="8" stroke-linecap="round"/>`
-        : '') +
-      `<path d="${ARROW}" fill="none" stroke="${BRAND}" stroke-width="${arrowWidth}" stroke-linecap="round" stroke-linejoin="round"/>` +
+      `<defs>` +
+      `<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">` +
+      `<stop offset="0%" stop-color="${GRAD_START}"/>` +
+      `<stop offset="100%" stop-color="${GRAD_END}"/>` +
+      `</linearGradient>` +
+      `</defs>` +
+      `<rect width="${size}" height="${size}" rx="${radius}" ry="${radius}" fill="url(#bg)"/>` +
+      `<g transform="translate(${offset.toFixed(2)} ${offset.toFixed(2)}) scale(${s.toFixed(5)})">` +
+      `<path d="${G_ARC}" fill="none" stroke="#FFFFFF" stroke-width="${arcWidth}" stroke-linecap="round"/>` +
+      `<path d="${G_ARROW}" fill="none" stroke="#FFFFFF" stroke-width="${arrowWidth}" stroke-linecap="round" stroke-linejoin="round"/>` +
       `</g></svg>`,
   );
 }
@@ -76,14 +67,14 @@ const r = (size) => Math.round(size * 0.23);
 
 const FILES = [
   // Next.js serves app/icon.png as the favicon, and fingerprints the URL itself — this one is not hashed here.
-  { key: 'favicon', out: 'app/icon.png', size: 32, inset: 0.86, radius: r(32), ring: false, arrowWidth: 10 },
+  { key: 'favicon', out: 'app/icon.png', size: 32, scale: 1.12, radius: r(32), arcWidth: 16, arrowWidth: 15 },
   // iOS applies its own mask, so this one is square — rounding it here would
   // show the home screen's background through the corners.
-  { key: 'appleTouch', stem: 'apple-touch-icon', size: 180, inset: 0.6, radius: 0 },
-  { key: 'icon192', stem: 'icon-192', size: 192, inset: 0.6, radius: r(192) },
-  { key: 'icon512', stem: 'icon-512', size: 512, inset: 0.6, radius: r(512) },
-  { key: 'maskable192', stem: 'icon-maskable-192', size: 192, inset: 0.46, radius: 0 },
-  { key: 'maskable512', stem: 'icon-maskable-512', size: 512, inset: 0.46, radius: 0 },
+  { key: 'appleTouch', stem: 'apple-touch-icon', size: 180, scale: 1, radius: 0 },
+  { key: 'icon192', stem: 'icon-192', size: 192, scale: 1, radius: r(192) },
+  { key: 'icon512', stem: 'icon-512', size: 512, scale: 1, radius: r(512) },
+  { key: 'maskable192', stem: 'icon-maskable-192', size: 192, scale: 0.9, radius: 0 },
+  { key: 'maskable512', stem: 'icon-maskable-512', size: 512, scale: 0.9, radius: 0 },
 ];
 
 const ICON_DIR = 'public/icons';
