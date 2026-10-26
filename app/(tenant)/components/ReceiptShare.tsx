@@ -281,8 +281,16 @@ export function ReceiptShare({
             ) : null}
 
             {card.googleReviewUrl ? (
-              <div className="wi-rc-footer">
-                ★ {card.reviewPrompt ?? nv.receiptReviewPrompt}: {card.googleReviewUrl}
+              <div className="wi-rc-rewards">
+                <div className="wi-rc-rewards-left">
+                  <span className="wi-rc-star" aria-hidden="true">★</span>
+                  <div>
+                    <strong className="wi-rc-rewards-title">
+                      {(card.reviewPrompt ?? nv.receiptReviewPrompt).replace(/:+\s*$/, '')}
+                    </strong>
+                    <span className="wi-rc-rewards-sub">{card.googleReviewUrl}</span>
+                  </div>
+                </div>
               </div>
             ) : null}
 
