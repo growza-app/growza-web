@@ -577,6 +577,7 @@
       "saveFailed": "Could not save. Please try again.",
       "nameEmpty": "Business name cannot be empty",
       "branchNameEmpty": "Branch name cannot be empty",
+      "googleReviewUrlInvalid": "Enter a valid https:// Google review link",
       "logoFailed": "Could not upload the logo. Please try again."
     },
     "bar": {
@@ -787,6 +788,7 @@
   "settingsCheckIn": {
     "coordsLabel": "Coordinates",
     "accuracy": "about {m} m accurate",
+    "vaguePin": "Your phone is only about {m} m sure of this spot. Step outside the shop and tap again, or paste a map link — a spot this rough can send your staff for approval.",
     "manualLabel": "Or type the numbers, or paste a map link",
     "latLabel": "Latitude",
     "lngLabel": "Longitude",

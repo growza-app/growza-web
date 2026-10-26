@@ -16,6 +16,17 @@ const RADIUS_MIN_M = 0;
 const RADIUS_MAX_M = 500;
 
 /**
+ * A pin the owner should be warned about before she saves it.
+ *
+ * "Use my location now" is only as good as the fix behind it, and a phone indoors can hand back a point
+ * from wifi or a cell tower that is hundreds of metres out while sounding confident. A pin set from one of
+ * those is worse than no pin: the fence is then drawn around the wrong place, and every stylist who taps
+ * "I'm in" at the right place is sent to the owner for approval. Above this she is told, in her own words,
+ * what the phone admitted to — she is never blocked, because the pin may be the best she can get.
+ */
+const VAGUE_PIN_M = 50;
+
+/**
  * Jira GRW-563 — where the branch is, how close counts, and who approves the rest.
  *
  * No map. The owner stands in the salon and taps "Use where I am now", or pastes a maps share link; the
@@ -200,6 +211,11 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
             <p className="ci-coords" aria-label={t('coordsLabel')}>
               <span>{pin.lat.toFixed(6)}, {pin.lng.toFixed(6)}</span>
               {accuracyM != null ? <span className="ci-accuracy">{t('accuracy', { m: accuracyM })}</span> : null}
+            </p>
+          ) : null}
+          {accuracyM != null && accuracyM > VAGUE_PIN_M ? (
+            <p className="ci-vague" role="status">
+              {t('vaguePin', { m: accuracyM })}
             </p>
           ) : null}
           <div className="ci-pin-actions">

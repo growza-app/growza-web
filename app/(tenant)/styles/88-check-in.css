@@ -167,6 +167,16 @@
   color: var(--accent-deep);
   font-weight: 650;
 }
+/* A pin the phone is not sure of. Amber like `.ci-needs-moving`: something to look at, nothing refused. */
+.ci-vague {
+  margin: var(--sp-1) 0 0;
+  padding: var(--sp-2);
+  border-radius: var(--radius-sm);
+  background: #fdf6ec;
+  color: var(--amber-ink);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
 .ci-pin-actions {
   display: flex;
   flex-wrap: wrap;
