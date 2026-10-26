@@ -6,10 +6,11 @@ import { api, ApiError } from '../lib/api';
 import { useDialog } from '../../shared/a11y/useDialog';
 import type { Product, ProductCategory, ProductImportResult } from '../lib/api-types';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useAreas } from '../components/SessionProvider';
 import { ImportProductDone } from './ImportProductDone';
 import { ImportProductColumns } from './ImportProductColumns';
 import { ImportProductReview } from './ImportProductReview';
-import { buildDrafts, suggest, SAMPLE_CSV, type ColumnMap, type ProductDraft } from './product-import';
+import { buildDrafts, suggest, SAMPLE_CSV, SAMPLE_MENU_CSV, type ColumnMap, type ProductDraft } from './product-import';
 
 /**
  * Owner, 2026-10-18 — load the shelf from a spreadsheet: pick the file, confirm which column is which, check every
@@ -34,6 +35,7 @@ export function ImportProducts({
   onImported: (result: ProductImportResult) => void;
 }) {
   const t = useTranslations('products.import');
+  const counted = useAreas().stock;
   const [step, setStep] = useState<'pick' | 'map' | 'review' | 'done'>('pick');
   const [result, setResult] = useState<ProductImportResult | null>(null);
   const [leaving, setLeaving] = useState(false);
@@ -74,23 +76,27 @@ export function ImportProducts({
 
   /** A starter file, made here: nothing is fetched, and the owner can fill it in or see what the importer recognises. */
   const downloadSample = () => {
-    const url = URL.createObjectURL(new Blob([SAMPLE_CSV], { type: 'text/csv' }));
+    const csv = counted ? SAMPLE_CSV : SAMPLE_MENU_CSV;
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'products-sample.csv';
+    a.download = counted ? 'products-sample.csv' : 'menu-sample.csv';
     a.click();
     URL.revokeObjectURL(url);
   };
 
+  const dialogTitle = t(counted ? 'title' : 'titleUncounted');
+  const reviewHeading = t(counted ? 'reviewTitle' : 'reviewTitleUncounted', { count: drafts.length });
+
   return (
     <div className="modal-backdrop" onClick={busy || leaving ? undefined : requestClose}>
-      <div className="modal import-modal" role="dialog" aria-modal="true" aria-label={t('title')} ref={dialogRef} onClick={(e) => e.stopPropagation()}>
-        <h3>{step === 'map' ? t('mapTitle') : step === 'review' ? t('reviewTitle', { count: drafts.length }) : step === 'done' ? t('doneTitle') : t('title')}</h3>
+      <div className="modal import-modal" role="dialog" aria-modal="true" aria-label={dialogTitle} ref={dialogRef} onClick={(e) => e.stopPropagation()}>
+        <h3>{step === 'map' ? t('mapTitle') : step === 'review' ? reviewHeading : step === 'done' ? t('doneTitle') : dialogTitle}</h3>
 
         {step === 'pick' && (
           <>
             <p className="confirm-body">{t('pickBody')}</p>
-            <p className="confirm-body">{t('pickColumns')}</p>
+            <p className="confirm-body">{t(counted ? 'pickColumns' : 'pickColumnsUncounted')}</p>
             <input ref={fileRef} type="file" accept=".xlsx,.csv" style={{ display: 'none' }} onChange={(e) => pick(e.target.files?.[0])} />
             <button type="button" className="btn btn-ghost import-change" disabled={busy} onClick={downloadSample}>
               {t('sample')}

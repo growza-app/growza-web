@@ -26,6 +26,7 @@ import { CataloguePicker } from './CataloguePicker';
 import { CopyFromBranch } from './CopyFromBranch';
 import { CategoriesSheet } from './CategoriesSheet';
 import { CategoryPicker } from './CategoryPicker';
+import { BulkEditServicesModal } from './BulkEditServicesModal';
 import { ALL_TAB, RETIRED_TAB, hasRetired, servicesOnTab, tabAfterChange, tabCounts } from './services-tabs';
 import { ServiceCards, ServiceTableRows, type RowActions } from './ServiceRows';
 import { HeldByPackagesDialog } from './HeldByPackagesDialog';
@@ -115,6 +116,7 @@ export function ServicesTable({
   const [choosing, setChoosing] = useState(false);
   const [picking, setPicking] = useState(false);
   const [copying, setCopying] = useState(false);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
   /**
    * Jira GRW-428 — the category sheet, and the admin list it needs.
    *
@@ -602,6 +604,17 @@ export function ServicesTable({
         />
       )}
 
+      {bulkEditOpen && (
+        <BulkEditServicesModal
+          branchId={branchId}
+          serviceLabel={lower}
+          services={services}
+          categories={deskCats ?? categories}
+          onChanged={() => void reload()}
+          onClose={() => setBulkEditOpen(false)}
+        />
+      )}
+
       {/* The phone's sheet, or on a desk the one-state dialog (owner, 2026-10-14). */}
       {managing && desk && (
         <DeskCategoriesDialog branchId={branchId} initial={managing} services={services} onClose={() => setManaging(null)} onChanged={() => void reload()} />
@@ -803,6 +816,11 @@ export function ServicesTable({
                     ))}
                   </select>
                 </label>
+                {writable && services.length > 0 ? (
+                  <button type="button" className="btn btn-ghost prd-bulk-edit-btn" onClick={() => setBulkEditOpen(true)}>
+                    {t('bulkTable.open')}
+                  </button>
+                ) : null}
               </div>
               {alsoTry.length > 0 && (
                 <div className="also-try">
@@ -950,6 +968,11 @@ export function ServicesTable({
         <button type="button" className="btn btn-ghost" onClick={exportCsv}>
           {t('export')}
         </button>
+        {writable && services.length > 0 ? (
+          <button type="button" className="btn btn-ghost prd-bulk-edit-btn" onClick={() => setBulkEditOpen(true)}>
+            {t('bulkTable.open')}
+          </button>
+        ) : null}
       </div>
 
       {/*

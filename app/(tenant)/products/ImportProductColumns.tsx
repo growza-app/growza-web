@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { useAreas } from '../components/SessionProvider';
 import { samplesFor } from '../services/import-columns';
 import { FIELDS, fieldAt, matchedAll, missingRequired, withColumnAs, type ColumnMap, type Field } from './product-import';
 
@@ -29,9 +30,13 @@ export function ImportProductColumns({
   onNext: () => void;
 }) {
   const t = useTranslations('products.import');
+  const counted = useAreas().stock;
   const [changing, setChanging] = useState(() => !matchedAll(map));
   const missing = missingRequired(map);
-  const label = (f: Field) => t(`fields.${f}`);
+  const label = (f: Field) => (!counted && f === 'name' ? t('fields.nameUncounted') : t(`fields.${f}`));
+  const availableFields = counted
+    ? FIELDS
+    : FIELDS.filter((f) => f.key !== 'stock' && f.key !== 'lowStock' && f.key !== 'barcode' && f.key !== 'sku' && f.key !== 'hsn');
   const headerOf = (i: number) => headers[i] || t('column', { n: i + 1 });
   const unused = headers.map((_, i) => i).filter((i) => fieldAt(map, i) === null);
 
@@ -80,7 +85,7 @@ export function ImportProductColumns({
                     <span className="field-label">{t('becomes')}</span>
                     <select value={fieldAt(map, i) ?? 'skip'} onChange={(e) => onMap(withColumnAs(map, i, e.target.value === 'skip' ? null : (e.target.value as Field)))}>
                       <option value="skip">{t('skipColumn')}</option>
-                      {FIELDS.map((f) => (
+                      {availableFields.map((f) => (
                         <option key={f.key} value={f.key}>
                           {label(f.key)}
                           {f.required ? ` (${t('needed')})` : ''}
