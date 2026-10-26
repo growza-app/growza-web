@@ -162,6 +162,24 @@ export function ReceiptShare({
     }
   };
 
+  const shareReceipt = async () => {
+    if (hasGraphicCard && card) {
+      try {
+        const blob = await renderReceiptCardBlob(card);
+        if (blob) {
+          const file = new File([blob], 'receipt.png', { type: 'image/png' });
+          if (!navigator.canShare || navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], text });
+            return;
+          }
+        }
+      } catch {
+        /* fallback to text share */
+      }
+    }
+    await navigator.share({ text }).catch(() => undefined);
+  };
+
   const problem = checkPhone(typed, { required: true });
   const digits = problem ? '' : waDigits(toStoredPhone(typed));
   const shownProblem = touched ? problem : null;
@@ -200,7 +218,7 @@ export function ReceiptShare({
 
             <div className="wi-rc-body">
               <div className="wi-rc-sec-head">
-                <span>{nv.rcYourOrder(card.totalItemsCount)}</span>
+                <span>{card.isOrder ? nv.rcYourOrder(card.totalItemsCount) : card.itemsHeading}</span>
                 <span>{nv.rcAmount}</span>
               </div>
               <ul className="wi-rc-items">
@@ -208,7 +226,7 @@ export function ReceiptShare({
                   <li key={idx} className="wi-rc-item">
                     <div className="wi-rc-item-row">
                       <div className="wi-rc-item-left">
-                        <span className="wi-rc-qty">{it.qty}×</span>
+                        {card.isOrder || it.qty > 1 ? <span className="wi-rc-qty">{it.qty}×</span> : null}
                         <span className="wi-rc-name">{it.name}</span>
                       </div>
                       <span className="wi-rc-amt">{it.amount}</span>
@@ -378,7 +396,7 @@ export function ReceiptShare({
             <button
               type="button"
               className="btn btn-ghost wi-act-alt"
-              onClick={() => void navigator.share({ text }).catch(() => undefined)}
+              onClick={() => void shareReceipt()}
             >
               <IconShare />
               {words.share}

@@ -270,6 +270,7 @@ describe('Graphic Receipt Card model, structured WhatsApp text, and optional Rew
       name: 'Chicken Drumstick (2 pcs)',
       amount: '₹140',
       details: [],
+      section: 'Menu',
     });
     expect(card.rewardsEarned).toBe('+34 Reward Points earned');
     expect(card.rewardsBalance).toBe('420 pts');
@@ -285,5 +286,28 @@ describe('Graphic Receipt Card model, structured WhatsApp text, and optional Rew
     expect(waText).toContain('★ +34 Reward Points earned');
     expect(waText).toContain('Available balance: *420 pts*');
     expect(waText).not.toMatch(/📅|🎟|🙏|🎉/);
+  });
+
+  it('uses Services and Products headings (not Your Order) and drops 1 × for single salon services', () => {
+    const rows = receiptRows(
+      {
+        ...full,
+        products: [{ name: 'Argan Oil 100ml', amountMinor: 45900 }],
+        totalMinor: 160800,
+      },
+      { ...copy, products: 'Products' },
+      money,
+    );
+    const card = parseReceiptCard(rows);
+    expect(card.isOrder).toBe(false);
+    expect(card.itemsHeading).toBe('Services');
+    expect(card.items).toHaveLength(4);
+
+    const waText = formatStructuredWhatsappText(rows);
+    expect(waText).toContain('Payment receipt · *Token #07*\nStylist: Rahul · 7 Oct 2026, 11:42 AM');
+    expect(waText).not.toContain('Your Order');
+    expect(waText).toContain('*Services*\n───────────────\n• Haircut × 2 — *₹600*\n• Beard Trim — *₹150*');
+    expect(waText).toContain('*Products*\n───────────────\n• Argan Oil 100ml — *₹459*');
+    expect(waText).not.toContain('1 × Beard Trim');
   });
 });
