@@ -15,6 +15,8 @@ export interface BranchRef {
   name: string;
   /** The QR to show at this branch's till (its own, else the business's). Absent where the role is not sent one. */
   paymentQrUrl?: string | null;
+  /** Optional Google review link for this branch (its own, else the business's), included on WhatsApp receipts. */
+  googleReviewUrl?: string | null;
 }
 
 export interface BranchState {

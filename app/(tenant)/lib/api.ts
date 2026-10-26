@@ -1033,6 +1033,7 @@ export const api = {
     timezone?: string;
     phone?: string;
     description?: string;
+    googleReviewUrl?: string;
     locationName?: string;
     addressLine1?: string;
     addressCity?: string;

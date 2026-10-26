@@ -244,6 +244,10 @@ export function PayFlow({
    * good for at least an hour and is byte-identical between renders, which is what lets the browser cache it.
    */
   const paymentQr = branch.branches.find((b) => b.id === location)?.paymentQrUrl ?? null;
+  const googleReviewUrl =
+    branch.branches.find((b) => b.id === location)?.googleReviewUrl ??
+    session?.branches?.find((b) => b.id === location)?.googleReviewUrl ??
+    null;
 
   /*
    * A QR that is recorded but will not draw (owner, 2026-10-13: "it's showing blank").
@@ -1070,6 +1074,7 @@ export function PayFlow({
           ...(redeemPoints > 0 ? { rewardPoints: redeemPoints, rewardMinor: discountMinor } : {}),
           ...(result.earnedPoints > 0 ? { earnedPoints: result.earnedPoints } : {}),
           paidBy,
+          googleReviewUrl,
         },
         {
           title: nv.receiptTitle,
@@ -1090,6 +1095,7 @@ export function PayFlow({
           earned: (points) => t('rewards.receiptEarned', { points }),
           paidBy: nv.receiptPaidBy,
           seeYou: nv.receiptSeeYou,
+          reviewPrompt: nv.receiptReviewPrompt,
         },
         money,
       );

@@ -27,7 +27,7 @@ export interface SessionInfo {
   /** The person's own name, for the avatar and the account menu. Null until they (or the invite) set one. */
   name?: string | null;
   /** Jira GRW-235 — open branches, main first; one or none means there is no branch to choose. */
-  branches?: Array<{ id: string; name: string }>;
+  branches?: Array<{ id: string; name: string; paymentQrUrl?: string | null; googleReviewUrl?: string | null }>;
   /** Jira GRW-306 — the language the page was rendered in, for the language switch in the account menu. */
   lang?: Lang;
   /**

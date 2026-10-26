@@ -72,6 +72,8 @@ export interface ReceiptInput {
   paidBy: string;
   /** Optional loyalty / reward points earned, redeemed, and remaining balance on this bill. */
   rewards?: ReceiptRewards | null;
+  /** Optional Google review link for the branch or business, appended at the foot of the receipt. */
+  googleReviewUrl?: string | null;
 }
 
 export interface ReceiptCopy {
@@ -94,6 +96,7 @@ export interface ReceiptCopy {
   saved: (amount: string) => string;
   paidBy: (mode: string) => string;
   seeYou: string;
+  reviewPrompt?: string;
   rewardsTitle?: string;
   rewardRedeemed?: (points: number, amount: string) => string;
   rewardEarned?: (points: number) => string;
@@ -207,6 +210,12 @@ export function receiptRows(input: ReceiptInput, copy: ReceiptCopy, money: (mino
   }
   gap();
   line({ t: `${copy.seeYou} 🙏` });
+  const reviewUrl = input.googleReviewUrl?.trim();
+  if (reviewUrl && /^https:\/\//i.test(reviewUrl)) {
+    gap();
+    line({ t: `★ ${copy.reviewPrompt ?? 'Leave us a Google review:'}` });
+    line({ t: reviewUrl });
+  }
   return rows;
 }
 
@@ -323,6 +332,8 @@ export interface ReceiptCardModel {
   rewardsEarned: string | null;
   rewardsBalance: string | null;
   seeYou: string;
+  reviewPrompt?: string | null;
+  googleReviewUrl?: string | null;
 }
 
 /**
@@ -355,6 +366,8 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
   let rewardsEarned: string | null = null;
   let rewardsBalance: string | null = null;
   let seeYou = '';
+  let reviewPrompt: string | null = null;
+  let googleReviewUrl: string | null = null;
 
   let idx = 0;
   // Header row(s)
@@ -484,7 +497,17 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
       continue;
     }
 
-    if (raw.endsWith('🙏') || i === flat.length - 1) {
+    if (/^https:\/\//i.test(t)) {
+      googleReviewUrl = t;
+      continue;
+    }
+
+    if (t.startsWith('★') && section !== 'rewards') {
+      reviewPrompt = t.replace(/^★\s*/, '').trim();
+      continue;
+    }
+
+    if (raw.endsWith('🙏') || (!seeYou && i === flat.length - 1)) {
       seeYou = raw.replace(/\s*🙏\s*$/, '').trim();
       continue;
     }
@@ -528,6 +551,8 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
     rewardsEarned,
     rewardsBalance,
     seeYou,
+    reviewPrompt,
+    googleReviewUrl,
   };
 }
 
@@ -601,6 +626,12 @@ export function formatStructuredWhatsappText(rows: ReceiptRow[]): string {
   out.push('');
   const closing = [c.thanks, c.seeYou].filter(Boolean).join(' ');
   if (closing) out.push(closing);
+
+  if (c.googleReviewUrl) {
+    out.push('');
+    out.push(`★ ${c.reviewPrompt || 'Leave us a Google review:'}`);
+    out.push(c.googleReviewUrl);
+  }
 
   return out.join('\n');
 }

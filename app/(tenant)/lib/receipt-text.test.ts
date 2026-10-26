@@ -310,5 +310,23 @@ describe('Graphic Receipt Card model, structured WhatsApp text, and optional Rew
     expect(waText).toContain('*Services*\n───────────────\n• Haircut × 2 — *₹600*\n• Beard Trim — *₹150*');
     expect(waText).toContain('*Products*\n───────────────\n• Argan Oil 100ml — *₹459*');
     expect(waText).not.toContain('1 × Beard Trim');
+    expect(waText).not.toContain('Leave us a Google review');
+  });
+
+  it('includes the Google review link at the bottom of the WhatsApp receipt when configured', () => {
+    const rows = receiptRows(
+      {
+        ...full,
+        googleReviewUrl: 'https://g.page/r/CdX8-example/review',
+      },
+      { ...copy, reviewPrompt: 'Leave us a Google review:' },
+      money,
+    );
+    const card = parseReceiptCard(rows);
+    expect(card.googleReviewUrl).toBe('https://g.page/r/CdX8-example/review');
+    expect(card.reviewPrompt).toBe('Leave us a Google review:');
+
+    const waText = formatStructuredWhatsappText(rows);
+    expect(waText).toContain('Thank you for visiting us today. See you again soon!\n\n★ Leave us a Google review:\nhttps://g.page/r/CdX8-example/review');
   });
 });

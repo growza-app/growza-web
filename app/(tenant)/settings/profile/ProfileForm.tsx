@@ -45,6 +45,7 @@ type Fields = {
   timezone: string;
   phone: string;
   description: string;
+  googleReviewUrl: string;
   locationName: string;
   addressLine1: string;
   addressCity: string;
@@ -57,6 +58,7 @@ function fieldsOf(s: SettingsSummary): Fields {
     // GRW-199 — the field holds ten NATIONAL digits; the stored value is E.164.
     phone: fromStoredPhone(s.tenant.phone),
     description: s.tenant.description,
+    googleReviewUrl: s.tenant.googleReviewUrl ?? '',
     locationName: s.location?.name ?? '',
     addressLine1: s.location?.addressLine1 ?? '',
     addressCity: s.location?.addressCity ?? '',
@@ -126,8 +128,8 @@ export function ProfileForm({
       setError(null);
       setSaved(false);
       try {
-        const { locationName, addressLine1, addressCity, description } = f;
-        const updated = await api.updateProfile({ locationName, addressLine1, addressCity, description, phone: toStoredPhone(f.phone) ?? '' }, branchId);
+        const { locationName, addressLine1, addressCity, description, googleReviewUrl } = f;
+        const updated = await api.updateProfile({ locationName, addressLine1, addressCity, description, googleReviewUrl: googleReviewUrl.trim(), phone: toStoredPhone(f.phone) ?? '' }, branchId);
         setSettings(updated);
         setSavedFields(fieldsOf(updated));
         setF(fieldsOf(updated));
@@ -157,7 +159,7 @@ export function ProfileForm({
           ? // Jira GRW-474 — and the business's own number: the one WhatsApp number a multi-branch salon has, which
             // Settings › Branches shows. It could not be changed anywhere once a second branch existed.
             { name: f.name, timezone: f.timezone, phone: toStoredPhone(f.phone) ?? '' }
-          : { ...business, phone: toStoredPhone(f.phone) ?? '', ...(multiBranch ? {} : { locationName, addressLine1, addressCity }) },
+          : { ...business, googleReviewUrl: f.googleReviewUrl.trim(), phone: toStoredPhone(f.phone) ?? '', ...(multiBranch ? {} : { locationName, addressLine1, addressCity }) },
       );
       setSettings(updated);
       const next = fieldsOf(updated);
@@ -394,6 +396,24 @@ export function ProfileForm({
           {/* GRW-199 — the same field as everywhere else. Optional: a salon
               may not publish a number, and this one is display, not identity. */}
           <PhoneField id="business-phone" label={t('fields.businessPhone')} optionalLabel={tCommon('optional')} value={f.phone} onChange={(v) => set('phone', v)} />
+          {businessOnly ? null : (
+            <div className="field bp-span">
+              <label htmlFor="bp-google-review">
+                <span>
+                  {t('fields.googleReviewUrl')} <span className="field-optional">{tCommon('optional')}</span>
+                </span>
+              </label>
+              <input
+                id="bp-google-review"
+                type="url"
+                value={f.googleReviewUrl}
+                maxLength={300}
+                onChange={(e) => set('googleReviewUrl', e.target.value)}
+                placeholder={t('placeholders.googleReviewUrl')}
+              />
+              <div className="field-hint">{t('hints.googleReviewUrl', { customers })}</div>
+            </div>
+          )}
         </div>
       </section>
       )}

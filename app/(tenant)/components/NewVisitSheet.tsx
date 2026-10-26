@@ -1902,7 +1902,9 @@ export function NewVisitSheet({
   const withBill = (paid: Omit<Extract<Stage, { step: 'paid' }>, 'bill'>): Stage => ({ ...paid, bill: billFor(paid) });
   const billFor = (paid: Omit<Extract<Stage, { step: 'paid' }>, 'bill'>): ReceiptRow[] => {
     const all = session?.branches ?? [];
-    const branchName = all.length > 1 ? (all.find((b) => b.id === (paysToken?.locationId ?? listBranch))?.name ?? null) : null;
+    const activeBranchId = paysToken?.locationId ?? listBranch ?? all[0]?.id ?? null;
+    const branchName = all.length > 1 ? (all.find((b) => b.id === activeBranchId)?.name ?? null) : null;
+    const googleReviewUrl = all.find((b) => b.id === activeBranchId)?.googleReviewUrl ?? null;
     // The day, then the time as this screen's own clock writes it ("1:37 PM"; `formatTime`'s en-IN gives "1:37 pm").
     const day = new Intl.DateTimeFormat(locale === 'hi' ? 'hi-IN' : 'en-IN', {
       timeZone: timezone,
@@ -1932,6 +1934,7 @@ export function NewVisitSheet({
           : null,
         totalMinor: paid.totalMinor,
         paidBy: PAYMENT_MODES.some((m) => m.value === paid.mode) ? tcr(`pay.${paid.mode}`) : paid.mode,
+        googleReviewUrl,
       },
       {
         title: nv.receiptTitle,
@@ -1945,6 +1948,7 @@ export function NewVisitSheet({
         saved: nv.receiptSaved,
         paidBy: nv.receiptPaidBy,
         seeYou: nv.receiptSeeYou,
+        reviewPrompt: nv.receiptReviewPrompt,
       },
       (minor) => formatMoney(String(minor)),
     );
