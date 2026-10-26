@@ -577,6 +577,7 @@
       "saveFailed": "सेव नहीं हो सका। फिर कोशिश करें।",
       "nameEmpty": "बिज़नेस का नाम खाली नहीं हो सकता",
       "branchNameEmpty": "ब्रांच का नाम खाली नहीं हो सकता",
+      "googleReviewUrlInvalid": "सही https:// Google रिव्यू लिंक लिखें",
       "logoFailed": "लोगो अपलोड नहीं हो सका। फिर कोशिश करें।"
     },
     "bar": {
