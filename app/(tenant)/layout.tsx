@@ -355,7 +355,20 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                   <BillingBanner billing={billing} canPayOnline={canPayOnline} canOpenBilling={canOpenBilling} lang={lang} />
                   {paymentReceived && !billing ? <PaymentReceived payment={paymentReceived} lang={lang} /> : null}
                 </HomeOnly>
-                <SetupBanner setup={setup} lang={lang} />
+                {/*
+                  * Owner, 2026-10-26 — the `attention` banner is Home's, the `setup` one is everywhere's.
+                  *
+                  * A business that has not opened yet IS its checklist: the bottom bar is the setup, so the list
+                  * belongs above whatever screen the owner is on. A live one is trading, and a banner that follows
+                  * them onto the very screen they went to fix is the repetition GRW-556 took off Home's siblings.
+                  */}
+                {setup?.mode === 'attention' ? (
+                  <HomeOnly>
+                    <SetupBanner setup={setup} lang={lang} />
+                  </HomeOnly>
+                ) : (
+                  <SetupBanner setup={setup} lang={lang} />
+                )}
               </div>
               {/*
                 * Jira GRW-192 — one `<main>`, in the shell, for every screen.

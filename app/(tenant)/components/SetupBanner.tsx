@@ -21,12 +21,24 @@ const known = (item: SetupItem) => KNOWN.has(item.key) || item.key.startsWith('b
  *
  * Folded by default on a phone: the banner sits above every screen, and the open list is taller than half of a
  * small phone. Folded, it still says how far along the setup is and what comes next. On a wider screen it opens.
+ *
+ * Owner, 2026-10-26 — the same banner in `attention` mode, for a LIVE business that has since lost something
+ * off the list (`/me` sends only the missing rows then, and sends nothing at all when nothing is missing).
+ * It says so in its own words, drops the progress count — "0 of 1 done" about a business already trading is a
+ * sentence nobody needs — and opens on a phone too, being one or two rows rather than five.
  */
-export function SetupBanner({ setup, lang }: { setup: { items: SetupItem[] } | null | undefined; lang: Lang }): ReactNode {
+export function SetupBanner({
+  setup,
+  lang,
+}: {
+  setup: { mode?: 'setup' | 'attention'; items: SetupItem[] } | null | undefined;
+  lang: Lang;
+}): ReactNode {
+  const attention = setup?.mode === 'attention';
   const [open, setOpen] = useState(false);
   useLayoutEffect(() => {
-    if (!window.matchMedia('(max-width: 860px)').matches) setOpen(true);
-  }, []);
+    if (attention || !window.matchMedia('(max-width: 860px)').matches) setOpen(true);
+  }, [attention]);
 
   const items = (setup?.items ?? []).filter(known);
   if (items.length === 0) return null;
@@ -45,19 +57,23 @@ export function SetupBanner({ setup, lang }: { setup: { items: SetupItem[] } | n
   const firstLeft = items.find((i) => !i.met);
 
   return (
-    <details className="setup-banner" open={open} onToggle={(e) => setOpen(e.currentTarget.open)}>
+    <details
+      className={attention ? 'setup-banner setup-banner-attention' : 'setup-banner'}
+      open={open}
+      onToggle={(e) => setOpen(e.currentTarget.open)}
+    >
       <summary className="setup-head">
         <span className="setup-head-text">
-          <span className="setup-title">{c.title}</span>
+          <span className="setup-title">{attention ? c.attentionTitle : c.title}</span>
           {open ? null : <span className="setup-next">{firstLeft ? c.next(wording(firstLeft)) : c.allDone}</span>}
         </span>
-        <span className="setup-progress">{c.progress(done, items.length)}</span>
+        {attention ? null : <span className="setup-progress">{c.progress(done, items.length)}</span>}
         <span className="setup-fold" aria-hidden>
           <IconChevronRight />
         </span>
       </summary>
       <p className="setup-intro" role="status">
-        {firstLeft ? c.intro : c.allDone}
+        {attention ? c.attention : firstLeft ? c.intro : c.allDone}
       </p>
       <ul className="setup-list">
         {items.map((item) => {

@@ -11,6 +11,16 @@
   min-width: 0;
 }
 
+/*
+ * Owner, 2026-10-26 — the live business missing something it used to have. Same amber family, read harder:
+ * a checklist on a business that has not opened is a to-do, and the same rows on one that is trading are a
+ * fault. The only other difference is structural (no progress chip) and lives in SetupBanner.tsx.
+ */
+.setup-banner-attention {
+  border-color: color-mix(in srgb, var(--amber) 60%, transparent);
+  background: color-mix(in srgb, var(--amber-soft) 70%, var(--surface));
+}
+
 .setup-head {
   display: flex;
   align-items: center;
