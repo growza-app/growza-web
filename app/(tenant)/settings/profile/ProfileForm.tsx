@@ -10,6 +10,7 @@ import { usePhoneProblem } from '../../lib/use-phone-problem';
 import { useCloseAfterSave } from '../../lib/close-after-save';
 import { useWritable } from '../../components/SessionProvider';
 import { useNouns } from '../../lib/use-nouns';
+import { cleanGoogleReviewUrl } from '../../lib/receipt-text';
 
 /**
  * Jira GRW-226 — Business profile, as a form that fits a laptop and a phone.
@@ -51,6 +52,18 @@ type Fields = {
   addressCity: string;
 };
 
+function isValidGoogleReviewUrl(raw: string): boolean {
+  const v = raw.trim();
+  if (!v) return true;
+  if (v.length > 500 || !/^https:\/\/\S+$/i.test(v)) return false;
+  try {
+    const u = new URL(v);
+    return u.protocol === 'https:' && u.hostname.includes('.') && !u.hostname.startsWith('.') && !u.hostname.endsWith('.');
+  } catch {
+    return false;
+  }
+}
+
 function fieldsOf(s: SettingsSummary): Fields {
   return {
     name: s.tenant.name,
@@ -58,7 +71,7 @@ function fieldsOf(s: SettingsSummary): Fields {
     // GRW-199 — the field holds ten NATIONAL digits; the stored value is E.164.
     phone: fromStoredPhone(s.tenant.phone),
     description: s.tenant.description,
-    googleReviewUrl: s.tenant.googleReviewUrl ?? '',
+    googleReviewUrl: cleanGoogleReviewUrl(s.tenant.googleReviewUrl ?? ''),
     locationName: s.location?.name ?? '',
     addressLine1: s.location?.addressLine1 ?? '',
     addressCity: s.location?.addressCity ?? '',
@@ -91,6 +104,7 @@ export function ProfileForm({
   const [logoBusy, setLogoBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [nameError, setNameError] = useState(false);
+  const [reviewUrlError, setReviewUrlError] = useState(false);
   const [saved, setSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -98,6 +112,7 @@ export function ProfileForm({
     setF((prev) => ({ ...prev, [key]: value }));
     setSaved(false);
     if (key === 'name') setNameError(false);
+    if (key === 'googleReviewUrl') setReviewUrlError(false);
   };
   const dirty = (Object.keys(f) as Array<keyof Fields>).some((k) => f[k] !== savedFields[k]);
   const multiBranch = branchCount > 1;
@@ -118,6 +133,11 @@ export function ProfileForm({
       setError(phoneProblem);
       return;
     }
+    if (!businessOnly && !isValidGoogleReviewUrl(f.googleReviewUrl)) {
+      setReviewUrlError(true);
+      setError(t('errors.googleReviewUrlInvalid'));
+      return;
+    }
     if (branchId) {
       // Jira GRW-230 — a branch's name, address, phone and "about". The business's name and logo are not a branch's.
       if (!f.locationName.trim()) {
@@ -129,7 +149,7 @@ export function ProfileForm({
       setSaved(false);
       try {
         const { locationName, addressLine1, addressCity, description, googleReviewUrl } = f;
-        const updated = await api.updateProfile({ locationName, addressLine1, addressCity, description, googleReviewUrl: googleReviewUrl.trim(), phone: toStoredPhone(f.phone) ?? '' }, branchId);
+        const updated = await api.updateProfile({ locationName, addressLine1, addressCity, description, googleReviewUrl: cleanGoogleReviewUrl(googleReviewUrl).trim(), phone: toStoredPhone(f.phone) ?? '' }, branchId);
         setSettings(updated);
         setSavedFields(fieldsOf(updated));
         setF(fieldsOf(updated));
@@ -159,7 +179,7 @@ export function ProfileForm({
           ? // Jira GRW-474 — and the business's own number: the one WhatsApp number a multi-branch salon has, which
             // Settings › Branches shows. It could not be changed anywhere once a second branch existed.
             { name: f.name, timezone: f.timezone, phone: toStoredPhone(f.phone) ?? '' }
-          : { ...business, googleReviewUrl: f.googleReviewUrl.trim(), phone: toStoredPhone(f.phone) ?? '', ...(multiBranch ? {} : { locationName, addressLine1, addressCity }) },
+          : { ...business, googleReviewUrl: cleanGoogleReviewUrl(f.googleReviewUrl).trim(), phone: toStoredPhone(f.phone) ?? '', ...(multiBranch ? {} : { locationName, addressLine1, addressCity }) },
       );
       setSettings(updated);
       const next = fieldsOf(updated);
@@ -190,6 +210,7 @@ export function ProfileForm({
 
   return (
     <form
+      noValidate
       className={`bp-form ${branchId ? 'bp-form-branch' : ''}`}
       onSubmit={(e) => {
         e.preventDefault();
@@ -407,10 +428,23 @@ export function ProfileForm({
                 id="bp-google-review"
                 type="url"
                 value={f.googleReviewUrl}
-                maxLength={300}
-                onChange={(e) => set('googleReviewUrl', e.target.value)}
+                maxLength={1000}
+                onChange={(e) => set('googleReviewUrl', cleanGoogleReviewUrl(e.target.value))}
+                onBlur={() => {
+                  if (f.googleReviewUrl.trim() && !isValidGoogleReviewUrl(f.googleReviewUrl)) {
+                    setReviewUrlError(true);
+                  }
+                }}
                 placeholder={t('placeholders.googleReviewUrl')}
+                className={reviewUrlError ? 'field-invalid' : ''}
+                aria-invalid={reviewUrlError || undefined}
+                aria-describedby={reviewUrlError ? 'bp-google-review-error' : undefined}
               />
+              {reviewUrlError ? (
+                <div role="alert" className="field-error" id="bp-google-review-error">
+                  {t('errors.googleReviewUrlInvalid')}
+                </div>
+              ) : null}
               <div className="field-hint">{t('hints.googleReviewUrl', { customers })}</div>
             </div>
           )}

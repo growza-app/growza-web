@@ -329,4 +329,32 @@ describe('Graphic Receipt Card model, structured WhatsApp text, and optional Rew
     const waText = formatStructuredWhatsappText(rows);
     expect(waText).toContain('Thank you for visiting us today. See you again soon!\n\n★ Leave us a Google review:\nhttps://g.page/r/CdX8-example/review');
   });
+
+  it('shortens long Google Search review URLs (#lrd feature IDs and #sv state blobs) inside WhatsApp receipts', () => {
+    const lrdRows = receiptRows(
+      {
+        ...full,
+        googleReviewUrl:
+          'https://www.google.com/search?sca_esv=084b9684899c43cd&rlz=1C5XQIR_enIN1229IN1229&cs=1&output=search&kgmid=/g/11zyj0cvl9&q=County+chicken.&shem=dlvs1,epsd1,esd2e,ltae,rimspwouoe,sdpie&shndl=30&source=sh/x/loc/uni/m1/1&kgs=465d63ef4678514d#lrd=0x3999570027d7e0df:0xad6916a510e0a8da,3,,,,',
+      },
+      { ...copy, reviewPrompt: 'Leave us a Google review:' },
+      money,
+    );
+    expect(formatStructuredWhatsappText(lrdRows)).toContain(
+      '★ Leave us a Google review:\nhttps://maps.google.com/?cid=12495543539324725466',
+    );
+
+    const svRows = receiptRows(
+      {
+        ...full,
+        googleReviewUrl:
+          'https://www.google.com/search?q=county+chicken.+lucknow&sxsrf=APpeQnvlfxd3GgdwFpquVUTcLRXjoSkNRA%3A1793028820507#sv=CAESzQEKuQEStgEKd0FKaVQ0dEpxbzVKR3A5dmhUSDVlTEFzNTk4Tk0wZUtyd3Vhc2lJbVV1M0s4NWlDWWo4QnBjc005RHBTT05ELVZqTS1EaGZkYmE5Xy04RF94Y24xTkpXM3ozZEtFWnNja2MwWmNucDgtV3VlbFhOaDlzR09yRnZjEhc3bkxmYW9tNEw3NlpodmNQc08yQnFBMBoiQURzcjlmUVdzSU9HWjBrbWs0Tl',
+      },
+      { ...copy, reviewPrompt: 'Leave us a Google review:' },
+      money,
+    );
+    expect(formatStructuredWhatsappText(svRows)).toContain(
+      '★ Leave us a Google review:\nhttps://www.google.com/search?q=county+chicken.+lucknow',
+    );
+  });
 });

@@ -210,7 +210,17 @@ describe('a menu can be imported; a count cannot', () => {
     expect(review).toMatch(/toItems\(rows, adding\)/);
     // No count to decide about, and no count or low-stock cell to edit.
     expect(review).toMatch(/const stockChoice = counted && hasStockToChoose\(rows\);/);
-    expect(review).toMatch(/counted \? EDITABLE : EDITABLE\.filter\(\(f\) => f\.key !== 'stock' && f\.key !== 'lowStock'\)/);
+    /*
+     * The keys, not the line. This was a single regex over the source, so it went red when the filter grew
+     * `barcode`, `sku` and `hsn` and prettier wrapped it over seven lines — a change that made the rule
+     * STRONGER, while the assertion read as though the rule had gone. `develop` carried the red build
+     * through three merges. What matters is that a business with no shelf is offered neither cell.
+     */
+    const at = review.indexOf('EDITABLE.filter(');
+    expect(at, 'a business with no shelf edits a filtered column list').toBeGreaterThan(-1);
+    const dropped = review.slice(at, review.indexOf('.map(', at));
+    for (const key of ['stock', 'lowStock']) expect(dropped).toContain(`f.key !== '${key}'`);
+    expect(review).toMatch(/counted\s*\?\s*EDITABLE\s*:\s*EDITABLE\.filter\(/);
   });
 });
 

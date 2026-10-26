@@ -210,13 +210,60 @@ export function receiptRows(input: ReceiptInput, copy: ReceiptCopy, money: (mino
   }
   gap();
   line({ t: `${copy.seeYou} 🙏` });
-  const reviewUrl = input.googleReviewUrl?.trim();
+  const reviewUrl = input.googleReviewUrl ? cleanGoogleReviewUrl(input.googleReviewUrl).trim() : '';
   if (reviewUrl && /^https:\/\//i.test(reviewUrl)) {
     gap();
     line({ t: `★ ${copy.reviewPrompt ?? 'Leave us a Google review:'}` });
     line({ t: reviewUrl });
   }
   return rows;
+}
+
+/**
+ * Shortens long Google Search / Google Maps review URLs so WhatsApp receipts never print
+ * multi-line session/tracking strings:
+ * - Converts `0x<hex1>:0x<hex2>` feature IDs (`#lrd=0x...:0x...` or `!1s0x...:0x...`) to
+ *   `https://maps.google.com/?cid=<decimal>` (49 chars).
+ * - Strips all tracking query params (`sxsrf`, `sca_esv`, `rlz`, etc.) and `#sv=...` state
+ *   fragments from `google.com/search` URLs, keeping only `q` (or `kgmid`).
+ */
+export function cleanGoogleReviewUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return raw;
+  try {
+    const u = new URL(trimmed);
+    if (/(^|\.)google\./i.test(u.hostname)) {
+      const fidMatch = decodedOrRaw(trimmed).match(/0x[0-9a-fA-F]+:0x([0-9a-fA-F]{8,16})/);
+      if (fidMatch?.[1]) {
+        const cid = BigInt(`0x${fidMatch[1]}`).toString(10);
+        return `https://maps.google.com/?cid=${cid}`;
+      }
+      if (u.pathname === '/search') {
+        const q = u.searchParams.get('q');
+        const kgmid = u.searchParams.get('kgmid');
+        u.search = '';
+        if (q) u.searchParams.set('q', q);
+        else if (kgmid) u.searchParams.set('kgmid', kgmid);
+        if (u.hash && !u.hash.startsWith('#lrd=')) {
+          u.hash = '';
+        } else if (u.hash.startsWith('#lrd=')) {
+          u.hash = u.hash.replace(/,+$/, '');
+        }
+        return u.toString();
+      }
+    }
+    return trimmed;
+  } catch {
+    return raw;
+  }
+}
+
+function decodedOrRaw(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
 }
 
 /** The rows as WhatsApp text: `*bold*`, `_italic_`, one row per line. */
@@ -498,7 +545,7 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
     }
 
     if (/^https:\/\//i.test(t)) {
-      googleReviewUrl = t;
+      googleReviewUrl = cleanGoogleReviewUrl(t);
       continue;
     }
 
@@ -657,7 +704,8 @@ export async function renderReceiptCardBlob(card: ReceiptCardModel): Promise<Blo
   const itemRowsH = card.items.reduce((acc, it) => acc + 28 + it.details.length * 18, 0);
   const adjH = card.adjustments.length * 24 + (card.savedLine ? 24 : 0);
   const rewardsH = card.rewardsEarned || card.rewardsBalance ? 68 : 0;
-  const H = 82 + 40 + 48 + itemRowsH + 24 + adjH + 68 + rewardsH + 44;
+  const reviewH = card.googleReviewUrl ? 68 : 0;
+  const H = 82 + 40 + 48 + itemRowsH + 24 + adjH + 68 + rewardsH + reviewH + 44;
 
   const canvas = document.createElement('canvas');
   const scale = 2;
@@ -880,6 +928,34 @@ export async function renderReceiptCardBlob(card: ReceiptCardModel): Promise<Blo
       ctx.font = `900 14.5px ${font}`;
       ctx.fillText(card.rewardsBalance, W - 32, y + 35);
     }
+    y += 68;
+  }
+
+  // Optional Google Review banner
+  if (card.googleReviewUrl) {
+    ctx.fillStyle = '#fef3c7';
+    roundRect(ctx, 20, y, W - 40, 52, 10);
+    ctx.fill();
+    ctx.strokeStyle = '#fde68a';
+    ctx.stroke();
+
+    ctx.fillStyle = '#f59e0b';
+    roundRect(ctx, 32, y + 10, 32, 32, 8);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.font = `900 16px ${font}`;
+    ctx.fillText('★', 48, y + 27);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#78350f';
+    ctx.font = `800 12.5px ${font}`;
+    const promptLabel = (card.reviewPrompt || 'Leave us a Google review').replace(/:+\s*$/, '');
+    ctx.fillText(promptLabel, 74, y + 20);
+
+    ctx.fillStyle = '#92400e';
+    ctx.font = `600 11px ${font}`;
+    ctx.fillText(card.googleReviewUrl.slice(0, 52), 74, y + 36);
     y += 68;
   }
 
