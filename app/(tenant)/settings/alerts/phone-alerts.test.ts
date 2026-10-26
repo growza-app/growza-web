@@ -272,8 +272,16 @@ describe('the switch is big enough to hit', () => {
 describe('the service worker', () => {
   const sw = readFileSync(path.join(here, '../../../../public/sw.js'), 'utf-8');
 
+  /*
+   * A ratchet, not a pin. It was written as `=== 'v7'` and went red the moment somebody bumped the worker to
+   * v8 for a later change — which is the thing it exists to encourage. `develop` then carried a failing
+   * build through three merges. What it has to hold is that the version is at or past the one these push
+   * listeners arrived with: a device holding an older worker never receives them.
+   */
   it('was bumped, or the listeners never reach a device that already has the old one', () => {
-    expect(sw).toMatch(/const CACHE_VERSION = 'v7';/);
+    const version = /const CACHE_VERSION = 'v(\d+)';/.exec(sw);
+    expect(version, 'the worker must declare a numbered CACHE_VERSION').toBeTruthy();
+    expect(Number(version![1])).toBeGreaterThanOrEqual(7);
   });
 
   it('shows a notification for every push, even one it cannot read', () => {
