@@ -19,7 +19,7 @@ export type ColumnMap = Record<Field, number>;
  * English as the files usually are.
  */
 export const FIELDS: { key: Field; required: boolean; hints: string[] }[] = [
-  { key: 'name', required: true, hints: ['product name', 'product', 'name', 'item name', 'item', 'description', 'title', 'particulars'] },
+  { key: 'name', required: true, hints: ['product name', 'product', 'dish name', 'dish', 'menu item', 'name', 'item name', 'item', 'description', 'title', 'particulars'] },
   { key: 'price', required: true, hints: ['mrp', 'selling price', 'selling', 'sale price', 'price', 'rate', 'amount', 'sp'] },
   { key: 'stock', required: false, hints: ['stock', 'qty', 'quantity', 'opening', 'on hand', 'units', 'count'] },
   { key: 'barcode', required: false, hints: ['barcode', 'bar code', 'ean', 'upc', 'gtin'] },
@@ -389,3 +389,6 @@ export function mappingSummary(headers: readonly string[], map: ColumnMap): { us
 
 /** A starter file: the headers the importer recognises, and one row to show how a line looks. */
 export const SAMPLE_CSV = 'Product name,Barcode,Price,Stock,GST %,HSN,Cost,SKU,Category,Low stock\nArgan Hair Oil 100ml,8901234567890,450,12,18,33059090,300,ARG-100,Hair care,3\n';
+
+/** A simple menu starter file for uncounted catalogs (restaurants / kitchens): dish name, category, price, GST % and cost. */
+export const SAMPLE_MENU_CSV = 'Dish name,Category,Price,GST %,Cost\nButter Chicken,Main Course,320,5,140\nPaneer Tikka,Starters,240,5,90\nGarlic Naan,Breads,60,5,15\n';
