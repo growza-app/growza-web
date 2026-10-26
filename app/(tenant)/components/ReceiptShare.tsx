@@ -356,11 +356,11 @@ export function ReceiptShare({
           {words.send}
         </a>
       ) : (
-        // No usable number yet: the button says what it will do, and pressing it says what is missing.
+        // No usable number yet: keep the Send on WhatsApp button disabled until a valid number is entered.
         <button
           type="button"
           className="btn wi-receipt-send"
-          onClick={() => setTouched(true)}
+          disabled
           aria-describedby="wi-receipt-phone"
         >
           <IconWhatsApp />

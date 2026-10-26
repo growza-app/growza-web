@@ -169,9 +169,10 @@ describe('the screen after Mark done offers the bill', () => {
     expect(share).toMatch(/onClick=\{backToTheirs\}/);
   });
 
-  it('opens WhatsApp only with a usable number, and needs no WhatsApp API', () => {
+  it('opens WhatsApp only with a usable number, disables the button when there is no number, and needs no WhatsApp API', () => {
     expect(share).toMatch(/href=\{whatsappHref\(digits, text\)\}/);
     expect(share).toMatch(/const digits = problem \? '' :/);
+    expect(share).toMatch(/className="btn wi-receipt-send"\s+disabled/);
     expect(share).not.toMatch(/api\./);
   });
 });
