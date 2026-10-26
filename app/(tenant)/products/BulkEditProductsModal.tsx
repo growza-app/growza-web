@@ -134,6 +134,7 @@ export function BulkEditProductsModal({
     if (!trimmed) return;
     setBusy(true);
     setError(null);
+    setSavedBanner(false);
     try {
       const created = await api.createProductCategory(branchId, trimmed);
       onCategoriesChange([...categories, created]);
@@ -156,6 +157,7 @@ export function BulkEditProductsModal({
     }
     setBusy(true);
     setError(null);
+    setSavedBanner(false);
     try {
       const updated = await api.renameProductCategory(branchId, selectedCategoryObj.id, trimmed);
       onCategoriesChange(categories.map((c) => (c.id === updated.id ? { ...c, name: updated.name } : c)));
@@ -173,6 +175,7 @@ export function BulkEditProductsModal({
   const handleDeleteOne = async (p: Product) => {
     setRowBusyId(p.id);
     setError(null);
+    setSavedBanner(false);
     try {
       await api.deleteProduct(p.id);
       const next = products.filter((x) => x.id !== p.id);
@@ -193,6 +196,7 @@ export function BulkEditProductsModal({
     if (shownRows.length === 0) return;
     setBusy(true);
     setError(null);
+    setSavedBanner(false);
     try {
       const ids = shownRows.map((p) => p.id);
       await api.deleteProducts(branchId, ids);
@@ -219,6 +223,7 @@ export function BulkEditProductsModal({
     if (!selectedCategoryObj) return;
     setBusy(true);
     setError(null);
+    setSavedBanner(false);
     try {
       const catId = selectedCategoryObj.id;
       await api.deleteProductCategory(branchId, catId, { deleteProducts: true });

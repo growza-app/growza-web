@@ -129,6 +129,7 @@ export function BulkEditServicesModal({
     if (!trimmed) return;
     setBusy(true);
     setError(null);
+    setSavedBanner(false);
     try {
       const created = await api.createCategory(branchId, trimmed);
       await onChanged();
@@ -151,6 +152,7 @@ export function BulkEditServicesModal({
     }
     setBusy(true);
     setError(null);
+    setSavedBanner(false);
     try {
       await api.renameCategory(branchId, selectedCategoryObj.id, trimmed);
       await onChanged();
@@ -165,6 +167,7 @@ export function BulkEditServicesModal({
   const handleDeleteOne = async (s: ServiceAdmin) => {
     setRowBusyId(s.id);
     setError(null);
+    setSavedBanner(false);
     try {
       await api.deleteService(branchId, s.id);
       await onChanged();
@@ -203,6 +206,7 @@ export function BulkEditServicesModal({
     if (shownRows.length === 0) return;
     setBusy(true);
     setError(null);
+    setSavedBanner(false);
     try {
       const ids = shownRows.map((s) => s.id);
       const blockedAll: Array<{
@@ -239,6 +243,7 @@ export function BulkEditServicesModal({
     if (!selectedCategoryObj) return;
     setBusy(true);
     setError(null);
+    setSavedBanner(false);
     try {
       const catId = selectedCategoryObj.id;
       const inCatIds = services.filter((s) => s.categoryId === catId).map((s) => s.id);
