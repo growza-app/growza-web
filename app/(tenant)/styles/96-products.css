@@ -650,7 +650,7 @@
   .page-body.prd-desk {
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    overflow: hidden;
   }
 
   .prd-desk-grid {
@@ -658,7 +658,7 @@
     min-height: 0;
     grid-template-rows: minmax(0, 1fr);
     grid-template-columns: minmax(0, 1fr) minmax(26rem, 30rem);
-    align-items: start;
+    align-items: stretch;
     gap: var(--sp-4);
   }
 
@@ -672,11 +672,10 @@
   }
 
   .prd-desk-right {
-    position: sticky;
-    top: 0;
-    height: calc(100dvh - 11.5rem);
-    min-height: 28rem;
-    max-height: 46rem;
+    position: static;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
     padding: 0;
     overflow: hidden;
   }
@@ -693,6 +692,7 @@
     flex-direction: column;
     gap: var(--sp-3);
     min-height: 0;
+    overflow: hidden;
   }
 
   /* The search is a row, never the column's filler. */
@@ -885,6 +885,8 @@
 
   /* The shelf as a full-height table card so all 10 rows of the page are visible at once. */
   .prd-desk-card {
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     margin: 0;
@@ -893,7 +895,20 @@
   }
 
   .prd-desk-card .table-scroll {
-    overflow-x: auto;
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .prd-menu-cards-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    padding-right: 4px;
+    padding-bottom: var(--sp-2);
   }
 
   .prd-desk-card .pagination {
@@ -933,12 +948,10 @@
   }
 
   @media (max-width: 1560px) {
-    .prd-desk-grid.has-sheet .prd-table th:nth-child(2),
-    .prd-desk-grid.has-sheet .prd-table td:nth-child(2),
-    .prd-desk-grid.has-sheet .prd-table th:nth-child(3),
-    .prd-desk-grid.has-sheet .prd-table td:nth-child(3),
-    .prd-desk-grid.has-sheet .prd-table th:nth-child(5),
-    .prd-desk-grid.has-sheet .prd-table td:nth-child(5) {
+    .prd-desk-grid.has-sheet .prd-table th:nth-child(3):nth-last-child(5),
+    .prd-desk-grid.has-sheet .prd-table td:nth-child(3):nth-last-child(5),
+    .prd-desk-grid.has-sheet .prd-table th:nth-last-child(3),
+    .prd-desk-grid.has-sheet .prd-table td:nth-last-child(3) {
       display: none;
     }
   }
@@ -1785,20 +1798,20 @@
   }
 
   .prd-desk-right {
-    position: sticky;
-    top: var(--sp-2);
-    height: calc(100dvh - 13.5rem);
-    min-height: 30rem;
-    max-height: 44rem;
+    position: static;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
   }
 
   .prd-desk-tools {
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
   }
 
   .prd-desk-mid .prd-search {
-    flex: 1 1 10rem;
-    min-width: 9rem;
+    flex: 1 1 13rem;
+    min-width: 12rem;
   }
 }
 

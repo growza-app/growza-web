@@ -221,6 +221,12 @@ export function ProductsList({
     return () => mq.removeEventListener('change', read);
   }, []);
 
+  useEffect(() => {
+    if (!desk || !editing || editing === 'new') return;
+    const activeEl = document.querySelector<HTMLElement>('.prd-menu-card.is-on, .prd-row-on');
+    activeEl?.scrollIntoView({ block: 'nearest' });
+  }, [desk, editing]);
+
   const live = useMemo(() => rows.filter((p) => p.active), [rows]);
   const liveCategories = useMemo(
     () => categories.map((c) => ({ ...c, count: live.filter((p) => p.categoryId === c.id).length })),

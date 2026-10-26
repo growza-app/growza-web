@@ -41,10 +41,14 @@ describe('Option 1 — Edit / Delete Big Spreadsheet Table for Products/Menu and
     expect(apiSrc).toContain('&deleteProducts=true');
   });
 
-  it('defines responsive modal and sticky table header styles using design tokens', () => {
+  it('defines responsive modal and sticky table header styles using design tokens, and independent desktop scroll for menu and edit sheet', () => {
     expect(css).toContain('.bulk-edit-modal');
     expect(css).toContain('.bulk-edit-table');
     expect(css).toContain('.bulk-cell-input');
+    expect(css).toMatch(/\.page-body\.prd-desk\s*\{[\s\S]*?overflow:\s*hidden;/);
+    expect(css).toMatch(/\.prd-menu-cards-wrap\s*\{[\s\S]*?overflow-y:\s*auto;/);
+    expect(css).toContain('.prd-desk-grid.has-sheet .prd-table th:nth-last-child(3)');
+    expect(productsList).toContain("activeEl?.scrollIntoView({ block: 'nearest' })");
   });
 
   it('ships matching English and Hindi strings for products.bulkTable and services.bulkTable', () => {
