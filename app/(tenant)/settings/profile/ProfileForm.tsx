@@ -10,6 +10,7 @@ import { usePhoneProblem } from '../../lib/use-phone-problem';
 import { useCloseAfterSave } from '../../lib/close-after-save';
 import { useWritable } from '../../components/SessionProvider';
 import { useNouns } from '../../lib/use-nouns';
+import { cleanGoogleReviewUrl } from '../../lib/receipt-text';
 
 /**
  * Jira GRW-226 — Business profile, as a form that fits a laptop and a phone.
@@ -51,26 +52,6 @@ type Fields = {
   addressCity: string;
 };
 
-function cleanGoogleReviewUrl(raw: string): string {
-  const trimmed = raw.trim();
-  if (!trimmed) return raw;
-  try {
-    const u = new URL(trimmed);
-    if (/(^|\.)google\./i.test(u.hostname) && u.pathname === '/search') {
-      for (const k of ['sca_esv', 'rlz', 'cs', 'output', 'shem', 'shndl', 'source', 'kgs', 'utm_source', 'utm_medium', 'utm_campaign', 'ved', 'ei', 'oq', 'gs_lp', 'sclient']) {
-        u.searchParams.delete(k);
-      }
-      if (u.hash.startsWith('#lrd=')) {
-        u.hash = u.hash.replace(/,+$/, '');
-      }
-      return u.toString().replace(/%2F/gi, '/');
-    }
-  } catch {
-    // Keep raw value while user is typing
-  }
-  return raw;
-}
-
 function isValidGoogleReviewUrl(raw: string): boolean {
   const v = raw.trim();
   if (!v) return true;
@@ -90,7 +71,7 @@ function fieldsOf(s: SettingsSummary): Fields {
     // GRW-199 — the field holds ten NATIONAL digits; the stored value is E.164.
     phone: fromStoredPhone(s.tenant.phone),
     description: s.tenant.description,
-    googleReviewUrl: s.tenant.googleReviewUrl ?? '',
+    googleReviewUrl: cleanGoogleReviewUrl(s.tenant.googleReviewUrl ?? ''),
     locationName: s.location?.name ?? '',
     addressLine1: s.location?.addressLine1 ?? '',
     addressCity: s.location?.addressCity ?? '',
