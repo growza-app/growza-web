@@ -132,6 +132,22 @@ describe('the POS screen', () => {
     expect(client).toContain('setBills(null)');
   });
 
+  it('refreshes shelf stock and queue totals in place when a return or exchange is recorded', () => {
+    const sellClient = src('../products/sell/SellProductClient.tsx');
+    const payFlow = src('../appointments/new/PayFlow.tsx');
+    expect(client).toContain('reloadKey={reloadKey}');
+    expect(client).toContain('setReloadKey((k) => k + 1);');
+    expect(client).toContain('void loadTodayTokens();');
+    expect(sellClient).toContain('reloadKey={reloadKey}');
+    expect(payFlow).toContain('if (!reloadKey) return;');
+  });
+
+  it('hides daily revenue and per-order money on the Queue board when the desk may not view sales/returns', () => {
+    expect(client).toContain('{canReturn ? <span className="pos-queue-kpi-sub">{formatMoney(String(todayTotalMinor))}</span> : null}');
+    expect(client).toContain('{canReturn ? <span className="pos-qcard-item-amt">{formatMoney(String(item.paidMinor))}</span> : null}');
+    expect(client).toContain('{canReturn ? <strong className="pos-qcard-total">{formatMoney(String(tk.totalMinor))}</strong> : <span />}');
+  });
+
   it('supports toggleable full-screen POS terminal mode with keyboard shortcuts and rich bill drawer', () => {
     const payFlow = src('../appointments/new/PayFlow.tsx');
     const deskGrid = src('../appointments/new/DeskServiceGrid.tsx');

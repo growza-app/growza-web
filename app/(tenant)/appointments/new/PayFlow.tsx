@@ -146,6 +146,7 @@ export function PayFlow({
   heading,
   nextTokenNo,
   onSaleCompleted,
+  reloadKey = 0,
 }: {
   /** A waiting token being paid: its client, branch and services are the answer to ①. */
   token?: QueueEntry;
@@ -185,6 +186,8 @@ export function PayFlow({
   nextTokenNo?: number | null;
   /** Notifies the POS shell when a sale completes so the live token queue updates immediately. */
   onSaleCompleted?: (saleId: string) => void;
+  /** Incremented after a return or exchange on POS so the product shelf refreshes its live stock counts in place. */
+  reloadKey?: number;
 }) {
   const t = useTranslations('payFlow');
   const ts = useTranslations('payFlow.size');
@@ -311,6 +314,21 @@ export function PayFlow({
   useEffect(() => {
     whoChips.current?.querySelector('.pf-chip-on')?.scrollIntoView?.({ inline: 'nearest', block: 'nearest' });
   }, [client]);
+
+  // Refresh shelf stock counts in place when a return or exchange is recorded in the POS sheet above this till.
+  useEffect(() => {
+    if (!reloadKey) return;
+    let gone = false;
+    void api
+      .products(location)
+      .then((rows) => {
+        if (!gone) setProducts(rows);
+      })
+      .catch(() => {});
+    return () => {
+      gone = true;
+    };
+  }, [reloadKey, location]);
 
   // The menu, the people, the latest clients — three reads, all at once, none blocking the others.
   useEffect(() => {
