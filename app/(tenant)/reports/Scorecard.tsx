@@ -1,6 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
+import { useAreas } from '../components/SessionProvider';
 
 import { formatMoney, type Scorecard as ScorecardData, type ScorecardLine } from '../lib/api';
 
@@ -43,6 +44,15 @@ const LINES: { key: LineKey; money?: boolean; lowerIsBetter?: boolean }[] = [
  */
 export function Scorecard({ data }: { data: ScorecardData }) {
   const t = useTranslations('reports.scorecard');
+  /*
+   * QA 2026-10-26 — absent, not zero. GRW-610's rule, applied to the five lines rather than to the page.
+   *
+   * A business that takes no bookings has no visits to count and nobody who failed to turn up, so both read
+   * a flat 0 with "Same as the week before" beneath them — two of five lines saying nothing, every week,
+   * next to three that are telling the owner something true. Money, new clients and came back all hold for
+   * a kitchen, which is why the card is worth showing at all.
+   */
+  const lines = useAreas().bookings ? LINES : LINES.filter((l) => l.key !== 'visits' && l.key !== 'noShows');
   const locale = useLocale();
   const money = (minor: number) => formatMoney(String(minor), 'INR', locale);
   const period = t(`period.${data.vs}`);
@@ -59,7 +69,7 @@ export function Scorecard({ data }: { data: ScorecardData }) {
     <section className="rp-card sc">
       <h2 className="sc-title">{t('title')}</h2>
       <ol className="sc-lines">
-        {LINES.map(({ key, money: isMoney, lowerIsBetter }) => {
+        {lines.map(({ key, money: isMoney, lowerIsBetter }) => {
           const line = data[key];
           const tone = verdict(line, lowerIsBetter);
           return (

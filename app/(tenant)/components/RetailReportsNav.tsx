@@ -1,11 +1,9 @@
 'use client';
 
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import AppLink from '../../shared/AppLink';
-import { homeCopy } from '../lib/home-copy';
 import { areaAllows } from '../lib/areas';
 import { useAreas } from './SessionProvider';
-import { sellsOnMarketplaces } from '../lib/order-channels';
 
 export type RetailReportTab = 'hub' | 'channels' | 'sellers' | 'report' | 'order' | 'returns' | 'refunds';
 
@@ -39,8 +37,13 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
   ];
   const tabs = allTabs.filter((tab) => areaAllows(tab.href, areas));
 
+  /*
+   * Jira GRW-591 — on `/reports` none of the six IS the page (the counter report is), so `active="hub"`
+   * leaves every tab in its unselected grey and the bar reads as four words in a box. The modifier gives
+   * them each a border and the accent, which is what a row of links should look like.
+   */
   return (
-    <nav className="srp-nav" aria-label={tReport('title')}>
+    <nav className={`srp-nav ${active === 'hub' ? 'srp-nav-links' : ''}`} aria-label={tReport('title')}>
       {tabs.map((tab) => {
         const isCurrent = tab.key === active;
         return (
@@ -55,74 +58,5 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
         );
       })}
     </nav>
-  );
-}
-
-/**
- * Retail Reports Hub shown on `/reports` for a business that takes no bookings:
- * gives 1-click access to all 6 retail analytics and stock/order reports.
- */
-export function RetailReportsHub() {
-  const locale = useLocale();
-  const areas = useAreas();
-  const viewAll = homeCopy(locale === 'hi' ? 'hi' : 'en').shop.viewOrders;
-  const tChannels = useTranslations('products.channels');
-  const tSellers = useTranslations('products.sellers');
-  const tReport = useTranslations('products.stockReport');
-  const tOrder = useTranslations('products.reorder');
-  const tReturns = useTranslations('orders.returns');
-  const tRefunds = useTranslations('orders.refunds');
-
-  const cards = [
-    {
-      href: '/stock/channels',
-      title: tChannels('title'),
-      sub: tChannels('billed'),
-    },
-    {
-      href: '/stock/sellers',
-      title: tSellers('title'),
-      // Unsold stock is a count's report: a kitchen (no count) is offered the best sellers alone.
-      sub: areas.stock ? `${tSellers('viewBest')} · ${tSellers('viewDead')}` : tSellers('viewBest'),
-    },
-    {
-      href: '/stock/report',
-      title: tReport('title'),
-      sub: tReport('totalsLabel'),
-    },
-    {
-      href: '/stock/order',
-      title: tOrder('title'),
-      sub: tOrder('howFarAhead'),
-    },
-    {
-      href: '/orders/returns',
-      title: tReturns('title'),
-      // Owner, 2026-10-24 — a parcel comes back undelivered only from a marketplace; where nothing ships, there is none.
-      sub: sellsOnMarketplaces(areas) ? `${tReturns('customerTitle')} · ${tReturns('undeliveredTitle')}` : tReturns('customerTitle'),
-    },
-    {
-      href: '/orders/refunds',
-      title: tRefunds('title'),
-      sub: tRefunds('total'),
-    },
-  ].filter((c) => areaAllows(c.href, areas));
-
-  return (
-    <div className="srp srp-stock">
-      <ul className="srp-list">
-        {cards.map((c) => (
-          <li key={c.href} className="srp-card">
-            <div className="srp-head">
-              <h2 className="srp-name">{c.title}</h2>
-              <AppLink className="btn btn-ghost srp-export" href={c.href}>
-                {viewAll}
-              </AppLink>
-            </div>
-            <p className="srp-hint">{c.sub}</p>
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }

@@ -485,10 +485,17 @@ describe('Record payment in three taps', () => {
   });
 
   it('gives every tile row the same height, and fits the name that tells two tiles apart', () => {
-    // One line held open on every tile: rows stay level without paying 20px a tile for the four names that
-    // would have used a second one.
+    // One line held OPEN on every tile: rows stay level without paying 20px a tile for the few names that
+    // need a second one.
     expect(css).toMatch(/\.pf-tile-name \{[\s\S]{0,600}min-height: 1\.25em;/);
-    expect(css).toMatch(/\.pf-tile-name \{[\s\S]{0,640}-webkit-line-clamp: 1;/);
+    /*
+     * ...and two lines ALLOWED, which is the half this test was named for. QA 2026-10-26, County Chicken:
+     * at one line "Chicken Gharwala (Full - 6 pcs)" and "Chicken Gharwala (Half - 3 pcs)" both rendered
+     * "Chicken Gharwal…" at 146px — two dishes ₹140 apart, the same word on screen, and the owner picking
+     * by price alone. A salon name loses a trailing adjective when it clips; a kitchen name loses the part
+     * that says which one it is. The reserve and the cap are different numbers on purpose.
+     */
+    expect(css).toMatch(/\.pf-tile-name \{[\s\S]{0,640}-webkit-line-clamp: 2;/);
     // 14px, because at 16 "Anti-Ageing Facial" clipped to "Anti-Ageing…" beside a plain "Facial" at another price.
     expect(css).toMatch(/\.pf-tile-name \{[\s\S]{0,600}font-size: 0\.875rem;/);
     expect(css).toMatch(/-webkit-line-clamp: 2;/);

@@ -45,6 +45,7 @@ import { usePhoneProblem } from '../lib/use-phone-problem';
 import { SEARCH_DEBOUNCE_MS, worthSearching } from '../lib/search-tuning';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { SearchClear } from '../components/SearchClear';
+import { segmentRangeValues } from '../lib/segment-range';
 
 /**
  * Chips only where they say something. "Active" on every row was the original
@@ -461,7 +462,7 @@ export function CustomersClient({
                         className={`cust-desk-band ${on ? 'is-on' : ''}`}
                         aria-pressed={on}
                         style={SEGMENT_TONE[s] ? { ['--seg' as string]: SEGMENT_TONE[s] } : undefined}
-                        title={seg ? `${t(`segments.${seg.key}.label`)} · ${t(`segments.${seg.key}.range`)}` : undefined}
+                        title={seg ? `${t(`segments.${seg.key}.label`)} · ${t(`segments.${seg.key}.range`, segmentRangeValues(seg.key, seg.range))}` : undefined}
                         onClick={() => pickBand(on && s !== 'all' ? 'all' : s)}
                       >
                         <span className="cust-desk-band-name">
@@ -617,7 +618,7 @@ export function CustomersClient({
           </div>
           <div className="cust-segment-grid">
             {stats.segments.map((seg) => {
-              const words = { label: t(`segments.${seg.key}.label`), range: t(`segments.${seg.key}.range`) };
+              const words = { label: t(`segments.${seg.key}.label`), range: t(`segments.${seg.key}.range`, segmentRangeValues(seg.key, seg.range)) };
               const on = status === seg.key;
               return (
                 <button

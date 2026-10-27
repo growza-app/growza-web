@@ -103,6 +103,8 @@ import type {
   HeldPage,
   StockReportPage,
   ByChannelPage,
+  CounterReportPage,
+  DiaryReportPage,
   ReturnsReportPage,
   RefundsReportPage,
   SellersRange,
@@ -596,8 +598,20 @@ export interface CustomerRewards {
   balance: number;
   pointValueMinor: number;
   minRedeemPoints: number;
+  /**
+   * The smallest bill these rules can take a point off at all — ₹125 for a 25-point floor under a 20% cap.
+   *
+   * The till shows a balance whether or not it can be spent, so it has to be able to say WHY it cannot,
+   * and "this bill is too small" is the reason nobody guesses. 0 when rewards are off.
+   */
+  minBillMinor: number;
   maxRedeemable: number;
   discountMinor: number;
+  /**
+   * Of the balance above, how many are still in this business's hold — points they HAVE and may not spend
+   * yet (QA 2026-10-27, loophole L3). 0 for every business that keeps no hold, which is the default.
+   */
+  heldPoints: number;
   /** The next lot to die, and when. Null when nothing of theirs expires. */
   expiring: { points: number; at: string } | null;
 }
@@ -609,12 +623,15 @@ export interface RewardSettings {
   earnBps: number;
   /** 0 means points never die. */
   expiryDays: number;
+  /** How long points must sit before they can be spent. 0 — the default — means straight away. */
+  holdHours: number;
   pointValueMinor: number;
   minRedeemPoints: number;
   redeemCapBps: number;
   /** The most the platform allows, as this business's vertical leaves it. */
   maxEarnBps: number;
   maxExpiryDays: number;
+  maxHoldHours: number;
   /** False where points are not permitted at all — the switch is not drawn. */
   available: boolean;
   /** False between subscriptions: there is nowhere for the choice to live. */
@@ -648,7 +665,7 @@ export const api = {
     get<CustomerRewards>(`/api/v1/customers/${customerId}/rewards${billMinor === undefined ? '' : `?billMinor=${billMinor}`}`),
   rewardSettings: () => get<RewardSettings>('/api/v1/settings/rewards'),
   /** Any of the three. Answers with what was WRITTEN — a rate over the platform's ceiling comes back clamped. */
-  saveRewardSettings: (body: { enabled?: boolean; earnBps?: number; expiryDays?: number }) =>
+  saveRewardSettings: (body: { enabled?: boolean; earnBps?: number; expiryDays?: number; holdHours?: number }) =>
     patch<RewardSettings>('/api/v1/settings/rewards', body),
   alertPrefs: () => get<AlertPrefs>('/api/v1/alerts/prefs'),
   setAlertPref: (kind: AlertKind, enabled: boolean) => put<{ kind: AlertKind; enabled: boolean }>('/api/v1/alerts/prefs', { kind, enabled }),
@@ -903,6 +920,12 @@ export const api = {
   },
   /** Jira GRW-635 — what came back and why, by reason, with a parcel that never arrived apart. */
   returnsReport: (q: { range: SellersRange; location?: string }) => get<ReturnsReportPage>(`/api/v1/reports/returns?${sellersParams({ range: q.range, location: q.location })}`),
+  /** Jira GRW-591 — the diary report: what was taken, who earned it, what people came for, who has not come back. */
+  diaryReport: (q: { range: ReportRangeKey; location?: string | null; from?: string; to?: string }) =>
+    get<DiaryReportPage>(`/api/v1/reports/diary?${sellersParams({ range: q.range, location: q.location ?? undefined, from: q.from, to: q.to })}`),
+  /** Jira GRW-591 — the counter report: what was taken, what earned it, when the rush was, what changed. */
+  counterReport: (q: { range: ReportRangeKey; location?: string | null; from?: string; to?: string }) =>
+    get<CounterReportPage>(`/api/v1/reports/counter?${sellersParams({ range: q.range, location: q.location ?? undefined, from: q.from, to: q.to })}`),
   /** Jira GRW-634 — what was billed on each channel over a range, beside the period before; billed, not received. */
   byChannel: (q: { range: ReportRangeKey; location?: string; from?: string; to?: string }) =>
     get<ByChannelPage>(`/api/v1/reports/by-channel?${sellersParams({ range: q.range, location: q.location, from: q.from, to: q.to })}`),
@@ -1354,6 +1377,14 @@ export const api = {
       groupMembers?: CheckoutGroupMemberInput[];
       /** Jira GRW-314 — the combo's other legs the customer never had: cancelled, chair released. */
       cancelMemberIds?: string[];
+      /**
+       * Jira GRW-648 — reward points to spend on this bill. The lines are sent at their OWN prices and the
+       * server takes the discount off them, so a response's legs come back net of it.
+       *
+       * Undeclared until 2026-10-27: both tills passed it through a spread, which type-checks and documents
+       * nothing. The next person to read this file could not see that the field existed.
+       */
+      redeemPoints?: number;
       /** Jira GRW-480 — sent again after "That is a large amount" is confirmed. */
       confirmLargeAmount?: boolean;
     },
@@ -1491,6 +1522,14 @@ export const api = {
       channel?: string;
       /** The app's own order number, when typed. */
       externalRef?: string;
+      /**
+       * Jira GRW-648 — reward points to spend on this bill. The lines are sent at their OWN prices and the
+       * server takes the discount off them, so a response's legs come back net of it.
+       *
+       * Undeclared until 2026-10-27: both tills passed it through a spread, which type-checks and documents
+       * nothing. The next person to read this file could not see that the field existed.
+       */
+      redeemPoints?: number;
       // The route refuses to guess: exactly one of these (GRW-293). A named stylist only when paying a token (GRW-403).
     } & ({ noStylist: true; schedulableId?: never } | { schedulableId: string; noStylist?: never }),
   ) =>

@@ -16,8 +16,14 @@
   gap: var(--sp-3);
 }
 
+/*
+ * The same two columns as `.rp-grid-2`, and that is the point: with 1.3fr/1fr the seam between the
+ * two cards sat 74px to the right of the seam in the row above it, so the page had two vertical
+ * gutters instead of one. It keeps its own class only for the width it folds at -- the health card
+ * needs the room sooner (65-narrower-viewports.css).
+ */
 .rp-grid-health {
   display: grid;
-  grid-template-columns: 1.3fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: var(--sp-3);
 }

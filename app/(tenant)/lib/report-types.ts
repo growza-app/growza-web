@@ -63,6 +63,8 @@ export interface ReportSegment {
   key: ReportSegmentKey;
   rangeLabel: string;
   count: number;
+  /** QA 2026-10-26 — the vertical's own boundaries in days; the screen words them (`segmentRangeWords`). */
+  range?: { from: number; to: number | null };
 }
 
 /**

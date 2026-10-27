@@ -28,6 +28,17 @@ import { useCloseAfterSave } from '../../lib/close-after-save';
 const EXAMPLE_BILL_MINOR = 100_000;
 
 /** How long points last, in the answers a business actually means. Any above the platform's ceiling are dropped. */
+/*
+ * How long points sit before they can be spent — QA 2026-10-27 (loophole L3).
+ *
+ * Three answers rather than a box for a number of hours, for the reason the expiry list gives: nobody has an
+ * opinion about 37 hours.
+ *
+ * Every business starts on 24 — earn today, spend from tomorrow (owner, 2026-10-28). An owner who wants the
+ * points spendable at once says so here; the default is the scheme rather than an instant discount.
+ */
+const HOLD_CHOICES = [0, 24, 168] as const;
+
 const EXPIRY_CHOICES = [
   { days: 180, key: 'expiry.180' },
   { days: 365, key: 'expiry.365' },
@@ -54,6 +65,8 @@ export function RewardsForm({ initial }: { initial: RewardSettings | null }) {
   const [enabled, setEnabled] = useState(initial?.enabled ?? false);
   const [percent, setPercent] = useState(((initial?.earnBps ?? 200) / 100).toString());
   const [expiryDays, setExpiryDays] = useState(String(initial?.expiryDays ?? 365));
+  // 24 to match the plan's baseline (API migration 0167): earn today, spend from tomorrow.
+  const [holdHours, setHoldHours] = useState(String(initial?.holdHours ?? 24));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -101,7 +114,7 @@ export function RewardsForm({ initial }: { initial: RewardSettings | null }) {
     try {
       // The rate and the expiry go with the switch even when it is being turned off, so an owner who sets a
       // rate and switches on next month gets the rate they chose rather than the one they left behind.
-      await api.saveRewardSettings({ enabled, earnBps: bps ?? initial.earnBps, expiryDays: days });
+      await api.saveRewardSettings({ enabled, earnBps: bps ?? initial.earnBps, expiryDays: days, holdHours: Number(holdHours) });
       closeForm();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('saveFailed'));
@@ -213,6 +226,29 @@ export function RewardsForm({ initial }: { initial: RewardSettings | null }) {
                   <option value={0}>{t('expiry.never')}</option>
                 </select>
                 <span className="field-hint">{t('expiryHint')}</span>
+              </div>
+
+              <div className="field">
+                <label className="field-label" htmlFor="rw-hold">
+                  {t('holdLabel')}
+                  <InfoTip ask="infoTipHow" label={t('holdLabel')}>{t('tips.hold')}</InfoTip>
+                </label>
+                <select
+                  id="rw-hold"
+                  value={holdHours}
+                  disabled={busy}
+                  onChange={(e) => {
+                    setHoldHours(e.target.value);
+                    setError(null);
+                  }}
+                >
+                  {HOLD_CHOICES.filter((h) => h <= initial.maxHoldHours).map((h) => (
+                    <option key={h} value={h}>
+                      {t(`hold.${h}`)}
+                    </option>
+                  ))}
+                </select>
+                <span className="field-hint">{t('holdHint')}</span>
               </div>
 
               {/* What the till will do with the points, which this screen does not set but the owner has to know. */}

@@ -285,8 +285,152 @@ describe('Graphic Receipt Card model, structured WhatsApp text, and optional Rew
     expect(waText).toContain('✓ Paid by Cash');
     expect(waText).toContain('*Rewards*');
     expect(waText).toContain('★ +34 Reward Points earned');
-    expect(waText).toContain('Available balance: *420 pts*');
+    // The whole line, as the receipt wrote it: the text no longer labels it in English of its own.
+    expect(waText).toContain('*Available balance: 420 pts*');
     expect(waText).not.toMatch(/📅|🎟|🙏|🎉/);
+  });
+
+  /**
+   * Owner, 2026-10-27 — "we just show current trans reward, we should show both".
+   *
+   * The balance line is the tenant's own sentence now, so it reaches WhatsApp in the owner's language and
+   * the card still has a figure to put under BALANCE.
+   */
+  it('says what the bill earned AND what the customer now has, in the words the tenant chose', () => {
+    const rows = receiptRows(
+      {
+        businessName: 'Glow Salon',
+        branchName: null,
+        when: '27 Oct 2026, 6:40 pm',
+        tokenNo: null,
+        stylist: null,
+        singles: [{ name: 'Haircut', amountMinor: 30000 }],
+        pkg: null,
+        totalMinor: 30000,
+        paidBy: 'Cash',
+        rewards: { redeemedPoints: 0, earnedPoints: 38, balancePoints: 420 },
+      },
+      {
+        ...copy,
+        rewardsTitle: 'Rewards',
+        rewardEarned: (points) => `You earned ${points} points towards your next visit.`,
+        rewardBalance: (points) => `You now have ${points} points.`,
+      },
+      money,
+    );
+
+    const card = parseReceiptCard(rows);
+    expect(card.rewardsEarned).toBe('You earned 38 points towards your next visit.');
+    // The sentence for the message...
+    expect(card.rewardsBalanceLine).toBe('You now have 420 points.');
+    // ...and the figure alone for the card and the image, which show it under a BALANCE label.
+    expect(card.rewardsBalance).toBe('420 points');
+
+    const waText = formatStructuredWhatsappText(rows);
+    expect(waText).toContain('★ You earned 38 points towards your next visit.');
+    expect(waText).toContain('*You now have 420 points.*');
+    expect(waText).not.toContain('Available balance');
+  });
+
+  /**
+   * QA 2026-10-27 (loophole L4) — and the date on that promise.
+   *
+   * "You now have 420 points" with nothing after it is a number the business has not promised: points die
+   * at 365 days, and the day the client finds out is the day they try to spend them. The line sits under
+   * the balance, and a business whose points never die prints nothing extra.
+   */
+  it('puts a date under the balance, and reads it back as its own line rather than as a second balance', () => {
+    const withDate = (rewards: object) =>
+      receiptRows(
+        {
+          businessName: 'Glow Salon',
+          branchName: null,
+          when: '27 Oct 2026, 6:40 pm',
+          tokenNo: null,
+          stylist: null,
+          singles: [{ name: 'Haircut', amountMinor: 30000 }],
+          pkg: null,
+          totalMinor: 30000,
+          paidBy: 'Cash',
+          rewards,
+        },
+        {
+          ...copy,
+          rewardsTitle: 'Rewards',
+          rewardEarned: (points) => `You earned ${points} points towards your next visit.`,
+          rewardBalance: (points) => `You now have ${points} points.`,
+          rewardExpiry: (points, date) => `${points} points run out on ${date}.`,
+        },
+        money,
+      );
+
+    const rows = withDate({ redeemedPoints: 0, earnedPoints: 38, balancePoints: 420, expiringPoints: 38, expiringOn: '27 Oct 2027' });
+    const card = parseReceiptCard(rows);
+    // The balance is still read as the balance: the date must not be mistaken for a second one.
+    expect(card.rewardsBalance).toBe('420 points');
+    expect(card.rewardsBalanceLine).toBe('You now have 420 points.');
+    expect(card.rewardsExpiryLine).toBe('38 points run out on 27 Oct 2027.');
+
+    const waText = formatStructuredWhatsappText(rows);
+    expect(waText).toContain('*You now have 420 points.*');
+    expect(waText).toContain('38 points run out on 27 Oct 2027.');
+
+    // ...and a business whose points never die says nothing about dates at all.
+    const forever = parseReceiptCard(withDate({ redeemedPoints: 0, earnedPoints: 38, balancePoints: 420 }));
+    expect(forever.rewardsExpiryLine).toBeNull();
+    expect(formatStructuredWhatsappText(withDate({ redeemedPoints: 0, earnedPoints: 38, balancePoints: 420 }))).not.toMatch(/run out/);
+  });
+
+  /**
+   * Found at the till, 2026-10-27: the card read "★ Leave us a Google review:" as the earning and the
+   * twenty digits of the review link's id as the balance. The Rewards block ends at its blank line.
+   */
+  it('does not read the Google review link as a reward', () => {
+    const rows = receiptRows(
+      {
+        businessName: 'Glow Salon',
+        branchName: null,
+        when: '27 Oct 2026, 8:10 pm',
+        tokenNo: 6,
+        stylist: null,
+        singles: [],
+        products: [{ name: 'Aloe Vera Gel', amountMinor: 15000 }],
+        pkg: null,
+        totalMinor: 15000,
+        paidBy: 'Cash',
+        rewards: { redeemedPoints: 0, earnedPoints: 3, balancePoints: 3 },
+        googleReviewUrl: 'https://maps.google.com/?cid=12495543539324725466',
+      },
+      { ...copy, rewardsTitle: 'Rewards', rewardEarned: (points) => `You earned ${points} points towards your next visit.`, rewardBalance: (points) => `You now have ${points} points.` },
+      money,
+    );
+    const card = parseReceiptCard(rows);
+    expect(card.rewardsEarned).toBe('You earned 3 points towards your next visit.');
+    expect(card.rewardsBalance).toBe('3 points');
+    expect(card.googleReviewUrl).toBe('https://maps.google.com/?cid=12495543539324725466');
+    expect(card.rewardsBalance).not.toContain('12495543539324725466');
+  });
+
+  it('reads the figure out of a Hindi balance line too', () => {
+    const rows = receiptRows(
+      {
+        businessName: 'Glow Salon',
+        branchName: null,
+        when: '27 Oct 2026',
+        tokenNo: null,
+        stylist: null,
+        singles: [{ name: 'Haircut', amountMinor: 30000 }],
+        pkg: null,
+        totalMinor: 30000,
+        paidBy: 'नकद',
+        rewards: { redeemedPoints: 0, earnedPoints: 38, balancePoints: 420 },
+      },
+      { ...copy, rewardsTitle: 'रिवॉर्ड', rewardBalance: (points) => `अब आपके पास ${points} पॉइंट हैं।` },
+      money,
+    );
+    const card = parseReceiptCard(rows);
+    expect(card.rewardsBalanceLine).toBe('अब आपके पास 420 पॉइंट हैं।');
+    expect(card.rewardsBalance).toBe('420 पॉइंट');
   });
 
   it('uses Services and Products headings (not Your Order) and drops 1 × for single salon services', () => {

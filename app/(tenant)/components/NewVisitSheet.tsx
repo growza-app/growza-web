@@ -24,7 +24,7 @@ function newAttemptKey(): string {
 import Link from '../../shared/AppLink';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useLocale, useTranslations } from 'next-intl';
-import { formatDateWithWeekday } from '../lib/format';
+import { formatDate, formatDateWithWeekday } from '../lib/format';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -36,12 +36,15 @@ import {
   type AvailabilityResponse,
   type ChairNow,
   type Customer,
+  type VisitRewards,
   type Offer,
   type PaymentMode,
   type Provider,
   type QueueEntry,
   type Service,
 } from '../lib/api';
+import { RedeemRow } from './RedeemRow';
+import { useRewardQuote } from '../lib/use-reward-quote';
 import { asMinor, matchItems, MIN_CHARS } from '../lib/service-match';
 import { extraSuggestions } from '../lib/service-suggest';
 import { useServiceSuggestions } from '../lib/useServiceSuggestions';
@@ -238,6 +241,8 @@ type Stage =
       result: WalkInDone;
       totalMinor: number;
       mode: PaymentMode;
+      /** Jira GRW-648 — what this bill did to the client's points: spent, earned, and what is left. */
+      rewards: VisitRewards | null;
       /** The WhatsApp bill, built once as the payment landed: the page refreshes after it, and the token goes with it. */
       bill: ReceiptRow[];
     };
@@ -407,6 +412,8 @@ export function NewVisitSheet({
   const [outcomeWanted, setOutcomeWanted] = useState<'queue' | 'start' | null>(null);
   const checkPhone = usePhoneProblem();
   const tcr = useTranslations('chrome');
+  /** Points are the till's words wherever a bill is settled, so both screens say the same thing. */
+  const tRewards = useTranslations('payFlow.rewards');
   const tw = useTranslations('staffWizard');
   const router = useRouter();
   const clientNoun = useLabel('customer', 'Client');
@@ -1127,25 +1134,51 @@ export function NewVisitSheet({
     : Number(comboPriceMinor ?? 0) + extras.reduce((sum, item) => sum + Number(item.priceMinor ?? 0), 0);
   /** Record payment: the money being taken, as the bill below adds it up — what the tray shows beside Mark done. */
   const billTotalMinor = comboActive ? comboWithExtrasTotalMinor : paidTotalMinor;
+
+  /*
+   * Jira GRW-648, owner 2026-10-27 — reward points on this bill.
+   *
+   * This sheet takes money on four paths and had no rewards on any of them: a client could spend their
+   * points at the counter and not here, on the same bill, for the same business. The quote, the row and
+   * the sending are the counter's, so the two tills answer the same question the same way.
+   *
+   * Only while taking money: a booking for later earns and spends nothing until somebody pays for it.
+   */
+  const rewardClientId = forPayment ? (selectedId ?? paysToken?.customerId ?? savedVisit?.customerId ?? null) : null;
+  const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor } = useRewardQuote(rewardClientId, billTotalMinor);
   /*
    * Record payment: what is being charged sits beside Mark done. The bill's lines are under the menu, and with the
    * tray pinned over the bottom of the page they were a scroll below it — the person was asked to take money for an
    * amount the screen was not showing. Tapping the total takes them to the lines, where each amount can be changed.
    */
   const billCount = picked.length + extras.length;
+  /*
+   * Jira GRW-648 — what is being COLLECTED, which with points on the bill is less than the lines come to.
+   *
+   * The bill's own Total above stays the sum of the lines, because that is what it is; this is the figure
+   * the desk takes money for, and it was showing the gross with a ₹42 discount switched on right beside it.
+   */
+  const dueMinor = Math.max(0, billTotalMinor - redeemMinor);
   const trayTotal =
     payPage && billCount > 0 ? (
       <button
         type="button"
         className="wi-tray-total"
-        aria-label={nv.trayTotalA11y(billCount, formatMoney(String(billTotalMinor)))}
+        aria-label={nv.trayTotalA11y(billCount, formatMoney(String(dueMinor)))}
         onClick={() => {
           const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
           document.getElementById('wi-bill')?.scrollIntoView({ block: 'start', behavior: still ? 'auto' : 'smooth' });
         }}
       >
         <span className="wi-tray-total-label">{nv.trayTotal(billCount)}</span>
-        <span className="wi-tray-total-amount">{formatMoney(String(billTotalMinor))}</span>
+        <span className="wi-tray-total-amount">
+          {formatMoney(String(dueMinor))}
+          {redeemMinor > 0 ? (
+            <span className="wi-tray-total-off">
+              {tRewards('wasOff', { bill: formatMoney(String(billTotalMinor)), amount: formatMoney(String(redeemMinor)) })}
+            </span>
+          ) : null}
+        </span>
       </button>
     ) : null;
   // --- `later` only: which day, and which slot on it ---
@@ -1511,6 +1544,7 @@ export function NewVisitSheet({
    * than as an error that invites a third try.
    */
   const payFor = async (client: PickedClient, visit: WalkInDone) => {
+    let settledRewards: VisitRewards | null = null;
     const amounts = picked.map((item) => rupeesToMinor(item.paidRupees) ?? 0);
     const [first, ...rest] = visit.legIds;
     if (!first || visit.legIds.length !== amounts.length) {
@@ -1530,15 +1564,23 @@ export function NewVisitSheet({
       paidAmountMinor: rupeesToMinor(item.paidRupees) ?? 0,
     }));
     try {
-      await guardLargeAmount((confirmed) =>
-        api.checkout(first, {
-          paidAmountMinor: amounts[0],
-          paymentMode,
-          groupMembers: rest.map((appointmentId, i) => ({ appointmentId, paidAmountMinor: amounts[i + 1]! })),
-          ...(extraServices.length > 0 ? { extraServices } : {}),
-          ...(confirmed ? { confirmLargeAmount: true } : {}),
-        }),
-      );
+      /*
+       * Jira GRW-648 — the lines go in at their own prices and the points come off them server-side, the
+       * same way the counter sends a bill. `settledRewards` is what it did to the balance, for the receipt.
+       */
+      settledRewards =
+        (
+          await guardLargeAmount((confirmed) =>
+            api.checkout(first, {
+              paidAmountMinor: amounts[0],
+              paymentMode,
+              groupMembers: rest.map((appointmentId, i) => ({ appointmentId, paidAmountMinor: amounts[i + 1]! })),
+              ...(extraServices.length > 0 ? { extraServices } : {}),
+              ...(redeemPoints > 0 ? { redeemPoints } : {}),
+              ...(confirmed ? { confirmLargeAmount: true } : {}),
+            }),
+          )
+        ).rewards ?? null;
     } catch (error) {
       if (error instanceof LargeAmountDeclined) {
         setStage({ step: 'error', client, message: nv.amountNotSaved });
@@ -1563,8 +1605,11 @@ export function NewVisitSheet({
       step: 'paid',
       client,
       result: visit,
-      totalMinor: amounts.reduce((a, b) => a + b, 0) + extraServices.reduce((sum, e) => sum + e.paidAmountMinor, 0),
+      // What the customer actually handed over. With points on the bill that is less than the lines come to.
+      totalMinor:
+        amounts.reduce((a, b) => a + b, 0) + extraServices.reduce((sum, e) => sum + e.paidAmountMinor, 0) - redeemMinor,
       mode: paymentMode,
+      rewards: settledRewards,
     }));
   };
 
@@ -1738,6 +1783,7 @@ export function NewVisitSheet({
             ...(noStylist || !schedulableId ? { noStylist: true as const } : { schedulableId }),
             paymentMode,
             idempotencyKey: attemptKey,
+              ...(redeemPoints > 0 ? { redeemPoints } : {}),
               ...(confirmed ? { confirmLargeAmount: true } : {}),
           }),
         );
@@ -1754,8 +1800,10 @@ export function NewVisitSheet({
             overlapping: result.overlapping,
             tokenNo: result.tokenNo ?? paysToken.tokenNo,
           },
+          // The legs come back NET of a reward discount, so this is what was collected.
           totalMinor: result.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0),
           mode: paymentMode,
+          rewards: result.rewards ?? null,
         }));
         return;
       }
@@ -1776,6 +1824,7 @@ export function NewVisitSheet({
             paymentMode,
             idempotencyKey: attemptKey,
             ...atBranch,
+              ...(redeemPoints > 0 ? { redeemPoints } : {}),
               ...(confirmed ? { confirmLargeAmount: true } : {}),
           }),
         );
@@ -1792,8 +1841,10 @@ export function NewVisitSheet({
             overlapping: false,
             tokenNo: result.tokenNo,
           },
+          // The legs come back NET of a reward discount, so this is what was collected.
           totalMinor: result.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0),
           mode: paymentMode,
+          rewards: result.rewards ?? null,
         }));
         return;
       }
@@ -1934,6 +1985,21 @@ export function NewVisitSheet({
           : null,
         totalMinor: paid.totalMinor,
         paidBy: PAYMENT_MODES.some((m) => m.value === paid.mode) ? tcr(`pay.${paid.mode}`) : paid.mode,
+        /* Jira GRW-648 — the points this bill spent, what it earned, and what the client now has. */
+        ...(paid.rewards
+          ? {
+              rewards: {
+                earnedPoints: paid.rewards.earnedPoints,
+                redeemedPoints: paid.rewards.redeemedPoints,
+                redeemedMinor: paid.rewards.discountMinor,
+                ...(paid.rewards.balanceAfter !== null ? { balancePoints: paid.rewards.balanceAfter } : {}),
+                // The date on that promise, in the salon's zone and the reader's language (QA 2026-10-27, L4).
+                ...(paid.rewards.expiring
+                  ? { expiringPoints: paid.rewards.expiring.points, expiringOn: formatDate(paid.rewards.expiring.atISO, timezone, locale) }
+                  : {}),
+              },
+            }
+          : {}),
         googleReviewUrl,
       },
       {
@@ -1949,6 +2015,12 @@ export function NewVisitSheet({
         paidBy: nv.receiptPaidBy,
         seeYou: nv.receiptSeeYou,
         reviewPrompt: nv.receiptReviewPrompt,
+        // The till's own words, deliberately: one wording for points wherever a bill is settled.
+        rewardsTitle: tRewards('receiptTitle'),
+        rewardRedeemed: (points, amount) => tRewards('receiptUsed', { points, amount }),
+        rewardEarned: (points) => tRewards('receiptEarned', { points }),
+        rewardBalance: (points) => tRewards('receiptBalance', { points }),
+        rewardExpiry: (points, date) => tRewards('receiptExpiry', { points, date }),
       },
       (minor) => formatMoney(String(minor)),
     );
@@ -1984,6 +2056,8 @@ export function NewVisitSheet({
   };
 
   const busy = stage.step === 'saving' || phoneSaving;
+  /* Jira GRW-648 — the counter's own row, from the one component both tills draw it with. */
+  const redeemRow = <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={toggleRedeem} disabled={busy} />;
   /** Jira GRW-290 — once a Record payment visit exists, its lines are what was written. */
   const linesLocked = forPayment && savedVisit !== null;
   const headSub =
@@ -3934,6 +4008,11 @@ export function NewVisitSheet({
                 ) : null}
 
                 <div className={`modal-actions wi-actions wi-acts ${forPayment ? 'wi-pay-actions' : ''}`}>
+                  {/*
+                    Jira GRW-648 — points sit above how it is being paid, because that is what they are: part
+                    of how this bill is settled. The same row the counter draws, from the same component.
+                  */}
+                  {forPayment && redeemRow}
                   {/* Record payment: how they paid sits in the tray beside Mark done (GRW-290). */}
                   {forPayment && (
                     <div className="wi-pay-modes" role="radiogroup" aria-label={nv.howPaid}>
@@ -4080,6 +4159,8 @@ export function NewVisitSheet({
                 the footer ended up half-hidden behind it: the one choice that
                 goes with Mark done has to be on screen with Mark done.
               */}
+              {/* Jira GRW-648 — and in the pinned footer too, for the same reason the modes are there. */}
+              {forPayment && redeemRow}
               {forPayment && (
                 <div className="wi-pay-modes" role="radiogroup" aria-label={nv.howPaid}>
                   <span className="wi-pay-modes-label">{nv.howPaid}</span>

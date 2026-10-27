@@ -155,6 +155,7 @@ describe('the Reports page in Hindi names the staff and clients itself', () => {
         range: 'this_month',
         compare: false,
         staffTabAvailable: true,
+        hasSummary: true,
         allowedTabs: ['overview', 'customers', 'revenue', 'bookings', 'services', 'staff'],
         filters: { providerIds: [], serviceIds: [], statuses: [] },
         filterOptions: { providers: [], services: [] },

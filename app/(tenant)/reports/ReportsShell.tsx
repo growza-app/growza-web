@@ -20,6 +20,8 @@ import {
 } from '../lib/api';
 import { FiltersDrawer } from './FiltersDrawer';
 import { IconCalendar, IconChevronDown, IconDownload, IconFilter, IconRepeat } from '../components/icons';
+import { RetailReportsNav } from '../components/RetailReportsNav';
+import { useAreas } from '../components/SessionProvider';
 
 const TAB_ORDER: ReportTabKey[] = [
   'todo',
@@ -55,6 +57,7 @@ export function ReportsShell({
   range,
   compare,
   staffTabAvailable,
+  hasSummary,
   allowedTabs,
   filters,
   filterOptions,
@@ -78,6 +81,8 @@ export function ReportsShell({
   rangeLabel?: string;
   /** Off for verticals where ranking providers is a product smell (07 §3.2). */
   staffTabAvailable: boolean;
+  /** Whether `/reports` with no tab shows this viewer the four cards -- if it does not, there is nowhere to go back to. */
+  hasSummary: boolean;
   /** GRW-197 — report tabs this caller may open. */
   allowedTabs: readonly string[];
   filters: ReportFilters;
@@ -92,8 +97,11 @@ export function ReportsShell({
   labels: Record<string, string>;
   children: ReactNode;
 }) {
+  /** Which panels and bars this business has an answer for — a kitchen keeps its own four reports. */
+  const areas = useAreas();
   const rp = useReportsCopy();
   const st = useTranslations('status');
+  const rt = useTranslations('reports');
   const locale = useLocale();
   const router = useRouter();
   const params = useSearchParams();
@@ -104,6 +112,16 @@ export function ReportsShell({
     const query = new URLSearchParams(params.toString());
     for (const [key, value] of Object.entries(next)) query.set(key, value);
     router.push(`/reports?${query.toString()}`);
+  };
+
+  /**
+   * Back to the four cards. The branch travels (it is the business you are looking at, not a setting of
+   * this tab); the range and the filters do not -- the cards carry their own period, and a filter chosen
+   * for one tab has no meaning on a page that is not that tab.
+   */
+  const goSummary = () => {
+    const branch = params.get('branch');
+    router.push(branch ? `/reports?branch=${encodeURIComponent(branch)}` : '/reports');
   };
 
   // Two independent gates: the vertical decides whether a staff leaderboard
@@ -160,6 +178,41 @@ export function ReportsShell({
       {/* Jira GRW-377 — the branch chosen on any other screen is the branch Reports opens on. */}
       <BranchUrlSync />
       <header className="rp-header">
+        {/*
+          Owner, 2026-10-26 — the tabs come first.
+          They sat under the title, the subtitle, the range picker and four controls, which put the one
+          control that changes the whole page below everything that only narrows it. A shop made that
+          plain: its four own reports are a bar of their own, and with both on screen the primary one was
+          the lower of the two.
+        */}
+        <nav className="rp-tabs rp-tabs-top">
+          {/*
+            Owner, 2026-10-27 — the way back to the four cards.
+            `/reports` with no `tab` IS that page, and nothing linked to it: the Back arrow steps through
+            history, so after two tab changes it walks the tabs rather than leaving them, and the sidebar's
+            Reports is already lit as the current page, which is not something anyone reads as a way out.
+            It is absent for a role whose `/reports` shows a tab rather than the cards -- a button that
+            lands you where you already are is worse than no button.
+          */}
+          {hasSummary ? (
+            <button type="button" className="rp-tab-summary" onClick={goSummary}>
+              {rt('summaryTab')}
+            </button>
+          ) : null}
+          {tabs.map((key) => (
+            <button
+              key={key}
+              type="button"
+              className={key === tab ? 'active' : ''}
+              onClick={() => go({ tab: key })}
+            >
+              {tabLabel(key)}
+            </button>
+          ))}
+        </nav>
+        {/* ...and a business with no diary keeps its own four beside them, rather than above the title. */}
+        {!areas.bookings ? <RetailReportsNav active="hub" /> : null}
+
         <div className="rp-title-row">
           <div className="topbar-lead">
             <BackButton phoneOnly />
@@ -271,18 +324,6 @@ export function ReportsShell({
           </button>
         </div>
 
-        <nav className="rp-tabs">
-          {tabs.map((key) => (
-            <button
-              key={key}
-              type="button"
-              className={key === tab ? 'active' : ''}
-              onClick={() => go({ tab: key })}
-            >
-              {tabLabel(key)}
-            </button>
-          ))}
-        </nav>
       </header>
 
       <div className="rp-body page-body">

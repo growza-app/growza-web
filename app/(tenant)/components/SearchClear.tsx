@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { IconClose, IconMic } from './icons';
+import { ConfirmDialog } from './ConfirmDialog';
 import {
   claimVoiceSession,
   extractVoiceTranscript,
@@ -46,12 +47,56 @@ export function SearchClear({
   const [canSpeak, setCanSpeak] = useState(false);
   const [listening, setListening] = useState(false);
   const [denied, setDenied] = useState(false);
+  /** QA 2026-10-26 — the "how do I turn it on" popup, opened from the note and never by itself. */
+  const [showHowTo, setShowHowTo] = useState(false);
   const recRef = useRef<BrowserSpeechRecognition | null>(null);
   const btnRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     setCanSpeak(getSpeechRecognitionConstructor() !== null);
   }, []);
+
+  /*
+   * QA 2026-10-26 — notice the moment they allow it, and put the microphone back without being asked.
+   *
+   * A page cannot re-open the browser's permission prompt: once somebody has tapped Block, `start()` fails
+   * immediately and silently, and the same is true of geolocation — this is a browser rule, not something
+   * the app chose. What the app CAN do is stop being wrong about it. Having told them where the switch is,
+   * it watches that switch: they change it in the browser's own settings, come back to the tab, and the
+   * warning clears itself rather than sitting there contradicting a microphone that now works.
+   *
+   * `navigator.permissions` and the `microphone` name are both optional in the wild (Safari has neither),
+   * hence the try/catch and the silent return: without it the note simply stays until the next tap, which
+   * is where this started.
+   */
+  useEffect(() => {
+    if (!denied) return;
+    let status: { state: string; onchange: (() => void) | null } | null = null;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const query = (navigator as Navigator & { permissions?: { query: (d: { name: string }) => Promise<PermissionStatus> } }).permissions;
+        if (!query) return;
+        const result = (await query.query({ name: 'microphone' })) as unknown as { state: string; onchange: (() => void) | null };
+        if (cancelled) return;
+        status = result;
+        const sync = () => {
+          if (result.state === 'granted' || result.state === 'prompt') {
+            setDenied(false);
+            setShowHowTo(false);
+          }
+        };
+        sync();
+        result.onchange = sync;
+      } catch {
+        /* a browser without the Permissions API keeps the note until the next tap */
+      }
+    })();
+    return () => {
+      cancelled = true;
+      if (status) status.onchange = null;
+    };
+  }, [denied]);
 
   useEffect(() => {
     if (!listening) return;
@@ -188,16 +233,72 @@ export function SearchClear({
   };
 
   return (
-    <button
-      ref={btnRef}
-      type="button"
-      className={`search-mic${listening ? ' search-mic-listening is-listening' : ''}${denied ? ' search-mic-denied' : ''}`}
-      aria-label={listening ? t('stopVoiceSearch') : denied ? t('voicePermissionDenied') : t('voiceSearch')}
-      aria-pressed={listening}
-      title={denied ? t('voicePermissionDenied') : listening ? t('voiceListening') : t('voiceSearch')}
-      onClick={(e) => toggleVoice(e.currentTarget)}
-    >
-      <IconMic />
-    </button>
+    <>
+      <button
+        ref={btnRef}
+        type="button"
+        className={`search-mic${listening ? ' search-mic-listening is-listening' : ''}${denied ? ' search-mic-denied' : ''}`}
+        aria-label={listening ? t('stopVoiceSearch') : denied ? t('voicePermissionDenied') : t('voiceSearch')}
+        aria-pressed={listening}
+        title={denied ? t('voicePermissionDenied') : listening ? t('voiceListening') : t('voiceSearch')}
+        onClick={(e) => toggleVoice(e.currentTarget)}
+      >
+        <IconMic />
+      </button>
+      {/*
+        QA 2026-10-26 — say it in words, not in a colour, and give them somewhere to go.
+        A blocked microphone turned the icon red and set `title`, and that was the whole of it: `title` never
+        appears on a touch device, so an owner tapped the mic, a small shape changed shade, and they reported
+        that voice search does not work. One short line now, because the steps belong in the popup behind
+        "How to turn it on" rather than in a paragraph over the list they were reading.
+        `role="status"` rather than `alert`: it is the answer to something they just did, not an interruption.
+      */}
+      {denied && (
+        <p className="search-mic-note" role="status">
+          <span>{t('voicePermissionDeniedHelp')}</span>
+          <button type="button" className="search-mic-how" onClick={() => setShowHowTo(true)}>
+            {t('voiceHowTo')}
+          </button>
+          {/* Dismissible: they have read it, they are going to type, and it should not sit on the list for the rest of the day. */}
+          <button type="button" className="search-mic-note-x" aria-label={t('voiceNoteClose')} onClick={() => setDenied(false)}>
+            <IconClose />
+          </button>
+        </p>
+      )}
+      {/*
+        The popup the owner asked for. It is OURS and not the browser's, and it cannot be the browser's:
+        once somebody has tapped Block there is no API that reopens that prompt — `start()` just fails. So
+        this says where the switch is, says plainly that only they can throw it, and offers the retry that
+        makes sense the moment they have.
+      */}
+      {showHowTo && (
+        <ConfirmDialog
+          title={t('voiceEnableTitle')}
+          body={t('voiceEnableWhy')}
+          confirmLabel={t('voiceTryAgain')}
+          cancelLabel={t('voiceNoteClose')}
+          onConfirm={() => {
+            setShowHowTo(false);
+            setDenied(false);
+            const btn = btnRef.current;
+            if (btn) toggleVoice(btn);
+          }}
+          onCancel={() => setShowHowTo(false)}
+        >
+          {/*
+            An <ol>, not a string with newlines in it: `voiceEnableSteps` rendered as a paragraph ran
+            "...turn it on. 3. Come back here" onto one line, which is three steps that read as two.
+            Split here so the numbers are the list's, and a translator writes sentences rather than layout.
+          */}
+          <ol className="search-mic-steps">
+            {t('voiceEnableSteps')
+              .split('\n')
+              .map((step) => (
+                <li key={step}>{step.replace(/^\d+\.\s*/, '')}</li>
+              ))}
+          </ol>
+        </ConfirmDialog>
+      )}
+    </>
   );
 }
