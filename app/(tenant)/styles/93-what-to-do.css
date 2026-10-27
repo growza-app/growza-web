@@ -156,7 +156,30 @@
 
 .td-person-quiet { color: var(--muted); font-size: 0.75rem; flex: none; max-width: 9rem; text-align: right; }
 
+/*
+ * Desktop. Below 860 the cards stack one per row, which is the phone layout they were drawn at.
+ * From 860 the column is centred rather than pinned to the left edge of a screen three times its
+ * width. From 1000 a card at full width is one sentence with a metre of white beside it, so the
+ * action cards sit two to a row -- the shape the counter and diary reports take at 760.
+ */
 @media (min-width: 860px) {
-  .td-stack { max-width: 640px; }
+  .td-stack { max-width: 640px; margin-inline: auto; }
   .td-action { width: auto; align-self: flex-start; min-width: 12rem; }
+}
+
+@media (min-width: 1000px) {
+  .td-stack {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 1040px;
+  }
+
+  /* The money is the week's headline, not one card of five; the empty state and the footnote are
+     about the whole screen, not one column of it. */
+  .td-money,
+  .td-empty,
+  .td-foot { grid-column: 1 / -1; }
+
+  /* The cards in a row are the same height, so their buttons line up rather than stepping. */
+  .td-action { margin-top: auto; }
 }
