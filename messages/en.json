@@ -3161,7 +3161,9 @@
       "earnedDone": "{points, plural, one {# point} other {# points}} earned",
       "have": "{points, plural, one {# point} other {# points}} saved",
       "needMore": "{points, plural, one {# more} other {# more}} to use them",
-      "needBill": "a bill of {amount} to use them"
+      "needBill": "a bill of {amount} to use them",
+      "receiptTitle": "Rewards",
+      "receiptBalance": "You now have {points, plural, one {# point} other {# points}}."
     }
   },
   "help": {
