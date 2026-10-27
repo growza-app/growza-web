@@ -313,9 +313,9 @@
   }
 }
 
-/* The heading over the bar of the other six reports, beneath the four cards. */
+/* The heading over the bar of the other six reports, above the four cards. */
 .cr-more {
-  margin: var(--sp-5) 0 var(--sp-2);
+  margin: 0 0 var(--sp-2);
   font-size: var(--fs-2);
   font-weight: 600;
   letter-spacing: 0.02em;

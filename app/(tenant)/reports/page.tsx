@@ -179,10 +179,11 @@ export default async function ReportsPage({
         <div className="page-body srp-page">
           {mayOpenShopReports ? (
             <>
-              {/* The report itself first; the other six are a bar beneath it, not the page. */}
-              <CounterReport />
+              {/* The way to the other six sits where an owner's eye goes for it, above the report
+                  rather than below a screenful of cards. */}
               <h2 className="cr-more">{t('counterMore')}</h2>
               <RetailReportsNav active="hub" />
+              <CounterReport />
             </>
           ) : (
             <div className="card">
@@ -251,7 +252,6 @@ export default async function ReportsPage({
       <>
         <PageHeader title={t('title')} />
         <div className="page-body srp-page">
-          <DiaryReport />
           <h2 className="cr-more">{t('counterMore')}</h2>
           <nav className="srp-nav srp-nav-links" aria-label={t('title')}>
             {ALL_REPORT_TABS.filter(canOpen).map((key) => (
@@ -260,6 +260,7 @@ export default async function ReportsPage({
               </a>
             ))}
           </nav>
+          <DiaryReport />
         </div>
       </>
     );
