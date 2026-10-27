@@ -256,8 +256,11 @@ describe('the POS screen', () => {
     expect(overridden[1]?.state).toBe('completed');
 
     expect(client).toContain('pos-token-strip');
+    expect(client).toContain('pos-bar-completed');
     expect(client).toContain('pos-queue-board');
     expect(css).toContain('.pos-token-strip');
+    expect(css).toContain('.pos-bar-completed');
+    expect(css).toMatch(/\.pos-token-strip\.is-empty\s*\{\s*display:\s*none;/);
     expect(css).toContain('.pos-queue-board');
   });
 });
