@@ -275,6 +275,8 @@ export function ReceiptShare({
                   <div className="wi-rc-rewards-bal">
                     <span className="wi-rc-rewards-bal-lbl">{nv.rcRewardBalance}</span>
                     <strong className="wi-rc-rewards-bal-val">{card.rewardsBalance}</strong>
+                    {/* The date on the promise — QA 2026-10-27 (L4). Absent where points never die. */}
+                    {card.rewardsExpiryLine ? <span className="wi-rc-rewards-bal-exp">{card.rewardsExpiryLine}</span> : null}
                   </div>
                 ) : null}
               </div>

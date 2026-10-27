@@ -10,6 +10,7 @@ import type { Appointment, Offer, PaymentMode, Product, ProductCategory, Provide
 import type { QueueEntry } from '../../lib/home-types';
 import { receiptRows, type ReceiptRow } from '../../lib/receipt-text';
 import { displayPhone } from '../../lib/phone';
+import { formatDate } from '../../lib/format';
 import { RedeemRow } from '../../components/RedeemRow';
 import { useRewardQuote } from '../../lib/use-reward-quote';
 import { ServicePhoto } from '../../components/ServicePhoto';
@@ -1046,6 +1047,18 @@ export function PayFlow({
                   redeemedPoints: result.rewards.redeemedPoints,
                   redeemedMinor: result.rewards.discountMinor,
                   ...(result.rewards.balanceAfter !== null ? { balancePoints: result.rewards.balanceAfter } : {}),
+                  /*
+                   * And the date on that promise — QA 2026-10-27 (loophole L4). The receipt said "you now
+                   * have 420 points" and never that points die; a number with no date on it is a promise
+                   * the business has not made. Formatted here, where the salon's zone and the reader's
+                   * language are: the builder does no dates.
+                   */
+                  ...(result.rewards.expiring
+                    ? {
+                        expiringPoints: result.rewards.expiring.points,
+                        expiringOn: formatDate(result.rewards.expiring.atISO, timezone, locale),
+                      }
+                    : {}),
                 },
               }
             : {}),
@@ -1071,6 +1084,7 @@ export function PayFlow({
           rewardRedeemed: (points, amount) => t('rewards.receiptUsed', { points, amount }),
           rewardEarned: (points) => t('rewards.receiptEarned', { points }),
           rewardBalance: (points) => t('rewards.receiptBalance', { points }),
+          rewardExpiry: (points, date) => t('rewards.receiptExpiry', { points, date }),
           paidBy: nv.receiptPaidBy,
           seeYou: nv.receiptSeeYou,
           reviewPrompt: nv.receiptReviewPrompt,
