@@ -2791,7 +2791,8 @@
         "seeAll": "See all {n}"
       }
     },
-    "counterMore": "More reports"
+    "counterMore": "More reports",
+    "summaryTab": "Summary"
   },
   "counterReport": {
     "title": "Reports",

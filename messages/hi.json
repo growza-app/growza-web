@@ -2791,7 +2791,8 @@
         "seeAll": "सभी {n} देखें"
       }
     },
-    "counterMore": "और रिपोर्ट"
+    "counterMore": "और रिपोर्ट",
+    "summaryTab": "सारांश"
   },
   "counterReport": {
     "title": "रिपोर्ट",

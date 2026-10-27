@@ -60,6 +60,7 @@ export function ReportsClient({
   range,
   compare,
   staffTabAvailable,
+  hasSummary,
   allowedTabs,
   filters,
   filterOptions,
@@ -75,6 +76,8 @@ export function ReportsClient({
   range: ReportRangeKey;
   compare: boolean;
   staffTabAvailable: boolean;
+  /** Whether a Summary tab belongs in the bar -- see ReportsShell. */
+  hasSummary: boolean;
   /** GRW-197 — report tabs this caller may open. */
   allowedTabs: readonly string[];
   /** Already narrowed to ids this tenant owns — see page.tsx. */
@@ -136,6 +139,7 @@ export function ReportsClient({
       range={range}
       compare={compare}
       staffTabAvailable={staffTabAvailable}
+      hasSummary={hasSummary}
       allowedTabs={allowedTabs}
       filters={filters}
       filterOptions={filterOptions}

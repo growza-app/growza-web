@@ -13,7 +13,13 @@
      space on the smallest screen that can least afford it. */
   scrollbar-width: none;
   padding-bottom: 2px;
-  margin: 0 -2px;
+  /*
+   * Flush with the cards below it. The -2px it carried arrived with the globals.css split (GRW-160)
+   * with no reason attached, and it made the bar 4px wider than every card on the page: with the first
+   * tab selected its green fill started two pixels left of the card edge, which is the kind of
+   * misalignment you see without being able to name.
+   */
+  margin: 0;
 }
 
 .rp-tabs::-webkit-scrollbar {
