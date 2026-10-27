@@ -3158,7 +3158,10 @@
       "wasOff": "{bill} less {amount} in points",
       "receiptUsed": "Reward points used: {points} (−{amount})",
       "receiptEarned": "You earned {points, plural, one {# point} other {# points}} towards your next visit.",
-      "earnedDone": "{points, plural, one {# point} other {# points}} earned"
+      "earnedDone": "{points, plural, one {# point} other {# points}} earned",
+      "have": "{points, plural, one {# point} other {# points}} saved",
+      "needMore": "{points, plural, one {# more} other {# more}} to use them",
+      "needBill": "a bill of {amount} to use them"
     }
   },
   "help": {

@@ -18,9 +18,16 @@ const card = readFileSync(resolve(__dirname, '../../components/ClientProfileCard
 describe('what the till asks for', () => {
   it('asks the one route that knows, with the bill, rather than working the offer out itself', () => {
     expect(flow).toMatch(/api\s*\n?\s*\.customerRewards\(clientId, totalMinor\)/);
-    // No second copy of the cap, the floor or the balance arithmetic anywhere on this screen.
+    /*
+     * No second copy of the OFFER anywhere on this screen: what a bill can take is the API's answer, and
+     * a till that worked it out again would drift from the rules the owner set.
+     *
+     * Reading `minRedeemPoints` is allowed from 2026-10-27, and only to subtract: the balance line says
+     * "15 more to use them", which is two numbers the API sent, not a rule of its own. `redeemCapBps`
+     * stays out — that one IS the rule, and the till is told `minBillMinor` rather than deriving it.
+     */
     expect(flow).not.toMatch(/redeemCapBps/);
-    expect(flow).not.toMatch(/minRedeemPoints/);
+    expect(flow).not.toMatch(/(const|let)\s+maxRedeemable/);
   });
 
   it('knows whose points even when it is settling a booking', () => {
@@ -29,9 +36,42 @@ describe('what the till asks for', () => {
 
   it('offers nothing when there is nobody, nothing to spend, or the read failed', () => {
     expect(flow).toMatch(/if \(!clientId \|\| totalMinor <= 0\) \{\s*setRewards\(null\);/);
-    expect(flow).toMatch(/setRewards\(answer\.enabled && answer\.maxRedeemable > 0 \? answer : null\)/);
+    // Owner, 2026-10-27 — the ANSWER is kept whenever rewards are on, so the balance can be shown; what
+    // the bill can take still decides the toggle.
+    expect(flow).toMatch(/setRewards\(answer\.enabled \? answer : null\)/);
+    expect(flow).toMatch(/if \(!answer\.enabled \|\| answer\.maxRedeemable <= 0\) setUsePoints\(false\)/);
     // A failed read leaves the bill alone: the money is the thing with somebody standing at the counter.
     expect(flow).toMatch(/\.catch\(\(\) => \{[\s\S]{0,400}setRewards\(null\);/);
+  });
+
+  /**
+   * Owner, 2026-10-27 — "at pos owner should be able to view rewards".
+   *
+   * The desk could only see a client's points when this bill could spend them, so the question asked at
+   * every counter had no answer on the screen. The row shows the balance either way, and when it cannot
+   * be spent it names which of the two reasons it is -- too few points, or too small a bill. Those are
+   * not the same thing, and the second is the one nobody guesses.
+   */
+  it('shows what the client has whether or not this bill can spend it', () => {
+    // The balance rides along with the offer...
+    expect(flow).toMatch(/t\('rewards\.offer', \{ points: rewards\.maxRedeemable \}\)[\s\S]{0,160}t\('rewards\.have', \{ points: rewards\.balance \}\)/);
+    // ...and stands alone when there is no offer, with the reason beside it.
+    expect(flow).toMatch(/rewards\.maxRedeemable > 0 \? \([\s\S]{0,1400}: rewards\.balance > 0 \?/);
+    expect(flow).toMatch(/shortBy > 0\s*\?\s*t\('rewards\.needMore', \{ points: shortBy \}\)\s*:\s*t\('rewards\.needBill', \{ amount: money\(rewards\.minBillMinor\) \}\)/);
+    // Nothing at all for somebody with no points: an empty frame is worse than no frame.
+    expect(flow).toMatch(/!rewards \|\| \(rewards\.maxRedeemable === 0 && rewards\.balance === 0\) \? null/);
+    // The bill figure is the API's, not one worked out here.
+    expect(flow).toMatch(/rewards\.minBillMinor/);
+  });
+
+  it('words all three states in both languages', () => {
+    for (const lang of [en, hi]) {
+      for (const key of ['have', 'needMore', 'needBill'] as const) {
+        expect(lang.payFlow.rewards[key], key).toBeTruthy();
+      }
+    }
+    expect(hi.payFlow.rewards.have).toMatch(/[ऀ-ॿ]/);
+    expect(hi.payFlow.rewards.needBill).toMatch(/[ऀ-ॿ]/);
   });
 
   it('does not ask again on every tile tapped', () => {

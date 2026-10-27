@@ -598,6 +598,13 @@ export interface CustomerRewards {
   balance: number;
   pointValueMinor: number;
   minRedeemPoints: number;
+  /**
+   * The smallest bill these rules can take a point off at all — ₹125 for a 25-point floor under a 20% cap.
+   *
+   * The till shows a balance whether or not it can be spent, so it has to be able to say WHY it cannot,
+   * and "this bill is too small" is the reason nobody guesses. 0 when rewards are off.
+   */
+  minBillMinor: number;
   maxRedeemable: number;
   discountMinor: number;
   /** The next lot to die, and when. Null when nothing of theirs expires. */

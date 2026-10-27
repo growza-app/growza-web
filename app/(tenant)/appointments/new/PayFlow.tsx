@@ -605,8 +605,13 @@ export function PayFlow({
         .customerRewards(clientId, totalMinor)
         .then((answer) => {
           if (!live) return;
-          // Nothing to offer is the same as no answer: rewards off, or fewer points than this business takes.
-          setRewards(answer.enabled && answer.maxRedeemable > 0 ? answer : null);
+          /*
+           * Owner, 2026-10-27 — the answer is kept whenever rewards are ON, not only when this bill can
+           * spend them. It used to be thrown away unless something was redeemable, so a client with ten
+           * points showed the desk nothing at all and nobody could tell them they had any. What the bill
+           * can take still decides the TOGGLE; the balance is shown either way.
+           */
+          setRewards(answer.enabled ? answer : null);
           if (!answer.enabled || answer.maxRedeemable <= 0) setUsePoints(false);
         })
         .catch(() => {
@@ -1333,27 +1338,50 @@ export function PayFlow({
    * Tapping it spends the most this bill allows. There is no box to type a number into: the cap, the floor
    * and the balance already decide the answer, and a till is not the place to do arithmetic at somebody.
    */
-  const redeemRow =
-    rewards && rewards.maxRedeemable > 0 ? (
-      <div className="pf-redeem">
-        <label className="switch">
-          <input
-            type="checkbox"
-            aria-labelledby="pf-redeem-label"
-            checked={usePoints}
-            disabled={saving !== null}
-            onChange={() => setUsePoints(!usePoints)}
-          />
-          <span className="switch-track">
-            <span className="switch-thumb" />
+  /*
+   * Why the balance has a line of its own, 2026-10-27.
+   *
+   * The desk could not see a client's points unless this bill happened to be able to spend them, so the
+   * commonest question at a counter -- "how many have I got?" -- had no answer on the screen the answer
+   * is on. The line says what they have, and when it cannot be spent it says which of the two reasons it
+   * is: too few points, or too small a bill. Those are not the same thing and the second is the one
+   * nobody guesses.
+   */
+  const shortBy = rewards ? rewards.minRedeemPoints - rewards.balance : 0;
+  const redeemRow = !rewards || (rewards.maxRedeemable === 0 && rewards.balance === 0) ? null : (
+    <div className="pf-redeem">
+      {rewards.maxRedeemable > 0 ? (
+        <>
+          <label className="switch">
+            <input
+              type="checkbox"
+              aria-labelledby="pf-redeem-label"
+              checked={usePoints}
+              disabled={saving !== null}
+              onChange={() => setUsePoints(!usePoints)}
+            />
+            <span className="switch-track">
+              <span className="switch-thumb" />
+            </span>
+          </label>
+          <span id="pf-redeem-label" className="pf-redeem-label">
+            {t('rewards.offer', { points: rewards.maxRedeemable })}
+            <span className="pf-redeem-have">{t('rewards.have', { points: rewards.balance })}</span>
           </span>
-        </label>
-        <span id="pf-redeem-label" className="pf-redeem-label">
-          {t('rewards.offer', { points: rewards.maxRedeemable })}
+          <strong className="pf-redeem-off">{t('rewards.off', { amount: money(rewards.discountMinor) })}</strong>
+        </>
+      ) : rewards.balance > 0 ? (
+        <span className="pf-redeem-label pf-redeem-quiet">
+          {t('rewards.have', { points: rewards.balance })}
+          <span className="pf-redeem-have">
+            {shortBy > 0
+              ? t('rewards.needMore', { points: shortBy })
+              : t('rewards.needBill', { amount: money(rewards.minBillMinor) })}
+          </span>
         </span>
-        <strong className="pf-redeem-off">{t('rewards.off', { amount: money(rewards.discountMinor) })}</strong>
-      </div>
-    ) : null;
+      ) : null}
+    </div>
+  );
 
   /** The amount to collect, and — when points are coming off — the bill it was before they did. */
   const dueLine = (
