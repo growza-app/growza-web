@@ -14,10 +14,11 @@ import {
 import { copy } from '../lib/copy';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { PageHeader } from '../components/PageHeader';
-import { RetailReportsHub, RetailReportsNav } from '../components/RetailReportsNav';
+import { RetailReportsNav } from '../components/RetailReportsNav';
 import { areasOf } from '../lib/areas';
 import { loadErrorKind, type LoadErrorKind } from '../lib/load-error';
 import { ReportsClient, type TabPayload } from './ReportsClient';
+import { CounterReport } from './CounterReport';
 
 /**
  * The Reports screen's tabs, in its own order. Mirrors `REPORT_TABS` on the
@@ -28,17 +29,20 @@ import { ReportsClient, type TabPayload } from './ReportsClient';
 const ALL_REPORT_TABS = ['todo', 'overview', 'customers', 'revenue', 'bookings', 'services', 'staff'] as const;
 
 /**
- * Owner, 2026-10-26 — the three of those a business with no bookings can honestly answer.
+ * The three generic tabs a business with no bookings can still honestly answer.
  *
- * GRW-610 sent every such business straight to the retail hub, on the reasoning that these reports are built
- * from bookings and "Money earned ₹0 under a till full of product sales would be a lie". That was true of
- * the reports as they stood; it is not true of all three any more. Revenue counts `sale` rows (GRW-576) and
- * the client counts beside them were taught about bills on 2026-10-26, so County Chicken's own figures —
- * ₹27,212 of takings, ₹1,088 average spend, 52% repeat — were being computed correctly and then withheld.
+ * They are no longer where it LANDS. Jira GRW-591 gave a counter business its own four-card report, because
+ * the owner's verdict on these three (2026-10-27) was "most of the information is useless and ui is not good
+ * and it's for all verticals, Not providing value to owner" — and the screen bore him out: a bar chart of one
+ * bar labelled "Products, 100%", the same figure again under "New faces or regulars", client bands reading
+ * 29 · 0 · 0 · 0, and "Average visit ₹0" on a kitchen. Those are not bugs; they are what a vertical-neutral
+ * report has left once everything a kitchen cannot answer is hidden.
  *
- * Bookings, Services and Staff stay away: a kitchen has no diary, no service lines and no stylist, and those
- * three WOULD be the zeros the original reasoning was about. The restaurant's stock- and dish-shaped reports
- * are still GRW-591's; this is the part that already existed.
+ * The three stay REACHABLE — `?tab=revenue` from a bookmark or a link still renders — because the figures in
+ * them are correct and somebody may want them. Nothing on the screen points at them any more. Whether to
+ * delete them outright is the owner's call, not a thing to decide inside a layout change.
+ *
+ * Bookings, Services and Staff were never here: a kitchen has no diary, no service lines and no stylist.
  */
 const SHOP_REPORT_TABS = new Set<string>(['overview', 'revenue', 'customers']);
 
@@ -145,15 +149,13 @@ export default async function ReportsPage({
    * may see it.
    */
   /*
-   * Owner, 2026-10-26 — Reports opens on Overview for a shop too, not on the hub.
-   *
-   * The three tabs were reachable only by typing `?tab=overview`: the nav's own link carries no tab, so it
-   * fell to `'todo'`, which is not one of the three, and the owner landed back on the four retail cards with
-   * nothing on screen pointing at the money report that had just been built for them. A door nobody can see
-   * is the same as no door — the hub stays, one tap away on the bar below.
+   * Jira GRW-591 — a counter business opens on its OWN report, and only a deep link reaches the generic
+   * three. `params.tab` is what distinguishes the two: absent means "show me Reports", which is now the
+   * four cards; present and one of the three means somebody asked for that one by name.
    */
-  const shopTab = noBookings && !params.tab && allowedTabsOf(me).includes('overview') ? 'overview' : tab;
-  if (noBookings && !(SHOP_REPORT_TABS.has(shopTab) && allowedTabsOf(me).includes(shopTab))) {
+  const shopTab = tab;
+  const askedGenericTab = noBookings && params.tab !== undefined;
+  if (noBookings && !(askedGenericTab && SHOP_REPORT_TABS.has(shopTab) && allowedTabsOf(me).includes(shopTab))) {
     const role = me.member?.role;
     const mayOpenShopReports = areasOf(me).shop && (role === undefined || role === 'owner' || role === 'manager');
     // "See your stock" is a count's link: a kitchen keeps none, and its menu is already in the nav.
@@ -174,8 +176,10 @@ export default async function ReportsPage({
         <div className="page-body srp-page">
           {mayOpenShopReports ? (
             <>
+              {/* The report itself first; the other six are a bar beneath it, not the page. */}
+              <CounterReport />
+              <h2 className="cr-more">{t('counterMore')}</h2>
               <RetailReportsNav active="hub" />
-              <RetailReportsHub />
             </>
           ) : (
             <div className="card">

@@ -1817,6 +1817,62 @@ export interface ByChannelPage {
   caveat: string;
 }
 
+/**
+ * Jira GRW-591 — the counter report: four questions, each with one number and one line to act on.
+ *
+ * Nothing here is a sentence. The API sends figures and keys — `dow`, `fromHour`, `sharePct` — and the
+ * screen words them from `messages/*.json`, because an English string in a payload is a screen Hindi
+ * cannot render (the lesson `reports-i18n.test.ts` exists to keep).
+ */
+export interface CounterDay {
+  dateISO: string;
+  /** 1 = Monday … 7 = Sunday. */
+  dow: number;
+  valueMinor: string;
+}
+export interface CounterItem {
+  id: string;
+  name: string;
+  qty: number;
+  valueMinor: string;
+  sharePct: number;
+}
+export interface CounterMover {
+  id: string;
+  name: string;
+  qty: number;
+  previousQty: number;
+  deltaQty: number;
+}
+export interface CounterReportPage {
+  window: { key: string; label: string; startISO: string; endExclusiveISO: string };
+  previous: { startISO: string; endExclusiveISO: string; hasData: boolean };
+  anySales: boolean;
+  takings: {
+    totalMinor: string;
+    previousMinor: string | null;
+    changePct: number | null;
+    differenceMinor: string | null;
+    bills: number;
+    averageBillMinor: number | null;
+    previousAverageBillMinor: number | null;
+    byDay: CounterDay[];
+  };
+  earners: {
+    rows: CounterItem[];
+    distinct: number;
+    leader: { name: string; sharePct: number } | null;
+    slow: Array<{ id: string; name: string; qty: number }>;
+    slowTotal: number;
+  };
+  busy: {
+    byHour: Array<{ hour: number; valueMinor: string }>;
+    peak: { fromHour: number; toHour: number; valueMinor: string } | null;
+    quietestDay: { dow: number; valueMinor: string } | null;
+  };
+  changed: { up: CounterMover[]; down: CounterMover[] };
+}
+
 /** Jira GRW-635 — a return's reason, from the small set returns are grouped by. */
 export type ReturnReason = 'size' | 'not_as_described' | 'faulty' | 'wrong_item' | 'changed_mind' | 'other';
 export interface OrderReturn {

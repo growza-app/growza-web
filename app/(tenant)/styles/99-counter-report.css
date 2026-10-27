@@ -1,0 +1,344 @@
+/*
+ * Jira GRW-591 — the counter report: four cards, each a question with one line to act on.
+ *
+ * Drawn at 344px first (a folded Galaxy Z Fold, the narrowest screen in the device matrix) and widened
+ * from there. One column on a phone; two from 760px, where a card at full width would be a line of text
+ * with a metre of white beside it.
+ *
+ * No raw colours: every one is a token from 00-base.css, which `accent-discipline.test.ts` enforces.
+ */
+
+.cr {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.cr-toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cr-select {
+  width: auto;
+  min-width: 10rem;
+}
+
+.cr-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-4);
+}
+
+.cr-skeleton {
+  min-height: 12rem;
+}
+
+/* ------------------------------------------------------------------ what you took */
+
+.cr-label {
+  margin: 0;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.cr-hero {
+  /* The one number on the screen that is allowed to be this big. */
+  margin: var(--sp-1) 0 var(--sp-1);
+  font-size: var(--fs-12);
+  font-weight: 650;
+  line-height: 1.1;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.cr-delta {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.cr-delta.is-up {
+  color: var(--accent-deep);
+}
+
+.cr-delta.is-down {
+  color: var(--danger-deep);
+}
+
+.cr-sub {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ the bars */
+
+.cr-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cr-bar-col {
+  display: flex;
+  flex: 1 1 0;
+  /* `min-width: 0` so fourteen hour columns shrink instead of pushing the card sideways. */
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/*
+ * The bar's own height is a PERCENTAGE, so it needs a box with a height to be a percentage of — and one
+ * that holds nothing else. Drawn without this slot, the bar and its label were flex siblings in the
+ * column: the label took what it needed, the bar shrank to the remainder, and every bar came out the same
+ * height whatever the figure said. A chart that lies about its own numbers is worse than no chart.
+ */
+.cr-bar-slot {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.cr-bars-day .cr-bar-slot {
+  height: 3.5rem;
+}
+
+.cr-bars-hour .cr-bar-slot {
+  height: 4.25rem;
+}
+
+.cr-bar {
+  width: 100%;
+  flex: 0 0 auto;
+  min-height: 0;
+  border-radius: 3px 3px 0 0;
+  background: var(--accent-soft);
+}
+
+.cr-bar.is-peak {
+  background: var(--accent);
+}
+
+.cr-bar-tick {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-1);
+  text-align: center;
+  color: var(--muted);
+  white-space: nowrap;
+  /* An hour label is wider than its column; it may overlap the next rather than widen the chart. */
+  overflow: visible;
+}
+
+/*
+ * An hour label is wider than its column, so only every third hour is named (the component decides which)
+ * and the name is allowed to spill into its neighbours' empty space. `overflow: visible` on a flex item
+ * whose siblings are blank is how a centred label stays centred on ITS bar.
+ */
+.cr-bars-hour .cr-bar-tick {
+  min-height: 1rem;
+}
+
+/* ------------------------------------------------------------------ what earns */
+
+.cr-title {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-5);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cr-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cr-row-line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: var(--fs-3);
+}
+
+.cr-row-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--text);
+  /* A dish with a long name loses its tail rather than wrapping the count onto its own line. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-row-qty {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cr-row-money {
+  flex: 0 0 auto;
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr-row-track {
+  display: block;
+  margin-top: 5px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--slate-soft);
+}
+
+.cr-row-fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* ------------------------------------------------------------------ the line to act on */
+
+/*
+ * The sentence is the product; the chart above it is only the evidence. It is given a tinted block of its
+ * own so an owner skimming four cards on a phone reads four sentences and nothing else if that is all they
+ * have time for.
+ */
+.cr-say {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-2);
+  line-height: 1.45;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.cr-say-warn {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+.cr-aside {
+  margin: var(--sp-3) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-2);
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* An aside straight after a sentence block is a second line of the same thought, not a new section. */
+.cr-say + .cr-aside {
+  border-top: 0;
+  padding-top: 0;
+  margin-top: var(--sp-2);
+}
+
+/* ------------------------------------------------------------------ what changed */
+
+.cr-moves {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cr-move,
+.cr-move-bill {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-3);
+}
+
+.cr-move-bill {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+}
+
+.cr-move-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.cr-move-delta {
+  flex: 0 0 auto;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr-move.is-up .cr-move-delta,
+.cr-move-bill.is-up .cr-move-delta {
+  color: var(--accent-deep);
+}
+
+.cr-move.is-down .cr-move-delta,
+.cr-move-bill.is-down .cr-move-delta {
+  color: var(--danger-deep);
+}
+
+/*
+ * Two columns once a card at full width would be a sentence with a metre of white beside it. Below this
+ * the cards stack, which is the phone layout they were drawn at.
+ */
+@media (min-width: 760px) {
+  .cr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .cr-toolbar {
+    grid-column: 1 / -1;
+  }
+}
+
+/* The heading over the bar of the other six reports, beneath the four cards. */
+.cr-more {
+  margin: var(--sp-5) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/*
+ * The six other reports, on a page where none of them is the current one. As a tab bar with nothing
+ * selected they were four grey words in a white box that nobody would guess were links.
+ */
+.srp-nav-links {
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+}
+
+.srp-nav-links .srp-nav-tab {
+  justify-content: center;
+  border: 1px solid var(--border);
+  color: var(--accent-deep);
+}
+
+.srp-nav-links .srp-nav-tab:hover {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}

@@ -63,15 +63,18 @@ describe('Retail Enterprise UI Redesign across all 6 surfaces', () => {
     expect(ordersCss).toContain('.ord-chips-channel');
   });
 
-  it('Surface 3 (Reports): shares RetailReportsNav across all 6 retail report screens and renders RetailReportsHub on /reports', () => {
+  it('Surface 3 (Reports): shares RetailReportsNav across all 6 retail report screens and renders the counter report on /reports', () => {
     const reportsPage = read('app/(tenant)/reports/page.tsx');
     const navFile = read('app/(tenant)/components/RetailReportsNav.tsx');
     const reportCss = read('app/(tenant)/styles/99-stock-report.css');
 
     expect(reportsPage).toContain('RetailReportsNav');
-    expect(reportsPage).toContain('RetailReportsHub');
+    // Jira GRW-591 — the hub of six link-cards WAS this page; the counter report is, and the six are the
+    // bar beneath it. Nothing is unreachable: every card the hub held is a tab in RetailReportsNav.
+    expect(reportsPage).toContain('<CounterReport />');
+    expect(reportsPage).not.toContain('RetailReportsHub');
     expect(navFile).toContain('export function RetailReportsNav');
-    expect(navFile).toContain('export function RetailReportsHub');
+    expect(navFile).not.toContain('RetailReportsHub');
     expect(reportCss).toContain('.srp-nav');
     expect(reportCss).toContain('.srp-nav-tab');
 

@@ -38,13 +38,15 @@ describe('FR-04 — a part that is meaningless for a business is absent, not zer
   });
 
   /*
-   * Owner, 2026-10-26 — three of the tabs now ARE built for a business with no bookings, so this is no
-   * longer "every tab". GRW-610 wrote the rule when Revenue counted appointments only and the client counts
-   * beside it did the same; `sale` rows joined Revenue in GRW-576 and the client counts on 2026-10-26, and
-   * County Chicken's ₹27,212, ₹1,088 average spend and 52% repeat were being computed correctly and then
-   * withheld. Bookings, Services and Staff stay behind the door: those WOULD be the zeros GRW-610 meant.
+   * Owner, 2026-10-27 — a business with no bookings opens its OWN report, not a generic one with the
+   * unanswerable parts hidden. His verdict on the latter: "most of the information is useless and ui is
+   * not good and it's for all verticals, Not providing value to owner" — and the screen agreed, down to a
+   * bar chart of one bar reading "Products, 100%". Jira GRW-591 put four cards there instead.
+   *
+   * The three generic tabs are still CORRECT and still reachable by name (`?tab=revenue`); nothing points
+   * at them. Bookings, Services and Staff were never offered: those WOULD be the zeros GRW-610 meant.
    */
-  it('Reports — a business with no bookings opens the three tabs that answer it, and the hub for the rest', () => {
+  it('Reports — a business with no bookings opens its own four cards, and the generic three only by name', () => {
     const page = read('reports/page.tsx');
     // The three, named once, so the set cannot drift apart from the reasoning above.
     expect(page).toContain("const SHOP_REPORT_TABS = new Set<string>(['overview', 'revenue', 'customers']);");
@@ -58,13 +60,16 @@ describe('FR-04 — a part that is meaningless for a business is absent, not zer
     // …and the tab bar offers a shop only those three, whatever the plan allows.
     expect(page).toContain('allowedTabsOf(me).filter((key) => !noBookings || SHOP_REPORT_TABS.has(key))');
     /*
-     * The nav's own link carries no `?tab=`, so without this the shop fell to 'todo', missed the three and
-     * landed back on the hub — the tabs existed and nothing on screen pointed at them.
+     * No `?tab=` means "show me Reports", which is the counter report; a tab named explicitly is somebody
+     * asking for that one. Without the second half, the nav's own tab-less link would have reopened a
+     * generic tab and the four cards would be unreachable from the menu.
      */
-    expect(page).toContain("const shopTab = noBookings && !params.tab && allowedTabsOf(me).includes('overview') ? 'overview' : tab;");
+    expect(page).toContain('const shopTab = tab;');
+    expect(page).toContain('const askedGenericTab = noBookings && params.tab !== undefined;');
+    expect(page).toContain('<CounterReport />');
     expect(page).toContain('canOpen(shopTab) ? shopTab : firstAllowed');
-    // ...and the four retail reports stay linked from there, so neither set is a dead end. They render
-    // inside the shell, under the tab bar, rather than above the page title.
+    // ...and the six retail reports stay linked beneath the cards, so neither set is a dead end. They also
+    // render inside the shell for a shop that deep-linked one of the generic three.
     expect(read('reports/ReportsShell.tsx')).toContain('{!areas.bookings ? <RetailReportsNav active="hub" /> : null}');
     // The tabs are the first thing in the header: they change the page, the controls under them only narrow it.
     const shell = read('reports/ReportsShell.tsx');

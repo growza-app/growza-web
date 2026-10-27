@@ -2790,6 +2790,55 @@
         "none": "कोई देर से नहीं है। आपके नियमित ग्राहक आ रहे हैं।",
         "seeAll": "सभी {n} देखें"
       }
+    },
+    "counterMore": "और रिपोर्ट"
+  },
+  "counterReport": {
+    "title": "रिपोर्ट",
+    "rangeLabel": "अवधि",
+    "range": {
+      "last_7_days": "इस हफ़्ते",
+      "this_month": "इस महीने",
+      "last_month": "पिछले महीने",
+      "last_3_months": "पिछले 3 महीने",
+      "this_year": "इस साल"
+    },
+    "loadError": "रिपोर्ट नहीं खुल पाई।",
+    "retry": "फिर कोशिश करें",
+    "nothingTitle": "इस अवधि में कुछ नहीं बिका",
+    "nothingBody": "एक ऑर्डर लीजिए, आंकड़े यहीं से शुरू होंगे।",
+    "took": {
+      "label": "आपने कमाए",
+      "bills": "{n, plural, one {# ऑर्डर} other {# ऑर्डर}}",
+      "average": "{amount} प्रति ऑर्डर",
+      "more": "पिछली अवधि से {amount} ज़्यादा",
+      "less": "पिछली अवधि से {amount} कम",
+      "same": "पिछली अवधि जितना ही",
+      "noPrior": "अभी तुलना करने को कुछ नहीं"
+    },
+    "earners": {
+      "title": "पैसा कहाँ से आता है",
+      "qtyHeading": "बिके",
+      "moneyHeading": "कमाई",
+      "leader": "आपकी पूरी कमाई का {pct}% {name} है।",
+      "others": "{n, plural, one {और #} other {और #}}",
+      "slow": "मुश्किल से बिके: {names}",
+      "slowMore": "{names} और {n} और",
+      "nothing": "अभी कुछ नहीं बिका।"
+    },
+    "busy": {
+      "title": "भीड़ कब होती है",
+      "peak": "आपकी भीड़ {from}–{to} है।",
+      "quietest": "{day} सबसे सुस्त दिन है — कुल {amount}।",
+      "notEnough": "भीड़ का समय बताने लायक बिक्री अभी नहीं हुई।"
+    },
+    "changed": {
+      "title": "क्या बदला",
+      "up": "{n} ज़्यादा",
+      "down": "{n} कम",
+      "averageBill": "ऑर्डर का आकार",
+      "noPrior": "तुलना करने को पिछली अवधि नहीं — यह आपकी पहली है।",
+      "steady": "पिछली अवधि से कुछ ख़ास नहीं बदला।"
     }
   },
   "autopayRenewal": {
