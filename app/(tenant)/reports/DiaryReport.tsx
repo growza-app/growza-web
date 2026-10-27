@@ -8,6 +8,7 @@ import type { DiaryReportPage } from '../lib/api-types';
 import { formatMoney, intlLocale } from '../lib/format';
 import { segmentRangeValues } from '../lib/segment-range';
 import { useNoProvider } from '../lib/use-no-provider';
+import { useLabel } from '../components/LabelsProvider';
 import { useBranch } from '../components/BranchProvider';
 import { useSession } from '../components/SessionProvider';
 
@@ -120,6 +121,8 @@ export function DiaryCards({ data }: { data: DiaryReportPage }) {
    * and a second copy here would be a fifth wording for a clinic to disagree with.
    */
   const noProvider = useNoProvider();
+  // The business's own word for what it books — "services", "treatments", "jobs" (ctx.labels).
+  const serviceWord = useLabel('services', 'services').toLowerCase();
   const money = useCallback((minor: string | number | null) => formatMoney(minor, 'INR', locale), [locale]);
 
   // 1 Jan 2024 was a Monday, so `Date.UTC(2024, 0, dow)` is that weekday for dow 1–7. Formatted in UTC so
@@ -188,6 +191,15 @@ export function DiaryCards({ data }: { data: DiaryReportPage }) {
             );
           })}
         </ul>
+        {/*
+          QA 2026-10-27 (L1) — the two cards below count SERVICES; the headline also counts what was sold
+          off the shelf and over the counter. Their shares are of the service money, so they still add up
+          to 100 — and this line is what stops the difference being invisible. Without it a ₹3,000 shampoo
+          sale moved every stylist's share down and nothing on screen said why.
+        */}
+        {Number(takings.otherMinor) > 0 ? (
+          <p className="cr-aside">{t('took.fromTheShelf', { amount: money(takings.otherMinor), service: serviceWord })}</p>
+        ) : null}
         {/* The number this product exists to push down, so it sits on the money card and not in a tab. */}
         {takings.noShows > 0 ? <p className="cr-say cr-say-warn">{t('took.noShows', { n: takings.noShows })}</p> : null}
       </section>

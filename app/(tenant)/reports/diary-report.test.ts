@@ -32,6 +32,8 @@ const payload: DiaryReportPage = {
     visits: 41,
     averageVisitMinor: 118293,
     previousAverageVisitMinor: 110810,
+    serviceMinor: '4850000',
+    otherMinor: '0',
     noShows: 2,
     previousNoShows: 1,
     byDay: [
@@ -137,6 +139,20 @@ describe('the four cards say something, in English', () => {
 
   it('sends the message from What to do rather than growing a second way to send it', () => {
     expect(render('en')).toContain('href="/reports?tab=todo"');
+  });
+
+  it('names the money the two cards below are not made of, so the shares still add up', () => {
+    // QA L1: a shelf sale lifts the headline and must not move anybody's share.
+    const withShelf: DiaryReportPage = {
+      ...payload,
+      takings: { ...payload.takings, totalMinor: '5150000', serviceMinor: '4850000', otherMinor: '300000' },
+    };
+    const shown = text(render('en', withShelf));
+    expect(shown).toContain('₹3,000 came from things sold rather than booked');
+    // The shares are unchanged by it.
+    expect(shown).toContain('Priya brought in 42% of it.');
+    // ...and the line is absent when there is nothing to explain.
+    expect(text(render('en'))).not.toContain('came from things sold rather than booked');
   });
 
   it('gives a bar to every day of the period, including the one that took nothing', () => {

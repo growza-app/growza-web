@@ -1922,6 +1922,10 @@ export interface DiaryReportPage {
     visits: number;
     averageVisitMinor: number | null;
     previousAverageVisitMinor: number | null;
+    /** Of the headline, the part the two cards below are made of. */
+    serviceMinor: string;
+    /** The rest: things sold rather than booked. Named on screen so the missing share is accounted for. */
+    otherMinor: string;
     noShows: number;
     previousNoShows: number | null;
     byDay: DiaryDay[];
