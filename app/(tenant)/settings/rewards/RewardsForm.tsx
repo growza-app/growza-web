@@ -32,8 +32,10 @@ const EXAMPLE_BILL_MINOR = 100_000;
  * How long points sit before they can be spent — QA 2026-10-27 (loophole L3).
  *
  * Three answers rather than a box for a number of hours, for the reason the expiry list gives: nobody has an
- * opinion about 37 hours. "Straight away" is 0 and is what every business starts on, so this screen changes
- * nothing for anybody who does not touch it.
+ * opinion about 37 hours.
+ *
+ * Every business starts on 24 — earn today, spend from tomorrow (owner, 2026-10-28). An owner who wants the
+ * points spendable at once says so here; the default is the scheme rather than an instant discount.
  */
 const HOLD_CHOICES = [0, 24, 168] as const;
 
@@ -63,7 +65,8 @@ export function RewardsForm({ initial }: { initial: RewardSettings | null }) {
   const [enabled, setEnabled] = useState(initial?.enabled ?? false);
   const [percent, setPercent] = useState(((initial?.earnBps ?? 200) / 100).toString());
   const [expiryDays, setExpiryDays] = useState(String(initial?.expiryDays ?? 365));
-  const [holdHours, setHoldHours] = useState(String(initial?.holdHours ?? 0));
+  // 24 to match the plan's baseline (API migration 0167): earn today, spend from tomorrow.
+  const [holdHours, setHoldHours] = useState(String(initial?.holdHours ?? 24));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
