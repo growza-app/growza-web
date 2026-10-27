@@ -37,19 +37,46 @@ describe('FR-04 — a part that is meaningless for a business is absent, not zer
     expect(list).toContain("{bookingsOn ? <span>{t('visitCount', { count: c.totalBookings })}</span> : null}");
   });
 
-  it('Reports — every tab is built from bookings, so a business with none is told its own are on the way, with two doors', () => {
+  /*
+   * Owner, 2026-10-26 — three of the tabs now ARE built for a business with no bookings, so this is no
+   * longer "every tab". GRW-610 wrote the rule when Revenue counted appointments only and the client counts
+   * beside it did the same; `sale` rows joined Revenue in GRW-576 and the client counts on 2026-10-26, and
+   * County Chicken's ₹27,212, ₹1,088 average spend and 52% repeat were being computed correctly and then
+   * withheld. Bookings, Services and Staff stay behind the door: those WOULD be the zeros GRW-610 meant.
+   */
+  it('Reports — a business with no bookings opens the three tabs that answer it, and the hub for the rest', () => {
     const page = read('reports/page.tsx');
-    const at = page.indexOf('if (!areasOf(me).bookings) {');
+    // The three, named once, so the set cannot drift apart from the reasoning above.
+    expect(page).toContain("const SHOP_REPORT_TABS = new Set<string>(['overview', 'revenue', 'customers']);");
+    // Still decided before the filters, the branch picker and every per-tab read.
+    const at = page.indexOf('if (noBookings &&');
     expect(at).toBeGreaterThan(page.indexOf('me = await api.me()'));
-    // …before the filters, the branch picker and every per-tab read.
     expect(at).toBeLessThan(page.indexOf('api.reportFilterOptions'));
+    // A tab outside the three is still the hub's, and the hub keeps both its doors.
     expect(page).toContain("href=\"/orders\"");
     expect(page).toContain("href=\"/stock\"");
+    // …and the tab bar offers a shop only those three, whatever the plan allows.
+    expect(page).toContain('allowedTabsOf(me).filter((key) => !noBookings || SHOP_REPORT_TABS.has(key))');
     for (const lang of ['en', 'hi'] as const) {
       const r = messages(lang).reports;
       for (const key of ['shopSoonTitle', 'shopSoonBody', 'shopSoonOrders', 'shopSoonStock']) expect(r[key], `${lang} ${key}`).toBeTruthy();
     }
     expect(messages('hi').reports.shopSoonTitle).toMatch(/[ऀ-ॿ]/);
+  });
+
+  /*
+   * ...and inside those three, the parts a kitchen cannot answer are absent rather than zeroed — which is
+   * GRW-610's actual rule, applied a level down from the page.
+   */
+  it('Reports — the booking-shaped parts of Overview are absent for a business with no diary', () => {
+    const scorecard = read('reports/Scorecard.tsx');
+    expect(scorecard).toContain("LINES.filter((l) => l.key !== 'visits' && l.key !== 'noShows')");
+    expect(scorecard).toContain('{lines.map(');
+    const overview = read('reports/OverviewTab.tsx');
+    expect(overview).toMatch(/\{areas\.bookings \? \(\s*<section className="rp-card">\s*<div className="rp-card-head">\s*<div>\s*<h2>\{rp\.bookingTrend\}/);
+    expect(overview).toMatch(/\{areas\.services \? \(\s*<section className="rp-card">\s*<h2>\{rp\.topServices\}/);
+    // "Nothing happened" cannot be decided by a booking count a kitchen never has.
+    expect(overview).toContain('areas.bookings ? data.kpis.bookings.value === 0 && data.kpis.revenueMinor.value === 0 : data.kpis.revenueMinor.value === 0');
   });
 
   it('Settings — the diary’s row is listed only for a business that takes bookings, and their addresses are closed to one that does not', () => {
@@ -96,9 +123,20 @@ describe('BR-04 — a salon’s rendering of every audited screen is unchanged',
     for (const href of ['/providers', '/services', '/settings']) expect(canSee(href, 'owner', undefined, false, SALON), href).toBe(true);
   });
 
-  it('a shop’s Home offers no door onto a screen that answers it with "not yet"', () => {
+  /*
+   * Owner, 2026-10-26 — Reports is a door worth opening now, so Home has the tile.
+   *
+   * It was withheld because `/reports` answered a shop with "your reports are on the way"; three of its tabs
+   * answer with the shop's own figures as of today, so the reason is spent. It takes Attendance's place
+   * rather than a seventh tile: a restaurant owner opens Reports several times a shift and marks attendance
+   * once a morning, and the nav still holds both.
+   */
+  it('a shop’s Home opens Reports, and Attendance moves to the nav', () => {
     const home = read('components/home/ShopHome.tsx');
-    expect(home, 'the Reports tile lands on the GRW-610 placeholder').not.toMatch(/href: '\/reports'/);
+    expect(home).toMatch(/href: '\/reports', label: t\.nav\.reports/);
+    expect(home).not.toMatch(/href: '\/attendance'/);
+    // Still filtered by what the role and the vertical allow, like every other tile.
+    expect(home).toContain('.filter((l) => canSee(l.href, role, reportTabs, true, areas))');
     // And "View all" opens the shelf, not a filter that answers per style what this list says per size.
     expect(home).toContain('href={`/stock${stockBranch}`}');
     expect(home).not.toContain('filter=low');

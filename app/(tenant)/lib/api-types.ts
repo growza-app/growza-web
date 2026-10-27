@@ -904,6 +904,14 @@ export interface CustomerSegmentCount {
   key: 'active' | 'due' | 'at_risk' | 'inactive';
   count: number;
   pct: number;
+  /**
+   * QA 2026-10-26 — this band's boundaries in days, from the vertical's own thresholds.
+   *
+   * Numbers, not a finished string: the server does not know the reader's language, and a first draft that
+   * sent "0–14 days" broke Hindi within the hour. Optional because a response cached before it existed has
+   * none, and `segmentRangeWords` then falls back to the salon's 0–30 / 31–45 / 46–90 / 90+.
+   */
+  range?: { from: number; to: number | null };
 }
 
 export interface CustomerStats {

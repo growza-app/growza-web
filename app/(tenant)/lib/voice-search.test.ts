@@ -5,6 +5,7 @@ import {
   claimVoiceSession,
   cleanVoiceTranscript,
   extractVoiceTranscript,
+  getSpeechRecognitionConstructor,
   releaseVoiceSession,
   voiceSearchLang,
   type BrowserSpeechRecognitionResultList,
@@ -61,5 +62,39 @@ describe('POS and Menu search automatically ask the server for OpenAI embedding 
     expect(src).toContain('useServiceSuggestions(');
     expect(src).toContain('extraSuggestions(');
     expect(src).toContain('also-try-chip');
+  });
+});
+
+/**
+ * QA 2026-10-26 — the microphone is not offered where it cannot work.
+ *
+ * A phone reaches a dev build over the LAN at `http://192.168.x.x:3020`, and the constructor exists there:
+ * the button appeared, every tap failed, and the owner went looking for a Chrome permission that an
+ * insecure origin is not even listed under. Their global "Sites can ask for mic" was on the whole time —
+ * it lets a site ASK, and an http page is not allowed to. Production is https and is unaffected.
+ */
+describe('voice search needs a secure origin, not just the API', () => {
+  const withContext = (secure: boolean, hasApi = true) => {
+    vi.stubGlobal('window', {
+      isSecureContext: secure,
+      ...(hasApi ? { SpeechRecognition: function Rec() {} } : {}),
+    });
+    try {
+      return getSpeechRecognitionConstructor();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  };
+
+  it('is offered on https and on localhost', () => {
+    expect(withContext(true)).not.toBeNull();
+  });
+
+  it('is withheld on a plain-http origin even though the constructor is there', () => {
+    expect(withContext(false)).toBeNull();
+  });
+
+  it('is still withheld on a browser that has no SpeechRecognition at all', () => {
+    expect(withContext(true, false)).toBeNull();
   });
 });

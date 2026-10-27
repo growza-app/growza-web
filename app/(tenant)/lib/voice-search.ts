@@ -72,9 +72,22 @@ export function voiceSearchLang(locale: string): 'hi-IN' | 'en-IN' {
   return locale === 'hi' ? 'hi-IN' : 'en-IN';
 }
 
-/** Returns the browser's `SpeechRecognition` or `webkitSpeechRecognition` constructor, or `null` when unsupported. */
+/**
+ * Returns the browser's `SpeechRecognition` or `webkitSpeechRecognition` constructor, or `null` when voice
+ * search cannot work here.
+ *
+ * QA 2026-10-26 — `isSecureContext` is half of that question and the half this forgot. The constructor
+ * exists on a plain-http page; the microphone behind it does not. A dashboard opened over the LAN
+ * (`http://192.168.x.x:3020`, which is how a phone reaches a dev build) therefore offered a microphone
+ * button, failed on every tap, and sent the owner to look for a permission that Chrome does not list for an
+ * insecure origin at all — there is no switch to find, so the advice was a wild goose chase.
+ *
+ * Secure means https, or localhost. Production is https and is unaffected; what changes is that the button
+ * now stays away from the one place it could never have worked.
+ */
 export function getSpeechRecognitionConstructor(): BrowserSpeechRecognitionConstructor | null {
   if (typeof window === 'undefined') return null;
+  if (!window.isSecureContext) return null;
   const w = window as unknown as {
     SpeechRecognition?: BrowserSpeechRecognitionConstructor;
     webkitSpeechRecognition?: BrowserSpeechRecognitionConstructor;

@@ -227,19 +227,19 @@
     "segments": {
       "active": {
         "label": "आ रहे हैं",
-        "range": "0–30 दिन"
+        "range": "0–{to} दिन"
       },
       "due": {
         "label": "आने का समय",
-        "range": "31–45 दिन"
+        "range": "{from}–{to} दिन"
       },
       "at_risk": {
         "label": "दूर हो रहे हैं",
-        "range": "46–90 दिन"
+        "range": "{from}–{to} दिन"
       },
       "inactive": {
         "label": "आना बंद कर दिया",
-        "range": "90+ दिन"
+        "range": "{from}+ दिन"
       }
     },
     "statusNever": "कभी नहीं आए",
@@ -492,6 +492,7 @@
     "stopVoiceSearch": "बोलकर खोजना रोकें",
     "voiceListening": "सुन रहे हैं… अब बोलें",
     "voicePermissionDenied": "ब्राउज़र में माइक की अनुमति बंद है",
+    "voicePermissionDeniedHelp": "माइक बंद है। आप टाइप कर सकते हैं।",
     "alsoTry": "ये भी देखें",
     "actionFailed": "यह नहीं हुआ। कृपया फिर से कोशिश करें।",
     "optional": "वैकल्पिक",
@@ -507,7 +508,13 @@
       "page": "पेज {current} / {count}"
     },
     "noProvider": "कोई {provider} नहीं",
-    "loading": "लोड हो रहा है…"
+    "loading": "लोड हो रहा है…",
+    "voiceHowTo": "इसे चालू कैसे करें",
+    "voiceEnableTitle": "माइक चालू करें",
+    "voiceEnableSteps": "1. वेब पते के पास बने ताले पर दबाएँ।\n2. माइक्रोफ़ोन ढूँढें और चालू करें।\n3. यहाँ वापस आकर फिर से कोशिश करें दबाएँ।",
+    "voiceEnableWhy": "यह सिर्फ़ आप कर सकते हैं — कोई वेबसाइट अपना माइक खुद चालू नहीं कर सकती।",
+    "voiceTryAgain": "फिर से कोशिश करें",
+    "voiceNoteClose": "यह संदेश बंद करें"
   },
   "branchScope": {
     "topics": {

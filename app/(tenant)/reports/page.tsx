@@ -27,6 +27,24 @@ import { ReportsClient, type TabPayload } from './ReportsClient';
  */
 const ALL_REPORT_TABS = ['todo', 'overview', 'customers', 'revenue', 'bookings', 'services', 'staff'] as const;
 
+/**
+ * Owner, 2026-10-26 — the three of those a business with no bookings can honestly answer.
+ *
+ * GRW-610 sent every such business straight to the retail hub, on the reasoning that these reports are built
+ * from bookings and "Money earned ₹0 under a till full of product sales would be a lie". That was true of
+ * the reports as they stood; it is not true of all three any more. Revenue counts `sale` rows (GRW-576) and
+ * the client counts beside them were taught about bills on 2026-10-26, so County Chicken's own figures —
+ * ₹27,212 of takings, ₹1,088 average spend, 52% repeat — were being computed correctly and then withheld.
+ *
+ * Bookings, Services and Staff stay away: a kitchen has no diary, no service lines and no stylist, and those
+ * three WOULD be the zeros the original reasoning was about. The restaurant's stock- and dish-shaped reports
+ * are still GRW-591's; this is the part that already existed.
+ */
+const SHOP_REPORT_TABS = new Set<string>(['overview', 'revenue', 'customers']);
+
+/** What this business's plan allows, before the vertical has its say. */
+const allowedTabsOf = (me: { reportTabs?: string[] }): string[] => me.reportTabs ?? [...ALL_REPORT_TABS];
+
 export const dynamic = 'force-dynamic';
 
 const TABS = new Set<string>([
@@ -119,7 +137,14 @@ export default async function ReportsPage({
    * sales would be a lie. They are absent for it, not zeroed; its own reports (sales, stock, what is selling) are Jira
    * GRW-591's. Until then it is told so plainly, with the two screens that already say what happened.
    */
-  if (!areasOf(me).bookings) {
+  const noBookings = !areasOf(me).bookings;
+  /*
+   * A shop asking for one of its three analytics tabs falls through to the ordinary renderer below; anything
+   * else about a business with no bookings is still answered by the hub. `tab` has already been checked
+   * against `TABS`, and `canOpen` below still has the final say — this decides which PAGE answers, not who
+   * may see it.
+   */
+  if (noBookings && !(SHOP_REPORT_TABS.has(tab) && allowedTabsOf(me).includes(tab))) {
     const role = me.member?.role;
     const mayOpenShopReports = areasOf(me).shop && (role === undefined || role === 'owner' || role === 'manager');
     // "See your stock" is a count's link: a kitchen keeps none, and its menu is already in the nav.
@@ -173,7 +198,7 @@ export default async function ReportsPage({
    * them would make a salon's grant able to conjure a tab the vertical does
    * not have.
    */
-  const allowedTabs = me.reportTabs ?? [...ALL_REPORT_TABS];
+  const allowedTabs = allowedTabsOf(me).filter((key) => !noBookings || SHOP_REPORT_TABS.has(key));
   const canOpen = (key: string) => allowedTabs.includes(key) && (key !== 'staff' || staffTabAvailable);
 
   /**

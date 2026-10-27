@@ -227,19 +227,19 @@
     "segments": {
       "active": {
         "label": "Coming in",
-        "range": "0–30 days"
+        "range": "0–{to} days"
       },
       "due": {
         "label": "Due a visit",
-        "range": "31–45 days"
+        "range": "{from}–{to} days"
       },
       "at_risk": {
         "label": "Slipping away",
-        "range": "46–90 days"
+        "range": "{from}–{to} days"
       },
       "inactive": {
         "label": "Gone quiet",
-        "range": "90+ days"
+        "range": "{from}+ days"
       }
     },
     "statusNever": "Never been in",
@@ -492,6 +492,7 @@
     "stopVoiceSearch": "Stop voice search",
     "voiceListening": "Listening… speak now",
     "voicePermissionDenied": "Microphone access is blocked in your browser",
+    "voicePermissionDeniedHelp": "Microphone is blocked. You can type instead.",
     "alsoTry": "Also try",
     "actionFailed": "That didn't work. Please try again.",
     "optional": "optional",
@@ -507,7 +508,13 @@
       "page": "Page {current} of {count}"
     },
     "noProvider": "No {provider}",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "voiceHowTo": "How to turn it on",
+    "voiceEnableTitle": "Turn on the microphone",
+    "voiceEnableSteps": "1. Tap the lock next to the web address.\n2. Find Microphone and turn it on.\n3. Come back here and tap Try again.",
+    "voiceEnableWhy": "Only you can do this — a website is not allowed to switch its own microphone on.",
+    "voiceTryAgain": "Try again",
+    "voiceNoteClose": "Close this message"
   },
   "branchScope": {
     "topics": {
