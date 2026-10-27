@@ -332,6 +332,9 @@ export default async function ReportsPage({
         range={range}
         compare={compare}
         staffTabAvailable={staffTabAvailable}
+        /* The same condition the two hub branches above are guarded by: show the way back only where
+           there is something behind it. */
+        hasSummary={noBookings ? areasOf(me).shop && maySeeTheBooks : maySeeTheBooks}
         allowedTabs={allowedTabs}
         filters={filters}
         filterOptions={filterOptions}
