@@ -1369,6 +1369,14 @@ export const api = {
       groupMembers?: CheckoutGroupMemberInput[];
       /** Jira GRW-314 — the combo's other legs the customer never had: cancelled, chair released. */
       cancelMemberIds?: string[];
+      /**
+       * Jira GRW-648 — reward points to spend on this bill. The lines are sent at their OWN prices and the
+       * server takes the discount off them, so a response's legs come back net of it.
+       *
+       * Undeclared until 2026-10-27: both tills passed it through a spread, which type-checks and documents
+       * nothing. The next person to read this file could not see that the field existed.
+       */
+      redeemPoints?: number;
       /** Jira GRW-480 — sent again after "That is a large amount" is confirmed. */
       confirmLargeAmount?: boolean;
     },
@@ -1506,6 +1514,14 @@ export const api = {
       channel?: string;
       /** The app's own order number, when typed. */
       externalRef?: string;
+      /**
+       * Jira GRW-648 — reward points to spend on this bill. The lines are sent at their OWN prices and the
+       * server takes the discount off them, so a response's legs come back net of it.
+       *
+       * Undeclared until 2026-10-27: both tills passed it through a spread, which type-checks and documents
+       * nothing. The next person to read this file could not see that the field existed.
+       */
+      redeemPoints?: number;
       // The route refuses to guess: exactly one of these (GRW-293). A named stylist only when paying a token (GRW-403).
     } & ({ noStylist: true; schedulableId?: never } | { schedulableId: string; noStylist?: never }),
   ) =>
