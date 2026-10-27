@@ -333,6 +333,55 @@ describe('Graphic Receipt Card model, structured WhatsApp text, and optional Rew
   });
 
   /**
+   * QA 2026-10-27 (loophole L4) — and the date on that promise.
+   *
+   * "You now have 420 points" with nothing after it is a number the business has not promised: points die
+   * at 365 days, and the day the client finds out is the day they try to spend them. The line sits under
+   * the balance, and a business whose points never die prints nothing extra.
+   */
+  it('puts a date under the balance, and reads it back as its own line rather than as a second balance', () => {
+    const withDate = (rewards: object) =>
+      receiptRows(
+        {
+          businessName: 'Glow Salon',
+          branchName: null,
+          when: '27 Oct 2026, 6:40 pm',
+          tokenNo: null,
+          stylist: null,
+          singles: [{ name: 'Haircut', amountMinor: 30000 }],
+          pkg: null,
+          totalMinor: 30000,
+          paidBy: 'Cash',
+          rewards,
+        },
+        {
+          ...copy,
+          rewardsTitle: 'Rewards',
+          rewardEarned: (points) => `You earned ${points} points towards your next visit.`,
+          rewardBalance: (points) => `You now have ${points} points.`,
+          rewardExpiry: (points, date) => `${points} points run out on ${date}.`,
+        },
+        money,
+      );
+
+    const rows = withDate({ redeemedPoints: 0, earnedPoints: 38, balancePoints: 420, expiringPoints: 38, expiringOn: '27 Oct 2027' });
+    const card = parseReceiptCard(rows);
+    // The balance is still read as the balance: the date must not be mistaken for a second one.
+    expect(card.rewardsBalance).toBe('420 points');
+    expect(card.rewardsBalanceLine).toBe('You now have 420 points.');
+    expect(card.rewardsExpiryLine).toBe('38 points run out on 27 Oct 2027.');
+
+    const waText = formatStructuredWhatsappText(rows);
+    expect(waText).toContain('*You now have 420 points.*');
+    expect(waText).toContain('38 points run out on 27 Oct 2027.');
+
+    // ...and a business whose points never die says nothing about dates at all.
+    const forever = parseReceiptCard(withDate({ redeemedPoints: 0, earnedPoints: 38, balancePoints: 420 }));
+    expect(forever.rewardsExpiryLine).toBeNull();
+    expect(formatStructuredWhatsappText(withDate({ redeemedPoints: 0, earnedPoints: 38, balancePoints: 420 }))).not.toMatch(/run out/);
+  });
+
+  /**
    * Found at the till, 2026-10-27: the card read "★ Leave us a Google review:" as the earning and the
    * twenty digits of the review link's id as the balance. The Rewards block ends at its blank line.
    */

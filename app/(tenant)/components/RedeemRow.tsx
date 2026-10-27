@@ -39,8 +39,20 @@ export function RedeemRow({
   if (!rewards || (rewards.maxRedeemable === 0 && rewards.balance === 0)) return null;
 
   const have = t('have', { points: rewards.balance });
-  // Two different reasons it cannot be spent, and the second is the one nobody guesses.
+  /*
+   * Three different reasons it cannot be spent, and only the first is the one anybody guesses.
+   *
+   * The hold goes first (QA 2026-10-27, loophole L3): a client holding 94 points with all 94 still waiting
+   * is not short of points and the bill is not too small, so either of the other two sentences would be a
+   * lie. 0 for every business that keeps no hold, which is the default and therefore most of them.
+   */
   const shortBy = rewards.minRedeemPoints - rewards.balance;
+  const why =
+    rewards.heldPoints > 0
+      ? t('held', { points: rewards.heldPoints })
+      : shortBy > 0
+        ? t('needMore', { points: shortBy })
+        : t('needBill', { amount: money(rewards.minBillMinor) });
 
   return (
     <div className="pf-redeem">
@@ -61,9 +73,7 @@ export function RedeemRow({
       ) : (
         <span className="pf-redeem-label pf-redeem-quiet">
           {have}
-          <span className="pf-redeem-have">
-            {shortBy > 0 ? t('needMore', { points: shortBy }) : t('needBill', { amount: money(rewards.minBillMinor) })}
-          </span>
+          <span className="pf-redeem-have">{why}</span>
         </span>
       )}
     </div>

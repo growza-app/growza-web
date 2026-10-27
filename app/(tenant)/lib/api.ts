@@ -607,6 +607,11 @@ export interface CustomerRewards {
   minBillMinor: number;
   maxRedeemable: number;
   discountMinor: number;
+  /**
+   * Of the balance above, how many are still in this business's hold — points they HAVE and may not spend
+   * yet (QA 2026-10-27, loophole L3). 0 for every business that keeps no hold, which is the default.
+   */
+  heldPoints: number;
   /** The next lot to die, and when. Null when nothing of theirs expires. */
   expiring: { points: number; at: string } | null;
 }
@@ -618,12 +623,15 @@ export interface RewardSettings {
   earnBps: number;
   /** 0 means points never die. */
   expiryDays: number;
+  /** How long points must sit before they can be spent. 0 — the default — means straight away. */
+  holdHours: number;
   pointValueMinor: number;
   minRedeemPoints: number;
   redeemCapBps: number;
   /** The most the platform allows, as this business's vertical leaves it. */
   maxEarnBps: number;
   maxExpiryDays: number;
+  maxHoldHours: number;
   /** False where points are not permitted at all — the switch is not drawn. */
   available: boolean;
   /** False between subscriptions: there is nowhere for the choice to live. */
@@ -657,7 +665,7 @@ export const api = {
     get<CustomerRewards>(`/api/v1/customers/${customerId}/rewards${billMinor === undefined ? '' : `?billMinor=${billMinor}`}`),
   rewardSettings: () => get<RewardSettings>('/api/v1/settings/rewards'),
   /** Any of the three. Answers with what was WRITTEN — a rate over the platform's ceiling comes back clamped. */
-  saveRewardSettings: (body: { enabled?: boolean; earnBps?: number; expiryDays?: number }) =>
+  saveRewardSettings: (body: { enabled?: boolean; earnBps?: number; expiryDays?: number; holdHours?: number }) =>
     patch<RewardSettings>('/api/v1/settings/rewards', body),
   alertPrefs: () => get<AlertPrefs>('/api/v1/alerts/prefs'),
   setAlertPref: (kind: AlertKind, enabled: boolean) => put<{ kind: AlertKind; enabled: boolean }>('/api/v1/alerts/prefs', { kind, enabled }),

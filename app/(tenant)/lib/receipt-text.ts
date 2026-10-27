@@ -34,6 +34,14 @@ export interface ReceiptRewards {
   redeemedMinor?: number;
   /** Customer's updated available point balance after this bill (e.g. 420). */
   balancePoints?: number;
+  /**
+   * How many of those points die next, and the day they die — QA 2026-10-27 (loophole L4).
+   *
+   * Already formatted, like `when`: the builder does no dates, and the till knows the salon's zone and the
+   * reader's language. Both absent together for a business whose points never expire.
+   */
+  expiringPoints?: number;
+  expiringOn?: string;
 }
 
 export interface ReceiptInput {
@@ -101,6 +109,7 @@ export interface ReceiptCopy {
   rewardRedeemed?: (points: number, amount: string) => string;
   rewardEarned?: (points: number) => string;
   rewardBalance?: (points: number) => string;
+  rewardExpiry?: (points: number, date: string) => string;
 }
 
 /**
@@ -206,6 +215,15 @@ export function receiptRows(input: ReceiptInput, copy: ReceiptCopy, money: (mino
     }
     if (rw.balancePoints !== undefined) {
       line({ t: copy.rewardBalance ? copy.rewardBalance(rw.balancePoints) : `Available balance: ${rw.balancePoints} pts` });
+    }
+    // The date on the promise. Printed under the balance and only when there is one, so a business whose
+    // points never die prints nothing extra (QA 2026-10-27, loophole L4).
+    if (rw.expiringPoints && rw.expiringPoints > 0 && rw.expiringOn) {
+      line({
+        t: copy.rewardExpiry
+          ? copy.rewardExpiry(rw.expiringPoints, rw.expiringOn)
+          : `${rw.expiringPoints} pts expire on ${rw.expiringOn}`,
+      });
     }
   }
   gap();
@@ -386,6 +404,8 @@ export interface ReceiptCardModel {
    * one of its own in English (owner, 2026-10-27).
    */
   rewardsBalanceLine: string | null;
+  /** The sentence under it: how many of those points die next, and when. Null when none do. */
+  rewardsExpiryLine: string | null;
   seeYou: string;
   reviewPrompt?: string | null;
   googleReviewUrl?: string | null;
@@ -421,6 +441,7 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
   let rewardsEarned: string | null = null;
   let rewardsBalance: string | null = null;
   let rewardsBalanceLine: string | null = null;
+  let rewardsExpiryLine: string | null = null;
   let seeYou = '';
   let reviewPrompt: string | null = null;
   let googleReviewUrl: string | null = null;
@@ -551,6 +572,15 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
        * the word that follows -- "420 points", "420 पॉइंट" -- which is what the card shows under BALANCE,
        * and the whole line is kept for the WhatsApp text.
        */
+      /*
+       * The line after the balance is the expiry (QA 2026-10-27, loophole L4): the builder writes at most
+       * these two, in this order, and taking it here keeps it out of the figure-matching below, which would
+       * otherwise read its date as somebody's balance.
+       */
+      if (rewardsBalance !== null && rewardsExpiryLine === null) {
+        rewardsExpiryLine = t;
+        continue;
+      }
       const figure: RegExpExecArray | null = rewardsBalance === null ? /(\d[\d,]*)\s*([^\s.,!]+)?/.exec(t.includes(':') ? t.slice(t.lastIndexOf(':') + 1) : t) : null;
       if (figure) {
         rewardsBalanceLine = t;
@@ -623,6 +653,7 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
     rewardsEarned,
     rewardsBalance,
     rewardsBalanceLine,
+    rewardsExpiryLine,
     seeYou,
     reviewPrompt,
     googleReviewUrl,
@@ -696,6 +727,7 @@ export function formatStructuredWhatsappText(rows: ReceiptRow[]): string {
     // The receipt's own sentence, in the owner's language. The fallback is for a row that predates it.
     if (c.rewardsBalanceLine) out.push(`*${c.rewardsBalanceLine}*`);
     else if (c.rewardsBalance) out.push(`Available balance: *${c.rewardsBalance}*`);
+    if (c.rewardsExpiryLine) out.push(c.rewardsExpiryLine);
   }
 
   out.push('');

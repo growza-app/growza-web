@@ -68,16 +68,23 @@ describe('what the till asks for', () => {
     // The balance rides along with the offer...
     expect(row).toMatch(/t\('offer', \{ points: rewards\.maxRedeemable \}\)[\s\S]{0,140}\{have\}/);
     // ...and stands alone when there is no offer, with the reason beside it.
-    expect(row).toMatch(/shortBy > 0 \? t\('needMore', \{ points: shortBy \}\) : t\('needBill', \{ amount: money\(rewards\.minBillMinor\) \}\)/);
+    /*
+     * QA 2026-10-27 — three reasons now, and the hold goes first (loophole L3). A client whose points are
+     * all still waiting is not short of points and the bill is not too small, so either of the other two
+     * sentences would be a lie.
+     */
+    expect(row).toMatch(/rewards\.heldPoints > 0[\s\S]{0,60}t\('held', \{ points: rewards\.heldPoints \}\)/);
+    expect(row).toMatch(/shortBy > 0[\s\S]{0,60}t\('needMore', \{ points: shortBy \}\)/);
+    expect(row).toMatch(/t\('needBill', \{ amount: money\(rewards\.minBillMinor\) \}\)/);
     // Nothing at all for somebody with no points: an empty frame is worse than no frame.
     expect(row).toMatch(/if \(!rewards \|\| \(rewards\.maxRedeemable === 0 && rewards\.balance === 0\)\) return null/);
     // One row, both tills: the counter and the visit sheet render the same component.
     expect(flow).toMatch(/<RedeemRow rewards=\{rewards\}/);
   });
 
-  it('words all three states in both languages', () => {
+  it('words every state in both languages', () => {
     for (const lang of [en, hi]) {
-      for (const key of ['have', 'needMore', 'needBill'] as const) {
+      for (const key of ['have', 'needMore', 'needBill', 'held'] as const) {
         expect(lang.payFlow.rewards[key], key).toBeTruthy();
       }
     }

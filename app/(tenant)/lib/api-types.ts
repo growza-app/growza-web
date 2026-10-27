@@ -996,6 +996,13 @@ export interface VisitRewards {
   discountMinor: number;
   earnedPoints: number;
   balanceAfter: number | null;
+  /**
+   * The next tranche of those points to die, and when — QA 2026-10-27 (loophole L4).
+   *
+   * The receipt told the customer "you now have 420 points" and never that points die at all. A number with
+   * no date on it is a promise the business has not made. Null when nothing of theirs is due to die.
+   */
+  expiring: { points: number; atISO: string } | null;
 }
 
 export interface CheckoutResponse {

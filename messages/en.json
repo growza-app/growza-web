@@ -895,7 +895,15 @@
       "how": "The client pays a bill. They get points for it. Next time they come, those points make their bill smaller. We do not message them. You tell them, or they see it on the bill.",
       "earning": "Points come from what the client really paid. Not the full price. If you gave a discount, the points are on the smaller amount. Part points are never given. The number is always rounded down.",
       "expiry": "Points start counting from the day you give them. Not from the last visit. Every bill's points have their own end date. When a client uses points, the oldest ones go first. Points past their date are gone. The till will not offer them.",
-      "spending": "Points cover only part of a bill. So every visit still brings in money. A client needs a few points before they can use any. If something comes back, the points come back too. What that bill gave is taken away. What the client spent is given back. If you fix a bill's amount later, the points change with it."
+      "spending": "Points cover only part of a bill. So every visit still brings in money. A client needs a few points before they can use any. If something comes back, the points come back too. What that bill gave is taken away. What the client spent is given back. If you fix a bill's amount later, the points change with it.",
+      "hold": "A client pays and gets points. They can use them on the very next bill, the same minute. That is a discount, not a reason to come back. Hold the points a day and they have to return to spend them. You lose nothing either way. Nobody can ever take off more than your cap allows."
+    },
+    "holdLabel": "Points can be used",
+    "holdHint": "Hold them a day and the points bring the client back. Let them be used now and they work like a discount.",
+    "hold": {
+      "0": "Straight away",
+      "24": "From the next day",
+      "168": "After a week"
     }
   },
   "settingsTeam": {
@@ -3163,7 +3171,9 @@
       "needMore": "{points, plural, one {# more} other {# more}} to use them",
       "needBill": "a bill of {amount} to use them",
       "receiptTitle": "Rewards",
-      "receiptBalance": "You now have {points, plural, one {# point} other {# points}}."
+      "receiptBalance": "You now have {points, plural, one {# point} other {# points}}.",
+      "receiptExpiry": "{points, plural, one {# point runs out} other {# points run out}} on {date}.",
+      "held": "{points, plural, one {# point} other {# points}} not ready to use yet"
     }
   },
   "help": {

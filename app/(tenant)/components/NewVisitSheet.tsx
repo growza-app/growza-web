@@ -24,7 +24,7 @@ function newAttemptKey(): string {
 import Link from '../../shared/AppLink';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useLocale, useTranslations } from 'next-intl';
-import { formatDateWithWeekday } from '../lib/format';
+import { formatDate, formatDateWithWeekday } from '../lib/format';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -1993,6 +1993,10 @@ export function NewVisitSheet({
                 redeemedPoints: paid.rewards.redeemedPoints,
                 redeemedMinor: paid.rewards.discountMinor,
                 ...(paid.rewards.balanceAfter !== null ? { balancePoints: paid.rewards.balanceAfter } : {}),
+                // The date on that promise, in the salon's zone and the reader's language (QA 2026-10-27, L4).
+                ...(paid.rewards.expiring
+                  ? { expiringPoints: paid.rewards.expiring.points, expiringOn: formatDate(paid.rewards.expiring.atISO, timezone, locale) }
+                  : {}),
               },
             }
           : {}),
@@ -2016,6 +2020,7 @@ export function NewVisitSheet({
         rewardRedeemed: (points, amount) => tRewards('receiptUsed', { points, amount }),
         rewardEarned: (points) => tRewards('receiptEarned', { points }),
         rewardBalance: (points) => tRewards('receiptBalance', { points }),
+        rewardExpiry: (points, date) => tRewards('receiptExpiry', { points, date }),
       },
       (minor) => formatMoney(String(minor)),
     );

@@ -70,7 +70,7 @@ describe('what the screen offers', () => {
 
   it('saves the lot at once — a switch that saved itself would start a rate its owner was still typing', () => {
     expect(form).toMatch(/<SettingsSaveBar/);
-    expect(form).toMatch(/api\.saveRewardSettings\(\{ enabled, earnBps: bps \?\? initial\.earnBps, expiryDays: days \}\)/);
+    expect(form).toMatch(/api\.saveRewardSettings\(\{ enabled, earnBps: bps \?\? initial\.earnBps, expiryDays: days, holdHours: Number\(holdHours\) \}\)/);
     // And closes, like every other full-page settings form (GRW-556 follow-up).
     expect(form).toMatch(/useCloseAfterSave\('\/settings'\)/);
   });
@@ -126,16 +126,17 @@ describe('its words', () => {
  * button that opens an empty bubble.
  */
 describe('the rule, in the info tips', () => {
-  const TIPS = ['how', 'earning', 'expiry', 'spending'] as const;
+  // QA 2026-10-27 — five, since the hold (loophole L3) is a rule an owner cannot work out from the field.
+  const TIPS = ['how', 'earning', 'expiry', 'hold', 'spending'] as const;
 
-  it('is offered on the switch, the rate, the expiry and the till line', () => {
+  it('is offered on the switch, the rate, the expiry, the hold and the till line', () => {
     for (const tip of TIPS) expect(form).toContain(`{t('tips.${tip}')}`);
-    // Four bubbles, four things that have a rule — not one giant one on the heading.
-    expect(form.match(/<InfoTip/g) ?? []).toHaveLength(4);
+    // One bubble per thing that has a rule — not one giant one on the heading.
+    expect(form.match(/<InfoTip/g) ?? []).toHaveLength(TIPS.length);
   });
 
   it('names what each one explains, so a screen reader announces more than "info"', () => {
-    for (const key of ['switchLabel', 'rateLabel', 'expiryLabel', 'tillLabel'] as const) {
+    for (const key of ['switchLabel', 'rateLabel', 'expiryLabel', 'holdLabel', 'tillLabel'] as const) {
       expect(form).toContain(`<InfoTip ask="infoTipHow" label={t('${key}')}>`);
     }
   });
@@ -150,7 +151,7 @@ describe('the rule, in the info tips', () => {
   });
 
   for (const [lang, messages] of [['English', en], ['Hindi', hi]] as const) {
-    it(`has ${lang} words for all four, and a label for the till line`, () => {
+    it(`has ${lang} words for every one of them, and a label for the till line`, () => {
       const rewards = messages.settingsRewards as unknown as { tips: Record<string, string>; tillLabel: string };
       expect(rewards.tillLabel.length).toBeGreaterThan(0);
       for (const tip of TIPS) {

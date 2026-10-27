@@ -2119,6 +2119,15 @@ input.wi-search-input-plain {
   color: var(--text);
 }
 
+/* QA 2026-10-27 (L4) — the date the balance above runs out, kept quiet under it. */
+.wi-rc-rewards-bal-exp {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
 .wi-rc-footer {
   padding: var(--sp-2) var(--sp-4);
   background: var(--page-bg);
