@@ -996,6 +996,7 @@ export function PayFlow({
               startAt: visit.appointment.startAt,
               tokenNo: null as number | null,
               earnedPoints: r.rewards?.earnedPoints ?? 0,
+              rewards: r.rewards ?? null,
             };
           })()
         : await (async () => {
@@ -1034,6 +1035,7 @@ export function PayFlow({
               startAt: r.startAt,
               tokenNo: r.tokenNo ?? null,
               earnedPoints: r.rewards?.earnedPoints ?? 0,
+              rewards: r.rewards ?? null,
             };
           })();
       const result = settled;
@@ -1070,9 +1072,24 @@ export function PayFlow({
           })),
           totalMinor: paidMinor,
           adjustMinor: totalMinor - listMinor,
-          // Jira GRW-648 — the points this bill spent, and the ones it just earned them.
-          ...(redeemPoints > 0 ? { rewardPoints: redeemPoints, rewardMinor: discountMinor } : {}),
-          ...(result.earnedPoints > 0 ? { earnedPoints: result.earnedPoints } : {}),
+          /*
+           * Jira GRW-648, owner 2026-10-27 — the whole reward story, in one field.
+           *
+           * It used to hand over two loose numbers, `rewardPoints` and `earnedPoints`, and the receipt could
+           * only ever say what this bill did. The customer's own question -- how many have I got now? -- had
+           * no answer on the one piece of paper they keep. `rewards` carries the balance as well, and the
+           * builder prints the three together under a heading of their own.
+           */
+          ...(result.rewards
+            ? {
+                rewards: {
+                  earnedPoints: result.rewards.earnedPoints,
+                  redeemedPoints: result.rewards.redeemedPoints,
+                  redeemedMinor: result.rewards.discountMinor,
+                  ...(result.rewards.balanceAfter !== null ? { balancePoints: result.rewards.balanceAfter } : {}),
+                },
+              }
+            : {}),
           paidBy,
           googleReviewUrl,
         },
@@ -1091,8 +1108,10 @@ export function PayFlow({
           discount: nv.receiptDiscount,
           extra: nv.receiptExtra,
           saved: nv.receiptSaved,
-          rewardUsed: (points, amount) => t('rewards.receiptUsed', { points, amount }),
-          earned: (points) => t('rewards.receiptEarned', { points }),
+          rewardsTitle: t('rewards.receiptTitle'),
+          rewardRedeemed: (points, amount) => t('rewards.receiptUsed', { points, amount }),
+          rewardEarned: (points) => t('rewards.receiptEarned', { points }),
+          rewardBalance: (points) => t('rewards.receiptBalance', { points }),
           paidBy: nv.receiptPaidBy,
           seeYou: nv.receiptSeeYou,
           reviewPrompt: nv.receiptReviewPrompt,
