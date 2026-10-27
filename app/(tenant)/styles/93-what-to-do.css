@@ -174,10 +174,12 @@
     max-width: 1040px;
   }
 
-  /* The money is the week's headline, not one card of five; the empty state and the footnote are
-     about the whole screen, not one column of it. */
+  /* The money is the week's headline, not one card of five. The empty state, the share card and the
+     footnote are about the whole screen rather than one column of it -- and the share card is always
+     last, so left in a column it would sit alone in a half-width box with nothing beside it. */
   .td-money,
   .td-empty,
+  .td-share,
   .td-foot { grid-column: 1 / -1; }
 
   /* The cards in a row are the same height, so their buttons line up rather than stepping. */

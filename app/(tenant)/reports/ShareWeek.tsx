@@ -60,7 +60,7 @@ export function ShareWeek({ data, business }: { data: ReportTodo; business: stri
   ].join('\n');
 
   return (
-    <section className="rp-card td-card">
+    <section className="rp-card td-card td-share">
       <div className="td-head"><h2 className="td-title">{t('share.title')}</h2></div>
       <p className="td-hint">{t('share.hint')}</p>
       <a className="btn td-action" href={whatsappHref('', text)} target="_blank" rel="noopener noreferrer">
