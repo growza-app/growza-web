@@ -134,6 +134,23 @@
   white-space: nowrap;
 }
 
+/*
+ * What the client has, under what this bill can do with it. Second line, quieter: the desk acts on the
+ * offer, and reads the balance out when asked.
+ */
+.pf-redeem-have {
+  display: block;
+  margin-top: 2px;
+  font-weight: 500;
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+/* The same row with nothing to switch on: a balance, and which of the two reasons it cannot be spent. */
+.pf-redeem-quiet {
+  font-weight: 650;
+}
+
 /* "₹1,000 less ₹100 in points", under the figure being collected. */
 .pf-how-total-off {
   display: block;

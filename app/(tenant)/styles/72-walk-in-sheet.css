@@ -1517,6 +1517,15 @@ input.wi-search-input-plain {
   line-height: 1.2;
 }
 
+/* Jira GRW-648 — "₹300 less ₹42 in points", under the figure being collected. */
+.wi-tray-total-off {
+  display: block;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
 /* ---------- A package: "View details", and the overlay it opens (owner, 2026-10-07) ---------- */
 
 /*

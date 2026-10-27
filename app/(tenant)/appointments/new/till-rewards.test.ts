@@ -14,13 +14,32 @@ import { receiptRows, rowsToText } from '../../lib/receipt-text';
  */
 const flow = readFileSync(resolve(__dirname, 'PayFlow.tsx'), 'utf8');
 const card = readFileSync(resolve(__dirname, '../../components/ClientProfileCard.tsx'), 'utf8');
+/** The row itself, shared by the two tills since 2026-10-27 so they cannot word the same balance differently. */
+const row = readFileSync(resolve(__dirname, '../../components/RedeemRow.tsx'), 'utf8');
+/** And the question behind it, asked once for both of them. */
+const quote = readFileSync(resolve(__dirname, '../../lib/use-reward-quote.ts'), 'utf8');
+/** The other till. It had no rewards at all until 2026-10-27. */
+const sheet = readFileSync(resolve(__dirname, '../../components/NewVisitSheet.tsx'), 'utf8');
 
 describe('what the till asks for', () => {
   it('asks the one route that knows, with the bill, rather than working the offer out itself', () => {
-    expect(flow).toMatch(/api\s*\n?\s*\.customerRewards\(clientId, totalMinor\)/);
-    // No second copy of the cap, the floor or the balance arithmetic anywhere on this screen.
-    expect(flow).not.toMatch(/redeemCapBps/);
-    expect(flow).not.toMatch(/minRedeemPoints/);
+    expect(quote).toMatch(/api\s*\n?\s*\.customerRewards\(clientId, billMinor\)/);
+    // Both tills ask through it; neither has an effect of its own.
+    expect(flow).toMatch(/useRewardQuote\(fromApp \? null : clientId, totalMinor\)/);
+    expect(sheet).toMatch(/useRewardQuote\(rewardClientId, billTotalMinor\)/);
+    for (const [name, src] of [['PayFlow', flow], ['NewVisitSheet', sheet]] as const) {
+      expect(src, `${name} does not fetch the quote itself`).not.toMatch(/customerRewards\(/);
+    }
+    /*
+     * No second copy of the OFFER anywhere on this screen: what a bill can take is the API's answer, and
+     * a till that worked it out again would drift from the rules the owner set.
+     *
+     * Reading `minRedeemPoints` is allowed from 2026-10-27, and only to subtract: the balance line says
+     * "15 more to use them", which is two numbers the API sent, not a rule of its own. `redeemCapBps`
+     * stays out — that one IS the rule, and the till is told `minBillMinor` rather than deriving it.
+     */
+    for (const src of [flow, sheet, row, quote]) expect(src).not.toMatch(/redeemCapBps/);
+    for (const src of [flow, sheet, row, quote]) expect(src).not.toMatch(/(const|let)\s+maxRedeemable/);
   });
 
   it('knows whose points even when it is settling a booking', () => {
@@ -28,15 +47,68 @@ describe('what the till asks for', () => {
   });
 
   it('offers nothing when there is nobody, nothing to spend, or the read failed', () => {
-    expect(flow).toMatch(/if \(!clientId \|\| totalMinor <= 0\) \{\s*setRewards\(null\);/);
-    expect(flow).toMatch(/setRewards\(answer\.enabled && answer\.maxRedeemable > 0 \? answer : null\)/);
+    expect(quote).toMatch(/if \(!clientId \|\| billMinor <= 0\) \{\s*setRewards\(null\);/);
+    // Owner, 2026-10-27 — the ANSWER is kept whenever rewards are on, so the balance can be shown; what
+    // the bill can take still decides the toggle.
+    expect(quote).toMatch(/setRewards\(answer\.enabled \? answer : null\)/);
+    expect(quote).toMatch(/if \(!answer\.enabled \|\| answer\.maxRedeemable <= 0\) setUsePoints\(false\)/);
     // A failed read leaves the bill alone: the money is the thing with somebody standing at the counter.
-    expect(flow).toMatch(/\.catch\(\(\) => \{[\s\S]{0,400}setRewards\(null\);/);
+    expect(quote).toMatch(/\.catch\(\(\) => \{[\s\S]{0,400}setRewards\(null\);/);
+  });
+
+  /**
+   * Owner, 2026-10-27 — "at pos owner should be able to view rewards".
+   *
+   * The desk could only see a client's points when this bill could spend them, so the question asked at
+   * every counter had no answer on the screen. The row shows the balance either way, and when it cannot
+   * be spent it names which of the two reasons it is -- too few points, or too small a bill. Those are
+   * not the same thing, and the second is the one nobody guesses.
+   */
+  it('shows what the client has whether or not this bill can spend it', () => {
+    // The balance rides along with the offer...
+    expect(row).toMatch(/t\('offer', \{ points: rewards\.maxRedeemable \}\)[\s\S]{0,140}\{have\}/);
+    // ...and stands alone when there is no offer, with the reason beside it.
+    expect(row).toMatch(/shortBy > 0 \? t\('needMore', \{ points: shortBy \}\) : t\('needBill', \{ amount: money\(rewards\.minBillMinor\) \}\)/);
+    // Nothing at all for somebody with no points: an empty frame is worse than no frame.
+    expect(row).toMatch(/if \(!rewards \|\| \(rewards\.maxRedeemable === 0 && rewards\.balance === 0\)\) return null/);
+    // One row, both tills: the counter and the visit sheet render the same component.
+    expect(flow).toMatch(/<RedeemRow rewards=\{rewards\}/);
+  });
+
+  it('words all three states in both languages', () => {
+    for (const lang of [en, hi]) {
+      for (const key of ['have', 'needMore', 'needBill'] as const) {
+        expect(lang.payFlow.rewards[key], key).toBeTruthy();
+      }
+    }
+    expect(hi.payFlow.rewards.have).toMatch(/[ऀ-ॿ]/);
+    expect(hi.payFlow.rewards.needBill).toMatch(/[ऀ-ॿ]/);
+  });
+
+  /**
+   * Owner, 2026-10-27 — the OTHER till.
+   *
+   * `NewVisitSheet` takes money on three paths (a waiting token, a counter sale with no stylist, and the
+   * checkout that settles a saved walk-in) and had no rewards on any of them: a client could spend their
+   * points at the counter and not here, on the same bill, for the same business.
+   */
+  it('the visit sheet sends the points on every path that takes money', () => {
+    const paths = sheet.match(/\.\.\.\(redeemPoints > 0 \? \{ redeemPoints \} : \{\}\),/g) ?? [];
+    expect(paths.length, 'one per paying path').toBe(3);
+    // The lines go in at their own prices; the server takes the discount off them.
+    expect(sheet).not.toMatch(/paidAmountMinor:[^,]*redeemMinor/);
+    // What was COLLECTED is the bill less the points, on the tray and on the receipt.
+    expect(sheet).toMatch(/const dueMinor = Math\.max\(0, billTotalMinor - redeemMinor\);/);
+    expect(sheet).toMatch(/- redeemMinor,/);
+    // And what it did to the balance reaches the receipt.
+    expect(sheet).toMatch(/rewards: result\.rewards \?\? null,/);
+    expect(sheet).toMatch(/rewards: settledRewards,/);
+    expect(sheet).toMatch(/balancePoints: paid\.rewards\.balanceAfter/);
   });
 
   it('does not ask again on every tile tapped', () => {
-    expect(flow).toMatch(/setTimeout\(\(\) => \{[\s\S]{0,200}customerRewards/);
-    expect(flow).toMatch(/clearTimeout\(timer\)/);
+    expect(quote).toMatch(/setTimeout\(\(\) => \{[\s\S]{0,200}customerRewards/);
+    expect(quote).toMatch(/clearTimeout\(timer\)/);
   });
 });
 

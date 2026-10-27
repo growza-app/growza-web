@@ -3159,6 +3159,9 @@
       "receiptUsed": "इस्तेमाल किए गए रिवॉर्ड पॉइंट: {points} (−{amount})",
       "receiptEarned": "आपने अगली विज़िट के लिए {points, plural, one {# पॉइंट} other {# पॉइंट}} कमाए।",
       "earnedDone": "{points, plural, one {# पॉइंट} other {# पॉइंट}} मिले",
+      "have": "{points, plural, one {# पॉइंट} other {# पॉइंट}} जमा",
+      "needMore": "इस्तेमाल करने के लिए {points, plural, one {# और} other {# और}}",
+      "needBill": "इस्तेमाल करने के लिए {amount} का बिल",
       "receiptTitle": "रिवॉर्ड",
       "receiptBalance": "अब आपके पास {points, plural, one {# पॉइंट} other {# पॉइंट}} हैं।"
     }

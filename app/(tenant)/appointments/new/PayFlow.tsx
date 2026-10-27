@@ -4,12 +4,14 @@ import Link from '../../../shared/AppLink';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { api, ApiError, formatMoney, type CustomerRewards } from '../../lib/api';
+import { api, ApiError, formatMoney } from '../../lib/api';
 import { fixVisitHref, nextCustomerHref } from '../../lib/pay-token';
 import type { Appointment, Offer, PaymentMode, Product, ProductCategory, Provider, Service, TillSize } from '../../lib/api-types';
 import type { QueueEntry } from '../../lib/home-types';
 import { receiptRows, type ReceiptRow } from '../../lib/receipt-text';
 import { displayPhone } from '../../lib/phone';
+import { RedeemRow } from '../../components/RedeemRow';
+import { useRewardQuote } from '../../lib/use-reward-quote';
 import { ServicePhoto } from '../../components/ServicePhoto';
 import { ProductPhoto } from '../../components/ProductPhoto';
 import { ALL_CATEGORIES, DeskProductCategories, NO_CATEGORY } from '../../products/DeskProductCategories';
@@ -280,8 +282,6 @@ export function PayFlow({
    * switched off, a client with too few to spend on this bill, or a read that failed. All four draw nothing,
    * which is what the till looked like yesterday.
    */
-  const [rewards, setRewards] = useState<CustomerRewards | null>(null);
-  const [usePoints, setUsePoints] = useState(false);
   const [stylistId, setStylistId] = useState<string | null>(null);
   const [override, setOverride] = useState<number | null>(null);
   const [keypad, setKeypad] = useState<string | null>(null);
@@ -575,55 +575,14 @@ export function PayFlow({
    * there is nothing to look up and nothing is offered, which is the right answer for that person.
    */
   const clientId = client.kind === 'existing' ? client.id : (visit?.appointment.customerId ?? null);
-  const discountMinor = usePoints && rewards ? rewards.discountMinor : 0;
+  /*
+   * Jira GRW-648 — the quote, from the hook the visit sheet asks with too (`use-reward-quote.ts`), so the
+   * two tills cannot answer the same question differently. An app's order is paid to the app, so it asks
+   * for nobody's points.
+   */
+  const { rewards, usePoints, toggle: toggleRedeem, redeemMinor: discountMinor } = useRewardQuote(fromApp ? null : clientId, totalMinor);
   const dueMinor = Math.max(0, totalMinor - discountMinor);
 
-  /*
-   * Jira GRW-648 — what this client may take off THIS bill, asked of the one route that answers it.
-   *
-   * Asked with the bill rather than worked out here: the cap is a share of the bill and the floor is a number
-   * of points, and both are the business's settings. A second copy of that arithmetic in the browser is a
-   * second place for the till and the client's card to disagree about the same person.
-   *
-   * Debounced, because the bill changes with every tile tapped and this is a round trip per change otherwise.
-   * 300ms is below the pause between adding a line and reaching for the payment tiles.
-   */
-  useEffect(() => {
-    if (!clientId || totalMinor <= 0) {
-      setRewards(null);
-      setUsePoints(false);
-      return;
-    }
-    if (fromApp) {
-      setRewards(null);
-      setUsePoints(false);
-      return;
-    }
-    let live = true;
-    const timer = setTimeout(() => {
-      api
-        .customerRewards(clientId, totalMinor)
-        .then((answer) => {
-          if (!live) return;
-          // Nothing to offer is the same as no answer: rewards off, or fewer points than this business takes.
-          setRewards(answer.enabled && answer.maxRedeemable > 0 ? answer : null);
-          if (!answer.enabled || answer.maxRedeemable <= 0) setUsePoints(false);
-        })
-        .catch(() => {
-          if (!live) return;
-          /*
-           * A failed read leaves the bill alone. The desk can still take the money, which is the thing that
-           * matters at a counter with somebody standing at it; the points are still theirs tomorrow.
-           */
-          setRewards(null);
-          setUsePoints(false);
-        });
-    }, 300);
-    return () => {
-      live = false;
-      clearTimeout(timer);
-    };
-  }, [clientId, totalMinor, fromApp]);
   /** Owner, 2026-10-15 — every package on the bill, one entry per time it was rung up, in the order picked. */
   const pkgsOnBill = useMemo(() => {
     const seen = new Map<string, NonNullable<Line['pkg']>>();
@@ -1352,27 +1311,11 @@ export function PayFlow({
    * Tapping it spends the most this bill allows. There is no box to type a number into: the cap, the floor
    * and the balance already decide the answer, and a till is not the place to do arithmetic at somebody.
    */
-  const redeemRow =
-    rewards && rewards.maxRedeemable > 0 ? (
-      <div className="pf-redeem">
-        <label className="switch">
-          <input
-            type="checkbox"
-            aria-labelledby="pf-redeem-label"
-            checked={usePoints}
-            disabled={saving !== null}
-            onChange={() => setUsePoints(!usePoints)}
-          />
-          <span className="switch-track">
-            <span className="switch-thumb" />
-          </span>
-        </label>
-        <span id="pf-redeem-label" className="pf-redeem-label">
-          {t('rewards.offer', { points: rewards.maxRedeemable })}
-        </span>
-        <strong className="pf-redeem-off">{t('rewards.off', { amount: money(rewards.discountMinor) })}</strong>
-      </div>
-    ) : null;
+  /*
+   * Jira GRW-648 — one row, both tills (`RedeemRow`), so they cannot grow different words for the same
+   * balance or a toggle on one screen and not the other.
+   */
+  const redeemRow = <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={toggleRedeem} disabled={saving !== null} />;
 
   /** The amount to collect, and — when points are coming off — the bill it was before they did. */
   const dueLine = (

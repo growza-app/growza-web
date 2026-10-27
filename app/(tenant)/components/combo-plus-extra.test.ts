@@ -51,8 +51,10 @@ describe('Record payment settles the combo and its extras in one checkout', () =
     expect(payFor).toMatch(/\.\.\.\(extraServices\.length > 0 \? \{ extraServices \} : \{\}\),/);
   });
 
-  it('the paid total includes what was sold beside the combo', () => {
-    expect(payFor).toMatch(/totalMinor: amounts\.reduce\(\(a, b\) => a \+ b, 0\) \+ extraServices\.reduce/);
+  it('the paid total includes what was sold beside the combo, less any points spent', () => {
+    expect(payFor).toMatch(/amounts\.reduce\(\(a, b\) => a \+ b, 0\) \+ extraServices\.reduce/);
+    // Jira GRW-648 — what the customer handed over, which with points on the bill is less than the lines.
+    expect(payFor).toMatch(/- redeemMinor,/);
   });
 });
 
