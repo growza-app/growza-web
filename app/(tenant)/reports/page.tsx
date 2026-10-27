@@ -287,11 +287,6 @@ export default async function ReportsPage({
 
   return (
     <Suspense>
-      {/*
-        A shop's four own reports stay one tap away from its three new ones, so neither set is a dead end:
-        before this, landing on Overview meant nothing on screen pointed back at Sales by channel.
-      */}
-      {noBookings ? <RetailReportsNav active="hub" /> : null}
       <ReportsClient
         tab={resolvedTab}
         range={range}

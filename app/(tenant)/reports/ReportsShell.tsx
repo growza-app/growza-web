@@ -20,6 +20,8 @@ import {
 } from '../lib/api';
 import { FiltersDrawer } from './FiltersDrawer';
 import { IconCalendar, IconChevronDown, IconDownload, IconFilter, IconRepeat } from '../components/icons';
+import { RetailReportsNav } from '../components/RetailReportsNav';
+import { useAreas } from '../components/SessionProvider';
 
 const TAB_ORDER: ReportTabKey[] = [
   'todo',
@@ -92,6 +94,8 @@ export function ReportsShell({
   labels: Record<string, string>;
   children: ReactNode;
 }) {
+  /** Which panels and bars this business has an answer for — a kitchen keeps its own four reports. */
+  const areas = useAreas();
   const rp = useReportsCopy();
   const st = useTranslations('status');
   const locale = useLocale();
@@ -160,6 +164,28 @@ export function ReportsShell({
       {/* Jira GRW-377 — the branch chosen on any other screen is the branch Reports opens on. */}
       <BranchUrlSync />
       <header className="rp-header">
+        {/*
+          Owner, 2026-10-26 — the tabs come first.
+          They sat under the title, the subtitle, the range picker and four controls, which put the one
+          control that changes the whole page below everything that only narrows it. A shop made that
+          plain: its four own reports are a bar of their own, and with both on screen the primary one was
+          the lower of the two.
+        */}
+        <nav className="rp-tabs rp-tabs-top">
+          {tabs.map((key) => (
+            <button
+              key={key}
+              type="button"
+              className={key === tab ? 'active' : ''}
+              onClick={() => go({ tab: key })}
+            >
+              {tabLabel(key)}
+            </button>
+          ))}
+        </nav>
+        {/* ...and a business with no diary keeps its own four beside them, rather than above the title. */}
+        {!areas.bookings ? <RetailReportsNav active="hub" /> : null}
+
         <div className="rp-title-row">
           <div className="topbar-lead">
             <BackButton phoneOnly />
@@ -271,18 +297,6 @@ export function ReportsShell({
           </button>
         </div>
 
-        <nav className="rp-tabs">
-          {tabs.map((key) => (
-            <button
-              key={key}
-              type="button"
-              className={key === tab ? 'active' : ''}
-              onClick={() => go({ tab: key })}
-            >
-              {tabLabel(key)}
-            </button>
-          ))}
-        </nav>
       </header>
 
       <div className="rp-body page-body">

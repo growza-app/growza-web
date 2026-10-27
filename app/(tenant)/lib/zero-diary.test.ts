@@ -63,8 +63,12 @@ describe('FR-04 — a part that is meaningless for a business is absent, not zer
      */
     expect(page).toContain("const shopTab = noBookings && !params.tab && allowedTabsOf(me).includes('overview') ? 'overview' : tab;");
     expect(page).toContain('canOpen(shopTab) ? shopTab : firstAllowed');
-    // ...and the four retail reports stay linked from there, so neither set is a dead end.
-    expect(page).toContain('{noBookings ? <RetailReportsNav active="hub" /> : null}');
+    // ...and the four retail reports stay linked from there, so neither set is a dead end. They render
+    // inside the shell, under the tab bar, rather than above the page title.
+    expect(read('reports/ReportsShell.tsx')).toContain('{!areas.bookings ? <RetailReportsNav active="hub" /> : null}');
+    // The tabs are the first thing in the header: they change the page, the controls under them only narrow it.
+    const shell = read('reports/ReportsShell.tsx');
+    expect(shell.indexOf('rp-tabs rp-tabs-top')).toBeLessThan(shell.indexOf('rp-title-row'));
     for (const lang of ['en', 'hi'] as const) {
       const r = messages(lang).reports;
       for (const key of ['shopSoonTitle', 'shopSoonBody', 'shopSoonOrders', 'shopSoonStock']) expect(r[key], `${lang} ${key}`).toBeTruthy();
