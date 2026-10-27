@@ -57,6 +57,14 @@ describe('FR-04 — a part that is meaningless for a business is absent, not zer
     expect(page).toContain("href=\"/stock\"");
     // …and the tab bar offers a shop only those three, whatever the plan allows.
     expect(page).toContain('allowedTabsOf(me).filter((key) => !noBookings || SHOP_REPORT_TABS.has(key))');
+    /*
+     * The nav's own link carries no `?tab=`, so without this the shop fell to 'todo', missed the three and
+     * landed back on the hub — the tabs existed and nothing on screen pointed at them.
+     */
+    expect(page).toContain("const shopTab = noBookings && !params.tab && allowedTabsOf(me).includes('overview') ? 'overview' : tab;");
+    expect(page).toContain('canOpen(shopTab) ? shopTab : firstAllowed');
+    // ...and the four retail reports stay linked from there, so neither set is a dead end.
+    expect(page).toContain('{noBookings ? <RetailReportsNav active="hub" /> : null}');
     for (const lang of ['en', 'hi'] as const) {
       const r = messages(lang).reports;
       for (const key of ['shopSoonTitle', 'shopSoonBody', 'shopSoonOrders', 'shopSoonStock']) expect(r[key], `${lang} ${key}`).toBeTruthy();

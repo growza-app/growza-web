@@ -144,7 +144,16 @@ export default async function ReportsPage({
    * against `TABS`, and `canOpen` below still has the final say — this decides which PAGE answers, not who
    * may see it.
    */
-  if (noBookings && !(SHOP_REPORT_TABS.has(tab) && allowedTabsOf(me).includes(tab))) {
+  /*
+   * Owner, 2026-10-26 — Reports opens on Overview for a shop too, not on the hub.
+   *
+   * The three tabs were reachable only by typing `?tab=overview`: the nav's own link carries no tab, so it
+   * fell to `'todo'`, which is not one of the three, and the owner landed back on the four retail cards with
+   * nothing on screen pointing at the money report that had just been built for them. A door nobody can see
+   * is the same as no door — the hub stays, one tap away on the bar below.
+   */
+  const shopTab = noBookings && !params.tab && allowedTabsOf(me).includes('overview') ? 'overview' : tab;
+  if (noBookings && !(SHOP_REPORT_TABS.has(shopTab) && allowedTabsOf(me).includes(shopTab))) {
     const role = me.member?.role;
     const mayOpenShopReports = areasOf(me).shop && (role === undefined || role === 'owner' || role === 'manager');
     // "See your stock" is a count's link: a kitchen keeps none, and its menu is already in the nav.
@@ -215,7 +224,7 @@ export default async function ReportsPage({
       </div>
     );
   }
-  const resolvedTab = canOpen(tab) ? tab : firstAllowed;
+  const resolvedTab = canOpen(shopTab) ? shopTab : firstAllowed;
 
   // One tab's failure must not blank the page: the body renders its own error
   // state while the chrome above stays usable, so the owner can change the
@@ -278,6 +287,11 @@ export default async function ReportsPage({
 
   return (
     <Suspense>
+      {/*
+        A shop's four own reports stay one tap away from its three new ones, so neither set is a dead end:
+        before this, landing on Overview meant nothing on screen pointed back at Sales by channel.
+      */}
+      {noBookings ? <RetailReportsNav active="hub" /> : null}
       <ReportsClient
         tab={resolvedTab}
         range={range}
