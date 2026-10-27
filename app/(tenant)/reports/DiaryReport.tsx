@@ -200,8 +200,19 @@ export function DiaryCards({ data }: { data: DiaryReportPage }) {
         {Number(takings.otherMinor) > 0 ? (
           <p className="cr-aside">{t('took.fromTheShelf', { amount: money(takings.otherMinor), service: serviceWord })}</p>
         ) : null}
-        {/* The number this product exists to push down, so it sits on the money card and not in a tab. */}
-        {takings.noShows > 0 ? <p className="cr-say cr-say-warn">{t('took.noShows', { n: takings.noShows })}</p> : null}
+        {/*
+          The number this product exists to push down, so it sits on the money card and not in a tab —
+          and priced, since QA L5: counting the misses without saying what they cost is the one thing
+          that stops the owner seeing them fall in money. Unpriced only when the bookings carried no
+          quote at all.
+        */}
+        {takings.noShows > 0 ? (
+          <p className="cr-say cr-say-warn">
+            {Number(takings.noShowMinor) > 0
+              ? t('took.noShowsWorth', { n: takings.noShows, amount: money(takings.noShowMinor) })
+              : t('took.noShows', { n: takings.noShows })}
+          </p>
+        ) : null}
       </section>
 
       {people ? (

@@ -2863,7 +2863,8 @@
       "same": "The same as the period before",
       "noPrior": "Nothing to compare with yet",
       "noShows": "{n, plural, one {# booked and did not come} other {# booked and did not come}}",
-      "fromTheShelf": "Of that, {amount} came from things sold rather than booked — the two cards below are the {service} people came in for."
+      "fromTheShelf": "Of that, {amount} came from things sold rather than booked — the two cards below are the {service} people came in for.",
+      "noShowsWorth": "{n, plural, one {# booked and did not come} other {# booked and did not come}} — {amount} of chair time"
     },
     "people": {
       "title": "Who earns it",

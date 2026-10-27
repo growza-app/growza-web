@@ -34,7 +34,9 @@ const payload: DiaryReportPage = {
     previousAverageVisitMinor: 110810,
     serviceMinor: '4850000',
     otherMinor: '0',
+    visitMinor: '4850000',
     noShows: 2,
+    noShowMinor: '240000',
     previousNoShows: 1,
     byDay: [
       { dateISO: '2026-10-19', dow: 1, valueMinor: '620000' },
@@ -102,7 +104,8 @@ describe('the four cards say something, in English', () => {
     expect(out).toContain('₹48,500');
     expect(out).toContain('₹7,500 more than the period before');
     expect(out).toContain('41 visits');
-    expect(out).toContain('2 booked and did not come');
+    // QA L5 — priced, so the owner can watch the figure fall in money.
+    expect(out).toContain('2 booked and did not come — ₹2,400 of chair time');
   });
 
   it('turns the floor into a sentence, and borrows the product’s one phrase for a visit with no stylist', () => {
@@ -199,7 +202,7 @@ describe('what it does when it has not earned the right to say something', () =>
     const quiet: DiaryReportPage = {
       ...payload,
       previous: { ...payload.previous, hasData: false },
-      takings: { ...payload.takings, previousMinor: null, changePct: null, differenceMinor: null, previousAverageVisitMinor: null, noShows: 0 },
+      takings: { ...payload.takings, previousMinor: null, changePct: null, differenceMinor: null, previousAverageVisitMinor: null, noShows: 0, noShowMinor: '0' },
       back: { ...payload.back, worthACall: [], worthACallTotal: 0 },
     };
     const out = text(render('en', quiet));

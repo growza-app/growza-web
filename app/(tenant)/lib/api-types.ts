@@ -1926,7 +1926,11 @@ export interface DiaryReportPage {
     serviceMinor: string;
     /** The rest: things sold rather than booked. Named on screen so the missing share is accounted for. */
     otherMinor: string;
+    /** What came out of the diary — services plus what was bought during a visit. What "a visit" divides by. */
+    visitMinor: string;
     noShows: number;
+    /** What the people who did not come would have paid, at the price they booked at. Never revenue. */
+    noShowMinor: string;
     previousNoShows: number | null;
     byDay: DiaryDay[];
   };
