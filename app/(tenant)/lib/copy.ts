@@ -559,10 +559,12 @@ export const copy = {
      */
     visitsCsvHeader: 'Total visits',
     segments: {
-      active: { label: 'Coming in', range: '0–30 days' },
-      due: { label: 'Due a visit', range: '31–45 days' },
-      at_risk: { label: 'Slipping away', range: '46–90 days' },
-      inactive: { label: 'Gone quiet', range: '90+ days' },
+      // QA 2026-10-26 — the boundaries are the vertical's now (`client_segment_days`), so the words take
+      // them as values rather than spelling out the salon's four numbers for every business.
+      active: { label: 'Coming in', range: '0–{to} days' },
+      due: { label: 'Due a visit', range: '{from}–{to} days' },
+      at_risk: { label: 'Slipping away', range: '{from}–{to} days' },
+      inactive: { label: 'Gone quiet', range: '{from}+ days' },
     },
   },
 

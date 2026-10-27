@@ -103,6 +103,8 @@ import type {
   HeldPage,
   StockReportPage,
   ByChannelPage,
+  CounterReportPage,
+  DiaryReportPage,
   ReturnsReportPage,
   RefundsReportPage,
   SellersRange,
@@ -903,6 +905,12 @@ export const api = {
   },
   /** Jira GRW-635 — what came back and why, by reason, with a parcel that never arrived apart. */
   returnsReport: (q: { range: SellersRange; location?: string }) => get<ReturnsReportPage>(`/api/v1/reports/returns?${sellersParams({ range: q.range, location: q.location })}`),
+  /** Jira GRW-591 — the diary report: what was taken, who earned it, what people came for, who has not come back. */
+  diaryReport: (q: { range: ReportRangeKey; location?: string | null; from?: string; to?: string }) =>
+    get<DiaryReportPage>(`/api/v1/reports/diary?${sellersParams({ range: q.range, location: q.location ?? undefined, from: q.from, to: q.to })}`),
+  /** Jira GRW-591 — the counter report: what was taken, what earned it, when the rush was, what changed. */
+  counterReport: (q: { range: ReportRangeKey; location?: string | null; from?: string; to?: string }) =>
+    get<CounterReportPage>(`/api/v1/reports/counter?${sellersParams({ range: q.range, location: q.location ?? undefined, from: q.from, to: q.to })}`),
   /** Jira GRW-634 — what was billed on each channel over a range, beside the period before; billed, not received. */
   byChannel: (q: { range: ReportRangeKey; location?: string; from?: string; to?: string }) =>
     get<ByChannelPage>(`/api/v1/reports/by-channel?${sellersParams({ range: q.range, location: q.location, from: q.from, to: q.to })}`),

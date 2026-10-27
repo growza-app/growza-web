@@ -233,6 +233,91 @@ input[type='search']:has(~ .search-mic)::-webkit-search-cancel-button {
   margin-right: 2.25rem;
 }
 
+/*
+ * QA 2026-10-26 — what a blocked microphone says, in words.
+ *
+ * Amber and under the box, in the flow, so it pushes the list down rather than covering the first result:
+ * an owner who cannot use voice is about to type instead, and the thing they type into must stay visible.
+ */
+/*
+ * The note goes on its own line, in WHATEVER box holds it.
+ *
+ * Two different parents, both found by looking rather than by reading: `.search-wrap` is a flex row in
+ * `.prd-search`, so the <p> became a 94px column beside the input; and the menu sheet's `.pf-client-box` is
+ * another box entirely, where the magnifier and the microphone — both `position: absolute; top: 50%` of a
+ * parent that had just grown 90px taller — came to rest ON TOP of the sentence they had produced.
+ *
+ * Hence `:has(> .search-mic-note)` and not a class: any box that holds this note has the same two problems,
+ * and naming them one at a time is how the second one was shipped. The selector matches only the direct
+ * parent. In a parent that is not flex, `flex-wrap` and `flex-basis` are inert and the note is just a block.
+ */
+:has(> .search-mic-note) {
+  flex-wrap: wrap;
+}
+
+/*
+ * 1.375rem is half of the 2.75rem input every one of these boxes uses: it pins the icons to the input's own
+ * row instead of to the middle of a box the note has made taller.
+ *
+ * `:is()` rather than three selectors, for its specificity and not for its brevity. `.pf-client-box svg`
+ * (0,1,1) sets `top: 50%` from a later stylesheet, so a plain `:has(> .search-mic-note) > svg` (0,1,1) ties
+ * and loses on source order — which is exactly what happened, and the magnifier sat on the word
+ * "Microphone". `:is()` carries its most specific argument, so this reads (0,2,0) and wins outright.
+ */
+:has(> .search-mic-note) > :is(svg, .search-mic, .search-clear) {
+  top: 1.375rem;
+}
+
+.search-mic-note {
+  flex: 1 0 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: #fdf6ec;
+  color: var(--amber-ink);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+/* The way out of the message, and the way to act on it: both in the line, neither hidden behind a hover. */
+.search-mic-how {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/*
+ * 44px of target, 1rem of ink: the cross is small to look at and full-size to hit, which is the rule the
+ * rest of the app's icon buttons follow. `margin-inline-start: auto` parks it at the end of the line.
+ */
+.search-mic-note-x {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: -0.75rem -0.5rem -0.75rem auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.search-mic-note-x svg {
+  width: 1rem;
+  height: 1rem;
+}
+
 /* Jira GRW-651 — free browser voice-to-text microphone inside empty search boxes. */
 .search-mic {
   position: absolute;
@@ -299,4 +384,14 @@ button.search-mic.search-mic-denied > svg {
   outline: 2px solid var(--accent-deep);
   outline-offset: -4px;
   border-radius: 50%;
+}
+
+/* The steps in the "Turn on the microphone" popup: a real list, so three of them read as three. */
+.search-mic-steps {
+  margin: var(--sp-3) 0 0;
+  padding-inline-start: var(--sp-5);
+  display: grid;
+  gap: var(--sp-2);
+  font-size: 0.9375rem;
+  line-height: 1.4;
 }

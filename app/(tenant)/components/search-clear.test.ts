@@ -56,3 +56,89 @@ describe('the × and voice microphone inside a search box', () => {
     }
   });
 });
+
+/**
+ * QA 2026-10-26, County Chicken — a blocked microphone says so in words.
+ *
+ * The owner reported that voice search "does not work". It was wired correctly; what was missing was the
+ * answer. A denied microphone turned the icon red and set `title`, and `title` never appears on a touch
+ * device — so the owner tapped, a small shape changed shade, and nothing told them what had happened or
+ * what to do. The red icon stays; it is no longer the whole of the message.
+ */
+describe('a microphone the browser has blocked', () => {
+  const component = read('components/SearchClear.tsx');
+  const css = read('styles/26-search.css');
+
+  it('says it in a sentence, not only in a colour', () => {
+    expect(component).toMatch(/\{denied && \(/);
+    expect(component).toContain("t('voicePermissionDeniedHelp')");
+    // A status, not an alert: it answers something they just did, it does not interrupt them.
+    expect(component).toMatch(/className="search-mic-note" role="status"/);
+  });
+
+  it('keeps the line short and puts the instructions in the popup, in both languages', () => {
+    for (const locale of ['en', 'hi']) {
+      const messages = JSON.parse(readFileSync(join(tenant, '..', '..', 'messages', `${locale}.json`), 'utf8')) as {
+        common: Record<string, string>;
+      };
+      const c = messages.common;
+      // The note is one line over a list the owner was reading: it says what happened and that typing works.
+      expect(c.voicePermissionDeniedHelp, locale).toBeTruthy();
+      expect(c.voicePermissionDeniedHelp!.length, locale).toBeLessThan(70);
+      // The steps live behind "How to turn it on", and they say WHERE — a help message that does not name
+      // the switch is the bug this started as.
+      for (const key of ['voiceHowTo', 'voiceEnableTitle', 'voiceEnableSteps', 'voiceEnableWhy', 'voiceTryAgain', 'voiceNoteClose']) {
+        expect(c[key], `${locale}.${key}`).toBeTruthy();
+      }
+      expect(c.voiceEnableSteps, locale).toMatch(locale === 'en' ? /lock/i : /ताले|ताला/);
+      // Three numbered steps, one per line, so the <ol> has three items to render.
+      expect(c.voiceEnableSteps!.split('\n'), locale).toHaveLength(3);
+      expect(c.voicePermissionDenied, locale).toBeTruthy();
+    }
+  });
+
+  /*
+   * No page can reopen a permission prompt it has already been refused — the same is true of geolocation.
+   * So the popup is ours, it says plainly whose decision it is, and it offers the retry that makes sense
+   * once they have made it. The watcher is what spares them even that on the common path.
+   */
+  it('offers a way out and a way back: a dismiss, a how-to, and a retry', () => {
+    expect(component).toMatch(/className="search-mic-note-x"[\s\S]{0,80}onClick=\{\(\) => setDenied\(false\)\}/);
+    expect(component).toMatch(/className="search-mic-how"[\s\S]{0,60}setShowHowTo\(true\)/);
+    expect(component).toContain('<ConfirmDialog');
+    expect(component).toMatch(/confirmLabel=\{t\('voiceTryAgain'\)\}/);
+    // The steps render as a list, not as a string with newlines in it.
+    expect(component).toMatch(/<ol className="search-mic-steps">/);
+  });
+
+  it('clears itself when the microphone is allowed, rather than contradicting a mic that now works', () => {
+    expect(component).toMatch(/permissions/);
+    expect(component).toMatch(/query\(\{ name: 'microphone' \}\)/);
+    expect(component).toMatch(/result\.onchange = sync;/);
+    // A browser without the Permissions API must not throw: it simply keeps the note until the next tap.
+    expect(component).toMatch(/\} catch \{[\s\S]{0,120}\}/);
+  });
+
+  /*
+   * Two parents, both found by looking. `.search-wrap` is a flex row in `.prd-search`, so the <p> became a
+   * 94px column beside the input; the menu sheet's `.pf-client-box` is a different box, where the magnifier
+   * and the microphone — `position: absolute; top: 50%` of a parent that had just grown 90px — came to rest
+   * on top of the sentence they produced. Hence the rule is on the note's PARENT, whatever it is: naming
+   * the containers one at a time is how the second one shipped.
+   */
+  it('takes a line of its own in whatever box holds it, not a column beside the input', () => {
+    expect(css).toMatch(/:has\(> \.search-mic-note\) \{\s*flex-wrap: wrap;/);
+    expect(css).toMatch(/\.search-mic-note \{\s*flex: 1 0 100%;/);
+    // Not tied to one container's class name.
+    expect(css).not.toMatch(/\.search-wrap:has\(\.search-mic-note\)/);
+  });
+
+  /*
+   * `:is()` for specificity, not brevity: `.pf-client-box svg` sets `top: 50%` from a later stylesheet, and
+   * a plain `> svg` ties with it and loses on source order — which is how the magnifier ended up sitting on
+   * the word "Microphone".
+   */
+  it('leaves the magnifier and the microphone on the input row', () => {
+    expect(css).toMatch(/:has\(> \.search-mic-note\) > :is\(svg, \.search-mic, \.search-clear\) \{\s*top: 1\.375rem;/);
+  });
+});

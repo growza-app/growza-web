@@ -75,11 +75,17 @@ describe('each screen draws the business’s own channels', () => {
     expect(page).toContain('{!isCounter && !fromApp ? (');
   });
 
-  it('Returns and the reports hub leave out what only a parcel or a count has', () => {
+  it('Returns and the reports bar leave out what only a parcel or a count has', () => {
     expect(src('orders/returns/ReturnsClient.tsx')).toContain('const ships = sellsOnMarketplaces(useAreas());');
-    const hub = src('components/RetailReportsNav.tsx');
-    expect(hub).toContain("areas.stock ? `${tSellers('viewBest')} · ${tSellers('viewDead')}` : tSellers('viewBest')");
-    expect(hub).toContain("sellsOnMarketplaces(areas) ? `${tReturns('customerTitle')} · ${tReturns('undeliveredTitle')}` : tReturns('customerTitle')");
+    /*
+     * Jira GRW-591 — the hub of six link-cards, whose SUBTITLES used to say "best sellers · dead stock"
+     * only where a count exists, is gone: `/reports` is the counter report now and the six are the tab bar
+     * beneath it. A tab has no subtitle to adapt, so what is left to check is that the bar still drops a
+     * whole tab a business does not have, which `areaAllows` does for all six at once.
+     */
+    const nav = src('components/RetailReportsNav.tsx');
+    expect(nav).toContain('const tabs = allTabs.filter((tab) => areaAllows(tab.href, areas));');
+    expect(nav).not.toContain('RetailReportsHub');
     expect(src('reports/page.tsx')).toContain('mayOpenShopReports && counted ?');
   });
 });

@@ -21,7 +21,6 @@ import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
 import { useAreas } from '../SessionProvider';
 import {
-  IconClipboardCheck,
   IconNavClients,
   IconNavOrders,
   IconNavStock,
@@ -300,7 +299,15 @@ export function ShopHome({
     { href: '/orders', label: t.nav.orders, icon: <IconNavOrders />, tone: 'blue' },
     { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'green' },
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
-    { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
+    /*
+     * Owner, 2026-10-26 — Reports, not Attendance.
+     *
+     * Six tiles is the pad; which six is the question. A restaurant owner opens Home to see how the day
+     * went and reaches Reports from it several times a shift, while attendance is marked once a morning by
+     * whoever opens up and is a tap away in the nav either way. The one that earns a tile is the one that
+     * is wanted repeatedly.
+     */
+    { href: '/reports', label: t.nav.reports, icon: <IconReports />, tone: 'violet' },
     { href: '/settings', label: t.nav.settings, icon: <IconSettings />, tone: 'slate' },
   ].filter((l) => canSee(l.href, role, reportTabs, true, areas));
 

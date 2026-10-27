@@ -3,11 +3,13 @@
 import { rangeName } from './shared';
 import { useLocale, useTranslations } from 'next-intl';
 import { chartBucketLabel } from '../lib/format';
+import { useAreas } from '../components/SessionProvider';
 import { useReportsCopy } from '../lib/use-reports-copy';
 import { formatMoney, type ReportOverview } from '../lib/api';
 import { IconAlert } from '../components/icons';
 import { BarList, LineChart } from './charts';
 import { Scorecard } from './Scorecard';
+import { segmentRangeValues } from '../lib/segment-range';
 
 const SEGMENT_TONE: Record<string, string> = {
   active: 'var(--rp-brand)',
@@ -39,7 +41,13 @@ export function OverviewTab({
   // Jira GRW-478 (U-3) — dates in the owner's language, not the API's English.
   const labels = data.range.buckets.map((b) => chartBucketLabel(b.startISO, data.range.bucketUnit, locale, b.label));
   const { kpis } = data;
-  const empty = data.kpis.bookings.value === 0 && data.kpis.revenueMinor.value === 0;
+  /** Which panels this business has an answer for — a kitchen has no booking trend and no service list. */
+  const areas = useAreas();
+  /*
+   * "Nothing happened" has to mean nothing happened. For a business that takes no bookings the booking
+   * count is permanently 0, so the old test made every period empty however much money came in.
+   */
+  const empty = areas.bookings ? data.kpis.bookings.value === 0 && data.kpis.revenueMinor.value === 0 : data.kpis.revenueMinor.value === 0;
 
   return (
     <div className="rp-stack">
@@ -65,6 +73,12 @@ export function OverviewTab({
           )}
         </section>
 
+        {/*
+          QA 2026-10-26 — a flat zero line is not a chart. A business that takes no bookings has no booking
+          trend to draw, and drawing one anyway said "0" across seven days beside a revenue chart that was
+          telling the truth. Absent, not zeroed (GRW-610).
+        */}
+        {areas.bookings ? (
         <section className="rp-card">
           <div className="rp-card-head">
             <div>
@@ -84,6 +98,7 @@ export function OverviewTab({
             />
           )}
         </section>
+        ) : null}
       </div>
 
       <div className="rp-grid-health">
@@ -104,7 +119,7 @@ export function OverviewTab({
                   {rp.segments[segment.key]}
                 </span>
                 <span className="rp-segment-count">{segment.count}</span>
-                <span className="rp-segment-range">{bands(`segments.${segment.key}.range`)}</span>
+                <span className="rp-segment-range">{bands(`segments.${segment.key}.range`, segmentRangeValues(segment.key, segment.range))}</span>
               </button>
             ))}
           </div>
@@ -114,6 +129,8 @@ export function OverviewTab({
           {data.neverVisited > 0 && <p className="rp-card-foot">{rp.neverVisited(data.neverVisited)}</p>}
         </section>
 
+        {/* Likewise: a kitchen sells no services, and the card said "No bookings in this period" for ever. */}
+        {areas.services ? (
         <section className="rp-card">
           <h2>{rp.topServices}</h2>
           <p className="rp-card-sub">{rangeName(data.range, rp.ranges)}</p>
@@ -127,6 +144,7 @@ export function OverviewTab({
             }))}
           />
         </section>
+        ) : null}
       </div>
 
       {/* "Worth a call this week" used to sit here, as a list with no button.

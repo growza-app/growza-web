@@ -278,6 +278,31 @@
   display: none;
 }
 
+/*
+ * QA 2026-10-26 — a row that scrolls should look like one.
+ *
+ * County Chicken has nine menu sections in 316px. The row scrolls perfectly well, but the chip at the edge
+ * was sliced through the middle of a word ("Barbeque Se"), which reads as a layout fault rather than as an
+ * invitation to swipe — the owner does not try. The fade says there is more; the snap stops the next swipe
+ * on a whole chip instead of halfway through the one after it.
+ *
+ * `scrollbar-width: none` above is why neither is redundant: there is no scrollbar to say it instead. The
+ * mask is harmless where nothing overflows — it fades the background, and there is no chip under it.
+ */
+.pf-from .pf-chips {
+  scroll-snap-type: none;
+}
+
+.pf-chips:not(.pf-from .pf-chips) {
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--sp-2);
+  mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent 100%);
+}
+
+.pf-chips:not(.pf-from .pf-chips) > * {
+  scroll-snap-align: start;
+}
+
 .pf-chip {
   flex: none;
   min-height: 2.75rem;
@@ -409,6 +434,19 @@
  * catalogue long enough to need them, and 20px a row is a third row of services on an 882px screen. A name
  * too long now ellipsises — the photo and the price carry a tile that an owner may not be reading anyway.
  */
+/*
+ * QA 2026-10-26, County Chicken — two lines again, but only for the names that need them.
+ *
+ * The one-line clamp above was reasoned on a SALON catalogue, where a long name loses a trailing adjective
+ * and the tile still reads. A kitchen's names are not shaped that way: "Chicken Gharwala (Full - 6 pcs)" and
+ * "Chicken Gharwala (Half - 3 pcs)" both render "Chicken Gharwal…" at 146px, so two different dishes ₹140
+ * apart are the same word on screen and the owner is picking by price alone. The distinguishing part of a
+ * dish name is at the END of it.
+ *
+ * `min-height` still reserves ONE line, not two, so the 20px the one-line clamp was bought with is only
+ * spent on the tiles that need it — and `.pf-tiles` is a grid, so a row with one tall name stays level by
+ * itself and the prices do not step down the page.
+ */
 .pf-tile-name {
   padding: 0 var(--sp-3);
   /*
@@ -421,7 +459,7 @@
   line-height: 1.25;
   min-height: 1.25em;
   display: -webkit-box;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1981,6 +2019,41 @@
 .pf-from .pf-chips {
   flex-wrap: wrap;
   overflow: visible;
+}
+
+/*
+ * QA 2026-10-26 — on a phone the label goes ABOVE them, so the three fit on one line.
+ *
+ * Counter, Swiggy and Zomato are 93 + 88 + 91 with two 8px gaps: 288px. Beside an 80px label column there
+ * are 228 at 344px, so one always wrapped, and `.pf-row` then centred "Order from" in the gap between the
+ * two rows, pointing at neither. Stacked, the chips have the content column's whole 312px and sit on one
+ * line with room to spare — and the label reads as a heading for them rather than a column beside them.
+ *
+ * `flex-wrap: wrap` above stays: it is the floor for a vertical that one day offers four channels, not the
+ * thing that shapes this one. Above 560px the row goes back to label-beside-control like the bars below it.
+ */
+.pf-from {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-1);
+}
+
+.pf-from > .pf-row-label {
+  min-width: 0;
+}
+
+.pf-from .pf-from-no {
+  grid-column: 1;
+}
+
+@media (min-width: 560px) {
+  .pf-from {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--sp-2);
+  }
+
+  .pf-from .pf-from-no {
+    grid-column: 2;
+  }
 }
 
 /* The order number sits under the chips, in the content column, and only once an app is chosen. */

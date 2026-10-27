@@ -227,19 +227,19 @@
     "segments": {
       "active": {
         "label": "Coming in",
-        "range": "0–30 days"
+        "range": "0–{to} days"
       },
       "due": {
         "label": "Due a visit",
-        "range": "31–45 days"
+        "range": "{from}–{to} days"
       },
       "at_risk": {
         "label": "Slipping away",
-        "range": "46–90 days"
+        "range": "{from}–{to} days"
       },
       "inactive": {
         "label": "Gone quiet",
-        "range": "90+ days"
+        "range": "{from}+ days"
       }
     },
     "statusNever": "Never been in",
@@ -492,6 +492,7 @@
     "stopVoiceSearch": "Stop voice search",
     "voiceListening": "Listening… speak now",
     "voicePermissionDenied": "Microphone access is blocked in your browser",
+    "voicePermissionDeniedHelp": "Microphone is blocked. You can type instead.",
     "alsoTry": "Also try",
     "actionFailed": "That didn't work. Please try again.",
     "optional": "optional",
@@ -507,7 +508,13 @@
       "page": "Page {current} of {count}"
     },
     "noProvider": "No {provider}",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "voiceHowTo": "How to turn it on",
+    "voiceEnableTitle": "Turn on the microphone",
+    "voiceEnableSteps": "1. Tap the lock next to the web address.\n2. Find Microphone and turn it on.\n3. Come back here and tap Try again.",
+    "voiceEnableWhy": "Only you can do this — a website is not allowed to switch its own microphone on.",
+    "voiceTryAgain": "Try again",
+    "voiceNoteClose": "Close this message"
   },
   "branchScope": {
     "topics": {
@@ -2783,6 +2790,103 @@
         "none": "Nobody is overdue. Your regulars are coming in.",
         "seeAll": "See all {n}"
       }
+    },
+    "counterMore": "More reports"
+  },
+  "counterReport": {
+    "title": "Reports",
+    "rangeLabel": "Period",
+    "range": {
+      "last_7_days": "This week",
+      "this_month": "This month",
+      "last_month": "Last month",
+      "last_3_months": "Last 3 months",
+      "this_year": "This year"
+    },
+    "loadError": "Could not load your reports.",
+    "retry": "Try again",
+    "nothingTitle": "Nothing sold in this period",
+    "nothingBody": "Take an order and the figures start here.",
+    "took": {
+      "label": "You took in",
+      "bills": "{n, plural, one {# order} other {# orders}}",
+      "average": "{amount} an order",
+      "more": "{amount} more than the period before",
+      "less": "{amount} less than the period before",
+      "same": "The same as the period before",
+      "noPrior": "Nothing to compare with yet"
+    },
+    "earners": {
+      "title": "What your money comes from",
+      "qtyHeading": "Sold",
+      "moneyHeading": "Money",
+      "leader": "{name} is {pct}% of everything you earn.",
+      "others": "{n, plural, one {and # more} other {and # more}}",
+      "slow": "Barely moved: {names}",
+      "nothing": "Nothing sold yet.",
+      "slowCount": "{n} of your {menu} aren’t selling — nothing ordered in this period."
+    },
+    "busy": {
+      "title": "When you are busy",
+      "peak": "Your rush is {from}–{to}.",
+      "quietest": "{day} is your weakest day — {amount} in all.",
+      "notEnough": "Not enough trade yet to tell you when your rush is."
+    },
+    "changed": {
+      "title": "What changed",
+      "up": "up {n}",
+      "down": "down {n}",
+      "averageBill": "Order size",
+      "noPrior": "Nothing to compare with yet — this is your first period.",
+      "steady": "Nothing moved much since the period before."
+    }
+  },
+  "diaryReport": {
+    "rangeLabel": "Period",
+    "range": {
+      "last_7_days": "This week",
+      "this_month": "This month",
+      "last_month": "Last month",
+      "last_3_months": "Last 3 months",
+      "this_year": "This year"
+    },
+    "loadError": "Could not load your reports.",
+    "retry": "Try again",
+    "nothingTitle": "Nothing happened in this period",
+    "nothingBody": "Take a booking and the figures start here.",
+    "took": {
+      "label": "You took in",
+      "visits": "{n, plural, one {# visit} other {# visits}}",
+      "average": "{amount} a visit",
+      "more": "{amount} more than the period before",
+      "less": "{amount} less than the period before",
+      "same": "The same as the period before",
+      "noPrior": "Nothing to compare with yet",
+      "noShows": "{n, plural, one {# booked and did not come} other {# booked and did not come}}",
+      "fromTheShelf": "Of that, {amount} came from things sold rather than booked — the two cards below are the {service} people came in for.",
+      "noShowsWorth": "{n, plural, one {# booked and did not come} other {# booked and did not come}} — {amount} of chair time"
+    },
+    "people": {
+      "title": "Who earns it",
+      "leader": "{name} brought in {pct}% of it.",
+      "others": "{n, plural, one {and # more} other {and # more}}",
+      "nothing": "Nobody has taken money yet."
+    },
+    "services": {
+      "title": "What they come for",
+      "leader": "{name} is {pct}% of what you earn.",
+      "others": "{n, plural, one {and # more} other {and # more}}",
+      "slow": "Barely booked: {names}",
+      "nothing": "Nothing booked yet.",
+      "slowCount": "{n} of your {menu} services weren’t booked in this period."
+    },
+    "back": {
+      "title": "Who has not come back",
+      "worthACall": "{n, plural, one {# client is past their usual gap} other {# clients are past their usual gap}}.",
+      "lastIn": "Last in {days, plural, one {# day} other {# days}} ago",
+      "worth": "about {amount} a visit",
+      "message": "Message them",
+      "nobody": "Nobody is due a nudge right now."
     }
   },
   "autopayRenewal": {

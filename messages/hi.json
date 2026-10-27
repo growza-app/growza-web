@@ -227,19 +227,19 @@
     "segments": {
       "active": {
         "label": "आ रहे हैं",
-        "range": "0–30 दिन"
+        "range": "0–{to} दिन"
       },
       "due": {
         "label": "आने का समय",
-        "range": "31–45 दिन"
+        "range": "{from}–{to} दिन"
       },
       "at_risk": {
         "label": "दूर हो रहे हैं",
-        "range": "46–90 दिन"
+        "range": "{from}–{to} दिन"
       },
       "inactive": {
         "label": "आना बंद कर दिया",
-        "range": "90+ दिन"
+        "range": "{from}+ दिन"
       }
     },
     "statusNever": "कभी नहीं आए",
@@ -492,6 +492,7 @@
     "stopVoiceSearch": "बोलकर खोजना रोकें",
     "voiceListening": "सुन रहे हैं… अब बोलें",
     "voicePermissionDenied": "ब्राउज़र में माइक की अनुमति बंद है",
+    "voicePermissionDeniedHelp": "माइक बंद है। आप टाइप कर सकते हैं।",
     "alsoTry": "ये भी देखें",
     "actionFailed": "यह नहीं हुआ। कृपया फिर से कोशिश करें।",
     "optional": "वैकल्पिक",
@@ -507,7 +508,13 @@
       "page": "पेज {current} / {count}"
     },
     "noProvider": "कोई {provider} नहीं",
-    "loading": "लोड हो रहा है…"
+    "loading": "लोड हो रहा है…",
+    "voiceHowTo": "इसे चालू कैसे करें",
+    "voiceEnableTitle": "माइक चालू करें",
+    "voiceEnableSteps": "1. वेब पते के पास बने ताले पर दबाएँ।\n2. माइक्रोफ़ोन ढूँढें और चालू करें।\n3. यहाँ वापस आकर फिर से कोशिश करें दबाएँ।",
+    "voiceEnableWhy": "यह सिर्फ़ आप कर सकते हैं — कोई वेबसाइट अपना माइक खुद चालू नहीं कर सकती।",
+    "voiceTryAgain": "फिर से कोशिश करें",
+    "voiceNoteClose": "यह संदेश बंद करें"
   },
   "branchScope": {
     "topics": {
@@ -2783,6 +2790,103 @@
         "none": "कोई देर से नहीं है। आपके नियमित ग्राहक आ रहे हैं।",
         "seeAll": "सभी {n} देखें"
       }
+    },
+    "counterMore": "और रिपोर्ट"
+  },
+  "counterReport": {
+    "title": "रिपोर्ट",
+    "rangeLabel": "अवधि",
+    "range": {
+      "last_7_days": "इस हफ़्ते",
+      "this_month": "इस महीने",
+      "last_month": "पिछले महीने",
+      "last_3_months": "पिछले 3 महीने",
+      "this_year": "इस साल"
+    },
+    "loadError": "रिपोर्ट नहीं खुल पाई।",
+    "retry": "फिर कोशिश करें",
+    "nothingTitle": "इस अवधि में कुछ नहीं बिका",
+    "nothingBody": "एक ऑर्डर लीजिए, आंकड़े यहीं से शुरू होंगे।",
+    "took": {
+      "label": "आपने कमाए",
+      "bills": "{n, plural, one {# ऑर्डर} other {# ऑर्डर}}",
+      "average": "{amount} प्रति ऑर्डर",
+      "more": "पिछली अवधि से {amount} ज़्यादा",
+      "less": "पिछली अवधि से {amount} कम",
+      "same": "पिछली अवधि जितना ही",
+      "noPrior": "अभी तुलना करने को कुछ नहीं"
+    },
+    "earners": {
+      "title": "पैसा कहाँ से आता है",
+      "qtyHeading": "बिके",
+      "moneyHeading": "कमाई",
+      "leader": "आपकी पूरी कमाई का {pct}% {name} है।",
+      "others": "{n, plural, one {और #} other {और #}}",
+      "slow": "मुश्किल से बिके: {names}",
+      "nothing": "अभी कुछ नहीं बिका।",
+      "slowCount": "आपके {menu} में से {n} बिक ही नहीं रहे — इस अवधि में एक भी ऑर्डर नहीं।"
+    },
+    "busy": {
+      "title": "भीड़ कब होती है",
+      "peak": "आपकी भीड़ {from}–{to} है।",
+      "quietest": "{day} सबसे सुस्त दिन है — कुल {amount}।",
+      "notEnough": "भीड़ का समय बताने लायक बिक्री अभी नहीं हुई।"
+    },
+    "changed": {
+      "title": "क्या बदला",
+      "up": "{n} ज़्यादा",
+      "down": "{n} कम",
+      "averageBill": "ऑर्डर का आकार",
+      "noPrior": "तुलना करने को पिछली अवधि नहीं — यह आपकी पहली है।",
+      "steady": "पिछली अवधि से कुछ ख़ास नहीं बदला।"
+    }
+  },
+  "diaryReport": {
+    "rangeLabel": "अवधि",
+    "range": {
+      "last_7_days": "इस हफ़्ते",
+      "this_month": "इस महीने",
+      "last_month": "पिछले महीने",
+      "last_3_months": "पिछले 3 महीने",
+      "this_year": "इस साल"
+    },
+    "loadError": "रिपोर्ट नहीं खुल पाई।",
+    "retry": "फिर कोशिश करें",
+    "nothingTitle": "इस अवधि में कुछ नहीं हुआ",
+    "nothingBody": "एक बुकिंग लीजिए, आंकड़े यहीं से शुरू होंगे।",
+    "took": {
+      "label": "आपने कमाए",
+      "visits": "{n, plural, one {# विज़िट} other {# विज़िट}}",
+      "average": "{amount} प्रति विज़िट",
+      "more": "पिछली अवधि से {amount} ज़्यादा",
+      "less": "पिछली अवधि से {amount} कम",
+      "same": "पिछली अवधि जितना ही",
+      "noPrior": "अभी तुलना करने को कुछ नहीं",
+      "noShows": "{n, plural, one {# ने बुक किया पर आए नहीं} other {# ने बुक किया पर आए नहीं}}",
+      "fromTheShelf": "इसमें से {amount} बुकिंग से नहीं, सामान बेचकर आए — नीचे के दोनों कार्ड {service} के हैं जिनके लिए लोग आए।",
+      "noShowsWorth": "{n, plural, one {# ने बुक किया पर आए नहीं} other {# ने बुक किया पर आए नहीं}} — {amount} का समय ख़ाली गया"
+    },
+    "people": {
+      "title": "कौन कमाता है",
+      "leader": "इसमें से {pct}% {name} लाए।",
+      "others": "{n, plural, one {और #} other {और #}}",
+      "nothing": "अभी किसी ने कमाई नहीं की।"
+    },
+    "services": {
+      "title": "लोग किसलिए आते हैं",
+      "leader": "आपकी कमाई का {pct}% {name} है।",
+      "others": "{n, plural, one {और #} other {और #}}",
+      "slow": "मुश्किल से बुक हुईं: {names}",
+      "nothing": "अभी कुछ बुक नहीं हुआ।",
+      "slowCount": "आपकी {menu} सेवाओं में से {n} इस अवधि में बुक ही नहीं हुईं।"
+    },
+    "back": {
+      "title": "कौन वापस नहीं आया",
+      "worthACall": "{n, plural, one {# क्लाइंट अपने तय अंतराल से आगे निकल चुके हैं} other {# क्लाइंट अपने तय अंतराल से आगे निकल चुके हैं}}।",
+      "lastIn": "आख़िरी बार {days, plural, one {# दिन} other {# दिन}} पहले",
+      "worth": "लगभग {amount} प्रति विज़िट",
+      "message": "मैसेज भेजें",
+      "nobody": "अभी किसी को याद दिलाने की ज़रूरत नहीं।"
     }
   },
   "autopayRenewal": {
