@@ -19,6 +19,7 @@ import { areasOf } from '../lib/areas';
 import { loadErrorKind, type LoadErrorKind } from '../lib/load-error';
 import { ReportsClient, type TabPayload } from './ReportsClient';
 import { CounterReport } from './CounterReport';
+import { DiaryReport } from './DiaryReport';
 
 /**
  * The Reports screen's tabs, in its own order. Mirrors `REPORT_TABS` on the
@@ -142,6 +143,9 @@ export default async function ReportsPage({
    * GRW-591's. Until then it is told so plainly, with the two screens that already say what happened.
    */
   const noBookings = !areasOf(me).bookings;
+  /** The books are the owner's and the manager's, on either report. A limited role keeps its granted tabs. */
+  const role = me.member?.role;
+  const maySeeTheBooks = role === undefined || role === 'owner' || role === 'manager';
   /*
    * A shop asking for one of its three analytics tabs falls through to the ordinary renderer below; anything
    * else about a business with no bookings is still answered by the hub. `tab` has already been checked
@@ -156,8 +160,7 @@ export default async function ReportsPage({
   const shopTab = tab;
   const askedGenericTab = noBookings && params.tab !== undefined;
   if (noBookings && !(askedGenericTab && SHOP_REPORT_TABS.has(shopTab) && allowedTabsOf(me).includes(shopTab))) {
-    const role = me.member?.role;
-    const mayOpenShopReports = areasOf(me).shop && (role === undefined || role === 'owner' || role === 'manager');
+    const mayOpenShopReports = areasOf(me).shop && maySeeTheBooks;
     // "See your stock" is a count's link: a kitchen keeps none, and its menu is already in the nav.
     const counted = areasOf(me).stock;
     return (
@@ -229,6 +232,38 @@ export default async function ReportsPage({
     );
   }
   const resolvedTab = canOpen(shopTab) ? shopTab : firstAllowed;
+
+  /*
+   * Jira GRW-591 — a business that books time opens on its OWN four cards, the mirror of what a counter
+   * business gets above.
+   *
+   * The same rule decides it: no `?tab=` means "show me Reports", which is the cards; a tab named by name
+   * is somebody asking for that one. The seven tabs stay exactly as they were behind their own links —
+   * their figures are correct and the owner who wants Money every morning is one tap from it — but they
+   * are no longer what the screen opens with, because seven tabs of figures is what "most of the
+   * information is useless" meant.
+   *
+   * Owner and manager only, like every other money report: a limited role keeps the tabs it was granted
+   * and never sees the whole salon's takings on a card it did not ask for.
+   */
+  if (!noBookings && params.tab === undefined && maySeeTheBooks) {
+    return (
+      <>
+        <PageHeader title={t('title')} />
+        <div className="page-body srp-page">
+          <DiaryReport />
+          <h2 className="cr-more">{t('counterMore')}</h2>
+          <nav className="srp-nav srp-nav-links" aria-label={t('title')}>
+            {ALL_REPORT_TABS.filter(canOpen).map((key) => (
+              <a key={key} className="srp-nav-tab" href={`/reports?tab=${key}`}>
+                {t(`tabs.${key}`)}
+              </a>
+            ))}
+          </nav>
+        </div>
+      </>
+    );
+  }
 
   // One tab's failure must not blank the page: the body renders its own error
   // state while the chrome above stays usable, so the owner can change the

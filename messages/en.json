@@ -2823,8 +2823,8 @@
       "leader": "{name} is {pct}% of everything you earn.",
       "others": "{n, plural, one {and # more} other {and # more}}",
       "slow": "Barely moved: {names}",
-      "slowMore": "{names} and {n} more",
-      "nothing": "Nothing sold yet."
+      "nothing": "Nothing sold yet.",
+      "slowCount": "{n} of your {menu} aren’t selling — nothing ordered in this period."
     },
     "busy": {
       "title": "When you are busy",
@@ -2839,6 +2839,52 @@
       "averageBill": "Order size",
       "noPrior": "Nothing to compare with yet — this is your first period.",
       "steady": "Nothing moved much since the period before."
+    }
+  },
+  "diaryReport": {
+    "rangeLabel": "Period",
+    "range": {
+      "last_7_days": "This week",
+      "this_month": "This month",
+      "last_month": "Last month",
+      "last_3_months": "Last 3 months",
+      "this_year": "This year"
+    },
+    "loadError": "Could not load your reports.",
+    "retry": "Try again",
+    "nothingTitle": "Nothing happened in this period",
+    "nothingBody": "Take a booking and the figures start here.",
+    "took": {
+      "label": "You took in",
+      "visits": "{n, plural, one {# visit} other {# visits}}",
+      "average": "{amount} a visit",
+      "more": "{amount} more than the period before",
+      "less": "{amount} less than the period before",
+      "same": "The same as the period before",
+      "noPrior": "Nothing to compare with yet",
+      "noShows": "{n, plural, one {# booked and did not come} other {# booked and did not come}}"
+    },
+    "people": {
+      "title": "Who earns it",
+      "leader": "{name} brought in {pct}% of it.",
+      "others": "{n, plural, one {and # more} other {and # more}}",
+      "nothing": "Nobody has taken money yet."
+    },
+    "services": {
+      "title": "What they come for",
+      "leader": "{name} is {pct}% of what you earn.",
+      "others": "{n, plural, one {and # more} other {and # more}}",
+      "slow": "Barely booked: {names}",
+      "nothing": "Nothing booked yet.",
+      "slowCount": "{n} of your {menu} services weren’t booked in this period."
+    },
+    "back": {
+      "title": "Who has not come back",
+      "worthACall": "{n, plural, one {# client is past their usual gap} other {# clients are past their usual gap}}.",
+      "lastIn": "Last in {days, plural, one {# day} other {# days}} ago",
+      "worth": "about {amount} a visit",
+      "message": "Message them",
+      "nobody": "Nobody is due a nudge right now."
     }
   },
   "autopayRenewal": {

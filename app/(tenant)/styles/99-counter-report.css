@@ -342,3 +342,97 @@
   background: var(--accent-soft);
   color: var(--accent-ink);
 }
+
+/* ------------------------------------------------------------------ the diary report's own two lists */
+
+/*
+ * Jira GRW-591 — the diary report shares every class above; these two are the parts a counter business
+ * has no question for. The bands are four tiles rather than a bar chart: the useful reading is "29 · 0 ·
+ * 0 · 0", four numbers at a glance, and a chart of four categories is a chart of nothing.
+ */
+.dr-bands {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+}
+
+.dr-band {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--page-bg);
+}
+
+.dr-band-count {
+  font-size: var(--fs-7);
+  font-weight: 650;
+  line-height: 1.1;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.dr-band-label {
+  font-size: var(--fs-2);
+  color: var(--text);
+}
+
+.dr-band-range {
+  font-size: var(--fs-1);
+  color: var(--muted);
+}
+
+/* The two bands that are a problem carry the tint; the other two are context, not an alarm. */
+.dr-band.is-at_risk {
+  background: var(--amber-soft);
+}
+
+.dr-band.is-at_risk .dr-band-count,
+.dr-band.is-at_risk .dr-band-label {
+  color: var(--amber-ink);
+}
+
+.dr-band.is-at_risk .dr-band-range {
+  color: var(--amber-ink);
+}
+
+.dr-band.is-inactive {
+  background: var(--danger-soft);
+}
+
+.dr-band.is-inactive .dr-band-count,
+.dr-band.is-inactive .dr-band-label,
+.dr-band.is-inactive .dr-band-range {
+  color: var(--danger-deep);
+}
+
+.dr-calls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dr-call {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: var(--fs-3);
+}
+
+.dr-call-meta {
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.dr-message {
+  margin-top: var(--sp-3);
+  /* A 44px target, as every tappable thing on a phone is. */
+  min-height: 2.75rem;
+}

@@ -903,7 +903,14 @@ export interface CustomerPage {
 export interface CustomerSegmentCount {
   key: 'active' | 'due' | 'at_risk' | 'inactive';
   count: number;
-  pct: number;
+  /**
+   * Jira GRW-591 — optional, because it has never been sent. Nothing server-side computes a `pct` for a
+   * band (`getSegmentCounts` returns key, count and the range), and nothing on any screen reads one; it
+   * was typed as required and has been `undefined` at runtime since the day it was written. Reusing this
+   * type for the diary report's bands is what turned it up — a required field no response carries is a
+   * trap for the next reader, not a contract.
+   */
+  pct?: number;
   /**
    * QA 2026-10-26 — this band's boundaries in days, from the vertical's own thresholds.
    *
@@ -1864,6 +1871,8 @@ export interface CounterReportPage {
     leader: { name: string; sharePct: number } | null;
     slow: Array<{ id: string; name: string; qty: number }>;
     slowTotal: number;
+    /** How many things are on the menu at all — see the screen for why naming five of fifty is noise. */
+    menuTotal: number;
   };
   busy: {
     byHour: Array<{ hour: number; valueMinor: string }>;
@@ -1871,6 +1880,68 @@ export interface CounterReportPage {
     quietestDay: { dow: number; valueMinor: string } | null;
   };
   changed: { up: CounterMover[]; down: CounterMover[] };
+}
+
+/**
+ * Jira GRW-591 — the diary report: the counter report's mirror, for a business that books time.
+ *
+ * Same rule about prose: the API sends figures and keys, the screen writes the sentence.
+ */
+export interface DiaryDay {
+  dateISO: string;
+  /** 1 = Monday … 7 = Sunday. */
+  dow: number;
+  valueMinor: string;
+}
+export interface DiaryRow {
+  id: string;
+  name: string;
+  /** Visits for a person, bookings for a service. */
+  count: number;
+  valueMinor: string;
+  sharePct: number;
+  /** Jira GRW-363 — the one row for visits recorded with no stylist; the screen words it. */
+  key?: 'unassigned';
+}
+export interface DiaryCallback {
+  customerId: string;
+  name: string;
+  lastVisitDays: number;
+  daysOverdue: number | null;
+  avgTicketMinor: number;
+}
+export interface DiaryReportPage {
+  window: { key: string; label: string; startISO: string; endExclusiveISO: string };
+  previous: { startISO: string; endExclusiveISO: string; hasData: boolean };
+  anyVisits: boolean;
+  takings: {
+    totalMinor: string;
+    previousMinor: string | null;
+    changePct: number | null;
+    differenceMinor: string | null;
+    visits: number;
+    averageVisitMinor: number | null;
+    previousAverageVisitMinor: number | null;
+    noShows: number;
+    previousNoShows: number | null;
+    byDay: DiaryDay[];
+  };
+  /** Null — not empty — for a business that does not rank its people. The screen draws three cards. */
+  people: { rows: DiaryRow[]; distinct: number; leader: { name: string; sharePct: number; key?: 'unassigned' } | null } | null;
+  services: {
+    rows: DiaryRow[];
+    distinct: number;
+    leader: { name: string; sharePct: number } | null;
+    slow: Array<{ id: string; name: string; count: number }>;
+    slowTotal: number;
+    /** How many services are on the menu at all — see the screen for why naming five of fifty is noise. */
+    menuTotal: number;
+  };
+  back: {
+    segments: CustomerSegmentCount[];
+    worthACall: DiaryCallback[];
+    worthACallTotal: number;
+  };
 }
 
 /** Jira GRW-635 — a return's reason, from the small set returns are grouped by. */

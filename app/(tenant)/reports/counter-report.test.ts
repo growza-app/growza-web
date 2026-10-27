@@ -50,6 +50,7 @@ const payload: CounterReportPage = {
     leader: { name: 'Chicken Biryani', sharePct: 31 },
     slow: [{ id: 'p9', name: 'Lemon Soda', qty: 0 }],
     slowTotal: 3,
+    menuTotal: 26,
   },
   busy: {
     byHour: [
@@ -94,6 +95,18 @@ describe('the four cards say something, in English', () => {
   it('turns the leader row into the sentence, rather than leaving a share column to read', () => {
     expect(out).toContain('Chicken Biryani is 31% of everything you earn.');
     expect(out).toContain('and 12 more');
+  });
+
+  it('gives the count against the menu rather than five arbitrary names', () => {
+    // Three barely moved out of twenty-six, and the card can name only one of them: naming it alone
+    // would imply the other two are fine.
+    expect(out).toContain('3 of your 26 aren’t selling');
+    expect(out).not.toContain('Lemon Soda');
+  });
+
+  it('names them when there are few enough to name honestly', () => {
+    const few = { ...payload, earners: { ...payload.earners, slowTotal: 1 } };
+    expect(text(render('en', few))).toContain('Barely moved: Lemon Soda');
   });
 
   it('names the rush as hours, and the slow day beside it', () => {

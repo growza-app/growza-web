@@ -225,16 +225,20 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
             {t('earners.leader', { name: earners.leader.name, pct: earners.leader.sharePct })}
           </p>
         ) : null}
-        {earners.slow.length > 0 ? (
+        {/*
+          Jira GRW-591, found on the salon's own data: a book of fifty services and ten visits in a week
+          leaves forty-five "barely booked", and naming five of them in alphabetical order said nothing —
+          the five shown were arbitrary, because every one sat at zero. Past what it can honestly name,
+          the card gives the count against the menu instead, which is the fact worth having: your menu is
+          bigger than your week.
+        */}
+        {earners.slowTotal === 0 ? null : (
           <p className="cr-aside">
             {earners.slowTotal > earners.slow.length
-              ? t('earners.slowMore', {
-                  names: earners.slow.map((s) => s.name).join(', '),
-                  n: earners.slowTotal - earners.slow.length,
-                })
+              ? t('earners.slowCount', { n: earners.slowTotal, menu: earners.menuTotal })
               : t('earners.slow', { names: earners.slow.map((s) => s.name).join(', ') })}
           </p>
-        ) : null}
+        )}
       </section>
 
       <section className="cr-card" aria-labelledby="cr-busy-h">
