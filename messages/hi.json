@@ -3158,7 +3158,9 @@
       "wasOff": "{bill} में से {amount} पॉइंट से",
       "receiptUsed": "इस्तेमाल किए गए रिवॉर्ड पॉइंट: {points} (−{amount})",
       "receiptEarned": "आपने अगली विज़िट के लिए {points, plural, one {# पॉइंट} other {# पॉइंट}} कमाए।",
-      "earnedDone": "{points, plural, one {# पॉइंट} other {# पॉइंट}} मिले"
+      "earnedDone": "{points, plural, one {# पॉइंट} other {# पॉइंट}} मिले",
+      "receiptTitle": "रिवॉर्ड",
+      "receiptBalance": "अब आपके पास {points, plural, one {# पॉइंट} other {# पॉइंट}} हैं।"
     }
   },
   "help": {

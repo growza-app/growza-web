@@ -378,6 +378,14 @@ export interface ReceiptCardModel {
   savedLine: string | null;
   rewardsEarned: string | null;
   rewardsBalance: string | null;
+  /**
+   * The balance line as the receipt wrote it -- "You now have 420 points." -- in the owner's language.
+   *
+   * `rewardsBalance` above is the figure alone, which is what the graphic card and the image want: a short
+   * value under a BALANCE label, right-aligned. The WhatsApp text wants the sentence, and it must not build
+   * one of its own in English (owner, 2026-10-27).
+   */
+  rewardsBalanceLine: string | null;
   seeYou: string;
   reviewPrompt?: string | null;
   googleReviewUrl?: string | null;
@@ -412,6 +420,7 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
   let savedLine: string | null = null;
   let rewardsEarned: string | null = null;
   let rewardsBalance: string | null = null;
+  let rewardsBalanceLine: string | null = null;
   let seeYou = '';
   let reviewPrompt: string | null = null;
   let googleReviewUrl: string | null = null;
@@ -442,6 +451,13 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
     const t = raw.trim();
     if (!t) {
       if (section === 'items' && items.length > 0) section = 'totals';
+      /*
+       * The Rewards block is heading, earning, balance and then a blank line. Without this the section
+       * stayed open to the end of the receipt and swallowed what came after it: with a Google review link
+       * on the bill the card read "★ Leave us a Google review:" as the earning and the twenty digits of
+       * the link's id as the balance. Measured at the till, 2026-10-27.
+       */
+      if (section === 'rewards') section = 'totals';
       continue;
     }
 
@@ -524,12 +540,21 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
     }
 
     if (section === 'rewards') {
-      if (t.startsWith('★')) {
+      if (t.startsWith('★') && rewardsEarned === null) {
         rewardsEarned = t.replace(/^★\s*/, '').trim();
         continue;
       }
-      if (t.includes(':')) {
-        rewardsBalance = t.split(':').slice(1).join(':').trim();
+      /*
+       * The balance line, whatever shape its sentence takes. It used to be read as "label: value", which
+       * worked only while the label was English and only while there WAS a colon; the line now comes from
+       * the tenant's own copy and says "You now have 420 points." The figure is the first number in it and
+       * the word that follows -- "420 points", "420 पॉइंट" -- which is what the card shows under BALANCE,
+       * and the whole line is kept for the WhatsApp text.
+       */
+      const figure: RegExpExecArray | null = rewardsBalance === null ? /(\d[\d,]*)\s*([^\s.,!]+)?/.exec(t.includes(':') ? t.slice(t.lastIndexOf(':') + 1) : t) : null;
+      if (figure) {
+        rewardsBalanceLine = t;
+        rewardsBalance = [figure[1], figure[2]].filter(Boolean).join(' ');
         continue;
       }
     }
@@ -597,6 +622,7 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
     savedLine,
     rewardsEarned,
     rewardsBalance,
+    rewardsBalanceLine,
     seeYou,
     reviewPrompt,
     googleReviewUrl,
@@ -667,7 +693,9 @@ export function formatStructuredWhatsappText(rows: ReceiptRow[]): string {
     out.push('');
     out.push('*Rewards*');
     if (c.rewardsEarned) out.push(`★ ${c.rewardsEarned}`);
-    if (c.rewardsBalance) out.push(`Available balance: *${c.rewardsBalance}*`);
+    // The receipt's own sentence, in the owner's language. The fallback is for a row that predates it.
+    if (c.rewardsBalanceLine) out.push(`*${c.rewardsBalanceLine}*`);
+    else if (c.rewardsBalance) out.push(`Available balance: *${c.rewardsBalance}*`);
   }
 
   out.push('');
