@@ -305,7 +305,16 @@
   .cr {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
+  }
+
+  /*
+   * No `align-items: start`. With it, a short card beside a tall one ended halfway down its row and
+   * left a block of page showing through beside it, which reads as something that failed to load. The
+   * cards in a row are one height instead, and the white space is inside a card where it looks meant.
+   */
+  .cr-card {
+    display: flex;
+    flex-direction: column;
   }
 
   .cr-toolbar {
