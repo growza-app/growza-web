@@ -169,3 +169,55 @@
     display: none;
   }
 }
+
+/*
+ * Owner, 2026-10-28 — "in mobile app everything is too big ... other apps like Airbnb don't have that big
+ * buttons and image boxes".
+ *
+ * Measured both at 393px, which is the phone they were holding. Airbnb runs 14px body text and spends the
+ * screen on content: two photo cards per row, 167px wide, almost no card chrome. Home ran 16px text and
+ * spent the screen on chrome — a 50px icon chip per tile and padding around everything — so a screen held
+ * one money card and eight shortcuts and little else.
+ *
+ * What is NOT copied is the type: Airbnb's readers are not these readers. The owners this is built for may
+ * not read English confidently, and the house rule is to take the plainer, larger word. So the text stays
+ * where it is and the chrome gives up the pixels instead: 52px back on the first screen, which is the
+ * difference between "Bookings today" being below the fold and above it.
+ *
+ * Phone only (this file is inside the 860px query). A laptop has the room and is untouched.
+ */
+@media (max-width: 860px) {
+  .hm-page .hm-hero:not(.hm-hero-small) {
+    padding: 10px 12px;
+  }
+
+  /* The ruled strip under the figures: it was carrying a blank 8px above and below its own rule. */
+  .hm-page .hm-hero:not(.hm-hero-small) .hm-hero-stats {
+    margin-top: var(--sp-1);
+    padding-top: var(--sp-1);
+  }
+
+  /*
+   * 40px, not 50. The chip is a label for the word beneath it, not a target in its own right — the whole
+   * tile is the target and stays over 44px — so the circle was sized for nothing and took the height of a
+   * line of text from every row of shortcuts.
+   */
+  .hm-tiles .hm-tile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius);
+  }
+
+  .hm-tiles .hm-tile-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .hm-tiles .hm-tile {
+    gap: var(--sp-1);
+  }
+
+  .hm-tiles {
+    gap: 10px var(--sp-2);
+  }
+}
