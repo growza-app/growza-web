@@ -32,9 +32,23 @@ describe('the Permissions-Policy header', () => {
     expect(policy).not.toMatch(/geolocation=\(\)/);
   });
 
-  it('still refuses the camera and the microphone, which nothing here uses', () => {
+  /*
+   * The same bug as geolocation's, found on 2026-10-28, seventeen days later, on the other feature that
+   * needed a device — and this very test is what held it in place. It asserted the microphone was refused
+   * "which nothing here uses", and that parenthesis stopped being true the day voice search shipped
+   * (GRW-651). The assertion outlived its own reason and then defended the breakage.
+   */
+  it('lets THIS page ask for the microphone — voice search is the product', () => {
+    expect(policy).toContain('microphone=(self)');
+    expect(policy).not.toMatch(/microphone=\(\)/);
+  });
+
+  it('still refuses the camera, which nothing here uses', () => {
     expect(policy).toContain('camera=()');
-    expect(policy).toContain('microphone=()');
+  });
+
+  it('does not open the microphone to embedded third parties', () => {
+    expect(policy).not.toContain('microphone=*');
   });
 
   it('does not open geolocation to embedded third parties', () => {

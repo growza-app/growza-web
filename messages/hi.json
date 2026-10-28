@@ -493,6 +493,7 @@
     "voiceListening": "सुन रहे हैं… अब बोलें",
     "voicePermissionDenied": "ब्राउज़र में माइक की अनुमति बंद है",
     "voicePermissionDeniedHelp": "माइक बंद है। आप टाइप कर सकते हैं।",
+    "voiceMicUnusable": "इस डिवाइस का माइक हम इस्तेमाल नहीं कर सकते। आप टाइप कर सकते हैं।",
     "alsoTry": "ये भी देखें",
     "actionFailed": "यह नहीं हुआ। कृपया फिर से कोशिश करें।",
     "optional": "वैकल्पिक",

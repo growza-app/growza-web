@@ -114,12 +114,17 @@ export function getSpeechRecognitionConstructor(): BrowserSpeechRecognitionConst
  * a recording, and a microphone left open puts a recording indicator in the owner's status bar.
  *
  * - `granted`  — carry on and start listening.
- * - `denied`   — they tapped Block, or had already; this is where the "how to turn it on" note belongs.
- * - `unavailable` — no `mediaDevices` at all, or an error that is not about permission (no microphone in
- *   the machine, hardware in use elsewhere). The caller carries on to `SpeechRecognition` and lets it have
- *   its own say, which is exactly what happened before this existed.
+ * - `denied`   — they tapped Block, or had already; this is where the "how to turn it on" note belongs,
+ *   because there IS a switch and only they can throw it.
+ * - `unusable`  — the microphone cannot open and no setting of theirs will change that: a Permissions-Policy
+ *   that forbids it (`NotSupportedError`), or no microphone in the machine (`NotFoundError`). QA 2026-10-28:
+ *   this used to be folded into `unavailable`, so the button went to "listening" against a device that could
+ *   never open — a lie on screen, and the one the owner was looking at. Sending them to Chrome's settings
+ *   would be a second wild goose chase, so this says so and offers no switch.
+ * - `unavailable` — no `mediaDevices` object at all (an old browser). The caller carries on to
+ *   `SpeechRecognition` and lets it have its own say, which is what happened before this existed.
  */
-export async function askForMicrophone(): Promise<'granted' | 'denied' | 'unavailable'> {
+export async function askForMicrophone(): Promise<'granted' | 'denied' | 'unusable' | 'unavailable'> {
   if (typeof navigator === 'undefined') return 'unavailable';
   const media = navigator.mediaDevices as MediaDevices | undefined;
   if (!media?.getUserMedia) return 'unavailable';
@@ -129,7 +134,10 @@ export async function askForMicrophone(): Promise<'granted' | 'denied' | 'unavai
     return 'granted';
   } catch (error) {
     const name = (error as DOMException | undefined)?.name;
-    return name === 'NotAllowedError' || name === 'SecurityError' ? 'denied' : 'unavailable';
+    if (name === 'NotAllowedError' || name === 'SecurityError') return 'denied';
+    // Nothing the owner can set will open it: the page is forbidden the device, or there is no device.
+    if (name === 'NotSupportedError' || name === 'NotFoundError') return 'unusable';
+    return 'unavailable';
   }
 }
 

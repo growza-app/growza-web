@@ -493,6 +493,7 @@
     "voiceListening": "Listening… speak now",
     "voicePermissionDenied": "Microphone access is blocked in your browser",
     "voicePermissionDeniedHelp": "Microphone is blocked. You can type instead.",
+    "voiceMicUnusable": "This device has no microphone we can use. You can type instead.",
     "alsoTry": "Also try",
     "actionFailed": "That didn't work. Please try again.",
     "optional": "optional",

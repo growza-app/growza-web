@@ -163,10 +163,31 @@ describe('a microphone the browser has blocked', () => {
    * PWA is the ordinary case, not an edge one. Only a real refusal reaches the note now.
    */
   it('asks for the microphone before starting the recogniser, and only then calls it blocked', () => {
-    expect(component).toMatch(/await askForMicrophone\(\)\) === 'denied'/);
+    expect(component).toMatch(/const mic = await askForMicrophone\(\)/);
+    expect(component).toMatch(/mic === 'denied' \|\| mic === 'unusable'/);
     // The ask comes BEFORE the recogniser is built, or the prompt is pointless.
     expect(component.indexOf('askForMicrophone')).toBeLessThan(component.indexOf('new Ctor()'));
     expect(component).toMatch(/setDenied\(true\)/);
+  });
+
+  /*
+   * QA 2026-10-28 — and it does not say "listening" at a microphone that cannot open.
+   *
+   * `microphone=()` in next.config.ts forbade this page its own microphone on every origin, production
+   * included. `getUserMedia` answered `NotSupportedError`, which was folded into `unavailable`, so the tap
+   * fell through to the recogniser and the button lit up as though it were hearing something. The owner was
+   * looking at that when they said voice search does not work.
+   */
+  it('stops at a microphone that cannot open, rather than pretending to listen', () => {
+    expect(component).toMatch(/setNoSwitch\(mic === 'unusable'\)/);
+    expect(component).toMatch(/setListening\(false\)/);
+  });
+
+  it('offers no way to turn it on where there is none to offer', () => {
+    // "How to turn it on" over a policy block sends them after a control Chrome does not list.
+    expect(component).toMatch(/noSwitch \? t\('voiceMicUnusable'\) : t\('voicePermissionDeniedHelp'\)/);
+    expect(component).toMatch(/noSwitch \? null : \(/);
+    expect(JSON.parse(readFileSync(join(tenant, '../../messages/hi.json'), 'utf8')).common.voiceMicUnusable).toBeTruthy();
   });
 
   it('keeps the note’s own icons in their buttons, where they can be tapped', () => {

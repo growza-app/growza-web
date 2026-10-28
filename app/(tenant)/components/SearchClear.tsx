@@ -48,6 +48,8 @@ export function SearchClear({
   const [canSpeak, setCanSpeak] = useState(false);
   const [listening, setListening] = useState(false);
   const [denied, setDenied] = useState(false);
+  /** True when the note must not offer a way to turn it on, because there is none. */
+  const [noSwitch, setNoSwitch] = useState(false);
   /** QA 2026-10-26 — the "how do I turn it on" popup, opened from the note and never by itself. */
   const [showHowTo, setShowHowTo] = useState(false);
   const recRef = useRef<BrowserSpeechRecognition | null>(null);
@@ -186,8 +188,12 @@ export function SearchClear({
      * `unavailable` carries on regardless: no media stack, no microphone in the machine, or an error that
      * is not about permission. `SpeechRecognition` then has its own say, exactly as it did before.
      */
-    if ((await askForMicrophone()) === 'denied') {
+    const mic = await askForMicrophone();
+    if (mic === 'denied' || mic === 'unusable') {
+      // `unusable` says the same sentence without the way out, because there is no way out to offer:
+      // the page is forbidden the microphone, or the machine has none (QA 2026-10-28).
       setDenied(true);
+      setNoSwitch(mic === 'unusable');
       setListening(false);
       return;
     }
@@ -275,10 +281,14 @@ export function SearchClear({
       */}
       {denied && (
         <p className="search-mic-note" role="status">
-          <span>{t('voicePermissionDeniedHelp')}</span>
-          <button type="button" className="search-mic-how" onClick={() => setShowHowTo(true)}>
-            {t('voiceHowTo')}
-          </button>
+          <span>{noSwitch ? t('voiceMicUnusable') : t('voicePermissionDeniedHelp')}</span>
+          {/* No link where there is no switch: "How to turn it on" over a policy block sends them hunting for a
+              control Chrome does not list, which is the trip this whole note exists to stop. */}
+          {noSwitch ? null : (
+            <button type="button" className="search-mic-how" onClick={() => setShowHowTo(true)}>
+              {t('voiceHowTo')}
+            </button>
+          )}
           {/* Dismissible: they have read it, they are going to type, and it should not sit on the list for the rest of the day. */}
           <button type="button" className="search-mic-note-x" aria-label={t('voiceNoteClose')} onClick={() => setDenied(false)}>
             <IconClose />
