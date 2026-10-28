@@ -11,7 +11,7 @@ import { ProductPhoto } from './ProductPhoto';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useAreas } from './SessionProvider';
 import { useDialog } from '../../shared/a11y/useDialog';
-import { IconInfo, IconSearch } from './icons';
+import { IconFilter, IconInfo, IconSearch } from './icons';
 import { PackageSheet } from './PackageSheet';
 import { MENU_SORTS, sortMenu, type MenuSort } from '../lib/menu-sort';
 import { SearchClear } from './SearchClear';
@@ -211,7 +211,19 @@ export function ServiceSheet({
             <SearchClear value={term} onClear={() => setTerm('')} onVoice={setTerm} />
           </div>
           <div className="pf-menu-tools">
-            <label className="pf-sort">
+            {/*
+              Owner, 2026-10-28 — the sort is its mark, not its sentence.
+              "Menu order" spelled out took 120px of a 344px row and squeezed the search box until its own
+              placeholder read "Search 24 c…" — the box people actually type in, made unreadable by a control
+              most of them never touch. The <select> is still a real <select> underneath, laid over the mark at
+              full size and invisible: the phone's own picker opens, the keyboard reaches it, and the option
+              names stay the words they were. A dot marks it when it is set to anything but the menu's own order,
+              because an icon that never changes cannot say that it has been.
+            */}
+            <label className={`pf-sort pf-sort-mark ${sort === 'menu' ? '' : 'pf-sort-set'}`}>
+              <span className="pf-sort-icon" aria-hidden="true">
+                <IconFilter />
+              </span>
               <select value={sort} onChange={(e) => setSort(e.target.value as MenuSort)} aria-label={t('sort.label')}>
                 {MENU_SORTS.map((k) => (
                   <option key={k} value={k}>
