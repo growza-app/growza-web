@@ -324,6 +324,7 @@ export function useClientCardCopy() {
     neverIn: t('neverIn'),
     call: t('call'),
     viewBookings: t('viewBookings'),
+    viewOrders: t('viewOrders'),
     close: t('close'),
     loadFailed: t('loadFailed'),
     noPhone: t('noPhone'),

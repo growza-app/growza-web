@@ -21,7 +21,7 @@ import { OrdersBringIn } from './OrdersBringIn';
  * and nothing flashes unfiltered first. Everything after that — a chip, the search, the next page — is the client asking
  * the server again. A failed first read is not a failed screen: the client shows the retry with the filters as they were.
  */
-export type OrdersSearch = { channel?: string; status?: string; q?: string; page?: string };
+export type OrdersSearch = { channel?: string; status?: string; q?: string; customerId?: string; page?: string };
 
 export async function OrdersScreen({ searchParams }: { searchParams: Promise<OrdersSearch> }) {
   const query = readQuery(await searchParams);
@@ -46,7 +46,7 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
   const mayImport = me ? (role === undefined || role === 'owner' || role === 'manager') && isWritable(me.tenant?.status) && areaAllows('/orders/import', areasOf(me)) : false;
 
   // The whole business on arrival; a branch the header picker has chosen is applied by the client, which re-reads.
-  const initial = await api.orders({ channel: query.channel, status: query.status, q: query.q.trim(), page: query.page, pageSize: ORDERS_PAGE_SIZE }).catch((error: unknown) => ({
+  const initial = await api.orders({ channel: query.channel, status: query.status, q: query.q.trim(), customerId: query.customerId, page: query.page, pageSize: ORDERS_PAGE_SIZE }).catch((error: unknown) => ({
     error: error instanceof Error ? error.message : String(error),
   }));
 

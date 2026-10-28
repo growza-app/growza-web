@@ -9,7 +9,8 @@ import { useClientCardCopy } from '../lib/use-copy';
 import { formatPhone } from '../lib/format';
 import { IconClose, IconPhone } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
-import { useMayUse } from './SessionProvider';
+import { useAreas, useMayUse } from './SessionProvider';
+import { clientHistoryOf } from '../lib/areas';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
 /**
@@ -86,6 +87,10 @@ export function ClientProfileCard({
   const [deletedFor, setDeletedFor] = useState<number | null>(null);
   const panel = useRef<HTMLDivElement>(null);
   const c = useClientCardCopy();
+  // Where this business keeps a client's past, and so what the one button at the foot of this card says and opens.
+  const areas = useAreas();
+  const place = clientHistoryOf(areas);
+  const history = place ? { href: place.href, label: place.kind === 'orders' ? c.viewOrders : c.viewBookings } : null;
   const router = useRouter();
 
   useEffect(() => {
@@ -403,13 +408,24 @@ export function ClientProfileCard({
           </a>
           {/* By id, not by name in the search box. The search-by-name link
               landed on the Bookings screen's default day — today — so a client
-              whose last visit was in July showed nothing at all. */}
-          <a
-            className={`cpc-btn cpc-btn-primary ${profile ? '' : 'cpc-btn-off'}`}
-            href={profile ? `/appointments?customerId=${profile.id}` : undefined}
-          >
-            {c.viewBookings}
-          </a>
+              whose last visit was in July showed nothing at all.
+
+              Where that history LIVES is the business's own. This one card is
+              drawn for a salon, a shop and a restaurant alike, and it offered
+              every one of them the diary: a restaurant has no `/appointments`,
+              so the guard sent the owner Home and the button read as broken
+              (owner, 2026-10-28). A shop's history is its Orders; the word
+              follows, because the button should name the screen it opens and
+              that screen is called Orders in this business's own nav.
+
+              Neither area is a case that can happen today — a business has one
+              or the other — but it is the reason this bug existed, so it is
+              answered rather than assumed: no destination, no button. */}
+          {history && (
+            <a className={`cpc-btn cpc-btn-primary ${profile ? '' : 'cpc-btn-off'}`} href={profile ? `${history.href}${profile.id}` : undefined}>
+              {history.label}
+            </a>
+          )}
         </footer>
       </div>
       {confirmDelete && (

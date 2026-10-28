@@ -2380,6 +2380,7 @@
     "neverIn": "never been in",
     "call": "Call",
     "viewBookings": "See bookings",
+    "viewOrders": "See orders",
     "close": "Close",
     "loadFailed": "Could not load this client.",
     "noPhone": "no number saved",
@@ -4465,7 +4466,14 @@
       "nounOrders": "orders",
       "allChannels": "Anywhere",
       "allStates": "Any state",
-      "notConfirmed": "Not confirmed"
+      "notConfirmed": "Not confirmed",
+      "clientShowing": "Orders for <b>{name}</b>",
+      "thisClient": "this client",
+      "showAllOrders": "Show all",
+      "clientEmpty": {
+        "title": "Nothing from them yet",
+        "body": "Anything they order will show up here."
+      }
     },
     "detail": {
       "paidOn": "Paid on {channel}",

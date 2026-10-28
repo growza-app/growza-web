@@ -127,3 +127,21 @@ export function areaAllows(href: string, areas: Areas = DIARY_AREAS): boolean {
 
 /** Is this one of the shop's own screens? (Used by the role rules, which must say who of the shop's staff may open them.) */
 export const isShopRoute = (href: string): boolean => SHOP_ROUTES.some((r) => under(href, r));
+
+/**
+ * Where one client's past lives at this business: the diary's bookings, or the shop's orders.
+ *
+ * Owner, 2026-10-28 — the client card's one link used to be `/appointments?customerId=` for everybody, and a
+ * restaurant has no diary, so `areaAllows` bounced the owner Home and a working button read as broken. Asked HERE
+ * rather than in the card, for the reason every other such question is: a screen does not ask what kind of business
+ * this is, it asks this module.
+ *
+ * Null where neither area is the business's. That cannot happen today — `areasOf` gives bookings to anyone who does
+ * not say otherwise — but a link to nowhere is exactly the bug this answers, so it is not assumed away.
+ */
+export function clientHistoryOf(areas: Areas = DIARY_AREAS): { kind: 'bookings' | 'orders'; href: string } | null {
+  // A shop's own history first: where a business has both, what it RINGS UP is what its desk is looking for.
+  if (areas.shop && areaAllows('/orders', areas)) return { kind: 'orders', href: '/orders?customerId=' };
+  if (areas.bookings && areaAllows('/appointments', areas)) return { kind: 'bookings', href: '/appointments?customerId=' };
+  return null;
+}

@@ -849,12 +849,16 @@ export const api = {
   /**
    * Jira GRW-614 — the Orders list: one page, filtered and searched by the SERVER. `channel` and `status` are the API's
    * own values, comma-separated for several (`new,packed` is "still to send"); `location` absent is every branch.
+   *
+   * `customerId` narrows it to one client, for the "See orders" on their card. By id, never by name: `q` matches text,
+   * so two guests called Sharma would read as one person and a renamed client would stop matching their own orders.
    */
-  orders: (args: { channel?: string; status?: string; q?: string; page?: number; pageSize?: number; location?: string | null } = {}) => {
+  orders: (args: { channel?: string; status?: string; q?: string; customerId?: string; page?: number; pageSize?: number; location?: string | null } = {}) => {
     const params = new URLSearchParams();
     if (args.channel) params.set('channel', args.channel);
     if (args.status) params.set('status', args.status);
     if (args.q) params.set('q', args.q);
+    if (args.customerId) params.set('customerId', args.customerId);
     if (args.page && args.page > 1) params.set('page', String(args.page));
     if (args.pageSize != null) params.set('pageSize', String(args.pageSize));
     if (args.location) params.set('location', args.location);

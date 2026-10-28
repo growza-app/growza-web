@@ -1333,6 +1333,8 @@ export interface OrdersPage {
   total: number;
   page: number;
   pageSize: number;
+  /** Who the list was narrowed to, when it was — so the banner can name them on a page with no rows. */
+  client?: { id: string; name: string | null };
 }
 
 /** Jira GRW-615 — one thing that happened to an order after it was placed. Says THAT, never what (no buyer value). */
