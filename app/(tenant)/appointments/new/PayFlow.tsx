@@ -1050,6 +1050,9 @@ export function PayFlow({
                   // What one point is worth here, so the balance line can price itself. Absent from an API a
                   // deploy behind, and then the sentence simply says the points, as it always did.
                   ...(result.rewards.pointValueMinor ? { pointValueMinor: result.rewards.pointValueMinor } : {}),
+                  // And what the till would actually honour next time, so the line cannot promise more (QA 2026-10-28).
+                  ...(result.rewards.spendableAfter !== undefined ? { spendableAfter: result.rewards.spendableAfter } : {}),
+                  ...(result.rewards.minRedeemPoints !== undefined ? { minRedeemPoints: result.rewards.minRedeemPoints } : {}),
                   /*
                    * And the date on that promise — QA 2026-10-27 (loophole L4). The receipt said "you now
                    * have 420 points" and never that points die; a number with no date on it is a promise

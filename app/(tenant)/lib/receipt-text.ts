@@ -37,6 +37,16 @@ export interface ReceiptRewards {
   /** What one point takes off a bill, in paise. The balance line needs it to say what the points are worth. */
   pointValueMinor?: number;
   /**
+   * What the till would actually honour next time, and the floor under it — QA 2026-10-28.
+   *
+   * The balance is what they HAVE; it counts points still in the hold and knows nothing about the minimum
+   * this business takes in one go. Built from the balance alone, this line told a customer "You have 12
+   * points. That is ₹12 off your next bill" while the till would honour nothing. The price is printed only
+   * when these two agree it can be spent.
+   */
+  spendableAfter?: number;
+  minRedeemPoints?: number;
+  /**
    * How many of those points die next, and the day they die — QA 2026-10-27 (loophole L4).
    *
    * Already formatted, like `when`: the builder does no dates, and the till knows the salon's zone and the
@@ -228,7 +238,9 @@ export function receiptRows(input: ReceiptInput, copy: ReceiptCopy, money: (mino
       line({ t: `★ ${copy.rewardEarned ? copy.rewardEarned(rw.earnedPoints) : `+${rw.earnedPoints} Reward Points earned`}` });
     }
     if (rw.balancePoints !== undefined) {
-      const worth = rw.pointValueMinor ? money(rw.balancePoints * rw.pointValueMinor) : null;
+      const spendable = rw.spendableAfter ?? rw.balancePoints;
+      const usable = rw.pointValueMinor !== undefined && spendable > 0 && spendable >= (rw.minRedeemPoints ?? 0);
+      const worth = usable ? money(spendable * rw.pointValueMinor!) : null;
       line({ t: copy.rewardBalance ? copy.rewardBalance(rw.balancePoints, worth) : `Available balance: ${rw.balancePoints} pts` });
     }
     // The date on the promise. Printed under the balance and only when there is one, so a business whose
