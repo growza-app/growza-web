@@ -17,7 +17,7 @@ import {
 import { waDigits } from './BookingSheet';
 import { PhoneField } from './PhoneField';
 import type { ReactNode } from 'react';
-import { IconCheck, IconPrint, IconShare, IconWhatsApp } from './icons';
+import { IconPrint, IconShare, IconWhatsApp } from './icons';
 
 /** One row of the bill as WhatsApp will draw it: the same segments the text is written from. */
 function Row({ row }: { row: ReceiptRow }) {
@@ -106,7 +106,6 @@ export function ReceiptShare({
   const [editing, setEditing] = useState(!phone);
   const [typed, setTyped] = useState(fromStoredPhone(phone));
   const [touched, setTouched] = useState(false);
-  const [copiedKind, setCopiedKind] = useState<'card' | 'text' | null>(null);
   /*
    * Share is a phone's: a touch screen whose browser can hand text to another app. Desktop Safari and Edge have
    * `navigator.share` too, and there it opens an OS panel beside the Send on WhatsApp right above it. Asked after
@@ -123,43 +122,6 @@ export function ReceiptShare({
     setTyped(fromStoredPhone(phone));
     setTouched(false);
     setEditing(false);
-  };
-
-  const copyCardToClipboard = async () => {
-    if (!card) return;
-    try {
-      const blob = await renderReceiptCardBlob(card);
-      if (blob && typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
-        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-        setCopiedKind('card');
-        window.setTimeout(() => setCopiedKind((prev) => (prev === 'card' ? null : prev)), 3000);
-        return;
-      }
-      if (blob && typeof navigator.share === 'function') {
-        const file = new File([blob], 'receipt.png', { type: 'image/png' });
-        await navigator.share({ files: [file], text });
-        return;
-      }
-    } catch {
-      // Fallback to copying structured text if the browser blocks image clipboard write
-    }
-    try {
-      await navigator.clipboard?.writeText(text);
-      setCopiedKind('text');
-      window.setTimeout(() => setCopiedKind((prev) => (prev === 'text' ? null : prev)), 3000);
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const copyTextToClipboard = async () => {
-    try {
-      await navigator.clipboard?.writeText(text);
-      setCopiedKind('text');
-      window.setTimeout(() => setCopiedKind((prev) => (prev === 'text' ? null : prev)), 3000);
-    } catch {
-      /* ignore */
-    }
   };
 
   const shareReceipt = async () => {
@@ -365,7 +327,6 @@ export function ReceiptShare({
            */
           onClick={() => {
             if (onNumberGiven && !phone) onNumberGiven(toStoredPhone(typed)!);
-            if (hasGraphicCard) void copyCardToClipboard();
           }}
         >
           <IconWhatsApp />
@@ -388,26 +349,21 @@ export function ReceiptShare({
 
       {canShare || canPrint ? (
         <div className="wi-receipt-more">
-          {hasGraphicCard ? (
-            <button
-              type="button"
-              className="btn btn-ghost wi-act-alt"
-              onClick={() => void copyCardToClipboard()}
-            >
-              {copiedKind === 'card' ? <IconCheck /> : <IconShare />}
-              {copiedKind === 'card' ? nv.cardCopied : nv.copyCard}
-            </button>
-          ) : null}
-          {canPrint ? (
-            <button
-              type="button"
-              className="btn btn-ghost wi-act-alt"
-              onClick={() => void copyTextToClipboard()}
-            >
-              <IconCheck />
-              {copiedKind === 'text' ? nv.textCopied : nv.copyText}
-            </button>
-          ) : null}
+          {/*
+            Owner, 2026-10-28, on this screen: "too many options and graphics card is never shared".
+            Both halves were true, and they were the same fault.
+
+            "Copy receipt card" and "Copy text" put something on a CLIPBOARD. Nothing on this screen then tells
+            anyone to paste it, and the two of them sat beside a Send that already carries the text and a Share
+            that already carries the picture — four buttons for two jobs. Worse, Send ITSELF ran the card's
+            clipboard copy on the way out, silently: the card the owner was looking at went to the clipboard,
+            `wa.me` opened with text only, and nobody ever pasted the thing. That is the whole of "the graphic
+            card is never shared".
+
+            What remains does what it says: Send on WhatsApp (text, to a typed number, which already carries the
+            items, the total, the points and the Google review link), Share (the OS sheet, the ONLY route an
+            image can take to WhatsApp — a `wa.me` link cannot carry one), and Print.
+          */}
           {canShare ? (
             <button
               type="button"
