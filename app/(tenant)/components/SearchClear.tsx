@@ -7,6 +7,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import {
   claimVoiceSession,
   extractVoiceTranscript,
+  askForMicrophone,
   getSpeechRecognitionConstructor,
   releaseVoiceSession,
   setNativeInputValue,
@@ -158,7 +159,7 @@ export function SearchClear({
     );
   }
 
-  const toggleVoice = (btn: HTMLButtonElement) => {
+  const toggleVoice = async (btn: HTMLButtonElement) => {
     if (listening && recRef.current) {
       try {
         recRef.current.stop();
@@ -172,6 +173,24 @@ export function SearchClear({
 
     const Ctor = getSpeechRecognitionConstructor();
     if (!Ctor) return;
+
+    /*
+     * Ask for the microphone before trying to use it — QA 2026-10-28, and the owner's own words: "the
+     * dialogue is not for allowing microphone, like allow location access".
+     *
+     * `start()` below does not raise Chrome's permission prompt; `getUserMedia` does, and nothing in this
+     * app had ever called it. So a tap went straight to speech recognition, got `not-allowed` back, and the
+     * owner was told their microphone was blocked and sent to unblock something nobody had asked them
+     * about. On an installed PWA that is the ordinary case, not an edge one.
+     *
+     * `unavailable` carries on regardless: no media stack, no microphone in the machine, or an error that
+     * is not about permission. `SpeechRecognition` then has its own say, exactly as it did before.
+     */
+    if ((await askForMicrophone()) === 'denied') {
+      setDenied(true);
+      setListening(false);
+      return;
+    }
 
     const rec = new Ctor();
     rec.lang = voiceSearchLang(locale);
@@ -241,7 +260,8 @@ export function SearchClear({
         aria-label={listening ? t('stopVoiceSearch') : denied ? t('voicePermissionDenied') : t('voiceSearch')}
         aria-pressed={listening}
         title={denied ? t('voicePermissionDenied') : listening ? t('voiceListening') : t('voiceSearch')}
-        onClick={(e) => toggleVoice(e.currentTarget)}
+        // The element is read in the handler's own turn: `currentTarget` is null by the time the await inside resolves.
+        onClick={(e) => void toggleVoice(e.currentTarget)}
       >
         <IconMic />
       </button>
@@ -281,7 +301,7 @@ export function SearchClear({
             setShowHowTo(false);
             setDenied(false);
             const btn = btnRef.current;
-            if (btn) toggleVoice(btn);
+            if (btn) void toggleVoice(btn);
           }}
           onCancel={() => setShowHowTo(false)}
         >

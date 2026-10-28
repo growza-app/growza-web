@@ -16,11 +16,13 @@ describe('the menu button on Bookings and Clients', () => {
     expect(header).toMatch(/\{onBack \? null : menu \? <MenuButton \/> : <BackButton phoneOnly \/>\}/);
   });
 
-  it('Bookings (both headers) and Clients ask for it', () => {
+  it('Bookings (both headers), Clients and Orders ask for it', () => {
     const bookings = read('../appointments/page.tsx');
     expect(bookings.match(/<PageHeader [^>]*\bmenu \/>/g)?.length).toBe(2);
     expect(read('../customers/page.tsx')).toMatch(/<PageHeader [^>]*\bmenu \/>/);
     expect(read('../customers/CustomersClient.tsx')).toMatch(/<PageHeader\s+title=\{label\}\s+menu\b/);
+    // QA 2026-10-28 — Orders is a tab too, and had a Back arrow that went nowhere.
+    expect(read('../orders/OrdersScreen.tsx')).toMatch(/<PageHeader[\s\S]{0,120}\bmenu\b/);
   });
 
   it('no other screen asks for it, so they keep Back', () => {
