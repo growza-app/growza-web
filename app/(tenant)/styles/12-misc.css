@@ -102,3 +102,21 @@
   /* 44px is Apple's minimum tap target, and a chip row is the easiest place to fall under it (GRW-305). */
   min-height: 44px;
 }
+
+/*
+ * QA 2026-10-28 — an empty state is a sentence, not a room.
+ *
+ * `34px 20px` of padding puts one short line in a 95px card. On a laptop that reads as composure; on a
+ * phone, where the whole screen is 852px and the owner is looking for the thing that is not there, it is
+ * a third of a screen saying "no". Every empty state in the app wears this class, so they all get the
+ * same answer and none of them drifts.
+ *
+ *   "No bookings that day." 95px -> 61px
+ *
+ * The text stays centred and stays its own size; only the room around it goes.
+ */
+@media (max-width: 860px) {
+  .empty {
+    padding: 17px 16px;
+  }
+}
