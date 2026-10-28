@@ -783,7 +783,11 @@ export function CustomersClient({
                           </span>
                           {/* No year: it is this year or it is in the text beside it, and "2026" was
                               costing the service name the room to be read. */}
-                          {formatDateShort(c.lastBookingAt, undefined, locale)} · {c.lastServiceName}
+                          {/* The separator belongs to the service, so it travels with it. A restaurant
+                              guest has no service name against their last visit, and the line read
+                              "28 Oct ·" with nothing after the dot. */}
+                          {formatDateShort(c.lastBookingAt, undefined, locale)}
+                          {c.lastServiceName ? ` · ${c.lastServiceName}` : ''}
                         </span>
                       )}
                     </div>
