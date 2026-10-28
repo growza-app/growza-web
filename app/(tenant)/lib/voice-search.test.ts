@@ -147,13 +147,34 @@ describe('asking for the microphone', () => {
   });
 
   /*
-   * No microphone in the machine, or one another app is holding. Not a permission answer, so the caller
-   * carries on and lets `SpeechRecognition` have its own say — which is what happened before this existed.
+   * No microphone in the machine, and the page forbidden one by a Permissions-Policy, are the same answer:
+   * it cannot open, and nothing the owner sets will change that.
+   *
+   * These two used to be `unavailable`, which meant "carry on and let SpeechRecognition have its own say" —
+   * so the button went to "listening" against a device that could never open. QA 2026-10-28 found the second
+   * of them live: `microphone=()` in next.config.ts forbade the page its own microphone on every origin,
+   * production included, and the owner was looking at a mic that said it was listening.
    */
-  it('does not call a missing microphone a refusal', async () => {
+  it('calls a microphone that cannot open unusable, not merely unavailable', async () => {
+    for (const name of ['NotFoundError', 'NotSupportedError']) {
+      const restore = withMedia(() => {
+        const error = new Error('none');
+        error.name = name;
+        return Promise.reject(error);
+      });
+      try {
+        await expect(askForMicrophone(), name).resolves.toBe('unusable');
+      } finally {
+        restore();
+      }
+    }
+  });
+
+  /* An error that is none of the above stays `unavailable`: the recogniser gets its own say, as before. */
+  it('leaves an unrecognised failure to the recogniser', async () => {
     const restore = withMedia(() => {
-      const error = new Error('none');
-      error.name = 'NotFoundError';
+      const error = new Error('busy');
+      error.name = 'AbortError';
       return Promise.reject(error);
     });
     try {

@@ -85,6 +85,16 @@ const nextConfig: NextConfig = {
    * and phone check-in arrived after it (GRW-563), so "Use where I am now" and a stylist's own "I'm in" have
    * never once been able to ask for a position, on any origin, however the phone's own permission was set.
    * `(self)` is still the restrictive answer — this document may ask, and no embedded third party can.
+   *
+   * **`microphone=(self)`, not `microphone=()`** (owner, 2026-10-28) — and it is the SAME mistake, found
+   * seventeen days later on the other feature that needed a device. Voice search (GRW-651) shipped behind a
+   * header forbidding the microphone to this page, so `getUserMedia` answered `NotSupportedError` with
+   * "Permissions policy violation: microphone is not allowed in this document" in the console, and Chrome
+   * reported the permission as `denied` with no control offered to change it. Every owner who went looking
+   * for the switch was sent after one that does not exist, on every origin, production included.
+   *
+   * The lesson this file has now taught twice: `()` is not "off until someone turns it on", it is "off, and
+   * nobody may ask" — including us. A feature that needs a device needs `(self)` the day it ships.
    */
   async headers() {
     return [
@@ -95,7 +105,7 @@ const nextConfig: NextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(self)' },
         ],
       },
     ];
