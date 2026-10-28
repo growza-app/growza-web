@@ -51,7 +51,7 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
     const mine = ++requestId.current;
     setLoading(true);
     api
-      .orders({ channel: q.channel, status: q.status, q: q.q.trim(), page: q.page, pageSize: ORDERS_PAGE_SIZE, location })
+      .orders({ channel: q.channel, status: q.status, q: q.q.trim(), customerId: q.customerId, page: q.page, pageSize: ORDERS_PAGE_SIZE, location })
       .then((r) => {
         // A slower, older answer must not overwrite a newer one.
         if (mine !== requestId.current) return;
@@ -95,7 +95,7 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
   useEffect(() => {
     const onPop = () => {
       const params = new URLSearchParams(window.location.search);
-      const next = readQuery({ channel: params.get('channel') ?? '', status: params.get('status') ?? '', q: params.get('q') ?? '', page: params.get('page') ?? '' });
+      const next = readQuery({ channel: params.get('channel') ?? '', status: params.get('status') ?? '', q: params.get('q') ?? '', customerId: params.get('customerId') ?? '', page: params.get('page') ?? '' });
       setQuery(next);
       setTyped(next.q);
     };
@@ -112,7 +112,9 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
   const ships = sellsOnMarketplaces(areas);
   const pickChannel = (channel: string) => go({ ...query, channel, page: 1 }, 'push');
   const pickState = (status: string) => go({ ...query, status, page: 1 }, 'push');
-  const clearAll = () => go({ ...EMPTY_QUERY }, 'push');
+  // The client is a scope, not a filter: clearing the chips and the search leaves you looking at the same person.
+  // Only the banner's "Show all orders" lets them go.
+  const clearAll = () => go({ ...EMPTY_QUERY, customerId: query.customerId }, 'push');
   const filtered = isFiltered(query);
 
   // Typed lookups, not `t(`states.${x}`)`: the message keys are checked, and a key that does not exist cannot compile.
@@ -144,6 +146,25 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
 
   return (
     <div className="ord" aria-busy={loading || undefined}>
+      {/* Says whose orders these are and how to get back out — the same banner, and the same reason for it, as the
+          diary's. Without it a list holding one person's three orders is indistinguishable from a very quiet shop.
+
+          The name is the SERVER's (`page.client`), not the rows': read off the rows it vanished at the one moment
+          it matters, when the list is empty and the banner is all there is to say what you are looking at. A row's
+          name is still the fallback, for an API a deploy behind. */}
+      {query.customerId && (
+        <div className="ord-client-banner">
+          <span>
+            {t.rich('list.clientShowing', {
+              name: page?.client?.name?.trim() || rows[0]?.who?.name?.trim() || t('list.thisClient'),
+              b: (chunks) => <strong>{chunks}</strong>,
+            })}
+          </span>
+          <a className="btn btn-ghost btn-sm" href="/orders">
+            {t('list.showAllOrders')}
+          </a>
+        </div>
+      )}
       <div className="ord-tools">
         <label className="search-wrap ord-search">
           <IconSearch />
@@ -206,8 +227,10 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
         </ul>
       ) : rows.length === 0 ? (
         <div className="ord-state">
-          <strong>{filtered ? t('list.noMatch.title') : t('list.empty.title')}</strong>
-          <p>{filtered ? t('list.noMatch.body') : t('list.empty.body')}</p>
+          {/* "Your first sale will show up here" is the shop's sentence, and it is not true of a list scoped to one
+              person who simply has not ordered yet. Theirs says so instead. */}
+          <strong>{filtered ? t('list.noMatch.title') : query.customerId ? t('list.clientEmpty.title') : t('list.empty.title')}</strong>
+          <p>{filtered ? t('list.noMatch.body') : query.customerId ? t('list.clientEmpty.body') : t('list.empty.body')}</p>
           {filtered ? (
             <button type="button" className="btn" onClick={clearAll}>
               {t('list.noMatch.clear')}

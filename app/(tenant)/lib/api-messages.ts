@@ -169,6 +169,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
   // Jira GRW-613 — a marketplace buyer who is not in the client list, and attaching a client the owner recognises.
   'This order already has a client.': 'इस ऑर्डर में पहले से ग्राहक जुड़ा है।',
   'That client is not available.': 'वह ग्राहक उपलब्ध नहीं है।',
+  'That is not a client.': 'यह कोई ग्राहक नहीं है।',
   'There is no such branch.': 'ऐसी कोई ब्रांच नहीं है।',
   // Jira GRW-617 — swapping a size on a bill.
   'A size can only be swapped for another size of the same product.': 'साइज़ सिर्फ़ उसी प्रोडक्ट के दूसरे साइज़ से बदला जा सकता है।',

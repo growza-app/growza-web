@@ -19,13 +19,13 @@ const messages = (lang: 'en' | 'hi') => JSON.parse(readFileSync(path.resolve(imp
 
 describe('FR-03 — a chip is a request, and a link round-trips the filters', () => {
   it('reads what the server reads: channel, status, q and page', () => {
-    expect(readQuery({ channel: 'flipkart', status: 'new,packed', q: 'Meera', page: '3' })).toEqual({ channel: 'flipkart', status: 'new,packed', q: 'Meera', page: 3 });
+    expect(readQuery({ channel: 'flipkart', status: 'new,packed', q: 'Meera', page: '3' })).toEqual({ channel: 'flipkart', status: 'new,packed', q: 'Meera', customerId: '', page: 3 });
     expect(readQuery({})).toEqual(EMPTY_QUERY);
   });
 
   it('writes an unfiltered list as a clean address, and the same view as the same link', () => {
     expect(toSearch(EMPTY_QUERY)).toBe('');
-    const q = { channel: 'amazon', status: 'sent', q: ' Meera ', page: 2 };
+    const q = { channel: 'amazon', status: 'sent', q: ' Meera ', customerId: '', page: 2 };
     expect(toSearch(q)).toBe('?channel=amazon&status=sent&q=Meera&page=2');
     expect(readQuery(Object.fromEntries(new URLSearchParams(toSearch(q)))).status).toBe('sent');
     // Page 1 is the default and stays out; so does a blank search.
@@ -62,8 +62,8 @@ describe('FR-03 — a chip is a request, and a link round-trips the filters', ()
 
 describe('BR-01 / NFR-02 — the SERVER filters, searches and pages; the browser narrows nothing', () => {
   it('asks the API for every chip, search and page, with the API’s own values', () => {
-    expect(client).toMatch(/\.orders\(\{ channel: q\.channel, status: q\.status, q: q\.q\.trim\(\), page: q\.page, pageSize: ORDERS_PAGE_SIZE, location \}\)/);
-    expect(screen).toContain('api.orders({ channel: query.channel, status: query.status, q: query.q.trim(), page: query.page, pageSize: ORDERS_PAGE_SIZE })');
+    expect(client).toMatch(/\.orders\(\{ channel: q\.channel, status: q\.status, q: q\.q\.trim\(\), customerId: q\.customerId, page: q\.page, pageSize: ORDERS_PAGE_SIZE, location \}\)/);
+    expect(screen).toContain('api.orders({ channel: query.channel, status: query.status, q: query.q.trim(), customerId: query.customerId, page: query.page, pageSize: ORDERS_PAGE_SIZE })');
   });
 
   it('never filters, sorts or slices the rows it was given', () => {
@@ -111,7 +111,8 @@ describe('UI states — loading, empty (two different ones), error', () => {
   });
 
   it('"No orders yet" and "Nothing matches that" are different messages, and only the second offers to clear', () => {
-    expect(client).toContain("filtered ? t('list.noMatch.title') : t('list.empty.title')");
+    // Three now: a list scoped to one client says so in its own words rather than the shop's "your first sale".
+    expect(client).toContain("filtered ? t('list.noMatch.title') : query.customerId ? t('list.clientEmpty.title') : t('list.empty.title')");
     expect(client).toContain("filtered ? (\n            <button type=\"button\" className=\"btn\" onClick={clearAll}>");
   });
 

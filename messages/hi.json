@@ -2380,6 +2380,7 @@
     "neverIn": "कभी नहीं आए",
     "call": "कॉल करें",
     "viewBookings": "बुकिंग देखें",
+    "viewOrders": "ऑर्डर देखें",
     "close": "बंद करें",
     "loadFailed": "यह ग्राहक लोड नहीं हो सका।",
     "noPhone": "नंबर सेव नहीं",
@@ -4465,7 +4466,14 @@
       "nounOrders": "ऑर्डर",
       "allChannels": "कहीं से भी",
       "allStates": "कोई भी स्थिति",
-      "notConfirmed": "पुष्टि नहीं हुई"
+      "notConfirmed": "पुष्टि नहीं हुई",
+      "clientShowing": "<b>{name}</b> के ऑर्डर",
+      "thisClient": "यह ग्राहक",
+      "showAllOrders": "सभी दिखाएँ",
+      "clientEmpty": {
+        "title": "अभी तक इनका कुछ नहीं",
+        "body": "ये जो भी ऑर्डर करेंगे वह यहाँ दिखेगा।"
+      }
     },
     "detail": {
       "paidOn": "{channel} पर भुगतान",
