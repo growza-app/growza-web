@@ -308,6 +308,8 @@ export function useClientCardCopy() {
     points: t('points'),
     pointsCount: (n: number) => t('pointsCount', { n }),
     pointsWorth: (worth: string) => t('pointsWorth', { worth }),
+    pointsHeld: (n: number) => t('pointsHeld', { n }),
+    pointsNeedMore: (n: number) => t('pointsNeedMore', { n }),
     pointsExpire: (n: number, on: string) => t('pointsExpire', { n, on }),
     rows: {visits: t('rows.visits'), spent: t('rows.spent'), avgSpend: t('rows.avgSpend'), lastVisit: t('rows.lastVisit'), favourite: t('rows.favourite'), topProvider: t('rows.topProvider'), interval: t('rows.interval'), cancelRate: t('rows.cancelRate'), since: t('rows.since'), nextVisit: t('rows.nextVisit') },
     recent: t('recent'),

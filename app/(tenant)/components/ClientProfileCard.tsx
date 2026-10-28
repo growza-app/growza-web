@@ -87,6 +87,14 @@ export function ClientProfileCard({
   const [deletedFor, setDeletedFor] = useState<number | null>(null);
   const panel = useRef<HTMLDivElement>(null);
   const c = useClientCardCopy();
+  /**
+   * What this client could actually spend at the till right now.
+   *
+   * The balance is what they HAVE; the hold is the part of it the business has not released yet. The till
+   * subtracts the hold before it offers anything, so a card drawn off the balance alone promises money the
+   * till will refuse (QA 2026-10-28).
+   */
+  const spendable = rewards ? Math.max(0, rewards.balance - rewards.heldPoints) : 0;
   // Where this business keeps a client's past, and so what the one button at the foot of this card says and opens.
   const areas = useAreas();
   const place = clientHistoryOf(areas);
@@ -357,10 +365,21 @@ export function ClientProfileCard({
               */}
               {rewards && (
                 <>
+                  {/*
+                    QA 2026-10-28 — what the TILL will take off, not what the balance adds up to.
+                    This said "Worth ₹75 off a bill" for a client with 75 points, 45 of them still inside the
+                    business's hold: the till would honour ₹30 and the desk had read the larger number out to
+                    them. A card that promises more than the till pays is an argument at the counter.
+                    Two rules decide it, and both are already in this answer: the hold, and the floor under
+                    which nothing may be spent at all.
+                  */}
                   <h3 className="cpc-section">{c.points}</h3>
                   <div className="cpc-row cpc-points">
                     <span>
-                      {c.pointsWorth(formatMoney(String(rewards.balance * rewards.pointValueMinor)))}
+                      {spendable >= rewards.minRedeemPoints
+                        ? c.pointsWorth(formatMoney(String(spendable * rewards.pointValueMinor)))
+                        : c.pointsNeedMore(rewards.minRedeemPoints - spendable)}
+                      {rewards.heldPoints > 0 && <em>{c.pointsHeld(rewards.heldPoints)}</em>}
                       {rewards.expiring && (
                         <em>{c.pointsExpire(rewards.expiring.points, new Date(rewards.expiring.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }))}</em>
                       )}

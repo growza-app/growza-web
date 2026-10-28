@@ -1995,6 +1995,9 @@ export function NewVisitSheet({
                 ...(paid.rewards.balanceAfter !== null ? { balancePoints: paid.rewards.balanceAfter } : {}),
                 // The rate, so the balance line can say what it is worth (owner, 2026-10-28).
                 ...(paid.rewards.pointValueMinor ? { pointValueMinor: paid.rewards.pointValueMinor } : {}),
+                // And what the till would actually honour next time, so the line cannot promise more (QA 2026-10-28).
+                ...(paid.rewards.spendableAfter !== undefined ? { spendableAfter: paid.rewards.spendableAfter } : {}),
+                ...(paid.rewards.minRedeemPoints !== undefined ? { minRedeemPoints: paid.rewards.minRedeemPoints } : {}),
                 // The date on that promise, in the salon's zone and the reader's language (QA 2026-10-27, L4).
                 ...(paid.rewards.expiring
                   ? { expiringPoints: paid.rewards.expiring.points, expiringOn: formatDate(paid.rewards.expiring.atISO, timezone, locale) }

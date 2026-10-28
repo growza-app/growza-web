@@ -2366,6 +2366,8 @@
     "points": "Reward points",
     "pointsCount": "{n, plural, one {# point} other {# points}}",
     "pointsWorth": "Worth {worth} off a bill",
+    "pointsHeld": "{n, plural, one {# point is} other {# points are}} not ready to use yet",
+    "pointsNeedMore": "{n, plural, one {# more point} other {# more points}} to use them",
     "pointsExpire": "{n, plural, one {# point expires} other {# points expire}} on {on}",
     "recent": "Last few visits",
     "daysAgo": "{n, plural, =0 {today} one {yesterday} other {# days ago}}",

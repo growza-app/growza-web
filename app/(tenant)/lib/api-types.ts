@@ -1005,6 +1005,10 @@ export interface VisitRewards {
   expiring: { points: number; atISO: string } | null;
   /** What one point takes off a bill, in paise — so the receipt can say what the balance is worth. */
   pointValueMinor?: number;
+  /** What they could actually spend next time: the balance less whatever is still held. */
+  spendableAfter?: number;
+  /** The fewest points this business accepts in one go. Below it nothing can be spent at all. */
+  minRedeemPoints?: number;
 }
 
 export interface CheckoutResponse {

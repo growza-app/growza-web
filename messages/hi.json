@@ -2366,6 +2366,8 @@
     "points": "रिवॉर्ड पॉइंट",
     "pointsCount": "{n, plural, one {# पॉइंट} other {# पॉइंट}}",
     "pointsWorth": "बिल में {worth} की छूट के बराबर",
+    "pointsHeld": "{n, plural, one {# पॉइंट} other {# पॉइंट}} अभी इस्तेमाल नहीं हो सकते",
+    "pointsNeedMore": "इस्तेमाल करने के लिए {n, plural, one {# और पॉइंट} other {# और पॉइंट}}",
     "pointsExpire": "{on} को {n, plural, one {# पॉइंट} other {# पॉइंट}} खत्म हो रहे हैं",
     "recent": "पिछली कुछ विज़िट",
     "daysAgo": "{n, plural, =0 {आज} one {कल} other {# दिन पहले}}",
