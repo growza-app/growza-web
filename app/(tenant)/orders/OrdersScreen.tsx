@@ -62,7 +62,19 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
           mayTake || mayImport || mayReadReturns ? (
             <>
               {mayReadReturns ? (
-                <a className="btn btn-ghost" href="/orders/returns">
+                /*
+                  QA 2026-10-28 — not in the header on a phone.
+                
+                  The header carries the menu button, the title, this, "Take an order" and the avatar: 403px
+                  of content across 363px, so the title was printed underneath this link and neither could
+                  be read. Fixing the wrap made the header two rows, which is correct and still costs 54px.
+                
+                  This is the one to give up, because it is the only one that is not an action and not
+                  unique: Returns is a DESTINATION, and the same destination is already a quick button on
+                  Home and "What came back" in the reports nav. From 861px the sidebar is up and there is
+                  room for a third way to it.
+                */
+                <a className="btn btn-ghost desktop-only" href="/orders/returns">
                   {tOrders('returnsLink')}
                 </a>
               ) : null}
