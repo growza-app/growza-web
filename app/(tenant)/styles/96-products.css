@@ -2476,3 +2476,37 @@
     justify-content: flex-end;
   }
 }
+
+/*
+ * QA 2026-10-28 — the Menu's own header, on a phone.
+ *
+ * 326px above the first dish on a screen opened to read dishes: four stat cards in two rows, then a search
+ * box, then Categories / Sort / Edit-Delete wrapping onto two rows of their own.
+ *
+ * Two changes, neither of them removing anything:
+ *
+ *   - the three controls go on ONE row. The "Sort" label goes with it: the select beside it already reads
+ *     "Name (A–Z)", so the word was labelling something that says its own name. Columns are 0.95 / 1.2 /
+ *     0.95 rather than equal thirds, because the select is the widest of the three and an equal share
+ *     clipped its closing bracket. Measured: 118 / 110 / 87, nothing clipped.
+ *   - the stat cards lose the blank line between their number and their label. The four of them stay, in
+ *     two columns: two carry text values ("County Tikka", "Top seller") and four across at 85px would
+ *     make a nonsense of those, which is the difference between these and the Clients figures.
+ *
+ *   controls 96px -> 44px, cards 176px -> 160px, so 326px -> 258px.
+ */
+@media (max-width: 860px) {
+  .prd-selects {
+    grid-template-columns: 0.95fr 1.2fr 0.95fr;
+  }
+
+  .prd-sort > span,
+  .prd-sort label {
+    display: none;
+  }
+
+  .prd-stat {
+    gap: 0;
+    padding: 6px 10px;
+  }
+}
