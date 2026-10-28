@@ -58,6 +58,11 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
     <>
       <PageHeader
         title={heading}
+        // QA 2026-10-28 — Orders is a bottom-nav tab, so it wears the menu button, not Back (GRW-538). The
+        // Back arrow it had fell through to `window.history.length`, which counts the whole browsing session
+        // rather than this app's own screens: in a standalone PWA that is routinely > 1 with nothing of ours
+        // behind it, so the arrow stepped somewhere that was not a Growza screen and the tap looked dead.
+        menu
         actions={
           mayTake || mayImport || mayReadReturns ? (
             <>

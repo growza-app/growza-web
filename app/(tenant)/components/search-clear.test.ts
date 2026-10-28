@@ -141,4 +141,21 @@ describe('a microphone the browser has blocked', () => {
   it('leaves the magnifier and the microphone on the input row', () => {
     expect(css).toMatch(/:has\(> \.search-mic-note\) > :is\(svg, \.search-mic, \.search-clear\) \{\s*top: 1\.375rem;/);
   });
+
+  /*
+   * QA 2026-10-28 — and the note's OWN icons stay inside their buttons.
+   *
+   * The rule above rescues the box's direct children. The cross is a grandchild, inside its own button, so
+   * `.pf-client-box svg` still had it: `position: absolute; left: var(--sp-3); top: 50%` parked the glyph at
+   * the middle-left of a box the note had just made 90px taller — on top of "Microphone is blocked" — and
+   * `pointer-events: none` meant tapping it did nothing. Measured in a browser: the glyph sat at x=44 while
+   * its button was at x=295, and a hit test at the glyph returned the <p>, not the button.
+   *
+   * Two classes deep because one is not enough: `.search-mic-note svg` is (0,1,1), the same as the rule that
+   * caused this, and 73-pay-flow.css loads later. The first attempt at this fix changed nothing at all.
+   */
+  it('keeps the note’s own icons in their buttons, where they can be tapped', () => {
+    expect(css).toMatch(/\.search-mic-note :is\(\.search-mic-how, \.search-mic-note-x\) svg \{\s*position: static;/);
+    expect(css).toMatch(/\.search-mic-note :is\([^)]*\) svg \{[^}]*pointer-events: auto;/);
+  });
 });
