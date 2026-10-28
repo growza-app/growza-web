@@ -96,3 +96,26 @@
     animation: none;
   }
 }
+
+/*
+ * Owner, 2026-10-28 — "can you trim record payment also", after the same complaint about Home: the boxes
+ * are too big.
+ *
+ * On the till, the biggest box on the screen is the one with nothing in it. A product tile is 171x173 and
+ * 85px of that is the photo band — which is right when there IS a photo (owner, 2026-10-10: a 2:1 band is
+ * recognised at a glance), and is 85px of empty tinted rectangle when there is not. A shop that has not
+ * uploaded its pictures yet, which is every shop on its first day, gets a grid of big blank cards.
+ *
+ * So only the EMPTY one gives up height: 3.2:1 instead of 2:1, which is 53px rather than 85 and still
+ * leaves the 36px icon room to read. A tile with a real photo is untouched, because there the band is the
+ * thing the eye is looking for.
+ *
+ *   tile 173px -> 152px, and four of them now fit where three did.
+ *
+ * Phone only; a laptop shows more tiles at once and has the room.
+ */
+@media (max-width: 860px) {
+  .pf-tile-photo.photo-none {
+    aspect-ratio: 3.2 / 1;
+  }
+}
