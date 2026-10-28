@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { useNewVisitCopy } from '../../lib/use-copy';
 import { useDialog } from '../../../shared/a11y/useDialog';
+import { useScrimDismiss } from '../../../shared/a11y/scrim-dismiss';
 
 /**
  * Owner, 2026-10-24 — the delivery app's own order number (Swiggy, Zomato), typed off the app's tablet.
@@ -25,8 +26,10 @@ export function AppOrderNoSheet({ app, value, onDone, onClose }: { app: string; 
   const [typed, setTyped] = useState(value);
   const done = () => onDone(typed.trim());
 
+  // A tap beside the card closes it and presses nothing underneath (owner, 2026-10-28).
+  const scrimDismiss = useScrimDismiss(onClose);
   return (
-    <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="pf-keypad-scrim" {...scrimDismiss}>
       <div ref={ref} className="pf-keypad pf-client" role="dialog" aria-modal="true" aria-label={t('orderNo', { app })} tabIndex={-1}>
         <div className="pf-keypad-head">
           <span className="pf-keypad-title">{t('orderNo', { app })}</span>

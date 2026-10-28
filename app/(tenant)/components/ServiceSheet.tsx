@@ -18,6 +18,7 @@ import { SearchClear } from './SearchClear';
 import { useBranch } from './BranchProvider';
 import { extraSuggestions } from '../lib/service-suggest';
 import { useServiceSuggestions } from '../lib/useServiceSuggestions';
+import { useScrimDismiss } from '../../shared/a11y/scrim-dismiss';
 
 /**
  * "More…" — the whole menu, in the flow (owner, 2026-10-09: the tile used to leave for the full form).
@@ -184,8 +185,10 @@ export function ServiceSheet({
   const searchLabel = productsOnly
     ? t(counted ? 'desk.searchProducts' : 'desk.searchDishes', { count: shelf.length })
     : t('searchServices');
+  // A tap beside the card closes it and presses nothing underneath (owner, 2026-10-28).
+  const scrimDismiss = useScrimDismiss(onClose);
   return (
-    <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="pf-keypad-scrim" {...scrimDismiss}>
       <div ref={ref} className="pf-keypad pf-client pf-menu" role="dialog" aria-modal="true" aria-label={sheetTitle} tabIndex={-1}>
         <div className="pf-keypad-head">
           <span className="pf-keypad-title">{sheetTitle}</span>
