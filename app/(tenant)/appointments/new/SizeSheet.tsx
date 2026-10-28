@@ -7,6 +7,7 @@ import { formatMoney } from '../../lib/api';
 import { canAddSize, colourChoices, secondAxisName, sizeLabel, sizePriceMinor, sizesFor } from '../../lib/till-sizes';
 import { useDialog } from '../../../shared/a11y/useDialog';
 import { IconCheck, IconMinus, IconPlus } from '../../components/icons';
+import { useScrimDismiss } from '../../../shared/a11y/scrim-dismiss';
 
 /**
  * Jira GRW-599 — the till's size grid: a product's sizes in one bottom sheet, one tap to add one.
@@ -64,8 +65,10 @@ export function SizeSheet({
   // discovered on the bill after ₹400 was read at the top.
   const pricesDiffer = new Set(prices).size > 1;
 
+  // A tap beside the card closes it and presses nothing underneath (owner, 2026-10-28).
+  const scrimDismiss = useScrimDismiss(onClose);
   return (
-    <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="pf-keypad-scrim" {...scrimDismiss}>
       <div ref={ref} className="pf-keypad psz-sheet" role="dialog" aria-modal="true" aria-label={`${ts('title')}: ${product.name}`} tabIndex={-1}>
         <div className="pf-keypad-head">
           <span className="pf-keypad-title">

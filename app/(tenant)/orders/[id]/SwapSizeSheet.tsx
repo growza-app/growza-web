@@ -7,6 +7,7 @@ import type { ExchangeBody, ExchangeResult, OrderDetail, Size } from '../../lib/
 import { sizeLabel } from '../../lib/till-sizes';
 import { newRequestId } from '../../sales/sales-helpers';
 import { useDialog } from '../../../shared/a11y/useDialog';
+import { useScrimDismiss } from '../../../shared/a11y/scrim-dismiss';
 
 type Line = OrderDetail['lines'][number];
 type Mode = NonNullable<ExchangeBody['settlementMode']>;
@@ -224,8 +225,10 @@ export function SwapSizeSheet({
             })
           : t('confirmSame', { size: sizeLabel(chosen) });
 
+  // A tap beside the card closes it and presses nothing underneath (owner, 2026-10-28).
+  const scrimDismiss = useScrimDismiss(onClose, !busy);
   return (
-    <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && !busy && onClose()}>
+    <div className="pf-keypad-scrim" {...scrimDismiss}>
       <div ref={ref} className="pf-keypad psz-sheet swp-sheet" role="dialog" aria-modal="true" aria-label={t('title')} tabIndex={-1}>
         <div className="pf-keypad-head">
           <span className="pf-keypad-title">{t('title')}</span>

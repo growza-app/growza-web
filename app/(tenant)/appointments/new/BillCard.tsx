@@ -7,6 +7,7 @@ import { useNewVisitCopy } from '../../lib/use-copy';
 import { useDialog } from '../../../shared/a11y/useDialog';
 import { IconMinus } from '../../components/icons';
 import { productLineKey } from '../../lib/till-sizes';
+import { useScrimDismiss } from '../../../shared/a11y/scrim-dismiss';
 
 /** One line of the bill: one leg of the visit, as `POST /counter-sales` takes them. */
 export interface BillLine {
@@ -69,8 +70,10 @@ export function BillCard({
   useDialog(ref, { onClose, initialFocus: 'container' });
 
   // A tap on the dimmed area closes it, as every other sheet in the app does (`sheet-backdrop`).
+  // A tap beside the card closes it and presses nothing underneath (owner, 2026-10-28).
+  const scrimDismiss = useScrimDismiss(onClose);
   return (
-    <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="pf-keypad-scrim" {...scrimDismiss}>
       <div ref={ref} className="pf-keypad pf-bill" role="dialog" aria-modal="true" aria-label={t('billTitle')} tabIndex={-1}>
         <div className="pf-keypad-head">
           <span className="pf-keypad-title">{t('billTitle')}</span>

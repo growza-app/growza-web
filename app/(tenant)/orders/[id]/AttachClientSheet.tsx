@@ -6,6 +6,7 @@ import { useNouns } from '../../lib/use-nouns';
 import { api, ApiError } from '../../lib/api';
 import type { Customer } from '../../lib/api-types';
 import { useDialog } from '../../../shared/a11y/useDialog';
+import { useScrimDismiss } from '../../../shared/a11y/scrim-dismiss';
 
 /**
  * Jira GRW-613 — "This is a client of ours": the buyer a marketplace named is somebody the shop already knows.
@@ -94,8 +95,10 @@ export function AttachClientSheet({
     }
   };
 
+  // A tap beside the card closes it and presses nothing underneath (owner, 2026-10-28).
+  const scrimDismiss = useScrimDismiss(onClose, !busy);
   return (
-    <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && !busy && onClose()}>
+    <div className="pf-keypad-scrim" {...scrimDismiss}>
       <div ref={ref} className="pf-keypad psz-sheet atc-sheet" role="dialog" aria-modal="true" aria-label={t('attach.title', { customer: nouns.customer })} tabIndex={-1}>
         <div className="pf-keypad-head">
           <span className="pf-keypad-title">{t('attach.title', { customer: nouns.customer })}</span>

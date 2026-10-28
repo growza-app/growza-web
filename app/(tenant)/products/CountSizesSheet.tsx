@@ -6,6 +6,7 @@ import type { Product } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { sizeLabel } from '../lib/till-sizes';
 import { countedOf, readTypedSize, sizeGap, sizesOf, uncountedOf } from './count-sizes';
+import { useScrimDismiss } from '../../shared/a11y/scrim-dismiss';
 
 /**
  * Jira GRW-602 — count one style's sizes, in a bottom sheet over the stock take.
@@ -35,8 +36,10 @@ export function CountSizesSheet({
   const sizes = sizesOf(product);
   const left = uncountedOf(product, typed);
 
+  // A tap beside the card closes it and presses nothing underneath (owner, 2026-10-28).
+  const scrimDismiss = useScrimDismiss(onClose);
   return (
-    <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="pf-keypad-scrim" {...scrimDismiss}>
       <div ref={ref} className="pf-keypad pcs-sheet" role="dialog" aria-modal="true" aria-label={t('sizesTitle', { name: product.name })} tabIndex={-1}>
         <div className="pf-keypad-head">
           <span className="pf-keypad-title">{t('sizesTitle', { name: product.name })}</span>
