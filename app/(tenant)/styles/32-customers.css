@@ -142,15 +142,66 @@
   margin-bottom: 3px;
 }
 
+/*
+ * QA 2026-10-28 — the facts under a name sit on ONE wrapping line.
+ *
+ * The card was four stacked blocks — name, number, last visit, then a dashed rule with visits and spend
+ * under it — and came to 158px, so a phone screen held three clients. None of the four is longer than a
+ * few words, and read across they are a sentence about the person: who, their number, when they last came
+ * and for what, how often and how much. Stacked, they were a form.
+ *
+ * `flex-wrap` rather than a grid: on a 344px Fold the spend drops to a second line by itself, which is the
+ * right answer there and needs no breakpoint of its own.
+ */
+.cust-card-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
+  margin-top: 2px;
+  min-width: 0;
+  font-size: 0.8125rem;
+}
+
+/*
+ * The last visit takes what room is left and no more. "27 Oct 2026 · Keratin Treatment" is the longest
+ * thing on the card and the only one that can be cut without losing a fact: the date is the fact, the
+ * service is the colour. Clipped with an ellipsis rather than wrapped, so a long treatment name cannot
+ * make one client twice the height of the next.
+ */
+.cust-card-line .cl-last-visit {
+  flex: 1 1 8rem;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/*
+ * The dashed rule went with the stacking. It separated two things that are now beside each other, where a
+ * gap says the same thing more quietly. `margin-inline-start: auto` parks the money at the end of the line
+ * when there is room, and lets it wrap under when there is not.
+ */
+/*
+ * One line, not a stacked pair: "2 visits · ₹10,250" is eleven characters of figure and had been taking
+ * two lines of the name row, which pushed the name column narrow enough that the last visit wrapped too.
+ * The row got shorter by making this taller-looking and the column wider.
+ */
 .cust-card-foot {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 9px;
-  padding-top: 9px;
-  border-top: 1px dashed var(--border);
-  font-size: 0.8125rem;
+  align-items: baseline;
+  gap: 6px;
+  flex: none;
+  margin-inline-start: auto;
+  font-size: 0.75rem;
+  white-space: nowrap;
   color: var(--muted);
+}
+
+/* The figure the owner actually scans for, so it carries the weight and the ink. */
+.cust-spent {
+  font-weight: 650;
+  color: var(--text);
 }
 
 /* ---------- bookings list (mobile cards) ----------
