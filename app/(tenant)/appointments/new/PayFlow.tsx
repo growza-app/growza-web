@@ -1281,11 +1281,27 @@ export function PayFlow({
   });
 
   const leave = () => {
+    /*
+     * QA 2026-10-28 — somewhere to go beats starting again.
+     *
+     * `productsOnly` was tested first, so on a shop's or a restaurant's till — which is products-only by
+     * definition — Back always meant `nextCustomer()`: clear the lines and stay. On an empty till that
+     * clears nothing and goes nowhere, so the owner tapped Back on "Take an order" and the screen sat
+     * there. `backTo` is '/orders' on exactly that screen and was never reached.
+     *
+     * The order is the fix: if this till was opened FROM somewhere, Back returns there. `nextCustomer()`
+     * is for the till that is nobody's second screen — `/products/sell` reached from the nav, where there
+     * is no "there" to go back to and starting the next customer is the useful thing.
+     */
+    if (backTo) {
+      router.push(backTo);
+      return;
+    }
     if (productsOnly) {
       nextCustomer();
       return;
     }
-    router.push(backTo ?? '/');
+    router.push('/');
   };
   const payToken = token ? `&token=${encodeURIComponent(token.id)}${token.locationId ? `&location=${encodeURIComponent(token.locationId)}` : ''}` : '';
   const simpleForm = `/appointments/new?purpose=payment${payToken}`;

@@ -112,3 +112,30 @@ describe('a shop reaches it from everywhere it takes an order from', () => {
     expect(read('appointments/new/PayFlow.tsx')).toContain("backTo?: '/appointments' | '/products' | '/sales' | '/orders';");
   });
 });
+
+/**
+ * QA 2026-10-28 — Back on "Take an order" goes to Orders.
+ *
+ * `leave()` tested `productsOnly` first, and a shop's or a restaurant's till is products-only by
+ * definition, so Back always meant `nextCustomer()`: clear the lines and stay put. On an empty till that
+ * clears nothing and goes nowhere — the owner tapped Back and the screen sat there. `backTo` is '/orders'
+ * on exactly this screen and was never reached.
+ */
+describe('the way out of Take an order', () => {
+  const flow = readFileSync(path.resolve(__dirname, '../../appointments/new/PayFlow.tsx'), 'utf8');
+
+  it('prefers where it came from over starting the next customer', () => {
+    const leave = flow.slice(flow.indexOf('const leave = () => {'));
+    const end = leave.indexOf('};');
+    const body = leave.slice(0, end);
+    expect(body).toMatch(/if \(backTo\) \{/);
+    // The order is the whole fix: `backTo` is tested BEFORE `productsOnly`. Compared on the `if`s, not on
+    // the first mention — the comment above them names `productsOnly` first.
+    expect(body.indexOf('if (backTo)')).toBeLessThan(body.indexOf('if (productsOnly)'));
+  });
+
+  it('still starts the next customer on a till that is nobody’s second screen', () => {
+    // `/products/sell` reached from the nav has no `backTo`: there is no "there" to go back to.
+    expect(flow).toMatch(/if \(productsOnly\) \{\s*nextCustomer\(\);/);
+  });
+});
