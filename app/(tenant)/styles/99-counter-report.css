@@ -445,3 +445,43 @@
   /* A 44px target, as every tappable thing on a phone is. */
   min-height: 2.75rem;
 }
+
+/*
+ * QA 2026-10-28 — on a phone the seven report links are a strip that scrolls, not four rows that stack.
+ *
+ * Two columns and seven links is four rows: 218px above the first figure, on a screen 852px tall, and
+ * these are links to OTHER reports — the page's own subject is the number underneath them.
+ *
+ * Not a new idea: `.rp-tabs` (51-tabs.css) already does this, and says why — "wrapping onto a second row
+ * costs vertical space on the smallest screen that can least afford it". The same reasoning applies to
+ * the same shape, so it gets the same answer rather than a second one. `min-width: 0` is the line that
+ * makes it scroll at all: a flex row's automatic minimum size is its content's, so `overflow-x` alone
+ * never gets the chance.
+ *
+ *   218px -> 60px, and the owner sees "You took in ₹1,54,368" without scrolling.
+ *
+ * Seven chips do not fit 393px, which is the point of a scroller — the fourth is cut by the edge, which
+ * is what says "there is more this way". A laptop keeps the grid; it has the room.
+ */
+@media (max-width: 860px) {
+  .srp-nav-links {
+    /* It is a GRID at this width, not a flex row — `flex-wrap` alone changed nothing and collapsed the
+       chips to 18px of nothing when `overflow-x` was added on top of it. */
+    display: flex;
+    /* The page body is a flex COLUMN, so this strip is one of its items: without `flex: none` it shrank
+       to 18px and the 44px chips hung out of it as slivers. */
+    flex: none;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+    scrollbar-width: none;
+  }
+
+  .srp-nav-links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .srp-nav-links .srp-nav-tab {
+    flex: none;
+  }
+}
