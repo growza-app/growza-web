@@ -3029,3 +3029,48 @@ button.bk-waiting-row:focus-visible {
 .bk-card-just-given:focus {
   outline: 2px solid var(--accent-deep);
 }
+
+/*
+ * QA 2026-10-28 — the four figures are a strip on a phone, not a 2x2 block of cards.
+ *
+ * The laptop layout was already cut once (see `.cust-kpi` above: 306px down to a short band). On a phone
+ * the same band is still two rows of two, 121px, and it sits on top of a search box, a segment toggle and
+ * a Filter/Export row — 396px of header before the first client on a page opened to read clients. One
+ * screen showed ONE of them.
+ *
+ * Four across, number under its label, no icon. The icon was the first thing to go: four different glyphs
+ * distinguish four tiles on a laptop, and at 85px wide the label already does that on its own.
+ *
+ *   figures 121px -> 66px, header 396px -> 341px, and three clients on screen instead of one.
+ *
+ * The label stays at 12px, which is the floor `accessibility.test.ts` enforces, and wraps to two lines
+ * rather than shrinking — "Returning clients" is two words and reads as two.
+ */
+@media (max-width: 860px) {
+  .cust-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .cust-kpi {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    padding: 7px 8px;
+  }
+
+  .cust-kpi-icon {
+    display: none;
+  }
+
+  .cust-kpi-label {
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+
+  .cust-kpi-value {
+    font-size: 1.0625rem;
+    line-height: 1.25;
+  }
+}
