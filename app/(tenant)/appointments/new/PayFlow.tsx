@@ -1047,6 +1047,12 @@ export function PayFlow({
                   redeemedPoints: result.rewards.redeemedPoints,
                   redeemedMinor: result.rewards.discountMinor,
                   ...(result.rewards.balanceAfter !== null ? { balancePoints: result.rewards.balanceAfter } : {}),
+                  // What one point is worth here, so the balance line can price itself. Absent from an API a
+                  // deploy behind, and then the sentence simply says the points, as it always did.
+                  ...(result.rewards.pointValueMinor ? { pointValueMinor: result.rewards.pointValueMinor } : {}),
+                  // And what the till would actually honour next time, so the line cannot promise more (QA 2026-10-28).
+                  ...(result.rewards.spendableAfter !== undefined ? { spendableAfter: result.rewards.spendableAfter } : {}),
+                  ...(result.rewards.minRedeemPoints !== undefined ? { minRedeemPoints: result.rewards.minRedeemPoints } : {}),
                   /*
                    * And the date on that promise — QA 2026-10-27 (loophole L4). The receipt said "you now
                    * have 420 points" and never that points die; a number with no date on it is a promise
@@ -1083,7 +1089,7 @@ export function PayFlow({
           rewardsTitle: t('rewards.receiptTitle'),
           rewardRedeemed: (points, amount) => t('rewards.receiptUsed', { points, amount }),
           rewardEarned: (points) => t('rewards.receiptEarned', { points }),
-          rewardBalance: (points) => t('rewards.receiptBalance', { points }),
+          rewardBalance: (points, worth) => (worth ? t('rewards.receiptBalance', { points, worth }) : t('rewards.receiptBalanceOnly', { points })),
           rewardExpiry: (points, date) => t('rewards.receiptExpiry', { points, date }),
           paidBy: nv.receiptPaidBy,
           seeYou: nv.receiptSeeYou,
@@ -1281,11 +1287,27 @@ export function PayFlow({
   });
 
   const leave = () => {
+    /*
+     * QA 2026-10-28 — somewhere to go beats starting again.
+     *
+     * `productsOnly` was tested first, so on a shop's or a restaurant's till — which is products-only by
+     * definition — Back always meant `nextCustomer()`: clear the lines and stay. On an empty till that
+     * clears nothing and goes nowhere, so the owner tapped Back on "Take an order" and the screen sat
+     * there. `backTo` is '/orders' on exactly that screen and was never reached.
+     *
+     * The order is the fix: if this till was opened FROM somewhere, Back returns there. `nextCustomer()`
+     * is for the till that is nobody's second screen — `/products/sell` reached from the nav, where there
+     * is no "there" to go back to and starting the next customer is the useful thing.
+     */
+    if (backTo) {
+      router.push(backTo);
+      return;
+    }
     if (productsOnly) {
       nextCustomer();
       return;
     }
-    router.push(backTo ?? '/');
+    router.push('/');
   };
   const payToken = token ? `&token=${encodeURIComponent(token.id)}${token.locationId ? `&location=${encodeURIComponent(token.locationId)}` : ''}` : '';
   const simpleForm = `/appointments/new?purpose=payment${payToken}`;

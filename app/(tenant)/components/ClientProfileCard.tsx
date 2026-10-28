@@ -9,7 +9,8 @@ import { useClientCardCopy } from '../lib/use-copy';
 import { formatPhone } from '../lib/format';
 import { IconClose, IconPhone } from './icons';
 import { useDialog } from '../../shared/a11y/useDialog';
-import { useMayUse } from './SessionProvider';
+import { useAreas, useMayUse } from './SessionProvider';
+import { clientHistoryOf } from '../lib/areas';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 
 /**
@@ -86,6 +87,18 @@ export function ClientProfileCard({
   const [deletedFor, setDeletedFor] = useState<number | null>(null);
   const panel = useRef<HTMLDivElement>(null);
   const c = useClientCardCopy();
+  /**
+   * What this client could actually spend at the till right now.
+   *
+   * The balance is what they HAVE; the hold is the part of it the business has not released yet. The till
+   * subtracts the hold before it offers anything, so a card drawn off the balance alone promises money the
+   * till will refuse (QA 2026-10-28).
+   */
+  const spendable = rewards ? Math.max(0, rewards.balance - rewards.heldPoints) : 0;
+  // Where this business keeps a client's past, and so what the one button at the foot of this card says and opens.
+  const areas = useAreas();
+  const place = clientHistoryOf(areas);
+  const history = place ? { href: place.href, label: place.kind === 'orders' ? c.viewOrders : c.viewBookings } : null;
   const router = useRouter();
 
   useEffect(() => {
@@ -352,10 +365,21 @@ export function ClientProfileCard({
               */}
               {rewards && (
                 <>
+                  {/*
+                    QA 2026-10-28 — what the TILL will take off, not what the balance adds up to.
+                    This said "Worth ₹75 off a bill" for a client with 75 points, 45 of them still inside the
+                    business's hold: the till would honour ₹30 and the desk had read the larger number out to
+                    them. A card that promises more than the till pays is an argument at the counter.
+                    Two rules decide it, and both are already in this answer: the hold, and the floor under
+                    which nothing may be spent at all.
+                  */}
                   <h3 className="cpc-section">{c.points}</h3>
                   <div className="cpc-row cpc-points">
                     <span>
-                      {c.pointsWorth(formatMoney(String(rewards.balance * rewards.pointValueMinor)))}
+                      {spendable >= rewards.minRedeemPoints
+                        ? c.pointsWorth(formatMoney(String(spendable * rewards.pointValueMinor)))
+                        : c.pointsNeedMore(rewards.minRedeemPoints - spendable)}
+                      {rewards.heldPoints > 0 && <em>{c.pointsHeld(rewards.heldPoints)}</em>}
                       {rewards.expiring && (
                         <em>{c.pointsExpire(rewards.expiring.points, new Date(rewards.expiring.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }))}</em>
                       )}
@@ -403,13 +427,24 @@ export function ClientProfileCard({
           </a>
           {/* By id, not by name in the search box. The search-by-name link
               landed on the Bookings screen's default day — today — so a client
-              whose last visit was in July showed nothing at all. */}
-          <a
-            className={`cpc-btn cpc-btn-primary ${profile ? '' : 'cpc-btn-off'}`}
-            href={profile ? `/appointments?customerId=${profile.id}` : undefined}
-          >
-            {c.viewBookings}
-          </a>
+              whose last visit was in July showed nothing at all.
+
+              Where that history LIVES is the business's own. This one card is
+              drawn for a salon, a shop and a restaurant alike, and it offered
+              every one of them the diary: a restaurant has no `/appointments`,
+              so the guard sent the owner Home and the button read as broken
+              (owner, 2026-10-28). A shop's history is its Orders; the word
+              follows, because the button should name the screen it opens and
+              that screen is called Orders in this business's own nav.
+
+              Neither area is a case that can happen today — a business has one
+              or the other — but it is the reason this bug existed, so it is
+              answered rather than assumed: no destination, no button. */}
+          {history && (
+            <a className={`cpc-btn cpc-btn-primary ${profile ? '' : 'cpc-btn-off'}`} href={profile ? `${history.href}${profile.id}` : undefined}>
+              {history.label}
+            </a>
+          )}
         </footer>
       </div>
       {confirmDelete && (

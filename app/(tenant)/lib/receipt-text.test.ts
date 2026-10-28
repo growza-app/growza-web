@@ -278,16 +278,23 @@ describe('Graphic Receipt Card model, structured WhatsApp text, and optional Rew
 
     const waText = formatStructuredWhatsappText(rows);
     expect(waText).toContain('*County Chicken · Main Outlet*');
-    expect(waText).toContain('Payment receipt · *Token #15*');
-    expect(waText).toContain('*Your Order (2 items)*');
-    expect(waText).toContain('• 1 × Chicken Drumstick (2 pcs) — *₹140*');
+    expect(waText).toContain('\u{1F9FE} Payment receipt · *Token #15*');
+    // The vertical's own word, not an English sentence written in the formatter: this tenant calls it Menu.
+    expect(waText).toContain('*Menu*');
+    expect(waText).not.toContain('Your Order (');
+    expect(waText).toContain('1 × Chicken Drumstick (2 pcs) — *₹140*');
     expect(waText).toContain('*Total paid: ₹340*');
-    expect(waText).toContain('✓ Paid by Cash');
-    expect(waText).toContain('*Rewards*');
-    expect(waText).toContain('★ +34 Reward Points earned');
+    expect(waText).toContain('\u2705 Paid by Cash');
+    expect(waText).toContain('\u{1F381} *Rewards*');
+    expect(waText).toContain('\u2b50 +34 Reward Points earned');
     // The whole line, as the receipt wrote it: the text no longer labels it in English of its own.
     expect(waText).toContain('*Available balance: 420 pts*');
-    expect(waText).not.toMatch(/📅|🎟|🙏|🎉/);
+    /*
+     * This used to assert NO emoji, on the grounds that a 4-byte surrogate "corrupts in wa.me links". The
+     * owner asked for them on 2026-10-28 and sent a sample. The property that rule was really protecting is
+     * the round trip, so that is what is asserted now — see also `what-the-points-are-worth.test.ts`.
+     */
+    expect(decodeURIComponent(whatsappHref('919800079001', waText).split('?text=')[1]!)).toBe(waText);
   });
 
   /**
@@ -327,7 +334,7 @@ describe('Graphic Receipt Card model, structured WhatsApp text, and optional Rew
     expect(card.rewardsBalance).toBe('420 points');
 
     const waText = formatStructuredWhatsappText(rows);
-    expect(waText).toContain('★ You earned 38 points towards your next visit.');
+    expect(waText).toContain('\u2b50 You earned 38 points towards your next visit.');
     expect(waText).toContain('*You now have 420 points.*');
     expect(waText).not.toContain('Available balance');
   });
@@ -449,10 +456,10 @@ describe('Graphic Receipt Card model, structured WhatsApp text, and optional Rew
     expect(card.items).toHaveLength(4);
 
     const waText = formatStructuredWhatsappText(rows);
-    expect(waText).toContain('Payment receipt · *Token #07*\nStylist: Rahul · 7 Oct 2026, 11:42 AM');
+    expect(waText).toContain('\u{1F9FE} Payment receipt · *Token #07*\n\u{1F4C5} Stylist: Rahul · 7 Oct 2026, 11:42 AM');
     expect(waText).not.toContain('Your Order');
-    expect(waText).toContain('*Services*\n───────────────\n• Haircut × 2 — *₹600*\n• Beard Trim — *₹150*');
-    expect(waText).toContain('*Products*\n───────────────\n• Argan Oil 100ml — *₹459*');
+    expect(waText).toContain('*Services*\nHaircut × 2 — *₹600*\nBeard Trim — *₹150*');
+    expect(waText).toContain('*Products*\nArgan Oil 100ml — *₹459*');
     expect(waText).not.toContain('1 × Beard Trim');
     expect(waText).not.toContain('Leave us a Google review');
   });
@@ -471,7 +478,7 @@ describe('Graphic Receipt Card model, structured WhatsApp text, and optional Rew
     expect(card.reviewPrompt).toBe('Leave us a Google review:');
 
     const waText = formatStructuredWhatsappText(rows);
-    expect(waText).toContain('Thank you for visiting us today. See you again soon!\n\n★ Leave us a Google review:\nhttps://g.page/r/CdX8-example/review');
+    expect(waText).toContain('\u{1F64F} Thank you for visiting us today. See you again soon!\n\n\u2b50 Leave us a Google review:\nhttps://g.page/r/CdX8-example/review');
   });
 
   it('shortens long Google Search review URLs (#lrd feature IDs and #sv state blobs) inside WhatsApp receipts', () => {
@@ -485,7 +492,7 @@ describe('Graphic Receipt Card model, structured WhatsApp text, and optional Rew
       money,
     );
     expect(formatStructuredWhatsappText(lrdRows)).toContain(
-      '★ Leave us a Google review:\nhttps://maps.google.com/?cid=12495543539324725466',
+      '\u2b50 Leave us a Google review:\nhttps://maps.google.com/?cid=12495543539324725466',
     );
 
     const svRows = receiptRows(
@@ -498,7 +505,7 @@ describe('Graphic Receipt Card model, structured WhatsApp text, and optional Rew
       money,
     );
     expect(formatStructuredWhatsappText(svRows)).toContain(
-      '★ Leave us a Google review:\nhttps://www.google.com/search?q=county+chicken.+lucknow',
+      '\u2b50 Leave us a Google review:\nhttps://www.google.com/search?q=county+chicken.+lucknow',
     );
   });
 });

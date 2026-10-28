@@ -1003,6 +1003,12 @@ export interface VisitRewards {
    * no date on it is a promise the business has not made. Null when nothing of theirs is due to die.
    */
   expiring: { points: number; atISO: string } | null;
+  /** What one point takes off a bill, in paise — so the receipt can say what the balance is worth. */
+  pointValueMinor?: number;
+  /** What they could actually spend next time: the balance less whatever is still held. */
+  spendableAfter?: number;
+  /** The fewest points this business accepts in one go. Below it nothing can be spent at all. */
+  minRedeemPoints?: number;
 }
 
 export interface CheckoutResponse {
@@ -1333,6 +1339,8 @@ export interface OrdersPage {
   total: number;
   page: number;
   pageSize: number;
+  /** Who the list was narrowed to, when it was — so the banner can name them on a page with no rows. */
+  client?: { id: string; name: string | null };
 }
 
 /** Jira GRW-615 — one thing that happened to an order after it was placed. Says THAT, never what (no buyer value). */

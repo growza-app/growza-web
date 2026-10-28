@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pagination } from '../components/Pagination';
 import { csvLines } from '../lib/csv';
-import { formatDate, formatPhone, formatRecency } from '../lib/format';
+import { formatDate, formatDateShort, formatPhone, formatRecency } from '../lib/format';
 import { useSearchParams } from 'next/navigation';
 import {
   api,
@@ -744,9 +744,26 @@ export function CustomersClient({
                         {chipOf(c.segment)}
                         {branchTag(c.locationId)}
                       </div>
-                      {/* Stops the row's own click: tapping the number should
-                          open WhatsApp, not the card behind it.
-                          GRW-199 — and there may be no number to tap. */}
+                    </div>
+                    {/*
+                      The money rides on the NAME line, where Airbnb puts a price. Left under the name it
+                      wrapped to a line of its own and bought nothing: it is two short figures, and the
+                      name line has room to the right on every phone from 344px up.
+                    */}
+                    <span className="cust-card-foot">
+                      {bookingsOn ? <span>{t('visitCount', { count: c.totalBookings })}</span> : null}
+                      <span className="cust-spent">{t('spent', { amount: formatMoney(c.totalSpentMinor) })}</span>
+                    </span>
+                  </div>
+                  {/*
+                    QA 2026-10-28 — the facts under the name are ONE line, and they sit outside the name
+                    column so they get the card's whole width. Inside it they had only what was left beside
+                    the money, which is how a phone number and a date came to take two lines of their own.
+                    The card was 158px and three clients filled a phone screen; it is 107px now.
+                    The phone keeps its own anchor and its own click (GRW-199): tapping the number opens
+                    WhatsApp, not the card behind it, and there may be no number to tap.
+                  */}
+                  <div className="cust-card-line">
                       {c.waPhone && (
                         <a
                           className="cust-phone"
@@ -760,19 +777,20 @@ export function CustomersClient({
                         </a>
                       )}
                       {c.lastBookingAt && (
-                        <div className="muted cl-last-visit" style={{ fontSize: 13, marginTop: 2 }}>
+                        <span className="muted cl-last-visit">
                           <span className="cl-last-visit-icon">
                             <IconCalendar />
                           </span>
-                          {formatDate(c.lastBookingAt, undefined, locale)} · {c.lastServiceName}
-                        </div>
+                          {/* No year: it is this year or it is in the text beside it, and "2026" was
+                              costing the service name the room to be read. */}
+                          {/* The separator belongs to the service, so it travels with it. A restaurant
+                              guest has no service name against their last visit, and the line read
+                              "28 Oct ·" with nothing after the dot. */}
+                          {formatDateShort(c.lastBookingAt, undefined, locale)}
+                          {c.lastServiceName ? ` · ${c.lastServiceName}` : ''}
+                        </span>
                       )}
                     </div>
-                  </div>
-                  <div className="cust-card-foot">
-                    {bookingsOn ? <span>{t('visitCount', { count: c.totalBookings })}</span> : null}
-                    <span>{t('spent', { amount: formatMoney(c.totalSpentMinor) })}</span>
-                  </div>
                 </div>
               ))}
             >

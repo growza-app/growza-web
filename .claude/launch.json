@@ -4,8 +4,21 @@
     {
       "name": "growza-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000
+    },
+    {
+      "name": "web-qa",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd '/Users/hitesharya/Documents/Whatapp Project/growza-web' && API_URL=http://localhost:3031 exec npx next dev -p 3040"
+      ],
+      "port": 3040,
+      "autoPort": false
     }
   ]
 }

@@ -122,6 +122,17 @@ export const KNOWN_ACTIONS = [
   'order.status_change',
   // GRW-613 — an owner recognised a marketplace buyer and attached a client they already have.
   'order.client_attached',
+  /*
+   * `order.client_detached` is NOT here yet, and that is deliberate.
+   *
+   * QA 2026-10-26 added taking a client back off an order, and the action went into @growza-app/shared. This repo
+   * pins 1.0.19; the action arrived after 1.0.23. `audit-fields.test.ts` compares this list against the INSTALLED
+   * shared, so adding the word before the pin moves turns the test red the other way — a filter offering an action
+   * the platform cannot write.
+   *
+   * It goes in with the pin bump, not before. The same word is already in the growza repo's copy of this file,
+   * which builds shared from source and so was red without it.
+   */
   // GRW-613 — a buyer's name, contact and address removed from an order on request. Says THAT, never what.
   'order.buyer_erased',
   // GRW-617 — a size swapped on a bill: what went back, what went out, the difference.

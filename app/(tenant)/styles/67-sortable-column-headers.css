@@ -318,8 +318,10 @@
   .rp-cs-group-text em { display: none; }
 }
 
-/* The Bookings screen, when it is showing one client rather than a day. */
-.bk-client-banner {
+/* The Bookings screen, when it is showing one client rather than a day — and the Orders list, showing one client
+   rather than a shop's day. One rule: it is the same banner saying the same thing, and two copies would drift. */
+.bk-client-banner,
+.ord-client-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -334,26 +336,32 @@
   font-size: 0.8125rem;
 }
 
-.bk-client-banner strong { font-weight: 700; }
+.bk-client-banner strong,
+.ord-client-banner strong { font-weight: 700; }
 
 /* On a phone this sits above a fit-to-screen list, so it earns one line and
    no more — two wrapped lines cost a booking card's worth of height.
    860px, the app's own mobile breakpoint: at 859 a 860px-wide screen got the
    phone's fit-to-screen list with this banner still at its desktop height. */
 @media (max-width: 860px) {
-  .bk-client-banner {
+  .bk-client-banner,
+  .ord-client-banner {
     flex-wrap: nowrap;
     gap: var(--sp-2);
     margin-bottom: var(--sp-2);
     padding: 7px 10px;
     font-size: 0.75rem;
   }
+  /* Bookings only. Its list fits the screen, so the banner earns one line and the name is cut if it must be.
+     The Orders list scrolls and is paged, so there is nothing to protect by cutting a name out of the one
+     sentence whose whole job is to say whose orders these are: at 375px "…for Rohit Rawat" read "…for Rohit …". */
   .bk-client-banner > span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .bk-client-banner > a { flex: none; }
+  .bk-client-banner > a,
+  .ord-client-banner > a { flex: none; }
 }
 
 /* Four across fits a tablet. At phone width "New clients" wraps and its ⓘ drops under it, so the four figures sat on

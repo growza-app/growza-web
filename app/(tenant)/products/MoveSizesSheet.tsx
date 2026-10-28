@@ -9,6 +9,7 @@ import { IconMinus, IconPlus } from '../components/icons';
 import { useSession } from '../components/SessionProvider';
 import { sizeLabel } from '../lib/till-sizes';
 import { clampQty, leftAfter, linesToSend, movableSizes, nothingToMove, totalMoving } from './move-sizes';
+import { useScrimDismiss } from '../../shared/a11y/scrim-dismiss';
 
 /**
  * Jira GRW-601 — move sizes of a product to another branch, in one bottom sheet.
@@ -68,8 +69,10 @@ export function MoveSizesSheet({ product, onMoved, onClose }: { product: Product
     }
   };
 
+  // A tap beside the card closes it and presses nothing underneath (owner, 2026-10-28).
+  const scrimDismiss = useScrimDismiss(onClose);
   return (
-    <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="pf-keypad-scrim" {...scrimDismiss}>
       <div ref={ref} className="pf-keypad pmv-sheet" role="dialog" aria-modal="true" aria-label={`${t('title')}: ${product.name}`} tabIndex={-1}>
         <div className="pf-keypad-head">
           <span className="pf-keypad-title">{t('title')}</span>

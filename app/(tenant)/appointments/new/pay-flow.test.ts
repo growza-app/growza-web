@@ -166,10 +166,23 @@ describe('Record payment in three taps', () => {
     expect(css).toMatch(/\.pf-bill-less \{[^}]*width: 2\.75rem;[^}]*height: 2\.75rem;/);
   });
 
-  it('closes every sheet on a tap outside it', () => {
-    // The dimmed area closes the sheet, as `sheet-backdrop` does everywhere else; Escape already did (useDialog).
+  /*
+   * The dimmed area closes the sheet, as `sheet-backdrop` does everywhere else; Escape already did (useDialog).
+   *
+   * It used to close on `pointerdown`, and this test pinned that line in four files while nine more carried a copy
+   * of it. Owner, 2026-10-28: "when he tries to close the overlay by clicking outside of the overlay card,
+   * accidently the menu item may add up or gets deleted" — the scrim unmounted under the finger and the press
+   * landed on a dish tile, or on a row's minus. On the till that is a bill gaining an item nobody ordered.
+   *
+   * One hook now, and it is the SHAPE that matters: the press is remembered on pointerdown and the sheet closes on
+   * click, while the scrim is still mounted and still the click's target.
+   */
+  it('closes on a tap outside it, and presses nothing underneath', () => {
     for (const src of [keypad, client, menu, bill]) {
-      expect(src).toMatch(/className="pf-keypad-scrim" onPointerDown=\{\(e\) => e\.target === e\.currentTarget && onClose\(\)\}/);
+      expect(src).toMatch(/className="pf-keypad-scrim" \{\.\.\.scrimDismiss\}/);
+      expect(src).toContain('useScrimDismiss(onClose');
+      // The line this replaced. It must not come back by hand in any of them.
+      expect(src).not.toMatch(/onPointerDown=\{\(e\) => e\.target === e\.currentTarget && onClose\(\)\}/);
     }
   });
 

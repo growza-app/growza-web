@@ -96,6 +96,52 @@ export function getSpeechRecognitionConstructor(): BrowserSpeechRecognitionConst
 }
 
 /**
+ * Ask the browser for the microphone, the way every other site asks — QA 2026-10-28.
+ *
+ * The owner's words: "the dialogue is not for allowing microphone, like allow location access". They were
+ * right, and it was a real gap rather than a misunderstanding. Nothing in this app had ever called
+ * `getUserMedia`, which is the ONLY thing that raises Chrome's own "Allow microphone?" prompt. The mic
+ * button went straight to `SpeechRecognition.start()`, and when that answered `not-allowed` the app told
+ * the owner their microphone was blocked and sent them into browser settings to unblock something they had
+ * never been asked about.
+ *
+ * `start()` does not reliably raise the prompt — in an installed PWA on Android it commonly fails with
+ * `not-allowed` while the permission is still in its untouched `prompt` state, because speech recognition
+ * runs through the browser's own service rather than through the page's media stack.
+ *
+ * So the page asks first, in the tap's own turn, and the browser shows the prompt it shows for the camera
+ * and for location. The track is stopped the instant it arrives: this asks for permission, it does not want
+ * a recording, and a microphone left open puts a recording indicator in the owner's status bar.
+ *
+ * - `granted`  — carry on and start listening.
+ * - `denied`   — they tapped Block, or had already; this is where the "how to turn it on" note belongs,
+ *   because there IS a switch and only they can throw it.
+ * - `unusable`  — the microphone cannot open and no setting of theirs will change that: a Permissions-Policy
+ *   that forbids it (`NotSupportedError`), or no microphone in the machine (`NotFoundError`). QA 2026-10-28:
+ *   this used to be folded into `unavailable`, so the button went to "listening" against a device that could
+ *   never open — a lie on screen, and the one the owner was looking at. Sending them to Chrome's settings
+ *   would be a second wild goose chase, so this says so and offers no switch.
+ * - `unavailable` — no `mediaDevices` object at all (an old browser). The caller carries on to
+ *   `SpeechRecognition` and lets it have its own say, which is what happened before this existed.
+ */
+export async function askForMicrophone(): Promise<'granted' | 'denied' | 'unusable' | 'unavailable'> {
+  if (typeof navigator === 'undefined') return 'unavailable';
+  const media = navigator.mediaDevices as MediaDevices | undefined;
+  if (!media?.getUserMedia) return 'unavailable';
+  try {
+    const stream = await media.getUserMedia({ audio: true });
+    for (const track of stream.getTracks()) track.stop();
+    return 'granted';
+  } catch (error) {
+    const name = (error as DOMException | undefined)?.name;
+    if (name === 'NotAllowedError' || name === 'SecurityError') return 'denied';
+    // Nothing the owner can set will open it: the page is forbidden the device, or there is no device.
+    if (name === 'NotSupportedError' || name === 'NotFoundError') return 'unusable';
+    return 'unavailable';
+  }
+}
+
+/**
  * Writes `nextValue` into a controlled React `<input>` element and dispatches a bubbling `'input'` event so React's
  * `onChange` handler runs even when the caller did not pass an explicit `onVoice` callback.
  */

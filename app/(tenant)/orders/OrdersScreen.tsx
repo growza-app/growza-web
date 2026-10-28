@@ -21,7 +21,7 @@ import { OrdersBringIn } from './OrdersBringIn';
  * and nothing flashes unfiltered first. Everything after that — a chip, the search, the next page — is the client asking
  * the server again. A failed first read is not a failed screen: the client shows the retry with the filters as they were.
  */
-export type OrdersSearch = { channel?: string; status?: string; q?: string; page?: string };
+export type OrdersSearch = { channel?: string; status?: string; q?: string; customerId?: string; page?: string };
 
 export async function OrdersScreen({ searchParams }: { searchParams: Promise<OrdersSearch> }) {
   const query = readQuery(await searchParams);
@@ -46,7 +46,7 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
   const mayImport = me ? (role === undefined || role === 'owner' || role === 'manager') && isWritable(me.tenant?.status) && areaAllows('/orders/import', areasOf(me)) : false;
 
   // The whole business on arrival; a branch the header picker has chosen is applied by the client, which re-reads.
-  const initial = await api.orders({ channel: query.channel, status: query.status, q: query.q.trim(), page: query.page, pageSize: ORDERS_PAGE_SIZE }).catch((error: unknown) => ({
+  const initial = await api.orders({ channel: query.channel, status: query.status, q: query.q.trim(), customerId: query.customerId, page: query.page, pageSize: ORDERS_PAGE_SIZE }).catch((error: unknown) => ({
     error: error instanceof Error ? error.message : String(error),
   }));
 
@@ -58,11 +58,28 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
     <>
       <PageHeader
         title={heading}
+        // QA 2026-10-28 — Orders is a bottom-nav tab, so it wears the menu button, not Back (GRW-538). The
+        // Back arrow it had fell through to `window.history.length`, which counts the whole browsing session
+        // rather than this app's own screens: in a standalone PWA that is routinely > 1 with nothing of ours
+        // behind it, so the arrow stepped somewhere that was not a Growza screen and the tap looked dead.
+        menu
         actions={
           mayTake || mayImport || mayReadReturns ? (
             <>
               {mayReadReturns ? (
-                <a className="btn btn-ghost" href="/orders/returns">
+                /*
+                  QA 2026-10-28 — not in the header on a phone.
+                
+                  The header carries the menu button, the title, this, "Take an order" and the avatar: 403px
+                  of content across 363px, so the title was printed underneath this link and neither could
+                  be read. Fixing the wrap made the header two rows, which is correct and still costs 54px.
+                
+                  This is the one to give up, because it is the only one that is not an action and not
+                  unique: Returns is a DESTINATION, and the same destination is already a quick button on
+                  Home and "What came back" in the reports nav. From 861px the sidebar is up and there is
+                  room for a third way to it.
+                */
+                <a className="btn btn-ghost desktop-only" href="/orders/returns">
                   {tOrders('returnsLink')}
                 </a>
               ) : null}

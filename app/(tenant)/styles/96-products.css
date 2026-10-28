@@ -1641,11 +1641,28 @@
 
 .prd-menu-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(14.5rem, 1fr));
+  /*
+   * 12.25rem, which is where this file's second copy of this rule had already moved it. That copy sat 170
+   * lines further down with no media query and the same (0,1,0) weight, so it won on source order at every
+   * width — including the phone one below, which therefore never ran. QA 2026-10-28 found a 24-dish menu
+   * drawing ONE card per row at 393px.
+   */
+  grid-template-columns: repeat(auto-fill, minmax(12.25rem, 1fr));
   gap: var(--sp-3);
 }
 
-@media (max-width: 520px) {
+/*
+ * Two across on a phone — owner, 2026-10-28, after measuring this against Airbnb's.
+ *
+ * One card a row is 329x334 of which 247px is the photo: a menu of 24 dishes is twelve screens, and the
+ * owner scrolling it is looking for one dish. Two across is 161x227 with a 119px photo — almost exactly
+ * Airbnb's 167x158 — and five dishes on screen instead of two.
+ *
+ * 860px, not 520: a phone is a phone all the way up to the laptop breakpoint, and between 520 and 860 the
+ * auto-fill above was already giving two or three columns anyway. The number that changes is below 520,
+ * where it was giving one.
+ */
+@media (max-width: 860px) {
   .prd-menu-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--sp-2);
@@ -1813,12 +1830,6 @@
     flex: 1 1 13rem;
     min-width: 12rem;
   }
-}
-
-.prd-menu-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(12.25rem, 1fr));
-  gap: var(--sp-3);
 }
 
 .prd-sheet:has(.prd-sheet-id) .prd-photo-box {
@@ -2362,6 +2373,11 @@
   white-space: nowrap;
 }
 
+/* The pencil is the phone's copy of this button; where there is room for the words, the words are better. */
+.prd-bulk-edit-icon {
+  display: none;
+}
+
 @media (max-width: 720px) {
   .prd-cat-bar,
   .bulk-edit-cats {
@@ -2474,5 +2490,119 @@
   .bulk-edit-foot-btns {
     width: 100%;
     justify-content: flex-end;
+  }
+}
+
+/*
+ * QA 2026-10-28 — the Menu's own header, on a phone.
+ *
+ * 326px above the first dish on a screen opened to read dishes: four stat cards in two rows, then a search
+ * box, then Categories / Sort / Edit-Delete wrapping onto two rows of their own.
+ *
+ * Two changes, neither of them removing anything:
+ *
+ *   - the three controls go on ONE row. The "Sort" label goes with it: the select beside it already reads
+ *     "Name (A–Z)", so the word was labelling something that says its own name. Columns are 0.95 / 1.2 /
+ *     0.95 rather than equal thirds, because the select is the widest of the three and an equal share
+ *     clipped its closing bracket. Measured: 118 / 110 / 87, nothing clipped.
+ *   - the stat cards lose the blank line between their number and their label. The four of them stay, in
+ *     two columns: two carry text values ("County Tikka", "Top seller") and four across at 85px would
+ *     make a nonsense of those, which is the difference between these and the Clients figures.
+ *
+ *   controls 96px -> 44px, cards 176px -> 160px, so 326px -> 258px.
+ */
+@media (max-width: 860px) {
+  .prd-selects {
+    grid-template-columns: 0.95fr 1.2fr 0.95fr;
+  }
+
+  /*
+   * Owner, 2026-10-28 — "instead of this big button, better to have filter option".
+   *
+   * Three full-width controls wrapped to two rows below 380px, so at 375px the toolbar was 96px and the
+   * first dish began 426px down an 812px screen: more than half the phone was chrome before a single
+   * thing you could sell. The earlier answer here was to let it wrap, on the grounds that a control you
+   * cannot read is not a saving. That was right about the words and wrong about the shape — the third
+   * control does not need words.
+   *
+   * "Edit / Delete" becomes its pencil (the name stays, as `aria-label`), which buys the two that DO
+   * carry a value — the section and the sort — a readable half each at every width. Measured at 320px:
+   * 44px for the pencil leaves 114px each, where the wrapped layout gave them 136px and cost a whole
+   * row to do it.
+   */
+  .prd-selects {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 2.75rem;
+  }
+
+  .prd-bulk-edit-btn {
+    padding: 0;
+    justify-content: center;
+  }
+
+  .prd-bulk-edit-icon {
+    display: inline-flex;
+  }
+
+  .prd-bulk-edit-word {
+    display: none;
+  }
+
+  .prd-sort > span,
+  .prd-sort label {
+    display: none;
+  }
+
+  /* The value has half a narrow row to say itself in; at 1rem "Name (A–Z)" was already at the edge. */
+  .prd-sort select {
+    padding: 0 var(--sp-2);
+    font-size: 0.875rem;
+  }
+
+  /*
+   * The third line goes, on the three cards where it was not pulling its weight: two of them restate
+   * their own label ("On the menu / Active on POS counter", "Taken off / Hidden from POS") and the
+   * third lists section names in a width that cuts them off ("Barbeque Se · Gharwali …").
+   *
+   * The top seller KEEPS its line, because "110 sold · ₹120" is the only one of the four that says
+   * something the number above it does not. Cards 76px -> 55px on that row: the strip is 160px -> 139px.
+   */
+  .prd-stat-products .prd-stat-sub,
+  .prd-stat-cats .prd-stat-sub,
+  .prd-stat-retired .prd-stat-sub {
+    display: none;
+  }
+
+  .prd-stat {
+    gap: 0;
+    padding: 6px 10px;
+  }
+}
+
+/*
+ * QA 2026-10-28 — the two chips on a dish's photo stop fighting on a phone.
+ *
+ * Both are absolute: the section at the top-left, the on/off status at the top-right. On a 329px card
+ * there was room for both. On a 162px one there is not — measured at 393px, "Rice & Biryani" ran x=25..118
+ * and "On the menu" began at x=81, so 37px of one was printed over the other and the section name read
+ * "Rice & Bi".
+ *
+ * The status moves to the BOTTOM right of the photo rather than either of them shrinking. They are
+ * different kinds of fact — which part of the menu this is, and whether it is being sold — and stacking
+ * them in opposite corners keeps both readable at a glance, which is the whole job of a chip.
+ *
+ * The section also takes a ceiling and an ellipsis: "Chinese Starters & Soups" is longer than any card is
+ * wide, and a chip that runs off the photo is worse than one that stops with a dot.
+ */
+@media (max-width: 860px) {
+  .prd-menu-card-status {
+    top: auto;
+    bottom: var(--sp-2);
+  }
+
+  .prd-menu-card-cat {
+    max-width: calc(100% - var(--sp-4));
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 }

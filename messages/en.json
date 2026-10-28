@@ -493,6 +493,7 @@
     "voiceListening": "Listening… speak now",
     "voicePermissionDenied": "Microphone access is blocked in your browser",
     "voicePermissionDeniedHelp": "Microphone is blocked. You can type instead.",
+    "voiceMicUnusable": "This device has no microphone we can use. You can type instead.",
     "alsoTry": "Also try",
     "actionFailed": "That didn't work. Please try again.",
     "optional": "optional",
@@ -2195,10 +2196,6 @@
     "sendHint": "Opens WhatsApp with the bill typed out. You press send.",
     "shareBill": "Share",
     "printBill": "Print",
-    "copyCard": "Copy receipt card",
-    "cardCopied": "Receipt card copied",
-    "copyText": "Copy text",
-    "textCopied": "Text copied",
     "rcTokenLabel": "Token",
     "rcYourOrder": "Your order ({count})",
     "rcAmount": "Amount",
@@ -2369,6 +2366,8 @@
     "points": "Reward points",
     "pointsCount": "{n, plural, one {# point} other {# points}}",
     "pointsWorth": "Worth {worth} off a bill",
+    "pointsHeld": "{n, plural, one {# point is} other {# points are}} not ready to use yet",
+    "pointsNeedMore": "{n, plural, one {# more point} other {# more points}} to use them",
     "pointsExpire": "{n, plural, one {# point expires} other {# points expire}} on {on}",
     "recent": "Last few visits",
     "daysAgo": "{n, plural, =0 {today} one {yesterday} other {# days ago}}",
@@ -2380,6 +2379,7 @@
     "neverIn": "never been in",
     "call": "Call",
     "viewBookings": "See bookings",
+    "viewOrders": "See orders",
     "close": "Close",
     "loadFailed": "Could not load this client.",
     "noPhone": "no number saved",
@@ -3171,8 +3171,9 @@
       "needMore": "{points, plural, one {# more} other {# more}} to use them",
       "needBill": "a bill of {amount} to use them",
       "receiptTitle": "Rewards",
-      "receiptBalance": "You now have {points, plural, one {# point} other {# points}}.",
-      "receiptExpiry": "{points, plural, one {# point runs out} other {# points run out}} on {date}.",
+      "receiptBalance": "You have {points, plural, one {# point} other {# points}}. That is {worth} off your next bill.",
+      "receiptBalanceOnly": "You have {points, plural, one {# point} other {# points}}.",
+      "receiptExpiry": "{points, plural, one {# point expires} other {# points expire}} on {date}.",
       "held": "{points, plural, one {# point} other {# points}} not ready to use yet"
     }
   },
@@ -4465,7 +4466,14 @@
       "nounOrders": "orders",
       "allChannels": "Anywhere",
       "allStates": "Any state",
-      "notConfirmed": "Not confirmed"
+      "notConfirmed": "Not confirmed",
+      "clientShowing": "Orders for <b>{name}</b>",
+      "thisClient": "this client",
+      "showAllOrders": "Show all",
+      "clientEmpty": {
+        "title": "Nothing from them yet",
+        "body": "Anything they order will show up here."
+      }
     },
     "detail": {
       "paidOn": "Paid on {channel}",

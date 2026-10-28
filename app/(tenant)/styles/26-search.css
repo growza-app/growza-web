@@ -313,6 +313,30 @@ input[type='search']:has(~ .search-mic)::-webkit-search-cancel-button {
   cursor: pointer;
 }
 
+/*
+ * QA 2026-10-28 — and it stays IN the button.
+ *
+ * `.pf-client-box svg` (73-pay-flow.css) is a descendant selector: `position: absolute; left: var(--sp-3);
+ * top: 50%; pointer-events: none`, written for the magnifier that box holds. It also matches every other
+ * icon that ever lands inside it, and the note brought two. The `:has(> ...)` rule above rescues only the
+ * box's DIRECT children, so the cross — a grandchild, inside its own button — was pulled out of the line
+ * and parked at the middle-left of a box the note had just made 90px taller: the glyph sat on top of
+ * "Microphone is blocked", and because the same rule says `pointer-events: none`, tapping it did nothing
+ * at all. The button itself was still in the line, 44px wide and holding nothing visible.
+ *
+ * So the note's icons are pinned back into their own flow. Scoped to the note rather than fixing the
+ * `.pf-client-box` rule, which half the till's search boxes lean on for the magnifier.
+ *
+ * Two classes deep on purpose. A plain `.search-mic-note svg` is (0,1,1) — the same weight as
+ * `.pf-client-box svg` — and 73-pay-flow.css is loaded after this file, so the tie goes to the rule that
+ * caused the bug. Measured in the browser before and after: the first attempt changed nothing at all.
+ */
+.search-mic-note :is(.search-mic-how, .search-mic-note-x) svg {
+  position: static;
+  transform: none;
+  pointer-events: auto;
+}
+
 .search-mic-note-x svg {
   width: 1rem;
   height: 1rem;

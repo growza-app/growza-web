@@ -6,6 +6,7 @@ import type { Offer, Service } from '../lib/api-types';
 import { formatMoney } from '../lib/api';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { ServicePhoto } from './ServicePhoto';
+import { useScrimDismiss } from '../../shared/a11y/scrim-dismiss';
 
 /**
  * Owner, 2026-10-15 — what is inside a package, before it goes on the bill.
@@ -54,8 +55,10 @@ export function PackageSheet({
   const saves = price !== null && listTotal > price ? listTotal - price : 0;
   const until = offer.visibleUntil ? new Date(offer.visibleUntil) : null;
 
+  // A tap beside the card closes it and presses nothing underneath (owner, 2026-10-28).
+  const scrimDismiss = useScrimDismiss(onClose);
   return (
-    <div className="pf-keypad-scrim pf-pkg-scrim" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="pf-keypad-scrim pf-pkg-scrim" {...scrimDismiss}>
       <div ref={ref} className="pf-keypad pf-client pf-pkg" role="dialog" aria-modal="true" aria-label={offer.title} tabIndex={-1}>
         <div className="pf-keypad-head">
           <span className="pf-keypad-title">{offer.title}</span>

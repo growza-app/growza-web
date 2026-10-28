@@ -31,7 +31,20 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .topbar > :first-child {
+  /*
+   * Everything but the lead may shrink below its content.
+   *
+   * QA 2026-10-28 — this was `.topbar > :first-child`, which IS the lead, and at (0,1,1) from a later file
+   * it quietly cancelled `.topbar-lead { min-width: 150px }` in 76-header-controls.css. That 150px is not
+   * decoration: the comment there says it is what the wrap decision is made against, so the controls drop
+   * to a row of their own instead of squeezing the title.
+   *
+   * Without it the lead collapsed to whatever was left — 72px on Orders, where the header carries Returns,
+   * Take an order and the avatar — while the title inside it kept its own 96px minimum and simply hung out
+   * of its parent. Measured on a restaurant tenant at 363px: the h1 ran from x=70 to x=166 and the actions
+   * began at x=100, so "Orders" was printed underneath "Returns" and neither could be read.
+   */
+  .topbar > :first-child:not(.topbar-lead) {
     min-width: 0;
   }
 }

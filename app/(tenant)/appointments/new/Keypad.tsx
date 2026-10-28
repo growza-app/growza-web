@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef } from 'react';
 import { useDialog } from '../../../shared/a11y/useDialog';
+import { useScrimDismiss } from '../../../shared/a11y/scrim-dismiss';
 
 /**
  * An in-page number pad, so a figure can be typed without the phone's own keyboard.
@@ -95,8 +96,10 @@ export function Keypad({
   );
 
   // A tap on the dimmed area closes it, as every other sheet in the app does (`sheet-backdrop`).
+  // A tap beside the card closes it and presses nothing underneath (owner, 2026-10-28).
+  const scrimDismiss = useScrimDismiss(onClose);
   return (
-    <div className="pf-keypad-scrim" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="pf-keypad-scrim" {...scrimDismiss}>
       <div ref={ref} className="pf-keypad" role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}>
         <div className="pf-keypad-head">
           <span className="pf-keypad-title">{title}</span>

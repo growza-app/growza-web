@@ -34,6 +34,18 @@ export interface ReceiptRewards {
   redeemedMinor?: number;
   /** Customer's updated available point balance after this bill (e.g. 420). */
   balancePoints?: number;
+  /** What one point takes off a bill, in paise. The balance line needs it to say what the points are worth. */
+  pointValueMinor?: number;
+  /**
+   * What the till would actually honour next time, and the floor under it — QA 2026-10-28.
+   *
+   * The balance is what they HAVE; it counts points still in the hold and knows nothing about the minimum
+   * this business takes in one go. Built from the balance alone, this line told a customer "You have 12
+   * points. That is ₹12 off your next bill" while the till would honour nothing. The price is printed only
+   * when these two agree it can be spent.
+   */
+  spendableAfter?: number;
+  minRedeemPoints?: number;
   /**
    * How many of those points die next, and the day they die — QA 2026-10-27 (loophole L4).
    *
@@ -108,7 +120,9 @@ export interface ReceiptCopy {
   rewardsTitle?: string;
   rewardRedeemed?: (points: number, amount: string) => string;
   rewardEarned?: (points: number) => string;
-  rewardBalance?: (points: number) => string;
+  /** `worth` is null where the business's point value is unknown — an API a deploy behind. The sentence then
+   *  says the points and nothing about money, as it did before. */
+  rewardBalance?: (points: number, worth: string | null) => string;
   rewardExpiry?: (points: number, date: string) => string;
 }
 
@@ -120,6 +134,16 @@ export interface ReceiptSeg {
   t: string;
   bold?: boolean;
   italic?: boolean;
+  /**
+   * What this row IS, where the reader cannot tell from its words — owner, 2026-10-28.
+   *
+   * `parseReceiptCard` found the rewards block by testing its heading against `/^(Rewards|रिवॉर्ड)/i`, which
+   * is the English word and one translation of it. `rewardsTitle` is tenant copy: a business whose heading
+   * read "Your rewards" (or anything else in any other language) had its whole rewards block silently dropped
+   * from the WhatsApp receipt — the points were earned, the screen showed them, and the customer's message
+   * did not. Found while printing a sample of the new format.
+   */
+  kind?: 'rewards-heading';
 }
 export type ReceiptRow = ReceiptSeg[];
 
@@ -209,12 +233,15 @@ export function receiptRows(input: ReceiptInput, copy: ReceiptCopy, money: (mino
   line({ t: copy.paidBy(input.paidBy) });
   if (rw && ((rw.earnedPoints && rw.earnedPoints > 0) || rw.balancePoints !== undefined)) {
     gap();
-    line({ t: copy.rewardsTitle ?? 'Rewards', bold: true });
+    line({ t: copy.rewardsTitle ?? 'Rewards', bold: true, kind: 'rewards-heading' });
     if (rw.earnedPoints && rw.earnedPoints > 0) {
       line({ t: `★ ${copy.rewardEarned ? copy.rewardEarned(rw.earnedPoints) : `+${rw.earnedPoints} Reward Points earned`}` });
     }
     if (rw.balancePoints !== undefined) {
-      line({ t: copy.rewardBalance ? copy.rewardBalance(rw.balancePoints) : `Available balance: ${rw.balancePoints} pts` });
+      const spendable = rw.spendableAfter ?? rw.balancePoints;
+      const usable = rw.pointValueMinor !== undefined && spendable > 0 && spendable >= (rw.minRedeemPoints ?? 0);
+      const worth = usable ? money(spendable * rw.pointValueMinor!) : null;
+      line({ t: copy.rewardBalance ? copy.rewardBalance(rw.balancePoints, worth) : `Available balance: ${rw.balancePoints} pts` });
     }
     // The date on the promise. Printed under the balance and only when there is one, so a business whose
     // points never die prints nothing extra (QA 2026-10-27, loophole L4).
@@ -394,6 +421,8 @@ export interface ReceiptCardModel {
   totalAmount: string;
   paidBy: string | null;
   savedLine: string | null;
+  /** The rewards heading as the receipt wrote it, in the owner's language. Null on a bill with no rewards. */
+  rewardsTitle: string | null;
   rewardsEarned: string | null;
   rewardsBalance: string | null;
   /**
@@ -438,6 +467,7 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
   let totalAmount = '';
   let paidBy: string | null = null;
   let savedLine: string | null = null;
+  let rewardsTitle: string | null = null;
   let rewardsEarned: string | null = null;
   let rewardsBalance: string | null = null;
   let rewardsBalanceLine: string | null = null;
@@ -506,8 +536,12 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
     }
 
     if (row.bold) {
-      if (/^(Rewards|रिवॉर्ड)/i.test(t)) {
+      // The row says so itself now; the word test stays for a row built before `kind` existed.
+      if (row.segs.some((seg) => seg.kind === 'rewards-heading') || /^(Rewards|रिवॉर्ड)/i.test(t)) {
         section = 'rewards';
+        // The word as the receipt wrote it, in the owner's language — the WhatsApp message reuses it rather
+        // than printing an English "Rewards" over a Hindi block.
+        rewardsTitle = t;
         continue;
       }
       // A bold row with a colon or currency sign is the Total row; any other bold row (`Services`, `Products`, `Menu`)
@@ -650,6 +684,7 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
     totalAmount,
     paidBy,
     savedLine,
+    rewardsTitle,
     rewardsEarned,
     rewardsBalance,
     rewardsBalanceLine,
@@ -660,39 +695,54 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
   };
 }
 
+/** A section break. Short enough that a 320px phone does not wrap it onto a second line. */
+const RULE = '\u2501'.repeat(12);
+
 /**
- * Formats a `ReceiptRow[]` bill into a clean, multi-line WhatsApp message using only safe BMP Unicode symbols
- * (`•`, `─`, `×`, `—`, `✓`, `★`) so 4-byte surrogate emojis never corrupt into `` in `wa.me` links or clipboards.
+ * The bill as a WhatsApp message — owner, 2026-10-28, with a sample of the shape they wanted.
+ *
+ * ## Why emoji now, when this file used to forbid them
+ *
+ * The note here read: BMP symbols only, "so 4-byte surrogate emojis never corrupt into ? in `wa.me` links or
+ * clipboards". The link half of that is not true — `whatsappHref` builds the query with `encodeURIComponent`,
+ * which encodes a surrogate PAIR as the four bytes of one code point, and a round trip through
+ * decodeURIComponent returns the emoji unchanged (asserted in `receipt-emoji.test.ts`). What is true is that
+ * the marks must be CHOSEN rather than sprinkled: each one here labels a section a reader is scanning for.
+ *
+ * ## Nothing in here names a trade
+ *
+ * The owner's sample opened with a chicken and a plate. This has neither: the same function writes a salon's
+ * receipt, a garage's and a shop's, and an emoji that belongs to one of them is a hardcoded vertical by
+ * another route. Every word still comes from the card, which got it from the vertical's own copy — including
+ * the items heading, which until now said "Your Order (1 item)" in English on a Hindi receipt.
  */
 export function formatStructuredWhatsappText(rows: ReceiptRow[]): string {
   const c = parseReceiptCard(rows);
   if (c.items.length === 0 && !c.totalAmount) {
     return rowsToText(rows)
-      .replace(/📅\s*/g, '')
-      .replace(/🎟\s*/g, '')
-      .replace(/🎉\s*/g, '★ ')
-      .replace(/\s*🙏/g, '');
+      .replace(/\u{1F4C5}\s*/gu, '')
+      .replace(/\u{1F39F}\s*/gu, '')
+      .replace(/\u{1F389}\s*/gu, '\u2b50 ')
+      .replace(/\s*\u{1F64F}/gu, '');
   }
 
   const out: string[] = [];
-  const head = c.branchName ? `*${c.businessName} · ${c.branchName}*` : `*${c.businessName}*`;
+  const head = c.branchName ? `*${c.businessName} \u00b7 ${c.branchName}*` : `*${c.businessName}*`;
   out.push(head);
 
   const subParts = [c.title, c.tokenLabel ? `*Token ${c.tokenLabel}*` : null].filter(Boolean);
-  out.push(subParts.join(' · '));
+  if (subParts.length > 0) out.push(`\u{1F9FE} ${subParts.join(' \u00b7 ')}`);
   const metaParts = [c.stylist, c.when].filter(Boolean);
-  if (metaParts.length > 0) out.push(metaParts.join(' · '));
+  if (metaParts.length > 0) out.push(`\u{1F4C5} ${metaParts.join(' \u00b7 ')}`);
 
   out.push('');
+  out.push(RULE);
   if (c.isOrder) {
-    const countLabel = c.totalItemsCount === 1 ? '1 item' : `${c.totalItemsCount} items`;
-    out.push(`*Your Order (${countLabel})*`);
-    out.push('───────────────');
+    // The heading is the vertical's own word ("Your order", "Your dishes"), not a sentence written here.
+    out.push(`*${c.itemsHeading}*`);
     for (const item of c.items) {
-      out.push(`• ${item.qty} × ${item.name} — *${item.amount}*`);
-      for (const d of item.details) {
-        out.push(`  _${d}_`);
-      }
+      out.push(`${item.qty} \u00d7 ${item.name} \u2014 *${item.amount}*`);
+      for (const d of item.details) out.push(`  _${d}_`);
     }
   } else {
     let lastSection = '';
@@ -701,42 +751,43 @@ export function formatStructuredWhatsappText(rows: ReceiptRow[]): string {
       if (sec !== lastSection) {
         if (lastSection) out.push('');
         out.push(`*${sec}*`);
-        out.push('───────────────');
         lastSection = sec;
       }
-      const label = item.qty > 1 ? `${item.name} × ${item.qty}` : item.name;
-      out.push(`• ${label} — *${item.amount}*`);
-      for (const d of item.details) {
-        out.push(`  _${d}_`);
-      }
+      const label = item.qty > 1 ? `${item.name} \u00d7 ${item.qty}` : item.name;
+      out.push(`${label} \u2014 *${item.amount}*`);
+      for (const d of item.details) out.push(`  _${d}_`);
     }
   }
 
-  out.push('───────────────');
-  for (const adj of c.adjustments) {
-    out.push(`${adj.label}: ${adj.amount}`);
-  }
-  out.push(`*${c.totalLabel}: ${c.totalAmount}*`);
-  if (c.savedLine) out.push(`★ ${c.savedLine}`);
-  if (c.paidBy) out.push(`✓ ${c.paidBy}`);
+  out.push('');
+  out.push(RULE);
+  for (const adj of c.adjustments) out.push(`${adj.label}: ${adj.amount}`);
+  out.push(`\u{1F4B0} *${c.totalLabel}: ${c.totalAmount}*`);
+  if (c.paidBy) out.push(`\u2705 ${c.paidBy}`);
+  if (c.savedLine) out.push(`\u{1F389} ${c.savedLine}`);
 
+  // The whole block is absent for a business with rewards off, and for a bill that moved no points.
   if (c.rewardsEarned || c.rewardsBalance) {
     out.push('');
-    out.push('*Rewards*');
-    if (c.rewardsEarned) out.push(`★ ${c.rewardsEarned}`);
-    // The receipt's own sentence, in the owner's language. The fallback is for a row that predates it.
-    if (c.rewardsBalanceLine) out.push(`*${c.rewardsBalanceLine}*`);
-    else if (c.rewardsBalance) out.push(`Available balance: *${c.rewardsBalance}*`);
-    if (c.rewardsExpiryLine) out.push(c.rewardsExpiryLine);
+    out.push(`\u{1F381} *${c.rewardsTitle ?? 'Rewards'}*`);
+    if (c.rewardsEarned) out.push(`\u2b50 ${c.rewardsEarned}`);
+    if (c.rewardsBalanceLine) out.push(`\u{1F3C6} *${c.rewardsBalanceLine}*`);
+    else if (c.rewardsBalance) out.push(`\u{1F3C6} *${c.rewardsBalance}*`);
+    // Only when the business expires points AND this customer has some with a date on them.
+    if (c.rewardsExpiryLine) out.push(`\u23f3 ${c.rewardsExpiryLine}`);
   }
 
-  out.push('');
   const closing = [c.thanks, c.seeYou].filter(Boolean).join(' ');
-  if (closing) out.push(closing);
+  if (closing) {
+    out.push('');
+    out.push(RULE);
+    out.push(`\u{1F64F} ${closing}`);
+  }
 
+  // Absent until the business has configured one (Settings > Profile).
   if (c.googleReviewUrl) {
     out.push('');
-    out.push(`★ ${c.reviewPrompt || 'Leave us a Google review:'}`);
+    out.push(`\u2b50 ${c.reviewPrompt || 'Leave us a Google review:'}`);
     out.push(c.googleReviewUrl);
   }
 
