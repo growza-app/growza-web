@@ -154,6 +154,21 @@ describe('a microphone the browser has blocked', () => {
    * Two classes deep because one is not enough: `.search-mic-note svg` is (0,1,1), the same as the rule that
    * caused this, and 73-pay-flow.css loads later. The first attempt at this fix changed nothing at all.
    */
+  /*
+   * QA 2026-10-28 — and it ASKS before it decides the answer was no.
+   *
+   * `SpeechRecognition.start()` does not raise the browser's permission prompt; `getUserMedia` does, and
+   * nothing in this app called it. So the first tap went straight to the recogniser, got `not-allowed`
+   * back, and the owner was told to unblock a permission nobody had asked them for — which on an installed
+   * PWA is the ordinary case, not an edge one. Only a real refusal reaches the note now.
+   */
+  it('asks for the microphone before starting the recogniser, and only then calls it blocked', () => {
+    expect(component).toMatch(/await askForMicrophone\(\)\) === 'denied'/);
+    // The ask comes BEFORE the recogniser is built, or the prompt is pointless.
+    expect(component.indexOf('askForMicrophone')).toBeLessThan(component.indexOf('new Ctor()'));
+    expect(component).toMatch(/setDenied\(true\)/);
+  });
+
   it('keeps the note’s own icons in their buttons, where they can be tapped', () => {
     expect(css).toMatch(/\.search-mic-note :is\(\.search-mic-how, \.search-mic-note-x\) svg \{\s*position: static;/);
     expect(css).toMatch(/\.search-mic-note :is\([^)]*\) svg \{[^}]*pointer-events: auto;/);

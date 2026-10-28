@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  askForMicrophone,
   claimVoiceSession,
   cleanVoiceTranscript,
   extractVoiceTranscript,
@@ -96,5 +97,78 @@ describe('voice search needs a secure origin, not just the API', () => {
 
   it('is still withheld on a browser that has no SpeechRecognition at all', () => {
     expect(withContext(true, false)).toBeNull();
+  });
+});
+
+/**
+ * QA 2026-10-28 — the app asks for the microphone, instead of telling the owner it is blocked.
+ *
+ * The owner's words: "the dialogue is not for allowing microphone, like allow location access". Nothing
+ * here had ever called `getUserMedia`, which is the only thing that raises the browser's own prompt, so a
+ * tap went straight to `SpeechRecognition.start()`, got `not-allowed`, and the app sent them to unblock a
+ * permission they had never been asked for. On an installed PWA that is the ordinary case.
+ */
+describe('asking for the microphone', () => {
+  const withMedia = (getUserMedia: unknown) => {
+    const nav = globalThis.navigator as unknown as { mediaDevices?: unknown };
+    const before = nav.mediaDevices;
+    nav.mediaDevices = getUserMedia === undefined ? undefined : { getUserMedia };
+    return () => {
+      nav.mediaDevices = before;
+    };
+  };
+
+  it('stops the track the moment permission arrives — this wants an answer, not a recording', async () => {
+    const stop = vi.fn();
+    const restore = withMedia(() => Promise.resolve({ getTracks: () => [{ stop }] }));
+    try {
+      await expect(askForMicrophone()).resolves.toBe('granted');
+      // A microphone left open puts a recording indicator in the owner's status bar.
+      expect(stop).toHaveBeenCalledTimes(1);
+    } finally {
+      restore();
+    }
+  });
+
+  it('reads a refusal as denied, which is the one case the "how to turn it on" note is for', async () => {
+    const refuse = (name: string) => () => {
+      const error = new Error(name);
+      error.name = name;
+      return Promise.reject(error);
+    };
+    for (const name of ['NotAllowedError', 'SecurityError']) {
+      const restore = withMedia(refuse(name));
+      try {
+        await expect(askForMicrophone()).resolves.toBe('denied');
+      } finally {
+        restore();
+      }
+    }
+  });
+
+  /*
+   * No microphone in the machine, or one another app is holding. Not a permission answer, so the caller
+   * carries on and lets `SpeechRecognition` have its own say — which is what happened before this existed.
+   */
+  it('does not call a missing microphone a refusal', async () => {
+    const restore = withMedia(() => {
+      const error = new Error('none');
+      error.name = 'NotFoundError';
+      return Promise.reject(error);
+    });
+    try {
+      await expect(askForMicrophone()).resolves.toBe('unavailable');
+    } finally {
+      restore();
+    }
+  });
+
+  it('says so when the browser has no media stack at all', async () => {
+    const restore = withMedia(undefined);
+    try {
+      await expect(askForMicrophone()).resolves.toBe('unavailable');
+    } finally {
+      restore();
+    }
   });
 });
