@@ -1993,6 +1993,8 @@ export function NewVisitSheet({
                 redeemedPoints: paid.rewards.redeemedPoints,
                 redeemedMinor: paid.rewards.discountMinor,
                 ...(paid.rewards.balanceAfter !== null ? { balancePoints: paid.rewards.balanceAfter } : {}),
+                // The rate, so the balance line can say what it is worth (owner, 2026-10-28).
+                ...(paid.rewards.pointValueMinor ? { pointValueMinor: paid.rewards.pointValueMinor } : {}),
                 // The date on that promise, in the salon's zone and the reader's language (QA 2026-10-27, L4).
                 ...(paid.rewards.expiring
                   ? { expiringPoints: paid.rewards.expiring.points, expiringOn: formatDate(paid.rewards.expiring.atISO, timezone, locale) }
@@ -2019,7 +2021,7 @@ export function NewVisitSheet({
         rewardsTitle: tRewards('receiptTitle'),
         rewardRedeemed: (points, amount) => tRewards('receiptUsed', { points, amount }),
         rewardEarned: (points) => tRewards('receiptEarned', { points }),
-        rewardBalance: (points) => tRewards('receiptBalance', { points }),
+        rewardBalance: (points, worth) => (worth ? tRewards('receiptBalance', { points, worth }) : tRewards('receiptBalanceOnly', { points })),
         rewardExpiry: (points, date) => tRewards('receiptExpiry', { points, date }),
       },
       (minor) => formatMoney(String(minor)),

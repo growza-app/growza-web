@@ -3169,7 +3169,8 @@
       "needMore": "इस्तेमाल करने के लिए {points, plural, one {# और} other {# और}}",
       "needBill": "इस्तेमाल करने के लिए {amount} का बिल",
       "receiptTitle": "रिवॉर्ड",
-      "receiptBalance": "अब आपके पास {points, plural, one {# पॉइंट} other {# पॉइंट}} हैं।",
+      "receiptBalance": "आपके पास {points, plural, one {# पॉइंट} other {# पॉइंट}} हैं। यानी अगले बिल पर {worth} की छूट।",
+      "receiptBalanceOnly": "आपके पास {points, plural, one {# पॉइंट} other {# पॉइंट}} हैं।",
       "receiptExpiry": "{points, plural, one {# पॉइंट} other {# पॉइंट}} {date} को खत्म हो जाएंगे।",
       "held": "{points, plural, one {# पॉइंट} other {# पॉइंट}} अभी इस्तेमाल नहीं हो सकते"
     }
