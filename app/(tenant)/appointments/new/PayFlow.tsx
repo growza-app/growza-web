@@ -1047,6 +1047,9 @@ export function PayFlow({
                   redeemedPoints: result.rewards.redeemedPoints,
                   redeemedMinor: result.rewards.discountMinor,
                   ...(result.rewards.balanceAfter !== null ? { balancePoints: result.rewards.balanceAfter } : {}),
+                  // What one point is worth here, so the balance line can price itself. Absent from an API a
+                  // deploy behind, and then the sentence simply says the points, as it always did.
+                  ...(result.rewards.pointValueMinor ? { pointValueMinor: result.rewards.pointValueMinor } : {}),
                   /*
                    * And the date on that promise — QA 2026-10-27 (loophole L4). The receipt said "you now
                    * have 420 points" and never that points die; a number with no date on it is a promise
@@ -1083,7 +1086,7 @@ export function PayFlow({
           rewardsTitle: t('rewards.receiptTitle'),
           rewardRedeemed: (points, amount) => t('rewards.receiptUsed', { points, amount }),
           rewardEarned: (points) => t('rewards.receiptEarned', { points }),
-          rewardBalance: (points) => t('rewards.receiptBalance', { points }),
+          rewardBalance: (points, worth) => (worth ? t('rewards.receiptBalance', { points, worth }) : t('rewards.receiptBalanceOnly', { points })),
           rewardExpiry: (points, date) => t('rewards.receiptExpiry', { points, date }),
           paidBy: nv.receiptPaidBy,
           seeYou: nv.receiptSeeYou,

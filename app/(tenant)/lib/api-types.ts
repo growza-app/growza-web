@@ -1003,6 +1003,8 @@ export interface VisitRewards {
    * no date on it is a promise the business has not made. Null when nothing of theirs is due to die.
    */
   expiring: { points: number; atISO: string } | null;
+  /** What one point takes off a bill, in paise — so the receipt can say what the balance is worth. */
+  pointValueMinor?: number;
 }
 
 export interface CheckoutResponse {

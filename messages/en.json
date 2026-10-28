@@ -3169,8 +3169,9 @@
       "needMore": "{points, plural, one {# more} other {# more}} to use them",
       "needBill": "a bill of {amount} to use them",
       "receiptTitle": "Rewards",
-      "receiptBalance": "You now have {points, plural, one {# point} other {# points}}.",
-      "receiptExpiry": "{points, plural, one {# point runs out} other {# points run out}} on {date}.",
+      "receiptBalance": "You have {points, plural, one {# point} other {# points}}. That is {worth} off your next bill.",
+      "receiptBalanceOnly": "You have {points, plural, one {# point} other {# points}}.",
+      "receiptExpiry": "{points, plural, one {# point expires} other {# points expire}} on {date}.",
       "held": "{points, plural, one {# point} other {# points}} not ready to use yet"
     }
   },
