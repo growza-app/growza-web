@@ -13,7 +13,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useAreas, useBusinessWritable, useSession, useWritable } from '../components/SessionProvider';
 import { canSee, type MemberRole } from '../lib/nav-policy';
-import { IconCart, IconPlus, IconSearch, IconSort, IconUpload } from '../components/icons';
+import { IconCart, IconEdit, IconPlus, IconSearch, IconSort, IconUpload } from '../components/icons';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { matchItems } from '../lib/service-match';
 import { productMatchable } from '../lib/product-match';
@@ -460,7 +460,7 @@ export function ProductsList({
       <div role="listitem" className="prd-stat-cell">
         <button
           type="button"
-          className={`prd-stat prd-stat-tap ${filter === 'retired' ? 'is-on' : ''}`}
+          className={`prd-stat prd-stat-tap prd-stat-retired ${filter === 'retired' ? 'is-on' : ''}`}
           aria-pressed={filter === 'retired'}
           onClick={() => pick(() => setFilter((cur) => (cur === 'retired' ? 'all' : 'retired')))}
         >
@@ -1050,8 +1050,11 @@ export function ProductsList({
                   {categoriesDropdown}
                   {sortBox}
                   {canStockTake && writable ? (
-                    <button type="button" className="btn btn-ghost prd-bulk-edit-btn" onClick={() => setBulkEditOpen(true)}>
-                      {t('bulkTable.open')}
+                    <button type="button" className="btn btn-ghost prd-bulk-edit-btn" onClick={() => setBulkEditOpen(true)} aria-label={t('bulkTable.open')}>
+                      <span className="prd-bulk-edit-icon" aria-hidden="true">
+                        <IconEdit />
+                      </span>
+                      <span className="prd-bulk-edit-word">{t('bulkTable.open')}</span>
                     </button>
                   ) : null}
                 </div>
@@ -1059,8 +1062,11 @@ export function ProductsList({
                 <div className="prd-selects">
                   {sortBox}
                   {canStockTake && writable ? (
-                    <button type="button" className="btn btn-ghost prd-bulk-edit-btn" onClick={() => setBulkEditOpen(true)}>
-                      {t('bulkTable.open')}
+                    <button type="button" className="btn btn-ghost prd-bulk-edit-btn" onClick={() => setBulkEditOpen(true)} aria-label={t('bulkTable.open')}>
+                      <span className="prd-bulk-edit-icon" aria-hidden="true">
+                        <IconEdit />
+                      </span>
+                      <span className="prd-bulk-edit-word">{t('bulkTable.open')}</span>
                     </button>
                   ) : null}
                 </div>
