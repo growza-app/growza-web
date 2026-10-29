@@ -1038,7 +1038,8 @@ export const api = {
   updateRole: (id: string, body: Partial<RoleBody>) => patch<ShopRole>(`/api/v1/roles/${encodeURIComponent(id)}`, body),
   deleteRole: (id: string) => del<void>(`/api/v1/roles/${encodeURIComponent(id)}`),
   teamInvites: () => get<{ invites: PendingInvite[] }>('/api/v1/team/invites'),
-  createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist' | 'manager'; locationId?: string | null; name?: string | null; tenantRoleId?: string }) =>
+  /** `jointOwner: true` makes a second OWNER: a phone and a name and nothing else, and only an owner may send it. */
+  createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist' | 'manager'; locationId?: string | null; name?: string | null; tenantRoleId?: string; jointOwner?: true }) =>
     post<CreatedInvite>('/api/v1/team/invites', body),
   teamMembers: () => get<{ members: TeamMember[] }>('/api/v1/team/members'),
   setTeamMemberBranch: (userId: string, locationId: string) =>

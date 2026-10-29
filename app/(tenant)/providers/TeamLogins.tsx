@@ -32,6 +32,12 @@ import { waDigits } from '../components/BookingSheet';
 export type InviteTarget = { role: 'staff' | 'receptionist' | 'manager'; providerId?: string };
 
 /**
+ * The picker's value for "a joint owner". Two underscores at each end because it shares a `<select>` with this
+ * business's own role ids, and a role can be called anything — including "owner".
+ */
+const OWNER_OPTION = '__joint_owner__';
+
+/**
  * The bottom sheet both the invite form and "Add a staff member" sit in: backdrop, grab handle, title, close button, Escape and focus kept in.
  * `dismiss` is what a tap outside or Escape does; absent while the sheet must not be dismissed (a request in flight, or a link shown once).
  */
@@ -109,6 +115,17 @@ export function InviteSheet({
   const multiBranch = branches.length > 1;
   const tRoles = useTranslations('settingsRoles');
   const [role, setRole] = useState<'staff' | 'receptionist' | 'manager'>(target.role);
+  /**
+   * A JOINT OWNER — a second person who owns this business, with an owner's login.
+   *
+   * Its own flag rather than a fourth `role`, because that is what it is on the server: owner lives outside the
+   * role system (it holds no role and has no calendar and no branch), and the invite carries `jointOwner: true`
+   * and a name and nothing else. Keeping it beside `role` rather than inside it means every rule below — whose
+   * calendar, which branch, which role — stays written in the terms it was written in.
+   */
+  const [jointOwner, setJointOwner] = useState(false);
+  /** The second press. Making an owner is the one choice on this sheet that cannot be undone by the person making it. */
+  const [confirmOwner, setConfirmOwner] = useState(false);
   const [tenantRoleId, setTenantRoleId] = useState('');
   const [providerId, setProviderId] = useState(target.providerId ?? '');
   const [phone, setPhone] = useState('');
@@ -140,15 +157,19 @@ export function InviteSheet({
      * guessing whose calendar somebody gets is worse than asking, and the wrong guess is invisible until they sign
      * in to somebody else's day.
      */
-    if (role === 'staff' && !providerId) {
+    if (jointOwner && !name.trim()) {
+      setError(t('errors.nameNeeded'));
+      return;
+    }
+    if (!jointOwner && role === 'staff' && !providerId) {
       setError(t('errors.chooseStylistFirst'));
       return;
     }
-    if (role === 'receptionist' && multiBranch && !locationId) {
+    if (!jointOwner && role === 'receptionist' && multiBranch && !locationId) {
       setError(t('errors.chooseBranchFirst'));
       return;
     }
-    if (roles && !tenantRoleId) {
+    if (roles && !jointOwner && !tenantRoleId) {
       setError(tRoles('chooseRoleFirst'));
       return;
     }
@@ -161,14 +182,20 @@ export function InviteSheet({
     setCopied(false);
     setCopyFailed(false);
     try {
-      const invite = await api.createTeamInvite({
-        phone: e164,
-        role,
-        providerId: role === 'staff' ? providerId : null,
-        locationId: role === 'receptionist' && multiBranch ? locationId : null,
-        name: (role === 'receptionist' || role === 'manager') && name.trim() ? name.trim() : null,
-        ...(roles ? { tenantRoleId } : {}),
-      });
+      // An owner's invite carries a phone and a name and nothing else: no role (they hold none), no stylist
+      // (no calendar) and no branch (every one of them). The server refuses the extras rather than ignoring them.
+      const invite = await api.createTeamInvite(
+        jointOwner
+          ? { phone: e164, name: name.trim(), jointOwner: true }
+          : {
+              phone: e164,
+              role,
+              providerId: role === 'staff' ? providerId : null,
+              locationId: role === 'receptionist' && multiBranch ? locationId : null,
+              name: (role === 'receptionist' || role === 'manager') && name.trim() ? name.trim() : null,
+              ...(roles ? { tenantRoleId } : {}),
+            },
+      );
       // The normalised number, not what was typed — it is the one the invite is actually for, and the one they
       // will sign in with.
       setCreated({ ...invite, phone: e164 });
@@ -187,7 +214,7 @@ export function InviteSheet({
   return (
     <InviteShell
       title={t('inviteTitle')}
-      sub={stylistName && role === 'staff' ? t('inviteSubFor', { name: stylistName }) : t('intro')}
+      sub={stylistName && role === 'staff' && !jointOwner ? t('inviteSubFor', { name: stylistName }) : t('intro')}
       closeLabel={t('closeInvite')}
       onClose={onClose}
       dismiss={dismiss}
@@ -256,11 +283,17 @@ export function InviteSheet({
                   ) : (
                     <select
                       id="invite-role"
-                      value={tenantRoleId}
+                      value={jointOwner ? OWNER_OPTION : tenantRoleId}
                       disabled={busy}
                       onChange={(e) => {
-                        const picked = roles.find((r) => r.id === e.target.value);
-                        setTenantRoleId(e.target.value);
+                        const value = e.target.value;
+                        // Owner is not one of this business's roles and never will be: it is hardcoded outside
+                        // them. It sits at the end of the same list because "what will they be?" is the question
+                        // the owner is answering here, and owner is one of the answers.
+                        setJointOwner(value === OWNER_OPTION);
+                        setConfirmOwner(false);
+                        setTenantRoleId(value === OWNER_OPTION ? '' : value);
+                        const picked = roles.find((r) => r.id === value);
                         if (picked?.worksLike === 'receptionist' || picked?.worksLike === 'staff' || picked?.worksLike === 'manager') setRole(picked.worksLike);
                         setError(null);
                       }}
@@ -271,6 +304,7 @@ export function InviteSheet({
                           {r.name}
                         </option>
                       ))}
+                      <option value={OWNER_OPTION}>{t('roleOwner')}</option>
                     </select>
                   )}
                 </div>
@@ -279,22 +313,26 @@ export function InviteSheet({
                   <label htmlFor="invite-role">{t('role')}</label>
                   <select
                     id="invite-role"
-                    value={role}
+                    value={jointOwner ? OWNER_OPTION : role}
                     disabled={busy}
                     onChange={(e) => {
-                      setRole(e.target.value as typeof role);
+                      const picked = e.target.value;
+                      setJointOwner(picked === OWNER_OPTION);
+                      setConfirmOwner(false);
+                      if (picked !== OWNER_OPTION) setRole(picked as typeof role);
                       setError(null);
                     }}
                   >
                     <option value="staff">{t('roleStaff')}</option>
                     <option value="receptionist">{t('roleReceptionist')}</option>
+                    <option value={OWNER_OPTION}>{t('roleOwner')}</option>
                   </select>
                 </div>
               )}
 
               {/* Only for a stylist. A receptionist runs the whole diary, so a "whose calendar?" question has no
                   answer for them and the API drops the field anyway. */}
-              {role === 'staff' && (
+              {role === 'staff' && !jointOwner && (
                 <div className="field">
                   <label htmlFor="invite-provider">
                     {roles ? tRoles('whichPerson') : t('whoseCalendar')}
@@ -326,7 +364,7 @@ export function InviteSheet({
                 </div>
               )}
 
-              {(role === 'receptionist' || role === 'manager') && (
+              {(jointOwner || role === 'receptionist' || role === 'manager') && (
                 <div className="field">
                   <label htmlFor="invite-name">
                     {t('theirName')}
@@ -336,7 +374,7 @@ export function InviteSheet({
                 </div>
               )}
 
-              {role === 'receptionist' && multiBranch && (
+              {role === 'receptionist' && !jointOwner && multiBranch && (
                 <div className="field">
                   <label htmlFor="invite-branch">
                     {t('whichBranch')}
@@ -382,17 +420,50 @@ export function InviteSheet({
                 </div>
               )}
 
+              {/*
+                The one thing on this sheet that the person doing it cannot undo on their own: another owner can
+                remove them, they cannot. So it is said plainly, in the words of what the other person will be able
+                to do, and it takes a second press — not a dialog, which is one more thing to dismiss on a phone.
+              */}
+              {jointOwner && !busy && (
+                <div role="alert" className="banner">
+                  {t('ownerWarning')}
+                </div>
+              )}
               <button
                 className="btn invite-submit"
-                disabled={busy || !phone.trim() || ((role === 'receptionist' || role === 'manager') && !name.trim()) || (!!roles && !tenantRoleId)}
-                onClick={() => void send()}
+                disabled={
+                  busy ||
+                  !phone.trim() ||
+                  ((jointOwner || role === 'receptionist' || role === 'manager') && !name.trim()) ||
+                  (!!roles && !jointOwner && !tenantRoleId)
+                }
+                onClick={() => {
+                  if (jointOwner && !confirmOwner) {
+                    setConfirmOwner(true);
+                    return;
+                  }
+                  void send();
+                }}
               >
-                {busy ? t('creating') : t('createInvite')}
+                {busy ? t('creating') : jointOwner && confirmOwner ? t('ownerConfirm') : t('createInvite')}
               </button>
+              {jointOwner && confirmOwner && !busy && (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => {
+                    setConfirmOwner(false);
+                    setJointOwner(false);
+                  }}
+                >
+                  {t('ownerCancel')}
+                </button>
+              )}
               {/* Why the button would refuse, said before it is pressed rather than after. */}
-              {!busy && phone.trim() && (role === 'receptionist' || role === 'manager') && !name.trim() && <p className="field-hint">{t('errors.nameNeeded')}</p>}
-              {!busy && phone.trim() && role === 'staff' && !providerId && <p className="field-hint">{t('errors.chooseStylistFirst')}</p>}
-              {!busy && phone.trim() && role === 'receptionist' && multiBranch && !locationId && <p className="field-hint">{t('errors.chooseBranchFirst')}</p>}
+              {!busy && phone.trim() && (jointOwner || role === 'receptionist' || role === 'manager') && !name.trim() && <p className="field-hint">{t('errors.nameNeeded')}</p>}
+              {!busy && phone.trim() && !jointOwner && role === 'staff' && !providerId && <p className="field-hint">{t('errors.chooseStylistFirst')}</p>}
+              {!busy && phone.trim() && !jointOwner && role === 'receptionist' && multiBranch && !locationId && <p className="field-hint">{t('errors.chooseBranchFirst')}</p>}
             </>
           )}
     </InviteShell>
@@ -415,6 +486,7 @@ export function LoginGroup({
   roleLabel,
   onMove,
   onRemove,
+  removable,
   writable,
 }: {
   title: string;
@@ -426,6 +498,12 @@ export function LoginGroup({
   roleLabel: (m: TeamMember) => string;
   onMove: (userId: string, locationId: string) => void;
   onRemove: (m: TeamMember) => void;
+  /**
+   * Whether THIS row may be taken away. Absent means every row may, which is how the front desk and the stray
+   * logins have always behaved. The owners group passes one: the last owner has no Remove at all, because a
+   * button that is always refused teaches an owner that the screen is broken rather than that the rule exists.
+   */
+  removable?: (m: TeamMember) => boolean;
   writable: boolean;
 }) {
   const t = useTranslations('settingsTeam');
@@ -484,7 +562,7 @@ export function LoginGroup({
                     ))}
                   </select>
                 ) : null}
-                {writable && (
+                {writable && (removable?.(m) ?? true) && (
                   <button type="button" className="btn btn-ghost btn-danger" aria-label={t('removeFor', { name })} onClick={() => onRemove(m)}>
                     {t('remove')}
                   </button>
