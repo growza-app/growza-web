@@ -15,6 +15,7 @@ import { describe, expect, it } from 'vitest';
  */
 const sheet = readFileSync(resolve(__dirname, 'TeamLogins.tsx'), 'utf8');
 const screen = readFileSync(resolve(__dirname, 'StaffClient.tsx'), 'utf8');
+const rolesScreen = readFileSync(resolve(__dirname, '../settings/roles/RolesTeam.tsx'), 'utf8');
 const api = readFileSync(resolve(__dirname, '../lib/api.ts'), 'utf8');
 const en = JSON.parse(readFileSync(resolve(__dirname, '../../../messages/en.json'), 'utf8')).settingsTeam;
 const hi = JSON.parse(readFileSync(resolve(__dirname, '../../../messages/hi.json'), 'utf8')).settingsTeam;
@@ -88,5 +89,25 @@ describe('the words', () => {
       expect(en.ownerWarning.toLowerCase(), `the warning should mention ${word}`).toContain(word);
     }
     expect(en.ownerWarning).toContain('Only another owner can remove them.');
+  });
+});
+
+describe('the owners are on the Roles screen too', () => {
+  /*
+   * The screen a SHOP opens. It has no Staff screen at all — its nav is Orders and Stock — so this is where a
+   * restaurant or a retail business invites a joint owner, and it was the one screen where a joint owner would
+   * have been invisible: `people` has always excluded owners, because an owner holds no role to show in the
+   * select beside each person.
+   */
+  it('lists them, and leaves the people list alone', () => {
+    expect(rolesScreen).toMatch(/const owners = members\.filter\(\(m\) => m\.role === 'owner'\);/);
+    expect(rolesScreen, 'the role-holders list is unchanged').toMatch(/const people = members\.filter\(\(m\) => m\.role !== 'owner'\);/);
+    expect(rolesScreen).toMatch(/title=\{tTeam\('owners'\)\}\s*\n\s*members=\{owners\}/);
+  });
+
+  it('can take a login back, asking first, and never from the last owner', () => {
+    expect(rolesScreen).toMatch(/await api\.removeTeamMember\(member\.userId\);/);
+    expect(rolesScreen).toMatch(/<ConfirmDialog[\s\S]*?tone="danger"[\s\S]*?onConfirm=\{\(\) => void doRemoveLogin\(confirmLogin\)\}/);
+    expect(rolesScreen).toMatch(/removable=\{\(\) => owners\.length > 1\}/);
   });
 });
