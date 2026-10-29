@@ -61,7 +61,29 @@ export interface TokenCountsToday extends TokenFigures {
   withStylist: number;
 }
 
+/**
+ * The end of a SHOP's day — a restaurant, a retail branch, any business with no diary.
+ *
+ * The same route answers both shapes and says which one it sent (`kind`), because the question is the same
+ * question and only the business differs. None of the diary's rows are here: a counter takes no bookings,
+ * nobody fails to turn up for one, and the day belongs to what sold rather than to who was on shift.
+ */
+export interface ShopDaySummary {
+  kind: 'shop';
+  date: string;
+  locationId: string | null;
+  orders: number;
+  /** What the bills were paid, net of what came back — the figure Home shows. */
+  takingsMinor: number;
+  byChannel: Array<{ channel: string; orders: number; billedMinor: number }>;
+  /** Billed, not received: the marketplace's commission is not taken off. */
+  channelCaveat: string;
+  topSellers: Array<{ name: string; sizeLabel: string | null; units: number; takingsMinor: number }>;
+  branches?: Array<{ id: string; name: string; orders: number; takingsMinor: number }>;
+}
+
 export interface DaySummary {
+  kind?: 'diary';
   date: string;
   locationId: string | null;
   revenueMinor: number;

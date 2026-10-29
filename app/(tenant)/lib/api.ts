@@ -184,7 +184,7 @@ import type {
   ManualMovementKind,
   VisitRewards,
 } from './api-types';
-import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, TokenBoard } from './home-types';
+import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, ShopDaySummary, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
 
 /** Where a business stands on payment QRs: the business-wide one, and each branch's own. */
@@ -1005,8 +1005,9 @@ export const api = {
   tokensToday: (location?: string | null) => get<TokenBoard>(`/api/v1/tokens/today${atBranch(location)}`),
   /** Jira GRW-405 — a booked client has arrived: today's token for that booking (the same one again on a repeat). */
   markArrived: (appointmentId: string) => post<{ id: string; tokenNo: number | null; created: boolean }>('/api/v1/tokens', { appointmentId }),
+  /** Both shapes come back from this one route; `kind` says which (a shop's day has no bookings in it). */
   daySummary: (location?: string | null) =>
-    get<DaySummary>(`/api/v1/home/day-summary${location ? `?location=${encodeURIComponent(location)}` : ''}`),
+    get<DaySummary | ShopDaySummary>(`/api/v1/home/day-summary${location ? `?location=${encodeURIComponent(location)}` : ''}`),
   /**
    * Reports. Under /reports/, never /analytics/ — this is fetched from the
    * browser on every tab and range change, and that path segment is a common
