@@ -79,7 +79,8 @@ export interface ShopDaySummary {
   /** Billed, not received: the marketplace's commission is not taken off. */
   channelCaveat: string;
   topSellers: Array<{ name: string; sizeLabel: string | null; units: number; takingsMinor: number }>;
-  branches?: Array<{ id: string; name: string; orders: number; takingsMinor: number }>;
+  /** `closed` only on a branch that has been shut since it traded — absent, never false. */
+  branches?: Array<{ id: string; name: string; orders: number; takingsMinor: number; closed?: boolean }>;
 }
 
 export interface DaySummary {
