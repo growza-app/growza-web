@@ -316,3 +316,33 @@ describe('the service worker', () => {
     expect(sw).not.toMatch(/caches\.(put|match)\([^)]*notification/i);
   });
 });
+
+describe('when the day summary arrives', () => {
+  const form = read('AlertsForm.tsx');
+
+  it('is offered only beside a summary that is switched on', () => {
+    // An hour for a message you do not get is a control that does nothing — the shape this repo keeps finding.
+    expect(form).toMatch(/prefs\?\.prefs\.find\(\(p\) => p\.kind === 'day\.summary'\)\?\.enabled && summaryHour !== 'loading'/);
+  });
+
+  it('offers the evening and the small hours, not a whole 24-hour list', () => {
+    expect(form).toMatch(/const HOURS = \[18, 19, 20, 21, 22, 23, 0, 1\] as const;/);
+  });
+
+  it('says the time the way a clock is spoken', () => {
+    expect(form).toMatch(/if \(h === 0\) return 'Midnight';/);
+    expect(form).toMatch(/h < 12 \? `\$\{h\} am`/);
+  });
+
+  it('treats "never set" as its own answer, not as zero', () => {
+    expect(form).toMatch(/value=\{summaryHour === null \? '' : String\(summaryHour\)\}/);
+    expect(form).toMatch(/next === null \? \{\} : \{ daySummaryHour: next \}/);
+  });
+
+  it('has its words in both languages', () => {
+    for (const key of ['summaryHourTitle', 'summaryHourHint', 'summaryHourDefault', 'summaryHourSaved']) {
+      expect((copyFor(en) as unknown as Record<string, string>)[key], `en ${key}`).toBeTruthy();
+      expect((copyFor(hi) as unknown as Record<string, string>)[key], `hi ${key}`).toBeTruthy();
+    }
+  });
+});

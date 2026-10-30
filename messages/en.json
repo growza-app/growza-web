@@ -865,7 +865,11 @@
     "stopOnThisPhone": "Stop on this phone",
     "blocked": "Your browser blocked the request. Allow notifications for this site and try again.",
     "saveFailed": "That didn't save. Try again.",
-    "loadFailed": "We couldn't load your alerts. Try again in a moment."
+    "loadFailed": "We couldn't load your alerts. Try again in a moment.",
+    "summaryHourTitle": "When the day summary arrives",
+    "summaryHourHint": "Pick the hour you have finished for the day. A kitchen still serving at eleven should not be sent its takings at nine.",
+    "summaryHourDefault": "The usual time (9 pm)",
+    "summaryHourSaved": "Saved"
   },
   "settingsRewards": {
     "intro": "Clients earn points on what they spend, and take them off a later bill. Nothing changes for them until you switch it on.",
