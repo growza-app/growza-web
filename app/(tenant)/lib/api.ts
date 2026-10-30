@@ -1175,6 +1175,8 @@ export const api = {
     staffSeesClientContact?: boolean;
     attendanceLateGraceMin?: number;
     productReturnWindowDays?: number;
+    /** The hour the closing summary arrives, in the business's own timezone (0–23). */
+    daySummaryHour?: number;
     reportAccess?: Record<string, string[]>;
     closedDates?: string[];
     /** Jira GRW-397 — every branch's closed days, a day at a time (business only). */
