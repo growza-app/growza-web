@@ -288,12 +288,20 @@ export function StaffClient({
    * a staff login whose stylist row is gone (invited before GRW-470 made the stylist mandatory, or the provider was
    * deleted). Their row would otherwise be nowhere, and taking a login away would be impossible.
    */
+  /*
+   * The owners. Listed because a business can have more than one of them now, and an owner who cannot see who
+   * else owns their business — or take a login back from somebody who has left — is being asked to trust a
+   * screen that does not say. The last one has no Remove: the API refuses it, and this is the same rule said
+   * before it is pressed.
+   */
+  const owners = useMemo(() => members.filter((m) => m.role === 'owner'), [members]);
   const frontDesk = useMemo(() => members.filter((m) => m.role === 'receptionist'), [members]);
   const strayLogins = useMemo(
     () => members.filter((m) => m.role === 'staff' && !everyone.some((p) => p.id === m.providerId)),
     [members, everyone],
   );
-  const roleLabelOf = (m: { role: string }) => (m.role === 'receptionist' ? tTeam('receptionist') : tTeam('stylist'));
+  const roleLabelOf = (m: { role: string }) =>
+    m.role === 'owner' ? tTeam('owner') : m.role === 'receptionist' ? tTeam('receptionist') : tTeam('stylist');
 
   const tabbed = useMemo(() => {
     switch (tab) {
@@ -458,6 +466,20 @@ export function StaffClient({
       */}
       {tab === 'all' && (
         <>
+          <LoginGroup
+            title={tTeam('owners')}
+            members={owners}
+            branches={branches}
+            savingId={savingMember}
+            roleLabel={roleLabelOf}
+            onMove={moveMember}
+            onRemove={(m) => {
+              setLoginError(null);
+              setConfirmLogin(m);
+            }}
+            removable={() => owners.length > 1}
+            writable={writable}
+          />
           <LoginGroup
             title={tTeam('frontDesk')}
             empty={tTeam('noFrontDesk')}

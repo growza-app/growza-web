@@ -5,7 +5,8 @@ import { useState } from 'react';
 import { api, ApiError, type PendingInvite, type ProviderOverviewRow, type ShopRole, type TeamMember } from '../../lib/api';
 import { useWritable } from '../../components/SessionProvider';
 import { PersonPhoto } from '../../components/PersonPhoto';
-import { InviteShell, InviteSheet, WaitingGroup } from '../../providers/TeamLogins';
+import { InviteShell, InviteSheet, LoginGroup, WaitingGroup } from '../../providers/TeamLogins';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { PhoneField } from '../../components/PhoneField';
 import { toStoredPhone } from '../../lib/phone';
 import { usePhoneProblem } from '../../lib/use-phone-problem';
@@ -37,6 +38,8 @@ export function RolesTeam({
   onChanged: () => void;
 }) {
   const t = useTranslations('settingsRoles');
+  // The owners group's words are the Staff screen's: it is the same group, on the screen a shop actually opens.
+  const tTeam = useTranslations('settingsTeam');
   const writable = useWritable();
   const [members, setMembers] = useState(initialMembers);
   const [invites, setInvites] = useState(initialInvites);
@@ -44,6 +47,9 @@ export function RolesTeam({
   const [error, setError] = useState<string | null>(null);
   const [inviting, setInviting] = useState(false);
   const [addingStaff, setAddingStaff] = useState(false);
+  const [confirmLogin, setConfirmLogin] = useState<TeamMember | null>(null);
+  const [removingLogin, setRemovingLogin] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const [providers, setProviders] = useState(initialProviders);
 
   // Roles that can be given: any that works like a manager, a desk or staff (a role that works like nothing is refused by the API).
@@ -51,6 +57,29 @@ export function RolesTeam({
   const rosterPeople = providers.filter((p) => p.active);
   const giveable = rolesToGive(roles, rosterPeople.length);
   const people = members.filter((m) => m.role !== 'owner');
+  /*
+   * The owners, who are not in `people` above and never were — there was one of them and it was you.
+   *
+   * A business can have joint owners now, and this is the screen a shop opens (it has no Staff screen), so this is
+   * where an owner has to be able to see who else owns the business and take a login back from somebody who has
+   * left. No role select on these rows: an owner holds no role, which is the whole reason they were filtered out.
+   */
+  const owners = members.filter((m) => m.role === 'owner');
+
+  /** Take a login away. Asked first, because it is immediate: their next tap is refused. */
+  const doRemoveLogin = async (member: TeamMember) => {
+    setRemovingLogin(true);
+    setLoginError(null);
+    try {
+      await api.removeTeamMember(member.userId);
+      setMembers((all) => all.filter((m) => m.userId !== member.userId));
+      setConfirmLogin(null);
+    } catch (e) {
+      setLoginError(e instanceof ApiError ? e.message : t('errors.roleFailed'));
+    } finally {
+      setRemovingLogin(false);
+    }
+  };
 
   const refresh = async () => {
     const [m, i] = await Promise.all([api.teamMembers().then((r) => r.members), api.teamInvites().then((r) => r.invites)]);
@@ -87,6 +116,23 @@ export function RolesTeam({
     <div className="card roles-card roles-team">
       <div className="card-head">{t('peopleTitle')}</div>
       <div className="card-body">
+        <LoginGroup
+          title={tTeam('owners')}
+          members={owners}
+          branches={branches}
+          savingId={savingId}
+          roleLabel={() => tTeam('owner')}
+          // An owner has no branch of their own, so this group never draws the branch select that would call it.
+          onMove={() => undefined}
+          onRemove={(m) => {
+            setLoginError(null);
+            setConfirmLogin(m);
+          }}
+          // The last owner keeps no Remove: the API refuses it, and a button that is always refused reads as a
+          // broken screen rather than as the rule it is.
+          removable={() => owners.length > 1}
+          writable={writable}
+        />
         {loadFailed ? (
           <div role="alert" className="field-error">
             {t('errors.peopleFailed')}
@@ -154,6 +200,21 @@ export function RolesTeam({
           onAdded={async () => {
             // The new person must be on the roster before a Staff invitation can name them.
             setProviders(await api.providersOverview().then((o) => o.providers, () => providers));
+          }}
+        />
+      )}
+      {confirmLogin && (
+        <ConfirmDialog
+          title={tTeam('removeTitle', { name: confirmLogin.name ?? confirmLogin.phone ?? t('unnamed') })}
+          body={tTeam('removeBody')}
+          confirmLabel={tTeam('remove')}
+          tone="danger"
+          busy={removingLogin}
+          error={loginError}
+          onConfirm={() => void doRemoveLogin(confirmLogin)}
+          onCancel={() => {
+            setConfirmLogin(null);
+            setLoginError(null);
           }}
         />
       )}
