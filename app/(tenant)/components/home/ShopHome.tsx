@@ -13,6 +13,7 @@ import type {
   StockReportPage,
 } from '../../lib/api-types';
 import { homeCopy } from '../../lib/home-copy';
+import { DaySummarySheet } from './DaySummarySheet';
 import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import { ordersHref } from '../../lib/orders-filter';
@@ -25,6 +26,7 @@ import {
   IconNavOrders,
   IconNavStock,
   IconSettings,
+  IconDaySummary,
   IconPos,
   IconProducts,
   IconReports,
@@ -112,6 +114,8 @@ export function ShopHome({
    * phone makes none of the command center's five, which it has never been able to see.
    */
   const [phone, setPhone] = useState<boolean | null>(null);
+  /** The end-of-day sheet. Fetched when opened, like the salon's: most visits to Home never open it. */
+  const [summaryOpen, setSummaryOpen] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 860px)');
     const read = () => setPhone(mq.matches);
@@ -591,7 +595,29 @@ export function ShopHome({
                 ) : null}
               </div>
               <div className="hm-toolbar-end">
+                {/*
+                  The same button the salon's Home has carried since Jira GRW-306, on the same row, opening the
+                  same sheet — a shop's day was the one Home that could not be asked how it went.
+                */}
+                {money ? (
+                  <button type="button" className="hm-toolbar-summary" aria-label={t.daySummary} title={t.daySummary} onClick={() => setSummaryOpen(true)}>
+                    <IconDaySummary />
+                    <span className="hm-toolbar-summary-label">{t.daySummary}</span>
+                  </button>
+                ) : null}
                 <div className="hm-primary-actions hm-toolbar-actions hm-desktop">
+                  {/*
+                    The same sheet on a laptop. `.hm-toolbar-summary` above is the PHONE control — it is
+                    `display: none` from 861px (styles/83-role-home.css), where the salon's Home opens the sheet
+                    from its "Day closed" row instead. A shop's Home has no such row, so the way in here is an
+                    action beside the others, in the shape every other action on this row already has.
+                  */}
+                  {money ? (
+                    <button type="button" className="hm-action" onClick={() => setSummaryOpen(true)}>
+                      <IconDaySummary />
+                      <strong>{t.daySummary}</strong>
+                    </button>
+                  ) : null}
                   {!isKitchen && can('/orders/import') ? (
                     <a href="/orders/import" className="hm-action">
                       <IconUpload />
@@ -1537,6 +1563,15 @@ export function ShopHome({
 
                     {canReports && (can('/stock/sellers') || can('/stock/report')) ? (
                       <div className="shp-hero-links">
+                        {/*
+                          The way into the day's sheet ON A PHONE. The toolbar's button above is the laptop's —
+                          this screen's toolbar is not drawn at phone width, and the salon's phone control sits
+                          in its header, which a shop's Home does not have. Here it is beside the two links an
+                          owner cashing up already uses, in the same pill.
+                        */}
+                        <button type="button" className="shp-hero-pill" onClick={() => setSummaryOpen(true)}>
+                          {t.daySummary} →
+                        </button>
                         {can('/stock/sellers') ? (
                           <a className="shp-hero-pill" href="/stock/sellers">
                             {phoneTopSeller ? s.topSellerPill(phoneTopSeller.name) : s.whatSellsLink} →
@@ -1754,6 +1789,14 @@ export function ShopHome({
             </div>
         )}
       </div>
+      {summaryOpen ? (
+        <DaySummarySheet
+          t={t}
+          locationId={branch}
+          subtitle={s.liveTodayLabel}
+          onClose={() => setSummaryOpen(false)}
+        />
+      ) : null}
     </>
   );
 }
