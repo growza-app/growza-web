@@ -41,7 +41,8 @@ export function ShopDayBody({ t, data, onOpenBranch }: { t: HomeCopy; data: Shop
               <li key={b.id}>
                 <button type="button" className="hm-row hm-row-btn" onClick={() => onOpenBranch({ id: b.id, name: b.name })}>
                   <span className="hm-row-main">
-                    <span className="hm-row-name">{b.name}</span>
+                    {/* The same "(closed)" the stylist's Home and the diary's sheet already say of a shut branch. */}
+                    <span className="hm-row-name">{b.closed ? t.branchClosed(b.name) : b.name}</span>
                   </span>
                   <span className="hm-row-meta">{t.shop.orderCount(b.orders)}</span>
                   <span className="hm-row-amount">{rupees(b.takingsMinor)}</span>
@@ -55,7 +56,9 @@ export function ShopDayBody({ t, data, onOpenBranch }: { t: HomeCopy; data: Shop
       {data.byChannel.length > 0 ? (
         <section className="hm-card">
           <div className="hm-card-head">
-            <h2>{t.shop.whereFrom}</h2>
+            <h2>
+              {t.shop.whereFrom} <small>{t.shop.whereFromSub}</small>
+            </h2>
           </div>
           <ul className="hm-rows">
             {data.byChannel.map((c) => (

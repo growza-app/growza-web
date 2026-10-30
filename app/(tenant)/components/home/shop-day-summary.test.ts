@@ -36,6 +36,16 @@ describe('a shop’s rows', () => {
     expect(body).toMatch(/data\.topSellers\.map/);
   });
 
+  it('say which money the channel rows are, so two numbers under one heading cannot be read as one', () => {
+    // The hero is what was PAID (net of returns); these are what was BILLED. With a marketplace's fee between
+    // them they do not add up, and nothing but this line says why.
+    expect(body).toMatch(/t\.shop\.whereFrom\} <small>\{t\.shop\.whereFromSub\}<\/small>/);
+  });
+
+  it('says "(closed)" of a branch that has shut, in the diary sheet’s own words', () => {
+    expect(body).toMatch(/b\.closed \? t\.branchClosed\(b\.name\) : b\.name/);
+  });
+
   it('carry the API’s own caveat rather than a second wording of it', () => {
     // "Billed, not received" is the Channels report's sentence; this screen prints it, it does not rewrite it.
     expect(body).toMatch(/\{data\.channelCaveat\}/);
@@ -77,7 +87,7 @@ describe('the words', () => {
   it('are in both languages', () => {
     for (const lang of ['en', 'hi'] as const) {
       const t = homeCopy(lang, {});
-      for (const key of ['whereFrom', 'whatSold', 'whatSoldSub', 'nothingSold'] as const) {
+      for (const key of ['whereFrom', 'whereFromSub', 'whatSold', 'whatSoldSub', 'nothingSold'] as const) {
         expect(t.shop[key], `${lang} ${key}`).toBeTruthy();
       }
       expect(t.soldCount(12), `${lang} soldCount`).toBeTruthy();
