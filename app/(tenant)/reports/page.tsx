@@ -170,8 +170,10 @@ export default async function ReportsPage({
           actions={
             areasOf(me).shop ? (
               <>
-                <a className="btn btn-ghost" href="/orders">{t('shopSoonOrders')}</a>
-                {mayOpenShopReports && counted ? <a className="btn btn-ghost" href="/stock">{t('shopSoonStock')}</a> : null}
+                {/* Owner, 2026-11-02 — a phone already has both of these in the bar at the foot of the screen, and in
+                    the header they wrapped it onto a second row that held nothing else. `cr-head-link` hides them there. */}
+                <a className="btn btn-ghost cr-head-link" href="/orders">{t('shopSoonOrders')}</a>
+                {mayOpenShopReports && counted ? <a className="btn btn-ghost cr-head-link" href="/stock">{t('shopSoonStock')}</a> : null}
               </>
             ) : undefined
           }

@@ -2815,6 +2815,8 @@
   "counterReport": {
     "title": "Reports",
     "rangeLabel": "Period",
+    "from": "From",
+    "to": "To",
     "range": {
       "last_7_days": "This week",
       "this_month": "This month",
@@ -2862,6 +2864,8 @@
   },
   "diaryReport": {
     "rangeLabel": "Period",
+    "from": "From",
+    "to": "To",
     "range": {
       "last_7_days": "This week",
       "this_month": "This month",

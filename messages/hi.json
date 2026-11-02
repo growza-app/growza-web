@@ -2815,6 +2815,8 @@
   "counterReport": {
     "title": "रिपोर्ट",
     "rangeLabel": "अवधि",
+    "from": "से",
+    "to": "तक",
     "range": {
       "last_7_days": "इस हफ़्ते",
       "this_month": "इस महीने",
@@ -2862,6 +2864,8 @@
   },
   "diaryReport": {
     "rangeLabel": "अवधि",
+    "from": "से",
+    "to": "तक",
     "range": {
       "last_7_days": "इस हफ़्ते",
       "this_month": "इस महीने",

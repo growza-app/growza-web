@@ -9,6 +9,28 @@
   gap: var(--sp-3);
 }
 
+/*
+ * Owner, 2026-11-02 — every gap on this page was being paid twice. `92-spacing.css` gives each child of a
+ * `.page-body` a 16px top margin on a phone; this column adds 12px of its own gap on top, so the strips and
+ * cards sat 28px apart and the first figure on Reports was 319px down an 812px screen. The house rule is the
+ * one that stays: 16px, once.
+ */
+@media (max-width: 860px) {
+  /*
+   * One mechanism, not two: the column keeps its gap and the blanket margin is switched off inside it. Gap is
+   * what `order` below respects — margins are applied in DOM order, so a page that reorders itself and spaces
+   * itself with margins puts its 16px in the wrong place. The selector is the spacing rule's own shape plus one
+   * class, because that rule is `!important` and specificity is the only thing that answers it.
+   */
+  .srp-page {
+    gap: var(--sp-4);
+  }
+
+  .page-body.srp-page:not(.hm-page) > * + *:not(.sr-only):not(.fab):not([class*='backdrop']):not([class*='overlay']) {
+    margin-top: 0 !important;
+  }
+}
+
 /* ---------- Shared Retail Reports Tab Bar ---------- */
 .srp-nav {
   display: flex;
