@@ -16,8 +16,18 @@
  * one that stays: 16px, once.
  */
 @media (max-width: 860px) {
+  /*
+   * One mechanism, not two: the column keeps its gap and the blanket margin is switched off inside it. Gap is
+   * what `order` below respects — margins are applied in DOM order, so a page that reorders itself and spaces
+   * itself with margins puts its 16px in the wrong place. The selector is the spacing rule's own shape plus one
+   * class, because that rule is `!important` and specificity is the only thing that answers it.
+   */
   .srp-page {
-    gap: 0;
+    gap: var(--sp-4);
+  }
+
+  .page-body.srp-page:not(.hm-page) > * + *:not(.sr-only):not(.fab):not([class*='backdrop']):not([class*='overlay']) {
+    margin-top: 0 !important;
   }
 }
 
