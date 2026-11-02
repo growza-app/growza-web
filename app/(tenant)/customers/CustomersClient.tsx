@@ -111,6 +111,7 @@ export function CustomersClient({
   initialStatus,
   initialSort,
   initialDirection,
+  initialOpenClientId,
   label,
 }: {
   /** Jira GRW-392 — the branch whose clients these are; null is every branch (an owner on "All"). */
@@ -125,6 +126,8 @@ export function CustomersClient({
   initialSort?: CustomerSort;
   /** From the URL (?dir=asc) — defaults to 'desc'. Travels with `initialSort`. */
   initialDirection?: SortDirection;
+  /** From the URL (?open=<id>) — a guest's orders go Back to here, with that guest's card open as they left it. */
+  initialOpenClientId?: string;
   /** "Clients" for a salon, "Patients" for a clinic — from the vertical config. */
   label: string;
 }) {
@@ -166,7 +169,7 @@ export function CustomersClient({
   const searchParams = useSearchParams();
   // Which client's card is open. Null closes it; the list keeps its scroll
   // position because nothing navigates away.
-  const [openClientId, setOpenClientId] = useState<string | null>(null);
+  const [openClientId, setOpenClientId] = useState<string | null>(initialOpenClientId ?? null);
   // Which way the sorted column runs. Clicking the same header again flips it,
   // which is what makes "who spends least" reachable without a second control.
   const [direction, setDirection] = useState<SortDirection>(initialDirection ?? 'desc');

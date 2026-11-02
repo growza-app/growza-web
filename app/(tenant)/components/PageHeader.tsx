@@ -37,6 +37,7 @@ export function PageHeader({
   onBack,
   bare,
   menu,
+  backHref,
 }: {
   title: string;
   subtitle?: string;
@@ -63,6 +64,11 @@ export function PageHeader({
    * button stands where Back would: the same circle, as on Home.
    */
   menu?: boolean;
+  /**
+   * A tab screen opened FROM somewhere (Orders for one guest, from the guest's card) says where Back goes. A plain string, because
+   * this is a server component and cannot be handed a function. Wins over `menu`: there is something behind this screen now.
+   */
+  backHref?: string;
   /** Jira GRW-307 — leave out the header's search button: the Search screen is what it opens. */
 }) {
   return (
@@ -71,7 +77,7 @@ export function PageHeader({
           every screen but Home (the menu is on Home and behind the avatar); a screen with its own
           Back, inline with the title, keeps that one and shows nothing here. */}
       <div className="topbar-lead">
-        {onBack ? null : menu ? <MenuButton /> : <BackButton phoneOnly />}
+        {onBack ? null : backHref ? <BackButton phoneOnly href={backHref} /> : menu ? <MenuButton /> : <BackButton phoneOnly />}
         <div className="topbar-title">
           {onBack || (subtitle && subtitleAsInfo) ? (
             <div className="topbar-title-row">

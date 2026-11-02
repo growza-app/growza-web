@@ -96,8 +96,8 @@
 }
 
 .cpc-close {
-  width: 32px;
-  height: 32px;
+  width: 2.75rem;
+  height: 2.75rem;
   border: none;
   border-radius: var(--radius-sm);
   background: var(--page-bg);
