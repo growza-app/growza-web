@@ -103,6 +103,8 @@ import type {
   HeldPage,
   StockReportPage,
   ByChannelPage,
+  DeliveryAppTally,
+  DeliveryTallyRange,
   CounterReportPage,
   DiaryReportPage,
   ReturnsReportPage,
@@ -933,6 +935,12 @@ export const api = {
   /** Jira GRW-634 — what was billed on each channel over a range, beside the period before; billed, not received. */
   byChannel: (q: { range: ReportRangeKey; location?: string; from?: string; to?: string }) =>
     get<ByChannelPage>(`/api/v1/reports/by-channel?${sellersParams({ range: q.range, location: q.location, from: q.from, to: q.to })}`),
+  /** Jira GRW-658 — what each delivery app should pay over a range, after the commission the owner has set for it. An estimate. */
+  deliveryAppTally: (q: { range: DeliveryTallyRange; location?: string | null }) =>
+    get<DeliveryAppTally>(`/api/v1/delivery-apps/tally?${new URLSearchParams({ range: q.range, ...(q.location ? { location: q.location } : {}) }).toString()}`),
+  /** Jira GRW-658 — the owner's commission for one app, in percent to two places (null clears it). */
+  setDeliveryAppCommission: (app: 'swiggy' | 'zomato', percent: number | null) =>
+    put<{ app: string; commissionBp: number | null }>(`/api/v1/delivery-apps/${app}/commission`, { percent }),
   /** Jira GRW-633 — what to order before the season, size by size: last year's sales in the same days, less the shelf. */
   reorder: (q: ReorderQuery) => get<ReorderPage>(`/api/v1/reports/reorder?${reorderParams(q)}`),
   /** Jira GRW-633 — the owner's own number over a suggestion (null clears it). */
