@@ -9,6 +9,7 @@ import { isWritable } from '../lib/read-only';
 import { areaAllows, areasOf } from '../lib/areas';
 import { OrdersClient } from './OrdersClient';
 import { OrdersBringIn } from './OrdersBringIn';
+import { PayoutCard } from './PayoutCard';
 
 /**
  * Jira GRW-614 — a shop's Orders: every order, newest first, filtered by where it came from and what state it is in.
@@ -44,6 +45,10 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
   const tOrders = await getTranslations('orders');
   // Owner, 2026-10-24 — and only where there is a marketplace to import from (not a restaurant's Swiggy and Zomato).
   const mayImport = me ? (role === undefined || role === 'owner' || role === 'manager') && isWritable(me.tenant?.status) && areaAllows('/orders/import', areasOf(me)) : false;
+
+  // Jira GRW-658 — what the delivery apps should pay is money, and the owner's: the API gives it to no desk, and the commission is the owner's own
+  // deal with the app. Only where the vertical lists delivery apps (a restaurant); a salon and a shop never see it.
+  const showPayout = me ? (role === undefined || role === 'owner') && (areasOf(me).deliveryApps ?? []).length > 0 : false;
 
   // The whole business on arrival; a branch the header picker has chosen is applied by the client, which re-reads.
   const initial = await api.orders({ channel: query.channel, status: query.status, q: query.q.trim(), customerId: query.customerId, page: query.page, pageSize: ORDERS_PAGE_SIZE }).catch((error: unknown) => ({
@@ -98,6 +103,7 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
         }
       />
       <div className="page-body ord-page">
+        {showPayout ? <PayoutCard mayEdit={isWritable(me?.tenant?.status)} /> : null}
         <OrdersBringIn lines={bringIn} lang={lang} timezone={me?.tenant?.timezone ?? 'Asia/Kolkata'} />
         <OrdersClient initialQuery={query} initial={'rows' in initial ? initial : null} timezone={me?.tenant?.timezone ?? 'Asia/Kolkata'} />
       </div>

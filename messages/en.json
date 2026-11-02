@@ -4792,6 +4792,34 @@
       "noneFound": "No {customer} of that name. Check the spelling, or leave it — the order keeps the buyer’s own details either way.",
       "failed": "Could not attach that {customer}. Please try again.",
       "close": "Close"
+    },
+    "payout": {
+      "title": "What the delivery apps should pay you",
+      "rangeLabel": "Period",
+      "ranges": {
+        "today": "Today",
+        "thisWeek": "This week",
+        "lastWeek": "Last week",
+        "thisMonth": "This month"
+      },
+      "orders": "{count, plural, one {1 order} other {# orders}}",
+      "orderTotal": "Order total",
+      "commission": "Commission",
+      "shouldPay": "{app} should pay you",
+      "addCommission": "Add this app's commission to see what it should pay you",
+      "someWithout": "{count, plural, one {1 order was entered before a commission was set, so we cannot work out the total.} other {# orders were entered before a commission was set, so we cannot work out the total.}}",
+      "empty": "No Swiggy or Zomato orders in this time",
+      "note": "Worked out from the orders you entered. What the app pays can differ by its own fees, taxes and cancelled orders.",
+      "setCommission": "Set commission",
+      "commissionNow": "Commission {percent}% · Change",
+      "commissionLabel": "{app} commission (%)",
+      "clearHint": "Leave empty to clear it",
+      "invalidPercent": "Enter a percentage between 0 and 50",
+      "save": "Save",
+      "cancel": "Cancel",
+      "saveFailed": "Could not save. Try again.",
+      "loadFailed": "Could not load this. Try again.",
+      "retry": "Try again"
     }
   },
   "settingsChannels": {
