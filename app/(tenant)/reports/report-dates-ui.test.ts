@@ -49,7 +49,9 @@ describe('Both reports are asked for by date', () => {
   ])('%s groups a long period and thins the axis rather than drawing a smear', (_name, src) => {
     // 33 days was 33 columns 6px wide with a weekday printed over the next one.
     expect(src).toContain('bucketDays(takings.byDay)');
-    expect(src).toContain('namedTicks(bars.length)');
+    expect(src).toContain('namedTicks(bars.length, labelBudget)');
+    // How many labels fit is measured from the chart's width and the reader's text size, never assumed.
+    expect(src).toContain('useLabelBudget(barsRef, widestTick, bars.length)');
     expect(src).toContain("{barNamed(i) ? barLabel.tick(b) : ''}");
     // Thinning the axis must not take the figures off the screen for somebody listening to it.
     expect(src).toContain('{barLabel.full(b)} {money(b.valueMinor)}');

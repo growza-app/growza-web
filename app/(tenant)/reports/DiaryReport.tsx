@@ -14,6 +14,7 @@ import { useSession } from '../components/SessionProvider';
 import { ReportDates } from './ReportDates';
 import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../lib/report-dates';
 import { bucketDays, type ChartBucket, namedTicks } from '../lib/report-buckets';
+import { useLabelBudget } from '../lib/use-label-budget';
 
 /**
  * Jira GRW-591 — the diary report: four questions, four cards, one line each to act on.
@@ -121,6 +122,7 @@ export function DiaryReport() {
  */
 export function DiaryCards({ data }: { data: DiaryReportPage }) {
   const t = useTranslations('diaryReport');
+  const barsRef = useRef<HTMLUListElement>(null);
   const tc = useTranslations('customers');
   const locale = useLocale();
   /*
@@ -161,7 +163,6 @@ export function DiaryCards({ data }: { data: DiaryReportPage }) {
    * a weekday printed on top of the next one.
    */
   const { unit: barUnit, buckets: bars } = useMemo(() => bucketDays(takings.byDay), [takings.byDay]);
-  const barNamed = useMemo(() => namedTicks(bars.length), [bars.length]);
   const barLabel = useMemo(() => {
     const l = intlLocale(locale);
     const dayNum = new Intl.DateTimeFormat(l, { day: 'numeric', timeZone: 'UTC' });
@@ -184,6 +185,13 @@ export function DiaryCards({ data }: { data: DiaryReportPage }) {
       full: (b: ChartBucket) => dayMonth.format(at(b)),
     };
   }, [locale, barUnit, bars.length, dayLetter]);
+  /* The widest label this axis would print, measured rather than guessed at: it decides how many fit. */
+  const widestTick = useMemo(
+    () => bars.map((b) => barLabel.tick(b)).reduce((a, b) => (b.length > a.length ? b : a), ''),
+    [bars, barLabel],
+  );
+  const labelBudget = useLabelBudget(barsRef, widestTick, bars.length);
+  const barNamed = useMemo(() => namedTicks(bars.length, labelBudget), [bars.length, labelBudget]);
   const dayPeak = Math.max(...bars.map((b) => b.valueMinor), 1);
   const peoplePeak = Math.max(...(people?.rows ?? []).map((r) => Number(r.valueMinor)), 1);
   const servicePeak = Math.max(...services.rows.map((r) => Number(r.valueMinor)), 1);
@@ -211,7 +219,7 @@ export function DiaryCards({ data }: { data: DiaryReportPage }) {
           {t('took.visits', { n: takings.visits })}
           {takings.averageVisitMinor === null ? null : ` · ${t('took.average', { amount: money(takings.averageVisitMinor) })}`}
         </p>
-        <ul className="cr-bars cr-bars-day">
+        <ul className="cr-bars cr-bars-day" ref={barsRef}>
           {bars.map((b, i) => (
             <li key={b.startISO} className="cr-bar-col">
               <span className="cr-bar-slot">

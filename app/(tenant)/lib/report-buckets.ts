@@ -87,11 +87,38 @@ export function bucketDays(days: readonly DayPoint[]): { unit: ChartUnit; bucket
  * its full text for a screen reader.
  */
 export function namedTicks(total: number, max = 7): (index: number) => boolean {
+  if (total <= 0) return () => false;
   if (total <= max) return () => true;
-  const step = Math.ceil(total / max);
-  return (i) => {
-    if (i === 0 || i === total - 1) return true;
-    // A label landing just before the last one would collide with it, so the end wins and this one drops.
-    return i % step === 0 && total - 1 - i >= Math.ceil(step / 2);
-  };
+  /*
+   * Spread evenly between the two ends rather than stepped from the front.
+   *
+   * Stepping leaves whatever is left over as the last gap, and the last column is named whatever that gap
+   * turns out to be: 15 columns named every 4th gives 0, 4, 8, 12 and then 14, and those last two sit 32px
+   * apart with 35px labels on them. Placing them on the line between the ends makes every gap the same
+   * within a column, so the room measured for them is the room they actually get.
+   */
+  const n = Math.max(2, max);
+  const chosen = new Set<number>();
+  for (let i = 0; i < n; i++) chosen.add(Math.round((i * (total - 1)) / (n - 1)));
+  return (i) => chosen.has(i);
+}
+
+/**
+ * How many labels fit across a chart `widthPx` wide holding `columns` columns, when the widest label is
+ * `labelPx`.
+ *
+ * A label cannot be placed anywhere: it sits on a column, so the closest two can ever be is the column
+ * pitch. Dividing the width by the label width answers a different question — how many would fit if they
+ * floated — and over-counts whenever the columns are narrower than the labels, which is exactly when this
+ * matters. Eleven months 25px apart with "Sept" on them fit eight by that reckoning and overlap at six.
+ *
+ * So: work out how many columns apart two labels must be to clear each other, then how many of those fit.
+ * Both ends are always named, so two is the floor. An unmeasured chart — the first render, or a browser
+ * with no ResizeObserver — gets seven, which is what this did before it could measure anything.
+ */
+export function labelsThatFit(widthPx: number, labelPx: number, columns: number, minGapPx = 8): number {
+  if (!(widthPx > 0) || !(labelPx > 0) || !(columns > 0)) return 7;
+  const pitch = widthPx / columns;
+  const apart = Math.max(1, Math.ceil((labelPx + minGapPx) / pitch));
+  return Math.max(2, Math.floor((columns - 1) / apart) + 1);
 }

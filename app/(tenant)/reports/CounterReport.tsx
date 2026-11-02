@@ -10,6 +10,7 @@ import { useSession } from '../components/SessionProvider';
 import { ReportDates } from './ReportDates';
 import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../lib/report-dates';
 import { bucketDays, type ChartBucket, namedTicks } from '../lib/report-buckets';
+import { useLabelBudget } from '../lib/use-label-budget';
 
 /**
  * Jira GRW-591 — the counter report: four questions, four cards, one line each to act on.
@@ -123,6 +124,7 @@ export function CounterReport() {
  */
 export function CounterCards({ data }: { data: CounterReportPage }) {
   const t = useTranslations('counterReport');
+  const barsRef = useRef<HTMLUListElement>(null);
   const locale = useLocale();
   const money = useCallback((minor: string | number | null) => formatMoney(minor, 'INR', locale), [locale]);
 
@@ -166,7 +168,6 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
    * a weekday printed on top of the next one.
    */
   const { unit: barUnit, buckets: bars } = useMemo(() => bucketDays(takings.byDay), [takings.byDay]);
-  const barNamed = useMemo(() => namedTicks(bars.length), [bars.length]);
   const barLabel = useMemo(() => {
     const l = intlLocale(locale);
     const dayNum = new Intl.DateTimeFormat(l, { day: 'numeric', timeZone: 'UTC' });
@@ -189,6 +190,13 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
       full: (b: ChartBucket) => dayMonth.format(at(b)),
     };
   }, [locale, barUnit, bars.length, dayLetter]);
+  /* The widest label this axis would print, measured rather than guessed at: it decides how many fit. */
+  const widestTick = useMemo(
+    () => bars.map((b) => barLabel.tick(b)).reduce((a, b) => (b.length > a.length ? b : a), ''),
+    [bars, barLabel],
+  );
+  const labelBudget = useLabelBudget(barsRef, widestTick, bars.length);
+  const barNamed = useMemo(() => namedTicks(bars.length, labelBudget), [bars.length, labelBudget]);
   const dayPeak = Math.max(...bars.map((b) => b.valueMinor), 1);
   const hourPeak = Math.max(...busy.byHour.map((h) => Number(h.valueMinor)), 1);
   const topValue = Math.max(...earners.rows.map((r) => Number(r.valueMinor)), 1);
@@ -217,7 +225,7 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
             ? null
             : ` · ${t('took.average', { amount: money(takings.averageBillMinor) })}`}
         </p>
-        <ul className="cr-bars cr-bars-day">
+        <ul className="cr-bars cr-bars-day" ref={barsRef}>
           {bars.map((b, i) => (
             <li key={b.startISO} className="cr-bar-col">
               <span className="cr-bar-slot">
