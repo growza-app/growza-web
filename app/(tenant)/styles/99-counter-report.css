@@ -322,6 +322,14 @@
   }
 }
 
+/* A shop's way back to its Orders and its shelf, in the header. On a phone both are tabs in the bottom bar, and
+   keeping them here wrapped the header onto a second row. */
+@media (max-width: 640px) {
+  .cr-head-link {
+    display: none;
+  }
+}
+
 /* The heading over the bar of the other six reports, above the four cards. */
 .cr-more {
   margin: 0 0 var(--sp-2);
@@ -483,5 +491,14 @@
 
   .srp-nav-links .srp-nav-tab {
     flex: none;
+  }
+
+  /* No box around the box: each chip is already bordered and green (that is what made them read as links),
+     so the surrounding card was 18px of height saying nothing. */
+  .srp-nav-links {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
   }
 }

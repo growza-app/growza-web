@@ -9,6 +9,18 @@
   gap: var(--sp-3);
 }
 
+/*
+ * Owner, 2026-11-02 — every gap on this page was being paid twice. `92-spacing.css` gives each child of a
+ * `.page-body` a 16px top margin on a phone; this column adds 12px of its own gap on top, so the strips and
+ * cards sat 28px apart and the first figure on Reports was 319px down an 812px screen. The house rule is the
+ * one that stays: 16px, once.
+ */
+@media (max-width: 860px) {
+  .srp-page {
+    gap: 0;
+  }
+}
+
 /* ---------- Shared Retail Reports Tab Bar ---------- */
 .srp-nav {
   display: flex;
