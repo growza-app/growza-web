@@ -804,3 +804,162 @@ a.ord-card:focus-visible,
 .ord-d-saleable label:has(input:checked) {
   border-color: var(--accent-deep);
 }
+
+/*
+ * Jira GRW-658 — what the delivery apps should pay (orders/PayoutCard.tsx), above the Orders list.
+ *
+ * One column at 344px: a block per app, the period chips wrapping rather than scrolling, every tap target 2.75rem. The money is the
+ * quiet part and "should pay you" the one loud line; an estimate is marked as one by a note under the numbers, never behind a tooltip.
+ * Nothing animates. Every class is `pay-`, so no other screen is touched.
+ */
+.pay {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  overflow: visible;
+}
+.pay-title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.pay[aria-busy='true'] .pay-apps {
+  opacity: 0.6;
+}
+.pay-apps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.pay-app {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--page-bg);
+  min-width: 0;
+}
+.pay-app-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-3);
+}
+.pay-app-name {
+  font-weight: 650;
+}
+.pay-app-count {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.pay-figures {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+}
+.pay-figures > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  font-size: 0.9375rem;
+}
+.pay-figures dt {
+  color: var(--muted);
+}
+.pay-figures dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.pay-should {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border);
+}
+.pay-should strong {
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+.pay-hint,
+.pay-empty,
+.pay-note {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.pay-commission {
+  align-self: flex-start;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-deep);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.pay-commission:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+.pay-edit-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+/* `input[type='text']` in the base sheet sets a min-width; this has to outrank it so the box shares the row at 344px. */
+.pay-edit input[type='text'] {
+  flex: 1 1 6rem;
+  min-width: 0;
+  min-height: 2.75rem;
+  /* 16px, so iOS does not zoom the page when the box takes focus. */
+  font-size: 1rem;
+}
+.pay-edit .btn {
+  min-height: 2.75rem;
+}
+.pay-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  color: var(--danger);
+  font-weight: 600;
+}
+.pay-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.pay-skeleton span {
+  height: 3.5rem;
+  border-radius: var(--radius);
+  background: var(--border);
+  opacity: 0.5;
+}
+@media (min-width: 861px) {
+  .pay-apps {
+    flex-direction: row;
+    align-items: stretch;
+  }
+  .pay-app {
+    flex: 1 1 0;
+  }
+}

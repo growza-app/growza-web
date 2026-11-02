@@ -1831,6 +1831,30 @@ export interface ChannelRow {
   previous: { billedMinor: string; orders: number } | null;
   changePct: number | null;
 }
+/**
+ * Jira GRW-658 — what Swiggy and Zomato should pay: the orders rung up at the till, less the commission each app takes.
+ *
+ * Money is minor units in strings (bigint-safe). `commissionBp` is the percentage NOW set (2200 is 22%), null when the owner has not set
+ * one. `shouldPayMinor` is null unless every order in the range carries a commission: an order entered before one was set has none, and
+ * `ordersWithoutCommission` counts those rather than treating them as 0%.
+ */
+export interface DeliveryAppTallyRow {
+  app: 'swiggy' | 'zomato';
+  commissionBp: number | null;
+  orders: number;
+  billedMinor: string;
+  commissionMinor: string | null;
+  shouldPayMinor: string | null;
+  ordersWithoutCommission: number;
+}
+export interface DeliveryAppTally {
+  window: { key: string; label: string; startISO: string; endExclusiveISO: string };
+  apps: DeliveryAppTallyRow[];
+  anyOrders: boolean;
+  caveat: string;
+}
+export type DeliveryTallyRange = 'today' | 'this_week' | 'last_week' | 'this_month';
+
 export interface ByChannelPage {
   window: { key: string; label: string; startISO: string; endExclusiveISO: string };
   previous: { startISO: string; endExclusiveISO: string; hasData: boolean };
