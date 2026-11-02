@@ -451,49 +451,6 @@ export function PosClient({
         </div>
       ) : null}
 
-      {mode !== 'queue' ? (
-        <section
-          className={`pos-token-strip${preparingTokens.length === 0 ? ' is-empty' : ' is-live'}`}
-          aria-label={t('queue')}
-        >
-          <div className="pos-token-strip-head">
-            <span className="pos-token-strip-dot" aria-hidden="true" />
-            <strong className="pos-token-strip-title">
-              {t('inQueueLabel', { count: preparingTokens.length })}
-            </strong>
-          </div>
-          {preparingTokens.length > 0 ? (
-            <div className="pos-token-strip-list">
-              {preparingTokens.map((tk) => (
-                <div key={tk.id} className="pos-token-chip">
-                  <span className="pos-token-chip-no">{tk.tokenLabel}</span>
-                  <span className={`pos-token-chip-chan is-${tk.channel}`}>{channelLabel(tk.channel)}</span>
-                  <span className="pos-token-chip-items" title={tk.itemsSummary}>
-                    {tk.itemsSummary}
-                  </span>
-                  <span className="pos-token-chip-time">
-                    {tk.elapsedMin <= 0 ? t('elapsedJustNow') : t('elapsedMinShort', { min: tk.elapsedMin })}
-                  </span>
-                  <button
-                    type="button"
-                    className="pos-token-chip-done"
-                    onClick={() => setTokenState(tk.id, 'completed')}
-                    aria-label={`${tk.tokenLabel} ${t('markCompleted')}`}
-                  >
-                    <IconCheck />
-                    <span>{t('markReady')}</span>
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="pos-token-strip-empty">
-              {t('allDoneStrip', { token: formatTokenNo(nextTokenNo) })}
-            </p>
-          )}
-        </section>
-      ) : null}
-
       <div className="pos-body" hidden={mode === 'queue'}>
         <SellProductClient
           timezone={timezone}

@@ -180,7 +180,7 @@ describe('the POS screen', () => {
     expect(css).toContain('@keyframes pos-step-pulse');
   });
 
-  it('provides Option C daily resetting token numbers, live queue strip above the till, and two-column Queue board', () => {
+  it('provides Option C daily resetting token numbers and the Queue board that carries them', () => {
     const css = src('../styles/99-pos.css');
     expect(posModeOf('queue', true)).toBe('queue');
     expect(posModeOf('queue', false)).toBe('queue');
@@ -257,16 +257,17 @@ describe('the POS screen', () => {
     const overridden = buildDailyTokens(sampleRows, 'loc-1', { 'sale-2': 'completed' }, nowMs);
     expect(overridden[1]?.state).toBe('completed');
 
-    expect(client).toContain('pos-token-strip');
     expect(client).toContain('pos-queue-board');
-    expect(css).toContain('.pos-token-strip');
-    // Owner, 2026-11-03 — the bar's "Next token" pill and its "Completed today" button are gone, and so is the
-    // third copy of that button under the strip: the Queue tab is one tap away and carries both figures itself.
-    for (const dead of ['pos-bar-completed', 'pos-next-token-pill', 'pos-token-strip-more']) {
+    /*
+     * Owner, 2026-11-03 — the Sell tab carries no queue of its own any more. The bar's "Next token" pill and its
+     * "Completed today" button went first, then the live strip beneath them: at 344px a chip was 300px wide, so
+     * 0.92 of one was on screen and fifteen orders meant 4,377px of sideways scrolling to reach the last. The
+     * Queue tab is one tap away, its tab badge carries the count, and its board holds every token at full width.
+     */
+    for (const dead of ['pos-bar-completed', 'pos-next-token-pill', 'pos-token-strip', 'pos-token-chip']) {
       expect(client, dead).not.toContain(dead);
       expect(css, dead).not.toContain(dead);
     }
-    expect(css).toMatch(/\.pos-token-strip\.is-empty\s*\{\s*display:\s*none;/);
     expect(css).toContain('.pos-queue-board');
   });
 });
