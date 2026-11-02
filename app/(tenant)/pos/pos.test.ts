@@ -258,10 +258,14 @@ describe('the POS screen', () => {
     expect(overridden[1]?.state).toBe('completed');
 
     expect(client).toContain('pos-token-strip');
-    expect(client).toContain('pos-bar-completed');
     expect(client).toContain('pos-queue-board');
     expect(css).toContain('.pos-token-strip');
-    expect(css).toContain('.pos-bar-completed');
+    // Owner, 2026-11-03 — the bar's "Next token" pill and its "Completed today" button are gone, and so is the
+    // third copy of that button under the strip: the Queue tab is one tap away and carries both figures itself.
+    for (const dead of ['pos-bar-completed', 'pos-next-token-pill', 'pos-token-strip-more']) {
+      expect(client, dead).not.toContain(dead);
+      expect(css, dead).not.toContain(dead);
+    }
     expect(css).toMatch(/\.pos-token-strip\.is-empty\s*\{\s*display:\s*none;/);
     expect(css).toContain('.pos-queue-board');
   });

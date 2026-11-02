@@ -406,14 +406,6 @@ export function PosClient({
                 {t('loadingBills')}
               </span>
             ) : null}
-            <span className="pos-next-token-pill">
-              {t('nextToken', { token: formatTokenNo(nextTokenNo) })}
-            </span>
-            {mode !== 'queue' && preparingTokens.length === 0 ? (
-              <button type="button" className="pos-bar-completed" onClick={openQueue}>
-                {t('completedLabel', { count: completedTokens.length })} →
-              </button>
-            ) : null}
             <div className="pos-bar-shortcuts" aria-hidden="true">
               <span className="pos-kbd-inline"><kbd>F2</kbd> {t('shortcutSearch')}</span>
               <span className="pos-kbd-inline"><kbd>F4</kbd> {t('shortcutClient', { customer: Customer })}</span>
@@ -437,14 +429,6 @@ export function PosClient({
             </button>
           </div>
           <div className="pos-bar-right">
-            <span className="pos-next-token-pill">
-              {t('nextToken', { token: formatTokenNo(nextTokenNo) })}
-            </span>
-            {mode !== 'queue' && preparingTokens.length === 0 ? (
-              <button type="button" className="pos-bar-completed" onClick={openQueue}>
-                {t('completedLabel', { count: completedTokens.length })} →
-              </button>
-            ) : null}
             <div className="pos-bar-shortcuts" aria-hidden="true">
               <span className="pos-kbd-inline"><kbd>F2</kbd> {t('shortcutSearch')}</span>
               <span className="pos-kbd-inline"><kbd>F4</kbd> {t('shortcutClient', { customer: Customer })}</span>
@@ -507,9 +491,6 @@ export function PosClient({
               {t('allDoneStrip', { token: formatTokenNo(nextTokenNo) })}
             </p>
           )}
-          <button type="button" className="pos-token-strip-more" onClick={openQueue}>
-            {t('completedLabel', { count: completedTokens.length })} →
-          </button>
         </section>
       ) : null}
 
