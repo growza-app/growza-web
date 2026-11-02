@@ -19,11 +19,6 @@
   justify-content: flex-end;
 }
 
-.cr-select {
-  width: auto;
-  min-width: 10rem;
-}
-
 .cr-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -347,6 +342,29 @@
      control floating in 180px of nothing. */
   .cr-toolbar {
     justify-content: flex-start;
+  }
+
+  /*
+   * Two dates where a dropdown was. The label goes ABOVE its field below 860px: side by side at 344px the pair
+   * needs 364px, and type set in rem grows with the reader's text size, so the row that just fits today would
+   * not fit them. Stacked, each field takes half the width and the row is one 62px line instead of two.
+   */
+  .cr-dates {
+    width: 100%;
+    flex-wrap: nowrap;
+  }
+
+  .cr-dates .sls-date-field {
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+  }
+
+  .cr-dates .sls-date-input {
+    width: 100%;
+    min-width: 0;
   }
 
   .cr-more {
