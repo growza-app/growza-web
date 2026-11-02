@@ -9,13 +9,14 @@ import { IconArrowLeft } from './icons';
  *
  * Jira GRW-497 — with no `onBack` it steps back through history, and goes Home when there is none
  * (a screen opened straight from a link has nothing behind it, and a button that does nothing is worse
- * than one that goes somewhere). `phoneOnly` is for the screens that wear it where Home wears the menu
+ * than one that goes somewhere). With `href` it goes to that screen instead. `phoneOnly` is for the screens that wear it where Home wears the menu
  * button: from 861px the sidebar is on screen and there is no Back.
  */
-export function BackButton({ onBack, phoneOnly }: { onBack?: () => void; phoneOnly?: boolean }) {
+export function BackButton({ onBack, phoneOnly, href }: { onBack?: () => void; phoneOnly?: boolean; href?: string }) {
   const t = useTranslations('chrome');
   const router = useRouter();
-  const back = onBack ?? (() => (window.history.length > 1 ? router.back() : router.push('/')));
+  // A `href` is a screen that knows where it came from (Orders filtered to one guest): it goes there, not wherever history was.
+  const back = onBack ?? (href ? () => router.push(href) : () => (window.history.length > 1 ? router.back() : router.push('/')));
   return (
     <button type="button" className={`staff-icon-btn topbar-back ${phoneOnly ? 'topbar-back-phone' : ''}`} aria-label={t('back')} onClick={back}>
       <IconArrowLeft />

@@ -67,7 +67,10 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
         // Back arrow it had fell through to `window.history.length`, which counts the whole browsing session
         // rather than this app's own screens: in a standalone PWA that is routinely > 1 with nothing of ours
         // behind it, so the arrow stepped somewhere that was not a Growza screen and the tap looked dead.
-        menu
+        // Owner, 2026-11-02 — except when it is one guest's orders, reached from that guest's card: then there is a screen behind it,
+        // and Back is how a phone returns to the guest.
+        menu={!query.customerId}
+        backHref={query.customerId ? `/customers?open=${encodeURIComponent(query.customerId)}` : undefined}
         actions={
           mayTake || mayImport || mayReadReturns ? (
             <>
