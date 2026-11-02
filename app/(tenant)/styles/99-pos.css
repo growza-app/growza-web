@@ -1220,7 +1220,7 @@
 }
 
 .pos-queue-new-btn {
-  min-height: 2.375rem;
+  min-height: 2.75rem;
   padding: 0 var(--sp-3);
   font-size: 0.8125rem;
   font-weight: 700;
@@ -1412,7 +1412,7 @@
 }
 
 .pos-qcard-recall-btn {
-  min-height: 2rem;
+  min-height: 2.75rem;
   padding: 0 var(--sp-3);
   font-size: 0.75rem;
   font-weight: 700;

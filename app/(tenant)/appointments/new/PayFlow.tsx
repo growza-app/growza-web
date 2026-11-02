@@ -1312,7 +1312,14 @@ export function PayFlow({
       router.push(backTo);
       return;
     }
-    if (productsOnly) {
+    /*
+     * Owner, 2026-11-03 — and only while there is a bill to clear.
+     *
+     * On a till reached from the nav or from Home there IS no `backTo`, so Back meant `nextCustomer()` whatever
+     * the screen held. With nothing on the bill that clears nothing and goes nowhere: the arrow at the top of
+     * the screen looked broken, which is what it was reported as. An arrow has to arrive somewhere.
+     */
+    if (productsOnly && lines.length > 0) {
       nextCustomer();
       return;
     }

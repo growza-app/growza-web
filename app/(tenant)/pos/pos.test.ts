@@ -173,11 +173,27 @@ describe('the POS screen', () => {
     expect(payFlow).toContain('guideMode');
     expect(payFlow).toContain('guideReady');
     expect(payFlow).toContain("t('desk.needPaymentMode')");
-    expect(payFlow).toContain('if (productsOnly) {\n      nextCustomer();\n      return;\n    }');
+    // Owner, 2026-11-03 — `&& lines.length > 0`: with nothing to clear, Back goes Home instead of nowhere.
+    expect(payFlow).toContain('if (productsOnly && lines.length > 0) {\n      nextCustomer();\n      return;\n    }');
     expect(posBill).toContain('pos-bill-stepper');
     expect(css).toContain('.pos-shell.is-fullscreen');
     expect(css).toContain('.pos-cat-pills-wrap');
     expect(css).toContain('@keyframes pos-step-pulse');
+  });
+
+  it('gives Back somewhere to arrive when there is no bill to clear', () => {
+    // Owner, 2026-11-03 — reported as "the Sell back button is not working". It cleared the bill, and on an
+    // empty till that clears nothing and goes nowhere, so an arrow at the top of the screen looked broken.
+    expect(src('../appointments/new/PayFlow.tsx')).toContain('if (productsOnly && lines.length > 0) {');
+  });
+
+  it('gives every control on the Queue board a 44px target', () => {
+    const css = src('../styles/99-pos.css');
+    // "+ New order" was 38px and "Back to queue" 32px.
+    for (const sel of ['.pos-queue-new-btn', '.pos-qcard-recall-btn']) {
+      const block = css.slice(css.indexOf(`\n${sel} {`));
+      expect(block.slice(0, block.indexOf('}')), sel).toContain('min-height: 2.75rem;');
+    }
   });
 
   it("puts the till's Back in the bar and keeps the title row off the screen", () => {
