@@ -3663,6 +3663,8 @@
       "done": "Done",
       "delete": "Delete category",
       "deleteNamed": "Delete {name}",
+      "renameNamed": "Change name of {name}",
+      "renameSave": "Save name",
       "deleteAsk": "Delete {name}? Its {n, plural, =0 {products} one {# product} other {# products}} stay on the shelf with no category.",
       "deleteWithProductsAsk": "Delete {name} and all {n} items inside it, or keep the items with no category?",
       "deleteWithProducts": "Delete {name} & {n} items",

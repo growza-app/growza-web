@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import type { ProductCategory } from '../lib/api-types';
-import { IconChevronDown, IconPlus, IconSearch } from '../components/icons';
+import { IconCheck, IconChevronDown, IconEdit, IconPlus, IconSearch } from '../components/icons';
 import { useAreas } from '../components/SessionProvider';
 
 export const ALL_CATEGORIES = '';
@@ -156,6 +156,7 @@ export function ProductCategoriesDropdown({
   onToggle,
   onClear,
   onAdd,
+  onRename,
   onDelete,
 }: {
   selected: readonly string[];
@@ -164,6 +165,8 @@ export function ProductCategoriesDropdown({
   onToggle: (id: string) => void;
   onClear: () => void;
   onAdd?: (name: string) => Promise<void>;
+  /** A category's name was never changeable here: Edit offered a delete and nothing else. */
+  onRename?: (c: ProductCategory, name: string) => Promise<void>;
   onDelete?: (c: ProductCategory) => void;
 }) {
   const t = useTranslations('products.categories');
@@ -174,13 +177,17 @@ export function ProductCategoriesDropdown({
   const [adding, setAdding] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameText, setRenameText] = useState('');
   const wrapRef = useRef<HTMLDivElement>(null);
   const addRef = useRef<HTMLInputElement>(null);
+  const renameRef = useRef<HTMLInputElement>(null);
 
   const closeMenu = () => {
     setOpen(false);
     setQuery('');
     setEditing(false);
+    setRenamingId(null);
     setAddOpen(false);
     setAdding('');
     setError(null);
@@ -189,6 +196,9 @@ export function ProductCategoriesDropdown({
   useEffect(() => {
     if (addOpen) addRef.current?.focus();
   }, [addOpen]);
+  useEffect(() => {
+    if (renamingId) renameRef.current?.focus();
+  }, [renamingId]);
 
   useEffect(() => {
     if (!open) return;
@@ -199,6 +209,11 @@ export function ProductCategoriesDropdown({
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
+      if (renamingId) {
+        setRenamingId(null);
+        setError(null);
+        return;
+      }
       if (addOpen) {
         setAddOpen(false);
         setAdding('');
@@ -213,7 +228,7 @@ export function ProductCategoriesDropdown({
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open, addOpen]);
+  }, [open, addOpen, renamingId]);
 
   const add = async () => {
     const name = adding.trim();
@@ -224,6 +239,25 @@ export function ProductCategoriesDropdown({
       await onAdd(name);
       setAdding('');
       addRef.current?.focus();
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : t('failed'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const rename = async (c: ProductCategory) => {
+    const name = renameText.trim();
+    if (!onRename || busy) return;
+    if (!name || name === c.name) {
+      setRenamingId(null);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await onRename(c, name);
+      setRenamingId(null);
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : t('failed'));
     } finally {
@@ -275,8 +309,16 @@ export function ProductCategoriesDropdown({
                 {t('clear')}
               </button>
             ) : null}
-            {onDelete && categories.length > 0 ? (
-              <button type="button" className="sls-dd-clear" onClick={() => setEditing((v) => !v)}>
+            {(onDelete || onRename) && categories.length > 0 ? (
+              <button
+                type="button"
+                className="sls-dd-clear"
+                onClick={() => {
+                  setEditing((v) => !v);
+                  setRenamingId(null);
+                  setError(null);
+                }}
+              >
                 {editing ? t('done') : t('edit')}
               </button>
             ) : null}
@@ -291,11 +333,53 @@ export function ProductCategoriesDropdown({
                   const checked = selected.includes(c.id);
                   return (
                     <div key={c.id} className="prd-cat-dd-row">
-                      <label className="sls-check-row">
-                        <input type="checkbox" checked={checked} onChange={() => onToggle(c.id)} />
-                        <span className="sls-check-main">{c.name}</span>
-                        <span className="sls-check-sub">({c.count})</span>
-                      </label>
+                      {editing && onRename && renamingId === c.id ? (
+                        <>
+                          <input
+                            ref={renameRef}
+                            type="text"
+                            className="prd-cat-rename"
+                            value={renameText}
+                            maxLength={60}
+                            aria-label={t('renameNamed', { name: c.name })}
+                            disabled={busy}
+                            onFocus={(e) => e.target.select()}
+                            onChange={(e) => setRenameText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') void rename(c);
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="prd-cat-edit"
+                            aria-label={t('renameSave')}
+                            disabled={busy || !renameText.trim()}
+                            onClick={() => void rename(c)}
+                          >
+                            <IconCheck />
+                          </button>
+                        </>
+                      ) : (
+                        <label className="sls-check-row">
+                          <input type="checkbox" checked={checked} onChange={() => onToggle(c.id)} />
+                          <span className="sls-check-main">{c.name}</span>
+                          <span className="sls-check-sub">({c.count})</span>
+                        </label>
+                      )}
+                      {editing && onRename && renamingId !== c.id ? (
+                        <button
+                          type="button"
+                          className="prd-cat-edit"
+                          aria-label={t('renameNamed', { name: c.name })}
+                          onClick={() => {
+                            setRenamingId(c.id);
+                            setRenameText(c.name);
+                            setError(null);
+                          }}
+                        >
+                          <IconEdit />
+                        </button>
+                      ) : null}
                       {editing && onDelete ? (
                         <button
                           type="button"
@@ -326,6 +410,12 @@ export function ProductCategoriesDropdown({
               </>
             )}
           </div>
+
+          {error && renamingId ? (
+            <p role="alert" className="field-error prd-cat-dd-error">
+              {error}
+            </p>
+          ) : null}
 
           {onAdd ? (
             <div className="prd-cat-dd-foot">
