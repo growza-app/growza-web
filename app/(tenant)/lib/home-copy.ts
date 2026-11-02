@@ -398,6 +398,17 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       orderCount: (n: number) => (hi ? `${n} ऑर्डर` : `${n} ${nounInSentence(n === 1 ? (labels.order ?? 'Order') : (labels.orders ?? 'Orders'))}`),
       /** The noun alone, for a hero that prints the number itself — `bookingWord`'s shape, for a shop. */
       orderWord: (n: number) => (hi ? 'ऑर्डर' : nounInSentence(n === 1 ? (labels.order ?? 'Order') : (labels.orders ?? 'Orders'))),
+      /*
+       * The end-of-day sheet, for a business with no diary. Plain words, like the rest of this screen: an owner
+       * cashing up wants "where the orders came from" and "what sold", not "channel mix" and "best sellers".
+       */
+      whereFrom: S('Where the orders came from', 'ऑर्डर कहाँ से आए'),
+      /* The hero is what was PAID; these are what was billed. Two different numbers under one heading is how
+         an owner is left to work out why they do not add up. */
+      whereFromSub: S('Billed, before any app’s fee', 'बिल की रकम, ऐप की फ़ीस काटने से पहले'),
+      whatSold: S('What sold', 'क्या बिका'),
+      whatSoldSub: S('Your five biggest today', 'आज के आपके पाँच सबसे बड़े'),
+      nothingSold: S('Nothing sold today', 'आज कुछ नहीं बिका'),
       ordersTitle: S(labels.orders ?? 'Orders', 'ऑर्डर'),
       viewOrders: S('View all', 'सभी देखें'),
       noOrdersTitle: S('No orders yet', 'अभी कोई ऑर्डर नहीं'),

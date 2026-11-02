@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { api, type DaySummary } from '../../lib/api';
+import { api, type DaySummary, type ShopDaySummary } from '../../lib/api';
 import type { HomeCopy } from '../../lib/home-copy';
 import { IconClose } from '../icons';
 import { Avatar, CardError, rupees } from './parts';
@@ -11,6 +11,7 @@ import { useTranslations } from 'next-intl';
 import { useDialog } from '../../../shared/a11y/useDialog';
 import { useNoProvider } from '../../lib/use-no-provider';
 import { branchTag } from '../../lib/day-summary-view';
+import { ShopDayBody } from './ShopDayBody';
 
 /**
  * Jira GRW-222 — the end-of-day readout: what came in, how, and who did it.
@@ -39,7 +40,7 @@ export function DaySummarySheet({
   dateLabel?: string;
   onClose: () => void;
 }) {
-  const [data, setData] = useState<DaySummary | null>(null);
+  const [data, setData] = useState<DaySummary | ShopDaySummary | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -94,6 +95,13 @@ export function DaySummarySheet({
           <CardError t={t} onRetry={() => setAttempt((n) => n + 1)} />
         ) : !data ? (
           <div className="hm-skeleton" style={{ height: 260 }} aria-busy="true" />
+        ) : data.kind === 'shop' ? (
+          /*
+           * A business with no diary gets the same sheet with a different body: same shell, same fetch, same
+           * way into a branch. The route says which shape it sent, so this reads a field rather than guessing
+           * from which figures happen to be missing.
+           */
+          <ShopDayBody t={t} data={data} onOpenBranch={setOpened} />
         ) : (
           <div className="hm-sheet-grid">
             <section className="hm-hero hm-hero-small">

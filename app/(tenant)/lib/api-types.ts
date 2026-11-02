@@ -709,6 +709,8 @@ export interface SettingsSummary {
     attendanceLateGraceMin: number;
     /** 0127 — days after a sale during which a product may be returned (0 = day of sale only). */
     productReturnWindowDays?: number;
+    /** The hour the closing summary arrives, in this business's timezone. Null: whatever the platform sends at. */
+    daySummaryHour?: number | null;
     /** Jira GRW-248 — closed days at this scope (a branch: its own). */
     closedDates?: string[];
     /** Jira GRW-248 — the business's closed days, which close every branch. */

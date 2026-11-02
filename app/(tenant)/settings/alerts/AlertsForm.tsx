@@ -26,6 +26,16 @@ import {
  * away from; a bar that has to be pressed afterwards is how somebody ends up thinking they turned something on
  * when they did not.
  */
+/** Evening and night, which is when a day ends anywhere this is sold. Earlier hours are not a closing time. */
+const HOURS = [18, 19, 20, 21, 22, 23, 0, 1] as const;
+
+/** "9 pm", "midnight", "1 am" — a clock as it is spoken, not a 24-hour number to decode. */
+function hourLabel(h: number): string {
+  if (h === 0) return 'Midnight';
+  if (h === 12) return 'Noon';
+  return h < 12 ? `${h} am` : `${h === 12 ? 12 : h - 12} pm`;
+}
+
 export function AlertsForm({ vapidPublicKey }: { vapidPublicKey: string | null }) {
   const t = useTranslations('settingsAlerts');
   const writable = useWritable();
@@ -45,6 +55,24 @@ export function AlertsForm({ vapidPublicKey }: { vapidPublicKey: string | null }
    * connection a second tap landed before the first returned, and the count below counted both.
    */
   const [onDevice, setOnDevice] = useState(false);
+  /**
+   * The hour this business wants its closing summary, in its own timezone.
+   *
+   * `null` is a real answer and not a missing one: it means "whatever the platform sends at", which is what
+   * every business that has never thought about it has. Shown beside the switch it belongs to rather than in
+   * Booking settings, because an hour a message arrives is a fact about the message.
+   */
+  const [summaryHour, setSummaryHour] = useState<number | null | 'loading'>('loading');
+  const [hourSaved, setHourSaved] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    void api
+      .settings()
+      .then((cfg) => live && setSummaryHour(cfg.booking?.daySummaryHour ?? null))
+      // A screen that cannot read the hour still works for the switches above it: the control hides itself.
+      .catch(() => live && setSummaryHour('loading'));
+  }, []);
 
   useEffect(() => {
     let live = true;
@@ -235,6 +263,44 @@ export function AlertsForm({ vapidPublicKey }: { vapidPublicKey: string | null }
             );
           })}
         </ul>
+
+        {/*
+          The hour the closing summary arrives. Only beside a summary that is actually switched on: an hour for
+          a message you do not get is a control that does nothing, which is the shape this repo keeps finding.
+        */}
+        {prefs?.prefs.find((p) => p.kind === 'day.summary')?.enabled && summaryHour !== 'loading' ? (
+          <div className="al-row al-summary-hour">
+            <div>
+              <label className="al-row-title" htmlFor="al-summary-hour">
+                {t('summaryHourTitle')}
+              </label>
+              <span className="field-hint">{t('summaryHourHint')}</span>
+            </div>
+            <select
+              id="al-summary-hour"
+              value={summaryHour === null ? '' : String(summaryHour)}
+              disabled={!writable}
+              onChange={(e) => {
+                const next = e.target.value === '' ? null : Number(e.target.value);
+                setSummaryHour(next);
+                setHourSaved(false);
+                setError(null);
+                void api
+                  .updateBookingRules(next === null ? {} : { daySummaryHour: next })
+                  .then(() => setHourSaved(true))
+                  .catch(() => setError(t('saveFailed')));
+              }}
+            >
+              <option value="">{t('summaryHourDefault')}</option>
+              {HOURS.map((h) => (
+                <option key={h} value={h}>
+                  {hourLabel(h)}
+                </option>
+              ))}
+            </select>
+            {hourSaved ? <span className="field-hint">{t('summaryHourSaved')}</span> : null}
+          </div>
+        ) : null}
 
         {error ? (
           <p className="al-error" role="alert">

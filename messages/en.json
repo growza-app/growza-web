@@ -865,7 +865,11 @@
     "stopOnThisPhone": "Stop on this phone",
     "blocked": "Your browser blocked the request. Allow notifications for this site and try again.",
     "saveFailed": "That didn't save. Try again.",
-    "loadFailed": "We couldn't load your alerts. Try again in a moment."
+    "loadFailed": "We couldn't load your alerts. Try again in a moment.",
+    "summaryHourTitle": "When the day summary arrives",
+    "summaryHourHint": "Pick the hour you have finished for the day. A kitchen still serving at eleven should not be sent its takings at nine.",
+    "summaryHourDefault": "The usual time (9 pm)",
+    "summaryHourSaved": "Saved"
   },
   "settingsRewards": {
     "intro": "Clients earn points on what they spend, and take them off a later bill. Nothing changes for them until you switch it on.",
@@ -914,6 +918,8 @@
     "closeInvite": "Close",
     "done": "Done",
     "frontDesk": "Front desk",
+    "owners": "Owners",
+    "owner": "Owner",
     "noFrontDesk": "Nobody on the front desk yet. A receptionist signs in to run bookings, clients and payments.",
     "otherLogins": "Other logins",
     "chipIn": "Can sign in",
@@ -926,6 +932,10 @@
     "role": "Role",
     "roleStaff": "Stylist — their own bookings only",
     "roleReceptionist": "Receptionist — bookings, clients, payments, attendance",
+    "roleOwner": "Owner — can do everything you can",
+    "ownerWarning": "They will be able to do everything you can: take money, change prices, see every branch and give or take away logins. Only another owner can remove them.",
+    "ownerConfirm": "Yes, make them an owner",
+    "ownerCancel": "No, go back",
     "whoseCalendar": "Which stylist",
     "noStaff": "No staff on the roster yet — add someone under Staff first, then invite them here.",
     "chooseStylist": "Choose a stylist…",

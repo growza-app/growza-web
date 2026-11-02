@@ -184,7 +184,7 @@ import type {
   ManualMovementKind,
   VisitRewards,
 } from './api-types';
-import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, TokenBoard } from './home-types';
+import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, ShopDaySummary, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
 
 /** Where a business stands on payment QRs: the business-wide one, and each branch's own. */
@@ -1005,8 +1005,9 @@ export const api = {
   tokensToday: (location?: string | null) => get<TokenBoard>(`/api/v1/tokens/today${atBranch(location)}`),
   /** Jira GRW-405 — a booked client has arrived: today's token for that booking (the same one again on a repeat). */
   markArrived: (appointmentId: string) => post<{ id: string; tokenNo: number | null; created: boolean }>('/api/v1/tokens', { appointmentId }),
+  /** Both shapes come back from this one route; `kind` says which (a shop's day has no bookings in it). */
   daySummary: (location?: string | null) =>
-    get<DaySummary>(`/api/v1/home/day-summary${location ? `?location=${encodeURIComponent(location)}` : ''}`),
+    get<DaySummary | ShopDaySummary>(`/api/v1/home/day-summary${location ? `?location=${encodeURIComponent(location)}` : ''}`),
   /**
    * Reports. Under /reports/, never /analytics/ — this is fetched from the
    * browser on every tab and range change, and that path segment is a common
@@ -1038,7 +1039,8 @@ export const api = {
   updateRole: (id: string, body: Partial<RoleBody>) => patch<ShopRole>(`/api/v1/roles/${encodeURIComponent(id)}`, body),
   deleteRole: (id: string) => del<void>(`/api/v1/roles/${encodeURIComponent(id)}`),
   teamInvites: () => get<{ invites: PendingInvite[] }>('/api/v1/team/invites'),
-  createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist' | 'manager'; locationId?: string | null; name?: string | null; tenantRoleId?: string }) =>
+  /** `jointOwner: true` makes a second OWNER: a phone and a name and nothing else, and only an owner may send it. */
+  createTeamInvite: (body: { phone: string; providerId?: string | null; role?: 'staff' | 'receptionist' | 'manager'; locationId?: string | null; name?: string | null; tenantRoleId?: string; jointOwner?: true }) =>
     post<CreatedInvite>('/api/v1/team/invites', body),
   teamMembers: () => get<{ members: TeamMember[] }>('/api/v1/team/members'),
   setTeamMemberBranch: (userId: string, locationId: string) =>
@@ -1173,6 +1175,8 @@ export const api = {
     staffSeesClientContact?: boolean;
     attendanceLateGraceMin?: number;
     productReturnWindowDays?: number;
+    /** The hour the closing summary arrives, in the business's own timezone (0–23). */
+    daySummaryHour?: number;
     reportAccess?: Record<string, string[]>;
     closedDates?: string[];
     /** Jira GRW-397 — every branch's closed days, a day at a time (business only). */
