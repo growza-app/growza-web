@@ -43,6 +43,20 @@ describe('Both reports are asked for by date', () => {
     expect(control.match(/max=\{today\}/g)).toHaveLength(2);
   });
 
+  it.each([
+    ['diary', diary],
+    ['counter', counter],
+  ])('%s groups a long period and thins the axis rather than drawing a smear', (_name, src) => {
+    // 33 days was 33 columns 6px wide with a weekday printed over the next one.
+    expect(src).toContain('bucketDays(takings.byDay)');
+    expect(src).toContain('namedTicks(bars.length)');
+    expect(src).toContain("{barNamed(i) ? barLabel.tick(b) : ''}");
+    // Thinning the axis must not take the figures off the screen for somebody listening to it.
+    expect(src).toContain('{barLabel.full(b)} {money(b.valueMinor)}');
+    // The peak is the tallest BUCKET now, not the tallest day, or every grouped bar would overflow its slot.
+    expect(src).toContain('Math.max(...bars.map((b) => b.valueMinor), 1)');
+  });
+
   it('the words exist in both languages', () => {
     for (const lang of ['en', 'hi']) {
       const m = JSON.parse(read(`../../messages/${lang}.json`));

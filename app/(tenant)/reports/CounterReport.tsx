@@ -9,6 +9,7 @@ import { useBranch } from '../components/BranchProvider';
 import { useSession } from '../components/SessionProvider';
 import { ReportDates } from './ReportDates';
 import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../lib/report-dates';
+import { bucketDays, type ChartBucket, namedTicks } from '../lib/report-buckets';
 
 /**
  * Jira GRW-591 — the counter report: four questions, four cards, one line each to act on.
@@ -159,7 +160,36 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
 
   const { takings, earners, busy, changed } = data;
   // `|| 1` is the divisor's floor, not the bar's: a period whose every figure is zero must not divide by it.
-  const dayPeak = Math.max(...takings.byDay.map((d) => Number(d.valueMinor)), 1);
+  /*
+   * Owner, 2026-11-02 — a month is drawn as weeks and a year as months. One column per day was right while
+   * the longest period on offer was a week; asked for the whole of October it was 33 columns 6px wide under
+   * a weekday printed on top of the next one.
+   */
+  const { unit: barUnit, buckets: bars } = useMemo(() => bucketDays(takings.byDay), [takings.byDay]);
+  const barNamed = useMemo(() => namedTicks(bars.length), [bars.length]);
+  const barLabel = useMemo(() => {
+    const l = intlLocale(locale);
+    const dayNum = new Intl.DateTimeFormat(l, { day: 'numeric', timeZone: 'UTC' });
+    const dayMonth = new Intl.DateTimeFormat(l, { day: 'numeric', month: 'short', timeZone: 'UTC' });
+    const monthOnly = new Intl.DateTimeFormat(l, { month: 'short', timeZone: 'UTC' });
+    const at = (b: ChartBucket) => new Date(`${b.startISO}T00:00:00Z`);
+    return {
+      /* Printed under the column, on the ones there is room for. A weekday still names a week of days, which
+         is what an owner reads every morning; past that it is the date, which does not repeat. */
+      tick: (b: ChartBucket) =>
+        barUnit === 'month'
+          ? monthOnly.format(at(b))
+          : barUnit === 'week'
+            ? dayMonth.format(at(b))
+            : bars.length <= 7
+              ? dayLetter(b.dow)
+              : dayNum.format(at(b)),
+      /* Heard for EVERY column, named or not: thinning the axis must not take the figures off the screen
+         for somebody listening to it. */
+      full: (b: ChartBucket) => dayMonth.format(at(b)),
+    };
+  }, [locale, barUnit, bars.length, dayLetter]);
+  const dayPeak = Math.max(...bars.map((b) => b.valueMinor), 1);
   const hourPeak = Math.max(...busy.byHour.map((h) => Number(h.valueMinor)), 1);
   const topValue = Math.max(...earners.rows.map((r) => Number(r.valueMinor)), 1);
   const difference = takings.differenceMinor === null ? null : Number(takings.differenceMinor);
@@ -188,21 +218,20 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
             : ` · ${t('took.average', { amount: money(takings.averageBillMinor) })}`}
         </p>
         <ul className="cr-bars cr-bars-day">
-          {takings.byDay.map((d) => {
-            const value = Number(d.valueMinor);
-            return (
-              <li key={d.dateISO} className="cr-bar-col">
-                <span className="cr-bar-slot">
-                  <span
-                    className="cr-bar"
-                    style={{ height: `${value === 0 ? 0 : Math.max(MIN_BAR_PCT, (value / dayPeak) * 100)}%` }}
-                  />
-                </span>
-                <span className="cr-bar-tick">{dayLetter(d.dow)}</span>
-                <span className="sr-only">{money(d.valueMinor)}</span>
-              </li>
-            );
-          })}
+          {bars.map((b, i) => (
+            <li key={b.startISO} className="cr-bar-col">
+              <span className="cr-bar-slot">
+                <span
+                  className="cr-bar"
+                  style={{ height: `${b.valueMinor === 0 ? 0 : Math.max(MIN_BAR_PCT, (b.valueMinor / dayPeak) * 100)}%` }}
+                />
+              </span>
+              <span className="cr-bar-tick">{barNamed(i) ? barLabel.tick(b) : ''}</span>
+              <span className="sr-only">
+                {barLabel.full(b)} {money(b.valueMinor)}
+              </span>
+            </li>
+          ))}
         </ul>
       </section>
 
