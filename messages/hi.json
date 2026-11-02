@@ -3663,6 +3663,8 @@
       "done": "हो गया",
       "delete": "श्रेणी मिटाएँ",
       "deleteNamed": "{name} मिटाएँ",
+      "renameNamed": "{name} का नाम बदलें",
+      "renameSave": "नाम सहेजें",
       "deleteAsk": "{name} मिटाएँ? इसका {n, plural, =0 {सामान} one {# सामान} other {# सामान}} बिना श्रेणी के शेल्फ़ पर रहेगा।",
       "deleteWithProductsAsk": "{name} और इसके सभी {n} आइटम मिटाएँ, या आइटम बिना श्रेणी के रखें?",
       "deleteWithProducts": "{name} और {n} आइटम मिटाएँ",
