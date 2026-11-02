@@ -75,6 +75,56 @@
   }
 }
 
+/*
+ * Owner, 2026-11-03 — the till's Back, at the top left of the screen rather than on a row of its own.
+ *
+ * It is the same button the flow drew under its "Take an order" title; only the place changed, so what it does
+ * is unchanged. Above 1100px the wide till draws its own header with its own Back, and this one steps aside.
+ */
+.pos-bar-back {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-right: var(--sp-1);
+  border: 0;
+  border-radius: 999px;
+  background: var(--page-bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+/*
+ * The tabs take a whole row of their own (`flex: 1 1 100%`). Beside a Back button they share it, or the button
+ * costs the row that removing the title just saved.
+ *
+ * `flex-basis: 0` and not `auto`: a wrapping flex row breaks the line at the items' BASE sizes and only then
+ * shrinks what is on it, so tabs asking for their content width (three at 89px) wrap before they ever shrink.
+ * From zero they fit beside the button first and grow into what is left.
+ */
+.pos-bar-back + .page-tabs.pos-tabs {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.pos-bar-back svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.pos-bar-back:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+
+@media (min-width: 1101px) {
+  .pos-bar-back {
+    display: none;
+  }
+}
+
 .pos-bar-shortcuts {
   display: none;
 }

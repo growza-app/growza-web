@@ -180,6 +180,23 @@ describe('the POS screen', () => {
     expect(css).toContain('@keyframes pos-step-pulse');
   });
 
+  it("puts the till's Back in the bar and keeps the title row off the screen", () => {
+    const css = src('../styles/99-pos.css');
+    const pay = src('../appointments/new/PayFlow.tsx');
+    // The POS asks the flow not to draw its own header, and takes the flow's own `leave` to drive the button —
+    // the control moved, what it does did not.
+    expect(client).toContain('hideHead');
+    expect(client).toContain('leaveRef={leaveRef}');
+    expect(client).toContain('onClick={() => leaveRef.current?.()}');
+    expect(pay).toContain('{hideHead ? null : (');
+    expect(pay).toContain('if (leaveRef) leaveRef.current = leave;');
+    // Beside the button the tabs share the row instead of claiming one: basis 0, or a wrapping row breaks
+    // before it shrinks and the button costs the row the title just gave back.
+    expect(css).toMatch(/\.pos-bar-back \+ \.page-tabs\.pos-tabs \{\s*flex: 1 1 0%;\s*min-width: 0;/);
+    // The wide till draws its own header with its own Back, so this one steps aside there.
+    expect(css).toMatch(/@media \(min-width: 1101px\) \{\s*\.pos-bar-back \{\s*display: none;/);
+  });
+
   it('provides Option C daily resetting token numbers and the Queue board that carries them', () => {
     const css = src('../styles/99-pos.css');
     expect(posModeOf('queue', true)).toBe('queue');

@@ -148,6 +148,8 @@ export function PayFlow({
   productsOnly = false,
   heading,
   nextTokenNo,
+  hideHead,
+  leaveRef,
   onSaleCompleted,
   reloadKey = 0,
 }: {
@@ -187,6 +189,13 @@ export function PayFlow({
   heading?: string;
   /** Daily sequential token number for today's POS queue. */
   nextTokenNo?: number | null;
+  /**
+   * Owner, 2026-11-03 — the POS draws this flow's header itself, in the bar at the very top of the screen.
+   * The title row said "Take an order" under a tab already reading Sell, and cost a row the phone did not have.
+   */
+  hideHead?: boolean;
+  /** Where the POS's own Back button reaches `leave`, so moving the control changes nothing it does. */
+  leaveRef?: { current: (() => void) | null };
   /** Notifies the POS shell when a sale completes so the live token queue updates immediately. */
   onSaleCompleted?: (saleId: string) => void;
   /** Incremented after a return or exchange on POS so the product shelf refreshes its live stock counts in place. */
@@ -1309,6 +1318,11 @@ export function PayFlow({
     }
     router.push('/');
   };
+  // Assigned on every render: `leave` closes over state that moves (backTo, the lines), so a stale one would
+  // clear a bill that is no longer on the screen.
+  useEffect(() => {
+    if (leaveRef) leaveRef.current = leave;
+  });
   const payToken = token ? `&token=${encodeURIComponent(token.id)}${token.locationId ? `&location=${encodeURIComponent(token.locationId)}` : ''}` : '';
   const simpleForm = `/appointments/new?purpose=payment${payToken}`;
   const fullForm = `/appointments/new?purpose=payment&full=1${payToken}`;
@@ -1981,16 +1995,18 @@ export function PayFlow({
       */}
       {productsOnly ? (
         <>
-          <header className="pf-head">
-            <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
-              <IconArrowLeft />
-            </button>
-            <span className="pf-head-stack">
-              <h1 className="pf-title">{heading ?? t('sellTitle', { product: nouns.product })}</h1>
-              <HeaderBranchPicker variant="line" />
-            </span>
-            <span className="pf-head-gap" aria-hidden="true" />
-          </header>
+          {hideHead ? null : (
+            <header className="pf-head">
+              <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
+                <IconArrowLeft />
+              </button>
+              <span className="pf-head-stack">
+                <h1 className="pf-title">{heading ?? t('sellTitle', { product: nouns.product })}</h1>
+                <HeaderBranchPicker variant="line" />
+              </span>
+              <span className="pf-head-gap" aria-hidden="true" />
+            </header>
+          )}
           {scanNote ? <div role="status" className="pf-error">{scanNote}</div> : null}
         </>
       ) : (

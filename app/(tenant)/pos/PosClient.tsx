@@ -7,7 +7,7 @@ import { api, formatMoney, type Appointment } from '../lib/api';
 import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
 import { useBranch } from '../components/BranchProvider';
 import { useSession } from '../components/SessionProvider';
-import { IconCheck } from '../components/icons';
+import { IconCheck, IconArrowLeft } from '../components/icons';
 import { SellProductClient } from '../products/sell/SellProductClient';
 import { buildSaleRows, type SaleRow } from '../sales/SalesClient';
 import { ReturnProductSheet } from '../sales/ReturnProductSheet';
@@ -58,6 +58,7 @@ export function PosClient({
   backTo?: '/products' | '/sales';
 }) {
   const t = useTranslations('pos');
+  const tc = useTranslations('chrome');
   const locale = useLocale();
   const { Customer } = useNouns();
   const branch = useBranch();
@@ -76,6 +77,8 @@ export function PosClient({
   const [reloadKey, setReloadKey] = useState(0);
   /** Only the latest open may answer: a slow read from an earlier open must not put old bills under a newer sheet. */
   const opened = useRef(0);
+  /* Owner, 2026-11-03 — the till's own Back, moved up into the bar. The action is still the till's. */
+  const leaveRef = useRef<(() => void) | null>(null);
 
   const storageKey = posQueueStorageKey(location, todayISO);
 
@@ -388,6 +391,9 @@ export function PosClient({
         </header>
       ) : canReturn ? (
         <div className="pos-bar">
+          <button type="button" className="pos-bar-back" aria-label={tc('back')} onClick={() => leaveRef.current?.()}>
+            <IconArrowLeft />
+          </button>
           <div className="page-tabs pos-tabs" role="tablist" aria-label={t('modes')}>
             <button type="button" role="tab" aria-selected={mode === 'sell'} className={`page-tab${mode === 'sell' ? ' active' : ''}`} onClick={closeReturn}>
               {t('sell')}
@@ -419,6 +425,9 @@ export function PosClient({
         </div>
       ) : (
         <div className="pos-bar pos-bar-minimal">
+          <button type="button" className="pos-bar-back" aria-label={tc('back')} onClick={() => leaveRef.current?.()}>
+            <IconArrowLeft />
+          </button>
           <div className="page-tabs pos-tabs" role="tablist" aria-label={t('modes')}>
             <button type="button" role="tab" aria-selected={mode === 'sell'} className={`page-tab${mode === 'sell' ? ' active' : ''}`} onClick={closeReturn}>
               {t('sell')}
@@ -455,6 +464,8 @@ export function PosClient({
         <SellProductClient
           timezone={timezone}
           backTo={backTo}
+          hideHead
+          leaveRef={leaveRef}
           heading={heading}
           nextTokenNo={nextTokenNo}
           onSaleCompleted={handleSaleCompleted}
