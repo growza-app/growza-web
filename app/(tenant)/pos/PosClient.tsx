@@ -149,8 +149,6 @@ export function PosClient({
     [dailyTokens],
   );
   const nextTokenNo = dailyTokens.length + 1;
-  const lastTokenLabel = dailyTokens.length > 0 ? dailyTokens[dailyTokens.length - 1]!.tokenLabel : t('noneIssuedYet');
-  const todayTotalMinor = useMemo(() => dailyTokens.reduce((sum, tk) => sum + tk.totalMinor, 0), [dailyTokens]);
 
   const formatTime = useCallback(
     (iso: string) => {
@@ -528,40 +526,14 @@ export function PosClient({
 
       {mode === 'queue' ? (
         <section className="pos-queue-board" aria-label={t('queue')}>
-          <div className="pos-queue-kpis">
-            <div className="pos-queue-kpi">
-              <span className="pos-queue-kpi-label">{t('kpiLastToken')}</span>
-              <strong className="pos-queue-kpi-val">{lastTokenLabel}</strong>
-              <span className="pos-queue-kpi-sub">{t('nextToken', { token: formatTokenNo(nextTokenNo) })}</span>
-            </div>
-            <div className="pos-queue-kpi is-preparing">
-              <span className="pos-queue-kpi-label">{t('kpiInQueue')}</span>
-              <strong className="pos-queue-kpi-val">{preparingTokens.length}</strong>
-              <span className="pos-queue-kpi-sub">{t('statusPreparing')}</span>
-            </div>
-            <div className="pos-queue-kpi is-completed">
-              <span className="pos-queue-kpi-label">{t('kpiCompletedToday')}</span>
-              <strong className="pos-queue-kpi-val">{completedTokens.length}</strong>
-              <span className="pos-queue-kpi-sub">{t('statusCompleted')}</span>
-            </div>
-            <div className="pos-queue-kpi">
-              <span className="pos-queue-kpi-label">{t('kpiTotalOrders')}</span>
-              <strong className="pos-queue-kpi-val">{dailyTokens.length}</strong>
-              {canReturn ? <span className="pos-queue-kpi-sub">{formatMoney(String(todayTotalMinor))}</span> : null}
-            </div>
-          </div>
-
           <div className="pos-queue-cols">
             <div className="pos-queue-col">
               <header className="pos-queue-col-head">
-                <div>
-                  <h2 className="pos-queue-col-title">
-                    <span className="pos-queue-dot is-preparing" aria-hidden="true" />
-                    {t('preparingColTitle')}
-                    <span className="pos-queue-col-count">{preparingTokens.length}</span>
-                  </h2>
-                  <p className="pos-queue-col-sub">{t('preparingColSub')}</p>
-                </div>
+                <h2 className="pos-queue-col-title">
+                  <span className="pos-queue-dot is-preparing" aria-hidden="true" />
+                  {t('preparingColTitle')}
+                  <span className="pos-queue-col-count">{preparingTokens.length}</span>
+                </h2>
                 <button type="button" className="btn btn-primary pos-queue-new-btn" onClick={closeReturn}>
                   + {t('backToSell')} ({formatTokenNo(nextTokenNo)})
                 </button>
@@ -579,14 +551,11 @@ export function PosClient({
 
             <div className="pos-queue-col">
               <header className="pos-queue-col-head">
-                <div>
-                  <h2 className="pos-queue-col-title">
-                    <span className="pos-queue-dot is-completed" aria-hidden="true" />
-                    {t('completedColTitle')}
-                    <span className="pos-queue-col-count">{completedTokens.length}</span>
-                  </h2>
-                  <p className="pos-queue-col-sub">{t('completedColSub')}</p>
-                </div>
+                <h2 className="pos-queue-col-title">
+                  <span className="pos-queue-dot is-completed" aria-hidden="true" />
+                  {t('completedColTitle')}
+                  <span className="pos-queue-col-count">{completedTokens.length}</span>
+                </h2>
               </header>
               {completedTokens.length === 0 ? (
                 <div className="pos-queue-empty">

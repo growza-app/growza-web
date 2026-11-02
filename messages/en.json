@@ -4215,7 +4215,7 @@
     "kpiInQueue": "In queue · Preparing",
     "kpiCompletedToday": "Completed today",
     "kpiTotalOrders": "Today’s orders",
-    "preparingColTitle": "In queue · Preparing",
+    "preparingColTitle": "In queue",
     "preparingColSub": "Active kitchen tokens waiting to be handed over",
     "completedColTitle": "Completed today",
     "completedColSub": "Handed over today — resets to #01 tomorrow",

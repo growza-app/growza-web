@@ -143,7 +143,9 @@ describe('the POS screen', () => {
   });
 
   it('hides daily revenue and per-order money on the Queue board when the desk may not view sales/returns', () => {
-    expect(client).toContain('{canReturn ? <span className="pos-queue-kpi-sub">{formatMoney(String(todayTotalMinor))}</span> : null}');
+    // Owner, 2026-11-03 — the day's total went with the KPI cards; the board now carries no figure of its own,
+    // which is the strongest form of this rule. What is left is the money ON a token, still gated.
+    expect(client).not.toContain('pos-queue-kpi');
     expect(client).toContain('{canReturn ? <span className="pos-qcard-item-amt">{formatMoney(String(item.paidMinor))}</span> : null}');
     expect(client).toContain('{canReturn ? <strong className="pos-qcard-total">{formatMoney(String(tk.totalMinor))}</strong> : <span />}');
   });
