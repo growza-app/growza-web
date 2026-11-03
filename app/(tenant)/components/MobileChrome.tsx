@@ -78,7 +78,7 @@ export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Recor
   // Jira GRW-74 — and the role opens what the plus goes to: a shop's till needs Orders and Stock.
   const plusOpens = !areas.pages || canSee(areas.shop ? '/products/sell' : '/appointments', role, undefined, true, areas);
   const onCentre =
-    mayBook && plusOpens && live && PLUS_ROUTE_RE.test(pathname) ? () => router.push(areas.shop ? '/orders/new' : '/appointments/new?mode=now') : undefined;
+    mayBook && plusOpens && live && PLUS_ROUTE_RE.test(pathname) ? () => router.push(areas.shop ? '/pos' : '/appointments/new?mode=now') : undefined;
 
   /*
    * Owner, 2026-10-06 — the plus offers two things: New booking (the page) and Record payment (a page on a phone,

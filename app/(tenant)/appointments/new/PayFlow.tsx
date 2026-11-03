@@ -1710,26 +1710,28 @@ export function PayFlow({
   if (wide) {
     return (
       <div className="pf pf-wide">
-        <header className="pf-head">
-          <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
-            <IconArrowLeft />
-          </button>
-          <span className="pf-head-stack">
-            <h1 className="pf-title">{productsOnly ? (heading ?? t('sellTitle', { product: nouns.product })) : t('whatTitle')}</h1>
-            {token ? (
-              branchName ? <span className="pf-at">{t('at', { branch: branchName })}</span> : null
-            ) : (
-              <HeaderBranchPicker variant="line" />
-            )}
-          </span>
-          {/*
-            Owner, 2026-10-14 — no Simple / Full switch on the wide till. The one-page form earned its door on
-            the phone for the sale the three taps could not write: a package, a client added by name and number.
-            The Desk sells packages and adds clients, so the switch here was a way to a smaller screen that does
-            less. `?full=1` still opens the one-page form for anyone who types it.
-          */}
-          <span className="pf-head-gap" aria-hidden="true" />
-        </header>
+        {hideHead ? null : (
+          <header className="pf-head">
+            <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
+              <IconArrowLeft />
+            </button>
+            <span className="pf-head-stack">
+              <h1 className="pf-title">{productsOnly ? (heading ?? t('sellTitle', { product: nouns.product })) : t('whatTitle')}</h1>
+              {token ? (
+                branchName ? <span className="pf-at">{t('at', { branch: branchName })}</span> : null
+              ) : (
+                <HeaderBranchPicker variant="line" />
+              )}
+            </span>
+            {/*
+              Owner, 2026-10-14 — no Simple / Full switch on the wide till. The one-page form earned its door on
+              the phone for the sale the three taps could not write: a package, a client added by name and number.
+              The Desk sells packages and adds clients, so the switch here was a way to a smaller screen that does
+              less. `?full=1` still opens the one-page form for anyone who types it.
+            */}
+            <span className="pf-head-gap" aria-hidden="true" />
+          </header>
+        )}
         {scanNote ? <div role="status" className="pf-error">{scanNote}</div> : null}
         {tokenGone ? (
           <div role="alert" className="pf-error">

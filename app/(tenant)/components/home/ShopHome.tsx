@@ -310,20 +310,10 @@ export function ShopHome({
    * reach; it was only ever offered three of them.
    */
   const tiles = [
-    { href: '/orders/new', label: s.takeOrder, icon: <IconNavOrders />, tone: 'green' },
+    { href: '/pos', label: t.nav.pos, icon: <IconPos />, tone: 'green' },
     { href: '/orders', label: t.nav.orders, icon: <IconNavOrders />, tone: 'blue' },
     { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'green' },
-    /*
-     * Owner, 2026-11-03 — the till stands where a kitchen's guests did.
-     *
-     * Not a question about the vertical: `areas.stock` is the capability, and a business that keeps no count
-     * rings a sale up as it is made. Its diners are walk-ins nobody looks up by name, so Guests was the least
-     * used of the six — and it is a tab in the bar at the foot of the screen either way, while the till has no
-     * tab at all. A business that DOES count stock keeps Guests: its customers are the ones it calls back.
-     */
-    areas.stock
-      ? { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' }
-      : { href: '/pos', label: t.nav.pos, icon: <IconPos />, tone: 'amber' },
+    { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
     /*
      * Owner, 2026-10-26 — Reports, not Attendance.
      *
@@ -669,12 +659,6 @@ export function ShopHome({
                       <strong>{t.nav.stock}</strong>
                     </a>
                   ) : null}
-                  {can('/orders/new') ? (
-                    <a href="/orders/new" className="hm-action hm-action-dark">
-                      <IconPos />
-                      <strong>{s.takeOrder}</strong>
-                    </a>
-                  ) : null}
                 </div>
               </div>
             </div>
@@ -763,23 +747,10 @@ export function ShopHome({
                   </a>
                 </div>
 
-                {/* ROW 2 — What would you like to do? (5 Action Cards) */}
+                {/* ROW 2 — What would you like to do? (4 Action Cards) */}
                 <section className="rst-actions-section">
                   <h2 className="rst-section-title">{s.whatWouldYouLikeToDo}</h2>
                   <div className="rst-actions-grid">
-                    {can('/orders/new') ? (
-                      <a className="rst-action-tile is-primary" href="/orders/new">
-                        <span className="rst-action-icon" aria-hidden>
-                          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 4v2" />
-                            <path d="M4 15a8 8 0 0 1 16 0" />
-                            <line x1="2" y1="15" x2="22" y2="15" />
-                            <line x1="3" y1="18" x2="21" y2="18" />
-                          </svg>
-                        </span>
-                        <strong>{s.takeOrder}</strong>
-                      </a>
-                    ) : null}
                     {can('/orders') ? (
                       <a className="rst-action-tile" href="/orders">
                         <span className="rst-action-icon" aria-hidden>
@@ -1377,12 +1348,12 @@ export function ShopHome({
                     <h2>{s.quickActionsTitle}</h2>
                   </div>
                   <div className="hm-v3-qgrid">
-                    {can('/orders/new') ? (
-                      <a className="hm-v3-qbtn is-primary" href="/orders/new">
+                    {can('/pos') ? (
+                      <a className="hm-v3-qbtn is-primary" href="/pos">
                         <span className="hm-v3-qicon">
                           <IconPos />
                         </span>
-                        <strong>{s.takeOrder}</strong>
+                        <strong>{t.nav.pos}</strong>
                       </a>
                     ) : null}
                     {can('/orders') ? (
@@ -1948,11 +1919,6 @@ export function ShopHome({
                             {s.yesterday}: <b>{data.yesterday.orders}</b>
                           </span>
                         </div>
-                        {can('/orders/new') ? (
-                          <a className="btn btn-primary shp-cta" href="/orders/new">
-                            {s.takeOrder}
-                          </a>
-                        ) : null}
                       </div>
                       {/*
                         Jira GRW-614 (FR-06) — the work waiting. It opens the Orders list already filtered to exactly the states
@@ -1971,9 +1937,9 @@ export function ShopHome({
                       {/* A shelf nobody has counted has nothing to sell, so the first step is the count (below), not the till. */}
                       {/* A shelf nobody counted cannot sell; a kitchen has no shelf, so its first step IS the till. */}
                       <span>{data.running.counted || !areas.stock ? s.noOrdersBody : s.countFirst}</span>
-                      {(data.running.counted || !areas.stock) && can('/orders/new') ? (
-                        <a className="btn btn-primary shp-cta" href="/orders/new">
-                          {s.takeOrder}
+                      {(data.running.counted || !areas.stock) && can('/pos') ? (
+                        <a className="btn btn-primary shp-cta" href="/pos">
+                          {t.nav.pos}
                         </a>
                       ) : null}
                     </div>

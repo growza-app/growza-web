@@ -769,7 +769,7 @@
     font-weight: 500;
   }
 
-  /* Row 2: What would you like to do? (5 Action Cards) */
+  /* Row 2: What would you like to do? (4 Action Cards) */
   .rst-actions-section {
     display: flex;
     flex-direction: column;
@@ -786,7 +786,7 @@
 
   .rst-actions-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1rem;
   }
 

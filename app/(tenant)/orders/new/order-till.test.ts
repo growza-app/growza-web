@@ -86,19 +86,20 @@ describe('who may reach it', () => {
   });
 });
 
-describe('a shop reaches it from everywhere it takes an order from', () => {
-  it('Home’s tile and its first-order button, and the plus on the phone, all open /orders/new', () => {
+describe('a shop reaches POS from everywhere without duplicating Take an order', () => {
+  it('Home’s tile, its first-order button, and the plus on the phone all open /pos', () => {
     const home = read('components/home/ShopHome.tsx');
-    expect(home).toContain("{ href: '/orders/new', label: s.takeOrder,");
-    expect(home).toContain('href="/orders/new"');
+    expect(home).toContain("{ href: '/pos', label: t.nav.pos,");
+    expect(home).toContain('href="/pos"');
+    expect(home).not.toContain('/orders/new');
     expect(home).not.toContain('/products/sell');
-    expect(read('components/MobileChrome.tsx')).toContain("areas.shop ? '/orders/new' : '/appointments/new?mode=now'");
+    expect(read('components/MobileChrome.tsx')).toContain("areas.shop ? '/pos' : '/appointments/new?mode=now'");
   });
 
-  it('the Orders list offers it in its header, to whoever may record a sale', () => {
+  it('the Orders list header does not duplicate Take an order beside POS in the sidebar', () => {
     const list = read('orders/OrdersScreen.tsx');
-    expect(list).toContain('href="/orders/new"');
-    expect(list).toContain("mayUse(me.member?.role, 'visit.recordPayment', isWritable(me.tenant?.status))");
+    expect(list).not.toContain('href="/orders/new"');
+    expect(list).not.toContain('takeOrder');
   });
 
   it('the salon’s own entrances are untouched', () => {
