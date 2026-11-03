@@ -20,7 +20,7 @@
 }
 
 .pos-bar-minimal {
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .pos-bar .pos-tabs {

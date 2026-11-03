@@ -45,7 +45,7 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
    * them each a border and the accent, which is what a row of links should look like.
    */
   return (
-    <nav className={`srp-nav ${active === 'hub' ? 'srp-nav-links' : ''}`} aria-label={tReport('title')}>
+    <nav className={`srp-nav ${active === 'hub' ? 'srp-nav-links' : ''}`} aria-label={tReports('title')}>
       {tabs.map((tab) => {
         const isCurrent = tab.key === active;
         return (

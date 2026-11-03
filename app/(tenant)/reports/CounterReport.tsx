@@ -147,19 +147,6 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
     return (hour: number) => fmt.format(new Date(Date.UTC(2024, 0, 1, hour % 24)));
   }, [locale]);
 
-  if (!data.anySales) {
-    return (
-      <div className="cr-card">
-        <div className="empty">
-          <p>
-            <strong>{t('nothingTitle')}</strong>
-          </p>
-          <p className="muted">{t('nothingBody')}</p>
-        </div>
-      </div>
-    );
-  }
-
   const { takings, earners, busy, changed, strategy } = data;
   const channelLabel = useCallback(
     (ch: string) =>
@@ -225,6 +212,20 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
   );
   const labelBudget = useLabelBudget(barsRef, widestTick, bars.length);
   const barNamed = useMemo(() => namedTicks(bars.length, labelBudget), [bars.length, labelBudget]);
+
+  if (!data.anySales) {
+    return (
+      <div className="cr-card">
+        <div className="empty">
+          <p>
+            <strong>{t('nothingTitle')}</strong>
+          </p>
+          <p className="muted">{t('nothingBody')}</p>
+        </div>
+      </div>
+    );
+  }
+
   const dayPeak = Math.max(...bars.map((b) => b.valueMinor), 1);
   const hourPeak = Math.max(...busy.byHour.map((h) => Number(h.valueMinor)), 1);
   const topValue = Math.max(...earners.rows.map((r) => Number(r.valueMinor)), 1);
@@ -472,12 +473,12 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
               <p className="cr-strat-action">
                 <strong>{t('strategy.actionLabel')}: </strong>
                 {t('strategy.combo.action', {
-                  leader: earners.leader?.name ?? earners.rows[0]?.name ?? 'Top dish',
+                  leader: earners.leader?.name ?? earners.rows[0]?.name ?? t('strategy.fallbackTop'),
                   partner:
                     strategy.basket.topPair?.itemB ??
                     earners.rows[1]?.name ??
                     earners.rows[0]?.name ??
-                    'side dish',
+                    t('strategy.fallbackPartner'),
                 })}
               </p>
               <p className="cr-strat-impact">
@@ -493,27 +494,31 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
               <h3 className="cr-strat-title">{t('strategy.timing.title')}</h3>
               <p className="cr-strat-data">
                 <strong>{t('strategy.dataLabel')}: </strong>
-                {strategy.bestDay && busy.quietestDay
+                {strategy.bestDay && busy.quietestDay && busy.peak
                   ? t('strategy.timing.dataWithDays', {
                       bestDay: dayName(strategy.bestDay.dow),
                       bestAmount: money(strategy.bestDay.valueMinor),
                       weakDay: dayName(busy.quietestDay.dow),
                       weakAmount: money(busy.quietestDay.valueMinor),
-                      from: busy.peak ? hourName(busy.peak.fromHour) : hourName(19),
-                      to: busy.peak ? hourName(busy.peak.toHour) : hourName(22),
+                      from: hourName(busy.peak.fromHour),
+                      to: hourName(busy.peak.toHour),
                     })
-                  : t('strategy.timing.dataRushOnly', {
-                      from: busy.peak ? hourName(busy.peak.fromHour) : hourName(19),
-                      to: busy.peak ? hourName(busy.peak.toHour) : hourName(22),
-                    })}
+                  : busy.peak
+                    ? t('strategy.timing.dataRushOnly', {
+                        from: hourName(busy.peak.fromHour),
+                        to: hourName(busy.peak.toHour),
+                      })
+                    : t('strategy.timing.dataNoPeak')}
               </p>
               <p className="cr-strat-action">
                 <strong>{t('strategy.actionLabel')}: </strong>
-                {t('strategy.timing.action', {
-                  weakDay: busy.quietestDay ? dayName(busy.quietestDay.dow) : dayName(2),
-                  from: busy.peak ? hourName(busy.peak.fromHour) : hourName(19),
-                  to: busy.peak ? hourName(busy.peak.toHour) : hourName(22),
-                })}
+                {busy.quietestDay && busy.peak
+                  ? t('strategy.timing.action', {
+                      weakDay: dayName(busy.quietestDay.dow),
+                      from: hourName(busy.peak.fromHour),
+                      to: hourName(busy.peak.toHour),
+                    })
+                  : t('strategy.timing.actionNoPeak')}
               </p>
               <p className="cr-strat-impact">
                 {t('strategy.timing.impact', {
@@ -559,24 +564,24 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
                 <strong>{t('strategy.dataLabel')}: </strong>
                 {earners.slowTotal > 0 && earners.slow.length > 0
                   ? t('strategy.menu.dataWithSlow', {
-                      star: changed.up[0]?.name ?? earners.leader?.name ?? earners.rows[0]?.name ?? 'Top dish',
+                      star: changed.up[0]?.name ?? earners.leader?.name ?? earners.rows[0]?.name ?? t('strategy.fallbackTop'),
                       slowCount: earners.slowTotal,
                       menuTotal: earners.menuTotal,
                       slowNames: earners.slow.slice(0, 3).map((s) => s.name).join(', '),
                     })
                   : t('strategy.menu.dataClean', {
-                      star: changed.up[0]?.name ?? earners.leader?.name ?? earners.rows[0]?.name ?? 'Top dish',
+                      star: changed.up[0]?.name ?? earners.leader?.name ?? earners.rows[0]?.name ?? t('strategy.fallbackTop'),
                       menuTotal: earners.menuTotal,
                     })}
               </p>
               <p className="cr-strat-action">
                 <strong>{t('strategy.actionLabel')}: </strong>
                 {t('strategy.menu.action', {
-                  star: changed.up[0]?.name ?? earners.leader?.name ?? earners.rows[0]?.name ?? 'Top dish',
+                  star: changed.up[0]?.name ?? earners.leader?.name ?? earners.rows[0]?.name ?? t('strategy.fallbackTop'),
                   slowNames:
                     earners.slow.length > 0
                       ? earners.slow.slice(0, 3).map((s) => s.name).join(', ')
-                      : earners.rows[earners.rows.length - 1]?.name ?? 'slow items',
+                      : earners.rows[earners.rows.length - 1]?.name ?? t('strategy.fallbackSlow'),
                 })}
               </p>
               <p className="cr-strat-impact">

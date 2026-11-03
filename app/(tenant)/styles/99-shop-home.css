@@ -1159,11 +1159,9 @@
    from 861px up, so none of it can reach the command center.
    ===================================================================== */
 
-/* The four windows. `Segmented` ships a tab row AND a native select; the salon's
-   phone Home takes the select, this one keeps the tabs — four short words fit in a
-   4-up grid at 344px, and a filter the owner changes all day should be one tap, not
-   two. The grid (not the inline-flex default) is what makes them fit: equal tracks
-   that shrink together instead of a row that overflows. */
+/* The four windows + inline Day summary button. `Segmented` ships a tab row AND a
+   native select; the phone Home uses the compact select so the period picker and
+   the Day summary button sit side-by-side on a single row at 344px. */
 .shp-period {
   display: flex;
   align-items: center;
