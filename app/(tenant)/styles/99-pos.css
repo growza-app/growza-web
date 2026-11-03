@@ -1304,14 +1304,44 @@
   gap: var(--sp-2);
   padding: var(--sp-3);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: 14px;
   background: var(--page-bg);
 }
 
 .pos-qcard.is-preparing {
   background: var(--surface);
   border-width: 1.5px;
+  border-color: var(--border);
+}
+
+.pos-qcard.is-preparing.is-first {
+  border-width: 2px;
   border-color: var(--accent-deep);
+  background: linear-gradient(180deg, rgba(22, 163, 74, 0.06) 0%, var(--surface) 45%);
+  box-shadow: 0 4px 14px rgba(14, 51, 37, 0.08);
+}
+
+.pos-qcard.is-preparing.is-overdue {
+  border-color: var(--danger);
+  background: linear-gradient(180deg, rgba(220, 38, 38, 0.06) 0%, var(--surface) 45%);
+}
+
+.pos-qcard-priority {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  background: var(--accent-deep);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.pos-qcard-priority.is-overdue {
+  background: var(--danger);
 }
 
 .pos-qcard-top {
@@ -1320,6 +1350,14 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
+}
+
+.pos-qcard-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-width: 0;
 }
 
 .pos-qcard-id {
@@ -1354,13 +1392,17 @@
   font-size: 0.875rem;
   font-weight: 700;
   color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Where the order came from. Swiggy and Zomato are tinted, so a delivery order is not read as a counter one. */
 .pos-qcard-chan {
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 999px;
-  background: var(--surface);
+  background: var(--page-bg);
   border: 1px solid var(--border);
   color: var(--text);
   font-size: 0.75rem;
@@ -1383,15 +1425,32 @@
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
+  white-space: nowrap;
 }
 
 .pos-qcard-elapsed {
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 999px;
   background: var(--amber-soft);
   color: var(--text);
   font-size: 0.75rem;
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.pos-qcard-elapsed.is-fresh {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.pos-qcard-elapsed.is-warn {
+  background: var(--amber-soft);
+  color: var(--text);
+}
+
+.pos-qcard-elapsed.is-overdue {
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .pos-qcard-done-pill {
@@ -1456,6 +1515,25 @@
   padding-top: 2px;
 }
 
+.pos-qcard-foot.is-preparing {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-2);
+}
+
+.pos-qcard-total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.pos-qcard-total-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
 .pos-qcard-total {
   font-size: 1rem;
   font-weight: 800;
@@ -1466,13 +1544,15 @@
 .pos-qcard-complete-btn {
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-1);
+  justify-content: center;
+  width: 100%;
+  gap: var(--sp-2);
   min-height: 2.75rem;
   padding: 0 var(--sp-3);
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   background: var(--accent-deep);
   color: #fff;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 800;
 }
 

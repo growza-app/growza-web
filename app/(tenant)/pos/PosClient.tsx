@@ -113,10 +113,6 @@ export function PosClient({
 
   useEffect(() => {
     void loadTodayTokens();
-    const timer = window.setInterval(() => {
-      setNowMs(Date.now());
-    }, 30_000);
-    return () => window.clearInterval(timer);
   }, [loadTodayTokens]);
 
   const setTokenState = useCallback(
@@ -152,6 +148,18 @@ export function PosClient({
     [dailyTokens],
   );
   const nextTokenNo = dailyTokens.length + 1;
+
+  // Only tick `nowMs` when the Queue tab is open and has active tokens waiting; zero background timers on Sell/Return.
+  const hasPreparing = preparingTokens.length > 0;
+  useEffect(() => {
+    if (mode !== 'queue' || !hasPreparing) return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        setNowMs(Date.now());
+      }
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, [mode, hasPreparing]);
 
   const formatTime = useCallback(
     (iso: string) => {
@@ -280,21 +288,30 @@ export function PosClient({
     if (initialMode === 'return' && canReturn) void openReturn();
   }, [initialMode, canReturn, openReturn]);
 
-  const renderTokenCard = (tk: PosDailyToken, isPreparing: boolean) => {
+  const renderTokenCard = (tk: PosDailyToken, isPreparing: boolean, isFirst = false) => {
     const guest = tk.customerName || t('walkInGuest');
     const elapsedText = tk.elapsedMin <= 0 ? t('elapsedJustNow') : t('elapsedMin', { min: tk.elapsedMin });
+    const isOverdue = isPreparing && tk.elapsedMin >= 15;
+    const isWarn = isPreparing && tk.elapsedMin >= 10 && tk.elapsedMin < 15;
+    const slaTone = isOverdue ? ' is-overdue' : isWarn ? ' is-warn' : ' is-fresh';
+    const cardStateClass = isPreparing
+      ? ` is-preparing${isFirst ? ' is-first' : ''}${isOverdue ? ' is-overdue' : ''}`
+      : ' is-completed';
     return (
-      <article key={tk.id} className={`pos-qcard${isPreparing ? ' is-preparing' : ' is-completed'}`}>
+      <article key={tk.id} className={`pos-qcard${cardStateClass}`}>
+        {isPreparing && isFirst ? (
+          <div className={`pos-qcard-priority${isOverdue ? ' is-overdue' : ''}`}>
+            <span>⚡ {isOverdue ? t('deliverFirstOverdue') : t('deliverFirst')}</span>
+          </div>
+        ) : null}
         <div className="pos-qcard-top">
           <div className="pos-qcard-id">
             <span className="pos-qcard-token">{tk.tokenLabel}</span>
             <span className={`pos-qcard-chan is-${tk.channel}`}>{channelLabel(tk.channel)}</span>
-            <span className="pos-qcard-guest">{guest}</span>
           </div>
           <div className="pos-qcard-meta">
-            <span className="pos-qcard-time">{formatTime(tk.startAt)}</span>
             {isPreparing ? (
-              <span className="pos-qcard-elapsed">{elapsedText}</span>
+              <span className={`pos-qcard-elapsed${slaTone}`}>{elapsedText}</span>
             ) : (
               <span className="pos-qcard-done-pill">
                 <IconCheck />
@@ -302,6 +319,10 @@ export function PosClient({
               </span>
             )}
           </div>
+        </div>
+        <div className="pos-qcard-sub">
+          <span className="pos-qcard-guest">{guest}</span>
+          <span className="pos-qcard-time">{formatTime(tk.startAt)}</span>
         </div>
         <ul className="pos-qcard-items">
           {tk.items.map((item, i) => (
@@ -312,8 +333,11 @@ export function PosClient({
             </li>
           ))}
         </ul>
-        <div className="pos-qcard-foot">
-          {canReturn ? <strong className="pos-qcard-total">{formatMoney(String(tk.totalMinor))}</strong> : <span />}
+        <div className={`pos-qcard-foot${isPreparing ? ' is-preparing' : ''}`}>
+          <div className="pos-qcard-total-row">
+            {canReturn ? <span className="pos-qcard-total-label">{t('totalPaid')}</span> : null}
+            {canReturn ? <strong className="pos-qcard-total">{formatMoney(String(tk.totalMinor))}</strong> : <span />}
+          </div>
           {isPreparing ? (
             <button
               type="button"
@@ -321,7 +345,7 @@ export function PosClient({
               onClick={() => setTokenState(tk.id, 'completed')}
             >
               <IconCheck />
-              <span>{t('markCompleted')}</span>
+              <span>{t('handOverToken', { token: tk.tokenLabel })}</span>
             </button>
           ) : (
             <button
@@ -509,7 +533,7 @@ export function PosClient({
                 </div>
               ) : (
                 <div className="pos-queue-list">
-                  {preparingTokens.map((tk) => renderTokenCard(tk, true))}
+                  {preparingTokens.map((tk, idx) => renderTokenCard(tk, true, idx === 0))}
                 </div>
               )}
             </div>
