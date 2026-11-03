@@ -346,6 +346,12 @@ export function ProductsList({
     const c = await api.createProductCategory(branchId, name);
     setCategories((prev) => [...prev, c]);
   };
+  const renameCategory = async (c: ProductCategory, name: string) => {
+    const updated = await api.renameProductCategory(branchId, c.id, name);
+    setCategories((prev) => prev.map((x) => (x.id === updated.id ? { ...x, name: updated.name } : x)));
+    setRows((prev) => prev.map((p) => (p.categoryId === updated.id ? { ...p, categoryName: updated.name } : p)));
+    router.refresh();
+  };
   const removeCategory = async (deleteProducts = false) => {
     if (!deletingCategory) return;
     setBusy(true);
@@ -543,6 +549,7 @@ export function ProductsList({
         onToggle={toggleCategory}
         onClear={clearCategories}
         onAdd={writable ? addCategory : undefined}
+        onRename={writable ? renameCategory : undefined}
         onDelete={writable ? (c) => setDeletingCategory(c) : undefined}
       />
     ) : null;

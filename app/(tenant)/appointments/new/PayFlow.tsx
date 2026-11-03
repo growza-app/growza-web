@@ -148,6 +148,8 @@ export function PayFlow({
   productsOnly = false,
   heading,
   nextTokenNo,
+  hideHead,
+  leaveRef,
   onSaleCompleted,
   reloadKey = 0,
 }: {
@@ -187,6 +189,13 @@ export function PayFlow({
   heading?: string;
   /** Daily sequential token number for today's POS queue. */
   nextTokenNo?: number | null;
+  /**
+   * Owner, 2026-11-03 — the POS draws this flow's header itself, in the bar at the very top of the screen.
+   * The title row said "Take an order" under a tab already reading Sell, and cost a row the phone did not have.
+   */
+  hideHead?: boolean;
+  /** Where the POS's own Back button reaches `leave`, so moving the control changes nothing it does. */
+  leaveRef?: { current: (() => void) | null };
   /** Notifies the POS shell when a sale completes so the live token queue updates immediately. */
   onSaleCompleted?: (saleId: string) => void;
   /** Incremented after a return or exchange on POS so the product shelf refreshes its live stock counts in place. */
@@ -1303,12 +1312,30 @@ export function PayFlow({
       router.push(backTo);
       return;
     }
-    if (productsOnly) {
+    /*
+     * Owner, 2026-11-03 — and only while there is a bill to clear.
+     *
+     * On a till reached from the nav or from Home there IS no `backTo`, so Back meant `nextCustomer()` whatever
+     * the screen held. With nothing on the bill that clears nothing and goes nowhere: the arrow at the top of
+     * the screen looked broken, which is what it was reported as. An arrow has to arrive somewhere.
+     */
+    if (productsOnly && lines.length > 0) {
       nextCustomer();
       return;
     }
     router.push('/');
   };
+  // Assigned on every render: `leave` closes over state that moves (backTo, the lines), so a stale one would
+  // clear a bill that is no longer on the screen. Cleared when the flow unmounts, for the same reason: the
+  // owner of the ref outlives this component, and a Back arrow left pointing at a gone screen's `leave` is the
+  // stale closure this effect exists to prevent.
+  useEffect(() => {
+    if (!leaveRef) return;
+    leaveRef.current = leave;
+    return () => {
+      leaveRef.current = null;
+    };
+  });
   const payToken = token ? `&token=${encodeURIComponent(token.id)}${token.locationId ? `&location=${encodeURIComponent(token.locationId)}` : ''}` : '';
   const simpleForm = `/appointments/new?purpose=payment${payToken}`;
   const fullForm = `/appointments/new?purpose=payment&full=1${payToken}`;
@@ -1683,26 +1710,28 @@ export function PayFlow({
   if (wide) {
     return (
       <div className="pf pf-wide">
-        <header className="pf-head">
-          <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
-            <IconArrowLeft />
-          </button>
-          <span className="pf-head-stack">
-            <h1 className="pf-title">{productsOnly ? (heading ?? t('sellTitle', { product: nouns.product })) : t('whatTitle')}</h1>
-            {token ? (
-              branchName ? <span className="pf-at">{t('at', { branch: branchName })}</span> : null
-            ) : (
-              <HeaderBranchPicker variant="line" />
-            )}
-          </span>
-          {/*
-            Owner, 2026-10-14 — no Simple / Full switch on the wide till. The one-page form earned its door on
-            the phone for the sale the three taps could not write: a package, a client added by name and number.
-            The Desk sells packages and adds clients, so the switch here was a way to a smaller screen that does
-            less. `?full=1` still opens the one-page form for anyone who types it.
-          */}
-          <span className="pf-head-gap" aria-hidden="true" />
-        </header>
+        {hideHead ? null : (
+          <header className="pf-head">
+            <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
+              <IconArrowLeft />
+            </button>
+            <span className="pf-head-stack">
+              <h1 className="pf-title">{productsOnly ? (heading ?? t('sellTitle', { product: nouns.product })) : t('whatTitle')}</h1>
+              {token ? (
+                branchName ? <span className="pf-at">{t('at', { branch: branchName })}</span> : null
+              ) : (
+                <HeaderBranchPicker variant="line" />
+              )}
+            </span>
+            {/*
+              Owner, 2026-10-14 — no Simple / Full switch on the wide till. The one-page form earned its door on
+              the phone for the sale the three taps could not write: a package, a client added by name and number.
+              The Desk sells packages and adds clients, so the switch here was a way to a smaller screen that does
+              less. `?full=1` still opens the one-page form for anyone who types it.
+            */}
+            <span className="pf-head-gap" aria-hidden="true" />
+          </header>
+        )}
         {scanNote ? <div role="status" className="pf-error">{scanNote}</div> : null}
         {tokenGone ? (
           <div role="alert" className="pf-error">
@@ -1981,16 +2010,18 @@ export function PayFlow({
       */}
       {productsOnly ? (
         <>
-          <header className="pf-head">
-            <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
-              <IconArrowLeft />
-            </button>
-            <span className="pf-head-stack">
-              <h1 className="pf-title">{heading ?? t('sellTitle', { product: nouns.product })}</h1>
-              <HeaderBranchPicker variant="line" />
-            </span>
-            <span className="pf-head-gap" aria-hidden="true" />
-          </header>
+          {hideHead ? null : (
+            <header className="pf-head">
+              <button type="button" className="pf-back" aria-label={nv.back} onClick={leave}>
+                <IconArrowLeft />
+              </button>
+              <span className="pf-head-stack">
+                <h1 className="pf-title">{heading ?? t('sellTitle', { product: nouns.product })}</h1>
+                <HeaderBranchPicker variant="line" />
+              </span>
+              <span className="pf-head-gap" aria-hidden="true" />
+            </header>
+          )}
           {scanNote ? <div role="status" className="pf-error">{scanNote}</div> : null}
         </>
       ) : (

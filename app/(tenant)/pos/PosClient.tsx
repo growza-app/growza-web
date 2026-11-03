@@ -7,7 +7,7 @@ import { api, formatMoney, type Appointment } from '../lib/api';
 import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
 import { useBranch } from '../components/BranchProvider';
 import { useSession } from '../components/SessionProvider';
-import { IconCheck } from '../components/icons';
+import { IconCheck, IconArrowLeft } from '../components/icons';
 import { SellProductClient } from '../products/sell/SellProductClient';
 import { buildSaleRows, type SaleRow } from '../sales/SalesClient';
 import { ReturnProductSheet } from '../sales/ReturnProductSheet';
@@ -18,6 +18,7 @@ import {
   returnLookbackFrom,
   type PosDailyToken,
   type PosMode,
+  type PosTokenOverride,
   type PosTokenState,
 } from './pos-helpers';
 import { useNouns } from '../lib/use-nouns';
@@ -58,6 +59,7 @@ export function PosClient({
   backTo?: '/products' | '/sales';
 }) {
   const t = useTranslations('pos');
+  const tc = useTranslations('chrome');
   const locale = useLocale();
   const { Customer } = useNouns();
   const branch = useBranch();
@@ -71,11 +73,13 @@ export function PosClient({
   const [loading, setLoading] = useState(false);
   /** Today's raw appointments/sales for daily token generation and live queue tracking. */
   const [todayRows, setTodayRows] = useState<Appointment[]>([]);
-  const [tokenOverrides, setTokenOverrides] = useState<Record<string, PosTokenState>>({});
+  const [tokenOverrides, setTokenOverrides] = useState<Record<string, PosTokenOverride>>({});
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
   const [reloadKey, setReloadKey] = useState(0);
   /** Only the latest open may answer: a slow read from an earlier open must not put old bills under a newer sheet. */
   const opened = useRef(0);
+  /* Owner, 2026-11-03 — the till's own Back, moved up into the bar. The action is still the till's. */
+  const leaveRef = useRef<(() => void) | null>(null);
 
   const storageKey = posQueueStorageKey(location, todayISO);
 
@@ -84,7 +88,7 @@ export function PosClient({
     try {
       const raw = typeof window !== 'undefined' ? window.localStorage.getItem(storageKey) : null;
       if (raw) {
-        const parsed = JSON.parse(raw) as Record<string, PosTokenState>;
+        const parsed = JSON.parse(raw) as Record<string, PosTokenOverride>;
         if (parsed && typeof parsed === 'object') {
           setTokenOverrides(parsed);
           return;
@@ -110,16 +114,15 @@ export function PosClient({
 
   useEffect(() => {
     void loadTodayTokens();
-    const timer = window.setInterval(() => {
-      setNowMs(Date.now());
-    }, 30_000);
-    return () => window.clearInterval(timer);
   }, [loadTodayTokens]);
 
   const setTokenState = useCallback(
-    (visitId: string, state: PosTokenState) => {
+    (visitId: string, state: PosTokenState, recalled = false) => {
+      const now = Date.now();
+      const val: PosTokenOverride = recalled && state === 'preparing' ? `preparing:${now}` : state;
+      if (recalled && state === 'preparing') setNowMs(now);
       setTokenOverrides((prev) => {
-        const next = { ...prev, [visitId]: state };
+        const next = { ...prev, [visitId]: val };
         try {
           window.localStorage.setItem(storageKey, JSON.stringify(next));
         } catch {
@@ -143,14 +146,30 @@ export function PosClient({
     () => buildDailyTokens(todayRows, location, tokenOverrides, nowMs),
     [todayRows, location, tokenOverrides, nowMs],
   );
-  const preparingTokens = useMemo(() => dailyTokens.filter((tk) => tk.state === 'preparing'), [dailyTokens]);
+  const preparingTokens = useMemo(
+    () =>
+      [...dailyTokens.filter((tk) => tk.state === 'preparing')].sort(
+        (a, b) => b.elapsedMin - a.elapsedMin || a.tokenNo - b.tokenNo,
+      ),
+    [dailyTokens],
+  );
   const completedTokens = useMemo(
     () => [...dailyTokens.filter((tk) => tk.state === 'completed')].reverse(),
     [dailyTokens],
   );
   const nextTokenNo = dailyTokens.length + 1;
-  const lastTokenLabel = dailyTokens.length > 0 ? dailyTokens[dailyTokens.length - 1]!.tokenLabel : t('noneIssuedYet');
-  const todayTotalMinor = useMemo(() => dailyTokens.reduce((sum, tk) => sum + tk.totalMinor, 0), [dailyTokens]);
+
+  // Only tick `nowMs` when the Queue tab is open and has active tokens waiting; zero background timers on Sell/Return.
+  const hasPreparing = preparingTokens.length > 0;
+  useEffect(() => {
+    if (mode !== 'queue' || !hasPreparing) return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        setNowMs(Date.now());
+      }
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, [mode, hasPreparing]);
 
   const formatTime = useCallback(
     (iso: string) => {
@@ -279,21 +298,30 @@ export function PosClient({
     if (initialMode === 'return' && canReturn) void openReturn();
   }, [initialMode, canReturn, openReturn]);
 
-  const renderTokenCard = (tk: PosDailyToken, isPreparing: boolean) => {
+  const renderTokenCard = (tk: PosDailyToken, isPreparing: boolean, isFirst = false) => {
     const guest = tk.customerName || t('walkInGuest');
     const elapsedText = tk.elapsedMin <= 0 ? t('elapsedJustNow') : t('elapsedMin', { min: tk.elapsedMin });
+    const isOverdue = isPreparing && tk.elapsedMin >= 15;
+    const isWarn = isPreparing && tk.elapsedMin >= 10 && tk.elapsedMin < 15;
+    const slaTone = isOverdue ? ' is-overdue' : isWarn ? ' is-warn' : ' is-fresh';
+    const cardStateClass = isPreparing
+      ? ` is-preparing${isFirst ? ' is-first' : ''}${isOverdue ? ' is-overdue' : ''}`
+      : ' is-completed';
     return (
-      <article key={tk.id} className={`pos-qcard${isPreparing ? ' is-preparing' : ' is-completed'}`}>
+      <article key={tk.id} className={`pos-qcard${cardStateClass}`}>
+        {isPreparing && isFirst ? (
+          <div className={`pos-qcard-priority${isOverdue ? ' is-overdue' : ''}`}>
+            <span>⚡ {isOverdue ? t('deliverFirstOverdue') : t('deliverFirst')}</span>
+          </div>
+        ) : null}
         <div className="pos-qcard-top">
           <div className="pos-qcard-id">
             <span className="pos-qcard-token">{tk.tokenLabel}</span>
             <span className={`pos-qcard-chan is-${tk.channel}`}>{channelLabel(tk.channel)}</span>
-            <span className="pos-qcard-guest">{guest}</span>
           </div>
           <div className="pos-qcard-meta">
-            <span className="pos-qcard-time">{formatTime(tk.startAt)}</span>
             {isPreparing ? (
-              <span className="pos-qcard-elapsed">{elapsedText}</span>
+              <span className={`pos-qcard-elapsed${slaTone}`}>{elapsedText}</span>
             ) : (
               <span className="pos-qcard-done-pill">
                 <IconCheck />
@@ -301,6 +329,10 @@ export function PosClient({
               </span>
             )}
           </div>
+        </div>
+        <div className="pos-qcard-sub">
+          <span className="pos-qcard-guest">{guest}</span>
+          <span className="pos-qcard-time">{formatTime(tk.startAt)}</span>
         </div>
         <ul className="pos-qcard-items">
           {tk.items.map((item, i) => (
@@ -311,8 +343,11 @@ export function PosClient({
             </li>
           ))}
         </ul>
-        <div className="pos-qcard-foot">
-          {canReturn ? <strong className="pos-qcard-total">{formatMoney(String(tk.totalMinor))}</strong> : <span />}
+        <div className={`pos-qcard-foot${isPreparing ? ' is-preparing' : ''}`}>
+          <div className="pos-qcard-total-row">
+            {canReturn ? <span className="pos-qcard-total-label">{t('totalPaid')}</span> : null}
+            {canReturn ? <strong className="pos-qcard-total">{formatMoney(String(tk.totalMinor))}</strong> : <span />}
+          </div>
           {isPreparing ? (
             <button
               type="button"
@@ -320,13 +355,13 @@ export function PosClient({
               onClick={() => setTokenState(tk.id, 'completed')}
             >
               <IconCheck />
-              <span>{t('markCompleted')}</span>
+              <span>{t('handOverToken', { token: tk.tokenLabel })}</span>
             </button>
           ) : (
             <button
               type="button"
               className="btn btn-ghost pos-qcard-recall-btn"
-              onClick={() => setTokenState(tk.id, 'preparing')}
+              onClick={() => setTokenState(tk.id, 'preparing', true)}
             >
               {t('recallToQueue')}
             </button>
@@ -390,12 +425,15 @@ export function PosClient({
         </header>
       ) : canReturn ? (
         <div className="pos-bar">
+          <button type="button" className="pos-bar-back" aria-label={tc('back')} onClick={() => leaveRef.current?.()}>
+            <IconArrowLeft />
+          </button>
           <div className="page-tabs pos-tabs" role="tablist" aria-label={t('modes')}>
             <button type="button" role="tab" aria-selected={mode === 'sell'} className={`page-tab${mode === 'sell' ? ' active' : ''}`} onClick={closeReturn}>
               {t('sell')}
             </button>
             <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab pos-tab-queue${mode === 'queue' ? ' active' : ''}`} onClick={openQueue}>
-              <span>{t('queue')}</span>
+              <span>{t('queue')}</span>{' '}
               <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
             </button>
             <button type="button" role="tab" aria-selected={mode === 'return'} className={`page-tab${mode === 'return' ? ' active' : ''}`} onClick={() => mode !== 'return' && void openReturn()}>
@@ -403,18 +441,21 @@ export function PosClient({
             </button>
           </div>
           <div className="pos-bar-right">
+            {/*
+              Which branch this till is selling at. The flow underneath draws no header here (`hideHead`), so
+              without this a business with more than one branch had no branch control on the till at all — and
+              the branch decides the shelf, the prices and whose takings the sale lands in. Both variants, as
+              every other header does: CSS shows the pill on a laptop and the line on a phone, where this row
+              is otherwise empty. A single-branch business sees nothing, as everywhere else.
+            */}
+            <div className="pos-bar-branch">
+              <HeaderBranchPicker variant="pill" />
+              <HeaderBranchPicker variant="line" />
+            </div>
             {loading ? (
               <span className="pos-note" role="status">
                 {t('loadingBills')}
               </span>
-            ) : null}
-            <span className="pos-next-token-pill">
-              {t('nextToken', { token: formatTokenNo(nextTokenNo) })}
-            </span>
-            {mode !== 'queue' && preparingTokens.length === 0 ? (
-              <button type="button" className="pos-bar-completed" onClick={openQueue}>
-                {t('completedLabel', { count: completedTokens.length })} →
-              </button>
             ) : null}
             <div className="pos-bar-shortcuts" aria-hidden="true">
               <span className="pos-kbd-inline"><kbd>F2</kbd> {t('shortcutSearch')}</span>
@@ -429,24 +470,24 @@ export function PosClient({
         </div>
       ) : (
         <div className="pos-bar pos-bar-minimal">
+          <button type="button" className="pos-bar-back" aria-label={tc('back')} onClick={() => leaveRef.current?.()}>
+            <IconArrowLeft />
+          </button>
           <div className="page-tabs pos-tabs" role="tablist" aria-label={t('modes')}>
             <button type="button" role="tab" aria-selected={mode === 'sell'} className={`page-tab${mode === 'sell' ? ' active' : ''}`} onClick={closeReturn}>
               {t('sell')}
             </button>
             <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab pos-tab-queue${mode === 'queue' ? ' active' : ''}`} onClick={openQueue}>
-              <span>{t('queue')}</span>
+              <span>{t('queue')}</span>{' '}
               <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
             </button>
           </div>
           <div className="pos-bar-right">
-            <span className="pos-next-token-pill">
-              {t('nextToken', { token: formatTokenNo(nextTokenNo) })}
-            </span>
-            {mode !== 'queue' && preparingTokens.length === 0 ? (
-              <button type="button" className="pos-bar-completed" onClick={openQueue}>
-                {t('completedLabel', { count: completedTokens.length })} →
-              </button>
-            ) : null}
+            {/* As above: the till's branch, since the flow underneath draws no header of its own. */}
+            <div className="pos-bar-branch">
+              <HeaderBranchPicker variant="pill" />
+              <HeaderBranchPicker variant="line" />
+            </div>
             <div className="pos-bar-shortcuts" aria-hidden="true">
               <span className="pos-kbd-inline"><kbd>F2</kbd> {t('shortcutSearch')}</span>
               <span className="pos-kbd-inline"><kbd>F4</kbd> {t('shortcutClient', { customer: Customer })}</span>
@@ -469,56 +510,12 @@ export function PosClient({
         </div>
       ) : null}
 
-      {mode !== 'queue' ? (
-        <section
-          className={`pos-token-strip${preparingTokens.length === 0 ? ' is-empty' : ' is-live'}`}
-          aria-label={t('queue')}
-        >
-          <div className="pos-token-strip-head">
-            <span className="pos-token-strip-dot" aria-hidden="true" />
-            <strong className="pos-token-strip-title">
-              {t('inQueueLabel', { count: preparingTokens.length })}
-            </strong>
-          </div>
-          {preparingTokens.length > 0 ? (
-            <div className="pos-token-strip-list">
-              {preparingTokens.map((tk) => (
-                <div key={tk.id} className="pos-token-chip">
-                  <span className="pos-token-chip-no">{tk.tokenLabel}</span>
-                  <span className={`pos-token-chip-chan is-${tk.channel}`}>{channelLabel(tk.channel)}</span>
-                  <span className="pos-token-chip-items" title={tk.itemsSummary}>
-                    {tk.itemsSummary}
-                  </span>
-                  <span className="pos-token-chip-time">
-                    {tk.elapsedMin <= 0 ? t('elapsedJustNow') : t('elapsedMinShort', { min: tk.elapsedMin })}
-                  </span>
-                  <button
-                    type="button"
-                    className="pos-token-chip-done"
-                    onClick={() => setTokenState(tk.id, 'completed')}
-                    aria-label={`${tk.tokenLabel} ${t('markCompleted')}`}
-                  >
-                    <IconCheck />
-                    <span>{t('markReady')}</span>
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="pos-token-strip-empty">
-              {t('allDoneStrip', { token: formatTokenNo(nextTokenNo) })}
-            </p>
-          )}
-          <button type="button" className="pos-token-strip-more" onClick={openQueue}>
-            {t('completedLabel', { count: completedTokens.length })} →
-          </button>
-        </section>
-      ) : null}
-
       <div className="pos-body" hidden={mode === 'queue'}>
         <SellProductClient
           timezone={timezone}
           backTo={backTo}
+          hideHead
+          leaveRef={leaveRef}
           heading={heading}
           nextTokenNo={nextTokenNo}
           onSaleCompleted={handleSaleCompleted}
@@ -528,40 +525,14 @@ export function PosClient({
 
       {mode === 'queue' ? (
         <section className="pos-queue-board" aria-label={t('queue')}>
-          <div className="pos-queue-kpis">
-            <div className="pos-queue-kpi">
-              <span className="pos-queue-kpi-label">{t('kpiLastToken')}</span>
-              <strong className="pos-queue-kpi-val">{lastTokenLabel}</strong>
-              <span className="pos-queue-kpi-sub">{t('nextToken', { token: formatTokenNo(nextTokenNo) })}</span>
-            </div>
-            <div className="pos-queue-kpi is-preparing">
-              <span className="pos-queue-kpi-label">{t('kpiInQueue')}</span>
-              <strong className="pos-queue-kpi-val">{preparingTokens.length}</strong>
-              <span className="pos-queue-kpi-sub">{t('statusPreparing')}</span>
-            </div>
-            <div className="pos-queue-kpi is-completed">
-              <span className="pos-queue-kpi-label">{t('kpiCompletedToday')}</span>
-              <strong className="pos-queue-kpi-val">{completedTokens.length}</strong>
-              <span className="pos-queue-kpi-sub">{t('statusCompleted')}</span>
-            </div>
-            <div className="pos-queue-kpi">
-              <span className="pos-queue-kpi-label">{t('kpiTotalOrders')}</span>
-              <strong className="pos-queue-kpi-val">{dailyTokens.length}</strong>
-              {canReturn ? <span className="pos-queue-kpi-sub">{formatMoney(String(todayTotalMinor))}</span> : null}
-            </div>
-          </div>
-
           <div className="pos-queue-cols">
             <div className="pos-queue-col">
               <header className="pos-queue-col-head">
-                <div>
-                  <h2 className="pos-queue-col-title">
-                    <span className="pos-queue-dot is-preparing" aria-hidden="true" />
-                    {t('preparingColTitle')}
-                    <span className="pos-queue-col-count">{preparingTokens.length}</span>
-                  </h2>
-                  <p className="pos-queue-col-sub">{t('preparingColSub')}</p>
-                </div>
+                <h2 className="pos-queue-col-title">
+                  <span className="pos-queue-dot is-preparing" aria-hidden="true" />
+                  {t('preparingColTitle')}
+                  <span className="pos-queue-col-count">{preparingTokens.length}</span>
+                </h2>
                 <button type="button" className="btn btn-primary pos-queue-new-btn" onClick={closeReturn}>
                   + {t('backToSell')} ({formatTokenNo(nextTokenNo)})
                 </button>
@@ -572,21 +543,18 @@ export function PosClient({
                 </div>
               ) : (
                 <div className="pos-queue-list">
-                  {preparingTokens.map((tk) => renderTokenCard(tk, true))}
+                  {preparingTokens.map((tk, idx) => renderTokenCard(tk, true, idx === 0))}
                 </div>
               )}
             </div>
 
             <div className="pos-queue-col">
               <header className="pos-queue-col-head">
-                <div>
-                  <h2 className="pos-queue-col-title">
-                    <span className="pos-queue-dot is-completed" aria-hidden="true" />
-                    {t('completedColTitle')}
-                    <span className="pos-queue-col-count">{completedTokens.length}</span>
-                  </h2>
-                  <p className="pos-queue-col-sub">{t('completedColSub')}</p>
-                </div>
+                <h2 className="pos-queue-col-title">
+                  <span className="pos-queue-dot is-completed" aria-hidden="true" />
+                  {t('completedColTitle')}
+                  <span className="pos-queue-col-count">{completedTokens.length}</span>
+                </h2>
               </header>
               {completedTokens.length === 0 ? (
                 <div className="pos-queue-empty">

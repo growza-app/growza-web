@@ -33,7 +33,7 @@ export function Card({
       // `admin-card` always, so the phone rules can reach any card; the
       // caller's own class is for placement (a dashboard grid area).
       className={className ? `admin-card ${className}` : 'admin-card'}
-      style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, padding: 20, ...style }}
+      style={style}
     >
       {children}
     </div>
@@ -42,8 +42,8 @@ export function Card({
 
 export function SectionTitle({ title, right }: { title: string; right?: ReactNode }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>{title}</h3>
+    <div className="admin-section-title">
+      <h3>{title}</h3>
       {right ?? null}
     </div>
   );
@@ -51,21 +51,8 @@ export function SectionTitle({ title, right }: { title: string; right?: ReactNod
 
 export function Pill({ text, fg, bg }: { text: string; fg: string; bg: string }) {
   return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        fontSize: 12,
-        fontWeight: 700,
-        color: fg,
-        background: bg,
-        padding: '4px 10px',
-        borderRadius: 8,
-        whiteSpace: 'nowrap',
-      }}
-    >
-      <span style={{ width: 6, height: 6, borderRadius: '50%', background: fg }} />
+    <span className="admin-pill" style={{ color: fg, background: bg }}>
+      <span className="admin-pill-dot" style={{ background: fg }} />
       {text}
     </span>
   );
@@ -541,12 +528,12 @@ export const ERROR_COLOR = 'oklch(0.5 0.18 25)';
 
 const inputBase: CSSProperties = {
   width: '100%',
-  height: 44,
-  padding: '0 14px',
-  borderRadius: 11,
+  height: '2.75rem',
+  padding: '0 0.875rem',
+  borderRadius: '0.6875rem',
   border: `1px solid ${oklch.borderStrong}`,
   background: oklch.inputBg,
-  fontSize: 14,
+  fontSize: '0.875rem',
   fontWeight: 600,
   outline: 'none',
 };
@@ -563,11 +550,13 @@ const inputBase: CSSProperties = {
  */
 export function TextInput({
   invalid,
+  className,
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean; ref?: React.Ref<HTMLInputElement> }) {
   return (
     <input
       {...props}
+      className={className ? `admin-input ${className}` : 'admin-input'}
       aria-invalid={invalid || undefined}
       style={{ ...inputBase, ...(invalid ? { border: `1px solid ${ERROR_COLOR}` } : {}), ...props.style }}
     />
@@ -577,6 +566,7 @@ export function TextInput({
 export function Select({
   options,
   invalid,
+  className,
   ...props
 }: React.SelectHTMLAttributes<HTMLSelectElement> & {
   /** A plain string is its own label; `{ value, label }` when the two differ (Jira GRW-384). */
@@ -586,11 +576,12 @@ export function Select({
   return (
     <select
       {...props}
+      className={className ? `admin-select ${className}` : 'admin-select'}
       aria-invalid={invalid || undefined}
       // Same shorthand-not-longhand rule as TextInput above.
       style={{
         ...inputBase,
-        padding: '0 12px',
+        padding: '0 0.75rem',
         cursor: 'pointer',
         ...(invalid ? { border: `1px solid ${ERROR_COLOR}` } : {}),
         ...props.style,
@@ -637,25 +628,11 @@ export function PrimaryButton({
   return (
     <button
       type={type}
+      className="admin-btn-primary"
       onClick={onClick}
       disabled={disabled}
       title={title}
-      style={{
-        height: 40,
-        padding: '0 16px',
-        borderRadius: 11,
-        border: 'none',
-        background: oklch.accent,
-        color: 'white',
-        fontSize: 13.5,
-        fontWeight: 700,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.5 : 1,
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 8,
-        ...style,
-      }}
+      style={style}
     >
       {children}
     </button>
@@ -681,22 +658,12 @@ export function SecondaryButton({
   return (
     <button
       type="button"
+      className="admin-btn-secondary"
+      data-danger={danger ? 'true' : undefined}
       onClick={onClick}
       disabled={disabled}
       title={title}
-      style={{
-        height: 40,
-        padding: '0 16px',
-        borderRadius: 11,
-        border: `1px solid ${oklch.borderStrong}`,
-        background: 'white',
-        color: danger ? oklch.danger : 'oklch(0.36 0.02 155)',
-        fontSize: 13.5,
-        fontWeight: 700,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.5 : 1,
-        ...style,
-      }}
+      style={style}
     >
       {children}
     </button>

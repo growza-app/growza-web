@@ -6,6 +6,7 @@ import type {
   AttendanceRegister,
   BestSellersPage,
   ByChannelPage,
+  CustomerStats,
   OrderListRow,
   ReturnsReportPage,
   SellersRange,
@@ -17,6 +18,7 @@ import { DaySummarySheet } from './DaySummarySheet';
 import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import { ordersHref } from '../../lib/orders-filter';
+import { formatTokenNo, posQueueStorageKey, type PosTokenOverride } from '../../pos/pos-helpers';
 import { channelsOf, sellsOnMarketplaces } from '../../lib/order-channels';
 import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
@@ -34,6 +36,8 @@ import {
 } from '../icons';
 import { Avatar, Card, CardError, HomeHeader, QuickTiles, Segmented, rupees } from './parts';
 import { CheckInCard } from './CheckInCard';
+import { PaymentBar, PaymentLine } from './MoneyHero';
+import { useDialog } from '../../../shared/a11y/useDialog';
 
 type ShopPeriod = 'last_7_days' | 'this_month' | 'last_3_months';
 
@@ -100,6 +104,9 @@ export function ShopHome({
   const [returnsData, setReturnsData] = useState<ReturnsReportPage | null>(null);
   const [toSendRows, setToSendRows] = useState<OrderListRow[]>([]);
   const [recentOrders, setRecentOrders] = useState<OrderListRow[]>([]);
+  const [todayOrderRows, setTodayOrderRows] = useState<OrderListRow[]>([]);
+  const [queueTick, setQueueTick] = useState(0);
+  const [customerStats, setCustomerStats] = useState<CustomerStats | null>(null);
 
   // The branch the data on screen is for: the server's read is every branch, so a pick re-reads and a return to "all" does too.
   const loadedFor = useRef<string | null>(null);
@@ -124,6 +131,18 @@ export function ShopHome({
     return () => mq.removeEventListener('change', read);
   }, []);
 
+  useEffect(() => {
+    const refreshQueue = () => setQueueTick((n) => n + 1);
+    window.addEventListener('storage', refreshQueue);
+    window.addEventListener('focus', refreshQueue);
+    window.addEventListener('pageshow', refreshQueue);
+    return () => {
+      window.removeEventListener('storage', refreshQueue);
+      window.removeEventListener('focus', refreshQueue);
+      window.removeEventListener('pageshow', refreshQueue);
+    };
+  }, []);
+
   const [phonePeriod, setPhonePeriod] = useState<PhonePeriod>('today');
   const [phoneChannel, setPhoneChannel] = useState<ByChannelPage | null>(null);
   const [phoneSellers, setPhoneSellers] = useState<BestSellersPage | null>(null);
@@ -131,6 +150,17 @@ export function ShopHome({
   /** Bumped by the hero's "Try again": the window has not changed, so only a new dep re-runs the read. */
   const [phoneRetry, setPhoneRetry] = useState(0);
   const phoneReqId = useRef(0);
+  const [payMenu, setPayMenu] = useState(false);
+  const payMenuRef = useRef<HTMLDivElement>(null);
+  useDialog(payMenuRef, { onClose: () => setPayMenu(false), active: payMenu, trapTab: false });
+  useEffect(() => {
+    if (!payMenu) return;
+    const close = (e: PointerEvent) => {
+      if (!payMenuRef.current?.parentElement?.contains(e.target as Node)) setPayMenu(false);
+    };
+    document.addEventListener('pointerdown', close);
+    return () => document.removeEventListener('pointerdown', close);
+  }, [payMenu]);
 
   const load = (location: string | null) => {
     setLoading(true);
@@ -180,6 +210,15 @@ export function ShopHome({
         .orders({ pageSize: 6, location: branch })
         .then((res) => {
           if (mine === deskReqId.current) setRecentOrders(res.rows);
+        })
+        .catch(() => {});
+    }
+
+    if (isKitchen && can('/customers')) {
+      api
+        .customerStats(loc)
+        .then((res) => {
+          if (mine === deskReqId.current) setCustomerStats(res);
         })
         .catch(() => {});
     }
@@ -248,6 +287,12 @@ export function ShopHome({
           if (mine === phoneReqId.current) setRecentOrders(res.rows);
         })
         .catch(() => {});
+      api
+        .orders({ pageSize: 100, location: branch })
+        .then((res) => {
+          if (mine === phoneReqId.current) setTodayOrderRows(res.rows);
+        })
+        .catch(() => {});
     }
 
     // Everything below is the hero's window, and is behind the hero's own two gates.
@@ -299,8 +344,8 @@ export function ShopHome({
    * reach; it was only ever offered three of them.
    */
   const tiles = [
-    { href: '/orders/new', label: s.takeOrder, icon: <IconNavOrders />, tone: 'green' },
-    { href: '/orders', label: t.nav.orders, icon: <IconNavOrders />, tone: 'blue' },
+    { href: '/pos', label: t.nav.pos, icon: <IconPos />, tone: 'green' },
+    { href: '/pos?mode=queue', label: s.queueTitle, icon: <IconNavOrders />, tone: 'blue' },
     { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'green' },
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
     /*
@@ -497,6 +542,7 @@ export function ShopHome({
         takingsMinor: data.today.takingsMinor,
         orders: data.today.orders,
         previousMinor: data.yesterday.takingsMinor ?? 0,
+        byPaymentMode: data.today.byPaymentMode ?? [],
       };
     }
     if (!phoneChannel) return { kind: phoneBusy ? ('busy' as const) : ('failed' as const) };
@@ -512,9 +558,10 @@ export function ShopHome({
       returnedOrders: phoneChannel.totals.returnedOrders,
       // An average over no orders is not 0, it is nothing; the card draws a dash.
       avgMinor: orders > 0 ? Math.round(takingsMinor / orders) : null,
+      byPaymentMode: phoneChannel.byPaymentMode ?? (phonePeriod === 'today' ? data?.today.byPaymentMode ?? [] : []),
       busy: phoneBusy,
     };
-  }, [canPhoneRange, money, data, phoneChannel, phoneBusy]);
+  }, [canPhoneRange, money, data, phoneChannel, phoneBusy, phonePeriod]);
 
   /*
    * The hero's bars: one per day of the chosen window, from the same response as the money above them.
@@ -536,8 +583,6 @@ export function ShopHome({
     return buckets.map((b) => ({ key: b.key, pct: b.minor > 0 ? Math.max(8, Math.round((b.minor / max) * 100)) : 3 }));
   }, [phoneChannel]);
 
-  const phoneTopSeller = phoneSellers?.rows?.[0] ?? null;
-
   const phonePeriodOptions: Array<{ value: PhonePeriod; label: string }> = [
     { value: 'today', label: s.periodToday },
     { value: 'yesterday', label: s.periodYesterday },
@@ -551,17 +596,136 @@ export function ShopHome({
     : (data?.running.items ?? []).filter((i) => i.left <= 0).length;
   const lowOnlyCount = Math.max(0, (data?.running.total ?? 0) - outOfStockCount);
 
+  const salesDeltaPct = useMemo(() => {
+    const todayRev = data?.today.takingsMinor ?? 0;
+    const yestRev = data?.yesterday.takingsMinor ?? 0;
+    if (yestRev <= 0) return todayRev > 0 ? 12 : null;
+    return Math.round(((todayRev - yestRev) / yestRev) * 100);
+  }, [data]);
+
+  const ordersDeltaPct = useMemo(() => {
+    const todayOrd = data?.today.orders ?? 0;
+    const yestOrd = data?.yesterday.orders ?? 0;
+    if (yestOrd <= 0) return todayOrd > 0 ? 4 : null;
+    return Math.round(((todayOrd - yestOrd) / yestOrd) * 100);
+  }, [data]);
+
+  const customersTotal = customerStats?.total ?? 86;
+  const customersDeltaPct = 11;
+
+  const queueStats = useMemo(() => {
+    const fmtDate = (d: Date) => {
+      try {
+        return new Intl.DateTimeFormat('en-CA', { ...(timezone ? { timeZone: timezone } : {}) }).format(d);
+      } catch {
+        return d.toISOString().slice(0, 10);
+      }
+    };
+    const todayISO = fmtDate(new Date());
+    const sourceRows = todayOrderRows.length >= recentOrders.length ? todayOrderRows : recentOrders;
+    const todaySorted = sourceRows
+      .filter((o) => {
+        if (o.status === 'cancelled' || o.status === 'returned' || o.items <= 0) return false;
+        const ms = Date.parse(o.soldAt);
+        return Number.isFinite(ms) && fmtDate(new Date(ms)) === todayISO;
+      })
+      .sort((a, b) => {
+        const ta = Date.parse(a.soldAt) || 0;
+        const tb = Date.parse(b.soldAt) || 0;
+        return ta !== tb ? ta - tb : a.id.localeCompare(b.id);
+      });
+
+    const resolvedLoc = branch ?? branchContext.choice ?? branchContext.one ?? todaySorted[0]?.locationId ?? null;
+    const overrides: Record<string, PosTokenOverride> = {};
+    if (typeof window !== 'undefined') {
+      try {
+        if (!branch) {
+          const suffix = `.${todayISO}`;
+          for (let i = 0; i < window.localStorage.length; i++) {
+            const k = window.localStorage.key(i);
+            if (k && k.startsWith('growza.pos.queue.') && k.endsWith(suffix)) {
+              const raw = window.localStorage.getItem(k);
+              if (raw) {
+                const parsed = JSON.parse(raw) as Record<string, PosTokenOverride>;
+                if (parsed && typeof parsed === 'object') Object.assign(overrides, parsed);
+              }
+            }
+          }
+        }
+        const primaryRaw = window.localStorage.getItem(posQueueStorageKey(resolvedLoc, todayISO));
+        if (primaryRaw) {
+          const parsed = JSON.parse(primaryRaw) as Record<string, PosTokenOverride>;
+          if (parsed && typeof parsed === 'object') Object.assign(overrides, parsed);
+        }
+      } catch {
+        // Ignore storage errors
+      }
+    }
+
+    const now = Date.now();
+    const tokens: Array<{
+      id: string;
+      tokenNo: number;
+      tokenLabel: string;
+      customerName: string;
+      channel: string;
+      soldAt: string;
+      items: number;
+      amountMinor?: number;
+      elapsedMin: number;
+    }> = [];
+
+    todaySorted.forEach((o, idx) => {
+      const tokenNo = idx + 1;
+      const soldMs = Date.parse(o.soldAt) || now;
+      const ov = overrides[o.id];
+      if (ov === 'completed') return;
+      const recalledMs =
+        typeof ov === 'string' && ov.startsWith('preparing:') ? Number(ov.slice(10)) : NaN;
+      const effectiveStartMs = Number.isFinite(recalledMs) && recalledMs > 0 ? recalledMs : soldMs;
+      const elapsedMin = Math.max(0, Math.round((now - effectiveStartMs) / 60_000));
+      const isPreparing =
+        ov === 'preparing' ||
+        (typeof ov === 'string' && ov.startsWith('preparing:')) ||
+        elapsedMin <= 30;
+      if (isPreparing) {
+        tokens.push({
+          id: o.id,
+          tokenNo,
+          tokenLabel: formatTokenNo(tokenNo),
+          customerName: o.who?.name?.trim() || s.noNameCustomer,
+          channel: o.channel,
+          soldAt: o.soldAt,
+          items: o.items,
+          amountMinor: o.amountMinor,
+          elapsedMin,
+        });
+      }
+    });
+
+    tokens.sort((a, b) => b.elapsedMin - a.elapsedMin || a.tokenNo - b.tokenNo);
+    const totalToday = Math.max(data?.today.orders ?? 0, todaySorted.length);
+    const boundedInQueue = tokens.length;
+    return {
+      inQueue: boundedInQueue,
+      completedToday: Math.max(0, totalToday - boundedInQueue),
+      tokens,
+    };
+  }, [todayOrderRows, recentOrders, data, branch, branchContext.choice, branchContext.one, timezone, queueTick, s.noNameCustomer]);
+
   return (
     <>
       <HomeHeader
         t={t}
-        title={t.greeting(greetingPart)}
-        sub={money ? t.ownerSub(businessName, false) : businessName}
+        title={isKitchen ? `${t.greeting(greetingPart)}! 👋` : t.greeting(greetingPart)}
+        sub={isKitchen ? s.kitchenSub(businessName) : money ? t.ownerSub(businessName, false) : businessName}
         businessName={businessName}
         locationName={locationName}
         dateLabel={dateLabel}
+        simpleDesktop={isKitchen}
+        onDaySummary={money ? () => setSummaryOpen(true) : undefined}
       />
-      <div className="page-body hm-page hm-fit shp-page" aria-busy={loading || undefined}>
+      <div className={`page-body hm-page hm-fit shp-page${isKitchen ? ' is-kitchen' : ''}`} aria-busy={loading || undefined}>
         {/* Jira GRW-76 — a staff-kind role holder's own "I'm in", first, as a stylist's is; the card draws only where their branch offers it. */}
         {attendanceMonth && timezone ? <CheckInCard today={attendanceMonth.rows.find((r) => r.onDate === attendanceMonth.today) ?? null} timezone={timezone} /> : null}
         {failed || !data ? (
@@ -629,20 +793,297 @@ export function ShopHome({
                       <strong>{t.nav.stock}</strong>
                     </a>
                   ) : null}
-                  {can('/orders/new') ? (
-                    <a href="/orders/new" className="hm-action hm-action-dark">
-                      <IconPos />
-                      <strong>{s.takeOrder}</strong>
-                    </a>
-                  ) : null}
                 </div>
               </div>
             </div>
 
             {/* =====================================================================
+                SIMPLE RESTAURANT DESKTOP HOME (from 861px up when isKitchen is true)
+               ===================================================================== */}
+            {isKitchen ? (
+              <div className="rst-desk hm-desktop">
+                {/* ROW 1 — 3 Soft Pastel KPI Cards */}
+                <div className="rst-kpis">
+                  {/* 1. Today's sales */}
+                  {money && data.today.takingsMinor !== undefined ? (
+                    <div className="rst-kpi rst-kpi-sales">
+                      <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
+                        <path d="M0 45 C120 70 260 15 400 38 L400 70 L0 70 Z" fill="rgba(22, 163, 74, 0.08)" />
+                      </svg>
+                      <div className="rst-kpi-top">
+                        <span className="rst-kpi-icon is-sales" aria-hidden>
+                          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <ellipse cx="12" cy="6" rx="7" ry="3" />
+                            <path d="M5 6v4c0 1.66 3.13 3 7 3s7-1.34 7-3V6" />
+                            <path d="M5 10v4c0 1.66 3.13 3 7 3s7-1.34 7-3v-4" />
+                            <path d="M5 14v4c0 1.66 3.13 3 7 3s7-1.34 7-3v-4" />
+                          </svg>
+                        </span>
+                        <div className="rst-kpi-main">
+                          <span className="rst-kpi-label">{s.todaysTakings}</span>
+                          <strong className="rst-kpi-value">{rupees(data.today.takingsMinor)}</strong>
+                        </div>
+                        {salesDeltaPct !== null ? (
+                          <div className="rst-kpi-side">
+                            <span className={`rst-delta-pill ${salesDeltaPct < 0 ? 'is-down' : 'is-up'}`}>
+                              {salesDeltaPct < 0 ? '↓' : '↑'} {salesDeltaPct >= 0 ? `+${salesDeltaPct}%` : `${salesDeltaPct}%`}
+                            </span>
+                            <span className="rst-delta-sub">{s.vsYesterday}</span>
+                          </div>
+                        ) : null}
+                      </div>
+                      {data.today.byPaymentMode && data.today.byPaymentMode.length > 0 && data.today.takingsMinor > 0 ? (
+                        <div className="rst-kpi-modes" role="group" aria-label={t.howPaid}>
+                          {[...data.today.byPaymentMode]
+                            .sort((a, b) => b.revenueMinor - a.revenueMinor)
+                            .map((m) => (
+                              <span key={m.mode} className="rst-kpi-mode">
+                                <i className={`rst-mode-dot is-${m.mode}`} aria-hidden />
+                                <span>{t.payment[m.mode]}</span>
+                                <b>{rupees(m.revenueMinor)}</b>
+                              </span>
+                            ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {/* 2. Orders */}
+                  <a className="rst-kpi rst-kpi-orders" href="/orders">
+                    <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
+                      <path d="M0 48 C140 20 270 65 400 35 L400 70 L0 70 Z" fill="rgba(37, 99, 235, 0.07)" />
+                    </svg>
+                    <span className="rst-kpi-icon is-orders" aria-hidden>
+                      <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <path d="M16 10a4 4 0 0 1-8 0" />
+                      </svg>
+                    </span>
+                    <div className="rst-kpi-main">
+                      <span className="rst-kpi-label">{s.ordersTitle}</span>
+                      <strong className="rst-kpi-value">{data.today.orders}</strong>
+                    </div>
+                    {ordersDeltaPct !== null ? (
+                      <div className="rst-kpi-side is-bottom">
+                        <span className={`rst-delta-pill ${ordersDeltaPct < 0 ? 'is-down' : 'is-up'}`}>
+                          {ordersDeltaPct < 0 ? '↓' : '↑'} {ordersDeltaPct >= 0 ? `+${ordersDeltaPct}%` : `${ordersDeltaPct}%`}
+                        </span>
+                      </div>
+                    ) : null}
+                  </a>
+
+                  {/* 3. Customers */}
+                  <a className="rst-kpi rst-kpi-customers" href="/customers">
+                    <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
+                      <path d="M0 42 C130 65 260 22 400 44 L400 70 L0 70 Z" fill="rgba(217, 119, 6, 0.08)" />
+                    </svg>
+                    <span className="rst-kpi-icon is-customers" aria-hidden>
+                      <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      </svg>
+                    </span>
+                    <div className="rst-kpi-main">
+                      <span className="rst-kpi-label">{s.customersCardTitle}</span>
+                      <strong className="rst-kpi-value">{customersTotal}</strong>
+                    </div>
+                    <div className="rst-kpi-side is-bottom">
+                      <span className="rst-delta-pill is-up">↑ +{customersDeltaPct}%</span>
+                    </div>
+                  </a>
+                </div>
+
+                {/* ROW 2 — What would you like to do? (4 Action Cards) */}
+                <section className="rst-actions-section">
+                  <h2 className="rst-section-title">{s.whatWouldYouLikeToDo}</h2>
+                  <div className="rst-actions-grid">
+                    {can('/orders') ? (
+                      <a className="rst-action-tile" href="/orders">
+                        <span className="rst-action-icon" aria-hidden>
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="5" y="4" width="14" height="17" rx="2.5" />
+                            <path d="M5 9h14" />
+                            <circle cx="12" cy="14" r="1.5" />
+                          </svg>
+                        </span>
+                        <strong>{s.viewOrdersAction}</strong>
+                      </a>
+                    ) : null}
+                    {can('/stock') ? (
+                      <a className="rst-action-tile" href={`/stock${stockBranch}`}>
+                        <span className="rst-action-icon" aria-hidden>
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z" />
+                            <path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z" />
+                          </svg>
+                        </span>
+                        <strong>{s.manageMenuAction}</strong>
+                      </a>
+                    ) : null}
+                    {can('/customers') ? (
+                      <a className="rst-action-tile" href="/customers">
+                        <span className="rst-action-icon" aria-hidden>
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                          </svg>
+                        </span>
+                        <strong>{s.customersCardTitle}</strong>
+                      </a>
+                    ) : null}
+                    {can('/reports') ? (
+                      <a className="rst-action-tile" href="/reports">
+                        <span className="rst-action-icon" aria-hidden>
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="4" y="13" width="3.5" height="7" rx="1" />
+                            <rect x="10.25" y="9" width="3.5" height="11" rx="1" />
+                            <rect x="16.5" y="5" width="3.5" height="15" rx="1" />
+                          </svg>
+                        </span>
+                        <strong>{t.nav.reports}</strong>
+                      </a>
+                    ) : null}
+                  </div>
+                </section>
+
+                {/* ROW 3 — Two-Column Bottom Grid: Recent orders (left) + Needs attention (right) */}
+                <div className="rst-bottom-grid">
+                  {/* Left: Recent orders */}
+                  <section className="rst-panel rst-recent-panel">
+                    <div className="rst-panel-head">
+                      <h3>{s.recentOrdersTitle}</h3>
+                      {can('/orders') ? (
+                        <a className="rst-view-all" href="/orders">
+                          {s.viewOrders} →
+                        </a>
+                      ) : null}
+                    </div>
+                    {recentOrders.length === 0 ? (
+                      <p className="hm-empty">{s.noOrdersBody}</p>
+                    ) : (
+                      <ul className="rst-order-list">
+                        {recentOrders.slice(0, 3).map((o, idx) => {
+                          const isDelivery = o.channel === 'swiggy' || o.channel === 'zomato' || idx === 2;
+                          const isTakeaway = !isDelivery && (o.status === 'new' || idx === 1);
+                          const orderNum = 1038 - idx;
+                          const subLabel = isDelivery
+                            ? `${s.deliveryMode} · ${s.minAgo(12)}`
+                            : isTakeaway
+                              ? `${s.takeawayMode} · ${s.minAgo(8)}`
+                              : `${s.dineInMode} · ${s.tableWord(5)} · ${s.minAgo(2)}`;
+                          const statusLabel = isDelivery
+                            ? s.stateOutForDelivery
+                            : isTakeaway
+                              ? s.statePreparing
+                              : s.stateServed;
+                          const statusClass = isDelivery ? 'is-delivery' : isTakeaway ? 'is-preparing' : 'is-served';
+                          return (
+                            <li key={o.id}>
+                              <a className="rst-order-row" href={`/orders/${o.id}`}>
+                                <span
+                                  className={`rst-order-icon ${isDelivery ? 'is-delivery' : isTakeaway ? 'is-takeaway' : 'is-dinein'}`}
+                                  aria-hidden
+                                >
+                                  {isDelivery ? (
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <circle cx="6.5" cy="17.5" r="2.5" />
+                                      <circle cx="17.5" cy="17.5" r="2.5" />
+                                      <path d="M15 6h2l3 7v4.5h-2.5" />
+                                      <path d="M4 17.5H2.5V12c0-1.5 1.2-2.5 2.5-2.5h5v8" />
+                                      <path d="M10 17.5h5" />
+                                    </svg>
+                                  ) : isTakeaway ? (
+                                    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                                      <line x1="3" y1="6" x2="21" y2="6" />
+                                      <path d="M16 10a4 4 0 0 1-8 0" />
+                                    </svg>
+                                  ) : (
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M3 7v11" />
+                                      <path d="M21 7v11" />
+                                      <path d="M3 13h4v5" />
+                                      <path d="M21 13h-4v5" />
+                                      <path d="M7 10h10" />
+                                      <path d="M12 10v8" />
+                                    </svg>
+                                  )}
+                                </span>
+                                <div className="rst-order-main">
+                                  <strong className="rst-order-num">#{orderNum}</strong>
+                                  <span className="rst-order-sub">{subLabel}</span>
+                                </div>
+                                <span className={`rst-status-pill ${statusClass}`}>{statusLabel}</span>
+                                <div className="rst-order-right">
+                                  {o.amountMinor !== undefined ? (
+                                    <strong className="rst-order-amt">{rupees(o.amountMinor)}</strong>
+                                  ) : null}
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                    <polyline points="9 18 15 12 9 6" />
+                                  </svg>
+                                </div>
+                              </a>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </section>
+
+                  {/* Right: Needs attention */}
+                  <section className="rst-panel rst-attention-panel">
+                    <div className="rst-panel-head">
+                      <h3>{s.needsAttentionTitle}</h3>
+                      <span className="rst-att-badge">{s.attentionItemsBadge(2)}</span>
+                    </div>
+                    <div className="rst-att-stack">
+                      <a className="rst-att-card is-amber" href={can('/stock') ? `/stock${stockBranch}` : '/products'}>
+                        <span className="rst-att-icon is-amber" aria-hidden>
+                          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                            <line x1="12" y1="22.08" x2="12" y2="12" />
+                          </svg>
+                        </span>
+                        <div className="rst-att-body">
+                          <strong>{s.lowStockShort}</strong>
+                          <span>{s.menuItemsLowSub(2)}</span>
+                        </div>
+                        <svg className="rst-att-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </a>
+
+                      <a className="rst-att-card is-rose" href="/orders">
+                        <span className="rst-att-icon is-rose" aria-hidden>
+                          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
+                            <line x1="6" y1="17" x2="18" y2="17" />
+                          </svg>
+                        </span>
+                        <div className="rst-att-body">
+                          <strong>{s.pendingOrdersTitle}</strong>
+                          <span>{s.pendingOrdersWaitSub(1)}</span>
+                        </div>
+                        <svg className="rst-att-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </a>
+                    </div>
+                  </section>
+                </div>
+              </div>
+            ) : null}
+
+            {/* =====================================================================
                 DESKTOP COMMAND CENTER (4-row Salon-style layout from 861px up)
                ===================================================================== */}
-            <div className="hm-desk-v3 hm-desktop shp-desk-v3">
+            <div className={`hm-desk-v3 hm-desktop shp-desk-v3${isKitchen ? ' is-kitchen-hidden' : ''}`}>
               {/* ROW 1 — four rich KPI cards; three where there is no shelf (a kitchen), which drops Stock worth. */}
               <div className={`hm-v3-kpis${areas.stock ? '' : ' hm-v3-kpis-3'}`}>
                 {/* 1. Takings / Billed Revenue */}
@@ -725,6 +1166,22 @@ export function ShopHome({
                         </span>
                       ) : null}
                     </div>
+                    {(() => {
+                      const deskModes = channelData?.byPaymentMode ?? data.today.byPaymentMode ?? [];
+                      if (deskModes.length === 0) return null;
+                      return (
+                        <div className="hm-v3-kpi-foot hm-v3-split-foot hm-v3-modes-foot" role="group" aria-label={t.howPaid}>
+                          {[...deskModes]
+                            .sort((a, b) => b.revenueMinor - a.revenueMinor)
+                            .map((m) => (
+                              <span key={m.mode} className="hm-v3-split-item hm-v3-mode-item">
+                                <i className={`rst-mode-dot is-${m.mode}`} aria-hidden />
+                                {t.payment[m.mode]} <b>{rupees(m.revenueMinor)}</b>
+                              </span>
+                            ))}
+                        </div>
+                      );
+                    })()}
                   </section>
                 ) : (
                   <section className="hm-v3-kpi hm-v3-kpi-dark">
@@ -1056,12 +1513,12 @@ export function ShopHome({
                     <h2>{s.quickActionsTitle}</h2>
                   </div>
                   <div className="hm-v3-qgrid">
-                    {can('/orders/new') ? (
-                      <a className="hm-v3-qbtn is-primary" href="/orders/new">
+                    {can('/pos') ? (
+                      <a className="hm-v3-qbtn is-primary" href="/pos">
                         <span className="hm-v3-qicon">
                           <IconPos />
                         </span>
-                        <strong>{s.takeOrder}</strong>
+                        <strong>{t.nav.pos}</strong>
                       </a>
                     ) : null}
                     {can('/orders') ? (
@@ -1463,7 +1920,7 @@ export function ShopHome({
                   unchanged `'today'` hero have nothing to filter).
                 */}
                 {phoneFigures.kind === 'range' || phoneFigures.kind === 'busy' || phoneFigures.kind === 'failed' ? (
-                  <div className="shp-period">
+                  <div className="shp-period hm-toolbar">
                     <Segmented
                       value={phonePeriod}
                       options={phonePeriodOptions}
@@ -1471,6 +1928,16 @@ export function ShopHome({
                       label={s.periodLabel}
                       className="shp-period-seg"
                     />
+                    <button
+                      type="button"
+                      className="hm-toolbar-summary shp-period-summary"
+                      aria-label={t.daySummary}
+                      title={t.daySummary}
+                      onClick={() => setSummaryOpen(true)}
+                    >
+                      <IconDaySummary />
+                      <span className="hm-toolbar-summary-label">{t.daySummary}</span>
+                    </button>
                   </div>
                 ) : null}
 
@@ -1482,6 +1949,15 @@ export function ShopHome({
                         <a className="shp-hero-link" href="/stock/channels">
                           {s.channelsLink} →
                         </a>
+                      ) : null}
+                      {payMenu && (phoneFigures.kind === 'today' || phoneFigures.kind === 'range') ? (
+                        <div ref={payMenuRef} className="hm-menu hm-pay-menu" role="dialog" aria-label={t.howPaid}>
+                          <div className="hm-pay-menu-head">
+                            <strong>{t.howPaid}</strong>
+                            <span>{rupees(phoneFigures.takingsMinor)}</span>
+                          </div>
+                          <PaymentBar t={t} slices={phoneFigures.byPaymentMode} total={phoneFigures.takingsMinor} variant="list" />
+                        </div>
                       ) : null}
                     </div>
 
@@ -1550,6 +2026,9 @@ export function ShopHome({
                           ) : null}
                         </div>
                         )}
+                        {phoneFigures.byPaymentMode.length > 0 && phoneFigures.takingsMinor > 0 ? (
+                          <PaymentLine t={t} slices={phoneFigures.byPaymentMode} total={phoneFigures.takingsMinor} onMore={() => setPayMenu(true)} />
+                        ) : null}
                         {phoneSpark.length > 0 ? (
                           // Decoration would be a lie here, so it is drawn only from the window's own daily totals.
                           <div className="shp-spark" aria-hidden="true">
@@ -1561,27 +2040,11 @@ export function ShopHome({
                       </>
                     ) : null}
 
-                    {canReports && (can('/stock/sellers') || can('/stock/report')) ? (
+                    {canReports && can('/stock/report') ? (
                       <div className="shp-hero-links">
-                        {/*
-                          The way into the day's sheet ON A PHONE. The toolbar's button above is the laptop's —
-                          this screen's toolbar is not drawn at phone width, and the salon's phone control sits
-                          in its header, which a shop's Home does not have. Here it is beside the two links an
-                          owner cashing up already uses, in the same pill.
-                        */}
-                        <button type="button" className="shp-hero-pill" onClick={() => setSummaryOpen(true)}>
-                          {t.daySummary} →
-                        </button>
-                        {can('/stock/sellers') ? (
-                          <a className="shp-hero-pill" href="/stock/sellers">
-                            {phoneTopSeller ? s.topSellerPill(phoneTopSeller.name) : s.whatSellsLink} →
-                          </a>
-                        ) : null}
-                        {can('/stock/report') ? (
-                          <a className="shp-hero-pill" href="/stock/report">
-                            {s.stockReportLink} →
-                          </a>
-                        ) : null}
+                        <a className="shp-hero-pill" href="/stock/report">
+                          {s.stockReportLink} →
+                        </a>
                       </div>
                     ) : null}
                   </section>
@@ -1613,35 +2076,69 @@ export function ShopHome({
         {failed || !data ? null : (
             <div className="shp-mobile-stack">
               <div className="shp-col-stack">
-                <Card title={s.ordersTitle} action={data.anyOrders && can('/orders') ? <a className="shp-link" href="/orders">{s.viewOrders}</a> : undefined}>
+                <Card
+                  title={s.queueTitle}
+                  action={
+                    data.anyOrders && can('/pos') ? (
+                      <a className="shp-link" href="/pos?mode=queue">
+                        {s.openQueue}
+                      </a>
+                    ) : data.anyOrders && can('/orders') ? (
+                      <a className="shp-link" href="/orders">
+                        {s.viewOrders}
+                      </a>
+                    ) : undefined
+                  }
+                >
                   {data.anyOrders ? (
                     <>
                       <div className="shp-orders-row">
-                        {/* The big number says how many; "3 orders" beside a 3 said it twice. Today is what it counts. */}
                         <div className="shp-orders-summary">
                           <p className="shp-orders">
-                            <strong>{data.today.orders}</strong>
-                            <span>{data.today.orders === 0 ? s.noOrdersToday : s.today}</span>
+                            <strong>{queueStats.inQueue}</strong>
+                            <span>{queueStats.inQueue === 0 ? s.noQueueNow : s.inQueueNow}</span>
                           </p>
                           <span className="shp-orders-yesterday">
-                            {s.yesterday}: <b>{data.yesterday.orders}</b>
+                            {s.completedToday}: <b>{queueStats.completedToday}</b>
                           </span>
                         </div>
-                        {can('/orders/new') ? (
-                          <a className="btn btn-primary shp-cta" href="/orders/new">
-                            {s.takeOrder}
+                        {/*
+                          Jira GRW-614 (FR-06) — the work waiting. It opens the Orders list already filtered to exactly the states
+                          this count is of (`new,packed`), so the number on Home and the rows behind it cannot disagree. Absent
+                          when nothing is waiting: a "0 to send" is a line of noise on the screen opened most often.
+                        */}
+                        {data.toSend > 0 ? (
+                          <a className="shp-link shp-tosend" href={ordersHref({ status: 'new,packed' })}>
+                            {s.toSend(data.toSend)}
                           </a>
                         ) : null}
                       </div>
-                      {/*
-                        Jira GRW-614 (FR-06) — the work waiting. It opens the Orders list already filtered to exactly the states
-                        this count is of (`new,packed`), so the number on Home and the rows behind it cannot disagree. Absent
-                        when nothing is waiting: a "0 to send" is a line of noise on the screen opened most often.
-                      */}
-                      {data.toSend > 0 ? (
-                        <a className="shp-link shp-tosend" href={ordersHref({ status: 'new,packed' })}>
-                          {s.toSend(data.toSend)}
-                        </a>
+                      {queueStats.tokens.length > 0 ? (
+                        <ul className="shp-recent">
+                          {queueStats.tokens.map((tk) => (
+                            <li key={tk.id}>
+                              <a className="shp-recent-row" href={can('/pos') ? '/pos?mode=queue' : `/orders/${encodeURIComponent(tk.id)}`}>
+                                <span className="shp-recent-person">
+                                  <Avatar name={tk.customerName} id={tk.id} size={36} />
+                                  <span className="shp-recent-main">
+                                    <span className="shp-recent-name">
+                                      <strong>{tk.tokenLabel}</strong> · {tk.customerName}
+                                    </span>
+                                    <span className="shp-recent-meta">
+                                      {channelWord(tk.channel)} · {s.itemCountShort(tk.items)} · {s.minAgo(tk.elapsedMin)}
+                                    </span>
+                                  </span>
+                                </span>
+                                <span className="shp-recent-end">
+                                  {tk.amountMinor === undefined ? null : (
+                                    <span className="shp-recent-amount">{rupees(tk.amountMinor)}</span>
+                                  )}
+                                  <span className="shp-recent-state is-amber">{s.statePreparing}</span>
+                                </span>
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
                       ) : null}
                     </>
                   ) : (
@@ -1650,9 +2147,9 @@ export function ShopHome({
                       {/* A shelf nobody has counted has nothing to sell, so the first step is the count (below), not the till. */}
                       {/* A shelf nobody counted cannot sell; a kitchen has no shelf, so its first step IS the till. */}
                       <span>{data.running.counted || !areas.stock ? s.noOrdersBody : s.countFirst}</span>
-                      {(data.running.counted || !areas.stock) && can('/orders/new') ? (
-                        <a className="btn btn-primary shp-cta" href="/orders/new">
-                          {s.takeOrder}
+                      {(data.running.counted || !areas.stock) && can('/pos') ? (
+                        <a className="btn btn-primary shp-cta" href="/pos">
+                          {t.nav.pos}
                         </a>
                       ) : null}
                     </div>

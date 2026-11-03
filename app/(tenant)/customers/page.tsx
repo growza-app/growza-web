@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 export default async function CustomersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; sort?: string; dir?: string; branch?: string }>;
+  searchParams: Promise<{ status?: string; sort?: string; dir?: string; branch?: string; open?: string }>;
 }) {
   // Jira GRW-409 — a role the nav does not offer this screen lands on Home, not on controls that answer 403.
   await guardScreen('/customers');
@@ -78,6 +78,7 @@ export default async function CustomersPage({
       initialStatus={status}
       initialSort={sort}
       initialDirection={direction}
+      initialOpenClientId={params.open?.trim() || undefined}
       label={pickNoun(locale, me.labels.customers ?? 'Customers', nouns('customersTitle'))}
       />
     </>

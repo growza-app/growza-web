@@ -48,6 +48,7 @@ export default function AdminPlansPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryToken, setRetryToken] = useState(0);
+  const [showRetired, setShowRetired] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,17 +71,30 @@ export default function AdminPlansPage() {
     };
   }, [retryToken]);
 
+  const retiredCount = plans ? plans.filter((p) => p.status !== 'active').length : 0;
+  const visiblePlans = plans ? plans.filter((p) => showRetired || p.status === 'active') : [];
+
   return (
     <div>
-      {/* Batch D — creating and changing plans needs `admin.plan.manage`; the screen is open to `admin.plan.view`. */}
-      {canManage ? (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14 }}>
-          <PrimaryButton onClick={() => router.push('/admin/plans/new')}>
-            <Icon name="plus" size={16} />
-            Create plan
-          </PrimaryButton>
-        </div>
-      ) : null}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
+        {retiredCount > 0 ? (
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: '0.78125rem', fontWeight: 600, color: oklch.textMuted, cursor: 'pointer' }}>
+            <input type="checkbox" checked={showRetired} onChange={(e) => setShowRetired(e.target.checked)} />
+            Show retired ({retiredCount})
+          </label>
+        ) : (
+          <span />
+        )}
+        {/* Batch D — creating and changing plans needs `admin.plan.manage`; the screen is open to `admin.plan.view`. */}
+        {canManage ? (
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <PrimaryButton onClick={() => router.push('/admin/plans/new')}>
+              <Icon name="plus" size={16} />
+              Create plan
+            </PrimaryButton>
+          </div>
+        ) : null}
+      </div>
 
       {error ? (
         <Card>
@@ -97,11 +111,11 @@ export default function AdminPlansPage() {
             </Card>
           ))}
         </div>
-      ) : plans.length === 0 ? (
-        <EmptyState icon="plans" title="No plans yet" sub="Create the first plan to start selling." />
+      ) : visiblePlans.length === 0 ? (
+        <EmptyState icon="plans" title="No active plans" sub={retiredCount > 0 ? 'Tick "Show retired" above to view retired plans, or create a new active plan.' : 'Create the first plan to start selling.'} />
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 16, alignItems: 'start' }}>
-          {plans.map((plan) => (
+          {visiblePlans.map((plan) => (
             <PlanCard key={plan.code} plan={plan} registry={registry} canManage={canManage} onEdit={() => router.push(`/admin/plans/${plan.code}`)} />
           ))}
         </div>

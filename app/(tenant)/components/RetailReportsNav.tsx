@@ -17,6 +17,7 @@ export type RetailReportTab = 'hub' | 'channels' | 'sellers' | 'report' | 'order
  *   - What was refunded (`/orders/refunds`)
  */
 export function RetailReportsNav({ active }: { active: RetailReportTab }) {
+  const tReports = useTranslations('reports');
   const tChannels = useTranslations('products.channels');
   const tSellers = useTranslations('products.sellers');
   const tReport = useTranslations('products.stockReport');
@@ -28,6 +29,7 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
   // list are absent here, exactly as they are in the nav — the guard would bounce either one Home.
   const areas = useAreas();
   const allTabs: Array<{ key: RetailReportTab; href: string; label: string }> = [
+    { key: 'hub', href: '/reports', label: tReports('summaryTab') },
     { key: 'channels', href: '/stock/channels', label: tChannels('title') },
     { key: 'sellers', href: '/stock/sellers', label: tSellers('title') },
     { key: 'report', href: '/stock/report', label: tReport('title') },
@@ -43,7 +45,7 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
    * them each a border and the accent, which is what a row of links should look like.
    */
   return (
-    <nav className={`srp-nav ${active === 'hub' ? 'srp-nav-links' : ''}`} aria-label={tReport('title')}>
+    <nav className={`srp-nav ${active === 'hub' ? 'srp-nav-links' : ''}`} aria-label={tReports('title')}>
       {tabs.map((tab) => {
         const isCurrent = tab.key === active;
         return (

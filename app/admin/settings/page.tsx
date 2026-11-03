@@ -1,14 +1,19 @@
 'use client';
 
-import { Card, Select, TextInput, Toggle } from '../components/primitives';
+import { Card, Pill, Select, TextInput, Toggle } from '../components/primitives';
 import { oklch } from '../tokens';
-import { PreviewBanner } from '../components/PreviewBanner';
+import { Icon } from '../icons';
 
 function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <Card>
-      <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>{title}</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>{children}</div>
+    <Card style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 14 }}>
+          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>{title}</h3>
+          <Pill text="Enforced in code" fg="oklch(0.45 0.02 155)" bg={oklch.surfaceSubtle} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>{children}</div>
+      </div>
     </Card>
   );
 }
@@ -19,9 +24,9 @@ function SettingsSection({ title, children }: { title: string; children: React.R
 function SettingsRow({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-      <div>
-        <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.28 0.02 155)' }}>{label}</div>
-        {hint ? <div style={{ fontSize: 12, color: oklch.textFaint, marginTop: 2 }}>{hint}</div> : null}
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: 'oklch(0.28 0.02 155)' }}>{label}</div>
+        {hint ? <div style={{ fontSize: '0.75rem', color: oklch.textFaint, marginTop: 2 }}>{hint}</div> : null}
       </div>
       <div style={{ flex: 'none' }}>{children}</div>
     </div>
@@ -29,16 +34,36 @@ function SettingsRow({ label, hint, children }: { label: string; hint?: string; 
 }
 
 /**
- * GRW-92's Platform Configuration screen. Filed as scope-only in Jira — the
- * settings it gathers belong to the epics that give them meaning (tax rules
- * to GRW-83, grace period to GRW-84, WhatsApp defaults to GRW-86). This is
- * the visual shell those land in; every toggle here is a client-side stub.
+ * GRW-92's Platform Configuration screen — displays the read-only platform
+ * invariants enforced by the billing, tax and compliance engines.
  */
 export default function AdminSettingsPage() {
   return (
     <>
-      <PreviewBanner shows="Platform configuration — tax rates, grace periods and message caps" epic="Jira GRW-92" />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: 16, alignItems: 'start' }}>
+      <div
+        role="note"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 11,
+          padding: '11px 15px',
+          marginBottom: 16,
+          borderRadius: 12,
+          background: oklch.surfaceSubtle,
+          border: `1px solid ${oklch.border}`,
+          color: oklch.textMuted,
+          fontSize: '0.8125rem',
+          fontWeight: 600,
+        }}
+      >
+        <span style={{ display: 'flex', flex: 'none', color: oklch.accentText }}>
+          <Icon name="shield" size={16} />
+        </span>
+        <span>
+          <strong style={{ fontWeight: 800, color: oklch.textStrong }}>Read-only platform defaults</strong> — these rules are enforced by the billing, tax and compliance engines and cannot be edited from the browser.
+        </span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: 16, alignItems: 'stretch' }}>
         <SettingsSection title="Tax & currency">
           <SettingsRow label="Currency">
             <div style={{ width: 150 }}>

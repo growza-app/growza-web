@@ -143,7 +143,9 @@ describe('the POS screen', () => {
   });
 
   it('hides daily revenue and per-order money on the Queue board when the desk may not view sales/returns', () => {
-    expect(client).toContain('{canReturn ? <span className="pos-queue-kpi-sub">{formatMoney(String(todayTotalMinor))}</span> : null}');
+    // Owner, 2026-11-03 — the day's total went with the KPI cards; the board now carries no figure of its own,
+    // which is the strongest form of this rule. What is left is the money ON a token, still gated.
+    expect(client).not.toContain('pos-queue-kpi');
     expect(client).toContain('{canReturn ? <span className="pos-qcard-item-amt">{formatMoney(String(item.paidMinor))}</span> : null}');
     expect(client).toContain('{canReturn ? <strong className="pos-qcard-total">{formatMoney(String(tk.totalMinor))}</strong> : <span />}');
   });
@@ -171,14 +173,86 @@ describe('the POS screen', () => {
     expect(payFlow).toContain('guideMode');
     expect(payFlow).toContain('guideReady');
     expect(payFlow).toContain("t('desk.needPaymentMode')");
-    expect(payFlow).toContain('if (productsOnly) {\n      nextCustomer();\n      return;\n    }');
+    // Owner, 2026-11-03 — `&& lines.length > 0`: with nothing to clear, Back goes Home instead of nowhere.
+    expect(payFlow).toContain('if (productsOnly && lines.length > 0) {\n      nextCustomer();\n      return;\n    }');
     expect(posBill).toContain('pos-bill-stepper');
     expect(css).toContain('.pos-shell.is-fullscreen');
     expect(css).toContain('.pos-cat-pills-wrap');
     expect(css).toContain('@keyframes pos-step-pulse');
   });
 
-  it('provides Option C daily resetting token numbers, live queue strip above the till, and two-column Queue board', () => {
+  it('gives Back somewhere to arrive when there is no bill to clear', () => {
+    // Owner, 2026-11-03 — reported as "the Sell back button is not working". It cleared the bill, and on an
+    // empty till that clears nothing and goes nowhere, so an arrow at the top of the screen looked broken.
+    expect(src('../appointments/new/PayFlow.tsx')).toContain('if (productsOnly && lines.length > 0) {');
+  });
+
+  it('gives every control on the Queue board a 44px target', () => {
+    const css = src('../styles/99-pos.css');
+    // "+ New order" was 38px, "Back to queue" 32px and "Mark completed" — the one a desk taps all day — 36px.
+    for (const sel of ['.pos-queue-new-btn', '.pos-qcard-recall-btn', '.pos-qcard-complete-btn']) {
+      const block = css.slice(css.indexOf(`\n${sel} {`));
+      expect(block.slice(0, block.indexOf('}')), sel).toContain('min-height: 2.75rem;');
+    }
+  });
+
+  it('leaves no POS class on the screen with no styling behind it', () => {
+    /*
+     * Owner, 2026-11-03 — the check that four regressions in one change got past.
+     *
+     * Simplifying the Queue board removed markup, and the rules for it were removed by matching class names.
+     * Several of those rules were shared blocks — one selector list covering the removed token strip AND
+     * classes still on the screen — so taking the block out took the survivors' styling with it. The channel
+     * pill lost its tint, the status dots lost their size and rendered as nothing, and three buttons lost
+     * their focus ring. Every one of the 4,100 tests passed: not one of them asks whether a class that is
+     * rendered has any CSS at all.
+     *
+     * Both directions, because the mistake runs both ways: a class on the screen with no rule is invisible
+     * styling, and a rule with no class is a block waiting to be read as still in use.
+     */
+    const css = src('../styles/99-pos.css');
+    // Only what the markup puts in a `className`, so an import path like `./pos-helpers` is not read as one.
+    const inMarkup = new Set(
+      [...client.matchAll(/className=(?:"([^"]*)"|\{`([^`]*)`\})/g)]
+        .flatMap((m) => (m[1] ?? m[2] ?? '').split(/[\s'"`${}?:+]+/))
+        .filter((c) => /^pos-[a-z0-9-]+$/.test(c)),
+    );
+    const inCss = new Set([...css.matchAll(/\.(pos-[a-z0-9-]+)/g)].map((m) => m[1]!));
+    /*
+     * `pos-fs-exit` is a marker and nothing else: the Exit button takes its whole look from `.pos-fs-btn`
+     * beside it, and this name is here only so a reader can find that one button. Anything else that lands
+     * in this list is a class whose styling has gone, not a second marker — add to it only when the class
+     * genuinely carries no look of its own.
+     */
+    const markersOnly = new Set(['pos-fs-exit']);
+    expect([...inMarkup].filter((c) => !inCss.has(c) && !markersOnly.has(c)), 'rendered, but no CSS').toEqual([]);
+    // The other way: a block nobody renders reads as still in use, and the next person edits around it. The
+    // till's own screens (the bill drawer, the keypad, the category pills) live in other files, so skip those.
+    const elsewhere = /^pos-(bill|cat|step|charge|held|search|filter|wide|kbd|note|fail|tab|body|shell)/;
+    expect([...inCss].filter((c) => !inMarkup.has(c) && !elsewhere.test(c)), 'CSS, but nothing renders it').toEqual([]);
+  });
+
+  it("puts the till's Back in the bar and keeps the title row off the screen", () => {
+    const css = src('../styles/99-pos.css');
+    const pay = src('../appointments/new/PayFlow.tsx');
+    // The POS asks the flow not to draw its own header, and takes the flow's own `leave` to drive the button —
+    // the control moved, what it does did not.
+    expect(client).toContain('hideHead');
+    expect(client).toContain('leaveRef={leaveRef}');
+    expect(client).toContain('onClick={() => leaveRef.current?.()}');
+    expect(pay).toContain('{hideHead ? null : (');
+    expect(pay).toContain('leaveRef.current = leave;');
+    // And released when the flow goes: the ref outlives it, so a Back arrow left pointing at a gone screen's
+    // `leave` is exactly the stale closure the assignment above exists to avoid.
+    expect(pay).toMatch(/return \(\) => \{\s*leaveRef\.current = null;/);
+    // Beside the button the tabs share the row instead of claiming one: basis 0, or a wrapping row breaks
+    // before it shrinks and the button costs the row the title just gave back.
+    expect(css).toMatch(/\.pos-bar-back \+ \.page-tabs\.pos-tabs \{\s*flex: 1 1 0%;\s*min-width: 0;/);
+    // The wide till draws its own header with its own Back, so this one steps aside there.
+    expect(css).toMatch(/@media \(min-width: 1101px\) \{\s*\.pos-bar-back \{\s*display: none;/);
+  });
+
+  it('provides Option C daily resetting token numbers and the Queue board that carries them', () => {
     const css = src('../styles/99-pos.css');
     expect(posModeOf('queue', true)).toBe('queue');
     expect(posModeOf('queue', false)).toBe('queue');
@@ -255,12 +329,21 @@ describe('the POS screen', () => {
     const overridden = buildDailyTokens(sampleRows, 'loc-1', { 'sale-2': 'completed' }, nowMs);
     expect(overridden[1]?.state).toBe('completed');
 
-    expect(client).toContain('pos-token-strip');
-    expect(client).toContain('pos-bar-completed');
+    const recalled = buildDailyTokens(sampleRows, 'loc-1', { 'sale-1': `preparing:${nowMs - 2 * 60_000}` }, nowMs);
+    expect(recalled[0]?.state).toBe('preparing');
+    expect(recalled[0]?.elapsedMin).toBe(2);
+
     expect(client).toContain('pos-queue-board');
-    expect(css).toContain('.pos-token-strip');
-    expect(css).toContain('.pos-bar-completed');
-    expect(css).toMatch(/\.pos-token-strip\.is-empty\s*\{\s*display:\s*none;/);
+    /*
+     * Owner, 2026-11-03 — the Sell tab carries no queue of its own any more. The bar's "Next token" pill and its
+     * "Completed today" button went first, then the live strip beneath them: at 344px a chip was 300px wide, so
+     * 0.92 of one was on screen and fifteen orders meant 4,377px of sideways scrolling to reach the last. The
+     * Queue tab is one tap away, its tab badge carries the count, and its board holds every token at full width.
+     */
+    for (const dead of ['pos-bar-completed', 'pos-next-token-pill', 'pos-token-strip', 'pos-token-chip']) {
+      expect(client, dead).not.toContain(dead);
+      expect(css, dead).not.toContain(dead);
+    }
     expect(css).toContain('.pos-queue-board');
   });
 });

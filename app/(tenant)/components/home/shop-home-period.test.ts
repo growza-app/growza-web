@@ -172,9 +172,9 @@ describe('the phone running order: the money, Quick links, then the lists', () =
 });
 
 describe('the rows and the filter read at 344px, and say nothing by colour alone', () => {
-  it('four windows fit as one tap each, on a grid rather than a row that overflows', () => {
-    expect(css).toMatch(/\.shp-period \.hm-seg \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);/);
-    expect(css).toMatch(/\.shp-period \.hm-seg button \{[\s\S]*?min-height: 2\.75rem;/);
+  it('offers the four windows in a 44px select dropdown inline with Day summary', () => {
+    expect(css).toMatch(/\.shp-period \.hm-seg-select \{[\s\S]*?min-height: 2\.75rem;/);
+    expect(shop).toContain('className="hm-toolbar-summary shp-period-summary"');
   });
 
   it('the order state is a word, and the change carries an arrow and a sign', () => {

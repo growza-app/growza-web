@@ -4,7 +4,6 @@ import { PageHeader } from '../components/PageHeader';
 import { homeCopy } from '../lib/home-copy';
 import { serverLang } from '../lib/lang';
 import { ORDERS_PAGE_SIZE, readQuery } from '../lib/orders-filter';
-import { mayUse } from '../lib/nav-policy';
 import { isWritable } from '../lib/read-only';
 import { areaAllows, areasOf } from '../lib/areas';
 import { OrdersClient } from './OrdersClient';
@@ -36,8 +35,6 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
   const lang = await serverLang();
   const copy = homeCopy(lang, me?.labels ?? {});
   const heading = copy.nav.orders;
-  // Jira GRW-616 — taking an order is the list's one create action, for whoever stands at the till and may record a sale.
-  const mayTake = me ? mayUse(me.member?.role, 'visit.recordPayment', isWritable(me.tenant?.status)) : false;
   // Jira GRW-619 — importing a marketplace's order report is the owner's and the manager's, as the API is (the desk packs the parcels).
   const role = me?.member?.role;
   // Jira GRW-635 — what came back and why is the owner's and the manager's to read, as the API is; reading it needs no write.
@@ -67,9 +64,12 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
         // Back arrow it had fell through to `window.history.length`, which counts the whole browsing session
         // rather than this app's own screens: in a standalone PWA that is routinely > 1 with nothing of ours
         // behind it, so the arrow stepped somewhere that was not a Growza screen and the tap looked dead.
-        menu
+        // Owner, 2026-11-02 — except when it is one guest's orders, reached from that guest's card: then there is a screen behind it,
+        // and Back is how a phone returns to the guest.
+        menu={!query.customerId}
+        backHref={query.customerId ? `/customers?open=${encodeURIComponent(query.customerId)}` : undefined}
         actions={
-          mayTake || mayImport || mayReadReturns ? (
+          mayImport || mayReadReturns ? (
             <>
               {mayReadReturns ? (
                 /*
@@ -91,11 +91,6 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
               {mayImport ? (
                 <a className="btn btn-ghost" href="/orders/import">
                   {copy.shop.importOrders}
-                </a>
-              ) : null}
-              {mayTake ? (
-                <a className="btn btn-primary" href="/orders/new">
-                  {copy.shop.takeOrder}
                 </a>
               ) : null}
             </>

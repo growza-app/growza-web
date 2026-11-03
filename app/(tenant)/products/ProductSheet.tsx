@@ -225,27 +225,7 @@ export function ProductSheet({
           {part !== 'details' ? t('done') : t('cancel')}
         </button>
         <span className="sheet-head-title">{title}</span>
-        {part === 'details' ? (
-          <button
-            type="button"
-            className={`sheet-head-save ${showSaved ? 'is-saved' : ''}`}
-            disabled={busy || !canSave}
-            aria-live="polite"
-            onClick={() => void submit()}
-          >
-            {busy ? (
-              t('saving')
-            ) : showSaved ? (
-              <>
-                <IconCheck /> {t('saved')}
-              </>
-            ) : (
-              t('save')
-            )}
-          </button>
-        ) : (
-          <span className="prd-head-spacer" aria-hidden="true" />
-        )}
+        <span className="prd-head-spacer" aria-hidden="true" />
       </div>
 
       {product ? (
@@ -658,6 +638,7 @@ export function ProductSheet({
               type="button"
               className={`btn prd-footer-save ${showSaved ? 'is-saved' : ''}`}
               disabled={busy || !canSave}
+              aria-live="polite"
               onClick={() => void submit()}
             >
               {busy ? (

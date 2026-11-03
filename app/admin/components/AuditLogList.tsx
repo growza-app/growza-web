@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
-import { fieldLabel, renderDiffField } from '../lib/audit-fields';
+import { fieldLabel, formatAuditAction, renderDiffField } from '../lib/audit-fields';
 import { formatDateTime } from '../lib/format';
 import { Icon } from '../icons';
 import { Card, EmptyState, Field, SecondaryButton, Select, TextInput } from './primitives';
@@ -334,7 +334,11 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
         <TextInput placeholder="Name or phone" value={filters.actor} onChange={(e) => updateFilter('actor', e.target.value)} />
       </Field>
       <Field label="Action">
-        <Select options={['All', ...KNOWN_ACTIONS]} value={filters.action || 'All'} onChange={(e) => updateFilter('action', e.target.value === 'All' ? '' : e.target.value)} />
+        <Select
+          options={[{ value: 'All', label: 'All actions' }, ...KNOWN_ACTIONS.map((a) => ({ value: a, label: `${formatAuditAction(a)} (${a})` }))]}
+          value={filters.action || 'All'}
+          onChange={(e) => updateFilter('action', e.target.value === 'All' ? '' : e.target.value)}
+        />
       </Field>
       <Field label="Entity type">
         <TextInput placeholder="e.g. appointment" value={filters.entityType} onChange={(e) => updateFilter('entityType', e.target.value)} />
@@ -447,7 +451,20 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
                       </span>
                       <div style={{ flex: 1, minWidth: 200, textAlign: 'left' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 14, fontWeight: 800, color: oklch.textStrong }}>{row.action}</span>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: oklch.textStrong }}>{formatAuditAction(row.action)}</span>
+                          <code
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 600,
+                              color: oklch.textMuted,
+                              background: oklch.surfaceSubtle,
+                              border: `1px solid ${oklch.border}`,
+                              padding: '1px 6px',
+                              borderRadius: 5,
+                            }}
+                          >
+                            {row.action}
+                          </code>
                           {row.entityType ? (
                             <span style={{ fontSize: 11.5, fontWeight: 700, color: 'oklch(0.5 0.02 155)', background: oklch.divider, padding: '2px 8px', borderRadius: 6 }}>
                               {row.entityType}

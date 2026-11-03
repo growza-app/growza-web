@@ -15,6 +15,8 @@ export function SellProductClient({
   backTo,
   heading,
   nextTokenNo,
+  hideHead,
+  leaveRef,
   onSaleCompleted,
   reloadKey,
 }: {
@@ -24,6 +26,8 @@ export function SellProductClient({
   heading?: string;
   /** Next sequential daily token number for today at this branch, so the receipt and done screen show it. */
   nextTokenNo?: number | null;
+  hideHead?: boolean;
+  leaveRef?: { current: (() => void) | null };
   /** Called when a sale is recorded on POS so the live token queue updates immediately. */
   onSaleCompleted?: (saleId: string) => void;
   /** Incremented after a return or exchange on POS so the product shelf refreshes its live stock counts without unmounting the till. */
@@ -58,6 +62,8 @@ export function SellProductClient({
       productsOnly
       heading={heading}
       nextTokenNo={nextTokenNo}
+      hideHead={hideHead}
+      leaveRef={leaveRef}
       onSaleCompleted={onSaleCompleted}
       reloadKey={reloadKey}
     />

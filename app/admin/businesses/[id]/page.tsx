@@ -9,11 +9,12 @@ import Link from '../../../shared/AppLink';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../../lib/api';
-import { formatDateOnly, formatDateTime } from '../../lib/format';
+import { formatDateOnly, formatDateTime, formatTimestampDate } from '../../lib/format';
+import { formatAuditAction } from '../../lib/audit-fields';
 import { Icon, TypeIcon } from '../../icons';
 import { AuditLogList } from '../../components/AuditLogList';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, Select, StatusPill, Table, TableRow, TextInput, type TableColumn } from '../../components/primitives';
+import { Bar, Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, Select, StatusPill, Table, TableRow, TextInput, type TableColumn } from '../../components/primitives';
 import { SubscriptionPanel } from '../../components/SubscriptionPanel';
 import { GoLiveChecklist, type ReadinessItem } from '../../components/GoLiveChecklist';
 import { BillingTab } from '../../components/BillingTab';
@@ -102,6 +103,19 @@ interface AuditRow {
   createdAt: string;
 }
 
+interface BusinessUsageSummary {
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  limitsResolved: boolean;
+  meters: Array<{
+    usageType: string;
+    label: string;
+    used: number;
+    limit: number | null;
+    counted: boolean;
+  }>;
+}
+
 const statusLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 interface TabDef {
@@ -176,6 +190,23 @@ function BusinessDetailInner() {
   const [impersonateOpen, setImpersonateOpen] = useState(false);
   const [impersonateLoading, setImpersonateLoading] = useState(false);
   const [impersonateError, setImpersonateError] = useState<string | null>(null);
+  const [usageSummary, setUsageSummary] = useState<BusinessUsageSummary | null>(null);
+  const canViewUsage = can('admin.usage.view');
+
+  useEffect(() => {
+    if (!canViewUsage) return;
+    let cancelled = false;
+    adminFetch<{ rows: BusinessUsageSummary[] }>(`/usage?businessId=${params.id}&pageSize=1`)
+      .then((res) => {
+        if (!cancelled) setUsageSummary(res.rows[0] ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setUsageSummary(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [params.id, retryToken, canViewUsage]);
 
   useEffect(() => {
     let cancelled = false;
@@ -321,6 +352,8 @@ function BusinessDetailInner() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <SummaryHeader
         business={business}
+        bookingsTotal={bookings.total}
+        usageSummary={usageSummary}
         canManage={canManage}
         canImpersonate={canImpersonate}
         onRequestAction={setPendingAction}
@@ -467,7 +500,7 @@ function BusinessDetailInner() {
           />
         )
       ) : null}
-      {activeTab === 'usage' ? <NotYetBuiltTab what="Usage tracking against the plan's limits" epic="GRW-85" /> : null}
+      {activeTab === 'usage' ? <UsageTab usageSummary={usageSummary} bookingsTotal={bookings.total} /> : null}
       {activeTab === 'whatsapp' ? <NotYetBuiltTab what="WhatsApp message usage, by category" epic="GRW-86" /> : null}
       {/* GRW-119 — replaces GRW-102's placeholder. The same components the
           standalone Invoices and Payments screens use, so this business's
@@ -479,12 +512,16 @@ function BusinessDetailInner() {
 
 function SummaryHeader({
   business,
+  bookingsTotal,
+  usageSummary,
   canManage,
   canImpersonate,
   onRequestAction,
   onRequestImpersonate,
 }: {
   business: BusinessDetail;
+  bookingsTotal: number;
+  usageSummary: BusinessUsageSummary | null;
   canManage: boolean;
   canImpersonate: boolean;
   onRequestAction: (action: 'suspend' | 'reactivate') => void;
@@ -496,6 +533,12 @@ function SummaryHeader({
   // that would just come back 409.
   const canSuspend = canManage && business.status === 'active';
   const canReactivate = canManage && business.status === 'suspended';
+  const bookingMeter = usageSummary?.meters.find((m) => m.usageType === 'booking');
+  const bookingsSummaryValue = bookingMeter
+    ? bookingMeter.limit !== null
+      ? `${bookingMeter.used.toLocaleString('en-IN')} / ${bookingMeter.limit.toLocaleString('en-IN')}`
+      : `${bookingMeter.used.toLocaleString('en-IN')} (no cap)`
+    : `${bookingsTotal.toLocaleString('en-IN')} total`;
 
   return (
     <Card>
@@ -562,16 +605,7 @@ function SummaryHeader({
           today neither exists (no subscription/pricing epic has shipped),
           so both show the same honest placeholder rather than one being
           silently omitted. */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(130px, 100%), 1fr))',
-          gap: 16,
-          marginTop: 20,
-          paddingTop: 20,
-          borderTop: `1px solid ${oklch.divider}`,
-        }}
-      >
+      <div className="admin-summary-grid">
         <SummaryField label="Plan" value={business.planName} />
         <SummaryField label="List price" value={`${inr(business.planListPriceMinor / 100)}/mo`} />
         {/* Real since GRW-105/GRW-109. These four used to read "isn't tracked
@@ -601,13 +635,17 @@ function SummaryHeader({
         />
         <SummaryField
           label="Bookings"
-          value="—"
-          hint="Enforced since GRW-125 — a booking past the plan's cap is refused. The used/limit number isn't on this screen yet (GRW-126). The Bookings tab counts appointment rows all-time, which is not what the cap measures — don't use it to explain a refusal."
+          value={bookingsSummaryValue}
+          hint={
+            bookingMeter
+              ? `Current billing period (${formatDateOnly(usageSummary!.currentPeriodStart)} – ${formatDateOnly(usageSummary!.currentPeriodEnd)}). Total all-time: ${bookingsTotal}.`
+              : 'All-time bookings recorded for this business.'
+          }
         />
         <SummaryField label="WhatsApp" value="—" hint="WhatsApp usage isn't metered yet (Jira GRW-86)." />
         <SummaryField label="Branches" value={String(business.branchCount)} />
         <SummaryField label="Users" value={String(business.userCount)} />
-        <SummaryField label="Created" value={formatDateTime(business.createdAt)} />
+        <SummaryField label="Created" value={formatTimestampDate(business.createdAt)} hint={formatDateTime(business.createdAt)} />
       </div>
     </Card>
   );
@@ -726,13 +764,30 @@ function OverviewTab({ business }: { business: BusinessDetail }) {
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
                   gap: 12,
                   padding: '10px 0',
                   borderBottom: i < activity.length - 1 ? `1px solid ${oklch.divider}` : 'none',
                   fontSize: 13,
                 }}
               >
-                <span style={{ fontWeight: 700, color: oklch.textStrong }}>{row.action}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontWeight: 700, color: oklch.textStrong }}>{formatAuditAction(row.action)}</span>
+                  <code
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: oklch.textMuted,
+                      background: oklch.surfaceSubtle,
+                      border: `1px solid ${oklch.border}`,
+                      padding: '1px 6px',
+                      borderRadius: 5,
+                    }}
+                  >
+                    {row.action}
+                  </code>
+                </div>
                 <span style={{ color: oklch.textFaint }}>{formatDateTime(row.createdAt)}</span>
               </div>
             ))}
@@ -1068,6 +1123,50 @@ function CustomersTab({ total }: { total: number }) {
         own customer list — a customer's name and WhatsApp number are that business's data, not Growza's, and stay off
         cross-tenant admin surfaces (see <code>06-security.md</code>'s admin read boundary).
       </p>
+    </Card>
+  );
+}
+
+function UsageTab({ usageSummary, bookingsTotal }: { usageSummary: BusinessUsageSummary | null; bookingsTotal: number }) {
+  if (!usageSummary) {
+    return (
+      <Card>
+        <SectionTitle title="Usage in current billing period" />
+        <div style={{ fontSize: 13, color: oklch.textMuted }}>
+          No open billing period is metered for this business right now. All-time bookings recorded: <strong>{bookingsTotal.toLocaleString('en-IN')}</strong>.
+        </div>
+      </Card>
+    );
+  }
+  const bookingMeter = usageSummary.meters.find((m) => m.usageType === 'booking');
+  const used = bookingMeter?.used ?? 0;
+  const limit = bookingMeter?.limit ?? null;
+
+  return (
+    <Card>
+      <SectionTitle
+        title="Usage in current billing period"
+        right={
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: oklch.textMuted }}>
+            {formatDateOnly(usageSummary.currentPeriodStart)} – {formatDateOnly(usageSummary.currentPeriodEnd)}
+          </span>
+        }
+      />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {limit !== null && limit > 0 ? (
+          <Bar used={used} limit={limit} label="Bookings counted against plan allowance" />
+        ) : (
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5 }}>
+            <span style={{ fontWeight: 700, color: oklch.textStrong }}>Bookings counted this period</span>
+            <span style={{ fontWeight: 700, color: oklch.textMuted }}>
+              {used.toLocaleString('en-IN')} · {limit === 0 ? 'Blocked (limit 0)' : 'No limit'}
+            </span>
+          </div>
+        )}
+        <div style={{ fontSize: 12.5, color: oklch.textFaint }}>
+          All-time bookings recorded across all periods: <strong>{bookingsTotal.toLocaleString('en-IN')}</strong>
+        </div>
+      </div>
     </Card>
   );
 }

@@ -55,7 +55,7 @@ describe('Retail Enterprise UI Redesign across all 6 surfaces', () => {
     const ordersCss = read('app/(tenant)/styles/99-orders.css');
 
     expect(ordersScreen).toContain('className="btn btn-ghost" href="/orders/import"');
-    expect(ordersScreen).toContain('className="btn btn-primary" href="/orders/new"');
+    expect(ordersScreen).not.toContain('href="/orders/new"');
     expect(ordersClient).toContain('ord-chips-channel');
     expect(ordersClient).toContain('ord-chips-state');
     expect(ordersClient).toContain('ord-chan-badge');

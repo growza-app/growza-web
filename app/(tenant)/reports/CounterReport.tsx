@@ -7,6 +7,10 @@ import type { CounterReportPage } from '../lib/api-types';
 import { formatMoney, intlLocale } from '../lib/format';
 import { useBranch } from '../components/BranchProvider';
 import { useSession } from '../components/SessionProvider';
+import { ReportDates } from './ReportDates';
+import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../lib/report-dates';
+import { bucketDays, type ChartBucket, namedTicks } from '../lib/report-buckets';
+import { useLabelBudget } from '../lib/use-label-budget';
 
 /**
  * Jira GRW-591 — the counter report: four questions, four cards, one line each to act on.
@@ -37,8 +41,6 @@ import { useSession } from '../components/SessionProvider';
  * compare dishes across) and `custom` (which needs a date picker this screen does not have), and naming
  * them here is what makes `t('range.' + r)` type-check against the five keys that exist in the messages.
  */
-const RANGES = ['last_7_days', 'this_month', 'last_month', 'last_3_months', 'this_year'] as const;
-type CounterRange = (typeof RANGES)[number];
 
 /** Bars shorter than this are invisible; an hour that took something must never look like one that took nothing. */
 const MIN_BAR_PCT = 4;
@@ -50,7 +52,9 @@ export function CounterReport() {
   const branchContext = useBranch();
   const branch = branchContext.ready && branchContext.multi ? (branchContext.choice ?? '') : '';
   const ready = branchContext.ready || branches.length <= 1;
-  const [range, setRange] = useState<CounterRange>('last_7_days');
+  // Today where the business is: an owner reading this abroad still gets their own day.
+  const todayISO = useMemo(() => todayInZone(session?.timezone), [session?.timezone]);
+  const [dates, setDates] = useState(() => defaultReportRange(todayISO));
   const [data, setData] = useState<CounterReportPage | null>(null);
   const [failed, setFailed] = useState(false);
   const seq = useRef(0);
@@ -60,33 +64,39 @@ export function CounterReport() {
     const mine = ++seq.current;
     setFailed(false);
     try {
-      const res = await api.counterReport({ range, location: branch || undefined });
+      const res = await api.counterReport({ range: 'custom', from: dates.fromISO, to: dates.toISO, location: branch || undefined });
       // A reply from a range the owner has already moved on from must not overwrite the one they are reading.
       if (mine === seq.current) setData(res);
     } catch {
       if (mine === seq.current) setFailed(true);
     }
-  }, [ready, range, branch]);
+  }, [ready, dates.fromISO, dates.toISO, branch]);
   useEffect(() => {
     setData(null);
     void load();
   }, [load]);
 
+  /*
+   * A half-typed date is not a period. A native date field reports an empty value until every part of it is
+   * filled, so applying each keystroke would send the report back to its default week between two digits —
+   * the Sales filter refuses an incomplete pair the same way.
+   */
+  const changeDates = (fromISO: string, toISO: string, changed: ChangedEnd) => {
+    const iso = /^\d{4}-\d{2}-\d{2}$/;
+    if (!iso.test(fromISO) || !iso.test(toISO)) return;
+    setDates(clampReportRange(fromISO, toISO, todayISO, changed));
+  };
+
   return (
     <div className="cr">
       <div className="cr-toolbar">
-        <select
-          className="input cr-select"
-          aria-label={t('rangeLabel')}
-          value={range}
-          onChange={(e) => setRange(e.target.value as CounterRange)}
-        >
-          {RANGES.map((r) => (
-            <option key={r} value={r}>
-              {t(`range.${r}`)}
-            </option>
-          ))}
-        </select>
+        <ReportDates
+          from={dates.fromISO}
+          to={dates.toISO}
+          today={todayISO}
+          labels={{ group: t('rangeLabel'), from: t('from'), to: t('to') }}
+          onChange={changeDates}
+        />
       </div>
 
       {failed ? (
@@ -114,6 +124,7 @@ export function CounterReport() {
  */
 export function CounterCards({ data }: { data: CounterReportPage }) {
   const t = useTranslations('counterReport');
+  const barsRef = useRef<HTMLUListElement>(null);
   const locale = useLocale();
   const money = useCallback((minor: string | number | null) => formatMoney(minor, 'INR', locale), [locale]);
 
@@ -133,8 +144,77 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
   const hourName = useMemo(() => {
     const fmt = new Intl.DateTimeFormat(intlLocale(locale), { hour: 'numeric', timeZone: 'UTC' });
     // Hour 24 is midnight at the END of the day: an evening rush of 21:00–24:00 must not read "9 pm – 12 am".
-    return (hour: number) => fmt.format(new Date(Date.UTC(2024, 0, 1, hour % 24)));
+    return (hour: number) => {
+      const raw = fmt.format(new Date(Date.UTC(2024, 0, 1, hour % 24)));
+      return locale === 'hi' ? raw.replace(/\bam\b/i, 'सुबह').replace(/\bpm\b/i, 'शाम') : raw;
+    };
   }, [locale]);
+
+  const { takings, earners, busy, changed, strategy } = data;
+  const channelLabel = useCallback(
+    (ch: string) =>
+      ch === 'counter'
+        ? t('mix.channelCounter')
+        : ch === 'swiggy'
+          ? t('mix.channelSwiggy')
+          : ch === 'zomato'
+            ? t('mix.channelZomato')
+            : ch === 'flipkart'
+              ? t('mix.channelFlipkart')
+              : ch === 'amazon'
+                ? t('mix.channelAmazon')
+                : ch,
+    [t],
+  );
+  const modeLabel = useCallback(
+    (mode: string) =>
+      mode === 'upi'
+        ? t('mix.modeUpi')
+        : mode === 'cash'
+          ? t('mix.modeCash')
+          : mode === 'card'
+            ? t('mix.modeCard')
+            : mode === 'other'
+              ? t('mix.modeOther')
+              : t('mix.modeNotRecorded'),
+    [t],
+  );
+  // `|| 1` is the divisor's floor, not the bar's: a period whose every figure is zero must not divide by it.
+  /*
+   * Owner, 2026-11-02 — a month is drawn as weeks and a year as months. One column per day was right while
+   * the longest period on offer was a week; asked for the whole of October it was 33 columns 6px wide under
+   * a weekday printed on top of the next one.
+   */
+  const { unit: barUnit, buckets: bars } = useMemo(() => bucketDays(takings.byDay), [takings.byDay]);
+  const barLabel = useMemo(() => {
+    const l = intlLocale(locale);
+    const dayNum = new Intl.DateTimeFormat(l, { day: 'numeric', timeZone: 'UTC' });
+    const dayMonth = new Intl.DateTimeFormat(l, { day: 'numeric', month: 'short', timeZone: 'UTC' });
+    const monthOnly = new Intl.DateTimeFormat(l, { month: 'short', timeZone: 'UTC' });
+    const at = (b: ChartBucket) => new Date(`${b.startISO}T00:00:00Z`);
+    return {
+      /* Printed under the column, on the ones there is room for. A weekday still names a week of days, which
+         is what an owner reads every morning; past that it is the date, which does not repeat. */
+      tick: (b: ChartBucket) =>
+        barUnit === 'month'
+          ? monthOnly.format(at(b))
+          : barUnit === 'week'
+            ? dayMonth.format(at(b))
+            : bars.length <= 7
+              ? dayLetter(b.dow)
+              : dayNum.format(at(b)),
+      /* Heard for EVERY column, named or not: thinning the axis must not take the figures off the screen
+         for somebody listening to it. */
+      full: (b: ChartBucket) => dayMonth.format(at(b)),
+    };
+  }, [locale, barUnit, bars.length, dayLetter]);
+  /* The widest label this axis would print, measured rather than guessed at: it decides how many fit. */
+  const widestTick = useMemo(
+    () => bars.map((b) => barLabel.tick(b)).reduce((a, b) => (b.length > a.length ? b : a), ''),
+    [bars, barLabel],
+  );
+  const labelBudget = useLabelBudget(barsRef, widestTick, bars.length);
+  const barNamed = useMemo(() => namedTicks(bars.length, labelBudget), [bars.length, labelBudget]);
 
   if (!data.anySales) {
     return (
@@ -149,9 +229,7 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
     );
   }
 
-  const { takings, earners, busy, changed } = data;
-  // `|| 1` is the divisor's floor, not the bar's: a period whose every figure is zero must not divide by it.
-  const dayPeak = Math.max(...takings.byDay.map((d) => Number(d.valueMinor)), 1);
+  const dayPeak = Math.max(...bars.map((b) => b.valueMinor), 1);
   const hourPeak = Math.max(...busy.byHour.map((h) => Number(h.valueMinor)), 1);
   const topValue = Math.max(...earners.rows.map((r) => Number(r.valueMinor)), 1);
   const difference = takings.differenceMinor === null ? null : Number(takings.differenceMinor);
@@ -179,23 +257,50 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
             ? null
             : ` · ${t('took.average', { amount: money(takings.averageBillMinor) })}`}
         </p>
-        <ul className="cr-bars cr-bars-day">
-          {takings.byDay.map((d) => {
-            const value = Number(d.valueMinor);
-            return (
-              <li key={d.dateISO} className="cr-bar-col">
-                <span className="cr-bar-slot">
-                  <span
-                    className="cr-bar"
-                    style={{ height: `${value === 0 ? 0 : Math.max(MIN_BAR_PCT, (value / dayPeak) * 100)}%` }}
-                  />
-                </span>
-                <span className="cr-bar-tick">{dayLetter(d.dow)}</span>
-                <span className="sr-only">{money(d.valueMinor)}</span>
-              </li>
-            );
-          })}
+        <ul className="cr-bars cr-bars-day" ref={barsRef}>
+          {bars.map((b, i) => (
+            <li key={b.startISO} className="cr-bar-col">
+              <span className="cr-bar-slot">
+                <span
+                  className="cr-bar"
+                  style={{ height: `${b.valueMinor === 0 ? 0 : Math.max(MIN_BAR_PCT, (b.valueMinor / dayPeak) * 100)}%` }}
+                />
+              </span>
+              <span className="cr-bar-tick">{barNamed(i) ? barLabel.tick(b) : ''}</span>
+              <span className="sr-only">
+                {barLabel.full(b)} {money(b.valueMinor)}
+              </span>
+            </li>
+          ))}
         </ul>
+        {strategy && (strategy.byChannel.length > 0 || strategy.byPaymentMode.length > 0) ? (
+          <div className="cr-mix-block">
+            {strategy.byChannel.length > 0 ? (
+              <div className="cr-mix-row">
+                <span className="cr-mix-label">{t('mix.channelsLabel')}</span>
+                <div className="cr-mix-pills">
+                  {strategy.byChannel.map((c) => (
+                    <span key={c.channel} className="cr-mix-pill">
+                      <strong>{channelLabel(c.channel)}</strong> {money(c.valueMinor)} <em>({c.sharePct}%)</em>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {strategy.byPaymentMode.length > 0 ? (
+              <div className="cr-mix-row">
+                <span className="cr-mix-label">{t('mix.paymentsLabel')}</span>
+                <div className="cr-mix-pills">
+                  {strategy.byPaymentMode.map((p) => (
+                    <span key={p.mode} className="cr-mix-pill">
+                      <strong>{modeLabel(p.mode)}</strong> {money(p.valueMinor)} <em>({p.sharePct}%)</em>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </section>
 
       <section className="cr-card" aria-labelledby="cr-earn-h">
@@ -239,6 +344,11 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
               : t('earners.slow', { names: earners.slow.map((s) => s.name).join(', ') })}
           </p>
         )}
+        {strategy && earners.slowTotal > earners.slow.length && earners.slow.length > 0 ? (
+          <p className="cr-sub cr-slow-examples">
+            {t('mix.slowExamples', { names: earners.slow.map((s) => s.name).join(', ') })}
+          </p>
+        ) : null}
       </section>
 
       <section className="cr-card" aria-labelledby="cr-busy-h">
@@ -283,6 +393,11 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
             {t('busy.quietest', { day: dayName(busy.quietestDay.dow), amount: money(busy.quietestDay.valueMinor) })}
           </p>
         ) : null}
+        {strategy?.bestDay ? (
+          <p className="cr-sub cr-best-day">
+            {t('mix.bestDay', { day: dayName(strategy.bestDay.dow), amount: money(strategy.bestDay.valueMinor) })}
+          </p>
+        ) : null}
       </section>
 
       <section className="cr-card" aria-labelledby="cr-chg-h">
@@ -319,7 +434,170 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
             </span>
           </p>
         ) : null}
+        {strategy && strategy.basket.totalUnits > 0 ? (
+          <p className="cr-sub cr-basket-meta">
+            {t('mix.basketMeta', {
+              items: strategy.basket.avgItemsPerBill,
+              singlePct: strategy.basket.singleItemSharePct,
+            })}
+          </p>
+        ) : null}
       </section>
+
+      {strategy ? (
+        <section className="cr-card cr-playbook" aria-labelledby="cr-strat-h">
+          <div className="cr-playbook-head">
+            <h2 className="cr-title" id="cr-strat-h">
+              {t('strategy.title')}
+            </h2>
+            <p className="cr-sub">{t('strategy.subtitle')}</p>
+          </div>
+          <div className="cr-strat-grid">
+            {/* 1. Basket & Combo Strategy */}
+            <article className="cr-strat-card">
+              <span className="cr-strat-tag">{t('strategy.combo.tag')}</span>
+              <h3 className="cr-strat-title">{t('strategy.combo.title')}</h3>
+              <p className="cr-strat-data">
+                <strong>{t('strategy.dataLabel')}: </strong>
+                {strategy.basket.topPair
+                  ? t('strategy.combo.dataPair', {
+                      singlePct: strategy.basket.singleItemSharePct,
+                      avgItems: strategy.basket.avgItemsPerBill,
+                      itemA: strategy.basket.topPair.itemA,
+                      itemB: strategy.basket.topPair.itemB,
+                      pairBills: strategy.basket.topPair.bills,
+                    })
+                  : t('strategy.combo.dataSingle', {
+                      singlePct: strategy.basket.singleItemSharePct,
+                      avgItems: strategy.basket.avgItemsPerBill,
+                      avgBill: money(takings.averageBillMinor ?? 0),
+                    })}
+              </p>
+              <p className="cr-strat-action">
+                <strong>{t('strategy.actionLabel')}: </strong>
+                {(() => {
+                  const leader =
+                    strategy.basket.topPair?.itemA ??
+                    earners.leader?.name ??
+                    earners.rows[0]?.name ??
+                    t('strategy.fallbackTop');
+                  const partner =
+                    strategy.basket.topPair?.itemB ??
+                    earners.rows.find((r) => r.name !== leader)?.name ??
+                    t('strategy.fallbackPartner');
+                  return t('strategy.combo.action', { leader, partner });
+                })()}
+              </p>
+              <p className="cr-strat-impact">
+                {t('strategy.combo.impact', {
+                  amount: money(Math.max(1, Math.round(takings.bills / 3)) * 6000),
+                })}
+              </p>
+            </article>
+
+            {/* 2. Peak & Slow-Slot Strategy */}
+            <article className="cr-strat-card">
+              <span className="cr-strat-tag">{t('strategy.timing.tag')}</span>
+              <h3 className="cr-strat-title">{t('strategy.timing.title')}</h3>
+              <p className="cr-strat-data">
+                <strong>{t('strategy.dataLabel')}: </strong>
+                {strategy.bestDay && busy.quietestDay && busy.peak
+                  ? t('strategy.timing.dataWithDays', {
+                      bestDay: dayName(strategy.bestDay.dow),
+                      bestAmount: money(strategy.bestDay.valueMinor),
+                      weakDay: dayName(busy.quietestDay.dow),
+                      weakAmount: money(busy.quietestDay.valueMinor),
+                      from: hourName(busy.peak.fromHour),
+                      to: hourName(busy.peak.toHour),
+                    })
+                  : busy.peak
+                    ? t('strategy.timing.dataRushOnly', {
+                        from: hourName(busy.peak.fromHour),
+                        to: hourName(busy.peak.toHour),
+                      })
+                    : t('strategy.timing.dataNoPeak')}
+              </p>
+              <p className="cr-strat-action">
+                <strong>{t('strategy.actionLabel')}: </strong>
+                {busy.quietestDay && busy.peak
+                  ? t('strategy.timing.action', {
+                      weakDay: dayName(busy.quietestDay.dow),
+                      from: hourName(busy.peak.fromHour),
+                      to: hourName(busy.peak.toHour),
+                    })
+                  : t('strategy.timing.actionNoPeak')}
+              </p>
+              <p className="cr-strat-impact">
+                {t('strategy.timing.impact', {
+                  amount: money(
+                    strategy.bestDay && busy.quietestDay
+                      ? Math.max(50000, Math.round((Number(strategy.bestDay.valueMinor) - Number(busy.quietestDay.valueMinor)) / 200) * 100)
+                      : Math.round(Number(takings.totalMinor) * 0.0015) * 100,
+                  ),
+                })}
+              </p>
+            </article>
+
+            {/* 3. Channel Margin & Retention Strategy */}
+            <article className="cr-strat-card">
+              <span className="cr-strat-tag">{t('strategy.channels.tag')}</span>
+              <h3 className="cr-strat-title">{t('strategy.channels.title')}</h3>
+              <p className="cr-strat-data">
+                <strong>{t('strategy.dataLabel')}: </strong>
+                {(() => {
+                  const counterSlice = strategy.byChannel.find((c) => c.channel === 'counter');
+                  const counterPct = counterSlice ? counterSlice.sharePct : 100;
+                  const onlinePct = Math.max(0, 100 - counterPct);
+                  return t('strategy.channels.data', {
+                    counterPct,
+                    onlinePct,
+                    capturePct: strategy.customers.customerCapturePct,
+                    repeatPct: strategy.customers.repeatSharePct,
+                  });
+                })()}
+              </p>
+              <p className="cr-strat-action">
+                <strong>{t('strategy.actionLabel')}: </strong>
+                {t('strategy.channels.action')}
+              </p>
+              <p className="cr-strat-impact">{t('strategy.channels.impact')}</p>
+            </article>
+
+            {/* 4. Menu Engineering Strategy */}
+            <article className="cr-strat-card">
+              <span className="cr-strat-tag">{t('strategy.menu.tag')}</span>
+              <h3 className="cr-strat-title">{t('strategy.menu.title')}</h3>
+              <p className="cr-strat-data">
+                <strong>{t('strategy.dataLabel')}: </strong>
+                {earners.slowTotal > 0 && earners.slow.length > 0
+                  ? t('strategy.menu.dataWithSlow', {
+                      star: changed.up[0]?.name ?? earners.leader?.name ?? earners.rows[0]?.name ?? t('strategy.fallbackTop'),
+                      slowCount: earners.slowTotal,
+                      menuTotal: earners.menuTotal,
+                      slowNames: earners.slow.slice(0, 3).map((s) => s.name).join(', '),
+                    })
+                  : t('strategy.menu.dataClean', {
+                      star: changed.up[0]?.name ?? earners.leader?.name ?? earners.rows[0]?.name ?? t('strategy.fallbackTop'),
+                      menuTotal: earners.menuTotal,
+                    })}
+              </p>
+              <p className="cr-strat-action">
+                <strong>{t('strategy.actionLabel')}: </strong>
+                {t('strategy.menu.action', {
+                  star: changed.up[0]?.name ?? earners.leader?.name ?? earners.rows[0]?.name ?? t('strategy.fallbackTop'),
+                  slowNames:
+                    earners.slow.length > 0
+                      ? earners.slow.slice(0, 3).map((s) => s.name).join(', ')
+                      : earners.rows[earners.rows.length - 1]?.name ?? t('strategy.fallbackSlow'),
+                })}
+              </p>
+              <p className="cr-strat-impact">
+                {t('strategy.menu.impact', { slowCount: earners.slowTotal })}
+              </p>
+            </article>
+          </div>
+        </section>
+      ) : null}
     </>
   );
 }

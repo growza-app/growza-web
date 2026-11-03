@@ -139,11 +139,9 @@ function SubscriptionsList() {
         <div style={{ width: 180 }}>
           <Select
             aria-label="Filter by status"
-            options={STATUS_OPTIONS.map(subscriptionStatusLabel)}
-            value={subscriptionStatusLabel(status)}
-            onChange={(e) =>
-              setStatus(STATUS_OPTIONS[STATUS_OPTIONS.map(subscriptionStatusLabel).indexOf(e.target.value)] ?? 'All')
-            }
+            options={STATUS_OPTIONS.map((s) => ({ value: s, label: s === 'All' ? 'All statuses' : subscriptionStatusLabel(s) }))}
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
           />
         </div>
         <button

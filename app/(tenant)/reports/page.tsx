@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { redirect } from 'next/navigation';
 import { guardLive } from '../lib/screen-guard';
 import { screenTitle } from '../lib/page-title';
 import { Suspense } from 'react';
@@ -161,6 +162,7 @@ export default async function ReportsPage({
   const askedGenericTab = noBookings && params.tab !== undefined;
   if (noBookings && !(askedGenericTab && SHOP_REPORT_TABS.has(shopTab) && allowedTabsOf(me).includes(shopTab))) {
     const mayOpenShopReports = areasOf(me).shop && maySeeTheBooks;
+    if (!mayOpenShopReports && !allowedTabsOf(me).some((k) => SHOP_REPORT_TABS.has(k))) redirect('/');
     // "See your stock" is a count's link: a kitchen keeps none, and its menu is already in the nav.
     const counted = areasOf(me).stock;
     return (
@@ -170,8 +172,10 @@ export default async function ReportsPage({
           actions={
             areasOf(me).shop ? (
               <>
-                <a className="btn btn-ghost" href="/orders">{t('shopSoonOrders')}</a>
-                {mayOpenShopReports && counted ? <a className="btn btn-ghost" href="/stock">{t('shopSoonStock')}</a> : null}
+                {/* Owner, 2026-11-02 — a phone already has both of these in the bar at the foot of the screen, and in
+                    the header they wrapped it onto a second row that held nothing else. `cr-head-link` hides them there. */}
+                <a className="btn btn-ghost cr-head-link" href="/orders">{t('shopSoonOrders')}</a>
+                {mayOpenShopReports && counted ? <a className="btn btn-ghost cr-head-link" href="/stock">{t('shopSoonStock')}</a> : null}
               </>
             ) : undefined
           }

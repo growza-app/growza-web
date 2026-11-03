@@ -13,7 +13,7 @@ describe('the menu button on Bookings and Clients', () => {
   const header = read('./PageHeader.tsx');
 
   it('PageHeader takes `menu` and shows the menu button in place of Back', () => {
-    expect(header).toMatch(/\{onBack \? null : menu \? <MenuButton \/> : <BackButton phoneOnly \/>\}/);
+    expect(header).toMatch(/\{onBack \? null : backHref \? <BackButton phoneOnly href=\{backHref\} \/> : menu \? <MenuButton \/> : <BackButton phoneOnly \/>\}/);
   });
 
   it('Bookings (both headers), Clients and Orders ask for it', () => {
