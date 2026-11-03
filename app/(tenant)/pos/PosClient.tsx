@@ -525,13 +525,32 @@ export function PosClient({
           ...(ways.length > 1 ? { payments: ways } : {}),
           ...(redeemPoints > 0 ? { redeemPoints } : {}),
         });
+        const paidMinor = settled.paidAmountMinor ?? tk.totalMinor;
+        const discountMinor = settled.rewards?.discountMinor ?? 0;
         setTodayRows((prev) =>
-          prev.map((r) => ((r.bookingGroupId ?? r.id) === tk.id ? { ...r, paymentMode: chosen } : r)),
+          prev.map((r) => {
+            if ((r.bookingGroupId ?? r.id) !== tk.id) return r;
+            let remDiscount = discountMinor;
+            const updatedProducts =
+              discountMinor > 0 && r.products
+                ? r.products.map((p) => {
+                    const gross = Math.max(0, Number(p.paidMinor ?? 0));
+                    const take = Math.min(gross, remDiscount);
+                    remDiscount -= take;
+                    return { ...p, paidMinor: String(gross - take) };
+                  })
+                : r.products;
+            return {
+              ...r,
+              paymentMode: chosen,
+              payments: ways.map((w) => ({ mode: w.mode, amountMinor: String(w.amountMinor) })),
+              products: updatedProducts,
+            };
+          }),
         );
         setTokenState(tk.id, 'completed');
         setPayingToken(null);
         void loadTodayTokens();
-        const paidMinor = settled.paidAmountMinor ?? tk.totalMinor;
         const paidBy =
           ways.length > 1
             ? ways.map((w) => `${payModeLabel(w.mode)} ${formatMoney(String(w.amountMinor))}`).join(' · ')
@@ -731,6 +750,7 @@ export function PosClient({
       });
       if (mine !== opened.current) return;
       // Owner, 2026-10-24 — "No return": a Swiggy or Zomato order is returned and refunded by the app, so it is not offered here.
+      // Unpaid counter orders still waiting in the queue for payment are filtered out inside `buildSaleRows`.
       setBills(buildSaleRows(rows.filter((r) => !isDeliveryApp(r.channel ?? 'counter')), timezone));
     } catch {
       if (mine !== opened.current) return;

@@ -402,5 +402,22 @@ describe('the POS screen', () => {
     // An unpaid order in Queue stays 'preparing' even 120 minutes later until payment is taken and marked done.
     expect(token?.elapsedMin).toBe(120);
     expect(token?.state).toBe('preparing');
+
+    // Even a localStorage 'completed' override cannot hide an unpaid pending order from the Preparing column.
+    const [withOverride] = buildDailyTokens([unpaidOldRow], 'loc-1', { 'sale-pending-1': 'completed' }, nowMs);
+    expect(withOverride?.state).toBe('preparing');
+
+    // A service appointment with paymentMode === null is never misclassified as an unpaid counter product sale.
+    const serviceRow: Appointment = {
+      ...unpaidOldRow,
+      id: 'appt-svc-1',
+      channel: undefined,
+      serviceId: 'svc-1',
+      serviceName: 'Haircut',
+      priceMinor: '50000',
+      products: [],
+    };
+    const [svcToken] = buildDailyTokens([serviceRow], 'loc-1', {}, nowMs);
+    expect(svcToken?.paymentPending).toBe(false);
   });
 });
