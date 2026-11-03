@@ -215,16 +215,16 @@ describe('the strategy playbook and channel/payment mix', () => {
 
   it('renders the channel/payment mix and 4 actionable strategy cards in English and Hindi', () => {
     const enOut = text(render('en', withStrategy));
-    expect(enOut).toContain('Growth &amp; strategy playbook');
-    expect(enOut).toContain('Chicken Biryani + Rumali Roti were ordered together 6 times');
+    expect(enOut).toContain('How to sell more');
+    expect(enOut).toContain('Customers often buy Chicken Biryani + Rumali Roti together (6 bills)');
     expect(enOut).toContain('Counter ₹18,000 (66%)');
     expect(enOut).toContain('UPI ₹16,000 (59%)');
     expect(enOut).toContain('Best day: Saturday — ₹7,200');
 
     const hiOut = text(render('hi', withStrategy));
-    expect(hiOut).toContain('बिज़नेस बढ़ाने की रणनीतियाँ');
+    expect(hiOut).toContain('बिक्री कैसे बढ़ाएँ');
     expect(hiOut).toContain('काउंटर ₹18,000 (66%)');
-    expect(hiOut).not.toContain('Growth &amp; strategy playbook');
+    expect(hiOut).not.toContain('How to sell more');
   });
 });
 

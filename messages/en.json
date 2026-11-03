@@ -2862,8 +2862,8 @@
       "steady": "Nothing moved much since the period before."
     },
     "mix": {
-      "channelsLabel": "Channels",
-      "paymentsLabel": "Payments",
+      "channelsLabel": "Where orders came from",
+      "paymentsLabel": "How people paid",
       "channelCounter": "Counter",
       "channelSwiggy": "Swiggy",
       "channelZomato": "Zomato",
@@ -2873,46 +2873,46 @@
       "modeCash": "Cash",
       "modeCard": "Card",
       "modeOther": "Other",
-      "modeNotRecorded": "Unrecorded",
+      "modeNotRecorded": "Not noted",
       "bestDay": "Best day: {day} — {amount}",
-      "slowExamples": "Includes: {names}",
-      "basketMeta": "{items} items/order · {singlePct}% single-item orders"
+      "slowExamples": "Not selling: {names}",
+      "basketMeta": "Avg {items} items per bill · {singlePct}% bought only 1 item"
     },
     "strategy": {
-      "title": "Growth & strategy playbook",
-      "subtitle": "Actionable ways to grow your sales based on this period’s data",
-      "dataLabel": "Data insight",
-      "actionLabel": "Recommended strategy",
+      "title": "How to sell more",
+      "subtitle": "Simple ideas from your numbers to grow your business",
+      "dataLabel": "Why",
+      "actionLabel": "What to do",
       "combo": {
-        "tag": "BASKET & AOV",
-        "title": "Build a high-margin combo to lift order size",
-        "dataPair": "{singlePct}% of orders have only 1 item (avg {avgItems} items/order). {itemA} + {itemB} were ordered together {pairBills} times.",
-        "dataSingle": "{singlePct}% of orders have only 1 item (avg {avgItems} items/order, {avgBill} per order).",
-        "action": "Bundle {leader} with {partner} or a drink as a 1-tap combo at POS, and prompt staff to suggest an add-on on single-item bills.",
-        "impact": "Est. upside: +{amount} if 1 in 3 orders adds ₹60"
+        "tag": "MAKE BIGGER BILLS",
+        "title": "Sell a combo to increase bill size",
+        "dataPair": "{singlePct}% of customers buy only 1 item (avg {avgItems} items/bill). Customers often buy {itemA} + {itemB} together ({pairBills} bills).",
+        "dataSingle": "{singlePct}% of customers buy only 1 item (avg {avgItems} items/bill, {avgBill} per order).",
+        "action": "Make a combo of {leader} + {partner} (or a cold drink) on POS. Ask staff to offer it whenever someone orders just 1 item.",
+        "impact": "Extra money: +{amount} if 1 in 3 customers adds a ₹60 item"
       },
       "timing": {
-        "tag": "PEAK & SLOW SLOTS",
-        "title": "Fill quiet weekday & afternoon capacity",
-        "dataWithDays": "Your best day ({bestDay}: {bestAmount}) brings far more than your slowest ({weakDay}: {weakAmount}). Rush is concentrated in {from}–{to}.",
-        "dataRushOnly": "Your rush is concentrated in {from}–{to}, leaving off-peak afternoon hours under-used.",
-        "action": "Launch a {weakDay} Family Pack offer on WhatsApp and a 4 pm–6 pm evening snack combo outside your {from}–{to} peak rush.",
-        "impact": "Est. upside: +{amount} by closing half the slow-day gap"
+        "tag": "QUIET DAYS & HOURS",
+        "title": "Get more orders on slow days",
+        "dataWithDays": "{bestDay} ({bestAmount}) is your best day, while {weakDay} ({weakAmount}) is very slow. Most orders come between {from}–{to}.",
+        "dataRushOnly": "Most orders come between {from}–{to}, while afternoon hours stay quiet.",
+        "action": "Send a {weakDay} Family Pack offer on WhatsApp, and run a 4 pm–6 pm evening snack deal outside your {from}–{to} rush.",
+        "impact": "Extra money: +{amount} by filling half the gap on slow days"
       },
       "channels": {
-        "tag": "CHANNELS & RETENTION",
-        "title": "Convert app & walk-in buyers into direct regulars",
-        "data": "Counter brings {counterPct}% of sales ({onlinePct}% on delivery apps). Customer phone saved on {capturePct}% of bills ({repeatPct}% repeat orders).",
-        "action": "Save guest phone numbers at billing on every counter order, and slip a 10% direct-pickup coupon into Swiggy/Zomato bags to save commission.",
-        "impact": "Target: 80%+ phone capture & commission-free repeats"
+        "tag": "SAVE APP COMMISSION",
+        "title": "Bring app & walk-in customers back directly",
+        "data": "Counter brings {counterPct}% of sales ({onlinePct}% on delivery apps). Customer phone is saved on {capturePct}% of bills ({repeatPct}% repeat orders).",
+        "action": "Save the customer’s phone number on every counter bill, and put a 10% direct-order discount slip inside Swiggy/Zomato parcels.",
+        "impact": "Goal: Save 20–25% app commission on repeat orders"
       },
       "menu": {
-        "tag": "MENU ENGINEERING",
-        "title": "Push rising stars & clean up dead weight",
-        "dataWithSlow": "{star} leads demand, while {slowCount} of {menuTotal} menu items ({slowNames}) barely moved.",
-        "dataClean": "{star} leads demand across {menuTotal} active menu items.",
-        "action": "Pin {star} at the top of your POS and menu, pair slow movers ({slowNames}) into value combos, or drop zero-sale items to cut kitchen prep waste.",
-        "impact": "Action: Optimize {slowCount} slow-moving menu items"
+        "tag": "FIX YOUR MENU",
+        "title": "Promote top dishes & cut slow items",
+        "dataWithSlow": "{star} is selling fast, while {slowCount} of {menuTotal} items ({slowNames}) had almost no orders.",
+        "dataClean": "{star} is your fastest-selling item across {menuTotal} menu items.",
+        "action": "Keep {star} at the top of your POS screen. Pair slow items ({slowNames}) into a combo, or stop making them to save kitchen waste.",
+        "impact": "Result: Less kitchen waste across {slowCount} slow items"
       }
     }
   },
