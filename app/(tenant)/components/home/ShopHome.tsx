@@ -18,6 +18,7 @@ import { DaySummarySheet } from './DaySummarySheet';
 import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import { ordersHref } from '../../lib/orders-filter';
+import { posQueueStorageKey, type PosTokenOverride } from '../../pos/pos-helpers';
 import { channelsOf, sellsOnMarketplaces } from '../../lib/order-channels';
 import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
@@ -324,7 +325,7 @@ export function ShopHome({
    */
   const tiles = [
     { href: '/pos', label: t.nav.pos, icon: <IconPos />, tone: 'green' },
-    { href: '/orders', label: t.nav.orders, icon: <IconNavOrders />, tone: 'blue' },
+    { href: '/pos?mode=queue', label: s.queueTitle, icon: <IconNavOrders />, tone: 'blue' },
     { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'green' },
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
     /*
@@ -591,6 +592,50 @@ export function ShopHome({
 
   const customersTotal = customerStats?.total ?? 86;
   const customersDeltaPct = 11;
+
+  const queueStats = useMemo(() => {
+    const fmtDate = (d: Date) => {
+      try {
+        return new Intl.DateTimeFormat('en-CA', { ...(timezone ? { timeZone: timezone } : {}) }).format(d);
+      } catch {
+        return d.toISOString().slice(0, 10);
+      }
+    };
+    const todayISO = fmtDate(new Date());
+    let overrides: Record<string, PosTokenOverride> = {};
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = window.localStorage.getItem(posQueueStorageKey(branch, todayISO));
+        if (raw) {
+          const parsed = JSON.parse(raw) as Record<string, PosTokenOverride>;
+          if (parsed && typeof parsed === 'object') overrides = parsed;
+        }
+      } catch {
+        // Ignore storage errors
+      }
+    }
+    const now = Date.now();
+    let inQueue = 0;
+    for (const o of recentOrders) {
+      if (o.status === 'cancelled' || o.status === 'returned') continue;
+      const soldMs = Date.parse(o.soldAt);
+      if (!Number.isFinite(soldMs) || fmtDate(new Date(soldMs)) !== todayISO) continue;
+      const ov = overrides[o.id];
+      if (ov === 'completed') continue;
+      if (ov === 'preparing' || (typeof ov === 'string' && ov.startsWith('preparing:'))) {
+        inQueue++;
+        continue;
+      }
+      const elapsedMin = Math.max(0, Math.round((now - soldMs) / 60_000));
+      if (elapsedMin <= 30) inQueue++;
+    }
+    const totalToday = data?.today.orders ?? 0;
+    const boundedInQueue = Math.min(totalToday, inQueue);
+    return {
+      inQueue: boundedInQueue,
+      completedToday: Math.max(0, totalToday - boundedInQueue),
+    };
+  }, [recentOrders, data, branch, timezone]);
 
   return (
     <>
@@ -1955,18 +2000,30 @@ export function ShopHome({
         {failed || !data ? null : (
             <div className="shp-mobile-stack">
               <div className="shp-col-stack">
-                <Card title={s.ordersTitle} action={data.anyOrders && can('/orders') ? <a className="shp-link" href="/orders">{s.viewOrders}</a> : undefined}>
+                <Card
+                  title={s.queueTitle}
+                  action={
+                    data.anyOrders && can('/pos') ? (
+                      <a className="shp-link" href="/pos?mode=queue">
+                        {s.openQueue}
+                      </a>
+                    ) : data.anyOrders && can('/orders') ? (
+                      <a className="shp-link" href="/orders">
+                        {s.viewOrders}
+                      </a>
+                    ) : undefined
+                  }
+                >
                   {data.anyOrders ? (
                     <>
                       <div className="shp-orders-row">
-                        {/* The big number says how many; "3 orders" beside a 3 said it twice. Today is what it counts. */}
                         <div className="shp-orders-summary">
                           <p className="shp-orders">
-                            <strong>{data.today.orders}</strong>
-                            <span>{data.today.orders === 0 ? s.noOrdersToday : s.today}</span>
+                            <strong>{queueStats.inQueue}</strong>
+                            <span>{queueStats.inQueue === 0 ? s.noQueueNow : s.inQueueNow}</span>
                           </p>
                           <span className="shp-orders-yesterday">
-                            {s.yesterday}: <b>{data.yesterday.orders}</b>
+                            {s.completedToday}: <b>{queueStats.completedToday}</b>
                           </span>
                         </div>
                         {/*
