@@ -684,25 +684,77 @@
 /* The amount, on a ground of its own, so the question above it and the four answers below do not crowd it. */
 .pf-how-total {
   margin: 0;
-  padding: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
   border-radius: var(--radius);
   background: var(--accent-soft);
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }
 
 .pf-how-total-label {
   font-size: 1rem;
-  font-weight: 600;
-  color: var(--muted);
+  font-weight: 700;
+  color: var(--accent-deep);
 }
 
 .pf-how-total strong {
   display: block;
-  margin-top: 2px;
-  font-size: 3.25rem;
+  margin-top: 0;
+  font-size: 2rem;
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.pf:has(.pf-how-total) {
+  gap: var(--sp-3);
+  padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+.pf > .pf-redeem {
+  margin: 0;
+  padding: 0.625rem var(--sp-4);
+}
+
+.pf > .pf-pay {
+  gap: var(--sp-3);
+}
+
+.pf > .pf-pay .pf-pay-tile {
+  padding: 0.875rem var(--sp-4);
+}
+
+.pf > .pf-pay .pf-pay-tile::after {
+  top: 1.125rem;
+  right: var(--sp-3);
+  font-size: 1.5rem;
+}
+
+.pf > .pf-pay .pf-pay-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-bottom: var(--sp-2);
+}
+
+.pf > .pf-pay .pf-pay-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.pf > .pf-pay .pf-pay-word {
+  font-size: 1.0625rem;
+  line-height: 1.2;
+}
+
+.pf > .pf-pay .pf-pay-sub {
+  margin-top: 4px;
+  min-height: 2.5em;
+  font-size: 0.875rem;
+  line-height: 1.25;
 }
 
 .pf-pay {

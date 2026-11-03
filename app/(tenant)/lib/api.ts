@@ -1546,6 +1546,8 @@ export const api = {
        * nothing. The next person to read this file could not see that the field existed.
        */
       redeemPoints?: number;
+      /** Send a counter order to the kitchen queue with payment pending; settled from Queue when handed over. */
+      paymentPending?: boolean;
       // The route refuses to guess: exactly one of these (GRW-293). A named stylist only when paying a token (GRW-403).
     } & ({ noStylist: true; schedulableId?: never } | { schedulableId: string; noStylist?: never }),
   ) =>
@@ -1565,6 +1567,21 @@ export const api = {
       /** Jira GRW-648 — what this bill did to the client's reward balance. Absent when the business has rewards off. */
       rewards?: VisitRewards;
     }>('/api/v1/counter-sales', input),
+  /**
+   * Settle a counter order that was sent to the kitchen queue with payment pending (`paymentMode = null`).
+   * Uses `POST /api/v1/counter-sales` with `settleSaleId` so anyone who may ring up a counter sale (including front desk)
+   * may also collect payment when handing the order over from Queue.
+   */
+  settleCounterSale: (
+    saleId: string,
+    input: { paymentMode?: PaymentMode; payments?: { mode: PaymentMode; amountMinor: number }[]; redeemPoints?: number },
+  ) =>
+    post<{
+      saleId: string;
+      paymentMode: PaymentMode;
+      paidAmountMinor: number;
+      rewards?: VisitRewards;
+    }>('/api/v1/counter-sales', { settleSaleId: saleId, ...input }),
   /**
    * The number the client gave when the bill was handed over, kept.
    *

@@ -55,9 +55,12 @@ export function PaymentDone({
   sound: soundProp,
   onToggleSound,
   title,
+  nextLabel,
 }: {
   /** Owner, 2026-10-24 — said instead of "₹300 received" when no money was taken here (a delivery app's order). */
   title?: string;
+  /** Optional custom label for the primary return button (e.g. "Back to queue" when settling a token in Queue). */
+  nextLabel?: string;
   /** The sale, so a number typed on this screen can be kept as its client. */
   appointmentId: string;
   /**
@@ -186,7 +189,7 @@ export function PaymentDone({
       ) : null}
       <div className="pf-done-actions">
         <button type="button" className="btn pf-go" onClick={onNextCustomer}>
-          {t('nextCustomer', { client: nounInSentence(clientNoun) })}
+          {nextLabel ?? t('nextCustomer', { client: nounInSentence(clientNoun) })}
         </button>
         {/*
           Next customer is the button of the three that gets pressed after every sale, so it keeps the width.

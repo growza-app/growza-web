@@ -346,4 +346,61 @@ describe('the POS screen', () => {
     }
     expect(css).toContain('.pos-queue-board');
   });
+
+  it('lets the till send an order to Queue with payment pending and lets the desk settle it there', () => {
+    const payFlow = src('../appointments/new/PayFlow.tsx');
+    const css = src('../styles/99-pos.css');
+
+    expect(payFlow).toContain('sendPosPending');
+    expect(payFlow).toContain('pos-charge-pending');
+    expect(payFlow).toContain("t('desk.keepPendingInQueue')");
+    expect(payFlow).toContain('...(pending ? { paymentPending: true } : {}),');
+    expect(payFlow).toContain('setQueuedBanner({ tokenNo, amountMinor: paidMinor })');
+    expect(payFlow).toContain('pos-charge-queued');
+    expect(client).toContain('settleAndCompleteToken');
+    expect(client).toContain('const settled = await api.settleCounterSale(tk.id, {');
+    expect(client).toContain('QueueTokenPayScreen');
+    expect(client).toContain('setSettledReceipt({');
+    expect(client).toContain("nextLabel={t('backToQueueDone')}");
+
+    for (const sel of ['.pos-charge-pending', '.pos-charge-queued-link']) {
+      const block = css.slice(css.indexOf(`\n${sel} {`));
+      expect(block.slice(0, block.indexOf('}')), sel).toContain('min-height: 2.75rem;');
+    }
+
+    const nowMs = Date.parse('2026-10-24T13:00:00Z');
+    const unpaidOldRow: Appointment = {
+      id: 'sale-pending-1',
+      startAt: '2026-10-24T11:00:00Z',
+      endAt: '2026-10-24T11:00:00Z',
+      status: 'completed',
+      createdVia: 'dashboard',
+      channel: 'counter',
+      customerName: 'Aarav Bist',
+      customerPhone: null,
+      serviceId: null,
+      serviceName: '',
+      priceMinor: null,
+      paidAmountMinor: null,
+      paymentMode: null,
+      providerId: null,
+      providerName: null,
+      bookingGroupId: null,
+      offerTitle: null,
+      comboPriceMinor: null,
+      locationId: 'loc-1',
+      bookedAhead: false,
+      movedTo: null,
+      reminderSent: false,
+      customerIsNew: false,
+      products: [{ id: 'vp-p1', productId: 'p-1', name: 'Masala Chai', priceMinor: '4000', qty: 2, paidMinor: '8000', returnedQty: 0, returnedMinor: '0' }],
+      payments: [],
+      refunds: [],
+    };
+    const [token] = buildDailyTokens([unpaidOldRow], 'loc-1', {}, nowMs);
+    expect(token?.paymentPending).toBe(true);
+    // An unpaid order in Queue stays 'preparing' even 120 minutes later until payment is taken and marked done.
+    expect(token?.elapsedMin).toBe(120);
+    expect(token?.state).toBe('preparing');
+  });
 });

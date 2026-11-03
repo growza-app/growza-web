@@ -658,7 +658,12 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
         adjustments.push({
           label,
           amount,
-          isDiscount: amount.startsWith('−') || amount.startsWith('-') || /discount|redeem|छूट/i.test(label),
+          isDiscount:
+            amount.startsWith('−') ||
+            amount.startsWith('-') ||
+            amount.includes('(−') ||
+            amount.includes('(-') ||
+            /discount|redeem|reward|points|छूट|पॉइंट|रिवॉर्ड/i.test(label),
         });
       }
     }

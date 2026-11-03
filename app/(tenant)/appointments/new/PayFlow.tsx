@@ -25,7 +25,7 @@ import { nounInSentence, pickNoun } from '../../lib/nouns';
 import { useNouns } from '../../lib/use-nouns';
 import { LargeAmountDeclined, useLargeAmountGuard } from '../../components/LargeAmountConfirm';
 import { useAreas, useSession } from '../../components/SessionProvider';
-import { IconArrowLeft, IconClose, IconEdit, IconMinus, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch, IconUserPlus } from '../../components/icons';
+import { IconArrowLeft, IconCheck, IconClose, IconEdit, IconMinus, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch, IconUserPlus } from '../../components/icons';
 import { FormModeSwitch } from './FormModeSwitch';
 import { ClientSheet } from './ClientSheet';
 import { Keypad } from './Keypad';
@@ -151,6 +151,7 @@ export function PayFlow({
   hideHead,
   leaveRef,
   onSaleCompleted,
+  onOpenQueue,
   reloadKey = 0,
 }: {
   /** A waiting token being paid: its client, branch and services are the answer to ①. */
@@ -198,6 +199,8 @@ export function PayFlow({
   leaveRef?: { current: (() => void) | null };
   /** Notifies the POS shell when a sale completes so the live token queue updates immediately. */
   onSaleCompleted?: (saleId: string) => void;
+  /** Opens the POS Queue tab directly when the desk taps "View Queue" on the queued-order confirmation banner. */
+  onOpenQueue?: () => void;
   /** Incremented after a return or exchange on POS so the product shelf refreshes its live stock counts in place. */
   reloadKey?: number;
 }) {
@@ -678,6 +681,10 @@ export function PayFlow({
    * rather than doing nothing, because a silent miss at the counter reads as "the scanner is broken".
    */
   const [scanNote, setScanNote] = useState<string | null>(null);
+  const [queuedBanner, setQueuedBanner] = useState<{ tokenNo: number | null; amountMinor: number } | null>(null);
+  useEffect(() => {
+    if (lines.length > 0 && queuedBanner) setQueuedBanner(null);
+  }, [lines.length, queuedBanner]);
   // A code that matched nothing goes into the search box: a person can edit it into a name and sell it by hand.
   const [searchSeed, setSearchSeed] = useState<{ text: string; n: number } | null>(null);
   useEffect(() => {
@@ -893,7 +900,7 @@ export function PayFlow({
   };
 
   /** ② — the tile that was tapped is the payment; this is the save. */
-  const pay = async (mode: PaymentMode) => {
+  const pay = async (mode: PaymentMode, pending = false) => {
     if (saving || lines.length === 0) return;
     felt(BUZZ.paid);
     setSaving(mode);
@@ -909,7 +916,7 @@ export function PayFlow({
     // Owner, 2026-10-14 — a bill paid two ways goes as `payments`; the legs' one word is the larger way's.
     const ways = waysFor(mode);
     // On the receipt this reads "Paid by Swiggy"; on the done screen, the app's name where a way of paying would be.
-    const paidBy = fromApp ? appWord(fromApp) : paidByWords(ways);
+    const paidBy = pending ? t('desk.paymentPending') : fromApp ? appWord(fromApp) : paidByWords(ways);
     const mainMode = ways.reduce((best, w) => (w.amountMinor > best.amountMinor ? w : best), ways[0]!).mode;
     const howPaid = ways.length > 1 ? { paymentMode: mainMode, payments: ways } : { paymentMode: mode };
     try {
@@ -976,6 +983,7 @@ export function PayFlow({
               ...who,
               services: legs,
               ...howPaid,
+              ...(pending ? { paymentPending: true } : {}),
               // An app's order is paid to the app: the till says where it came from (the server takes it as "other").
               ...(appOrder ?? {}),
               ...soldProducts,
@@ -1022,6 +1030,11 @@ export function PayFlow({
       }).format(new Date(result.startAt));
       const tokenNo = result.tokenNo ?? token?.tokenNo ?? nextTokenNo ?? null;
       onSaleCompleted?.(result.appointmentId);
+      if (pending) {
+        nextCustomer();
+        setQueuedBanner({ tokenNo, amountMinor: paidMinor });
+        return;
+      }
       const bill = receiptRows(
         {
           businessName: session?.businessName ?? null,
@@ -1110,7 +1123,11 @@ export function PayFlow({
       setSale({
         appointmentId: result.appointmentId,
         tokenNo,
-        ...(fromApp ? { title: t('from.doneTitle', { amount: money(paidMinor), app: appWord(fromApp) }) } : {}),
+        ...(pending
+          ? { title: t('desk.pendingDoneTitle', { amount: money(paidMinor) }) }
+          : fromApp
+            ? { title: t('from.doneTitle', { amount: money(paidMinor), app: appWord(fromApp) }) }
+            : {}),
         totalMinor: paidMinor,
         mode: mainMode,
         paidBy,
@@ -1274,6 +1291,13 @@ export function PayFlow({
     if (!ok) return;
     if (selectedMode === 'upi' && paymentQr && !firstWay) setStep('qr');
     else void pay(selectedMode);
+  };
+
+  const sendPosPending = () => {
+    if (saving !== null || lines.length === 0 || fromApp) return;
+    setBadMode(false);
+    if (!readyToPay()) return;
+    void pay('cash', true);
   };
 
   useEffect(() => {
@@ -1518,7 +1542,7 @@ export function PayFlow({
           <span className="pf-pay-sub">{t(`sub.${mode}`)}</span>
         </button>
       ))}
-      {!splitting && !firstWay ? (
+      {!productsOnly && !splitting && !firstWay ? (
         <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
           {t('split.link')}
         </button>
@@ -1589,6 +1613,21 @@ export function PayFlow({
           same line, and Other a target the size of the rest.
         */}
         {payTiles}
+        {productsOnly && !fromApp && !splitting && !firstWay ? (
+          <div className="pos-charge-actions pos-charge-actions-mobile">
+            <button
+              type="button"
+              className="btn pos-charge-pending"
+              disabled={saving !== null || lines.length === 0}
+              onClick={sendPosPending}
+            >
+              <span>{t('desk.keepPendingInQueue')}</span>
+            </button>
+            <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
+              {t('split.link')}
+            </button>
+          </div>
+        ) : null}
         {splitKeypadEl}
         {dialog}
       </div>
@@ -1733,6 +1772,40 @@ export function PayFlow({
           </header>
         )}
         {scanNote ? <div role="status" className="pf-error">{scanNote}</div> : null}
+        {queuedBanner ? (
+          <div className="pos-charge-queued" role="status">
+            <span className="pos-charge-queued-check" aria-hidden="true">
+              <IconCheck />
+            </span>
+            <span className="pos-charge-queued-text">
+              {queuedBanner.tokenNo !== null
+                ? t('desk.sentToQueueBannerWithToken', {
+                    token: nv.token(queuedBanner.tokenNo),
+                    amount: money(queuedBanner.amountMinor),
+                  })
+                : t('desk.pendingDoneTitle', { amount: money(queuedBanner.amountMinor) })}
+            </span>
+            <button
+              type="button"
+              className="pos-charge-queued-link"
+              onClick={() => {
+                setQueuedBanner(null);
+                if (onOpenQueue) onOpenQueue();
+                else router.push('/pos?mode=queue');
+              }}
+            >
+              {t('desk.viewInQueue')}
+            </button>
+            <button
+              type="button"
+              className="pos-charge-queued-close"
+              aria-label={nv.close}
+              onClick={() => setQueuedBanner(null)}
+            >
+              <IconClose />
+            </button>
+          </div>
+        ) : null}
         {tokenGone ? (
           <div role="alert" className="pf-error">
             {nv.tokenGone}
@@ -1923,16 +1996,33 @@ export function PayFlow({
             ) : null}
             {payTiles}
             {productsOnly ? (
-              <button
-                type="button"
-                className="btn pos-charge-cta"
-                data-step={guideReady ? 'ready' : lines.length > 0 ? 'waiting' : undefined}
-                disabled={saving !== null || lines.length === 0}
-                onClick={completePosSale}
-              >
-                <span>{fromApp ? t('from.complete', { amount: money(dueMinor) }) : t('desk.chargeNow', { amount: money(dueMinor) })}</span>
-                <kbd className="pos-charge-kbd">F8</kbd>
-              </button>
+              <div className="pos-charge-actions">
+                <button
+                  type="button"
+                  className="btn pos-charge-cta"
+                  data-step={guideReady ? 'ready' : lines.length > 0 ? 'waiting' : undefined}
+                  disabled={saving !== null || lines.length === 0}
+                  onClick={completePosSale}
+                >
+                  <span>{fromApp ? t('from.complete', { amount: money(dueMinor) }) : t('desk.chargeNow', { amount: money(dueMinor) })}</span>
+                  <kbd className="pos-charge-kbd">F8</kbd>
+                </button>
+                {!fromApp && !splitting && !firstWay ? (
+                  <>
+                    <button
+                      type="button"
+                      className="btn pos-charge-pending"
+                      disabled={saving !== null || lines.length === 0}
+                      onClick={sendPosPending}
+                    >
+                      <span>{t('desk.keepPendingInQueue')}</span>
+                    </button>
+                    <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
+                      {t('split.link')}
+                    </button>
+                  </>
+                ) : null}
+              </div>
             ) : null}
             {splitKeypadEl}
             {dialog}
@@ -2023,6 +2113,40 @@ export function PayFlow({
             </header>
           )}
           {scanNote ? <div role="status" className="pf-error">{scanNote}</div> : null}
+          {queuedBanner ? (
+            <div className="pos-charge-queued" role="status">
+              <span className="pos-charge-queued-check" aria-hidden="true">
+                <IconCheck />
+              </span>
+              <span className="pos-charge-queued-text">
+                {queuedBanner.tokenNo !== null
+                  ? t('desk.sentToQueueBannerWithToken', {
+                      token: nv.token(queuedBanner.tokenNo),
+                      amount: money(queuedBanner.amountMinor),
+                    })
+                  : t('desk.pendingDoneTitle', { amount: money(queuedBanner.amountMinor) })}
+              </span>
+              <button
+                type="button"
+                className="pos-charge-queued-link"
+                onClick={() => {
+                  setQueuedBanner(null);
+                  if (onOpenQueue) onOpenQueue();
+                  else router.push('/pos?mode=queue');
+                }}
+              >
+                {t('desk.viewInQueue')}
+              </button>
+              <button
+                type="button"
+                className="pos-charge-queued-close"
+                aria-label={nv.close}
+                onClick={() => setQueuedBanner(null)}
+              >
+                <IconClose />
+              </button>
+            </div>
+          ) : null}
         </>
       ) : (
         <header className="pf-head">

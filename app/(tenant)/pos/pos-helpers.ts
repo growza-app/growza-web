@@ -22,9 +22,12 @@ export interface PosDailyToken {
   tokenNo: number;
   tokenLabel: string;
   startAt: string;
+  customerId: string | null;
   customerName: string;
+  customerPhone: string | null;
   channel: string;
   paymentMode: string | null;
+  paymentPending: boolean;
   totalMinor: number;
   items: Array<{ name: string; qty: number; paidMinor: number }>;
   itemsSummary: string;
@@ -98,7 +101,10 @@ export function buildDailyTokens(
         : NaN;
     const effectiveStartMs = Number.isFinite(recalledMs) && recalledMs > 0 ? recalledMs : startMs;
     const elapsedMin = Math.max(0, Math.round((nowMs - effectiveStartMs) / 60_000));
-    const defaultState: PosTokenState = elapsedMin <= 30 ? 'preparing' : 'completed';
+    const channel = first.channel ?? 'counter';
+    const paymentMode = first.paymentMode ?? null;
+    const paymentPending = paymentMode === null && channel === 'counter';
+    const defaultState: PosTokenState = paymentPending || elapsedMin <= 30 ? 'preparing' : 'completed';
     const state: PosTokenState =
       rawOverride === 'completed'
         ? 'completed'
@@ -111,9 +117,12 @@ export function buildDailyTokens(
       tokenNo,
       tokenLabel: formatTokenNo(tokenNo),
       startAt: first.startAt,
+      customerId: first.customerId ?? null,
       customerName: first.customerName?.trim() || '',
-      channel: first.channel ?? 'counter',
-      paymentMode: first.paymentMode ?? null,
+      customerPhone: first.customerPhone ?? null,
+      channel,
+      paymentMode,
+      paymentPending,
       totalMinor,
       items,
       itemsSummary,

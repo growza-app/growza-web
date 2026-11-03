@@ -18,6 +18,7 @@ export function SellProductClient({
   hideHead,
   leaveRef,
   onSaleCompleted,
+  onOpenQueue,
   reloadKey,
 }: {
   timezone: string;
@@ -30,6 +31,8 @@ export function SellProductClient({
   leaveRef?: { current: (() => void) | null };
   /** Called when a sale is recorded on POS so the live token queue updates immediately. */
   onSaleCompleted?: (saleId: string) => void;
+  /** Called when the desk taps "View Queue" on the pending-payment confirmation banner. */
+  onOpenQueue?: () => void;
   /** Incremented after a return or exchange on POS so the product shelf refreshes its live stock counts without unmounting the till. */
   reloadKey?: number;
 }) {
@@ -65,6 +68,7 @@ export function SellProductClient({
       hideHead={hideHead}
       leaveRef={leaveRef}
       onSaleCompleted={onSaleCompleted}
+      onOpenQueue={onOpenQueue}
       reloadKey={reloadKey}
     />
   );
