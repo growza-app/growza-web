@@ -12,6 +12,7 @@
  * being buried in the transport layer.
  */
 
+import type { PaymentModeSlice } from './home-types';
 import type { ReportRangeKey } from './report-types';
 
 export interface Me {
@@ -1298,7 +1299,7 @@ export interface BookingCorrection {
  */
 export interface ShopHome {
   timezone: string;
-  today: { orders: number; takingsMinor?: number };
+  today: { orders: number; takingsMinor?: number; byPaymentMode?: PaymentModeSlice[] };
   yesterday: { orders: number; takingsMinor?: number };
   /** Has the shop ever sold anything. False: Home invites the first order. */
   anyOrders: boolean;
@@ -1860,6 +1861,7 @@ export interface ByChannelPage {
   previous: { startISO: string; endExclusiveISO: string; hasData: boolean };
   channels: ChannelRow[];
   totals: { billedMinor: string; orders: number; returnedOrders: number; previousBilledMinor: string | null; changePct: number | null };
+  byPaymentMode?: PaymentModeSlice[];
   trend: Array<{ label: string; startISO: string; endExclusiveISO: string; billedMinor: Record<string, string> }>;
   anyOrders: boolean;
   caveat: string;

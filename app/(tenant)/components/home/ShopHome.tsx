@@ -35,6 +35,8 @@ import {
 } from '../icons';
 import { Avatar, Card, CardError, HomeHeader, QuickTiles, Segmented, rupees } from './parts';
 import { CheckInCard } from './CheckInCard';
+import { PaymentBar, PaymentLine } from './MoneyHero';
+import { useDialog } from '../../../shared/a11y/useDialog';
 
 type ShopPeriod = 'last_7_days' | 'this_month' | 'last_3_months';
 
@@ -133,6 +135,17 @@ export function ShopHome({
   /** Bumped by the hero's "Try again": the window has not changed, so only a new dep re-runs the read. */
   const [phoneRetry, setPhoneRetry] = useState(0);
   const phoneReqId = useRef(0);
+  const [payMenu, setPayMenu] = useState(false);
+  const payMenuRef = useRef<HTMLDivElement>(null);
+  useDialog(payMenuRef, { onClose: () => setPayMenu(false), active: payMenu, trapTab: false });
+  useEffect(() => {
+    if (!payMenu) return;
+    const close = (e: PointerEvent) => {
+      if (!payMenuRef.current?.parentElement?.contains(e.target as Node)) setPayMenu(false);
+    };
+    document.addEventListener('pointerdown', close);
+    return () => document.removeEventListener('pointerdown', close);
+  }, [payMenu]);
 
   const load = (location: string | null) => {
     setLoading(true);
@@ -508,6 +521,7 @@ export function ShopHome({
         takingsMinor: data.today.takingsMinor,
         orders: data.today.orders,
         previousMinor: data.yesterday.takingsMinor ?? 0,
+        byPaymentMode: data.today.byPaymentMode ?? [],
       };
     }
     if (!phoneChannel) return { kind: phoneBusy ? ('busy' as const) : ('failed' as const) };
@@ -523,9 +537,10 @@ export function ShopHome({
       returnedOrders: phoneChannel.totals.returnedOrders,
       // An average over no orders is not 0, it is nothing; the card draws a dash.
       avgMinor: orders > 0 ? Math.round(takingsMinor / orders) : null,
+      byPaymentMode: phoneChannel.byPaymentMode ?? (phonePeriod === 'today' ? data?.today.byPaymentMode ?? [] : []),
       busy: phoneBusy,
     };
-  }, [canPhoneRange, money, data, phoneChannel, phoneBusy]);
+  }, [canPhoneRange, money, data, phoneChannel, phoneBusy, phonePeriod]);
 
   /*
    * The hero's bars: one per day of the chosen window, from the same response as the money above them.
@@ -687,6 +702,19 @@ export function ShopHome({
                       <div className="rst-kpi-main">
                         <span className="rst-kpi-label">{s.todaysTakings}</span>
                         <strong className="rst-kpi-value">{rupees(data.today.takingsMinor)}</strong>
+                        {data.today.byPaymentMode && data.today.byPaymentMode.length > 0 && data.today.takingsMinor > 0 ? (
+                          <div className="rst-kpi-modes" role="group" aria-label={t.howPaid}>
+                            {[...data.today.byPaymentMode]
+                              .sort((a, b) => b.revenueMinor - a.revenueMinor)
+                              .map((m) => (
+                                <span key={m.mode} className="rst-kpi-mode">
+                                  <i className={`rst-mode-dot is-${m.mode}`} aria-hidden />
+                                  <span>{t.payment[m.mode]}</span>
+                                  <b>{rupees(m.revenueMinor)}</b>
+                                </span>
+                              ))}
+                          </div>
+                        ) : null}
                       </div>
                       {salesDeltaPct !== null ? (
                         <div className="rst-kpi-side">
@@ -1017,6 +1045,22 @@ export function ShopHome({
                         </span>
                       ) : null}
                     </div>
+                    {(() => {
+                      const deskModes = channelData?.byPaymentMode ?? data.today.byPaymentMode ?? [];
+                      if (deskModes.length === 0) return null;
+                      return (
+                        <div className="hm-v3-kpi-foot hm-v3-split-foot hm-v3-modes-foot" role="group" aria-label={t.howPaid}>
+                          {[...deskModes]
+                            .sort((a, b) => b.revenueMinor - a.revenueMinor)
+                            .map((m) => (
+                              <span key={m.mode} className="hm-v3-split-item hm-v3-mode-item">
+                                <i className={`rst-mode-dot is-${m.mode}`} aria-hidden />
+                                {t.payment[m.mode]} <b>{rupees(m.revenueMinor)}</b>
+                              </span>
+                            ))}
+                        </div>
+                      );
+                    })()}
                   </section>
                 ) : (
                   <section className="hm-v3-kpi hm-v3-kpi-dark">
@@ -1775,6 +1819,15 @@ export function ShopHome({
                           {s.channelsLink} →
                         </a>
                       ) : null}
+                      {payMenu && (phoneFigures.kind === 'today' || phoneFigures.kind === 'range') ? (
+                        <div ref={payMenuRef} className="hm-menu hm-pay-menu" role="dialog" aria-label={t.howPaid}>
+                          <div className="hm-pay-menu-head">
+                            <strong>{t.howPaid}</strong>
+                            <span>{rupees(phoneFigures.takingsMinor)}</span>
+                          </div>
+                          <PaymentBar t={t} slices={phoneFigures.byPaymentMode} total={phoneFigures.takingsMinor} variant="list" />
+                        </div>
+                      ) : null}
                     </div>
 
                     {phoneFigures.kind === 'busy' ? (
@@ -1842,6 +1895,9 @@ export function ShopHome({
                           ) : null}
                         </div>
                         )}
+                        {phoneFigures.byPaymentMode.length > 0 && phoneFigures.takingsMinor > 0 ? (
+                          <PaymentLine t={t} slices={phoneFigures.byPaymentMode} total={phoneFigures.takingsMinor} onMore={() => setPayMenu(true)} />
+                        ) : null}
                         {phoneSpark.length > 0 ? (
                           // Decoration would be a lie here, so it is drawn only from the window's own daily totals.
                           <div className="shp-spark" aria-hidden="true">
