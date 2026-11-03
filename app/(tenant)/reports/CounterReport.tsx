@@ -144,7 +144,10 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
   const hourName = useMemo(() => {
     const fmt = new Intl.DateTimeFormat(intlLocale(locale), { hour: 'numeric', timeZone: 'UTC' });
     // Hour 24 is midnight at the END of the day: an evening rush of 21:00–24:00 must not read "9 pm – 12 am".
-    return (hour: number) => fmt.format(new Date(Date.UTC(2024, 0, 1, hour % 24)));
+    return (hour: number) => {
+      const raw = fmt.format(new Date(Date.UTC(2024, 0, 1, hour % 24)));
+      return locale === 'hi' ? raw.replace(/\bam\b/i, 'सुबह').replace(/\bpm\b/i, 'शाम') : raw;
+    };
   }, [locale]);
 
   const { takings, earners, busy, changed, strategy } = data;
@@ -472,14 +475,18 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
               </p>
               <p className="cr-strat-action">
                 <strong>{t('strategy.actionLabel')}: </strong>
-                {t('strategy.combo.action', {
-                  leader: earners.leader?.name ?? earners.rows[0]?.name ?? t('strategy.fallbackTop'),
-                  partner:
-                    strategy.basket.topPair?.itemB ??
-                    earners.rows[1]?.name ??
+                {(() => {
+                  const leader =
+                    strategy.basket.topPair?.itemA ??
+                    earners.leader?.name ??
                     earners.rows[0]?.name ??
-                    t('strategy.fallbackPartner'),
-                })}
+                    t('strategy.fallbackTop');
+                  const partner =
+                    strategy.basket.topPair?.itemB ??
+                    earners.rows.find((r) => r.name !== leader)?.name ??
+                    t('strategy.fallbackPartner');
+                  return t('strategy.combo.action', { leader, partner });
+                })()}
               </p>
               <p className="cr-strat-impact">
                 {t('strategy.combo.impact', {

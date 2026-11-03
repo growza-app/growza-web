@@ -15,6 +15,7 @@ import type { MemberRole } from '../lib/nav-policy';
 export type PosMode = 'sell' | 'queue' | 'return';
 
 export type PosTokenState = 'preparing' | 'completed';
+export type PosTokenOverride = PosTokenState | `preparing:${number}`;
 
 export interface PosDailyToken {
   id: string;
@@ -48,7 +49,7 @@ export function posQueueStorageKey(locationId: string | null | undefined, todayI
 export function buildDailyTokens(
   rows: readonly Appointment[],
   locationId: string | null | undefined,
-  overrides: Readonly<Record<string, PosTokenState>> = {},
+  overrides: Readonly<Record<string, PosTokenOverride>> = {},
   nowMs: number = Date.now(),
 ): PosDailyToken[] {
   const filtered = rows.filter((r) => {
@@ -90,9 +91,20 @@ export function buildDailyTokens(
     const totalMinor = items.reduce((sum, item) => sum + item.paidMinor, 0);
     const itemsSummary = items.map((i) => (i.qty > 1 ? `${i.qty}× ${i.name}` : i.name)).join(', ');
     const startMs = Date.parse(first.startAt) || nowMs;
-    const elapsedMin = Math.max(0, Math.round((nowMs - startMs) / 60_000));
+    const rawOverride = overrides[key];
+    const recalledMs =
+      typeof rawOverride === 'string' && rawOverride.startsWith('preparing:')
+        ? Number(rawOverride.slice(10))
+        : NaN;
+    const effectiveStartMs = Number.isFinite(recalledMs) && recalledMs > 0 ? recalledMs : startMs;
+    const elapsedMin = Math.max(0, Math.round((nowMs - effectiveStartMs) / 60_000));
     const defaultState: PosTokenState = elapsedMin <= 30 ? 'preparing' : 'completed';
-    const state: PosTokenState = overrides[key] ?? defaultState;
+    const state: PosTokenState =
+      rawOverride === 'completed'
+        ? 'completed'
+        : rawOverride === 'preparing' || (typeof rawOverride === 'string' && rawOverride.startsWith('preparing:'))
+          ? 'preparing'
+          : defaultState;
 
     return {
       id: key,

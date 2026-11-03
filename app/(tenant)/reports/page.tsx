@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { redirect } from 'next/navigation';
 import { guardLive } from '../lib/screen-guard';
 import { screenTitle } from '../lib/page-title';
 import { Suspense } from 'react';
@@ -161,6 +162,7 @@ export default async function ReportsPage({
   const askedGenericTab = noBookings && params.tab !== undefined;
   if (noBookings && !(askedGenericTab && SHOP_REPORT_TABS.has(shopTab) && allowedTabsOf(me).includes(shopTab))) {
     const mayOpenShopReports = areasOf(me).shop && maySeeTheBooks;
+    if (!mayOpenShopReports && !allowedTabsOf(me).some((k) => SHOP_REPORT_TABS.has(k))) redirect('/');
     // "See your stock" is a count's link: a kitchen keeps none, and its menu is already in the nav.
     const counted = areasOf(me).stock;
     return (

@@ -329,6 +329,10 @@ describe('the POS screen', () => {
     const overridden = buildDailyTokens(sampleRows, 'loc-1', { 'sale-2': 'completed' }, nowMs);
     expect(overridden[1]?.state).toBe('completed');
 
+    const recalled = buildDailyTokens(sampleRows, 'loc-1', { 'sale-1': `preparing:${nowMs - 2 * 60_000}` }, nowMs);
+    expect(recalled[0]?.state).toBe('preparing');
+    expect(recalled[0]?.elapsedMin).toBe(2);
+
     expect(client).toContain('pos-queue-board');
     /*
      * Owner, 2026-11-03 — the Sell tab carries no queue of its own any more. The bar's "Next token" pill and its

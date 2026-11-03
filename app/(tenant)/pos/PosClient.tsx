@@ -18,6 +18,7 @@ import {
   returnLookbackFrom,
   type PosDailyToken,
   type PosMode,
+  type PosTokenOverride,
   type PosTokenState,
 } from './pos-helpers';
 import { useNouns } from '../lib/use-nouns';
@@ -72,7 +73,7 @@ export function PosClient({
   const [loading, setLoading] = useState(false);
   /** Today's raw appointments/sales for daily token generation and live queue tracking. */
   const [todayRows, setTodayRows] = useState<Appointment[]>([]);
-  const [tokenOverrides, setTokenOverrides] = useState<Record<string, PosTokenState>>({});
+  const [tokenOverrides, setTokenOverrides] = useState<Record<string, PosTokenOverride>>({});
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
   const [reloadKey, setReloadKey] = useState(0);
   /** Only the latest open may answer: a slow read from an earlier open must not put old bills under a newer sheet. */
@@ -87,7 +88,7 @@ export function PosClient({
     try {
       const raw = typeof window !== 'undefined' ? window.localStorage.getItem(storageKey) : null;
       if (raw) {
-        const parsed = JSON.parse(raw) as Record<string, PosTokenState>;
+        const parsed = JSON.parse(raw) as Record<string, PosTokenOverride>;
         if (parsed && typeof parsed === 'object') {
           setTokenOverrides(parsed);
           return;
@@ -116,9 +117,12 @@ export function PosClient({
   }, [loadTodayTokens]);
 
   const setTokenState = useCallback(
-    (visitId: string, state: PosTokenState) => {
+    (visitId: string, state: PosTokenState, recalled = false) => {
+      const now = Date.now();
+      const val: PosTokenOverride = recalled && state === 'preparing' ? `preparing:${now}` : state;
+      if (recalled && state === 'preparing') setNowMs(now);
       setTokenOverrides((prev) => {
-        const next = { ...prev, [visitId]: state };
+        const next = { ...prev, [visitId]: val };
         try {
           window.localStorage.setItem(storageKey, JSON.stringify(next));
         } catch {
@@ -142,7 +146,13 @@ export function PosClient({
     () => buildDailyTokens(todayRows, location, tokenOverrides, nowMs),
     [todayRows, location, tokenOverrides, nowMs],
   );
-  const preparingTokens = useMemo(() => dailyTokens.filter((tk) => tk.state === 'preparing'), [dailyTokens]);
+  const preparingTokens = useMemo(
+    () =>
+      [...dailyTokens.filter((tk) => tk.state === 'preparing')].sort(
+        (a, b) => b.elapsedMin - a.elapsedMin || a.tokenNo - b.tokenNo,
+      ),
+    [dailyTokens],
+  );
   const completedTokens = useMemo(
     () => [...dailyTokens.filter((tk) => tk.state === 'completed')].reverse(),
     [dailyTokens],
@@ -351,7 +361,7 @@ export function PosClient({
             <button
               type="button"
               className="btn btn-ghost pos-qcard-recall-btn"
-              onClick={() => setTokenState(tk.id, 'preparing')}
+              onClick={() => setTokenState(tk.id, 'preparing', true)}
             >
               {t('recallToQueue')}
             </button>
@@ -423,7 +433,7 @@ export function PosClient({
               {t('sell')}
             </button>
             <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab pos-tab-queue${mode === 'queue' ? ' active' : ''}`} onClick={openQueue}>
-              <span>{t('queue')}</span>
+              <span>{t('queue')}</span>{' '}
               <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
             </button>
             <button type="button" role="tab" aria-selected={mode === 'return'} className={`page-tab${mode === 'return' ? ' active' : ''}`} onClick={() => mode !== 'return' && void openReturn()}>
@@ -468,7 +478,7 @@ export function PosClient({
               {t('sell')}
             </button>
             <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab pos-tab-queue${mode === 'queue' ? ' active' : ''}`} onClick={openQueue}>
-              <span>{t('queue')}</span>
+              <span>{t('queue')}</span>{' '}
               <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
             </button>
           </div>
