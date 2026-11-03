@@ -56,6 +56,21 @@
   gap: var(--sp-3);
 }
 
+/*
+ * The till's branch. It holds both pickers — the laptop's pill and the phone's line — as every other header
+ * does, and 94-header-branch-picker.css shows the one for the width. A business with one branch renders
+ * neither, so the wrapper is empty and takes itself off the row rather than leaving a gap behind.
+ */
+.pos-bar-branch {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.pos-bar-branch:empty {
+  display: none;
+}
+
 @media (max-width: 759px) {
   .pos-bar .pos-tabs {
     flex: 1 1 100%;
@@ -171,9 +186,10 @@
 
 .pos-fs-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--sp-3);
+  gap: var(--sp-2) var(--sp-3);
   min-height: 3.375rem;
   padding: var(--sp-2) var(--sp-4);
   background: var(--accent-deep);
@@ -304,6 +320,37 @@
 
 .pos-fs-bar .pos-fs-btn:focus-visible {
   outline-color: #fff;
+}
+
+/*
+ * Owner, 2026-11-03 — the way out of full screen, at any width.
+ *
+ * Full screen is only ever ENTERED from 1101px up, where the bar's eight items fit on one line. Turn a tablet
+ * sideways, or drag the window narrower, and they did not: at 900px the row ran to 1012px, and "Exit full
+ * screen" — the ONLY way out, since full screen hides the flow's own header — sat 47px past the right edge of
+ * a bar that does not scroll. The till was a locked room.
+ *
+ * So the bar wraps (above), and below 1101px the keyboard hints come off it: they are decorative
+ * (`aria-hidden`) and name function keys a tablet has not got, which makes them the first thing to give way.
+ *
+ * It sits here, after the rules it overrides, and not up beside `.pos-fs-bar`: these selectors are no more
+ * specific than the ones they beat, so being later in the file is the whole of why they win.
+ */
+@media (max-width: 1100px) {
+  .pos-fs-shortcuts {
+    display: none;
+  }
+
+  .pos-fs-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  /* Below the terminal width these are tapped, not clicked, so they take the touch size. The 1101px-and-up
+     till is driven by a mouse and the function keys printed beside it, and keeps its denser 36px. */
+  .pos-fs-btn {
+    min-height: 2.75rem;
+  }
 }
 
 .pos-shell.is-fullscreen .pos-body {
@@ -1105,56 +1152,17 @@
   gap: var(--sp-4);
 }
 
-.pos-queue-kpis {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-3);
+/* The dot beside each column's name — green for done, amber for still cooking. */
+.pos-queue-dot {
+  width: 0.5625rem;
+  height: 0.5625rem;
+  border-radius: 999px;
+  background: var(--accent-deep);
+  flex: none;
 }
 
-@media (min-width: 760px) {
-  .pos-queue-kpis {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-.pos-queue-kpi {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--sp-3) var(--sp-4);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.pos-queue-kpi.is-preparing {
-  background: var(--amber-soft);
-}
-
-.pos-queue-kpi.is-completed {
-  background: var(--accent-soft);
-}
-
-.pos-queue-kpi-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-}
-
-.pos-queue-kpi-val {
-  font-size: 1.5rem;
-  font-weight: 800;
-  line-height: 1.15;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-}
-
-.pos-queue-kpi-sub {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--muted);
+.pos-queue-dot.is-preparing {
+  background: var(--amber);
 }
 
 .pos-queue-cols {
@@ -1211,12 +1219,6 @@
   color: var(--text);
   font-size: 0.75rem;
   font-weight: 800;
-}
-
-.pos-queue-col-sub {
-  margin: 2px 0 0;
-  font-size: 0.8125rem;
-  color: var(--muted);
 }
 
 .pos-queue-new-btn {
@@ -1301,6 +1303,23 @@
   font-size: 0.875rem;
   font-weight: 700;
   color: var(--text);
+}
+
+/* Where the order came from. Swiggy and Zomato are tinted, so a delivery order is not read as a counter one. */
+.pos-qcard-chan {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.pos-qcard-chan.is-swiggy,
+.pos-qcard-chan.is-zomato {
+  background: var(--amber-soft);
+  border-color: transparent;
 }
 
 .pos-qcard-meta {
@@ -1397,7 +1416,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
-  min-height: 2.25rem;
+  min-height: 2.75rem;
   padding: 0 var(--sp-3);
   border-radius: var(--radius-sm);
   background: var(--accent-deep);
@@ -1416,5 +1435,14 @@
   padding: 0 var(--sp-3);
   font-size: 0.75rem;
   font-weight: 700;
+}
+
+/* The board's three buttons keep a focus ring. They shared this block with the token strip that went; it has
+   to stay with the buttons that are still on screen, not with the markup that was removed. */
+.pos-qcard-complete-btn:focus-visible,
+.pos-qcard-recall-btn:focus-visible,
+.pos-queue-new-btn:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
 }
 

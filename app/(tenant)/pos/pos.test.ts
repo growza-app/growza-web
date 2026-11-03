@@ -189,11 +189,47 @@ describe('the POS screen', () => {
 
   it('gives every control on the Queue board a 44px target', () => {
     const css = src('../styles/99-pos.css');
-    // "+ New order" was 38px and "Back to queue" 32px.
-    for (const sel of ['.pos-queue-new-btn', '.pos-qcard-recall-btn']) {
+    // "+ New order" was 38px, "Back to queue" 32px and "Mark completed" — the one a desk taps all day — 36px.
+    for (const sel of ['.pos-queue-new-btn', '.pos-qcard-recall-btn', '.pos-qcard-complete-btn']) {
       const block = css.slice(css.indexOf(`\n${sel} {`));
       expect(block.slice(0, block.indexOf('}')), sel).toContain('min-height: 2.75rem;');
     }
+  });
+
+  it('leaves no POS class on the screen with no styling behind it', () => {
+    /*
+     * Owner, 2026-11-03 — the check that four regressions in one change got past.
+     *
+     * Simplifying the Queue board removed markup, and the rules for it were removed by matching class names.
+     * Several of those rules were shared blocks — one selector list covering the removed token strip AND
+     * classes still on the screen — so taking the block out took the survivors' styling with it. The channel
+     * pill lost its tint, the status dots lost their size and rendered as nothing, and three buttons lost
+     * their focus ring. Every one of the 4,100 tests passed: not one of them asks whether a class that is
+     * rendered has any CSS at all.
+     *
+     * Both directions, because the mistake runs both ways: a class on the screen with no rule is invisible
+     * styling, and a rule with no class is a block waiting to be read as still in use.
+     */
+    const css = src('../styles/99-pos.css');
+    // Only what the markup puts in a `className`, so an import path like `./pos-helpers` is not read as one.
+    const inMarkup = new Set(
+      [...client.matchAll(/className=(?:"([^"]*)"|\{`([^`]*)`\})/g)]
+        .flatMap((m) => (m[1] ?? m[2] ?? '').split(/[\s'"`${}?:+]+/))
+        .filter((c) => /^pos-[a-z0-9-]+$/.test(c)),
+    );
+    const inCss = new Set([...css.matchAll(/\.(pos-[a-z0-9-]+)/g)].map((m) => m[1]!));
+    /*
+     * `pos-fs-exit` is a marker and nothing else: the Exit button takes its whole look from `.pos-fs-btn`
+     * beside it, and this name is here only so a reader can find that one button. Anything else that lands
+     * in this list is a class whose styling has gone, not a second marker — add to it only when the class
+     * genuinely carries no look of its own.
+     */
+    const markersOnly = new Set(['pos-fs-exit']);
+    expect([...inMarkup].filter((c) => !inCss.has(c) && !markersOnly.has(c)), 'rendered, but no CSS').toEqual([]);
+    // The other way: a block nobody renders reads as still in use, and the next person edits around it. The
+    // till's own screens (the bill drawer, the keypad, the category pills) live in other files, so skip those.
+    const elsewhere = /^pos-(bill|cat|step|charge|held|search|filter|wide|kbd|note|fail|tab|body|shell)/;
+    expect([...inCss].filter((c) => !inMarkup.has(c) && !elsewhere.test(c)), 'CSS, but nothing renders it').toEqual([]);
   });
 
   it("puts the till's Back in the bar and keeps the title row off the screen", () => {
@@ -205,7 +241,10 @@ describe('the POS screen', () => {
     expect(client).toContain('leaveRef={leaveRef}');
     expect(client).toContain('onClick={() => leaveRef.current?.()}');
     expect(pay).toContain('{hideHead ? null : (');
-    expect(pay).toContain('if (leaveRef) leaveRef.current = leave;');
+    expect(pay).toContain('leaveRef.current = leave;');
+    // And released when the flow goes: the ref outlives it, so a Back arrow left pointing at a gone screen's
+    // `leave` is exactly the stale closure the assignment above exists to avoid.
+    expect(pay).toMatch(/return \(\) => \{\s*leaveRef\.current = null;/);
     // Beside the button the tabs share the row instead of claiming one: basis 0, or a wrapping row breaks
     // before it shrinks and the button costs the row the title just gave back.
     expect(css).toMatch(/\.pos-bar-back \+ \.page-tabs\.pos-tabs \{\s*flex: 1 1 0%;\s*min-width: 0;/);

@@ -1326,9 +1326,15 @@ export function PayFlow({
     router.push('/');
   };
   // Assigned on every render: `leave` closes over state that moves (backTo, the lines), so a stale one would
-  // clear a bill that is no longer on the screen.
+  // clear a bill that is no longer on the screen. Cleared when the flow unmounts, for the same reason: the
+  // owner of the ref outlives this component, and a Back arrow left pointing at a gone screen's `leave` is the
+  // stale closure this effect exists to prevent.
   useEffect(() => {
-    if (leaveRef) leaveRef.current = leave;
+    if (!leaveRef) return;
+    leaveRef.current = leave;
+    return () => {
+      leaveRef.current = null;
+    };
   });
   const payToken = token ? `&token=${encodeURIComponent(token.id)}${token.locationId ? `&location=${encodeURIComponent(token.locationId)}` : ''}` : '';
   const simpleForm = `/appointments/new?purpose=payment${payToken}`;

@@ -407,6 +407,17 @@ export function PosClient({
             </button>
           </div>
           <div className="pos-bar-right">
+            {/*
+              Which branch this till is selling at. The flow underneath draws no header here (`hideHead`), so
+              without this a business with more than one branch had no branch control on the till at all — and
+              the branch decides the shelf, the prices and whose takings the sale lands in. Both variants, as
+              every other header does: CSS shows the pill on a laptop and the line on a phone, where this row
+              is otherwise empty. A single-branch business sees nothing, as everywhere else.
+            */}
+            <div className="pos-bar-branch">
+              <HeaderBranchPicker variant="pill" />
+              <HeaderBranchPicker variant="line" />
+            </div>
             {loading ? (
               <span className="pos-note" role="status">
                 {t('loadingBills')}
@@ -438,6 +449,11 @@ export function PosClient({
             </button>
           </div>
           <div className="pos-bar-right">
+            {/* As above: the till's branch, since the flow underneath draws no header of its own. */}
+            <div className="pos-bar-branch">
+              <HeaderBranchPicker variant="pill" />
+              <HeaderBranchPicker variant="line" />
+            </div>
             <div className="pos-bar-shortcuts" aria-hidden="true">
               <span className="pos-kbd-inline"><kbd>F2</kbd> {t('shortcutSearch')}</span>
               <span className="pos-kbd-inline"><kbd>F4</kbd> {t('shortcutClient', { customer: Customer })}</span>
