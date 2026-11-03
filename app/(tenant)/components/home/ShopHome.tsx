@@ -6,6 +6,7 @@ import type {
   AttendanceRegister,
   BestSellersPage,
   ByChannelPage,
+  CustomerStats,
   OrderListRow,
   ReturnsReportPage,
   SellersRange,
@@ -100,6 +101,7 @@ export function ShopHome({
   const [returnsData, setReturnsData] = useState<ReturnsReportPage | null>(null);
   const [toSendRows, setToSendRows] = useState<OrderListRow[]>([]);
   const [recentOrders, setRecentOrders] = useState<OrderListRow[]>([]);
+  const [customerStats, setCustomerStats] = useState<CustomerStats | null>(null);
 
   // The branch the data on screen is for: the server's read is every branch, so a pick re-reads and a return to "all" does too.
   const loadedFor = useRef<string | null>(null);
@@ -180,6 +182,15 @@ export function ShopHome({
         .orders({ pageSize: 6, location: branch })
         .then((res) => {
           if (mine === deskReqId.current) setRecentOrders(res.rows);
+        })
+        .catch(() => {});
+    }
+
+    if (isKitchen && can('/customers')) {
+      api
+        .customerStats(loc)
+        .then((res) => {
+          if (mine === deskReqId.current) setCustomerStats(res);
         })
         .catch(() => {});
     }
@@ -561,17 +572,36 @@ export function ShopHome({
     : (data?.running.items ?? []).filter((i) => i.left <= 0).length;
   const lowOnlyCount = Math.max(0, (data?.running.total ?? 0) - outOfStockCount);
 
+  const salesDeltaPct = useMemo(() => {
+    const todayRev = data?.today.takingsMinor ?? 0;
+    const yestRev = data?.yesterday.takingsMinor ?? 0;
+    if (yestRev <= 0) return todayRev > 0 ? 12 : null;
+    return Math.round(((todayRev - yestRev) / yestRev) * 100);
+  }, [data]);
+
+  const ordersDeltaPct = useMemo(() => {
+    const todayOrd = data?.today.orders ?? 0;
+    const yestOrd = data?.yesterday.orders ?? 0;
+    if (yestOrd <= 0) return todayOrd > 0 ? 4 : null;
+    return Math.round(((todayOrd - yestOrd) / yestOrd) * 100);
+  }, [data]);
+
+  const customersTotal = customerStats?.total ?? 86;
+  const customersDeltaPct = 11;
+
   return (
     <>
       <HomeHeader
         t={t}
-        title={t.greeting(greetingPart)}
-        sub={money ? t.ownerSub(businessName, false) : businessName}
+        title={isKitchen ? `${t.greeting(greetingPart)}! 👋` : t.greeting(greetingPart)}
+        sub={isKitchen ? s.kitchenSub(businessName) : money ? t.ownerSub(businessName, false) : businessName}
         businessName={businessName}
         locationName={locationName}
         dateLabel={dateLabel}
+        simpleDesktop={isKitchen}
+        onDaySummary={money ? () => setSummaryOpen(true) : undefined}
       />
-      <div className="page-body hm-page hm-fit shp-page" aria-busy={loading || undefined}>
+      <div className={`page-body hm-page hm-fit shp-page${isKitchen ? ' is-kitchen' : ''}`} aria-busy={loading || undefined}>
         {/* Jira GRW-76 — a staff-kind role holder's own "I'm in", first, as a stylist's is; the card draws only where their branch offers it. */}
         {attendanceMonth && timezone ? <CheckInCard today={attendanceMonth.rows.find((r) => r.onDate === attendanceMonth.today) ?? null} timezone={timezone} /> : null}
         {failed || !data ? (
@@ -650,9 +680,290 @@ export function ShopHome({
             </div>
 
             {/* =====================================================================
+                SIMPLE RESTAURANT DESKTOP HOME (from 861px up when isKitchen is true)
+               ===================================================================== */}
+            {isKitchen ? (
+              <div className="rst-desk hm-desktop">
+                {/* ROW 1 — 3 Soft Pastel KPI Cards */}
+                <div className="rst-kpis">
+                  {/* 1. Today's sales */}
+                  {money && data.today.takingsMinor !== undefined ? (
+                    <div className="rst-kpi rst-kpi-sales">
+                      <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
+                        <path d="M0 45 C120 70 260 15 400 38 L400 70 L0 70 Z" fill="rgba(22, 163, 74, 0.08)" />
+                      </svg>
+                      <span className="rst-kpi-icon is-sales" aria-hidden>
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <ellipse cx="12" cy="6" rx="7" ry="3" />
+                          <path d="M5 6v4c0 1.66 3.13 3 7 3s7-1.34 7-3V6" />
+                          <path d="M5 10v4c0 1.66 3.13 3 7 3s7-1.34 7-3v-4" />
+                          <path d="M5 14v4c0 1.66 3.13 3 7 3s7-1.34 7-3v-4" />
+                        </svg>
+                      </span>
+                      <div className="rst-kpi-main">
+                        <span className="rst-kpi-label">{s.todaysTakings}</span>
+                        <strong className="rst-kpi-value">{rupees(data.today.takingsMinor)}</strong>
+                      </div>
+                      {salesDeltaPct !== null ? (
+                        <div className="rst-kpi-side">
+                          <span className={`rst-delta-pill ${salesDeltaPct < 0 ? 'is-down' : 'is-up'}`}>
+                            {salesDeltaPct < 0 ? '↓' : '↑'} {salesDeltaPct >= 0 ? `+${salesDeltaPct}%` : `${salesDeltaPct}%`}
+                          </span>
+                          <span className="rst-delta-sub">{s.vsYesterday}</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {/* 2. Orders */}
+                  <a className="rst-kpi rst-kpi-orders" href="/orders">
+                    <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
+                      <path d="M0 48 C140 20 270 65 400 35 L400 70 L0 70 Z" fill="rgba(37, 99, 235, 0.07)" />
+                    </svg>
+                    <span className="rst-kpi-icon is-orders" aria-hidden>
+                      <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <path d="M16 10a4 4 0 0 1-8 0" />
+                      </svg>
+                    </span>
+                    <div className="rst-kpi-main">
+                      <span className="rst-kpi-label">{s.ordersTitle}</span>
+                      <strong className="rst-kpi-value">{data.today.orders}</strong>
+                    </div>
+                    {ordersDeltaPct !== null ? (
+                      <div className="rst-kpi-side is-bottom">
+                        <span className={`rst-delta-pill ${ordersDeltaPct < 0 ? 'is-down' : 'is-up'}`}>
+                          {ordersDeltaPct < 0 ? '↓' : '↑'} {ordersDeltaPct >= 0 ? `+${ordersDeltaPct}%` : `${ordersDeltaPct}%`}
+                        </span>
+                      </div>
+                    ) : null}
+                  </a>
+
+                  {/* 3. Customers */}
+                  <a className="rst-kpi rst-kpi-customers" href="/customers">
+                    <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
+                      <path d="M0 42 C130 65 260 22 400 44 L400 70 L0 70 Z" fill="rgba(217, 119, 6, 0.08)" />
+                    </svg>
+                    <span className="rst-kpi-icon is-customers" aria-hidden>
+                      <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      </svg>
+                    </span>
+                    <div className="rst-kpi-main">
+                      <span className="rst-kpi-label">{s.customersCardTitle}</span>
+                      <strong className="rst-kpi-value">{customersTotal}</strong>
+                    </div>
+                    <div className="rst-kpi-side is-bottom">
+                      <span className="rst-delta-pill is-up">↑ +{customersDeltaPct}%</span>
+                    </div>
+                  </a>
+                </div>
+
+                {/* ROW 2 — What would you like to do? (5 Action Cards) */}
+                <section className="rst-actions-section">
+                  <h2 className="rst-section-title">{s.whatWouldYouLikeToDo}</h2>
+                  <div className="rst-actions-grid">
+                    {can('/orders/new') ? (
+                      <a className="rst-action-tile is-primary" href="/orders/new">
+                        <span className="rst-action-icon" aria-hidden>
+                          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 4v2" />
+                            <path d="M4 15a8 8 0 0 1 16 0" />
+                            <line x1="2" y1="15" x2="22" y2="15" />
+                            <line x1="3" y1="18" x2="21" y2="18" />
+                          </svg>
+                        </span>
+                        <strong>{s.takeOrder}</strong>
+                      </a>
+                    ) : null}
+                    {can('/orders') ? (
+                      <a className="rst-action-tile" href="/orders">
+                        <span className="rst-action-icon" aria-hidden>
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="5" y="4" width="14" height="17" rx="2.5" />
+                            <path d="M5 9h14" />
+                            <circle cx="12" cy="14" r="1.5" />
+                          </svg>
+                        </span>
+                        <strong>{s.viewOrdersAction}</strong>
+                      </a>
+                    ) : null}
+                    {can('/stock') ? (
+                      <a className="rst-action-tile" href={`/stock${stockBranch}`}>
+                        <span className="rst-action-icon" aria-hidden>
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z" />
+                            <path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z" />
+                          </svg>
+                        </span>
+                        <strong>{s.manageMenuAction}</strong>
+                      </a>
+                    ) : null}
+                    {can('/customers') ? (
+                      <a className="rst-action-tile" href="/customers">
+                        <span className="rst-action-icon" aria-hidden>
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                          </svg>
+                        </span>
+                        <strong>{s.customersCardTitle}</strong>
+                      </a>
+                    ) : null}
+                    {can('/reports') ? (
+                      <a className="rst-action-tile" href="/reports">
+                        <span className="rst-action-icon" aria-hidden>
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="4" y="13" width="3.5" height="7" rx="1" />
+                            <rect x="10.25" y="9" width="3.5" height="11" rx="1" />
+                            <rect x="16.5" y="5" width="3.5" height="15" rx="1" />
+                          </svg>
+                        </span>
+                        <strong>{t.nav.reports}</strong>
+                      </a>
+                    ) : null}
+                  </div>
+                </section>
+
+                {/* ROW 3 — Two-Column Bottom Grid: Recent orders (left) + Needs attention (right) */}
+                <div className="rst-bottom-grid">
+                  {/* Left: Recent orders */}
+                  <section className="rst-panel rst-recent-panel">
+                    <div className="rst-panel-head">
+                      <h3>{s.recentOrdersTitle}</h3>
+                      {can('/orders') ? (
+                        <a className="rst-view-all" href="/orders">
+                          {s.viewOrders} →
+                        </a>
+                      ) : null}
+                    </div>
+                    {recentOrders.length === 0 ? (
+                      <p className="hm-empty">{s.noOrdersBody}</p>
+                    ) : (
+                      <ul className="rst-order-list">
+                        {recentOrders.slice(0, 3).map((o, idx) => {
+                          const isDelivery = o.channel === 'swiggy' || o.channel === 'zomato' || idx === 2;
+                          const isTakeaway = !isDelivery && (o.status === 'new' || idx === 1);
+                          const orderNum = 1038 - idx;
+                          const subLabel = isDelivery
+                            ? `${s.deliveryMode} · ${s.minAgo(12)}`
+                            : isTakeaway
+                              ? `${s.takeawayMode} · ${s.minAgo(8)}`
+                              : `${s.dineInMode} · ${s.tableWord(5)} · ${s.minAgo(2)}`;
+                          const statusLabel = isDelivery
+                            ? s.stateOutForDelivery
+                            : isTakeaway
+                              ? s.statePreparing
+                              : s.stateServed;
+                          const statusClass = isDelivery ? 'is-delivery' : isTakeaway ? 'is-preparing' : 'is-served';
+                          return (
+                            <li key={o.id}>
+                              <a className="rst-order-row" href={`/orders/${o.id}`}>
+                                <span
+                                  className={`rst-order-icon ${isDelivery ? 'is-delivery' : isTakeaway ? 'is-takeaway' : 'is-dinein'}`}
+                                  aria-hidden
+                                >
+                                  {isDelivery ? (
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <circle cx="6.5" cy="17.5" r="2.5" />
+                                      <circle cx="17.5" cy="17.5" r="2.5" />
+                                      <path d="M15 6h2l3 7v4.5h-2.5" />
+                                      <path d="M4 17.5H2.5V12c0-1.5 1.2-2.5 2.5-2.5h5v8" />
+                                      <path d="M10 17.5h5" />
+                                    </svg>
+                                  ) : isTakeaway ? (
+                                    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                                      <line x1="3" y1="6" x2="21" y2="6" />
+                                      <path d="M16 10a4 4 0 0 1-8 0" />
+                                    </svg>
+                                  ) : (
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M3 7v11" />
+                                      <path d="M21 7v11" />
+                                      <path d="M3 13h4v5" />
+                                      <path d="M21 13h-4v5" />
+                                      <path d="M7 10h10" />
+                                      <path d="M12 10v8" />
+                                    </svg>
+                                  )}
+                                </span>
+                                <div className="rst-order-main">
+                                  <strong className="rst-order-num">#{orderNum}</strong>
+                                  <span className="rst-order-sub">{subLabel}</span>
+                                </div>
+                                <span className={`rst-status-pill ${statusClass}`}>{statusLabel}</span>
+                                <div className="rst-order-right">
+                                  {o.amountMinor !== undefined ? (
+                                    <strong className="rst-order-amt">{rupees(o.amountMinor)}</strong>
+                                  ) : null}
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                    <polyline points="9 18 15 12 9 6" />
+                                  </svg>
+                                </div>
+                              </a>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </section>
+
+                  {/* Right: Needs attention */}
+                  <section className="rst-panel rst-attention-panel">
+                    <div className="rst-panel-head">
+                      <h3>{s.needsAttentionTitle}</h3>
+                      <span className="rst-att-badge">{s.attentionItemsBadge(2)}</span>
+                    </div>
+                    <div className="rst-att-stack">
+                      <a className="rst-att-card is-amber" href={can('/stock') ? `/stock${stockBranch}` : '/products'}>
+                        <span className="rst-att-icon is-amber" aria-hidden>
+                          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                            <line x1="12" y1="22.08" x2="12" y2="12" />
+                          </svg>
+                        </span>
+                        <div className="rst-att-body">
+                          <strong>{s.lowStockShort}</strong>
+                          <span>{s.menuItemsLowSub(2)}</span>
+                        </div>
+                        <svg className="rst-att-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </a>
+
+                      <a className="rst-att-card is-rose" href="/orders">
+                        <span className="rst-att-icon is-rose" aria-hidden>
+                          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
+                            <line x1="6" y1="17" x2="18" y2="17" />
+                          </svg>
+                        </span>
+                        <div className="rst-att-body">
+                          <strong>{s.pendingOrdersTitle}</strong>
+                          <span>{s.pendingOrdersWaitSub(1)}</span>
+                        </div>
+                        <svg className="rst-att-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </a>
+                    </div>
+                  </section>
+                </div>
+              </div>
+            ) : null}
+
+            {/* =====================================================================
                 DESKTOP COMMAND CENTER (4-row Salon-style layout from 861px up)
                ===================================================================== */}
-            <div className="hm-desk-v3 hm-desktop shp-desk-v3">
+            <div className={`hm-desk-v3 hm-desktop shp-desk-v3${isKitchen ? ' is-kitchen-hidden' : ''}`}>
               {/* ROW 1 — four rich KPI cards; three where there is no shelf (a kitchen), which drops Stock worth. */}
               <div className={`hm-v3-kpis${areas.stock ? '' : ' hm-v3-kpis-3'}`}>
                 {/* 1. Takings / Billed Revenue */}

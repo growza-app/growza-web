@@ -115,7 +115,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', width: '100%', position: 'relative' }}>
       <aside className="admin-sidebar" data-open={navOpen}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 8px 8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 8px 4px' }}>
           <button
             type="button"
             onClick={() => setChangingPassword(true)}
@@ -169,7 +169,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
         <nav
           aria-busy={navLoading}
-          style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 16, overflowY: 'auto', flex: 1, paddingRight: 2 }}
+          className="admin-sidebar-nav"
+          style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 6, overflowY: 'auto', flex: 1, paddingRight: 2 }}
         >
           {/*
             While /me is in flight, show the nav's SHAPE rather than nothing:
@@ -185,13 +186,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
             NAV_GROUPS.map((grp) => (
               <div key={grp.group} aria-hidden>
                 <div
+                  className="admin-nav-group-label"
                   style={{
-                    fontSize: 10.5,
+                    fontSize: '0.625rem',
                     fontWeight: 800,
                     letterSpacing: '0.09em',
                     textTransform: 'uppercase',
                     color: 'oklch(0.62 0.04 150)',
-                    padding: '14px 13px 6px',
+                    padding: '6px 12px 2px',
                   }}
                 >
                   {grp.group}
@@ -199,13 +201,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 {grp.items.map((item) => (
                   <div
                     key={item.href}
+                    className="admin-nav-item"
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 12,
-                      padding: '10px 13px',
-                      borderRadius: 11,
-                      fontSize: 14,
+                      gap: 10,
+                      padding: '5px 12px',
+                      borderRadius: 9,
+                      fontSize: '0.8125rem',
                     }}
                   >
                     <span style={{ display: 'flex', opacity: 0.25 }}>
@@ -226,13 +229,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
           {visibleNavGroups.map((grp) => (
             <div key={grp.group}>
               <div
+                className="admin-nav-group-label"
                 style={{
-                  fontSize: 10.5,
+                  fontSize: '0.625rem',
                   fontWeight: 800,
                   letterSpacing: '0.09em',
                   textTransform: 'uppercase',
                   color: 'oklch(0.62 0.04 150)',
-                  padding: '14px 13px 6px',
+                  padding: '6px 12px 2px',
                 }}
               >
                 {grp.group}
@@ -243,14 +247,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    className="admin-nav-item"
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 12,
-                      padding: '10px 13px',
-                      borderRadius: 11,
+                      gap: 10,
+                      padding: '5px 12px',
+                      borderRadius: 9,
                       cursor: 'pointer',
-                      fontSize: 14,
+                      fontSize: '0.8125rem',
                       ...(active
                         ? {
                             background: oklch.sidebarActiveBg,
@@ -274,12 +279,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
         <div
           style={{
-            marginTop: 12,
+            marginTop: 8,
             display: 'flex',
             alignItems: 'center',
-            gap: 11,
-            padding: 12,
-            borderRadius: 13,
+            gap: 10,
+            padding: '9px 11px',
+            borderRadius: 12,
             background: 'oklch(1 0 0 / 0.06)',
             border: '1px solid oklch(1 0 0 / 0.08)',
           }}

@@ -111,6 +111,7 @@ export function HomeHeader({
   locationName,
   dateLabel,
   onDaySummary,
+  simpleDesktop = false,
 }: {
   t: HomeCopy;
   title: string;
@@ -120,11 +121,13 @@ export function HomeHeader({
   dateLabel: string;
   /** Owner only — the Day summary is the business's takings. */
   onDaySummary?: () => void;
+  /** Simple restaurant desktop header: calendar date pill + bell + avatar. */
+  simpleDesktop?: boolean;
 }) {
   // Jira GRW-556 — no bookings feed until the business is live.
   const live = useLive();
   return (
-    <header className="hm-head">
+    <header className={`hm-head${simpleDesktop ? ' is-rst-head' : ''}`}>
       <MenuButton />
       <div className="hm-head-id">
         <div className="hm-head-business">{businessName}</div>
@@ -145,14 +148,42 @@ export function HomeHeader({
         {/* Jira GRW-395 — the one branch picker; Home's own dropdown and tabs are gone. */}
         <HeaderBranchPicker />
         {/* Jira GRW-409 — the same gated search as every other header; a receptionist's or stylist's Home has none. */}
-        <HeaderSearch wide />
-        {onDaySummary ? (
+        {simpleDesktop ? (
+          <span className="hm-mobile">
+            <HeaderSearch wide />
+          </span>
+        ) : (
+          <HeaderSearch wide />
+        )}
+        {onDaySummary && !simpleDesktop ? (
           <button type="button" className="hm-summary-btn" onClick={onDaySummary} aria-label={t.daySummary}>
             <IconDaySummary />
             <span>{t.daySummary}</span>
           </button>
         ) : null}
-        <span className="hm-date-chip hm-desktop">{dateLabel}</span>
+        {simpleDesktop ? (
+          <button
+            type="button"
+            className="rst-date-pill hm-desktop"
+            onClick={onDaySummary}
+            aria-label={`${t.todayWord}, ${dateLabel}`}
+          >
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <rect x="3" y="4" width="18" height="18" rx="2.5" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span>
+              {t.todayWord}, {dateLabel.replace(',', '')}
+            </span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+        ) : (
+          <span className="hm-date-chip hm-desktop">{dateLabel}</span>
+        )}
         {live ? <NotificationBell /> : null}
         <AccountMenu />
       </div>

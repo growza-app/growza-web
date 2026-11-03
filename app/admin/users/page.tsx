@@ -235,7 +235,7 @@ export default function AdminUsersPage() {
                         aria-label={`Role for ${user.name}`}
                         value={user.roleId ?? ''}
                         onChange={(e) => changeRole(user, e.target.value)}
-                        style={{ padding: '6px 9px', borderRadius: 9, border: `1px solid ${oklch.border}`, fontSize: 12.5, fontWeight: 600, maxWidth: 170 }}
+                        style={{ padding: '6px 9px', borderRadius: 9, border: `1px solid ${oklch.border}`, fontSize: 12.5, fontWeight: 600, width: '100%', maxWidth: 170, boxSizing: 'border-box' }}
                       >
                         {user.roleId === null ? <option value="">No role</option> : null}
                         {rolesInReach.map((role) => (

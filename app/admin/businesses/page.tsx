@@ -11,7 +11,7 @@ import { Pagination, type PaginationState } from '../components/Pagination';
 import { VerticalFilterSheet } from '../components/VerticalFilterSheet';
 import { INITIAL_PAGING, applyPageParams, mergeRows, reloadFromFirstPage } from '../lib/paging';
 import { useAdminSearch } from '../components/SearchContext';
-import { oklch, STATUS_COLORS, typeColor } from '../tokens';
+import { oklch, STATUS_COLORS, typeColor, usageState } from '../tokens';
 import { useAdminMe } from '../components/AdminMeContext';
 
 /**
@@ -177,6 +177,8 @@ function AdminBusinessesInner() {
   const [verticalNames, setVerticalNames] = useState<string[]>([]);
   const { can } = useAdminMe();
   const canCreate = can('admin.business.create') && can('admin.plan.view');
+  const canViewUsage = can('admin.usage.view');
+  const [usageByBusiness, setUsageByBusiness] = useState<Record<string, { used: number; limit: number | null; resolved: boolean }>>({});
   useEffect(() => {
     const controller = new AbortController();
     adminFetch<{ code: string; name: string }[]>('/business-types', { signal: controller.signal })
@@ -190,12 +192,40 @@ function AdminBusinessesInner() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    if (!canViewUsage) return;
+    const controller = new AbortController();
+    adminFetch<{
+      rows: Array<{
+        businessId: string;
+        limitsResolved: boolean;
+        meters: Array<{ usageType: string; used: number; limit: number | null }>;
+      }>;
+    }>('/usage?pageSize=100', { signal: controller.signal })
+      .then((res) => {
+        if (controller.signal.aborted) return;
+        const next: Record<string, { used: number; limit: number | null; resolved: boolean }> = {};
+        for (const r of res.rows) {
+          const booking = r.meters.find((m) => m.usageType === 'booking');
+          next[r.businessId] = {
+            used: booking?.used ?? 0,
+            limit: booking?.limit ?? null,
+            resolved: r.limitsResolved,
+          };
+        }
+        setUsageByBusiness(next);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [canViewUsage]);
+
   const [adding, setAdding] = useState(false);
   const [created, setCreated] = useState<CreatedBusiness | null>(null);
 
   // The vertical filter's admin-mobile picker — see VerticalFilterSheet's own comment.
   const [mobileVerticalOpen, setMobileVerticalOpen] = useState(false);
   const verticalOptions = [ALL, ...verticalNames];
+  const verticalSelectOptions = [{ value: ALL, label: 'All verticals' }, ...verticalNames.map((v) => ({ value: v, label: v }))];
 
   return (
     <div>
@@ -208,7 +238,7 @@ function AdminBusinessesInner() {
           <div className="admin-desktop-only">
             <Select
               aria-label="Filter by vertical"
-              options={verticalOptions}
+              options={verticalSelectOptions}
               value={vertical}
               onChange={(e) => setVertical(e.target.value)}
             />
@@ -234,7 +264,9 @@ function AdminBusinessesInner() {
                 gap: 8,
               }}
             >
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{vertical}</span>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {vertical === ALL ? 'All verticals' : vertical}
+              </span>
               <span style={{ display: 'inline-flex', transform: 'rotate(90deg)', flex: 'none', color: oklch.textFaint }}>
                 <Icon name="chevronRight" size={14} />
               </span>
@@ -248,8 +280,13 @@ function AdminBusinessesInner() {
             `admin-desktop-only` (not a wrapped inner div, unlike the vertical
             filter above) so the whole slot is removed from the mobile flex
             row rather than left behind as an empty gap. */}
-        <div className="admin-filter-grow admin-desktop-only" style={{ width: 150 }}>
-          <Select aria-label="Filter by status" options={STATUS_OPTIONS.map(statusLabel)} value={statusLabel(status)} onChange={(e) => setStatus(STATUS_OPTIONS[STATUS_OPTIONS.map(statusLabel).indexOf(e.target.value)]!)} />
+        <div className="admin-filter-grow admin-desktop-only" style={{ width: 155 }}>
+          <Select
+            aria-label="Filter by status"
+            options={STATUS_OPTIONS.map((s) => ({ value: s, label: s === ALL ? 'All statuses' : statusLabel(s) }))}
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          />
         </div>
         {canCreate ? (
           // `admin-businesses-add-first`: admin mobile only — "Add business"
@@ -443,11 +480,27 @@ function AdminBusinessesInner() {
                       </span>
                     ) : null}
                   </div>
-                  <div>
-                    <NotYetAvailable reason="Bookings aren't counted yet — lands with the usage metering epic (GRW-85)." />
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>
+                    {usageByBusiness[b.tenantId] !== undefined ? (
+                      usageByBusiness[b.tenantId]!.used.toLocaleString('en-IN')
+                    ) : (
+                      <NotYetAvailable reason="No active billing period metered for this business." />
+                    )}
                   </div>
-                  <div>
-                    <NotYetAvailable reason="Usage against a plan limit isn't tracked yet — lands with the usage metering epic (GRW-85)." />
+                  <div style={{ fontSize: 12.5, fontWeight: 700 }}>
+                    {(() => {
+                      const u = usageByBusiness[b.tenantId];
+                      if (!u) return <NotYetAvailable reason="No active billing period metered for this business." />;
+                      if (!u.resolved) return <span style={{ color: 'oklch(0.52 0.13 65)' }}>Unknown</span>;
+                      if (u.limit === null) return <span style={{ color: oklch.textFaint, fontWeight: 600 }}>No limit</span>;
+                      if (u.limit === 0) return <span style={{ color: oklch.danger }}>Blocked</span>;
+                      const { pct, color } = usageState(u.used, u.limit);
+                      return (
+                        <span title={`${u.used.toLocaleString('en-IN')} of ${u.limit.toLocaleString('en-IN')} bookings used`} style={{ color }}>
+                          {pct}%
+                        </span>
+                      );
+                    })()}
                   </div>
                   <div style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>
                     {new Date(b.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}

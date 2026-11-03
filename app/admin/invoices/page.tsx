@@ -116,9 +116,9 @@ export default function AdminInvoicesPage() {
         <div style={{ width: 170 }}>
           <Select
             aria-label="Filter by payment"
-            options={STATUS_OPTIONS.map(billingStatusLabel)}
-            value={billingStatusLabel(paymentStatus)}
-            onChange={(e) => setPaymentStatus(STATUS_OPTIONS[STATUS_OPTIONS.map(billingStatusLabel).indexOf(e.target.value)] ?? 'All')}
+            options={STATUS_OPTIONS.map((s) => ({ value: s, label: s === 'All' ? 'All payments' : billingStatusLabel(s) }))}
+            value={paymentStatus}
+            onChange={(e) => setPaymentStatus(e.target.value)}
           />
         </div>
         <DateRangeFilter range={range} />
