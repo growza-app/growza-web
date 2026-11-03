@@ -18,7 +18,7 @@ import { DaySummarySheet } from './DaySummarySheet';
 import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import { ordersHref } from '../../lib/orders-filter';
-import { posQueueStorageKey, type PosTokenOverride } from '../../pos/pos-helpers';
+import { formatTokenNo, posQueueStorageKey, type PosTokenOverride } from '../../pos/pos-helpers';
 import { channelsOf, sellsOnMarketplaces } from '../../lib/order-channels';
 import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
@@ -104,6 +104,8 @@ export function ShopHome({
   const [returnsData, setReturnsData] = useState<ReturnsReportPage | null>(null);
   const [toSendRows, setToSendRows] = useState<OrderListRow[]>([]);
   const [recentOrders, setRecentOrders] = useState<OrderListRow[]>([]);
+  const [todayOrderRows, setTodayOrderRows] = useState<OrderListRow[]>([]);
+  const [queueTick, setQueueTick] = useState(0);
   const [customerStats, setCustomerStats] = useState<CustomerStats | null>(null);
 
   // The branch the data on screen is for: the server's read is every branch, so a pick re-reads and a return to "all" does too.
@@ -127,6 +129,18 @@ export function ShopHome({
     read();
     mq.addEventListener('change', read);
     return () => mq.removeEventListener('change', read);
+  }, []);
+
+  useEffect(() => {
+    const refreshQueue = () => setQueueTick((n) => n + 1);
+    window.addEventListener('storage', refreshQueue);
+    window.addEventListener('focus', refreshQueue);
+    window.addEventListener('pageshow', refreshQueue);
+    return () => {
+      window.removeEventListener('storage', refreshQueue);
+      window.removeEventListener('focus', refreshQueue);
+      window.removeEventListener('pageshow', refreshQueue);
+    };
   }, []);
 
   const [phonePeriod, setPhonePeriod] = useState<PhonePeriod>('today');
@@ -271,6 +285,12 @@ export function ShopHome({
         .orders({ pageSize: 6, location: branch })
         .then((res) => {
           if (mine === phoneReqId.current) setRecentOrders(res.rows);
+        })
+        .catch(() => {});
+      api
+        .orders({ pageSize: 100, location: branch })
+        .then((res) => {
+          if (mine === phoneReqId.current) setTodayOrderRows(res.rows);
         })
         .catch(() => {});
     }
@@ -602,40 +622,96 @@ export function ShopHome({
       }
     };
     const todayISO = fmtDate(new Date());
-    let overrides: Record<string, PosTokenOverride> = {};
+    const sourceRows = todayOrderRows.length >= recentOrders.length ? todayOrderRows : recentOrders;
+    const todaySorted = sourceRows
+      .filter((o) => {
+        if (o.status === 'cancelled' || o.status === 'returned' || o.items <= 0) return false;
+        const ms = Date.parse(o.soldAt);
+        return Number.isFinite(ms) && fmtDate(new Date(ms)) === todayISO;
+      })
+      .sort((a, b) => {
+        const ta = Date.parse(a.soldAt) || 0;
+        const tb = Date.parse(b.soldAt) || 0;
+        return ta !== tb ? ta - tb : a.id.localeCompare(b.id);
+      });
+
+    const resolvedLoc = branch ?? branchContext.choice ?? branchContext.one ?? todaySorted[0]?.locationId ?? null;
+    const overrides: Record<string, PosTokenOverride> = {};
     if (typeof window !== 'undefined') {
       try {
-        const raw = window.localStorage.getItem(posQueueStorageKey(branch, todayISO));
-        if (raw) {
-          const parsed = JSON.parse(raw) as Record<string, PosTokenOverride>;
-          if (parsed && typeof parsed === 'object') overrides = parsed;
+        if (!branch) {
+          const suffix = `.${todayISO}`;
+          for (let i = 0; i < window.localStorage.length; i++) {
+            const k = window.localStorage.key(i);
+            if (k && k.startsWith('growza.pos.queue.') && k.endsWith(suffix)) {
+              const raw = window.localStorage.getItem(k);
+              if (raw) {
+                const parsed = JSON.parse(raw) as Record<string, PosTokenOverride>;
+                if (parsed && typeof parsed === 'object') Object.assign(overrides, parsed);
+              }
+            }
+          }
+        }
+        const primaryRaw = window.localStorage.getItem(posQueueStorageKey(resolvedLoc, todayISO));
+        if (primaryRaw) {
+          const parsed = JSON.parse(primaryRaw) as Record<string, PosTokenOverride>;
+          if (parsed && typeof parsed === 'object') Object.assign(overrides, parsed);
         }
       } catch {
         // Ignore storage errors
       }
     }
+
     const now = Date.now();
-    let inQueue = 0;
-    for (const o of recentOrders) {
-      if (o.status === 'cancelled' || o.status === 'returned') continue;
-      const soldMs = Date.parse(o.soldAt);
-      if (!Number.isFinite(soldMs) || fmtDate(new Date(soldMs)) !== todayISO) continue;
+    const tokens: Array<{
+      id: string;
+      tokenNo: number;
+      tokenLabel: string;
+      customerName: string;
+      channel: string;
+      soldAt: string;
+      items: number;
+      amountMinor?: number;
+      elapsedMin: number;
+    }> = [];
+
+    todaySorted.forEach((o, idx) => {
+      const tokenNo = idx + 1;
+      const soldMs = Date.parse(o.soldAt) || now;
       const ov = overrides[o.id];
-      if (ov === 'completed') continue;
-      if (ov === 'preparing' || (typeof ov === 'string' && ov.startsWith('preparing:'))) {
-        inQueue++;
-        continue;
+      if (ov === 'completed') return;
+      const recalledMs =
+        typeof ov === 'string' && ov.startsWith('preparing:') ? Number(ov.slice(10)) : NaN;
+      const effectiveStartMs = Number.isFinite(recalledMs) && recalledMs > 0 ? recalledMs : soldMs;
+      const elapsedMin = Math.max(0, Math.round((now - effectiveStartMs) / 60_000));
+      const isPreparing =
+        ov === 'preparing' ||
+        (typeof ov === 'string' && ov.startsWith('preparing:')) ||
+        elapsedMin <= 30;
+      if (isPreparing) {
+        tokens.push({
+          id: o.id,
+          tokenNo,
+          tokenLabel: formatTokenNo(tokenNo),
+          customerName: o.who?.name?.trim() || s.noNameCustomer,
+          channel: o.channel,
+          soldAt: o.soldAt,
+          items: o.items,
+          amountMinor: o.amountMinor,
+          elapsedMin,
+        });
       }
-      const elapsedMin = Math.max(0, Math.round((now - soldMs) / 60_000));
-      if (elapsedMin <= 30) inQueue++;
-    }
-    const totalToday = data?.today.orders ?? 0;
-    const boundedInQueue = Math.min(totalToday, inQueue);
+    });
+
+    tokens.sort((a, b) => b.elapsedMin - a.elapsedMin || a.tokenNo - b.tokenNo);
+    const totalToday = Math.max(data?.today.orders ?? 0, todaySorted.length);
+    const boundedInQueue = tokens.length;
     return {
       inQueue: boundedInQueue,
       completedToday: Math.max(0, totalToday - boundedInQueue),
+      tokens,
     };
-  }, [recentOrders, data, branch, timezone]);
+  }, [todayOrderRows, recentOrders, data, branch, branchContext.choice, branchContext.one, timezone, queueTick, s.noNameCustomer]);
 
   return (
     <>
@@ -2037,6 +2113,33 @@ export function ShopHome({
                           </a>
                         ) : null}
                       </div>
+                      {queueStats.tokens.length > 0 ? (
+                        <ul className="shp-recent">
+                          {queueStats.tokens.map((tk) => (
+                            <li key={tk.id}>
+                              <a className="shp-recent-row" href={can('/pos') ? '/pos?mode=queue' : `/orders/${encodeURIComponent(tk.id)}`}>
+                                <span className="shp-recent-person">
+                                  <Avatar name={tk.customerName} id={tk.id} size={36} />
+                                  <span className="shp-recent-main">
+                                    <span className="shp-recent-name">
+                                      <strong>{tk.tokenLabel}</strong> · {tk.customerName}
+                                    </span>
+                                    <span className="shp-recent-meta">
+                                      {channelWord(tk.channel)} · {s.itemCountShort(tk.items)} · {s.minAgo(tk.elapsedMin)}
+                                    </span>
+                                  </span>
+                                </span>
+                                <span className="shp-recent-end">
+                                  {tk.amountMinor === undefined ? null : (
+                                    <span className="shp-recent-amount">{rupees(tk.amountMinor)}</span>
+                                  )}
+                                  <span className="shp-recent-state is-amber">{s.statePreparing}</span>
+                                </span>
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
                     </>
                   ) : (
                     <div className="shp-empty">
