@@ -689,37 +689,39 @@ export function ShopHome({
                       <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
                         <path d="M0 45 C120 70 260 15 400 38 L400 70 L0 70 Z" fill="rgba(22, 163, 74, 0.08)" />
                       </svg>
-                      <span className="rst-kpi-icon is-sales" aria-hidden>
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <ellipse cx="12" cy="6" rx="7" ry="3" />
-                          <path d="M5 6v4c0 1.66 3.13 3 7 3s7-1.34 7-3V6" />
-                          <path d="M5 10v4c0 1.66 3.13 3 7 3s7-1.34 7-3v-4" />
-                          <path d="M5 14v4c0 1.66 3.13 3 7 3s7-1.34 7-3v-4" />
-                        </svg>
-                      </span>
-                      <div className="rst-kpi-main">
-                        <span className="rst-kpi-label">{s.todaysTakings}</span>
-                        <strong className="rst-kpi-value">{rupees(data.today.takingsMinor)}</strong>
-                        {data.today.byPaymentMode && data.today.byPaymentMode.length > 0 && data.today.takingsMinor > 0 ? (
-                          <div className="rst-kpi-modes" role="group" aria-label={t.howPaid}>
-                            {[...data.today.byPaymentMode]
-                              .sort((a, b) => b.revenueMinor - a.revenueMinor)
-                              .map((m) => (
-                                <span key={m.mode} className="rst-kpi-mode">
-                                  <i className={`rst-mode-dot is-${m.mode}`} aria-hidden />
-                                  <span>{t.payment[m.mode]}</span>
-                                  <b>{rupees(m.revenueMinor)}</b>
-                                </span>
-                              ))}
+                      <div className="rst-kpi-top">
+                        <span className="rst-kpi-icon is-sales" aria-hidden>
+                          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <ellipse cx="12" cy="6" rx="7" ry="3" />
+                            <path d="M5 6v4c0 1.66 3.13 3 7 3s7-1.34 7-3V6" />
+                            <path d="M5 10v4c0 1.66 3.13 3 7 3s7-1.34 7-3v-4" />
+                            <path d="M5 14v4c0 1.66 3.13 3 7 3s7-1.34 7-3v-4" />
+                          </svg>
+                        </span>
+                        <div className="rst-kpi-main">
+                          <span className="rst-kpi-label">{s.todaysTakings}</span>
+                          <strong className="rst-kpi-value">{rupees(data.today.takingsMinor)}</strong>
+                        </div>
+                        {salesDeltaPct !== null ? (
+                          <div className="rst-kpi-side">
+                            <span className={`rst-delta-pill ${salesDeltaPct < 0 ? 'is-down' : 'is-up'}`}>
+                              {salesDeltaPct < 0 ? '↓' : '↑'} {salesDeltaPct >= 0 ? `+${salesDeltaPct}%` : `${salesDeltaPct}%`}
+                            </span>
+                            <span className="rst-delta-sub">{s.vsYesterday}</span>
                           </div>
                         ) : null}
                       </div>
-                      {salesDeltaPct !== null ? (
-                        <div className="rst-kpi-side">
-                          <span className={`rst-delta-pill ${salesDeltaPct < 0 ? 'is-down' : 'is-up'}`}>
-                            {salesDeltaPct < 0 ? '↓' : '↑'} {salesDeltaPct >= 0 ? `+${salesDeltaPct}%` : `${salesDeltaPct}%`}
-                          </span>
-                          <span className="rst-delta-sub">{s.vsYesterday}</span>
+                      {data.today.byPaymentMode && data.today.byPaymentMode.length > 0 && data.today.takingsMinor > 0 ? (
+                        <div className="rst-kpi-modes" role="group" aria-label={t.howPaid}>
+                          {[...data.today.byPaymentMode]
+                            .sort((a, b) => b.revenueMinor - a.revenueMinor)
+                            .map((m) => (
+                              <span key={m.mode} className="rst-kpi-mode">
+                                <i className={`rst-mode-dot is-${m.mode}`} aria-hidden />
+                                <span>{t.payment[m.mode]}</span>
+                                <b>{rupees(m.revenueMinor)}</b>
+                              </span>
+                            ))}
                         </div>
                       ) : null}
                     </div>
