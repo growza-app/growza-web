@@ -7,7 +7,7 @@ import { api, formatMoney, type Appointment } from '../lib/api';
 import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
 import { useBranch } from '../components/BranchProvider';
 import { useSession } from '../components/SessionProvider';
-import { IconCheck } from '../components/icons';
+import { IconCheck, IconArrowLeft } from '../components/icons';
 import { SellProductClient } from '../products/sell/SellProductClient';
 import { buildSaleRows, type SaleRow } from '../sales/SalesClient';
 import { ReturnProductSheet } from '../sales/ReturnProductSheet';
@@ -58,6 +58,7 @@ export function PosClient({
   backTo?: '/products' | '/sales';
 }) {
   const t = useTranslations('pos');
+  const tc = useTranslations('chrome');
   const locale = useLocale();
   const { Customer } = useNouns();
   const branch = useBranch();
@@ -76,6 +77,8 @@ export function PosClient({
   const [reloadKey, setReloadKey] = useState(0);
   /** Only the latest open may answer: a slow read from an earlier open must not put old bills under a newer sheet. */
   const opened = useRef(0);
+  /* Owner, 2026-11-03 — the till's own Back, moved up into the bar. The action is still the till's. */
+  const leaveRef = useRef<(() => void) | null>(null);
 
   const storageKey = posQueueStorageKey(location, todayISO);
 
@@ -149,8 +152,6 @@ export function PosClient({
     [dailyTokens],
   );
   const nextTokenNo = dailyTokens.length + 1;
-  const lastTokenLabel = dailyTokens.length > 0 ? dailyTokens[dailyTokens.length - 1]!.tokenLabel : t('noneIssuedYet');
-  const todayTotalMinor = useMemo(() => dailyTokens.reduce((sum, tk) => sum + tk.totalMinor, 0), [dailyTokens]);
 
   const formatTime = useCallback(
     (iso: string) => {
@@ -390,6 +391,9 @@ export function PosClient({
         </header>
       ) : canReturn ? (
         <div className="pos-bar">
+          <button type="button" className="pos-bar-back" aria-label={tc('back')} onClick={() => leaveRef.current?.()}>
+            <IconArrowLeft />
+          </button>
           <div className="page-tabs pos-tabs" role="tablist" aria-label={t('modes')}>
             <button type="button" role="tab" aria-selected={mode === 'sell'} className={`page-tab${mode === 'sell' ? ' active' : ''}`} onClick={closeReturn}>
               {t('sell')}
@@ -403,18 +407,21 @@ export function PosClient({
             </button>
           </div>
           <div className="pos-bar-right">
+            {/*
+              Which branch this till is selling at. The flow underneath draws no header here (`hideHead`), so
+              without this a business with more than one branch had no branch control on the till at all — and
+              the branch decides the shelf, the prices and whose takings the sale lands in. Both variants, as
+              every other header does: CSS shows the pill on a laptop and the line on a phone, where this row
+              is otherwise empty. A single-branch business sees nothing, as everywhere else.
+            */}
+            <div className="pos-bar-branch">
+              <HeaderBranchPicker variant="pill" />
+              <HeaderBranchPicker variant="line" />
+            </div>
             {loading ? (
               <span className="pos-note" role="status">
                 {t('loadingBills')}
               </span>
-            ) : null}
-            <span className="pos-next-token-pill">
-              {t('nextToken', { token: formatTokenNo(nextTokenNo) })}
-            </span>
-            {mode !== 'queue' && preparingTokens.length === 0 ? (
-              <button type="button" className="pos-bar-completed" onClick={openQueue}>
-                {t('completedLabel', { count: completedTokens.length })} →
-              </button>
             ) : null}
             <div className="pos-bar-shortcuts" aria-hidden="true">
               <span className="pos-kbd-inline"><kbd>F2</kbd> {t('shortcutSearch')}</span>
@@ -429,6 +436,9 @@ export function PosClient({
         </div>
       ) : (
         <div className="pos-bar pos-bar-minimal">
+          <button type="button" className="pos-bar-back" aria-label={tc('back')} onClick={() => leaveRef.current?.()}>
+            <IconArrowLeft />
+          </button>
           <div className="page-tabs pos-tabs" role="tablist" aria-label={t('modes')}>
             <button type="button" role="tab" aria-selected={mode === 'sell'} className={`page-tab${mode === 'sell' ? ' active' : ''}`} onClick={closeReturn}>
               {t('sell')}
@@ -439,14 +449,11 @@ export function PosClient({
             </button>
           </div>
           <div className="pos-bar-right">
-            <span className="pos-next-token-pill">
-              {t('nextToken', { token: formatTokenNo(nextTokenNo) })}
-            </span>
-            {mode !== 'queue' && preparingTokens.length === 0 ? (
-              <button type="button" className="pos-bar-completed" onClick={openQueue}>
-                {t('completedLabel', { count: completedTokens.length })} →
-              </button>
-            ) : null}
+            {/* As above: the till's branch, since the flow underneath draws no header of its own. */}
+            <div className="pos-bar-branch">
+              <HeaderBranchPicker variant="pill" />
+              <HeaderBranchPicker variant="line" />
+            </div>
             <div className="pos-bar-shortcuts" aria-hidden="true">
               <span className="pos-kbd-inline"><kbd>F2</kbd> {t('shortcutSearch')}</span>
               <span className="pos-kbd-inline"><kbd>F4</kbd> {t('shortcutClient', { customer: Customer })}</span>
@@ -469,56 +476,12 @@ export function PosClient({
         </div>
       ) : null}
 
-      {mode !== 'queue' ? (
-        <section
-          className={`pos-token-strip${preparingTokens.length === 0 ? ' is-empty' : ' is-live'}`}
-          aria-label={t('queue')}
-        >
-          <div className="pos-token-strip-head">
-            <span className="pos-token-strip-dot" aria-hidden="true" />
-            <strong className="pos-token-strip-title">
-              {t('inQueueLabel', { count: preparingTokens.length })}
-            </strong>
-          </div>
-          {preparingTokens.length > 0 ? (
-            <div className="pos-token-strip-list">
-              {preparingTokens.map((tk) => (
-                <div key={tk.id} className="pos-token-chip">
-                  <span className="pos-token-chip-no">{tk.tokenLabel}</span>
-                  <span className={`pos-token-chip-chan is-${tk.channel}`}>{channelLabel(tk.channel)}</span>
-                  <span className="pos-token-chip-items" title={tk.itemsSummary}>
-                    {tk.itemsSummary}
-                  </span>
-                  <span className="pos-token-chip-time">
-                    {tk.elapsedMin <= 0 ? t('elapsedJustNow') : t('elapsedMinShort', { min: tk.elapsedMin })}
-                  </span>
-                  <button
-                    type="button"
-                    className="pos-token-chip-done"
-                    onClick={() => setTokenState(tk.id, 'completed')}
-                    aria-label={`${tk.tokenLabel} ${t('markCompleted')}`}
-                  >
-                    <IconCheck />
-                    <span>{t('markReady')}</span>
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="pos-token-strip-empty">
-              {t('allDoneStrip', { token: formatTokenNo(nextTokenNo) })}
-            </p>
-          )}
-          <button type="button" className="pos-token-strip-more" onClick={openQueue}>
-            {t('completedLabel', { count: completedTokens.length })} →
-          </button>
-        </section>
-      ) : null}
-
       <div className="pos-body" hidden={mode === 'queue'}>
         <SellProductClient
           timezone={timezone}
           backTo={backTo}
+          hideHead
+          leaveRef={leaveRef}
           heading={heading}
           nextTokenNo={nextTokenNo}
           onSaleCompleted={handleSaleCompleted}
@@ -528,40 +491,14 @@ export function PosClient({
 
       {mode === 'queue' ? (
         <section className="pos-queue-board" aria-label={t('queue')}>
-          <div className="pos-queue-kpis">
-            <div className="pos-queue-kpi">
-              <span className="pos-queue-kpi-label">{t('kpiLastToken')}</span>
-              <strong className="pos-queue-kpi-val">{lastTokenLabel}</strong>
-              <span className="pos-queue-kpi-sub">{t('nextToken', { token: formatTokenNo(nextTokenNo) })}</span>
-            </div>
-            <div className="pos-queue-kpi is-preparing">
-              <span className="pos-queue-kpi-label">{t('kpiInQueue')}</span>
-              <strong className="pos-queue-kpi-val">{preparingTokens.length}</strong>
-              <span className="pos-queue-kpi-sub">{t('statusPreparing')}</span>
-            </div>
-            <div className="pos-queue-kpi is-completed">
-              <span className="pos-queue-kpi-label">{t('kpiCompletedToday')}</span>
-              <strong className="pos-queue-kpi-val">{completedTokens.length}</strong>
-              <span className="pos-queue-kpi-sub">{t('statusCompleted')}</span>
-            </div>
-            <div className="pos-queue-kpi">
-              <span className="pos-queue-kpi-label">{t('kpiTotalOrders')}</span>
-              <strong className="pos-queue-kpi-val">{dailyTokens.length}</strong>
-              {canReturn ? <span className="pos-queue-kpi-sub">{formatMoney(String(todayTotalMinor))}</span> : null}
-            </div>
-          </div>
-
           <div className="pos-queue-cols">
             <div className="pos-queue-col">
               <header className="pos-queue-col-head">
-                <div>
-                  <h2 className="pos-queue-col-title">
-                    <span className="pos-queue-dot is-preparing" aria-hidden="true" />
-                    {t('preparingColTitle')}
-                    <span className="pos-queue-col-count">{preparingTokens.length}</span>
-                  </h2>
-                  <p className="pos-queue-col-sub">{t('preparingColSub')}</p>
-                </div>
+                <h2 className="pos-queue-col-title">
+                  <span className="pos-queue-dot is-preparing" aria-hidden="true" />
+                  {t('preparingColTitle')}
+                  <span className="pos-queue-col-count">{preparingTokens.length}</span>
+                </h2>
                 <button type="button" className="btn btn-primary pos-queue-new-btn" onClick={closeReturn}>
                   + {t('backToSell')} ({formatTokenNo(nextTokenNo)})
                 </button>
@@ -579,14 +516,11 @@ export function PosClient({
 
             <div className="pos-queue-col">
               <header className="pos-queue-col-head">
-                <div>
-                  <h2 className="pos-queue-col-title">
-                    <span className="pos-queue-dot is-completed" aria-hidden="true" />
-                    {t('completedColTitle')}
-                    <span className="pos-queue-col-count">{completedTokens.length}</span>
-                  </h2>
-                  <p className="pos-queue-col-sub">{t('completedColSub')}</p>
-                </div>
+                <h2 className="pos-queue-col-title">
+                  <span className="pos-queue-dot is-completed" aria-hidden="true" />
+                  {t('completedColTitle')}
+                  <span className="pos-queue-col-count">{completedTokens.length}</span>
+                </h2>
               </header>
               {completedTokens.length === 0 ? (
                 <div className="pos-queue-empty">

@@ -56,6 +56,21 @@
   gap: var(--sp-3);
 }
 
+/*
+ * The till's branch. It holds both pickers — the laptop's pill and the phone's line — as every other header
+ * does, and 94-header-branch-picker.css shows the one for the width. A business with one branch renders
+ * neither, so the wrapper is empty and takes itself off the row rather than leaving a gap behind.
+ */
+.pos-bar-branch {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.pos-bar-branch:empty {
+  display: none;
+}
+
 @media (max-width: 759px) {
   .pos-bar .pos-tabs {
     flex: 1 1 100%;
@@ -75,23 +90,52 @@
   }
 }
 
-.pos-bar-completed {
+/*
+ * Owner, 2026-11-03 — the till's Back, at the top left of the screen rather than on a row of its own.
+ *
+ * It is the same button the flow drew under its "Take an order" title; only the place changed, so what it does
+ * is unchanged. Above 1100px the wide till draws its own header with its own Back, and this one steps aside.
+ */
+.pos-bar-back {
+  flex: none;
   display: inline-flex;
   align-items: center;
-  min-height: 2rem;
-  padding: 0 var(--sp-2);
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-right: var(--sp-1);
   border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--accent-deep);
-  font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 800;
+  border-radius: 999px;
+  background: var(--page-bg);
+  color: var(--text);
   cursor: pointer;
 }
 
-@media (min-width: 760px) {
-  .pos-bar-completed {
+/*
+ * The tabs take a whole row of their own (`flex: 1 1 100%`). Beside a Back button they share it, or the button
+ * costs the row that removing the title just saved.
+ *
+ * `flex-basis: 0` and not `auto`: a wrapping flex row breaks the line at the items' BASE sizes and only then
+ * shrinks what is on it, so tabs asking for their content width (three at 89px) wrap before they ever shrink.
+ * From zero they fit beside the button first and grow into what is left.
+ */
+.pos-bar-back + .page-tabs.pos-tabs {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.pos-bar-back svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.pos-bar-back:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+
+@media (min-width: 1101px) {
+  .pos-bar-back {
     display: none;
   }
 }
@@ -142,9 +186,10 @@
 
 .pos-fs-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--sp-3);
+  gap: var(--sp-2) var(--sp-3);
   min-height: 3.375rem;
   padding: var(--sp-2) var(--sp-4);
   background: var(--accent-deep);
@@ -275,6 +320,37 @@
 
 .pos-fs-bar .pos-fs-btn:focus-visible {
   outline-color: #fff;
+}
+
+/*
+ * Owner, 2026-11-03 — the way out of full screen, at any width.
+ *
+ * Full screen is only ever ENTERED from 1101px up, where the bar's eight items fit on one line. Turn a tablet
+ * sideways, or drag the window narrower, and they did not: at 900px the row ran to 1012px, and "Exit full
+ * screen" — the ONLY way out, since full screen hides the flow's own header — sat 47px past the right edge of
+ * a bar that does not scroll. The till was a locked room.
+ *
+ * So the bar wraps (above), and below 1101px the keyboard hints come off it: they are decorative
+ * (`aria-hidden`) and name function keys a tablet has not got, which makes them the first thing to give way.
+ *
+ * It sits here, after the rules it overrides, and not up beside `.pos-fs-bar`: these selectors are no more
+ * specific than the ones they beat, so being later in the file is the whole of why they win.
+ */
+@media (max-width: 1100px) {
+  .pos-fs-shortcuts {
+    display: none;
+  }
+
+  .pos-fs-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  /* Below the terminal width these are tapped, not clicked, so they take the touch size. The 1101px-and-up
+     till is driven by a mouse and the function keys printed beside it, and keeps its denser 36px. */
+  .pos-fs-btn {
+    min-height: 2.75rem;
+  }
 }
 
 .pos-shell.is-fullscreen .pos-body {
@@ -1068,209 +1144,6 @@
   color: #fff;
 }
 
-.pos-next-token-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2rem;
-  padding: 0 var(--sp-3);
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent-deep);
-  font-size: 0.8125rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-
-.pos-token-strip {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2) var(--sp-3);
-  margin-bottom: var(--sp-3);
-  padding: var(--sp-2) var(--sp-3);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.pos-token-strip-head {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  flex: none;
-}
-
-.pos-token-strip-dot,
-.pos-queue-dot {
-  width: 0.5625rem;
-  height: 0.5625rem;
-  border-radius: 999px;
-  background: var(--accent-deep);
-  flex: none;
-}
-
-.pos-token-strip.is-live .pos-token-strip-dot,
-.pos-queue-dot.is-preparing {
-  background: var(--amber);
-}
-
-.pos-token-strip-title {
-  font-size: 0.8125rem;
-  font-weight: 800;
-  color: var(--text);
-}
-
-.pos-token-strip-list {
-  flex: 1;
-  min-width: 12rem;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  overflow-x: auto;
-  padding: 2px 0;
-}
-
-@media (max-width: 759px) {
-  .pos-token-strip.is-empty {
-    display: none;
-  }
-
-  .pos-token-strip-list,
-  .pos-token-strip-empty {
-    order: 3;
-    flex: 1 1 100%;
-    min-width: 0;
-    padding-top: var(--sp-2);
-    border-top: 1px solid var(--border);
-  }
-}
-
-.pos-token-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: 4px 6px 4px var(--sp-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--page-bg);
-  flex: none;
-}
-
-.pos-token-chip-no {
-  padding: 2px 7px;
-  border-radius: 4px;
-  background: var(--accent-deep);
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-
-.pos-token-chip-chan,
-.pos-qcard-chan {
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.pos-token-chip-chan.is-swiggy,
-.pos-qcard-chan.is-swiggy,
-.pos-token-chip-chan.is-zomato,
-.pos-qcard-chan.is-zomato {
-  background: var(--amber-soft);
-  border-color: transparent;
-}
-
-.pos-token-chip-items {
-  max-width: 9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-@media (max-width: 759px) {
-  .pos-token-chip-items {
-    max-width: 4.5rem;
-  }
-}
-
-.pos-token-chip-time {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.pos-token-chip-done {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 1.75rem;
-  padding: 0 var(--sp-2);
-  border: 0;
-  border-radius: 4px;
-  background: var(--accent-soft);
-  color: var(--accent-deep);
-  font: inherit;
-  font-size: 0.75rem;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.pos-token-chip-done:hover {
-  background: var(--accent-deep);
-  color: #fff;
-}
-
-.pos-token-chip-done svg {
-  width: 0.8125rem;
-  height: 0.8125rem;
-}
-
-.pos-token-strip-empty {
-  flex: 1;
-  margin: 0;
-  font-size: 0.8125rem;
-  color: var(--muted);
-}
-
-.pos-token-strip-more {
-  flex: none;
-  min-height: 2rem;
-  padding: 0 var(--sp-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--page-bg);
-  color: var(--text);
-  font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.pos-token-strip-more:hover {
-  border-color: var(--accent-deep);
-  color: var(--accent-deep);
-}
-
-.pos-bar-completed:focus-visible,
-.pos-token-chip-done:focus-visible,
-.pos-token-strip-more:focus-visible,
-.pos-qcard-complete-btn:focus-visible,
-.pos-qcard-recall-btn:focus-visible,
-.pos-queue-new-btn:focus-visible {
-  outline: 2px solid var(--accent-deep);
-  outline-offset: 2px;
-}
-
 /* ---------- Dedicated Queue Board (`mode === 'queue'`) ---------- */
 
 .pos-queue-board {
@@ -1279,56 +1152,17 @@
   gap: var(--sp-4);
 }
 
-.pos-queue-kpis {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-3);
+/* The dot beside each column's name — green for done, amber for still cooking. */
+.pos-queue-dot {
+  width: 0.5625rem;
+  height: 0.5625rem;
+  border-radius: 999px;
+  background: var(--accent-deep);
+  flex: none;
 }
 
-@media (min-width: 760px) {
-  .pos-queue-kpis {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-.pos-queue-kpi {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--sp-3) var(--sp-4);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.pos-queue-kpi.is-preparing {
-  background: var(--amber-soft);
-}
-
-.pos-queue-kpi.is-completed {
-  background: var(--accent-soft);
-}
-
-.pos-queue-kpi-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-}
-
-.pos-queue-kpi-val {
-  font-size: 1.5rem;
-  font-weight: 800;
-  line-height: 1.15;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-}
-
-.pos-queue-kpi-sub {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--muted);
+.pos-queue-dot.is-preparing {
+  background: var(--amber);
 }
 
 .pos-queue-cols {
@@ -1387,14 +1221,8 @@
   font-weight: 800;
 }
 
-.pos-queue-col-sub {
-  margin: 2px 0 0;
-  font-size: 0.8125rem;
-  color: var(--muted);
-}
-
 .pos-queue-new-btn {
-  min-height: 2.375rem;
+  min-height: 2.75rem;
   padding: 0 var(--sp-3);
   font-size: 0.8125rem;
   font-weight: 700;
@@ -1475,6 +1303,23 @@
   font-size: 0.875rem;
   font-weight: 700;
   color: var(--text);
+}
+
+/* Where the order came from. Swiggy and Zomato are tinted, so a delivery order is not read as a counter one. */
+.pos-qcard-chan {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.pos-qcard-chan.is-swiggy,
+.pos-qcard-chan.is-zomato {
+  background: var(--amber-soft);
+  border-color: transparent;
 }
 
 .pos-qcard-meta {
@@ -1571,7 +1416,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
-  min-height: 2.25rem;
+  min-height: 2.75rem;
   padding: 0 var(--sp-3);
   border-radius: var(--radius-sm);
   background: var(--accent-deep);
@@ -1586,9 +1431,18 @@
 }
 
 .pos-qcard-recall-btn {
-  min-height: 2rem;
+  min-height: 2.75rem;
   padding: 0 var(--sp-3);
   font-size: 0.75rem;
   font-weight: 700;
+}
+
+/* The board's three buttons keep a focus ring. They shared this block with the token strip that went; it has
+   to stay with the buttons that are still on screen, not with the markup that was removed. */
+.pos-qcard-complete-btn:focus-visible,
+.pos-qcard-recall-btn:focus-visible,
+.pos-queue-new-btn:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
 }
 

@@ -120,6 +120,11 @@ describe('a shop reaches it from everywhere it takes an order from', () => {
  * definition, so Back always meant `nextCustomer()`: clear the lines and stay put. On an empty till that
  * clears nothing and goes nowhere — the owner tapped Back and the screen sat there. `backTo` is '/orders'
  * on exactly this screen and was never reached.
+ *
+ * Owner, 2026-11-03 — and the half of it that was left. `/pos` is reached from the nav and from Home, so it
+ * has no `backTo` at all: Back still cleared an empty bill and sat there, and was reported as a dead button
+ * once it moved to the top left of the screen. Clearing is now conditional on there being something to clear,
+ * and an empty till goes Home. Every arrow arrives somewhere.
  */
 describe('the way out of Take an order', () => {
   const flow = readFileSync(path.resolve(__dirname, '../../appointments/new/PayFlow.tsx'), 'utf8');
@@ -131,11 +136,18 @@ describe('the way out of Take an order', () => {
     expect(body).toMatch(/if \(backTo\) \{/);
     // The order is the whole fix: `backTo` is tested BEFORE `productsOnly`. Compared on the `if`s, not on
     // the first mention — the comment above them names `productsOnly` first.
-    expect(body.indexOf('if (backTo)')).toBeLessThan(body.indexOf('if (productsOnly)'));
+    expect(body.indexOf('if (backTo)')).toBeLessThan(body.indexOf('if (productsOnly'));
   });
 
-  it('still starts the next customer on a till that is nobody’s second screen', () => {
-    // `/products/sell` reached from the nav has no `backTo`: there is no "there" to go back to.
-    expect(flow).toMatch(/if \(productsOnly\) \{\s*nextCustomer\(\);/);
+  it('still starts the next customer on a till that is nobody’s second screen — while there is a bill', () => {
+    // `/products/sell` reached from the nav has no `backTo`: clearing the lines IS the useful thing there.
+    expect(flow).toMatch(/if \(productsOnly && lines\.length > 0\) \{\s*nextCustomer\(\);/);
+  });
+
+  it('goes Home rather than nowhere when there is nothing to clear', () => {
+    const leave = flow.slice(flow.indexOf('const leave = () => {'));
+    const body = leave.slice(0, leave.indexOf('};'));
+    // The last line of `leave`, now reachable from a products-only till for the first time.
+    expect(body.trimEnd().endsWith("router.push('/');")).toBe(true);
   });
 });
