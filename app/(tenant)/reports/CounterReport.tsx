@@ -160,7 +160,35 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
     );
   }
 
-  const { takings, earners, busy, changed } = data;
+  const { takings, earners, busy, changed, strategy } = data;
+  const channelLabel = useCallback(
+    (ch: string) =>
+      ch === 'counter'
+        ? t('mix.channelCounter')
+        : ch === 'swiggy'
+          ? t('mix.channelSwiggy')
+          : ch === 'zomato'
+            ? t('mix.channelZomato')
+            : ch === 'flipkart'
+              ? t('mix.channelFlipkart')
+              : ch === 'amazon'
+                ? t('mix.channelAmazon')
+                : ch,
+    [t],
+  );
+  const modeLabel = useCallback(
+    (mode: string) =>
+      mode === 'upi'
+        ? t('mix.modeUpi')
+        : mode === 'cash'
+          ? t('mix.modeCash')
+          : mode === 'card'
+            ? t('mix.modeCard')
+            : mode === 'other'
+              ? t('mix.modeOther')
+              : t('mix.modeNotRecorded'),
+    [t],
+  );
   // `|| 1` is the divisor's floor, not the bar's: a period whose every figure is zero must not divide by it.
   /*
    * Owner, 2026-11-02 — a month is drawn as weeks and a year as months. One column per day was right while
@@ -241,6 +269,34 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
             </li>
           ))}
         </ul>
+        {strategy && (strategy.byChannel.length > 0 || strategy.byPaymentMode.length > 0) ? (
+          <div className="cr-mix-block">
+            {strategy.byChannel.length > 0 ? (
+              <div className="cr-mix-row">
+                <span className="cr-mix-label">{t('mix.channelsLabel')}</span>
+                <div className="cr-mix-pills">
+                  {strategy.byChannel.map((c) => (
+                    <span key={c.channel} className="cr-mix-pill">
+                      <strong>{channelLabel(c.channel)}</strong> {money(c.valueMinor)} <em>({c.sharePct}%)</em>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {strategy.byPaymentMode.length > 0 ? (
+              <div className="cr-mix-row">
+                <span className="cr-mix-label">{t('mix.paymentsLabel')}</span>
+                <div className="cr-mix-pills">
+                  {strategy.byPaymentMode.map((p) => (
+                    <span key={p.mode} className="cr-mix-pill">
+                      <strong>{modeLabel(p.mode)}</strong> {money(p.valueMinor)} <em>({p.sharePct}%)</em>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </section>
 
       <section className="cr-card" aria-labelledby="cr-earn-h">
@@ -284,6 +340,11 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
               : t('earners.slow', { names: earners.slow.map((s) => s.name).join(', ') })}
           </p>
         )}
+        {strategy && earners.slowTotal > earners.slow.length && earners.slow.length > 0 ? (
+          <p className="cr-sub cr-slow-examples">
+            {t('mix.slowExamples', { names: earners.slow.map((s) => s.name).join(', ') })}
+          </p>
+        ) : null}
       </section>
 
       <section className="cr-card" aria-labelledby="cr-busy-h">
@@ -328,6 +389,11 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
             {t('busy.quietest', { day: dayName(busy.quietestDay.dow), amount: money(busy.quietestDay.valueMinor) })}
           </p>
         ) : null}
+        {strategy?.bestDay ? (
+          <p className="cr-sub cr-best-day">
+            {t('mix.bestDay', { day: dayName(strategy.bestDay.dow), amount: money(strategy.bestDay.valueMinor) })}
+          </p>
+        ) : null}
       </section>
 
       <section className="cr-card" aria-labelledby="cr-chg-h">
@@ -364,7 +430,162 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
             </span>
           </p>
         ) : null}
+        {strategy && strategy.basket.totalUnits > 0 ? (
+          <p className="cr-sub cr-basket-meta">
+            {t('mix.basketMeta', {
+              items: strategy.basket.avgItemsPerBill,
+              singlePct: strategy.basket.singleItemSharePct,
+            })}
+          </p>
+        ) : null}
       </section>
+
+      {strategy ? (
+        <section className="cr-card cr-playbook" aria-labelledby="cr-strat-h">
+          <div className="cr-playbook-head">
+            <h2 className="cr-title" id="cr-strat-h">
+              {t('strategy.title')}
+            </h2>
+            <p className="cr-sub">{t('strategy.subtitle')}</p>
+          </div>
+          <div className="cr-strat-grid">
+            {/* 1. Basket & Combo Strategy */}
+            <article className="cr-strat-card">
+              <span className="cr-strat-tag">{t('strategy.combo.tag')}</span>
+              <h3 className="cr-strat-title">{t('strategy.combo.title')}</h3>
+              <p className="cr-strat-data">
+                <strong>{t('strategy.dataLabel')}: </strong>
+                {strategy.basket.topPair
+                  ? t('strategy.combo.dataPair', {
+                      singlePct: strategy.basket.singleItemSharePct,
+                      avgItems: strategy.basket.avgItemsPerBill,
+                      itemA: strategy.basket.topPair.itemA,
+                      itemB: strategy.basket.topPair.itemB,
+                      pairBills: strategy.basket.topPair.bills,
+                    })
+                  : t('strategy.combo.dataSingle', {
+                      singlePct: strategy.basket.singleItemSharePct,
+                      avgItems: strategy.basket.avgItemsPerBill,
+                      avgBill: money(takings.averageBillMinor ?? 0),
+                    })}
+              </p>
+              <p className="cr-strat-action">
+                <strong>{t('strategy.actionLabel')}: </strong>
+                {t('strategy.combo.action', {
+                  leader: earners.leader?.name ?? earners.rows[0]?.name ?? 'Top dish',
+                  partner:
+                    strategy.basket.topPair?.itemB ??
+                    earners.rows[1]?.name ??
+                    earners.rows[0]?.name ??
+                    'side dish',
+                })}
+              </p>
+              <p className="cr-strat-impact">
+                {t('strategy.combo.impact', {
+                  amount: money(Math.max(1, Math.round(takings.bills / 3)) * 6000),
+                })}
+              </p>
+            </article>
+
+            {/* 2. Peak & Slow-Slot Strategy */}
+            <article className="cr-strat-card">
+              <span className="cr-strat-tag">{t('strategy.timing.tag')}</span>
+              <h3 className="cr-strat-title">{t('strategy.timing.title')}</h3>
+              <p className="cr-strat-data">
+                <strong>{t('strategy.dataLabel')}: </strong>
+                {strategy.bestDay && busy.quietestDay
+                  ? t('strategy.timing.dataWithDays', {
+                      bestDay: dayName(strategy.bestDay.dow),
+                      bestAmount: money(strategy.bestDay.valueMinor),
+                      weakDay: dayName(busy.quietestDay.dow),
+                      weakAmount: money(busy.quietestDay.valueMinor),
+                      from: busy.peak ? hourName(busy.peak.fromHour) : hourName(19),
+                      to: busy.peak ? hourName(busy.peak.toHour) : hourName(22),
+                    })
+                  : t('strategy.timing.dataRushOnly', {
+                      from: busy.peak ? hourName(busy.peak.fromHour) : hourName(19),
+                      to: busy.peak ? hourName(busy.peak.toHour) : hourName(22),
+                    })}
+              </p>
+              <p className="cr-strat-action">
+                <strong>{t('strategy.actionLabel')}: </strong>
+                {t('strategy.timing.action', {
+                  weakDay: busy.quietestDay ? dayName(busy.quietestDay.dow) : dayName(2),
+                  from: busy.peak ? hourName(busy.peak.fromHour) : hourName(19),
+                  to: busy.peak ? hourName(busy.peak.toHour) : hourName(22),
+                })}
+              </p>
+              <p className="cr-strat-impact">
+                {t('strategy.timing.impact', {
+                  amount: money(
+                    strategy.bestDay && busy.quietestDay
+                      ? Math.max(50000, Math.round((Number(strategy.bestDay.valueMinor) - Number(busy.quietestDay.valueMinor)) / 200) * 100)
+                      : Math.round(Number(takings.totalMinor) * 0.0015) * 100,
+                  ),
+                })}
+              </p>
+            </article>
+
+            {/* 3. Channel Margin & Retention Strategy */}
+            <article className="cr-strat-card">
+              <span className="cr-strat-tag">{t('strategy.channels.tag')}</span>
+              <h3 className="cr-strat-title">{t('strategy.channels.title')}</h3>
+              <p className="cr-strat-data">
+                <strong>{t('strategy.dataLabel')}: </strong>
+                {(() => {
+                  const counterSlice = strategy.byChannel.find((c) => c.channel === 'counter');
+                  const counterPct = counterSlice ? counterSlice.sharePct : 100;
+                  const onlinePct = Math.max(0, 100 - counterPct);
+                  return t('strategy.channels.data', {
+                    counterPct,
+                    onlinePct,
+                    capturePct: strategy.customers.customerCapturePct,
+                    repeatPct: strategy.customers.repeatSharePct,
+                  });
+                })()}
+              </p>
+              <p className="cr-strat-action">
+                <strong>{t('strategy.actionLabel')}: </strong>
+                {t('strategy.channels.action')}
+              </p>
+              <p className="cr-strat-impact">{t('strategy.channels.impact')}</p>
+            </article>
+
+            {/* 4. Menu Engineering Strategy */}
+            <article className="cr-strat-card">
+              <span className="cr-strat-tag">{t('strategy.menu.tag')}</span>
+              <h3 className="cr-strat-title">{t('strategy.menu.title')}</h3>
+              <p className="cr-strat-data">
+                <strong>{t('strategy.dataLabel')}: </strong>
+                {earners.slowTotal > 0 && earners.slow.length > 0
+                  ? t('strategy.menu.dataWithSlow', {
+                      star: changed.up[0]?.name ?? earners.leader?.name ?? earners.rows[0]?.name ?? 'Top dish',
+                      slowCount: earners.slowTotal,
+                      menuTotal: earners.menuTotal,
+                      slowNames: earners.slow.slice(0, 3).map((s) => s.name).join(', '),
+                    })
+                  : t('strategy.menu.dataClean', {
+                      star: changed.up[0]?.name ?? earners.leader?.name ?? earners.rows[0]?.name ?? 'Top dish',
+                      menuTotal: earners.menuTotal,
+                    })}
+              </p>
+              <p className="cr-strat-action">
+                <strong>{t('strategy.actionLabel')}: </strong>
+                {t('strategy.menu.action', {
+                  star: changed.up[0]?.name ?? earners.leader?.name ?? earners.rows[0]?.name ?? 'Top dish',
+                  slowNames:
+                    earners.slow.length > 0
+                      ? earners.slow.slice(0, 3).map((s) => s.name).join(', ')
+                      : earners.rows[earners.rows.length - 1]?.name ?? 'slow items',
+                })}
+              </p>
+              <p className="cr-strat-impact">
+                {t('strategy.menu.impact', { slowCount: earners.slowTotal })}
+              </p>
+            </article>
+          </div>
+        </section>
+      ) : null}
     </>
   );
 }

@@ -184,6 +184,50 @@ describe('what it does when there is nothing to say', () => {
   });
 });
 
+describe('the strategy playbook and channel/payment mix', () => {
+  const withStrategy: CounterReportPage = {
+    ...payload,
+    strategy: {
+      byChannel: [
+        { channel: 'counter', bills: 20, valueMinor: '1800000', sharePct: 66, averageBillMinor: 90000 },
+        { channel: 'swiggy', bills: 10, valueMinor: '921200', sharePct: 34, averageBillMinor: 92120 },
+      ],
+      byPaymentMode: [
+        { mode: 'upi', valueMinor: '1600000', sharePct: 59 },
+        { mode: 'cash', valueMinor: '1121200', sharePct: 41 },
+      ],
+      basket: {
+        totalUnits: 54,
+        avgItemsPerBill: 1.8,
+        singleItemBills: 13,
+        singleItemSharePct: 43,
+        topPair: { itemA: 'Chicken Biryani', itemB: 'Rumali Roti', bills: 6 },
+      },
+      customers: {
+        billsWithCustomer: 12,
+        customerCapturePct: 40,
+        repeatBills: 5,
+        repeatSharePct: 17,
+      },
+      bestDay: { dow: 6, valueMinor: '720000' },
+    },
+  };
+
+  it('renders the channel/payment mix and 4 actionable strategy cards in English and Hindi', () => {
+    const enOut = text(render('en', withStrategy));
+    expect(enOut).toContain('Growth &amp; strategy playbook');
+    expect(enOut).toContain('Chicken Biryani + Rumali Roti were ordered together 6 times');
+    expect(enOut).toContain('Counter ₹18,000 (66%)');
+    expect(enOut).toContain('UPI ₹16,000 (59%)');
+    expect(enOut).toContain('Best day: Saturday — ₹7,200');
+
+    const hiOut = text(render('hi', withStrategy));
+    expect(hiOut).toContain('बिज़नेस बढ़ाने की रणनीतियाँ');
+    expect(hiOut).toContain('काउंटर ₹18,000 (66%)');
+    expect(hiOut).not.toContain('Growth &amp; strategy playbook');
+  });
+});
+
 describe('the message files', () => {
   const walk = (obj: unknown, path = ''): string[] =>
     typeof obj === 'string'

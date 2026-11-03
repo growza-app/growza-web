@@ -22,9 +22,8 @@ describe('Reports on a phone spends its height on figures', () => {
     expect(stock).toMatch(/\.srp-page \{[^}]*gap: var\(--sp-3\);/);
   });
 
-  it('a phone reads the report first and the other reports after it', () => {
-    expect(counter).toMatch(/@media \(max-width: 860px\) \{\s*\.srp-page > \.cr \{\s*order: -1;/);
-    // `order` and not a change of markup: the order a screen reader follows is the one it always had.
+  it('keeps the report tabs at the top on both phone and desktop', () => {
+    expect(counter).not.toMatch(/\.srp-page > \.cr \{\s*order: -1;/);
     expect(read('reports/page.tsx')).toMatch(/<h2 className="cr-more">[\s\S]{0,40}<\/h2>\s*<RetailReportsNav/);
     expect(counter).toMatch(/\.cr-more \{\s*position: absolute;/);
     expect(counter).toMatch(/\.cr-toolbar \{\s*justify-content: flex-start;/);

@@ -1894,6 +1894,36 @@ export interface CounterMover {
   previousQty: number;
   deltaQty: number;
 }
+export interface CounterChannelSlice {
+  channel: string;
+  bills: number;
+  valueMinor: string;
+  sharePct: number;
+  averageBillMinor: number | null;
+}
+export interface CounterPaymentSlice {
+  mode: 'upi' | 'cash' | 'card' | 'other' | 'not_recorded';
+  valueMinor: string;
+  sharePct: number;
+}
+export interface CounterStrategy {
+  byChannel: CounterChannelSlice[];
+  byPaymentMode: CounterPaymentSlice[];
+  basket: {
+    totalUnits: number;
+    avgItemsPerBill: number;
+    singleItemBills: number;
+    singleItemSharePct: number;
+    topPair: { itemA: string; itemB: string; bills: number } | null;
+  };
+  customers: {
+    billsWithCustomer: number;
+    customerCapturePct: number;
+    repeatBills: number;
+    repeatSharePct: number;
+  };
+  bestDay: { dow: number; valueMinor: string } | null;
+}
 export interface CounterReportPage {
   window: { key: string; label: string; startISO: string; endExclusiveISO: string };
   previous: { startISO: string; endExclusiveISO: string; hasData: boolean };
@@ -1923,6 +1953,7 @@ export interface CounterReportPage {
     quietestDay: { dow: number; valueMinor: string } | null;
   };
   changed: { up: CounterMover[]; down: CounterMover[] };
+  strategy?: CounterStrategy;
 }
 
 /**
