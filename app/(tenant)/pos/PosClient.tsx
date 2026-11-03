@@ -860,6 +860,14 @@ export function PosClient({
       {fullScreen ? (
         <header className="pos-fs-bar">
           <div className="pos-fs-left">
+            {/*
+              The till's own Back. The flow underneath draws no header of its own (`hideHead`), and full screen has
+              no sidebar either, so without this the arrow that returns to whatever opened the till — the shelf, the
+              sales list — existed nowhere on the screen.
+            */}
+            <button type="button" className="pos-fs-back" aria-label={tc('back')} onClick={() => leaveRef.current?.()}>
+              <IconArrowLeft />
+            </button>
             <span className="pos-fs-brand">
               <span className="pos-fs-logo" aria-hidden="true">G</span>
               {/* i18n-ok: brand name */}Growza

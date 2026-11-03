@@ -374,6 +374,14 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That value is too long': 'वह मान बहुत लंबा है',
   'Price cannot be negative': 'क़ीमत शून्य से कम नहीं हो सकती',
   'That price is too large': 'वह क़ीमत बहुत ज़्यादा है',
+  // ---- Jira GRW-658 — what Swiggy and Zomato should pay, and the commission each takes
+  'Enter a percentage between 0 and 50': '0 से 50 के बीच का प्रतिशत लिखें',
+  'This business takes no orders from delivery apps.': 'यह बिज़नेस डिलीवरी ऐप से ऑर्डर नहीं लेता।',
+  'This business takes no orders from that app.': 'यह बिज़नेस उस ऐप से ऑर्डर नहीं लेता।',
+  // ---- A bill left waiting in the POS queue for its payment. Untranslated since it was added; found once the
+  // GRW-658 three above stopped masking it.
+  'Only a counter product order can wait in the queue for payment':
+    'कतार में पेमेंट के लिए सिर्फ़ काउंटर का प्रोडक्ट ऑर्डर रुक सकता है',
 };
 
 /** The sentence in the visitor's language when it is known; otherwise exactly what the server said. */
