@@ -1975,17 +1975,17 @@ export function ShopHome({
                             {s.yesterday}: <b>{data.yesterday.orders}</b>
                           </span>
                         </div>
+                        {/*
+                          Jira GRW-614 (FR-06) — the work waiting. It opens the Orders list already filtered to exactly the states
+                          this count is of (`new,packed`), so the number on Home and the rows behind it cannot disagree. Absent
+                          when nothing is waiting: a "0 to send" is a line of noise on the screen opened most often.
+                        */}
+                        {data.toSend > 0 ? (
+                          <a className="shp-link shp-tosend" href={ordersHref({ status: 'new,packed' })}>
+                            {s.toSend(data.toSend)}
+                          </a>
+                        ) : null}
                       </div>
-                      {/*
-                        Jira GRW-614 (FR-06) — the work waiting. It opens the Orders list already filtered to exactly the states
-                        this count is of (`new,packed`), so the number on Home and the rows behind it cannot disagree. Absent
-                        when nothing is waiting: a "0 to send" is a line of noise on the screen opened most often.
-                      */}
-                      {data.toSend > 0 ? (
-                        <a className="shp-link shp-tosend" href={ordersHref({ status: 'new,packed' })}>
-                          {s.toSend(data.toSend)}
-                        </a>
-                      ) : null}
                     </>
                   ) : (
                     <div className="shp-empty">
