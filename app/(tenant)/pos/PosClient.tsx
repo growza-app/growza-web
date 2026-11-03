@@ -82,6 +82,10 @@ function QueueTokenPayScreen({
     setSplitAmount('');
     setFirstWay(null);
   };
+  const handleToggleRedeem = () => {
+    clearSplit();
+    toggleRedeem();
+  };
   const waysFor = (mode: PaymentMode): Array<{ mode: PaymentMode; amountMinor: number }> => {
     if (!firstWay || firstWay.mode === mode || firstWay.minor <= 0 || firstWay.minor >= dueMinor) {
       return [{ mode, amountMinor: dueMinor }];
@@ -183,7 +187,7 @@ function QueueTokenPayScreen({
         <span className="pf-head-gap" aria-hidden="true" />
       </header>
       {dueLine}
-      <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={toggleRedeem} disabled={saving !== null} />
+      <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={handleToggleRedeem} disabled={saving !== null} />
       {error ? (
         <div role="alert" className="pf-error">
           {error}
@@ -234,7 +238,7 @@ function QueueTokenPayScreen({
                 setSplitAmount('');
                 return;
               }
-              if (m === 'upi' && paymentQr && !firstWay) {
+              if (m === 'upi' && paymentQr && !firstWay && dueMinor > 0) {
                 setQrStep(true);
                 return;
               }

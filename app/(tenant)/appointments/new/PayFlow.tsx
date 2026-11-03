@@ -1017,7 +1017,7 @@ export function PayFlow({
           })();
       const result = settled;
       router.refresh();
-      const paidMinor = result.paidMinor;
+      const paidMinor = pending ? totalMinor : result.paidMinor;
       const stylist = result.schedulableId ? (shownProviders.find((p) => p.id === result.schedulableId)?.displayName ?? null) : null;
       const when = new Intl.DateTimeFormat(locale === 'hi' ? 'hi-IN' : 'en-IN', {
         timeZone: timezone,
@@ -1615,14 +1615,16 @@ export function PayFlow({
         {payTiles}
         {productsOnly && !fromApp && !splitting && !firstWay ? (
           <div className="pos-charge-actions pos-charge-actions-mobile">
-            <button
-              type="button"
-              className="btn pos-charge-pending"
-              disabled={saving !== null || lines.length === 0}
-              onClick={sendPosPending}
-            >
-              <span>{t('desk.keepPendingInQueue')}</span>
-            </button>
+            {onOpenQueue ? (
+              <button
+                type="button"
+                className="btn pos-charge-pending"
+                disabled={saving !== null || lines.length === 0}
+                onClick={sendPosPending}
+              >
+                <span>{t('desk.keepPendingInQueue')}</span>
+              </button>
+            ) : null}
             <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
               {t('split.link')}
             </button>
@@ -2009,14 +2011,16 @@ export function PayFlow({
                 </button>
                 {!fromApp && !splitting && !firstWay ? (
                   <>
-                    <button
-                      type="button"
-                      className="btn pos-charge-pending"
-                      disabled={saving !== null || lines.length === 0}
-                      onClick={sendPosPending}
-                    >
-                      <span>{t('desk.keepPendingInQueue')}</span>
-                    </button>
+                    {onOpenQueue ? (
+                      <button
+                        type="button"
+                        className="btn pos-charge-pending"
+                        disabled={saving !== null || lines.length === 0}
+                        onClick={sendPosPending}
+                      >
+                        <span>{t('desk.keepPendingInQueue')}</span>
+                      </button>
+                    ) : null}
                     <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
                       {t('split.link')}
                     </button>
