@@ -64,6 +64,24 @@ describe('AC-03 — a brand-new shop: each section says its own plain thing, and
   });
 });
 
+describe('Quick links — the sixth tile follows the capability, never the vertical name', () => {
+  it('a business that counts stock keeps Guests; one that does not gets the till', () => {
+    // Owner, 2026-11-03. `areas.stock` and not a check on the business type: a kitchen cooks a dish when it
+    // is ordered, its diners are walk-ins nobody looks up, and the till has no tab of its own.
+    expect(shop).toMatch(
+      /areas\.stock\s*\?\s*\{ href: '\/customers', label: t\.nav\.clients[^}]*\}\s*:\s*\{ href: '\/pos', label: t\.nav\.pos[^}]*\}/,
+    );
+  });
+
+  it('no business type is named anywhere in this screen', () => {
+    expect(shop).not.toMatch(/tenant\.type|businessType|=== 'restaurant'|=== 'salon'|=== 'retail'/);
+  });
+
+  it('the till tile is still subject to the same permission check as every other', () => {
+    expect(shop).toContain(".filter((l) => canSee(l.href, role, reportTabs, true, areas))");
+  });
+});
+
 describe('error handling — a failed read is one plain line with a retry, and the doors stay', () => {
   it('shows the error card and keeps the quick tiles (and so the nav) usable', () => {
     expect(shop).toMatch(/failed \|\| !data \? \(\s*<Card>\s*<CardError t=\{t\} onRetry=\{\(\) => load\(branch\)\} \/>/);

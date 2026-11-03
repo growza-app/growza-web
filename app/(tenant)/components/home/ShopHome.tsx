@@ -302,7 +302,17 @@ export function ShopHome({
     { href: '/orders/new', label: s.takeOrder, icon: <IconNavOrders />, tone: 'green' },
     { href: '/orders', label: t.nav.orders, icon: <IconNavOrders />, tone: 'blue' },
     { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'green' },
-    { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
+    /*
+     * Owner, 2026-11-03 — the till stands where a kitchen's guests did.
+     *
+     * Not a question about the vertical: `areas.stock` is the capability, and a business that keeps no count
+     * rings a sale up as it is made. Its diners are walk-ins nobody looks up by name, so Guests was the least
+     * used of the six — and it is a tab in the bar at the foot of the screen either way, while the till has no
+     * tab at all. A business that DOES count stock keeps Guests: its customers are the ones it calls back.
+     */
+    areas.stock
+      ? { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' }
+      : { href: '/pos', label: t.nav.pos, icon: <IconPos />, tone: 'amber' },
     /*
      * Owner, 2026-10-26 — Reports, not Attendance.
      *
