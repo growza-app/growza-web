@@ -562,8 +562,6 @@ export function ShopHome({
     return buckets.map((b) => ({ key: b.key, pct: b.minor > 0 ? Math.max(8, Math.round((b.minor / max) * 100)) : 3 }));
   }, [phoneChannel]);
 
-  const phoneTopSeller = phoneSellers?.rows?.[0] ?? null;
-
   const phonePeriodOptions: Array<{ value: PhonePeriod; label: string }> = [
     { value: 'today', label: s.periodToday },
     { value: 'yesterday', label: s.periodYesterday },
@@ -1919,18 +1917,11 @@ export function ShopHome({
                       </>
                     ) : null}
 
-                    {canReports && (can('/stock/sellers') || can('/stock/report')) ? (
+                    {canReports && can('/stock/report') ? (
                       <div className="shp-hero-links">
-                        {can('/stock/sellers') ? (
-                          <a className="shp-hero-pill" href="/stock/sellers">
-                            {phoneTopSeller ? s.topSellerPill(phoneTopSeller.name) : s.whatSellsLink} →
-                          </a>
-                        ) : null}
-                        {can('/stock/report') ? (
-                          <a className="shp-hero-pill" href="/stock/report">
-                            {s.stockReportLink} →
-                          </a>
-                        ) : null}
+                        <a className="shp-hero-pill" href="/stock/report">
+                          {s.stockReportLink} →
+                        </a>
                       </div>
                     ) : null}
                   </section>
