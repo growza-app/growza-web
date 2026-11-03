@@ -1149,23 +1149,38 @@
    4-up grid at 344px, and a filter the owner changes all day should be one tap, not
    two. The grid (not the inline-flex default) is what makes them fit: equal tracks
    that shrink together instead of a row that overflows. */
+.shp-period {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
 .shp-period .hm-seg {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  width: 100%;
-  padding: 3px;
-  gap: 2px;
-}
-.shp-period .hm-seg button {
-  min-height: 2.75rem;
-  padding: 0 2px;
-  font-size: 0.75rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.shp-period .hm-seg-select {
   display: none;
+}
+
+.shp-period .hm-seg-select {
+  display: block;
+  flex: 1 1 auto;
+  max-width: 11.5rem;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0 2.125rem 0 var(--sp-3);
+  border: 1px solid var(--hm-line);
+  border-radius: var(--radius);
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgb(95 111 102)' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0.625rem center / 0.9375rem 0.9375rem;
+  color: var(--hm-ink);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.shp-period-summary {
+  margin-left: auto;
 }
 
 .shp-hero-link {

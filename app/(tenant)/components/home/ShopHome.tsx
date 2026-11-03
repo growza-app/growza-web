@@ -1799,7 +1799,7 @@ export function ShopHome({
                   unchanged `'today'` hero have nothing to filter).
                 */}
                 {phoneFigures.kind === 'range' || phoneFigures.kind === 'busy' || phoneFigures.kind === 'failed' ? (
-                  <div className="shp-period">
+                  <div className="shp-period hm-toolbar">
                     <Segmented
                       value={phonePeriod}
                       options={phonePeriodOptions}
@@ -1807,6 +1807,16 @@ export function ShopHome({
                       label={s.periodLabel}
                       className="shp-period-seg"
                     />
+                    <button
+                      type="button"
+                      className="hm-toolbar-summary shp-period-summary"
+                      aria-label={t.daySummary}
+                      title={t.daySummary}
+                      onClick={() => setSummaryOpen(true)}
+                    >
+                      <IconDaySummary />
+                      <span className="hm-toolbar-summary-label">{t.daySummary}</span>
+                    </button>
                   </div>
                 ) : null}
 
@@ -1911,15 +1921,6 @@ export function ShopHome({
 
                     {canReports && (can('/stock/sellers') || can('/stock/report')) ? (
                       <div className="shp-hero-links">
-                        {/*
-                          The way into the day's sheet ON A PHONE. The toolbar's button above is the laptop's —
-                          this screen's toolbar is not drawn at phone width, and the salon's phone control sits
-                          in its header, which a shop's Home does not have. Here it is beside the two links an
-                          owner cashing up already uses, in the same pill.
-                        */}
-                        <button type="button" className="shp-hero-pill" onClick={() => setSummaryOpen(true)}>
-                          {t.daySummary} →
-                        </button>
                         {can('/stock/sellers') ? (
                           <a className="shp-hero-pill" href="/stock/sellers">
                             {phoneTopSeller ? s.topSellerPill(phoneTopSeller.name) : s.whatSellsLink} →

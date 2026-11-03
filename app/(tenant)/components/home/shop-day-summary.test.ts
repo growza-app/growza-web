@@ -71,11 +71,11 @@ describe('a shop’s rows', () => {
 
 describe('the ways in', () => {
   it('has one on a laptop and one on a phone — the toolbar button is phone-only CSS', () => {
-    // `.hm-toolbar-summary` is `display: none` from 861px (styles/83-role-home.css), and this screen's phone
-    // layout does not draw the toolbar at all, so neither control alone would reach both.
+    // `.hm-toolbar-summary` is `display: none` from 861px (styles/83-role-home.css), and sits inline with the
+    // phone period dropdown on mobile.
     expect(shopHome).toMatch(/className="hm-toolbar-summary"[\s\S]*?setSummaryOpen\(true\)/);
     expect(shopHome).toMatch(/className="hm-action" onClick=\{\(\) => setSummaryOpen\(true\)\}/);
-    expect(shopHome).toMatch(/className="shp-hero-pill" onClick=\{\(\) => setSummaryOpen\(true\)\}/);
+    expect(shopHome).toMatch(/className="hm-toolbar-summary shp-period-summary"[\s\S]*?setSummaryOpen\(true\)/);
   });
 
   it('opens the sheet at the branch the screen is showing', () => {
