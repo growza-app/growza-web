@@ -39,6 +39,7 @@ export function RedeemRow({
   if (!rewards || (rewards.maxRedeemable === 0 && rewards.balance === 0)) return null;
 
   const have = t('have', { points: rewards.balance });
+  const worth = money(rewards.balance * rewards.pointValueMinor);
   /*
    * Three different reasons it cannot be spent, and only the first is the one anybody guesses.
    *
@@ -55,7 +56,7 @@ export function RedeemRow({
         : t('needBill', { amount: money(rewards.minBillMinor) });
 
   return (
-    <div className="pf-redeem">
+    <div className={`pf-redeem ${rewards.maxRedeemable > 0 ? 'is-ready' : 'is-locked'}`}>
       {rewards.maxRedeemable > 0 ? (
         <>
           <label className="switch">
@@ -65,14 +66,16 @@ export function RedeemRow({
             </span>
           </label>
           <span id="pf-redeem-label" className="pf-redeem-label">
-            {t('offer', { points: rewards.maxRedeemable })}
-            <span className="pf-redeem-have">{have}</span>
+            <span className="pf-redeem-offer">{t('offer', { points: rewards.maxRedeemable })}</span>
+            <span className="pf-redeem-have">· {have} ({worth})</span>
           </span>
           <strong className="pf-redeem-off">{t('off', { amount: money(rewards.discountMinor) })}</strong>
         </>
       ) : (
         <span className="pf-redeem-label pf-redeem-quiet">
-          {have}
+          <span className="pf-redeem-bal">
+            {have} <span className="pf-redeem-worth">({worth})</span>
+          </span>
           <span className="pf-redeem-have">{why}</span>
         </span>
       )}

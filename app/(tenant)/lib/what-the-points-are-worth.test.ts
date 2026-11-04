@@ -122,7 +122,8 @@ describe('rewards', () => {
     const en = JSON.parse(readFileSync(join(process.cwd(), 'messages/en.json'), 'utf8'));
     expect(en.payFlow.rewards.receiptExpiry).toContain('expire');
     expect(en.payFlow.rewards.receiptExpiry).not.toContain('run out');
-    expect(en.payFlow.rewards.receiptBalance).toContain('{worth}');
+    expect(en.payFlow.rewards.receiptBalance).toContain('{points');
+    expect(en.payFlow.rewards.receiptBalance).not.toContain('off your next bill');
   });
 
   /*

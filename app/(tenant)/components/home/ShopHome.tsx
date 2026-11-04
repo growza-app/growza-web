@@ -2117,7 +2117,14 @@ export function ShopHome({
                         <ul className="shp-recent">
                           {queueStats.tokens.map((tk) => (
                             <li key={tk.id}>
-                              <a className="shp-recent-row" href={can('/pos') ? '/pos?mode=queue' : `/orders/${encodeURIComponent(tk.id)}`}>
+                              <a
+                                className="shp-recent-row"
+                                href={
+                                  can('/pos')
+                                    ? `/pos?mode=queue&token=${encodeURIComponent(tk.id)}`
+                                    : `/orders/${encodeURIComponent(tk.id)}`
+                                }
+                              >
                                 <span className="shp-recent-person">
                                   <Avatar name={tk.customerName} id={tk.id} size={36} />
                                   <span className="shp-recent-main">

@@ -346,4 +346,110 @@ describe('the POS screen', () => {
     }
     expect(css).toContain('.pos-queue-board');
   });
+
+  it('lets the till send an order to Queue with payment pending and lets the desk settle it there', () => {
+    const payFlow = src('../appointments/new/PayFlow.tsx');
+    const css = src('../styles/99-pos.css');
+
+    expect(payFlow).toContain('sendPosPending');
+    expect(payFlow).toContain('pos-charge-pending');
+    expect(payFlow).toContain("t('desk.keepPendingInQueue')");
+    expect(payFlow).toContain('...(pending ? { paymentPending: true } : {}),');
+    expect(payFlow).toContain('setQueuedBanner({ tokenNo, amountMinor: paidMinor })');
+    expect(payFlow).toContain('pos-charge-queued');
+    expect(client).toContain('settleAndCompleteToken');
+    expect(client).toContain('const settled = await api.settleCounterSale(tk.id, {');
+    expect(client).toContain('QueueTokenPayScreen');
+    expect(client).toContain('setSettledReceipt({');
+    expect(client).toContain("nextLabel={t('backToQueueDone')}");
+
+    for (const sel of ['.pos-charge-pending', '.pos-charge-queued-link']) {
+      const block = css.slice(css.indexOf(`\n${sel} {`));
+      expect(block.slice(0, block.indexOf('}')), sel).toContain('min-height: 2.75rem;');
+    }
+
+    const nowMs = Date.parse('2026-10-24T13:00:00Z');
+    const unpaidOldRow: Appointment = {
+      id: 'sale-pending-1',
+      startAt: '2026-10-24T11:00:00Z',
+      endAt: '2026-10-24T11:00:00Z',
+      status: 'completed',
+      createdVia: 'dashboard',
+      channel: 'counter',
+      customerName: 'Aarav Bist',
+      customerPhone: null,
+      serviceId: null,
+      serviceName: '',
+      priceMinor: null,
+      paidAmountMinor: null,
+      paymentMode: null,
+      providerId: null,
+      providerName: null,
+      bookingGroupId: null,
+      offerTitle: null,
+      comboPriceMinor: null,
+      locationId: 'loc-1',
+      bookedAhead: false,
+      movedTo: null,
+      reminderSent: false,
+      customerIsNew: false,
+      products: [{ id: 'vp-p1', productId: 'p-1', name: 'Masala Chai', priceMinor: '4000', qty: 2, paidMinor: '8000', returnedQty: 0, returnedMinor: '0' }],
+      payments: [],
+      refunds: [],
+    };
+    const [token] = buildDailyTokens([unpaidOldRow], 'loc-1', {}, nowMs);
+    expect(token?.paymentPending).toBe(true);
+    // An unpaid order in Queue stays 'preparing' even 120 minutes later until payment is taken and marked done.
+    expect(token?.elapsedMin).toBe(120);
+    expect(token?.state).toBe('preparing');
+
+    // Even a localStorage 'completed' override cannot hide an unpaid pending order from the Preparing column.
+    const [withOverride] = buildDailyTokens([unpaidOldRow], 'loc-1', { 'sale-pending-1': 'completed' }, nowMs);
+    expect(withOverride?.state).toBe('preparing');
+
+    // A service appointment with paymentMode === null is never misclassified as an unpaid counter product sale.
+    const serviceRow: Appointment = {
+      ...unpaidOldRow,
+      id: 'appt-svc-1',
+      channel: undefined,
+      serviceId: 'svc-1',
+      serviceName: 'Haircut',
+      priceMinor: '50000',
+      products: [],
+    };
+    const [svcToken] = buildDailyTokens([serviceRow], 'loc-1', {}, nowMs);
+    expect(svcToken?.paymentPending).toBe(false);
+
+    // A ₹0 free counter meal or 100%-points sale has paymentMode === null AND paymentPending === false:
+    // it is already settled and never treated as an unpaid queue order.
+    const freeMealRow: Appointment = {
+      ...unpaidOldRow,
+      id: 'sale-free-meal',
+      paymentMode: null,
+      paymentPending: false,
+      products: [{ id: 'vp-free', productId: 'p-1', name: 'Rumali Roti', priceMinor: '2000', qty: 2, paidMinor: '0', returnedQty: 0, returnedMinor: '0' }],
+    };
+    const [freeToken] = buildDailyTokens([freeMealRow], 'loc-1', {}, nowMs);
+    expect(freeToken?.paymentPending).toBe(false);
+    expect(freeToken?.state).toBe('completed');
+  });
+
+  it('hides payment options when a restaurant order has no guest yet, then prompts to add the guest in Queue before showing the payment screen', () => {
+    const payFlow = src('../appointments/new/PayFlow.tsx');
+    expect(payFlow).toContain('const guestOptional = productsOnly && !counted;');
+    expect(payFlow).toContain('const hidePayUntilGuest = guestOptional && !hasWho && !fromApp;');
+    expect(payFlow).toContain('hidePayUntilGuest ? null : (');
+    expect(client).toContain('function isWalkInToken(');
+    expect(client).toContain('api.assignClientToSale(');
+    expect(client).toContain('<ClientSheet');
+    expect(client).toContain('{!anonymous ? (');
+  });
+
+  it('deep-links each Home queue row to its token on /pos?mode=queue and scrolls that token card into view', () => {
+    const shopHome = src('../components/home/ShopHome.tsx');
+    expect(shopHome).toContain('`/pos?mode=queue&token=${encodeURIComponent(tk.id)}`');
+    expect(page).toContain('initialToken={params.token}');
+    expect(client).toContain('id={`pos-token-${tk.id}`}');
+    expect(client).toContain("el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })");
+  });
 });

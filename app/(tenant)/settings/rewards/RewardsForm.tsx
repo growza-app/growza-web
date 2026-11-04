@@ -125,144 +125,293 @@ export function RewardsForm({ initial }: { initial: RewardSettings | null }) {
 
   /** The rate in the owner's own terms, rebuilt as they type: what one ordinary bill actually gives. */
   const earned = bps === null ? null : pointsFor(EXAMPLE_BILL_MINOR, bps, initial.pointValueMinor);
+  const effectiveBps = bps ?? initial.earnBps;
+  const effectiveRateText = (effectiveBps / 100).toString();
+  const pointMinor = Math.max(1, initial.pointValueMinor);
+  const capPct = initial.redeemCapBps / 100;
+  const floorPts = initial.minRedeemPoints;
+  const floorWorthMinor = floorPts * pointMinor;
+  const minBillMinor = Math.ceil((floorWorthMinor * 10_000) / Math.max(1, initial.redeemCapBps));
+  const exampleBills = [10_000, minBillMinor, 25_000, 50_000];
 
   return (
     <>
       <div className="card rw-rewards">
         <div className="card-body">
-          <p className="field-hint rw-intro">{t('intro')}</p>
-
-          <div className="rw-row">
-            <label className="switch">
-              <input
-                type="checkbox"
-                aria-labelledby="rw-switch-label"
-                checked={enabled}
-                disabled={busy}
-                onChange={() => {
-                  setEnabled(!enabled);
-                  setError(null);
-                }}
-              />
-              <span className="switch-track">
-                <span className="switch-thumb" />
-              </span>
-            </label>
-            <div>
-              <div id="rw-switch-label" className="rw-row-title">
-                {t('switchLabel')}
-                {/*
-                  Jira GRW-648 (owner, 2026-10-25) — the whole scheme in one bubble, because every number on
-                  this screen is part of one rule and an owner reading them one at a time cannot see it.
-                */}
-                <InfoTip ask="infoTipHow" label={t('switchLabel')}>{t('tips.how')}</InfoTip>
+          <div className={`rw-hero ${enabled ? 'is-on' : 'is-off'}`}>
+            <div className="rw-row">
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  aria-labelledby="rw-switch-label"
+                  checked={enabled}
+                  disabled={busy}
+                  onChange={() => {
+                    setEnabled(!enabled);
+                    setError(null);
+                  }}
+                />
+                <span className="switch-track">
+                  <span className="switch-thumb" />
+                </span>
+              </label>
+              <div className="rw-hero-copy">
+                <div className="rw-hero-head">
+                  <div id="rw-switch-label" className="rw-row-title">
+                    {t('switchLabel')}
+                    {/*
+                      Jira GRW-648 (owner, 2026-10-25) — the whole scheme in one bubble, because every number on
+                      this screen is part of one rule and an owner reading them one at a time cannot see it.
+                    */}
+                    <InfoTip ask="infoTipHow" label={t('switchLabel')}>{t('tips.how')}</InfoTip>
+                  </div>
+                  <span className={`rw-status-pill ${enabled ? 'is-on' : 'is-off'}`}>
+                    {enabled ? t('statusOn') : t('statusOff')}
+                  </span>
+                </div>
+                <span className="field-hint">{t('switchHint')}</span>
               </div>
-              <span className="field-hint">{t('switchHint')}</span>
             </div>
+            <p className="field-hint rw-intro">{t('intro')}</p>
           </div>
 
           {/* The two numbers only exist for a business that is doing this at all. */}
           {enabled && (
             <>
-              <div className="field">
-                <label className="field-label" htmlFor="rw-rate">
-                  {t('rateLabel')}
-                  <InfoTip ask="infoTipHow" label={t('rateLabel')}>{t('tips.earning')}</InfoTip>
-                </label>
-                <div className="rw-suffixed">
-                  <input
-                    id="rw-rate"
-                    // `inputMode` decimal, not `type="number"`: a phone keypad with a full stop on it, and no
-                    // spinner arrows to nudge a rate by accident.
-                    type="text"
-                    inputMode="decimal"
-                    maxLength={6}
-                    value={percent}
-                    disabled={busy}
-                    aria-invalid={badRate || undefined}
-                    onChange={(e) => {
-                      setPercent(e.target.value);
-                      setError(null);
-                    }}
-                  />
-                  <span aria-hidden="true">%</span>
+              <div className="rw-summary-grid">
+                <div className="rw-kpi-tile">
+                  <span className="rw-kpi-label">{t('summary.earnLabel')}</span>
+                  {/* i18n-ok: numeric percentage */}
+                  <strong className="rw-kpi-value">{effectiveRateText}%</strong>
+                  <span className="rw-kpi-sub">
+                    {t('summary.earnSub', {
+                      points: earned ?? pointsFor(EXAMPLE_BILL_MINOR, effectiveBps, pointMinor),
+                      bill: formatMoney(String(EXAMPLE_BILL_MINOR)),
+                    })}
+                  </span>
                 </div>
-                <span className="field-hint">
-                  {earned === null
-                    ? t('rateBad', { max: maxPercent })
-                    : t('rateHint', {
-                        bill: formatMoney(String(EXAMPLE_BILL_MINOR)),
-                        points: earned,
-                        off: formatMoney(String(earned * initial.pointValueMinor)),
+                <div className="rw-kpi-tile">
+                  <span className="rw-kpi-label">{t('summary.worthLabel')}</span>
+                  <strong className="rw-kpi-value">
+                    {t('summary.worthValue', { worth: formatMoney(String(pointMinor)) })}
+                  </strong>
+                  <span className="rw-kpi-sub">{t('summary.worthSub')}</span>
+                </div>
+                <div className="rw-kpi-tile">
+                  <span className="rw-kpi-label">{t('summary.capLabel')}</span>
+                  <strong className="rw-kpi-value">{t('summary.capValue', { cap: capPct })}</strong>
+                  <span className="rw-kpi-sub">{t('summary.capSub')}</span>
+                </div>
+                <div className="rw-kpi-tile">
+                  <span className="rw-kpi-label">{t('summary.minLabel')}</span>
+                  <strong className="rw-kpi-value">
+                    {t('summary.minValue', { floor: floorPts, worth: formatMoney(String(floorWorthMinor)) })}
+                  </strong>
+                  <span className="rw-kpi-sub">
+                    {t('summary.minSub', { minBill: formatMoney(String(minBillMinor)) })}
+                  </span>
+                </div>
+              </div>
+
+              <div className="rw-section-block">
+                <h3 className="rw-section-heading">{t('configTitle')}</h3>
+
+                <div className="field rw-field-box">
+                  <label className="field-label" htmlFor="rw-rate">
+                    {t('rateLabel')}
+                    <InfoTip ask="infoTipHow" label={t('rateLabel')}>{t('tips.earning')}</InfoTip>
+                  </label>
+                  <div className="rw-rate-inline">
+                    <div className="rw-suffixed">
+                      <input
+                        id="rw-rate"
+                        // `inputMode` decimal, not `type="number"`: a phone keypad with a full stop on it, and no
+                        // spinner arrows to nudge a rate by accident.
+                        type="text"
+                        inputMode="decimal"
+                        maxLength={6}
+                        value={percent}
+                        disabled={busy}
+                        aria-invalid={badRate || undefined}
+                        onChange={(e) => {
+                          setPercent(e.target.value);
+                          setError(null);
+                        }}
+                      />
+                      <span aria-hidden="true">%</span>
+                    </div>
+                    <span className="rw-rate-max-badge">{t('rateMax', { max: maxPercent })}</span>
+                  </div>
+                  <span className="field-hint rw-rate-preview">
+                    {earned === null
+                      ? t('rateBad', { max: maxPercent })
+                      : t('rateHint', {
+                          bill: formatMoney(String(EXAMPLE_BILL_MINOR)),
+                          points: earned,
+                          off: formatMoney(String(earned * initial.pointValueMinor)),
+                        })}
+                  </span>
+                </div>
+
+                <div className="rw-two-col">
+                  <div className="field rw-field-box">
+                    <label className="field-label" htmlFor="rw-expiry">
+                      {t('expiryLabel')}
+                      <InfoTip ask="infoTipHow" label={t('expiryLabel')}>{t('tips.expiry')}</InfoTip>
+                    </label>
+                    {/*
+                      A short list rather than a box for a number of days: nobody has an opinion about 400 days,
+                      and the four answers here are the ones a business actually means. "Never" is 0, which is how
+                      `expiryFor` already reads it.
+                    */}
+                    <select
+                      id="rw-expiry"
+                      value={expiryDays}
+                      disabled={busy}
+                      onChange={(e) => {
+                        setExpiryDays(e.target.value);
+                        setError(null);
+                      }}
+                    >
+                      {EXPIRY_CHOICES.filter((c) => c.days <= initial.maxExpiryDays).map((c) => (
+                        <option key={c.days} value={c.days}>
+                          {t(c.key)}
+                        </option>
+                      ))}
+                      <option value={0}>{t('expiry.never')}</option>
+                    </select>
+                    <span className="field-hint">{t('expiryHint')}</span>
+                  </div>
+
+                  <div className="field rw-field-box">
+                    <label className="field-label" htmlFor="rw-hold">
+                      {t('holdLabel')}
+                      <InfoTip ask="infoTipHow" label={t('holdLabel')}>{t('tips.hold')}</InfoTip>
+                    </label>
+                    <select
+                      id="rw-hold"
+                      value={holdHours}
+                      disabled={busy}
+                      onChange={(e) => {
+                        setHoldHours(e.target.value);
+                        setError(null);
+                      }}
+                    >
+                      {HOLD_CHOICES.filter((h) => h <= initial.maxHoldHours).map((h) => (
+                        <option key={h} value={h}>
+                          {t(`hold.${h}`)}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="field-hint">{t('holdHint')}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rw-guide-section">
+                <h3 className="rw-section-heading">{t('rules.title')}</h3>
+                {/* What the till will do with the points, which this screen does not set but the owner has to know. */}
+                <p className="field-hint rw-till">
+                  {t('tillRule', {
+                    cap: initial.redeemCapBps / 100,
+                    floor: initial.minRedeemPoints,
+                    worth: formatMoney(String(initial.pointValueMinor)),
+                  })}{' '}
+                  {/* After the sentence, not before it: leading a paragraph, the icon reads as a bullet. */}
+                  <InfoTip ask="infoTipHow" label={t('tillLabel')}>
+                    {t('tips.spending')}
+                  </InfoTip>
+                </p>
+
+                <div className="rw-rules-grid">
+                  <div className="rw-rule-card">
+                    <strong className="rw-rule-title">{t('rules.earnTitle')}</strong>
+                    <p className="rw-rule-body">{t('rules.earnBody', { rate: effectiveRateText })}</p>
+                  </div>
+                  <div className="rw-rule-card">
+                    <strong className="rw-rule-title">{t('rules.redeemTitle')}</strong>
+                    <p className="rw-rule-body">
+                      {t('rules.redeemBody', {
+                        cap: capPct,
+                        floor: floorPts,
+                        floorWorth: formatMoney(String(floorWorthMinor)),
+                        minBill: formatMoney(String(minBillMinor)),
                       })}
-                </span>
-                <span className="field-hint">{t('rateMax', { max: maxPercent })}</span>
-              </div>
+                    </p>
+                  </div>
+                  <div className="rw-rule-card">
+                    <strong className="rw-rule-title">{t('rules.lifecycleTitle')}</strong>
+                    <p className="rw-rule-body">{t('rules.lifecycleBody')}</p>
+                  </div>
+                </div>
 
-              <div className="field">
-                <label className="field-label" htmlFor="rw-expiry">
-                  {t('expiryLabel')}
-                  <InfoTip ask="infoTipHow" label={t('expiryLabel')}>{t('tips.expiry')}</InfoTip>
-                </label>
-                {/*
-                  A short list rather than a box for a number of days: nobody has an opinion about 400 days,
-                  and the four answers here are the ones a business actually means. "Never" is 0, which is how
-                  `expiryFor` already reads it.
-                */}
-                <select
-                  id="rw-expiry"
-                  value={expiryDays}
-                  disabled={busy}
-                  onChange={(e) => {
-                    setExpiryDays(e.target.value);
-                    setError(null);
-                  }}
-                >
-                  {EXPIRY_CHOICES.filter((c) => c.days <= initial.maxExpiryDays).map((c) => (
-                    <option key={c.days} value={c.days}>
-                      {t(c.key)}
-                    </option>
-                  ))}
-                  <option value={0}>{t('expiry.never')}</option>
-                </select>
-                <span className="field-hint">{t('expiryHint')}</span>
+                <div className="rw-examples-box">
+                  <div className="rw-examples-head">
+                    <strong className="rw-examples-title">{t('examples.title', { rate: effectiveRateText })}</strong>
+                    <span className="field-hint">{t('examples.subtitle')}</span>
+                  </div>
+                  <div className="rw-examples-table-wrap">
+                    <table className="rw-examples-table">
+                      <thead>
+                        <tr>
+                          <th>{t('examples.colBill')}</th>
+                          <th>{t('examples.colEarn')}</th>
+                          <th>{t('examples.colRedeem')}</th>
+                          <th>{t('examples.colPay')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {exampleBills.map((billMinor) => {
+                          const ptsEarned = pointsFor(billMinor, effectiveBps, pointMinor);
+                          const maxCapMinor = Math.floor((billMinor * initial.redeemCapBps) / 10_000);
+                          const maxPts = Math.floor(maxCapMinor / pointMinor);
+                          const canUse = maxPts >= floorPts;
+                          const offMinor = maxPts * pointMinor;
+                          const payMinor = canUse ? billMinor - offMinor : billMinor;
+                          return (
+                            <tr key={billMinor}>
+                              <td className="rw-ex-bill">{formatMoney(String(billMinor))}</td>
+                              <td>
+                                {ptsEarned > 0 ? (
+                                  <span className="rw-ex-earn">
+                                    {t('examples.ptsWorth', {
+                                      points: ptsEarned,
+                                      worth: formatMoney(String(ptsEarned * pointMinor)),
+                                    })}
+                                  </span>
+                                ) : (
+                                  <span className="rw-ex-muted">{t('examples.noPoints')}</span>
+                                )}
+                              </td>
+                              <td>
+                                {canUse ? (
+                                  <span className="rw-ex-pill is-ok">
+                                    {t('examples.canUse', {
+                                      points: maxPts,
+                                      off: formatMoney(String(offMinor)),
+                                    })}
+                                  </span>
+                                ) : (
+                                  <span className="rw-ex-pill is-locked">
+                                    {t('examples.belowMin', {
+                                      minBill: formatMoney(String(minBillMinor)),
+                                      maxPts,
+                                      floor: floorPts,
+                                    })}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="rw-ex-pay">
+                                {t('examples.pays', { pay: formatMoney(String(payMinor)) })}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
-
-              <div className="field">
-                <label className="field-label" htmlFor="rw-hold">
-                  {t('holdLabel')}
-                  <InfoTip ask="infoTipHow" label={t('holdLabel')}>{t('tips.hold')}</InfoTip>
-                </label>
-                <select
-                  id="rw-hold"
-                  value={holdHours}
-                  disabled={busy}
-                  onChange={(e) => {
-                    setHoldHours(e.target.value);
-                    setError(null);
-                  }}
-                >
-                  {HOLD_CHOICES.filter((h) => h <= initial.maxHoldHours).map((h) => (
-                    <option key={h} value={h}>
-                      {t(`hold.${h}`)}
-                    </option>
-                  ))}
-                </select>
-                <span className="field-hint">{t('holdHint')}</span>
-              </div>
-
-              {/* What the till will do with the points, which this screen does not set but the owner has to know. */}
-              <p className="field-hint rw-till">
-                {t('tillRule', {
-                  cap: initial.redeemCapBps / 100,
-                  floor: initial.minRedeemPoints,
-                  worth: formatMoney(String(initial.pointValueMinor)),
-                })}{' '}
-                {/* After the sentence, not before it: leading a paragraph, the icon reads as a bullet. */}
-                <InfoTip ask="infoTipHow" label={t('tillLabel')}>
-                  {t('tips.spending')}
-                </InfoTip>
-              </p>
             </>
           )}
 

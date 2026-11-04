@@ -22,9 +22,12 @@ export interface PosDailyToken {
   tokenNo: number;
   tokenLabel: string;
   startAt: string;
+  customerId: string | null;
   customerName: string;
+  customerPhone: string | null;
   channel: string;
   paymentMode: string | null;
+  paymentPending: boolean;
   totalMinor: number;
   items: Array<{ name: string; qty: number; paidMinor: number }>;
   itemsSummary: string;
@@ -84,8 +87,10 @@ export function buildDailyTokens(
       }
     }
     for (const p of first.products ?? []) {
-      if (p.qty > 0) {
-        items.push({ name: p.name, qty: p.qty, paidMinor: Number(p.paidMinor ?? 0) });
+      const netQty = p.qty - (p.returnedQty ?? 0);
+      const netPaidMinor = Math.max(0, Number(p.paidMinor ?? 0) - Number(p.returnedMinor ?? 0));
+      if (netQty > 0) {
+        items.push({ name: p.name, qty: netQty, paidMinor: netPaidMinor });
       }
     }
     const totalMinor = items.reduce((sum, item) => sum + item.paidMinor, 0);
@@ -98,9 +103,13 @@ export function buildDailyTokens(
         : NaN;
     const effectiveStartMs = Number.isFinite(recalledMs) && recalledMs > 0 ? recalledMs : startMs;
     const elapsedMin = Math.max(0, Math.round((nowMs - effectiveStartMs) / 60_000));
-    const defaultState: PosTokenState = elapsedMin <= 30 ? 'preparing' : 'completed';
+    const isProductSale = !first.serviceName && !first.serviceId && first.channel !== undefined;
+    const channel = first.channel ?? 'counter';
+    const paymentMode = first.paymentMode ?? null;
+    const paymentPending = isProductSale && channel === 'counter' && (first.paymentPending ?? paymentMode === null);
+    const defaultState: PosTokenState = paymentPending || elapsedMin <= 30 ? 'preparing' : 'completed';
     const state: PosTokenState =
-      rawOverride === 'completed'
+      !paymentPending && rawOverride === 'completed'
         ? 'completed'
         : rawOverride === 'preparing' || (typeof rawOverride === 'string' && rawOverride.startsWith('preparing:'))
           ? 'preparing'
@@ -111,9 +120,12 @@ export function buildDailyTokens(
       tokenNo,
       tokenLabel: formatTokenNo(tokenNo),
       startAt: first.startAt,
+      customerId: first.customerId ?? null,
       customerName: first.customerName?.trim() || '',
-      channel: first.channel ?? 'counter',
-      paymentMode: first.paymentMode ?? null,
+      customerPhone: first.customerPhone ?? null,
+      channel,
+      paymentMode,
+      paymentPending,
       totalMinor,
       items,
       itemsSummary,

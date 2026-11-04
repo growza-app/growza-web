@@ -20,7 +20,7 @@ describe('the New booking screen has no tab bar', () => {
   });
 
   it('matches the New booking page and any step under it, and nothing else', () => {
-    for (const p of ['/appointments/new', '/appointments/new/']) expect(noBar(p)).toBe(true);
+    for (const p of ['/appointments/new', '/appointments/new/', '/pos', '/pos/']) expect(noBar(p)).toBe(true);
     for (const p of ['/', '/appointments', '/customers', '/appointments/newer', '/notifications', '/providers/new']) {
       expect({ p, noBar: noBar(p) }).toEqual({ p, noBar: false });
     }

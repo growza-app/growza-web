@@ -22,7 +22,11 @@ export const dynamic = 'force-dynamic';
  * It asks what the till (`/products/sell`, which now lands here) always asked: the same `visit.recordPayment`
  * permission and the same go-live gate. Return is drawn only for the people the API lets refund (`mayTakeReturns`).
  */
-export default async function PosPage({ searchParams }: { searchParams: Promise<{ mode?: string; from?: string }> }) {
+export default async function PosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mode?: string; from?: string; token?: string }>;
+}) {
   await guardScreen('/pos');
   await guardLive('/pos');
   const params = await searchParams;
@@ -58,6 +62,7 @@ export default async function PosPage({ searchParams }: { searchParams: Promise<
         canReturn={canReturn}
         heading={heading}
         initialMode={posModeOf(params.mode, canReturn)}
+        initialToken={params.token}
         backTo={params.from === 'products' ? '/products' : params.from === 'sales' ? '/sales' : undefined}
       />
     </div>

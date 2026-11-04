@@ -613,6 +613,8 @@ export interface Appointment {
   paidAmountMinor: string | null;
   /** How the visit was paid — 'cash' | 'card' | 'upi' | 'other'; null until checkout. */
   paymentMode: string | null;
+  /** True while a counter product order is in the POS queue waiting for payment at handover. */
+  paymentPending?: boolean;
   providerId: string | null;
   providerName: string | null;
   reminderSent: boolean;

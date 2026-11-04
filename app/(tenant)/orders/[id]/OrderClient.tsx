@@ -212,8 +212,9 @@ export function OrderClient({
   const toSend = order.status === 'new' || order.status === 'packed';
   const noAddress = !isCounter && toSend && !order.buyer?.address;
 
+  const isPaidCounter = !isCounter || (order.payments?.length ?? 0) > 0;
   const returnable: ReturnableSaleBill | null =
-    isCounter && hasMoney && order.lines.every((l) => l.priceMinor !== undefined)
+    isCounter && hasMoney && order.lines.every((l) => l.priceMinor !== undefined) && isPaidCounter
       ? {
           key: order.id,
           startAt: order.soldAt,
@@ -397,7 +398,7 @@ export function OrderClient({
               ))}
             </dl>
             <div className="ord-d-paper">
-              <DocumentAction visitKey={order.id} />
+              {isPaidCounter ? <DocumentAction visitKey={order.id} /> : null}
               {returnable && writable ? (
                 <button type="button" className="btn" onClick={() => setReturning(true)}>
                   {t('detail.returnItems')}

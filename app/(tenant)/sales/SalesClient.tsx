@@ -193,6 +193,10 @@ export function buildSaleRows(appointments: readonly Appointment[], timezone: st
   const out: SaleRow[] = [];
 
   for (const g of groups) {
+    const first = g.appointments[0];
+    if (first && !first.serviceName && !first.serviceId && first.channel === 'counter' && (first.paymentPending ?? first.paymentMode === null)) {
+      continue;
+    }
     const completedLegs = g.appointments.filter((a) => a.status === 'completed');
     const products = g.products ?? [];
     if (completedLegs.length === 0 && products.length === 0) continue;

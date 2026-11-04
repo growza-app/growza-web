@@ -6,15 +6,29 @@
  * a 21px track is the reason that file explains itself at length.
  */
 
+.rw-hero {
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--page-bg);
+}
+
+.rw-hero.is-on {
+  border-color: rgba(22, 101, 52, 0.25);
+  background: rgba(220, 245, 230, 0.35);
+}
+
 .rw-intro {
-  margin: 0 0 var(--sp-4);
+  margin: var(--sp-2) 0 0;
+  padding-top: var(--sp-2);
+  border-top: 1px solid rgba(20, 32, 27, 0.08);
 }
 
 .rw-row {
   display: flex;
   align-items: flex-start;
   gap: var(--sp-3);
-  padding: var(--sp-3) 0;
+  padding: 2px 0;
 }
 
 .rw-row .switch {
@@ -26,26 +40,167 @@
   margin: -10px;
 }
 
-.rw-row > div {
+.rw-row > div,
+.rw-hero-copy {
+  flex: 1;
   min-width: 0;
+}
+
+.rw-hero-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: 2px;
 }
 
 .rw-row-title,
 .rw-blocked-title {
-  font-weight: 650;
-  font-size: 0.9375rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 1rem;
   color: var(--text);
+}
+
+.rw-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.rw-status-pill.is-on {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.rw-status-pill.is-off {
+  background: var(--slate-soft);
+  color: var(--muted);
 }
 
 .rw-blocked-title {
   margin: 0 0 var(--sp-2);
 }
 
-/* The two fields belong to the switch above them, so the hairline says where the choice ends. */
-.rw-row + .field {
-  margin-top: var(--sp-3);
+/* 4-Tile KPI Overview Strip */
+.rw-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+
+@media (min-width: 720px) {
+  .rw-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.rw-kpi-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--page-bg);
+}
+
+.rw-kpi-label {
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.rw-kpi-value {
+  font-size: 1.0625rem;
+  font-weight: 750;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.rw-kpi-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+/* Section blocks */
+.rw-section-block,
+.rw-guide-section {
+  margin-top: var(--sp-4);
   padding-top: var(--sp-4);
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--border);
+}
+
+.rw-section-heading {
+  margin: 0 0 var(--sp-3);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.rw-field-box {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.rw-two-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+}
+
+.rw-two-col .rw-field-box {
+  margin: 0;
+}
+
+@media (min-width: 640px) {
+  .rw-two-col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.rw-rate-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.rw-rate-max-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--page-bg);
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.rw-rate-preview {
+  display: block;
+  margin-top: var(--sp-2);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(220, 245, 230, 0.45);
+  border: 1px solid rgba(22, 101, 52, 0.18);
+  color: var(--text);
+  font-weight: 600;
 }
 
 /*
@@ -62,19 +217,164 @@
 
 .rw-suffixed input {
   /* Four characters is the whole field ("2.75"), so it does not stretch to the width of the card. */
-  width: 6rem;
+  width: 6.5rem;
   min-width: 0;
+  font-weight: 700;
 }
 
 .rw-suffixed span {
-  font-weight: 650;
+  font-weight: 700;
   color: var(--muted);
 }
 
 .rw-till {
-  margin: var(--sp-4) 0 0;
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--line);
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--page-bg);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* 3-card Rules Grid */
+.rw-rules-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+@media (min-width: 720px) {
+  .rw-rules-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.rw-rule-card {
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--page-bg);
+}
+
+.rw-rule-title {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.rw-rule-body {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* Worked Examples Table */
+.rw-examples-box {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.rw-examples-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-3);
+  border-bottom: 1px solid var(--border);
+  background: var(--page-bg);
+}
+
+.rw-examples-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.rw-examples-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.rw-examples-table {
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.rw-examples-table th,
+.rw-examples-table td {
+  padding: 8px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+@media (min-width: 640px) {
+  .rw-examples-table th,
+  .rw-examples-table td {
+    padding: 10px 12px;
+  }
+}
+
+.rw-examples-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.rw-examples-table th {
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--muted);
+  white-space: nowrap;
+  background: var(--page-bg);
+}
+
+.rw-ex-bill {
+  font-weight: 750;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.rw-ex-earn {
+  font-weight: 650;
+  color: var(--accent-deep);
+  white-space: nowrap;
+}
+
+.rw-ex-muted {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.rw-ex-pill {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.rw-ex-pill.is-ok {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.rw-ex-pill.is-locked {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+.rw-ex-pay {
+  font-weight: 650;
+  color: var(--text);
+  white-space: nowrap;
 }
 
 .rw-error {
@@ -104,12 +404,21 @@
 .pf-redeem {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
   margin: 0 0 var(--sp-3);
-  padding: var(--sp-3);
-  border: 1px solid var(--line);
+  padding: 8px 12px;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--card, #fff);
+  background: var(--surface);
+}
+
+.pf-redeem.is-ready {
+  border-color: rgba(22, 101, 52, 0.25);
+  background: rgba(220, 245, 230, 0.28);
+}
+
+.pf-redeem.is-locked {
+  background: var(--page-bg);
 }
 
 .pf-redeem .switch {
@@ -124,31 +433,78 @@
 .pf-redeem-label {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 6px;
   font-weight: 650;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+
+.pf-redeem-offer {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.pf-redeem-sep {
+  color: var(--muted);
+  font-weight: 400;
 }
 
 .pf-redeem-off {
   flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 0.8125rem;
   font-weight: 700;
   white-space: nowrap;
 }
 
 /*
- * What the client has, under what this bill can do with it. Second line, quieter: the desk acts on the
- * offer, and reads the balance out when asked.
+ * What the client has, inline beside the offer or right-aligned as a compact reason pill when locked.
  */
 .pf-redeem-have {
-  display: block;
-  margin-top: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-weight: 500;
-  font-size: var(--fs-2);
+  font-size: 0.75rem;
   color: var(--muted);
 }
 
-/* The same row with nothing to switch on: a balance, and which of the two reasons it cannot be spent. */
+/* The same row with nothing to switch on: balance + worth on the left, reason pill on the right, in a single row. */
 .pf-redeem-quiet {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
   font-weight: 650;
+}
+
+.pf-redeem-bal {
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pf-redeem-worth {
+  color: var(--accent-deep);
+  font-weight: 700;
+}
+
+.pf-redeem-quiet .pf-redeem-have {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-weight: 650;
+  font-size: 0.75rem;
+  white-space: nowrap;
 }
 
 /* "₹1,000 less ₹100 in points", under the figure being collected. */

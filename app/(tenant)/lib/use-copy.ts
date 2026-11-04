@@ -1,6 +1,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 import { nounInSentence, pickNoun } from './nouns';
+import { useNouns } from './use-nouns';
 
 /**
   * Jira GRW-362 — the New booking flow's words, in the owner's language.
@@ -290,8 +291,8 @@ export function useBookingCopy() {
 
 export function useClientCardCopy() {
   const t = useTranslations('clientCard');
-  const tn = useTranslations('nouns');
   const locale = useLocale();
+  const { Customer } = useNouns();
   return useMemo(() => ({
     edit: t('edit'),
     save: t('save'),
@@ -300,7 +301,7 @@ export function useClientCardCopy() {
     namePlaceholder: t('namePlaceholder'),
     phonePlaceholder: t('phonePlaceholder'),
     saveFailed: t('saveFailed'),
-    kicker: t('kicker'),
+    kicker: pickNoun(locale, Customer, t('kicker')),
     totalSpent: t('totalSpent'),
     totalVisits: t('totalVisits'),
     insight: t('insight'),
@@ -335,5 +336,5 @@ export function useClientCardCopy() {
     undo: t('undo'),
     undoing: t('undoing'),
     actionFailed: t('actionFailed'),
-  }), [t, tn, locale]);
+  }), [t, locale, Customer]);
 }
