@@ -201,6 +201,14 @@ a.ord-card:focus-visible,
   background: var(--accent-soft);
   color: var(--accent-deep);
 }
+/*
+ * QA 4 Nov 2026 — money still to come in. A counter order is `done` the moment it is rung up, so without this it
+ * wore the finished chip while it sat unpaid in the queue. Warm, like the other work still to do above.
+ */
+.ord-s-waiting {
+  background: var(--amber-soft, var(--slate-soft));
+  color: var(--amber-ink);
+}
 .ord-s-delivered,
 .ord-s-done {
   background: var(--slate-soft);

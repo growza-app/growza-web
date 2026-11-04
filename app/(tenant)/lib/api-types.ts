@@ -1337,6 +1337,11 @@ export interface OrderListRow {
   amountMinor?: number;
   /** Jira GRW-625 — the marketplace has not yet accepted what the shop told it (sent, cancelled): a glance finds these. */
   marketplaceUnconfirmed?: boolean;
+  /**
+   * QA 4 Nov 2026 — still waiting for payment in the queue. A counter order's `status` is `done` from the moment it
+   * is rung up (there is no parcel to pack or send), so the state alone said `Done` about money that had not come in.
+   */
+  paymentPending?: boolean;
 }
 
 export interface OrdersPage {

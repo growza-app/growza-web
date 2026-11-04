@@ -4587,6 +4587,7 @@
         "retry": "फिर से कोशिश करें"
       },
       "unknownState": "अज्ञात",
+      "paymentPending": "भुगतान बाकी",
       "nounOrders": "ऑर्डर",
       "allChannels": "कहीं से भी",
       "allStates": "कोई भी स्थिति",
