@@ -4587,6 +4587,7 @@
         "retry": "Try again"
       },
       "unknownState": "Unknown",
+      "paymentPending": "Payment pending",
       "nounOrders": "orders",
       "allChannels": "Anywhere",
       "allStates": "Any state",

@@ -257,7 +257,7 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
                 <div className="ord-card-foot">
                   <span className="ord-code">{t('list.orderCode', { code: r.code.toUpperCase() })}</span>
                   {isDeliveryApp(r.channel) && r.externalRef ? <span className="ord-code">{t('list.appOrder', { ref: r.externalRef })}</span> : null}
-                  <span className={`ord-state-chip ord-s-${r.known ? r.status : 'unknown'}`}>{stateWord(r.status)}</span>
+                  <span className={`ord-state-chip ${r.paymentPending ? 'ord-s-waiting' : `ord-s-${r.known ? r.status : 'unknown'}`}`}>{r.paymentPending ? t('list.paymentPending') : stateWord(r.status)}</span>
                   {r.marketplaceUnconfirmed ? <span className="ord-unconfirmed">{t('list.notConfirmed')}</span> : null}
                 </div>
                 </a>
@@ -293,7 +293,7 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
                   <td className="ord-num">{r.items}</td>
                   {showMoney ? <td className="ord-num ord-td-amount">{r.amountMinor !== undefined ? formatMoney(r.amountMinor, 'INR', locale) : ''}</td> : null}
                   <td>
-                    <span className={`ord-state-chip ord-s-${r.known ? r.status : 'unknown'}`}>{stateWord(r.status)}</span>
+                    <span className={`ord-state-chip ${r.paymentPending ? 'ord-s-waiting' : `ord-s-${r.known ? r.status : 'unknown'}`}`}>{r.paymentPending ? t('list.paymentPending') : stateWord(r.status)}</span>
                     {r.marketplaceUnconfirmed ? <span className="ord-unconfirmed">{t('list.notConfirmed')}</span> : null}
                   </td>
                 </tr>

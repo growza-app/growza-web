@@ -474,9 +474,25 @@ export function PosClient({
     void loadTodayTokens();
   }, [loadTodayTokens]);
 
+  /*
+   * Owner, 4 Nov 2026 — a handover is told to the server, so every device on the account agrees.
+   *
+   * It used to be written ONLY here, into this browser's `localStorage`: the desk that tapped "Mark completed"
+   * cleared the token from its own screen and the kitchen's phone kept showing it for ever. The local write stays
+   * as the optimistic layer — the tap should feel instant, and an offline tap should not be lost — but the server
+   * is the truth, and `buildDailyTokens` lets its answer win on the next read.
+   */
   const setTokenState = useCallback(
     (visitId: string, state: PosTokenState, recalled = false) => {
       const now = Date.now();
+      void (async () => {
+        try {
+          await api.setSaleHandover(visitId, state === 'completed');
+          await loadTodayTokens();
+        } catch {
+          // The local flag above still holds this device's view; the next read reconciles it with the shop's.
+        }
+      })();
       const val: PosTokenOverride = recalled && state === 'preparing' ? `preparing:${now}` : state;
       if (recalled && state === 'preparing') setNowMs(now);
       setTokenOverrides((prev) => {
@@ -489,7 +505,7 @@ export function PosClient({
         return next;
       });
     },
-    [storageKey],
+    [storageKey, loadTodayTokens],
   );
 
   const handleSaleCompleted = useCallback(
@@ -529,6 +545,32 @@ export function PosClient({
     }, 60_000);
     return () => window.clearInterval(timer);
   }, [mode, hasPreparing]);
+
+  /*
+   * Owner, 4 Nov 2026 — the queue re-reads itself while somebody is watching it.
+   *
+   * The timer above only advanced the "16m ago" label; nothing ever asked the server again. So a payment taken,
+   * or an order handed over, by the OTHER desk on the same account was invisible until this one switched tabs or
+   * reloaded — which is not something a person staring at a queue thinks to do.
+   *
+   * Only while the Queue tab is open and the screen is actually in front of somebody: a phone in a pocket and the
+   * Sell tab cost nothing, as before. Twenty seconds is the width of the window in which two desks disagree, and
+   * one small read of today's own rows is what it costs.
+   */
+  useEffect(() => {
+    if (mode !== 'queue') return;
+    const refresh = () => {
+      if (document.visibilityState === 'visible') void loadTodayTokens();
+    };
+    const timer = window.setInterval(refresh, 20_000);
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [mode, loadTodayTokens]);
 
   const formatTime = useCallback(
     (iso: string) => {

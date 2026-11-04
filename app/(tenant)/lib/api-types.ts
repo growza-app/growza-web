@@ -615,6 +615,13 @@ export interface Appointment {
   paymentMode: string | null;
   /** True while a counter product order is in the POS queue waiting for payment at handover. */
   paymentPending?: boolean;
+  /**
+   * Owner, 4 Nov 2026 — when this counter order was handed over the counter; null while it still waits.
+   *
+   * This was a flag in one browser's `localStorage`, so the desk that tapped "Mark completed" cleared the token
+   * from its own screen and no other device ever learned. It belongs to the shop, so it comes from the server.
+   */
+  handedOverAt?: string | null;
   providerId: string | null;
   providerName: string | null;
   reminderSent: boolean;
@@ -1337,6 +1344,11 @@ export interface OrderListRow {
   amountMinor?: number;
   /** Jira GRW-625 — the marketplace has not yet accepted what the shop told it (sent, cancelled): a glance finds these. */
   marketplaceUnconfirmed?: boolean;
+  /**
+   * QA 4 Nov 2026 — still waiting for payment in the queue. A counter order's `status` is `done` from the moment it
+   * is rung up (there is no parcel to pack or send), so the state alone said `Done` about money that had not come in.
+   */
+  paymentPending?: boolean;
 }
 
 export interface OrdersPage {
