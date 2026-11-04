@@ -1590,6 +1590,16 @@ export const api = {
    * one moment somebody actually wants to give a number. Anonymous to named only; a visit that already has a named
    * client comes back 409.
    */
+  /**
+   * Owner, 4 Nov 2026 — the order went over the counter, told to the server so every device on the account agrees.
+   * `handedOver: false` is the queue's own "Back to queue". Refused 400 `payment_needed` while the bill is unpaid.
+   *
+   * A branch of `POST /api/v1/counter-sales` rather than a path of its own, like `settleCounterSale` above: the
+   * gate tables in `shared` already name that route, so this ships in one release instead of waiting on a
+   * published `@growza-app/shared` and a pin bump.
+   */
+  setSaleHandover: (saleId: string, handedOver: boolean) =>
+    post<{ saleId: string; handedOverAt: string | null }>('/api/v1/counter-sales', { handoverSaleId: saleId, handedOver }),
   assignClientToSale: (appointmentId: string, input: { customerId?: string; phone?: string; name?: string }) =>
     post<{ appointmentIds: string[]; customerId: string }>(`/api/v1/counter-sales/${appointmentId}/assign-client`, input),
   /**

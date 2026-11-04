@@ -615,6 +615,13 @@ export interface Appointment {
   paymentMode: string | null;
   /** True while a counter product order is in the POS queue waiting for payment at handover. */
   paymentPending?: boolean;
+  /**
+   * Owner, 4 Nov 2026 — when this counter order was handed over the counter; null while it still waits.
+   *
+   * This was a flag in one browser's `localStorage`, so the desk that tapped "Mark completed" cleared the token
+   * from its own screen and no other device ever learned. It belongs to the shop, so it comes from the server.
+   */
+  handedOverAt?: string | null;
   providerId: string | null;
   providerName: string | null;
   reminderSent: boolean;

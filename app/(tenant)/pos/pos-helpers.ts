@@ -32,6 +32,8 @@ export interface PosDailyToken {
   items: Array<{ name: string; qty: number; paidMinor: number }>;
   itemsSummary: string;
   state: PosTokenState;
+  /** Owner, 4 Nov 2026 — when the shop handed it over, as the server knows it; null while it waits. */
+  handedOverAt: string | null;
   elapsedMin: number;
 }
 
@@ -108,12 +110,27 @@ export function buildDailyTokens(
     const paymentMode = first.paymentMode ?? null;
     const paymentPending = isProductSale && channel === 'counter' && (first.paymentPending ?? paymentMode === null);
     const defaultState: PosTokenState = paymentPending || elapsedMin <= 30 ? 'preparing' : 'completed';
+    /*
+     * Owner, 4 Nov 2026 — the SHOP's answer first, then this device's.
+     *
+     * Handing an order over was a flag in this browser's `localStorage` and nowhere else, so two people on one
+     * account saw two different queues all day: the one who tapped it cleared the token, the other kept it for
+     * ever. `handedOverAt` comes from the server, so a handover is now the same answer on every phone.
+     *
+     * Only when it is SET. A null is not "still waiting" — it is "nobody recorded it", which is every order rung
+     * up before the column existed. Reading null as waiting put a whole day's finished orders back in the queue
+     * (23 of them, on the first run of this). So null falls through to what this screen did before: the local
+     * flag, else the thirty-minute default. The direction that matters — somebody handed it over — is shared;
+     * the other direction is this device's own until the server knows better.
+     */
+    const handedOverAt = first.handedOverAt ?? null;
     const state: PosTokenState =
-      !paymentPending && rawOverride === 'completed'
+      (handedOverAt ? 'completed' : null) ??
+      (!paymentPending && rawOverride === 'completed'
         ? 'completed'
         : rawOverride === 'preparing' || (typeof rawOverride === 'string' && rawOverride.startsWith('preparing:'))
           ? 'preparing'
-          : defaultState;
+          : defaultState);
 
     return {
       id: key,
@@ -130,6 +147,7 @@ export function buildDailyTokens(
       items,
       itemsSummary,
       state,
+      handedOverAt,
       elapsedMin,
     };
   });

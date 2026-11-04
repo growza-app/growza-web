@@ -179,6 +179,9 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Request id is missing.': 'रिक्वेस्ट आईडी नहीं मिली।',
   'That is the size already on the bill. Choose a different size.': 'यही साइज़ बिल पर पहले से है। कोई दूसरा साइज़ चुनें।',
   'That line is not on this order': 'यह आइटम इस ऑर्डर में नहीं है',
+  // Owner, 4 Nov 2026 — handing an order over the counter, now a fact the whole shop shares rather than one phone's.
+  'Say whether it has been handed over.': 'बताएँ कि ऑर्डर दे दिया गया है या नहीं।',
+  'Take payment for this order before handing it over.': 'ऑर्डर देने से पहले उसका पैसा ले लें।',
   'The price changed. Check the new amount.': 'कीमत बदल गई है। नई रकम देखें।',
   // Jira GRW-618 — a marketplace's own codes for the shop's sizes.
   'That product is not valid': 'यह प्रोडक्ट सही नहीं है',
