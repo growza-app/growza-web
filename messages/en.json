@@ -909,6 +909,44 @@
       "0": "Straight away",
       "24": "From the next day",
       "168": "After a week"
+    },
+    "statusOn": "Active",
+    "statusOff": "Off",
+    "configTitle": "Earning & validity rules",
+    "summary": {
+      "earnLabel": "Earn rate",
+      "earnSub": "{points} pts on {bill}",
+      "worthLabel": "Point value",
+      "worthValue": "1 pt = {worth}",
+      "worthSub": "Direct discount at till",
+      "capLabel": "Max bill discount",
+      "capValue": "Up to {cap}%",
+      "capSub": "Of total bill amount",
+      "minLabel": "Minimum to redeem",
+      "minValue": "{floor} pts ({worth})",
+      "minSub": "Needs {minBill}+ bill"
+    },
+    "rules": {
+      "title": "How points work at the till",
+      "earnTitle": "1. Earning points on paid bills",
+      "earnBody": "Clients earn {rate}% on the final amount actually paid (after any discount). Partial points are rounded down to whole numbers.",
+      "redeemTitle": "2. When points unlock for redemption",
+      "redeemBody": "Points can cover up to {cap}% of a bill, and a client must use at least {floor} points ({floorWorth}) at a time. That means the bill must be at least {minBill} for the redeem switch to unlock.",
+      "lifecycleTitle": "3. Validity, hold & returns",
+      "lifecycleBody": "Oldest points are always spent first. If a bill is returned or corrected later, earned points are deducted and redeemed points are restored automatically."
+    },
+    "examples": {
+      "title": "Live bill examples (at {rate}% earn rate)",
+      "subtitle": "Assuming the client already has 200+ spendable points in their balance:",
+      "colBill": "Bill",
+      "colEarn": "Earns",
+      "colRedeem": "Max points usable",
+      "colPay": "To pay",
+      "ptsWorth": "+{points} pts ({worth})",
+      "noPoints": "0 pts",
+      "belowMin": "Needs {minBill}+ ({maxPts} < {floor} pts)",
+      "canUse": "Use {points} pts (-{off})",
+      "pays": "{pay}"
     }
   },
   "settingsTeam": {
@@ -3245,14 +3283,14 @@
       "receiptUsed": "Reward points used: {points} (−{amount})",
       "receiptEarned": "You earned {points, plural, one {# point} other {# points}} towards your next visit.",
       "earnedDone": "{points, plural, one {# point} other {# points}} earned",
-      "have": "{points, plural, one {# point} other {# points}} saved",
-      "needMore": "{points, plural, one {# more} other {# more}} to use them",
-      "needBill": "a bill of {amount} to use them",
+      "have": "Reward balance: {points, plural, one {# pt} other {# pts}}",
+      "needMore": "Need {points, plural, one {# more pt} other {# more pts}} to redeem",
+      "needBill": "Redeem on bills {amount}+",
       "receiptTitle": "Rewards",
       "receiptBalance": "You have {points, plural, one {# point} other {# points}}.",
       "receiptBalanceOnly": "You have {points, plural, one {# point} other {# points}}.",
       "receiptExpiry": "{points, plural, one {# point expires} other {# points expire}} on {date}.",
-      "held": "{points, plural, one {# point} other {# points}} not ready to use yet"
+      "held": "{points, plural, one {# pt} other {# pts}} available tomorrow"
     }
   },
   "help": {
@@ -4285,6 +4323,8 @@
     "walkInGuest": "Counter guest",
     "noneIssuedYet": "None yet",
     "paymentPendingBadge": "Payment pending",
+    "paidBadge": "Paid",
+    "paidViaBadge": "Paid · {mode}",
     "amountToCollect": "To collect",
     "collectPaymentLabel": "Collect {amount} — select payment mode",
     "modeCash": "Cash",

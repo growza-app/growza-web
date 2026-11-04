@@ -41,7 +41,8 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
   const live = useLive();
   // Jira GRW-610 — a business with no diary is not offered the settings of one.
   const areas = useAreas();
-  const role = useSession()?.role;
+  // BR-03 (SessionProvider.tsx) — null for a dev-fallback or degraded session with no member is treated as owner.
+  const role = useSession()?.role ?? 'owner';
   // Jira GRW-396 — the branch the branch tabs are showing: the address's, else the main one — the same rule
   // the tabs themselves load by (`scope.ts`), so the title and the form never name different branches.
   const { branches } = useBranch();

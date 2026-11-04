@@ -433,4 +433,23 @@ describe('the POS screen', () => {
     expect(freeToken?.paymentPending).toBe(false);
     expect(freeToken?.state).toBe('completed');
   });
+
+  it('hides payment options when a restaurant order has no guest yet, then prompts to add the guest in Queue before showing the payment screen', () => {
+    const payFlow = src('../appointments/new/PayFlow.tsx');
+    expect(payFlow).toContain('const guestOptional = productsOnly && !counted;');
+    expect(payFlow).toContain('const hidePayUntilGuest = guestOptional && !hasWho && !fromApp;');
+    expect(payFlow).toContain('hidePayUntilGuest ? null : (');
+    expect(client).toContain('function isWalkInToken(');
+    expect(client).toContain('api.assignClientToSale(');
+    expect(client).toContain('<ClientSheet');
+    expect(client).toContain('{!anonymous ? (');
+  });
+
+  it('deep-links each Home queue row to its token on /pos?mode=queue and scrolls that token card into view', () => {
+    const shopHome = src('../components/home/ShopHome.tsx');
+    expect(shopHome).toContain('`/pos?mode=queue&token=${encodeURIComponent(tk.id)}`');
+    expect(page).toContain('initialToken={params.token}');
+    expect(client).toContain('id={`pos-token-${tk.id}`}');
+    expect(client).toContain("el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })");
+  });
 });

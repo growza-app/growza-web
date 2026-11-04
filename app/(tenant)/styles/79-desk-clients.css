@@ -21,8 +21,8 @@
     /* One row, bounded by the panel's height: left as `auto` the row grows to the tallest column's content
        and the page clips the bottom of it (the matrix at 1280×720, 2026-10-14). The columns scroll inside. */
     grid-template-rows: minmax(0, 1fr);
-    /* The list gets the room: a 1366 laptop leaves it ~36rem beside an 11rem band column and a 21rem card. */
-    grid-template-columns: minmax(10rem, 11rem) minmax(0, 1fr) minmax(20rem, 21rem);
+    /* Balanced 3-pane CRM layout: 13rem KPI/segment sidebar, fluid table, 20.5rem profile inspector. */
+    grid-template-columns: minmax(12.5rem, 13.5rem) minmax(0, 1fr) minmax(20rem, 21rem);
     align-items: stretch;
   }
 
@@ -30,6 +30,22 @@
   .cust-desk-right {
     min-height: 0;
     overflow-y: auto;
+  }
+
+  .cust-desk-left {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+  }
+
+  .cust-desk-left .pf-wide-h {
+    margin: var(--sp-1) 0 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
   }
 
   .cust-desk-right {
@@ -41,6 +57,7 @@
 
   .cust-desk-mid {
     min-height: 0;
+    gap: var(--sp-3);
   }
 
   .cust-desk-tools {
@@ -52,6 +69,33 @@
   .cust-desk-tools .pf-wide-search {
     flex: 1;
     min-width: 0;
+    min-height: 2.625rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0 var(--sp-3);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .cust-desk-tools .pf-wide-search:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    outline: none;
+  }
+
+  .cust-desk-tools > .btn-ghost {
+    min-height: 2.625rem;
+    padding: 0 var(--sp-4);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+  }
+
+  .cust-desk-tools > .btn-ghost:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent-deep);
+    background: var(--accent-soft);
   }
 
   .cust-desk-table {
@@ -60,6 +104,7 @@
     display: flex;
     flex-direction: column;
     margin: 0;
+    overflow: hidden;
   }
 
   .cust-desk-table .table-scroll {
@@ -119,12 +164,27 @@
 
   .cust-desk-table th,
   .cust-desk-table td {
-    padding: 8px 10px;
+    padding: 10px 10px;
     white-space: nowrap;
+    vertical-align: middle;
   }
 
   .cust-desk-table th:first-child,
   .cust-desk-table td:first-child {
+    padding-left: 14px;
+  }
+
+  .cust-desk-table th.th-sortable {
+    padding: 0;
+  }
+
+  .cust-desk-table th.th-sortable button {
+    padding: 10px 10px;
+    text-transform: inherit;
+    letter-spacing: inherit;
+  }
+
+  .cust-desk-table th.th-sortable:first-child button {
     padding-left: 14px;
   }
 
@@ -143,28 +203,59 @@
   }
 
   .cust-desk-table:not(:has(th:nth-child(6))) th:nth-child(2) {
-    width: 8.5rem;
+    width: 9rem;
   }
 
   .cust-desk-table:not(:has(th:nth-child(6))) th:nth-child(3) {
-    width: 6.75rem;
+    width: 5.5rem;
   }
 
   .cust-desk-table:not(:has(th:nth-child(6))) th:nth-child(4) {
-    width: 8.5rem;
+    width: 5.75rem;
   }
 
   .cust-desk-table thead th {
     position: sticky;
     top: 0;
     z-index: 1;
-    background: var(--surface);
+    background: var(--page-bg);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .cust-desk-table tbody td {
+    font-size: 0.8125rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cust-desk-table .cust-name-cell {
+    gap: 8px;
+  }
+
+  .cust-desk-table .cust-name-cell > span:nth-child(2) {
+    font-size: 0.875rem;
+  }
+
+  .cust-desk-table tbody td:nth-last-child(2) {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
   }
 
   .cust-desk-table .avatar {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     font-size: 0.75rem;
+    font-weight: 700;
+    border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  }
+
+  .cust-desk-table tr.cust-row-click {
+    transition: background 0.12s ease;
   }
 
   .cust-desk-table tr.is-selected td {
@@ -177,35 +268,52 @@
 
   /* ---------- left: the figures and the bands ---------- */
   .cust-desk-kpis {
-    margin: 0 0 var(--sp-3);
+    margin: 0;
     padding: 0 0 var(--sp-3);
     border-bottom: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .cust-desk-kpis > div {
     display: flex;
-    align-items: baseline;
+    flex-direction: column-reverse;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: var(--sp-2);
+    gap: 3px;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--page-bg);
+    min-width: 0;
+  }
+
+  .cust-desk-kpis > div:last-child {
+    background: var(--accent-soft);
+    border-color: color-mix(in srgb, var(--accent) 24%, var(--border));
   }
 
   .cust-desk-kpis dt {
     min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
     color: var(--muted);
   }
 
   .cust-desk-kpis dd {
     margin: 0;
-    font-size: 0.9375rem;
-    font-weight: 700;
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--text);
     font-variant-numeric: tabular-nums;
+  }
+
+  .cust-desk-kpis > div:last-child dd {
+    color: var(--accent-deep);
   }
 
   .cust-desk-bands {
@@ -214,7 +322,7 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
   }
 
   .cust-desk-band {
@@ -223,26 +331,30 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--sp-2);
-    min-height: 2.5rem;
-    padding: 0 var(--sp-3);
-    border: 0;
+    min-height: 2.375rem;
+    padding: 0 10px;
+    border: 1px solid transparent;
     border-radius: var(--radius-sm);
     background: transparent;
     color: var(--text);
     font: inherit;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
+    font-weight: 550;
     text-align: left;
     cursor: pointer;
+    transition: background 0.14s ease, border-color 0.14s ease;
   }
 
   .cust-desk-band:hover {
     background: var(--page-bg);
+    border-color: var(--border);
   }
 
   .cust-desk-band.is-on {
     background: var(--accent-soft);
+    border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
     color: var(--accent-deep);
-    font-weight: 600;
+    font-weight: 700;
   }
 
   .cust-desk-band-name {
@@ -262,18 +374,25 @@
     flex: none;
     border-radius: 50%;
     background: var(--seg, var(--muted));
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--seg, var(--muted)) 20%, transparent);
   }
 
   .cust-desk-n {
     flex: none;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--page-bg);
+    border: 1px solid var(--border);
     font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--muted);
+    font-weight: 700;
+    color: var(--text);
     font-variant-numeric: tabular-nums;
   }
 
   .cust-desk-band.is-on .cust-desk-n {
-    color: inherit;
+    background: var(--accent-deep);
+    border-color: var(--accent-deep);
+    color: var(--surface);
   }
 
   /* ---------- right: the card in place ---------- */
@@ -290,7 +409,7 @@
   }
 
   .cpc-inline .cpc-head {
-    padding: var(--sp-3) var(--sp-4) var(--sp-4);
+    padding: var(--sp-4);
   }
 
   .cpc-inline .cpc-foot {
@@ -301,14 +420,33 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     gap: var(--sp-3);
-    padding: var(--sp-4);
+    padding: var(--sp-6);
+    background: radial-gradient(circle at 50% 42%, var(--accent-soft) 0%, transparent 65%);
+  }
+
+  .cust-desk-nothing::before {
+    content: '';
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23166534' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M22 21v-2a4 4 0 0 0-3-3.87'/%3E%3Cpath d='M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 24px 24px;
   }
 
   .cust-desk-nothing p {
     margin: 0;
+    max-width: 15rem;
     font-size: 0.875rem;
+    font-weight: 550;
+    line-height: 1.45;
     color: var(--muted);
   }
 }
@@ -328,7 +466,7 @@
 /* The narrow end of the tier (1101–1300px): side panels at their floors, the list gets what is left. */
 @media (min-width: 1101px) and (max-width: 1300px) {
   .cust-desk-grid {
-    grid-template-columns: 10rem minmax(0, 1fr) 19rem;
+    grid-template-columns: 11.75rem minmax(0, 1fr) 18.25rem;
     gap: var(--sp-3);
   }
 
@@ -338,12 +476,24 @@
 
   .cust-desk-table th,
   .cust-desk-table td {
-    padding: 8px 8px;
+    padding: 9px 6px;
   }
 
-  .cust-desk-table:not(:has(th:nth-child(6))) th:nth-child(2),
-  .cust-desk-table:not(:has(th:nth-child(6))) td:nth-child(2) {
-    display: none;
+  .cust-desk-table th:first-child,
+  .cust-desk-table td:first-child {
+    padding-left: 12px;
+  }
+
+  .cust-desk-table th.th-sortable {
+    padding: 0;
+  }
+
+  .cust-desk-table th.th-sortable button {
+    padding: 9px 6px;
+  }
+
+  .cust-desk-table th.th-sortable:first-child button {
+    padding-left: 12px;
   }
 }
 

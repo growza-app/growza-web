@@ -1223,6 +1223,7 @@ export function PayFlow({
     setBadMode(false);
   }, [location, token]);
 
+  const guestOptional = productsOnly && !counted;
   const canGoOn = hasService && (token !== undefined || client.kind !== 'none' || fromApp !== null);
   /*
    * Both complaints at once (owner, 2026-10-10).
@@ -1233,7 +1234,7 @@ export function PayFlow({
    */
   const onNext = () => {
     const service = !hasService;
-    const client_ = !token && client.kind === 'none' && !fromApp;
+    const client_ = !token && client.kind === 'none' && !fromApp && !guestOptional;
     if (service || client_) {
       setMissing({ client: client_, service });
       // The sheet opens over the screen, so it may only open when the client is the ONE thing missing —
@@ -1251,9 +1252,9 @@ export function PayFlow({
   };
 
   /** Jira GRW-572 — the wide till has no Next: a payment tile does Next's check first, and marks what is missing. */
-  const readyToPay = () => {
+  const readyToPay = (allowWithoutGuest = false) => {
     const service = !hasService;
-    const client_ = !token && client.kind === 'none' && !fromApp;
+    const client_ = !token && client.kind === 'none' && !fromApp && !(guestOptional && allowWithoutGuest);
     if (service || client_) {
       setMissing({ client: client_, service });
       if (client_ && !service) setWhoOpen('add');
@@ -1272,13 +1273,14 @@ export function PayFlow({
   // 2) Guest picked → highlight Payment mode tiles (`guideMode`)
   // 3) Payment mode picked (or delivery app order) → light up Complete sale (`guideReady`)
   const hasWho = Boolean(token) || client.kind !== 'none';
-  const guideClient = Boolean(productsOnly && wide && lines.length > 0 && !hasWho && !fromApp && !badClient);
+  const hidePayUntilGuest = guestOptional && !hasWho && !fromApp;
+  const guideClient = Boolean(productsOnly && wide && lines.length > 0 && !hasWho && !fromApp && !badClient && !guestOptional);
   const guideMode = Boolean(productsOnly && wide && lines.length > 0 && hasWho && !fromApp && !selectedMode && !splitting && !firstWay);
   const guideReady = Boolean(productsOnly && wide && lines.length > 0 && (fromApp !== null || (hasWho && (selectedMode !== null || firstWay !== null))));
 
   const completePosSale = () => {
     if (saving !== null || lines.length === 0) return;
-    const ok = readyToPay();
+    const ok = readyToPay(false);
     if (fromApp) {
       if (ok) void pay('other');
       return;
@@ -1296,7 +1298,7 @@ export function PayFlow({
   const sendPosPending = () => {
     if (saving !== null || lines.length === 0 || fromApp) return;
     setBadMode(false);
-    if (!readyToPay()) return;
+    if (!readyToPay(true)) return;
     void pay('cash', true);
   };
 
@@ -1482,6 +1484,7 @@ export function PayFlow({
   const restMinor = firstWay ? Math.max(0, dueMinor - firstWay.minor) : 0;
   // An app's order has nothing to collect: no tiles (its note is drawn in their place).
   const payTiles = fromApp ? null : (
+    hidePayUntilGuest ? null : (
     <div className="pf-pay" data-step={guideMode ? 'next' : badMode && !selectedMode ? 'bad' : undefined} role="group" aria-label={t('howTitle')}>
       {firstWay ? (
         /* The first way, held, and what the next tile is for. × puts the bill back to one way. */
@@ -1548,6 +1551,7 @@ export function PayFlow({
         </button>
       ) : null}
     </div>
+    )
   );
   /** The keypad for how much came the first way; the rest is the next tile's. Enough for the whole bill is one way. */
   const splitKeypadEl =
@@ -1625,9 +1629,11 @@ export function PayFlow({
                 <span>{t('desk.keepPendingInQueue')}</span>
               </button>
             ) : null}
-            <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
-              {t('split.link')}
-            </button>
+            {!hidePayUntilGuest ? (
+              <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
+                {t('split.link')}
+              </button>
+            ) : null}
           </div>
         ) : null}
         {splitKeypadEl}
@@ -1985,8 +1991,12 @@ export function PayFlow({
                 <strong>{money(dueMinor)}</strong>
               </p>
             ) : null}
-            {fromApp ? null : <h2 className="pf-wide-h">{t('howTitle')}</h2>}
-            {badMode && !selectedMode ? (
+            {hidePayUntilGuest ? null : (
+              <>
+                {fromApp ? null : <h2 className="pf-wide-h">{t('howTitle')}</h2>}
+              </>
+            )}
+            {badMode && !selectedMode && !hidePayUntilGuest ? (
               <p className="pf-miss" role="alert">
                 {t('desk.needPaymentMode')}
               </p>
@@ -1999,16 +2009,18 @@ export function PayFlow({
             {payTiles}
             {productsOnly ? (
               <div className="pos-charge-actions">
-                <button
-                  type="button"
-                  className="btn pos-charge-cta"
-                  data-step={guideReady ? 'ready' : lines.length > 0 ? 'waiting' : undefined}
-                  disabled={saving !== null || lines.length === 0}
-                  onClick={completePosSale}
-                >
-                  <span>{fromApp ? t('from.complete', { amount: money(dueMinor) }) : t('desk.chargeNow', { amount: money(dueMinor) })}</span>
-                  <kbd className="pos-charge-kbd">F8</kbd>
-                </button>
+                {!hidePayUntilGuest ? (
+                  <button
+                    type="button"
+                    className="btn pos-charge-cta"
+                    data-step={guideReady ? 'ready' : lines.length > 0 ? 'waiting' : undefined}
+                    disabled={saving !== null || lines.length === 0}
+                    onClick={completePosSale}
+                  >
+                    <span>{fromApp ? t('from.complete', { amount: money(dueMinor) }) : t('desk.chargeNow', { amount: money(dueMinor) })}</span>
+                    <kbd className="pos-charge-kbd">F8</kbd>
+                  </button>
+                ) : null}
                 {!fromApp && !splitting && !firstWay ? (
                   <>
                     {onOpenQueue ? (
@@ -2021,9 +2033,11 @@ export function PayFlow({
                         <span>{t('desk.keepPendingInQueue')}</span>
                       </button>
                     ) : null}
-                    <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
-                      {t('split.link')}
-                    </button>
+                    {!hidePayUntilGuest ? (
+                      <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
+                        {t('split.link')}
+                      </button>
+                    ) : null}
                   </>
                 ) : null}
               </div>
@@ -2425,7 +2439,7 @@ export function PayFlow({
           a button that cannot answer teaches nothing, and "nothing happened" is the worst state on this screen.
           Missing a client opens the sheet as well as saying so — the complaint and the fix in one tap.
         */}
-        <button type="button" className="btn pf-go" onClick={onNext} aria-disabled={!canGoOn}>
+        <button type="button" className="btn pf-go" onClick={onNext} aria-disabled={!(canGoOn || (guestOptional && hasService))}>
           {/* An app's order is saved by this tap (nothing to collect), so it says so. */}
           {fromApp ? t('from.completeShort') : t('next')}
         </button>

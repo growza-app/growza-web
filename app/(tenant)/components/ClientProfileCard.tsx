@@ -390,12 +390,19 @@ export function ClientProfileCard({
               )}
 
               <h3 className="cpc-section">{c.insight}</h3>
-              {profile.rows.map((row) => (
-                <div className="cpc-row" key={row.label}>
-                  <span>{c.rows[row.label as keyof typeof c.rows] ?? row.label}</span>
-                  <strong style={{ color: tone(row) }}>{render(row)}</strong>
-                </div>
-              ))}
+              {profile.rows
+                .filter((row) => {
+                  if (row.label === 'visits' || row.label === 'spent') return false;
+                  if (row.label === 'favourite' && !areas.services) return false;
+                  if ((row.label === 'topProvider' || row.label === 'cancelRate') && !areas.bookings) return false;
+                  return true;
+                })
+                .map((row) => (
+                  <div className="cpc-row" key={row.label}>
+                    <span>{c.rows[row.label as keyof typeof c.rows] ?? row.label}</span>
+                    <strong style={{ color: tone(row) }}>{render(row)}</strong>
+                  </div>
+                ))}
 
               {profile.recent.length > 0 && (
                 <>

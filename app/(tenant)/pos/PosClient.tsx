@@ -11,10 +11,12 @@ import { useLabel } from '../components/LabelsProvider';
 import { PaymentDone } from '../components/PaymentDone';
 import { RedeemRow } from '../components/RedeemRow';
 import { useSession } from '../components/SessionProvider';
-import { IconCheck, IconArrowLeft, IconClose, IconPayCard, IconPayCash, IconPayOther, IconPayUpi } from '../components/icons';
+import { IconCheck, IconArrowLeft, IconClose, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch } from '../components/icons';
+import { ClientSheet, type PickedClient } from '../appointments/new/ClientSheet';
 import { Keypad } from '../appointments/new/Keypad';
 import { formatDate } from '../lib/format';
-import { pickNoun } from '../lib/nouns';
+import { displayPhone } from '../lib/phone';
+import { nounInSentence, pickNoun } from '../lib/nouns';
 import { receiptRows, type ReceiptRow } from '../lib/receipt-text';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useRewardQuote } from '../lib/use-reward-quote';
@@ -41,12 +43,18 @@ const QUEUE_PAY_ICONS: Record<'cash' | 'upi' | 'card' | 'other', ReactNode> = {
   other: <IconPayOther />,
 };
 
+function isWalkInToken(tk: Pick<PosDailyToken, 'customerName' | 'customerPhone'>): boolean {
+  return !tk.customerPhone && (!tk.customerName || tk.customerName.trim().toLowerCase() === 'walk-in');
+}
+
 function QueueTokenPayScreen({
   token,
   paymentQr,
   saving,
   error,
   walkInGuestLabel,
+  clientNoun,
+  onOpenClientSheet,
   onBack,
   onSettle,
 }: {
@@ -55,12 +63,16 @@ function QueueTokenPayScreen({
   saving: PaymentMode | null;
   error: string | null;
   walkInGuestLabel: string;
+  clientNoun: string;
+  onOpenClientSheet: (startAdding: boolean) => void;
   onBack: () => void;
   onSettle: (ways: Array<{ mode: PaymentMode; amountMinor: number }>, redeemPoints: number) => void;
 }) {
   const tPay = useTranslations('payFlow');
   const tc = useTranslations('chrome');
   const nv = useNewVisitCopy();
+  const anonymous = isWalkInToken(token);
+  const guestLabel = anonymous ? walkInGuestLabel : (token.customerName || walkInGuestLabel);
   const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor: discountMinor } = useRewardQuote(
     token.customerId,
     token.totalMinor,
@@ -124,7 +136,7 @@ function QueueTokenPayScreen({
           <span className="pf-head-stack">
             <h1 className="pf-title">{tPay('qrTitle')}</h1>
             <span className="pf-at">
-              {token.tokenLabel} · {token.customerName || walkInGuestLabel}
+              {token.tokenLabel} · {guestLabel}
             </span>
           </span>
           <span className="pf-head-gap" aria-hidden="true" />
@@ -181,91 +193,134 @@ function QueueTokenPayScreen({
         <span className="pf-head-stack">
           <h1 className="pf-title">{tPay('howTitle')}</h1>
           <span className="pf-at">
-            {token.tokenLabel} · {token.customerName || walkInGuestLabel}
+            {token.tokenLabel} · {guestLabel}
           </span>
         </span>
         <span className="pf-head-gap" aria-hidden="true" />
       </header>
+      <div className="pf-row" role="group" aria-label={tPay('who', { client: clientNoun })}>
+        <span className="pf-row-label">{tPay('who', { client: clientNoun })}</span>
+        {!anonymous ? (
+          <div className="pf-who-picked">
+            <span className="pf-face" aria-hidden="true">
+              {(token.customerName ?? '').trim().charAt(0).toUpperCase() || '?'}
+            </span>
+            <span className="pf-who-picked-name">{token.customerName}</span>
+            {token.customerPhone ? <span className="pf-who-picked-sub">{displayPhone(token.customerPhone)}</span> : null}
+            <button
+              type="button"
+              className="pf-who-clear"
+              aria-label={tPay('addClient', { client: nounInSentence(clientNoun) })}
+              onClick={() => onOpenClientSheet(false)}
+              disabled={saving !== null}
+            >
+              <IconSearch />
+            </button>
+          </div>
+        ) : (
+          <div className="pf-who-bar">
+            <button type="button" className="pf-who-search" onClick={() => onOpenClientSheet(false)} disabled={saving !== null}>
+              <IconSearch />
+              {tPay('nameOrNumber')}
+            </button>
+            <button
+              type="button"
+              className="pf-who-add"
+              aria-label={tPay('addClient', { client: nounInSentence(clientNoun) })}
+              onClick={() => onOpenClientSheet(true)}
+              disabled={saving !== null}
+            >
+              <IconPlus />
+            </button>
+          </div>
+        )}
+      </div>
       {dueLine}
-      <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={handleToggleRedeem} disabled={saving !== null} />
+      {!anonymous ? (
+        <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={handleToggleRedeem} disabled={saving !== null} />
+      ) : null}
       {error ? (
         <div role="alert" className="pf-error">
           {error}
         </div>
       ) : null}
-      <div className="pf-pay" role="group" aria-label={tPay('howTitle')}>
-        {firstWay ? (
-          <p className="pf-split-held" role="status">
-            <span>
-              {tPay('split.then', {
-                amount: money(firstWay.minor),
-                mode: modeWord(firstWay.mode),
-                rest: money(restMinor),
-              })}
-            </span>
-            <button
-              type="button"
-              className="icon-btn pf-split-clear"
-              aria-label={tPay('split.clear')}
-              onClick={clearSplit}
-            >
-              <IconClose />
-            </button>
-          </p>
-        ) : splitting ? (
-          <p className="pf-split-held" role="status">
-            <span>{tPay('split.first')}</span>
-            <button
-              type="button"
-              className="icon-btn pf-split-clear"
-              aria-label={tPay('split.clear')}
-              onClick={clearSplit}
-            >
-              <IconClose />
-            </button>
-          </p>
-        ) : null}
-        {(['cash', 'upi', 'card', 'other'] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            className={`pf-pay-tile pf-pay-${m}`}
-            disabled={saving !== null || firstWay?.mode === m}
-            aria-busy={saving === m}
-            onClick={() => {
-              if (splitting && !firstWay) {
-                setSplitKeypad(m);
-                setSplitAmount('');
-                return;
-              }
-              if (m === 'upi' && paymentQr && !firstWay && dueMinor > 0) {
-                setQrStep(true);
-                return;
-              }
-              onSettle(waysFor(m), redeemPoints);
-            }}
-          >
-            <span className="pf-pay-icon" aria-hidden="true">
-              {QUEUE_PAY_ICONS[m]}
-            </span>
-            <span className="pf-pay-word">
-              {saving === m ? tPay('saving') : m === 'other' ? tPay('other') : modeWord(m)}
-            </span>
-            <span className="pf-pay-sub">{tPay(`sub.${m}`)}</span>
-          </button>
-        ))}
-      </div>
-      {!splitting && !firstWay ? (
-        <div className="pos-charge-actions pos-charge-actions-mobile">
-          <button
-            type="button"
-            className="pf-split-link"
-            onClick={() => setSplitting(true)}
-            disabled={saving !== null}
-          >
-            {tPay('split.link')}
-          </button>
-        </div>
+      {!anonymous ? (
+        <>
+          <div className="pf-pay" role="group" aria-label={tPay('howTitle')}>
+            {firstWay ? (
+              <p className="pf-split-held" role="status">
+                <span>
+                  {tPay('split.then', {
+                    amount: money(firstWay.minor),
+                    mode: modeWord(firstWay.mode),
+                    rest: money(restMinor),
+                  })}
+                </span>
+                <button
+                  type="button"
+                  className="icon-btn pf-split-clear"
+                  aria-label={tPay('split.clear')}
+                  onClick={clearSplit}
+                >
+                  <IconClose />
+                </button>
+              </p>
+            ) : splitting ? (
+              <p className="pf-split-held" role="status">
+                <span>{tPay('split.first')}</span>
+                <button
+                  type="button"
+                  className="icon-btn pf-split-clear"
+                  aria-label={tPay('split.clear')}
+                  onClick={clearSplit}
+                >
+                  <IconClose />
+                </button>
+              </p>
+            ) : null}
+            {(['cash', 'upi', 'card', 'other'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                className={`pf-pay-tile pf-pay-${m}`}
+                disabled={saving !== null || firstWay?.mode === m}
+                aria-busy={saving === m}
+                onClick={() => {
+                  if (splitting && !firstWay) {
+                    setSplitKeypad(m);
+                    setSplitAmount('');
+                    return;
+                  }
+                  if (m === 'upi' && paymentQr && !firstWay && dueMinor > 0) {
+                    setQrStep(true);
+                    return;
+                  }
+                  onSettle(waysFor(m), redeemPoints);
+                }}
+              >
+                <span className="pf-pay-icon" aria-hidden="true">
+                  {QUEUE_PAY_ICONS[m]}
+                </span>
+                <span className="pf-pay-word">
+                  {saving === m ? tPay('saving') : m === 'other' ? tPay('other') : modeWord(m)}
+                </span>
+                <span className="pf-pay-sub">{tPay(`sub.${m}`)}</span>
+              </button>
+            ))}
+          </div>
+          {!splitting && !firstWay ? (
+            <div className="pos-charge-actions pos-charge-actions-mobile">
+              <button
+                type="button"
+                className="pf-split-link"
+                onClick={() => setSplitting(true)}
+                disabled={saving !== null}
+              >
+                {tPay('split.link')}
+              </button>
+            </div>
+          ) : null}
+        </>
       ) : null}
       {splitKeypad !== null ? (
         <Keypad
@@ -320,6 +375,7 @@ export function PosClient({
   returnWindowDays,
   canReturn,
   initialMode,
+  initialToken,
   heading,
   backTo,
 }: {
@@ -328,16 +384,20 @@ export function PosClient({
   returnWindowDays: number;
   canReturn: boolean;
   initialMode: PosMode;
+  /** Optional token id or number (`#07`, `7`, or visit UUID) to scroll to and highlight when opening the Queue board. */
+  initialToken?: string;
   /** A shop's name for the till. Absent is "Sell product". */
   heading?: string;
   backTo?: '/products' | '/sales';
 }) {
   const t = useTranslations('pos');
   const tPay = useTranslations('payFlow');
+  const tNouns = useTranslations('nouns');
   const tc = useTranslations('chrome');
   const nv = useNewVisitCopy();
   const locale = useLocale();
   const { Customer } = useNouns();
+  const clientNoun = pickNoun(locale, useLabel('customer', 'Client'), tNouns('customer'));
   const productsNoun = useLabel('products', 'Products');
   const providerNoun = useLabel('provider', 'Staff member');
   const branch = useBranch();
@@ -357,6 +417,7 @@ export function PosClient({
   const [todayRows, setTodayRows] = useState<Appointment[]>([]);
   const [tokenOverrides, setTokenOverrides] = useState<Record<string, PosTokenOverride>>({});
   const [payingToken, setPayingToken] = useState<PosDailyToken | null>(null);
+  const [clientSheetTarget, setClientSheetTarget] = useState<{ token: PosDailyToken; startAdding: boolean } | null>(null);
   const [settlingMode, setSettlingMode] = useState<PaymentMode | null>(null);
   const [settleError, setSettleError] = useState<string | null>(null);
   const [settledReceipt, setSettledReceipt] = useState<{
@@ -370,6 +431,9 @@ export function PosClient({
   } | null>(null);
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
   const [reloadKey, setReloadKey] = useState(0);
+  const [focusToken, setFocusToken] = useState<string | null>(() => initialToken?.trim() || null);
+  const [highlightedTokenId, setHighlightedTokenId] = useState<string | null>(null);
+  const lastQueuedIdRef = useRef<string | null>(null);
   /** Only the latest open may answer: a slow read from an earlier open must not put old bills under a newer sheet. */
   const opened = useRef(0);
   /* Owner, 2026-11-03 — the till's own Back, moved up into the bar. The action is still the till's. */
@@ -430,6 +494,7 @@ export function PosClient({
 
   const handleSaleCompleted = useCallback(
     (saleId: string) => {
+      lastQueuedIdRef.current = saleId;
       setTokenState(saleId, 'preparing');
       void loadTodayTokens();
     },
@@ -500,6 +565,51 @@ export function PosClient({
     [t],
   );
 
+  const attachClientToToken = useCallback(
+    async (tk: PosDailyToken, picked: PickedClient) => {
+      try {
+        const res = await api.assignClientToSale(
+          tk.id,
+          picked.id
+            ? { customerId: picked.id }
+            : picked.waPhone
+              ? { phone: picked.waPhone, ...(picked.name ? { name: picked.name } : {}) }
+              : { name: picked.name ?? '' },
+        );
+        const nextCustomerId = res.customerId;
+        const nextName = picked.name;
+        const nextPhone = picked.waPhone;
+        setTodayRows((prev) =>
+          prev.map((r) =>
+            (r.bookingGroupId ?? r.id) === tk.id
+              ? {
+                  ...r,
+                  customerId: nextCustomerId,
+                  customerName: nextName,
+                  customerPhone: nextPhone,
+                }
+              : r,
+          ),
+        );
+        setPayingToken((prev) =>
+          prev && prev.id === tk.id
+            ? {
+                ...prev,
+                customerId: nextCustomerId,
+                customerName: nextName ?? prev.customerName,
+                customerPhone: nextPhone,
+              }
+            : prev,
+        );
+      } catch (e) {
+        setSettleError(e instanceof Error && e.message ? e.message : t('settleFailed'));
+      } finally {
+        setClientSheetTarget(null);
+      }
+    },
+    [t],
+  );
+
   const settleAndCompleteToken = useCallback(
     async (
       tk: PosDailyToken,
@@ -513,6 +623,9 @@ export function PosClient({
       if (!ways || ways.length === 0) {
         setSettleError(null);
         setPayingToken(tk);
+        if (isWalkInToken(tk) && tk.channel === 'counter') {
+          setClientSheetTarget({ token: tk, startAdding: false });
+        }
         return;
       }
       if (settlingMode) return;
@@ -762,21 +875,61 @@ export function PosClient({
     }
   }, [todayISO, returnWindowDays, timezone]);
 
-  const openQueue = useCallback(() => {
-    opened.current++;
-    setMode('queue');
-    setPayingToken(null);
-    setSettleError(null);
-    setSettledReceipt(null);
-    setLoading(false);
-    setFailed(false);
-    void loadTodayTokens();
-  }, [loadTodayTokens]);
+  const openQueue = useCallback(
+    (targetToken?: unknown) => {
+      opened.current++;
+      setMode('queue');
+      if (typeof targetToken === 'string' && targetToken.trim()) {
+        setFocusToken(targetToken.trim());
+      }
+      setPayingToken(null);
+      setClientSheetTarget(null);
+      setSettleError(null);
+      setSettledReceipt(null);
+      setLoading(false);
+      setFailed(false);
+      void loadTodayTokens();
+    },
+    [loadTodayTokens],
+  );
+
+  useEffect(() => {
+    const raw = initialToken?.trim();
+    if (raw) {
+      setMode('queue');
+      setFocusToken(raw);
+    }
+  }, [initialToken]);
+
+  useEffect(() => {
+    if (mode !== 'queue' || !focusToken || dailyTokens.length === 0) return;
+    const cleaned = focusToken.replace(/^#0*/, '');
+    const target = dailyTokens.find(
+      (tk) =>
+        tk.id === focusToken ||
+        String(tk.tokenNo) === cleaned ||
+        tk.tokenLabel.toLowerCase() === focusToken.toLowerCase(),
+    );
+    if (!target) return;
+    setFocusToken(null);
+    setHighlightedTokenId(target.id);
+  }, [mode, focusToken, dailyTokens]);
+
+  useEffect(() => {
+    if (mode !== 'queue' || !highlightedTokenId) return;
+    const el = typeof document !== 'undefined' ? document.getElementById(`pos-token-${highlightedTokenId}`) : null;
+    el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+    const clearTimer = window.setTimeout(() => {
+      setHighlightedTokenId((cur) => (cur === highlightedTokenId ? null : cur));
+    }, 4000);
+    return () => window.clearTimeout(clearTimer);
+  }, [mode, highlightedTokenId]);
 
   const closeReturn = useCallback(() => {
     opened.current++;
     setMode('sell');
     setPayingToken(null);
+    setClientSheetTarget(null);
     setSettleError(null);
     setSettledReceipt(null);
     setLoading(false);
@@ -792,16 +945,18 @@ export function PosClient({
   }, [initialMode, canReturn, openReturn]);
 
   const renderTokenCard = (tk: PosDailyToken, isPreparing: boolean, isFirst = false) => {
-    const guest = tk.customerName || t('walkInGuest');
+    const anonymous = isWalkInToken(tk);
+    const guest = anonymous ? t('walkInGuest') : (tk.customerName || t('walkInGuest'));
     const elapsedText = tk.elapsedMin <= 0 ? t('elapsedJustNow') : t('elapsedMin', { min: tk.elapsedMin });
     const isOverdue = isPreparing && tk.elapsedMin >= 15;
     const isWarn = isPreparing && tk.elapsedMin >= 10 && tk.elapsedMin < 15;
     const slaTone = isOverdue ? ' is-overdue' : isWarn ? ' is-warn' : ' is-fresh';
+    const isTarget = highlightedTokenId === tk.id;
     const cardStateClass = isPreparing
-      ? ` is-preparing${isFirst ? ' is-first' : ''}${isOverdue ? ' is-overdue' : ''}${tk.paymentPending ? ' is-unpaid' : ''}`
-      : ` is-completed${tk.paymentPending ? ' is-unpaid' : ''}`;
+      ? ` is-preparing${isFirst ? ' is-first' : ''}${isOverdue ? ' is-overdue' : ''}${tk.paymentPending ? ' is-unpaid' : ''}${isTarget ? ' is-target' : ''}`
+      : ` is-completed${tk.paymentPending ? ' is-unpaid' : ''}${isTarget ? ' is-target' : ''}`;
     return (
-      <article key={tk.id} className={`pos-qcard${cardStateClass}`}>
+      <article key={tk.id} id={`pos-token-${tk.id}`} data-token-no={tk.tokenNo} className={`pos-qcard${cardStateClass}`}>
         {isPreparing && isFirst ? (
           <div className={`pos-qcard-priority${isOverdue ? ' is-overdue' : ''}`}>
             <span>⚡ {isOverdue ? t('deliverFirstOverdue') : t('deliverFirst')}</span>
@@ -816,8 +971,15 @@ export function PosClient({
                 <span className="pos-qcard-pay-dot" aria-hidden="true" />
                 {t('paymentPendingBadge')}
               </span>
-            ) : tk.paymentMode && !isDeliveryApp(tk.channel) ? (
-              <span className="pos-qcard-pay is-paid">{payModeLabel(tk.paymentMode)}</span>
+            ) : !isDeliveryApp(tk.channel) ? (
+              <span className="pos-qcard-pay is-paid">
+                <IconCheck />
+                <span>
+                  {tk.paymentMode
+                    ? t('paidViaBadge', { mode: payModeLabel(tk.paymentMode) })
+                    : t('paidBadge')}
+                </span>
+              </span>
             ) : null}
           </div>
           <div className="pos-qcard-meta">
@@ -833,6 +995,16 @@ export function PosClient({
         </div>
         <div className="pos-qcard-sub">
           <span className="pos-qcard-guest">{guest}</span>
+          {anonymous && tk.channel === 'counter' ? (
+            <button
+              type="button"
+              className="pos-qcard-add-client"
+              onClick={() => setClientSheetTarget({ token: tk, startAdding: false })}
+            >
+              <IconPlus />
+              <span>{tPay('addClient', { client: nounInSentence(clientNoun) })}</span>
+            </button>
+          ) : null}
           <span className="pos-qcard-time">{formatTime(tk.startAt)}</span>
         </div>
         <ul className="pos-qcard-items">
@@ -1032,7 +1204,7 @@ export function PosClient({
           heading={heading}
           nextTokenNo={nextTokenNo}
           onSaleCompleted={handleSaleCompleted}
-          onOpenQueue={openQueue}
+          onOpenQueue={() => openQueue(lastQueuedIdRef.current ?? undefined)}
           reloadKey={reloadKey}
         />
       </div>
@@ -1059,8 +1231,11 @@ export function PosClient({
             saving={settlingMode}
             error={settleError}
             walkInGuestLabel={t('walkInGuest')}
+            clientNoun={clientNoun}
+            onOpenClientSheet={(startAdding) => setClientSheetTarget({ token: payingToken, startAdding })}
             onBack={() => {
               setPayingToken(null);
+              setClientSheetTarget(null);
               setSettleError(null);
             }}
             onSettle={(ways, redeemPoints) => void settleAndCompleteToken(payingToken, ways, redeemPoints)}
@@ -1111,6 +1286,15 @@ export function PosClient({
           </div>
         </section>
         )
+      ) : null}
+
+      {clientSheetTarget ? (
+        <ClientSheet
+          location={location}
+          startAdding={clientSheetTarget.startAdding}
+          onPick={(c) => void attachClientToToken(clientSheetTarget.token, c)}
+          onClose={() => setClientSheetTarget(null)}
+        />
       ) : null}
 
       {mode === 'return' && bills ? (

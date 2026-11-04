@@ -909,6 +909,44 @@
       "0": "तुरंत",
       "24": "अगले दिन से",
       "168": "एक हफ्ते बाद"
+    },
+    "statusOn": "चालू",
+    "statusOff": "बंद",
+    "configTitle": "पॉइंट कमाने और वैधता के नियम",
+    "summary": {
+      "earnLabel": "कमाई की दर",
+      "earnSub": "{bill} पर {points} पॉइंट",
+      "worthLabel": "पॉइंट की कीमत",
+      "worthValue": "1 पॉइंट = {worth}",
+      "worthSub": "टिल पर सीधी छूट",
+      "capLabel": "अधिकतम बिल छूट",
+      "capValue": "{cap}% तक",
+      "capSub": "कुल बिल रकम का",
+      "minLabel": "रिडीम के लिए न्यूनतम",
+      "minValue": "{floor} पॉइंट ({worth})",
+      "minSub": "कम से कम {minBill}+ का बिल"
+    },
+    "rules": {
+      "title": "टिल पर पॉइंट कैसे काम करते हैं",
+      "earnTitle": "1. चुकाए गए बिल पर पॉइंट कमाना",
+      "earnBody": "ग्राहक छूट के बाद वास्तव में चुकाई गई रकम पर {rate}% पॉइंट कमाते हैं। अधूरे पॉइंट नीचे की ओर पूरे अंक में गिने जाते हैं।",
+      "redeemTitle": "2. रिडीम कब चालू होता है",
+      "redeemBody": "पॉइंट बिल का अधिकतम {cap}% कम कर सकते हैं और एक बार में कम से कम {floor} पॉइंट ({floorWorth}) लगाने ज़रूरी हैं। इसलिए रिडीम चालू होने के लिए बिल कम से कम {minBill} का होना चाहिए।",
+      "lifecycleTitle": "3. वैधता, रोक और वापसी",
+      "lifecycleBody": "सबसे पुराने पॉइंट हमेशा पहले खर्च होते हैं। बिल वापस या संशोधित होने पर कमाए गए पॉइंट अपने आप घट जाते हैं और इस्तेमाल किए गए पॉइंट वापस मिल जाते हैं।"
+    },
+    "examples": {
+      "title": "उदाहरण बिल ({rate}% दर पर)",
+      "subtitle": "मान लें कि ग्राहक के पास पहले से 200+ खर्च करने योग्य पॉइंट हैं:",
+      "colBill": "बिल",
+      "colEarn": "कमाई",
+      "colRedeem": "अधिकतम इस्तेमाल",
+      "colPay": "देय",
+      "ptsWorth": "+{points} ({worth})",
+      "noPoints": "0 पॉइंट",
+      "belowMin": "{minBill}+ चाहिए ({maxPts} < {floor})",
+      "canUse": "{points} पॉइंट (-{off})",
+      "pays": "{pay}"
     }
   },
   "settingsTeam": {
@@ -3245,14 +3283,14 @@
       "receiptUsed": "इस्तेमाल किए गए रिवॉर्ड पॉइंट: {points} (−{amount})",
       "receiptEarned": "आपने अगली विज़िट के लिए {points, plural, one {# पॉइंट} other {# पॉइंट}} कमाए।",
       "earnedDone": "{points, plural, one {# पॉइंट} other {# पॉइंट}} मिले",
-      "have": "{points, plural, one {# पॉइंट} other {# पॉइंट}} जमा",
-      "needMore": "इस्तेमाल करने के लिए {points, plural, one {# और} other {# और}}",
-      "needBill": "इस्तेमाल करने के लिए {amount} का बिल",
+      "have": "रिवॉर्ड बैलेंस: {points, plural, one {# पॉइंट} other {# पॉइंट}}",
+      "needMore": "रिडीम के लिए {points, plural, one {# और पॉइंट} other {# और पॉइंट}} चाहिए",
+      "needBill": "{amount}+ के बिल पर रिडीम होगा",
       "receiptTitle": "रिवॉर्ड",
       "receiptBalance": "आपके पास {points, plural, one {# पॉइंट} other {# पॉइंट}} हैं।",
       "receiptBalanceOnly": "आपके पास {points, plural, one {# पॉइंट} other {# पॉइंट}} हैं।",
       "receiptExpiry": "{points, plural, one {# पॉइंट} other {# पॉइंट}} {date} को खत्म हो जाएंगे।",
-      "held": "{points, plural, one {# पॉइंट} other {# पॉइंट}} अभी इस्तेमाल नहीं हो सकते"
+      "held": "{points, plural, one {# पॉइंट} other {# पॉइंट}} कल से इस्तेमाल होंगे"
     }
   },
   "help": {
@@ -4285,6 +4323,8 @@
     "walkInGuest": "काउंटर अतिथि",
     "noneIssuedYet": "अभी कोई नहीं",
     "paymentPendingBadge": "भुगतान बाकी",
+    "paidBadge": "भुगतान हो गया",
+    "paidViaBadge": "भुगतान हो गया · {mode}",
     "amountToCollect": "लेना बाकी",
     "collectPaymentLabel": "{amount} लें — भुगतान का तरीका चुनें",
     "modeCash": "नकद",
