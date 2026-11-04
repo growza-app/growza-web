@@ -3062,23 +3062,27 @@ button.bk-waiting-row:focus-visible {
 @media (max-width: 860px) {
   .cust-kpis {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
-    margin-bottom: 10px;
+    gap: 8px;
+    margin-bottom: 12px;
   }
 
   .cust-kpi {
     flex-direction: column;
     align-items: flex-start;
+    justify-content: space-between;
+    min-height: 78px;
     gap: 0;
-    padding: 8px 9px;
+    padding: 12px 10px;
   }
 
   .cust-kpi > div {
     display: flex;
     flex-direction: column-reverse;
     align-items: flex-start;
-    gap: 2px;
+    justify-content: space-between;
+    gap: 5px;
     width: 100%;
+    height: 100%;
   }
 
   .cust-kpi:last-child {
@@ -3097,11 +3101,11 @@ button.bk-waiting-row:focus-visible {
   .cust-kpi-label {
     font-size: 0.75rem;
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1.25;
   }
 
   .cust-kpi-value {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
     font-weight: 800;
     line-height: 1.15;
     font-variant-numeric: tabular-nums;
