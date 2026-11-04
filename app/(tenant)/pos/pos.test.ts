@@ -419,5 +419,18 @@ describe('the POS screen', () => {
     };
     const [svcToken] = buildDailyTokens([serviceRow], 'loc-1', {}, nowMs);
     expect(svcToken?.paymentPending).toBe(false);
+
+    // A ₹0 free counter meal or 100%-points sale has paymentMode === null AND paymentPending === false:
+    // it is already settled and never treated as an unpaid queue order.
+    const freeMealRow: Appointment = {
+      ...unpaidOldRow,
+      id: 'sale-free-meal',
+      paymentMode: null,
+      paymentPending: false,
+      products: [{ id: 'vp-free', productId: 'p-1', name: 'Rumali Roti', priceMinor: '2000', qty: 2, paidMinor: '0', returnedQty: 0, returnedMinor: '0' }],
+    };
+    const [freeToken] = buildDailyTokens([freeMealRow], 'loc-1', {}, nowMs);
+    expect(freeToken?.paymentPending).toBe(false);
+    expect(freeToken?.state).toBe('completed');
   });
 });

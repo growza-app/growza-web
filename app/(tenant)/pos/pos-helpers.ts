@@ -106,7 +106,7 @@ export function buildDailyTokens(
     const isProductSale = !first.serviceName && !first.serviceId && first.channel !== undefined;
     const channel = first.channel ?? 'counter';
     const paymentMode = first.paymentMode ?? null;
-    const paymentPending = isProductSale && paymentMode === null && channel === 'counter';
+    const paymentPending = isProductSale && channel === 'counter' && (first.paymentPending ?? paymentMode === null);
     const defaultState: PosTokenState = paymentPending || elapsedMin <= 30 ? 'preparing' : 'completed';
     const state: PosTokenState =
       !paymentPending && rawOverride === 'completed'

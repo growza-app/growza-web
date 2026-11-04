@@ -543,6 +543,7 @@ export function PosClient({
             return {
               ...r,
               paymentMode: chosen,
+              paymentPending: false,
               payments: ways.map((w) => ({ mode: w.mode, amountMinor: String(w.amountMinor) })),
               products: updatedProducts,
             };
