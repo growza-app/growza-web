@@ -490,6 +490,7 @@
     "clearSearch": "खोज हटाएँ",
     "voiceSearch": "बोलकर खोजें",
     "stopVoiceSearch": "बोलकर खोजना रोकें",
+    "voiceStarting": "तैयार हो रहा है… अभी न बोलें",
     "voiceListening": "सुन रहे हैं… अब बोलें",
     "voicePermissionDenied": "ब्राउज़र में माइक की अनुमति बंद है",
     "voicePermissionDeniedHelp": "माइक बंद है। आप टाइप कर सकते हैं।",

@@ -383,6 +383,17 @@ button.search-mic.is-listening > svg {
   box-shadow: 0 0 0 2px var(--accent-deep);
 }
 
+/*
+ * Getting ready, not listening — QA 2026-11-05. The engine is still opening its capture and reaching its
+ * speech service, and anything said into this window is lost. Grey and quiet, deliberately NOT the green
+ * ring below: green is the promise that it can hear you, and it has to stay worth that.
+ */
+button.search-mic.search-mic-starting > svg {
+  background: var(--slate-soft);
+  color: var(--muted);
+  box-shadow: 0 0 0 2px var(--slate-soft);
+}
+
 button.search-mic.search-mic-denied > svg {
   color: var(--danger);
 }
