@@ -52,7 +52,9 @@ export function pageCsp(nonce: string, admin: boolean, dev: boolean = process.en
 
 /** The API's own answers, proxied: they carry the API's policy and must not be given a second one. */
 export function isProxiedToApi(pathname: string): boolean {
-  return pathname.startsWith('/api/') || pathname.startsWith('/uploads/');
+  // `/d/:token` is the customer's short link to a shared document, rewritten to the API's own page
+  // (next.config.ts). It carries the policy the API wrote for that page, like everything under `/api/`.
+  return pathname.startsWith('/api/') || pathname.startsWith('/uploads/') || pathname.startsWith('/d/');
 }
 
 function pass(req: NextRequest): NextResponse {

@@ -1149,6 +1149,8 @@ export const api = {
    * so asking again makes a new link; the ones already sent keep working until they run out on their own.
    */
   shareDocument: (id: string) => post<{ token: string; expiresAt: string }>(`/api/v1/documents/${id}/share`, {}),
+  /** Jira GRW-674 (SEC-12) — every link of this document stops working now. `stopped` is how many were still live. */
+  stopSharingDocument: (id: string) => del<{ ok: true; stopped: number }>(`/api/v1/documents/${id}/share`),
 
   /** Jira GRW-582 — Settings › GST. One Save; the API decides what belongs to the business and what to the branch. */
   updateGstSettings: (

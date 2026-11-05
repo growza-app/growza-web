@@ -2,7 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
-import { ApiError } from '../../lib/api';
+import { api, ApiError } from '../../lib/api';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { sendDocumentOnWhatsApp } from '../../lib/share-document';
 
 /**
@@ -52,7 +53,32 @@ export function DocumentViewer({
    * the next render both see `false` — and each opens a window and makes a link.
    */
   const sharingNow = useRef(false);
+  /** Jira GRW-674 (SEC-12) — the "are you sure" for taking the links back, and whether that is under way. */
+  const [askStop, setAskStop] = useState(false);
+  const [stopping, setStopping] = useState(false);
+  const [stopError, setStopError] = useState<string | null>(null);
   const href = `/api/v1/documents/${id}/html`;
+
+  /**
+   * Every link of this document stops working now — for the one that went to the wrong number.
+   *
+   * The answer says what happened, because "done" would read the same whether two links died or there was
+   * never one to stop, and an owner who has just sent a customer's bill to a stranger needs to know which.
+   */
+  const stopSharing = async () => {
+    setStopping(true);
+    setStopError(null);
+    try {
+      const { stopped } = await api.stopSharingDocument(id);
+      setAskStop(false);
+      setNote(stopped > 0 ? t('stopped', { count: stopped }) : t('notShared'));
+    } catch (e) {
+      // Shown inside the dialog, which stays open: they are looking right at it and can try again.
+      setStopError(e instanceof ApiError && e.status < 500 ? e.message : t('couldNotStop'));
+    } finally {
+      setStopping(false);
+    }
+  };
 
   /** A link the customer opens with no account; valid a week, then the business sends a new one. */
   const share = async () => {
@@ -151,10 +177,37 @@ export function DocumentViewer({
         ) : null}
       </div>
 
+      {/*
+        Jira GRW-674 (SEC-12) — a quiet line, not a fifth button (the owner, 2026-11-05: "A").
+        It names the one situation it is for, so nobody has to wonder what "stop sharing" stops, and it keeps
+        an action that ends something out of a row of actions that send something. On a cancelled document
+        too: a link sent before the cancellation still opens.
+      */}
+      <p className="doc-stop">
+        <span>{t('stopHint')}</span>{' '}
+        <button type="button" className="link-btn doc-stop-btn" onClick={() => { setStopError(null); setAskStop(true); }}>
+          {t('stop')}
+        </button>
+      </p>
+
       {note ? (
         <p className="field-hint" role="status">
           {note}
         </p>
+      ) : null}
+
+      {askStop ? (
+        <ConfirmDialog
+          title={t('stopTitle')}
+          body={t('stopBody')}
+          confirmLabel={stopping ? t('stopping') : t('stop')}
+          cancelLabel={t('stopKeep')}
+          tone="danger"
+          busy={stopping}
+          error={stopError ?? undefined}
+          onConfirm={() => void stopSharing()}
+          onCancel={() => setAskStop(false)}
+        />
       ) : null}
     </div>
   );
