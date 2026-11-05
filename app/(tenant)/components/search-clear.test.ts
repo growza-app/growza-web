@@ -301,3 +301,41 @@ describe('the microphone beside a box that already has text', () => {
     expect(component).toMatch(/if \(el instanceof HTMLInputElement\) return el;/);
   });
 });
+
+/**
+ * Review 2026-11-05 — three faults found by reading the voice code again after it shipped to develop.
+ */
+describe('one tap, one session, one phrase', () => {
+  const component = read('components/SearchClear.tsx');
+  const home = read('components/home/ShopHome.tsx');
+
+  it('writes nothing after the first complete phrase', () => {
+    // `stop()` does not silence the engine at once, and Android Chrome repeats itself in continuous mode:
+    // every late result was joined on, and the box read "butter butter chicken".
+    expect(component).toMatch(/rec\.onresult = \(event\) => \{[\s\S]{0,520}if \(finished\) return;/);
+    expect(component).toMatch(/if \(last\?\.isFinal\) \{\s*finished = true;/);
+  });
+
+  it('treats a second tap while getting ready as "never mind", not as a second request', () => {
+    expect(component).toMatch(/if \(starting\) \{\s*attempt\.current \+= 1;\s*setStarting\(false\);\s*return;/);
+    // And the start-up that was under way notices on waking that it was cancelled or overtaken.
+    expect(component).toMatch(/const mic = await askForMicrophone\(\);[\s\S]{0,120}if \(attempt\.current !== mine\) return;/);
+    // Leaving the screen cancels it too.
+    expect(component).toMatch(/attempt\.current \+= 1;\s*const rec = recRef\.current;/);
+  });
+
+  it('lets only the session that holds the button change what the button says', () => {
+    expect(component).toMatch(/const holdsTheButton = \(\): boolean => recRef\.current === rec;/);
+    expect(component).toMatch(/rec\.onend = \(\) => \{\s*clearTimers\(\);\s*if \(holdsTheButton\(\)\) \{/);
+    expect(component).toMatch(/if \(live \|\| !holdsTheButton\(\)\) return;/);
+    // An error is held to the same rule as an ending.
+    expect(component).toMatch(/rec\.onerror = \(event\) => \{[\s\S]{0,360}if \(holdsTheButton\(\)\) \{/);
+  });
+
+  it('colours a change by its direction, so no change is not drawn as a rise', () => {
+    // All three pills: the two on the wide Home and the phone's. This assertion found the third.
+    expect(home).not.toMatch(/Pct < 0 \? 'is-down' : 'is-up'/);
+    expect((home.match(/rst-delta-pill \$\{deltaTone\(/g) ?? []).length).toBe(2);
+    expect(home).toMatch(/shp-delta \$\{deltaTone\(phoneFigures\.changePct\)\}/);
+  });
+});

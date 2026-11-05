@@ -19,6 +19,14 @@ export function periodDeltaPct(current: number, previous: number): number | null
  * The words for it: "↑ 12%", "↓ 59%", "0%". The arrow carries the direction, so the number carries no sign — the
  * card used to say "↓ −59%", the same thing twice.
  */
+/**
+ * The pill's colour class — review 2026-11-05. The call sites wrote `pct < 0 ? 'is-down' : 'is-up'`, so a
+ * day exactly level with yesterday read "0%" in the green of a rise. No change is neither.
+ */
+export function deltaTone(pct: number): 'is-up' | 'is-down' | '' {
+  return pct > 0 ? 'is-up' : pct < 0 ? 'is-down' : '';
+}
+
 export function deltaLabel(pct: number): string {
   if (pct === 0) return '0%';
   return `${pct < 0 ? '↓' : '↑'} ${Math.abs(pct)}%`;

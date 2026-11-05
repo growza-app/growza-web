@@ -115,8 +115,14 @@ export function InstallBanner({ app }: { app: InstallApp }) {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const start = () => {
       timer = setTimeout(() => {
-        // Not on top of a sheet or a dialog that opened in those 2.5 s; the next visit to this page asks again.
-        if (document.querySelector(SOMETHING_OPEN_SELECTOR)) return;
+        // Not on top of a sheet or a dialog that opened in those 2.5 s — and not forgotten either (review
+        // 2026-11-05). This used to return and leave nothing pending, so an owner who opened the + menu in
+        // that window was never offered the app for as long as they stayed on the page. Look again in
+        // another 2.5 s, until whatever is open has closed; the effect's cleanup clears whichever is pending.
+        if (document.querySelector(SOMETHING_OPEN_SELECTOR)) {
+          start();
+          return;
+        }
         due.current = true;
         setMode(decide());
       }, SHOW_DELAY_MS);

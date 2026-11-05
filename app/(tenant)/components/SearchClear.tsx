@@ -68,6 +68,12 @@ export function SearchClear({
   const [showHowTo, setShowHowTo] = useState(false);
   const recRef = useRef<BrowserSpeechRecognition | null>(null);
   const btnRef = useRef<HTMLButtonElement | null>(null);
+  /**
+   * Which tap the start-up under way belongs to — review 2026-11-05. Starting is two awaits long, and a
+   * ref outlives the render a tap happened in: a second tap bumps this, and the first start-up sees on
+   * waking that it is no longer the one that was asked for.
+   */
+  const attempt = useRef(0);
   /** A session is open — starting or live. The button must stay a microphone across both. */
   const active = listening || starting;
 
@@ -145,6 +151,9 @@ export function SearchClear({
 
   useEffect(() => {
     return () => {
+      // Leaving the screen is a change of mind too: a start-up still waiting on the microphone must not
+      // wake up and begin listening on behalf of a box that is gone.
+      attempt.current += 1;
       const rec = recRef.current;
       if (rec) {
         try {
@@ -201,12 +210,25 @@ export function SearchClear({
       return;
     }
 
+    /*
+     * A tap while it is still getting ready — review 2026-11-05. There is no recogniser to stop yet (the
+     * branch above needs one), so this fell through and began a SECOND session beside the first: two
+     * permission checks, two recognisers, and the first one's ending switched the button off while the
+     * second was still recording. A second tap means "never mind", so it cancels the start-up.
+     */
+    if (starting) {
+      attempt.current += 1;
+      setStarting(false);
+      return;
+    }
+
     const Ctor = getSpeechRecognitionConstructor();
     if (!Ctor) return;
 
     // Acknowledge the tap before the awaits below: on a phone the permission check and the engine's own
     // start-up are the two seconds the owner was speaking into, and a button that does nothing for two
     // seconds reads as a button that did not work.
+    const mine = (attempt.current += 1);
     setStarting(true);
 
     /*
@@ -222,6 +244,8 @@ export function SearchClear({
      * is not about permission. `SpeechRecognition` then has its own say, exactly as it did before.
      */
     const mic = await askForMicrophone();
+    // Cancelled, or overtaken by a later tap, while the browser was being asked.
+    if (attempt.current !== mine) return;
     if (mic === 'denied' || mic === 'unusable') {
       // `unusable` says the same sentence without the way out, because there is no way out to offer:
       // the page is forbidden the microphone, or the machine has none (QA 2026-10-28).
@@ -249,6 +273,10 @@ export function SearchClear({
     /** An engine that never reports audio must not leave the button stuck on "getting ready". */
     let liveTimer: ReturnType<typeof setTimeout> | null = null;
     let live = false;
+    /** The phrase is in: later results are the engine finishing up, not something else to write. */
+    let finished = false;
+    /** Only the session that still holds the button may change what the button says. */
+    const holdsTheButton = (): boolean => recRef.current === rec;
 
     const clearTimers = () => {
       if (capTimer) clearTimeout(capTimer);
@@ -259,7 +287,7 @@ export function SearchClear({
 
     /** The one moment the button may say "speak now": the engine can hear. */
     const goLive = () => {
-      if (live) return;
+      if (live || !holdsTheButton()) return;
       live = true;
       if (liveTimer) clearTimeout(liveTimer);
       liveTimer = null;
@@ -294,6 +322,13 @@ export function SearchClear({
     liveTimer = setTimeout(goLive, 1500);
 
     rec.onresult = (event) => {
+      /*
+       * Nothing after the first complete phrase — review 2026-11-05. `stop()` below does not silence the
+       * engine at once, and in continuous mode Android Chrome goes on delivering results that repeat what
+       * it already said. Every one was joined on and written to the box: "butter butter chicken", which
+       * matches no dish.
+       */
+      if (finished) return;
       goLive();
       const cleaned = extractVoiceTranscript(event.results);
       if (!cleaned) return;
@@ -307,6 +342,7 @@ export function SearchClear({
       // open after the cashier has finished saying the dish.
       const last = event.results[event.results.length - 1];
       if (last?.isFinal) {
+        finished = true;
         try {
           rec.stop();
         } catch {
@@ -320,17 +356,22 @@ export function SearchClear({
       if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
         setDenied(true);
       }
-      if (recRef.current === rec) recRef.current = null;
-      setListening(false);
-      setStarting(false);
+      // A session that was overtaken ends quietly: the button is the newer session's to change.
+      if (holdsTheButton()) {
+        recRef.current = null;
+        setListening(false);
+        setStarting(false);
+      }
       releaseVoiceSession(stopSession);
     };
 
     rec.onend = () => {
       clearTimers();
-      if (recRef.current === rec) recRef.current = null;
-      setListening(false);
-      setStarting(false);
+      if (holdsTheButton()) {
+        recRef.current = null;
+        setListening(false);
+        setStarting(false);
+      }
       releaseVoiceSession(stopSession);
       const box = findSearchInput(btnRef.current ?? btn);
       if (box && box.value) box.focus();
