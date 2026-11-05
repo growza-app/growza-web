@@ -834,6 +834,68 @@ a.ord-card:focus-visible,
   letter-spacing: -0.01em;
   overflow-wrap: anywhere;
 }
+/*
+ * Jira GRW-679 (UX-06) — the fold. The body keeps the card's own column and gap, so opened it is the card as it was.
+ * From 861px up the heading's button is plain text: no chevron, no pointer, nothing to press.
+ */
+.pay-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.pay-fold {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: start;
+  cursor: default;
+  pointer-events: none;
+}
+.pay-fold-words {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+.pay-fold-sum,
+.pay-fold-mark {
+  display: none;
+}
+@media (max-width: 860px) {
+  .pay-fold {
+    min-height: 2.75rem;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  .pay-fold-mark {
+    display: block;
+    flex: none;
+    color: var(--muted);
+  }
+  .pay.is-open .pay-fold-mark {
+    transform: rotate(180deg);
+  }
+  .pay:not(.is-open) .pay-fold-sum {
+    display: block;
+    color: var(--accent-deep);
+    font-size: var(--fs-4);
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+  .pay:not(.is-open) .pay-body {
+    display: none;
+  }
+}
+
 .pay[aria-busy='true'] .pay-apps {
   opacity: 0.6;
 }

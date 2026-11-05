@@ -268,6 +268,40 @@
 .hm-section-title {
   margin-bottom: var(--sp-3);
 }
+
+/*
+ * Jira GRW-679 (UX-02) — on a phone, a card's "View all" is its foot, not the end of its heading.
+ *
+ * The + button floats at the bottom right. A link at the right-hand end of a card's heading sits exactly where it
+ * does, so the first card below the fold opened with its link under the button: "Queue" read "Open qu" and could
+ * not be tapped without scrolling. A foot is the full width of the card with its words in the middle, so the button
+ * can never cover them, and it is a 44px target instead of a few words.
+ *
+ * `display: contents` lifts the heading's two children into the card's own column, so the link can be ordered
+ * last without moving it in the markup: a screen reader still meets it straight after the title.
+ */
+@media (max-width: 860px) {
+  .hm-card-acts {
+    display: flex;
+    flex-direction: column;
+  }
+  .hm-card-acts > .hm-card-head {
+    display: contents;
+  }
+  .hm-card-acts > .hm-card-head > h2 {
+    margin-bottom: var(--sp-2);
+  }
+  .hm-card-acts > .hm-card-head > :not(h2) {
+    order: 1;
+    align-self: stretch;
+    justify-content: center;
+    min-height: 2.75rem;
+    margin: var(--sp-3) calc(var(--sp-4) * -1) calc(var(--sp-4) * -1);
+    padding: 0 var(--sp-4);
+    border-top: 1px solid var(--hm-line);
+    text-align: center;
+  }
+}
 .hm-title-accent {
   color: var(--hm-green);
 }

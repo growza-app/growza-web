@@ -57,6 +57,7 @@ import { mayReadDueBack } from './due-back';
 import { AttentionList, Avatar, avatarKey, BookingRows, Card, CardError, HomeHeader, QuickTiles, rupees, Segmented, SegmentCards } from './parts';
 import { RightNow } from './RightNow';
 import { useMinuteClock } from './useMinuteClock';
+import { deltaLabel } from './day-delta';
 
 /**
  * Jira GRW-222 — the owner's Home.
@@ -347,6 +348,8 @@ export function OwnerHome(p: OwnerHomeProps) {
   const branches = data?.branches ?? [];
   const multiBranch = branchContext.multi || branches.length > 1;
   const selected = branchContext.branches.find((b) => b.id === branch) ?? branches.find((b) => b.id === branch) ?? null;
+  // Jira GRW-679 (UX-04) — a comparison is drawn only when the API has one AND this period has takings.
+  const periodDeltaShown = Boolean(data && data.money.deltaPct !== null && data.money.deltaPct !== undefined && data.money.revenueMinor > 0);
   /*
    * Jira GRW-450 — more than one branch in view and none of them picked. Declared here because GRW-462 needs
    * it one line later; the closing time below reads the same value.
@@ -918,11 +921,9 @@ export function OwnerHome(p: OwnerHomeProps) {
                     <strong className="hm-v3-kpi-amount">{rupees(data?.money.revenueMinor ?? 0)}</strong>
                   </div>
                   <div className="hm-v3-kpi-delta-row">
-                    {data?.money.deltaPct !== null && data?.money.deltaPct !== undefined ? (
-                      <span className="hm-v3-delta-pill">
-                        {data.money.deltaPct >= 0 ? '↑' : '↓'} {Math.abs(data.money.deltaPct)}%
-                      </span>
-                    ) : null}
+                    {/* Jira GRW-679 (UX-04) — no badge until something has come in: "↓ 100%" at 9 am is the time of day,
+                        not news. The phone's hero has had this rule since BR-08; this card did not. */}
+                    {periodDeltaShown && data ? <span className="hm-v3-delta-pill">{deltaLabel(data.money.deltaPct ?? 0)}</span> : null}
                     <span className="hm-v3-kpi-vs">
                       {selected?.name ? `${selected.name} · ` : ''}
                       {period === 'today' ? t.vsYesterday : period === 'week' ? t.vsLastWeek : t.vsLastMonth}

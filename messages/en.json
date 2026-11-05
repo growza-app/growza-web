@@ -3216,6 +3216,8 @@
       "sentToQueueBannerWithToken": "{token} · {amount} sent to queue (Payment pending)",
       "viewInQueue": "View Queue",
       "needPaymentMode": "Select how they paid",
+      "guestToPay": "Add a {client} to take payment now.",
+      "guestToPayAdd": "Add {client}",
       "removeLine": "Remove {name}",
       "sizesCount": "{count} sizes",
       "subtotalUnits": "Subtotal ({count})",

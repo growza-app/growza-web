@@ -660,6 +660,43 @@
   font-weight: 600;
 }
 
+/*
+ * Jira GRW-679 (UX-01) — where the payment tiles will be, while a guest is still needed: what is missing, and the
+ * button that fixes it. The same pale amber as the app's other "one more thing first" notes; the button is a full
+ * 44px target because this is the step a desk repeats all day.
+ */
+.pf-guest-first {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius);
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+.pf-guest-first-say {
+  flex: 1 1 12rem;
+  margin: 0;
+  font-size: var(--fs-4);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.pf-guest-first-add {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 var(--sp-4);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--amber-ink);
+  font-size: var(--fs-4);
+  font-weight: 600;
+}
+
 /* Above the tiles, which are the full width of the page and have no label column to sit beside. */
 .pf-miss-wide {
   grid-column: 1 / -1;

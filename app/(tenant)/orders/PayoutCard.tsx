@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { api, ApiError, formatMoney } from '../lib/api';
 import type { DeliveryAppTally, DeliveryAppTallyRow, DeliveryTallyRange } from '../lib/api-types';
-import { DEFAULT_PAYOUT_RANGE, PAYOUT_RANGES, parsePercent, payoutRowState, percentText } from '../lib/delivery-payout';
+import { DEFAULT_PAYOUT_RANGE, PAYOUT_RANGES, parsePercent, payoutRowState, payoutSummary, percentText } from '../lib/delivery-payout';
 import { useBranch } from '../components/BranchProvider';
 
 /**
@@ -56,8 +56,27 @@ export function PayoutCard({ mayEdit }: { mayEdit: boolean }) {
     load(range, branch);
   }, [range, branch, load]);
 
+  /*
+   * Jira GRW-679 (UX-06) — on a phone the card opens folded, so the orders are the first thing on the Orders screen.
+   *
+   * It is the owner's money and stays at the top (GRW-658), but drawn in full it filled the first screen of a phone
+   * and the list this page is named for started below the fold. Folded it is its title and, where there is one, the
+   * figure it exists for; a tap opens it exactly as it was. From 861px up nothing changes: the CSS shows the body
+   * whatever `open` says, so there is no flash of the wrong state before the browser has been asked its width.
+   */
+  const [open, setOpen] = useState(false);
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 860px)');
+    const sync = () => setPhone(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
   if (hidden) return null;
   const money = (minor: string | null) => formatMoney(minor, 'INR', locale);
+  const summary = data ? payoutSummary(data.apps, (app) => tChannels(app), money) : '';
   const rangeLabel: Record<DeliveryTallyRange, string> = {
     today: t('ranges.today'),
     this_week: t('ranges.thisWeek'),
@@ -66,10 +85,27 @@ export function PayoutCard({ mayEdit }: { mayEdit: boolean }) {
   };
 
   return (
-    <section className="pay card" aria-labelledby="pay-title" aria-busy={loading}>
+    <section className={`pay card${open ? ' is-open' : ''}`} aria-labelledby="pay-title" aria-busy={loading}>
       <h2 className="pay-title" id="pay-title">
-        {t('title')}
+        {/* A button on every width so the markup is one thing; from 861px up it is drawn and behaves as plain text. */}
+        <button
+          type="button"
+          className="pay-fold"
+          aria-expanded={phone ? open : true}
+          aria-controls="pay-body"
+          tabIndex={phone ? 0 : -1}
+          onClick={() => setOpen((was) => !was)}
+        >
+          <span className="pay-fold-words">
+            <span>{t('title')}</span>
+            {summary ? <span className="pay-fold-sum">{summary}</span> : null}
+          </span>
+          <svg className="pay-fold-mark" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
       </h2>
+      <div className="pay-body" id="pay-body">
       <div className="ord-chips" role="group" aria-label={t('rangeLabel')}>
         {PAYOUT_RANGES.map((r) => (
           <button key={r} type="button" className={`ord-chip${r === range ? ' is-on' : ''}`} aria-pressed={r === range} onClick={() => setRange(r)}>
@@ -101,6 +137,7 @@ export function PayoutCard({ mayEdit }: { mayEdit: boolean }) {
           <p className="pay-note">{t('note')}</p>
         </>
       )}
+      </div>
     </section>
   );
 }

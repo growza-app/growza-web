@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { installBannerCopy } from './install-copy';
 import {
   installModeFor,
+  mayOfferOn,
   isInAppBrowser,
   parseDismissedAt,
   platformOf,
   SHOW_DELAY_MS,
   SNOOZE_MS,
+  SOMETHING_OPEN_SELECTOR,
   storageKeys,
   type InstallEnvironment,
 } from './install-logic';
@@ -192,5 +194,31 @@ describe('the install banner in Hindi (Jira GRW-364)', () => {
   });
   it('leaves the admin app in English', () => {
     expect(installBannerCopy('admin', 'prompt', 'hi').title).toBe('Install app');
+  });
+});
+
+describe('Jira GRW-679 (UX-03) — the offer waits for a quiet moment', () => {
+  it('on the dashboard it is offered on Home only', () => {
+    expect(mayOfferOn('salon', '/')).toBe(true);
+    for (const path of ['/appointments/new', '/services', '/pos', '/orders', '/customers/abc', '/settings']) {
+      expect(mayOfferOn('salon', path), path).toBe(false);
+    }
+  });
+
+  it('the sign-in and join pages keep it', () => {
+    expect(mayOfferOn('salon', '/login')).toBe(true);
+    expect(mayOfferOn('salon', '/join')).toBe(true);
+    expect(mayOfferOn('salon', '/join/some-token')).toBe(true);
+    // A page that only starts with the same letters is not the join page.
+    expect(mayOfferOn('salon', '/joinery')).toBe(false);
+  });
+
+  it('the admin portal is unchanged', () => {
+    expect(mayOfferOn('admin', '/admin/businesses')).toBe(true);
+  });
+
+  it('knows a sheet, a dialog and the + menu as something already open — and not the banner itself', () => {
+    for (const part of ['.sheet-backdrop', '.modal-backdrop', 'dialog[open]', '.fab-menu']) expect(SOMETHING_OPEN_SELECTOR).toContain(part);
+    expect(SOMETHING_OPEN_SELECTOR).toContain('[role="dialog"]:not(.install-banner)');
   });
 });

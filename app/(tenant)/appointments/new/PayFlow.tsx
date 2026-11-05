@@ -1483,8 +1483,24 @@ export function PayFlow({
    */
   const restMinor = firstWay ? Math.max(0, dueMinor - firstWay.minor) : 0;
   // An app's order has nothing to collect: no tiles (its note is drawn in their place).
+  /*
+   * Jira GRW-679 (UX-01) — why there is nothing to pay with yet.
+   *
+   * At a counter that needs no guest to ring a bill, the tiles are held back until one is chosen, and the step
+   * offered only "Keep payment pending in queue". Nothing said why: a desk about to take cash had to guess that the
+   * way forward was a guest. The flow is unchanged; this says it, and the button beside it opens the same sheet the
+   * guest field does.
+   */
+  const guestToPay = (
+    <div className="pf-guest-first" role="note" data-testid="guest-to-pay">
+      <p className="pf-guest-first-say">{t('desk.guestToPay', { client: nounInSentence(clientNoun) })}</p>
+      <button type="button" className="btn pf-guest-first-add" onClick={() => setWhoOpen('add')} disabled={saving !== null}>
+        {t('desk.guestToPayAdd', { client: nounInSentence(clientNoun) })}
+      </button>
+    </div>
+  );
   const payTiles = fromApp ? null : (
-    hidePayUntilGuest ? null : (
+    hidePayUntilGuest ? guestToPay : (
     <div className="pf-pay" data-step={guideMode ? 'next' : badMode && !selectedMode ? 'bad' : undefined} role="group" aria-label={t('howTitle')}>
       {firstWay ? (
         /* The first way, held, and what the next tile is for. × puts the bill back to one way. */
@@ -1638,6 +1654,21 @@ export function PayFlow({
         ) : null}
         {splitKeypadEl}
         {dialog}
+        {/*
+          Jira GRW-679 (UX-01) — the guest sheet, on this step too. It was only drawn on the step before, so the
+          "Add guest" button above had nothing to open; choosing one here brings the payment tiles up in place.
+        */}
+        {whoOpen ? (
+          <ClientSheet
+            location={location}
+            startAdding={whoOpen === 'add'}
+            onPick={(c) => {
+              setClient(c.id === null ? { kind: 'named', name: c.name ?? '' } : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone });
+              setWhoOpen(false);
+            }}
+            onClose={() => setWhoOpen(false)}
+          />
+        ) : null}
       </div>
     );
   }

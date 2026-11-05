@@ -230,6 +230,15 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
   }
 
   const dayPeak = Math.max(...bars.map((b) => b.valueMinor), 1);
+  /*
+   * Jira GRW-679 (UX-11) — which day was the best, when there was one. The seven bars were all one pale green with
+   * no figure anywhere on them, so the chart said "some days were bigger" and not how big. The tallest is drawn in the
+   * accent (as the busiest hours already are, below) and carries its amount; the rest are told from it by height.
+   * No peak when nothing was taken: seven empty columns have no best day.
+   */
+  const peakDay = bars.reduce((best, b, i) => (b.valueMinor > 0 && (best === -1 || b.valueMinor > bars[best]!.valueMinor) ? i : best), -1);
+  /** A per-order average in whole rupees: "₹299 per order". The paise of an average are not anybody's money. */
+  const wholeRupees = (minor: number) => Math.round(minor / 100) * 100;
   const hourPeak = Math.max(...busy.byHour.map((h) => Number(h.valueMinor)), 1);
   const topValue = Math.max(...earners.rows.map((r) => Number(r.valueMinor)), 1);
   const difference = takings.differenceMinor === null ? null : Number(takings.differenceMinor);
@@ -255,14 +264,19 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
           {t('took.bills', { n: takings.bills })}
           {takings.averageBillMinor === null
             ? null
-            : ` · ${t('took.average', { amount: money(takings.averageBillMinor) })}`}
+            : ` · ${t('took.average', { amount: money(wholeRupees(takings.averageBillMinor)) })}`}
         </p>
         <ul className="cr-bars cr-bars-day" ref={barsRef}>
           {bars.map((b, i) => (
             <li key={b.startISO} className="cr-bar-col">
+              {/* Above the slot, so the amount sits on top of its bar; empty for the other days, which keeps every
+                  column the same height. Read out below for everybody, so hidden from a screen reader here. */}
+              <span className="cr-bar-top" aria-hidden="true">
+                {i === peakDay ? money(b.valueMinor) : ''}
+              </span>
               <span className="cr-bar-slot">
                 <span
-                  className="cr-bar"
+                  className={`cr-bar${i === peakDay ? ' is-peak' : ''}`}
                   style={{ height: `${b.valueMinor === 0 ? 0 : Math.max(MIN_BAR_PCT, (b.valueMinor / dayPeak) * 100)}%` }}
                 />
               </span>
@@ -470,7 +484,7 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
                   : t('strategy.combo.dataSingle', {
                       singlePct: strategy.basket.singleItemSharePct,
                       avgItems: strategy.basket.avgItemsPerBill,
-                      avgBill: money(takings.averageBillMinor ?? 0),
+                      avgBill: money(wholeRupees(takings.averageBillMinor ?? 0)),
                     })}
               </p>
               <p className="cr-strat-action">
