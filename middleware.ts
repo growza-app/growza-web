@@ -57,9 +57,21 @@ export function isProxiedToApi(pathname: string): boolean {
   return pathname.startsWith('/api/') || pathname.startsWith('/uploads/') || pathname.startsWith('/d/');
 }
 
+/**
+ * A file, not a page — review 2026-11-05. The policy governs what a DOCUMENT may run; an icon, the manifest,
+ * the service worker and a resized photo are not documents, and each was being handed a fresh nonce, a
+ * twelve-part policy and a copied set of headers it could not use. Named by extension rather than "anything
+ * with a dot", so a page whose address happens to contain one still gets its policy.
+ */
+const STATIC_FILE = /\.(?:png|jpe?g|gif|webp|avif|svg|ico|woff2?|css|js|map|json|webmanifest|txt|xml)$/i;
+
+export function isStaticAsset(pathname: string): boolean {
+  return pathname.startsWith('/_next/image') || STATIC_FILE.test(pathname);
+}
+
 function pass(req: NextRequest): NextResponse {
   const { pathname } = req.nextUrl;
-  if (isProxiedToApi(pathname)) return NextResponse.next();
+  if (isProxiedToApi(pathname) || isStaticAsset(pathname)) return NextResponse.next();
   const nonce = btoa(crypto.randomUUID());
   const policy = pageCsp(nonce, pathname.startsWith('/admin'));
   const requestHeaders = new Headers(req.headers);

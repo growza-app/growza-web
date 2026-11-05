@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { deltaLabel, periodDeltaPct } from './day-delta';
+import { deltaLabel, deltaTone, periodDeltaPct } from './day-delta';
 
 /** Jira GRW-679 (UX-04) — a comparison is shown only when there is something on both sides of it. */
 describe('compared with the period before', () => {
@@ -45,5 +45,22 @@ describe('the Home cards use it, and invent nothing', () => {
 
   it('the salon Home hides its badge until something has come in', () => {
     expect(owner).toContain('periodDeltaShown');
+  });
+});
+
+/** Review 2026-11-05 — a day level with yesterday read "0%" in the green of a rise. */
+describe('the colour of the change', () => {
+  it('is up for a rise, down for a fall, and neither for no change', () => {
+    expect(deltaTone(12)).toBe('is-up');
+    expect(deltaTone(-59)).toBe('is-down');
+    expect(deltaTone(0)).toBe('');
+  });
+
+  it('agrees with the arrow the label draws', () => {
+    for (const pct of [-100, -1, 0, 1, 250]) {
+      const label = deltaLabel(pct);
+      expect(label.startsWith('↑'), String(pct)).toBe(deltaTone(pct) === 'is-up');
+      expect(label.startsWith('↓'), String(pct)).toBe(deltaTone(pct) === 'is-down');
+    }
   });
 });

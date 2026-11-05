@@ -1,6 +1,6 @@
 'use client';
 
-import { deltaLabel, periodDeltaPct } from './day-delta';
+import { deltaLabel, deltaTone, periodDeltaPct } from './day-delta';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../lib/api';
 import type {
@@ -821,7 +821,7 @@ export function ShopHome({
                         </div>
                         {salesDeltaPct !== null ? (
                           <div className="rst-kpi-side">
-                            <span className={`rst-delta-pill ${salesDeltaPct < 0 ? 'is-down' : 'is-up'}`}>{deltaLabel(salesDeltaPct)}</span>
+                            <span className={`rst-delta-pill ${deltaTone(salesDeltaPct)}`}>{deltaLabel(salesDeltaPct)}</span>
                             <span className="rst-delta-sub">{s.vsYesterday}</span>
                           </div>
                         ) : null}
@@ -860,7 +860,7 @@ export function ShopHome({
                     </div>
                     {ordersDeltaPct !== null ? (
                       <div className="rst-kpi-side is-bottom">
-                        <span className={`rst-delta-pill ${ordersDeltaPct < 0 ? 'is-down' : 'is-up'}`}>{deltaLabel(ordersDeltaPct)}</span>
+                        <span className={`rst-delta-pill ${deltaTone(ordersDeltaPct)}`}>{deltaLabel(ordersDeltaPct)}</span>
                       </div>
                     ) : null}
                   </a>
@@ -1999,8 +1999,8 @@ export function ShopHome({
                             </span>
                           ) : phoneFigures.changePct !== null && phoneFigures.changePct !== undefined ? (
                             // Never colour alone: the arrow and the sign carry it for anyone who cannot tell green from red.
-                            <span className={`shp-delta ${phoneFigures.changePct < 0 ? 'is-down' : 'is-up'}`}>
-                              {phoneFigures.changePct < 0 ? '↓' : '↑'} {Math.abs(phoneFigures.changePct)}% {s.vsPrevious}
+                            <span className={`shp-delta ${deltaTone(phoneFigures.changePct)}`}>
+                              {deltaLabel(phoneFigures.changePct)} {s.vsPrevious}
                             </span>
                           ) : null}
                           {/*

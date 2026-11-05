@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { installBannerCopy } from './install-copy';
 import {
@@ -220,5 +222,14 @@ describe('Jira GRW-679 (UX-03) — the offer waits for a quiet moment', () => {
   it('knows a sheet, a dialog and the + menu as something already open — and not the banner itself', () => {
     for (const part of ['.sheet-backdrop', '.modal-backdrop', 'dialog[open]', '.fab-menu']) expect(SOMETHING_OPEN_SELECTOR).toContain(part);
     expect(SOMETHING_OPEN_SELECTOR).toContain('[role="dialog"]:not(.install-banner)');
+  });
+});
+
+/** Review 2026-11-05 — a sheet open at the wrong moment postponed the offer; it used to cancel it. */
+describe('the offer waits out whatever is open', () => {
+  const banner = readFileSync(resolve(__dirname, 'InstallBanner.tsx'), 'utf8');
+
+  it('looks again instead of giving up for the rest of the visit', () => {
+    expect(banner).toMatch(/if \(document\.querySelector\(SOMETHING_OPEN_SELECTOR\)\) \{\s*start\(\);\s*return;\s*\}/);
   });
 });
