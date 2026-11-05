@@ -348,6 +348,9 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
      * announcement, so the package turned up in Offers instead.
      */
     if (selectedIds.length > 0 && comboPriceMinor == null) errs.price = t('errors.priceRequired');
+    // Jira GRW-676 (SAL-07) — "100% off" or a typed 0 made a package that gives its services away on every booking.
+    // The API refuses it now; said here first, beside the price, in the page's own language.
+    if (selectedIds.length > 0 && comboPriceMinor === 0) errs.price = t('errors.priceZero');
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };

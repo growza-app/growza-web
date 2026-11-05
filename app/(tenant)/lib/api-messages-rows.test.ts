@@ -21,3 +21,33 @@ describe('the refusals of a spreadsheet import, in Hindi', () => {
     for (const k of ['Upload a .xlsx or .csv file.', 'That file has no rows in it.', 'That file has column headings but nothing under them.']) expect(API_MESSAGES_HI[k], k).toBeTruthy();
   });
 });
+
+/** Jira GRW-678 (RET-01) — "not enough on the shelf" carries a number and the shop's own name for the thing. */
+describe('how many are left, in Hindi', () => {
+  it('translates the sentence and keeps the name and the number', () => {
+    expect(localiseApiMessage('Only 3 left of White Shirt', 'hi')).toBe('White Shirt: सिर्फ़ 3 बचे हैं');
+    expect(localiseApiMessage('Only 2 left of Grey Trousers (28)', 'hi')).toBe('Grey Trousers (28): सिर्फ़ 2 बचे हैं');
+    expect(localiseApiMessage('White Shirt is out of stock', 'hi')).toBe('White Shirt: स्टॉक ख़त्म है');
+  });
+
+  it('changes nothing in English', () => {
+    expect(localiseApiMessage('Only 3 left of White Shirt', 'en')).toBe('Only 3 left of White Shirt');
+    expect(localiseApiMessage('White Shirt is out of stock', 'en')).toBe('White Shirt is out of stock');
+  });
+
+  it('a whole-sentence translation still wins, and a near miss is left alone', () => {
+    expect(localiseApiMessage('That item is not for sale here', 'hi')).toBe(API_MESSAGES_HI['That item is not for sale here']);
+    expect(localiseApiMessage('Only a few left', 'hi')).toBe('Only a few left');
+  });
+
+  it('has the other sentences these fixes send', () => {
+    for (const k of [
+      'A package needs a price above ₹0',
+      'Somebody has already taken payment for this booking.',
+      'This booking was cancelled, so it cannot be paid for.',
+      'That product was sold in sizes. Say which size is coming back',
+    ]) {
+      expect(API_MESSAGES_HI[k], k).toBeTruthy();
+    }
+  });
+});
