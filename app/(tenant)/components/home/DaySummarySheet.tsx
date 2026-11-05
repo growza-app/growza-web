@@ -11,6 +11,7 @@ import { useTranslations } from 'next-intl';
 import { useDialog } from '../../../shared/a11y/useDialog';
 import { useNoProvider } from '../../lib/use-no-provider';
 import { branchTag } from '../../lib/day-summary-view';
+import { GivenAwayCard } from './GivenAwayCard';
 import { ShopDayBody } from './ShopDayBody';
 
 /**
@@ -174,6 +175,9 @@ export function DaySummarySheet({
               </div>
               <PaymentBar t={t} slices={data.byPaymentMode} total={data.revenueMinor} variant="list" />
             </section>
+
+            {/* Money that did not come in, straight after how the money that did was paid. */}
+            <GivenAwayCard t={t} givenAway={data.givenAway} />
 
             {/* Jira GRW-406 — the counter's day: tokens given, served, paid, and who left without service. */}
             {data.tokens ? (

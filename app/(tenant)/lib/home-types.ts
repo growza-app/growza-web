@@ -79,6 +79,8 @@ export interface ShopDaySummary {
   /** Billed, not received: the marketplace's commission is not taken off. */
   channelCaveat: string;
   topSellers: Array<{ name: string; sizeLabel: string | null; units: number; takingsMinor: number }>;
+  /** What the day's counter bills were charged below their price, and on how many. Absent from an older API. */
+  givenAway?: { minor: number; bills: number };
   /** `closed` only on a branch that has been shut since it traded — absent, never false. */
   branches?: Array<{ id: string; name: string; orders: number; takingsMinor: number; closed?: boolean }>;
 }
@@ -101,6 +103,8 @@ export interface DaySummary {
   staff: Array<{ id: string; name: string; bookings: number; revenueMinor: number; key?: 'unassigned'; locationId?: string | null }>;
   /** What the day's bills took for products (with a visit or alone); the staff rows are services only. Absent from an older API. */
   productsMinor?: number;
+  /** Owner, 2026-11-06 — what the day's bills were charged below their price, and on how many. Absent from an older API. */
+  givenAway?: { minor: number; bills: number };
   /** Jira GRW-222 — who the day was for. */
   clients: {
     served: number;

@@ -249,6 +249,11 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     daySummary: S('Day summary', 'दिन का हिसाब'),
     todaysSummary: S("Today's summary", 'आज का पूरा हिसाब'),
     moneyTaken: S('Money today', 'आज मिला पैसा'),
+    // Owner, 2026-11-06 — the day report's line for bills that took less than their price. Plain words: not
+    // "discounts" (a word for an offer the owner chose) and not "giveaway" — it says what the till did.
+    chargedBelow: S('Charged below price', 'दाम से कम लिया'),
+    chargedBelowSub: S('Bills that took less than the price today', 'आज जिन बिलों में दाम से कम लिया गया'),
+    billCount: (n: number) => S(n === 1 ? '1 bill' : `${n} bills`, `${n} बिल`),
     done: S('done', 'पूरे हुए'),
     notDone: S('still to do', 'बाकी हैं'),
     /*

@@ -2,6 +2,7 @@
 
 import type { ShopDaySummary } from '../../lib/api';
 import type { HomeCopy } from '../../lib/home-copy';
+import { GivenAwayCard } from './GivenAwayCard';
 import { rupees } from './parts';
 
 /**
@@ -52,6 +53,9 @@ export function ShopDayBody({ t, data, onOpenBranch }: { t: HomeCopy; data: Shop
           </ul>
         </section>
       ) : null}
+
+      {/* Money that did not come in, straight after the money that did. */}
+      <GivenAwayCard t={t} givenAway={data.givenAway} />
 
       {data.byChannel.length > 0 ? (
         <section className="hm-card">
