@@ -222,6 +222,25 @@ input[type='search']:has(~ .search-mic) {
   padding-right: 2.75rem;
 }
 
+/*
+ * Both buttons at once — the owner, 2026-11-05: "always show mic icon on text box".
+ *
+ * The microphone holds the outer place in every state, so it is in the same spot whether the box is
+ * empty or full and the hand learns one target. The × moves inside it, and the text gets out of the way
+ * of both. At 344px that leaves the placeholder room to truncate, which is the right thing to lose here.
+ *
+ * 2.875rem, not 2.75rem: the microphone starts 0.125rem in from the edge, so a 2.75rem step put the ×
+ * two pixels UNDER it — measured at 344px, × ending at x=220 over a microphone starting at x=218. Two
+ * 44px targets that overlap are one target with a lie in the middle of it.
+ */
+.search-clear:has(+ .search-mic) {
+  right: 2.875rem;
+}
+
+input[type='search']:has(~ .search-clear):has(~ .search-mic) {
+  padding-right: 5.5rem;
+}
+
 input[type='search']:has(+ .search-clear)::-webkit-search-cancel-button,
 input[type='search']:has(+ .search-mic)::-webkit-search-cancel-button,
 input[type='search']:has(~ .search-clear)::-webkit-search-cancel-button,

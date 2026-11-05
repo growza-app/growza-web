@@ -265,3 +265,39 @@ describe('the moment the microphone can actually hear', () => {
     }
   });
 });
+
+/**
+ * The owner, 2026-11-05: "always show mic icon on text box."
+ *
+ * The first typed character used to replace the microphone with the ×, so voice was only ever offered on
+ * an empty box. Mis-hear one word, or want to say the next dish rather than backspace through this one,
+ * and the button you wanted had gone. They stand together now, and the microphone holds the outer place
+ * in every state so it never moves.
+ */
+describe('the microphone beside a box that already has text', () => {
+  const component = read('components/SearchClear.tsx');
+  const css = read('styles/26-search.css');
+
+  it('renders the × and the microphone together rather than one instead of the other', () => {
+    // One × , built once and rendered beside the mic — not an early return that ends the component.
+    expect(component).toMatch(/const clearButton =\s*\n?\s*value !== '' \? \(/);
+    expect(component).toMatch(/<>\s*\n\s*\{clearButton\}/);
+    // The old swap is gone: nothing returns the × on its own except a browser with no voice at all.
+    expect(component).not.toMatch(/if \(value !== '' && !active\) \{/);
+    expect(component).toMatch(/if \(!canSpeak && !active\) return clearButton;/);
+  });
+
+  it('keeps the microphone in the same spot whether the box is empty or full', () => {
+    // The × moves inside; the mic's own `right` is never overridden.
+    expect(css).toMatch(/\.search-clear:has\(\+ \.search-mic\) \{\s*right: 2\.875rem;/);
+    expect(css).not.toMatch(/\.search-mic:has\([^)]*\) \{\s*right:/);
+    // 2.875rem clears the microphone's own 0.125rem inset: at 2.75rem the two 44px targets overlapped
+    // by two pixels, measured at 344px.
+    expect(css).toMatch(/input\[type='search'\]:has\(~ \.search-clear\):has\(~ \.search-mic\) \{\s*padding-right: 5\.5rem;/);
+  });
+
+  it('still finds its own box when the × or the till’s F2 key sits between', () => {
+    expect(component).toMatch(/for \(let el = btn\.previousElementSibling; el; el = el\.previousElementSibling\)/);
+    expect(component).toMatch(/if \(el instanceof HTMLInputElement\) return el;/);
+  });
+});

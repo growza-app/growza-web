@@ -29,7 +29,15 @@ import {
  */
 function findSearchInput(btn: HTMLElement | null): HTMLInputElement | null {
   if (!btn) return null;
-  if (btn.previousElementSibling instanceof HTMLInputElement) return btn.previousElementSibling;
+  /*
+   * Walk back over whatever sits between, rather than looking at one sibling — 2026-11-05. The till puts
+   * an `F2` <kbd> beside its box, and since the × and the microphone now stand together the microphone's
+   * previous sibling is the ×. Stepping back to the nearest input keeps this on the right box in a
+   * container that holds more than one, which `querySelector('input')` below cannot promise.
+   */
+  for (let el = btn.previousElementSibling; el; el = el.previousElementSibling) {
+    if (el instanceof HTMLInputElement) return el;
+  }
   const fallback = btn.parentElement?.querySelector('input');
   return fallback instanceof HTMLInputElement ? fallback : null;
 }
@@ -153,8 +161,16 @@ export function SearchClear({
     if (value === '') return null;
   }
 
-  if (value !== '' && !active) {
-    return (
+  /*
+   * The × and the microphone stand together — the owner, 2026-11-05: "always show mic icon on text box".
+   *
+   * Until now the first typed character replaced the microphone with the ×, so voice was available only
+   * on an empty box: mis-hear one word, or want to say the next dish instead of backspacing, and the
+   * button you wanted had vanished. The × takes the inner place and the microphone keeps the outer one,
+   * so the microphone never moves — which is the whole point of "always".
+   */
+  const clearButton =
+    value !== '' ? (
       <button
         type="button"
         className="search-clear"
@@ -167,8 +183,10 @@ export function SearchClear({
       >
         <IconClose />
       </button>
-    );
-  }
+    ) : null;
+
+  // No voice on this browser: the × on its own, exactly as it has always been.
+  if (!canSpeak && !active) return clearButton;
 
   const toggleVoice = async (btn: HTMLButtonElement) => {
     if (active && recRef.current) {
@@ -332,6 +350,7 @@ export function SearchClear({
 
   return (
     <>
+      {clearButton}
       <button
         ref={btnRef}
         type="button"
