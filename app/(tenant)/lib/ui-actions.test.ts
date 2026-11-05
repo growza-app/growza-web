@@ -343,6 +343,11 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
    * installed @growza-app/shared is behind the API's source.)
    */
   '/appointments/new': ['POST /api/v1/bills/:visitKey/document', 'POST /api/v1/documents/:id/share'],
+  /*
+   * Jira GRW-674 (SEC-12) — taking a shared link back, from the document's own screen. Gated by that screen
+   * (`guardScreen('/documents')`), and the API keeps it the owner's alone, as making the link is.
+   */
+  '/documents': ['DELETE /api/v1/documents/:id/share'],
   // 0127 — returning a product against a settled bill on the Sales register (/sales is gated by guardScreen('/sales')).
   '/sales': ['POST /api/v1/sales/:visitKey/returns'],
 };
