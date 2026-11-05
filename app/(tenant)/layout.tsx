@@ -2,6 +2,7 @@ import { areasOf, DIARY_AREAS, type Areas } from './lib/areas';
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { headers } from 'next/headers';
 import { api } from './lib/api';
 import type { Me } from './lib/api-types';
 import { Sidebar } from './components/Sidebar';
@@ -197,6 +198,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   /** Jira GRW-329 — the language on the person's account; the cookie is a cache of it. */
   let storedLang: string | null = null;
   const lang = await serverLang();
+  // Jira GRW-674 (SEC-04) — the nonce `middleware.ts` put in this request's script policy, for the inline scripts below.
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
   const messages = await getMessages();
 
   try {
@@ -282,7 +285,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     return (
       <html lang={lang} className={fontClass}>
         <body>
-          <BrowserGate />
+          <BrowserGate nonce={nonce} />
           <AccountStatusScreen message={accountStatus.message} support={accountStatus.support} />
         </body>
       </html>
@@ -294,8 +297,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <body>
         {/* GRW-197 — first in the body, so it runs before the app bundle has a
             chance to fail to parse. */}
-        <BrowserGate />
-        <InstallPromptCapture />
+        <BrowserGate nonce={nonce} />
+        <InstallPromptCapture nonce={nonce} />
         <PwaRegister />
         <NumberWheelGuard />
         <ViewportHeight />

@@ -66,23 +66,34 @@ export const MINIMUM = {
  * `static {}` initialisation block, which is what Next's own runtime contains.
  * If this parses, that chunk parses.
  *
- * ## Why `new Function` and not the literal syntax
+ * ## Two scripts, and no `new Function` — Jira GRW-674 (SEC-04)
  *
- * Written inline, `class X{static{}}` would be a parse error in *this* script
- * on the very browsers it is meant to detect — the detector would die of the
- * disease it diagnoses. Inside a string handed to `new Function`, the parse
- * happens at call time and throws a catchable `SyntaxError`.
+ * The probe used to be one script: `try { new Function('class X{static{}}') } catch { mark }`. Handing
+ * the syntax to `new Function` as a string made the parse happen at call time, where a `SyntaxError`
+ * could be caught. That is `eval` by another name, and a script policy without `'unsafe-eval'` refuses
+ * it with an `EvalError` — which the same `catch` took for "this browser cannot parse the app". Under
+ * the tenant screens' policy EVERY browser would have been shown the too-old notice.
  *
- * ## ES5 only, deliberately
+ * So the parse is left to the browser's own parser, which is the thing being asked about:
  *
- * No arrow functions, no `const`, no template literals. Everything here must
- * parse on a browser that cannot parse the app — BR-03. A guard written in the
- * syntax it is guarding against is not a guard.
+ * 1. `SUPPORT_SYNTAX` is the construct written out, followed by a flag. On a browser that can parse
+ *    it, the flag is set. On one that cannot, the whole script is a syntax error and is discarded —
+ *    it dies of the disease, and that is the measurement.
+ * 2. `SUPPORT_PROBE` runs next, in a SEPARATE script element (a syntax error in one script does not
+ *    stop another), and marks the document when the flag is missing.
+ *
+ * Nothing is evaluated from a string, so the policy has nothing to refuse.
+ *
+ * ## ES5 only, deliberately — the second script
+ *
+ * No arrow functions, no `const`, no template literals. `SUPPORT_PROBE` must parse on a browser that
+ * cannot parse the app — BR-03. A guard written in the syntax it is guarding against is not a guard.
+ * `SUPPORT_SYNTAX` is the one place that rule is broken on purpose.
  */
+export const SUPPORT_SYNTAX = `{class GrowzaSupportProbe{static{}}}window.__growzaModern=1;`;
+
 export const SUPPORT_PROBE = `(function () {
-  try {
-    new Function('class X{static{}}');
-  } catch (e) {
+  if (!window.__growzaModern) {
     document.documentElement.className += ' browser-too-old';
   }
 })();`;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MINIMUM, SUPPORT_PROBE, UNSUPPORTED_COPY } from './browser-support';
+import { MINIMUM, SUPPORT_PROBE, SUPPORT_SYNTAX, UNSUPPORTED_COPY } from './browser-support';
 
 /**
  * Jira GRW-197 — the floor tracks the build, not a comment.
@@ -53,28 +53,50 @@ describe('the probe can run where the app cannot', () => {
   it('tests the class static block — the construct that actually breaks', () => {
     // Not a user-agent string: that can be spoofed, frozen, or simply
     // unfamiliar, and a version comparison against it is a guess. This is the
-    // exact syntax found in Next's own runtime chunk.
-    expect(SUPPORT_PROBE).toContain('static{}');
-    expect(SUPPORT_PROBE).toContain('new Function');
+    // exact syntax found in Next's own runtime chunk — written out, so the
+    // browser's own parser is what answers.
+    expect(SUPPORT_SYNTAX).toContain('static{}');
+    expect(SUPPORT_SYNTAX).toContain('window.__growzaModern=1');
   });
 
-  it('marks the document rather than throwing', () => {
-    // A detector that throws takes out whatever runs after it.
-    expect(SUPPORT_PROBE).toContain('try');
-    expect(SUPPORT_PROBE).toContain('catch');
+  /*
+   * Jira GRW-674 (SEC-04) — nothing is evaluated from a string.
+   *
+   * The probe was `try { new Function('class X{static{}}') } catch { mark }`. A script policy without
+   * 'unsafe-eval' answers `new Function` with an EvalError, the catch took that for "cannot parse the
+   * app", and every browser on earth would have been shown the too-old notice the day the policy
+   * reached the tenant screens.
+   */
+  it('evaluates nothing from a string, so a script policy has nothing to refuse', () => {
+    for (const script of [SUPPORT_SYNTAX, SUPPORT_PROBE]) {
+      expect(script).not.toMatch(/new Function|\beval\(|setTimeout\(\s*['"`]/);
+    }
+  });
+
+  it('marks the document and cannot throw doing it', () => {
+    // A detector that throws takes out whatever runs after it. Reading a
+    // missing property of `window` is the one thing every browser can do.
+    expect(SUPPORT_PROBE).toContain('window.__growzaModern');
     expect(SUPPORT_PROBE).toContain('browser-too-old');
   });
 
-  it('passes on a browser that supports the syntax', () => {
-    // Node parses class static blocks, so running the probe here must NOT mark
-    // the document — the false-positive direction, which would take the app
-    // away from someone whose browser is fine.
-    const marks: string[] = [];
+  /** The two scripts as a browser runs them: each in its own element, a failed parse discarding the first whole. */
+  const run = (parsesModernSyntax: boolean): string => {
+    const windowStub: Record<string, unknown> = {};
     const documentStub = { documentElement: { className: '' } };
-    const run = new Function('document', SUPPORT_PROBE);
-    run(documentStub);
-    marks.push(documentStub.documentElement.className);
-    expect(marks[0]).toBe('');
+    if (parsesModernSyntax) new Function('window', SUPPORT_SYNTAX)(windowStub);
+    new Function('window', 'document', SUPPORT_PROBE)(windowStub, documentStub);
+    return documentStub.documentElement.className;
+  };
+
+  it('passes on a browser that supports the syntax', () => {
+    // Node parses class static blocks. The false-positive direction: marking
+    // here would take the app away from someone whose browser is fine.
+    expect(run(true)).toBe('');
+  });
+
+  it('marks a browser whose parser threw the first script away', () => {
+    expect(run(false).trim()).toBe('browser-too-old');
   });
 });
 
