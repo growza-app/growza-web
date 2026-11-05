@@ -1629,6 +1629,8 @@ export const api = {
       startAt: string;
       endAt: string;
       remindersScheduled: number;
+      /** Jira GRW-676 (SAL-05) — another booking this client already has at that time. The booking is still made. */
+      clientAlsoBooked?: { startAt: string; staffName: string | null };
     }>('/api/v1/bookings', input),
   uploadServicePhoto: (id: string, file: File) => uploadFile<Service>(`/api/v1/services/${id}/photo`, 'photo', file),
   removeServicePhoto: (id: string) => del<Service>(`/api/v1/services/${id}/photo`),
