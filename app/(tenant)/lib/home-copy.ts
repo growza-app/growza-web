@@ -539,12 +539,12 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       vsYesterday: S('vs. yesterday', 'कल की तुलना में'),
       whatWouldYouLikeToDo: S('What would you like to do?', 'आप क्या करना चाहेंगे?'),
       viewOrdersAction: S('View orders', 'ऑर्डर देखें'),
-      manageMenuAction: S('Manage menu', 'मेनू संभालें'),
+      manageMenuAction: S('Manage menu', 'मेन्यू संभालें'),
       customersCardTitle: S('Customers', 'ग्राहक'),
       needsAttentionTitle: S('Needs attention', 'ध्यान दें'),
       attentionItemsBadge: (n: number) => (n === 1 ? S('1 item', '1 बात') : S(`${n} items`, `${n} बातें`)),
       menuItemsLowSub: (n: number) =>
-        n === 1 ? S('1 menu item is running low', '1 मेनू आइटम कम हो रहा है') : S(`${n} menu items are running low`, `${n} मेनू आइटम कम हो रहे हैं`),
+        n === 1 ? S('1 menu item is running low', '1 मेन्यू आइटम कम हो रहा है') : S(`${n} menu items are running low`, `${n} मेन्यू आइटम कम हो रहे हैं`),
       pendingOrdersTitle: S('Pending orders', 'लंबित ऑर्डर'),
       pendingOrdersWaitSub: (n: number) =>
         n === 1
@@ -570,7 +570,13 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       pos: S('POS', 'पीओएस'),
       /** Jira GRW-608 — the shop's two screens. The vertical's own word in English; Hindi uses the generic one (Jira GRW-315). */
       orders: hi ? 'ऑर्डर' : (labels.orders ?? 'Orders'),
-      stock: hi ? 'स्टॉक' : (labels.stock ?? 'Stock'),
+      /*
+       * Jira GRW-679 (UX-05) — a restaurant's shelf is its Menu, in Hindi too. The rule above (Hindi uses the generic
+       * word) put "स्टॉक" on a kitchen's tab while English said "Menu": a different thing, not a different word, since
+       * a kitchen keeps no count. The vertical's word is still what decides; this is its Hindi, for the one word that
+       * changes the meaning.
+       */
+      stock: hi ? (labels.stock === 'Menu' ? 'मेन्यू' : 'स्टॉक') : (labels.stock ?? 'Stock'),
       schedule: S('My schedule', 'मेरा काम'),
       clients: hi ? 'ग्राहक' : (labels.customers ?? copy.nav.customers),
       staff: hi ? 'स्टाफ़' : (labels.providers ?? copy.nav.staff),

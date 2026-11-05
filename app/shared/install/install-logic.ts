@@ -74,6 +74,26 @@ export interface InstallEnvironment {
   now: number;
 }
 
+/**
+ * Jira GRW-679 (UX-03) — where the offer may appear.
+ *
+ * It used to appear on every dashboard page, 2.5 s after load: over New booking with a client half picked, over
+ * Services mid-edit. An offer to install is never urgent, so on the dashboard it waits for Home — the screen people
+ * land on with nothing in their hands. The sign-in and join pages keep it (nothing is in progress there either), and
+ * the admin portal is unchanged.
+ */
+export function mayOfferOn(app: InstallApp, pathname: string): boolean {
+  if (app !== 'salon') return true;
+  return pathname === '/' || pathname === '/login' || pathname === '/join' || pathname.startsWith('/join/');
+}
+
+/**
+ * Anything that is already asking for the person's attention: a sheet, a dialog, a menu over the page. The offer does
+ * not open on top of one; it waits for the next visit to Home. The banner is itself a dialog, so it is left out.
+ */
+export const SOMETHING_OPEN_SELECTOR =
+  '[role="dialog"]:not(.install-banner), dialog[open], .sheet-backdrop, .modal-backdrop, .admin-dialog-backdrop, .fab-menu';
+
 export function isSnoozed(dismissedAt: number | null, now: number): boolean {
   return dismissedAt !== null && Number.isFinite(dismissedAt) && now - dismissedAt < SNOOZE_MS;
 }

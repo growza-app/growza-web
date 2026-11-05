@@ -3,11 +3,14 @@
 import './install-banner.css';
 import { APP_ICONS } from '../../icons.generated';
 import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { installBannerCopy } from './install-copy';
 import {
   installModeFor,
+  mayOfferOn,
   parseDismissedAt,
   SHOW_DELAY_MS,
+  SOMETHING_OPEN_SELECTOR,
   storageKeys,
   type InstallApp,
   type InstallMode,
@@ -21,6 +24,9 @@ import {
  * out like the browser's install dialog: 2.5 s after the page has loaded it
  * shows the app, Cancel, and Install where the browser can install — or short
  * steps where it cannot. Never inside the installed app; Cancel snoozes a week.
+ *
+ * Jira GRW-679 (UX-03) — rendered on every page, SHOWN only where nothing is in
+ * progress: on the dashboard that is Home, with no sheet open (`mayOfferOn`).
  */
 
 interface BeforeInstallPromptEvent extends Event {
@@ -76,10 +82,14 @@ export function InstallBanner({ app }: { app: InstallApp }) {
   const [offset, setOffset] = useState(0);
   const [host, setHost] = useState('');
   const due = useRef(false);
+  const pathname = usePathname() ?? '/';
 
   useEffect(() => {
     const keys = storageKeys(app);
     setHost(window.location.host);
+    // Jira GRW-679 (UX-03) — a new page starts again: whatever was showing belonged to the page that was left.
+    due.current = false;
+    setMode(null);
 
     if (runningInstalled()) {
       // Remembered on this device, so the same browser later knows it is
@@ -87,6 +97,9 @@ export function InstallBanner({ app }: { app: InstallApp }) {
       write(keys.installed, '1');
       return;
     }
+    // Only where nothing is in progress (see `mayOfferOn`). Checked after the "installed" note above, so a device
+    // that opens the installed app on any page is still remembered as installed.
+    if (!mayOfferOn(app, pathname)) return;
 
     const decide = () =>
       installModeFor({
@@ -102,6 +115,8 @@ export function InstallBanner({ app }: { app: InstallApp }) {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const start = () => {
       timer = setTimeout(() => {
+        // Not on top of a sheet or a dialog that opened in those 2.5 s; the next visit to this page asks again.
+        if (document.querySelector(SOMETHING_OPEN_SELECTOR)) return;
         due.current = true;
         setMode(decide());
       }, SHOW_DELAY_MS);
@@ -128,7 +143,7 @@ export function InstallBanner({ app }: { app: InstallApp }) {
       window.removeEventListener('growza:installprompt', onPrompt);
       window.removeEventListener('growza:appinstalled', onInstalled);
     };
-  }, [app]);
+  }, [app, pathname]);
 
   useEffect(() => {
     if (!mode) return;

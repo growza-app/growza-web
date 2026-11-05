@@ -670,7 +670,8 @@ export function parseReceiptCard(rows: ReceiptRow[]): ReceiptCardModel {
   }
 
   const totalItemsCount = items.reduce((sum, it) => sum + it.qty, 0);
-  const isOrder = /^(Menu|मेनू|Your Order)/i.test(itemsHeading);
+  // Both spellings: the app writes "मेन्यू" (Jira GRW-679, UX-05), and a heading saved earlier may carry "मेनू".
+  const isOrder = /^(Menu|मेनू|मेन्यू|Your Order)/i.test(itemsHeading);
 
   return {
     businessName,

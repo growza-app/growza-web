@@ -50,3 +50,17 @@ export function parsePercent(text: string): PercentInput {
   if (!Number.isFinite(value) || value < 0 || value > MAX_COMMISSION_PERCENT) return { ok: false };
   return { ok: true, percent: value };
 }
+
+/**
+ * Jira GRW-679 (UX-06) — the card in one line, for a phone that shows it folded: "Swiggy ₹4,120 · Zomato ₹2,300".
+ *
+ * Only the apps whose figure is whole (`ready`): an app with no commission set, or with some orders missing one,
+ * has no "should pay you" to quote, and a line that quoted the order total in its place would read as what is owed.
+ * Empty when no app has one — the folded card then shows its title alone.
+ */
+export function payoutSummary(rows: readonly DeliveryAppTallyRow[], name: (app: DeliveryAppTallyRow['app']) => string, money: (minor: string | null) => string): string {
+  return rows
+    .filter((row) => payoutRowState(row) === 'ready')
+    .map((row) => `${name(row.app)} ${money(row.shouldPayMinor)}`)
+    .join(' · ');
+}

@@ -1274,7 +1274,10 @@ export function PayFlow({
   // 3) Payment mode picked (or delivery app order) → light up Complete sale (`guideReady`)
   const hasWho = Boolean(token) || client.kind !== 'none';
   const hidePayUntilGuest = guestOptional && !hasWho && !fromApp;
-  const guideClient = Boolean(productsOnly && wide && lines.length > 0 && !hasWho && !fromApp && !badClient && !guestOptional);
+  // Owner, 2026-11-05 (Jira GRW-679, UX-01) — a counter where the guest is optional gets the same step-1 mark as every
+  // other shop: the tiles are held back until a guest is chosen, so the Guest field IS the next step there too. It used
+  // to be left out (`!guestOptional`), which is why the wide till showed no tiles and nothing pointing at why.
+  const guideClient = Boolean(productsOnly && wide && lines.length > 0 && !hasWho && !fromApp && !badClient);
   const guideMode = Boolean(productsOnly && wide && lines.length > 0 && hasWho && !fromApp && !selectedMode && !splitting && !firstWay);
   const guideReady = Boolean(productsOnly && wide && lines.length > 0 && (fromApp !== null || (hasWho && (selectedMode !== null || firstWay !== null))));
 
@@ -1483,8 +1486,28 @@ export function PayFlow({
    */
   const restMinor = firstWay ? Math.max(0, dueMinor - firstWay.minor) : 0;
   // An app's order has nothing to collect: no tiles (its note is drawn in their place).
+  /*
+   * Jira GRW-679 (UX-01) — why there is nothing to pay with yet.
+   *
+   * At a counter that needs no guest to ring a bill, the tiles are held back until one is chosen, and the step
+   * offered only "Keep payment pending in queue". Nothing said why: a desk about to take cash had to guess that the
+   * way forward was a guest. The flow is unchanged; this says it, and the button beside it opens the same sheet the
+   * guest field does.
+   *
+   * On a PHONE only. Owner, 2026-11-05: on the wide till the Guest field sits two rows above where this would go, so
+   * the note repeated what was already on screen (and showed on an empty bill). There the field itself is marked as
+   * the next step once a dish is on the bill (`guideClient`), which costs no extra row.
+   */
+  const guestToPay = (
+    <div className="pf-guest-first" role="note" data-testid="guest-to-pay">
+      <p className="pf-guest-first-say">{t('desk.guestToPay', { client: nounInSentence(clientNoun) })}</p>
+      <button type="button" className="btn pf-guest-first-add" onClick={() => setWhoOpen('add')} disabled={saving !== null}>
+        {t('desk.guestToPayAdd', { client: nounInSentence(clientNoun) })}
+      </button>
+    </div>
+  );
   const payTiles = fromApp ? null : (
-    hidePayUntilGuest ? null : (
+    hidePayUntilGuest ? (wide ? null : guestToPay) : (
     <div className="pf-pay" data-step={guideMode ? 'next' : badMode && !selectedMode ? 'bad' : undefined} role="group" aria-label={t('howTitle')}>
       {firstWay ? (
         /* The first way, held, and what the next tile is for. × puts the bill back to one way. */
@@ -1638,6 +1661,21 @@ export function PayFlow({
         ) : null}
         {splitKeypadEl}
         {dialog}
+        {/*
+          Jira GRW-679 (UX-01) — the guest sheet, on this step too. It was only drawn on the step before, so the
+          "Add guest" button above had nothing to open; choosing one here brings the payment tiles up in place.
+        */}
+        {whoOpen ? (
+          <ClientSheet
+            location={location}
+            startAdding={whoOpen === 'add'}
+            onPick={(c) => {
+              setClient(c.id === null ? { kind: 'named', name: c.name ?? '' } : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone });
+              setWhoOpen(false);
+            }}
+            onClose={() => setWhoOpen(false)}
+          />
+        ) : null}
       </div>
     );
   }

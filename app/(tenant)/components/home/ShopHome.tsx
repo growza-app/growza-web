@@ -1,5 +1,6 @@
 'use client';
 
+import { deltaLabel, periodDeltaPct } from './day-delta';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../lib/api';
 import type {
@@ -596,22 +597,17 @@ export function ShopHome({
     : (data?.running.items ?? []).filter((i) => i.left <= 0).length;
   const lowOnlyCount = Math.max(0, (data?.running.total ?? 0) - outOfStockCount);
 
-  const salesDeltaPct = useMemo(() => {
-    const todayRev = data?.today.takingsMinor ?? 0;
-    const yestRev = data?.yesterday.takingsMinor ?? 0;
-    if (yestRev <= 0) return todayRev > 0 ? 12 : null;
-    return Math.round(((todayRev - yestRev) / yestRev) * 100);
-  }, [data]);
+  /*
+   * Jira GRW-679 (UX-04) — compared with yesterday only once today has something in it, and only against a
+   * yesterday that had something (`periodDeltaPct`). These two used to answer "+12%" and "+4%" when yesterday was
+   * empty: numbers that were not worked out from anything.
+   */
+  const salesDeltaPct = useMemo(() => periodDeltaPct(data?.today.takingsMinor ?? 0, data?.yesterday.takingsMinor ?? 0), [data]);
+  const ordersDeltaPct = useMemo(() => periodDeltaPct(data?.today.orders ?? 0, data?.yesterday.orders ?? 0), [data]);
 
-  const ordersDeltaPct = useMemo(() => {
-    const todayOrd = data?.today.orders ?? 0;
-    const yestOrd = data?.yesterday.orders ?? 0;
-    if (yestOrd <= 0) return todayOrd > 0 ? 4 : null;
-    return Math.round(((todayOrd - yestOrd) / yestOrd) * 100);
-  }, [data]);
-
-  const customersTotal = customerStats?.total ?? 86;
-  const customersDeltaPct = 11;
+  // The count of guests, or nothing until it has loaded. It used to read 86 while loading, and always carried a
+  // "+11%" beside it that no figure stood behind; the badge is gone until there is a real comparison to draw.
+  const customersTotal = customerStats?.total ?? null;
 
   const queueStats = useMemo(() => {
     const fmtDate = (d: Date) => {
@@ -825,9 +821,7 @@ export function ShopHome({
                         </div>
                         {salesDeltaPct !== null ? (
                           <div className="rst-kpi-side">
-                            <span className={`rst-delta-pill ${salesDeltaPct < 0 ? 'is-down' : 'is-up'}`}>
-                              {salesDeltaPct < 0 ? '↓' : '↑'} {salesDeltaPct >= 0 ? `+${salesDeltaPct}%` : `${salesDeltaPct}%`}
-                            </span>
+                            <span className={`rst-delta-pill ${salesDeltaPct < 0 ? 'is-down' : 'is-up'}`}>{deltaLabel(salesDeltaPct)}</span>
                             <span className="rst-delta-sub">{s.vsYesterday}</span>
                           </div>
                         ) : null}
@@ -866,9 +860,7 @@ export function ShopHome({
                     </div>
                     {ordersDeltaPct !== null ? (
                       <div className="rst-kpi-side is-bottom">
-                        <span className={`rst-delta-pill ${ordersDeltaPct < 0 ? 'is-down' : 'is-up'}`}>
-                          {ordersDeltaPct < 0 ? '↓' : '↑'} {ordersDeltaPct >= 0 ? `+${ordersDeltaPct}%` : `${ordersDeltaPct}%`}
-                        </span>
+                        <span className={`rst-delta-pill ${ordersDeltaPct < 0 ? 'is-down' : 'is-up'}`}>{deltaLabel(ordersDeltaPct)}</span>
                       </div>
                     ) : null}
                   </a>
@@ -888,10 +880,7 @@ export function ShopHome({
                     </span>
                     <div className="rst-kpi-main">
                       <span className="rst-kpi-label">{s.customersCardTitle}</span>
-                      <strong className="rst-kpi-value">{customersTotal}</strong>
-                    </div>
-                    <div className="rst-kpi-side is-bottom">
-                      <span className="rst-delta-pill is-up">↑ +{customersDeltaPct}%</span>
+                      <strong className="rst-kpi-value">{customersTotal ?? '—'}</strong>
                     </div>
                   </a>
                 </div>

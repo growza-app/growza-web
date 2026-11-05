@@ -29,7 +29,15 @@ import {
  */
 function findSearchInput(btn: HTMLElement | null): HTMLInputElement | null {
   if (!btn) return null;
-  if (btn.previousElementSibling instanceof HTMLInputElement) return btn.previousElementSibling;
+  /*
+   * Walk back over whatever sits between, rather than looking at one sibling — 2026-11-05. The till puts
+   * an `F2` <kbd> beside its box, and since the × and the microphone now stand together the microphone's
+   * previous sibling is the ×. Stepping back to the nearest input keeps this on the right box in a
+   * container that holds more than one, which `querySelector('input')` below cannot promise.
+   */
+  for (let el = btn.previousElementSibling; el; el = el.previousElementSibling) {
+    if (el instanceof HTMLInputElement) return el;
+  }
   const fallback = btn.parentElement?.querySelector('input');
   return fallback instanceof HTMLInputElement ? fallback : null;
 }
@@ -47,6 +55,12 @@ export function SearchClear({
   const locale = useLocale();
   const [canSpeak, setCanSpeak] = useState(false);
   const [listening, setListening] = useState(false);
+  /**
+   * Tapped, but the engine cannot hear yet — QA 2026-11-05. The owner had to "speak after 2 seconds and
+   * very slowly", because the button went red the moment they tapped it while the browser was still
+   * opening its capture and reaching its speech service. Red now means heard, and this means wait.
+   */
+  const [starting, setStarting] = useState(false);
   const [denied, setDenied] = useState(false);
   /** True when the note must not offer a way to turn it on, because there is none. */
   const [noSwitch, setNoSwitch] = useState(false);
@@ -54,6 +68,8 @@ export function SearchClear({
   const [showHowTo, setShowHowTo] = useState(false);
   const recRef = useRef<BrowserSpeechRecognition | null>(null);
   const btnRef = useRef<HTMLButtonElement | null>(null);
+  /** A session is open — starting or live. The button must stay a microphone across both. */
+  const active = listening || starting;
 
   useEffect(() => {
     setCanSpeak(getSpeechRecognitionConstructor() !== null);
@@ -102,7 +118,7 @@ export function SearchClear({
   }, [denied]);
 
   useEffect(() => {
-    if (!listening) return;
+    if (!active) return;
     const stopCurrent = () => {
       try {
         recRef.current?.stop();
@@ -111,6 +127,7 @@ export function SearchClear({
       }
       recRef.current = null;
       setListening(false);
+      setStarting(false);
     };
     const onKeyDown = (ev: KeyboardEvent) => {
       if (ev.key === 'Escape') stopCurrent();
@@ -124,7 +141,7 @@ export function SearchClear({
       window.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('visibilitychange', onVisChange);
     };
-  }, [listening]);
+  }, [active]);
 
   useEffect(() => {
     return () => {
@@ -140,12 +157,20 @@ export function SearchClear({
     };
   }, []);
 
-  if (!canSpeak && !listening) {
+  if (!canSpeak && !active) {
     if (value === '') return null;
   }
 
-  if (value !== '' && !listening) {
-    return (
+  /*
+   * The × and the microphone stand together — the owner, 2026-11-05: "always show mic icon on text box".
+   *
+   * Until now the first typed character replaced the microphone with the ×, so voice was available only
+   * on an empty box: mis-hear one word, or want to say the next dish instead of backspacing, and the
+   * button you wanted had vanished. The × takes the inner place and the microphone keeps the outer one,
+   * so the microphone never moves — which is the whole point of "always".
+   */
+  const clearButton =
+    value !== '' ? (
       <button
         type="button"
         className="search-clear"
@@ -158,11 +183,13 @@ export function SearchClear({
       >
         <IconClose />
       </button>
-    );
-  }
+    ) : null;
+
+  // No voice on this browser: the × on its own, exactly as it has always been.
+  if (!canSpeak && !active) return clearButton;
 
   const toggleVoice = async (btn: HTMLButtonElement) => {
-    if (listening && recRef.current) {
+    if (active && recRef.current) {
       try {
         recRef.current.stop();
       } catch {
@@ -170,11 +197,17 @@ export function SearchClear({
       }
       recRef.current = null;
       setListening(false);
+      setStarting(false);
       return;
     }
 
     const Ctor = getSpeechRecognitionConstructor();
     if (!Ctor) return;
+
+    // Acknowledge the tap before the awaits below: on a phone the permission check and the engine's own
+    // start-up are the two seconds the owner was speaking into, and a button that does nothing for two
+    // seconds reads as a button that did not work.
+    setStarting(true);
 
     /*
      * Ask for the microphone before trying to use it — QA 2026-10-28, and the owner's own words: "the
@@ -195,16 +228,47 @@ export function SearchClear({
       setDenied(true);
       setNoSwitch(mic === 'unusable');
       setListening(false);
+      setStarting(false);
       return;
     }
 
     const rec = new Ctor();
     rec.lang = voiceSearchLang(locale);
-    rec.continuous = false;
+    /*
+     * `continuous = false` ended the session at the owner's first pause — QA 2026-11-05. That is why they
+     * had to speak "very slowly": slowly means pauses, and a pause was a full stop. Continuous carries
+     * across them, and the final-result check below still ends the session on the first complete phrase,
+     * so it finishes by itself and nobody taps the button twice.
+     */
+    rec.continuous = true;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
 
+    /** A session that never produces a phrase still has to end; the microphone is not left open. */
+    let capTimer: ReturnType<typeof setTimeout> | null = null;
+    /** An engine that never reports audio must not leave the button stuck on "getting ready". */
+    let liveTimer: ReturnType<typeof setTimeout> | null = null;
+    let live = false;
+
+    const clearTimers = () => {
+      if (capTimer) clearTimeout(capTimer);
+      if (liveTimer) clearTimeout(liveTimer);
+      capTimer = null;
+      liveTimer = null;
+    };
+
+    /** The one moment the button may say "speak now": the engine can hear. */
+    const goLive = () => {
+      if (live) return;
+      live = true;
+      if (liveTimer) clearTimeout(liveTimer);
+      liveTimer = null;
+      setStarting(false);
+      setListening(true);
+    };
+
     const stopSession = () => {
+      clearTimers();
       try {
         rec.stop();
       } catch {
@@ -212,15 +276,25 @@ export function SearchClear({
       }
       if (recRef.current === rec) recRef.current = null;
       setListening(false);
+      setStarting(false);
       releaseVoiceSession(stopSession);
     };
 
     claimVoiceSession(stopSession);
     recRef.current = rec;
     setDenied(false);
-    setListening(true);
+
+    /*
+     * The engine says when it is really hearing, and nothing below `start()` may assume it already is.
+     * `onaudiostart` is the honest signal; `onstart` covers an engine that does not declare it; the timer
+     * is the last resort for one that reports neither, so the button cannot stick on "getting ready".
+     */
+    rec.onaudiostart = goLive;
+    rec.onstart = goLive;
+    liveTimer = setTimeout(goLive, 1500);
 
     rec.onresult = (event) => {
+      goLive();
       const cleaned = extractVoiceTranscript(event.results);
       if (!cleaned) return;
       if (onVoice) {
@@ -229,20 +303,34 @@ export function SearchClear({
         const box = findSearchInput(btnRef.current ?? btn);
         if (box) setNativeInputValue(box, cleaned);
       }
+      // A complete phrase is the end of the job. Without this, `continuous` would hold the microphone
+      // open after the cashier has finished saying the dish.
+      const last = event.results[event.results.length - 1];
+      if (last?.isFinal) {
+        try {
+          rec.stop();
+        } catch {
+          /* `onend` still runs */
+        }
+      }
     };
 
     rec.onerror = (event) => {
+      clearTimers();
       if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
         setDenied(true);
       }
       if (recRef.current === rec) recRef.current = null;
       setListening(false);
+      setStarting(false);
       releaseVoiceSession(stopSession);
     };
 
     rec.onend = () => {
+      clearTimers();
       if (recRef.current === rec) recRef.current = null;
       setListening(false);
+      setStarting(false);
       releaseVoiceSession(stopSession);
       const box = findSearchInput(btnRef.current ?? btn);
       if (box && box.value) box.focus();
@@ -250,22 +338,27 @@ export function SearchClear({
 
     try {
       rec.start();
+      capTimer = setTimeout(stopSession, 15000);
     } catch {
+      clearTimers();
       recRef.current = null;
       setListening(false);
+      setStarting(false);
       releaseVoiceSession(stopSession);
     }
   };
 
   return (
     <>
+      {clearButton}
       <button
         ref={btnRef}
         type="button"
-        className={`search-mic${listening ? ' search-mic-listening is-listening' : ''}${denied ? ' search-mic-denied' : ''}`}
-        aria-label={listening ? t('stopVoiceSearch') : denied ? t('voicePermissionDenied') : t('voiceSearch')}
-        aria-pressed={listening}
-        title={denied ? t('voicePermissionDenied') : listening ? t('voiceListening') : t('voiceSearch')}
+        className={`search-mic${listening ? ' search-mic-listening is-listening' : ''}${starting ? ' search-mic-starting' : ''}${denied ? ' search-mic-denied' : ''}`}
+        aria-label={listening ? t('stopVoiceSearch') : starting ? t('voiceStarting') : denied ? t('voicePermissionDenied') : t('voiceSearch')}
+        aria-pressed={active}
+        aria-busy={starting || undefined}
+        title={denied ? t('voicePermissionDenied') : listening ? t('voiceListening') : starting ? t('voiceStarting') : t('voiceSearch')}
         // The element is read in the handler's own turn: `currentTarget` is null by the time the await inside resolves.
         onClick={(e) => void toggleVoice(e.currentTarget)}
       >

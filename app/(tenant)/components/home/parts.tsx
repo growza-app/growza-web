@@ -193,7 +193,9 @@ export function HomeHeader({
 
 export function Card({ title, action, children, className = '' }: { title?: ReactNode; action?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={`hm-card ${className}`}>
+    // Jira GRW-679 (UX-02) — `hm-card-acts` marks a card whose head carries a link, so a phone can draw that link as
+    // the card's foot (see 83-role-home.css). The markup and its reading order do not change.
+    <section className={`hm-card ${action ? 'hm-card-acts ' : ''}${className}`}>
       {title || action ? (
         <div className="hm-card-head">
           {title ? <h2>{title}</h2> : <span />}

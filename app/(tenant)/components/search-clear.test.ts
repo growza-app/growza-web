@@ -195,3 +195,109 @@ describe('a microphone the browser has blocked', () => {
     expect(css).toMatch(/\.search-mic-note :is\([^)]*\) svg \{[^}]*pointer-events: auto;/);
   });
 });
+
+/**
+ * QA 2026-11-05, Spice Garden — the till heard nothing for the first two seconds.
+ *
+ * The owner's words: "it's working but I need to speak after 2 seconds and need to speak very slowly."
+ * Both halves were the app's doing. The button turned green the instant it was tapped, while the browser
+ * was still releasing the permission stream, opening its own capture and reaching its speech service —
+ * so "speak now" was a lie for about as long as it takes to say a dish. And `continuous = false` ended
+ * the session at the first pause, which is exactly what speaking slowly is made of.
+ */
+describe('the moment the microphone can actually hear', () => {
+  const component = read('components/SearchClear.tsx');
+  const helper = read('lib/voice-search.ts');
+  const css = read('styles/26-search.css');
+
+  it('waits for the engine to report audio before it says "speak now"', () => {
+    // The green/listening state is set by the engine's own signal, never by the tap.
+    expect(component).toMatch(/rec\.onaudiostart = goLive;/);
+    expect(component).toMatch(/rec\.onstart = goLive;/);
+    expect(component).toMatch(/const goLive = \(\) => \{[\s\S]{0,220}setListening\(true\);/);
+    // The old bug in one line: nothing may turn the button green before `start()` is even called.
+    const beforeStart = component.slice(0, component.indexOf('rec.start()'));
+    expect(beforeStart).not.toMatch(/setListening\(true\);\s*\n\s*\n?\s*rec\.onresult/);
+  });
+
+  it('acknowledges the tap with a "getting ready" state that is not the listening one', () => {
+    expect(component).toMatch(/const \[starting, setStarting\] = useState\(false\);/);
+    // Set before the awaits, or the button does nothing for the whole start-up.
+    expect(component.indexOf('setStarting(true)')).toBeLessThan(component.indexOf('await askForMicrophone()'));
+    expect(component).toMatch(/starting \? ' search-mic-starting' : ''/);
+    expect(component).toMatch(/aria-busy=\{starting \|\| undefined\}/);
+    // Grey, not the green ring: green is the promise that it can hear you.
+    expect(css).toMatch(/button\.search-mic\.search-mic-starting > svg \{[^}]*color: var\(--muted\);/);
+    expect(css).not.toMatch(/button\.search-mic\.search-mic-starting > svg \{[^}]*var\(--accent-deep\)/);
+  });
+
+  it('cannot stick on "getting ready" when the engine reports neither signal', () => {
+    expect(component).toMatch(/liveTimer = setTimeout\(goLive, 1500\);/);
+    expect(component).toMatch(/clearTimers\(\)/);
+  });
+
+  it('survives a pause instead of ending on one, and still finishes by itself', () => {
+    expect(component).toMatch(/rec\.continuous = true;/);
+    // A complete phrase ends the session; nothing has to be tapped twice.
+    expect(component).toMatch(/if \(last\?\.isFinal\) \{/);
+    // And a session that never produces one still ends, so the microphone is not left open.
+    expect(component).toMatch(/capTimer = setTimeout\(stopSession, 15000\);/);
+  });
+
+  it('skips the permission round trip when the browser has already said yes', () => {
+    expect(helper).toMatch(/export async function microphonePermissionState\(\)/);
+    expect(helper).toMatch(/if \(\(await microphonePermissionState\(\)\) === 'granted'\) return 'granted';/);
+    // Read-only: it must not be able to prompt, or it is the round trip again under another name.
+    expect(helper).toMatch(/perms\.query\(\{ name: 'microphone' \}\)/);
+    // A browser with no Permissions API falls through to what it always did.
+    expect(helper).toMatch(/if \(!perms\?\.query\) return 'unknown';/);
+  });
+
+  it('declares the engine signals it listens for, and has its words in both languages', () => {
+    expect(helper).toMatch(/onaudiostart\?: \(\(\) => void\) \| null;/);
+    expect(helper).toMatch(/onstart\?: \(\(\) => void\) \| null;/);
+    for (const locale of ['en', 'hi']) {
+      const c = JSON.parse(readFileSync(join(tenant, '..', '..', 'messages', `${locale}.json`), 'utf8')).common as Record<string, string>;
+      expect(c.voiceStarting, locale).toBeTruthy();
+      expect(c.voiceStarting!.length, locale).toBeLessThan(45);
+      // It has to say the opposite of the listening line, or it is the same lie in grey.
+      expect(c.voiceStarting, locale).not.toBe(c.voiceListening);
+    }
+  });
+});
+
+/**
+ * The owner, 2026-11-05: "always show mic icon on text box."
+ *
+ * The first typed character used to replace the microphone with the ×, so voice was only ever offered on
+ * an empty box. Mis-hear one word, or want to say the next dish rather than backspace through this one,
+ * and the button you wanted had gone. They stand together now, and the microphone holds the outer place
+ * in every state so it never moves.
+ */
+describe('the microphone beside a box that already has text', () => {
+  const component = read('components/SearchClear.tsx');
+  const css = read('styles/26-search.css');
+
+  it('renders the × and the microphone together rather than one instead of the other', () => {
+    // One × , built once and rendered beside the mic — not an early return that ends the component.
+    expect(component).toMatch(/const clearButton =\s*\n?\s*value !== '' \? \(/);
+    expect(component).toMatch(/<>\s*\n\s*\{clearButton\}/);
+    // The old swap is gone: nothing returns the × on its own except a browser with no voice at all.
+    expect(component).not.toMatch(/if \(value !== '' && !active\) \{/);
+    expect(component).toMatch(/if \(!canSpeak && !active\) return clearButton;/);
+  });
+
+  it('keeps the microphone in the same spot whether the box is empty or full', () => {
+    // The × moves inside; the mic's own `right` is never overridden.
+    expect(css).toMatch(/\.search-clear:has\(\+ \.search-mic\) \{\s*right: 2\.875rem;/);
+    expect(css).not.toMatch(/\.search-mic:has\([^)]*\) \{\s*right:/);
+    // 2.875rem clears the microphone's own 0.125rem inset: at 2.75rem the two 44px targets overlapped
+    // by two pixels, measured at 344px.
+    expect(css).toMatch(/input\[type='search'\]:has\(~ \.search-clear\):has\(~ \.search-mic\) \{\s*padding-right: 5\.5rem;/);
+  });
+
+  it('still finds its own box when the × or the till’s F2 key sits between', () => {
+    expect(component).toMatch(/for \(let el = btn\.previousElementSibling; el; el = el\.previousElementSibling\)/);
+    expect(component).toMatch(/if \(el instanceof HTMLInputElement\) return el;/);
+  });
+});
