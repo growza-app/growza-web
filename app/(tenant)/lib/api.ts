@@ -36,14 +36,27 @@ const meThisRender = cache(() => get<Me>('/api/v1/me'));
  * into client components, where importing it at the top level is a build error.
  */
 const SESSION_COOKIE = 'growza_session';
+/**
+ * Jira GRW-674 (SEC-05) — the name the session has in production.
+ *
+ * The API issues it as `__Host-growza_session` there, a name a sibling host such as growza.biz cannot plant
+ * (the browser refuses the prefix without `Secure`, `Path=/` and no `Domain`). In development it stays plain,
+ * because the prefix needs https. This server does not decide which applies: it forwards whichever cookie the
+ * browser sent, UNDER THE NAME IT CAME IN, and the API alone decides what it will accept. A planted
+ * `growza_session` on production is therefore forwarded as exactly that and refused there, the same as no
+ * session at all — this file never turns one name into the other.
+ */
+const SESSION_COOKIE_PRODUCTION = '__Host-growza_session';
 
 async function authHeaders(): Promise<Record<string, string>> {
   if (typeof window !== 'undefined') return {};
   try {
     const { cookies, headers } = await import('next/headers');
-    const token = (await cookies()).get(SESSION_COOKIE)?.value;
+    const jar = await cookies();
+    const hostLocked = jar.get(SESSION_COOKIE_PRODUCTION)?.value;
+    const token = hostLocked ?? jar.get(SESSION_COOKIE)?.value;
     const forwardedFor = (await headers()).get('x-forwarded-for');
-    return serverSideHeaders({ token, forwardedFor });
+    return serverSideHeaders({ token, forwardedFor, hostLocked: hostLocked !== undefined });
   } catch {
     // `cookies()` throws outside a request scope (a build-time render, say).
     // No cookie is the honest answer there, and the caller's 401 handling is
@@ -71,9 +84,9 @@ async function authHeaders(): Promise<Record<string, string>> {
  *
  * Exported for its test; nothing else should call it.
  */
-export function serverSideHeaders(input: { token?: string | null; forwardedFor?: string | null }): Record<string, string> {
+export function serverSideHeaders(input: { token?: string | null; forwardedFor?: string | null; hostLocked?: boolean }): Record<string, string> {
   const out: Record<string, string> = {};
-  if (input.token) out.cookie = `${SESSION_COOKIE}=${input.token}`;
+  if (input.token) out.cookie = `${input.hostLocked ? SESSION_COOKIE_PRODUCTION : SESSION_COOKIE}=${input.token}`;
   if (input.forwardedFor) out['x-forwarded-for'] = input.forwardedFor;
   return out;
 }

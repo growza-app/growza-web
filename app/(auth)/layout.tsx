@@ -7,6 +7,7 @@ import type { Metadata, Viewport } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
+import { headers } from 'next/headers';
 import { AUTH_MESSAGES } from '../../i18n/client-messages';
 import { pickNamespaces, type Messages } from '../../i18n/messages';
 import { serverLang } from '../(tenant)/lib/lang';
@@ -60,6 +61,8 @@ export const viewport: Viewport = {
 export default async function AuthLayout({ children }: { children: ReactNode }) {
   // Jira GRW-361 — the visitor's language from the cookie: no `api.me()` here (that would put back the redirect loop this layout exists to prevent).
   const lang = await serverLang();
+  // Jira GRW-674 (SEC-04) — the nonce `middleware.ts` put in this request's script policy, for the inline scripts below.
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
   const messages = await getMessages();
   return (
     <html lang={lang}>
@@ -68,8 +71,8 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
         {/* GRW-197 — the sign-in screen is where an unsupported browser lands
             FIRST. Telling them here saves a password attempt on a form whose
             button will never respond. */}
-        <BrowserGate />
-        <InstallPromptCapture />
+        <BrowserGate nonce={nonce} />
+        <InstallPromptCapture nonce={nonce} />
         {children}
         <PwaRegister />
         <InstallBanner app="salon" />

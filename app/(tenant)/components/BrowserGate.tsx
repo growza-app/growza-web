@@ -1,4 +1,4 @@
-import { MINIMUM, SUPPORT_PROBE, UNSUPPORTED_COPY } from '../lib/browser-support';
+import { MINIMUM, SUPPORT_PROBE, SUPPORT_SYNTAX, UNSUPPORTED_COPY } from '../lib/browser-support';
 
 /**
  * Jira GRW-197 — the notice an unsupported browser gets instead of a dead app.
@@ -19,7 +19,8 @@ import { MINIMUM, SUPPORT_PROBE, UNSUPPORTED_COPY } from '../lib/browser-support
  * Rendered by the server on every page, costing one hidden `<div>` and a
  * four-line script to a browser that is fine. FR-04.
  */
-export function BrowserGate() {
+/** `nonce` — Jira GRW-674 (SEC-04): under the script policy an inline script runs only with the request's nonce. */
+export function BrowserGate({ nonce }: { nonce?: string } = {}) {
   return (
     <>
       {/*
@@ -31,7 +32,10 @@ export function BrowserGate() {
 
         Nothing here is user input: `SUPPORT_PROBE` is a constant in this repo.
       */}
-      <script dangerouslySetInnerHTML={{ __html: SUPPORT_PROBE }} />
+      {/* Two elements on purpose: the first is the modern syntax itself and is thrown away whole by a browser
+          that cannot parse it; the second notices. See `browser-support.ts`. */}
+      <script nonce={nonce} dangerouslySetInnerHTML={{ __html: SUPPORT_SYNTAX }} />
+      <script nonce={nonce} dangerouslySetInnerHTML={{ __html: SUPPORT_PROBE }} />
 
       <div className="browser-gate" role="alert" aria-live="polite">
         <div className="browser-gate-card">
