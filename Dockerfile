@@ -22,17 +22,18 @@
 #      here, not `web/server.js`, because `outputFileTracingRoot` is this
 #      directory rather than a workspace above it.
 #
-# Deliberately `npm install`, not `npm ci`: this repo has no package-lock.json
-# yet — it was a workspace member and the lock lived in the monorepo. Commit a
-# lockfile generated with the token in place and change this to `npm ci`, which
-# is what makes a build reproducible.
+# `npm ci`, as of Jira GRW-674 (SEC-02): the lockfile exists now, so the image
+# installs exactly what was resolved and reviewed rather than whatever the
+# registry offers on build day. It also FAILS when package.json and the lock
+# disagree, which is the property worth having — a dependency bump that skipped
+# the lockfile stops here instead of shipping.
 
 # ---- deps ----
 FROM node:22-slim AS deps
 WORKDIR /app
-COPY package.json .npmrc ./
+COPY package.json package-lock.json .npmrc ./
 RUN --mount=type=secret,id=npm_token \
-    NODE_AUTH_TOKEN="$(cat /run/secrets/npm_token 2>/dev/null || true)" npm install --no-audit --no-fund
+    NODE_AUTH_TOKEN="$(cat /run/secrets/npm_token 2>/dev/null || true)" npm ci --no-audit --no-fund
 
 # ---- build ----
 FROM node:22-slim AS build
