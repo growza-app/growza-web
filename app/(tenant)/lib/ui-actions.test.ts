@@ -345,7 +345,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   '/appointments/new': ['POST /api/v1/bills/:visitKey/document', 'POST /api/v1/documents/:id/share'],
   /*
    * Jira GRW-674 (SEC-12) — taking a shared link back, from the document's own screen. Gated by that screen
-   * (`guardScreen('/documents')`), and the API keeps it the owner's alone, as making the link is.
+   * (`guardScreen('/documents')`). The API lets whoever may settle the bill make the link and take it back
+   * (owner, 2026-11-05): it was the owner's alone, and the desk was refused the Send button the till showed it.
    */
   '/documents': ['DELETE /api/v1/documents/:id/share'],
   // 0127 — returning a product against a settled bill on the Sales register (/sales is gated by guardScreen('/sales')).
