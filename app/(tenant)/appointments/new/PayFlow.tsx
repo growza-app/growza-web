@@ -1274,7 +1274,10 @@ export function PayFlow({
   // 3) Payment mode picked (or delivery app order) → light up Complete sale (`guideReady`)
   const hasWho = Boolean(token) || client.kind !== 'none';
   const hidePayUntilGuest = guestOptional && !hasWho && !fromApp;
-  const guideClient = Boolean(productsOnly && wide && lines.length > 0 && !hasWho && !fromApp && !badClient && !guestOptional);
+  // Owner, 2026-11-05 (Jira GRW-679, UX-01) — a counter where the guest is optional gets the same step-1 mark as every
+  // other shop: the tiles are held back until a guest is chosen, so the Guest field IS the next step there too. It used
+  // to be left out (`!guestOptional`), which is why the wide till showed no tiles and nothing pointing at why.
+  const guideClient = Boolean(productsOnly && wide && lines.length > 0 && !hasWho && !fromApp && !badClient);
   const guideMode = Boolean(productsOnly && wide && lines.length > 0 && hasWho && !fromApp && !selectedMode && !splitting && !firstWay);
   const guideReady = Boolean(productsOnly && wide && lines.length > 0 && (fromApp !== null || (hasWho && (selectedMode !== null || firstWay !== null))));
 
@@ -1490,6 +1493,10 @@ export function PayFlow({
    * offered only "Keep payment pending in queue". Nothing said why: a desk about to take cash had to guess that the
    * way forward was a guest. The flow is unchanged; this says it, and the button beside it opens the same sheet the
    * guest field does.
+   *
+   * On a PHONE only. Owner, 2026-11-05: on the wide till the Guest field sits two rows above where this would go, so
+   * the note repeated what was already on screen (and showed on an empty bill). There the field itself is marked as
+   * the next step once a dish is on the bill (`guideClient`), which costs no extra row.
    */
   const guestToPay = (
     <div className="pf-guest-first" role="note" data-testid="guest-to-pay">
@@ -1500,7 +1507,7 @@ export function PayFlow({
     </div>
   );
   const payTiles = fromApp ? null : (
-    hidePayUntilGuest ? guestToPay : (
+    hidePayUntilGuest ? (wide ? null : guestToPay) : (
     <div className="pf-pay" data-step={guideMode ? 'next' : badMode && !selectedMode ? 'bad' : undefined} role="group" aria-label={t('howTitle')}>
       {firstWay ? (
         /* The first way, held, and what the next tile is for. × puts the bill back to one way. */
