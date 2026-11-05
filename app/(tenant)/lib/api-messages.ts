@@ -109,6 +109,12 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That is too many services for one booking': 'एक बुकिंग के लिए इतनी सेवाएँ बहुत ज़्यादा हैं',
   'Pick a day and time for the booking': 'बुकिंग के लिए दिन और समय चुनें',
   'Say how they paid': 'बताएँ कि पैसे कैसे दिए',
+  // QA 2026-11-06 — the till's refusals of an amount, reworded from JSON keys into what is wrong with it.
+  'Enter the amount as a number': 'रकम अंकों में लिखें',
+  'Enter the amount in whole paise, with no fraction': 'रकम पूरे पैसों में लिखें, पैसे का हिस्सा नहीं',
+  'The amount cannot be less than ₹0': 'रकम ₹0 से कम नहीं हो सकती',
+  'Enter the package price as a number': 'पैकेज की कीमत अंकों में लिखें',
+  'Enter the bill amount as a number, ₹0 or more': 'बिल की रकम अंकों में लिखें, ₹0 या उससे ज़्यादा',
   'That item is not for sale here': 'यह चीज़ यहाँ बिक्री के लिए नहीं है',
   // Jira GRW-607 — a business that takes no bookings, or sells no services (a shop).
   'This business does not take bookings.': 'यह बिज़नेस बुकिंग नहीं लेता।',
