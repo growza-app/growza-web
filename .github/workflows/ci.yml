@@ -62,17 +62,18 @@ jobs:
         with:
           node-version: 22
 
-      # No `npm ci`: this repo has no lockfile yet — it was a workspace member
-      # and the lock lived in the monorepo. Commit one generated with the token
-      # in place and this becomes `npm ci`, which is what makes it reproducible.
+      # `npm ci`, as of Jira GRW-674 (SEC-02). It installs the committed lockfile
+      # exactly, and refuses when package.json and the lock disagree — so a
+      # dependency changed without regenerating the lock goes red here rather
+      # than resolving to something nobody reviewed.
       - name: Install
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       # Jira GRW-674 (SEC-01) — a known high or critical advisory in what ships
-      # fails the run. `npm install` above writes a package-lock.json into the
-      # runner's checkout, which is what `npm audit` reads; it is not committed.
+      # fails the run. `npm audit` reads the lockfile, which is committed as of
+      # SEC-02, so it now audits the same resolution the image installs.
       # `--omit=dev`: the test runner's advisories are not what a visitor reaches.
       #
       # This goes red on the day an advisory is published, on a branch that did
