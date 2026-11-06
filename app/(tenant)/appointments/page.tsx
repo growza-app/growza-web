@@ -1,5 +1,6 @@
 import { labelledTitle, TITLE_FALLBACK } from '../lib/page-title';
 import { guardLive } from '../lib/screen-guard';
+import { roleMayReach, type MemberRole } from '@growza-app/shared';
 import { api, type Appointment } from '../lib/api';
 import { formatDateShort, formatDateWithWeekday } from '../lib/format';
 import { copy } from '../lib/copy';
@@ -190,7 +191,15 @@ export default async function AppointmentsPage({
      * `null` on failure, never `[]`: the section must be able to say it could not look, because
      * "nobody is waiting" is the one wrong answer to give about a salon with somebody in it.
      */
-    isTodayRequest ? api.walkInQueue().catch(() => null) : Promise.resolve([]),
+    /*
+     * Only for a role the API lets read it. A stylist is refused (403, role-routes.ts: the queue is the front desk's),
+     * and that refusal landed in `.catch(() => null)` — which this page reads as "could not look", so every stylist
+     * saw "Could not check who is waiting." over a screen that was working. A queue the person is not meant to see
+     * is not a queue that failed to load: nothing is drawn, as on any day but today.
+     */
+    isTodayRequest && roleMayReach((me.member?.role ?? 'owner') as MemberRole, 'GET', '/api/v1/walk-in-queue')
+      ? api.walkInQueue().catch(() => null)
+      : Promise.resolve([]),
   ]);
   const appointments = appointmentsResult.rows;
   const bookingsWord = me.labels.appointments ?? copy.nav.appointments;
