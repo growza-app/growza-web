@@ -22,6 +22,7 @@ import { NamePrompt } from './components/NamePrompt';
 import { SessionResume } from './components/SessionResume';
 import { BranchProvider } from './components/BranchProvider';
 import { LabelsProvider } from './components/LabelsProvider';
+import { nounsIn } from './lib/vertical-nouns';
 import { mayUse, type MemberRole } from './lib/nav-policy';
 import { BillingBanner } from './components/BillingBanner';
 import { HomeOnly } from './components/HomeOnly';
@@ -333,7 +334,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         >
         <ScreenAccess>
         <BranchProvider branches={branches} role={role ?? null} memberLocationId={memberLocationId} workBranchName={workBranchName}>
-        <LabelsProvider labels={labels}>
+        <LabelsProvider labels={nounsIn(labels, (messages as Messages).verticalNouns as Record<string, string> | undefined)}>
         {impersonation ? null : <NamePrompt />}
         <MobileNavProvider>
           <div className={impersonation ? 'shell shell-impersonating' : 'shell'}>

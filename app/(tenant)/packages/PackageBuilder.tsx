@@ -14,7 +14,7 @@ import {
   type Service,
 } from '../lib/api';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { IconCalendar, IconClock, IconUser } from '../components/icons';
+import { IconCalendar, IconClock, IconUser, IconWhatsApp } from '../components/icons';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { OfferBranchField, useDefaultOfferBranch } from '../offers/OfferBranchField';
 import { useBranch } from '../components/BranchProvider';
@@ -852,7 +852,11 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
               ) : (
                 <>
                   {previewCard}
-                  <div className="preview-caption">{t('caption')}</div>
+                  {/* The product's one icon language, not an emoji (salon QA 2026-11-07). */}
+                  <div className="preview-caption">
+                    <IconWhatsApp />
+                    {t('caption')}
+                  </div>
                 </>
               )}
             </div>

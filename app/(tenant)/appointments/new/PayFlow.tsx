@@ -1412,7 +1412,7 @@ export function PayFlow({
   /** The amount to collect, and — when points are coming off — the bill it was before they did. */
   const dueLine = (
     <p className="pf-how-total">
-      <span className="pf-how-total-label">{t('total')}</span>
+      <span className="pf-how-total-label">{discountMinor > 0 ? t('toPay') : t('total')}</span>
       <strong>{money(dueMinor)}</strong>
       {discountMinor > 0 ? (
         <span className="pf-how-total-off">{t('rewards.wasOff', { bill: money(totalMinor), amount: money(discountMinor) })}</span>
@@ -2025,7 +2025,8 @@ export function PayFlow({
             {redeemRow}
             {discountMinor > 0 ? (
               <p className="pf-wide-due">
-                <span>{t('total')}</span>
+                {/* "To pay", not a second "Total": the bill's total is the button above it (salon QA 2026-11-07). */}
+                <span>{t('toPay')}</span>
                 <strong>{money(dueMinor)}</strong>
               </p>
             ) : null}
