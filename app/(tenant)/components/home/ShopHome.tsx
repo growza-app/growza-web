@@ -20,7 +20,7 @@ import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import { ordersHref } from '../../lib/orders-filter';
 import { formatTokenNo, posQueueStorageKey, tokenNumbersOf, type PosTokenOverride } from '../../pos/pos-helpers';
-import { channelsOf, sellsOnMarketplaces } from '../../lib/order-channels';
+import { channelsOf, isDeliveryApp, sellsOnMarketplaces } from '../../lib/order-channels';
 import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
 import { useAreas } from '../SessionProvider';
@@ -428,6 +428,27 @@ export function ShopHome({
       return formatShortDate(iso);
     }
   };
+
+  /**
+   * QA 2026-11-06 — "Needs attention" on a laptop said "2 menu items are running low" and "1 order is waiting for more than 15
+   * min" whatever the restaurant held: the numbers were typed into the markup from the design mock. These are counted from what
+   * the restaurant has. Low stock only once the shelf has been counted (a kitchen that does not count has none to report), and
+   * waiting orders from the recent orders the card already lists — a bill kept pending in the queue and not yet paid.
+   */
+  const attention: Array<{ key: 'stock' | 'pending'; tone: 'amber' | 'rose'; title: string; sub: string; href: string }> = [];
+  if (data?.running.counted && data.running.total > 0) {
+    attention.push({
+      key: 'stock',
+      tone: 'amber',
+      title: s.lowStockShort,
+      sub: s.menuItemsLowSub(data.running.total),
+      href: can('/stock') ? `/stock${stockBranch}` : '/products',
+    });
+  }
+  const waitingForPayment = recentOrders.filter((o) => o.paymentPending).length;
+  if (waitingForPayment > 0) {
+    attention.push({ key: 'pending', tone: 'rose', title: s.pendingOrdersTitle, sub: s.pendingPaymentSub(waitingForPayment), href: '/orders' });
+  }
 
   // Build SVG polyline + bar chart from channelData.trend
   const trendChart = useMemo(() => {
@@ -983,26 +1004,18 @@ export function ShopHome({
                       <p className="hm-empty">{s.noOrdersBody}</p>
                     ) : (
                       <ul className="rst-order-list">
-                        {recentOrders.slice(0, 3).map((o, idx) => {
-                          const isDelivery = o.channel === 'swiggy' || o.channel === 'zomato' || idx === 2;
-                          const isTakeaway = !isDelivery && (o.status === 'new' || idx === 1);
-                          const orderNum = 1038 - idx;
-                          const subLabel = isDelivery
-                            ? `${s.deliveryMode} · ${s.minAgo(12)}`
-                            : isTakeaway
-                              ? `${s.takeawayMode} · ${s.minAgo(8)}`
-                              : `${s.dineInMode} · ${s.tableWord(5)} · ${s.minAgo(2)}`;
-                          const statusLabel = isDelivery
-                            ? s.stateOutForDelivery
-                            : isTakeaway
-                              ? s.statePreparing
-                              : s.stateServed;
-                          const statusClass = isDelivery ? 'is-delivery' : isTakeaway ? 'is-preparing' : 'is-served';
+                        {recentOrders.slice(0, 3).map((o) => {
+                          // What the order IS — never a guess at it. An app's order is a delivery; anything else rung up here is a counter order.
+                          const isDelivery = isDeliveryApp(o.channel);
+                          const subLabel = `${channelWord(o.channel)} · ${formatDateTime(o.soldAt)}`;
+                          const statusLabel = o.paymentPending ? s.paymentPendingState : stateWord(o.status);
+                          const tone = o.paymentPending ? 'amber' : stateTone(o.status);
+                          const statusClass = tone === 'green' ? 'is-served' : tone === 'blue' ? 'is-delivery' : tone === 'amber' ? 'is-preparing' : 'is-problem';
                           return (
                             <li key={o.id}>
                               <a className="rst-order-row" href={`/orders/${o.id}`}>
                                 <span
-                                  className={`rst-order-icon ${isDelivery ? 'is-delivery' : isTakeaway ? 'is-takeaway' : 'is-dinein'}`}
+                                  className={`rst-order-icon ${isDelivery ? 'is-delivery' : 'is-dinein'}`}
                                   aria-hidden
                                 >
                                   {isDelivery ? (
@@ -1012,12 +1025,6 @@ export function ShopHome({
                                       <path d="M15 6h2l3 7v4.5h-2.5" />
                                       <path d="M4 17.5H2.5V12c0-1.5 1.2-2.5 2.5-2.5h5v8" />
                                       <path d="M10 17.5h5" />
-                                    </svg>
-                                  ) : isTakeaway ? (
-                                    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                                      <line x1="3" y1="6" x2="21" y2="6" />
-                                      <path d="M16 10a4 4 0 0 1-8 0" />
                                     </svg>
                                   ) : (
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1031,7 +1038,7 @@ export function ShopHome({
                                   )}
                                 </span>
                                 <div className="rst-order-main">
-                                  <strong className="rst-order-num">#{orderNum}</strong>
+                                  <strong className="rst-order-num">#{o.code.toUpperCase()}</strong>
                                   <span className="rst-order-sub">{subLabel}</span>
                                 </div>
                                 <span className={`rst-status-pill ${statusClass}`}>{statusLabel}</span>
@@ -1051,46 +1058,43 @@ export function ShopHome({
                     )}
                   </section>
 
-                  {/* Right: Needs attention */}
+                  {/* Right: Needs attention — only what is true right now; nothing at all when nothing is. */}
                   <section className="rst-panel rst-attention-panel">
                     <div className="rst-panel-head">
                       <h3>{s.needsAttentionTitle}</h3>
-                      <span className="rst-att-badge">{s.attentionItemsBadge(2)}</span>
+                      {attention.length > 0 ? <span className="rst-att-badge">{s.attentionItemsBadge(attention.length)}</span> : null}
                     </div>
-                    <div className="rst-att-stack">
-                      <a className="rst-att-card is-amber" href={can('/stock') ? `/stock${stockBranch}` : '/products'}>
-                        <span className="rst-att-icon is-amber" aria-hidden>
-                          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                            <line x1="12" y1="22.08" x2="12" y2="12" />
-                          </svg>
-                        </span>
-                        <div className="rst-att-body">
-                          <strong>{s.lowStockShort}</strong>
-                          <span>{s.menuItemsLowSub(2)}</span>
-                        </div>
-                        <svg className="rst-att-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                          <polyline points="9 18 15 12 9 6" />
-                        </svg>
-                      </a>
-
-                      <a className="rst-att-card is-rose" href="/orders">
-                        <span className="rst-att-icon is-rose" aria-hidden>
-                          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
-                            <line x1="6" y1="17" x2="18" y2="17" />
-                          </svg>
-                        </span>
-                        <div className="rst-att-body">
-                          <strong>{s.pendingOrdersTitle}</strong>
-                          <span>{s.pendingOrdersWaitSub(1)}</span>
-                        </div>
-                        <svg className="rst-att-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                          <polyline points="9 18 15 12 9 6" />
-                        </svg>
-                      </a>
-                    </div>
+                    {attention.length === 0 ? (
+                      <p className="hm-empty">{s.nothingNeedsYou}</p>
+                    ) : (
+                      <div className="rst-att-stack">
+                        {attention.map((item) => (
+                          <a key={item.key} className={`rst-att-card ${item.tone === 'amber' ? 'is-amber' : 'is-rose'}`} href={item.href}>
+                            <span className={`rst-att-icon ${item.tone === 'amber' ? 'is-amber' : 'is-rose'}`} aria-hidden>
+                              {item.key === 'stock' ? (
+                                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                  <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                                  <line x1="12" y1="22.08" x2="12" y2="12" />
+                                </svg>
+                              ) : (
+                                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
+                                  <line x1="6" y1="17" x2="18" y2="17" />
+                                </svg>
+                              )}
+                            </span>
+                            <div className="rst-att-body">
+                              <strong>{item.title}</strong>
+                              <span>{item.sub}</span>
+                            </div>
+                            <svg className="rst-att-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                              <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </section>
                 </div>
               </div>

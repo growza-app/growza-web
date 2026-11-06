@@ -559,18 +559,15 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       menuItemsLowSub: (n: number) =>
         n === 1 ? S('1 menu item is running low', '1 मेन्यू आइटम कम हो रहा है') : S(`${n} menu items are running low`, `${n} मेन्यू आइटम कम हो रहे हैं`),
       pendingOrdersTitle: S('Pending orders', 'लंबित ऑर्डर'),
-      pendingOrdersWaitSub: (n: number) =>
+      /** An order rung up and kept in the queue, not yet paid. */
+      pendingPaymentSub: (n: number) =>
         n === 1
-          ? S('1 order is waiting for more than 15 min', '1 ऑर्डर 15 मिनट से ज़्यादा से इंतज़ार में है')
-          : S(`${n} orders are waiting for more than 15 min`, `${n} ऑर्डर 15 मिनट से ज़्यादा से इंतज़ार में हैं`),
-      dineInMode: S('Dine-in', 'डाइन-इन'),
-      takeawayMode: S('Takeaway', 'टेकअवे'),
-      deliveryMode: S('Delivery', 'डिलीवरी'),
-      tableWord: (n: number) => S(`Table ${n}`, `टेबल ${n}`),
+          ? S('1 order is waiting for payment', '1 ऑर्डर का भुगतान बाकी है')
+          : S(`${n} orders are waiting for payment`, `${n} ऑर्डर का भुगतान बाकी है`),
+      paymentPendingState: S('Payment pending', 'भुगतान बाकी'),
+      nothingNeedsYou: S('Nothing needs you right now', 'अभी आपको कुछ नहीं करना है'),
       minAgo: (n: number) => S(`${n} min ago`, `${n} मिनट पहले`),
-      stateServed: S('Served', 'परोसा गया'),
       statePreparing: S('Preparing', 'तैयार हो रहा है'),
-      stateOutForDelivery: S('Out for delivery', 'डिलीवरी के लिए निकला'),
       kitchenSub: (name: string) => S(`Here’s how ${name} is doing today.`, `यहाँ देखें आज ${name} कैसा चल रहा है।`),
     },
     couldNotLoad: S('Could not load this. Check your connection and try again.', 'यह लोड नहीं हुआ। इंटरनेट देखें और फिर से कोशिश करें।'),

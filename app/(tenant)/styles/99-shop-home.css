@@ -1057,6 +1057,12 @@
     color: var(--blue);
   }
 
+  /* Returned or cancelled: the order did not stand. */
+  .rst-status-pill.is-problem {
+    background: var(--danger-soft);
+    color: var(--danger-deep);
+  }
+
   .rst-order-right {
     display: flex;
     align-items: center;
