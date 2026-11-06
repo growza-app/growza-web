@@ -107,7 +107,9 @@
     "cancelled": "रद्द",
     "moved": "समय बदला",
     "movedNowAt": "अब {time} पर",
-    "movedNowOn": "अब {date}, {time} पर"
+    "movedNowOn": "अब {date}, {time} पर",
+    "alsoAt": "{time} पर एक और बुकिंग भी है",
+    "alsoAtWith": "{time} पर {staff} के साथ एक और बुकिंग भी है"
   },
   "bookings": {
     "none": "उस दिन कोई बुकिंग नहीं।",

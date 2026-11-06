@@ -632,6 +632,11 @@ export interface Appointment {
   movedTo?: string | null;
   /** True when this customer had no booking before this day — a first-time (new) customer. */
   customerIsNew: boolean;
+  /**
+   * QA 2026-11-06 — another booking this client has that overlaps this one. The API puts it on BOTH rows, so the
+   * desk that booked first sees it too; absent or null when there is none (and from an API that predates it).
+   */
+  clientAlsoBooked?: { startAt: string; staffName: string | null } | null;
   /** Ties the legs of one combo/multi-service booking together — null for a plain single-service booking. */
   bookingGroupId: string | null;
   /** The offer/combo package this booking came from, if any — present means it's a real combo, not just several services. */

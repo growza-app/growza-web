@@ -743,6 +743,18 @@ export function BookingsList({
       : ts('movedNowOn', { date: formatDateWithWeekday(movedTo, timezone, { withYear: false, locale }), time });
   };
 
+  /**
+   * QA 2026-11-06 — "Also booked at 11:00 am with Fatima", on both of a client's two bookings.
+   *
+   * The desk that made the second booking is told as it saves (Jira GRW-676). The desk that made the first never
+   * was: its screen had already moved on. So the booking itself says it, to whoever looks. A note, not an error —
+   * a mother and her daughter under one number look exactly like this.
+   */
+  const alsoLine = (also: NonNullable<BookingGroup['alsoBooked']>) => {
+    const time = formatTime(also.startAt, timezone);
+    return also.staffName ? ts('alsoAtWith', { time, staff: also.staffName }) : ts('alsoAt', { time });
+  };
+
   const cardInner = (b: BookingGroup) => {
     const chip = statusChip(b);
     // First provider only, even for a multi-staff combo — one rail colour per
@@ -799,6 +811,7 @@ export function BookingsList({
           )}
           <div className="bk-card-services">{summarizeServices(b.serviceNames, locale)}</div>
           {b.movedTo ? <div className="bk-card-moved">{movedLine(b.movedTo, b.startAt)}</div> : null}
+          {b.alsoBooked ? <div className="bk-card-also">{alsoLine(b.alsoBooked)}</div> : null}
           {b.customerPhone ? (
             <div className="bk-card-phone">
               <IconPhone />
@@ -1357,6 +1370,7 @@ export function BookingsList({
                         <strong>{svcLabel}</strong>
                         <span>{formatDuration(b.totalMin, locale)}</span>
                         {b.movedTo ? <div className="bk-card-moved">{movedLine(b.movedTo, b.startAt)}</div> : null}
+                        {b.alsoBooked ? <div className="bk-card-also">{alsoLine(b.alsoBooked)}</div> : null}
                       </td>
                       <td className="hm-v3-td-staff">
                         <div className="hm-v3-staff-cell">{staffName}</div>
