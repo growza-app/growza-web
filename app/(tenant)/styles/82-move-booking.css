@@ -72,14 +72,13 @@
  * Amber, and deliberately the same amber as `.wi-overlap`.
  *
  * The difference between them is WHEN, not what: the walk-in sheet reports an
- * overlap that has already happened, this one warns about an overlap about to
- * be created. Giving the same fact two colours would suggest they are two
+ * overlap that has already happened, this one names a clash before it can
+ * happen. Giving the same fact two colours would suggest they are two
  * different kinds of thing.
  *
- * Not red, because nothing has failed and nothing is being refused — the
- * button beside it changes its own words to "Move anyway" and the move goes
- * through. This is the product telling the receptionist what they are about to
- * do, which is the whole of the owner's rule: never restricted, always told.
+ * Not red, because nothing has failed yet — the receptionist is still choosing,
+ * and this says why the button below is off and what to do about it. (Until
+ * SAL-04, 6 Nov 2026, the button read "Move anyway" and the move went through.)
  */
 .mv-clash {
   margin: 12px 0 4px;

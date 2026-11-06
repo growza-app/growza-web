@@ -49,6 +49,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Nobody who does this is free at that time. Pick another.': 'उस समय यह काम करने वाला कोई खाली नहीं है। कोई दूसरा समय चुनें।',
   'That day has already gone. Pick today or a later day.': 'वह दिन बीत चुका है। आज या आगे का कोई दिन चुनें।',
   'That time was just taken. Pick another.': 'वह समय अभी-अभी भर गया। कोई दूसरा चुनें।',
+  'That time is already taken. Pick another time.': 'वह समय पहले से भरा है। कोई दूसरा समय चुनें।',
   'The owner cannot be removed from their own business.': 'मालिक को उनके अपने बिज़नेस से हटाया नहीं जा सकता।',
   'You cannot remove yourself. Ask the owner.': 'आप ख़ुद को नहीं हटा सकते। मालिक से कहें।',
   'This number is not part of a business any more. Ask the owner to invite you again.': 'यह नंबर अब किसी बिज़नेस से जुड़ा नहीं है। मालिक से फिर से न्योता भेजने को कहें।',

@@ -1427,8 +1427,8 @@ export const api = {
    * hands over the row the receptionist tapped rather than working out which
    * of three appointments is the first one.
    *
-   * `overlapping` in the response means it was recorded on a chair that is
-   * already taken — the booking exists either way, and the sheet says so.
+   * A time somebody else has is refused: 409 `slot_taken`, with a sentence to
+   * show (SAL-04, 6 Nov 2026). Nothing has moved when that comes back.
    */
   rescheduleAppointment: (
     appointmentId: string,
@@ -1439,7 +1439,6 @@ export const api = {
       bookingGroupId: string;
       startAt: string;
       endAt: string;
-      overlapping: boolean;
       remindersScheduled: number;
     }>(`/api/v1/appointments/${appointmentId}/reschedule`, args),
   /** Jira GRW-477 — `location` is the header's branch; absent searches every branch. */
