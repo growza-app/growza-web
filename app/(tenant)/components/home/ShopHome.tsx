@@ -545,6 +545,7 @@ export function ShopHome({
         orders: data.today.orders,
         previousMinor: data.yesterday.takingsMinor ?? 0,
         byPaymentMode: data.today.byPaymentMode ?? [],
+        fromAppsMinor: data.today.fromAppsMinor,
         cashDrawer: data.today.cashDrawer,
       };
     }
@@ -564,6 +565,8 @@ export function ShopHome({
       byPaymentMode: phoneChannel.byPaymentMode ?? (phonePeriod === 'today' ? data?.today.byPaymentMode ?? [] : []),
       // Today's till only: the notes in it are a fact about this day, not about a week or a month.
       cashDrawer: phonePeriod === 'today' ? data?.today.cashDrawer : undefined,
+      // And the apps' share of today, for the same reason: the channel report already carries the other periods.
+      fromAppsMinor: phonePeriod === 'today' ? data?.today.fromAppsMinor : undefined,
       busy: phoneBusy,
     };
   }, [canPhoneRange, money, data, phoneChannel, phoneBusy, phonePeriod]);
@@ -844,6 +847,14 @@ export function ShopHome({
                                 <b>{rupees(m.revenueMinor)}</b>
                               </span>
                             ))}
+                          {/* QA 2026-11-06 — what the apps billed, so the split adds up to the takings beside it. */}
+                          {data.today.fromAppsMinor ? (
+                            <span className="rst-kpi-mode">
+                              <i className="rst-mode-dot is-apps" aria-hidden />
+                              <span>{t.fromApps}</span>
+                              <b>{rupees(data.today.fromAppsMinor)}</b>
+                            </span>
+                          ) : null}
                         </div>
                       ) : null}
                       {/* Owner, 2026-11-06 — the notes in the till, which the split above cannot say (CashDrawer.tsx). */}
@@ -2031,8 +2042,14 @@ export function ShopHome({
                           ) : null}
                         </div>
                         )}
-                        {phoneFigures.byPaymentMode.length > 0 && phoneFigures.takingsMinor > 0 ? (
-                          <PaymentLine t={t} slices={phoneFigures.byPaymentMode} total={phoneFigures.takingsMinor} onMore={() => setPayMenu(true)} />
+                        {(phoneFigures.byPaymentMode.length > 0 || (phoneFigures.fromAppsMinor ?? 0) > 0) && phoneFigures.takingsMinor > 0 ? (
+                          <PaymentLine
+                            t={t}
+                            slices={phoneFigures.byPaymentMode}
+                            total={phoneFigures.takingsMinor}
+                            onMore={() => setPayMenu(true)}
+                            appsMinor={phoneFigures.fromAppsMinor}
+                          />
                         ) : null}
                         {phoneFigures.kind === 'today' || phoneFigures.kind === 'range' ? <CashDrawerLine t={t} cashDrawer={phoneFigures.cashDrawer} /> : null}
                         {phoneSpark.length > 0 ? (
