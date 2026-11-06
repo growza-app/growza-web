@@ -147,6 +147,9 @@ export const copy = {
     moved: 'Moved',
     movedNowAt: 'Now at {time}',
     movedNowOn: 'Now on {date}, {time}',
+    // QA 2026-11-06 — another booking the client has at the same time, said on both bookings.
+    alsoAt: 'Also booked at {time}',
+    alsoAtWith: 'Also booked at {time} with {staff}',
   },
 
   today: {

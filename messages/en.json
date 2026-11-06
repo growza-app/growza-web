@@ -107,7 +107,9 @@
     "cancelled": "Cancelled",
     "moved": "Moved",
     "movedNowAt": "Now at {time}",
-    "movedNowOn": "Now on {date}, {time}"
+    "movedNowOn": "Now on {date}, {time}",
+    "alsoAt": "Also booked at {time}",
+    "alsoAtWith": "Also booked at {time} with {staff}"
   },
   "bookings": {
     "none": "No bookings that day.",

@@ -60,6 +60,16 @@
   color: var(--blue);
 }
 
+/*
+ * QA 2026-11-06 — "Also booked at 11:00 am with Fatima". The same line as "Now at …" above, in the amber the
+ * move sheet uses for a clash: something to look at, not something that failed.
+ */
+.bk-card-also {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--amber-ink);
+}
+
 .chip-no_show {
   background: var(--danger-soft);
   color: var(--danger);
