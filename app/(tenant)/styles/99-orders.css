@@ -451,6 +451,9 @@ a.ord-card:focus-visible,
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
+.ord-d-money > .ord-d-note dd {
+  color: var(--muted);
+}
 .ord-d-money > div:first-child dd {
   font-weight: 700;
 }

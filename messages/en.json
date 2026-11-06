@@ -4637,6 +4637,8 @@
       "moneyTitle": "Money",
       "total": "Total",
       "givenBack": "Given back",
+      "pointsUsed": "Paid with points",
+      "pointsUsedValue": "{points, plural, one {# point} other {# points}} · {off} off",
       "paidBy": "Paid by {mode}",
       "modes": {
         "cash": "cash",
