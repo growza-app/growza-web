@@ -1318,7 +1318,7 @@ export interface BookingCorrection {
  */
 export interface ShopHome {
   timezone: string;
-  today: { orders: number; takingsMinor?: number; byPaymentMode?: PaymentModeSlice[] };
+  today: { orders: number; takingsMinor?: number; byPaymentMode?: PaymentModeSlice[]; cashDrawer?: { takenMinor: number; refundedMinor: number; inDrawerMinor: number } };
   yesterday: { orders: number; takingsMinor?: number };
   /** Has the shop ever sold anything. False: Home invites the first order. */
   anyOrders: boolean;

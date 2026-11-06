@@ -251,6 +251,12 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     moneyTaken: S('Money today', 'आज मिला पैसा'),
     // Owner, 2026-11-06 — the day report's line for bills that took less than their price. Plain words: not
     // "discounts" (a word for an offer the owner chose) and not "giveaway" — it says what the till did.
+    // Owner, 2026-11-06 — the notes that should be in the till (CashDrawer.tsx). Plain words: "drawer" is the thing on the counter.
+    cashInDrawer: S('Cash in drawer', 'गल्ले में कैश'),
+    cashInDrawerSub: S('Cash taken today, less cash handed back', 'आज लिया गया कैश, घटा लौटाया गया कैश'),
+    cashTaken: S('Cash taken', 'कैश लिया'),
+    cashHandedBack: S('Cash handed back', 'कैश लौटाया'),
+    cashLeft: S('Should be in the drawer', 'गल्ले में होना चाहिए'),
     chargedBelow: S('Charged below price', 'दाम से कम लिया'),
     chargedBelowSub: S('Bills that took less than the price today', 'आज जिन बिलों में दाम से कम लिया गया'),
     billCount: (n: number) => S(n === 1 ? '1 bill' : `${n} bills`, `${n} बिल`),

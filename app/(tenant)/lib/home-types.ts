@@ -68,6 +68,13 @@ export interface TokenCountsToday extends TokenFigures {
  * question and only the business differs. None of the diary's rows are here: a counter takes no bookings,
  * nobody fails to turn up for one, and the day belongs to what sold rather than to who was on shift.
  */
+/** Owner, 2026-11-06 — the day's counter cash: what came in less what was handed back. Can be negative. */
+export interface CashDrawerFigure {
+  takenMinor: number;
+  refundedMinor: number;
+  inDrawerMinor: number;
+}
+
 export interface ShopDaySummary {
   kind: 'shop';
   date: string;
@@ -81,6 +88,8 @@ export interface ShopDaySummary {
   topSellers: Array<{ name: string; sizeLabel: string | null; units: number; takingsMinor: number }>;
   /** What the day's counter bills were charged below their price, and on how many. Absent from an older API. */
   givenAway?: { minor: number; bills: number };
+  /** Owner, 2026-11-06 — the day's counter cash (`CashDrawerFigure`). Absent from an older API. */
+  cashDrawer?: CashDrawerFigure;
   /** `closed` only on a branch that has been shut since it traded — absent, never false. */
   branches?: Array<{ id: string; name: string; orders: number; takingsMinor: number; closed?: boolean }>;
 }
