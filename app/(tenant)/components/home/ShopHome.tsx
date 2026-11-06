@@ -35,7 +35,7 @@ import {
   IconReports,
   IconUpload,
 } from '../icons';
-import { Avatar, Card, CardError, HomeHeader, QuickTiles, Segmented, rupees } from './parts';
+import { Avatar, Card, CardError, HomeHeader, QuickTiles, Segmented, exactRupees, rupees } from './parts';
 import { CheckInCard } from './CheckInCard';
 import { PaymentBar, PaymentLine } from './MoneyHero';
 import { CashDrawerLine } from './CashDrawer';
@@ -1037,7 +1037,7 @@ export function ShopHome({
                                 <span className={`rst-status-pill ${statusClass}`}>{statusLabel}</span>
                                 <div className="rst-order-right">
                                   {o.amountMinor !== undefined ? (
-                                    <strong className="rst-order-amt">{rupees(o.amountMinor)}</strong>
+                                    <strong className="rst-order-amt">{exactRupees(o.amountMinor)}</strong>
                                   ) : null}
                                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                                     <polyline points="9 18 15 12 9 6" />
