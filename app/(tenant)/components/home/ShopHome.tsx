@@ -38,6 +38,7 @@ import {
 import { Avatar, Card, CardError, HomeHeader, QuickTiles, Segmented, rupees } from './parts';
 import { CheckInCard } from './CheckInCard';
 import { PaymentBar, PaymentLine } from './MoneyHero';
+import { CashDrawerLine } from './CashDrawer';
 import { useDialog } from '../../../shared/a11y/useDialog';
 
 type ShopPeriod = 'last_7_days' | 'this_month' | 'last_3_months';
@@ -544,6 +545,7 @@ export function ShopHome({
         orders: data.today.orders,
         previousMinor: data.yesterday.takingsMinor ?? 0,
         byPaymentMode: data.today.byPaymentMode ?? [],
+        cashDrawer: data.today.cashDrawer,
       };
     }
     if (!phoneChannel) return { kind: phoneBusy ? ('busy' as const) : ('failed' as const) };
@@ -560,6 +562,8 @@ export function ShopHome({
       // An average over no orders is not 0, it is nothing; the card draws a dash.
       avgMinor: orders > 0 ? Math.round(takingsMinor / orders) : null,
       byPaymentMode: phoneChannel.byPaymentMode ?? (phonePeriod === 'today' ? data?.today.byPaymentMode ?? [] : []),
+      // Today's till only: the notes in it are a fact about this day, not about a week or a month.
+      cashDrawer: phonePeriod === 'today' ? data?.today.cashDrawer : undefined,
       busy: phoneBusy,
     };
   }, [canPhoneRange, money, data, phoneChannel, phoneBusy, phonePeriod]);
@@ -840,6 +844,15 @@ export function ShopHome({
                                 <b>{rupees(m.revenueMinor)}</b>
                               </span>
                             ))}
+                        </div>
+                      ) : null}
+                      {/* Owner, 2026-11-06 — the notes in the till, which the split above cannot say (CashDrawer.tsx). */}
+                      {data.today.cashDrawer && (data.today.cashDrawer.takenMinor > 0 || data.today.cashDrawer.refundedMinor > 0) ? (
+                        <div className="rst-kpi-modes rst-kpi-drawer">
+                          <span className="rst-kpi-mode">
+                            <span>{t.cashInDrawer}</span>
+                            <b>{rupees(data.today.cashDrawer.inDrawerMinor)}</b>
+                          </span>
                         </div>
                       ) : null}
                     </div>
@@ -2021,6 +2034,7 @@ export function ShopHome({
                         {phoneFigures.byPaymentMode.length > 0 && phoneFigures.takingsMinor > 0 ? (
                           <PaymentLine t={t} slices={phoneFigures.byPaymentMode} total={phoneFigures.takingsMinor} onMore={() => setPayMenu(true)} />
                         ) : null}
+                        {phoneFigures.kind === 'today' || phoneFigures.kind === 'range' ? <CashDrawerLine t={t} cashDrawer={phoneFigures.cashDrawer} /> : null}
                         {phoneSpark.length > 0 ? (
                           // Decoration would be a lie here, so it is drawn only from the window's own daily totals.
                           <div className="shp-spark" aria-hidden="true">
