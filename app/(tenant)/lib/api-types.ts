@@ -1447,6 +1447,8 @@ export interface OrderDetail {
   payments?: Array<{ mode: string; amountMinor: number }>;
   totalMinor?: number;
   refundedMinor?: number;
+  /** The reward points that paid part of this counter order (net of any given back), with what they came to. Null when none did. */
+  rewardPoints?: { points: number; discountMinor: string } | null;
 }
 
 /** The answer to a move that was refused because the order is no longer where the screen thought. */

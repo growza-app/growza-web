@@ -4639,6 +4639,8 @@
       "moneyTitle": "पैसा",
       "total": "कुल",
       "givenBack": "लौटाया",
+      "pointsUsed": "पॉइंट्स से भुगतान",
+      "pointsUsedValue": "{points} पॉइंट्स · {off} की छूट",
       "paidBy": "{mode} से भुगतान",
       "modes": {
         "cash": "नकद",

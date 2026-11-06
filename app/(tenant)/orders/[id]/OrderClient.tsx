@@ -389,6 +389,12 @@ export function OrderClient({
                   <dd>{money(order.refundedMinor)}</dd>
                 </div>
               ) : null}
+              {order.rewardPoints ? (
+                <div className="ord-d-note">
+                  <dt>{t('detail.pointsUsed')}</dt>
+                  <dd>{t('detail.pointsUsedValue', { points: order.rewardPoints.points, off: money(order.rewardPoints.discountMinor) ?? '' })}</dd>
+                </div>
+              ) : null}
               {(order.payments ?? []).map((p) => (
                 <div key={p.mode}>
                   {/* An app's order was paid to the app: "Paid on Swiggy", never "Paid by other". */}
