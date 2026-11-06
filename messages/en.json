@@ -1864,6 +1864,12 @@
         "above": "{amount} more than the services come to.",
         "nothing": "—"
       },
+      "aboveServices": {
+        "title": "This costs more than its services",
+        "body": "The services come to {services} on their own. This package is {price}.",
+        "confirm": "Save at {price}",
+        "cancel": "Change the price"
+      },
       "servicesSummary": "{count, plural, one {# service} other {# services}} · takes {duration}",
       "original": "Original price",
       "youSave": "You save",

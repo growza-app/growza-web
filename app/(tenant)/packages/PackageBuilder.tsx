@@ -269,6 +269,13 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
   // Submission failures only (network/server) — field-level required-ness
   // shows inline next to the field itself, not as a banner up top.
   const [error, setError] = useState<string | null>(null);
+  /**
+   * QA 2026-11-06 — the API asked "this costs more than its services, is that right?" about the save in hand.
+   *
+   * `publish` is which button was pressed, so saying yes finishes that same save. A package at ₹50,000 for ₹1,100
+   * of services used to go through on one tap; the line under the price said so, but nothing stopped the tap.
+   */
+  const [askingAbove, setAskingAbove] = useState<{ publish: boolean } | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ title?: string; services?: string; price?: string }>({});
 
   const selectedServices = useMemo(
@@ -355,7 +362,7 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
     return Object.keys(errs).length === 0;
   };
 
-  const save = async (publish: boolean) => {
+  const save = async (publish: boolean, confirmedAbove = false) => {
     if (!validateForm()) return;
     /*
      * Jira GRW-473 — two ways to save a package that would never show. "Only on" with no day ticked is visible on
@@ -388,6 +395,7 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
         visibleWeekdays: visibilityMode === 'weekdays' ? visibleWeekdays : null,
         visibleFrom: visibilityMode === 'window' ? fromDatetimeLocal(visibleFromInput) : null,
         visibleUntil: visibilityMode === 'window' ? fromDatetimeLocal(visibleUntilInput) : null,
+        ...(confirmedAbove ? { confirmAboveServices: true } : {}),
       };
       if (mode === 'create') {
         const created = await api.createOffer({
@@ -405,6 +413,11 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
       }
       leave();
     } catch (err) {
+      // Not a failure: a question. The dialog asks it, with both figures, and "yes" sends this same save again.
+      if (err instanceof ApiError && err.code === 'package_above_its_services') {
+        setAskingAbove({ publish });
+        return;
+      }
       // Jira GRW-473 — the server's reason when it gave one ("a service from another branch"), not a guess.
       setError(err instanceof ApiError && err.status < 500 ? err.message : t('errors.saveFailed'));
     } finally {
@@ -861,6 +874,25 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
         <PreviewSheet onClose={() => setPreviewOpen(false)}>
           {selectedServices.length === 0 ? <div className="empty">{t('sidebarEmpty')}</div> : previewCard}
         </PreviewSheet>
+      )}
+
+      {askingAbove && comboPriceMinor != null && (
+        <ConfirmDialog
+          title={t('aboveServices.title')}
+          body={t('aboveServices.body', {
+            services: formatMoney(String(originalPriceMinor)),
+            price: formatMoney(String(comboPriceMinor)),
+          })}
+          confirmLabel={t('aboveServices.confirm', { price: formatMoney(String(comboPriceMinor)) })}
+          cancelLabel={t('aboveServices.cancel')}
+          busy={busy}
+          onConfirm={() => {
+            const { publish } = askingAbove;
+            setAskingAbove(null);
+            void save(publish, true);
+          }}
+          onCancel={() => setAskingAbove(null)}
+        />
       )}
 
       {confirmDelete && initialOffer && (
