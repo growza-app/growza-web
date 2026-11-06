@@ -193,4 +193,26 @@ describe('the rule, in the info tips', () => {
       expect({ name, enough: sentences.length >= 4 }).toEqual({ name, enough: true });
     }
   });
+
+  /**
+   * QA 2026-11-06 — a rate the plan does not allow shows the message, not the figures it would have earned.
+   *
+   * Typing 150 left "A ₹1,000 bill earns 1500 points" and a 150% summary on screen beside "between 0 and 1%".
+   */
+  it('works out the example, and the summary, only for a rate the plan allows', () => {
+    const form = readFileSync(resolve(__dirname, 'RewardsForm.tsx'), 'utf8');
+    expect(form).toMatch(/const allowedBps = bps !== null && bps <= initial\.maxEarnBps \? bps : null;/);
+    expect(form).toMatch(/const earned = allowedBps === null \? null : pointsFor\(EXAMPLE_BILL_MINOR, allowedBps, initial\.pointValueMinor\);/);
+    // The summary keeps the saved rate while the typed one is not allowed.
+    expect(form).toMatch(/const effectiveBps = allowedBps \?\? initial\.earnBps;/);
+    // Which is what shows the message in place of the example.
+    expect(form).toMatch(/\{earned === null\s+\? t\('rateBad', \{ max: maxPercent \}\)/);
+  });
+
+  it('a rate over the plan’s ceiling is what bpsOf passes and the ceiling check refuses', () => {
+    expect(bpsOf('150')).toBe(15_000);
+    expect(bpsOf('1')).toBe(100);
+    expect(bpsOf('1.5')).toBe(150);
+    expect(bpsOf('abc')).toBeNull();
+  });
 });
