@@ -187,7 +187,12 @@ export function SellersClient({ timezone }: { timezone: string }) {
             <section className="srp-totals" aria-label={t('totalsLabel')}>
               <p className="srp-worth-label">{t(`range.${range}`)}</p>
               <p className="srp-worth">{t('sold', { units: best.totals.units })}</p>
-              <p className="srp-hint">{t('bestTotals', { sizes: best.totals.sizes, value: money(best.totals.valueMinor) })}</p>
+              {/* QA 2026-11-06 — a kitchen sells dishes and has no sizes: "9 sizes · ₹9,708.50" read wrong on a menu. */}
+              <p className="srp-hint">
+                {counted
+                  ? t('bestTotals', { sizes: best.totals.sizes, value: money(best.totals.valueMinor) })
+                  : t('bestTotalsUncounted', { dishes: best.totals.sizes, value: money(best.totals.valueMinor) })}
+              </p>
               {!best.lastYear.hasData ? <p className="srp-hint">{t('noLastYear')}</p> : null}
             </section>
             <ul className="srp-list">
@@ -204,7 +209,7 @@ export function SellersClient({ timezone }: { timezone: string }) {
                 </li>
               ))}
             </ul>
-            <Pagination page={livePage} total={best.totals.sizes} pageSize={PAGE_SIZE} noun={t('nounSizes')} onChange={setPage} />
+            <Pagination page={livePage} total={best.totals.sizes} pageSize={PAGE_SIZE} noun={t(counted ? 'nounSizes' : 'nounDishes')} onChange={setPage} />
           </>
         )
       ) : view === 'dead' && dead ? (

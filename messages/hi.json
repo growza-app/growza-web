@@ -4193,6 +4193,8 @@
       "nothingSits": "कुछ भी बिना बिके नहीं पड़ा",
       "nothingSitsHint": "शेल्फ़ पर जो साइज़ इस अवधि में नहीं बिके, वे यहाँ दिखते हैं।",
       "bestTotals": "{sizes, number} साइज़ · {value}",
+      "bestTotalsUncounted": "{dishes, number} डिश · {value}",
+      "nounDishes": "डिश",
       "noLastYear": "पिछले साल इन्हीं दिनों की कोई बिक्री दर्ज नहीं है।",
       "sold": "{units, plural, one {# बिका} other {# बिके}}",
       "lastYear": "पिछले साल {units}",

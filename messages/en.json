@@ -4193,6 +4193,8 @@
       "nothingSits": "Nothing is sitting unsold",
       "nothingSitsHint": "Sizes on the shelf that did not sell in this period show here.",
       "bestTotals": "{sizes, plural, one {1 size} other {# sizes}} · {value}",
+      "bestTotalsUncounted": "{dishes, plural, one {1 dish} other {# dishes}} · {value}",
+      "nounDishes": "dishes",
       "noLastYear": "No sales recorded for the same days last year.",
       "sold": "{units, number} sold",
       "lastYear": "{units} last year",
