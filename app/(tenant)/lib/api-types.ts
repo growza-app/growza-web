@@ -882,6 +882,11 @@ export interface OfferInput {
   visibleWeekdays?: number[] | null;
   visibleFrom?: string | null;
   visibleUntil?: string | null;
+  /**
+   * QA 2026-11-06 — "yes, it costs more than its services, save it". The API answers 409
+   * `package_above_its_services` to a package priced above its parts until the same save is sent with this.
+   */
+  confirmAboveServices?: boolean;
 }
 
 /** Jira GRW-381 — a created offer, and with "all branches", where its copies went and which branches were skipped. */

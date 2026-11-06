@@ -146,6 +146,9 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
         visibleWeekdays: pkg.visibleWeekdays,
         visibleFrom: pkg.visibleFrom,
         visibleUntil: pkg.visibleUntil,
+        // QA 2026-11-06 — a copy repeats a price the owner already set, and is made retired. Asking "it costs more
+        // than its services, is that right?" from a list row would be a question about a decision made elsewhere.
+        confirmAboveServices: true,
       });
       router.refresh();
     } catch (err) {

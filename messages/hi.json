@@ -1864,6 +1864,12 @@
         "above": "सेवाओं के जोड़ से {amount} ज़्यादा।",
         "nothing": "—"
       },
+      "aboveServices": {
+        "title": "यह अपनी सेवाओं से महँगा है",
+        "body": "सेवाएँ अलग-अलग {services} की हैं। यह पैकेज {price} का है।",
+        "confirm": "{price} पर सेव करें",
+        "cancel": "दाम बदलें"
+      },
       "servicesSummary": "{count, plural, one {# सेवा} other {# सेवाएँ}} · {duration} लगते हैं",
       "original": "असली कीमत",
       "youSave": "आप बचाते हैं",
