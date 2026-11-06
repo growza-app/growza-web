@@ -43,6 +43,18 @@ export function formatTokenNo(n: number): string {
 }
 
 /**
+ * QA 2026-11-06 — the tokens that are still an order to hand over: the ones with something left on them.
+ *
+ * A fully returned order keeps its token NUMBER (the day's numbering counts it, so the next token and every later
+ * one stay where the customers' slips say they are), but it has no dishes and no money left, so there is nothing to
+ * deliver. It sat in the Queue as "Deliver first — Hand over" at ₹0 until somebody tapped it, and the tab badge
+ * counted it. Home already left such an order out; this makes the POS agree.
+ */
+export function tokensStillOnTheBoard<T extends { items: readonly unknown[] }>(tokens: readonly T[]): T[] {
+  return tokens.filter((tk) => tk.items.length > 0);
+}
+
+/**
  * QA 2026-11-06 — the token number of each of today's orders, the way the POS numbers them.
  *
  * A token is the order's place in the day: the first order rung up is #01, the next #02. It is what the customer's

@@ -25,6 +25,7 @@ import { buildSaleRows, type SaleRow } from '../sales/SalesClient';
 import { ReturnProductSheet } from '../sales/ReturnProductSheet';
 import {
   buildDailyTokens,
+  tokensStillOnTheBoard,
   formatTokenNo,
   posQueueStorageKey,
   returnLookbackFrom,
@@ -523,13 +524,13 @@ export function PosClient({
   );
   const preparingTokens = useMemo(
     () =>
-      [...dailyTokens.filter((tk) => tk.state === 'preparing')].sort(
+      [...tokensStillOnTheBoard(dailyTokens).filter((tk) => tk.state === 'preparing')].sort(
         (a, b) => b.elapsedMin - a.elapsedMin || a.tokenNo - b.tokenNo,
       ),
     [dailyTokens],
   );
   const completedTokens = useMemo(
-    () => [...dailyTokens.filter((tk) => tk.state === 'completed')].reverse(),
+    () => [...tokensStillOnTheBoard(dailyTokens).filter((tk) => tk.state === 'completed')].reverse(),
     [dailyTokens],
   );
   const nextTokenNo = dailyTokens.length + 1;
