@@ -3312,7 +3312,9 @@
       "receiptBalance": "You have {points, plural, one {# point} other {# points}}.",
       "receiptBalanceOnly": "You have {points, plural, one {# point} other {# points}}.",
       "receiptExpiry": "{points, plural, one {# point expires} other {# points expire}} on {date}.",
-      "held": "{points, plural, one {# pt} other {# pts}} available tomorrow"
+      "held": "{points, plural, one {# pt} other {# pts}} available tomorrow",
+      "addNumberToEarn": "Add their mobile number to earn {points, plural, one {# point} other {# points}} on this bill",
+      "addNumber": "Add their mobile number to earn reward points"
     }
   },
   "help": {

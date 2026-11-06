@@ -3312,7 +3312,9 @@
       "receiptBalance": "आपके पास {points, plural, one {# पॉइंट} other {# पॉइंट}} हैं।",
       "receiptBalanceOnly": "आपके पास {points, plural, one {# पॉइंट} other {# पॉइंट}} हैं।",
       "receiptExpiry": "{points, plural, one {# पॉइंट} other {# पॉइंट}} {date} को खत्म हो जाएंगे।",
-      "held": "{points, plural, one {# पॉइंट} other {# पॉइंट}} कल से इस्तेमाल होंगे"
+      "held": "{points, plural, one {# पॉइंट} other {# पॉइंट}} कल से इस्तेमाल होंगे",
+      "addNumberToEarn": "उनका मोबाइल नंबर जोड़ें, तो इस बिल पर {points, plural, one {# पॉइंट} other {# पॉइंट}} मिलेंगे",
+      "addNumber": "रिवॉर्ड पॉइंट पाने के लिए उनका मोबाइल नंबर जोड़ें"
     }
   },
   "help": {
