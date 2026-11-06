@@ -19,7 +19,7 @@ import { DaySummarySheet } from './DaySummarySheet';
 import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import { ordersHref } from '../../lib/orders-filter';
-import { formatTokenNo, posQueueStorageKey, type PosTokenOverride } from '../../pos/pos-helpers';
+import { formatTokenNo, posQueueStorageKey, tokenNumbersOf, type PosTokenOverride } from '../../pos/pos-helpers';
 import { channelsOf, sellsOnMarketplaces } from '../../lib/order-channels';
 import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
@@ -619,6 +619,9 @@ export function ShopHome({
     };
     const todayISO = fmtDate(new Date());
     const sourceRows = todayOrderRows.length >= recentOrders.length ? todayOrderRows : recentOrders;
+    // QA 2026-11-06 — numbered over EVERY order of the day, like the POS and the receipt; only then is it narrowed to
+    // what this card lists. Numbering the narrowed list made a returned order shift every later token down by one.
+    const tokenNoOf = tokenNumbersOf(sourceRows, (ms) => fmtDate(new Date(ms)) === todayISO);
     const todaySorted = sourceRows
       .filter((o) => {
         if (o.status === 'cancelled' || o.status === 'returned' || o.items <= 0) return false;
@@ -672,7 +675,7 @@ export function ShopHome({
     }> = [];
 
     todaySorted.forEach((o, idx) => {
-      const tokenNo = idx + 1;
+      const tokenNo = tokenNoOf.get(o.id) ?? idx + 1;
       const soldMs = Date.parse(o.soldAt) || now;
       const ov = overrides[o.id];
       if (ov === 'completed') return;
