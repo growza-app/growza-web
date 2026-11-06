@@ -102,7 +102,12 @@ export function DocumentViewer({
 
   /** Opens the document and asks that window to print itself, so the printed sheet is the document and nothing else. */
   const print = () => {
-    const w = window.open(href, '_blank', 'noopener');
+    /*
+     * Not `noopener`: a window opened with it is handed back as null, so this always took a working tab for a blocked
+     * pop-up and never printed (salon QA 2026-11-07). The document is our own page; the link back is cut by hand.
+     */
+    const w = window.open(href, '_blank');
+    if (w) w.opener = null;
     if (!w) {
       // A blocked pop-up is not an error worth alarming anybody with: the Open button beside this one still works.
       setNote(t('popupBlocked'));

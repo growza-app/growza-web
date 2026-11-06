@@ -10,6 +10,7 @@ import { intlLocale } from './[providerId]/month';
 import { useBranch } from '../components/BranchProvider';
 import { IconNote, IconPlus } from '../components/icons';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
+import { markAllInTime } from './mark-all';
 
 /**
  * Jira GRW-63 · GRW-170 — the attendance register, built to Attendance.dc.html.
@@ -315,6 +316,9 @@ export function AttendanceRegister({
     try {
       // One fix for the whole batch — the desk has not moved between the first row and the eighth.
       const fix = await deskFix();
+      // Today, a shift that has not started yet is not an in-time: the server refuses a time that has not happened
+      // (salon QA 2026-11-07 — marking the team at 8:45 for a 9:00 shift failed for everyone). They are here now.
+      const nowHm = date === register.today ? wallClockNow(tz) : null;
       for (const row of unmarked) {
         await api.markAttendance({
           providerId: row.providerId,
@@ -322,7 +326,7 @@ export function AttendanceRegister({
           status: 'present',
           // Their own shift start, not one salon-wide default — the same
           // reason lateness is measured per person.
-          inTime: row.shiftStart,
+          inTime: markAllInTime(row.shiftStart, nowHm),
           outTime: null,
           note: row.note,
           ...fix,
