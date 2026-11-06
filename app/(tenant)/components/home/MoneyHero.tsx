@@ -65,17 +65,41 @@ export function planPaymentLine(slices: PaymentModeSlice[]): { shown: PaymentMod
   return { shown, more: sorted.length - shown.length, only: sorted.length === 1 && sorted[0]!.mode !== 'not_recorded' };
 }
 
-export function PaymentLine({ t, slices, total, onMore }: { t: HomeCopy; slices: PaymentModeSlice[]; total: number; onMore: () => void }) {
-  if (slices.length === 0 || total === 0) return <p className="hm-line hm-line-empty">{t.noMoneyYet}</p>;
+/**
+ * `appsMinor` — QA 2026-11-06: what the delivery apps billed today. The split is the COUNTER's (an app pays the shop, not
+ * the till), so beside the takings above it the split read short by exactly this much. Said as its own item, "Apps",
+ * so the parts add up to the day; it is not a way of paying and is not dressed as one.
+ */
+export function PaymentLine({
+  t,
+  slices,
+  total,
+  onMore,
+  appsMinor,
+}: {
+  t: HomeCopy;
+  slices: PaymentModeSlice[];
+  total: number;
+  onMore: () => void;
+  appsMinor?: number;
+}) {
+  const apps = appsMinor && appsMinor > 0 ? appsMinor : 0;
+  if ((slices.length === 0 && apps === 0) || total === 0) return <p className="hm-line hm-line-empty">{t.noMoneyYet}</p>;
   const { shown, more, only } = planPaymentLine(slices);
   return (
     <div className="hm-line" role="group" aria-label={t.howPaid}>
       {shown.map((s) => (
         <span key={s.mode} className="hm-line-item">
           <i style={{ background: MODE_COLOR[s.mode] }} />
-          {only ? t.allPaidBy(t.payment[s.mode] ?? s.mode, s.mode) : t.payment[s.mode]} <b>{rupees(s.revenueMinor)}</b>
+          {only && apps === 0 ? t.allPaidBy(t.payment[s.mode] ?? s.mode, s.mode) : t.payment[s.mode]} <b>{rupees(s.revenueMinor)}</b>
         </span>
       ))}
+      {apps > 0 ? (
+        <span className="hm-line-item hm-line-apps">
+          <i style={{ background: '#9ca3af' }} />
+          {t.fromApps} <b>{rupees(apps)}</b>
+        </span>
+      ) : null}
       {more > 0 ? (
         <button type="button" className="hm-line-more" aria-label={`${t.howPaid}: +${more}`} onClick={onMore}>
           +{more}

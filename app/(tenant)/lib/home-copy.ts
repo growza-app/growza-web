@@ -88,6 +88,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     newClientWord,
     cameBack: S('came back', 'दोबारा आए'),
     howPaid: S('How they paid', 'कैसे पैसे दिए'),
+    // QA 2026-11-06 — what the delivery apps billed, beside the counter's payment split so the parts add up to the day.
+    fromApps: S('Apps', 'ऐप से'),
     noMoneyYet: S('No money taken yet', 'अभी तक कोई पैसा नहीं'),
     thisWeek: S('This week', 'इस हफ़्ते'),
     thisMonth: S('This month', 'इस महीने'),

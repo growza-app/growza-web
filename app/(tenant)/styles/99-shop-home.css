@@ -792,6 +792,10 @@
     background: rgb(168 85 247);
   }
 
+  /* QA 2026-11-06 — what the delivery apps billed: grey, because it is not a way of paying at the till. */
+  .rst-mode-dot.is-apps {
+    background: #9ca3af;
+  }
   .rst-mode-dot.is-not_recorded {
     background: rgb(148 163 184);
   }
