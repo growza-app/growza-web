@@ -68,7 +68,7 @@ function runningInstalled(): boolean {
  * button reach. Descendants count, not only the bar: the raised "New booking"
  * circle sits inside `.bottom-nav` but rises above its box.
  */
-function chromeOffset(): number {
+export function chromeOffset(): number {
   let top = window.innerHeight;
   for (const element of document.querySelectorAll('.bottom-nav, .bottom-nav *, .fab')) {
     const rect = element.getBoundingClientRect();

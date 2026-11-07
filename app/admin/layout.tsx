@@ -7,6 +7,7 @@ import { SearchProvider } from './components/SearchContext';
 import { SessionGate } from './components/SessionGate';
 import { PwaRegister } from '../(tenant)/components/PwaRegister';
 import { InstallBanner } from '../shared/install/InstallBanner';
+import { NewIconNote } from '../shared/install/NewIconNote';
 import { InstallPromptCapture } from '../shared/install/InstallPromptCapture';
 import { NumberWheelGuard } from '../shared/NumberWheelGuard';
 import { hanken } from '../fonts';
@@ -82,6 +83,7 @@ export default async function AdminRootLayout({ children }: { children: ReactNod
         <PwaRegister />
         <NumberWheelGuard />
         <InstallBanner app="admin" />
+        <NewIconNote app="admin" />
       </body>
     </html>
   );

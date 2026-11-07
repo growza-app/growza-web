@@ -122,6 +122,15 @@ for (const manifest of ['public/manifest.json', 'public/admin-manifest.json']) {
   console.log(`${manifest}  icons rewritten`);
 }
 
+// The service worker's alert icon (Jira GRW-647) is the manifest's 192px one. It cannot import a module, so its line is
+// rewritten here — left by hand, it pointed at a deleted file for a whole icon generation.
+const worker = 'public/sw.js';
+const workerSource = await readFile(worker, 'utf8');
+const ICON_LINE = /const ICON_URL = '[^']*';/;
+if (!ICON_LINE.test(workerSource)) throw new Error(`${worker}: no ICON_URL line to rewrite`);
+await writeFile(worker, workerSource.replace(ICON_LINE, `const ICON_URL = '${urls.icon192}';`));
+console.log(`${worker}  ICON_URL rewritten`);
+
 const generated = 'app/icons.generated.ts';
 await writeFile(
   generated,
