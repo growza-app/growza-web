@@ -12,7 +12,8 @@
 //
 // So it caches only what is the same for everyone and safe to keep:
 //   - hashed build assets (/_next/static/) — cache-first, they never change
-//   - the install icons and manifests    — stale-while-revalidate
+//   - the install icons (hashed names)   — stale-while-revalidate
+//   - the manifests                      — network first, the copy only when offline
 // and everything else — pages, Next's RSC payloads, /api/*, /uploads/* — goes
 // straight to the network, untouched. If a PAGE load fails because the device
 // is offline, a small honest offline notice replaces the browser's error page.
@@ -49,8 +50,13 @@ self.addEventListener('activate', (event) => {
 const isBuildAsset = (pathname) => pathname.startsWith('/_next/static/');
 
 /** What installing the app needs: the same for everyone, and small. */
-const isInstallAsset = (pathname) =>
-  pathname.startsWith('/icons/') || pathname === '/manifest.json' || pathname === '/admin-manifest.json';
+const isInstallAsset = (pathname) => pathname.startsWith('/icons/');
+
+/**
+ * The manifests: what an installed app's name and icons are. Chrome re-reads it to update the home-screen icon, so it
+ * must see today's — network first; the stored copy is only for a device that is offline.
+ */
+const isManifest = (pathname) => pathname === '/manifest.json' || pathname === '/admin-manifest.json';
 
 /**
  * Keeps a copy of `response` and hands it back. A 502 from the proxy during a
@@ -90,6 +96,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  if (isManifest(url.pathname)) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => store(event, request, response))
+        .catch(async () => (await caches.match(request)) ?? Response.error()),
+    );
+    return;
+  }
+
   if (isInstallAsset(url.pathname)) {
     event.respondWith(
       caches.match(request).then((cached) => {
@@ -116,8 +131,11 @@ self.addEventListener('fetch', (event) => {
  * crosses Google's and Apple's servers to get here. `url` opens the app, which then fetches the real detail
  * over the session's own auth.
  */
-/** Kept beside the manifest's own entry — if one is renamed, the other must be. */
-const ICON_URL = '/icons/icon-192.efb083ff.png';
+/**
+ * The manifest's own 192px icon. Written by `tools/make-icons.mjs` with the manifests — by hand it went stale once:
+ * from the "G and arrow" icon until 2026-11-07 every alert pointed at a file that had been deleted.
+ */
+const ICON_URL = '/icons/icon-192.c9592266.png';
 
 self.addEventListener('push', (event) => {
   // A push with no data, or with something that is not our JSON, is not a reason to show nothing: the browser

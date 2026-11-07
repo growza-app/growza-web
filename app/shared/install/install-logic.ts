@@ -125,3 +125,23 @@ export function parseDismissedAt(raw: string | null): number | null {
   const value = Number(raw);
   return Number.isFinite(value) && value > 0 ? value : null;
 }
+
+/**
+ * 2026-11-07 — "Growza has a new icon", for the iPhone.
+ *
+ * iOS copies an installed web app's icon once, when it is added to the home screen, and never again: a new icon reaches
+ * an iPhone only if the person removes the app and adds it back. Android's Chrome updates it by itself, so only an
+ * iPhone or iPad running the installed app is told — once per icon, keyed on the icon's own content hash, so the next
+ * icon change asks again and nothing else ever does.
+ *
+ * A phone that added the app after the change has the new icon already; we cannot tell it from one that did not, so the
+ * note's words hold for both ("if your home screen still shows the old one").
+ */
+export function iconNoteKey(appleTouchUrl: string): string {
+  const hash = /\.([0-9a-f]{8})\.png$/.exec(appleTouchUrl)?.[1] ?? appleTouchUrl;
+  return `growza.icon-note.${hash}`;
+}
+
+export function iconNoteDue(env: { userAgent: string; maxTouchPoints: number; standalone: boolean; seen: boolean }): boolean {
+  return env.standalone && !env.seen && platformOf(env.userAgent, env.maxTouchPoints) === 'ios';
+}

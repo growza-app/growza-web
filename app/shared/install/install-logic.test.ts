@@ -1,8 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { installBannerCopy } from './install-copy';
+import { iconNoteCopy, installBannerCopy } from './install-copy';
 import {
+  iconNoteDue,
+  iconNoteKey,
   installModeFor,
   mayOfferOn,
   isInAppBrowser,
@@ -231,5 +233,33 @@ describe('the offer waits out whatever is open', () => {
 
   it('looks again instead of giving up for the rest of the visit', () => {
     expect(banner).toMatch(/if \(document\.querySelector\(SOMETHING_OPEN_SELECTOR\)\) \{\s*start\(\);\s*return;\s*\}/);
+  });
+});
+
+describe('the new-icon note (2026-11-07)', () => {
+  const env = { userAgent: UA.iphoneSafari, maxTouchPoints: 5, standalone: true, seen: false };
+
+  it('is due on an iPhone running the installed app, once', () => {
+    expect(iconNoteDue(env)).toBe(true);
+    expect(iconNoteDue({ ...env, seen: true })).toBe(false);
+  });
+
+  it('is never due in a browser tab, or where the icon updates by itself (Android, desktop)', () => {
+    expect(iconNoteDue({ ...env, standalone: false })).toBe(false);
+    expect(iconNoteDue({ ...env, userAgent: UA.androidChrome })).toBe(false);
+  });
+
+  it('is remembered per icon, so the next icon change asks again', () => {
+    expect(iconNoteKey('/icons/apple-touch-icon.783d3586.png')).toBe('growza.icon-note.783d3586');
+    expect(iconNoteKey('/icons/apple-touch-icon.783d3586.png')).not.toBe(iconNoteKey('/icons/apple-touch-icon.ef82bef3.png'));
+  });
+
+  it('names the site to open in both languages, and gives the same steps in each', () => {
+    const en = iconNoteCopy('en', 'app.growza.biz');
+    const hi = iconNoteCopy('hi', 'app.growza.biz');
+    expect(en.steps.join(' ')).toContain('app.growza.biz');
+    expect(hi.steps.join(' ')).toContain('app.growza.biz');
+    expect(hi.steps).toHaveLength(en.steps.length);
+    expect(en.lead).toMatch(/sign in again/);
   });
 });

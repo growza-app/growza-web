@@ -137,3 +137,11 @@
     width: 340px;
   }
 }
+
+/* 2026-11-07 — the new-icon note's sentence beside the icon: it wraps, where the host line beside it is cut short. */
+.install-banner-lead {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #3d4643;
+}

@@ -77,3 +77,31 @@ export function installBannerCopy(app: InstallApp, mode: InstallMode, lang: 'en'
       };
   }
 }
+
+/**
+ * 2026-11-07 — the one-time note to iPhone users that the icon changed (see `iconNoteDue`). Removing a home-screen app on
+ * an iPhone clears its sign-in too (it keeps its own, apart from Safari's), so the note says so rather than surprise them.
+ */
+export interface IconNoteCopy {
+  title: string;
+  lead: string;
+  steps: string[];
+  ok: string;
+}
+
+export function iconNoteCopy(lang: 'en' | 'hi', host: string): IconNoteCopy {
+  if (lang === 'hi') {
+    return {
+      title: 'Growza का नया आइकन',
+      lead: 'अगर आपकी होम स्क्रीन पर अभी भी पुराना आइकन है, तो नया ऐसे लगाएँ। आपको फिर से साइन इन करना होगा।',
+      steps: ['होम स्क्रीन पर Growza आइकन को दबाकर रखें और उसे हटा दें', `Safari में ${host} खोलें`, '“Share” दबाएँ, फिर “Add to Home Screen”'],
+      ok: 'ठीक है',
+    };
+  }
+  return {
+    title: 'Growza has a new icon',
+    lead: 'If your home screen still shows the old one, here is how to get the new one. You will need to sign in again.',
+    steps: ['Press and hold the Growza icon on your home screen, and remove it', `Open ${host} in Safari`, 'Tap Share, then “Add to Home Screen”'],
+    ok: 'OK',
+  };
+}

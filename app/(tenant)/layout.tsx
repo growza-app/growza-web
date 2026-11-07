@@ -12,6 +12,7 @@ import { PwaRegister } from './components/PwaRegister';
 import { LanguageSync } from './components/LanguageSync';
 import { ViewportHeight } from './components/ViewportHeight';
 import { InstallBanner } from '../shared/install/InstallBanner';
+import { NewIconNote } from '../shared/install/NewIconNote';
 import { InstallPromptCapture } from '../shared/install/InstallPromptCapture';
 import { NumberWheelGuard } from '../shared/NumberWheelGuard';
 import { BrowserGate } from './components/BrowserGate';
@@ -402,6 +403,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </SessionProvider>
         </NextIntlClientProvider>
         <InstallBanner app="salon" />
+        <NewIconNote app="salon" />
       </body>
     </html>
   );
