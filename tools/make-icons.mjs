@@ -1,9 +1,10 @@
 /**
  * The Growza app icon, generated from the brand mark.
  *
- * The mark is growza.biz's (https://growza.biz/favicon.svg, 2026-11-07): a sculpted sprout — a mint leaf and a white
- * leaf rising from one stem — with a four-point star spark, on the deep green squircle (`#1E7E45` -> `#0A2E20`) with a
- * faint white inner edge. Drawn on the same 140x140 box as the site's file, so the two are one mark.
+ * The mark is growza.biz's sprout (https://growza.biz/favicon.svg, 2026-11-07): a mint leaf and a white leaf rising
+ * from one stem, on the deep green squircle (`#1E7E45` -> `#0A2E20`) with a faint white inner edge, drawn on the same
+ * 140x140 box as the site's file. The site's four-point star spark is left out (owner, 2026-11-07): it is the sign
+ * most apps now use for "AI", and at 16px it was a two-pixel smudge.
  *
  *   node tools/make-icons.mjs
  *
@@ -35,17 +36,15 @@ const MINT_START = '#10B981';
 const MINT_END = '#6EE7B7';
 const MINT_LEAF = 'M 58 106 C 34 98, 22 76, 26 48 C 52 52, 64 74, 58 106 Z';
 const WHITE_LEAF = 'M 65 108 C 62 66, 78 38, 112 28 C 110 68, 94 100, 65 108 Z';
-const SPARK = 'M 53 20 Q 53 34 67 34 Q 53 34 53 48 Q 53 34 39 34 Q 53 34 53 20 Z';
-const SPARK_FILL = '#A7F3D0';
 
 /**
  * Everything is drawn in the mark's own 140x140 space and scaled to `size` as a whole.
  *
- * `scale` sizes the sprout and spark about the centre, leaving the squircle where it is:
+ * `scale` sizes the sprout about the centre, leaving the squircle where it is:
  *   1.00  standard icon (`appleTouch`, `192`, `512`) — exactly the site's mark
  *   0.90  maskable — the white leaf's tip, the farthest point, lands at 38% of the edge from the centre: inside
  *         Android's 40% safe circle (at 1.00 it is 42%, and a round mask would clip it)
- *   1.12  32px favicon — a little larger so the spark is still a spark at 32 pixels; it stays inside the corners
+ *   1.12  32px favicon — a little larger, so the two leaves stay distinct at 32 and 16 pixels; it stays inside the corners
  *
  * `radius` is in the 140 space: 34 is the mark's own corner. 0 for the icons a platform masks itself (iOS, Android
  * maskable) — a rounded corner there shows the home screen through it. `edge` is the faint inner border: kept on the
@@ -69,7 +68,6 @@ function icon({ size, scale = 1, radius = 34, edge = true }) {
       `<g transform="translate(70 70) scale(${k}) translate(-70 -70)">` +
       `<path d="${MINT_LEAF}" fill="url(#mint)"/>` +
       `<path d="${WHITE_LEAF}" fill="#ffffff"/>` +
-      `<path d="${SPARK}" fill="${SPARK_FILL}"/>` +
       `</g></svg>`,
   );
 }
