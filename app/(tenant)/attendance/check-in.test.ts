@@ -63,7 +63,7 @@ describe('phone check-in', () => {
     // Every one of the three writes carries it, the batch included.
     expect(register.match(/\.\.\.\(await deskFix\(\)\)|\.\.\.fix,/g) ?? []).toHaveLength(3);
     // One fix for a whole "Mark everyone present", not one prompt per person.
-    expect(register).toMatch(/const fix = await deskFix\(\);\n\s*for \(const row of unmarked\)/);
+    expect(register).toMatch(/const fix = await deskFix\(\);(?:(?!deskFix)[\s\S]){0,400}?for \(const row of unmarked\)/);
     expect(read('../lib/api.ts')).toMatch(/markAttendance: \(input: \{[\s\S]*?accuracyM\?: number \| null;/);
   });
 

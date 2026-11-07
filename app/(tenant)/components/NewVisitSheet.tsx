@@ -258,6 +258,8 @@ interface WalkInDone {
   schedulableId: string | null;
   startAt: string;
   overlapping: boolean;
+  /** Jira GRW-676 (SAL-05) — a booking this client already had at the time just booked, when there is one. */
+  clientAlsoBooked?: { startAt: string; staffName: string | null };
 }
 
 function clientName(client: PickedClient): string {
@@ -1751,6 +1753,7 @@ export function NewVisitSheet({
             schedulableId: booked.schedulableId,
             startAt: booked.startAt,
             overlapping: false,
+            ...(booked.clientAlsoBooked ? { clientAlsoBooked: booked.clientAlsoBooked } : {}),
           },
           confirm: confirmFor({ startAt: booked.startAt, tokenNo: null, schedulableId: booked.schedulableId }),
         });
@@ -4394,6 +4397,22 @@ export function NewVisitSheet({
               <div className="wi-overlap">
                 {nv.overlap(
                   providers?.find((p) => p.id === stage.result.schedulableId)?.displayName ?? providerNoun,
+                )}
+              </div>
+            )}
+
+            {/*
+              Jira GRW-676 (SAL-05) — the same client, already booked at this time with somebody else. Two stylists
+              can each be free at 11:00, so nothing stopped it and nothing said it. The booking is made (a mother
+              booking herself and her daughter under one number looks exactly like this); the desk is told, in the
+              same amber as the overlap above, because it is the same kind of news.
+            */}
+            {stage.result.clientAlsoBooked && (
+              <div className="wi-overlap" role="status" data-testid="client-also-booked">
+                {nv.alsoBooked(
+                  clientName(stage.client),
+                  clockTime(stage.result.clientAlsoBooked.startAt),
+                  stage.result.clientAlsoBooked.staffName,
                 )}
               </div>
             )}

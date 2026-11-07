@@ -74,6 +74,26 @@ export interface InstallEnvironment {
   now: number;
 }
 
+/**
+ * Jira GRW-679 (UX-03) — where the offer may appear.
+ *
+ * It used to appear on every dashboard page, 2.5 s after load: over New booking with a client half picked, over
+ * Services mid-edit. An offer to install is never urgent, so on the dashboard it waits for Home — the screen people
+ * land on with nothing in their hands. The sign-in and join pages keep it (nothing is in progress there either), and
+ * the admin portal is unchanged.
+ */
+export function mayOfferOn(app: InstallApp, pathname: string): boolean {
+  if (app !== 'salon') return true;
+  return pathname === '/' || pathname === '/login' || pathname === '/join' || pathname.startsWith('/join/');
+}
+
+/**
+ * Anything that is already asking for the person's attention: a sheet, a dialog, a menu over the page. The offer does
+ * not open on top of one; it waits for the next visit to Home. The banner is itself a dialog, so it is left out.
+ */
+export const SOMETHING_OPEN_SELECTOR =
+  '[role="dialog"]:not(.install-banner), dialog[open], .sheet-backdrop, .modal-backdrop, .admin-dialog-backdrop, .fab-menu';
+
 export function isSnoozed(dismissedAt: number | null, now: number): boolean {
   return dismissedAt !== null && Number.isFinite(dismissedAt) && now - dismissedAt < SNOOZE_MS;
 }
@@ -104,4 +124,24 @@ export function parseDismissedAt(raw: string | null): number | null {
   if (raw === null) return null;
   const value = Number(raw);
   return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+/**
+ * 2026-11-07 — "Growza has a new icon", for the iPhone.
+ *
+ * iOS copies an installed web app's icon once, when it is added to the home screen, and never again: a new icon reaches
+ * an iPhone only if the person removes the app and adds it back. Android's Chrome updates it by itself, so only an
+ * iPhone or iPad running the installed app is told — once per icon, keyed on the icon's own content hash, so the next
+ * icon change asks again and nothing else ever does.
+ *
+ * A phone that added the app after the change has the new icon already; we cannot tell it from one that did not, so the
+ * note's words hold for both ("if your home screen still shows the old one").
+ */
+export function iconNoteKey(appleTouchUrl: string): string {
+  const hash = /\.([0-9a-f]{8})\.png$/.exec(appleTouchUrl)?.[1] ?? appleTouchUrl;
+  return `growza.icon-note.${hash}`;
+}
+
+export function iconNoteDue(env: { userAgent: string; maxTouchPoints: number; standalone: boolean; seen: boolean }): boolean {
+  return env.standalone && !env.seen && platformOf(env.userAgent, env.maxTouchPoints) === 'ios';
 }

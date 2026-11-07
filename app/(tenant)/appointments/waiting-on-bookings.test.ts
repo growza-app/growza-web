@@ -30,7 +30,8 @@ describe('the people waiting, on Bookings', () => {
   it('the page reads the queue, and only for today', () => {
     // A queue is a fact about now: asking for it while looking at last Tuesday would draw people
     // who are not there. Any other day hands down `[]`, so the section simply does not apply.
-    expect(page).toMatch(/isTodayRequest \? api\.walkInQueue\(\)\.catch\(\(\) => null\) : Promise\.resolve\(\[\]\)/);
+    // ...and a role the API refuses the queue (a stylist) gets `[]` too, not a 403 read as "could not look".
+    expect(page).toMatch(/isTodayRequest && roleMayReach\([^)]*\)[\s\S]*\? api\.walkInQueue\(\)\.catch\(\(\) => null\)\s*: Promise\.resolve\(\[\]\)/);
     expect(page).toMatch(/queue=\{queue\}/);
   });
 

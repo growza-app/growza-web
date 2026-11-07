@@ -49,6 +49,8 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Nobody who does this is free at that time. Pick another.': 'उस समय यह काम करने वाला कोई खाली नहीं है। कोई दूसरा समय चुनें।',
   'That day has already gone. Pick today or a later day.': 'वह दिन बीत चुका है। आज या आगे का कोई दिन चुनें।',
   'That time was just taken. Pick another.': 'वह समय अभी-अभी भर गया। कोई दूसरा चुनें।',
+  'That time is already taken. Pick another time.': 'वह समय पहले से भरा है। कोई दूसरा समय चुनें।',
+  'This package costs more than its services do on their own. Check the price, or confirm it is right.': 'इस पैकेज का दाम इसकी सेवाओं के अलग-अलग दाम से ज़्यादा है। दाम जाँचें, या पक्का करें कि यह सही है।',
   'The owner cannot be removed from their own business.': 'मालिक को उनके अपने बिज़नेस से हटाया नहीं जा सकता।',
   'You cannot remove yourself. Ask the owner.': 'आप ख़ुद को नहीं हटा सकते। मालिक से कहें।',
   'This number is not part of a business any more. Ask the owner to invite you again.': 'यह नंबर अब किसी बिज़नेस से जुड़ा नहीं है। मालिक से फिर से न्योता भेजने को कहें।',
@@ -109,6 +111,12 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That is too many services for one booking': 'एक बुकिंग के लिए इतनी सेवाएँ बहुत ज़्यादा हैं',
   'Pick a day and time for the booking': 'बुकिंग के लिए दिन और समय चुनें',
   'Say how they paid': 'बताएँ कि पैसे कैसे दिए',
+  // QA 2026-11-06 — the till's refusals of an amount, reworded from JSON keys into what is wrong with it.
+  'Enter the amount as a number': 'रकम अंकों में लिखें',
+  'Enter the amount in whole paise, with no fraction': 'रकम पूरे पैसों में लिखें, पैसे का हिस्सा नहीं',
+  'The amount cannot be less than ₹0': 'रकम ₹0 से कम नहीं हो सकती',
+  'Enter the package price as a number': 'पैकेज की कीमत अंकों में लिखें',
+  'Enter the bill amount as a number, ₹0 or more': 'बिल की रकम अंकों में लिखें, ₹0 या उससे ज़्यादा',
   'That item is not for sale here': 'यह चीज़ यहाँ बिक्री के लिए नहीं है',
   // Jira GRW-607 — a business that takes no bookings, or sells no services (a shop).
   'This business does not take bookings.': 'यह बिज़नेस बुकिंग नहीं लेता।',
@@ -385,13 +393,37 @@ export const API_MESSAGES_HI: Record<string, string> = {
   // GRW-658 three above stopped masking it.
   'Only a counter product order can wait in the queue for payment':
     'कतार में पेमेंट के लिए सिर्फ़ काउंटर का प्रोडक्ट ऑर्डर रुक सकता है',
+  // ---- Jira GRW-676 · GRW-678 — the 2026-11-05 functional test's fixes.
+  'A package needs a price above ₹0': 'पैकेज की कीमत ₹0 से ज़्यादा होनी चाहिए',
+  'Somebody has already taken payment for this booking.': 'इस बुकिंग का पेमेंट कोई पहले ही ले चुका है।',
+  'This booking was cancelled, so it cannot be paid for.': 'यह बुकिंग रद्द हो चुकी है, इसलिए इसका पेमेंट नहीं लिया जा सकता।',
+  'This booking was marked as not come, so it cannot be paid for.': 'इस बुकिंग पर "नहीं आए" लिखा है, इसलिए इसका पेमेंट नहीं लिया जा सकता।',
+  'This booking is already closed, so it cannot be paid for.': 'यह बुकिंग पहले ही बंद हो चुकी है, इसलिए इसका पेमेंट नहीं लिया जा सकता।',
+  'That product was sold in sizes. Say which size is coming back': 'यह सामान साइज़ में बिका था। बताएँ कौन सा साइज़ वापस आ रहा है',
 };
+
+/**
+ * Jira GRW-678 (RET-01) — the two sentences that carry a number and a name, so cannot be looked up whole.
+ *
+ * "Only 3 left of White Shirt" and "White Shirt is out of stock". The name is the shop's own word for the thing and
+ * stays exactly as the shop wrote it; only the sentence around it changes language. Anchored at both ends, and the
+ * name may contain anything, so a product called "Only 2 left of everything" is still read from the outside in.
+ */
+function localiseStockMessage(message: string): string | null {
+  const few = /^Only (\d+) left of (.+)$/s.exec(message);
+  if (few) return `${few[2]}: सिर्फ़ ${few[1]} बचे हैं`;
+  const none = /^(.+) is out of stock$/s.exec(message);
+  if (none) return `${none[1]}: स्टॉक ख़त्म है`;
+  return null;
+}
 
 /** The sentence in the visitor's language when it is known; otherwise exactly what the server said. */
 export function localiseApiMessage(message: string, lang: string): string {
   if (lang !== 'hi') return message;
   const known = API_MESSAGES_HI[message];
   if (known) return known;
+  const stock = localiseStockMessage(message);
+  if (stock) return stock;
   // "Row 12: An HSN code is 4 to 8 digits" — a spreadsheet import names the row, then says why. The "why" is one of the
   // sentences above, so it is translated on its own and the row keeps its number.
   const row = /^Row (\d+): (.+)$/s.exec(message);

@@ -36,6 +36,15 @@ export interface BrowserSpeechRecognition {
   onresult: ((event: BrowserSpeechRecognitionEvent) => void) | null;
   onerror: ((event: BrowserSpeechRecognitionErrorEvent) => void) | null;
   onend: (() => void) | null;
+  /**
+   * The instant the engine actually has the audio device open — QA 2026-11-05, and the whole reason this
+   * exists. `start()` returning is NOT that instant: the browser then opens its own capture and connects
+   * to its speech service, which on a phone is comfortably over a second. Until this fires the microphone
+   * is deaf, so the button must not yet say "speak now". `onstart` is the weaker fallback (the session
+   * began, audio may not be live); both are optional because not every engine declares them.
+   */
+  onaudiostart?: (() => void) | null;
+  onstart?: (() => void) | null;
   start(): void;
   stop(): void;
   abort(): void;
@@ -124,8 +133,38 @@ export function getSpeechRecognitionConstructor(): BrowserSpeechRecognitionConst
  * - `unavailable` — no `mediaDevices` object at all (an old browser). The caller carries on to
  *   `SpeechRecognition` and lets it have its own say, which is what happened before this existed.
  */
+/**
+ * What the browser already knows about the microphone, without asking for it — QA 2026-11-05.
+ *
+ * `permissions.query({ name: 'microphone' })` is a read: it never prompts and never touches the device.
+ * When it answers `granted` there is nothing left to ask, so `askForMicrophone` can skip opening and
+ * closing a media stream it does not want. Safari has no `microphone` name and some browsers have no
+ * Permissions API at all, hence `unknown` and the try/catch — the caller then does what it always did.
+ */
+export async function microphonePermissionState(): Promise<'granted' | 'denied' | 'prompt' | 'unknown'> {
+  if (typeof navigator === 'undefined') return 'unknown';
+  const perms = (navigator as Navigator & { permissions?: { query: (d: { name: string }) => Promise<{ state: string }> } }).permissions;
+  if (!perms?.query) return 'unknown';
+  try {
+    const res = await perms.query({ name: 'microphone' });
+    if (res.state === 'granted' || res.state === 'denied' || res.state === 'prompt') return res.state;
+    return 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
 export async function askForMicrophone(): Promise<'granted' | 'denied' | 'unusable' | 'unavailable'> {
   if (typeof navigator === 'undefined') return 'unavailable';
+  /*
+   * Already allowed? Then do not open the device and close it again just to be told so — QA 2026-11-05.
+   *
+   * The owner's words: "I need to speak after 2 seconds". This round trip was the first half of that gap.
+   * It runs on EVERY tap, it acquires and releases the real microphone, and the speech engine then has to
+   * acquire it a second time — on a phone that is most of a second, spent before anything is listening.
+   * The prompt it exists to raise has already been answered here, so there is nothing to raise.
+   */
+  if ((await microphonePermissionState()) === 'granted') return 'granted';
   const media = navigator.mediaDevices as MediaDevices | undefined;
   if (!media?.getUserMedia) return 'unavailable';
   try {

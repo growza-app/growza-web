@@ -1,12 +1,18 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { installBannerCopy } from './install-copy';
+import { iconNoteCopy, installBannerCopy } from './install-copy';
 import {
+  iconNoteDue,
+  iconNoteKey,
   installModeFor,
+  mayOfferOn,
   isInAppBrowser,
   parseDismissedAt,
   platformOf,
   SHOW_DELAY_MS,
   SNOOZE_MS,
+  SOMETHING_OPEN_SELECTOR,
   storageKeys,
   type InstallEnvironment,
 } from './install-logic';
@@ -192,5 +198,68 @@ describe('the install banner in Hindi (Jira GRW-364)', () => {
   });
   it('leaves the admin app in English', () => {
     expect(installBannerCopy('admin', 'prompt', 'hi').title).toBe('Install app');
+  });
+});
+
+describe('Jira GRW-679 (UX-03) — the offer waits for a quiet moment', () => {
+  it('on the dashboard it is offered on Home only', () => {
+    expect(mayOfferOn('salon', '/')).toBe(true);
+    for (const path of ['/appointments/new', '/services', '/pos', '/orders', '/customers/abc', '/settings']) {
+      expect(mayOfferOn('salon', path), path).toBe(false);
+    }
+  });
+
+  it('the sign-in and join pages keep it', () => {
+    expect(mayOfferOn('salon', '/login')).toBe(true);
+    expect(mayOfferOn('salon', '/join')).toBe(true);
+    expect(mayOfferOn('salon', '/join/some-token')).toBe(true);
+    // A page that only starts with the same letters is not the join page.
+    expect(mayOfferOn('salon', '/joinery')).toBe(false);
+  });
+
+  it('the admin portal is unchanged', () => {
+    expect(mayOfferOn('admin', '/admin/businesses')).toBe(true);
+  });
+
+  it('knows a sheet, a dialog and the + menu as something already open — and not the banner itself', () => {
+    for (const part of ['.sheet-backdrop', '.modal-backdrop', 'dialog[open]', '.fab-menu']) expect(SOMETHING_OPEN_SELECTOR).toContain(part);
+    expect(SOMETHING_OPEN_SELECTOR).toContain('[role="dialog"]:not(.install-banner)');
+  });
+});
+
+/** Review 2026-11-05 — a sheet open at the wrong moment postponed the offer; it used to cancel it. */
+describe('the offer waits out whatever is open', () => {
+  const banner = readFileSync(resolve(__dirname, 'InstallBanner.tsx'), 'utf8');
+
+  it('looks again instead of giving up for the rest of the visit', () => {
+    expect(banner).toMatch(/if \(document\.querySelector\(SOMETHING_OPEN_SELECTOR\)\) \{\s*start\(\);\s*return;\s*\}/);
+  });
+});
+
+describe('the new-icon note (2026-11-07)', () => {
+  const env = { userAgent: UA.iphoneSafari, maxTouchPoints: 5, standalone: true, seen: false };
+
+  it('is due on an iPhone running the installed app, once', () => {
+    expect(iconNoteDue(env)).toBe(true);
+    expect(iconNoteDue({ ...env, seen: true })).toBe(false);
+  });
+
+  it('is never due in a browser tab, or where the icon updates by itself (Android, desktop)', () => {
+    expect(iconNoteDue({ ...env, standalone: false })).toBe(false);
+    expect(iconNoteDue({ ...env, userAgent: UA.androidChrome })).toBe(false);
+  });
+
+  it('is remembered per icon, so the next icon change asks again', () => {
+    expect(iconNoteKey('/icons/apple-touch-icon.783d3586.png')).toBe('growza.icon-note.783d3586');
+    expect(iconNoteKey('/icons/apple-touch-icon.783d3586.png')).not.toBe(iconNoteKey('/icons/apple-touch-icon.ef82bef3.png'));
+  });
+
+  it('names the site to open in both languages, and gives the same steps in each', () => {
+    const en = iconNoteCopy('en', 'app.growza.biz');
+    const hi = iconNoteCopy('hi', 'app.growza.biz');
+    expect(en.steps.join(' ')).toContain('app.growza.biz');
+    expect(hi.steps.join(' ')).toContain('app.growza.biz');
+    expect(hi.steps).toHaveLength(en.steps.length);
+    expect(en.lead).toMatch(/sign in again/);
   });
 });

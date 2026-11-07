@@ -36,14 +36,27 @@ const meThisRender = cache(() => get<Me>('/api/v1/me'));
  * into client components, where importing it at the top level is a build error.
  */
 const SESSION_COOKIE = 'growza_session';
+/**
+ * Jira GRW-674 (SEC-05) — the name the session has in production.
+ *
+ * The API issues it as `__Host-growza_session` there, a name a sibling host such as growza.biz cannot plant
+ * (the browser refuses the prefix without `Secure`, `Path=/` and no `Domain`). In development it stays plain,
+ * because the prefix needs https. This server does not decide which applies: it forwards whichever cookie the
+ * browser sent, UNDER THE NAME IT CAME IN, and the API alone decides what it will accept. A planted
+ * `growza_session` on production is therefore forwarded as exactly that and refused there, the same as no
+ * session at all — this file never turns one name into the other.
+ */
+const SESSION_COOKIE_PRODUCTION = '__Host-growza_session';
 
 async function authHeaders(): Promise<Record<string, string>> {
   if (typeof window !== 'undefined') return {};
   try {
     const { cookies, headers } = await import('next/headers');
-    const token = (await cookies()).get(SESSION_COOKIE)?.value;
+    const jar = await cookies();
+    const hostLocked = jar.get(SESSION_COOKIE_PRODUCTION)?.value;
+    const token = hostLocked ?? jar.get(SESSION_COOKIE)?.value;
     const forwardedFor = (await headers()).get('x-forwarded-for');
-    return serverSideHeaders({ token, forwardedFor });
+    return serverSideHeaders({ token, forwardedFor, hostLocked: hostLocked !== undefined });
   } catch {
     // `cookies()` throws outside a request scope (a build-time render, say).
     // No cookie is the honest answer there, and the caller's 401 handling is
@@ -71,9 +84,9 @@ async function authHeaders(): Promise<Record<string, string>> {
  *
  * Exported for its test; nothing else should call it.
  */
-export function serverSideHeaders(input: { token?: string | null; forwardedFor?: string | null }): Record<string, string> {
+export function serverSideHeaders(input: { token?: string | null; forwardedFor?: string | null; hostLocked?: boolean }): Record<string, string> {
   const out: Record<string, string> = {};
-  if (input.token) out.cookie = `${SESSION_COOKIE}=${input.token}`;
+  if (input.token) out.cookie = `${input.hostLocked ? SESSION_COOKIE_PRODUCTION : SESSION_COOKIE}=${input.token}`;
   if (input.forwardedFor) out['x-forwarded-for'] = input.forwardedFor;
   return out;
 }
@@ -597,6 +610,13 @@ export interface CreatedInvite {
  */
 export interface CustomerRewards {
   enabled: boolean;
+  /**
+   * Owner, 2026-11-07 — no number, no points: a client saved by name alone earns and spends nothing, and the till asks
+   * for the number instead. Absent from an older API.
+   */
+  needsPhone?: boolean;
+  /** What THIS bill would earn — the number the till quotes when it asks for the client's mobile. Absent from an older API. */
+  wouldEarn?: number;
   balance: number;
   pointValueMinor: number;
   minRedeemPoints: number;
@@ -1136,6 +1156,8 @@ export const api = {
    * so asking again makes a new link; the ones already sent keep working until they run out on their own.
    */
   shareDocument: (id: string) => post<{ token: string; expiresAt: string }>(`/api/v1/documents/${id}/share`, {}),
+  /** Jira GRW-674 (SEC-12) — every link of this document stops working now. `stopped` is how many were still live. */
+  stopSharingDocument: (id: string) => del<{ ok: true; stopped: number }>(`/api/v1/documents/${id}/share`),
 
   /** Jira GRW-582 — Settings › GST. One Save; the API decides what belongs to the business and what to the branch. */
   updateGstSettings: (
@@ -1412,8 +1434,8 @@ export const api = {
    * hands over the row the receptionist tapped rather than working out which
    * of three appointments is the first one.
    *
-   * `overlapping` in the response means it was recorded on a chair that is
-   * already taken — the booking exists either way, and the sheet says so.
+   * A time somebody else has is refused: 409 `slot_taken`, with a sentence to
+   * show (SAL-04, 6 Nov 2026). Nothing has moved when that comes back.
    */
   rescheduleAppointment: (
     appointmentId: string,
@@ -1424,7 +1446,6 @@ export const api = {
       bookingGroupId: string;
       startAt: string;
       endAt: string;
-      overlapping: boolean;
       remindersScheduled: number;
     }>(`/api/v1/appointments/${appointmentId}/reschedule`, args),
   /** Jira GRW-477 — `location` is the header's branch; absent searches every branch. */
@@ -1629,6 +1650,8 @@ export const api = {
       startAt: string;
       endAt: string;
       remindersScheduled: number;
+      /** Jira GRW-676 (SAL-05) — another booking this client already has at that time. The booking is still made. */
+      clientAlsoBooked?: { startAt: string; staffName: string | null };
     }>('/api/v1/bookings', input),
   uploadServicePhoto: (id: string, file: File) => uploadFile<Service>(`/api/v1/services/${id}/photo`, 'photo', file),
   removeServicePhoto: (id: string) => del<Service>(`/api/v1/services/${id}/photo`),

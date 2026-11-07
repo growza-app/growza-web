@@ -22,7 +22,9 @@ describe('the owner Home shows only what was counted', () => {
   });
 
   it('shows a change only when there is a previous period to compare with', () => {
-    expect(home).toMatch(/data\?\.money\.deltaPct !== null && data\?\.money\.deltaPct !== undefined \? \(/);
+    // Jira GRW-679 (UX-04) — the same rule, and one more: nothing until this period has takings either.
+    expect(home).toMatch(/const periodDeltaShown = Boolean\(data && data\.money\.deltaPct !== null && data\.money\.deltaPct !== undefined && data\.money\.revenueMinor > 0\);/);
+    expect(home).toMatch(/\{periodDeltaShown && data \? </);
     expect(home).not.toMatch(/cameBackPct \?\? 100/);
   });
 

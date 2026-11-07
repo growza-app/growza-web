@@ -12,6 +12,19 @@ const USER = process.env.TUNNEL_USER;
 const PASS = process.env.TUNNEL_PASS;
 
 /**
+ * Jira GRW-674 (SEC-04) — and so does every other page, since 2026-11-05.
+ *
+ * The policy below was the admin portal's alone. Every tenant screen — clients' names and numbers, the till,
+ * the day's money — went out with `frame-ancestors 'none'` and nothing else, so one injected script there
+ * would have run with nothing to stop it. Same policy now, with one difference outside the admin portal:
+ * `img-src` allows any https image. In production a service or product photo is fetched by the browser
+ * straight from a presigned storage address, on a host this server does not know; an image is not a script,
+ * and blocking it would blank every photo in the app to protect nothing.
+ *
+ * NOT applied to `/api/*` and `/uploads/*`. Those are the API's own responses passing through the rewrite, and
+ * it sets its own policy on each — a shared invoice page carries one written for exactly that page. Two
+ * policies on one response are enforced together, and this one would break that page.
+ *
  * Jira GRW-480 (S-10) — the admin portal runs only the scripts it was sent with.
  *
  * Its pages reach every business on the platform, so a script injected into one of them is the worst XSS this
@@ -20,13 +33,12 @@ const PASS = process.env.TUNNEL_PASS;
  * scripts load the chunks they need and nothing else may run. Styles stay `'unsafe-inline'`: Next and the font
  * loader inject them, and a style is not a script. Development adds `'unsafe-eval'`, which React's dev tooling needs.
  */
-function adminCsp(nonce: string): string {
-  const dev = process.env.NODE_ENV !== 'production';
+export function pageCsp(nonce: string, admin: boolean, dev: boolean = process.env.NODE_ENV !== 'production'): string {
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
+    `img-src 'self' data: blob:${admin ? '' : ' https:'}`,
     "font-src 'self' data:",
     "connect-src 'self'",
     "worker-src 'self'",
@@ -38,10 +50,30 @@ function adminCsp(nonce: string): string {
   ].join('; ');
 }
 
+/** The API's own answers, proxied: they carry the API's policy and must not be given a second one. */
+export function isProxiedToApi(pathname: string): boolean {
+  // `/d/:token` is the customer's short link to a shared document, rewritten to the API's own page
+  // (next.config.ts). It carries the policy the API wrote for that page, like everything under `/api/`.
+  return pathname.startsWith('/api/') || pathname.startsWith('/uploads/') || pathname.startsWith('/d/');
+}
+
+/**
+ * A file, not a page — review 2026-11-05. The policy governs what a DOCUMENT may run; an icon, the manifest,
+ * the service worker and a resized photo are not documents, and each was being handed a fresh nonce, a
+ * twelve-part policy and a copied set of headers it could not use. Named by extension rather than "anything
+ * with a dot", so a page whose address happens to contain one still gets its policy.
+ */
+const STATIC_FILE = /\.(?:png|jpe?g|gif|webp|avif|svg|ico|woff2?|css|js|map|json|webmanifest|txt|xml)$/i;
+
+export function isStaticAsset(pathname: string): boolean {
+  return pathname.startsWith('/_next/image') || STATIC_FILE.test(pathname);
+}
+
 function pass(req: NextRequest): NextResponse {
-  if (!req.nextUrl.pathname.startsWith('/admin')) return NextResponse.next();
+  const { pathname } = req.nextUrl;
+  if (isProxiedToApi(pathname) || isStaticAsset(pathname)) return NextResponse.next();
   const nonce = btoa(crypto.randomUUID());
-  const policy = adminCsp(nonce);
+  const policy = pageCsp(nonce, pathname.startsWith('/admin'));
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set('x-nonce', nonce);
   requestHeaders.set('Content-Security-Policy', policy);

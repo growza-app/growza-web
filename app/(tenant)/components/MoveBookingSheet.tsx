@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   api,
+  ApiError,
   formatTime,
   reasonOr,
   type Appointment,
@@ -28,19 +29,21 @@ import { useDialog } from '../../shared/a11y/useDialog';
  * Priya's 3 o'clock to a quarter to four" would simply not be offerable. That
  * is the everyday case, not the edge one.
  *
- * So the grid is the fast path and `Another time` is the escape, and the
- * engine tolerates a clash rather than refusing it (`reschedule.ts`).
+ * So the grid is the fast path and `Another time` is the escape — for a time
+ * that is FREE but not offered (inside the notice window, outside the hours).
  *
- * ## The clash is named BEFORE the save
+ * ## A taken time cannot be moved onto (owner decision, 6 Nov 2026 — SAL-04)
  *
- * This is the one place the move sheet deliberately differs from the walk-in
- * sheet. A walk-in's overlap is a fact already standing in the room, reported
- * after the event. A future overlap is a CHOICE the receptionist is making, so
- * it is named while they can still change their mind and the button changes
- * its own words to say what it is about to do.
+ * The first cut let the move through and changed the button to "Move anyway".
+ * Two clients were then down for one chair at one minute. The API now refuses
+ * (`409 slot_taken`), and this sheet says so BEFORE the tap: the clash is
+ * named, with who is there, and the button stays off until another time or
+ * another person is picked.
  *
- * Computed here from the day's own bookings rather than from the response,
- * because the response arrives too late to be a warning.
+ * Computed here from the day's own bookings so the receptionist is told while
+ * they are still choosing. The server is still the one that decides — see the
+ * note on `clash` for the case this cannot see — and its sentence is shown in
+ * the same place, under the time field.
  */
 export function MoveBookingSheet({
   appointment,
@@ -89,6 +92,14 @@ export function MoveBookingSheet({
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialog(dialogRef, { onClose: busy ? undefined : onClose });
   const [error, setError] = useState<string | null>(null);
+  /**
+   * The server's "that time is taken", for the time and person chosen right now.
+   *
+   * Kept apart from `error` because of where each is read. `error` is the line at the head of the sheet; by the
+   * time somebody has typed a time, the sheet has scrolled and that line is under the title. A refusal about the
+   * time belongs beside the time, in the same place `clash` speaks from. Seen in a browser, 6 Nov 2026.
+   */
+  const [refused, setRefused] = useState<string | null>(null);
 
   /**
    * The next seven days, in the salon's zone.
@@ -204,11 +215,11 @@ export function MoveBookingSheet({
    * which includes each service's turnaround buffers; this compares the times a
    * person sees, because those are the only ones the API hands the browser.
    *
-   * So a move into somebody else's ten-minute buffer warns about nothing and
-   * still lands `released` — reported afterwards instead of before. Under-
-   * warning is the right direction to be wrong in: the move succeeds either
-   * way, and a warning that fired on gaps a receptionist considers empty would
-   * be trained away within a week.
+   * So a move into somebody else's ten-minute buffer is not caught here: the
+   * button stays on, the server refuses, and its sentence is shown here instead.
+   * Under-blocking is the right direction for this to be wrong in — a button
+   * switched off over a gap the server would have accepted is a refusal with
+   * nobody to appeal to.
    */
   const clash = useMemo(() => {
     if (!chosenStart || !targetProviderId) return null;
@@ -228,6 +239,13 @@ export function MoveBookingSheet({
     return who ? mv.clash(who) : mv.clashUnknown;
   }, [chosenStart, targetProviderId, spanMin, dayBookings, legs, providers]);
 
+  // A refusal is about one choice. Pick another time or another person and it no longer applies.
+  const chosenAt = chosenStart?.getTime() ?? null;
+  useEffect(() => setRefused(null), [chosenAt, targetProviderId]);
+
+  /** Why this time cannot be moved onto — known here, or told by the server. */
+  const taken = clash ?? refused;
+
   const save = async () => {
     if (!chosenStart) return;
     setBusy(true);
@@ -240,8 +258,10 @@ export function MoveBookingSheet({
       router.refresh();
       onMoved();
     } catch (e) {
+      // SAL-04 — the server saw somebody the day's list could not show (a turnaround gap, a booking made a moment ago).
+      if (e instanceof ApiError && e.code === 'slot_taken') setRefused(e.message);
       // Jira GRW-478 — `instanceof Error` let a dropped connection's "Failed to fetch" through as if the server said it.
-      setError(reasonOr(e, mv.failed));
+      else setError(reasonOr(e, mv.failed));
       setBusy(false);
     }
   };
@@ -326,6 +346,12 @@ export function MoveBookingSheet({
             />
             <span className="mv-any-hint">{mv.anotherTimeHint}</span>
           </div>
+          {/*
+            Under the field it is about, not above the buttons. Only a typed time can clash — the grid offers free
+            times alone — and at 344px the foot of this sheet is behind the button bar: a switched-off button with
+            its reason out of sight is a dead end. Seen in a browser, 6 Nov 2026.
+          */}
+          {taken && <div className="mv-clash" role="status">{taken}</div>}
 
           {providers.length > 0 && (
             <>
@@ -354,14 +380,12 @@ export function MoveBookingSheet({
             </>
           )}
 
-          {clash && <div className="mv-clash">{clash}</div>}
-
           <div className="modal-actions wi-actions">
             <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose}>
               {mv.back}
             </button>
-            <button type="button" className="btn" disabled={busy || !chosenStart} onClick={() => void save()}>
-              {busy ? mv.saving : clash ? mv.confirmAnyway : mv.confirm}
+            <button type="button" className="btn" disabled={busy || !chosenStart || !!taken} onClick={() => void save()}>
+              {busy ? mv.saving : mv.confirm}
             </button>
           </div>
         </div>

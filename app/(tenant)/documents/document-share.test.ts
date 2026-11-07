@@ -176,3 +176,61 @@ describe('opening /documents/[id] from the Done screen in a shop or a salon', ()
     }
   });
 });
+
+/**
+ * Jira GRW-674 (SEC-12) — a link can be taken back, from the bill's own screen.
+ *
+ * A link lasts a week and there was no way to end one sooner. The owner chose a quiet line under the actions
+ * over a fifth button (2026-11-05): it names the one situation it is for, and keeps an action that ends
+ * something out of a row of actions that send something.
+ */
+describe('stopping a link that went to the wrong number', () => {
+  const api = readFileSync(resolve(__dirname, '../lib/api.ts'), 'utf8');
+  const css = readFileSync(resolve(__dirname, '../styles/99-document.css'), 'utf8');
+  const middleware = readFileSync(resolve(root, 'middleware.ts'), 'utf8');
+
+  it('calls the route that ends every link of that document', () => {
+    expect(api).toMatch(/stopSharingDocument: \(id: string\) => del<\{ ok: true; stopped: number \}>\(`\/api\/v1\/documents\/\$\{id\}\/share`\)/);
+  });
+
+  it('is a line under the actions, not a button in the row', () => {
+    const row = viewer.slice(viewer.indexOf('className="doc-actions"'), viewer.indexOf('className="doc-stop"'));
+    expect(row).not.toContain("t('stop')");
+    expect(viewer).toMatch(/<p className="doc-stop">[\s\S]{0,120}t\('stopHint'\)[\s\S]{0,260}t\('stop'\)/);
+  });
+
+  it('asks before it ends anything, and keeps a refusal inside the question', () => {
+    expect(viewer).toMatch(/<ConfirmDialog[\s\S]{0,200}title=\{t\('stopTitle'\)\}[\s\S]{0,400}tone="danger"/);
+    expect(viewer).toMatch(/error=\{stopError \?\? undefined\}/);
+    // The line itself only opens the question; the route is called from the dialog's confirm.
+    expect(viewer).toMatch(/onConfirm=\{\(\) => void stopSharing\(\)\}/);
+  });
+
+  it('says what happened: how many links ended, or that there was none', () => {
+    expect(viewer).toMatch(/stopped > 0 \? t\('stopped', \{ count: stopped \}\) : t\('notShared'\)/);
+  });
+
+  it('is offered on a cancelled document too — a link sent before the cancellation still opens', () => {
+    const stopLine = viewer.slice(viewer.indexOf('<p className="doc-stop">') - 400, viewer.indexOf('<p className="doc-stop">'));
+    expect(stopLine).not.toMatch(/status === 'issued' \?\s*\(\s*$/);
+  });
+
+  it('keeps a finger-sized target on a line of small text', () => {
+    expect(css).toMatch(/\.doc-stop-btn \{\s*min-height: 2\.75rem;/);
+    expect(css).toMatch(/\.doc-stop \{[^}]*font-size: var\(--fs-2\);/);
+  });
+
+  it('has its words in English and Hindi, plural and all', () => {
+    for (const m of [en, hi]) {
+      const d = (m as unknown as { documents: Record<string, string> }).documents;
+      for (const key of ['stopHint', 'stop', 'stopTitle', 'stopBody', 'stopKeep', 'stopping', 'stopped', 'notShared', 'couldNotStop']) {
+        expect(d[key], key).toBeTruthy();
+      }
+      expect(d.stopped).toMatch(/\{count, plural, one \{[^}]+\} other \{[^}]+\}\}/);
+    }
+  });
+
+  it('leaves the customer\u2019s short link to the API\u2019s own script policy', () => {
+    expect(middleware).toMatch(/pathname\.startsWith\('\/d\/'\)/);
+  });
+});

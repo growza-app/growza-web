@@ -33,6 +33,17 @@ export function rupees(minor: number): string {
 }
 
 /**
+ * One order's amount as it is on the bill and on the Orders screen: paise kept, and only when there are some.
+ *
+ * QA 2026-11-06 — a Recent orders row rounded ₹748.50 to ₹749 while the same order on Orders and the POS read ₹748.50, so
+ * an owner matching the row to the order saw two figures. `rupees` stays for every total and card, which are read at a
+ * glance (QA 2026-10-23); a row that stands for ONE bill is something people check against that bill.
+ */
+export function exactRupees(minor: number): string {
+  return formatMoney(String(Math.round(minor)));
+}
+
+/**
  * A stable tint per person, from their id — never a fixed map of names.
  * The design's colours were per mock person; a real salon's roster is not.
  *
@@ -193,7 +204,9 @@ export function HomeHeader({
 
 export function Card({ title, action, children, className = '' }: { title?: ReactNode; action?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={`hm-card ${className}`}>
+    // Jira GRW-679 (UX-02) — `hm-card-acts` marks a card whose head carries a link, so a phone can draw that link as
+    // the card's foot (see 83-role-home.css). The markup and its reading order do not change.
+    <section className={`hm-card ${action ? 'hm-card-acts ' : ''}${className}`}>
       {title || action ? (
         <div className="hm-card-head">
           {title ? <h2>{title}</h2> : <span />}

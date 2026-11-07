@@ -42,6 +42,48 @@ export function formatTokenNo(n: number): string {
   return `#${String(Math.max(1, Math.trunc(n))).padStart(2, '0')}`;
 }
 
+/**
+ * QA 2026-11-06 — the tokens that are still an order to hand over: the ones with something left on them.
+ *
+ * A fully returned order keeps its token NUMBER (the day's numbering counts it, so the next token and every later
+ * one stay where the customers' slips say they are), but it has no dishes and no money left, so there is nothing to
+ * deliver. It sat in the Queue as "Deliver first — Hand over" at ₹0 until somebody tapped it, and the tab badge
+ * counted it. Home already left such an order out; this makes the POS agree.
+ */
+export function tokensStillOnTheBoard<T extends { items: readonly unknown[] }>(tokens: readonly T[]): T[] {
+  return tokens.filter((tk) => tk.items.length > 0);
+}
+
+/**
+ * QA 2026-11-06 — the token number of each of today's orders, the way the POS numbers them.
+ *
+ * A token is the order's place in the day: the first order rung up is #01, the next #02. It is what the customer's
+ * receipt says and what the POS Queue shows, so it has to be the SAME number wherever the order is drawn. Home
+ * drew its own: it counted only the orders it was about to show, so a fully returned order (which Home hides)
+ * moved every later token down by one, and the number changed again each time an order left the list — Token 6 on
+ * the receipt, #05 on Home.
+ *
+ * So the number is worked out over every order of the day that still counts as one — everything but a cancelled
+ * order, a returned one included — in the order the POS sorts them; WHICH of them to show is decided afterwards.
+ */
+export function tokenNumbersOf(
+  orders: ReadonlyArray<{ id: string; soldAt: string; status?: string }>,
+  isToday: (ms: number) => boolean,
+): Map<string, number> {
+  const counted = orders
+    .filter((o) => {
+      if (o.status === 'cancelled' || o.status === 'no_show') return false;
+      const ms = Date.parse(o.soldAt);
+      return Number.isFinite(ms) && isToday(ms);
+    })
+    .sort((a, b) => {
+      const ta = Date.parse(a.soldAt) || 0;
+      const tb = Date.parse(b.soldAt) || 0;
+      return ta !== tb ? ta - tb : a.id.localeCompare(b.id);
+    });
+  return new Map(counted.map((o, idx) => [o.id, idx + 1]));
+}
+
 /** Storage key for today's token queue state at a branch; includes `todayISO` so it resets each new day. */
 export function posQueueStorageKey(locationId: string | null | undefined, todayISO: string): string {
   return `growza.pos.queue.${locationId ?? 'all'}.${todayISO}`;

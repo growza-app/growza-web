@@ -201,15 +201,40 @@ describe('the service worker', () => {
   });
 
   describe('install assets', () => {
-    it('keeps icons and manifests, serving the copy first and refreshing behind it', async () => {
+    it('keeps icons, serving the copy first and refreshing behind it', async () => {
       let version = 'one';
       const w = makeWorker(() => ok(version));
       expect(await (await w.get('/icons/icon-192.png')).response!.text()).toBe('one');
       version = 'two';
       expect(await (await w.get('/icons/icon-192.png')).response!.text()).toBe('one'); // stale first…
       expect(await (await w.get('/icons/icon-192.png')).response!.text()).toBe('two'); // …then refreshed
-      expect((await w.get('/manifest.json')).answered).toBe(true);
-      expect((await w.get('/admin-manifest.json')).answered).toBe(true);
+    });
+
+    /*
+     * 2026-11-07 — Chrome re-reads an installed app's manifest to update its home-screen icon. Served stale-first, that
+     * check saw the old icon list after a release, and the new icon waited for the next check, a day or more later.
+     */
+    it.each(['/manifest.json', '/admin-manifest.json'])('serves %s fresh every time, and the stored copy only offline', async (path) => {
+      let version = 'one';
+      let offline = false;
+      const w = makeWorker(() => {
+        if (offline) throw new TypeError('offline');
+        return ok(version);
+      });
+      expect(await (await w.get(path)).response!.text()).toBe('one');
+      version = 'two';
+      expect(await (await w.get(path)).response!.text(), 'the new icon list on the very next read').toBe('two');
+      offline = true;
+      expect(await (await w.get(path)).response!.text(), 'offline: the last one seen').toBe('two');
+    });
+  });
+
+  describe('the alert icon (Jira GRW-647)', () => {
+    it("is the manifest's own 192px icon, and the file is there", async () => {
+      const { APP_ICONS } = await import('../../icons.generated');
+      const url = /const ICON_URL = '([^']+)'/.exec(SOURCE)?.[1];
+      expect(url).toBe(APP_ICONS.icon192);
+      expect(() => readFileSync(fromDashboard(`public${url}`))).not.toThrow();
     });
   });
 

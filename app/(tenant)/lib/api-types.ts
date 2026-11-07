@@ -632,6 +632,11 @@ export interface Appointment {
   movedTo?: string | null;
   /** True when this customer had no booking before this day — a first-time (new) customer. */
   customerIsNew: boolean;
+  /**
+   * QA 2026-11-06 — another booking this client has that overlaps this one. The API puts it on BOTH rows, so the
+   * desk that booked first sees it too; absent or null when there is none (and from an API that predates it).
+   */
+  clientAlsoBooked?: { startAt: string; staffName: string | null } | null;
   /** Ties the legs of one combo/multi-service booking together — null for a plain single-service booking. */
   bookingGroupId: string | null;
   /** The offer/combo package this booking came from, if any — present means it's a real combo, not just several services. */
@@ -882,6 +887,11 @@ export interface OfferInput {
   visibleWeekdays?: number[] | null;
   visibleFrom?: string | null;
   visibleUntil?: string | null;
+  /**
+   * QA 2026-11-06 — "yes, it costs more than its services, save it". The API answers 409
+   * `package_above_its_services` to a package priced above its parts until the same save is sent with this.
+   */
+  confirmAboveServices?: boolean;
 }
 
 /** Jira GRW-381 — a created offer, and with "all branches", where its copies went and which branches were skipped. */
@@ -1308,7 +1318,7 @@ export interface BookingCorrection {
  */
 export interface ShopHome {
   timezone: string;
-  today: { orders: number; takingsMinor?: number; byPaymentMode?: PaymentModeSlice[] };
+  today: { orders: number; takingsMinor?: number; byPaymentMode?: PaymentModeSlice[]; fromAppsMinor?: number; cashDrawer?: { takenMinor: number; refundedMinor: number; inDrawerMinor: number } };
   yesterday: { orders: number; takingsMinor?: number };
   /** Has the shop ever sold anything. False: Home invites the first order. */
   anyOrders: boolean;
@@ -1437,6 +1447,8 @@ export interface OrderDetail {
   payments?: Array<{ mode: string; amountMinor: number }>;
   totalMinor?: number;
   refundedMinor?: number;
+  /** The reward points that paid part of this counter order (net of any given back), with what they came to. Null when none did. */
+  rewardPoints?: { points: number; discountMinor: string } | null;
 }
 
 /** The answer to a move that was refused because the order is no longer where the screen thought. */

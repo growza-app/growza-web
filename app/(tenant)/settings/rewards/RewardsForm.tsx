@@ -124,8 +124,12 @@ export function RewardsForm({ initial }: { initial: RewardSettings | null }) {
   };
 
   /** The rate in the owner's own terms, rebuilt as they type: what one ordinary bill actually gives. */
-  const earned = bps === null ? null : pointsFor(EXAMPLE_BILL_MINOR, bps, initial.pointValueMinor);
-  const effectiveBps = bps ?? initial.earnBps;
+  // QA 2026-11-06 — only a rate the plan allows is worked out. Typing 150 put "₹1,000 earns 1500 points" and "150%" on
+  // the screen beside the sentence saying a rate must be between 0 and 1%: a figure that can never be saved, shown as if
+  // it could. A rate that is not allowed shows the message and keeps the last good figures.
+  const allowedBps = bps !== null && bps <= initial.maxEarnBps ? bps : null;
+  const earned = allowedBps === null ? null : pointsFor(EXAMPLE_BILL_MINOR, allowedBps, initial.pointValueMinor);
+  const effectiveBps = allowedBps ?? initial.earnBps;
   const effectiveRateText = (effectiveBps / 100).toString();
   const pointMinor = Math.max(1, initial.pointValueMinor);
   const capPct = initial.redeemCapBps / 100;

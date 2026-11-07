@@ -22,6 +22,22 @@
   min-height: 2.75rem;
 }
 
+/*
+ * Jira GRW-674 (SEC-12) — "Sent to the wrong number? Stop sharing".
+ * Muted like a hint, because most visits to this screen have no use for it; the action itself keeps the
+ * 44px a finger needs, as inline padding rather than a box, so the line stays one line of text at 344px.
+ */
+.doc-stop {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+
+.doc-stop-btn {
+  min-height: 2.75rem;
+  padding: 0 var(--sp-1);
+}
+
 /* What the document is, in four facts, so the owner knows what they are about to send before they send it. */
 .doc-card {
   margin: 0;

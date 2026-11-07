@@ -109,12 +109,31 @@
   height: 4.25rem;
 }
 
+/*
+ * Jira GRW-679 (UX-11) — a bar a phone in daylight can see. `--accent-soft` on a white card measures 1.15:1: the
+ * chart was there and could barely be made out. A little over half of the accent on the card measures 1.91:1, and
+ * the best day in the full accent 3.30:1 — so the quiet bars are visible and the best one still stands apart.
+ */
 .cr-bar {
   width: 100%;
   flex: 0 0 auto;
   min-height: 0;
   border-radius: 3px 3px 0 0;
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 55%, var(--surface));
+}
+
+/* The best day's amount, on top of its bar. One line, centred on the column and allowed to hang over its
+   neighbours: "₹1,54,368" is wider than a seventh of a phone. */
+.cr-bar-top {
+  display: flex;
+  justify-content: center;
+  min-height: 1.125rem;
+  margin-bottom: 2px;
+  font-size: var(--fs-1);
+  font-weight: 700;
+  color: var(--accent-deep);
+  white-space: nowrap;
+  overflow: visible;
 }
 
 .cr-bar.is-peak {

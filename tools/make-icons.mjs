@@ -1,10 +1,10 @@
 /**
  * The Growza app icon, generated from the brand mark.
  *
- * Renders the bold white `G` ring + upward-right growth arrow directly on the
- * emerald gradient squircle (`#159360` -> `#0B613E`), without the outer speech
- * bubble wrapper that previously shrank the inner `G`-arrow to ~25% of the
- * mobile home-screen icon.
+ * The mark is growza.biz's sprout (https://growza.biz/favicon.svg, 2026-11-07): a mint leaf and a white leaf rising
+ * from one stem, on the deep green squircle (`#1E7E45` -> `#0A2E20`) with a faint white inner edge, drawn on the same
+ * 140x140 box as the site's file. The site's four-point star spark is left out (owner, 2026-11-07): it is the sign
+ * most apps now use for "AI", and at 16px it was a two-pixel smudge.
  *
  *   node tools/make-icons.mjs
  *
@@ -29,52 +29,59 @@ import sharp from 'sharp';
 import { createHash } from 'node:crypto';
 import { readFile, readdir, rm, writeFile } from 'node:fs/promises';
 
-const G_ARC = 'M 61.2 44.2 A 31 31 0 1 0 95.8 78.8';
-const G_ARROW = 'M 65 75 L 104 36 M 82 36 H 104 V 58';
-const GRAD_START = '#159360';
-const GRAD_END = '#0B613E';
+/* growza.biz/favicon.svg, path for path. */
+const BG_START = '#1E7E45';
+const BG_END = '#0A2E20';
+const MINT_START = '#10B981';
+const MINT_END = '#6EE7B7';
+const MINT_LEAF = 'M 58 106 C 34 98, 22 76, 26 48 C 52 52, 64 74, 58 106 Z';
+const WHITE_LEAF = 'M 65 108 C 62 66, 78 38, 112 28 C 110 68, 94 100, 65 108 Z';
 
 /**
- * The mark sits in a 140x140 coordinate space where the outer stroke box is
- * 83x83 centered at (70, 70).
+ * Everything is drawn in the mark's own 140x140 space and scaled to `size` as a whole.
  *
- * `scale` adjusts the mark relative to the 140x140 box:
- *   1.00  standard icon (`appleTouch`, `192`, `512`) — ~60% of the icon width
- *   0.90  maskable — sits comfortably inside Android's 80% safe circle
- *   1.12  32px favicon — slightly larger and thicker so both strokes stay crisp
+ * `scale` sizes the sprout about the centre, leaving the squircle where it is:
+ *   1.00  standard icon (`appleTouch`, `192`, `512`) — exactly the site's mark
+ *   0.90  maskable — the white leaf's tip, the farthest point, lands at 38% of the edge from the centre: inside
+ *         Android's 40% safe circle (at 1.00 it is 42%, and a round mask would clip it)
+ *   1.12  32px favicon — a little larger, so the two leaves stay distinct at 32 and 16 pixels; it stays inside the corners
+ *
+ * `radius` is in the 140 space: 34 is the mark's own corner. 0 for the icons a platform masks itself (iOS, Android
+ * maskable) — a rounded corner there shows the home screen through it. `edge` is the faint inner border: kept on the
+ * rounded icons, where it follows the corner, and dropped where the platform's mask would cut across it or, at 32px, it
+ * is under half a pixel and only blurs the edge.
  */
-function icon({ size, scale = 1, radius, arcWidth = 14.5, arrowWidth = 13.5 }) {
-  const s = (size / 140) * scale;
-  const offset = (size * (1 - scale)) / 2;
+function icon({ size, scale = 1, radius = 34, edge = true }) {
+  const k = scale.toFixed(4);
   return Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 140 140">` +
       `<defs>` +
       `<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">` +
-      `<stop offset="0%" stop-color="${GRAD_START}"/>` +
-      `<stop offset="100%" stop-color="${GRAD_END}"/>` +
+      `<stop offset="0%" stop-color="${BG_START}"/><stop offset="100%" stop-color="${BG_END}"/>` +
+      `</linearGradient>` +
+      `<linearGradient id="mint" x1="0" y1="1" x2="1" y2="0">` +
+      `<stop offset="0%" stop-color="${MINT_START}"/><stop offset="100%" stop-color="${MINT_END}"/>` +
       `</linearGradient>` +
       `</defs>` +
-      `<rect width="${size}" height="${size}" rx="${radius}" ry="${radius}" fill="url(#bg)"/>` +
-      `<g transform="translate(${offset.toFixed(2)} ${offset.toFixed(2)}) scale(${s.toFixed(5)})">` +
-      `<path d="${G_ARC}" fill="none" stroke="#FFFFFF" stroke-width="${arcWidth}" stroke-linecap="round"/>` +
-      `<path d="${G_ARROW}" fill="none" stroke="#FFFFFF" stroke-width="${arrowWidth}" stroke-linecap="round" stroke-linejoin="round"/>` +
+      `<rect width="140" height="140" rx="${radius}" fill="url(#bg)"/>` +
+      (edge ? `<rect x="3" y="3" width="134" height="134" rx="${Math.max(radius - 3, 0)}" fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2"/>` : '') +
+      `<g transform="translate(70 70) scale(${k}) translate(-70 -70)">` +
+      `<path d="${MINT_LEAF}" fill="url(#mint)"/>` +
+      `<path d="${WHITE_LEAF}" fill="#ffffff"/>` +
       `</g></svg>`,
   );
 }
 
-/* The artboard rounds 400px at 92, which is 23% of the edge. */
-const r = (size) => Math.round(size * 0.23);
-
 const FILES = [
   // Next.js serves app/icon.png as the favicon, and fingerprints the URL itself — this one is not hashed here.
-  { key: 'favicon', out: 'app/icon.png', size: 32, scale: 1.12, radius: r(32), arcWidth: 16, arrowWidth: 15 },
+  { key: 'favicon', out: 'app/icon.png', size: 32, scale: 1.12, edge: false },
   // iOS applies its own mask, so this one is square — rounding it here would
   // show the home screen's background through the corners.
-  { key: 'appleTouch', stem: 'apple-touch-icon', size: 180, scale: 1, radius: 0 },
-  { key: 'icon192', stem: 'icon-192', size: 192, scale: 1, radius: r(192) },
-  { key: 'icon512', stem: 'icon-512', size: 512, scale: 1, radius: r(512) },
-  { key: 'maskable192', stem: 'icon-maskable-192', size: 192, scale: 0.9, radius: 0 },
-  { key: 'maskable512', stem: 'icon-maskable-512', size: 512, scale: 0.9, radius: 0 },
+  { key: 'appleTouch', stem: 'apple-touch-icon', size: 180, scale: 1, radius: 0, edge: false },
+  { key: 'icon192', stem: 'icon-192', size: 192, scale: 1 },
+  { key: 'icon512', stem: 'icon-512', size: 512, scale: 1 },
+  { key: 'maskable192', stem: 'icon-maskable-192', size: 192, scale: 0.9, radius: 0, edge: false },
+  { key: 'maskable512', stem: 'icon-maskable-512', size: 512, scale: 0.9, radius: 0, edge: false },
 ];
 
 const ICON_DIR = 'public/icons';
@@ -114,6 +121,15 @@ for (const manifest of ['public/manifest.json', 'public/admin-manifest.json']) {
   await writeFile(manifest, `${JSON.stringify(json, null, 2)}\n`);
   console.log(`${manifest}  icons rewritten`);
 }
+
+// The service worker's alert icon (Jira GRW-647) is the manifest's 192px one. It cannot import a module, so its line is
+// rewritten here — left by hand, it pointed at a deleted file for a whole icon generation.
+const worker = 'public/sw.js';
+const workerSource = await readFile(worker, 'utf8');
+const ICON_LINE = /const ICON_URL = '[^']*';/;
+if (!ICON_LINE.test(workerSource)) throw new Error(`${worker}: no ICON_URL line to rewrite`);
+await writeFile(worker, workerSource.replace(ICON_LINE, `const ICON_URL = '${urls.icon192}';`));
+console.log(`${worker}  ICON_URL rewritten`);
 
 const generated = 'app/icons.generated.ts';
 await writeFile(

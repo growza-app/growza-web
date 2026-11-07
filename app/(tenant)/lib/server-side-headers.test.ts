@@ -26,4 +26,17 @@ describe('serverSideHeaders', () => {
     expect(serverSideHeaders({ token: null, forwardedFor: '203.0.113.7' })).toEqual({ 'x-forwarded-for': '203.0.113.7' });
     expect(serverSideHeaders({})).toEqual({});
   });
+
+  /*
+   * Jira GRW-674 (SEC-05) — the cookie goes on under the name it came in.
+   *
+   * Production's session is `__Host-growza_session`; a plain `growza_session` there can only be one a sibling
+   * host planted. Forwarding it under the plain name leaves the API to refuse it. Renaming it on the way
+   * through would launder exactly the cookie the prefix exists to keep out.
+   */
+  it('forwards a host-locked session under its own name, and never promotes a plain one to it', () => {
+    expect(serverSideHeaders({ token: 'abc', hostLocked: true })).toEqual({ cookie: '__Host-growza_session=abc' });
+    expect(serverSideHeaders({ token: 'abc', hostLocked: false })).toEqual({ cookie: 'growza_session=abc' });
+    expect(serverSideHeaders({ token: 'abc' })).toEqual({ cookie: 'growza_session=abc' });
+  });
 });

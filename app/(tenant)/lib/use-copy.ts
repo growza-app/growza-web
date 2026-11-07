@@ -169,6 +169,9 @@ export function useNewVisitCopy() {
     saveUnknown: t('saveUnknown'),
     recorded: t('recorded'),
     overlap: (provider: string) => t('overlap', { provider }),
+    // Jira GRW-676 (SAL-05) — said after a booking is made, when the client already had one at that time.
+    alsoBooked: (client: string, time: string, staff: string | null) =>
+      staff ? t('alsoBooked', { client, time, staff }) : t('alsoBookedNoStaff', { client, time }),
     takePayment: t('takePayment'),
     addToQueue: t('addToQueue'),
     /**
@@ -258,12 +261,10 @@ export function useMoveCopy() {
     keepStylist: t('keepStylist'),
     back: t('back'),
     confirm: t('confirm'),
-    confirmAnyway: t('confirmAnyway'),
     saving: t('saving'),
     clash: (who: string) => t('clash', { who }),
     clashUnknown: t('clashUnknown'),
     moved: (when: string) => t('moved', { when }),
-    movedOverlap: t('movedOverlap'),
     failed: t('failed'),
     done: t('done'),
   }), [t, tn, locale]);

@@ -179,7 +179,10 @@ describe('the rows and the filter read at 344px, and say nothing by colour alone
 
   it('the order state is a word, and the change carries an arrow and a sign', () => {
     expect(shop).toContain('{stateWord(o.status)}');
-    expect(shop).toContain("{phoneFigures.changePct < 0 ? '↓' : '↑'}");
+    // The arrow comes from `deltaLabel` now (review 2026-11-05), which draws one for a rise and a fall and
+    // none for no change — and no change takes no colour either, so nothing is said by colour alone.
+    expect(shop).toContain('{deltaLabel(phoneFigures.changePct)} {s.vsPrevious}');
+    expect(shop).toContain('shp-delta ${deltaTone(phoneFigures.changePct)}');
   });
 
   it('every row is a 44px door', () => {

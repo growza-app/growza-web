@@ -56,19 +56,31 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
 
-      # No `npm ci`: this repo has no lockfile yet — it was a workspace member
-      # and the lock lived in the monorepo. Commit one generated with the token
-      # in place and this becomes `npm ci`, which is what makes it reproducible.
+      # `npm ci`, as of Jira GRW-674 (SEC-02). It installs the committed lockfile
+      # exactly, and refuses when package.json and the lock disagree — so a
+      # dependency changed without regenerating the lock goes red here rather
+      # than resolving to something nobody reviewed.
       - name: Install
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
+
+      # Jira GRW-674 (SEC-01) — a known high or critical advisory in what ships
+      # fails the run. `npm audit` reads the lockfile, which is committed as of
+      # SEC-02, so it now audits the same resolution the image installs.
+      # `--omit=dev`: the test runner's advisories are not what a visitor reaches.
+      #
+      # This goes red on the day an advisory is published, on a branch that did
+      # not cause it. That is the point; raising the floor in package.json is
+      # the answer (see `next` there).
+      - name: No known high or critical advisory in production dependencies
+        run: npm audit --omit=dev --audit-level=high
 
       # `npx tsc` without typescript installed silently fetches an unrelated
       # 2016 package called `tsc` and fails with "This is not the tsc command

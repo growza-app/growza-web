@@ -14,7 +14,7 @@ import {
   type Service,
 } from '../lib/api';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { IconCalendar, IconClock, IconUser } from '../components/icons';
+import { IconCalendar, IconClock, IconUser, IconWhatsApp } from '../components/icons';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { OfferBranchField, useDefaultOfferBranch } from '../offers/OfferBranchField';
 import { useBranch } from '../components/BranchProvider';
@@ -269,6 +269,13 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
   // Submission failures only (network/server) — field-level required-ness
   // shows inline next to the field itself, not as a banner up top.
   const [error, setError] = useState<string | null>(null);
+  /**
+   * QA 2026-11-06 — the API asked "this costs more than its services, is that right?" about the save in hand.
+   *
+   * `publish` is which button was pressed, so saying yes finishes that same save. A package at ₹50,000 for ₹1,100
+   * of services used to go through on one tap; the line under the price said so, but nothing stopped the tap.
+   */
+  const [askingAbove, setAskingAbove] = useState<{ publish: boolean } | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ title?: string; services?: string; price?: string }>({});
 
   const selectedServices = useMemo(
@@ -348,11 +355,14 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
      * announcement, so the package turned up in Offers instead.
      */
     if (selectedIds.length > 0 && comboPriceMinor == null) errs.price = t('errors.priceRequired');
+    // Jira GRW-676 (SAL-07) — "100% off" or a typed 0 made a package that gives its services away on every booking.
+    // The API refuses it now; said here first, beside the price, in the page's own language.
+    if (selectedIds.length > 0 && comboPriceMinor === 0) errs.price = t('errors.priceZero');
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
-  const save = async (publish: boolean) => {
+  const save = async (publish: boolean, confirmedAbove = false) => {
     if (!validateForm()) return;
     /*
      * Jira GRW-473 — two ways to save a package that would never show. "Only on" with no day ticked is visible on
@@ -385,6 +395,7 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
         visibleWeekdays: visibilityMode === 'weekdays' ? visibleWeekdays : null,
         visibleFrom: visibilityMode === 'window' ? fromDatetimeLocal(visibleFromInput) : null,
         visibleUntil: visibilityMode === 'window' ? fromDatetimeLocal(visibleUntilInput) : null,
+        ...(confirmedAbove ? { confirmAboveServices: true } : {}),
       };
       if (mode === 'create') {
         const created = await api.createOffer({
@@ -402,6 +413,11 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
       }
       leave();
     } catch (err) {
+      // Not a failure: a question. The dialog asks it, with both figures, and "yes" sends this same save again.
+      if (err instanceof ApiError && err.code === 'package_above_its_services') {
+        setAskingAbove({ publish });
+        return;
+      }
       // Jira GRW-473 — the server's reason when it gave one ("a service from another branch"), not a guess.
       setError(err instanceof ApiError && err.status < 500 ? err.message : t('errors.saveFailed'));
     } finally {
@@ -836,7 +852,11 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
               ) : (
                 <>
                   {previewCard}
-                  <div className="preview-caption">{t('caption')}</div>
+                  {/* The product's one icon language, not an emoji (salon QA 2026-11-07). */}
+                  <div className="preview-caption">
+                    <IconWhatsApp />
+                    {t('caption')}
+                  </div>
                 </>
               )}
             </div>
@@ -858,6 +878,25 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
         <PreviewSheet onClose={() => setPreviewOpen(false)}>
           {selectedServices.length === 0 ? <div className="empty">{t('sidebarEmpty')}</div> : previewCard}
         </PreviewSheet>
+      )}
+
+      {askingAbove && comboPriceMinor != null && (
+        <ConfirmDialog
+          title={t('aboveServices.title')}
+          body={t('aboveServices.body', {
+            services: formatMoney(String(originalPriceMinor)),
+            price: formatMoney(String(comboPriceMinor)),
+          })}
+          confirmLabel={t('aboveServices.confirm', { price: formatMoney(String(comboPriceMinor)) })}
+          cancelLabel={t('aboveServices.cancel')}
+          busy={busy}
+          onConfirm={() => {
+            const { publish } = askingAbove;
+            setAskingAbove(null);
+            void save(publish, true);
+          }}
+          onCancel={() => setAskingAbove(null)}
+        />
       )}
 
       {confirmDelete && initialOffer && (

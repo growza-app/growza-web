@@ -88,6 +88,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     newClientWord,
     cameBack: S('came back', 'दोबारा आए'),
     howPaid: S('How they paid', 'कैसे पैसे दिए'),
+    // QA 2026-11-06 — what the delivery apps billed, beside the counter's payment split so the parts add up to the day.
+    fromApps: S('Apps', 'ऐप से'),
     noMoneyYet: S('No money taken yet', 'अभी तक कोई पैसा नहीं'),
     thisWeek: S('This week', 'इस हफ़्ते'),
     thisMonth: S('This month', 'इस महीने'),
@@ -249,6 +251,17 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     daySummary: S('Day summary', 'दिन का हिसाब'),
     todaysSummary: S("Today's summary", 'आज का पूरा हिसाब'),
     moneyTaken: S('Money today', 'आज मिला पैसा'),
+    // Owner, 2026-11-06 — the day report's line for bills that took less than their price. Plain words: not
+    // "discounts" (a word for an offer the owner chose) and not "giveaway" — it says what the till did.
+    // Owner, 2026-11-06 — the notes that should be in the till (CashDrawer.tsx). Plain words: "drawer" is the thing on the counter.
+    cashInDrawer: S('Cash in drawer', 'गल्ले में कैश'),
+    cashInDrawerSub: S('Cash taken today, less cash handed back', 'आज लिया गया कैश, घटा लौटाया गया कैश'),
+    cashTaken: S('Cash taken', 'कैश लिया'),
+    cashHandedBack: S('Cash handed back', 'कैश लौटाया'),
+    cashLeft: S('Should be in the drawer', 'गल्ले में होना चाहिए'),
+    chargedBelow: S('Charged below price', 'दाम से कम लिया'),
+    chargedBelowSub: S('Bills that took less than the price today', 'आज जिन बिलों में दाम से कम लिया गया'),
+    billCount: (n: number) => S(n === 1 ? '1 bill' : `${n} bills`, `${n} बिल`),
     done: S('done', 'पूरे हुए'),
     notDone: S('still to do', 'बाकी हैं'),
     /*
@@ -539,25 +552,22 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       vsYesterday: S('vs. yesterday', 'कल की तुलना में'),
       whatWouldYouLikeToDo: S('What would you like to do?', 'आप क्या करना चाहेंगे?'),
       viewOrdersAction: S('View orders', 'ऑर्डर देखें'),
-      manageMenuAction: S('Manage menu', 'मेनू संभालें'),
+      manageMenuAction: S('Manage menu', 'मेन्यू संभालें'),
       customersCardTitle: S('Customers', 'ग्राहक'),
       needsAttentionTitle: S('Needs attention', 'ध्यान दें'),
       attentionItemsBadge: (n: number) => (n === 1 ? S('1 item', '1 बात') : S(`${n} items`, `${n} बातें`)),
       menuItemsLowSub: (n: number) =>
-        n === 1 ? S('1 menu item is running low', '1 मेनू आइटम कम हो रहा है') : S(`${n} menu items are running low`, `${n} मेनू आइटम कम हो रहे हैं`),
+        n === 1 ? S('1 menu item is running low', '1 मेन्यू आइटम कम हो रहा है') : S(`${n} menu items are running low`, `${n} मेन्यू आइटम कम हो रहे हैं`),
       pendingOrdersTitle: S('Pending orders', 'लंबित ऑर्डर'),
-      pendingOrdersWaitSub: (n: number) =>
+      /** An order rung up and kept in the queue, not yet paid. */
+      pendingPaymentSub: (n: number) =>
         n === 1
-          ? S('1 order is waiting for more than 15 min', '1 ऑर्डर 15 मिनट से ज़्यादा से इंतज़ार में है')
-          : S(`${n} orders are waiting for more than 15 min`, `${n} ऑर्डर 15 मिनट से ज़्यादा से इंतज़ार में हैं`),
-      dineInMode: S('Dine-in', 'डाइन-इन'),
-      takeawayMode: S('Takeaway', 'टेकअवे'),
-      deliveryMode: S('Delivery', 'डिलीवरी'),
-      tableWord: (n: number) => S(`Table ${n}`, `टेबल ${n}`),
+          ? S('1 order is waiting for payment', '1 ऑर्डर का भुगतान बाकी है')
+          : S(`${n} orders are waiting for payment`, `${n} ऑर्डर का भुगतान बाकी है`),
+      paymentPendingState: S('Payment pending', 'भुगतान बाकी'),
+      nothingNeedsYou: S('Nothing needs you right now', 'अभी आपको कुछ नहीं करना है'),
       minAgo: (n: number) => S(`${n} min ago`, `${n} मिनट पहले`),
-      stateServed: S('Served', 'परोसा गया'),
       statePreparing: S('Preparing', 'तैयार हो रहा है'),
-      stateOutForDelivery: S('Out for delivery', 'डिलीवरी के लिए निकला'),
       kitchenSub: (name: string) => S(`Here’s how ${name} is doing today.`, `यहाँ देखें आज ${name} कैसा चल रहा है।`),
     },
     couldNotLoad: S('Could not load this. Check your connection and try again.', 'यह लोड नहीं हुआ। इंटरनेट देखें और फिर से कोशिश करें।'),
@@ -570,7 +580,13 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       pos: S('POS', 'पीओएस'),
       /** Jira GRW-608 — the shop's two screens. The vertical's own word in English; Hindi uses the generic one (Jira GRW-315). */
       orders: hi ? 'ऑर्डर' : (labels.orders ?? 'Orders'),
-      stock: hi ? 'स्टॉक' : (labels.stock ?? 'Stock'),
+      /*
+       * Jira GRW-679 (UX-05) — a restaurant's shelf is its Menu, in Hindi too. The rule above (Hindi uses the generic
+       * word) put "स्टॉक" on a kitchen's tab while English said "Menu": a different thing, not a different word, since
+       * a kitchen keeps no count. The vertical's word is still what decides; this is its Hindi, for the one word that
+       * changes the meaning.
+       */
+      stock: hi ? (labels.stock === 'Menu' ? 'मेन्यू' : 'स्टॉक') : (labels.stock ?? 'Stock'),
       schedule: S('My schedule', 'मेरा काम'),
       clients: hi ? 'ग्राहक' : (labels.customers ?? copy.nav.customers),
       staff: hi ? 'स्टाफ़' : (labels.providers ?? copy.nav.staff),

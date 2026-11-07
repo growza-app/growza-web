@@ -36,6 +36,19 @@ export function RedeemRow({
 }) {
   const t = useTranslations('payFlow.rewards');
   const money = (minor: number) => formatMoney(String(minor));
+  /*
+   * Owner, 2026-11-07 — a client with no mobile number earns nothing, so the till says what the number is worth while
+   * they are still at the counter. Points start from the next bill once it is added; nothing is back-dated.
+   */
+  if (rewards?.enabled && rewards.needsPhone) {
+    return (
+      <div className="pf-redeem is-locked" role="note">
+        <span className="pf-redeem-label pf-redeem-quiet">
+          <span className="pf-redeem-have">{(rewards.wouldEarn ?? 0) > 0 ? t('addNumberToEarn', { points: rewards.wouldEarn! }) : t('addNumber')}</span>
+        </span>
+      </div>
+    );
+  }
   if (!rewards || (rewards.maxRedeemable === 0 && rewards.balance === 0)) return null;
 
   const have = t('have', { points: rewards.balance });

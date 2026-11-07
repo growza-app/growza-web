@@ -117,6 +117,8 @@ export interface BookingGroup {
   offerTitle: string | null;
   /** Where a moved visit is now: set only when every leg was retired by a move (owner-app audit, 2026-10-10). */
   movedTo: string | null;
+  /** QA 2026-11-06 — another booking this client has at the same time, from whichever leg overlaps it. */
+  alsoBooked: { startAt: string; staffName: string | null } | null;
   /** Jira GRW-581 — products sold on this visit (`visit_product`). */
   products?: VisitProductLine[];
   /** Jira GRW-581 — split payment lines (`visit_payment`). */
@@ -188,6 +190,7 @@ export function groupBookings(appointments: Appointment[]): BookingGroup[] {
       offerTitle: sorted.find((a) => a.offerTitle)?.offerTitle ?? null,
       // The legs move together, so the first leg's new start is the visit's.
       movedTo: sorted.every((a) => a.status === 'cancelled' && a.movedTo) ? first.movedTo! : null,
+      alsoBooked: sorted.find((a) => a.clientAlsoBooked)?.clientAlsoBooked ?? null,
       ...(products !== undefined ? { products } : {}),
       ...(payments !== undefined ? { payments } : {}),
       ...(refunds !== undefined ? { refunds } : {}),
