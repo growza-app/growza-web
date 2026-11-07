@@ -90,8 +90,7 @@ export function NewIconNote({ app }: { app: InstallApp }) {
   return (
     <section
       className="install-banner"
-      role="dialog"
-      aria-modal="false"
+      // A labelled region, not a dialog: it takes no focus and blocks nothing — the page stays usable around it.
       aria-labelledby={`icon-note-title-${app}`}
       style={offset > 0 ? { bottom: `${offset + 12}px` } : undefined}
       data-mode="icon-note"
