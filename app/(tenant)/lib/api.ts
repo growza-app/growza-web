@@ -610,6 +610,13 @@ export interface CreatedInvite {
  */
 export interface CustomerRewards {
   enabled: boolean;
+  /**
+   * Owner, 2026-11-07 — no number, no points: a client saved by name alone earns and spends nothing, and the till asks
+   * for the number instead. Absent from an older API.
+   */
+  needsPhone?: boolean;
+  /** What THIS bill would earn — the number the till quotes when it asks for the client's mobile. Absent from an older API. */
+  wouldEarn?: number;
   balance: number;
   pointValueMinor: number;
   minRedeemPoints: number;
