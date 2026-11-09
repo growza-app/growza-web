@@ -41,7 +41,7 @@ describe('the unpaid order card', () => {
 
 describe('Add items', () => {
   it('opens the Sell tab on a fresh cart that adds to the order, with no guest or payment step', () => {
-    expect(client).toContain("key={addingToToken ? `add-${addingToToken.id}` : 'sell'}");
+    expect(client).toContain('key={`add-${addingToToken.id}`}');
     expect(client).toContain('api.addToPendingCounterSale(addingToToken.id, products)');
     expect(payFlow).toMatch(/const onNext = \(\) => \{\s*if \(addingTo\) \{\s*void addToOrder\(\);/);
     expect(payFlow).toMatch(/const completePosSale = \(\) => \{\s*if \(addingTo\) \{\s*void addToOrder\(\);/);
@@ -70,6 +70,30 @@ describe('Add items', () => {
       { name: 'Boondi Raita', qty: 1, paidMinor: 4000 },
     ]);
     expect(tk!.totalMinor).toBe(56000);
+  });
+});
+
+describe('Add items never costs the desk the bill it was ringing up (owner, 9 Nov 2026)', () => {
+  const sell = client.slice(client.indexOf('<div className="pos-body" hidden={mode === \'queue\' || addingToToken !== null}>'), client.indexOf('{addingToToken ? (\n        <div className="pos-body"'));
+  const adding = client.slice(client.indexOf('{addingToToken ? (\n        <div className="pos-body"'));
+
+  it('keeps the Sell till mounted, never re-keyed, and only hidden while adding', () => {
+    expect(sell).toContain('<SellProductClient');
+    expect(sell, 'a key that changes would remount the till and drop its bill').not.toMatch(/\bkey=/);
+    expect(sell).not.toContain('addingTo=');
+    expect(sell).toContain("inactive={mode === 'queue' || addingToToken !== null}");
+  });
+
+  it('adds through a till of its own, which owns Back while it is up', () => {
+    expect(adding).toContain('addingTo={{');
+    expect(adding).toContain('leaveRef={leaveRef}');
+    expect(sell).toContain('leaveRef={addingToToken ? undefined : leaveRef}');
+  });
+
+  it('a hidden till answers no shortcut and no scanner', () => {
+    expect(payFlow).toContain("useBarcodeScan(!inactive && productsOnly && step === 'what'");
+    expect(payFlow).toContain("useBarcodeScan(!inactive && productsOnly && (step === 'how' || step === 'qr')");
+    expect(payFlow).toContain("if (inactive || !productsOnly || !wide || step !== 'what') return;");
   });
 });
 

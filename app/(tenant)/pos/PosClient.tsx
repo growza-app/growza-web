@@ -1297,29 +1297,19 @@ export function PosClient({
         </div>
       ) : null}
 
-      <div className="pos-body" hidden={mode === 'queue'}>
+      {/*
+        Owner, 9 Nov 2026 — the Sell till stays mounted, bill and all, while "Add items" uses a till of its own. It
+        used to be one till re-keyed for adding, which threw away a bill the desk had half rung up — and an empty one
+        came back after. Hidden, the Sell till answers no shortcut and no scanner (`inactive`), and hands the bar's
+        Back arrow to the adding till while that one is up.
+      */}
+      <div className="pos-body" hidden={mode === 'queue' || addingToToken !== null}>
         <SellProductClient
-          // A fresh till for "Add items" and a fresh one after it: the order being added to never shares a cart with a new sale.
-          key={addingToToken ? `add-${addingToToken.id}` : 'sell'}
-          addingTo={
-            addingToToken
-              ? {
-                  tokenLabel: addingToToken.tokenLabel,
-                  onAdd: async (products) => {
-                    const res = await api.addToPendingCounterSale(addingToToken.id, products);
-                    const tk = addingToToken;
-                    setQueueNote(t('addedToOrder', { token: tk.tokenLabel, amount: formatMoney(String(res.totalMinor)) }));
-                    setReloadKey((k) => k + 1);
-                    openQueue(tk.id);
-                  },
-                  onStop: () => openQueue(addingToToken.id),
-                }
-              : null
-          }
           timezone={timezone}
           backTo={backTo}
           hideHead
-          leaveRef={leaveRef}
+          leaveRef={addingToToken ? undefined : leaveRef}
+          inactive={mode === 'queue' || addingToToken !== null}
           heading={heading}
           nextTokenNo={nextTokenNo}
           onSaleCompleted={handleSaleCompleted}
@@ -1327,6 +1317,34 @@ export function PosClient({
           reloadKey={reloadKey}
         />
       </div>
+      {addingToToken ? (
+        <div className="pos-body" hidden={mode === 'queue'}>
+          <SellProductClient
+            key={`add-${addingToToken.id}`}
+            addingTo={{
+              tokenLabel: addingToToken.tokenLabel,
+              onAdd: async (products) => {
+                const res = await api.addToPendingCounterSale(addingToToken.id, products);
+                const tk = addingToToken;
+                setQueueNote(t('addedToOrder', { token: tk.tokenLabel, amount: formatMoney(String(res.totalMinor)) }));
+                setReloadKey((k) => k + 1);
+                openQueue(tk.id);
+              },
+              onStop: () => openQueue(addingToToken.id),
+            }}
+            inactive={mode === 'queue'}
+            timezone={timezone}
+            backTo={backTo}
+            hideHead
+            leaveRef={leaveRef}
+            heading={heading}
+            nextTokenNo={nextTokenNo}
+            onSaleCompleted={handleSaleCompleted}
+            onOpenQueue={() => openQueue(addingToToken.id)}
+            reloadKey={reloadKey}
+          />
+        </div>
+      ) : null}
 
       {mode === 'queue' ? (
         settledReceipt ? (

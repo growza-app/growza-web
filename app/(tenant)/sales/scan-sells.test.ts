@@ -55,7 +55,7 @@ describe('the sell page takes the queued scans', () => {
   });
 
   it('listens from the first moment and queues a scan that arrives while the shelf loads', () => {
-    expect(flow).toContain("useBarcodeScan(productsOnly && step === 'what'");
+    expect(flow).toContain("useBarcodeScan(!inactive && productsOnly && step === 'what'");
     expect(flow).toContain('else queueScan(code);');
   });
 

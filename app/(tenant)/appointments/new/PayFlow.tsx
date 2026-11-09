@@ -154,6 +154,7 @@ export function PayFlow({
   onOpenQueue,
   reloadKey = 0,
   addingTo = null,
+  inactive = false,
 }: {
   /** A waiting token being paid: its client, branch and services are the answer to ①. */
   token?: QueueEntry;
@@ -213,6 +214,12 @@ export function PayFlow({
     onAdd: (products: Array<{ productId: string; variantId?: string; qty: number; paidMinor: number }>) => Promise<void>;
     onStop: () => void;
   } | null;
+  /**
+   * Owner, 9 Nov 2026 — kept on the page but not in front of anyone (the POS keeps the Sell till mounted, with its
+   * half-built bill, while "Add items" uses a second one). Hidden, it must not answer the keyboard or a scanner:
+   * F8 would ring up a bill nobody can see, and a scanned code would land in it.
+   */
+  inactive?: boolean;
 }) {
   const t = useTranslations('payFlow');
   const ts = useTranslations('payFlow.size');
@@ -717,7 +724,7 @@ export function PayFlow({
   };
   // Only on the screen where products are picked: on 'how', 'qr' and 'done' a scan would change a bill being paid.
   // Listening from the first moment, not from when the shelf is in: a bottle scanned while it loads waits in the queue.
-  useBarcodeScan(productsOnly && step === 'what', (code) => {
+  useBarcodeScan(!inactive && productsOnly && step === 'what', (code) => {
     if (productsLoaded) onScans([code]);
     else queueScan(code);
   });
@@ -733,7 +740,7 @@ export function PayFlow({
    * Nothing is drawn until somebody actually scans, because a line of standing advice about a thing that is not
    * happening is what people stop reading.
    */
-  useBarcodeScan(productsOnly && (step === 'how' || step === 'qr'), () => setScanNote(t('desk.scanWhilePaying')));
+  useBarcodeScan(!inactive && productsOnly && (step === 'how' || step === 'qr'), () => setScanNote(t('desk.scanWhilePaying')));
   // Codes scanned on the Sales screen wait in the browser: put them on the bill once, in the order scanned.
   const scansTaken = useRef(false);
   useEffect(() => {
@@ -1364,7 +1371,7 @@ export function PayFlow({
   };
 
   useEffect(() => {
-    if (!productsOnly || !wide || step !== 'what') return;
+    if (inactive || !productsOnly || !wide || step !== 'what') return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'F4') {
         e.preventDefault();
