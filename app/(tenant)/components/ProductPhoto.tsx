@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import type { Product } from '../lib/api-types';
 import { IconProducts } from './icons';
 
@@ -242,7 +245,12 @@ export function ProductPhoto({
   className: string;
   eager?: boolean;
 }) {
-  if (product.imageUrl) return <img className={className} src={product.imageUrl} alt="" loading={eager ? 'eager' : 'lazy'} />;
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const rawUrl = product.imageUrl?.trim() || null;
+  const src = rawUrl ? (/^(\/|https?:|data:|blob:)/.test(rawUrl) ? rawUrl : `/uploads/${rawUrl}`) : null;
+  if (src && failedUrl !== src) {
+    return <img className={className} src={src} alt="" loading={eager ? 'eager' : 'lazy'} onError={() => setFailedUrl(src)} />;
+  }
   const { kind, tone } = resolveProductGraphic(product);
   const hasName = Boolean(product.name?.trim() || product.categoryName?.trim());
   const toneClass = hasName ? ` photo-tone-${tone} photo-kind-${kind}` : '';

@@ -53,9 +53,11 @@
   grid-area: name;
   font-weight: 600;
   min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
 }
 
 .prd-chip {
@@ -768,9 +770,7 @@
 .prd-sheet-name {
   font-weight: 700;
   font-size: 1.0625rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
 }
 
 .prd-sheet-tags {
@@ -1793,9 +1793,10 @@
   line-height: 1.3;
   color: var(--text);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  overflow-wrap: break-word;
 }
 
 .prd-menu-card-bestseller {
