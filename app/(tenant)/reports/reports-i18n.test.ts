@@ -192,7 +192,7 @@ const customers = {
     { label: '10+ visits', value: 1, key: 'visits_10_plus' },
     { label: '2–4 visits', value: 10, key: 'visits_2_to_4' },
     { label: 'Just once', value: 20, key: 'visits_once' },
-    { label: 'Never been in', value: 9, key: 'visits_never' },
+    { label: 'Never came', value: 9, key: 'visits_never' },
   ],
   avgIntervalDays: 21,
   avgVisits: 2.5,
@@ -208,7 +208,7 @@ describe('the Clients tab', () => {
 
   it('keeps the English words', () => {
     const page = html('en');
-    for (const s of ['₹10,000+', 'Under ₹1,000', '10+ visits', '2–4 visits', 'Just once', 'Never been in', '~21d', '· 0–30 days']) {
+    for (const s of ['₹10,000+', 'Under ₹1,000', '10+ visits', '2–4 visits', 'Just once', 'Never came', '~21d', '· 0–30 days']) {
       expect(page, s).toContain(s);
     }
   });
@@ -218,7 +218,7 @@ describe('the Clients tab', () => {
     for (const s of ['₹10,000+', '₹1,000 से कम', '10+ विज़िट', '2–4 विज़िट', 'बस एक बार', 'कभी नहीं आए', '~21 दिन', '· 0–30 दिन']) {
       expect(page, s).toContain(s);
     }
-    for (const s of ['Under ₹1,000', 'visits', 'Just once', 'Never been in', '~21d', 'days']) expect(page, s).not.toContain(s);
+    for (const s of ['Under ₹1,000', 'visits', 'Just once', 'Never came', '~21d', 'days']) expect(page, s).not.toContain(s);
   });
 });
 
