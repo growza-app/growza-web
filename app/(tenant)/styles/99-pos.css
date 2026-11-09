@@ -1366,7 +1366,8 @@
 
 .pos-queue-cols {
   display: grid;
-  grid-template-columns: 1fr;
+  /* minmax(0, …): a plain 1fr grows to its longest unbreakable line, which pushed the card off a 327px phone. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
   align-items: start;
 }
@@ -1380,6 +1381,7 @@
 .pos-queue-col {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: var(--sp-3);
   padding: var(--sp-4);
   background: var(--surface);
@@ -1556,14 +1558,24 @@
 
 .pos-qcard-top {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--sp-2);
 }
 
+/* The token and its pills wrap among themselves; the time stays top-right instead of taking a line of its own. */
+.pos-qcard-top > .pos-qcard-id {
+  flex: 1;
+  min-width: 0;
+}
+
+.pos-qcard-top > .pos-qcard-meta {
+  flex: none;
+}
+
 .pos-qcard-sub {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
@@ -1821,6 +1833,149 @@
   height: 0.875rem;
 }
 
+/*
+ * Owner, 9 Nov 2026 — an unpaid order's actions in one card, two rows: Take payment across the card, then
+ * "Add items" and "Cancel order" side by side. Each label may wrap rather than push the card wider (344px first).
+ */
+.pos-qcard-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.pos-qcard-complete-btn > span,
+.pos-qcard-more .btn > span {
+  min-width: 0;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.pos-qcard-more {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+.pos-qcard-more .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-height: 2.75rem;
+  padding: 0 var(--sp-2);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+/* Owner, 9 Nov 2026 — on a phone the column is not a second card around the cards: its frame and padding cost
+   every order card 34px of a 327px screen, enough to break "Cancel order" onto two lines. */
+@media (max-width: 600px) {
+  .pos-queue-col {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+}
+
+.pos-qcard-more .btn svg {
+  flex: none;
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.pos-qcard-add-btn {
+  color: var(--accent-deep);
+}
+
+.pos-qcard-add-btn:hover {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+}
+
+.pos-qcard-cancel-btn {
+  color: var(--danger);
+}
+
+.pos-qcard-cancel-btn:hover {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+/* What was just added, said once on the board the desk lands back on. */
+.pos-queue-note {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.pos-queue-note > span {
+  flex: 1;
+  min-width: 0;
+}
+
+.pos-queue-note svg {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+}
+
+.pos-queue-note-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: calc(-1 * var(--sp-2)) calc(-1 * var(--sp-2)) calc(-1 * var(--sp-2)) 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* The Sell tab while it is adding to a waiting order: says which, and how to stop. */
+.pos-charge-adding {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--amber);
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.pos-charge-adding-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.pos-charge-adding-stop {
+  flex: none;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--amber);
+  background: var(--surface);
+  color: var(--amber-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
 .pos-qcard-recall-btn {
   min-height: 2.75rem;
   padding: 0 var(--sp-3);
@@ -1850,6 +2005,8 @@
 /* The board's three buttons keep a focus ring. They shared this block with the token strip that went; it has
    to stay with the buttons that are still on screen, not with the markup that was removed. */
 .pos-qcard-complete-btn:focus-visible,
+.pos-qcard-more .btn:focus-visible,
+.pos-charge-adding-stop:focus-visible,
 .pos-qcard-recall-btn:focus-visible,
 .pos-qcard-add-client:focus-visible,
 .pos-queue-new-btn:focus-visible {

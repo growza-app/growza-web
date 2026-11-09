@@ -11,6 +11,7 @@ import { useLabel } from '../components/LabelsProvider';
 import { PaymentDone } from '../components/PaymentDone';
 import { RedeemRow } from '../components/RedeemRow';
 import { useSession } from '../components/SessionProvider';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconCheck, IconArrowLeft, IconClose, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch } from '../components/icons';
 import { ClientSheet, type PickedClient } from '../appointments/new/ClientSheet';
 import { Keypad } from '../appointments/new/Keypad';
@@ -421,6 +422,12 @@ export function PosClient({
   const [clientSheetTarget, setClientSheetTarget] = useState<{ token: PosDailyToken; startAdding: boolean } | null>(null);
   const [settlingMode, setSettlingMode] = useState<PaymentMode | null>(null);
   const [settleError, setSettleError] = useState<string | null>(null);
+  /** Owner, 9 Nov 2026 — the unpaid order the Sell tab is adding to ("Add items"), and the one being cancelled. */
+  const [addingToToken, setAddingToToken] = useState<PosDailyToken | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<PosDailyToken | null>(null);
+  const [cancelBusy, setCancelBusy] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [queueNote, setQueueNote] = useState<string | null>(null);
   const [settledReceipt, setSettledReceipt] = useState<{
     appointmentId: string;
     totalMinor: number;
@@ -652,6 +659,33 @@ export function PosClient({
     },
     [t],
   );
+
+  const cancelUnpaidOrder = useCallback(async () => {
+    const tk = cancelTarget;
+    if (!tk || cancelBusy) return;
+    setCancelBusy(true);
+    setCancelError(null);
+    try {
+      await api.cancelPendingCounterSale(tk.id);
+      // Gone from the board at once; the read after it is the shop's answer for every other device.
+      setTodayRows((prev) => prev.filter((r) => (r.bookingGroupId ?? r.id) !== tk.id));
+      setCancelTarget(null);
+      setReloadKey((k) => k + 1);
+      void loadTodayTokens();
+    } catch (e) {
+      setCancelError(e instanceof Error && e.message ? e.message : t('cancelFailed'));
+      // Paid or cancelled on another device meanwhile: the board should show it as it is now.
+      void loadTodayTokens();
+    } finally {
+      setCancelBusy(false);
+    }
+  }, [cancelTarget, cancelBusy, loadTodayTokens, t]);
+
+  const startAddingTo = useCallback((tk: PosDailyToken) => {
+    setQueueNote(null);
+    setAddingToToken(tk);
+    setMode('sell');
+  }, []);
 
   const settleAndCompleteToken = useCallback(
     async (
@@ -922,6 +956,7 @@ export function PosClient({
     (targetToken?: unknown) => {
       opened.current++;
       setMode('queue');
+      setAddingToToken(null);
       if (typeof targetToken === 'string' && targetToken.trim()) {
         setFocusToken(targetToken.trim());
       }
@@ -1065,18 +1100,40 @@ export function PosClient({
             {canReturn ? <strong className="pos-qcard-total">{formatMoney(String(tk.totalMinor))}</strong> : <span />}
           </div>
           {isPreparing ? (
-            <button
-              type="button"
-              className="btn pos-qcard-complete-btn"
-              onClick={() => void settleAndCompleteToken(tk)}
-            >
-              <IconCheck />
-              <span>
-                {tk.paymentPending
-                  ? t('selectPaymentAndComplete', { token: tk.tokenLabel })
-                  : t('handOverToken', { token: tk.tokenLabel })}
-              </span>
-            </button>
+            <div className="pos-qcard-actions">
+              <button
+                type="button"
+                className="btn pos-qcard-complete-btn"
+                onClick={() => void settleAndCompleteToken(tk)}
+              >
+                <IconCheck />
+                <span>
+                  {tk.paymentPending
+                    ? t('takePayment', { token: tk.tokenLabel })
+                    : t('handOverToken', { token: tk.tokenLabel })}
+                </span>
+              </button>
+              {/* Owner, 9 Nov 2026 — only an order still waiting for payment can grow or be called off here; a paid one is a return. */}
+              {tk.paymentPending && tk.channel === 'counter' ? (
+                <div className="pos-qcard-more">
+                  <button type="button" className="btn pos-qcard-add-btn" onClick={() => startAddingTo(tk)}>
+                    <IconPlus />
+                    <span>{t('addItems')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn pos-qcard-cancel-btn"
+                    onClick={() => {
+                      setCancelError(null);
+                      setCancelTarget(tk);
+                    }}
+                  >
+                    <IconClose />
+                    <span>{t('cancelOrder')}</span>
+                  </button>
+                </div>
+              ) : null}
+            </div>
           ) : (
             <button
               type="button"
@@ -1240,6 +1297,23 @@ export function PosClient({
 
       <div className="pos-body" hidden={mode === 'queue'}>
         <SellProductClient
+          // A fresh till for "Add items" and a fresh one after it: the order being added to never shares a cart with a new sale.
+          key={addingToToken ? `add-${addingToToken.id}` : 'sell'}
+          addingTo={
+            addingToToken
+              ? {
+                  tokenLabel: addingToToken.tokenLabel,
+                  onAdd: async (products) => {
+                    const res = await api.addToPendingCounterSale(addingToToken.id, products);
+                    const tk = addingToToken;
+                    setQueueNote(t('addedToOrder', { token: tk.tokenLabel, amount: formatMoney(String(res.totalMinor)) }));
+                    setReloadKey((k) => k + 1);
+                    openQueue(tk.id);
+                  },
+                  onStop: () => openQueue(addingToToken.id),
+                }
+              : null
+          }
           timezone={timezone}
           backTo={backTo}
           hideHead
@@ -1285,6 +1359,15 @@ export function PosClient({
           />
         ) : (
         <section className="pos-queue-board" aria-label={t('queue')}>
+          {queueNote ? (
+            <div className="pos-queue-note" role="status">
+              <IconCheck />
+              <span>{queueNote}</span>
+              <button type="button" className="pos-queue-note-close" aria-label={tc('close')} onClick={() => setQueueNote(null)}>
+                <IconClose />
+              </button>
+            </div>
+          ) : null}
           <div className="pos-queue-cols">
             <div className="pos-queue-col">
               <header className="pos-queue-col-head">
@@ -1329,6 +1412,22 @@ export function PosClient({
           </div>
         </section>
         )
+      ) : null}
+
+      {cancelTarget ? (
+        <ConfirmDialog
+          tone="danger"
+          title={t('cancelOrderTitle', { token: cancelTarget.tokenLabel })}
+          body={t('cancelOrderBody', { amount: formatMoney(String(cancelTarget.totalMinor)) })}
+          confirmLabel={t('cancelOrderConfirm')}
+          cancelLabel={t('keepOrder')}
+          busy={cancelBusy}
+          error={cancelError}
+          onConfirm={() => void cancelUnpaidOrder()}
+          onCancel={() => {
+            if (!cancelBusy) setCancelTarget(null);
+          }}
+        />
       ) : null}
 
       {clientSheetTarget ? (

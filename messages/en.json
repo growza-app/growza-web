@@ -3242,7 +3242,13 @@
       "menu": "Menu",
       "searchDishes": "Search {count} dishes",
       "noDishes": "Nothing on the menu yet. Add dishes on the Menu screen.",
-      "noDishMatch": "No dish by that name."
+      "noDishMatch": "No dish by that name.",
+      "addingToOrder": "Adding to {token} — these go on the same bill",
+      "stopAdding": "Stop",
+      "addToOrder": "Add to {token} · {amount}",
+      "addToOrderShort": "Add to {token}",
+      "addingBusy": "Adding…",
+      "addToOrderFailed": "Could not add these to the order. Please try again."
     },
     "sellTitle": "Sell {product}",
     "pickProduct": "Select a product",
@@ -4361,7 +4367,16 @@
     "selectPaymentAndComplete": "Select payment & Mark {token} Done",
     "needQueuePaymentMode": "Select how the customer paid before marking this order done.",
     "settleFailed": "Could not save payment. Please try again.",
-    "backToQueueDone": "Back to queue"
+    "backToQueueDone": "Back to queue",
+    "takePayment": "Take payment · {token}",
+    "addItems": "Add items",
+    "cancelOrder": "Cancel order",
+    "cancelOrderTitle": "Cancel order {token}?",
+    "cancelOrderBody": "{amount} not collected. The order is removed from the queue and kept in Orders as Cancelled.",
+    "cancelOrderConfirm": "Cancel order",
+    "keepOrder": "Keep order",
+    "cancelFailed": "Could not cancel this order. Please try again.",
+    "addedToOrder": "Added to {token}. It now comes to {amount}."
   },
   "sales": {
     "scanUnknown": "No product has the code {code}. Check the bottle.",

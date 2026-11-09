@@ -3242,7 +3242,13 @@
       "menu": "मेन्यू",
       "searchDishes": "{count} डिश में खोजें",
       "noDishes": "अभी मेन्यू में कुछ नहीं है। मेन्यू स्क्रीन पर डिश जोड़ें।",
-      "noDishMatch": "इस नाम की कोई डिश नहीं।"
+      "noDishMatch": "इस नाम की कोई डिश नहीं।",
+      "addingToOrder": "{token} में जोड़ रहे हैं — ये उसी बिल में जाएँगे",
+      "stopAdding": "रोकें",
+      "addToOrder": "{token} में जोड़ें · {amount}",
+      "addToOrderShort": "{token} में जोड़ें",
+      "addingBusy": "जोड़ रहे हैं…",
+      "addToOrderFailed": "ऑर्डर में नहीं जुड़ सका। फिर से कोशिश करें।"
     },
     "sellTitle": "{product} बेचें",
     "pickProduct": "एक सामान चुनें",
@@ -4361,7 +4367,16 @@
     "selectPaymentAndComplete": "भुगतान चुनें और {token} पूरा करें",
     "needQueuePaymentMode": "इस ऑर्डर को पूरा करने से पहले चुनें कि ग्राहक ने कैसे भुगतान किया।",
     "settleFailed": "भुगतान सेव नहीं हो सका। कृपया फिर कोशिश करें।",
-    "backToQueueDone": "कतार पर वापस जाएँ"
+    "backToQueueDone": "कतार पर वापस जाएँ",
+    "takePayment": "पेमेंट लें · {token}",
+    "addItems": "और जोड़ें",
+    "cancelOrder": "ऑर्डर रद्द करें",
+    "cancelOrderTitle": "ऑर्डर {token} रद्द करें?",
+    "cancelOrderBody": "{amount} नहीं लिया गया। ऑर्डर कतार से हट जाएगा और Orders में रद्द के रूप में रहेगा।",
+    "cancelOrderConfirm": "ऑर्डर रद्द करें",
+    "keepOrder": "ऑर्डर रखें",
+    "cancelFailed": "यह ऑर्डर रद्द नहीं हो सका। फिर से कोशिश करें।",
+    "addedToOrder": "{token} में जुड़ गया। अब कुल {amount} है।"
   },
   "sales": {
     "scanUnknown": "कोड {code} वाला कोई सामान नहीं मिला। बोतल जाँचें।",
