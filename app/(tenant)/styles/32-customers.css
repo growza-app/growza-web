@@ -3135,10 +3135,20 @@ button.bk-waiting-row:focus-visible {
     display: none;
   }
 
-  /* The search and Export are round too, like the pills and the rows under them. */
+  /*
+   * The search and Export are round too, like the pills and the rows under them — and white with a clear edge:
+   * on the page's own grey they had its exact colour (search) or none (Export), and all but vanished (owner, 10 Nov).
+   */
   .cust-toolbar .search-wrap,
   .cust-toolbar .btn {
     border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--text) 18%, var(--surface));
+    box-shadow: 0 1px 2px rgb(16 24 40 / 4%);
+  }
+
+  .cust-toolbar .search-wrap:focus-within {
+    border-color: var(--accent-deep);
   }
 
   /* The list sits on the page's own ground, so each capsule reads as its own thing. */
