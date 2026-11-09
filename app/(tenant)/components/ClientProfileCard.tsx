@@ -7,7 +7,8 @@ import { api, ApiError, formatMoney, type ClientProfile, type ClientProfileRow, 
 import { ConfirmDialog } from './ConfirmDialog';
 import { useClientCardCopy } from '../lib/use-copy';
 import { formatPhone } from '../lib/format';
-import { IconClose, IconPhone } from './icons';
+import { IconClose, IconPhone, IconWhatsApp } from './icons';
+import { waDigits } from './BookingSheet';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useAreas, useMayUse } from './SessionProvider';
 import { clientHistoryOf } from '../lib/areas';
@@ -432,6 +433,17 @@ export function ClientProfileCard({
             <span className="cpc-btn-icon"><IconPhone /></span>
             {c.call}
           </a>
+          {/*
+            Owner, 9 Nov 2026 — WhatsApp lives here, one deliberate tap away, and no longer on the number in the
+            list, where a thumb scrolling past opened a chat. It is the owner's own WhatsApp opening a chat with the
+            person (wa.me), not a send from the business — the same manual link the list carried, never gated.
+          */}
+          {profile?.phone ? (
+            <a className="cpc-btn" href={`https://wa.me/${waDigits(profile.phone)}`} target="_blank" rel="noreferrer">
+              <span className="cpc-btn-icon"><IconWhatsApp /></span>
+              {c.whatsapp}
+            </a>
+          ) : null}
           {/* By id, not by name in the search box. The search-by-name link
               landed on the Bookings screen's default day — today — so a client
               whose last visit was in July showed nothing at all.

@@ -99,34 +99,30 @@
 }
 
 .cust-phone {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--accent-deep);
-  text-decoration: none;
+  color: var(--text);
   font-size: 0.8125rem;
-  font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.cust-phone svg {
-  width: 0.875rem;
-  height: 0.875rem;
-  flex-shrink: 0;
-}
-
-.cust-phone:hover {
-  text-decoration: underline;
-}
-
+/*
+ * Owner, 9 Nov 2026 — the phone list: one inset group of rows that are all the same height. Who and what they
+ * have spent on the top line, the facts in grey under it, a › to say the row opens. The number is text; WhatsApp
+ * and Call are in the card the row opens (ClientProfileCard), so a thumb scrolling the list opens nothing.
+ */
 .cust-card {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 4rem;
+  padding: var(--sp-3) var(--sp-4);
   border-bottom: 1px solid var(--border);
-  padding: 12px 14px;
+  cursor: pointer;
   transition: background 0.12s ease;
 }
 
-.cust-card:hover {
+.cust-card:hover,
+.cust-card:active {
   background: var(--page-bg);
 }
 
@@ -134,87 +130,76 @@
   border-bottom: none;
 }
 
-.cust-card-head {
-  display: flex;
+.cust-avatar {
+  flex: none;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.cust-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cust-card-top {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-width: 0;
 }
 
 .cust-card-name {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  font-weight: 640;
-  margin-bottom: 0;
-}
-
-/*
- * QA 2026-10-28 — the facts under a name sit on ONE wrapping line.
- *
- * The card was four stacked blocks — name, number, last visit, then a dashed rule with visits and spend
- * under it — and came to 158px, so a phone screen held three clients. None of the four is longer than a
- * few words, and read across they are a sentence about the person: who, their number, when they last came
- * and for what, how often and how much. Stacked, they were a form.
- *
- * `flex-wrap` rather than a grid: on a 344px Fold the spend drops to a second line by itself, which is the
- * right answer there and needs no breakpoint of its own.
- */
-.cust-card-line {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 10px;
-  margin-top: 4px;
-  padding-left: 46px;
-  min-width: 0;
-  font-size: 0.8125rem;
-}
-
-/*
- * The last visit takes what room is left and no more. "27 Oct 2026 · Keratin Treatment" is the longest
- * thing on the card and the only one that can be cut without losing a fact: the date is the fact, the
- * service is the colour. Clipped with an ellipsis rather than wrapped, so a long treatment name cannot
- * make one client twice the height of the next.
- */
-.cust-card-line .cl-last-visit {
-  flex: 1 1 8rem;
+  flex: 1;
   min-width: 0;
   overflow: hidden;
-  white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-/*
- * The dashed rule went with the stacking. It separated two things that are now beside each other, where a
- * gap says the same thing more quietly. `margin-inline-start: auto` parks the money at the end of the line
- * when there is room, and lets it wrap under when there is not.
- */
-/*
- * One line, not a stacked pair: "2 visits · ₹10,250" is eleven characters of figure and had been taking
- * two lines of the name row, which pushed the name column narrow enough that the last visit wrapped too.
- * The row got shorter by making this taller-looking and the column wider.
- */
-.cust-card-foot {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  flex: none;
-  margin-inline-start: auto;
-  font-size: 0.75rem;
   white-space: nowrap;
-  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--text);
 }
 
-/* The figure the owner actually scans for, so it carries the weight and the ink. */
-.cust-spent {
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--page-bg);
-  border: 1px solid var(--border);
+/* The figure the owner scans for: on the name's line, at the end, in the text's own ink. */
+.cust-card-amt {
+  flex: none;
+  font-size: 0.9375rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--text);
+}
+
+.cust-card-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+/* Number · last visit · visits — clipped, never wrapped, so every row is the same height. */
+.cust-card-facts {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cust-card > svg {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--muted);
 }
 
 /* ---------- bookings list (mobile cards) ----------
@@ -2527,13 +2512,6 @@
     font-size: 1.125rem;
   }
 
-  /* The WhatsApp link's own box was only 24px tall — text-height, not a tap
-     target. min-height (not padding, which would nudge the icon/text off
-     center) gets it to the 44px minimum without changing how the row looks. */
-  .cust-card .cust-phone {
-    min-height: 44px;
-  }
-
   /* Customers toolbar only (no tabs): search takes the full first row; Filter
      and Export share the second rather than Export wrapping alone onto a
      third. Scoped so it does not disturb the Offers toolbar, which shares the
@@ -2559,31 +2537,6 @@
   font-size: 0.75rem;
   background: var(--slate-soft);
   color: #5b6660;
-}
-
-/*
- * Was 📅 before the last-visit line (CustomersClient).
- *
- * The icons in this app carry no width or height of their own — `base` in icons.tsx sets only a
- * viewBox — so an inline SVG with no rule matching it stretches to fill its parent. The first
- * version of this rule named `.cl-card .muted svg`, an ancestor that does not exist here, and ten
- * calendars rendered at 282x282 down the list. The icon has its own element now, so the rule
- * cannot miss it again.
- */
-.cl-last-visit {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.cl-last-visit-icon {
-  display: inline-flex;
-  flex: none;
-}
-
-.cl-last-visit-icon svg {
-  width: 0.9375rem;
-  height: 0.9375rem;
 }
 
 /*
@@ -3109,5 +3062,123 @@ button.bk-waiting-row:focus-visible {
     font-weight: 800;
     line-height: 1.15;
     font-variant-numeric: tabular-nums;
+  }
+}
+
+
+/*
+ * Owner, 10 Nov 2026 — the phone list in the reference he chose: capsules on the page's soft ground, each with its
+ * group's colour as an arc down its rounded left edge (green coming in, amber due, red slipping, violet gone quiet,
+ * grey never been in), and the groups themselves as round pills with the same arc. A laptop keeps its table.
+ */
+.cust-pills {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .cust-pills {
+    display: flex;
+    gap: var(--sp-2);
+    margin: 0 0 var(--sp-3);
+    padding: 2px 2px var(--sp-1);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .cust-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cust-pill {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 2.75rem;
+    padding: 0 var(--sp-4) 0 var(--sp-3);
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--seg, var(--border));
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .cust-pill b {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+  }
+
+  .cust-pill[aria-pressed='true'] {
+    border-color: var(--seg, var(--accent-deep));
+    background: color-mix(in srgb, var(--seg, var(--accent)) 12%, var(--surface));
+  }
+
+  .cust-pill[aria-pressed='true'] b {
+    color: var(--text);
+  }
+
+  .cust-pill:focus-visible {
+    outline: 2px solid var(--accent-deep);
+    outline-offset: 2px;
+  }
+
+  /* The pills are the groups and the filter now: the folded panel and the Filter menu would say it twice. */
+  .cust-segments-toggle,
+  #cust-segments,
+  .cust-toolbar .dropdown-anchor {
+    display: none;
+  }
+
+  /*
+   * The search and Export are round too, like the pills and the rows under them — and white with a clear edge:
+   * on the page's own grey they had its exact colour (search) or none (Export), and all but vanished (owner, 10 Nov).
+   */
+  .cust-toolbar .search-wrap,
+  .cust-toolbar .btn {
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--text) 18%, var(--surface));
+    box-shadow: 0 1px 2px rgb(16 24 40 / 4%);
+  }
+
+  .cust-toolbar .search-wrap:focus-within {
+    border-color: var(--accent-deep);
+  }
+
+  /* The list sits on the page's own ground, so each capsule reads as its own thing. */
+  .cust-list-card {
+    background: none;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .cust-list-card .paged-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    border: 0;
+    background: none;
+  }
+
+  .cust-card,
+  .cust-card:last-child {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--seg, var(--border));
+    border-radius: 2.25rem;
+    background: var(--surface);
+    padding: var(--sp-3) var(--sp-4) var(--sp-3) var(--sp-3);
+    box-shadow: 0 1px 2px rgb(16 24 40 / 4%);
+  }
+
+  .cust-card:hover,
+  .cust-card:active {
+    background: color-mix(in srgb, var(--seg, var(--accent)) 6%, var(--surface));
   }
 }

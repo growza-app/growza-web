@@ -214,7 +214,7 @@
     "kpiTotalSub": "अब तक",
     "kpiNew": "इस महीने नए",
     "kpiNewSub": "इस महीने पहली बार आए",
-    "kpiReturning": "दोबारा आए {noun}",
+    "kpiReturning": "दोबारा आए",
     "kpiReturningSub": "एक से ज़्यादा बार बुकिंग की",
     "kpiRepeat": "दोबारा आने की दर",
     "kpiRepeatSub": "दोबारा आए ÷ कुल {noun}",
@@ -246,7 +246,7 @@
     },
     "statusNever": "कभी नहीं आए",
     "statusLapsed": "आने का समय या दूर हो रहे",
-    "searchPlaceholder": "{noun} को नाम या फ़ोन से खोजें…",
+    "searchPlaceholder": "नाम या फ़ोन से खोजें",
     "allNoun": "सभी {noun}",
     "noMatch": "आपकी खोज से कोई {noun} नहीं मिला।",
     "loading": "लोड हो रहा है…",
@@ -2470,7 +2470,8 @@
     "deleted": "क्लाइंट हटा दिया गया। {days} दिन तक वापस ला सकते हैं।",
     "undo": "वापस लाएँ",
     "undoing": "वापस ला रहे हैं…",
-    "actionFailed": "नहीं हो पाया। फिर से कोशिश करें।"
+    "actionFailed": "नहीं हो पाया। फिर से कोशिश करें।",
+    "whatsapp": "WhatsApp"
   },
   "reports": {
     "title": "रिपोर्ट",

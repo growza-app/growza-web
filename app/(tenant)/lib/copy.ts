@@ -345,10 +345,10 @@ export const copy = {
     },
 
     segments: {
-      active: 'Coming in',
-      due: 'Due a visit',
-      at_risk: 'Slipping away',
-      inactive: 'Gone quiet',
+      active: 'Came recently',
+      due: 'Due now',
+      at_risk: 'Not seen lately',
+      inactive: 'Stopped coming',
     },
     segmentsTitle: 'How your clients are doing',
     /** Overview has no client-count tile, so its version carries the total. */
@@ -501,7 +501,7 @@ export const copy = {
         highValue: { title: 'Big spenders', hint: 'spent over ₹10,000' },
         atRisk: { title: 'Regulars who stopped', hint: 'came often, gone 2 months' },
       },
-      neverBand: 'Never been in',
+      neverBand: 'Never came',
       spend: 'What people spend',
       spendHint: 'Every client, by what they have spent with you in total — not just this period',
       frequency: 'How often they come',
@@ -514,11 +514,11 @@ export const copy = {
       colVisits: 'Visits',
       colSpend: 'Total spent',
       colAvg: 'Average',
-      colLast: 'Last in',
+      colLast: 'Last visit',
       colFavourite: 'Usual',
       colInterval: 'Comes every',
       daysAgo: (n: number) => `${n} days ago`,
-      neverIn: 'never been in',
+      neverIn: 'never came',
 
       /**
        * All that survives of the old "Coming back" tab. Its three charts —
@@ -542,8 +542,8 @@ export const copy = {
    */
   /** The Clients page's own words. Domain nouns still come from ctx.labels. */
   clients: {
-    segmentsTitle: 'How your {noun} are doing',
-    segmentsHint: 'Tap one to see just those',
+    segmentsTitle: 'When {noun} last came',
+    segmentsHint: 'Tap one to see only them',
     neverVisited: (n: number, pct: number) => `${n} (${pct}%) have not been in yet, so they are in none of these`,
     /**
      * The same fact for a phone. The full sentence wrapped to eleven lines at
@@ -564,10 +564,10 @@ export const copy = {
     segments: {
       // QA 2026-10-26 — the boundaries are the vertical's now (`client_segment_days`), so the words take
       // them as values rather than spelling out the salon's four numbers for every business.
-      active: { label: 'Coming in', range: '0–{to} days' },
-      due: { label: 'Due a visit', range: '{from}–{to} days' },
-      at_risk: { label: 'Slipping away', range: '{from}–{to} days' },
-      inactive: { label: 'Gone quiet', range: '{from}+ days' },
+      active: { label: 'Came recently', range: '0–{to} days' },
+      due: { label: 'Due now', range: '{from}–{to} days' },
+      at_risk: { label: 'Not seen lately', range: '{from}–{to} days' },
+      inactive: { label: 'Stopped coming', range: '{from}+ days' },
     },
   },
 

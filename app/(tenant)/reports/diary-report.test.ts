@@ -129,9 +129,9 @@ describe('the four cards say something, in English', () => {
   });
 
   it('bands the book in the Clients list’s own words, and names who is worth a message', () => {
-    expect(out).toContain('Coming in');
-    expect(out).toContain('Slipping away');
-    expect(out).toContain('Gone quiet');
+    expect(out).toContain('Came recently');
+    expect(out).toContain('Not seen lately');
+    expect(out).toContain('Stopped coming');
     // The vertical's own boundaries, worded from numbers the API sent.
     expect(out).toContain('46–90 days');
     expect(out).toContain('9 clients are past their usual gap.');
@@ -176,7 +176,7 @@ describe('the same cards in Hindi', () => {
   });
 
   it('leaves no English sentence behind — the payload carries none to leak', () => {
-    for (const phrase of ['You took in', 'brought in', 'of what you earn', 'past their usual gap', 'Coming in']) {
+    for (const phrase of ['You took in', 'brought in', 'of what you earn', 'past their usual gap', 'Came recently']) {
       expect(out).not.toContain(phrase);
     }
   });
@@ -210,7 +210,7 @@ describe('what it does when it has not earned the right to say something', () =>
     expect(out).toContain('Nobody is due a nudge right now.');
     expect(out).not.toContain('booked and did not come');
     // The bands are still there: they are the state of the book, not a nudge list.
-    expect(out).toContain('Gone quiet');
+    expect(out).toContain('Stopped coming');
   });
 });
 
