@@ -540,7 +540,9 @@ export function PosClient({
     () => [...tokensStillOnTheBoard(dailyTokens).filter((tk) => tk.state === 'completed')].reverse(),
     [dailyTokens],
   );
-  const nextTokenNo = dailyTokens.length + 1;
+  // A label only ("New order (#06)"): the number itself is issued by the API when the order is rung up, and the slip
+  // prints that one. One past the highest, never the count plus one, which a cancelled order made a number in use.
+  const nextTokenNo = dailyTokens.reduce((n, tk) => Math.max(n, tk.tokenNo), 0) + 1;
 
   // Only tick `nowMs` when the Queue tab is open and has active tokens waiting; zero background timers on Sell/Return.
   const hasPreparing = preparingTokens.length > 0;
