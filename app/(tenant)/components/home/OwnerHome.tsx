@@ -932,14 +932,6 @@ export function OwnerHome(p: OwnerHomeProps) {
                     ))}
                 </div>
               ) : null}
-              {data?.money.cashDrawer && (data.money.cashDrawer.takenMinor > 0 || data.money.cashDrawer.refundedMinor > 0) ? (
-                <div className="rst-kpi-modes rst-kpi-drawer">
-                  <span className="rst-kpi-mode">
-                    <span>{t.cashInDrawer}</span>
-                    <b>{rupees(data.money.cashDrawer.inDrawerMinor)}</b>
-                  </span>
-                </div>
-              ) : null}
             </div>
 
             {/* 2. Bookings today */}
@@ -1099,14 +1091,14 @@ export function OwnerHome(p: OwnerHomeProps) {
                         : st === 'later'
                           ? t.upcomingLabel
                           : st === 'done'
-                            ? t.doneWord
+                            ? t.status.completed
                             : st === 'cancelled'
                               ? t.cancelledLabel
                               : t.noShowLabel;
                       return (
                         <li key={b.key}>
                           <button type="button" className="rst-order-row" onClick={() => setOpenBooking(b)}>
-                            <Avatar name={cName} id={avatarKey(b)} size={40} photoUrl={b.customerPhotoUrl} />
+                            <Avatar name={cName} id={avatarKey(b)} size={40} />
                             <div className="rst-order-main">
                               <strong className="rst-order-num">{cName}</strong>
                               <span className="rst-order-sub">
