@@ -41,3 +41,25 @@ describe('the Customers list', () => {
     expect(css).toMatch(/\.cust-card \{[^}]*min-height: 4rem;/);
   });
 });
+
+describe("the owner's round theme on a phone (10 Nov 2026)", () => {
+  it('draws the groups as round pills that filter, each with its colour on its left edge', () => {
+    expect(list).toContain('className="cust-pill"');
+    expect(list).toContain('aria-pressed={on}');
+    expect(css).toMatch(/\.cust-pill \{[^}]*border-radius: 999px;[^}]*border-left: 3px solid var\(--seg, var\(--border\)\);/);
+    expect(css).toMatch(/\.cust-pill \{[^}]*min-height: 2\.75rem;/);
+  });
+
+  it('draws each row as a capsule whose left arc is its group colour', () => {
+    expect(list).toContain("style={SEGMENT_TONE[c.segment] ? { ['--seg' as string]: SEGMENT_TONE[c.segment] } : undefined}");
+    expect(css).toMatch(/\.cust-card,\s*\.cust-card:last-child \{[^}]*border-left: 3px solid var\(--seg, var\(--border\)\);[^}]*border-radius: 2\.25rem;/);
+  });
+
+  it('keeps the group in words beside its colour on the All view, and drops it where the pill already says it', () => {
+    expect(list).toContain("{status === 'all' ? chipOf(c.segment) : null}");
+  });
+
+  it('is a phone thing: a laptop keeps its table, panel and Filter menu', () => {
+    expect(css).toMatch(/\.cust-pills \{\s*display: none;\s*\}/);
+  });
+});

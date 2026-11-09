@@ -648,7 +648,40 @@ export function CustomersClient({
           </div>
         </div>
 
-        <div className="card">
+        {/*
+          Owner, 10 Nov 2026 — on a phone the groups are round pills you tap, each with its colour on its left edge —
+          the same colour as the edge of every row in that group. They replace the folded "How your guests are doing"
+          panel and the Filter menu there; a laptop keeps both.
+        */}
+        <div className="cust-pills mobile-only" role="group" aria-label={t('segmentsTitle', { noun: lower })}>
+          {[
+            { key: 'all' as const, label: t('allNoun', { noun: lower }), count: stats.total },
+            ...stats.segments.map((seg) => ({ key: seg.key as CustomerStatusFilter, label: t(`segments.${seg.key}.label`), count: seg.count })),
+            { key: 'never' as const, label: statusLabel('never'), count: stats.neverVisited },
+          ].map((pill) => {
+            const on = status === pill.key;
+            return (
+              <button
+                key={pill.key}
+                type="button"
+                className="cust-pill"
+                aria-pressed={on}
+                style={SEGMENT_TONE[pill.key] ? { ['--seg' as string]: SEGMENT_TONE[pill.key] } : undefined}
+                onClick={() => {
+                  setStatus(pill.key);
+                  setSort(pill.key === 'all' || pill.key === 'active' ? 'recent' : 'spent');
+                  setDirection('desc');
+                  setPageIndex(0);
+                }}
+              >
+                {pill.label}
+                <b>{pill.count}</b>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="card cust-list-card">
           <div className="offers-toolbar cust-toolbar">
             <label className="search-wrap">
               <IconSearch />
@@ -730,6 +763,7 @@ export function CustomersClient({
                   <div
                     className="cust-card cust-row-click"
                     key={c.id}
+                    style={SEGMENT_TONE[c.segment] ? { ['--seg' as string]: SEGMENT_TONE[c.segment] } : undefined}
                     data-row
                     role="button"
                     tabIndex={0}
@@ -751,7 +785,8 @@ export function CustomersClient({
                         <span className="cust-card-amt">{formatMoney(c.totalSpentMinor)}</span>
                       </span>
                       <span className="cust-card-sub">
-                        {chipOf(c.segment)}
+                        {/* The group's word, beside its colour — but not when the pill above already names it for every row. */}
+                        {status === 'all' ? chipOf(c.segment) : null}
                         {branchTag(c.locationId)}
                         <span className="cust-card-facts">{facts.join(' · ')}</span>
                       </span>

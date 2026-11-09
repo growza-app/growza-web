@@ -3064,3 +3064,111 @@ button.bk-waiting-row:focus-visible {
     font-variant-numeric: tabular-nums;
   }
 }
+
+
+/*
+ * Owner, 10 Nov 2026 — the phone list in the reference he chose: capsules on the page's soft ground, each with its
+ * group's colour as an arc down its rounded left edge (green coming in, amber due, red slipping, violet gone quiet,
+ * grey never been in), and the groups themselves as round pills with the same arc. A laptop keeps its table.
+ */
+.cust-pills {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .cust-pills {
+    display: flex;
+    gap: var(--sp-2);
+    margin: 0 0 var(--sp-3);
+    padding: 2px 2px var(--sp-1);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .cust-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cust-pill {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 2.75rem;
+    padding: 0 var(--sp-4) 0 var(--sp-3);
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--seg, var(--border));
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .cust-pill b {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+  }
+
+  .cust-pill[aria-pressed='true'] {
+    border-color: var(--seg, var(--accent-deep));
+    background: color-mix(in srgb, var(--seg, var(--accent)) 12%, var(--surface));
+  }
+
+  .cust-pill[aria-pressed='true'] b {
+    color: var(--text);
+  }
+
+  .cust-pill:focus-visible {
+    outline: 2px solid var(--accent-deep);
+    outline-offset: 2px;
+  }
+
+  /* The pills are the groups and the filter now: the folded panel and the Filter menu would say it twice. */
+  .cust-segments-toggle,
+  #cust-segments,
+  .cust-toolbar .dropdown-anchor {
+    display: none;
+  }
+
+  /* The search and Export are round too, like the pills and the rows under them. */
+  .cust-toolbar .search-wrap,
+  .cust-toolbar .btn {
+    border-radius: 999px;
+  }
+
+  /* The list sits on the page's own ground, so each capsule reads as its own thing. */
+  .cust-list-card {
+    background: none;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .cust-list-card .paged-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    border: 0;
+    background: none;
+  }
+
+  .cust-card,
+  .cust-card:last-child {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--seg, var(--border));
+    border-radius: 2.25rem;
+    background: var(--surface);
+    padding: var(--sp-3) var(--sp-4) var(--sp-3) var(--sp-3);
+    box-shadow: 0 1px 2px rgb(16 24 40 / 4%);
+  }
+
+  .cust-card:hover,
+  .cust-card:active {
+    background: color-mix(in srgb, var(--seg, var(--accent)) 6%, var(--surface));
+  }
+}
