@@ -84,10 +84,8 @@ describe('Clients due back on the owner Home', () => {
     expect(card).toContain("h('none')");
   });
 
-  it('is gated on the tab it reads, and the row gives up its third column without it', () => {
-    expect(owner).toContain("mayReadDueBack(canSee('/reports', p.role, p.reportTabs), p.reportTabs)");
-    expect(owner).toContain("hm-v3-mid${showDueBack ? '' : ' hm-v3-mid-two'}");
-    expect(css).toMatch(/\.hm-v3-mid\.hm-v3-mid-two\s*\{\s*grid-template-columns:\s*minmax\(0, 1\.35fr\) minmax\(0, 0\.9fr\);/);
+  it('is not on the salon desk Home, which PR 454 cut to sales, bookings, clients, actions, schedule and staff', () => {
+    expect(owner).not.toContain('DueBackCard');
   });
 
   it('has its words in English and Hindi, and the "last visit" line reads as English', () => {

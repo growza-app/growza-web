@@ -24,18 +24,17 @@ describe('the owner Home shows only what was counted', () => {
   it('shows a change only when there is a previous period to compare with', () => {
     // Jira GRW-679 (UX-04) — the same rule, and one more: nothing until this period has takings either.
     expect(home).toMatch(/const periodDeltaShown = Boolean\(data && data\.money\.deltaPct !== null && data\.money\.deltaPct !== undefined && data\.money\.revenueMinor > 0\);/);
-    expect(home).toMatch(/\{periodDeltaShown && data \? </);
+    expect(home).toMatch(/\{periodDeltaShown && data \? \(\s*<div className="rst-kpi-side">/);
     expect(home).not.toMatch(/cameBackPct \?\? 100/);
   });
 
-  it('feeds Recent activity from real events only, with no invented payment or product row', () => {
+  it('invents no payment or product row (PR 454 dropped the Recent activity feed and its read)', () => {
     expect(home).not.toMatch(/actProductSold\(/);
     expect(home).not.toMatch(/actPaymentReceived\(rupees\(g\.priceMinor\)\)/);
-    expect(home).toMatch(/\}, \[activities, p\.timezone, t\]\);/);
+    expect(home).not.toMatch(/api\s*\.notifications\(/);
   });
 
-  it('reads the products KPI card from the period (money.products), not from the shelf\'s lifetime counts, and reads shelf stock only for stock alerts', () => {
-    expect(home).toMatch(/const productTake = data\?\.money\.products \?\? null;/);
+  it('reads shelf stock only for stock alerts, never as a sales figure', () => {
     expect(home).not.toMatch(/pr\.sold \?\? 0\) \* Number\(pr\.priceMinor/);
     expect(home).toMatch(/const out = list\.filter\(\(pr\) => pr\.stock <= 0\);/);
   });
@@ -53,14 +52,8 @@ describe('the owner Home shows only what was counted', () => {
     expect(home).not.toContain('hm-v3-appts-card');
   });
 
-  it('keeps the revenue trend a label, so it cannot change the headline card\'s period', () => {
-    expect(home).toMatch(/hm-v3-period-pill is-static/);
-    expect(home).not.toMatch(/const next = period === 'week' \? 'month' : 'week';/);
-  });
-
-  it('sends Walk-in and Add client somewhere of their own', () => {
-    expect(home).toMatch(/hm-v3-qbtn is-mint" href="\/appointments\/new\?mode=now"/);
-    expect(home).toMatch(/hm-v3-qbtn is-purple" href="\/customers\?add=1"/);
+  it('sends Walk-in somewhere of its own', () => {
+    expect(home).toMatch(/sln-action-tile is-primary" href="\/appointments\/new\?mode=now"/);
   });
 
   it('makes the desk-only reads only where the desk Home is drawn', () => {
@@ -79,10 +72,12 @@ describe('the desk Products panel lets the keyboard out (QA, 2026-10-17)', () =>
 describe('the Bookings today tile counts bookings, not the queue (QA, 2026-10-17)', () => {
   const home = readFileSync(path.join(here, 'OwnerHome.tsx'), 'utf8');
 
-  it('shows the bookings, and keeps waiting tokens out of "upcoming"', () => {
-    expect(home).toMatch(/const bookingsCount = allListGroups\.length;/);
-    expect(home).toMatch(/<strong className="hm-v3-kpi-value">\{bookingsCount\}<\/strong>/);
-    expect(home).toMatch(/const upcomingCount = allListGroups\.filter\(\(g\) => rowState\(g\) === 'later'\)\.length;/);
+  it('shows the bookings, and keeps waiting tokens out of "later"', () => {
+    // The counts are built from today's booking groups only; the token board is never read into them.
+    const counts = home.slice(home.indexOf('const todayByState = useMemo'), home.indexOf('}, [todayGroups, now]);'));
+    expect(counts).toContain('for (const g of todayGroups ?? [])');
+    expect(counts).not.toMatch(/boardTokens|tokens/);
+    expect(home).toMatch(/<strong className="rst-kpi-value">\{todayByState\.total\}<\/strong>/);
   });
 });
 

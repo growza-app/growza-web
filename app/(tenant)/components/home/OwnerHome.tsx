@@ -6,7 +6,6 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   api,
   formatTime,
-  type ActivityEvent,
   type Appointment,
   type AutopayRenewal,
   type CustomerStats,
@@ -17,9 +16,8 @@ import {
   type QueueEntry,
   type TokenBoard as TokenBoardData,
 } from '../../lib/api';
-import { bookingBill, clientNameLabel, formatDuration, groupBookings, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
+import { bookingBill, clientNameLabel, groupBookings, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
 import { countsAsNotMarked, liveState, minutesBetween } from '../../lib/live-state';
-import { buildSaleRows, computeSalesKpis, filterSalesByDateRange, formatAxisRupees } from '../../sales/SalesClient';
 import { hasLiveWork, TokenBoard } from './TokenBoard';
 import { useTokenWords } from './token-words';
 import { atBranch } from '../../lib/right-now';
@@ -31,7 +29,6 @@ import type { Lang } from '../../lib/lang';
 import { canSee, type MemberRole } from '../../lib/nav-policy';
 import {
   IconBan,
-  IconCalendar,
   IconCalendarPlus,
   IconCart,
   IconChevronRight,
@@ -41,7 +38,6 @@ import {
   IconPackages,
   IconProducts,
   IconReceipt,
-  IconRupee,
   IconReports,
   IconServices,
   IconSettings,
@@ -52,8 +48,6 @@ import { BookingSummary } from '../BookingSummary';
 import { DaySummarySheet } from './DaySummarySheet';
 import { MoneyHero } from './MoneyHero';
 import { BranchCarousel } from './BranchCarousel';
-import { DueBackCard } from './DueBackCard';
-import { mayReadDueBack } from './due-back';
 import { AttentionList, Avatar, avatarKey, BookingRows, Card, CardError, HomeHeader, QuickTiles, rupees, Segmented, SegmentCards } from './parts';
 import { RightNow } from './RightNow';
 import { useMinuteClock } from './useMinuteClock';
@@ -497,27 +491,8 @@ export function OwnerHome(p: OwnerHomeProps) {
   const attentionTotal = attention.reduce((sum, a) => sum + a.count, 0);
 
   // Desktop v3 Command Center state & data.
-  const [salesAppointments, setSalesAppointments] = useState<Appointment[] | null>(null);
-  const [activities, setActivities] = useState<ActivityEvent[]>([]);
   const [shelfProducts, setShelfProducts] = useState<Product[] | null>(null);
 
-  /*
-   * Period bounds in the business's own timezone, matching `/api/v1/home`'s `periodBounds` (`src/modules/analytics/home.ts`):
-   * - `today`: `todayISO..todayISO`
-   * - `week`: 7 days ending today (`today - 6 days..todayISO`)
-   * - `month`: start of current month (`monthStartISO..todayISO`)
-   */
-  const { todayISO, weekStartISO, monthStartISO, fetchStartISO } = useMemo(() => {
-    const dt = DateTime.fromISO(p.nowISO, { zone: p.timezone });
-    const tISO = dt.toISODate() ?? p.nowISO.slice(0, 10);
-    const wISO = dt.minus({ days: 6 }).toISODate() ?? tISO;
-    const mISO = dt.startOf('month').toISODate() ?? tISO;
-    const fISO = wISO < mISO ? wISO : mISO;
-    return { todayISO: tISO, weekStartISO: wISO, monthStartISO: mISO, fetchStartISO: fISO };
-  }, [p.nowISO, p.timezone]);
-
-  const periodStartISO = period === 'today' ? todayISO : period === 'week' ? weekStartISO : monthStartISO;
-  const salesQuerySuffix = `date=${encodeURIComponent(periodStartISO)}&to=${encodeURIComponent(todayISO)}`;
 
   /*
    * Release review, 2026-10-17 — the Command Center is the laptop's Home. Its extra reads are made only where it is
@@ -537,59 +512,33 @@ export function OwnerHome(p: OwnerHomeProps) {
     if (!branchContext.ready || !deskHome) return;
     let cancelled = false;
     api
-      .appointments(fetchStartISO, todayISO, undefined, undefined, { includeSales: true })
-      .then((res) => !cancelled && setSalesAppointments(res))
-      .catch(() => !cancelled && setSalesAppointments(null));
-    api
-      .notifications(6, branch)
-      .then((res) => !cancelled && setActivities(res))
-      .catch(() => !cancelled && setActivities([]));
-    api
       .products(branch)
       .then((res) => !cancelled && setShelfProducts(res))
       .catch(() => !cancelled && setShelfProducts(null));
     return () => {
       cancelled = true;
     };
-  }, [branchContext.ready, deskHome, branch, serverSig, fetchStartISO, todayISO]);
-
-  const allListGroups = listGroups ?? [];
-  const inServiceCount = allListGroups.filter((g) => {
-    const s = rowState(g);
-    return s === 'in_service' || s === 'needs_answer';
-  }).length;
-  /** Bookings still to come. A waiting token is a person in the queue, not a booking, so it is not in this number. */
-  const upcomingCount = allListGroups.filter((g) => rowState(g) === 'later').length;
-  const doneTodayCount = allListGroups.filter((g) => rowState(g) === 'done').length;
-  // QA 2026-10-23 — "19 bookings" over tiles that added to 13: the six who did not come had no tile of their own.
-  const noShowCount = allListGroups.filter((g) => rowState(g) === 'no_show').length;
-  const bookingsCount = allListGroups.length;
-  const cancelledCount = data?.attention.cancelledToday ?? 0;
-  const activeClientsCount = clientStats?.segments.find((s) => s.key === 'active')?.count ?? 0;
-  const totalClientsCount = clientStats?.total ?? activeClientsCount;
-
-  /** The period's own product lines, from the API. Null from an older API: the card then shows a dash, not a guess. */
-  const productTake = data?.money.products ?? null;
+  }, [branchContext.ready, deskHome, branch, serverSig]);
 
   /*
-   * Exact parity with `/sales` (`SalesClient.tsx`): build completed sale rows from the fetched window
-   * (or fall back to `p.appointments` on first paint for `today`), narrowed to `[periodStartISO, todayISO]`
-   * and the header's `branch`.
+   * Today's visits by live state, once — the bookings card's pill and the schedule list both read these.
+   * Always today, even after close: the desk's schedule is the day that is ending, not tomorrow's list.
    */
-  const allSaleRows = useMemo(
-    () => buildSaleRows(salesAppointments ?? p.appointments ?? [], p.timezone),
-    [salesAppointments, p.appointments, p.timezone],
-  );
-  const periodSaleRows = useMemo(
-    () => filterSalesByDateRange(allSaleRows, periodStartISO, todayISO, branch),
-    [allSaleRows, periodStartISO, todayISO, branch],
-  );
-  const periodSalesKpis = useMemo(() => computeSalesKpis(periodSaleRows), [periodSaleRows]);
-  const periodBillsCount = periodSalesKpis.billsCount;
-  const periodAvgBillMinor =
-    periodBillsCount > 0
-      ? Math.round((data?.money.revenueMinor ?? periodSalesKpis.totalSalesMinor) / periodBillsCount / 100) * 100
-      : 0;
+  const todayByState = useMemo(() => {
+    const active: BookingGroup[] = [];
+    const later: BookingGroup[] = [];
+    const done: BookingGroup[] = [];
+    for (const g of todayGroups ?? []) {
+      const s = rowState(g);
+      if (s === 'in_service' || s === 'needs_answer') active.push(g);
+      else if (s === 'later') later.push(g);
+      else if (s === 'done') done.push(g);
+    }
+    return { active, later, done, total: (todayGroups ?? []).length };
+    // `rowState` reads `now`, which is listed.
+  }, [todayGroups, now]);
+  const activeClientsCount = clientStats?.segments.find((s) => s.key === 'active')?.count ?? 0;
+  const totalClientsCount = clientStats?.total ?? activeClientsCount;
 
   const deskAttention = useMemo(() => {
     const overdueGroups = (todayGroups ?? []).filter((g) => countsAsNotMarked(g, now));
@@ -681,114 +630,11 @@ export function OwnerHome(p: OwnerHomeProps) {
     };
   }, [shelfProducts]);
 
-  const recentFeed = useMemo(() => {
-    const items: Array<{ id: string; tone: 'green' | 'blue' | 'amber' | 'rose'; text: string; time: string; href: string }> = [];
-    for (const ev of activities.slice(0, 4)) {
-      const who = ev.customerName || t.nav.clients;
-      const isCancel = ev.topic.includes('cancel');
-      items.push({
-        id: ev.id,
-        tone: isCancel ? 'rose' : 'green',
-        text: isCancel ? t.actCancelled(who) : t.actNewBooking(who),
-        time: formatTime(ev.createdAt, p.timezone),
-        href: ev.appointmentId ? `/appointments?open=${encodeURIComponent(ev.appointmentId)}` : '/appointments',
-      });
-    }
-    return items.slice(0, 4);
-  }, [activities, p.timezone, t]);
-
   const branchProviders = useMemo(
     () => p.providers.filter((prov) => !branch || !prov.locationId || prov.locationId === branch),
     [p.providers, branch],
   );
   const absentSet = useMemo(() => new Set(p.staffAbsentIds ?? []), [p.staffAbsentIds]);
-
-  const weekDays = useMemo(() => (data?.week.days ?? []).slice(-7), [data]);
-  const maxWeekDayRev = useMemo(() => Math.max(...weekDays.map((d) => d.revenueMinor), 1), [weekDays]);
-  const peakWeekIdx = useMemo(() => {
-    let bestIdx = Math.max(0, weekDays.length - 1);
-    let bestVal = -1;
-    weekDays.forEach((d, idx) => {
-      if (!d.future && d.revenueMinor >= bestVal) {
-        bestVal = d.revenueMinor;
-        bestIdx = idx;
-      }
-    });
-    return bestIdx;
-  }, [weekDays]);
-
-  const kpiSparkDays = useMemo(() => {
-    const days = weekDays.slice(-7);
-    const byDate = new Map<string, { bookings: number; units: number }>();
-    for (const r of allSaleRows) {
-      if (branch && r.locationId !== branch) continue;
-      const cur = byDate.get(r.dayISO) ?? { bookings: 0, units: 0 };
-      if (r.serviceNames.length > 0) cur.bookings += 1;
-      cur.units += r.productUnits;
-      byDate.set(r.dayISO, cur);
-    }
-    return days.map((d) => ({
-      date: d.date,
-      revenueMinor: d.revenueMinor,
-      bookings: byDate.get(d.date)?.bookings ?? 0,
-      units: byDate.get(d.date)?.units ?? 0,
-    }));
-  }, [weekDays, allSaleRows, branch]);
-  const maxSparkBookings = Math.max(...kpiSparkDays.map((d) => d.bookings), 1);
-  const maxSparkUnits = Math.max(...kpiSparkDays.map((d) => d.units), 1);
-
-  const trendChart = useMemo(() => {
-    const days = weekDays.slice(-7);
-    const maxRupees = Math.max(0, Math.ceil(maxWeekDayRev / 100));
-    const targetRupees = Math.max(300, Math.ceil(maxRupees * 1.15));
-    const rawStep = targetRupees / 3;
-    const steps = [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000];
-    const stepRupees = steps.find((s) => s >= rawStep) ?? Math.ceil(rawStep / 250000) * 250000;
-    const yMaxMinor = stepRupees * 3 * 100;
-    const ticks = [3, 2, 1, 0].map((m) => (m === 0 ? '0' : formatAxisRupees(m * stepRupees * 100)));
-    const dateFmt = new Intl.DateTimeFormat(p.lang === 'hi' ? 'hi-IN' : 'en-IN', {
-      day: 'numeric',
-      month: 'short',
-      timeZone: 'UTC',
-    });
-    const n = Math.max(days.length, 1);
-    const gapPct = 2.0;
-    const colPct = (100 - gapPct * Math.max(0, n - 1)) / n;
-    const points = days.map((d, idx) => {
-      const pct = d.revenueMinor > 0 ? Math.min(96, Math.max(6, Math.round((d.revenueMinor / yMaxMinor) * 100))) : 4;
-      const x = idx * (colPct + gapPct) + colPct / 2;
-      const y = 100 - pct;
-      const parsed = Date.parse(`${d.date}T12:00:00Z`);
-      const dateShort = Number.isFinite(parsed) ? dateFmt.format(new Date(parsed)) : d.weekday || d.date.slice(5);
-      return { ...d, pct, x, y, dateShort, isPeak: idx === peakWeekIdx };
-    });
-    const polyPoints = points.map((pt) => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ');
-    return { yMaxMinor, ticks, points, polyPoints };
-  }, [weekDays, maxWeekDayRev, peakWeekIdx, p.lang]);
-
-  const paymentModes = useMemo(() => {
-    const byMode = new Map((data?.money.byPaymentMode ?? []).map((s) => [s.mode, s.revenueMinor]));
-    const otherAmt = (byMode.get('other') ?? 0) + (byMode.get('not_recorded') ?? 0);
-    return [
-      { key: 'upi' as const, label: t.payment.upi, amount: byMode.get('upi') ?? 0, tone: 'upi' },
-      { key: 'cash' as const, label: t.payment.cash, amount: byMode.get('cash') ?? 0, tone: 'cash' },
-      { key: 'card' as const, label: t.payment.card, amount: byMode.get('card') ?? 0, tone: 'card' },
-      ...(otherAmt > 0 ? [{ key: 'other' as const, label: t.payment.other, amount: otherAmt, tone: 'other' }] : []),
-    ];
-  }, [data, t]);
-
-  // The card reads the What-to-do tab, so it needs that tab's grant, not just any Reports tab.
-  const showDueBack = mayReadDueBack(canSee('/reports', p.role, p.reportTabs), p.reportTabs);
-
-  /** Today's (or tomorrow's after close) visits for the full-width Recent bookings table at the bottom of desktop Home. */
-  const recentBookingRows = useMemo(() => {
-    const all = allListGroups;
-    const firstLive = all.findIndex((g) => new Date(g.endAt).getTime() > now.getTime());
-    const from = listIsTomorrow || firstLive < 0 ? 0 : Math.max(0, firstLive - 2);
-    return all.slice(from, from + 6);
-  }, [allListGroups, listIsTomorrow, now]);
-
-  const totalBookingBar = Math.max(doneTodayCount + upcomingCount + inServiceCount, 1);
 
   const links = [
     { href: '/providers', label: t.nav.staff, icon: <IconStaff />, tone: 'rose' },
@@ -803,12 +649,16 @@ export function OwnerHome(p: OwnerHomeProps) {
     { href: '/settings', label: t.nav.settings, icon: <IconSettings />, tone: 'slate' },
   ].filter((l) => canSee(l.href, p.role, p.reportTabs));
 
+  /** A link only where this role may open the page; otherwise the card is plain (an `<a>` without `href`). */
+  const mayOpen = (href: string) => canSee(href, p.role, p.reportTabs);
+
   return (
     <>
       <HomeHeader
         t={t}
-        title={`${t.greeting(p.greetingPart)}! 👋`}
-        sub={t.shop.kitchenSub(p.businessName)}
+        // Hindi's greeting already ends in "!"; strip it so the wave never reads "नमस्ते!! 👋".
+        title={`${t.greeting(p.greetingPart).replace(/!$/, '')}! 👋`}
+        sub={t.ownerSub(p.businessName, afterClose)}
         businessName={p.businessName}
         locationName={multiBranch ? null : locationLine}
         dateLabel={p.dateLabel}
@@ -897,7 +747,7 @@ export function OwnerHome(p: OwnerHomeProps) {
             {/* 1. Today's sales */}
             <div className="rst-kpi rst-kpi-sales">
               <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
-                <path d="M0 45 C120 70 260 15 400 38 L400 70 L0 70 Z" fill="rgba(22, 163, 74, 0.08)" />
+                <path d="M0 45 C120 70 260 15 400 38 L400 70 L0 70 Z" fill="currentColor" />
               </svg>
               <div className="rst-kpi-top">
                 <span className="rst-kpi-icon is-sales" aria-hidden>
@@ -935,9 +785,9 @@ export function OwnerHome(p: OwnerHomeProps) {
             </div>
 
             {/* 2. Bookings today */}
-            <a className="rst-kpi rst-kpi-orders" href="/appointments">
+            <a className="rst-kpi rst-kpi-orders" href={mayOpen('/appointments') ? '/appointments' : undefined}>
               <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
-                <path d="M0 48 C140 20 270 65 400 35 L400 70 L0 70 Z" fill="rgba(37, 99, 235, 0.07)" />
+                <path d="M0 48 C140 20 270 65 400 35 L400 70 L0 70 Z" fill="currentColor" />
               </svg>
               <span className="rst-kpi-icon is-orders" aria-hidden>
                 <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -949,24 +799,17 @@ export function OwnerHome(p: OwnerHomeProps) {
               </span>
               <div className="rst-kpi-main">
                 <span className="rst-kpi-label">{t.bookingsToday}</span>
-                <strong className="rst-kpi-value">{(todayGroups ?? []).length}</strong>
-                {(() => {
-                  const todayInChair = (todayGroups ?? []).filter((g) => {
-                    const s = rowState(g);
-                    return s === 'in_service' || s === 'needs_answer';
-                  }).length;
-                  const todayLater = (todayGroups ?? []).filter((g) => rowState(g) === 'later').length;
-                  return todayInChair > 0 || todayLater > 0 ? (
-                    <span className="sln-kpi-pill is-blue">{t.inChairLaterPill(todayInChair, todayLater)}</span>
-                  ) : null;
-                })()}
+                <strong className="rst-kpi-value">{todayByState.total}</strong>
+                {todayByState.active.length > 0 || todayByState.later.length > 0 ? (
+                  <span className="sln-kpi-pill is-blue">{t.nowLaterPill(todayByState.active.length, todayByState.later.length)}</span>
+                ) : null}
               </div>
             </a>
 
             {/* 3. Clients */}
-            <a className="rst-kpi rst-kpi-customers" href="/customers">
+            <a className="rst-kpi rst-kpi-customers" href={mayOpen('/customers') ? '/customers' : undefined}>
               <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
-                <path d="M0 42 C130 65 260 22 400 44 L400 70 L0 70 Z" fill="rgba(217, 119, 6, 0.08)" />
+                <path d="M0 42 C130 65 260 22 400 44 L400 70 L0 70 Z" fill="currentColor" />
               </svg>
               <span className="rst-kpi-icon is-customers" aria-hidden>
                 <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1015,6 +858,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                   <span>{t.quickBillPosSub}</span>
                 </a>
               ) : null}
+              {mayOpen('/appointments') ? (
               <a className="sln-action-tile" href="/appointments">
                 <span className="sln-action-badge is-blue" aria-hidden>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1027,7 +871,8 @@ export function OwnerHome(p: OwnerHomeProps) {
                 <strong>{t.todaysDiary}</strong>
                 <span>{t.todaysDiarySub}</span>
               </a>
-              {canSee('/customers', p.role, p.reportTabs) ? (
+              ) : null}
+              {mayOpen('/customers') ? (
                 <a className="sln-action-tile" href="/customers">
                   <span className="sln-action-badge is-amber" aria-hidden>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1050,19 +895,14 @@ export function OwnerHome(p: OwnerHomeProps) {
             <section className="rst-panel rst-recent-panel">
               <div className="rst-panel-head">
                 <h3>{t.todaysScheduleTitle}</h3>
-                <a className="rst-view-all" href="/appointments">
-                  {t.openDiaryLink} →
-                </a>
+                {mayOpen('/appointments') ? (
+                  <a className="rst-view-all" href="/appointments">
+                    {t.openDiaryLink} →
+                  </a>
+                ) : null}
               </div>
               {(() => {
-                const slnScheduleRows = [
-                  ...(todayGroups ?? []).filter((g) => {
-                    const s = rowState(g);
-                    return s === 'in_service' || s === 'needs_answer';
-                  }),
-                  ...(todayGroups ?? []).filter((g) => rowState(g) === 'later'),
-                  ...[...(todayGroups ?? []).filter((g) => rowState(g) === 'done')].reverse(),
-                ].slice(0, 4);
+                const slnScheduleRows = [...todayByState.active, ...todayByState.later, ...[...todayByState.done].reverse()].slice(0, 4);
                 if (slnScheduleRows.length === 0) {
                   return <p className="hm-empty">{t.nothingToday}</p>;
                 }
@@ -1087,7 +927,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                               ? 'is-done-neutral'
                               : 'is-problem';
                       const statusLabel = isActive
-                        ? t.inChairBadge
+                        ? t.inProgressLabel
                         : st === 'later'
                           ? t.upcomingLabel
                           : st === 'done'
@@ -1128,7 +968,7 @@ export function OwnerHome(p: OwnerHomeProps) {
                 <h3>
                   {t.teamOnFloorTitle} ({branchProviders.length})
                 </h3>
-                {canSee('/providers', p.role, p.reportTabs) ? (
+                {mayOpen('/providers') ? (
                   <a className="rst-view-all" href="/providers">
                     {t.manageLink} →
                   </a>
@@ -1142,15 +982,11 @@ export function OwnerHome(p: OwnerHomeProps) {
                     const inChair = busy.get(prov.id);
                     const isAbsent = absentSet.has(prov.id);
                     const statusKey = inChair ? 'busy' : isAbsent ? 'absent' : 'available';
-                    const statusLabel = inChair ? `● ${t.inChairBadge}` : isAbsent ? `● ${t.absentLabel}` : `● ${t.availableNow}`;
-                    const subText = inChair
-                      ? `${t.withClient(inChair.client)}`
-                      : isAbsent
-                        ? t.absentLabel
-                        : t.freeForWalkIns;
+                    const statusLabel = inChair ? `● ${t.busyLabel}` : isAbsent ? `● ${t.absentLabel}` : `● ${t.availableNow}`;
+                    const subText = inChair ? t.withClient(inChair.client) : isAbsent ? t.notInToday : t.freeNow;
                     return (
                       <li key={prov.id}>
-                        <a className="sln-team-row" href="/providers">
+                        <a className="sln-team-row" href={mayOpen('/providers') ? '/providers' : undefined}>
                           <Avatar name={prov.displayName} id={prov.id} size={40} photoUrl={prov.photoUrl} />
                           <div className="sln-team-main">
                             <strong className="sln-team-name">{prov.displayName}</strong>
@@ -1213,582 +1049,6 @@ export function OwnerHome(p: OwnerHomeProps) {
               })()}
             </section>
           </div>
-        </div>
-
-        {/* Desktop Command Center — 4-row workspace matching the owner's Option A reference design */}
-        <div className={`hm-desk-v3 hm-desktop is-sln-hidden ${hideUntilBranch ? 'is-settling' : ''}`}>
-          {/* ROW 1 — 4 Equal Light KPI Cards */}
-          <div className="hm-v3-kpis">
-            {/* 1. Today's revenue */}
-            <section className="hm-v3-kpi hm-v3-kpi-dark">
-              <div className="hm-v3-kpi-head">
-                <span className="hm-v3-kpi-icon hm-v3-icon-dark" aria-hidden>
-                  <span className="hm-v3-rupee-glyph">₹</span>
-                </span>
-                <a className="hm-v3-kpi-title hm-v3-kpi-title-link" href={`/sales?${salesQuerySuffix}`}>
-                  {period === 'today' ? t.todaysRevenue : period === 'week' ? t.moneyWeek : t.moneyMonth}
-                </a>
-                <button
-                  type="button"
-                  className="hm-v3-kpi-period"
-                  onClick={() => {
-                    const next: HomePeriod = period === 'today' ? 'week' : period === 'week' ? 'month' : 'today';
-                    setPeriod(next);
-                    load(next, branch);
-                  }}
-                  aria-label={t.showMoneyFor}
-                >
-                  {period === 'today' ? t.today : period === 'week' ? t.week : t.month} ▾
-                </button>
-              </div>
-              <div className="hm-v3-kpi-body">
-                <div className="hm-v3-kpi-main">
-                  <div className="hm-v3-kpi-num-row">
-                    <strong className="hm-v3-kpi-amount">{rupees(data?.money.revenueMinor ?? 0)}</strong>
-                  </div>
-                  <div className="hm-v3-kpi-delta-row">
-                    {/* Jira GRW-679 (UX-04) — no badge until something has come in: "↓ 100%" at 9 am is the time of day,
-                        not news. The phone's hero has had this rule since BR-08; this card did not. */}
-                    {periodDeltaShown && data ? <span className="hm-v3-delta-pill">{deltaLabel(data.money.deltaPct ?? 0)}</span> : null}
-                    <span className="hm-v3-kpi-vs">
-                      {selected?.name ? `${selected.name} · ` : ''}
-                      {period === 'today' ? t.vsYesterday : period === 'week' ? t.vsLastWeek : t.vsLastMonth}
-                    </span>
-                  </div>
-                </div>
-                {kpiSparkDays.length > 0 ? (
-                  <div className="hm-v3-mini-bars" aria-hidden>
-                    {kpiSparkDays.map((d, idx) => (
-                      <span
-                        key={d.date}
-                        className={idx === peakWeekIdx ? 'is-peak' : ''}
-                        style={{ height: `${d.revenueMinor > 0 ? Math.max(18, Math.round((d.revenueMinor / maxWeekDayRev) * 100)) : 12}%` }}
-                      />
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-              <div className="hm-v3-kpi-foot hm-v3-split-foot">
-                {paymentModes.slice(0, 3).map((pm) => (
-                  <span key={pm.key} className="hm-v3-split-item">
-                    {pm.label} <b>{rupees(pm.amount)}</b>
-                  </span>
-                ))}
-              </div>
-            </section>
-
-            {/* 2. Bookings today */}
-            <a className="hm-v3-kpi hm-v3-kpi-link hm-v3-kpi-blue" href="/appointments">
-              <div className="hm-v3-kpi-head">
-                <span className="hm-v3-kpi-icon hm-v3-icon-blue">
-                  <IconCalendar />
-                </span>
-                <span className="hm-v3-kpi-title">{listIsTomorrow ? t.bookingsTomorrow : t.bookingsToday}</span>
-              </div>
-              <div className="hm-v3-kpi-body">
-                <div className="hm-v3-kpi-main">
-                  <div className="hm-v3-kpi-num-row">
-                    <strong className="hm-v3-kpi-value">{bookingsCount}</strong>
-                  </div>
-                  <div className="hm-v3-kpi-delta-row">
-                    <span className="hm-v3-kpi-sub">
-                      {doneTodayCount} {t.completedLabel.toLowerCase()} · {upcomingCount} {t.upcomingLabel.toLowerCase()}
-                    </span>
-                  </div>
-                </div>
-                {kpiSparkDays.length > 0 ? (
-                  <div className="hm-v3-mini-bars is-blue" aria-hidden>
-                    {kpiSparkDays.map((d, idx) => (
-                      <span
-                        key={d.date}
-                        className={idx === kpiSparkDays.length - 1 ? 'is-peak' : ''}
-                        style={{ height: `${d.bookings > 0 ? Math.max(20, Math.round((d.bookings / maxSparkBookings) * 100)) : 12}%` }}
-                      />
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-              <div className="hm-v3-prog-track" aria-hidden>
-                <span className="is-deep" style={{ width: `${(doneTodayCount / totalBookingBar) * 100}%` }} />
-                <span className="is-green" style={{ width: `${(upcomingCount / totalBookingBar) * 100}%` }} />
-                <span className="is-amber" style={{ width: `${(inServiceCount / totalBookingBar) * 100}%` }} />
-              </div>
-              <div className="hm-v3-kpi-foot hm-v3-split-foot">
-                <span className="hm-v3-split-item">
-                  {t.completedLabel} <b>{doneTodayCount}</b>
-                </span>
-                <span className="hm-v3-split-item">
-                  {t.inProgressLabel} <b>{inServiceCount}</b>
-                </span>
-                {noShowCount > 0 ? (
-                  <span className="hm-v3-split-item">
-                    {t.noShowLabel} <b>{noShowCount}</b>
-                  </span>
-                ) : null}
-                <span className="hm-v3-split-item">
-                  {t.cancelledLabel} <b>{cancelledCount}</b>
-                </span>
-              </div>
-            </a>
-
-            {/* 3. New clients */}
-            <a className="hm-v3-kpi hm-v3-kpi-link hm-v3-kpi-purple" href="/customers">
-              <div className="hm-v3-kpi-head">
-                <span className="hm-v3-kpi-icon hm-v3-icon-green">
-                  <IconStaff />
-                </span>
-                <span className="hm-v3-kpi-title">{t.newClientsTitle}</span>
-              </div>
-              <div className="hm-v3-kpi-body">
-                <div className="hm-v3-kpi-main">
-                  <div className="hm-v3-kpi-num-row">
-                    <strong className="hm-v3-kpi-value">{data?.money.newCustomers ?? 0}</strong>
-                  </div>
-                  <div className="hm-v3-kpi-delta-row">
-                    <span className="hm-v3-kpi-sub">
-                      {period === 'today' ? t.todayWord : period === 'week' ? t.week : t.month}
-                    </span>
-                  </div>
-                </div>
-                {kpiSparkDays.length > 0 ? (
-                  <div className="hm-v3-mini-bars is-purple" aria-hidden>
-                    {kpiSparkDays.map((d, idx) => (
-                      <span
-                        key={d.date}
-                        className={idx === kpiSparkDays.length - 1 ? 'is-peak' : ''}
-                        style={{ height: `${d.bookings > 0 ? Math.max(20, Math.round((d.bookings / maxSparkBookings) * 100)) : 12}%` }}
-                      />
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-              <div className="hm-v3-kpi-foot hm-v3-split-foot">
-                <span className="hm-v3-split-item">
-                  {t.totalClientsLabel} <b>{totalClientsCount}</b>
-                </span>
-                <span className="hm-v3-split-item">
-                  {t.returningLabel} <b>{activeClientsCount}</b>
-                </span>
-              </div>
-            </a>
-
-            {/* 4. Products sold */}
-            <a className="hm-v3-kpi hm-v3-kpi-link hm-v3-kpi-amber" href={`/sales?filter=products&${salesQuerySuffix}`}>
-              <div className="hm-v3-kpi-head">
-                <span className="hm-v3-kpi-icon hm-v3-icon-amber">
-                  <IconProducts />
-                </span>
-                <span className="hm-v3-kpi-title">{t.productsSoldTitle}</span>
-              </div>
-              <div className="hm-v3-kpi-body">
-                <div className="hm-v3-kpi-main">
-                  <div className="hm-v3-kpi-num-row">
-                    <strong className="hm-v3-kpi-value">{productTake ? productTake.units : '—'}</strong>
-                  </div>
-                  <div className="hm-v3-kpi-delta-row">
-                    <span className="hm-v3-kpi-sub">
-                      {productTake ? rupees(productTake.revenueMinor) : '—'} {t.revenueWord}
-                    </span>
-                  </div>
-                </div>
-                {kpiSparkDays.length > 0 ? (
-                  <div className="hm-v3-mini-bars is-amber" aria-hidden>
-                    {kpiSparkDays.map((d, idx) => (
-                      <span
-                        key={d.date}
-                        className={idx === kpiSparkDays.length - 1 ? 'is-peak' : ''}
-                        style={{ height: `${d.units > 0 ? Math.max(20, Math.round((d.units / maxSparkUnits) * 100)) : 12}%` }}
-                      />
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-              <div className="hm-v3-kpi-foot hm-v3-prod-foot">
-                <span className="hm-v3-prod-inline">
-                  <span>{t.topProductLabel}</span>{' '}
-                  <b>
-                    {productTake?.topName
-                      ? `${productTake.topName} (${productTake.topUnits ?? 0})`
-                      : '—'}
-                  </b>
-                </span>
-              </div>
-            </a>
-          </div>
-
-          {/* ROW 2 — Revenue Trend + Sales by Payment Method + Quick Actions */}
-          <div className={`hm-v3-mid${showDueBack ? '' : ' hm-v3-mid-two'}`}>
-            {/* 1. Revenue trend */}
-            <section className="hm-v3-card hm-v3-trend-card">
-              <div className="hm-v3-card-head">
-                <h2>{t.revenueTrendTitle}</h2>
-                {/* A label, not a switch: the chart is the headline card's period (`data.week`), and a second switch here
-                    changed that card's period underneath it. */}
-                <span className="hm-v3-period-pill is-static">{data?.week.span === 'month' ? t.thisMonth : t.thisWeek}</span>
-              </div>
-              {trendChart.points.length === 0 ? (
-                <p className="hm-empty">{t.nothingToday}</p>
-              ) : (
-                <div className="hm-v3-chart-box">
-                  <div className="hm-v3-yaxis" aria-hidden>
-                    {trendChart.ticks.map((lbl, idx) => (
-                      <span key={idx}>{lbl}</span>
-                    ))}
-                  </div>
-                  <div className="hm-v3-chart-plot">
-                    <div className="hm-v3-grid-lines" aria-hidden>
-                      <span />
-                      <span />
-                      <span />
-                      <span />
-                    </div>
-                    <svg className="hm-v3-trend-line-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-                      <polyline className="hm-v3-trend-poly" points={trendChart.polyPoints} vectorEffect="non-scaling-stroke" />
-                    </svg>
-                    <div className="hm-v3-bars">
-                      {trendChart.points.map((d) => (
-                        <div key={d.date} className={`hm-v3-bar-col ${d.isPeak ? 'is-peak' : ''}`}>
-                          <div className="hm-v3-bar-track">
-                            {d.isPeak ? (
-                              <span className="hm-v3-bar-tip" style={{ bottom: `calc(${d.pct}% + 10px)` }}>
-                                {rupees(d.revenueMinor)}
-                              </span>
-                            ) : null}
-                            <span className="hm-v3-bar-dot" style={{ bottom: `calc(${d.pct}% - 4px)` }} aria-hidden />
-                            <span className="hm-v3-bar-fill" style={{ height: `${d.pct}%` }} />
-                          </div>
-                          <span className="hm-v3-bar-day">{d.dateShort}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </section>
-
-            {/* 2. Clients due back — Sales by payment method was here; Today's revenue already splits by method. */}
-            {showDueBack ? <DueBackCard branch={branch} business={p.businessName} /> : null}
-
-            {/* 3. Quick actions */}
-            <section className="hm-v3-card hm-v3-quick-card">
-              <div className="hm-v3-card-head">
-                <h2>{t.quickActionsTitle}</h2>
-              </div>
-              <div className="hm-v3-qgrid">
-                {mayRecordPayment ? (
-                  <a className="hm-v3-qbtn is-primary" href="/appointments/new?purpose=payment">
-                    <span className="hm-v3-qicon">
-                      <IconReceipt />
-                    </span>
-                    <strong>{t.recordPayment}</strong>
-                  </a>
-                ) : null}
-                {mayRecordPayment ? (
-                  <a className="hm-v3-qbtn is-green" href="/sales">
-                    <span className="hm-v3-qicon">
-                      <IconRupee />
-                    </span>
-                    <strong>{t.nav.sales}</strong>
-                  </a>
-                ) : null}
-                {mayRecordPayment ? (
-                  <a className="hm-v3-qbtn is-amber" href="/products/sell">
-                    <span className="hm-v3-qicon">
-                      <IconProducts />
-                    </span>
-                    <strong>{t.sellProductAction}</strong>
-                  </a>
-                ) : null}
-                {mayBook ? (
-                  <a className="hm-v3-qbtn is-mint" href="/appointments/new?mode=now">
-                    <span className="hm-v3-qicon">
-                      <IconStaff />
-                    </span>
-                    <strong>{t.walkInAction}</strong>
-                  </a>
-                ) : null}
-                <a className="hm-v3-qbtn is-purple" href="/customers?add=1">
-                  <span className="hm-v3-qicon">
-                    <IconStaff />
-                  </span>
-                  <strong>{t.addClientAction}</strong>
-                </a>
-                <a className="hm-v3-qbtn is-blue" href="/packages">
-                  <span className="hm-v3-qicon">
-                    <IconPackages />
-                  </span>
-                  <strong>{t.nav.packages}</strong>
-                </a>
-              </div>
-            </section>
-          </div>
-
-          {/* ROW 3 — Needs your attention (Bookings, Services & Attendance) + Products needing attention + Staff Status */}
-          <div className="hm-v3-bot">
-            {/* 1. Needs your attention (Bookings, Queue & Attendance) */}
-            <section className="hm-v3-card hm-v3-services-card hm-v3-desk-attention">
-              <div className="hm-v3-card-head">
-                <h2>
-                  {t.needsYourAttention}{' '}
-                  <span className="hm-v3-count">({deskAttention.totalCount})</span>
-                </h2>
-                {canSee('/reports', p.role, p.reportTabs) ? (
-                  <a className="hm-v3-head-link" href="/reports">
-                    {t.whatToDoLink} →
-                  </a>
-                ) : deskAttention.totalCount === 0 && !failed ? (
-                  <span className="hm-pill hm-pill-green">{t.allClear}</span>
-                ) : null}
-              </div>
-              {failed && !dataIsForBranch ? (
-                <CardError t={t} />
-              ) : (
-                <>
-                  <div className="hm-v3-prod-att-summary">
-                    <a
-                      className={`hm-v3-prod-att-chip is-amber ${deskAttention.bookingCount === 0 ? 'is-clear' : ''}`}
-                      href={unmarkedHref}
-                    >
-                      <strong>{deskAttention.bookingCount}</strong>
-                      <span>{t.bookingsAttentionChip}</span>
-                    </a>
-                  </div>
-                  {deskAttention.rows.length === 0 ? (
-                    <p className="hm-empty">{t.allCaughtUpToday}</p>
-                  ) : (
-                    <ul className="hm-v3-srv-rows hm-v3-prod-att-rows">
-                      {deskAttention.rows.map((row) => (
-                        <li key={row.id}>
-                          <a className="hm-v3-srv-row hm-v3-prod-att-row" href={row.href}>
-                            <Avatar name={row.name} id={row.avatarId} size={30} photoUrl={row.photoUrl} />
-                            <div className="hm-v3-srv-main">
-                              <strong className="hm-v3-srv-name">{row.name}</strong>
-                              <span className="hm-v3-prod-att-sub">{row.sub}</span>
-                            </div>
-                            <span className={`hm-pill hm-pill-${row.tone}`}>{row.pill}</span>
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </>
-              )}
-            </section>
-
-            {/* 2. Products needing attention (Out of stock & Low stock) */}
-            <section className="hm-v3-card hm-v3-products-card hm-v3-prod-attention">
-              <div className="hm-v3-card-head">
-                <h2>
-                  {t.productsAttentionTitle}{' '}
-                  <span className="hm-v3-count">({productAttention.totalCount})</span>
-                </h2>
-                <a
-                  className="hm-v3-head-link"
-                  href={`/products?filter=${productAttention.outCount > 0 ? 'out' : 'low'}${branch ? `&branch=${encodeURIComponent(branch)}` : ''}`}
-                >
-                  {t.viewAll} →
-                </a>
-              </div>
-              <div className="hm-v3-prod-att-summary">
-                <a
-                  className={`hm-v3-prod-att-chip is-rose ${productAttention.outCount === 0 ? 'is-clear' : ''}`}
-                  href={`/products?filter=out${branch ? `&branch=${encodeURIComponent(branch)}` : ''}`}
-                >
-                  <strong>{productAttention.outCount}</strong>
-                  <span>{t.outOfStockLabel}</span>
-                </a>
-                <a
-                  className={`hm-v3-prod-att-chip is-amber ${productAttention.lowCount === 0 ? 'is-clear' : ''}`}
-                  href={`/products?filter=low${branch ? `&branch=${encodeURIComponent(branch)}` : ''}`}
-                >
-                  <strong>{productAttention.lowCount}</strong>
-                  <span>{t.lowStockLabel}</span>
-                </a>
-              </div>
-              {productAttention.items.length === 0 ? (
-                <p className="hm-empty">{t.allStockHealthy}</p>
-              ) : (
-                <ul className="hm-v3-srv-rows hm-v3-prod-att-rows">
-                  {productAttention.items.map((pr) => {
-                    const isOut = pr.stock <= 0;
-                    const filterKey = isOut ? 'out' : 'low';
-                    return (
-                      <li key={pr.id}>
-                        <a
-                          className="hm-v3-srv-row hm-v3-prod-att-row"
-                          href={`/products?filter=${filterKey}${branch ? `&branch=${encodeURIComponent(branch)}` : ''}`}
-                        >
-                          <Avatar name={pr.name} id={pr.id} size={30} photoUrl={pr.imageUrl} />
-                          <div className="hm-v3-srv-main">
-                            <strong className="hm-v3-srv-name">{pr.name}</strong>
-                            <span className="hm-v3-prod-att-sub">{t.stockLeftSub(Math.max(0, pr.stock), pr.lowStockAt)}</span>
-                          </div>
-                          <span className={`hm-pill hm-pill-${isOut ? 'rose' : 'amber'}`}>
-                            {isOut ? t.outOfStockLabel : t.lowStockLabel}
-                          </span>
-                        </a>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
-
-            {/* 3. Staff status */}
-            <section className="hm-v3-card hm-v3-staff-card">
-              <div className="hm-v3-card-head">
-                <h2>
-                  {t.staffStatusTitle} <span className="hm-v3-count">({branchProviders.length})</span>
-                </h2>
-                {canSee('/providers', p.role, p.reportTabs) ? (
-                  <a className="hm-v3-head-link" href="/providers">
-                    {t.viewAll} →
-                  </a>
-                ) : null}
-              </div>
-              {branchProviders.length === 0 ? (
-                <p className="hm-empty">{t.teamEmpty}</p>
-              ) : (
-                <div className="hm-v3-staff-strip hm-v3-staff-list">
-                  {branchProviders.map((prov) => {
-                    const inChair = busy.get(prov.id);
-                    const isAbsent = absentSet.has(prov.id);
-                    const statusKey = inChair ? 'busy' : isAbsent ? 'absent' : 'available';
-                    const statusLabel = inChair ? t.busyLabel : isAbsent ? t.absentLabel : t.availableNow;
-                    const inAtISO = p.staffInAt?.[prov.id] ?? null;
-                    const inTimeLabel = inAtISO ? formatTime(inAtISO, p.timezone) : null;
-                    return (
-                      <a key={prov.id} className="hm-v3-staff-item" href="/providers">
-                        <span className={`hm-v3-staff-ring is-${statusKey}`}>
-                          <Avatar name={prov.displayName} id={prov.id} size={30} photoUrl={prov.photoUrl} />
-                        </span>
-                        <strong className="hm-v3-staff-name">{prov.displayName.split(' ')[0]}</strong>
-                        <span className="hm-v3-staff-role">{t.providerRoleWord}</span>
-                        <span className={`hm-v3-staff-in ${inTimeLabel ? 'is-in' : ''}`}>
-                          {inTimeLabel ? t.staffInTime(inTimeLabel) : t.staffNotInYet}
-                        </span>
-                        <span className={`hm-v3-staff-pill is-${statusKey}`}>
-                          <i />
-                          {statusLabel}
-                        </span>
-                      </a>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-          </div>
-
-          {/* ROW 4 — Recent Bookings (Full-width Table Card) */}
-          <section className="hm-v3-card hm-v3-recent-card">
-            <div className="hm-v3-card-head">
-              <h2>
-                {t.recentBookingsTitle}{' '}
-                <span className="hm-v3-count">({listIsTomorrow ? t.bookingsTomorrow : t.today})</span>
-              </h2>
-              <a className="hm-v3-head-link" href="/appointments">
-                {t.viewAll} →
-              </a>
-            </div>
-            {recentBookingRows.length === 0 ? (
-              <p className="hm-empty">{listIsTomorrow ? t.nothingTomorrow : t.nothingToday}</p>
-            ) : (
-              <div className="hm-v3-recent-wrap">
-                <table className="hm-v3-recent-table">
-                  <thead>
-                    <tr>
-                      <th>{t.colTime}</th>
-                      <th>{t.colClient}</th>
-                      <th>{t.colService}</th>
-                      <th>{t.colStaff}</th>
-                      <th>{t.colAmount}</th>
-                      <th>{t.colStatus}</th>
-                      <th>{t.colActions}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentBookingRows.map((b) => {
-                      const timeStr = formatTime(b.startAt, p.timezone);
-                      const cName = clientNameLabel(b) ?? b.customerName ?? '—';
-                      const svcLabel = summarizeServices(b.serviceNames, p.lang);
-                      const staffName = b.providerNames.length > 0 ? b.providerNames.join(', ') : '—';
-                      const { totalMinor: servicesBillMinor } = bookingBill(b.appointments);
-                      const productsBillMinor = (b.products ?? []).reduce((s, pr) => s + Number(pr.paidMinor || 0), 0);
-                      const billMinor = servicesBillMinor + productsBillMinor;
-                      const st = rowState(b);
-                      const isActive = st === 'in_service' || st === 'needs_answer';
-                      const pillTone = isActive ? 'blue' : st === 'done' ? 'green' : st === 'later' ? 'amber' : 'rose';
-                      const statusLabel = isActive
-                        ? t.inProgressLabel
-                        : st === 'done'
-                          ? t.completedLabel
-                          : st === 'later'
-                            ? t.upcomingLabel
-                            : st === 'cancelled'
-                              ? t.cancelledLabel
-                              : t.noShowLabel;
-                      return (
-                        <tr key={b.key} onClick={() => setOpenBooking(b)}>
-                          <td className="hm-v3-td-time">
-                            <strong>{timeStr}</strong>
-                          </td>
-                          <td className="hm-v3-td-client">
-                            <div className="hm-v3-person">
-                              <Avatar name={cName} id={avatarKey(b)} size={28} />
-                              <div className="hm-v3-person-meta">
-                                <strong>{cName}</strong>
-                                <span>{b.customerPhone ? b.customerPhone : formatDuration(b.totalMin, p.lang)}</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="hm-v3-td-service">
-                            <strong>{svcLabel}</strong>
-                          </td>
-                          <td className="hm-v3-td-staff">
-                            <div className="hm-v3-staff-cell">
-                              {b.providerNames[0] ? <Avatar name={b.providerNames[0]} id={b.providerNames[0]} size={24} /> : null}
-                              <span>{staffName}</span>
-                            </div>
-                          </td>
-                          <td className="hm-v3-td-amount">
-                            <strong>{rupees(billMinor)}</strong>
-                          </td>
-                          <td>
-                            <span className={`hm-pill hm-pill-${pillTone}`}>{statusLabel}</span>
-                          </td>
-                          <td className="hm-v3-td-actions">
-                            <div className="hm-v3-act-wrap">
-                              <button
-                                type="button"
-                                className="hm-v3-row-btn"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenBooking(b);
-                                }}
-                              >
-                                {t.viewBtn}
-                              </button>
-                              <button
-                                type="button"
-                                className="hm-v3-row-dots"
-                                aria-label={t.viewBtn}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenBooking(b);
-                                }}
-                              >
-                                ⋮
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
         </div>
 
         <div className={`hm-owner-grid ${hideUntilBranch ? 'is-settling' : ''}`} aria-busy={hideUntilBranch || undefined}>

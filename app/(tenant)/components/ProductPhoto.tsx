@@ -246,8 +246,8 @@ export function ProductPhoto({
   eager?: boolean;
 }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  const rawUrl = product.imageUrl?.trim() || null;
-  const src = rawUrl ? (/^(\/|https?:|data:|blob:)/.test(rawUrl) ? rawUrl : `/uploads/${rawUrl}`) : null;
+  // The API hands back a URL the browser can load as it is; a photo that fails to load falls back to the drawing.
+  const src = product.imageUrl?.trim() || null;
   if (src && failedUrl !== src) {
     return <img className={className} src={src} alt="" loading={eager ? 'eager' : 'lazy'} onError={() => setFailedUrl(src)} />;
   }
