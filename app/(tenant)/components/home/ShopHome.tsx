@@ -3,6 +3,7 @@
 import { deltaLabel, deltaTone, periodDeltaPct } from './day-delta';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../lib/api';
+import { paidCustomers } from '../../lib/paid-customers';
 import type {
   AttendanceRegister,
   BestSellersPage,
@@ -635,7 +636,8 @@ export function ShopHome({
 
   // The count of guests, or nothing until it has loaded. It used to read 86 while loading, and always carried a
   // "+11%" beside it that no figure stood behind; the badge is gone until there is a real comparison to draw.
-  const customersTotal = customerStats?.total ?? null;
+  // Owner, 9 Nov 2026 — only guests who have paid: a cancelled order's guest is not counted (`paidCustomers`).
+  const customersTotal = paidCustomers(customerStats);
 
   const queueStats = useMemo(() => {
     const fmtDate = (d: Date) => {

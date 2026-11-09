@@ -17,6 +17,7 @@ import {
   type TokenBoard as TokenBoardData,
 } from '../../lib/api';
 import { bookingBill, clientNameLabel, groupBookings, summarizeServices, type BookingGroup } from '../../lib/appointment-display';
+import { paidCustomers } from '../../lib/paid-customers';
 import { countsAsNotMarked, liveState, minutesBetween } from '../../lib/live-state';
 import { hasLiveWork, TokenBoard } from './TokenBoard';
 import { useTokenWords } from './token-words';
@@ -537,8 +538,8 @@ export function OwnerHome(p: OwnerHomeProps) {
     return { active, later, done, total: (todayGroups ?? []).length };
     // `rowState` reads `now`, which is listed.
   }, [todayGroups, now]);
-  const activeClientsCount = clientStats?.segments.find((s) => s.key === 'active')?.count ?? 0;
-  const totalClientsCount = clientStats?.total ?? activeClientsCount;
+  // Owner, 9 Nov 2026 — only clients who have paid: see `paidCustomers`.
+  const totalClientsCount = paidCustomers(clientStats) ?? 0;
 
   const deskAttention = useMemo(() => {
     const overdueGroups = (todayGroups ?? []).filter((g) => countsAsNotMarked(g, now));
