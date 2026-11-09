@@ -670,11 +670,7 @@
     font-weight: 700;
     line-height: 1.25;
     min-height: 2.5em;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
   }
 
   .pf-tile-meta {
@@ -907,11 +903,7 @@
     font-weight: 700;
     line-height: 1.25;
     min-width: 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
   }
 
   .pos-bill-item-amt {

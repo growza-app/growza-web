@@ -53,11 +53,7 @@
   grid-area: name;
   font-weight: 600;
   min-width: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 .prd-chip {
@@ -1780,11 +1776,16 @@
   flex: 1;
 }
 
+/*
+ * Owner, 10 Nov 2026 — "the dish's full name is not visible". "Bestseller" sat BESIDE the name and left it a 63px
+ * strip on a phone, clipped at three lines ("Chicken Biryani (Half - …"). The name takes the card's whole width and
+ * every line it needs; the badge sits under it.
+ */
 .prd-menu-card-title-row {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--sp-2);
+  gap: var(--sp-1);
 }
 
 .prd-menu-card-name {
@@ -1792,11 +1793,7 @@
   font-weight: 750;
   line-height: 1.3;
   color: var(--text);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 .prd-menu-card-bestseller {

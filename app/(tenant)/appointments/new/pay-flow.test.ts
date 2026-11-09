@@ -508,7 +508,9 @@ describe('Record payment in three taps', () => {
      * by price alone. A salon name loses a trailing adjective when it clips; a kitchen name loses the part
      * that says which one it is. The reserve and the cap are different numbers on purpose.
      */
-    expect(css).toMatch(/\.pf-tile-name \{[\s\S]{0,640}-webkit-line-clamp: 2;/);
+    // Owner, 10 Nov 2026 — and no cap at all now: the whole name, on every tile, in every business.
+    expect(css).not.toMatch(/\.pf-tile-name \{[^}]*-webkit-line-clamp/);
+    expect(css).toMatch(/\.pf-tile-name \{[^}]*overflow-wrap: anywhere;/);
     // 14px, because at 16 "Anti-Ageing Facial" clipped to "Anti-Ageing…" beside a plain "Facial" at another price.
     expect(css).toMatch(/\.pf-tile-name \{[\s\S]{0,600}font-size: 0\.875rem;/);
     expect(css).toMatch(/-webkit-line-clamp: 2;/);
