@@ -34,7 +34,8 @@ describe('FR-04 — a part that is meaningless for a business is absent, not zer
     expect(list).toContain("{bookingsOn ? <th>{t('colLastBooking')}</th> : null}");
     expect(list).toMatch(/\{bookingsOn \? <SortableTh col="visits"/);
     expect(list).toContain('{bookingsOn ? <td>{c.totalBookings}</td> : null}');
-    expect(list).toContain("{bookingsOn ? <span>{t('visitCount', { count: c.totalBookings })}</span> : null}");
+    // The phone row's facts line (owner, 9 Nov 2026): the visit count is one of its facts only where there are bookings.
+    expect(list).toContain("bookingsOn ? t('visitCount', { count: c.totalBookings }) : null,");
   });
 
   /*

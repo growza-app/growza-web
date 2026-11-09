@@ -323,6 +323,7 @@ export function useClientCardCopy() {
     notEnough: t('notEnough'),
     neverIn: t('neverIn'),
     call: t('call'),
+    whatsapp: t('whatsapp'),
     viewBookings: t('viewBookings'),
     viewOrders: t('viewOrders'),
     close: t('close'),

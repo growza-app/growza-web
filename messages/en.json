@@ -2470,7 +2470,8 @@
     "deleted": "Client deleted. You can undo this for {days} days.",
     "undo": "Undo",
     "undoing": "Bringing back…",
-    "actionFailed": "That did not work. Try again."
+    "actionFailed": "That did not work. Try again.",
+    "whatsapp": "WhatsApp"
   },
   "reports": {
     "title": "Reports",
