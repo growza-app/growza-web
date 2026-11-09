@@ -622,6 +622,11 @@ export interface Appointment {
    * from its own screen and no other device ever learned. It belongs to the shop, so it comes from the server.
    */
   handedOverAt?: string | null;
+  /**
+   * Owner, 9 Nov 2026 — the token this visit or order was given (#01, #02 …), stored when it was issued (API 0174).
+   * Absent from an older API, and null for a visit that never had one; then the screens number it as before.
+   */
+  tokenNo?: number | null;
   providerId: string | null;
   providerName: string | null;
   reminderSent: boolean;
@@ -1359,6 +1364,8 @@ export interface OrderListRow {
    * is rung up (there is no parcel to pack or send), so the state alone said `Done` about money that had not come in.
    */
   paymentPending?: boolean;
+  /** Owner, 9 Nov 2026 — the order's stored token (API 0174); absent from an older API. */
+  tokenNo?: number | null;
 }
 
 export interface OrdersPage {

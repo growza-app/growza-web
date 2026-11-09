@@ -75,6 +75,8 @@ describe('the POS uses it for the lists and the badge, and not for the numbering
   });
 
   it('numbers the next token over every order, returned ones included', () => {
-    expect(client).toMatch(/const nextTokenNo = dailyTokens\.length \+ 1;/);
+    // Over `dailyTokens` (every order of the day, a returned one included), one past the highest stored number:
+    // the count plus one stopped being safe once a cancelled order kept its number (owner, 9 Nov 2026).
+    expect(client).toContain('const nextTokenNo = dailyTokens.reduce((n, tk) => Math.max(n, tk.tokenNo), 0) + 1;');
   });
 });
