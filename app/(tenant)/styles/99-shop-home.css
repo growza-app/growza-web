@@ -575,8 +575,7 @@
      SIMPLE RESTAURANT DESKTOP HOME (`.shp-page.is-kitchen`, `.rst-desk`)
      ===================================================================== */
   .shp-page.is-kitchen > .shp-desk-toolbar,
-  .shp-desk-v3.is-kitchen-hidden,
-  .hm-desk-v3.is-sln-hidden {
+  .shp-desk-v3.is-kitchen-hidden {
     display: none !important;
   }
 
@@ -631,7 +630,7 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    padding: 0.25rem 0 2rem;
+    padding: 0.25rem var(--page-pad-x) 2rem;
   }
 
   /* Row 1: 3 Soft Pastel KPI Cards */
@@ -1178,8 +1177,28 @@
   /* =====================================================================
      SALON RECEPTION DESKTOP HOME (`.sln-desk`)
      ===================================================================== */
+  /* OwnerHome's page body already carries the side gutter; the restaurant's `.rst-desk` keeps its own. */
   .sln-desk {
-    gap: 1.125rem;
+    gap: var(--sp-4);
+    padding-inline: 0;
+  }
+
+  .sln-desk .rst-kpi-sales .rst-kpi-wave {
+    color: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+
+  .sln-desk .rst-kpi-orders .rst-kpi-wave {
+    color: color-mix(in srgb, var(--blue) 7%, transparent);
+  }
+
+  .sln-desk .rst-kpi-customers .rst-kpi-wave {
+    color: color-mix(in srgb, var(--amber) 8%, transparent);
+  }
+
+  /* A card this role may not open is drawn without a link (no href): no pointer, no hover lift. */
+  .sln-desk a.rst-kpi:not([href]),
+  .sln-desk a.sln-team-row:not([href]) {
+    cursor: default;
   }
 
   .sln-kpi-pill {
@@ -1195,12 +1214,12 @@
   }
 
   .sln-kpi-pill.is-blue {
-    background: rgb(37 99 235 / 12%);
+    background: var(--blue-soft);
     color: var(--blue);
   }
 
   .sln-kpi-pill.is-amber {
-    background: rgb(217 119 6 / 14%);
+    background: var(--amber-soft);
     color: var(--amber-ink);
   }
 
@@ -1209,10 +1228,10 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.3125rem;
+    gap: var(--sp-1);
     min-height: 6.75rem;
-    padding: 0.9375rem 1rem;
-    border-radius: 16px;
+    padding: var(--sp-4);
+    border-radius: var(--radius-lg);
     background: var(--surface);
     border: 1px solid var(--border);
     box-shadow: 0 2px 6px rgb(16 24 40 / 3%);
@@ -1222,7 +1241,7 @@
   }
 
   .sln-action-tile:hover {
-    border-color: rgb(189 215 198);
+    border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
     background: var(--page-bg);
   }
 
@@ -1241,15 +1260,14 @@
   .sln-action-badge {
     width: 2.75rem;
     height: 2.75rem;
-    border-radius: 12px;
+    border-radius: var(--radius);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 0.125rem;
   }
 
   .sln-action-badge.is-primary {
-    background: rgb(255 255 255 / 16%);
+    background: color-mix(in srgb, var(--surface) 16%, transparent);
     color: var(--surface);
   }
 
@@ -1269,14 +1287,14 @@
   }
 
   .sln-action-tile.is-primary {
-    background: linear-gradient(135deg, rgb(22 101 52) 0%, rgb(17 75 40) 100%);
-    border-color: rgb(17 75 40);
+    background: var(--accent-deep);
+    border-color: var(--accent-deep);
     color: var(--surface);
-    box-shadow: 0 6px 18px rgb(22 101 52 / 22%);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--accent-deep) 22%, transparent);
   }
 
   .sln-action-tile.is-primary:hover {
-    background: linear-gradient(135deg, rgb(19 88 45) 0%, rgb(14 63 33) 100%);
+    background: var(--sidebar);
   }
 
   .sln-action-tile.is-primary strong {
@@ -1284,7 +1302,7 @@
   }
 
   .sln-action-tile.is-primary span {
-    color: rgb(187 247 208);
+    color: var(--accent-soft);
   }
 
   .rst-status-pill.is-done-neutral {

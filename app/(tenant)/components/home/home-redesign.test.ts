@@ -12,6 +12,7 @@ describe('Tenant Home v2 redesign', () => {
   const parts = code('parts.tsx');
   const hero = code('MoneyHero.tsx');
   const homeCss = code('../../styles/83-role-home.css');
+  const shopCss = code('../../styles/99-shop-home.css');
   const boardCss = code('../../styles/95-token-board.css');
 
   it('includes Products in Owner and Reception quick links, gated by canSee', () => {
@@ -67,42 +68,34 @@ describe('Tenant Home v2 redesign', () => {
     expect(boardCss).toMatch(/\.tb-col\[data-col='paid'\]\s*\{\s*border-top:\s*3px solid var\(--accent\);/);
   });
 
-  it('renders the Desktop Command Center with 4 light KPI cards, Revenue trend + Clients due back + Quick actions, Needs your attention (Bookings, Services & Attendance) + Products needing attention + vertical Staff status, and Recent bookings table synced with /sales', () => {
+  it('renders the salon desk Home: 3 KPI cards, reception actions, today\'s schedule and staff with what needs attention', () => {
     const bookingsList = code('../../appointments/BookingsList.tsx');
-    expect(owner).toContain('className={`hm-desk-v3 hm-desktop');
-    expect(owner).toContain('className="hm-v3-kpis"');
-    expect(owner).toContain('className="hm-v3-kpi hm-v3-kpi-dark"');
-    expect(owner).toContain('className={`hm-v3-mid${showDueBack');
-    expect(owner).not.toContain('className="hm-v3-table"');
+    expect(owner).toContain('className={`rst-desk hm-desktop sln-desk');
+    expect(owner).toContain('className="rst-kpis"');
+    expect(owner).toContain('className="rst-kpi rst-kpi-sales"');
+    expect(owner).toContain('className="rst-actions-grid sln-actions-grid"');
+    expect(owner).toContain('className="rst-bottom-grid"');
+    expect(owner).toContain('className="sln-team-list"');
+    // The old command center is removed, not hidden by CSS.
+    expect(owner).not.toContain('hm-desk-v3');
+    expect(homeCss + shopCss).not.toContain('is-sln-hidden');
     expect(bookingsList).toContain('className="hm-v3-table bk-table"');
-    // Owner, 2026-10-19 — Sales by payment method left: Today's revenue already splits money by method.
-    expect(owner).toContain('<DueBackCard branch={branch} business={p.businessName} />');
-    expect(owner).not.toContain('hm-v3-payment-card');
-    expect(owner).not.toContain('hm-v3-donut');
-    expect(owner).toContain('className="hm-v3-card hm-v3-services-card hm-v3-desk-attention"');
-    expect(owner).toContain('className="hm-v3-card hm-v3-products-card hm-v3-prod-attention"');
+    // What needs attention is still counted from the day, not invented.
     expect(owner).toContain('const overdueGroups = (todayGroups ?? []).filter((g) => countsAsNotMarked(g, now));');
     expect(owner).toContain('const branchAtt = dataIsForBranch ? data?.attention : null;');
     expect(owner).toContain('const svc = tk.serviceNames.length > 0 ? summarizeServices(tk.serviceNames, t.lang) : w.servicesAtPayment;');
-    expect(owner).toContain('deskAttention.bookingCount');
-    // Who has not marked in is the Staff status card's job; Needs your attention no longer repeats it (2026-10-19).
-    expect(owner).not.toContain('deskAttention.staffCount');
-    expect(owner).not.toContain('staffAttentionChip');
-    expect(owner).not.toContain('unmarkedStaff');
     expect(owner).toContain('deskAttention.rows.map');
-    const clinicEn = homeCopy('en', { appointments: 'Consultations', providers: 'Doctors' });
+    // Who has not marked in is the staff list's job; what needs attention no longer repeats it (2026-10-19).
+    expect(owner).not.toContain('deskAttention.staffCount');
+    expect(owner).not.toContain('unmarkedStaff');
+    const clinicEn = homeCopy('en', { appointments: 'Consultations', appointment: 'Consultation', providers: 'Doctors', services: 'Treatments', resource: 'Room' });
     expect(clinicEn.bookingsAttentionChip).toBe('Consultations & queue');
-    expect(owner).toContain('className="hm-v3-staff-strip hm-v3-staff-list"');
-    expect(owner).toContain('className="hm-v3-recent-table"');
-    expect(owner).toContain('className="hm-v3-qgrid"');
-    expect(owner).toContain('className="hm-v3-bot"');
-    expect(owner).toContain('className="hm-v3-bars"');
-    expect(owner).toContain('filterSalesByDateRange(allSaleRows, periodStartISO, todayISO, branch)');
-    expect(homeCss).toMatch(/\.hm-v3-kpis\s*\{/);
-    expect(homeCss).toMatch(/\.hm-v3-mid\s*\{/);
-    expect(homeCss).toMatch(/\.hm-v3-bot\s*\{/);
-    expect(homeCss).toMatch(/\.hm-v3-dueback-card\s*\{/);
-    expect(homeCss).toMatch(/\.hm-v3-recent-table\s*\{/);
+    // The desk is every booking vertical's Home: no salon nouns in its words.
+    expect(clinicEn.walkInOrNewBooking).toBe('Walk-in / New consultation');
+    expect(clinicEn.todaysDiarySub).toBe('View all consultations');
+    expect(clinicEn.quickBillPosSub).toBe('Bill treatments & products');
+    expect(clinicEn.teamOnFloorTitle).toBe('Doctors today');
+    expect(JSON.stringify(clinicEn)).not.toMatch(/\bchair\b/i);
   });
 
   it('routes Sell product on Home and Products to the dedicated /products/sell POS screen with product categories', () => {
@@ -111,7 +104,7 @@ describe('Tenant Home v2 redesign', () => {
     const productsList = code('../../products/ProductsList.tsx');
     const payFlow = code('../../appointments/new/PayFlow.tsx');
     const deskGrid = code('../../appointments/new/DeskServiceGrid.tsx');
-    expect(owner).toContain('href="/products/sell"');
+    expect(owner).toContain("{ href: '/products/sell', label: t.sellProductAction");
     expect(productsList).toContain('href="/products/sell?from=products"');
     // Jira GRW-616 — the page names its address; the screen it hands to holds the guards, for both of its addresses.
     expect(sellPage).toContain('guard="/products/sell"');

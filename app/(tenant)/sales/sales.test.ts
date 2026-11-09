@@ -252,14 +252,12 @@ describe('Jira GRW-581 — Sales register (/sales)', () => {
     ).toBe(kpis.totalSalesMinor);
   });
 
-  it('places Sales in the Sidebar below Bookings and links Home Products sold card to /sales?filter=products', () => {
+  it('places Sales in the Sidebar below Bookings', () => {
     const sidebar = here('../components/Sidebar.tsx');
-    const ownerHome = here('../components/home/OwnerHome.tsx');
     const summary = here('../components/BookingSummary.tsx');
 
     expect(sidebar.indexOf("href: '/appointments'")).toBeLessThan(sidebar.indexOf("href: '/sales'"));
     expect(sidebar.indexOf("href: '/sales'")).toBeLessThan(sidebar.indexOf("href: '/customers'"));
-    expect(ownerHome).toContain('/sales?filter=products&${salesQuerySuffix}');
     expect(summary).toContain("t('products')");
   });
 

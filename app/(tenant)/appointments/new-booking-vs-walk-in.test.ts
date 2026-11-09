@@ -22,16 +22,16 @@ describe('New booking opens on Pick a time, Walk-in on Starts now', () => {
     expect(reception).toContain('href="/appointments/new?mode=later" className="hm-action tb-new-booking hm-desktop"');
   });
 
-  it('the Quick actions card has Walk-in and Sales, no second New booking (the header button is the one)', () => {
-    const card = owner.slice(owner.indexOf('hm-v3-qgrid'), owner.indexOf('Needs your attention (Bookings, Queue'));
+  it('the reception actions have one Walk-in / New booking tile, no second New booking (the header button is the one)', () => {
+    const card = owner.slice(owner.indexOf('sln-actions-grid'), owner.indexOf('rst-bottom-grid'));
     expect(card).not.toContain('t.nav.newBooking');
-    expect(owner).toContain('className="hm-v3-qbtn is-green" href="/sales"');
+    expect(card.match(/sln-action-tile is-primary/g)).toHaveLength(1);
   });
 
   it('every Walk-in link asks for now', () => {
     // Owner, 2026-10-19 — the Bookings toolbar has one button: the page's own Starts now / Pick a time switch covers both.
     expect(bookings).not.toContain('bk-cmd-walkin-btn');
-    expect(owner).toContain('className="hm-v3-qbtn is-mint" href="/appointments/new?mode=now"');
+    expect(owner).toContain('className="sln-action-tile is-primary" href="/appointments/new?mode=now"');
     expect(reception).toContain("href: '/appointments/new?mode=now', label: t.walkInShort");
   });
 
