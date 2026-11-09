@@ -358,7 +358,7 @@ export function DeskServiceGrid({
                         {t('desk.inBillBadge', { count })}
                       </span>
                     ) : null}
-                    <span className="pf-tile-name">{p.name}</span>
+                    <span className="pf-tile-name" title={p.name}>{p.name}</span>
                     {metaText ? <span className="pf-tile-meta">{metaText}</span> : null}
                     <span className="pf-tile-price">
                       {money(price)}
@@ -414,7 +414,7 @@ export function DeskServiceGrid({
                     onClick={() => onPickPackage?.(o)}
                   >
                     {first ? <ServicePhoto className="pf-tile-photo" service={first} /> : <span className="pf-tile-photo" aria-hidden="true" />}
-                    <span className="pf-tile-name">{o.title}</span>
+                    <span className="pf-tile-name" title={o.title}>{o.title}</span>
                     <span className="pf-tile-price">
                       {money(Number(o.comboPriceMinor ?? 0))}
                       <span className="pf-tile-mins">{names}</span>
@@ -459,7 +459,7 @@ export function DeskServiceGrid({
                   disabled={full && count === 0}
                 >
                   <ServicePhoto className="pf-tile-photo" service={s} />
-                  <span className="pf-tile-name">{s.name}</span>
+                  <span className="pf-tile-name" title={s.name}>{s.name}</span>
                   <span className="pf-tile-price">
                     {money(price)}
                     {s.durationMin ? <span className="pf-tile-mins">{t('desk.mins', { n: s.durationMin })}</span> : null}

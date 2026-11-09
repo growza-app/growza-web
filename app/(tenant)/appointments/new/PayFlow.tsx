@@ -2354,7 +2354,7 @@ export function PayFlow({
                     disabled={full && count === 0}
                   >
                     <ProductPhoto className="pf-tile-photo" product={p} />
-                    <span className="pf-tile-name">{p.name}</span>
+                    <span className="pf-tile-name" title={p.name}>{p.name}</span>
                     <span className="pf-tile-price">
                       {money(price)}
                       {/* How many are left is a count; a kitchen's tile is the dish and its price, and nothing else. */}
@@ -2407,7 +2407,7 @@ export function PayFlow({
                   disabled={full && count === 0}
                 >
                   <ServicePhoto className="pf-tile-photo" service={s} />
-                  <span className="pf-tile-name">{s.name}</span>
+                  <span className="pf-tile-name" title={s.name}>{s.name}</span>
                   <span className="pf-tile-price">{money(Number(s.priceMinor ?? 0))}</span>
                 </button>
                 {count > 0 ? (
