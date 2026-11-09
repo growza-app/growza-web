@@ -22,11 +22,11 @@ const flow = read('PayFlow.tsx');
 describe('a scan while taking payment is answered, not swallowed', () => {
   it('still adds only on the picking step', () => {
     // Unchanged, and the reason the rest of this file exists: 'how' and 'qr' must NOT add.
-    expect(flow).toContain("useBarcodeScan(productsOnly && step === 'what'");
+    expect(flow).toContain("useBarcodeScan(!inactive && productsOnly && step === 'what'");
   });
 
   it('listens on the two paying steps, and only to say so', () => {
-    expect(flow).toContain("useBarcodeScan(productsOnly && (step === 'how' || step === 'qr'), () => setScanNote(t('desk.scanWhilePaying')));");
+    expect(flow).toContain("useBarcodeScan(!inactive && productsOnly && (step === 'how' || step === 'qr'), () => setScanNote(t('desk.scanWhilePaying')));");
     // No `onScans`, no `queueScan`: the code is read and dropped. Nothing may reach the bill from here.
     const listener = flow.slice(flow.indexOf("step === 'how' || step === 'qr'"));
     expect(listener.slice(0, listener.indexOf('\n'))).not.toMatch(/onScans|queueScan|addProduct/);

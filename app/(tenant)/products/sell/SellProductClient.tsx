@@ -21,6 +21,7 @@ export function SellProductClient({
   onOpenQueue,
   reloadKey,
   addingTo,
+  inactive,
 }: {
   timezone: string;
   backTo?: '/products' | '/sales' | '/orders';
@@ -38,6 +39,8 @@ export function SellProductClient({
   reloadKey?: number;
   /** Owner, 9 Nov 2026 — the Queue's "Add items": picks go onto that waiting order instead of a new sale. */
   addingTo?: ComponentProps<typeof PayFlow>['addingTo'];
+  /** Mounted but hidden: no keyboard shortcuts, no scanner (see PayFlow's `inactive`). */
+  inactive?: boolean;
 }) {
   const [ready, setReady] = useState(false);
   const [wide, setWide] = useState(false);
@@ -74,6 +77,7 @@ export function SellProductClient({
       onOpenQueue={onOpenQueue}
       reloadKey={reloadKey}
       addingTo={addingTo}
+      inactive={inactive}
     />
   );
 }
