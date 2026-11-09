@@ -241,6 +241,11 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Give the date the refund was made': 'रिफ़ंड की तारीख़ दें',
   'Check the refund': 'रिफ़ंड जाँचें',
   'Order not found': 'ऑर्डर नहीं मिला',
+  // Owner, 9 Nov 2026 — the Queue's Cancel and Add items, refused on an order that is no longer waiting for payment.
+  'This order is already paid. Take a return instead.': 'इस ऑर्डर का पेमेंट हो चुका है। इसकी जगह रिटर्न करें।',
+  'This order is already paid. Start a new order for anything more.': 'इस ऑर्डर का पेमेंट हो चुका है। और कुछ के लिए नया ऑर्डर शुरू करें।',
+  'This order was cancelled. Start a new order instead.': 'यह ऑर्डर रद्द हो चुका है। इसकी जगह नया ऑर्डर शुरू करें।',
+  'Pick at least one product': 'कम से कम एक प्रोडक्ट चुनें',
   'A refund needs the line that came back': 'रिफ़ंड के लिए वापस आई लाइन चाहिए',
   'A counter sale is refunded when the product is returned, not recorded here': 'काउंटर की बिक्री का रिफ़ंड प्रोडक्ट लौटाने पर ही होता है, यहाँ दर्ज नहीं होता',
   'A refund cannot be dated in the future': 'रिफ़ंड की तारीख़ आगे की नहीं हो सकती',

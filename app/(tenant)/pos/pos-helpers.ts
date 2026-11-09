@@ -130,11 +130,21 @@ export function buildDailyTokens(
         items.push({ name: leg.serviceName, qty: 1, paidMinor: paid });
       }
     }
+    // Owner, 9 Nov 2026 — "Add items" writes its own lines onto the order, so the same dish added twice is one row here.
+    const sameProduct = new Map<string, { name: string; qty: number; paidMinor: number }>();
     for (const p of first.products ?? []) {
       const netQty = p.qty - (p.returnedQty ?? 0);
       const netPaidMinor = Math.max(0, Number(p.paidMinor ?? 0) - Number(p.returnedMinor ?? 0));
-      if (netQty > 0) {
-        items.push({ name: p.name, qty: netQty, paidMinor: netPaidMinor });
+      if (netQty <= 0) continue;
+      const key = `${p.productId ?? ''}|${p.variantId ?? ''}|${p.name}`;
+      const seen = sameProduct.get(key);
+      if (seen) {
+        seen.qty += netQty;
+        seen.paidMinor += netPaidMinor;
+      } else {
+        const row = { name: p.name, qty: netQty, paidMinor: netPaidMinor };
+        sameProduct.set(key, row);
+        items.push(row);
       }
     }
     const totalMinor = items.reduce((sum, item) => sum + item.paidMinor, 0);
