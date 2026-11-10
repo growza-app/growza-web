@@ -1,5 +1,6 @@
 'use client';
 
+import { BusinessesToolbar } from '../components/BusinessesToolbar';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
@@ -83,7 +84,7 @@ export default function AdminBusinessesPage() {
 function AdminBusinessesInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { query: search } = useAdminSearch();
+  const { query: search, setQuery: setSearch } = useAdminSearch();
   const [vertical, setVertical] = useState('All');
   // GRW-104's dashboard drill-through (`?status=suspended`) lands here
   // already filtered — read once on mount, and written back below.
@@ -299,6 +300,18 @@ function AdminBusinessesInner() {
           </div>
         ) : null}
       </div>
+
+      {/* Jira GRW-702 — saved views and Export CSV, over the list they apply to. */}
+      <BusinessesToolbar
+        current={{ vertical, status, search }}
+        canSave={hasActiveFilters}
+        total={page?.total ?? null}
+        onApply={(f) => {
+          setVertical(f.vertical);
+          setStatus(f.status);
+          setSearch(f.search);
+        }}
+      />
 
       {/* Jira GRW-297 — admin mobile's status filter: a clickable chip per
           status, each carrying the count of businesses that fall into it

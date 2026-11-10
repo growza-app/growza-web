@@ -120,6 +120,7 @@ const ACTION_LABELS: Record<string, string> = {
   'business.create': 'Business enrolled',
   'business.activate': 'Business activated',
   'business.suspend': 'Business suspended',
+  'business.list_exported': 'Business list exported',
   'business.reactivate': 'Business reactivated',
   'business.branch_add': 'Branch added',
   'business.branch_close': 'Branch closed',
