@@ -153,6 +153,8 @@ export function PayFlow({
   onSaleCompleted,
   onOpenQueue,
   reloadKey = 0,
+  addingTo = null,
+  inactive = false,
 }: {
   /** A waiting token being paid: its client, branch and services are the answer to ①. */
   token?: QueueEntry;
@@ -203,6 +205,21 @@ export function PayFlow({
   onOpenQueue?: () => void;
   /** Incremented after a return or exchange on POS so the product shelf refreshes its live stock counts in place. */
   reloadKey?: number;
+  /**
+   * Owner, 9 Nov 2026 — the Queue's "Add items": what is picked here goes onto an order already waiting for payment
+   * (same token, paid for once) instead of becoming a new sale. No guest and no payment step: the order has both.
+   */
+  addingTo?: {
+    tokenLabel: string;
+    onAdd: (products: Array<{ productId: string; variantId?: string; qty: number; paidMinor: number }>) => Promise<void>;
+    onStop: () => void;
+  } | null;
+  /**
+   * Owner, 9 Nov 2026 — kept on the page but not in front of anyone (the POS keeps the Sell till mounted, with its
+   * half-built bill, while "Add items" uses a second one). Hidden, it must not answer the keyboard or a scanner:
+   * F8 would ring up a bill nobody can see, and a scanned code would land in it.
+   */
+  inactive?: boolean;
 }) {
   const t = useTranslations('payFlow');
   const ts = useTranslations('payFlow.size');
@@ -707,7 +724,7 @@ export function PayFlow({
   };
   // Only on the screen where products are picked: on 'how', 'qr' and 'done' a scan would change a bill being paid.
   // Listening from the first moment, not from when the shelf is in: a bottle scanned while it loads waits in the queue.
-  useBarcodeScan(productsOnly && step === 'what', (code) => {
+  useBarcodeScan(!inactive && productsOnly && step === 'what', (code) => {
     if (productsLoaded) onScans([code]);
     else queueScan(code);
   });
@@ -723,7 +740,7 @@ export function PayFlow({
    * Nothing is drawn until somebody actually scans, because a line of standing advice about a thing that is not
    * happening is what people stop reading.
    */
-  useBarcodeScan(productsOnly && (step === 'how' || step === 'qr'), () => setScanNote(t('desk.scanWhilePaying')));
+  useBarcodeScan(!inactive && productsOnly && (step === 'how' || step === 'qr'), () => setScanNote(t('desk.scanWhilePaying')));
   // Codes scanned on the Sales screen wait in the browser: put them on the bill once, in the order scanned.
   const scansTaken = useRef(false);
   useEffect(() => {
@@ -1233,6 +1250,10 @@ export function PayFlow({
    * things the screen already knew. Each is now marked where it is missing, so one look answers both.
    */
   const onNext = () => {
+    if (addingTo) {
+      void addToOrder();
+      return;
+    }
     const service = !hasService;
     const client_ = !token && client.kind === 'none' && !fromApp && !guestOptional;
     if (service || client_) {
@@ -1281,7 +1302,51 @@ export function PayFlow({
   const guideMode = Boolean(productsOnly && wide && lines.length > 0 && hasWho && !fromApp && !selectedMode && !splitting && !firstWay);
   const guideReady = Boolean(productsOnly && wide && lines.length > 0 && (fromApp !== null || (hasWho && (selectedMode !== null || firstWay !== null))));
 
+  const [addingBusy, setAddingBusy] = useState(false);
+  const addToOrder = async () => {
+    if (!addingTo || addingBusy) return;
+    if (lines.length === 0) {
+      setMissing({ client: false, service: true });
+      return;
+    }
+    setMissing(null);
+    setError(null);
+    setAddingBusy(true);
+    try {
+      const amounts = spread(baseAmounts.map((priceMinor) => ({ priceMinor })), totalMinor);
+      await addingTo.onAdd(groupProductLines(lines, amounts));
+      nextCustomer();
+    } catch (e) {
+      setError(e instanceof Error && e.message ? e.message : t('desk.addToOrderFailed'));
+    } finally {
+      setAddingBusy(false);
+    }
+  };
+  const addingBanner = addingTo ? (
+    <div className="pos-charge-adding" role="status">
+      <span className="pos-charge-adding-text">{t('desk.addingToOrder', { token: addingTo.tokenLabel })}</span>
+      <button type="button" className="pos-charge-adding-stop" onClick={addingTo.onStop} disabled={addingBusy}>
+        {t('desk.stopAdding')}
+      </button>
+    </div>
+  ) : null;
+  const addButton = addingTo ? (
+    <button
+      type="button"
+      className="btn pos-charge-cta"
+      disabled={addingBusy}
+      aria-busy={addingBusy}
+      onClick={() => void addToOrder()}
+    >
+      {addingBusy ? t('desk.addingBusy') : t('desk.addToOrder', { token: addingTo.tokenLabel, amount: money(totalMinor) })}
+    </button>
+  ) : null;
+
   const completePosSale = () => {
+    if (addingTo) {
+      void addToOrder();
+      return;
+    }
     if (saving !== null || lines.length === 0) return;
     const ok = readyToPay(false);
     if (fromApp) {
@@ -1299,14 +1364,14 @@ export function PayFlow({
   };
 
   const sendPosPending = () => {
-    if (saving !== null || lines.length === 0 || fromApp) return;
+    if (addingTo || saving !== null || lines.length === 0 || fromApp) return;
     setBadMode(false);
     if (!readyToPay(true)) return;
     void pay('cash', true);
   };
 
   useEffect(() => {
-    if (!productsOnly || !wide || step !== 'what') return;
+    if (inactive || !productsOnly || !wide || step !== 'what') return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'F4') {
         e.preventDefault();
@@ -1316,6 +1381,8 @@ export function PayFlow({
         completePosSale();
       } else if (e.key === 'F9') {
         e.preventDefault();
+        // Nothing to hold while adding to a waiting order: Stop is how to leave it.
+        if (addingTo) return;
         if (lines.length > 0) holdBill();
         else if (heldBills.length > 0) resumeHeldBill(heldBills[0]!.id);
       }
@@ -1818,6 +1885,7 @@ export function PayFlow({
           </header>
         )}
         {scanNote ? <div role="status" className="pf-error">{scanNote}</div> : null}
+        {addingBanner}
         {queuedBanner ? (
           <div className="pos-charge-queued" role="status">
             <span className="pos-charge-queued-check" aria-hidden="true">
@@ -1926,13 +1994,14 @@ export function PayFlow({
             />
           )}
           <aside className="pf-wide-right">
-            {productsOnly ? (
+            {/* Adding to a waiting order: it already has its guest and where it came from. */}
+            {productsOnly && !addingTo ? (
               <div className="pos-bill-client">
                 {fromRow}
                 {who}
               </div>
             ) : null}
-            {productsOnly && heldBills.length > 0 ? (
+            {productsOnly && !addingTo && heldBills.length > 0 ? (
               <div className="pos-held-strip" role="status">
                 <span className="pos-held-label">{t('desk.heldBills', { count: heldBills.length })}</span>
                 <div className="pos-held-actions">
@@ -1952,9 +2021,11 @@ export function PayFlow({
                 <div className="pos-bill-head-actions">
                   {productsOnly ? (
                     <>
-                      <button type="button" className="pos-bill-action pos-bill-hold" onClick={holdBill}>
-                        {t('desk.holdBill')} <kbd>F9</kbd>
-                      </button>
+                      {addingTo ? null : (
+                        <button type="button" className="pos-bill-action pos-bill-hold" onClick={holdBill}>
+                          {t('desk.holdBill')} <kbd>F9</kbd>
+                        </button>
+                      )}
                       <button type="button" className="pos-bill-action pos-bill-clear" onClick={clearBill}>
                         {t('desk.clearBill')}
                       </button>
@@ -2021,6 +2092,10 @@ export function PayFlow({
                 {error}
               </div>
             ) : null}
+            {addingTo ? (
+              addButton
+            ) : (
+              <>
             {/* Jira GRW-648 — between what the bill comes to and how it is being paid, which is what it is. */}
             {redeemRow}
             {discountMinor > 0 ? (
@@ -2081,6 +2156,8 @@ export function PayFlow({
                 ) : null}
               </div>
             ) : null}
+              </>
+            )}
             {splitKeypadEl}
             {dialog}
           </aside>
@@ -2170,6 +2247,7 @@ export function PayFlow({
             </header>
           )}
           {scanNote ? <div role="status" className="pf-error">{scanNote}</div> : null}
+          {addingBanner}
           {queuedBanner ? (
             <div className="pos-charge-queued" role="status">
               <span className="pos-charge-queued-check" aria-hidden="true">
@@ -2238,8 +2316,8 @@ export function PayFlow({
           {nv.visitGone}
         </div>
       ) : null}
-      {fromRow}
-      {who}
+      {addingTo ? null : fromRow}
+      {addingTo ? null : who}
       {productsOnly ? null : stylists}
 
       {/*
@@ -2354,7 +2432,7 @@ export function PayFlow({
                     disabled={full && count === 0}
                   >
                     <ProductPhoto className="pf-tile-photo" product={p} />
-                    <span className="pf-tile-name">{p.name}</span>
+                    <span className="pf-tile-name" title={p.name}>{p.name}</span>
                     <span className="pf-tile-price">
                       {money(price)}
                       {/* How many are left is a count; a kitchen's tile is the dish and its price, and nothing else. */}
@@ -2407,7 +2485,7 @@ export function PayFlow({
                   disabled={full && count === 0}
                 >
                   <ServicePhoto className="pf-tile-photo" service={s} />
-                  <span className="pf-tile-name">{s.name}</span>
+                  <span className="pf-tile-name" title={s.name}>{s.name}</span>
                   <span className="pf-tile-price">{money(Number(s.priceMinor ?? 0))}</span>
                 </button>
                 {count > 0 ? (
@@ -2478,10 +2556,16 @@ export function PayFlow({
           a button that cannot answer teaches nothing, and "nothing happened" is the worst state on this screen.
           Missing a client opens the sheet as well as saying so — the complaint and the fix in one tap.
         */}
-        <button type="button" className="btn pf-go" onClick={onNext} aria-disabled={!(canGoOn || (guestOptional && hasService))}>
-          {/* An app's order is saved by this tap (nothing to collect), so it says so. */}
-          {fromApp ? t('from.completeShort') : t('next')}
-        </button>
+        {addingTo ? (
+          <button type="button" className="btn pf-go" onClick={() => void addToOrder()} disabled={addingBusy} aria-busy={addingBusy}>
+            {addingBusy ? t('desk.addingBusy') : t('desk.addToOrderShort', { token: addingTo.tokenLabel })}
+          </button>
+        ) : (
+          <button type="button" className="btn pf-go" onClick={onNext} aria-disabled={!(canGoOn || (guestOptional && hasService))}>
+            {/* An app's order is saved by this tap (nothing to collect), so it says so. */}
+            {fromApp ? t('from.completeShort') : t('next')}
+          </button>
+        )}
       </div>
       {error ? (
         <div role="alert" className="pf-error pf-error-tray">

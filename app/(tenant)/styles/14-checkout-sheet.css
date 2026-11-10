@@ -131,9 +131,7 @@
 .checkout-service-name {
   font-size: 0.9375rem;
   color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .checkout-service-sub {

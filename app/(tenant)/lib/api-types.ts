@@ -15,9 +15,20 @@
 import type { PaymentModeSlice } from './home-types';
 import type { ReportRangeKey } from './report-types';
 
+/** One open branch as `/me` sends it. */
+export interface MeBranch {
+  id: string;
+  name: string;
+  paymentQrUrl?: string | null;
+  googleReviewUrl?: string | null;
+  /** Jira GRW-671 — its phone (its own, else the business's) and a maps link to its pin. Absent on an older API. */
+  phone?: string | null;
+  mapsUrl?: string | null;
+}
+
 export interface Me {
   /** Jira GRW-556 — `status` is the business's lifecycle: while `provisioning` only the setup screens are offered. Absent from an older API. */
-  tenant: { id: string; name: string; timezone: string; locationName: string | null; /** The main branch (Jira GRW-582 perf) — the API has always sent it. */ locationId?: string | null; branchCount?: number; status?: string; productReturnWindowDays?: number } | null;
+  tenant: { id: string; name: string; timezone: string; locationName: string | null; /** The main branch (Jira GRW-582 perf) — the API has always sent it. */ locationId?: string | null; branchCount?: number; status?: string; productReturnWindowDays?: number; /** Jira GRW-671 — the business's own phone, which its WhatsApp booking link opens a chat with. */ phone?: string | null } | null;
   /**
    * Jira GRW-235 — open branches, main first.
    *
@@ -26,7 +37,12 @@ export interface Me {
    * the salon's QR up to a customer) and from an API a deploy behind, which is
    * why the till treats it as "no QR" rather than as an error.
    */
-  branches?: Array<{ id: string; name: string; paymentQrUrl?: string | null; googleReviewUrl?: string | null }>;
+  branches?: Array<MeBranch>;
+  /**
+   * Jira GRW-671 — how a message the owner shares on WhatsApp is worded: the vertical's tone. Absent on an API a
+   * deploy behind, which reads as neutral (no ✨), right for every vertical.
+   */
+  share?: { tone: 'casual' | 'neutral' };
   /**
    * The owner's own billing state, or null when there is nothing to say
    * (GRW-122). Null is the healthy case AND the case where the state could
@@ -239,6 +255,9 @@ export interface Product {
   /** QA 2026-10-23 — sizes at or under the warn line, and sizes with none left (0 for no sizes; absent on an API a deploy behind). */
   sizesLow?: number;
   sizesOut?: number;
+  /** Jira GRW-671 — the lowest and highest price among its active sizes; null for no sizes, absent on an older API. */
+  sizePriceMinMinor?: string | null;
+  sizePriceMaxMinor?: string | null;
   /**
    * Jira GRW-599 — on the till's list only, and only for a product with sizes: every live, active size in the owner's
    * order with its count, price and codes, so tapping a product never costs a request to learn its sizes.
@@ -622,6 +641,11 @@ export interface Appointment {
    * from its own screen and no other device ever learned. It belongs to the shop, so it comes from the server.
    */
   handedOverAt?: string | null;
+  /**
+   * Owner, 9 Nov 2026 — the token this visit or order was given (#01, #02 …), stored when it was issued (API 0174).
+   * Absent from an older API, and null for a visit that never had one; then the screens number it as before.
+   */
+  tokenNo?: number | null;
   providerId: string | null;
   providerName: string | null;
   reminderSent: boolean;
@@ -866,6 +890,11 @@ export interface Offer {
   serviceIds: string[];
   /** Set when this offer is a priced combo (not just a discount announcement). */
   comboPriceMinor: string | null;
+  /**
+   * QA 10 Nov 2026 (GRW-671) — what its services cost one by one when its set of services was chosen (API 0175). A
+   * share quotes the lower of this and today's prices as "was". Absent from an older API; null with no services.
+   */
+  partsWhenMadeMinor?: string | null;
   /** Rules step — all null means always visible. 0=Sun..6=Sat. */
   visibleWeekdays: number[] | null;
   visibleFrom: string | null;
@@ -1359,6 +1388,8 @@ export interface OrderListRow {
    * is rung up (there is no parcel to pack or send), so the state alone said `Done` about money that had not come in.
    */
   paymentPending?: boolean;
+  /** Owner, 9 Nov 2026 — the order's stored token (API 0174); absent from an older API. */
+  tokenNo?: number | null;
 }
 
 export interface OrdersPage {
@@ -1403,6 +1434,8 @@ export interface OrderMarketplaceMessage {
 export interface OrderDetail {
   id: string;
   locationId: string;
+  /** QA 10 Nov 2026 — the token the guest holds (API 0174); absent from an older API, null for an order without one. */
+  tokenNo?: number | null;
   /** Jira GRW-641 — the branch the order is booked against, by name. */
   branchName: string | null;
   status: string;

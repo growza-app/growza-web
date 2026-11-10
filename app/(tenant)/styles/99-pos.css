@@ -589,14 +589,16 @@
     overflow: hidden;
   }
 
+  /* Owner, 10 Nov 2026 — "these borders are too thick": a grey hairline on hover, and a picked tile is a single green
+     hairline over a light wash. The − 1 + stepper on it already says it is in the bill; a heavy frame said it twice. */
   .pf-wide:has(.prd-cat-li) .pf-tile:hover {
-    border-color: var(--accent-deep);
+    border-color: color-mix(in srgb, var(--text) 22%, var(--surface));
   }
 
   .pf-wide:has(.prd-cat-li) .pf-tile.pf-tile-on {
     border-color: var(--accent-deep);
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1.5px var(--accent-deep);
+    background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface));
+    box-shadow: none;
   }
 
   .pf-wide:has(.prd-cat-li) .pf-tile-tap {
@@ -669,8 +671,8 @@
     font-size: 0.875rem;
     font-weight: 700;
     line-height: 1.25;
-    min-height: 0;
-    -webkit-line-clamp: 1;
+    min-height: 2.5em;
+    overflow-wrap: anywhere;
   }
 
   .pf-tile-meta {
@@ -901,11 +903,9 @@
   .pos-bill-item-name {
     font-size: 0.8125rem;
     font-weight: 700;
-    line-height: 1.2;
+    line-height: 1.25;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
   }
 
   .pos-bill-item-amt {
@@ -1114,25 +1114,8 @@
     color: #fff;
   }
 
-  /* Progressive step guidance (Guest → Payment mode → Complete sale) */
-  @keyframes pos-step-pulse {
-    0%, 100% {
-      box-shadow: 0 0 0 2px var(--accent-deep), 0 0 0 4px rgba(20, 83, 45, 0.12);
-    }
-    50% {
-      box-shadow: 0 0 0 2px var(--accent-deep), 0 0 0 8px rgba(20, 83, 45, 0.24);
-    }
-  }
-
-  @keyframes pos-cta-ready-pulse {
-    0%, 100% {
-      box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--accent-deep), 0 4px 12px rgba(20, 83, 45, 0.26);
-    }
-    50% {
-      box-shadow: 0 0 0 2px #fff, 0 0 0 7px rgba(20, 83, 45, 0.32), 0 6px 16px rgba(20, 83, 45, 0.34);
-    }
-  }
-
+  /* Progressive step guidance (Guest → Payment mode → Complete sale): the next step is a green hairline and a light
+     fill — no halo, no pulse (owner, 10 Nov 2026). */
   .pos-bill-client .pf-row:has(.pf-who-bar[data-step="next"]) .pf-row-label {
     color: var(--accent-deep);
     font-weight: 800;
@@ -1142,16 +1125,13 @@
     border-color: var(--accent-deep);
     background: var(--accent-soft);
     color: var(--accent-deep);
-    font-weight: 700;
-    box-shadow: 0 0 0 2px var(--accent-deep), 0 0 0 4px rgba(20, 83, 45, 0.14);
-    animation: pos-step-pulse 1.4s ease-in-out 3;
+    font-weight: 600;
   }
 
   .pos-bill-client .pf-who-bar[data-step="next"] .pf-who-add {
     border-color: var(--accent-deep);
     background: var(--accent-deep);
     color: #fff;
-    box-shadow: 0 0 0 3px rgba(20, 83, 45, 0.16);
   }
 
   .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-wide-h:has(+ .pf-pay[data-step="next"]) {
@@ -1161,8 +1141,6 @@
 
   .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-pay[data-step="next"] .pf-pay-tile {
     border-color: var(--accent-deep);
-    box-shadow: 0 0 0 1.5px var(--accent-deep), 0 0 0 4px rgba(20, 83, 45, 0.14);
-    animation: pos-step-pulse 1.4s ease-in-out 3;
   }
 
   .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-pay[data-step="bad"] .pf-pay-tile {
@@ -1176,8 +1154,6 @@
 
   .pos-charge-cta[data-step="ready"] {
     opacity: 1;
-    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--accent-deep), 0 4px 12px rgba(20, 83, 45, 0.26);
-    animation: pos-cta-ready-pulse 1.3s ease-in-out 2;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -1360,7 +1336,8 @@
 
 .pos-queue-cols {
   display: grid;
-  grid-template-columns: 1fr;
+  /* minmax(0, …): a plain 1fr grows to its longest unbreakable line, which pushed the card off a 327px phone. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
   align-items: start;
 }
@@ -1374,6 +1351,7 @@
 .pos-queue-col {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: var(--sp-3);
   padding: var(--sp-4);
   background: var(--surface);
@@ -1550,14 +1528,24 @@
 
 .pos-qcard-top {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--sp-2);
 }
 
+/* The token and its pills wrap among themselves; the time stays top-right instead of taking a line of its own. */
+.pos-qcard-top > .pos-qcard-id {
+  flex: 1;
+  min-width: 0;
+}
+
+.pos-qcard-top > .pos-qcard-meta {
+  flex: none;
+}
+
 .pos-qcard-sub {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
@@ -1815,6 +1803,149 @@
   height: 0.875rem;
 }
 
+/*
+ * Owner, 9 Nov 2026 — an unpaid order's actions in one card, two rows: Take payment across the card, then
+ * "Add items" and "Cancel order" side by side. Each label may wrap rather than push the card wider (344px first).
+ */
+.pos-qcard-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.pos-qcard-complete-btn > span,
+.pos-qcard-more .btn > span {
+  min-width: 0;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.pos-qcard-more {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+.pos-qcard-more .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-height: 2.75rem;
+  padding: 0 var(--sp-2);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+/* Owner, 9 Nov 2026 — on a phone the column is not a second card around the cards: its frame and padding cost
+   every order card 34px of a 327px screen, enough to break "Cancel order" onto two lines. */
+@media (max-width: 600px) {
+  .pos-queue-col {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+}
+
+.pos-qcard-more .btn svg {
+  flex: none;
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.pos-qcard-add-btn {
+  color: var(--accent-deep);
+}
+
+.pos-qcard-add-btn:hover {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+}
+
+.pos-qcard-cancel-btn {
+  color: var(--danger);
+}
+
+.pos-qcard-cancel-btn:hover {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+/* What was just added, said once on the board the desk lands back on. */
+.pos-queue-note {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.pos-queue-note > span {
+  flex: 1;
+  min-width: 0;
+}
+
+.pos-queue-note svg {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+}
+
+.pos-queue-note-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: calc(-1 * var(--sp-2)) calc(-1 * var(--sp-2)) calc(-1 * var(--sp-2)) 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* The Sell tab while it is adding to a waiting order: says which, and how to stop. */
+.pos-charge-adding {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--amber);
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.pos-charge-adding-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.pos-charge-adding-stop {
+  flex: none;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--amber);
+  background: var(--surface);
+  color: var(--amber-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
 .pos-qcard-recall-btn {
   min-height: 2.75rem;
   padding: 0 var(--sp-3);
@@ -1844,6 +1975,8 @@
 /* The board's three buttons keep a focus ring. They shared this block with the token strip that went; it has
    to stay with the buttons that are still on screen, not with the markup that was removed. */
 .pos-qcard-complete-btn:focus-visible,
+.pos-qcard-more .btn:focus-visible,
+.pos-charge-adding-stop:focus-visible,
 .pos-qcard-recall-btn:focus-visible,
 .pos-qcard-add-client:focus-visible,
 .pos-queue-new-btn:focus-visible {

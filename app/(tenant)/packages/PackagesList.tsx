@@ -13,7 +13,10 @@ import { useFitRows } from '../lib/use-fit-rows';
 import { usePhone } from '../lib/use-phone';
 import { servicePhotoUrl } from '../lib/service-photos';
 import { useBranch } from '../components/BranchProvider';
-import { useWritable } from '../components/SessionProvider';
+import { useSession, useWritable } from '../components/SessionProvider';
+import { JustCreatedShareBanner, ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
+import { offerShareItem, wasPriceMinor } from '../lib/share-on-whatsapp';
+import { useJustCreated } from '../lib/just-created';
 import { partsMinutes, partsOf, partsTotalMinor, savingMinor, savingPct, searchPackages } from './packages-logic';
 import { durationPhrase } from '../lib/duration-words';
 import { PackageOverview } from './PackageOverview';
@@ -66,6 +69,18 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
   const [pageIndex, setPageIndex] = useState(0);
 
   const serviceById = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
+
+  /*
+   * Jira GRW-671 — a package that is running can be shared on WhatsApp, with its saving against what its services
+   * cost one by one. Not when one of its services is gone: that saving would be against a price nobody can buy.
+   */
+  const timezone = useSession()?.timezone ?? 'Asia/Kolkata';
+  /** Takes the row's own `partsOf` when the row has already worked it out, so the services are walked once. */
+  const shareItemFor = (pkg: Offer, { parts, missing }: ReturnType<typeof partsOf> = partsOf(pkg, serviceById)) =>
+    offerShareItem(pkg, { timezone, partsTotalMinor: missing > 0 ? null : wasPriceMinor(partsTotalMinor(parts), pkg.partsWhenMadeMinor) });
+  const [justCreatedId, dismissJustCreated] = useJustCreated('package');
+  const justCreated = justCreatedId ? (packages.find((p) => p.id === justCreatedId) ?? null) : null;
+  const justCreatedItem = justCreated ? shareItemFor(justCreated) : null;
 
   /** Jira GRW-381 — on "All branches" each package says which branch sells it. */
   const branchTag = (locationId: string | undefined) => {
@@ -188,6 +203,9 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
 
   return (
     <div className="card pkg-card">
+      {justCreated && justCreatedItem ? (
+        <JustCreatedShareBanner kind="package" item={justCreatedItem} branchId={justCreated.locationId} bookable onDone={dismissJustCreated} />
+      ) : null}
       {actionError && (
         <div className="banner" role="alert" style={{ margin: '0 0 12px' }}>
           {actionError}
@@ -231,6 +249,7 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
               const total = partsTotalMinor(parts);
               const saved = savingMinor(pkg, parts);
               const pct = savingPct(pkg, parts);
+              const shareItem = shareItemFor(pkg, { parts, missing });
 
               return (
                 <div
@@ -314,9 +333,12 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
                     </div>
                   </div>
 
+                  {(writable || shareItem) && (
+                  <div className="pkg-actions">
+                  {shareItem ? <ShareOnWhatsAppButton item={shareItem} branchId={pkg.locationId} bookable /> : null}
                   {writable && (
                   <div
-                    className="dropdown-anchor pkg-actions"
+                    className="dropdown-anchor"
                     ref={openMenuId === pkg.id ? menu.anchorRef : undefined}
                   >
                     <button
@@ -353,6 +375,8 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
                         </button>
                       </div>
                     )}
+                  </div>
+                  )}
                   </div>
                   )}
                 </div>

@@ -3,6 +3,7 @@
 import { deltaLabel, deltaTone, periodDeltaPct } from './day-delta';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../lib/api';
+import { paidCustomers } from '../../lib/paid-customers';
 import type {
   AttendanceRegister,
   BestSellersPage,
@@ -39,6 +40,7 @@ import { Avatar, Card, CardError, HomeHeader, QuickTiles, Segmented, exactRupees
 import { CheckInCard } from './CheckInCard';
 import { PaymentBar, PaymentLine } from './MoneyHero';
 import { CashDrawerLine } from './CashDrawer';
+import { orderNumber } from '../../lib/order-number';
 import { useDialog } from '../../../shared/a11y/useDialog';
 
 type ShopPeriod = 'last_7_days' | 'this_month' | 'last_3_months';
@@ -347,7 +349,8 @@ export function ShopHome({
    */
   const tiles = [
     { href: '/pos', label: t.nav.pos, icon: <IconPos />, tone: 'green' },
-    { href: '/pos?mode=queue', label: s.queueTitle, icon: <IconNavOrders />, tone: 'blue' },
+    // Only a kitchen has an order queue to open (hasOrderQueue); a shop's tile would open Sell.
+    ...(isKitchen ? [{ href: '/pos?mode=queue', label: s.queueTitle, icon: <IconNavOrders />, tone: 'blue' }] : []),
     { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'green' },
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
     /*
@@ -635,7 +638,8 @@ export function ShopHome({
 
   // The count of guests, or nothing until it has loaded. It used to read 86 while loading, and always carried a
   // "+11%" beside it that no figure stood behind; the badge is gone until there is a real comparison to draw.
-  const customersTotal = customerStats?.total ?? null;
+  // Owner, 9 Nov 2026 — only guests who have paid: a cancelled order's guest is not counted (`paidCustomers`).
+  const customersTotal = paidCustomers(customerStats);
 
   const queueStats = useMemo(() => {
     const fmtDate = (d: Date) => {
@@ -1038,7 +1042,7 @@ export function ShopHome({
                                   )}
                                 </span>
                                 <div className="rst-order-main">
-                                  <strong className="rst-order-num">#{o.code.toUpperCase()}</strong>
+                                  <strong className="rst-order-num">{orderNumber(o)}</strong>
                                   <span className="rst-order-sub">{subLabel}</span>
                                 </div>
                                 <span className={`rst-status-pill ${statusClass}`}>{statusLabel}</span>
@@ -1673,7 +1677,7 @@ export function ShopHome({
                                   <div className="hm-v3-srv-main">
                                     <strong className="hm-v3-srv-name">{customerName}</strong>
                                     <span className="hm-v3-prod-att-sub">
-                                      #{o.code.toUpperCase()} · {formatShortDate(o.soldAt)} · {s.itemCountShort(o.items)}
+                                      {orderNumber(o)} · {formatShortDate(o.soldAt)} · {s.itemCountShort(o.items)}
                                     </span>
                                   </div>
                                   {o.amountMinor !== undefined ? (
@@ -1706,7 +1710,7 @@ export function ShopHome({
                               <div className="hm-v3-srv-main">
                                 <strong className="hm-v3-srv-name">{customerName}</strong>
                                 <span className="hm-v3-prod-att-sub">
-                                  #{o.code.toUpperCase()} · {channelWord(o.channel)} · {s.itemCountShort(o.items)}
+                                  {orderNumber(o)} · {channelWord(o.channel)} · {s.itemCountShort(o.items)}
                                 </span>
                               </div>
                               <span className={`hm-pill hm-pill-${stateTone(o.status)}`}>{stateWord(o.status)}</span>
@@ -1885,7 +1889,7 @@ export function ShopHome({
                                   <Avatar name={customerName} id={o.id} size={28} />
                                   <div className="hm-v3-person-meta">
                                     <strong>{customerName}</strong>
-                                    <span>#{o.code.toUpperCase()}</span>
+                                    <span>{orderNumber(o)}</span>
                                   </div>
                                 </div>
                               </td>
@@ -2106,7 +2110,7 @@ export function ShopHome({
                 <Card
                   title={s.queueTitle}
                   action={
-                    data.anyOrders && can('/pos') ? (
+                    data.anyOrders && isKitchen && can('/pos') ? (
                       <a className="shp-link" href="/pos?mode=queue">
                         {s.openQueue}
                       </a>
@@ -2147,7 +2151,7 @@ export function ShopHome({
                               <a
                                 className="shp-recent-row"
                                 href={
-                                  can('/pos')
+                                  isKitchen && can('/pos')
                                     ? `/pos?mode=queue&token=${encodeURIComponent(tk.id)}`
                                     : `/orders/${encodeURIComponent(tk.id)}`
                                 }
@@ -2218,7 +2222,7 @@ export function ShopHome({
                               <span className="shp-recent-main">
                                 <span className="shp-recent-name">{customerName}</span>
                                 <span className="shp-recent-meta">
-                                  <span className="shp-recent-code">#{o.code.toUpperCase()}</span> · {channelWord(o.channel)} · {formatShortDate(o.soldAt)} · {s.itemCountShort(o.items)}
+                                  <span className="shp-recent-code">{orderNumber(o)}</span> · {channelWord(o.channel)} · {formatShortDate(o.soldAt)} · {s.itemCountShort(o.items)}
                                 </span>
                               </span>
                             </span>

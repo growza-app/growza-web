@@ -1,5 +1,6 @@
 'use client';
 
+import { formatTokenNo } from '../../pos/pos-helpers';
 import { useCallback, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { api, ApiError, formatMoney } from '../../lib/api';
@@ -244,12 +245,14 @@ export function OrderClient({
 
   return (
     <>
-      <PageHeader title={t('list.orderCode', { code })} />
+      {/* QA 10 Nov 2026 — titled by the token the guest holds (#08), as the list and Home show it; the code stays in the line below. */}
+      <PageHeader title={t('list.orderCode', { code: order.tokenNo ? formatTokenNo(order.tokenNo).slice(1) : code })} />
       <div className={`page-body ord-page ord-detail ${hasBar ? 'has-bar' : ''}`} aria-busy={busy || undefined}>
         <section className="ord-d-head">
           <span className={`ord-state-chip ord-s-${order.known ? order.status : 'unknown'}`}>{stateWord(order.status)}</span>
           <span className="ord-d-meta">
             {when(order.soldAt)} · {channelWord(order.channel)}
+            {order.tokenNo ? ` · ${t('list.orderCode', { code })}` : ''}
             {order.externalRef ? ` · ${fromApp ? t('detail.appOrderRef', { ref: order.externalRef }) : order.externalRef}` : ''}
           </span>
         </section>

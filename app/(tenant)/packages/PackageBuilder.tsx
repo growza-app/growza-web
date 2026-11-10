@@ -23,6 +23,7 @@ import { weekdayNames } from '../lib/weekday-names';
 import { clampPercentInput, percentOff, pricedMinor, type PriceMode } from './packages-logic';
 import { durationPhrase } from '../lib/duration-words';
 import { ServicePickerSheet } from './ServicePickerSheet';
+import { markJustCreated } from '../lib/just-created';
 
 /**
  * Making or editing a package: ONE page, in the grouped-form language the service sheet already speaks
@@ -403,6 +404,8 @@ export function PackageBuilder({ services: allServices, initialOffer }: { servic
           ...(atBranch ? { locationId: atBranch } : {}),
           ...(allBranches ? { allBranches: true } : {}),
         });
+        // Jira GRW-671 — the list it goes back to asks once: "Package saved. Tell your clients now?"
+        markJustCreated(created.id, 'package');
         // Jira GRW-381 (FR-03) — "all branches" says where it went, and which branches were skipped and why.
         if (allBranches) {
           setPublished(created);

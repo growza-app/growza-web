@@ -10,7 +10,9 @@ import { useBranch } from '../components/BranchProvider';
 import { useLabel } from '../components/LabelsProvider';
 import { PaymentDone } from '../components/PaymentDone';
 import { RedeemRow } from '../components/RedeemRow';
-import { useSession } from '../components/SessionProvider';
+import { useAreas, useSession } from '../components/SessionProvider';
+import { hasOrderQueue } from '../lib/areas';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconCheck, IconArrowLeft, IconClose, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch } from '../components/icons';
 import { ClientSheet, type PickedClient } from '../appointments/new/ClientSheet';
 import { Keypad } from '../appointments/new/Keypad';
@@ -409,7 +411,9 @@ export function PosClient({
     session?.branches?.find((b) => b.id === location)?.paymentQrUrl ??
     null;
 
-  const [mode, setMode] = useState<PosMode>(initialMode === 'queue' ? 'queue' : 'sell');
+  // Owner, 10 Nov 2026 — only a kitchen has an order queue; a salon's or a shop's till is Sell and Return alone.
+  const orderQueue = hasOrderQueue(useAreas());
+  const [mode, setMode] = useState<PosMode>(initialMode === 'queue' && orderQueue ? 'queue' : 'sell');
   const [fullScreen, setFullScreen] = useState(false);
   const [bills, setBills] = useState<SaleRow[] | null>(null);
   const [failed, setFailed] = useState(false);
@@ -421,6 +425,12 @@ export function PosClient({
   const [clientSheetTarget, setClientSheetTarget] = useState<{ token: PosDailyToken; startAdding: boolean } | null>(null);
   const [settlingMode, setSettlingMode] = useState<PaymentMode | null>(null);
   const [settleError, setSettleError] = useState<string | null>(null);
+  /** Owner, 9 Nov 2026 — the unpaid order the Sell tab is adding to ("Add items"), and the one being cancelled. */
+  const [addingToToken, setAddingToToken] = useState<PosDailyToken | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<PosDailyToken | null>(null);
+  const [cancelBusy, setCancelBusy] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [queueNote, setQueueNote] = useState<string | null>(null);
   const [settledReceipt, setSettledReceipt] = useState<{
     appointmentId: string;
     totalMinor: number;
@@ -533,7 +543,9 @@ export function PosClient({
     () => [...tokensStillOnTheBoard(dailyTokens).filter((tk) => tk.state === 'completed')].reverse(),
     [dailyTokens],
   );
-  const nextTokenNo = dailyTokens.length + 1;
+  // A label only ("New order (#06)"): the number itself is issued by the API when the order is rung up, and the slip
+  // prints that one. One past the highest, never the count plus one, which a cancelled order made a number in use.
+  const nextTokenNo = dailyTokens.reduce((n, tk) => Math.max(n, tk.tokenNo), 0) + 1;
 
   // Only tick `nowMs` when the Queue tab is open and has active tokens waiting; zero background timers on Sell/Return.
   const hasPreparing = preparingTokens.length > 0;
@@ -652,6 +664,33 @@ export function PosClient({
     },
     [t],
   );
+
+  const cancelUnpaidOrder = useCallback(async () => {
+    const tk = cancelTarget;
+    if (!tk || cancelBusy) return;
+    setCancelBusy(true);
+    setCancelError(null);
+    try {
+      await api.cancelPendingCounterSale(tk.id);
+      // Gone from the board at once; the read after it is the shop's answer for every other device.
+      setTodayRows((prev) => prev.filter((r) => (r.bookingGroupId ?? r.id) !== tk.id));
+      setCancelTarget(null);
+      setReloadKey((k) => k + 1);
+      void loadTodayTokens();
+    } catch (e) {
+      setCancelError(e instanceof Error && e.message ? e.message : t('cancelFailed'));
+      // Paid or cancelled on another device meanwhile: the board should show it as it is now.
+      void loadTodayTokens();
+    } finally {
+      setCancelBusy(false);
+    }
+  }, [cancelTarget, cancelBusy, loadTodayTokens, t]);
+
+  const startAddingTo = useCallback((tk: PosDailyToken) => {
+    setQueueNote(null);
+    setAddingToToken(tk);
+    setMode('sell');
+  }, []);
 
   const settleAndCompleteToken = useCallback(
     async (
@@ -922,6 +961,7 @@ export function PosClient({
     (targetToken?: unknown) => {
       opened.current++;
       setMode('queue');
+      setAddingToToken(null);
       if (typeof targetToken === 'string' && targetToken.trim()) {
         setFocusToken(targetToken.trim());
       }
@@ -938,11 +978,11 @@ export function PosClient({
 
   useEffect(() => {
     const raw = initialToken?.trim();
-    if (raw) {
+    if (raw && orderQueue) {
       setMode('queue');
       setFocusToken(raw);
     }
-  }, [initialToken]);
+  }, [initialToken, orderQueue]);
 
   useEffect(() => {
     if (mode !== 'queue' || !focusToken || dailyTokens.length === 0) return;
@@ -1065,18 +1105,40 @@ export function PosClient({
             {canReturn ? <strong className="pos-qcard-total">{formatMoney(String(tk.totalMinor))}</strong> : <span />}
           </div>
           {isPreparing ? (
-            <button
-              type="button"
-              className="btn pos-qcard-complete-btn"
-              onClick={() => void settleAndCompleteToken(tk)}
-            >
-              <IconCheck />
-              <span>
-                {tk.paymentPending
-                  ? t('selectPaymentAndComplete', { token: tk.tokenLabel })
-                  : t('handOverToken', { token: tk.tokenLabel })}
-              </span>
-            </button>
+            <div className="pos-qcard-actions">
+              <button
+                type="button"
+                className="btn pos-qcard-complete-btn"
+                onClick={() => void settleAndCompleteToken(tk)}
+              >
+                <IconCheck />
+                <span>
+                  {tk.paymentPending
+                    ? t('takePayment', { token: tk.tokenLabel })
+                    : t('handOverToken', { token: tk.tokenLabel })}
+                </span>
+              </button>
+              {/* Owner, 9 Nov 2026 — only an order still waiting for payment can grow or be called off here; a paid one is a return. */}
+              {tk.paymentPending && tk.channel === 'counter' ? (
+                <div className="pos-qcard-more">
+                  <button type="button" className="btn pos-qcard-add-btn" onClick={() => startAddingTo(tk)}>
+                    <IconPlus />
+                    <span>{t('addItems')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn pos-qcard-cancel-btn"
+                    onClick={() => {
+                      setCancelError(null);
+                      setCancelTarget(tk);
+                    }}
+                  >
+                    <IconClose />
+                    <span>{t('cancelOrder')}</span>
+                  </button>
+                </div>
+              ) : null}
+            </div>
           ) : (
             <button
               type="button"
@@ -1127,13 +1189,15 @@ export function PosClient({
             >
               {t('sell')}
             </button>
-            <button
-              type="button"
-              className={`pos-fs-btn${mode === 'queue' ? ' is-active' : ''}`}
-              onClick={openQueue}
-            >
-              {t('openQueue', { count: preparingTokens.length })}
-            </button>
+            {orderQueue ? (
+              <button
+                type="button"
+                className={`pos-fs-btn${mode === 'queue' ? ' is-active' : ''}`}
+                onClick={openQueue}
+              >
+                {t('openQueue', { count: preparingTokens.length })}
+              </button>
+            ) : null}
             {canReturn ? (
               <button
                 type="button"
@@ -1160,10 +1224,12 @@ export function PosClient({
             <button type="button" role="tab" aria-selected={mode === 'sell'} className={`page-tab${mode === 'sell' ? ' active' : ''}`} onClick={closeReturn}>
               {t('sell')}
             </button>
-            <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab pos-tab-queue${mode === 'queue' ? ' active' : ''}`} onClick={openQueue}>
-              <span>{t('queue')}</span>{' '}
-              <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
-            </button>
+            {orderQueue ? (
+              <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab pos-tab-queue${mode === 'queue' ? ' active' : ''}`} onClick={openQueue}>
+                <span>{t('queue')}</span>{' '}
+                <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
+              </button>
+            ) : null}
             <button type="button" role="tab" aria-selected={mode === 'return'} className={`page-tab${mode === 'return' ? ' active' : ''}`} onClick={() => mode !== 'return' && void openReturn()}>
               {t('return')}
             </button>
@@ -1205,10 +1271,12 @@ export function PosClient({
             <button type="button" role="tab" aria-selected={mode === 'sell'} className={`page-tab${mode === 'sell' ? ' active' : ''}`} onClick={closeReturn}>
               {t('sell')}
             </button>
-            <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab pos-tab-queue${mode === 'queue' ? ' active' : ''}`} onClick={openQueue}>
-              <span>{t('queue')}</span>{' '}
-              <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
-            </button>
+            {orderQueue ? (
+              <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab pos-tab-queue${mode === 'queue' ? ' active' : ''}`} onClick={openQueue}>
+                <span>{t('queue')}</span>{' '}
+                <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
+              </button>
+            ) : null}
           </div>
           <div className="pos-bar-right">
             {/* As above: the till's branch, since the flow underneath draws no header of its own. */}
@@ -1238,19 +1306,54 @@ export function PosClient({
         </div>
       ) : null}
 
-      <div className="pos-body" hidden={mode === 'queue'}>
+      {/*
+        Owner, 9 Nov 2026 — the Sell till stays mounted, bill and all, while "Add items" uses a till of its own. It
+        used to be one till re-keyed for adding, which threw away a bill the desk had half rung up — and an empty one
+        came back after. Hidden, the Sell till answers no shortcut and no scanner (`inactive`), and hands the bar's
+        Back arrow to the adding till while that one is up.
+      */}
+      <div className="pos-body" hidden={mode === 'queue' || addingToToken !== null}>
         <SellProductClient
           timezone={timezone}
           backTo={backTo}
           hideHead
-          leaveRef={leaveRef}
+          leaveRef={addingToToken ? undefined : leaveRef}
+          inactive={mode === 'queue' || addingToToken !== null}
           heading={heading}
           nextTokenNo={nextTokenNo}
           onSaleCompleted={handleSaleCompleted}
-          onOpenQueue={() => openQueue(lastQueuedIdRef.current ?? undefined)}
+          onOpenQueue={orderQueue ? () => openQueue(lastQueuedIdRef.current ?? undefined) : undefined}
           reloadKey={reloadKey}
         />
       </div>
+      {addingToToken ? (
+        <div className="pos-body" hidden={mode === 'queue'}>
+          <SellProductClient
+            key={`add-${addingToToken.id}`}
+            addingTo={{
+              tokenLabel: addingToToken.tokenLabel,
+              onAdd: async (products) => {
+                const res = await api.addToPendingCounterSale(addingToToken.id, products);
+                const tk = addingToToken;
+                setQueueNote(t('addedToOrder', { token: tk.tokenLabel, amount: formatMoney(String(res.totalMinor)) }));
+                setReloadKey((k) => k + 1);
+                openQueue(tk.id);
+              },
+              onStop: () => openQueue(addingToToken.id),
+            }}
+            inactive={mode === 'queue'}
+            timezone={timezone}
+            backTo={backTo}
+            hideHead
+            leaveRef={leaveRef}
+            heading={heading}
+            nextTokenNo={nextTokenNo}
+            onSaleCompleted={handleSaleCompleted}
+            onOpenQueue={() => openQueue(addingToToken.id)}
+            reloadKey={reloadKey}
+          />
+        </div>
+      ) : null}
 
       {mode === 'queue' ? (
         settledReceipt ? (
@@ -1285,6 +1388,15 @@ export function PosClient({
           />
         ) : (
         <section className="pos-queue-board" aria-label={t('queue')}>
+          {queueNote ? (
+            <div className="pos-queue-note" role="status">
+              <IconCheck />
+              <span>{queueNote}</span>
+              <button type="button" className="pos-queue-note-close" aria-label={tc('close')} onClick={() => setQueueNote(null)}>
+                <IconClose />
+              </button>
+            </div>
+          ) : null}
           <div className="pos-queue-cols">
             <div className="pos-queue-col">
               <header className="pos-queue-col-head">
@@ -1329,6 +1441,22 @@ export function PosClient({
           </div>
         </section>
         )
+      ) : null}
+
+      {cancelTarget ? (
+        <ConfirmDialog
+          tone="danger"
+          title={t('cancelOrderTitle', { token: cancelTarget.tokenLabel })}
+          body={t('cancelOrderBody', { amount: formatMoney(String(cancelTarget.totalMinor)) })}
+          confirmLabel={t('cancelOrderConfirm')}
+          cancelLabel={t('keepOrder')}
+          busy={cancelBusy}
+          error={cancelError}
+          onConfirm={() => void cancelUnpaidOrder()}
+          onCancel={() => {
+            if (!cancelBusy) setCancelTarget(null);
+          }}
+        />
       ) : null}
 
       {clientSheetTarget ? (

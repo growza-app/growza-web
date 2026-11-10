@@ -1621,6 +1621,15 @@ export const api = {
    */
   setSaleHandover: (saleId: string, handedOver: boolean) =>
     post<{ saleId: string; handedOverAt: string | null }>('/api/v1/counter-sales', { handoverSaleId: saleId, handedOver }),
+  /**
+   * Owner, 9 Nov 2026 — cancel an order still waiting in the Queue for payment. It stays in Orders as Cancelled, and
+   * where the business counts stock its units go back on the shelf. A paid order is refused (409): that is a return.
+   */
+  cancelPendingCounterSale: (saleId: string) =>
+    post<{ saleId: string; status: string; totalMinor: number }>('/api/v1/counter-sales', { cancelSaleId: saleId }),
+  /** Owner, 9 Nov 2026 — add more to an order still waiting for payment; it keeps its token and is paid for once. */
+  addToPendingCounterSale: (saleId: string, products: Array<{ productId: string; variantId?: string; qty: number; paidMinor: number }>) =>
+    post<{ saleId: string; status: string; totalMinor: number }>('/api/v1/counter-sales', { addToSaleId: saleId, products }),
   assignClientToSale: (appointmentId: string, input: { customerId?: string; phone?: string; name?: string }) =>
     post<{ appointmentIds: string[]; customerId: string }>(`/api/v1/counter-sales/${appointmentId}/assign-client`, input),
   /**

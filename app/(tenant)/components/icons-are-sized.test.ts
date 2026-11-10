@@ -31,7 +31,6 @@ describe('an inline icon is sized by a class of its own', () => {
 
   const sized: Array<[string, string, string]> = [
     // [what it replaced, the wrapper in the markup, the stylesheet that sizes it]
-    ['📅 on the Clients list', 'cl-last-visit-icon', '../styles/32-customers.css'],
     ['📅 · 👤 · ⏱️ · 🎁 · 🧾 in the package preview', 'preview-fact-icon', '../styles/30-combo-builder-wizard.css'],
   ];
 
@@ -46,7 +45,6 @@ describe('an inline icon is sized by a class of its own', () => {
   }
 
   it('the markup uses those wrappers', () => {
-    expect(read('../customers/CustomersClient.tsx')).toMatch(/className="cl-last-visit-icon"/);
     const builder = read('../packages/PackageBuilder.tsx');
     expect(builder).toMatch(/className="preview-fact-icon"/);
   });

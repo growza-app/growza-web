@@ -72,7 +72,11 @@ describe('each screen carries its fix', () => {
     expect(src('products/ProductSheet.tsx')).toContain("t('belowZero')");
   });
   it('salon Home counts the no-shows its total includes (F21)', () => {
-    expect(src('components/home/OwnerHome.tsx')).toContain("rowState(g) === 'no_show'");
+    // PR 454 — the desk shows one total (every visit of the day, no-shows included) and a now/later pill, no tiles that
+    // must add up to it.
+    const home = src('components/home/OwnerHome.tsx');
+    expect(home).toContain('total: (todayGroups ?? []).length');
+    expect(home).toContain('<strong className="rst-kpi-value">{todayByState.total}</strong>');
   });
   it('Bookings leave a moved booking out of the total (F23)', () => {
     expect(src('appointments/BookingsList.tsx')).toContain('const bookingCount = inView.filter((b) => !b.movedTo).length;');

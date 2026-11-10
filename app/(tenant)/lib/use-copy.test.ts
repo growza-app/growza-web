@@ -29,7 +29,7 @@ describe('the New booking flow words', () => {
     expect(said('en', useFlow).split('|')).toEqual([
       'Walk-in', '1 visit', '3 visits', 'nobody free', '4 free', 'Search services…', 'Search 52 services or packages…',
       'Starts now · 45 min in total', 'Token 7', "Priya hasn't turned up (12 min) — use this chair", 'Search for the client, or add them.', 'Which stylist?',
-      'Moved to Mon 10:00', 'Same stylist?', 'Last in', 'today', 'yesterday', '5 days ago', 'tomorrow', 'in about 9 days', '2 days late',
+      'Moved to Mon 10:00', 'Same stylist?', 'Last visit', 'today', 'yesterday', '5 days ago', 'tomorrow', 'in about 9 days', '2 days late',
     ]);
   });
 

@@ -16,14 +16,13 @@ import {
   type SortDirection,
 } from '../lib/api';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
-import { initials } from '../lib/appointment-display';
-import { waDigits } from '../components/BookingSheet';
 import { PageHeader } from '../components/PageHeader';
 import { useAreas, useWritable } from '../components/SessionProvider';
 import { PaginatedTable } from '../components/PaginatedTable';
 import { PAGE_SIZE } from '../components/Pagination';
 import {
   IconChevronDown,
+  IconChevronRight,
   IconPercent,
   IconPlus,
   IconRepeat,
@@ -31,14 +30,13 @@ import {
   IconSort,
   IconStaff,
   IconUserPlus,
-  IconWhatsApp,
-  IconCalendar,
 } from '../components/icons';
 import { useTranslations, useLocale } from 'next-intl';
 import { copy } from '../lib/copy';
 import { pickNoun } from '../lib/nouns';
 import { useNouns } from '../lib/use-nouns';
 import { ClientProfileCard } from '../components/ClientProfileCard';
+import { ClientCartoon } from '../components/ClientCartoon';
 import { PhoneField } from '../components/PhoneField';
 import { toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
@@ -364,26 +362,16 @@ export function CustomersClient({
       <tr key={c.id} data-row className={`cust-row-click${openClientId === c.id ? ' is-selected' : ''}`} aria-selected={openClientId === c.id || undefined} onClick={() => setOpenClientId(c.id)}>
         <td>
           <div className="cust-name-cell">
-            <span className="avatar">{initials(c.name)}</span>
+            <ClientCartoon id={c.id} className="avatar" />
             <span style={{ fontWeight: 620 }}>{c.name ?? t('unnamed')}</span>
             {branchTag(c.locationId)}
           </div>
         </td>
         <td>
-          {/* GRW-199 — a client recorded at the desk may have no
-              number; a wa.me link built from nothing opens WhatsApp
-              on a blank chat. */}
+          {/* GRW-199 — a client recorded at the desk may have no number: a dash, not an empty cell. */}
+          {/* Owner, 9 Nov 2026 — the number is read here; WhatsApp is in the card the row opens, not a link a stray tap fires. */}
           {c.waPhone ? (
-            <a
-              className="cust-phone"
-              href={`https://wa.me/${waDigits(c.waPhone)}`}
-              target="_blank"
-              rel="noreferrer"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <IconWhatsApp />
-              {formatPhone(c.waPhone)}
-            </a>
+            <span className="cust-phone">{formatPhone(c.waPhone)}</span>
           ) : (
             <span className="muted">—</span>
           )}
@@ -659,7 +647,40 @@ export function CustomersClient({
           </div>
         </div>
 
-        <div className="card">
+        {/*
+          Owner, 10 Nov 2026 — on a phone the groups are round pills you tap, each with its colour on its left edge —
+          the same colour as the edge of every row in that group. They replace the folded "How your guests are doing"
+          panel and the Filter menu there; a laptop keeps both.
+        */}
+        <div className="cust-pills mobile-only" role="group" aria-label={t('segmentsTitle', { noun: lower })}>
+          {[
+            { key: 'all' as const, label: t('allNoun', { noun: lower }), count: stats.total },
+            ...stats.segments.map((seg) => ({ key: seg.key as CustomerStatusFilter, label: t(`segments.${seg.key}.label`), count: seg.count })),
+            { key: 'never' as const, label: statusLabel('never'), count: stats.neverVisited },
+          ].map((pill) => {
+            const on = status === pill.key;
+            return (
+              <button
+                key={pill.key}
+                type="button"
+                className="cust-pill"
+                aria-pressed={on}
+                style={SEGMENT_TONE[pill.key] ? { ['--seg' as string]: SEGMENT_TONE[pill.key] } : undefined}
+                onClick={() => {
+                  setStatus(pill.key);
+                  setSort(pill.key === 'all' || pill.key === 'active' ? 'recent' : 'spent');
+                  setDirection('desc');
+                  setPageIndex(0);
+                }}
+              >
+                {pill.label}
+                <b>{pill.count}</b>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="card cust-list-card">
           <div className="offers-toolbar cust-toolbar">
             <label className="search-wrap">
               <IconSearch />
@@ -724,78 +745,52 @@ export function CustomersClient({
               total={page.total}
               onPageChange={(p) => setPageIndex(p - 1)}
               head={tableHead}
-              cards={visibleRows.map((c) => (
-                <div
-                  className="cust-card cust-row-click"
-                  key={c.id}
-                  data-row
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setOpenClientId(c.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setOpenClientId(c.id);
-                    }
-                  }}
-                >
-                  <div className="cust-card-head">
-                    <span className="avatar">{initials(c.name)}</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="cust-card-name">
-                        {c.name ?? t('unnamed')}
-                        {chipOf(c.segment)}
+              cards={visibleRows.map((c) => {
+                /*
+                 * Owner, 9 Nov 2026 — one clean row per person, the same height every time: who and what they have
+                 * spent on top, the facts in grey under it, a › to say the row opens. The number is TEXT: it was a
+                 * WhatsApp link, and a thumb scrolling the list opened chats nobody meant. WhatsApp (and Call) are in
+                 * the card the row opens.
+                 */
+                const facts = [
+                  c.waPhone ? formatPhone(c.waPhone) : null,
+                  c.lastBookingAt ? formatDateShort(c.lastBookingAt, undefined, locale) : null,
+                  bookingsOn ? t('visitCount', { count: c.totalBookings }) : null,
+                ].filter((x): x is string => Boolean(x));
+                return (
+                  <div
+                    className="cust-card cust-row-click"
+                    key={c.id}
+                    style={SEGMENT_TONE[c.segment] ? { ['--seg' as string]: SEGMENT_TONE[c.segment] } : undefined}
+                    data-row
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${c.name ?? t('unnamed')}, ${t('spent', { amount: formatMoney(c.totalSpentMinor) })}`}
+                    onClick={() => setOpenClientId(c.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setOpenClientId(c.id);
+                      }
+                    }}
+                  >
+                    <ClientCartoon id={c.id} className="cust-avatar" />
+                    <span className="cust-card-body">
+                      <span className="cust-card-top">
+                        <span className="cust-card-name">{c.name ?? t('unnamed')}</span>
+                        <span className="cust-card-amt">{formatMoney(c.totalSpentMinor)}</span>
+                      </span>
+                      <span className="cust-card-sub">
+                        {/* The group's word, beside its colour — but not when the pill above already names it for every row. */}
+                        {status === 'all' ? chipOf(c.segment) : null}
                         {branchTag(c.locationId)}
-                      </div>
-                    </div>
-                    {/*
-                      The money rides on the NAME line, where Airbnb puts a price. Left under the name it
-                      wrapped to a line of its own and bought nothing: it is two short figures, and the
-                      name line has room to the right on every phone from 344px up.
-                    */}
-                    <span className="cust-card-foot">
-                      {bookingsOn ? <span>{t('visitCount', { count: c.totalBookings })}</span> : null}
-                      <span className="cust-spent">{t('spent', { amount: formatMoney(c.totalSpentMinor) })}</span>
+                        <span className="cust-card-facts">{facts.join(' · ')}</span>
+                      </span>
                     </span>
+                    <IconChevronRight />
                   </div>
-                  {/*
-                    QA 2026-10-28 — the facts under the name are ONE line, and they sit outside the name
-                    column so they get the card's whole width. Inside it they had only what was left beside
-                    the money, which is how a phone number and a date came to take two lines of their own.
-                    The card was 158px and three clients filled a phone screen; it is 107px now.
-                    The phone keeps its own anchor and its own click (GRW-199): tapping the number opens
-                    WhatsApp, not the card behind it, and there may be no number to tap.
-                  */}
-                  <div className="cust-card-line">
-                      {c.waPhone && (
-                        <a
-                          className="cust-phone"
-                          href={`https://wa.me/${waDigits(c.waPhone)}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <IconWhatsApp />
-                          {formatPhone(c.waPhone)}
-                        </a>
-                      )}
-                      {c.lastBookingAt && (
-                        <span className="muted cl-last-visit">
-                          <span className="cl-last-visit-icon">
-                            <IconCalendar />
-                          </span>
-                          {/* No year: it is this year or it is in the text beside it, and "2026" was
-                              costing the service name the room to be read. */}
-                          {/* The separator belongs to the service, so it travels with it. A restaurant
-                              guest has no service name against their last visit, and the line read
-                              "28 Oct ·" with nothing after the dot. */}
-                          {formatDateShort(c.lastBookingAt, undefined, locale)}
-                          {c.lastServiceName ? ` · ${c.lastServiceName}` : ''}
-                        </span>
-                      )}
-                    </div>
-                </div>
-              ))}
+                );
+              })}
             >
               {tableRows}
             </PaginatedTable>

@@ -19,9 +19,12 @@ import { inVerticalWords } from './vertical-words';
  */
 async function labelsOfThisBusiness(): Promise<Record<string, string> | null> {
   try {
-    const { cookies } = await import('next/headers');
-    const jar = await cookies();
-    if (!jar.get('__Host-growza_session') && !jar.get('growza_session')) return null;
+    /*
+     * Owner, 10 Nov 2026 — asked of `/me` whether or not a session cookie is visible here. Gated on the cookie, a
+     * business signed in any other way (the local API's DEV_AUTH_BYPASS, which needs none) read every English message
+     * in the salon's words: a restaurant guest's card said "Client since". `/me` is the one that knows who is signed in;
+     * signed out, it refuses and the messages stay as written (the catch below).
+     */
     const { api } = await import('../app/(tenant)/lib/api');
     return (await api.me()).labels ?? null;
   } catch {

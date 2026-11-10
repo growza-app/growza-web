@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { api, formatMoney } from '../lib/api';
 import type { OrderListRow, OrdersPage } from '../lib/api-types';
@@ -13,6 +13,8 @@ import { IconSearch } from '../components/icons';
 import { intlLocale } from '../lib/format';
 import { useAreas } from '../components/SessionProvider';
 import { channelsOf, isDeliveryApp, sellsOnMarketplaces } from '../lib/order-channels';
+import { formatTokenNo } from '../pos/pos-helpers';
+import { groupByDay } from './order-days';
 
 /**
  * Jira GRW-614 — the Orders list.
@@ -30,7 +32,18 @@ import { channelsOf, isDeliveryApp, sellsOnMarketplaces } from '../lib/order-cha
  *
  * A row opens the order's own screen (Jira GRW-615): the whole card on a phone, the date and code in the table.
  */
-export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery: OrdersQuery; initial: OrdersPage | null; timezone: string }) {
+export function OrdersClient({
+  initialQuery,
+  initial,
+  timezone,
+  payout = null,
+}: {
+  initialQuery: OrdersQuery;
+  initial: OrdersPage | null;
+  timezone: string;
+  /** The delivery-app payout row, drawn under the filters so the orders come first on a phone (owner, 10 Nov 2026). */
+  payout?: ReactNode;
+}) {
   const t = useTranslations('orders');
   const locale = useLocale();
   const branchContext = useBranch();
@@ -137,7 +150,17 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
   const stateWord = (status: string): string => stateWords[status as keyof typeof stateWords] ?? t('list.unknownState');
   const when = (iso: string) =>
     new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: timezone }).format(new Date(iso));
+  // On a phone the day is the group's heading, so a row says only the time.
+  const timeOf = (iso: string) => new Intl.DateTimeFormat(intlLocale(locale), { hour: 'numeric', minute: '2-digit', timeZone: timezone }).format(new Date(iso));
+  const dayLabel = (key: string, kind: 'today' | 'yesterday' | 'other') =>
+    kind === 'today'
+      ? t('list.today')
+      : kind === 'yesterday'
+        ? t('list.yesterday')
+        : new Intl.DateTimeFormat(intlLocale(locale), { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${key}T12:00:00Z`));
   const whoOf = (r: OrderListRow) => r.who?.name?.trim() || t('list.noName');
+  // Cancelled and returned orders brought in no money: greyed and the amount crossed through, so a glance adds up only real sales.
+  const isVoid = (r: OrderListRow) => r.status === 'cancelled' || r.status === 'returned';
   // A channel this build has no word for is shown as the data spells it.
   const channelWord = (c: string): string => channelWords[c as keyof typeof channelWords] ?? c;
 
@@ -212,6 +235,8 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
         ) : null}
       </div>
 
+      {payout}
+
       {failed ? (
         <div className="ord-state" role="alert">
           <p>{t('list.error.body')}</p>
@@ -239,31 +264,44 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
         </div>
       ) : (
         <>
-          <ul className="ord-cards">
-            {rows.map((r) => (
-              <li key={r.id} className="ord-card-item">
-                <a className="ord-card" href={`/orders/${r.id}`}>
-                <div className="ord-card-top">
-                  <span className="ord-who">{whoOf(r)}</span>
-                  {showMoney && r.amountMinor !== undefined ? <span className="ord-amount">{formatMoney(r.amountMinor, 'INR', locale)}</span> : null}
-                </div>
-                <div className="ord-card-mid">
-                  <span>{when(r.soldAt)}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{channelWord(r.channel)}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{t('list.itemCount', { count: r.items })}</span>
-                </div>
-                <div className="ord-card-foot">
-                  <span className="ord-code">{t('list.orderCode', { code: r.code.toUpperCase() })}</span>
-                  {isDeliveryApp(r.channel) && r.externalRef ? <span className="ord-code">{t('list.appOrder', { ref: r.externalRef })}</span> : null}
-                  <span className={`ord-state-chip ${r.paymentPending ? 'ord-s-waiting' : `ord-s-${r.known ? r.status : 'unknown'}`}`}>{r.paymentPending ? t('list.paymentPending') : stateWord(r.status)}</span>
-                  {r.marketplaceUnconfirmed ? <span className="ord-unconfirmed">{t('list.notConfirmed')}</span> : null}
-                </div>
-                </a>
-              </li>
+          {/* Owner, 10 Nov 2026 — on a phone, one rounded list per day under its own heading; each order is two lines:
+              token, who and how much, then the time, where from, how many and its state. */}
+          <div className="ord-days">
+            {groupByDay(rows, timezone, Date.now()).map((day) => (
+              <section key={day.key} className="ord-day" aria-label={dayLabel(day.key, day.kind)}>
+                <h3 className="ord-day-head">{dayLabel(day.key, day.kind)}</h3>
+                <ul className="ord-cards">
+                  {day.rows.map((r) => (
+                    <li key={r.id} className="ord-card-item">
+                      <a className={`ord-card${isVoid(r) ? ' is-void' : ''}`} href={`/orders/${r.id}`}>
+                        <div className="ord-card-top">
+                          <span className="ord-who">
+                            {r.tokenNo ? <span className="ord-token">{formatTokenNo(r.tokenNo)}</span> : null}
+                            {whoOf(r)}
+                          </span>
+                          {showMoney && r.amountMinor !== undefined ? <span className="ord-amount">{formatMoney(r.amountMinor, 'INR', locale)}</span> : null}
+                        </div>
+                        <div className="ord-card-foot">
+                          <span className="ord-card-mid">
+                            <span>{timeOf(r.soldAt)}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>{channelWord(r.channel)}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>{t('list.itemCount', { count: r.items })}</span>
+                            {/* A token says which order this is; only an order without one (a marketplace's, an older one) needs its code. */}
+                            {r.tokenNo ? null : <span className="ord-code">{t('list.orderCode', { code: r.code.toUpperCase() })}</span>}
+                            {isDeliveryApp(r.channel) && r.externalRef ? <span className="ord-code">{t('list.appOrder', { ref: r.externalRef })}</span> : null}
+                          </span>
+                          <span className={`ord-state-chip ${r.paymentPending ? 'ord-s-waiting' : `ord-s-${r.known ? r.status : 'unknown'}`}`}>{r.paymentPending ? t('list.paymentPending') : stateWord(r.status)}</span>
+                          {r.marketplaceUnconfirmed ? <span className="ord-unconfirmed">{t('list.notConfirmed')}</span> : null}
+                        </div>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
-          </ul>
+          </div>
 
           <table className="ord-table">
             <thead>
@@ -283,7 +321,8 @@ export function OrdersClient({ initialQuery, initial, timezone }: { initialQuery
                     <a className="ord-row-link" href={`/orders/${r.id}`}>
                       {when(r.soldAt)}
                     </a>
-                    <div className="ord-code">{t('list.orderCode', { code: r.code.toUpperCase() })}</div>
+                    {/* The token the guest holds where there is one, as on the phone; the code only for an order without. */}
+                    <div className="ord-code">{r.tokenNo ? formatTokenNo(r.tokenNo) : t('list.orderCode', { code: r.code.toUpperCase() })}</div>
                     {isDeliveryApp(r.channel) && r.externalRef ? <div className="ord-code">{t('list.appOrder', { ref: r.externalRef })}</div> : null}
                   </td>
                   <td>

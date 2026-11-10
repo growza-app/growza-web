@@ -458,10 +458,7 @@
   font-weight: 500;
   line-height: 1.25;
   min-height: 1.25em;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .pf-tile-price {

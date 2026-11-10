@@ -204,7 +204,7 @@
     "products": "products"
   },
   "customers": {
-    "subtitle": "View and manage your {noun}, their history and total spend.",
+    "subtitle": "See your {noun}, what they bought and how much they spent.",
     "addNoun": "Add {noun}",
     "adding": "Adding…",
     "cancel": "Cancel",
@@ -213,58 +213,58 @@
     "kpiTotal": "Total {noun}",
     "kpiTotalSub": "All time",
     "kpiNew": "New this month",
-    "kpiNewSub": "First seen this month",
-    "kpiReturning": "Returning {noun}",
-    "kpiReturningSub": "Booked more than once",
-    "kpiRepeat": "Repeat rate",
-    "kpiRepeatSub": "Returning ÷ total {noun}",
-    "segmentsTitle": "How your {noun} are doing",
-    "segmentsHint": "Tap one to see just those",
-    "neverVisited": "{count} ({pct}%) have not been in yet, so they are in none of these",
-    "neverVisitedShort": "{count} ({pct}%) never been in",
-    "clearFilter": "Show everyone",
+    "kpiNewSub": "Came first time this month",
+    "kpiReturning": "Came back",
+    "kpiReturningSub": "Came more than once",
+    "kpiRepeat": "% came back",
+    "kpiRepeatSub": "Out of all {noun}",
+    "segmentsTitle": "When {noun} last came",
+    "segmentsHint": "Tap one to see only them",
+    "neverVisited": "{count} ({pct}%) never came, so they are not in these groups",
+    "neverVisitedShort": "{count} ({pct}%) never came",
+    "clearFilter": "Show all",
     "visitsColumn": "Visits",
     "visitCount": "{count, plural, one {# visit} other {# visits}}",
     "sortBy": "Sort by {column}",
     "segments": {
       "active": {
-        "label": "Coming in",
+        "label": "Came recently",
         "range": "0–{to} days"
       },
       "due": {
-        "label": "Due a visit",
+        "label": "Due now",
         "range": "{from}–{to} days"
       },
       "at_risk": {
-        "label": "Slipping away",
+        "label": "Not seen lately",
         "range": "{from}–{to} days"
       },
       "inactive": {
-        "label": "Gone quiet",
+        "label": "Stopped coming",
         "range": "{from}+ days"
       }
     },
-    "statusNever": "Never been in",
-    "statusLapsed": "Due or slipping",
-    "searchPlaceholder": "Search {noun} by name or phone…",
+    "statusNever": "Never came",
+    "statusLapsed": "Due or not seen lately",
+    "searchPlaceholder": "Search by name or phone",
     "allNoun": "All {noun}",
-    "noMatch": "No {noun} match your search.",
+    "noMatch": "No {noun} found.",
     "loading": "Loading…",
     "colCustomer": "{customer}",
-    "colPhone": "Phone / WhatsApp",
+    "colPhone": "Phone",
     "colLastBooking": "Last booking",
     "colTotalSpent": "Total spent",
-    "colLastSeen": "Last seen",
+    "colLastSeen": "Last visit",
     "unnamed": "Unnamed",
     "never": "Never",
     "spent": "{amount} spent",
-    "addHint": "Someone already on file with this number is updated, never duplicated.",
+    "addHint": "If this number is already saved, we update that person. No double entry.",
     "whatsappNumber": "WhatsApp number",
     "nameOptional": "Name (optional)",
     "namePlaceholder": "e.g. Priya Sharma",
     "couldNotAdd": "Could not add the {noun}.",
     "whichBranch": "Which branch",
-    "deskPick": "Pick a {noun} to see their story, or add a new one.",
+    "deskPick": "Tap a {noun} to see their details, or add a new one.",
     "noneYet": "No {noun} here yet."
   },
   "tax": {
@@ -2429,21 +2429,21 @@
     "kicker": "Client",
     "totalSpent": "Total spent",
     "totalVisits": "Visits",
-    "insight": "What we know",
+    "insight": "Details",
     "points": "Reward points",
     "pointsCount": "{n, plural, one {# point} other {# points}}",
     "pointsWorth": "Worth {worth} off a bill",
     "pointsHeld": "{n, plural, one {# point is} other {# points are}} not ready to use yet",
     "pointsNeedMore": "{n, plural, one {# more point} other {# more points}} to use them",
     "pointsExpire": "{n, plural, one {# point expires} other {# points expire}} on {on}",
-    "recent": "Last few visits",
+    "recent": "Recent visits",
     "daysAgo": "{n, plural, =0 {today} one {yesterday} other {# days ago}}",
     "days": "{n, plural, one {# day} other {# days}}",
     "dueIn": "{n, plural, one {tomorrow} other {in about # days}}",
     "dueNow": "due now",
     "overdue": "{n, plural, one {# day late} other {# days late}}",
     "notEnough": "not enough visits yet",
-    "neverIn": "never been in",
+    "neverIn": "never came",
     "call": "Call",
     "viewBookings": "See bookings",
     "viewOrders": "See orders",
@@ -2453,24 +2453,25 @@
     "rows": {
       "visits": "Visits",
       "spent": "Total spent",
-      "avgSpend": "Average spend",
-      "lastVisit": "Last in",
+      "avgSpend": "Average bill",
+      "lastVisit": "Last visit",
       "favourite": "Usual service",
-      "topProvider": "Usually sees",
+      "topProvider": "Usually with",
       "interval": "Comes every",
-      "cancelRate": "Calls off",
+      "cancelRate": "Cancels",
       "since": "Client since",
-      "nextVisit": "Due back"
+      "nextVisit": "Next visit due"
     },
     "delete": "Delete client",
     "deleteTitle": "Delete this client?",
-    "deleteBody": "They leave your client list now. You can undo this for {days} days; after that their name and number are erased for good.",
+    "deleteBody": "They are removed from your client list now. You can undo this for {days} days. After that, their name and number are deleted forever.",
     "deleteConfirm": "Delete",
     "deleting": "Deleting…",
     "deleted": "Client deleted. You can undo this for {days} days.",
     "undo": "Undo",
-    "undoing": "Bringing back…",
-    "actionFailed": "That did not work. Try again."
+    "undoing": "Undoing…",
+    "actionFailed": "That did not work. Try again.",
+    "whatsapp": "WhatsApp"
   },
   "reports": {
     "title": "Reports",
@@ -2578,10 +2579,10 @@
       "noPrior": "Nothing to compare with yet"
     },
     "segments": {
-      "active": "Coming in",
-      "due": "Due a visit",
-      "at_risk": "Slipping away",
-      "inactive": "Gone quiet"
+      "active": "Came recently",
+      "due": "Due now",
+      "at_risk": "Not seen lately",
+      "inactive": "Stopped coming"
     },
     "segmentsTitle": "How your clients are doing",
     "segmentsHint": "{total} clients, by how long since they were last in",
@@ -2731,7 +2732,7 @@
           "hint": "came often, gone 2 months"
         }
       },
-      "neverBand": "Never been in",
+      "neverBand": "Never came",
       "spend": "What people spend",
       "spendHint": "Every client, by what they have spent with you in total — not just this period",
       "frequency": "How often they come",
@@ -2744,11 +2745,11 @@
       "colVisits": "Visits",
       "colSpend": "Total spent",
       "colAvg": "Average",
-      "colLast": "Last in",
+      "colLast": "Last visit",
       "colFavourite": "Usual",
       "colInterval": "Comes every",
       "daysAgo": "{n, plural, one {# day ago} other {# days ago}}",
-      "neverIn": "never been in",
+      "neverIn": "never came",
       "repeatRate": "Came back",
       "comesEvery": "~{days}d"
     },
@@ -2780,7 +2781,7 @@
       "visits_5_to_9": "5–9 visits",
       "visits_2_to_4": "2–4 visits",
       "visits_once": "Just once",
-      "visits_never": "Never been in",
+      "visits_never": "Never came",
       "products": "Products"
     },
     "bookingsCount": "{n, plural, one {# {one}} other {# {other}}}",
@@ -3242,7 +3243,13 @@
       "menu": "Menu",
       "searchDishes": "Search {count} dishes",
       "noDishes": "Nothing on the menu yet. Add dishes on the Menu screen.",
-      "noDishMatch": "No dish by that name."
+      "noDishMatch": "No dish by that name.",
+      "addingToOrder": "Adding to {token} — these go on the same bill",
+      "stopAdding": "Stop",
+      "addToOrder": "Add to {token} · {amount}",
+      "addToOrderShort": "Add to {token}",
+      "addingBusy": "Adding…",
+      "addToOrderFailed": "Could not add these to the order. Please try again."
     },
     "sellTitle": "Sell {product}",
     "pickProduct": "Select a product",
@@ -4361,7 +4368,16 @@
     "selectPaymentAndComplete": "Select payment & Mark {token} Done",
     "needQueuePaymentMode": "Select how the customer paid before marking this order done.",
     "settleFailed": "Could not save payment. Please try again.",
-    "backToQueueDone": "Back to queue"
+    "backToQueueDone": "Back to queue",
+    "takePayment": "Take payment · {token}",
+    "addItems": "Add items",
+    "cancelOrder": "Cancel order",
+    "cancelOrderTitle": "Cancel order {token}?",
+    "cancelOrderBody": "{amount} not collected. The order is removed from the queue and kept in Orders as Cancelled.",
+    "cancelOrderConfirm": "Cancel order",
+    "keepOrder": "Keep order",
+    "cancelFailed": "Could not cancel this order. Please try again.",
+    "addedToOrder": "Added to {token}. It now comes to {amount}."
   },
   "sales": {
     "scanUnknown": "No product has the code {code}. Check the bottle.",
@@ -4575,8 +4591,8 @@
       "fromApp": "A {channel} order. Not in your list."
     },
     "list": {
-      "searchPlaceholder": "Order number or name",
-      "searchLabel": "Search orders",
+      "searchPlaceholder": "Token, name or order number",
+      "searchLabel": "Search orders by token, name or order number",
       "filtersLabel": "Filter orders",
       "channelGroup": "Where from",
       "stateGroup": "State",
@@ -4595,7 +4611,7 @@
         "amount": "Amount",
         "state": "State"
       },
-      "itemCount": "{count, plural, one {# item} other {# items}}",
+      "itemCount": "{count, plural, =0 {No items} one {# item} other {# items}}",
       "orderCode": "Order #{code}",
       "appOrder": "App order {ref}",
       "noName": "No name",
@@ -4624,7 +4640,9 @@
       "clientEmpty": {
         "title": "Nothing from them yet",
         "body": "Anything they order will show up here."
-      }
+      },
+      "today": "Today",
+      "yesterday": "Yesterday"
     },
     "detail": {
       "paidOn": "Paid on {channel}",
@@ -4937,7 +4955,7 @@
       "close": "Close"
     },
     "payout": {
-      "title": "What the delivery apps should pay you",
+      "title": "What delivery apps owe you",
       "rangeLabel": "Period",
       "ranges": {
         "today": "Today",
@@ -5214,5 +5232,22 @@
     "Book a treatment": "Book a treatment",
     "Take an order": "Take an order",
     "Order now": "Order now"
+  },
+  "share": {
+    "button": "Share on WhatsApp",
+    "buttonFor": "Share on WhatsApp: {name}",
+    "savedOffer": "Offer saved. Tell your clients now?",
+    "savedPackage": "Package saved. Tell your clients now?",
+    "later": "Later",
+    "copyTitle": "Copy and paste in WhatsApp",
+    "copyNote": "WhatsApp did not open. Copy the message and paste it in WhatsApp.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "close": "Close",
+    "noNumberTitle": "Clients can't reach you",
+    "noNumberBody": "This message has no phone number. Add your business number in Settings so clients know how to book.",
+    "noNumberBodyStaff": "This message has no phone number. Ask the owner to add the business number in Settings.",
+    "shareAnyway": "Share anyway",
+    "addNumber": "Add number"
   }
 }

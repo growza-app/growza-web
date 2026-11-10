@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ComponentProps } from 'react';
 import { PayFlow } from '../../appointments/new/PayFlow';
 
 /**
@@ -20,6 +20,8 @@ export function SellProductClient({
   onSaleCompleted,
   onOpenQueue,
   reloadKey,
+  addingTo,
+  inactive,
 }: {
   timezone: string;
   backTo?: '/products' | '/sales' | '/orders';
@@ -35,6 +37,10 @@ export function SellProductClient({
   onOpenQueue?: () => void;
   /** Incremented after a return or exchange on POS so the product shelf refreshes its live stock counts without unmounting the till. */
   reloadKey?: number;
+  /** Owner, 9 Nov 2026 — the Queue's "Add items": picks go onto that waiting order instead of a new sale. */
+  addingTo?: ComponentProps<typeof PayFlow>['addingTo'];
+  /** Mounted but hidden: no keyboard shortcuts, no scanner (see PayFlow's `inactive`). */
+  inactive?: boolean;
 }) {
   const [ready, setReady] = useState(false);
   const [wide, setWide] = useState(false);
@@ -70,6 +76,8 @@ export function SellProductClient({
       onSaleCompleted={onSaleCompleted}
       onOpenQueue={onOpenQueue}
       reloadKey={reloadKey}
+      addingTo={addingTo}
+      inactive={inactive}
     />
   );
 }

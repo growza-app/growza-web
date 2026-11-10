@@ -579,6 +579,10 @@
     display: none !important;
   }
 
+  .rst-desk.is-settling {
+    visibility: hidden;
+  }
+
   .hm-head.is-rst-head {
     background: transparent;
     border-bottom: none;
@@ -986,6 +990,15 @@
     color: var(--text);
   }
 
+  button.rst-order-row {
+    width: 100%;
+    background: none;
+    border: 0;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
   .rst-order-icon {
     width: 2.75rem;
     height: 2.75rem;
@@ -1159,6 +1172,217 @@
   .rst-att-chev {
     color: var(--muted);
     flex-shrink: 0;
+  }
+
+  /* =====================================================================
+     SALON RECEPTION DESKTOP HOME (`.sln-desk`)
+     ===================================================================== */
+  /* OwnerHome's page body already carries the side gutter; the restaurant's `.rst-desk` keeps its own. */
+  .sln-desk {
+    gap: var(--sp-4);
+    padding-inline: 0;
+  }
+
+  .sln-desk .rst-kpi-sales .rst-kpi-wave {
+    color: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+
+  .sln-desk .rst-kpi-orders .rst-kpi-wave {
+    color: color-mix(in srgb, var(--blue) 7%, transparent);
+  }
+
+  .sln-desk .rst-kpi-customers .rst-kpi-wave {
+    color: color-mix(in srgb, var(--amber) 8%, transparent);
+  }
+
+  /* A card this role may not open is drawn without a link (no href): no pointer, no hover lift. */
+  .sln-desk a.rst-kpi:not([href]),
+  .sln-desk a.sln-team-row:not([href]) {
+    cursor: default;
+  }
+
+  .sln-kpi-pill {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    margin-top: 0.25rem;
+    padding: 0.2rem 0.625rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sln-kpi-pill.is-blue {
+    background: var(--blue-soft);
+    color: var(--blue);
+  }
+
+  .sln-kpi-pill.is-amber {
+    background: var(--amber-soft);
+    color: var(--amber-ink);
+  }
+
+  .sln-action-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-1);
+    min-height: 6.75rem;
+    padding: var(--sp-4);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgb(16 24 40 / 3%);
+    text-decoration: none;
+    color: var(--text);
+    text-align: center;
+  }
+
+  .sln-action-tile:hover {
+    border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+    background: var(--page-bg);
+  }
+
+  .sln-action-tile strong {
+    font-size: 0.9375rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .sln-action-tile span {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  .sln-action-badge {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--radius);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sln-action-badge.is-primary {
+    background: color-mix(in srgb, var(--surface) 16%, transparent);
+    color: var(--surface);
+  }
+
+  .sln-action-badge.is-green {
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+  }
+
+  .sln-action-badge.is-blue {
+    background: var(--blue-soft);
+    color: var(--blue);
+  }
+
+  .sln-action-badge.is-amber {
+    background: var(--amber-soft);
+    color: var(--amber);
+  }
+
+  .sln-action-tile.is-primary {
+    background: var(--accent-deep);
+    border-color: var(--accent-deep);
+    color: var(--surface);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--accent-deep) 22%, transparent);
+  }
+
+  .sln-action-tile.is-primary:hover {
+    background: var(--sidebar);
+  }
+
+  .sln-action-tile.is-primary strong {
+    color: var(--surface);
+  }
+
+  .sln-action-tile.is-primary span {
+    color: var(--accent-soft);
+  }
+
+  .rst-status-pill.is-done-neutral {
+    background: var(--page-bg);
+    color: var(--muted);
+  }
+
+  .sln-team-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sln-team-list li + li {
+    border-top: 1px solid var(--border);
+  }
+
+  .sln-team-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .sln-team-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .sln-team-name {
+    font-size: 0.9375rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .sln-team-sub {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sln-team-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3125rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .sln-team-pill.is-busy {
+    background: var(--amber-soft);
+    color: var(--amber-ink);
+  }
+
+  .sln-team-pill.is-available {
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+  }
+
+  .sln-team-pill.is-absent {
+    background: var(--danger-soft);
+    color: var(--danger-deep);
+  }
+
+  .sln-att-stack {
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
   }
 }
 

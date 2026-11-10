@@ -33,7 +33,7 @@ describe('every noun from the business’s own words', () => {
     expect(tEn('pos.shortcutClient', { customer: restaurant.customer })).toBe('Guest');
     expect(tEn('orders.detail.client', { customer: restaurant.customer })).toBe('Guest');
     expect(tEn('customers.colCustomer', { customer: restaurant.customer })).toBe('Guest');
-    expect(tEn('customers.segmentsTitle', { noun: 'guests' })).toBe('How your guests are doing');
+    expect(tEn('customers.segmentsTitle', { noun: 'guests' })).toBe('When guests last came');
     expect(tEn('tax.pricesInclude', { customer: word(restaurant, 'customer') })).toContain('so a guest pays');
     expect(homeCopy('en', restaurant).shop.addCustomerAction).toBe('Add guest');
   });
@@ -44,8 +44,8 @@ describe('every noun from the business’s own words', () => {
     expect(tEn('sales.returnSheet.title', { product: word(retail, 'product') })).toBe('Return product');
     expect(tEn('payFlow.sellTitle', { product: word(retail, 'product') })).toBe('Sell product');
     expect(homeCopy('en', retail).shop.addCustomerAction).toBe('Add customer');
-    expect(tEn('customers.segmentsTitle', { noun: 'clients' })).toBe('How your clients are doing');
-    expect(homeCopy('en', salon).clientsDoingTitle).toBe('How your clients are doing');
+    expect(tEn('customers.segmentsTitle', { noun: 'clients' })).toBe('When clients last came');
+    expect(homeCopy('en', salon).clientsDoingTitle).toBe('When clients last came');
   });
 
   it('the salon-only sentences are about any business', () => {

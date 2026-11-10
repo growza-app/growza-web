@@ -66,8 +66,32 @@ export function tokensStillOnTheBoard<T extends { items: readonly unknown[] }>(t
  * So the number is worked out over every order of the day that still counts as one — everything but a cancelled
  * order, a returned one included — in the order the POS sorts them; WHICH of them to show is decided afterwards.
  */
+/**
+ * Owner, 9 Nov 2026 — the token each order of the day carries.
+ *
+ * The number the API stored when the order was rung up (0174) is the order's number, full stop: a cancel or a return
+ * of another order can never move it. Only an order the API gave no number — a visit that never had a token, or
+ * every order from an API older than 0174 — is numbered here, in the order of the day, after the stored ones, so it
+ * cannot take a number another order already has. With no stored numbers at all this is the old place-in-the-day.
+ */
+export function numberTheDay<T>(sortedOfTheDay: readonly T[], storedOf: (o: T) => number | null | undefined, keyOf: (o: T) => string): Map<string, number> {
+  const out = new Map<string, number>();
+  let next = 0;
+  for (const o of sortedOfTheDay) {
+    const n = storedOf(o);
+    if (typeof n === 'number' && n >= 1) {
+      out.set(keyOf(o), n);
+      next = Math.max(next, n);
+    }
+  }
+  for (const o of sortedOfTheDay) {
+    if (!out.has(keyOf(o))) out.set(keyOf(o), ++next);
+  }
+  return out;
+}
+
 export function tokenNumbersOf(
-  orders: ReadonlyArray<{ id: string; soldAt: string; status?: string }>,
+  orders: ReadonlyArray<{ id: string; soldAt: string; status?: string; tokenNo?: number | null }>,
   isToday: (ms: number) => boolean,
 ): Map<string, number> {
   const counted = orders
@@ -81,7 +105,7 @@ export function tokenNumbersOf(
       const tb = Date.parse(b.soldAt) || 0;
       return ta !== tb ? ta - tb : a.id.localeCompare(b.id);
     });
-  return new Map(counted.map((o, idx) => [o.id, idx + 1]));
+  return numberTheDay(counted, (o) => o.tokenNo, (o) => o.id);
 }
 
 /** Storage key for today's token queue state at a branch; includes `todayISO` so it resets each new day. */
@@ -120,9 +144,12 @@ export function buildDailyTokens(
     return ta !== tb ? ta - tb : a[0].localeCompare(b[0]);
   });
 
-  return visits.map(([key, legs], idx) => {
+  // The leg that carries a token (a walk-in's is on its first leg; an order has one row) — see `numberTheDay`.
+  const numbers = numberTheDay(visits, ([, legs]) => legs.find((l) => typeof l.tokenNo === 'number')?.tokenNo, ([key]) => key);
+
+  return visits.map(([key, legs]) => {
     const first = legs[0]!;
-    const tokenNo = idx + 1;
+    const tokenNo = numbers.get(key)!;
     const items: Array<{ name: string; qty: number; paidMinor: number }> = [];
     for (const leg of legs) {
       if (leg.serviceName) {
@@ -130,11 +157,21 @@ export function buildDailyTokens(
         items.push({ name: leg.serviceName, qty: 1, paidMinor: paid });
       }
     }
+    // Owner, 9 Nov 2026 — "Add items" writes its own lines onto the order, so the same dish added twice is one row here.
+    const sameProduct = new Map<string, { name: string; qty: number; paidMinor: number }>();
     for (const p of first.products ?? []) {
       const netQty = p.qty - (p.returnedQty ?? 0);
       const netPaidMinor = Math.max(0, Number(p.paidMinor ?? 0) - Number(p.returnedMinor ?? 0));
-      if (netQty > 0) {
-        items.push({ name: p.name, qty: netQty, paidMinor: netPaidMinor });
+      if (netQty <= 0) continue;
+      const key = `${p.productId ?? ''}|${p.variantId ?? ''}|${p.name}`;
+      const seen = sameProduct.get(key);
+      if (seen) {
+        seen.qty += netQty;
+        seen.paidMinor += netPaidMinor;
+      } else {
+        const row = { name: p.name, qty: netQty, paidMinor: netPaidMinor };
+        sameProduct.set(key, row);
+        items.push(row);
       }
     }
     const totalMinor = items.reduce((sum, item) => sum + item.paidMinor, 0);

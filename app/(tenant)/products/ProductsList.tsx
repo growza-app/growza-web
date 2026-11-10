@@ -15,6 +15,8 @@ import { useAreas, useBusinessWritable, useSession, useWritable } from '../compo
 import { canSee, type MemberRole } from '../lib/nav-policy';
 import { IconCart, IconEdit, IconPlus, IconSearch, IconSort, IconUpload } from '../components/icons';
 import { ProductPhoto } from '../components/ProductPhoto';
+import { ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
+import { productShareItem } from '../lib/share-on-whatsapp';
 import { matchItems } from '../lib/service-match';
 import { productMatchable } from '../lib/product-match';
 import { ProductSheet } from './ProductSheet';
@@ -181,6 +183,7 @@ export function ProductsList({
 }) {
   const t = useTranslations('products');
   const tc = useTranslations('common');
+  const tShare = useTranslations('share');
   const router = useRouter();
   const session = useSession();
   const writable = useWritable();
@@ -457,7 +460,7 @@ export function ProductsList({
         </span>
       </div>
       <div className="prd-stat prd-stat-worth" role="listitem">
-        <span className="prd-stat-n">{topSeller ? topSeller.name : totalSold}</span>
+        <span className={`prd-stat-n${topSeller ? ' prd-stat-name' : ''}`}>{topSeller ? topSeller.name : totalSold}</span>
         <span className="prd-stat-l">{topSeller ? t('topSeller') : t('cols.sold')}</span>
         <span className="prd-stat-sub">
           {topSeller ? `${t('sold', { n: topSeller.sold })} · ${formatMoney(topSeller.priceMinor)}` : t('soldAcrossMenu', { sold: t('sold', { n: totalSold }) })}
@@ -618,8 +621,9 @@ export function ProductsList({
       <ul className="prd-list">
         {pageRows.map((p) => {
           const tone = stockTone(p);
+          const shareItem = productShareItem(p, { counted });
           return (
-            <li key={p.id} className={`prd-row ${p.active ? '' : 'prd-row-retired'}`}>
+            <li key={p.id} className={`prd-row ${p.active ? '' : 'prd-row-retired'} ${shareItem ? 'prd-row-share' : ''}`}>
               <button
                 type="button"
                 className={`prd-row-tap ${isOn(p) ? 'is-on' : ''}`}
@@ -647,6 +651,8 @@ export function ProductsList({
                   <span className="prd-sold">{t('sold', { n: p.sold })}</span>
                 </span>
               </button>
+              {/* Jira GRW-671 — outside the row's own button: a button cannot hold a button. */}
+              {shareItem ? <ShareOnWhatsAppButton item={shareItem} branchId={p.locationId} bookable={false} photoUrl={p.imageUrl} /> : null}
             </li>
           );
         })}
@@ -674,6 +680,8 @@ export function ProductsList({
                 <SortableTh col="sold" label={t('cols.sold')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
               )}
               <SortableTh col="status" label={t('cols.status')} sort={sort} dir={sortDir} onSort={pickColumnSort} />
+              {/* Jira GRW-671 — the share column has no title of its own; the button names itself. */}
+              <th className="prd-td-share" aria-label={tShare('button')} />
             </tr>
           </thead>
           <tbody>
@@ -682,6 +690,7 @@ export function ProductsList({
               const costNum = p.costMinor != null ? Number(p.costMinor) : null;
               const marginPct =
                 costNum != null && priceNum > 0 ? Math.round(((priceNum - costNum) / priceNum) * 100) : null;
+              const shareItem = productShareItem(p, { counted });
               return (
                 <tr
                   key={p.id}
@@ -742,6 +751,9 @@ export function ProductsList({
                     </td>
                   )}
                   <td>{pill(p)}</td>
+                  <td className="prd-td-share" onClick={(e) => e.stopPropagation()}>
+                    {shareItem ? <ShareOnWhatsAppButton item={shareItem} branchId={p.locationId} bookable={false} photoUrl={p.imageUrl} /> : null}
+                  </td>
                 </tr>
               );
             })}
@@ -771,9 +783,11 @@ export function ProductsList({
       <div className="prd-menu-grid">
         {pageRows.map((p) => {
           const isBestSeller = topSeller !== null && topSeller.id === p.id && p.sold > 0;
+          const shareItem = productShareItem(p, { counted });
           return (
+            // Jira GRW-671 — the card is a button, and a button cannot hold one: the share sits over it, in a wrapper.
+            <div key={p.id} className="prd-menu-card-wrap">
             <button
-              key={p.id}
               type="button"
               className={`prd-menu-card ${isOn(p) ? 'is-on' : ''} ${p.active ? '' : 'is-retired'}`}
               aria-current={isOn(p) ? 'true' : undefined}
@@ -798,6 +812,8 @@ export function ProductsList({
                 </div>
               </div>
             </button>
+            {shareItem ? <ShareOnWhatsAppButton item={shareItem} branchId={p.locationId} bookable={false} photoUrl={p.imageUrl} /> : null}
+            </div>
           );
         })}
       </div>

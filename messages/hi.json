@@ -214,7 +214,7 @@
     "kpiTotalSub": "अब तक",
     "kpiNew": "इस महीने नए",
     "kpiNewSub": "इस महीने पहली बार आए",
-    "kpiReturning": "दोबारा आए {noun}",
+    "kpiReturning": "दोबारा आए",
     "kpiReturningSub": "एक से ज़्यादा बार बुकिंग की",
     "kpiRepeat": "दोबारा आने की दर",
     "kpiRepeatSub": "दोबारा आए ÷ कुल {noun}",
@@ -246,7 +246,7 @@
     },
     "statusNever": "कभी नहीं आए",
     "statusLapsed": "आने का समय या दूर हो रहे",
-    "searchPlaceholder": "{noun} को नाम या फ़ोन से खोजें…",
+    "searchPlaceholder": "नाम या फ़ोन से खोजें",
     "allNoun": "सभी {noun}",
     "noMatch": "आपकी खोज से कोई {noun} नहीं मिला।",
     "loading": "लोड हो रहा है…",
@@ -2470,7 +2470,8 @@
     "deleted": "क्लाइंट हटा दिया गया। {days} दिन तक वापस ला सकते हैं।",
     "undo": "वापस लाएँ",
     "undoing": "वापस ला रहे हैं…",
-    "actionFailed": "नहीं हो पाया। फिर से कोशिश करें।"
+    "actionFailed": "नहीं हो पाया। फिर से कोशिश करें।",
+    "whatsapp": "WhatsApp"
   },
   "reports": {
     "title": "रिपोर्ट",
@@ -3242,7 +3243,13 @@
       "menu": "मेन्यू",
       "searchDishes": "{count} डिश में खोजें",
       "noDishes": "अभी मेन्यू में कुछ नहीं है। मेन्यू स्क्रीन पर डिश जोड़ें।",
-      "noDishMatch": "इस नाम की कोई डिश नहीं।"
+      "noDishMatch": "इस नाम की कोई डिश नहीं।",
+      "addingToOrder": "{token} में जोड़ रहे हैं — ये उसी बिल में जाएँगे",
+      "stopAdding": "रोकें",
+      "addToOrder": "{token} में जोड़ें · {amount}",
+      "addToOrderShort": "{token} में जोड़ें",
+      "addingBusy": "जोड़ रहे हैं…",
+      "addToOrderFailed": "ऑर्डर में नहीं जुड़ सका। फिर से कोशिश करें।"
     },
     "sellTitle": "{product} बेचें",
     "pickProduct": "एक सामान चुनें",
@@ -4361,7 +4368,16 @@
     "selectPaymentAndComplete": "भुगतान चुनें और {token} पूरा करें",
     "needQueuePaymentMode": "इस ऑर्डर को पूरा करने से पहले चुनें कि ग्राहक ने कैसे भुगतान किया।",
     "settleFailed": "भुगतान सेव नहीं हो सका। कृपया फिर कोशिश करें।",
-    "backToQueueDone": "कतार पर वापस जाएँ"
+    "backToQueueDone": "कतार पर वापस जाएँ",
+    "takePayment": "पेमेंट लें · {token}",
+    "addItems": "और जोड़ें",
+    "cancelOrder": "ऑर्डर रद्द करें",
+    "cancelOrderTitle": "ऑर्डर {token} रद्द करें?",
+    "cancelOrderBody": "{amount} नहीं लिया गया। ऑर्डर कतार से हट जाएगा और Orders में रद्द के रूप में रहेगा।",
+    "cancelOrderConfirm": "ऑर्डर रद्द करें",
+    "keepOrder": "ऑर्डर रखें",
+    "cancelFailed": "यह ऑर्डर रद्द नहीं हो सका। फिर से कोशिश करें।",
+    "addedToOrder": "{token} में जुड़ गया। अब कुल {amount} है।"
   },
   "sales": {
     "scanUnknown": "कोड {code} वाला कोई सामान नहीं मिला। बोतल जाँचें।",
@@ -4575,8 +4591,8 @@
       "fromApp": "{channel} का ऑर्डर। आपकी सूची में नहीं।"
     },
     "list": {
-      "searchPlaceholder": "ऑर्डर नंबर या नाम",
-      "searchLabel": "ऑर्डर खोजें",
+      "searchPlaceholder": "टोकन, नाम या ऑर्डर नंबर",
+      "searchLabel": "टोकन, नाम या ऑर्डर नंबर से ऑर्डर खोजें",
       "filtersLabel": "ऑर्डर छाँटें",
       "channelGroup": "कहाँ से",
       "stateGroup": "स्थिति",
@@ -4595,7 +4611,7 @@
         "amount": "रकम",
         "state": "स्थिति"
       },
-      "itemCount": "{count, plural, one {# सामान} other {# सामान}}",
+      "itemCount": "{count, plural, =0 {कोई सामान नहीं} one {# सामान} other {# सामान}}",
       "orderCode": "ऑर्डर #{code}",
       "appOrder": "ऐप ऑर्डर {ref}",
       "noName": "नाम नहीं",
@@ -4624,7 +4640,9 @@
       "clientEmpty": {
         "title": "अभी तक इनका कुछ नहीं",
         "body": "ये जो भी ऑर्डर करेंगे वह यहाँ दिखेगा।"
-      }
+      },
+      "today": "आज",
+      "yesterday": "कल"
     },
     "detail": {
       "paidOn": "{channel} पर भुगतान",
@@ -4937,7 +4955,7 @@
       "close": "बंद करें"
     },
     "payout": {
-      "title": "डिलीवरी ऐप्स से आपको कितना मिलना चाहिए",
+      "title": "डिलीवरी ऐप्स से कितना मिलना है",
       "rangeLabel": "समय",
       "ranges": {
         "today": "आज",
@@ -5214,5 +5232,22 @@
     "Book a treatment": "ट्रीटमेंट बुक करें",
     "Take an order": "ऑर्डर लें",
     "Order now": "अभी ऑर्डर करें"
+  },
+  "share": {
+    "button": "व्हाट्सऐप पर भेजें",
+    "buttonFor": "व्हाट्सऐप पर भेजें: {name}",
+    "savedOffer": "ऑफ़र सेव हो गया। अभी अपने क्लाइंट्स को बताएँ?",
+    "savedPackage": "पैकेज सेव हो गया। अभी अपने क्लाइंट्स को बताएँ?",
+    "later": "बाद में",
+    "copyTitle": "कॉपी करके व्हाट्सऐप में डालें",
+    "copyNote": "व्हाट्सऐप नहीं खुला। मैसेज कॉपी करें और व्हाट्सऐप में पेस्ट करें।",
+    "copy": "कॉपी करें",
+    "copied": "कॉपी हो गया",
+    "close": "बंद करें",
+    "noNumberTitle": "ग्राहक आपसे संपर्क नहीं कर पाएंगे",
+    "noNumberBody": "इस मैसेज में कोई फ़ोन नंबर नहीं है। सेटिंग्स में अपना बिज़नेस नंबर जोड़ें ताकि ग्राहक बुक कर सकें।",
+    "noNumberBodyStaff": "इस मैसेज में कोई फ़ोन नंबर नहीं है। मालिक से सेटिंग्स में बिज़नेस नंबर जुड़वाएं।",
+    "shareAnyway": "फिर भी भेजें",
+    "addNumber": "नंबर जोड़ें"
   }
 }
