@@ -47,7 +47,8 @@ describe('Admin UI polish — layout, mobile density, filter clarity and live us
     expect(formatAuditAction('appointment.walk_in')).toBe('Walk-in recorded');
     expect(formatAuditAction('appointment.corrected')).toBe('Booking corrected');
     expect(formatAuditAction('business.suspend')).toBe('Business suspended');
-    expect(formatAuditAction('custom.new_event')).toBe('Custom new event');
+    // Jira GRW-695 — an unknown action no longer echoes its code back as words; it reads as a plain fallback.
+    expect(formatAuditAction('custom.new_event')).toBe('Account change');
     expect(read('components/AuditLogList.tsx')).toMatch(/formatAuditAction\(row\.action\)/);
     expect(read('businesses/[id]/page.tsx')).toMatch(/formatAuditAction\(row\.action\)/);
   });

@@ -65,7 +65,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     group: 'Operations',
     items: [
-      { label: 'Impersonation', href: '/admin/impersonation', permission: 'admin.impersonation.start', icon: 'impersonate' },
+      { label: 'Owner views', href: '/admin/impersonation', permission: 'admin.impersonation.start', icon: 'impersonate' },
       { label: 'Audit logs', href: '/admin/audit-logs', permission: 'admin.audit.view', icon: 'audit' },
       /*
        * Jira GRW-279 — Operations, beside Impersonation and Audit logs, which
@@ -146,7 +146,7 @@ export function resolveRouteMeta(pathname: string): RouteMeta {
         ? { title: 'Feature flag', subtitle: 'Global, plan and business targeting.', showSearch: false, back: { href: '/admin/feature-flags', label: 'Feature flags' } }
         : { title: 'Feature flags', subtitle: 'Enable capabilities independent of pricing.', showSearch: false };
     case 'impersonation':
-      return { title: 'Impersonation', subtitle: 'Controlled support sessions.', showSearch: false };
+      return { title: 'Owner views', subtitle: 'Support sessions viewing a business as its owner.', showSearch: false };
     case 'audit-logs':
       // GRW-99 replaced the header's free-text search with its own structured
       // filter bar (admin/action/entity/business/date range) — a global
