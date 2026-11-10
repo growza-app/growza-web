@@ -16,7 +16,6 @@ import {
   type SortDirection,
 } from '../lib/api';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
-import { initials } from '../lib/appointment-display';
 import { PageHeader } from '../components/PageHeader';
 import { useAreas, useWritable } from '../components/SessionProvider';
 import { PaginatedTable } from '../components/PaginatedTable';
@@ -37,7 +36,7 @@ import { copy } from '../lib/copy';
 import { pickNoun } from '../lib/nouns';
 import { useNouns } from '../lib/use-nouns';
 import { ClientProfileCard } from '../components/ClientProfileCard';
-import { tintFor } from '../components/home/parts';
+import { ClientCartoon } from '../components/ClientCartoon';
 import { PhoneField } from '../components/PhoneField';
 import { toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
@@ -363,7 +362,7 @@ export function CustomersClient({
       <tr key={c.id} data-row className={`cust-row-click${openClientId === c.id ? ' is-selected' : ''}`} aria-selected={openClientId === c.id || undefined} onClick={() => setOpenClientId(c.id)}>
         <td>
           <div className="cust-name-cell">
-            <span className="avatar">{initials(c.name)}</span>
+            <ClientCartoon id={c.id} className="avatar" />
             <span style={{ fontWeight: 620 }}>{c.name ?? t('unnamed')}</span>
             {branchTag(c.locationId)}
           </div>
@@ -758,7 +757,6 @@ export function CustomersClient({
                   c.lastBookingAt ? formatDateShort(c.lastBookingAt, undefined, locale) : null,
                   bookingsOn ? t('visitCount', { count: c.totalBookings }) : null,
                 ].filter((x): x is string => Boolean(x));
-                const tint = tintFor(c.id);
                 return (
                   <div
                     className="cust-card cust-row-click"
@@ -776,9 +774,7 @@ export function CustomersClient({
                       }
                     }}
                   >
-                    <span className="cust-avatar" style={{ background: tint.bg, color: tint.fg }} aria-hidden>
-                      {initials(c.name)}
-                    </span>
+                    <ClientCartoon id={c.id} className="cust-avatar" />
                     <span className="cust-card-body">
                       <span className="cust-card-top">
                         <span className="cust-card-name">{c.name ?? t('unnamed')}</span>

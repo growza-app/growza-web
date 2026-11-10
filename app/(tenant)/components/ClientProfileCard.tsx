@@ -13,6 +13,7 @@ import { useDialog } from '../../shared/a11y/useDialog';
 import { useAreas, useMayUse } from './SessionProvider';
 import { clientHistoryOf } from '../lib/areas';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
+import { ClientCartoon } from './ClientCartoon';
 
 /**
  * One client's whole story, in a card that opens over the list.
@@ -274,7 +275,7 @@ export function ClientProfileCard({
           ) : (
             <>
               <div className="cpc-identity">
-                <span className="cpc-avatar">{profile?.initial ?? '·'}</span>
+                <ClientCartoon id={clientId} className="cpc-avatar" />
                 {editing ? (
                   <div className="cpc-edit">
                     <input
