@@ -9,6 +9,7 @@ import { clearAdminSession } from '../lib/session';
 import { BROWSER_BACK, NAV_GROUPS, bottomNavItems, isNavItemActive, resolveRouteMeta } from '../nav';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { NotificationBell } from './NotificationBell';
+import { FindBusiness } from './FindBusiness';
 import { oklch } from '../tokens';
 import { useImpersonation } from './ImpersonationContext';
 import { useAdminSearch } from './SearchContext';
@@ -392,7 +393,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           >
             <Icon name="impersonate" size={19} />
             <div className="admin-name" style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: '0.01em' }}>
-              IMPERSONATING · {impersonation.business} · {impersonation.user}
+              VIEWING AS OWNER · {impersonation.business} · {impersonation.user}
             </div>
             <span style={{ fontSize: 12.5, color: 'oklch(0.92 0.05 25)', fontWeight: 500 }}>
               Reason: {impersonation.reason}. All actions are logged to the audit trail.
@@ -413,7 +414,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 cursor: 'pointer',
               }}
             >
-              Exit impersonation
+              Stop viewing
             </button>
           </div>
         ) : null}
@@ -590,6 +591,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
               It keeps `admin-header-bell` on a wrapper because the phone rules
               in admin.css order it against the search box by that class.
             */}
+            {/* Jira GRW-699 — find any business from any screen; ⌘K / Ctrl+K opens it too. */}
+            <FindBusiness />
             <div className="admin-header-bell" style={{ display: 'flex', alignItems: 'center', flex: 'none' }}>
               <NotificationBell />
             </div>
