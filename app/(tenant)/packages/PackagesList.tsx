@@ -15,7 +15,7 @@ import { servicePhotoUrl } from '../lib/service-photos';
 import { useBranch } from '../components/BranchProvider';
 import { useSession, useWritable } from '../components/SessionProvider';
 import { JustCreatedShareBanner, ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
-import { offerShareItem } from '../lib/share-on-whatsapp';
+import { offerShareItem, wasPriceMinor } from '../lib/share-on-whatsapp';
 import { useJustCreated } from '../lib/just-created';
 import { partsMinutes, partsOf, partsTotalMinor, savingMinor, savingPct, searchPackages } from './packages-logic';
 import { durationPhrase } from '../lib/duration-words';
@@ -77,7 +77,7 @@ export function PackagesList({ packages, services }: { packages: Offer[]; servic
   const timezone = useSession()?.timezone ?? 'Asia/Kolkata';
   /** Takes the row's own `partsOf` when the row has already worked it out, so the services are walked once. */
   const shareItemFor = (pkg: Offer, { parts, missing }: ReturnType<typeof partsOf> = partsOf(pkg, serviceById)) =>
-    offerShareItem(pkg, { timezone, partsTotalMinor: missing > 0 ? null : partsTotalMinor(parts) });
+    offerShareItem(pkg, { timezone, partsTotalMinor: missing > 0 ? null : wasPriceMinor(partsTotalMinor(parts), pkg.partsWhenMadeMinor) });
   const [justCreatedId, dismissJustCreated] = useJustCreated('package');
   const justCreated = justCreatedId ? (packages.find((p) => p.id === justCreatedId) ?? null) : null;
   const justCreatedItem = justCreated ? shareItemFor(justCreated) : null;

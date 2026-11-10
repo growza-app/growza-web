@@ -5240,6 +5240,11 @@
     "copyNote": "WhatsApp did not open. Copy the message and paste it in WhatsApp.",
     "copy": "Copy",
     "copied": "Copied",
-    "close": "Close"
+    "close": "Close",
+    "noNumberTitle": "Clients can't reach you",
+    "noNumberBody": "This message has no phone number. Add your business number in Settings so clients know how to book.",
+    "noNumberBodyStaff": "This message has no phone number. Ask the owner to add the business number in Settings.",
+    "shareAnyway": "Share anyway",
+    "addNumber": "Add number"
   }
 }

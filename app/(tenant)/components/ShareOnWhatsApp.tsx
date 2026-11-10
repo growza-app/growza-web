@@ -6,7 +6,8 @@ import { whatsappShareUrl, type ShareItem } from '@growza-app/shared';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { IconCheck, IconWhatsApp } from './icons';
 import { useAreas, useSession, useWhatsappLive } from './SessionProvider';
-import { shareMessage, type ShareSession } from '../lib/share-on-whatsapp';
+import { canSee } from '../lib/nav-policy';
+import { shareMessage, shareReachesSomeone, type ShareSession } from '../lib/share-on-whatsapp';
 
 /**
  * Jira GRW-671 — Share on WhatsApp: one button, used on Offers, Packages, Menu and Products.
@@ -169,6 +170,60 @@ function CopyShareDialog({ text, onClose }: { text: string; onClose: () => void 
   );
 }
 
+const WAIVED_KEY = 'growza.shareWithoutNumber';
+const numberWaived = () => {
+  try {
+    return window.sessionStorage.getItem(WAIVED_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+const waiveNumber = () => {
+  try {
+    window.sessionStorage.setItem(WAIVED_KEY, '1');
+  } catch {
+    // A private window: asked again next time, which is the safe side.
+  }
+};
+
+/**
+ * QA 10 Nov 2026 (GRW-671 loophole) — "Clients can't reach you": the business has no phone in Settings and nothing
+ * else in the message says how to book. The owner (who may open Settings) is offered the way to add it; anyone may
+ * still share — it is a question, never a block.
+ */
+function NoNumberDialog({ onCancel, onShareAnyway }: { onCancel: () => void; onShareAnyway: () => void }) {
+  const t = useTranslations('share');
+  const session = useSession();
+  const areas = useAreas();
+  const ref = useRef<HTMLDivElement>(null);
+  useDialog(ref, { onClose: onCancel });
+  const mayAdd = canSee('/settings/profile', (session?.role ?? null) as Parameters<typeof canSee>[1], undefined, true, areas);
+  return (
+    <div className="modal-backdrop" onClick={onCancel}>
+      <div className="modal modal-fit share-copy-modal" role="dialog" aria-modal="true" aria-label={t('noNumberTitle')} ref={ref} onClick={(e) => e.stopPropagation()}>
+        <h3>{t('noNumberTitle')}</h3>
+        <div className="modal-body">
+          <p className="muted">{mayAdd ? t('noNumberBody') : t('noNumberBodyStaff')}</p>
+        </div>
+        <div className="modal-actions">
+          <button type="button" className="btn btn-ghost" onClick={onShareAnyway}>
+            {t('shareAnyway')}
+          </button>
+          {mayAdd ? (
+            <a className="btn" href="/settings/profile">
+              {t('addNumber')}
+            </a>
+          ) : (
+            <button type="button" className="btn" onClick={onCancel}>
+              {t('close')}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export interface ShareTarget {
   item: ShareItem;
   /** The branch it is sold at — the row's own. */
@@ -223,8 +278,15 @@ function useShare(target: ShareTarget, onFinished?: () => void) {
   const inFlight = useRef(false);
   const button = useRef<HTMLButtonElement>(null);
   const photo = usePhotoReady(target.photoUrl, button);
-  const share = async () => {
+  const [askNumber, setAskNumber] = useState(false);
+  const share = async (anyway = false) => {
     if (inFlight.current) return;
+    // QA 10 Nov 2026 — a message with no phone and no booking link brings nobody back once forwarded. Ask first, once a
+    // session: "Share anyway" is remembered until the tab closes, so a busy owner is not asked on every row.
+    if (!anyway && !numberWaived() && !shareReachesSomeone({ branchId: target.branchId, bookable: target.bookable }, session)) {
+      setAskNumber(true);
+      return;
+    }
     inFlight.current = true;
     setBusy(true);
     try {
@@ -243,7 +305,18 @@ function useShare(target: ShareTarget, onFinished?: () => void) {
     setCopyText(null);
     onFinished?.();
   };
-  const dialog = copyText ? <CopyShareDialog text={copyText} onClose={closeCopy} /> : null;
+  const dialog = copyText ? (
+    <CopyShareDialog text={copyText} onClose={closeCopy} />
+  ) : askNumber ? (
+    <NoNumberDialog
+      onCancel={() => setAskNumber(false)}
+      onShareAnyway={() => {
+        setAskNumber(false);
+        waiveNumber();
+        void share(true);
+      }}
+    />
+  ) : null;
   return { share, busy, dialog, warm: photo.warm, button };
 }
 

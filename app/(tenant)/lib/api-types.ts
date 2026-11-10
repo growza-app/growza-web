@@ -890,6 +890,11 @@ export interface Offer {
   serviceIds: string[];
   /** Set when this offer is a priced combo (not just a discount announcement). */
   comboPriceMinor: string | null;
+  /**
+   * QA 10 Nov 2026 (GRW-671) — what its services cost one by one when its set of services was chosen (API 0175). A
+   * share quotes the lower of this and today's prices as "was". Absent from an older API; null with no services.
+   */
+  partsWhenMadeMinor?: string | null;
   /** Rules step — all null means always visible. 0=Sun..6=Sat. */
   visibleWeekdays: number[] | null;
   visibleFrom: string | null;

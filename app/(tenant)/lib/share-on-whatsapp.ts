@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { bookingLinkUrl, shareTextFor, type ShareItem, type ShareLang, type ShareTone } from '@growza-app/shared';
+import { bookingLinkUrl, sharePhone, shareTextFor, type ShareItem, type ShareLang, type ShareTone } from '@growza-app/shared';
 import type { MeBranch, Offer, Product } from './api-types';
 
 /**
@@ -53,6 +53,16 @@ export function offerShareItem(
 }
 
 /**
+ * QA 10 Nov 2026 (GRW-671 loophole) — the "was" a shared package quotes: the LOWER of what its services cost today and
+ * what they cost when its set of services was chosen (API 0175). Raising a service's price after making the package —
+ * or just before sharing it — must never make the saving look bigger than it was: a fake strikethrough discount.
+ */
+export function wasPriceMinor(todayMinor: number, whenMadeMinor: string | null | undefined): number {
+  const then = whenMadeMinor == null ? NaN : Number(whenMadeMinor);
+  return Number.isFinite(then) ? Math.min(todayMinor, then) : todayMinor;
+}
+
+/**
  * A product or a dish, as a shareable item; null when it is retired, or counted and none is left.
  *
  * A product sold in sizes at different prices says "from" its cheapest size; sizes all at one price say that price.
@@ -80,6 +90,21 @@ export interface ShareSession {
   bookingLive: boolean;
 }
 
+/** The branch a row is shared from: its own, never a guess (see `shareMessage`). */
+function branchOf(branchId: string | null | undefined, session: ShareSession): MeBranch | undefined {
+  return branchId ? session.branches.find((b) => b.id === branchId) : session.branches.length === 1 ? session.branches[0] : undefined;
+}
+
+/**
+ * QA 10 Nov 2026 (GRW-671 loophole) — does the message tell a client how to reach the business? A booking link or a
+ * phone WhatsApp can dial. Without either, a forwarded message brings nobody back, so the button asks first.
+ */
+export function shareReachesSomeone({ branchId, bookable }: { branchId: string | null | undefined; bookable: boolean }, session: ShareSession): boolean {
+  const branch = branchOf(branchId, session);
+  if (bookable && session.bookingLive && branch && bookingLinkUrl(session.businessPhone, branch.name, branch.id)) return true;
+  return sharePhone(branch?.phone ?? session.businessPhone) != null;
+}
+
 /**
  * The finished message for one item at its branch.
  *
@@ -99,11 +124,7 @@ export function shareMessage(
    * With no branch the message signs with the business alone and gives the business's phone. Only a row that names no
    * branch at all (an API a deploy behind) at a ONE-branch business takes that branch, since there is no other.
    */
-  const branch = branchId
-    ? session.branches.find((b) => b.id === branchId)
-    : session.branches.length === 1
-      ? session.branches[0]
-      : undefined;
+  const branch = branchOf(branchId, session);
   const bookingUrl = bookable && session.bookingLive && branch ? bookingLinkUrl(session.businessPhone, branch.name, branch.id) : null;
   return shareTextFor(item, {
     lang: session.lang,
