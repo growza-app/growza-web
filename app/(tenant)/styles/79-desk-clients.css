@@ -503,3 +503,32 @@
     display: none;
   }
 }
+
+/*
+ * QA 10 Nov 2026 (device matrix, 1101 and 1112px) — a shop's four-column table (Name, Phone, Total spent, Last seen)
+ * re-shows Phone over the ≤1600 rule above, and at the narrow end its 9rem left the name 0px: no names at all. Up to
+ * 1360px the Phone column goes here too — the number is on the card on the right, with Call — and the name keeps at
+ * least ~9rem at every width of the tier (measured 1101, 1300, 1301, 1360, 1361).
+ */
+@media (min-width: 1101px) and (max-width: 1360px) {
+  .cust-desk-table:not(:has(th:nth-child(6))) th:nth-child(2),
+  .cust-desk-table:not(:has(th:nth-child(6))) td:nth-child(2) {
+    display: none;
+  }
+
+  /* The pager under it had the same trouble: five page numbers and the arrows pushed "›" past the card's edge, where
+     overflow:hidden made the next page unreachable. Here it says "Page 1 of 10" between the arrows, as on a phone. */
+  .cust-desk-table .pagination {
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+  }
+
+  .cust-desk-table .pagination-pages {
+    display: none;
+  }
+
+  .cust-desk-table .pagination-indicator {
+    display: inline-flex;
+  }
+}
