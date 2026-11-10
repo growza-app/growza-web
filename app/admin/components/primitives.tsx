@@ -138,7 +138,29 @@ export type { TableColumn } from '../lib/table-layout';
  * not a media query). `minWidthPx` is only for tables whose columns declare no
  * `min` of their own.
  */
-export function Table({ columns, rows, minWidthPx = 640 }: { columns: TableColumn[]; rows: ReactNode; minWidthPx?: number }) {
+/** Jira GRW-693 — which column a sortable table is ordered by. */
+export interface TableSort {
+  key: string;
+  dir: 'asc' | 'desc';
+}
+
+export function Table({
+  columns,
+  rows,
+  minWidthPx = 640,
+  sort,
+  onSort,
+  dense = false,
+}: {
+  columns: TableColumn[];
+  rows: ReactNode;
+  minWidthPx?: number;
+  /** With `onSort`, a column carrying a `sortKey` gets a heading that sorts by it. */
+  sort?: TableSort;
+  onSort?: (key: string) => void;
+  /** Jira GRW-693 — shorter rows on a laptop, for a list an admin scans. No effect on the phone cards. */
+  dense?: boolean;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   // `table` until measured. Every list screen mounts its table only once its
   // rows have arrived, on the client, so the layout effect below runs before
@@ -169,6 +191,7 @@ export function Table({ columns, rows, minWidthPx = 640 }: { columns: TableColum
       ref={ref}
       className="admin-table"
       data-layout={layout}
+      data-dense={dense ? 'true' : undefined}
       style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, overflow: 'hidden' }}
     >
       <div className="admin-table-scroll">
@@ -195,7 +218,7 @@ export function Table({ columns, rows, minWidthPx = 640 }: { columns: TableColum
           >
             {columns.map((c, i) => (
               <div key={i} data-optional={c.optional ? 'true' : undefined} style={c.right ? { textAlign: 'right' } : undefined}>
-                {c.label}
+                {c.sortKey && onSort ? <SortHeading column={c} sort={sort} onSort={onSort} /> : c.label}
               </div>
             ))}
           </div>
@@ -203,6 +226,25 @@ export function Table({ columns, rows, minWidthPx = 640 }: { columns: TableColum
         </div>
       </div>
     </div>
+  );
+}
+
+/** Jira GRW-693 — a column heading that sorts. The arrow is solid on the column in use; a second press reverses it. */
+function SortHeading({ column, sort, onSort }: { column: TableColumn; sort?: TableSort; onSort: (key: string) => void }) {
+  const dir = sort && sort.key === column.sortKey ? sort.dir : null;
+  return (
+    <button
+      type="button"
+      className="admin-sort-heading"
+      data-active={dir ? 'true' : undefined}
+      onClick={() => onSort(column.sortKey!)}
+      aria-label={`Sort by ${column.label}${dir ? (dir === 'asc' ? ', ascending' : ', descending') : ''}`}
+    >
+      {column.label}
+      <span aria-hidden className="admin-sort-arrow">
+        {dir === 'asc' ? '↑' : dir === 'desc' ? '↓' : '↕'}
+      </span>
+    </button>
   );
 }
 
