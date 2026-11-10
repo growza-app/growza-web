@@ -122,11 +122,12 @@ export default function AdminFeatureFlagsPage() {
               <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 5 }}>
                 <span style={{ fontSize: 15.5, fontWeight: 800, color: oklch.textStrong, lineHeight: 1.25 }}>{flag.label}</span>
                 <div style={{ fontSize: 12.5, color: oklch.textMuted, lineHeight: 1.4 }}>{flag.description}</div>
-                <div style={{ fontSize: 11.5, color: 'oklch(0.6 0.015 155)', fontFamily: 'ui-monospace, monospace' }}>{flag.key}</div>
+                {/* Jira GRW-697 — the key is how the code names it; it lives on the switch's own page, under Details. */}
               </div>
               <div style={{ flex: 'none' }}>
                 <Toggle
                   on={flag.enabled}
+                  label={flag.label}
                   onClick={() => {
                     setSaveError(null);
                     setPending(flag);
