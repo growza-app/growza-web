@@ -11,6 +11,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../../lib/api';
 import { formatDateOnly, formatDateTime, formatTimestampDate } from '../../lib/format';
 import { formatAuditAction } from '../../lib/audit-fields';
+import { groupByDay, timeOfDay } from '../../lib/audit-days';
 import { Icon, TypeIcon } from '../../icons';
 import { AuditLogList } from '../../components/AuditLogList';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -769,38 +770,30 @@ function OverviewTab({ business }: { business: BusinessDetail }) {
           <div style={{ fontSize: 13, color: oklch.textFaint, marginTop: 10 }}>No activity recorded for this business yet.</div>
         ) : (
           <div style={{ marginTop: 8 }}>
-            {activity.map((row, i) => (
-              <div
-                key={row.id}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: 12,
-                  padding: '10px 0',
-                  borderBottom: i < activity.length - 1 ? `1px solid ${oklch.divider}` : 'none',
-                  fontSize: 13,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontWeight: 700, color: oklch.textStrong }}>{formatAuditAction(row.action)}</span>
-                  <code
+            {/* Jira GRW-695 — plain words under a heading per day; no raw action codes. */}
+            {groupByDay(activity).map((day) => (
+              <section key={day.key} aria-label={day.label}>
+                <h4 className="admin-day-heading">{day.label}</h4>
+                {day.rows.map((row, i) => (
+                  <div
+                    key={row.id}
                     style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: oklch.textMuted,
-                      background: oklch.surfaceSubtle,
-                      border: `1px solid ${oklch.border}`,
-                      padding: '1px 6px',
-                      borderRadius: 5,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '10px 0',
+                      borderBottom: i < day.rows.length - 1 ? `1px solid ${oklch.divider}` : 'none',
+                      fontSize: '0.8125rem',
                     }}
                   >
-                    {row.action}
-                  </code>
-                </div>
-                <span style={{ color: oklch.textFaint }}>{formatDateTime(row.createdAt)}</span>
-              </div>
+                    <span style={{ fontWeight: 700, color: oklch.textStrong, minWidth: 0 }}>{formatAuditAction(row.action)}</span>
+                    <time dateTime={row.createdAt} title={formatDateTime(row.createdAt)} style={{ color: oklch.textFaint, flex: 'none' }}>
+                      {timeOfDay(row.createdAt)}
+                    </time>
+                  </div>
+                ))}
+              </section>
             ))}
           </div>
         )}
