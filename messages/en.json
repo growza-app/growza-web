@@ -2180,6 +2180,12 @@
       "haveAccount": "Already have a Growza account for this number? Enter that password above.",
       "couldNotJoin": "Could not join. Please try again.",
       "unreachable": "Could not reach the server. Please check your connection and try again."
+    },
+    "claimSession": {
+      "opening": "Opening the business…",
+      "failedTitle": "This support session could not be opened",
+      "failedBody": "It may have ended. Start it again from the admin portal.",
+      "back": "Back to the admin portal"
     }
   },
   "tryWhatsApp": {

@@ -1,5 +1,6 @@
 'use client';
 
+import { businessOriginFrom } from '../../../shared/admin-address';
 import { BranchBillPreview } from '../../components/BranchBillPreview';
 import { BranchRowActions } from '../../components/BranchRowActions';
 import { BranchPlaces } from '../../components/BranchPlaces';
@@ -296,8 +297,18 @@ function BusinessDetailInner() {
   function startImpersonation(reason: string) {
     setImpersonateLoading(true);
     setImpersonateError(null);
-    adminFetch(`/businesses/${params.id}/impersonate`, { method: 'POST', body: JSON.stringify({ reason }) })
-      .then(() => {
+    adminFetch<{ grant?: string }>(`/businesses/${params.id}/impersonate`, { method: 'POST', body: JSON.stringify({ reason }) })
+      .then((started) => {
+        /*
+         * Jira GRW-689 — on admin.growza.biz the cookie this response set stays on the admin's address (`__Host-`), so the
+         * business app on app.growza.biz would not see it. The grant crosses once, in the fragment (never sent to a
+         * server, never in a log), and app.growza.biz turns it into its own cookie (/claim-session).
+         */
+        const business = businessOriginFrom(window.location);
+        if (business && started?.grant) {
+          window.location.assign(`${business}/claim-session#${encodeURIComponent(started.grant)}`);
+          return;
+        }
         /**
          * A full page load to the salon's dashboard.
          *
