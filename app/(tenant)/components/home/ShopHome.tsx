@@ -348,7 +348,8 @@ export function ShopHome({
    */
   const tiles = [
     { href: '/pos', label: t.nav.pos, icon: <IconPos />, tone: 'green' },
-    { href: '/pos?mode=queue', label: s.queueTitle, icon: <IconNavOrders />, tone: 'blue' },
+    // Only a kitchen has an order queue to open (hasOrderQueue); a shop's tile would open Sell.
+    ...(isKitchen ? [{ href: '/pos?mode=queue', label: s.queueTitle, icon: <IconNavOrders />, tone: 'blue' }] : []),
     { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'green' },
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
     /*
@@ -2108,7 +2109,7 @@ export function ShopHome({
                 <Card
                   title={s.queueTitle}
                   action={
-                    data.anyOrders && can('/pos') ? (
+                    data.anyOrders && isKitchen && can('/pos') ? (
                       <a className="shp-link" href="/pos?mode=queue">
                         {s.openQueue}
                       </a>
@@ -2149,7 +2150,7 @@ export function ShopHome({
                               <a
                                 className="shp-recent-row"
                                 href={
-                                  can('/pos')
+                                  isKitchen && can('/pos')
                                     ? `/pos?mode=queue&token=${encodeURIComponent(tk.id)}`
                                     : `/orders/${encodeURIComponent(tk.id)}`
                                 }

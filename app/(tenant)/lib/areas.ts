@@ -75,6 +75,17 @@ export function areasOf(me: MeAreas | null | undefined): Areas {
   };
 }
 
+/**
+ * Owner, 10 Nov 2026 — the POS order queue (tokens waiting to be made and handed over, and "Keep payment pending in
+ * queue") is a kitchen's: a dish is cooked after it is ordered, so the order waits. A salon or a shop hands over what
+ * it sells at the counter, so there is nothing to wait for and the Queue was noise there. It follows the same setting
+ * that already marks a kitchen everywhere else (`catalog.stock_counted` off — ShopHome's `isKitchen`), so it is the
+ * vertical's config that decides, never its name.
+ */
+export function hasOrderQueue(areas: Pick<Areas, 'stock'>): boolean {
+  return !areas.stock;
+}
+
 /** Is `href` this route or one under it? (`/appointments` owns `/appointments/new`; `/servicesX` is nobody's.) */
 const under = (href: string, route: string): boolean => href === route || href.startsWith(`${route}/`);
 
