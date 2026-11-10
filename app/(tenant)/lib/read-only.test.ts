@@ -137,7 +137,8 @@ describe('every screen that writes asks whether it may (the list that cannot qui
     ['offers/OffersList.tsx', /\{writable && \(\s*<div\s+className="dropdown-anchor"/],
     // Packages
     ['packages/page.tsx', /<WriteOnly>\s*<Link className="btn" href="\/packages\/new">/],
-    ['packages/PackagesList.tsx', /\{writable && \(\s*<div\s+className="dropdown-anchor pkg-actions"/],
+    // Jira GRW-671 — the actions cell now also holds Share on WhatsApp (sharing writes nothing); ⋯ inside it is still writable-only.
+    ['packages/PackagesList.tsx', /\{writable && \(\s*<div\s+className="dropdown-anchor"/],
     ['packages/new/page.tsx', /await guardWritable\('\/packages'\);/],
     ['packages/[id]/edit/page.tsx', /await guardWritable\('\/packages'\);/],
     // Products

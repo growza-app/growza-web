@@ -4,7 +4,7 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { headers } from 'next/headers';
 import { api } from './lib/api';
-import type { Me } from './lib/api-types';
+import type { Me, MeBranch } from './lib/api-types';
 import { Sidebar } from './components/Sidebar';
 import { MobileChrome } from './components/MobileChrome';
 import { MobileNavProvider } from './components/MobileNavProvider';
@@ -189,7 +189,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   let workBranchName: string | null = null;
   let branchCount = 1;
   // `paymentQrUrl` and `googleReviewUrl` ride along to the till through BranchProvider.
-  let branches: Array<{ id: string; name: string; paymentQrUrl?: string | null; googleReviewUrl?: string | null }> = [];
+  let branches: MeBranch[] = [];
+  // Jira GRW-671 — how a shared WhatsApp message is worded; neutral and no phone until /me says otherwise.
+  let share: { tone: 'casual' | 'neutral'; businessPhone: string | null } = { tone: 'neutral', businessPhone: null };
   /** Jira GRW-377 — the member's own branch; fixes a receptionist or stylist to it everywhere. */
   let memberLocationId: string | null = null;
   /** Jira GRW-563 — the owner's approval queue, and whether a stylist is offered phone check-in. */
@@ -236,6 +238,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     memberPhone = me.member?.phone ?? null;
     memberName = me.member?.name?.trim() || null;
     branches = me.branches ?? [];
+    share = { tone: me.share?.tone === 'casual' ? 'casual' : 'neutral', businessPhone: me.tenant?.phone ?? null };
     memberLocationId = me.member?.locationId ?? null;
     impersonation = me.impersonation ?? null;
     // Jira GRW-237 — a receptionist with a branch is named at that branch.
@@ -321,6 +324,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             name: memberName,
             businessName: tenantName ?? null,
             branches,
+            share,
             lang,
             sizes,
             live,

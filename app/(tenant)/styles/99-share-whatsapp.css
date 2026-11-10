@@ -1,0 +1,246 @@
+/* ---------- Jira GRW-671 — Share on WhatsApp ----------
+   One icon button on Offers, Packages, Menu and Products. Drawn at 32px so it sits level with ⋯ (`.kebab-btn`),
+   with a 44px target (Apple's minimum) made by a pseudo-element, so the row and the fixed-height offer card do
+   not grow. The app's one green, not WhatsApp's brand green: the glyph is what says WhatsApp.
+
+   Its sizes are built from the spacing tokens, once, here — so the text that gives way to it (the menu card's foot,
+   the product row's meta) moves with it if the button ever changes size, instead of keeping a copied number. */
+
+:root {
+  /* Drawn: --sp-7 (32px), level with ⋯. */
+  --share-btn: var(--sp-7);
+  /* Tapped: 44px, Apple's minimum target. */
+  --share-btn-target: calc(var(--sp-8) + var(--sp-1));
+  /* What text beside it leaves free: the button and the gap after it. */
+  --share-btn-reach: calc(var(--share-btn) + var(--sp-3));
+}
+
+.share-wa-btn {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  width: var(--share-btn);
+  height: var(--share-btn);
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+
+.share-wa-btn::before {
+  content: '';
+  position: absolute;
+  inset: calc((var(--share-btn) - var(--share-btn-target)) / 2);
+}
+
+.share-wa-btn svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.share-wa-btn:hover,
+.share-wa-btn:active {
+  color: var(--accent-ink);
+}
+
+.share-wa-btn[aria-busy='true'] {
+  opacity: 0.6;
+}
+
+/* ---------- Offers and Packages ----------
+   Laptop: beside ⋯, in the row's actions. Phone (owner, 2026-11-05): bottom-right, in the card's footer row, the
+   same corner Products and Menu put it in — so the name keeps the top line it had before (beside ⋯ it lost 42px of
+   a 344px card). */
+
+.offer-share {
+  display: inline-flex;
+  align-self: center;
+}
+
+/* Packages: the share sits in the row's actions cell, before ⋯. */
+.pkg-actions {
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+@media (min-width: 861px) {
+  /* The actions column held ⋯ alone (44px); it now holds the share too. Header and rows keep one grid. */
+  .pkg-head,
+  .pkg-row {
+    grid-template-columns: minmax(0, 1fr) 120px 200px 84px;
+  }
+}
+
+@media (max-width: 860px) {
+  /* The phone's offer card is one grid (32-customers.css): icon | name | switch | ⋯ on top. Its footer used to be
+     ONE line — the rules (cut at 46%) and the counts — and at 344px there is no room on it for a 32px button as
+     well. So the footer is two lines: the rules at full width (no longer cut short), then the counts with the share
+     at the right, under ⋯. Every card takes the three lines, shareable or not, so they stay one height; the paging
+     measures the height (`useFitRows`), so a taller card costs nothing but the pixels. */
+  .offer-card-row,
+  .offer-card-row:last-child {
+    height: calc(112px + var(--sp-3));
+  }
+
+  .offer-card-row .offer-info-col {
+    grid-row: 2;
+    max-width: 100%;
+    padding-right: 0;
+  }
+
+  .offer-card-row .offer-stats-col {
+    grid-row: 3;
+    grid-column: 1 / -1;
+    justify-self: start;
+    align-self: center;
+  }
+
+  .offer-card-row .offer-share {
+    grid-row: 3;
+    grid-column: -2 / -1;
+    justify-self: end;
+    align-self: center;
+  }
+
+  /* Packages: the actions cell dissolves so ⋯ stays top-right and the share drops to the footer's end. */
+  .pkg-row:has(.share-wa-btn) {
+    grid-template-areas:
+      'main actions'
+      'foot share';
+  }
+
+  .pkg-row .pkg-actions {
+    display: contents;
+  }
+
+  .pkg-row .pkg-actions > .dropdown-anchor {
+    grid-area: actions;
+  }
+
+  .pkg-row .pkg-actions > .share-wa-btn {
+    grid-area: share;
+    align-self: end;
+    justify-self: end;
+  }
+}
+
+/* ---------- Products (phone list): inside the card, under the price ----------
+   The card is the row's own button, which cannot hold another, so the share is its sibling laid over the card's
+   bottom-right corner — the end of the second line (stock and sold), which is short and left-aligned. */
+
+.prd-row-share {
+  position: relative;
+}
+
+.prd-row-share > .share-wa-btn {
+  position: absolute;
+  right: var(--sp-3);
+  bottom: var(--sp-2);
+}
+
+.prd-row-share .prd-meta {
+  padding-right: var(--share-btn-reach);
+}
+
+/* ---------- Products (desktop table): its own narrow column ---------- */
+
+.prd-td-share {
+  width: 48px;
+  text-align: center;
+}
+
+/* ---------- Menu cards: bottom-right of the card, over the foot ---------- */
+
+.prd-menu-card-wrap {
+  position: relative;
+  display: flex;
+}
+
+.prd-menu-card-wrap > .prd-menu-card {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.prd-menu-card-wrap > .share-wa-btn {
+  position: absolute;
+  right: var(--sp-2);
+  bottom: var(--sp-2);
+}
+
+/* The card's foot gives way to the button, so "sold" never sits under it. Where price and count no longer fit one
+   line beside it (a 344px phone's two-column grid), "136 sold" drops under the price whole, never split as
+   "136 / sold". */
+.prd-menu-card-wrap .prd-menu-card-foot {
+  padding-right: var(--share-btn-reach);
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  column-gap: var(--sp-3);
+  row-gap: 0;
+}
+
+.prd-menu-card-wrap .prd-menu-card-sold {
+  white-space: nowrap;
+}
+
+/* ---------- After saving a new offer or package ---------- */
+
+.share-saved-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-3);
+  margin: 0 0 var(--sp-3);
+}
+
+.share-saved-text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 1 1 12rem;
+  font-weight: 600;
+}
+
+.share-saved-text svg {
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.share-saved-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.share-saved-actions .btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ---------- The text to copy, when WhatsApp could not open ---------- */
+
+.share-copy-note {
+  margin: 0 0 var(--sp-2);
+}
+
+.share-copy-text {
+  display: block;
+  width: 100%;
+  min-height: 9rem;
+  max-height: 14rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  resize: none;
+  overflow: auto;
+  white-space: pre-wrap;
+}

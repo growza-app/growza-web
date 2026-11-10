@@ -5229,5 +5229,17 @@
     "Book a treatment": "Book a treatment",
     "Take an order": "Take an order",
     "Order now": "Order now"
+  },
+  "share": {
+    "button": "Share on WhatsApp",
+    "buttonFor": "Share on WhatsApp: {name}",
+    "savedOffer": "Offer saved. Tell your clients now?",
+    "savedPackage": "Package saved. Tell your clients now?",
+    "later": "Later",
+    "copyTitle": "Copy and paste in WhatsApp",
+    "copyNote": "WhatsApp did not open. Copy the message and paste it in WhatsApp.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "close": "Close"
   }
 }

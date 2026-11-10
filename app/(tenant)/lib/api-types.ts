@@ -15,9 +15,20 @@
 import type { PaymentModeSlice } from './home-types';
 import type { ReportRangeKey } from './report-types';
 
+/** One open branch as `/me` sends it. */
+export interface MeBranch {
+  id: string;
+  name: string;
+  paymentQrUrl?: string | null;
+  googleReviewUrl?: string | null;
+  /** Jira GRW-671 — its phone (its own, else the business's) and a maps link to its pin. Absent on an older API. */
+  phone?: string | null;
+  mapsUrl?: string | null;
+}
+
 export interface Me {
   /** Jira GRW-556 — `status` is the business's lifecycle: while `provisioning` only the setup screens are offered. Absent from an older API. */
-  tenant: { id: string; name: string; timezone: string; locationName: string | null; /** The main branch (Jira GRW-582 perf) — the API has always sent it. */ locationId?: string | null; branchCount?: number; status?: string; productReturnWindowDays?: number } | null;
+  tenant: { id: string; name: string; timezone: string; locationName: string | null; /** The main branch (Jira GRW-582 perf) — the API has always sent it. */ locationId?: string | null; branchCount?: number; status?: string; productReturnWindowDays?: number; /** Jira GRW-671 — the business's own phone, which its WhatsApp booking link opens a chat with. */ phone?: string | null } | null;
   /**
    * Jira GRW-235 — open branches, main first.
    *
@@ -26,7 +37,12 @@ export interface Me {
    * the salon's QR up to a customer) and from an API a deploy behind, which is
    * why the till treats it as "no QR" rather than as an error.
    */
-  branches?: Array<{ id: string; name: string; paymentQrUrl?: string | null; googleReviewUrl?: string | null }>;
+  branches?: Array<MeBranch>;
+  /**
+   * Jira GRW-671 — how a message the owner shares on WhatsApp is worded: the vertical's tone. Absent on an API a
+   * deploy behind, which reads as neutral (no ✨), right for every vertical.
+   */
+  share?: { tone: 'casual' | 'neutral' };
   /**
    * The owner's own billing state, or null when there is nothing to say
    * (GRW-122). Null is the healthy case AND the case where the state could
@@ -239,6 +255,9 @@ export interface Product {
   /** QA 2026-10-23 — sizes at or under the warn line, and sizes with none left (0 for no sizes; absent on an API a deploy behind). */
   sizesLow?: number;
   sizesOut?: number;
+  /** Jira GRW-671 — the lowest and highest price among its active sizes; null for no sizes, absent on an older API. */
+  sizePriceMinMinor?: string | null;
+  sizePriceMaxMinor?: string | null;
   /**
    * Jira GRW-599 — on the till's list only, and only for a product with sizes: every live, active size in the owner's
    * order with its count, price and codes, so tapping a product never costs a request to learn its sizes.

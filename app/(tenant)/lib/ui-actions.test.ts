@@ -528,6 +528,13 @@ describe('the reverse — nothing a limited role may do is left without a contro
     'PATCH /api/v1/providers/:id/availability-today': 'the Staff screen is not in the receptionist’s nav',
     // GRW-293 — assigning a stylist to a counter sale afterwards; no screen calls it yet.
     'POST /api/v1/counter-sales/:id/assign-stylist': 'no dashboard control calls it yet',
+    // QA 2026-10-26 — taking a wrongly attached client back off an order. Granted in shared since 1.0.24; this repo
+    // only saw it when Jira GRW-671 moved the pin to 1.0.29. The growza repo's copy records the same decision.
+    'DELETE /api/v1/orders/:id/client': 'nothing calls it yet, in either copy of web — the API route is all there is',
+    // Owner, 2026-11-05 — the desk sends the customer its bill link. Granted in shared 1.0.31; this repo saw it when
+    // Jira GRW-671 moved the pin to 1.0.32. The Send button is on the payment-done screen of New visit, which the
+    // desk is not offered here yet — the same decision the growza repo's copy records.
+    'POST /api/v1/documents/:id/share': 'the payment-done Send is on New visit, not in the receptionist’s nav yet',
   };
 
   for (const [role, allowed] of [['receptionist', RECEPTIONIST_ALLOWED], ['staff', STAFF_ALLOWED]] as const) {

@@ -13,7 +13,10 @@ import { Pagination } from '../components/Pagination';
 import { IconCalendar, IconFilter, IconOffers, IconSearch } from '../components/icons';
 import { weekdayNames } from '../lib/weekday-names';
 import { useBranch } from '../components/BranchProvider';
-import { useWritable } from '../components/SessionProvider';
+import { useSession, useWritable } from '../components/SessionProvider';
+import { JustCreatedShareBanner, ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
+import { offerShareItem } from '../lib/share-on-whatsapp';
+import { useJustCreated } from '../lib/just-created';
 
 /** First paint only — the client immediately measures how many rows the screen actually fits. */
 const INITIAL_PAGE_SIZE = 4;
@@ -55,6 +58,11 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
   const writable = useWritable();
   // Jira GRW-381 — on "All branches" each offer says which branch runs it: the same offer at two branches is two rows.
   const branchContext = useBranch();
+  // Jira GRW-671 — the end date a shared message names is a day in the business's zone, not the reader's.
+  const timezone = useSession()?.timezone ?? 'Asia/Kolkata';
+  const [justCreatedId, dismissJustCreated] = useJustCreated('offer');
+  const justCreated = justCreatedId ? (offers.find((o) => o.id === justCreatedId) ?? null) : null;
+  const justCreatedItem = justCreated ? offerShareItem(justCreated, { timezone }) : null;
   const branchTag = (locationId: string | undefined) => {
     if (!branchContext.multi || branchContext.choice || !locationId) return null;
     const name = branchContext.branches.find((b) => b.id === locationId)?.name;
@@ -192,6 +200,9 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
 
   return (
     <div className="card offers-card">
+      {justCreated && justCreatedItem ? (
+        <JustCreatedShareBanner kind="offer" item={justCreatedItem} branchId={justCreated.locationId} bookable onDone={dismissJustCreated} />
+      ) : null}
       {actionError && (
         <div className="banner" role="alert" style={{ margin: '0 0 12px' }}>
           {actionError}
@@ -248,6 +259,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
         <>
           <div className="card-body offers-list" ref={listRef}>
             {pageItems.map((offer) => {
+              const shareItem = offerShareItem(offer, { timezone });
               return (
                 <div
                   key={offer.id}
@@ -308,6 +320,13 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                         <span className="offer-stat-label">{t('revenue')}</span>
                       </div>
                     </div>
+
+                    {/* Jira GRW-671 — beside ⋯, not inside it, and for anyone who can see the screen (BR-03). */}
+                    {shareItem ? (
+                      <span className="offer-share" onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+                        <ShareOnWhatsAppButton item={shareItem} branchId={offer.locationId} bookable />
+                      </span>
+                    ) : null}
 
                     {writable && (
                     <div
