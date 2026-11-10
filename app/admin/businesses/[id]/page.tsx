@@ -423,6 +423,7 @@ function BusinessDetailInner() {
         }
         confirmLabel={pendingAction === 'suspend' ? 'Suspend business' : 'Reactivate business'}
         danger={pendingAction === 'suspend'}
+        confirmText={pendingAction === 'suspend' ? business.name : undefined}
         reasonRequired
         reasonPlaceholder={pendingAction === 'suspend' ? 'Why is this business being suspended?' : 'Why is this business being reactivated?'}
         loading={actionLoading}
@@ -477,6 +478,23 @@ function BusinessDetailInner() {
       {activeTab === 'bookings' ? <BookingsTab bookings={bookings} timezone={business.timezone} /> : null}
       {activeTab === 'customers' ? <CustomersTab total={customers.total} /> : null}
       {activeTab === 'audit' ? <AuditLogList fixedTenantId={business.tenantId} /> : null}
+
+      {/* QA 10 Nov 2026 — Suspend was the first full-width button on a phone, above everything else: the most damaging
+          action the easiest to hit. It lives here now, last on the page, behind a typed-name confirm. */}
+      {canManage && business.status === 'active' ? (
+        <Card className="admin-danger-zone" style={{ borderColor: 'oklch(0.85 0.06 25)' }}>
+          <SectionTitle title="Danger zone" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.5, color: oklch.textMuted, flex: '1 1 16rem' }}>
+              Suspend this business: its people can still sign in and look, but cannot change anything, and no WhatsApp
+              messages go out for it. You can reactivate it at any time.
+            </p>
+            <SecondaryButton danger onClick={() => setPendingAction('suspend')} style={{ minHeight: 44 }}>
+              Suspend business…
+            </SecondaryButton>
+          </div>
+        </Card>
+      ) : null}
       {activeTab === 'subscription' ? (
         business.subscription ? (
           <SubscriptionPanel
@@ -531,7 +549,6 @@ function SummaryHeader({
   // BR-03 — only active<->suspended is this story's transition; a business
   // that is provisioning or churned offers neither button rather than one
   // that would just come back 409.
-  const canSuspend = canManage && business.status === 'active';
   const canReactivate = canManage && business.status === 'suspended';
   const bookingMeter = usageSummary?.meters.find((m) => m.usageType === 'booking');
   const bookingsSummaryValue = bookingMeter
@@ -583,11 +600,6 @@ function SummaryHeader({
         */}
         <div className="admin-bar-end" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <StatusPill status={statusLabel(business.status)} />
-          {canSuspend ? (
-            <SecondaryButton danger onClick={() => onRequestAction('suspend')}>
-              Suspend
-            </SecondaryButton>
-          ) : null}
           {canReactivate ? (
             <PrimaryButton onClick={() => onRequestAction('reactivate')}>Reactivate</PrimaryButton>
           ) : null}
