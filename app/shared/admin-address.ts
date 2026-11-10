@@ -3,8 +3,10 @@
  * covered /admin, so Android Chrome would not install Growza Admin beside Growza. Same dashboard, two addresses:
  * this file says which pages belong to which, for the middleware and for "Open as business".
  */
-export const APP_HOST = process.env.APP_HOSTNAME || 'app.growza.biz';
-export const ADMIN_HOST = process.env.ADMIN_HOSTNAME || 'admin.growza.biz';
+// NEXT_PUBLIC_, so the middleware and the admin's browser page read the same two names: set at build for a local or
+// test copy (app.localhost / admin.localhost); production needs neither — the defaults are the real addresses.
+export const APP_HOST = process.env.NEXT_PUBLIC_APP_HOSTNAME || 'app.growza.biz';
+export const ADMIN_HOST = process.env.NEXT_PUBLIC_ADMIN_HOSTNAME || 'admin.growza.biz';
 
 const isAdminPath = (pathname: string) => pathname === '/admin' || pathname.startsWith('/admin/');
 
