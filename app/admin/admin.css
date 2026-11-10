@@ -1100,3 +1100,14 @@ body.admin-body {
   outline: 2px solid oklch(0.48 0.11 150) !important;
   outline-offset: 2px;
 }
+
+/* Jira GRW-695 — the day heading over a run of audit rows (Today, Yesterday, 8 Nov 2026). */
+.admin-day-heading {
+  margin: 0;
+  padding: 6px 0 2px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: oklch(0.55 0.015 155);
+}

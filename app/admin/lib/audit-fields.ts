@@ -189,13 +189,18 @@ const ACTION_LABELS: Record<string, string> = {
   'role.deleted': 'Role deleted',
 };
 
-/** Translates a raw dot-separated audit action key into a readable sentence while falling back cleanly for new keys. */
+/**
+ * Jira GRW-695 — what an audit row says it was, in plain words. An action with no label yet reads "Account change",
+ * never its raw code: the code is how the system names it, not something an admin should have to decode. The test
+ * beside this file fails, naming the action, the moment one is added without a label.
+ */
+export const UNLABELLED_ACTION = 'Account change';
+
 export function formatAuditAction(action: string): string {
-  const known = ACTION_LABELS[action];
-  if (known) return known;
-  return action
-    .replace(/[._]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/^./, (c) => c.toUpperCase());
+  return ACTION_LABELS[action] ?? UNLABELLED_ACTION;
+}
+
+/** The actions in `actions` that have no plain-words label. Empty is the only acceptable answer. */
+export function actionsWithoutLabels(actions: readonly string[]): string[] {
+  return actions.filter((a) => !Object.hasOwn(ACTION_LABELS, a));
 }
