@@ -10,7 +10,8 @@ import { useBranch } from '../components/BranchProvider';
 import { useLabel } from '../components/LabelsProvider';
 import { PaymentDone } from '../components/PaymentDone';
 import { RedeemRow } from '../components/RedeemRow';
-import { useSession } from '../components/SessionProvider';
+import { useAreas, useSession } from '../components/SessionProvider';
+import { hasOrderQueue } from '../lib/areas';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconCheck, IconArrowLeft, IconClose, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch } from '../components/icons';
 import { ClientSheet, type PickedClient } from '../appointments/new/ClientSheet';
@@ -410,7 +411,9 @@ export function PosClient({
     session?.branches?.find((b) => b.id === location)?.paymentQrUrl ??
     null;
 
-  const [mode, setMode] = useState<PosMode>(initialMode === 'queue' ? 'queue' : 'sell');
+  // Owner, 10 Nov 2026 — only a kitchen has an order queue; a salon's or a shop's till is Sell and Return alone.
+  const orderQueue = hasOrderQueue(useAreas());
+  const [mode, setMode] = useState<PosMode>(initialMode === 'queue' && orderQueue ? 'queue' : 'sell');
   const [fullScreen, setFullScreen] = useState(false);
   const [bills, setBills] = useState<SaleRow[] | null>(null);
   const [failed, setFailed] = useState(false);
@@ -975,11 +978,11 @@ export function PosClient({
 
   useEffect(() => {
     const raw = initialToken?.trim();
-    if (raw) {
+    if (raw && orderQueue) {
       setMode('queue');
       setFocusToken(raw);
     }
-  }, [initialToken]);
+  }, [initialToken, orderQueue]);
 
   useEffect(() => {
     if (mode !== 'queue' || !focusToken || dailyTokens.length === 0) return;
@@ -1186,13 +1189,15 @@ export function PosClient({
             >
               {t('sell')}
             </button>
-            <button
-              type="button"
-              className={`pos-fs-btn${mode === 'queue' ? ' is-active' : ''}`}
-              onClick={openQueue}
-            >
-              {t('openQueue', { count: preparingTokens.length })}
-            </button>
+            {orderQueue ? (
+              <button
+                type="button"
+                className={`pos-fs-btn${mode === 'queue' ? ' is-active' : ''}`}
+                onClick={openQueue}
+              >
+                {t('openQueue', { count: preparingTokens.length })}
+              </button>
+            ) : null}
             {canReturn ? (
               <button
                 type="button"
@@ -1219,10 +1224,12 @@ export function PosClient({
             <button type="button" role="tab" aria-selected={mode === 'sell'} className={`page-tab${mode === 'sell' ? ' active' : ''}`} onClick={closeReturn}>
               {t('sell')}
             </button>
-            <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab pos-tab-queue${mode === 'queue' ? ' active' : ''}`} onClick={openQueue}>
-              <span>{t('queue')}</span>{' '}
-              <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
-            </button>
+            {orderQueue ? (
+              <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab pos-tab-queue${mode === 'queue' ? ' active' : ''}`} onClick={openQueue}>
+                <span>{t('queue')}</span>{' '}
+                <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
+              </button>
+            ) : null}
             <button type="button" role="tab" aria-selected={mode === 'return'} className={`page-tab${mode === 'return' ? ' active' : ''}`} onClick={() => mode !== 'return' && void openReturn()}>
               {t('return')}
             </button>
@@ -1264,10 +1271,12 @@ export function PosClient({
             <button type="button" role="tab" aria-selected={mode === 'sell'} className={`page-tab${mode === 'sell' ? ' active' : ''}`} onClick={closeReturn}>
               {t('sell')}
             </button>
-            <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab pos-tab-queue${mode === 'queue' ? ' active' : ''}`} onClick={openQueue}>
-              <span>{t('queue')}</span>{' '}
-              <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
-            </button>
+            {orderQueue ? (
+              <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab pos-tab-queue${mode === 'queue' ? ' active' : ''}`} onClick={openQueue}>
+                <span>{t('queue')}</span>{' '}
+                <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
+              </button>
+            ) : null}
           </div>
           <div className="pos-bar-right">
             {/* As above: the till's branch, since the flow underneath draws no header of its own. */}
@@ -1313,7 +1322,7 @@ export function PosClient({
           heading={heading}
           nextTokenNo={nextTokenNo}
           onSaleCompleted={handleSaleCompleted}
-          onOpenQueue={() => openQueue(lastQueuedIdRef.current ?? undefined)}
+          onOpenQueue={orderQueue ? () => openQueue(lastQueuedIdRef.current ?? undefined) : undefined}
           reloadKey={reloadKey}
         />
       </div>
