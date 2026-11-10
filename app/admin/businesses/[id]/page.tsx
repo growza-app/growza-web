@@ -15,6 +15,7 @@ import { groupByDay, timeOfDay } from '../../lib/audit-days';
 import { Icon, TypeIcon } from '../../icons';
 import { AuditLogList } from '../../components/AuditLogList';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { CopyableId } from '../../components/CopyableId';
 import { Bar, Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, Select, StatusPill, Table, TableRow, TextInput, type TableColumn } from '../../components/primitives';
 import { SubscriptionPanel } from '../../components/SubscriptionPanel';
 import { GoLiveChecklist, type ReadinessItem } from '../../components/GoLiveChecklist';
@@ -608,7 +609,7 @@ function SummaryHeader({
               (GRW-136 AC-02); this is about not offering what will not work.
               Absent with no owner too — there would be nobody to be. */}
           {canImpersonate && business.ownerPhone ? (
-            <SecondaryButton onClick={onRequestImpersonate}>Impersonate owner</SecondaryButton>
+            <SecondaryButton onClick={onRequestImpersonate}>View as owner</SecondaryButton>
           ) : null}
         </div>
       </div>
@@ -744,7 +745,11 @@ function OverviewTab({ business }: { business: BusinessDetail }) {
       <Card>
         <SectionTitle title="Identity" />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(160px, 100%), 1fr))', gap: 16, marginTop: 12 }}>
-          <SummaryField label="Business ID" value={business.tenantId} />
+          {/* Jira GRW-696 — first 8 characters, tap to copy all 36. */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Business ID</div>
+            <CopyableId id={business.tenantId} label="business ID" />
+          </div>
           <SummaryField label="Vertical" value={`${business.vertical} · v${business.businessTypeVersion}`} />
           <SummaryField label="Timezone" value={business.timezone} />
           <SummaryField label="WhatsApp number" value={business.waPhoneNumber ?? '—'} />
