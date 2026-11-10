@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import type { Lang } from '../lib/lang';
 import { gridCanChange, gridMayUse, mayUse, type UiAction } from '../lib/nav-policy';
 import { DIARY_AREAS, type Areas } from '../lib/areas';
+import type { MeBranch } from '../lib/api-types';
 
 /**
  * Jira GRW-63 · GRW-203 — who is signed in, for any client component.
@@ -27,7 +28,12 @@ export interface SessionInfo {
   /** The person's own name, for the avatar and the account menu. Null until they (or the invite) set one. */
   name?: string | null;
   /** Jira GRW-235 — open branches, main first; one or none means there is no branch to choose. */
-  branches?: Array<{ id: string; name: string; paymentQrUrl?: string | null; googleReviewUrl?: string | null }>;
+  branches?: MeBranch[];
+  /**
+   * Jira GRW-671 — what a shared WhatsApp message needs that `/me` already carried: the vertical's tone and the
+   * business's own phone (the number its WhatsApp booking link opens). Absent reads as neutral, no phone.
+   */
+  share?: { tone: 'casual' | 'neutral'; businessPhone: string | null };
   /** Jira GRW-306 — the language the page was rendered in, for the language switch in the account menu. */
   lang?: Lang;
   /**

@@ -146,4 +146,6 @@
 @import './styles/99-stock-report.css';
 @import './styles/99-channels.css';
 @import './styles/99-counter-report.css';
+/* Jira GRW-671 — Share on WhatsApp: the row button, the after-save banner, the copy dialog. */
+@import './styles/99-share-whatsapp.css';
 @import './styles/99-photo-none.css';

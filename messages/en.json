@@ -5232,5 +5232,22 @@
     "Book a treatment": "Book a treatment",
     "Take an order": "Take an order",
     "Order now": "Order now"
+  },
+  "share": {
+    "button": "Share on WhatsApp",
+    "buttonFor": "Share on WhatsApp: {name}",
+    "savedOffer": "Offer saved. Tell your clients now?",
+    "savedPackage": "Package saved. Tell your clients now?",
+    "later": "Later",
+    "copyTitle": "Copy and paste in WhatsApp",
+    "copyNote": "WhatsApp did not open. Copy the message and paste it in WhatsApp.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "close": "Close",
+    "noNumberTitle": "Clients can't reach you",
+    "noNumberBody": "This message has no phone number. Add your business number in Settings so clients know how to book.",
+    "noNumberBodyStaff": "This message has no phone number. Ask the owner to add the business number in Settings.",
+    "shareAnyway": "Share anyway",
+    "addNumber": "Add number"
   }
 }

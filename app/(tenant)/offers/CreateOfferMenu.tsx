@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '../lib/api';
+import { markJustCreated } from '../lib/just-created';
 import { OfferBranchField, useDefaultOfferBranch } from './OfferBranchField';
 import { IconPlus } from '../components/icons';
 import { useWritable } from '../components/SessionProvider';
@@ -58,13 +59,15 @@ function CreateOfferModal({ onClose }: { onClose: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      await api.createOffer({
+      const created = await api.createOffer({
         title: title.trim(),
         description: description.trim() || null,
         active: true,
         ...(atBranch ? { locationId: atBranch } : {}),
         ...(allBranches ? { allBranches: true } : {}),
       });
+      // Jira GRW-671 — the list beside this modal asks once: "Offer saved. Tell your clients now?"
+      markJustCreated(created.id, 'offer');
       router.refresh();
       onClose();
     } catch (err) {

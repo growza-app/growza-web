@@ -49,6 +49,7 @@ export const KNOWN_ACTIONS = [
   'business.branch_close',
   'business.branch_reopen',
   'business.branch_make_main',
+  'business.branch_places_set',
   'plan.create',
   'plan.update',
   'plan.delete',
@@ -104,6 +105,9 @@ export const KNOWN_ACTIONS = [
   'subscription.mandate_cancelled',
   // Jira GRW-470 — an owner took a receptionist's or stylist's login away.
   'team.member_removed',
+  // An owner's invite: sent, and taken up (the owner's own sign-in is now on the record).
+  'team.invite_created',
+  'team.invite_accepted',
   // Jira GRW-477 — a day on the attendance register recorded, corrected or removed.
   'attendance.marked',
   'attendance.cleared',
@@ -123,16 +127,11 @@ export const KNOWN_ACTIONS = [
   // GRW-613 — an owner recognised a marketplace buyer and attached a client they already have.
   'order.client_attached',
   /*
-   * `order.client_detached` is NOT here yet, and that is deliberate.
-   *
-   * QA 2026-10-26 added taking a client back off an order, and the action went into @growza-app/shared. This repo
-   * pins 1.0.19; the action arrived after 1.0.23. `audit-fields.test.ts` compares this list against the INSTALLED
-   * shared, so adding the word before the pin moves turns the test red the other way — a filter offering an action
-   * the platform cannot write.
-   *
-   * It goes in with the pin bump, not before. The same word is already in the growza repo's copy of this file,
-   * which builds shared from source and so was red without it.
+   * QA 2026-10-26 — the undo of the above: a wrongly attached client taken off the order. It waited for the pin to
+   * move past 1.0.23 (`audit-fields.test.ts` compares this list against the INSTALLED shared); Jira GRW-671 moved it
+   * to 1.0.29, so it is here now.
    */
+  'order.client_detached',
   // GRW-613 — a buyer's name, contact and address removed from an order on request. Says THAT, never what.
   'order.buyer_erased',
   // GRW-617 — a size swapped on a bill: what went back, what went out, the difference.
