@@ -16,7 +16,8 @@ describe('Tenant Home v2 redesign', () => {
   const boardCss = code('../../styles/95-token-board.css');
 
   it('includes Products in Owner and Reception quick links, gated by canSee', () => {
-    expect(owner).toContain("{ href: '/products', label: t.nav.products, icon: <IconProducts />, tone: 'blue' }");
+    // Owner, 10 Nov 2026 — the owner's Home has Record payment where Products was; Products is in the menu's Catalogue.
+    expect(owner).not.toContain("{ href: '/products', label: t.nav.products");
     // The front desk sells from the shelf; the catalogue stays the owner's (QA, 2026-10-17 — this asked
     // `canSee('/products', 'receptionist')`, which is always false, so the desk had no tile at all).
     expect(reception).toContain("canSee('/products/sell', 'receptionist')");
@@ -27,6 +28,14 @@ describe('Tenant Home v2 redesign', () => {
     expect(owner).not.toContain("'/settings/billing'");
     expect(owner).not.toContain('IconWallet');
     expect(owner).toContain("{ href: '/settings', label: t.nav.settings, icon: <IconSettings />, tone: 'slate' }");
+  });
+
+  it('opens the Owner quick links with Record payment, Services, Packages, Staff — Record payment only for who may record one (owner, 10 Nov 2026)', () => {
+    const links = owner.slice(owner.indexOf('const links = ['), owner.indexOf('].filter((l) => canSee(l.href'));
+    const order = ['/appointments/new?purpose=payment', "'/services'", "'/packages'", "'/providers'", "'/products/sell'", "'/attendance'", "'/reports'", "'/settings'"].map((h) => links.indexOf(h));
+    expect(order.every((i) => i > 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(links).toContain("...(mayRecordPayment ? [{ href: '/appointments/new?purpose=payment', label: t.recordPayment, icon: <IconReceipt />, tone: 'green' }] : [])");
   });
 
   it('has Sell product in the Owner quick links where Offers was, gated by canSee', () => {
