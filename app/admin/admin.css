@@ -1232,6 +1232,42 @@ body.admin-body {
   width: 32px;
   height: 32px;
   border-radius: 9px;
+/* ---------- Jira GRW-694: Businesses on a phone ----------
+   One inset list instead of the table's ~180px cards: name, plan · type, status. Every row is a single link at
+   least 60px tall. Shown at the phone breakpoint only; the table keeps every width above it. */
+.admin-phone-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: oklch(1 0 0);
+  border: 1px solid oklch(0.92 0.008 150);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.admin-phone-list > li + li {
+  border-top: 1px solid oklch(0.94 0.006 150);
+}
+.admin-phone-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px 12px 10px 14px;
+  text-decoration: none;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.admin-phone-row:active {
+  background: oklch(0.97 0.006 150);
+}
+.admin-phone-row:focus-visible {
+  outline: 2px solid oklch(0.55 0.13 150);
+  outline-offset: -2px;
+}
+.admin-phone-row-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1240,6 +1276,14 @@ body.admin-body {
 .admin-find-name,
 .admin-find-sub {
   display: block;
+.admin-phone-row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.admin-phone-row-name,
+.admin-phone-row-sub {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1251,6 +1295,72 @@ body.admin-body {
 }
 .admin-find-sub {
   font-size: 0.75rem;
+.admin-phone-row-name {
+  font-size: 0.90625rem;
+  font-weight: 700;
+  color: oklch(0.3 0.02 155);
+}
+.admin-phone-row-sub {
+  font-size: 0.78125rem;
+  color: oklch(0.55 0.015 155);
+  margin-top: 1px;
+}
+.admin-phone-row-end {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex: none;
+}
+.admin-phone-row-ready {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: oklch(0.42 0.13 150);
+}
+
+/* The Enrol button, bottom-right above the tab bar and the home indicator, within thumb reach. The list leaves room
+   under its last row so the button never covers it. */
+.admin-fab {
+  position: fixed;
+  right: 16px;
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  z-index: 31;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 20px 0 16px;
+  border: none;
+  border-radius: 999px;
+  background: oklch(0.45 0.12 150);
+  color: oklch(1 0 0);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  box-shadow: 0 8px 24px oklch(0.3 0.08 150 / 0.3);
+  cursor: pointer;
+}
+.admin-fab:focus-visible {
+  outline: 3px solid oklch(0.75 0.12 150);
+  outline-offset: 2px;
+}
+.admin-fab-clearance {
+  height: 72px;
+}
+@media (min-width: 861px) {
+  .admin-fab,
+  .admin-fab-clearance,
+  .admin-phone-list {
+    display: none;
+  }
+}
+@media (max-width: 860px) {
+  .admin-businesses-table {
+    display: none;
+  }
+  .admin-businesses-add-first {
+    display: none !important;
+  }
 /* Jira GRW-695 — the day heading over a run of audit rows (Today, Yesterday, 8 Nov 2026). */
 .admin-day-heading {
   margin: 0;
