@@ -35,6 +35,11 @@ describe('an item name is never cut short', () => {
     });
   }
 
+  it('the Top seller tile shows the dish’s whole name, not "Chicken Biryan…" (QA 10 Nov)', () => {
+    expect(rule('96-products.css', '.prd-stat-n.prd-stat-name')).toMatch(/white-space: normal;[\s\S]*overflow-wrap: anywhere;/);
+    expect(readFileSync(resolve(__dirname, 'ProductsList.tsx'), 'utf8')).toContain("className={`prd-stat-n${topSeller ? ' prd-stat-name' : ''}`}");
+  });
+
   it('on a Menu card the name has the whole width: Bestseller sits under it, not beside it', () => {
     expect(rule('96-products.css', '.prd-menu-card-title-row')).toContain('flex-direction: column;');
   });
