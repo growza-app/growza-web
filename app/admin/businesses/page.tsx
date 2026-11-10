@@ -4,7 +4,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { Icon, TypeIcon } from '../icons';
-import { Card, EmptyState, PrimaryButton, SecondaryButton, Select, StatusPill, Table, TableRow } from '../components/primitives';
+import { Card, EmptyState, PrimaryButton, SecondaryButton, Select, StatusPill, Table, TableRow, type TableSort } from '../components/primitives';
+import { isDefaultSort, MOBILE_SORT_OPTIONS, nextSort, sortFromOption, sortFromParams } from '../lib/business-sort';
 import { BUSINESS_COLUMNS } from '../lib/list-columns';
 import { AddBusinessModal, OwnerCredentialNotice, type CreatedBusiness } from '../components/AddBusinessModal';
 import { Pagination, type PaginationState } from '../components/Pagination';
@@ -93,6 +94,8 @@ function AdminBusinessesInner() {
   });
   const [createdFrom] = useState(() => searchParams.get('createdFrom'));
   const [createdFromCleared, setCreatedFromCleared] = useState(false);
+  // Jira GRW-693 — the order, read from and written back to the URL like every other filter.
+  const [sort, setSort] = useState<TableSort>(() => sortFromParams(searchParams));
   const activeCreatedFrom = createdFromCleared ? null : createdFrom;
 
   /*
@@ -104,9 +107,13 @@ function AdminBusinessesInner() {
     const params = new URLSearchParams();
     if (status !== 'All') params.set('status', status);
     if (activeCreatedFrom) params.set('createdFrom', activeCreatedFrom);
+    if (!isDefaultSort(sort)) {
+      params.set('sort', sort.key);
+      params.set('dir', sort.dir);
+    }
     const next = params.size > 0 ? `/admin/businesses?${params}` : '/admin/businesses';
     if (`${window.location.pathname}${window.location.search}` !== next) router.replace(next, { scroll: false });
-  }, [status, activeCreatedFrom, router]);
+  }, [status, activeCreatedFrom, sort, router]);
   const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
   const [page, setPage] = useState<BusinessPage | null>(null);
   /**
@@ -130,7 +137,7 @@ function AdminBusinessesInner() {
     // two identical requests per filter click). Returning `p` itself here
     // makes React skip the re-render entirely in that case.
     setPaging((p) => (p.page === 1 ? p : { ...p, page: 1, intent: 'replace' }));
-  }, [vertical, status, trimmedSearch, activeCreatedFrom]);
+  }, [vertical, status, trimmedSearch, activeCreatedFrom, sort]);
 
   useEffect(() => {
     if (searchTooShort) return;
@@ -143,6 +150,8 @@ function AdminBusinessesInner() {
     if (vertical !== ALL) params.set('vertical', vertical);
     if (status !== 'All') params.set('status', status);
     if (activeCreatedFrom) params.set('createdFrom', activeCreatedFrom);
+    params.set('sort', sort.key);
+    params.set('dir', sort.dir);
     applyPageParams(params, paging);
 
     adminFetch<BusinessPage>(`/businesses?${params}`, { signal: controller.signal })
@@ -160,7 +169,7 @@ function AdminBusinessesInner() {
 
     return () => controller.abort();
      
-  }, [trimmedSearch, vertical, status, paging, searchTooShort, activeCreatedFrom]);
+  }, [trimmedSearch, vertical, status, paging, searchTooShort, activeCreatedFrom, sort]);
 
   const hasActiveFilters = vertical !== ALL || status !== 'All' || trimmedSearch.length >= 2 || !!activeCreatedFrom;
   const totalStatusCount = (page?.statusCounts ?? []).reduce((sum, s) => sum + s.count, 0);
@@ -305,6 +314,14 @@ function AdminBusinessesInner() {
           (matching the current vertical/search filters, not the whole
           platform — see BusinessPage.statusCounts's own comment). Desktop
           keeps the plain dropdown above. */}
+      <div className="admin-mobile-only" style={{ marginBottom: 12 }}>
+        <Select
+          aria-label="Sort businesses"
+          options={MOBILE_SORT_OPTIONS}
+          value={MOBILE_SORT_OPTIONS.some((o) => o.value === `${sort.key}:${sort.dir}`) ? `${sort.key}:${sort.dir}` : 'created:desc'}
+          onChange={(e) => setSort(sortFromOption(e.target.value))}
+        />
+      </div>
       <div className="admin-mobile-only admin-status-chip-row" style={{ gap: 8, marginBottom: 16 }}>
         {STATUS_OPTIONS.map((s) => {
           const label = statusLabel(s);
@@ -422,6 +439,9 @@ function AdminBusinessesInner() {
         <>
           <Table
             columns={COLUMNS}
+            dense
+            sort={sort}
+            onSort={(key) => setSort((s) => nextSort(s, key))}
             rows={rows.map((b) => {
               const tc = typeColor(b.vertical);
               return (
@@ -429,9 +449,9 @@ function AdminBusinessesInner() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                     <span
                       style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: 11,
+                        width: 32,
+                        height: 32,
+                        borderRadius: 9,
                         background: tc.bg,
                         color: tc.fg,
                         display: 'flex',
@@ -446,7 +466,7 @@ function AdminBusinessesInner() {
                       <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {b.name}
                       </div>
-                      <div style={{ fontSize: 12, color: oklch.textFaint }}>{b.vertical}</div>
+                      <div style={{ fontSize: 12, color: oklch.textFaint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.vertical}</div>
                     </div>
                   </div>
                   <div style={{ fontSize: 13.5, color: 'oklch(0.36 0.02 155)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
