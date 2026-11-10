@@ -27,7 +27,7 @@ describe('the Customers list', () => {
     for (const lang of [en, hi]) expect(lang.clientCard.whatsapp).toBeTruthy();
   });
 
-  it('draws one row per person: tinted initials, name and amount, facts in grey, a chevron', () => {
+  it('draws one row per person: a cartoon face, name and amount, facts in grey, a chevron', () => {
     for (const cls of ['cust-avatar', 'cust-card-top', 'cust-card-name', 'cust-card-amt', 'cust-card-sub', 'cust-card-facts']) {
       expect(list, cls).toContain(`className="${cls}"`);
       expect(css, cls).toContain(`.${cls} {`);
