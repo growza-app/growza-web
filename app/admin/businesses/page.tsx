@@ -5,7 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { Icon, TypeIcon } from '../icons';
-import { Card, EmptyState, PrimaryButton, SecondaryButton, Select, StatusPill, Table, TableRow } from '../components/primitives';
+import { businessHealth } from '../lib/business-health';
+import { BusinessPhoneList } from '../components/BusinessPhoneList';
+import { Card, EmptyState, PrimaryButton, SecondaryButton, Select, StatusPill, Table, TableRow, Toggle, type TableSort } from '../components/primitives';
+import { isDefaultSort, MOBILE_SORT_OPTIONS, nextSort, sortFromOption, sortFromParams } from '../lib/business-sort';
 import { BUSINESS_COLUMNS } from '../lib/list-columns';
 import { AddBusinessModal, OwnerCredentialNotice, type CreatedBusiness } from '../components/AddBusinessModal';
 import { Pagination, type PaginationState } from '../components/Pagination';
@@ -38,12 +41,17 @@ interface BusinessRow {
   tenantId: string;
   name: string;
   status: string;
+  /** Jira GRW-692 — only ever true when the list was asked to include test businesses. */
+  isTest?: boolean;
   vertical: string;
   planName: string;
   ownerPhone: string | null;
   branchCount: number;
   userCount: number;
   createdAt: string;
+  /** Jira GRW-701 — absent from an API older than growza#514. */
+  lastActiveAt?: string | null;
+  weekActivity?: number;
   /**
    * Owner, 2026-10-26 — `true` when a provisioning business has finished its checklist and is waiting on
    * somebody here to press Activate. `null` for every other status: a live business has no checklist, and a
@@ -94,6 +102,10 @@ function AdminBusinessesInner() {
   });
   const [createdFrom] = useState(() => searchParams.get('createdFrom'));
   const [createdFromCleared, setCreatedFromCleared] = useState(false);
+  // Jira GRW-693 — the order, read from and written back to the URL like every other filter.
+  const [sort, setSort] = useState<TableSort>(() => sortFromParams(searchParams));
+  // Jira GRW-692 — test businesses are hidden unless the admin asks; kept in the URL like every other filter.
+  const [showTest, setShowTest] = useState(() => searchParams.get('test') === '1');
   const activeCreatedFrom = createdFromCleared ? null : createdFrom;
 
   /*
@@ -105,9 +117,14 @@ function AdminBusinessesInner() {
     const params = new URLSearchParams();
     if (status !== 'All') params.set('status', status);
     if (activeCreatedFrom) params.set('createdFrom', activeCreatedFrom);
+    if (!isDefaultSort(sort)) {
+      params.set('sort', sort.key);
+      params.set('dir', sort.dir);
+    }
+    if (showTest) params.set('test', '1');
     const next = params.size > 0 ? `/admin/businesses?${params}` : '/admin/businesses';
     if (`${window.location.pathname}${window.location.search}` !== next) router.replace(next, { scroll: false });
-  }, [status, activeCreatedFrom, router]);
+  }, [status, activeCreatedFrom, sort, showTest, router]);
   const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
   const [page, setPage] = useState<BusinessPage | null>(null);
   /**
@@ -131,7 +148,7 @@ function AdminBusinessesInner() {
     // two identical requests per filter click). Returning `p` itself here
     // makes React skip the re-render entirely in that case.
     setPaging((p) => (p.page === 1 ? p : { ...p, page: 1, intent: 'replace' }));
-  }, [vertical, status, trimmedSearch, activeCreatedFrom]);
+  }, [vertical, status, trimmedSearch, activeCreatedFrom, sort, showTest]);
 
   useEffect(() => {
     if (searchTooShort) return;
@@ -144,6 +161,9 @@ function AdminBusinessesInner() {
     if (vertical !== ALL) params.set('vertical', vertical);
     if (status !== 'All') params.set('status', status);
     if (activeCreatedFrom) params.set('createdFrom', activeCreatedFrom);
+    params.set('sort', sort.key);
+    params.set('dir', sort.dir);
+    if (showTest) params.set('includeTest', 'true');
     applyPageParams(params, paging);
 
     adminFetch<BusinessPage>(`/businesses?${params}`, { signal: controller.signal })
@@ -161,7 +181,7 @@ function AdminBusinessesInner() {
 
     return () => controller.abort();
      
-  }, [trimmedSearch, vertical, status, paging, searchTooShort, activeCreatedFrom]);
+  }, [trimmedSearch, vertical, status, paging, searchTooShort, activeCreatedFrom, sort, showTest]);
 
   const hasActiveFilters = vertical !== ALL || status !== 'All' || trimmedSearch.length >= 2 || !!activeCreatedFrom;
   const totalStatusCount = (page?.statusCounts ?? []).reduce((sum, s) => sum + s.count, 0);
@@ -289,6 +309,10 @@ function AdminBusinessesInner() {
             onChange={(e) => setStatus(e.target.value)}
           />
         </div>
+        <label className="admin-show-test" style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 44, fontSize: '0.84375rem', fontWeight: 600, color: oklch.textMuted, cursor: 'pointer' }}>
+          <Toggle on={showTest} onClick={() => setShowTest((v) => !v)} label="Show test businesses" />
+          Show test businesses
+        </label>
         {canCreate ? (
           // `admin-businesses-add-first`: admin mobile only — "Add business"
           // renders first in the flex row so it appears above the two filter
@@ -318,6 +342,14 @@ function AdminBusinessesInner() {
           (matching the current vertical/search filters, not the whole
           platform — see BusinessPage.statusCounts's own comment). Desktop
           keeps the plain dropdown above. */}
+      <div className="admin-mobile-only" style={{ marginBottom: 12 }}>
+        <Select
+          aria-label="Sort businesses"
+          options={MOBILE_SORT_OPTIONS}
+          value={MOBILE_SORT_OPTIONS.some((o) => o.value === `${sort.key}:${sort.dir}`) ? `${sort.key}:${sort.dir}` : 'created:desc'}
+          onChange={(e) => setSort(sortFromOption(e.target.value))}
+        />
+      </div>
       <div className="admin-mobile-only admin-status-chip-row" style={{ gap: 8, marginBottom: 16 }}>
         {STATUS_OPTIONS.map((s) => {
           const label = statusLabel(s);
@@ -428,13 +460,26 @@ function AdminBusinessesInner() {
       ) : !page || page.total === 0 ? (
         hasActiveFilters ? (
           <EmptyState title="No businesses match" sub="Try a different filter or search term." />
+        ) : !showTest ? (
+          // Jira GRW-692 AC-03 — the list may be empty only because every business is a test one; say so.
+          <EmptyState
+            title="No businesses to show"
+            sub="Test businesses are hidden."
+            action={<SecondaryButton onClick={() => setShowTest(true)}>Show test businesses</SecondaryButton>}
+          />
         ) : (
           <EmptyState title="No businesses on the platform yet" sub="Enroll one to see it here." />
         )
       ) : (
         <>
+          {/* Jira GRW-694 — a phone gets the short inset list; the table keeps every width above the phone breakpoint. */}
+          <BusinessPhoneList rows={rows} statusLabel={statusLabel} />
+          <div className="admin-businesses-table">
           <Table
             columns={COLUMNS}
+            dense
+            sort={sort}
+            onSort={(key) => setSort((s) => nextSort(s, key))}
             rows={rows.map((b) => {
               const tc = typeColor(b.vertical);
               return (
@@ -442,9 +487,9 @@ function AdminBusinessesInner() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                     <span
                       style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: 11,
+                        width: 32,
+                        height: 32,
+                        borderRadius: 9,
                         background: tc.bg,
                         color: tc.fg,
                         display: 'flex',
@@ -459,7 +504,8 @@ function AdminBusinessesInner() {
                       <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {b.name}
                       </div>
-                      <div style={{ fontSize: 12, color: oklch.textFaint }}>{b.vertical}</div>
+                      <div style={{ fontSize: 12, color: oklch.textFaint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.vertical}</div>
+                      <RowHealth business={b} />
                     </div>
                   </div>
                   <div style={{ fontSize: 13.5, color: 'oklch(0.36 0.02 155)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -470,6 +516,7 @@ function AdminBusinessesInner() {
                   <div style={{ fontSize: 13.5, fontWeight: 600, color: 'oklch(0.36 0.02 155)' }}>{b.planName}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     <StatusPill status={statusLabel(b.status)} />
+                    {b.isTest ? <TestPill /> : null}
                     {/*
                       * Nothing used to tell anybody here that an owner had finished setting up — readiness was
                       * computed on the one-business page only, so it meant opening each Provisioning row in turn.
@@ -545,9 +592,51 @@ function AdminBusinessesInner() {
               );
             })}
           />
+          </div>
           <Pagination total={page.total} loaded={rows.length} state={paging} onChange={setPaging} />
         </>
       )}
+      {canCreate ? (
+        <>
+          <div className="admin-fab-clearance" aria-hidden />
+          <button type="button" className="admin-fab" onClick={() => setAdding(true)}>
+            <Icon name="plus" size={20} />
+            Add business
+          </button>
+        </>
+      ) : null}
     </div>
+  );
+}
+
+/** Jira GRW-701 — under the name: active and this week's count, or quiet in the warning colour. */
+function RowHealth({ business }: { business: BusinessRow }) {
+  const health = businessHealth(business);
+  if (!health) return null;
+  return (
+    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: health.quiet ? 'oklch(0.52 0.13 65)' : oklch.textFaint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      {health.text}
+    </div>
+  );
+}
+
+/** Jira GRW-692 — marks a test business when the list is showing them. Grey: it is a fact, not a warning. */
+function TestPill() {
+  return (
+    <span
+      title="A test business: left out of the dashboard's figures."
+      style={{
+        fontSize: '0.75rem',
+        fontWeight: 700,
+        padding: '2px 7px',
+        borderRadius: 999,
+        whiteSpace: 'nowrap',
+        color: oklch.textMuted,
+        background: 'oklch(0.96 0.004 250)',
+        border: `1px solid ${oklch.border}`,
+      }}
+    >
+      Test
+    </span>
   );
 }

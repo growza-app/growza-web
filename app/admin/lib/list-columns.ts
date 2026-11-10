@@ -17,19 +17,19 @@ import type { TableColumn } from './table-layout';
  */
 
 export const BUSINESS_COLUMNS: TableColumn[] = [
-  { label: 'Business', width: '1.8fr', min: 190 },
+  { label: 'Business', width: '1.8fr', min: 190, sortKey: 'name' },
   { label: 'Owner', width: '1.3fr', min: 120 },
   { label: 'Branches', width: '0.8fr', min: 70 },
   { label: 'Users', width: '0.7fr', min: 48 },
-  { label: 'Plan', width: '1fr', min: 96 },
-  { label: 'Status', width: '1fr', min: 110 },
+  { label: 'Plan', width: '1fr', min: 96, sortKey: 'plan' },
+  { label: 'Status', width: '1fr', min: 110, sortKey: 'status' },
   // Jira GRW-267 · GRW-272 — `mobile: false`: two placeholders for figures not
   // counted yet, and a chevron on a card that already opens when tapped.
   // Jira GRW-288 — `optional` for the same reason: they are the first thing a
   // laptop too narrow for all ten columns gives up (the `compact` layout).
   { label: 'Bookings', width: '0.9fr', min: 66, mobile: false, optional: true },
   { label: 'Usage', width: '0.9fr', min: 50, mobile: false, optional: true },
-  { label: 'Created', width: '1fr', min: 92 },
+  { label: 'Created', width: '1fr', min: 92, sortKey: 'created' },
   { label: '', width: '36px', right: true, mobile: false },
 ];
 

@@ -5,6 +5,7 @@ import { adminFetch, AdminApiError } from '../lib/api';
 import { oklch } from '../tokens';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Card, SectionTitle, Toggle } from './primitives';
+import { useToast } from './Toast';
 
 /**
  * Jira GRW-556 (follow-up) — online payment, on the business's own page.
@@ -44,17 +45,39 @@ export function PaymentsCard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const next = !payments.online;
+  const toast = useToast();
 
-  function change(reason: string) {
-    setBusy(true);
-    setError(null);
+  const put = (enabled: boolean, reason: string) =>
     adminFetch(`/feature-flags/payments.online/overrides/${encodeURIComponent(businessId)}`, {
       method: 'PUT',
-      body: JSON.stringify({ enabled: next, reason }),
-    })
+      body: JSON.stringify({ enabled, reason }),
+    });
+
+  function change(reason: string) {
+    const previousOverride = payments.override;
+    setBusy(true);
+    setError(null);
+    put(next, reason)
       .then(() => {
         setAsking(false);
         onChanged();
+        // Jira GRW-704 — say it worked, and offer the way back. Undo is its own audited change, its reason says so.
+        toast.show({
+          message: `Online payments ${next ? 'on' : 'off'} for ${businessName}`,
+          undo: async () => {
+            // Back to exactly where it was: a business that followed the default goes back to the default, rather
+            // than being left with a setting of its own that happens to match it.
+            if (previousOverride === null) {
+              await adminFetch(`/feature-flags/payments.online/overrides/${encodeURIComponent(businessId)}`, {
+                method: 'DELETE',
+                body: JSON.stringify({ reason: `Undo: ${reason}` }),
+              });
+            } else {
+              await put(previousOverride, `Undo: ${reason}`);
+            }
+            onChanged();
+          },
+        });
       })
       .catch((err) => setError(err instanceof AdminApiError ? err.message : 'Could not change this.'))
       .finally(() => setBusy(false));
