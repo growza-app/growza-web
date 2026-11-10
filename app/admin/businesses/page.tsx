@@ -6,7 +6,7 @@ import { adminFetch, AdminApiError } from '../lib/api';
 import { Icon, TypeIcon } from '../icons';
 import { businessHealth } from '../lib/business-health';
 import { BusinessPhoneList } from '../components/BusinessPhoneList';
-import { Card, EmptyState, PrimaryButton, SecondaryButton, Select, StatusPill, Table, TableRow, type TableSort } from '../components/primitives';
+import { Card, EmptyState, PrimaryButton, SecondaryButton, Select, StatusPill, Table, TableRow, Toggle, type TableSort } from '../components/primitives';
 import { isDefaultSort, MOBILE_SORT_OPTIONS, nextSort, sortFromOption, sortFromParams } from '../lib/business-sort';
 import { BUSINESS_COLUMNS } from '../lib/list-columns';
 import { AddBusinessModal, OwnerCredentialNotice, type CreatedBusiness } from '../components/AddBusinessModal';
@@ -40,6 +40,8 @@ interface BusinessRow {
   tenantId: string;
   name: string;
   status: string;
+  /** Jira GRW-692 — only ever true when the list was asked to include test businesses. */
+  isTest?: boolean;
   vertical: string;
   planName: string;
   ownerPhone: string | null;
@@ -101,6 +103,8 @@ function AdminBusinessesInner() {
   const [createdFromCleared, setCreatedFromCleared] = useState(false);
   // Jira GRW-693 — the order, read from and written back to the URL like every other filter.
   const [sort, setSort] = useState<TableSort>(() => sortFromParams(searchParams));
+  // Jira GRW-692 — test businesses are hidden unless the admin asks; kept in the URL like every other filter.
+  const [showTest, setShowTest] = useState(() => searchParams.get('test') === '1');
   const activeCreatedFrom = createdFromCleared ? null : createdFrom;
 
   /*
@@ -116,9 +120,10 @@ function AdminBusinessesInner() {
       params.set('sort', sort.key);
       params.set('dir', sort.dir);
     }
+    if (showTest) params.set('test', '1');
     const next = params.size > 0 ? `/admin/businesses?${params}` : '/admin/businesses';
     if (`${window.location.pathname}${window.location.search}` !== next) router.replace(next, { scroll: false });
-  }, [status, activeCreatedFrom, sort, router]);
+  }, [status, activeCreatedFrom, sort, showTest, router]);
   const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
   const [page, setPage] = useState<BusinessPage | null>(null);
   /**
@@ -142,7 +147,7 @@ function AdminBusinessesInner() {
     // two identical requests per filter click). Returning `p` itself here
     // makes React skip the re-render entirely in that case.
     setPaging((p) => (p.page === 1 ? p : { ...p, page: 1, intent: 'replace' }));
-  }, [vertical, status, trimmedSearch, activeCreatedFrom, sort]);
+  }, [vertical, status, trimmedSearch, activeCreatedFrom, sort, showTest]);
 
   useEffect(() => {
     if (searchTooShort) return;
@@ -157,6 +162,7 @@ function AdminBusinessesInner() {
     if (activeCreatedFrom) params.set('createdFrom', activeCreatedFrom);
     params.set('sort', sort.key);
     params.set('dir', sort.dir);
+    if (showTest) params.set('includeTest', 'true');
     applyPageParams(params, paging);
 
     adminFetch<BusinessPage>(`/businesses?${params}`, { signal: controller.signal })
@@ -174,7 +180,7 @@ function AdminBusinessesInner() {
 
     return () => controller.abort();
      
-  }, [trimmedSearch, vertical, status, paging, searchTooShort, activeCreatedFrom, sort]);
+  }, [trimmedSearch, vertical, status, paging, searchTooShort, activeCreatedFrom, sort, showTest]);
 
   const hasActiveFilters = vertical !== ALL || status !== 'All' || trimmedSearch.length >= 2 || !!activeCreatedFrom;
   const totalStatusCount = (page?.statusCounts ?? []).reduce((sum, s) => sum + s.count, 0);
@@ -302,6 +308,10 @@ function AdminBusinessesInner() {
             onChange={(e) => setStatus(e.target.value)}
           />
         </div>
+        <label className="admin-show-test" style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 44, fontSize: '0.84375rem', fontWeight: 600, color: oklch.textMuted, cursor: 'pointer' }}>
+          <Toggle on={showTest} onClick={() => setShowTest((v) => !v)} label="Show test businesses" />
+          Show test businesses
+        </label>
         {canCreate ? (
           // `admin-businesses-add-first`: admin mobile only — "Add business"
           // renders first in the flex row so it appears above the two filter
@@ -437,6 +447,13 @@ function AdminBusinessesInner() {
       ) : !page || page.total === 0 ? (
         hasActiveFilters ? (
           <EmptyState title="No businesses match" sub="Try a different filter or search term." />
+        ) : !showTest ? (
+          // Jira GRW-692 AC-03 — the list may be empty only because every business is a test one; say so.
+          <EmptyState
+            title="No businesses to show"
+            sub="Test businesses are hidden."
+            action={<SecondaryButton onClick={() => setShowTest(true)}>Show test businesses</SecondaryButton>}
+          />
         ) : (
           <EmptyState title="No businesses on the platform yet" sub="Enroll one to see it here." />
         )
@@ -486,6 +503,7 @@ function AdminBusinessesInner() {
                   <div style={{ fontSize: 13.5, fontWeight: 600, color: 'oklch(0.36 0.02 155)' }}>{b.planName}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     <StatusPill status={statusLabel(b.status)} />
+                    {b.isTest ? <TestPill /> : null}
                     {/*
                       * Nothing used to tell anybody here that an owner had finished setting up — readiness was
                       * computed on the one-business page only, so it meant opening each Provisioning row in turn.
@@ -586,5 +604,26 @@ function RowHealth({ business }: { business: BusinessRow }) {
     <div style={{ fontSize: '0.75rem', fontWeight: 600, color: health.quiet ? 'oklch(0.52 0.13 65)' : oklch.textFaint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
       {health.text}
     </div>
+  );
+}
+
+/** Jira GRW-692 — marks a test business when the list is showing them. Grey: it is a fact, not a warning. */
+function TestPill() {
+  return (
+    <span
+      title="A test business: left out of the dashboard's figures."
+      style={{
+        fontSize: '0.75rem',
+        fontWeight: 700,
+        padding: '2px 7px',
+        borderRadius: 999,
+        whiteSpace: 'nowrap',
+        color: oklch.textMuted,
+        background: 'oklch(0.96 0.004 250)',
+        border: `1px solid ${oklch.border}`,
+      }}
+    >
+      Test
+    </span>
   );
 }
