@@ -30,6 +30,11 @@ export function attentionTint(count: number | undefined, warning: StatTint): Sta
   return count !== undefined && count > 0 ? warning : STAT_TINTS.neutral;
 }
 
+/** Jira GRW-691 — the rows that have a real figure behind them. An unbuilt row is not shown at all. */
+export function builtRows<T extends { available: boolean }>(rows: readonly T[]): T[] {
+  return rows.filter((r) => r.available);
+}
+
 export const STATUS_LABEL: Record<string, string> = { provisioning: 'Provisioning', active: 'Active', suspended: 'Suspended', churned: 'Churned' };
 
 

@@ -141,7 +141,7 @@ const TABS: TabDef[] = [
   { key: 'branches', label: 'Branches', permission: null },
   { key: 'bookings', label: 'Bookings', permission: null },
   { key: 'customers', label: 'Customers', permission: null },
-  { key: 'whatsapp', label: 'WhatsApp', permission: 'admin.usage.view' },
+  // Jira GRW-691 — the WhatsApp tab comes back when its data source does (Jira GRW-86); an empty tab naming a ticket is not a screen.
   { key: 'billing', label: 'Billing', permission: 'admin.invoice.view' },
   { key: 'audit', label: 'Audit', permission: 'admin.audit.view' },
 ];
@@ -519,7 +519,6 @@ function BusinessDetailInner() {
         )
       ) : null}
       {activeTab === 'usage' ? <UsageTab usageSummary={usageSummary} bookingsTotal={bookings.total} /> : null}
-      {activeTab === 'whatsapp' ? <NotYetBuiltTab what="WhatsApp message usage, by category" epic="GRW-86" /> : null}
       {/* GRW-119 — replaces GRW-102's placeholder. The same components the
           standalone Invoices and Payments screens use, so this business's
           figures cannot render differently here than they do there. */}
@@ -1177,37 +1176,6 @@ function UsageTab({ usageSummary, bookingsTotal }: { usageSummary: BusinessUsage
         )}
         <div style={{ fontSize: 12.5, color: oklch.textFaint }}>
           All-time bookings recorded across all periods: <strong>{bookingsTotal.toLocaleString('en-IN')}</strong>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function NotYetBuiltTab({ what, epic }: { what: string; epic: string }) {
-  return (
-    <Card>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '8px 4px' }}>
-        <span
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 11,
-            background: 'oklch(0.96 0.05 80)',
-            color: 'oklch(0.52 0.13 65)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flex: 'none',
-          }}
-        >
-          <Icon name="alert" size={18} />
-        </span>
-        <div>
-          <div style={{ fontSize: 14.5, fontWeight: 800, color: oklch.textStrong }}>Not built yet</div>
-          <div style={{ fontSize: 13, color: oklch.textMuted, marginTop: 4, lineHeight: 1.5 }}>
-            {what} will appear here once <strong>Jira {epic}</strong> ships. Nothing is hidden — this tab genuinely has
-            no data source yet, so it says so rather than showing a zero.
-          </div>
         </div>
       </div>
     </Card>
