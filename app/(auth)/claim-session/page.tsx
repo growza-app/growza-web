@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { ADMIN_HOST } from '../../shared/admin-address';
 
@@ -15,7 +15,12 @@ import { ADMIN_HOST } from '../../shared/admin-address';
 export default function ClaimSession() {
   const t = useTranslations('auth.claimSession');
   const [failed, setFailed] = useState(false);
+  // Once per page. React may run this effect twice (development's strict mode does); the second run found the grant
+  // already wiped from the address bar and flashed "could not be opened" while the first was still claiming it.
+  const claimed = useRef(false);
   useEffect(() => {
+    if (claimed.current) return;
+    claimed.current = true;
     const grant = decodeURIComponent(window.location.hash.slice(1));
     window.history.replaceState(null, '', '/claim-session');
     if (!grant) {

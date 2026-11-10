@@ -42,6 +42,8 @@ describe('"Open as business" from the admin address', () => {
     expect(admin).toContain('window.location.assign(`${business}/claim-session#${encodeURIComponent(started.grant)}`)');
     const claim = readFileSync(resolve(__dirname, '../(auth)/claim-session/page.tsx'), 'utf8');
     expect(claim.indexOf("window.history.replaceState(null, '', '/claim-session')")).toBeLessThan(claim.indexOf("fetch('/api/v1/auth/claim-impersonation'"));
+    // Claimed once: a second run of the effect must not see the wiped fragment and show the failure (QA, 10 Nov).
+    expect(claim).toMatch(/if \(claimed\.current\) return;\s*claimed\.current = true;/);
   });
   it('the middleware redirects page requests only — never an API call or a file', () => {
     const mw = readFileSync(resolve(__dirname, '../../middleware.ts'), 'utf8');
