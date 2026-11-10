@@ -393,7 +393,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           >
             <Icon name="impersonate" size={19} />
             <div className="admin-name" style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: '0.01em' }}>
-              IMPERSONATING · {impersonation.business} · {impersonation.user}
+              VIEWING AS OWNER · {impersonation.business} · {impersonation.user}
             </div>
             <span style={{ fontSize: 12.5, color: 'oklch(0.92 0.05 25)', fontWeight: 500 }}>
               Reason: {impersonation.reason}. All actions are logged to the audit trail.
@@ -414,7 +414,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 cursor: 'pointer',
               }}
             >
-              Exit impersonation
+              Stop viewing
             </button>
           </div>
         ) : null}

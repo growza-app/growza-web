@@ -11,9 +11,11 @@ import { Suspense, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../../lib/api';
 import { formatDateOnly, formatDateTime, formatTimestampDate } from '../../lib/format';
 import { formatAuditAction } from '../../lib/audit-fields';
+import { groupByDay, timeOfDay } from '../../lib/audit-days';
 import { Icon, TypeIcon } from '../../icons';
 import { AuditLogList } from '../../components/AuditLogList';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { CopyableId } from '../../components/CopyableId';
 import { Bar, Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, Select, StatusPill, Table, TableRow, TextInput, type TableColumn } from '../../components/primitives';
 import { SubscriptionPanel } from '../../components/SubscriptionPanel';
 import { GoLiveChecklist, type ReadinessItem } from '../../components/GoLiveChecklist';
@@ -141,7 +143,7 @@ const TABS: TabDef[] = [
   { key: 'branches', label: 'Branches', permission: null },
   { key: 'bookings', label: 'Bookings', permission: null },
   { key: 'customers', label: 'Customers', permission: null },
-  { key: 'whatsapp', label: 'WhatsApp', permission: 'admin.usage.view' },
+  // Jira GRW-691 — the WhatsApp tab comes back when its data source does (Jira GRW-86); an empty tab naming a ticket is not a screen.
   { key: 'billing', label: 'Billing', permission: 'admin.invoice.view' },
   { key: 'audit', label: 'Audit', permission: 'admin.audit.view' },
 ];
@@ -519,7 +521,6 @@ function BusinessDetailInner() {
         )
       ) : null}
       {activeTab === 'usage' ? <UsageTab usageSummary={usageSummary} bookingsTotal={bookings.total} /> : null}
-      {activeTab === 'whatsapp' ? <NotYetBuiltTab what="WhatsApp message usage, by category" epic="GRW-86" /> : null}
       {/* GRW-119 — replaces GRW-102's placeholder. The same components the
           standalone Invoices and Payments screens use, so this business's
           figures cannot render differently here than they do there. */}
@@ -608,7 +609,7 @@ function SummaryHeader({
               (GRW-136 AC-02); this is about not offering what will not work.
               Absent with no owner too — there would be nobody to be. */}
           {canImpersonate && business.ownerPhone ? (
-            <SecondaryButton onClick={onRequestImpersonate}>Impersonate owner</SecondaryButton>
+            <SecondaryButton onClick={onRequestImpersonate}>View as owner</SecondaryButton>
           ) : null}
         </div>
       </div>
@@ -744,7 +745,11 @@ function OverviewTab({ business }: { business: BusinessDetail }) {
       <Card>
         <SectionTitle title="Identity" />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(160px, 100%), 1fr))', gap: 16, marginTop: 12 }}>
-          <SummaryField label="Business ID" value={business.tenantId} />
+          {/* Jira GRW-696 — first 8 characters, tap to copy all 36. */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Business ID</div>
+            <CopyableId id={business.tenantId} label="business ID" />
+          </div>
           <SummaryField label="Vertical" value={`${business.vertical} · v${business.businessTypeVersion}`} />
           <SummaryField label="Timezone" value={business.timezone} />
           <SummaryField label="WhatsApp number" value={business.waPhoneNumber ?? '—'} />
@@ -770,38 +775,30 @@ function OverviewTab({ business }: { business: BusinessDetail }) {
           <div style={{ fontSize: 13, color: oklch.textFaint, marginTop: 10 }}>No activity recorded for this business yet.</div>
         ) : (
           <div style={{ marginTop: 8 }}>
-            {activity.map((row, i) => (
-              <div
-                key={row.id}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: 12,
-                  padding: '10px 0',
-                  borderBottom: i < activity.length - 1 ? `1px solid ${oklch.divider}` : 'none',
-                  fontSize: 13,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontWeight: 700, color: oklch.textStrong }}>{formatAuditAction(row.action)}</span>
-                  <code
+            {/* Jira GRW-695 — plain words under a heading per day; no raw action codes. */}
+            {groupByDay(activity).map((day) => (
+              <section key={day.key} aria-label={day.label}>
+                <h4 className="admin-day-heading">{day.label}</h4>
+                {day.rows.map((row, i) => (
+                  <div
+                    key={row.id}
                     style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: oklch.textMuted,
-                      background: oklch.surfaceSubtle,
-                      border: `1px solid ${oklch.border}`,
-                      padding: '1px 6px',
-                      borderRadius: 5,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '10px 0',
+                      borderBottom: i < day.rows.length - 1 ? `1px solid ${oklch.divider}` : 'none',
+                      fontSize: '0.8125rem',
                     }}
                   >
-                    {row.action}
-                  </code>
-                </div>
-                <span style={{ color: oklch.textFaint }}>{formatDateTime(row.createdAt)}</span>
-              </div>
+                    <span style={{ fontWeight: 700, color: oklch.textStrong, minWidth: 0 }}>{formatAuditAction(row.action)}</span>
+                    <time dateTime={row.createdAt} title={formatDateTime(row.createdAt)} style={{ color: oklch.textFaint, flex: 'none' }}>
+                      {timeOfDay(row.createdAt)}
+                    </time>
+                  </div>
+                ))}
+              </section>
             ))}
           </div>
         )}
@@ -1177,37 +1174,6 @@ function UsageTab({ usageSummary, bookingsTotal }: { usageSummary: BusinessUsage
         )}
         <div style={{ fontSize: 12.5, color: oklch.textFaint }}>
           All-time bookings recorded across all periods: <strong>{bookingsTotal.toLocaleString('en-IN')}</strong>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function NotYetBuiltTab({ what, epic }: { what: string; epic: string }) {
-  return (
-    <Card>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '8px 4px' }}>
-        <span
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 11,
-            background: 'oklch(0.96 0.05 80)',
-            color: 'oklch(0.52 0.13 65)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flex: 'none',
-          }}
-        >
-          <Icon name="alert" size={18} />
-        </span>
-        <div>
-          <div style={{ fontSize: 14.5, fontWeight: 800, color: oklch.textStrong }}>Not built yet</div>
-          <div style={{ fontSize: 13, color: oklch.textMuted, marginTop: 4, lineHeight: 1.5 }}>
-            {what} will appear here once <strong>Jira {epic}</strong> ships. Nothing is hidden — this tab genuinely has
-            no data source yet, so it says so rather than showing a zero.
-          </div>
         </div>
       </div>
     </Card>

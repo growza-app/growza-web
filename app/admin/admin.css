@@ -638,6 +638,42 @@ body.admin-body {
   padding: 14px 20px;
 }
 
+/* Jira GRW-693 — a list an admin scans (Businesses): shorter rows on a laptop, so 12+ fit at 1440x900. The phone
+   card keeps its own spacing. */
+.admin-table[data-dense='true']:not([data-layout='cards']) .admin-table-row {
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+
+/* Jira GRW-693 — a sortable heading reads like its neighbours; the arrow says which way. */
+.admin-sort-heading {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  border-radius: 6px;
+}
+.admin-sort-heading:hover,
+.admin-sort-heading[data-active='true'] {
+  color: oklch(0.3 0.02 155);
+}
+.admin-sort-heading:focus-visible {
+  outline: 2px solid oklch(0.55 0.13 150);
+  outline-offset: 2px;
+}
+.admin-sort-arrow {
+  opacity: 0.45;
+}
+.admin-sort-heading[data-active='true'] .admin-sort-arrow {
+  opacity: 1;
+}
+
 /* Laptop: the wrapper is not a box at all, so cells remain direct grid items
    and the column layout is exactly what it was before cards existed. */
 .admin-cell {
@@ -1215,5 +1251,13 @@ body.admin-body {
 }
 .admin-find-sub {
   font-size: 0.75rem;
+/* Jira GRW-695 — the day heading over a run of audit rows (Today, Yesterday, 8 Nov 2026). */
+.admin-day-heading {
+  margin: 0;
+  padding: 6px 0 2px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: oklch(0.55 0.015 155);
 }

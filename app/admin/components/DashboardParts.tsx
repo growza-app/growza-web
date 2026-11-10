@@ -197,7 +197,8 @@ export function StatCard({
 }: {
   icon: StatIcon;
   label: string;
-  value: number;
+  /** `null` = the figure could not be read; shown as a dash, never as 0 (Jira GRW-690 AC-03). */
+  value: number | null;
   href: string;
   tint: StatTint;
   /** Real movement only. `text` is already formatted ("12% vs last month"); `direction` colours the arrow. */
@@ -247,7 +248,7 @@ export function StatCard({
           {label}
         </div>
         <div className="admin-stat-value" style={{ color: oklch.textStrong }}>
-          {value.toLocaleString('en-IN')}
+          {value === null ? '—' : value.toLocaleString('en-IN')}
         </div>
         <div className="admin-stat-delta">
           {delta ? (
@@ -495,6 +496,8 @@ function monthShort(iso: string): string {
 }
 
 export function AttentionRowView({ row, isLast }: { row: AttentionRow; isLast: boolean }) {
+  // Jira GRW-691 — callers pass built rows only (`builtRows`); this is the backstop, so a ticket number never shows.
+  if (!row.available) return null;
   const body = (
     <div
       style={{
@@ -537,7 +540,7 @@ export function AttentionRowView({ row, isLast }: { row: AttentionRow; isLast: b
               // everywhere else.
               (ATTENTION_SUBTITLES[row.key]?.[row.count === 0 ? 'clear' : 'action'] ??
               (row.count === 0 ? 'Nothing needs attention.' : 'Currently failing — open to reconcile.'))
-            : `Not yet available — lands with Jira ${row.epic}.`}
+            : null}
         </div>
       </div>
       {row.available ? (
