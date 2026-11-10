@@ -197,7 +197,8 @@ export function StatCard({
 }: {
   icon: StatIcon;
   label: string;
-  value: number;
+  /** `null` = the figure could not be read; shown as a dash, never as 0 (Jira GRW-690 AC-03). */
+  value: number | null;
   href: string;
   tint: StatTint;
   /** Real movement only. `text` is already formatted ("12% vs last month"); `direction` colours the arrow. */
@@ -247,7 +248,7 @@ export function StatCard({
           {label}
         </div>
         <div className="admin-stat-value" style={{ color: oklch.textStrong }}>
-          {value.toLocaleString('en-IN')}
+          {value === null ? '—' : value.toLocaleString('en-IN')}
         </div>
         <div className="admin-stat-delta">
           {delta ? (

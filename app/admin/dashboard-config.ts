@@ -18,7 +18,17 @@ export const STAT_TINTS = {
   blue: { bg: 'oklch(0.96 0.025 250)', fg: 'oklch(0.5 0.15 250)', border: 'oklch(0.92 0.035 250)' },
   amber: { bg: 'oklch(0.965 0.035 75)', fg: 'oklch(0.55 0.13 65)', border: 'oklch(0.93 0.05 75)' },
   rose: { bg: 'oklch(0.965 0.025 25)', fg: 'oklch(0.53 0.16 25)', border: 'oklch(0.93 0.035 25)' },
+  /** Jira GRW-690 — a warning card with nothing to warn about. Grey, so colour on this dashboard means "look here". */
+  neutral: { bg: 'oklch(0.975 0.003 250)', fg: 'oklch(0.5 0.01 250)', border: 'oklch(0.92 0.005 250)' },
 } satisfies Record<string, StatTint>;
+
+/**
+ * Jira GRW-690 — an attention card wears its warning colour only when it has something in it. "0 payments failed" in
+ * amber read as an alarm on a quiet day; a count we could not read is not a zero either, and is neutral too.
+ */
+export function attentionTint(count: number | undefined, warning: StatTint): StatTint {
+  return count !== undefined && count > 0 ? warning : STAT_TINTS.neutral;
+}
 
 /** Jira GRW-691 — the rows that have a real figure behind them. An unbuilt row is not shown at all. */
 export function builtRows<T extends { available: boolean }>(rows: readonly T[]): T[] {

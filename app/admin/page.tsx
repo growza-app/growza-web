@@ -28,7 +28,7 @@ import {
 } from './components/DashboardParts';
 import { DashboardSkeleton } from './components/DashboardSkeleton';
 import { oklch, STATUS_COLORS } from './tokens';
-import { ATTENTION_CARDS, QUICK_ACTIONS, STAT_TINTS, STATUS_LABEL, builtRows } from './dashboard-config';
+import { ATTENTION_CARDS, QUICK_ACTIONS, STAT_TINTS, STATUS_LABEL, attentionTint, builtRows } from './dashboard-config';
 import { useAdminMe } from './components/AdminMeContext';
 
 /**
@@ -211,10 +211,10 @@ export default function AdminDashboardPage() {
               key={key}
               icon={icon}
               label={label}
-              value={row.count ?? 0}
+              value={row.count ?? null}
               href={row.href}
-              tint={tint}
-              note={note(row.count ?? 0)}
+              tint={attentionTint(row.count, tint)}
+              note={row.count === undefined ? undefined : note(row.count)}
               chevron
             />
           );
