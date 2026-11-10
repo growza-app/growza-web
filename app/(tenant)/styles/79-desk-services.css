@@ -761,9 +761,7 @@
 .svc-sheet-name {
   font-weight: 700;
   font-size: 1.0625rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .svc-sheet-tags {
