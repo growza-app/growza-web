@@ -4591,8 +4591,8 @@
       "fromApp": "A {channel} order. Not in your list."
     },
     "list": {
-      "searchPlaceholder": "Order number or name",
-      "searchLabel": "Search orders",
+      "searchPlaceholder": "Token, name or order number",
+      "searchLabel": "Search orders by token, name or order number",
       "filtersLabel": "Filter orders",
       "channelGroup": "Where from",
       "stateGroup": "State",
