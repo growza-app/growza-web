@@ -1410,6 +1410,8 @@ export interface OrderMarketplaceMessage {
 export interface OrderDetail {
   id: string;
   locationId: string;
+  /** QA 10 Nov 2026 — the token the guest holds (API 0174); absent from an older API, null for an order without one. */
+  tokenNo?: number | null;
   /** Jira GRW-641 — the branch the order is booked against, by name. */
   branchName: string | null;
   status: string;

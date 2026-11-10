@@ -321,7 +321,8 @@ export function OrdersClient({
                     <a className="ord-row-link" href={`/orders/${r.id}`}>
                       {when(r.soldAt)}
                     </a>
-                    <div className="ord-code">{t('list.orderCode', { code: r.code.toUpperCase() })}</div>
+                    {/* The token the guest holds where there is one, as on the phone; the code only for an order without. */}
+                    <div className="ord-code">{r.tokenNo ? formatTokenNo(r.tokenNo) : t('list.orderCode', { code: r.code.toUpperCase() })}</div>
                     {isDeliveryApp(r.channel) && r.externalRef ? <div className="ord-code">{t('list.appOrder', { ref: r.externalRef })}</div> : null}
                   </td>
                   <td>
