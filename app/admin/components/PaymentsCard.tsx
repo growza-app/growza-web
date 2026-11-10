@@ -89,14 +89,14 @@ export function PaymentsCard({
     <Card>
       <SectionTitle title="Online payments" />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginTop: 10 }}>
-        <div style={{ fontSize: 13.5, lineHeight: 1.5, color: oklch.textStrong }}>
+        <div style={{ fontSize: '0.84375rem', lineHeight: 1.5, color: oklch.textStrong }}>
           <strong>{payments.online ? 'On' : 'Off'}</strong>
           <span style={{ color: oklch.textMuted }}>
             {payments.online
               ? ' — the owner sees a Pay now button on their bill.'
               : ' — the owner is told to pay by UPI, and you record the payment under Billing.'}
           </span>
-          <div style={{ fontSize: 12.5, color: oklch.textFaint, marginTop: 2 }}>
+          <div style={{ fontSize: '0.78125rem', color: oklch.textFaint, marginTop: 2 }}>
             {payments.override === null ? 'Same as every business (the default).' : 'Set for this business only.'}
           </div>
         </div>
@@ -114,14 +114,14 @@ export function PaymentsCard({
       {stuck ? (
         <div
           role="status"
-          style={{ marginTop: 12, padding: '10px 12px', borderRadius: 10, fontSize: 13, lineHeight: 1.5, background: oklch.dangerBg, color: oklch.textStrong }}
+          style={{ marginTop: 12, padding: '10px 12px', borderRadius: 10, fontSize: '0.8125rem', lineHeight: 1.5, background: oklch.dangerBg, color: oklch.textStrong }}
         >
           <strong>Switched on, but it will not work yet.</strong> Growza&apos;s payment account is not connected on the server
           (the Razorpay secret and keys). Until it is, this business still sees no Pay now button.
         </div>
       ) : null}
       {!canManage ? (
-        <div style={{ marginTop: 10, fontSize: 12.5, color: oklch.textFaint }}>You do not have permission to change this.</div>
+        <div style={{ marginTop: 10, fontSize: '0.78125rem', color: oklch.textFaint }}>You do not have permission to change this.</div>
       ) : null}
 
       <ConfirmDialog

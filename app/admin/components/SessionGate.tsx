@@ -88,12 +88,12 @@ export function SessionGate({ children }: { children: ReactNode }) {
     return (
       <div role="alert" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <div style={{ maxWidth: 360, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
-          <div style={{ fontSize: 16, fontWeight: 800 }}>Could not reach the sign-in service</div>
-          <div style={{ fontSize: 13.5, lineHeight: 1.5, opacity: 0.75 }}>You are still signed in. Check your connection, then try again.</div>
+          <div style={{ fontSize: '1rem', fontWeight: 800 }}>Could not reach the sign-in service</div>
+          <div style={{ fontSize: '0.84375rem', lineHeight: 1.5, opacity: 0.75 }}>You are still signed in. Check your connection, then try again.</div>
           <button
             type="button"
             onClick={() => setAttempt((n) => n + 1)}
-            style={{ height: 40, padding: '0 18px', borderRadius: 10, border: 'none', background: 'oklch(0.31 0.055 158)', color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+            style={{ height: 40, padding: '0 18px', borderRadius: 10, border: 'none', background: 'oklch(0.31 0.055 158)', color: 'white', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}
           >
             Try again
           </button>

@@ -339,7 +339,7 @@ function BusinessDetailInner() {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+          <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
           <SecondaryButton onClick={() => setRetryToken((n) => n + 1)}>
             Retry
           </SecondaryButton>
@@ -388,7 +388,7 @@ function BusinessDetailInner() {
         onCancel={() => setImpersonateOpen(false)}
       />
 
-      {goLiveNotice ? <div role="status" style={{ fontSize: 13.5, color: oklch.textStrong }}>{goLiveNotice}</div> : null}
+      {goLiveNotice ? <div role="status" style={{ fontSize: '0.84375rem', color: oklch.textStrong }}>{goLiveNotice}</div> : null}
       {business.status === 'suspended' ? <SuspendedBanner reason={business.suspensionReason} /> : null}
 
       {readiness ? (
@@ -457,7 +457,7 @@ function BusinessDetailInner() {
             onClick={() => setTab(t.key)}
             style={{
               padding: '10px 16px',
-              fontSize: 13.5,
+              fontSize: '0.84375rem',
               fontWeight: 700,
               whiteSpace: 'nowrap',
               flex: 'none',
@@ -501,7 +501,7 @@ function BusinessDetailInner() {
         <Card className="admin-danger-zone" style={{ borderColor: 'oklch(0.85 0.06 25)' }}>
           <SectionTitle title="Danger zone" />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-            <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.5, color: oklch.textMuted, flex: '1 1 16rem' }}>
+            <p style={{ margin: 0, fontSize: '0.84375rem', lineHeight: 1.5, color: oklch.textMuted, flex: '1 1 16rem' }}>
               Suspend this business: its people can still sign in and look, but cannot change anything, and no WhatsApp
               messages go out for it. You can reactivate it at any time.
             </p>
@@ -597,10 +597,10 @@ function SummaryHeader({
           {/* Jira GRW-288 — a 118-character name with a long unbroken run
               scrolled the page 9px sideways at 320px: the word was wider
               than the card, and nothing let it break. */}
-          <div className="admin-name" style={{ fontSize: 19, fontWeight: 800, color: oklch.textStrong }}>
+          <div className="admin-name" style={{ fontSize: '1.1875rem', fontWeight: 800, color: oklch.textStrong }}>
             {business.name}
           </div>
-          <div style={{ fontSize: 13, color: oklch.textMuted }}>
+          <div style={{ fontSize: '0.8125rem', color: oklch.textMuted }}>
             {business.vertical} · {business.ownerPhone ?? 'No owner recorded'}
           </div>
           {/* Jira GRW-701 — is it being used: last booking or bill, this week's count, and setup while setting up. */}
@@ -686,10 +686,10 @@ function SummaryHeader({
 function SummaryField({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div title={hint}>
-      <div style={{ fontSize: 11, fontWeight: 800, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
       <div
         style={{
-          fontSize: 14,
+          fontSize: '0.875rem',
           fontWeight: 700,
           color: value === '—' ? oklch.textFaint : oklch.textStrong,
           marginTop: 3,
@@ -719,7 +719,7 @@ function SuspendedBanner({ reason }: { reason: string | null }) {
       <span style={{ color: oklch.danger, flex: 'none', marginTop: 1 }}>
         <Icon name="alert" size={18} />
       </span>
-      <div style={{ fontSize: 13.5, color: oklch.textStrong, lineHeight: 1.5 }}>
+      <div style={{ fontSize: '0.84375rem', color: oklch.textStrong, lineHeight: 1.5 }}>
         <strong>This business is suspended.</strong> Its dashboard users can sign in and look at everything, but cannot
         change anything except pay the bill, and no proactive WhatsApp messages are sent on its behalf. Its data is
         untouched.
@@ -766,7 +766,7 @@ function OverviewTab({ business }: { business: BusinessDetail }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(160px, 100%), 1fr))', gap: 16, marginTop: 12 }}>
           {/* Jira GRW-696 — first 8 characters, tap to copy all 36. */}
           <div>
-            <div style={{ fontSize: 11, fontWeight: 800, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Business ID</div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Business ID</div>
             <CopyableId id={business.tenantId} label="business ID" />
           </div>
           <SummaryField label="Vertical" value={`${business.vertical} · v${business.businessTypeVersion}`} />
@@ -781,17 +781,17 @@ function OverviewTab({ business }: { business: BusinessDetail }) {
         <SectionTitle
           title="Recent activity"
           right={
-            <Link href={`/admin/businesses/${business.tenantId}?tab=audit`} style={{ fontSize: 12.5, fontWeight: 700 }}>
+            <Link href={`/admin/businesses/${business.tenantId}?tab=audit`} style={{ fontSize: '0.78125rem', fontWeight: 700 }}>
               View all
             </Link>
           }
         />
         {activityError ? (
-          <div style={{ fontSize: 13, color: oklch.textFaint, marginTop: 10 }}>{activityError}</div>
+          <div style={{ fontSize: '0.8125rem', color: oklch.textFaint, marginTop: 10 }}>{activityError}</div>
         ) : !activity ? (
           <div style={{ height: 60, borderRadius: 10, background: oklch.divider, marginTop: 10, animation: 'admin-fade 1.2s ease infinite alternate' }} />
         ) : activity.length === 0 ? (
-          <div style={{ fontSize: 13, color: oklch.textFaint, marginTop: 10 }}>No activity recorded for this business yet.</div>
+          <div style={{ fontSize: '0.8125rem', color: oklch.textFaint, marginTop: 10 }}>No activity recorded for this business yet.</div>
         ) : (
           <div style={{ marginTop: 8 }}>
             {/* Jira GRW-695 — plain words under a heading per day; no raw action codes. */}
@@ -842,8 +842,8 @@ function UsersTab({ members }: { members: BusinessDetail['members'] }) {
       minWidthPx={420}
       rows={members.map((m) => (
         <TableRow key={m.userId} columns={USERS_COLUMNS}>
-          <div style={{ fontSize: 13.5, fontWeight: 600, color: oklch.text }}>{m.phone ?? '—'}</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: oklch.textMuted, textTransform: 'capitalize' }}>{m.role}</div>
+          <div style={{ fontSize: '0.84375rem', fontWeight: 600, color: oklch.text }}>{m.phone ?? '—'}</div>
+          <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: oklch.textMuted, textTransform: 'capitalize' }}>{m.role}</div>
         </TableRow>
       ))}
     />
@@ -988,13 +988,13 @@ function BranchesTab({
           minWidthPx={480}
           rows={locations.map((l) => (
             <TableRow key={l.id} columns={branchesColumns(providersLabel)}>
-              <div className="admin-name" style={{ fontSize: 13.5, fontWeight: 600, color: oklch.text }}>
+              <div className="admin-name" style={{ fontSize: '0.84375rem', fontWeight: 600, color: oklch.text }}>
                 {l.name}
                 {l.isMain ? (
-                  <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 800, color: oklch.textMuted }}>MAIN</span>
+                  <span style={{ marginLeft: 8, fontSize: '0.75rem', fontWeight: 800, color: oklch.textMuted }}>MAIN</span>
                 ) : null}
                 {/* Jira GRW-563 — whether the branch has a pin for phone check-in. */}
-                <div style={{ fontSize: 11.5, fontWeight: 500, color: oklch.textMuted, marginTop: 2 }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 500, color: oklch.textMuted, marginTop: 2 }}>
                   {l.geoLat != null && l.geoLng != null ? `Pin ${l.geoLat.toFixed(4)}, ${l.geoLng.toFixed(4)}` : 'No pin yet'}
                 </div>
               </div>
@@ -1037,26 +1037,26 @@ function BranchesTab({
         onCancel={() => setAdding(false)}
       >
         <div style={{ display: 'grid', gap: 10 }}>
-          <label htmlFor="add-branch-name" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
+          <label htmlFor="add-branch-name" style={{ fontSize: '0.78125rem', fontWeight: 700, color: oklch.textMuted }}>
             Branch name
           </label>
           <TextInput id="add-branch-name" value={name} maxLength={80} onChange={(e) => setName(e.target.value)} placeholder="Koramangala" />
-          <label htmlFor="add-branch-line1" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
+          <label htmlFor="add-branch-line1" style={{ fontSize: '0.78125rem', fontWeight: 700, color: oklch.textMuted }}>
             Address (optional)
           </label>
           <TextInput id="add-branch-line1" value={line1} onChange={(e) => setLine1(e.target.value)} placeholder="80 Feet Road" />
-          <label htmlFor="add-branch-city" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
+          <label htmlFor="add-branch-city" style={{ fontSize: '0.78125rem', fontWeight: 700, color: oklch.textMuted }}>
             City (optional)
           </label>
           <TextInput id="add-branch-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Bengaluru" />
-          <label htmlFor="add-branch-geo" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
+          <label htmlFor="add-branch-geo" style={{ fontSize: '0.78125rem', fontWeight: 700, color: oklch.textMuted }}>
             Location (optional)
           </label>
           <TextInput id="add-branch-geo" value={geo} onChange={(e) => setGeo(e.target.value)} placeholder="https://maps.google.com/… or 12.9716, 77.5946" />
-          <span style={{ fontSize: 12.5, color: oklch.textMuted }}>
+          <span style={{ fontSize: '0.78125rem', color: oklch.textMuted }}>
             A Google or Apple Maps link, or lat, lng. Pre-fills the owner&rsquo;s Location check-in setting; they switch it on.
           </span>
-          <label htmlFor="add-branch-stylists" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
+          <label htmlFor="add-branch-stylists" style={{ fontSize: '0.78125rem', fontWeight: 700, color: oklch.textMuted }}>
             {providersLabel || 'Staff'} at most
           </label>
           <TextInput
@@ -1066,10 +1066,10 @@ function BranchesTab({
             onChange={(e) => setStylists(e.target.value.replace(/[^0-9]/g, ''))}
             placeholder={placesDefault === null ? '5' : String(placesDefault)}
           />
-          <span style={{ fontSize: 12.5, color: oklch.textMuted }}>
+          <span style={{ fontSize: '0.78125rem', color: oklch.textMuted }}>
             Starts at the plan&rsquo;s number: fewer for a small branch, more for a large one. Can be changed later.
           </span>
-          <label htmlFor="add-branch-menu" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
+          <label htmlFor="add-branch-menu" style={{ fontSize: '0.78125rem', fontWeight: 700, color: oklch.textMuted }}>
             Its menu
           </label>
           <Select
@@ -1082,7 +1082,7 @@ function BranchesTab({
               { value: 'empty', label: 'Empty — the owner adds services later' },
             ]}
           />
-          <span style={{ fontSize: 12.5, color: oklch.textMuted }}>
+          <span style={{ fontSize: '0.78125rem', color: oklch.textMuted }}>
             A copy is the branch&rsquo;s own: prices can be changed there without touching the branch it came from.
           </span>
         </div>
@@ -1129,8 +1129,8 @@ function BookingsTab({ bookings, timezone }: { bookings: { total: number; recent
           minWidthPx={480}
           rows={bookings.recent.map((b) => (
             <TableRow key={b.id} columns={BOOKINGS_COLUMNS}>
-              <div style={{ fontSize: 13.5, fontWeight: 600, color: oklch.text }}>{b.serviceName}</div>
-              <div style={{ fontSize: 13, color: oklch.textMuted }}>{formatDateTime(b.startAt, timezone)}</div>
+              <div style={{ fontSize: '0.84375rem', fontWeight: 600, color: oklch.text }}>{b.serviceName}</div>
+              <div style={{ fontSize: '0.8125rem', color: oklch.textMuted }}>{formatDateTime(b.startAt, timezone)}</div>
               <div>
                 <StatusPill status={statusLabel(b.status).replace('_', ' ')} />
               </div>
@@ -1146,7 +1146,7 @@ function CustomersTab({ total }: { total: number }) {
   return (
     <Card>
       <SummaryField label="Total customers" value={String(total)} />
-      <p style={{ fontSize: 13, color: oklch.textFaint, marginTop: 16, lineHeight: 1.6 }}>
+      <p style={{ fontSize: '0.8125rem', color: oklch.textFaint, marginTop: 16, lineHeight: 1.6 }}>
         Individual customer records don't appear on this screen. Support reads a business's shape here, not the salon's
         own customer list — a customer's name and WhatsApp number are that business's data, not Growza's, and stay off
         cross-tenant admin surfaces (see <code>06-security.md</code>'s admin read boundary).
@@ -1160,7 +1160,7 @@ function UsageTab({ usageSummary, bookingsTotal }: { usageSummary: BusinessUsage
     return (
       <Card>
         <SectionTitle title="Usage in current billing period" />
-        <div style={{ fontSize: 13, color: oklch.textMuted }}>
+        <div style={{ fontSize: '0.8125rem', color: oklch.textMuted }}>
           No open billing period is metered for this business right now. All-time bookings recorded: <strong>{bookingsTotal.toLocaleString('en-IN')}</strong>.
         </div>
       </Card>
@@ -1175,7 +1175,7 @@ function UsageTab({ usageSummary, bookingsTotal }: { usageSummary: BusinessUsage
       <SectionTitle
         title="Usage in current billing period"
         right={
-          <span style={{ fontSize: 12.5, fontWeight: 600, color: oklch.textMuted }}>
+          <span style={{ fontSize: '0.78125rem', fontWeight: 600, color: oklch.textMuted }}>
             {formatDateOnly(usageSummary.currentPeriodStart)} – {formatDateOnly(usageSummary.currentPeriodEnd)}
           </span>
         }
@@ -1184,14 +1184,14 @@ function UsageTab({ usageSummary, bookingsTotal }: { usageSummary: BusinessUsage
         {limit !== null && limit > 0 ? (
           <Bar used={used} limit={limit} label="Bookings counted against plan allowance" />
         ) : (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84375rem' }}>
             <span style={{ fontWeight: 700, color: oklch.textStrong }}>Bookings counted this period</span>
             <span style={{ fontWeight: 700, color: oklch.textMuted }}>
               {used.toLocaleString('en-IN')} · {limit === 0 ? 'Blocked (limit 0)' : 'No limit'}
             </span>
           </div>
         )}
-        <div style={{ fontSize: 12.5, color: oklch.textFaint }}>
+        <div style={{ fontSize: '0.78125rem', color: oklch.textFaint }}>
           All-time bookings recorded across all periods: <strong>{bookingsTotal.toLocaleString('en-IN')}</strong>
         </div>
       </div>

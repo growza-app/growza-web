@@ -116,15 +116,15 @@ export default function AdminLoginPage() {
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 800,
-              fontSize: 20,
+              fontSize: '1.25rem',
               flex: 'none',
             }}
           >
             G
           </div>
           <div>
-            <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: '-0.01em', color: oklch.textStrong }}>Growza Admin</div>
-            <div style={{ fontSize: 12.5, color: oklch.textMuted }}>
+            <div style={{ fontWeight: 800, fontSize: '1.125rem', letterSpacing: '-0.01em', color: oklch.textStrong }}>Growza Admin</div>
+            <div style={{ fontSize: '0.78125rem', color: oklch.textMuted }}>
               {mustChangePassword ? 'Choose your own password to finish' : 'Platform team sign-in'}
             </div>
           </div>
@@ -169,7 +169,7 @@ export default function AdminLoginPage() {
           {error ? (
             <div
               style={{
-                fontSize: 13,
+                fontSize: '0.8125rem',
                 fontWeight: 600,
                 color: oklch.danger,
                 background: oklch.dangerBg,

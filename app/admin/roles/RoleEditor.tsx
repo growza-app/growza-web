@@ -172,10 +172,10 @@ export function RoleEditor({
         }}
       >
         <div style={{ padding: '22px 24px 0' }}>
-          <h3 id={`${ids}-title`} style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: '-0.01em', color: oklch.textStrong }}>
+          <h3 id={`${ids}-title`} style={{ margin: 0, fontSize: '1.1875rem', fontWeight: 800, letterSpacing: '-0.01em', color: oklch.textStrong }}>
             {role ? `Edit ${role.name}` : 'New role'}
           </h3>
-          <p style={{ margin: '4px 0 0', fontSize: 13.5, color: oklch.textMuted }}>
+          <p style={{ margin: '4px 0 0', fontSize: '0.84375rem', color: oklch.textMuted }}>
             {role
               ? `${role.holders} ${role.holders === 1 ? 'administrator holds' : 'administrators hold'} this role. Changes apply on their next request.`
               : 'Choose what an administrator on this role may do.'}
@@ -190,16 +190,16 @@ export function RoleEditor({
           </div>
 
           <div>
-            <div style={{ fontSize: 12, fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>
               Permissions · {selected.size} selected
             </div>
             <div style={{ display: 'grid', gap: 14 }}>
               {groupByArea(catalogue).map(([area, options]) => (
                 <div key={area}>
-                  <div style={{ fontSize: 12.5, fontWeight: 800, color: oklch.textStrong, marginBottom: 5, textTransform: 'capitalize' }}>{area}</div>
+                  <div style={{ fontSize: '0.78125rem', fontWeight: 800, color: oklch.textStrong, marginBottom: 5, textTransform: 'capitalize' }}>{area}</div>
                   <div style={{ display: 'grid', gap: 5 }}>
                     {options.map((option) => (
-                      <label key={option.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: 13, color: oklch.textStrong }}>
+                      <label key={option.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: '0.8125rem', color: oklch.textStrong }}>
                         <input
                           type="checkbox"
                           checked={selected.has(option.key)}
@@ -211,7 +211,7 @@ export function RoleEditor({
                         />
                         <span style={can(option.key) ? undefined : { color: oklch.textFaint }}>
                           {option.label}
-                          {can(option.key) ? null : <span style={{ fontSize: 11.5 }}> — you do not hold this</span>}
+                          {can(option.key) ? null : <span style={{ fontSize: '0.75rem' }}> — you do not hold this</span>}
                         </span>
                       </label>
                     ))}
@@ -226,8 +226,8 @@ export function RoleEditor({
             <TextInput id={`${ids}-reason`} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why this role exists, or why it is changing" disabled={saving} />
           </div>
 
-          {error ? <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{error}</div> : null}
-          {blocker ? <div style={{ fontSize: 12.5, color: oklch.textMuted, fontWeight: 600 }}>{blocker}</div> : null}
+          {error ? <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{error}</div> : null}
+          {blocker ? <div style={{ fontSize: '0.78125rem', color: oklch.textMuted, fontWeight: 600 }}>{blocker}</div> : null}
 
           <div style={{ display: 'flex', gap: 9, justifyContent: 'flex-end' }}>
             <SecondaryButton onClick={onClose} disabled={saving}>

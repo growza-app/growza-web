@@ -43,7 +43,7 @@ export function EnrolDiscountFields({
 
   return (
     <div style={{ borderTop: `1px solid ${oklch.border}`, paddingTop: 14 }}>
-      <label style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer', fontSize: 13.5, fontWeight: 700, color: oklch.textStrong }}>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer', fontSize: '0.84375rem', fontWeight: 700, color: oklch.textStrong }}>
         <input
           type="checkbox"
           checked={value.enabled}
@@ -52,7 +52,7 @@ export function EnrolDiscountFields({
         />
         Give this business a discount
       </label>
-      <p style={{ margin: '4px 0 0 25px', fontSize: 12.5, color: oklch.textMuted }}>
+      <p style={{ margin: '4px 0 0 25px', fontSize: '0.78125rem', color: oklch.textMuted }}>
         Applied to the first bill, which is raised when the business goes live.
       </p>
 
@@ -97,7 +97,7 @@ export function EnrolDiscountFields({
           </Field>
 
           {planPriceMinor > 0 ? (
-            <div style={{ borderRadius: 12, background: 'oklch(0.98 0.012 150)', border: '1px solid oklch(0.9 0.02 150)', padding: '12px 14px', fontSize: 13 }}>
+            <div style={{ borderRadius: 12, background: 'oklch(0.98 0.012 150)', border: '1px solid oklch(0.9 0.02 150)', padding: '12px 14px', fontSize: '0.8125rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', color: oklch.textMuted }}>
                 <span>Plan price</span>
                 <span>{inr(planPriceMinor)} a month</span>
@@ -106,14 +106,14 @@ export function EnrolDiscountFields({
                 <span>They pay</span>
                 <span>{inr(math.finalMinor)} a month</span>
               </div>
-              <p style={{ margin: '8px 0 0', fontSize: 12.5, color: oklch.textMuted }}>
+              <p style={{ margin: '8px 0 0', fontSize: '0.78125rem', color: oklch.textMuted }}>
                 {bills === null
                   ? 'Every bill, until an admin removes it.'
                   : `The first ${bills === 1 ? 'bill' : `${bills} bills`} from go-live. ${inr(planPriceMinor)} a month after that.`}
               </p>
             </div>
           ) : (
-            <p style={{ margin: 0, fontSize: 12.5, color: oklch.textMuted }}>Choose a plan above to see what they will pay.</p>
+            <p style={{ margin: 0, fontSize: '0.78125rem', color: oklch.textMuted }}>Choose a plan above to see what they will pay.</p>
           )}
         </div>
       ) : null}

@@ -70,7 +70,7 @@ export function VerticalFilterSheet({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: `1px solid ${oklch.divider}` }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Filter by vertical</h3>
+          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>Filter by vertical</h3>
           <button
             type="button"
             onClick={onClose}
@@ -111,7 +111,7 @@ export function VerticalFilterSheet({
 
         <div style={{ overflowY: 'auto', padding: '0 12px 20px' }}>
           {filtered.length === 0 ? (
-            <div style={{ padding: '20px 8px', textAlign: 'center', fontSize: 13.5, color: oklch.textFaint }}>No verticals match “{search}”.</div>
+            <div style={{ padding: '20px 8px', textAlign: 'center', fontSize: '0.84375rem', color: oklch.textFaint }}>No verticals match “{search}”.</div>
           ) : (
             filtered.map((f) => {
               const selected = value === f;
@@ -130,7 +130,7 @@ export function VerticalFilterSheet({
                     border: 'none',
                     background: selected ? 'oklch(0.95 0.035 150)' : 'transparent',
                     color: selected ? 'oklch(0.31 0.055 158)' : oklch.textStrong,
-                    fontSize: 14.5,
+                    fontSize: '0.90625rem',
                     fontWeight: selected ? 800 : 600,
                     cursor: 'pointer',
                     textAlign: 'left',

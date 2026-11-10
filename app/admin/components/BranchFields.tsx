@@ -73,8 +73,8 @@ export function BranchFields({
         }}
       >
         <div>
-          <div style={{ fontSize: 13.5, fontWeight: 700, color: oklch.textStrong }}>More than one branch</div>
-          <div style={{ fontSize: 11.5, color: oklch.textMuted, marginTop: 2 }}>
+          <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: oklch.textStrong }}>More than one branch</div>
+          <div style={{ fontSize: '0.75rem', color: oklch.textMuted, marginTop: 2 }}>
             The first branch is the main one. More can be added later too.
           </div>
         </div>
@@ -92,14 +92,14 @@ export function BranchFields({
         >
           {multiBranch ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: 12.5, fontWeight: 800, color: oklch.textMuted }}>
+              <div style={{ fontSize: '0.78125rem', fontWeight: 800, color: oklch.textMuted }}>
                 {index === 0 ? 'Main branch' : `Branch ${index + 1}`}
               </div>
               {index > 0 ? (
                 <button
                   type="button"
                   onClick={() => onRemove(index)}
-                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 700, color: ERROR_COLOR, padding: 0 }}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.78125rem', fontWeight: 700, color: ERROR_COLOR, padding: 0 }}
                 >
                   Remove
                 </button>

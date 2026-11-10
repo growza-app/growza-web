@@ -67,7 +67,7 @@ export function Bar({ used, limit, label }: { used: number; limit: number; label
   const { pct, color } = usageState(used, limit);
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: 6 }}>
         <span style={{ fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{label}</span>
         <span style={{ fontWeight: 600, color: oklch.textFaint }}>
           {used.toLocaleString('en-IN')} / {limit.toLocaleString('en-IN')} · {pct}%
@@ -106,8 +106,8 @@ export function EmptyState({ title, sub, icon = 'businesses', action }: { title:
       >
         <Icon name={icon} size={24} />
       </div>
-      <div style={{ fontSize: 15.5, fontWeight: 800, color: 'oklch(0.3 0.02 155)' }}>{title}</div>
-      <div style={{ fontSize: 13.5, color: oklch.textFaint, marginTop: 5 }}>{sub}</div>
+      <div style={{ fontSize: '0.96875rem', fontWeight: 800, color: 'oklch(0.3 0.02 155)' }}>{title}</div>
+      <div style={{ fontSize: '0.84375rem', color: oklch.textFaint, marginTop: 5 }}>{sub}</div>
       {action ? <div style={{ marginTop: 16 }}>{action}</div> : null}
     </div>
   );
@@ -406,7 +406,7 @@ export function InfoTooltip({ text }: { text: string }) {
             borderRadius: 8,
             background: oklch.textStrong,
             color: 'white',
-            fontSize: 11.5,
+            fontSize: '0.75rem',
             lineHeight: 1.45,
             zIndex: 10,
             boxShadow: '0 4px 12px oklch(0.2 0.02 150 / 0.25)',
@@ -472,7 +472,7 @@ export function EntitlementRow({
     >
       <div style={{ minWidth: 200, flex: '1 1 240px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 13.5, fontWeight: 700, color: oklch.text }}>{label}</span>
+          <span style={{ fontSize: '0.84375rem', fontWeight: 700, color: oklch.text }}>{label}</span>
           {tooltip ? <InfoTooltip text={tooltip} /> : null}
           {badge}
         </div>
@@ -532,17 +532,17 @@ export function Field({
     <div>
       <label
         htmlFor={controlId}
-        style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginBottom: 7 }}
+        style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginBottom: 7 }}
       >
         {label}
       </label>
       {child ? cloneElement(child, { id: controlId }) : children}
       {error ? (
-        <div role="alert" style={{ fontSize: 11.5, fontWeight: 700, color: ERROR_COLOR, marginTop: 6 }}>
+        <div role="alert" style={{ fontSize: '0.75rem', fontWeight: 700, color: ERROR_COLOR, marginTop: 6 }}>
           {error}
         </div>
       ) : hint ? (
-        <div style={{ fontSize: 11.5, color: 'oklch(0.58 0.02 155)', marginTop: 6 }}>{hint}</div>
+        <div style={{ fontSize: '0.75rem', color: 'oklch(0.58 0.02 155)', marginTop: 6 }}>{hint}</div>
       ) : null}
     </div>
   );
@@ -562,7 +562,7 @@ export function FieldLabel({ htmlFor, children }: { htmlFor: string; children: R
   return (
     <label
       htmlFor={htmlFor}
-      style={{ display: 'block', fontSize: 12, fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}
+      style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}
     >
       {children}
     </label>

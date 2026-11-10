@@ -46,7 +46,7 @@ export default function SubscriptionDetailPage() {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{meError}</div>
+          <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{meError}</div>
           <SecondaryButton onClick={() => window.location.reload()}>Retry</SecondaryButton>
         </div>
       </Card>

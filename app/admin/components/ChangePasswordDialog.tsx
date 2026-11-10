@@ -45,7 +45,7 @@ export function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
   const field: React.CSSProperties = {
     width: '100%',
     padding: '9px 10px',
-    fontSize: 14,
+    fontSize: '0.875rem',
     borderRadius: 9,
     border: `1px solid ${oklch.border}`,
     marginTop: 4,
@@ -78,14 +78,14 @@ export function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
           padding: 20,
         }}
       >
-        <h2 style={{ margin: '0 0 4px', fontSize: 17, fontWeight: 800 }}>Change your password</h2>
-        <p style={{ margin: '0 0 14px', fontSize: 13, color: oklch.textMuted }}>
+        <h2 style={{ margin: '0 0 4px', fontSize: '1.0625rem', fontWeight: 800 }}>Change your password</h2>
+        <p style={{ margin: '0 0 14px', fontSize: '0.8125rem', color: oklch.textMuted }}>
           You sign in with your phone number. This only changes the password.
         </p>
 
         {done ? (
           <>
-            <p style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 600, color: oklch.accent }}>
+            <p style={{ margin: '0 0 16px', fontSize: '0.875rem', fontWeight: 600, color: oklch.accent }}>
               Password changed. Use the new one next time you sign in.
             </p>
             <button type="button" onClick={onClose} style={{ padding: '9px 16px', borderRadius: 9, cursor: 'pointer' }}>
@@ -94,7 +94,7 @@ export function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
           </>
         ) : (
           <>
-            <label style={{ fontSize: 12, fontWeight: 600, color: oklch.textMuted }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: oklch.textMuted }}>
               Current password
               <input
                 type="password"
@@ -108,7 +108,7 @@ export function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
                 }}
               />
             </label>
-            <label style={{ fontSize: 12, fontWeight: 600, color: oklch.textMuted, display: 'block', marginTop: 12 }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: oklch.textMuted, display: 'block', marginTop: 12 }}>
               New password
               <input
                 type="password"
@@ -122,8 +122,8 @@ export function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
                 }}
               />
             </label>
-            <p style={{ margin: '8px 0 0', fontSize: 12, color: oklch.textMuted }}>At least 8 characters.</p>
-            {error && <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--danger)' }}>{error}</p>}
+            <p style={{ margin: '8px 0 0', fontSize: '0.75rem', color: oklch.textMuted }}>At least 8 characters.</p>
+            {error && <p style={{ margin: '8px 0 0', fontSize: '0.8125rem', color: 'var(--danger)' }}>{error}</p>}
             <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
               <button
                 type="button"

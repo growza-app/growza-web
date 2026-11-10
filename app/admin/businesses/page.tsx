@@ -275,7 +275,7 @@ function AdminBusinessesInner() {
                 borderRadius: 11,
                 border: `1px solid ${oklch.borderStrong}`,
                 background: oklch.inputBg,
-                fontSize: 14,
+                fontSize: '0.875rem',
                 fontWeight: 600,
                 color: oklch.textStrong,
                 cursor: 'pointer',
@@ -368,7 +368,7 @@ function AdminBusinessesInner() {
                 height: 34,
                 padding: '0 12px',
                 borderRadius: 10,
-                fontSize: 13,
+                fontSize: '0.8125rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 border: 'none',
@@ -381,7 +381,7 @@ function AdminBusinessesInner() {
               {label}
               <span
                 style={{
-                  fontSize: 11.5,
+                  fontSize: '0.75rem',
                   fontWeight: 800,
                   padding: '1px 6px',
                   borderRadius: 999,
@@ -428,12 +428,12 @@ function AdminBusinessesInner() {
       {created ? <OwnerCredentialNotice created={created} onClose={() => setCreated(null)} /> : null}
 
       {activeCreatedFrom ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: 13, color: oklch.textMuted }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: '0.8125rem', color: oklch.textMuted }}>
           Created since {new Date(activeCreatedFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
           <button
             type="button"
             onClick={() => setCreatedFromCleared(true)}
-            style={{ background: 'none', border: 'none', color: oklch.accentText, fontWeight: 700, fontSize: 13, cursor: 'pointer', padding: 0 }}
+            style={{ background: 'none', border: 'none', color: oklch.accentText, fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer', padding: 0 }}
           >
             Clear
           </button>
@@ -441,11 +441,11 @@ function AdminBusinessesInner() {
       ) : null}
 
       {searchTooShort ? (
-        <div style={{ fontSize: 13, color: oklch.textFaint, marginBottom: 14 }}>Type at least 2 characters to search.</div>
+        <div style={{ fontSize: '0.8125rem', color: oklch.textFaint, marginBottom: 14 }}>Type at least 2 characters to search.</div>
       ) : error ? (
         <Card>
           <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
             <SecondaryButton onClick={() => setPaging((p) => ({ ...p }))}>Retry</SecondaryButton>
           </div>
         </Card>
@@ -501,19 +501,19 @@ function AdminBusinessesInner() {
                       <TypeIcon type={b.vertical} />
                     </span>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {b.name}
                       </div>
-                      <div style={{ fontSize: 12, color: oklch.textFaint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.vertical}</div>
+                      <div style={{ fontSize: '0.75rem', color: oklch.textFaint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.vertical}</div>
                       <RowHealth business={b} />
                     </div>
                   </div>
-                  <div style={{ fontSize: 13.5, color: 'oklch(0.36 0.02 155)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: '0.84375rem', color: 'oklch(0.36 0.02 155)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {b.ownerPhone ?? <span style={{ color: oklch.textFaint }}>—</span>}
                   </div>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{b.branchCount}</div>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{b.userCount}</div>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'oklch(0.36 0.02 155)' }}>{b.planName}</div>
+                  <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{b.branchCount}</div>
+                  <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{b.userCount}</div>
+                  <div style={{ fontSize: '0.84375rem', fontWeight: 600, color: 'oklch(0.36 0.02 155)' }}>{b.planName}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     <StatusPill status={statusLabel(b.status)} />
                     {b.isTest ? <TestPill /> : null}
@@ -526,7 +526,7 @@ function AdminBusinessesInner() {
                       <span
                         title="This business has finished its setup checklist and can be activated."
                         style={{
-                          fontSize: 11,
+                          fontSize: '0.75rem',
                           fontWeight: 700,
                           padding: '2px 7px',
                           borderRadius: 999,
@@ -540,14 +540,14 @@ function AdminBusinessesInner() {
                       </span>
                     ) : null}
                   </div>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>
+                  <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>
                     {usageByBusiness[b.tenantId] !== undefined ? (
                       usageByBusiness[b.tenantId]!.used.toLocaleString('en-IN')
                     ) : (
                       <NotYetAvailable reason="No active billing period metered for this business." />
                     )}
                   </div>
-                  <div style={{ fontSize: 12.5, fontWeight: 700 }}>
+                  <div style={{ fontSize: '0.78125rem', fontWeight: 700 }}>
                     {(() => {
                       const u = usageByBusiness[b.tenantId];
                       if (!u) return <NotYetAvailable reason="No active billing period metered for this business." />;
@@ -562,7 +562,7 @@ function AdminBusinessesInner() {
                       );
                     })()}
                   </div>
-                  <div style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>
+                  <div style={{ fontSize: '0.78125rem', color: oklch.textFaint, fontWeight: 600 }}>
                     {new Date(b.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </div>
                   <div style={{ textAlign: 'right' }}>

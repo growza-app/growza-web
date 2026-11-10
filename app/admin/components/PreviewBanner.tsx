@@ -34,7 +34,7 @@ export function PreviewBanner({ shows, epic }: { shows: string; epic: string }) 
         background: oklch.warnBg,
         border: '1px solid oklch(0.88 0.06 80)',
         color: 'oklch(0.4 0.11 65)',
-        fontSize: 13,
+        fontSize: '0.8125rem',
         fontWeight: 600,
         lineHeight: 1.55,
       }}

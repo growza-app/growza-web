@@ -132,7 +132,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 800,
-              fontSize: 19,
+              fontSize: '1.1875rem',
               flex: 'none',
               // GRW-203 — was a <div>. It looks like an account button on every
               // other product and did nothing when clicked.
@@ -143,8 +143,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
             G
           </button>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: 17, letterSpacing: '-0.01em' }}>Growza</div>
-            <div style={{ fontSize: 11.5, color: oklch.sidebarTextFaint }}>Platform team</div>
+            <div style={{ fontWeight: 700, fontSize: '1.0625rem', letterSpacing: '-0.01em' }}>Growza</div>
+            <div style={{ fontSize: '0.75rem', color: oklch.sidebarTextFaint }}>Platform team</div>
           </div>
           <button
             type="button"
@@ -189,7 +189,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 <div
                   className="admin-nav-group-label"
                   style={{
-                    fontSize: '0.625rem',
+                    fontSize: '0.75rem',
                     fontWeight: 800,
                     letterSpacing: '0.09em',
                     textTransform: 'uppercase',
@@ -232,7 +232,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               <div
                 className="admin-nav-group-label"
                 style={{
-                  fontSize: '0.625rem',
+                  fontSize: '0.75rem',
                   fontWeight: 800,
                   letterSpacing: '0.09em',
                   textTransform: 'uppercase',
@@ -301,25 +301,25 @@ export function AdminShell({ children }: { children: ReactNode }) {
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 700,
-              fontSize: 14,
+              fontSize: '0.875rem',
               flex: 'none',
             }}
           >
             {me ? initialsOf(me.name) : ''}
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: '0.84375rem', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {me?.name ?? 'Loading…'}
             </div>
             {/* GRW-202 — the ROLE, which is what somebody checks here, and the
                 number they sign in with (GRW-198). The email sat in this slot
                 and is neither: it is a contact detail this product never
                 authenticates with. */}
-            <div style={{ fontSize: 11, color: oklch.sidebarTextFaint, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: '0.75rem', color: oklch.sidebarTextFaint, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {me?.roleName ?? (me ? 'No role assigned' : '')}
             </div>
             {me?.phone && (
-              <div style={{ fontSize: 11, color: oklch.sidebarTextFaint, fontVariantNumeric: 'tabular-nums' }}>
+              <div style={{ fontSize: '0.75rem', color: oklch.sidebarTextFaint, fontVariantNumeric: 'tabular-nums' }}>
                 {me.phone}
               </div>
             )}
@@ -334,7 +334,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                   background: 'none',
                   color: oklch.sidebarText,
                   font: 'inherit',
-                  fontSize: 11,
+                  fontSize: '0.75rem',
                   fontWeight: 600,
                   textDecoration: 'underline',
                   cursor: 'pointer',
@@ -369,7 +369,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </button>
         </div>
         {signOutError ? (
-          <div role="alert" style={{ marginTop: 8, padding: '0 4px', fontSize: 12, lineHeight: 1.45, fontWeight: 600, color: 'oklch(0.86 0.09 40)' }}>
+          <div role="alert" style={{ marginTop: 8, padding: '0 4px', fontSize: '0.75rem', lineHeight: 1.45, fontWeight: 600, color: 'oklch(0.86 0.09 40)' }}>
             {signOutError}
           </div>
         ) : null}
@@ -392,10 +392,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
             }}
           >
             <Icon name="impersonate" size={19} />
-            <div className="admin-name" style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: '0.01em' }}>
+            <div className="admin-name" style={{ fontSize: '0.84375rem', fontWeight: 700, letterSpacing: '0.01em' }}>
               VIEWING AS OWNER · {impersonation.business} · {impersonation.user}
             </div>
-            <span style={{ fontSize: 12.5, color: 'oklch(0.92 0.05 25)', fontWeight: 500 }}>
+            <span style={{ fontSize: '0.78125rem', color: 'oklch(0.92 0.05 25)', fontWeight: 500 }}>
               Reason: {impersonation.reason}. All actions are logged to the audit trail.
             </span>
             <button
@@ -409,7 +409,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 border: '1px solid oklch(1 0 0 / 0.5)',
                 background: 'oklch(1 0 0 / 0.14)',
                 color: 'white',
-                fontSize: 13,
+                fontSize: '0.8125rem',
                 fontWeight: 700,
                 cursor: 'pointer',
               }}
@@ -452,7 +452,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 5,
-                  fontSize: 12.5,
+                  fontSize: '0.78125rem',
                   fontWeight: 700,
                   cursor: 'pointer',
                   marginBottom: 3,
@@ -528,7 +528,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               <h1
                 style={{
                   margin: 0,
-                  fontSize: 22,
+                  fontSize: '1.375rem',
                   fontWeight: 800,
                   letterSpacing: '-0.02em',
                   color: oklch.textStrong,
@@ -541,7 +541,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 {meta.title}
               </h1>
             </div>
-            <p className="admin-header-subtitle" style={{ margin: '2px 0 0', fontSize: 13, color: oklch.textMuted }}>{meta.subtitle}</p>
+            <p className="admin-header-subtitle" style={{ margin: '2px 0 0', fontSize: '0.8125rem', color: oklch.textMuted }}>{meta.subtitle}</p>
           </div>
           <div className="admin-header-actions" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 11 }}>
             {meta.showSearch ? (
@@ -573,7 +573,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                     borderRadius: 11,
                     border: `1px solid ${oklch.borderStrong}`,
                     background: 'white',
-                    fontSize: 14,
+                    fontSize: '0.875rem',
                     fontWeight: 500,
                     outline: 'none',
                   }}
