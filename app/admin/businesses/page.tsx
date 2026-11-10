@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { Icon, TypeIcon } from '../icons';
+import { businessHealth } from '../lib/business-health';
 import { Card, EmptyState, PrimaryButton, SecondaryButton, Select, StatusPill, Table, TableRow } from '../components/primitives';
 import { BUSINESS_COLUMNS } from '../lib/list-columns';
 import { AddBusinessModal, OwnerCredentialNotice, type CreatedBusiness } from '../components/AddBusinessModal';
@@ -43,6 +44,9 @@ interface BusinessRow {
   branchCount: number;
   userCount: number;
   createdAt: string;
+  /** Jira GRW-701 — absent from an API older than growza#514. */
+  lastActiveAt?: string | null;
+  weekActivity?: number;
   /**
    * Owner, 2026-10-26 — `true` when a provisioning business has finished its checklist and is waiting on
    * somebody here to press Activate. `null` for every other status: a live business has no checklist, and a
@@ -447,6 +451,7 @@ function AdminBusinessesInner() {
                         {b.name}
                       </div>
                       <div style={{ fontSize: 12, color: oklch.textFaint }}>{b.vertical}</div>
+                      <RowHealth business={b} />
                     </div>
                   </div>
                   <div style={{ fontSize: 13.5, color: 'oklch(0.36 0.02 155)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -535,6 +540,17 @@ function AdminBusinessesInner() {
           <Pagination total={page.total} loaded={rows.length} state={paging} onChange={setPaging} />
         </>
       )}
+    </div>
+  );
+}
+
+/** Jira GRW-701 — under the name: active and this week's count, or quiet in the warning colour. */
+function RowHealth({ business }: { business: BusinessRow }) {
+  const health = businessHealth(business);
+  if (!health) return null;
+  return (
+    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: health.quiet ? 'oklch(0.52 0.13 65)' : oklch.textFaint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      {health.text}
     </div>
   );
 }

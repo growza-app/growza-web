@@ -22,6 +22,7 @@ import { PaymentsCard, type BusinessPayments } from '../../components/PaymentsCa
 import { subscriptionStatusLabel } from '../../lib/subscription-status';
 import { inr, oklch, typeColor } from '../../tokens';
 import { useAdminMe } from '../../components/AdminMeContext';
+import { businessHealth } from '../../lib/business-health';
 
 /**
  * GRW-102's business detail — the one screen support lives in. This story
@@ -46,6 +47,9 @@ interface BusinessDetail {
   branchCount: number;
   userCount: number;
   createdAt: string;
+  /** Jira GRW-701 — latest booking or bill in 90 days, and this week's count. Absent from an API older than growza#514. */
+  lastActiveAt?: string | null;
+  weekActivity?: number;
   timezone: string;
   waPhoneNumber: string | null;
   businessTypeVersion: number;
@@ -354,6 +358,7 @@ function BusinessDetailInner() {
         business={business}
         bookingsTotal={bookings.total}
         usageSummary={usageSummary}
+        setup={readiness ? { met: readiness.items.filter((i) => i.met).length, total: readiness.items.length } : null}
         canManage={canManage}
         canImpersonate={canImpersonate}
         onRequestAction={setPendingAction}
@@ -532,6 +537,7 @@ function SummaryHeader({
   business,
   bookingsTotal,
   usageSummary,
+  setup,
   canManage,
   canImpersonate,
   onRequestAction,
@@ -540,6 +546,8 @@ function SummaryHeader({
   business: BusinessDetail;
   bookingsTotal: number;
   usageSummary: BusinessUsageSummary | null;
+  /** Jira GRW-701 — checklist progress while the business is still being set up. */
+  setup: { met: number; total: number } | null;
   canManage: boolean;
   canImpersonate: boolean;
   onRequestAction: (action: 'suspend' | 'reactivate') => void;
@@ -585,6 +593,8 @@ function SummaryHeader({
           <div style={{ fontSize: 13, color: oklch.textMuted }}>
             {business.vertical} · {business.ownerPhone ?? 'No owner recorded'}
           </div>
+          {/* Jira GRW-701 — is it being used: last booking or bill, this week's count, and setup while setting up. */}
+          <HealthLine business={business} setup={setup} />
         </div>
         {/*
           `flexWrap` because these three do not fit a 320px phone.
@@ -1211,5 +1221,16 @@ function NotYetBuiltTab({ what, epic }: { what: string; epic: string }) {
         </div>
       </div>
     </Card>
+  );
+}
+
+function HealthLine({ business, setup }: { business: BusinessDetail; setup: { met: number; total: number } | null }) {
+  const health = businessHealth(business);
+  const parts = [health?.text, setup ? `Setup ${setup.met} of ${setup.total}` : null].filter(Boolean);
+  if (parts.length === 0) return null;
+  return (
+    <div style={{ fontSize: '0.8125rem', fontWeight: 600, marginTop: 4, color: health?.quiet ? 'oklch(0.52 0.13 65)' : oklch.textMuted }}>
+      {parts.join(' · ')}
+    </div>
   );
 }
