@@ -35,7 +35,7 @@ describe('L10 — Businesses keeps its filters in the URL', () => {
     const page = read('businesses/page.tsx');
     expect(page).toMatch(/if \(status !== 'All'\) params\.set\('status', status\);/);
     expect(page).toMatch(/if \(activeCreatedFrom\) params\.set\('createdFrom', activeCreatedFrom\);/);
-    expect(page).toMatch(/router\.replace\(next, \{ scroll: false \}\);\s*\}, \[status, activeCreatedFrom, router\]\);/);
+    expect(page).toMatch(/router\.replace\(next, \{ scroll: false \}\);\s*\}, \[status, activeCreatedFrom, showTest, router\]\);/);
   });
 });
 

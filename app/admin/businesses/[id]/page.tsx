@@ -16,6 +16,7 @@ import { AuditLogList } from '../../components/AuditLogList';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Bar, Card, EmptyState, PrimaryButton, SecondaryButton, SectionTitle, Select, StatusPill, Table, TableRow, TextInput, type TableColumn } from '../../components/primitives';
 import { SubscriptionPanel } from '../../components/SubscriptionPanel';
+import { TestBusinessCard } from '../../components/TestBusinessCard';
 import { GoLiveChecklist, type ReadinessItem } from '../../components/GoLiveChecklist';
 import { BillingTab } from '../../components/BillingTab';
 import { PaymentsCard, type BusinessPayments } from '../../components/PaymentsCard';
@@ -35,6 +36,8 @@ interface BusinessDetail {
   tenantId: string;
   name: string;
   status: string;
+  /** Jira GRW-692 — left out of the Businesses list and dashboard. Absent from an API older than growza#509. */
+  isTest?: boolean;
   vertical: string;
   /** What this vertical calls its providers, plural — "Staff", "Doctors". Labels the branch cap. */
   providersLabel: string | null;
@@ -481,6 +484,9 @@ function BusinessDetailInner() {
 
       {/* QA 10 Nov 2026 — Suspend was the first full-width button on a phone, above everything else: the most damaging
           action the easiest to hit. It lives here now, last on the page, behind a typed-name confirm. */}
+      {canManage && business.isTest !== undefined ? (
+        <TestBusinessCard businessId={business.tenantId} isTest={business.isTest} onChanged={() => setRetryToken((n) => n + 1)} />
+      ) : null}
       {canManage && business.status === 'active' ? (
         <Card className="admin-danger-zone" style={{ borderColor: 'oklch(0.85 0.06 25)' }}>
           <SectionTitle title="Danger zone" />

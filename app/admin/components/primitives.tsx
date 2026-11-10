@@ -80,7 +80,7 @@ export function Bar({ used, limit, label }: { used: number; limit: number; label
   );
 }
 
-export function EmptyState({ title, sub, icon = 'businesses' }: { title: string; sub: string; icon?: IconName }) {
+export function EmptyState({ title, sub, icon = 'businesses', action }: { title: string; sub: string; icon?: IconName; action?: ReactNode }) {
   return (
     <div
       style={{
@@ -108,6 +108,7 @@ export function EmptyState({ title, sub, icon = 'businesses' }: { title: string;
       </div>
       <div style={{ fontSize: 15.5, fontWeight: 800, color: 'oklch(0.3 0.02 155)' }}>{title}</div>
       <div style={{ fontSize: 13.5, color: oklch.textFaint, marginTop: 5 }}>{sub}</div>
+      {action ? <div style={{ marginTop: 16 }}>{action}</div> : null}
     </div>
   );
 }
