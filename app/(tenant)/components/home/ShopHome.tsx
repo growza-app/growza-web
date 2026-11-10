@@ -40,6 +40,7 @@ import { Avatar, Card, CardError, HomeHeader, QuickTiles, Segmented, exactRupees
 import { CheckInCard } from './CheckInCard';
 import { PaymentBar, PaymentLine } from './MoneyHero';
 import { CashDrawerLine } from './CashDrawer';
+import { orderNumber } from '../../lib/order-number';
 import { useDialog } from '../../../shared/a11y/useDialog';
 
 type ShopPeriod = 'last_7_days' | 'this_month' | 'last_3_months';
@@ -1041,7 +1042,7 @@ export function ShopHome({
                                   )}
                                 </span>
                                 <div className="rst-order-main">
-                                  <strong className="rst-order-num">#{o.code.toUpperCase()}</strong>
+                                  <strong className="rst-order-num">{orderNumber(o)}</strong>
                                   <span className="rst-order-sub">{subLabel}</span>
                                 </div>
                                 <span className={`rst-status-pill ${statusClass}`}>{statusLabel}</span>
@@ -1676,7 +1677,7 @@ export function ShopHome({
                                   <div className="hm-v3-srv-main">
                                     <strong className="hm-v3-srv-name">{customerName}</strong>
                                     <span className="hm-v3-prod-att-sub">
-                                      #{o.code.toUpperCase()} · {formatShortDate(o.soldAt)} · {s.itemCountShort(o.items)}
+                                      {orderNumber(o)} · {formatShortDate(o.soldAt)} · {s.itemCountShort(o.items)}
                                     </span>
                                   </div>
                                   {o.amountMinor !== undefined ? (
@@ -1709,7 +1710,7 @@ export function ShopHome({
                               <div className="hm-v3-srv-main">
                                 <strong className="hm-v3-srv-name">{customerName}</strong>
                                 <span className="hm-v3-prod-att-sub">
-                                  #{o.code.toUpperCase()} · {channelWord(o.channel)} · {s.itemCountShort(o.items)}
+                                  {orderNumber(o)} · {channelWord(o.channel)} · {s.itemCountShort(o.items)}
                                 </span>
                               </div>
                               <span className={`hm-pill hm-pill-${stateTone(o.status)}`}>{stateWord(o.status)}</span>
@@ -1888,7 +1889,7 @@ export function ShopHome({
                                   <Avatar name={customerName} id={o.id} size={28} />
                                   <div className="hm-v3-person-meta">
                                     <strong>{customerName}</strong>
-                                    <span>#{o.code.toUpperCase()}</span>
+                                    <span>{orderNumber(o)}</span>
                                   </div>
                                 </div>
                               </td>
@@ -2221,7 +2222,7 @@ export function ShopHome({
                               <span className="shp-recent-main">
                                 <span className="shp-recent-name">{customerName}</span>
                                 <span className="shp-recent-meta">
-                                  <span className="shp-recent-code">#{o.code.toUpperCase()}</span> · {channelWord(o.channel)} · {formatShortDate(o.soldAt)} · {s.itemCountShort(o.items)}
+                                  <span className="shp-recent-code">{orderNumber(o)}</span> · {channelWord(o.channel)} · {formatShortDate(o.soldAt)} · {s.itemCountShort(o.items)}
                                 </span>
                               </span>
                             </span>

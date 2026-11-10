@@ -13,7 +13,8 @@ const copy = readFileSync(path.resolve(import.meta.dirname, '../../lib/home-copy
 
 describe('Recent orders', () => {
   it('shows each order by its own code, channel, time and state', () => {
-    expect(home).toContain('#{o.code.toUpperCase()}</strong>');
+    // QA 10 Nov 2026 — by its own number: the stored token where there is one, else its code (lib/order-number).
+    expect(home).toContain('{orderNumber(o)}</strong>');
     expect(home).toContain('${channelWord(o.channel)} · ${formatDateTime(o.soldAt)}');
     expect(home).toContain('o.paymentPending ? s.paymentPendingState : stateWord(o.status)');
     expect(home).toContain('isDeliveryApp(o.channel)');
