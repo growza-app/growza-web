@@ -4611,7 +4611,7 @@
         "amount": "रकम",
         "state": "स्थिति"
       },
-      "itemCount": "{count, plural, one {# सामान} other {# सामान}}",
+      "itemCount": "{count, plural, =0 {कोई सामान नहीं} one {# सामान} other {# सामान}}",
       "orderCode": "ऑर्डर #{code}",
       "appOrder": "ऐप ऑर्डर {ref}",
       "noName": "नाम नहीं",
@@ -4640,7 +4640,9 @@
       "clientEmpty": {
         "title": "अभी तक इनका कुछ नहीं",
         "body": "ये जो भी ऑर्डर करेंगे वह यहाँ दिखेगा।"
-      }
+      },
+      "today": "आज",
+      "yesterday": "कल"
     },
     "detail": {
       "paidOn": "{channel} पर भुगतान",
@@ -4953,7 +4955,7 @@
       "close": "बंद करें"
     },
     "payout": {
-      "title": "डिलीवरी ऐप्स से आपको कितना मिलना चाहिए",
+      "title": "डिलीवरी ऐप्स से कितना मिलना है",
       "rangeLabel": "समय",
       "ranges": {
         "today": "आज",

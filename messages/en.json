@@ -4611,7 +4611,7 @@
         "amount": "Amount",
         "state": "State"
       },
-      "itemCount": "{count, plural, one {# item} other {# items}}",
+      "itemCount": "{count, plural, =0 {No items} one {# item} other {# items}}",
       "orderCode": "Order #{code}",
       "appOrder": "App order {ref}",
       "noName": "No name",
@@ -4640,7 +4640,9 @@
       "clientEmpty": {
         "title": "Nothing from them yet",
         "body": "Anything they order will show up here."
-      }
+      },
+      "today": "Today",
+      "yesterday": "Yesterday"
     },
     "detail": {
       "paidOn": "Paid on {channel}",
@@ -4953,7 +4955,7 @@
       "close": "Close"
     },
     "payout": {
-      "title": "What the delivery apps should pay you",
+      "title": "What delivery apps owe you",
       "rangeLabel": "Period",
       "ranges": {
         "today": "Today",

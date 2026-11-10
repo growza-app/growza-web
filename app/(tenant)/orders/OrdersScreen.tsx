@@ -98,9 +98,14 @@ export async function OrdersScreen({ searchParams }: { searchParams: Promise<Ord
         }
       />
       <div className="page-body ord-page">
-        {showPayout ? <PayoutCard mayEdit={isWritable(me?.tenant?.status)} /> : null}
         <OrdersBringIn lines={bringIn} lang={lang} timezone={me?.tenant?.timezone ?? 'Asia/Kolkata'} />
-        <OrdersClient initialQuery={query} initial={'rows' in initial ? initial : null} timezone={me?.tenant?.timezone ?? 'Asia/Kolkata'} />
+        {/* Owner, 10 Nov 2026 — under the search and filters, not above them: the orders are what the page is for. */}
+        <OrdersClient
+          initialQuery={query}
+          initial={'rows' in initial ? initial : null}
+          timezone={me?.tenant?.timezone ?? 'Asia/Kolkata'}
+          payout={showPayout ? <PayoutCard mayEdit={isWritable(me?.tenant?.status)} /> : null}
+        />
       </div>
     </>
   );
