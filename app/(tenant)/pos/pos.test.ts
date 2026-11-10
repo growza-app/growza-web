@@ -178,7 +178,8 @@ describe('the POS screen', () => {
     expect(posBill).toContain('pos-bill-stepper');
     expect(css).toContain('.pos-shell.is-fullscreen');
     expect(css).toContain('.pos-cat-pills-wrap');
-    expect(css).toContain('@keyframes pos-step-pulse');
+    // Owner, 10 Nov 2026 — the next step is a green hairline and a light fill: no halo, no pulse.
+    expect(css).not.toMatch(/pos-step-pulse|pos-cta-ready-pulse/);
   });
 
   it('gives Back somewhere to arrive when there is no bill to clear', () => {

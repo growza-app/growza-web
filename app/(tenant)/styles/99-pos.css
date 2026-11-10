@@ -589,14 +589,16 @@
     overflow: hidden;
   }
 
+  /* Owner, 10 Nov 2026 — "these borders are too thick": a grey hairline on hover, and a picked tile is a single green
+     hairline over a light wash. The − 1 + stepper on it already says it is in the bill; a heavy frame said it twice. */
   .pf-wide:has(.prd-cat-li) .pf-tile:hover {
-    border-color: var(--accent-deep);
+    border-color: color-mix(in srgb, var(--text) 22%, var(--surface));
   }
 
   .pf-wide:has(.prd-cat-li) .pf-tile.pf-tile-on {
     border-color: var(--accent-deep);
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1.5px var(--accent-deep);
+    background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface));
+    box-shadow: none;
   }
 
   .pf-wide:has(.prd-cat-li) .pf-tile-tap {
@@ -1112,25 +1114,8 @@
     color: #fff;
   }
 
-  /* Progressive step guidance (Guest → Payment mode → Complete sale) */
-  @keyframes pos-step-pulse {
-    0%, 100% {
-      box-shadow: 0 0 0 2px var(--accent-deep), 0 0 0 4px rgba(20, 83, 45, 0.12);
-    }
-    50% {
-      box-shadow: 0 0 0 2px var(--accent-deep), 0 0 0 8px rgba(20, 83, 45, 0.24);
-    }
-  }
-
-  @keyframes pos-cta-ready-pulse {
-    0%, 100% {
-      box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--accent-deep), 0 4px 12px rgba(20, 83, 45, 0.26);
-    }
-    50% {
-      box-shadow: 0 0 0 2px #fff, 0 0 0 7px rgba(20, 83, 45, 0.32), 0 6px 16px rgba(20, 83, 45, 0.34);
-    }
-  }
-
+  /* Progressive step guidance (Guest → Payment mode → Complete sale): the next step is a green hairline and a light
+     fill — no halo, no pulse (owner, 10 Nov 2026). */
   .pos-bill-client .pf-row:has(.pf-who-bar[data-step="next"]) .pf-row-label {
     color: var(--accent-deep);
     font-weight: 800;
@@ -1140,16 +1125,13 @@
     border-color: var(--accent-deep);
     background: var(--accent-soft);
     color: var(--accent-deep);
-    font-weight: 700;
-    box-shadow: 0 0 0 2px var(--accent-deep), 0 0 0 4px rgba(20, 83, 45, 0.14);
-    animation: pos-step-pulse 1.4s ease-in-out 3;
+    font-weight: 600;
   }
 
   .pos-bill-client .pf-who-bar[data-step="next"] .pf-who-add {
     border-color: var(--accent-deep);
     background: var(--accent-deep);
     color: #fff;
-    box-shadow: 0 0 0 3px rgba(20, 83, 45, 0.16);
   }
 
   .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-wide-h:has(+ .pf-pay[data-step="next"]) {
@@ -1159,8 +1141,6 @@
 
   .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-pay[data-step="next"] .pf-pay-tile {
     border-color: var(--accent-deep);
-    box-shadow: 0 0 0 1.5px var(--accent-deep), 0 0 0 4px rgba(20, 83, 45, 0.14);
-    animation: pos-step-pulse 1.4s ease-in-out 3;
   }
 
   .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-pay[data-step="bad"] .pf-pay-tile {
@@ -1174,8 +1154,6 @@
 
   .pos-charge-cta[data-step="ready"] {
     opacity: 1;
-    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--accent-deep), 0 4px 12px rgba(20, 83, 45, 0.26);
-    animation: pos-cta-ready-pulse 1.3s ease-in-out 2;
   }
 
   @media (prefers-reduced-motion: reduce) {
