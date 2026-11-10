@@ -9,6 +9,7 @@ import { clearAdminSession } from '../lib/session';
 import { BROWSER_BACK, NAV_GROUPS, bottomNavItems, isNavItemActive, resolveRouteMeta } from '../nav';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { NotificationBell } from './NotificationBell';
+import { FindBusiness } from './FindBusiness';
 import { oklch } from '../tokens';
 import { useImpersonation } from './ImpersonationContext';
 import { useAdminSearch } from './SearchContext';
@@ -590,6 +591,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
               It keeps `admin-header-bell` on a wrapper because the phone rules
               in admin.css order it against the search box by that class.
             */}
+            {/* Jira GRW-699 — find any business from any screen; ⌘K / Ctrl+K opens it too. */}
+            <FindBusiness />
             <div className="admin-header-bell" style={{ display: 'flex', alignItems: 'center', flex: 'none' }}>
               <NotificationBell />
             </div>
