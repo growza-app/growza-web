@@ -4591,8 +4591,8 @@
       "fromApp": "{channel} का ऑर्डर। आपकी सूची में नहीं।"
     },
     "list": {
-      "searchPlaceholder": "ऑर्डर नंबर या नाम",
-      "searchLabel": "ऑर्डर खोजें",
+      "searchPlaceholder": "टोकन, नाम या ऑर्डर नंबर",
+      "searchLabel": "टोकन, नाम या ऑर्डर नंबर से ऑर्डर खोजें",
       "filtersLabel": "ऑर्डर छाँटें",
       "channelGroup": "कहाँ से",
       "stateGroup": "स्थिति",
