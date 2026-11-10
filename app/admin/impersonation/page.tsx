@@ -86,7 +86,7 @@ export default function AdminImpersonationPage() {
         if (!cancelled) setRows(res.rows);
       })
       .catch((err) => {
-        if (!cancelled) setError(err instanceof AdminApiError ? err.message : 'Could not load impersonation sessions.');
+        if (!cancelled) setError(err instanceof AdminApiError ? err.message : 'Could not load owner-view sessions.');
       });
     return () => {
       cancelled = true;
@@ -115,7 +115,7 @@ export default function AdminImpersonationPage() {
           <div>
             <div style={{ fontSize: '0.9375rem', fontWeight: 800, color: oklch.textStrong }}>Start a session from a business</div>
             <div style={{ fontSize: '0.8125rem', color: oklch.textMuted, marginTop: 2 }}>
-              Open the business and choose “Impersonate owner”. A reason is required, the session is read-only, and it
+              Open the business and choose “View as owner”. A reason is required, the session is read-only, and it
               ends after 30 minutes or when you exit.
             </div>
           </div>

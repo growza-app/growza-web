@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { Card, EmptyState, SecondaryButton } from '../components/primitives';
 import { AttentionRowView, type AttentionRow } from '../components/DashboardParts';
+import { builtRows } from '../dashboard-config';
 import { oklch } from '../tokens';
 
 /**
@@ -16,12 +17,9 @@ import { oklch } from '../tokens';
  * (AdminShell.tsx) rather than the header, with a back button rather than a
  * dismiss-on-outside-click panel.
  *
- * Reads every row `AttentionRowView` already knows how to draw — including an
- * unavailable one's honest "not yet available" state (the dashboard's own
- * "Billing attention" card, page.tsx, renders the identical list the same
- * way) — rather than the bell's own narrower "only what's live" filter, so
- * "all the notifications" means all of them, not just the ones currently
- * non-zero.
+ * Reads every BUILT row, zero or not — rather than the bell's narrower
+ * "only what's non-zero" filter, so "all the notifications" means all of
+ * them. A row with nothing built behind it is left out (Jira GRW-691).
  */
 export default function AdminNotificationsPage() {
   const [attention, setAttention] = useState<AttentionRow[] | null>(null);
@@ -33,7 +31,7 @@ export default function AdminNotificationsPage() {
     setError(null);
     adminFetch<{ attention: AttentionRow[] }>('/dashboard')
       .then((result) => {
-        if (!cancelled) setAttention(result.attention);
+        if (!cancelled) setAttention(builtRows(result.attention));
       })
       .catch((err) => {
         if (cancelled) return;

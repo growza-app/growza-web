@@ -155,13 +155,7 @@ export default function NetworkMonitoringPage() {
           <WebhookSection data={data} onRetry={refresh} loading={loading} />
           <DunningSection data={data} onRetry={refresh} loading={loading} />
 
-          {/* BR-02 — present, and honest about being empty. A zero here would
-              read as "nobody is near their limit", which is a much more
-              comforting claim than "nothing has been built to check". */}
-          <Card style={{ borderStyle: 'dashed' }}>
-            <h3 style={{ margin: '0 0 6px', fontSize: '0.9375rem', fontWeight: 700, color: oklch.textMuted }}>Businesses near their limits</h3>
-            <div style={{ fontSize: '0.8125rem', color: oklch.textFaint }}>Not yet available — lands with Jira {data.limits.epic}.</div>
-          </Card>
+          {/* Jira GRW-691 — "Businesses near their limits" returns when it has a data source; until then it is not drawn. */}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.75rem', color: oklch.textFaint, padding: '0 2px' }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'oklch(0.55 0.13 150)', flex: 'none' }} />

@@ -170,11 +170,17 @@ export default function FeatureFlagDetailPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: '1.125rem', fontWeight: 800, color: oklch.textStrong }}>{flag.label}</div>
-            <div style={{ fontSize: '0.75rem', color: 'oklch(0.6 0.015 155)', marginTop: 4, fontFamily: 'ui-monospace, monospace' }}>{flag.key}</div>
             <div style={{ fontSize: '0.8125rem', color: oklch.textMuted, marginTop: 8, maxWidth: 560, lineHeight: 1.45 }}>{flag.description}</div>
+            {/* Jira GRW-697 — the key, for a support conversation with a developer: below the words, selectable whole. */}
+            <details style={{ marginTop: 10, fontSize: '0.78125rem', color: oklch.textFaint }}>
+              <summary style={{ cursor: 'pointer', minHeight: 32, display: 'flex', alignItems: 'center', fontWeight: 700 }}>Details</summary>
+              <div style={{ marginTop: 4 }}>
+                Code name: <code style={{ userSelect: 'all', fontSize: '0.78125rem', color: oklch.textMuted }}>{flag.key}</code>
+              </div>
+            </details>
           </div>
           <div style={{ flex: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            <Toggle on={flag.enabled} onClick={() => setConfirm({ kind: 'enabled', next: !flag.enabled })} />
+            <Toggle on={flag.enabled} label={flag.label} onClick={() => setConfirm({ kind: 'enabled', next: !flag.enabled })} />
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {flag.enabled ? 'Live' : 'Off for all'}
             </span>
