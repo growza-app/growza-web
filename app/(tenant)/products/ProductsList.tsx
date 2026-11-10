@@ -457,7 +457,7 @@ export function ProductsList({
         </span>
       </div>
       <div className="prd-stat prd-stat-worth" role="listitem">
-        <span className="prd-stat-n">{topSeller ? topSeller.name : totalSold}</span>
+        <span className={`prd-stat-n${topSeller ? ' prd-stat-name' : ''}`}>{topSeller ? topSeller.name : totalSold}</span>
         <span className="prd-stat-l">{topSeller ? t('topSeller') : t('cols.sold')}</span>
         <span className="prd-stat-sub">
           {topSeller ? `${t('sold', { n: topSeller.sold })} · ${formatMoney(topSeller.priceMinor)}` : t('soldAcrossMenu', { sold: t('sold', { n: totalSold }) })}

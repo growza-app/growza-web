@@ -179,6 +179,14 @@
   color: var(--accent-deep);
 }
 
+/* Owner, 10 Nov 2026 — the top seller is a dish's NAME, not a number: shown whole, wrapping, never cut to "Chicken Biryan…". */
+.prd-stat-n.prd-stat-name {
+  font-size: 1rem;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .prd-stat-low-card {
   background: color-mix(in srgb, var(--amber-soft) 65%, var(--surface));
   border-color: color-mix(in srgb, var(--amber-soft) 95%, var(--border));
