@@ -1,5 +1,6 @@
 'use client';
 
+import { NeedsAttention, type NeedsAttentionRow } from './components/NeedsAttention';
 import Link from '../shared/AppLink';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -70,6 +71,8 @@ interface DashboardResponse {
   revenue: { currency: string; thisMonthMinor: number; previousMonthMinor: number; previousToDateMinor?: number; months: RevenueMonth[] } | null;
   /** GRW-280 — visits booked across every business, counted as visits rather than rows. */
   bookings: PlatformBookings;
+  /** Jira GRW-700 — absent from an API older than growza#513. */
+  needsAttention?: NeedsAttentionRow[];
 }
 
 function shortDate(iso: string): string {
@@ -226,6 +229,9 @@ export default function AdminDashboardPage() {
           `data-has-revenue` — QA GRW-276 — lets that stylesheet collapse the
           revenue column when there is no RevenueCard to put in it, instead of
           leaving the cell empty. */}
+      {/* Jira GRW-700 — who needs an admin today, right under the figures. */}
+      {data.needsAttention ? <NeedsAttention rows={data.needsAttention} /> : null}
+
       <div className="admin-dash-cols" data-has-revenue={data.revenue ? 'true' : 'false'}>
         {/* GRW-265/274 FR-01 — real links to screens that already exist and are already permission-gated. */}
         {quickActions.length > 0 ? (
