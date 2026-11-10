@@ -473,7 +473,7 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
                         <div style={{ fontSize: 12.5, color: 'oklch(0.5 0.02 155)', marginTop: 4 }}>
                           {actorLabel(row)}
                           {row.impersonatedByName ? (
-                            <span style={{ color: oklch.danger, fontWeight: 700 }}> · impersonated by {row.impersonatedByName}</span>
+                            <span style={{ color: oklch.danger, fontWeight: 700 }}> · while {row.impersonatedByName} was viewing as owner</span>
                           ) : null}
                           {row.reason ? ` · ${row.reason}` : ''}
                         </div>
