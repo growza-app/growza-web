@@ -29,10 +29,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  padding: var(--sp-3) var(--sp-4);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
 }
 
 .ord-search {
@@ -225,6 +221,116 @@ a.ord-card:focus-visible,
   font-style: italic;
 }
 
+/*
+ * Owner, 10 Nov 2026 — the phone list, redone: no box around the search and filters, a white round search, and the
+ * orders as one rounded list per day under a quiet heading. Each order is two lines. A cancelled or returned order is
+ * greyed with its amount crossed through, so the eye adds up only money that came in.
+ */
+.ord-days {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.ord-day-head {
+  margin: 0 0 var(--sp-2);
+  padding: 0 var(--sp-2);
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.ord-token {
+  display: inline-block;
+  margin-inline-end: var(--sp-2);
+  padding: 0 var(--sp-2);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  vertical-align: 0.0625rem;
+}
+.ord-card.is-void .ord-who,
+.ord-card.is-void .ord-amount {
+  color: var(--muted);
+}
+.ord-card.is-void .ord-amount {
+  text-decoration: line-through;
+  font-weight: 500;
+}
+.ord-card.is-void .ord-token {
+  background: var(--slate-soft);
+  color: var(--muted);
+}
+
+@media (max-width: 860px) {
+  .ord-search {
+    padding: 0 var(--sp-4);
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--text) 18%, var(--surface));
+    box-shadow: 0 1px 2px rgb(16 24 40 / 4%);
+  }
+  .ord-search:focus-within {
+    border-color: var(--accent-deep);
+  }
+  /* Smaller pills so a restaurant's four (Anywhere, Counter and two apps) sit on one line at 344px. Still 2.75rem tall. */
+  .ord-tools .ord-chips {
+    gap: 0.375rem;
+  }
+  .ord-tools .ord-chip {
+    padding: 0 var(--sp-2);
+    font-size: 0.8125rem;
+  }
+  .ord-days .ord-cards {
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    background: var(--surface);
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgb(16 24 40 / 4%);
+  }
+  .ord-days .ord-card {
+    gap: 0.125rem;
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+  .ord-days .ord-card-item + .ord-card-item .ord-card {
+    border-top: 1px solid var(--border);
+  }
+  .ord-days .ord-card:active {
+    background: var(--page-bg);
+  }
+  .ord-days .ord-card:focus-visible {
+    outline-offset: -2px;
+  }
+  .ord-days .ord-card-foot {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+  .ord-days .ord-card-mid {
+    flex: 1;
+    min-width: 0;
+  }
+  .ord-days .ord-state-chip {
+    font-size: 0.75rem;
+  }
+  /* The payout is a row under the filters now, not a banner over the list. */
+  .ord .pay {
+    padding: var(--sp-2) var(--sp-4);
+    border-radius: 1.25rem;
+  }
+  .ord .pay.is-open {
+    padding-bottom: var(--sp-4);
+  }
+  .ord .pay-title {
+    font-size: 0.9375rem;
+  }
+}
+
 /* ── Empty and error ─────────────────────────────────────────────────────────────────────────────────────────── */
 .ord-state {
   display: flex;
@@ -294,13 +400,18 @@ a.ord-card:focus-visible,
 }
 
 @media (min-width: 861px) {
-  .ord-cards:not(.ord-skeleton) {
+  .ord-cards:not(.ord-skeleton),
+  .ord-days {
     display: none;
   }
   .ord-table {
     display: table;
   }
   .ord-tools {
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
