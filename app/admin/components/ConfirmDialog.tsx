@@ -35,6 +35,11 @@ export interface ConfirmDialogProps {
    */
   reasonMinLength?: number;
   reasonPlaceholder?: string;
+  /**
+   * QA 10 Nov 2026 — for the actions that stop a business: the admin types this (the business's name) before the
+   * confirm button works, so a slip of the thumb on a phone cannot suspend somebody's salon.
+   */
+  confirmText?: string;
   loading?: boolean;
   /** A failed attempt's message, shown inside the dialog with the typed reason preserved — never surfaced by closing it, which would lose both. */
   error?: string | null;
@@ -62,6 +67,7 @@ export function ConfirmDialog({
   reasonRequired,
   reasonMinLength = 1,
   reasonPlaceholder = 'Why is this being done?',
+  confirmText,
   loading,
   error,
   onConfirm,
@@ -69,6 +75,7 @@ export function ConfirmDialog({
   children,
 }: ConfirmDialogProps) {
   const [reason, setReason] = useState('');
+  const [typed, setTyped] = useState('');
   // Clicking Save while the reason is blank used to just do nothing —
   // silently disabled, no visible reason why. Track that it was tried so a
   // real message can render instead of a click that appears to go nowhere.
@@ -95,6 +102,7 @@ export function ConfirmDialog({
   useEffect(() => {
     if (open) {
       setReason('');
+      setTyped('');
       setTriedWithoutReason(false);
     }
   }, [open]);
@@ -102,6 +110,7 @@ export function ConfirmDialog({
   if (!open) return null;
 
   const reasonMissing = reasonRequired && reason.trim().length < reasonMinLength;
+  const typedMissing = confirmText !== undefined && typed.trim().toLowerCase() !== confirmText.trim().toLowerCase();
 
   return (
     <div
@@ -203,6 +212,15 @@ export function ConfirmDialog({
           </div>
         ) : null}
 
+        {confirmText !== undefined ? (
+          <div style={{ marginTop: 18 }}>
+            <label htmlFor={`${reasonId}-type`} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginBottom: 7 }}>
+              Type <strong>{confirmText}</strong> to confirm
+            </label>
+            <TextInput id={`${reasonId}-type`} value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" />
+          </div>
+        ) : null}
+
         {error ? (
           <div style={{ marginTop: 14, fontSize: 13, fontWeight: 600, color: oklch.danger }}>{error}</div>
         ) : null}
@@ -215,7 +233,7 @@ export function ConfirmDialog({
           </SecondaryButton>
           <PrimaryButton
             onClick={() => {
-              if (loading) return;
+              if (loading || typedMissing) return;
               if (reasonMissing) {
                 setTriedWithoutReason(true);
                 return;
@@ -227,7 +245,7 @@ export function ConfirmDialog({
               height: 44,
               justifyContent: 'center',
               background: danger ? oklch.danger : oklch.accent,
-              opacity: reasonMissing || loading ? 0.6 : 1,
+              opacity: reasonMissing || typedMissing || loading ? 0.6 : 1,
               cursor: loading ? 'not-allowed' : 'pointer',
             }}
           >

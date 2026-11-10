@@ -289,6 +289,8 @@ export function Toggle({
       style={{
         width: 46,
         height: 26,
+        // QA 10 Nov 2026 — beside a long sentence on a phone, flex squeezed it to 26px: a bare knob, no track.
+        flexShrink: 0,
         borderRadius: 99,
         border: 'none',
         cursor: disabled ? 'not-allowed' : 'pointer',
