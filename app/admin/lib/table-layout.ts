@@ -79,6 +79,8 @@ export interface TableColumn extends TableColumnSizing {
    * chevron on a row that already opens when tapped.
    */
   mobile?: boolean;
+  /** Jira GRW-693 — the API sort key this column orders by. Its heading becomes a button when the table has `onSort`. */
+  sortKey?: string;
 }
 
 export type TableLayout = 'table' | 'compact' | 'cards';
