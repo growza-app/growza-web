@@ -495,6 +495,8 @@ function monthShort(iso: string): string {
 }
 
 export function AttentionRowView({ row, isLast }: { row: AttentionRow; isLast: boolean }) {
+  // Jira GRW-691 — callers pass built rows only (`builtRows`); this is the backstop, so a ticket number never shows.
+  if (!row.available) return null;
   const body = (
     <div
       style={{
@@ -537,7 +539,7 @@ export function AttentionRowView({ row, isLast }: { row: AttentionRow; isLast: b
               // everywhere else.
               (ATTENTION_SUBTITLES[row.key]?.[row.count === 0 ? 'clear' : 'action'] ??
               (row.count === 0 ? 'Nothing needs attention.' : 'Currently failing — open to reconcile.'))
-            : `Not yet available — lands with Jira ${row.epic}.`}
+            : null}
         </div>
       </div>
       {row.available ? (

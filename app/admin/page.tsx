@@ -28,7 +28,7 @@ import {
 } from './components/DashboardParts';
 import { DashboardSkeleton } from './components/DashboardSkeleton';
 import { oklch, STATUS_COLORS } from './tokens';
-import { ATTENTION_CARDS, QUICK_ACTIONS, STAT_TINTS, STATUS_LABEL } from './dashboard-config';
+import { ATTENTION_CARDS, QUICK_ACTIONS, STAT_TINTS, STATUS_LABEL, builtRows } from './dashboard-config';
 import { useAdminMe } from './components/AdminMeContext';
 
 /**
@@ -161,6 +161,7 @@ export default function AdminDashboardPage() {
 
   // Jira GRW-287 — the loaded page's own grid, placeholders and all; see DashboardSkeleton.
   if (loading || !data) return <DashboardSkeleton />;
+  const builtAttention = builtRows(data.attention);
 
   const empty = data.totalBusinesses === 0;
   // Computed across the whole breakdown at once, so the four shares total 100
@@ -357,15 +358,18 @@ export default function AdminDashboardPage() {
           </Card>
         </div>
 
-        {/* FR-02/AC-02 — every row present whether or not its epic has shipped; a row without a real count yet names it. */}
-        <Card className="admin-dash-attention">
-          <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Billing attention</h3>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {data.attention.map((row, i) => (
-              <AttentionRowView key={row.key} row={row} isLast={i === data.attention.length - 1} />
-            ))}
-          </div>
-        </Card>
+        {/* Jira GRW-691 — only rows with something real behind them; a row naming a ticket is a developer note, not a
+            figure. With none built, the card is not drawn at all. */}
+        {builtAttention.length > 0 ? (
+          <Card className="admin-dash-attention">
+            <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Billing attention</h3>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {builtAttention.map((row, i) => (
+                <AttentionRowView key={row.key} row={row} isLast={i === builtAttention.length - 1} />
+              ))}
+            </div>
+          </Card>
+        ) : null}
 
         {/* GRW-265/274 FR-02 — real signups, `tenant.created_at`, the same
           column the KPI above already counts. "View all" is real: `/admin/

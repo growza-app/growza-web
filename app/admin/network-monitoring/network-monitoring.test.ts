@@ -86,8 +86,8 @@ describe('error handling — one failed panel does not blank the screen', () => 
 
 describe('loading — one skeleton per panel', () => {
   it('draws as many skeletons as the screen has panels', () => {
-    // Worker, webhooks, billing retries, and the limits card.
-    expect(PANEL_COUNT).toBe(4);
+    // Worker, webhooks and billing retries. The unbuilt limits card left with Jira GRW-691.
+    expect(PANEL_COUNT).toBe(3);
     const cards = page.slice(page.indexOf('<WorkerSection')).match(/<(WorkerSection|WebhookSection|DunningSection|Card style=\{\{ borderStyle: 'dashed' \}\})/g);
     expect(cards).toHaveLength(PANEL_COUNT);
     expect(page).toContain('Array.from({ length: PANEL_COUNT }');

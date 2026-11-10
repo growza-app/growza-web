@@ -20,6 +20,11 @@ export const STAT_TINTS = {
   rose: { bg: 'oklch(0.965 0.025 25)', fg: 'oklch(0.53 0.16 25)', border: 'oklch(0.93 0.035 25)' },
 } satisfies Record<string, StatTint>;
 
+/** Jira GRW-691 — the rows that have a real figure behind them. An unbuilt row is not shown at all. */
+export function builtRows<T extends { available: boolean }>(rows: readonly T[]): T[] {
+  return rows.filter((r) => r.available);
+}
+
 export const STATUS_LABEL: Record<string, string> = { provisioning: 'Provisioning', active: 'Active', suspended: 'Suspended', churned: 'Churned' };
 
 
