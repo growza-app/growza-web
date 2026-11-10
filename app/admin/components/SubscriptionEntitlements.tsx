@@ -198,7 +198,7 @@ export function SubscriptionEntitlements({
     return (
       <Card>
         <SectionTitle title="Effective entitlements" />
-        <div style={{ fontSize: 13.5, fontWeight: 600, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+        <div style={{ fontSize: '0.84375rem', fontWeight: 600, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
         <SecondaryButton onClick={() => void load()}>Retry</SecondaryButton>
       </Card>
     );
@@ -231,14 +231,14 @@ export function SubscriptionEntitlements({
         }
       />
 
-      <p style={{ margin: '2px 0 16px', fontSize: 12.5, lineHeight: 1.55, color: oklch.textFaint }}>
+      <p style={{ margin: '2px 0 16px', fontSize: '0.78125rem', lineHeight: 1.55, color: oklch.textFaint }}>
         What this business may actually use, and where each value comes from. A plan sets the baseline; an override
         replaces it for this customer alone and never changes the plan. Platform and vertical ceilings still have the
         last word.
       </p>
 
       {clampNotice ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', borderRadius: 11, background: oklch.warnBg, fontSize: 12.5, fontWeight: 600, lineHeight: 1.5, color: 'oklch(0.42 0.12 65)', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', borderRadius: 11, background: oklch.warnBg, fontSize: '0.78125rem', fontWeight: 600, lineHeight: 1.5, color: 'oklch(0.42 0.12 65)', marginBottom: 16 }}>
           <Icon name="alert" size={14} />
           Asked for {formatValue({ type: typeof clampNotice.effectiveValue === 'boolean' ? 'boolean' : 'number' }, clampNotice.requested)} on{' '}
           {clampNotice.label}, capped to {formatValue({ type: typeof clampNotice.effectiveValue === 'boolean' ? 'boolean' : 'number' }, clampNotice.effectiveValue)}{' '}
@@ -247,23 +247,23 @@ export function SubscriptionEntitlements({
       ) : null}
 
       {!isOpen ? (
-        <div style={{ padding: '12px 14px', borderRadius: 11, background: oklch.warnBg, fontSize: 12.5, fontWeight: 600, lineHeight: 1.5, color: 'oklch(0.42 0.12 65)', marginBottom: 16 }}>
+        <div style={{ padding: '12px 14px', borderRadius: 11, background: oklch.warnBg, fontSize: '0.78125rem', fontWeight: 600, lineHeight: 1.5, color: 'oklch(0.42 0.12 65)', marginBottom: 16 }}>
           This subscription is {statusLabel.toLowerCase()}, so overrides on it are no longer read when capabilities
           resolve. The values below are what would apply if it were open; they cannot be changed from here.
         </div>
       ) : !canManage ? (
-        <div style={{ padding: '12px 14px', borderRadius: 11, background: oklch.surfaceSubtle, border: `1px solid ${oklch.border}`, fontSize: 12.5, fontWeight: 600, color: oklch.textMuted, marginBottom: 16 }}>
+        <div style={{ padding: '12px 14px', borderRadius: 11, background: oklch.surfaceSubtle, border: `1px solid ${oklch.border}`, fontSize: '0.78125rem', fontWeight: 600, color: oklch.textMuted, marginBottom: 16 }}>
           You can see entitlements but not change them — that needs the subscription-manage permission.
         </div>
       ) : null}
 
       {visibleRows.length === 0 ? (
-        <div style={{ fontSize: 13, color: oklch.textFaint, padding: '8px 0' }}>No overrides on this subscription.</div>
+        <div style={{ fontSize: '0.8125rem', color: oklch.textFaint, padding: '8px 0' }}>No overrides on this subscription.</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {grouped.map(({ group, rows }) => (
             <div key={group}>
-              <div style={{ fontSize: 12.5, fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>
+              <div style={{ fontSize: '0.78125rem', fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>
                 {capabilityGroupLabel(group)}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -356,7 +356,7 @@ function EntitlementLine({
               admin who typed 500 wondering whether their write landed at
               all. */}
           {row.requested !== undefined && row.clampedBy ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5, fontSize: 12, fontWeight: 600, color: 'oklch(0.42 0.12 65)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5, fontSize: '0.75rem', fontWeight: 600, color: 'oklch(0.42 0.12 65)' }}>
               <Icon name="alert" size={13} />
               Asked for {formatValue(row, row.requested)}, capped to {formatValue(row, row.value)} by the{' '}
               {SOURCE_LABEL[row.clampedBy].toLowerCase()}.
@@ -364,7 +364,7 @@ function EntitlementLine({
           ) : null}
 
           {row.override ? (
-            <div style={{ marginTop: 5, fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>
+            <div style={{ marginTop: 5, fontSize: '0.75rem', color: oklch.textFaint, fontWeight: 600 }}>
               Override reason: {row.override.reason}
             </div>
           ) : null}
@@ -374,7 +374,7 @@ function EntitlementLine({
         <>
           {row.type === 'boolean' ? (
             <>
-              <span style={{ fontSize: 13, fontWeight: 700, color: oklch.textMuted, minWidth: 26 }}>{formatValue(row, row.value)}</span>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: oklch.textMuted, minWidth: 26 }}>{formatValue(row, row.value)}</span>
               <Toggle label={row.label} on={Boolean(row.value)} disabled={!editable} onClick={() => onSet(!row.value)} />
             </>
           ) : (
@@ -393,14 +393,14 @@ function EntitlementLine({
                 onClick={() => onSet(Number(draft))}
                 disabled={!editable || !changed}
                 title={!editable ? undefined : !changed ? 'This is already the value in force' : undefined}
-                style={{ height: 36, padding: '0 12px', fontSize: 12.5 }}
+                style={{ height: 36, padding: '0 12px', fontSize: '0.78125rem' }}
               >
                 Set
               </SecondaryButton>
             </>
           )}
           {row.override ? (
-            <SecondaryButton danger onClick={onRemove} disabled={!editable} style={{ height: 36, padding: '0 12px', fontSize: 12.5 }}>
+            <SecondaryButton danger onClick={onRemove} disabled={!editable} style={{ height: 36, padding: '0 12px', fontSize: '0.78125rem' }}>
               Remove
             </SecondaryButton>
           ) : null}

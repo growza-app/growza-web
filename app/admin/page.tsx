@@ -137,10 +137,10 @@ export default function AdminDashboardPage() {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 6 }}>
+          <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 6 }}>
             Your role does not open any screens yet
           </div>
-          <div style={{ fontSize: 13, color: oklch.textMuted }}>
+          <div style={{ fontSize: '0.8125rem', color: oklch.textMuted }}>
             Ask a Super Admin to add permissions to it. Retrying will not change this.
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function AdminDashboardPage() {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+          <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
           <SecondaryButton onClick={() => setRetryToken((n) => n + 1)}>Retry</SecondaryButton>
         </div>
       </Card>
@@ -230,7 +230,7 @@ export default function AdminDashboardPage() {
         {/* GRW-265/274 FR-01 — real links to screens that already exist and are already permission-gated. */}
         {quickActions.length > 0 ? (
         <Card className="admin-dash-quick">
-          <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Quick actions</h3>
+          <h3 style={{ margin: '0 0 14px', fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>Quick actions</h3>
           {/* Fixed 5-column grid, not auto-fit/minmax — same reasoning as the KPI
             grid above. Icon-above-label, centered, no border: matches the
             tenant Home's own compact tile pattern (`hm-tile`,
@@ -264,7 +264,7 @@ export default function AdminDashboardPage() {
                   <span style={{ color: tint.fg, display: 'flex', flex: 'none' }}>
                     <Icon name={action.icon} size={21} />
                   </span>
-                  <span style={{ fontSize: 10.5, fontWeight: 600, lineHeight: 1.25, textAlign: 'center' }}>{action.label}</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.25, textAlign: 'center' }}>{action.label}</span>
                 </Link>
               );
             })}
@@ -298,13 +298,13 @@ export default function AdminDashboardPage() {
             array the old plain list did; no new query, no fabricated trend. */}
           <Card>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>Business status</div>
-              <div style={{ fontSize: 12, color: oklch.textFaint }}>
+              <div style={{ fontSize: '0.78125rem', fontWeight: 700, color: oklch.textMuted }}>Business status</div>
+              <div style={{ fontSize: '0.75rem', color: oklch.textFaint }}>
                 Total <strong style={{ color: oklch.textStrong, fontWeight: 800 }}>{data.totalBusinesses}</strong>
               </div>
             </div>
             {empty ? (
-              <div style={{ fontSize: 13, color: oklch.textFaint }}>{PLATFORM_EMPTY_COPY}</div>
+              <div style={{ fontSize: '0.8125rem', color: oklch.textFaint }}>{PLATFORM_EMPTY_COPY}</div>
             ) : (
               <>
                 <div
@@ -342,11 +342,11 @@ export default function AdminDashboardPage() {
                           <span
                             style={{ width: 8, height: 8, borderRadius: '50%', background: dotColor, display: 'inline-block', flex: 'none' }}
                           />
-                          <span style={{ fontSize: 13, fontWeight: 600, color: oklch.textStrong }}>{STATUS_LABEL[s.status] ?? s.status}</span>
+                          <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: oklch.textStrong }}>{STATUS_LABEL[s.status] ?? s.status}</span>
                         </span>
                         <span style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                          <span style={{ fontSize: 13.5, fontWeight: 800, color: oklch.textStrong }}>{s.count}</span>
-                          <span style={{ fontSize: 11.5, color: oklch.textFaint }}>({shareLabel(s.count, data.totalBusinesses, pct)})</span>
+                          <span style={{ fontSize: '0.84375rem', fontWeight: 800, color: oklch.textStrong }}>{s.count}</span>
+                          <span style={{ fontSize: '0.75rem', color: oklch.textFaint }}>({shareLabel(s.count, data.totalBusinesses, pct)})</span>
                         </span>
                       </Link>
                     );
@@ -359,7 +359,7 @@ export default function AdminDashboardPage() {
 
         {/* FR-02/AC-02 — every row present whether or not its epic has shipped; a row without a real count yet names it. */}
         <Card className="admin-dash-attention">
-          <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Billing attention</h3>
+          <h3 style={{ margin: '0 0 14px', fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>Billing attention</h3>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {data.attention.map((row, i) => (
               <AttentionRowView key={row.key} row={row} isLast={i === data.attention.length - 1} />
@@ -372,8 +372,8 @@ export default function AdminDashboardPage() {
           businesses` lists every business this list is a preview of. */}
         <Card className="admin-dash-signups">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Recent signups</h3>
-            <Link href="/admin/businesses" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.accent, textDecoration: 'none' }}>
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>Recent signups</h3>
+            <Link href="/admin/businesses" style={{ fontSize: '0.78125rem', fontWeight: 700, color: oklch.accent, textDecoration: 'none' }}>
               View all
             </Link>
           </div>
@@ -407,7 +407,7 @@ export default function AdminDashboardPage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontWeight: 800,
-                        fontSize: 13.5,
+                        fontSize: '0.84375rem',
                         flex: 'none',
                       }}
                     >
@@ -422,7 +422,7 @@ export default function AdminDashboardPage() {
                       <span
                         title={signup.name}
                         style={{
-                          fontSize: 12.5,
+                          fontSize: '0.78125rem',
                           fontWeight: 700,
                           color: oklch.textStrong,
                           whiteSpace: 'nowrap',
@@ -433,7 +433,7 @@ export default function AdminDashboardPage() {
                       >
                         {signup.name}
                       </span>
-                      <span style={{ fontSize: 11, color: oklch.textFaint, whiteSpace: 'nowrap' }}>{shortDate(signup.createdAt)}</span>
+                      <span style={{ fontSize: '0.75rem', color: oklch.textFaint, whiteSpace: 'nowrap' }}>{shortDate(signup.createdAt)}</span>
                     </span>
                   </Link>
                 );

@@ -104,7 +104,7 @@ export function BillingTab({ businessId }: { businessId: string; businessName?: 
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+          <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
           <SecondaryButton onClick={() => void load()}>Retry</SecondaryButton>
         </div>
       </Card>
@@ -130,7 +130,7 @@ export function BillingTab({ businessId }: { businessId: string; businessName?: 
       <Card>
         <SectionTitle title={`Invoices (${invoices.length})`} />
         {invoices.length === 0 ? (
-          <div style={{ fontSize: 13, color: oklch.textFaint, padding: '6px 0' }}>
+          <div style={{ fontSize: '0.8125rem', color: oklch.textFaint, padding: '6px 0' }}>
             No invoices yet — one is issued when a billing period ends.
           </div>
         ) : (
@@ -159,7 +159,7 @@ export function BillingTab({ businessId }: { businessId: string; businessName?: 
                       background: 'none',
                       padding: 0,
                       cursor: 'pointer',
-                      fontSize: 13.5,
+                      fontSize: '0.84375rem',
                       fontWeight: 700,
                       color: oklch.accentText,
                       fontFamily: 'ui-monospace, SFMono-Regular, monospace',
@@ -167,7 +167,7 @@ export function BillingTab({ businessId }: { businessId: string; businessName?: 
                   >
                     {inv.invoiceNumber}
                   </button>
-                  <div style={{ fontSize: 12, color: oklch.textFaint, fontWeight: 600, marginTop: 3 }}>
+                  <div style={{ fontSize: '0.75rem', color: oklch.textFaint, fontWeight: 600, marginTop: 3 }}>
                     {formatDateOnly(inv.periodStart)} – {formatDateOnly(inv.periodEnd)}
                   </div>
                   <div style={{ display: 'flex', gap: 6, marginTop: 7, flexWrap: 'wrap' }}>
@@ -190,7 +190,7 @@ export function BillingTab({ businessId }: { businessId: string; businessName?: 
       <Card>
         <SectionTitle title={`Payments (${payments.length})`} />
         {payments.length === 0 ? (
-          <div style={{ fontSize: 13, color: oklch.textFaint, padding: '6px 0' }}>
+          <div style={{ fontSize: '0.8125rem', color: oklch.textFaint, padding: '6px 0' }}>
             No payments yet — they appear as the payment provider reports them.
           </div>
         ) : (
@@ -211,15 +211,15 @@ export function BillingTab({ businessId }: { businessId: string; businessName?: 
                 }}
               >
                 <div style={{ minWidth: 0, flex: '1 1 200px' }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, fontFamily: 'ui-monospace, SFMono-Regular, monospace', color: 'oklch(0.45 0.02 155)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, fontFamily: 'ui-monospace, SFMono-Regular, monospace', color: 'oklch(0.45 0.02 155)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {p.externalPaymentId}
                   </div>
-                  <div style={{ fontSize: 11.5, color: oklch.textFaint, fontWeight: 600, textTransform: 'capitalize', marginTop: 2 }}>
+                  <div style={{ fontSize: '0.75rem', color: oklch.textFaint, fontWeight: 600, textTransform: 'capitalize', marginTop: 2 }}>
                     {p.paymentProvider} · {formatTimestampDate(p.paidAt ?? p.createdAt)}
                   </div>
-                  {p.failureReason ? <div style={{ fontSize: 11.5, color: oklch.danger, fontWeight: 600, marginTop: 2 }}>{p.failureReason}</div> : null}
+                  {p.failureReason ? <div style={{ fontSize: '0.75rem', color: oklch.danger, fontWeight: 600, marginTop: 2 }}>{p.failureReason}</div> : null}
                   {(p.appliedTo?.length ?? 0) > 0 || (p.onAccountMinor ?? 0) > 0 ? (
-                    <div style={{ fontSize: 12, color: oklch.textMuted, fontWeight: 600, marginTop: 3 }} data-testid="payment-applied">
+                    <div style={{ fontSize: '0.75rem', color: oklch.textMuted, fontWeight: 600, marginTop: 3 }} data-testid="payment-applied">
                       {[
                         ...(p.appliedTo ?? []).map((a) =>
                           a.amountMinor === 0
@@ -231,16 +231,16 @@ export function BillingTab({ businessId }: { businessId: string; businessName?: 
                     </div>
                   ) : null}
                   {(p.heldMinor ?? 0) > 0 ? (
-                    <div style={{ fontSize: 12, color: oklch.danger, fontWeight: 700, marginTop: 3 }} data-testid="payment-held">
+                    <div style={{ fontSize: '0.75rem', color: oklch.danger, fontWeight: 700, marginTop: 3 }} data-testid="payment-held">
                       {formatMoneyMinor(p.heldMinor!)} held — needs a person (no bill will take it on its own)
                     </div>
                   ) : null}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 'none' }}>
                   {p.refundedAmountMinor > 0 ? (
-                    <span style={{ fontSize: 12.5, fontWeight: 600, color: 'oklch(0.5 0.15 25)' }}>−{formatMoneyMinor(p.refundedAmountMinor)}</span>
+                    <span style={{ fontSize: '0.78125rem', fontWeight: 600, color: 'oklch(0.5 0.15 25)' }}>−{formatMoneyMinor(p.refundedAmountMinor)}</span>
                   ) : null}
-                  <span style={{ fontSize: 14, fontWeight: 800, color: 'oklch(0.28 0.02 155)' }}>{formatMoneyMinor(p.amountMinor)}</span>
+                  <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'oklch(0.28 0.02 155)' }}>{formatMoneyMinor(p.amountMinor)}</span>
                   <StatusPill status={billingStatusLabel(p.status)} />
                 </div>
               </div>

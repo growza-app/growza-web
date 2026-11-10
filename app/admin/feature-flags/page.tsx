@@ -85,7 +85,7 @@ export default function AdminFeatureFlagsPage() {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+          <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
           <SecondaryButton onClick={() => void load()}>Retry</SecondaryButton>
         </div>
       </Card>
@@ -108,7 +108,7 @@ export default function AdminFeatureFlagsPage() {
           two gates are easy to confuse, and confusing them is how a
           commercial decision gets made with a release control. */}
       <Card>
-        <div style={{ fontSize: 12.5, lineHeight: 1.55, color: 'oklch(0.45 0.02 155)', fontWeight: 500 }}>
+        <div style={{ fontSize: '0.78125rem', lineHeight: 1.55, color: 'oklch(0.45 0.02 155)', fontWeight: 500 }}>
           A flag answers <strong>&ldquo;is this built and switched on&rdquo;</strong>. Whether a business has <em>bought</em> a feature is a
           separate question, answered by their plan and shown on their subscription. Turning a flag off here takes the feature away from
           everyone it applies to, however much they pay.
@@ -120,9 +120,9 @@ export default function AdminFeatureFlagsPage() {
           <Card key={flag.key}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14 }}>
               <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 5 }}>
-                <span style={{ fontSize: 15.5, fontWeight: 800, color: oklch.textStrong, lineHeight: 1.25 }}>{flag.label}</span>
-                <div style={{ fontSize: 12.5, color: oklch.textMuted, lineHeight: 1.4 }}>{flag.description}</div>
-                <div style={{ fontSize: 11.5, color: 'oklch(0.6 0.015 155)', fontFamily: 'ui-monospace, monospace' }}>{flag.key}</div>
+                <span style={{ fontSize: '0.96875rem', fontWeight: 800, color: oklch.textStrong, lineHeight: 1.25 }}>{flag.label}</span>
+                <div style={{ fontSize: '0.78125rem', color: oklch.textMuted, lineHeight: 1.4 }}>{flag.description}</div>
+                <div style={{ fontSize: '0.75rem', color: 'oklch(0.6 0.015 155)', fontFamily: 'ui-monospace, monospace' }}>{flag.key}</div>
               </div>
               <div style={{ flex: 'none' }}>
                 <Toggle
@@ -157,7 +157,7 @@ export default function AdminFeatureFlagsPage() {
               <Fact label="Overrides" value={String(flag.overrideCount)} tone={flag.overrideCount > 0 ? 'on' : 'off'} />
               <SecondaryButton
                 onClick={() => router.push(`/admin/feature-flags/${encodeURIComponent(flag.key)}`)}
-                style={{ marginLeft: 'auto', height: 30, padding: '0 13px', fontSize: 12.5, color: oklch.accentText }}
+                style={{ marginLeft: 'auto', height: 30, padding: '0 13px', fontSize: '0.78125rem', color: oklch.accentText }}
               >
                 Configure
               </SecondaryButton>
@@ -167,7 +167,7 @@ export default function AdminFeatureFlagsPage() {
                 switched off globally still shows a default and a plan list,
                 and neither applies. */}
             {!flag.enabled ? (
-              <div style={{ marginTop: 11, fontSize: 12, fontWeight: 700, color: 'oklch(0.55 0.17 25)' }}>
+              <div style={{ marginTop: 11, fontSize: '0.75rem', fontWeight: 700, color: 'oklch(0.55 0.17 25)' }}>
                 Off for everyone — the default and plan targeting below do not apply while it is.
               </div>
             ) : null}
@@ -205,10 +205,10 @@ export default function AdminFeatureFlagsPage() {
 function Fact({ label, value, tone }: { label: string; value: string; tone: 'on' | 'off' }) {
   return (
     <div style={{ minWidth: 0 }}>
-      <div style={{ fontSize: 10.5, fontWeight: 800, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
       <div
         style={{
-          fontSize: 13,
+          fontSize: '0.8125rem',
           fontWeight: 700,
           marginTop: 2,
           color: tone === 'on' ? oklch.textStrong : 'oklch(0.6 0.02 155)',

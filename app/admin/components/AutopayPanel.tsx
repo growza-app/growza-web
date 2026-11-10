@@ -151,7 +151,7 @@ export function AutopayPanel({ businessId }: { businessId: string }) {
     return (
       <Card>
         <SectionTitle title="Automatic payment (UPI AutoPay)" right={<SecondaryButton onClick={() => void load()}>Retry</SecondaryButton>} />
-        <div style={{ fontSize: 13, color: oklch.danger, fontWeight: 600 }}>{error}</div>
+        <div style={{ fontSize: '0.8125rem', color: oklch.danger, fontWeight: 600 }}>{error}</div>
       </Card>
     );
   }
@@ -164,7 +164,7 @@ export function AutopayPanel({ businessId }: { businessId: string }) {
   return (
     <Card>
       <SectionTitle title="Automatic payment (UPI AutoPay)" />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13.5 }} data-testid="admin-autopay">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: '0.84375rem' }} data-testid="admin-autopay">
         {view.cancelsNeedingSupport.map((c) => (
           <div
             key={c.externalSubscriptionId}
@@ -173,7 +173,7 @@ export function AutopayPanel({ businessId }: { businessId: string }) {
           >
             AutoPay cancel failed — cancel it in the payment provider&apos;s dashboard:{' '}
             <code style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>{c.externalSubscriptionId}</code>
-            <div style={{ fontWeight: 600, fontSize: 12.5 }}>
+            <div style={{ fontWeight: 600, fontSize: '0.78125rem' }}>
               It is {CANCEL_WHY[c.why]}. Asked since {formatTimestampDate(c.requestedAt)}, {c.attempts} tries
               {c.lastError ? ` — last answer: ${c.lastError}` : ''}. Until it is cancelled it could still take a payment.
             </div>

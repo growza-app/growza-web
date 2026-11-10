@@ -332,12 +332,12 @@ export function RevenueCard({
   return (
     <div className={className} style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, padding: 16 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Revenue</h3>
-        <span style={{ fontSize: 12, color: oklch.textFaint }}>This month</span>
+        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>Revenue</h3>
+        <span style={{ fontSize: '0.75rem', color: oklch.textFaint }}>This month</span>
       </div>
-      <div style={{ fontSize: 25, fontWeight: 800, color: oklch.textStrong, lineHeight: 1.2 }}>{inr(thisMonthMinor / 100)}</div>
+      <div style={{ fontSize: '1.5625rem', fontWeight: 800, color: oklch.textStrong, lineHeight: 1.2 }}>{inr(thisMonthMinor / 100)}</div>
       {delta ? (
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 3, fontSize: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 3, fontSize: '0.75rem' }}>
           <span style={{ color: deltaColor, fontWeight: 800 }}>
             {delta.direction === 'up' ? '↑' : delta.direction === 'down' ? '↓' : '—'}
           </span>
@@ -366,7 +366,7 @@ export function RevenueCard({
                   background: isCurrent ? 'oklch(0.55 0.13 150)' : 'oklch(0.78 0.08 150)',
                 }}
               />
-              <span style={{ fontSize: 10.5, color: oklch.textFaint, fontWeight: 600 }}>{monthShort(m.month)}</span>
+              <span style={{ fontSize: '0.75rem', color: oklch.textFaint, fontWeight: 600 }}>{monthShort(m.month)}</span>
             </div>
           );
         })}
@@ -441,14 +441,14 @@ export function BookingsCard({
   return (
     <div className={className} style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, padding: 16 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Bookings</h3>
-        <span style={{ fontSize: 12, color: oklch.textFaint }}>This month · all businesses</span>
+        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>Bookings</h3>
+        <span style={{ fontSize: '0.75rem', color: oklch.textFaint }}>This month · all businesses</span>
       </div>
-      <div style={{ fontSize: 25, fontWeight: 800, color: oklch.textStrong, lineHeight: 1.2 }}>{bookings.thisMonth.toLocaleString('en-IN')}</div>
+      <div style={{ fontSize: '1.5625rem', fontWeight: 800, color: oklch.textStrong, lineHeight: 1.2 }}>{bookings.thisMonth.toLocaleString('en-IN')}</div>
       {/* No movement line when last month had nothing to compare against —
           "↑ 100%" on a first month is noise, not information. */}
       {delta ? (
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 3, fontSize: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 3, fontSize: '0.75rem' }}>
           <span style={{ color: deltaColor, fontWeight: 800 }}>{delta.direction === 'up' ? '↑' : delta.direction === 'down' ? '↓' : '—'}</span>
           <span style={{ color: oklch.textFaint, fontWeight: 500 }}>{delta.text}</span>
         </div>
@@ -458,7 +458,7 @@ export function BookingsCard({
         // A real zero, said as one — not an empty bar that looks like a fault.
         // In the same words as the cards beside it: on an empty platform that
         // is the shared sentence, otherwise their "No … yet" shape.
-        <div style={{ fontSize: 13, color: oklch.textFaint, marginTop: 12 }}>
+        <div style={{ fontSize: '0.8125rem', color: oklch.textFaint, marginTop: 12 }}>
           {platformEmpty ? PLATFORM_EMPTY_COPY : 'No bookings this month yet.'}
         </div>
       ) : (
@@ -475,11 +475,11 @@ export function BookingsCard({
               <div key={o.status} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '3px 0', minWidth: 0 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: OUTCOME_STYLE[o.status].color, flex: 'none' }} />
-                  <span style={{ fontSize: 12.5, fontWeight: 600, color: oklch.textStrong }}>{OUTCOME_STYLE[o.status].label}</span>
+                  <span style={{ fontSize: '0.78125rem', fontWeight: 600, color: oklch.textStrong }}>{OUTCOME_STYLE[o.status].label}</span>
                 </span>
                 <span style={{ display: 'flex', alignItems: 'baseline', gap: 4, flex: 'none' }}>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: oklch.textStrong }}>{o.count.toLocaleString('en-IN')}</span>
-                  <span style={{ fontSize: 11, color: oklch.textFaint }}>({shareLabel(o.count, bookings.thisMonth, o.pct)})</span>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: oklch.textStrong }}>{o.count.toLocaleString('en-IN')}</span>
+                  <span style={{ fontSize: '0.75rem', color: oklch.textFaint }}>({shareLabel(o.count, bookings.thisMonth, o.pct)})</span>
                 </span>
               </div>
             ))}
@@ -521,8 +521,8 @@ export function AttentionRowView({ row, isLast }: { row: AttentionRow; isLast: b
         <Icon name="alert" size={18} />
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: row.available ? oklch.textStrong : oklch.textMuted }}>{row.label}</div>
-        <div style={{ fontSize: 12.5, color: oklch.textFaint, marginTop: 2 }}>
+        <div style={{ fontSize: '0.875rem', fontWeight: 700, color: row.available ? oklch.textStrong : oklch.textMuted }}>{row.label}</div>
+        <div style={{ fontSize: '0.78125rem', color: oklch.textFaint, marginTop: 2 }}>
           {row.available
             ? // A count on its own read as a stray number in the subtitle
               // slot. Say what it means, and — for the zero case — say it is
@@ -542,7 +542,7 @@ export function AttentionRowView({ row, isLast }: { row: AttentionRow; isLast: b
       </div>
       {row.available ? (
         <>
-          <span style={{ fontSize: 20, fontWeight: 800, color: row.count === 0 ? oklch.textFaint : 'oklch(0.5 0.14 25)' }}>
+          <span style={{ fontSize: '1.25rem', fontWeight: 800, color: row.count === 0 ? oklch.textFaint : 'oklch(0.5 0.14 25)' }}>
             {row.count}
           </span>
           <span style={{ color: oklch.textFaint, display: 'flex' }}>

@@ -369,7 +369,7 @@ body.admin-body {
 
 .admin-stat-label {
   grid-area: label;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.25;
   /* Two lines reserved, so a one-line label does not lift its number above
@@ -383,7 +383,7 @@ body.admin-body {
 
 .admin-stat-value {
   grid-area: value;
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 800;
   line-height: 1.15;
 }
@@ -394,7 +394,7 @@ body.admin-body {
   align-items: baseline;
   gap: 4px;
   margin-top: 4px;
-  font-size: 11.5px;
+  font-size: 0.75rem;
   /* Two lines: beside the icon "↑ 400% vs last month" wraps, and reserving
      one line let the cards with a movement grow taller than those without. */
   min-height: 32px;
@@ -443,17 +443,17 @@ body.admin-body {
   }
 
   .admin-stat-label {
-    font-size: 11.5px;
+    font-size: 0.75rem;
     min-height: 29px;
   }
 
   .admin-stat-value {
-    font-size: 22px;
+    font-size: 1.375rem;
   }
 
   .admin-stat-delta {
     margin-top: 3px;
-    font-size: 11px;
+    font-size: 0.75rem;
     /* One line now that it has the whole card — nothing left to reserve. */
     min-height: 0;
   }
@@ -628,7 +628,7 @@ body.admin-body {
 
 .admin-table-head {
   padding: 13px 20px;
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -751,7 +751,7 @@ body.admin-body {
   content: attr(data-label);
   display: block;
   margin-bottom: 3px;
-  font-size: 10.5px;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -812,7 +812,7 @@ body.admin-body {
     flex: 1;
   }
   .admin-header-title h1 {
-    font-size: 19px !important;
+    font-size: 1.1875rem !important;
   }
   .admin-header-subtitle {
     display: none;
@@ -881,7 +881,7 @@ body.admin-body {
   }
   .admin-bottom-label {
     max-width: 100%;
-    font-size: 11px;
+    font-size: 0.75rem;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
@@ -951,7 +951,7 @@ body.admin-body {
       padding-right: 0;
     }
     .admin-bottom-label {
-      font-size: 10px;
+      font-size: 0.75rem;
       letter-spacing: -0.02em;
     }
     .admin-bottom-icon {
@@ -1018,7 +1018,7 @@ body.admin-body {
   border-radius: 0;
   background: transparent;
   font: inherit;
-  font-size: 12.5px;
+  font-size: 0.78125rem;
   font-weight: 600;
   color: oklch(0.45 0.02 155);
   padding: 6px 12px;

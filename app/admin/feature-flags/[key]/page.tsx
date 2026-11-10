@@ -147,7 +147,7 @@ export default function FeatureFlagDetailPage() {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+          <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
           <SecondaryButton onClick={() => void load()}>Retry</SecondaryButton>
         </div>
       </Card>
@@ -169,13 +169,13 @@ export default function FeatureFlagDetailPage() {
       <Card>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: oklch.textStrong }}>{flag.label}</div>
-            <div style={{ fontSize: 12, color: 'oklch(0.6 0.015 155)', marginTop: 4, fontFamily: 'ui-monospace, monospace' }}>{flag.key}</div>
-            <div style={{ fontSize: 13, color: oklch.textMuted, marginTop: 8, maxWidth: 560, lineHeight: 1.45 }}>{flag.description}</div>
+            <div style={{ fontSize: '1.125rem', fontWeight: 800, color: oklch.textStrong }}>{flag.label}</div>
+            <div style={{ fontSize: '0.75rem', color: 'oklch(0.6 0.015 155)', marginTop: 4, fontFamily: 'ui-monospace, monospace' }}>{flag.key}</div>
+            <div style={{ fontSize: '0.8125rem', color: oklch.textMuted, marginTop: 8, maxWidth: 560, lineHeight: 1.45 }}>{flag.description}</div>
           </div>
           <div style={{ flex: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
             <Toggle on={flag.enabled} onClick={() => setConfirm({ kind: 'enabled', next: !flag.enabled })} />
-            <span style={{ fontSize: 11, fontWeight: 700, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {flag.enabled ? 'Live' : 'Off for all'}
             </span>
           </div>
@@ -192,7 +192,7 @@ export default function FeatureFlagDetailPage() {
             borderRadius: 12,
             background: oklch.surfaceSubtle,
             border: `1px solid ${oklch.border}`,
-            fontSize: 12.5,
+            fontSize: '0.78125rem',
             lineHeight: 1.6,
             color: 'oklch(0.45 0.02 155)',
             fontWeight: 500,
@@ -215,7 +215,7 @@ export default function FeatureFlagDetailPage() {
         <Card>
           <SectionTitle title="Default" />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14 }}>
-            <div style={{ fontSize: 12.5, color: oklch.textMuted, lineHeight: 1.45 }}>
+            <div style={{ fontSize: '0.78125rem', color: oklch.textMuted, lineHeight: 1.45 }}>
               What a business gets when it has no override and its plan is not targeted. This is most businesses.
             </div>
             <div style={{ flex: 'none' }}>
@@ -226,15 +226,15 @@ export default function FeatureFlagDetailPage() {
 
         <Card>
           <SectionTitle title="Plans" />
-          <div style={{ fontSize: 12.5, color: oklch.textMuted, marginBottom: 11, lineHeight: 1.45 }}>
+          <div style={{ fontSize: '0.78125rem', color: oklch.textMuted, marginBottom: 11, lineHeight: 1.45 }}>
             Businesses on a ticked plan get this feature, unless they have an override of their own.
           </div>
           {plans.length === 0 ? (
-            <div style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>Plans could not be loaded.</div>
+            <div style={{ fontSize: '0.78125rem', color: oklch.textFaint, fontWeight: 600 }}>Plans could not be loaded.</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {plans.map((plan) => (
-                <label key={plan.code} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                <label key={plan.code} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>
                   <input
                     type="checkbox"
                     checked={draftPlans.includes(plan.code)}
@@ -242,7 +242,7 @@ export default function FeatureFlagDetailPage() {
                     onChange={(e) => setDraftPlans((current) => (e.target.checked ? [...current, plan.code] : current.filter((c) => c !== plan.code)))}
                   />
                   <span style={{ color: oklch.textStrong }}>{plan.name}</span>
-                  <span style={{ color: oklch.textFaint, fontFamily: 'ui-monospace, monospace', fontSize: 11.5 }}>{plan.code}</span>
+                  <span style={{ color: oklch.textFaint, fontFamily: 'ui-monospace, monospace', fontSize: '0.75rem' }}>{plan.code}</span>
                 </label>
               ))}
             </div>
@@ -262,7 +262,7 @@ export default function FeatureFlagDetailPage() {
           right={<SecondaryButton onClick={() => { setSaveError(null); setAdding(true); }}>Add a business</SecondaryButton>}
         />
         {overrides.length === 0 ? (
-          <div style={{ fontSize: 13, color: oklch.textFaint, fontWeight: 600, padding: '10px 0' }}>
+          <div style={{ fontSize: '0.8125rem', color: oklch.textFaint, fontWeight: 600, padding: '10px 0' }}>
             No business overrides this flag. Everyone follows the plans and the default above.
           </div>
         ) : (
@@ -284,17 +284,17 @@ export default function FeatureFlagDetailPage() {
                   <Link
                     href={`/admin/businesses/${row.businessId}`}
                     className="admin-name"
-                    style={{ fontSize: 13.5, fontWeight: 700, color: oklch.textStrong, textDecoration: 'none' }}
+                    style={{ fontSize: '0.84375rem', fontWeight: 700, color: oklch.textStrong, textDecoration: 'none' }}
                   >
                     {row.businessName}
                   </Link>
-                  <div style={{ fontSize: 12, color: oklch.textMuted, marginTop: 3 }}>
+                  <div style={{ fontSize: '0.75rem', color: oklch.textMuted, marginTop: 3 }}>
                     {row.reason} · {formatDateTime(row.updatedAt)}
                   </div>
                 </div>
                 <span
                   style={{
-                    fontSize: 11.5,
+                    fontSize: '0.75rem',
                     fontWeight: 800,
                     padding: '3px 9px',
                     borderRadius: 7,
@@ -306,7 +306,7 @@ export default function FeatureFlagDetailPage() {
                 >
                   {row.enabled ? 'On' : 'Off'}
                 </span>
-                <SecondaryButton danger onClick={() => { setSaveError(null); setRemoving(row); }} style={{ height: 30, padding: '0 12px', fontSize: 12.5 }}>
+                <SecondaryButton danger onClick={() => { setSaveError(null); setRemoving(row); }} style={{ height: 30, padding: '0 12px', fontSize: '0.78125rem' }}>
                   Remove
                 </SecondaryButton>
               </div>
@@ -376,7 +376,7 @@ export default function FeatureFlagDetailPage() {
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 4 }}>
           <TextInput aria-label="Business id" placeholder="Business id" value={addBusinessId} onChange={(e) => setAddBusinessId(e.target.value)} />
-          <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 600, color: oklch.textStrong }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.8125rem', fontWeight: 600, color: oklch.textStrong }}>
             <Toggle on={addEnabled} onClick={() => setAddEnabled((v) => !v)} label="Switched on for this business" />
             {addEnabled ? 'On for this business' : 'Off for this business'}
           </label>

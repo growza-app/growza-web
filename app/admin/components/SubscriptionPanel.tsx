@@ -219,7 +219,7 @@ export function SubscriptionPanel({
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+          <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
           <SecondaryButton onClick={() => void load()}>Retry</SecondaryButton>
         </div>
       </Card>
@@ -265,11 +265,11 @@ export function SubscriptionPanel({
       <Card>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
           <div style={{ minWidth: 0 }}>
-            <div className="admin-name" style={{ fontSize: 18, fontWeight: 800, color: oklch.textStrong }}>
+            <div className="admin-name" style={{ fontSize: '1.125rem', fontWeight: 800, color: oklch.textStrong }}>
               {businessName ? `${businessName} · ` : ''}
               {planName ?? s.planCode}
             </div>
-            <div style={{ fontSize: 12.5, color: oklch.textFaint, marginTop: 2 }}>
+            <div style={{ fontSize: '0.78125rem', color: oklch.textFaint, marginTop: 2 }}>
               Plan version {s.planVersion} · {s.billingCycle} · started {formatDateOnly(s.startDate)}
             </div>
           </div>
@@ -360,10 +360,10 @@ export function SubscriptionPanel({
           true and useless: the salon is trading and also leaving. */}
       {scheduledToEnd ? (
         <Card>
-          <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.52 0.13 65)' }}>
+          <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: 'oklch(0.52 0.13 65)' }}>
             Ends on {formatDateOnly(s.currentPeriodEnd)}
           </div>
-          <div style={{ fontSize: 12.5, color: oklch.textMuted, marginTop: 6, lineHeight: 1.5 }}>
+          <div style={{ fontSize: '0.78125rem', color: oklch.textMuted, marginTop: 6, lineHeight: 1.5 }}>
             Still trading until then — they have paid for this month. Billing stops after it, and nothing is deleted.
           </div>
         </Card>
@@ -371,8 +371,8 @@ export function SubscriptionPanel({
 
       {s.access?.restricted ? (
         <Card>
-          <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.5 0.15 25)' }}>{s.access.summary}</div>
-          <div style={{ fontSize: 12.5, color: oklch.textMuted, marginTop: 6, lineHeight: 1.5 }}>
+          <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: 'oklch(0.5 0.15 25)' }}>{s.access.summary}</div>
+          <div style={{ fontSize: '0.78125rem', color: oklch.textMuted, marginTop: 6, lineHeight: 1.5 }}>
             New bookings are refused, walk-ins are off and reminders are not sent. Nothing has been deleted — existing data and past
             appointments are untouched.
           </div>
@@ -385,7 +385,7 @@ export function SubscriptionPanel({
       {recordedNote ? (
         <Card>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, justifyContent: 'space-between' }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.5 0.13 65)' }}>{recordedNote}</div>
+            <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: 'oklch(0.5 0.13 65)' }}>{recordedNote}</div>
             <SecondaryButton onClick={() => setRecordedNote(null)}>Dismiss</SecondaryButton>
           </div>
         </Card>
@@ -446,7 +446,7 @@ export function SubscriptionPanel({
             decision with a different date, and two dialogs would make an admin
             choose before knowing what either does. */}
         {scheduledToEnd ? null : (
-          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: 13, fontWeight: 600, color: oklch.textStrong }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: '0.8125rem', fontWeight: 600, color: oklch.textStrong }}>
             <input type="checkbox" checked={endNow} onChange={(e) => setEndNow(e.target.checked)} disabled={cancelling} style={{ marginTop: 2 }} />
             <span>End it now instead — the rest of the month they have paid for is forfeited, and no refund is issued.</span>
           </label>
@@ -532,8 +532,8 @@ export function SubscriptionPanel({
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div style={{ fontSize: 12, fontWeight: 700, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
-      <div style={{ fontSize: 14.5, fontWeight: 700, color: oklch.textStrong, marginTop: 5 }}>{value}</div>
+      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+      <div style={{ fontSize: '0.90625rem', fontWeight: 700, color: oklch.textStrong, marginTop: 5 }}>{value}</div>
     </div>
   );
 }

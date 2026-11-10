@@ -68,10 +68,10 @@ export function BranchPlaces({
 
   return (
     <>
-      <span style={{ fontSize: 13, color: oklch.text, whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: '0.8125rem', color: oklch.text, whiteSpace: 'nowrap' }}>
         {limit === null ? `${branch.activeStylists} · plan's number` : `${branch.activeStylists} of ${limit}`}
         {branch.maxProviders === null && limit !== null ? (
-          <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: oklch.textMuted }}>PLAN</span>
+          <span style={{ marginLeft: 6, fontSize: '0.75rem', fontWeight: 700, color: oklch.textMuted }}>PLAN</span>
         ) : null}
       </span>
       {canManage && branch.active ? (
@@ -100,7 +100,7 @@ export function BranchPlaces({
         onCancel={() => setOpen(false)}
       >
         <div style={{ display: 'grid', gap: 8 }}>
-          <label htmlFor={`places-${branch.id}`} style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>
+          <label htmlFor={`places-${branch.id}`} style={{ fontSize: '0.78125rem', fontWeight: 700, color: oklch.textMuted }}>
             Stylists at most
           </label>
           <TextInput
@@ -111,7 +111,7 @@ export function BranchPlaces({
             placeholder={placesDefault === null ? '5' : String(placesDefault)}
           />
           {below ? (
-            <span role="status" style={{ fontSize: 12.5, fontWeight: 600, color: oklch.textStrong }}>
+            <span role="status" style={{ fontSize: '0.78125rem', fontWeight: 600, color: oklch.textStrong }}>
               {branch.name} has {branch.activeStylists} active stylists. Nobody is turned off, but nobody new can be added there
               until fewer than {typed} are active.
             </span>

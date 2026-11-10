@@ -177,8 +177,8 @@ export function ConfirmDialog({
             <Icon name="alert" size={19} />
           </span>
           <div style={{ minWidth: 0 }}>
-            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: oklch.textStrong }}>{title}</h3>
-            <p style={{ margin: '6px 0 0', fontSize: 13.5, color: oklch.textMuted, lineHeight: 1.5 }}>{description}</p>
+            <h3 style={{ margin: 0, fontSize: '1.0625rem', fontWeight: 800, color: oklch.textStrong }}>{title}</h3>
+            <p style={{ margin: '6px 0 0', fontSize: '0.84375rem', color: oklch.textMuted, lineHeight: 1.5 }}>{description}</p>
           </div>
         </div>
 
@@ -186,7 +186,7 @@ export function ConfirmDialog({
 
         {reasonRequired ? (
           <div style={{ marginTop: 18 }}>
-            <label htmlFor={reasonId} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginBottom: 7 }}>
+            <label htmlFor={reasonId} style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginBottom: 7 }}>
               Reason <span style={{ color: oklch.danger }}>*</span>
             </label>
             <TextInput
@@ -203,7 +203,7 @@ export function ConfirmDialog({
               autoFocus={autoFocusField(!children)}
             />
             {triedWithoutReason && reasonMissing ? (
-              <div style={{ marginTop: 6, fontSize: 12.5, fontWeight: 600, color: oklch.danger }}>
+              <div style={{ marginTop: 6, fontSize: '0.78125rem', fontWeight: 600, color: oklch.danger }}>
                 {reason.trim().length === 0
                   ? 'A reason is required before this can be saved.'
                   : `Say a little more — at least ${reasonMinLength} characters.`}
@@ -214,7 +214,7 @@ export function ConfirmDialog({
 
         {confirmText !== undefined ? (
           <div style={{ marginTop: 18 }}>
-            <label htmlFor={`${reasonId}-type`} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginBottom: 7 }}>
+            <label htmlFor={`${reasonId}-type`} style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginBottom: 7 }}>
               Type <strong>{confirmText}</strong> to confirm
             </label>
             <TextInput id={`${reasonId}-type`} value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" />
@@ -222,7 +222,7 @@ export function ConfirmDialog({
         ) : null}
 
         {error ? (
-          <div style={{ marginTop: 14, fontSize: 13, fontWeight: 600, color: oklch.danger }}>{error}</div>
+          <div style={{ marginTop: 14, fontSize: '0.8125rem', fontWeight: 600, color: oklch.danger }}>{error}</div>
         ) : null}
 
         </div>

@@ -105,7 +105,7 @@ export default function InvoiceDetailPage() {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+          <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
           <SecondaryButton onClick={() => void load()}>Retry</SecondaryButton>
         </div>
       </Card>
@@ -125,10 +125,10 @@ export default function InvoiceDetailPage() {
       <Card>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: oklch.textStrong, fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
+            <div style={{ fontSize: '1.125rem', fontWeight: 800, color: oklch.textStrong, fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
               {invoice.invoiceNumber}
             </div>
-            <div className="admin-name" style={{ fontSize: 12.5, color: oklch.textFaint, marginTop: 3 }}>
+            <div className="admin-name" style={{ fontSize: '0.78125rem', color: oklch.textFaint, marginTop: 3 }}>
               {businessName ? `${businessName} · ` : ''}
               {invoice.planCode} v{invoice.planVersion} · issued {formatTimestampDate(invoice.issuedAt)}
             </div>
@@ -154,7 +154,7 @@ export default function InvoiceDetailPage() {
         <div style={{ maxWidth: 420 }}>
           <InvoiceBreakdown figures={invoice} />
         </div>
-        <p style={{ margin: '14px 0 0', fontSize: 12, lineHeight: 1.55, color: oklch.textFaint }}>
+        <p style={{ margin: '14px 0 0', fontSize: '0.75rem', lineHeight: 1.55, color: oklch.textFaint }}>
           These are the figures stored when the invoice was issued. A later plan price change, discount edit or tax-rate
           change does not alter them.
         </p>
@@ -163,15 +163,15 @@ export default function InvoiceDetailPage() {
       <Card>
         <SectionTitle title="Payments applied to this invoice" />
         {(invoice.paymentsApplied ?? []).length === 0 ? (
-          <div style={{ fontSize: 13, color: oklch.textFaint }}>Nothing has been paid against this invoice yet.</div>
+          <div style={{ fontSize: '0.8125rem', color: oklch.textFaint }}>Nothing has been paid against this invoice yet.</div>
         ) : (
-          <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4, fontSize: 13.5 }} data-testid="invoice-payments">
+          <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.84375rem' }} data-testid="invoice-payments">
             {(invoice.paymentsApplied ?? []).map((p) => (
               <li key={p.paymentId}>
                 <strong>{formatMoneyMinor(p.amountMinor)}</strong> by {VIA[p.via]}
                 {p.carried ? ' (money from the account)' : ''}
                 {(p.refundedMinor ?? 0) > 0 ? ` — ${formatMoneyMinor(p.refundedMinor!)} refunded` : ''} · {p.paidAt ? formatTimestampDate(p.paidAt) : '—'} ·{' '}
-                <code style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace', fontSize: 12 }}>{p.externalPaymentId}</code> · {p.status}
+                <code style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace', fontSize: '0.75rem' }}>{p.externalPaymentId}</code> · {p.status}
               </li>
             ))}
           </ul>
@@ -184,8 +184,8 @@ export default function InvoiceDetailPage() {
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div style={{ fontSize: 12, fontWeight: 700, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
-      <div style={{ fontSize: 14.5, fontWeight: 700, color: oklch.textStrong, marginTop: 5 }}>{value}</div>
+      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+      <div style={{ fontSize: '0.90625rem', fontWeight: 700, color: oklch.textStrong, marginTop: 5 }}>{value}</div>
     </div>
   );
 }

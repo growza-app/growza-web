@@ -48,7 +48,7 @@ export default function AdminNotificationsPage() {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+          <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
           <SecondaryButton onClick={() => setRetryCount((n) => n + 1)}>Retry</SecondaryButton>
         </div>
       </Card>

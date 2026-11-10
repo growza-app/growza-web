@@ -92,7 +92,7 @@ export function PlanForm({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {canManage ? null : (
-        <div role="note" style={{ fontSize: 13, fontWeight: 600, color: oklch.textMuted }}>
+        <div role="note" style={{ fontSize: '0.8125rem', fontWeight: 600, color: oklch.textMuted }}>
           View only — changing plans needs Manage plans.
         </div>
       )}
@@ -119,7 +119,7 @@ const textareaStyle: CSSProperties = {
   borderRadius: 11,
   border: `1px solid ${oklch.borderStrong}`,
   background: oklch.inputBg,
-  fontSize: 14,
+  fontSize: '0.875rem',
   fontWeight: 500,
   outline: 'none',
   resize: 'vertical',
@@ -185,8 +185,8 @@ function PlanDetailsCard({ plan, onSaved }: { plan: PlanDetail; onSaved: (p: Pla
 function SummaryField({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div style={{ fontSize: 11, fontWeight: 800, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
-      <div style={{ fontSize: 15, fontWeight: 700, color: oklch.textStrong, marginTop: 3 }}>{value}</div>
+      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+      <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: oklch.textStrong, marginTop: 3 }}>{value}</div>
     </div>
   );
 }
@@ -261,7 +261,7 @@ function PricingCard({ plan, onVersionCreated }: { plan: PlanDetail; onVersionCr
           <BranchPriceFields branchPrice={branchPrice} included={included} onBranchPrice={setBranchPrice} onIncluded={setIncluded} />
 
           <div>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted, marginBottom: 8 }}>
+            <div style={{ fontSize: '0.78125rem', fontWeight: 700, color: oklch.textMuted, marginBottom: 8 }}>
               What happens to existing customers? <span style={{ color: oklch.danger }}>*</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -288,8 +288,8 @@ function PricingCard({ plan, onVersionCreated }: { plan: PlanDetail; onVersionCr
                     style={{ marginTop: 2, accentColor: oklch.accent }}
                   />
                   <div>
-                    <div style={{ fontSize: 13.5, fontWeight: 700, color: oklch.text }}>{c.label}</div>
-                    <div style={{ fontSize: 12, color: oklch.textFaint, marginTop: 2 }}>{c.description}</div>
+                    <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: oklch.text }}>{c.label}</div>
+                    <div style={{ fontSize: '0.75rem', color: oklch.textFaint, marginTop: 2 }}>{c.description}</div>
                   </div>
                 </label>
               ))}
@@ -375,7 +375,7 @@ function StatusCard({
       />
       <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         <StatusPill status={plan.status === 'active' ? 'Active' : 'Retired'} />
-        <span style={{ fontSize: 12.5, color: oklch.textFaint }}>
+        <span style={{ fontSize: '0.78125rem', color: oklch.textFaint }}>
           {plan.status === 'active'
             ? 'New businesses can be assigned this plan.'
             : 'This plan cannot be chosen for a new business; existing tenants on it are unaffected.'}
@@ -431,7 +431,7 @@ function VersionHistoryCard({ versions, currentVersion }: { versions: PlanVersio
     <Card>
       <SectionTitle title="Version history" />
       {versions.length === 0 ? (
-        <div style={{ fontSize: 13, color: oklch.textFaint, marginTop: 6 }}>No versions yet.</div>
+        <div style={{ fontSize: '0.8125rem', color: oklch.textFaint, marginTop: 6 }}>No versions yet.</div>
       ) : (
         <Table
           columns={VERSION_COLUMNS}
@@ -440,16 +440,16 @@ function VersionHistoryCard({ versions, currentVersion }: { versions: PlanVersio
             <TableRow key={v.id} columns={VERSION_COLUMNS}>
               <div style={{ fontWeight: 800, color: oklch.textStrong }}>v{v.version}</div>
               <div style={{ fontWeight: 700, color: oklch.text }}>{inr(v.basePriceMinor / 100)}/mo</div>
-              <div style={{ fontSize: 12.5, color: oklch.textMuted }}>{COHORT_LABEL[v.cohortChoice] ?? v.cohortChoice}</div>
+              <div style={{ fontSize: '0.78125rem', color: oklch.textMuted }}>{COHORT_LABEL[v.cohortChoice] ?? v.cohortChoice}</div>
               <div>
                 <StatusPill status={versionStatus(v, currentVersion)} />
               </div>
-              <div style={{ fontSize: 12.5, color: oklch.textFaint }}>{formatDateTime(v.createdAt)}</div>
+              <div style={{ fontSize: '0.78125rem', color: oklch.textFaint }}>{formatDateTime(v.createdAt)}</div>
             </TableRow>
           ))}
         />
       )}
-      <div style={{ fontSize: 12, color: oklch.textFaint, marginTop: 14, lineHeight: 1.5 }}>
+      <div style={{ fontSize: '0.75rem', color: oklch.textFaint, marginTop: 14, lineHeight: 1.5 }}>
         Only the version the plan currently points at is Active; the rest are kept so a price a customer was sold
         stays readable. How many subscriptions are pinned to each isn&apos;t shown here — open a subscription from
         the Subscriptions list to see its own pinned version.

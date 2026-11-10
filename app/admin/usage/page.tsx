@@ -158,7 +158,7 @@ export default function AdminUsagePage() {
             borderRadius: 11,
             background: oklch.surfaceSubtle,
             border: `1px solid ${oklch.border}`,
-            fontSize: 12.5,
+            fontSize: '0.78125rem',
             lineHeight: 1.55,
             color: 'oklch(0.45 0.02 155)',
             fontWeight: 500,
@@ -172,7 +172,7 @@ export default function AdminUsagePage() {
 
         {error ? (
           <div style={{ textAlign: 'center', padding: '28px 12px' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
             <SecondaryButton onClick={() => setReloadToken((t) => t + 1)}>Retry</SecondaryButton>
           </div>
         ) : searchTooShort ? (
@@ -203,7 +203,7 @@ export default function AdminUsagePage() {
                       <Link
                         href={`/admin/businesses/${row.businessId}`}
                         style={{
-                          fontSize: 13.5,
+                          fontSize: '0.84375rem',
                           fontWeight: 700,
                           color: oklch.textStrong,
                           textDecoration: 'none',
@@ -221,17 +221,17 @@ export default function AdminUsagePage() {
                         </div>
                       ) : null}
                     </div>
-                    <div style={{ fontSize: 13, color: 'oklch(0.4 0.02 155)', fontWeight: 600 }}>
+                    <div style={{ fontSize: '0.8125rem', color: 'oklch(0.4 0.02 155)', fontWeight: 600 }}>
                       {/* The "Limits from <other plan>" warning that used to
                           sit here is gone: GRW-147 made the limits resolve
                           from this subscription's own plan, so the plan named
                           in this column is the plan the numbers came from. */}
                       {row.planName ?? row.planCode}
                     </div>
-                    <div style={{ fontSize: 12.5, color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>
+                    <div style={{ fontSize: '0.78125rem', color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>
                       {formatDateOnly(row.currentPeriodStart)} – {formatDateOnly(row.currentPeriodEnd)}
                     </div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: 'oklch(0.28 0.02 155)' }}>{used.toLocaleString('en-IN')}</div>
+                    <div style={{ fontSize: '0.875rem', fontWeight: 800, color: 'oklch(0.28 0.02 155)' }}>{used.toLocaleString('en-IN')}</div>
                     <LimitCell used={used} limit={limit} resolved={row.limitsResolved} />
                   </TableRow>
                 );
@@ -241,7 +241,7 @@ export default function AdminUsagePage() {
             {/* Audit L8 — the API ranks the busiest rows by share of their limit and pages the rest by bookings
                 used. Said here, so an admin past that point does not read the order as "nobody below is close". */}
             {page?.rankedCount !== undefined && page.total > page.rankedCount ? (
-              <div style={{ marginTop: 10, fontSize: 12.5, color: oklch.textFaint }}>
+              <div style={{ marginTop: 10, fontSize: '0.78125rem', color: oklch.textFaint }}>
                 The busiest {page.rankedCount.toLocaleString('en-IN')} are in order of how close they are to their limit. The other{' '}
                 {(page.total - page.rankedCount).toLocaleString('en-IN')} follow in order of bookings used.
               </div>
@@ -256,11 +256,11 @@ export default function AdminUsagePage() {
 function Stat({ label, value, sub, muted }: { label: string; value: string; sub: string; muted?: boolean }) {
   return (
     <Card>
-      <div style={{ fontSize: 12.5, color: oklch.textMuted, fontWeight: 600 }}>{label}</div>
-      <div style={{ fontSize: 25, fontWeight: 800, color: muted ? 'oklch(0.6 0.02 155)' : oklch.textStrong, marginTop: 6, lineHeight: 1 }}>
+      <div style={{ fontSize: '0.78125rem', color: oklch.textMuted, fontWeight: 600 }}>{label}</div>
+      <div style={{ fontSize: '1.5625rem', fontWeight: 800, color: muted ? 'oklch(0.6 0.02 155)' : oklch.textStrong, marginTop: 6, lineHeight: 1 }}>
         {value}
       </div>
-      <div style={{ fontSize: 12, color: oklch.textFaint, marginTop: 7, fontWeight: 500 }}>{sub}</div>
+      <div style={{ fontSize: '0.75rem', color: oklch.textFaint, marginTop: 7, fontWeight: 500 }}>{sub}</div>
     </Card>
   );
 }
@@ -276,13 +276,13 @@ function Stat({ label, value, sub, muted }: { label: string; value: string; sub:
 function LimitCell({ used, limit, resolved }: { used: number; limit: number | null; resolved: boolean }) {
   if (!resolved) {
     return (
-      <div style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.52 0.13 65)' }} title="This business's plan configuration could not be read.">
+      <div style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.52 0.13 65)' }} title="This business's plan configuration could not be read.">
         Limit unknown
       </div>
     );
   }
   if (limit === null) {
-    return <div style={{ fontSize: 12.5, fontWeight: 600, color: oklch.textFaint }}>No limit</div>;
+    return <div style={{ fontSize: '0.78125rem', fontWeight: 600, color: oklch.textFaint }}>No limit</div>;
   }
   if (limit === 0) {
     // A limit of zero is how a SUSPENDED or PAUSED subscription's restricted
@@ -290,7 +290,7 @@ function LimitCell({ used, limit, resolved }: { used: number; limit: number | nu
     // limit and answers 0% for it, which would paint a green bar over a
     // business whose every booking is being refused — precisely inverted.
     return (
-      <div style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.55 0.17 25)' }} title="This subscription's status blocks new bookings.">
+      <div style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.55 0.17 25)' }} title="This subscription's status blocks new bookings.">
         Blocked
       </div>
     );
@@ -305,7 +305,7 @@ function LimitCell({ used, limit, resolved }: { used: number; limit: number | nu
       {/* The percentage is NOT clamped even though the bar is: a business
           over its limit — legitimate, when a limit is lowered after the
           bookings were taken — is the one row a support team needs to see. */}
-      <span style={{ fontSize: 12, fontWeight: 700, color, width: 44, textAlign: 'right' }}>{pct}%</span>
+      <span style={{ fontSize: '0.75rem', fontWeight: 700, color, width: 44, textAlign: 'right' }}>{pct}%</span>
     </div>
   );
 }

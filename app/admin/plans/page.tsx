@@ -99,7 +99,7 @@ export default function AdminPlansPage() {
       {error ? (
         <Card>
           <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
             <SecondaryButton onClick={() => setRetryToken((n) => n + 1)}>Retry</SecondaryButton>
           </div>
         </Card>
@@ -137,7 +137,7 @@ function PlanCard({ plan, registry, canManage, onEdit }: { plan: PlanSummary; re
     <Card>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
         <div style={{ minWidth: 0 }}>
-          <div className="admin-name" style={{ fontSize: 18, fontWeight: 800, color: oklch.textStrong }}>
+          <div className="admin-name" style={{ fontSize: '1.125rem', fontWeight: 800, color: oklch.textStrong }}>
             {plan.name}
           </div>
           <div style={{ marginTop: 6 }}>
@@ -145,12 +145,12 @@ function PlanCard({ plan, registry, canManage, onEdit }: { plan: PlanSummary; re
           </div>
         </div>
         <div style={{ textAlign: 'right', flex: 'none' }}>
-          <div style={{ fontSize: 26, fontWeight: 800, color: oklch.textStrong, lineHeight: 1 }}>{inr(plan.basePriceMinor / 100)}</div>
-          <div style={{ fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>per {plan.billingCycle} · includes tax</div>
+          <div style={{ fontSize: '1.625rem', fontWeight: 800, color: oklch.textStrong, lineHeight: 1 }}>{inr(plan.basePriceMinor / 100)}</div>
+          <div style={{ fontSize: '0.75rem', color: oklch.textFaint, fontWeight: 600 }}>per {plan.billingCycle} · includes tax</div>
         </div>
       </div>
 
-      {plan.description ? <div style={{ fontSize: 13, color: oklch.textMuted, marginTop: 10, lineHeight: 1.5 }}>{plan.description}</div> : null}
+      {plan.description ? <div style={{ fontSize: '0.8125rem', color: oklch.textMuted, marginTop: 10, lineHeight: 1.5 }}>{plan.description}</div> : null}
 
       <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 }}>
         <CapabilityColumn title="Included" keys={included} tone="on" />
@@ -159,13 +159,13 @@ function PlanCard({ plan, registry, canManage, onEdit }: { plan: PlanSummary; re
 
       {/* AI has no registry keys at all yet (GRW-107's own honesty rule) — stated
           statically rather than fabricated as a capability being "excluded". */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: oklch.textFaint, marginTop: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.78125rem', color: oklch.textFaint, marginTop: 10 }}>
         <Icon name="close" size={12} />
         AI — Future / Not enabled
       </div>
 
       <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${oklch.divider}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontSize: 13, color: oklch.textFaint, fontWeight: 600 }}>
+        <div style={{ fontSize: '0.8125rem', color: oklch.textFaint, fontWeight: 600 }}>
           {plan.businessCount} {plan.businessCount === 1 ? 'business' : 'businesses'} on this plan
         </div>
         <SecondaryButton onClick={onEdit}>{canManage ? 'Edit plan' : 'View plan'}</SecondaryButton>
@@ -179,21 +179,21 @@ function CapabilityColumn({ title, keys, tone }: { title: string; keys: Capabili
   const remaining = keys.length - shown.length;
   return (
     <div>
-      <div style={{ fontSize: 11, fontWeight: 800, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>{title}</div>
+      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: oklch.textFaint, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>{title}</div>
       {keys.length === 0 ? (
-        <div style={{ fontSize: 12.5, color: oklch.textFaint }}>{tone === 'on' ? 'Nothing beyond code defaults.' : 'Everything in the registry is granted.'}</div>
+        <div style={{ fontSize: '0.78125rem', color: oklch.textFaint }}>{tone === 'on' ? 'Nothing beyond code defaults.' : 'Everything in the registry is granted.'}</div>
       ) : (
         <>
           {shown.map((k) => (
             <div
               key={k.key}
-              style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: tone === 'on' ? oklch.text : oklch.textFaint, marginBottom: 5 }}
+              style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.78125rem', color: tone === 'on' ? oklch.text : oklch.textFaint, marginBottom: 5 }}
             >
               <Icon name={tone === 'on' ? 'check' : 'close'} size={12} />
               {k.label}
             </div>
           ))}
-          {remaining > 0 ? <div style={{ fontSize: 12, color: oklch.textFaint, marginTop: 2 }}>+{remaining} more</div> : null}
+          {remaining > 0 ? <div style={{ fontSize: '0.75rem', color: oklch.textFaint, marginTop: 2 }}>+{remaining} more</div> : null}
         </>
       )}
     </div>

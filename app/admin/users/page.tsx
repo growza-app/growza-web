@@ -171,7 +171,7 @@ export default function AdminUsersPage() {
   }
 
   if (error) return <EmptyState icon="users" title="Could not load administrators" sub={error} />;
-  if (!data) return <div style={{ fontSize: 13.5, color: oklch.textMuted }}>Loading…</div>;
+  if (!data) return <div style={{ fontSize: '0.84375rem', color: oklch.textMuted }}>Loading…</div>;
 
   const visible = data.rows.filter((u) => showDeactivated || u.status === 'active');
   const activeSupers = data.rows.filter((u) => u.roleIsBuiltin && u.status === 'active').length;
@@ -184,21 +184,21 @@ export default function AdminUsersPage() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <SectionTitle title="Platform administrators" />
           <div style={{ display: 'flex', gap: 9, alignItems: 'center', flexWrap: 'wrap' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 600, color: oklch.textMuted }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.78125rem', fontWeight: 600, color: oklch.textMuted }}>
               <input type="checkbox" checked={showDeactivated} onChange={(e) => setShowDeactivated(e.target.checked)} />
               Show deactivated
             </label>
             {canManage ? (
               <PrimaryButton onClick={() => setAddOpen(true)}>Add administrator</PrimaryButton>
             ) : (
-              <span style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>View only — changing administrators needs Manage administrators.</span>
+              <span style={{ fontSize: '0.78125rem', color: oklch.textFaint, fontWeight: 600 }}>View only — changing administrators needs Manage administrators.</span>
             )}
           </div>
         </div>
 
-        {roleError ? <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.5 0.18 25)', paddingTop: 8 }}>{roleError}</div> : null}
-        {resetError ? <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.5 0.18 25)', paddingTop: 8 }}>{resetError}</div> : null}
-        {resetDone ? <div style={{ fontSize: 13, fontWeight: 700, color: oklch.textStrong, paddingTop: 8 }}>{resetDone}</div> : null}
+        {roleError ? <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'oklch(0.5 0.18 25)', paddingTop: 8 }}>{roleError}</div> : null}
+        {resetError ? <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'oklch(0.5 0.18 25)', paddingTop: 8 }}>{resetError}</div> : null}
+        {resetDone ? <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: oklch.textStrong, paddingTop: 8 }}>{resetDone}</div> : null}
 
         {visible.length === 0 ? (
           <EmptyState icon="users" title="Nobody to show" sub={showDeactivated ? 'No administrators yet.' : 'No active administrators.'} />
@@ -221,21 +221,21 @@ export default function AdminUsersPage() {
               return (
                 <TableRow key={user.id} columns={COLUMNS}>
                   <div style={{ minWidth: 0 }}>
-                    <div className="admin-name" style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong }}>
+                    <div className="admin-name" style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong }}>
                       {user.name}
                     </div>
-                    <div style={{ fontSize: 12.5, color: oklch.textMuted, overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.phone ?? '—'}</div>
+                    <div style={{ fontSize: '0.78125rem', color: oklch.textMuted, overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.phone ?? '—'}</div>
                   </div>
 
                   <div>
                     {locked || !canManage ? (
-                      <span style={{ fontSize: 13, fontWeight: 700, color: oklch.textStrong }}>{user.roleName ?? 'No role'}</span>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: oklch.textStrong }}>{user.roleName ?? 'No role'}</span>
                     ) : (
                       <select
                         aria-label={`Role for ${user.name}`}
                         value={user.roleId ?? ''}
                         onChange={(e) => changeRole(user, e.target.value)}
-                        style={{ padding: '6px 9px', borderRadius: 9, border: `1px solid ${oklch.border}`, fontSize: 12.5, fontWeight: 600, width: '100%', maxWidth: 170, boxSizing: 'border-box' }}
+                        style={{ padding: '6px 9px', borderRadius: 9, border: `1px solid ${oklch.border}`, fontSize: '0.78125rem', fontWeight: 600, width: '100%', maxWidth: 170, boxSizing: 'border-box' }}
                       >
                         {user.roleId === null ? <option value="">No role</option> : null}
                         {rolesInReach.map((role) => (
@@ -248,11 +248,11 @@ export default function AdminUsersPage() {
                     {/* A role is what they may do; no role is a real state and
                         must not read as an empty cell. */}
                     {user.roleId === null ? (
-                      <div style={{ fontSize: 11.5, fontWeight: 700, color: 'oklch(0.52 0.13 65)', marginTop: 3 }}>No permissions</div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'oklch(0.52 0.13 65)', marginTop: 3 }}>No permissions</div>
                     ) : null}
                   </div>
 
-                  <div style={{ fontSize: 13, color: oklch.textMuted, fontWeight: 600 }}>{formatDateOnly(user.createdAt)}</div>
+                  <div style={{ fontSize: '0.8125rem', color: oklch.textMuted, fontWeight: 600 }}>{formatDateOnly(user.createdAt)}</div>
 
                   <div>
                     <StatusPill status={user.status === 'active' ? 'Active' : 'Deactivated'} />
@@ -271,7 +271,7 @@ export default function AdminUsersPage() {
                       <SecondaryButton onClick={() => resetPassword(user)}>Reset password</SecondaryButton>
                     ) : null}
                     {!canManage ? null : locked ? (
-                      <span style={{ fontSize: 11.5, color: oklch.textFaint, fontWeight: 600, alignSelf: 'center' }}>{locked}</span>
+                      <span style={{ fontSize: '0.75rem', color: oklch.textFaint, fontWeight: 600, alignSelf: 'center' }}>{locked}</span>
                     ) : user.status === 'active' ? (
                       <SecondaryButton danger onClick={() => setChanging({ user, status: 'deactivated' })}>
                         Deactivate
