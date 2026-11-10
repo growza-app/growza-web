@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { Icon, TypeIcon } from '../icons';
+import { BusinessPhoneList } from '../components/BusinessPhoneList';
 import { Card, EmptyState, PrimaryButton, SecondaryButton, Select, StatusPill, Table, TableRow } from '../components/primitives';
 import { BUSINESS_COLUMNS } from '../lib/list-columns';
 import { AddBusinessModal, OwnerCredentialNotice, type CreatedBusiness } from '../components/AddBusinessModal';
@@ -420,6 +421,9 @@ function AdminBusinessesInner() {
         )
       ) : (
         <>
+          {/* Jira GRW-694 — a phone gets the short inset list; the table keeps every width above the phone breakpoint. */}
+          <BusinessPhoneList rows={rows} statusLabel={statusLabel} />
+          <div className="admin-businesses-table">
           <Table
             columns={COLUMNS}
             rows={rows.map((b) => {
@@ -532,9 +536,19 @@ function AdminBusinessesInner() {
               );
             })}
           />
+          </div>
           <Pagination total={page.total} loaded={rows.length} state={paging} onChange={setPaging} />
         </>
       )}
+      {canCreate ? (
+        <>
+          <div className="admin-fab-clearance" aria-hidden />
+          <button type="button" className="admin-fab" onClick={() => setAdding(true)}>
+            <Icon name="plus" size={20} />
+            Add business
+          </button>
+        </>
+      ) : null}
     </div>
   );
 }
