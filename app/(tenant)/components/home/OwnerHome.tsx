@@ -37,7 +37,6 @@ import {
   IconClock,
   IconDaySummary,
   IconPackages,
-  IconProducts,
   IconReceipt,
   IconReports,
   IconServices,
@@ -638,11 +637,13 @@ export function OwnerHome(p: OwnerHomeProps) {
   const absentSet = useMemo(() => new Set(p.staffAbsentIds ?? []), [p.staffAbsentIds]);
 
   const links = [
-    { href: '/providers', label: t.nav.staff, icon: <IconStaff />, tone: 'rose' },
+    // Owner, 10 Nov 2026 — Record payment leads the phone's quick links, where Staff was; Staff takes Products' place, and
+    // Products is reached from the menu's Catalogue. Only for a role that may record a payment (the desktop button's gate).
+    ...(mayRecordPayment ? [{ href: '/appointments/new?purpose=payment', label: t.recordPayment, icon: <IconReceipt />, tone: 'green' }] : []),
     { href: '/services', label: t.nav.services, icon: <IconServices />, tone: 'green' },
     // Jira GRW-438 — a quick link of its own, asked for alongside the screen.
     { href: '/packages', label: t.nav.packages, icon: <IconPackages />, tone: 'green' },
-    { href: '/products', label: t.nav.products, icon: <IconProducts />, tone: 'blue' },
+    { href: '/providers', label: t.nav.staff, icon: <IconStaff />, tone: 'rose' },
     // Owner, 2026-10-19 — Sell product takes Offers' place in the phone quick links; Offers is one tap away in the menu.
     { href: '/products/sell', label: t.sellProductAction, icon: <IconCart />, tone: 'blue' },
     { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
