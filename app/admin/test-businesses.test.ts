@@ -29,7 +29,7 @@ describe('test businesses on the admin screens', () => {
   });
 
   it('the business page lets an admin who can manage it mark it, and refreshes after', () => {
-    expect(detail).toMatch(/<TestBusinessCard businessId=\{business\.tenantId\} isTest=\{business\.isTest\}/);
+    expect(detail).toMatch(/<TestBusinessCard businessId=\{business\.tenantId\} businessName=\{business\.name\} isTest=\{business\.isTest\}/);
     expect(detail).toMatch(/canManage && business\.isTest !== undefined/);
   });
 });

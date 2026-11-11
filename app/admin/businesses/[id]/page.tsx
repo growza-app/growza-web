@@ -495,7 +495,7 @@ function BusinessDetailInner() {
       {/* Jira GRW-703 — what support has said and done, for the next admin who calls. */}
       {activeTab === 'overview' && can('admin.business.view') ? <SupportNotes businessId={business.tenantId} canWrite={canManage} /> : null}
       {canManage && business.isTest !== undefined ? (
-        <TestBusinessCard businessId={business.tenantId} isTest={business.isTest} onChanged={() => setRetryToken((n) => n + 1)} />
+        <TestBusinessCard businessId={business.tenantId} businessName={business.name} isTest={business.isTest} onChanged={() => setRetryToken((n) => n + 1)} />
       ) : null}
       {canManage && business.status === 'active' ? (
         <Card className="admin-danger-zone" style={{ borderColor: 'oklch(0.85 0.06 25)' }}>

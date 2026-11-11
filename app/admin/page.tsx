@@ -29,7 +29,7 @@ import {
 } from './components/DashboardParts';
 import { DashboardSkeleton } from './components/DashboardSkeleton';
 import { oklch, STATUS_COLORS } from './tokens';
-import { ATTENTION_CARDS, QUICK_ACTIONS, STAT_TINTS, STATUS_LABEL, attentionTint, builtRows } from './dashboard-config';
+import { ATTENTION_CARDS, QUICK_ACTIONS, STAT_TINTS, STATUS_LABEL, attentionTint, builtRows, testBusinessesLine } from './dashboard-config';
 import { useAdminMe } from './components/AdminMeContext';
 
 /**
@@ -63,6 +63,8 @@ interface RecentSignup {
 
 interface DashboardResponse {
   totalBusinesses: number;
+  /** QA loophole L1 — test businesses every figure leaves out. Absent from an older API. */
+  testBusinesses?: number;
   totalAtPeriodStart: number;
   byStatus: StatusCount[];
   newBusinesses: { count: number; previous: number; previousToDate?: number; period: { from: string; to: string } };
@@ -310,6 +312,11 @@ export default function AdminDashboardPage() {
                 Total <strong style={{ color: oklch.textStrong, fontWeight: 800 }}>{data.totalBusinesses}</strong>
               </div>
             </div>
+            {data.testBusinesses ? (
+              <a href="/admin/businesses?test=1" style={{ display: 'block', margin: '-6px 0 12px', fontSize: '0.75rem', color: oklch.textMuted }}>
+                {testBusinessesLine(data.testBusinesses)}
+              </a>
+            ) : null}
             {empty ? (
               <div style={{ fontSize: '0.8125rem', color: oklch.textFaint }}>{PLATFORM_EMPTY_COPY}</div>
             ) : (

@@ -1455,3 +1455,23 @@ body.admin-body {
     }
   }
 }
+
+/* ---------- QA loophole L3: removing a support note ---------- */
+.admin-note-remove {
+  all: unset;
+  cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: oklch(0.55 0.17 25);
+}
+.admin-note-remove:focus-visible {
+  outline: 2px solid oklch(0.55 0.12 155);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
