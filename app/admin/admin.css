@@ -1475,3 +1475,68 @@ body.admin-body {
   outline-offset: 2px;
   border-radius: 6px;
 }
+
+/* ---------- Owner, 11 Nov 2026: Needs attention page — one chip per reason ---------- */
+.admin-reason-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.admin-reason-chip {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  min-height: 44px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid oklch(0.9 0.01 155);
+  background: white;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: oklch(0.28 0.02 155);
+}
+.admin-reason-chip[aria-pressed='true'] {
+  background: oklch(0.3 0.06 160);
+  border-color: oklch(0.3 0.06 160);
+  color: white;
+}
+.admin-reason-chip:focus-visible {
+  outline: 2px solid oklch(0.55 0.12 155);
+  outline-offset: 2px;
+}
+.admin-reason-chip-count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+/* Owner, 11 Nov 2026 — the fifth tile, Needs attention.
+   Five across only from 1366px: at 1024 each tile was 133px and "Payment" broke mid-word. Between 1001 and 1365 five
+   tiles go three over two (a 6-track grid, 2 + 2 + 2 then 3 + 3), so nothing is stranded; a role that sees four keeps
+   the four-across row. In the 2-up grid a lone last tile takes the whole row instead of leaving a hole beside it. */
+@media (min-width: 1366px) {
+  .admin-stat-grid {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+}
+@media (min-width: 1001px) and (max-width: 1365px) {
+  .admin-stat-grid:has(> :nth-child(5):last-child) {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .admin-stat-grid:has(> :nth-child(5):last-child) > :nth-child(-n + 3) {
+    grid-column: span 2;
+  }
+  .admin-stat-grid:has(> :nth-child(5):last-child) > :nth-child(n + 4) {
+    grid-column: span 3;
+  }
+}
+@media (min-width: 360px) and (max-width: 1000px) {
+  .admin-stat-grid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}

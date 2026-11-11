@@ -1,6 +1,6 @@
 'use client';
 
-import { NeedsAttention, type NeedsAttentionRow } from './components/NeedsAttention';
+import type { NeedsAttentionRow } from './components/NeedsAttention';
 import Link from '../shared/AppLink';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -29,7 +29,7 @@ import {
 } from './components/DashboardParts';
 import { DashboardSkeleton } from './components/DashboardSkeleton';
 import { oklch, STATUS_COLORS } from './tokens';
-import { ATTENTION_CARDS, QUICK_ACTIONS, STAT_TINTS, STATUS_LABEL, attentionTint, builtRows, testBusinessesLine } from './dashboard-config';
+import { ATTENTION_CARDS, QUICK_ACTIONS, STAT_TINTS, STATUS_LABEL, attentionTint, builtRows, needsAttentionTile, testBusinessesLine, type AttentionCount } from './dashboard-config';
 import { useAdminMe } from './components/AdminMeContext';
 
 /**
@@ -75,6 +75,8 @@ interface DashboardResponse {
   bookings: PlatformBookings;
   /** Jira GRW-700 — absent from an API older than growza#513. */
   needsAttention?: NeedsAttentionRow[];
+  /** Owner, 11 Nov 2026 — the tile's numbers. Absent from an API older than the Needs attention page. */
+  needsAttentionCount?: AttentionCount;
 }
 
 function shortDate(iso: string): string {
@@ -224,6 +226,18 @@ export default function AdminDashboardPage() {
             />
           );
         })}
+        {/* Owner, 11 Nov 2026 — Needs attention is a tile, and its list its own page: the list grows with the platform. */}
+        {data.needsAttentionCount ? (
+          <StatCard
+            icon="alert"
+            label="Needs attention"
+            value={data.needsAttentionCount.total}
+            href="/admin/needs-attention"
+            tint={needsAttentionTile(data.needsAttentionCount).tint}
+            note={needsAttentionTile(data.needsAttentionCount).note}
+            chevron
+          />
+        ) : null}
       </div>
 
       {/* GRW-277 QA — one column on a phone, two on a laptop. The DOM order
@@ -232,8 +246,6 @@ export default function AdminDashboardPage() {
           `data-has-revenue` — QA GRW-276 — lets that stylesheet collapse the
           revenue column when there is no RevenueCard to put in it, instead of
           leaving the cell empty. */}
-      {/* Jira GRW-700 — who needs an admin today, right under the figures. */}
-      {data.needsAttention ? <NeedsAttention rows={data.needsAttention} /> : null}
 
       <div className="admin-dash-cols" data-has-revenue={data.revenue ? 'true' : 'false'}>
         {/* GRW-265/274 FR-01 — real links to screens that already exist and are already permission-gated. */}

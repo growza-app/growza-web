@@ -105,3 +105,32 @@ export const QUICK_ACTIONS: Array<{
 export function testBusinessesLine(n: number): string {
   return n === 1 ? '1 test business not counted' : `${n} test businesses not counted`;
 }
+
+/** Owner, 11 Nov 2026 — the Needs attention tile. Reasons in the order an admin should act on them. */
+export type AttentionKind = 'overdue' | 'payment_failed' | 'setup_stuck' | 'trial_ending';
+export const ATTENTION_KINDS: readonly AttentionKind[] = ['overdue', 'payment_failed', 'setup_stuck', 'trial_ending'];
+export const ATTENTION_KIND_WORDS: Record<AttentionKind, string> = {
+  overdue: 'Overdue',
+  payment_failed: 'Payment failed',
+  setup_stuck: 'Setup stuck',
+  trial_ending: 'Trial ending',
+};
+
+export interface AttentionCount {
+  total: number;
+  counts: Record<AttentionKind, number>;
+}
+
+/**
+ * What the tile says. Up to two reasons by name; past that, the rest as "N more" so the line stays one line on a
+ * phone. Red while anything is overdue (money), amber for anything else, grey when there is nothing to do.
+ */
+export function needsAttentionTile(c: AttentionCount): { note: string; tint: StatTint } {
+  if (c.total === 0) return { note: 'No business needs you', tint: STAT_TINTS.neutral };
+  const named = ATTENTION_KINDS.filter((k) => c.counts[k] > 0);
+  const shown = named.length <= 2 ? named : named.slice(0, 1);
+  const rest = c.total - shown.reduce((sum, k) => sum + c.counts[k], 0);
+  const parts = shown.map((k) => `${c.counts[k]} ${ATTENTION_KIND_WORDS[k].toLowerCase()}`);
+  if (rest > 0) parts.push(`${rest} more`);
+  return { note: parts.join(' · '), tint: c.counts.overdue > 0 ? STAT_TINTS.rose : STAT_TINTS.amber };
+}
