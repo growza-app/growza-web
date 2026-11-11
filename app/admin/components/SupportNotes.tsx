@@ -4,20 +4,26 @@ import { useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { formatDateTime } from '../lib/format';
 import { oklch } from '../tokens';
+import { ConfirmDialog } from './ConfirmDialog';
 import { Card, PrimaryButton, SectionTitle } from './primitives';
 
 export const NOTE_MAX = 1000;
 
 interface Note {
   id: string;
-  body: string;
+  /** null once removed. */
+  body: string | null;
   author: string;
   createdAt: string;
+  removed?: { by: string; at: string; reason: string };
 }
 
 /**
  * Jira GRW-703 — short notes support keeps on a business, so the next admin knows the history before calling.
- * Never shown to the business. Kept as written: no edit, no delete. Newest first.
+ * Never shown to the business. Newest first, never edited.
+ *
+ * QA loophole L3, 11 Nov 2026 — a note can be removed, for the one that should never have been written (an owner's
+ * phone, a client's health detail). Its words go; the line stays, saying who removed it, when and why.
  */
 export function SupportNotes({ businessId, canWrite }: { businessId: string; canWrite: boolean }) {
   const [notes, setNotes] = useState<Note[] | null>(null);
@@ -26,6 +32,9 @@ export function SupportNotes({ businessId, canWrite }: { businessId: string; can
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
+  const [removing, setRemoving] = useState<Note | null>(null);
+  const [removeBusy, setRemoveBusy] = useState(false);
+  const [removeError, setRemoveError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,6 +61,19 @@ export function SupportNotes({ businessId, canWrite }: { businessId: string; can
       })
       .catch((err) => setSaveError(err instanceof AdminApiError ? err.message : 'Could not save the note.'))
       .finally(() => setSaving(false));
+  };
+
+  const remove = (reason: string) => {
+    if (!removing) return;
+    setRemoveBusy(true);
+    setRemoveError(null);
+    adminFetch(`/businesses/${businessId}/notes/${removing.id}`, { method: 'DELETE', body: JSON.stringify({ reason }) })
+      .then(() => {
+        setRemoving(null);
+        setReload((n) => n + 1);
+      })
+      .catch((err) => setRemoveError(err instanceof AdminApiError ? err.message : 'Could not remove the note.'))
+      .finally(() => setRemoveBusy(false));
   };
 
   return (
@@ -91,14 +113,48 @@ export function SupportNotes({ businessId, canWrite }: { businessId: string; can
         <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {notes?.map((n, i) => (
             <li key={n.id} style={{ padding: '10px 0', borderTop: i === 0 ? 'none' : `1px solid ${oklch.divider}` }}>
-              <div style={{ fontSize: '0.875rem', color: oklch.textStrong, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{n.body}</div>
-              <div style={{ fontSize: '0.75rem', color: oklch.textFaint, marginTop: 4 }}>
-                {n.author} · {formatDateTime(n.createdAt)}
+              {n.removed ? (
+                <div style={{ fontSize: '0.8125rem', color: oklch.textMuted, fontStyle: 'italic', overflowWrap: 'anywhere' }}>
+                  Removed by {n.removed.by} · {formatDateTime(n.removed.at)} — {n.removed.reason}
+                </div>
+              ) : (
+                <div style={{ fontSize: '0.875rem', color: oklch.textStrong, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{n.body}</div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                <span style={{ fontSize: '0.75rem', color: oklch.textFaint, flex: 1, minWidth: 0 }}>
+                  {n.author} · {formatDateTime(n.createdAt)}
+                </span>
+                {canWrite && !n.removed ? (
+                  <button
+                    type="button"
+                    className="admin-note-remove"
+                    onClick={() => {
+                      setRemoveError(null);
+                      setRemoving(n);
+                    }}
+                    aria-label={`Remove note by ${n.author}`}
+                  >
+                    Remove
+                  </button>
+                ) : null}
               </div>
             </li>
           ))}
         </ul>
       )}
+      <ConfirmDialog
+        open={removing !== null}
+        title="Remove this note?"
+        description="Its words are deleted for good. Every admin will still see that a note was here, who removed it, when and why."
+        confirmLabel="Remove note"
+        danger
+        reasonRequired
+        reasonPlaceholder="Why? For example: had the owner's phone number in it."
+        loading={removeBusy}
+        error={removeError}
+        onConfirm={remove}
+        onCancel={() => setRemoving(null)}
+      />
     </Card>
   );
 }

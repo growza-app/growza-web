@@ -123,6 +123,7 @@ const ACTION_LABELS: Record<string, string> = {
   'business.test_set': 'Test business mark changed',
   'business.list_exported': 'Business list exported',
   'business.note_added': 'Support note added',
+  'business.note_removed': 'Support note removed',
   'business.reactivate': 'Business reactivated',
   'business.branch_add': 'Branch added',
   'business.branch_close': 'Branch closed',

@@ -24,12 +24,19 @@ describe('toast with Undo', () => {
     const undo = card.slice(card.indexOf('if (previousOverride === null)'));
     expect(undo.indexOf("method: 'DELETE'")).toBeGreaterThan(0);
     expect(undo.indexOf("method: 'DELETE'")).toBeLessThan(undo.indexOf('} else {'));
-    expect(card).toContain('await put(previousOverride, `Undo: ${reason}`)');
+    expect(card).toContain('JSON.stringify({ enabled: previousOverride, ifCurrent: next, reason: `Undo: ${reason}` })');
+  });
+
+  it('QA 11 Nov — Undo only if nobody changed it since: both ways send ifCurrent, the page reloads either way', () => {
+    const undo = card.slice(card.indexOf('undo: async () => {'), card.indexOf('.catch((err)'));
+    expect(undo.match(/ifCurrent: next, reason/g)).toHaveLength(2);
+    expect(undo.indexOf('} finally {')).toBeLessThan(undo.lastIndexOf('onChanged();'));
+    expect(toast).toContain("err.code === 'changed_since'");
   });
 
   it('AC-03 — a failed save shows no Undo; a failed undo says so, without another Undo', () => {
     // The toast is shown only in the success branch of the save; an error stays in the dialog.
     expect(card.indexOf('toast.show(')).toBeGreaterThan(card.indexOf('.then(() => {'));
-    expect(toast).toContain("message: 'Could not undo that. Change it back by hand.', tone: 'error'");
+    expect(toast).toContain("'Could not undo that. Change it back by hand.', tone: 'error'");
   });
 });

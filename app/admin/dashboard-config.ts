@@ -100,3 +100,8 @@ export const QUICK_ACTIONS: Array<{
   // even 4-up row instead of a lone tile on its own second line.
   { icon: 'audit', label: 'Audit log', href: '/admin/audit-logs', tint: 'audit', hideOnMobile: true, permission: 'admin.audit.view' },
 ];
+
+/** QA loophole L1 — a test business is left out of every figure here; this says how many, so none hides quietly. */
+export function testBusinessesLine(n: number): string {
+  return n === 1 ? '1 test business not counted' : `${n} test businesses not counted`;
+}

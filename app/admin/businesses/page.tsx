@@ -17,6 +17,7 @@ import { INITIAL_PAGING, applyPageParams, mergeRows, reloadFromFirstPage } from 
 import { useAdminSearch } from '../components/SearchContext';
 import { oklch, STATUS_COLORS, typeColor, usageState } from '../tokens';
 import { useAdminMe } from '../components/AdminMeContext';
+import { TestPill } from '../components/TestPill';
 
 /**
  * GRW-101's Businesses list, wired to GRW-100's real read layer in place of
@@ -329,6 +330,7 @@ function AdminBusinessesInner() {
       <BusinessesToolbar
         current={{ vertical, status, search }}
         canSave={hasActiveFilters}
+        canExport={can('admin.business.export')}
         total={page?.total ?? null}
         onApply={(f) => {
           setVertical(f.vertical);
@@ -617,26 +619,5 @@ function RowHealth({ business }: { business: BusinessRow }) {
     <div style={{ fontSize: '0.75rem', fontWeight: 600, color: health.quiet ? 'oklch(0.52 0.13 65)' : oklch.textFaint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
       {health.text}
     </div>
-  );
-}
-
-/** Jira GRW-692 — marks a test business when the list is showing them. Grey: it is a fact, not a warning. */
-function TestPill() {
-  return (
-    <span
-      title="A test business: left out of the dashboard's figures."
-      style={{
-        fontSize: '0.75rem',
-        fontWeight: 700,
-        padding: '2px 7px',
-        borderRadius: 999,
-        whiteSpace: 'nowrap',
-        color: oklch.textMuted,
-        background: 'oklch(0.96 0.004 250)',
-        border: `1px solid ${oklch.border}`,
-      }}
-    >
-      Test
-    </span>
   );
 }

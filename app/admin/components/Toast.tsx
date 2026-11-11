@@ -1,5 +1,6 @@
 'use client';
 
+import { AdminApiError } from '../lib/api';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 /**
@@ -53,8 +54,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     try {
       await toast.undo();
       setToast(null);
-    } catch {
-      setToast({ id: toast.id + 1, message: 'Could not undo that. Change it back by hand.', tone: 'error' });
+    } catch (err) {
+      // Someone else changed it since (409): say so, and that it was left as they set it — not "change it back by hand",
+      // which would tell this admin to overwrite them.
+      const changedSince = err instanceof AdminApiError && err.code === 'changed_since';
+      setToast({ id: toast.id + 1, message: changedSince ? err.message : 'Could not undo that. Change it back by hand.', tone: 'error' });
     } finally {
       setUndoing(false);
     }

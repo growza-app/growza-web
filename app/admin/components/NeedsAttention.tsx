@@ -2,6 +2,7 @@ import Link from '../../shared/AppLink';
 import { Icon } from '../icons';
 import { oklch } from '../tokens';
 import { Card } from './primitives';
+import { useAdminMe } from './AdminMeContext';
 
 /** Jira GRW-700 — what the API sends: one row per business per reason. */
 export interface NeedsAttentionRow {
@@ -26,7 +27,12 @@ const ZONE = 'Asia/Kolkata';
 const day = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(d);
 
 /** The reason in plain words, and the one place to go about it. Pure, so a test pins the words. */
-export function attentionLine(row: NeedsAttentionRow, now: Date = new Date()): { reason: string; action: string; href: string } {
+export function attentionLine(
+  row: NeedsAttentionRow,
+  now: Date = new Date(),
+  /** QA loophole L5 — "Record payment" only for an admin who may record one; anyone else is sent to look. */
+  canRecordPayment = true,
+): { reason: string; action: string; href: string } {
   const page = `/admin/businesses/${row.tenantId}`;
   const since = new Date(row.since);
   switch (row.kind) {
@@ -39,7 +45,7 @@ export function attentionLine(row: NeedsAttentionRow, now: Date = new Date()): {
         row.owedMinor ? `${rupees(row.owedMinor)} owed` : null,
         row.suspendsAt ? `suspends ${shortDay(new Date(row.suspendsAt))}` : null,
       ].filter(Boolean);
-      return { reason: parts.join(' · '), action: 'Record payment', href: `${page}?tab=subscription` };
+      return { reason: parts.join(' · '), action: canRecordPayment ? 'Record payment' : 'Open subscription', href: `${page}?tab=subscription` };
     }
     case 'payment_failed':
       return { reason: 'Payment failed this month', action: 'Open billing', href: `${page}?tab=billing` };
@@ -67,6 +73,8 @@ export function attentionLine(row: NeedsAttentionRow, now: Date = new Date()): {
  * The tiles count problems; this names who has them. With nothing to do it is one line, not an empty box.
  */
 export function NeedsAttention({ rows }: { rows: NeedsAttentionRow[] }) {
+  const { can } = useAdminMe();
+  const canRecordPayment = can('admin.payment.record');
   if (rows.length === 0) {
     return (
       <Card>
@@ -84,7 +92,7 @@ export function NeedsAttention({ rows }: { rows: NeedsAttentionRow[] }) {
       <h3 style={{ margin: '0 0 6px', fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>Needs attention</h3>
       <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {rows.map((row, i) => {
-          const line = attentionLine(row);
+          const line = attentionLine(row, undefined, canRecordPayment);
           return (
             <li
               key={`${row.tenantId}:${row.kind}`}

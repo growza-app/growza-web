@@ -49,6 +49,7 @@ export const KNOWN_ACTIONS = [
   'business.test_set',
   'business.list_exported',
   'business.note_added',
+  'business.note_removed',
   'business.branch_add',
   'business.branch_close',
   'business.branch_reopen',
