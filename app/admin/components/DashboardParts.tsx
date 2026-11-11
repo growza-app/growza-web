@@ -297,6 +297,11 @@ const ATTENTION_SUBTITLES: Record<string, { clear: string; action: string }> = {
   // GRW-265 — a cancellation is not a failure, so it doesn't get the default
   // "Currently failing" wording; that would misdescribe a business that
   // simply left, the same per-row-wording lesson GRW-167 established above.
+  // QA loophole L4 — a download of every business is worth a Super Admin's glance, not an alarm.
+  list_exports: {
+    clear: 'Nobody downloaded the business list this week.',
+    action: 'The business list was downloaded — open to see who, when and which filters.',
+  },
   cancellations: {
     clear: 'No subscriptions cancelled this month.',
     action: 'Cancelled this month — open to see which businesses and consider following up.',

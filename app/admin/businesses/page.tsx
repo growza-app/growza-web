@@ -330,6 +330,7 @@ function AdminBusinessesInner() {
       <BusinessesToolbar
         current={{ vertical, status, search }}
         canSave={hasActiveFilters}
+        canExport={can('admin.business.export')}
         total={page?.total ?? null}
         onApply={(f) => {
           setVertical(f.vertical);

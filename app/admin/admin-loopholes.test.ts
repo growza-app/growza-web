@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { testBusinessesLine } from './dashboard-config';
 
-/** QA loopholes L1 and L3, 11 Nov 2026. */
+/** QA loopholes L1–L5, 11 Nov 2026. */
 const card = readFileSync(join(__dirname, 'components/TestBusinessCard.tsx'), 'utf8');
 const notes = readFileSync(join(__dirname, 'components/SupportNotes.tsx'), 'utf8');
 const page = readFileSync(join(__dirname, 'page.tsx'), 'utf8');
@@ -36,5 +36,24 @@ describe('L3 — a support note can be removed, and the removal shows', () => {
   it('a removed note shows who, when and why instead of its words, and offers no Remove', () => {
     expect(notes).toContain('Removed by {n.removed.by}');
     expect(notes).toContain('canWrite && !n.removed');
+  });
+});
+
+describe('L2, L4, L5 — QA loopholes, 11 Nov 2026', () => {
+  const toolbar = readFileSync(join(__dirname, 'components/BusinessesToolbar.tsx'), 'utf8');
+  const list = readFileSync(join(__dirname, 'businesses/page.tsx'), 'utf8');
+  const parts = readFileSync(join(__dirname, 'components/DashboardParts.tsx'), 'utf8');
+
+  it('L2 — the Test business card says Growza does not bill it', () => {
+    expect(card).toContain('Growza does not bill it or chase it for payment');
+  });
+
+  it('L4 — Export CSV is there only for an admin who may download the list', () => {
+    expect(list).toContain("canExport={can('admin.business.export')}");
+    expect(toolbar).toMatch(/\{canExport \? \(/);
+  });
+
+  it('L4 — the week’s downloads are a notification with its own words', () => {
+    expect(parts).toContain('list_exports: {');
   });
 });

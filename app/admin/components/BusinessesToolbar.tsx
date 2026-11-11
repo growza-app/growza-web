@@ -42,10 +42,13 @@ const chip = {
 export function BusinessesToolbar({
   current,
   canSave,
+  canExport = true,
   total,
   onApply,
 }: {
   current: Filters;
+  /** QA loophole L4 — `admin.business.export`; without it there is no Export button at all. */
+  canExport?: boolean;
   /** A view is worth saving only when some filter is set. */
   canSave: boolean;
   total: number | null;
@@ -133,15 +136,17 @@ export function BusinessesToolbar({
           + Save this view
         </button>
       ) : null}
-      <button
-        type="button"
-        onClick={download}
-        disabled={!total || busy}
-        title={total ? `Download these ${total} businesses as a CSV file` : 'Nothing to export'}
-        style={{ ...chip, marginLeft: 'auto', opacity: !total || busy ? 0.5 : 1, cursor: !total || busy ? 'default' : 'pointer' }}
-      >
-        {busy ? 'Exporting…' : 'Export CSV'}
-      </button>
+      {canExport ? (
+        <button
+          type="button"
+          onClick={download}
+          disabled={!total || busy}
+          title={total ? `Download these ${total} businesses as a CSV file` : 'Nothing to export'}
+          style={{ ...chip, marginLeft: 'auto', opacity: !total || busy ? 0.5 : 1, cursor: !total || busy ? 'default' : 'pointer' }}
+        >
+          {busy ? 'Exporting…' : 'Export CSV'}
+        </button>
+      ) : null}
       {error ? (
         <div role="alert" style={{ flexBasis: '100%', fontSize: '0.8125rem', color: oklch.danger }}>
           {error}
