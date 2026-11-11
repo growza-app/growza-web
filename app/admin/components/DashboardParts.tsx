@@ -288,6 +288,8 @@ export function StatCard({
  */
 const ATTENTION_SUBTITLES: Record<string, { clear: string; action: string }> = {
   payments_failed: { clear: 'Nothing needs attention.', action: 'Currently failing — open to reconcile.' },
+  // Owner, 11 Nov 2026 — behind on the bill, on the way to suspension.
+  overdue_payment: { clear: 'Every bill is paid.', action: 'Behind on their bill — open to see who, and when they will be suspended.' },
   uninvoiced_periods: {
     clear: 'Every live subscription has been invoiced for its current period.',
     action: 'These salons are not being billed — check a tax rule covers their period.',

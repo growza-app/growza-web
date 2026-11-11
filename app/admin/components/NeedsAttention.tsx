@@ -7,9 +7,20 @@ import { Card } from './primitives';
 export interface NeedsAttentionRow {
   tenantId: string;
   name: string;
-  kind: 'payment_failed' | 'setup_stuck' | 'trial_ending';
+  kind: 'overdue' | 'payment_failed' | 'setup_stuck' | 'trial_ending';
   since: string;
+  /** `overdue` only — where on the way to suspension, what is owed, and when it will be suspended (null: paused). */
+  stage?: 'PAYMENT_FAILED' | 'GRACE_PERIOD' | 'PAST_DUE';
+  owedMinor?: number;
+  suspendsAt?: string | null;
 }
+
+const STAGE_WORDS = { PAYMENT_FAILED: 'Payment failed', GRACE_PERIOD: 'Grace period', PAST_DUE: 'Past due' } as const;
+const rupees = (minor: number) => {
+  const paise = minor % 100 !== 0;
+  return `₹${(minor / 100).toLocaleString('en-IN', { minimumFractionDigits: paise ? 2 : 0, maximumFractionDigits: 2 })}`;
+};
+const shortDay = (d: Date) => new Intl.DateTimeFormat('en-IN', { timeZone: ZONE, day: 'numeric', month: 'short' }).format(d);
 
 const ZONE = 'Asia/Kolkata';
 const day = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(d);
@@ -19,6 +30,17 @@ export function attentionLine(row: NeedsAttentionRow, now: Date = new Date()): {
   const page = `/admin/businesses/${row.tenantId}`;
   const since = new Date(row.since);
   switch (row.kind) {
+    case 'overdue': {
+      // Owner, 11 Nov 2026 — "Grace period · 2 days overdue · ₹799 owed · suspends 14 Nov".
+      const days = Math.max(0, Math.floor((now.getTime() - since.getTime()) / 86_400_000));
+      const parts = [
+        row.stage ? STAGE_WORDS[row.stage] : 'Overdue',
+        days === 0 ? 'overdue since today' : days === 1 ? '1 day overdue' : `${days} days overdue`,
+        row.owedMinor ? `${rupees(row.owedMinor)} owed` : null,
+        row.suspendsAt ? `suspends ${shortDay(new Date(row.suspendsAt))}` : null,
+      ].filter(Boolean);
+      return { reason: parts.join(' · '), action: 'Record payment', href: `${page}?tab=subscription` };
+    }
     case 'payment_failed':
       return { reason: 'Payment failed this month', action: 'Open billing', href: `${page}?tab=billing` };
     case 'setup_stuck': {
@@ -72,7 +94,7 @@ export function NeedsAttention({ rows }: { rows: NeedsAttentionRow[] }) {
                 <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {row.name}
                 </span>
-                <span style={{ display: 'block', fontSize: '0.8125rem', color: row.kind === 'payment_failed' ? oklch.danger : oklch.textMuted }}>{line.reason}</span>
+                <span style={{ display: 'block', fontSize: '0.8125rem', color: row.kind === 'payment_failed' || row.kind === 'overdue' ? oklch.danger : oklch.textMuted }}>{line.reason}</span>
               </span>
               <Link
                 href={line.href}

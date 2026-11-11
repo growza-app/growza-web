@@ -57,4 +57,6 @@ export function isTerminalSubscriptionStatus(status: string): boolean {
 export const SUBSCRIPTION_VIEWS: Record<string, string> = {
   uninvoiced: 'Billing periods with no invoice',
   cancelled_this_month: 'Cancelled this month',
+  // Owner, 11 Nov 2026 — the Overdue Payment tile: Payment failed, Grace period or Past due.
+  overdue: 'Overdue payment',
 };
