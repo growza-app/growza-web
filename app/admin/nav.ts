@@ -157,6 +157,9 @@ export function resolveRouteMeta(pathname: string): RouteMeta {
       return { title: 'Settings', subtitle: 'Platform configuration.', showSearch: false };
     // Jira GRW-299 — admin mobile's own full-page notifications (the bottom
     // tab replaces the header bell there; see AdminShell's own note).
+    // Owner, 11 Nov 2026 — the dashboard's Needs attention tile opens this.
+    case 'needs-attention':
+      return { title: 'Needs attention', subtitle: 'Every business that needs an admin, and why.', showSearch: false, back: { href: '/admin', label: 'Dashboard' } };
     case 'notifications':
       return { title: 'Notifications', subtitle: 'What needs attention right now.', showSearch: false, back: { href: BROWSER_BACK, label: 'Back' } };
     default:

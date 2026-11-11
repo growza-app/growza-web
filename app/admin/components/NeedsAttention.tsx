@@ -72,7 +72,14 @@ export function attentionLine(
  * Jira GRW-700 — the businesses that need an admin today, with the reason and the one tap that deals with it.
  * The tiles count problems; this names who has them. With nothing to do it is one line, not an empty box.
  */
-export function NeedsAttention({ rows }: { rows: NeedsAttentionRow[] }) {
+/** Owner, 11 Nov 2026 — the list lives on its own page now (`/admin/needs-attention`); the dashboard shows a tile. */
+export function NeedsAttention({
+  rows,
+  emptyText = 'All clear — no business needs you right now.',
+}: {
+  rows: NeedsAttentionRow[];
+  emptyText?: string;
+}) {
   const { can } = useAdminMe();
   const canRecordPayment = can('admin.payment.record');
   if (rows.length === 0) {
@@ -82,14 +89,13 @@ export function NeedsAttention({ rows }: { rows: NeedsAttentionRow[] }) {
           <span style={{ color: 'oklch(0.5 0.13 150)', display: 'flex' }}>
             <Icon name="check" size={18} />
           </span>
-          All clear — no business needs you right now.
+          {emptyText}
         </div>
       </Card>
     );
   }
   return (
     <Card>
-      <h3 style={{ margin: '0 0 6px', fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>Needs attention</h3>
       <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {rows.map((row, i) => {
           const line = attentionLine(row, undefined, canRecordPayment);
