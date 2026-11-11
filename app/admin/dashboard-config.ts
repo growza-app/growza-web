@@ -56,13 +56,15 @@ export const ATTENTION_CARDS: Array<{
   note: (count: number) => string;
 }> = [
   {
-    key: 'payments_failed',
-    label: 'Payments failed',
+    // Owner, 11 Nov 2026 — "I have no idea which business is past its due date and in grace." Every business whose
+    // bill is unpaid and on the way to suspension: Payment failed, Grace period or Past due. It takes the place of
+    // Payments failed, which counted declined ONLINE payments only — a business paying by UPI that simply has not
+    // paid never showed there. Failed payments are still listed under Billing attention below.
+    key: 'overdue_payment',
+    label: 'Overdue Payment',
     icon: 'alert',
     tint: STAT_TINTS.amber,
-    // Jira GRW-287 — the count is this month's (GRW-276 AC-04), and the short
-    // label cannot say so, so the note does — as the Cancellations card's does.
-    note: (count) => (count > 0 ? 'This month · open to reconcile' : 'None this month'),
+    note: (count) => (count > 0 ? 'Behind on their bill · open to see' : 'Every bill is paid'),
   },
   {
     key: 'cancellations',

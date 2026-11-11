@@ -6,6 +6,23 @@ const NOW = new Date('2026-11-10T15:00:00+05:30');
 const row = (kind: NeedsAttentionRow['kind'], since: string): NeedsAttentionRow => ({ tenantId: 'abc', name: 'Meera Beauty Lounge', kind, since });
 
 describe('needs attention, in words', () => {
+  it('owner, 11 Nov — an overdue business: stage, days overdue, what it owes, when it is suspended; Record payment', () => {
+    const line = attentionLine(
+      { tenantId: 'abc', name: 'Meera Beauty Lounge', kind: 'overdue', since: '2026-11-08T15:00:00+05:30', stage: 'GRACE_PERIOD', owedMinor: 79900, suspendsAt: '2026-11-14T10:00:00+05:30' },
+      NOW,
+    );
+    expect(line).toEqual({
+      reason: 'Grace period · 2 days overdue · ₹799 owed · suspends 14 Nov',
+      action: 'Record payment',
+      href: '/admin/businesses/abc?tab=subscription',
+    });
+  });
+
+  it('overdue with the schedule paused leaves the date out rather than guessing it', () => {
+    const line = attentionLine({ tenantId: 'abc', name: 'x', kind: 'overdue', since: '2026-11-10T09:00:00+05:30', stage: 'PAST_DUE', owedMinor: 50050, suspendsAt: null }, NOW);
+    expect(line.reason).toBe('Past due · overdue since today · ₹500.50 owed');
+  });
+
   it('a failed payment opens the business billing', () => {
     expect(attentionLine(row('payment_failed', '2026-11-10T08:00:00Z'), NOW)).toEqual({
       reason: 'Payment failed this month',

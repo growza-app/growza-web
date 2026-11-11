@@ -69,7 +69,7 @@ function FigureLines({ figure }: { figure: string }) {
   );
 }
 
-const STAT_LABELS = ['Total businesses', 'New this month', 'Payments failed', 'Cancellations'];
+const STAT_LABELS = ['Total businesses', 'New this month', 'Overdue Payment', 'Cancellations'];
 const MONTHS = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
 /**
  * Six, the full attention registry. An admin whose role hides some rows will
