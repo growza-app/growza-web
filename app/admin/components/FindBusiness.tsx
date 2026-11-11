@@ -7,6 +7,7 @@ import { Icon, TypeIcon } from '../icons';
 import { oklch, typeColor } from '../tokens';
 import { useAdminMe } from './AdminMeContext';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { TestPill } from './TestPill';
 
 /**
  * Jira GRW-699 — find any business from any admin screen.
@@ -14,6 +15,9 @@ import { useDialog } from '../../shared/a11y/useDialog';
  * On a support call the caller gives a name, a phone number or the 8 characters on their business page. Search used
  * to live on the Businesses list only, so every call began with a trip there. ⌘K (Ctrl+K) or the search button in
  * the header opens this from anywhere; Enter opens the first match.
+ *
+ * Test businesses are found too, marked Test (QA, 11 Nov 2026): support is asked about a demo salon as often as a
+ * real one, and a finder that answers "No business found" for a business that exists sends them hunting.
  *
  * Nothing is asked for under 2 characters: one letter matches most of the platform and tells nobody anything.
  */
@@ -27,6 +31,7 @@ interface Match {
   vertical: string;
   status: string;
   ownerPhone: string | null;
+  isTest?: boolean;
 }
 
 /** Whether a key press opens the finder: ⌘K on a Mac, Ctrl+K elsewhere. */
@@ -73,7 +78,7 @@ export function FindBusiness() {
     }
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      adminFetch<{ rows: Match[] }>(`/businesses?search=${encodeURIComponent(trimmed)}&pageSize=${LIMIT}`, { signal: controller.signal })
+      adminFetch<{ rows: Match[] }>(`/businesses?search=${encodeURIComponent(trimmed)}&pageSize=${LIMIT}&includeTest=true`, { signal: controller.signal })
         .then((res) => {
           setMatches(res.rows);
           setActive(0);
@@ -164,7 +169,9 @@ export function FindBusiness() {
                         <TypeIcon type={m.vertical} size={16} />
                       </span>
                       <span style={{ minWidth: 0, flex: 1 }}>
-                        <span className="admin-find-name">{m.name}</span>
+                        <span className="admin-find-name">
+                          {m.name} {m.isTest ? <TestPill /> : null}
+                        </span>
                         <span className="admin-find-sub">
                           {m.vertical} · {m.ownerPhone ?? 'No owner'} · {m.tenantId.slice(0, 8)}
                         </span>
