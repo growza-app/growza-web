@@ -66,16 +66,25 @@ export function PaymentsCard({
           message: `Online payments ${next ? 'on' : 'off'} for ${businessName}`,
           undo: async () => {
             // Back to exactly where it was: a business that followed the default goes back to the default, rather
-            // than being left with a setting of its own that happens to match it.
-            if (previousOverride === null) {
-              await adminFetch(`/feature-flags/payments.online/overrides/${encodeURIComponent(businessId)}`, {
-                method: 'DELETE',
-                body: JSON.stringify({ reason: `Undo: ${reason}` }),
-              });
-            } else {
-              await put(previousOverride, `Undo: ${reason}`);
+            // than being left with a setting of its own that happens to match it. `ifCurrent: next` — only if the
+            // switch is still as this admin left it; if someone changed it since, the API refuses (409) and their
+            // setting stays (QA, 11 Nov 2026: an old Undo erased another admin's later change).
+            try {
+              if (previousOverride === null) {
+                await adminFetch(`/feature-flags/payments.online/overrides/${encodeURIComponent(businessId)}`, {
+                  method: 'DELETE',
+                  body: JSON.stringify({ ifCurrent: next, reason: `Undo: ${reason}` }),
+                });
+              } else {
+                await adminFetch(`/feature-flags/payments.online/overrides/${encodeURIComponent(businessId)}`, {
+                  method: 'PUT',
+                  body: JSON.stringify({ enabled: previousOverride, ifCurrent: next, reason: `Undo: ${reason}` }),
+                });
+              }
+            } finally {
+              // Refused or not, show the switch as it now is.
+              onChanged();
             }
-            onChanged();
           },
         });
       })
