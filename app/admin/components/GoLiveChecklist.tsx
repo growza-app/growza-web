@@ -53,14 +53,14 @@ export function GoLiveChecklist({
       }}
     >
       <div style={{ minWidth: 260, flex: 1 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 800, color: oklch.textStrong }}>This business is still being set up</div>
-        <div style={{ fontSize: 12.5, color: oklch.textMuted, marginTop: 2, lineHeight: 1.5 }}>
+        <div style={{ fontSize: '0.84375rem', fontWeight: 800, color: oklch.textStrong }}>This business is still being set up</div>
+        <div style={{ fontSize: '0.78125rem', color: oklch.textMuted, marginTop: 2, lineHeight: 1.5 }}>
           Its owner can sign in and finish setting it up. It cannot take bookings until it goes live.
         </div>
 
         <ul style={{ listStyle: 'none', margin: '12px 0 0', padding: 0, display: 'grid', gap: 7 }}>
           {items.map((item) => (
-            <li key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13 }}>
+            <li key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: '0.8125rem' }}>
               <span style={{ color: item.met ? oklch.accent : oklch.textFaint, flex: 'none', display: 'flex' }}>
                 <Icon name={item.met ? 'check' : 'alert'} size={15} />
               </span>
@@ -82,7 +82,7 @@ export function GoLiveChecklist({
             {busy ? 'Going live…' : 'Go live'}
           </PrimaryButton>
           {!ready ? (
-            <div style={{ fontSize: 11.5, color: oklch.textMuted, maxWidth: 220, textAlign: 'right' }}>
+            <div style={{ fontSize: '0.75rem', color: oklch.textMuted, maxWidth: 220, textAlign: 'right' }}>
               {missing.length === 1 ? 'Waiting for one more thing' : `Waiting for ${missing.length} more things`}
             </div>
           ) : null}

@@ -31,27 +31,27 @@ export function SubscriptionPriceBox({ s }: { s: SubscriptionPanelSubscription }
         color={discounted ? 'oklch(0.5 0.15 25)' : undefined}
       />
       <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, marginTop: 5, borderTop: '1px solid oklch(0.9 0.02 150)' }}>
-        <span style={{ fontSize: 14, fontWeight: 800, color: oklch.textStrong }}>
+        <span style={{ fontSize: '0.875rem', fontWeight: 800, color: oklch.textStrong }}>
           Charged per {s.billingCycle === 'monthly' ? 'month' : s.billingCycle}
         </span>
-        <span style={{ fontSize: 18, fontWeight: 800, color: oklch.accentText }}>{formatMoneyMinor(bill?.finalPriceMinor ?? s.finalPriceMinor)}</span>
+        <span style={{ fontSize: '1.125rem', fontWeight: 800, color: oklch.accentText }}>{formatMoneyMinor(bill?.finalPriceMinor ?? s.finalPriceMinor)}</span>
       </div>
       {/* Jira GRW-255 — prices include tax: this is what the salon pays, and
           any GST is carved out of it on the invoice. This card once showed an
           18% line from a hardcoded frontend constant — a tax figure invented
           by a UI; it still shows none. */}
-      <div style={{ marginTop: 10, fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>
+      <div style={{ marginTop: 10, fontSize: '0.75rem', color: oklch.textFaint, fontWeight: 600 }}>
         Includes tax. This is what the customer pays; any GST is inside it on the invoice.
         {bill ? ` Branches are counted when the bill is raised on ${formatDateOnly(s.nextBillingDate)}.` : ''}
       </div>
       {s.branchAddonOverrideMinor != null ? (
-        <div style={{ marginTop: 8, fontSize: 12, color: oklch.textMuted, fontWeight: 700 }}>
+        <div style={{ marginTop: 8, fontSize: '0.75rem', color: oklch.textMuted, fontWeight: 700 }}>
           This customer pays {formatMoneyMinor(s.branchAddonOverrideMinor)} per extra branch (plan: {formatMoneyMinor(s.branchAddonMinor ?? 0)})
           {s.branchAddonOverrideReason ? ` — ${s.branchAddonOverrideReason}` : ''}
         </div>
       ) : null}
       {discounted && s.discountReason ? (
-        <div style={{ marginTop: 10, fontSize: 12, color: 'oklch(0.5 0.15 25)', fontWeight: 700 }}>
+        <div style={{ marginTop: 10, fontSize: '0.75rem', color: 'oklch(0.5 0.15 25)', fontWeight: 700 }}>
           {s.discountReason}
           {/* §2.1's own line: "the subscription screen says so before it
               happens" — a discount that reverts on its own should never
@@ -65,7 +65,7 @@ export function SubscriptionPriceBox({ s }: { s: SubscriptionPanelSubscription }
 
 function PriceRow({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5, padding: '5px 0' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84375rem', padding: '5px 0' }}>
       <span style={{ color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>{label}</span>
       <span style={{ fontWeight: 700, color: color ?? 'oklch(0.3 0.02 155)' }}>{value}</span>
     </div>

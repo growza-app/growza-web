@@ -1,5 +1,6 @@
 'use client';
 
+import { groupByDay, timeOfDay } from '../lib/audit-days';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
@@ -45,6 +46,10 @@ export const KNOWN_ACTIONS = [
   'business.activate',
   'business.suspend',
   'business.reactivate',
+  'business.test_set',
+  'business.list_exported',
+  'business.note_added',
+  'business.note_removed',
   'business.branch_add',
   'business.branch_close',
   'business.branch_reopen',
@@ -396,13 +401,13 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
       ) : null}
 
       {rangeError ? (
-        <div style={{ fontSize: 13, fontWeight: 600, color: oklch.danger, background: oklch.dangerBg, borderRadius: 10, padding: '10px 12px', marginBottom: 14 }}>
+        <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: oklch.danger, background: oklch.dangerBg, borderRadius: 10, padding: '10px 12px', marginBottom: 14 }}>
           {rangeError}
         </div>
       ) : error ? (
         <Card>
           <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
             <SecondaryButton onClick={() => setPaging((p) => ({ ...p }))}>Retry</SecondaryButton>
           </div>
         </Card>
@@ -424,14 +429,20 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
         <>
           <Card>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {rows.map((row, i) => {
+              {/* Jira GRW-695 — under a heading per day, newest first, as the API sends them. */}
+              {groupByDay(rows).map((day, d) => (
+                <section key={day.key} aria-label={day.label}>
+                  <h3 className="admin-day-heading" style={{ marginTop: d === 0 ? 0 : 14 }}>
+                    {day.label}
+                  </h3>
+              {day.rows.map((row, i) => {
                 const expanded = expandedId === row.id;
                 return (
-                  <div key={row.id} style={{ borderBottom: i < rows.length - 1 ? `1px solid ${oklch.divider}` : 'none' }}>
+                  <div key={row.id} style={{ borderBottom: i < day.rows.length - 1 ? `1px solid ${oklch.divider}` : 'none' }}>
                     <button
                       type="button"
                       onClick={() => setExpandedId(expanded ? null : row.id)}
-                      style={{ all: 'unset', display: 'flex', gap: 14, padding: '14px 0', width: '100%', cursor: 'pointer', flexWrap: 'wrap', boxSizing: 'border-box' }}
+                      style={{ all: 'unset', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', width: '100%', cursor: 'pointer', boxSizing: 'border-box' }}
                     >
                       <span
                         style={{
@@ -448,38 +459,23 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
                       >
                         <Icon name="audit" size={17} />
                       </span>
-                      <div style={{ flex: 1, minWidth: 200, textAlign: 'left' }}>
+                      <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 14, fontWeight: 800, color: oklch.textStrong }}>{formatAuditAction(row.action)}</span>
-                          <code
-                            style={{
-                              fontSize: 11,
-                              fontWeight: 600,
-                              color: oklch.textMuted,
-                              background: oklch.surfaceSubtle,
-                              border: `1px solid ${oklch.border}`,
-                              padding: '1px 6px',
-                              borderRadius: 5,
-                            }}
-                          >
-                            {row.action}
-                          </code>
-                          {row.entityType ? (
-                            <span style={{ fontSize: 11.5, fontWeight: 700, color: 'oklch(0.5 0.02 155)', background: oklch.divider, padding: '2px 8px', borderRadius: 6 }}>
-                              {row.entityType}
-                            </span>
-                          ) : null}
+                          {/* Jira GRW-695 — the sentence only; the raw action code and record type were system names. */}
+                          <span style={{ fontSize: '0.875rem', fontWeight: 800, color: oklch.textStrong }}>{formatAuditAction(row.action)}</span>
                         </div>
-                        <div style={{ fontSize: 12.5, color: 'oklch(0.5 0.02 155)', marginTop: 4 }}>
+                        <div style={{ fontSize: '0.78125rem', color: 'oklch(0.5 0.02 155)', marginTop: 4 }}>
                           {actorLabel(row)}
                           {row.impersonatedByName ? (
-                            <span style={{ color: oklch.danger, fontWeight: 700 }}> · impersonated by {row.impersonatedByName}</span>
+                            <span style={{ color: oklch.danger, fontWeight: 700 }}> · while {row.impersonatedByName} was viewing as owner</span>
                           ) : null}
                           {row.reason ? ` · ${row.reason}` : ''}
                         </div>
                       </div>
-                      <div style={{ fontSize: 12, color: oklch.textFaint, fontWeight: 600, textAlign: 'right', flex: 'none' }}>
-                        {formatDateTime(row.createdAt)}
+                      <div style={{ fontSize: '0.75rem', color: oklch.textFaint, fontWeight: 600, textAlign: 'right', flex: 'none' }}>
+                        <time dateTime={row.createdAt} title={formatDateTime(row.createdAt)}>
+                          {timeOfDay(row.createdAt)}
+                        </time>
                       </div>
                       <Icon name="chevronRight" size={15} />
                     </button>
@@ -487,7 +483,7 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
                     {expanded ? (
                       <div style={{ padding: '0 0 16px 50px' }}>
                         {!row.diff || (!row.diff.before && !row.diff.after) ? (
-                          <div style={{ fontSize: 12.5, color: oklch.textFaint }}>No diff recorded for this action.</div>
+                          <div style={{ fontSize: '0.78125rem', color: oklch.textFaint }}>No diff recorded for this action.</div>
                         ) : (
                           <DiffTable entityType={row.entityType} before={row.diff.before} after={row.diff.after} />
                         )}
@@ -504,10 +500,10 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
                           purged — an empty cell reads as an address of
                           nothing, which is the only reading that is wrong.
                         */}
-                        <div style={{ fontSize: 12, color: oklch.textFaint, marginTop: 10 }}>
+                        <div style={{ fontSize: '0.75rem', color: oklch.textFaint, marginTop: 10 }}>
                           From{' '}
                           {row.ip ? (
-                            <code style={{ fontSize: 12 }}>{row.ip}</code>
+                            <code style={{ fontSize: '0.75rem' }}>{row.ip}</code>
                           ) : (
                             <span style={{ fontStyle: 'italic' }}>not recorded</span>
                           )}
@@ -517,6 +513,8 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
                   </div>
                 );
               })}
+                </section>
+              ))}
             </div>
           </Card>
           <Pagination total={page.total} loaded={rows.length} state={paging} onChange={setPaging} />
@@ -528,7 +526,7 @@ export function AuditLogList({ fixedTenantId }: { fixedTenantId?: string }) {
 
 function DiffTable({ entityType, before, after }: { entityType: string | null; before?: Record<string, unknown>; after?: Record<string, unknown> }) {
   const keys = Array.from(new Set([...Object.keys(before ?? {}), ...Object.keys(after ?? {})]));
-  if (keys.length === 0) return <div style={{ fontSize: 12.5, color: oklch.textFaint }}>No fields changed.</div>;
+  if (keys.length === 0) return <div style={{ fontSize: '0.78125rem', color: oklch.textFaint }}>No fields changed.</div>;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 520 }}>
@@ -536,7 +534,7 @@ function DiffTable({ entityType, before, after }: { entityType: string | null; b
         const beforeVal = before ? renderDiffField(entityType, key, before[key]) : null;
         const afterVal = after ? renderDiffField(entityType, key, after[key]) : null;
         return (
-          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }}>
+          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.8125rem' }}>
             <span style={{ width: 130, flex: 'none', fontWeight: 700, color: oklch.textMuted }}>{fieldLabel(key)}</span>
             {beforeVal ? <ValueChip rendered={beforeVal} /> : <span style={{ color: oklch.textFaint }}>—</span>}
             {beforeVal && afterVal ? <Icon name="chevronRight" size={13} /> : null}
@@ -551,7 +549,7 @@ function DiffTable({ entityType, before, after }: { entityType: string | null; b
 function ValueChip({ rendered }: { rendered: ReturnType<typeof renderDiffField> }) {
   if (rendered.kind === 'status' && rendered.chip) {
     return (
-      <span style={{ fontSize: 11.5, fontWeight: 700, color: rendered.chip[0], background: rendered.chip[1], padding: '3px 9px', borderRadius: 7 }}>
+      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: rendered.chip[0], background: rendered.chip[1], padding: '3px 9px', borderRadius: 7 }}>
         {rendered.text}
       </span>
     );

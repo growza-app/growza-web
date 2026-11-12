@@ -67,7 +67,7 @@ export function Bar({ used, limit, label }: { used: number; limit: number; label
   const { pct, color } = usageState(used, limit);
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: 6 }}>
         <span style={{ fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{label}</span>
         <span style={{ fontWeight: 600, color: oklch.textFaint }}>
           {used.toLocaleString('en-IN')} / {limit.toLocaleString('en-IN')} · {pct}%
@@ -80,7 +80,7 @@ export function Bar({ used, limit, label }: { used: number; limit: number; label
   );
 }
 
-export function EmptyState({ title, sub, icon = 'businesses' }: { title: string; sub: string; icon?: IconName }) {
+export function EmptyState({ title, sub, icon = 'businesses', action }: { title: string; sub: string; icon?: IconName; action?: ReactNode }) {
   return (
     <div
       style={{
@@ -106,8 +106,9 @@ export function EmptyState({ title, sub, icon = 'businesses' }: { title: string;
       >
         <Icon name={icon} size={24} />
       </div>
-      <div style={{ fontSize: 15.5, fontWeight: 800, color: 'oklch(0.3 0.02 155)' }}>{title}</div>
-      <div style={{ fontSize: 13.5, color: oklch.textFaint, marginTop: 5 }}>{sub}</div>
+      <div style={{ fontSize: '0.96875rem', fontWeight: 800, color: 'oklch(0.3 0.02 155)' }}>{title}</div>
+      <div style={{ fontSize: '0.84375rem', color: oklch.textFaint, marginTop: 5 }}>{sub}</div>
+      {action ? <div style={{ marginTop: 16 }}>{action}</div> : null}
     </div>
   );
 }
@@ -138,7 +139,29 @@ export type { TableColumn } from '../lib/table-layout';
  * not a media query). `minWidthPx` is only for tables whose columns declare no
  * `min` of their own.
  */
-export function Table({ columns, rows, minWidthPx = 640 }: { columns: TableColumn[]; rows: ReactNode; minWidthPx?: number }) {
+/** Jira GRW-693 — which column a sortable table is ordered by. */
+export interface TableSort {
+  key: string;
+  dir: 'asc' | 'desc';
+}
+
+export function Table({
+  columns,
+  rows,
+  minWidthPx = 640,
+  sort,
+  onSort,
+  dense = false,
+}: {
+  columns: TableColumn[];
+  rows: ReactNode;
+  minWidthPx?: number;
+  /** With `onSort`, a column carrying a `sortKey` gets a heading that sorts by it. */
+  sort?: TableSort;
+  onSort?: (key: string) => void;
+  /** Jira GRW-693 — shorter rows on a laptop, for a list an admin scans. No effect on the phone cards. */
+  dense?: boolean;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   // `table` until measured. Every list screen mounts its table only once its
   // rows have arrived, on the client, so the layout effect below runs before
@@ -169,6 +192,7 @@ export function Table({ columns, rows, minWidthPx = 640 }: { columns: TableColum
       ref={ref}
       className="admin-table"
       data-layout={layout}
+      data-dense={dense ? 'true' : undefined}
       style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, overflow: 'hidden' }}
     >
       <div className="admin-table-scroll">
@@ -195,7 +219,7 @@ export function Table({ columns, rows, minWidthPx = 640 }: { columns: TableColum
           >
             {columns.map((c, i) => (
               <div key={i} data-optional={c.optional ? 'true' : undefined} style={c.right ? { textAlign: 'right' } : undefined}>
-                {c.label}
+                {c.sortKey && onSort ? <SortHeading column={c} sort={sort} onSort={onSort} /> : c.label}
               </div>
             ))}
           </div>
@@ -203,6 +227,25 @@ export function Table({ columns, rows, minWidthPx = 640 }: { columns: TableColum
         </div>
       </div>
     </div>
+  );
+}
+
+/** Jira GRW-693 — a column heading that sorts. The arrow is solid on the column in use; a second press reverses it. */
+function SortHeading({ column, sort, onSort }: { column: TableColumn; sort?: TableSort; onSort: (key: string) => void }) {
+  const dir = sort && sort.key === column.sortKey ? sort.dir : null;
+  return (
+    <button
+      type="button"
+      className="admin-sort-heading"
+      data-active={dir ? 'true' : undefined}
+      onClick={() => onSort(column.sortKey!)}
+      aria-label={`Sort by ${column.label}${dir ? (dir === 'asc' ? ', ascending' : ', descending') : ''}`}
+    >
+      {column.label}
+      <span aria-hidden className="admin-sort-arrow">
+        {dir === 'asc' ? '↑' : dir === 'desc' ? '↓' : '↕'}
+      </span>
+    </button>
   );
 }
 
@@ -289,6 +332,8 @@ export function Toggle({
       style={{
         width: 46,
         height: 26,
+        // QA 10 Nov 2026 — beside a long sentence on a phone, flex squeezed it to 26px: a bare knob, no track.
+        flexShrink: 0,
         borderRadius: 99,
         border: 'none',
         cursor: disabled ? 'not-allowed' : 'pointer',
@@ -361,7 +406,7 @@ export function InfoTooltip({ text }: { text: string }) {
             borderRadius: 8,
             background: oklch.textStrong,
             color: 'white',
-            fontSize: 11.5,
+            fontSize: '0.75rem',
             lineHeight: 1.45,
             zIndex: 10,
             boxShadow: '0 4px 12px oklch(0.2 0.02 150 / 0.25)',
@@ -427,7 +472,7 @@ export function EntitlementRow({
     >
       <div style={{ minWidth: 200, flex: '1 1 240px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 13.5, fontWeight: 700, color: oklch.text }}>{label}</span>
+          <span style={{ fontSize: '0.84375rem', fontWeight: 700, color: oklch.text }}>{label}</span>
           {tooltip ? <InfoTooltip text={tooltip} /> : null}
           {badge}
         </div>
@@ -487,17 +532,17 @@ export function Field({
     <div>
       <label
         htmlFor={controlId}
-        style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginBottom: 7 }}
+        style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginBottom: 7 }}
       >
         {label}
       </label>
       {child ? cloneElement(child, { id: controlId }) : children}
       {error ? (
-        <div role="alert" style={{ fontSize: 11.5, fontWeight: 700, color: ERROR_COLOR, marginTop: 6 }}>
+        <div role="alert" style={{ fontSize: '0.75rem', fontWeight: 700, color: ERROR_COLOR, marginTop: 6 }}>
           {error}
         </div>
       ) : hint ? (
-        <div style={{ fontSize: 11.5, color: 'oklch(0.58 0.02 155)', marginTop: 6 }}>{hint}</div>
+        <div style={{ fontSize: '0.75rem', color: 'oklch(0.58 0.02 155)', marginTop: 6 }}>{hint}</div>
       ) : null}
     </div>
   );
@@ -517,7 +562,7 @@ export function FieldLabel({ htmlFor, children }: { htmlFor: string; children: R
   return (
     <label
       htmlFor={htmlFor}
-      style={{ display: 'block', fontSize: 12, fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}
+      style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}
     >
       {children}
     </label>

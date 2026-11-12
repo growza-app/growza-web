@@ -95,8 +95,8 @@ export default function NetworkMonitoringPage() {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 6 }}>Your role does not open this screen</div>
-          <div style={{ fontSize: 13, color: oklch.textMuted }}>
+          <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 6 }}>Your role does not open this screen</div>
+          <div style={{ fontSize: '0.8125rem', color: oklch.textMuted }}>
             Ask a Super Admin to add platform-health access to it. Retrying will not change this.
           </div>
         </div>
@@ -108,7 +108,7 @@ export default function NetworkMonitoringPage() {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+          <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
           <SecondaryButton onClick={refresh}>Retry</SecondaryButton>
         </div>
       </Card>
@@ -155,15 +155,9 @@ export default function NetworkMonitoringPage() {
           <WebhookSection data={data} onRetry={refresh} loading={loading} />
           <DunningSection data={data} onRetry={refresh} loading={loading} />
 
-          {/* BR-02 — present, and honest about being empty. A zero here would
-              read as "nobody is near their limit", which is a much more
-              comforting claim than "nothing has been built to check". */}
-          <Card style={{ borderStyle: 'dashed' }}>
-            <h3 style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700, color: oklch.textMuted }}>Businesses near their limits</h3>
-            <div style={{ fontSize: 13, color: oklch.textFaint }}>Not yet available — lands with Jira {data.limits.epic}.</div>
-          </Card>
+          {/* Jira GRW-691 — "Businesses near their limits" returns when it has a data source; until then it is not drawn. */}
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: oklch.textFaint, padding: '0 2px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.75rem', color: oklch.textFaint, padding: '0 2px' }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'oklch(0.55 0.13 150)', flex: 'none' }} />
             <span>A green dot marks a figure that is current state — the range above never affects it.</span>
           </div>
@@ -261,7 +255,7 @@ function DunningSection({ data, onRetry, loading }: SectionProps) {
       windowed={RANGE_WORDS[data.range]}
     >
       {d.outcomes.length === 0 ? (
-        <div style={{ fontSize: 13, color: oklch.textFaint }}>Billing looked at nobody in {RANGE_WORDS[data.range]}.</div>
+        <div style={{ fontSize: '0.8125rem', color: oklch.textFaint }}>Billing looked at nobody in {RANGE_WORDS[data.range]}.</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {d.outcomes.map((row, i) => {
@@ -275,7 +269,7 @@ function DunningSection({ data, onRetry, loading }: SectionProps) {
                   justifyContent: 'space-between',
                   gap: 12,
                   padding: '8px 0',
-                  fontSize: 13,
+                  fontSize: '0.8125rem',
                   borderBottom: i === d.outcomes.length - 1 ? 'none' : `1px solid ${oklch.divider}`,
                 }}
               >

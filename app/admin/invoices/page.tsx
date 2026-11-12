@@ -125,15 +125,15 @@ export default function AdminInvoicesPage() {
       </div>
 
       {range.invalid ? (
-        <div style={{ fontSize: 13, color: oklch.danger, fontWeight: 600, marginBottom: 14 }}>
+        <div style={{ fontSize: '0.8125rem', color: oklch.danger, fontWeight: 600, marginBottom: 14 }}>
           The end of the range is before its start.
         </div>
       ) : searchTooShort ? (
-        <div style={{ fontSize: 13, color: oklch.textFaint, marginBottom: 14 }}>Type at least 2 characters to search.</div>
+        <div style={{ fontSize: '0.8125rem', color: oklch.textFaint, marginBottom: 14 }}>Type at least 2 characters to search.</div>
       ) : error ? (
         <Card>
           <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
             <SecondaryButton onClick={() => setPaging((p) => ({ ...p }))}>Retry</SecondaryButton>
           </div>
         </Card>
@@ -157,23 +157,23 @@ export default function AdminInvoicesPage() {
             columns={COLUMNS}
             rows={rows.map((inv) => (
               <TableRow key={inv.id} columns={COLUMNS} onClick={() => router.push(`/admin/invoices/${inv.id}`)}>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)', fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
+                <div style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.3 0.02 155)', fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
                   {inv.invoiceNumber}
                 </div>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {inv.businessName ?? '—'}
                   </div>
-                  <div style={{ fontSize: 11.5, color: oklch.textFaint }}>
+                  <div style={{ fontSize: '0.75rem', color: oklch.textFaint }}>
                     {inv.planName ?? inv.planCode} · v{inv.planVersion}
                   </div>
                 </div>
-                <div style={{ fontSize: 12.5, color: 'oklch(0.5 0.02 155)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: '0.78125rem', color: 'oklch(0.5 0.02 155)', fontWeight: 600, whiteSpace: 'nowrap' }}>
                   {formatDateOnly(inv.periodStart)} – {formatDateOnly(inv.periodEnd)}
                 </div>
-                <div style={{ fontSize: 13, color: 'oklch(0.45 0.02 155)', fontWeight: 600 }}>{formatMoneyMinor(inv.taxableAmountMinor)}</div>
-                <div style={{ fontSize: 13, color: 'oklch(0.45 0.02 155)', fontWeight: 600 }}>{formatMoneyMinor(inv.taxAmountMinor)}</div>
-                <div style={{ fontSize: 13.5, fontWeight: 800, color: 'oklch(0.28 0.02 155)' }}>{formatMoneyMinor(inv.totalMinor)}</div>
+                <div style={{ fontSize: '0.8125rem', color: 'oklch(0.45 0.02 155)', fontWeight: 600 }}>{formatMoneyMinor(inv.taxableAmountMinor)}</div>
+                <div style={{ fontSize: '0.8125rem', color: 'oklch(0.45 0.02 155)', fontWeight: 600 }}>{formatMoneyMinor(inv.taxAmountMinor)}</div>
+                <div style={{ fontSize: '0.84375rem', fontWeight: 800, color: 'oklch(0.28 0.02 155)' }}>{formatMoneyMinor(inv.totalMinor)}</div>
                 <div>
                   <StatusPill status={billingStatusLabel(inv.paymentStatus)} />
                 </div>

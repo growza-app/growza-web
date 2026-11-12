@@ -49,8 +49,8 @@ const PANEL: CSSProperties = { background: oklch.surface, border: `1px solid ${o
 function PanelHeader({ title, aside }: { title: string; aside: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>{title}</h3>
-      <span style={{ fontSize: 12, color: oklch.textFaint }}>{aside}</span>
+      <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>{title}</h3>
+      <span style={{ fontSize: '0.75rem', color: oklch.textFaint }}>{aside}</span>
     </div>
   );
 }
@@ -59,17 +59,17 @@ function PanelHeader({ title, aside }: { title: string; aside: string }) {
 function FigureLines({ figure }: { figure: string }) {
   return (
     <>
-      <div style={{ fontSize: 25, fontWeight: 800, lineHeight: 1.2 }}>
+      <div style={{ fontSize: '1.5625rem', fontWeight: 800, lineHeight: 1.2 }}>
         <Ghost>{figure}</Ghost>
       </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 3, fontSize: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 3, fontSize: '0.75rem' }}>
         <Ghost>↑ 00% vs same day last month</Ghost>
       </div>
     </>
   );
 }
 
-const STAT_LABELS = ['Total businesses', 'New this month', 'Payments failed', 'Cancellations'];
+const STAT_LABELS = ['Total businesses', 'New this month', 'Overdue Payment', 'Cancellations'];
 const MONTHS = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
 /**
  * Six, the full attention registry. An admin whose role hides some rows will
@@ -101,7 +101,7 @@ export function DashboardSkeleton() {
 
       <div className="admin-dash-cols">
         <Card className="admin-dash-quick">
-          <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Quick actions</h3>
+          <h3 style={{ margin: '0 0 14px', fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>Quick actions</h3>
           <div className="admin-quick-grid">
             {QUICK_ACTIONS.map((action) => (
               <div
@@ -121,7 +121,7 @@ export function DashboardSkeleton() {
               >
                 <span style={{ width: 21, height: 21 }} />
                 {/* The real label, invisible — so a label that wraps loaded wraps here too. */}
-                <span style={{ fontSize: 10.5, fontWeight: 600, lineHeight: 1.25, textAlign: 'center', color: 'transparent' }}>{action.label}</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.25, textAlign: 'center', color: 'transparent' }}>{action.label}</span>
               </div>
             ))}
           </div>
@@ -134,7 +134,7 @@ export function DashboardSkeleton() {
             {MONTHS.map((m, i) => (
               <div key={m} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                 <Block style={{ width: '100%', maxWidth: 72, height: 30 + i * 8, borderRadius: 6 }} />
-                <span style={{ fontSize: 10.5, fontWeight: 600, color: 'transparent' }}>{m}</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'transparent' }}>{m}</span>
               </div>
             ))}
           </div>
@@ -148,8 +148,8 @@ export function DashboardSkeleton() {
             <div className="admin-outcome-legend">
               {['Upcoming', 'Completed', 'No-show', 'Cancelled'].map((label) => (
                 <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, padding: '3px 0' }}>
-                  <Ghost style={{ fontSize: 12.5, fontWeight: 600 }}>{label}</Ghost>
-                  <Ghost style={{ fontSize: 13, fontWeight: 800 }}>000 (00%)</Ghost>
+                  <Ghost style={{ fontSize: '0.78125rem', fontWeight: 600 }}>{label}</Ghost>
+                  <Ghost style={{ fontSize: '0.8125rem', fontWeight: 800 }}>000 (00%)</Ghost>
                 </div>
               ))}
             </div>
@@ -157,15 +157,15 @@ export function DashboardSkeleton() {
 
           <Card>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>Business status</div>
-              <Ghost style={{ fontSize: 12 }}>Total 00</Ghost>
+              <div style={{ fontSize: '0.78125rem', fontWeight: 700, color: oklch.textMuted }}>Business status</div>
+              <Ghost style={{ fontSize: '0.75rem' }}>Total 00</Ghost>
             </div>
             <Block style={{ height: 10, borderRadius: 6, marginBottom: 12 }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {['Provisioning', 'Active', 'Suspended', 'Churned'].map((label) => (
                 <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0' }}>
-                  <Ghost style={{ fontSize: 13, fontWeight: 600 }}>{label}</Ghost>
-                  <Ghost style={{ fontSize: 13.5, fontWeight: 800 }}>00 (00%)</Ghost>
+                  <Ghost style={{ fontSize: '0.8125rem', fontWeight: 600 }}>{label}</Ghost>
+                  <Ghost style={{ fontSize: '0.84375rem', fontWeight: 800 }}>00 (00%)</Ghost>
                 </div>
               ))}
             </div>
@@ -173,7 +173,7 @@ export function DashboardSkeleton() {
         </div>
 
         <Card className="admin-dash-attention">
-          <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Billing attention</h3>
+          <h3 style={{ margin: '0 0 14px', fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>Billing attention</h3>
           {Array.from({ length: ATTENTION_ROWS }, (_, i) => (
             <div
               key={i}
@@ -187,10 +187,10 @@ export function DashboardSkeleton() {
             >
               <Block style={{ width: 38, height: 38, borderRadius: 11, flex: 'none' }} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 700 }}>
+                <div style={{ fontSize: '0.875rem', fontWeight: 700 }}>
                   <Ghost>Payments failed this month</Ghost>
                 </div>
-                <div style={{ fontSize: 12.5, marginTop: 2 }}>
+                <div style={{ fontSize: '0.78125rem', marginTop: 2 }}>
                   <Ghost>Nothing needs attention.</Ghost>
                 </div>
               </div>
@@ -200,16 +200,16 @@ export function DashboardSkeleton() {
 
         <Card className="admin-dash-signups">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Recent signups</h3>
-            <Ghost style={{ fontSize: 12.5, fontWeight: 700 }}>View all</Ghost>
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>Recent signups</h3>
+            <Ghost style={{ fontSize: '0.78125rem', fontWeight: 700 }}>View all</Ghost>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, overflow: 'hidden', minWidth: 0, paddingBottom: 2 }}>
             {Array.from({ length: 5 }, (_, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, flex: '0 0 auto' }}>
                 <Block style={{ width: 40, height: 40, borderRadius: '50%', flex: 'none' }} />
                 <span style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Ghost style={{ fontSize: 12.5, fontWeight: 700 }}>Salon name</Ghost>
-                  <Ghost style={{ fontSize: 11 }}>16 Sept</Ghost>
+                  <Ghost style={{ fontSize: '0.78125rem', fontWeight: 700 }}>Salon name</Ghost>
+                  <Ghost style={{ fontSize: '0.75rem' }}>16 Sept</Ghost>
                 </span>
               </div>
             ))}

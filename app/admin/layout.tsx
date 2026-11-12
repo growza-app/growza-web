@@ -1,3 +1,4 @@
+import { ToastProvider } from './components/Toast';
 import './admin.css';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
@@ -77,7 +78,9 @@ export default async function AdminRootLayout({ children }: { children: ReactNod
         <InstallPromptCapture nonce={nonce} />
         <ImpersonationProvider>
           <SearchProvider>
-            <SessionGate>{children}</SessionGate>
+            <ToastProvider>
+              <SessionGate>{children}</SessionGate>
+            </ToastProvider>
           </SearchProvider>
         </ImpersonationProvider>
         <PwaRegister />

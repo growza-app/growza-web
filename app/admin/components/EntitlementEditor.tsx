@@ -113,7 +113,7 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
   if (registryError) {
     return (
       <Card>
-        <div style={{ fontSize: 13, color: oklch.textFaint }}>{registryError}</div>
+        <div style={{ fontSize: '0.8125rem', color: oklch.textFaint }}>{registryError}</div>
       </Card>
     );
   }
@@ -155,7 +155,7 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
         keyForTitle={k.key}
         tooltip={k.description}
         description={
-          <div style={{ fontSize: 11.5, color: oklch.textFaint, marginTop: 4 }}>
+          <div style={{ fontSize: '0.75rem', color: oklch.textFaint, marginTop: 4 }}>
             Ceiling: {(k.codeDefault as number).toLocaleString('en-IN')} · {k.key}
           </div>
         }
@@ -191,7 +191,7 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 26, marginTop: 6 }}>
         {roleGrouped.map(({ role, rows: roleRows }) => (
           <div key={role}>
-            <div style={{ fontSize: 14, fontWeight: 800, color: oklch.textStrong, marginBottom: 12 }}>{capabilityRoleLabel(role)}</div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 800, color: oklch.textStrong, marginBottom: 12 }}>{capabilityRoleLabel(role)}</div>
 
             {/* GRW-296 AC-03 — most of a stylist's day isn't decided here. */}
             {role === 'stylist' ? (
@@ -210,7 +210,7 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
                 <span style={{ color: oklch.textFaint, flex: 'none', marginTop: 1 }}>
                   <Icon name="alert" size={16} />
                 </span>
-                <div style={{ fontSize: 12.5, color: oklch.textFaint, lineHeight: 1.5 }}>
+                <div style={{ fontSize: '0.78125rem', color: oklch.textFaint, lineHeight: 1.5 }}>
                   <strong style={{ color: oklch.textMuted }}>Most of a stylist&rsquo;s day isn&rsquo;t set here.</strong> Their calendar,
                   what they can edit, what they can see — that&rsquo;s{' '}
                   <Link href="/admin/roles" style={{ color: oklch.accentText, fontWeight: 700, textDecoration: 'underline' }}>
@@ -232,7 +232,7 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
                   <div key={group}>
                     <div
                       style={{
-                        fontSize: 11.5,
+                        fontSize: '0.75rem',
                         fontWeight: 700,
                         color: oklch.textFaint,
                         textTransform: 'uppercase',
@@ -253,7 +253,7 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
         ))}
 
         <div>
-          <div style={{ fontSize: 12.5, fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>
+          <div style={{ fontSize: '0.78125rem', fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>
             AI
           </div>
           <div
@@ -270,7 +270,7 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
             <span style={{ color: oklch.textFaint, flex: 'none', marginTop: 1 }}>
               <Icon name="alert" size={16} />
             </span>
-            <div style={{ fontSize: 12.5, color: oklch.textFaint, lineHeight: 1.5 }}>
+            <div style={{ fontSize: '0.78125rem', color: oklch.textFaint, lineHeight: 1.5 }}>
               <strong style={{ color: oklch.textMuted }}>Future / Not enabled.</strong> AI entitlements aren't built
               yet — no keys exist for them, so there is nothing here to toggle. Nothing on this screen claims
               otherwise.
@@ -279,7 +279,7 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
         </div>
 
         {overCeiling.length > 0 ? (
-          <div style={{ padding: '12px 14px', borderRadius: 11, background: oklch.warnBg, fontSize: 12.5, color: 'oklch(0.42 0.12 65)', fontWeight: 600, lineHeight: 1.5 }}>
+          <div style={{ padding: '12px 14px', borderRadius: 11, background: oklch.warnBg, fontSize: '0.78125rem', color: 'oklch(0.42 0.12 65)', fontWeight: 600, lineHeight: 1.5 }}>
             {overCeiling.map((k) => (
               <div key={k.key}>
                 {k.label}: entered {draftLimits[k.key]!.toLocaleString('en-IN')}, but {(k.codeDefault as number).toLocaleString('en-IN')} is
@@ -291,7 +291,7 @@ export function EntitlementEditor({ planCode, limits, capabilityGrants, onSaved 
         ) : null}
 
         {saveError ? (
-          <div style={{ fontSize: 13, fontWeight: 600, color: oklch.danger }}>{saveError}</div>
+          <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: oklch.danger }}>{saveError}</div>
         ) : null}
       </div>
 

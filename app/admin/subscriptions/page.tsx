@@ -152,7 +152,7 @@ function SubscriptionsList() {
             height: 38,
             padding: '0 16px',
             borderRadius: 10,
-            fontSize: 13.5,
+            fontSize: '0.84375rem',
             fontWeight: 700,
             cursor: 'pointer',
             ...(discountedOnly
@@ -173,7 +173,7 @@ function SubscriptionsList() {
               borderRadius: 10,
               background: oklch.surfaceSubtle,
               border: `1px solid ${oklch.borderStrong}`,
-              fontSize: 13.5,
+              fontSize: '0.84375rem',
               fontWeight: 700,
               color: oklch.textStrong,
             }}
@@ -183,7 +183,7 @@ function SubscriptionsList() {
               type="button"
               onClick={() => router.replace('/admin/subscriptions')}
               aria-label={`Show all subscriptions, not only ${SUBSCRIPTION_VIEWS[view]!.toLowerCase()}`}
-              style={{ height: 28, padding: '0 10px', borderRadius: 8, border: 'none', background: 'white', color: oklch.accentText, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}
+              style={{ height: 28, padding: '0 10px', borderRadius: 8, border: 'none', background: 'white', color: oklch.accentText, fontSize: '0.78125rem', fontWeight: 700, cursor: 'pointer' }}
             >
               Show all
             </button>
@@ -192,11 +192,11 @@ function SubscriptionsList() {
       </div>
 
       {searchTooShort ? (
-        <div style={{ fontSize: 13, color: oklch.textFaint, marginBottom: 14 }}>Type at least 2 characters to search.</div>
+        <div style={{ fontSize: '0.8125rem', color: oklch.textFaint, marginBottom: 14 }}>Type at least 2 characters to search.</div>
       ) : error ? (
         <Card>
           <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
             <SecondaryButton onClick={() => setPaging((p) => ({ ...p }))}>Retry</SecondaryButton>
           </div>
         </Card>
@@ -232,27 +232,27 @@ function SubscriptionsList() {
                       <TypeIcon type={s.vertical} size={16} />
                     </span>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {s.businessName}
                       </div>
-                      <div style={{ fontSize: 11.5, color: oklch.textFaint }}>{s.vertical}</div>
+                      <div style={{ fontSize: '0.75rem', color: oklch.textFaint }}>{s.vertical}</div>
                     </div>
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: 'oklch(0.4 0.02 155)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ fontSize: '0.78125rem', fontWeight: 600, color: 'oklch(0.4 0.02 155)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {s.planName}
                     </div>
                     {/* The version this business is pinned to. It matters on this
                         screen because a later plan version does not re-rate an
                         existing subscription — two rows on the same plan can
                         legitimately show different list prices. */}
-                    <div style={{ fontSize: 11.5, color: oklch.textFaint }}>v{s.planVersion}</div>
+                    <div style={{ fontSize: '0.75rem', color: oklch.textFaint }}>v{s.planVersion}</div>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'oklch(0.45 0.02 155)' }}>{formatMoneyMinor(s.listPriceMinor)}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: discounted ? 'oklch(0.5 0.15 25)' : oklch.textFaint }}>
+                  <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'oklch(0.45 0.02 155)' }}>{formatMoneyMinor(s.listPriceMinor)}</div>
+                  <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: discounted ? 'oklch(0.5 0.15 25)' : oklch.textFaint }}>
                     {discounted ? '−' + formatMoneyMinor(s.discountAmountMinor) : '—'}
                   </div>
-                  <div style={{ fontSize: 13.5, fontWeight: 800, color: oklch.accentText }}>{formatMoneyMinor(s.finalPriceMinor)}</div>
+                  <div style={{ fontSize: '0.84375rem', fontWeight: 800, color: oklch.accentText }}>{formatMoneyMinor(s.finalPriceMinor)}</div>
                   <div>
                     <StatusPill status={subscriptionStatusLabel(s.status)} />
                   </div>
@@ -265,7 +265,7 @@ function SubscriptionsList() {
                         pressing the button. */}
                     <div
                       style={{
-                        fontSize: 13,
+                        fontSize: '0.8125rem',
                         fontWeight: 700,
                         color: isTerminalSubscriptionStatus(s.status) ? 'oklch(0.6 0.02 155)' : 'oklch(0.3 0.02 155)',
                       }}
@@ -276,7 +276,7 @@ function SubscriptionsList() {
                         next billing date, and without this it reads as one that
                         will be charged. */}
                     {s.cancelAtPeriodEnd ? (
-                      <div style={{ fontSize: 11.5, fontWeight: 700, color: 'oklch(0.52 0.13 65)' }}>Ends at period end</div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'oklch(0.52 0.13 65)' }}>Ends at period end</div>
                     ) : null}
                   </div>
                   <div style={{ textAlign: 'right', display: 'flex', gap: 7, justifyContent: 'flex-end', alignItems: 'center' }}>
@@ -298,7 +298,7 @@ function SubscriptionsList() {
                           border: `1px solid ${oklch.borderStrong}`,
                           background: 'white',
                           color: oklch.textStrong,
-                          fontSize: 12.5,
+                          fontSize: '0.78125rem',
                           fontWeight: 700,
                           cursor: 'pointer',
                           whiteSpace: 'nowrap',

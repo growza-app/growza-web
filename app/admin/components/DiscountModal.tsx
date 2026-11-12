@@ -269,10 +269,10 @@ export function DiscountModal({
       >
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, padding: '22px 24px 0' }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: '-0.01em', color: oklch.textStrong }}>
+            <h3 style={{ margin: 0, fontSize: '1.1875rem', fontWeight: 800, letterSpacing: '-0.01em', color: oklch.textStrong }}>
               Customer-specific pricing
             </h3>
-            <p style={{ margin: '4px 0 0', fontSize: 13.5, color: oklch.textMuted }}>
+            <p style={{ margin: '4px 0 0', fontSize: '0.84375rem', color: oklch.textMuted }}>
               {businessName}
               {planName ? ` · ${planName}` : ''}
             </p>
@@ -312,15 +312,15 @@ export function DiscountModal({
               border: `1px solid ${oklch.border}`,
             }}
           >
-            <span style={{ fontSize: 13.5, fontWeight: 600, color: 'oklch(0.45 0.02 155)' }}>Standard plan price</span>
-            <span style={{ fontSize: 16, fontWeight: 800, color: oklch.text }}>
+            <span style={{ fontSize: '0.84375rem', fontWeight: 600, color: 'oklch(0.45 0.02 155)' }}>Standard plan price</span>
+            <span style={{ fontSize: '1rem', fontWeight: 800, color: oklch.text }}>
               {inr(listPriceRupees)}
-              <span style={{ fontSize: 12, fontWeight: 600, color: oklch.textFaint }}>/mo</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: oklch.textFaint }}>/mo</span>
             </span>
           </div>
 
           {currentDiscount ? (
-            <div style={{ marginTop: 12, fontSize: 12, fontWeight: 600, color: oklch.textFaint }}>
+            <div style={{ marginTop: 12, fontSize: '0.75rem', fontWeight: 600, color: oklch.textFaint }}>
               Currently: {currentDiscount.reason}
               {currentDiscount.endsAt ? ` · ends ${formatDateOnly(currentDiscount.endsAt)}` : ' · permanent'}
             </div>
@@ -329,7 +329,7 @@ export function DiscountModal({
           <div style={{ marginTop: 16 }}>
             {/* A choice of buttons, not one control, so nothing for a <label>
                 to point at: the group is named by the heading instead. */}
-            <div id={typeLabelId} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
+            <div id={typeLabelId} style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
               Discount type
             </div>
             <div role="group" aria-labelledby={typeLabelId} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
@@ -343,7 +343,7 @@ export function DiscountModal({
                     flex: 1,
                     height: 40,
                     borderRadius: 10,
-                    fontSize: 13,
+                    fontSize: '0.8125rem',
                     fontWeight: 700,
                     cursor: busy ? 'not-allowed' : 'pointer',
                     ...(type === v
@@ -359,7 +359,7 @@ export function DiscountModal({
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 14, marginTop: 16 }}>
             <div>
-              <label htmlFor={valueId} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
+              <label htmlFor={valueId} style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
                 {valueLabel}
               </label>
               <TextInput
@@ -372,16 +372,16 @@ export function DiscountModal({
                 aria-invalid={notWholePercent || undefined}
                 aria-describedby={notWholePercent ? `${valueId}-whole` : undefined}
                 onChange={(e) => setValue(e.target.value)}
-                style={{ marginTop: 7, fontSize: 15, fontWeight: 700 }}
+                style={{ marginTop: 7, fontSize: '0.9375rem', fontWeight: 700 }}
               />
               {notWholePercent ? (
-                <p id={`${valueId}-whole`} role="alert" style={{ margin: '6px 0 0', fontSize: 12.5, color: 'oklch(0.5 0.17 25)' }}>
+                <p id={`${valueId}-whole`} role="alert" style={{ margin: '6px 0 0', fontSize: '0.78125rem', color: 'oklch(0.5 0.17 25)' }}>
                   Use a whole number — for example 12 or 13, not 12.5.
                 </p>
               ) : null}
             </div>
             <div>
-              <label htmlFor={durationId} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
+              <label htmlFor={durationId} style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
                 Duration
               </label>
               <select
@@ -397,7 +397,7 @@ export function DiscountModal({
                   borderRadius: 11,
                   border: `1px solid ${oklch.borderStrong}`,
                   background: oklch.inputBg,
-                  fontSize: 14,
+                  fontSize: '0.875rem',
                   fontWeight: 600,
                   outline: 'none',
                   cursor: busy ? 'not-allowed' : 'pointer',
@@ -420,7 +420,7 @@ export function DiscountModal({
           </div>
 
           <div>
-            <label htmlFor={reasonId} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginTop: 16 }}>
+            <label htmlFor={reasonId} style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.45 0.02 155)', display: 'block', marginTop: 16 }}>
               Reason
             </label>
             <TextInput
@@ -454,13 +454,13 @@ export function DiscountModal({
                 marginTop: 5,
               }}
             >
-              <span style={{ fontSize: 14, fontWeight: 800, color: oklch.textStrong }}>Charged per month</span>
-              <span style={{ fontSize: 19, fontWeight: 800, color: oklch.accentText }}>{inr(math.finalMinor / 100)}</span>
+              <span style={{ fontSize: '0.875rem', fontWeight: 800, color: oklch.textStrong }}>Charged per month</span>
+              <span style={{ fontSize: '1.1875rem', fontWeight: 800, color: oklch.accentText }}>{inr(math.finalMinor / 100)}</span>
             </div>
           </div>
 
           {math.outOfRange ? (
-            <div style={{ marginTop: 12, fontSize: 12.5, fontWeight: 600, color: 'oklch(0.5 0.15 25)' }}>
+            <div style={{ marginTop: 12, fontSize: '0.78125rem', fontWeight: 600, color: 'oklch(0.5 0.15 25)' }}>
               {type === 'final' ? 'The final price entered is above list price.' : 'That discount is larger than the list price itself.'}
             </div>
           ) : null}
@@ -473,7 +473,7 @@ export function DiscountModal({
             * then depended on whether the owner had paid yet. Billing now starts at go-live and an offer is set
             * on the enrol form, so the rule is the same every month and this line can simply state it.
             */}
-          <p style={{ marginTop: 12, fontSize: 12.5, fontWeight: 600, color: oklch.textMuted }}>
+          <p style={{ marginTop: 12, fontSize: '0.78125rem', fontWeight: 600, color: oklch.textMuted }}>
             {subscription?.liveYet === false
               ? 'This business is not live yet. It applies to its first bill, raised when it goes live.'
               : subscription?.nextBillingDate
@@ -481,7 +481,7 @@ export function DiscountModal({
                 : 'Applies from the next bill. The current bill does not change.'}
           </p>
 
-          {saveError ? <div style={{ marginTop: 12, fontSize: 13, fontWeight: 600, color: oklch.danger }}>{saveError}</div> : null}
+          {saveError ? <div style={{ marginTop: 12, fontSize: '0.8125rem', fontWeight: 600, color: oklch.danger }}>{saveError}</div> : null}
         </div>
 
         <div style={{ display: 'flex', gap: 10, padding: '14px 24px 22px' }}>
@@ -538,7 +538,7 @@ function Row({
   valueColor?: string;
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13.5, padding: '5px 0' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.84375rem', padding: '5px 0' }}>
       <span style={{ color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>{label}</span>
       <span style={{ fontWeight: 700, color: valueColor ?? 'oklch(0.3 0.02 155)' }}>{value}</span>
     </div>

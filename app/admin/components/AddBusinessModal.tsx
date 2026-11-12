@@ -308,10 +308,10 @@ export function AddBusinessModal({
         }}
       >
         <div style={{ padding: '22px 24px 0', flexShrink: 0 }}>
-          <h3 id={`${ids}-title`} style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: '-0.01em', color: oklch.textStrong }}>
+          <h3 id={`${ids}-title`} style={{ margin: 0, fontSize: '1.1875rem', fontWeight: 800, letterSpacing: '-0.01em', color: oklch.textStrong }}>
             Add a business
           </h3>
-          <p style={{ margin: '4px 0 0', fontSize: 13.5, color: oklch.textMuted }}>
+          <p style={{ margin: '4px 0 0', fontSize: '0.84375rem', color: oklch.textMuted }}>
             The business is created ready to set up — it does not start taking bookings until it is made live.
           </p>
         </div>
@@ -434,7 +434,7 @@ export function AddBusinessModal({
                       border: `1px solid ${errorFor('owner.phone') ? ERROR_COLOR : oklch.borderStrong}`,
                       borderRight: 'none',
                       background: 'oklch(0.95 0.01 155)',
-                      fontSize: 14,
+                      fontSize: '0.875rem',
                       fontWeight: 700,
                       color: oklch.textMuted,
                       whiteSpace: 'nowrap',
@@ -562,10 +562,10 @@ export function OwnerCredentialNotice({ created, onClose }: { created: CreatedBu
         aria-labelledby={`${ids}-title`}
         style={{ width: 'min(520px, 100%)', background: 'white', borderRadius: 18, padding: 24, boxShadow: '0 24px 60px oklch(0.2 0.04 155 / 0.35)' }}
       >
-        <h3 id={`${ids}-title`} style={{ margin: 0, fontSize: 19, fontWeight: 800, color: oklch.textStrong }}>
+        <h3 id={`${ids}-title`} style={{ margin: 0, fontSize: '1.1875rem', fontWeight: 800, color: oklch.textStrong }}>
           Business created
         </h3>
-        <p style={{ margin: '6px 0 0', fontSize: 13.5, color: oklch.textMuted }}>
+        <p style={{ margin: '6px 0 0', fontSize: '0.84375rem', color: oklch.textMuted }}>
           {created.catalog.services} services were added from the ready-made catalogue. Give the owner this one-time password —
           <strong> it cannot be shown again.</strong>
         </p>
@@ -577,7 +577,7 @@ export function OwnerCredentialNotice({ created, onClose }: { created: CreatedBu
             background: 'oklch(0.96 0.01 155)',
             border: `1px solid ${oklch.borderStrong}`,
             fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-            fontSize: 15,
+            fontSize: '0.9375rem',
             fontWeight: 700,
             wordBreak: 'break-all',
           }}
@@ -597,5 +597,5 @@ function Row({ children }: { children: React.ReactNode }) {
 }
 
 function ErrorText({ text }: { text: string }) {
-  return <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{text}</div>;
+  return <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{text}</div>;
 }

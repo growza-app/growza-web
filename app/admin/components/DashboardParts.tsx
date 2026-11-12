@@ -197,7 +197,8 @@ export function StatCard({
 }: {
   icon: StatIcon;
   label: string;
-  value: number;
+  /** `null` = the figure could not be read; shown as a dash, never as 0 (Jira GRW-690 AC-03). */
+  value: number | null;
   href: string;
   tint: StatTint;
   /** Real movement only. `text` is already formatted ("12% vs last month"); `direction` colours the arrow. */
@@ -247,7 +248,7 @@ export function StatCard({
           {label}
         </div>
         <div className="admin-stat-value" style={{ color: oklch.textStrong }}>
-          {value.toLocaleString('en-IN')}
+          {value === null ? '—' : value.toLocaleString('en-IN')}
         </div>
         <div className="admin-stat-delta">
           {delta ? (
@@ -287,6 +288,8 @@ export function StatCard({
  */
 const ATTENTION_SUBTITLES: Record<string, { clear: string; action: string }> = {
   payments_failed: { clear: 'Nothing needs attention.', action: 'Currently failing — open to reconcile.' },
+  // Owner, 11 Nov 2026 — behind on the bill, on the way to suspension.
+  overdue_payment: { clear: 'Every bill is paid.', action: 'Behind on their bill — open to see who, and when they will be suspended.' },
   uninvoiced_periods: {
     clear: 'Every live subscription has been invoiced for its current period.',
     action: 'These salons are not being billed — check a tax rule covers their period.',
@@ -294,6 +297,11 @@ const ATTENTION_SUBTITLES: Record<string, { clear: string; action: string }> = {
   // GRW-265 — a cancellation is not a failure, so it doesn't get the default
   // "Currently failing" wording; that would misdescribe a business that
   // simply left, the same per-row-wording lesson GRW-167 established above.
+  // QA loophole L4 — a download of every business is worth a Super Admin's glance, not an alarm.
+  list_exports: {
+    clear: 'Nobody downloaded the business list this week.',
+    action: 'The business list was downloaded — open to see who, when and which filters.',
+  },
   cancellations: {
     clear: 'No subscriptions cancelled this month.',
     action: 'Cancelled this month — open to see which businesses and consider following up.',
@@ -332,12 +340,12 @@ export function RevenueCard({
   return (
     <div className={className} style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, padding: 16 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Revenue</h3>
-        <span style={{ fontSize: 12, color: oklch.textFaint }}>This month</span>
+        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>Revenue</h3>
+        <span style={{ fontSize: '0.75rem', color: oklch.textFaint }}>This month</span>
       </div>
-      <div style={{ fontSize: 25, fontWeight: 800, color: oklch.textStrong, lineHeight: 1.2 }}>{inr(thisMonthMinor / 100)}</div>
+      <div style={{ fontSize: '1.5625rem', fontWeight: 800, color: oklch.textStrong, lineHeight: 1.2 }}>{inr(thisMonthMinor / 100)}</div>
       {delta ? (
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 3, fontSize: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 3, fontSize: '0.75rem' }}>
           <span style={{ color: deltaColor, fontWeight: 800 }}>
             {delta.direction === 'up' ? '↑' : delta.direction === 'down' ? '↓' : '—'}
           </span>
@@ -366,7 +374,7 @@ export function RevenueCard({
                   background: isCurrent ? 'oklch(0.55 0.13 150)' : 'oklch(0.78 0.08 150)',
                 }}
               />
-              <span style={{ fontSize: 10.5, color: oklch.textFaint, fontWeight: 600 }}>{monthShort(m.month)}</span>
+              <span style={{ fontSize: '0.75rem', color: oklch.textFaint, fontWeight: 600 }}>{monthShort(m.month)}</span>
             </div>
           );
         })}
@@ -441,14 +449,14 @@ export function BookingsCard({
   return (
     <div className={className} style={{ background: oklch.surface, border: `1px solid ${oklch.border}`, borderRadius: 16, padding: 16 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Bookings</h3>
-        <span style={{ fontSize: 12, color: oklch.textFaint }}>This month · all businesses</span>
+        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>Bookings</h3>
+        <span style={{ fontSize: '0.75rem', color: oklch.textFaint }}>This month · all businesses</span>
       </div>
-      <div style={{ fontSize: 25, fontWeight: 800, color: oklch.textStrong, lineHeight: 1.2 }}>{bookings.thisMonth.toLocaleString('en-IN')}</div>
+      <div style={{ fontSize: '1.5625rem', fontWeight: 800, color: oklch.textStrong, lineHeight: 1.2 }}>{bookings.thisMonth.toLocaleString('en-IN')}</div>
       {/* No movement line when last month had nothing to compare against —
           "↑ 100%" on a first month is noise, not information. */}
       {delta ? (
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 3, fontSize: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 3, fontSize: '0.75rem' }}>
           <span style={{ color: deltaColor, fontWeight: 800 }}>{delta.direction === 'up' ? '↑' : delta.direction === 'down' ? '↓' : '—'}</span>
           <span style={{ color: oklch.textFaint, fontWeight: 500 }}>{delta.text}</span>
         </div>
@@ -458,7 +466,7 @@ export function BookingsCard({
         // A real zero, said as one — not an empty bar that looks like a fault.
         // In the same words as the cards beside it: on an empty platform that
         // is the shared sentence, otherwise their "No … yet" shape.
-        <div style={{ fontSize: 13, color: oklch.textFaint, marginTop: 12 }}>
+        <div style={{ fontSize: '0.8125rem', color: oklch.textFaint, marginTop: 12 }}>
           {platformEmpty ? PLATFORM_EMPTY_COPY : 'No bookings this month yet.'}
         </div>
       ) : (
@@ -475,11 +483,11 @@ export function BookingsCard({
               <div key={o.status} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '3px 0', minWidth: 0 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: OUTCOME_STYLE[o.status].color, flex: 'none' }} />
-                  <span style={{ fontSize: 12.5, fontWeight: 600, color: oklch.textStrong }}>{OUTCOME_STYLE[o.status].label}</span>
+                  <span style={{ fontSize: '0.78125rem', fontWeight: 600, color: oklch.textStrong }}>{OUTCOME_STYLE[o.status].label}</span>
                 </span>
                 <span style={{ display: 'flex', alignItems: 'baseline', gap: 4, flex: 'none' }}>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: oklch.textStrong }}>{o.count.toLocaleString('en-IN')}</span>
-                  <span style={{ fontSize: 11, color: oklch.textFaint }}>({shareLabel(o.count, bookings.thisMonth, o.pct)})</span>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: oklch.textStrong }}>{o.count.toLocaleString('en-IN')}</span>
+                  <span style={{ fontSize: '0.75rem', color: oklch.textFaint }}>({shareLabel(o.count, bookings.thisMonth, o.pct)})</span>
                 </span>
               </div>
             ))}
@@ -495,6 +503,8 @@ function monthShort(iso: string): string {
 }
 
 export function AttentionRowView({ row, isLast }: { row: AttentionRow; isLast: boolean }) {
+  // Jira GRW-691 — callers pass built rows only (`builtRows`); this is the backstop, so a ticket number never shows.
+  if (!row.available) return null;
   const body = (
     <div
       style={{
@@ -521,8 +531,8 @@ export function AttentionRowView({ row, isLast }: { row: AttentionRow; isLast: b
         <Icon name="alert" size={18} />
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: row.available ? oklch.textStrong : oklch.textMuted }}>{row.label}</div>
-        <div style={{ fontSize: 12.5, color: oklch.textFaint, marginTop: 2 }}>
+        <div style={{ fontSize: '0.875rem', fontWeight: 700, color: row.available ? oklch.textStrong : oklch.textMuted }}>{row.label}</div>
+        <div style={{ fontSize: '0.78125rem', color: oklch.textFaint, marginTop: 2 }}>
           {row.available
             ? // A count on its own read as a stray number in the subtitle
               // slot. Say what it means, and — for the zero case — say it is
@@ -537,12 +547,12 @@ export function AttentionRowView({ row, isLast }: { row: AttentionRow; isLast: b
               // everywhere else.
               (ATTENTION_SUBTITLES[row.key]?.[row.count === 0 ? 'clear' : 'action'] ??
               (row.count === 0 ? 'Nothing needs attention.' : 'Currently failing — open to reconcile.'))
-            : `Not yet available — lands with Jira ${row.epic}.`}
+            : null}
         </div>
       </div>
       {row.available ? (
         <>
-          <span style={{ fontSize: 20, fontWeight: 800, color: row.count === 0 ? oklch.textFaint : 'oklch(0.5 0.14 25)' }}>
+          <span style={{ fontSize: '1.25rem', fontWeight: 800, color: row.count === 0 ? oklch.textFaint : 'oklch(0.5 0.14 25)' }}>
             {row.count}
           </span>
           <span style={{ color: oklch.textFaint, display: 'flex' }}>

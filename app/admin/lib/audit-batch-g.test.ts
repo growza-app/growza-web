@@ -14,7 +14,7 @@ const read = (p: string) => readFileSync(resolve(__dirname, '..', p), 'utf8');
 
 describe('M10 — a dashboard tile opens the rows it counted', () => {
   it('the list knows both views the API filters by', () => {
-    expect(Object.keys(SUBSCRIPTION_VIEWS).sort()).toEqual(['cancelled_this_month', 'uninvoiced']);
+    expect(Object.keys(SUBSCRIPTION_VIEWS).sort()).toEqual(['cancelled_this_month', 'overdue', 'uninvoiced']);
   });
 
   it('reads ?view= from the URL, sends it, and offers Show all', () => {

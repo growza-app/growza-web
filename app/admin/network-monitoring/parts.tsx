@@ -74,16 +74,16 @@ export function Panel({
   return (
     <Card>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>{title}</h3>
+        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>{title}</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* Says so on the panel, not only in a legend: a reader who has just
               changed the range needs to know which panels moved. */}
           {windowed ? (
-            <span style={{ fontSize: 11, color: oklch.textFaint, border: `1px solid ${oklch.border}`, borderRadius: 8, padding: '2px 8px' }}>
+            <span style={{ fontSize: '0.75rem', color: oklch.textFaint, border: `1px solid ${oklch.border}`, borderRadius: 8, padding: '2px 8px' }}>
               {windowed}
             </span>
           ) : null}
-          <span style={{ fontSize: 12, fontWeight: 700, color: tone.fg, background: tone.bg, borderRadius: 8, padding: '3px 10px' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: tone.fg, background: tone.bg, borderRadius: 8, padding: '3px 10px' }}>
             {status.text}
           </span>
         </div>
@@ -106,8 +106,8 @@ export function PanelFailure({ title, error, onRetry, disabled }: { title: strin
     <Card>
       <div role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
         <div style={{ minWidth: 0 }}>
-          <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>{title}</h3>
-          <div style={{ fontSize: 13, color: TONES.bad.fg }}>{error}</div>
+          <h3 style={{ margin: '0 0 4px', fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>{title}</h3>
+          <div style={{ fontSize: '0.8125rem', color: TONES.bad.fg }}>{error}</div>
         </div>
         <SecondaryButton onClick={onRetry} disabled={disabled}>
           Retry
@@ -158,11 +158,11 @@ export function StatTile({
           style={{ position: 'absolute', top: 10, right: 10, width: 7, height: 7, borderRadius: '50%', background: 'oklch(0.55 0.13 150)' }}
         />
       ) : null}
-      <div style={{ fontSize: 11.5, color: oklch.textMuted, fontWeight: 500, paddingRight: live ? 14 : 0, overflowWrap: 'anywhere' }}>{label}</div>
-      <div title={title} style={{ fontSize: 20, fontWeight: 800, lineHeight: 1.2, marginTop: 3, color: bad ? 'oklch(0.48 0.16 25)' : oklch.textStrong }}>
+      <div style={{ fontSize: '0.75rem', color: oklch.textMuted, fontWeight: 500, paddingRight: live ? 14 : 0, overflowWrap: 'anywhere' }}>{label}</div>
+      <div title={title} style={{ fontSize: '1.25rem', fontWeight: 800, lineHeight: 1.2, marginTop: 3, color: bad ? 'oklch(0.48 0.16 25)' : oklch.textStrong }}>
         {value}
       </div>
-      {note ? <div style={{ fontSize: 11, color: oklch.textFaint, marginTop: 2 }}>{note}</div> : null}
+      {note ? <div style={{ fontSize: '0.75rem', color: oklch.textFaint, marginTop: 2 }}>{note}</div> : null}
     </div>
   );
 }
@@ -221,7 +221,7 @@ export function Bars({ buckets, caption }: { buckets: Bucket[]; caption: string 
           />
         ))}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: oklch.textFaint, marginTop: 5 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: oklch.textFaint, marginTop: 5 }}>
         <span>{buckets[0]?.label ?? ''}</span>
         <span>{caption}</span>
         <span>now</span>
@@ -247,7 +247,7 @@ export function Freshness({ readAt, staleAfterMinutes }: { readAt: string | null
     return () => clearInterval(t);
   }, []);
 
-  if (!readAt) return <span style={{ fontSize: 12, color: oklch.textFaint }}>Reading…</span>;
+  if (!readAt) return <span style={{ fontSize: '0.75rem', color: oklch.textFaint }}>Reading…</span>;
 
   const ageMs = now - new Date(readAt).getTime();
   const minutes = Math.floor(ageMs / 60_000);
@@ -256,13 +256,13 @@ export function Freshness({ readAt, staleAfterMinutes }: { readAt: string | null
   // BR-04 — the threshold comes from the API's configuration, not a literal here.
   if (minutes >= staleAfterMinutes) {
     return (
-      <span style={{ fontSize: 12, fontWeight: 700, color: 'oklch(0.5 0.13 65)' }}>
+      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'oklch(0.5 0.13 65)' }}>
         Figures are {minutes} minutes old — refresh
       </span>
     );
   }
   return (
-    <span style={{ fontSize: 12, color: oklch.textFaint }}>
+    <span style={{ fontSize: '0.75rem', color: oklch.textFaint }}>
       as of {clock}
       {minutes >= 2 ? ` · ${minutes} minutes ago` : ''}
     </span>

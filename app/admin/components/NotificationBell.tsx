@@ -159,7 +159,7 @@ export function NotificationBell() {
               borderRadius: 9,
               background: 'oklch(0.55 0.19 25)',
               color: 'white',
-              fontSize: 10.5,
+              fontSize: '0.75rem',
               fontWeight: 700,
               display: 'flex',
               alignItems: 'center',
@@ -192,7 +192,7 @@ export function NotificationBell() {
             style={{
               padding: '11px 14px',
               borderBottom: `1px solid ${oklch.divider}`,
-              fontSize: 12.5,
+              fontSize: '0.78125rem',
               fontWeight: 800,
               color: oklch.textStrong,
             }}
@@ -200,7 +200,7 @@ export function NotificationBell() {
             Needs attention
           </div>
           {live.length === 0 ? (
-            <div style={{ padding: '16px 14px', fontSize: 13, color: oklch.textFaint }}>Nothing needs attention right now.</div>
+            <div style={{ padding: '16px 14px', fontSize: '0.8125rem', color: oklch.textFaint }}>Nothing needs attention right now.</div>
           ) : (
             live.map((row) => (
               <Link
@@ -232,8 +232,8 @@ export function NotificationBell() {
                 >
                   <Icon name="alert" size={15} />
                 </span>
-                <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: oklch.textStrong }}>{row.label}</span>
-                <span style={{ fontSize: 13.5, fontWeight: 800, color: 'oklch(0.5 0.14 25)' }}>{row.count}</span>
+                <span style={{ flex: 1, minWidth: 0, fontSize: '0.8125rem', fontWeight: 600, color: oklch.textStrong }}>{row.label}</span>
+                <span style={{ fontSize: '0.84375rem', fontWeight: 800, color: 'oklch(0.5 0.14 25)' }}>{row.count}</span>
               </Link>
             ))
           )}

@@ -61,7 +61,7 @@ export default function CreatePlanPage() {
     return (
       <Card>
         <SectionTitle title="Create a plan" />
-        <p style={{ fontSize: 13.5, color: oklch.textMuted, margin: '6px 0 0' }}>Creating a plan needs Manage plans, which your role does not have.</p>
+        <p style={{ fontSize: '0.84375rem', color: oklch.textMuted, margin: '6px 0 0' }}>Creating a plan needs Manage plans, which your role does not have.</p>
       </Card>
     );
   }
@@ -87,7 +87,7 @@ export default function CreatePlanPage() {
               borderRadius: 11,
               border: `1px solid ${oklch.borderStrong}`,
               background: oklch.inputBg,
-              fontSize: 14,
+              fontSize: '0.875rem',
               fontWeight: 500,
               outline: 'none',
               resize: 'vertical',
@@ -110,7 +110,7 @@ export default function CreatePlanPage() {
           <TextInput value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Elite tier now priced and ready to sell" />
         </Field>
 
-        {error ? <div style={{ fontSize: 13, fontWeight: 600, color: oklch.danger }}>{error}</div> : null}
+        {error ? <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: oklch.danger }}>{error}</div> : null}
 
         <div style={{ display: 'flex', gap: 10 }}>
           <SecondaryButton onClick={() => router.push('/admin/plans')} style={{ flex: 1, height: 44 }}>
@@ -124,7 +124,7 @@ export default function CreatePlanPage() {
             {saving ? 'Creating…' : 'Create plan'}
           </PrimaryButton>
         </div>
-        <div style={{ fontSize: 12, color: oklch.textFaint }}>Entitlements are set on the next screen, once the plan exists.</div>
+        <div style={{ fontSize: '0.75rem', color: oklch.textFaint }}>Entitlements are set on the next screen, once the plan exists.</div>
       </div>
     </Card>
   );

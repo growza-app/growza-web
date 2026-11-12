@@ -71,7 +71,7 @@ export function BranchPriceDialog({
           .finally(() => setSaving(false));
       }}
     >
-      <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13, fontWeight: 600, marginBottom: 10 }}>
+      <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: '0.8125rem', fontWeight: 600, marginBottom: 10 }}>
         <input type="checkbox" checked={usePlan} onChange={(e) => setUsePlan(e.target.checked)} />
         Use the plan&apos;s price
       </label>
@@ -82,7 +82,7 @@ export function BranchPriceDialog({
           min={0}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          style={{ width: '100%', padding: '9px 11px', borderRadius: 10, border: `1px solid ${oklch.borderStrong}`, fontSize: 14 }}
+          style={{ width: '100%', padding: '9px 11px', borderRadius: 10, border: `1px solid ${oklch.borderStrong}`, fontSize: '0.875rem' }}
         />
       ) : null}
     </ConfirmDialog>

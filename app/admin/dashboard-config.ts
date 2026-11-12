@@ -18,7 +18,22 @@ export const STAT_TINTS = {
   blue: { bg: 'oklch(0.96 0.025 250)', fg: 'oklch(0.5 0.15 250)', border: 'oklch(0.92 0.035 250)' },
   amber: { bg: 'oklch(0.965 0.035 75)', fg: 'oklch(0.55 0.13 65)', border: 'oklch(0.93 0.05 75)' },
   rose: { bg: 'oklch(0.965 0.025 25)', fg: 'oklch(0.53 0.16 25)', border: 'oklch(0.93 0.035 25)' },
+  /** Jira GRW-690 — a warning card with nothing to warn about. Grey, so colour on this dashboard means "look here". */
+  neutral: { bg: 'oklch(0.975 0.003 250)', fg: 'oklch(0.5 0.01 250)', border: 'oklch(0.92 0.005 250)' },
 } satisfies Record<string, StatTint>;
+
+/**
+ * Jira GRW-690 — an attention card wears its warning colour only when it has something in it. "0 payments failed" in
+ * amber read as an alarm on a quiet day; a count we could not read is not a zero either, and is neutral too.
+ */
+export function attentionTint(count: number | undefined, warning: StatTint): StatTint {
+  return count !== undefined && count > 0 ? warning : STAT_TINTS.neutral;
+}
+
+/** Jira GRW-691 — the rows that have a real figure behind them. An unbuilt row is not shown at all. */
+export function builtRows<T extends { available: boolean }>(rows: readonly T[]): T[] {
+  return rows.filter((r) => r.available);
+}
 
 export const STATUS_LABEL: Record<string, string> = { provisioning: 'Provisioning', active: 'Active', suspended: 'Suspended', churned: 'Churned' };
 
@@ -41,13 +56,15 @@ export const ATTENTION_CARDS: Array<{
   note: (count: number) => string;
 }> = [
   {
-    key: 'payments_failed',
-    label: 'Payments failed',
+    // Owner, 11 Nov 2026 — "I have no idea which business is past its due date and in grace." Every business whose
+    // bill is unpaid and on the way to suspension: Payment failed, Grace period or Past due. It takes the place of
+    // Payments failed, which counted declined ONLINE payments only — a business paying by UPI that simply has not
+    // paid never showed there. Failed payments are still listed under Billing attention below.
+    key: 'overdue_payment',
+    label: 'Overdue Payment',
     icon: 'alert',
     tint: STAT_TINTS.amber,
-    // Jira GRW-287 — the count is this month's (GRW-276 AC-04), and the short
-    // label cannot say so, so the note does — as the Cancellations card's does.
-    note: (count) => (count > 0 ? 'This month · open to reconcile' : 'None this month'),
+    note: (count) => (count > 0 ? 'Behind on their bill · open to see' : 'Every bill is paid'),
   },
   {
     key: 'cancellations',
@@ -83,3 +100,37 @@ export const QUICK_ACTIONS: Array<{
   // even 4-up row instead of a lone tile on its own second line.
   { icon: 'audit', label: 'Audit log', href: '/admin/audit-logs', tint: 'audit', hideOnMobile: true, permission: 'admin.audit.view' },
 ];
+
+/** QA loophole L1 — a test business is left out of every figure here; this says how many, so none hides quietly. */
+export function testBusinessesLine(n: number): string {
+  return n === 1 ? '1 test business not counted' : `${n} test businesses not counted`;
+}
+
+/** Owner, 11 Nov 2026 — the Needs attention tile. Reasons in the order an admin should act on them. */
+export type AttentionKind = 'overdue' | 'payment_failed' | 'setup_stuck' | 'trial_ending';
+export const ATTENTION_KINDS: readonly AttentionKind[] = ['overdue', 'payment_failed', 'setup_stuck', 'trial_ending'];
+export const ATTENTION_KIND_WORDS: Record<AttentionKind, string> = {
+  overdue: 'Overdue',
+  payment_failed: 'Payment failed',
+  setup_stuck: 'Setup stuck',
+  trial_ending: 'Trial ending',
+};
+
+export interface AttentionCount {
+  total: number;
+  counts: Record<AttentionKind, number>;
+}
+
+/**
+ * What the tile says. Up to two reasons by name; past that, the rest as "N more" so the line stays one line on a
+ * phone. Red while anything is overdue (money), amber for anything else, grey when there is nothing to do.
+ */
+export function needsAttentionTile(c: AttentionCount): { note: string; tint: StatTint } {
+  if (c.total === 0) return { note: 'No business needs you', tint: STAT_TINTS.neutral };
+  const named = ATTENTION_KINDS.filter((k) => c.counts[k] > 0);
+  const shown = named.length <= 2 ? named : named.slice(0, 1);
+  const rest = c.total - shown.reduce((sum, k) => sum + c.counts[k], 0);
+  const parts = shown.map((k) => `${c.counts[k]} ${ATTENTION_KIND_WORDS[k].toLowerCase()}`);
+  if (rest > 0) parts.push(`${rest} more`);
+  return { note: parts.join(' · '), tint: c.counts.overdue > 0 ? STAT_TINTS.rose : STAT_TINTS.amber };
+}

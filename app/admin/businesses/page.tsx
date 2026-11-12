@@ -1,10 +1,14 @@
 'use client';
 
+import { BusinessesToolbar } from '../components/BusinessesToolbar';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { adminFetch, AdminApiError } from '../lib/api';
 import { Icon, TypeIcon } from '../icons';
-import { Card, EmptyState, PrimaryButton, SecondaryButton, Select, StatusPill, Table, TableRow } from '../components/primitives';
+import { businessHealth } from '../lib/business-health';
+import { BusinessPhoneList } from '../components/BusinessPhoneList';
+import { Card, EmptyState, PrimaryButton, SecondaryButton, Select, StatusPill, Table, TableRow, Toggle, type TableSort } from '../components/primitives';
+import { isDefaultSort, MOBILE_SORT_OPTIONS, nextSort, sortFromOption, sortFromParams } from '../lib/business-sort';
 import { BUSINESS_COLUMNS } from '../lib/list-columns';
 import { AddBusinessModal, OwnerCredentialNotice, type CreatedBusiness } from '../components/AddBusinessModal';
 import { Pagination, type PaginationState } from '../components/Pagination';
@@ -13,6 +17,7 @@ import { INITIAL_PAGING, applyPageParams, mergeRows, reloadFromFirstPage } from 
 import { useAdminSearch } from '../components/SearchContext';
 import { oklch, STATUS_COLORS, typeColor, usageState } from '../tokens';
 import { useAdminMe } from '../components/AdminMeContext';
+import { TestPill } from '../components/TestPill';
 
 /**
  * GRW-101's Businesses list, wired to GRW-100's real read layer in place of
@@ -37,12 +42,17 @@ interface BusinessRow {
   tenantId: string;
   name: string;
   status: string;
+  /** Jira GRW-692 — only ever true when the list was asked to include test businesses. */
+  isTest?: boolean;
   vertical: string;
   planName: string;
   ownerPhone: string | null;
   branchCount: number;
   userCount: number;
   createdAt: string;
+  /** Jira GRW-701 — absent from an API older than growza#514. */
+  lastActiveAt?: string | null;
+  weekActivity?: number;
   /**
    * Owner, 2026-10-26 — `true` when a provisioning business has finished its checklist and is waiting on
    * somebody here to press Activate. `null` for every other status: a live business has no checklist, and a
@@ -83,7 +93,7 @@ export default function AdminBusinessesPage() {
 function AdminBusinessesInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { query: search } = useAdminSearch();
+  const { query: search, setQuery: setSearch } = useAdminSearch();
   const [vertical, setVertical] = useState('All');
   // GRW-104's dashboard drill-through (`?status=suspended`) lands here
   // already filtered — read once on mount, and written back below.
@@ -93,6 +103,10 @@ function AdminBusinessesInner() {
   });
   const [createdFrom] = useState(() => searchParams.get('createdFrom'));
   const [createdFromCleared, setCreatedFromCleared] = useState(false);
+  // Jira GRW-693 — the order, read from and written back to the URL like every other filter.
+  const [sort, setSort] = useState<TableSort>(() => sortFromParams(searchParams));
+  // Jira GRW-692 — test businesses are hidden unless the admin asks; kept in the URL like every other filter.
+  const [showTest, setShowTest] = useState(() => searchParams.get('test') === '1');
   const activeCreatedFrom = createdFromCleared ? null : createdFrom;
 
   /*
@@ -104,9 +118,14 @@ function AdminBusinessesInner() {
     const params = new URLSearchParams();
     if (status !== 'All') params.set('status', status);
     if (activeCreatedFrom) params.set('createdFrom', activeCreatedFrom);
+    if (!isDefaultSort(sort)) {
+      params.set('sort', sort.key);
+      params.set('dir', sort.dir);
+    }
+    if (showTest) params.set('test', '1');
     const next = params.size > 0 ? `/admin/businesses?${params}` : '/admin/businesses';
     if (`${window.location.pathname}${window.location.search}` !== next) router.replace(next, { scroll: false });
-  }, [status, activeCreatedFrom, router]);
+  }, [status, activeCreatedFrom, sort, showTest, router]);
   const [paging, setPaging] = useState<PaginationState>(INITIAL_PAGING);
   const [page, setPage] = useState<BusinessPage | null>(null);
   /**
@@ -130,7 +149,7 @@ function AdminBusinessesInner() {
     // two identical requests per filter click). Returning `p` itself here
     // makes React skip the re-render entirely in that case.
     setPaging((p) => (p.page === 1 ? p : { ...p, page: 1, intent: 'replace' }));
-  }, [vertical, status, trimmedSearch, activeCreatedFrom]);
+  }, [vertical, status, trimmedSearch, activeCreatedFrom, sort, showTest]);
 
   useEffect(() => {
     if (searchTooShort) return;
@@ -143,6 +162,9 @@ function AdminBusinessesInner() {
     if (vertical !== ALL) params.set('vertical', vertical);
     if (status !== 'All') params.set('status', status);
     if (activeCreatedFrom) params.set('createdFrom', activeCreatedFrom);
+    params.set('sort', sort.key);
+    params.set('dir', sort.dir);
+    if (showTest) params.set('includeTest', 'true');
     applyPageParams(params, paging);
 
     adminFetch<BusinessPage>(`/businesses?${params}`, { signal: controller.signal })
@@ -160,7 +182,7 @@ function AdminBusinessesInner() {
 
     return () => controller.abort();
      
-  }, [trimmedSearch, vertical, status, paging, searchTooShort, activeCreatedFrom]);
+  }, [trimmedSearch, vertical, status, paging, searchTooShort, activeCreatedFrom, sort, showTest]);
 
   const hasActiveFilters = vertical !== ALL || status !== 'All' || trimmedSearch.length >= 2 || !!activeCreatedFrom;
   const totalStatusCount = (page?.statusCounts ?? []).reduce((sum, s) => sum + s.count, 0);
@@ -254,7 +276,7 @@ function AdminBusinessesInner() {
                 borderRadius: 11,
                 border: `1px solid ${oklch.borderStrong}`,
                 background: oklch.inputBg,
-                fontSize: 14,
+                fontSize: '0.875rem',
                 fontWeight: 600,
                 color: oklch.textStrong,
                 cursor: 'pointer',
@@ -288,6 +310,10 @@ function AdminBusinessesInner() {
             onChange={(e) => setStatus(e.target.value)}
           />
         </div>
+        <label className="admin-show-test" style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 44, fontSize: '0.84375rem', fontWeight: 600, color: oklch.textMuted, cursor: 'pointer' }}>
+          <Toggle on={showTest} onClick={() => setShowTest((v) => !v)} label="Show test businesses" />
+          Show test businesses
+        </label>
         {canCreate ? (
           // `admin-businesses-add-first`: admin mobile only — "Add business"
           // renders first in the flex row so it appears above the two filter
@@ -300,11 +326,32 @@ function AdminBusinessesInner() {
         ) : null}
       </div>
 
+      {/* Jira GRW-702 — saved views and Export CSV, over the list they apply to. */}
+      <BusinessesToolbar
+        current={{ vertical, status, search }}
+        canSave={hasActiveFilters}
+        canExport={can('admin.business.export')}
+        total={page?.total ?? null}
+        onApply={(f) => {
+          setVertical(f.vertical);
+          setStatus(f.status);
+          setSearch(f.search);
+        }}
+      />
+
       {/* Jira GRW-297 — admin mobile's status filter: a clickable chip per
           status, each carrying the count of businesses that fall into it
           (matching the current vertical/search filters, not the whole
           platform — see BusinessPage.statusCounts's own comment). Desktop
           keeps the plain dropdown above. */}
+      <div className="admin-mobile-only" style={{ marginBottom: 12 }}>
+        <Select
+          aria-label="Sort businesses"
+          options={MOBILE_SORT_OPTIONS}
+          value={MOBILE_SORT_OPTIONS.some((o) => o.value === `${sort.key}:${sort.dir}`) ? `${sort.key}:${sort.dir}` : 'created:desc'}
+          onChange={(e) => setSort(sortFromOption(e.target.value))}
+        />
+      </div>
       <div className="admin-mobile-only admin-status-chip-row" style={{ gap: 8, marginBottom: 16 }}>
         {STATUS_OPTIONS.map((s) => {
           const label = statusLabel(s);
@@ -323,7 +370,7 @@ function AdminBusinessesInner() {
                 height: 34,
                 padding: '0 12px',
                 borderRadius: 10,
-                fontSize: 13,
+                fontSize: '0.8125rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 border: 'none',
@@ -336,7 +383,7 @@ function AdminBusinessesInner() {
               {label}
               <span
                 style={{
-                  fontSize: 11.5,
+                  fontSize: '0.75rem',
                   fontWeight: 800,
                   padding: '1px 6px',
                   borderRadius: 999,
@@ -383,12 +430,12 @@ function AdminBusinessesInner() {
       {created ? <OwnerCredentialNotice created={created} onClose={() => setCreated(null)} /> : null}
 
       {activeCreatedFrom ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: 13, color: oklch.textMuted }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: '0.8125rem', color: oklch.textMuted }}>
           Created since {new Date(activeCreatedFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
           <button
             type="button"
             onClick={() => setCreatedFromCleared(true)}
-            style={{ background: 'none', border: 'none', color: oklch.accentText, fontWeight: 700, fontSize: 13, cursor: 'pointer', padding: 0 }}
+            style={{ background: 'none', border: 'none', color: oklch.accentText, fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer', padding: 0 }}
           >
             Clear
           </button>
@@ -396,11 +443,11 @@ function AdminBusinessesInner() {
       ) : null}
 
       {searchTooShort ? (
-        <div style={{ fontSize: 13, color: oklch.textFaint, marginBottom: 14 }}>Type at least 2 characters to search.</div>
+        <div style={{ fontSize: '0.8125rem', color: oklch.textFaint, marginBottom: 14 }}>Type at least 2 characters to search.</div>
       ) : error ? (
         <Card>
           <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
             <SecondaryButton onClick={() => setPaging((p) => ({ ...p }))}>Retry</SecondaryButton>
           </div>
         </Card>
@@ -415,13 +462,26 @@ function AdminBusinessesInner() {
       ) : !page || page.total === 0 ? (
         hasActiveFilters ? (
           <EmptyState title="No businesses match" sub="Try a different filter or search term." />
+        ) : !showTest ? (
+          // Jira GRW-692 AC-03 — the list may be empty only because every business is a test one; say so.
+          <EmptyState
+            title="No businesses to show"
+            sub="Test businesses are hidden."
+            action={<SecondaryButton onClick={() => setShowTest(true)}>Show test businesses</SecondaryButton>}
+          />
         ) : (
           <EmptyState title="No businesses on the platform yet" sub="Enroll one to see it here." />
         )
       ) : (
         <>
+          {/* Jira GRW-694 — a phone gets the short inset list; the table keeps every width above the phone breakpoint. */}
+          <BusinessPhoneList rows={rows} statusLabel={statusLabel} />
+          <div className="admin-businesses-table">
           <Table
             columns={COLUMNS}
+            dense
+            sort={sort}
+            onSort={(key) => setSort((s) => nextSort(s, key))}
             rows={rows.map((b) => {
               const tc = typeColor(b.vertical);
               return (
@@ -429,9 +489,9 @@ function AdminBusinessesInner() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                     <span
                       style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: 11,
+                        width: 32,
+                        height: 32,
+                        borderRadius: 9,
                         background: tc.bg,
                         color: tc.fg,
                         display: 'flex',
@@ -443,20 +503,22 @@ function AdminBusinessesInner() {
                       <TypeIcon type={b.vertical} />
                     </span>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {b.name}
                       </div>
-                      <div style={{ fontSize: 12, color: oklch.textFaint }}>{b.vertical}</div>
+                      <div style={{ fontSize: '0.75rem', color: oklch.textFaint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.vertical}</div>
+                      <RowHealth business={b} />
                     </div>
                   </div>
-                  <div style={{ fontSize: 13.5, color: 'oklch(0.36 0.02 155)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: '0.84375rem', color: 'oklch(0.36 0.02 155)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {b.ownerPhone ?? <span style={{ color: oklch.textFaint }}>—</span>}
                   </div>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{b.branchCount}</div>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{b.userCount}</div>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'oklch(0.36 0.02 155)' }}>{b.planName}</div>
+                  <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{b.branchCount}</div>
+                  <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>{b.userCount}</div>
+                  <div style={{ fontSize: '0.84375rem', fontWeight: 600, color: 'oklch(0.36 0.02 155)' }}>{b.planName}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     <StatusPill status={statusLabel(b.status)} />
+                    {b.isTest ? <TestPill /> : null}
                     {/*
                       * Nothing used to tell anybody here that an owner had finished setting up — readiness was
                       * computed on the one-business page only, so it meant opening each Provisioning row in turn.
@@ -466,7 +528,7 @@ function AdminBusinessesInner() {
                       <span
                         title="This business has finished its setup checklist and can be activated."
                         style={{
-                          fontSize: 11,
+                          fontSize: '0.75rem',
                           fontWeight: 700,
                           padding: '2px 7px',
                           borderRadius: 999,
@@ -480,14 +542,14 @@ function AdminBusinessesInner() {
                       </span>
                     ) : null}
                   </div>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>
+                  <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: 'oklch(0.3 0.02 155)' }}>
                     {usageByBusiness[b.tenantId] !== undefined ? (
                       usageByBusiness[b.tenantId]!.used.toLocaleString('en-IN')
                     ) : (
                       <NotYetAvailable reason="No active billing period metered for this business." />
                     )}
                   </div>
-                  <div style={{ fontSize: 12.5, fontWeight: 700 }}>
+                  <div style={{ fontSize: '0.78125rem', fontWeight: 700 }}>
                     {(() => {
                       const u = usageByBusiness[b.tenantId];
                       if (!u) return <NotYetAvailable reason="No active billing period metered for this business." />;
@@ -502,7 +564,7 @@ function AdminBusinessesInner() {
                       );
                     })()}
                   </div>
-                  <div style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>
+                  <div style={{ fontSize: '0.78125rem', color: oklch.textFaint, fontWeight: 600 }}>
                     {new Date(b.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </div>
                   <div style={{ textAlign: 'right' }}>
@@ -532,9 +594,30 @@ function AdminBusinessesInner() {
               );
             })}
           />
+          </div>
           <Pagination total={page.total} loaded={rows.length} state={paging} onChange={setPaging} />
         </>
       )}
+      {canCreate ? (
+        <>
+          <div className="admin-fab-clearance" aria-hidden />
+          <button type="button" className="admin-fab" onClick={() => setAdding(true)}>
+            <Icon name="plus" size={20} />
+            Add business
+          </button>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+/** Jira GRW-701 — under the name: active and this week's count, or quiet in the warning colour. */
+function RowHealth({ business }: { business: BusinessRow }) {
+  const health = businessHealth(business);
+  if (!health) return null;
+  return (
+    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: health.quiet ? 'oklch(0.52 0.13 65)' : oklch.textFaint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      {health.text}
     </div>
   );
 }
