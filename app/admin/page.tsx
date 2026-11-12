@@ -1,5 +1,6 @@
 'use client';
 
+import type { NeedsAttentionRow } from './components/NeedsAttention';
 import Link from '../shared/AppLink';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -28,7 +29,7 @@ import {
 } from './components/DashboardParts';
 import { DashboardSkeleton } from './components/DashboardSkeleton';
 import { oklch, STATUS_COLORS } from './tokens';
-import { ATTENTION_CARDS, QUICK_ACTIONS, STAT_TINTS, STATUS_LABEL } from './dashboard-config';
+import { ATTENTION_CARDS, QUICK_ACTIONS, STAT_TINTS, STATUS_LABEL, attentionTint, builtRows, needsAttentionTile, testBusinessesLine, type AttentionCount } from './dashboard-config';
 import { useAdminMe } from './components/AdminMeContext';
 
 /**
@@ -62,6 +63,8 @@ interface RecentSignup {
 
 interface DashboardResponse {
   totalBusinesses: number;
+  /** QA loophole L1 — test businesses every figure leaves out. Absent from an older API. */
+  testBusinesses?: number;
   totalAtPeriodStart: number;
   byStatus: StatusCount[];
   newBusinesses: { count: number; previous: number; previousToDate?: number; period: { from: string; to: string } };
@@ -70,6 +73,10 @@ interface DashboardResponse {
   revenue: { currency: string; thisMonthMinor: number; previousMonthMinor: number; previousToDateMinor?: number; months: RevenueMonth[] } | null;
   /** GRW-280 — visits booked across every business, counted as visits rather than rows. */
   bookings: PlatformBookings;
+  /** Jira GRW-700 — absent from an API older than growza#513. */
+  needsAttention?: NeedsAttentionRow[];
+  /** Owner, 11 Nov 2026 — the tile's numbers. Absent from an API older than the Needs attention page. */
+  needsAttentionCount?: AttentionCount;
 }
 
 function shortDate(iso: string): string {
@@ -137,10 +144,10 @@ export default function AdminDashboardPage() {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 6 }}>
+          <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 6 }}>
             Your role does not open any screens yet
           </div>
-          <div style={{ fontSize: 13, color: oklch.textMuted }}>
+          <div style={{ fontSize: '0.8125rem', color: oklch.textMuted }}>
             Ask a Super Admin to add permissions to it. Retrying will not change this.
           </div>
         </div>
@@ -152,7 +159,7 @@ export default function AdminDashboardPage() {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+          <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
           <SecondaryButton onClick={() => setRetryToken((n) => n + 1)}>Retry</SecondaryButton>
         </div>
       </Card>
@@ -161,6 +168,7 @@ export default function AdminDashboardPage() {
 
   // Jira GRW-287 — the loaded page's own grid, placeholders and all; see DashboardSkeleton.
   if (loading || !data) return <DashboardSkeleton />;
+  const builtAttention = builtRows(data.attention);
 
   const empty = data.totalBusinesses === 0;
   // Computed across the whole breakdown at once, so the four shares total 100
@@ -210,14 +218,26 @@ export default function AdminDashboardPage() {
               key={key}
               icon={icon}
               label={label}
-              value={row.count ?? 0}
+              value={row.count ?? null}
               href={row.href}
-              tint={tint}
-              note={note(row.count ?? 0)}
+              tint={attentionTint(row.count, tint)}
+              note={row.count === undefined ? undefined : note(row.count)}
               chevron
             />
           );
         })}
+        {/* Owner, 11 Nov 2026 — Needs attention is a tile, and its list its own page: the list grows with the platform. */}
+        {data.needsAttentionCount ? (
+          <StatCard
+            icon="alert"
+            label="Needs attention"
+            value={data.needsAttentionCount.total}
+            href="/admin/needs-attention"
+            tint={needsAttentionTile(data.needsAttentionCount).tint}
+            note={needsAttentionTile(data.needsAttentionCount).note}
+            chevron
+          />
+        ) : null}
       </div>
 
       {/* GRW-277 QA — one column on a phone, two on a laptop. The DOM order
@@ -226,11 +246,12 @@ export default function AdminDashboardPage() {
           `data-has-revenue` — QA GRW-276 — lets that stylesheet collapse the
           revenue column when there is no RevenueCard to put in it, instead of
           leaving the cell empty. */}
+
       <div className="admin-dash-cols" data-has-revenue={data.revenue ? 'true' : 'false'}>
         {/* GRW-265/274 FR-01 — real links to screens that already exist and are already permission-gated. */}
         {quickActions.length > 0 ? (
         <Card className="admin-dash-quick">
-          <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Quick actions</h3>
+          <h3 style={{ margin: '0 0 14px', fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>Quick actions</h3>
           {/* Fixed 5-column grid, not auto-fit/minmax — same reasoning as the KPI
             grid above. Icon-above-label, centered, no border: matches the
             tenant Home's own compact tile pattern (`hm-tile`,
@@ -264,7 +285,7 @@ export default function AdminDashboardPage() {
                   <span style={{ color: tint.fg, display: 'flex', flex: 'none' }}>
                     <Icon name={action.icon} size={21} />
                   </span>
-                  <span style={{ fontSize: 10.5, fontWeight: 600, lineHeight: 1.25, textAlign: 'center' }}>{action.label}</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.25, textAlign: 'center' }}>{action.label}</span>
                 </Link>
               );
             })}
@@ -298,13 +319,18 @@ export default function AdminDashboardPage() {
             array the old plain list did; no new query, no fabricated trend. */}
           <Card>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: oklch.textMuted }}>Business status</div>
-              <div style={{ fontSize: 12, color: oklch.textFaint }}>
+              <div style={{ fontSize: '0.78125rem', fontWeight: 700, color: oklch.textMuted }}>Business status</div>
+              <div style={{ fontSize: '0.75rem', color: oklch.textFaint }}>
                 Total <strong style={{ color: oklch.textStrong, fontWeight: 800 }}>{data.totalBusinesses}</strong>
               </div>
             </div>
+            {data.testBusinesses ? (
+              <a href="/admin/businesses?test=1" style={{ display: 'block', margin: '-6px 0 12px', fontSize: '0.75rem', color: oklch.textMuted }}>
+                {testBusinessesLine(data.testBusinesses)}
+              </a>
+            ) : null}
             {empty ? (
-              <div style={{ fontSize: 13, color: oklch.textFaint }}>{PLATFORM_EMPTY_COPY}</div>
+              <div style={{ fontSize: '0.8125rem', color: oklch.textFaint }}>{PLATFORM_EMPTY_COPY}</div>
             ) : (
               <>
                 <div
@@ -342,11 +368,11 @@ export default function AdminDashboardPage() {
                           <span
                             style={{ width: 8, height: 8, borderRadius: '50%', background: dotColor, display: 'inline-block', flex: 'none' }}
                           />
-                          <span style={{ fontSize: 13, fontWeight: 600, color: oklch.textStrong }}>{STATUS_LABEL[s.status] ?? s.status}</span>
+                          <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: oklch.textStrong }}>{STATUS_LABEL[s.status] ?? s.status}</span>
                         </span>
                         <span style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                          <span style={{ fontSize: 13.5, fontWeight: 800, color: oklch.textStrong }}>{s.count}</span>
-                          <span style={{ fontSize: 11.5, color: oklch.textFaint }}>({shareLabel(s.count, data.totalBusinesses, pct)})</span>
+                          <span style={{ fontSize: '0.84375rem', fontWeight: 800, color: oklch.textStrong }}>{s.count}</span>
+                          <span style={{ fontSize: '0.75rem', color: oklch.textFaint }}>({shareLabel(s.count, data.totalBusinesses, pct)})</span>
                         </span>
                       </Link>
                     );
@@ -357,23 +383,26 @@ export default function AdminDashboardPage() {
           </Card>
         </div>
 
-        {/* FR-02/AC-02 — every row present whether or not its epic has shipped; a row without a real count yet names it. */}
-        <Card className="admin-dash-attention">
-          <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Billing attention</h3>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {data.attention.map((row, i) => (
-              <AttentionRowView key={row.key} row={row} isLast={i === data.attention.length - 1} />
-            ))}
-          </div>
-        </Card>
+        {/* Jira GRW-691 — only rows with something real behind them; a row naming a ticket is a developer note, not a
+            figure. With none built, the card is not drawn at all. */}
+        {builtAttention.length > 0 ? (
+          <Card className="admin-dash-attention">
+            <h3 style={{ margin: '0 0 14px', fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>Billing attention</h3>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {builtAttention.map((row, i) => (
+                <AttentionRowView key={row.key} row={row} isLast={i === builtAttention.length - 1} />
+              ))}
+            </div>
+          </Card>
+        ) : null}
 
         {/* GRW-265/274 FR-02 — real signups, `tenant.created_at`, the same
           column the KPI above already counts. "View all" is real: `/admin/
           businesses` lists every business this list is a preview of. */}
         <Card className="admin-dash-signups">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: oklch.textStrong }}>Recent signups</h3>
-            <Link href="/admin/businesses" style={{ fontSize: 12.5, fontWeight: 700, color: oklch.accent, textDecoration: 'none' }}>
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: oklch.textStrong }}>Recent signups</h3>
+            <Link href="/admin/businesses" style={{ fontSize: '0.78125rem', fontWeight: 700, color: oklch.accent, textDecoration: 'none' }}>
               View all
             </Link>
           </div>
@@ -407,7 +436,7 @@ export default function AdminDashboardPage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontWeight: 800,
-                        fontSize: 13.5,
+                        fontSize: '0.84375rem',
                         flex: 'none',
                       }}
                     >
@@ -422,7 +451,7 @@ export default function AdminDashboardPage() {
                       <span
                         title={signup.name}
                         style={{
-                          fontSize: 12.5,
+                          fontSize: '0.78125rem',
                           fontWeight: 700,
                           color: oklch.textStrong,
                           whiteSpace: 'nowrap',
@@ -433,7 +462,7 @@ export default function AdminDashboardPage() {
                       >
                         {signup.name}
                       </span>
-                      <span style={{ fontSize: 11, color: oklch.textFaint, whiteSpace: 'nowrap' }}>{shortDate(signup.createdAt)}</span>
+                      <span style={{ fontSize: '0.75rem', color: oklch.textFaint, whiteSpace: 'nowrap' }}>{shortDate(signup.createdAt)}</span>
                     </span>
                   </Link>
                 );

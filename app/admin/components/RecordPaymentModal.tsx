@@ -271,10 +271,10 @@ export function RecordPaymentModal({
       >
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, padding: '22px 24px 0' }}>
           <div>
-            <h3 id={`${ids}-title`} style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: '-0.01em', color: oklch.textStrong }}>
+            <h3 id={`${ids}-title`} style={{ margin: 0, fontSize: '1.1875rem', fontWeight: 800, letterSpacing: '-0.01em', color: oklch.textStrong }}>
               Record a payment
             </h3>
-            <p style={{ margin: '4px 0 0', fontSize: 13.5, color: oklch.textMuted }}>{businessName}</p>
+            <p style={{ margin: '4px 0 0', fontSize: '0.84375rem', color: oklch.textMuted }}>{businessName}</p>
           </div>
           <button
             type="button"
@@ -311,17 +311,17 @@ export function RecordPaymentModal({
               border: `1px solid ${oklch.border}`,
             }}
           >
-            <span style={{ fontSize: 13.5, fontWeight: 600, color: 'oklch(0.45 0.02 155)' }}>
+            <span style={{ fontSize: '0.84375rem', fontWeight: 600, color: 'oklch(0.45 0.02 155)' }}>
               {owedNow ? 'Owed now' : 'Their next bill'}
               {owedNow && nextBillMinor !== owed ? (
-                <span style={{ display: 'block', fontSize: 12, fontWeight: 500, color: oklch.textMuted }}>Next bill {inr(nextBillMinor / 100)}</span>
+                <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: oklch.textMuted }}>Next bill {inr(nextBillMinor / 100)}</span>
               ) : null}
             </span>
-            <span style={{ fontSize: 16, fontWeight: 800, color: oklch.text }}>{inr(owed / 100)}</span>
+            <span style={{ fontSize: '1rem', fontWeight: 800, color: oklch.text }}>{inr(owed / 100)}</span>
           </div>
 
           <div style={{ marginTop: 16 }} role="group" aria-labelledby={`${ids}-method`}>
-            <span id={`${ids}-method`} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
+            <span id={`${ids}-method`} style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
               How they paid
             </span>
             <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
@@ -337,7 +337,7 @@ export function RecordPaymentModal({
                     flex: '1 1 110px',
                     height: 40,
                     borderRadius: 10,
-                    fontSize: 13,
+                    fontSize: '0.8125rem',
                     fontWeight: 700,
                     cursor: saving ? 'not-allowed' : 'pointer',
                     ...(method === value
@@ -353,7 +353,7 @@ export function RecordPaymentModal({
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: 14, marginTop: 16 }}>
             <div>
-              <label htmlFor={`${ids}-amount`} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
+              <label htmlFor={`${ids}-amount`} style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
                 Amount received (₹)
               </label>
               <TextInput
@@ -367,11 +367,11 @@ export function RecordPaymentModal({
                   // A changed amount has not been confirmed: it goes back through the server's check (GRW-475).
                   setNeedsConfirm(false);
                 }}
-                style={{ marginTop: 7, fontSize: 15, fontWeight: 700 }}
+                style={{ marginTop: 7, fontSize: '0.9375rem', fontWeight: 700 }}
               />
             </div>
             <div>
-              <label htmlFor={`${ids}-paidat`} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
+              <label htmlFor={`${ids}-paidat`} style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
                 When it arrived
               </label>
               <TextInput
@@ -387,7 +387,7 @@ export function RecordPaymentModal({
           </div>
 
           <div style={{ marginTop: 16 }}>
-            <label htmlFor={`${ids}-reference`} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
+            <label htmlFor={`${ids}-reference`} style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
               {method === 'cash' ? 'Reference (optional)' : 'Reference'}
             </label>
             <TextInput
@@ -403,7 +403,7 @@ export function RecordPaymentModal({
                 transfer twice is refused rather than counted twice. Say so,
                 or an admin who cannot find the UTR will type something
                 arbitrary. */}
-            <div style={{ marginTop: 6, fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>
+            <div style={{ marginTop: 6, fontSize: '0.75rem', color: oklch.textFaint, fontWeight: 600 }}>
               {method === 'cash'
                 ? 'Cash has no bank statement, so a reference is optional. If you give one, the same reference cannot be recorded twice for this business.'
                 : 'This is what ties the payment to the bank statement. The same reference cannot be recorded twice for this business.'}
@@ -411,7 +411,7 @@ export function RecordPaymentModal({
           </div>
 
           <div style={{ marginTop: 16 }}>
-            <label htmlFor={`${ids}-reason`} style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
+            <label htmlFor={`${ids}-reason`} style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.45 0.02 155)' }}>
               Reason
             </label>
             <TextInput
@@ -440,7 +440,7 @@ export function RecordPaymentModal({
               border: '1px solid oklch(0.9 0.02 150)',
               background: 'oklch(0.98 0.012 150)',
               padding: '14px 16px',
-              fontSize: 12.5,
+              fontSize: '0.78125rem',
               lineHeight: 1.5,
               color: 'oklch(0.45 0.02 155)',
               fontWeight: 600,
@@ -449,7 +449,7 @@ export function RecordPaymentModal({
             No payment provider confirms this — you are asserting the money arrived. It is recorded against your name with the reason above.
           </div>
 
-          {error ? <div style={{ marginTop: 12, fontSize: 13, fontWeight: 600, color: oklch.danger }}>{error}</div> : null}
+          {error ? <div style={{ marginTop: 12, fontSize: '0.8125rem', fontWeight: 600, color: oklch.danger }}>{error}</div> : null}
           {needsConfirm ? (
             <div style={{ marginTop: 8 }}>
               <SecondaryButton onClick={() => submit(true)} disabled={saving}>
@@ -482,7 +482,7 @@ function Note({ tone, children }: { tone: 'danger' | 'muted'; children: React.Re
     <div
       style={{
         marginTop: 12,
-        fontSize: 12.5,
+        fontSize: '0.78125rem',
         fontWeight: 600,
         color: tone === 'danger' ? 'oklch(0.5 0.15 25)' : oklch.textFaint,
       }}

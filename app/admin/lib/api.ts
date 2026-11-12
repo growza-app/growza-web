@@ -122,3 +122,18 @@ export async function adminFetch<T>(path: string, init?: RequestInit): Promise<T
   // current call cleanly rather than letting a caller act on no data.
   throw new AdminApiError(401, 'Session expired — signing out.');
 }
+
+/**
+ * Jira GRW-702 — a file from the admin API (a CSV export), with the same one renewal on an expired session as
+ * `adminFetch`. Errors arrive as JSON and are thrown as an AdminApiError like any other.
+ */
+export async function adminDownload(path: string, init?: RequestInit): Promise<{ blob: Blob; filename: string }> {
+  let res = await send(path, init);
+  if (res.status === 401 && (await refreshAdminSession()).status === 'renewed') res = await send(path, init);
+  if (!res.ok) {
+    const { message, code, field } = await extractError(res, path);
+    throw new AdminApiError(res.status, message, code, field);
+  }
+  const named = /filename="([^"]+)"/.exec(res.headers.get('content-disposition') ?? '');
+  return { blob: await res.blob(), filename: named?.[1] ?? 'export.csv' };
+}

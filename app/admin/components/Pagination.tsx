@@ -60,9 +60,9 @@ export function Pagination({
   return (
     <div style={{ marginTop: 14 }}>
       <div className="admin-pagination-desktop" style={{ alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <div style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>{showingLabel(state, loaded, total)}</div>
+        <div style={{ fontSize: '0.78125rem', color: oklch.textFaint, fontWeight: 600 }}>{showingLabel(state, loaded, total)}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78125rem', color: oklch.textFaint, fontWeight: 600 }}>
             Rows
             <div style={{ width: 76 }}>
               <Select
@@ -70,14 +70,14 @@ export function Pagination({
                 options={PAGE_SIZE_OPTIONS.map(String)}
                 value={String(state.pageSize)}
                 onChange={(e) => onChange(changePageSize(Number(e.target.value)))}
-                style={{ height: 34, fontSize: 12.5 }}
+                style={{ height: 34, fontSize: '0.78125rem' }}
               />
             </div>
           </div>
           <PageButton onClick={() => onChange(goToPage(state, state.page - 1, total))} disabled={atStart} label="Previous page">
             <Icon name="chevronLeft" size={14} />
           </PageButton>
-          <span style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.3 0.02 155)', minWidth: 64, textAlign: 'center' }}>
+          <span style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.3 0.02 155)', minWidth: 64, textAlign: 'center' }}>
             Page {state.page} of {pages}
           </span>
           <PageButton onClick={() => onChange(goToPage(state, state.page + 1, total))} disabled={atEnd} label="Next page">
@@ -98,7 +98,7 @@ export function Pagination({
               border: `1px solid ${oklch.borderStrong}`,
               background: 'white',
               color: oklch.accentText,
-              fontSize: 13.5,
+              fontSize: '0.84375rem',
               fontWeight: 700,
               cursor: 'pointer',
             }}
@@ -106,7 +106,7 @@ export function Pagination({
             Load more
           </button>
         ) : (
-          <div style={{ width: '100%', textAlign: 'center', fontSize: 12.5, color: oklch.textFaint, fontWeight: 600, padding: '10px 0' }}>
+          <div style={{ width: '100%', textAlign: 'center', fontSize: '0.78125rem', color: oklch.textFaint, fontWeight: 600, padding: '10px 0' }}>
             {`All ${total.toLocaleString('en-IN')} shown`}
           </div>
         )}

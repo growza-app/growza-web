@@ -44,7 +44,7 @@ export function BranchBillPreview({ businessId, change, open }: { businessId: st
     return () => controller.abort();
   }, [businessId, change, open]);
 
-  const box = { marginTop: 12, padding: '10px 12px', borderRadius: 10, fontSize: 13, lineHeight: 1.5, border: `1px solid ${oklch.borderStrong}` } as const;
+  const box = { marginTop: 12, padding: '10px 12px', borderRadius: 10, fontSize: '0.8125rem', lineHeight: 1.5, border: `1px solid ${oklch.borderStrong}` } as const;
 
   if (failed) return <div style={{ ...box, color: 'oklch(0.45 0.13 60)' }}>The new price could not be shown. You can still continue.</div>;
   if (!preview) return <div style={{ ...box, color: oklch.textFaint }}>Working out the new bill…</div>;

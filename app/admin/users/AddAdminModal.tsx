@@ -153,10 +153,10 @@ export function AddAdminModal({
         }}
       >
         <div style={{ padding: '22px 24px 0' }}>
-          <h3 id={`${ids}-title`} style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: '-0.01em', color: oklch.textStrong }}>
+          <h3 id={`${ids}-title`} style={{ margin: 0, fontSize: '1.1875rem', fontWeight: 800, letterSpacing: '-0.01em', color: oklch.textStrong }}>
             Add an administrator
           </h3>
-          <p style={{ margin: '4px 0 0', fontSize: 13.5, color: oklch.textMuted }}>They can administer Growza itself — never a single business.</p>
+          <p style={{ margin: '4px 0 0', fontSize: '0.84375rem', color: oklch.textMuted }}>They can administer Growza itself — never a single business.</p>
         </div>
 
         <div style={{ padding: '18px 24px 24px', display: 'grid', gap: 14 }}>
@@ -192,7 +192,7 @@ export function AddAdminModal({
               onChange={(e) => setPassword(e.target.value)}
               disabled={saving}
             />
-            <div style={{ fontSize: 12, color: oklch.textFaint, fontWeight: 600, marginTop: 5 }}>
+            <div style={{ fontSize: '0.75rem', color: oklch.textFaint, fontWeight: 600, marginTop: 5 }}>
               Tell them this password. They must replace it the first time they sign in, so it stops working for you
               straight away.
             </div>
@@ -204,7 +204,7 @@ export function AddAdminModal({
               value={roleId}
               onChange={(e) => setRoleId(e.target.value)}
               disabled={saving}
-              style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: `1px solid ${oklch.borderStrong}`, fontSize: 14, fontWeight: 600 }}
+              style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: `1px solid ${oklch.borderStrong}`, fontSize: '0.875rem', fontWeight: 600 }}
             >
               <option value="">Choose a role…</option>
               {roles.map((role) => (
@@ -220,8 +220,8 @@ export function AddAdminModal({
             <TextInput id={`${ids}-reason`} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why they need access" disabled={saving} />
           </div>
 
-          {error ? <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{error}</div> : null}
-          {blocker ? <div style={{ fontSize: 12.5, color: oklch.textMuted, fontWeight: 600 }}>{blocker}</div> : null}
+          {error ? <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{error}</div> : null}
+          {blocker ? <div style={{ fontSize: '0.78125rem', color: oklch.textMuted, fontWeight: 600 }}>{blocker}</div> : null}
 
           <div style={{ display: 'flex', gap: 9, justifyContent: 'flex-end' }}>
             <SecondaryButton onClick={onClose} disabled={saving}>

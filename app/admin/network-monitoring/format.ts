@@ -142,4 +142,4 @@ export function attemptWords(outcome: string, skipReason: string | null): { labe
 }
 
 /** The panels the screen draws — one skeleton each while loading. */
-export const PANEL_COUNT = 4;
+export const PANEL_COUNT = 3;

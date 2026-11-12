@@ -5,6 +5,7 @@ import { adminFetch, AdminApiError } from '../lib/api';
 import { oklch } from '../tokens';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Card, SectionTitle, Toggle } from './primitives';
+import { useToast } from './Toast';
 
 /**
  * Jira GRW-556 (follow-up) — online payment, on the business's own page.
@@ -44,17 +45,48 @@ export function PaymentsCard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const next = !payments.online;
+  const toast = useToast();
 
-  function change(reason: string) {
-    setBusy(true);
-    setError(null);
+  const put = (enabled: boolean, reason: string) =>
     adminFetch(`/feature-flags/payments.online/overrides/${encodeURIComponent(businessId)}`, {
       method: 'PUT',
-      body: JSON.stringify({ enabled: next, reason }),
-    })
+      body: JSON.stringify({ enabled, reason }),
+    });
+
+  function change(reason: string) {
+    const previousOverride = payments.override;
+    setBusy(true);
+    setError(null);
+    put(next, reason)
       .then(() => {
         setAsking(false);
         onChanged();
+        // Jira GRW-704 — say it worked, and offer the way back. Undo is its own audited change, its reason says so.
+        toast.show({
+          message: `Online payments ${next ? 'on' : 'off'} for ${businessName}`,
+          undo: async () => {
+            // Back to exactly where it was: a business that followed the default goes back to the default, rather
+            // than being left with a setting of its own that happens to match it. `ifCurrent: next` — only if the
+            // switch is still as this admin left it; if someone changed it since, the API refuses (409) and their
+            // setting stays (QA, 11 Nov 2026: an old Undo erased another admin's later change).
+            try {
+              if (previousOverride === null) {
+                await adminFetch(`/feature-flags/payments.online/overrides/${encodeURIComponent(businessId)}`, {
+                  method: 'DELETE',
+                  body: JSON.stringify({ ifCurrent: next, reason: `Undo: ${reason}` }),
+                });
+              } else {
+                await adminFetch(`/feature-flags/payments.online/overrides/${encodeURIComponent(businessId)}`, {
+                  method: 'PUT',
+                  body: JSON.stringify({ enabled: previousOverride, ifCurrent: next, reason: `Undo: ${reason}` }),
+                });
+              }
+            } finally {
+              // Refused or not, show the switch as it now is.
+              onChanged();
+            }
+          },
+        });
       })
       .catch((err) => setError(err instanceof AdminApiError ? err.message : 'Could not change this.'))
       .finally(() => setBusy(false));
@@ -66,14 +98,14 @@ export function PaymentsCard({
     <Card>
       <SectionTitle title="Online payments" />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginTop: 10 }}>
-        <div style={{ fontSize: 13.5, lineHeight: 1.5, color: oklch.textStrong }}>
+        <div style={{ fontSize: '0.84375rem', lineHeight: 1.5, color: oklch.textStrong }}>
           <strong>{payments.online ? 'On' : 'Off'}</strong>
           <span style={{ color: oklch.textMuted }}>
             {payments.online
               ? ' — the owner sees a Pay now button on their bill.'
               : ' — the owner is told to pay by UPI, and you record the payment under Billing.'}
           </span>
-          <div style={{ fontSize: 12.5, color: oklch.textFaint, marginTop: 2 }}>
+          <div style={{ fontSize: '0.78125rem', color: oklch.textFaint, marginTop: 2 }}>
             {payments.override === null ? 'Same as every business (the default).' : 'Set for this business only.'}
           </div>
         </div>
@@ -91,14 +123,14 @@ export function PaymentsCard({
       {stuck ? (
         <div
           role="status"
-          style={{ marginTop: 12, padding: '10px 12px', borderRadius: 10, fontSize: 13, lineHeight: 1.5, background: oklch.dangerBg, color: oklch.textStrong }}
+          style={{ marginTop: 12, padding: '10px 12px', borderRadius: 10, fontSize: '0.8125rem', lineHeight: 1.5, background: oklch.dangerBg, color: oklch.textStrong }}
         >
           <strong>Switched on, but it will not work yet.</strong> Growza&apos;s payment account is not connected on the server
           (the Razorpay secret and keys). Until it is, this business still sees no Pay now button.
         </div>
       ) : null}
       {!canManage ? (
-        <div style={{ marginTop: 10, fontSize: 12.5, color: oklch.textFaint }}>You do not have permission to change this.</div>
+        <div style={{ marginTop: 10, fontSize: '0.78125rem', color: oklch.textFaint }}>You do not have permission to change this.</div>
       ) : null}
 
       <ConfirmDialog

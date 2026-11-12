@@ -161,7 +161,7 @@ function AdminPaymentsInner() {
             height: 38,
             padding: '0 16px',
             borderRadius: 10,
-            fontSize: 13.5,
+            fontSize: '0.84375rem',
             fontWeight: 700,
             cursor: 'pointer',
             ...(unreconciledOnly
@@ -174,15 +174,15 @@ function AdminPaymentsInner() {
       </div>
 
       {range.invalid ? (
-        <div style={{ fontSize: 13, color: oklch.danger, fontWeight: 600, marginBottom: 14 }}>
+        <div style={{ fontSize: '0.8125rem', color: oklch.danger, fontWeight: 600, marginBottom: 14 }}>
           The end of the range is before its start.
         </div>
       ) : searchTooShort ? (
-        <div style={{ fontSize: 13, color: oklch.textFaint, marginBottom: 14 }}>Type at least 2 characters to search.</div>
+        <div style={{ fontSize: '0.8125rem', color: oklch.textFaint, marginBottom: 14 }}>Type at least 2 characters to search.</div>
       ) : error ? (
         <Card>
           <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
             <SecondaryButton onClick={() => setPaging((p) => ({ ...p }))}>Retry</SecondaryButton>
           </div>
         </Card>
@@ -207,25 +207,25 @@ function AdminPaymentsInner() {
             rows={rows.map((p) => (
               <TableRow key={p.id} columns={COLUMNS}>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: oklch.textStrong, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {p.businessName ?? 'Unreconciled'}
                   </div>
                   {!p.subscriptionId ? (
                     // Flagged, never hidden — this is precisely the row that
                     // needs a human, so it says so on the row itself.
-                    <div style={{ fontSize: 11.5, fontWeight: 700, color: 'oklch(0.52 0.13 65)' }}>No matching subscription</div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'oklch(0.52 0.13 65)' }}>No matching subscription</div>
                   ) : null}
-                  {p.failureReason ? <div style={{ fontSize: 11.5, color: oklch.danger, fontWeight: 600 }}>{p.failureReason}</div> : null}
+                  {p.failureReason ? <div style={{ fontSize: '0.75rem', color: oklch.danger, fontWeight: 600 }}>{p.failureReason}</div> : null}
                 </div>
-                <div style={{ fontSize: 13.5, fontWeight: 800, color: 'oklch(0.28 0.02 155)' }}>{formatMoneyMinor(p.amountMinor)}</div>
-                <div style={{ fontSize: 12.5, fontWeight: 600, color: p.refundedAmountMinor > 0 ? 'oklch(0.5 0.15 25)' : oklch.textFaint }}>
+                <div style={{ fontSize: '0.84375rem', fontWeight: 800, color: 'oklch(0.28 0.02 155)' }}>{formatMoneyMinor(p.amountMinor)}</div>
+                <div style={{ fontSize: '0.78125rem', fontWeight: 600, color: p.refundedAmountMinor > 0 ? 'oklch(0.5 0.15 25)' : oklch.textFaint }}>
                   {p.refundedAmountMinor > 0 ? '−' + formatMoneyMinor(p.refundedAmountMinor) : '—'}
                 </div>
                 <div>
                   <StatusPill status={billingStatusLabel(p.status)} />
                 </div>
                 <ExternalId provider={p.paymentProvider} id={p.externalPaymentId} />
-                <div style={{ fontSize: 12.5, color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>
+                <div style={{ fontSize: '0.78125rem', color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>
                   {formatTimestampDate(p.paidAt ?? p.createdAt)}
                 </div>
               </TableRow>
@@ -253,7 +253,7 @@ function ExternalId({ provider, id }: { provider: string; id: string }) {
 
   return (
     <div style={{ minWidth: 0 }}>
-      <div style={{ fontSize: 11.5, color: offline ? 'oklch(0.52 0.13 65)' : oklch.textFaint, fontWeight: offline ? 700 : 600, textTransform: offline ? 'none' : 'capitalize' }}>
+      <div style={{ fontSize: '0.75rem', color: offline ? 'oklch(0.52 0.13 65)' : oklch.textFaint, fontWeight: offline ? 700 : 600, textTransform: offline ? 'none' : 'capitalize' }}>
         {offline ? 'Recorded by hand' : provider}
       </div>
       <button
@@ -275,7 +275,7 @@ function ExternalId({ provider, id }: { provider: string; id: string }) {
           background: 'none',
           padding: 0,
           cursor: 'pointer',
-          fontSize: 12,
+          fontSize: '0.75rem',
           fontWeight: 600,
           fontFamily: 'ui-monospace, SFMono-Regular, monospace',
           color: copied ? oklch.accentText : 'oklch(0.45 0.02 155)',

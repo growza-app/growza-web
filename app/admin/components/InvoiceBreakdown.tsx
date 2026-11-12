@@ -86,8 +86,8 @@ export function InvoiceBreakdown({ figures, compact }: { figures: InvoiceFigures
           </>
         )}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, paddingTop: 8 }}>
-          <span style={{ fontSize: compact ? 13.5 : 14, fontWeight: 800, color: oklch.textStrong }}>Total</span>
-          <span style={{ fontSize: compact ? 16 : 19, fontWeight: 800, color: oklch.accentText, whiteSpace: 'nowrap', flex: 'none' }}>
+          <span style={{ fontSize: compact ? '0.84375rem' : '0.875rem', fontWeight: 800, color: oklch.textStrong }}>Total</span>
+          <span style={{ fontSize: compact ? '1rem' : '1.1875rem', fontWeight: 800, color: oklch.accentText, whiteSpace: 'nowrap', flex: 'none' }}>
             {formatMoneyMinor(figures.totalMinor)}
           </span>
         </div>
@@ -108,7 +108,7 @@ export function InvoiceBreakdown({ figures, compact }: { figures: InvoiceFigures
 
 function Line({ label, value, color, faint }: { label: string; value: string; color?: string; faint?: boolean }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, fontSize: faint ? 12.5 : 13.5, padding: faint ? '3px 0' : '5px 0' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, fontSize: faint ? '0.78125rem' : '0.84375rem', padding: faint ? '3px 0' : '5px 0' }}>
       <span style={{ color: 'oklch(0.5 0.02 155)', fontWeight: 600, minWidth: 0 }}>{label}</span>
       <span
         style={{

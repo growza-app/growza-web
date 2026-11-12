@@ -277,7 +277,7 @@ export function ReenrolModal({
   // (Jira GRW-288): these were the fields' labels too, as <div>s that named
   // nothing.
   const label = (text: string) => (
-    <div style={{ fontSize: 12, fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>{text}</div>
+    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: oklch.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>{text}</div>
   );
 
   return (
@@ -312,10 +312,10 @@ export function ReenrolModal({
         }}
       >
         <div style={{ padding: '22px 24px 0' }}>
-          <h3 id={`${ids}-title`} style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: '-0.01em', color: oklch.textStrong }}>
+          <h3 id={`${ids}-title`} style={{ margin: 0, fontSize: '1.1875rem', fontWeight: 800, letterSpacing: '-0.01em', color: oklch.textStrong }}>
             {copy?.title ?? 'Continue this subscription'}
           </h3>
-          <p style={{ margin: '4px 0 0', fontSize: 13.5, color: oklch.textMuted }}>
+          <p style={{ margin: '4px 0 0', fontSize: '0.84375rem', color: oklch.textMuted }}>
             {preview
               ? `${preview.businessName} — currently ${preview.currentStatus.toLowerCase().replace(/_/g, ' ')}`
               : loadError
@@ -327,7 +327,7 @@ export function ReenrolModal({
         <div style={{ padding: '18px 24px 24px', display: 'grid', gap: 16 }}>
           {loadError ? (
             <>
-              <div role="alert" style={{ fontSize: 13.5, fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{loadError}</div>
+              <div role="alert" style={{ fontSize: '0.84375rem', fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{loadError}</div>
               {/* Admin audit 2026-10-09 — this state had no button at all: a business that already has an open
                   subscription (the list still offers Re-enrol on its old row) left the admin with only Escape or a
                   click outside, neither of which is visible. */}
@@ -336,14 +336,14 @@ export function ReenrolModal({
               </div>
             </>
           ) : !preview ? (
-            <div style={{ fontSize: 13.5, color: oklch.textMuted }}>Loading…</div>
+            <div style={{ fontSize: '0.84375rem', color: oklch.textMuted }}>Loading…</div>
           ) : (
             <>
-              <p style={{ margin: 0, fontSize: 13.5, color: oklch.textMuted, lineHeight: 1.5 }}>{copy!.blurb}</p>
+              <p style={{ margin: 0, fontSize: '0.84375rem', color: oklch.textMuted, lineHeight: 1.5 }}>{copy!.blurb}</p>
 
               {/* AC-02 / DoD — the first thing an owner asks, answered with
                   counts rather than a reassuring adjective. */}
-              <div style={{ background: 'oklch(0.97 0.02 155)', borderRadius: 12, padding: '12px 14px', fontSize: 13, color: oklch.textStrong, fontWeight: 600 }}>
+              <div style={{ background: 'oklch(0.97 0.02 155)', borderRadius: 12, padding: '12px 14px', fontSize: '0.8125rem', color: oklch.textStrong, fontWeight: 600 }}>
                 Their {preview.retainedCustomers.toLocaleString('en-IN')} customers and {preview.retainedAppointments.toLocaleString('en-IN')} bookings are not
                 affected — those belong to the business, not to the subscription.
               </div>
@@ -351,22 +351,22 @@ export function ReenrolModal({
               {/* GRW-153 FR-03 — coming back starts a fresh month today, and
                   "when am I next billed" is asked in the same breath as "can I
                   take bookings again". Said before the button, not after. */}
-              <div style={{ fontSize: 13, color: oklch.textStrong, fontWeight: 600 }}>
+              <div style={{ fontSize: '0.8125rem', color: oklch.textStrong, fontWeight: 600 }}>
                 Their month restarts today — next billed {formatDateOnly(preview.nextBillingDateAfter)}.
               </div>
 
               {preview.outstandingMinor > 0 ? (
                 <div>
                   {label('Outstanding')}
-                  <div style={{ fontSize: 18, fontWeight: 800, color: 'oklch(0.5 0.15 25)' }}>{formatMoneyMinor(preview.outstandingMinor)}</div>
+                  <div style={{ fontSize: '1.125rem', fontWeight: 800, color: 'oklch(0.5 0.15 25)' }}>{formatMoneyMinor(preview.outstandingMinor)}</div>
                   {preview.outstandingInvoices.map((i) => (
-                    <div key={i.id} style={{ marginTop: 4, fontSize: 12.5, color: oklch.textMuted, fontWeight: 600 }}>
+                    <div key={i.id} style={{ marginTop: 4, fontSize: '0.78125rem', color: oklch.textMuted, fontWeight: 600 }}>
                       {i.invoiceNumber} · {formatDateOnly(i.periodStart)} – {formatDateOnly(i.periodEnd)} · {formatMoneyMinor(i.outstandingMinor)}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div style={{ fontSize: 13, color: oklch.textMuted, fontWeight: 600 }}>Nothing outstanding.</div>
+                <div style={{ fontSize: '0.8125rem', color: oklch.textMuted, fontWeight: 600 }}>Nothing outstanding.</div>
               )}
 
               {/* FR-02 — the terms that carry, shown BEFORE saving. This is
@@ -374,7 +374,7 @@ export function ReenrolModal({
               {preview.action === 'reenrol' ? (
                 <div>
                   {label('Carried onto the new subscription')}
-                  <div style={{ fontSize: 13, color: oklch.textStrong, fontWeight: 600, lineHeight: 1.6 }}>
+                  <div style={{ fontSize: '0.8125rem', color: oklch.textStrong, fontWeight: 600, lineHeight: 1.6 }}>
                     <div>Plan {preview.planName ?? preview.planCode}</div>
                     <div>
                       {preview.carriesDiscount
@@ -397,7 +397,7 @@ export function ReenrolModal({
               ) : null}
 
               {preview.mayRecordPayment ? (
-                <label style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, fontWeight: 700, color: oklch.textStrong }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: '0.84375rem', fontWeight: 700, color: oklch.textStrong }}>
                   <input type="checkbox" checked={withPayment} onChange={(e) => setWithPayment(e.target.checked)} disabled={saving} />
                   Record a payment at the same time
                 </label>
@@ -416,7 +416,7 @@ export function ReenrolModal({
                       value={method}
                       onChange={(e) => setMethod(e.target.value)}
                       disabled={saving}
-                      style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: `1px solid ${oklch.borderStrong}`, fontSize: 14, fontWeight: 600 }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: `1px solid ${oklch.borderStrong}`, fontSize: '0.875rem', fontWeight: 600 }}
                     >
                       {METHODS.map(([value, text]) => (
                         <option key={value} value={value}>
@@ -437,16 +437,16 @@ export function ReenrolModal({
                       value={paidAt}
                       onChange={(e) => setPaidAt(e.target.value)}
                       disabled={saving}
-                      style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: `1px solid ${oklch.borderStrong}`, fontSize: 14, fontWeight: 600 }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: `1px solid ${oklch.borderStrong}`, fontSize: '0.875rem', fontWeight: 600 }}
                     />
                   </div>
                   {shortfall > 0 ? (
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: 'oklch(0.52 0.13 65)' }}>
+                    <div style={{ fontSize: '0.78125rem', fontWeight: 700, color: 'oklch(0.52 0.13 65)' }}>
                       This is {formatMoneyMinor(shortfall)} short of what is owed. It will be recorded, but the subscription stays as it is until the balance is
                       cleared.
                     </div>
                   ) : null}
-                  <div style={{ fontSize: 12, color: oklch.textFaint, fontWeight: 600 }}>
+                  <div style={{ fontSize: '0.75rem', color: oklch.textFaint, fontWeight: 600 }}>
                     Recorded on your word — no provider will confirm it. The reference is what ties it to a bank statement; cash needs none.
                   </div>
                 </div>
@@ -457,8 +457,8 @@ export function ReenrolModal({
                 <TextInput id={`${ids}-reason`} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why this is being done" disabled={saving} />
               </div>
 
-              {error ? <div style={{ fontSize: 13, fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{error}</div> : null}
-              {blocker && blocker !== 'Loading…' ? <div style={{ fontSize: 12.5, color: oklch.textMuted, fontWeight: 600 }}>{blocker}</div> : null}
+              {error ? <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'oklch(0.5 0.18 25)' }}>{error}</div> : null}
+              {blocker && blocker !== 'Loading…' ? <div style={{ fontSize: '0.78125rem', color: oklch.textMuted, fontWeight: 600 }}>{blocker}</div> : null}
 
               <div style={{ display: 'flex', gap: 9, justifyContent: 'flex-end' }}>
                 <SecondaryButton onClick={onClose} disabled={saving}>

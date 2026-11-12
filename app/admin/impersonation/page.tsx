@@ -86,7 +86,7 @@ export default function AdminImpersonationPage() {
         if (!cancelled) setRows(res.rows);
       })
       .catch((err) => {
-        if (!cancelled) setError(err instanceof AdminApiError ? err.message : 'Could not load impersonation sessions.');
+        if (!cancelled) setError(err instanceof AdminApiError ? err.message : 'Could not load owner-view sessions.');
       });
     return () => {
       cancelled = true;
@@ -113,9 +113,9 @@ export default function AdminImpersonationPage() {
             <Icon name="impersonate" size={20} />
           </span>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 800, color: oklch.textStrong }}>Start a session from a business</div>
-            <div style={{ fontSize: 13, color: oklch.textMuted, marginTop: 2 }}>
-              Open the business and choose “Impersonate owner”. A reason is required, the session is read-only, and it
+            <div style={{ fontSize: '0.9375rem', fontWeight: 800, color: oklch.textStrong }}>Start a session from a business</div>
+            <div style={{ fontSize: '0.8125rem', color: oklch.textMuted, marginTop: 2 }}>
+              Open the business and choose “View as owner”. A reason is required, the session is read-only, and it
               ends after 30 minutes or when you exit.
             </div>
           </div>
@@ -128,13 +128,13 @@ export default function AdminImpersonationPage() {
       <Card>
         <SectionTitle title="Recent sessions" />
         {endError ? (
-          <div role="alert" style={{ marginBottom: 10, fontSize: 13, fontWeight: 600, color: 'oklch(0.5 0.16 25)' }}>
+          <div role="alert" style={{ marginBottom: 10, fontSize: '0.8125rem', fontWeight: 600, color: 'oklch(0.5 0.16 25)' }}>
             {endError}
           </div>
         ) : null}
         {error ? (
           <div style={{ textAlign: 'center', padding: '20px 12px' }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
+            <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: oklch.textStrong, marginBottom: 10 }}>{error}</div>
             <SecondaryButton onClick={() => setRetryToken((n) => n + 1)}>Retry</SecondaryButton>
           </div>
         ) : rows === null ? (
@@ -160,15 +160,15 @@ export default function AdminImpersonationPage() {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: oklch.textStrong }}>
+                  <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: oklch.textStrong }}>
                     {row.businessName} · {row.targetPhone ?? '—'}
                   </div>
-                  <div style={{ fontSize: 12, color: oklch.textFaint }}>by {row.adminName ?? row.adminPhone ?? '—'}</div>
+                  <div style={{ fontSize: '0.75rem', color: oklch.textFaint }}>by {row.adminName ?? row.adminPhone ?? '—'}</div>
                 </div>
                 {/* The reason, at the same weight as everything else. It is the
                     field that makes the row reviewable, so it is not a tooltip. */}
-                <div style={{ fontSize: 13, color: 'oklch(0.45 0.02 155)', fontWeight: 600 }}>{row.reason}</div>
-                <div style={{ fontSize: 13, color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>{duration(row)}</div>
+                <div style={{ fontSize: '0.8125rem', color: 'oklch(0.45 0.02 155)', fontWeight: 600 }}>{row.reason}</div>
+                <div style={{ fontSize: '0.8125rem', color: 'oklch(0.5 0.02 155)', fontWeight: 600 }}>{duration(row)}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                   {isActive(row) ? (
                     <>
@@ -180,11 +180,11 @@ export default function AdminImpersonationPage() {
                       ) : null}
                     </>
                   ) : row.endedReason === 'admin_deactivated' ? (
-                    <span style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>
+                    <span style={{ fontSize: '0.78125rem', color: oklch.textFaint, fontWeight: 600 }}>
                       {formatDateTime(row.startedAt)} · ended — administrator deactivated
                     </span>
                   ) : (
-                    <span style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>
+                    <span style={{ fontSize: '0.78125rem', color: oklch.textFaint, fontWeight: 600 }}>
                       {formatDateTime(row.startedAt)}
                       {row.endedReason === 'expired' ? ' · timed out' : ''}
                     </span>

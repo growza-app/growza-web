@@ -109,12 +109,12 @@ export default function AdminRolesPage() {
               New role
             </PrimaryButton>
           ) : (
-            <div style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>View only — changing roles needs Manage roles.</div>
+            <div style={{ fontSize: '0.78125rem', color: oklch.textFaint, fontWeight: 600 }}>View only — changing roles needs Manage roles.</div>
           )}
         </div>
 
         {!data ? (
-          <div style={{ fontSize: 13.5, color: oklch.textMuted, paddingTop: 8 }}>Loading…</div>
+          <div style={{ fontSize: '0.84375rem', color: oklch.textMuted, paddingTop: 8 }}>Loading…</div>
         ) : data.rows.length === 0 ? (
           <EmptyState icon="roles" title="No roles yet" sub="Create one to give an administrator less than full access." />
         ) : (
@@ -143,10 +143,10 @@ export default function AdminRolesPage() {
                       <Icon name="roles" size={15} />
                     </span>
                     <div style={{ minWidth: 0 }}>
-                      <div className="admin-name" style={{ fontSize: 13.5, fontWeight: 700, color: oklch.textStrong }}>
+                      <div className="admin-name" style={{ fontSize: '0.84375rem', fontWeight: 700, color: oklch.textStrong }}>
                         {role.name}
                       </div>
-                      <div style={{ fontSize: 12, color: oklch.textFaint }}>
+                      <div style={{ fontSize: '0.75rem', color: oklch.textFaint }}>
                         {role.holders} {role.holders === 1 ? 'administrator' : 'administrators'} ·{' '}
                         {role.isBuiltin ? 'every permission' : `${role.permissions.length} permissions`}
                       </div>
@@ -157,11 +157,11 @@ export default function AdminRolesPage() {
                       reason stated. Shown-and-disabled would invite a click and
                       then refuse it; this says why there is nothing to click. */}
                   {role.isBuiltin ? (
-                    <div style={{ fontSize: 12, color: oklch.textFaint, fontWeight: 600, maxWidth: 320 }}>
+                    <div style={{ fontSize: '0.75rem', color: oklch.textFaint, fontWeight: 600, maxWidth: 320 }}>
                       Cannot be changed — it is what guarantees somebody can always administer this platform.
                     </div>
                   ) : !canManage ? null : lockedReason(role) ? (
-                    <div style={{ fontSize: 12, color: oklch.textFaint, fontWeight: 600, maxWidth: 320 }}>{lockedReason(role)}</div>
+                    <div style={{ fontSize: '0.75rem', color: oklch.textFaint, fontWeight: 600, maxWidth: 320 }}>{lockedReason(role)}</div>
                   ) : (
                     <div style={{ display: 'flex', gap: 9, alignItems: 'center', flexWrap: 'wrap' }}>
                       <SecondaryButton
@@ -174,7 +174,7 @@ export default function AdminRolesPage() {
                       </SecondaryButton>
                       {/* The server refuses to delete a role somebody still holds (`role_in_use`) — said here instead. */}
                       {role.holders > 0 ? (
-                        <span style={{ fontSize: 11.5, color: oklch.textFaint, fontWeight: 600 }}>
+                        <span style={{ fontSize: '0.75rem', color: oklch.textFaint, fontWeight: 600 }}>
                           In use — move its {role.holders === 1 ? 'administrator' : 'administrators'} first to delete it.
                         </span>
                       ) : (
@@ -198,7 +198,7 @@ export default function AdminRolesPage() {
                       <span
                         key={key}
                         style={{
-                          fontSize: 11.5,
+                          fontSize: '0.75rem',
                           fontWeight: 700,
                           color: 'oklch(0.44 0.06 220)',
                           background: 'oklch(0.96 0.02 220)',
@@ -213,7 +213,7 @@ export default function AdminRolesPage() {
                 ) : null}
 
                 {!role.isBuiltin && role.permissions.length === 0 ? (
-                  <div style={{ fontSize: 12, color: 'oklch(0.52 0.13 65)', fontWeight: 600, marginTop: 9, paddingLeft: 43 }}>
+                  <div style={{ fontSize: '0.75rem', color: 'oklch(0.52 0.13 65)', fontWeight: 600, marginTop: 9, paddingLeft: 43 }}>
                     No permissions — an administrator on this role can sign in and do nothing.
                   </div>
                 ) : null}

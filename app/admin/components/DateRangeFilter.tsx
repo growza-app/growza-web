@@ -50,13 +50,13 @@ export function DateRangeFilter({ range }: { range: DateRange }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
       <DateInput label="From" value={range.from} onChange={range.setFrom} invalid={range.invalid} />
-      <span style={{ fontSize: 12.5, color: oklch.textFaint, fontWeight: 600 }}>to</span>
+      <span style={{ fontSize: '0.78125rem', color: oklch.textFaint, fontWeight: 600 }}>to</span>
       <DateInput label="To" value={range.to} onChange={range.setTo} invalid={range.invalid} />
       {range.from || range.to ? (
         <button
           type="button"
           onClick={range.clear}
-          style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 700, color: oklch.accentText, padding: '0 4px' }}
+          style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.78125rem', fontWeight: 700, color: oklch.accentText, padding: '0 4px' }}
         >
           Clear
         </button>
@@ -78,7 +78,7 @@ function DateInput({ label, value, onChange, invalid }: { label: string; value: 
         borderRadius: 10,
         border: `1px solid ${invalid ? oklch.danger : oklch.borderStrong}`,
         background: oklch.inputBg,
-        fontSize: 13,
+        fontSize: '0.8125rem',
         fontWeight: 600,
         color: oklch.text,
         outline: 'none',
