@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { addressFor } from './app/shared/admin-address';
 
 /**
  * HTTP Basic Auth gate for the whole dashboard.
@@ -83,6 +84,14 @@ function pass(req: NextRequest): NextResponse {
 }
 
 export function middleware(req: NextRequest) {
+  // Jira GRW-689 — each address serves its own pages: /admin on admin.growza.biz, the business app on app.growza.biz.
+  // API calls and files (manifests, icons, the service worker) are served on both, as they always were.
+  const { pathname, search } = req.nextUrl;
+  if (!isProxiedToApi(pathname) && !isStaticAsset(pathname)) {
+    const proto = req.headers.get('x-forwarded-proto') ?? req.nextUrl.protocol.replace(':', '');
+    const to = addressFor(req.headers.get('x-forwarded-host') ?? req.headers.get('host'), pathname, search, proto);
+    if (to) return NextResponse.redirect(to, 308);
+  }
   if (!USER || !PASS) return pass(req);
 
   const header = req.headers.get('authorization');
