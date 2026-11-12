@@ -43,11 +43,52 @@ describe('the Customers list', () => {
 });
 
 describe("the owner's round theme on a phone (10 Nov 2026)", () => {
-  it('draws the groups as round pills that filter, each with its colour on its left edge', () => {
-    expect(list).toContain('className="cust-pill"');
-    expect(list).toContain('aria-pressed={on}');
-    expect(css).toMatch(/\.cust-pill \{[^}]*border-radius: 999px;[^}]*border-left: 3px solid var\(--seg, var\(--border\)\);/);
-    expect(css).toMatch(/\.cust-pill \{[^}]*min-height: 2\.75rem;/);
+  /** Owner, 12 Nov 2026 — "I want this to go into a filter, in line with the Export button." */
+  it('keeps the groups in the Filter menu beside Export, each with its colour and its count', () => {
+    expect(list).not.toContain('cust-pill');
+    expect(css).not.toContain('cust-pill');
+    expect(list).toContain('className="dropdown-item dropdown-item-plain cust-filter-item"');
+    expect(list).toContain('aria-checked={status === group.key}');
+    expect(list).toContain('<b>{group.count}</b>');
+    expect(list.indexOf('cust-filter-item')).toBeLessThan(list.lastIndexOf("{t('export')}"));
+    expect(css).toMatch(/\.cust-filter-item \{[^}]*border-left: 3px solid var\(--seg, transparent\);/);
+  });
+
+  /** Owner, 12 Nov 2026 — "can we filter by customer has spent the most". */
+  it('offers the order in the same menu: came last, spent the most, name', () => {
+    expect(list).toContain("{ key: 'recent', direction: 'desc', label: t('orderRecent') }");
+    expect(list).toContain("{ key: 'spent', direction: 'desc', label: t('orderSpent') }");
+    expect(list).toContain("{ key: 'name', direction: 'asc', label: t('orderName') }");
+    expect(list).toContain('aria-checked={sort === order.key && direction === order.direction}');
+    // Under the groups, inside the one menu — not a third button on a 344px row.
+    expect(list.indexOf('<b>{group.count}</b>')).toBeLessThan(list.indexOf("t('showFirst')"));
+    expect(list.indexOf("t('showFirst')")).toBeLessThan(list.lastIndexOf("{t('export')}"));
+    expect(css).toMatch(/\.cust-order-item\[aria-checked='true'\]::after \{/);
+  });
+
+  /** Owner, 12 Nov 2026 — "on top card I want total reward points people have accumulated". */
+  it('shows the reward points only where the business runs rewards, in place of "Came back" on a phone', () => {
+    expect(list).toContain("typeof stats.rewardPoints === 'number'");
+    expect(list).toContain("{points && <Kpi icon={<IconCoins />} label={t('kpiPoints')}");
+    expect(list).toContain("className={points ? 'cust-kpis cust-kpis-points' : 'cust-kpis'}");
+    expect(css).toMatch(/@media \(max-width: 860px\) \{[^@]*\.cust-kpis-points \.cust-kpi-returning,\s*\.cust-kpi-full \{\s*display: none;/);
+    expect(css).toMatch(/\.cust-kpi-short \{\s*display: none;/);
+  });
+
+  it('writes a big points figure short on a phone, in digits a reader of either language knows', () => {
+    const short = (n: number) => new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+    expect(short(12450)).toBe('12.5K');
+    expect(short(124500)).toBe('1.2L');
+    expect(list).toContain("new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 })");
+    // Under ten thousand it is the whole number: 1,494 points is not "1.5K" to the business that owes them.
+    expect(list).toContain('Math.abs(stats.rewardPoints) < 10_000');
+  });
+
+  it('shows that menu on a phone, with a 44px line to tap', () => {
+    expect(css).not.toMatch(/\.cust-toolbar \.dropdown-anchor \{\s*display: none;/);
+    expect(css).not.toMatch(/\.cust-toolbar \.dropdown-anchor\s*\{\s*display: none;/);
+    expect(css).not.toMatch(/#cust-segments,\s*\.cust-toolbar \.dropdown-anchor/);
+    expect(css).toMatch(/@media \(max-width: 860px\) \{\s*\.cust-filter-item \{[^}]*min-height: 2\.75rem;/);
   });
 
   it('draws each row as a capsule whose left arc is its group colour', () => {
@@ -55,11 +96,11 @@ describe("the owner's round theme on a phone (10 Nov 2026)", () => {
     expect(css).toMatch(/\.cust-card,\s*\.cust-card:last-child \{[^}]*border-left: 3px solid var\(--seg, var\(--border\)\);[^}]*border-radius: 2\.25rem;/);
   });
 
-  it('keeps the group in words beside its colour on the All view, and drops it where the pill already says it', () => {
+  it('keeps the group in words beside its colour on the All view, and drops it where the Filter already says it', () => {
     expect(list).toContain("{status === 'all' ? chipOf(c.segment) : null}");
   });
 
-  it('is a phone thing: a laptop keeps its table, panel and Filter menu', () => {
-    expect(css).toMatch(/\.cust-pills \{\s*display: none;\s*\}/);
+  it('still folds the "how they are doing" panel away on a phone: the menu already says it', () => {
+    expect(css).toMatch(/\.cust-segments-toggle,\s*#cust-segments \{\s*display: none;\s*\}/);
   });
 });

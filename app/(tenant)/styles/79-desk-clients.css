@@ -289,6 +289,11 @@
     min-width: 0;
   }
 
+  /* A fifth figure (reward points) takes the whole of its row rather than half of one. */
+  .cust-desk-kpis > div:nth-child(5) {
+    grid-column: 1 / -1;
+  }
+
   .cust-desk-kpis > div:last-child {
     background: var(--accent-soft);
     border-color: color-mix(in srgb, var(--accent) 24%, var(--border));

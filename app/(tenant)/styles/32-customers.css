@@ -3081,74 +3081,86 @@ button.bk-waiting-row:focus-visible {
 /*
  * Owner, 10 Nov 2026 — the phone list in the reference he chose: capsules on the page's soft ground, each with its
  * group's colour as an arc down its rounded left edge (green coming in, amber due, red slipping, violet gone quiet,
- * grey never been in), and the groups themselves as round pills with the same arc. A laptop keeps its table.
+ * grey never been in). A laptop keeps its table.
+ *
+ * Owner, 12 Nov 2026 — the groups were a row of round pills above the list; they are the Filter menu now, beside
+ * Export. Each line of the menu keeps the pill's colour and count.
  */
-.cust-pills {
+.cust-filter-item {
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  border-left: 3px solid var(--seg, transparent);
+}
+
+.cust-filter-item b {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.cust-filter-item[aria-checked='true'] {
+  background: color-mix(in srgb, var(--seg, var(--accent)) 12%, var(--surface));
+}
+
+.cust-filter-item[aria-checked='true'] b {
+  color: var(--text);
+}
+
+/*
+ * Owner, 12 Nov 2026 — "Show first", the order, under the groups in the same menu. The chosen line carries a
+ * tick as well as the tint: with no colour edge and no count, the tint alone was the only sign.
+ */
+.cust-filter-head {
+  padding: var(--sp-2) var(--sp-3) var(--sp-1);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.cust-order-item[aria-checked='true']::after {
+  content: '';
+  flex: none;
+  width: 0.375rem;
+  height: 0.6875rem;
+  margin-right: var(--sp-1);
+  border: solid var(--accent-deep);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* The points, whole on a laptop and short on a phone (see `Kpi`). */
+.cust-kpi-short {
   display: none;
 }
 
 @media (max-width: 860px) {
-  .cust-pills {
-    display: flex;
-    gap: var(--sp-2);
-    margin: 0 0 var(--sp-3);
-    padding: 2px 2px var(--sp-1);
-    overflow-x: auto;
-    scrollbar-width: none;
+  .cust-filter-item {
+    min-height: 2.75rem;
+    font-size: 0.875rem;
   }
 
-  .cust-pills::-webkit-scrollbar {
+  /*
+   * Four figures across is what 344px holds. Where the business runs rewards the points take "Came back"'s
+   * place — "% came back" beside it says the same thing — and the long number gives way to the short one.
+   */
+  .cust-kpis-points .cust-kpi-returning,
+  .cust-kpi-full {
     display: none;
   }
 
-  .cust-pill {
-    flex: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    min-height: 2.75rem;
-    padding: 0 var(--sp-4) 0 var(--sp-3);
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--seg, var(--border));
-    background: var(--surface);
-    color: var(--text);
-    font: inherit;
-    font-size: 0.875rem;
-    font-weight: 600;
-    white-space: nowrap;
-    cursor: pointer;
+  .cust-kpi-short {
+    display: inline;
   }
 
-  .cust-pill b {
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    color: var(--muted);
-  }
-
-  .cust-pill[aria-pressed='true'] {
-    border-color: var(--seg, var(--accent-deep));
-    background: color-mix(in srgb, var(--seg, var(--accent)) 12%, var(--surface));
-  }
-
-  .cust-pill[aria-pressed='true'] b {
-    color: var(--text);
-  }
-
-  .cust-pill:focus-visible {
-    outline: 2px solid var(--accent-deep);
-    outline-offset: 2px;
-  }
-
-  /* The pills are the groups and the filter now: the folded panel and the Filter menu would say it twice. */
+  /* The Filter menu is the groups: the folded panel would say it twice. */
   .cust-segments-toggle,
-  #cust-segments,
-  .cust-toolbar .dropdown-anchor {
+  #cust-segments {
     display: none;
   }
 
   /*
-   * The search and Export are round too, like the pills and the rows under them — and white with a clear edge:
+   * The search, Filter and Export are round too, like the rows under them — and white with a clear edge:
    * on the page's own grey they had its exact colour (search) or none (Export), and all but vanished (owner, 10 Nov).
    */
   .cust-toolbar .search-wrap,

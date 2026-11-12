@@ -980,6 +980,11 @@ export interface CustomerStats {
   /** Clients with no completed visit — in the total, in none of the bands. */
   neverVisited: number;
   segments: CustomerSegmentCount[];
+  /**
+   * Every reward point these clients hold now. ABSENT, not zero, for a business that runs no rewards — the
+   * Clients page draws its card on the field being there (owner, 12 Nov 2026).
+   */
+  rewardPoints?: number;
 }
 
 export type CustomerStatusFilter = 'all' | 'active' | 'due' | 'at_risk' | 'inactive' | 'lapsed' | 'never';

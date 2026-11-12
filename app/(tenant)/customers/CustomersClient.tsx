@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pagination } from '../components/Pagination';
 import { csvLines } from '../lib/csv';
-import { formatDate, formatDateShort, formatPhone, formatRecency } from '../lib/format';
+import { formatDate, formatDateShort, formatPhone, formatRecency, intlLocale } from '../lib/format';
 import { useSearchParams } from 'next/navigation';
 import {
   api,
@@ -23,6 +23,7 @@ import { PAGE_SIZE } from '../components/Pagination';
 import {
   IconChevronDown,
   IconChevronRight,
+  IconCoins,
   IconPercent,
   IconPlus,
   IconRepeat,
@@ -148,6 +149,25 @@ export function CustomersClient({
     return chip ? <span className={`chip ${chip.cls}`}>{t(chip.key)}</span> : null;
   };
   const [stats] = useState(initialStats);
+  /*
+   * Owner, 12 Nov 2026 — the reward points everyone holds, as a fifth figure.
+   *
+   * Null when the business runs no rewards (the API leaves the field out), and then no card is drawn. The short
+   * form is for a phone, where four figures share the width and "1,24,500" does not fit an 52px cell: "1.2L".
+   * It is `en-IN` in Hindi too — K, L and Cr are how the number is said here, and "12.5 हज़ार" is the long form
+   * again.
+   */
+  const points =
+    typeof stats.rewardPoints === 'number'
+      ? {
+          full: new Intl.NumberFormat(intlLocale(locale)).format(stats.rewardPoints),
+          // Under ten thousand the whole number fits, and "1,494" is not "1.5K" to the person who owes them.
+          short:
+            Math.abs(stats.rewardPoints) < 10_000
+              ? new Intl.NumberFormat(intlLocale(locale)).format(stats.rewardPoints)
+              : new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 }).format(stats.rewardPoints),
+        }
+      : null;
   const [page, setPage] = useState(initialPage);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<CustomerStatusFilter>(initialStatus ?? 'all');
@@ -439,6 +459,7 @@ export function CustomersClient({
                 <div><dt>{t('kpiNew')}</dt><dd>{stats.newThisMonth}</dd></div>
                 <div><dt>{t('kpiReturning', { noun: lower })}</dt><dd>{stats.returning}</dd></div>
                 <div><dt>{t('kpiRepeat')}</dt><dd>{stats.repeatRatePct}%</dd></div>
+                {points && <div><dt>{t('kpiPoints')}</dt><dd title={t('kpiPointsSub', { noun: lower })}>{points.full}</dd></div>}
               </dl>
               <h2 className="pf-wide-h">{t('segmentsTitle', { noun: lower })}</h2>
               <ul className="cust-desk-bands">
@@ -541,15 +562,17 @@ export function CustomersClient({
         }
       />
       <div className="page-body table-fit cust-fit">
-        <div className="cust-kpis">
+        <div className={points ? 'cust-kpis cust-kpis-points' : 'cust-kpis'}>
           {/* Four distinct facts. Previously tile 1's subtitle repeated tile 2's
               value, and tile 3's subtitle repeated tile 4's — so half the row
               restated the other half and the numbers read as contradicting
               each other. */}
           <Kpi icon={<IconStaff />} label={t('kpiTotal', { noun: lower })} value={String(stats.total)} sub={t('kpiTotalSub')} />
           <Kpi icon={<IconUserPlus />} label={t('kpiNew')} value={String(stats.newThisMonth)} sub={t('kpiNewSub')} />
-          <Kpi icon={<IconRepeat />} label={t('kpiReturning', { noun: lower })} value={String(stats.returning)} sub={t('kpiReturningSub')} />
+          {/* On a phone the points take this card's place (owner, 12 Nov 2026): "% came back" already says it. */}
+          <Kpi className="cust-kpi-returning" icon={<IconRepeat />} label={t('kpiReturning', { noun: lower })} value={String(stats.returning)} sub={t('kpiReturningSub')} />
           <Kpi icon={<IconPercent />} label={t('kpiRepeat')} value={`${stats.repeatRatePct}%`} sub={t('kpiRepeatSub', { noun: lower })} />
+          {points && <Kpi icon={<IconCoins />} label={t('kpiPoints')} value={points.full} short={points.short} sub={t('kpiPointsSub', { noun: lower })} />}
         </div>
 
         {/* The cards are also the filter. Their counts come back with the
@@ -647,39 +670,6 @@ export function CustomersClient({
           </div>
         </div>
 
-        {/*
-          Owner, 10 Nov 2026 — on a phone the groups are round pills you tap, each with its colour on its left edge —
-          the same colour as the edge of every row in that group. They replace the folded "How your guests are doing"
-          panel and the Filter menu there; a laptop keeps both.
-        */}
-        <div className="cust-pills mobile-only" role="group" aria-label={t('segmentsTitle', { noun: lower })}>
-          {[
-            { key: 'all' as const, label: t('allNoun', { noun: lower }), count: stats.total },
-            ...stats.segments.map((seg) => ({ key: seg.key as CustomerStatusFilter, label: t(`segments.${seg.key}.label`), count: seg.count })),
-            { key: 'never' as const, label: statusLabel('never'), count: stats.neverVisited },
-          ].map((pill) => {
-            const on = status === pill.key;
-            return (
-              <button
-                key={pill.key}
-                type="button"
-                className="cust-pill"
-                aria-pressed={on}
-                style={SEGMENT_TONE[pill.key] ? { ['--seg' as string]: SEGMENT_TONE[pill.key] } : undefined}
-                onClick={() => {
-                  setStatus(pill.key);
-                  setSort(pill.key === 'all' || pill.key === 'active' ? 'recent' : 'spent');
-                  setDirection('desc');
-                  setPageIndex(0);
-                }}
-              >
-                {pill.label}
-                <b>{pill.count}</b>
-              </button>
-            );
-          })}
-        </div>
-
         <div className="card cust-list-card">
           <div className="offers-toolbar cust-toolbar">
             <label className="search-wrap">
@@ -698,35 +688,80 @@ export function CustomersClient({
               <SearchClear value={search} onClear={() => { setSearch(''); setPageIndex(0); }} />
             </label>
             <div className="dropdown-anchor" ref={filterMenu.anchorRef}>
-              <button type="button" className="btn btn-ghost" onClick={() => setFilterOpen((v) => !v)}>
+              <button type="button" className="btn btn-ghost" aria-haspopup="menu" aria-expanded={filterOpen} onClick={() => setFilterOpen((v) => !v)}>
                 {status === 'all' ? t('filter') : statusLabel(status)} ⌄
               </button>
               {filterOpen && (
                 <div
                   className="dropdown-panel dropdown-panel-sm"
+                  role="menu"
                   ref={filterMenu.panelRef}
                   style={filterMenu.style}
                   onMouseLeave={closeFilter}
                 >
-                  {(['all', 'active', 'due', 'at_risk', 'inactive', 'never'] as CustomerStatusFilter[]).map((s) => (
+                  {/*
+                    Owner, 12 Nov 2026 — the groups are this menu on a phone too, beside Export, in place of the row
+                    of pills above the list. Each line keeps what its pill said: the group's colour and how many.
+                  */}
+                  {[
+                    { key: 'all' as const, label: t('allNoun', { noun: lower }), count: stats.total },
+                    ...stats.segments.map((seg) => ({ key: seg.key as CustomerStatusFilter, label: t(`segments.${seg.key}.label`), count: seg.count })),
+                    { key: 'never' as const, label: statusLabel('never'), count: stats.neverVisited },
+                  ].map((group) => (
                     <button
-                      key={s}
+                      key={group.key}
                       type="button"
-                      className="dropdown-item dropdown-item-plain"
+                      role="menuitemradio"
+                      aria-checked={status === group.key}
+                      className="dropdown-item dropdown-item-plain cust-filter-item"
+                      style={SEGMENT_TONE[group.key] ? { ['--seg' as string]: SEGMENT_TONE[group.key] } : undefined}
                       onClick={() => {
-                        setStatus(s);
+                        setStatus(group.key);
                         // A band of people who have drifted is a call list, so
                         // it opens highest-spend-first. Anything else goes back
                         // to most-recent.
-                        setSort(s === 'all' || s === 'active' ? 'recent' : 'spent');
+                        setSort(group.key === 'all' || group.key === 'active' ? 'recent' : 'spent');
                         setDirection('desc');
                         setPageIndex(0);
                         setFilterOpen(false);
                       }}
                     >
-                      {s === 'all' ? t('allNoun', { noun: lower }) : statusLabel(s)}
+                      <span>{group.label}</span>
+                      <b>{group.count}</b>
                     </button>
                   ))}
+                  {/*
+                    Owner, 12 Nov 2026 — "who has spent the most". A laptop sorts by clicking a column; a phone has
+                    no columns, so the order lives here, under the groups, and Filter and Export stay two buttons.
+                    Picking a group above still sets its own order (a drifted band opens biggest spender first).
+                  */}
+                  <span className="dropdown-sep" aria-hidden="true" />
+                  <div role="group" aria-labelledby="cust-order-head">
+                    <div className="cust-filter-head" id="cust-order-head">{t('showFirst')}</div>
+                    {(
+                      [
+                        { key: 'recent', direction: 'desc', label: t('orderRecent') },
+                        { key: 'spent', direction: 'desc', label: t('orderSpent') },
+                        { key: 'name', direction: 'asc', label: t('orderName') },
+                      ] as const
+                    ).map((order) => (
+                      <button
+                        key={order.key}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={sort === order.key && direction === order.direction}
+                        className="dropdown-item dropdown-item-plain cust-filter-item cust-order-item"
+                        onClick={() => {
+                          setSort(order.key);
+                          setDirection(order.direction);
+                          setPageIndex(0);
+                          setFilterOpen(false);
+                        }}
+                      >
+                        <span>{order.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -816,17 +851,26 @@ export function CustomersClient({
  * the same reason a column whose value never varies got retired from this
  * very table (12-conventions.md §6).
  */
-function Kpi({ label, value, sub, icon }: { label: string; value: string; sub: string; icon: ReactNode }) {
+function Kpi({ label, value, short, sub, icon, className }: { label: string; value: string; short?: string; sub: string; icon: ReactNode; className?: string }) {
   return (
     // `sub` becomes the tooltip rather than a third line. Two of the four
     // restated their own label ("New this month" / "First seen this month");
     // the two that genuinely defined something still do, on hover, without
     // costing every screen a row of the list.
-    <div className="cust-kpi" title={sub}>
+    <div className={className ? `cust-kpi ${className}` : 'cust-kpi'} title={sub}>
       <span className="cust-kpi-icon">{icon}</span>
       <div style={{ minWidth: 0 }}>
         <div className="cust-kpi-label">{label}</div>
-        <div className="cust-kpi-value">{value}</div>
+        {short && short !== value ? (
+          // Two spellings of one number: the whole of it where there is room, the short one on a phone. A screen
+          // reader is given the whole one only.
+          <div className="cust-kpi-value" aria-label={value}>
+            <span className="cust-kpi-full" aria-hidden="true">{value}</span>
+            <span className="cust-kpi-short" aria-hidden="true">{short}</span>
+          </div>
+        ) : (
+          <div className="cust-kpi-value">{value}</div>
+        )}
       </div>
     </div>
   );
