@@ -183,6 +183,14 @@ export default function AdminImpersonationPage() {
                     <span style={{ fontSize: '0.78125rem', color: oklch.textFaint, fontWeight: 600 }}>
                       {formatDateTime(row.startedAt)} · ended — administrator deactivated
                     </span>
+                  ) : row.endedReason === 'admin_signed_out' ? (
+                    <span style={{ fontSize: '0.78125rem', color: oklch.textFaint, fontWeight: 600 }}>
+                      {formatDateTime(row.startedAt)} · ended — administrator signed out
+                    </span>
+                  ) : row.endedReason === 'admin_lost_permission' ? (
+                    <span style={{ fontSize: '0.78125rem', color: oklch.textFaint, fontWeight: 600 }}>
+                      {formatDateTime(row.startedAt)} · ended — administrator no longer allowed
+                    </span>
                   ) : (
                     <span style={{ fontSize: '0.78125rem', color: oklch.textFaint, fontWeight: 600 }}>
                       {formatDateTime(row.startedAt)}

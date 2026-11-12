@@ -161,7 +161,8 @@ export function RolesTeam({
                     disabled={savingId === m.userId || !writable}
                     onChange={(e) => void change(m, e.target.value)}
                   >
-                    <option value="">{t('noRole')}</option>
+                    {/* Security QA 2026-11-12 — a manager with no role reaches what the owner does, so the API refuses it and it is not offered. Kept only for a manager who has none today, so the select is never blank. */}
+                    {(m.role !== 'manager' || !m.tenantRoleId) && <option value="">{t('noRole')}</option>}
                     {options.map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.name}
