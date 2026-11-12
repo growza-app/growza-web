@@ -335,6 +335,12 @@
     color: var(--accent-deep);
   }
 
+  /* Owner, 13 Nov 2026 — the points open no list, so their box lies flat: raised is kept for what can be tapped. */
+  .cust-desk-kpis > div.cust-desk-kpi-flat {
+    background: var(--kpi-top);
+    box-shadow: none;
+  }
+
   /*
    * Owner, 13 Nov 2026 — a figure, tapped, lists the people it counted. The button is the number and its
    * ::after covers the whole box, so the box is the target and the list of terms stays a list of terms.

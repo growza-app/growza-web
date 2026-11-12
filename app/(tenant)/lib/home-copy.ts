@@ -617,6 +617,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       team: S('Team', 'टीम'),
       attendance: S('Attendance', 'हाज़िरी'),
       notifications: S('Notifications', 'सूचनाएं'),
+      // Owner, 13 Nov 2026 — the bottom bar's word: "Notifications" was cut to "Notificati…" at 344px.
+      notificationsShort: S('Alerts', 'सूचनाएं'),
       reports: S(copy.reports.navLabel, 'रिपोर्ट'),
       freeTimes: S(copy.nav.availability, 'खाली समय'),
       billing: S('Billing', 'बिल'),

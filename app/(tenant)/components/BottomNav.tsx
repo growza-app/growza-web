@@ -102,7 +102,7 @@ export function BottomNav({
         { href: '/', label: t.nav.home, icon: <IconNavHome /> },
         { href: '/appointments', label: t.nav.schedule, icon: <IconNavBookings /> },
         { href: '/attendance', label: t.nav.attendance, icon: <IconNavAttendance /> },
-        { href: '/notifications', label: t.nav.notifications, icon: <IconBell /> },
+        { href: '/notifications', label: t.nav.notificationsShort, icon: <IconBell /> },
       ]
     : [
         { href: '/', label: t.nav.home, icon: <IconNavHome /> },
@@ -111,7 +111,7 @@ export function BottomNav({
         { href: '/orders', label: t.nav.orders, icon: <IconNavOrders /> },
         { href: '/stock', label: t.nav.stock, icon: <IconNavStock /> },
         { href: '/customers', label: t.nav.clients, icon: <IconNavClients /> },
-        { href: '/notifications', label: t.nav.notifications, icon: <IconBell /> },
+        { href: '/notifications', label: t.nav.notificationsShort, icon: <IconBell /> },
       ];
 
   const visible = visibleItems(items, role, reportTabs, live, areas);

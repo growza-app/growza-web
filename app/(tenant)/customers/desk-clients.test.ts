@@ -62,8 +62,24 @@ describe('Clients on a desk', () => {
   });
 
   it('the right panel is the client card drawn in place, or the hint and Add', () => {
-    expect(client).toMatch(/<ClientProfileCard clientId=\{openClientId\} inline onClose=\{\(\) => setOpenClientId\(null\)\} \/>/);
+    expect(client).toContain('<ClientProfileCard clientId={openClientId} inline onClose={closeDeskCard} />');
     expect(client).toMatch(/<div className="cust-desk-nothing">\s*<p>\{t\('deskPick', \{ noun: singular \}\)\}<\/p>\s*<\/div>/);
+  });
+
+  /** Owner, 13 Nov 2026 — a third of a laptop screen sat empty until a row was tapped. */
+  it('opens the first person on the list by itself, and stays shut once the owner shuts it', () => {
+    expect(client).toContain('const firstId = visibleRows[0]?.id ?? null;');
+    expect(client).toMatch(/if \(deskClosed\.current \|\| firstId === openClientId\) return;\s*if \(openClientId !== null && !mine\) return;\s*autoOpened\.current = firstId;\s*setOpenClientId\(firstId\);/);
+    expect(client).toMatch(/const closeDeskCard = \(\) => \{\s*deskClosed\.current = true;\s*setOpenClientId\(null\);/);
+    // Never on a phone or a tablet, where the card is a sheet over the list: one it opened there is taken back.
+    expect(client).toMatch(/if \(!desk \|\| !firstId\) \{\s*if \(mine\) \{\s*autoOpened\.current = null;\s*setOpenClientId\(null\);/);
+  });
+
+  /** Owner, 13 Nov 2026 — raised means "tap me"; the points open no list. */
+  it('lays the reward points flat, and drops the group chip from a list that is already one group', () => {
+    expect(client).toContain(`{points && <div className="cust-desk-kpi-flat"><dt>{t('kpiPoints')}</dt>`);
+    expect(css).toMatch(/\.cust-desk-kpis > div\.cust-desk-kpi-flat \{\s*background: var\(--kpi-top\);\s*box-shadow: none;/);
+    expect(client).toMatch(/<div className="cust-recency">[\s\S]{0,260}\{status === 'all' \? chipOf\(c\.segment\) : null\}/);
   });
 
   it('the card inline has no scrim, no focus trap, and is a region not a dialog', () => {

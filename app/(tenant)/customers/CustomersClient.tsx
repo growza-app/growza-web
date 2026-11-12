@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pagination } from '../components/Pagination';
 import { csvLines } from '../lib/csv';
-import { formatDate, formatDateShort, formatPhone, formatRecency, intlLocale } from '../lib/format';
+import { formatDate, formatPhone, formatRecency, intlLocale } from '../lib/format';
 import { useSearchParams } from 'next/navigation';
 import {
   api,
@@ -23,6 +23,7 @@ import { PAGE_SIZE } from '../components/Pagination';
 import {
   IconChevronDown,
   IconChevronRight,
+  IconClose,
   IconCoins,
   IconPercent,
   IconPlus,
@@ -43,8 +44,12 @@ import { toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
 import { SEARCH_DEBOUNCE_MS, worthSearching } from '../lib/search-tuning';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
+import { MAX_PAGE_SIZE } from '@growza-app/shared';
 import { SearchClear } from '../components/SearchClear';
 import { segmentRangeValues } from '../lib/segment-range';
+
+/** "Today" → "today", to sit after "Came". Devanagari has no case, so Hindi passes through as it is. */
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 /**
  * Chips only where they say something. "Active" on every row was the original
@@ -226,6 +231,8 @@ export function CustomersClient({
   const pageSize = PAGE_SIZE;
   // Skip the fetch on first render — the server already sent page 0.
   const primed = useRef(false);
+  // What the list on screen was asked for. Export reads this, so the file is the list, not the half-typed box.
+  const shown = useRef({ search, status, sort, direction, location: branchId });
 
   /**
    * The band and sort live in the address bar, not only in React state.
@@ -304,12 +311,15 @@ export function CustomersClient({
     }
     setLoading(true);
     let cancelled = false;
+    const asked = { search, status, sort, direction, location: branchId };
     // Debounced so typing a phone number doesn't fire a request per digit.
     const timer = setTimeout(() => {
       api
-        .customers({ search, status, sort, direction, limit: pageSize, offset: pageIndex * pageSize, location: branchId })
+        .customers({ ...asked, limit: pageSize, offset: pageIndex * pageSize })
         .then((r) => {
-          if (!cancelled) setPage(r);
+          if (cancelled) return;
+          shown.current = asked;
+          setPage(r);
         })
         .finally(() => {
           if (!cancelled) setLoading(false);
@@ -350,9 +360,69 @@ export function CustomersClient({
 
   const visibleRows = page.rows.slice(0, pageSize);
 
-  const exportCsv = () => {
+  /*
+   * Owner, 13 Nov 2026 — on a laptop the right third sat empty until a row was clicked. The first person on
+   * the list opens there by default. Three things it must not do: reopen a card the owner closed by hand,
+   * replace a person the owner picked, or follow the window down to a tablet, where the same id would open
+   * as a sheet over the list nobody asked for.
+   */
+  const autoOpened = useRef<string | null>(null);
+  const deskClosed = useRef(false);
+  const firstId = visibleRows[0]?.id ?? null;
+  useEffect(() => {
+    if (desk === null) return;
+    const mine = openClientId !== null && openClientId === autoOpened.current;
+    if (!desk || !firstId) {
+      if (mine) {
+        autoOpened.current = null;
+        setOpenClientId(null);
+      }
+      return;
+    }
+    if (deskClosed.current || firstId === openClientId) return;
+    if (openClientId !== null && !mine) return;
+    autoOpened.current = firstId;
+    setOpenClientId(firstId);
+  }, [desk, firstId, openClientId]);
+  const closeDeskCard = () => {
+    deskClosed.current = true;
+    setOpenClientId(null);
+  };
+
+  /*
+   * Owner, 13 Nov 2026 — Export wrote the ten rows on screen and called it the list. It now asks for every
+   * person the list holds — the same search, group, order and branch the screen last drew (`shown`, not the
+   * box: one typed letter is not searched for, and must not change the file) — a hundred at a time, which is
+   * the API's own page limit.
+   */
+  const [exporting, setExporting] = useState(false);
+  const [exportFailed, setExportFailed] = useState(false);
+  const exportBusy = useRef(false);
+  const exportCsv = async () => {
+    if (exportBusy.current) return;
+    exportBusy.current = true;
+    setExporting(true);
+    setExportFailed(false);
+    try {
+      const everyone = new Map<string, CustomerPage['rows'][number]>();
+      for (let offset = 0; ; ) {
+        const part = await api.customers({ ...shown.current, limit: MAX_PAGE_SIZE, offset });
+        // By id: someone added between two requests shifts the pages, and would be written twice.
+        for (const c of part.rows) everyone.set(c.id, c);
+        offset += part.rows.length;
+        if (part.rows.length === 0 || offset >= part.total) break;
+      }
+      writeCsv([...everyone.values()]);
+    } catch {
+      setExportFailed(true);
+    } finally {
+      exportBusy.current = false;
+      setExporting(false);
+    }
+  };
+  const writeCsv = (people: CustomerPage['rows']) => {
     const header = ['Name', 'Phone', 'Last booking', 'Last service', copy.clients.visitsCsvHeader, 'Total spent', 'Last seen'];
-    const rows = page.rows.map((c) => [
+    const rows = people.map((c) => [
       c.name ?? '',
       formatPhone(c.waPhone),
       c.lastBookingAt ? formatDate(c.lastBookingAt, undefined, locale) : '',
@@ -425,7 +495,8 @@ export function CustomersClient({
         <td>
           <div className="cust-recency">
             <span>{formatRecency(c.lastBookingAt, undefined, locale)}</span>
-            {chipOf(c.segment)}
+            {/* Owner, 13 Nov 2026 — not when a group is picked: every row would repeat the one word. */}
+            {status === 'all' ? chipOf(c.segment) : null}
           </div>
         </td>
       </tr>
@@ -503,7 +574,8 @@ export function CustomersClient({
                     </dd>
                   </div>
                 ))}
-                {points && <div><dt>{t('kpiPoints')}</dt><dd title={t('kpiPointsSub', { noun: lower })}>{points.full}</dd></div>}
+                {/* Flat, where the others are raised: raised means "tap me", and the points open nothing. */}
+                {points && <div className="cust-desk-kpi-flat"><dt>{t('kpiPoints')}</dt><dd title={t('kpiPointsSub', { noun: lower })}>{points.full}</dd></div>}
               </dl>
               <h2 className="pf-wide-h">{t('segmentsTitle', { noun: lower })}</h2>
               <ul className="cust-desk-bands">
@@ -550,10 +622,11 @@ export function CustomersClient({
                   />
                   <SearchClear value={search} onClear={() => { setSearch(''); setPageIndex(0); }} />
                 </label>
-                <button type="button" className="btn btn-ghost" onClick={exportCsv} disabled={page.rows.length === 0}>
-                  {t('export')}
+                <button type="button" className="btn btn-ghost" onClick={() => void exportCsv()} disabled={page.rows.length === 0 || exporting}>
+                  {exporting ? t('exporting') : t('export')}
                 </button>
               </div>
+              {exportFailed && <p className="field-error cust-export-failed" role="alert">{t('exportFailed')}</p>}
               <div className="card cust-desk-table">
                 {page.rows.length === 0 ? (
                   <div className="empty">{loading ? t('loading') : search.trim() ? t('noMatch', { noun: lower }) : t('noneYet', { noun: lower })}</div>
@@ -572,7 +645,7 @@ export function CustomersClient({
 
             <aside className="pf-wide-right cust-desk-right" aria-label={singular}>
               {openClientId ? (
-                <ClientProfileCard clientId={openClientId} inline onClose={() => setOpenClientId(null)} />
+                <ClientProfileCard clientId={openClientId} inline onClose={closeDeskCard} />
               ) : (
                 <div className="cust-desk-nothing">
                   <p>{t('deskPick', { noun: singular })}</p>
@@ -618,7 +691,7 @@ export function CustomersClient({
               and opens the same list. */}
           <Kpi className="cust-kpi-returning" icon={<IconRepeat />} label={t('kpiReturning', { noun: lower })} value={String(stats.returning)} sub={t('kpiReturningSub')} onClick={() => pickCard('returning')} pressed={status === 'returning'} />
           <Kpi icon={<IconPercent />} label={t('kpiRepeat')} value={`${stats.repeatRatePct}%`} sub={t('kpiRepeatSub', { noun: lower })} onClick={() => pickCard('returning')} pressed={status === 'returning'} />
-          {points && <Kpi icon={<IconCoins />} label={t('kpiPoints')} value={points.full} short={points.short} sub={t('kpiPointsSub', { noun: lower })} />}
+          {points && <Kpi icon={<IconCoins />} label={t('kpiPoints')} value={points.full} short={points.short} sub={t('kpiPointsSub', { noun: lower })} className="cust-kpi-flat" />}
         </div>
 
         {/* The cards are also the filter. Their counts come back with the
@@ -660,13 +733,21 @@ export function CustomersClient({
               you do.
             */}
             <p>
+              {/* Owner, 13 Nov 2026 — the words that count the people who never came open their list. */}
               <span className="cust-aside-full">
                 {t('segmentsHint')}
-                {neverPct !== null && ` · ${t('neverVisited', { count: stats.neverVisited, pct: neverPct })}`}
+                {neverPct !== null && ' · '}
+                {neverPct !== null && (
+                  <button type="button" className="cust-never-link" aria-pressed={status === 'never'} onClick={() => pickBand(status === 'never' ? 'all' : 'never')}>
+                    {t('neverVisited', { count: stats.neverVisited, pct: neverPct })}
+                  </button>
+                )}
               </span>
               {neverPct !== null && (
                 <span className="cust-aside-brief">
-                  {t('neverVisitedShort', { count: stats.neverVisited, pct: neverPct })}
+                  <button type="button" className="cust-never-link" aria-pressed={status === 'never'} onClick={() => pickBand(status === 'never' ? 'all' : 'never')}>
+                    {t('neverVisitedShort', { count: stats.neverVisited, pct: neverPct })}
+                  </button>
                 </span>
               )}
             </p>
@@ -734,8 +815,9 @@ export function CustomersClient({
               <SearchClear value={search} onClear={() => { setSearch(''); setPageIndex(0); }} />
             </label>
             <div className="dropdown-anchor" ref={filterMenu.anchorRef}>
-              <button type="button" className="btn btn-ghost" aria-haspopup="menu" aria-expanded={filterOpen} onClick={() => setFilterOpen((v) => !v)}>
-                {status === 'all' ? t('filter') : statusLabel(status)} ⌄
+              {/* The line under the toolbar names the list that is on, so the button keeps one word and one width. */}
+              <button type="button" className={`btn btn-ghost${status === 'all' ? '' : ' is-on'}`} aria-haspopup="menu" aria-expanded={filterOpen} onClick={() => setFilterOpen((v) => !v)}>
+                {t('filter')} ⌄
               </button>
               {filterOpen && (
                 <div
@@ -805,13 +887,44 @@ export function CustomersClient({
                       </button>
                     ))}
                   </div>
+                  {/* Owner, 13 Nov 2026 — on a phone Export is the last line here, so Search and Filter share one row. */}
+                  <span className="dropdown-sep cust-filter-export-sep" aria-hidden="true" />
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="dropdown-item dropdown-item-plain cust-filter-item cust-filter-export"
+                    disabled={page.rows.length === 0 || exporting}
+                    onClick={() => {
+                      void exportCsv();
+                      setFilterOpen(false);
+                    }}
+                  >
+                    <span>{t('export')}</span>
+                  </button>
                 </div>
               )}
             </div>
-            <button type="button" className="btn btn-ghost" onClick={exportCsv} disabled={page.rows.length === 0}>
-              {t('export')}
+            <button type="button" className="btn btn-ghost" onClick={() => void exportCsv()} disabled={page.rows.length === 0 || exporting}>
+              {exporting ? t('exporting') : t('export')}
             </button>
           </div>
+          {/* On a phone the menu has shut by the time the file is made, so both the wait and a failure say so here. */}
+          {exporting && <p className="cust-export-wait" role="status">{t('exporting')}</p>}
+          {exportFailed && <p className="field-error cust-export-failed" role="alert">{t('exportFailed')}</p>}
+          {/* How many, of which list, and the way back — a phone has no panel above saying which group is on. */}
+          {(status !== 'all' || search.trim() !== '') && (
+            <p className="cust-list-count" aria-live="polite">
+              <span>
+                {t('listCount', { count: page.total, one: singular, many: lower })}
+                {status !== 'all' ? ` · ${statusLabel(status)}` : ''}
+              </span>
+              {status !== 'all' && (
+                <button type="button" className="cust-list-clear" aria-label={t('clearFilter')} onClick={() => pickBand('all')}>
+                  <IconClose />
+                </button>
+              )}
+            </p>
+          )}
 
           {page.rows.length === 0 ? (
             <div className="empty">{loading ? t('loading') : search.trim() ? t('noMatch', { noun: lower }) : t('noneYet', { noun: lower })}</div>
@@ -832,7 +945,8 @@ export function CustomersClient({
                  */
                 const facts = [
                   c.waPhone ? formatPhone(c.waPhone) : null,
-                  c.lastBookingAt ? formatDateShort(c.lastBookingAt, undefined, locale) : null,
+                  // "Came 2 days ago", as the laptop's column says it — a bare "10 Nov" did not say what happened then.
+                  c.lastBookingAt ? t('cameWhen', { when: lowerFirst(formatRecency(c.lastBookingAt, undefined, locale)) }) : null,
                   bookingsOn ? t('visitCount', { count: c.totalBookings }) : null,
                 ].filter((x): x is string => Boolean(x));
                 return (

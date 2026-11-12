@@ -2612,21 +2612,24 @@
     font-size: 1.125rem;
   }
 
-  /* Customers toolbar only (no tabs): search takes the full first row; Filter
-     and Export share the second rather than Export wrapping alone onto a
-     third. Scoped so it does not disturb the Offers toolbar, which shares the
-     .offers-toolbar class but adds a tab row. */
+  /* Customers toolbar only (no tabs). Owner, 13 Nov 2026 — one row: the search takes what Filter leaves, and
+     Export is the last line of the Filter menu, so it no longer costs half a row of a 344px screen. Scoped so
+     it does not disturb the Offers toolbar, which shares the .offers-toolbar class but adds a tab row. */
+  .cust-toolbar {
+    flex-wrap: nowrap;
+  }
+
   .cust-toolbar .search-wrap {
-    flex-basis: 100%;
+    flex: 1 1 0;
+    min-width: 0;
   }
 
-  .cust-toolbar .dropdown-anchor,
+  .cust-toolbar .dropdown-anchor {
+    flex: none;
+  }
+
   .cust-toolbar > .btn-ghost {
-    flex: 1;
-  }
-
-  .cust-toolbar .dropdown-anchor > .btn {
-    width: 100%;
+    display: none;
   }
 }
 
@@ -3294,5 +3297,154 @@ button.bk-waiting-row:focus-visible {
   .cust-card:hover,
   .cust-card:active {
     background: color-mix(in srgb, var(--seg, var(--accent)) 6%, var(--surface));
+  }
+}
+
+/*
+ * Owner, 13 Nov 2026 — raised means "tap me". The reward points open no list, so their card lies flat:
+ * the same tint, no lip and no shadow under it.
+ */
+.cust-kpi.cust-kpi-flat {
+  background: var(--kpi-top);
+  box-shadow: none;
+}
+
+/* The words that count the people who never came are the way to their list. Inline, so the sentence still wraps. */
+.cust-never-link {
+  display: inline;
+  padding: 0.8125rem 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--accent-deep);
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.cust-never-link[aria-pressed='true'] {
+  font-weight: 700;
+}
+
+.cust-never-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* How many, of which list, and the way back to everyone. Only drawn while a list or a search is on. */
+.cust-list-count {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0 20px;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.cust-list-count > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cust-list-clear {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.cust-list-clear svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.cust-list-clear:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -4px;
+}
+
+@media (hover: hover) {
+  .cust-list-clear:hover {
+    color: var(--text);
+    background: color-mix(in srgb, var(--text) 6%, transparent);
+  }
+}
+
+/* The Filter button says a list is on without changing its word or its width. */
+.cust-toolbar .btn.is-on {
+  border-color: var(--accent);
+  color: var(--accent-deep);
+}
+
+/* Export has its own button from a tablet up; on a phone it is the Filter menu's last line. */
+@media (min-width: 861px) {
+  .cust-filter-export,
+  .cust-filter-export-sep {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .cust-list-count {
+    padding: 0 var(--sp-1) 0 var(--sp-3);
+    border-bottom: 0;
+  }
+}
+
+/*
+ * Owner, 13 Nov 2026 — a tablet beside the sidebar has 570–810px for the cards. Auto-fit made three columns
+ * of it, so five cards left an empty slot and four left two. Five now sit three over two, each row filled;
+ * four sit two over two.
+ */
+@media (min-width: 861px) and (max-width: 1100px) {
+  .cust-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cust-kpis-points {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .cust-kpis-points > .cust-kpi {
+    grid-column: span 2;
+  }
+
+  .cust-kpis-points > .cust-kpi:nth-child(n + 4) {
+    grid-column: span 3;
+  }
+}
+
+/*
+ * Owner, 13 Nov 2026 — Export now fetches the whole list, so it can take a moment and it can fail. Both are
+ * said on the line under the toolbar: on a phone the Filter menu has shut by then.
+ */
+.cust-export-wait,
+.cust-export-failed {
+  margin: 0;
+  padding: var(--sp-2) 20px;
+  font-size: 0.8125rem;
+}
+
+.cust-export-wait {
+  color: var(--muted);
+}
+
+@media (max-width: 860px) {
+  .cust-export-wait,
+  .cust-export-failed {
+    padding-inline: var(--sp-4);
   }
 }

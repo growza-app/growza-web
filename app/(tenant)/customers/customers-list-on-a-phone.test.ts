@@ -44,7 +44,7 @@ describe('the Customers list', () => {
 
 describe("the owner's round theme on a phone (10 Nov 2026)", () => {
   /** Owner, 12 Nov 2026 — "I want this to go into a filter, in line with the Export button." */
-  it('keeps the groups in the Filter menu beside Export, each with its colour and its count', () => {
+  it('keeps the groups in the Filter menu, each with its colour and its count', () => {
     expect(list).not.toContain('cust-pill');
     expect(css).not.toContain('cust-pill');
     expect(list).toContain('className="dropdown-item dropdown-item-plain cust-filter-item"');
@@ -122,7 +122,7 @@ describe("the owner's round theme on a phone (10 Nov 2026)", () => {
     expect(list).toContain("pickBand(status === group.key ? 'all' : group.key);");
   });
 
-  it('names a card’s list on the Filter button and takes it from a link', () => {
+  it('names a card’s list in words and takes it from a link', () => {
     expect(list).toMatch(/s === 'new'\s*\? t\('kpiNew'\)\s*: s === 'returning'\s*\? t\('kpiReturning', \{ noun: lower \}\)/);
     expect(read('page.tsx')).toContain("'never', 'new', 'returning']);");
     expect(read('../lib/api-types.ts')).toContain("| 'never' | 'new' | 'returning';");
@@ -146,5 +146,79 @@ describe("the owner's round theme on a phone (10 Nov 2026)", () => {
 
   it('still folds the "how they are doing" panel away on a phone: the menu already says it', () => {
     expect(css).toMatch(/\.cust-segments-toggle,\s*#cust-segments \{\s*display: none;\s*\}/);
+  });
+});
+
+describe('the Guests page, tidied (owner, 13 Nov 2026)', () => {
+  /** Owner, 13 Nov 2026 — Export wrote the ten rows on screen: 97 guests, a file of 10. */
+  it('exports every person the list holds, not the page on screen', () => {
+    // A hundred at a time (the API's own limit), until the total is reached; the same list the screen last drew.
+    expect(list).toContain("import { MAX_PAGE_SIZE } from '@growza-app/shared';");
+    expect(list).toMatch(/const part = await api\.customers\(\{ \.\.\.shown\.current, limit: MAX_PAGE_SIZE, offset \}\);/);
+    expect(list).toMatch(/offset \+= part\.rows\.length;\s*if \(part\.rows\.length === 0 \|\| offset >= part\.total\) break;/);
+    expect(list).toMatch(/for \(const c of part\.rows\) everyone\.set\(c\.id, c\);/);
+    expect(list).toMatch(/writeCsv\(\[\.\.\.everyone\.values\(\)\]\);/);
+    expect(list).not.toMatch(/const rows = page\.rows\.map/);
+    // `shown` is what the list was asked for, set only when that answer is drawn.
+    expect(list).toMatch(/if \(cancelled\) return;\s*shown\.current = asked;\s*setPage\(r\);/);
+    // One at a time, and it says so while it waits and when it fails.
+    expect(list).toMatch(/if \(exportBusy\.current\) return;/);
+    expect(list).toMatch(/\{exporting && <p className="cust-export-wait" role="status">\{t\('exporting'\)\}<\/p>\}/);
+    expect(list.match(/<p className="field-error cust-export-failed" role="alert">\{t\('exportFailed'\)\}<\/p>/g)).toHaveLength(2);
+    for (const m of [en, hi]) {
+      expect(m.customers.exporting).toBeTruthy();
+      expect(m.customers.exportFailed).toBeTruthy();
+    }
+  });
+
+  it('puts search and Filter on one row of a phone, with Export as the last line of the Filter menu', () => {
+    expect(css).toMatch(/@media \(max-width: 860px\) \{[\s\S]*?\.cust-toolbar \{\s*flex-wrap: nowrap;\s*\}\s*\.cust-toolbar \.search-wrap \{\s*flex: 1 1 0;\s*min-width: 0;\s*\}\s*\.cust-toolbar \.dropdown-anchor \{\s*flex: none;\s*\}\s*\.cust-toolbar > \.btn-ghost \{\s*display: none;/);
+    expect(list).toContain('className="dropdown-item dropdown-item-plain cust-filter-item cust-filter-export"');
+    expect(list).toMatch(/cust-filter-export"\s*disabled=\{page\.rows\.length === 0 \|\| exporting\}\s*onClick=\{\(\) => \{\s*void exportCsv\(\);\s*setFilterOpen\(false\);/);
+    // From a tablet up Export keeps its own button, so the menu line is not drawn twice.
+    expect(css).toMatch(/@media \(min-width: 861px\) \{\s*\.cust-filter-export,\s*\.cust-filter-export-sep \{\s*display: none;/);
+  });
+
+  it('keeps the Filter button one word, and marks it when a list is on', () => {
+    expect(list).toContain("className={`btn btn-ghost${status === 'all' ? '' : ' is-on'}`}");
+    expect(list).toContain("{t('filter')} ⌄");
+    expect(css).toMatch(/\.cust-toolbar \.btn\.is-on \{\s*border-color: var\(--accent\);/);
+  });
+
+  it('says how many and of which list under the toolbar, with a 44px way back to everyone', () => {
+    expect(list).toContain("{(status !== 'all' || search.trim() !== '') && (");
+    expect(list).toContain('<p className="cust-list-count" aria-live="polite">');
+    expect(list).toContain("{t('listCount', { count: page.total, one: singular, many: lower })}");
+    expect(list).toContain(`<button type="button" className="cust-list-clear" aria-label={t('clearFilter')} onClick={() => pickBand('all')}>`);
+    expect(css).toMatch(/\.cust-list-clear \{[^}]*width: 2\.75rem;\s*height: 2\.75rem;/);
+    expect(css).toMatch(/\.cust-list-count > span \{[^}]*text-overflow: ellipsis;/);
+    for (const lang of [en, hi]) expect(lang.customers.listCount).toContain('{count, plural,');
+  });
+
+  it('writes when a person came in words, not as a date', () => {
+    expect(list).toContain("c.lastBookingAt ? t('cameWhen', { when: lowerFirst(formatRecency(c.lastBookingAt, undefined, locale)) }) : null");
+    expect(list).not.toContain('formatDateShort');
+    for (const lang of [en, hi]) expect(lang.customers.cameWhen).toContain('{when}');
+  });
+
+  it('lays the reward points card flat: raised is kept for what can be tapped', () => {
+    expect(list).toMatch(/label=\{t\('kpiPoints'\)\}[^\n]*className="cust-kpi-flat" \/>/);
+    expect(css).toMatch(/\.cust-kpi\.cust-kpi-flat \{\s*background: var\(--kpi-top\);\s*box-shadow: none;/);
+  });
+
+  it('makes the never-came words on a tablet the way to their list, and back', () => {
+    expect(list.split(`className="cust-never-link" aria-pressed={status === 'never'} onClick={() => pickBand(status === 'never' ? 'all' : 'never')}`)).toHaveLength(3);
+    expect(css).toMatch(/\.cust-never-link \{[^}]*padding: 0\.8125rem 0;[^}]*text-decoration: underline;/);
+    expect(css).toMatch(/\.cust-never-link:focus-visible \{\s*outline: 2px solid var\(--accent\);/);
+  });
+
+  it('fills both rows of cards on a tablet: three over two with points, two over two without', () => {
+    expect(css).toMatch(/@media \(min-width: 861px\) and \(max-width: 1100px\) \{\s*\.cust-kpis \{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);\s*\}\s*\.cust-kpis-points \{\s*grid-template-columns: repeat\(6, minmax\(0, 1fr\)\);\s*\}\s*\.cust-kpis-points > \.cust-kpi \{\s*grid-column: span 2;\s*\}\s*\.cust-kpis-points > \.cust-kpi:nth-child\(n \+ 4\) \{\s*grid-column: span 3;/);
+  });
+
+  it('calls the phone tab "Alerts": "Notifications" was the longest word on a five-tab bar', () => {
+    const nav = read('../components/BottomNav.tsx');
+    expect(nav.split("{ href: '/notifications', label: t.nav.notificationsShort,")).toHaveLength(3);
+    expect(read('../lib/home-copy.ts')).toContain("notificationsShort: S('Alerts', 'सूचनाएं'),");
   });
 });
