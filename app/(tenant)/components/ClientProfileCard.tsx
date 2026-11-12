@@ -409,8 +409,10 @@ export function ClientProfileCard({
               {profile.recent.length > 0 && (
                 <>
                   <h3 className="cpc-section">{c.recent}</h3>
-                  {profile.recent.map((visit) => (
-                    <div className="cpc-row" key={visit.whenISO}>
+                  {/* Two visits can carry one timestamp (two services rung up together), and the API sends no id for a
+                      visit — so the place in the list finishes the key. The list is drawn once and never reordered. */}
+                  {profile.recent.map((visit, i) => (
+                    <div className="cpc-row" key={`${visit.whenISO}-${i}`}>
                       <span>
                         {visit.service}
                         <em>{new Date(visit.whenISO).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</em>

@@ -89,6 +89,13 @@ describe('Clients on a desk', () => {
     expect(card).toMatch(/className=\{inline \? 'cpc cpc-inline' : 'cpc'\} role=\{inline \? 'region' : 'dialog'\} aria-modal=\{inline \? undefined : 'true'\}/);
   });
 
+  /** 13 Nov 2026 — two visits at one timestamp gave two rows one key, and React warned on every laptop load. */
+  it('keys each recent visit by its time and its place, since two can share a time', () => {
+    expect(card).toContain('{profile.recent.map((visit, i) => (');
+    expect(card).toContain('<div className="cpc-row" key={`${visit.whenISO}-${i}`}>');
+    expect(card).not.toContain('key={visit.whenISO}');
+  });
+
   it('the sheet lands in the panel: static, full width, no shadow', () => {
     expect(css).toMatch(/\.cpc-inline \{\s*position: static;\s*z-index: auto;\s*width: 100%;\s*max-width: none;[\s\S]*?box-shadow: none;/);
   });
