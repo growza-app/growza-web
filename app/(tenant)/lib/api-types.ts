@@ -987,7 +987,8 @@ export interface CustomerStats {
   rewardPoints?: number;
 }
 
-export type CustomerStatusFilter = 'all' | 'active' | 'due' | 'at_risk' | 'inactive' | 'lapsed' | 'never';
+/** `new` and `returning` are the Clients cards' own lists (owner, 13 Nov 2026): the API counts and lists them by one rule. */
+export type CustomerStatusFilter = 'all' | 'active' | 'due' | 'at_risk' | 'inactive' | 'lapsed' | 'never' | 'new' | 'returning';
 export type CustomerSort = 'recent' | 'spent' | 'visits' | 'name';
 export type SortDirection = 'asc' | 'desc';
 

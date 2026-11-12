@@ -84,6 +84,50 @@ describe("the owner's round theme on a phone (10 Nov 2026)", () => {
     expect(list).toContain('Math.abs(stats.rewardPoints) < 10_000');
   });
 
+  /** Owner, 13 Nov 2026 — "we can remove some options and make top cards clickable so they will filter the data". */
+  it('lists the people a card counted when the card is tapped: Total, New, Came back — not the points', () => {
+    expect(list).toContain("const pickCard = (s: 'all' | 'new' | 'returning') => {");
+    expect(list).toContain("setStatus(status === s ? 'all' : s);");
+    expect(list).toMatch(/label=\{t\('kpiTotal', \{ noun: lower \}\)\}[^\n]*onClick=\{\(\) => pickCard\('all'\)\} \/>/);
+    expect(list).toMatch(/label=\{t\('kpiNew'\)\}[^\n]*onClick=\{\(\) => pickCard\('new'\)\} pressed=\{status === 'new'\}/);
+    expect(list).toMatch(/className="cust-kpi-returning"[^\n]*onClick=\{\(\) => pickCard\('returning'\)\} pressed=\{status === 'returning'\}/);
+    // With rewards on, a phone hides "Came back": "% came back" opens the same list, so the list is never out of reach.
+    expect(list).toMatch(/label=\{t\('kpiRepeat'\)\}[^\n]*onClick=\{\(\) => pickCard\('returning'\)\} pressed=\{status === 'returning'\}/);
+    expect(list).not.toMatch(/label=\{t\('kpiPoints'\)\}[^\n]*onClick/);
+  });
+
+  it('makes a tappable card a real button that says when it is on, and not by colour alone', () => {
+    expect(list).toContain('<button type="button" className={classes} title={sub} aria-pressed={pressed} onClick={onClick}>');
+    expect(css).toMatch(/\.cust-kpi-tap:focus-visible \{\s*outline: 2px solid var\(--accent\);/);
+    // The accent ring is the first shadow layer; the raised look (owner, 13 Nov 2026) adds layers after it.
+    expect(css).toMatch(/\.cust-kpi\.cust-kpi-tap\[aria-pressed='true'\] \{[^}]*border-color: var\(--accent\);[^}]*box-shadow:\s*inset 0 0 0 1px var\(--accent\)[,;]/);
+    // 78px on a phone, so the whole card is well over a 44px target.
+    expect(css).toMatch(/@media \(max-width: 860px\) \{[^@]*\.cust-kpi \{[^}]*min-height: 78px;/);
+  });
+
+  // Owner, 13 Nov 2026 — "change the existing card shape and look like 3d".
+  it('raises each card off the page, and presses a tappable one down without needing motion', () => {
+    expect(css).toMatch(/\.cust-kpi \{[^}]*border-radius: var\(--radius-lg\);[^}]*box-shadow:[^;]*0 3px 0 var\(--kpi-lip\)/);
+    expect(css).toMatch(/\.cust-kpi-tap:active \{\s*transform: translateY\(2px\);/);
+    expect(css).toMatch(/\.cust-kpi\.cust-kpi-tap\[aria-pressed='true'\] \{[^}]*transform: translateY\(2px\);/);
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.cust-kpi-tap \{\s*transition: none;/);
+    // Under a pointer the card turns green and lifts; the picked card (a heavier selector) stays down.
+    expect(css).toMatch(/@media \(hover: hover\) \{\s*\.cust-kpi-tap:hover \{[^}]*--kpi-bottom: var\(--accent-soft\);[^}]*transform: translateY\(-1px\);/);
+  });
+
+  it('drops "All" and "Never came" from the Filter menu, and a group that is on comes off when tapped again', () => {
+    expect(list).toContain('{stats.segments.map((group) => (');
+    expect(list).not.toContain("{ key: 'all' as const, label: t('allNoun'");
+    expect(list).not.toContain("{ key: 'never' as const");
+    expect(list).toContain("pickBand(status === group.key ? 'all' : group.key);");
+  });
+
+  it('names a card’s list on the Filter button and takes it from a link', () => {
+    expect(list).toMatch(/s === 'new'\s*\? t\('kpiNew'\)\s*: s === 'returning'\s*\? t\('kpiReturning', \{ noun: lower \}\)/);
+    expect(read('page.tsx')).toContain("'never', 'new', 'returning']);");
+    expect(read('../lib/api-types.ts')).toContain("| 'never' | 'new' | 'returning';");
+  });
+
   it('shows that menu on a phone, with a 44px line to tap', () => {
     expect(css).not.toMatch(/\.cust-toolbar \.dropdown-anchor \{\s*display: none;/);
     expect(css).not.toMatch(/\.cust-toolbar \.dropdown-anchor\s*\{\s*display: none;/);

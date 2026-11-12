@@ -27,10 +27,30 @@ describe('Clients on a desk', () => {
 
   it('the left panel is the four figures and every band with its count', () => {
     expect(client).toMatch(/<dl className="cust-desk-kpis">/);
-    expect(client).toMatch(/const bands: CustomerStatusFilter\[\] = \['all', 'active', 'due', 'at_risk', 'inactive', 'never'\];/);
+    // Owner, 13 Nov 2026 — no "All" and no "Never came" row: the Total figure clears, a picked band lets go.
+    expect(client).toMatch(/const bands = \['active', 'due', 'at_risk', 'inactive'\] as const;/);
+    expect(client).toContain("onClick={() => pickBand(on ? 'all' : s)}");
     expect(client).toMatch(/className=\{`cust-desk-band \$\{on \? 'is-on' : ''\}`\}\s*aria-pressed=\{on\}/);
     // A drifted band opens highest-spend-first, as the phone's cards do.
     expect(client).toMatch(/const pickBand = \(s: CustomerStatusFilter\) => \{\s*setStatus\(s\);[\s\S]*?setSort\(s === 'all' \|\| s === 'active' \? 'recent' : 'spent'\);/);
+  });
+
+  /** Owner, 13 Nov 2026 — the figures open their own lists on a laptop too. */
+  it('a figure, tapped, lists the people it counted, and the whole box is the target', () => {
+    const desk = css;
+    expect(client).toMatch(/className="cust-desk-kpi-tap"\s*aria-label=\{`\$\{figure\.label\}: \$\{figure\.value\}`\}\s*aria-pressed=\{figure\.card === 'all' \? undefined : status === figure\.card\}\s*onClick=\{\(\) => pickCard\(figure\.card\)\}/);
+    expect(desk).toMatch(/\.cust-desk-kpi-tap::after \{\s*content: '';\s*position: absolute;\s*inset: 0;/);
+    expect(desk).toMatch(/\.cust-desk-kpis > div\.is-on \{[^}]*border-color: var\(--accent\);/);
+    expect(desk).toMatch(/\.cust-desk-kpi-tap:focus-visible::after \{\s*outline: 2px solid var\(--accent\);/);
+  });
+
+  /** Owner, 13 Nov 2026 — the same raised tile as the phone's cards, tinted and lifted under the pointer. */
+  it('raises each figure off the panel, tints it under the pointer, and sinks the picked one', () => {
+    const desk = css;
+    expect(desk).toMatch(/\.cust-desk-kpis > div \{[^}]*border-radius: var\(--radius-lg\);[^}]*box-shadow:[^;]*0 3px 0 var\(--kpi-lip\)/);
+    expect(desk).toMatch(/@media \(hover: hover\) \{\s*\.cust-desk-kpis > div:not\(\.is-on\):has\(\.cust-desk-kpi-tap\):hover \{[^}]*--kpi-bottom: var\(--accent-soft\);[^}]*transform: translateY\(-1px\);/);
+    expect(desk).toMatch(/\.cust-desk-kpis > div\.is-on \{[^}]*transform: translateY\(2px\);/);
+    expect(desk).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.cust-desk-kpis > div \{\s*transition: none;/);
   });
 
   it('the list is the same rows as the phone table, ten a page, with the open one highlighted', () => {

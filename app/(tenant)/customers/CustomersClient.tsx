@@ -138,8 +138,17 @@ export function CustomersClient({
   const singular = lower.replace(/s$/, '');
   // Restaurant QA 2026-10-24 — the column says who is listed in the business's own word (Guest, Client, Patient).
   const { Customer } = useNouns();
+  // A list opened from a card is named by its card (owner, 13 Nov 2026): the Filter button says "Came back".
   const statusLabel = (s: Exclude<CustomerStatusFilter, 'all'>) =>
-    s === 'never' ? t('statusNever') : s === 'lapsed' ? t('statusLapsed') : t(`segments.${s}.label`);
+    s === 'never'
+      ? t('statusNever')
+      : s === 'lapsed'
+        ? t('statusLapsed')
+        : s === 'new'
+          ? t('kpiNew')
+          : s === 'returning'
+            ? t('kpiReturning', { noun: lower })
+            : t(`segments.${s}.label`);
   // Jira GRW-392 — on "All", each row says whose client it is: the same person at two branches is two rows.
   const branchName = new Map(branches.map((b) => [b.id, b.name]));
   const branchTag = (locationId: string | undefined) =>
@@ -427,13 +436,27 @@ export function CustomersClient({
       <IconPlus /> {t('addNoun', { noun: singular })}
     </button>
   ) : undefined;
-  const bands: CustomerStatusFilter[] = ['all', 'active', 'due', 'at_risk', 'inactive', 'never'];
-  const bandCount = (s: CustomerStatusFilter) =>
-    s === 'all' ? stats.total : s === 'never' ? stats.neverVisited : (stats.segments.find((seg) => seg.key === s)?.count ?? null);
+  // Owner, 13 Nov 2026 — "All" and "Never came" are gone from here as from the phone's Filter: the Total
+  // figure is the way back to everyone, and a picked band, tapped again, lets go.
+  const bands = ['active', 'due', 'at_risk', 'inactive'] as const;
+  const bandCount = (s: (typeof bands)[number]) => stats.segments.find((seg) => seg.key === s)?.count ?? null;
   const pickBand = (s: CustomerStatusFilter) => {
     setStatus(s);
     // A band of people who have drifted is a call list, so it opens highest-spend-first.
     setSort(s === 'all' || s === 'active' ? 'recent' : 'spent');
+    setDirection('desc');
+    setPageIndex(0);
+  };
+  /*
+   * Owner, 13 Nov 2026 — "make top cards clickable so they will filter the data".
+   *
+   * A card lists the people it counted: the API runs the card's own predicate for `new` and `returning`, so
+   * the figure on the card and the total under the list are one number. "Total" is everyone, which is the
+   * filter taken off. Tapping the card that is on takes it off again.
+   */
+  const pickCard = (s: 'all' | 'new' | 'returning') => {
+    setStatus(status === s ? 'all' : s);
+    setSort('recent');
     setDirection('desc');
     setPageIndex(0);
   };
@@ -455,10 +478,31 @@ export function CustomersClient({
           <div className="pf-wide-grid cust-desk-grid">
             <aside className="pf-wide-left cust-desk-left" aria-label={t('segmentsTitle', { noun: lower })}>
               <dl className="cust-desk-kpis">
-                <div><dt>{t('kpiTotal', { noun: lower })}</dt><dd>{stats.total}</dd></div>
-                <div><dt>{t('kpiNew')}</dt><dd>{stats.newThisMonth}</dd></div>
-                <div><dt>{t('kpiReturning', { noun: lower })}</dt><dd>{stats.returning}</dd></div>
-                <div><dt>{t('kpiRepeat')}</dt><dd>{stats.repeatRatePct}%</dd></div>
+                {/* The figure is the button, stretched over its whole box (79-desk-clients.css): still a list of
+                    terms and values to a screen reader, and a tap anywhere on the box to everyone else. */}
+                {(
+                  [
+                    { card: 'all', label: t('kpiTotal', { noun: lower }), value: String(stats.total) },
+                    { card: 'new', label: t('kpiNew'), value: String(stats.newThisMonth) },
+                    { card: 'returning', label: t('kpiReturning', { noun: lower }), value: String(stats.returning) },
+                    { card: 'returning', label: t('kpiRepeat'), value: `${stats.repeatRatePct}%` },
+                  ] as const
+                ).map((figure) => (
+                  <div key={figure.label} className={figure.card !== 'all' && status === figure.card ? 'is-on' : undefined}>
+                    <dt>{figure.label}</dt>
+                    <dd>
+                      <button
+                        type="button"
+                        className="cust-desk-kpi-tap"
+                        aria-label={`${figure.label}: ${figure.value}`}
+                        aria-pressed={figure.card === 'all' ? undefined : status === figure.card}
+                        onClick={() => pickCard(figure.card)}
+                      >
+                        {figure.value}
+                      </button>
+                    </dd>
+                  </div>
+                ))}
                 {points && <div><dt>{t('kpiPoints')}</dt><dd title={t('kpiPointsSub', { noun: lower })}>{points.full}</dd></div>}
               </dl>
               <h2 className="pf-wide-h">{t('segmentsTitle', { noun: lower })}</h2>
@@ -475,11 +519,11 @@ export function CustomersClient({
                         aria-pressed={on}
                         style={SEGMENT_TONE[s] ? { ['--seg' as string]: SEGMENT_TONE[s] } : undefined}
                         title={seg ? `${t(`segments.${seg.key}.label`)} · ${t(`segments.${seg.key}.range`, segmentRangeValues(seg.key, seg.range))}` : undefined}
-                        onClick={() => pickBand(on && s !== 'all' ? 'all' : s)}
+                        onClick={() => pickBand(on ? 'all' : s)}
                       >
                         <span className="cust-desk-band-name">
                           {SEGMENT_TONE[s] && <span className="cust-segment-dot" />}
-                          {s === 'all' ? t('allNoun', { noun: lower }) : statusLabel(s)}
+                          {statusLabel(s)}
                         </span>
                         {n !== null && <span className="cust-desk-n">{n}</span>}
                       </button>
@@ -567,11 +611,13 @@ export function CustomersClient({
               value, and tile 3's subtitle repeated tile 4's — so half the row
               restated the other half and the numbers read as contradicting
               each other. */}
-          <Kpi icon={<IconStaff />} label={t('kpiTotal', { noun: lower })} value={String(stats.total)} sub={t('kpiTotalSub')} />
-          <Kpi icon={<IconUserPlus />} label={t('kpiNew')} value={String(stats.newThisMonth)} sub={t('kpiNewSub')} />
-          {/* On a phone the points take this card's place (owner, 12 Nov 2026): "% came back" already says it. */}
-          <Kpi className="cust-kpi-returning" icon={<IconRepeat />} label={t('kpiReturning', { noun: lower })} value={String(stats.returning)} sub={t('kpiReturningSub')} />
-          <Kpi icon={<IconPercent />} label={t('kpiRepeat')} value={`${stats.repeatRatePct}%`} sub={t('kpiRepeatSub', { noun: lower })} />
+          {/* Owner, 13 Nov 2026 — a card, tapped, lists the people it counted. The points are a figure, not a list. */}
+          <Kpi icon={<IconStaff />} label={t('kpiTotal', { noun: lower })} value={String(stats.total)} sub={t('kpiTotalSub')} onClick={() => pickCard('all')} />
+          <Kpi icon={<IconUserPlus />} label={t('kpiNew')} value={String(stats.newThisMonth)} sub={t('kpiNewSub')} onClick={() => pickCard('new')} pressed={status === 'new'} />
+          {/* On a phone the points take this card's place (owner, 12 Nov 2026): "% came back" already says it,
+              and opens the same list. */}
+          <Kpi className="cust-kpi-returning" icon={<IconRepeat />} label={t('kpiReturning', { noun: lower })} value={String(stats.returning)} sub={t('kpiReturningSub')} onClick={() => pickCard('returning')} pressed={status === 'returning'} />
+          <Kpi icon={<IconPercent />} label={t('kpiRepeat')} value={`${stats.repeatRatePct}%`} sub={t('kpiRepeatSub', { noun: lower })} onClick={() => pickCard('returning')} pressed={status === 'returning'} />
           {points && <Kpi icon={<IconCoins />} label={t('kpiPoints')} value={points.full} short={points.short} sub={t('kpiPointsSub', { noun: lower })} />}
         </div>
 
@@ -703,30 +749,27 @@ export function CustomersClient({
                     Owner, 12 Nov 2026 — the groups are this menu on a phone too, beside Export, in place of the row
                     of pills above the list. Each line keeps what its pill said: the group's colour and how many.
                   */}
-                  {[
-                    { key: 'all' as const, label: t('allNoun', { noun: lower }), count: stats.total },
-                    ...stats.segments.map((seg) => ({ key: seg.key as CustomerStatusFilter, label: t(`segments.${seg.key}.label`), count: seg.count })),
-                    { key: 'never' as const, label: statusLabel('never'), count: stats.neverVisited },
-                  ].map((group) => (
+                  {/*
+                    Owner, 13 Nov 2026 — "All" and "Never came" are gone from here: the Total card is everyone,
+                    and a group that is on comes off when it is tapped again.
+                  */}
+                  {stats.segments.map((group) => (
                     <button
                       key={group.key}
                       type="button"
                       role="menuitemradio"
                       aria-checked={status === group.key}
                       className="dropdown-item dropdown-item-plain cust-filter-item"
-                      style={SEGMENT_TONE[group.key] ? { ['--seg' as string]: SEGMENT_TONE[group.key] } : undefined}
+                      style={{ ['--seg' as string]: SEGMENT_TONE[group.key] }}
                       onClick={() => {
-                        setStatus(group.key);
                         // A band of people who have drifted is a call list, so
                         // it opens highest-spend-first. Anything else goes back
                         // to most-recent.
-                        setSort(group.key === 'all' || group.key === 'active' ? 'recent' : 'spent');
-                        setDirection('desc');
-                        setPageIndex(0);
+                        pickBand(status === group.key ? 'all' : group.key);
                         setFilterOpen(false);
                       }}
                     >
-                      <span>{group.label}</span>
+                      <span>{t(`segments.${group.key}.label`)}</span>
                       <b>{group.count}</b>
                     </button>
                   ))}
@@ -851,27 +894,58 @@ export function CustomersClient({
  * the same reason a column whose value never varies got retired from this
  * very table (12-conventions.md §6).
  */
-function Kpi({ label, value, short, sub, icon, className }: { label: string; value: string; short?: string; sub: string; icon: ReactNode; className?: string }) {
-  return (
-    // `sub` becomes the tooltip rather than a third line. Two of the four
-    // restated their own label ("New this month" / "First seen this month");
-    // the two that genuinely defined something still do, on hover, without
-    // costing every screen a row of the list.
-    <div className={className ? `cust-kpi ${className}` : 'cust-kpi'} title={sub}>
+function Kpi({
+  label,
+  value,
+  short,
+  sub,
+  icon,
+  className,
+  onClick,
+  pressed,
+}: {
+  label: string;
+  value: string;
+  short?: string;
+  sub: string;
+  icon: ReactNode;
+  className?: string;
+  /** Given, the card is a button that lists the people it counted (owner, 13 Nov 2026). */
+  onClick?: () => void;
+  /** Whether the list below is this card's. Left out for "Total", which takes a filter off and is never "on". */
+  pressed?: boolean;
+}) {
+  const classes = `cust-kpi${className ? ` ${className}` : ''}${onClick ? ' cust-kpi-tap' : ''}`;
+  const inside = (
+    <>
       <span className="cust-kpi-icon">{icon}</span>
-      <div style={{ minWidth: 0 }}>
-        <div className="cust-kpi-label">{label}</div>
+      {/* Spans, not divs: inside a button only phrasing content is valid. The sheet lays them out as blocks. */}
+      <span className="cust-kpi-text">
+        <span className="cust-kpi-label">{label}</span>
         {short && short !== value ? (
           // Two spellings of one number: the whole of it where there is room, the short one on a phone. A screen
           // reader is given the whole one only.
-          <div className="cust-kpi-value" aria-label={value}>
+          <span className="cust-kpi-value" aria-label={value}>
             <span className="cust-kpi-full" aria-hidden="true">{value}</span>
             <span className="cust-kpi-short" aria-hidden="true">{short}</span>
-          </div>
+          </span>
         ) : (
-          <div className="cust-kpi-value">{value}</div>
+          <span className="cust-kpi-value">{value}</span>
         )}
-      </div>
+      </span>
+    </>
+  );
+  // `sub` becomes the tooltip rather than a third line. Two of the four
+  // restated their own label ("New this month" / "First seen this month");
+  // the two that genuinely defined something still do, on hover, without
+  // costing every screen a row of the list.
+  return onClick ? (
+    <button type="button" className={classes} title={sub} aria-pressed={pressed} onClick={onClick}>
+      {inside}
+    </button>
+  ) : (
+    <div className={classes} title={sub}>
+      {inside}
     </div>
   );
 }
