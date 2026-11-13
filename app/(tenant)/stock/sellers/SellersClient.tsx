@@ -116,6 +116,14 @@ export function SellersClient({ timezone }: { timezone: string }) {
   const total = view === 'best' ? (best?.totals.sizes ?? 0) : (dead?.totals.sizes ?? 0);
   const filtered = liveCategory !== '';
   const nameOf = (name: string, size: string | null) => (size ? t('sizeOf', { name, size }) : name);
+  /*
+   * On "All branches" of a business with several, which branch's shelf a row is: each branch has its own Sweat Band,
+   * and the list showed "Sweat Band · 86 sold" and "Sweat Band · 51 sold" with nothing between them (sports-shop QA).
+   */
+  const branchOf = (locationId: string | undefined): string | null =>
+    branchContext.ready && branchContext.multi && branchContext.choice === null && locationId
+      ? (branchContext.branches.find((b) => b.id === locationId)?.name ?? null)
+      : null;
   const since = (iso: string | null): string => {
     if (!iso) return t('neverSold');
     const d = new Date(iso);
@@ -199,7 +207,10 @@ export function SellersClient({ timezone }: { timezone: string }) {
               {best.rows.map((r) => (
                 <li key={r.id} className="srp-card">
                   <div className="srp-head">
-                    <h2 className="srp-name">{nameOf(r.name, r.sizeLabel)}</h2>
+                    <h2 className="srp-name">
+                      {nameOf(r.name, r.sizeLabel)}
+                      {branchOf(r.locationId) ? <span className="srp-branch"> · {branchOf(r.locationId)}</span> : null}
+                    </h2>
                     <p className="srp-value">{t('sold', { units: r.units })}</p>
                   </div>
                   <p className="srp-hint">
@@ -227,7 +238,10 @@ export function SellersClient({ timezone }: { timezone: string }) {
               {dead.rows.map((r) => (
                 <li key={r.id} className="srp-card">
                   <div className="srp-head">
-                    <h2 className="srp-name">{nameOf(r.name, r.sizeLabel)}</h2>
+                    <h2 className="srp-name">
+                      {nameOf(r.name, r.sizeLabel)}
+                      {branchOf(r.locationId) ? <span className="srp-branch"> · {branchOf(r.locationId)}</span> : null}
+                    </h2>
                     <p className="srp-value">{r.valueMinor === null ? t('noCost') : money(r.valueMinor)}</p>
                   </div>
                   <p className="srp-hint">{`${t('onShelf', { units: count(r.stock) })} · ${since(r.lastSoldAt)}`}</p>

@@ -1800,6 +1800,8 @@ export interface SellersWindow {
 export interface BestSellerRow {
   id: string;
   productId: string;
+  /** Which branch's shelf (Jira GRW-376: a product belongs to one). Absent from an older API. */
+  locationId?: string;
   name: string;
   sizeLabel: string | null;
   units: number;
@@ -1818,6 +1820,8 @@ export interface BestSellersPage {
 export interface DeadStockRow {
   id: string;
   productId: string;
+  /** Which branch's shelf (Jira GRW-376: a product belongs to one). Absent from an older API. */
+  locationId?: string;
   name: string;
   sizeLabel: string | null;
   stock: number;

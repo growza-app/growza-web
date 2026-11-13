@@ -226,6 +226,12 @@
   background: var(--accent-soft);
   color: var(--accent-deep);
 }
+.srp-branch {
+  color: var(--muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .srp-name {
   margin: 0;
   font-size: var(--fs-4);
