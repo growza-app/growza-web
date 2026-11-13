@@ -281,3 +281,22 @@
     display: none;
   }
 }
+
+/* ---------- every other screen ----------
+ * The list below is what a walk through every screen found drawing a white box with a border
+ * on the grey page (desktop and phone, County Chicken, 14 Nov 2026). Cards and on-page toolbars
+ * lose the line; things that float over content (the till's bar and tray, save bars, menus,
+ * sheets) and form fields keep theirs, because there the line is what separates them.
+ * Inside a sheet or dialog a card sits on white, so it keeps its border there. */
+
+:is(
+  .card, .rp-card, .tile, .bk-card, .bk-kpi, .staff-card,
+  .cr-card, .srp-card, .srp-totals, .srp-empty, .prd-stat,
+  .att-tile, .att-list, .menu-list, .cust-card, .ord-cards, .pay,
+  .pf-wide-left, .pf-wide-right, .rw-examples-box, .settings-empty-state,
+  .srp-toolbar, .srp-nav, .ord-tools, .att-daynav
+):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
+  border-color: transparent;
+  box-shadow: none;
+  border-radius: var(--radius-lg);
+}
