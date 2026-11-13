@@ -92,9 +92,14 @@ describe('each Home pays only for its own reads', () => {
     expect(shop.slice(at, at + 200)).toContain('pageSize: 3');
   });
 
-  it('"recent" is the last six orders, not the chosen window', () => {
-    const at = shop.indexOf('if (can(\'/orders\')) {\n      api\n        .orders({ pageSize: 6, location: branch })');
+  it('"recent" is the last six orders, not the chosen window — cut from the one hundred-row read', () => {
+    const at = shop.indexOf('if (can(\'/orders\')) {\n      api\n        .orders({ pageSize: 100, location: branch })');
     expect(at).toBeGreaterThan(shop.indexOf('if (phone !== true) return;'));
+    // Owner, 2026-11-13 (IO) — one orders read on a phone's Home, not two: the six are the first six of the hundred.
+    // (The desk's own six-row read for its command center stays; it does not run on a phone.)
+    const phoneEffect = shop.slice(shop.indexOf('if (phone !== true) return;'), shop.indexOf('if (!canPhoneRange) return;'));
+    expect(phoneEffect).not.toContain('pageSize: 6');
+    expect(shop.slice(at, at + 400)).toContain('setRecentOrders(res.rows.slice(0, 6));');
     // It sits ABOVE the `canPhoneRange` gate: the rows are not behind the channel report's permission.
     expect(at).toBeLessThan(shop.indexOf('if (!canPhoneRange) return;'));
   });
