@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pagination } from '../components/Pagination';
 import { csvLines } from '../lib/csv';
-import { formatDate, formatDateShort, formatPhone, formatRecency } from '../lib/format';
+import { formatDate, formatPhone, formatRecency, intlLocale } from '../lib/format';
 import { useSearchParams } from 'next/navigation';
 import {
   api,
@@ -23,6 +23,8 @@ import { PAGE_SIZE } from '../components/Pagination';
 import {
   IconChevronDown,
   IconChevronRight,
+  IconClose,
+  IconCoins,
   IconPercent,
   IconPlus,
   IconRepeat,
@@ -42,8 +44,12 @@ import { toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
 import { SEARCH_DEBOUNCE_MS, worthSearching } from '../lib/search-tuning';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
+import { MAX_PAGE_SIZE } from '@growza-app/shared';
 import { SearchClear } from '../components/SearchClear';
 import { segmentRangeValues } from '../lib/segment-range';
+
+/** "Today" → "today", to sit after "Came". Devanagari has no case, so Hindi passes through as it is. */
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 /**
  * Chips only where they say something. "Active" on every row was the original
@@ -137,8 +143,17 @@ export function CustomersClient({
   const singular = lower.replace(/s$/, '');
   // Restaurant QA 2026-10-24 — the column says who is listed in the business's own word (Guest, Client, Patient).
   const { Customer } = useNouns();
+  // A list opened from a card is named by its card (owner, 13 Nov 2026): the Filter button says "Came back".
   const statusLabel = (s: Exclude<CustomerStatusFilter, 'all'>) =>
-    s === 'never' ? t('statusNever') : s === 'lapsed' ? t('statusLapsed') : t(`segments.${s}.label`);
+    s === 'never'
+      ? t('statusNever')
+      : s === 'lapsed'
+        ? t('statusLapsed')
+        : s === 'new'
+          ? t('kpiNew')
+          : s === 'returning'
+            ? t('kpiReturning', { noun: lower })
+            : t(`segments.${s}.label`);
   // Jira GRW-392 — on "All", each row says whose client it is: the same person at two branches is two rows.
   const branchName = new Map(branches.map((b) => [b.id, b.name]));
   const branchTag = (locationId: string | undefined) =>
@@ -148,6 +163,25 @@ export function CustomersClient({
     return chip ? <span className={`chip ${chip.cls}`}>{t(chip.key)}</span> : null;
   };
   const [stats] = useState(initialStats);
+  /*
+   * Owner, 12 Nov 2026 — the reward points everyone holds, as a fifth figure.
+   *
+   * Null when the business runs no rewards (the API leaves the field out), and then no card is drawn. The short
+   * form is for a phone, where four figures share the width and "1,24,500" does not fit an 52px cell: "1.2L".
+   * It is `en-IN` in Hindi too — K, L and Cr are how the number is said here, and "12.5 हज़ार" is the long form
+   * again.
+   */
+  const points =
+    typeof stats.rewardPoints === 'number'
+      ? {
+          full: new Intl.NumberFormat(intlLocale(locale)).format(stats.rewardPoints),
+          // Under ten thousand the whole number fits, and "1,494" is not "1.5K" to the person who owes them.
+          short:
+            Math.abs(stats.rewardPoints) < 10_000
+              ? new Intl.NumberFormat(intlLocale(locale)).format(stats.rewardPoints)
+              : new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 }).format(stats.rewardPoints),
+        }
+      : null;
   const [page, setPage] = useState(initialPage);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<CustomerStatusFilter>(initialStatus ?? 'all');
@@ -197,6 +231,8 @@ export function CustomersClient({
   const pageSize = PAGE_SIZE;
   // Skip the fetch on first render — the server already sent page 0.
   const primed = useRef(false);
+  // What the list on screen was asked for. Export reads this, so the file is the list, not the half-typed box.
+  const shown = useRef({ search, status, sort, direction, location: branchId });
 
   /**
    * The band and sort live in the address bar, not only in React state.
@@ -275,12 +311,15 @@ export function CustomersClient({
     }
     setLoading(true);
     let cancelled = false;
+    const asked = { search, status, sort, direction, location: branchId };
     // Debounced so typing a phone number doesn't fire a request per digit.
     const timer = setTimeout(() => {
       api
-        .customers({ search, status, sort, direction, limit: pageSize, offset: pageIndex * pageSize, location: branchId })
+        .customers({ ...asked, limit: pageSize, offset: pageIndex * pageSize })
         .then((r) => {
-          if (!cancelled) setPage(r);
+          if (cancelled) return;
+          shown.current = asked;
+          setPage(r);
         })
         .finally(() => {
           if (!cancelled) setLoading(false);
@@ -321,9 +360,69 @@ export function CustomersClient({
 
   const visibleRows = page.rows.slice(0, pageSize);
 
-  const exportCsv = () => {
+  /*
+   * Owner, 13 Nov 2026 — on a laptop the right third sat empty until a row was clicked. The first person on
+   * the list opens there by default. Three things it must not do: reopen a card the owner closed by hand,
+   * replace a person the owner picked, or follow the window down to a tablet, where the same id would open
+   * as a sheet over the list nobody asked for.
+   */
+  const autoOpened = useRef<string | null>(null);
+  const deskClosed = useRef(false);
+  const firstId = visibleRows[0]?.id ?? null;
+  useEffect(() => {
+    if (desk === null) return;
+    const mine = openClientId !== null && openClientId === autoOpened.current;
+    if (!desk || !firstId) {
+      if (mine) {
+        autoOpened.current = null;
+        setOpenClientId(null);
+      }
+      return;
+    }
+    if (deskClosed.current || firstId === openClientId) return;
+    if (openClientId !== null && !mine) return;
+    autoOpened.current = firstId;
+    setOpenClientId(firstId);
+  }, [desk, firstId, openClientId]);
+  const closeDeskCard = () => {
+    deskClosed.current = true;
+    setOpenClientId(null);
+  };
+
+  /*
+   * Owner, 13 Nov 2026 — Export wrote the ten rows on screen and called it the list. It now asks for every
+   * person the list holds — the same search, group, order and branch the screen last drew (`shown`, not the
+   * box: one typed letter is not searched for, and must not change the file) — a hundred at a time, which is
+   * the API's own page limit.
+   */
+  const [exporting, setExporting] = useState(false);
+  const [exportFailed, setExportFailed] = useState(false);
+  const exportBusy = useRef(false);
+  const exportCsv = async () => {
+    if (exportBusy.current) return;
+    exportBusy.current = true;
+    setExporting(true);
+    setExportFailed(false);
+    try {
+      const everyone = new Map<string, CustomerPage['rows'][number]>();
+      for (let offset = 0; ; ) {
+        const part = await api.customers({ ...shown.current, limit: MAX_PAGE_SIZE, offset });
+        // By id: someone added between two requests shifts the pages, and would be written twice.
+        for (const c of part.rows) everyone.set(c.id, c);
+        offset += part.rows.length;
+        if (part.rows.length === 0 || offset >= part.total) break;
+      }
+      writeCsv([...everyone.values()]);
+    } catch {
+      setExportFailed(true);
+    } finally {
+      exportBusy.current = false;
+      setExporting(false);
+    }
+  };
+  const writeCsv = (people: CustomerPage['rows']) => {
     const header = ['Name', 'Phone', 'Last booking', 'Last service', copy.clients.visitsCsvHeader, 'Total spent', 'Last seen'];
-    const rows = page.rows.map((c) => [
+    const rows = people.map((c) => [
       c.name ?? '',
       formatPhone(c.waPhone),
       c.lastBookingAt ? formatDate(c.lastBookingAt, undefined, locale) : '',
@@ -396,7 +495,8 @@ export function CustomersClient({
         <td>
           <div className="cust-recency">
             <span>{formatRecency(c.lastBookingAt, undefined, locale)}</span>
-            {chipOf(c.segment)}
+            {/* Owner, 13 Nov 2026 — not when a group is picked: every row would repeat the one word. */}
+            {status === 'all' ? chipOf(c.segment) : null}
           </div>
         </td>
       </tr>
@@ -407,13 +507,27 @@ export function CustomersClient({
       <IconPlus /> {t('addNoun', { noun: singular })}
     </button>
   ) : undefined;
-  const bands: CustomerStatusFilter[] = ['all', 'active', 'due', 'at_risk', 'inactive', 'never'];
-  const bandCount = (s: CustomerStatusFilter) =>
-    s === 'all' ? stats.total : s === 'never' ? stats.neverVisited : (stats.segments.find((seg) => seg.key === s)?.count ?? null);
+  // Owner, 13 Nov 2026 — "All" and "Never came" are gone from here as from the phone's Filter: the Total
+  // figure is the way back to everyone, and a picked band, tapped again, lets go.
+  const bands = ['active', 'due', 'at_risk', 'inactive'] as const;
+  const bandCount = (s: (typeof bands)[number]) => stats.segments.find((seg) => seg.key === s)?.count ?? null;
   const pickBand = (s: CustomerStatusFilter) => {
     setStatus(s);
     // A band of people who have drifted is a call list, so it opens highest-spend-first.
     setSort(s === 'all' || s === 'active' ? 'recent' : 'spent');
+    setDirection('desc');
+    setPageIndex(0);
+  };
+  /*
+   * Owner, 13 Nov 2026 — "make top cards clickable so they will filter the data".
+   *
+   * A card lists the people it counted: the API runs the card's own predicate for `new` and `returning`, so
+   * the figure on the card and the total under the list are one number. "Total" is everyone, which is the
+   * filter taken off. Tapping the card that is on takes it off again.
+   */
+  const pickCard = (s: 'all' | 'new' | 'returning') => {
+    setStatus(status === s ? 'all' : s);
+    setSort('recent');
     setDirection('desc');
     setPageIndex(0);
   };
@@ -435,10 +549,33 @@ export function CustomersClient({
           <div className="pf-wide-grid cust-desk-grid">
             <aside className="pf-wide-left cust-desk-left" aria-label={t('segmentsTitle', { noun: lower })}>
               <dl className="cust-desk-kpis">
-                <div><dt>{t('kpiTotal', { noun: lower })}</dt><dd>{stats.total}</dd></div>
-                <div><dt>{t('kpiNew')}</dt><dd>{stats.newThisMonth}</dd></div>
-                <div><dt>{t('kpiReturning', { noun: lower })}</dt><dd>{stats.returning}</dd></div>
-                <div><dt>{t('kpiRepeat')}</dt><dd>{stats.repeatRatePct}%</dd></div>
+                {/* The figure is the button, stretched over its whole box (79-desk-clients.css): still a list of
+                    terms and values to a screen reader, and a tap anywhere on the box to everyone else. */}
+                {(
+                  [
+                    { card: 'all', label: t('kpiTotal', { noun: lower }), value: String(stats.total) },
+                    { card: 'new', label: t('kpiNew'), value: String(stats.newThisMonth) },
+                    { card: 'returning', label: t('kpiReturning', { noun: lower }), value: String(stats.returning) },
+                    { card: 'returning', label: t('kpiRepeat'), value: `${stats.repeatRatePct}%` },
+                  ] as const
+                ).map((figure) => (
+                  <div key={figure.label} className={figure.card !== 'all' && status === figure.card ? 'is-on' : undefined}>
+                    <dt>{figure.label}</dt>
+                    <dd>
+                      <button
+                        type="button"
+                        className="cust-desk-kpi-tap"
+                        aria-label={`${figure.label}: ${figure.value}`}
+                        aria-pressed={figure.card === 'all' ? undefined : status === figure.card}
+                        onClick={() => pickCard(figure.card)}
+                      >
+                        {figure.value}
+                      </button>
+                    </dd>
+                  </div>
+                ))}
+                {/* Flat, where the others are raised: raised means "tap me", and the points open nothing. */}
+                {points && <div className="cust-desk-kpi-flat"><dt>{t('kpiPoints')}</dt><dd title={t('kpiPointsSub', { noun: lower })}>{points.full}</dd></div>}
               </dl>
               <h2 className="pf-wide-h">{t('segmentsTitle', { noun: lower })}</h2>
               <ul className="cust-desk-bands">
@@ -454,11 +591,11 @@ export function CustomersClient({
                         aria-pressed={on}
                         style={SEGMENT_TONE[s] ? { ['--seg' as string]: SEGMENT_TONE[s] } : undefined}
                         title={seg ? `${t(`segments.${seg.key}.label`)} · ${t(`segments.${seg.key}.range`, segmentRangeValues(seg.key, seg.range))}` : undefined}
-                        onClick={() => pickBand(on && s !== 'all' ? 'all' : s)}
+                        onClick={() => pickBand(on ? 'all' : s)}
                       >
                         <span className="cust-desk-band-name">
                           {SEGMENT_TONE[s] && <span className="cust-segment-dot" />}
-                          {s === 'all' ? t('allNoun', { noun: lower }) : statusLabel(s)}
+                          {statusLabel(s)}
                         </span>
                         {n !== null && <span className="cust-desk-n">{n}</span>}
                       </button>
@@ -485,10 +622,11 @@ export function CustomersClient({
                   />
                   <SearchClear value={search} onClear={() => { setSearch(''); setPageIndex(0); }} />
                 </label>
-                <button type="button" className="btn btn-ghost" onClick={exportCsv} disabled={page.rows.length === 0}>
-                  {t('export')}
+                <button type="button" className="btn btn-ghost" onClick={() => void exportCsv()} disabled={page.rows.length === 0 || exporting}>
+                  {exporting ? t('exporting') : t('export')}
                 </button>
               </div>
+              {exportFailed && <p className="field-error cust-export-failed" role="alert">{t('exportFailed')}</p>}
               <div className="card cust-desk-table">
                 {page.rows.length === 0 ? (
                   <div className="empty">{loading ? t('loading') : search.trim() ? t('noMatch', { noun: lower }) : t('noneYet', { noun: lower })}</div>
@@ -507,7 +645,7 @@ export function CustomersClient({
 
             <aside className="pf-wide-right cust-desk-right" aria-label={singular}>
               {openClientId ? (
-                <ClientProfileCard clientId={openClientId} inline onClose={() => setOpenClientId(null)} />
+                <ClientProfileCard clientId={openClientId} inline onClose={closeDeskCard} />
               ) : (
                 <div className="cust-desk-nothing">
                   <p>{t('deskPick', { noun: singular })}</p>
@@ -541,15 +679,19 @@ export function CustomersClient({
         }
       />
       <div className="page-body table-fit cust-fit">
-        <div className="cust-kpis">
+        <div className={points ? 'cust-kpis cust-kpis-points' : 'cust-kpis'}>
           {/* Four distinct facts. Previously tile 1's subtitle repeated tile 2's
               value, and tile 3's subtitle repeated tile 4's — so half the row
               restated the other half and the numbers read as contradicting
               each other. */}
-          <Kpi icon={<IconStaff />} label={t('kpiTotal', { noun: lower })} value={String(stats.total)} sub={t('kpiTotalSub')} />
-          <Kpi icon={<IconUserPlus />} label={t('kpiNew')} value={String(stats.newThisMonth)} sub={t('kpiNewSub')} />
-          <Kpi icon={<IconRepeat />} label={t('kpiReturning', { noun: lower })} value={String(stats.returning)} sub={t('kpiReturningSub')} />
-          <Kpi icon={<IconPercent />} label={t('kpiRepeat')} value={`${stats.repeatRatePct}%`} sub={t('kpiRepeatSub', { noun: lower })} />
+          {/* Owner, 13 Nov 2026 — a card, tapped, lists the people it counted. The points are a figure, not a list. */}
+          <Kpi icon={<IconStaff />} label={t('kpiTotal', { noun: lower })} value={String(stats.total)} sub={t('kpiTotalSub')} onClick={() => pickCard('all')} />
+          <Kpi icon={<IconUserPlus />} label={t('kpiNew')} value={String(stats.newThisMonth)} sub={t('kpiNewSub')} onClick={() => pickCard('new')} pressed={status === 'new'} />
+          {/* On a phone the points take this card's place (owner, 12 Nov 2026): "% came back" already says it,
+              and opens the same list. */}
+          <Kpi className="cust-kpi-returning" icon={<IconRepeat />} label={t('kpiReturning', { noun: lower })} value={String(stats.returning)} sub={t('kpiReturningSub')} onClick={() => pickCard('returning')} pressed={status === 'returning'} />
+          <Kpi icon={<IconPercent />} label={t('kpiRepeat')} value={`${stats.repeatRatePct}%`} sub={t('kpiRepeatSub', { noun: lower })} onClick={() => pickCard('returning')} pressed={status === 'returning'} />
+          {points && <Kpi icon={<IconCoins />} label={t('kpiPoints')} value={points.full} short={points.short} sub={t('kpiPointsSub', { noun: lower })} className="cust-kpi-flat" />}
         </div>
 
         {/* The cards are also the filter. Their counts come back with the
@@ -591,13 +733,21 @@ export function CustomersClient({
               you do.
             */}
             <p>
+              {/* Owner, 13 Nov 2026 — the words that count the people who never came open their list. */}
               <span className="cust-aside-full">
                 {t('segmentsHint')}
-                {neverPct !== null && ` · ${t('neverVisited', { count: stats.neverVisited, pct: neverPct })}`}
+                {neverPct !== null && ' · '}
+                {neverPct !== null && (
+                  <button type="button" className="cust-never-link" aria-pressed={status === 'never'} onClick={() => pickBand(status === 'never' ? 'all' : 'never')}>
+                    {t('neverVisited', { count: stats.neverVisited, pct: neverPct })}
+                  </button>
+                )}
               </span>
               {neverPct !== null && (
                 <span className="cust-aside-brief">
-                  {t('neverVisitedShort', { count: stats.neverVisited, pct: neverPct })}
+                  <button type="button" className="cust-never-link" aria-pressed={status === 'never'} onClick={() => pickBand(status === 'never' ? 'all' : 'never')}>
+                    {t('neverVisitedShort', { count: stats.neverVisited, pct: neverPct })}
+                  </button>
                 </span>
               )}
             </p>
@@ -647,39 +797,6 @@ export function CustomersClient({
           </div>
         </div>
 
-        {/*
-          Owner, 10 Nov 2026 — on a phone the groups are round pills you tap, each with its colour on its left edge —
-          the same colour as the edge of every row in that group. They replace the folded "How your guests are doing"
-          panel and the Filter menu there; a laptop keeps both.
-        */}
-        <div className="cust-pills mobile-only" role="group" aria-label={t('segmentsTitle', { noun: lower })}>
-          {[
-            { key: 'all' as const, label: t('allNoun', { noun: lower }), count: stats.total },
-            ...stats.segments.map((seg) => ({ key: seg.key as CustomerStatusFilter, label: t(`segments.${seg.key}.label`), count: seg.count })),
-            { key: 'never' as const, label: statusLabel('never'), count: stats.neverVisited },
-          ].map((pill) => {
-            const on = status === pill.key;
-            return (
-              <button
-                key={pill.key}
-                type="button"
-                className="cust-pill"
-                aria-pressed={on}
-                style={SEGMENT_TONE[pill.key] ? { ['--seg' as string]: SEGMENT_TONE[pill.key] } : undefined}
-                onClick={() => {
-                  setStatus(pill.key);
-                  setSort(pill.key === 'all' || pill.key === 'active' ? 'recent' : 'spent');
-                  setDirection('desc');
-                  setPageIndex(0);
-                }}
-              >
-                {pill.label}
-                <b>{pill.count}</b>
-              </button>
-            );
-          })}
-        </div>
-
         <div className="card cust-list-card">
           <div className="offers-toolbar cust-toolbar">
             <label className="search-wrap">
@@ -698,42 +815,116 @@ export function CustomersClient({
               <SearchClear value={search} onClear={() => { setSearch(''); setPageIndex(0); }} />
             </label>
             <div className="dropdown-anchor" ref={filterMenu.anchorRef}>
-              <button type="button" className="btn btn-ghost" onClick={() => setFilterOpen((v) => !v)}>
-                {status === 'all' ? t('filter') : statusLabel(status)} ⌄
+              {/* The line under the toolbar names the list that is on, so the button keeps one word and one width. */}
+              <button type="button" className={`btn btn-ghost${status === 'all' ? '' : ' is-on'}`} aria-haspopup="menu" aria-expanded={filterOpen} onClick={() => setFilterOpen((v) => !v)}>
+                {t('filter')} ⌄
               </button>
               {filterOpen && (
                 <div
                   className="dropdown-panel dropdown-panel-sm"
+                  role="menu"
                   ref={filterMenu.panelRef}
                   style={filterMenu.style}
                   onMouseLeave={closeFilter}
                 >
-                  {(['all', 'active', 'due', 'at_risk', 'inactive', 'never'] as CustomerStatusFilter[]).map((s) => (
+                  {/*
+                    Owner, 12 Nov 2026 — the groups are this menu on a phone too, beside Export, in place of the row
+                    of pills above the list. Each line keeps what its pill said: the group's colour and how many.
+                  */}
+                  {/*
+                    Owner, 13 Nov 2026 — "All" and "Never came" are gone from here: the Total card is everyone,
+                    and a group that is on comes off when it is tapped again.
+                  */}
+                  {stats.segments.map((group) => (
                     <button
-                      key={s}
+                      key={group.key}
                       type="button"
-                      className="dropdown-item dropdown-item-plain"
+                      role="menuitemradio"
+                      aria-checked={status === group.key}
+                      className="dropdown-item dropdown-item-plain cust-filter-item"
+                      style={{ ['--seg' as string]: SEGMENT_TONE[group.key] }}
                       onClick={() => {
-                        setStatus(s);
                         // A band of people who have drifted is a call list, so
                         // it opens highest-spend-first. Anything else goes back
                         // to most-recent.
-                        setSort(s === 'all' || s === 'active' ? 'recent' : 'spent');
-                        setDirection('desc');
-                        setPageIndex(0);
+                        pickBand(status === group.key ? 'all' : group.key);
                         setFilterOpen(false);
                       }}
                     >
-                      {s === 'all' ? t('allNoun', { noun: lower }) : statusLabel(s)}
+                      <span>{t(`segments.${group.key}.label`)}</span>
+                      <b>{group.count}</b>
                     </button>
                   ))}
+                  {/*
+                    Owner, 12 Nov 2026 — "who has spent the most". A laptop sorts by clicking a column; a phone has
+                    no columns, so the order lives here, under the groups, and Filter and Export stay two buttons.
+                    Picking a group above still sets its own order (a drifted band opens biggest spender first).
+                  */}
+                  <span className="dropdown-sep" aria-hidden="true" />
+                  <div role="group" aria-labelledby="cust-order-head">
+                    <div className="cust-filter-head" id="cust-order-head">{t('showFirst')}</div>
+                    {(
+                      [
+                        { key: 'recent', direction: 'desc', label: t('orderRecent') },
+                        { key: 'spent', direction: 'desc', label: t('orderSpent') },
+                        { key: 'name', direction: 'asc', label: t('orderName') },
+                      ] as const
+                    ).map((order) => (
+                      <button
+                        key={order.key}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={sort === order.key && direction === order.direction}
+                        className="dropdown-item dropdown-item-plain cust-filter-item cust-order-item"
+                        onClick={() => {
+                          setSort(order.key);
+                          setDirection(order.direction);
+                          setPageIndex(0);
+                          setFilterOpen(false);
+                        }}
+                      >
+                        <span>{order.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {/* Owner, 13 Nov 2026 — on a phone Export is the last line here, so Search and Filter share one row. */}
+                  <span className="dropdown-sep cust-filter-export-sep" aria-hidden="true" />
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="dropdown-item dropdown-item-plain cust-filter-item cust-filter-export"
+                    disabled={page.rows.length === 0 || exporting}
+                    onClick={() => {
+                      void exportCsv();
+                      setFilterOpen(false);
+                    }}
+                  >
+                    <span>{t('export')}</span>
+                  </button>
                 </div>
               )}
             </div>
-            <button type="button" className="btn btn-ghost" onClick={exportCsv} disabled={page.rows.length === 0}>
-              {t('export')}
+            <button type="button" className="btn btn-ghost" onClick={() => void exportCsv()} disabled={page.rows.length === 0 || exporting}>
+              {exporting ? t('exporting') : t('export')}
             </button>
           </div>
+          {/* On a phone the menu has shut by the time the file is made, so both the wait and a failure say so here. */}
+          {exporting && <p className="cust-export-wait" role="status">{t('exporting')}</p>}
+          {exportFailed && <p className="field-error cust-export-failed" role="alert">{t('exportFailed')}</p>}
+          {/* How many, of which list, and the way back — a phone has no panel above saying which group is on. */}
+          {(status !== 'all' || search.trim() !== '') && (
+            <p className="cust-list-count" aria-live="polite">
+              <span>
+                {t('listCount', { count: page.total, one: singular, many: lower })}
+                {status !== 'all' ? ` · ${statusLabel(status)}` : ''}
+              </span>
+              {status !== 'all' && (
+                <button type="button" className="cust-list-clear" aria-label={t('clearFilter')} onClick={() => pickBand('all')}>
+                  <IconClose />
+                </button>
+              )}
+            </p>
+          )}
 
           {page.rows.length === 0 ? (
             <div className="empty">{loading ? t('loading') : search.trim() ? t('noMatch', { noun: lower }) : t('noneYet', { noun: lower })}</div>
@@ -754,7 +945,8 @@ export function CustomersClient({
                  */
                 const facts = [
                   c.waPhone ? formatPhone(c.waPhone) : null,
-                  c.lastBookingAt ? formatDateShort(c.lastBookingAt, undefined, locale) : null,
+                  // "Came 2 days ago", as the laptop's column says it — a bare "10 Nov" did not say what happened then.
+                  c.lastBookingAt ? t('cameWhen', { when: lowerFirst(formatRecency(c.lastBookingAt, undefined, locale)) }) : null,
                   bookingsOn ? t('visitCount', { count: c.totalBookings }) : null,
                 ].filter((x): x is string => Boolean(x));
                 return (
@@ -816,18 +1008,58 @@ export function CustomersClient({
  * the same reason a column whose value never varies got retired from this
  * very table (12-conventions.md §6).
  */
-function Kpi({ label, value, sub, icon }: { label: string; value: string; sub: string; icon: ReactNode }) {
-  return (
-    // `sub` becomes the tooltip rather than a third line. Two of the four
-    // restated their own label ("New this month" / "First seen this month");
-    // the two that genuinely defined something still do, on hover, without
-    // costing every screen a row of the list.
-    <div className="cust-kpi" title={sub}>
+function Kpi({
+  label,
+  value,
+  short,
+  sub,
+  icon,
+  className,
+  onClick,
+  pressed,
+}: {
+  label: string;
+  value: string;
+  short?: string;
+  sub: string;
+  icon: ReactNode;
+  className?: string;
+  /** Given, the card is a button that lists the people it counted (owner, 13 Nov 2026). */
+  onClick?: () => void;
+  /** Whether the list below is this card's. Left out for "Total", which takes a filter off and is never "on". */
+  pressed?: boolean;
+}) {
+  const classes = `cust-kpi${className ? ` ${className}` : ''}${onClick ? ' cust-kpi-tap' : ''}`;
+  const inside = (
+    <>
       <span className="cust-kpi-icon">{icon}</span>
-      <div style={{ minWidth: 0 }}>
-        <div className="cust-kpi-label">{label}</div>
-        <div className="cust-kpi-value">{value}</div>
-      </div>
+      {/* Spans, not divs: inside a button only phrasing content is valid. The sheet lays them out as blocks. */}
+      <span className="cust-kpi-text">
+        <span className="cust-kpi-label">{label}</span>
+        {short && short !== value ? (
+          // Two spellings of one number: the whole of it where there is room, the short one on a phone. A screen
+          // reader is given the whole one only.
+          <span className="cust-kpi-value" aria-label={value}>
+            <span className="cust-kpi-full" aria-hidden="true">{value}</span>
+            <span className="cust-kpi-short" aria-hidden="true">{short}</span>
+          </span>
+        ) : (
+          <span className="cust-kpi-value">{value}</span>
+        )}
+      </span>
+    </>
+  );
+  // `sub` becomes the tooltip rather than a third line. Two of the four
+  // restated their own label ("New this month" / "First seen this month");
+  // the two that genuinely defined something still do, on hover, without
+  // costing every screen a row of the list.
+  return onClick ? (
+    <button type="button" className={classes} title={sub} aria-pressed={pressed} onClick={onClick}>
+      {inside}
+    </button>
+  ) : (
+    <div className={classes} title={sub}>
+      {inside}
     </div>
   );
 }

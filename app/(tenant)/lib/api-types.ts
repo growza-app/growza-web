@@ -980,9 +980,15 @@ export interface CustomerStats {
   /** Clients with no completed visit — in the total, in none of the bands. */
   neverVisited: number;
   segments: CustomerSegmentCount[];
+  /**
+   * Every reward point these clients hold now. ABSENT, not zero, for a business that runs no rewards — the
+   * Clients page draws its card on the field being there (owner, 12 Nov 2026).
+   */
+  rewardPoints?: number;
 }
 
-export type CustomerStatusFilter = 'all' | 'active' | 'due' | 'at_risk' | 'inactive' | 'lapsed' | 'never';
+/** `new` and `returning` are the Clients cards' own lists (owner, 13 Nov 2026): the API counts and lists them by one rule. */
+export type CustomerStatusFilter = 'all' | 'active' | 'due' | 'at_risk' | 'inactive' | 'lapsed' | 'never' | 'new' | 'returning';
 export type CustomerSort = 'recent' | 'spent' | 'visits' | 'name';
 export type SortDirection = 'asc' | 'desc';
 
