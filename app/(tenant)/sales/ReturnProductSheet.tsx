@@ -219,6 +219,18 @@ export function ReturnProductSheet({
 
   const session = useSession();
   const viewerIsOwner = !session || session.role === null || session.role === 'owner';
+  /*
+   * Security audit 2026-11-14 (#3) — the server refunds anyone but the owner only in a way the bill was paid, and asks them
+   * why a unit is not going back on the shelf. The sheet offers exactly that, so the refusal is never met: a manager sees
+   * the bill's own ways (all four when the bill recorded none), and "Damaged" needs a reason before Confirm lights up.
+   */
+  const paidWays = (selectedBill?.paymentModes ?? []).map((m) => (m === 'cash' || m === 'upi' || m === 'card' ? m : 'other'));
+  const offeredRefundModes = viewerIsOwner || paidWays.length === 0 ? REFUND_MODES : REFUND_MODES.filter((m) => paidWays.includes(m));
+  const needsWriteOffReason = !viewerIsOwner && counted && !restock && reasonCode === null;
+  useEffect(() => {
+    if (!offeredRefundModes.includes(refundMode)) setRefundMode(offeredRefundModes[0] ?? 'cash');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offeredRefundModes.join(','), refundMode]);
 
   /**
    * What a scanned or typed code does: with a bill open it adds a unit of that product; with none it opens the one
@@ -873,7 +885,7 @@ export function ReturnProductSheet({
                 <div className="sls-ret-condition">
                   <span className="sls-ret-field-title">{t('refundModeLabel')}</span>
                   <div className="sls-ret-mode-grid" role="radiogroup" aria-label={t('refundModeLabel')}>
-                    {REFUND_MODES.map((m) => (
+                    {offeredRefundModes.map((m) => (
                       <button
                         key={m}
                         type="button"
@@ -905,6 +917,7 @@ export function ReturnProductSheet({
                     ))}
                   </div>
                   {reasonCode === 'other' && !reason.trim() ? <span className="sls-ret-reason-count">{t('whyOtherNeeds')}</span> : null}
+                  {needsWriteOffReason ? <span className="sls-ret-reason-count">{t('whyWriteOffNeeds')}</span> : null}
                 </div>
 
                 <label className="sls-ret-reason-field">
@@ -963,7 +976,7 @@ export function ReturnProductSheet({
                   <button
                     type="button"
                     className="btn"
-                    disabled={totalSelectedUnits <= 0 || !mayReturnBill || busy || (reasonCode === 'other' && !reason.trim())}
+                    disabled={totalSelectedUnits <= 0 || !mayReturnBill || busy || (reasonCode === 'other' && !reason.trim()) || needsWriteOffReason}
                     onClick={() => void submitReturn()}
                   >
                     {busy
