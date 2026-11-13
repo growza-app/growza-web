@@ -13,7 +13,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useAreas, useBusinessWritable, useSession, useWritable } from '../components/SessionProvider';
 import { canSee, type MemberRole } from '../lib/nav-policy';
-import { IconCart, IconEdit, IconPlus, IconSearch, IconSort, IconUpload } from '../components/icons';
+import { IconCart, IconChevronRight, IconClipboardCheck, IconEdit, IconPlus, IconSearch, IconSort, IconUpload } from '../components/icons';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
 import { productShareItem } from '../lib/share-on-whatsapp';
@@ -394,7 +394,7 @@ export function ProductsList({
   const header = (
     <PageHeader
       title={heading ?? t('title')}
-      subtitle={!counted ? t('uncountedSubtitle') : heading !== undefined ? t('stockSubtitle') : t('subtitle')}
+      subtitle={counted && desk === false ? undefined : !counted ? t('uncountedSubtitle') : heading !== undefined ? t('stockSubtitle') : t('subtitle')}
       subtitleAsInfo
       actions={
         <>
@@ -408,9 +408,15 @@ export function ProductsList({
               {t('stockReport.open')}
             </Link>
           ) : null}
+          {/* Owner's review 2026-11-13 — the reorder list was reachable only from Home, Reports and the two reports; the shelf is where you notice you are short. */}
+          {heading !== undefined && canStockTake && counted ? (
+            <Link className="btn btn-ghost desktop-only" href="/stock/order">
+              {t('reorder.title')}
+            </Link>
+          ) : null}
           {/* The till is Bookings' and Stock's, not this screen's page: drawn when the role may open it, and the business may write. */}
           {live.length > 0 && tillOpen ? (
-            <Link className="btn btn-ghost" href="/products/sell?from=products">
+            <Link className={`btn btn-ghost ${counted ? 'desktop-only' : ''}`} href="/products/sell?from=products">
               <IconCart /> {t(counted ? 'sell' : 'sellUncounted')}
             </Link>
           ) : null}
@@ -418,7 +424,7 @@ export function ProductsList({
           {live.length > 0 && canStockTake && counted ? (
             <button
               type="button"
-              className="btn btn-ghost"
+              className="btn btn-ghost desktop-only"
               onClick={() => {
                 setEditing((cur) => (cur === 'new' ? null : cur));
                 setStockTakeOpen(true);
@@ -485,6 +491,60 @@ export function ProductsList({
       </div>
     </div>
   );
+  /*
+   * Owner's review 2026-11-13 — on a phone the header has no room for the two reports (see the header comment), so
+   * they sit under the four figures instead: the stock report and the reorder list, a 44px row each. Desktop keeps
+   * them in the header, where there is room; the row is phone-only so the same door is never drawn twice.
+   */
+  /*
+   * Owner's review 2026-11-13 (A) — a phone's header is one row (Back, Stock, the branch, Add, avatar): Sell and
+   * Count stock come down here as tiles beside the two reports, so the header no longer wraps to a second row
+   * with an empty left half. Each tile is gated exactly as its header button is; the row is drawn when any apply.
+   */
+  const phoneSell = counted && live.length > 0 && tillOpen;
+  const phoneCount = counted && live.length > 0 && canStockTake && writable;
+  const phoneReports = heading !== undefined && canStockTake && counted;
+  const reportLinks =
+    phoneSell || phoneCount || phoneReports ? (
+      <nav className="prd-report-links mobile-only" aria-label={t('title')}>
+        {phoneSell ? (
+          <Link className="prd-report-link prd-report-act" href="/products/sell?from=products">
+            <IconCart />
+            <span>{t('sell')}</span>
+          </Link>
+        ) : null}
+        {phoneCount ? (
+          <button
+            type="button"
+            className="prd-report-link prd-report-act"
+            onClick={() => {
+              setEditing((cur) => (cur === 'new' ? null : cur));
+              setStockTakeOpen(true);
+            }}
+          >
+            <IconClipboardCheck />
+            <span>{t('stockTake.open')}</span>
+          </button>
+        ) : null}
+        {phoneReports ? (
+          <Link className="prd-report-link" href="/stock/report">
+            <span>{t('stockReport.open')}</span>
+            <IconChevronRight />
+          </Link>
+        ) : null}
+        {phoneReports ? (
+          <Link className="prd-report-link" href="/stock/order">
+            <span>{t('reorder.title')}</span>
+            <IconChevronRight />
+          </Link>
+        ) : null}
+      </nav>
+    ) : null;
+  /*
+   * Owner's review 2026-11-13 — on a phone the four tiles cost 119px and said what the chips say a row below
+   * (Running low / Out of stock are the Low / Out chips); the two figures that were only here are one line now.
+   */
+  const shelfLine = <p className="prd-shelf-line">{t('shelfLine', { count: inCategory.length, worth: formatMoney(worth) })}</p>;
   const strip = !counted ? (
     uncountedStrip
   ) : (
@@ -551,6 +611,7 @@ export function ProductsList({
   const categoriesDropdown =
     liveCategories.length > 0 || noneCount > 0 || writable ? (
       <ProductCategoriesDropdown
+        fixedMenu={!desk && counted}
         selected={selectedCategories}
         categories={liveCategories}
         noneCount={noneCount}
@@ -626,9 +687,8 @@ export function ProductsList({
       <ul className="prd-list">
         {pageRows.map((p) => {
           const tone = stockTone(p);
-          const shareItem = productShareItem(p, { counted });
           return (
-            <li key={p.id} className={`prd-row ${p.active ? '' : 'prd-row-retired'} ${shareItem ? 'prd-row-share' : ''}`}>
+            <li key={p.id} className={`prd-row ${p.active ? '' : 'prd-row-retired'}`}>
               <button
                 type="button"
                 className={`prd-row-tap ${isOn(p) ? 'is-on' : ''}`}
@@ -656,8 +716,8 @@ export function ProductsList({
                   <span className="prd-sold">{t('sold', { n: p.sold })}</span>
                 </span>
               </button>
-              {/* Jira GRW-671 — outside the row's own button: a button cannot hold a button. */}
-              {shareItem ? <ShareOnWhatsAppButton item={shareItem} branchId={p.locationId} bookable={false} photoUrl={p.imageUrl} /> : null}
+              {/* Owner's review 2026-11-13 — the WhatsApp share (Jira GRW-671) moved into the product's sheet: the owner's
+                  own stock list carried a green button on every row and lost its right column to it. */}
             </li>
           );
         })}
@@ -839,7 +899,8 @@ export function ProductsList({
     ) : null;
   const note = (
     <>
-      {shownBranchName ? <div className="banner banner-info prd-branch-note">{t('shownBranch', { branch: shownBranchName })}</div> : null}
+      {/* Owner's review 2026-11-13 — on a counted shelf the header names the branch (branch-routes), so no banner. */}
+      {shownBranchName && !counted ? <div className="banner banner-info prd-branch-note">{t('shownBranch', { branch: shownBranchName })}</div> : null}
       {importNote ? (
         <div className="banner" role="status">
           {importNote}
@@ -990,6 +1051,7 @@ export function ProductsList({
         <div className="page-body prd-desk">
           {note}
           {strip}
+          {reportLinks}
           <div className={`pf-wide-grid prd-desk-grid ${editing ? 'has-sheet' : 'is-full'}`}>
             <section className="pf-wide-mid prd-desk-mid" aria-label={t('title')}>
               <div className="prd-desk-tools">
@@ -1070,10 +1132,37 @@ export function ProductsList({
           </div>
         ) : (
           <>
-            {strip}
+            {counted ? shelfLine : strip}
+            {reportLinks}
             <div className="prd-tools">
               {searchBox}
-              {categoriesDropdown ? (
+              {counted ? (
+                /*
+                 * Owner's review 2026-11-13 — one scroller instead of a selects row AND a chips row: the four
+                 * status chips first (the filter people reach for), then Categories, the sort and Bulk edit.
+                 * The Categories menu is fixed to the viewport so the scroller cannot clip it.
+                 */
+                <div className="prd-chips prd-filter-row" role="group" aria-label={t('filters.label')}>
+                  {SHELF_FILTERS.map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      className={`prd-chip ${filter === f ? 'prd-chip-on' : ''} ${f === 'low' && counts.low > 0 ? 'prd-chip-warn' : ''}`}
+                      aria-pressed={filter === f}
+                      onClick={() => pick(() => setFilter(f))}
+                    >
+                      {t(`filters.${f}`)} <span className="prd-chip-n">{counts[f]}</span>
+                    </button>
+                  ))}
+                  {categoriesDropdown}
+                  {sortBox}
+                  {canStockTake && writable ? (
+                    <button type="button" className="prd-chip prd-chip-edit" onClick={() => setBulkEditOpen(true)}>
+                      <IconEdit /> {t('bulkTable.open')}
+                    </button>
+                  ) : null}
+                </div>
+              ) : categoriesDropdown ? (
                 <div className="prd-selects">
                   {categoriesDropdown}
                   {sortBox}
@@ -1099,7 +1188,6 @@ export function ProductsList({
                   ) : null}
                 </div>
               )}
-              {counted ? chips : null}
             </div>
             {alsoTryRow}
             {!counted ? menuCards : list}

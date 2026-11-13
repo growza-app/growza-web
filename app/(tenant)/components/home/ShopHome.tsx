@@ -150,6 +150,12 @@ export function ShopHome({
   const [phoneChannel, setPhoneChannel] = useState<ByChannelPage | null>(null);
   const [phoneSellers, setPhoneSellers] = useState<BestSellersPage | null>(null);
   const [phoneBusy, setPhoneBusy] = useState(false);
+  /*
+   * Owner's review 2026-11-13 — "failed" is a read that was refused, not a read not yet made. With only `busy`
+   * to go on, the hero called its starting state (nothing read, nothing in flight) a failure, so every arrival
+   * on Home painted "Could not load this" for ~400ms until the effect fired. Set by the window read's catch alone.
+   */
+  const [phoneFailed, setPhoneFailed] = useState(false);
   /** Bumped by the hero's "Try again": the window has not changed, so only a new dep re-runs the read. */
   const [phoneRetry, setPhoneRetry] = useState(0);
   const phoneReqId = useRef(0);
@@ -296,10 +302,14 @@ export function ShopHome({
     api
       .byChannel({ ...w, location: branch ?? undefined })
       .then((res) => {
-        if (mine === phoneReqId.current) setPhoneChannel(res);
+        if (mine !== phoneReqId.current) return;
+        setPhoneChannel(res);
+        setPhoneFailed(false);
       })
       .catch(() => {
-        if (mine === phoneReqId.current) setPhoneChannel(null);
+        if (mine !== phoneReqId.current) return;
+        setPhoneChannel(null);
+        setPhoneFailed(true);
       })
       .finally(() => {
         if (mine === phoneReqId.current) setPhoneBusy(false);
@@ -564,7 +574,8 @@ export function ShopHome({
         cashDrawer: data.today.cashDrawer,
       };
     }
-    if (!phoneChannel) return { kind: phoneBusy ? ('busy' as const) : ('failed' as const) };
+    // Not yet read is the skeleton, not the error: only a refused read says "failed" (owner's review 2026-11-13).
+    if (!phoneChannel) return { kind: phoneFailed && !phoneBusy ? ('failed' as const) : ('busy' as const) };
     const takingsMinor = Number(phoneChannel.totals.billedMinor || 0);
     const orders = phoneChannel.totals.orders;
     return {
@@ -584,7 +595,7 @@ export function ShopHome({
       fromAppsMinor: phonePeriod === 'today' ? data?.today.fromAppsMinor : undefined,
       busy: phoneBusy,
     };
-  }, [canPhoneRange, money, data, phoneChannel, phoneBusy, phonePeriod]);
+  }, [canPhoneRange, money, data, phoneChannel, phoneBusy, phoneFailed, phonePeriod]);
 
   /*
    * The hero's bars: one per day of the chosen window, from the same response as the money above them.

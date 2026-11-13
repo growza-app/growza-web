@@ -607,23 +607,47 @@
   }
 }
 
-/* Five tiles two-up is three rows of chrome before the first person on a
-   phone — the work is the list, so the tiles compress rather than the list
-   starting below the fold. */
-@media (max-width: 640px) {
+/*
+ * Owner's review 2026-11-13 — on a phone the first person sat at 509px of 844: a second heading under the page
+ * header that already said Attendance, then five tiles (all 0 on a quiet day) in a 2×3 grid, 141px. The heading
+ * block is hidden there, and the five counts are one 36px row of pills that scrolls sideways — dot, name, count —
+ * so the day stepper is the first thing under the title and the list starts at ~300px. A laptop is untouched.
+ */
+@media (max-width: 860px) {
+  .att-head-text {
+    display: none;
+  }
+  .att-head {
+    margin-bottom: var(--sp-3);
+  }
   .att-summary {
-    grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+    display: flex;
+    flex: none;
+    flex-wrap: nowrap;
     gap: var(--sp-2);
+    overflow-x: auto;
+    min-width: 0;
+    scrollbar-width: none;
+    margin-bottom: var(--sp-3);
+  }
+  .att-summary::-webkit-scrollbar {
+    display: none;
   }
   .att-tile {
-    padding: 10px 11px;
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: 2.25rem;
+    padding: 0 var(--sp-3);
+    border-radius: 999px;
   }
   .att-tile-head {
-    margin-bottom: 4px;
+    margin-bottom: 0;
     font-size: 0.75rem;
   }
   .att-tile-count {
-    font-size: 1.375rem;
+    font-size: 0.9375rem;
   }
 }
 

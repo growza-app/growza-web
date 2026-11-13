@@ -32,7 +32,8 @@ export default async function OrderPage() {
   if (!allowed) redirect('/stock');
   return (
     <>
-      <PageHeader title={t('title')} />
+      {/* Owner's review 2026-11-13 — how the numbers are made is the ⓘ beside the title, not three lines above the list. */}
+      <PageHeader title={t('title')} subtitle={t('model')} subtitleAsInfo />
       <div className="page-body srp-page ro-page">
         <RetailReportsNav active="order" />
         <OrderClient />

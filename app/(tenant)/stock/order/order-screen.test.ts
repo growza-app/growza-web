@@ -33,7 +33,9 @@ describe('the basis is on the row (BR-01), and nothing is invented (BR-03)', () 
   });
 
   it('the suggestion is said to be a suggestion, and the one it replaced stays visible', () => {
-    expect(client).toContain("t('model')");
+    // Owner's review 2026-11-13 — the explanation is the header's ⓘ (page.tsx), not a paragraph above the list.
+    expect(client).not.toContain("t('model')");
+    expect(readFileSync(new URL('./page.tsx', import.meta.url), 'utf8')).toContain("subtitle={t('model')} subtitleAsInfo");
     expect(client).toContain("t('suggestedWas'");
   });
 });

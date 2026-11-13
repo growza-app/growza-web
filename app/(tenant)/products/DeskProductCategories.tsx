@@ -158,6 +158,7 @@ export function ProductCategoriesDropdown({
   onAdd,
   onRename,
   onDelete,
+  fixedMenu = false,
 }: {
   selected: readonly string[];
   categories: readonly ProductCategory[];
@@ -168,9 +169,12 @@ export function ProductCategoriesDropdown({
   /** A category's name was never changeable here: Edit offered a delete and nothing else. */
   onRename?: (c: ProductCategory, name: string) => Promise<void>;
   onDelete?: (c: ProductCategory) => void;
+  /** Owner's review 2026-11-13 — inside a scroller the menu would be clipped: pin it to the viewport under the button. */
+  fixedMenu?: boolean;
 }) {
   const t = useTranslations('products.categories');
   const [open, setOpen] = useState(false);
+  const [menuTop, setMenuTop] = useState(0);
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -275,7 +279,11 @@ export function ProductCategoriesDropdown({
         type="button"
         className={`sls-dd-btn ${selected.length > 0 ? 'is-active' : ''}`}
         aria-expanded={open}
-        onClick={() => (open ? closeMenu() : setOpen(true))}
+        onClick={() => {
+          if (open) return closeMenu();
+          if (fixedMenu && wrapRef.current) setMenuTop(wrapRef.current.getBoundingClientRect().bottom + 6);
+          setOpen(true);
+        }}
       >
         <span>
           {t('title')}
@@ -285,7 +293,7 @@ export function ProductCategoriesDropdown({
       </button>
 
       {open ? (
-        <div className="sls-dd-menu prd-cat-dd-menu" role="group" aria-label={t('title')}>
+        <div className={`sls-dd-menu prd-cat-dd-menu ${fixedMenu ? 'is-fixed' : ''}`} style={fixedMenu ? { top: menuTop, maxHeight: `calc(100dvh - ${menuTop}px - 16px)` } : undefined} role="group" aria-label={t('title')}>
           <div className="sls-dd-head">
             <label className="search-wrap sls-dd-search">
               <IconSearch />

@@ -18,6 +18,8 @@ import { MoveSizesEntry } from './MoveSizesEntry';
 import { StockPanel } from './StockPanel';
 import { SalesPanel } from './SalesPanel';
 import { stockTone } from './ProductsList';
+import { ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
+import { productShareItem } from '../lib/share-on-whatsapp';
 
 /**
  * Owner, 2026-10-14 — one product, in the sheet the service form uses, in two parts:
@@ -251,6 +253,10 @@ export function ProductSheet({
                 <span className="prd-pill prd-pill-off">{tp('retired')}</span>
               )}
               {product.categoryName ? <span className="prd-pill prd-pill-cat">{product.categoryName}</span> : null}
+              {/* Owner's review 2026-11-13 — the WhatsApp share (Jira GRW-671) lives here, not on every shelf row. */}
+              {counted && productShareItem(product, { counted }) ? (
+                <ShareOnWhatsAppButton item={productShareItem(product, { counted })!} branchId={product.locationId} bookable={false} photoUrl={imageUrl ?? undefined} className="prd-sheet-share" />
+              ) : null}
               <button type="button" className="prd-id-photo-link" onClick={() => photoRef.current?.click()}>
                 {photo || imageUrl ? t('changePhoto') : t('addPhoto')}
               </button>

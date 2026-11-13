@@ -166,9 +166,13 @@ describe('UX — 344px first, one accent, plain words, the shared parts', () => 
     expect(client).toContain('<SearchClear');
   });
 
-  it('every chip is at least 2.75rem tall, and the chips wrap instead of scrolling sideways', () => {
+  it('every chip is at least 2.75rem tall; the chips wrap on a laptop and scroll sideways on a phone', () => {
     expect(css).toMatch(/\.ord-chip\s*\{[^}]*min-height:\s*2\.75rem/);
     expect(css).toMatch(/\.ord-chips\s*\{[^}]*flex-wrap:\s*wrap/);
+    // Owner's review 2026-11-13 — three wrapped rows were ~130px before the first order; each group is one row.
+    const phone = css.slice(css.indexOf("Owner's review 2026-11-13"));
+    expect(phone).toMatch(/@media \(max-width: 860px\) \{\s*\.ord-chips \{[^}]*flex-wrap: nowrap;[^}]*overflow-x: auto;/);
+    expect(phone).toMatch(/\.ord-chip \{\s*flex: none;/);
   });
 
   it('cards first, the table from 861px — the same switch Bookings and Sales make', () => {
