@@ -1375,6 +1375,11 @@ export interface ShopHome {
       /** Which branch's shelf — sent only on the "All branches" read of a shop with more than one branch. */
       branch?: string;
     }>;
+    /**
+     * QA 13 Nov 2026, bug 1 — the Stock screen's own counts (products, by `stockTone`), one row per branch with any.
+     * `total`/`out` above count SIZES, so they are not what `/stock?filter=out|low` lists. Absent from an older API.
+     */
+    shelf?: Array<{ locationId: string; /** Sent only on the "All branches" read of a shop with more than one branch. */ branch?: string; out: number; low: number }>;
   };
 }
 
