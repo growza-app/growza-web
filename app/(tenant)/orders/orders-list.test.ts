@@ -166,13 +166,19 @@ describe('UX — 344px first, one accent, plain words, the shared parts', () => 
     expect(client).toContain('<SearchClear');
   });
 
-  it('every chip is at least 2.75rem tall; the chips wrap on a laptop and scroll sideways on a phone', () => {
+  it('every chip is at least 2.75rem tall and the chips wrap on a laptop; a phone gets two dropdown pills instead', () => {
     expect(css).toMatch(/\.ord-chip\s*\{[^}]*min-height:\s*2\.75rem/);
     expect(css).toMatch(/\.ord-chips\s*\{[^}]*flex-wrap:\s*wrap/);
-    // Owner's review 2026-11-13 — three wrapped rows were ~130px before the first order; each group is one row.
+    // Owner's review 2026-11-13 — the two chip groups were ~130px before the first order on a phone: there they are
+    // one row of two native selects styled as pills (44px), and the chips are not drawn. A laptop never sees the pills.
+    expect(client).toContain('<div className="ord-selects">');
+    expect(client).toContain('{offered.length > 1 ? (');
+    expect(client).toContain("<select aria-label={t('list.channelGroup')} value={query.channel} onChange={(e) => pickChannel(e.target.value)}>");
+    expect(client).toContain("<select aria-label={t('list.stateGroup')} value={query.status} onChange={(e) => pickState(e.target.value)}>");
+    expect(css).toMatch(/\.ord-selects \{\s*display: none;/);
+    expect(css).toMatch(/\.ord-select select \{[^}]*min-height: 2\.75rem;[^}]*border-radius: 999px;/);
     const phone = css.slice(css.indexOf("Owner's review 2026-11-13"));
-    expect(phone).toMatch(/@media \(max-width: 860px\) \{\s*\.ord-chips \{[^}]*flex-wrap: nowrap;[^}]*overflow-x: auto;/);
-    expect(phone).toMatch(/\.ord-chip \{\s*flex: none;/);
+    expect(phone).toMatch(/@media \(max-width: 860px\) \{\s*\.ord-selects \{\s*display: flex;\s*\}\s*\.ord-tools \.ord-chips \{\s*display: none;/);
   });
 
   it('cards first, the table from 861px — the same switch Bookings and Sales make', () => {

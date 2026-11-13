@@ -216,6 +216,41 @@ export function OrdersClient({
           />
         </label>
 
+        {/*
+          Owner's review 2026-11-13 — on a phone the two chip groups were ~130px (three wrapped rows, then two
+          scrollers); they are one row of two dropdown pills there, the current choice readable without opening.
+          A shop that sells only at the counter gets no "Where from" pill. The chips stay for a laptop; the CSS
+          (99-orders.css) draws one or the other by width.
+        */}
+        <div className="ord-selects">
+          {offered.length > 1 ? (
+            <label className="ord-select">
+              <span className="ord-select-l">{t('list.channelGroup')}</span>
+              <select aria-label={t('list.channelGroup')} value={query.channel} onChange={(e) => pickChannel(e.target.value)}>
+                <option value="">{t('list.allChannels')}</option>
+                {offered.map((c) => (
+                  <option key={c} value={c}>
+                    {channelWords[c]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {ships ? (
+            <label className="ord-select">
+              <span className="ord-select-l">{t('list.stateGroup')}</span>
+              <select aria-label={t('list.stateGroup')} value={query.status} onChange={(e) => pickState(e.target.value)}>
+                <option value="">{t('list.allStates')}</option>
+                {STATE_CHIPS.map((c) => (
+                  <option key={c.key} value={c.value}>
+                    {t(`list.stateChips.${c.key}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+        </div>
+
         <div className="ord-chips ord-chips-channel" role="group" aria-label={t('list.channelGroup')}>
           <button type="button" className={`ord-chip ${query.channel === '' ? 'is-on' : ''}`} aria-pressed={query.channel === ''} onClick={() => pickChannel('')}>
             {t('list.allChannels')}

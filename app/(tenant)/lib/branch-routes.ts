@@ -55,6 +55,14 @@ export function branchInAddress(pathname: string): boolean {
   return BRANCH_IN_ADDRESS.some((route) => matches(pathname, route));
 }
 
+/*
+ * Owner's review 2026-11-13 — one order is one branch's: the header said "All branches" over a Sector 17 sale and
+ * the picker did nothing. The order's own line names its branch, so the detail is a no-picker screen. The list
+ * (`/orders`), Returns, Refunds, New and Held are not ids and keep theirs.
+ */
+const ORDER_DETAIL = /^\/orders\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function wholeBusiness(pathname: string): boolean {
+  if (ORDER_DETAIL.test(pathname)) return true;
   return WHOLE_BUSINESS.some((route) => matches(pathname, route));
 }

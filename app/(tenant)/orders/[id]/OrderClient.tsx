@@ -2,6 +2,7 @@
 
 import { formatTokenNo } from '../../pos/pos-helpers';
 import { useCallback, useRef, useState } from 'react';
+import AppLink from '../../../shared/AppLink';
 import { useLocale, useTranslations } from 'next-intl';
 import { api, ApiError, formatMoney } from '../../lib/api';
 import type { OrderDetail, ReturnSaleProductsResponse } from '../../lib/api-types';
@@ -249,8 +250,16 @@ export function OrderClient({
 
   return (
     <>
-      {/* QA 10 Nov 2026 — titled by the token the guest holds (#08), as the list and Home show it; the code stays in the line below. */}
-      <PageHeader title={t('list.orderCode', { code: order.tokenNo ? formatTokenNo(order.tokenNo).slice(1) : code })} />
+      {/* QA 10 Nov 2026 — titled by the token the guest holds (#08), as the list and Home show it; the code stays in the line below.
+          Owner's review 2026-11-13 — on a counted shelf the token is a queue number and the code is what the receipt carries, so
+          the two are no longer both said as "Order #…": the title says "Token 5", the line below "Order #7D9906BA". */}
+      <PageHeader
+        title={
+          order.tokenNo && counted
+            ? t('list.tokenTitle', { n: formatTokenNo(order.tokenNo).slice(1) })
+            : t('list.orderCode', { code: order.tokenNo ? formatTokenNo(order.tokenNo).slice(1) : code })
+        }
+      />
       <div className={`page-body ord-page ord-detail ${hasBar ? 'has-bar' : ''}`} aria-busy={busy || undefined}>
         <section className="ord-d-head">
           <span className={`ord-state-chip ord-s-${order.known ? order.status : 'unknown'}`}>{stateWord(order.status)}</span>
@@ -283,7 +292,12 @@ export function OrderClient({
 
         <section className="ord-d-block" aria-label={t('detail.forTitle')}>
           <h2>{order.client ? t('detail.client', { customer: nouns.Customer }) : fromApp ? nouns.Customer : t('buyer.title')}</h2>
-          {order.client ? <p className="ord-d-name">{order.client.name ?? t('list.noName')}</p> : null}
+          {/* Owner's review 2026-11-13 — a known customer is a door to their card; a walk-in's name stays text. */}
+          {order.client ? (
+            <AppLink className="ord-d-name ord-d-name-link" href={`/customers?open=${encodeURIComponent(order.client.id)}`}>
+              {order.client.name ?? t('list.noName')}
+            </AppLink>
+          ) : null}
           {order.buyer ? (
             <>
               {!order.client ? <p className="ord-d-name">{order.buyer.name ?? t('list.noName')}</p> : null}
@@ -412,9 +426,10 @@ export function OrderClient({
               ))}
             </dl>
             <div className="ord-d-paper">
-              {isPaidCounter ? <DocumentAction visitKey={order.id} /> : null}
+              {/* Owner's review 2026-11-13 — the receipt is the common action and is filled; a return moves money and is the ghost. */}
+              {isPaidCounter ? <DocumentAction visitKey={order.id} primary /> : null}
               {returnable && writable ? (
-                <button type="button" className="btn" onClick={() => setReturning(true)}>
+                <button type="button" className="btn btn-ghost" onClick={() => setReturning(true)}>
                   {t('detail.returnItems')}
                 </button>
               ) : null}

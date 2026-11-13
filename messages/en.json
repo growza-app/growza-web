@@ -4632,6 +4632,7 @@
       },
       "itemCount": "{count, plural, =0 {No items} one {# item} other {# items}}",
       "orderCode": "Order #{code}",
+      "tokenTitle": "Token {n}",
       "appOrder": "App order {ref}",
       "noName": "No name",
       "empty": {

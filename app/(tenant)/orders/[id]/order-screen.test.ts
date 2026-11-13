@@ -67,7 +67,7 @@ describe('AC-03 — a cancelled order offers nothing; a counter sale offers the 
     expect(client).toContain("from '../../sales/ReturnProductSheet'");
     expect(client).toContain("from '../../components/DocumentAction'");
     expect(client).toContain('<ReturnProductSheet');
-    expect(client).toContain('<DocumentAction visitKey={order.id} />');
+    expect(client).toContain('<DocumentAction visitKey={order.id} primary />');
   });
 
   it('the return is offered only for the counter, and only where the prices are known (a desk without the sales tab has none)', () => {
