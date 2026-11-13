@@ -31,6 +31,7 @@ import {
   IconNavOrders,
   IconNavStock,
   IconSettings,
+  IconChevronRight,
   IconDaySummary,
   IconPos,
   IconProducts,
@@ -305,9 +306,18 @@ export function ShopHome({
       });
     // The top seller is read for the SAME window as the money above it. Asked for the command center's
     // range instead, the hero would name last quarter's best dish under today's takings.
+    // Owner, 2026-11-13 — a shop's phone lists its three best; the figure was read for one and shown for none.
+    if (areas.stock && can('/customers')) {
+      api
+        .customerStats(branch ?? undefined)
+        .then((res) => {
+          if (mine === phoneReqId.current) setCustomerStats(res);
+        })
+        .catch(() => {});
+    }
     if (can('/stock/sellers')) {
       api
-        .bestSellers({ ...w, location: branch ?? undefined, pageSize: 1 })
+        .bestSellers({ ...w, location: branch ?? undefined, pageSize: 3 })
         .then((res) => {
           if (mine === phoneReqId.current && !isKitchen) setPhoneSellers(res);
         })
@@ -627,6 +637,51 @@ export function ShopHome({
     { key: 'low', tone: 'amber', n: counted ? lowOnlyCount : 0, label: s.runningLowChip, href: can('/stock') ? `/stock${stockBranch}` : null },
   ].filter((c) => c.n > 0);
   const attentionCount = attentionChips.reduce((sum, c) => sum + c.n, 0);
+
+  /*
+   * Owner, 2026-11-13 — the phone's Needs attention card, for a shop with a counted shelf: the same four counts the
+   * laptop chips carry, as rows with a door each. Returns come from the phone's own window read (`phoneChannel`),
+   * since the command center's reports never run below 861px. Zero rows are not drawn.
+   */
+  const phoneAttention = [
+    { key: 'out', tone: 'is-out', n: counted ? outOfStockCount : 0, label: s.outOfStockChip, href: can('/stock') ? `/stock${stockBranch}` : null },
+    { key: 'low', tone: '', n: counted ? lowOnlyCount : 0, label: s.runningLowChip, href: can('/stock') ? `/stock${stockBranch}` : null },
+    { key: 'send', tone: '', n: ships ? (data?.toSend ?? 0) : 0, label: s.waitingToSendLabel, href: can('/orders') ? ordersHref({ status: 'new,packed' }) : null },
+    {
+      key: 'back',
+      tone: 'is-out',
+      n: phoneChannel?.totals.returnedOrders ?? 0,
+      label: s.cameBackLabel,
+      href: canReports && can('/orders/returns') ? '/orders/returns' : can('/orders') ? ordersHref({ status: 'returned' }) : null,
+    },
+  ].filter((c) => c.n > 0);
+
+  /*
+   * Who came in today: the day's paid orders, one customer each — a named buyer once however many times they bought,
+   * a nameless walk-in every time. Read from the same hundred most recent orders the queue card uses, so a day of
+   * more than a hundred orders is under-counted here exactly as it is there.
+   */
+  const customersToday = useMemo(() => {
+    const fmtDate = (d: Date) => {
+      try {
+        return new Intl.DateTimeFormat('en-CA', { ...(timezone ? { timeZone: timezone } : {}) }).format(d);
+      } catch {
+        return d.toISOString().slice(0, 10);
+      }
+    };
+    const todayISO = fmtDate(new Date());
+    const named = new Set<string>();
+    let walkIns = 0;
+    for (const o of todayOrderRows) {
+      if (o.status === 'cancelled' || o.status === 'returned' || o.items <= 0) continue;
+      const ms = Date.parse(o.soldAt);
+      if (Number.isNaN(ms) || fmtDate(new Date(ms)) !== todayISO) continue;
+      const name = o.who?.name?.trim();
+      if (name) named.add(name.toLowerCase());
+      else walkIns += 1;
+    }
+    return named.size + walkIns;
+  }, [todayOrderRows, timezone]);
 
   /*
    * Jira GRW-679 (UX-04) — compared with yesterday only once today has something in it, and only against a
@@ -1834,44 +1889,143 @@ export function ShopHome({
 
         {failed || !data ? null : (
             <div className="shp-mobile-stack">
-              {/* Running out first in the stack: after the money and the doors, what needs the owner comes before what already happened. */}
+              {/*
+                Owner, 2026-11-13 — a shop's phone Home is a summary, never a list: the lists live one tap away behind
+                Orders and Stock. After the money and the doors: what needs the owner, what sells, who came in. A
+                kitchen's stack below is untouched.
+              */}
               {!areas.stock ? null : (
-              <Card title={s.runningOut} action={data.running.total > data.running.items.length && can('/stock') ? <a className="shp-link" href={`/stock${stockBranch}`}>{s.viewAll(data.running.total)}</a> : undefined}>
-                {!data.running.counted ? (
-                  <div className="shp-empty">
-                    <span>{s.notCounted}</span>
-                    {can('/stock') ? (
-                      <a className="btn shp-cta" href="/stock">
-                        {s.countStock}
-                      </a>
-                    ) : null}
-                  </div>
-                ) : data.running.items.length === 0 ? (
-                  <p className="shp-plain">{s.nothingLow}</p>
-                ) : (
-                  <>
-                    <ul className="shp-running">
-                      {data.running.items.map((r) => (
-                        <li key={`${r.productId}-${r.size ?? ''}`}>
-                          <span className="shp-running-name">
-                            {r.name}
-                            {r.size ? <span className="shp-running-size"> · {s.sizeWord(r.size)}</span> : null}
-                            {r.branch ? <span className="shp-running-size"> · {r.branch}</span> : null}
-                          </span>
-                          <span className={`shp-running-left ${r.left <= 0 ? 'is-out' : ''}`}>{s.left(r.left)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    {canReports && can('/stock/order') ? (
-                      <div className="shp-running-foot">
-                        <a className="shp-pill-link" href="/stock/order">
-                          {s.whatToOrderLink}
+                <>
+                  <Card
+                    title={
+                      <>
+                        {s.needsAttentionTitle}
+                        {phoneAttention.length > 0 ? <span className="shp-card-count"> ({phoneAttention.reduce((n, c) => n + c.n, 0)})</span> : null}
+                      </>
+                    }
+                    action={
+                      data.running.counted && canReports && can('/stock/order') ? (
+                        <a className="shp-link" href="/stock/order">
+                          {s.reorderListLabel}
                         </a>
+                      ) : undefined
+                    }
+                  >
+                    {!data.running.counted ? (
+                      <div className="shp-empty">
+                        <span>{s.notCounted}</span>
+                        {can('/stock') ? (
+                          <a className="btn shp-cta" href="/stock">
+                            {s.countStock}
+                          </a>
+                        ) : null}
                       </div>
-                    ) : null}
-                  </>
-                )}
-              </Card>
+                    ) : phoneAttention.length === 0 ? (
+                      <p className="shp-plain">{s.nothingNeedsYou}</p>
+                    ) : (
+                      <ul className="shp-attn">
+                        {phoneAttention.map((c) => {
+                          const inner = (
+                            <>
+                              <span className="shp-attn-label">{c.label}</span>
+                              <span className={`shp-running-left ${c.tone}`}>{c.n}</span>
+                              {c.href ? (
+                                <span className="shp-attn-chev" aria-hidden>
+                                  <IconChevronRight />
+                                </span>
+                              ) : null}
+                            </>
+                          );
+                          return (
+                            <li key={c.key}>
+                              {c.href ? (
+                                <a className="shp-attn-row" href={c.href}>
+                                  {inner}
+                                </a>
+                              ) : (
+                                <span className="shp-attn-row">{inner}</span>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </Card>
+
+                  {canReports && can('/stock/sellers') ? (
+                    <Card
+                      title={s.whatSellsLink}
+                      action={
+                        <a className="shp-link" href="/stock/sellers">
+                          {s.viewOrders}
+                        </a>
+                      }
+                    >
+                      {(phoneSellers?.rows?.length ?? 0) === 0 ? (
+                        <p className="shp-plain">{s.noSalesInRange}</p>
+                      ) : (
+                        <ul className="shp-phone-sellers">
+                          {(() => {
+                            const rows = phoneSellers?.rows ?? [];
+                            const maxUnits = Math.max(1, ...rows.map((r) => r.units));
+                            return rows.slice(0, 3).map((item, idx) => {
+                              const share = Math.max(10, Math.round((item.units / maxUnits) * 100));
+                              return (
+                                <li key={item.id}>
+                                  <a className="shp-phone-seller-row" href="/stock/sellers">
+                                    <span className={`hm-v3-srv-rank ${idx === 0 ? 'is-top' : ''}`}>{idx + 1}</span>
+                                    <Avatar name={item.name} id={item.productId} size={32} />
+                                    <span className="shp-phone-seller-main">
+                                      <span className="shp-phone-seller-top">
+                                        <strong className="shp-phone-seller-name">
+                                          {item.name}
+                                          {item.sizeLabel ? ` (${item.sizeLabel})` : ''}
+                                        </strong>
+                                        <span className="shp-seller-val">{rupees(Number(item.valueMinor))}</span>
+                                      </span>
+                                      <span className="hm-v3-srv-bar">
+                                        <span style={{ width: `${share}%` }} />
+                                      </span>
+                                    </span>
+                                    <span className="shp-recent-state is-green">{s.soldCountPill(item.units)}</span>
+                                  </a>
+                                </li>
+                              );
+                            });
+                          })()}
+                        </ul>
+                      )}
+                    </Card>
+                  ) : null}
+
+                  {can('/customers') ? (
+                    <Card
+                      title={s.customersTitle}
+                      action={
+                        <a className="shp-link" href="/customers">
+                          {s.viewOrders}
+                        </a>
+                      }
+                    >
+                      {customersToday === 0 && !customerStats ? (
+                        <p className="shp-plain">{s.noCustomersToday}</p>
+                      ) : (
+                        <div className="shp-cust">
+                          <a className="shp-cust-figure" href="/customers">
+                            <strong>{customersToday}</strong>
+                            <span>{s.customersTodayLabel}</span>
+                          </a>
+                          {customerStats ? (
+                            <a className="shp-cust-figure" href="/customers?segment=new">
+                              <strong>{customerStats.newThisMonth}</strong>
+                              <span>{s.newThisMonthLabel}</span>
+                            </a>
+                          ) : null}
+                        </div>
+                      )}
+                    </Card>
+                  ) : null}
+                </>
               )}
               <div className="shp-col-stack">
                 {/*
@@ -1880,7 +2034,7 @@ export function ShopHome({
                   QA, 13 Nov 2026). A shop keeps the card only for what it says to a shop — the first-order invite, and
                   the app orders still to send — under the shop's own word for orders.
                 */}
-                {isKitchen || !data.anyOrders || data.toSend > 0 ? (
+                {isKitchen || !data.anyOrders ? (
                 <Card
                   title={isKitchen ? s.queueTitle : s.ordersTitle}
                   action={
@@ -1914,7 +2068,7 @@ export function ShopHome({
                           this count is of (`new,packed`), so the number on Home and the rows behind it cannot disagree. Absent
                           when nothing is waiting: a "0 to send" is a line of noise on the screen opened most often.
                         */}
-                        {data.toSend > 0 ? (
+                        {isKitchen && data.toSend > 0 ? (
                           <a className="shp-link shp-tosend" href={ordersHref({ status: 'new,packed' })}>
                             {s.toSend(data.toSend)}
                           </a>
@@ -1979,7 +2133,7 @@ export function ShopHome({
                 the state is a WORD, never a colour on its own. Money is omitted per row when the API omits it
                 (a front desk without the sales tab), the same rule the Orders list follows.
                */}
-              {can('/orders') && data.anyOrders && recentOrders.length > 0 ? (
+              {isKitchen && can('/orders') && data.anyOrders && recentOrders.length > 0 ? (
                 <Card
                   title={s.recentOrdersTitle}
                   action={

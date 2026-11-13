@@ -56,7 +56,8 @@ describe('AC-03 — a brand-new shop: each section says its own plain thing, and
     expect(shop).toMatch(/\(data\.running\.counted \|\| !areas\.stock\) && can\('\/pos'\) \? \(\s*<a className="btn btn-primary shp-cta" href="\/pos">/);
     expect(shop).toContain('!data.running.counted');
     expect(shop).toContain('s.notCounted');
-    expect(shop).toContain('s.nothingLow');
+    // Owner, 2026-11-13 — the shop's phone card is Needs attention; a quiet shelf says `nothingNeedsYou`.
+    expect(shop).toMatch(/phoneAttention\.length === 0 \? \(\s*<p className="shp-plain">\{s\.nothingNeedsYou\}<\/p>/);
   });
 
   it('a stock never counted offers the count, not a list of zeros', () => {
@@ -137,7 +138,8 @@ describe('UX-01, UX-02, UX-05 — laid out at 344px on the tokens, with 44px doo
   it('every link and row is at least 2.75rem tall', () => {
     expect(css).toMatch(/\.shp-link \{[^}]*min-height: 2\.75rem/);
     expect(css).toMatch(/\.shp-cta \{[^}]*min-height: 2\.75rem/);
-    expect(css).toMatch(/\.shp-running li \{[^}]*min-height: 2\.75rem/);
+    expect(css).toMatch(/\.shp-attn-row \{[^}]*min-height: 2\.75rem/);
+    expect(css).toMatch(/\.shp-cust-figure \{[^}]*min-height: 2\.75rem/);
   });
 
   it('is one column on a phone and two from 861px', () => {

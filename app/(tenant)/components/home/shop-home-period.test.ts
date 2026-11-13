@@ -88,7 +88,8 @@ describe('each Home pays only for its own reads', () => {
   it('the top seller is read for the same window as the money above it', () => {
     const at = shop.indexOf('api\n        .bestSellers({ ...w,');
     expect(at).toBeGreaterThan(0);
-    expect(shop.slice(at, at + 200)).toContain('pageSize: 1');
+    // Owner, 2026-11-13 — three rows for the shop's Top sellers card (it was one, read and never shown).
+    expect(shop.slice(at, at + 200)).toContain('pageSize: 3');
   });
 
   it('"recent" is the last six orders, not the chosen window', () => {
@@ -158,14 +159,21 @@ describe('the phone running order: the money, then Quick links for a shop (last 
     const money = shop.indexOf('<div className="shp-phone-money">');
     const shopLinks = shop.indexOf('{areas.stock ? quickLinks : null}');
     const stack = shop.indexOf('<div className="shp-mobile-stack">');
-    const running = shop.indexOf('<Card title={s.runningOut}');
+    // Owner, 2026-11-13 — a shop's stack is a summary: Needs attention, Top sellers, Customers. Recent orders is the
+    // kitchen's (the Orders tab lists them one tap away).
+    const attention = shop.indexOf('{s.needsAttentionTitle}\n                        {phoneAttention.length > 0');
+    const sellers = shop.indexOf('<ul className="shp-phone-sellers">');
+    const customers = shop.indexOf('title={s.customersTitle}');
     const recent = shop.indexOf('<Card\n                  title={s.recentOrdersTitle}');
     const kitchenLinks = shop.indexOf('{areas.stock ? null : quickLinks}');
     expect(money).toBeGreaterThan(-1);
     expect(shopLinks).toBeGreaterThan(money);
     expect(stack).toBeGreaterThan(shopLinks);
-    expect(running).toBeGreaterThan(stack);
-    expect(recent).toBeGreaterThan(running);
+    expect(attention).toBeGreaterThan(stack);
+    expect(sellers).toBeGreaterThan(attention);
+    expect(customers).toBeGreaterThan(sellers);
+    expect(recent).toBeGreaterThan(customers);
+    expect(shop).toContain("{isKitchen && can('/orders') && data.anyOrders && recentOrders.length > 0 ? (");
     expect(kitchenLinks).toBeGreaterThan(recent);
     expect(shop.match(/hm-area-links hm-mobile shp-links/g)).toHaveLength(1);
     expect(css).not.toMatch(/order: [123];/);

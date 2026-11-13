@@ -530,6 +530,13 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       runningLowChip: S('Running low', 'कम हो रहा है'),
       soldCountPill: (n: number) => S(`${n} sold`, `${n} बिके`),
       recentOrdersTitle: S('Recent orders', 'हाल के ऑर्डर'),
+      /** Owner, 2026-11-13 — the phone's Customers card: who came in today, and the month's new faces. */
+      customersTitle: S('Customers', 'ग्राहक'),
+      customersTodayLabel: S('Came in today', 'आज आए'),
+      newThisMonthLabel: S('New this month', 'इस महीने नए'),
+      noCustomersToday: S('No customers yet today.', 'आज अभी कोई ग्राहक नहीं आया।'),
+      /** Owner, 2026-11-13 — the phone's Needs attention rows, one door each. */
+      reorderListLabel: S('Reorder list', 'मँगाने की सूची'),
       colWhen: S('When', 'कब'),
       colCustomer: S(labels.customer ?? 'Customer', 'ग्राहक'),
       colChannel: S('Channel', 'चैनल'),
