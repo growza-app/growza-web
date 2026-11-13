@@ -9,7 +9,7 @@ import { copyToClipboard } from '../lib/copy-to-clipboard';
 import { PhoneField } from '../components/PhoneField';
 import { toStoredPhone } from '../lib/phone';
 import { usePhoneProblem } from '../lib/use-phone-problem';
-import { pickNoun } from '../lib/nouns';
+import { nounInSentence, pickNoun } from '../lib/nouns';
 import { IconCheck, IconClose, IconPlus, IconWhatsApp } from '../components/icons';
 import { waDigits } from '../components/BookingSheet';
 import { WeekdayHoursEditor, toWeekdayRows, type WeekdayRow } from '../components/WeekdayHoursEditor';
@@ -139,6 +139,8 @@ export function StaffWizard({
    */
   const labels = useLabels();
   const providerLabel = pickNoun(locale, labels.provider ?? staffWord, tn('staffTitle'));
+  // QA 13 Nov 2026, bug 7 — "Same hours as the salon" at a spa, a clinic and a garage: the business's own word.
+  const businessWord = pickNoun(locale, nounInSentence(labels.business ?? 'Business'), tn('business'));
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialog(dialogRef, { onClose });
   const [step, setStep] = useState<Step>('who');
@@ -533,11 +535,11 @@ export function StaffWizard({
                   }}
                 />
                 <span>
-                  <strong>{t('sameHours')}</strong>
+                  <strong>{t('sameHours', { business: businessWord })}</strong>
                   <span className="wiz-toggle-sub">
                     {/* Why this is a standing intent and not a copy, in one
                         sentence an owner can act on. */}
-                    {t('sameHoursSub')}
+                    {t('sameHoursSub', { business: businessWord })}
                   </span>
                 </span>
               </label>
@@ -561,7 +563,7 @@ export function StaffWizard({
               */}
               {!followsSalon && openDays === 0 && (
                 <div className="field-hint wiz-warn">
-                  {t('warnNoDays', { name: displayName.trim() || t('them') })}
+                  {t('warnNoDays', { name: displayName.trim() || t('them'), business: businessWord })}
                 </div>
               )}
 

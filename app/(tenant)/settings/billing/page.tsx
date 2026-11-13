@@ -3,6 +3,7 @@ import { screenTitle } from '../../lib/page-title';
 import { formatMoney } from '../../lib/format';
 import { api } from '../../lib/api';
 import { serverLang } from '../../lib/lang';
+import { nounInSentence } from '../../lib/nouns';
 import { billingCopy } from '../../lib/billing-copy';
 import { isLive } from '../../lib/go-live';
 import { BillingSummary } from './BillingSummary';
@@ -40,6 +41,7 @@ export default async function BillingSettingsPage() {
       // its owner "nothing is charged while you are setting up" above a bill they owe would be wrong.
       live={isLive(me?.tenant?.status) || billing.invoices.length > 0 || billing.due !== null}
       onAccountText={onAccountText}
+      businessWord={nounInSentence(me?.labels?.business ?? 'Business')}
     />
   );
 }

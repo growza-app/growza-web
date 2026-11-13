@@ -19,6 +19,7 @@ export function BillingSummary({
   canPayOnline,
   live = true,
   onAccountText = null,
+  businessWord = 'business',
 }: {
   billing: OwnerBilling;
   lang: Lang;
@@ -31,6 +32,8 @@ export function BillingSummary({
   live?: boolean;
   /** Jira GRW-407 — "₹299 is on your account…", already in the owner's language; null when nothing is. */
   onAccountText?: string | null;
+  /** QA 13 Nov 2026, bug 7 — what this business calls itself, in a sentence ("salon", "clinic", "garage"). */
+  businessWord?: string;
 }) {
   const t = billingCopy(lang);
   const sub = billing.subscription;
@@ -123,7 +126,7 @@ export function BillingSummary({
                   the day it would fall on moves to whenever they go live. */}
               {live ? null : (
                 <p className="bill-change" role="note">
-                  {t.billingStartsAtGoLive}
+                  {t.billingStartsAtGoLive(businessWord)}
                 </p>
               )}
               {sub.pendingChange ? (
