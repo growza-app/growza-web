@@ -438,7 +438,7 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     '/appointments/new': /if \(!mayUse\(me\.member\?\.role, 'visit\.new', isWritable\(me\.tenant\?\.status\)\)\)/,
     // Jira GRW-556 — where a closed screen's address lands until the business is live: open to every role, and it
     // sends a live business Home, since the address means nothing then.
-    '/not-live-yet': /isLive\(\(await api\.me\(\)\)\.tenant\?\.status\)\) redirect\('\/'\)/,
+    '/not-live-yet': /const me = await api\.me\(\);[\s\S]{0,80}if \(isLive\(me\.tenant\?\.status\)\) redirect\('\/'\)/,
     /*
      * Jira GRW-564 — open to every role, like `/not-live-yet` above, and the
      * only screen in the product that reaches a human.

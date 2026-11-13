@@ -2,7 +2,8 @@
 
 import Link from '../../shared/AppLink';
 import { useLayoutEffect, useState, type ReactNode } from 'react';
-import { setupCopy, setupHref } from '../lib/setup-copy';
+import { setupWords, setupCopy, setupHref } from '../lib/setup-copy';
+import { useLabels } from './LabelsProvider';
 import type { Lang } from '../lib/lang';
 import { IconCheck, IconChevronRight } from './icons';
 
@@ -36,13 +37,14 @@ export function SetupBanner({
 }): ReactNode {
   const attention = setup?.mode === 'attention';
   const [open, setOpen] = useState(false);
+  const labels = useLabels();
   useLayoutEffect(() => {
     if (attention || !window.matchMedia('(max-width: 860px)').matches) setOpen(true);
   }, [attention]);
 
   const items = (setup?.items ?? []).filter(known);
   if (items.length === 0) return null;
-  const c = setupCopy(lang);
+  const c = setupCopy(lang, setupWords(labels));
   const wording = (item: SetupItem): string =>
     item.key === 'services'
       ? c.services

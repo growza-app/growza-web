@@ -748,7 +748,7 @@
   },
   "settingsGst": {
     "title": "GST and invoices",
-    "hint": "Only if your business is registered for GST. Leave it as it is and your customers get a plain receipt, which is right for most businesses.",
+    "hint": "Only if your business is registered for GST. Leave it as it is and your {customers} get a plain receipt, which is right for most businesses.",
     "statusLabel": "Is your business registered for GST?",
     "status": {
       "unregistered": "Not registered",
@@ -838,7 +838,7 @@
     "linkHint": "Share the branch from Google Maps and paste the link here.",
     "radiusLabel": "How close counts",
     "radiusUnit": "meters",
-    "radiusHint": "0 = the shop door. 500 = the whole street.",
+    "radiusHint": "0 = the {business} door. 500 = the whole street.",
     "enabled": "Staff can check themselves in",
     "enabledOn": "On. Staff see an “I’m in” button.",
     "enabledOff": "Off. You mark attendance from the register.",

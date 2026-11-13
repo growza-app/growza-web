@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useNouns } from '../../lib/use-nouns';
 import { useState } from 'react';
 import { api, ApiError, type SettingsSummary } from '../../lib/api';
 import { SettingsSaveBar } from '../SettingsSaveBar';
@@ -26,6 +27,8 @@ type Status = (typeof STATUSES)[number];
 
 export function GstForm({ initial, branchName }: { initial: SettingsSummary; branchName: string | null }) {
   const t = useTranslations('settingsGst');
+  // QA 13 Nov 2026, bug 8 — "your customers" at a clinic: the business's own word (patients, guests).
+  const { customers } = useNouns();
   const closeForm = useCloseAfterSave('/settings');
 
   const [status, setStatus] = useState<Status>(initial.gst.status);
@@ -104,7 +107,7 @@ export function GstForm({ initial, branchName }: { initial: SettingsSummary; bra
         <div className="card-head">{t('title')}</div>
         <div className="card-body">
           <p className="field-hint" style={{ marginTop: 0 }}>
-            {t('hint')}
+            {t('hint', { customers })}
           </p>
 
           <div className="field">
