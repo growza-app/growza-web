@@ -53,9 +53,12 @@ describe('Return mode follows the refund rule the API enforces', () => {
     expect(mayTakeReturns('receptionist', ['sales'])).toBe(true);
   });
 
-  it('a member who holds a role never may: the grid gives no refund, whatever they work like', () => {
+  it('a member who holds a role may when the role can change Reports (owner, 13 Nov 2026), and not otherwise', () => {
+    expect(mayTakeReturns('manager', undefined, { reports: 'manage', bookings: 'manage' })).toBe(true);
+    expect(mayTakeReturns('receptionist', ['sales'], { bookings: 'manage', clients: 'manage' })).toBe(false);
+    expect(mayTakeReturns('manager', undefined, { reports: 'view' })).toBe(false);
+    // An older caller passing only "holds a role" stays closed.
     expect(mayTakeReturns('manager', undefined, true)).toBe(false);
-    expect(mayTakeReturns('receptionist', ['sales'], true)).toBe(false);
   });
 
   it('a stylist never may', () => {
@@ -118,7 +121,7 @@ describe('the POS screen', () => {
 
   it('draws the Sell | Return tabs only for someone who may take a return', () => {
     expect(client).toContain('{canReturn ? (');
-    expect(page).toContain('mayTakeReturns(me.member?.role, me.reportTabs, Boolean(areas.pages))');
+    expect(page).toContain('mayTakeReturns(me.member?.role, me.reportTabs, areas.pages ?? false)');
   });
 
   it('keeps the till mounted under the return sheet so a sale in progress is never lost', () => {

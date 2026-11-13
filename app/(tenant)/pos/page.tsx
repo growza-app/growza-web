@@ -49,7 +49,7 @@ export default async function PosPage({
   const timezone = me.tenant?.timezone ?? 'Asia/Kolkata';
   const todayISO = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date());
   const areas = areasOf(me);
-  const canReturn = mayTakeReturns(me.member?.role, me.reportTabs, Boolean(areas.pages));
+  const canReturn = mayTakeReturns(me.member?.role, me.reportTabs, areas.pages ?? false);
   // A shop's till says what a shop says ("Take an order", from the vertical's own words), as `/orders/new` does; everyone else keeps "Sell product".
   const heading = areas.shop ? homeCopy(await serverLang(), me.labels).shop.takeOrder : undefined;
 
@@ -60,6 +60,8 @@ export default async function PosPage({
         todayISO={todayISO}
         returnWindowDays={me.tenant?.productReturnWindowDays ?? DEFAULT_PRODUCT_RETURN_WINDOW_DAYS}
         canReturn={canReturn}
+        // Owner, 2026-11-14 (returns QA, loophole 1) — a member with a home branch takes returns there only; the owner is never held.
+        returnBranch={me.member?.returnBranchId ?? null}
         heading={heading}
         initialMode={posModeOf(params.mode, canReturn)}
         initialToken={params.token}

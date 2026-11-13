@@ -99,6 +99,8 @@ export interface Me {
     name?: string | null;
     /** Jira GRW-74 — the role they hold, if any; the grid below applies only to a member who has one. */
     tenantRoleId?: string | null;
+    /** Owner, 2026-11-14 — the one branch this member may take returns at; null for the owner or a member with none. Absent from an older API. */
+    returnBranchId?: string | null;
     /** Jira GRW-237 — a receptionist's own branch; null means every branch. */
     locationId?: string | null;
     locationName?: string | null;
