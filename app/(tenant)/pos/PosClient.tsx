@@ -471,8 +471,10 @@ export function PosClient({
 
   const loadTodayTokens = useCallback(async () => {
     try {
+      // QA 13 Nov 2026, bug 10 — the queue's own read: a desk the takings are not opened to gets the orders without amounts. Asking for
+      // the Sales register here was refused for the desk, which left its queue empty under the order it had just rung up.
       const rows = await api.appointments(todayISO, todayISO, undefined, undefined, {
-        includeSales: true,
+        includeSales: 'queue',
       });
       setTodayRows(rows);
       setNowMs(Date.now());
