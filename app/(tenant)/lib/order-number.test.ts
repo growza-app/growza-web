@@ -20,7 +20,7 @@ describe('the number an order goes by', () => {
   it('Home, the desktop table and the order page all use it — no screen prints the code where a token exists', () => {
     const home = src('../components/home/ShopHome.tsx');
     expect(home).not.toContain('#{o.code.toUpperCase()}');
-    expect(home.match(/\{orderNumber\(o\)\}/g)).toHaveLength(5);
+    expect(home.match(/\{orderNumber\(o\)\}/g)).toHaveLength(3);
     expect(src('../orders/OrdersClient.tsx')).toContain("{r.tokenNo ? formatTokenNo(r.tokenNo) : t('list.orderCode', { code: r.code.toUpperCase() })}");
     const page = src('../orders/[id]/OrderClient.tsx');
     expect(page).toContain("title={t('list.orderCode', { code: order.tokenNo ? formatTokenNo(order.tokenNo).slice(1) : code })}");

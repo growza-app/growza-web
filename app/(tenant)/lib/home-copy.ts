@@ -497,6 +497,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       unitsSoldTitle: S('Units sold', 'बिकी हुई यूनिट'),
       dishesSoldTitle: S('Dishes sold', 'बिके हुए पकवान'),
       acrossSizes: (revenue: string, sizes: number) => S(`${revenue} across ${sizes} sizes`, `${sizes} साइज़ में ${revenue}`),
+      // The Sales card beside it already carries the money, so the units card says only how many sizes sold.
+      acrossSizesOnly: (sizes: number) => S(`across ${sizes} ${sizes === 1 ? 'size' : 'sizes'}`, `${sizes} साइज़ में`),
       // Owner, 2026-10-24 — a kitchen sells dishes, not sizes.
       acrossItems: (revenue: string, items: number) => S(`${revenue} from ${items} ${items === 1 ? 'item' : 'items'}`, `${items} चीज़ों से ${revenue}`),
       acrossDishes: (revenue: string, dishes: number) => S(`${revenue} across ${dishes} ${dishes === 1 ? 'dish' : 'dishes'}`, `${dishes} पकवानों में ${revenue}`),
