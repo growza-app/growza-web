@@ -2637,3 +2637,43 @@
     text-overflow: ellipsis;
   }
 }
+
+/* Owner's review 2026-11-13 — the two reports under the figures on a phone (the header has no room there);
+   `.mobile-only` hides the row at ≥861px, where the header carries the same two buttons. */
+.prd-report-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin: calc(-1 * var(--sp-1)) 0 var(--sp-3);
+}
+
+.prd-report-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-1);
+  min-height: 2.75rem;
+  padding: 0 var(--sp-2) 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--accent-deep);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.prd-report-link svg {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--muted);
+}
+
+/* The shared `.mobile-only` rule lives in an earlier sheet, so this sheet's `display: grid` would beat it at equal
+   specificity by source order — the gotcha 32-customers.css documents. Hidden here, in the same desktop query. */
+@media (min-width: 861px) {
+  .prd-report-links {
+    display: none;
+  }
+}

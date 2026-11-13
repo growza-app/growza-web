@@ -13,7 +13,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useAreas, useBusinessWritable, useSession, useWritable } from '../components/SessionProvider';
 import { canSee, type MemberRole } from '../lib/nav-policy';
-import { IconCart, IconEdit, IconPlus, IconSearch, IconSort, IconUpload } from '../components/icons';
+import { IconCart, IconChevronRight, IconEdit, IconPlus, IconSearch, IconSort, IconUpload } from '../components/icons';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
 import { productShareItem } from '../lib/share-on-whatsapp';
@@ -408,6 +408,12 @@ export function ProductsList({
               {t('stockReport.open')}
             </Link>
           ) : null}
+          {/* Owner's review 2026-11-13 — the reorder list was reachable only from Home, Reports and the two reports; the shelf is where you notice you are short. */}
+          {heading !== undefined && canStockTake && counted ? (
+            <Link className="btn btn-ghost desktop-only" href="/stock/order">
+              {t('reorder.title')}
+            </Link>
+          ) : null}
           {/* The till is Bookings' and Stock's, not this screen's page: drawn when the role may open it, and the business may write. */}
           {live.length > 0 && tillOpen ? (
             <Link className="btn btn-ghost" href="/products/sell?from=products">
@@ -485,6 +491,24 @@ export function ProductsList({
       </div>
     </div>
   );
+  /*
+   * Owner's review 2026-11-13 — on a phone the header has no room for the two reports (see the header comment), so
+   * they sit under the four figures instead: the stock report and the reorder list, a 44px row each. Desktop keeps
+   * them in the header, where there is room; the row is phone-only so the same door is never drawn twice.
+   */
+  const reportLinks =
+    heading !== undefined && canStockTake && counted ? (
+      <nav className="prd-report-links mobile-only" aria-label={t('stockReport.open')}>
+        <Link className="prd-report-link" href="/stock/report">
+          <span>{t('stockReport.open')}</span>
+          <IconChevronRight />
+        </Link>
+        <Link className="prd-report-link" href="/stock/order">
+          <span>{t('reorder.title')}</span>
+          <IconChevronRight />
+        </Link>
+      </nav>
+    ) : null;
   const strip = !counted ? (
     uncountedStrip
   ) : (
@@ -990,6 +1014,7 @@ export function ProductsList({
         <div className="page-body prd-desk">
           {note}
           {strip}
+          {reportLinks}
           <div className={`pf-wide-grid prd-desk-grid ${editing ? 'has-sheet' : 'is-full'}`}>
             <section className="pf-wide-mid prd-desk-mid" aria-label={t('title')}>
               <div className="prd-desk-tools">
@@ -1071,6 +1096,7 @@ export function ProductsList({
         ) : (
           <>
             {strip}
+            {reportLinks}
             <div className="prd-tools">
               {searchBox}
               {categoriesDropdown ? (
