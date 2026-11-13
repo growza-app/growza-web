@@ -433,7 +433,8 @@ export function AttendanceRegister({
         </section>
       ) : null}
       <div className="att-head">
-        <div>
+        {/* Owner's review 2026-11-13 — on a phone the page header already says Attendance, so this block is hidden there. */}
+        <div className="att-head-text">
           <h2 className="att-title">{t('heading')}</h2>
           <p className="att-sub">{t('sub')}</p>
         </div>
