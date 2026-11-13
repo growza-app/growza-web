@@ -43,6 +43,13 @@
   --danger-soft: #fdeaea;
   --danger-line: #fecaca;
   --amber-ink: #92400e; /* amber as TEXT on --amber-soft: 6.3:1 (Jira GRW-478); --amber itself is 4.99:1 */
+  /* Emerald v2 theme preview (99-z-emerald-v2.css): one colour in three shades, plus the grey canvas. */
+  --forest: #173f2b;
+  --forest-2: #1f5a3c;
+  --mint: #8fd0a9;
+  --canvas: #f1f2ef;
+  --canvas-line: #e4e6e2;
+  --canvas-text: #4d5752;
   --radius: 10px; /* Jira GRW-570 — flat: 10 and 8, the way a crisp dashboard is drawn. */
   --radius-sm: 8px;
   --radius-lg: 14px; /* Jira GRW-571 — the third and last: sheets, big cards, tiles with a photo. */

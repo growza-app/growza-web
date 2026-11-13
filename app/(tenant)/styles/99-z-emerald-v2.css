@@ -1,0 +1,283 @@
+/*
+ * Emerald v2 — a theme preview, loaded last so it can be read (and removed) as one file.
+ *
+ * Owner, 14 Nov 2026: "this is looking very clean, I don't know why" about a Dribbble
+ * dashboard. What made it clean, and what this sheet does about it:
+ *
+ *   1. One colour in three shades (forest, green, mint); everything else grey or white.
+ *   2. ONE filled card per screen — the money card — so there is one obvious place to look.
+ *   3. No borders and no shadows on cards: white cards on a grey canvas, the gap does the work.
+ *   4. Large corners (22px cards, pill buttons).
+ *   5. A light sidebar in the same family as the page, not a dark slab.
+ *   6. Big numbers at a medium weight; labels small and grey. No weight above 600 anywhere
+ *      (the weight remap itself is done in the sheets, not here — see the branch's commit).
+ *
+ * Status colours (amber, red, blue, purple) keep their meanings from 00-base.css; they are
+ * only toned down where they were decoration rather than meaning.
+ */
+
+:root {
+  --page-bg: var(--canvas);
+  --border: var(--canvas-line);
+  --sidebar: var(--canvas);
+  --sidebar-deep: var(--canvas);
+  --sidebar-text: var(--canvas-text);
+  --sidebar-active: var(--surface);
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-lg: 22px;
+}
+
+/* ---------- shell: a light sidebar, one surface with the page ---------- */
+
+.sidebar {
+  background: var(--canvas);
+  color: var(--text);
+  border-right: 1px solid var(--border);
+}
+
+.brand-badge {
+  background: var(--forest);
+  border-radius: 12px;
+}
+
+.brand-name {
+  color: var(--text);
+}
+
+.nav a {
+  position: relative;
+  color: var(--sidebar-text);
+  border-radius: 12px;
+}
+
+.nav a:hover {
+  background: rgb(23 63 43 / 6%);
+  color: var(--text);
+}
+
+.nav a.active {
+  background: var(--surface);
+  color: var(--forest);
+  font-weight: 600;
+}
+
+.nav a.active::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: 9px;
+  bottom: 9px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--forest-2);
+}
+
+.nav svg {
+  opacity: 1;
+}
+
+/* Everything the dark sidebar painted white-on-green reads dark-on-grey now. */
+.sidebar .brand-location,
+.sidebar .nav-who-text span {
+  color: var(--muted);
+}
+
+.sidebar .nav-who-text strong,
+.sidebar .sidebar-close {
+  color: var(--text);
+}
+
+.sidebar .nav-pill {
+  color: var(--forest);
+  background: rgb(23 63 43 / 8%);
+}
+
+/* ---------- buttons: pills ---------- */
+
+:is(.btn, .button, .primary-btn, .secondary-btn, .ghost-btn, .rst-date-pill) {
+  border-radius: 999px;
+}
+
+/* ---------- restaurant / shop Home, laptop and up ---------- */
+
+@media (min-width: 861px) {
+  .hm-head.is-rst-head .hm-head-title {
+    font-size: 2rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+
+  .rst-date-pill {
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .rst-kpis {
+    gap: 1rem;
+  }
+
+  .rst-kpi,
+  .rst-kpi-orders,
+  .rst-kpi-customers {
+    background: var(--surface);
+    border-color: transparent;
+    box-shadow: none;
+    border-radius: var(--radius-lg);
+  }
+
+  .rst-kpi-wave {
+    display: none;
+  }
+
+  /* The one filled card. */
+  .rst-kpi-sales {
+    background: var(--forest);
+    border-color: transparent;
+    color: #fff;
+  }
+
+  .rst-kpi-sales :is(.rst-kpi-label, .rst-kpi-value, .rst-kpi-mode b) {
+    color: #fff;
+  }
+
+  .rst-kpi-sales :is(.rst-kpi-modes, .rst-kpi-mode, .rst-delta-sub) {
+    color: rgb(255 255 255 / 72%);
+  }
+
+  .rst-kpi-sales .rst-kpi-modes {
+    border-top-color: rgb(255 255 255 / 14%);
+  }
+
+  .rst-kpi-sales .rst-kpi-icon.is-sales {
+    background: rgb(255 255 255 / 12%);
+    color: #fff;
+  }
+
+  .rst-kpi-sales .rst-delta-pill {
+    background: rgb(255 255 255 / 14%);
+    color: #fff;
+  }
+
+  .rst-kpi-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  .rst-kpi-value {
+    font-weight: 600;
+    letter-spacing: -0.035em;
+  }
+
+  /* Icons on the white cards are an outlined circle, the same on each, not three tints. */
+  .rst-kpi-icon.is-orders,
+  .rst-kpi-icon.is-customers {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--text);
+  }
+
+  .rst-section-title,
+  .rst-panel-head h3 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .rst-action-tile {
+    border-color: transparent;
+    box-shadow: none;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+  }
+
+  .rst-action-tile:hover {
+    background: var(--surface);
+    border-color: var(--mint);
+  }
+
+  .rst-action-tile .rst-action-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 999px;
+    background: var(--canvas);
+    color: var(--forest);
+  }
+
+  .rst-panel {
+    border-color: transparent;
+    box-shadow: none;
+    border-radius: var(--radius-lg);
+  }
+
+  .rst-view-all {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
+    padding: 0 0.875rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .rst-view-all:hover {
+    text-decoration: none;
+    border-color: var(--forest-2);
+  }
+
+  .rst-order-icon.is-dinein,
+  .rst-order-icon.is-takeaway,
+  .rst-order-icon.is-delivery {
+    background: var(--canvas);
+    color: var(--forest);
+  }
+
+  .rst-order-num {
+    font-weight: 600;
+  }
+
+  .rst-status-pill.is-served {
+    background: var(--canvas);
+    color: var(--forest);
+  }
+}
+
+/* ---------- Home on a phone (and the shared Home cards) ---------- */
+
+/* The one filled card, flat: a gradient is decoration, the colour is the meaning. */
+.hm-hero {
+  background: var(--forest);
+}
+
+.hm-card {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.hm-card-head h2 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.hm-toolbar-summary,
+.shp-period .hm-seg-select {
+  border-radius: 999px;
+  border-color: transparent;
+}
+
+/* A colour per person is decoration; one neutral chip reads calmer (inline tone, hence !important). */
+.shp-recent .hm-avatar {
+  background: var(--canvas) !important;
+  color: var(--forest) !important;
+  border-radius: 999px;
+}
+
+
+/* Tablets held sideways: the money card's icon takes the room its label and number need. */
+@media (min-width: 861px) and (max-width: 1180px) {
+  .rst-kpi-sales .rst-kpi-icon {
+    display: none;
+  }
+}

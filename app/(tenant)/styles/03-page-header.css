@@ -24,7 +24,7 @@
 .topbar h1 {
   margin: 0 0 5px;
   font-size: 1.5rem;
-  font-weight: 680;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 
@@ -123,7 +123,7 @@
   color: #fff;
   display: grid;
   place-items: center;
-  font-weight: 650;
+  font-weight: 600;
   font-size: 1rem;
   flex-shrink: 0;
 }

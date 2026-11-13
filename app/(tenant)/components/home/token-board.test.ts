@@ -385,7 +385,7 @@ describe('the wait on a waiting token (GRW-541)', () => {
 
   it('is regular weight and italic as plain text on a laptop; a pill, upright, on a phone (GRW-548)', () => {
     expect(css).toMatch(/\.tb-col\[data-col='waiting'\] \.tb-meta \{[^}]*font-weight: 400;[^}]*font-style: italic;/);
-    expect(css).toMatch(/\.tb-meta \{[^}]*font-weight: 700;/);
+    expect(css).toMatch(/\.tb-meta \{[^}]*font-weight: 600;/);
   });
 
   it('the icon is 16×16, in rem', () => {

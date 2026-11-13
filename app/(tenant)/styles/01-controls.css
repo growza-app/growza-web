@@ -112,7 +112,7 @@ select {
 .field-error {
   margin-top: 6px;
   font-size: 0.8125rem;
-  font-weight: 550;
+  font-weight: 500;
   color: var(--amber);
 }
 
