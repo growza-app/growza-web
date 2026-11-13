@@ -214,6 +214,9 @@ export function OrderClient({
   const soldDayISO = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(order.soldAt));
   const windowExpired = !computeReturnWindow(soldDayISO, new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date()), returnWindowDays).eligible;
   const isOwner = !session || session.role === null || session.role === 'owner';
+  // QA 13 Nov 2026, bug 6 — the server says who may take a return, as it does for a swap: the owner and, since the owner's decision that day, a
+  // manager. Before, a manager was shown "Return items" and refused on Save. An older API sends nothing and keeps it the owner's.
+  const canReturn = writable && (order.canReturn ?? isOwner);
   // An online order that is still to send and has nowhere to go says so, plainly, instead of showing an empty block.
   const toSend = order.status === 'new' || order.status === 'packed';
   const noAddress = !isCounter && toSend && !order.buyer?.address;
@@ -428,7 +431,7 @@ export function OrderClient({
             <div className="ord-d-paper">
               {/* Owner's review 2026-11-13 — the receipt is the common action and is filled; a return moves money and is the ghost. */}
               {isPaidCounter ? <DocumentAction visitKey={order.id} primary /> : null}
-              {returnable && writable ? (
+              {returnable && canReturn ? (
                 <button type="button" className="btn btn-ghost" onClick={() => setReturning(true)}>
                   {t('detail.returnItems')}
                 </button>

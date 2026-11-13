@@ -1492,6 +1492,8 @@ export interface OrderDetail {
   }>;
   /** Jira GRW-617 — may this viewer swap a size? Decided by the server with the function that would refuse the swap. */
   canSwap: boolean;
+  /** QA 13 Nov 2026, bug 6 — whether THIS viewer may take a return (owner, or a role that changes Reports). Absent from an older API. */
+  canReturn?: boolean;
   /** Jira GRW-625 — what the marketplace was told about this order. Empty for a counter sale. */
   marketplace?: OrderMarketplaceMessage[];
   /** May this viewer ask for a message to be sent again? Decided by the server with the route's own role check. */
