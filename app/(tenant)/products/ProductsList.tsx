@@ -394,7 +394,7 @@ export function ProductsList({
   const header = (
     <PageHeader
       title={heading ?? t('title')}
-      subtitle={counted && desk === false ? undefined : !counted ? t('uncountedSubtitle') : heading !== undefined ? t('stockSubtitle') : t('subtitle')}
+      subtitle={!counted ? t('uncountedSubtitle') : heading !== undefined ? t('stockSubtitle') : t('subtitle')}
       subtitleAsInfo
       actions={
         <>
@@ -611,7 +611,7 @@ export function ProductsList({
   const categoriesDropdown =
     liveCategories.length > 0 || noneCount > 0 || writable ? (
       <ProductCategoriesDropdown
-        fixedMenu={!desk && counted}
+        fixedMenu={desk === false && counted}
         selected={selectedCategories}
         categories={liveCategories}
         noneCount={noneCount}
@@ -1118,7 +1118,8 @@ export function ProductsList({
   return (
     <>
       {header}
-      <div className="page-body prd-page">
+      {/* `prd-shelf` on a counted shelf: 96-products.css hides the header's ⓘ beside it on a phone (review 2026-11-13: a client flag flashed it). */}
+      <div className={`page-body prd-page ${counted ? 'prd-shelf' : ''}`}>
         {note}
         {rows.length === 0 ? (
           <div className="empty prd-empty">

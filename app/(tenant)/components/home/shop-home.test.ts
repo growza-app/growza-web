@@ -124,7 +124,7 @@ describe('UX-07 — English and Hindi for every line, the nouns from the vertica
     expect(en.sizeWord('30 / White')).toBe('size 30 / White');
     expect(en.left(2)).toBe('2 left');
     expect(en.left(0)).toBe('None left');
-    expect(en.viewAll(27)).toBe('View all (27)');
+    // `viewAll(n)` went with the phone's Running out card (review 2026-11-13); the laptop list keeps `left` and `sizeWord`.
   });
 });
 

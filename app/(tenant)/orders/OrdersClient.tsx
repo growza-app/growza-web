@@ -222,6 +222,7 @@ export function OrdersClient({
           A shop that sells only at the counter gets no "Where from" pill. The chips stay for a laptop; the CSS
           (99-orders.css) draws one or the other by width.
         */}
+        {offered.length > 1 || ships ? (
         <div className="ord-selects">
           {offered.length > 1 ? (
             <label className="ord-select">
@@ -250,6 +251,7 @@ export function OrdersClient({
             </label>
           ) : null}
         </div>
+        ) : null}
 
         <div className="ord-chips ord-chips-channel" role="group" aria-label={t('list.channelGroup')}>
           <button type="button" className={`ord-chip ${query.channel === '' ? 'is-on' : ''}`} aria-pressed={query.channel === ''} onClick={() => pickChannel('')}>

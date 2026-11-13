@@ -50,7 +50,7 @@ describe('the shelf on a phone, compacted', () => {
     // The old chips row is not drawn beside it on the phone (the desk keeps its own chips under its tools).
     const phone = list.slice(list.indexOf('<div className="page-body prd-page">'));
     expect(phone).not.toContain('{counted ? chips : null}');
-    expect(list).toContain('fixedMenu={!desk && counted}');
+    expect(list).toContain('fixedMenu={desk === false && counted}');
     expect(dropdown).toContain('fixedMenu?: boolean;');
     expect(dropdown).toContain('setMenuTop(wrapRef.current.getBoundingClientRect().bottom + 6)');
     expect(dropdown).toContain('maxHeight: `calc(100dvh - ${menuTop}px - 16px)`');
@@ -62,7 +62,7 @@ describe('the shelf on a phone, compacted', () => {
     const row = list.slice(list.indexOf('<ul className="prd-list">'), list.indexOf('const showSku'));
     expect(row).not.toContain('ShareOnWhatsAppButton');
     expect(row).not.toContain('prd-row-share');
-    expect(sheet).toContain('counted && productShareItem(product, { counted }) ? (');
+    expect(sheet).toContain('const shareItem = product && counted ? productShareItem(product, { counted }) : null;');
     expect(sheet).toContain('className="prd-sheet-share"');
     // The kitchen's menu cards keep theirs.
     expect(list).toContain('{shareItem ? <ShareOnWhatsAppButton item={shareItem} branchId={p.locationId} bookable={false} photoUrl={p.imageUrl} /> : null}');

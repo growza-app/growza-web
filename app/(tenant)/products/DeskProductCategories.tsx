@@ -228,11 +228,21 @@ export function ProductCategoriesDropdown({
     };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
+    // Review 2026-11-13 — a menu pinned to the viewport would float away from its button as the page scrolls or
+    // the phone turns; it closes instead, the same way a tap outside closes it.
+    if (fixedMenu) {
+      window.addEventListener('scroll', closeMenu, true);
+      window.addEventListener('resize', closeMenu);
+    }
     return () => {
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
+      if (fixedMenu) {
+        window.removeEventListener('scroll', closeMenu, true);
+        window.removeEventListener('resize', closeMenu);
+      }
     };
-  }, [open, addOpen, renamingId]);
+  }, [open, addOpen, renamingId, fixedMenu]);
 
   const add = async () => {
     const name = adding.trim();
