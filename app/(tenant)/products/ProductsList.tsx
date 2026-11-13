@@ -509,6 +509,11 @@ export function ProductsList({
         </Link>
       </nav>
     ) : null;
+  /*
+   * Owner's review 2026-11-13 — on a phone the four tiles cost 119px and said what the chips say a row below
+   * (Running low / Out of stock are the Low / Out chips); the two figures that were only here are one line now.
+   */
+  const shelfLine = <p className="prd-shelf-line">{t('shelfLine', { count: inCategory.length, worth: formatMoney(worth) })}</p>;
   const strip = !counted ? (
     uncountedStrip
   ) : (
@@ -575,6 +580,7 @@ export function ProductsList({
   const categoriesDropdown =
     liveCategories.length > 0 || noneCount > 0 || writable ? (
       <ProductCategoriesDropdown
+        fixedMenu={!desk && counted}
         selected={selectedCategories}
         categories={liveCategories}
         noneCount={noneCount}
@@ -650,9 +656,8 @@ export function ProductsList({
       <ul className="prd-list">
         {pageRows.map((p) => {
           const tone = stockTone(p);
-          const shareItem = productShareItem(p, { counted });
           return (
-            <li key={p.id} className={`prd-row ${p.active ? '' : 'prd-row-retired'} ${shareItem ? 'prd-row-share' : ''}`}>
+            <li key={p.id} className={`prd-row ${p.active ? '' : 'prd-row-retired'}`}>
               <button
                 type="button"
                 className={`prd-row-tap ${isOn(p) ? 'is-on' : ''}`}
@@ -680,8 +685,8 @@ export function ProductsList({
                   <span className="prd-sold">{t('sold', { n: p.sold })}</span>
                 </span>
               </button>
-              {/* Jira GRW-671 — outside the row's own button: a button cannot hold a button. */}
-              {shareItem ? <ShareOnWhatsAppButton item={shareItem} branchId={p.locationId} bookable={false} photoUrl={p.imageUrl} /> : null}
+              {/* Owner's review 2026-11-13 — the WhatsApp share (Jira GRW-671) moved into the product's sheet: the owner's
+                  own stock list carried a green button on every row and lost its right column to it. */}
             </li>
           );
         })}
@@ -863,7 +868,8 @@ export function ProductsList({
     ) : null;
   const note = (
     <>
-      {shownBranchName ? <div className="banner banner-info prd-branch-note">{t('shownBranch', { branch: shownBranchName })}</div> : null}
+      {/* Owner's review 2026-11-13 — on a counted shelf the header names the branch (branch-routes), so no banner. */}
+      {shownBranchName && !counted ? <div className="banner banner-info prd-branch-note">{t('shownBranch', { branch: shownBranchName })}</div> : null}
       {importNote ? (
         <div className="banner" role="status">
           {importNote}
@@ -1095,11 +1101,37 @@ export function ProductsList({
           </div>
         ) : (
           <>
-            {strip}
+            {counted ? shelfLine : strip}
             {reportLinks}
             <div className="prd-tools">
               {searchBox}
-              {categoriesDropdown ? (
+              {counted ? (
+                /*
+                 * Owner's review 2026-11-13 — one scroller instead of a selects row AND a chips row: the four
+                 * status chips first (the filter people reach for), then Categories, the sort and Bulk edit.
+                 * The Categories menu is fixed to the viewport so the scroller cannot clip it.
+                 */
+                <div className="prd-chips prd-filter-row" role="group" aria-label={t('filters.label')}>
+                  {SHELF_FILTERS.map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      className={`prd-chip ${filter === f ? 'prd-chip-on' : ''} ${f === 'low' && counts.low > 0 ? 'prd-chip-warn' : ''}`}
+                      aria-pressed={filter === f}
+                      onClick={() => pick(() => setFilter(f))}
+                    >
+                      {t(`filters.${f}`)} <span className="prd-chip-n">{counts[f]}</span>
+                    </button>
+                  ))}
+                  {categoriesDropdown}
+                  {sortBox}
+                  {canStockTake && writable ? (
+                    <button type="button" className="prd-chip prd-chip-edit" onClick={() => setBulkEditOpen(true)}>
+                      <IconEdit /> {t('bulkTable.open')}
+                    </button>
+                  ) : null}
+                </div>
+              ) : categoriesDropdown ? (
                 <div className="prd-selects">
                   {categoriesDropdown}
                   {sortBox}
@@ -1125,7 +1157,6 @@ export function ProductsList({
                   ) : null}
                 </div>
               )}
-              {counted ? chips : null}
             </div>
             {alsoTryRow}
             {!counted ? menuCards : list}
