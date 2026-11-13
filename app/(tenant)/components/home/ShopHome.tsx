@@ -2108,8 +2108,15 @@ export function ShopHome({
         {failed || !data ? null : (
             <div className="shp-mobile-stack">
               <div className="shp-col-stack">
+                {/*
+                  The order queue is a kitchen's (POS, 35a76ea5: no Queue on a salon's or a shop's till). This card still
+                  drew it for a shop: a football sold and paid at the counter sat in "Queue" as "Preparing" (sports-shop
+                  QA, 13 Nov 2026). A shop keeps the card only for what it says to a shop — the first-order invite, and
+                  the app orders still to send — under the shop's own word for orders.
+                */}
+                {isKitchen || !data.anyOrders || data.toSend > 0 ? (
                 <Card
-                  title={s.queueTitle}
+                  title={isKitchen ? s.queueTitle : s.ordersTitle}
                   action={
                     data.anyOrders && isKitchen && can('/pos') ? (
                       <a className="shp-link" href="/pos?mode=queue">
@@ -2125,6 +2132,7 @@ export function ShopHome({
                   {data.anyOrders ? (
                     <>
                       <div className="shp-orders-row">
+                        {isKitchen ? (
                         <div className="shp-orders-summary">
                           <p className="shp-orders">
                             <strong>{queueStats.inQueue}</strong>
@@ -2134,6 +2142,7 @@ export function ShopHome({
                             {s.completedToday}: <b>{queueStats.completedToday}</b>
                           </span>
                         </div>
+                        ) : null}
                         {/*
                           Jira GRW-614 (FR-06) — the work waiting. It opens the Orders list already filtered to exactly the states
                           this count is of (`new,packed`), so the number on Home and the rows behind it cannot disagree. Absent
@@ -2145,7 +2154,7 @@ export function ShopHome({
                           </a>
                         ) : null}
                       </div>
-                      {queueStats.tokens.length > 0 ? (
+                      {isKitchen && queueStats.tokens.length > 0 ? (
                         <ul className="shp-recent">
                           {queueStats.tokens.map((tk) => (
                             <li key={tk.id}>
@@ -2194,6 +2203,7 @@ export function ShopHome({
                     </div>
                   )}
                 </Card>
+                ) : null}
               </div>
 
               {/*

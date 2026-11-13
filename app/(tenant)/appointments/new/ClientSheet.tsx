@@ -7,6 +7,7 @@ import type { Customer } from '../../lib/api-types';
 import { displayPhone, toNationalDigits, toStoredPhone } from '../../lib/phone';
 import { useNewVisitCopy } from '../../lib/use-copy';
 import { useLabel } from '../../components/LabelsProvider';
+import { useAreas } from '../../components/SessionProvider';
 import { nounInSentence, pickNoun } from '../../lib/nouns';
 import { usePhoneProblem } from '../../lib/use-phone-problem';
 import { opensSoftKeyboard } from '../../../shared/a11y/soft-keyboard';
@@ -43,6 +44,9 @@ const NAME_ID = 'pf-client-name';
 export function ClientSheet({ location, onPick, onClose, startAdding = false }: { location: string | null; onPick: (c: PickedClient) => void; onClose: () => void; /** Open with the add row already expanded (the + beside the search bar). */ startAdding?: boolean }) {
   const t = useTranslations('payFlow');
   const tNouns = useTranslations('nouns');
+  // Jira GRW-610's rule, as the Customers list keeps it: a business that takes no bookings has no "visits" to count. A
+  // sports shop's till said "Tarun Goyal · 7 visits" (sports-shop QA, 13 Nov 2026).
+  const bookingsOn = useAreas().bookings;
   const tc = useTranslations('common');
   const locale = useLocale();
   // Guest at a restaurant, Customer at a shop, Client at a salon — lower-cased where it sits inside a sentence.
@@ -267,7 +271,7 @@ export function ClientSheet({ location, onPick, onClose, startAdding = false }: 
                     {(c.name ?? '').trim().charAt(0).toUpperCase() || '?'}
                   </span>
                   <span className="pf-client-match-name">{c.name ?? nv.noName}</span>
-                  <span className="pf-client-match-sub">{[c.waPhone ? displayPhone(c.waPhone) : null, c.totalBookings > 0 ? nv.visits(c.totalBookings) : null].filter(Boolean).join(' · ')}</span>
+                  <span className="pf-client-match-sub">{[c.waPhone ? displayPhone(c.waPhone) : null, bookingsOn && c.totalBookings > 0 ? nv.visits(c.totalBookings) : null].filter(Boolean).join(' · ')}</span>
                 </button>
               </li>
             ))}
