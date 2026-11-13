@@ -41,7 +41,6 @@ describe('Retail Enterprise UI Redesign across all 6 surfaces', () => {
       expect(copy.shop.waitingToSendLabel).toBeTruthy();
       expect(copy.shop.lowStockLabel).toBeTruthy();
       expect(copy.shop.whatSellsLink).toBeTruthy();
-      expect(copy.shop.whatToOrderLink).toBeTruthy();
       expect(copy.shop.channelsLink).toBeTruthy();
       expect(copy.shop.stockReportLink).toBeTruthy();
       expect(copy.shop.salesTrendTitle).toBeTruthy();

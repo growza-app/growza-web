@@ -64,6 +64,8 @@ export function ProductSheet({
   const sizesOn = useSizesOn();
   // A kitchen (`catalog.stock_counted` off) has no count behind a dish: no Stock tab, no opening count, no low line.
   const counted = useAreas().stock;
+  // Review 2026-11-13 — the WhatsApp share (Jira GRW-671) lives on the sheet's head, bound once; null when retired or none left.
+  const shareItem = product && counted ? productShareItem(product, { counted }) : null;
   const sizeCount = product?.variantCount ?? 0;
   const sheetRef = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
@@ -254,9 +256,7 @@ export function ProductSheet({
               )}
               {product.categoryName ? <span className="prd-pill prd-pill-cat">{product.categoryName}</span> : null}
               {/* Owner's review 2026-11-13 — the WhatsApp share (Jira GRW-671) lives here, not on every shelf row. */}
-              {counted && productShareItem(product, { counted }) ? (
-                <ShareOnWhatsAppButton item={productShareItem(product, { counted })!} branchId={product.locationId} bookable={false} photoUrl={imageUrl ?? undefined} className="prd-sheet-share" />
-              ) : null}
+              {shareItem ? <ShareOnWhatsAppButton item={shareItem} branchId={product.locationId} bookable={false} photoUrl={imageUrl ?? undefined} className="prd-sheet-share" /> : null}
               <button type="button" className="prd-id-photo-link" onClick={() => photoRef.current?.click()}>
                 {photo || imageUrl ? t('changePhoto') : t('addPhoto')}
               </button>

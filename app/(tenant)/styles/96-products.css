@@ -2764,3 +2764,11 @@
 .prd-sheet-share {
   min-height: 2.25rem;
 }
+
+/* Review 2026-11-13 — the ⓘ on a counted shelf's phone header is hidden by width, not by a client flag: the flag read
+   null on the first paint and the button flashed. The header is the page body's previous sibling. */
+@media (max-width: 860px) {
+  .topbar:has(+ .page-body.prd-shelf) .topbar-info {
+    display: none;
+  }
+}

@@ -28,8 +28,9 @@ describe('the reorder list is a door on the Stock screen', () => {
     // …and their header buttons hide on a phone, so each action is drawn once per width.
     expect(list).toContain("<Link className={`btn btn-ghost ${counted ? 'desktop-only' : ''}`} href=\"/products/sell?from=products\">");
     expect(list).toMatch(/className="btn btn-ghost desktop-only"\n\s*onClick=\{\(\) => \{\n\s*setEditing\(\(cur\) => \(cur === 'new' \? null : cur\)\);\n\s*setStockTakeOpen\(true\);/);
-    // No ⓘ on a phone's counted shelf: the subtitle is a description, and the title row needs the width.
-    expect(list).toContain("subtitle={counted && desk === false ? undefined : ");
+    // No ⓘ on a phone's counted shelf: hidden by width in CSS (a client flag flashed it — review 2026-11-13).
+    expect(list).toContain("<div className={`page-body prd-page ${counted ? 'prd-shelf' : ''}`}>");
+    expect(readFileSync(new URL('../styles/96-products.css', import.meta.url), 'utf8')).toMatch(/@media \(max-width: 860px\) \{\s*\.topbar:has\(\+ \.page-body\.prd-shelf\) \.topbar-info \{\s*display: none;/);
     expect(list).toContain('<Link className="prd-report-link" href="/stock/report">');
     expect(list).toContain('<Link className="prd-report-link" href="/stock/order">');
     expect(list.match(/\{reportLinks\}/g)).toHaveLength(2);

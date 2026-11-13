@@ -659,7 +659,8 @@ export function ShopHome({
     {
       key: 'back',
       tone: 'is-out',
-      n: phoneChannel?.totals.returnedOrders ?? 0,
+      // Review 2026-11-13 — the other three are live counts; returns are the hero window's, so only today's qualify.
+      n: phonePeriod === 'today' ? (phoneChannel?.totals.returnedOrders ?? 0) : 0,
       label: s.cameBackLabel,
       href: canReports && can('/orders/returns') ? '/orders/returns' : can('/orders') ? ordersHref({ status: 'returned' }) : null,
     },
@@ -670,14 +671,17 @@ export function ShopHome({
    * a nameless walk-in every time. Read from the same hundred most recent orders the queue card uses, so a day of
    * more than a hundred orders is under-counted here exactly as it is there.
    */
+  /** The day a moment falls on in the business's zone, as YYYY-MM-DD — one formatter per zone, shared below. */
+  const fmtDate = useMemo(() => {
+    let f: Intl.DateTimeFormat | null = null;
+    try {
+      f = new Intl.DateTimeFormat('en-CA', { ...(timezone ? { timeZone: timezone } : {}) });
+    } catch {
+      f = null;
+    }
+    return (d: Date) => (f ? f.format(d) : d.toISOString().slice(0, 10));
+  }, [timezone]);
   const customersToday = useMemo(() => {
-    const fmtDate = (d: Date) => {
-      try {
-        return new Intl.DateTimeFormat('en-CA', { ...(timezone ? { timeZone: timezone } : {}) }).format(d);
-      } catch {
-        return d.toISOString().slice(0, 10);
-      }
-    };
     const todayISO = fmtDate(new Date());
     const named = new Set<string>();
     let walkIns = 0;
@@ -690,7 +694,7 @@ export function ShopHome({
       else walkIns += 1;
     }
     return named.size + walkIns;
-  }, [todayOrderRows, timezone]);
+  }, [todayOrderRows, fmtDate]);
 
   /*
    * Jira GRW-679 (UX-04) — compared with yesterday only once today has something in it, and only against a
@@ -706,13 +710,6 @@ export function ShopHome({
   const customersTotal = paidCustomers(customerStats);
 
   const queueStats = useMemo(() => {
-    const fmtDate = (d: Date) => {
-      try {
-        return new Intl.DateTimeFormat('en-CA', { ...(timezone ? { timeZone: timezone } : {}) }).format(d);
-      } catch {
-        return d.toISOString().slice(0, 10);
-      }
-    };
     const todayISO = fmtDate(new Date());
     const sourceRows = todayOrderRows.length >= recentOrders.length ? todayOrderRows : recentOrders;
     // QA 2026-11-06 — numbered over EVERY order of the day, like the POS and the receipt; only then is it narrowed to
@@ -806,7 +803,7 @@ export function ShopHome({
       completedToday: Math.max(0, totalToday - boundedInQueue),
       tokens,
     };
-  }, [todayOrderRows, recentOrders, data, branch, branchContext.choice, branchContext.one, timezone, queueTick, s.noNameCustomer]);
+  }, [todayOrderRows, recentOrders, data, branch, branchContext.choice, branchContext.one, fmtDate, queueTick, s.noNameCustomer]);
 
   const quickLinks =
     tiles.length > 0 ? (
@@ -2016,9 +2013,8 @@ export function ShopHome({
                         </a>
                       }
                     >
-                      {customersToday === 0 && !customerStats ? (
-                        <p className="shp-plain">{s.noCustomersToday}</p>
-                      ) : (
+                      {/* Review 2026-11-13 — a zero is a figure, not an empty state: nothing is said while the reads are in flight. */}
+                      {(
                         <div className="shp-cust">
                           <a className="shp-cust-figure" href="/customers">
                             <strong>{customersToday}</strong>

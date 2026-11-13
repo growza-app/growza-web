@@ -456,13 +456,10 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       noOrdersToday: S('No orders today yet.', 'आज अभी कोई ऑर्डर नहीं।'),
       /** Jira GRW-614 — the work waiting, which opens the Orders list already filtered to it. */
       toSend: (n: number) => S(`${n} to send`, `${n} भेजने हैं`),
-      runningOut: S('Running out', 'ख़त्म होने वाला'),
       notCounted: S("You haven't counted your stock yet.", 'आपने अभी स्टॉक की गिनती नहीं की है।'),
       countStock: S('Count your stock', 'स्टॉक गिनें'),
-      nothingLow: S('Nothing is running low.', 'कुछ भी कम नहीं है।'),
       left: (n: number) => (n <= 0 ? S('None left', 'ख़त्म') : S(`${n} left`, `${n} बचे`)),
       sizeWord: (size: string) => S(`size ${size}`, `साइज़ ${size}`),
-      viewAll: (n: number) => S(`View all (${n})`, `सभी देखें (${n})`),
       todaysTakings: S("Today's sales", 'आज की बिक्री'),
       yesterdaysTakings: S("Yesterday's sales", 'कल की बिक्री'),
       ordersTodayLabel: S('Orders today', 'आज के ऑर्डर'),
@@ -472,7 +469,6 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       lowStockLabel: S('Low stock sizes', 'कम स्टॉक वाले साइज़'),
       sizesLowSub: (n: number) => (n === 0 ? S('All sizes well stocked', 'सभी साइज़ पर्याप्त हैं') : S(`${n} sizes running low`, `${n} साइज़ कम हो रहे हैं`)),
       whatSellsLink: S('Top sellers', 'सबसे ज़्यादा बिकने वाले'),
-      whatToOrderLink: S('Reorder list', 'मँगाने की सूची'),
       channelsLink: S('Sales by channel', 'चैनल के हिसाब से बिक्री'),
       stockReportLink: S('Stock report', 'स्टॉक रिपोर्ट'),
       range7d: S('Last 7 days', 'पिछले 7 दिन'),
@@ -531,10 +527,9 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       soldCountPill: (n: number) => S(`${n} sold`, `${n} बिके`),
       recentOrdersTitle: S('Recent orders', 'हाल के ऑर्डर'),
       /** Owner, 2026-11-13 — the phone's Customers card: who came in today, and the month's new faces. */
-      customersTitle: S('Customers', 'ग्राहक'),
+      customersTitle: S(clientsWord, 'ग्राहक'),
       customersTodayLabel: S('Came in today', 'आज आए'),
       newThisMonthLabel: S('New this month', 'इस महीने नए'),
-      noCustomersToday: S('No customers yet today.', 'आज अभी कोई ग्राहक नहीं आया।'),
       /** Owner, 2026-11-13 — the phone's Needs attention rows, one door each. */
       reorderListLabel: S('Reorder list', 'मँगाने की सूची'),
       colWhen: S('When', 'कब'),
