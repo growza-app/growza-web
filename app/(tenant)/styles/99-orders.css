@@ -580,6 +580,9 @@ a.ord-card:focus-visible,
 .ord-d-paper {
   display: flex;
   flex-wrap: wrap;
+  /* QA 13 Nov 2026, bug 9 — once a receipt exists its block holds two stacked buttons, and the default stretch made
+     "Return items" beside it 96px tall. Each control keeps its own height, top-aligned. */
+  align-items: flex-start;
   gap: var(--sp-2);
   margin-top: var(--sp-3);
 }
