@@ -2761,6 +2761,16 @@
   height: 1rem;
 }
 
+/* QA 13 Nov 2026, bug 3 — every control in the phone's scroller measured 36px: the status chips, Categories, the sort
+   and Bulk edit. A phone gets the 44px tap target the rest of the app uses; the laptop's tools keep their size. */
+@media (max-width: 860px) {
+  .prd-filter-row .prd-chip,
+  .prd-filter-row .sls-dd-btn,
+  .prd-filter-row .prd-sort select {
+    min-height: 2.75rem;
+  }
+}
+
 .prd-sheet-share {
   min-height: 2.25rem;
 }
