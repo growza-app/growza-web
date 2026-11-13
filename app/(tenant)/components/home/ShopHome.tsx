@@ -1801,10 +1801,20 @@ export function ShopHome({
           </>
         )}
 
+        {/*
+          Owner, 2026-11-13 — Quick links straight under the money on a phone: the figure, then the doors, then
+          what needs the owner. Outside the branch below, so they stay when the read fails. `.hm-mobile`, so a
+          laptop never draws them.
+        */}
+        {tiles.length > 0 ? (
+          <Card className="hm-area-links hm-mobile shp-links" title={t.quickLinks}>
+            <QuickTiles items={tiles} />
+          </Card>
+        ) : null}
 
         {failed || !data ? null : (
             <div className="shp-mobile-stack">
-              {/* Running out first on a phone: after the money, what needs the owner comes before what already happened. */}
+              {/* Running out first in the stack: after the money and the doors, what needs the owner comes before what already happened. */}
               {!areas.stock ? null : (
               <Card title={s.runningOut} action={data.running.total > data.running.items.length && can('/stock') ? <a className="shp-link" href={`/stock${stockBranch}`}>{s.viewAll(data.running.total)}</a> : undefined}>
                 {!data.running.counted ? (
@@ -2032,15 +2042,6 @@ export function ShopHome({
 
             </div>
         )}
-        {/*
-          Quick links, last on a phone: the money, then what needs the owner, then what happened, then the doors.
-          Outside the branch below, so they stay when the read fails. `.hm-mobile`, so a laptop never draws them.
-        */}
-        {tiles.length > 0 ? (
-          <Card className="hm-area-links hm-mobile shp-links" title={t.quickLinks}>
-            <QuickTiles items={tiles} />
-          </Card>
-        ) : null}
       </div>
       {summaryOpen ? (
         <DaySummarySheet
