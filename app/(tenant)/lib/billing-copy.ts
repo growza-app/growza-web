@@ -27,10 +27,12 @@ export function billingCopy(lang: Lang) {
      * day they may never reach, for a month they cannot use.
      */
     firstBill: S('Your first bill', 'आपका पहला बिल'),
-    billingStartsAtGoLive: S(
-      'Nothing is charged while you are setting up. Your first bill comes when your salon goes live.',
-      'जब तक आप सेटअप कर रहे हैं, कोई शुल्क नहीं लगता। आपका पहला बिल तब आएगा जब आपका सैलून लाइव होगा।',
-    ),
+    // QA 13 Nov 2026, bug 7 — "your salon" at a spa, a clinic and a garage: the business's own word, lower case, in English.
+    billingStartsAtGoLive: (business: string) =>
+      S(
+        `Nothing is charged while you are setting up. Your first bill comes when your ${business} goes live.`,
+        'जब तक आप सेटअप कर रहे हैं, कोई शुल्क नहीं लगता। आपका पहला बिल तब आएगा जब आपका बिज़नेस लाइव होगा।',
+      ),
     on: (d: string) => S(`on ${d}`, `${d} को`),
     amount: S('Amount', 'राशि'),
     paidBy: S('How it is paid', 'भुगतान कैसे होता है'),

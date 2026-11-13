@@ -203,7 +203,8 @@
     "bookings": "bookings",
     "packages": "packages",
     "product": "product",
-    "products": "products"
+    "products": "products",
+    "business": "business"
   },
   "customers": {
     "subtitle": "See your {noun}, what they bought and how much they spent.",
@@ -1086,7 +1087,7 @@
       "photoHint": "Optional. Clients see it when booking on WhatsApp.",
       "remove": "Remove",
       "name": "Name",
-      "namePlaceholder": "e.g. Haircut",
+      "namePlaceholder": "Name of the {service}",
       "type": "Category",
       "noType": "None",
       "duration": "Duration",
@@ -1622,9 +1623,9 @@
     "branch": "Branch",
     "mainSuffix": "{name} (Main)",
     "branchFull": "{name} · full",
-    "sameHours": "Same hours as the salon",
-    "sameHoursSub": "They follow the salon automatically, including when you change it later.",
-    "warnNoDays": "Nobody can book {name} with no working days. Turn a day on, or switch the salon hours back on above.",
+    "sameHours": "Same hours as the {business}",
+    "sameHoursSub": "They follow the {business} automatically, including when you change it later.",
+    "warnNoDays": "Nobody can book {name} with no working days. Turn a day on, or switch the {business} hours back on above.",
     "warnNoSalonHours": "This business has no opening hours set yet, so nobody can book {name} until it does. Saving is fine — they will pick the hours up automatically. Set them in <b>Settings → Working hours</b>, or turn the switch off above and give {name} their own days.",
     "them": "them",
     "back": "Back",
