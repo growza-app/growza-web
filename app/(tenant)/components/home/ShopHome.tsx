@@ -17,6 +17,7 @@ import type {
 } from '../../lib/api-types';
 import { homeCopy } from '../../lib/home-copy';
 import { DaySummarySheet } from './DaySummarySheet';
+import { CashDrawerLine } from './CashDrawer';
 import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import { ordersHref } from '../../lib/orders-filter';
@@ -550,6 +551,7 @@ export function ShopHome({
         previousMinor: data.yesterday.takingsMinor ?? 0,
         byPaymentMode: data.today.byPaymentMode ?? [],
         fromAppsMinor: data.today.fromAppsMinor,
+        cashDrawer: data.today.cashDrawer,
       };
     }
     if (!phoneChannel) return { kind: phoneBusy ? ('busy' as const) : ('failed' as const) };
@@ -566,6 +568,8 @@ export function ShopHome({
       // An average over no orders is not 0, it is nothing; the card draws a dash.
       avgMinor: orders > 0 ? Math.round(takingsMinor / orders) : null,
       byPaymentMode: phoneChannel.byPaymentMode ?? (phonePeriod === 'today' ? data?.today.byPaymentMode ?? [] : []),
+      // Today's till only: the notes in it are a fact about this day, not about a week or a month.
+      cashDrawer: phonePeriod === 'today' ? data?.today.cashDrawer : undefined,
       // And the apps' share of today, for the same reason: the channel report already carries the other periods.
       fromAppsMinor: phonePeriod === 'today' ? data?.today.fromAppsMinor : undefined,
       busy: phoneBusy,
@@ -740,6 +744,13 @@ export function ShopHome({
     };
   }, [todayOrderRows, recentOrders, data, branch, branchContext.choice, branchContext.one, timezone, queueTick, s.noNameCustomer]);
 
+  const quickLinks =
+    tiles.length > 0 ? (
+      <Card className="hm-area-links hm-mobile shp-links" title={t.quickLinks}>
+        <QuickTiles items={tiles} />
+      </Card>
+    ) : null;
+
   return (
     <>
       <HomeHeader
@@ -874,6 +885,18 @@ export function ShopHome({
                               <b>{rupees(data.today.fromAppsMinor)}</b>
                             </span>
                           ) : null}
+                        </div>
+                      ) : null}
+                      {/*
+                        Owner, 2026-11-06 — the notes in the till, which the split above cannot say (CashDrawer.tsx).
+                        Owner, 2026-11-13 — a shop with a counted shelf does not get the row; the kitchen keeps it.
+                      */}
+                      {isKitchen && data.today.cashDrawer && (data.today.cashDrawer.takenMinor > 0 || data.today.cashDrawer.refundedMinor > 0) ? (
+                        <div className="rst-kpi-modes rst-kpi-drawer">
+                          <span className="rst-kpi-mode">
+                            <span>{t.cashInDrawer}</span>
+                            <b>{rupees(data.today.cashDrawer.inDrawerMinor)}</b>
+                          </span>
                         </div>
                       ) : null}
                     </div>
@@ -1776,6 +1799,7 @@ export function ShopHome({
                             appsMinor={phoneFigures.fromAppsMinor}
                           />
                         ) : null}
+                        {isKitchen && (phoneFigures.kind === 'today' || phoneFigures.kind === 'range') ? <CashDrawerLine t={t} cashDrawer={phoneFigures.cashDrawer} /> : null}
                         {phoneSpark.length > 0 ? (
                           // Decoration would be a lie here, so it is drawn only from the window's own daily totals.
                           <div className="shp-spark" aria-hidden="true">
@@ -1802,15 +1826,11 @@ export function ShopHome({
         )}
 
         {/*
-          Owner, 2026-11-13 — Quick links straight under the money on a phone: the figure, then the doors, then
-          what needs the owner. Outside the branch below, so they stay when the read fails. `.hm-mobile`, so a
-          laptop never draws them.
+          Quick links on a phone. Owner, 2026-11-13 — a shop with a counted shelf has them straight under the money:
+          the figure, then the doors, then what needs the owner. The kitchen keeps them last (below). Outside the
+          branch a failed read replaces, so they stay when it does. `.hm-mobile`, so a laptop never draws them.
         */}
-        {tiles.length > 0 ? (
-          <Card className="hm-area-links hm-mobile shp-links" title={t.quickLinks}>
-            <QuickTiles items={tiles} />
-          </Card>
-        ) : null}
+        {areas.stock ? quickLinks : null}
 
         {failed || !data ? null : (
             <div className="shp-mobile-stack">
@@ -2042,6 +2062,7 @@ export function ShopHome({
 
             </div>
         )}
+        {areas.stock ? null : quickLinks}
       </div>
       {summaryOpen ? (
         <DaySummarySheet

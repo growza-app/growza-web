@@ -1724,3 +1724,11 @@ button.shp-hero-pill {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* Owner, 2026-11-06 — the cash line sits under the payment split, one step apart from it (CashDrawer.tsx). */
+.hm-line-drawer {
+  margin-top: 4px;
+}
+.rst-kpi-drawer {
+  margin-top: 6px;
+}

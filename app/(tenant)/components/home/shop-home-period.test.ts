@@ -142,39 +142,44 @@ describe('nothing on the hero is invented, and nothing stale is left under a new
   });
 });
 
-describe('the phone running order: the money, Quick links, what needs the owner, then the lists', () => {
+describe('the phone running order: the money, then Quick links for a shop (last for a kitchen), what needs the owner, the lists', () => {
   it('the money is its own block, hidden from 861px exactly as the stack is', () => {
     expect(shop).toContain('<div className="shp-phone-money">');
     expect(deskBlock).toMatch(/\.shp-mobile-stack,\s*\n\s*\.shp-phone-money \{\s*\n\s*display: none;/);
   });
 
-  it('Quick links sit straight under the money, then the lists, written in that order, not moved there by `order`', () => {
+  it('a shop with a counted shelf has Quick links straight under the money; a kitchen keeps them last', () => {
     /*
-     * Owner, 13 Nov 2026 — "just below the KPI card there should be quick links": the money, then the doors, then
-     * what needs the owner (Running out), then what happened. `OwnerHome` states the rule: on a phone the cards are
-     * laid out in the order they are READ. `order` would have left a keyboard tabbing out of step with the screen
-     * (WCAG 2.4.3).
+     * Owner, 13 Nov 2026 — "just below the KPI card there should be quick links", retail only: the money, then the
+     * doors, then what needs the owner (Running out), then what happened. The kitchen is unchanged: the doors last.
+     * `OwnerHome` states the rule: on a phone the cards are laid out in the order they are READ. `order` would have
+     * left a keyboard tabbing out of step with the screen (WCAG 2.4.3).
      */
     const money = shop.indexOf('<div className="shp-phone-money">');
-    const links = shop.indexOf('hm-area-links hm-mobile shp-links');
+    const shopLinks = shop.indexOf('{areas.stock ? quickLinks : null}');
     const stack = shop.indexOf('<div className="shp-mobile-stack">');
     const running = shop.indexOf('<Card title={s.runningOut}');
+    const recent = shop.indexOf('<Card\n                  title={s.recentOrdersTitle}');
+    const kitchenLinks = shop.indexOf('{areas.stock ? null : quickLinks}');
     expect(money).toBeGreaterThan(-1);
-    expect(links).toBeGreaterThan(money);
-    expect(stack).toBeGreaterThan(links);
+    expect(shopLinks).toBeGreaterThan(money);
+    expect(stack).toBeGreaterThan(shopLinks);
     expect(running).toBeGreaterThan(stack);
-    expect(shop.indexOf('<Card\n                  title={s.recentOrdersTitle}')).toBeGreaterThan(running);
+    expect(recent).toBeGreaterThan(running);
+    expect(kitchenLinks).toBeGreaterThan(recent);
+    expect(shop.match(/hm-area-links hm-mobile shp-links/g)).toHaveLength(1);
     expect(css).not.toMatch(/order: [123];/);
   });
 
-  it('and Quick links stay outside the branch a failed read replaces, so the doors stay', () => {
+  it('and both spots are outside the branch a failed read replaces, so the doors stay', () => {
     expect(shop).toMatch(/\{failed \|\| !data \? \(\s*\n\s*<Card>/);
     expect(shop).toMatch(/\{failed \|\| !data \? null : \(\s*\n\s*<div className="shp-mobile-stack">/);
-    const links = shop.indexOf('hm-area-links hm-mobile shp-links');
+    const shopLinks = shop.indexOf('{areas.stock ? quickLinks : null}');
     const stackBranch = shop.indexOf('{failed || !data ? null : (');
-    // The links close before the branch opens: they are not inside it.
-    expect(stackBranch).toBeGreaterThan(links);
-    expect(shop.slice(links, stackBranch)).toMatch(/<\/Card>\n {8}\) : null\}\n/);
+    const kitchenLinks = shop.indexOf('{areas.stock ? null : quickLinks}');
+    expect(stackBranch).toBeGreaterThan(shopLinks);
+    // After the branch closes: the stack's own closing `)}` comes before the kitchen's links.
+    expect(shop.slice(stackBranch, kitchenLinks)).toMatch(/<\/div>\n {8}\)\}\n/);
   });
 });
 

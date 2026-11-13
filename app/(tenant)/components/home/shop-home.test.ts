@@ -86,8 +86,10 @@ describe('error handling — a failed read is one plain line with a retry, and t
     // Still OUTSIDE that branch — that is the point of this test — but now with the salon's chrome
     // around it (`hm-area-links hm-mobile`), which is what keeps its labels off the tab bar.
     expect(shop).toMatch(/tiles\.length > 0 \? \(\s*<Card className="hm-area-links hm-mobile shp-links" title=\{t\.quickLinks\}>\s*<QuickTiles items=\{tiles\} \/>/);
+    // 2026-11-13 — the card is built once (`quickLinks`) and placed in one of two spots, both outside the branch.
     const errorBranch = shop.indexOf('failed || !data ? (');
-    expect(shop.indexOf('<QuickTiles items={tiles} />')).toBeGreaterThan(errorBranch);
+    expect(shop.indexOf('{areas.stock ? quickLinks : null}')).toBeGreaterThan(errorBranch);
+    expect(shop.indexOf('{areas.stock ? null : quickLinks}')).toBeGreaterThan(errorBranch);
   });
 
   it('follows the branch the owner picked, and returns to every branch when they let go', () => {

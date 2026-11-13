@@ -11,10 +11,20 @@ import { rupees } from './parts';
  *
  * Absent from an API that predates it, and on a day with no cash moving either way: a line saying "₹0" under every
  * quiet evening is a line nobody reads on the evening it matters.
- *
- * Owner, 2026-11-13 — taken off Home (laptop takings card and phone hero); it stays on the day sheet only.
  */
 const moving = (d: CashDrawerFigure | undefined): d is CashDrawerFigure => d !== undefined && (d.takenMinor > 0 || d.refundedMinor > 0);
+
+/** One line under the money on Home. */
+export function CashDrawerLine({ t, cashDrawer }: { t: HomeCopy; cashDrawer: CashDrawerFigure | undefined }) {
+  if (!moving(cashDrawer)) return null;
+  return (
+    <p className="hm-line hm-line-drawer">
+      <span className="hm-line-item">
+        {t.cashInDrawer} <b>{rupees(cashDrawer.inDrawerMinor)}</b>
+      </span>
+    </p>
+  );
+}
 
 /** The day sheet's card: what came in, what went out, what is left. */
 export function CashDrawerCard({ t, cashDrawer }: { t: HomeCopy; cashDrawer: CashDrawerFigure | undefined }) {
