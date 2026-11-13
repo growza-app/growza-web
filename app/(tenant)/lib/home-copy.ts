@@ -566,7 +566,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
        * card below counts every order taken. Both are right, and without this line they read as two
        * answers to one question — "2 orders" above "3 Today". Said out loud, they add up.
        */
-      cameBack: (n: number) => (n === 1 ? S('1 came back', '1 वापस आया') : S(`${n} came back`, `${n} वापस आए`)),
+      // QA 13 Nov 2026, bug 12 — one word for one thing: the card below says "Returns" and the screen it opens is Returns.
+      cameBack: (n: number) => (n === 1 ? S('1 return', '1 वापसी') : S(`${n} returns`, `${n} वापसी`)),
       /** The hero's top-seller pill once the window has one; it falls back to `whatSellsLink` before then. */
       topSellerPill: (name: string) => S(`Top: ${name}`, `सबसे ज़्यादा: ${name}`),
       noSalesYet: S('No sales in this period yet.', 'इस अवधि में अभी कोई बिक्री नहीं।'),
