@@ -245,37 +245,6 @@
 }
 
 /* ---------- Running Out Watchlist ---------- */
-.shp-running {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-.shp-running li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--sp-3);
-  min-height: 2.75rem;
-  padding: var(--sp-1) 0;
-  border-top: 1px solid var(--hm-line-soft);
-}
-.shp-running li:first-child {
-  border-top: 0;
-}
-.shp-running-name {
-  min-width: 0;
-  font-weight: 600;
-  font-size: 0.875rem;
-  overflow-wrap: anywhere;
-}
-.shp-running-size {
-  color: var(--hm-muted);
-  font-weight: 500;
-  /* "· size 10" and "· Sector 17" wrap as a whole, never as "· Sector" over "17". */
-  white-space: nowrap;
-}
 .shp-running-left {
   flex: none;
   font-size: 0.75rem;
@@ -291,12 +260,70 @@
   color: var(--danger);
 }
 
-.shp-running-foot {
-  margin-top: var(--sp-3);
-  padding-top: var(--sp-2);
-  border-top: 1px solid var(--border);
+
+/* Owner, 2026-11-13 — the phone's Needs attention rows: a label, a count, a door. */
+.shp-attn {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+}
+.shp-attn li + li {
+  border-top: 1px solid var(--hm-line-soft);
+}
+.shp-attn-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 2.75rem;
+  padding: var(--sp-1) 0;
+  color: var(--text);
+  text-decoration: none;
+}
+.shp-attn-label {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+.shp-attn-chev {
+  display: inline-flex;
+  color: var(--hm-muted);
+}
+.shp-attn-chev svg {
+  width: 1rem;
+  height: 1rem;
+}
+.shp-card-count {
+  color: var(--hm-muted);
+  font-weight: 500;
+}
+
+/* The phone's Customers card: two figures side by side, each a door. */
+.shp-cust {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+.shp-cust-figure {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 2.75rem;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--text);
+}
+.shp-cust-figure strong {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.shp-cust-figure span {
+  font-size: 0.8125rem;
+  color: var(--hm-muted);
 }
 
 .shp-kpi-card:last-child:nth-child(odd) {

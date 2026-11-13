@@ -88,7 +88,8 @@ describe('each Home pays only for its own reads', () => {
   it('the top seller is read for the same window as the money above it', () => {
     const at = shop.indexOf('api\n        .bestSellers({ ...w,');
     expect(at).toBeGreaterThan(0);
-    expect(shop.slice(at, at + 200)).toContain('pageSize: 1');
+    // Owner, 2026-11-13 — three rows for the shop's Top sellers card (it was one, read and never shown).
+    expect(shop.slice(at, at + 200)).toContain('pageSize: 3');
   });
 
   it('"recent" is the last six orders, not the chosen window', () => {
@@ -142,39 +143,51 @@ describe('nothing on the hero is invented, and nothing stale is left under a new
   });
 });
 
-describe('the phone running order: the money, what needs the owner, the lists, then Quick links', () => {
+describe('the phone running order: the money, then Quick links for a shop (last for a kitchen), what needs the owner, the lists', () => {
   it('the money is its own block, hidden from 861px exactly as the stack is', () => {
     expect(shop).toContain('<div className="shp-phone-money">');
     expect(deskBlock).toMatch(/\.shp-mobile-stack,\s*\n\s*\.shp-phone-money \{\s*\n\s*display: none;/);
   });
 
-  it('the lists come next and Quick links last, written in that order, not moved there by `order`', () => {
+  it('a shop with a counted shelf has Quick links straight under the money; a kitchen keeps them last', () => {
     /*
-     * 13 Nov 2026 — the money, then what needs the owner (Running out), then what happened, then the doors.
+     * Owner, 13 Nov 2026 — "just below the KPI card there should be quick links", retail only: the money, then the
+     * doors, then what needs the owner (Running out), then what happened. The kitchen is unchanged: the doors last.
      * `OwnerHome` states the rule: on a phone the cards are laid out in the order they are READ. `order` would have
      * left a keyboard tabbing out of step with the screen (WCAG 2.4.3).
      */
     const money = shop.indexOf('<div className="shp-phone-money">');
+    const shopLinks = shop.indexOf('{areas.stock ? quickLinks : null}');
     const stack = shop.indexOf('<div className="shp-mobile-stack">');
-    const running = shop.indexOf('<Card title={s.runningOut}');
-    const recent = shop.indexOf('title={s.recentOrdersTitle}\n');
-    const links = shop.indexOf('hm-area-links hm-mobile shp-links');
+    // Owner, 2026-11-13 — a shop's stack is a summary: Needs attention, Top sellers, Customers. Recent orders is the
+    // kitchen's (the Orders tab lists them one tap away).
+    const attention = shop.indexOf('{s.needsAttentionTitle}\n                        {phoneAttention.length > 0');
+    const sellers = shop.indexOf('<ul className="shp-phone-sellers">');
+    const customers = shop.indexOf('title={s.customersTitle}');
+    const recent = shop.indexOf('<Card\n                  title={s.recentOrdersTitle}');
+    const kitchenLinks = shop.indexOf('{areas.stock ? null : quickLinks}');
     expect(money).toBeGreaterThan(-1);
-    expect(stack).toBeGreaterThan(money);
-    expect(running).toBeGreaterThan(stack);
-    expect(links).toBeGreaterThan(running);
-    expect(links).toBeGreaterThan(shop.indexOf('<Card\n                  title={s.recentOrdersTitle}'));
+    expect(shopLinks).toBeGreaterThan(money);
+    expect(stack).toBeGreaterThan(shopLinks);
+    expect(attention).toBeGreaterThan(stack);
+    expect(sellers).toBeGreaterThan(attention);
+    expect(customers).toBeGreaterThan(sellers);
+    expect(recent).toBeGreaterThan(customers);
+    expect(shop).toContain("{isKitchen && can('/orders') && data.anyOrders && recentOrders.length > 0 ? (");
+    expect(kitchenLinks).toBeGreaterThan(recent);
+    expect(shop.match(/hm-area-links hm-mobile shp-links/g)).toHaveLength(1);
     expect(css).not.toMatch(/order: [123];/);
   });
 
-  it('and Quick links stays outside the branch a failed read replaces, so the last door stays', () => {
+  it('and both spots are outside the branch a failed read replaces, so the doors stay', () => {
     expect(shop).toMatch(/\{failed \|\| !data \? \(\s*\n\s*<Card>/);
     expect(shop).toMatch(/\{failed \|\| !data \? null : \(\s*\n\s*<div className="shp-mobile-stack">/);
+    const shopLinks = shop.indexOf('{areas.stock ? quickLinks : null}');
     const stackBranch = shop.indexOf('{failed || !data ? null : (');
-    const links = shop.indexOf('hm-area-links hm-mobile shp-links');
-    // After the branch closes: the stack's own closing `)}` comes before the links.
-    expect(links).toBeGreaterThan(stackBranch);
-    expect(shop.slice(stackBranch, links)).toMatch(/<\/div>\n {8}\)\}\n/);
+    const kitchenLinks = shop.indexOf('{areas.stock ? null : quickLinks}');
+    expect(stackBranch).toBeGreaterThan(shopLinks);
+    // After the branch closes: the stack's own closing `)}` comes before the kitchen's links.
+    expect(shop.slice(stackBranch, kitchenLinks)).toMatch(/<\/div>\n {8}\)\}\n/);
   });
 });
 

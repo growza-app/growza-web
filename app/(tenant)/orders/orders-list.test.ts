@@ -138,7 +138,11 @@ describe('FR-06 — Home’s count of what is waiting opens the list already fil
   });
 
   it('draws nothing when nothing is waiting: a "0 to send" is noise on the screen opened most', () => {
-    expect(home).toContain('{data.toSend > 0 ? (');
+    // Owner, 2026-11-13 — on a shop's phone the count is a Needs attention row (same rule: a zero row is not drawn);
+    // the kitchen's Orders card keeps the link.
+    expect(home).toContain('{isKitchen && data.toSend > 0 ? (');
+    expect(home).toContain("{ key: 'send', tone: '', n: ships ? (data?.toSend ?? 0) : 0, label: s.waitingToSendLabel");
+    expect(home).toContain('].filter((c) => c.n > 0);');
   });
 
   it('says it in both languages', () => {
