@@ -576,7 +576,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       whatWouldYouLikeToDo: S('What would you like to do?', 'आप क्या करना चाहेंगे?'),
       viewOrdersAction: S('View orders', 'ऑर्डर देखें'),
       manageMenuAction: S('Manage menu', 'मेन्यू संभालें'),
-      customersCardTitle: S('Customers', 'ग्राहक'),
+      // QA 13 Nov 2026, bug 14 — the business's own word: a restaurant's nav says Guests, and so does this tile.
+      customersCardTitle: S(clientsWord, 'ग्राहक'),
       needsAttentionTitle: S('Needs attention', 'ध्यान दें'),
       attentionItemsBadge: (n: number) => (n === 1 ? S('1 item', '1 बात') : S(`${n} items`, `${n} बातें`)),
       menuItemsLowSub: (n: number) =>

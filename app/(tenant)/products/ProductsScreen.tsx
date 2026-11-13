@@ -9,6 +9,8 @@ import { guardScreen } from '../lib/screen-guard';
 import { homeCopy } from '../lib/home-copy';
 import { serverLang } from '../lib/lang';
 import { ProductsList } from './ProductsList';
+import { redirect } from 'next/navigation';
+import { areasOf } from '../lib/areas';
 
 /**
  * Owner, 2026-10-14 — the shelf: what the till sells that nobody performs.
@@ -45,6 +47,16 @@ export async function ProductsScreen({ searchParams, guard }: { searchParams: Pr
         </div>
       </>
     );
+  }
+  /*
+   * QA 13 Nov 2026, bug 14 — a business that sells from `/stock` (a shop, a kitchen) has ONE shelf screen, named in its own words (Stock,
+   * Menu). `/products` is not in its nav, and typed in it drew the same shelf headed "Products". It goes to that one screen instead.
+   */
+  if (guard === '/products' && areasOf(me).shop) {
+    const q = new URLSearchParams();
+    if (params.branch) q.set('branch', params.branch);
+    if (params.filter) q.set('filter', params.filter);
+    redirect(q.size ? `/stock?${q.toString()}` : '/stock');
   }
   const branch = resolveBranchState({
     branches: me.branches ?? [],
