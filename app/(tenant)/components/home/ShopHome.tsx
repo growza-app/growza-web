@@ -680,9 +680,12 @@ export function ShopHome({
     {
       key: 'back',
       tone: 'is-out',
-      // Review 2026-11-13 — the other three are live counts; returns are the hero window's, so only today's qualify.
-      n: phonePeriod === 'today' ? (phoneChannel?.totals.returnedOrders ?? 0) : 0,
-      label: s.cameBackLabel,
+      /*
+       * QA 13 Nov 2026, bug 2 — a live count like the other three, so the card's total is the same on every period
+       * (it read 51 on Today and 50 on the rest). An API older than this falls back to the Today-only figure.
+       */
+      n: data?.cameBackToday ?? (phonePeriod === 'today' ? (phoneChannel?.totals.returnedOrders ?? 0) : 0),
+      label: s.returnsTodayLabel,
       href: canReports && can('/orders/returns') ? '/orders/returns' : can('/orders') ? ordersHref({ status: 'returned' }) : null,
     },
   ].filter((c) => c.n > 0);
