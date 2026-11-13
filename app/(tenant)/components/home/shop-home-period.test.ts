@@ -110,7 +110,12 @@ describe('nothing on the hero is invented, and nothing stale is left under a new
   });
 
   it('a window still loading or failed draws its own line, not the previous window’s money', () => {
-    expect(shop).toContain("if (!phoneChannel) return { kind: phoneBusy ? ('busy' as const) : ('failed' as const) };");
+    // Owner's review 2026-11-13 — the starting state (nothing read, nothing in flight) is the skeleton, not the error:
+    // every arrival on Home painted "Could not load this" for ~400ms before the effect fired. Only a refused read fails.
+    expect(shop).toContain("if (!phoneChannel) return { kind: phoneFailed && !phoneBusy ? ('failed' as const) : ('busy' as const) };");
+    expect(shop).toContain('const [phoneFailed, setPhoneFailed] = useState(false);');
+    expect(shop).toMatch(/\.catch\(\(\) => \{\n\s*if \(mine !== phoneReqId\.current\) return;\n\s*setPhoneChannel\(null\);\n\s*setPhoneFailed\(true\);/);
+    expect(shop).toMatch(/setPhoneChannel\(res\);\n\s*setPhoneFailed\(false\);/);
     expect(shop).toMatch(/phoneFigures\.kind === 'busy' \? \([\s\S]{0,200}shp-hero-skeleton/);
   });
 
