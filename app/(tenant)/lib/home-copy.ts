@@ -520,6 +520,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       addCustomerAction: S(`Add ${nounInSentence(labels.customer ?? 'Customer')}`, 'ग्राहक जोड़ें'),
       ordersAttentionTitle: S('Orders needing attention', 'ध्यान देने वाले ऑर्डर'),
       cameBackLabel: S('Returns', 'वापसी'),
+      returnsTodayLabel: S('Returns today', 'आज की वापसी'),
       allOrdersDispatched: S('Every order has been packed and sent.', 'सभी ऑर्डर पैक करके भेजे जा चुके हैं।'),
       stockAttentionTitle: S('Stock needing attention', 'ध्यान देने वाला स्टॉक'),
       outOfStockChip: S('Out of stock', 'स्टॉक ख़त्म'),
