@@ -1156,3 +1156,25 @@ a.ord-card:focus-visible,
     flex: 1 1 0;
   }
 }
+
+/*
+ * Owner's review 2026-11-13 — on a phone the two chip groups (where from: 4 chips; what state: 6 chips) wrapped
+ * to three rows, ~130px, before the first order. Each group is one row that scrolls sideways now, the cut-off
+ * chip at the edge saying there is more; two rows of 44px. A laptop keeps the wrapping groups.
+ */
+@media (max-width: 860px) {
+  .ord-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+    scrollbar-width: none;
+    padding: 2px;
+    margin: -2px;
+  }
+  .ord-chips::-webkit-scrollbar {
+    display: none;
+  }
+  .ord-chip {
+    flex: none;
+  }
+}
