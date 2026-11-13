@@ -8,7 +8,7 @@ import { getFix, metresLabel, type GeoFix } from '../lib/geo-fix';
 import { pickNoun } from '../lib/nouns';
 import { intlLocale } from './[providerId]/month';
 import { useBranch } from '../components/BranchProvider';
-import { IconNote, IconPlus } from '../components/icons';
+import { IconNote, IconPlus, IconSearch } from '../components/icons';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { markAllInTime } from './mark-all';
 
@@ -479,7 +479,10 @@ export function AttendanceRegister({
 
       <div className="att-toolbar">
         <div className="att-search">
-          <span aria-hidden="true">⌕</span>
+          {/* One icon language (CLAUDE.md): the app's search icon, not a "⌕" glyph from whatever font loaded. */}
+          <span aria-hidden="true">
+            <IconSearch />
+          </span>
           <input
             type="search"
             value={search}

@@ -142,32 +142,39 @@ describe('nothing on the hero is invented, and nothing stale is left under a new
   });
 });
 
-describe('the phone running order: the money, Quick links, then the lists', () => {
+describe('the phone running order: the money, what needs the owner, the lists, then Quick links', () => {
   it('the money is its own block, hidden from 861px exactly as the stack is', () => {
     expect(shop).toContain('<div className="shp-phone-money">');
     expect(deskBlock).toMatch(/\.shp-mobile-stack,\s*\n\s*\.shp-phone-money \{\s*\n\s*display: none;/);
   });
 
-  it('Quick links is written between them, not moved there by `order`', () => {
+  it('the lists come next and Quick links last, written in that order, not moved there by `order`', () => {
     /*
-     * `OwnerHome` already states the rule: on a phone the cards are laid out in the order
-     * they are READ. `order` would have left a keyboard tabbing from the hero down through
-     * three cards and then BACK UP to the shortcuts sitting second on screen (WCAG 2.4.3).
+     * 13 Nov 2026 — the money, then what needs the owner (Running out), then what happened, then the doors.
+     * `OwnerHome` states the rule: on a phone the cards are laid out in the order they are READ. `order` would have
+     * left a keyboard tabbing out of step with the screen (WCAG 2.4.3).
      */
     const money = shop.indexOf('<div className="shp-phone-money">');
-    const links = shop.indexOf('hm-area-links hm-mobile shp-links');
     const stack = shop.indexOf('<div className="shp-mobile-stack">');
+    const running = shop.indexOf('<Card title={s.runningOut}');
+    const recent = shop.indexOf('title={s.recentOrdersTitle}\n');
+    const links = shop.indexOf('hm-area-links hm-mobile shp-links');
     expect(money).toBeGreaterThan(-1);
-    expect(links).toBeGreaterThan(money);
-    expect(stack).toBeGreaterThan(links);
+    expect(stack).toBeGreaterThan(money);
+    expect(running).toBeGreaterThan(stack);
+    expect(links).toBeGreaterThan(running);
+    expect(links).toBeGreaterThan(shop.indexOf('<Card\n                  title={s.recentOrdersTitle}'));
     expect(css).not.toMatch(/order: [123];/);
   });
 
-  it('and still outside the branch a failed read replaces, so the last door stays', () => {
-    // The error card takes the money AND the lists; Quick links is in neither conditional.
+  it('and Quick links stays outside the branch a failed read replaces, so the last door stays', () => {
     expect(shop).toMatch(/\{failed \|\| !data \? \(\s*\n\s*<Card>/);
     expect(shop).toMatch(/\{failed \|\| !data \? null : \(\s*\n\s*<div className="shp-mobile-stack">/);
-    expect(shop.indexOf('hm-area-links hm-mobile shp-links')).toBeLessThan(shop.indexOf('{failed || !data ? null : ('));
+    const stackBranch = shop.indexOf('{failed || !data ? null : (');
+    const links = shop.indexOf('hm-area-links hm-mobile shp-links');
+    // After the branch closes: the stack's own closing `)}` comes before the links.
+    expect(links).toBeGreaterThan(stackBranch);
+    expect(shop.slice(stackBranch, links)).toMatch(/<\/div>\n {8}\)\}\n/);
   });
 });
 

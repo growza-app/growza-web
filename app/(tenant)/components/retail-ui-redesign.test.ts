@@ -15,7 +15,9 @@ describe('Retail Enterprise UI Redesign across all 6 surfaces', () => {
     expect(shopHome).toContain('hm-desk-v3 hm-desktop shp-desk-v3');
     expect(shopHome).toContain('hm-v3-kpis');
     expect(shopHome).toContain('hm-v3-trend-card');
-    expect(shopHome).toContain('hm-v3-quick-card');
+    // 13 Nov 2026 — the laptop's Quick actions went: every tile was already in the sidebar. Needs attention took its place.
+    expect(shopHome).not.toContain('hm-v3-quick-card');
+    expect(shopHome).toContain('shp-needs-card');
     expect(shopHome).toContain('hm-v3-recent-table');
     /*
      * The phone's KPI strip is gone (2026-10-23). Every figure on it was already on a card below —

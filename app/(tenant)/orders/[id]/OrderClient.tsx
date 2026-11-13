@@ -19,6 +19,7 @@ import { AttachClientSheet } from './AttachClientSheet';
 import { OrderMarketplaceLine } from './OrderMarketplaceLine';
 import { useNouns } from '../../lib/use-nouns';
 import { isDeliveryApp } from '../../lib/order-channels';
+import { useBranch } from '../../components/BranchProvider';
 
 /**
  * Jira GRW-615 — an order's own screen.
@@ -58,6 +59,9 @@ export function OrderClient({
   // A kitchen keeps no count, so the API answers `restocked: false` for every return for want of a shelf: saying so
   // on the order would read as a write-off of a dish nobody wrote off.
   const counted = useAreas().stock;
+  // A business with several branches: which one a counter order was rung up at. Each counts its tokens from 1.
+  const branchContext = useBranch();
+  const severalBranches = branchContext.ready && branchContext.multi;
 
   const [order, setOrder] = useState<OrderDetail | null>(initial);
   const [failed, setFailed] = useState(initial === null);
@@ -253,6 +257,7 @@ export function OrderClient({
           <span className="ord-d-meta">
             {when(order.soldAt)} · {channelWord(order.channel)}
             {order.tokenNo ? ` · ${t('list.orderCode', { code })}` : ''}
+            {isCounter && severalBranches && order.branchName ? ` · ${order.branchName}` : ''}
             {order.externalRef ? ` · ${fromApp ? t('detail.appOrderRef', { ref: order.externalRef }) : order.externalRef}` : ''}
           </span>
         </section>
@@ -329,7 +334,7 @@ export function OrderClient({
                   <span className="ord-d-line-qty">{t('detail.times', { count: l.qty })}</span>
                   {l.paidMinor !== undefined ? <span className="ord-d-line-amount">{money(l.paidMinor)}</span> : null}
                   {canSwap && l.swappable ? (
-                    <button type="button" className="btn ord-d-line-swap" onClick={() => setSwapping(l.id)}>
+                    <button type="button" className="btn btn-ghost ord-d-line-swap" onClick={() => setSwapping(l.id)}>
                       {t('detail.swap.action')}
                     </button>
                   ) : null}

@@ -57,8 +57,8 @@ describe('each screen draws the business’s own channels', () => {
     expect(home).toContain('return channelsOf(areas).map((key) => {');
     expect(home).toContain('const ships = sellsOnMarketplaces(areas);');
     expect(home).toContain('{!ships ? s.ordersInPeriod : data.toSend > 0');
-    // The list of what waits to be sent is not even asked for.
-    expect(home).toMatch(/if \(ships\) \{\s*\n\s*api\s*\n\s*\.orders\(\{ status: 'new,packed'/);
+    // The list of what waits to be sent is not asked for at all now (13 Nov 2026): Needs attention draws the count only.
+    expect(home).not.toContain(".orders({ status: 'new,packed'");
   });
 
   it('Orders offers the business’s own channel chips, no parcel states where nothing ships, and the app’s order number', () => {

@@ -1364,7 +1364,17 @@ export interface ShopHome {
     counted: boolean;
     /** Everything at or under its line — the "View all (n)" beside the few listed. */
     total: number;
-    items: Array<{ productId: string; name: string; /** "30" or "30 / White"; null for a product with no sizes. */ size: string | null; left: number }>;
+    /** How many of `total` have none left. Absent from an API older than 13 Nov 2026. */
+    out?: number;
+    items: Array<{
+      productId: string;
+      name: string;
+      /** "30" or "30 / White"; null for a product with no sizes. */
+      size: string | null;
+      left: number;
+      /** Which branch's shelf — sent only on the "All branches" read of a shop with more than one branch. */
+      branch?: string;
+    }>;
   };
 }
 
@@ -1792,6 +1802,8 @@ export interface SellersWindow {
 export interface BestSellerRow {
   id: string;
   productId: string;
+  /** Which branch's shelf (Jira GRW-376: a product belongs to one). Absent from an older API. */
+  locationId?: string;
   name: string;
   sizeLabel: string | null;
   units: number;
@@ -1810,6 +1822,8 @@ export interface BestSellersPage {
 export interface DeadStockRow {
   id: string;
   productId: string;
+  /** Which branch's shelf (Jira GRW-376: a product belongs to one). Absent from an older API. */
+  locationId?: string;
   name: string;
   sizeLabel: string | null;
   stock: number;

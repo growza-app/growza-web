@@ -121,11 +121,10 @@ describe('the dish sheet is two tabs, not three', () => {
 describe('Home and the return sheet', () => {
   it('Home drops the Stock worth card and the stock attention card, and the rows close up', () => {
     expect(home).toMatch(/hm-v3-kpis\$\{areas\.stock \? '' : ' hm-v3-kpis-3'\}/);
-    expect(home).toMatch(/hm-v3-bot\$\{areas\.stock \? '' : ' hm-v3-bot-2'\}/);
-    // Three, unchanged: the desk Stock-worth KPI, the desk stock-attention card, and the phone
-    // "Running out" card. What went on 2026-10-23 is the phone KPI strip — its low-stock figure was
-    // a FOURTH gate (`? can('/stock') ?`), and the strip repeated the money card and this one.
-    expect(home.match(/\{!areas\.stock \? null : \(/g) ?? []).toHaveLength(3);
+    // Two: the desk Stock-worth KPI and the phone "Running out" card. The desk stock-attention card went on
+    // 13 Nov 2026 into one Needs attention card, whose shelf counts are gated on `counted` (areas.stock and a count).
+    expect(home.match(/\{!areas\.stock \? null : \(/g) ?? []).toHaveLength(2);
+    expect(home).toContain('const counted = areas.stock && !!data?.running.counted;');
     expect(home).not.toContain('shp-kpi-strip');
     expect(home).toMatch(/data\.running\.counted \|\| !areas\.stock \? s\.noOrdersBody : s\.countFirst/);
     const css = src('styles/83-role-home.css');

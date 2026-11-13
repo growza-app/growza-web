@@ -172,4 +172,10 @@ describe('the quick fixes', () => {
       expect(JSON.stringify(fixes(en)) + JSON.stringify(fixes(hi))).not.toMatch(/\p{Extended_Pictographic}/u);
     });
   });
+
+  it('a business that takes no bookings is not shown the bookings fixes', () => {
+    // Sports-shop QA, 13 Nov 2026 — a shop's Help listed "Bookings · 6".
+    expect(fixesFor('owner', { bookings: false }).map((c) => c.id)).not.toContain('bookings');
+    expect(fixesFor('owner').map((c) => c.id)).toContain('bookings');
+  });
 });

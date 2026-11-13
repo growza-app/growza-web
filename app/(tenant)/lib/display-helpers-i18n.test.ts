@@ -24,6 +24,7 @@ describe('display helpers in Hindi', () => {
     ['formatRecency never', formatRecency(null, NOW, 'hi')],
     ['formatRecency today', formatRecency('2026-09-20T05:00:00Z', NOW, 'hi')],
     ['formatRecency days', formatRecency('2026-09-15T05:00:00Z', NOW, 'hi')],
+    ['formatRecency yesterday', formatRecency('2026-09-19T15:29:00Z', NOW, 'hi')],
     ['formatRecency months', formatRecency('2026-05-15T05:00:00Z', NOW, 'hi')],
     ['formatRecency years', formatRecency('2024-05-15T05:00:00Z', NOW, 'hi')],
     ['chartBucketLabel day', chartBucketLabel('2026-09-01T00:00:00.000+05:30', 'day', 'hi', '1 Sep')],

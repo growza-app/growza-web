@@ -1819,7 +1819,7 @@ export function PayFlow({
         <div className={`pf-who-bar ${badClient ? 'pf-bad' : ''}`} data-step={guideClient ? 'next' : undefined} ref={whoChips}>
           <button type="button" className="pf-who-search" onClick={() => setWhoOpen('find')}>
             <IconSearch />
-            {t('nameOrNumber')}
+            <span className="pf-who-search-text">{t('nameOrNumber')}</span>
           </button>
           <button type="button" className="pf-who-add" aria-label={t('addClient', { client: nounInSentence(clientNoun) })} onClick={() => setWhoOpen('add')}>
             <IconPlus />
@@ -2333,7 +2333,7 @@ export function PayFlow({
             <div className="pf-who-bar">
               <button type="button" className="pf-who-search pf-find-service" onClick={() => setMenuOpen(true)}>
                 <IconSearch />
-                {t(counted ? 'desk.searchProducts' : 'desk.searchDishes', { count: products.length })}
+                <span className="pf-who-search-text">{t(counted ? 'desk.searchProducts' : 'desk.searchDishes', { count: products.length })}</span>
               </button>
               <span className="pf-who-add pf-who-gap" aria-hidden="true" />
             </div>
@@ -2385,7 +2385,7 @@ export function PayFlow({
           <div className="pf-who-bar">
             <button type="button" className="pf-who-search pf-find-service" onClick={() => setMenuOpen(true)}>
               <IconSearch />
-              {t('searchCount')}
+              <span className="pf-who-search-text">{t('searchCount')}</span>
             </button>
             <span className="pf-who-add pf-who-gap" aria-hidden="true" />
           </div>

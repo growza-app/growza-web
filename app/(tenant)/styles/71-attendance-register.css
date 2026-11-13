@@ -172,6 +172,15 @@
   color: var(--muted);
 }
 
+.att-search > span {
+  display: inline-flex;
+  flex: none;
+}
+.att-search > span svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
 .att-search input {
   flex: 1;
   min-width: 0;

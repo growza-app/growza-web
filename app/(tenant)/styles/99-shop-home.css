@@ -273,6 +273,8 @@
 .shp-running-size {
   color: var(--hm-muted);
   font-weight: 500;
+  /* "· size 10" and "· Sector 17" wrap as a whole, never as "· Sector" over "17". */
+  white-space: nowrap;
 }
 .shp-running-left {
   flex: none;

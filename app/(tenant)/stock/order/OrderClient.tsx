@@ -284,7 +284,13 @@ export function OrderClient() {
               return (
                 <li key={r.id} className="srp-card ro-row">
                   <div className="ro-main">
-                    <h2 className="srp-name">{nameOf(r)}</h2>
+                    <h2 className="srp-name">
+                      {nameOf(r)}
+                      {/* "All branches" of a business with several: each branch reorders its own shelf (sports-shop QA). */}
+                      {branchContext.ready && branchContext.multi && branchContext.choice === null && r.branchName ? (
+                        <span className="srp-branch"> · {r.branchName}</span>
+                      ) : null}
+                    </h2>
                     <p className="srp-hint">{reason(r)}</p>
                     {r.soldOutLastYear ? <p className="srp-warn">{t('soldOut')}</p> : null}
                     {r.override !== null && r.suggested !== null && r.override !== r.suggested ? <p className="srp-hint">{t('suggestedWas', { n: count(r.suggested) })}</p> : null}

@@ -119,7 +119,9 @@ describe('the four cards say something, in English', () => {
     expect(out).toContain('up 18');
     expect(out).toContain('Mutton Biryani');
     expect(out).toContain('down 11');
-    expect(out).toContain('₹1,088 → ₹907.07');
+    // Whole rupees, as "₹907 an order" says it above — "₹907.07" put paise on one line of the card (sports-shop QA, 13 Nov 2026).
+    expect(out).toContain('₹1,088 → ₹907');
+    expect(out).not.toContain('₹907.07');
   });
 
   it('gives a bar to every day of the period, including the one that took nothing', () => {

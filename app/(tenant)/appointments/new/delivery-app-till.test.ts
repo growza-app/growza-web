@@ -79,7 +79,7 @@ describe('QA fixes', () => {
   });
 
   it('a kitchen’s Home counts items, not sizes', () => {
-    expect(src('components/home/ShopHome.tsx')).toContain('(areas.stock ? s.acrossSizes : s.acrossItems)');
+    expect(src('components/home/ShopHome.tsx')).toMatch(/areas\.stock\s*\? s\.acrossSizesOnly\(sellersData\.totals\.sizes\)\s*: s\.acrossItems\(/);
   });
 
   it('the order-from CSS is whole: the chips wrap at 344px and the number button keeps its own rule', () => {

@@ -398,8 +398,13 @@ export function ProductsList({
       subtitleAsInfo
       actions={
         <>
+          {/*
+            Not in the header on a phone: with Sell, Count stock, Add and the avatar it made the header three rows at
+            344px. It is a destination, not an action, and the same report is a link on Home's money card and in
+            Reports — the call made for Returns on the Orders header (QA 2026-10-28).
+          */}
           {heading !== undefined && canStockTake && counted ? (
-            <Link className="btn btn-ghost" href="/stock/report">
+            <Link className="btn btn-ghost desktop-only" href="/stock/report">
               {t('stockReport.open')}
             </Link>
           ) : null}

@@ -12,6 +12,8 @@ import { IconArrowLeft, IconPhone, IconSearch } from '../components/icons';
 import { SEARCH_DEBOUNCE_MS, SEARCH_MIN_CHARS } from '../lib/search-tuning';
 import { useBranch } from '../components/BranchProvider';
 import { SearchClear } from '../components/SearchClear';
+import { useAreas } from '../components/SessionProvider';
+import { useNouns } from '../lib/use-nouns';
 
 const EMPTY: SearchResult = { customers: [], bookings: [] };
 
@@ -31,6 +33,13 @@ export function SearchClient({ timezone, showBranch = false }: { timezone: strin
   const locale = useLocale();
   const t = useTranslations('search');
   const ts = useTranslations('status');
+  /*
+   * A business that takes no bookings finds its own people and nothing else — the words the header's search button
+   * already uses (HeaderSearch). This page still said "Find a customer or booking … or a booking ID" and "7 visits" to
+   * a sports shop (sports-shop QA, 13 Nov 2026).
+   */
+  const shop = useAreas().bookings === false;
+  const { customer } = useNouns();
   const [q, setQ] = useState('');
   const [results, setResults] = useState<SearchResult>(EMPTY);
   const [loading, setLoading] = useState(false);
@@ -98,7 +107,7 @@ export function SearchClient({ timezone, showBranch = false }: { timezone: strin
         beside a screen that is one big search box, and it read as broken. Every
         other screen still has it.
       */}
-      <PageHeader title={t('title')} />
+      <PageHeader title={shop ? t('shopTitle', { customer }) : t('title')} />
       <div className="page-body">
         <div className="srch-bar-row">
           <a className="icon-btn" href="/" aria-label={t('back')}>
@@ -111,14 +120,14 @@ export function SearchClient({ timezone, showBranch = false }: { timezone: strin
               type="search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder={t('placeholder')}
-              aria-label={t('placeholder')}
+              placeholder={shop ? t('shopPlaceholder') : t('placeholder')}
+              aria-label={shop ? t('shopPlaceholder') : t('placeholder')}
             />
             <SearchClear value={q} onClear={() => setQ('')} onVoice={setQ} />
           </div>
         </div>
 
-        {term.length < SEARCH_MIN_CHARS && <div className="empty">{t('hint')}</div>}
+        {term.length < SEARCH_MIN_CHARS && <div className="empty">{shop ? t('shopHint', { customer }) : t('hint')}</div>}
         {nothing && <div className="empty">{t('nothing')}</div>}
 
         {results.customers.length > 0 && (
@@ -137,8 +146,7 @@ export function SearchClient({ timezone, showBranch = false }: { timezone: strin
                         {showBranch ? <span className="chip cust-branch-chip">{c.branchName}</span> : null}
                       </div>
                       <div className="muted" style={{ fontSize: 13 }}>
-                        {c.phone ? `${c.phone} · ` : ''}
-                        {t('visits', { count: c.visitCount })}
+                        {shop ? (c.phone ?? '') : `${c.phone ? `${c.phone} · ` : ''}${t('visits', { count: c.visitCount })}`}
                       </div>
                     </div>
                   </button>
