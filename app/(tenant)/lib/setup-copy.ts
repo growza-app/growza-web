@@ -1,4 +1,31 @@
 import type { Lang } from './lang';
+import { nounInSentence } from './nouns';
+
+/**
+ * QA 13 Nov 2026, bug 8 — the business's own nouns for the English lines below, from its labels. A spa, a clinic and
+ * a garage read "Add a member of staff", "Bookings, clients…" and "Add at least one service"; a clinic is now told to
+ * add a doctor and a consultation. Hindi keeps its generic words, as every other noun does until the vertical labels
+ * are translated. The fallbacks are the words these lines always said.
+ */
+export interface SetupWords {
+  /** "consultation", "job" — in a sentence. */
+  service: string;
+  /** "a doctor", "a mechanic" — with its article. */
+  aProvider: string;
+  /** "patients", "guests". */
+  customers: string;
+  /** "Visits", "Bookings" — first word of a sentence. */
+  Appointments: string;
+}
+export function setupWords(labels: Record<string, string> | null | undefined): SetupWords {
+  const provider = labels?.provider ? nounInSentence(labels.provider) : 'member of staff';
+  return {
+    service: labels?.service ? nounInSentence(labels.service) : 'service',
+    aProvider: `${/^[aeiou]/i.test(provider) ? 'an' : 'a'} ${provider}`,
+    customers: labels?.customers ? nounInSentence(labels.customers) : 'clients',
+    Appointments: labels?.appointments ?? 'Bookings',
+  };
+}
 
 /**
  * The setup banner — everything a business that has not gone live yet is waiting on, in English and Hindi.
@@ -6,7 +33,7 @@ import type { Lang } from './lang';
  * Plain words, and the next step named: an owner reading this has not been told what "provisioning" is and
  * should not have to learn it. The Hindi is a draft and unreviewed, like the rest of the i18n epic's first pass.
  */
-export function setupCopy(lang: Lang) {
+export function setupCopy(lang: Lang, words: SetupWords = setupWords(null)) {
   const hi = lang === 'hi';
   const S = (en: string, h: string) => (hi ? h : en);
   return {
@@ -30,8 +57,8 @@ export function setupCopy(lang: Lang) {
     ),
     done: S('Done', 'पूरा'),
     todo: S('To do', 'बाकी'),
-    services: S('Add at least one service', 'कम से कम एक सेवा जोड़ें'),
-    providers: S('Add a member of staff', 'एक स्टाफ सदस्य जोड़ें'),
+    services: S(`Add at least one ${words.service}`, 'कम से कम एक सेवा जोड़ें'),
+    providers: S(`Add ${words.aProvider}`, 'एक स्टाफ सदस्य जोड़ें'),
     /*
      * "Opening hours", not "your salon's opening hours" (owner, 2026-10-26). County Chicken is a restaurant
      * and was being told about a salon. Every other noun in this product comes from the vertical's own
@@ -66,14 +93,14 @@ export function setupCopy(lang: Lang) {
     staffHomeTitle: S('Still being set up', 'अभी सेटअप हो रहा है'),
     /** Home for a receptionist or stylist at a business that is not live yet — theirs to wait on, not to set up. */
     staffHome: S(
-      'The owner is still setting this business up. Bookings, clients and your day open here as soon as it is live.',
+      `The owner is still setting this business up. ${words.Appointments}, ${words.customers} and your day open here as soon as it is live.`,
       'मालिक अभी बिज़नेस का सेटअप पूरा कर रहे हैं। चालू होते ही बुकिंग, क्लाइंट और आपका दिन यहाँ खुल जाएगा।',
     ),
     /** The page a closed screen's address lands on, until the business is live. */
     closed: {
       title: S('Not open yet', 'अभी बंद है'),
       body: S(
-        'Bookings, clients, offers, reports and attendance open as soon as your business is live. Until then, finish setting it up — that is all that is left.',
+        `${words.Appointments}, ${words.customers}, offers, reports and attendance open as soon as your business is live. Until then, finish setting it up — that is all that is left.`,
         'बुकिंग, क्लाइंट, ऑफ़र, रिपोर्ट और हाज़िरी बिज़नेस के चालू होते ही खुल जाएँगे। तब तक सेटअप पूरा करें — बस वही बाकी है।',
       ),
       back: S('Back to setup', 'सेटअप पर वापस जाएँ'),

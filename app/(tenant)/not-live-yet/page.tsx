@@ -3,7 +3,7 @@ import { screenTitle } from '../lib/page-title';
 import { api } from '../lib/api';
 import { serverLang } from '../lib/lang';
 import { isLive } from '../lib/go-live';
-import { setupCopy } from '../lib/setup-copy';
+import { setupCopy, setupWords } from '../lib/setup-copy';
 import { PageHeader } from '../components/PageHeader';
 
 // Jira GRW-556 — a screen that opens at go-live, reached by its address before then.
@@ -17,13 +17,16 @@ export const metadata = screenTitle('Not open yet');
  * outlive the thing it describes).
  */
 export default async function NotLiveYetPage() {
+  let labels: Record<string, string> | null = null;
   try {
-    if (isLive((await api.me()).tenant?.status)) redirect('/');
+    const me = await api.me();
+    labels = me.labels ?? null;
+    if (isLive(me.tenant?.status)) redirect('/');
   } catch (error) {
     // `redirect()` works by throwing; anything else (a `/me` that cannot answer) just shows the page.
     if (error && typeof error === 'object' && 'digest' in error) throw error;
   }
-  const c = setupCopy(await serverLang()).closed;
+  const c = setupCopy(await serverLang(), setupWords(labels)).closed;
   return (
     <>
       <PageHeader title={c.title} />

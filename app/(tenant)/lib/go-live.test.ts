@@ -281,6 +281,6 @@ describe('every surface that offers a destination follows the flag', () => {
   it('a closed address lands on a page that says so, and that page is open', () => {
     expect(code('lib/screen-guard.ts')).toMatch(/NOT_LIVE_PATH = '\/not-live-yet'/);
     expect(isSetupDestination('/not-live-yet')).toBe(true);
-    expect(code('not-live-yet/page.tsx')).toMatch(/isLive\(\(await api\.me\(\)\)\.tenant\?\.status\)\) redirect\('\/'\)/);
+    expect(code('not-live-yet/page.tsx')).toMatch(/const me = await api\.me\(\);[\s\S]{0,80}if \(isLive\(me\.tenant\?\.status\)\) redirect\('\/'\)/);
   });
 });
