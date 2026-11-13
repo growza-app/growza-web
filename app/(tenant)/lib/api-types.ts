@@ -1361,6 +1361,8 @@ export interface ShopHome {
   toSend: number;
   /** QA 13 Nov 2026, bug 2 — today's orders that came back, live (not the period picked). Absent from an older API. */
   cameBackToday?: number;
+  /** QA 13 Nov 2026, bug 4 — who came in today, counted by the API for every role. Absent from an older API. */
+  customersToday?: number;
   running: {
     /** Has the shelf ever been counted. False: Home says so instead of listing zeros. */
     counted: boolean;

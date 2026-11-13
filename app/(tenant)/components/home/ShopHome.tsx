@@ -705,7 +705,13 @@ export function ShopHome({
     }
     return (d: Date) => (f ? f.format(d) : d.toISOString().slice(0, 10));
   }, [timezone]);
+  /*
+   * QA 13 Nov 2026, bug 4 — the API's count (`customersToday`), the same for every role: the hundred-order read below
+   * runs only for a role that may open Orders, so a desk's card said 0. An older API falls back to counting those rows.
+   */
+  const apiCustomersToday = data?.customersToday;
   const customersToday = useMemo(() => {
+    if (typeof apiCustomersToday === 'number') return apiCustomersToday;
     const todayISO = fmtDate(new Date());
     const named = new Set<string>();
     let walkIns = 0;
@@ -718,7 +724,7 @@ export function ShopHome({
       else walkIns += 1;
     }
     return named.size + walkIns;
-  }, [todayOrderRows, fmtDate]);
+  }, [apiCustomersToday, todayOrderRows, fmtDate]);
 
   /*
    * Jira GRW-679 (UX-04) — compared with yesterday only once today has something in it, and only against a
