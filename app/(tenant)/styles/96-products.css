@@ -2663,6 +2663,22 @@
   text-decoration: none;
 }
 
+/* Owner's review 2026-11-13 (A) — Sell and Count stock are tiles in the same row: a button styled as the links
+   are, with its icon leading the word rather than a chevron trailing it. */
+.prd-report-act {
+  justify-content: flex-start;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-3);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.prd-report-act svg {
+  color: var(--accent-deep);
+}
+
 .prd-report-link svg {
   flex: none;
   width: 1rem;

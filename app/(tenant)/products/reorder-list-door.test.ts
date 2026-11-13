@@ -25,13 +25,21 @@ describe('the reorder list is a door on the Stock screen', () => {
 
   it('is a phone-only row under the figures, drawn in both the desk and the phone layout', () => {
     expect(list).toContain('<nav className="prd-report-links mobile-only"');
+    // …and their header buttons hide on a phone, so each action is drawn once per width.
+    expect(list).toContain("<Link className={`btn btn-ghost ${counted ? 'desktop-only' : ''}`} href=\"/products/sell?from=products\">");
+    expect(list).toMatch(/className="btn btn-ghost desktop-only"\n\s*onClick=\{\(\) => \{\n\s*setEditing\(\(cur\) => \(cur === 'new' \? null : cur\)\);\n\s*setStockTakeOpen\(true\);/);
+    // No ⓘ on a phone's counted shelf: the subtitle is a description, and the title row needs the width.
+    expect(list).toContain("subtitle={counted && desk === false ? undefined : ");
     expect(list).toContain('<Link className="prd-report-link" href="/stock/report">');
     expect(list).toContain('<Link className="prd-report-link" href="/stock/order">');
     expect(list.match(/\{reportLinks\}/g)).toHaveLength(2);
     expect(list).toMatch(/\{strip\}\n\s*\{reportLinks\}/);
     // The row is gated exactly as the header buttons are: counted shelf, Stock's own heading, a reporting role.
-    const row = list.indexOf('const reportLinks =');
-    expect(list.slice(row, row + 120)).toContain('heading !== undefined && canStockTake && counted ? (');
+    // Owner's review 2026-11-13 (A) — the row also carries Sell and Count stock, each gated as its header button is;
+    // the two reports keep the reporting-role gate.
+    expect(list).toContain('const phoneReports = heading !== undefined && canStockTake && counted;');
+    expect(list).toContain('const phoneSell = counted && live.length > 0 && tillOpen;');
+    expect(list).toContain('const phoneCount = counted && live.length > 0 && canStockTake && writable;');
   });
 
   it('is a 44px tap target in the accent, hidden where the header carries the same buttons', () => {

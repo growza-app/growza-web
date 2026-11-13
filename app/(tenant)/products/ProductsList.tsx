@@ -13,7 +13,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useAreas, useBusinessWritable, useSession, useWritable } from '../components/SessionProvider';
 import { canSee, type MemberRole } from '../lib/nav-policy';
-import { IconCart, IconChevronRight, IconEdit, IconPlus, IconSearch, IconSort, IconUpload } from '../components/icons';
+import { IconCart, IconChevronRight, IconClipboardCheck, IconEdit, IconPlus, IconSearch, IconSort, IconUpload } from '../components/icons';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
 import { productShareItem } from '../lib/share-on-whatsapp';
@@ -394,7 +394,7 @@ export function ProductsList({
   const header = (
     <PageHeader
       title={heading ?? t('title')}
-      subtitle={!counted ? t('uncountedSubtitle') : heading !== undefined ? t('stockSubtitle') : t('subtitle')}
+      subtitle={counted && desk === false ? undefined : !counted ? t('uncountedSubtitle') : heading !== undefined ? t('stockSubtitle') : t('subtitle')}
       subtitleAsInfo
       actions={
         <>
@@ -416,7 +416,7 @@ export function ProductsList({
           ) : null}
           {/* The till is Bookings' and Stock's, not this screen's page: drawn when the role may open it, and the business may write. */}
           {live.length > 0 && tillOpen ? (
-            <Link className="btn btn-ghost" href="/products/sell?from=products">
+            <Link className={`btn btn-ghost ${counted ? 'desktop-only' : ''}`} href="/products/sell?from=products">
               <IconCart /> {t(counted ? 'sell' : 'sellUncounted')}
             </Link>
           ) : null}
@@ -424,7 +424,7 @@ export function ProductsList({
           {live.length > 0 && canStockTake && counted ? (
             <button
               type="button"
-              className="btn btn-ghost"
+              className="btn btn-ghost desktop-only"
               onClick={() => {
                 setEditing((cur) => (cur === 'new' ? null : cur));
                 setStockTakeOpen(true);
@@ -496,17 +496,48 @@ export function ProductsList({
    * they sit under the four figures instead: the stock report and the reorder list, a 44px row each. Desktop keeps
    * them in the header, where there is room; the row is phone-only so the same door is never drawn twice.
    */
+  /*
+   * Owner's review 2026-11-13 (A) — a phone's header is one row (Back, Stock, the branch, Add, avatar): Sell and
+   * Count stock come down here as tiles beside the two reports, so the header no longer wraps to a second row
+   * with an empty left half. Each tile is gated exactly as its header button is; the row is drawn when any apply.
+   */
+  const phoneSell = counted && live.length > 0 && tillOpen;
+  const phoneCount = counted && live.length > 0 && canStockTake && writable;
+  const phoneReports = heading !== undefined && canStockTake && counted;
   const reportLinks =
-    heading !== undefined && canStockTake && counted ? (
-      <nav className="prd-report-links mobile-only" aria-label={t('stockReport.open')}>
-        <Link className="prd-report-link" href="/stock/report">
-          <span>{t('stockReport.open')}</span>
-          <IconChevronRight />
-        </Link>
-        <Link className="prd-report-link" href="/stock/order">
-          <span>{t('reorder.title')}</span>
-          <IconChevronRight />
-        </Link>
+    phoneSell || phoneCount || phoneReports ? (
+      <nav className="prd-report-links mobile-only" aria-label={t('title')}>
+        {phoneSell ? (
+          <Link className="prd-report-link prd-report-act" href="/products/sell?from=products">
+            <IconCart />
+            <span>{t('sell')}</span>
+          </Link>
+        ) : null}
+        {phoneCount ? (
+          <button
+            type="button"
+            className="prd-report-link prd-report-act"
+            onClick={() => {
+              setEditing((cur) => (cur === 'new' ? null : cur));
+              setStockTakeOpen(true);
+            }}
+          >
+            <IconClipboardCheck />
+            <span>{t('stockTake.open')}</span>
+          </button>
+        ) : null}
+        {phoneReports ? (
+          <Link className="prd-report-link" href="/stock/report">
+            <span>{t('stockReport.open')}</span>
+            <IconChevronRight />
+          </Link>
+        ) : null}
+        {phoneReports ? (
+          <Link className="prd-report-link" href="/stock/order">
+            <span>{t('reorder.title')}</span>
+            <IconChevronRight />
+          </Link>
+        ) : null}
       </nav>
     ) : null;
   /*
