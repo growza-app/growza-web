@@ -4535,6 +4535,7 @@
       "conditionLabel": "वापस आए सामान की स्थिति",
       "restockShelf": "दोबारा बिक सकता है",
       "restockShelfHint": "उस साइज़ की गिनती में वापस जोड़ता है",
+      "restockShelfHintPlain": "शेल्फ़ की गिनती में वापस जोड़ता है",
       "damagedOpened": "खराब, बिक नहीं सकता",
       "damagedOpenedHint": "गिनती में नहीं जुड़ेगा; बट्टे खाते में जाएगा",
       "reasonLabel": "वजह (वैकल्पिक)",

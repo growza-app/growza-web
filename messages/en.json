@@ -4535,6 +4535,7 @@
       "conditionLabel": "Returned item condition",
       "restockShelf": "Can be sold again",
       "restockShelfHint": "Adds the units back to that size’s count",
+      "restockShelfHintPlain": "Adds the units back to the shelf count",
       "damagedOpened": "Damaged, cannot be sold",
       "damagedOpenedHint": "Not added to the count; written off",
       "reasonLabel": "Reason (optional)",
