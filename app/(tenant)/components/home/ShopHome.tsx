@@ -279,19 +279,17 @@ export function ShopHome({
     const w = phoneWindow(phonePeriod, timezone, new Date());
 
     // The rows the Recent orders card below the hero lists. The command center's own `api.orders` read no
-    // longer runs on a phone, so the phone asks for its own six — NOT narrowed to the window, because
-    // "recent" means the last six orders, which is not a question the period filter asks.
+    // longer runs on a phone, so the phone asks for its own — NOT narrowed to the window, because
+    // "recent" means the last orders, which is not a question the period filter asks.
+    // Owner, 2026-11-13 (IO) — one read, not two: the six most recent are the first six of the hundred the
+    // queue card and the customers count already read, same sort, same branch.
     if (can('/orders')) {
-      api
-        .orders({ pageSize: 6, location: branch })
-        .then((res) => {
-          if (mine === phoneReqId.current) setRecentOrders(res.rows);
-        })
-        .catch(() => {});
       api
         .orders({ pageSize: 100, location: branch })
         .then((res) => {
-          if (mine === phoneReqId.current) setTodayOrderRows(res.rows);
+          if (mine !== phoneReqId.current) return;
+          setTodayOrderRows(res.rows);
+          setRecentOrders(res.rows.slice(0, 6));
         })
         .catch(() => {});
     }
