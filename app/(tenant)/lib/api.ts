@@ -852,14 +852,15 @@ export const api = {
     to?: string,
     providerId?: string,
     customerId?: string,
-    opts?: { includeSales?: boolean },
+    /** `'queue'` — QA 13 Nov 2026, bug 10: the till's token queue, today's orders without amounts for a desk the takings are not opened to. */
+    opts?: { includeSales?: boolean | 'queue' },
   ) => {
     const params = new URLSearchParams();
     if (date) params.set('date', date);
     if (to) params.set('to', to);
     if (providerId) params.set('providerId', providerId);
     if (customerId) params.set('customerId', customerId);
-    if (opts?.includeSales) params.set('includeSales', '1');
+    if (opts?.includeSales) params.set('includeSales', opts.includeSales === 'queue' ? 'queue' : '1');
     const qs = params.toString();
     return get<Appointment[]>(`/api/v1/appointments${qs ? `?${qs}` : ''}`);
   },
