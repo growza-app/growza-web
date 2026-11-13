@@ -373,6 +373,10 @@ export function OrderClient({
                     {r.reasonText && r.reasonCode === 'other' ? <span className="ord-d-quiet"> · {r.reasonText}</span> : null}
                     {counted && !r.restocked ? <span className="ord-d-quiet"> · {t('detail.notRestocked')}</span> : null}
                     {r.saleableDefaulted ? <span className="ord-d-quiet"> · {t('detail.saleableAssumed')}</span> : null}
+                    {/* Owner, 2026-11-14 (returns QA, loophole 2) — who gave it back: their name, else their role. */}
+                    {r.by || r.byRole ? (
+                      <span className="ord-d-quiet"> · {t('detail.by', { name: r.by || t(`returns.byRole.${r.byRole}` as 'returns.byRole.owner') })}</span>
+                    ) : null}
                   </span>
                   <span className="ord-d-line-qty">{t('detail.times', { count: r.units })}</span>
                 </li>
