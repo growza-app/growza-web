@@ -1,3 +1,4 @@
+import type { PageGrid } from '../lib/areas';
 import type { Appointment } from '../lib/api-types';
 import type { MemberRole } from '../lib/nav-policy';
 
@@ -235,10 +236,12 @@ export function buildDailyTokens(
 /**
  * A session with no role reads as the owner, as everywhere else: a degraded `/me` is not a reason to hide the till.
  *
- * A member who HOLDS a role (Jira GRW-73) is judged by the role grid, and the grid never grants a refund: `POST /api/v1/sales/:visitKey/returns` is
- * the owner's alone for a role holder (`route-pages.ts`), however much of Bookings they hold. So `holdsRole` closes it, whatever fixed role they work like.
+ * A member who HOLDS a role (Jira GRW-73) is judged by the role grid. Owner, 2026-11-13 (QA bug 6) — a manager takes returns: the route is the
+ * grid's Reports `manage` (`route-pages.ts`, shared 1.0.37), so a role that can change Reports may, and any other may not. Pass the grid itself;
+ * `true` without one (an older caller) still closes it.
  */
-export function mayTakeReturns(role: MemberRole | null | undefined, reportTabs?: readonly string[], holdsRole = false): boolean {
+export function mayTakeReturns(role: MemberRole | null | undefined, reportTabs?: readonly string[], holdsRole: boolean | PageGrid | null = false): boolean {
+  if (holdsRole && typeof holdsRole === 'object') return holdsRole.reports === 'manage';
   if (holdsRole) return false;
   if (role == null || role === 'owner' || role === 'manager') return true;
   if (role === 'receptionist') return Boolean(reportTabs?.includes('sales'));

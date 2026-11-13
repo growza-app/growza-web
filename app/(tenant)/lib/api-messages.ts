@@ -99,6 +99,8 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Pick what they are having first': 'पहले चुनें कि वे क्या करवा रहे हैं',
   'A name is needed, even a first name': 'नाम चाहिए, पहला नाम भी चलेगा',
   'Add at least one service before saving': 'सेव करने से पहले कम से कम एक सेवा जोड़ें',
+  // Owner, 2026-11-14 (returns QA, loophole 1) — a manager takes returns at their own branch only.
+  'You can take returns only at your own branch.': 'आप सिर्फ़ अपनी शाखा पर ही वापसी ले सकते हैं।',
   'That request was not valid.': 'वह अनुरोध सही नहीं था।',
   'Something went wrong handling this request.': 'इस अनुरोध को संभालते समय कुछ गड़बड़ हो गई।',
   // ---- bookings, visits and clients
