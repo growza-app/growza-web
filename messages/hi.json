@@ -4894,7 +4894,10 @@
       "undeliveredTitle": "बिना पहुँचे लौट आया",
       "undeliveredNone": "कोई पार्सल बिना पहुँचे नहीं लौटा।",
       "undeliveredNote": "ये ग्राहक तक पहुँचे ही नहीं। इन्हें वापसी में नहीं, अलग गिना जाता है।",
-      "toRefunds": "रिफ़ंड रिपोर्ट"
+      "toRefunds": "रिफ़ंड रिपोर्ट",
+      "byTitle": "किसने वापसी दी",
+      "byNone": "दर्ज नहीं",
+      "byRole": {"owner": "मालिक", "manager": "मैनेजर", "receptionist": "फ्रंट डेस्क", "staff": "टीम सदस्य"}
     },
     "returnsLink": "वापसी रिपोर्ट",
     "bringIn": {

@@ -4894,7 +4894,10 @@
       "undeliveredTitle": "Came back undelivered",
       "undeliveredNone": "No parcels came back undelivered.",
       "undeliveredNote": "These never reached the customer. They are counted apart, not as returns.",
-      "toRefunds": "Refunds"
+      "toRefunds": "Refunds",
+      "byTitle": "Given back by",
+      "byNone": "Not recorded",
+      "byRole": {"owner": "Owner", "manager": "Manager", "receptionist": "Front desk", "staff": "Team member"}
     },
     "returnsLink": "Returns",
     "bringIn": {

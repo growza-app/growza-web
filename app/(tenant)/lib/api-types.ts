@@ -2128,12 +2128,17 @@ export interface OrderReturn {
   units: number;
   restocked: boolean;
   saleableDefaulted: boolean;
+  /** Owner, 2026-11-14 (returns QA, loophole 2) — who took it back, and their role for when no name was set. Absent from an older API. */
+  by?: string | null;
+  byRole?: string | null;
 }
 export interface ReturnsReportPage {
   window: { key: string; label: string; startISO: string; endExclusiveISO: string };
   byReason: Array<{ reason: string; returns: number; units: number }>;
   customer: { returns: number; units: number };
   undelivered: { returns: number; units: number };
+  /** Owner, 2026-11-14 — who gave money back in the window, the most money first. Absent from an older API. */
+  byPerson?: Array<{ name: string | null; role: string | null; returns: number; refundMinor: string }>;
   anyReturns: boolean;
 }
 
