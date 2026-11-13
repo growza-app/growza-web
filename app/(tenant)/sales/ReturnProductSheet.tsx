@@ -843,7 +843,8 @@ export function ReturnProductSheet({
                       </span>
                       <div className="sls-ret-cond-copy">
                         <strong>{t('restockShelf')}</strong>
-                        <span>{t('restockShelfHint')}</span>
+                        {/* Returns QA 13 Nov 2026 — "that size's count" only when a size is coming back; a plain product goes back on the shelf. */}
+                        <span>{t(selectedLines.some(({ line }) => line.variantId) ? 'restockShelfHint' : 'restockShelfHintPlain')}</span>
                       </div>
                     </button>
                     <button
