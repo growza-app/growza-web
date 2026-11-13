@@ -633,6 +633,29 @@ export function ShopHome({
 
   /** The laptop's Needs attention card: what is waiting on the owner, each count only when it is not zero. */
   const counted = areas.stock && !!data?.running.counted;
+  /*
+   * QA 13 Nov 2026, bug 1 — Home said "Out of stock 5 · Running low 18" over a Stock screen showing 1 and 9, and both rows
+   * opened the shelf on "All". The counts are now the Stock screen's own (`running.shelf`, products not sizes), and each
+   * row opens that branch's shelf on that filter. On All branches a branch with any gets its own row, named, since the
+   * Stock screen shows one branch at a time. An API older than this has no `shelf` and keeps the old two rows.
+   */
+  const shelfRows = (outTone: string, lowTone: string) => {
+    if (!counted) return [];
+    const shelf = data?.running.shelf;
+    const stockHref = (locationId: string, filter: 'out' | 'low') =>
+      can('/stock') ? `/stock?branch=${encodeURIComponent(locationId)}&filter=${filter}` : null;
+    if (!shelf) {
+      return [
+        { key: 'out', tone: outTone, n: outOfStockCount, label: s.outOfStockChip, href: can('/stock') ? `/stock${stockBranch}` : null },
+        { key: 'low', tone: lowTone, n: lowOnlyCount, label: s.runningLowChip, href: can('/stock') ? `/stock${stockBranch}` : null },
+      ];
+    }
+    const named = (label: string, branchName?: string) => (branchName ? `${label} · ${branchName}` : label);
+    return [
+      ...shelf.map((b) => ({ key: `out-${b.locationId}`, tone: outTone, n: b.out, label: named(s.outOfStockChip, b.branch), href: stockHref(b.locationId, 'out') })),
+      ...shelf.map((b) => ({ key: `low-${b.locationId}`, tone: lowTone, n: b.low, label: named(s.runningLowChip, b.branch), href: stockHref(b.locationId, 'low') })),
+    ];
+  };
   const attentionChips = [
     { key: 'send', tone: 'amber', n: ships ? (data?.toSend ?? 0) : 0, label: s.waitingToSendLabel, href: can('/orders') ? ordersHref({ status: 'new,packed' }) : null },
     {
@@ -642,8 +665,7 @@ export function ShopHome({
       label: s.cameBackLabel,
       href: canReports && can('/orders/returns') ? '/orders/returns' : can('/orders') ? ordersHref({ status: 'returned' }) : null,
     },
-    { key: 'out', tone: 'rose', n: counted ? outOfStockCount : 0, label: s.outOfStockChip, href: can('/stock') ? `/stock${stockBranch}` : null },
-    { key: 'low', tone: 'amber', n: counted ? lowOnlyCount : 0, label: s.runningLowChip, href: can('/stock') ? `/stock${stockBranch}` : null },
+    ...shelfRows('rose', 'amber'),
   ].filter((c) => c.n > 0);
   const attentionCount = attentionChips.reduce((sum, c) => sum + c.n, 0);
 
@@ -653,8 +675,7 @@ export function ShopHome({
    * since the command center's reports never run below 861px. Zero rows are not drawn.
    */
   const phoneAttention = [
-    { key: 'out', tone: 'is-out', n: counted ? outOfStockCount : 0, label: s.outOfStockChip, href: can('/stock') ? `/stock${stockBranch}` : null },
-    { key: 'low', tone: '', n: counted ? lowOnlyCount : 0, label: s.runningLowChip, href: can('/stock') ? `/stock${stockBranch}` : null },
+    ...shelfRows('is-out', ''),
     { key: 'send', tone: '', n: ships ? (data?.toSend ?? 0) : 0, label: s.waitingToSendLabel, href: can('/orders') ? ordersHref({ status: 'new,packed' }) : null },
     {
       key: 'back',
