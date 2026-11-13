@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useEffect, useRef } from 'react';
 import AppLink from '../../shared/AppLink';
 import { areaAllows } from '../lib/areas';
 import { useAreas } from './SessionProvider';
@@ -40,12 +41,25 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
   const tabs = allTabs.filter((tab) => areaAllows(tab.href, areas));
 
   /*
+   * Owner's review 2026-11-13 — on a phone the bar scrolls sideways, so the current tab is brought to the middle
+   * on arrival: Refunds is the seventh chip and would otherwise open with its own name off the right edge. A
+   * laptop's bar does not overflow, so the same arithmetic leaves it at 0.
+   */
+  const navRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const nav = navRef.current;
+    const current = nav?.querySelector<HTMLElement>('.is-active');
+    if (!nav || !current) return;
+    nav.scrollLeft = current.offsetLeft - (nav.clientWidth - current.offsetWidth) / 2;
+  }, [active]);
+
+  /*
    * Jira GRW-591 — on `/reports` none of the six IS the page (the counter report is), so `active="hub"`
    * leaves every tab in its unselected grey and the bar reads as four words in a box. The modifier gives
    * them each a border and the accent, which is what a row of links should look like.
    */
   return (
-    <nav className={`srp-nav ${active === 'hub' ? 'srp-nav-links' : ''}`} aria-label={tReports('title')}>
+    <nav ref={navRef} className={`srp-nav ${active === 'hub' ? 'srp-nav-links' : ''}`} aria-label={tReports('title')}>
       {tabs.map((tab) => {
         const isCurrent = tab.key === active;
         return (
