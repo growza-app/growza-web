@@ -44,3 +44,11 @@ describe('a shop’s Home says each thing once', () => {
     expect(homeCopy('hi').shop.acrossSizesOnly(126)).toBe('126 साइज़ में');
   });
 });
+
+describe('out of stock is counted over the whole list, not a page of it', () => {
+  it('reads the API’s count, and asks the stock report only for its totals', () => {
+    expect(shop).toContain('const outOfStockCount = data?.running.out ?? (data?.running.items ?? []).filter((i) => i.left <= 0).length;');
+    expect(shop).toContain('.stockReport({ location: loc, pageSize: 1 })');
+    expect(shop).not.toContain('stockData.styles');
+  });
+});

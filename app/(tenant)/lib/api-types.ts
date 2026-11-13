@@ -1364,6 +1364,8 @@ export interface ShopHome {
     counted: boolean;
     /** Everything at or under its line — the "View all (n)" beside the few listed. */
     total: number;
+    /** How many of `total` have none left. Absent from an API older than 13 Nov 2026. */
+    out?: number;
     items: Array<{
       productId: string;
       name: string;

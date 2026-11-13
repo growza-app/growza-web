@@ -236,7 +236,7 @@ export function ShopHome({
       }
       if (can('/stock/report')) {
         api
-          .stockReport({ location: loc, pageSize: 5 })
+          .stockReport({ location: loc, pageSize: 1 })
           .then((res) => {
             if (mine === deskReqId.current) setStockData(res);
           })
@@ -604,9 +604,12 @@ export function ShopHome({
   ];
   const phonePeriodWord = phonePeriodOptions.find((o) => o.value === phonePeriod)?.label ?? s.periodToday;
 
-  const outOfStockCount = stockData
-    ? stockData.styles.reduce((acc, st) => acc + st.sizes.filter((sz) => sz.stock <= 0).length, 0)
-    : (data?.running.items ?? []).filter((i) => i.left <= 0).length;
+  /*
+   * The API counts these over the same list `total` is of (sports-shop QA, 13 Nov 2026). This used to be counted
+   * from `stockData`, a five-style page of the stock report, so Home said "1 out of stock" over four "None left"
+   * rows. An older API without `out` falls back to the rows listed, which can only undercount, never disagree.
+   */
+  const outOfStockCount = data?.running.out ?? (data?.running.items ?? []).filter((i) => i.left <= 0).length;
   const lowOnlyCount = Math.max(0, (data?.running.total ?? 0) - outOfStockCount);
 
   /** The laptop's Needs attention card: what is waiting on the owner, each count only when it is not zero. */
