@@ -733,3 +733,8 @@
     justify-content: space-between;
   }
 }
+
+/* Owner's review 2026-11-13 — the "no sales last year" line on the reorder list sits flush under the tab bar. */
+.ro-warn {
+  margin-top: 0;
+}
