@@ -153,7 +153,16 @@ a.ord-card:focus-visible,
   color: var(--muted);
   font-size: 0.8125rem;
 }
+/*
+  The amount stays on the name's line. With the row free to wrap, a buyer like "Rising Stars Cricket Academy"
+  took the whole width at 344px and pushed the amount onto a line of its own, where it read as a second order.
+  The name wraps inside its own space instead.
+*/
+.ord-card-top {
+  flex-wrap: nowrap;
+}
 .ord-who {
+  flex: 1 1 auto;
   min-width: 0;
   font-weight: 600;
   overflow-wrap: anywhere;

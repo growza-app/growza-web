@@ -239,6 +239,7 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
   const peakDay = bars.reduce((best, b, i) => (b.valueMinor > 0 && (best === -1 || b.valueMinor > bars[best]!.valueMinor) ? i : best), -1);
   /** A per-order average in whole rupees: "₹299 per order". The paise of an average are not anybody's money. */
   const wholeRupees = (minor: number) => Math.round(minor / 100) * 100;
+  const addOnMinor = Math.max(1000, Math.round((takings.averageBillMinor ?? 0) / 10 / 1000) * 1000);
   const hourPeak = Math.max(...busy.byHour.map((h) => Number(h.valueMinor)), 1);
   const topValue = Math.max(...earners.rows.map((r) => Number(r.valueMinor)), 1);
   const difference = takings.differenceMinor === null ? null : Number(takings.differenceMinor);
@@ -444,7 +445,7 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
           >
             <span className="cr-move-name">{t('changed.averageBill')}</span>
             <span className="cr-move-delta">
-              {money(takings.previousAverageBillMinor)} → {money(takings.averageBillMinor)}
+              {money(wholeRupees(takings.previousAverageBillMinor))} → {money(wholeRupees(takings.averageBillMinor))}
             </span>
           </p>
         ) : null}
@@ -503,8 +504,13 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
                 })()}
               </p>
               <p className="cr-strat-impact">
+                {/*
+                  The add-on is a tenth of this business's own order, to the ₹10 — it was a fixed ₹60, a side dish's
+                  price, which said nothing to a shop whose order is ₹2,400 (sports-shop QA, 13 Nov 2026).
+                */}
                 {t('strategy.combo.impact', {
-                  amount: money(Math.max(1, Math.round(takings.bills / 3)) * 6000),
+                  amount: money(Math.max(1, Math.round(takings.bills / 3)) * addOnMinor),
+                  addOn: money(addOnMinor),
                 })}
               </p>
             </article>
@@ -552,7 +558,11 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
               </p>
             </article>
 
-            {/* 3. Channel Margin & Retention Strategy */}
+            {/*
+              3. Channel Margin & Retention Strategy — only for a business that sells on the apps. A shop whose every
+              order is at its own counter was told to "save app commission" on 0% app sales (sports-shop QA, 13 Nov 2026).
+            */}
+            {strategy.byChannel.some((c) => c.channel !== 'counter' && c.sharePct > 0) ? (
             <article className="cr-strat-card">
               <span className="cr-strat-tag">{t('strategy.channels.tag')}</span>
               <h3 className="cr-strat-title">{t('strategy.channels.title')}</h3>
@@ -576,6 +586,7 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
               </p>
               <p className="cr-strat-impact">{t('strategy.channels.impact')}</p>
             </article>
+            ) : null}
 
             {/* 4. Menu Engineering Strategy */}
             <article className="cr-strat-card">

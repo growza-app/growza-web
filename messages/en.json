@@ -2966,7 +2966,7 @@
         "dataPair": "{singlePct}% of customers buy only 1 item (avg {avgItems} items/bill). Customers often buy {itemA} + {itemB} together ({pairBills} bills).",
         "dataSingle": "{singlePct}% of customers buy only 1 item (avg {avgItems} items/bill, {avgBill} per order).",
         "action": "Offer {leader} + {partner} together at a special price on POS. Ask staff to suggest it whenever someone buys just 1 item.",
-        "impact": "Extra money: +{amount} if 1 in 3 customers adds a ₹60 item"
+        "impact": "Extra money: +{amount} if 1 in 3 customers adds a {addOn} item"
       },
       "timing": {
         "tag": "QUIET DAYS & HOURS",
@@ -2990,8 +2990,8 @@
         "title": "Promote top sellers & cut slow items",
         "dataWithSlow": "{star} is selling fast, while {slowCount} of {menuTotal} items ({slowNames}) had almost no orders.",
         "dataClean": "{star} is your fastest-selling item across {menuTotal} items.",
-        "action": "Keep {star} at the top of your POS screen. Pair slow items ({slowNames}) into a special deal, or stop stocking them to save waste.",
-        "impact": "Result: Less waste across {slowCount} slow items"
+        "action": "Keep {star} at the top of your POS screen. Pair slow items ({slowNames}) into a special deal, or stop stocking them.",
+        "impact": "Result: Less money stuck in {slowCount} slow items"
       }
     }
   },

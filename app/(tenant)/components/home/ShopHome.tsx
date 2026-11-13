@@ -1783,6 +1783,7 @@ export function ShopHome({
                                 <strong className="hm-v3-srv-name">{r.name}</strong>
                                 <span className="hm-v3-prod-att-sub">
                                   {r.size ? s.sizeWord(r.size) : t.nav.stock}
+                                  {r.branch ? ` · ${r.branch}` : ''}
                                 </span>
                               </div>
                               <span className={`hm-pill hm-pill-${isOut ? 'rose' : 'amber'}`}>{s.left(r.left)}</span>
@@ -2305,6 +2306,7 @@ export function ShopHome({
                           <span className="shp-running-name">
                             {r.name}
                             {r.size ? <span className="shp-running-size"> · {s.sizeWord(r.size)}</span> : null}
+                            {r.branch ? <span className="shp-running-size"> · {r.branch}</span> : null}
                           </span>
                           <span className={`shp-running-left ${r.left <= 0 ? 'is-out' : ''}`}>{s.left(r.left)}</span>
                         </li>

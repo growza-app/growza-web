@@ -1364,7 +1364,15 @@ export interface ShopHome {
     counted: boolean;
     /** Everything at or under its line — the "View all (n)" beside the few listed. */
     total: number;
-    items: Array<{ productId: string; name: string; /** "30" or "30 / White"; null for a product with no sizes. */ size: string | null; left: number }>;
+    items: Array<{
+      productId: string;
+      name: string;
+      /** "30" or "30 / White"; null for a product with no sizes. */
+      size: string | null;
+      left: number;
+      /** Which branch's shelf — sent only on the "All branches" read of a shop with more than one branch. */
+      branch?: string;
+    }>;
   };
 }
 

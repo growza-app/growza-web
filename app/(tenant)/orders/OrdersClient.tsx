@@ -49,6 +49,12 @@ export function OrdersClient({
   const branchContext = useBranch();
   // An owner's free choice of branch narrows the list; a desk is held to its own by the server whatever is sent.
   const branch = branchContext.ready && branchContext.multi ? branchContext.choice : null;
+  /**
+   * The branch an order was rung up at, named only on the "All branches" list of a business with several. Each branch
+   * counts its own tokens from 1, so "#04" at one shop and "#04" at the other are two different orders side by side.
+   */
+  const branchOf = (locationId: string): string | null =>
+    branchContext.ready && branchContext.multi && branch === null ? (branchContext.branches.find((b) => b.id === locationId)?.name ?? null) : null;
 
   const [query, setQuery] = useState<OrdersQuery>(initialQuery);
   // What is TYPED, apart from what has been SENT: the box answers every keystroke, the server only hears the pause.
@@ -288,6 +294,12 @@ export function OrdersClient({
                             <span>{channelWord(r.channel)}</span>
                             <span aria-hidden="true">·</span>
                             <span>{t('list.itemCount', { count: r.items })}</span>
+                            {branchOf(r.locationId) ? (
+                              <>
+                                <span aria-hidden="true">·</span>
+                                <span>{branchOf(r.locationId)}</span>
+                              </>
+                            ) : null}
                             {/* A token says which order this is; only an order without one (a marketplace's, an older one) needs its code. */}
                             {r.tokenNo ? null : <span className="ord-code">{t('list.orderCode', { code: r.code.toUpperCase() })}</span>}
                             {isDeliveryApp(r.channel) && r.externalRef ? <span className="ord-code">{t('list.appOrder', { ref: r.externalRef })}</span> : null}
@@ -324,6 +336,7 @@ export function OrdersClient({
                     {/* The token the guest holds where there is one, as on the phone; the code only for an order without. */}
                     <div className="ord-code">{r.tokenNo ? formatTokenNo(r.tokenNo) : t('list.orderCode', { code: r.code.toUpperCase() })}</div>
                     {isDeliveryApp(r.channel) && r.externalRef ? <div className="ord-code">{t('list.appOrder', { ref: r.externalRef })}</div> : null}
+                    {branchOf(r.locationId) ? <div className="ord-code">{branchOf(r.locationId)}</div> : null}
                   </td>
                   <td>
                     <span className={`ord-chan-badge ord-chan-${r.channel}`}>{channelWord(r.channel)}</span>
