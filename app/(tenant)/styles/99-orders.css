@@ -1178,3 +1178,14 @@ a.ord-card:focus-visible,
     flex: none;
   }
 }
+
+/* Owner's review 2026-11-13 — a known customer's name on an order is a door to their card. */
+.ord-d-name-link {
+  display: inline-block;
+  color: var(--accent-deep);
+  text-decoration: none;
+}
+
+.ord-d-name-link:hover {
+  text-decoration: underline;
+}

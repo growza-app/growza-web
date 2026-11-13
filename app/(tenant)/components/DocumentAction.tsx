@@ -37,7 +37,9 @@ type Preview = {
   issued: { id: string; number: string } | null;
 };
 
-export function DocumentAction({ visitKey }: { visitKey: string }) {
+/** `primary`: the make/view button filled rather than ghost — on a screen where the receipt is the main thing to do. */
+export function DocumentAction({ visitKey, primary = false }: { visitKey: string; primary?: boolean }) {
+  const mainBtn = primary ? 'btn' : 'btn btn-ghost';
   const t = useTranslations('documents');
   const [preview, setPreview] = useState<Preview | null>(null);
   /** The reason the business cannot have one yet, in its own words. Shown, never thrown away. */
@@ -142,7 +144,7 @@ export function DocumentAction({ visitKey }: { visitKey: string }) {
     <div className="pf-doc">
       {issued ? (
         <>
-          <a className="btn btn-ghost" href={`/documents/${issued.id}`}>
+          <a className={mainBtn} href={`/documents/${issued.id}`}>
             <IconNote />
             {t('view', { title })} · {issued.number}
           </a>
@@ -154,7 +156,7 @@ export function DocumentAction({ visitKey }: { visitKey: string }) {
           ) : null}
         </>
       ) : (
-        <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void issue()}>
+        <button type="button" className={mainBtn} disabled={busy} onClick={() => void issue()}>
           <IconNote />
           {busy ? t('making') : t('make', { title })}
         </button>
