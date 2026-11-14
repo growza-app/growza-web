@@ -3675,6 +3675,7 @@
       "titleEdit": "Edit {product}",
       "name": "Name",
       "namePlaceholder": "e.g. Water bottle 1 litre",
+      "namePlaceholderUncounted": "e.g. Paneer butter masala",
       "price": "Sell price",
       "stock": "Opening count",
       "stockHint": "How many are on the shelf today. Later changes go on the Stock tab, with a reason.",

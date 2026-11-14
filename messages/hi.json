@@ -3675,6 +3675,7 @@
       "titleEdit": "{product} बदलें",
       "name": "नाम",
       "namePlaceholder": "जैसे पानी की बोतल 1 लीटर",
+      "namePlaceholderUncounted": "जैसे पनीर बटर मसाला",
       "price": "बिक्री दाम",
       "stock": "शुरुआती गिनती",
       "stockHint": "आज शेल्फ़ पर कितने हैं। आगे के बदलाव स्टॉक टैब पर, वजह के साथ।",

@@ -236,3 +236,13 @@ describe('the words a count brings with it', () => {
     expect(en.products.import.summaryUncounted).toContain('on your menu');
   });
 });
+
+/** QA 2026-11-14, F19 — a kitchen's "Add a dish" suggested "Water bottle 1 litre" as the name. */
+describe("the add form's example name follows the shelf", () => {
+  it('a counted shelf keeps the shop example; a kitchen gets a dish, in both languages', () => {
+    expect(sheet).toContain("placeholder={t(counted ? 'namePlaceholder' : 'namePlaceholderUncounted')}");
+    expect(en.products.form.namePlaceholder).toContain('Water bottle');
+    expect(en.products.form.namePlaceholderUncounted).not.toMatch(/bottle|litre/i);
+    expect(hi.products.form.namePlaceholderUncounted).not.toContain('बोतल');
+  });
+});
