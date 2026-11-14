@@ -27,7 +27,8 @@ describe('a shop’s Home says each thing once', () => {
   it('splits by channel only once something sold outside the counter', () => {
     expect(shop).toContain("const soldElsewhere = channelBreakdown.some((ch) => ch.key !== 'counter' && ch.billed > 0);");
     expect(shop).toMatch(/\{soldElsewhere \? \(\s*<div className="hm-v3-kpi-foot hm-v3-split-foot">/);
-    expect(shop).toContain('{money && canReports && soldElsewhere ? (\n                  <section className="hm-v3-card shp-channels-card">');
+    expect(shop).toContain('const showChannels = money && canReports && soldElsewhere;');
+    expect(shop).toContain('{showChannels ? (\n                  <section className="hm-v3-card shp-channels-card">');
   });
 
   it('has one Needs attention card that draws only counts above zero', () => {

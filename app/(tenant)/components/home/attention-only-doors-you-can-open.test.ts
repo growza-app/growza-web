@@ -23,7 +23,9 @@ describe('Needs attention shows only what this person can open', () => {
   });
 
   it('lets the trend take the row on a laptop when the card is gone', () => {
-    expect(home).toContain("attentionReachable ? ' hm-v3-mid-two' : ' hm-v3-mid-one'");
+    // The row counts what it draws (final check 2026-11-14): the trend, the channel split, Needs attention.
+    expect(home).toContain('const midCount = (money ? 1 : 0) + (showChannels ? 1 : 0) + (attentionReachable ? 1 : 0);');
+    expect(home).toContain("midCount === 3 ? '' : midCount === 2 ? ' hm-v3-mid-two' : ' hm-v3-mid-one'");
     expect(css).toMatch(/\.hm-v3-mid\.hm-v3-mid-one \{\s*grid-template-columns: minmax\(0, 1fr\);/);
   });
 });

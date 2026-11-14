@@ -562,6 +562,16 @@ export function ShopHome({
   const showSellers = reportsOn && can('/stock/sellers');
   const showStockWorth = reportsOn && can('/stock/report');
   const kpiCount = 2 + (showSellers ? 1 : 0) + (areas.stock ? 1 : 0);
+  /*
+   * …and the rows under it. The desk was told "No sales recorded in this period yet" by Sales trend and Top sellers,
+   * and "Recent orders (0) · Your first sale will show up here" on a day of 18 orders: each card reads a figure this
+   * person is refused, and an empty answer read as an empty day. A card whose figure cannot reach this person is not
+   * drawn, and the row closes up around what is left. The toolbar above, every control of which is the money's, goes
+   * when it would be an empty strip.
+   */
+  const showChannels = money && canReports && soldElsewhere;
+  const showRecent = can('/orders');
+  const showToolbar = money || (isKitchen && can('/stock'));
   const kpiBox = (href: string | null, tone: string, body: ReactNode) =>
     href ? (
       <a className={`hm-v3-kpi hm-v3-kpi-link ${tone}`} href={href}>
@@ -702,6 +712,8 @@ export function ShopHome({
    * rows they can open.
    */
   const attentionReachable = can('/stock') || can('/orders');
+  /** How many cards the laptop's middle row draws: the trend (money), the channel split, Needs attention. */
+  const midCount = (money ? 1 : 0) + (showChannels ? 1 : 0) + (attentionReachable ? 1 : 0);
 
   /*
    * Owner, 2026-11-13 — the phone's Needs attention card, for a shop with a counted shelf: the same four counts the
@@ -897,6 +909,7 @@ export function ShopHome({
         ) : (
           <>
             {/* Top Toolbar (Desktop Command Center period switch & quick primary actions) */}
+            {showToolbar ? (
             <div className="hm-toolbar shp-desk-toolbar">
               <div className="shp-desk-toolbar-start">
                 {money && canReports ? (
@@ -955,6 +968,7 @@ export function ShopHome({
                 </div>
               </div>
             </div>
+            ) : null}
 
             {/* =====================================================================
                 SIMPLE RESTAURANT DESKTOP HOME (from 861px up when isKitchen is true)
@@ -1478,8 +1492,10 @@ export function ShopHome({
               </div>
 
               {/* ROW 2 — Sales trend, where the money came from (once there is more than the counter), and what needs attention */}
-              <div className={`hm-v3-mid${money && canReports && soldElsewhere ? '' : attentionReachable ? ' hm-v3-mid-two' : ' hm-v3-mid-one'}`}>
-                {/* 1. Sales Trend SVG Line + Bar Chart */}
+              {midCount === 0 ? null : (
+              <div className={`hm-v3-mid${midCount === 3 ? '' : midCount === 2 ? ' hm-v3-mid-two' : ' hm-v3-mid-one'}`}>
+                {/* 1. Sales Trend SVG Line + Bar Chart — money, so only for whoever is sent it. */}
+                {!money ? null : (
                 <section className="hm-v3-card hm-v3-trend-card">
                   <div className="hm-v3-card-head">
                     <div className="shp-trend-head-main">
@@ -1545,9 +1561,10 @@ export function ShopHome({
                     </div>
                   )}
                 </section>
+                )}
 
                 {/* 2. Where Money Came From — drawn only once a channel besides the counter has sold. */}
-                {money && canReports && soldElsewhere ? (
+                {showChannels ? (
                   <section className="hm-v3-card shp-channels-card">
                     <div className="hm-v3-card-head">
                       <h2>{s.channelsLink}</h2>
@@ -1665,8 +1682,10 @@ export function ShopHome({
                   </section>
                 ) : null}
               </div>
+              )}
 
-              {/* ROW 3 — Top sellers, the width of the page. */}
+              {/* ROW 3 — Top sellers, the width of the page: the sellers report's, so only for whoever reads it. */}
+              {!showSellers ? null : (
               <section className="hm-v3-card hm-v3-staff-card">
                 <div className="hm-v3-card-head">
                   <h2>
@@ -1716,8 +1735,10 @@ export function ShopHome({
                   </ul>
                 )}
               </section>
+              )}
 
-              {/* ROW 4 — Recent Orders (Full-Width Table Card) */}
+              {/* ROW 4 — Recent Orders (Full-Width Table Card): the Orders list's rows, so only where Orders opens. */}
+              {!showRecent ? null : (
               <section className="hm-v3-card hm-v3-recent-card">
                 <div className="hm-v3-card-head">
                   <h2>
@@ -1792,6 +1813,7 @@ export function ShopHome({
                   </div>
                 )}
               </section>
+              )}
             </div>
 
             {/* =====================================================================
