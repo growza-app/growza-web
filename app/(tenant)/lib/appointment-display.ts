@@ -4,7 +4,7 @@ import type { Appointment, VisitPaymentLine, VisitProductLine } from './api';
 export type StatusKey = 'done' | 'didNotCome' | 'cancelled' | 'moved' | 'reminded' | 'walkIn' | 'confirmed';
 
 /** Shared with the dashboard's "today" list so a booking's status reads identically everywhere it appears. */
-export function statusChip(appt: Pick<Appointment, 'status'> & Partial<Pick<Appointment, 'reminderSent' | 'createdVia' | 'movedTo'>>) {
+export function statusChip(appt: Pick<Appointment, 'status'> & Partial<Pick<Appointment, 'reminderSent' | 'createdVia' | 'movedTo' | 'bookedAhead'>>) {
   if (appt.status === 'completed') return { cls: 'chip-completed', key: 'done' as StatusKey };
   if (appt.status === 'no_show') return { cls: 'chip-no_show', key: 'didNotCome' as StatusKey };
   // Owner-app audit, 2026-10-10 — a move retires the old slot as cancelled; it was moved, not called off.
@@ -13,7 +13,12 @@ export function statusChip(appt: Pick<Appointment, 'status'> & Partial<Pick<Appo
   // A confirmed booking whose reminder already went out shows that instead —
   // a derived display state, never a DB status (07-product-surfaces.md §1.2).
   if (appt.reminderSent) return { cls: 'chip-reminder', key: 'reminded' as StatusKey };
-  if (appt.createdVia === 'dashboard') return { cls: 'chip-new', key: 'walkIn' as StatusKey };
+  /*
+   * QA 2026-11-14 — "Walk-in" only for a visit recorded as it happened. A booking the desk made for later
+   * (New booking → Pick a time; `bookedAhead`, the rule `markArrived` applies) is also `createdVia: dashboard`,
+   * and every one of them read "Walk-in" on the Bookings list. An older API sends no `bookedAhead`: as before.
+   */
+  if (appt.createdVia === 'dashboard' && appt.bookedAhead !== true) return { cls: 'chip-new', key: 'walkIn' as StatusKey };
   return { cls: 'chip-confirmed', key: 'confirmed' as StatusKey };
 }
 
@@ -109,6 +114,8 @@ export interface BookingGroup {
   providerNames: string[];
   status: Appointment['status'];
   createdVia: Appointment['createdVia'];
+  /** QA 2026-11-14 — booked for later rather than recorded as a walk-in; the legs are booked together. */
+  bookedAhead?: boolean;
   reminderSent: boolean;
   priceMinor: number;
   /** True when the booking has more than one service (grouped display). */
@@ -184,6 +191,7 @@ export function groupBookings(appointments: Appointment[]): BookingGroup[] {
       providerNames: [...new Set(sorted.map((a) => a.providerName).filter((n): n is string => !!n))],
       status: groupStatus(sorted),
       createdVia: first.createdVia,
+      ...(first.bookedAhead !== undefined ? { bookedAhead: first.bookedAhead } : {}),
       reminderSent: sorted.some((a) => a.reminderSent),
       priceMinor: sorted.reduce((sum, a) => sum + Number(a.priceMinor ?? 0), 0),
       isCombo: sorted.length > 1,
