@@ -1,7 +1,7 @@
 'use client';
 
 import { deltaLabel, deltaTone, periodDeltaPct } from './day-delta';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api } from '../../lib/api';
 import { paidCustomers } from '../../lib/paid-customers';
 import type {
@@ -17,7 +17,6 @@ import type {
 } from '../../lib/api-types';
 import { homeCopy } from '../../lib/home-copy';
 import { DaySummarySheet } from './DaySummarySheet';
-import { CashDrawerLine } from './CashDrawer';
 import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import { ordersHref } from '../../lib/orders-filter';
@@ -30,6 +29,7 @@ import { useAreas } from '../SessionProvider';
 import {
   IconNavClients,
   IconNavOrders,
+  IconPlus,
   IconNavStock,
   IconSettings,
   IconChevronRight,
@@ -38,7 +38,7 @@ import {
   IconProducts,
   IconReports,
 } from '../icons';
-import { Avatar, Card, CardError, HomeHeader, QuickTiles, Segmented, exactRupees, rupees } from './parts';
+import { Avatar, Card, CardError, DarkStatCard, HomeHeader, PageHead, PayGaugeCard, QuickTiles, Segmented, WeekBarsCard, exactRupees, paySlicesOf, rupees } from './parts';
 import { CheckInCard } from './CheckInCard';
 import { PaymentBar, PaymentLine } from './MoneyHero';
 import { orderNumber } from '../../lib/order-number';
@@ -109,6 +109,8 @@ export function ShopHome({
   const [returnsData, setReturnsData] = useState<ReturnsReportPage | null>(null);
   const [recentOrders, setRecentOrders] = useState<OrderListRow[]>([]);
   const [todayOrderRows, setTodayOrderRows] = useState<OrderListRow[]>([]);
+  /** Emerald v2 — the laptop's week of orders behind the two white tiles' sparklines, with the list's full count. */
+  const [deskWeek, setDeskWeek] = useState<{ rows: OrderListRow[]; total: number } | null>(null);
   const [queueTick, setQueueTick] = useState(0);
   const [customerStats, setCustomerStats] = useState<CustomerStats | null>(null);
 
@@ -208,10 +210,14 @@ export function ShopHome({
 
     if (can('/orders')) {
       // Nothing is ever waiting to be sent where nothing ships (a kitchen): that list is not asked for.
+      // Emerald v2 (owner, 2026-11-14, "try the sparkline") — the hundred most recent, not six: the first six are the
+      // Recent orders panel, and the whole read is the week the Orders and Guests tiles draw a line from.
       api
-        .orders({ pageSize: 6, location: branch })
+        .orders({ pageSize: 100, location: branch })
         .then((res) => {
-          if (mine === deskReqId.current) setRecentOrders(res.rows);
+          if (mine !== deskReqId.current) return;
+          setRecentOrders(res.rows.slice(0, 6));
+          setDeskWeek({ rows: res.rows, total: res.total });
         })
         .catch(() => {});
     }
@@ -520,6 +526,9 @@ export function ShopHome({
     return { ticks, points, polyPoints, areaPoints, maxMinor, totalMinor, dailyAvgMinor, peakDay };
   }, [channelData, lang]);
 
+  /* Emerald v3 — the laptop's half-donut: the window's takings by how they were paid. */
+  const paySlices = useMemo(() => paySlicesOf(channelData?.byPaymentMode), [channelData]);
+
   const channelBreakdown = useMemo(() => {
     const byKey = new Map((channelData?.channels ?? []).map((c) => [c.channel, c]));
     const totalBilled = Math.max(1, Number(channelData?.totals.billedMinor ?? 0));
@@ -752,6 +761,34 @@ export function ShopHome({
     return (d: Date) => (f ? f.format(d) : d.toISOString().slice(0, 10));
   }, [timezone]);
   /*
+   * Emerald v2 — the last seven days for the Orders and Guests tiles: orders a day, and named guests a day. Drawn
+   * only when the read reaches back past the first of the seven days (or holds every order there is): a busy
+   * kitchen's hundred most recent may cover two days, and a line that drops to nothing on day three would be a lie.
+   */
+  const weekLines = useCallback(
+    (rows: OrderListRow[], total: number) => {
+      if (rows.length === 0) return null;
+      const days = Array.from({ length: 7 }, (_, k) => fmtDate(new Date(Date.now() - (6 - k) * 86_400_000)));
+      const first = days[0]!;
+      const covered = total <= rows.length || rows.some((r) => fmtDate(new Date(r.soldAt)) < first);
+      if (!covered) return null;
+      const orders = days.map(() => 0);
+      const guests = days.map(() => new Set<string>());
+      for (const r of rows) {
+        if (r.status === 'cancelled') continue;
+        const i = days.indexOf(fmtDate(new Date(r.soldAt)));
+        if (i < 0) continue;
+        orders[i]! += 1;
+        const name = r.who?.name?.trim().toLowerCase();
+        if (name) guests[i]!.add(name);
+      }
+      return { orders, guests: guests.map((g) => g.size) };
+    },
+    [fmtDate],
+  );
+  const deskSpark = useMemo(() => (deskWeek ? weekLines(deskWeek.rows, deskWeek.total) : null), [deskWeek, weekLines]);
+
+  /*
    * QA 13 Nov 2026, bug 4 — the API's count (`customersToday`), the same for every role: the hundred-order read below
    * runs only for a role that may open Orders, so a desk's card said 0. An older API falls back to counting those rows.
    */
@@ -890,12 +927,13 @@ export function ShopHome({
     <>
       <HomeHeader
         t={t}
-        title={isKitchen ? `${t.greeting(greetingPart)}! 👋` : t.greeting(greetingPart)}
+        title={t.greeting(greetingPart)}
         sub={isKitchen ? s.kitchenSub(businessName) : money ? t.ownerSub(businessName, false) : businessName}
         businessName={businessName}
         locationName={locationName}
         dateLabel={dateLabel}
-        simpleDesktop={isKitchen}
+        // Emerald v3 (owner, 2026-11-14, "apply the same layout to all verticals") — every shop's laptop header is the slim bar.
+        simpleDesktop
         // A shop opens the day's summary from the toolbar beside the range, so the header does not carry a second one.
         onDaySummary={money && isKitchen ? () => setSummaryOpen(true) : undefined}
       />
@@ -973,13 +1011,38 @@ export function ShopHome({
             {/* =====================================================================
                 SIMPLE RESTAURANT DESKTOP HOME (from 861px up when isKitchen is true)
                ===================================================================== */}
-            {isKitchen ? (
+            {/* Emerald v3 — the laptop Home every shop gets now, kitchen or shelf; the command center below is retired. */}
+            {data ? (
               <div className="rst-desk hm-desktop">
+                {/*
+                  Emerald v2 (owner, 2026-11-14, "go ahead with all") — the page's own head, as the shot has it: the
+                  greeting and one line on the left, the day's two actions on the right as pills. The header's h1 says
+                  the same words to a screen reader; on a laptop it is moved out of sight (99-z-emerald-v2.css), so
+                  this copy is hidden from one.
+                */}
+                <PageHead title={t.greeting(greetingPart)} sub={`${dateLabel} · ${s.kitchenSub(businessName)}`}>
+                  {money ? (
+                    <button type="button" className="rst-pill" onClick={() => setSummaryOpen(true)}>
+                      <IconDaySummary />
+                      <span>{t.daySummary}</span>
+                    </button>
+                  ) : null}
+                  {can('/pos') ? (
+                    <a className="rst-pill is-primary" href="/pos">
+                      <IconPlus />
+                      <span>{s.newOrderAction}</span>
+                    </a>
+                  ) : null}
+                </PageHead>
+
                 {/* ROW 1 — 3 Soft Pastel KPI Cards */}
                 <div className="rst-kpis">
                   {/* 1. Today's sales */}
                   {money && data.today.takingsMinor !== undefined ? (
                     <div className="rst-kpi rst-kpi-sales">
+                      {can('/reports') ? (
+                        <a className="rst-kpi-go" href="/reports" aria-label={t.nav.reports}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg></a>
+                      ) : null}
                       <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
                         <path d="M0 45 C120 70 260 15 400 38 L400 70 L0 70 Z" fill="rgba(22, 163, 74, 0.08)" />
                       </svg>
@@ -1014,7 +1077,13 @@ export function ShopHome({
                                 <b>{rupees(m.revenueMinor)}</b>
                               </span>
                             ))}
-                          {/* QA 2026-11-06 — what the apps billed, so the split adds up to the takings beside it. */}
+                          {/* Emerald v3 — what an order came to on average, on the wide money tile. */}
+                          {data.today.orders > 0 ? (
+                            <span className="rst-kpi-mode is-avg">
+                              <b>{s.avgOrderShort(rupees(Math.round(data.today.takingsMinor / data.today.orders)))}</b>
+                            </span>
+                          ) : null}
+                                                    {/* QA 2026-11-06 — what the apps billed, so the split adds up to the takings beside it. */}
                           {data.today.fromAppsMinor ? (
                             <span className="rst-kpi-mode">
                               <i className="rst-mode-dot is-apps" aria-hidden />
@@ -1024,23 +1093,15 @@ export function ShopHome({
                           ) : null}
                         </div>
                       ) : null}
-                      {/*
-                        Owner, 2026-11-06 — the notes in the till, which the split above cannot say (CashDrawer.tsx).
-                        Owner, 2026-11-13 — a shop with a counted shelf does not get the row; the kitchen keeps it.
-                      */}
-                      {isKitchen && data.today.cashDrawer && (data.today.cashDrawer.takenMinor > 0 || data.today.cashDrawer.refundedMinor > 0) ? (
-                        <div className="rst-kpi-modes rst-kpi-drawer">
-                          <span className="rst-kpi-mode">
-                            <span>{t.cashInDrawer}</span>
-                            <b>{rupees(data.today.cashDrawer.inDrawerMinor)}</b>
-                          </span>
-                        </div>
-                      ) : null}
+                      {/* Owner, 2026-11-14 (Emerald v2) — cash in the drawer is off the desktop tile; the phone hero keeps it. */}
                     </div>
                   ) : null}
 
                   {/* 2. Orders */}
                   <a className="rst-kpi rst-kpi-orders" href={can('/orders') ? '/orders' : undefined}>
+                    {/* The arrow says "opens"; a tile this person cannot open draws none (develop: a link only where its screen opens). */}
+                    {can('/orders') ? <span className="rst-kpi-go" aria-hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg></span> : null}
+                    {deskSpark ? <KpiSpark values={deskSpark.orders} /> : null}
                     <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
                       <path d="M0 48 C140 20 270 65 400 35 L400 70 L0 70 Z" fill="rgba(37, 99, 235, 0.07)" />
                     </svg>
@@ -1054,16 +1115,24 @@ export function ShopHome({
                     <div className="rst-kpi-main">
                       <span className="rst-kpi-label">{s.ordersTitle}</span>
                       <strong className="rst-kpi-value">{data.today.orders}</strong>
+                      {/* Emerald v3 (owner, 2026-11-14: "add more info to the KPIs, looking empty") — where today's orders are. */}
+                      <span className="rst-kpi-note">
+                        {isKitchen ? s.ordersNote(queueStats.completedToday, queueStats.inQueue) : s.toSendNote(data.toSend)}
+                      </span>
                     </div>
                     {ordersDeltaPct !== null ? (
                       <div className="rst-kpi-side is-bottom">
                         <span className={`rst-delta-pill ${deltaTone(ordersDeltaPct)}`}>{deltaLabel(ordersDeltaPct)}</span>
+                        <span className="rst-delta-sub">{s.vsYesterday}</span>
                       </div>
                     ) : null}
                   </a>
 
                   {/* 3. Customers */}
                   <a className="rst-kpi rst-kpi-customers" href={can('/customers') ? '/customers' : undefined}>
+                    {/* The arrow says "opens"; a tile this person cannot open draws none (develop: a link only where its screen opens). */}
+                    {can('/customers') ? <span className="rst-kpi-go" aria-hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg></span> : null}
+                    {deskSpark ? <KpiSpark values={deskSpark.guests} /> : null}
                     <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
                       <path d="M0 42 C130 65 260 22 400 44 L400 70 L0 70 Z" fill="rgba(217, 119, 6, 0.08)" />
                     </svg>
@@ -1078,64 +1147,65 @@ export function ShopHome({
                     <div className="rst-kpi-main">
                       <span className="rst-kpi-label">{s.customersCardTitle}</span>
                       <strong className="rst-kpi-value">{customersTotal ?? '—'}</strong>
+                      {customerStats ? <span className="rst-kpi-note">{s.newThisMonthNote(customerStats.newThisMonth)}</span> : null}
+                    </div>
+                    {/* Emerald v3 — every tile ends on the same small line, as the shot's four do. */}
+                    <div className="rst-kpi-side is-bottom">
+                      <span className="rst-delta-pill is-up">{customersToday}</span>
+                      <span className="rst-delta-sub">{s.cameInToday}</span>
                     </div>
                   </a>
                 </div>
 
-                {/* ROW 2 — What would you like to do? (4 Action Cards) */}
-                <section className="rst-actions-section">
-                  <h2 className="rst-section-title">{s.whatWouldYouLikeToDo}</h2>
-                  <div className="rst-actions-grid">
-                    {can('/orders') ? (
-                      <a className="rst-action-tile" href="/orders">
-                        <span className="rst-action-icon" aria-hidden>
-                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="5" y="4" width="14" height="17" rx="2.5" />
-                            <path d="M5 9h14" />
-                            <circle cx="12" cy="14" r="1.5" />
-                          </svg>
-                        </span>
-                        <strong>{s.viewOrdersAction}</strong>
-                      </a>
-                    ) : null}
-                    {can('/stock') ? (
-                      <a className="rst-action-tile" href={`/stock${stockBranch}`}>
-                        <span className="rst-action-icon" aria-hidden>
-                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z" />
-                            <path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z" />
-                          </svg>
-                        </span>
-                        <strong>{s.manageMenuAction}</strong>
-                      </a>
-                    ) : null}
-                    {can('/customers') ? (
-                      <a className="rst-action-tile" href="/customers">
-                        <span className="rst-action-icon" aria-hidden>
-                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                            <circle cx="9" cy="7" r="4" />
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                          </svg>
-                        </span>
-                        <strong>{s.customersCardTitle}</strong>
-                      </a>
-                    ) : null}
-                    {can('/reports') ? (
-                      <a className="rst-action-tile" href="/reports">
-                        <span className="rst-action-icon" aria-hidden>
-                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="4" y="13" width="3.5" height="7" rx="1" />
-                            <rect x="10.25" y="9" width="3.5" height="11" rx="1" />
-                            <rect x="16.5" y="5" width="3.5" height="15" rx="1" />
-                          </svg>
-                        </span>
-                        <strong>{t.nav.reports}</strong>
-                      </a>
-                    ) : null}
-                  </div>
-                </section>
+                {/*
+                  ROW 2 — Emerald v2: the week in pictures instead of four shortcut tiles (the sidebar has every one of
+                  those doors). Each card draws only when its figures came back; nothing is drawn as a placeholder.
+                */}
+                <div className="rst-charts">
+                  {money && trendChart.points.length > 0 && trendChart.totalMinor > 0 ? (
+                    <WeekBarsCard
+                      title={s.salesLast7}
+                      total={rupees(trendChart.totalMinor)}
+                      bars={trendChart.points.map((p) => ({
+                        key: p.key,
+                        label: p.dateShort,
+                        pct: p.pct,
+                        amount: p.revenueMinor > 0 ? rupees(p.revenueMinor) : null,
+                        peak: p.isPeak,
+                        srText: `${p.dateShort} ${rupees(p.revenueMinor)}`,
+                      }))}
+                    />
+                  ) : null}
+                  {money ? (
+                    <PayGaugeCard title={s.paidLast7} slices={paySlices} nameOf={(m) => t.payment[m] ?? m} money={rupees} />
+                  ) : null}
+                  {isKitchen ? (
+                    <DarkStatCard
+                      title={s.queueTitle}
+                      value={queueStats.inQueue}
+                      valueLabel={queueStats.inQueue === 0 ? s.noQueueNow : s.waitingNow}
+                      foot={
+                        <>
+                          {s.completedToday}: <b>{queueStats.completedToday}</b>
+                        </>
+                      }
+                      action={can('/pos') ? { href: '/pos?mode=queue', label: s.openQueue } : null}
+                    />
+                  ) : counted ? (
+                    /* A shop has no queue; its live number is the shelf: what is running low, and how much of it is gone. */
+                    <DarkStatCard
+                      title={s.runningOutTitle}
+                      value={data.running.total}
+                      valueLabel={s.lowStockShort}
+                      foot={
+                        <>
+                          {s.outOfStockShort}: <b>{outOfStockCount}</b>
+                        </>
+                      }
+                      action={can('/stock') ? { href: `/stock${stockBranch}`, label: t.nav.stock } : null}
+                    />
+                  ) : null}
+                </div>
 
                 {/* ROW 3 — Two-Column Bottom Grid: Recent orders (left) + Needs attention (right) */}
                 <div className="rst-bottom-grid">
@@ -1153,7 +1223,7 @@ export function ShopHome({
                       <p className="hm-empty">{s.noOrdersBody}</p>
                     ) : (
                       <ul className="rst-order-list">
-                        {recentOrders.slice(0, 3).map((o) => {
+                        {recentOrders.slice(0, 5).map((o) => {
                           // What the order IS — never a guess at it. An app's order is a delivery; anything else rung up here is a counter order.
                           const isDelivery = isDeliveryApp(o.channel);
                           const subLabel = `${channelWord(o.channel)} · ${formatDateTime(o.soldAt)}`;
@@ -1207,7 +1277,35 @@ export function ShopHome({
                     )}
                   </section>
 
-                  {/* Right: Needs attention — only what is true right now; nothing at all when nothing is. */}
+                  {/* Emerald v2 — what sold, beside what was ordered. */}
+                  {money && (sellersData?.rows?.length ?? 0) > 0 ? (
+                    <section className="rst-panel rst-sellers-panel">
+                      <div className="rst-panel-head">
+                        <h3>{s.topSellersTitle}</h3>
+                        {can('/stock/sellers') ? (
+                          <a className="rst-view-all" href="/stock/sellers">
+                            {t.viewAll} →
+                          </a>
+                        ) : null}
+                      </div>
+                      <ol className="rst-sellers">
+                        {(sellersData?.rows ?? []).slice(0, 5).map((item, idx) => (
+                          <li key={item.id}>
+                            <span className={`rst-seller-rank${idx === 0 ? ' is-top' : ''}`}>{idx + 1}</span>
+                            <span className="rst-seller-name">
+                              {item.name}
+                              {item.sizeLabel ? ` (${item.sizeLabel})` : ''}
+                            </span>
+                            <span className="rst-seller-units">{s.soldCountPill(item.units)}</span>
+                            <b className="rst-seller-val">{rupees(Number(item.valueMinor))}</b>
+                          </li>
+                        ))}
+                      </ol>
+                    </section>
+                  ) : null}
+
+                  {/* Right: Needs attention — only when something does (Emerald v2: an empty white box read as broken). */}
+                  {attention.length === 0 ? null : (
                   <section className="rst-panel rst-attention-panel">
                     <div className="rst-panel-head">
                       <h3>{s.needsAttentionTitle}</h3>
@@ -1245,6 +1343,7 @@ export function ShopHome({
                       </div>
                     )}
                   </section>
+                  )}
                 </div>
               </div>
             ) : null}
@@ -1252,7 +1351,7 @@ export function ShopHome({
             {/* =====================================================================
                 DESKTOP COMMAND CENTER (4-row Salon-style layout from 861px up)
                ===================================================================== */}
-            <div className={`hm-desk-v3 hm-desktop shp-desk-v3${isKitchen ? ' is-kitchen-hidden' : ''}`}>
+            <div className="hm-desk-v3 hm-desktop shp-desk-v3 is-kitchen-hidden">
               {/* ROW 1 — four rich KPI cards; three where there is no shelf (a kitchen), which drops Stock worth. */}
               <div className={`hm-v3-kpis${kpiCount === 4 ? '' : ` hm-v3-kpis-${kpiCount}`}`}>
                 {/* 1. Takings / Billed Revenue */}
@@ -1951,7 +2050,7 @@ export function ShopHome({
                             appsMinor={phoneFigures.fromAppsMinor}
                           />
                         ) : null}
-                        {isKitchen && (phoneFigures.kind === 'today' || phoneFigures.kind === 'range') ? <CashDrawerLine t={t} cashDrawer={phoneFigures.cashDrawer} /> : null}
+                        {/* Owner, 2026-11-14 (Emerald v2) — "remove cash drawer for mobile also": the day sheet still has it. */}
                         {phoneSpark.length > 0 ? (
                           // Decoration would be a lie here, so it is drawn only from the window's own daily totals.
                           <div className="shp-spark" aria-hidden="true">
@@ -1978,11 +2077,12 @@ export function ShopHome({
         )}
 
         {/*
-          Quick links on a phone. Owner, 2026-11-13 — a shop with a counted shelf has them straight under the money:
-          the figure, then the doors, then what needs the owner. The kitchen keeps them last (below). Outside the
-          branch a failed read replaces, so they stay when it does. `.hm-mobile`, so a laptop never draws them.
+          Quick links on a phone, straight under the money: the figure, then the doors, then what needs the owner.
+          Owner, 2026-11-13 for a shop; 2026-11-14 for the kitchen too ("move quick links below the KPI card").
+          Outside the branch a failed read replaces, so they stay when it does. `.hm-mobile`, so a laptop never
+          draws them.
         */}
-        {areas.stock ? quickLinks : null}
+        {quickLinks}
 
         {failed || !data ? null : (
             <div className="shp-mobile-stack">
@@ -2314,7 +2414,6 @@ export function ShopHome({
 
             </div>
         )}
-        {areas.stock ? null : quickLinks}
       </div>
       {summaryOpen ? (
         <DaySummarySheet
@@ -2325,5 +2424,22 @@ export function ShopHome({
         />
       ) : null}
     </>
+  );
+}
+
+/**
+ * Emerald v2 — a week as one thin line along the bottom of a white tile, with a soft mint fill under it. Seven
+ * points, oldest on the left. Decoration that is also a reading: is this week going up or down. Hidden from a
+ * screen reader, which has the figure itself; a week with nothing in it draws nothing.
+ */
+function KpiSpark({ values }: { values: number[] }) {
+  const max = Math.max(...values);
+  if (max <= 0 || values.length < 2) return null;
+  const pts = values.map((v, i) => `${((i / (values.length - 1)) * 100).toFixed(1)},${(30 - (v / max) * 24).toFixed(1)}`).join(' ');
+  return (
+    <svg className="rst-kpi-spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <polygon points={`0,32 ${pts} 100,32`} />
+      <polyline points={pts} />
+    </svg>
   );
 }

@@ -49,5 +49,5 @@
 .rp-range-menu button.active {
   background: var(--accent-soft);
   color: var(--accent-deep);
-  font-weight: 700;
+  font-weight: 600;
 }

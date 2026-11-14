@@ -23,7 +23,7 @@
 
 .rp-card h2 {
   margin: 0;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 0.9375rem;
   color: var(--text);
 }
@@ -45,7 +45,7 @@
 
 .rp-card-figure {
   font-size: 1.25rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: -0.4px;
   white-space: nowrap;
 }

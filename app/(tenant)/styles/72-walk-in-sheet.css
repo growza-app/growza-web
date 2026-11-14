@@ -105,13 +105,13 @@ input.wi-search-input-plain {
 
 .wi-also-try-label {
   font-size: 0.8125rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--muted);
 }
 
 .wi-section-label {
   font-size: 0.8125rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--muted);
   margin: 16px 0 8px;
 }
@@ -204,7 +204,7 @@ input.wi-search-input-plain {
 
 .wi-done-title {
   font-size: 1.125rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .wi-done-sub {
@@ -243,7 +243,7 @@ input.wi-search-input-plain {
   background: var(--accent-deep);
   color: #fff;
   border-radius: var(--radius-sm);
-  font-weight: 620;
+  font-weight: 600;
 }
 
 .wi-body .sheet-item.wi-take-payment:hover {
@@ -259,7 +259,7 @@ input.wi-search-input-plain {
   border-radius: var(--radius-sm);
   background: var(--accent-deep);
   color: #fff;
-  font-weight: 620;
+  font-weight: 600;
 }
 .wi-body .sheet-item.wi-finish:hover {
   background: var(--accent-deep);
@@ -758,7 +758,7 @@ input.wi-search-input-plain {
   background: var(--slate-soft);
   color: var(--muted);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* Jira GRW-290 — payment mode pinned in the footer, on its own row above Back / Mark done. */
@@ -776,7 +776,7 @@ input.wi-search-input-plain {
 }
 .wi-pay-modes-label {
   font-size: 0.8125rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--muted);
 }
 .wi-pay-modes .wi-chips {
@@ -894,7 +894,7 @@ input.wi-search-input-plain {
 }
 .wi-combo-save {
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--accent-deep); /* Jira GRW-478 (U-7) — 12px text needs 4.5:1; --accent is 3.3:1 */
   white-space: nowrap;
 }
@@ -989,7 +989,7 @@ input.wi-search-input-plain {
   margin: 12px 0 0;
   color: var(--muted);
   font-size: 0.8125rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 /* ---------- the client search as a dropdown (Jira GRW-520) ----------
@@ -1372,7 +1372,7 @@ input.wi-search-input-plain {
 .wi-qty-n {
   min-width: 1.25rem;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   text-align: center;
   color: var(--accent-ink);
@@ -1512,7 +1512,7 @@ input.wi-search-input-plain {
 
 .wi-tray-total-amount {
   font-size: 1.25rem;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
 }
@@ -1659,7 +1659,7 @@ input.wi-search-input-plain {
 
 .pkg-details-total {
   font-size: 1.0625rem;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1708,7 +1708,7 @@ input.wi-search-input-plain {
 /* The noun leads the row, so "Rahul" and "Priya" read as the stylist without a heading above them. */
 .wi-stylist-chips-label {
   font-size: 0.8125rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--muted);
   margin-inline-end: var(--sp-1);
 }
@@ -1834,7 +1834,7 @@ input.wi-search-input-plain {
   background: var(--surface);
   color: var(--accent-deep);
   font-size: 1.125rem;
-  font-weight: 800;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1849,7 +1849,7 @@ input.wi-search-input-plain {
 
 .wi-rc-biz {
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.2;
   color: #fff;
   overflow: hidden;
@@ -1880,7 +1880,7 @@ input.wi-search-input-plain {
 
 .wi-rc-token-lbl {
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
@@ -1889,7 +1889,7 @@ input.wi-search-input-plain {
 
 .wi-rc-token-num {
   font-size: 1.125rem;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.15;
   color: var(--accent-deep);
   font-variant-numeric: tabular-nums;
@@ -1915,7 +1915,7 @@ input.wi-search-input-plain {
   background: var(--accent-soft);
   color: var(--accent-deep);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .wi-rc-body {
@@ -1932,7 +1932,7 @@ input.wi-search-input-plain {
   padding-bottom: 6px;
   border-bottom: 1px solid var(--border);
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
@@ -1971,7 +1971,7 @@ input.wi-search-input-plain {
 .wi-rc-qty {
   min-width: 1.5rem;
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--accent-deep);
   font-variant-numeric: tabular-nums;
 }
@@ -1982,7 +1982,7 @@ input.wi-search-input-plain {
 }
 
 .wi-rc-amt {
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -2015,7 +2015,7 @@ input.wi-search-input-plain {
 
 .wi-rc-adj.is-discount {
   color: var(--accent-deep);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .wi-rc-total-bar {
@@ -2036,7 +2036,7 @@ input.wi-search-input-plain {
 
 .wi-rc-total-lbl {
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--accent-deep);
@@ -2044,13 +2044,13 @@ input.wi-search-input-plain {
 
 .wi-rc-paid-by {
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--accent-deep);
 }
 
 .wi-rc-total-val {
   font-size: 1.25rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--accent-deep);
   font-variant-numeric: tabular-nums;
 }
@@ -2079,7 +2079,7 @@ input.wi-search-input-plain {
   background: var(--amber);
   color: #fff;
   font-size: 0.9375rem;
-  font-weight: 800;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2089,7 +2089,7 @@ input.wi-search-input-plain {
 .wi-rc-rewards-title {
   display: block;
   font-size: 0.8125rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text);
 }
 
@@ -2108,14 +2108,14 @@ input.wi-search-input-plain {
 .wi-rc-rewards-bal-lbl {
   display: block;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   color: var(--muted);
 }
 
 .wi-rc-rewards-bal-val {
   font-size: 0.9375rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text);
 }
 
@@ -2152,7 +2152,7 @@ input.wi-search-input-plain {
 
 .wi-receipt-to-label {
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;

@@ -1,0 +1,2391 @@
+/*
+ * Emerald v2 — a theme preview, loaded last so it can be read (and removed) as one file.
+ *
+ * Owner, 14 Nov 2026: "this is looking very clean, I don't know why" about a Dribbble
+ * dashboard. What made it clean, and what this sheet does about it:
+ *
+ *   1. One colour in three shades (forest, green, mint); everything else grey or white.
+ *   2. ONE filled card per screen — the money card — so there is one obvious place to look.
+ *   3. No borders and no shadows on cards: white cards on a grey canvas, the gap does the work.
+ *   4. Large corners (22px cards, pill buttons).
+ *   5. A light sidebar in the same family as the page, not a dark slab.
+ *   6. Big numbers at a medium weight; labels small and grey. No weight above 600 anywhere
+ *      (the weight remap itself is done in the sheets, not here — see the branch's commit).
+ *
+ * Status colours (amber, red, blue, purple) keep their meanings from 00-base.css; they are
+ * only toned down where they were decoration rather than meaning.
+ */
+
+:root {
+  --page-bg: var(--canvas);
+  --border: var(--canvas-line);
+  --sidebar: var(--canvas);
+  --sidebar-deep: var(--canvas);
+  --sidebar-text: var(--canvas-text);
+  --sidebar-active: var(--surface);
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-lg: 22px;
+}
+
+/* ---------- the face: Plus Jakarta Sans for Latin (owner, 14 Nov 2026 — the shot's closest; was Hanken Grotesk) ----------
+ * Sharper than Figtree, closer to the shot. Devanagari still falls through to Noto Sans Devanagari, and
+ * Figtree stays in the stack behind it, so removing this rule is the whole undo. Form fields inherit. */
+html,
+body {
+  font-family: var(--font-jakarta, ui-sans-serif), var(--font-figtree, ui-sans-serif), var(--font-devanagari, ui-sans-serif), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+:is(button, input, select, textarea) {
+  font-family: inherit;
+}
+
+/* ---------- shell: a light sidebar, one surface with the page ---------- */
+
+.sidebar {
+  background: var(--canvas);
+  color: var(--text);
+  border-right: 1px solid var(--border);
+}
+
+.brand-badge {
+  background: var(--forest);
+  border-radius: 12px;
+}
+
+.brand-name {
+  color: var(--text);
+}
+
+.nav a {
+  position: relative;
+  color: var(--sidebar-text);
+  border-radius: 12px;
+}
+
+.nav a:hover {
+  background: rgb(23 63 43 / 6%);
+  color: var(--text);
+}
+
+.nav a.active {
+  background: var(--surface);
+  color: var(--forest);
+  font-weight: 600;
+}
+
+.nav a.active::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: 9px;
+  bottom: 9px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--forest-2);
+}
+
+.nav svg {
+  opacity: 1;
+}
+
+/* Everything the dark sidebar painted white-on-green reads dark-on-grey now. */
+.sidebar .brand-location,
+.sidebar .nav-who-text span {
+  color: var(--muted);
+}
+
+.sidebar .nav-who-text strong,
+.sidebar .sidebar-close {
+  color: var(--text);
+}
+
+.sidebar .nav-pill {
+  color: var(--forest);
+  background: rgb(23 63 43 / 8%);
+}
+
+/* ---------- buttons: pills ---------- */
+
+:is(.btn, .button, .primary-btn, .secondary-btn, .ghost-btn, .rst-date-pill) {
+  border-radius: 999px;
+}
+
+/* ---------- restaurant / shop Home, laptop and up ---------- */
+
+@media (min-width: 861px) {
+  /* Type: big jumps, few steps. A page title, a card title, a label, a number — nothing in between. */
+  .hm-head.is-rst-head .hm-head-title,
+  .topbar-title,
+  .topbar-title h1 {
+    font-size: var(--fs-12);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+  }
+
+  .rst-date-pill {
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .rst-kpis {
+    gap: 1.25rem;
+  }
+
+  /* ---- the KPI tiles: label top-left, the arrow top-right, one big number, a small badge under it ---- */
+  .rst-kpi,
+  .rst-kpi-sales,
+  .rst-kpi-orders,
+  .rst-kpi-customers {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: var(--sp-1);
+    min-height: 0;
+    padding: 1.125rem 1.25rem;
+    background: var(--surface);
+    border-color: transparent;
+    box-shadow: none;
+    border-radius: var(--radius-lg);
+  }
+
+  .rst-kpi-wave,
+  .rst-kpi-icon {
+    display: none;
+  }
+
+  .rst-kpi-top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-2);
+  }
+
+  .rst-kpi-main {
+    flex: 0 0 auto;
+    gap: var(--sp-2);
+    padding-right: 3rem;
+  }
+
+  .rst-kpi-label {
+    font-size: var(--fs-5);
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .rst-kpi-value {
+    font-size: var(--fs-12);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.045em;
+  }
+
+  /* The same round arrow on every tile: repetition reads as order. */
+  .rst-kpi-go {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    border: 1.5px solid var(--canvas-line);
+    background: var(--surface);
+    color: var(--text);
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  a.rst-kpi:hover .rst-kpi-go,
+  a.rst-kpi-go:hover {
+    background: var(--forest);
+    border-color: var(--forest);
+    color: #fff;
+  }
+
+  /* Compact (owner, 14 Nov 2026: "shrink card"): the badge sits beside the number, bottom-aligned, not
+     on a row of its own. A tile is label, number + badge, and on the money tile one line of how it was paid. */
+  .rst-kpi,
+  .rst-kpi-sales,
+  .rst-kpi-orders,
+  .rst-kpi-customers {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    column-gap: var(--sp-3);
+    row-gap: var(--sp-2);
+    padding: 1rem 1.25rem;
+  }
+
+  .rst-kpi-top {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    /* Tall enough that the chip beside the number always clears the arrow button above it. */
+    min-height: 4.25rem;
+  }
+
+  .rst-kpi-modes {
+    grid-column: 1 / -1;
+  }
+
+  /* Label at the top, number at the bottom, on every tile alike. */
+  .rst-kpi-main {
+    gap: var(--sp-1);
+    align-self: stretch;
+    justify-content: space-between;
+  }
+
+  .rst-kpi-main .rst-kpi-label {
+    padding-right: 2.75rem;
+  }
+
+  .rst-kpi-main {
+    padding-right: 0;
+  }
+
+  /* The badge row: a mint chip and a quiet line, as on every tile. */
+  .rst-kpi-side,
+  .rst-kpi-side.is-bottom {
+    flex-direction: row;
+    align-items: center;
+    align-self: end;
+    gap: var(--sp-2);
+    margin: 0 0 0.25rem;
+  }
+
+  .rst-delta-pill,
+  .sln-kpi-pill,
+  .sln-kpi-pill.is-blue,
+  .sln-kpi-pill.is-amber {
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    font-size: var(--fs-1);
+    font-weight: 500;
+  }
+
+  .rst-delta-pill.is-up,
+  .sln-kpi-pill.is-blue,
+  .sln-kpi-pill.is-amber {
+    background: color-mix(in srgb, var(--mint) 38%, var(--surface));
+    color: var(--forest);
+  }
+
+  .rst-delta-sub {
+    font-size: var(--fs-1);
+    color: var(--muted);
+  }
+
+  /* ---- the white tiles' week (owner, 14 Nov 2026: "try A sparkline") ----
+     A thin forest line with a mint wash under it, along the bottom of the tile and behind its text. */
+  /* The line takes the bottom-right of the tile, beside the number; the change chip moves up beside the arrow
+     so neither sits on the line. */
+  .rst-kpi-spark {
+    position: absolute;
+    right: 1.25rem;
+    bottom: 1rem;
+    z-index: 0;
+    width: 45%;
+    height: 2.5rem;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .rst-kpi:is(.rst-kpi-orders, .rst-kpi-customers) .rst-kpi-side {
+    position: absolute;
+    top: 1.125rem;
+    right: 4rem;
+    margin: 0;
+  }
+
+  .rst-kpi-spark polygon {
+    fill: color-mix(in srgb, var(--mint) 22%, transparent);
+  }
+
+  .rst-kpi-spark polyline {
+    fill: none;
+    stroke: var(--forest-2);
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .rst-kpi :is(.rst-kpi-main, .rst-kpi-side, .rst-kpi-top, .rst-kpi-modes) {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ---- the one filled tile ----
+     Owner, 14 Nov 2026 (screenshot of the shot's tile): "this has colour shade". Dark forest lit from
+     the top-left with a lime glow and from the bottom-right with mint, the number in pale lime, the
+     change chip outlined in lime. Still one colour family; the shading is what makes it look rich. */
+  .rst-kpi-sales {
+    color: #fff;
+    background:
+      radial-gradient(70% 90% at 8% 0%, color-mix(in srgb, var(--lime) 30%, transparent) 0%, transparent 70%),
+      radial-gradient(80% 120% at 100% 100%, color-mix(in srgb, var(--mint) 35%, var(--forest-2)) 0%, transparent 70%),
+      linear-gradient(140deg, var(--forest) 0%, var(--forest-2) 100%);
+  }
+
+  .rst-kpi-sales .rst-kpi-value {
+    color: color-mix(in srgb, var(--lime) 40%, #fff);
+    text-shadow: 0 0 1.25rem color-mix(in srgb, var(--lime) 45%, transparent);
+  }
+
+  .rst-kpi-sales :is(.rst-kpi-label, .rst-kpi-mode b) {
+    color: #fff;
+  }
+
+  .rst-kpi-sales :is(.rst-kpi-modes, .rst-kpi-mode, .rst-delta-sub) {
+    color: rgb(255 255 255 / 72%);
+  }
+
+  .rst-kpi-sales .rst-kpi-modes {
+    padding-top: var(--sp-2);
+    border-top-color: rgb(255 255 255 / 14%);
+  }
+
+  /* Cash in the drawer reads as one more line of the split above it, not a third block. */
+  .rst-kpi-sales .rst-kpi-drawer {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .rst-kpi-sales .rst-kpi-side {
+    margin-top: 0;
+  }
+
+  .rst-kpi-sales .rst-delta-pill,
+  .rst-kpi-sales .rst-delta-pill.is-up,
+  .rst-kpi-sales .rst-delta-pill.is-down {
+    background: transparent;
+    border: 1px solid var(--lime);
+    border-radius: 0.375rem;
+    color: var(--lime);
+  }
+
+  .rst-kpi-sales .rst-delta-sub {
+    color: var(--lime);
+  }
+
+  .rst-kpi-sales .rst-kpi-go {
+    background: #fff;
+    border-color: #fff;
+    color: var(--forest);
+  }
+
+  .rst-kpi-sales a.rst-kpi-go:hover {
+    background: var(--mint);
+    border-color: var(--mint);
+    color: var(--forest);
+  }
+
+  /* How it was paid, in the three greens instead of four unrelated colours. */
+  .rst-kpi-sales .rst-mode-dot.is-cash { background: var(--mint); }
+  .rst-kpi-sales .rst-mode-dot.is-upi { background: #fff; }
+  .rst-kpi-sales .rst-mode-dot.is-card { background: color-mix(in srgb, var(--mint) 55%, var(--forest)); }
+  .rst-kpi-sales .rst-mode-dot:is(.is-other, .is-apps, .is-not_recorded) { background: rgb(255 255 255 / 45%); }
+
+  .rst-section-title,
+  .rst-panel-head h3 {
+    font-size: var(--fs-8);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .rst-action-tile {
+    border-color: transparent;
+    box-shadow: none;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+  }
+
+  .rst-action-tile:hover {
+    background: var(--surface);
+    border-color: var(--mint);
+  }
+
+  .rst-action-tile .rst-action-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 999px;
+    background: var(--canvas);
+    color: var(--forest);
+  }
+
+  .rst-panel {
+    border-color: transparent;
+    box-shadow: none;
+    border-radius: var(--radius-lg);
+  }
+
+  .rst-view-all {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
+    padding: 0 0.875rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .rst-view-all:hover {
+    text-decoration: none;
+    border-color: var(--forest-2);
+  }
+
+  .rst-order-icon.is-dinein,
+  .rst-order-icon.is-takeaway,
+  .rst-order-icon.is-delivery {
+    background: var(--canvas);
+    color: var(--forest);
+  }
+
+  .rst-order-num {
+    font-weight: 600;
+  }
+
+  .rst-status-pill.is-served {
+    background: color-mix(in srgb, var(--mint) 38%, var(--surface));
+    color: var(--forest);
+  }
+}
+
+/* ---------- Home on a phone (and the shared Home cards) ---------- */
+
+/* The one filled card, shaded like the desktop money tile (owner, 14 Nov 2026). */
+.hm-hero {
+  background:
+    radial-gradient(70% 90% at 8% 0%, color-mix(in srgb, var(--lime) 30%, transparent) 0%, transparent 70%),
+    radial-gradient(80% 120% at 100% 100%, color-mix(in srgb, var(--mint) 35%, var(--forest-2)) 0%, transparent 70%),
+    linear-gradient(140deg, var(--forest) 0%, var(--forest-2) 100%);
+}
+
+.hm-card {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.hm-card-head h2 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.hm-toolbar-summary,
+.shp-period .hm-seg-select {
+  border-radius: 999px;
+  border-color: transparent;
+}
+
+/* A colour per person is decoration; one neutral chip reads calmer (inline tone, hence !important). */
+.shp-recent .hm-avatar {
+  background: var(--canvas) !important;
+  color: var(--forest) !important;
+  border-radius: 999px;
+}
+
+
+/* Tablets held sideways: three tiles share less room, so the number steps down one size. */
+@media (min-width: 861px) and (max-width: 1180px) {
+  .rst-kpi-value {
+    font-size: var(--fs-11);
+  }
+
+  /* No room for "vs. yesterday" beside the number; the arrow on the chip already says which way. */
+  .rst-delta-sub {
+    display: none;
+  }
+
+  /* A white tile is too narrow here for its label, its chip and its arrow on one line; the sparkline already
+     says which way the week went, so the chip gives way. */
+  .rst-kpi:is(.rst-kpi-orders, .rst-kpi-customers) .rst-kpi-side {
+    display: none;
+  }
+}
+
+/* ---------- every other screen ----------
+ * The list below is what a walk through every screen found drawing a white box with a border
+ * on the grey page (desktop and phone, County Chicken, 14 Nov 2026). Cards and on-page toolbars
+ * lose the line; things that float over content (the till's bar and tray, save bars, menus,
+ * sheets) and form fields keep theirs, because there the line is what separates them.
+ * Inside a sheet or dialog a card sits on white, so it keeps its border there. */
+
+:is(
+  .card, .rp-card, .tile, .bk-card, .bk-kpi, .staff-card,
+  .cr-card, .srp-card, .srp-totals, .srp-empty, .prd-stat,
+  .att-tile, .att-list, .menu-list, .cust-card, .ord-cards, .pay,
+  .pf-wide-left, .pf-wide-right, .rw-examples-box, .settings-empty-state,
+  .srp-toolbar, .srp-nav, .ord-tools, .att-daynav
+):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
+  border-color: transparent;
+  box-shadow: none;
+  border-radius: var(--radius-lg);
+}
+
+/* ---------- charts: pill bars in the greens, over a striped track ----------
+ * The shot's bar chart: every column has a rounded track, the quiet part of the track is hatched, the
+ * figure is a solid pill in it, and the best one is the darkest green. Stripes say "nothing here yet"
+ * without spending a colour on it. */
+
+.cr-bars {
+  gap: var(--sp-2);
+}
+
+/* Owner, 14 Nov 2026: "make the bars wider on the hour chart". Twenty-odd columns share a phone, so the
+   gap between them is the thinnest that still separates two bars, and the bar takes the rest. */
+.cr-bars-hour {
+  gap: 2px;
+}
+
+/* A pill as wide as a thumb, centred in its column: a full-width column with round ends clips a short bar
+   into a half-moon. */
+.cr-bar-slot {
+  justify-content: center;
+  max-width: 2.75rem;
+  margin-inline: auto;
+  border-radius: 999px;
+  background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
+}
+
+.cr-bars-hour .cr-bar-slot {
+  max-width: 2.5rem;
+}
+
+.cr-bars-day .cr-bar-slot {
+  height: 7rem;
+}
+
+.cr-bars-hour .cr-bar-slot {
+  height: 5.5rem;
+}
+
+.cr-bar {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+}
+
+.cr-bar.is-peak {
+  background: var(--forest);
+}
+
+.cr-bar-top {
+  color: var(--forest);
+}
+
+/* Horizontal bars: a thick rounded track, the leader in the dark green. */
+.cr-row-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--canvas);
+}
+
+.cr-row-fill {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+}
+
+.cr-row:first-child .cr-row-fill {
+  background: var(--forest);
+}
+
+.cr-hero {
+  font-size: 2.75rem;
+  letter-spacing: -0.045em;
+}
+
+/* Sales by channel. */
+.sls-chart-track {
+  max-width: 2.75rem;
+  border-radius: 999px;
+  background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
+}
+
+.sls-chart-stack {
+  border-radius: 999px;
+}
+
+.sls-chart-col.is-zero .sls-chart-stack {
+  background: transparent;
+}
+
+.sls-bar-srv {
+  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+}
+
+.sls-bar-prd {
+  background: var(--mint);
+}
+
+.sls-chart-col.is-peak .sls-bar-srv {
+  background: var(--forest);
+}
+
+.sls-chart-col.is-peak .sls-bar-prd {
+  background: color-mix(in srgb, var(--mint) 60%, var(--forest-2));
+}
+
+/* The salon Home's week chart and the report bar lists. */
+.hm-v3-bar-track {
+  border-radius: 999px;
+  background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
+}
+
+.hm-v3-bar-fill {
+  max-width: 2.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+  opacity: 1;
+}
+
+.hm-v3-bar-col.is-peak .hm-v3-bar-fill {
+  background: var(--forest);
+}
+
+.rp-bar-track,
+.rp-cell-bar-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--canvas);
+}
+
+.rp-bar-fill {
+  border-radius: 999px;
+}
+
+/* Card titles: one size, medium weight. */
+:is(.cr-title, .hm-card-head h2, .rp-card h2, .rp-card h3) {
+  font-size: var(--fs-7);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- tables on a page: a white card with row lines only ----------
+ * No grid of vertical lines and no grey header band: the header is small grey text, rows are split by
+ * one faint line, the card has no outline. The editing grids (bulk edit, sizes) keep their cell lines,
+ * because there a cell is a field. */
+
+:is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
+  border-color: transparent;
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+}
+
+:is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table) :is(th, td) {
+  border-left: 0;
+  border-right: 0;
+  border-bottom-color: var(--canvas);
+}
+
+:is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table) th {
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--fs-2);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  border-bottom-color: var(--canvas-line);
+}
+
+:is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table) tbody tr:hover td {
+  background: color-mix(in srgb, var(--canvas) 60%, var(--surface));
+}
+
+:is(.rp-table-scroll, .sls-table-wrap, .srp-table-card):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
+  border-color: transparent;
+  box-shadow: none;
+  border-radius: var(--radius-lg);
+}
+
+/* Segmented filters and tabs: pills on a pill track, the chosen one dark green. */
+:is(.seg, .segmented, .rp-tabs, .tabs) :is(button, a) {
+  border-radius: 999px;
+}
+
+/* Every bar's amount (owner, 14 Nov 2026): the best day's in dark green and bold, the others quieter. */
+.cr-bar-top {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.cr-bar-top.is-peak {
+  font-weight: 600;
+  color: var(--forest);
+}
+
+/* The hour chart has a column for every hour (2026-11-14), so twenty striped tracks read as a barcode: here the
+   track is a plain light pill, and the first and last time names keep inside the card. */
+.cr-bars-hour .cr-bar-slot {
+  background: var(--canvas);
+}
+
+.cr-bars-hour .cr-bar-col:first-child .cr-bar-tick,
+.cr-bars-hour .cr-bar-col:last-child .cr-bar-tick {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.cr-bars-hour .cr-bar-col:last-child .cr-bar-tick {
+  justify-content: flex-end;
+}
+
+/* =====================================================================================================
+ * Emerald v3 layout (owner, 14 Nov 2026: "go ahead with all") — what the shot does that colour alone
+ * could not: floating panels, a page head with two pill actions, a row of charts, and full rows below.
+ * ===================================================================================================== */
+
+/* The two section labels in the sidebar are a laptop thing; the phone drawer stays one list. */
+.nav-section {
+  display: none;
+}
+
+@media (min-width: 861px) {
+  /* ---- floating panels: the sidebar and the header are white cards on the grey page ---- */
+  .shell {
+    grid-template-columns: 248px 1fr;
+  }
+
+  .sidebar {
+    margin: 0.75rem 0 0.75rem 0.75rem;
+    height: calc(min(100dvh, var(--app-h, 100dvh)) - 1.5rem);
+    background: var(--surface);
+    border-right: 0;
+    border-radius: var(--radius-lg);
+  }
+
+  .nav-section {
+    display: block;
+    margin: var(--sp-3) 0 var(--sp-1);
+    padding: 0 12px;
+    font-size: var(--fs-1);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .nav a.active {
+    background: var(--canvas);
+  }
+
+  :is(.topbar, .hm-head) {
+    margin: 0.75rem 0.75rem 0;
+    border-bottom: 0;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  /* The restaurant's Home: the header is the slim bar (search, date, bell, you); the greeting moves down into
+     the page head. The h1 stays for a screen reader, moved out of sight. */
+  .hm-head.is-rst-head {
+    padding-block: 0.625rem;
+  }
+
+  .hm-head.is-rst-head .hm-head-id {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .hm-head.is-rst-head .hm-head-controls {
+    flex: 1;
+  }
+
+  .hm-head.is-rst-head .hm-head-controls > :first-child {
+    margin-right: auto;
+  }
+
+  /* ---- page head ---- */
+  .rst-page-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--sp-4);
+  }
+
+  .rst-page-id {
+    min-width: 0;
+  }
+
+  .rst-page-title {
+    margin: 0;
+    font-size: var(--fs-12);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1.15;
+    color: var(--text);
+  }
+
+  .rst-page-sub {
+    margin: var(--sp-1) 0 0;
+    font-size: var(--fs-4);
+    color: var(--muted);
+  }
+
+  .rst-page-actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: var(--sp-2);
+  }
+
+  .rst-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: 2.75rem;
+    padding: 0 1.125rem;
+    border: 1.5px solid var(--forest);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--forest);
+    font: inherit;
+    font-size: var(--fs-3);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .rst-pill svg {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .rst-pill.is-primary {
+    background: var(--forest);
+    color: #fff;
+  }
+
+  .rst-pill:hover {
+    background: var(--canvas);
+  }
+
+  .rst-pill.is-primary:hover {
+    background: var(--forest-2);
+  }
+
+  /* ---- row 2: three cards of pictures ---- */
+  .rst-charts .rst-panel {
+    padding-block: 1rem;
+  }
+
+  .rst-charts {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 0.9fr;
+    gap: 1.25rem;
+  }
+
+  .rst-week-total {
+    font-size: var(--fs-7);
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .rst-week-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--sp-3);
+    margin: var(--sp-2) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rst-week-bars li {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .rst-week-amt {
+    min-height: 1.125rem;
+    margin-bottom: 2px;
+    font-size: var(--fs-1);
+    font-weight: 500;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .rst-week-bars li.is-peak .rst-week-amt {
+    font-weight: 600;
+    color: var(--forest);
+  }
+
+  .rst-week-slot {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    max-width: 2.25rem;
+    height: 5rem;
+    border-radius: 999px;
+    background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
+  }
+
+  .rst-week-bar {
+    width: 100%;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+  }
+
+  .rst-week-bars li.is-peak .rst-week-bar {
+    background: var(--forest);
+  }
+
+  .rst-week-day {
+    margin-top: var(--sp-1);
+    font-size: var(--fs-1);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* The half-donut. Arc 0 is the biggest share, then down the greens. */
+  /* Owner, 14 Nov 2026: "decrease the height of row 2" — the gauge is drawn to the bar chart's height. */
+  .rst-gauge {
+    position: relative;
+    margin: var(--sp-2) auto 0;
+    max-width: 10rem;
+  }
+
+  .rst-gauge svg {
+    display: block;
+    width: 100%;
+  }
+
+  .rst-gauge-track,
+  .rst-gauge-arc {
+    fill: none;
+    stroke-width: 14;
+    stroke-linecap: round;
+  }
+
+  .rst-gauge-track {
+    stroke: var(--canvas);
+  }
+
+  .rst-gauge-arc.is-0 { stroke: var(--forest); }
+  .rst-gauge-arc.is-1 { stroke: color-mix(in srgb, var(--forest-2) 55%, var(--mint)); }
+  .rst-gauge-arc.is-2 { stroke: var(--mint); }
+  .rst-gauge-arc.is-3,
+  .rst-gauge-arc.is-4 { stroke: var(--canvas-line); }
+
+  .rst-gauge-mid {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    text-align: center;
+  }
+
+  .rst-gauge-mid strong {
+    display: block;
+    font-size: var(--fs-8);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+
+  .rst-gauge-mid span {
+    font-size: var(--fs-2);
+    color: var(--muted);
+  }
+
+  .rst-gauge-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--sp-1) var(--sp-3);
+    margin: var(--sp-2) 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-2);
+    color: var(--muted);
+  }
+
+  .rst-gauge-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+  }
+
+  .rst-gauge-legend b {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .rst-gauge-legend i {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+  }
+
+  .rst-gauge-legend i.is-0 { background: var(--forest); }
+  .rst-gauge-legend i.is-1 { background: color-mix(in srgb, var(--forest-2) 55%, var(--mint)); }
+  .rst-gauge-legend i.is-2 { background: var(--mint); }
+  .rst-gauge-legend i:is(.is-3, .is-4) { background: var(--canvas-line); }
+
+  /* The dark card: the queue, live, balancing the dark money tile above it on the other side. */
+  .rst-queue-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-lg);
+    color: #fff;
+    background:
+      radial-gradient(70% 90% at 100% 0%, color-mix(in srgb, var(--lime) 22%, transparent) 0%, transparent 70%),
+      radial-gradient(80% 120% at 0% 100%, color-mix(in srgb, var(--mint) 30%, var(--forest-2)) 0%, transparent 70%),
+      linear-gradient(140deg, var(--forest) 0%, var(--forest-2) 100%);
+  }
+
+  .rst-queue-card h3 {
+    margin: 0;
+    font-size: var(--fs-7);
+    font-weight: 600;
+  }
+
+  .rst-queue-count {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-2);
+    margin: auto 0 0;
+  }
+
+  .rst-queue-count strong {
+    font-size: var(--fs-12);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.045em;
+    color: color-mix(in srgb, var(--lime) 40%, #fff);
+  }
+
+  .rst-queue-count span,
+  .rst-queue-done {
+    font-size: var(--fs-2);
+    color: rgb(255 255 255 / 72%);
+  }
+
+  .rst-queue-done {
+    margin: 0;
+  }
+
+  .rst-queue-done b {
+    color: #fff;
+  }
+
+  .rst-queue-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    margin-top: var(--sp-2);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--forest);
+    font-size: var(--fs-3);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .rst-queue-btn:hover {
+    background: var(--mint);
+  }
+
+  /* ---- row 3: Recent orders beside Top sellers; Needs attention, when it draws, takes a full row under them
+     (a third column squeezed each order onto four lines). ---- */
+  .rst-bottom-grid {
+    grid-template-columns: 1.3fr 1fr;
+  }
+
+  .rst-bottom-grid > .rst-attention-panel:not(.sln-team-panel) {
+    grid-column: 1 / -1;
+  }
+
+  .rst-sellers {
+    display: flex;
+    flex-direction: column;
+    margin: var(--sp-2) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rst-sellers li {
+    display: grid;
+    grid-template-columns: 1.75rem minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: var(--sp-3);
+    min-height: 3.25rem;
+    border-bottom: 1px solid var(--canvas);
+  }
+
+  .rst-sellers li:last-child {
+    border-bottom: 0;
+  }
+
+  .rst-seller-rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    background: var(--canvas);
+    color: var(--forest);
+    font-size: var(--fs-2);
+    font-weight: 600;
+  }
+
+  .rst-seller-rank.is-top {
+    background: var(--forest);
+    color: #fff;
+  }
+
+  .rst-seller-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--fs-4);
+    font-weight: 500;
+  }
+
+  .rst-seller-units {
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--mint) 38%, var(--surface));
+    color: var(--forest);
+    font-size: var(--fs-1);
+    font-weight: 500;
+  }
+
+  .rst-seller-val {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* A sideways tablet: the three chart cards wrap to two and one. */
+@media (min-width: 861px) and (max-width: 1180px) {
+  .rst-charts {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .rst-week-panel {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Emerald v3 for every vertical (owner, 14 Nov 2026): a shop's laptop Home is the restaurant's layout now, so the
+   old command-center toolbar (period switch and Day summary) goes the way the kitchen's already had; the page head
+   carries Day summary, and the charts say "last 7 days" on their face. */
+@media (min-width: 861px) {
+  .shp-page > .shp-desk-toolbar {
+    display: none !important;
+  }
+}
+
+/* =====================================================================================================
+ * Emerald v3 — the shot's division by background (owner, 14 Nov 2026: "check how division is done with
+ * background color"). A WHITE frame; three GREY panels on it — the sidebar, the header bar, and one big panel
+ * for the page — and white things inside the grey: the cards in the page, the search pill and the round
+ * buttons in the header. White on grey on white, so no line is needed anywhere. Laptop only.
+ * ===================================================================================================== */
+@media (min-width: 861px) {
+  html,
+  body,
+  .shell {
+    background: var(--surface);
+  }
+
+  .sidebar {
+    background: var(--canvas);
+  }
+
+  .nav a.active {
+    background: var(--surface);
+  }
+
+  :is(.topbar, .hm-head),
+  .hm-head.is-rst-head {
+    background: var(--canvas);
+  }
+
+  /* Everything in the header bar is white on its grey: the search pill, the date, the bell, the avatar. */
+  :is(.topbar, .hm-head) :is(.hdr-search, .rst-date-pill, .notif-bell, .icon-btn, .hm-summary-btn) {
+    background: var(--surface);
+    border-color: transparent;
+  }
+
+  .hdr-search-wide {
+    border-radius: 999px;
+  }
+
+  /* The page itself is the third grey panel, with the same gap round it as the other two. */
+  .content > .page-body,
+  .content-main > .page-body {
+    margin: 0.75rem;
+    border-radius: var(--radius-lg);
+    background: var(--canvas);
+  }
+}
+
+/* =====================================================================================================
+ * The header, as the shot draws it (owner, 14 Nov 2026: "make top like this"): a long white search pill
+ * with its key at the end, white round buttons, and the person — a drawn face, their name, their role.
+ * ===================================================================================================== */
+
+/* The face fills the round avatar on every screen size; nobody has a photo, so everybody gets one. */
+.acct-trigger .acct-face {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.acct-trigger.avatar-lg {
+  overflow: hidden;
+  background: transparent;
+}
+
+.acct-trigger-text,
+.hdr-search-kbd {
+  display: none;
+}
+
+@media (min-width: 861px) {
+  .hdr-search-wide {
+    width: min(26rem, 40vw);
+    height: 3rem;
+    padding: 0 0.5rem 0 1.125rem;
+    border-radius: 999px;
+    font-size: var(--fs-4);
+  }
+
+  .hdr-search-wide > span {
+    flex: 1;
+  }
+
+  .hdr-search-kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.5rem;
+    border-radius: 0.5rem;
+    background: var(--canvas);
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-2);
+    font-weight: 600;
+  }
+
+  :is(.topbar, .hm-head) .notif-bell {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 999px;
+  }
+
+  /* The account button grows to hold the face and the two lines beside it. */
+  .acct-trigger.avatar-lg {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    border-radius: 999px;
+    color: var(--text);
+    text-align: left;
+  }
+
+  .acct-trigger .acct-face {
+    width: 3rem;
+    height: 3rem;
+    flex-shrink: 0;
+  }
+
+  .acct-trigger-text {
+    display: flex;
+    flex-direction: column;
+    max-width: 12rem;
+    line-height: 1.25;
+  }
+
+  .acct-trigger-text strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--fs-4);
+    font-weight: 600;
+  }
+
+  .acct-trigger-text span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--fs-2);
+    color: var(--muted);
+  }
+}
+
+/* =====================================================================================================
+ * The KPI tiles, symmetrical as the shot's (owner, 14 Nov 2026: "the KPIs are not symmetrical as the
+ * source"): equal widths, and every tile the same four things in the same places — its name top-left,
+ * the arrow top-right, the number, and one small line at the foot (a chip and a few words). The money
+ * tile's payment split and the white tiles' sparklines go: the Payments and Sales cards below say both.
+ * ===================================================================================================== */
+@media (min-width: 861px) {
+  /* Owner, 14 Nov 2026: "extend the revenue card and shrink order and guests" — the money tile leads. */
+  .rst-kpis {
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .rst-kpi,
+  .rst-kpi-sales,
+  .rst-kpi-orders,
+  .rst-kpi-customers {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
+    min-height: 10rem;
+    padding: 1.25rem 1.375rem;
+  }
+
+  .rst-kpi-top {
+    display: contents;
+  }
+
+  .rst-kpi-main {
+    flex: 0 0 auto;
+    gap: var(--sp-3);
+    padding-right: 3.25rem;
+    justify-content: flex-start;
+  }
+
+  .rst-kpi-main .rst-kpi-label {
+    padding-right: 0;
+  }
+
+  .rst-kpi-value {
+    font-size: 2.75rem;
+  }
+
+  .rst-kpi-sales .rst-kpi-modes,
+  .rst-kpi-spark {
+    display: none;
+  }
+
+  .rst-kpi .rst-kpi-side,
+  .rst-kpi .rst-kpi-side.is-bottom,
+  .rst-kpi:is(.rst-kpi-orders, .rst-kpi-customers) .rst-kpi-side {
+    position: static;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    align-self: flex-start;
+    gap: var(--sp-2);
+    margin: auto 0 0;
+    padding-top: var(--sp-3);
+  }
+
+  .rst-kpi .rst-kpi-go {
+    top: 1.125rem;
+    right: 1.125rem;
+  }
+
+  /* The chips keep their colour (owner, 14 Nov 2026: "you have removed the colour of these cards"): a filled
+     mint pill going up, a soft red one going down, the words beside them grey. */
+  .rst-kpi .rst-delta-pill {
+    padding: 0.1875rem 0.625rem;
+    border: 0;
+    border-radius: 999px;
+    font-size: var(--fs-1);
+    font-weight: 500;
+  }
+
+  .rst-kpi .rst-delta-pill.is-up {
+    background: color-mix(in srgb, var(--mint) 38%, var(--surface));
+    color: var(--forest);
+  }
+
+  .rst-kpi .rst-delta-pill.is-down {
+    background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+    color: var(--danger);
+  }
+
+  .rst-kpi-sales .rst-delta-pill,
+  .rst-kpi-sales .rst-delta-pill:is(.is-up, .is-down) {
+    background: color-mix(in srgb, var(--lime) 22%, transparent);
+    color: var(--lime);
+  }
+
+  .rst-kpi .rst-delta-sub {
+    font-size: var(--fs-2);
+  }
+}
+
+@media (min-width: 861px) and (max-width: 1180px) {
+  .rst-kpi-value {
+    font-size: var(--fs-12);
+  }
+
+  .rst-kpi .rst-delta-sub {
+    display: none;
+  }
+
+  .rst-kpi:is(.rst-kpi-orders, .rst-kpi-customers) .rst-kpi-side {
+    display: flex;
+  }
+}
+
+/* A booking business's tiles carry their foot line inside the number's block (the "2 now · 3 later" and
+   "1 new today" pills): the block fills the tile and the pill sits at its foot, level with the others. */
+@media (min-width: 861px) {
+  .rst-kpi .rst-kpi-main {
+    flex: 1 0 auto;
+  }
+
+  .rst-kpi .rst-kpi-main .sln-kpi-pill {
+    margin-top: auto;
+  }
+}
+
+/* =====================================================================================================
+ * Owner, 14 Nov 2026, marking up the laptop Home: "add more info to the KPIs, looking empty"; the sidebar's
+ * signed-in block "remove"; and the sidebar not matching the shot.
+ * ===================================================================================================== */
+@media (min-width: 861px) {
+  /* ---- KPI tiles: a second line under each number ---- */
+  .rst-kpi-note {
+    font-size: var(--fs-2);
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .rst-kpi .rst-kpi-main {
+    gap: var(--sp-2);
+  }
+
+  /* The wide money tile: the figure on the left, how it was paid down the right — dot, way, amount — and the
+     average order under them. */
+  .rst-kpi-sales {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(9rem, auto);
+    grid-template-rows: 1fr auto;
+    column-gap: var(--sp-5, 1.5rem);
+  }
+
+  .rst-kpi-sales .rst-kpi-main {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .rst-kpi-sales .rst-kpi-side {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .rst-kpi-sales .rst-kpi-modes,
+  .rst-kpi-sales .rst-kpi-modes:not(.rst-kpi-drawer) {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-end;
+    gap: var(--sp-2);
+    grid-column: 2;
+    grid-row: 1 / 3;
+    margin: 3rem 0 0;
+    padding: 0 0 0 var(--sp-4);
+    border-top: 0;
+    border-left: 1px solid rgb(255 255 255 / 14%);
+    font-size: var(--fs-2);
+  }
+
+  .rst-kpi-sales .rst-kpi-mode {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+
+  .rst-kpi-sales .rst-kpi-mode.is-avg {
+    display: block;
+    margin-top: var(--sp-1);
+    padding-top: var(--sp-2);
+    border-top: 1px solid rgb(255 255 255 / 14%);
+    color: var(--lime);
+  }
+
+  .rst-kpi-sales .rst-kpi-mode.is-avg b {
+    color: var(--lime);
+    font-weight: 500;
+  }
+
+  /* ---- sidebar: the signed-in block and Log out are in the header's account menu already ---- */
+  .sidebar .nav-foot {
+    display: none;
+  }
+
+  /* ---- sidebar rows the shot's size: 1rem words, 1.375rem icons at a lighter stroke, taller rows ---- */
+  .nav a {
+    min-height: 2.875rem;
+    gap: 0.875rem;
+    font-size: var(--fs-5);
+  }
+
+  .nav a svg {
+    width: 1.375rem;
+    height: 1.375rem;
+    stroke-width: 1.75;
+  }
+
+  .nav a.active svg {
+    color: var(--forest);
+    stroke-width: 2;
+  }
+
+  /* The active page's green bar sits on the sidebar's own left edge. At -16px it fell outside the
+     sidebar's 12px padding, which scrolls (overflow: auto) and so clipped it out of sight. */
+  .nav a.active::before {
+    left: -12px;
+    top: 6px;
+    bottom: 6px;
+    width: 6px;
+    border-radius: 0 6px 6px 0;
+    background: var(--forest-2);
+  }
+
+  .nav-section {
+    margin-top: var(--sp-4);
+  }
+}
+
+@media (min-width: 861px) and (max-width: 1180px) {
+  .rst-kpi-sales {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .rst-kpi-sales .rst-kpi-modes {
+    padding-left: var(--sp-3);
+  }
+}
+
+/* =====================================================================================================
+ * Density pass (owner, 14 Nov 2026: "the KPI cards and everything is looking too big — check on desktop").
+ * The shot is drawn for a 1920px canvas and shown scaled down; built 1:1 on a 1280–1440px laptop its sizes
+ * read as oversized. Everything here comes down about a fifth, toward a working dashboard's density: 16px
+ * card padding, 16px gaps, a ~56px header bar, 2rem figures. Buttons people press keep 40px or more.
+ * ===================================================================================================== */
+@media (min-width: 861px) {
+  /* ---- shell ---- */
+  .shell {
+    grid-template-columns: 232px 1fr;
+  }
+
+  .sidebar {
+    padding: 1.125rem 0.75rem;
+  }
+
+  .nav a {
+    min-height: 2.5rem;
+    gap: 0.75rem;
+    padding-block: 0.5rem;
+    font-size: var(--fs-4);
+  }
+
+  .nav a svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .nav-section {
+    margin: var(--sp-3) 0 var(--sp-1);
+  }
+
+  :is(.topbar, .hm-head),
+  .hm-head.is-rst-head {
+    padding-block: 0.5rem;
+  }
+
+  .hdr-search-wide {
+    height: 2.5rem;
+    font-size: var(--fs-3);
+  }
+
+  .hdr-search-kbd {
+    min-width: 1.625rem;
+    height: 1.625rem;
+  }
+
+  :is(.topbar, .hm-head) .notif-bell,
+  .acct-trigger .acct-face {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .acct-trigger-text strong {
+    font-size: var(--fs-3);
+  }
+
+  .acct-trigger-text span {
+    font-size: var(--fs-1);
+  }
+
+  /* ---- the page ---- */
+  .rst-desk {
+    gap: 1rem;
+    padding-top: 1rem;
+  }
+
+  .rst-page-title {
+    font-size: var(--fs-10);
+  }
+
+  .rst-page-sub {
+    font-size: var(--fs-3);
+  }
+
+  .rst-pill {
+    min-height: 2.5rem;
+    padding: 0 1rem;
+  }
+
+  /* ---- KPI tiles ---- */
+  .rst-kpis,
+  .rst-charts {
+    gap: 1rem;
+  }
+
+  .rst-kpi,
+  .rst-kpi-sales,
+  .rst-kpi-orders,
+  .rst-kpi-customers {
+    min-height: 8.25rem;
+    padding: 1rem 1.125rem;
+  }
+
+  .rst-kpi-label {
+    font-size: var(--fs-4);
+  }
+
+  .rst-kpi-value {
+    font-size: var(--fs-12);
+  }
+
+  .rst-kpi .rst-kpi-main {
+    gap: var(--sp-1);
+  }
+
+  .rst-kpi .rst-kpi-go {
+    top: 0.875rem;
+    right: 0.875rem;
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .rst-kpi .rst-kpi-side,
+  .rst-kpi .rst-kpi-side.is-bottom,
+  .rst-kpi:is(.rst-kpi-orders, .rst-kpi-customers) .rst-kpi-side {
+    padding-top: var(--sp-2);
+  }
+
+  .rst-kpi-sales .rst-kpi-modes,
+  .rst-kpi-sales .rst-kpi-modes:not(.rst-kpi-drawer) {
+    margin-top: 2.5rem;
+    gap: var(--sp-1);
+  }
+
+  /* ---- cards ---- */
+  .rst-panel,
+  .rst-charts .rst-panel {
+    padding: 1rem 1.125rem;
+  }
+
+  .rst-section-title,
+  .rst-panel-head h3 {
+    font-size: var(--fs-6);
+  }
+
+  .rst-week-total {
+    font-size: var(--fs-6);
+  }
+
+  .rst-week-slot {
+    height: 4.5rem;
+  }
+
+  .rst-gauge {
+    max-width: 8.5rem;
+  }
+
+  .rst-gauge-mid strong {
+    font-size: var(--fs-7);
+  }
+
+  .rst-queue-card {
+    padding: 1rem 1.125rem;
+  }
+
+  .rst-queue-card h3 {
+    font-size: var(--fs-6);
+  }
+
+  .rst-queue-count strong {
+    font-size: var(--fs-11);
+  }
+
+  .rst-queue-btn {
+    min-height: 2.5rem;
+  }
+
+  .rst-bottom-grid {
+    gap: 1rem;
+  }
+
+  .rst-sellers li {
+    min-height: 2.75rem;
+  }
+
+  .rst-seller-name {
+    font-size: var(--fs-3);
+  }
+
+  .rst-view-all {
+    min-height: 2rem;
+    padding: 0 0.75rem;
+    font-size: var(--fs-2);
+  }
+}
+
+@media (min-width: 861px) {
+  .rst-order-row {
+    gap: 0.75rem;
+    padding: 0.5625rem 0;
+  }
+
+  .rst-order-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+}
+
+/* The same density on every other laptop screen (owner, 14 Nov 2026: "apply the same size to all other
+   screens"): one page-title size with the Home's, the same header bar, tighter page padding, 16px gaps,
+   and the report's figures and bars at the Home's sizes. */
+@media (min-width: 861px) {
+  :root {
+    --page-pad-x: clamp(16px, 1.8vw, 24px);
+  }
+
+  .topbar-title,
+  .topbar-title h1 {
+    font-size: var(--fs-10);
+    letter-spacing: -0.03em;
+  }
+
+  .topbar {
+    padding-block: 0.625rem;
+  }
+
+  .topbar p {
+    font-size: var(--fs-3);
+  }
+
+  /* Reports */
+  .cr {
+    gap: 1rem;
+  }
+
+  .cr-card {
+    padding: 1rem 1.125rem;
+  }
+
+  .cr-hero {
+    font-size: var(--fs-12);
+  }
+
+  .cr-bars-day .cr-bar-slot {
+    height: 5rem;
+  }
+
+  .cr-bars-hour .cr-bar-slot {
+    height: 4rem;
+  }
+
+  /* Tables */
+  :is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table) :is(th, td) {
+    padding: 0.625rem 0.875rem;
+  }
+}
+
+/*
+ * The Menu screen's header on a narrow phone (owner, 14 Nov 2026: "Menu was aligned before"). At ~342px
+ * back + "Menu" + ⓘ and the three buttons need ~354px and the buttons wrapped to a second line. Only this
+ * screen's header, only below 400px: the buttons 44px instead of 52px with a 6px gap, the title cut with
+ * "…" only if it really cannot fit, and the whole header kept to one line.
+ */
+@media (max-width: 400px) {
+  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar {
+    flex-wrap: nowrap;
+  }
+
+  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-lead {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-title h1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-actions {
+    flex-shrink: 0;
+    gap: 6px;
+  }
+
+  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-primary > .btn {
+    min-width: 44px;
+    width: 44px;
+    padding-inline: 0;
+  }
+}
+
+/*
+ * One header on every laptop screen (owner, 14 Nov 2026: "fix all"). Home has a slim grey bar (find a guest,
+ * bell, you) over a page head (big title, a line, the pills) at the top of its panel; every other screen had the
+ * title inside the bar and no search. PageHeader's markup is the same on every screen, so the laptop lays it out
+ * as a 2×2 grid: row 1 is the bar (drawn by ::before), row 2 is the page head (drawn by ::after as the top of the
+ * panel), and the page body below drops its own top corners and gap so the two read as one panel.
+ */
+@media (min-width: 861px) {
+  .topbar {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'find ctrls'
+      'lead primary';
+    column-gap: var(--sp-3);
+    row-gap: 0;
+    align-items: center;
+    margin: 0.75rem 0.75rem 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .topbar::before,
+  .topbar::after {
+    content: '';
+    z-index: -1;
+    align-self: stretch;
+    background: var(--canvas);
+  }
+
+  .topbar::before {
+    grid-area: 1 / 1 / 2 / -1;
+    border-radius: var(--radius-lg);
+  }
+
+  .topbar::after {
+    grid-area: 2 / 1 / 3 / -1;
+    margin-top: 0.75rem;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .topbar-actions {
+    display: contents;
+  }
+
+  .topbar-find {
+    grid-area: find;
+    display: flex;
+    min-width: 0;
+    padding: 0.5rem 0 0.5rem 0.5rem;
+  }
+
+  .topbar-ctrls {
+    grid-area: ctrls;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.5rem 0.5rem 0;
+  }
+
+  .topbar-lead {
+    grid-area: lead;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+    margin-top: 0.75rem;
+    padding: 1.25rem 1.5rem 0.25rem;
+  }
+
+  .topbar-primary {
+    grid-area: primary;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    align-self: end;
+    margin-top: 0.75rem;
+    padding: 0 1.5rem 0.25rem 0;
+  }
+
+  /* The page head's actions are Home's pills: round, the first one filled. */
+  .topbar-primary > :is(.btn, a.btn, button.btn) {
+    min-height: 2.75rem;
+    padding-inline: 1.125rem;
+    border-radius: 999px;
+  }
+
+  .topbar + .page-body,
+  .topbar + .content-main > .page-body:first-child {
+    margin-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+
+/*
+ * Home's tile on the other screens' figures (owner, 14 Nov 2026: "fix all"): Menu's four, Guests' five, and
+ * Attendance's five were three other tile designs. On a laptop they are one: white, label on top, the figure
+ * large under it, the line under that quiet. A figure that filters the list, when on, is the forest tile with
+ * white type — Home's first tile — and keeps its ring, so "on" is not said by colour alone.
+ */
+@media (min-width: 861px) {
+  :is(.prd-stat, .att-tile, .ord-kpi),
+  .page-body.cust-desk > .cust-desk-kpis > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0.375rem;
+    padding: 1rem 1.125rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: none;
+    transform: none;
+    text-align: left;
+  }
+
+  /* Label first, as on Home. */
+  .prd-stat .prd-stat-l {
+    order: -1;
+  }
+
+  :is(.prd-stat-l, .att-tile-head, .ord-kpi-label),
+  .page-body.cust-desk > .cust-desk-kpis dt {
+    font-size: var(--fs-3);
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  :is(.prd-stat-n, .att-tile-count, .ord-kpi-value),
+  .page-body.cust-desk > .cust-desk-kpis dd {
+    font-size: var(--fs-11);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    color: var(--text);
+  }
+
+  .prd-stat-sub,
+  .ord-kpi-note,
+  .page-body.cust-desk > .cust-desk-kpis dd.cust-desk-kpi-note {
+    font-size: var(--fs-1);
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 1.35;
+    color: var(--muted);
+  }
+
+  .page-body.cust-desk > .cust-desk-kpis > div.is-on dd.cust-desk-kpi-note {
+    color: rgb(255 255 255 / 72%);
+  }
+
+  /* Total guests: how they split across the four bands (and those who never came), as one thin bar. */
+  .page-body.cust-desk > .cust-desk-kpis dd.cust-desk-kpi-bands {
+    display: flex;
+    gap: 2px;
+    width: 100%;
+    height: 0.375rem;
+    margin-top: 0.125rem;
+    overflow: hidden;
+    border-radius: 999px;
+  }
+
+  .cust-desk-kpi-bands > span {
+    flex-basis: 0;
+    min-width: 0.25rem;
+  }
+
+  .cust-desk-kpi-bands > span.is-never {
+    background: var(--canvas-line);
+  }
+
+  /* Orders: today's figures over the list. */
+  .ord-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: var(--sp-3);
+  }
+
+  a.ord-kpi {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  a.ord-kpi:hover {
+    border-color: var(--canvas-line);
+  }
+
+  .prd-stat-tap:hover,
+  .page-body.cust-desk > .cust-desk-kpis > div:not(.is-on):has(.cust-desk-kpi-tap):hover {
+    border-color: var(--canvas-line);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .prd-strip .prd-stat.prd-stat-tap.is-on,
+  .page-body.cust-desk > .cust-desk-kpis > div.is-on {
+    border-color: var(--forest);
+    background: linear-gradient(135deg, var(--forest-2), var(--forest));
+    box-shadow: inset 0 0 0 1px var(--forest);
+  }
+
+  .prd-strip .prd-stat.prd-stat-tap.is-on :is(.prd-stat-n, .prd-stat-l),
+  .page-body.cust-desk > .cust-desk-kpis > div.is-on :is(dt, dd, dd button) {
+    color: #fff;
+  }
+
+  .prd-strip .prd-stat.prd-stat-tap.is-on .prd-stat-sub {
+    color: rgb(255 255 255 / 72%);
+  }
+
+  /* Guests: the figures are a row over the list, one tile each, reward points included. */
+  .page-body.cust-desk > .cust-desk-kpis {
+    flex: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: var(--sp-3);
+    margin: 0 0 var(--sp-3);
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .page-body.cust-desk > .cust-desk-kpis > div:nth-child(5) {
+    grid-column: auto;
+  }
+
+  .page-body.cust-desk > .cust-desk-kpis > div:last-child dd {
+    color: var(--forest);
+  }
+
+  /* Attendance: one title (the header's), and the counts in Home's tiles. */
+  .att-head-text {
+    display: none;
+  }
+
+  .att-head {
+    justify-content: flex-end;
+  }
+
+  .att-summary {
+    gap: var(--sp-3);
+  }
+
+  .att-tile {
+    min-height: 0;
+  }
+}
+
+/*
+ * Orders on a wide laptop (owner, 14 Nov 2026: "fix all"): "What delivery apps owe you" sat between the filters and
+ * the list and pushed the list off the first screen. From 1101px it is a column at the right of the list, the two
+ * apps one under the other, and the list keeps the whole of the left — Home's lists-and-a-side-card row.
+ */
+@media (min-width: 1101px) {
+  .ord {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 19rem;
+    grid-auto-rows: auto;
+    column-gap: var(--sp-4);
+    row-gap: var(--sp-3);
+    align-items: start;
+  }
+
+  .ord > * {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  .ord {
+    grid-auto-flow: row dense;
+  }
+
+  .ord > :is(.ord-tools, .ord-kpis) {
+    grid-column: 1 / -1;
+  }
+
+  /* Placed by the grid, not by row number: the tiles and the one-guest banner come and go above it. */
+  .ord > .pay {
+    grid-column: 2;
+    grid-row: span 4;
+    position: sticky;
+    top: 0;
+    margin: 0;
+  }
+
+  .ord > .pay .pay-apps {
+    flex-direction: column;
+  }
+
+  .ord > .pay .ord-chips {
+    flex-wrap: wrap;
+  }
+
+  /* The list is a white card on the panel's grey, as Home's lists are. */
+  .ord > .ord-table {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--surface);
+  }
+}
+
+/* WhatsApp demo: the steps are a laptop's only; on a phone the wrapper has no box (the chat is the whole screen). */
+.tw-desk {
+  display: contents;
+}
+
+.tw-how {
+  display: none;
+}
+
+/*
+ * The last three screens of the laptop pass (owner, 14 Nov 2026: "fix all").
+ */
+@media (min-width: 861px) {
+  /* Returns: the tabs above already go to Refunds, so the lone "Refunds" link under the figures is gone. */
+  .srp-links:has(> a[href='/orders/refunds']) {
+    display: none;
+  }
+
+  /* Notifications: a reading column, not a full-width strip with two rows in it. */
+  .content:has(.notif-mark-read, .notif-empty) .page-body > .card {
+    width: 100%;
+    max-width: 45rem;
+    margin-inline: auto;
+  }
+
+  /* WhatsApp demo: the phone and three steps beside it, centred together. */
+  .tw-desk {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-6);
+    height: 100%;
+  }
+
+  .tw-how {
+    display: block;
+    flex: 0 1 20rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  .tw-how h2 {
+    margin: 0 0 var(--sp-3);
+    font-size: var(--fs-6);
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .tw-how ol {
+    margin: 0;
+    padding-left: 1.25rem;
+    display: grid;
+    gap: var(--sp-3);
+    font-size: var(--fs-3);
+    line-height: 1.5;
+    color: var(--canvas-text);
+  }
+
+  .tw-how li::marker {
+    font-weight: 600;
+    color: var(--forest);
+  }
+}
+
+@media (min-width: 861px) and (max-width: 1100px) {
+  .tw-how {
+    display: none;
+  }
+}
+
+/*
+ * Growza at the top of the sidebar, the business in the header bar (owner, 14 Nov 2026). A laptop's only: the phone
+ * drawer keeps the business at its top and never draws the header's business chip.
+ */
+.brand-growza,
+.hdr-biz {
+  display: none;
+}
+
+@media (min-width: 861px) {
+  .sidebar .brand {
+    display: none;
+  }
+
+  .brand-growza {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.375rem 0.75rem 0.5rem;
+  }
+
+  .brand-growza svg {
+    flex: none;
+    border-radius: 0.625rem;
+  }
+
+  .brand-growza-word {
+    font-size: var(--fs-9);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--forest);
+  }
+
+  .hdr-biz {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: 0;
+    max-width: 16rem;
+    /*
+     * Owner, 14 Nov 2026 — "the strip not looking good" (option A): the business is text on the bar's grey, not a
+     * third white shape, set off from the bell and the face by a thin rule — Donezo's account corner. White is kept
+     * for the controls (search, bell); the space either side of the rule is the "some space between" asked for.
+     */
+    margin-right: var(--sp-2);
+    padding: 0.25rem var(--sp-4) 0.25rem var(--sp-2);
+    border-right: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .hdr-biz-text {
+    display: grid;
+    min-width: 0;
+    line-height: 1.2;
+  }
+
+  .hdr-biz-text strong {
+    overflow: hidden;
+    font-size: var(--fs-3);
+    font-weight: 600;
+    color: var(--text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hdr-biz-text span {
+    overflow: hidden;
+    font-size: var(--fs-1);
+    color: var(--muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/*
+ * The business chip is the branch picker for an owner of several branches (owner, 14 Nov 2026: "County Chicken /
+ * All branches ▾" — one control, not two). The line under the name is the picker's button; a tap anywhere on the
+ * chip opens it (the button's ::after covers the chip); the list hangs under the chip. The header's own branch
+ * pill is hidden on a laptop wherever the chip is there to stand in for it.
+ */
+.hbp-chip {
+  display: none;
+}
+
+@media (min-width: 861px) {
+  .hdr-biz {
+    position: relative;
+  }
+
+  .hdr-biz.has-picker:hover .hdr-biz-text strong {
+    color: var(--forest);
+  }
+
+  .hbp-chip.sbp {
+    position: static;
+    display: flex;
+    min-width: 0;
+  }
+
+  .hbp-chip .sbp-btn,
+  .hbp-chip .sbp-btn.is-branch {
+    position: static;
+    min-height: 0;
+    max-width: 100%;
+    gap: 0.25rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: var(--fs-1);
+    font-weight: 500;
+  }
+
+  .hbp-chip .sbp-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+  }
+
+  .hbp-chip .sbp-btn > svg {
+    width: 0.75rem;
+    height: 0.75rem;
+    flex: none;
+  }
+
+  .hbp-chip .sbp-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hbp-chip .sbp-menu {
+    top: calc(100% + 0.5rem);
+    right: 0;
+    left: auto;
+  }
+
+  :has(> .hdr-biz.has-picker) > .hbp-pill {
+    display: none;
+  }
+
+  /* Home's bar: the search pill pushes the rest right, whether or not a (now hidden) picker comes before it. */
+  .hm-head.is-rst-head .hm-head-controls > .hdr-search {
+    margin-right: auto;
+  }
+}

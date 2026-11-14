@@ -57,7 +57,28 @@ export function CounterReport() {
   const [dates, setDates] = useState(() => defaultReportRange(todayISO));
   const [data, setData] = useState<CounterReportPage | null>(null);
   const [failed, setFailed] = useState(false);
+  const [openHours, setOpenHours] = useState<OpenHours | null>(null);
   const seq = useRef(0);
+
+  /*
+   * Owner, 14 Nov 2026 — "show only open hours". The branch's opening hours, from Settings. Best effort: a role
+   * that may not read Settings, or a branch with no hours yet, gets the chart from first sale to last as before.
+   */
+  useEffect(() => {
+    if (!ready) return;
+    let live = true;
+    api
+      .settings(branch || undefined)
+      .then((st) => {
+        if (live) setOpenHours(openingWindow(st.workingHours));
+      })
+      .catch(() => {
+        if (live) setOpenHours(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [ready, branch]);
 
   const load = useCallback(async () => {
     if (!ready) return;
@@ -109,10 +130,36 @@ export function CounterReport() {
       ) : data === null ? (
         <div className="cr-card cr-skeleton" aria-busy="true" />
       ) : (
-        <CounterCards data={data} />
+        <CounterCards data={data} openHours={openHours} />
       )}
     </div>
   );
+}
+
+/** The hours a branch is open, as whole clock hours: from the earliest opening to the latest closing in the week. */
+export type OpenHours = { fromHour: number; toHour: number };
+
+/**
+ * One window for the week, so the chart's columns do not change with the day. `toHour` is exclusive and rounds
+ * up (a 22:30 close keeps the 10 pm column). A row that closes after midnight, or no rows, gives no window, and
+ * the chart falls back to the hours that sold.
+ */
+export function openingWindow(rows: ReadonlyArray<{ startTime: string; endTime: string }> | undefined): OpenHours | null {
+  if (!rows || rows.length === 0) return null;
+  const mins = (hhmm: string) => {
+    const [h, m] = hhmm.split(':').map(Number);
+    return (h ?? 0) * 60 + (m ?? 0);
+  };
+  let from = 24 * 60;
+  let to = 0;
+  for (const r of rows) {
+    const a = mins(r.startTime);
+    const b = mins(r.endTime) === 0 ? 24 * 60 : mins(r.endTime);
+    if (b <= a) return null;
+    from = Math.min(from, a);
+    to = Math.max(to, b);
+  }
+  return { fromHour: Math.floor(from / 60), toHour: Math.ceil(to / 60) };
 }
 
 /**
@@ -122,7 +169,7 @@ export function CounterReport() {
  * this app has no jsdom, so a component that can only show its figures after an effect has run is a
  * component no test can read.
  */
-export function CounterCards({ data }: { data: CounterReportPage }) {
+export function CounterCards({ data, openHours = null }: { data: CounterReportPage; openHours?: OpenHours | null }) {
   const t = useTranslations('counterReport');
   const barsRef = useRef<HTMLUListElement>(null);
   const locale = useLocale();
@@ -236,11 +283,37 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
    * accent (as the busiest hours already are, below) and carries its amount; the rest are told from it by height.
    * No peak when nothing was taken: seven empty columns have no best day.
    */
+  /* A week's bars each carry their figure; a month's thirty would collide, so there only the best day does. */
+  const everyFigure = bars.length <= 7;
+  /** "₹1,180" while it fits a seventh of a phone; "₹12K", "₹1.5L" past ₹9,999. Indian grouping either way. */
+  const barAmount = (minor: number) =>
+    minor < 1_000_000 ? money(minor) : `₹${new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 }).format(minor / 100)}`;
   const peakDay = bars.reduce((best, b, i) => (b.valueMinor > 0 && (best === -1 || b.valueMinor > bars[best]!.valueMinor) ? i : best), -1);
   /** A per-order average in whole rupees: "₹299 per order". The paise of an average are not anybody's money. */
   const wholeRupees = (minor: number) => Math.round(minor / 100) * 100;
   const addOnMinor = Math.max(1000, Math.round((takings.averageBillMinor ?? 0) / 10 / 1000) * 1000);
-  const hourPeak = Math.max(...busy.byHour.map((h) => Number(h.valueMinor)), 1);
+
+  /*
+   * Owner, 14 Nov 2026 ("can we improve this") — the API sends only the hours that sold, and the chart drew them
+   * side by side: 4 am sat next to 10 am as if they were an hour apart, and the rush looked like any two bars.
+   * Every hour from the first sale to the last now gets a column, an empty one just its striped track, so the
+   * spacing is the clock's. The busiest single hour carries its amount, as the best day does above.
+   */
+  const sold = new Map(busy.byHour.map((h) => [h.hour, Number(h.valueMinor)]));
+  /* Owner, 14 Nov 2026 — "show only open hours": the opening hours when the branch has them, else first sale to last. */
+  const [firstCol, lastCol] = openHours
+    ? [openHours.fromHour, openHours.toHour - 1]
+    : sold.size > 0
+      ? [Math.min(...sold.keys()), Math.max(...sold.keys())]
+      : [0, -1];
+  const hourCols = Array.from({ length: Math.max(0, lastCol - firstCol + 1) }, (_, k) => ({
+    hour: firstCol + k,
+    value: sold.get(firstCol + k) ?? 0,
+  }));
+  /* Money taken while closed is not dropped silently: the card says how much, under the chart. */
+  const outsideMinor = openHours ? busy.byHour.reduce((sum, h) => (h.hour < firstCol || h.hour > lastCol ? sum + Number(h.valueMinor) : sum), 0) : 0;
+  const hourPeak = Math.max(...hourCols.map((h) => h.value), 1);
+  const topHour = hourCols.reduce((best, h) => (h.value > (best?.value ?? 0) ? h : best), null as (typeof hourCols)[number] | null);
   const topValue = Math.max(...earners.rows.map((r) => Number(r.valueMinor)), 1);
   const difference = takings.differenceMinor === null ? null : Number(takings.differenceMinor);
   const moreOthers = earners.distinct - earners.rows.length;
@@ -270,10 +343,12 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
         <ul className="cr-bars cr-bars-day" ref={barsRef}>
           {bars.map((b, i) => (
             <li key={b.startISO} className="cr-bar-col">
-              {/* Above the slot, so the amount sits on top of its bar; empty for the other days, which keeps every
-                  column the same height. Read out below for everybody, so hidden from a screen reader here. */}
-              <span className="cr-bar-top" aria-hidden="true">
-                {i === peakDay ? money(b.valueMinor) : ''}
+              {/* Above the slot, so the amount sits on top of its bar. Owner, 14 Nov 2026 — "amount on top of each
+                  bar": every day of a week carries its figure (short above ₹9,999, so seven fit across a phone); a
+                  longer range still names only the best day. An empty day stays blank, which keeps every column the
+                  same height. Read out below for everybody, so hidden from a screen reader here. */}
+              <span className={`cr-bar-top${i === peakDay ? ' is-peak' : ''}`} aria-hidden="true">
+                {i === peakDay || (everyFigure && b.valueMinor > 0) ? barAmount(b.valueMinor) : ''}
               </span>
               <span className="cr-bar-slot">
                 <span
@@ -375,7 +450,7 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
         ) : (
           <>
             <ul className="cr-bars cr-bars-hour">
-              {busy.byHour.map((h, i, all) => {
+              {hourCols.map((h, i, all) => {
                 const inPeak = h.hour >= busy.peak!.fromHour && h.hour < busy.peak!.toHour;
                 /*
                  * A kitchen trades fourteen hours and a phone is 344px wide: "11 am" under every column
@@ -383,17 +458,22 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
                  * so only every third hour is named, with the ends always named so the axis has a range.
                  * The column itself is still there for every hour — it is the LABEL that thins out.
                  */
-                const named = i === 0 || i === all.length - 1 || h.hour % 3 === 0;
+                // Owner, 14 Nov 2026 — with every hour drawn, a name every third hour plus both ends put "1 am" on top
+                // of "3 am". Evenly spaced from the first column instead, about six names whatever the span.
+                const named = i % Math.max(3, Math.ceil(all.length / 6)) === 0;
                 return (
                   <li key={h.hour} className="cr-bar-col">
+                    <span className={`cr-bar-top${inPeak ? ' is-peak' : ''}`} aria-hidden="true">
+                      {topHour && h.hour === topHour.hour ? barAmount(h.value) : ''}
+                    </span>
                     <span className="cr-bar-slot">
                       <span
                         className={`cr-bar ${inPeak ? 'is-peak' : ''}`}
-                        style={{ height: `${Math.max(MIN_BAR_PCT, (Number(h.valueMinor) / hourPeak) * 100)}%` }}
+                        style={{ height: `${h.value === 0 ? 0 : Math.max(MIN_BAR_PCT, (h.value / hourPeak) * 100)}%` }}
                       />
                     </span>
                     <span className="cr-bar-tick">{named ? hourName(h.hour) : ''}</span>
-                    <span className="sr-only">{hourName(h.hour)} {money(h.valueMinor)}</span>
+                    <span className="sr-only">{hourName(h.hour)} {money(h.value)}</span>
                   </li>
                 );
               })}
@@ -401,6 +481,7 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
             <p className="cr-say">
               {t('busy.peak', { from: hourName(busy.peak.fromHour), to: hourName(busy.peak.toHour) })}
             </p>
+            {outsideMinor > 0 ? <p className="cr-aside">{t('busy.outsideHours', { amount: money(outsideMinor) })}</p> : null}
           </>
         )}
         {busy.quietestDay ? (

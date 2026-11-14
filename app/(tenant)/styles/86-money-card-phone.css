@@ -82,7 +82,7 @@
   .hm-line b {
     flex: none;
     color: #fff;
-    font-weight: 700;
+    font-weight: 600;
   }
   .hm-line-name {
     min-width: 0;
@@ -108,7 +108,7 @@
     background: transparent;
     color: #bbf7d0;
     font: inherit;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
   }
   .hm-line-empty {
@@ -122,7 +122,7 @@
   }
   .hm-line-foot b {
     color: #fff;
-    font-weight: 700;
+    font-weight: 600;
   }
 
   .hm-line-pick:focus-visible,

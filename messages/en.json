@@ -223,6 +223,8 @@
     "kpiReturningSub": "Came more than once",
     "kpiRepeat": "% came back",
     "kpiRepeatSub": "Out of all {noun}",
+    "kpiNewPct": "{pct}% of all {noun}",
+    "kpiRepeatOf": "{returning} of {total} {noun}",
     "showFirst": "Show first",
     "orderRecent": "Came last",
     "orderSpent": "Spent the most",
@@ -259,7 +261,7 @@
     },
     "statusNever": "Never came",
     "statusLapsed": "Due or not seen lately",
-    "searchPlaceholder": "Search by name or phone",
+    "searchPlaceholder": "Name or phone",
     "allNoun": "All {noun}",
     "noMatch": "No {noun} found.",
     "loading": "Loading…",
@@ -895,7 +897,9 @@
     "summaryHourTitle": "When the day summary arrives",
     "summaryHourHint": "Pick the hour you have finished for the day. A kitchen still serving at eleven should not be sent its takings at nine.",
     "summaryHourDefault": "The usual time (9 pm)",
-    "summaryHourSaved": "Saved"
+    "summaryHourSaved": "Saved",
+    "noMemberTitle": "Phone alerts are personal",
+    "noMember": "Each person on the team turns these on for their own phone. This sign-in is not a team member, so it has no alerts. Sign in with your own phone number to set them."
   },
   "settingsRewards": {
     "intro": "Clients earn points on what they spend, and take them off a later bill. Nothing changes for them until you switch it on.",
@@ -2152,7 +2156,8 @@
     },
     "foldGroup": "Fold {name}",
     "unfoldGroup": "Unfold {name}",
-    "infoTipHow": "How this works: {label}"
+    "infoTipHow": "How this works: {label}",
+    "productName": "Growza"
   },
   "auth": {
     "metaTitle": "Sign in",
@@ -2225,6 +2230,12 @@
       "timedOut": "Let's start over — that chat timed out.",
       "unreachable": "Could not reach the server.",
       "wentWrong": "Something went wrong."
+    },
+    "how": {
+      "title": "How it works",
+      "step1": "Type a phone number and a name, then tap Start chat.",
+      "step2": "Reply the way a customer would: tap the buttons. There is nothing to type.",
+      "step3": "This is the same chat people get once WhatsApp booking is on for you."
     }
   },
   "newVisit": {
@@ -2936,7 +2947,8 @@
       "title": "When you are busy",
       "peak": "Your rush is {from}–{to}.",
       "quietest": "{day} is your weakest day — {amount} in all.",
-      "notEnough": "Not enough trade yet to tell you when your rush is."
+      "notEnough": "Not enough trade yet to tell you when your rush is.",
+      "outsideHours": "{amount} came in outside your opening hours."
     },
     "changed": {
       "title": "What changed",
@@ -5018,6 +5030,25 @@
       "saveFailed": "Could not save. Try again.",
       "loadFailed": "Could not load this. Try again.",
       "retry": "Try again"
+    },
+    "tiles": {
+      "ordersToday": "Orders today",
+      "yesterday": "Yesterday: {count}",
+      "toSend": "{count} to send",
+      "salesToday": "Sales today",
+      "noSales": "Nothing taken yet",
+      "cameIn": "Came in today",
+      "cameInNote": "People who ordered today",
+      "returns": "Returns",
+      "returnsNote": "Last 3 months · mostly: {reason}",
+      "returnsNone": "Nothing came back in 3 months",
+      "modes": {
+        "upi": "UPI",
+        "cash": "Cash",
+        "card": "Card",
+        "other": "Other",
+        "not_recorded": "Not noted"
+      }
     }
   },
   "settingsChannels": {

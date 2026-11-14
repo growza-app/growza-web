@@ -21,10 +21,27 @@
   flex-shrink: 0;
 }
 
+/* Emerald v3 — PageHeader groups its trailing controls (page actions · find pill · bell and avatar) so a laptop
+   can lay them out as a bar over a page head. On a phone the groups have no box of their own, and the row is the
+   flat flex row it always was; the find pill is a laptop's only. */
+.topbar-primary,
+.topbar-ctrls {
+  display: contents;
+}
+
+.topbar-find {
+  display: none;
+}
+
+.topbar-primary > *,
+.topbar-ctrls > * {
+  flex: none;
+}
+
 .topbar h1 {
   margin: 0 0 5px;
   font-size: 1.5rem;
-  font-weight: 680;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 
@@ -123,7 +140,7 @@
   color: #fff;
   display: grid;
   place-items: center;
-  font-weight: 650;
+  font-weight: 600;
   font-size: 1rem;
   flex-shrink: 0;
 }

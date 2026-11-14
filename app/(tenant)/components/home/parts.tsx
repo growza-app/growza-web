@@ -13,6 +13,7 @@ import { NotificationBell } from '../NotificationBell';
 import { useLive } from '../SessionProvider';
 import { IconChevronRight, IconDaySummary, IconMapPin } from '../icons';
 import { HeaderSearch } from '../HeaderSearch';
+import { HeaderBusiness } from '../HeaderBusiness';
 
 /**
  * Jira GRW-222 — the pieces all three Homes are built from.
@@ -159,42 +160,21 @@ export function HomeHeader({
         {/* Jira GRW-395 — the one branch picker; Home's own dropdown and tabs are gone. */}
         <HeaderBranchPicker />
         {/* Jira GRW-409 — the same gated search as every other header; a receptionist's or stylist's Home has none. */}
-        {simpleDesktop ? (
-          <span className="hm-mobile">
-            <HeaderSearch wide />
-          </span>
-        ) : (
-          <HeaderSearch wide />
-        )}
+        {/* Emerald v2 — the restaurant's laptop header carries the search too, as a pill (it was phone-only). */}
+        <HeaderSearch wide />
         {onDaySummary && !simpleDesktop ? (
           <button type="button" className="hm-summary-btn" onClick={onDaySummary} aria-label={t.daySummary}>
             <IconDaySummary />
             <span>{t.daySummary}</span>
           </button>
         ) : null}
-        {simpleDesktop ? (
-          <button
-            type="button"
-            className="rst-date-pill hm-desktop"
-            onClick={onDaySummary}
-            aria-label={`${t.todayWord}, ${dateLabel}`}
-          >
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <rect x="3" y="4" width="18" height="18" rx="2.5" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-            <span>
-              {t.todayWord}, {dateLabel.replace(',', '')}
-            </span>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-        ) : (
-          <span className="hm-date-chip hm-desktop">{dateLabel}</span>
-        )}
+        {/*
+          Emerald v3 (owner, 2026-11-14, "remove it") — the laptop header's date pill is gone: it looked like a date
+          picker and opened Day summary. The date is in the page head's line now, and Day summary has its own button.
+        */}
+        {simpleDesktop ? null : <span className="hm-date-chip hm-desktop">{dateLabel}</span>}
+        {/* Emerald v3 — the business, in the laptop's header bar, beside the bell. */}
+        <HeaderBusiness />
         {live ? <NotificationBell /> : null}
         <AccountMenu />
       </div>
@@ -454,3 +434,151 @@ export function BookingRows({
 }
 
 export { minutesBetween };
+
+/* =====================================================================================================
+ * Emerald v3 — the laptop Home's chart row, shared by every vertical's Home (owner, 2026-11-14: "apply the
+ * same layout to all verticals"). Each takes figures already read; none fetches, and each draws nothing
+ * when there is nothing to draw.
+ * ===================================================================================================== */
+
+/** One column of the week chart. `amount` null: no figure above the bar (an empty or future day). */
+export type WeekBar = { key: string; label: string; pct: number; amount: string | null; peak: boolean; srText: string };
+
+/** Pill bars over a striped track, each day's amount on top, the best day in the dark green. */
+export function WeekBarsCard({ title, total, bars }: { title: string; total: string | null; bars: WeekBar[] }) {
+  return (
+    <section className="rst-panel rst-week-panel">
+      <div className="rst-panel-head">
+        <h3>{title}</h3>
+        {total ? <strong className="rst-week-total">{total}</strong> : null}
+      </div>
+      <ul className="rst-week-bars">
+        {bars.map((b) => (
+          <li key={b.key} className={b.peak ? 'is-peak' : ''}>
+            <span className="rst-week-amt" aria-hidden="true">
+              {b.amount ?? ''}
+            </span>
+            <span className="rst-week-slot">
+              <span className="rst-week-bar" style={{ height: `${b.pct}%` }} />
+            </span>
+            <span className="rst-week-day">{b.label}</span>
+            <span className="sr-only">{b.srText}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** A way of paying and its share of 100, biggest first; `start` is where its arc begins on the half-donut. */
+export type PaySlice = { mode: string; minor: number; pct: number; start: number };
+
+/** Splits takings by how they were paid into shares that add to exactly 100 (the last share takes the rounding). */
+export function paySlicesOf(byMode: ReadonlyArray<{ mode: string; revenueMinor: number }> | undefined): PaySlice[] {
+  const raw = (byMode ?? []).filter((m) => m.revenueMinor > 0).sort((a, b) => b.revenueMinor - a.revenueMinor);
+  const total = raw.reduce((sum, m) => sum + m.revenueMinor, 0);
+  let start = 0;
+  return raw.map((m, i) => {
+    const pct = i === raw.length - 1 ? 100 - start : Math.round((m.revenueMinor / total) * 100);
+    const slice = { mode: m.mode, minor: m.revenueMinor, pct, start };
+    start += pct;
+    return slice;
+  });
+}
+
+/** The half-donut: the biggest way of paying in the dark green and its share in the middle, a legend under it. */
+export function PayGaugeCard({
+  title,
+  slices,
+  nameOf,
+  money,
+}: {
+  title: string;
+  slices: PaySlice[];
+  nameOf: (mode: string) => string;
+  money: (minor: number) => string;
+}) {
+  const top = slices[0];
+  if (!top) return null;
+  return (
+    <section className="rst-panel rst-pay-panel">
+      <div className="rst-panel-head">
+        <h3>{title}</h3>
+      </div>
+      <div className="rst-gauge">
+        <svg viewBox="0 0 120 66" aria-hidden="true" focusable="false">
+          <path className="rst-gauge-track" d="M10 60 A50 50 0 0 1 110 60" pathLength={100} />
+          {slices.map((sl, i) => (
+            <path
+              key={sl.mode}
+              className={`rst-gauge-arc is-${i}`}
+              d="M10 60 A50 50 0 0 1 110 60"
+              pathLength={100}
+              strokeDasharray={`${Math.max(0, sl.pct - 1.2)} 100`}
+              strokeDashoffset={-sl.start}
+            />
+          ))}
+        </svg>
+        <div className="rst-gauge-mid">
+          <strong>{top.pct}%</strong>
+          <span>{nameOf(top.mode)}</span>
+        </div>
+      </div>
+      <ul className="rst-gauge-legend">
+        {slices.map((sl, i) => (
+          <li key={sl.mode}>
+            <i className={`is-${i}`} aria-hidden="true" />
+            <span>{nameOf(sl.mode)}</span>
+            <b>{money(sl.minor)}</b>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** The dark card: one live number, a line under it, and the door to it. */
+export function DarkStatCard({
+  title,
+  value,
+  valueLabel,
+  foot,
+  action,
+}: {
+  title: string;
+  value: ReactNode;
+  valueLabel: string;
+  foot?: ReactNode;
+  action?: { href: string; label: string } | null;
+}) {
+  return (
+    <section className="rst-queue-card">
+      <div className="rst-queue-head">
+        <h3>{title}</h3>
+      </div>
+      <p className="rst-queue-count">
+        <strong>{value}</strong>
+        <span>{valueLabel}</span>
+      </p>
+      {foot ? <p className="rst-queue-done">{foot}</p> : null}
+      {action ? (
+        <a className="rst-queue-btn" href={action.href}>
+          {action.label}
+        </a>
+      ) : null}
+    </section>
+  );
+}
+
+/** The page head: the greeting and one line on the left (hidden from a screen reader, which has the header's h1), actions right. */
+export function PageHead({ title, sub, children }: { title: string; sub: string; children?: ReactNode }) {
+  return (
+    <div className="rst-page-head">
+      <div className="rst-page-id" aria-hidden="true">
+        <p className="rst-page-title">{title}</p>
+        <p className="rst-page-sub">{sub}</p>
+      </div>
+      <div className="rst-page-actions">{children}</div>
+    </div>
+  );
+}

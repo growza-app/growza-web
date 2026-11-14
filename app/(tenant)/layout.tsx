@@ -39,7 +39,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { pickNamespaces, type Messages } from '../../i18n/messages';
 import { CLIENT_MESSAGES } from '../../i18n/client-messages';
-import { devanagari, figtree } from '../fonts';
+import { devanagari, figtree, jakarta } from '../fonts';
 import { APP_ICONS } from '../icons.generated';
 
 /**
@@ -50,7 +50,7 @@ import { APP_ICONS } from '../icons.generated';
  * note there for the deploy that could not be built. Exposed as CSS variables so 00-base.css keeps
  * owning the stack and its system-font fallback.
  */
-const fontClass = `${figtree.variable} ${devanagari.variable}`;
+const fontClass = `${figtree.variable} ${devanagari.variable} ${jakarta.variable}`;
 
 /**
  * Jira GRW-192 — the tab says which screen, and whose business.
@@ -330,6 +330,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             phone: memberPhone,
             name: memberName,
             businessName: tenantName ?? null,
+            locationName: role === 'owner' && branchCount > 1 ? null : locationName,
             branches,
             share,
             lang,

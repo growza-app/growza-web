@@ -41,4 +41,14 @@ export function resolveNav<I>(groups: readonly NavGroup<I>[], canSee: (href: str
   return out;
 }
 
-export const isActive = (pathname: string, route: string): boolean => (route === '/' ? pathname === '/' : pathname === route || pathname.startsWith(`${route}/`));
+const under = (pathname: string, route: string): boolean => pathname === route || pathname.startsWith(`${route}/`);
+/**
+ * Returns and Refunds live under /orders but are reports: they draw the Reports tabs (RetailReportsNav). Lit as
+ * Orders, the sidebar and the page disagreed about where you were (owner, 14 Nov 2026: "fix all").
+ */
+const REPORT_PAGES = ['/orders/returns', '/orders/refunds'];
+export const isActive = (pathname: string, route: string): boolean => {
+  if (route === '/') return pathname === '/';
+  if (REPORT_PAGES.some((p) => under(pathname, p))) return route === '/reports' || (route !== '/orders' && under(pathname, route));
+  return under(pathname, route);
+};
