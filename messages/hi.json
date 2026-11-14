@@ -4642,6 +4642,7 @@
         "state": "स्थिति"
       },
       "itemCount": "{count, plural, =0 {कोई सामान नहीं} one {# सामान} other {# सामान}}",
+      "itemsAllBack": "{count, plural, one {# सामान} other {# सामान}} · सब वापस आया",
       "orderCode": "ऑर्डर #{code}",
       "tokenTitle": "टोकन {n}",
       "appOrder": "ऐप ऑर्डर {ref}",

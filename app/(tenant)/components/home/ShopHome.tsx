@@ -22,6 +22,7 @@ import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import { ordersHref } from '../../lib/orders-filter';
 import { formatTokenNo, posQueueStorageKey, queueStateOf, tokenNumbersOf, type PosTokenOverride } from '../../pos/pos-helpers';
+import { allCameBack } from '../../lib/order-items';
 import { channelsOf, isDeliveryApp, sellsOnMarketplaces } from '../../lib/order-channels';
 import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
@@ -1742,7 +1743,7 @@ export function ShopHome({
                                   {channelWord(o.channel)}
                                 </span>
                               </td>
-                              <td>{s.itemCountShort(o.items)}</td>
+                              <td>{allCameBack(o) ? s.itemsAllBackShort(o.itemsSold) : s.itemCountShort(o.items)}</td>
                               {money ? (
                                 <td className="hm-v3-td-amount">
                                   <strong>{o.amountMinor !== undefined ? rupees(o.amountMinor) : '—'}</strong>
@@ -2203,7 +2204,7 @@ export function ShopHome({
                               <span className="shp-recent-main">
                                 <span className="shp-recent-name">{customerName}</span>
                                 <span className="shp-recent-meta">
-                                  <span className="shp-recent-code">{orderNumber(o)}</span> · {channelWord(o.channel)} · {formatShortDate(o.soldAt)} · {s.itemCountShort(o.items)}
+                                  <span className="shp-recent-code">{orderNumber(o)}</span> · {channelWord(o.channel)} · {formatShortDate(o.soldAt)} · {allCameBack(o) ? s.itemsAllBackShort(o.itemsSold) : s.itemCountShort(o.items)}
                                 </span>
                               </span>
                             </span>

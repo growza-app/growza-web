@@ -541,6 +541,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       colStatus: S('Status', 'स्थिति'),
       colActions: S('Actions', 'कार्रवाई'),
       itemCountShort: (n: number) => (n === 1 ? S('1 item', '1 सामान') : S(`${n} items`, `${n} सामान`)),
+      // QA 2026-11-14, F14 — an order everything on which came back.
+      itemsAllBackShort: (n: number) => (n === 1 ? S('1 item · all came back', '1 सामान · सब वापस आया') : S(`${n} items · all came back`, `${n} सामान · सब वापस आया`)),
       noNameCustomer: S('Walk-in customer', 'दुकान का ग्राहक'),
       stateDone: S('Done', 'पूरा हुआ'),
       stateNew: S('New', 'नया'),

@@ -4642,6 +4642,7 @@
         "state": "State"
       },
       "itemCount": "{count, plural, =0 {No items} one {# item} other {# items}}",
+      "itemsAllBack": "{count, plural, one {# item} other {# items}} · all came back",
       "orderCode": "Order #{code}",
       "tokenTitle": "Token {n}",
       "appOrder": "App order {ref}",
