@@ -748,6 +748,9 @@ export function OwnerHome(p: OwnerHomeProps) {
           <div className="rst-kpis">
             {/* 1. Today's sales */}
             <div className="rst-kpi rst-kpi-sales">
+              {mayOpen('/reports') ? (
+                <a className="rst-kpi-go" href="/reports" aria-label={t.nav.reports}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg></a>
+              ) : null}
               <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
                 <path d="M0 45 C120 70 260 15 400 38 L400 70 L0 70 Z" fill="currentColor" />
               </svg>
@@ -788,6 +791,7 @@ export function OwnerHome(p: OwnerHomeProps) {
 
             {/* 2. Bookings today */}
             <a className="rst-kpi rst-kpi-orders" href={mayOpen('/appointments') ? '/appointments' : undefined}>
+              <span className="rst-kpi-go" aria-hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg></span>
               <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
                 <path d="M0 48 C140 20 270 65 400 35 L400 70 L0 70 Z" fill="currentColor" />
               </svg>
@@ -810,6 +814,7 @@ export function OwnerHome(p: OwnerHomeProps) {
 
             {/* 3. Clients */}
             <a className="rst-kpi rst-kpi-customers" href={mayOpen('/customers') ? '/customers' : undefined}>
+              <span className="rst-kpi-go" aria-hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg></span>
               <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
                 <path d="M0 42 C130 65 260 22 400 44 L400 70 L0 70 Z" fill="currentColor" />
               </svg>

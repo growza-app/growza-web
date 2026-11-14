@@ -934,6 +934,9 @@ export function ShopHome({
                   {/* 1. Today's sales */}
                   {money && data.today.takingsMinor !== undefined ? (
                     <div className="rst-kpi rst-kpi-sales">
+                      {can('/reports') ? (
+                        <a className="rst-kpi-go" href="/reports" aria-label={t.nav.reports}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg></a>
+                      ) : null}
                       <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
                         <path d="M0 45 C120 70 260 15 400 38 L400 70 L0 70 Z" fill="rgba(22, 163, 74, 0.08)" />
                       </svg>
@@ -995,6 +998,7 @@ export function ShopHome({
 
                   {/* 2. Orders */}
                   <a className="rst-kpi rst-kpi-orders" href="/orders">
+                    <span className="rst-kpi-go" aria-hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg></span>
                     <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
                       <path d="M0 48 C140 20 270 65 400 35 L400 70 L0 70 Z" fill="rgba(37, 99, 235, 0.07)" />
                     </svg>
@@ -1012,12 +1016,14 @@ export function ShopHome({
                     {ordersDeltaPct !== null ? (
                       <div className="rst-kpi-side is-bottom">
                         <span className={`rst-delta-pill ${deltaTone(ordersDeltaPct)}`}>{deltaLabel(ordersDeltaPct)}</span>
+                        <span className="rst-delta-sub">{s.vsYesterday}</span>
                       </div>
                     ) : null}
                   </a>
 
                   {/* 3. Customers */}
                   <a className="rst-kpi rst-kpi-customers" href="/customers">
+                    <span className="rst-kpi-go" aria-hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg></span>
                     <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
                       <path d="M0 42 C130 65 260 22 400 44 L400 70 L0 70 Z" fill="rgba(217, 119, 6, 0.08)" />
                     </svg>

@@ -103,10 +103,13 @@
 /* ---------- restaurant / shop Home, laptop and up ---------- */
 
 @media (min-width: 861px) {
-  .hm-head.is-rst-head .hm-head-title {
-    font-size: 2rem;
+  /* Type: big jumps, few steps. A page title, a card title, a label, a number — nothing in between. */
+  .hm-head.is-rst-head .hm-head-title,
+  .topbar-title,
+  .topbar-title h1 {
+    font-size: var(--fs-12);
     font-weight: 600;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.035em;
   }
 
   .rst-date-pill {
@@ -115,26 +118,116 @@
   }
 
   .rst-kpis {
-    gap: 1rem;
+    gap: 1.25rem;
   }
 
+  /* ---- the KPI tiles: label top-left, the arrow top-right, one big number, a small badge under it ---- */
   .rst-kpi,
+  .rst-kpi-sales,
   .rst-kpi-orders,
   .rst-kpi-customers {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: var(--sp-2);
+    min-height: 10.5rem;
+    padding: 1.5rem 1.5rem 1.375rem;
     background: var(--surface);
     border-color: transparent;
     box-shadow: none;
     border-radius: var(--radius-lg);
   }
 
-  .rst-kpi-wave {
+  .rst-kpi-wave,
+  .rst-kpi-icon {
     display: none;
   }
 
-  /* The one filled card. */
+  .rst-kpi-top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-2);
+  }
+
+  .rst-kpi-main {
+    flex: 0 0 auto;
+    gap: var(--sp-3);
+    padding-right: 3.25rem;
+  }
+
+  .rst-kpi-label {
+    font-size: var(--fs-5);
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .rst-kpi-value {
+    font-size: 2.75rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.045em;
+  }
+
+  /* The same round arrow on every tile: repetition reads as order. */
+  .rst-kpi-go {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 999px;
+    border: 1.5px solid var(--canvas-line);
+    background: var(--surface);
+    color: var(--text);
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  a.rst-kpi:hover .rst-kpi-go,
+  a.rst-kpi-go:hover {
+    background: var(--forest);
+    border-color: var(--forest);
+    color: #fff;
+  }
+
+  /* The badge row: a mint chip and a quiet line, as on every tile. */
+  .rst-kpi-side,
+  .rst-kpi-side.is-bottom {
+    flex-direction: row;
+    align-items: center;
+    align-self: flex-start;
+    gap: var(--sp-2);
+    margin: auto 0 0;
+  }
+
+  .rst-delta-pill,
+  .sln-kpi-pill,
+  .sln-kpi-pill.is-blue,
+  .sln-kpi-pill.is-amber {
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    font-size: var(--fs-1);
+    font-weight: 500;
+  }
+
+  .rst-delta-pill.is-up,
+  .sln-kpi-pill.is-blue,
+  .sln-kpi-pill.is-amber {
+    background: color-mix(in srgb, var(--mint) 38%, var(--surface));
+    color: var(--forest);
+  }
+
+  .rst-delta-sub {
+    font-size: var(--fs-1);
+    color: var(--muted);
+  }
+
+  /* ---- the one filled tile ---- */
   .rst-kpi-sales {
     background: var(--forest);
-    border-color: transparent;
     color: #fff;
   }
 
@@ -147,40 +240,46 @@
   }
 
   .rst-kpi-sales .rst-kpi-modes {
+    padding-top: var(--sp-3);
     border-top-color: rgb(255 255 255 / 14%);
   }
 
-  .rst-kpi-sales .rst-kpi-icon.is-sales {
-    background: rgb(255 255 255 / 12%);
+  .rst-kpi-sales .rst-kpi-side {
+    margin-top: var(--sp-1);
+  }
+
+  .rst-kpi-sales .rst-delta-pill,
+  .rst-kpi-sales .rst-delta-pill.is-up {
+    background: var(--mint);
+    color: var(--forest);
+  }
+
+  .rst-kpi-sales .rst-delta-pill.is-down {
+    background: rgb(255 255 255 / 16%);
     color: #fff;
   }
 
-  .rst-kpi-sales .rst-delta-pill {
-    background: rgb(255 255 255 / 14%);
-    color: #fff;
+  .rst-kpi-sales .rst-kpi-go {
+    background: #fff;
+    border-color: #fff;
+    color: var(--forest);
   }
 
-  .rst-kpi-label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--muted);
+  .rst-kpi-sales a.rst-kpi-go:hover {
+    background: var(--mint);
+    border-color: var(--mint);
+    color: var(--forest);
   }
 
-  .rst-kpi-value {
-    font-weight: 600;
-    letter-spacing: -0.035em;
-  }
-
-  /* Icons on the white cards are an outlined circle, the same on each, not three tints. */
-  .rst-kpi-icon.is-orders,
-  .rst-kpi-icon.is-customers {
-    background: transparent;
-    border: 1.5px solid var(--border);
-    color: var(--text);
-  }
+  /* How it was paid, in the three greens instead of four unrelated colours. */
+  .rst-kpi-sales .rst-mode-dot.is-cash { background: var(--mint); }
+  .rst-kpi-sales .rst-mode-dot.is-upi { background: #fff; }
+  .rst-kpi-sales .rst-mode-dot.is-card { background: color-mix(in srgb, var(--mint) 55%, var(--forest)); }
+  .rst-kpi-sales .rst-mode-dot:is(.is-other, .is-apps, .is-not_recorded) { background: rgb(255 255 255 / 45%); }
 
   .rst-section-title,
   .rst-panel-head h3 {
+    font-size: var(--fs-8);
     font-weight: 600;
     letter-spacing: -0.02em;
   }
@@ -239,7 +338,7 @@
   }
 
   .rst-status-pill.is-served {
-    background: var(--canvas);
+    background: color-mix(in srgb, var(--mint) 38%, var(--surface));
     color: var(--forest);
   }
 }
@@ -275,10 +374,10 @@
 }
 
 
-/* Tablets held sideways: the money card's icon takes the room its label and number need. */
+/* Tablets held sideways: three tiles share less room, so the number steps down one size. */
 @media (min-width: 861px) and (max-width: 1180px) {
-  .rst-kpi-sales .rst-kpi-icon {
-    display: none;
+  .rst-kpi-value {
+    font-size: var(--fs-12);
   }
 }
 
@@ -299,4 +398,181 @@
   border-color: transparent;
   box-shadow: none;
   border-radius: var(--radius-lg);
+}
+
+/* ---------- charts: pill bars in the greens, over a striped track ----------
+ * The shot's bar chart: every column has a rounded track, the quiet part of the track is hatched, the
+ * figure is a solid pill in it, and the best one is the darkest green. Stripes say "nothing here yet"
+ * without spending a colour on it. */
+
+.cr-bars {
+  gap: var(--sp-2);
+}
+
+.cr-bars-hour {
+  gap: var(--sp-1);
+}
+
+/* A pill as wide as a thumb, centred in its column: a full-width column with round ends clips a short bar
+   into a half-moon. */
+.cr-bar-slot {
+  justify-content: center;
+  max-width: 2.75rem;
+  margin-inline: auto;
+  border-radius: 999px;
+  background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
+}
+
+.cr-bars-hour .cr-bar-slot {
+  max-width: 1.5rem;
+}
+
+.cr-bars-day .cr-bar-slot {
+  height: 7rem;
+}
+
+.cr-bars-hour .cr-bar-slot {
+  height: 5.5rem;
+}
+
+.cr-bar {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+}
+
+.cr-bar.is-peak {
+  background: var(--forest);
+}
+
+.cr-bar-top {
+  color: var(--forest);
+}
+
+/* Horizontal bars: a thick rounded track, the leader in the dark green. */
+.cr-row-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--canvas);
+}
+
+.cr-row-fill {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+}
+
+.cr-row:first-child .cr-row-fill {
+  background: var(--forest);
+}
+
+.cr-hero {
+  font-size: 2.75rem;
+  letter-spacing: -0.045em;
+}
+
+/* Sales by channel. */
+.sls-chart-track {
+  max-width: 2.75rem;
+  border-radius: 999px;
+  background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
+}
+
+.sls-chart-stack {
+  border-radius: 999px;
+}
+
+.sls-chart-col.is-zero .sls-chart-stack {
+  background: transparent;
+}
+
+.sls-bar-srv {
+  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+}
+
+.sls-bar-prd {
+  background: var(--mint);
+}
+
+.sls-chart-col.is-peak .sls-bar-srv {
+  background: var(--forest);
+}
+
+.sls-chart-col.is-peak .sls-bar-prd {
+  background: color-mix(in srgb, var(--mint) 60%, var(--forest-2));
+}
+
+/* The salon Home's week chart and the report bar lists. */
+.hm-v3-bar-track {
+  border-radius: 999px;
+  background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
+}
+
+.hm-v3-bar-fill {
+  max-width: 2.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+  opacity: 1;
+}
+
+.hm-v3-bar-col.is-peak .hm-v3-bar-fill {
+  background: var(--forest);
+}
+
+.rp-bar-track,
+.rp-cell-bar-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--canvas);
+}
+
+.rp-bar-fill {
+  border-radius: 999px;
+}
+
+/* Card titles: one size, medium weight. */
+:is(.cr-title, .hm-card-head h2, .rp-card h2, .rp-card h3) {
+  font-size: var(--fs-7);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- tables on a page: a white card with row lines only ----------
+ * No grid of vertical lines and no grey header band: the header is small grey text, rows are split by
+ * one faint line, the card has no outline. The editing grids (bulk edit, sizes) keep their cell lines,
+ * because there a cell is a field. */
+
+:is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
+  border-color: transparent;
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+}
+
+:is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table) :is(th, td) {
+  border-left: 0;
+  border-right: 0;
+  border-bottom-color: var(--canvas);
+}
+
+:is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table) th {
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--fs-2);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  border-bottom-color: var(--canvas-line);
+}
+
+:is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table) tbody tr:hover td {
+  background: color-mix(in srgb, var(--canvas) 60%, var(--surface));
+}
+
+:is(.rp-table-scroll, .sls-table-wrap, .srp-table-card):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
+  border-color: transparent;
+  box-shadow: none;
+  border-radius: var(--radius-lg);
+}
+
+/* Segmented filters and tabs: pills on a pill track, the chosen one dark green. */
+:is(.seg, .segmented, .rp-tabs, .tabs) :is(button, a) {
+  border-radius: 999px;
 }
