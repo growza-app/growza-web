@@ -121,6 +121,15 @@ const statusRank = (p: Pick<Product, 'stock' | 'lowStockAt' | 'active'>): number
   return tone === 'out' ? 0 : tone === 'low' ? 1 : 2;
 };
 
+/**
+ * QA 2026-11-14 (F15) — "QA4 Cricket" listed ten products A–Z with the one asked for eighth: the search ranks best
+ * first, and the shelf's default A–Z sort then threw that order away. While a search is typed and nobody has picked
+ * a sort, the best match leads; a sort the owner picks still wins.
+ */
+export function searchKeepsBestFirst(search: string, sort: ShelfSort, dir: ShelfSortDir): boolean {
+  return search.trim().length >= 2 && sort === 'name' && dir === defaultSortDir('name');
+}
+
 export function sortShelf(rows: readonly Product[], sort: ShelfSort, dir: ShelfSortDir = defaultSortDir(sort)): Product[] {
   const sign = dir === 'asc' ? 1 : -1;
   const byName = (a: Product, b: Product) => a.name.localeCompare(b.name);
@@ -250,10 +259,10 @@ export function ProductsList({
   const lowCount = useMemo(() => inCategory.filter((p) => stockTone(p) === 'low').length, [inCategory]);
   const outCount = useMemo(() => inCategory.filter((p) => p.stock <= 0).length, [inCategory]);
   const worth = useMemo(() => shelfWorthMinor(inCategory), [inCategory]);
-  const shown = useMemo(
-    () => sortShelf(filterShelf(rows, filter, search, selectedCategories), sort, sortDir),
-    [rows, filter, search, selectedCategories, sort, sortDir],
-  );
+  const shown = useMemo(() => {
+    const found = filterShelf(rows, filter, search, selectedCategories);
+    return searchKeepsBestFirst(search, sort, sortDir) ? found : sortShelf(found, sort, sortDir);
+  }, [rows, filter, search, selectedCategories, sort, sortDir]);
   const remote = useServiceSuggestions(search, branchId);
   const inFilterScope = useMemo(
     () => filterShelf(rows, filter, '', selectedCategories),
