@@ -138,7 +138,11 @@ describe('FR-06 — Home’s count of what is waiting opens the list already fil
   });
 
   it('draws nothing when nothing is waiting: a "0 to send" is noise on the screen opened most', () => {
-    expect(home).toContain('{data.toSend > 0 ? (');
+    // Owner, 2026-11-13 — on a shop's phone the count is a Needs attention row (same rule: a zero row is not drawn);
+    // the kitchen's Orders card keeps the link.
+    expect(home).toContain('{isKitchen && data.toSend > 0 ? (');
+    expect(home).toContain("{ key: 'send', tone: '', n: ships ? (data?.toSend ?? 0) : 0, label: s.waitingToSendLabel");
+    expect(home).toContain('].filter((c) => c.n > 0 && c.href !== null);'); // F10 (QA 2026-11-14): and only a row that opens
   });
 
   it('says it in both languages', () => {
@@ -162,9 +166,19 @@ describe('UX — 344px first, one accent, plain words, the shared parts', () => 
     expect(client).toContain('<SearchClear');
   });
 
-  it('every chip is at least 2.75rem tall, and the chips wrap instead of scrolling sideways', () => {
+  it('every chip is at least 2.75rem tall and the chips wrap on a laptop; a phone gets two dropdown pills instead', () => {
     expect(css).toMatch(/\.ord-chip\s*\{[^}]*min-height:\s*2\.75rem/);
     expect(css).toMatch(/\.ord-chips\s*\{[^}]*flex-wrap:\s*wrap/);
+    // Owner's review 2026-11-13 — the two chip groups were ~130px before the first order on a phone: there they are
+    // one row of two native selects styled as pills (44px), and the chips are not drawn. A laptop never sees the pills.
+    expect(client).toContain('<div className="ord-selects">');
+    expect(client).toContain('{offered.length > 1 ? (');
+    expect(client).toContain("<select aria-label={t('list.channelGroup')} value={query.channel} onChange={(e) => pickChannel(e.target.value)}>");
+    expect(client).toContain("<select aria-label={t('list.stateGroup')} value={query.status} onChange={(e) => pickState(e.target.value)}>");
+    expect(css).toMatch(/\.ord-selects \{\s*display: none;/);
+    expect(css).toMatch(/\.ord-select select \{[^}]*min-height: 2\.75rem;[^}]*border-radius: 999px;/);
+    const phone = css.slice(css.indexOf("Owner's review 2026-11-13"));
+    expect(phone).toMatch(/@media \(max-width: 860px\) \{\s*\.ord-selects \{\s*display: flex;\s*\}\s*\.ord-tools \.ord-chips \{\s*display: none;/);
   });
 
   it('cards first, the table from 861px — the same switch Bookings and Sales make', () => {

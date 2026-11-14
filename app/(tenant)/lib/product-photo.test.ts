@@ -178,4 +178,16 @@ describe('a kitchen reads sixty-nine rows a day, so a dish gets a dish', () => {
     // (A belt, not a tie — the category is read too and `belt` is matched first. Unchanged by any of this.)
     expect(kindOf('School Tie', 'Belts, ties & socks')).toBe('belt');
   });
+
+  it('a sports shop: a ball is a ball, by its name — its category neighbours are not', () => {
+    // Sports-shop QA, 13 Nov 2026: a football and a tube of shuttlecocks were drawn as bottles on the till.
+    expect(kindOf('Football', 'Football')).toBe('ball');
+    expect(kindOf('Leather Cricket Ball', 'Cricket')).toBe('ball');
+    expect(kindOf('Feather Shuttlecocks (tube of 10)', 'Racket sports')).toBe('ball');
+    expect(kindOf('Tennis Balls (can of 3)', 'Racket sports')).toBe('ball');
+    // The Football category's other things keep their own drawing, or none — never a ball.
+    expect(kindOf('Football Boots', 'Football')).toBe('shoes');
+    expect(kindOf('Shin Guards', 'Football')).not.toBe('ball');
+    expect(kindOf('Training Cones (set of 10)', 'Football')).not.toBe('ball');
+  });
 });

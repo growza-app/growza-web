@@ -29,5 +29,17 @@ export async function signOut(): Promise<void> {
      * still the right place to be.
      */
   }
+  /*
+   * Security audit 2026-11-14 (#14) — what this tab kept about people goes with the session: the client remembered
+   * on the booking grid (`wa-booking:rememberedCustomer`, a name and a number) and the bills held at the till
+   * (`growza.heldBills.*`, naming guests). On a shared counter tablet the next person to sign in used the same tab.
+   */
+  try {
+    for (const key of Object.keys(sessionStorage)) {
+      if (key.startsWith('wa-booking:') || key.startsWith('growza.heldBills.')) sessionStorage.removeItem(key);
+    }
+  } catch {
+    // Storage can be unavailable (a private window, blocked site data); leaving is still right.
+  }
   window.location.assign(SIGN_IN_PATH);
 }

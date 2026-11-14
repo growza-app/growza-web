@@ -91,8 +91,9 @@ export const QUICK_FIXES: readonly FixCategory[] = [
  * An unknown role — `/me` could not be read — is offered everything: this is a help page, and a page that
  * shows less because something is already wrong would be the opposite of its job.
  */
-export function fixesFor(role: FixRole | null): { id: FixCategory['id']; topics: FixTopic[] }[] {
-  return QUICK_FIXES.map((c) => ({
+export function fixesFor(role: FixRole | null, opts: { bookings?: boolean } = {}): { id: FixCategory['id']; topics: FixTopic[] }[] {
+  // A business that takes no bookings is not shown how to add, move or cancel one (sports-shop QA, 13 Nov 2026).
+  return QUICK_FIXES.filter((c) => c.id !== 'bookings' || opts.bookings !== false).map((c) => ({
     id: c.id,
     topics: c.topics.filter((t) => role === null || t.roles === 'all' || t.roles.includes(role)),
   })).filter((c) => c.topics.length > 0);

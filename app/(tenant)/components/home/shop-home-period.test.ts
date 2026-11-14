@@ -88,12 +88,18 @@ describe('each Home pays only for its own reads', () => {
   it('the top seller is read for the same window as the money above it', () => {
     const at = shop.indexOf('api\n        .bestSellers({ ...w,');
     expect(at).toBeGreaterThan(0);
-    expect(shop.slice(at, at + 200)).toContain('pageSize: 1');
+    // Owner, 2026-11-13 — three rows for the shop's Top sellers card (it was one, read and never shown).
+    expect(shop.slice(at, at + 200)).toContain('pageSize: 3');
   });
 
-  it('"recent" is the last six orders, not the chosen window', () => {
-    const at = shop.indexOf('if (can(\'/orders\')) {\n      api\n        .orders({ pageSize: 6, location: branch })');
+  it('"recent" is the last six orders, not the chosen window — cut from the one hundred-row read', () => {
+    const at = shop.indexOf('if (can(\'/orders\')) {\n      api\n        .orders({ pageSize: 100, location: branch })');
     expect(at).toBeGreaterThan(shop.indexOf('if (phone !== true) return;'));
+    // Owner, 2026-11-13 (IO) — one orders read on a phone's Home, not two: the six are the first six of the hundred.
+    // (The desk's own six-row read for its command center stays; it does not run on a phone.)
+    const phoneEffect = shop.slice(shop.indexOf('if (phone !== true) return;'), shop.indexOf('if (!canPhoneRange) return;'));
+    expect(phoneEffect).not.toContain('pageSize: 6');
+    expect(shop.slice(at, at + 400)).toContain('setRecentOrders(res.rows.slice(0, 6));');
     // It sits ABOVE the `canPhoneRange` gate: the rows are not behind the channel report's permission.
     expect(at).toBeLessThan(shop.indexOf('if (!canPhoneRange) return;'));
   });
@@ -109,7 +115,12 @@ describe('nothing on the hero is invented, and nothing stale is left under a new
   });
 
   it('a window still loading or failed draws its own line, not the previous window’s money', () => {
-    expect(shop).toContain("if (!phoneChannel) return { kind: phoneBusy ? ('busy' as const) : ('failed' as const) };");
+    // Owner's review 2026-11-13 — the starting state (nothing read, nothing in flight) is the skeleton, not the error:
+    // every arrival on Home painted "Could not load this" for ~400ms before the effect fired. Only a refused read fails.
+    expect(shop).toContain("if (!phoneChannel) return { kind: phoneFailed && !phoneBusy ? ('failed' as const) : ('busy' as const) };");
+    expect(shop).toContain('const [phoneFailed, setPhoneFailed] = useState(false);');
+    expect(shop).toMatch(/\.catch\(\(\) => \{\n\s*if \(mine !== phoneReqId\.current\) return;\n\s*setPhoneChannel\(null\);\n\s*setPhoneFailed\(true\);/);
+    expect(shop).toMatch(/setPhoneChannel\(res\);\n\s*setPhoneFailed\(false\);/);
     expect(shop).toMatch(/phoneFigures\.kind === 'busy' \? \([\s\S]{0,200}shp-hero-skeleton/);
   });
 
@@ -142,32 +153,51 @@ describe('nothing on the hero is invented, and nothing stale is left under a new
   });
 });
 
-describe('the phone running order: the money, Quick links, then the lists', () => {
+describe('the phone running order: the money, then Quick links for a shop (last for a kitchen), what needs the owner, the lists', () => {
   it('the money is its own block, hidden from 861px exactly as the stack is', () => {
     expect(shop).toContain('<div className="shp-phone-money">');
     expect(deskBlock).toMatch(/\.shp-mobile-stack,\s*\n\s*\.shp-phone-money \{\s*\n\s*display: none;/);
   });
 
-  it('Quick links is written between them, not moved there by `order`', () => {
+  it('a shop with a counted shelf has Quick links straight under the money; a kitchen keeps them last', () => {
     /*
-     * `OwnerHome` already states the rule: on a phone the cards are laid out in the order
-     * they are READ. `order` would have left a keyboard tabbing from the hero down through
-     * three cards and then BACK UP to the shortcuts sitting second on screen (WCAG 2.4.3).
+     * Owner, 13 Nov 2026 — "just below the KPI card there should be quick links", retail only: the money, then the
+     * doors, then what needs the owner (Running out), then what happened. The kitchen is unchanged: the doors last.
+     * `OwnerHome` states the rule: on a phone the cards are laid out in the order they are READ. `order` would have
+     * left a keyboard tabbing out of step with the screen (WCAG 2.4.3).
      */
     const money = shop.indexOf('<div className="shp-phone-money">');
-    const links = shop.indexOf('hm-area-links hm-mobile shp-links');
+    const shopLinks = shop.indexOf('{areas.stock ? quickLinks : null}');
     const stack = shop.indexOf('<div className="shp-mobile-stack">');
+    // Owner, 2026-11-13 — a shop's stack is a summary: Needs attention, Top sellers, Customers. Recent orders is the
+    // kitchen's (the Orders tab lists them one tap away).
+    const attention = shop.indexOf('{s.needsAttentionTitle}\n                          {phoneAttention.length > 0');
+    const sellers = shop.indexOf('<ul className="shp-phone-sellers">');
+    const customers = shop.indexOf('title={s.customersTitle}');
+    const recent = shop.indexOf('<Card\n                  title={s.recentOrdersTitle}');
+    const kitchenLinks = shop.indexOf('{areas.stock ? null : quickLinks}');
     expect(money).toBeGreaterThan(-1);
-    expect(links).toBeGreaterThan(money);
-    expect(stack).toBeGreaterThan(links);
+    expect(shopLinks).toBeGreaterThan(money);
+    expect(stack).toBeGreaterThan(shopLinks);
+    expect(attention).toBeGreaterThan(stack);
+    expect(sellers).toBeGreaterThan(attention);
+    expect(customers).toBeGreaterThan(sellers);
+    expect(recent).toBeGreaterThan(customers);
+    expect(shop).toContain("{isKitchen && can('/orders') && data.anyOrders && recentOrders.length > 0 ? (");
+    expect(kitchenLinks).toBeGreaterThan(recent);
+    expect(shop.match(/hm-area-links hm-mobile shp-links/g)).toHaveLength(1);
     expect(css).not.toMatch(/order: [123];/);
   });
 
-  it('and still outside the branch a failed read replaces, so the last door stays', () => {
-    // The error card takes the money AND the lists; Quick links is in neither conditional.
+  it('and both spots are outside the branch a failed read replaces, so the doors stay', () => {
     expect(shop).toMatch(/\{failed \|\| !data \? \(\s*\n\s*<Card>/);
     expect(shop).toMatch(/\{failed \|\| !data \? null : \(\s*\n\s*<div className="shp-mobile-stack">/);
-    expect(shop.indexOf('hm-area-links hm-mobile shp-links')).toBeLessThan(shop.indexOf('{failed || !data ? null : ('));
+    const shopLinks = shop.indexOf('{areas.stock ? quickLinks : null}');
+    const stackBranch = shop.indexOf('{failed || !data ? null : (');
+    const kitchenLinks = shop.indexOf('{areas.stock ? null : quickLinks}');
+    expect(stackBranch).toBeGreaterThan(shopLinks);
+    // After the branch closes: the stack's own closing `)}` comes before the kitchen's links.
+    expect(shop.slice(stackBranch, kitchenLinks)).toMatch(/<\/div>\n {8}\)\}\n/);
   });
 });
 

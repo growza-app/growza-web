@@ -2,6 +2,7 @@
 
 import { formatTokenNo } from '../../pos/pos-helpers';
 import { useCallback, useRef, useState } from 'react';
+import AppLink from '../../../shared/AppLink';
 import { useLocale, useTranslations } from 'next-intl';
 import { api, ApiError, formatMoney } from '../../lib/api';
 import type { OrderDetail, ReturnSaleProductsResponse } from '../../lib/api-types';
@@ -19,6 +20,7 @@ import { AttachClientSheet } from './AttachClientSheet';
 import { OrderMarketplaceLine } from './OrderMarketplaceLine';
 import { useNouns } from '../../lib/use-nouns';
 import { isDeliveryApp } from '../../lib/order-channels';
+import { useBranch } from '../../components/BranchProvider';
 
 /**
  * Jira GRW-615 — an order's own screen.
@@ -58,6 +60,9 @@ export function OrderClient({
   // A kitchen keeps no count, so the API answers `restocked: false` for every return for want of a shelf: saying so
   // on the order would read as a write-off of a dish nobody wrote off.
   const counted = useAreas().stock;
+  // A business with several branches: which one a counter order was rung up at. Each counts its tokens from 1.
+  const branchContext = useBranch();
+  const severalBranches = branchContext.ready && branchContext.multi;
 
   const [order, setOrder] = useState<OrderDetail | null>(initial);
   const [failed, setFailed] = useState(initial === null);
@@ -209,11 +214,21 @@ export function OrderClient({
   const soldDayISO = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(order.soldAt));
   const windowExpired = !computeReturnWindow(soldDayISO, new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date()), returnWindowDays).eligible;
   const isOwner = !session || session.role === null || session.role === 'owner';
+  // QA 13 Nov 2026, bug 6 — the server says who may take a return, as it does for a swap: the owner and, since the owner's decision that day, a
+  // manager. Before, a manager was shown "Return items" and refused on Save. An older API sends nothing and keeps it the owner's.
+  const canReturn = writable && (order.canReturn ?? isOwner);
   // An online order that is still to send and has nowhere to go says so, plainly, instead of showing an empty block.
   const toSend = order.status === 'new' || order.status === 'packed';
   const noAddress = !isCounter && toSend && !order.buyer?.address;
 
   const isPaidCounter = !isCounter || (order.payments?.length ?? 0) > 0;
+  /*
+   * QA 2026-11-14, F21 — a bill every unit of which came back has nothing on it to put on paper: the API's bill is only
+   * what was delivered and kept (`readBill`), so it answers the receipt preview 404 "That bill was not found", and the
+   * button then vanished on its own a moment later. The question is not asked: with nothing kept, there is no receipt
+   * control at all, from the first paint.
+   */
+  const somethingKept = order.lines.some((l) => l.qty > l.returnedQty);
   const returnable: ReturnableSaleBill | null =
     isCounter && hasMoney && order.lines.every((l) => l.priceMinor !== undefined) && isPaidCounter
       ? {
@@ -245,14 +260,23 @@ export function OrderClient({
 
   return (
     <>
-      {/* QA 10 Nov 2026 — titled by the token the guest holds (#08), as the list and Home show it; the code stays in the line below. */}
-      <PageHeader title={t('list.orderCode', { code: order.tokenNo ? formatTokenNo(order.tokenNo).slice(1) : code })} />
+      {/* QA 10 Nov 2026 — titled by the token the guest holds (#08), as the list and Home show it; the code stays in the line below.
+          Owner's review 2026-11-13 — on a counted shelf the token is a queue number and the code is what the receipt carries, so
+          the two are no longer both said as "Order #…": the title says "Token 5", the line below "Order #7D9906BA". */}
+      <PageHeader
+        title={
+          order.tokenNo && counted
+            ? t('list.tokenTitle', { n: formatTokenNo(order.tokenNo).slice(1) })
+            : t('list.orderCode', { code: order.tokenNo ? formatTokenNo(order.tokenNo).slice(1) : code })
+        }
+      />
       <div className={`page-body ord-page ord-detail ${hasBar ? 'has-bar' : ''}`} aria-busy={busy || undefined}>
         <section className="ord-d-head">
           <span className={`ord-state-chip ord-s-${order.known ? order.status : 'unknown'}`}>{stateWord(order.status)}</span>
           <span className="ord-d-meta">
             {when(order.soldAt)} · {channelWord(order.channel)}
             {order.tokenNo ? ` · ${t('list.orderCode', { code })}` : ''}
+            {isCounter && severalBranches && order.branchName ? ` · ${order.branchName}` : ''}
             {order.externalRef ? ` · ${fromApp ? t('detail.appOrderRef', { ref: order.externalRef }) : order.externalRef}` : ''}
           </span>
         </section>
@@ -278,7 +302,12 @@ export function OrderClient({
 
         <section className="ord-d-block" aria-label={t('detail.forTitle')}>
           <h2>{order.client ? t('detail.client', { customer: nouns.Customer }) : fromApp ? nouns.Customer : t('buyer.title')}</h2>
-          {order.client ? <p className="ord-d-name">{order.client.name ?? t('list.noName')}</p> : null}
+          {/* Owner's review 2026-11-13 — a known customer is a door to their card; a walk-in's name stays text. */}
+          {order.client ? (
+            <AppLink className="ord-d-name ord-d-name-link" href={`/customers?open=${encodeURIComponent(order.client.id)}`}>
+              {order.client.name ?? t('list.noName')}
+            </AppLink>
+          ) : null}
           {order.buyer ? (
             <>
               {!order.client ? <p className="ord-d-name">{order.buyer.name ?? t('list.noName')}</p> : null}
@@ -329,7 +358,7 @@ export function OrderClient({
                   <span className="ord-d-line-qty">{t('detail.times', { count: l.qty })}</span>
                   {l.paidMinor !== undefined ? <span className="ord-d-line-amount">{money(l.paidMinor)}</span> : null}
                   {canSwap && l.swappable ? (
-                    <button type="button" className="btn ord-d-line-swap" onClick={() => setSwapping(l.id)}>
+                    <button type="button" className="btn btn-ghost ord-d-line-swap" onClick={() => setSwapping(l.id)}>
                       {t('detail.swap.action')}
                     </button>
                   ) : null}
@@ -351,6 +380,10 @@ export function OrderClient({
                     {r.reasonText && r.reasonCode === 'other' ? <span className="ord-d-quiet"> · {r.reasonText}</span> : null}
                     {counted && !r.restocked ? <span className="ord-d-quiet"> · {t('detail.notRestocked')}</span> : null}
                     {r.saleableDefaulted ? <span className="ord-d-quiet"> · {t('detail.saleableAssumed')}</span> : null}
+                    {/* Owner, 2026-11-14 (returns QA, loophole 2) — who gave it back: their name, else their role. */}
+                    {r.by || r.byRole ? (
+                      <span className="ord-d-quiet"> · {t('detail.by', { name: r.by || t(`returns.byRole.${r.byRole}` as 'returns.byRole.owner') })}</span>
+                    ) : null}
                   </span>
                   <span className="ord-d-line-qty">{t('detail.times', { count: r.units })}</span>
                 </li>
@@ -406,14 +439,22 @@ export function OrderClient({
                 </div>
               ))}
             </dl>
-            <div className="ord-d-paper">
-              {isPaidCounter ? <DocumentAction visitKey={order.id} /> : null}
-              {returnable && writable ? (
-                <button type="button" className="btn" onClick={() => setReturning(true)}>
-                  {t('detail.returnItems')}
-                </button>
-              ) : null}
-            </div>
+            {/*
+              * QA 2026-11-14 — and no Return items once every unit has come back: the sheet would open on nothing to give
+              * back. Both controls ask the same question (`somethingKept`), so a fully returned order draws neither, nor
+              * the empty row that held them.
+              */}
+            {somethingKept && (isPaidCounter || (returnable && canReturn)) ? (
+              <div className="ord-d-paper">
+                {/* Owner's review 2026-11-13 — the receipt is the common action and is filled; a return moves money and is the ghost. */}
+                {isPaidCounter ? <DocumentAction visitKey={order.id} primary /> : null}
+                {returnable && canReturn ? (
+                  <button type="button" className="btn btn-ghost" onClick={() => setReturning(true)}>
+                    {t('detail.returnItems')}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
           </section>
         ) : null}
 

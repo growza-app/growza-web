@@ -377,6 +377,7 @@ export function PosClient({
   todayISO,
   returnWindowDays,
   canReturn,
+  returnBranch = null,
   initialMode,
   initialToken,
   heading,
@@ -386,6 +387,8 @@ export function PosClient({
   todayISO: string;
   returnWindowDays: number;
   canReturn: boolean;
+  /** The only branch whose bills this person may take back; null for the owner or a member with no branch. */
+  returnBranch?: string | null;
   initialMode: PosMode;
   /** Optional token id or number (`#07`, `7`, or visit UUID) to scroll to and highlight when opening the Queue board. */
   initialToken?: string;
@@ -471,8 +474,10 @@ export function PosClient({
 
   const loadTodayTokens = useCallback(async () => {
     try {
+      // QA 13 Nov 2026, bug 10 — the queue's own read: a desk the takings are not opened to gets the orders without amounts. Asking for
+      // the Sales register here was refused for the desk, which left its queue empty under the order it had just rung up.
       const rows = await api.appointments(todayISO, todayISO, undefined, undefined, {
-        includeSales: true,
+        includeSales: 'queue',
       });
       setTodayRows(rows);
       setNowMs(Date.now());
@@ -947,7 +952,8 @@ export function PosClient({
       if (mine !== opened.current) return;
       // Owner, 2026-10-24 — "No return": a Swiggy or Zomato order is returned and refunded by the app, so it is not offered here.
       // Unpaid counter orders still waiting in the queue for payment are filtered out inside `buildSaleRows`.
-      setBills(buildSaleRows(rows.filter((r) => !isDeliveryApp(r.channel ?? 'counter')), timezone));
+      // Owner, 2026-11-14 — a manager's till offers only their own branch's bills: the API refuses the rest (loophole 1).
+      setBills(buildSaleRows(rows.filter((r) => !isDeliveryApp(r.channel ?? 'counter') && (!returnBranch || r.locationId === returnBranch)), timezone));
     } catch {
       if (mine !== opened.current) return;
       setBills(null);
@@ -955,7 +961,7 @@ export function PosClient({
     } finally {
       if (mine === opened.current) setLoading(false);
     }
-  }, [todayISO, returnWindowDays, timezone]);
+  }, [todayISO, returnWindowDays, timezone, returnBranch]);
 
   const openQueue = useCallback(
     (targetToken?: unknown) => {

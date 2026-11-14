@@ -1,6 +1,8 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { useLabels } from '../components/LabelsProvider';
+import { nounInSentence, pickNoun } from '../lib/nouns';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError, type ServiceAdmin, type ServiceCategory } from '../lib/api';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -157,6 +159,11 @@ export function ServiceForm({
 }) {
   const t = useTranslations('services.form');
   const tp = useTranslations('services');
+  // QA 13 Nov 2026, bug 7 — "e.g. Haircut" in every vertical: the Name field now names the vertical's own service word.
+  const tn = useTranslations('nouns');
+  const locale = useLocale();
+  const labels = useLabels();
+  const serviceWord = pickNoun(locale, nounInSentence(labels.service ?? 'Service'), tn('service'));
 
   const [name, setName] = useState(service?.name ?? '');
   const [categoryId, setCategoryId] = useState(service?.categoryId ?? '');
@@ -407,7 +414,7 @@ export function ServiceForm({
                 type="text"
                 value={name}
                 autoFocus={autoFocusField()}
-                placeholder={t('namePlaceholder')}
+                placeholder={t('namePlaceholder', { service: serviceWord })}
                 className={fieldErrors.name ? 'field-invalid' : undefined}
                 onChange={(e) => {
                   setName(e.target.value);

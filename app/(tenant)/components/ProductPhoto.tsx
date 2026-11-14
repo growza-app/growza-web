@@ -14,6 +14,7 @@ export type ProductGraphicKind =
   | 'handbag'
   | 'shoes'
   | 'socks'
+  | 'ball'
   | 'bottle'
   | 'bowl'
   | 'bread'
@@ -51,6 +52,9 @@ export function resolveProductGraphic(product: {
   if (/\b(trouser|pant|jean|short|skirt|chino|legging|bottom|lower|trackpant)s?\b/.test(hay)) return { kind: 'trousers', tone: 'blue' };
   if (/\b(shoe|sneaker|boot|sandal|loafer|footwear|slipper|canvas)(es|s)?\b/.test(hay)) return { kind: 'shoes', tone: 'amber' };
   if (/\b(sock|stocking|anklet|cap|hat|badge|crest|glove|scarf|scarves)s?\b/.test(hay)) return { kind: 'socks', tone: 'rose' };
+  // A ball, by the product's NAME only: a sports shop's "Football" category also holds its shin guards and cones, and
+  // they are not balls. Before the bottle fallback, which drew a football and a tube of shuttlecocks as bottles.
+  if (/\b(ball|football|shuttlecock|shuttle)s?\b/.test((product.name ?? '').toLowerCase())) return { kind: 'ball', tone: 'green' };
   // Before the bottle rule: `cream` there means a face cream, and an ice cream is not one.
   if (/\b(ice\s*cream|kulfi|halwa|jamun|rasmalai|rasgulla|brownie|pastry|cake|falooda|phirni|kheer|dessert|sundae)s?\b/.test(hay)) {
     return { kind: 'dessert', tone: 'rose' };
@@ -169,6 +173,14 @@ function GraphicSvg({ kind }: { kind: ProductGraphicKind }) {
         <svg {...base}>
           <path d="M10 4h5v8.5c0 2-1.2 3.2-3 4.2l-2.5 1.3a2.5 2.5 0 0 1-3.5-2.2c0-1 .6-1.9 1.5-2.3L10 12V4Z" fill="currentColor" fillOpacity="0.16" />
           <line x1="10" y1="7" x2="15" y2="7" />
+        </svg>
+      );
+    case 'ball':
+      return (
+        <svg {...base}>
+          <circle cx="12" cy="12" r="8.5" fill="currentColor" fillOpacity="0.16" />
+          <path d="M12 7.5l3.4 2.5-1.3 4h-4.2l-1.3-4L12 7.5Z" fill="currentColor" fillOpacity="0.3" />
+          <path d="M12 7.5V3.5M15.4 10l3.9-1.3M14.1 14l2.4 3.4M9.9 14l-2.4 3.4M8.6 10L4.7 8.7" />
         </svg>
       );
     case 'bowl':

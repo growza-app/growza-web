@@ -1,6 +1,8 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { useLabels } from '../../components/LabelsProvider';
+import { nounInSentence, pickNoun } from '../../lib/nouns';
 import { useState } from 'react';
 import { api, ApiError, type BranchSettings } from '../../lib/api';
 import { getFix, pinFromText } from '../../lib/geo-fix';
@@ -35,6 +37,11 @@ const VAGUE_PIN_M = 50;
  */
 export function CheckInForm({ branch, branchName, branchCount }: { branch: BranchSettings; branchName: string | null; branchCount: number }) {
   const t = useTranslations('settingsCheckIn');
+  // QA 13 Nov 2026, bug 8 — "0 = the shop door" at a clinic and a salon: the business's own word.
+  const locale = useLocale();
+  const tn = useTranslations('nouns');
+  const labels = useLabels();
+  const businessWord = pickNoun(locale, nounInSentence(labels.business ?? 'Business'), tn('business'));
   const writable = useWritable();
   const closeForm = useCloseAfterSave('/settings');
   const [pin, setPin] = useState<{ lat: number; lng: number } | null>(branch.geoLat != null && branch.geoLng != null ? { lat: branch.geoLat, lng: branch.geoLng } : null);
@@ -278,7 +285,7 @@ export function CheckInForm({ branch, branchName, branchCount }: { branch: Branc
             </span>
           </span>
           <span className="field-hint" id="ci-radius-hint">
-            {t('radiusHint')}
+            {t('radiusHint', { business: businessWord })}
           </span>
         </label>
 

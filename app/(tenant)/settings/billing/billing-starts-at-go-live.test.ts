@@ -19,15 +19,15 @@ const page = readFileSync(path.join(here, 'page.tsx'), 'utf-8');
 describe('the words', () => {
   it('say nothing is charged during setup, in both languages', () => {
     for (const lang of ['en', 'hi'] as const) {
-      expect(billingCopy(lang).billingStartsAtGoLive.length).toBeGreaterThan(10);
+      expect(billingCopy(lang).billingStartsAtGoLive('salon').length).toBeGreaterThan(10);
       expect(billingCopy(lang).firstBill.length).toBeGreaterThan(2);
     }
-    expect(billingCopy('en').billingStartsAtGoLive).toContain('goes live');
+    expect(billingCopy('en').billingStartsAtGoLive('salon')).toContain('goes live');
     expect(billingCopy('en').firstBill).toBe('Your first bill');
   });
 
   it('are not the same string in Hindi as in English — an untranslated line is a bug, not a default', () => {
-    expect(billingCopy('hi').billingStartsAtGoLive).not.toBe(billingCopy('en').billingStartsAtGoLive);
+    expect(billingCopy('hi').billingStartsAtGoLive('salon')).not.toBe(billingCopy('en').billingStartsAtGoLive('salon'));
   });
 });
 
@@ -52,7 +52,7 @@ describe('the card', () => {
     expect(src).toContain('{live ? (');
     expect(src).toContain('t.firstBill');
     expect(src).toContain('{live ? null : (');
-    expect(src).toContain('t.billingStartsAtGoLive');
+    expect(src).toContain('t.billingStartsAtGoLive(businessWord)');
   });
 
   it('defaults to live, so a degraded session is never told its billing has not started', () => {

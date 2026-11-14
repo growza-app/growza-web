@@ -24,8 +24,8 @@ const SECTION_LABEL: Record<Exclude<FixSectionId, 'main'>, string> = { iphone: '
  * somebody opens when something is already not working. Closed by default: the page shows six lines, not
  * twenty-three problems.
  */
-export function QuickFixes({ role, t }: { role: FixRole | null; t: Translate }) {
-  const groups = fixesFor(role);
+export function QuickFixes({ role, t, bookings = true }: { role: FixRole | null; t: Translate; bookings?: boolean }) {
+  const groups = fixesFor(role, { bookings });
   if (groups.length === 0) return null;
   return (
     <section className="help-fixes" aria-labelledby="help-fixes-title">

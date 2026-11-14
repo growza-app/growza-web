@@ -163,7 +163,12 @@ export function ClientProfileCard({
     row.tone === 'bad' ? 'var(--rp-red)' : row.tone === 'warn' ? 'var(--rp-amber)' : undefined;
 
   const startEditing = () => {
-    setDraftName(profile?.name ?? '');
+    /*
+     * QA 2026-11-14 (F13) — a client saved with no name comes back named by their number (the card's title has to
+     * say something). Editing put that number into the Name box, so Save stored "+919000012346" as the name. The box
+     * starts empty for a client with no name of their own; the title can keep the number.
+     */
+    setDraftName(profile && profile.name !== profile.phone ? profile.name : '');
     /*
      * The stored value is E.164; the field shows the ten digits a person types
      * and the server's `toStoredPhone` puts it back. Showing "+919876543210"
@@ -409,8 +414,10 @@ export function ClientProfileCard({
               {profile.recent.length > 0 && (
                 <>
                   <h3 className="cpc-section">{c.recent}</h3>
-                  {profile.recent.map((visit) => (
-                    <div className="cpc-row" key={visit.whenISO}>
+                  {/* Two visits can carry one timestamp (two services rung up together), and the API sends no id for a
+                      visit — so the place in the list finishes the key. The list is drawn once and never reordered. */}
+                  {profile.recent.map((visit, i) => (
+                    <div className="cpc-row" key={`${visit.whenISO}-${i}`}>
                       <span>
                         {visit.service}
                         <em>{new Date(visit.whenISO).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</em>

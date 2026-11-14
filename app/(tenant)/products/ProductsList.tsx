@@ -13,7 +13,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useAreas, useBusinessWritable, useSession, useWritable } from '../components/SessionProvider';
 import { canSee, type MemberRole } from '../lib/nav-policy';
-import { IconCart, IconEdit, IconPlus, IconSearch, IconSort, IconUpload } from '../components/icons';
+import { IconCart, IconChevronRight, IconClipboardCheck, IconEdit, IconPlus, IconSearch, IconSort, IconUpload } from '../components/icons';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
 import { productShareItem } from '../lib/share-on-whatsapp';
@@ -52,6 +52,16 @@ export const SHELF_SORTS: readonly ShelfSort[] = ['name', 'stock', 'sold', 'pric
  */
 export const UNCOUNTED_FILTERS: readonly ShelfFilter[] = ['all', 'retired'];
 export const UNCOUNTED_SORTS: readonly ShelfSort[] = ['name', 'sold', 'price', 'cost', 'status'];
+
+/**
+ * QA 2026-11-14 — whether this viewer is sent what a product cost. The API leaves `costMinor` out altogether for
+ * whoever cannot see the sales (the front desk), so the key's absence IS the answer: nothing to compute here, and no
+ * second rule to drift from the server's. An owner's product with no cost has the key, as null. An empty shelf shows
+ * the field — there is nothing to hide yet, and an owner adding the first product needs it.
+ */
+export function shelfSeesCost(rows: readonly object[]): boolean {
+  return rows.length === 0 || rows.some((r) => 'costMinor' in r);
+}
 export type ShelfSortDir = 'asc' | 'desc';
 export const defaultSortDir = (sort: ShelfSort): ShelfSortDir =>
   sort === 'name' || sort === 'stock' || sort === 'status' ? 'asc' : 'desc';
@@ -110,6 +120,15 @@ const statusRank = (p: Pick<Product, 'stock' | 'lowStockAt' | 'active'>): number
   const tone = stockTone(p);
   return tone === 'out' ? 0 : tone === 'low' ? 1 : 2;
 };
+
+/**
+ * QA 2026-11-14 (F15) — "QA4 Cricket" listed ten products A–Z with the one asked for eighth: the search ranks best
+ * first, and the shelf's default A–Z sort then threw that order away. While a search is typed and nobody has picked
+ * a sort, the best match leads; a sort the owner picks still wins.
+ */
+export function searchKeepsBestFirst(search: string, sort: ShelfSort, dir: ShelfSortDir): boolean {
+  return search.trim().length >= 2 && sort === 'name' && dir === defaultSortDir('name');
+}
 
 export function sortShelf(rows: readonly Product[], sort: ShelfSort, dir: ShelfSortDir = defaultSortDir(sort)): Product[] {
   const sign = dir === 'asc' ? 1 : -1;
@@ -231,6 +250,7 @@ export function ProductsList({
   }, [desk, editing]);
 
   const live = useMemo(() => rows.filter((p) => p.active), [rows]);
+  const seesCost = useMemo(() => shelfSeesCost(rows), [rows]);
   const liveCategories = useMemo(
     () => categories.map((c) => ({ ...c, count: live.filter((p) => p.categoryId === c.id).length })),
     [categories, live],
@@ -239,10 +259,10 @@ export function ProductsList({
   const lowCount = useMemo(() => inCategory.filter((p) => stockTone(p) === 'low').length, [inCategory]);
   const outCount = useMemo(() => inCategory.filter((p) => p.stock <= 0).length, [inCategory]);
   const worth = useMemo(() => shelfWorthMinor(inCategory), [inCategory]);
-  const shown = useMemo(
-    () => sortShelf(filterShelf(rows, filter, search, selectedCategories), sort, sortDir),
-    [rows, filter, search, selectedCategories, sort, sortDir],
-  );
+  const shown = useMemo(() => {
+    const found = filterShelf(rows, filter, search, selectedCategories);
+    return searchKeepsBestFirst(search, sort, sortDir) ? found : sortShelf(found, sort, sortDir);
+  }, [rows, filter, search, selectedCategories, sort, sortDir]);
   const remote = useServiceSuggestions(search, branchId);
   const inFilterScope = useMemo(
     () => filterShelf(rows, filter, '', selectedCategories),
@@ -398,14 +418,25 @@ export function ProductsList({
       subtitleAsInfo
       actions={
         <>
+          {/*
+            Not in the header on a phone: with Sell, Count stock, Add and the avatar it made the header three rows at
+            344px. It is a destination, not an action, and the same report is a link on Home's money card and in
+            Reports — the call made for Returns on the Orders header (QA 2026-10-28).
+          */}
           {heading !== undefined && canStockTake && counted ? (
-            <Link className="btn btn-ghost" href="/stock/report">
+            <Link className="btn btn-ghost desktop-only" href="/stock/report">
               {t('stockReport.open')}
+            </Link>
+          ) : null}
+          {/* Owner's review 2026-11-13 — the reorder list was reachable only from Home, Reports and the two reports; the shelf is where you notice you are short. */}
+          {heading !== undefined && canStockTake && counted ? (
+            <Link className="btn btn-ghost desktop-only" href="/stock/order">
+              {t('reorder.title')}
             </Link>
           ) : null}
           {/* The till is Bookings' and Stock's, not this screen's page: drawn when the role may open it, and the business may write. */}
           {live.length > 0 && tillOpen ? (
-            <Link className="btn btn-ghost" href="/products/sell?from=products">
+            <Link className={`btn btn-ghost ${counted ? 'desktop-only' : ''}`} href="/products/sell?from=products">
               <IconCart /> {t(counted ? 'sell' : 'sellUncounted')}
             </Link>
           ) : null}
@@ -413,7 +444,7 @@ export function ProductsList({
           {live.length > 0 && canStockTake && counted ? (
             <button
               type="button"
-              className="btn btn-ghost"
+              className="btn btn-ghost desktop-only"
               onClick={() => {
                 setEditing((cur) => (cur === 'new' ? null : cur));
                 setStockTakeOpen(true);
@@ -480,6 +511,60 @@ export function ProductsList({
       </div>
     </div>
   );
+  /*
+   * Owner's review 2026-11-13 — on a phone the header has no room for the two reports (see the header comment), so
+   * they sit under the four figures instead: the stock report and the reorder list, a 44px row each. Desktop keeps
+   * them in the header, where there is room; the row is phone-only so the same door is never drawn twice.
+   */
+  /*
+   * Owner's review 2026-11-13 (A) — a phone's header is one row (Back, Stock, the branch, Add, avatar): Sell and
+   * Count stock come down here as tiles beside the two reports, so the header no longer wraps to a second row
+   * with an empty left half. Each tile is gated exactly as its header button is; the row is drawn when any apply.
+   */
+  const phoneSell = counted && live.length > 0 && tillOpen;
+  const phoneCount = counted && live.length > 0 && canStockTake && writable;
+  const phoneReports = heading !== undefined && canStockTake && counted;
+  const reportLinks =
+    phoneSell || phoneCount || phoneReports ? (
+      <nav className="prd-report-links mobile-only" aria-label={t('title')}>
+        {phoneSell ? (
+          <Link className="prd-report-link prd-report-act" href="/products/sell?from=products">
+            <IconCart />
+            <span>{t('sell')}</span>
+          </Link>
+        ) : null}
+        {phoneCount ? (
+          <button
+            type="button"
+            className="prd-report-link prd-report-act"
+            onClick={() => {
+              setEditing((cur) => (cur === 'new' ? null : cur));
+              setStockTakeOpen(true);
+            }}
+          >
+            <IconClipboardCheck />
+            <span>{t('stockTake.open')}</span>
+          </button>
+        ) : null}
+        {phoneReports ? (
+          <Link className="prd-report-link" href="/stock/report">
+            <span>{t('stockReport.open')}</span>
+            <IconChevronRight />
+          </Link>
+        ) : null}
+        {phoneReports ? (
+          <Link className="prd-report-link" href="/stock/order">
+            <span>{t('reorder.title')}</span>
+            <IconChevronRight />
+          </Link>
+        ) : null}
+      </nav>
+    ) : null;
+  /*
+   * Owner's review 2026-11-13 — on a phone the four tiles cost 119px and said what the chips say a row below
+   * (Running low / Out of stock are the Low / Out chips); the two figures that were only here are one line now.
+   */
+  const shelfLine = <p className="prd-shelf-line">{t('shelfLine', { count: inCategory.length, worth: formatMoney(worth) })}</p>;
   const strip = !counted ? (
     uncountedStrip
   ) : (
@@ -546,6 +631,7 @@ export function ProductsList({
   const categoriesDropdown =
     liveCategories.length > 0 || noneCount > 0 || writable ? (
       <ProductCategoriesDropdown
+        fixedMenu={desk === false && counted}
         selected={selectedCategories}
         categories={liveCategories}
         noneCount={noneCount}
@@ -590,7 +676,7 @@ export function ProductsList({
             {sort === 'sold' ? t('sort.sold') : t(`cols.${sort === 'name' ? 'product' : sort}`, { product: nouns.Product })} ({sortDir === 'desc' ? '↓' : '↑'})
           </option>
         ) : null}
-        {(counted ? SHELF_SORTS : UNCOUNTED_SORTS).map((s) => (
+        {(counted ? SHELF_SORTS : UNCOUNTED_SORTS).filter((s) => seesCost || s !== 'cost').map((s) => (
           <option key={s} value={s}>
             {t(`sort.${s}`)}
           </option>
@@ -621,9 +707,8 @@ export function ProductsList({
       <ul className="prd-list">
         {pageRows.map((p) => {
           const tone = stockTone(p);
-          const shareItem = productShareItem(p, { counted });
           return (
-            <li key={p.id} className={`prd-row ${p.active ? '' : 'prd-row-retired'} ${shareItem ? 'prd-row-share' : ''}`}>
+            <li key={p.id} className={`prd-row ${p.active ? '' : 'prd-row-retired'}`}>
               <button
                 type="button"
                 className={`prd-row-tap ${isOn(p) ? 'is-on' : ''}`}
@@ -651,8 +736,8 @@ export function ProductsList({
                   <span className="prd-sold">{t('sold', { n: p.sold })}</span>
                 </span>
               </button>
-              {/* Jira GRW-671 — outside the row's own button: a button cannot hold a button. */}
-              {shareItem ? <ShareOnWhatsAppButton item={shareItem} branchId={p.locationId} bookable={false} photoUrl={p.imageUrl} /> : null}
+              {/* Owner's review 2026-11-13 — the WhatsApp share (Jira GRW-671) moved into the product's sheet: the owner's
+                  own stock list carried a green button on every row and lost its right column to it. */}
             </li>
           );
         })}
@@ -672,7 +757,7 @@ export function ProductsList({
               <th>{t('cols.category')}</th>
               {showSku ? <th>{t('cols.sku')}</th> : null}
               <SortableTh col="price" label={t('cols.price')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
-              <SortableTh col="cost" label={t('cols.cost')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
+              {seesCost ? <SortableTh col="cost" label={t('cols.cost')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric /> : null}
               {/* Where there is no count, the same column carries what IS there: how many have sold. One header, one cell. */}
               {counted ? (
                 <SortableTh col="stock" label={t('cols.stock')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
@@ -734,12 +819,14 @@ export function ProductsList({
                     </td>
                   ) : null}
                   <td className="prd-td-num">{formatMoney(p.priceMinor)}</td>
-                  <td className="prd-td-num prd-td-muted">
-                    {p.costMinor != null ? formatMoney(p.costMinor) : '—'}
-                    {marginPct != null && marginPct >= 0 ? (
-                      <span className="prd-td-sold">{t('form.margin', { pct: marginPct })}</span>
-                    ) : null}
-                  </td>
+                  {seesCost ? (
+                    <td className="prd-td-num prd-td-muted">
+                      {p.costMinor != null ? formatMoney(p.costMinor) : '—'}
+                      {marginPct != null && marginPct >= 0 ? (
+                        <span className="prd-td-sold">{t('form.margin', { pct: marginPct })}</span>
+                      ) : null}
+                    </td>
+                  ) : null}
                   {counted ? (
                     <td className="prd-td-num">
                       <span className={`prd-td-stock prd-td-stock-${stockTone(p)}`}>{Math.max(0, p.stock)}</span>
@@ -830,11 +917,13 @@ export function ProductsList({
         onClose={() => setEditing(null)}
         inline={inline}
         initialSaved={editing !== 'new' && savedId === editing.id}
+        seesCost={seesCost}
       />
     ) : null;
   const note = (
     <>
-      {shownBranchName ? <div className="banner banner-info prd-branch-note">{t('shownBranch', { branch: shownBranchName })}</div> : null}
+      {/* Owner's review 2026-11-13 — on a counted shelf the header names the branch (branch-routes), so no banner. */}
+      {shownBranchName && !counted ? <div className="banner banner-info prd-branch-note">{t('shownBranch', { branch: shownBranchName })}</div> : null}
       {importNote ? (
         <div className="banner" role="status">
           {importNote}
@@ -985,6 +1074,7 @@ export function ProductsList({
         <div className="page-body prd-desk">
           {note}
           {strip}
+          {reportLinks}
           <div className={`pf-wide-grid prd-desk-grid ${editing ? 'has-sheet' : 'is-full'}`}>
             <section className="pf-wide-mid prd-desk-mid" aria-label={t('title')}>
               <div className="prd-desk-tools">
@@ -1051,7 +1141,8 @@ export function ProductsList({
   return (
     <>
       {header}
-      <div className="page-body prd-page">
+      {/* `prd-shelf` on a counted shelf: 96-products.css hides the header's ⓘ beside it on a phone (review 2026-11-13: a client flag flashed it). */}
+      <div className={`page-body prd-page ${counted ? 'prd-shelf' : ''}`}>
         {note}
         {rows.length === 0 ? (
           <div className="empty prd-empty">
@@ -1065,10 +1156,37 @@ export function ProductsList({
           </div>
         ) : (
           <>
-            {strip}
+            {counted ? shelfLine : strip}
+            {reportLinks}
             <div className="prd-tools">
               {searchBox}
-              {categoriesDropdown ? (
+              {counted ? (
+                /*
+                 * Owner's review 2026-11-13 — one scroller instead of a selects row AND a chips row: the four
+                 * status chips first (the filter people reach for), then Categories, the sort and Bulk edit.
+                 * The Categories menu is fixed to the viewport so the scroller cannot clip it.
+                 */
+                <div className="prd-chips prd-filter-row" role="group" aria-label={t('filters.label')}>
+                  {SHELF_FILTERS.map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      className={`prd-chip ${filter === f ? 'prd-chip-on' : ''} ${f === 'low' && counts.low > 0 ? 'prd-chip-warn' : ''}`}
+                      aria-pressed={filter === f}
+                      onClick={() => pick(() => setFilter(f))}
+                    >
+                      {t(`filters.${f}`)} <span className="prd-chip-n">{counts[f]}</span>
+                    </button>
+                  ))}
+                  {categoriesDropdown}
+                  {sortBox}
+                  {canStockTake && writable ? (
+                    <button type="button" className="prd-chip prd-chip-edit" onClick={() => setBulkEditOpen(true)}>
+                      <IconEdit /> {t('bulkTable.open')}
+                    </button>
+                  ) : null}
+                </div>
+              ) : categoriesDropdown ? (
                 <div className="prd-selects">
                   {categoriesDropdown}
                   {sortBox}
@@ -1094,7 +1212,6 @@ export function ProductsList({
                   ) : null}
                 </div>
               )}
-              {counted ? chips : null}
             </div>
             {alsoTryRow}
             {!counted ? menuCards : list}

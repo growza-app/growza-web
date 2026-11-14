@@ -88,20 +88,32 @@ export function formatPhone(raw: string | null | undefined): string {
   return raw.trim();
 }
 
-/** `Today` · `1 day ago` · `2 days ago` · `3 months ago` — per the spec's "recent past". */
-export function formatRecency(iso: string | null | undefined, now: Date = new Date(), lang: string = 'en'): string {
-  const days = iso ? Math.floor((now.getTime() - new Date(iso).getTime()) / 86_400_000) : 0;
+/** The calendar day an instant falls on in a zone, as a whole number of days — for counting days between two. */
+function dayNumber(at: Date, timeZone: string): number {
+  const [y, m, d] = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(at).split('-').map(Number);
+  return Date.UTC(y!, m! - 1, d!) / 86_400_000;
+}
+
+/**
+ * `Today` · `Yesterday` · `2 days ago` · `3 months ago` — per the spec's "recent past".
+ *
+ * Calendar days in the business's zone, not 24-hour blocks. Counted in blocks, a buyer who came at 8:59 last night
+ * read "Came today" at 10 the next morning — thirteen hours is less than one block (sports-shop QA, 13 Nov 2026).
+ */
+export function formatRecency(iso: string | null | undefined, now: Date = new Date(), lang: string = 'en', timeZone: string = 'Asia/Kolkata'): string {
+  const days = iso ? dayNumber(now, timeZone) - dayNumber(new Date(iso), timeZone) : 0;
   // Jira GRW-478 (U-3) — "Today" and "days ago" stayed English on a Hindi screen.
   if (lang === 'hi') {
     if (!iso) return 'कभी नहीं';
     if (days <= 0) return 'आज';
+    if (days === 1) return 'कल';
     if (days < 30) return `${days} दिन पहले`;
     if (days < 365) return `${Math.floor(days / 30)} महीने पहले`;
     return `${Math.floor(days / 365)} साल पहले`;
   }
   if (!iso) return 'Never';
   if (days <= 0) return 'Today';
-  if (days === 1) return '1 day ago';
+  if (days === 1) return 'Yesterday';
   if (days < 30) return `${days} days ago`;
   const months = Math.floor(days / 30);
   if (months < 12) return `${months} ${months === 1 ? 'month' : 'months'} ago`;

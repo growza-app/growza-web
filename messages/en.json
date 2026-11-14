@@ -21,10 +21,12 @@
     "shopTitle": "Find a {customer}",
     "shopPrompt": "Find a {customer}",
     "placeholder": "Name, phone, or booking ID",
+    "shopPlaceholder": "Name or phone",
     "customers": "CLIENTS",
     "bookings": "BOOKINGS",
     "nothing": "Nothing found.",
     "hint": "Search by a client name, any part of their phone number, or a booking ID.",
+    "shopHint": "Search by a {customer}’s name or any part of their phone number.",
     "back": "Back",
     "clear": "Clear",
     "call": "Call {name}",
@@ -201,7 +203,8 @@
     "bookings": "bookings",
     "packages": "packages",
     "product": "product",
-    "products": "products"
+    "products": "products",
+    "business": "business"
   },
   "customers": {
     "subtitle": "See your {noun}, what they bought and how much they spent.",
@@ -209,6 +212,8 @@
     "adding": "Adding…",
     "cancel": "Cancel",
     "export": "Export",
+    "exporting": "Making the file…",
+    "exportFailed": "Could not make the file. Try again.",
     "filter": "Filter",
     "kpiTotal": "Total {noun}",
     "kpiTotalSub": "All time",
@@ -218,11 +223,19 @@
     "kpiReturningSub": "Came more than once",
     "kpiRepeat": "% came back",
     "kpiRepeatSub": "Out of all {noun}",
+    "showFirst": "Show first",
+    "orderRecent": "Came last",
+    "orderSpent": "Spent the most",
+    "orderName": "Name A–Z",
+    "kpiPoints": "Reward points",
+    "kpiPointsSub": "Points all {noun} hold now",
     "segmentsTitle": "When {noun} last came",
     "segmentsHint": "Tap one to see only them",
     "neverVisited": "{count} ({pct}%) never came, so they are not in these groups",
     "neverVisitedShort": "{count} ({pct}%) never came",
     "clearFilter": "Show all",
+    "cameWhen": "Came {when}",
+    "listCount": "{count, plural, one {# {one}} other {# {many}}}",
     "visitsColumn": "Visits",
     "visitCount": "{count, plural, one {# visit} other {# visits}}",
     "sortBy": "Sort by {column}",
@@ -462,8 +475,8 @@
         "sub": "Sign out from this device"
       },
       "roles": {
-        "label": "Roles",
-        "sub": "What each person on your team can open"
+        "label": "Team and roles",
+        "sub": "Add staff, give them a login, choose what they open"
       },
       "channels": {
         "label": "Online selling",
@@ -500,6 +513,7 @@
   "common": {
     "clearSearch": "Clear search",
     "voiceSearch": "Search by voice",
+    "voiceSearchWhere": "Search by voice. Your browser sends the audio to its speech service.",
     "stopVoiceSearch": "Stop voice search",
     "voiceStarting": "Getting ready… don’t speak yet",
     "voiceListening": "Listening… speak now",
@@ -735,7 +749,7 @@
   },
   "settingsGst": {
     "title": "GST and invoices",
-    "hint": "Only if your business is registered for GST. Leave it as it is and your customers get a plain receipt, which is right for most businesses.",
+    "hint": "Only if your business is registered for GST. Leave it as it is and your {customers} get a plain receipt, which is right for most businesses.",
     "statusLabel": "Is your business registered for GST?",
     "status": {
       "unregistered": "Not registered",
@@ -743,9 +757,9 @@
       "composition": "Composition scheme"
     },
     "statusHelp": {
-      "unregistered": "Your customers get a receipt. No tax is shown on it.",
-      "regular": "Your customers get a tax invoice showing CGST and SGST, or IGST.",
-      "composition": "Your customers get a bill of supply. A composition dealer does not collect GST from them."
+      "unregistered": "Your {customers} get a receipt. No tax is shown on it.",
+      "regular": "Your {customers} get a tax invoice showing CGST and SGST, or IGST.",
+      "composition": "Your {customers} get a bill of supply. A composition dealer does not collect GST from them."
     },
     "gstinLabel": "GSTIN",
     "gstinHint": "The 15-character number on your registration certificate.",
@@ -765,7 +779,7 @@
     "stateCodeHint": "The two digits your GSTIN starts with — 07 for Delhi, 27 for Maharashtra.",
     "branchGstinLabel": "This branch's own GSTIN",
     "branchGstinHint": "Only if you hold a separate registration for this state. Otherwise leave it blank.",
-    "notRegisteredNote": "Nothing here is needed while you are not registered. Your customers still get a receipt for every payment.",
+    "notRegisteredNote": "Nothing here is needed while you are not registered. Your {customers} still get a receipt for every payment.",
     "save": "Save changes",
     "saving": "Saving…",
     "errors": {
@@ -825,7 +839,7 @@
     "linkHint": "Share the branch from Google Maps and paste the link here.",
     "radiusLabel": "How close counts",
     "radiusUnit": "meters",
-    "radiusHint": "0 = the shop door. 500 = the whole street.",
+    "radiusHint": "0 = the {business} door. 500 = the whole street.",
     "enabled": "Staff can check themselves in",
     "enabledOn": "On. Staff see an “I’m in” button.",
     "enabledOff": "Off. You mark attendance from the register.",
@@ -1074,7 +1088,7 @@
       "photoHint": "Optional. Clients see it when booking on WhatsApp.",
       "remove": "Remove",
       "name": "Name",
-      "namePlaceholder": "e.g. Haircut",
+      "namePlaceholder": "Name of the {service}",
       "type": "Category",
       "noType": "None",
       "duration": "Duration",
@@ -1610,9 +1624,9 @@
     "branch": "Branch",
     "mainSuffix": "{name} (Main)",
     "branchFull": "{name} · full",
-    "sameHours": "Same hours as the salon",
-    "sameHoursSub": "They follow the salon automatically, including when you change it later.",
-    "warnNoDays": "Nobody can book {name} with no working days. Turn a day on, or switch the salon hours back on above.",
+    "sameHours": "Same hours as the {business}",
+    "sameHoursSub": "They follow the {business} automatically, including when you change it later.",
+    "warnNoDays": "Nobody can book {name} with no working days. Turn a day on, or switch the {business} hours back on above.",
     "warnNoSalonHours": "This business has no opening hours set yet, so nobody can book {name} until it does. Saving is fine — they will pick the hours up automatically. Set them in <b>Settings → Working hours</b>, or turn the switch off above and give {name} their own days.",
     "them": "them",
     "back": "Back",
@@ -1722,7 +1736,11 @@
       "createFailed": "Could not create the offer.",
       "cancel": "Cancel",
       "creating": "Creating…",
-      "create": "Create offer"
+      "create": "Create offer",
+      "editTitle": "Edit offer",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saveFailed": "Could not save the offer."
     },
     "branch": {
       "which": "Which branch?",
@@ -2127,7 +2145,10 @@
       "pointsTitle": "Reward points",
       "pointsTakenBack": "{n, plural, one {# point taken back} other {# points taken back}}",
       "pointsAdded": "{n, plural, one {# point added} other {# points added}}",
-      "pointsWhy": "Points follow the amount, so this client keeps only what the visit really earned."
+      "pointsWhy": "Points follow the amount, so this client keeps only what the visit really earned.",
+      "documentIssuedBody": "{doc, select, receipt {Receipt} bill_of_supply {Bill of supply} other {Invoice}} {number} was already given to the customer for this visit. Correcting the bill does not change it: cancel that document and issue a new one, or correct anyway.",
+      "documentIssuedBodyNoNumber": "{doc, select, receipt {A receipt} bill_of_supply {A bill of supply} other {An invoice}} was already given to the customer for this visit. Correcting the bill does not change it: cancel that document and issue a new one, or correct anyway.",
+      "documentIssuedGo": "Correct anyway"
     },
     "foldGroup": "Fold {name}",
     "unfoldGroup": "Unfold {name}",
@@ -2956,7 +2977,7 @@
         "dataPair": "{singlePct}% of customers buy only 1 item (avg {avgItems} items/bill). Customers often buy {itemA} + {itemB} together ({pairBills} bills).",
         "dataSingle": "{singlePct}% of customers buy only 1 item (avg {avgItems} items/bill, {avgBill} per order).",
         "action": "Offer {leader} + {partner} together at a special price on POS. Ask staff to suggest it whenever someone buys just 1 item.",
-        "impact": "Extra money: +{amount} if 1 in 3 customers adds a ₹60 item"
+        "impact": "Extra money: +{amount} if 1 in 3 customers adds a {addOn} item"
       },
       "timing": {
         "tag": "QUIET DAYS & HOURS",
@@ -2980,8 +3001,8 @@
         "title": "Promote top sellers & cut slow items",
         "dataWithSlow": "{star} is selling fast, while {slowCount} of {menuTotal} items ({slowNames}) had almost no orders.",
         "dataClean": "{star} is your fastest-selling item across {menuTotal} items.",
-        "action": "Keep {star} at the top of your POS screen. Pair slow items ({slowNames}) into a special deal, or stop stocking them to save waste.",
-        "impact": "Result: Less waste across {slowCount} slow items"
+        "action": "Keep {star} at the top of your POS screen. Pair slow items ({slowNames}) into a special deal, or stop stocking them.",
+        "impact": "Result: Less money stuck in {slowCount} slow items"
       }
     }
   },
@@ -3635,6 +3656,7 @@
     "title": "Products",
     "subtitle": "Things you sell over the counter. Ring them up on the Record payment screen beside the services; every change to the count is kept here.",
     "stockSubtitle": "Styles, sizes and stock counts across your shop and online channels. Every change to the count is kept here.",
+    "shelfLine": "{count, plural, one {# product} other {# products}} · {worth} at selling price",
     "add": "Add a product",
     "sell": "Sell product",
     "empty": "Nothing on the shelf yet.",
@@ -3653,6 +3675,7 @@
       "titleEdit": "Edit {product}",
       "name": "Name",
       "namePlaceholder": "e.g. Water bottle 1 litre",
+      "namePlaceholderUncounted": "e.g. Paneer butter masala",
       "price": "Sell price",
       "stock": "Opening count",
       "stockHint": "How many are on the shelf today. Later changes go on the Stock tab, with a reason.",
@@ -3761,6 +3784,7 @@
         "toBranch": "To branch",
         "tooMany": "Only {n} here to move"
       },
+      "tooManyOnShelf": "Only {n} on the shelf",
       "after": "Count will be {n}",
       "confirm": "Confirm",
       "history": "History",
@@ -4237,7 +4261,7 @@
       "nothing": "Nothing to order yet",
       "nothingHint": "This list needs last year’s sales, or counted stock. Sizes show here once there is something to go on.",
       "model": "Each number is what you sold in the same days last year, less what is on the shelf now. It is a suggestion: change any number and it is kept.",
-      "withoutBasis": "{count, plural, one {1 size has no sales last year to compare, so it has no suggestion.} other {# sizes have no sales last year to compare, so they have no suggestion.}}",
+      "withoutBasis": "{count, plural, one {1 size has no sales last year to go on.} other {# sizes have no sales last year to go on.}}",
       "sizeOf": "{name} · size {size}",
       "basis": "Sold {sold} from {from} to {to} last year · {stock} on the shelf",
       "noBasis": "Nothing to compare with last year · {stock} on the shelf",
@@ -4522,6 +4546,8 @@
       "conditionLabel": "Returned item condition",
       "restockShelf": "Can be sold again",
       "restockShelfHint": "Adds the units back to that size’s count",
+      "restockShelfHintPlain": "Adds the units back to the shelf count",
+      "whyWriteOffNeeds": "Say why it cannot be sold again before you confirm.",
       "damagedOpened": "Damaged, cannot be sold",
       "damagedOpenedHint": "Not added to the count; written off",
       "reasonLabel": "Reason (optional)",
@@ -4563,8 +4589,8 @@
         "card": "Card",
         "other": "Other"
       },
-      "documentIssuedBody": "Invoice {number} was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?",
-      "documentIssuedBodyNoNumber": "An invoice was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?",
+      "documentIssuedBody": "{doc, select, receipt {Receipt {number} was already given to this customer. A return does not change it. Return anyway?} bill_of_supply {Bill of supply {number} was already given to this customer. A return does not change it. Return anyway?} other {Invoice {number} was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?}}",
+      "documentIssuedBodyNoNumber": "{doc, select, receipt {A receipt was already given to this customer. A return does not change it. Return anyway?} bill_of_supply {A bill of supply was already given to this customer. A return does not change it. Return anyway?} other {An invoice was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?}}",
       "documentIssuedGo": "Return anyway",
       "whyLabel": "Why did it come back? (optional)",
       "whyOtherNeeds": "Write what the reason was in the note.",
@@ -4618,7 +4644,9 @@
         "state": "State"
       },
       "itemCount": "{count, plural, =0 {No items} one {# item} other {# items}}",
+      "itemsAllBack": "{count, plural, one {# item} other {# items}} · all came back",
       "orderCode": "Order #{code}",
+      "tokenTitle": "Token {n}",
       "appOrder": "App order {ref}",
       "noName": "No name",
       "empty": {
@@ -4746,7 +4774,7 @@
         "priceMoved": "The price changed. Check the new amount.",
         "sizeGone": "That size just ran out. Choose another.",
         "failed": "Could not swap. Nothing changed. Try again.",
-        "documentIssued": "Invoice {number} was already given to the customer. A swap does not change it.",
+        "documentIssued": "{doc, select, receipt {Receipt {number} was already given to the customer.} bill_of_supply {Bill of supply {number} was already given to the customer.} other {Invoice {number} was already given to the customer.}} A swap does not change it.",
         "swapAnyway": "Swap anyway",
         "windowOwner": "This bill is past the {days}-day window. As the owner you can still swap it.",
         "windowNo": "This bill is past the {days}-day window. Only the owner can swap it now.",
@@ -4878,7 +4906,10 @@
       "undeliveredTitle": "Came back undelivered",
       "undeliveredNone": "No parcels came back undelivered.",
       "undeliveredNote": "These never reached the customer. They are counted apart, not as returns.",
-      "toRefunds": "Refunds"
+      "toRefunds": "Refunds",
+      "byTitle": "Given back by",
+      "byNone": "Not recorded",
+      "byRole": {"owner": "Owner", "manager": "Manager", "receptionist": "Front desk", "staff": "Team member"}
     },
     "returnsLink": "Returns",
     "bringIn": {
@@ -5118,7 +5149,7 @@
     "name": "Role name",
     "namePlaceholder": "For example, Cashier",
     "worksLike": "Works like",
-    "worksLikeHint": "What kind of login this is. A stylist-type login can never open more than a stylist can, whatever you tick.",
+    "worksLikeHint": "What kind of login this is. A Staff login can never open more than Staff can, whatever you tick.",
     "worksLikeOptions": {
       "none": "Not set",
       "manager": "Manager",

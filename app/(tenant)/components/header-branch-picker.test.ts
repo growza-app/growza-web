@@ -165,6 +165,12 @@ describe('the header picker', () => {
     expect(picker).toMatch(/\{oneOnly \? null : \(/);
     expect(oneBranchOnly('/services')).toBe(true);
     expect(oneBranchOnly('/availability')).toBe(true);
+    // Owner's review 2026-11-13 — the shop's shelf is one branch's, like /products; the reports under it are not.
+    expect(oneBranchOnly('/stock')).toBe(true);
+    expect(branchInAddress('/stock')).toBe(true);
+    expect(oneBranchOnly('/stock/report')).toBe(false);
+    expect(oneBranchOnly('/stock/order')).toBe(false);
+    expect(branchInAddress('/stock/report')).toBe(false);
     expect(oneBranchOnly('/customers')).toBe(false);
     expect(oneBranchOnly('/')).toBe(false);
     expect(oneBranchOnly('/servicesx')).toBe(false);

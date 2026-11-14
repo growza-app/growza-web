@@ -27,10 +27,30 @@ describe('Clients on a desk', () => {
 
   it('the left panel is the four figures and every band with its count', () => {
     expect(client).toMatch(/<dl className="cust-desk-kpis">/);
-    expect(client).toMatch(/const bands: CustomerStatusFilter\[\] = \['all', 'active', 'due', 'at_risk', 'inactive', 'never'\];/);
+    // Owner, 13 Nov 2026 — no "All" and no "Never came" row: the Total figure clears, a picked band lets go.
+    expect(client).toMatch(/const bands = \['active', 'due', 'at_risk', 'inactive'\] as const;/);
+    expect(client).toContain("onClick={() => pickBand(on ? 'all' : s)}");
     expect(client).toMatch(/className=\{`cust-desk-band \$\{on \? 'is-on' : ''\}`\}\s*aria-pressed=\{on\}/);
     // A drifted band opens highest-spend-first, as the phone's cards do.
     expect(client).toMatch(/const pickBand = \(s: CustomerStatusFilter\) => \{\s*setStatus\(s\);[\s\S]*?setSort\(s === 'all' \|\| s === 'active' \? 'recent' : 'spent'\);/);
+  });
+
+  /** Owner, 13 Nov 2026 — the figures open their own lists on a laptop too. */
+  it('a figure, tapped, lists the people it counted, and the whole box is the target', () => {
+    const desk = css;
+    expect(client).toMatch(/className="cust-desk-kpi-tap"\s*aria-label=\{`\$\{figure\.label\}: \$\{figure\.value\}`\}\s*aria-pressed=\{figure\.card === 'all' \? undefined : status === figure\.card\}\s*onClick=\{\(\) => pickCard\(figure\.card\)\}/);
+    expect(desk).toMatch(/\.cust-desk-kpi-tap::after \{\s*content: '';\s*position: absolute;\s*inset: 0;/);
+    expect(desk).toMatch(/\.cust-desk-kpis > div\.is-on \{[^}]*border-color: var\(--accent\);/);
+    expect(desk).toMatch(/\.cust-desk-kpi-tap:focus-visible::after \{\s*outline: 2px solid var\(--accent\);/);
+  });
+
+  /** Owner, 13 Nov 2026 — the same raised tile as the phone's cards, tinted and lifted under the pointer. */
+  it('raises each figure off the panel, tints it under the pointer, and sinks the picked one', () => {
+    const desk = css;
+    expect(desk).toMatch(/\.cust-desk-kpis > div \{[^}]*border-radius: var\(--radius-lg\);[^}]*box-shadow:[^;]*0 3px 0 var\(--kpi-lip\)/);
+    expect(desk).toMatch(/@media \(hover: hover\) \{\s*\.cust-desk-kpis > div:not\(\.is-on\):has\(\.cust-desk-kpi-tap\):hover \{[^}]*--kpi-bottom: var\(--accent-soft\);[^}]*transform: translateY\(-1px\);/);
+    expect(desk).toMatch(/\.cust-desk-kpis > div\.is-on \{[^}]*transform: translateY\(2px\);/);
+    expect(desk).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.cust-desk-kpis > div \{\s*transition: none;/);
   });
 
   it('the list is the same rows as the phone table, ten a page, with the open one highlighted', () => {
@@ -42,8 +62,24 @@ describe('Clients on a desk', () => {
   });
 
   it('the right panel is the client card drawn in place, or the hint and Add', () => {
-    expect(client).toMatch(/<ClientProfileCard clientId=\{openClientId\} inline onClose=\{\(\) => setOpenClientId\(null\)\} \/>/);
+    expect(client).toContain('<ClientProfileCard clientId={openClientId} inline onClose={closeDeskCard} />');
     expect(client).toMatch(/<div className="cust-desk-nothing">\s*<p>\{t\('deskPick', \{ noun: singular \}\)\}<\/p>\s*<\/div>/);
+  });
+
+  /** Owner, 13 Nov 2026 — a third of a laptop screen sat empty until a row was tapped. */
+  it('opens the first person on the list by itself, and stays shut once the owner shuts it', () => {
+    expect(client).toContain('const firstId = visibleRows[0]?.id ?? null;');
+    expect(client).toMatch(/if \(deskClosed\.current \|\| firstId === openClientId\) return;\s*if \(openClientId !== null && !mine\) return;\s*autoOpened\.current = firstId;\s*setOpenClientId\(firstId\);/);
+    expect(client).toMatch(/const closeDeskCard = \(\) => \{\s*deskClosed\.current = true;\s*setOpenClientId\(null\);/);
+    // Never on a phone or a tablet, where the card is a sheet over the list: one it opened there is taken back.
+    expect(client).toMatch(/if \(!desk \|\| !firstId\) \{\s*if \(mine\) \{\s*autoOpened\.current = null;\s*setOpenClientId\(null\);/);
+  });
+
+  /** Owner, 13 Nov 2026 — raised means "tap me"; the points open no list. */
+  it('lays the reward points flat, and drops the group chip from a list that is already one group', () => {
+    expect(client).toContain(`{points && <div className="cust-desk-kpi-flat"><dt>{t('kpiPoints')}</dt>`);
+    expect(css).toMatch(/\.cust-desk-kpis > div\.cust-desk-kpi-flat \{\s*background: var\(--kpi-top\);\s*box-shadow: none;/);
+    expect(client).toMatch(/<div className="cust-recency">[\s\S]{0,260}\{status === 'all' \? chipOf\(c\.segment\) : null\}/);
   });
 
   it('the card inline has no scrim, no focus trap, and is a region not a dialog', () => {
@@ -51,6 +87,13 @@ describe('Clients on a desk', () => {
     expect(card).toMatch(/useDialog\(panel, \{ onClose: inline \? undefined : onClose, initialFocus: 'container', active: !inline \}\);/);
     expect(card).toMatch(/\{!inline && <button type="button" className="cpc-scrim"/);
     expect(card).toMatch(/className=\{inline \? 'cpc cpc-inline' : 'cpc'\} role=\{inline \? 'region' : 'dialog'\} aria-modal=\{inline \? undefined : 'true'\}/);
+  });
+
+  /** 13 Nov 2026 — two visits at one timestamp gave two rows one key, and React warned on every laptop load. */
+  it('keys each recent visit by its time and its place, since two can share a time', () => {
+    expect(card).toContain('{profile.recent.map((visit, i) => (');
+    expect(card).toContain('<div className="cpc-row" key={`${visit.whenISO}-${i}`}>');
+    expect(card).not.toContain('key={visit.whenISO}');
   });
 
   it('the sheet lands in the panel: static, full width, no shadow', () => {

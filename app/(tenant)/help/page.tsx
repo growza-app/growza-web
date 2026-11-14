@@ -7,6 +7,7 @@ import { IconPhone, IconWhatsApp } from '../components/icons';
 import { helpOptions, isHelpRole, ROLE_KEY, supportIntro } from './links';
 import { QuickFixes } from './QuickFixes';
 import { WhatsNew } from './WhatsNew';
+import { areasOf } from '../lib/areas';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +47,8 @@ export default async function HelpPage() {
   let salon: string | undefined;
   let branch: string | null | undefined;
   let role: string | undefined;
+  // Unknown (the read failed) is treated as a business that books: the fuller list, never a shorter one by mistake.
+  let bookings = true;
   try {
     const me = await api.me();
     support = me.support;
@@ -65,6 +68,7 @@ export default async function HelpPage() {
      */
     branch = me.member?.locationName ?? ((me.tenant?.branchCount ?? 1) > 1 ? me.tenant?.locationName : null);
     role = me.member?.role;
+    bookings = areasOf(me).bookings !== false;
   } catch {
     // The buttons below simply do not render. A help screen that throws is the
     // one failure this screen must not have.
@@ -138,7 +142,7 @@ export default async function HelpPage() {
         </div>
 
         {/* The same page, below the people: what to try before ringing anybody. */}
-        <QuickFixes role={isHelpRole(role) ? role : null} t={fixText} />
+        <QuickFixes role={isHelpRole(role) ? role : null} t={fixText} bookings={bookings} />
 
         {/* And last, because somebody opening Help usually has a problem rather than an appetite for news. */}
         <WhatsNew role={isHelpRole(role) ? role : null} t={newText} locale={locale} />

@@ -2637,3 +2637,148 @@
     text-overflow: ellipsis;
   }
 }
+
+/* Owner's review 2026-11-13 — the two reports under the figures on a phone (the header has no room there);
+   `.mobile-only` hides the row at ≥861px, where the header carries the same two buttons. */
+.prd-report-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin: calc(-1 * var(--sp-1)) 0 var(--sp-3);
+}
+
+.prd-report-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-1);
+  min-height: 2.75rem;
+  padding: 0 var(--sp-2) 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--accent-deep);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Owner's review 2026-11-13 (A) — Sell and Count stock are tiles in the same row: a button styled as the links
+   are, with its icon leading the word rather than a chevron trailing it. */
+.prd-report-act {
+  justify-content: flex-start;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-3);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.prd-report-act svg {
+  color: var(--accent-deep);
+}
+
+.prd-report-link svg {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--muted);
+}
+
+/* The shared `.mobile-only` rule lives in an earlier sheet, so this sheet's `display: grid` would beat it at equal
+   specificity by source order — the gotcha 32-customers.css documents. Hidden here, in the same desktop query. */
+@media (min-width: 861px) {
+  .prd-report-links {
+    display: none;
+  }
+}
+
+/* Owner's review 2026-11-13 — the shop's shelf on a phone, compacted.
+
+   The two figures that only the tiles carried (count and worth) are one line; the other two tiles were the
+   Low / Out chips drawn twice. Then one scroller holds the status chips, Categories, the sort and Bulk edit,
+   where a selects row and a chips row stood. The first product moves up from ~590px to ~300px at 390×844. */
+.prd-shelf-line {
+  margin: 0 0 var(--sp-3);
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.prd-shelf-line {
+  font-variant-numeric: tabular-nums;
+}
+
+.prd-filter-row {
+  align-items: center;
+}
+
+/* Categories as a chip: the dropdown's own button is a 44px rounded box, so it matches the chips beside it. */
+.prd-filter-row .sls-dd {
+  flex: none;
+}
+
+.prd-filter-row .sls-dd-btn {
+  min-height: 2.25rem;
+  padding: 0 var(--sp-3);
+  border-radius: 999px;
+}
+
+/* The menu is pinned to the viewport (`fixedMenu`) because the scroller's overflow would clip it. */
+.prd-filter-row .sls-dd-menu.is-fixed {
+  position: fixed;
+  left: var(--sp-4);
+  right: var(--sp-4);
+  width: auto;
+  overflow-y: auto;
+}
+
+.prd-filter-row .prd-sort {
+  flex: none;
+}
+
+.prd-filter-row .prd-sort-l {
+  display: none;
+}
+
+.prd-filter-row .prd-sort select {
+  flex: none;
+  min-height: 2.25rem;
+  padding: 0 var(--sp-3);
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.prd-chip-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.prd-chip-edit svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* QA 13 Nov 2026, bug 3 — every control in the phone's scroller measured 36px: the status chips, Categories, the sort
+   and Bulk edit. A phone gets the 44px tap target the rest of the app uses; the laptop's tools keep their size. */
+@media (max-width: 860px) {
+  .prd-filter-row .prd-chip,
+  .prd-filter-row .sls-dd-btn,
+  .prd-filter-row .prd-sort select {
+    min-height: 2.75rem;
+  }
+}
+
+.prd-sheet-share {
+  min-height: 2.25rem;
+}
+
+/* Review 2026-11-13 — the ⓘ on a counted shelf's phone header is hidden by width, not by a client flag: the flag read
+   null on the first paint and the button flashed. The header is the page body's previous sibling. */
+@media (max-width: 860px) {
+  .topbar:has(+ .page-body.prd-shelf) .topbar-info {
+    display: none;
+  }
+}

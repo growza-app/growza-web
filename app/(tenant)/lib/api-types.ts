@@ -99,6 +99,8 @@ export interface Me {
     name?: string | null;
     /** Jira GRW-74 — the role they hold, if any; the grid below applies only to a member who has one. */
     tenantRoleId?: string | null;
+    /** Owner, 2026-11-14 — the one branch this member may take returns at; null for the owner or a member with none. Absent from an older API. */
+    returnBranchId?: string | null;
     /** Jira GRW-237 — a receptionist's own branch; null means every branch. */
     locationId?: string | null;
     locationName?: string | null;
@@ -980,9 +982,15 @@ export interface CustomerStats {
   /** Clients with no completed visit — in the total, in none of the bands. */
   neverVisited: number;
   segments: CustomerSegmentCount[];
+  /**
+   * Every reward point these clients hold now. ABSENT, not zero, for a business that runs no rewards — the
+   * Clients page draws its card on the field being there (owner, 12 Nov 2026).
+   */
+  rewardPoints?: number;
 }
 
-export type CustomerStatusFilter = 'all' | 'active' | 'due' | 'at_risk' | 'inactive' | 'lapsed' | 'never';
+/** `new` and `returning` are the Clients cards' own lists (owner, 13 Nov 2026): the API counts and lists them by one rule. */
+export type CustomerStatusFilter = 'all' | 'active' | 'due' | 'at_risk' | 'inactive' | 'lapsed' | 'never' | 'new' | 'returning';
 export type CustomerSort = 'recent' | 'spent' | 'visits' | 'name';
 export type SortDirection = 'asc' | 'desc';
 
@@ -1004,6 +1012,8 @@ export interface SearchResult {
     providerName: string | null;
     createdVia: 'whatsapp' | 'dashboard';
     reminderSent: boolean;
+    /** QA 2026-11-14 — booked for later, not a walk-in. Absent from an older API. */
+    bookedAhead?: boolean;
   }>;
 }
 
@@ -1353,12 +1363,31 @@ export interface ShopHome {
   anyOrders: boolean;
   /** Jira GRW-614 — orders still to send (new or packed). Home's count of what is waiting, linking into the filtered list. */
   toSend: number;
+  /** QA 13 Nov 2026, bug 2 — today's orders that came back, live (not the period picked). Absent from an older API. */
+  cameBackToday?: number;
+  /** QA 13 Nov 2026, bug 4 — who came in today, counted by the API for every role. Absent from an older API. */
+  customersToday?: number;
   running: {
     /** Has the shelf ever been counted. False: Home says so instead of listing zeros. */
     counted: boolean;
     /** Everything at or under its line — the "View all (n)" beside the few listed. */
     total: number;
-    items: Array<{ productId: string; name: string; /** "30" or "30 / White"; null for a product with no sizes. */ size: string | null; left: number }>;
+    /** How many of `total` have none left. Absent from an API older than 13 Nov 2026. */
+    out?: number;
+    items: Array<{
+      productId: string;
+      name: string;
+      /** "30" or "30 / White"; null for a product with no sizes. */
+      size: string | null;
+      left: number;
+      /** Which branch's shelf — sent only on the "All branches" read of a shop with more than one branch. */
+      branch?: string;
+    }>;
+    /**
+     * QA 13 Nov 2026, bug 1 — the Stock screen's own counts (products, by `stockTone`), one row per branch with any.
+     * `total`/`out` above count SIZES, so they are not what `/stock?filter=out|low` lists. Absent from an older API.
+     */
+    shelf?: Array<{ locationId: string; /** Sent only on the "All branches" read of a shop with more than one branch. */ branch?: string; out: number; low: number }>;
   };
 }
 
@@ -1380,6 +1409,8 @@ export interface OrderListRow {
   /** The client if it has one, else the buyer. */
   who: { kind: 'client' | 'buyer'; name: string | null } | null;
   items: number;
+  /** QA 2026-11-14, F14 — units rung up before anything came back; absent from an older API. */
+  itemsSold?: number;
   amountMinor?: number;
   /** Jira GRW-625 — the marketplace has not yet accepted what the shop told it (sent, cancelled): a glance finds these. */
   marketplaceUnconfirmed?: boolean;
@@ -1390,6 +1421,8 @@ export interface OrderListRow {
   paymentPending?: boolean;
   /** Owner, 9 Nov 2026 — the order's stored token (API 0174); absent from an older API. */
   tokenNo?: number | null;
+  /** QA 2026-11-14 — when it was handed over the counter; null while it waits. Absent from an older API. */
+  handedOverAt?: string | null;
 }
 
 export interface OrdersPage {
@@ -1467,6 +1500,8 @@ export interface OrderDetail {
   }>;
   /** Jira GRW-617 — may this viewer swap a size? Decided by the server with the function that would refuse the swap. */
   canSwap: boolean;
+  /** QA 13 Nov 2026, bug 6 — whether THIS viewer may take a return (owner, or a role that changes Reports). Absent from an older API. */
+  canReturn?: boolean;
   /** Jira GRW-625 — what the marketplace was told about this order. Empty for a counter sale. */
   marketplace?: OrderMarketplaceMessage[];
   /** May this viewer ask for a message to be sent again? Decided by the server with the route's own role check. */
@@ -1786,6 +1821,8 @@ export interface SellersWindow {
 export interface BestSellerRow {
   id: string;
   productId: string;
+  /** Which branch's shelf (Jira GRW-376: a product belongs to one). Absent from an older API. */
+  locationId?: string;
   name: string;
   sizeLabel: string | null;
   units: number;
@@ -1804,6 +1841,8 @@ export interface BestSellersPage {
 export interface DeadStockRow {
   id: string;
   productId: string;
+  /** Which branch's shelf (Jira GRW-376: a product belongs to one). Absent from an older API. */
+  locationId?: string;
   name: string;
   sizeLabel: string | null;
   stock: number;
@@ -2095,12 +2134,17 @@ export interface OrderReturn {
   units: number;
   restocked: boolean;
   saleableDefaulted: boolean;
+  /** Owner, 2026-11-14 (returns QA, loophole 2) — who took it back, and their role for when no name was set. Absent from an older API. */
+  by?: string | null;
+  byRole?: string | null;
 }
 export interface ReturnsReportPage {
   window: { key: string; label: string; startISO: string; endExclusiveISO: string };
   byReason: Array<{ reason: string; returns: number; units: number }>;
   customer: { returns: number; units: number };
   undelivered: { returns: number; units: number };
+  /** Owner, 2026-11-14 — who gave money back in the window, the most money first. Absent from an older API. */
+  byPerson?: Array<{ name: string | null; role: string | null; returns: number; refundMinor: string }>;
   anyReturns: boolean;
 }
 

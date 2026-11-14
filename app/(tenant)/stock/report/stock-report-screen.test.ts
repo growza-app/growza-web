@@ -85,7 +85,9 @@ describe('laid out for a thumb at 344px', () => {
 
   it('the sizes wrap, never scroll sideways', () => {
     expect(css).toMatch(/\.srp-sizes\s*\{[^}]*flex-wrap: wrap/);
-    expect(css).not.toMatch(/overflow-x:\s*(auto|scroll)/);
+    // The one sideways scroller in this sheet is the report tab bar on a phone (owner's review 2026-11-13); the
+    // sizes themselves still wrap.
+    expect(css.replace(/\.srp-nav \{[^}]*\}/g, '')).not.toMatch(/overflow-x:\s*(auto|scroll)/);
   });
 
   it('renders the 4-card KPI strip, quick filter pills, Cards/Table view toggle, and top-aligned style cards', () => {

@@ -6,6 +6,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { pickNoun } from '../lib/nouns';
+import { localLabels } from '../lib/local-labels';
 import { loadAtBranch } from '../lib/branch-load';
 import { BranchUrlSync } from '../components/BranchUrlSync';
 import { guardScreen } from '../lib/screen-guard';
@@ -28,7 +29,7 @@ export default async function CustomersPage({
   // Slipping away replaced, so an older bookmark keeps working. Nothing links
   // to it any more — Home used to, under the narrower band's name, which is
   // how it came to show 730 where the Clients page showed 462.
-  const STATUSES = new Set(['active', 'due', 'at_risk', 'inactive', 'lapsed', 'never']);
+  const STATUSES = new Set(['active', 'due', 'at_risk', 'inactive', 'lapsed', 'never', 'new', 'returning']);
   const SORTS = new Set(['recent', 'spent', 'visits', 'name']);
   const status: CustomerStatusFilter =
     params.status && STATUSES.has(params.status) ? (params.status as CustomerStatusFilter) : 'all';
@@ -79,7 +80,7 @@ export default async function CustomersPage({
       initialSort={sort}
       initialDirection={direction}
       initialOpenClientId={params.open?.trim() || undefined}
-      label={pickNoun(locale, me.labels.customers ?? 'Customers', nouns('customersTitle'))}
+      label={pickNoun(locale, (await localLabels(me.labels)).customers ?? 'Customers', nouns('customersTitle'))}
       />
     </>
   );

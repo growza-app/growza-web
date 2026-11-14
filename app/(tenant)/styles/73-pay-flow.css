@@ -1608,6 +1608,16 @@
   box-shadow: none;
 }
 
+/*
+ * The words end in "…" when the bar is narrower than them. At 344px "Search 42 products or scan barcode" is 320px of
+ * text in a 183px bar, and it was cut mid-letter at the bar's edge (sports-shop QA, 13 Nov 2026).
+ */
+.pf-who-search-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .pf-who-search svg {
   width: 1.25rem;
   height: 1.25rem;

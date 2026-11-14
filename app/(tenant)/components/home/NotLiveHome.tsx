@@ -1,7 +1,7 @@
 'use client';
 
 import { homeCopy } from '../../lib/home-copy';
-import { setupCopy } from '../../lib/setup-copy';
+import { setupWords, setupCopy } from '../../lib/setup-copy';
 import { canSee, type MemberRole } from '../../lib/nav-policy';
 import type { Lang } from '../../lib/lang';
 import { useAreas } from '../SessionProvider';
@@ -41,7 +41,7 @@ export function NotLiveHome({
   reportTabs?: string[];
 }) {
   const t = homeCopy(lang, labels);
-  const c = setupCopy(lang);
+  const c = setupCopy(lang, setupWords(labels));
   /*
    * The same `canSee` every nav surface asks, with `live` false — so these tiles and the tab bar cannot disagree
    * about what setup is. A role that may see none of them gets no empty card.

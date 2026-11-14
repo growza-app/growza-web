@@ -56,7 +56,8 @@ describe('AC-03 — a brand-new shop: each section says its own plain thing, and
     expect(shop).toMatch(/\(data\.running\.counted \|\| !areas\.stock\) && can\('\/pos'\) \? \(\s*<a className="btn btn-primary shp-cta" href="\/pos">/);
     expect(shop).toContain('!data.running.counted');
     expect(shop).toContain('s.notCounted');
-    expect(shop).toContain('s.nothingLow');
+    // Owner, 2026-11-13 — the shop's phone card is Needs attention; a quiet shelf says `nothingNeedsYou`.
+    expect(shop).toMatch(/phoneAttention\.length === 0 \? \(\s*<p className="shp-plain">\{s\.nothingNeedsYou\}<\/p>/);
   });
 
   it('a stock never counted offers the count, not a list of zeros', () => {
@@ -86,8 +87,10 @@ describe('error handling — a failed read is one plain line with a retry, and t
     // Still OUTSIDE that branch — that is the point of this test — but now with the salon's chrome
     // around it (`hm-area-links hm-mobile`), which is what keeps its labels off the tab bar.
     expect(shop).toMatch(/tiles\.length > 0 \? \(\s*<Card className="hm-area-links hm-mobile shp-links" title=\{t\.quickLinks\}>\s*<QuickTiles items=\{tiles\} \/>/);
+    // 2026-11-13 — the card is built once (`quickLinks`) and placed in one of two spots, both outside the branch.
     const errorBranch = shop.indexOf('failed || !data ? (');
-    expect(shop.indexOf('<QuickTiles items={tiles} />')).toBeGreaterThan(errorBranch);
+    expect(shop.indexOf('{areas.stock ? quickLinks : null}')).toBeGreaterThan(errorBranch);
+    expect(shop.indexOf('{areas.stock ? null : quickLinks}')).toBeGreaterThan(errorBranch);
   });
 
   it('follows the branch the owner picked, and returns to every branch when they let go', () => {
@@ -121,7 +124,7 @@ describe('UX-07 — English and Hindi for every line, the nouns from the vertica
     expect(en.sizeWord('30 / White')).toBe('size 30 / White');
     expect(en.left(2)).toBe('2 left');
     expect(en.left(0)).toBe('None left');
-    expect(en.viewAll(27)).toBe('View all (27)');
+    // `viewAll(n)` went with the phone's Running out card (review 2026-11-13); the laptop list keeps `left` and `sizeWord`.
   });
 });
 
@@ -135,7 +138,8 @@ describe('UX-01, UX-02, UX-05 — laid out at 344px on the tokens, with 44px doo
   it('every link and row is at least 2.75rem tall', () => {
     expect(css).toMatch(/\.shp-link \{[^}]*min-height: 2\.75rem/);
     expect(css).toMatch(/\.shp-cta \{[^}]*min-height: 2\.75rem/);
-    expect(css).toMatch(/\.shp-running li \{[^}]*min-height: 2\.75rem/);
+    expect(css).toMatch(/\.shp-attn-row \{[^}]*min-height: 2\.75rem/);
+    expect(css).toMatch(/\.shp-cust-figure \{[^}]*min-height: 2\.75rem/);
   });
 
   it('is one column on a phone and two from 861px', () => {

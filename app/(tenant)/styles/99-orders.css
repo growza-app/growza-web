@@ -153,7 +153,16 @@ a.ord-card:focus-visible,
   color: var(--muted);
   font-size: 0.8125rem;
 }
+/*
+  The amount stays on the name's line. With the row free to wrap, a buyer like "Rising Stars Cricket Academy"
+  took the whole width at 344px and pushed the amount onto a line of its own, where it read as a second order.
+  The name wraps inside its own space instead.
+*/
+.ord-card-top {
+  flex-wrap: nowrap;
+}
 .ord-who {
+  flex: 1 1 auto;
   min-width: 0;
   font-weight: 600;
   overflow-wrap: anywhere;
@@ -571,6 +580,9 @@ a.ord-card:focus-visible,
 .ord-d-paper {
   display: flex;
   flex-wrap: wrap;
+  /* QA 13 Nov 2026, bug 9 — once a receipt exists its block holds two stacked buttons, and the default stretch made
+     "Return items" beside it 96px tall. Each control keeps its own height, top-aligned. */
+  align-items: flex-start;
   gap: var(--sp-2);
   margin-top: var(--sp-3);
 }
@@ -1146,4 +1158,66 @@ a.ord-card:focus-visible,
   .pay-app {
     flex: 1 1 0;
   }
+}
+
+/*
+ * Owner's review 2026-11-13 — on a phone the two chip groups (where from: 4 chips; what state: 6 chips) were
+ * ~130px before the first order. There they are one row of two dropdown pills — native selects, so the OS
+ * picker opens the list and the current choice reads without opening — and the chips are not drawn. A laptop
+ * keeps the wrapping chips and never sees the pills. Hidden here, in each width's own query, because a bare
+ * `.mobile-only` would lose to this sheet's `display: flex` by source order.
+ */
+.ord-selects {
+  display: none;
+  gap: var(--sp-2);
+}
+
+.ord-select {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.ord-select-l {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.ord-select select {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-5) 0 var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f6a65' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right var(--sp-3) center / 1rem;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+@media (max-width: 860px) {
+  .ord-selects {
+    display: flex;
+  }
+  .ord-tools .ord-chips {
+    display: none;
+  }
+}
+
+/* Owner's review 2026-11-13 — a known customer's name on an order is a door to their card. */
+.ord-d-name-link {
+  display: inline-block;
+  color: var(--accent-deep);
+  text-decoration: none;
+}
+
+.ord-d-name-link:hover {
+  text-decoration: underline;
 }

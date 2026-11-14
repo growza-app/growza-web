@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { api } from '../../lib/api';
 import type { ReturnsReportPage, SellersRange } from '../../lib/api-types';
-import { intlLocale } from '../../lib/format';
+import { formatMoney, intlLocale } from '../../lib/format';
 import { returnReasonKey } from '../../lib/return-reasons';
 import AppLink from '../../../shared/AppLink';
 import { useBranch } from '../../components/BranchProvider';
@@ -103,6 +103,27 @@ export function ReturnsClient() {
                 </li>
               ))}
             </ul>
+          ) : null}
+
+          {/*
+            Owner, 2026-11-14 (returns QA, loophole 2) — who gave money back. A manager can take returns now, and the person who handed the
+            cash over was stored on every return and shown nowhere. One card per person, the most money first.
+          */}
+          {(data.byPerson ?? []).length > 0 ? (
+            <section aria-label={t('byTitle')}>
+              <p className="srp-worth-label">{t('byTitle')}</p>
+              <ul className="srp-list">
+                {(data.byPerson ?? []).map((p) => (
+                  <li key={`${p.name ?? ''}-${p.role ?? ''}`} className="srp-card">
+                    <div className="srp-head">
+                      <h2 className="srp-name">{p.name || (p.role ? t(`byRole.${p.role}` as 'byRole.owner') : t('byNone'))}</h2>
+                      <p className="srp-value">{formatMoney(p.refundMinor, 'INR', locale)}</p>
+                    </div>
+                    <p className="srp-hint">{t('returnsCount', { count: p.returns })}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
           ) : null}
 
           {/* Owner, 2026-10-24 — only a parcel comes back undelivered: where nothing ships (a kitchen), there is no such block. */}

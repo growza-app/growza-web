@@ -1,6 +1,6 @@
 import type { Lang } from './lang';
 import { copy } from './copy';
-import { nounInSentence } from './nouns';
+import { isLocalised, nounInSentence } from './nouns';
 
 /**
  * Jira GRW-222 — every word on the three Homes, the header and the navigation,
@@ -32,9 +32,12 @@ const segmentsHi = {
 export function homeCopy(lang: Lang, labels: Labels = {}) {
   const hi = lang === 'hi';
   const S = (en: string, h: string) => (hi ? h : en);
-  const bookingsWord = hi ? 'बुकिंग' : (labels.appointments ?? copy.nav.appointments).toLowerCase();
-  const clientsWord = hi ? 'ग्राहक' : (labels.customers ?? copy.nav.customers);
-  const staffWord = hi ? 'स्टाफ़' : (labels.providers ?? copy.nav.staff);
+  // QA 2026-11-14 (F17) — in Hindi, the vertical's own word when the labels arrive in Hindi (the layout puts them
+  // through `verticalNouns`): a clinic's nav says परामर्श and डॉक्टर, as English says Consultations and Doctors.
+  const H = (label: string | undefined, generic: string) => (isLocalised(label) ? label : generic);
+  const bookingsWord = hi ? H(labels.appointments, 'बुकिंग') : (labels.appointments ?? copy.nav.appointments).toLowerCase();
+  const clientsWord = hi ? H(labels.customers, 'ग्राहक') : (labels.customers ?? copy.nav.customers);
+  const staffWord = hi ? H(labels.providers, 'स्टाफ़') : (labels.providers ?? copy.nav.staff);
   /*
    * "1 booking", not "1 bookings". The vertical carries both forms
    * (`appointment` / `appointments`, `customer` / `customers`); Hindi uses one
@@ -456,13 +459,10 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       noOrdersToday: S('No orders today yet.', 'आज अभी कोई ऑर्डर नहीं।'),
       /** Jira GRW-614 — the work waiting, which opens the Orders list already filtered to it. */
       toSend: (n: number) => S(`${n} to send`, `${n} भेजने हैं`),
-      runningOut: S('Running out', 'ख़त्म होने वाला'),
       notCounted: S("You haven't counted your stock yet.", 'आपने अभी स्टॉक की गिनती नहीं की है।'),
       countStock: S('Count your stock', 'स्टॉक गिनें'),
-      nothingLow: S('Nothing is running low.', 'कुछ भी कम नहीं है।'),
       left: (n: number) => (n <= 0 ? S('None left', 'ख़त्म') : S(`${n} left`, `${n} बचे`)),
       sizeWord: (size: string) => S(`size ${size}`, `साइज़ ${size}`),
-      viewAll: (n: number) => S(`View all (${n})`, `सभी देखें (${n})`),
       todaysTakings: S("Today's sales", 'आज की बिक्री'),
       yesterdaysTakings: S("Yesterday's sales", 'कल की बिक्री'),
       ordersTodayLabel: S('Orders today', 'आज के ऑर्डर'),
@@ -472,7 +472,6 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       lowStockLabel: S('Low stock sizes', 'कम स्टॉक वाले साइज़'),
       sizesLowSub: (n: number) => (n === 0 ? S('All sizes well stocked', 'सभी साइज़ पर्याप्त हैं') : S(`${n} sizes running low`, `${n} साइज़ कम हो रहे हैं`)),
       whatSellsLink: S('Top sellers', 'सबसे ज़्यादा बिकने वाले'),
-      whatToOrderLink: S('Reorder list', 'मँगाने की सूची'),
       channelsLink: S('Sales by channel', 'चैनल के हिसाब से बिक्री'),
       stockReportLink: S('Stock report', 'स्टॉक रिपोर्ट'),
       range7d: S('Last 7 days', 'पिछले 7 दिन'),
@@ -497,6 +496,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       unitsSoldTitle: S('Units sold', 'बिकी हुई यूनिट'),
       dishesSoldTitle: S('Dishes sold', 'बिके हुए पकवान'),
       acrossSizes: (revenue: string, sizes: number) => S(`${revenue} across ${sizes} sizes`, `${sizes} साइज़ में ${revenue}`),
+      // The Sales card beside it already carries the money, so the units card says only how many sizes sold.
+      acrossSizesOnly: (sizes: number) => S(`across ${sizes} ${sizes === 1 ? 'size' : 'sizes'}`, `${sizes} साइज़ में`),
       // Owner, 2026-10-24 — a kitchen sells dishes, not sizes.
       acrossItems: (revenue: string, items: number) => S(`${revenue} from ${items} ${items === 1 ? 'item' : 'items'}`, `${items} चीज़ों से ${revenue}`),
       acrossDishes: (revenue: string, dishes: number) => S(`${revenue} across ${dishes} ${dishes === 1 ? 'dish' : 'dishes'}`, `${dishes} पकवानों में ${revenue}`),
@@ -522,12 +523,19 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       addCustomerAction: S(`Add ${nounInSentence(labels.customer ?? 'Customer')}`, 'ग्राहक जोड़ें'),
       ordersAttentionTitle: S('Orders needing attention', 'ध्यान देने वाले ऑर्डर'),
       cameBackLabel: S('Returns', 'वापसी'),
+      returnsTodayLabel: S('Returns today', 'आज की वापसी'),
       allOrdersDispatched: S('Every order has been packed and sent.', 'सभी ऑर्डर पैक करके भेजे जा चुके हैं।'),
       stockAttentionTitle: S('Stock needing attention', 'ध्यान देने वाला स्टॉक'),
       outOfStockChip: S('Out of stock', 'स्टॉक ख़त्म'),
       runningLowChip: S('Running low', 'कम हो रहा है'),
       soldCountPill: (n: number) => S(`${n} sold`, `${n} बिके`),
       recentOrdersTitle: S('Recent orders', 'हाल के ऑर्डर'),
+      /** Owner, 2026-11-13 — the phone's Customers card: who came in today, and the month's new faces. */
+      customersTitle: S(clientsWord, 'ग्राहक'),
+      customersTodayLabel: S('Came in today', 'आज आए'),
+      newThisMonthLabel: S('New this month', 'इस महीने नए'),
+      /** Owner, 2026-11-13 — the phone's Needs attention rows, one door each. */
+      reorderListLabel: S('Reorder list', 'मँगाने की सूची'),
       colWhen: S('When', 'कब'),
       colCustomer: S(labels.customer ?? 'Customer', 'ग्राहक'),
       colChannel: S('Channel', 'चैनल'),
@@ -536,6 +544,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       colStatus: S('Status', 'स्थिति'),
       colActions: S('Actions', 'कार्रवाई'),
       itemCountShort: (n: number) => (n === 1 ? S('1 item', '1 सामान') : S(`${n} items`, `${n} सामान`)),
+      // QA 2026-11-14, F14 — an order everything on which came back.
+      itemsAllBackShort: (n: number) => (n === 1 ? S('1 item · all came back', '1 सामान · सब वापस आया') : S(`${n} items · all came back`, `${n} सामान · सब वापस आया`)),
       noNameCustomer: S('Walk-in customer', 'दुकान का ग्राहक'),
       stateDone: S('Done', 'पूरा हुआ'),
       stateNew: S('New', 'नया'),
@@ -561,7 +571,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
        * card below counts every order taken. Both are right, and without this line they read as two
        * answers to one question — "2 orders" above "3 Today". Said out loud, they add up.
        */
-      cameBack: (n: number) => (n === 1 ? S('1 came back', '1 वापस आया') : S(`${n} came back`, `${n} वापस आए`)),
+      // QA 13 Nov 2026, bug 12 — one word for one thing: the card below says "Returns" and the screen it opens is Returns.
+      cameBack: (n: number) => (n === 1 ? S('1 return', '1 वापसी') : S(`${n} returns`, `${n} वापसी`)),
       /** The hero's top-seller pill once the window has one; it falls back to `whatSellsLink` before then. */
       topSellerPill: (name: string) => S(`Top: ${name}`, `सबसे ज़्यादा: ${name}`),
       noSalesYet: S('No sales in this period yet.', 'इस अवधि में अभी कोई बिक्री नहीं।'),
@@ -570,7 +581,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       whatWouldYouLikeToDo: S('What would you like to do?', 'आप क्या करना चाहेंगे?'),
       viewOrdersAction: S('View orders', 'ऑर्डर देखें'),
       manageMenuAction: S('Manage menu', 'मेन्यू संभालें'),
-      customersCardTitle: S('Customers', 'ग्राहक'),
+      // QA 13 Nov 2026, bug 14 — the business's own word: a restaurant's nav says Guests, and so does this tile.
+      customersCardTitle: S(clientsWord, 'ग्राहक'),
       needsAttentionTitle: S('Needs attention', 'ध्यान दें'),
       attentionItemsBadge: (n: number) => (n === 1 ? S('1 item', '1 बात') : S(`${n} items`, `${n} बातें`)),
       menuItemsLowSub: (n: number) =>
@@ -603,11 +615,11 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
        * a kitchen keeps no count. The vertical's word is still what decides; this is its Hindi, for the one word that
        * changes the meaning.
        */
-      stock: hi ? (labels.stock === 'Menu' ? 'मेन्यू' : 'स्टॉक') : (labels.stock ?? 'Stock'),
+      stock: hi ? (labels.stock === 'Menu' ? 'मेन्यू' : H(labels.stock, 'स्टॉक')) : (labels.stock ?? 'Stock'),
       schedule: S('My schedule', 'मेरा काम'),
-      clients: hi ? 'ग्राहक' : (labels.customers ?? copy.nav.customers),
-      staff: hi ? 'स्टाफ़' : (labels.providers ?? copy.nav.staff),
-      services: hi ? 'सेवाएँ' : (labels.services ?? copy.nav.services),
+      clients: hi ? H(labels.customers, 'ग्राहक') : (labels.customers ?? copy.nav.customers),
+      staff: hi ? H(labels.providers, 'स्टाफ़') : (labels.providers ?? copy.nav.staff),
+      services: hi ? H(labels.services, 'सेवाएँ') : (labels.services ?? copy.nav.services),
       offers: S(copy.nav.offers, 'ऑफर'),
       /** Jira GRW-438 — several services sold as one visit. "पैकेज" is the word a salon owner already uses. */
       packages: S('Packages', 'पैकेज'),
@@ -617,6 +629,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       team: S('Team', 'टीम'),
       attendance: S('Attendance', 'हाज़िरी'),
       notifications: S('Notifications', 'सूचनाएं'),
+      // Owner, 13 Nov 2026 — the bottom bar's word: "Notifications" was cut to "Notificati…" at 344px.
+      notificationsShort: S('Alerts', 'सूचनाएं'),
       reports: S(copy.reports.navLabel, 'रिपोर्ट'),
       freeTimes: S(copy.nav.availability, 'खाली समय'),
       billing: S('Billing', 'बिल'),

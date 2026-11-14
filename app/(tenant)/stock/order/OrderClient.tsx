@@ -228,8 +228,10 @@ export function OrderClient() {
 
   return (
     <div className="srp ro">
-      <div className="srp-toolbar">
-        {oneBranch ? (
+      {/* Owner's review 2026-11-13 — on "All branches" with the categories still loading this was an empty card. */}
+      {oneBranch || categories.length > 0 ? (
+        <div className="srp-toolbar">
+          {oneBranch ? (
           <button type="button" className="btn btn-ghost srp-export" aria-expanded={settingsOpen} onClick={() => setSettingsOpen((o) => !o)}>
             {t('howFarAhead')}
           </button>
@@ -253,7 +255,8 @@ export function OrderClient() {
             ))}
           </select>
         ) : null}
-      </div>
+        </div>
+      ) : null}
       {settingsOpen && oneBranch ? <Rules branchId={oneBranch} writable={writable} onChanged={() => void load()} /> : null}
 
       {failed ? (
@@ -276,15 +279,21 @@ export function OrderClient() {
         </div>
       ) : (
         <>
-          <p className="srp-hint">{t('model')}</p>
-          {data.totals.withoutBasis > 0 ? <p className="srp-warn">{t('withoutBasis', { count: data.totals.withoutBasis })}</p> : null}
+          {/* Owner's review 2026-11-13 — the explanation (`model`) is the header's ⓘ now; the warning is one line. */}
+          {data.totals.withoutBasis > 0 ? <p className="srp-warn ro-warn">{t('withoutBasis', { count: data.totals.withoutBasis })}</p> : null}
           <ul className="srp-list">
             {data.rows.map((r) => {
               const edit = edits[r.id];
               return (
                 <li key={r.id} className="srp-card ro-row">
                   <div className="ro-main">
-                    <h2 className="srp-name">{nameOf(r)}</h2>
+                    <h2 className="srp-name">
+                      {nameOf(r)}
+                      {/* "All branches" of a business with several: each branch reorders its own shelf (sports-shop QA). */}
+                      {branchContext.ready && branchContext.multi && branchContext.choice === null && r.branchName ? (
+                        <span className="srp-branch"> · {r.branchName}</span>
+                      ) : null}
+                    </h2>
                     <p className="srp-hint">{reason(r)}</p>
                     {r.soldOutLastYear ? <p className="srp-warn">{t('soldOut')}</p> : null}
                     {r.override !== null && r.suggested !== null && r.override !== r.suggested ? <p className="srp-hint">{t('suggestedWas', { n: count(r.suggested) })}</p> : null}

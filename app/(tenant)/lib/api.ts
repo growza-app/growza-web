@@ -367,7 +367,9 @@ async function extractError(
   const lang = typeof document === 'undefined' ? 'en' : document.documentElement.lang;
   // Jira GRW-478 — a bare code with no sentence ("forbidden", "unauthorized") is said in words, never shown raw.
   const bare = !body?.detail && body?.error ? bareRefusalMessage(body.error, lang) : null;
-  const said = bare ?? body?.detail ?? body?.error ?? genericFailureMessage(lang);
+  // Security audit 2026-11-14 (#19) — a 500 carries the request id now; said after the sentence so a support call can quote it.
+  const ref = typeof (body as { requestId?: unknown } | null)?.requestId === 'string' ? (body as { requestId: string }).requestId : null;
+  const said = (bare ?? body?.detail ?? body?.error ?? genericFailureMessage(lang)) + (ref && res.status >= 500 ? ` (ref ${ref})` : '');
   // Jira GRW-478 — the guard's 401 means the session is gone. In the browser, go and sign in again rather than
   // leave a button that can only fail; a wrong password elsewhere (sign-in, invites) sends a sentence, not this code.
   if (res.status === 401 && body?.error === 'unauthorized' && typeof window !== 'undefined' && window.location.pathname !== '/login') {
@@ -852,14 +854,15 @@ export const api = {
     to?: string,
     providerId?: string,
     customerId?: string,
-    opts?: { includeSales?: boolean },
+    /** `'queue'` — QA 13 Nov 2026, bug 10: the till's token queue, today's orders without amounts for a desk the takings are not opened to. */
+    opts?: { includeSales?: boolean | 'queue' },
   ) => {
     const params = new URLSearchParams();
     if (date) params.set('date', date);
     if (to) params.set('to', to);
     if (providerId) params.set('providerId', providerId);
     if (customerId) params.set('customerId', customerId);
-    if (opts?.includeSales) params.set('includeSales', '1');
+    if (opts?.includeSales) params.set('includeSales', opts.includeSales === 'queue' ? 'queue' : '1');
     const qs = params.toString();
     return get<Appointment[]>(`/api/v1/appointments${qs ? `?${qs}` : ''}`);
   },
@@ -1394,7 +1397,7 @@ export const api = {
   /** The owner fixes a finished booking's amount or service. `:id` is any leg of the visit. */
   correctBooking: (
     appointmentId: string,
-    args: { legs: { appointmentId: string; serviceId?: string; paidAmountMinor: number }[]; reason?: string; confirmLargeAmount?: boolean },
+    args: { legs: { appointmentId: string; serviceId?: string; paidAmountMinor: number }[]; reason?: string; confirmLargeAmount?: boolean; acknowledgeIssuedDocument?: boolean },
   ) => post<{ bookingGroupId: string | null; pointsMoved: number }>(`/api/v1/appointments/${appointmentId}/correct`, args),
   /** Jira GRW-318 — `wholeBooking` applies a cancel or a no-show to every still-confirmed service of the visit. */
   updateAppointmentStatus: (id: string, status: AppointmentStatus, wholeBooking = false) =>

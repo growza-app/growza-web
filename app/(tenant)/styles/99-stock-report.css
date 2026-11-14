@@ -74,18 +74,45 @@
   text-decoration: underline;
 }
 
-@media (max-width: 600px) {
+/*
+ * Owner's review 2026-11-13 — on a phone the seven tabs were a two-column grid, 198px tall, on every report
+ * page but the Reports hub, whose own `.srp-nav-links` had already become a 44px scroller (99-counter-report.css).
+ * The same scroller here: one row of bordered chips, the active one filled, the fourth cut by the edge to say
+ * there is more. The first row of a report moves up by 154px. A laptop keeps the wrapping row; it has the room.
+ */
+@media (max-width: 860px) {
   .srp-nav {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex: none;
+    flex-wrap: nowrap;
+    gap: var(--sp-2);
+    overflow-x: auto;
+    min-width: 0;
+    scrollbar-width: none;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+
+  .srp-nav::-webkit-scrollbar {
+    display: none;
   }
 
   .srp-nav-tab {
+    flex: none;
     justify-content: center;
-    text-align: center;
     min-height: 2.75rem;
-    padding: 0 var(--sp-2);
-    font-size: 0.8125rem;
+    padding: 0 var(--sp-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    font-size: 0.875rem;
+    color: var(--text);
+  }
+
+  .srp-nav-tab.is-active {
+    border-color: var(--accent-deep);
   }
 }
 
@@ -226,6 +253,12 @@
   background: var(--accent-soft);
   color: var(--accent-deep);
 }
+.srp-branch {
+  color: var(--muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .srp-name {
   margin: 0;
   font-size: var(--fs-4);
@@ -699,4 +732,9 @@
     align-items: center;
     justify-content: space-between;
   }
+}
+
+/* Owner's review 2026-11-13 — the "no sales last year" line on the reorder list sits flush under the tab bar. */
+.ro-warn {
+  margin-top: 0;
 }

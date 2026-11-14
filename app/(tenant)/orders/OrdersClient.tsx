@@ -15,6 +15,7 @@ import { useAreas } from '../components/SessionProvider';
 import { channelsOf, isDeliveryApp, sellsOnMarketplaces } from '../lib/order-channels';
 import { formatTokenNo } from '../pos/pos-helpers';
 import { groupByDay } from './order-days';
+import { allCameBack } from '../lib/order-items';
 
 /**
  * Jira GRW-614 — the Orders list.
@@ -49,6 +50,12 @@ export function OrdersClient({
   const branchContext = useBranch();
   // An owner's free choice of branch narrows the list; a desk is held to its own by the server whatever is sent.
   const branch = branchContext.ready && branchContext.multi ? branchContext.choice : null;
+  /**
+   * The branch an order was rung up at, named only on the "All branches" list of a business with several. Each branch
+   * counts its own tokens from 1, so "#04" at one shop and "#04" at the other are two different orders side by side.
+   */
+  const branchOf = (locationId: string): string | null =>
+    branchContext.ready && branchContext.multi && branch === null ? (branchContext.branches.find((b) => b.id === locationId)?.name ?? null) : null;
 
   const [query, setQuery] = useState<OrdersQuery>(initialQuery);
   // What is TYPED, apart from what has been SENT: the box answers every keystroke, the server only hears the pause.
@@ -210,6 +217,43 @@ export function OrdersClient({
           />
         </label>
 
+        {/*
+          Owner's review 2026-11-13 — on a phone the two chip groups were ~130px (three wrapped rows, then two
+          scrollers); they are one row of two dropdown pills there, the current choice readable without opening.
+          A shop that sells only at the counter gets no "Where from" pill. The chips stay for a laptop; the CSS
+          (99-orders.css) draws one or the other by width.
+        */}
+        {offered.length > 1 || ships ? (
+        <div className="ord-selects">
+          {offered.length > 1 ? (
+            <label className="ord-select">
+              <span className="ord-select-l">{t('list.channelGroup')}</span>
+              <select aria-label={t('list.channelGroup')} value={query.channel} onChange={(e) => pickChannel(e.target.value)}>
+                <option value="">{t('list.allChannels')}</option>
+                {offered.map((c) => (
+                  <option key={c} value={c}>
+                    {channelWords[c]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {ships ? (
+            <label className="ord-select">
+              <span className="ord-select-l">{t('list.stateGroup')}</span>
+              <select aria-label={t('list.stateGroup')} value={query.status} onChange={(e) => pickState(e.target.value)}>
+                <option value="">{t('list.allStates')}</option>
+                {STATE_CHIPS.map((c) => (
+                  <option key={c.key} value={c.value}>
+                    {t(`list.stateChips.${c.key}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+        </div>
+        ) : null}
+
         <div className="ord-chips ord-chips-channel" role="group" aria-label={t('list.channelGroup')}>
           <button type="button" className={`ord-chip ${query.channel === '' ? 'is-on' : ''}`} aria-pressed={query.channel === ''} onClick={() => pickChannel('')}>
             {t('list.allChannels')}
@@ -287,7 +331,13 @@ export function OrdersClient({
                             <span aria-hidden="true">·</span>
                             <span>{channelWord(r.channel)}</span>
                             <span aria-hidden="true">·</span>
-                            <span>{t('list.itemCount', { count: r.items })}</span>
+                            <span>{allCameBack(r) ? t('list.itemsAllBack', { count: r.itemsSold }) : t('list.itemCount', { count: r.items })}</span>
+                            {branchOf(r.locationId) ? (
+                              <>
+                                <span aria-hidden="true">·</span>
+                                <span>{branchOf(r.locationId)}</span>
+                              </>
+                            ) : null}
                             {/* A token says which order this is; only an order without one (a marketplace's, an older one) needs its code. */}
                             {r.tokenNo ? null : <span className="ord-code">{t('list.orderCode', { code: r.code.toUpperCase() })}</span>}
                             {isDeliveryApp(r.channel) && r.externalRef ? <span className="ord-code">{t('list.appOrder', { ref: r.externalRef })}</span> : null}
@@ -324,12 +374,13 @@ export function OrdersClient({
                     {/* The token the guest holds where there is one, as on the phone; the code only for an order without. */}
                     <div className="ord-code">{r.tokenNo ? formatTokenNo(r.tokenNo) : t('list.orderCode', { code: r.code.toUpperCase() })}</div>
                     {isDeliveryApp(r.channel) && r.externalRef ? <div className="ord-code">{t('list.appOrder', { ref: r.externalRef })}</div> : null}
+                    {branchOf(r.locationId) ? <div className="ord-code">{branchOf(r.locationId)}</div> : null}
                   </td>
                   <td>
                     <span className={`ord-chan-badge ord-chan-${r.channel}`}>{channelWord(r.channel)}</span>
                   </td>
                   <td className="ord-td-who">{whoOf(r)}</td>
-                  <td className="ord-num">{r.items}</td>
+                  <td className="ord-num">{allCameBack(r) ? t('list.itemsAllBack', { count: r.itemsSold }) : r.items}</td>
                   {showMoney ? <td className="ord-num ord-td-amount">{r.amountMinor !== undefined ? formatMoney(r.amountMinor, 'INR', locale) : ''}</td> : null}
                   <td>
                     <span className={`ord-state-chip ${r.paymentPending ? 'ord-s-waiting' : `ord-s-${r.known ? r.status : 'unknown'}`}`}>{r.paymentPending ? t('list.paymentPending') : stateWord(r.status)}</span>

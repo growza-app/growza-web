@@ -5,7 +5,7 @@ import { BranchUrlSync } from '../components/BranchUrlSync';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { pickNoun } from '../lib/nouns';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { HeaderControls } from '../components/HeaderControls';
 import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
@@ -107,6 +107,21 @@ export function ReportsShell({
   const params = useSearchParams();
   const [rangeOpen, setRangeOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  /*
+   * QA 13 Nov 2026, bug 5 — on a phone the bar scrolls sideways and always opened at its start, so Money was half off
+   * the edge and Bookings, Services and Staff were not on screen at all. The open tab is brought to the middle, as the
+   * shop's report bar does (RetailReportsNav). A laptop's bar does not overflow, so this leaves it at 0.
+   */
+  const tabsRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const nav = tabsRef.current;
+    const current = nav?.querySelector<HTMLElement>('button.active');
+    if (!nav || !current) return;
+    // Measured on screen, so it holds whichever ancestor is positioned (offsetLeft would be relative to that one).
+    const bar = nav.getBoundingClientRect();
+    const it = current.getBoundingClientRect();
+    nav.scrollLeft += it.left + it.width / 2 - (bar.left + bar.width / 2);
+  }, [tab]);
 
   const go = (next: Record<string, string>) => {
     const query = new URLSearchParams(params.toString());
@@ -185,7 +200,7 @@ export function ReportsShell({
           plain: its four own reports are a bar of their own, and with both on screen the primary one was
           the lower of the two.
         */}
-        <nav className="rp-tabs rp-tabs-top">
+        <nav ref={tabsRef} className="rp-tabs rp-tabs-top">
           {/*
             Owner, 2026-10-27 — the way back to the four cards.
             `/reports` with no `tab` IS that page, and nothing linked to it: the Back arrow steps through

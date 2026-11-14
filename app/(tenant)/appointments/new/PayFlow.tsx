@@ -628,6 +628,19 @@ export function PayFlow({
   const [sizing, setSizing] = useState<string | null>(null);
   // Hooks stay above every early return below (done, qr, how): a sale that ends on one of them must not change the hook count.
   const noneCount = useMemo(() => products.filter((p) => p.categoryId === null).length, [products]);
+  /*
+   * QA 2026-11-14 (F11) — only a category with something in it to sell. `products` is what the till can sell (the
+   * branch's active ones), and a category whose every product was retired still drew a chip, which opened onto
+   * "No service by that name." The category is still the shop's on the Stock screen; the till just has nothing in it.
+   */
+  const sellableCategories = useMemo(
+    () => productCategories.filter((c) => products.some((p) => p.categoryId === c.id)),
+    [productCategories, products],
+  );
+  useEffect(() => {
+    if (productCategory === ALL_CATEGORIES || productCategory === NO_CATEGORY) return;
+    if (productsLoaded && !sellableCategories.some((c) => c.id === productCategory)) setProductCategory(ALL_CATEGORIES);
+  }, [productCategory, sellableCategories, productsLoaded]);
   const phoneProducts = useMemo(() => {
     if (!productsOnly) return [];
     const byCat = productCategory
@@ -1819,7 +1832,7 @@ export function PayFlow({
         <div className={`pf-who-bar ${badClient ? 'pf-bad' : ''}`} data-step={guideClient ? 'next' : undefined} ref={whoChips}>
           <button type="button" className="pf-who-search" onClick={() => setWhoOpen('find')}>
             <IconSearch />
-            {t('nameOrNumber')}
+            <span className="pf-who-search-text">{t('nameOrNumber')}</span>
           </button>
           <button type="button" className="pf-who-add" aria-label={t('addClient', { client: nounInSentence(clientNoun) })} onClick={() => setWhoOpen('add')}>
             <IconPlus />
@@ -1936,7 +1949,7 @@ export function PayFlow({
             {productsOnly ? (
               <DeskProductCategories
                 picked={productCategory}
-                categories={productCategories}
+                categories={sellableCategories}
                 allCount={products.length}
                 noneCount={noneCount}
                 onPick={setProductCategory}
@@ -1984,7 +1997,7 @@ export function PayFlow({
                 productsOnly ? (
                   <DeskProductCategories
                     picked={productCategory}
-                    categories={productCategories}
+                    categories={sellableCategories}
                     allCount={products.length}
                     noneCount={noneCount}
                     onPick={setProductCategory}
@@ -2333,12 +2346,12 @@ export function PayFlow({
             <div className="pf-who-bar">
               <button type="button" className="pf-who-search pf-find-service" onClick={() => setMenuOpen(true)}>
                 <IconSearch />
-                {t(counted ? 'desk.searchProducts' : 'desk.searchDishes', { count: products.length })}
+                <span className="pf-who-search-text">{t(counted ? 'desk.searchProducts' : 'desk.searchDishes', { count: products.length })}</span>
               </button>
               <span className="pf-who-add pf-who-gap" aria-hidden="true" />
             </div>
           </div>
-          {productCategories.length > 0 ? (
+          {sellableCategories.length > 0 ? (
             <div className="pf-chips">
               <button
                 type="button"
@@ -2348,7 +2361,7 @@ export function PayFlow({
               >
                 {t(counted ? 'allCategories' : 'allDishes')}
               </button>
-              {productCategories.map((c) => (
+              {sellableCategories.map((c) => (
                 <button
                   key={c.id}
                   type="button"
@@ -2385,7 +2398,7 @@ export function PayFlow({
           <div className="pf-who-bar">
             <button type="button" className="pf-who-search pf-find-service" onClick={() => setMenuOpen(true)}>
               <IconSearch />
-              {t('searchCount')}
+              <span className="pf-who-search-text">{t('searchCount')}</span>
             </button>
             <span className="pf-who-add pf-who-gap" aria-hidden="true" />
           </div>
@@ -2415,7 +2428,9 @@ export function PayFlow({
             ))}
           </div>
         ) : phoneProducts.length === 0 ? (
-          <div className="empty">{products.length === 0 ? t('desk.noProducts') : t('desk.noMatch')}</div>
+          <div className="empty">
+            {products.length === 0 ? t(counted ? 'desk.noProducts' : 'desk.noDishes') : t(counted ? 'desk.noProductMatch' : 'desk.noDishMatch')}
+          </div>
         ) : (
           <div className="pf-tiles">
             {phoneProducts.map((p) => {

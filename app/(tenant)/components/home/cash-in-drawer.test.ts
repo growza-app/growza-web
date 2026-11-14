@@ -29,7 +29,9 @@ describe('the figure', () => {
   });
 
   it('is on the phone Home under the payment split, for today only, and on the desk hero', () => {
-    expect(shop).toMatch(/phoneFigures\.kind === 'today' \|\| phoneFigures\.kind === 'range' \? <CashDrawerLine t=\{t\} cashDrawer=\{phoneFigures\.cashDrawer\} \/> : null/);
+    // Owner, 2026-11-13 — the kitchen only: a shop with a counted shelf does not get the line on Home.
+    expect(shop).toMatch(/isKitchen && \(phoneFigures\.kind === 'today' \|\| phoneFigures\.kind === 'range'\) \? <CashDrawerLine t=\{t\} cashDrawer=\{phoneFigures\.cashDrawer\} \/> : null/);
+    expect(shop).toMatch(/isKitchen && data\.today\.cashDrawer && \(data\.today\.cashDrawer\.takenMinor > 0/);
     // The phone's range view carries it for TODAY only — never for a week or a month.
     expect(shop).toMatch(/cashDrawer: phonePeriod === 'today' \? data\?\.today\.cashDrawer : undefined,/);
     expect(shop).toMatch(/cashDrawer: data\.today\.cashDrawer,/);
