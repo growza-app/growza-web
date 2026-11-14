@@ -20,7 +20,7 @@ type Translate = (key: string) => string;
  * entries carried nine identical "OCTOBER 2026" labels — a word repeated on every line stops being read and
  * starts being noise. Printed once, it is a heading; printed nine times, it is wallpaper.
  */
-export function WhatsNew({ role, t, locale }: { role: HelpRole | null; t: Translate; locale: string }) {
+export function WhatsNew({ role, t, locale, mayOpen = () => true }: { role: HelpRole | null; t: Translate; locale: string; mayOpen?: (href: string) => boolean }) {
   const things = whatsNewFor(role);
   if (things.length === 0) return null;
 
@@ -52,8 +52,9 @@ export function WhatsNew({ role, t, locale }: { role: HelpRole | null; t: Transl
                 {i === 0 || month(thing) !== month(things[i - 1]!) ? <p className="help-new-when">{month(thing)}</p> : null}
                 <p className="help-new-what">{t(`items.${thing.id}.title`)}</p>
                 <p className="help-new-why">{t(`items.${thing.id}.body`)}</p>
-                {/* Only where there is somewhere to go: a line with no link is a thing that happens by itself. */}
-                {thing.href ? (
+                {/* Only where there is somewhere to go: a line with no link is a thing that happens by itself. And only where
+                    this reader may go (Jira GRW-709): Sizes is news to a front desk, but Products is not their screen. */}
+                {thing.href && mayOpen(thing.href) ? (
                   <AppLink className="help-new-go" href={thing.href}>
                     {t(`items.${thing.id}.go`)}
                     <IconChevronRight />

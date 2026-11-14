@@ -1040,7 +1040,7 @@ export function ShopHome({
                   ) : null}
 
                   {/* 2. Orders */}
-                  <a className="rst-kpi rst-kpi-orders" href="/orders">
+                  <a className="rst-kpi rst-kpi-orders" href={can('/orders') ? '/orders' : undefined}>
                     <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
                       <path d="M0 48 C140 20 270 65 400 35 L400 70 L0 70 Z" fill="rgba(37, 99, 235, 0.07)" />
                     </svg>
@@ -1063,7 +1063,7 @@ export function ShopHome({
                   </a>
 
                   {/* 3. Customers */}
-                  <a className="rst-kpi rst-kpi-customers" href="/customers">
+                  <a className="rst-kpi rst-kpi-customers" href={can('/customers') ? '/customers' : undefined}>
                     <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
                       <path d="M0 42 C130 65 260 22 400 44 L400 70 L0 70 Z" fill="rgba(217, 119, 6, 0.08)" />
                     </svg>

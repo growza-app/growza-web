@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type ComponentType, type CSSProperties } from 'react';
 import Link from '../../shared/AppLink';
 import { DateTime } from 'luxon';
-import { useSession } from './SessionProvider';
+import { useMayOpen, useSession } from './SessionProvider';
 import { feedDue, onLiveTick } from '../lib/live-signal';
 import { api, formatMoney, type ActivityEvent } from '../lib/api';
 import { IconAlert, IconBan, IconBell, IconCalendarPlus, IconChat, IconClipboardCheck, IconClose, IconMoveTime, IconPercent, IconReceipt, IconRepeat, IconRupee, IconUserPlus } from './icons';
@@ -283,7 +283,10 @@ export function NotifRow({
 }) {
   const meta = TOPIC_META[event.topic];
   const Icon = meta.icon;
-  const href = notifHref(event, timezone);
+  const mayOpen = useMayOpen();
+  // Jira GRW-709 — the bill is the owner's: a manager reads that it is ready, and is not linked to a screen that sends them Home.
+  const target = notifHref(event, timezone);
+  const href = target && mayOpen(target.split('?')[0]!) ? target : null;
   const className = `notif-item ${unread ? 'notif-item-unread' : ''}`;
   const inner = (
     <>

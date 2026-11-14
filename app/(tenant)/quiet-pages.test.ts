@@ -19,7 +19,7 @@ describe('the browser does not ask for what the server already read', () => {
 
   it('the layout hands the business timezone down with the session', () => {
     expect(provider).toMatch(/timezone\?: string;/);
-    expect(layout).toMatch(/selfCheckIn,\s*timezone,\s*\}\}/);
+    expect(layout).toMatch(/selfCheckIn,\s*timezone,\s*reportTabs,\s*\}\}/);
   });
 
   it.each([
