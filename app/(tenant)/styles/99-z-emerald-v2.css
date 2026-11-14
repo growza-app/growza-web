@@ -2280,6 +2280,8 @@ body {
     gap: 0.625rem;
     min-width: 0;
     max-width: 16rem;
+    /* Owner, 14 Nov 2026 — "some space between" the business and the bell. */
+    margin-right: var(--sp-4);
     padding: 0.25rem 0.875rem 0.25rem 0.25rem;
     border-radius: 999px;
     background: var(--surface);
