@@ -20,9 +20,6 @@ export function HeaderBusiness() {
   if (!name) return null;
   return (
     <div className={`hdr-biz${branch.multi && !branch.pinned ? ' has-picker' : ''}`}>
-      <span className="hdr-biz-badge" aria-hidden="true">
-        {Array.from(name)[0]!.toUpperCase()}
-      </span>
       <span className="hdr-biz-text">
         <strong>{name}</strong>
         {branch.multi && !branch.pinned ? <HeaderBranchPicker variant="chip" /> : session?.locationName ? <span>{session.locationName}</span> : null}
