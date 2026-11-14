@@ -17,6 +17,7 @@ import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { PageHeader } from '../components/PageHeader';
 import { RetailReportsNav } from '../components/RetailReportsNav';
 import { areasOf } from '../lib/areas';
+import { gridCanSee } from '../lib/nav-policy';
 import { loadErrorKind, type LoadErrorKind } from '../lib/load-error';
 import { ReportsClient, type TabPayload } from './ReportsClient';
 import { CounterReport } from './CounterReport';
@@ -161,7 +162,15 @@ export default async function ReportsPage({
   const shopTab = tab;
   const askedGenericTab = noBookings && params.tab !== undefined;
   if (noBookings && !(askedGenericTab && SHOP_REPORT_TABS.has(shopTab) && allowedTabsOf(me).includes(shopTab))) {
-    const mayOpenShopReports = areasOf(me).shop && maySeeTheBooks;
+    /*
+     * GRW-709 sweep, 2026-11-14 — a role that holds Reports opens a shop's report, whatever it works like. The nav offered
+     * Reports to a custom "Everything view-only" role and this line sent it Home, because it asked the member's KIND
+     * (owner/manager) where the API asks the ROLE: `maySeeSales` gives the sales to any role that can see Reports. Only a
+     * member who holds a role carries `pages`; the owner and a role-less manager still answer through `maySeeTheBooks`.
+     */
+    const pages = areasOf(me).pages;
+    const roleHoldsReports = !!pages && gridCanSee('/reports', pages);
+    const mayOpenShopReports = areasOf(me).shop && (maySeeTheBooks || roleHoldsReports);
     if (!mayOpenShopReports && !allowedTabsOf(me).some((k) => SHOP_REPORT_TABS.has(k))) redirect('/');
     // "See your stock" is a count's link: a kitchen keeps none, and its menu is already in the nav.
     const counted = areasOf(me).stock;
