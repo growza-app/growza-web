@@ -556,6 +556,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       periodToday: S('Today', 'आज'),
       periodYesterday: S('Yesterday', 'कल'),
       periodWeek: S('This week', 'इस हफ़्ते'),
+      /** Emerald v2 — the caption under the phone hero's seven-day line of orders. */
+      ordersLast7: S('Orders, last 7 days', 'ऑर्डर, पिछले 7 दिन'),
       periodMonth: S('This month', 'इस महीने'),
       periodLabel: S('Show sales for', 'इसकी बिक्री दिखाएँ'),
       /** The comparison the API returns, drawn only when it has a period to compare against. */

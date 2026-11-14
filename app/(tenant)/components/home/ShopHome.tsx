@@ -1,7 +1,7 @@
 'use client';
 
 import { deltaLabel, deltaTone, periodDeltaPct } from './day-delta';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../lib/api';
 import { paidCustomers } from '../../lib/paid-customers';
 import type {
@@ -109,6 +109,7 @@ export function ShopHome({
   const [todayOrderRows, setTodayOrderRows] = useState<OrderListRow[]>([]);
   /** Emerald v2 — the laptop's week of orders behind the two white tiles' sparklines, with the list's full count. */
   const [deskWeek, setDeskWeek] = useState<{ rows: OrderListRow[]; total: number } | null>(null);
+  const [phoneOrdersTotal, setPhoneOrdersTotal] = useState<number | null>(null);
   const [queueTick, setQueueTick] = useState(0);
   const [customerStats, setCustomerStats] = useState<CustomerStats | null>(null);
 
@@ -295,6 +296,7 @@ export function ShopHome({
           if (mine !== phoneReqId.current) return;
           setTodayOrderRows(res.rows);
           setRecentOrders(res.rows.slice(0, 6));
+          setPhoneOrdersTotal(res.total);
         })
         .catch(() => {});
     }
@@ -715,25 +717,33 @@ export function ShopHome({
    * only when the read reaches back past the first of the seven days (or holds every order there is): a busy
    * kitchen's hundred most recent may cover two days, and a line that drops to nothing on day three would be a lie.
    */
-  const deskSpark = useMemo(() => {
-    if (!deskWeek || deskWeek.rows.length === 0) return null;
-    const days = Array.from({ length: 7 }, (_, k) => fmtDate(new Date(Date.now() - (6 - k) * 86_400_000)));
-    const first = days[0]!;
-    const covered =
-      deskWeek.total <= deskWeek.rows.length || deskWeek.rows.some((r) => fmtDate(new Date(r.soldAt)) < first);
-    if (!covered) return null;
-    const orders = days.map(() => 0);
-    const guests = days.map(() => new Set<string>());
-    for (const r of deskWeek.rows) {
-      if (r.status === 'cancelled') continue;
-      const i = days.indexOf(fmtDate(new Date(r.soldAt)));
-      if (i < 0) continue;
-      orders[i]! += 1;
-      const name = r.who?.name?.trim().toLowerCase();
-      if (name) guests[i]!.add(name);
-    }
-    return { orders, guests: guests.map((g) => g.size) };
-  }, [deskWeek, fmtDate]);
+  const weekLines = useCallback(
+    (rows: OrderListRow[], total: number) => {
+      if (rows.length === 0) return null;
+      const days = Array.from({ length: 7 }, (_, k) => fmtDate(new Date(Date.now() - (6 - k) * 86_400_000)));
+      const first = days[0]!;
+      const covered = total <= rows.length || rows.some((r) => fmtDate(new Date(r.soldAt)) < first);
+      if (!covered) return null;
+      const orders = days.map(() => 0);
+      const guests = days.map(() => new Set<string>());
+      for (const r of rows) {
+        if (r.status === 'cancelled') continue;
+        const i = days.indexOf(fmtDate(new Date(r.soldAt)));
+        if (i < 0) continue;
+        orders[i]! += 1;
+        const name = r.who?.name?.trim().toLowerCase();
+        if (name) guests[i]!.add(name);
+      }
+      return { orders, guests: guests.map((g) => g.size) };
+    },
+    [fmtDate],
+  );
+  const deskSpark = useMemo(() => (deskWeek ? weekLines(deskWeek.rows, deskWeek.total) : null), [deskWeek, weekLines]);
+  /* The phone's hundred-order read (the queue and Recent orders use it) gives the hero the same week of orders. */
+  const phoneWeek = useMemo(
+    () => (phoneOrdersTotal === null ? null : weekLines(todayOrderRows, phoneOrdersTotal)),
+    [todayOrderRows, phoneOrdersTotal, weekLines],
+  );
 
   /*
    * QA 13 Nov 2026, bug 4 — the API's count (`customersToday`), the same for every role: the hundred-order read below
@@ -1924,6 +1934,13 @@ export function ShopHome({
                             {phoneSpark.map((b) => (
                               <i key={b.key} style={{ height: `${b.pct}%` }} />
                             ))}
+                          </div>
+                        ) : phoneWeek && Math.max(...phoneWeek.orders) > 0 ? (
+                          /* Owner, 2026-11-14 — "make the sparkline work on phone too": the laptop's Orders tile
+                             line, in the hero, when no window chart is already drawn there. */
+                          <div className="shp-hero-week">
+                            <KpiSpark values={phoneWeek.orders} />
+                            <span>{s.ordersLast7}</span>
                           </div>
                         ) : null}
                       </>
