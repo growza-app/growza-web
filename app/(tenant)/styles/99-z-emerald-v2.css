@@ -907,6 +907,10 @@ body {
   }
 
   /* ---- row 2: three cards of pictures ---- */
+  .rst-charts .rst-panel {
+    padding-block: 1rem;
+  }
+
   .rst-charts {
     display: grid;
     grid-template-columns: 1.6fr 1fr 0.9fr;
@@ -923,7 +927,7 @@ body {
     display: flex;
     align-items: flex-end;
     gap: var(--sp-3);
-    margin: var(--sp-3) 0 0;
+    margin: var(--sp-2) 0 0;
     padding: 0;
     list-style: none;
   }
@@ -954,8 +958,8 @@ body {
     display: flex;
     align-items: flex-end;
     width: 100%;
-    max-width: 2.75rem;
-    height: 8.5rem;
+    max-width: 2.25rem;
+    height: 5rem;
     border-radius: 999px;
     background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
   }
@@ -978,10 +982,11 @@ body {
   }
 
   /* The half-donut. Arc 0 is the biggest share, then down the greens. */
+  /* Owner, 14 Nov 2026: "decrease the height of row 2" — the gauge is drawn to the bar chart's height. */
   .rst-gauge {
     position: relative;
-    margin: var(--sp-3) auto 0;
-    max-width: 15rem;
+    margin: var(--sp-2) auto 0;
+    max-width: 10rem;
   }
 
   .rst-gauge svg {
@@ -1016,7 +1021,7 @@ body {
 
   .rst-gauge-mid strong {
     display: block;
-    font-size: var(--fs-11);
+    font-size: var(--fs-8);
     font-weight: 600;
     line-height: 1;
     letter-spacing: -0.03em;
@@ -1033,7 +1038,7 @@ body {
     flex-wrap: wrap;
     justify-content: center;
     gap: var(--sp-1) var(--sp-3);
-    margin: var(--sp-3) 0 0;
+    margin: var(--sp-2) 0 0;
     padding: 0;
     list-style: none;
     font-size: var(--fs-2);
@@ -1066,8 +1071,8 @@ body {
   .rst-queue-card {
     display: flex;
     flex-direction: column;
-    gap: var(--sp-2);
-    padding: 1.25rem;
+    gap: var(--sp-1);
+    padding: 1rem 1.25rem;
     border-radius: var(--radius-lg);
     color: #fff;
     background:
@@ -1090,7 +1095,7 @@ body {
   }
 
   .rst-queue-count strong {
-    font-size: 2.75rem;
+    font-size: var(--fs-12);
     font-weight: 600;
     line-height: 1;
     letter-spacing: -0.045em;
@@ -1115,7 +1120,7 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 2.75rem;
+    min-height: 2.5rem;
     margin-top: var(--sp-2);
     border-radius: 999px;
     background: #fff;
