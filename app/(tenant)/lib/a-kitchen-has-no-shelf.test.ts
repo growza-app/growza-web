@@ -73,7 +73,8 @@ describe('the Menu screen draws a dish without a count', () => {
     expect(list).toMatch(/UNCOUNTED_FILTERS: readonly ShelfFilter\[\] = \['all', 'retired'\]/);
     expect(list).toMatch(/UNCOUNTED_SORTS: readonly ShelfSort\[\] = \['name', 'sold', 'price', 'cost', 'status'\]/);
     expect(list).toMatch(/\(counted \? SHELF_FILTERS : UNCOUNTED_FILTERS\)\.map/);
-    expect(list).toMatch(/\(counted \? SHELF_SORTS : UNCOUNTED_SORTS\)\.map/);
+    // QA 2026-11-14 — and the cost sort only for a viewer who is sent the cost (cost-is-the-owners.test.ts).
+    expect(list).toMatch(/\(counted \? SHELF_SORTS : UNCOUNTED_SORTS\)\.(filter|map)\(/);
   });
 
   it('a filter about a count can never be the one in force, even arriving by address', () => {

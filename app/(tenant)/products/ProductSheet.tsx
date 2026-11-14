@@ -41,6 +41,7 @@ export function ProductSheet({
   onClose,
   inline = false,
   initialSaved = false,
+  seesCost = true,
 }: {
   product: Product | null;
   branchId: string;
@@ -53,6 +54,8 @@ export function ProductSheet({
   inline?: boolean;
   /** True when a newly created product on the wide desk mounts in place right after Save. */
   initialSaved?: boolean;
+  /** QA 2026-11-14 — false for a viewer the API sends no cost to (`shelfSeesCost`): no cost field, and none is sent. */
+  seesCost?: boolean;
 }) {
   const t = useTranslations('products.form');
   const tp = useTranslations('products');
@@ -151,7 +154,7 @@ export function ProductSheet({
       const body = {
         name: name.trim(),
         priceMinor: Math.round(rupees * 100),
-        costMinor: costRupees === null ? null : Math.round(costRupees * 100),
+        ...(seesCost ? { costMinor: costRupees === null ? null : Math.round(costRupees * 100) } : {}),
         lowStockAt: lowAt.trim() === '' ? 0 : Math.max(0, Math.trunc(Number(lowAt)) || 0),
         categoryId: categoryId || null,
         sku: sku.trim() || null,
@@ -418,7 +421,7 @@ export function ProductSheet({
                   <span className={`prd-margin ${marginPct < 0 ? 'prd-margin-neg' : ''}`}>{t('margin', { pct: marginPct })}</span>
                 ) : null}
               </div>
-              <div className="prd-field-grid-2">
+              <div className={seesCost ? 'prd-field-grid-2' : 'prd-field-stack'}>
                 <div className="prd-field">
                   <label className="prd-field-label" htmlFor="prd-price">
                     {t('price')}
@@ -435,30 +438,32 @@ export function ProductSheet({
                     onChange={(e) => setPrice(e.target.value)}
                   />
                 </div>
-                <div className="prd-field">
-                  <label className="prd-field-label" htmlFor="prd-cost">
-                    {t('cost')}
-                  </label>
-                  <input
-                    id="prd-cost"
-                    className="prd-input"
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    step={1}
-                    value={cost}
-                    placeholder={tc('optional')}
-                    onChange={(e) => setCost(e.target.value)}
-                  />
-                </div>
+                {seesCost ? (
+                  <div className="prd-field">
+                    <label className="prd-field-label" htmlFor="prd-cost">
+                      {t('cost')}
+                    </label>
+                    <input
+                      id="prd-cost"
+                      className="prd-input"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      step={1}
+                      value={cost}
+                      placeholder={tc('optional')}
+                      onChange={(e) => setCost(e.target.value)}
+                    />
+                  </div>
+                ) : null}
               </div>
               {belowZero ? (
                 <div className="sheet-foot sheet-foot-error" role="alert">
                   {t('belowZero')}
                 </div>
-              ) : (
+              ) : seesCost ? (
                 <div className="sheet-foot">{t('costHint')}</div>
-              )}
+              ) : null}
               <GstInPrice priceMinor={Math.round(rupees * 100)} rateBp={gstRateBp} />
 
               <div className={!product && counted ? 'prd-field-grid-2' : 'prd-field-stack'}>
