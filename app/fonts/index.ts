@@ -43,4 +43,6 @@ export const hanken = localFont({
   weight: '400 800',
   style: 'normal',
   display: 'swap',
+  /* Emerald v2 preview: the owner app tries this face too (99-z-emerald-v2.css). */
+  variable: '--font-hanken',
 });

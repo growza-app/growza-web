@@ -29,6 +29,18 @@
   --radius-lg: 22px;
 }
 
+/* ---------- the face: Hanken Grotesk for Latin (owner, 14 Nov 2026: "switch it, I'll compare") ----------
+ * Sharper than Figtree, closer to the shot. Devanagari still falls through to Noto Sans Devanagari, and
+ * Figtree stays in the stack behind it, so removing this rule is the whole undo. Form fields inherit. */
+html,
+body {
+  font-family: var(--font-hanken, ui-sans-serif), var(--font-figtree, ui-sans-serif), var(--font-devanagari, ui-sans-serif), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+:is(button, input, select, textarea) {
+  font-family: inherit;
+}
+
 /* ---------- shell: a light sidebar, one surface with the page ---------- */
 
 .sidebar {
