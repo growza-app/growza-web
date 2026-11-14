@@ -1236,3 +1236,103 @@ body {
     background: var(--canvas);
   }
 }
+
+/* =====================================================================================================
+ * The header, as the shot draws it (owner, 14 Nov 2026: "make top like this"): a long white search pill
+ * with its key at the end, white round buttons, and the person — a drawn face, their name, their role.
+ * ===================================================================================================== */
+
+/* The face fills the round avatar on every screen size; nobody has a photo, so everybody gets one. */
+.acct-trigger .acct-face {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.acct-trigger.avatar-lg {
+  overflow: hidden;
+  background: transparent;
+}
+
+.acct-trigger-text,
+.hdr-search-kbd {
+  display: none;
+}
+
+@media (min-width: 861px) {
+  .hdr-search-wide {
+    width: min(26rem, 40vw);
+    height: 3rem;
+    padding: 0 0.5rem 0 1.125rem;
+    border-radius: 999px;
+    font-size: var(--fs-4);
+  }
+
+  .hdr-search-wide > span {
+    flex: 1;
+  }
+
+  .hdr-search-kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.5rem;
+    border-radius: 0.5rem;
+    background: var(--canvas);
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-2);
+    font-weight: 600;
+  }
+
+  :is(.topbar, .hm-head) .notif-bell {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 999px;
+  }
+
+  /* The account button grows to hold the face and the two lines beside it. */
+  .acct-trigger.avatar-lg {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    border-radius: 999px;
+    color: var(--text);
+    text-align: left;
+  }
+
+  .acct-trigger .acct-face {
+    width: 3rem;
+    height: 3rem;
+    flex-shrink: 0;
+  }
+
+  .acct-trigger-text {
+    display: flex;
+    flex-direction: column;
+    max-width: 12rem;
+    line-height: 1.25;
+  }
+
+  .acct-trigger-text strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--fs-4);
+    font-weight: 600;
+  }
+
+  .acct-trigger-text span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--fs-2);
+    color: var(--muted);
+  }
+}
