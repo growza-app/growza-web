@@ -21,7 +21,7 @@
 .td-title {
   margin: 0;
   font-size: 1.0625rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.35;
   color: var(--text);
 }
@@ -46,7 +46,7 @@
 
 .td-money .td-amount {
   font-size: 2rem;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.1;
   color: var(--text);
@@ -61,7 +61,7 @@
   width: 100%;
   margin-top: var(--sp-1);
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 .td-action svg { width: 1.125rem; height: 1.125rem; }
 
@@ -137,7 +137,7 @@
 }
 .td-person-who:disabled { cursor: default; }
 .td-person-text { min-width: 0; display: flex; flex-direction: column; }
-.td-person-name { font-weight: 600; font-size: 0.9375rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.td-person-name { font-weight: 700; font-size: 0.9375rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .td-person-meta { color: var(--muted); font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .td-person-actions { display: flex; gap: var(--sp-1); flex: none; }
@@ -149,7 +149,7 @@
   min-height: 44px;
   min-width: 44px;
   padding: 0 var(--sp-3);
-  font-weight: 600;
+  font-weight: 700;
 }
 .td-call { padding: 0; width: 44px; }
 .td-wa svg, .td-call svg { width: 1.125rem; height: 1.125rem; }

@@ -17,7 +17,7 @@
   background: var(--accent-deep);
   color: #fff;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .rp-fd-scrim {
@@ -54,7 +54,7 @@
   border-bottom: 1px solid var(--border);
 }
 
-.rp-fd-head h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+.rp-fd-head h2 { margin: 0; font-size: 1rem; font-weight: 700; }
 
 .rp-fd-close {
   border: none;
@@ -79,7 +79,7 @@
 .rp-fd-group h3 {
   margin: 0 0 8px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   color: var(--muted);

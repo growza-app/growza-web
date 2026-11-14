@@ -54,7 +54,7 @@
   gap: var(--sp-2);
 }
 .held-code-text {
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }

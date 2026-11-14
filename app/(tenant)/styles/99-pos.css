@@ -71,7 +71,7 @@
 .pos-tabs .page-tab.active {
   background: var(--accent-deep);
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
   box-shadow: 0 2px 6px rgba(14, 51, 37, 0.2);
 }
 
@@ -287,7 +287,7 @@
   align-items: center;
   gap: var(--sp-2);
   font-size: 1.0625rem;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: -0.02em;
   color: #fff;
 }
@@ -302,7 +302,7 @@
   align-items: center;
   justify-content: center;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .pos-fs-branch .sbp-btn {
@@ -348,7 +348,7 @@
   border-radius: 4px;
   font-family: inherit;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
 }
 
@@ -649,7 +649,7 @@
   .pf-wide:has(.prd-cat-li) .pf-tile-qty .pf-qty-n {
     padding: 0 2px;
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 800;
     color: #fff;
   }
 
@@ -662,14 +662,14 @@
     background: var(--accent-deep);
     color: #fff;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
     z-index: 2;
   }
 
   .pf-wide:has(.prd-cat-li) .pf-tile-name {
     padding: 0 var(--sp-1);
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.25;
     min-height: 2.5em;
     overflow-wrap: anywhere;
@@ -692,7 +692,7 @@
     margin-top: auto;
     padding: var(--sp-1) var(--sp-1) 0;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 800;
     color: var(--accent-deep);
   }
 
@@ -744,7 +744,7 @@
   .pos-bill-client .pf-row-label {
     min-width: 0;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--muted);
   }
 
@@ -902,7 +902,7 @@
 
   .pos-bill-item-name {
     font-size: 0.8125rem;
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.25;
     min-width: 0;
     overflow-wrap: anywhere;
@@ -912,7 +912,7 @@
     min-width: 3.125rem;
     text-align: right;
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 800;
     font-variant-numeric: tabular-nums;
     flex: none;
   }
@@ -969,7 +969,7 @@
     min-width: 1.25rem;
     text-align: center;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
 
@@ -1031,7 +1031,7 @@
     margin: 0;
     padding: 0 var(--sp-1);
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 700;
   }
 
   .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-wide-due strong {
@@ -1079,7 +1079,7 @@
 
   .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-pay-word {
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
   }
 
   .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-split-link {
@@ -1096,7 +1096,7 @@
     background: var(--accent-deep);
     color: #fff;
     font-size: 0.9375rem;
-    font-weight: 600;
+    font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1118,7 +1118,7 @@
      fill — no halo, no pulse (owner, 10 Nov 2026). */
   .pos-bill-client .pf-row:has(.pf-who-bar[data-step="next"]) .pf-row-label {
     color: var(--accent-deep);
-    font-weight: 600;
+    font-weight: 800;
   }
 
   .pos-bill-client .pf-who-bar[data-step="next"] .pf-who-search {
@@ -1136,7 +1136,7 @@
 
   .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-wide-h:has(+ .pf-pay[data-step="next"]) {
     color: var(--accent-deep);
-    font-weight: 600;
+    font-weight: 800;
   }
 
   .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-pay[data-step="next"] .pf-pay-tile {
@@ -1186,7 +1186,7 @@
   background: var(--accent-deep);
   color: #fff;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 800;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1218,7 +1218,7 @@
   background: var(--amber-soft);
   color: var(--text);
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .pos-charge-queued-check {
@@ -1251,7 +1251,7 @@
   color: var(--accent-deep);
   font: inherit;
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
   display: inline-flex;
@@ -1296,7 +1296,7 @@
   border: 1px solid var(--border);
   color: var(--text);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -1375,7 +1375,7 @@
   align-items: center;
   gap: var(--sp-2);
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .pos-queue-col-count {
@@ -1389,14 +1389,14 @@
   background: var(--page-bg);
   color: var(--text);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .pos-queue-new-btn {
   min-height: 2.75rem;
   padding: 0 var(--sp-3);
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .pos-queue-list {
@@ -1518,7 +1518,7 @@
   background: var(--accent-deep);
   color: #fff;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 800;
   line-height: 1.2;
 }
 
@@ -1570,7 +1570,7 @@
   background: var(--accent-deep);
   color: #fff;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1582,7 +1582,7 @@
 
 .pos-qcard-guest {
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
   min-width: 0;
   overflow: hidden;
@@ -1598,7 +1598,7 @@
   border: 1px solid var(--border);
   color: var(--text);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .pos-qcard-chan.is-swiggy,
@@ -1611,7 +1611,7 @@
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .pos-qcard-pay.is-pending {
@@ -1676,7 +1676,7 @@
   background: var(--amber-soft);
   color: var(--text);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1704,7 +1704,7 @@
   background: var(--accent-soft);
   color: var(--accent-deep);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .pos-qcard-done-pill svg {
@@ -1732,7 +1732,7 @@
 
 .pos-qcard-item-qty {
   min-width: 1.75rem;
-  font-weight: 600;
+  font-weight: 800;
   color: var(--accent-deep);
   font-variant-numeric: tabular-nums;
 }
@@ -1744,7 +1744,7 @@
 }
 
 .pos-qcard-item-amt {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
@@ -1778,7 +1778,7 @@
 
 .pos-qcard-total {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 800;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
@@ -1795,7 +1795,7 @@
   background: var(--accent-deep);
   color: #fff;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .pos-qcard-complete-btn svg {
@@ -1839,7 +1839,7 @@
   border: 1px solid var(--border);
   background: var(--surface);
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* Owner, 9 Nov 2026 — on a phone the column is not a second card around the cards: its frame and padding cost
@@ -1887,7 +1887,7 @@
   background: var(--accent-soft);
   color: var(--accent-deep);
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .pos-queue-note > span {
@@ -1926,7 +1926,7 @@
   background: var(--amber-soft);
   color: var(--amber-ink);
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .pos-charge-adding-text {
@@ -1950,7 +1950,7 @@
   min-height: 2.75rem;
   padding: 0 var(--sp-3);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .pos-qcard-add-client {
@@ -1963,7 +1963,7 @@
   background: var(--surface-alt, transparent);
   color: var(--accent-deep);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 

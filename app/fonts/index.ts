@@ -49,12 +49,17 @@ export const hanken = localFont({
 
 /**
  * Emerald v3 preview (owner, 2026-11-14) — the closest face to the Dribbble shot the theme follows. Latin only,
- * one variable file (27 KB, fonts.gstatic.com, Google Fonts' "Plus Jakarta Sans" at 400–700); Hindi still falls
+ * one variable file (27 KB, fonts.gstatic.com, Google Fonts' "Plus Jakarta Sans" at 400–700, declared 400–600); Hindi still falls
  * through to Noto Sans Devanagari. 99-z-emerald-v2.css puts it first in the stack.
  */
 export const jakarta = localFont({
   src: './plus-jakarta-sans-latin-var.woff2',
-  weight: '400 700',
+  /*
+   * Declared 400–600 although the file carries 700: the laptop's "nothing above 600" rule lives here, not in the
+   * screen sheets (which keep their 700/800 for the phone, owner 2026-11-14: "don't touch mobile"). A browser asked
+   * for 700 or 800 from a face that stops at 600 draws 600.
+   */
+  weight: '400 600',
   style: 'normal',
   display: 'swap',
   variable: '--font-jakarta',

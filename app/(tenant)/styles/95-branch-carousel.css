@@ -21,7 +21,7 @@
   .bc-title {
     margin: 0 0 var(--sp-3);
     font-size: 1.125rem;
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.25;
     color: var(--hm-ink, var(--text));
   }
@@ -75,7 +75,7 @@
     color: var(--blue);
     font: inherit;
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.2;
     white-space: nowrap;
     overflow: hidden;
@@ -106,7 +106,7 @@
     background: rgba(255, 255, 255, 0.1);
     color: #86efac;
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 700;
   }
   .bc-delta.down {
     color: #fda4af;
@@ -119,7 +119,7 @@
     margin-top: var(--sp-1);
     color: #86efac;
     font-size: 2rem;
-    font-weight: 600;
+    font-weight: 800;
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
   }
@@ -145,7 +145,7 @@
   }
   .bc-stats b {
     color: #fff;
-    font-weight: 600;
+    font-weight: 700;
   }
   /* Until that branch's own figures arrive: the space they take, so the card does not jump. */
   .bc-wait {

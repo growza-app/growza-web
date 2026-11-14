@@ -45,12 +45,12 @@
   background: #128c7e;
   display: grid;
   place-items: center;
-  font-weight: 600;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
 .wa-title {
-  font-weight: 600;
+  font-weight: 620;
   font-size: 0.9375rem;
 }
 

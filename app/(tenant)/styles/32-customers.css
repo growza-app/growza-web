@@ -60,7 +60,7 @@
 
 .cust-kpi-value {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 680;
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
@@ -227,7 +227,7 @@
   height: 2.5rem;
   border-radius: 999px;
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* A client's cartoon face (ClientCartoon) fills whatever round tile it is given: list row, desk table, client card. */
@@ -264,7 +264,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 650;
   color: var(--text);
 }
 
@@ -272,7 +272,7 @@
 .cust-card-amt {
   flex: none;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
@@ -350,7 +350,7 @@
 .booking-time {
   flex-shrink: 0;
   width: 56px;
-  font-weight: 600;
+  font-weight: 680;
   font-size: 0.9375rem;
   line-height: 1.15;
   letter-spacing: -0.01em;
@@ -386,7 +386,7 @@
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  font-weight: 600;
+  font-weight: 640;
 }
 
 .booking-name-text {
@@ -506,7 +506,7 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: underline;
   cursor: pointer;
 }
@@ -544,7 +544,7 @@
 
 .bk-kpi-value {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.1;
 }
@@ -705,7 +705,7 @@
 .bk-sched-head h2 {
   margin: 0;
   font-size: 1.0625rem;
-  font-weight: 600;
+  font-weight: 680;
   letter-spacing: -0.01em;
 }
 
@@ -744,7 +744,7 @@
   background: transparent;
   color: var(--muted);
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -779,7 +779,7 @@
   padding: 6px 0;
   background: var(--page-bg);
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--muted);
@@ -822,7 +822,7 @@
   background: var(--accent-soft);
   color: var(--accent-deep);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   border: 1px solid var(--border);
 }
 
@@ -871,7 +871,7 @@
 
 .bk-tl-clock {
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.15;
 }
@@ -948,7 +948,7 @@
 
 .bk-card-name {
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 660;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -995,7 +995,7 @@
 .bk-card-ref {
   display: inline-block;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--muted);
   font-family: ui-monospace, monospace;
   background: var(--slate-soft);
@@ -1040,14 +1040,14 @@
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 800;
   flex-shrink: 0;
 }
 
 .bk-card-price {
   display: inline-block;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 800;
   color: var(--text);
 }
 
@@ -1117,7 +1117,7 @@
 
 .bk-summary-value {
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.15;
 }
@@ -1317,7 +1317,7 @@
 
   .bk-card-time {
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text);
   }
 
@@ -1379,7 +1379,7 @@
     display: inline-block;
     flex-shrink: 0;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--muted);
     font-family: ui-monospace, monospace;
     background: var(--slate-soft);
@@ -1429,14 +1429,14 @@
     align-items: center;
     justify-content: center;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 800;
     flex-shrink: 0;
   }
 
   .bk-card-price {
     display: inline-block;
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 800;
     color: var(--text);
   }
 
@@ -1484,7 +1484,7 @@
 
   .bk-no-matches-title {
     font-size: 0.9375rem;
-    font-weight: 600;
+    font-weight: 800;
     color: var(--text);
   }
 
@@ -1505,7 +1505,7 @@
     flex: 1;
     gap: 10px;
     font-size: 1.125rem;
-    font-weight: 600;
+    font-weight: 800;
   }
 
   .bk-sched-count {
@@ -1974,7 +1974,7 @@
     text-decoration: none;
     color: var(--muted);
     font-size: 0.75rem;
-    font-weight: 500;
+    font-weight: 550;
   }
 
   .bottom-nav a.active {
@@ -2052,7 +2052,7 @@
     background: var(--sidebar);
     color: #fff;
     font-size: 0.8125rem;
-    font-weight: 600;
+    font-weight: 620;
     padding: 9px 15px;
     border-radius: var(--radius);
     white-space: nowrap;
@@ -2690,7 +2690,7 @@
     color: var(--text);
     font: inherit;
     font-size: 0.9375rem;
-    font-weight: 600;
+    font-weight: 650;
     cursor: pointer;
   }
 
@@ -2723,7 +2723,7 @@
     background: var(--accent-deep);
     color: #fff;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
   }
 
   /*
@@ -2778,7 +2778,7 @@
     color: var(--text);
     font: inherit;
     font-size: 0.9375rem;
-    font-weight: 600;
+    font-weight: 650;
     text-align: left;
     cursor: pointer;
   }
@@ -2814,7 +2814,7 @@
     background: var(--accent-soft);
     color: var(--accent-deep);
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
   }
 
   .cust-segments {
@@ -2853,7 +2853,7 @@
   background: var(--accent-soft);
   color: var(--accent-deep);
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 650;
 }
 
 .bk-status-on button {
@@ -2864,7 +2864,7 @@
   background: none;
   color: var(--accent-deep);
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: underline;
   cursor: pointer;
 }
@@ -2902,7 +2902,7 @@
 .bk-waiting-head h2 {
   margin: 0;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--amber);
 }
 
@@ -2917,7 +2917,7 @@
   background: var(--amber);
   color: #fff;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .bk-waiting-list {
@@ -2992,7 +2992,7 @@ button.bk-waiting-row:focus-visible {
   background: var(--amber-soft);
   color: var(--amber);
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 
@@ -3014,7 +3014,7 @@ button.bk-waiting-row:focus-visible {
 
 .bk-waiting-name {
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 650;
 }
 
 .bk-waiting-svc {
@@ -3027,7 +3027,7 @@ button.bk-waiting-row:focus-visible {
   flex: none;
   color: var(--amber);
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -3164,7 +3164,7 @@ button.bk-waiting-row:focus-visible {
 
   .cust-kpi-value {
     font-size: 1.25rem;
-    font-weight: 600;
+    font-weight: 800;
     line-height: 1.15;
     font-variant-numeric: tabular-nums;
   }
@@ -3187,7 +3187,7 @@ button.bk-waiting-row:focus-visible {
 }
 
 .cust-filter-item b {
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--muted);
 }
@@ -3207,7 +3207,7 @@ button.bk-waiting-row:focus-visible {
 .cust-filter-head {
   padding: var(--sp-2) var(--sp-3) var(--sp-1);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--muted);
 }
 
@@ -3324,7 +3324,7 @@ button.bk-waiting-row:focus-visible {
 }
 
 .cust-never-link[aria-pressed='true'] {
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .cust-never-link:focus-visible {

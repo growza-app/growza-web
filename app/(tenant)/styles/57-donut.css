@@ -10,7 +10,7 @@
 
 .rp-donut svg { flex: 0 0 136px; }
 .rp-donut circle { transition: stroke-width 0.15s; }
-.rp-donut-value { font-size: 1.0625rem; font-weight: 600; fill: var(--text); }
+.rp-donut-value { font-size: 1.0625rem; font-weight: 800; fill: var(--text); }
 .rp-donut-label { font-size: 0.75rem; font-weight: 600; fill: #9aa39d; }
 
 /* Wraps below the ring rather than being squeezed beside it.
@@ -53,5 +53,5 @@
   text-overflow: ellipsis;
 }
 
-.rp-legend-value { font-weight: 600; white-space: nowrap; margin-left: auto; }
+.rp-legend-value { font-weight: 700; white-space: nowrap; margin-left: auto; }
 .rp-legend-pct { color: var(--muted); min-width: 34px; text-align: right; white-space: nowrap; }

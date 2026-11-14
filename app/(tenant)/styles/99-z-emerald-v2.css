@@ -16,17 +16,20 @@
  * only toned down where they were decoration rather than meaning.
  */
 
-:root {
-  --page-bg: var(--canvas);
-  --border: var(--canvas-line);
-  --sidebar: var(--canvas);
-  --sidebar-deep: var(--canvas);
-  --sidebar-text: var(--canvas-text);
-  --sidebar-active: var(--surface);
+/* Laptop only (owner, 14 Nov 2026: "don't touch mobile"). */
+@media (min-width: 861px) {
+  :root {
+    --page-bg: var(--canvas);
+    --border: var(--canvas-line);
+    --sidebar: var(--canvas);
+    --sidebar-deep: var(--canvas);
+    --sidebar-text: var(--canvas-text);
+    --sidebar-active: var(--surface);
 
-  --radius: 14px;
-  --radius-sm: 10px;
-  --radius-lg: 22px;
+    --radius: 14px;
+    --radius-sm: 10px;
+    --radius-lg: 22px;
+  }
 }
 
 /* ---------- the face: Plus Jakarta Sans for Latin (owner, 14 Nov 2026 — the shot's closest; was Hanken Grotesk) ----------
@@ -44,75 +47,78 @@
   }
 }
 
-/* ---------- shell: a light sidebar, one surface with the page ---------- */
+/* Laptop only (owner, 14 Nov 2026: "don't touch mobile"). */
+@media (min-width: 861px) {
+  /* ---------- shell: a light sidebar, one surface with the page ---------- */
 
-.sidebar {
-  background: var(--canvas);
-  color: var(--text);
-  border-right: 1px solid var(--border);
-}
+  .sidebar {
+    background: var(--canvas);
+    color: var(--text);
+    border-right: 1px solid var(--border);
+  }
 
-.brand-badge {
-  background: var(--forest);
-  border-radius: 12px;
-}
+  .brand-badge {
+    background: var(--forest);
+    border-radius: 12px;
+  }
 
-.brand-name {
-  color: var(--text);
-}
+  .brand-name {
+    color: var(--text);
+  }
 
-.nav a {
-  position: relative;
-  color: var(--sidebar-text);
-  border-radius: 12px;
-}
+  .nav a {
+    position: relative;
+    color: var(--sidebar-text);
+    border-radius: 12px;
+  }
 
-.nav a:hover {
-  background: rgb(23 63 43 / 6%);
-  color: var(--text);
-}
+  .nav a:hover {
+    background: rgb(23 63 43 / 6%);
+    color: var(--text);
+  }
 
-.nav a.active {
-  background: var(--surface);
-  color: var(--forest);
-  font-weight: 600;
-}
+  .nav a.active {
+    background: var(--surface);
+    color: var(--forest);
+    font-weight: 600;
+  }
 
-.nav a.active::before {
-  content: '';
-  position: absolute;
-  left: -16px;
-  top: 9px;
-  bottom: 9px;
-  width: 4px;
-  border-radius: 0 4px 4px 0;
-  background: var(--forest-2);
-}
+  .nav a.active::before {
+    content: '';
+    position: absolute;
+    left: -16px;
+    top: 9px;
+    bottom: 9px;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: var(--forest-2);
+  }
 
-.nav svg {
-  opacity: 1;
-}
+  .nav svg {
+    opacity: 1;
+  }
 
-/* Everything the dark sidebar painted white-on-green reads dark-on-grey now. */
-.sidebar .brand-location,
-.sidebar .nav-who-text span {
-  color: var(--muted);
-}
+  /* Everything the dark sidebar painted white-on-green reads dark-on-grey now. */
+  .sidebar .brand-location,
+  .sidebar .nav-who-text span {
+    color: var(--muted);
+  }
 
-.sidebar .nav-who-text strong,
-.sidebar .sidebar-close {
-  color: var(--text);
-}
+  .sidebar .nav-who-text strong,
+  .sidebar .sidebar-close {
+    color: var(--text);
+  }
 
-.sidebar .nav-pill {
-  color: var(--forest);
-  background: rgb(23 63 43 / 8%);
-}
+  .sidebar .nav-pill {
+    color: var(--forest);
+    background: rgb(23 63 43 / 8%);
+  }
 
-/* ---------- buttons: pills ---------- */
+  /* ---------- buttons: pills ---------- */
 
-:is(.btn, .button, .primary-btn, .secondary-btn, .ghost-btn, .rst-date-pill) {
-  border-radius: 999px;
+  :is(.btn, .button, .primary-btn, .secondary-btn, .ghost-btn, .rst-date-pill) {
+    border-radius: 999px;
+  }
 }
 
 /* ---------- restaurant / shop Home, laptop and up ---------- */
@@ -513,23 +519,26 @@
   }
 }
 
-/* ---------- every other screen ----------
- * The list below is what a walk through every screen found drawing a white box with a border
- * on the grey page (desktop and phone, County Chicken, 14 Nov 2026). Cards and on-page toolbars
- * lose the line; things that float over content (the till's bar and tray, save bars, menus,
- * sheets) and form fields keep theirs, because there the line is what separates them.
- * Inside a sheet or dialog a card sits on white, so it keeps its border there. */
+/* Laptop only (owner, 14 Nov 2026: "don't touch mobile"). */
+@media (min-width: 861px) {
+  /* ---------- every other screen ----------
+   * The list below is what a walk through every screen found drawing a white box with a border
+   * on the grey page (desktop and phone, County Chicken, 14 Nov 2026). Cards and on-page toolbars
+   * lose the line; things that float over content (the till's bar and tray, save bars, menus,
+   * sheets) and form fields keep theirs, because there the line is what separates them.
+   * Inside a sheet or dialog a card sits on white, so it keeps its border there. */
 
-:is(
-  .card, .rp-card, .tile, .bk-card, .bk-kpi, .staff-card,
-  .cr-card, .srp-card, .srp-totals, .srp-empty, .prd-stat,
-  .att-tile, .att-list, .menu-list, .cust-card, .ord-cards, .pay,
-  .pf-wide-left, .pf-wide-right, .rw-examples-box, .settings-empty-state,
-  .srp-toolbar, .srp-nav, .ord-tools, .att-daynav
-):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
-  border-color: transparent;
-  box-shadow: none;
-  border-radius: var(--radius-lg);
+  :is(
+    .card, .rp-card, .tile, .bk-card, .bk-kpi, .staff-card,
+    .cr-card, .srp-card, .srp-totals, .srp-empty, .prd-stat,
+    .att-tile, .att-list, .menu-list, .cust-card, .ord-cards, .pay,
+    .pf-wide-left, .pf-wide-right, .rw-examples-box, .settings-empty-state,
+    .srp-toolbar, .srp-nav, .ord-tools, .att-daynav
+  ):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
+    border-color: transparent;
+    box-shadow: none;
+    border-radius: var(--radius-lg);
+  }
 }
 
 /* ---------- charts: pill bars in the greens, over a striped track ----------
@@ -603,112 +612,118 @@
   letter-spacing: -0.045em;
 }
 
-/* Sales by channel. */
-.sls-chart-track {
-  max-width: 2.75rem;
-  border-radius: 999px;
-  background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
-}
+/* Laptop only (owner, 14 Nov 2026: "don't touch mobile"). */
+@media (min-width: 861px) {
+  /* Sales by channel. */
+  .sls-chart-track {
+    max-width: 2.75rem;
+    border-radius: 999px;
+    background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
+  }
 
-.sls-chart-stack {
-  border-radius: 999px;
-}
+  .sls-chart-stack {
+    border-radius: 999px;
+  }
 
-.sls-chart-col.is-zero .sls-chart-stack {
-  background: transparent;
-}
+  .sls-chart-col.is-zero .sls-chart-stack {
+    background: transparent;
+  }
 
-.sls-bar-srv {
-  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
-}
+  .sls-bar-srv {
+    background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+  }
 
-.sls-bar-prd {
-  background: var(--mint);
-}
+  .sls-bar-prd {
+    background: var(--mint);
+  }
 
-.sls-chart-col.is-peak .sls-bar-srv {
-  background: var(--forest);
-}
+  .sls-chart-col.is-peak .sls-bar-srv {
+    background: var(--forest);
+  }
 
-.sls-chart-col.is-peak .sls-bar-prd {
-  background: color-mix(in srgb, var(--mint) 60%, var(--forest-2));
-}
+  .sls-chart-col.is-peak .sls-bar-prd {
+    background: color-mix(in srgb, var(--mint) 60%, var(--forest-2));
+  }
 
-/* The salon Home's week chart and the report bar lists. */
-.hm-v3-bar-track {
-  border-radius: 999px;
-  background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
-}
+  /* The salon Home's week chart and the report bar lists. */
+  .hm-v3-bar-track {
+    border-radius: 999px;
+    background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
+  }
 
-.hm-v3-bar-fill {
-  max-width: 2.75rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
-  opacity: 1;
-}
+  .hm-v3-bar-fill {
+    max-width: 2.75rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+    opacity: 1;
+  }
 
-.hm-v3-bar-col.is-peak .hm-v3-bar-fill {
-  background: var(--forest);
-}
+  .hm-v3-bar-col.is-peak .hm-v3-bar-fill {
+    background: var(--forest);
+  }
 
-.rp-bar-track,
-.rp-cell-bar-track {
-  height: 0.5rem;
-  border-radius: 999px;
-  background: var(--canvas);
-}
+  .rp-bar-track,
+  .rp-cell-bar-track {
+    height: 0.5rem;
+    border-radius: 999px;
+    background: var(--canvas);
+  }
 
-.rp-bar-fill {
-  border-radius: 999px;
+  .rp-bar-fill {
+    border-radius: 999px;
+  }
 }
 
 /* Card titles: one size, medium weight. */
-:is(.cr-title, .hm-card-head h2, .rp-card h2, .rp-card h3) {
+:is(.cr-title, .hm-card-head h2) {
   font-size: var(--fs-7);
   font-weight: 600;
   letter-spacing: -0.02em;
 }
 
-/* ---------- tables on a page: a white card with row lines only ----------
- * No grid of vertical lines and no grey header band: the header is small grey text, rows are split by
- * one faint line, the card has no outline. The editing grids (bulk edit, sizes) keep their cell lines,
- * because there a cell is a field. */
+/* Laptop only (owner, 14 Nov 2026: "don't touch mobile"). */
+@media (min-width: 861px) {
+  /* ---------- tables on a page: a white card with row lines only ----------
+   * No grid of vertical lines and no grey header band: the header is small grey text, rows are split by
+   * one faint line, the card has no outline. The editing grids (bulk edit, sizes) keep their cell lines,
+   * because there a cell is a field. */
 
-:is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
-  border-color: transparent;
-  border-radius: var(--radius-lg);
-  box-shadow: none;
-}
+  :is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
+    border-color: transparent;
+    border-radius: var(--radius-lg);
+    box-shadow: none;
+  }
 
-:is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table) :is(th, td) {
-  border-left: 0;
-  border-right: 0;
-  border-bottom-color: var(--canvas);
-}
+  :is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table) :is(th, td) {
+    border-left: 0;
+    border-right: 0;
+    border-bottom-color: var(--canvas);
+  }
 
-:is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table) th {
-  background: transparent;
-  color: var(--muted);
-  font-size: var(--fs-2);
-  font-weight: 500;
-  text-transform: none;
-  letter-spacing: 0;
-  border-bottom-color: var(--canvas-line);
-}
+  :is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table) th {
+    background: transparent;
+    color: var(--muted);
+    font-size: var(--fs-2);
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+    border-bottom-color: var(--canvas-line);
+  }
 
-:is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table) tbody tr:hover td {
-  background: color-mix(in srgb, var(--canvas) 60%, var(--surface));
-}
+  :is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table) tbody tr:hover td {
+    background: color-mix(in srgb, var(--canvas) 60%, var(--surface));
+  }
 
-:is(.rp-table-scroll, .sls-table-wrap, .srp-table-card):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
-  border-color: transparent;
-  box-shadow: none;
-  border-radius: var(--radius-lg);
-}
+  :is(.rp-table-scroll, .sls-table-wrap, .srp-table-card):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
+    border-color: transparent;
+    box-shadow: none;
+    border-radius: var(--radius-lg);
+  }
 
-/* Segmented filters and tabs: pills on a pill track, the chosen one dark green. */
-:is(.seg, .segmented, .rp-tabs, .tabs) :is(button, a) {
-  border-radius: 999px;
+  /* Segmented filters and tabs: pills on a pill track, the chosen one dark green. */
+  :is(.seg, .segmented, .rp-tabs, .tabs) :is(button, a) {
+    border-radius: 999px;
+  }
 }
 
 /* Every bar's amount (owner, 14 Nov 2026): the best day's in dark green and bold, the others quieter. */
@@ -1827,5 +1842,13 @@
   /* Tables */
   :is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table) :is(th, td) {
     padding: 0.625rem 0.875rem;
+  }
+}
+
+@media (min-width: 861px) {
+  .rp-card :is(h2, h3) {
+    font-size: var(--fs-7);
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 }

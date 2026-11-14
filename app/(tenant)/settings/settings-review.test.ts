@@ -27,7 +27,7 @@ describe('the list says where you are', () => {
     expect(nav).toMatch(/settings-row-current/);
     expect(settingsCss).toMatch(/\.settings-row-current,\s*\n\.settings-row-current:hover \{\s*\n\s*background: var\(--accent-soft\);/);
     // Never the fill alone: "convey information with more than color alone" (HIG, Accessibility › Vision).
-    expect(settingsCss).toMatch(/\.settings-row-current \.settings-row-title \{[^}]*font-weight: 600;/);
+    expect(settingsCss).toMatch(/\.settings-row-current \.settings-row-title \{[^}]*font-weight: 700;/);
   });
 
   it('compares the path, not the query — `?branch=` picks a branch, not a screen', () => {

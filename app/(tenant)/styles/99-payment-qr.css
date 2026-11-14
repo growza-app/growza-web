@@ -32,7 +32,7 @@
 .pq-title {
   margin: 0;
   font-size: 1.0625rem;
-  font-weight: 600;
+  font-weight: 750;
   color: var(--text);
 }
 
@@ -102,7 +102,7 @@
   border: none;
   background: none;
   font: inherit;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
   /* 44px of target without 44px of ink. */
   min-height: 2.75rem;
@@ -162,7 +162,7 @@
 
 .pq-row-name {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 650;
   color: var(--text);
   /* A long branch name shortens rather than pushing the action off the row. */
   overflow: hidden;

@@ -39,7 +39,7 @@
 
 .rp-kpi-value {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: -0.4px;
   line-height: 1.15;
   margin: 2px 0 0;
@@ -63,7 +63,7 @@
   align-items: center;
   gap: 3px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .rp-kpi-delta-icon {

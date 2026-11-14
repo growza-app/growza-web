@@ -99,7 +99,7 @@
 
 .sec-label {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 620;
   color: var(--muted);
   letter-spacing: 0.05em;
   margin: 20px 2px 8px;
@@ -308,7 +308,7 @@ input[type='search']:has(~ .search-mic)::-webkit-search-cancel-button {
   border: 0;
   background: none;
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   color: inherit;
   text-decoration: underline;
   cursor: pointer;

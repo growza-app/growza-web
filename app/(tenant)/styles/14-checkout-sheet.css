@@ -33,7 +33,7 @@
   align-items: center;
   gap: 8px;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 620;
   color: var(--text);
 }
 
@@ -91,13 +91,13 @@
 
 .checkout-total-value {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 660;
   color: var(--text);
 }
 
 .checkout-section-label {
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 620;
   color: var(--text);
   margin: 18px 0 8px;
 }
@@ -120,7 +120,7 @@
   display: grid;
   place-items: center;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 660;
 }
 
 .checkout-service-info {
@@ -231,7 +231,7 @@
   background: var(--surface);
   color: var(--text);
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 560;
   padding: 8px 16px;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -290,7 +290,7 @@
   color: var(--accent-deep);
   font: inherit;
   font-size: inherit;
-  font-weight: 600;
+  font-weight: 620;
   cursor: pointer;
   text-decoration: underline;
 }
@@ -363,7 +363,7 @@
 .checkout-removed-row button {
   min-height: 44px;
   color: var(--accent-deep, #1f5a3f);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .checkout-removed-note {

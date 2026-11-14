@@ -66,7 +66,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 1.375rem;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--hm-ink);
   line-height: 1.2;
@@ -99,7 +99,7 @@
   color: var(--hm-ink);
   font: inherit;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -158,7 +158,7 @@
   .hm-head-business {
     display: block;
     font-size: 1.25rem;
-    font-weight: 600;
+    font-weight: 800;
     letter-spacing: -0.02em;
     line-height: 1.2;
     color: var(--hm-ink);
@@ -256,7 +256,7 @@
 .hm-section-title {
   margin: 0;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--hm-ink);
 }
 .hm-card-head h2 small {
@@ -319,7 +319,7 @@
 }
 .hm-link {
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--hm-green-deep);
   text-decoration: none;
   white-space: nowrap;
@@ -349,7 +349,7 @@
   background: #fff;
   color: #9f2f2f;
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 .hm-skeleton {
@@ -369,7 +369,7 @@
   justify-content: center;
   flex-shrink: 0;
   border-radius: var(--radius);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.9375rem;
 }
 .hm-tag {
@@ -379,7 +379,7 @@
   background: var(--hm-green-soft);
   color: var(--hm-green-deep);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   vertical-align: middle;
 }
 
@@ -432,7 +432,7 @@
 .hm-seg button.is-on {
   background: var(--hm-green-deep);
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
 }
 /* The phone form of the same switch — see `Segmented`. Hidden from 861px up, where the tabs show. */
 .hm-seg-select {
@@ -470,7 +470,7 @@
 .hm-menu button[aria-checked='true'] {
   background: var(--hm-green-soft);
   color: var(--hm-green-deep);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* ---------- owner grid ---------- */
@@ -589,7 +589,7 @@
     color: var(--hm-ink);
     font: inherit;
     font-size: 0.9375rem;
-    font-weight: 600;
+    font-weight: 700;
     appearance: none;
     -webkit-appearance: none;
     cursor: pointer;
@@ -619,7 +619,7 @@
 }
 .hm-eyebrow {
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: #8fdcae;
@@ -634,7 +634,7 @@
   background: rgba(255, 255, 255, 0.1);
   color: #bff0d0;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
 .hm-delta.down {
@@ -659,7 +659,7 @@
   font-size: 0.9375rem;
 }
 .hm-pay-menu-head span {
-  font-weight: 600;
+  font-weight: 800;
 }
 .hm-pay-menu .hm-paybar {
   background: #eef1ee;
@@ -712,7 +712,7 @@
 }
 .hm-branch-list b {
   flex: none;
-  font-weight: 600;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 .hm-branch-menu {
@@ -732,7 +732,7 @@
 }
 .hm-hero-amount {
   font-size: 2rem;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.1;
 }
@@ -753,7 +753,7 @@
 }
 .hm-hero-stats strong {
   color: #fff;
-  font-weight: 600;
+  font-weight: 800;
 }
 .hm-hero-week {
   flex-shrink: 0;
@@ -764,7 +764,7 @@
 }
 .hm-hero-week strong {
   font-size: 1.0625rem;
-  font-weight: 600;
+  font-weight: 800;
 }
 .hm-spark {
   width: 200px;
@@ -833,7 +833,7 @@
   align-items: center;
   gap: 6px;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #bfe6cf;
 }
 .hm-pay-label i {
@@ -844,7 +844,7 @@
 }
 .hm-pay-value {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 800;
 }
 .hm-pay-share {
   font-size: 0.8125rem;
@@ -1020,7 +1020,7 @@
 }
 .hm-att-line {
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 .hm-att-sub {
   font-size: 0.8125rem;
@@ -1096,7 +1096,7 @@
   background: var(--hm-green-soft);
   color: var(--hm-green-deep);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
 }
 .hm-tile-rose { background: #fdf1f1; border-color: #f7d9d9; color: #d64545; }
@@ -1177,7 +1177,7 @@
   align-items: center;
   gap: 6px;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
 .hm-seg-name i {
@@ -1199,7 +1199,7 @@
 }
 .hm-seg-count strong {
   font-size: 1.375rem;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: -0.02em;
 }
 .hm-seg-count span {
@@ -1268,7 +1268,7 @@
   width: 64px;
   flex-shrink: 0;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #4a574f;
   white-space: nowrap;
 }
@@ -1281,7 +1281,7 @@
 .hm-row-name,
 .hm-person-name {
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1306,7 +1306,7 @@
   width: 76px;
   text-align: right;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 800;
   flex-shrink: 0;
 }
 .hm-row-end {
@@ -1321,7 +1321,7 @@
   padding: 3px 10px;
   border-radius: var(--radius-lg);
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
 .hm-pill-green { background: var(--accent-soft); color: var(--accent-deep); }
@@ -1404,7 +1404,7 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-weight: 600;
+  font-weight: 800;
 }
 .hm-now-alert-sub {
   display: inline-flex;
@@ -1422,7 +1422,7 @@ button.hm-now-count {
 }
 .hm-now-count .hm-now-alert-sub {
   margin-left: auto;
-  font-weight: 600;
+  font-weight: 700;
 }
 .hm-now-count .hm-now-alert-sub svg {
   width: 0.9375rem;
@@ -1438,7 +1438,7 @@ button.hm-now-count {
   color: var(--hm-green-deep);
   font: inherit;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 .hm-now-more:hover,
@@ -1448,7 +1448,7 @@ button.hm-now-count {
 .hm-now-calm {
   background: var(--hm-green-soft);
   color: var(--hm-green-deep);
-  font-weight: 600;
+  font-weight: 700;
 }
 /* BR-12 — the queue could not be read: said plainly, never the calm line. */
 .hm-now-unread {
@@ -1510,7 +1510,7 @@ button.hm-now-count {
 .hm-now-value strong {
   flex-shrink: 0;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 800;
 }
 .hm-now-value strong + strong {
   font-size: 0.9375rem;
@@ -1580,7 +1580,7 @@ button.hm-now-count {
     color: var(--hm-green-deep);
     font: inherit;
     font-size: 0.9375rem;
-    font-weight: 600;
+    font-weight: 700;
     white-space: nowrap;
     cursor: pointer;
   }
@@ -1677,7 +1677,7 @@ button.hm-now-count {
 .hm-sheet-head h2 {
   margin: 0;
   font-size: 1.375rem;
-  font-weight: 600;
+  font-weight: 800;
 }
 .hm-sheet-head p {
   margin: 0;
@@ -1714,7 +1714,7 @@ button.hm-now-count {
   padding: 0 var(--sp-6);
   border-radius: var(--radius-lg);
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.875rem;
   cursor: pointer;
 }
@@ -1894,7 +1894,7 @@ button.hm-now-count {
 }
 .hm-count strong {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 800;
 }
 .hm-mine {
   display: flex;
@@ -1903,7 +1903,7 @@ button.hm-now-count {
 }
 .hm-mine strong {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: -0.02em;
 }
 .hm-mine span {
@@ -1946,7 +1946,7 @@ button.hm-now-count {
   border-radius: 50%;
   background: var(--blue-soft);
   color: var(--blue);
-  font-weight: 600;
+  font-weight: 700;
   flex-shrink: 0;
 }
 .nav-who-text {
@@ -2077,7 +2077,7 @@ button.hm-now-count {
 .hm-att-count {
   grid-area: count;
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1;
 }
@@ -2129,7 +2129,7 @@ button.hm-now-count {
   align-items: center;
   gap: 6px;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
 .hm-dot-status i {
@@ -2201,12 +2201,12 @@ button.hm-now-count {
   background: #f1f4f1;
   color: #4a574f;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 .hm-wait {
   flex-shrink: 0;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--amber-ink);
   white-space: nowrap;
 }
@@ -2227,7 +2227,7 @@ button.hm-now-count {
   color: var(--hm-green-deep);
   font: inherit;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -2382,7 +2382,7 @@ button.hm-now-count {
   display: block;
   margin-bottom: var(--sp-3);
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--hm-muted);
 }
 .hm-stylist .hm-card {
@@ -2459,7 +2459,7 @@ button.hm-now-count {
   .hm-block-head h2 {
     margin: 0;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
   }
   .hm-block-inner-title {
     display: none;
@@ -2793,7 +2793,7 @@ button.hm-now-count {
 }
 .hm-ds-stat strong {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 800;
   line-height: 1.1;
 }
 .hm-ds-lists {
@@ -2805,7 +2805,7 @@ button.hm-now-count {
 .hm-ds-lists h3 {
   margin: 0 0 var(--sp-2);
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--hm-ink);
 }
 .hm-ds-lists ul {
@@ -2833,7 +2833,7 @@ button.hm-now-count {
 }
 .hm-ds-lists li strong {
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 800;
 }
 .hm-ds-lists li .hm-avatar {
   border-radius: var(--radius-sm);
@@ -3044,7 +3044,7 @@ button.hm-now-count {
     color: #dff5e8;
     font: inherit;
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 700;
     text-align: left;
     cursor: pointer;
   }
@@ -3176,7 +3176,7 @@ button.hm-now-count {
   background: none;
   font: inherit;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 650;
   color: var(--hm-muted);
   cursor: pointer;
 }
@@ -3479,7 +3479,7 @@ button.hm-now-count {
 }
 .hm-v3-rupee-glyph {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1;
 }
 .hm-v3-icon-dark {
@@ -3560,7 +3560,7 @@ button.hm-now-count {
 }
 .hm-v3-kpi-amount {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.025em;
   font-variant-numeric: tabular-nums;
@@ -3568,7 +3568,7 @@ button.hm-now-count {
 }
 .hm-v3-kpi-value {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.025em;
   font-variant-numeric: tabular-nums;
@@ -3589,7 +3589,7 @@ button.hm-now-count {
   background: var(--accent-soft);
   color: var(--accent-deep);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
 .hm-v3-kpi-vs {
@@ -3615,7 +3615,7 @@ button.hm-now-count {
   background: var(--accent-soft);
   color: var(--accent-deep);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -3709,7 +3709,7 @@ button.hm-now-count {
 }
 .hm-v3-kpi-foot b {
   color: var(--hm-ink);
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 .hm-v3-kpi-dark .hm-v3-kpi-foot {
@@ -3759,7 +3759,7 @@ button.hm-now-count {
 }
 .hm-v3-prod-inline b {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--hm-ink);
   white-space: nowrap;
   overflow: hidden;
@@ -3812,7 +3812,7 @@ button.hm-now-count {
 .hm-v3-card-head h2 {
   margin: 0;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.015em;
   color: var(--hm-ink);
 }
@@ -3922,7 +3922,7 @@ button.hm-now-count {
   cursor: pointer;
 }
 .hm-v3-tab-count {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--hm-ink);
   font-variant-numeric: tabular-nums;
 }
@@ -4023,7 +4023,7 @@ button.hm-now-count {
 .hm-v3-recent-table th {
   padding: 8px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--hm-muted);
@@ -4115,7 +4115,7 @@ button.hm-now-count {
 }
 .hm-v3-td-amount strong {
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--hm-ink);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -4203,7 +4203,7 @@ button.hm-now-count {
   background: transparent;
   color: var(--hm-muted);
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 .hm-v3-card-foot {
@@ -4269,7 +4269,7 @@ button.hm-now-count {
 }
 .hm-v3-staff-name {
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--hm-ink);
   max-width: 100%;
   white-space: nowrap;
@@ -4436,7 +4436,7 @@ button.hm-now-count {
   background: var(--surface);
   font: inherit;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--hm-ink);
   cursor: pointer;
 }
@@ -4557,7 +4557,7 @@ button.hm-now-count {
   background: var(--hm-ink);
   color: var(--surface);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   z-index: 4;
@@ -4569,7 +4569,7 @@ button.hm-now-count {
   white-space: nowrap;
 }
 .hm-v3-bar-col.is-peak .hm-v3-bar-day {
-  font-weight: 600;
+  font-weight: 800;
   color: var(--hm-ink);
 }
 
@@ -4597,7 +4597,7 @@ button.hm-now-count {
   border-radius: 50%;
   background: var(--page-bg);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--hm-muted);
   flex-shrink: 0;
 }
@@ -4610,7 +4610,7 @@ button.hm-now-count {
 }
 .hm-v3-srv-name {
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--hm-ink);
   white-space: nowrap;
   overflow: hidden;
@@ -4640,7 +4640,7 @@ button.hm-now-count {
   min-width: 56px;
   text-align: right;
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 800;
   color: var(--hm-ink);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -4673,7 +4673,7 @@ button.hm-now-count {
 }
 .hm-v3-prod-att-chip strong {
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 .hm-v3-prod-att-chip.is-rose {

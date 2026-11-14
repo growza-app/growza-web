@@ -70,7 +70,7 @@
   background: var(--hm-green-soft);
   color: var(--hm-green-deep);
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* Jira GRW-548 — the token number is a phone card's pill (drawn in the phone block below); a laptop's row has no room for it. */
@@ -256,7 +256,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--hm-ink);
 }
 /* Beside its fact on one line; the fact drops under it when the column is narrow. Only inside `.tb-line` — in a
@@ -267,7 +267,7 @@
 .tb-meta {
   flex: 0 0 auto;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
   color: var(--amber-ink);
 }
@@ -360,7 +360,7 @@
 .tb-time {
   min-width: 64px;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--hm-ink);
   white-space: nowrap;
 }
@@ -399,7 +399,7 @@
 }
 .tb-issued-no {
   font-size: 2rem;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--hm-ink);
 }

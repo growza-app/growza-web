@@ -42,7 +42,7 @@
 }
 
 .svc-name {
-  font-weight: 600;
+  font-weight: 620;
   letter-spacing: -0.01em;
   /* Two lines, then an ellipsis: a long service name should wrap once, not be cut after one word and not
      push the row to five lines. */

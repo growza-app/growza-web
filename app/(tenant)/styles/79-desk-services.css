@@ -484,7 +484,7 @@
   .svc-catd-title {
     margin: 0;
     font-size: 1.125rem;
-    font-weight: 600;
+    font-weight: 650;
     letter-spacing: -0.01em;
   }
 
@@ -712,7 +712,7 @@
   padding: 2px 9px;
   border-radius: 999px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 650;
   white-space: nowrap;
 }
 
@@ -759,7 +759,7 @@
 }
 
 .svc-sheet-name {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1.0625rem;
   overflow-wrap: anywhere;
 }
@@ -794,7 +794,7 @@
 .svc-seg button.is-on {
   background: var(--surface);
   color: var(--text);
-  font-weight: 600;
+  font-weight: 700;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
@@ -819,7 +819,7 @@
 
 .svc-staff-n {
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .svc-staff-link {

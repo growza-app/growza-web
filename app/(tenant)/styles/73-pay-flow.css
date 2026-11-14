@@ -85,7 +85,7 @@
    * the back button and the 6.5rem switch are paid for; it ellipsises rather than wraps if type is scaled up.
    */
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
   text-align: left;
   white-space: nowrap;
@@ -183,7 +183,7 @@
 .pf-mode-on {
   background: var(--accent-deep);
   color: var(--surface);
-  font-weight: 600;
+  font-weight: 700;
   box-shadow: none;
 }
 
@@ -350,7 +350,7 @@
   display: grid;
   place-items: center;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   margin-left: calc(-1 * var(--sp-2));
 }
 
@@ -464,7 +464,7 @@
 .pf-tile-price {
   padding: 0 var(--sp-3);
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--accent-ink);
 }
 
@@ -539,7 +539,7 @@
 .pf-qty-n {
   text-align: center;
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 750;
   font-variant-numeric: tabular-nums;
 }
 
@@ -610,7 +610,7 @@
 
 .pf-total-figure {
   font-size: 2rem;
-  font-weight: 600;
+  font-weight: 750;
   line-height: 1.1;
   letter-spacing: -0.01em;
 }
@@ -730,7 +730,7 @@
 
 .pf-how-total-label {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--accent-deep);
 }
 
@@ -738,7 +738,7 @@
   display: block;
   margin-top: 0;
   font-size: 2rem;
-  font-weight: 600;
+  font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
@@ -942,7 +942,7 @@
 .pf-pay-word {
   display: block;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -1086,7 +1086,7 @@
 .pf-done-title {
   margin: 0;
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: 750;
   line-height: 1.1;
   letter-spacing: -0.01em;
 }
@@ -1128,7 +1128,7 @@
 
 .pf-done-minor .pf-go-alt {
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   text-align: center;
   justify-content: center;
   /* One of the two is a link; in a row of buttons it must not be the only underlined thing. */
@@ -1254,7 +1254,7 @@
 
 .pf-keypad-title {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 650;
   color: var(--muted);
 }
 
@@ -1274,7 +1274,7 @@
   display: block;
   text-align: center;
   font-size: 2.75rem;
-  font-weight: 600;
+  font-weight: 750;
   line-height: 1.1;
   letter-spacing: -0.01em;
 }
@@ -1300,7 +1300,7 @@
   background: var(--slate-soft);
   font: inherit;
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: 650;
   color: var(--text);
   cursor: pointer;
   display: grid;
@@ -1386,7 +1386,7 @@
 
 .pf-client-match-name {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 650;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1568,7 +1568,7 @@
 
 .pf-menu-row .pf-client-match-sub {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--accent-ink);
 }
 
@@ -1582,7 +1582,7 @@
   background: var(--accent-deep);
   color: #fff;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   display: grid;
   place-items: center;
 }
@@ -1689,7 +1689,7 @@
 
 .pf-who-picked-name {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 650;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1782,12 +1782,12 @@
 
 .pf-bill-times {
   color: var(--muted);
-  font-weight: 600;
+  font-weight: 650;
 }
 
 .pf-bill-amount {
   font-size: 1.0625rem;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1803,7 +1803,7 @@
   color: var(--accent-deep);
   font: inherit;
   font-size: 1.0625rem;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   text-decoration: underline dotted;
   text-underline-offset: 3px;
@@ -1867,7 +1867,7 @@
 .pf-bill-total dt,
 .pf-bill-total dd {
   font-size: 1.375rem;
-  font-weight: 600;
+  font-weight: 750;
   color: var(--text);
 }
 
@@ -2143,7 +2143,7 @@
 
 .pf-pkg-price-n {
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: 800;
   line-height: 1.1;
 }
 
@@ -2169,7 +2169,7 @@
   margin: 0;
   padding: 0 var(--sp-4) var(--sp-1);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--muted);

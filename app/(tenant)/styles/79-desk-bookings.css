@@ -79,7 +79,7 @@
 
   .bk-cmd-stat-val {
     font-size: 1.5rem;
-    font-weight: 600;
+    font-weight: 800;
     letter-spacing: -0.02em;
     color: var(--text);
     font-variant-numeric: tabular-nums;
@@ -103,7 +103,7 @@
     background: var(--accent-soft);
     color: var(--accent-deep);
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
   }
 
   /* ---------- 2. Unified Horizontal Toolbar ---------- */
@@ -159,7 +159,7 @@
   .bk-cmd-seg.is-active {
     background: var(--surface);
     color: var(--text);
-    font-weight: 600;
+    font-weight: 700;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   }
 
@@ -169,7 +169,7 @@
     background: var(--border);
     color: var(--muted);
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
 
@@ -264,7 +264,7 @@
     background: var(--amber);
     color: var(--surface);
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 800;
     padding: 3px 10px;
     border-radius: 999px;
     white-space: nowrap;
@@ -286,7 +286,7 @@
     border: 1px solid var(--border);
     color: var(--amber-ink);
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
     padding: 5px 12px;
     border-radius: var(--radius-sm);
     display: inline-flex;
@@ -354,7 +354,7 @@
     padding: 5px 10px;
     border-radius: var(--radius-sm);
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     text-decoration: none;
     white-space: nowrap;
@@ -501,7 +501,7 @@
 
 .bk-td-amount {
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -536,7 +536,7 @@
 
 .bk-table-day-row td {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--muted);
@@ -590,7 +590,7 @@
 
 .bk-waiting-cta {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--accent-deep);
   padding: 4px 10px;
   border-radius: 999px;

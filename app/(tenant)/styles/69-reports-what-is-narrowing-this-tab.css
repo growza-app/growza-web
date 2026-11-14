@@ -50,7 +50,7 @@
 /* The Bookings trend card's answer, said in its own hint line — the heading
    is a question and this is the reply, so it goes where the explanation
    would have gone rather than on three lines of its own. */
-.rp-verdict-word { font-weight: 600; color: var(--text); }
+.rp-verdict-word { font-weight: 700; color: var(--text); }
 .rp-verdict-word.is-up { color: var(--rp-green-ink); }
 .rp-verdict-word.is-down { color: var(--rp-red); }
 

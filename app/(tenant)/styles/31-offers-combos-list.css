@@ -105,7 +105,7 @@
 
 .dropdown-item-plain {
   font-size: 0.8125rem;
-  font-weight: 500;
+  font-weight: 560;
   padding: 8px 10px;
 }
 
@@ -135,7 +135,7 @@
 .dropdown-item-title {
   display: block;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 640;
 }
 
 .dropdown-item-desc {
@@ -242,7 +242,7 @@
 }
 
 .offer-title {
-  font-weight: 600;
+  font-weight: 640;
   font-size: 0.9375rem;
 }
 
@@ -260,7 +260,7 @@
 }
 
 .offer-price {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1rem;
   color: var(--accent-deep);
 }
@@ -379,7 +379,7 @@
 }
 
 .offer-stat-value {
-  font-weight: 600;
+  font-weight: 660;
   font-size: 0.875rem;
 }
 
@@ -456,7 +456,7 @@
 
 .pagination-summary strong {
   color: var(--text);
-  font-weight: 600;
+  font-weight: 620;
 }
 
 .pagination-controls {

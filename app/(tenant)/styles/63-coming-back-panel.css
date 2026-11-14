@@ -19,13 +19,13 @@
   align-items: center;
   gap: var(--sp-2);
   color: var(--accent-deep);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.875rem;
 }
 
 .rp-headline-value {
   font-size: 2rem;
-  font-weight: 600;
+  font-weight: 800;
   margin-top: var(--sp-2);
   color: var(--accent-deep);
   line-height: 1.1;

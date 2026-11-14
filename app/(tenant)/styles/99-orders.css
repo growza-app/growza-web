@@ -245,7 +245,7 @@ a.ord-card:focus-visible,
   padding: 0 var(--sp-2);
   color: var(--muted);
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 650;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
@@ -257,7 +257,7 @@ a.ord-card:focus-visible,
   background: var(--accent-soft);
   color: var(--accent-deep);
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   vertical-align: 0.0625rem;
 }
@@ -393,7 +393,7 @@ a.ord-card:focus-visible,
   background: var(--page-bg);
   color: var(--muted);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -405,7 +405,7 @@ a.ord-card:focus-visible,
   font-weight: 600;
 }
 .ord-td-amount {
-  font-weight: 600;
+  font-weight: 700;
 }
 
 @media (min-width: 861px) {
@@ -575,7 +575,7 @@ a.ord-card:focus-visible,
   color: var(--muted);
 }
 .ord-d-money > div:first-child dd {
-  font-weight: 600;
+  font-weight: 700;
 }
 .ord-d-paper {
   display: flex;
@@ -852,7 +852,7 @@ a.ord-card:focus-visible,
   gap: 2px;
 }
 .atc-buyer-name {
-  font-weight: 600;
+  font-weight: 650;
 }
 .atc-buyer-contact {
   font-size: 0.8125rem;
@@ -906,7 +906,7 @@ a.ord-card:focus-visible,
 .atc-error {
   margin: var(--sp-3) 0 0;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 550;
   color: var(--amber);
 }
 
@@ -956,7 +956,7 @@ a.ord-card:focus-visible,
 .pay-title {
   margin: 0;
   font-size: 1.0625rem;
-  font-weight: 600;
+  font-weight: 650;
   letter-spacing: -0.01em;
   overflow-wrap: anywhere;
 }
@@ -1051,7 +1051,7 @@ a.ord-card:focus-visible,
   gap: var(--sp-1) var(--sp-3);
 }
 .pay-app-name {
-  font-weight: 600;
+  font-weight: 650;
 }
 .pay-app-count {
   color: var(--muted);

@@ -345,7 +345,7 @@
   color: var(--text);
   font: inherit;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
 }
 .sbp-btn.is-branch {
@@ -438,7 +438,7 @@
   color: var(--accent-deep);
   font: inherit;
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
 }
 .bp-form .bsn {
@@ -664,15 +664,15 @@
 .bill-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .bill-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .bill-card { padding: 16px 18px; min-width: 0; }
-.bill-card-title { margin: 0 0 8px; font-size: 0.9375rem; font-weight: 600; }
+.bill-card-title { margin: 0 0 8px; font-size: 0.9375rem; font-weight: 700; }
 .bill-card-title small { font-weight: 500; font-size: 0.8125rem; }
 .bill-line { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; font-size: 0.875rem; border-bottom: 1px solid var(--border); }
 .bill-line > span:first-child { min-width: 0; overflow-wrap: anywhere; }
 .bill-line > span:last-child { white-space: nowrap; font-weight: 600; }
 .bill-line small { font-weight: 500; color: var(--muted); }
-.bill-line-strong > span { font-weight: 600; }
-.bill-line-total { border-bottom: 0; padding-top: 8px; font-weight: 600; }
-.bill-line-total > span { font-weight: 600; }
+.bill-line-strong > span { font-weight: 700; }
+.bill-line-total { border-bottom: 0; padding-top: 8px; font-weight: 700; }
+.bill-line-total > span { font-weight: 700; }
 .bill-discount > span:last-child { color: oklch(0.5 0.15 25); }
 .bill-muted { color: var(--muted); font-weight: 500; }
 .bill-paid-by { margin: 10px 0 0; font-size: 0.8125rem; color: var(--muted); line-height: 1.5; }
@@ -683,7 +683,7 @@
 .bill-invoice-when { display: flex; flex-direction: column; min-width: 0; }
 .bill-invoice-when small { font-size: 0.75rem; }
 .bill-invoice-amount { font-weight: 600; white-space: nowrap; }
-.bill-status { font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.bill-status { font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
 .bill-status.is-paid { background: oklch(0.95 0.05 150); color: oklch(0.4 0.1 150); }
 .bill-status.is-due { background: oklch(0.96 0.05 60); color: oklch(0.45 0.12 55); }
 @media (min-width: 1101px) {
@@ -705,7 +705,7 @@
   color: #fff;
   font: inherit;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
   cursor: pointer;
   /* 44px is the tap target this product holds itself to on a phone, and this
@@ -739,7 +739,7 @@
 .ar-notice-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
 .ar-notice .bill-autopay-button { margin-top: 0; }
 .ar-notice-error { flex-basis: 100%; margin: 0; font-size: 0.8125rem; font-weight: 600; }
-.ar-link { font-weight: 600; color: inherit; text-decoration: underline; }
+.ar-link { font-weight: 700; color: inherit; text-decoration: underline; }
 .ar-notice.ar-week {
   border-color: oklch(0.85 0.09 80);
   background: oklch(0.97 0.05 85);
@@ -984,24 +984,24 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
 
 /* Jira GRW-556 (follow-up) — the Pay card on Billing: how much, for which month, and either Pay now or where to send it. */
 .pay-card { padding: 16px 18px; min-width: 0; border-color: oklch(0.85 0.09 80); background: oklch(0.985 0.03 85); }
-.pay-card-title { margin: 0 0 6px; font-size: 0.9375rem; font-weight: 600; }
+.pay-card-title { margin: 0 0 6px; font-size: 0.9375rem; font-weight: 700; }
 .pay-card-amount { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
-.pay-card-figure { font-size: 1.75rem; font-weight: 600; line-height: 1.2; }
+.pay-card-figure { font-size: 1.75rem; font-weight: 700; line-height: 1.2; }
 .pay-card-for { font-size: 0.875rem; color: var(--muted); }
 .pay-card-more { margin: 6px 0 0; font-size: 0.8125rem; color: var(--muted); line-height: 1.5; }
 .pay-card-action { margin-top: 12px; }
 .pay-card-offline { margin-top: 12px; }
-.pay-card-how { margin: 0 0 8px; font-size: 0.875rem; font-weight: 600; }
+.pay-card-how { margin: 0 0 8px; font-size: 0.875rem; font-weight: 700; }
 .pay-card-upi { display: flex; align-items: center; justify-content: center; min-height: 44px; text-decoration: none; text-align: center; }
 .pay-card-apps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .pay-card-app { flex: 1 1 0; min-width: 0; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
-.pay-card-upiid { margin: 4px 0 0; font-size: 1.0625rem; font-weight: 600; overflow-wrap: anywhere; user-select: all; }
+.pay-card-upiid { margin: 4px 0 0; font-size: 1.0625rem; font-weight: 700; overflow-wrap: anywhere; user-select: all; }
 .pay-card-note { margin: 8px 0 0; font-size: 0.8125rem; color: var(--muted); line-height: 1.5; }
 .pay-card-call { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; margin-top: 12px; max-width: 100%; text-align: center; }
 
 /* Jira GRW-556 (follow-up) — "we are confirming your payment", and the acknowledgement that it arrived. */
 .pay-card-confirming { margin: 10px 0 0; padding: 8px 10px; border-radius: var(--radius); font-size: 0.8125rem; line-height: 1.45; background: oklch(0.97 0.02 250); color: oklch(0.38 0.08 255); }
-.pay-card-confirming a { font-weight: 600; }
+.pay-card-confirming a { font-weight: 700; }
 .payment-received {
   display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: var(--radius); font-size: 0.875rem; line-height: 1.45;
   border: 1px solid oklch(0.82 0.1 150); background: oklch(0.96 0.05 150); color: oklch(0.35 0.09 150);

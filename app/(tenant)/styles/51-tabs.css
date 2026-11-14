@@ -41,5 +41,5 @@
 .rp-tabs button.active {
   background: var(--sidebar);
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
 }

@@ -17,7 +17,7 @@
 .bp-title {
   margin: 0;
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 .bp-sub {
@@ -58,7 +58,7 @@
 }
 .bp-card-title {
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 32px;
 }
 .bp-card-head > div > .bp-card-title {
@@ -116,7 +116,7 @@
   background: var(--accent-soft);
   color: var(--accent-deep);
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -142,7 +142,7 @@
   color: var(--text);
   font: inherit;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
 }
 .bp-logo-btn:hover:not(:disabled) {
@@ -255,7 +255,7 @@
   background: var(--accent-soft);
   color: var(--accent-deep);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 .bp-branch-meta {
   display: flex;
