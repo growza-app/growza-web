@@ -1225,6 +1225,27 @@
   outline: none;
 }
 
+/*
+ * Owner, 2026-11-14 — "from queue take payment, location not good": on a laptop the picker sat pinned to the
+ * bottom of a 900px screen, far from the Guest field it fills in, with an empty page above it. From 861px a
+ * sheet is a dialog in the middle of the screen, rounded all round. A phone keeps the bottom sheet. A sideways
+ * tablet can still have a soft keyboard up, so the keyboard's height stays out of the room it is centred in.
+ */
+@media (min-width: 861px) {
+  .pf-keypad-scrim {
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-4) var(--sp-4) max(var(--sp-4), var(--kb, 0px));
+  }
+
+  .pf-keypad {
+    max-height: calc(min(100dvh, var(--app-h, 100dvh)) - var(--kb, 0px) - 2rem);
+    padding-bottom: var(--sp-4);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1.5rem 3rem rgb(20 32 27 / 18%);
+  }
+}
+
 .pf-keypad-head {
   display: flex;
   align-items: center;
