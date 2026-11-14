@@ -661,8 +661,13 @@ export function ShopHome({
     {
       key: 'back',
       tone: 'rose',
-      n: totalReturnedOrders,
-      label: s.cameBackLabel,
+      /*
+       * QA 2026-11-14, F6 — the laptop said "15 Returns" (the report's last seven days) over a phone saying "Returns
+       * today 8". Needs attention is what is waiting NOW, so both count today's (`cameBackToday`, bug 2's figure); an
+       * API older than that keeps the period's count and its old label.
+       */
+      n: data?.cameBackToday ?? totalReturnedOrders,
+      label: data?.cameBackToday !== undefined ? s.returnsTodayLabel : s.cameBackLabel,
       href: canReports && can('/orders/returns') ? '/orders/returns' : can('/orders') ? ordersHref({ status: 'returned' }) : null,
     },
     ...shelfRows('rose', 'amber'),
