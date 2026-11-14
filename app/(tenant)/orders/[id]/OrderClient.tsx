@@ -439,15 +439,22 @@ export function OrderClient({
                 </div>
               ))}
             </dl>
-            <div className="ord-d-paper">
-              {/* Owner's review 2026-11-13 — the receipt is the common action and is filled; a return moves money and is the ghost. */}
-              {isPaidCounter && somethingKept ? <DocumentAction visitKey={order.id} primary /> : null}
-              {returnable && canReturn ? (
-                <button type="button" className="btn btn-ghost" onClick={() => setReturning(true)}>
-                  {t('detail.returnItems')}
-                </button>
-              ) : null}
-            </div>
+            {/*
+              * QA 2026-11-14 — and no Return items once every unit has come back: the sheet would open on nothing to give
+              * back. Both controls ask the same question (`somethingKept`), so a fully returned order draws neither, nor
+              * the empty row that held them.
+              */}
+            {somethingKept && (isPaidCounter || (returnable && canReturn)) ? (
+              <div className="ord-d-paper">
+                {/* Owner's review 2026-11-13 — the receipt is the common action and is filled; a return moves money and is the ghost. */}
+                {isPaidCounter ? <DocumentAction visitKey={order.id} primary /> : null}
+                {returnable && canReturn ? (
+                  <button type="button" className="btn btn-ghost" onClick={() => setReturning(true)}>
+                    {t('detail.returnItems')}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
           </section>
         ) : null}
 
