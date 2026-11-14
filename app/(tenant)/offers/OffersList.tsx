@@ -4,7 +4,6 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState, useCallback } from 'react';
 import { formatDate } from '../lib/format';
 import { useRouter } from 'next/navigation';
-import Link from '../../shared/AppLink';
 import { api, ApiError, BookingConflictError, formatMoney, type Offer, type Service } from '../lib/api';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
@@ -17,6 +16,7 @@ import { useSession, useWritable } from '../components/SessionProvider';
 import { JustCreatedShareBanner, ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
 import { offerShareItem } from '../lib/share-on-whatsapp';
 import { useJustCreated } from '../lib/just-created';
+import { OfferModal } from './CreateOfferMenu';
 
 /** First paint only — the client immediately measures how many rows the screen actually fits. */
 const INITIAL_PAGE_SIZE = 4;
@@ -79,6 +79,8 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   /** Jira GRW-435 — the offer being confirmed, and why the last attempt was refused. */
   const [confirmDelete, setConfirmDelete] = useState<Offer | null>(null);
+  /** The offer whose wording is being changed — the create box, filled in. */
+  const [editing, setEditing] = useState<Offer | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -266,7 +268,7 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                   data-row
                   className={`offer-card-row ${selectedId === offer.id ? 'offer-card-row-selected' : ''}`}
                   onClick={() => setSelectedId(offer.id)}
-                  onDoubleClick={writable ? () => router.push(`/offers/${offer.id}/edit`) : undefined}
+                  onDoubleClick={writable ? () => setEditing(offer) : undefined}
                 >
                   <div className="offer-row-head">
                     <div className="offer-icon offer-icon-offer"><IconOffers /></div>
@@ -351,9 +353,16 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
                           style={menu.style}
                           onMouseLeave={closeMenu}
                         >
-                          <Link href={`/offers/${offer.id}/edit`} className="dropdown-item dropdown-item-plain">
+                          <button
+                            type="button"
+                            className="dropdown-item dropdown-item-plain"
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              setEditing(offer);
+                            }}
+                          >
                             {t('edit')}
-                          </Link>
+                          </button>
                           <button type="button" className="dropdown-item dropdown-item-plain dropdown-item-danger" onClick={() => askToRemove(offer)}>
                             {t('delete')}
                           </button>
@@ -380,6 +389,8 @@ export function OffersList({ offers, services }: { offers: Offer[]; services: Se
           />
         </>
       )}
+
+      {editing && <OfferModal offer={editing} onClose={() => setEditing(null)} />}
 
       {confirmDelete && (
         <ConfirmDialog
