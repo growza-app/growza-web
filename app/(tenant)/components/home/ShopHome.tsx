@@ -21,7 +21,7 @@ import { CashDrawerLine } from './CashDrawer';
 import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import { ordersHref } from '../../lib/orders-filter';
-import { formatTokenNo, posQueueStorageKey, tokenNumbersOf, type PosTokenOverride } from '../../pos/pos-helpers';
+import { formatTokenNo, posQueueStorageKey, queueStateOf, tokenNumbersOf, type PosTokenOverride } from '../../pos/pos-helpers';
 import { channelsOf, isDeliveryApp, sellsOnMarketplaces } from '../../lib/order-channels';
 import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
@@ -801,15 +801,13 @@ export function ShopHome({
       const tokenNo = tokenNoOf.get(o.id) ?? idx + 1;
       const soldMs = Date.parse(o.soldAt) || now;
       const ov = overrides[o.id];
-      if (ov === 'completed') return;
       const recalledMs =
         typeof ov === 'string' && ov.startsWith('preparing:') ? Number(ov.slice(10)) : NaN;
       const effectiveStartMs = Number.isFinite(recalledMs) && recalledMs > 0 ? recalledMs : soldMs;
       const elapsedMin = Math.max(0, Math.round((now - effectiveStartMs) / 60_000));
+      // The till's own rule, so the two never disagree: a handover on any device takes it off this card at once.
       const isPreparing =
-        ov === 'preparing' ||
-        (typeof ov === 'string' && ov.startsWith('preparing:')) ||
-        elapsedMin <= 30;
+        queueStateOf({ handedOverAt: o.handedOverAt, paymentPending: o.paymentPending === true, override: ov, elapsedMin }) === 'preparing';
       if (isPreparing) {
         tokens.push({
           id: o.id,
