@@ -399,7 +399,9 @@ export function SearchClear({
         aria-label={listening ? t('stopVoiceSearch') : starting ? t('voiceStarting') : denied ? t('voicePermissionDenied') : t('voiceSearch')}
         aria-pressed={active}
         aria-busy={starting || undefined}
-        title={denied ? t('voicePermissionDenied') : listening ? t('voiceListening') : starting ? t('voiceStarting') : t('voiceSearch')}
+        // Security audit 2026-11-14 (#10) — the Web Speech API sends the audio to the browser's own speech service (Google, on
+        // Chrome). Said here, on the control that starts it, rather than left for people to find out.
+        title={denied ? t('voicePermissionDenied') : listening ? t('voiceListening') : starting ? t('voiceStarting') : t('voiceSearchWhere')}
         // The element is read in the handler's own turn: `currentTarget` is null by the time the await inside resolves.
         onClick={(e) => void toggleVoice(e.currentTarget)}
       >

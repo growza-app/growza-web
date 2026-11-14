@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { api, formatTime, type Appointment, type Service } from '../lib/api';
+import { api, ApiError, formatTime, type Appointment, type Service } from '../lib/api';
 import { isValidAmount, minorToRupees, toMinor } from '../lib/checkout-lines';
 import { LargeAmountDeclined, useLargeAmountGuard } from './LargeAmountConfirm';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -48,6 +48,8 @@ export function CorrectBookingSheet({
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Security audit 2026-11-14 (#4) — the receipt or invoice already handed over for this visit, when the server named one.
+  const [issuedDocument, setIssuedDocument] = useState<string | null>(null);
   /**
    * Jira GRW-648 — reward points the save moved, held so the sheet can say so before it closes.
    *
@@ -73,7 +75,7 @@ export function CorrectBookingSheet({
   });
   const valid = rows.every((r) => isValidAmount(r.amount));
 
-  const save = async () => {
+  const save = async (acknowledgeIssuedDocument = false) => {
     if (!valid) {
       setError(t('amountInvalid'));
       return;
@@ -97,6 +99,7 @@ export function CorrectBookingSheet({
           }),
           ...(reason.trim() ? { reason: reason.trim() } : {}),
           ...(confirmed ? { confirmLargeAmount: true } : {}),
+          ...(acknowledgeIssuedDocument ? { acknowledgeIssuedDocument: true } : {}),
         }),
       );
       router.refresh();
@@ -109,6 +112,11 @@ export function CorrectBookingSheet({
     } catch (err) {
       setBusy(false);
       if (err instanceof LargeAmountDeclined) return;
+      if (err instanceof ApiError && err.code === 'document_issued') {
+        const number = (err.body as { documentNumber?: unknown } | undefined)?.documentNumber;
+        setIssuedDocument(typeof number === 'string' ? number : '');
+        return;
+      }
       setError(t('saveFailed'));
     }
   };
@@ -164,7 +172,7 @@ export function CorrectBookingSheet({
               {t('cancel')}
             </button>
             <span className="sheet-head-title">{t('title')}</span>
-            <button type="button" className="sheet-head-save" disabled={busy} onClick={save}>
+            <button type="button" className="sheet-head-save" disabled={busy} onClick={() => void save()}>
               {busy ? t('saving') : t('save')}
             </button>
           </div>
@@ -235,7 +243,14 @@ export function CorrectBookingSheet({
               </div>
             </div>
 
-            {error ? (
+            {issuedDocument !== null ? (
+              <div role="alert" className="sheet-foot sheet-foot-error">
+                {issuedDocument ? t('documentIssuedBody', { number: issuedDocument }) : t('documentIssuedBodyNoNumber')}{' '}
+                <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => void save(true)}>
+                  {t('documentIssuedGo')}
+                </button>
+              </div>
+            ) : error ? (
               <div role="alert" className="sheet-foot sheet-foot-error">
                 {error}
               </div>

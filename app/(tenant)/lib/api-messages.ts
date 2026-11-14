@@ -20,6 +20,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Only the owner can change roles.': 'रोल सिर्फ़ मालिक बदल सकते हैं।',
   'A manager needs a role. Choose one, or remove them from the team.': 'मैनेजर का कोई रोल होना ज़रूरी है। एक रोल चुनें, या उन्हें टीम से हटा दें।',
   'There is no such role.': 'ऐसा कोई रोल नहीं है।',
+  'Say why it cannot be sold again': 'बताएँ कि यह दोबारा क्यों नहीं बिक सकता',
   'There is no such page.': 'ऐसा कोई पेज नहीं है।',
   'Give the role a name': 'रोल को एक नाम दें',
   'Keep the name under 60 letters': 'नाम 60 अक्षरों से कम रखें',

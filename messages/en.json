@@ -513,6 +513,7 @@
   "common": {
     "clearSearch": "Clear search",
     "voiceSearch": "Search by voice",
+    "voiceSearchWhere": "Search by voice. Your browser sends the audio to its speech service.",
     "stopVoiceSearch": "Stop voice search",
     "voiceStarting": "Getting ready… don’t speak yet",
     "voiceListening": "Listening… speak now",
@@ -2140,7 +2141,10 @@
       "pointsTitle": "Reward points",
       "pointsTakenBack": "{n, plural, one {# point taken back} other {# points taken back}}",
       "pointsAdded": "{n, plural, one {# point added} other {# points added}}",
-      "pointsWhy": "Points follow the amount, so this client keeps only what the visit really earned."
+      "pointsWhy": "Points follow the amount, so this client keeps only what the visit really earned.",
+      "documentIssuedBody": "Invoice {number} was already given to the customer for this visit. Correcting the bill does not change it: cancel that document and issue a new one, or correct anyway.",
+      "documentIssuedBodyNoNumber": "An invoice was already given to the customer for this visit. Correcting the bill does not change it: cancel that document and issue a new one, or correct anyway.",
+      "documentIssuedGo": "Correct anyway"
     },
     "foldGroup": "Fold {name}",
     "unfoldGroup": "Unfold {name}",
@@ -4537,6 +4541,7 @@
       "restockShelf": "Can be sold again",
       "restockShelfHint": "Adds the units back to that size’s count",
       "restockShelfHintPlain": "Adds the units back to the shelf count",
+      "whyWriteOffNeeds": "Say why it cannot be sold again before you confirm.",
       "damagedOpened": "Damaged, cannot be sold",
       "damagedOpenedHint": "Not added to the count; written off",
       "reasonLabel": "Reason (optional)",
