@@ -896,7 +896,9 @@
     "summaryHourTitle": "When the day summary arrives",
     "summaryHourHint": "Pick the hour you have finished for the day. A kitchen still serving at eleven should not be sent its takings at nine.",
     "summaryHourDefault": "The usual time (9 pm)",
-    "summaryHourSaved": "Saved"
+    "summaryHourSaved": "Saved",
+    "noMemberTitle": "Phone alerts are personal",
+    "noMember": "Each person on the team turns these on for their own phone. This sign-in is not a team member, so it has no alerts. Sign in with your own phone number to set them."
   },
   "settingsRewards": {
     "intro": "Clients earn points on what they spend, and take them off a later bill. Nothing changes for them until you switch it on.",
