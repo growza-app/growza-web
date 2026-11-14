@@ -129,7 +129,7 @@ tr:last-child td {
 
 /* A ticked row is marked on the row, not only in its box — colour alone is not an answer (GRW-484). */
 .svc-cat-row.is-picked .svc-cat-name {
-  font-weight: 640;
+  font-weight: 600;
 }
 
 /* The sheet's own title line: the heading, and Edit at the trailing edge where a list keeps it. */
@@ -158,7 +158,7 @@ tr:last-child td {
   color: var(--accent-deep);
   font: inherit;
   font-size: 0.9375rem;
-  font-weight: 560;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -311,7 +311,7 @@ tr:last-child td {
   color: var(--accent-deep);
   font: inherit;
   font-size: 0.9375rem;
-  font-weight: 560;
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
 }
@@ -340,7 +340,7 @@ tr:last-child td {
 
 .svc-cat-name {
   font-size: 0.9375rem;
-  font-weight: 560;
+  font-weight: 500;
   /* A 60-character name on a 344px fold truncates rather than pushing its own controls off the row. */
   overflow: hidden;
   text-overflow: ellipsis;
@@ -504,7 +504,7 @@ tr:last-child td {
   flex: 1;
   min-width: 0;
   font-size: 1.0625rem;
-  font-weight: 620;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -713,7 +713,7 @@ tr:last-child td {
 
 .svc-cat-blocked-head {
   margin: 0 0 6px;
-  font-weight: 620;
+  font-weight: 600;
 }
 
 .svc-cat-blocked ul {
@@ -755,7 +755,7 @@ tr:last-child td {
 .svc-cat-sheet-actions .svc-cat-confirm-body {
   margin: 0;
   font-size: 0.875rem;
-  font-weight: 560;
+  font-weight: 500;
 }
 
 .svc-cat-sheet-actions .svc-cat-confirm-detail {
@@ -798,14 +798,14 @@ tr:last-child td {
 
 .svc-cat-sheet-actions .svc-cat-confirm-head .svc-cat-confirm-body {
   font-size: 0.9375rem;
-  font-weight: 640;
+  font-weight: 600;
 }
 
 /* What is about to go, by name — the list behind may have scrolled it out of sight. */
 .svc-cat-confirm-names {
   margin: 0;
   font-size: 0.875rem;
-  font-weight: 560;
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
 

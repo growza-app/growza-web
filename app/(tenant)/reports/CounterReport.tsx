@@ -11,7 +11,6 @@ import { ReportDates } from './ReportDates';
 import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../lib/report-dates';
 import { bucketDays, type ChartBucket, namedTicks } from '../lib/report-buckets';
 import { useLabelBudget } from '../lib/use-label-budget';
-import { usePhoneLayout } from '../components/home/use-phone-layout';
 
 /**
  * Jira GRW-591 — the counter report: four questions, four cards, one line each to act on.
@@ -171,12 +170,6 @@ export function openingWindow(rows: ReadonlyArray<{ startTime: string; endTime: 
  * component no test can read.
  */
 export function CounterCards({ data, openHours = null }: { data: CounterReportPage; openHours?: OpenHours | null }) {
-  /*
-   * Owner, 14 Nov 2026 — "revert all changes for mobile". Everything this card gained that day (each day's amount,
-   * every open hour as a column, the busiest hour's figure, the closed-hours line) is the laptop's; a phone draws
-   * the card exactly as develop did. False on the server, so a fixture renders the laptop's card.
-   */
-  const phone = usePhoneLayout();
   const t = useTranslations('counterReport');
   const barsRef = useRef<HTMLUListElement>(null);
   const locale = useLocale();
@@ -291,7 +284,7 @@ export function CounterCards({ data, openHours = null }: { data: CounterReportPa
    * No peak when nothing was taken: seven empty columns have no best day.
    */
   /* A week's bars each carry their figure; a month's thirty would collide, so there only the best day does. */
-  const everyFigure = !phone && bars.length <= 7;
+  const everyFigure = bars.length <= 7;
   /** "₹1,180" while it fits a seventh of a phone; "₹12K", "₹1.5L" past ₹9,999. Indian grouping either way. */
   const barAmount = (minor: number) =>
     minor < 1_000_000 ? money(minor) : `₹${new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 }).format(minor / 100)}`;
@@ -308,20 +301,17 @@ export function CounterCards({ data, openHours = null }: { data: CounterReportPa
    */
   const sold = new Map(busy.byHour.map((h) => [h.hour, Number(h.valueMinor)]));
   /* Owner, 14 Nov 2026 — "show only open hours": the opening hours when the branch has them, else first sale to last. */
-  const [firstCol, lastCol] = openHours && !phone
+  const [firstCol, lastCol] = openHours
     ? [openHours.fromHour, openHours.toHour - 1]
     : sold.size > 0
       ? [Math.min(...sold.keys()), Math.max(...sold.keys())]
       : [0, -1];
-  // A phone keeps develop's columns: only the hours that sold, side by side.
-  const hourCols = phone
-    ? busy.byHour.map((h) => ({ hour: h.hour, value: Number(h.valueMinor) }))
-    : Array.from({ length: Math.max(0, lastCol - firstCol + 1) }, (_, k) => ({
-        hour: firstCol + k,
-        value: sold.get(firstCol + k) ?? 0,
-      }));
-  /* Money taken while closed is not dropped silently: the card says how much, under the chart (laptop). */
-  const outsideMinor = openHours && !phone ? busy.byHour.reduce((sum, h) => (h.hour < firstCol || h.hour > lastCol ? sum + Number(h.valueMinor) : sum), 0) : 0;
+  const hourCols = Array.from({ length: Math.max(0, lastCol - firstCol + 1) }, (_, k) => ({
+    hour: firstCol + k,
+    value: sold.get(firstCol + k) ?? 0,
+  }));
+  /* Money taken while closed is not dropped silently: the card says how much, under the chart. */
+  const outsideMinor = openHours ? busy.byHour.reduce((sum, h) => (h.hour < firstCol || h.hour > lastCol ? sum + Number(h.valueMinor) : sum), 0) : 0;
   const hourPeak = Math.max(...hourCols.map((h) => h.value), 1);
   const topHour = hourCols.reduce((best, h) => (h.value > (best?.value ?? 0) ? h : best), null as (typeof hourCols)[number] | null);
   const topValue = Math.max(...earners.rows.map((r) => Number(r.valueMinor)), 1);
@@ -358,7 +348,7 @@ export function CounterCards({ data, openHours = null }: { data: CounterReportPa
                   longer range still names only the best day. An empty day stays blank, which keeps every column the
                   same height. Read out below for everybody, so hidden from a screen reader here. */}
               <span className={`cr-bar-top${i === peakDay ? ' is-peak' : ''}`} aria-hidden="true">
-                {phone ? (i === peakDay ? money(b.valueMinor) : '') : i === peakDay || (everyFigure && b.valueMinor > 0) ? barAmount(b.valueMinor) : ''}
+                {i === peakDay || (everyFigure && b.valueMinor > 0) ? barAmount(b.valueMinor) : ''}
               </span>
               <span className="cr-bar-slot">
                 <span
@@ -470,18 +460,16 @@ export function CounterCards({ data, openHours = null }: { data: CounterReportPa
                  */
                 // Owner, 14 Nov 2026 — with every hour drawn, a name every third hour plus both ends put "1 am" on top
                 // of "3 am". Evenly spaced from the first column instead, about six names whatever the span.
-                const named = phone ? i === 0 || i === all.length - 1 || h.hour % 3 === 0 : i % Math.max(3, Math.ceil(all.length / 6)) === 0;
+                const named = i % Math.max(3, Math.ceil(all.length / 6)) === 0;
                 return (
                   <li key={h.hour} className="cr-bar-col">
-                    {phone ? null : (
-                      <span className={`cr-bar-top${inPeak ? ' is-peak' : ''}`} aria-hidden="true">
-                        {topHour && h.hour === topHour.hour ? barAmount(h.value) : ''}
-                      </span>
-                    )}
+                    <span className={`cr-bar-top${inPeak ? ' is-peak' : ''}`} aria-hidden="true">
+                      {topHour && h.hour === topHour.hour ? barAmount(h.value) : ''}
+                    </span>
                     <span className="cr-bar-slot">
                       <span
                         className={`cr-bar ${inPeak ? 'is-peak' : ''}`}
-                        style={{ height: `${h.value === 0 && !phone ? 0 : Math.max(MIN_BAR_PCT, (h.value / hourPeak) * 100)}%` }}
+                        style={{ height: `${h.value === 0 ? 0 : Math.max(MIN_BAR_PCT, (h.value / hourPeak) * 100)}%` }}
                       />
                     </span>
                     <span className="cr-bar-tick">{named ? hourName(h.hour) : ''}</span>

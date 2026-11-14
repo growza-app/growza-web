@@ -157,14 +157,14 @@
 }
 .srp-worth-label {
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 .srp-worth {
   margin: 0;
   font-size: 1.75rem;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
@@ -262,14 +262,14 @@
 .srp-name {
   margin: 0;
   font-size: var(--fs-4);
-  font-weight: 700;
+  font-weight: 600;
   overflow-wrap: anywhere;
   min-width: 0;
 }
 .srp-value {
   margin: 0;
   font-size: var(--fs-5);
-  font-weight: 800;
+  font-weight: 600;
   color: var(--accent-deep);
   font-variant-numeric: tabular-nums;
 }
@@ -281,7 +281,7 @@
   background: var(--amber-soft);
   color: var(--amber-ink);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
 }
 .srp-sizes {
@@ -318,7 +318,7 @@
   border-radius: 4px;
   background: var(--surface);
   border: 1px solid var(--border);
-  font-weight: 800;
+  font-weight: 600;
   color: var(--accent-deep);
 }
 .srp-size-zero {
@@ -348,7 +348,7 @@
   background: var(--amber-soft);
   color: var(--amber-ink);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 .srp-totals.srp-kpi-grid {
   padding: 0;
@@ -385,7 +385,7 @@
 .srp-kpi-num {
   margin: 0;
   font-size: 1.75rem;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.15;
   color: var(--text);
   font-variant-numeric: tabular-nums;
@@ -450,7 +450,7 @@
   color: var(--muted);
   font: inherit;
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 .srp-view-btn.is-active {
@@ -475,7 +475,7 @@
   background: var(--page-bg);
   border-bottom: 1px solid var(--border);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
@@ -581,7 +581,7 @@
   background: none;
   color: inherit;
   font: inherit;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: underline;
 }
 .ro-bar {
@@ -595,7 +595,7 @@
 }
 .ro-total {
   margin: 0;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 .ro-rule {
@@ -653,7 +653,7 @@
 }
 .ch-trend-sum {
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
+  font-weight: 600;
 }
 .ch-caveat {
   margin: 0;

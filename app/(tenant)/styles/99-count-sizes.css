@@ -53,7 +53,7 @@
 
 .pcs-label {
   font-size: var(--fs-5);
-  font-weight: 700;
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
 
@@ -75,7 +75,7 @@
   /* 16px stops iOS zooming the field on focus. */
   font: inherit;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -109,7 +109,7 @@
   background: var(--surface);
   font: inherit;
   color: var(--accent-deep);
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 

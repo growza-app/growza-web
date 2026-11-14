@@ -40,7 +40,7 @@
 }
 .setup-title {
   font-size: 0.9375rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 /* Folded: the first thing still to do, on one line, so the banner says what is next without opening. */
 .setup-next {

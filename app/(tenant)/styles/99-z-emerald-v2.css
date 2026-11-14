@@ -16,109 +16,100 @@
  * only toned down where they were decoration rather than meaning.
  */
 
-/* Laptop only (owner, 14 Nov 2026: "don't touch mobile"). */
-@media (min-width: 861px) {
-  :root {
-    --page-bg: var(--canvas);
-    --border: var(--canvas-line);
-    --sidebar: var(--canvas);
-    --sidebar-deep: var(--canvas);
-    --sidebar-text: var(--canvas-text);
-    --sidebar-active: var(--surface);
+:root {
+  --page-bg: var(--canvas);
+  --border: var(--canvas-line);
+  --sidebar: var(--canvas);
+  --sidebar-deep: var(--canvas);
+  --sidebar-text: var(--canvas-text);
+  --sidebar-active: var(--surface);
 
-    --radius: 14px;
-    --radius-sm: 10px;
-    --radius-lg: 22px;
-  }
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-lg: 22px;
 }
 
 /* ---------- the face: Plus Jakarta Sans for Latin (owner, 14 Nov 2026 — the shot's closest; was Hanken Grotesk) ----------
  * Sharper than Figtree, closer to the shot. Devanagari still falls through to Noto Sans Devanagari, and
  * Figtree stays in the stack behind it, so removing this rule is the whole undo. Form fields inherit. */
-/* Laptop only (owner, 14 Nov 2026: "don't touch the mobile, mobile was already good"): a phone keeps Figtree. */
-@media (min-width: 861px) {
-  html,
-  body {
-    font-family: var(--font-jakarta, ui-sans-serif), var(--font-figtree, ui-sans-serif), var(--font-devanagari, ui-sans-serif), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  }
-
-  :is(button, input, select, textarea) {
-    font-family: inherit;
-  }
+html,
+body {
+  font-family: var(--font-jakarta, ui-sans-serif), var(--font-figtree, ui-sans-serif), var(--font-devanagari, ui-sans-serif), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Laptop only (owner, 14 Nov 2026: "don't touch mobile"). */
-@media (min-width: 861px) {
-  /* ---------- shell: a light sidebar, one surface with the page ---------- */
+:is(button, input, select, textarea) {
+  font-family: inherit;
+}
 
-  .sidebar {
-    background: var(--canvas);
-    color: var(--text);
-    border-right: 1px solid var(--border);
-  }
+/* ---------- shell: a light sidebar, one surface with the page ---------- */
 
-  .brand-badge {
-    background: var(--forest);
-    border-radius: 12px;
-  }
+.sidebar {
+  background: var(--canvas);
+  color: var(--text);
+  border-right: 1px solid var(--border);
+}
 
-  .brand-name {
-    color: var(--text);
-  }
+.brand-badge {
+  background: var(--forest);
+  border-radius: 12px;
+}
 
-  .nav a {
-    position: relative;
-    color: var(--sidebar-text);
-    border-radius: 12px;
-  }
+.brand-name {
+  color: var(--text);
+}
 
-  .nav a:hover {
-    background: rgb(23 63 43 / 6%);
-    color: var(--text);
-  }
+.nav a {
+  position: relative;
+  color: var(--sidebar-text);
+  border-radius: 12px;
+}
 
-  .nav a.active {
-    background: var(--surface);
-    color: var(--forest);
-    font-weight: 600;
-  }
+.nav a:hover {
+  background: rgb(23 63 43 / 6%);
+  color: var(--text);
+}
 
-  .nav a.active::before {
-    content: '';
-    position: absolute;
-    left: -16px;
-    top: 9px;
-    bottom: 9px;
-    width: 4px;
-    border-radius: 0 4px 4px 0;
-    background: var(--forest-2);
-  }
+.nav a.active {
+  background: var(--surface);
+  color: var(--forest);
+  font-weight: 600;
+}
 
-  .nav svg {
-    opacity: 1;
-  }
+.nav a.active::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: 9px;
+  bottom: 9px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--forest-2);
+}
 
-  /* Everything the dark sidebar painted white-on-green reads dark-on-grey now. */
-  .sidebar .brand-location,
-  .sidebar .nav-who-text span {
-    color: var(--muted);
-  }
+.nav svg {
+  opacity: 1;
+}
 
-  .sidebar .nav-who-text strong,
-  .sidebar .sidebar-close {
-    color: var(--text);
-  }
+/* Everything the dark sidebar painted white-on-green reads dark-on-grey now. */
+.sidebar .brand-location,
+.sidebar .nav-who-text span {
+  color: var(--muted);
+}
 
-  .sidebar .nav-pill {
-    color: var(--forest);
-    background: rgb(23 63 43 / 8%);
-  }
+.sidebar .nav-who-text strong,
+.sidebar .sidebar-close {
+  color: var(--text);
+}
 
-  /* ---------- buttons: pills ---------- */
+.sidebar .nav-pill {
+  color: var(--forest);
+  background: rgb(23 63 43 / 8%);
+}
 
-  :is(.btn, .button, .primary-btn, .secondary-btn, .ghost-btn, .rst-date-pill) {
-    border-radius: 999px;
-  }
+/* ---------- buttons: pills ---------- */
+
+:is(.btn, .button, .primary-btn, .secondary-btn, .ghost-btn, .rst-date-pill) {
+  border-radius: 999px;
 }
 
 /* ---------- restaurant / shop Home, laptop and up ---------- */
@@ -470,44 +461,34 @@
 /* ---------- Home on a phone (and the shared Home cards) ---------- */
 
 /* The one filled card, shaded like the desktop money tile (owner, 14 Nov 2026). */
-@media (min-width: 861px) {
-  .hm-hero {
-    background:
-      radial-gradient(70% 90% at 8% 0%, color-mix(in srgb, var(--lime) 30%, transparent) 0%, transparent 70%),
-      radial-gradient(80% 120% at 100% 100%, color-mix(in srgb, var(--mint) 35%, var(--forest-2)) 0%, transparent 70%),
-      linear-gradient(140deg, var(--forest) 0%, var(--forest-2) 100%);
-  }
+.hm-hero {
+  background:
+    radial-gradient(70% 90% at 8% 0%, color-mix(in srgb, var(--lime) 30%, transparent) 0%, transparent 70%),
+    radial-gradient(80% 120% at 100% 100%, color-mix(in srgb, var(--mint) 35%, var(--forest-2)) 0%, transparent 70%),
+    linear-gradient(140deg, var(--forest) 0%, var(--forest-2) 100%);
 }
 
-@media (min-width: 861px) {
-  .hm-card {
-    border-color: transparent;
-    box-shadow: none;
-  }
+.hm-card {
+  border-color: transparent;
+  box-shadow: none;
 }
 
-@media (min-width: 861px) {
-  .hm-card-head h2 {
-    font-weight: 600;
-    letter-spacing: -0.02em;
-  }
+.hm-card-head h2 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
-@media (min-width: 861px) {
-  .hm-toolbar-summary,
-  .shp-period .hm-seg-select {
-    border-radius: 999px;
-    border-color: transparent;
-  }
+.hm-toolbar-summary,
+.shp-period .hm-seg-select {
+  border-radius: 999px;
+  border-color: transparent;
 }
 
 /* A colour per person is decoration; one neutral chip reads calmer (inline tone, hence !important). */
-@media (min-width: 861px) {
-  .shp-recent .hm-avatar {
-    background: var(--canvas) !important;
-    color: var(--forest) !important;
-    border-radius: 999px;
-  }
+.shp-recent .hm-avatar {
+  background: var(--canvas) !important;
+  color: var(--forest) !important;
+  border-radius: 999px;
 }
 
 
@@ -529,26 +510,23 @@
   }
 }
 
-/* Laptop only (owner, 14 Nov 2026: "don't touch mobile"). */
-@media (min-width: 861px) {
-  /* ---------- every other screen ----------
-   * The list below is what a walk through every screen found drawing a white box with a border
-   * on the grey page (desktop and phone, County Chicken, 14 Nov 2026). Cards and on-page toolbars
-   * lose the line; things that float over content (the till's bar and tray, save bars, menus,
-   * sheets) and form fields keep theirs, because there the line is what separates them.
-   * Inside a sheet or dialog a card sits on white, so it keeps its border there. */
+/* ---------- every other screen ----------
+ * The list below is what a walk through every screen found drawing a white box with a border
+ * on the grey page (desktop and phone, County Chicken, 14 Nov 2026). Cards and on-page toolbars
+ * lose the line; things that float over content (the till's bar and tray, save bars, menus,
+ * sheets) and form fields keep theirs, because there the line is what separates them.
+ * Inside a sheet or dialog a card sits on white, so it keeps its border there. */
 
-  :is(
-    .card, .rp-card, .tile, .bk-card, .bk-kpi, .staff-card,
-    .cr-card, .srp-card, .srp-totals, .srp-empty, .prd-stat,
-    .att-tile, .att-list, .menu-list, .cust-card, .ord-cards, .pay,
-    .pf-wide-left, .pf-wide-right, .rw-examples-box, .settings-empty-state,
-    .srp-toolbar, .srp-nav, .ord-tools, .att-daynav
-  ):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
-    border-color: transparent;
-    box-shadow: none;
-    border-radius: var(--radius-lg);
-  }
+:is(
+  .card, .rp-card, .tile, .bk-card, .bk-kpi, .staff-card,
+  .cr-card, .srp-card, .srp-totals, .srp-empty, .prd-stat,
+  .att-tile, .att-list, .menu-list, .cust-card, .ord-cards, .pay,
+  .pf-wide-left, .pf-wide-right, .rw-examples-box, .settings-empty-state,
+  .srp-toolbar, .srp-nav, .ord-tools, .att-daynav
+):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
+  border-color: transparent;
+  box-shadow: none;
+  border-radius: var(--radius-lg);
 }
 
 /* ---------- charts: pill bars in the greens, over a striped track ----------
@@ -556,249 +534,205 @@
  * figure is a solid pill in it, and the best one is the darkest green. Stripes say "nothing here yet"
  * without spending a colour on it. */
 
-@media (min-width: 861px) {
-  .cr-bars {
-    gap: var(--sp-2);
-  }
+.cr-bars {
+  gap: var(--sp-2);
 }
 
 /* Owner, 14 Nov 2026: "make the bars wider on the hour chart". Twenty-odd columns share a phone, so the
    gap between them is the thinnest that still separates two bars, and the bar takes the rest. */
-@media (min-width: 861px) {
-  .cr-bars-hour {
-    gap: 2px;
-  }
+.cr-bars-hour {
+  gap: 2px;
 }
 
 /* A pill as wide as a thumb, centred in its column: a full-width column with round ends clips a short bar
    into a half-moon. */
-@media (min-width: 861px) {
-  .cr-bar-slot {
-    justify-content: center;
-    max-width: 2.75rem;
-    margin-inline: auto;
-    border-radius: 999px;
-    background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
-  }
+.cr-bar-slot {
+  justify-content: center;
+  max-width: 2.75rem;
+  margin-inline: auto;
+  border-radius: 999px;
+  background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
 }
 
-@media (min-width: 861px) {
-  .cr-bars-hour .cr-bar-slot {
-    max-width: 2.5rem;
-  }
+.cr-bars-hour .cr-bar-slot {
+  max-width: 2.5rem;
 }
 
-@media (min-width: 861px) {
-  .cr-bars-day .cr-bar-slot {
-    height: 7rem;
-  }
+.cr-bars-day .cr-bar-slot {
+  height: 7rem;
 }
 
-@media (min-width: 861px) {
-  .cr-bars-hour .cr-bar-slot {
-    height: 5.5rem;
-  }
+.cr-bars-hour .cr-bar-slot {
+  height: 5.5rem;
 }
 
-@media (min-width: 861px) {
-  .cr-bar {
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
-  }
+.cr-bar {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
 }
 
-@media (min-width: 861px) {
-  .cr-bar.is-peak {
-    background: var(--forest);
-  }
+.cr-bar.is-peak {
+  background: var(--forest);
 }
 
-@media (min-width: 861px) {
-  .cr-bar-top {
-    color: var(--forest);
-  }
+.cr-bar-top {
+  color: var(--forest);
 }
 
 /* Horizontal bars: a thick rounded track, the leader in the dark green. */
-@media (min-width: 861px) {
-  .cr-row-track {
-    height: 0.5rem;
-    border-radius: 999px;
-    background: var(--canvas);
-  }
+.cr-row-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--canvas);
 }
 
-@media (min-width: 861px) {
-  .cr-row-fill {
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
-  }
+.cr-row-fill {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
 }
 
-@media (min-width: 861px) {
-  .cr-row:first-child .cr-row-fill {
-    background: var(--forest);
-  }
+.cr-row:first-child .cr-row-fill {
+  background: var(--forest);
 }
 
-@media (min-width: 861px) {
-  .cr-hero {
-    font-size: 2.75rem;
-    letter-spacing: -0.045em;
-  }
+.cr-hero {
+  font-size: 2.75rem;
+  letter-spacing: -0.045em;
 }
 
-/* Laptop only (owner, 14 Nov 2026: "don't touch mobile"). */
-@media (min-width: 861px) {
-  /* Sales by channel. */
-  .sls-chart-track {
-    max-width: 2.75rem;
-    border-radius: 999px;
-    background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
-  }
+/* Sales by channel. */
+.sls-chart-track {
+  max-width: 2.75rem;
+  border-radius: 999px;
+  background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
+}
 
-  .sls-chart-stack {
-    border-radius: 999px;
-  }
+.sls-chart-stack {
+  border-radius: 999px;
+}
 
-  .sls-chart-col.is-zero .sls-chart-stack {
-    background: transparent;
-  }
+.sls-chart-col.is-zero .sls-chart-stack {
+  background: transparent;
+}
 
-  .sls-bar-srv {
-    background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
-  }
+.sls-bar-srv {
+  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+}
 
-  .sls-bar-prd {
-    background: var(--mint);
-  }
+.sls-bar-prd {
+  background: var(--mint);
+}
 
-  .sls-chart-col.is-peak .sls-bar-srv {
-    background: var(--forest);
-  }
+.sls-chart-col.is-peak .sls-bar-srv {
+  background: var(--forest);
+}
 
-  .sls-chart-col.is-peak .sls-bar-prd {
-    background: color-mix(in srgb, var(--mint) 60%, var(--forest-2));
-  }
+.sls-chart-col.is-peak .sls-bar-prd {
+  background: color-mix(in srgb, var(--mint) 60%, var(--forest-2));
+}
 
-  /* The salon Home's week chart and the report bar lists. */
-  .hm-v3-bar-track {
-    border-radius: 999px;
-    background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
-  }
+/* The salon Home's week chart and the report bar lists. */
+.hm-v3-bar-track {
+  border-radius: 999px;
+  background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
+}
 
-  .hm-v3-bar-fill {
-    max-width: 2.75rem;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
-    opacity: 1;
-  }
+.hm-v3-bar-fill {
+  max-width: 2.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+  opacity: 1;
+}
 
-  .hm-v3-bar-col.is-peak .hm-v3-bar-fill {
-    background: var(--forest);
-  }
+.hm-v3-bar-col.is-peak .hm-v3-bar-fill {
+  background: var(--forest);
+}
 
-  .rp-bar-track,
-  .rp-cell-bar-track {
-    height: 0.5rem;
-    border-radius: 999px;
-    background: var(--canvas);
-  }
+.rp-bar-track,
+.rp-cell-bar-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--canvas);
+}
 
-  .rp-bar-fill {
-    border-radius: 999px;
-  }
+.rp-bar-fill {
+  border-radius: 999px;
 }
 
 /* Card titles: one size, medium weight. */
-@media (min-width: 861px) {
-  :is(.cr-title, .hm-card-head h2) {
-    font-size: var(--fs-7);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-  }
+:is(.cr-title, .hm-card-head h2, .rp-card h2, .rp-card h3) {
+  font-size: var(--fs-7);
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
-/* Laptop only (owner, 14 Nov 2026: "don't touch mobile"). */
-@media (min-width: 861px) {
-  /* ---------- tables on a page: a white card with row lines only ----------
-   * No grid of vertical lines and no grey header band: the header is small grey text, rows are split by
-   * one faint line, the card has no outline. The editing grids (bulk edit, sizes) keep their cell lines,
-   * because there a cell is a field. */
+/* ---------- tables on a page: a white card with row lines only ----------
+ * No grid of vertical lines and no grey header band: the header is small grey text, rows are split by
+ * one faint line, the card has no outline. The editing grids (bulk edit, sizes) keep their cell lines,
+ * because there a cell is a field. */
 
-  :is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
-    border-color: transparent;
-    border-radius: var(--radius-lg);
-    box-shadow: none;
-  }
+:is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
+  border-color: transparent;
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+}
 
-  :is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table) :is(th, td) {
-    border-left: 0;
-    border-right: 0;
-    border-bottom-color: var(--canvas);
-  }
+:is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table) :is(th, td) {
+  border-left: 0;
+  border-right: 0;
+  border-bottom-color: var(--canvas);
+}
 
-  :is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table) th {
-    background: transparent;
-    color: var(--muted);
-    font-size: var(--fs-2);
-    font-weight: 500;
-    text-transform: none;
-    letter-spacing: 0;
-    border-bottom-color: var(--canvas-line);
-  }
+:is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table) th {
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--fs-2);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  border-bottom-color: var(--canvas-line);
+}
 
-  :is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table) tbody tr:hover td {
-    background: color-mix(in srgb, var(--canvas) 60%, var(--surface));
-  }
+:is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table) tbody tr:hover td {
+  background: color-mix(in srgb, var(--canvas) 60%, var(--surface));
+}
 
-  :is(.rp-table-scroll, .sls-table-wrap, .srp-table-card):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
-    border-color: transparent;
-    box-shadow: none;
-    border-radius: var(--radius-lg);
-  }
+:is(.rp-table-scroll, .sls-table-wrap, .srp-table-card):not(:is([role='dialog'], .sheet, .modal, .bottom-sheet) *) {
+  border-color: transparent;
+  box-shadow: none;
+  border-radius: var(--radius-lg);
+}
 
-  /* Segmented filters and tabs: pills on a pill track, the chosen one dark green. */
-  :is(.seg, .segmented, .rp-tabs, .tabs) :is(button, a) {
-    border-radius: 999px;
-  }
+/* Segmented filters and tabs: pills on a pill track, the chosen one dark green. */
+:is(.seg, .segmented, .rp-tabs, .tabs) :is(button, a) {
+  border-radius: 999px;
 }
 
 /* Every bar's amount (owner, 14 Nov 2026): the best day's in dark green and bold, the others quieter. */
-@media (min-width: 861px) {
-  .cr-bar-top {
-    font-weight: 500;
-    color: var(--muted);
-  }
+.cr-bar-top {
+  font-weight: 500;
+  color: var(--muted);
 }
 
-@media (min-width: 861px) {
-  .cr-bar-top.is-peak {
-    font-weight: 600;
-    color: var(--forest);
-  }
+.cr-bar-top.is-peak {
+  font-weight: 600;
+  color: var(--forest);
 }
 
 /* The hour chart has a column for every hour (2026-11-14), so twenty striped tracks read as a barcode: here the
    track is a plain light pill, and the first and last time names keep inside the card. */
-@media (min-width: 861px) {
-  .cr-bars-hour .cr-bar-slot {
-    background: var(--canvas);
-  }
+.cr-bars-hour .cr-bar-slot {
+  background: var(--canvas);
 }
 
-@media (min-width: 861px) {
-  .cr-bars-hour .cr-bar-col:first-child .cr-bar-tick,
-  .cr-bars-hour .cr-bar-col:last-child .cr-bar-tick {
-    display: flex;
-    justify-content: flex-start;
-  }
+.cr-bars-hour .cr-bar-col:first-child .cr-bar-tick,
+.cr-bars-hour .cr-bar-col:last-child .cr-bar-tick {
+  display: flex;
+  justify-content: flex-start;
 }
 
-@media (min-width: 861px) {
-  .cr-bars-hour .cr-bar-col:last-child .cr-bar-tick {
-    justify-content: flex-end;
-  }
+.cr-bars-hour .cr-bar-col:last-child .cr-bar-tick {
+  justify-content: flex-end;
 }
 
 /* =====================================================================================================
@@ -1308,29 +1242,22 @@
  * with its key at the end, white round buttons, and the person — a drawn face, their name, their role.
  * ===================================================================================================== */
 
-/* The face and the name are the laptop's; a phone keeps its green letter, as it was (owner, 14 Nov 2026: "don't
-   touch the mobile"). */
-.acct-trigger .acct-face,
+/* The face fills the round avatar on every screen size; nobody has a photo, so everybody gets one. */
+.acct-trigger .acct-face {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.acct-trigger.avatar-lg {
+  overflow: hidden;
+  background: transparent;
+}
+
 .acct-trigger-text,
 .hdr-search-kbd {
   display: none;
-}
-
-@media (min-width: 861px) {
-  .acct-trigger .acct-initial {
-    display: none;
-  }
-
-  .acct-trigger .acct-face {
-    display: block;
-    width: 100%;
-    height: 100%;
-    border-radius: 999px;
-  }
-
-  .acct-trigger.avatar-lg {
-    background: transparent;
-  }
 }
 
 @media (min-width: 861px) {
@@ -1893,11 +1820,36 @@
   }
 }
 
-@media (min-width: 861px) {
-  .rp-card :is(h2, h3) {
-    font-size: var(--fs-7);
-    font-weight: 600;
-    letter-spacing: -0.02em;
+/*
+ * The Menu screen's header on a narrow phone (owner, 14 Nov 2026: "Menu was aligned before"). At ~342px
+ * back + "Menu" + ⓘ and the three buttons need ~354px and the buttons wrapped to a second line. Only this
+ * screen's header, only below 400px: the buttons 44px instead of 52px with a 6px gap, the title cut with
+ * "…" only if it really cannot fit, and the whole header kept to one line.
+ */
+@media (max-width: 400px) {
+  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar {
+    flex-wrap: nowrap;
+  }
+
+  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-lead {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-title h1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-actions {
+    flex-shrink: 0;
+    gap: 6px;
+  }
+
+  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-actions > .btn {
+    min-width: 44px;
+    width: 44px;
+    padding-inline: 0;
   }
 }
-

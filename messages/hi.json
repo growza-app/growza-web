@@ -259,7 +259,7 @@
     },
     "statusNever": "कभी नहीं आए",
     "statusLapsed": "आने का समय या दूर हो रहे",
-    "searchPlaceholder": "नाम या फ़ोन से खोजें",
+    "searchPlaceholder": "नाम या फ़ोन",
     "allNoun": "सभी {noun}",
     "noMatch": "आपकी खोज से कोई {noun} नहीं मिला।",
     "loading": "लोड हो रहा है…",

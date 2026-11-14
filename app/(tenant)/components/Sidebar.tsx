@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Fragment, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
+import { ClientCartoon } from './ClientCartoon';
 import { usePathname } from 'next/navigation';
 import { canSee, type MemberRole } from '../lib/nav-policy';
 import { isActive, resolveNav, type NavGroup } from '../lib/nav-sections';
@@ -357,7 +358,8 @@ export function Sidebar({
               person IS their phone number here (GRW-189). Their own name leads
               once there is one; the role and number sit under it. */}
           <div className="nav-who">
-            <span className="nav-who-avatar">{Array.from(name ?? t.role[role ?? 'owner'] ?? 'O')[0]?.toUpperCase()}</span>
+            {/* Emerald v3 — the same drawn face as the header's account button, from the same number. */}
+            <ClientCartoon id={phone ?? name ?? tenantName ?? 'me'} className="nav-who-avatar" />
             <span className="nav-who-text">
               <strong>{name ?? t.role[role ?? 'owner']}</strong>
               {name ? <span>{t.role[role ?? 'owner']}</span> : null}
