@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
 import type { CounterReportPage } from '../lib/api-types';
-import { CounterCards } from './CounterReport';
+import { CounterCards, openingWindow, type OpenHours } from './CounterReport';
 
 /**
  * Jira GRW-591 — the counter report reads in both languages, and says something in each.
@@ -69,13 +69,13 @@ const payload: CounterReportPage = {
   },
 };
 
-const render = (locale: 'en' | 'hi', data: CounterReportPage = payload) =>
+const render = (locale: 'en' | 'hi', data: CounterReportPage = payload, openHours: OpenHours | null = null) =>
   renderToStaticMarkup(
     createElement(NextIntlClientProvider, {
       locale,
       messages: locale === 'en' ? en : hi,
       timeZone: 'Asia/Kolkata',
-      children: createElement(CounterCards, { data }),
+      children: createElement(CounterCards, { data, openHours }),
     }),
   );
 
@@ -253,5 +253,30 @@ describe('the message files', () => {
     for (const [key, value] of flat(en.counterReport)) {
       expect(placeholders(hiBy.get(key)!), key).toEqual(placeholders(value));
     }
+  });
+});
+
+describe('the hour chart keeps to opening hours (owner, 2026-11-14)', () => {
+  it('reads one window for the week from Settings', () => {
+    expect(openingWindow([{ startTime: '11:00', endTime: '22:30' }, { startTime: '10:00', endTime: '21:00' }])).toEqual({ fromHour: 10, toHour: 23 });
+    expect(openingWindow([{ startTime: '09:00', endTime: '00:00' }])).toEqual({ fromHour: 9, toHour: 24 });
+  });
+
+  it('gives no window for no hours, or for a day that closes after midnight', () => {
+    expect(openingWindow([])).toBeNull();
+    expect(openingWindow(undefined)).toBeNull();
+    expect(openingWindow([{ startTime: '18:00', endTime: '02:00' }])).toBeNull();
+  });
+
+  it('draws a column for each open hour only, and says what came in while closed', () => {
+    // Sold at 12, 13, 20, 21, 22; open 12:00–21:00, so 21 and 22 (₹15,912) were taken after closing.
+    const html = render('en', payload, { fromHour: 12, toHour: 21 });
+    expect((html.match(/cr-bar-col/g) ?? []).length).toBe(7 + 9);
+    expect(text(html)).toContain('₹15,912 came in outside your opening hours.');
+    expect(text(render('hi', payload, { fromHour: 12, toHour: 21 }))).toContain('दुकान बंद रहने के समय में आया');
+  });
+
+  it('says nothing about closed hours when every sale was inside them', () => {
+    expect(text(render('en', payload, { fromHour: 10, toHour: 23 }))).not.toContain('outside your opening hours');
   });
 });

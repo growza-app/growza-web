@@ -2928,7 +2928,8 @@
       "title": "When you are busy",
       "peak": "Your rush is {from}–{to}.",
       "quietest": "{day} is your weakest day — {amount} in all.",
-      "notEnough": "Not enough trade yet to tell you when your rush is."
+      "notEnough": "Not enough trade yet to tell you when your rush is.",
+      "outsideHours": "{amount} came in outside your opening hours."
     },
     "changed": {
       "title": "What changed",
