@@ -1736,7 +1736,11 @@
       "createFailed": "Could not create the offer.",
       "cancel": "Cancel",
       "creating": "Creating…",
-      "create": "Create offer"
+      "create": "Create offer",
+      "editTitle": "Edit offer",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saveFailed": "Could not save the offer."
     },
     "branch": {
       "which": "Which branch?",
