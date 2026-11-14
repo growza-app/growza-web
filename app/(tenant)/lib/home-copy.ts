@@ -443,6 +443,7 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       queueTitle: S('Queue', 'कतार'),
       /** Emerald v2 — the laptop Home's header buttons and its new cards. */
       newOrderAction: S('New order', 'नया ऑर्डर'),
+      cameInToday: S('came in today', 'आज आए'),
       salesThisWeek: S('Sales this week', 'इस हफ़्ते की बिक्री'),
       salesThisMonth: S('Sales this month', 'इस महीने की बिक्री'),
       paidToday: S('Payments today', 'आज के भुगतान'),

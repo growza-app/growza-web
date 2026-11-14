@@ -1090,6 +1090,11 @@ export function ShopHome({
                       <span className="rst-kpi-label">{s.customersCardTitle}</span>
                       <strong className="rst-kpi-value">{customersTotal ?? '—'}</strong>
                     </div>
+                    {/* Emerald v3 — every tile ends on the same small line, as the shot's four do. */}
+                    <div className="rst-kpi-side is-bottom">
+                      <span className="rst-delta-pill is-up">{customersToday}</span>
+                      <span className="rst-delta-sub">{s.cameInToday}</span>
+                    </div>
                   </a>
                 </div>
 
