@@ -475,8 +475,8 @@
         "sub": "Sign out from this device"
       },
       "roles": {
-        "label": "Roles",
-        "sub": "What each person on your team can open"
+        "label": "Team and roles",
+        "sub": "Add staff, give them a login, choose what they open"
       },
       "channels": {
         "label": "Online selling",
@@ -5147,7 +5147,7 @@
     "name": "Role name",
     "namePlaceholder": "For example, Cashier",
     "worksLike": "Works like",
-    "worksLikeHint": "What kind of login this is. A stylist-type login can never open more than a stylist can, whatever you tick.",
+    "worksLikeHint": "What kind of login this is. A Staff login can never open more than Staff can, whatever you tick.",
     "worksLikeOptions": {
       "none": "Not set",
       "manager": "Manager",
