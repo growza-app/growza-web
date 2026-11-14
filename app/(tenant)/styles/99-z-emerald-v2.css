@@ -1557,6 +1557,16 @@ body {
     stroke-width: 2;
   }
 
+  /* The active page's green bar sits on the sidebar's own left edge. At -16px it fell outside the
+     sidebar's 12px padding, which scrolls (overflow: auto) and so clipped it out of sight. */
+  .nav a.active::before {
+    left: -12px;
+    top: 10px;
+    bottom: 10px;
+    width: 4px;
+    background: var(--forest-2);
+  }
+
   .nav-section {
     margin-top: var(--sp-4);
   }
