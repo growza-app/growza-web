@@ -28,11 +28,10 @@ describe('the figure', () => {
     expect(drawer).toMatch(/rupees\(cashDrawer\.inDrawerMinor\)/);
   });
 
-  it('is off Home on both phone and desktop — the day sheet carries it', () => {
+  it('is on the phone Home under the payment split, for today only, and on the desk hero', () => {
     // Owner, 2026-11-13 — the kitchen only: a shop with a counted shelf does not get the line on Home.
-    // Owner, 2026-11-14 (Emerald v2) — off the phone Home too; the day sheet (below) is where it lives now.
-    expect(shop).not.toMatch(/<CashDrawerLine/);
-    // Owner, 2026-11-14 (Emerald v2) — "remove Cash in drawer": the desktop money tile no longer carries it.
+    expect(shop).toMatch(/isKitchen && \(phoneFigures\.kind === 'today' \|\| phoneFigures\.kind === 'range'\) \? <CashDrawerLine t=\{t\} cashDrawer=\{phoneFigures\.cashDrawer\} \/> : null/);
+    // Owner, 2026-11-14 (Emerald v2) — "remove Cash in drawer": the laptop's money tile no longer carries it; the phone does.
     expect(shop).not.toMatch(/rst-kpi-drawer/);
     // The phone's range view carries it for TODAY only — never for a week or a month.
     expect(shop).toMatch(/cashDrawer: phonePeriod === 'today' \? data\?\.today\.cashDrawer : undefined,/);

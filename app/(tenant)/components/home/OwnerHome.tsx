@@ -676,8 +676,7 @@ export function OwnerHome(p: OwnerHomeProps) {
       <HomeHeader
         t={t}
         // Hindi's greeting already ends in "!"; strip it so the wave never reads "नमस्ते!! 👋".
-        // Emerald v3 — no wave on the laptop's page head or the phone's header (owner, 2026-11-14).
-        title={t.greeting(p.greetingPart)}
+        title={`${t.greeting(p.greetingPart).replace(/!$/, '')}! 👋`}
         sub={t.ownerSub(p.businessName, afterClose)}
         businessName={p.businessName}
         locationName={multiBranch ? null : locationLine}

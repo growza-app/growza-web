@@ -259,7 +259,7 @@
     },
     "statusNever": "Never came",
     "statusLapsed": "Due or not seen lately",
-    "searchPlaceholder": "Name or phone",
+    "searchPlaceholder": "Search by name or phone",
     "allNoun": "All {noun}",
     "noMatch": "No {noun} found.",
     "loading": "Loading…",

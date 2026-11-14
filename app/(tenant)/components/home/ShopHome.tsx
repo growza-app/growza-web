@@ -16,6 +16,7 @@ import type {
   StockReportPage,
 } from '../../lib/api-types';
 import { homeCopy } from '../../lib/home-copy';
+import { CashDrawerLine } from './CashDrawer';
 import { DaySummarySheet } from './DaySummarySheet';
 import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
@@ -883,7 +884,7 @@ export function ShopHome({
     <>
       <HomeHeader
         t={t}
-        title={t.greeting(greetingPart)}
+        title={isKitchen ? `${t.greeting(greetingPart)}! 👋` : t.greeting(greetingPart)}
         sub={isKitchen ? s.kitchenSub(businessName) : money ? t.ownerSub(businessName, false) : businessName}
         businessName={businessName}
         locationName={locationName}
@@ -1987,7 +1988,7 @@ export function ShopHome({
                             appsMinor={phoneFigures.fromAppsMinor}
                           />
                         ) : null}
-                        {/* Owner, 2026-11-14 (Emerald v2) — "remove cash drawer for mobile also": the day sheet still has it. */}
+                        {isKitchen && (phoneFigures.kind === 'today' || phoneFigures.kind === 'range') ? <CashDrawerLine t={t} cashDrawer={phoneFigures.cashDrawer} /> : null}
                         {phoneSpark.length > 0 ? (
                           // Decoration would be a lie here, so it is drawn only from the window's own daily totals.
                           <div className="shp-spark" aria-hidden="true">
@@ -2014,12 +2015,11 @@ export function ShopHome({
         )}
 
         {/*
-          Quick links on a phone, straight under the money: the figure, then the doors, then what needs the owner.
-          Owner, 2026-11-13 for a shop; 2026-11-14 for the kitchen too ("move quick links below the KPI card").
-          Outside the branch a failed read replaces, so they stay when it does. `.hm-mobile`, so a laptop never
-          draws them.
+          Quick links on a phone. Owner, 2026-11-13 — a shop with a counted shelf has them straight under the money:
+          the figure, then the doors, then what needs the owner. The kitchen keeps them last (below). Outside the
+          branch a failed read replaces, so they stay when it does. `.hm-mobile`, so a laptop never draws them.
         */}
-        {quickLinks}
+        {areas.stock ? quickLinks : null}
 
         {failed || !data ? null : (
             <div className="shp-mobile-stack">
@@ -2349,6 +2349,7 @@ export function ShopHome({
 
             </div>
         )}
+        {areas.stock ? null : quickLinks}
       </div>
       {summaryOpen ? (
         <DaySummarySheet

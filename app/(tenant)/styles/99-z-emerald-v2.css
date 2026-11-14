@@ -470,34 +470,44 @@
 /* ---------- Home on a phone (and the shared Home cards) ---------- */
 
 /* The one filled card, shaded like the desktop money tile (owner, 14 Nov 2026). */
-.hm-hero {
-  background:
-    radial-gradient(70% 90% at 8% 0%, color-mix(in srgb, var(--lime) 30%, transparent) 0%, transparent 70%),
-    radial-gradient(80% 120% at 100% 100%, color-mix(in srgb, var(--mint) 35%, var(--forest-2)) 0%, transparent 70%),
-    linear-gradient(140deg, var(--forest) 0%, var(--forest-2) 100%);
+@media (min-width: 861px) {
+  .hm-hero {
+    background:
+      radial-gradient(70% 90% at 8% 0%, color-mix(in srgb, var(--lime) 30%, transparent) 0%, transparent 70%),
+      radial-gradient(80% 120% at 100% 100%, color-mix(in srgb, var(--mint) 35%, var(--forest-2)) 0%, transparent 70%),
+      linear-gradient(140deg, var(--forest) 0%, var(--forest-2) 100%);
+  }
 }
 
-.hm-card {
-  border-color: transparent;
-  box-shadow: none;
+@media (min-width: 861px) {
+  .hm-card {
+    border-color: transparent;
+    box-shadow: none;
+  }
 }
 
-.hm-card-head h2 {
-  font-weight: 600;
-  letter-spacing: -0.02em;
+@media (min-width: 861px) {
+  .hm-card-head h2 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
 }
 
-.hm-toolbar-summary,
-.shp-period .hm-seg-select {
-  border-radius: 999px;
-  border-color: transparent;
+@media (min-width: 861px) {
+  .hm-toolbar-summary,
+  .shp-period .hm-seg-select {
+    border-radius: 999px;
+    border-color: transparent;
+  }
 }
 
 /* A colour per person is decoration; one neutral chip reads calmer (inline tone, hence !important). */
-.shp-recent .hm-avatar {
-  background: var(--canvas) !important;
-  color: var(--forest) !important;
-  border-radius: 999px;
+@media (min-width: 861px) {
+  .shp-recent .hm-avatar {
+    background: var(--canvas) !important;
+    color: var(--forest) !important;
+    border-radius: 999px;
+  }
 }
 
 
@@ -546,70 +556,96 @@
  * figure is a solid pill in it, and the best one is the darkest green. Stripes say "nothing here yet"
  * without spending a colour on it. */
 
-.cr-bars {
-  gap: var(--sp-2);
+@media (min-width: 861px) {
+  .cr-bars {
+    gap: var(--sp-2);
+  }
 }
 
 /* Owner, 14 Nov 2026: "make the bars wider on the hour chart". Twenty-odd columns share a phone, so the
    gap between them is the thinnest that still separates two bars, and the bar takes the rest. */
-.cr-bars-hour {
-  gap: 2px;
+@media (min-width: 861px) {
+  .cr-bars-hour {
+    gap: 2px;
+  }
 }
 
 /* A pill as wide as a thumb, centred in its column: a full-width column with round ends clips a short bar
    into a half-moon. */
-.cr-bar-slot {
-  justify-content: center;
-  max-width: 2.75rem;
-  margin-inline: auto;
-  border-radius: 999px;
-  background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
+@media (min-width: 861px) {
+  .cr-bar-slot {
+    justify-content: center;
+    max-width: 2.75rem;
+    margin-inline: auto;
+    border-radius: 999px;
+    background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
+  }
 }
 
-.cr-bars-hour .cr-bar-slot {
-  max-width: 2.5rem;
+@media (min-width: 861px) {
+  .cr-bars-hour .cr-bar-slot {
+    max-width: 2.5rem;
+  }
 }
 
-.cr-bars-day .cr-bar-slot {
-  height: 7rem;
+@media (min-width: 861px) {
+  .cr-bars-day .cr-bar-slot {
+    height: 7rem;
+  }
 }
 
-.cr-bars-hour .cr-bar-slot {
-  height: 5.5rem;
+@media (min-width: 861px) {
+  .cr-bars-hour .cr-bar-slot {
+    height: 5.5rem;
+  }
 }
 
-.cr-bar {
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+@media (min-width: 861px) {
+  .cr-bar {
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+  }
 }
 
-.cr-bar.is-peak {
-  background: var(--forest);
+@media (min-width: 861px) {
+  .cr-bar.is-peak {
+    background: var(--forest);
+  }
 }
 
-.cr-bar-top {
-  color: var(--forest);
+@media (min-width: 861px) {
+  .cr-bar-top {
+    color: var(--forest);
+  }
 }
 
 /* Horizontal bars: a thick rounded track, the leader in the dark green. */
-.cr-row-track {
-  height: 0.5rem;
-  border-radius: 999px;
-  background: var(--canvas);
+@media (min-width: 861px) {
+  .cr-row-track {
+    height: 0.5rem;
+    border-radius: 999px;
+    background: var(--canvas);
+  }
 }
 
-.cr-row-fill {
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+@media (min-width: 861px) {
+  .cr-row-fill {
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+  }
 }
 
-.cr-row:first-child .cr-row-fill {
-  background: var(--forest);
+@media (min-width: 861px) {
+  .cr-row:first-child .cr-row-fill {
+    background: var(--forest);
+  }
 }
 
-.cr-hero {
-  font-size: 2.75rem;
-  letter-spacing: -0.045em;
+@media (min-width: 861px) {
+  .cr-hero {
+    font-size: 2.75rem;
+    letter-spacing: -0.045em;
+  }
 }
 
 /* Laptop only (owner, 14 Nov 2026: "don't touch mobile"). */
@@ -675,10 +711,12 @@
 }
 
 /* Card titles: one size, medium weight. */
-:is(.cr-title, .hm-card-head h2) {
-  font-size: var(--fs-7);
-  font-weight: 600;
-  letter-spacing: -0.02em;
+@media (min-width: 861px) {
+  :is(.cr-title, .hm-card-head h2) {
+    font-size: var(--fs-7);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
 }
 
 /* Laptop only (owner, 14 Nov 2026: "don't touch mobile"). */
@@ -727,30 +765,40 @@
 }
 
 /* Every bar's amount (owner, 14 Nov 2026): the best day's in dark green and bold, the others quieter. */
-.cr-bar-top {
-  font-weight: 500;
-  color: var(--muted);
+@media (min-width: 861px) {
+  .cr-bar-top {
+    font-weight: 500;
+    color: var(--muted);
+  }
 }
 
-.cr-bar-top.is-peak {
-  font-weight: 600;
-  color: var(--forest);
+@media (min-width: 861px) {
+  .cr-bar-top.is-peak {
+    font-weight: 600;
+    color: var(--forest);
+  }
 }
 
 /* The hour chart has a column for every hour (2026-11-14), so twenty striped tracks read as a barcode: here the
    track is a plain light pill, and the first and last time names keep inside the card. */
-.cr-bars-hour .cr-bar-slot {
-  background: var(--canvas);
+@media (min-width: 861px) {
+  .cr-bars-hour .cr-bar-slot {
+    background: var(--canvas);
+  }
 }
 
-.cr-bars-hour .cr-bar-col:first-child .cr-bar-tick,
-.cr-bars-hour .cr-bar-col:last-child .cr-bar-tick {
-  display: flex;
-  justify-content: flex-start;
+@media (min-width: 861px) {
+  .cr-bars-hour .cr-bar-col:first-child .cr-bar-tick,
+  .cr-bars-hour .cr-bar-col:last-child .cr-bar-tick {
+    display: flex;
+    justify-content: flex-start;
+  }
 }
 
-.cr-bars-hour .cr-bar-col:last-child .cr-bar-tick {
-  justify-content: flex-end;
+@media (min-width: 861px) {
+  .cr-bars-hour .cr-bar-col:last-child .cr-bar-tick {
+    justify-content: flex-end;
+  }
 }
 
 /* =====================================================================================================
@@ -1853,36 +1901,3 @@
   }
 }
 
-/*
- * The Menu screen's header on a narrow phone (owner, 14 Nov 2026: "Menu was aligned before"). At ~342px
- * back + "Menu" + ⓘ and the three buttons need ~354px and the buttons wrapped to a second line. Only this
- * screen's header, only below 400px: the buttons 44px instead of 52px with a 6px gap, the title cut with
- * "…" only if it really cannot fit, and the whole header kept to one line.
- */
-@media (max-width: 400px) {
-  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar {
-    flex-wrap: nowrap;
-  }
-
-  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-lead {
-    min-width: 0;
-    flex: 1 1 auto;
-  }
-
-  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-title h1 {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-actions {
-    flex-shrink: 0;
-    gap: 6px;
-  }
-
-  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-actions > .btn {
-    min-width: 44px;
-    width: 44px;
-    padding-inline: 0;
-  }
-}
