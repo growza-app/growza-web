@@ -1417,6 +1417,8 @@ export interface OrderListRow {
   paymentPending?: boolean;
   /** Owner, 9 Nov 2026 — the order's stored token (API 0174); absent from an older API. */
   tokenNo?: number | null;
+  /** QA 2026-11-14 — when it was handed over the counter; null while it waits. Absent from an older API. */
+  handedOverAt?: string | null;
 }
 
 export interface OrdersPage {

@@ -18,6 +18,25 @@ export type PosMode = 'sell' | 'queue' | 'return';
 export type PosTokenState = 'preparing' | 'completed';
 export type PosTokenOverride = PosTokenState | `preparing:${number}`;
 
+/**
+ * Whether an order is still in the queue — the till's rule, and the one Home's queue card uses too (QA 2026-11-14:
+ * Home read "2 in queue" while the till read "All caught up", because Home never looked at the handover).
+ *
+ * The shop's answer first: handed over on any device is done. Then this device's own flag (a local "done" does not
+ * clear an unpaid order). Then the default: unpaid, or rung up within the last thirty minutes, is still preparing.
+ */
+export function queueStateOf(o: {
+  handedOverAt: string | null | undefined;
+  paymentPending: boolean;
+  override: PosTokenOverride | undefined;
+  elapsedMin: number;
+}): PosTokenState {
+  if (o.handedOverAt) return 'completed';
+  if (!o.paymentPending && o.override === 'completed') return 'completed';
+  if (o.override === 'preparing' || (typeof o.override === 'string' && o.override.startsWith('preparing:'))) return 'preparing';
+  return o.paymentPending || o.elapsedMin <= 30 ? 'preparing' : 'completed';
+}
+
 export interface PosDailyToken {
   id: string;
   tokenNo: number;
@@ -189,7 +208,6 @@ export function buildDailyTokens(
     const channel = first.channel ?? 'counter';
     const paymentMode = first.paymentMode ?? null;
     const paymentPending = isProductSale && channel === 'counter' && (first.paymentPending ?? paymentMode === null);
-    const defaultState: PosTokenState = paymentPending || elapsedMin <= 30 ? 'preparing' : 'completed';
     /*
      * Owner, 4 Nov 2026 — the SHOP's answer first, then this device's.
      *
@@ -204,13 +222,7 @@ export function buildDailyTokens(
      * the other direction is this device's own until the server knows better.
      */
     const handedOverAt = first.handedOverAt ?? null;
-    const state: PosTokenState =
-      (handedOverAt ? 'completed' : null) ??
-      (!paymentPending && rawOverride === 'completed'
-        ? 'completed'
-        : rawOverride === 'preparing' || (typeof rawOverride === 'string' && rawOverride.startsWith('preparing:'))
-          ? 'preparing'
-          : defaultState);
+    const state = queueStateOf({ handedOverAt, paymentPending, override: rawOverride, elapsedMin });
 
     return {
       id: key,
