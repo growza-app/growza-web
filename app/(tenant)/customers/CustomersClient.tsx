@@ -553,10 +553,27 @@ export function CustomersClient({
                 terms and values to a screen reader, and a tap anywhere on the box to everyone else. */}
             {(
               [
-                { card: 'all', label: t('kpiTotal', { noun: lower }), value: String(stats.total) },
-                { card: 'new', label: t('kpiNew'), value: String(stats.newThisMonth) },
-                { card: 'returning', label: t('kpiReturning', { noun: lower }), value: String(stats.returning) },
-                { card: 'returning', label: t('kpiRepeat'), value: `${stats.repeatRatePct}%` },
+                // Owner, 14 Nov 2026 ("can we add more info") — each figure carries one line that explains it, from
+                // the stats this page already has. Total also shows how its people split across the four bands.
+                {
+                  card: 'all',
+                  label: t('kpiTotal', { noun: lower }),
+                  value: String(stats.total),
+                  note: neverPct !== null ? t('neverVisitedShort', { count: stats.neverVisited, pct: neverPct }) : t('kpiTotalSub'),
+                },
+                {
+                  card: 'new',
+                  label: t('kpiNew'),
+                  value: String(stats.newThisMonth),
+                  note: t('kpiNewPct', { pct: stats.total > 0 ? Math.round((stats.newThisMonth / stats.total) * 100) : 0, noun: lower }),
+                },
+                { card: 'returning', label: t('kpiReturning', { noun: lower }), value: String(stats.returning), note: t('kpiReturningSub') },
+                {
+                  card: 'returning',
+                  label: t('kpiRepeat'),
+                  value: `${stats.repeatRatePct}%`,
+                  note: t('kpiRepeatOf', { returning: stats.returning, total: stats.total, noun: lower }),
+                },
               ] as const
             ).map((figure) => (
               <div key={figure.label} className={figure.card !== 'all' && status === figure.card ? 'is-on' : undefined}>
@@ -572,10 +589,26 @@ export function CustomersClient({
                     {figure.value}
                   </button>
                 </dd>
+                <dd className="cust-desk-kpi-note">{figure.note}</dd>
+                {figure.card === 'all' && stats.total > 0 ? (
+                  <dd className="cust-desk-kpi-bands" aria-hidden="true">
+                    {bands.map((b) => {
+                      const n = bandCount(b) ?? 0;
+                      return n > 0 ? <span key={b} style={{ flexGrow: n, background: SEGMENT_TONE[b] }} /> : null;
+                    })}
+                    {stats.neverVisited > 0 ? <span className="is-never" style={{ flexGrow: stats.neverVisited }} /> : null}
+                  </dd>
+                ) : null}
               </div>
             ))}
             {/* Flat, where the others are raised: raised means "tap me", and the points open nothing. */}
-            {points && <div className="cust-desk-kpi-flat"><dt>{t('kpiPoints')}</dt><dd title={t('kpiPointsSub', { noun: lower })}>{points.full}</dd></div>}
+            {points && (
+              <div className="cust-desk-kpi-flat">
+                <dt>{t('kpiPoints')}</dt>
+                <dd>{points.full}</dd>
+                <dd className="cust-desk-kpi-note">{t('kpiPointsSub', { noun: lower })}</dd>
+              </div>
+            )}
           </dl>
           <div className="pf-wide-grid cust-desk-grid">
             <aside className="pf-wide-left cust-desk-left" aria-label={t('segmentsTitle', { noun: lower })}>

@@ -223,6 +223,8 @@
     "kpiReturningSub": "एक से ज़्यादा बार बुकिंग की",
     "kpiRepeat": "दोबारा आने की दर",
     "kpiRepeatSub": "दोबारा आए ÷ कुल {noun}",
+    "kpiNewPct": "सभी {noun} का {pct}%",
+    "kpiRepeatOf": "{total} में से {returning} {noun}",
     "showFirst": "पहले दिखाएँ",
     "orderRecent": "जो हाल में आए",
     "orderSpent": "सबसे ज़्यादा खर्च",
@@ -5010,6 +5012,25 @@
       "saveFailed": "सहेज नहीं सके। फिर कोशिश करें।",
       "loadFailed": "यह नहीं खुल सका। फिर कोशिश करें।",
       "retry": "फिर कोशिश करें"
+    },
+    "tiles": {
+      "ordersToday": "आज के ऑर्डर",
+      "yesterday": "कल: {count}",
+      "toSend": "{count} भेजने हैं",
+      "salesToday": "आज की बिक्री",
+      "noSales": "अभी कुछ नहीं आया",
+      "cameIn": "आज आए",
+      "cameInNote": "आज ऑर्डर करने वाले लोग",
+      "returns": "वापसी",
+      "returnsNote": "पिछले 3 महीने · ज़्यादातर: {reason}",
+      "returnsNone": "3 महीने में कुछ वापस नहीं आया",
+      "modes": {
+        "upi": "UPI",
+        "cash": "नकद",
+        "card": "कार्ड",
+        "other": "अन्य",
+        "not_recorded": "नहीं लिखा"
+      }
     }
   },
   "settingsChannels": {

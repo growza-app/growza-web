@@ -77,7 +77,7 @@ describe('Clients on a desk', () => {
 
   /** Owner, 13 Nov 2026 — raised means "tap me"; the points open no list. */
   it('lays the reward points flat, and drops the group chip from a list that is already one group', () => {
-    expect(client).toContain(`{points && <div className="cust-desk-kpi-flat"><dt>{t('kpiPoints')}</dt>`);
+    expect(client).toMatch(/\{points && \(\s*<div className="cust-desk-kpi-flat">\s*<dt>\{t\('kpiPoints'\)\}<\/dt>/);
     expect(css).toMatch(/\.cust-desk-kpis > div\.cust-desk-kpi-flat \{\s*background: var\(--kpi-top\);\s*box-shadow: none;/);
     expect(client).toMatch(/<div className="cust-recency">[\s\S]{0,260}\{status === 'all' \? chipOf\(c\.segment\) : null\}/);
   });

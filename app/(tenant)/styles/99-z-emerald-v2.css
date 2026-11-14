@@ -1970,7 +1970,7 @@ body {
  * white type — Home's first tile — and keeps its ring, so "on" is not said by colour alone.
  */
 @media (min-width: 861px) {
-  :is(.prd-stat, .att-tile),
+  :is(.prd-stat, .att-tile, .ord-kpi),
   .page-body.cust-desk > .cust-desk-kpis > div {
     display: flex;
     flex-direction: column;
@@ -1991,14 +1991,14 @@ body {
     order: -1;
   }
 
-  :is(.prd-stat-l, .att-tile-head),
+  :is(.prd-stat-l, .att-tile-head, .ord-kpi-label),
   .page-body.cust-desk > .cust-desk-kpis dt {
     font-size: var(--fs-3);
     font-weight: 500;
     color: var(--text);
   }
 
-  :is(.prd-stat-n, .att-tile-count),
+  :is(.prd-stat-n, .att-tile-count, .ord-kpi-value),
   .page-body.cust-desk > .cust-desk-kpis dd {
     font-size: var(--fs-11);
     font-weight: 600;
@@ -2007,9 +2007,54 @@ body {
     color: var(--text);
   }
 
-  .prd-stat-sub {
+  .prd-stat-sub,
+  .ord-kpi-note,
+  .page-body.cust-desk > .cust-desk-kpis dd.cust-desk-kpi-note {
     font-size: var(--fs-1);
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 1.35;
     color: var(--muted);
+  }
+
+  .page-body.cust-desk > .cust-desk-kpis > div.is-on dd.cust-desk-kpi-note {
+    color: rgb(255 255 255 / 72%);
+  }
+
+  /* Total guests: how they split across the four bands (and those who never came), as one thin bar. */
+  .page-body.cust-desk > .cust-desk-kpis dd.cust-desk-kpi-bands {
+    display: flex;
+    gap: 2px;
+    width: 100%;
+    height: 0.375rem;
+    margin-top: 0.125rem;
+    overflow: hidden;
+    border-radius: 999px;
+  }
+
+  .cust-desk-kpi-bands > span {
+    flex-basis: 0;
+    min-width: 0.25rem;
+  }
+
+  .cust-desk-kpi-bands > span.is-never {
+    background: var(--canvas-line);
+  }
+
+  /* Orders: today's figures over the list. */
+  .ord-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: var(--sp-3);
+  }
+
+  a.ord-kpi {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  a.ord-kpi:hover {
+    border-color: var(--canvas-line);
   }
 
   .prd-stat-tap:hover,
@@ -2092,13 +2137,18 @@ body {
     min-width: 0;
   }
 
-  .ord > .ord-tools {
+  .ord {
+    grid-auto-flow: row dense;
+  }
+
+  .ord > :is(.ord-tools, .ord-kpis) {
     grid-column: 1 / -1;
   }
 
+  /* Placed by the grid, not by row number: the tiles and the one-guest banner come and go above it. */
   .ord > .pay {
     grid-column: 2;
-    grid-row: 2 / span 4;
+    grid-row: span 4;
     position: sticky;
     top: 0;
     margin: 0;

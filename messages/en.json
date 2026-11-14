@@ -223,6 +223,8 @@
     "kpiReturningSub": "Came more than once",
     "kpiRepeat": "% came back",
     "kpiRepeatSub": "Out of all {noun}",
+    "kpiNewPct": "{pct}% of all {noun}",
+    "kpiRepeatOf": "{returning} of {total} {noun}",
     "showFirst": "Show first",
     "orderRecent": "Came last",
     "orderSpent": "Spent the most",
@@ -5010,6 +5012,25 @@
       "saveFailed": "Could not save. Try again.",
       "loadFailed": "Could not load this. Try again.",
       "retry": "Try again"
+    },
+    "tiles": {
+      "ordersToday": "Orders today",
+      "yesterday": "Yesterday: {count}",
+      "toSend": "{count} to send",
+      "salesToday": "Sales today",
+      "noSales": "Nothing taken yet",
+      "cameIn": "Came in today",
+      "cameInNote": "People who ordered today",
+      "returns": "Returns",
+      "returnsNote": "Last 3 months · mostly: {reason}",
+      "returnsNone": "Nothing came back in 3 months",
+      "modes": {
+        "upi": "UPI",
+        "cash": "Cash",
+        "card": "Card",
+        "other": "Other",
+        "not_recorded": "Not noted"
+      }
     }
   },
   "settingsChannels": {

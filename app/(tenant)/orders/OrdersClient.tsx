@@ -15,6 +15,7 @@ import { useAreas } from '../components/SessionProvider';
 import { channelsOf, isDeliveryApp, sellsOnMarketplaces } from '../lib/order-channels';
 import { formatTokenNo } from '../pos/pos-helpers';
 import { groupByDay } from './order-days';
+import { OrdersDeskTiles } from './OrdersDeskTiles';
 
 /**
  * Jira GRW-614 — the Orders list.
@@ -194,6 +195,8 @@ export function OrdersClient({
           </a>
         </div>
       )}
+      {/* Emerald v3 — a laptop's row of today's figures; renders nothing on a phone. */}
+      <OrdersDeskTiles />
       <div className="ord-tools">
         <label className="search-wrap ord-search">
           <IconSearch />
