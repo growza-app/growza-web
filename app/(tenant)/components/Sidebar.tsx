@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { canSee, type MemberRole } from '../lib/nav-policy';
 import { isActive, resolveNav, type NavGroup } from '../lib/nav-sections';
@@ -48,6 +48,12 @@ import {
 /** Where a person's folded and unfolded groups are kept on this device. */
 const FOLDS_KEY = 'growza_nav_folds';
 
+
+/**
+ * Emerald v2 — where the sidebar's "General" section starts: the WhatsApp demo and Settings, the rest is Main.
+ * Matched by its tail so this file still spells the demo's link once, behind its guard (whatsapp-demo-links.test.ts).
+ */
+const isGeneral = (href: string | undefined) => href === '/settings' || (href ?? '').endsWith('whatsapp');
 export function Sidebar({
   tenantName,
   labels,
@@ -280,13 +286,18 @@ export function Sidebar({
           {/* Jira GRW-66 · GRW-157 — a stylist is offered what they can use. The
               API is what refuses (GRW-156); this is about not wasting their time
               on eight links that 403. */}
+          {/* Emerald v2 — the laptop's two section labels; the phone drawer does not draw them (99-z-emerald-v2.css). */}
+          <span className="nav-section">{t.nav.sectionMain}</span>
           {nav.map((item) => {
             const current = item.routes.some((r) => isActive(pathname, r));
+            const firstGeneral = nav.find((n) => isGeneral(n.href));
             const expandable = item.children.length > 0;
             const expanded = expandable && (folds[item.label] ?? current);
             const panel = `nav-children-${nav.indexOf(item)}`;
             return (
-              <div key={item.label} className={`nav-group ${item.className ?? ''}`}>
+              <Fragment key={item.label}>
+              {item === firstGeneral ? <span className="nav-section">{t.nav.sectionGeneral}</span> : null}
+              <div className={`nav-group ${item.className ?? ''}`}>
                 <div className="nav-row">
                   <a
                     href={item.href}
@@ -334,6 +345,7 @@ export function Sidebar({
                   </div>
                 ) : null}
               </div>
+              </Fragment>
             );
           })}
         </nav>

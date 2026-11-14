@@ -502,6 +502,12 @@ body {
   .rst-delta-sub {
     display: none;
   }
+
+  /* A white tile is too narrow here for its label, its chip and its arrow on one line; the sparkline already
+     says which way the week went, so the chip gives way. */
+  .rst-kpi:is(.rst-kpi-orders, .rst-kpi-customers) .rst-kpi-side {
+    display: none;
+  }
 }
 
 /* ---------- every other screen ----------
@@ -761,4 +767,442 @@ body {
   margin-top: var(--sp-1);
   font-size: var(--fs-1);
   color: rgb(255 255 255 / 72%);
+}
+
+/* =====================================================================================================
+ * Emerald v3 layout (owner, 14 Nov 2026: "go ahead with all") — what the shot does that colour alone
+ * could not: floating panels, a page head with two pill actions, a row of charts, and full rows below.
+ * ===================================================================================================== */
+
+/* The two section labels in the sidebar are a laptop thing; the phone drawer stays one list. */
+.nav-section {
+  display: none;
+}
+
+@media (min-width: 861px) {
+  /* ---- floating panels: the sidebar and the header are white cards on the grey page ---- */
+  .shell {
+    grid-template-columns: 248px 1fr;
+  }
+
+  .sidebar {
+    margin: 0.75rem 0 0.75rem 0.75rem;
+    height: calc(min(100dvh, var(--app-h, 100dvh)) - 1.5rem);
+    background: var(--surface);
+    border-right: 0;
+    border-radius: var(--radius-lg);
+  }
+
+  .nav-section {
+    display: block;
+    margin: var(--sp-3) 0 var(--sp-1);
+    padding: 0 12px;
+    font-size: var(--fs-1);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .nav a.active {
+    background: var(--canvas);
+  }
+
+  :is(.topbar, .hm-head) {
+    margin: 0.75rem 0.75rem 0;
+    border-bottom: 0;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  /* The restaurant's Home: the header is the slim bar (search, date, bell, you); the greeting moves down into
+     the page head. The h1 stays for a screen reader, moved out of sight. */
+  .hm-head.is-rst-head {
+    padding-block: 0.625rem;
+  }
+
+  .hm-head.is-rst-head .hm-head-id {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .hm-head.is-rst-head .hm-head-controls {
+    flex: 1;
+  }
+
+  .hm-head.is-rst-head .hm-head-controls > :first-child {
+    margin-right: auto;
+  }
+
+  /* ---- page head ---- */
+  .rst-page-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--sp-4);
+  }
+
+  .rst-page-id {
+    min-width: 0;
+  }
+
+  .rst-page-title {
+    margin: 0;
+    font-size: var(--fs-12);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1.15;
+    color: var(--text);
+  }
+
+  .rst-page-sub {
+    margin: var(--sp-1) 0 0;
+    font-size: var(--fs-4);
+    color: var(--muted);
+  }
+
+  .rst-page-actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: var(--sp-2);
+  }
+
+  .rst-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: 2.75rem;
+    padding: 0 1.125rem;
+    border: 1.5px solid var(--forest);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--forest);
+    font: inherit;
+    font-size: var(--fs-3);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .rst-pill svg {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .rst-pill.is-primary {
+    background: var(--forest);
+    color: #fff;
+  }
+
+  .rst-pill:hover {
+    background: var(--canvas);
+  }
+
+  .rst-pill.is-primary:hover {
+    background: var(--forest-2);
+  }
+
+  /* ---- row 2: three cards of pictures ---- */
+  .rst-charts {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 0.9fr;
+    gap: 1.25rem;
+  }
+
+  .rst-week-total {
+    font-size: var(--fs-7);
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .rst-week-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--sp-3);
+    margin: var(--sp-3) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rst-week-bars li {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .rst-week-amt {
+    min-height: 1.125rem;
+    margin-bottom: 2px;
+    font-size: var(--fs-1);
+    font-weight: 500;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .rst-week-bars li.is-peak .rst-week-amt {
+    font-weight: 600;
+    color: var(--forest);
+  }
+
+  .rst-week-slot {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    max-width: 2.75rem;
+    height: 8.5rem;
+    border-radius: 999px;
+    background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
+  }
+
+  .rst-week-bar {
+    width: 100%;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+  }
+
+  .rst-week-bars li.is-peak .rst-week-bar {
+    background: var(--forest);
+  }
+
+  .rst-week-day {
+    margin-top: var(--sp-1);
+    font-size: var(--fs-1);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* The half-donut. Arc 0 is the biggest share, then down the greens. */
+  .rst-gauge {
+    position: relative;
+    margin: var(--sp-3) auto 0;
+    max-width: 15rem;
+  }
+
+  .rst-gauge svg {
+    display: block;
+    width: 100%;
+  }
+
+  .rst-gauge-track,
+  .rst-gauge-arc {
+    fill: none;
+    stroke-width: 14;
+    stroke-linecap: round;
+  }
+
+  .rst-gauge-track {
+    stroke: var(--canvas);
+  }
+
+  .rst-gauge-arc.is-0 { stroke: var(--forest); }
+  .rst-gauge-arc.is-1 { stroke: color-mix(in srgb, var(--forest-2) 55%, var(--mint)); }
+  .rst-gauge-arc.is-2 { stroke: var(--mint); }
+  .rst-gauge-arc.is-3,
+  .rst-gauge-arc.is-4 { stroke: var(--canvas-line); }
+
+  .rst-gauge-mid {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    text-align: center;
+  }
+
+  .rst-gauge-mid strong {
+    display: block;
+    font-size: var(--fs-11);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+
+  .rst-gauge-mid span {
+    font-size: var(--fs-2);
+    color: var(--muted);
+  }
+
+  .rst-gauge-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--sp-1) var(--sp-3);
+    margin: var(--sp-3) 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-2);
+    color: var(--muted);
+  }
+
+  .rst-gauge-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+  }
+
+  .rst-gauge-legend b {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .rst-gauge-legend i {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+  }
+
+  .rst-gauge-legend i.is-0 { background: var(--forest); }
+  .rst-gauge-legend i.is-1 { background: color-mix(in srgb, var(--forest-2) 55%, var(--mint)); }
+  .rst-gauge-legend i.is-2 { background: var(--mint); }
+  .rst-gauge-legend i:is(.is-3, .is-4) { background: var(--canvas-line); }
+
+  /* The dark card: the queue, live, balancing the dark money tile above it on the other side. */
+  .rst-queue-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    padding: 1.25rem;
+    border-radius: var(--radius-lg);
+    color: #fff;
+    background:
+      radial-gradient(70% 90% at 100% 0%, color-mix(in srgb, var(--lime) 22%, transparent) 0%, transparent 70%),
+      radial-gradient(80% 120% at 0% 100%, color-mix(in srgb, var(--mint) 30%, var(--forest-2)) 0%, transparent 70%),
+      linear-gradient(140deg, var(--forest) 0%, var(--forest-2) 100%);
+  }
+
+  .rst-queue-card h3 {
+    margin: 0;
+    font-size: var(--fs-7);
+    font-weight: 600;
+  }
+
+  .rst-queue-count {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-2);
+    margin: auto 0 0;
+  }
+
+  .rst-queue-count strong {
+    font-size: 2.75rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.045em;
+    color: color-mix(in srgb, var(--lime) 40%, #fff);
+  }
+
+  .rst-queue-count span,
+  .rst-queue-done {
+    font-size: var(--fs-2);
+    color: rgb(255 255 255 / 72%);
+  }
+
+  .rst-queue-done {
+    margin: 0;
+  }
+
+  .rst-queue-done b {
+    color: #fff;
+  }
+
+  .rst-queue-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    margin-top: var(--sp-2);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--forest);
+    font-size: var(--fs-3);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .rst-queue-btn:hover {
+    background: var(--mint);
+  }
+
+  /* ---- row 3 ---- */
+  .rst-bottom-grid {
+    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  }
+
+  .rst-sellers {
+    display: flex;
+    flex-direction: column;
+    margin: var(--sp-2) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rst-sellers li {
+    display: grid;
+    grid-template-columns: 1.75rem minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: var(--sp-3);
+    min-height: 3.25rem;
+    border-bottom: 1px solid var(--canvas);
+  }
+
+  .rst-sellers li:last-child {
+    border-bottom: 0;
+  }
+
+  .rst-seller-rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    background: var(--canvas);
+    color: var(--forest);
+    font-size: var(--fs-2);
+    font-weight: 600;
+  }
+
+  .rst-seller-rank.is-top {
+    background: var(--forest);
+    color: #fff;
+  }
+
+  .rst-seller-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--fs-4);
+    font-weight: 500;
+  }
+
+  .rst-seller-units {
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--mint) 38%, var(--surface));
+    color: var(--forest);
+    font-size: var(--fs-1);
+    font-weight: 500;
+  }
+
+  .rst-seller-val {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* A sideways tablet: the three chart cards wrap to two and one. */
+@media (min-width: 861px) and (max-width: 1180px) {
+  .rst-charts {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .rst-week-panel {
+    grid-column: 1 / -1;
+  }
 }

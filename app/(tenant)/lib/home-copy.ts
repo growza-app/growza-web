@@ -441,6 +441,12 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       nothingSold: S('Nothing sold today', 'आज कुछ नहीं बिका'),
       ordersTitle: S(labels.orders ?? 'Orders', 'ऑर्डर'),
       queueTitle: S('Queue', 'कतार'),
+      /** Emerald v2 — the laptop Home's header buttons and its new cards. */
+      newOrderAction: S('New order', 'नया ऑर्डर'),
+      salesLast7: S('Sales, last 7 days', 'बिक्री, पिछले 7 दिन'),
+      paidLast7: S('Payments, last 7 days', 'भुगतान, पिछले 7 दिन'),
+      waitingNow: S('waiting now', 'अभी इंतज़ार में'),
+      topSellersTitle: S('Top sellers', 'सबसे ज़्यादा बिके'),
       openQueue: S('Open queue', 'कतार खोलें'),
       inQueueNow: S('in queue', 'कतार में'),
       noQueueNow: S('No orders waiting in queue', 'कतार में कोई ऑर्डर नहीं'),
@@ -636,6 +642,9 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       more: S(copy.nav.more, 'और'),
       newBooking: S('New booking', 'नई बुकिंग'),
       signOut: S(copy.nav.signOut, 'लॉग आउट'),
+      /** Emerald v2 — the laptop sidebar's two section labels. */
+      sectionMain: S('Main', 'मुख्य'),
+      sectionGeneral: S('General', 'सामान्य'),
       demo: S(copy.whatsapp.previewPill, 'डेमो'),
     },
 

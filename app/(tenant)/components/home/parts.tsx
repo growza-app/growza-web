@@ -159,13 +159,8 @@ export function HomeHeader({
         {/* Jira GRW-395 — the one branch picker; Home's own dropdown and tabs are gone. */}
         <HeaderBranchPicker />
         {/* Jira GRW-409 — the same gated search as every other header; a receptionist's or stylist's Home has none. */}
-        {simpleDesktop ? (
-          <span className="hm-mobile">
-            <HeaderSearch wide />
-          </span>
-        ) : (
-          <HeaderSearch wide />
-        )}
+        {/* Emerald v2 — the restaurant's laptop header carries the search too, as a pill (it was phone-only). */}
+        <HeaderSearch wide />
         {onDaySummary && !simpleDesktop ? (
           <button type="button" className="hm-summary-btn" onClick={onDaySummary} aria-label={t.daySummary}>
             <IconDaySummary />

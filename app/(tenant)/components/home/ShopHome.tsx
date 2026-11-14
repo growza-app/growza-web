@@ -28,6 +28,7 @@ import { useAreas } from '../SessionProvider';
 import {
   IconNavClients,
   IconNavOrders,
+  IconPlus,
   IconNavStock,
   IconSettings,
   IconChevronRight,
@@ -526,6 +527,20 @@ export function ShopHome({
     return { ticks, points, polyPoints, areaPoints, maxMinor, totalMinor, dailyAvgMinor, peakDay };
   }, [channelData, lang]);
 
+  /* Emerald v2 — the laptop's half-donut: the window's takings by how they were paid, biggest first, in shares of 100. */
+  const paySplit = useMemo(() => {
+    const raw = (channelData?.byPaymentMode ?? []).filter((m) => m.revenueMinor > 0).sort((a, b) => b.revenueMinor - a.revenueMinor);
+    const total = raw.reduce((sum, m) => sum + m.revenueMinor, 0);
+    let start = 0;
+    const slices = raw.map((m, i) => {
+      const pct = i === raw.length - 1 ? 100 - start : Math.round((m.revenueMinor / total) * 100);
+      const slice = { mode: m.mode, minor: m.revenueMinor, pct, start };
+      start += pct;
+      return slice;
+    });
+    return { total, slices };
+  }, [channelData]);
+
   const channelBreakdown = useMemo(() => {
     const byKey = new Map((channelData?.channels ?? []).map((c) => [c.channel, c]));
     const totalBilled = Math.max(1, Number(channelData?.totals.billedMinor ?? 0));
@@ -886,7 +901,7 @@ export function ShopHome({
     <>
       <HomeHeader
         t={t}
-        title={isKitchen ? `${t.greeting(greetingPart)}! 👋` : t.greeting(greetingPart)}
+        title={t.greeting(greetingPart)}
         sub={isKitchen ? s.kitchenSub(businessName) : money ? t.ownerSub(businessName, false) : businessName}
         businessName={businessName}
         locationName={locationName}
@@ -969,6 +984,33 @@ export function ShopHome({
                ===================================================================== */}
             {isKitchen ? (
               <div className="rst-desk hm-desktop">
+                {/*
+                  Emerald v2 (owner, 2026-11-14, "go ahead with all") — the page's own head, as the shot has it: the
+                  greeting and one line on the left, the day's two actions on the right as pills. The header's h1 says
+                  the same words to a screen reader; on a laptop it is moved out of sight (99-z-emerald-v2.css), so
+                  this copy is hidden from one.
+                */}
+                <div className="rst-page-head">
+                  <div className="rst-page-id" aria-hidden="true">
+                    <p className="rst-page-title">{t.greeting(greetingPart)}</p>
+                    <p className="rst-page-sub">{s.kitchenSub(businessName)}</p>
+                  </div>
+                  <div className="rst-page-actions">
+                    {money ? (
+                      <button type="button" className="rst-pill" onClick={() => setSummaryOpen(true)}>
+                        <IconDaySummary />
+                        <span>{t.daySummary}</span>
+                      </button>
+                    ) : null}
+                    {can('/pos') ? (
+                      <a className="rst-pill is-primary" href="/pos">
+                        <IconPlus />
+                        <span>{s.newOrderAction}</span>
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+
                 {/* ROW 1 — 3 Soft Pastel KPI Cards */}
                 <div className="rst-kpis">
                   {/* 1. Today's sales */}
@@ -1073,60 +1115,90 @@ export function ShopHome({
                   </a>
                 </div>
 
-                {/* ROW 2 — What would you like to do? (4 Action Cards) */}
-                <section className="rst-actions-section">
-                  <h2 className="rst-section-title">{s.whatWouldYouLikeToDo}</h2>
-                  <div className="rst-actions-grid">
-                    {can('/orders') ? (
-                      <a className="rst-action-tile" href="/orders">
-                        <span className="rst-action-icon" aria-hidden>
-                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="5" y="4" width="14" height="17" rx="2.5" />
-                            <path d="M5 9h14" />
-                            <circle cx="12" cy="14" r="1.5" />
-                          </svg>
-                        </span>
-                        <strong>{s.viewOrdersAction}</strong>
+                {/*
+                  ROW 2 — Emerald v2: the week in pictures instead of four shortcut tiles (the sidebar has every one of
+                  those doors). Each card draws only when its figures came back; nothing is drawn as a placeholder.
+                */}
+                <div className="rst-charts">
+                  {money && trendChart.points.length > 0 && trendChart.totalMinor > 0 ? (
+                    <section className="rst-panel rst-week-panel">
+                      <div className="rst-panel-head">
+                        <h3>{s.salesLast7}</h3>
+                        <strong className="rst-week-total">{rupees(trendChart.totalMinor)}</strong>
+                      </div>
+                      <ul className="rst-week-bars">
+                        {trendChart.points.map((p) => (
+                          <li key={p.key} className={p.isPeak ? 'is-peak' : ''}>
+                            <span className="rst-week-amt" aria-hidden="true">
+                              {p.revenueMinor > 0 ? rupees(p.revenueMinor) : ''}
+                            </span>
+                            <span className="rst-week-slot">
+                              <span className="rst-week-bar" style={{ height: `${p.pct}%` }} />
+                            </span>
+                            <span className="rst-week-day">{p.dateShort}</span>
+                            <span className="sr-only">
+                              {p.dateShort} {rupees(p.revenueMinor)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ) : null}
+
+                  {money && paySplit.total > 0 ? (
+                    <section className="rst-panel rst-pay-panel">
+                      <div className="rst-panel-head">
+                        <h3>{s.paidLast7}</h3>
+                      </div>
+                      <div className="rst-gauge">
+                        <svg viewBox="0 0 120 66" aria-hidden="true" focusable="false">
+                          <path className="rst-gauge-track" d="M10 60 A50 50 0 0 1 110 60" pathLength={100} />
+                          {paySplit.slices.map((sl, i) => (
+                            <path
+                              key={sl.mode}
+                              className={`rst-gauge-arc is-${i}`}
+                              d="M10 60 A50 50 0 0 1 110 60"
+                              pathLength={100}
+                              strokeDasharray={`${Math.max(0, sl.pct - 1.2)} 100`}
+                              strokeDashoffset={-sl.start}
+                            />
+                          ))}
+                        </svg>
+                        <div className="rst-gauge-mid">
+                          <strong>{paySplit.slices[0]!.pct}%</strong>
+                          <span>{t.payment[paySplit.slices[0]!.mode] ?? paySplit.slices[0]!.mode}</span>
+                        </div>
+                      </div>
+                      <ul className="rst-gauge-legend">
+                        {paySplit.slices.map((sl, i) => (
+                          <li key={sl.mode}>
+                            <i className={`is-${i}`} aria-hidden="true" />
+                            <span>{t.payment[sl.mode] ?? sl.mode}</span>
+                            <b>{rupees(sl.minor)}</b>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ) : null}
+
+                  <section className="rst-queue-card">
+                    <div className="rst-queue-head">
+                      <h3>{s.queueTitle}</h3>
+                    </div>
+                    <p className="rst-queue-count">
+                      <strong>{queueStats.inQueue}</strong>
+                      <span>{queueStats.inQueue === 0 ? s.noQueueNow : s.waitingNow}</span>
+                    </p>
+                    <p className="rst-queue-done">
+                      {s.completedToday}: <b>{queueStats.completedToday}</b>
+                    </p>
+                    {can('/pos') ? (
+                      <a className="rst-queue-btn" href="/pos?mode=queue">
+                        {s.openQueue}
                       </a>
                     ) : null}
-                    {can('/stock') ? (
-                      <a className="rst-action-tile" href={`/stock${stockBranch}`}>
-                        <span className="rst-action-icon" aria-hidden>
-                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z" />
-                            <path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z" />
-                          </svg>
-                        </span>
-                        <strong>{s.manageMenuAction}</strong>
-                      </a>
-                    ) : null}
-                    {can('/customers') ? (
-                      <a className="rst-action-tile" href="/customers">
-                        <span className="rst-action-icon" aria-hidden>
-                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                            <circle cx="9" cy="7" r="4" />
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                          </svg>
-                        </span>
-                        <strong>{s.customersCardTitle}</strong>
-                      </a>
-                    ) : null}
-                    {can('/reports') ? (
-                      <a className="rst-action-tile" href="/reports">
-                        <span className="rst-action-icon" aria-hidden>
-                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="4" y="13" width="3.5" height="7" rx="1" />
-                            <rect x="10.25" y="9" width="3.5" height="11" rx="1" />
-                            <rect x="16.5" y="5" width="3.5" height="15" rx="1" />
-                          </svg>
-                        </span>
-                        <strong>{t.nav.reports}</strong>
-                      </a>
-                    ) : null}
-                  </div>
-                </section>
+                  </section>
+                </div>
 
                 {/* ROW 3 — Two-Column Bottom Grid: Recent orders (left) + Needs attention (right) */}
                 <div className="rst-bottom-grid">
@@ -1144,7 +1216,7 @@ export function ShopHome({
                       <p className="hm-empty">{s.noOrdersBody}</p>
                     ) : (
                       <ul className="rst-order-list">
-                        {recentOrders.slice(0, 3).map((o) => {
+                        {recentOrders.slice(0, 5).map((o) => {
                           // What the order IS — never a guess at it. An app's order is a delivery; anything else rung up here is a counter order.
                           const isDelivery = isDeliveryApp(o.channel);
                           const subLabel = `${channelWord(o.channel)} · ${formatDateTime(o.soldAt)}`;
@@ -1198,7 +1270,35 @@ export function ShopHome({
                     )}
                   </section>
 
-                  {/* Right: Needs attention — only what is true right now; nothing at all when nothing is. */}
+                  {/* Emerald v2 — what sold, beside what was ordered. */}
+                  {money && (sellersData?.rows?.length ?? 0) > 0 ? (
+                    <section className="rst-panel rst-sellers-panel">
+                      <div className="rst-panel-head">
+                        <h3>{s.topSellersTitle}</h3>
+                        {can('/stock/sellers') ? (
+                          <a className="rst-view-all" href="/stock/sellers">
+                            {t.viewAll} →
+                          </a>
+                        ) : null}
+                      </div>
+                      <ol className="rst-sellers">
+                        {(sellersData?.rows ?? []).slice(0, 5).map((item, idx) => (
+                          <li key={item.id}>
+                            <span className={`rst-seller-rank${idx === 0 ? ' is-top' : ''}`}>{idx + 1}</span>
+                            <span className="rst-seller-name">
+                              {item.name}
+                              {item.sizeLabel ? ` (${item.sizeLabel})` : ''}
+                            </span>
+                            <span className="rst-seller-units">{s.soldCountPill(item.units)}</span>
+                            <b className="rst-seller-val">{rupees(Number(item.valueMinor))}</b>
+                          </li>
+                        ))}
+                      </ol>
+                    </section>
+                  ) : null}
+
+                  {/* Right: Needs attention — only when something does (Emerald v2: an empty white box read as broken). */}
+                  {attention.length === 0 ? null : (
                   <section className="rst-panel rst-attention-panel">
                     <div className="rst-panel-head">
                       <h3>{s.needsAttentionTitle}</h3>
@@ -1236,6 +1336,7 @@ export function ShopHome({
                       </div>
                     )}
                   </section>
+                  )}
                 </div>
               </div>
             ) : null}
