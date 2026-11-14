@@ -1134,9 +1134,14 @@ body {
     background: var(--mint);
   }
 
-  /* ---- row 3 ---- */
+  /* ---- row 3: Recent orders beside Top sellers; Needs attention, when it draws, takes a full row under them
+     (a third column squeezed each order onto four lines). ---- */
   .rst-bottom-grid {
-    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+    grid-template-columns: 1.3fr 1fr;
+  }
+
+  .rst-bottom-grid > .rst-attention-panel:not(.sln-team-panel) {
+    grid-column: 1 / -1;
   }
 
   .rst-sellers {
@@ -1218,5 +1223,50 @@ body {
 @media (min-width: 861px) {
   .shp-page > .shp-desk-toolbar {
     display: none !important;
+  }
+}
+
+/* =====================================================================================================
+ * Emerald v3 — the shot's division by background (owner, 14 Nov 2026: "check how division is done with
+ * background color"). A WHITE frame; three GREY panels on it — the sidebar, the header bar, and one big panel
+ * for the page — and white things inside the grey: the cards in the page, the search pill and the round
+ * buttons in the header. White on grey on white, so no line is needed anywhere. Laptop only.
+ * ===================================================================================================== */
+@media (min-width: 861px) {
+  html,
+  body,
+  .shell {
+    background: var(--surface);
+  }
+
+  .sidebar {
+    background: var(--canvas);
+  }
+
+  .nav a.active {
+    background: var(--surface);
+  }
+
+  :is(.topbar, .hm-head),
+  .hm-head.is-rst-head {
+    background: var(--canvas);
+  }
+
+  /* Everything in the header bar is white on its grey: the search pill, the date, the bell, the avatar. */
+  :is(.topbar, .hm-head) :is(.hdr-search, .rst-date-pill, .notif-bell, .icon-btn, .hm-summary-btn) {
+    background: var(--surface);
+    border-color: transparent;
+  }
+
+  .hdr-search-wide {
+    border-radius: 999px;
+  }
+
+  /* The page itself is the third grey panel, with the same gap round it as the other two. */
+  .content > .page-body,
+  .content-main > .page-body {
+    margin: 0.75rem;
+    border-radius: var(--radius-lg);
+    background: var(--canvas);
   }
 }
