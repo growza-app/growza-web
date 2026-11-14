@@ -121,10 +121,13 @@ describe('the dish sheet is two tabs, not three', () => {
 
 describe('Home and the return sheet', () => {
   it('Home drops the Stock worth card and the stock attention card, and the rows close up', () => {
-    expect(home).toMatch(/hm-v3-kpis\$\{areas\.stock \? '' : ' hm-v3-kpis-3'\}/);
-    // Two: the desk Stock-worth KPI and the phone "Running out" card. The desk stock-attention card went on
+    // The row's width follows how many boxes it draws; a kitchen has no Stock box (final check 2026-11-14).
+    expect(home).toContain('const kpiCount = 2 + (showSellers ? 1 : 0) + (areas.stock ? 1 : 0);');
+    expect(home).toContain("<div className={`hm-v3-kpis${kpiCount === 4 ? '' : ` hm-v3-kpis-${kpiCount}`}`}>");
+    // Two: the desk Stock KPI and the phone "Running out" card. The desk stock-attention card went on
     // 13 Nov 2026 into one Needs attention card, whose shelf counts are gated on `counted` (areas.stock and a count).
-    expect(home.match(/\{!areas\.stock \? null : \(/g) ?? []).toHaveLength(2);
+    expect(home).toContain('{!areas.stock ? null : kpiBox(');
+    expect(home.match(/\{!areas\.stock \? null : \(/g) ?? []).toHaveLength(1);
     expect(home).toContain('const counted = areas.stock && !!data?.running.counted;');
     expect(home).not.toContain('shp-kpi-strip');
     expect(home).toMatch(/data\.running\.counted \|\| !areas\.stock \? s\.noOrdersBody : s\.countFirst/);
