@@ -6,6 +6,7 @@ import { formatDateShort, formatDateWithWeekday } from '../lib/format';
 import { copy } from '../lib/copy';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { pickNoun } from '../lib/nouns';
+import { localLabels } from '../lib/local-labels';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
@@ -202,7 +203,8 @@ export default async function AppointmentsPage({
       : Promise.resolve([]),
   ]);
   const appointments = appointmentsResult.rows;
-  const bookingsWord = me.labels.appointments ?? copy.nav.appointments;
+  const labelsHere = await localLabels(me.labels);
+  const bookingsWord = labelsHere.appointments ?? copy.nav.appointments;
   // A multi-day range is never "today", even when it starts today — the
   // headline labels ("Today", "Next 2 hrs") would be lying about the rest.
   const isToday = isTodayRequest;
@@ -265,7 +267,7 @@ export default async function AppointmentsPage({
           appointments={appointments}
           providers={providers}
           timezone={timezone}
-          noun={pickNoun(locale, (me.labels.appointments ?? copy.nav.appointments).toLowerCase(), tn('bookings'))}
+          noun={pickNoun(locale, bookingsWord.toLowerCase(), tn('bookings'))}
           nowISO={new Date().toISOString()}
           isToday={isToday}
           queue={queue}

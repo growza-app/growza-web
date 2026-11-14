@@ -1012,6 +1012,8 @@ export interface SearchResult {
     providerName: string | null;
     createdVia: 'whatsapp' | 'dashboard';
     reminderSent: boolean;
+    /** QA 2026-11-14 — booked for later, not a walk-in. Absent from an older API. */
+    bookedAhead?: boolean;
   }>;
 }
 

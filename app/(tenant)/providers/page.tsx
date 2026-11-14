@@ -7,6 +7,7 @@ import { loadErrorKind } from '../lib/load-error';
 import { PageHeader } from '../components/PageHeader';
 import { StaffClient } from './StaffClient';
 import { guardScreen } from '../lib/screen-guard';
+import { localLabels } from '../lib/local-labels';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +53,7 @@ export default async function ProvidersPage() {
     );
   }
 
-  const staffWord = me.labels.providers ?? copy.nav.staff;
+  const staffWord = (await localLabels(me.labels)).providers ?? copy.nav.staff;
   /*
    * Jira GRW-474 — each branch's own week, for the wizard's "same hours as the salon". The server copies the hours
    * of the branch the person is placed at; the preview showed the business-wide week, so at a branch with its own

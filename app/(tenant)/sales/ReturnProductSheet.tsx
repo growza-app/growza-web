@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { api, ApiError, formatMoney, formatTime, type ReturnReason, type ReturnSaleProductsResponse, type VisitProductLine } from '../lib/api';
+import { issuedDocKind, type IssuedDocKind } from '../lib/issued-document';
 
 /** Jira GRW-635 — the small set a return's reason is chosen from (the words are `orders.returnReasons`). */
 const RETURN_REASONS: readonly ReturnReason[] = ['size', 'not_as_described', 'faulty', 'wrong_item', 'changed_mind', 'other'];
@@ -154,6 +155,7 @@ export function ReturnProductSheet({
   const [completedResult, setCompletedResult] = useState<ReturnSaleProductsResponse | null>(null);
   // The invoice already handed over for this bill, once the server has said so: the desk is asked before going ahead.
   const [issuedDocument, setIssuedDocument] = useState<string | null>(null);
+  const [issuedKind, setIssuedKind] = useState<IssuedDocKind>('tax_invoice');
   const requestRef = useRef<{ sig: string; id: string } | null>(null);
   const warningRef = useRef<HTMLDivElement>(null);
   // The warning sits under the lines in a scrolling sheet: bring it into view, or the press of Confirm looks like it did nothing.
@@ -367,6 +369,7 @@ export function ReturnProductSheet({
       if (err instanceof ApiError && err.code === 'document_issued') {
         // An issued invoice is not changed by a return: say so, and let the desk decide.
         const number = (err.body as { documentNumber?: unknown } | undefined)?.documentNumber;
+        setIssuedKind(issuedDocKind(err.body));
         setIssuedDocument(typeof number === 'string' ? number : '');
       } else {
         setError(err instanceof ApiError ? err.message : tc('sheet.saveFailed'));
@@ -937,8 +940,8 @@ export function ReturnProductSheet({
                   <div className="sls-ret-error" role="alert" ref={warningRef}>
                     <p>
                       {issuedDocument
-                        ? t('documentIssuedBody', { number: issuedDocument })
-                        : t('documentIssuedBodyNoNumber')}
+                        ? t('documentIssuedBody', { number: issuedDocument, doc: issuedKind })
+                        : t('documentIssuedBodyNoNumber', { doc: issuedKind })}
                     </p>
                     <button
                       type="button"
