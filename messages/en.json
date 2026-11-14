@@ -3783,6 +3783,7 @@
         "toBranch": "To branch",
         "tooMany": "Only {n} here to move"
       },
+      "tooManyOnShelf": "Only {n} on the shelf",
       "after": "Count will be {n}",
       "confirm": "Confirm",
       "history": "History",
