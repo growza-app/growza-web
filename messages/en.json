@@ -757,9 +757,9 @@
       "composition": "Composition scheme"
     },
     "statusHelp": {
-      "unregistered": "Your customers get a receipt. No tax is shown on it.",
-      "regular": "Your customers get a tax invoice showing CGST and SGST, or IGST.",
-      "composition": "Your customers get a bill of supply. A composition dealer does not collect GST from them."
+      "unregistered": "Your {customers} get a receipt. No tax is shown on it.",
+      "regular": "Your {customers} get a tax invoice showing CGST and SGST, or IGST.",
+      "composition": "Your {customers} get a bill of supply. A composition dealer does not collect GST from them."
     },
     "gstinLabel": "GSTIN",
     "gstinHint": "The 15-character number on your registration certificate.",
@@ -779,7 +779,7 @@
     "stateCodeHint": "The two digits your GSTIN starts with — 07 for Delhi, 27 for Maharashtra.",
     "branchGstinLabel": "This branch's own GSTIN",
     "branchGstinHint": "Only if you hold a separate registration for this state. Otherwise leave it blank.",
-    "notRegisteredNote": "Nothing here is needed while you are not registered. Your customers still get a receipt for every payment.",
+    "notRegisteredNote": "Nothing here is needed while you are not registered. Your {customers} still get a receipt for every payment.",
     "save": "Save changes",
     "saving": "Saving…",
     "errors": {

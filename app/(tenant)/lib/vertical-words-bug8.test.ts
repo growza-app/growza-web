@@ -8,6 +8,7 @@ import { setupCopy, setupWords } from './setup-copy';
  */
 const read = (p: string) => readFileSync(new URL(p, import.meta.url), 'utf8');
 const en = JSON.parse(read('../../../messages/en.json'));
+const hi = JSON.parse(read('../../../messages/hi.json'));
 const clinic = { provider: 'Doctor', appointments: 'Visits', customers: 'Patients', service: 'Consultation', business: 'Clinic' };
 const salon = { provider: 'Stylist', appointments: 'Bookings', customers: 'Clients', service: 'Service', business: 'Salon' };
 
@@ -42,5 +43,16 @@ describe('setup lines say the business’s own words', () => {
     expect(en.settingsCheckIn.radiusHint).toBe('0 = the {business} door. 500 = the whole street.');
     expect(read('../settings/gst/GstForm.tsx')).toContain("t('hint', { customers })");
     expect(read('../settings/check-in/CheckInForm.tsx')).toContain("t('radiusHint', { business: businessWord })");
+  });
+  /** QA 2026-11-14, F18 — the hint said "patients" and the three lines under the status still said "customers". */
+  it('every GST line that names the people paying takes the noun, in both languages', () => {
+    const lines = [en.settingsGst.statusHelp.unregistered, en.settingsGst.statusHelp.regular, en.settingsGst.statusHelp.composition, en.settingsGst.notRegisteredNote];
+    const hiLines = [hi.settingsGst.statusHelp.unregistered, hi.settingsGst.statusHelp.regular, hi.settingsGst.statusHelp.composition, hi.settingsGst.notRegisteredNote];
+    for (const l of [...lines, ...hiLines]) expect(l).toContain('{customers}');
+    for (const l of lines) expect(l).not.toMatch(/\bcustomers\b(?!\})/);
+    for (const l of hiLines) expect(l).not.toContain('ग्राहक');
+    const form = read('../settings/gst/GstForm.tsx');
+    expect(form).toContain('t(`statusHelp.${status}`, { customers })');
+    expect(form).toContain("t('notRegisteredNote', { customers })");
   });
 });

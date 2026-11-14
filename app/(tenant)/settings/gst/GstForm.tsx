@@ -130,11 +130,11 @@ export function GstForm({ initial, branchName }: { initial: SettingsSummary; bra
               ))}
             </select>
             {/* What this choice MEANS for the customer, in the words the customer would use. */}
-            <span className="field-hint">{t(`statusHelp.${status}`)}</span>
+            <span className="field-hint">{t(`statusHelp.${status}`, { customers })}</span>
           </div>
 
           {!registered ? (
-            <p className="field-hint">{t('notRegisteredNote')}</p>
+            <p className="field-hint">{t('notRegisteredNote', { customers })}</p>
           ) : (
             <>
               <div className="field">
