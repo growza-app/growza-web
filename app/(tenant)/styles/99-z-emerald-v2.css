@@ -2323,3 +2323,77 @@ body {
     white-space: nowrap;
   }
 }
+
+/*
+ * The business chip is the branch picker for an owner of several branches (owner, 14 Nov 2026: "County Chicken /
+ * All branches ▾" — one control, not two). The line under the name is the picker's button; a tap anywhere on the
+ * chip opens it (the button's ::after covers the chip); the list hangs under the chip. The header's own branch
+ * pill is hidden on a laptop wherever the chip is there to stand in for it.
+ */
+.hbp-chip {
+  display: none;
+}
+
+@media (min-width: 861px) {
+  .hdr-biz {
+    position: relative;
+  }
+
+  .hdr-biz.has-picker:hover {
+    box-shadow: inset 0 0 0 1px var(--canvas-line);
+  }
+
+  .hbp-chip.sbp {
+    position: static;
+    display: flex;
+    min-width: 0;
+  }
+
+  .hbp-chip .sbp-btn,
+  .hbp-chip .sbp-btn.is-branch {
+    position: static;
+    min-height: 0;
+    max-width: 100%;
+    gap: 0.25rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: var(--fs-1);
+    font-weight: 500;
+  }
+
+  .hbp-chip .sbp-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+  }
+
+  .hbp-chip .sbp-btn > svg {
+    width: 0.75rem;
+    height: 0.75rem;
+    flex: none;
+  }
+
+  .hbp-chip .sbp-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hbp-chip .sbp-menu {
+    top: calc(100% + 0.5rem);
+    right: 0;
+    left: auto;
+  }
+
+  :has(> .hdr-biz.has-picker) > .hbp-pill {
+    display: none;
+  }
+
+  /* Home's bar: the search pill pushes the rest right, whether or not a (now hidden) picker comes before it. */
+  .hm-head.is-rst-head .hm-head-controls > .hdr-search {
+    margin-right: auto;
+  }
+}

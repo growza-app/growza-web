@@ -30,7 +30,7 @@ import { ALL_BRANCHES_PARAM } from '../lib/branch-url-sync';
 /** When a branch was last picked — see the mount effect. Module-wide: the picker that reads it is a new one. */
 let pickedAt = 0;
 
-export function HeaderBranchPicker({ variant = 'pill' }: { variant?: 'pill' | 'line' } = {}) {
+export function HeaderBranchPicker({ variant = 'pill' }: { variant?: 'pill' | 'line' | 'chip' } = {}) {
   const t = useTranslations('chrome.branchPicker');
   const branch = useBranch();
   const router = useRouter();
@@ -83,7 +83,9 @@ export function HeaderBranchPicker({ variant = 'pill' }: { variant?: 'pill' | 'l
 
   // The laptop's pill in the header's controls; the phone's line under the title, where a crowded header row
   // (a title, "Add", search and the avatar) has no room for it. CSS shows the one for the width.
-  const where = variant === 'line' ? 'hbp-line' : 'hbp-pill';
+  // Emerald v3 — `chip`: the laptop's business chip in the header bar ("County Chicken / All branches ▾"), which
+  // stands in for the pill there (owner, 14 Nov 2026: one control, not two).
+  const where = variant === 'line' ? 'hbp-line' : variant === 'chip' ? 'hbp-chip' : 'hbp-pill';
 
   // A member held to a branch is told which, and offered nothing (their `branches` is that one alone).
   if (branch.pinned) {
