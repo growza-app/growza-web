@@ -454,17 +454,22 @@ export function ShopHome({
    * waiting orders from the recent orders the card already lists — a bill kept pending in the queue and not yet paid.
    */
   const attention: Array<{ key: 'stock' | 'pending'; tone: 'amber' | 'rose'; title: string; sub: string; href: string }> = [];
-  if (data?.running.counted && data.running.total > 0) {
+  /*
+   * Jira GRW-709 sweep (2026-11-14) — and only the rows this person can open, the rule F10 set for the other Needs attention
+   * card. Running low fell back to /products when the role could not open /stock, and a shop's Staff role opens neither:
+   * the row sent him Home.
+   */
+  if (data?.running.counted && data.running.total > 0 && can('/stock')) {
     attention.push({
       key: 'stock',
       tone: 'amber',
       title: s.lowStockShort,
       sub: s.menuItemsLowSub(data.running.total),
-      href: can('/stock') ? `/stock${stockBranch}` : '/products',
+      href: `/stock${stockBranch}`,
     });
   }
   const waitingForPayment = recentOrders.filter((o) => o.paymentPending).length;
-  if (waitingForPayment > 0) {
+  if (waitingForPayment > 0 && can('/orders')) {
     attention.push({ key: 'pending', tone: 'rose', title: s.pendingOrdersTitle, sub: s.pendingPaymentSub(waitingForPayment), href: '/orders' });
   }
 
