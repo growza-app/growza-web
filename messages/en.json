@@ -2217,6 +2217,12 @@
       "timedOut": "Let's start over — that chat timed out.",
       "unreachable": "Could not reach the server.",
       "wentWrong": "Something went wrong."
+    },
+    "how": {
+      "title": "How it works",
+      "step1": "Type a phone number and a name, then tap Start chat.",
+      "step2": "Reply the way a customer would: tap the buttons. There is nothing to type.",
+      "step3": "This is the same chat people get once WhatsApp booking is on for you."
     }
   },
   "newVisit": {

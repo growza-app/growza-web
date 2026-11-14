@@ -1858,9 +1858,335 @@ body {
     gap: 6px;
   }
 
-  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-actions > .btn {
+  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-primary > .btn {
     min-width: 44px;
     width: 44px;
     padding-inline: 0;
+  }
+}
+
+/*
+ * One header on every laptop screen (owner, 14 Nov 2026: "fix all"). Home has a slim grey bar (find a guest,
+ * bell, you) over a page head (big title, a line, the pills) at the top of its panel; every other screen had the
+ * title inside the bar and no search. PageHeader's markup is the same on every screen, so the laptop lays it out
+ * as a 2×2 grid: row 1 is the bar (drawn by ::before), row 2 is the page head (drawn by ::after as the top of the
+ * panel), and the page body below drops its own top corners and gap so the two read as one panel.
+ */
+@media (min-width: 861px) {
+  .topbar {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'find ctrls'
+      'lead primary';
+    column-gap: var(--sp-3);
+    row-gap: 0;
+    align-items: center;
+    margin: 0.75rem 0.75rem 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .topbar::before,
+  .topbar::after {
+    content: '';
+    z-index: -1;
+    align-self: stretch;
+    background: var(--canvas);
+  }
+
+  .topbar::before {
+    grid-area: 1 / 1 / 2 / -1;
+    border-radius: var(--radius-lg);
+  }
+
+  .topbar::after {
+    grid-area: 2 / 1 / 3 / -1;
+    margin-top: 0.75rem;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .topbar-actions {
+    display: contents;
+  }
+
+  .topbar-find {
+    grid-area: find;
+    display: flex;
+    min-width: 0;
+    padding: 0.5rem 0 0.5rem 0.5rem;
+  }
+
+  .topbar-ctrls {
+    grid-area: ctrls;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.5rem 0.5rem 0;
+  }
+
+  .topbar-lead {
+    grid-area: lead;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+    margin-top: 0.75rem;
+    padding: 1.25rem 1.5rem 0.25rem;
+  }
+
+  .topbar-primary {
+    grid-area: primary;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    align-self: end;
+    margin-top: 0.75rem;
+    padding: 0 1.5rem 0.25rem 0;
+  }
+
+  /* The page head's actions are Home's pills: round, the first one filled. */
+  .topbar-primary > :is(.btn, a.btn, button.btn) {
+    min-height: 2.75rem;
+    padding-inline: 1.125rem;
+    border-radius: 999px;
+  }
+
+  .topbar + .page-body,
+  .topbar + .content-main > .page-body:first-child {
+    margin-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+
+/*
+ * Home's tile on the other screens' figures (owner, 14 Nov 2026: "fix all"): Menu's four, Guests' five, and
+ * Attendance's five were three other tile designs. On a laptop they are one: white, label on top, the figure
+ * large under it, the line under that quiet. A figure that filters the list, when on, is the forest tile with
+ * white type — Home's first tile — and keeps its ring, so "on" is not said by colour alone.
+ */
+@media (min-width: 861px) {
+  :is(.prd-stat, .att-tile),
+  .page-body.cust-desk > .cust-desk-kpis > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0.375rem;
+    padding: 1rem 1.125rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: none;
+    transform: none;
+    text-align: left;
+  }
+
+  /* Label first, as on Home. */
+  .prd-stat .prd-stat-l {
+    order: -1;
+  }
+
+  :is(.prd-stat-l, .att-tile-head),
+  .page-body.cust-desk > .cust-desk-kpis dt {
+    font-size: var(--fs-3);
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  :is(.prd-stat-n, .att-tile-count),
+  .page-body.cust-desk > .cust-desk-kpis dd {
+    font-size: var(--fs-11);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    color: var(--text);
+  }
+
+  .prd-stat-sub {
+    font-size: var(--fs-1);
+    color: var(--muted);
+  }
+
+  .prd-stat-tap:hover,
+  .page-body.cust-desk > .cust-desk-kpis > div:not(.is-on):has(.cust-desk-kpi-tap):hover {
+    border-color: var(--canvas-line);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .prd-strip .prd-stat.prd-stat-tap.is-on,
+  .page-body.cust-desk > .cust-desk-kpis > div.is-on {
+    border-color: var(--forest);
+    background: linear-gradient(135deg, var(--forest-2), var(--forest));
+    box-shadow: inset 0 0 0 1px var(--forest);
+  }
+
+  .prd-strip .prd-stat.prd-stat-tap.is-on :is(.prd-stat-n, .prd-stat-l),
+  .page-body.cust-desk > .cust-desk-kpis > div.is-on :is(dt, dd, dd button) {
+    color: #fff;
+  }
+
+  .prd-strip .prd-stat.prd-stat-tap.is-on .prd-stat-sub {
+    color: rgb(255 255 255 / 72%);
+  }
+
+  /* Guests: the figures are a row over the list, one tile each, reward points included. */
+  .page-body.cust-desk > .cust-desk-kpis {
+    flex: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: var(--sp-3);
+    margin: 0 0 var(--sp-3);
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .page-body.cust-desk > .cust-desk-kpis > div:nth-child(5) {
+    grid-column: auto;
+  }
+
+  .page-body.cust-desk > .cust-desk-kpis > div:last-child dd {
+    color: var(--forest);
+  }
+
+  /* Attendance: one title (the header's), and the counts in Home's tiles. */
+  .att-head-text {
+    display: none;
+  }
+
+  .att-head {
+    justify-content: flex-end;
+  }
+
+  .att-summary {
+    gap: var(--sp-3);
+  }
+
+  .att-tile {
+    min-height: 0;
+  }
+}
+
+/*
+ * Orders on a wide laptop (owner, 14 Nov 2026: "fix all"): "What delivery apps owe you" sat between the filters and
+ * the list and pushed the list off the first screen. From 1101px it is a column at the right of the list, the two
+ * apps one under the other, and the list keeps the whole of the left — Home's lists-and-a-side-card row.
+ */
+@media (min-width: 1101px) {
+  .ord {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 19rem;
+    grid-auto-rows: auto;
+    column-gap: var(--sp-4);
+    row-gap: var(--sp-3);
+    align-items: start;
+  }
+
+  .ord > * {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  .ord > .ord-tools {
+    grid-column: 1 / -1;
+  }
+
+  .ord > .pay {
+    grid-column: 2;
+    grid-row: 2 / span 4;
+    position: sticky;
+    top: 0;
+    margin: 0;
+  }
+
+  .ord > .pay .pay-apps {
+    flex-direction: column;
+  }
+
+  .ord > .pay .ord-chips {
+    flex-wrap: wrap;
+  }
+
+  /* The list is a white card on the panel's grey, as Home's lists are. */
+  .ord > .ord-table {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--surface);
+  }
+}
+
+/* WhatsApp demo: the steps are a laptop's only; on a phone the wrapper has no box (the chat is the whole screen). */
+.tw-desk {
+  display: contents;
+}
+
+.tw-how {
+  display: none;
+}
+
+/*
+ * The last three screens of the laptop pass (owner, 14 Nov 2026: "fix all").
+ */
+@media (min-width: 861px) {
+  /* Returns: the tabs above already go to Refunds, so the lone "Refunds" link under the figures is gone. */
+  .srp-links:has(> a[href='/orders/refunds']) {
+    display: none;
+  }
+
+  /* Notifications: a reading column, not a full-width strip with two rows in it. */
+  .content:has(.notif-mark-read, .notif-empty) .page-body > .card {
+    width: 100%;
+    max-width: 45rem;
+    margin-inline: auto;
+  }
+
+  /* WhatsApp demo: the phone and three steps beside it, centred together. */
+  .tw-desk {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-6);
+    height: 100%;
+  }
+
+  .tw-how {
+    display: block;
+    flex: 0 1 20rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  .tw-how h2 {
+    margin: 0 0 var(--sp-3);
+    font-size: var(--fs-6);
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .tw-how ol {
+    margin: 0;
+    padding-left: 1.25rem;
+    display: grid;
+    gap: var(--sp-3);
+    font-size: var(--fs-3);
+    line-height: 1.5;
+    color: var(--canvas-text);
+  }
+
+  .tw-how li::marker {
+    font-weight: 600;
+    color: var(--forest);
+  }
+}
+
+@media (min-width: 861px) and (max-width: 1100px) {
+  .tw-how {
+    display: none;
   }
 }

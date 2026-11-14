@@ -546,37 +546,39 @@ export function CustomersClient({
       <>
         <PageHeader title={label} menu subtitle={t('subtitle', { noun: lower })} actions={addButton} />
         <div className="page-body cust-desk">
+          {/* Emerald v3 (owner, 14 Nov 2026: "fix all") — the figures are a row of tiles over the list, as on Home,
+              not a 2×3 block squeezed into the left column. */}
+          <dl className="cust-desk-kpis">
+            {/* The figure is the button, stretched over its whole box (79-desk-clients.css): still a list of
+                terms and values to a screen reader, and a tap anywhere on the box to everyone else. */}
+            {(
+              [
+                { card: 'all', label: t('kpiTotal', { noun: lower }), value: String(stats.total) },
+                { card: 'new', label: t('kpiNew'), value: String(stats.newThisMonth) },
+                { card: 'returning', label: t('kpiReturning', { noun: lower }), value: String(stats.returning) },
+                { card: 'returning', label: t('kpiRepeat'), value: `${stats.repeatRatePct}%` },
+              ] as const
+            ).map((figure) => (
+              <div key={figure.label} className={figure.card !== 'all' && status === figure.card ? 'is-on' : undefined}>
+                <dt>{figure.label}</dt>
+                <dd>
+                  <button
+                    type="button"
+                    className="cust-desk-kpi-tap"
+                    aria-label={`${figure.label}: ${figure.value}`}
+                    aria-pressed={figure.card === 'all' ? undefined : status === figure.card}
+                    onClick={() => pickCard(figure.card)}
+                  >
+                    {figure.value}
+                  </button>
+                </dd>
+              </div>
+            ))}
+            {/* Flat, where the others are raised: raised means "tap me", and the points open nothing. */}
+            {points && <div className="cust-desk-kpi-flat"><dt>{t('kpiPoints')}</dt><dd title={t('kpiPointsSub', { noun: lower })}>{points.full}</dd></div>}
+          </dl>
           <div className="pf-wide-grid cust-desk-grid">
             <aside className="pf-wide-left cust-desk-left" aria-label={t('segmentsTitle', { noun: lower })}>
-              <dl className="cust-desk-kpis">
-                {/* The figure is the button, stretched over its whole box (79-desk-clients.css): still a list of
-                    terms and values to a screen reader, and a tap anywhere on the box to everyone else. */}
-                {(
-                  [
-                    { card: 'all', label: t('kpiTotal', { noun: lower }), value: String(stats.total) },
-                    { card: 'new', label: t('kpiNew'), value: String(stats.newThisMonth) },
-                    { card: 'returning', label: t('kpiReturning', { noun: lower }), value: String(stats.returning) },
-                    { card: 'returning', label: t('kpiRepeat'), value: `${stats.repeatRatePct}%` },
-                  ] as const
-                ).map((figure) => (
-                  <div key={figure.label} className={figure.card !== 'all' && status === figure.card ? 'is-on' : undefined}>
-                    <dt>{figure.label}</dt>
-                    <dd>
-                      <button
-                        type="button"
-                        className="cust-desk-kpi-tap"
-                        aria-label={`${figure.label}: ${figure.value}`}
-                        aria-pressed={figure.card === 'all' ? undefined : status === figure.card}
-                        onClick={() => pickCard(figure.card)}
-                      >
-                        {figure.value}
-                      </button>
-                    </dd>
-                  </div>
-                ))}
-                {/* Flat, where the others are raised: raised means "tap me", and the points open nothing. */}
-                {points && <div className="cust-desk-kpi-flat"><dt>{t('kpiPoints')}</dt><dd title={t('kpiPointsSub', { noun: lower })}>{points.full}</dd></div>}
-              </dl>
               <h2 className="pf-wide-h">{t('segmentsTitle', { noun: lower })}</h2>
               <ul className="cust-desk-bands">
                 {bands.map((s) => {

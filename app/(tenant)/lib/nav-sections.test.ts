@@ -44,6 +44,11 @@ describe('the grouped sidebar (owner, 2026-10-15)', () => {
     expect(isActive('/servicesx', '/services')).toBe(false);
     expect(isActive('/products', '/')).toBe(false);
     expect(isActive('/', '/')).toBe(true);
+    // Returns and Refunds are reports that live under /orders: the sidebar lights Reports, not Orders.
+    expect(isActive('/orders/returns', '/reports')).toBe(true);
+    expect(isActive('/orders/returns', '/orders')).toBe(false);
+    expect(isActive('/orders/refunds', '/orders/refunds')).toBe(true);
+    expect(isActive('/orders/held', '/orders')).toBe(true);
   });
 
   it('whatever the real policy says, every row opens a screen its role may see', () => {
