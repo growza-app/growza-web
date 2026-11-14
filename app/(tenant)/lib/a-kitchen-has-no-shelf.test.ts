@@ -73,7 +73,8 @@ describe('the Menu screen draws a dish without a count', () => {
     expect(list).toMatch(/UNCOUNTED_FILTERS: readonly ShelfFilter\[\] = \['all', 'retired'\]/);
     expect(list).toMatch(/UNCOUNTED_SORTS: readonly ShelfSort\[\] = \['name', 'sold', 'price', 'cost', 'status'\]/);
     expect(list).toMatch(/\(counted \? SHELF_FILTERS : UNCOUNTED_FILTERS\)\.map/);
-    expect(list).toMatch(/\(counted \? SHELF_SORTS : UNCOUNTED_SORTS\)\.map/);
+    // QA 2026-11-14 — and the cost sort only for a viewer who is sent the cost (cost-is-the-owners.test.ts).
+    expect(list).toMatch(/\(counted \? SHELF_SORTS : UNCOUNTED_SORTS\)\.(filter|map)\(/);
   });
 
   it('a filter about a count can never be the one in force, even arriving by address', () => {
@@ -120,10 +121,13 @@ describe('the dish sheet is two tabs, not three', () => {
 
 describe('Home and the return sheet', () => {
   it('Home drops the Stock worth card and the stock attention card, and the rows close up', () => {
-    expect(home).toMatch(/hm-v3-kpis\$\{areas\.stock \? '' : ' hm-v3-kpis-3'\}/);
-    // Two: the desk Stock-worth KPI and the phone "Running out" card. The desk stock-attention card went on
+    // The row's width follows how many boxes it draws; a kitchen has no Stock box (final check 2026-11-14).
+    expect(home).toContain('const kpiCount = 2 + (showSellers ? 1 : 0) + (areas.stock ? 1 : 0);');
+    expect(home).toContain("<div className={`hm-v3-kpis${kpiCount === 4 ? '' : ` hm-v3-kpis-${kpiCount}`}`}>");
+    // Two: the desk Stock KPI and the phone "Running out" card. The desk stock-attention card went on
     // 13 Nov 2026 into one Needs attention card, whose shelf counts are gated on `counted` (areas.stock and a count).
-    expect(home.match(/\{!areas\.stock \? null : \(/g) ?? []).toHaveLength(2);
+    expect(home).toContain('{!areas.stock ? null : kpiBox(');
+    expect(home.match(/\{!areas\.stock \? null : \(/g) ?? []).toHaveLength(1);
     expect(home).toContain('const counted = areas.stock && !!data?.running.counted;');
     expect(home).not.toContain('shp-kpi-strip');
     expect(home).toMatch(/data\.running\.counted \|\| !areas\.stock \? s\.noOrdersBody : s\.countFirst/);
@@ -233,5 +237,15 @@ describe('the words a count brings with it', () => {
     }
     expect(en.products.form.secPricingUncounted).toBe('Pricing');
     expect(en.products.import.summaryUncounted).toContain('on your menu');
+  });
+});
+
+/** QA 2026-11-14, F19 — a kitchen's "Add a dish" suggested "Water bottle 1 litre" as the name. */
+describe("the add form's example name follows the shelf", () => {
+  it('a counted shelf keeps the shop example; a kitchen gets a dish, in both languages', () => {
+    expect(sheet).toContain("placeholder={t(counted ? 'namePlaceholder' : 'namePlaceholderUncounted')}");
+    expect(en.products.form.namePlaceholder).toContain('Water bottle');
+    expect(en.products.form.namePlaceholderUncounted).not.toMatch(/bottle|litre/i);
+    expect(hi.products.form.namePlaceholderUncounted).not.toContain('बोतल');
   });
 });

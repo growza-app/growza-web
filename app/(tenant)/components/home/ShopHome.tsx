@@ -1,7 +1,7 @@
 'use client';
 
 import { deltaLabel, deltaTone, periodDeltaPct } from './day-delta';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api } from '../../lib/api';
 import { paidCustomers } from '../../lib/paid-customers';
 import type {
@@ -20,7 +20,8 @@ import { DaySummarySheet } from './DaySummarySheet';
 import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import { ordersHref } from '../../lib/orders-filter';
-import { formatTokenNo, posQueueStorageKey, tokenNumbersOf, type PosTokenOverride } from '../../pos/pos-helpers';
+import { formatTokenNo, posQueueStorageKey, queueStateOf, tokenNumbersOf, type PosTokenOverride } from '../../pos/pos-helpers';
+import { allCameBack } from '../../lib/order-items';
 import { channelsOf, isDeliveryApp, sellsOnMarketplaces } from '../../lib/order-channels';
 import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
@@ -560,6 +561,36 @@ export function ShopHome({
     0;
 
   /*
+   * Final check 2026-11-14 — the laptop's top row for a viewer who reads no reports (the front desk, a staff member).
+   * Its figures come from three reports this person is refused, and in their place it drew what it had under the
+   * report's words: "Units sold 18 · Last 7 days" was today's orders, "Stock at cost price 26" was the running-low
+   * count, "Returned 0" while 8 had come back today. And each box linked to a screen that sent them back to Home.
+   * Now a box is drawn only with its own figure, says what that figure is, and links only where this person can go.
+   */
+  const reportsOn = money && canReports;
+  const showSellers = reportsOn && can('/stock/sellers');
+  const showStockWorth = reportsOn && can('/stock/report');
+  const kpiCount = 2 + (showSellers ? 1 : 0) + (areas.stock ? 1 : 0);
+  /*
+   * …and the rows under it. The desk was told "No sales recorded in this period yet" by Sales trend and Top sellers,
+   * and "Recent orders (0) · Your first sale will show up here" on a day of 18 orders: each card reads a figure this
+   * person is refused, and an empty answer read as an empty day. A card whose figure cannot reach this person is not
+   * drawn, and the row closes up around what is left. The toolbar above, every control of which is the money's, goes
+   * when it would be an empty strip.
+   */
+  const showChannels = money && canReports && soldElsewhere;
+  const showRecent = can('/orders');
+  const showToolbar = money || (isKitchen && can('/stock'));
+  const kpiBox = (href: string | null, tone: string, body: ReactNode) =>
+    href ? (
+      <a className={`hm-v3-kpi hm-v3-kpi-link ${tone}`} href={href}>
+        {body}
+      </a>
+    ) : (
+      <section className={`hm-v3-kpi ${tone}`}>{body}</section>
+    );
+
+  /*
    * Jira GRW-643 — the figures the phone hero draws, for the window the filter is on.
    *
    * `kind` is the honest part. `'range'` means by-channel answered and every number below belongs to the
@@ -670,13 +701,28 @@ export function ShopHome({
     {
       key: 'back',
       tone: 'rose',
-      n: totalReturnedOrders,
-      label: s.cameBackLabel,
+      /*
+       * QA 2026-11-14, F6 — the laptop said "15 Returns" (the report's last seven days) over a phone saying "Returns
+       * today 8". Needs attention is what is waiting NOW, so both count today's (`cameBackToday`, bug 2's figure); an
+       * API older than that keeps the period's count and its old label.
+       */
+      n: data?.cameBackToday ?? totalReturnedOrders,
+      label: data?.cameBackToday !== undefined ? s.returnsTodayLabel : s.cameBackLabel,
       href: canReports && can('/orders/returns') ? '/orders/returns' : can('/orders') ? ordersHref({ status: 'returned' }) : null,
     },
     ...shelfRows('rose', 'amber'),
-  ].filter((c) => c.n > 0);
+    // QA 2026-11-14, F10 — a row is a door: one this person cannot open is not drawn (see `attentionReachable`).
+  ].filter((c) => c.n > 0 && c.href !== null);
   const attentionCount = attentionChips.reduce((sum, c) => sum + c.n, 0);
+  /*
+   * QA 2026-11-14, F10 — Needs attention is a list of things to go and do. A staff role that opens neither the shelf nor
+   * the orders (attendance only) was shown "Out of stock 1 · Running low 12 · Returns today 6", and on a laptop four
+   * product rows that opened /stock and bounced him Home. Such a person gets no card at all; anyone else gets only the
+   * rows they can open.
+   */
+  const attentionReachable = can('/stock') || can('/orders');
+  /** How many cards the laptop's middle row draws: the trend (money), the channel split, Needs attention. */
+  const midCount = (money ? 1 : 0) + (showChannels ? 1 : 0) + (attentionReachable ? 1 : 0);
 
   /*
    * Owner, 2026-11-13 — the phone's Needs attention card, for a shop with a counted shelf: the same four counts the
@@ -697,7 +743,7 @@ export function ShopHome({
       label: s.returnsTodayLabel,
       href: canReports && can('/orders/returns') ? '/orders/returns' : can('/orders') ? ordersHref({ status: 'returned' }) : null,
     },
-  ].filter((c) => c.n > 0);
+  ].filter((c) => c.n > 0 && c.href !== null);
 
   /*
    * Who came in today: the day's paid orders, one customer each — a named buyer once however many times they bought,
@@ -838,15 +884,13 @@ export function ShopHome({
       const tokenNo = tokenNoOf.get(o.id) ?? idx + 1;
       const soldMs = Date.parse(o.soldAt) || now;
       const ov = overrides[o.id];
-      if (ov === 'completed') return;
       const recalledMs =
         typeof ov === 'string' && ov.startsWith('preparing:') ? Number(ov.slice(10)) : NaN;
       const effectiveStartMs = Number.isFinite(recalledMs) && recalledMs > 0 ? recalledMs : soldMs;
       const elapsedMin = Math.max(0, Math.round((now - effectiveStartMs) / 60_000));
+      // The till's own rule, so the two never disagree: a handover on any device takes it off this card at once.
       const isPreparing =
-        ov === 'preparing' ||
-        (typeof ov === 'string' && ov.startsWith('preparing:')) ||
-        elapsedMin <= 30;
+        queueStateOf({ handedOverAt: o.handedOverAt, paymentPending: o.paymentPending === true, override: ov, elapsedMin }) === 'preparing';
       if (isPreparing) {
         tokens.push({
           id: o.id,
@@ -903,6 +947,7 @@ export function ShopHome({
         ) : (
           <>
             {/* Top Toolbar (Desktop Command Center period switch & quick primary actions) */}
+            {showToolbar ? (
             <div className="hm-toolbar shp-desk-toolbar">
               <div className="shp-desk-toolbar-start">
                 {money && canReports ? (
@@ -961,6 +1006,7 @@ export function ShopHome({
                 </div>
               </div>
             </div>
+            ) : null}
 
             {/* =====================================================================
                 SIMPLE RESTAURANT DESKTOP HOME (from 861px up when isKitchen is true)
@@ -1052,8 +1098,9 @@ export function ShopHome({
                   ) : null}
 
                   {/* 2. Orders */}
-                  <a className="rst-kpi rst-kpi-orders" href="/orders">
-                    <span className="rst-kpi-go" aria-hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg></span>
+                  <a className="rst-kpi rst-kpi-orders" href={can('/orders') ? '/orders' : undefined}>
+                    {/* The arrow says "opens"; a tile this person cannot open draws none (develop: a link only where its screen opens). */}
+                    {can('/orders') ? <span className="rst-kpi-go" aria-hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg></span> : null}
                     {deskSpark ? <KpiSpark values={deskSpark.orders} /> : null}
                     <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
                       <path d="M0 48 C140 20 270 65 400 35 L400 70 L0 70 Z" fill="rgba(37, 99, 235, 0.07)" />
@@ -1082,8 +1129,9 @@ export function ShopHome({
                   </a>
 
                   {/* 3. Customers */}
-                  <a className="rst-kpi rst-kpi-customers" href="/customers">
-                    <span className="rst-kpi-go" aria-hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg></span>
+                  <a className="rst-kpi rst-kpi-customers" href={can('/customers') ? '/customers' : undefined}>
+                    {/* The arrow says "opens"; a tile this person cannot open draws none (develop: a link only where its screen opens). */}
+                    {can('/customers') ? <span className="rst-kpi-go" aria-hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg></span> : null}
                     {deskSpark ? <KpiSpark values={deskSpark.guests} /> : null}
                     <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
                       <path d="M0 42 C130 65 260 22 400 44 L400 70 L0 70 Z" fill="rgba(217, 119, 6, 0.08)" />
@@ -1305,7 +1353,7 @@ export function ShopHome({
                ===================================================================== */}
             <div className="hm-desk-v3 hm-desktop shp-desk-v3 is-kitchen-hidden">
               {/* ROW 1 — four rich KPI cards; three where there is no shelf (a kitchen), which drops Stock worth. */}
-              <div className={`hm-v3-kpis${areas.stock ? '' : ' hm-v3-kpis-3'}`}>
+              <div className={`hm-v3-kpis${kpiCount === 4 ? '' : ` hm-v3-kpis-${kpiCount}`}`}>
                 {/* 1. Takings / Billed Revenue */}
                 {money && data.today.takingsMinor !== undefined ? (
                   <section className="hm-v3-kpi hm-v3-kpi-dark">
@@ -1400,10 +1448,10 @@ export function ShopHome({
                 )}
 
                 {/* 2. Orders & Dispatch */}
-                <a
-                  className="hm-v3-kpi hm-v3-kpi-link hm-v3-kpi-blue"
-                  href={data.toSend > 0 ? ordersHref({ status: 'new,packed' }) : '/orders'}
-                >
+                {kpiBox(
+                  can('/orders') ? (data.toSend > 0 ? ordersHref({ status: 'new,packed' }) : '/orders') : null,
+                  'hm-v3-kpi-blue',
+                  <>
                   <div className="hm-v3-kpi-head">
                     <span className="hm-v3-kpi-icon hm-v3-icon-blue">
                       <IconNavOrders />
@@ -1447,15 +1495,17 @@ export function ShopHome({
                       {!ships ? s.yesterday : s.toSendShort} <b>{!ships ? data.yesterday.orders : data.toSend}</b>
                     </span>
                     <span className="hm-v3-split-item">
-                      {s.returnedShort} <b>{totalReturnedOrders}</b>
+                      {s.returnedShort} <b>{reportsOn ? totalReturnedOrders : (data.cameBackToday ?? 0)}</b>
                     </span>
                   </div>
-                </a>
+                  </>,
+                )}
 
-                {/* 3. Units / Dishes Sold & Top Seller */}
+                {/* 3. Units / Dishes Sold & Top Seller — a report's figure, so only for whoever reads that report. */}
+                {!showSellers ? null : (
                 <a
                   className="hm-v3-kpi hm-v3-kpi-link hm-v3-kpi-amber"
-                  href={canReports && can('/stock/sellers') ? '/stock/sellers' : '/orders'}
+                  href="/stock/sellers"
                 >
                   <div className="hm-v3-kpi-head">
                     <span className="hm-v3-kpi-icon hm-v3-icon-amber">
@@ -1490,18 +1540,19 @@ export function ShopHome({
                     </span>
                   </div>
                 </a>
+                )}
 
                 {/* 4. Stock Worth & Shelf Health — a count, so a kitchen has none of it. */}
-                {!areas.stock ? null : (
-                <a
-                  className="hm-v3-kpi hm-v3-kpi-link hm-v3-kpi-purple"
-                  href={canReports && can('/stock/report') ? '/stock/report' : `/stock${stockBranch}`}
-                >
+                {!areas.stock ? null : kpiBox(
+                  showStockWorth ? '/stock/report' : can('/stock') ? `/stock${stockBranch}` : null,
+                  'hm-v3-kpi-purple',
+                  <>
                   <div className="hm-v3-kpi-head">
                     <span className="hm-v3-kpi-icon hm-v3-icon-green">
                       <IconNavStock />
                     </span>
-                    <span className="hm-v3-kpi-title">{s.stockWorthTitle}</span>
+                    {/* Without the stock report there is no worth to show: the card is what is running low, and says so. */}
+                    <span className="hm-v3-kpi-title">{showStockWorth ? s.stockWorthTitle : s.runningLowChip}</span>
                   </div>
                   <div className="hm-v3-kpi-body">
                     <div className="hm-v3-kpi-main">
@@ -1525,6 +1576,7 @@ export function ShopHome({
                       </div>
                     </div>
                   </div>
+                  {showStockWorth ? (
                   <div className="hm-v3-kpi-foot hm-v3-split-foot">
                     <span className="hm-v3-split-item">
                       {s.onShelfShort} <b>{stockData ? stockData.totals.units : '—'}</b>
@@ -1533,13 +1585,16 @@ export function ShopHome({
                       {s.lowStockShort} <b>{data.running.counted ? data.running.total : '—'}</b>
                     </span>
                   </div>
-                </a>
+                  ) : null}
+                  </>,
                 )}
               </div>
 
               {/* ROW 2 — Sales trend, where the money came from (once there is more than the counter), and what needs attention */}
-              <div className={`hm-v3-mid${money && canReports && soldElsewhere ? '' : ' hm-v3-mid-two'}`}>
-                {/* 1. Sales Trend SVG Line + Bar Chart */}
+              {midCount === 0 ? null : (
+              <div className={`hm-v3-mid${midCount === 3 ? '' : midCount === 2 ? ' hm-v3-mid-two' : ' hm-v3-mid-one'}`}>
+                {/* 1. Sales Trend SVG Line + Bar Chart — money, so only for whoever is sent it. */}
+                {!money ? null : (
                 <section className="hm-v3-card hm-v3-trend-card">
                   <div className="hm-v3-card-head">
                     <div className="shp-trend-head-main">
@@ -1605,9 +1660,10 @@ export function ShopHome({
                     </div>
                   )}
                 </section>
+                )}
 
                 {/* 2. Where Money Came From — drawn only once a channel besides the counter has sold. */}
-                {money && canReports && soldElsewhere ? (
+                {showChannels ? (
                   <section className="hm-v3-card shp-channels-card">
                     <div className="hm-v3-card-head">
                       <h2>{s.channelsLink}</h2>
@@ -1667,64 +1723,68 @@ export function ShopHome({
                   Needs attention — the one list of what is waiting on the owner: app orders still to send, orders that came
                   back, and the shelf running out. A count that is zero is not drawn; when every one is, the card says so.
                 */}
-                <section className="hm-v3-card hm-v3-products-card hm-v3-prod-attention shp-needs-card">
-                  <div className="hm-v3-card-head">
-                    <h2>
-                      {s.needsAttentionTitle} {attentionCount > 0 ? <span className="hm-v3-count">({attentionCount})</span> : null}
-                    </h2>
-                    {areas.stock && can('/stock') ? (
-                      <a className="hm-v3-head-link" href={`/stock${stockBranch}`}>
-                        {s.viewOrders} →
-                      </a>
-                    ) : null}
-                  </div>
-                  {attentionCount === 0 ? (
-                    <p className="hm-empty">{areas.stock && !data.running.counted ? s.notCounted : s.nothingNeedsYou}</p>
-                  ) : (
-                    <>
-                      <div className="hm-v3-prod-att-summary">
-                        {attentionChips.map((c) =>
-                          c.href ? (
-                            <a key={c.key} className={`hm-v3-prod-att-chip is-${c.tone}`} href={c.href}>
-                              <strong>{c.n}</strong>
-                              <span>{c.label}</span>
-                            </a>
-                          ) : (
-                            <span key={c.key} className={`hm-v3-prod-att-chip is-${c.tone}`}>
-                              <strong>{c.n}</strong>
-                              <span>{c.label}</span>
-                            </span>
-                          ),
-                        )}
-                      </div>
-                      {areas.stock && data.running.counted && data.running.items.length > 0 ? (
-                        <ul className="hm-v3-srv-rows hm-v3-prod-att-rows">
-                          {data.running.items.slice(0, 4).map((r) => {
-                            const isOut = r.left <= 0;
-                            return (
-                              <li key={`${r.productId}-${r.size ?? ''}`}>
-                                <a className="hm-v3-srv-row hm-v3-prod-att-row" href={`/stock${stockBranch}`}>
-                                  <Avatar name={r.name} id={r.productId} size={30} />
-                                  <div className="hm-v3-srv-main">
-                                    <strong className="hm-v3-srv-name">{r.name}</strong>
-                                    <span className="hm-v3-prod-att-sub">
-                                      {r.size ? s.sizeWord(r.size) : t.nav.stock}
-                                      {r.branch ? ` · ${r.branch}` : ''}
-                                    </span>
-                                  </div>
-                                  <span className={`hm-pill hm-pill-${isOut ? 'rose' : 'amber'}`}>{s.left(r.left)}</span>
-                                </a>
-                              </li>
-                            );
-                          })}
-                        </ul>
+                {attentionReachable ? (
+                  <section className="hm-v3-card hm-v3-products-card hm-v3-prod-attention shp-needs-card">
+                    <div className="hm-v3-card-head">
+                      <h2>
+                        {s.needsAttentionTitle} {attentionCount > 0 ? <span className="hm-v3-count">({attentionCount})</span> : null}
+                      </h2>
+                      {areas.stock && can('/stock') ? (
+                        <a className="hm-v3-head-link" href={`/stock${stockBranch}`}>
+                          {s.viewOrders} →
+                        </a>
                       ) : null}
-                    </>
-                  )}
-                </section>
+                    </div>
+                    {attentionCount === 0 ? (
+                      <p className="hm-empty">{areas.stock && !data.running.counted ? s.notCounted : s.nothingNeedsYou}</p>
+                    ) : (
+                      <>
+                        <div className="hm-v3-prod-att-summary">
+                          {attentionChips.map((c) =>
+                            c.href ? (
+                              <a key={c.key} className={`hm-v3-prod-att-chip is-${c.tone}`} href={c.href}>
+                                <strong>{c.n}</strong>
+                                <span>{c.label}</span>
+                              </a>
+                            ) : (
+                              <span key={c.key} className={`hm-v3-prod-att-chip is-${c.tone}`}>
+                                <strong>{c.n}</strong>
+                                <span>{c.label}</span>
+                              </span>
+                            ),
+                          )}
+                        </div>
+                        {areas.stock && can('/stock') && data.running.counted && data.running.items.length > 0 ? (
+                          <ul className="hm-v3-srv-rows hm-v3-prod-att-rows">
+                            {data.running.items.slice(0, 4).map((r) => {
+                              const isOut = r.left <= 0;
+                              return (
+                                <li key={`${r.productId}-${r.size ?? ''}`}>
+                                  <a className="hm-v3-srv-row hm-v3-prod-att-row" href={`/stock${stockBranch}`}>
+                                    <Avatar name={r.name} id={r.productId} size={30} />
+                                    <div className="hm-v3-srv-main">
+                                      <strong className="hm-v3-srv-name">{r.name}</strong>
+                                      <span className="hm-v3-prod-att-sub">
+                                        {r.size ? s.sizeWord(r.size) : t.nav.stock}
+                                        {r.branch ? ` · ${r.branch}` : ''}
+                                      </span>
+                                    </div>
+                                    <span className={`hm-pill hm-pill-${isOut ? 'rose' : 'amber'}`}>{s.left(r.left)}</span>
+                                  </a>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        ) : null}
+                      </>
+                    )}
+                  </section>
+                ) : null}
               </div>
+              )}
 
-              {/* ROW 3 — Top sellers, the width of the page. */}
+              {/* ROW 3 — Top sellers, the width of the page: the sellers report's, so only for whoever reads it. */}
+              {!showSellers ? null : (
               <section className="hm-v3-card hm-v3-staff-card">
                 <div className="hm-v3-card-head">
                   <h2>
@@ -1774,8 +1834,10 @@ export function ShopHome({
                   </ul>
                 )}
               </section>
+              )}
 
-              {/* ROW 4 — Recent Orders (Full-Width Table Card) */}
+              {/* ROW 4 — Recent Orders (Full-Width Table Card): the Orders list's rows, so only where Orders opens. */}
+              {!showRecent ? null : (
               <section className="hm-v3-card hm-v3-recent-card">
                 <div className="hm-v3-card-head">
                   <h2>
@@ -1826,7 +1888,7 @@ export function ShopHome({
                                   {channelWord(o.channel)}
                                 </span>
                               </td>
-                              <td>{s.itemCountShort(o.items)}</td>
+                              <td>{allCameBack(o) ? s.itemsAllBackShort(o.itemsSold) : s.itemCountShort(o.items)}</td>
                               {money ? (
                                 <td className="hm-v3-td-amount">
                                   <strong>{o.amountMinor !== undefined ? rupees(o.amountMinor) : '—'}</strong>
@@ -1850,6 +1912,7 @@ export function ShopHome({
                   </div>
                 )}
               </section>
+              )}
             </div>
 
             {/* =====================================================================
@@ -2030,61 +2093,63 @@ export function ShopHome({
               */}
               {!areas.stock ? null : (
                 <>
-                  <Card
-                    title={
-                      <>
-                        {s.needsAttentionTitle}
-                        {phoneAttention.length > 0 ? <span className="shp-card-count"> ({phoneAttention.reduce((n, c) => n + c.n, 0)})</span> : null}
-                      </>
-                    }
-                    action={
-                      data.running.counted && canReports && can('/stock/order') ? (
-                        <a className="shp-link" href="/stock/order">
-                          {s.reorderListLabel}
-                        </a>
-                      ) : undefined
-                    }
-                  >
-                    {!data.running.counted ? (
-                      <div className="shp-empty">
-                        <span>{s.notCounted}</span>
-                        {can('/stock') ? (
-                          <a className="btn shp-cta" href="/stock">
-                            {s.countStock}
+                  {attentionReachable ? (
+                    <Card
+                      title={
+                        <>
+                          {s.needsAttentionTitle}
+                          {phoneAttention.length > 0 ? <span className="shp-card-count"> ({phoneAttention.reduce((n, c) => n + c.n, 0)})</span> : null}
+                        </>
+                      }
+                      action={
+                        data.running.counted && canReports && can('/stock/order') ? (
+                          <a className="shp-link" href="/stock/order">
+                            {s.reorderListLabel}
                           </a>
-                        ) : null}
-                      </div>
-                    ) : phoneAttention.length === 0 ? (
-                      <p className="shp-plain">{s.nothingNeedsYou}</p>
-                    ) : (
-                      <ul className="shp-attn">
-                        {phoneAttention.map((c) => {
-                          const inner = (
-                            <>
-                              <span className="shp-attn-label">{c.label}</span>
-                              <span className={`shp-running-left ${c.tone}`}>{c.n}</span>
-                              {c.href ? (
-                                <span className="shp-attn-chev" aria-hidden>
-                                  <IconChevronRight />
-                                </span>
-                              ) : null}
-                            </>
-                          );
-                          return (
-                            <li key={c.key}>
-                              {c.href ? (
-                                <a className="shp-attn-row" href={c.href}>
-                                  {inner}
-                                </a>
-                              ) : (
-                                <span className="shp-attn-row">{inner}</span>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </Card>
+                        ) : undefined
+                      }
+                    >
+                      {!data.running.counted ? (
+                        <div className="shp-empty">
+                          <span>{s.notCounted}</span>
+                          {can('/stock') ? (
+                            <a className="btn shp-cta" href="/stock">
+                              {s.countStock}
+                            </a>
+                          ) : null}
+                        </div>
+                      ) : phoneAttention.length === 0 ? (
+                        <p className="shp-plain">{s.nothingNeedsYou}</p>
+                      ) : (
+                        <ul className="shp-attn">
+                          {phoneAttention.map((c) => {
+                            const inner = (
+                              <>
+                                <span className="shp-attn-label">{c.label}</span>
+                                <span className={`shp-running-left ${c.tone}`}>{c.n}</span>
+                                {c.href ? (
+                                  <span className="shp-attn-chev" aria-hidden>
+                                    <IconChevronRight />
+                                  </span>
+                                ) : null}
+                              </>
+                            );
+                            return (
+                              <li key={c.key}>
+                                {c.href ? (
+                                  <a className="shp-attn-row" href={c.href}>
+                                    {inner}
+                                  </a>
+                                ) : (
+                                  <span className="shp-attn-row">{inner}</span>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </Card>
+                  ) : null}
 
                   {canReports && can('/stock/sellers') ? (
                     <Card
@@ -2286,7 +2351,7 @@ export function ShopHome({
                               <span className="shp-recent-main">
                                 <span className="shp-recent-name">{customerName}</span>
                                 <span className="shp-recent-meta">
-                                  <span className="shp-recent-code">{orderNumber(o)}</span> · {channelWord(o.channel)} · {formatShortDate(o.soldAt)} · {s.itemCountShort(o.items)}
+                                  <span className="shp-recent-code">{orderNumber(o)}</span> · {channelWord(o.channel)} · {formatShortDate(o.soldAt)} · {allCameBack(o) ? s.itemsAllBackShort(o.itemsSold) : s.itemCountShort(o.items)}
                                 </span>
                               </span>
                             </span>

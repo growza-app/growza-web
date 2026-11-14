@@ -3,7 +3,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import type { Lang } from '../lib/lang';
-import { gridCanChange, gridMayUse, mayUse, type UiAction } from '../lib/nav-policy';
+import { canSee, gridCanChange, gridMayUse, mayUse, type MemberRole, type UiAction } from '../lib/nav-policy';
 import { DIARY_AREAS, type Areas } from '../lib/areas';
 import type { MeBranch } from '../lib/api-types';
 
@@ -82,6 +82,8 @@ export interface SessionInfo {
    * queries) on every page load, for one string the server already held.
    */
   timezone?: string;
+  /** The Reports tabs the owner opened to this person (`me.reportTabs`), so a link asks the same question the screen's guard does. */
+  reportTabs?: string[];
 }
 
 const SessionContext = createContext<SessionInfo | null>(null);
@@ -93,6 +95,16 @@ export function SessionProvider({ session, children }: { session: SessionInfo; c
 /** Null only outside the provider — every tenant screen renders inside it. */
 export function useSession(): SessionInfo | null {
   return useContext(SessionContext);
+}
+
+/**
+ * Jira GRW-709 — may the person signed in OPEN this address? The question `guardScreen` asks before drawing a screen,
+ * asked before drawing a link to it, so a link a page draws never lands the person on Home instead (the every-role
+ * sweep found seven that did). Live is not asked: a screen that opens later says so itself.
+ */
+export function useMayOpen(): (href: string) => boolean {
+  const session = useSession();
+  return (href) => canSee(href, (session?.role ?? null) as MemberRole | null, session?.reportTabs, true, session?.areas);
 }
 
 /**

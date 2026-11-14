@@ -20,7 +20,8 @@ describe('Tenant Home v2 redesign', () => {
     expect(owner).not.toContain("{ href: '/products', label: t.nav.products");
     // The front desk sells from the shelf; the catalogue stays the owner's (QA, 2026-10-17 — this asked
     // `canSee('/products', 'receptionist')`, which is always false, so the desk had no tile at all).
-    expect(reception).toContain("canSee('/products/sell', 'receptionist')");
+    // Jira GRW-709 — asked of the person's own role and grid (`useMayOpen`): a fixed front desk still gets it, a view-only role does not.
+    expect(reception).toContain("mayOpen('/products/sell')");
     expect(reception).toContain("href: '/products/sell', label: t.sellProductAction, icon: <IconProducts />");
   });
 
@@ -57,7 +58,7 @@ describe('Tenant Home v2 redesign', () => {
     expect(hi.whatToDoLink).toBe('क्या करें');
     expect(en.allClear).toBe('All clear');
     expect(hi.allClear).toBe('सब ठीक है');
-    expect(owner).toContain("canSee('/reports', p.role, p.reportTabs)");
+    expect(owner).toContain("canSee('/reports', p.role, p.reportTabs, true, areas)");
     expect(owner).toContain('{t.whatToDoLink} ›');
   });
 

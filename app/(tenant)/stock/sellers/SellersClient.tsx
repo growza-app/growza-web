@@ -8,7 +8,7 @@ import { formatMoney, intlLocale } from '../../lib/format';
 import AppLink from '../../../shared/AppLink';
 import { Pagination } from '../../components/Pagination';
 import { useBranch } from '../../components/BranchProvider';
-import { useAreas, useSession } from '../../components/SessionProvider';
+import { useAreas, useMayOpen, useSession } from '../../components/SessionProvider';
 
 const PAGE_SIZE = 20;
 const RANGES: readonly SellersRange[] = ['last_3_months', 'last_7_days', 'this_month', 'last_month', 'this_year'];
@@ -25,6 +25,7 @@ type View = 'best' | 'dead';
  * Laid out at 344px: a column of cards, no table, no chart that is the only way to read a number.
  */
 export function SellersClient({ timezone }: { timezone: string }) {
+  const mayOpen = useMayOpen();
   const t = useTranslations('products.sellers');
   const locale = useLocale();
   const session = useSession();
@@ -253,14 +254,21 @@ export function SellersClient({ timezone }: { timezone: string }) {
         )
       ) : null}
 
-      <div className="srp-links">
-        <AppLink className="btn btn-ghost srp-export" href="/stock/order">
-          {t('toOrder')}
-        </AppLink>
-        <AppLink className="btn btn-ghost srp-export" href="/stock/report">
-          {t('toReport')}
-        </AppLink>
-      </div>
+      {/* Both are a count (Jira GRW-709): a kitchen, which does not count its stock, has neither screen. */}
+      {mayOpen('/stock/order') || mayOpen('/stock/report') ? (
+        <div className="srp-links">
+          {mayOpen('/stock/order') ? (
+            <AppLink className="btn btn-ghost srp-export" href="/stock/order">
+              {t('toOrder')}
+            </AppLink>
+          ) : null}
+          {mayOpen('/stock/report') ? (
+            <AppLink className="btn btn-ghost srp-export" href="/stock/report">
+              {t('toReport')}
+            </AppLink>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

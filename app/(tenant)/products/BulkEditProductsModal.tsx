@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { api, ApiError, type Product, type ProductCategory } from '../lib/api';
 import { useNouns } from '../lib/use-nouns';
+import { matchItems } from '../lib/service-match';
+import { productMatchable } from '../lib/product-match';
 import { IconClose, IconEdit, IconSearch, IconTrash } from '../components/icons';
 
 interface DraftFields {
@@ -95,17 +97,25 @@ export function BulkEditProductsModal({
   );
 
   const shownRows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return products.filter((p) => {
+    const q = search.trim();
+    const inCategory = products.filter((p) => {
       if (catFilter === 'none' && p.categoryId !== null) return false;
       if (catFilter !== 'all' && catFilter !== 'none' && p.categoryId !== catFilter) return false;
-      if (q.length > 0) {
-        const draftName = drafts[p.id]?.name ?? p.name;
-        const catName = p.categoryName ?? '';
-        if (!draftName.toLowerCase().includes(q) && !catName.toLowerCase().includes(q)) return false;
-      }
       return true;
     });
+    if (q.length === 0) return inCategory;
+    /*
+     * QA 2026-11-14 (F15) — the Stock screen's own search, best match first, so the two boxes on one screen find the
+     * same things. This one was a plain "contains", which found "QA4 Cricket" where the shelf found ten. The name is
+     * the row's edited one, so a product renamed here is found by its new name.
+     */
+    return matchItems(
+      inCategory.map((p) => {
+        const m = productMatchable(p);
+        return { ...m, text: [drafts[p.id]?.name ?? p.name, ...m.text.slice(1)] };
+      }),
+      q,
+    );
   }, [products, catFilter, search, drafts]);
 
   const dirtyProducts = useMemo(

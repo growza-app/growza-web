@@ -222,6 +222,13 @@ export function OrderClient({
   const noAddress = !isCounter && toSend && !order.buyer?.address;
 
   const isPaidCounter = !isCounter || (order.payments?.length ?? 0) > 0;
+  /*
+   * QA 2026-11-14, F21 — a bill every unit of which came back has nothing on it to put on paper: the API's bill is only
+   * what was delivered and kept (`readBill`), so it answers the receipt preview 404 "That bill was not found", and the
+   * button then vanished on its own a moment later. The question is not asked: with nothing kept, there is no receipt
+   * control at all, from the first paint.
+   */
+  const somethingKept = order.lines.some((l) => l.qty > l.returnedQty);
   const returnable: ReturnableSaleBill | null =
     isCounter && hasMoney && order.lines.every((l) => l.priceMinor !== undefined) && isPaidCounter
       ? {
@@ -373,6 +380,10 @@ export function OrderClient({
                     {r.reasonText && r.reasonCode === 'other' ? <span className="ord-d-quiet"> · {r.reasonText}</span> : null}
                     {counted && !r.restocked ? <span className="ord-d-quiet"> · {t('detail.notRestocked')}</span> : null}
                     {r.saleableDefaulted ? <span className="ord-d-quiet"> · {t('detail.saleableAssumed')}</span> : null}
+                    {/* Owner, 2026-11-14 (returns QA, loophole 2) — who gave it back: their name, else their role. */}
+                    {r.by || r.byRole ? (
+                      <span className="ord-d-quiet"> · {t('detail.by', { name: r.by || t(`returns.byRole.${r.byRole}` as 'returns.byRole.owner') })}</span>
+                    ) : null}
                   </span>
                   <span className="ord-d-line-qty">{t('detail.times', { count: r.units })}</span>
                 </li>
@@ -428,15 +439,22 @@ export function OrderClient({
                 </div>
               ))}
             </dl>
-            <div className="ord-d-paper">
-              {/* Owner's review 2026-11-13 — the receipt is the common action and is filled; a return moves money and is the ghost. */}
-              {isPaidCounter ? <DocumentAction visitKey={order.id} primary /> : null}
-              {returnable && canReturn ? (
-                <button type="button" className="btn btn-ghost" onClick={() => setReturning(true)}>
-                  {t('detail.returnItems')}
-                </button>
-              ) : null}
-            </div>
+            {/*
+              * QA 2026-11-14 — and no Return items once every unit has come back: the sheet would open on nothing to give
+              * back. Both controls ask the same question (`somethingKept`), so a fully returned order draws neither, nor
+              * the empty row that held them.
+              */}
+            {somethingKept && (isPaidCounter || (returnable && canReturn)) ? (
+              <div className="ord-d-paper">
+                {/* Owner's review 2026-11-13 — the receipt is the common action and is filled; a return moves money and is the ghost. */}
+                {isPaidCounter ? <DocumentAction visitKey={order.id} primary /> : null}
+                {returnable && canReturn ? (
+                  <button type="button" className="btn btn-ghost" onClick={() => setReturning(true)}>
+                    {t('detail.returnItems')}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
           </section>
         ) : null}
 

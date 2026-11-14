@@ -171,7 +171,7 @@ describe('the phone running order: the money, then Quick links for a shop (last 
     const stack = shop.indexOf('<div className="shp-mobile-stack">');
     // Owner, 2026-11-13 — a shop's stack is a summary: Needs attention, Top sellers, Customers. Recent orders is the
     // kitchen's (the Orders tab lists them one tap away).
-    const attention = shop.indexOf('{s.needsAttentionTitle}\n                        {phoneAttention.length > 0');
+    const attention = shop.indexOf('{s.needsAttentionTitle}\n                          {phoneAttention.length > 0');
     const sellers = shop.indexOf('<ul className="shp-phone-sellers">');
     const customers = shop.indexOf('title={s.customersTitle}');
     const recent = shop.indexOf('<Card\n                  title={s.recentOrdersTitle}');

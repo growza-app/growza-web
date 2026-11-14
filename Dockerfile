@@ -29,14 +29,15 @@
 # the lockfile stops here instead of shipping.
 
 # ---- deps ----
-FROM node:22-slim AS deps
+FROM node:22-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee AS deps
 WORKDIR /app
 COPY package.json package-lock.json .npmrc ./
 RUN --mount=type=secret,id=npm_token \
     NODE_AUTH_TOKEN="$(cat /run/secrets/npm_token 2>/dev/null || true)" npm ci --no-audit --no-fund
 
 # ---- build ----
-FROM node:22-slim AS build
+# Security audit 2026-11-14 (#7) — the base image pinned by digest (multi-arch manifest list), moved on purpose.
+FROM node:22-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -52,7 +53,7 @@ ENV API_URL=http://api:3001
 RUN npm run build
 
 # ---- runtime: the standalone server and nothing else ----
-FROM node:22-slim AS runtime
+FROM node:22-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1

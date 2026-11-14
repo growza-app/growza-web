@@ -477,8 +477,8 @@
         "sub": "Sign out from this device"
       },
       "roles": {
-        "label": "Roles",
-        "sub": "What each person on your team can open"
+        "label": "Team and roles",
+        "sub": "Add staff, give them a login, choose what they open"
       },
       "channels": {
         "label": "Online selling",
@@ -515,6 +515,7 @@
   "common": {
     "clearSearch": "Clear search",
     "voiceSearch": "Search by voice",
+    "voiceSearchWhere": "Search by voice. Your browser sends the audio to its speech service.",
     "stopVoiceSearch": "Stop voice search",
     "voiceStarting": "Getting ready… don’t speak yet",
     "voiceListening": "Listening… speak now",
@@ -758,9 +759,9 @@
       "composition": "Composition scheme"
     },
     "statusHelp": {
-      "unregistered": "Your customers get a receipt. No tax is shown on it.",
-      "regular": "Your customers get a tax invoice showing CGST and SGST, or IGST.",
-      "composition": "Your customers get a bill of supply. A composition dealer does not collect GST from them."
+      "unregistered": "Your {customers} get a receipt. No tax is shown on it.",
+      "regular": "Your {customers} get a tax invoice showing CGST and SGST, or IGST.",
+      "composition": "Your {customers} get a bill of supply. A composition dealer does not collect GST from them."
     },
     "gstinLabel": "GSTIN",
     "gstinHint": "The 15-character number on your registration certificate.",
@@ -780,7 +781,7 @@
     "stateCodeHint": "The two digits your GSTIN starts with — 07 for Delhi, 27 for Maharashtra.",
     "branchGstinLabel": "This branch's own GSTIN",
     "branchGstinHint": "Only if you hold a separate registration for this state. Otherwise leave it blank.",
-    "notRegisteredNote": "Nothing here is needed while you are not registered. Your customers still get a receipt for every payment.",
+    "notRegisteredNote": "Nothing here is needed while you are not registered. Your {customers} still get a receipt for every payment.",
     "save": "Save changes",
     "saving": "Saving…",
     "errors": {
@@ -1739,7 +1740,11 @@
       "createFailed": "Could not create the offer.",
       "cancel": "Cancel",
       "creating": "Creating…",
-      "create": "Create offer"
+      "create": "Create offer",
+      "editTitle": "Edit offer",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saveFailed": "Could not save the offer."
     },
     "branch": {
       "which": "Which branch?",
@@ -2144,7 +2149,10 @@
       "pointsTitle": "Reward points",
       "pointsTakenBack": "{n, plural, one {# point taken back} other {# points taken back}}",
       "pointsAdded": "{n, plural, one {# point added} other {# points added}}",
-      "pointsWhy": "Points follow the amount, so this client keeps only what the visit really earned."
+      "pointsWhy": "Points follow the amount, so this client keeps only what the visit really earned.",
+      "documentIssuedBody": "{doc, select, receipt {Receipt} bill_of_supply {Bill of supply} other {Invoice}} {number} was already given to the customer for this visit. Correcting the bill does not change it: cancel that document and issue a new one, or correct anyway.",
+      "documentIssuedBodyNoNumber": "{doc, select, receipt {A receipt} bill_of_supply {A bill of supply} other {An invoice}} was already given to the customer for this visit. Correcting the bill does not change it: cancel that document and issue a new one, or correct anyway.",
+      "documentIssuedGo": "Correct anyway"
     },
     "foldGroup": "Fold {name}",
     "unfoldGroup": "Unfold {name}",
@@ -3679,6 +3687,7 @@
       "titleEdit": "Edit {product}",
       "name": "Name",
       "namePlaceholder": "e.g. Water bottle 1 litre",
+      "namePlaceholderUncounted": "e.g. Paneer butter masala",
       "price": "Sell price",
       "stock": "Opening count",
       "stockHint": "How many are on the shelf today. Later changes go on the Stock tab, with a reason.",
@@ -3787,6 +3796,7 @@
         "toBranch": "To branch",
         "tooMany": "Only {n} here to move"
       },
+      "tooManyOnShelf": "Only {n} on the shelf",
       "after": "Count will be {n}",
       "confirm": "Confirm",
       "history": "History",
@@ -4549,6 +4559,7 @@
       "restockShelf": "Can be sold again",
       "restockShelfHint": "Adds the units back to that size’s count",
       "restockShelfHintPlain": "Adds the units back to the shelf count",
+      "whyWriteOffNeeds": "Say why it cannot be sold again before you confirm.",
       "damagedOpened": "Damaged, cannot be sold",
       "damagedOpenedHint": "Not added to the count; written off",
       "reasonLabel": "Reason (optional)",
@@ -4590,8 +4601,8 @@
         "card": "Card",
         "other": "Other"
       },
-      "documentIssuedBody": "Invoice {number} was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?",
-      "documentIssuedBodyNoNumber": "An invoice was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?",
+      "documentIssuedBody": "{doc, select, receipt {Receipt {number} was already given to this customer. A return does not change it. Return anyway?} bill_of_supply {Bill of supply {number} was already given to this customer. A return does not change it. Return anyway?} other {Invoice {number} was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?}}",
+      "documentIssuedBodyNoNumber": "{doc, select, receipt {A receipt was already given to this customer. A return does not change it. Return anyway?} bill_of_supply {A bill of supply was already given to this customer. A return does not change it. Return anyway?} other {An invoice was already given to this customer. A return does not change it — you will need to give them a credit note. Return anyway?}}",
       "documentIssuedGo": "Return anyway",
       "whyLabel": "Why did it come back? (optional)",
       "whyOtherNeeds": "Write what the reason was in the note.",
@@ -4645,6 +4656,7 @@
         "state": "State"
       },
       "itemCount": "{count, plural, =0 {No items} one {# item} other {# items}}",
+      "itemsAllBack": "{count, plural, one {# item} other {# items}} · all came back",
       "orderCode": "Order #{code}",
       "tokenTitle": "Token {n}",
       "appOrder": "App order {ref}",
@@ -4774,7 +4786,7 @@
         "priceMoved": "The price changed. Check the new amount.",
         "sizeGone": "That size just ran out. Choose another.",
         "failed": "Could not swap. Nothing changed. Try again.",
-        "documentIssued": "Invoice {number} was already given to the customer. A swap does not change it.",
+        "documentIssued": "{doc, select, receipt {Receipt {number} was already given to the customer.} bill_of_supply {Bill of supply {number} was already given to the customer.} other {Invoice {number} was already given to the customer.}} A swap does not change it.",
         "swapAnyway": "Swap anyway",
         "windowOwner": "This bill is past the {days}-day window. As the owner you can still swap it.",
         "windowNo": "This bill is past the {days}-day window. Only the owner can swap it now.",
@@ -4906,7 +4918,10 @@
       "undeliveredTitle": "Came back undelivered",
       "undeliveredNone": "No parcels came back undelivered.",
       "undeliveredNote": "These never reached the customer. They are counted apart, not as returns.",
-      "toRefunds": "Refunds"
+      "toRefunds": "Refunds",
+      "byTitle": "Given back by",
+      "byNone": "Not recorded",
+      "byRole": {"owner": "Owner", "manager": "Manager", "receptionist": "Front desk", "staff": "Team member"}
     },
     "returnsLink": "Returns",
     "bringIn": {
@@ -5165,7 +5180,7 @@
     "name": "Role name",
     "namePlaceholder": "For example, Cashier",
     "worksLike": "Works like",
-    "worksLikeHint": "What kind of login this is. A stylist-type login can never open more than a stylist can, whatever you tick.",
+    "worksLikeHint": "What kind of login this is. A Staff login can never open more than Staff can, whatever you tick.",
     "worksLikeOptions": {
       "none": "Not set",
       "manager": "Manager",

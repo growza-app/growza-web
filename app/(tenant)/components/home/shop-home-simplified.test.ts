@@ -27,14 +27,15 @@ describe('a shop’s Home says each thing once', () => {
   it('splits by channel only once something sold outside the counter', () => {
     expect(shop).toContain("const soldElsewhere = channelBreakdown.some((ch) => ch.key !== 'counter' && ch.billed > 0);");
     expect(shop).toMatch(/\{soldElsewhere \? \(\s*<div className="hm-v3-kpi-foot hm-v3-split-foot">/);
-    expect(shop).toContain('{money && canReports && soldElsewhere ? (\n                  <section className="hm-v3-card shp-channels-card">');
+    expect(shop).toContain('const showChannels = money && canReports && soldElsewhere;');
+    expect(shop).toContain('{showChannels ? (\n                  <section className="hm-v3-card shp-channels-card">');
   });
 
   it('has one Needs attention card that draws only counts above zero', () => {
     expect(shop).not.toContain('hm-v3-quick-card');
     expect(shop).not.toContain('shp-orders-att');
     expect(shop.match(/shp-needs-card/g)).toHaveLength(1);
-    expect(shop).toContain('].filter((c) => c.n > 0);');
+    expect(shop).toContain('].filter((c) => c.n > 0 && c.href !== null);'); // F10 (QA 2026-11-14): and only a row that opens
     expect(shop).toContain('{attentionCount === 0 ? (');
   });
 

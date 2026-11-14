@@ -16,6 +16,7 @@ import { channelsOf, isDeliveryApp, sellsOnMarketplaces } from '../lib/order-cha
 import { formatTokenNo } from '../pos/pos-helpers';
 import { groupByDay } from './order-days';
 import { OrdersDeskTiles } from './OrdersDeskTiles';
+import { allCameBack } from '../lib/order-items';
 
 /**
  * Jira GRW-614 — the Orders list.
@@ -333,7 +334,7 @@ export function OrdersClient({
                             <span aria-hidden="true">·</span>
                             <span>{channelWord(r.channel)}</span>
                             <span aria-hidden="true">·</span>
-                            <span>{t('list.itemCount', { count: r.items })}</span>
+                            <span>{allCameBack(r) ? t('list.itemsAllBack', { count: r.itemsSold }) : t('list.itemCount', { count: r.items })}</span>
                             {branchOf(r.locationId) ? (
                               <>
                                 <span aria-hidden="true">·</span>
@@ -382,7 +383,7 @@ export function OrdersClient({
                     <span className={`ord-chan-badge ord-chan-${r.channel}`}>{channelWord(r.channel)}</span>
                   </td>
                   <td className="ord-td-who">{whoOf(r)}</td>
-                  <td className="ord-num">{r.items}</td>
+                  <td className="ord-num">{allCameBack(r) ? t('list.itemsAllBack', { count: r.itemsSold }) : r.items}</td>
                   {showMoney ? <td className="ord-num ord-td-amount">{r.amountMinor !== undefined ? formatMoney(r.amountMinor, 'INR', locale) : ''}</td> : null}
                   <td>
                     <span className={`ord-state-chip ${r.paymentPending ? 'ord-s-waiting' : `ord-s-${r.known ? r.status : 'unknown'}`}`}>{r.paymentPending ? t('list.paymentPending') : stateWord(r.status)}</span>

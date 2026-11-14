@@ -23,7 +23,7 @@ import { hasLiveWork, TokenBoard } from './TokenBoard';
 import { useTokenWords } from './token-words';
 import { atBranch } from '../../lib/right-now';
 import { useBranch } from '../BranchProvider';
-import { useMayUse, usePendingAttendance, useWritable } from '../SessionProvider';
+import { useAreas, useMayUse, usePendingAttendance, useWritable } from '../SessionProvider';
 import { homeCopy } from '../../lib/home-copy';
 import { closingTime } from '../../lib/day-summary-view';
 import type { Lang } from '../../lib/lang';
@@ -189,6 +189,8 @@ export interface OwnerHomeProps {
 }
 
 export function OwnerHome(p: OwnerHomeProps) {
+  // Jira GRW-709 — asked with the business's areas, which carry the role's grid: a view-only role is not offered Sell product.
+  const areas = useAreas();
   const t = homeCopy(p.lang, p.labels);
   // Jira GRW-418 — the board's own words, the same ones the desk's Home gives it.
   const w = useTokenWords();
@@ -666,10 +668,10 @@ export function OwnerHome(p: OwnerHomeProps) {
     { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
     { href: '/reports', label: t.nav.reports, icon: <IconReports />, tone: 'amber' },
     { href: '/settings', label: t.nav.settings, icon: <IconSettings />, tone: 'slate' },
-  ].filter((l) => canSee(l.href, p.role, p.reportTabs));
+  ].filter((l) => canSee(l.href, p.role, p.reportTabs, true, areas));
 
   /** A link only where this role may open the page; otherwise the card is plain (an `<a>` without `href`). */
-  const mayOpen = (href: string) => canSee(href, p.role, p.reportTabs);
+  const mayOpen = (href: string) => canSee(href, p.role, p.reportTabs, true, areas);
 
   return (
     <>
@@ -1137,7 +1139,7 @@ export function OwnerHome(p: OwnerHomeProps) {
           <Card
             className="hm-area-attention" title={t.needsYourAttention}
             action={
-              canSee('/reports', p.role, p.reportTabs) ? (
+              canSee('/reports', p.role, p.reportTabs, true, areas) ? (
                 <a className="hm-link" href="/reports">
                   {t.whatToDoLink} ›
                 </a>

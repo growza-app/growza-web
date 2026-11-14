@@ -297,6 +297,13 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     );
   }
 
+  /*
+   * The vertical's nouns in the reader's language (salon QA 2026-11-07), for the components below AND the nav: the
+   * sidebar and bottom bar had the English labels and so fell back to the generic Hindi word — "सेवाएँ / स्टाफ़" at a
+   * clinic whose English nav says Consultations / Doctors (QA 2026-11-14, F17).
+   */
+  const localLabels = nounsIn(labels, (messages as Messages).verticalNouns as Record<string, string> | undefined);
+
   return (
     <html lang={lang} className={fontClass}>
       <body>
@@ -336,15 +343,16 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             pendingAttendance,
             selfCheckIn,
             timezone,
+            reportTabs,
           }}
         >
         <ScreenAccess>
         <BranchProvider branches={branches} role={role ?? null} memberLocationId={memberLocationId} workBranchName={workBranchName}>
-        <LabelsProvider labels={nounsIn(labels, (messages as Messages).verticalNouns as Record<string, string> | undefined)}>
+        <LabelsProvider labels={localLabels}>
         {impersonation ? null : <NamePrompt />}
         <MobileNavProvider>
           <div className={impersonation ? 'shell shell-impersonating' : 'shell'}>
-            <Sidebar tenantName={tenantName} labels={labels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} whatsappDemo={whatsappDemo} products={products} lang={lang} locationName={locationName} branchCount={role === 'owner' ? branchCount : 1} phone={memberPhone} name={memberName} />
+            <Sidebar tenantName={tenantName} labels={localLabels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} whatsappDemo={whatsappDemo} products={products} lang={lang} locationName={locationName} branchCount={role === 'owner' ? branchCount : 1} phone={memberPhone} name={memberName} />
             <div className="content">
               {/*
                 * Jira GRW-300 — its own grid item, not a bare `BillingBanner`
@@ -398,7 +406,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 * was the grid item directly.
                 */}
               <main className="content-main">{children}</main>
-              <MobileChrome labels={labels} timezone={timezone} role={role} reportTabs={reportTabs} lang={lang} />
+              <MobileChrome labels={localLabels} timezone={timezone} role={role} reportTabs={reportTabs} lang={lang} />
             </div>
           </div>
         </MobileNavProvider>

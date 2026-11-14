@@ -74,6 +74,8 @@ export default async function MorePage() {
     { href: '/attendance', label: ta('title'), icon: <IconStaff /> },
     { href: '/offers', label: nav.nav.offers, icon: <IconOffers /> },
     { href: '/providers', label: nav.nav.staff, icon: <IconStaff /> },
+    // QA 2026-11-14 (F5) — a shop's staff and their logins (it has no Staff roster); the policy filter shows it to a shop's owner only.
+    ...(role === 'owner' ? [{ href: '/settings/roles', label: nav.nav.staff, icon: <IconStaff /> }] : []),
     { href: '/services', label: nav.nav.services, icon: <IconServices /> },
     // Jira GRW-438 — the bottom bar's five slots do not change, so Packages rides this menu on a phone.
     { href: '/packages', label: nav.nav.packages, icon: <IconPackages /> },

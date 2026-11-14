@@ -179,6 +179,14 @@ export function Sidebar({
       // GRW-170 — who was here sits with the people, not with the client list.
       children: [
         { href: '/providers', label: t.nav.staff },
+        /*
+         * QA 2026-11-14 (F5) — a shop has no Staff roster (`/providers` is not a shop's), so its people and their logins
+         * live on Settings › Team and roles. The Team fold opened only Attendance, and a retail owner looking for "add a
+         * staff member" found nothing. Policy decides who sees it (a shop's, never a salon's — `SHOP_SETTINGS`), and the
+         * owner alone, as Settings lists it (`shopOwnerOnly`): the roles API answers the owner only, and the allowlist's
+         * "a manager is an owner" would otherwise offer a manager a screen that says there is nothing here.
+         */
+        ...(role === 'owner' ? [{ href: '/settings/roles', label: t.nav.staff }] : []),
         { href: '/attendance', label: t.nav.attendance },
       ],
     },

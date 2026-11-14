@@ -10,7 +10,7 @@ import { formatPhone } from '../lib/format';
 import { IconClose, IconPhone, IconWhatsApp } from './icons';
 import { waDigits } from './BookingSheet';
 import { useDialog } from '../../shared/a11y/useDialog';
-import { useAreas, useMayUse } from './SessionProvider';
+import { useAreas, useMayOpen, useMayUse } from './SessionProvider';
 import { clientHistoryOf } from '../lib/areas';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { ClientCartoon } from './ClientCartoon';
@@ -100,7 +100,9 @@ export function ClientProfileCard({
   // Where this business keeps a client's past, and so what the one button at the foot of this card says and opens.
   const areas = useAreas();
   const place = clientHistoryOf(areas);
-  const history = place ? { href: place.href, label: place.kind === 'orders' ? c.viewOrders : c.viewBookings } : null;
+  // Jira GRW-709 — and only where this person may open it: a shop's front desk without Orders has no button, not one that lands on Home.
+  const mayOpen = useMayOpen();
+  const history = place && mayOpen(place.href.split('?')[0]!) ? { href: place.href, label: place.kind === 'orders' ? c.viewOrders : c.viewBookings } : null;
   const router = useRouter();
 
   useEffect(() => {
@@ -163,7 +165,12 @@ export function ClientProfileCard({
     row.tone === 'bad' ? 'var(--rp-red)' : row.tone === 'warn' ? 'var(--rp-amber)' : undefined;
 
   const startEditing = () => {
-    setDraftName(profile?.name ?? '');
+    /*
+     * QA 2026-11-14 (F13) — a client saved with no name comes back named by their number (the card's title has to
+     * say something). Editing put that number into the Name box, so Save stored "+919000012346" as the name. The box
+     * starts empty for a client with no name of their own; the title can keep the number.
+     */
+    setDraftName(profile && profile.name !== profile.phone ? profile.name : '');
     /*
      * The stored value is E.164; the field shows the ten digits a person types
      * and the server's `toStoredPhone` puts it back. Showing "+919876543210"

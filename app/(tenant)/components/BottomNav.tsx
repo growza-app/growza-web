@@ -51,6 +51,9 @@ import {
  * Offers left the bar to make room; it is on the owner's Home quick links and
  * on More, one tap from either.
  */
+/** The bar's slots beside the raised centre action; a sixth made every tab "very contracted" (Jira GRW-300). */
+const MAX_TABS = 5;
+
 export function BottomNav({
   labels,
   role,
@@ -111,10 +114,18 @@ export function BottomNav({
         { href: '/orders', label: t.nav.orders, icon: <IconNavOrders /> },
         { href: '/stock', label: t.nav.stock, icon: <IconNavStock /> },
         { href: '/customers', label: t.nav.clients, icon: <IconNavClients /> },
+        /*
+         * QA 2026-11-14 (F22) — a role whose only page is Attendance (a shop's Staff role: attendance view) had Home and
+         * the bell, and no way on a phone to the one screen the role exists for. Offered to a member who holds a role
+         * (`areas.pages`) when the role opens it and the bar has a slot to spare; the owner's and the fixed roles' bars
+         * are as they were, and a role that opens everything keeps the five frequent tabs.
+         */
+        ...(areas.pages ? [{ href: '/attendance', label: t.nav.attendance, icon: <IconNavAttendance /> }] : []),
         { href: '/notifications', label: t.nav.notificationsShort, icon: <IconBell /> },
       ];
 
-  const visible = visibleItems(items, role, reportTabs, live, areas);
+  const allowed = visibleItems(items, role, reportTabs, live, areas);
+  const visible = allowed.length > MAX_TABS ? allowed.filter((i) => i.href !== '/attendance') : allowed;
   // Owner, 2026-10-15 — the plus is Home's. Elsewhere it sat on the corner of every list and form, so it is not drawn
   // there at all; New booking is one tap from Home, and the screens that need it have their own button.
   const centre = !stylist && onCentre && pathname === '/';

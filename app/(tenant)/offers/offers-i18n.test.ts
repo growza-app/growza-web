@@ -6,7 +6,8 @@ import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
 import type { Offer, Service } from '../lib/api';
 import { OffersList } from './OffersList';
-import { CreateOfferMenu } from './CreateOfferMenu';
+import { CreateOfferMenu, OfferModal } from './CreateOfferMenu';
+import { readFileSync, readdirSync } from 'node:fs';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: () => {}, push: () => {} }) }));
 
@@ -54,5 +55,35 @@ describe('the offers list and menu', () => {
   /** It opens the announcement modal directly now, rather than a dropdown holding a single row. */
   it('the create control is a button, not a menu of one', () => {
     expect(wrap('en', createElement(CreateOfferMenu))).not.toContain('dropdown-panel');
+  });
+
+  /**
+   * QA 2026-11-14 — Edit went to `/offers/<id>/edit`, a page GRW-438 had moved to `/packages`. It opens the
+   * create box filled in now, and nothing links to the missing page.
+   */
+  describe('editing an offer', () => {
+    const edit = (l: 'en' | 'hi') => wrap(l, createElement(OfferModal, { offer: offers[1], onClose: () => {} }));
+
+    it('opens the same box, filled in, in each language', () => {
+      const html = edit('en');
+      expect(html).toContain('Edit offer');
+      expect(html).toContain('value="20% off"');
+      expect(html).toContain('value="This week"');
+      expect(html).toContain('Save changes');
+      expect(html).not.toContain('Create offer');
+      expect(edit('hi')).toContain('ऑफ़र बदलें');
+      expect(edit('hi')).toContain('बदलाव सेव करें');
+    });
+
+    it('does not offer to move the offer to another branch — the API refuses that', () => {
+      expect(edit('en')).not.toContain('offer-branch');
+    });
+
+    it('links to no /offers/<id>/edit page, because there is none', () => {
+      expect(readdirSync(new URL('.', import.meta.url))).not.toContain('[id]');
+      const list = readFileSync(new URL('./OffersList.tsx', import.meta.url), 'utf8');
+      expect(list).not.toMatch(/\/offers\/\$\{/);
+      expect(list).toContain('setEditing(offer)');
+    });
   });
 });

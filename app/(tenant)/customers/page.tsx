@@ -6,6 +6,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { pickNoun } from '../lib/nouns';
+import { localLabels } from '../lib/local-labels';
 import { loadAtBranch } from '../lib/branch-load';
 import { BranchUrlSync } from '../components/BranchUrlSync';
 import { guardScreen } from '../lib/screen-guard';
@@ -79,7 +80,7 @@ export default async function CustomersPage({
       initialSort={sort}
       initialDirection={direction}
       initialOpenClientId={params.open?.trim() || undefined}
-      label={pickNoun(locale, me.labels.customers ?? 'Customers', nouns('customersTitle'))}
+      label={pickNoun(locale, (await localLabels(me.labels)).customers ?? 'Customers', nouns('customersTitle'))}
       />
     </>
   );

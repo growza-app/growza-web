@@ -1,6 +1,6 @@
 import type { Lang } from './lang';
 import { copy } from './copy';
-import { nounInSentence } from './nouns';
+import { isLocalised, nounInSentence } from './nouns';
 
 /**
  * Jira GRW-222 — every word on the three Homes, the header and the navigation,
@@ -32,9 +32,12 @@ const segmentsHi = {
 export function homeCopy(lang: Lang, labels: Labels = {}) {
   const hi = lang === 'hi';
   const S = (en: string, h: string) => (hi ? h : en);
-  const bookingsWord = hi ? 'बुकिंग' : (labels.appointments ?? copy.nav.appointments).toLowerCase();
-  const clientsWord = hi ? 'ग्राहक' : (labels.customers ?? copy.nav.customers);
-  const staffWord = hi ? 'स्टाफ़' : (labels.providers ?? copy.nav.staff);
+  // QA 2026-11-14 (F17) — in Hindi, the vertical's own word when the labels arrive in Hindi (the layout puts them
+  // through `verticalNouns`): a clinic's nav says परामर्श and डॉक्टर, as English says Consultations and Doctors.
+  const H = (label: string | undefined, generic: string) => (isLocalised(label) ? label : generic);
+  const bookingsWord = hi ? H(labels.appointments, 'बुकिंग') : (labels.appointments ?? copy.nav.appointments).toLowerCase();
+  const clientsWord = hi ? H(labels.customers, 'ग्राहक') : (labels.customers ?? copy.nav.customers);
+  const staffWord = hi ? H(labels.providers, 'स्टाफ़') : (labels.providers ?? copy.nav.staff);
   /*
    * "1 booking", not "1 bookings". The vertical carries both forms
    * (`appointment` / `appointments`, `customer` / `customers`); Hindi uses one
@@ -558,6 +561,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       colStatus: S('Status', 'स्थिति'),
       colActions: S('Actions', 'कार्रवाई'),
       itemCountShort: (n: number) => (n === 1 ? S('1 item', '1 सामान') : S(`${n} items`, `${n} सामान`)),
+      // QA 2026-11-14, F14 — an order everything on which came back.
+      itemsAllBackShort: (n: number) => (n === 1 ? S('1 item · all came back', '1 सामान · सब वापस आया') : S(`${n} items · all came back`, `${n} सामान · सब वापस आया`)),
       noNameCustomer: S('Walk-in customer', 'दुकान का ग्राहक'),
       stateDone: S('Done', 'पूरा हुआ'),
       stateNew: S('New', 'नया'),
@@ -627,11 +632,11 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
        * a kitchen keeps no count. The vertical's word is still what decides; this is its Hindi, for the one word that
        * changes the meaning.
        */
-      stock: hi ? (labels.stock === 'Menu' ? 'मेन्यू' : 'स्टॉक') : (labels.stock ?? 'Stock'),
+      stock: hi ? (labels.stock === 'Menu' ? 'मेन्यू' : H(labels.stock, 'स्टॉक')) : (labels.stock ?? 'Stock'),
       schedule: S('My schedule', 'मेरा काम'),
-      clients: hi ? 'ग्राहक' : (labels.customers ?? copy.nav.customers),
-      staff: hi ? 'स्टाफ़' : (labels.providers ?? copy.nav.staff),
-      services: hi ? 'सेवाएँ' : (labels.services ?? copy.nav.services),
+      clients: hi ? H(labels.customers, 'ग्राहक') : (labels.customers ?? copy.nav.customers),
+      staff: hi ? H(labels.providers, 'स्टाफ़') : (labels.providers ?? copy.nav.staff),
+      services: hi ? H(labels.services, 'सेवाएँ') : (labels.services ?? copy.nav.services),
       offers: S(copy.nav.offers, 'ऑफर'),
       /** Jira GRW-438 — several services sold as one visit. "पैकेज" is the word a salon owner already uses. */
       packages: S('Packages', 'पैकेज'),

@@ -1012,6 +1012,8 @@ export interface SearchResult {
     providerName: string | null;
     createdVia: 'whatsapp' | 'dashboard';
     reminderSent: boolean;
+    /** QA 2026-11-14 — booked for later, not a walk-in. Absent from an older API. */
+    bookedAhead?: boolean;
   }>;
 }
 
@@ -1407,6 +1409,8 @@ export interface OrderListRow {
   /** The client if it has one, else the buyer. */
   who: { kind: 'client' | 'buyer'; name: string | null } | null;
   items: number;
+  /** QA 2026-11-14, F14 — units rung up before anything came back; absent from an older API. */
+  itemsSold?: number;
   amountMinor?: number;
   /** Jira GRW-625 — the marketplace has not yet accepted what the shop told it (sent, cancelled): a glance finds these. */
   marketplaceUnconfirmed?: boolean;
@@ -1417,6 +1421,8 @@ export interface OrderListRow {
   paymentPending?: boolean;
   /** Owner, 9 Nov 2026 — the order's stored token (API 0174); absent from an older API. */
   tokenNo?: number | null;
+  /** QA 2026-11-14 — when it was handed over the counter; null while it waits. Absent from an older API. */
+  handedOverAt?: string | null;
 }
 
 export interface OrdersPage {
@@ -2128,12 +2134,17 @@ export interface OrderReturn {
   units: number;
   restocked: boolean;
   saleableDefaulted: boolean;
+  /** Owner, 2026-11-14 (returns QA, loophole 2) — who took it back, and their role for when no name was set. Absent from an older API. */
+  by?: string | null;
+  byRole?: string | null;
 }
 export interface ReturnsReportPage {
   window: { key: string; label: string; startISO: string; endExclusiveISO: string };
   byReason: Array<{ reason: string; returns: number; units: number }>;
   customer: { returns: number; units: number };
   undelivered: { returns: number; units: number };
+  /** Owner, 2026-11-14 — who gave money back in the window, the most money first. Absent from an older API. */
+  byPerson?: Array<{ name: string | null; role: string | null; returns: number; refundMinor: string }>;
   anyReturns: boolean;
 }
 
