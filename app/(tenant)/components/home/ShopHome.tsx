@@ -1911,11 +1911,12 @@ export function ShopHome({
         )}
 
         {/*
-          Quick links on a phone. Owner, 2026-11-13 — a shop with a counted shelf has them straight under the money:
-          the figure, then the doors, then what needs the owner. The kitchen keeps them last (below). Outside the
-          branch a failed read replaces, so they stay when it does. `.hm-mobile`, so a laptop never draws them.
+          Quick links on a phone, straight under the money: the figure, then the doors, then what needs the owner.
+          Owner, 2026-11-13 for a shop; 2026-11-14 for the kitchen too ("move quick links below the KPI card").
+          Outside the branch a failed read replaces, so they stay when it does. `.hm-mobile`, so a laptop never
+          draws them.
         */}
-        {areas.stock ? quickLinks : null}
+        {quickLinks}
 
         {failed || !data ? null : (
             <div className="shp-mobile-stack">
@@ -2245,7 +2246,6 @@ export function ShopHome({
 
             </div>
         )}
-        {areas.stock ? null : quickLinks}
       </div>
       {summaryOpen ? (
         <DaySummarySheet
