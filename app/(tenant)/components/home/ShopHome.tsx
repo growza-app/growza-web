@@ -1031,7 +1031,13 @@ export function ShopHome({
                                 <b>{rupees(m.revenueMinor)}</b>
                               </span>
                             ))}
-                          {/* QA 2026-11-06 — what the apps billed, so the split adds up to the takings beside it. */}
+                          {/* Emerald v3 — what an order came to on average, on the wide money tile. */}
+                          {data.today.orders > 0 ? (
+                            <span className="rst-kpi-mode is-avg">
+                              <b>{s.avgOrderShort(rupees(Math.round(data.today.takingsMinor / data.today.orders)))}</b>
+                            </span>
+                          ) : null}
+                                                    {/* QA 2026-11-06 — what the apps billed, so the split adds up to the takings beside it. */}
                           {data.today.fromAppsMinor ? (
                             <span className="rst-kpi-mode">
                               <i className="rst-mode-dot is-apps" aria-hidden />
@@ -1062,6 +1068,10 @@ export function ShopHome({
                     <div className="rst-kpi-main">
                       <span className="rst-kpi-label">{s.ordersTitle}</span>
                       <strong className="rst-kpi-value">{data.today.orders}</strong>
+                      {/* Emerald v3 (owner, 2026-11-14: "add more info to the KPIs, looking empty") — where today's orders are. */}
+                      <span className="rst-kpi-note">
+                        {isKitchen ? s.ordersNote(queueStats.completedToday, queueStats.inQueue) : s.toSendNote(data.toSend)}
+                      </span>
                     </div>
                     {ordersDeltaPct !== null ? (
                       <div className="rst-kpi-side is-bottom">
@@ -1089,6 +1099,7 @@ export function ShopHome({
                     <div className="rst-kpi-main">
                       <span className="rst-kpi-label">{s.customersCardTitle}</span>
                       <strong className="rst-kpi-value">{customersTotal ?? '—'}</strong>
+                      {customerStats ? <span className="rst-kpi-note">{s.newThisMonthNote(customerStats.newThisMonth)}</span> : null}
                     </div>
                     {/* Emerald v3 — every tile ends on the same small line, as the shot's four do. */}
                     <div className="rst-kpi-side is-bottom">
