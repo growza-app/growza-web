@@ -179,6 +179,7 @@ export function AccountMenu() {
           drawn face the client list gives a client, picked from the person's own number so it is theirs on every
           device; and on a laptop their name and role beside it, as the shot's header has. Nobody has a photo yet.
         */}
+        <span className="acct-initial">{session?.initial ?? 'S'}</span>
         <ClientCartoon id={session?.phone ?? name ?? session?.businessName ?? 'me'} className="acct-face" />
         <span className="acct-trigger-text">
           <strong>{name ?? t(`roles.${role}.name`)}</strong>

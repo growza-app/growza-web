@@ -32,13 +32,16 @@
 /* ---------- the face: Plus Jakarta Sans for Latin (owner, 14 Nov 2026 — the shot's closest; was Hanken Grotesk) ----------
  * Sharper than Figtree, closer to the shot. Devanagari still falls through to Noto Sans Devanagari, and
  * Figtree stays in the stack behind it, so removing this rule is the whole undo. Form fields inherit. */
-html,
-body {
-  font-family: var(--font-jakarta, ui-sans-serif), var(--font-figtree, ui-sans-serif), var(--font-devanagari, ui-sans-serif), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-}
+/* Laptop only (owner, 14 Nov 2026: "don't touch the mobile, mobile was already good"): a phone keeps Figtree. */
+@media (min-width: 861px) {
+  html,
+  body {
+    font-family: var(--font-jakarta, ui-sans-serif), var(--font-figtree, ui-sans-serif), var(--font-devanagari, ui-sans-serif), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
 
-:is(button, input, select, textarea) {
-  font-family: inherit;
+  :is(button, input, select, textarea) {
+    font-family: inherit;
+  }
 }
 
 /* ---------- shell: a light sidebar, one surface with the page ---------- */
@@ -1242,22 +1245,29 @@ body {
  * with its key at the end, white round buttons, and the person — a drawn face, their name, their role.
  * ===================================================================================================== */
 
-/* The face fills the round avatar on every screen size; nobody has a photo, so everybody gets one. */
-.acct-trigger .acct-face {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 999px;
-}
-
-.acct-trigger.avatar-lg {
-  overflow: hidden;
-  background: transparent;
-}
-
+/* The face and the name are the laptop's; a phone keeps its green letter, as it was (owner, 14 Nov 2026: "don't
+   touch the mobile"). */
+.acct-trigger .acct-face,
 .acct-trigger-text,
 .hdr-search-kbd {
   display: none;
+}
+
+@media (min-width: 861px) {
+  .acct-trigger .acct-initial {
+    display: none;
+  }
+
+  .acct-trigger .acct-face {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+  }
+
+  .acct-trigger.avatar-lg {
+    background: transparent;
+  }
 }
 
 @media (min-width: 861px) {
