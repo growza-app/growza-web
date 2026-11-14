@@ -1852,3 +1852,37 @@
     letter-spacing: -0.02em;
   }
 }
+
+/*
+ * The Menu screen's header on a narrow phone (owner, 14 Nov 2026: "Menu was aligned before"). At ~342px
+ * back + "Menu" + ⓘ and the three buttons need ~354px and the buttons wrapped to a second line. Only this
+ * screen's header, only below 400px: the buttons 44px instead of 52px with a 6px gap, the title cut with
+ * "…" only if it really cannot fit, and the whole header kept to one line.
+ */
+@media (max-width: 400px) {
+  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar {
+    flex-wrap: nowrap;
+  }
+
+  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-lead {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-title h1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-actions {
+    flex-shrink: 0;
+    gap: 6px;
+  }
+
+  .content:has(> .page-body.prd-page, > .content-main > .page-body.prd-page) .topbar-actions > .btn {
+    min-width: 44px;
+    width: 44px;
+    padding-inline: 0;
+  }
+}
