@@ -222,6 +222,13 @@ export function OrderClient({
   const noAddress = !isCounter && toSend && !order.buyer?.address;
 
   const isPaidCounter = !isCounter || (order.payments?.length ?? 0) > 0;
+  /*
+   * QA 2026-11-14, F21 — a bill every unit of which came back has nothing on it to put on paper: the API's bill is only
+   * what was delivered and kept (`readBill`), so it answers the receipt preview 404 "That bill was not found", and the
+   * button then vanished on its own a moment later. The question is not asked: with nothing kept, there is no receipt
+   * control at all, from the first paint.
+   */
+  const somethingKept = order.lines.some((l) => l.qty > l.returnedQty);
   const returnable: ReturnableSaleBill | null =
     isCounter && hasMoney && order.lines.every((l) => l.priceMinor !== undefined) && isPaidCounter
       ? {
@@ -434,7 +441,7 @@ export function OrderClient({
             </dl>
             <div className="ord-d-paper">
               {/* Owner's review 2026-11-13 — the receipt is the common action and is filled; a return moves money and is the ghost. */}
-              {isPaidCounter ? <DocumentAction visitKey={order.id} primary /> : null}
+              {isPaidCounter && somethingKept ? <DocumentAction visitKey={order.id} primary /> : null}
               {returnable && canReturn ? (
                 <button type="button" className="btn btn-ghost" onClick={() => setReturning(true)}>
                   {t('detail.returnItems')}
