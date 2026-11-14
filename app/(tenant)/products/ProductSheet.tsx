@@ -389,7 +389,7 @@ export function ProductSheet({
                     className="prd-input"
                     type="text"
                     value={name}
-                    placeholder={t('namePlaceholder')}
+                    placeholder={t(counted ? 'namePlaceholder' : 'namePlaceholderUncounted')}
                     maxLength={120}
                     onChange={(e) => setName(e.target.value)}
                     autoFocus={autoFocusField(!product)}

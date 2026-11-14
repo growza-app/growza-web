@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { api, ApiError, formatTime, type Appointment, type Service } from '../lib/api';
+import { issuedDocKind, type IssuedDocKind } from '../lib/issued-document';
 import { isValidAmount, minorToRupees, toMinor } from '../lib/checkout-lines';
 import { LargeAmountDeclined, useLargeAmountGuard } from './LargeAmountConfirm';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -50,6 +51,7 @@ export function CorrectBookingSheet({
   const [error, setError] = useState<string | null>(null);
   // Security audit 2026-11-14 (#4) — the receipt or invoice already handed over for this visit, when the server named one.
   const [issuedDocument, setIssuedDocument] = useState<string | null>(null);
+  const [issuedKind, setIssuedKind] = useState<IssuedDocKind>('tax_invoice');
   /**
    * Jira GRW-648 — reward points the save moved, held so the sheet can say so before it closes.
    *
@@ -114,6 +116,7 @@ export function CorrectBookingSheet({
       if (err instanceof LargeAmountDeclined) return;
       if (err instanceof ApiError && err.code === 'document_issued') {
         const number = (err.body as { documentNumber?: unknown } | undefined)?.documentNumber;
+        setIssuedKind(issuedDocKind(err.body));
         setIssuedDocument(typeof number === 'string' ? number : '');
         return;
       }
@@ -245,7 +248,7 @@ export function CorrectBookingSheet({
 
             {issuedDocument !== null ? (
               <div role="alert" className="sheet-foot sheet-foot-error">
-                {issuedDocument ? t('documentIssuedBody', { number: issuedDocument }) : t('documentIssuedBodyNoNumber')}{' '}
+                {issuedDocument ? t('documentIssuedBody', { number: issuedDocument, doc: issuedKind }) : t('documentIssuedBodyNoNumber', { doc: issuedKind })}{' '}
                 <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => void save(true)}>
                   {t('documentIssuedGo')}
                 </button>

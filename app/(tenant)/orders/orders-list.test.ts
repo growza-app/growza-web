@@ -142,7 +142,7 @@ describe('FR-06 — Home’s count of what is waiting opens the list already fil
     // the kitchen's Orders card keeps the link.
     expect(home).toContain('{isKitchen && data.toSend > 0 ? (');
     expect(home).toContain("{ key: 'send', tone: '', n: ships ? (data?.toSend ?? 0) : 0, label: s.waitingToSendLabel");
-    expect(home).toContain('].filter((c) => c.n > 0);');
+    expect(home).toContain('].filter((c) => c.n > 0 && c.href !== null);'); // F10 (QA 2026-11-14): and only a row that opens
   });
 
   it('says it in both languages', () => {

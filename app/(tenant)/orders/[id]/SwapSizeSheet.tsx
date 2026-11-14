@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { api, ApiError, formatMoney } from '../../lib/api';
+import { issuedDocKind, type IssuedDocKind } from '../../lib/issued-document';
 import type { ExchangeBody, ExchangeResult, OrderDetail, Size } from '../../lib/api-types';
 import { sizeLabel } from '../../lib/till-sizes';
 import { newRequestId } from '../../sales/sales-helpers';
@@ -71,6 +72,7 @@ export function SwapSizeSheet({
   const [mode, setMode] = useState<Mode | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [documentNumber, setDocumentNumber] = useState<string | null>(null);
+  const [documentKind, setDocumentKind] = useState<IssuedDocKind>('tax_invoice');
   const [busy, setBusy] = useState(false);
   // One request id for as long as the choice is the same: a retry after a lost answer is the same swap, not a second.
   const request = useRef<{ id: string; signature: string } | null>(null);
@@ -184,6 +186,7 @@ export function SwapSizeSheet({
     } catch (error) {
       if (error instanceof ApiError && error.code === 'document_issued') {
         const number = (error.body as { documentNumber?: unknown } | undefined)?.documentNumber;
+        setDocumentKind(issuedDocKind(error.body));
         setDocumentNumber(typeof number === 'string' ? number : '');
       } else if (error instanceof ApiError && error.code === 'exchange_difference_changed') {
         // The price moved between the quote and the tap: show the amount it is now and let the person decide again.
@@ -364,7 +367,7 @@ export function SwapSizeSheet({
 
         {documentNumber !== null ? (
           <div className="psz-note swp-warn" role="alert">
-            <p>{t('documentIssued', { number: documentNumber })}</p>
+            <p>{t('documentIssued', { number: documentNumber, doc: documentKind })}</p>
             <button type="button" className="btn" disabled={busy} onClick={() => void confirm(true)}>
               {t('swapAnyway')}
             </button>

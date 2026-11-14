@@ -1012,6 +1012,8 @@ export interface SearchResult {
     providerName: string | null;
     createdVia: 'whatsapp' | 'dashboard';
     reminderSent: boolean;
+    /** QA 2026-11-14 — booked for later, not a walk-in. Absent from an older API. */
+    bookedAhead?: boolean;
   }>;
 }
 
@@ -1407,6 +1409,8 @@ export interface OrderListRow {
   /** The client if it has one, else the buyer. */
   who: { kind: 'client' | 'buyer'; name: string | null } | null;
   items: number;
+  /** QA 2026-11-14, F14 — units rung up before anything came back; absent from an older API. */
+  itemsSold?: number;
   amountMinor?: number;
   /** Jira GRW-625 — the marketplace has not yet accepted what the shop told it (sent, cancelled): a glance finds these. */
   marketplaceUnconfirmed?: boolean;

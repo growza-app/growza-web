@@ -45,7 +45,12 @@ describe("the vertical's nouns in Hindi", () => {
     expect(nounsIn(labels, undefined)).toEqual(labels);
   });
   it('the layout hands the translated nouns to every screen', () => {
-    expect(read('layout.tsx')).toMatch(/<LabelsProvider labels=\{nounsIn\(labels, /);
+    // QA 2026-11-14 (F17) — computed once as `localLabels`, and the nav gets the same translated nouns.
+    const layout = read('layout.tsx');
+    expect(layout).toMatch(/const localLabels = nounsIn\(labels, /);
+    expect(layout).toContain('<LabelsProvider labels={localLabels}>');
+    expect(layout).toContain('<Sidebar tenantName={tenantName} labels={localLabels}');
+    expect(layout).toContain('<MobileChrome labels={localLabels}');
   });
 });
 
