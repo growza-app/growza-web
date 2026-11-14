@@ -5317,5 +5317,74 @@
     "noNumberBodyStaff": "This message has no phone number. Ask the owner to add the business number in Settings.",
     "shareAnyway": "Share anyway",
     "addNumber": "Add number"
+  },
+  "moneyReports": {
+    "tabs": {
+      "profit": "Profit",
+      "discounts": "Discounts & free",
+      "payments": "Payments"
+    },
+    "rangeLabel": "Period",
+    "from": "From",
+    "to": "To",
+    "loadError": "Could not load this report.",
+    "retry": "Try again",
+    "nothing": "Nothing was sold in this period.",
+    "openOrder": "Open order",
+    "token": "Token {n}",
+    "profit": {
+      "title": "Profit",
+      "profitLabel": "Profit",
+      "marginLine": "{margin}% of sales",
+      "salesLabel": "Sales",
+      "costLabel": "Cost",
+      "commissionLabel": "Delivery app cut",
+      "noCostAtAll": "No cost prices yet",
+      "noCostAtAllHint": "Add what each item costs you in Menu or Stock, and profit appears here.",
+      "uncosted": "{count, plural, one {# item has} other {# items have}} no cost price — {value} of sales is not in the profit.",
+      "costNote": "Uses each item's cost price as it is today.",
+      "listTitle": "By item, best profit first",
+      "sold": "{qty} sold · {sales}",
+      "loss": "{loss} loss",
+      "noCost": "No cost price",
+      "partly": "Some sales of this item have no cost price.",
+      "more": "and {count} more"
+    },
+    "discounts": {
+      "title": "Discounts & free",
+      "belowLabel": "Charged below price",
+      "billsLine": "{bills} of {all} bills",
+      "freeBillsLabel": "Free bills",
+      "freeBillsLine": "Charged nothing at all",
+      "none": "Every bill in this period was charged its full price.",
+      "byDayTitle": "By day",
+      "dayLine": "{value} · {bills, plural, one {# bill} other {# bills}}",
+      "billsTitle": "Biggest first",
+      "billLine": "Price {list} · charged {charged}",
+      "freeTag": "Free",
+      "freeItemsTitle": "Given free",
+      "freeItemLine": "{qty} × · {value}"
+    },
+    "payments": {
+      "title": "Payments",
+      "netLabel": "Money in, after refunds",
+      "netLine": "{received} in · {refunded} refunded",
+      "mode": {
+        "cash": "Cash",
+        "upi": "UPI",
+        "card": "Card",
+        "other": "Other",
+        "not_recorded": "Not recorded"
+      },
+      "modeLine": "{received} in · {refunded} back",
+      "counterOnly": "Counter bills only. Swiggy, Zomato and online orders are paid to you separately — see Sales by channel.",
+      "none": "No money came in at the counter in this period.",
+      "byDayTitle": "By day",
+      "dayRefund": "{value} refunded",
+      "noTrade": "No sales",
+      "pendingTitle": "Waiting to be paid",
+      "pendingLine": "{count, plural, one {# order} other {# orders}} · {value}",
+      "pendingNone": "No order is waiting to be paid."
+    }
   }
 }

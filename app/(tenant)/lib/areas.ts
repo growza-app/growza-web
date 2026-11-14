@@ -121,6 +121,12 @@ const NOT_IN_A_SHOP = ['/sales', '/providers'] as const;
  */
 const MARKETPLACE_ROUTES = ['/orders/import', '/orders/held', '/settings/channels'] as const;
 
+/**
+ * Owner, 2026-11-14 — Reports tabs read from what a counter BILLED (`sale` rows): profit, discounts and payments. A diary
+ * business has none, and the API answers them 404. Not `SHOP_ROUTES`: the role rules read that list as the shop's own work.
+ */
+const COUNTER_REPORT_ROUTES = ['/reports/profit', '/reports/discounts', '/reports/payments'] as const;
+
 /** Jira GRW-72 — Settings screens that exist only for a shop. (Not `SHOP_ROUTES`: the role rules read that list as "the shop's own work".) */
 const SHOP_SETTINGS = ['/settings/roles'] as const;
 
@@ -131,6 +137,7 @@ export function areaAllows(href: string, areas: Areas = DIARY_AREAS): boolean {
   if (areas.shop && NOT_IN_A_SHOP.some((r) => under(href, r))) return false;
   if (!areas.shop && SHOP_ROUTES.some((r) => under(href, r))) return false;
   if (!areas.shop && SHOP_SETTINGS.some((r) => under(href, r))) return false;
+  if (!areas.shop && COUNTER_REPORT_ROUTES.some((r) => under(href, r))) return false;
   if (!areas.stock && COUNT_ROUTES.some((r) => under(href, r))) return false;
   if (areas.marketplaces === false && MARKETPLACE_ROUTES.some((r) => under(href, r))) return false;
   return true;
