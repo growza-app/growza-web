@@ -8,6 +8,7 @@ import { helpOptions, isHelpRole, ROLE_KEY, supportIntro } from './links';
 import { QuickFixes } from './QuickFixes';
 import { WhatsNew } from './WhatsNew';
 import { areasOf } from '../lib/areas';
+import { canSee, type MemberRole } from '../lib/nav-policy';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,6 +50,8 @@ export default async function HelpPage() {
   let role: string | undefined;
   // Unknown (the read failed) is treated as a business that books: the fuller list, never a shorter one by mistake.
   let bookings = true;
+  // Jira GRW-709 — where a "What's new" line may link: the screen's own guard, asked before the link is drawn. Unknown is no link.
+  let mayOpen: (href: string) => boolean = () => false;
   try {
     const me = await api.me();
     support = me.support;
@@ -69,6 +72,9 @@ export default async function HelpPage() {
     branch = me.member?.locationName ?? ((me.tenant?.branchCount ?? 1) > 1 ? me.tenant?.locationName : null);
     role = me.member?.role;
     bookings = areasOf(me).bookings !== false;
+    const areas = areasOf(me);
+    const memberRole = (me.member?.role ?? null) as MemberRole | null;
+    mayOpen = (href) => canSee(href, memberRole, me.reportTabs, true, areas);
   } catch {
     // The buttons below simply do not render. A help screen that throws is the
     // one failure this screen must not have.
@@ -145,7 +151,7 @@ export default async function HelpPage() {
         <QuickFixes role={isHelpRole(role) ? role : null} t={fixText} bookings={bookings} />
 
         {/* And last, because somebody opening Help usually has a problem rather than an appetite for news. */}
-        <WhatsNew role={isHelpRole(role) ? role : null} t={newText} locale={locale} />
+        <WhatsNew role={isHelpRole(role) ? role : null} t={newText} locale={locale} mayOpen={mayOpen} />
       </div>
     </>
   );
