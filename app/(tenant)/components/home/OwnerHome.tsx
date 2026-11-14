@@ -763,7 +763,7 @@ export function OwnerHome(p: OwnerHomeProps) {
         {/* Simple, clean desktop Home — Option 1: Warm Salon Reception */}
         <div className={`rst-desk hm-desktop sln-desk ${hideUntilBranch ? 'is-settling' : ''}`}>
           {/* Emerald v3 (owner, 2026-11-14, "apply the same layout to all verticals") — the page head, as the shop's. */}
-          <PageHead title={t.greeting(p.greetingPart)} sub={t.ownerSub(p.businessName, afterClose)}>
+          <PageHead title={t.greeting(p.greetingPart)} sub={`${p.dateLabel} · ${t.ownerSub(p.businessName, afterClose)}`}>
             <button type="button" className="rst-pill" onClick={() => setSummaryOpen(true)}>
               <IconDaySummary />
               <span>{t.daySummary}</span>

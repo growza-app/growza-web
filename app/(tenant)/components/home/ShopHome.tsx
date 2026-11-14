@@ -974,7 +974,7 @@ export function ShopHome({
                   the same words to a screen reader; on a laptop it is moved out of sight (99-z-emerald-v2.css), so
                   this copy is hidden from one.
                 */}
-                <PageHead title={t.greeting(greetingPart)} sub={s.kitchenSub(businessName)}>
+                <PageHead title={t.greeting(greetingPart)} sub={`${dateLabel} · ${s.kitchenSub(businessName)}`}>
                   {money ? (
                     <button type="button" className="rst-pill" onClick={() => setSummaryOpen(true)}>
                       <IconDaySummary />
