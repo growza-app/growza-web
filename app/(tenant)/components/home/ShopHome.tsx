@@ -1,7 +1,7 @@
 'use client';
 
 import { deltaLabel, deltaTone, periodDeltaPct } from './day-delta';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api } from '../../lib/api';
 import { paidCustomers } from '../../lib/paid-customers';
 import type {
@@ -552,6 +552,36 @@ export function ShopHome({
     0;
 
   /*
+   * Final check 2026-11-14 — the laptop's top row for a viewer who reads no reports (the front desk, a staff member).
+   * Its figures come from three reports this person is refused, and in their place it drew what it had under the
+   * report's words: "Units sold 18 · Last 7 days" was today's orders, "Stock at cost price 26" was the running-low
+   * count, "Returned 0" while 8 had come back today. And each box linked to a screen that sent them back to Home.
+   * Now a box is drawn only with its own figure, says what that figure is, and links only where this person can go.
+   */
+  const reportsOn = money && canReports;
+  const showSellers = reportsOn && can('/stock/sellers');
+  const showStockWorth = reportsOn && can('/stock/report');
+  const kpiCount = 2 + (showSellers ? 1 : 0) + (areas.stock ? 1 : 0);
+  /*
+   * …and the rows under it. The desk was told "No sales recorded in this period yet" by Sales trend and Top sellers,
+   * and "Recent orders (0) · Your first sale will show up here" on a day of 18 orders: each card reads a figure this
+   * person is refused, and an empty answer read as an empty day. A card whose figure cannot reach this person is not
+   * drawn, and the row closes up around what is left. The toolbar above, every control of which is the money's, goes
+   * when it would be an empty strip.
+   */
+  const showChannels = money && canReports && soldElsewhere;
+  const showRecent = can('/orders');
+  const showToolbar = money || (isKitchen && can('/stock'));
+  const kpiBox = (href: string | null, tone: string, body: ReactNode) =>
+    href ? (
+      <a className={`hm-v3-kpi hm-v3-kpi-link ${tone}`} href={href}>
+        {body}
+      </a>
+    ) : (
+      <section className={`hm-v3-kpi ${tone}`}>{body}</section>
+    );
+
+  /*
    * Jira GRW-643 — the figures the phone hero draws, for the window the filter is on.
    *
    * `kind` is the honest part. `'range'` means by-channel answered and every number below belongs to the
@@ -682,6 +712,8 @@ export function ShopHome({
    * rows they can open.
    */
   const attentionReachable = can('/stock') || can('/orders');
+  /** How many cards the laptop's middle row draws: the trend (money), the channel split, Needs attention. */
+  const midCount = (money ? 1 : 0) + (showChannels ? 1 : 0) + (attentionReachable ? 1 : 0);
 
   /*
    * Owner, 2026-11-13 — the phone's Needs attention card, for a shop with a counted shelf: the same four counts the
@@ -877,6 +909,7 @@ export function ShopHome({
         ) : (
           <>
             {/* Top Toolbar (Desktop Command Center period switch & quick primary actions) */}
+            {showToolbar ? (
             <div className="hm-toolbar shp-desk-toolbar">
               <div className="shp-desk-toolbar-start">
                 {money && canReports ? (
@@ -935,6 +968,7 @@ export function ShopHome({
                 </div>
               </div>
             </div>
+            ) : null}
 
             {/* =====================================================================
                 SIMPLE RESTAURANT DESKTOP HOME (from 861px up when isKitchen is true)
@@ -1220,7 +1254,7 @@ export function ShopHome({
                ===================================================================== */}
             <div className={`hm-desk-v3 hm-desktop shp-desk-v3${isKitchen ? ' is-kitchen-hidden' : ''}`}>
               {/* ROW 1 — four rich KPI cards; three where there is no shelf (a kitchen), which drops Stock worth. */}
-              <div className={`hm-v3-kpis${areas.stock ? '' : ' hm-v3-kpis-3'}`}>
+              <div className={`hm-v3-kpis${kpiCount === 4 ? '' : ` hm-v3-kpis-${kpiCount}`}`}>
                 {/* 1. Takings / Billed Revenue */}
                 {money && data.today.takingsMinor !== undefined ? (
                   <section className="hm-v3-kpi hm-v3-kpi-dark">
@@ -1315,10 +1349,10 @@ export function ShopHome({
                 )}
 
                 {/* 2. Orders & Dispatch */}
-                <a
-                  className="hm-v3-kpi hm-v3-kpi-link hm-v3-kpi-blue"
-                  href={data.toSend > 0 ? ordersHref({ status: 'new,packed' }) : '/orders'}
-                >
+                {kpiBox(
+                  can('/orders') ? (data.toSend > 0 ? ordersHref({ status: 'new,packed' }) : '/orders') : null,
+                  'hm-v3-kpi-blue',
+                  <>
                   <div className="hm-v3-kpi-head">
                     <span className="hm-v3-kpi-icon hm-v3-icon-blue">
                       <IconNavOrders />
@@ -1362,15 +1396,17 @@ export function ShopHome({
                       {!ships ? s.yesterday : s.toSendShort} <b>{!ships ? data.yesterday.orders : data.toSend}</b>
                     </span>
                     <span className="hm-v3-split-item">
-                      {s.returnedShort} <b>{totalReturnedOrders}</b>
+                      {s.returnedShort} <b>{reportsOn ? totalReturnedOrders : (data.cameBackToday ?? 0)}</b>
                     </span>
                   </div>
-                </a>
+                  </>,
+                )}
 
-                {/* 3. Units / Dishes Sold & Top Seller */}
+                {/* 3. Units / Dishes Sold & Top Seller — a report's figure, so only for whoever reads that report. */}
+                {!showSellers ? null : (
                 <a
                   className="hm-v3-kpi hm-v3-kpi-link hm-v3-kpi-amber"
-                  href={canReports && can('/stock/sellers') ? '/stock/sellers' : '/orders'}
+                  href="/stock/sellers"
                 >
                   <div className="hm-v3-kpi-head">
                     <span className="hm-v3-kpi-icon hm-v3-icon-amber">
@@ -1405,18 +1441,19 @@ export function ShopHome({
                     </span>
                   </div>
                 </a>
+                )}
 
                 {/* 4. Stock Worth & Shelf Health — a count, so a kitchen has none of it. */}
-                {!areas.stock ? null : (
-                <a
-                  className="hm-v3-kpi hm-v3-kpi-link hm-v3-kpi-purple"
-                  href={canReports && can('/stock/report') ? '/stock/report' : `/stock${stockBranch}`}
-                >
+                {!areas.stock ? null : kpiBox(
+                  showStockWorth ? '/stock/report' : can('/stock') ? `/stock${stockBranch}` : null,
+                  'hm-v3-kpi-purple',
+                  <>
                   <div className="hm-v3-kpi-head">
                     <span className="hm-v3-kpi-icon hm-v3-icon-green">
                       <IconNavStock />
                     </span>
-                    <span className="hm-v3-kpi-title">{s.stockWorthTitle}</span>
+                    {/* Without the stock report there is no worth to show: the card is what is running low, and says so. */}
+                    <span className="hm-v3-kpi-title">{showStockWorth ? s.stockWorthTitle : s.runningLowChip}</span>
                   </div>
                   <div className="hm-v3-kpi-body">
                     <div className="hm-v3-kpi-main">
@@ -1440,6 +1477,7 @@ export function ShopHome({
                       </div>
                     </div>
                   </div>
+                  {showStockWorth ? (
                   <div className="hm-v3-kpi-foot hm-v3-split-foot">
                     <span className="hm-v3-split-item">
                       {s.onShelfShort} <b>{stockData ? stockData.totals.units : '—'}</b>
@@ -1448,13 +1486,16 @@ export function ShopHome({
                       {s.lowStockShort} <b>{data.running.counted ? data.running.total : '—'}</b>
                     </span>
                   </div>
-                </a>
+                  ) : null}
+                  </>,
                 )}
               </div>
 
               {/* ROW 2 — Sales trend, where the money came from (once there is more than the counter), and what needs attention */}
-              <div className={`hm-v3-mid${money && canReports && soldElsewhere ? '' : attentionReachable ? ' hm-v3-mid-two' : ' hm-v3-mid-one'}`}>
-                {/* 1. Sales Trend SVG Line + Bar Chart */}
+              {midCount === 0 ? null : (
+              <div className={`hm-v3-mid${midCount === 3 ? '' : midCount === 2 ? ' hm-v3-mid-two' : ' hm-v3-mid-one'}`}>
+                {/* 1. Sales Trend SVG Line + Bar Chart — money, so only for whoever is sent it. */}
+                {!money ? null : (
                 <section className="hm-v3-card hm-v3-trend-card">
                   <div className="hm-v3-card-head">
                     <div className="shp-trend-head-main">
@@ -1520,9 +1561,10 @@ export function ShopHome({
                     </div>
                   )}
                 </section>
+                )}
 
                 {/* 2. Where Money Came From — drawn only once a channel besides the counter has sold. */}
-                {money && canReports && soldElsewhere ? (
+                {showChannels ? (
                   <section className="hm-v3-card shp-channels-card">
                     <div className="hm-v3-card-head">
                       <h2>{s.channelsLink}</h2>
@@ -1640,8 +1682,10 @@ export function ShopHome({
                   </section>
                 ) : null}
               </div>
+              )}
 
-              {/* ROW 3 — Top sellers, the width of the page. */}
+              {/* ROW 3 — Top sellers, the width of the page: the sellers report's, so only for whoever reads it. */}
+              {!showSellers ? null : (
               <section className="hm-v3-card hm-v3-staff-card">
                 <div className="hm-v3-card-head">
                   <h2>
@@ -1691,8 +1735,10 @@ export function ShopHome({
                   </ul>
                 )}
               </section>
+              )}
 
-              {/* ROW 4 — Recent Orders (Full-Width Table Card) */}
+              {/* ROW 4 — Recent Orders (Full-Width Table Card): the Orders list's rows, so only where Orders opens. */}
+              {!showRecent ? null : (
               <section className="hm-v3-card hm-v3-recent-card">
                 <div className="hm-v3-card-head">
                   <h2>
@@ -1767,6 +1813,7 @@ export function ShopHome({
                   </div>
                 )}
               </section>
+              )}
             </div>
 
             {/* =====================================================================
