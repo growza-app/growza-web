@@ -7,6 +7,7 @@ import { ServicesTable } from './ServicesTable';
 import { guardScreen } from '../lib/screen-guard';
 import { loadErrorKind } from '../lib/load-error';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
+import { localLabels } from '../lib/local-labels';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,7 +70,7 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
           services={services}
           categories={categories}
           tenantName={me.tenant?.name ?? null}
-          serviceLabel={me.labels.services ?? copy.nav.services}
+          serviceLabel={(await localLabels(me.labels)).services ?? copy.nav.services}
           branchId={branchId}
           branches={branch.multi && !branch.pinned ? branch.branches : []}
         />
