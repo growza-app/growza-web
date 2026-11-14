@@ -42,7 +42,7 @@
 .edit-title {
   margin: 2px 0 0;
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 
@@ -96,7 +96,7 @@
 
 .edit-card-title {
   font-size: 0.9375rem;
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: var(--sp-4);
 }
 
@@ -170,7 +170,7 @@
   background: var(--slate-soft);
   font: inherit;
   font-size: 0.8125rem;
-  font-weight: 550;
+  font-weight: 500;
   color: #3d4a43;
   cursor: pointer;
 }
@@ -193,7 +193,7 @@
 
 .edit-side-title {
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #5c6b63;
@@ -220,7 +220,7 @@
 
 .edit-stat strong {
   font-size: 1.125rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .edit-upcoming {
@@ -240,7 +240,7 @@
   width: 62px;
   flex: none;
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--accent-deep);
 }
 

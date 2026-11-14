@@ -28,14 +28,15 @@ describe('the figure', () => {
     expect(drawer).toMatch(/rupees\(cashDrawer\.inDrawerMinor\)/);
   });
 
-  it('is on the phone Home under the payment split, for today only, and on the desk hero', () => {
+  it('is off Home on both phone and desktop — the day sheet carries it', () => {
     // Owner, 2026-11-13 — the kitchen only: a shop with a counted shelf does not get the line on Home.
-    expect(shop).toMatch(/isKitchen && \(phoneFigures\.kind === 'today' \|\| phoneFigures\.kind === 'range'\) \? <CashDrawerLine t=\{t\} cashDrawer=\{phoneFigures\.cashDrawer\} \/> : null/);
-    expect(shop).toMatch(/isKitchen && data\.today\.cashDrawer && \(data\.today\.cashDrawer\.takenMinor > 0/);
+    // Owner, 2026-11-14 (Emerald v2) — off the phone Home too; the day sheet (below) is where it lives now.
+    expect(shop).not.toMatch(/<CashDrawerLine/);
+    // Owner, 2026-11-14 (Emerald v2) — "remove Cash in drawer": the desktop money tile no longer carries it.
+    expect(shop).not.toMatch(/rst-kpi-drawer/);
     // The phone's range view carries it for TODAY only — never for a week or a month.
     expect(shop).toMatch(/cashDrawer: phonePeriod === 'today' \? data\?\.today\.cashDrawer : undefined,/);
     expect(shop).toMatch(/cashDrawer: data\.today\.cashDrawer,/);
-    expect(shop).toMatch(/data\.today\.cashDrawer\.inDrawerMinor/);
   });
 
   it('is on the day sheet, after what was given away', () => {

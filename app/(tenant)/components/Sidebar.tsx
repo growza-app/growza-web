@@ -1,10 +1,12 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
+import { ClientCartoon } from './ClientCartoon';
 import { usePathname } from 'next/navigation';
 import { canSee, type MemberRole } from '../lib/nav-policy';
 import { isActive, resolveNav, type NavGroup } from '../lib/nav-sections';
+import { GrowzaMark } from './GrowzaMark';
 import { homeCopy } from '../lib/home-copy';
 import type { Lang } from '../lib/lang';
 import { SignOutButton } from './SignOutButton';
@@ -48,6 +50,12 @@ import {
 /** Where a person's folded and unfolded groups are kept on this device. */
 const FOLDS_KEY = 'growza_nav_folds';
 
+
+/**
+ * Emerald v2 — where the sidebar's "General" section starts: the WhatsApp demo and Settings, the rest is Main.
+ * Matched by its tail so this file still spells the demo's link once, behind its guard (whatsapp-demo-links.test.ts).
+ */
+const isGeneral = (href: string | undefined) => href === '/settings' || (href ?? '').endsWith('whatsapp');
 export function Sidebar({
   tenantName,
   labels,
@@ -274,6 +282,11 @@ export function Sidebar({
         aria-label={open ? tc('menu') : undefined}
         onKeyDown={keepFocusInside}
       >
+        {/* Emerald v3 (owner, 14 Nov 2026) — on a laptop the sidebar's top is Growza's; the business moved to the header bar. */}
+        <div className="brand-growza">
+          <GrowzaMark size={36} />
+          <span className="brand-growza-word">{tc('productName')}</span>
+        </div>
         <div className="brand">
           <div className="brand-badge">{tenantName.charAt(0).toUpperCase()}</div>
           <div className="brand-text">
@@ -288,13 +301,18 @@ export function Sidebar({
           {/* Jira GRW-66 · GRW-157 — a stylist is offered what they can use. The
               API is what refuses (GRW-156); this is about not wasting their time
               on eight links that 403. */}
+          {/* Emerald v2 — the laptop's two section labels; the phone drawer does not draw them (99-z-emerald-v2.css). */}
+          <span className="nav-section">{t.nav.sectionMain}</span>
           {nav.map((item) => {
             const current = item.routes.some((r) => isActive(pathname, r));
+            const firstGeneral = nav.find((n) => isGeneral(n.href));
             const expandable = item.children.length > 0;
             const expanded = expandable && (folds[item.label] ?? current);
             const panel = `nav-children-${nav.indexOf(item)}`;
             return (
-              <div key={item.label} className={`nav-group ${item.className ?? ''}`}>
+              <Fragment key={item.label}>
+              {item === firstGeneral ? <span className="nav-section">{t.nav.sectionGeneral}</span> : null}
+              <div className={`nav-group ${item.className ?? ''}`}>
                 <div className="nav-row">
                   <a
                     href={item.href}
@@ -342,6 +360,7 @@ export function Sidebar({
                   </div>
                 ) : null}
               </div>
+              </Fragment>
             );
           })}
         </nav>
@@ -353,7 +372,8 @@ export function Sidebar({
               person IS their phone number here (GRW-189). Their own name leads
               once there is one; the role and number sit under it. */}
           <div className="nav-who">
-            <span className="nav-who-avatar">{Array.from(name ?? t.role[role ?? 'owner'] ?? 'O')[0]?.toUpperCase()}</span>
+            {/* Emerald v3 — the same drawn face as the header's account button, from the same number. */}
+            <ClientCartoon id={phone ?? name ?? tenantName ?? 'me'} className="nav-who-avatar" />
             <span className="nav-who-text">
               <strong>{name ?? t.role[role ?? 'owner']}</strong>
               {name ? <span>{t.role[role ?? 'owner']}</span> : null}

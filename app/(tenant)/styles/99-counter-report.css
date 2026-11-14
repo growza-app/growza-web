@@ -43,7 +43,7 @@
   /* The one number on the screen that is allowed to be this big. */
   margin: var(--sp-1) 0 var(--sp-1);
   font-size: var(--fs-12);
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.1;
   color: var(--text);
   font-variant-numeric: tabular-nums;
@@ -130,7 +130,7 @@
   min-height: 1.125rem;
   margin-bottom: 2px;
   font-size: var(--fs-1);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--accent-deep);
   white-space: nowrap;
   overflow: visible;
@@ -516,14 +516,14 @@
   background: var(--accent-soft);
   color: var(--accent-ink);
   font-size: var(--fs-1);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.03em;
 }
 
 .cr-strat-title {
   margin: 0;
   font-size: var(--fs-4);
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text);
 }
 
@@ -580,7 +580,7 @@
 
 .dr-band-count {
   font-size: var(--fs-7);
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.1;
   color: var(--text);
   font-variant-numeric: tabular-nums;

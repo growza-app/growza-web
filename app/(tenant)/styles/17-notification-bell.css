@@ -16,7 +16,7 @@
   background: var(--danger);
   color: #fff;
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -39,7 +39,7 @@
   background: var(--danger);
   color: #fff;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: 0;
   display: flex;
@@ -69,11 +69,11 @@
   padding: 13px 16px;
   border-bottom: 1px solid var(--border);
   font-size: 0.875rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text);
 }
 .notif-dropdown-actions { display: flex; align-items: center; gap: 10px; }
-.notif-mark-read { background: none; border: none; color: var(--accent-deep); font-size: 0.75rem; font-weight: 620; cursor: pointer; padding: 0; }
+.notif-mark-read { background: none; border: none; color: var(--accent-deep); font-size: 0.75rem; font-weight: 600; cursor: pointer; padding: 0; }
 .notif-clear-all { background: none; border: none; color: var(--muted); font-size: 0.75rem; font-weight: 600; cursor: pointer; padding: 0; }
 .notif-empty { padding: 28px 16px; text-align: center; color: var(--muted); font-size: 0.8125rem; }
 .notif-list { max-height: 360px; overflow-y: auto; }

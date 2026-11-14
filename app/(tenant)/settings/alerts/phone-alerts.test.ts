@@ -346,3 +346,12 @@ describe('when the day summary arrives', () => {
     }
   });
 });
+
+/** 14 Nov 2026 — a sign-in with no member (an admin viewing, the local stub) got "try again in a moment" for a 403 no retry fixes. */
+describe('a sign-in that is not a team member', () => {
+  const page = read('page.tsx');
+  it('is told alerts are personal, and the form (which would ask for them) is not drawn', () => {
+    expect(page).toMatch(/if \(me && !me\.member\) \{[\s\S]{0,400}t\('noMemberTitle'\)[\s\S]{0,120}t\('noMember'\)/);
+    expect(page.indexOf("t('noMember')")).toBeLessThan(page.indexOf('<AlertsForm'));
+  });
+});

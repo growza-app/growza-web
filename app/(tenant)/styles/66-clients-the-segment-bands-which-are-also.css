@@ -16,7 +16,7 @@
   flex-wrap: wrap;
 }
 
-.cust-segments-head h2 { margin: 0; font-size: 0.875rem; font-weight: 700; }
+.cust-segments-head h2 { margin: 0; font-size: 0.875rem; font-weight: 600; }
 
 /* The hint and the never-been-in note share the heading's line: both are
    asides, and neither earns a row of its own above a list this cramped. */
@@ -80,7 +80,7 @@
   align-items: baseline;
   gap: 6px;
   font-size: 1.125rem;
-  font-weight: 800;
+  font-weight: 600;
   margin-top: 2px;
   line-height: 1.15;
 }
@@ -88,7 +88,7 @@
 .cust-segment-count em {
   font-style: normal;
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--muted);
 }
 

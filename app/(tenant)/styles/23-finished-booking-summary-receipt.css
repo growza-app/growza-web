@@ -51,7 +51,7 @@
   align-items: center;
   gap: 8px;
   font-size: 0.9375rem;
-  font-weight: 640;
+  font-weight: 600;
 }
 
 .summary-sub {
@@ -67,7 +67,7 @@
 .summary-section-label {
   padding: 14px 18px 4px;
   font-size: 0.75rem;
-  font-weight: 640;
+  font-weight: 600;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -90,7 +90,7 @@
   display: grid;
   place-items: center;
   font-size: 0.8125rem;
-  font-weight: 640;
+  font-weight: 600;
 }
 
 .summary-info {
@@ -100,7 +100,7 @@
 
 .summary-service {
   font-size: 0.875rem;
-  font-weight: 560;
+  font-weight: 500;
 }
 
 .summary-stylist {
@@ -111,7 +111,7 @@
 .summary-price {
   flex-shrink: 0;
   font-size: 0.875rem;
-  font-weight: 620;
+  font-weight: 600;
 }
 
 .summary-totals {
@@ -143,7 +143,7 @@
 
 .summary-total-value {
   font-size: 1.125rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 

@@ -38,7 +38,7 @@
 
 .sheet-title {
   font-size: 0.9375rem;
-  font-weight: 640;
+  font-weight: 600;
 }
 
 /* Jira GRW-342 — on the routed New booking page this is the page's <h1>; browsers give an h1 a margin. */

@@ -90,7 +90,7 @@
 
   .staff-card-name {
     font-size: 1rem;
-    font-weight: 620;
+    font-weight: 600;
     color: var(--text);
     overflow: hidden;
     text-overflow: ellipsis;

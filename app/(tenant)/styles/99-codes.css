@@ -57,7 +57,7 @@
   gap: var(--sp-2);
 }
 .mpc-size-name {
-  font-weight: 700;
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
 /* "No code yet" is the loud thing on a size's card: said in words and in a border, never by colour alone. */

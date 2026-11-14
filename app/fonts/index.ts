@@ -43,4 +43,19 @@ export const hanken = localFont({
   weight: '400 800',
   style: 'normal',
   display: 'swap',
+  /* Emerald v2 preview: the owner app tries this face too (99-z-emerald-v2.css). */
+  variable: '--font-hanken',
+});
+
+/**
+ * Emerald v3 preview (owner, 2026-11-14) — the closest face to the Dribbble shot the theme follows. Latin only,
+ * one variable file (27 KB, fonts.gstatic.com, Google Fonts' "Plus Jakarta Sans" at 400–700); Hindi still falls
+ * through to Noto Sans Devanagari. 99-z-emerald-v2.css puts it first in the stack.
+ */
+export const jakarta = localFont({
+  src: './plus-jakarta-sans-latin-var.woff2',
+  weight: '400 700',
+  style: 'normal',
+  display: 'swap',
+  variable: '--font-jakarta',
 });

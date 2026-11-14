@@ -35,7 +35,7 @@
 }
 
 .cpc-edit-name {
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .cpc-edit-name:focus,
@@ -96,7 +96,7 @@
   padding: 7px 15px;
   font: inherit;
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -130,7 +130,7 @@
   padding: 5px 12px;
   font: inherit;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--muted);
   cursor: pointer;
   white-space: nowrap;
@@ -152,7 +152,7 @@
   color: #b3261e;
   font: inherit;
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -182,6 +182,6 @@
   background: var(--surface, transparent);
   color: var(--text);
   font: inherit;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }

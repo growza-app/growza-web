@@ -61,7 +61,19 @@ export default async function TryWhatsAppPage({ searchParams }: { searchParams: 
         subtitle={me.whatsapp?.booking ? t('subtitleLive') : t('tryIsADemo')}
       />
       <div className="page-body">
-        <ChatWindow tenantName={me.tenant?.name ?? (await getTranslations('chrome'))('yourBusiness')} branch={branch} />
+        {/* Emerald v3 (owner, 14 Nov 2026: "fix all") — on a laptop the phone stood alone in a wide grey page; three
+            short steps beside it say what to do. On a phone the wrapper has no box and the steps are hidden. */}
+        <div className="tw-desk">
+          <ChatWindow tenantName={me.tenant?.name ?? (await getTranslations('chrome'))('yourBusiness')} branch={branch} />
+          <aside className="tw-how" aria-labelledby="tw-how-title">
+            <h2 id="tw-how-title">{t('how.title')}</h2>
+            <ol>
+              <li>{t('how.step1')}</li>
+              <li>{t('how.step2')}</li>
+              <li>{t('how.step3')}</li>
+            </ol>
+          </aside>
+        </div>
       </div>
     </>
   );

@@ -17,7 +17,7 @@
 
 .rp-banner-body {
   font-size: 1.25rem;
-  font-weight: 800;
+  font-weight: 600;
   margin-top: var(--sp-2);
   letter-spacing: -0.3px;
   max-width: 560px;
@@ -46,7 +46,7 @@
 
 .rp-insight-cat {
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--muted);
   letter-spacing: 0.4px;
   text-transform: uppercase;
@@ -55,7 +55,7 @@
 .rp-insight-headline {
   margin: 0;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.4;
   color: var(--text);
 }

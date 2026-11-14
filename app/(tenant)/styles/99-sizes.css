@@ -47,7 +47,7 @@
 
 .szg-summary-product {
   font-size: var(--fs-6);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text);
 }
 
@@ -139,7 +139,7 @@
 .szg-title {
   margin: 0;
   font-size: var(--fs-7);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .szg-label {
@@ -218,7 +218,7 @@
 
 .szg-presets-label {
   font-size: var(--fs-1);
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
@@ -382,7 +382,7 @@
 
 .szg-table thead th {
   background: var(--page-bg);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--muted);
   text-transform: uppercase;
   font-size: var(--fs-1);
@@ -404,7 +404,7 @@
   text-align: left;
   border-right: 1px solid var(--border);
   background: var(--surface);
-  font-weight: 700;
+  font-weight: 600;
   font-size: var(--fs-4);
 }
 
@@ -442,7 +442,7 @@
   border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--accent-deep);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .szg-price {
@@ -464,7 +464,7 @@
 .szg-foot-row td {
   border-bottom: 0;
   background: var(--page-bg);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }

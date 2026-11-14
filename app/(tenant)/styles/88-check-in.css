@@ -20,7 +20,7 @@
   border: 0;
   border-radius: var(--radius-lg);
   font-size: 1.25rem;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
   color: #fff;
   transition: transform 120ms ease;
@@ -41,7 +41,7 @@
 .ci-state {
   margin: var(--sp-3) 0 0;
   font-size: 0.9375rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 /* The live region stands in the page with nothing in it, so it must not stand in the layout too. */
 .ci-state:empty {
@@ -98,7 +98,7 @@
   padding: 0 var(--sp-4);
   border-radius: var(--radius);
   border: 1px solid transparent;
-  font-weight: 800;
+  font-weight: 600;
   font-size: 0.9375rem;
   cursor: pointer;
 }
@@ -120,7 +120,7 @@
   color: var(--amber-ink);
 }
 .ci-needs-moving a {
-  font-weight: 700;
+  font-weight: 600;
   color: inherit;
 }
 
@@ -147,7 +147,7 @@
 }
 .ci-pin.is-set {
   color: var(--accent-deep);
-  font-weight: 650;
+  font-weight: 600;
 }
 /* The status and its one check, on a single line: the numbers behind it are not shown (nobody can read a pin). */
 .ci-pin {
@@ -165,7 +165,7 @@
   align-items: center;
   min-height: 44px;
   color: var(--accent-deep);
-  font-weight: 650;
+  font-weight: 600;
 }
 /* A pin the phone is not sure of. Amber like `.ci-needs-moving`: something to look at, nothing refused. */
 .ci-vague {
@@ -219,7 +219,7 @@
   min-height: 44px;
   cursor: pointer;
   list-style: none;
-  font-weight: 650;
+  font-weight: 600;
   font-size: 0.9375rem;
   color: var(--accent-deep);
 }
@@ -237,7 +237,7 @@
   .ci-link summary svg { transition: none; }
 }
 .ci-switch-title {
-  font-weight: 620;
+  font-weight: 600;
   font-size: 0.9375rem;
   line-height: 1.5rem;
 }
@@ -278,7 +278,7 @@
   outline: none;
   background: none;
   /* 16px exactly: anything smaller and iOS zooms the page when the field takes focus. */
-  font-weight: 650;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   padding: 0 var(--sp-3);
   min-height: 2.75rem;
@@ -294,7 +294,7 @@
   border-left: 1px solid var(--border);
   color: var(--muted);
   font-size: 0.9375rem;
-  font-weight: 650;
+  font-weight: 600;
   user-select: none;
 }
 
@@ -369,7 +369,7 @@
   display: block;
   margin-bottom: 2px;
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--muted);
 }
 .ci-coord-grid input,
@@ -417,7 +417,7 @@
 .ci-waiting-title {
   margin: 0 0 var(--sp-2);
   font-size: 0.9375rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 .ci-waiting .ci-row {
   margin-top: var(--sp-2);

@@ -53,7 +53,7 @@ describe('the owner Home shows only what was counted', () => {
   });
 
   it('sends Walk-in somewhere of its own', () => {
-    expect(home).toMatch(/sln-action-tile is-primary" href="\/appointments\/new\?mode=now"/);
+    expect(home).toMatch(/rst-pill is-primary" href="\/appointments\/new\?mode=now"/);
   });
 
   it('makes the desk-only reads only where the desk Home is drawn', () => {

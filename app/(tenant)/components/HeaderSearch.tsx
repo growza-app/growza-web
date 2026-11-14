@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { IconSearch } from './icons';
 import { useAreas, useLive, useMayUse } from './SessionProvider';
@@ -33,13 +35,36 @@ export function HeaderSearch({ wide = false }: { wide?: boolean }) {
   const live = useLive();
   // Restaurant QA 2026-10-24 — a shop finds its own people: "Find a guest" at a restaurant, "Find a customer" at a shop.
   const { customer } = useNouns();
+  const router = useRouter();
+  /*
+   * Emerald v3 (owner, 2026-11-14, the shot's "⌘ F" pill) — the wide pill has a key of its own: "/" anywhere that is
+   * not a field opens search, as it does on most sites with one search box. Only the wide one listens, so a header
+   * that draws both never opens it twice.
+   */
+  useEffect(() => {
+    if (!wide || !mayUseSearch || !live) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
+      e.preventDefault();
+      router.push('/search');
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [wide, mayUseSearch, live, router]);
   if (!mayUseSearch || !live) return null;
   const label = areas.bookings === false ? t('shopTitle', { customer }) : t('title');
   const prompt = areas.bookings === false ? t('shopPrompt', { customer }) : t('prompt');
   return (
-    <a className={`hdr-search ${wide ? 'hdr-search-wide' : ''}`} href="/search" aria-label={label}>
+    <a className={`hdr-search ${wide ? 'hdr-search-wide' : ''}`} href="/search" aria-label={label} aria-keyshortcuts={wide ? '/' : undefined}>
       <IconSearch />
       {wide && <span>{prompt}</span>}
+      {wide && (
+        <kbd className="hdr-search-kbd" aria-hidden="true">
+          /
+        </kbd>
+      )}
     </a>
   );
 }

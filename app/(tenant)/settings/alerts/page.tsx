@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { screenTitle } from '../../lib/page-title';
 import { api } from '../../lib/api';
 import { AlertsForm } from './AlertsForm';
@@ -19,6 +20,23 @@ export const dynamic = 'force-dynamic';
 export default async function AlertsSettingsPage() {
   const me = await api.me().catch(() => null);
   if (me?.member && me.member.role !== 'owner') redirect('/settings');
+
+  /*
+   * Alerts belong to a person (`/alerts/prefs` answers per member), and a session with no member — a platform admin
+   * viewing the business, or the local stub sign-in — has none: the API refuses it with 403 by design. The form read
+   * that as a failed load and said "try again in a moment", which no amount of trying fixes. Say what is true instead.
+   */
+  if (me && !me.member) {
+    const t = await getTranslations('settingsAlerts');
+    return (
+      <div className="card">
+        <div className="card-body">
+          <h2 className="al-blocked-title">{t('noMemberTitle')}</h2>
+          <p className="field-hint">{t('noMember')}</p>
+        </div>
+      </div>
+    );
+  }
 
   /*
    * The key is fetched HERE rather than in the form, so the screen knows before it draws whether alerts are

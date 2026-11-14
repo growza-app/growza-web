@@ -4,6 +4,7 @@ import { HeaderBranchPicker } from './HeaderBranchPicker';
 import { BackButton } from './BackButton';
 import { MenuButton } from './MenuButton';
 import { HeaderInfo } from './HeaderInfo';
+import { TopbarFind } from './TopbarFind';
 
 /**
  * Jira GRW-30 — the one header. Title and subtitle left; the page's primary
@@ -97,9 +98,17 @@ export function PageHeader({
           siblings get spread across the width — a page with no `actions`
           stranded the bell in the middle of the header instead of keeping it
           next to the avatar. */}
+      {/* Emerald v3 — three groups, so a laptop can lay the header out as a bar (find · controls) over a page
+          head (title · actions). On a phone the two wrappers are `display: contents` and the find pill is hidden,
+          so the row is the same flat flex row it always was. */}
       <div className="topbar-actions">
-        {actions}
-        <HeaderControls />
+        <div className="topbar-primary">{actions}</div>
+        <div className="topbar-find">
+          <TopbarFind />
+        </div>
+        <div className="topbar-ctrls">
+          <HeaderControls />
+        </div>
       </div>
     </header>
   );

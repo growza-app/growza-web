@@ -7,10 +7,9 @@ import { clientNameLabel, groupBookings, summarizeServices } from '../../lib/app
 import { homeCopy } from '../../lib/home-copy';
 import type { Lang } from '../../lib/lang';
 import { countsAsNotMarked, liveState, minutesBetween } from '../../lib/live-state';
-import { canSee } from '../../lib/nav-policy';
 import { IconBan, IconCalendarPlus, IconChevronRight, IconClipboardCheck, IconClock, IconMenu, IconPlus, IconProducts, IconReceipt, IconScissors, IconSearch, IconUserPlus } from '../icons';
 import { useBranch } from '../BranchProvider';
-import { useMayUse } from '../SessionProvider';
+import { useMayOpen, useMayUse } from '../SessionProvider';
 import { BookedToday, bookedNotOnBoard } from './BookedToday';
 import { NewTokenSheet } from './NewTokenSheet';
 import { TokenBoard } from './TokenBoard';
@@ -53,6 +52,8 @@ export interface ReceptionHomeProps {
 }
 
 export function ReceptionHome(p: ReceptionHomeProps) {
+  // Jira GRW-709 — a tile is drawn only where its screen opens for this person: asked with the role's grid, not of the fixed front desk.
+  const mayOpen = useMayOpen();
   const t = homeCopy(p.lang, p.labels);
   const w = useTokenWords();
   const now = useMemo(() => new Date(p.nowISO), [p.nowISO]);
@@ -153,11 +154,11 @@ export function ReceptionHome(p: ReceptionHomeProps) {
             // Jira GRW-404 — Record payment moved up beside New token; Walk-in now (start a visit with a stylist straight
             // away) keeps a way in on a laptop, where the phone's centre button is not.
             ...(mayBook ? [{ href: '/appointments/new?mode=now', label: t.walkInShort, icon: <IconScissors />, tone: 'green' as const }] : []),
-            ...(canSee('/products/sell', 'receptionist') ? [{ href: '/products/sell', label: t.sellProductAction, icon: <IconProducts />, tone: 'slate' as const }] : []),
-            { href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' },
+            ...(mayOpen('/products/sell') ? [{ href: '/products/sell', label: t.sellProductAction, icon: <IconProducts />, tone: 'slate' as const }] : []),
+            ...(mayOpen('/attendance') ? [{ href: '/attendance', label: t.nav.attendance, icon: <IconClipboardCheck />, tone: 'violet' as const }] : []),
             // `/customers` search, not `/search`: the global search route is not
             // on the receptionist's allowlist (GRW-199), the client list's is.
-            { href: '/customers', label: t.findCustomer, icon: <IconSearch />, tone: 'amber' },
+            ...(mayOpen('/customers') ? [{ href: '/customers', label: t.findCustomer, icon: <IconSearch />, tone: 'amber' as const }] : []),
           ]}
         />
       </div>

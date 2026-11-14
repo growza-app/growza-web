@@ -444,6 +444,20 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       nothingSold: S('Nothing sold today', 'आज कुछ नहीं बिका'),
       ordersTitle: S(labels.orders ?? 'Orders', 'ऑर्डर'),
       queueTitle: S('Queue', 'कतार'),
+      /** Emerald v2 — the laptop Home's header buttons and its new cards. */
+      newOrderAction: S('New order', 'नया ऑर्डर'),
+      cameInToday: S('came in today', 'आज आए'),
+      /** Emerald v3 — the KPI tiles' second lines. */
+      ordersNote: (done: number, waiting: number) => S(`${done} done · ${waiting} in queue`, `${done} पूरे · ${waiting} कतार में`),
+      toSendNote: (n: number) => S(`${n} to send`, `${n} भेजने हैं`),
+      newThisMonthNote: (n: number) => S(`${n} new this month`, `इस महीने ${n} नए`),
+      salesThisWeek: S('Sales this week', 'इस हफ़्ते की बिक्री'),
+      salesThisMonth: S('Sales this month', 'इस महीने की बिक्री'),
+      paidToday: S('Payments today', 'आज के भुगतान'),
+      salesLast7: S('Sales, last 7 days', 'बिक्री, पिछले 7 दिन'),
+      paidLast7: S('Payments, last 7 days', 'भुगतान, पिछले 7 दिन'),
+      waitingNow: S('waiting now', 'अभी इंतज़ार में'),
+      topSellersTitle: S('Top sellers', 'सबसे ज़्यादा बिके'),
       openQueue: S('Open queue', 'कतार खोलें'),
       inQueueNow: S('in queue', 'कतार में'),
       noQueueNow: S('No orders waiting in queue', 'कतार में कोई ऑर्डर नहीं'),
@@ -515,6 +529,9 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       stylesAndSizes: (styles: number, sizes: number) => S(`${styles} styles · ${sizes} sizes`, `${styles} डिज़ाइन · ${sizes} साइज़`),
       onShelfShort: S('On shelf', 'दुकान में'),
       lowStockShort: S('Low stock', 'कम स्टॉक'),
+      /** Emerald v3 — a shop's dark card on the laptop Home. */
+      runningOutTitle: S('Running out', 'ख़त्म हो रहा है'),
+      outOfStockShort: S('None left', 'बिल्कुल नहीं बचा'),
       salesTrendTitle: S('Sales trend', 'बिक्री का रुझान'),
       noSalesInRange: S('No sales recorded in this period yet.', 'इस अवधि में अभी कोई बिक्री दर्ज नहीं हुई।'),
       avgOrderShort: (amt: string) => S(`avg ${amt}`, `औसत ${amt}`),
@@ -639,6 +656,9 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       more: S(copy.nav.more, 'और'),
       newBooking: S('New booking', 'नई बुकिंग'),
       signOut: S(copy.nav.signOut, 'लॉग आउट'),
+      /** Emerald v2 — the laptop sidebar's two section labels. */
+      sectionMain: S('Main', 'मुख्य'),
+      sectionGeneral: S('General', 'सामान्य'),
       demo: S(copy.whatsapp.previewPill, 'डेमो'),
     },
 

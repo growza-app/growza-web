@@ -55,7 +55,7 @@
 
 .al-row-title,
 .al-blocked-title {
-  font-weight: 650;
+  font-weight: 600;
   /* 15px. The type floor on this product is 12px and body is 16px; a row title sits just under body. */
   font-size: 0.9375rem;
   color: var(--text);

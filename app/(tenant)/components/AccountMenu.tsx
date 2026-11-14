@@ -11,6 +11,7 @@ import { putName, saveLang, type Lang } from '../lib/lang';
 import { useLabels } from './LabelsProvider';
 import { useSession } from './SessionProvider';
 import { SignOutButton } from './SignOutButton';
+import { ClientCartoon } from './ClientCartoon';
 import { IconClose, IconHelp, IconLogout } from './icons';
 
 /**
@@ -173,7 +174,16 @@ export function AccountMenu() {
         aria-label={t('menuAndAccount')}
         onClick={() => (open ? close() : setOpen(true))}
       >
-        {session?.initial ?? 'S'}
+        {/*
+          Emerald v3 (owner, 2026-11-14: "even if the user has not added an image, show the animated icon") — the same
+          drawn face the client list gives a client, picked from the person's own number so it is theirs on every
+          device; and on a laptop their name and role beside it, as the shot's header has. Nobody has a photo yet.
+        */}
+        <ClientCartoon id={session?.phone ?? name ?? session?.businessName ?? 'me'} className="acct-face" />
+        <span className="acct-trigger-text">
+          <strong>{name ?? t(`roles.${role}.name`)}</strong>
+          <span>{name ? t(`roles.${role}.name`) : (session?.phone ?? '')}</span>
+        </span>
       </button>
 
       {open && (

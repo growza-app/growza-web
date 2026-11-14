@@ -52,7 +52,7 @@
 
 .psz-label {
   font-size: var(--fs-5);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
 }
 
@@ -79,7 +79,7 @@
   background: var(--accent-deep);
   color: #fff;
   font-size: var(--fs-1);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.5;
 }
 

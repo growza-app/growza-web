@@ -8,7 +8,7 @@ import { fromStoredPhone, toStoredPhone } from '../../lib/phone';
 import { api, ApiError, type SettingsSummary } from '../../lib/api';
 import { usePhoneProblem } from '../../lib/use-phone-problem';
 import { useCloseAfterSave } from '../../lib/close-after-save';
-import { useWritable } from '../../components/SessionProvider';
+import { useMayOpen, useWritable } from '../../components/SessionProvider';
 import { useNouns } from '../../lib/use-nouns';
 import { cleanGoogleReviewUrl } from '../../lib/receipt-text';
 
@@ -116,6 +116,8 @@ export function ProfileForm({
   };
   const dirty = (Object.keys(f) as Array<keyof Fields>).some((k) => f[k] !== savedFields[k]);
   const multiBranch = branchCount > 1;
+  // Branches is the owner's alone (Jira GRW-709): a manager is not offered a card that would only send them Home.
+  const mayOpenBranches = useMayOpen()('/settings/branches');
   /**
    * Jira GRW-396 — Settings › Business name and logo at a business with several branches: only what the
    * business has once. Its phone and "about" are each branch's now, on the branch's profile.
@@ -358,6 +360,7 @@ export function ProfileForm({
       </div>
       <div className="bp-col">
       {branchId ? null : multiBranch ? (
+        mayOpenBranches ? (
         <a className="card bp-card bp-link-card" href="/settings/branches">
           <span className="bp-card-icon">
             <IconMapPin />
@@ -370,6 +373,7 @@ export function ProfileForm({
             <IconChevronRight />
           </span>
         </a>
+        ) : null
       ) : settings.location ? (
         <section className="card bp-card">
           <div className="bp-card-head">
