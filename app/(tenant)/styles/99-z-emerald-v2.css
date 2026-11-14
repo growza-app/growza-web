@@ -659,3 +659,14 @@ body {
 :is(.seg, .segmented, .rp-tabs, .tabs) :is(button, a) {
   border-radius: 999px;
 }
+
+/* Every bar's amount (owner, 14 Nov 2026): the best day's in dark green and bold, the others quieter. */
+.cr-bar-top {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.cr-bar-top.is-peak {
+  font-weight: 600;
+  color: var(--forest);
+}

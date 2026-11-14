@@ -236,6 +236,11 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
    * accent (as the busiest hours already are, below) and carries its amount; the rest are told from it by height.
    * No peak when nothing was taken: seven empty columns have no best day.
    */
+  /* A week's bars each carry their figure; a month's thirty would collide, so there only the best day does. */
+  const everyFigure = bars.length <= 7;
+  /** "₹1,180" while it fits a seventh of a phone; "₹12K", "₹1.5L" past ₹9,999. Indian grouping either way. */
+  const barAmount = (minor: number) =>
+    minor < 1_000_000 ? money(minor) : `₹${new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 }).format(minor / 100)}`;
   const peakDay = bars.reduce((best, b, i) => (b.valueMinor > 0 && (best === -1 || b.valueMinor > bars[best]!.valueMinor) ? i : best), -1);
   /** A per-order average in whole rupees: "₹299 per order". The paise of an average are not anybody's money. */
   const wholeRupees = (minor: number) => Math.round(minor / 100) * 100;
@@ -270,10 +275,12 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
         <ul className="cr-bars cr-bars-day" ref={barsRef}>
           {bars.map((b, i) => (
             <li key={b.startISO} className="cr-bar-col">
-              {/* Above the slot, so the amount sits on top of its bar; empty for the other days, which keeps every
-                  column the same height. Read out below for everybody, so hidden from a screen reader here. */}
-              <span className="cr-bar-top" aria-hidden="true">
-                {i === peakDay ? money(b.valueMinor) : ''}
+              {/* Above the slot, so the amount sits on top of its bar. Owner, 14 Nov 2026 — "amount on top of each
+                  bar": every day of a week carries its figure (short above ₹9,999, so seven fit across a phone); a
+                  longer range still names only the best day. An empty day stays blank, which keeps every column the
+                  same height. Read out below for everybody, so hidden from a screen reader here. */}
+              <span className={`cr-bar-top${i === peakDay ? ' is-peak' : ''}`} aria-hidden="true">
+                {i === peakDay || (everyFigure && b.valueMinor > 0) ? barAmount(b.valueMinor) : ''}
               </span>
               <span className="cr-bar-slot">
                 <span
