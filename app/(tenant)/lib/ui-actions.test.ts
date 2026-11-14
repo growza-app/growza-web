@@ -434,6 +434,10 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     '/search': /if \(!mayUse\(role, 'search'\)\) redirect\(/,
     // Its own tab gate (GRW-197): a tab they cannot open lands on one they can, none says so plainly.
     '/reports': /const firstAllowed = ALL_REPORT_TABS\.find\(canOpen\)/,
+    // Owner, 2026-11-14 — a counter business's money reports ask the screen guard by their own address (the role's Reports, and a shop's only).
+    '/reports/profit': /await guardScreen\('\/reports\/profit'\);/,
+    '/reports/payments': /await guardScreen\('\/reports\/payments'\);/,
+    '/reports/discounts': /await guardScreen\('\/reports\/discounts'\);/,
     // The centre button and this page ask the same action.
     '/appointments/new': /if \(!mayUse\(me\.member\?\.role, 'visit\.new', isWritable\(me\.tenant\?\.status\)\)\)/,
     // Jira GRW-556 — where a closed screen's address lands until the business is live: open to every role, and it
@@ -492,7 +496,8 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     const rel = path.relative(tenantDir, path.dirname(file)).split(path.sep).join('/');
     const href = rel === '' ? '/' : `/${rel}`;
     it(href, () => {
-      const own = Object.keys(OWN_GATE).find((k) => href === k || href.startsWith(`${k}/`));
+      // The most specific entry wins: `/reports/profit` has its own gate, not the Reports page's tab gate.
+      const own = Object.keys(OWN_GATE).sort((a, b) => b.length - a.length).find((k) => href === k || href.startsWith(`${k}/`));
       if (own) {
         expect(readFileSync(file, 'utf8'), `${href} lost its own gate`).toMatch(OWN_GATE[own]!);
         return;

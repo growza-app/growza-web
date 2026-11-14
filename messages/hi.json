@@ -5317,5 +5317,74 @@
     "noNumberBodyStaff": "इस मैसेज में कोई फ़ोन नंबर नहीं है। मालिक से सेटिंग्स में बिज़नेस नंबर जुड़वाएं।",
     "shareAnyway": "फिर भी भेजें",
     "addNumber": "नंबर जोड़ें"
+  },
+  "moneyReports": {
+    "tabs": {
+      "profit": "मुनाफ़ा",
+      "discounts": "छूट और मुफ़्त",
+      "payments": "भुगतान"
+    },
+    "rangeLabel": "अवधि",
+    "from": "से",
+    "to": "तक",
+    "loadError": "यह रिपोर्ट नहीं खुल पाई।",
+    "retry": "फिर कोशिश करें",
+    "nothing": "इस अवधि में कुछ नहीं बिका।",
+    "openOrder": "ऑर्डर खोलें",
+    "token": "टोकन {n}",
+    "profit": {
+      "title": "मुनाफ़ा",
+      "profitLabel": "मुनाफ़ा",
+      "marginLine": "बिक्री का {margin}%",
+      "salesLabel": "बिक्री",
+      "costLabel": "लागत",
+      "commissionLabel": "डिलीवरी ऐप का हिस्सा",
+      "noCostAtAll": "अभी कोई लागत नहीं डाली गई",
+      "noCostAtAllHint": "मेन्यू या स्टॉक में हर आइटम की लागत डालें, तब मुनाफ़ा यहाँ दिखेगा।",
+      "uncosted": "{count, plural, one {# आइटम की} other {# आइटम की}} लागत नहीं डाली गई — {value} की बिक्री मुनाफ़े में नहीं है।",
+      "costNote": "हर आइटम की आज की लागत से गिना गया है।",
+      "listTitle": "आइटम के हिसाब से, सबसे ज़्यादा मुनाफ़ा पहले",
+      "sold": "{qty} बिके · {sales}",
+      "loss": "{loss} नुकसान",
+      "noCost": "लागत नहीं डाली",
+      "partly": "इस आइटम की कुछ बिक्री की लागत नहीं डाली गई।",
+      "more": "और {count}"
+    },
+    "discounts": {
+      "title": "छूट और मुफ़्त",
+      "belowLabel": "दाम से कम लिया गया",
+      "billsLine": "{all} में से {bills} बिल",
+      "freeBillsLabel": "मुफ़्त बिल",
+      "freeBillsLine": "कुछ भी नहीं लिया गया",
+      "none": "इस अवधि में हर बिल पूरे दाम पर बना।",
+      "byDayTitle": "दिन के हिसाब से",
+      "dayLine": "{value} · {bills, plural, one {# बिल} other {# बिल}}",
+      "billsTitle": "सबसे बड़ी छूट पहले",
+      "billLine": "दाम {list} · लिया {charged}",
+      "freeTag": "मुफ़्त",
+      "freeItemsTitle": "मुफ़्त दिया गया",
+      "freeItemLine": "{qty} × · {value}"
+    },
+    "payments": {
+      "title": "भुगतान",
+      "netLabel": "आया पैसा, रिफ़ंड के बाद",
+      "netLine": "{received} आया · {refunded} लौटाया",
+      "mode": {
+        "cash": "कैश",
+        "upi": "UPI",
+        "card": "कार्ड",
+        "other": "अन्य",
+        "not_recorded": "दर्ज नहीं"
+      },
+      "modeLine": "{received} आया · {refunded} लौटाया",
+      "counterOnly": "सिर्फ़ काउंटर के बिल। Swiggy, Zomato और ऑनलाइन ऑर्डर का पैसा आपको अलग से मिलता है — चैनल के हिसाब से बिक्री देखें।",
+      "none": "इस अवधि में काउंटर पर कोई पैसा नहीं आया।",
+      "byDayTitle": "दिन के हिसाब से",
+      "dayRefund": "{value} लौटाया",
+      "noTrade": "कोई बिक्री नहीं",
+      "pendingTitle": "भुगतान बाकी",
+      "pendingLine": "{count, plural, one {# ऑर्डर} other {# ऑर्डर}} · {value}",
+      "pendingNone": "किसी ऑर्डर का भुगतान बाकी नहीं है।"
+    }
   }
 }

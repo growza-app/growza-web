@@ -6,10 +6,11 @@ import AppLink from '../../shared/AppLink';
 import { areaAllows } from '../lib/areas';
 import { useAreas } from './SessionProvider';
 
-export type RetailReportTab = 'hub' | 'channels' | 'sellers' | 'report' | 'order' | 'returns' | 'refunds';
+export type RetailReportTab = 'hub' | 'profit' | 'payments' | 'discounts' | 'channels' | 'sellers' | 'report' | 'order' | 'returns' | 'refunds';
 
 /**
  * Shared navigation tab bar across a retail shop's analytics and stock/order reports:
+ *   - Profit, Payments, Discounts & free (`/reports/profit`, `/reports/payments`, `/reports/discounts`)
  *   - Where the money came from (`/stock/channels`)
  *   - What sells (`/stock/sellers`)
  *   - Stock report (`/stock/report`)
@@ -19,6 +20,7 @@ export type RetailReportTab = 'hub' | 'channels' | 'sellers' | 'report' | 'order
  */
 export function RetailReportsNav({ active }: { active: RetailReportTab }) {
   const tReports = useTranslations('reports');
+  const tMoney = useTranslations('moneyReports.tabs');
   const tChannels = useTranslations('products.channels');
   const tSellers = useTranslations('products.sellers');
   const tReport = useTranslations('products.stockReport');
@@ -31,6 +33,10 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
   const areas = useAreas();
   const allTabs: Array<{ key: RetailReportTab; href: string; label: string }> = [
     { key: 'hub', href: '/reports', label: tReports('summaryTab') },
+    // Owner, 2026-11-14 — the money questions, right after the summary: what it made, how it came in, what went out below price.
+    { key: 'profit', href: '/reports/profit', label: tMoney('profit') },
+    { key: 'payments', href: '/reports/payments', label: tMoney('payments') },
+    { key: 'discounts', href: '/reports/discounts', label: tMoney('discounts') },
     { key: 'channels', href: '/stock/channels', label: tChannels('title') },
     { key: 'sellers', href: '/stock/sellers', label: tSellers('title') },
     { key: 'report', href: '/stock/report', label: tReport('title') },

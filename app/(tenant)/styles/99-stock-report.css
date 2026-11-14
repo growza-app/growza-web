@@ -738,3 +738,23 @@
 .ro-warn {
   margin-top: 0;
 }
+
+/* Owner, 2026-11-14 — Profit, Payments, Discounts & free (reports/money). The rest is the srp cards above. */
+.mr-title {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.mr .srp-value.mr-loss,
+.mr .srp-worth.mr-loss {
+  color: var(--danger);
+}
+.mr-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent-deep);
+}

@@ -2176,3 +2176,59 @@ export interface RefundsReportPage {
   page: number;
   pageSize: number;
 }
+
+/** Owner, 2026-11-14 — the window a money report was read over (`reports.money.ts` in the API). */
+export interface MoneyWindow {
+  key: string;
+  label: string;
+  startISO: string;
+  endExclusiveISO: string;
+}
+
+/** `GET /api/v1/reports/profit` — takings less cost price and the delivery apps' cut, by item. */
+export interface ProfitReportPage {
+  window: MoneyWindow;
+  anySales: boolean;
+  totals: {
+    salesMinor: number;
+    costedSalesMinor: number;
+    costMinor: number;
+    commissionMinor: number;
+    profitMinor: number;
+    marginPct: number | null;
+    uncostedSalesMinor: number;
+    uncostedItems: number;
+  };
+  rows: Array<{
+    id: string;
+    name: string;
+    qty: number;
+    salesMinor: number;
+    costMinor: number | null;
+    commissionMinor: number;
+    profitMinor: number | null;
+    marginPct: number | null;
+    partlyCosted: boolean;
+  }>;
+  moreRows: number;
+}
+
+/** `GET /api/v1/reports/discounts` — what the counter's bills were charged below their price, and what went out free. */
+export interface DiscountReportPage {
+  window: MoneyWindow;
+  totals: { belowMinor: number; bills: number; freeBills: number; allBills: number; listMinor: number };
+  byDay: Array<{ dateISO: string; belowMinor: number; bills: number }>;
+  bills: Array<{ id: string; soldAtISO: string; tokenNo: number | null; listMinor: number; chargedMinor: number; belowMinor: number; free: boolean }>;
+  freeItems: Array<{ name: string; qty: number; listMinor: number }>;
+}
+
+export type MoneyPaymentMode = 'cash' | 'upi' | 'card' | 'other' | 'not_recorded';
+
+/** `GET /api/v1/reports/payments` — the counter's money in by way and by day, less refunds, and the orders still unpaid. */
+export interface PaymentsReportPage {
+  window: MoneyWindow;
+  totals: { receivedMinor: number; refundedMinor: number; netMinor: number };
+  modes: Array<{ mode: MoneyPaymentMode; receivedMinor: number; refundedMinor: number; netMinor: number }>;
+  byDay: Array<{ dateISO: string; received: Partial<Record<MoneyPaymentMode, number>>; refundedMinor: number; netMinor: number }>;
+  pending: { count: number; valueMinor: number; rows: Array<{ id: string; soldAtISO: string; tokenNo: number | null; valueMinor: number }> };
+}

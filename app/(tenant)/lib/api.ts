@@ -119,6 +119,9 @@ import type {
   DeliveryAppTally,
   DeliveryTallyRange,
   CounterReportPage,
+  DiscountReportPage,
+  PaymentsReportPage,
+  ProfitReportPage,
   DiaryReportPage,
   ReturnsReportPage,
   RefundsReportPage,
@@ -410,6 +413,19 @@ function reorderParams(q: ReorderQuery): string {
 }
 
 /** Jira GRW-632 — the filters of the two sales views, as a query string. */
+/** Owner, 2026-11-14 — the money reports read a custom window of calendar days, like the counter report. */
+export interface MoneyReportQuery {
+  from: string;
+  to: string;
+  location?: string | null;
+}
+
+function moneyParams(q: MoneyReportQuery): string {
+  const p = new URLSearchParams({ range: 'custom', from: q.from, to: q.to });
+  if (q.location) p.set('location', q.location);
+  return p.toString();
+}
+
 function sellersParams(q: SellersQuery): string {
   const p = new URLSearchParams({ range: q.range });
   if (q.location) p.set('location', q.location);
@@ -955,6 +971,10 @@ export const api = {
   /** Jira GRW-591 — the counter report: what was taken, what earned it, when the rush was, what changed. */
   counterReport: (q: { range: ReportRangeKey; location?: string | null; from?: string; to?: string }) =>
     get<CounterReportPage>(`/api/v1/reports/counter?${sellersParams({ range: q.range, location: q.location ?? undefined, from: q.from, to: q.to })}`),
+  /** Owner, 2026-11-14 — a counter business's profit, discounts and payments, over the same range as the counter report. */
+  profitReport: (q: MoneyReportQuery) => get<ProfitReportPage>(`/api/v1/reports/profit?${moneyParams(q)}`),
+  discountReport: (q: MoneyReportQuery) => get<DiscountReportPage>(`/api/v1/reports/discounts?${moneyParams(q)}`),
+  paymentsReport: (q: MoneyReportQuery) => get<PaymentsReportPage>(`/api/v1/reports/payments?${moneyParams(q)}`),
   /** Jira GRW-634 — what was billed on each channel over a range, beside the period before; billed, not received. */
   byChannel: (q: { range: ReportRangeKey; location?: string; from?: string; to?: string }) =>
     get<ByChannelPage>(`/api/v1/reports/by-channel?${sellersParams({ range: q.range, location: q.location, from: q.from, to: q.to })}`),
