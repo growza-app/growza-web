@@ -1344,8 +1344,9 @@ body {
  * tile's payment split and the white tiles' sparklines go: the Payments and Sales cards below say both.
  * ===================================================================================================== */
 @media (min-width: 861px) {
+  /* Owner, 14 Nov 2026: "extend the revenue card and shrink order and guests" — the money tile leads. */
   .rst-kpis {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, 1fr);
   }
 
   .rst-kpi,
@@ -1403,31 +1404,30 @@ body {
     right: 1.125rem;
   }
 
-  /* The chips are the shot's small square-ish tags: a thin outline and the figure, the words beside them. */
+  /* The chips keep their colour (owner, 14 Nov 2026: "you have removed the colour of these cards"): a filled
+     mint pill going up, a soft red one going down, the words beside them grey. */
   .rst-kpi .rst-delta-pill {
-    padding: 0.0625rem 0.375rem;
-    border: 1px solid currentColor;
-    border-radius: 0.375rem;
-    background: transparent;
+    padding: 0.1875rem 0.625rem;
+    border: 0;
+    border-radius: 999px;
     font-size: var(--fs-1);
+    font-weight: 500;
   }
 
   .rst-kpi .rst-delta-pill.is-up {
-    color: var(--forest-2);
+    background: color-mix(in srgb, var(--mint) 38%, var(--surface));
+    color: var(--forest);
   }
 
   .rst-kpi .rst-delta-pill.is-down {
+    background: color-mix(in srgb, var(--danger) 12%, var(--surface));
     color: var(--danger);
-  }
-
-  .rst-kpi:not(.rst-kpi-sales) .rst-delta-sub {
-    color: var(--forest-2);
   }
 
   .rst-kpi-sales .rst-delta-pill,
   .rst-kpi-sales .rst-delta-pill:is(.is-up, .is-down) {
+    background: color-mix(in srgb, var(--lime) 22%, transparent);
     color: var(--lime);
-    border-color: var(--lime);
   }
 
   .rst-kpi .rst-delta-sub {
