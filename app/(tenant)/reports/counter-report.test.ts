@@ -124,10 +124,11 @@ describe('the four cards say something, in English', () => {
     expect(out).not.toContain('₹907.07');
   });
 
-  it('gives a bar to every day of the period, including the one that took nothing', () => {
+  it('gives a bar to every day of the period and every hour of the trading day, including the empty ones', () => {
     const html = render('en');
     expect(html.match(/cr-bars-day/g)).toHaveLength(1);
-    expect((html.match(/cr-bar-col/g) ?? []).length).toBe(7 + 5);
+    // Seven days, and every hour from noon to 10 pm (2026-11-14): the five that sold plus the six between them.
+    expect((html.match(/cr-bar-col/g) ?? []).length).toBe(7 + 11);
     // The quiet Tuesday is a column at zero height, not a missing column.
     expect(html).toContain('height:0%');
   });

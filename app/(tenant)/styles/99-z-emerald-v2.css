@@ -670,3 +670,19 @@ body {
   font-weight: 600;
   color: var(--forest);
 }
+
+/* The hour chart has a column for every hour (2026-11-14), so twenty striped tracks read as a barcode: here the
+   track is a plain light pill, and the first and last time names keep inside the card. */
+.cr-bars-hour .cr-bar-slot {
+  background: var(--canvas);
+}
+
+.cr-bars-hour .cr-bar-col:first-child .cr-bar-tick,
+.cr-bars-hour .cr-bar-col:last-child .cr-bar-tick {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.cr-bars-hour .cr-bar-col:last-child .cr-bar-tick {
+  justify-content: flex-end;
+}

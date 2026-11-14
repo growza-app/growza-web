@@ -246,6 +246,20 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
   const wholeRupees = (minor: number) => Math.round(minor / 100) * 100;
   const addOnMinor = Math.max(1000, Math.round((takings.averageBillMinor ?? 0) / 10 / 1000) * 1000);
   const hourPeak = Math.max(...busy.byHour.map((h) => Number(h.valueMinor)), 1);
+  /*
+   * Owner, 14 Nov 2026 ("can we improve this") — the API sends only the hours that sold, and the chart drew them
+   * side by side: 4 am sat next to 10 am as if they were an hour apart, and the rush looked like any two bars.
+   * Every hour from the first sale to the last now gets a column, an empty one just its striped track, so the
+   * spacing is the clock's. The busiest single hour carries its amount, as the best day does above.
+   */
+  const hourCols = (() => {
+    if (busy.byHour.length === 0) return [];
+    const sold = new Map(busy.byHour.map((h) => [h.hour, Number(h.valueMinor)]));
+    const first = Math.min(...sold.keys());
+    const last = Math.max(...sold.keys());
+    return Array.from({ length: last - first + 1 }, (_, k) => ({ hour: first + k, value: sold.get(first + k) ?? 0 }));
+  })();
+  const topHour = hourCols.reduce((best, h) => (h.value > (best?.value ?? 0) ? h : best), null as (typeof hourCols)[number] | null);
   const topValue = Math.max(...earners.rows.map((r) => Number(r.valueMinor)), 1);
   const difference = takings.differenceMinor === null ? null : Number(takings.differenceMinor);
   const moreOthers = earners.distinct - earners.rows.length;
@@ -382,7 +396,7 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
         ) : (
           <>
             <ul className="cr-bars cr-bars-hour">
-              {busy.byHour.map((h, i, all) => {
+              {hourCols.map((h, i, all) => {
                 const inPeak = h.hour >= busy.peak!.fromHour && h.hour < busy.peak!.toHour;
                 /*
                  * A kitchen trades fourteen hours and a phone is 344px wide: "11 am" under every column
@@ -390,17 +404,22 @@ export function CounterCards({ data }: { data: CounterReportPage }) {
                  * so only every third hour is named, with the ends always named so the axis has a range.
                  * The column itself is still there for every hour — it is the LABEL that thins out.
                  */
-                const named = i === 0 || i === all.length - 1 || h.hour % 3 === 0;
+                // Owner, 14 Nov 2026 — with every hour drawn, a name every third hour plus both ends put "1 am" on top
+                // of "3 am". Evenly spaced from the first column instead, about six names whatever the span.
+                const named = i % Math.max(3, Math.ceil(all.length / 6)) === 0;
                 return (
                   <li key={h.hour} className="cr-bar-col">
+                    <span className={`cr-bar-top${inPeak ? ' is-peak' : ''}`} aria-hidden="true">
+                      {topHour && h.hour === topHour.hour ? barAmount(h.value) : ''}
+                    </span>
                     <span className="cr-bar-slot">
                       <span
                         className={`cr-bar ${inPeak ? 'is-peak' : ''}`}
-                        style={{ height: `${Math.max(MIN_BAR_PCT, (Number(h.valueMinor) / hourPeak) * 100)}%` }}
+                        style={{ height: `${h.value === 0 ? 0 : Math.max(MIN_BAR_PCT, (h.value / hourPeak) * 100)}%` }}
                       />
                     </span>
                     <span className="cr-bar-tick">{named ? hourName(h.hour) : ''}</span>
-                    <span className="sr-only">{hourName(h.hour)} {money(h.valueMinor)}</span>
+                    <span className="sr-only">{hourName(h.hour)} {money(h.value)}</span>
                   </li>
                 );
               })}
