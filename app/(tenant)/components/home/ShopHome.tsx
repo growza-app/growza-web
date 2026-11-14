@@ -107,6 +107,8 @@ export function ShopHome({
   const [returnsData, setReturnsData] = useState<ReturnsReportPage | null>(null);
   const [recentOrders, setRecentOrders] = useState<OrderListRow[]>([]);
   const [todayOrderRows, setTodayOrderRows] = useState<OrderListRow[]>([]);
+  /** Emerald v2 — the laptop's week of orders behind the two white tiles' sparklines, with the list's full count. */
+  const [deskWeek, setDeskWeek] = useState<{ rows: OrderListRow[]; total: number } | null>(null);
   const [queueTick, setQueueTick] = useState(0);
   const [customerStats, setCustomerStats] = useState<CustomerStats | null>(null);
 
@@ -206,10 +208,14 @@ export function ShopHome({
 
     if (can('/orders')) {
       // Nothing is ever waiting to be sent where nothing ships (a kitchen): that list is not asked for.
+      // Emerald v2 (owner, 2026-11-14, "try the sparkline") — the hundred most recent, not six: the first six are the
+      // Recent orders panel, and the whole read is the week the Orders and Guests tiles draw a line from.
       api
-        .orders({ pageSize: 6, location: branch })
+        .orders({ pageSize: 100, location: branch })
         .then((res) => {
-          if (mine === deskReqId.current) setRecentOrders(res.rows);
+          if (mine !== deskReqId.current) return;
+          setRecentOrders(res.rows.slice(0, 6));
+          setDeskWeek({ rows: res.rows, total: res.total });
         })
         .catch(() => {});
     }
@@ -705,6 +711,31 @@ export function ShopHome({
     return (d: Date) => (f ? f.format(d) : d.toISOString().slice(0, 10));
   }, [timezone]);
   /*
+   * Emerald v2 — the last seven days for the Orders and Guests tiles: orders a day, and named guests a day. Drawn
+   * only when the read reaches back past the first of the seven days (or holds every order there is): a busy
+   * kitchen's hundred most recent may cover two days, and a line that drops to nothing on day three would be a lie.
+   */
+  const deskSpark = useMemo(() => {
+    if (!deskWeek || deskWeek.rows.length === 0) return null;
+    const days = Array.from({ length: 7 }, (_, k) => fmtDate(new Date(Date.now() - (6 - k) * 86_400_000)));
+    const first = days[0]!;
+    const covered =
+      deskWeek.total <= deskWeek.rows.length || deskWeek.rows.some((r) => fmtDate(new Date(r.soldAt)) < first);
+    if (!covered) return null;
+    const orders = days.map(() => 0);
+    const guests = days.map(() => new Set<string>());
+    for (const r of deskWeek.rows) {
+      if (r.status === 'cancelled') continue;
+      const i = days.indexOf(fmtDate(new Date(r.soldAt)));
+      if (i < 0) continue;
+      orders[i]! += 1;
+      const name = r.who?.name?.trim().toLowerCase();
+      if (name) guests[i]!.add(name);
+    }
+    return { orders, guests: guests.map((g) => g.size) };
+  }, [deskWeek, fmtDate]);
+
+  /*
    * QA 13 Nov 2026, bug 4 — the API's count (`customersToday`), the same for every role: the hundred-order read below
    * runs only for a role that may open Orders, so a desk's card said 0. An older API falls back to counting those rows.
    */
@@ -987,6 +1018,7 @@ export function ShopHome({
                   {/* 2. Orders */}
                   <a className="rst-kpi rst-kpi-orders" href="/orders">
                     <span className="rst-kpi-go" aria-hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg></span>
+                    {deskSpark ? <KpiSpark values={deskSpark.orders} /> : null}
                     <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
                       <path d="M0 48 C140 20 270 65 400 35 L400 70 L0 70 Z" fill="rgba(37, 99, 235, 0.07)" />
                     </svg>
@@ -1012,6 +1044,7 @@ export function ShopHome({
                   {/* 3. Customers */}
                   <a className="rst-kpi rst-kpi-customers" href="/customers">
                     <span className="rst-kpi-go" aria-hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg></span>
+                    {deskSpark ? <KpiSpark values={deskSpark.guests} /> : null}
                     <svg className="rst-kpi-wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden>
                       <path d="M0 42 C130 65 260 22 400 44 L400 70 L0 70 Z" fill="rgba(217, 119, 6, 0.08)" />
                     </svg>
@@ -2256,5 +2289,22 @@ export function ShopHome({
         />
       ) : null}
     </>
+  );
+}
+
+/**
+ * Emerald v2 — a week as one thin line along the bottom of a white tile, with a soft mint fill under it. Seven
+ * points, oldest on the left. Decoration that is also a reading: is this week going up or down. Hidden from a
+ * screen reader, which has the figure itself; a week with nothing in it draws nothing.
+ */
+function KpiSpark({ values }: { values: number[] }) {
+  const max = Math.max(...values);
+  if (max <= 0 || values.length < 2) return null;
+  const pts = values.map((v, i) => `${((i / (values.length - 1)) * 100).toFixed(1)},${(30 - (v / max) * 24).toFixed(1)}`).join(' ');
+  return (
+    <svg className="rst-kpi-spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <polygon points={`0,32 ${pts} 100,32`} />
+      <polyline points={pts} />
+    </svg>
   );
 }

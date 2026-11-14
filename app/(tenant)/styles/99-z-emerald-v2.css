@@ -280,6 +280,46 @@ body {
     color: var(--muted);
   }
 
+  /* ---- the white tiles' week (owner, 14 Nov 2026: "try A sparkline") ----
+     A thin forest line with a mint wash under it, along the bottom of the tile and behind its text. */
+  /* The line takes the bottom-right of the tile, beside the number; the change chip moves up beside the arrow
+     so neither sits on the line. */
+  .rst-kpi-spark {
+    position: absolute;
+    right: 1.25rem;
+    bottom: 1rem;
+    z-index: 0;
+    width: 45%;
+    height: 2.5rem;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .rst-kpi:is(.rst-kpi-orders, .rst-kpi-customers) .rst-kpi-side {
+    position: absolute;
+    top: 1.125rem;
+    right: 4rem;
+    margin: 0;
+  }
+
+  .rst-kpi-spark polygon {
+    fill: color-mix(in srgb, var(--mint) 22%, transparent);
+  }
+
+  .rst-kpi-spark polyline {
+    fill: none;
+    stroke: var(--forest-2);
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .rst-kpi :is(.rst-kpi-main, .rst-kpi-side, .rst-kpi-top, .rst-kpi-modes) {
+    position: relative;
+    z-index: 1;
+  }
+
   /* ---- the one filled tile ----
      Owner, 14 Nov 2026 (screenshot of the shot's tile): "this has colour shade". Dark forest lit from
      the top-left with a lime glow and from the bottom-right with mint, the number in pale lime, the
