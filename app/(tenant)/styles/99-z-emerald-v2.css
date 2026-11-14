@@ -141,9 +141,9 @@ body {
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
-    gap: var(--sp-2);
-    min-height: 10.5rem;
-    padding: 1.5rem 1.5rem 1.375rem;
+    gap: var(--sp-1);
+    min-height: 0;
+    padding: 1.125rem 1.25rem;
     background: var(--surface);
     border-color: transparent;
     box-shadow: none;
@@ -163,8 +163,8 @@ body {
 
   .rst-kpi-main {
     flex: 0 0 auto;
-    gap: var(--sp-3);
-    padding-right: 3.25rem;
+    gap: var(--sp-2);
+    padding-right: 3rem;
   }
 
   .rst-kpi-label {
@@ -174,7 +174,7 @@ body {
   }
 
   .rst-kpi-value {
-    font-size: 2.75rem;
+    font-size: var(--fs-12);
     font-weight: 600;
     line-height: 1;
     letter-spacing: -0.045em;
@@ -183,14 +183,14 @@ body {
   /* The same round arrow on every tile: repetition reads as order. */
   .rst-kpi-go {
     position: absolute;
-    top: 1.25rem;
-    right: 1.25rem;
+    top: 1rem;
+    right: 1rem;
     z-index: 2;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
+    width: 2.25rem;
+    height: 2.25rem;
     border-radius: 999px;
     border: 1.5px solid var(--canvas-line);
     background: var(--surface);
@@ -252,8 +252,15 @@ body {
   }
 
   .rst-kpi-sales .rst-kpi-modes {
-    padding-top: var(--sp-3);
+    padding-top: var(--sp-2);
     border-top-color: rgb(255 255 255 / 14%);
+  }
+
+  /* Cash in the drawer reads as one more line of the split above it, not a third block. */
+  .rst-kpi-sales .rst-kpi-drawer {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
   }
 
   .rst-kpi-sales .rst-kpi-side {
@@ -389,7 +396,7 @@ body {
 /* Tablets held sideways: three tiles share less room, so the number steps down one size. */
 @media (min-width: 861px) and (max-width: 1180px) {
   .rst-kpi-value {
-    font-size: var(--fs-12);
+    font-size: var(--fs-11);
   }
 }
 
