@@ -1770,3 +1770,52 @@ body {
     height: 2.25rem;
   }
 }
+
+/* The same density on every other laptop screen (owner, 14 Nov 2026: "apply the same size to all other
+   screens"): one page-title size with the Home's, the same header bar, tighter page padding, 16px gaps,
+   and the report's figures and bars at the Home's sizes. */
+@media (min-width: 861px) {
+  :root {
+    --page-pad-x: clamp(16px, 1.8vw, 24px);
+  }
+
+  .topbar-title,
+  .topbar-title h1 {
+    font-size: var(--fs-10);
+    letter-spacing: -0.03em;
+  }
+
+  .topbar {
+    padding-block: 0.625rem;
+  }
+
+  .topbar p {
+    font-size: var(--fs-3);
+  }
+
+  /* Reports */
+  .cr {
+    gap: 1rem;
+  }
+
+  .cr-card {
+    padding: 1rem 1.125rem;
+  }
+
+  .cr-hero {
+    font-size: var(--fs-12);
+  }
+
+  .cr-bars-day .cr-bar-slot {
+    height: 5rem;
+  }
+
+  .cr-bars-hour .cr-bar-slot {
+    height: 4rem;
+  }
+
+  /* Tables */
+  :is(.ord-table, .rp-table, .srp-table, .sls-table, .sls-ret-table, .prd-table, .bk-table, .hm-v3-recent-table, .rw-examples-table) :is(th, td) {
+    padding: 0.625rem 0.875rem;
+  }
+}
