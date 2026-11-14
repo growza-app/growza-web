@@ -735,40 +735,6 @@ body {
   justify-content: flex-end;
 }
 
-/* The phone hero's week of orders (owner, 14 Nov 2026: "make the sparkline work on phone too"). The same line
-   as the laptop's Orders tile, drawn in lime on the dark green, with a quiet caption under it. */
-.shp-hero-week {
-  margin-top: var(--sp-3);
-}
-
-.shp-hero-week .rst-kpi-spark {
-  position: static;
-  display: block;
-  width: 100%;
-  height: 2.5rem;
-  overflow: visible;
-}
-
-.shp-hero-week .rst-kpi-spark polygon {
-  fill: color-mix(in srgb, var(--lime) 18%, transparent);
-}
-
-.shp-hero-week .rst-kpi-spark polyline {
-  fill: none;
-  stroke: var(--lime);
-  stroke-width: 2;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-}
-
-.shp-hero-week span {
-  display: block;
-  margin-top: var(--sp-1);
-  font-size: var(--fs-1);
-  color: rgb(255 255 255 / 72%);
-}
-
 /* =====================================================================================================
  * Emerald v3 layout (owner, 14 Nov 2026: "go ahead with all") — what the shot does that colour alone
  * could not: floating panels, a page head with two pill actions, a row of charts, and full rows below.

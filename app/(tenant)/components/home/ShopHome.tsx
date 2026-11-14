@@ -110,7 +110,6 @@ export function ShopHome({
   const [todayOrderRows, setTodayOrderRows] = useState<OrderListRow[]>([]);
   /** Emerald v2 — the laptop's week of orders behind the two white tiles' sparklines, with the list's full count. */
   const [deskWeek, setDeskWeek] = useState<{ rows: OrderListRow[]; total: number } | null>(null);
-  const [phoneOrdersTotal, setPhoneOrdersTotal] = useState<number | null>(null);
   const [queueTick, setQueueTick] = useState(0);
   const [customerStats, setCustomerStats] = useState<CustomerStats | null>(null);
 
@@ -297,7 +296,6 @@ export function ShopHome({
           if (mine !== phoneReqId.current) return;
           setTodayOrderRows(res.rows);
           setRecentOrders(res.rows.slice(0, 6));
-          setPhoneOrdersTotal(res.total);
         })
         .catch(() => {});
     }
@@ -743,11 +741,6 @@ export function ShopHome({
     [fmtDate],
   );
   const deskSpark = useMemo(() => (deskWeek ? weekLines(deskWeek.rows, deskWeek.total) : null), [deskWeek, weekLines]);
-  /* The phone's hundred-order read (the queue and Recent orders use it) gives the hero the same week of orders. */
-  const phoneWeek = useMemo(
-    () => (phoneOrdersTotal === null ? null : weekLines(todayOrderRows, phoneOrdersTotal)),
-    [todayOrderRows, phoneOrdersTotal, weekLines],
-  );
 
   /*
    * QA 13 Nov 2026, bug 4 — the API's count (`customersToday`), the same for every role: the hundred-order read below
@@ -1985,13 +1978,6 @@ export function ShopHome({
                             {phoneSpark.map((b) => (
                               <i key={b.key} style={{ height: `${b.pct}%` }} />
                             ))}
-                          </div>
-                        ) : phoneWeek && Math.max(...phoneWeek.orders) > 0 ? (
-                          /* Owner, 2026-11-14 — "make the sparkline work on phone too": the laptop's Orders tile
-                             line, in the hero, when no window chart is already drawn there. */
-                          <div className="shp-hero-week">
-                            <KpiSpark values={phoneWeek.orders} />
-                            <span>{s.ordersLast7}</span>
                           </div>
                         ) : null}
                       </>
