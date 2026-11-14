@@ -659,3 +659,12 @@ body {
 :is(.seg, .segmented, .rp-tabs, .tabs) :is(button, a) {
   border-radius: 999px;
 }
+
+/* ---------- Quick links: one colour ----------
+ * Owner, 14 Nov 2026: "make icons green, let's see — if not liked I will revert." Six tints (rose, green,
+ * violet, amber, blue, slate) became one: a mint circle with a forest icon. Delete this block to undo. */
+.hm-tile-icon:is(.hm-tile-rose, .hm-tile-green, .hm-tile-violet, .hm-tile-amber, .hm-tile-blue, .hm-tile-slate) {
+  background: color-mix(in srgb, var(--mint) 30%, var(--surface));
+  border-color: transparent;
+  color: var(--forest);
+}
