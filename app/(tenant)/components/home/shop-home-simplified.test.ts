@@ -34,7 +34,7 @@ describe('a shop’s Home says each thing once', () => {
     expect(shop).not.toContain('hm-v3-quick-card');
     expect(shop).not.toContain('shp-orders-att');
     expect(shop.match(/shp-needs-card/g)).toHaveLength(1);
-    expect(shop).toContain('].filter((c) => c.n > 0);');
+    expect(shop).toContain('].filter((c) => c.n > 0 && c.href !== null);'); // F10 (QA 2026-11-14): and only a row that opens
     expect(shop).toContain('{attentionCount === 0 ? (');
   });
 

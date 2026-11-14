@@ -671,8 +671,16 @@ export function ShopHome({
       href: canReports && can('/orders/returns') ? '/orders/returns' : can('/orders') ? ordersHref({ status: 'returned' }) : null,
     },
     ...shelfRows('rose', 'amber'),
-  ].filter((c) => c.n > 0);
+    // QA 2026-11-14, F10 — a row is a door: one this person cannot open is not drawn (see `attentionReachable`).
+  ].filter((c) => c.n > 0 && c.href !== null);
   const attentionCount = attentionChips.reduce((sum, c) => sum + c.n, 0);
+  /*
+   * QA 2026-11-14, F10 — Needs attention is a list of things to go and do. A staff role that opens neither the shelf nor
+   * the orders (attendance only) was shown "Out of stock 1 · Running low 12 · Returns today 6", and on a laptop four
+   * product rows that opened /stock and bounced him Home. Such a person gets no card at all; anyone else gets only the
+   * rows they can open.
+   */
+  const attentionReachable = can('/stock') || can('/orders');
 
   /*
    * Owner, 2026-11-13 — the phone's Needs attention card, for a shop with a counted shelf: the same four counts the
@@ -693,7 +701,7 @@ export function ShopHome({
       label: s.returnsTodayLabel,
       href: canReports && can('/orders/returns') ? '/orders/returns' : can('/orders') ? ordersHref({ status: 'returned' }) : null,
     },
-  ].filter((c) => c.n > 0);
+  ].filter((c) => c.n > 0 && c.href !== null);
 
   /*
    * Who came in today: the day's paid orders, one customer each — a named buyer once however many times they bought,
@@ -1444,7 +1452,7 @@ export function ShopHome({
               </div>
 
               {/* ROW 2 — Sales trend, where the money came from (once there is more than the counter), and what needs attention */}
-              <div className={`hm-v3-mid${money && canReports && soldElsewhere ? '' : ' hm-v3-mid-two'}`}>
+              <div className={`hm-v3-mid${money && canReports && soldElsewhere ? '' : attentionReachable ? ' hm-v3-mid-two' : ' hm-v3-mid-one'}`}>
                 {/* 1. Sales Trend SVG Line + Bar Chart */}
                 <section className="hm-v3-card hm-v3-trend-card">
                   <div className="hm-v3-card-head">
@@ -1573,61 +1581,63 @@ export function ShopHome({
                   Needs attention — the one list of what is waiting on the owner: app orders still to send, orders that came
                   back, and the shelf running out. A count that is zero is not drawn; when every one is, the card says so.
                 */}
-                <section className="hm-v3-card hm-v3-products-card hm-v3-prod-attention shp-needs-card">
-                  <div className="hm-v3-card-head">
-                    <h2>
-                      {s.needsAttentionTitle} {attentionCount > 0 ? <span className="hm-v3-count">({attentionCount})</span> : null}
-                    </h2>
-                    {areas.stock && can('/stock') ? (
-                      <a className="hm-v3-head-link" href={`/stock${stockBranch}`}>
-                        {s.viewOrders} →
-                      </a>
-                    ) : null}
-                  </div>
-                  {attentionCount === 0 ? (
-                    <p className="hm-empty">{areas.stock && !data.running.counted ? s.notCounted : s.nothingNeedsYou}</p>
-                  ) : (
-                    <>
-                      <div className="hm-v3-prod-att-summary">
-                        {attentionChips.map((c) =>
-                          c.href ? (
-                            <a key={c.key} className={`hm-v3-prod-att-chip is-${c.tone}`} href={c.href}>
-                              <strong>{c.n}</strong>
-                              <span>{c.label}</span>
-                            </a>
-                          ) : (
-                            <span key={c.key} className={`hm-v3-prod-att-chip is-${c.tone}`}>
-                              <strong>{c.n}</strong>
-                              <span>{c.label}</span>
-                            </span>
-                          ),
-                        )}
-                      </div>
-                      {areas.stock && data.running.counted && data.running.items.length > 0 ? (
-                        <ul className="hm-v3-srv-rows hm-v3-prod-att-rows">
-                          {data.running.items.slice(0, 4).map((r) => {
-                            const isOut = r.left <= 0;
-                            return (
-                              <li key={`${r.productId}-${r.size ?? ''}`}>
-                                <a className="hm-v3-srv-row hm-v3-prod-att-row" href={`/stock${stockBranch}`}>
-                                  <Avatar name={r.name} id={r.productId} size={30} />
-                                  <div className="hm-v3-srv-main">
-                                    <strong className="hm-v3-srv-name">{r.name}</strong>
-                                    <span className="hm-v3-prod-att-sub">
-                                      {r.size ? s.sizeWord(r.size) : t.nav.stock}
-                                      {r.branch ? ` · ${r.branch}` : ''}
-                                    </span>
-                                  </div>
-                                  <span className={`hm-pill hm-pill-${isOut ? 'rose' : 'amber'}`}>{s.left(r.left)}</span>
-                                </a>
-                              </li>
-                            );
-                          })}
-                        </ul>
+                {attentionReachable ? (
+                  <section className="hm-v3-card hm-v3-products-card hm-v3-prod-attention shp-needs-card">
+                    <div className="hm-v3-card-head">
+                      <h2>
+                        {s.needsAttentionTitle} {attentionCount > 0 ? <span className="hm-v3-count">({attentionCount})</span> : null}
+                      </h2>
+                      {areas.stock && can('/stock') ? (
+                        <a className="hm-v3-head-link" href={`/stock${stockBranch}`}>
+                          {s.viewOrders} →
+                        </a>
                       ) : null}
-                    </>
-                  )}
-                </section>
+                    </div>
+                    {attentionCount === 0 ? (
+                      <p className="hm-empty">{areas.stock && !data.running.counted ? s.notCounted : s.nothingNeedsYou}</p>
+                    ) : (
+                      <>
+                        <div className="hm-v3-prod-att-summary">
+                          {attentionChips.map((c) =>
+                            c.href ? (
+                              <a key={c.key} className={`hm-v3-prod-att-chip is-${c.tone}`} href={c.href}>
+                                <strong>{c.n}</strong>
+                                <span>{c.label}</span>
+                              </a>
+                            ) : (
+                              <span key={c.key} className={`hm-v3-prod-att-chip is-${c.tone}`}>
+                                <strong>{c.n}</strong>
+                                <span>{c.label}</span>
+                              </span>
+                            ),
+                          )}
+                        </div>
+                        {areas.stock && can('/stock') && data.running.counted && data.running.items.length > 0 ? (
+                          <ul className="hm-v3-srv-rows hm-v3-prod-att-rows">
+                            {data.running.items.slice(0, 4).map((r) => {
+                              const isOut = r.left <= 0;
+                              return (
+                                <li key={`${r.productId}-${r.size ?? ''}`}>
+                                  <a className="hm-v3-srv-row hm-v3-prod-att-row" href={`/stock${stockBranch}`}>
+                                    <Avatar name={r.name} id={r.productId} size={30} />
+                                    <div className="hm-v3-srv-main">
+                                      <strong className="hm-v3-srv-name">{r.name}</strong>
+                                      <span className="hm-v3-prod-att-sub">
+                                        {r.size ? s.sizeWord(r.size) : t.nav.stock}
+                                        {r.branch ? ` · ${r.branch}` : ''}
+                                      </span>
+                                    </div>
+                                    <span className={`hm-pill hm-pill-${isOut ? 'rose' : 'amber'}`}>{s.left(r.left)}</span>
+                                  </a>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        ) : null}
+                      </>
+                    )}
+                  </section>
+                ) : null}
               </div>
 
               {/* ROW 3 — Top sellers, the width of the page. */}
@@ -1935,61 +1945,63 @@ export function ShopHome({
               */}
               {!areas.stock ? null : (
                 <>
-                  <Card
-                    title={
-                      <>
-                        {s.needsAttentionTitle}
-                        {phoneAttention.length > 0 ? <span className="shp-card-count"> ({phoneAttention.reduce((n, c) => n + c.n, 0)})</span> : null}
-                      </>
-                    }
-                    action={
-                      data.running.counted && canReports && can('/stock/order') ? (
-                        <a className="shp-link" href="/stock/order">
-                          {s.reorderListLabel}
-                        </a>
-                      ) : undefined
-                    }
-                  >
-                    {!data.running.counted ? (
-                      <div className="shp-empty">
-                        <span>{s.notCounted}</span>
-                        {can('/stock') ? (
-                          <a className="btn shp-cta" href="/stock">
-                            {s.countStock}
+                  {attentionReachable ? (
+                    <Card
+                      title={
+                        <>
+                          {s.needsAttentionTitle}
+                          {phoneAttention.length > 0 ? <span className="shp-card-count"> ({phoneAttention.reduce((n, c) => n + c.n, 0)})</span> : null}
+                        </>
+                      }
+                      action={
+                        data.running.counted && canReports && can('/stock/order') ? (
+                          <a className="shp-link" href="/stock/order">
+                            {s.reorderListLabel}
                           </a>
-                        ) : null}
-                      </div>
-                    ) : phoneAttention.length === 0 ? (
-                      <p className="shp-plain">{s.nothingNeedsYou}</p>
-                    ) : (
-                      <ul className="shp-attn">
-                        {phoneAttention.map((c) => {
-                          const inner = (
-                            <>
-                              <span className="shp-attn-label">{c.label}</span>
-                              <span className={`shp-running-left ${c.tone}`}>{c.n}</span>
-                              {c.href ? (
-                                <span className="shp-attn-chev" aria-hidden>
-                                  <IconChevronRight />
-                                </span>
-                              ) : null}
-                            </>
-                          );
-                          return (
-                            <li key={c.key}>
-                              {c.href ? (
-                                <a className="shp-attn-row" href={c.href}>
-                                  {inner}
-                                </a>
-                              ) : (
-                                <span className="shp-attn-row">{inner}</span>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </Card>
+                        ) : undefined
+                      }
+                    >
+                      {!data.running.counted ? (
+                        <div className="shp-empty">
+                          <span>{s.notCounted}</span>
+                          {can('/stock') ? (
+                            <a className="btn shp-cta" href="/stock">
+                              {s.countStock}
+                            </a>
+                          ) : null}
+                        </div>
+                      ) : phoneAttention.length === 0 ? (
+                        <p className="shp-plain">{s.nothingNeedsYou}</p>
+                      ) : (
+                        <ul className="shp-attn">
+                          {phoneAttention.map((c) => {
+                            const inner = (
+                              <>
+                                <span className="shp-attn-label">{c.label}</span>
+                                <span className={`shp-running-left ${c.tone}`}>{c.n}</span>
+                                {c.href ? (
+                                  <span className="shp-attn-chev" aria-hidden>
+                                    <IconChevronRight />
+                                  </span>
+                                ) : null}
+                              </>
+                            );
+                            return (
+                              <li key={c.key}>
+                                {c.href ? (
+                                  <a className="shp-attn-row" href={c.href}>
+                                    {inner}
+                                  </a>
+                                ) : (
+                                  <span className="shp-attn-row">{inner}</span>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </Card>
+                  ) : null}
 
                   {canReports && can('/stock/sellers') ? (
                     <Card

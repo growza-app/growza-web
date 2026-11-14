@@ -3890,6 +3890,10 @@ button.hm-now-count {
 .hm-v3-mid.hm-v3-mid-two {
   grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.9fr);
 }
+/* QA 2026-11-14, F10 — no Needs attention for a person who can open nothing it points at: the trend takes the row. */
+.hm-v3-mid.hm-v3-mid-one {
+  grid-template-columns: minmax(0, 1fr);
+}
 .hm-v3-filter-bar {
   display: flex;
   align-items: center;
