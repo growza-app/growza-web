@@ -2240,3 +2240,84 @@ body {
     display: none;
   }
 }
+
+/*
+ * Growza at the top of the sidebar, the business in the header bar (owner, 14 Nov 2026). A laptop's only: the phone
+ * drawer keeps the business at its top and never draws the header's business chip.
+ */
+.brand-growza,
+.hdr-biz {
+  display: none;
+}
+
+@media (min-width: 861px) {
+  .sidebar .brand {
+    display: none;
+  }
+
+  .brand-growza {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.375rem 0.75rem 0.5rem;
+  }
+
+  .brand-growza svg {
+    flex: none;
+    border-radius: 0.625rem;
+  }
+
+  .brand-growza-word {
+    font-size: var(--fs-9);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--forest);
+  }
+
+  .hdr-biz {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: 0;
+    max-width: 16rem;
+    padding: 0.25rem 0.875rem 0.25rem 0.25rem;
+    border-radius: 999px;
+    background: var(--surface);
+  }
+
+  .hdr-biz-badge {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: var(--forest);
+    color: #fff;
+    font-size: var(--fs-3);
+    font-weight: 600;
+  }
+
+  .hdr-biz-text {
+    display: grid;
+    min-width: 0;
+    line-height: 1.2;
+  }
+
+  .hdr-biz-text strong {
+    overflow: hidden;
+    font-size: var(--fs-3);
+    font-weight: 600;
+    color: var(--text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hdr-biz-text span {
+    overflow: hidden;
+    font-size: var(--fs-1);
+    color: var(--muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

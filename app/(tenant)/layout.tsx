@@ -323,6 +323,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             phone: memberPhone,
             name: memberName,
             businessName: tenantName ?? null,
+            locationName: role === 'owner' && branchCount > 1 ? null : locationName,
             branches,
             share,
             lang,

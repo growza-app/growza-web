@@ -25,6 +25,8 @@ export interface SessionInfo {
   /** What they sign in with (GRW-198). Null where none was recorded. */
   phone: string | null;
   businessName: string | null;
+  /** Emerald v3 — the branch named under the business in the laptop header; null for an owner of several (they have the picker). */
+  locationName?: string | null;
   /** The person's own name, for the avatar and the account menu. Null until they (or the invite) set one. */
   name?: string | null;
   /** Jira GRW-235 — open branches, main first; one or none means there is no branch to choose. */

@@ -13,6 +13,7 @@ import { NotificationBell } from '../NotificationBell';
 import { useLive } from '../SessionProvider';
 import { IconChevronRight, IconDaySummary, IconMapPin } from '../icons';
 import { HeaderSearch } from '../HeaderSearch';
+import { HeaderBusiness } from '../HeaderBusiness';
 
 /**
  * Jira GRW-222 — the pieces all three Homes are built from.
@@ -172,6 +173,8 @@ export function HomeHeader({
           picker and opened Day summary. The date is in the page head's line now, and Day summary has its own button.
         */}
         {simpleDesktop ? null : <span className="hm-date-chip hm-desktop">{dateLabel}</span>}
+        {/* Emerald v3 — the business, in the laptop's header bar, beside the bell. */}
+        <HeaderBusiness />
         {live ? <NotificationBell /> : null}
         <AccountMenu />
       </div>

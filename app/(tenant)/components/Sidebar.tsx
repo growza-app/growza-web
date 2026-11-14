@@ -6,6 +6,7 @@ import { ClientCartoon } from './ClientCartoon';
 import { usePathname } from 'next/navigation';
 import { canSee, type MemberRole } from '../lib/nav-policy';
 import { isActive, resolveNav, type NavGroup } from '../lib/nav-sections';
+import { GrowzaMark } from './GrowzaMark';
 import { homeCopy } from '../lib/home-copy';
 import type { Lang } from '../lib/lang';
 import { SignOutButton } from './SignOutButton';
@@ -273,6 +274,11 @@ export function Sidebar({
         aria-label={open ? tc('menu') : undefined}
         onKeyDown={keepFocusInside}
       >
+        {/* Emerald v3 (owner, 14 Nov 2026) — on a laptop the sidebar's top is Growza's; the business moved to the header bar. */}
+        <div className="brand-growza">
+          <GrowzaMark size={36} />
+          <span className="brand-growza-word">{tc('productName')}</span>
+        </div>
         <div className="brand">
           <div className="brand-badge">{tenantName.charAt(0).toUpperCase()}</div>
           <div className="brand-text">

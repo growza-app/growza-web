@@ -2146,7 +2146,8 @@
     },
     "foldGroup": "Fold {name}",
     "unfoldGroup": "Unfold {name}",
-    "infoTipHow": "How this works: {label}"
+    "infoTipHow": "How this works: {label}",
+    "productName": "Growza"
   },
   "auth": {
     "metaTitle": "Sign in",

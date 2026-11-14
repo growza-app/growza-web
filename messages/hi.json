@@ -2146,7 +2146,8 @@
     },
     "foldGroup": "{name} समेटें",
     "unfoldGroup": "{name} खोलें",
-    "infoTipHow": "यह कैसे काम करता है: {label}"
+    "infoTipHow": "यह कैसे काम करता है: {label}",
+    "productName": "Growza"
   },
   "auth": {
     "metaTitle": "साइन इन",

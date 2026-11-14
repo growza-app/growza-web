@@ -4,6 +4,7 @@ import { HeaderBranchPicker } from './HeaderBranchPicker';
 import { NotificationBell } from './NotificationBell';
 import { AccountMenu } from './AccountMenu';
 import { useLive } from './SessionProvider';
+import { HeaderBusiness } from './HeaderBusiness';
 
 /**
  * Jira GRW-30 — search, notifications and account, in that order, on every screen.
@@ -46,6 +47,8 @@ export function HeaderControls() {
   const live = useLive();
   return (
     <>
+      {/* Emerald v3 — the business, in the laptop's header bar (hidden on a phone, where the drawer names it). */}
+      <HeaderBusiness />
       {/* Jira GRW-395 — the branch the whole app is showing, first: every figure beside it depends on it. */}
       <HeaderBranchPicker />
       {live ? <NotificationBell /> : null}
