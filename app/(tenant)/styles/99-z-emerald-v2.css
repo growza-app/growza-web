@@ -492,8 +492,10 @@ body {
   gap: var(--sp-2);
 }
 
+/* Owner, 14 Nov 2026: "make the bars wider on the hour chart". Twenty-odd columns share a phone, so the
+   gap between them is the thinnest that still separates two bars, and the bar takes the rest. */
 .cr-bars-hour {
-  gap: var(--sp-1);
+  gap: 2px;
 }
 
 /* A pill as wide as a thumb, centred in its column: a full-width column with round ends clips a short bar
@@ -507,7 +509,7 @@ body {
 }
 
 .cr-bars-hour .cr-bar-slot {
-  max-width: 1.5rem;
+  max-width: 2.5rem;
 }
 
 .cr-bars-day .cr-bar-slot {
