@@ -981,18 +981,7 @@ export function ShopHome({
                           ) : null}
                         </div>
                       ) : null}
-                      {/*
-                        Owner, 2026-11-06 — the notes in the till, which the split above cannot say (CashDrawer.tsx).
-                        Owner, 2026-11-13 — a shop with a counted shelf does not get the row; the kitchen keeps it.
-                      */}
-                      {isKitchen && data.today.cashDrawer && (data.today.cashDrawer.takenMinor > 0 || data.today.cashDrawer.refundedMinor > 0) ? (
-                        <div className="rst-kpi-modes rst-kpi-drawer">
-                          <span className="rst-kpi-mode">
-                            <span>{t.cashInDrawer}</span>
-                            <b>{rupees(data.today.cashDrawer.inDrawerMinor)}</b>
-                          </span>
-                        </div>
-                      ) : null}
+                      {/* Owner, 2026-11-14 (Emerald v2) — cash in the drawer is off the desktop tile; the phone hero keeps it. */}
                     </div>
                   ) : null}
 

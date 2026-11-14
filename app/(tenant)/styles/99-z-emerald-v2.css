@@ -205,14 +205,57 @@ body {
     color: #fff;
   }
 
+  /* Compact (owner, 14 Nov 2026: "shrink card"): the badge sits beside the number, bottom-aligned, not
+     on a row of its own. A tile is label, number + badge, and on the money tile one line of how it was paid. */
+  .rst-kpi,
+  .rst-kpi-sales,
+  .rst-kpi-orders,
+  .rst-kpi-customers {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    column-gap: var(--sp-3);
+    row-gap: var(--sp-2);
+    padding: 1rem 1.25rem;
+  }
+
+  .rst-kpi-top {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    /* Tall enough that the chip beside the number always clears the arrow button above it. */
+    min-height: 4.25rem;
+  }
+
+  .rst-kpi-modes {
+    grid-column: 1 / -1;
+  }
+
+  /* Label at the top, number at the bottom, on every tile alike. */
+  .rst-kpi-main {
+    gap: var(--sp-1);
+    align-self: stretch;
+    justify-content: space-between;
+  }
+
+  .rst-kpi-main .rst-kpi-label {
+    padding-right: 2.75rem;
+  }
+
+  .rst-kpi-main {
+    padding-right: 0;
+  }
+
   /* The badge row: a mint chip and a quiet line, as on every tile. */
   .rst-kpi-side,
   .rst-kpi-side.is-bottom {
     flex-direction: row;
     align-items: center;
-    align-self: flex-start;
+    align-self: end;
     gap: var(--sp-2);
-    margin: auto 0 0;
+    margin: 0 0 0.25rem;
   }
 
   .rst-delta-pill,
@@ -264,7 +307,7 @@ body {
   }
 
   .rst-kpi-sales .rst-kpi-side {
-    margin-top: var(--sp-1);
+    margin-top: 0;
   }
 
   .rst-kpi-sales .rst-delta-pill,
@@ -397,6 +440,11 @@ body {
 @media (min-width: 861px) and (max-width: 1180px) {
   .rst-kpi-value {
     font-size: var(--fs-11);
+  }
+
+  /* No room for "vs. yesterday" beside the number; the arrow on the chip already says which way. */
+  .rst-delta-sub {
+    display: none;
   }
 }
 
