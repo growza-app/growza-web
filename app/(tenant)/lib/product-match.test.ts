@@ -184,7 +184,9 @@ describe('StockPanel — Move to another branch (GRW-574 part 3)', () => {
       /const tooMany = \(kind === 'transfer' \|\| kind === 'used' \|\| kind === 'damaged'\) && Number\.isFinite\(n\) && n > shelfStock;/,
     );
     expect(panel).toMatch(/\(kind !== 'transfer' \|\| toBranchId !== ''\) &&\s*!tooMany;/);
-    expect(panel).toMatch(/t\('transfer\.tooMany', \{ n: Math\.max\(product\.stock, 0\) \}\)/);
+    // QA 2026-11-14 (F12) — the transfer keeps this sentence; a removal says the shelf (remove-says-shelf.test.ts).
+    expect(panel).toMatch(/t\(tooManyKey, \{ n: Math\.max\(product\.stock, 0\) \}\)/);
+    expect(panel).toContain("kind === 'transfer' ? 'transfer.tooMany' : 'tooManyOnShelf'");
     expect(panel).not.toMatch(/warnNegative|confirmAnyway/);
   });
 

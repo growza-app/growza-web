@@ -98,6 +98,8 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
   // A removal or branch transfer cannot exceed what is on this shelf. The server refuses it too; saying so here means
   // the button is off and the sentence is already on the screen.
   const tooMany = (kind === 'transfer' || kind === 'used' || kind === 'damaged') && Number.isFinite(n) && n > shelfStock;
+  // QA 2026-11-14 (F12) — a removal is not a move: "Only 8 here to move" was the transfer's sentence on every kind.
+  const tooManyKey = kind === 'transfer' ? 'transfer.tooMany' : 'tooManyOnShelf';
   const canGo =
     kind !== null &&
     qty.trim() !== '' &&
@@ -288,7 +290,7 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
           </div>
           <div className="prd-move-go">
             <span className={`prd-move-after ${tooMany ? 'prd-move-after-warn' : ''}`} role={tooMany ? 'alert' : undefined}>
-              {tooMany ? t('transfer.tooMany', { n: Math.max(product.stock, 0) }) : canGo ? t('after', { n: afterCount }) : ''}
+              {tooMany ? t(tooManyKey, { n: Math.max(product.stock, 0) }) : canGo ? t('after', { n: afterCount }) : ''}
             </span>
             <button type="button" className="btn" disabled={!canGo || busy} onClick={() => void go()}>
               {busy ? tc('working') : t('confirm')}
