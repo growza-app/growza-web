@@ -1211,3 +1211,12 @@ body {
     grid-column: 1 / -1;
   }
 }
+
+/* Emerald v3 for every vertical (owner, 14 Nov 2026): a shop's laptop Home is the restaurant's layout now, so the
+   old command-center toolbar (period switch and Day summary) goes the way the kitchen's already had; the page head
+   carries Day summary, and the charts say "last 7 days" on their face. */
+@media (min-width: 861px) {
+  .shp-page > .shp-desk-toolbar {
+    display: none !important;
+  }
+}

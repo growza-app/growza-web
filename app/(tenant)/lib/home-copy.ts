@@ -443,6 +443,9 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       queueTitle: S('Queue', 'कतार'),
       /** Emerald v2 — the laptop Home's header buttons and its new cards. */
       newOrderAction: S('New order', 'नया ऑर्डर'),
+      salesThisWeek: S('Sales this week', 'इस हफ़्ते की बिक्री'),
+      salesThisMonth: S('Sales this month', 'इस महीने की बिक्री'),
+      paidToday: S('Payments today', 'आज के भुगतान'),
       salesLast7: S('Sales, last 7 days', 'बिक्री, पिछले 7 दिन'),
       paidLast7: S('Payments, last 7 days', 'भुगतान, पिछले 7 दिन'),
       waitingNow: S('waiting now', 'अभी इंतज़ार में'),
@@ -518,6 +521,9 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       stylesAndSizes: (styles: number, sizes: number) => S(`${styles} styles · ${sizes} sizes`, `${styles} डिज़ाइन · ${sizes} साइज़`),
       onShelfShort: S('On shelf', 'दुकान में'),
       lowStockShort: S('Low stock', 'कम स्टॉक'),
+      /** Emerald v3 — a shop's dark card on the laptop Home. */
+      runningOutTitle: S('Running out', 'ख़त्म हो रहा है'),
+      outOfStockShort: S('None left', 'बिल्कुल नहीं बचा'),
       salesTrendTitle: S('Sales trend', 'बिक्री का रुझान'),
       noSalesInRange: S('No sales recorded in this period yet.', 'इस अवधि में अभी कोई बिक्री दर्ज नहीं हुई।'),
       avgOrderShort: (amt: string) => S(`avg ${amt}`, `औसत ${amt}`),

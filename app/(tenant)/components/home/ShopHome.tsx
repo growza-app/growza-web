@@ -37,7 +37,7 @@ import {
   IconProducts,
   IconReports,
 } from '../icons';
-import { Avatar, Card, CardError, HomeHeader, QuickTiles, Segmented, exactRupees, rupees } from './parts';
+import { Avatar, Card, CardError, DarkStatCard, HomeHeader, PageHead, PayGaugeCard, QuickTiles, Segmented, WeekBarsCard, exactRupees, paySlicesOf, rupees } from './parts';
 import { CheckInCard } from './CheckInCard';
 import { PaymentBar, PaymentLine } from './MoneyHero';
 import { orderNumber } from '../../lib/order-number';
@@ -527,19 +527,8 @@ export function ShopHome({
     return { ticks, points, polyPoints, areaPoints, maxMinor, totalMinor, dailyAvgMinor, peakDay };
   }, [channelData, lang]);
 
-  /* Emerald v2 — the laptop's half-donut: the window's takings by how they were paid, biggest first, in shares of 100. */
-  const paySplit = useMemo(() => {
-    const raw = (channelData?.byPaymentMode ?? []).filter((m) => m.revenueMinor > 0).sort((a, b) => b.revenueMinor - a.revenueMinor);
-    const total = raw.reduce((sum, m) => sum + m.revenueMinor, 0);
-    let start = 0;
-    const slices = raw.map((m, i) => {
-      const pct = i === raw.length - 1 ? 100 - start : Math.round((m.revenueMinor / total) * 100);
-      const slice = { mode: m.mode, minor: m.revenueMinor, pct, start };
-      start += pct;
-      return slice;
-    });
-    return { total, slices };
-  }, [channelData]);
+  /* Emerald v3 — the laptop's half-donut: the window's takings by how they were paid. */
+  const paySlices = useMemo(() => paySlicesOf(channelData?.byPaymentMode), [channelData]);
 
   const channelBreakdown = useMemo(() => {
     const byKey = new Map((channelData?.channels ?? []).map((c) => [c.channel, c]));
@@ -906,7 +895,8 @@ export function ShopHome({
         businessName={businessName}
         locationName={locationName}
         dateLabel={dateLabel}
-        simpleDesktop={isKitchen}
+        // Emerald v3 (owner, 2026-11-14, "apply the same layout to all verticals") — every shop's laptop header is the slim bar.
+        simpleDesktop
         // A shop opens the day's summary from the toolbar beside the range, so the header does not carry a second one.
         onDaySummary={money && isKitchen ? () => setSummaryOpen(true) : undefined}
       />
@@ -982,7 +972,8 @@ export function ShopHome({
             {/* =====================================================================
                 SIMPLE RESTAURANT DESKTOP HOME (from 861px up when isKitchen is true)
                ===================================================================== */}
-            {isKitchen ? (
+            {/* Emerald v3 — the laptop Home every shop gets now, kitchen or shelf; the command center below is retired. */}
+            {data ? (
               <div className="rst-desk hm-desktop">
                 {/*
                   Emerald v2 (owner, 2026-11-14, "go ahead with all") — the page's own head, as the shot has it: the
@@ -990,26 +981,20 @@ export function ShopHome({
                   the same words to a screen reader; on a laptop it is moved out of sight (99-z-emerald-v2.css), so
                   this copy is hidden from one.
                 */}
-                <div className="rst-page-head">
-                  <div className="rst-page-id" aria-hidden="true">
-                    <p className="rst-page-title">{t.greeting(greetingPart)}</p>
-                    <p className="rst-page-sub">{s.kitchenSub(businessName)}</p>
-                  </div>
-                  <div className="rst-page-actions">
-                    {money ? (
-                      <button type="button" className="rst-pill" onClick={() => setSummaryOpen(true)}>
-                        <IconDaySummary />
-                        <span>{t.daySummary}</span>
-                      </button>
-                    ) : null}
-                    {can('/pos') ? (
-                      <a className="rst-pill is-primary" href="/pos">
-                        <IconPlus />
-                        <span>{s.newOrderAction}</span>
-                      </a>
-                    ) : null}
-                  </div>
-                </div>
+                <PageHead title={t.greeting(greetingPart)} sub={s.kitchenSub(businessName)}>
+                  {money ? (
+                    <button type="button" className="rst-pill" onClick={() => setSummaryOpen(true)}>
+                      <IconDaySummary />
+                      <span>{t.daySummary}</span>
+                    </button>
+                  ) : null}
+                  {can('/pos') ? (
+                    <a className="rst-pill is-primary" href="/pos">
+                      <IconPlus />
+                      <span>{s.newOrderAction}</span>
+                    </a>
+                  ) : null}
+                </PageHead>
 
                 {/* ROW 1 — 3 Soft Pastel KPI Cards */}
                 <div className="rst-kpis">
@@ -1121,83 +1106,48 @@ export function ShopHome({
                 */}
                 <div className="rst-charts">
                   {money && trendChart.points.length > 0 && trendChart.totalMinor > 0 ? (
-                    <section className="rst-panel rst-week-panel">
-                      <div className="rst-panel-head">
-                        <h3>{s.salesLast7}</h3>
-                        <strong className="rst-week-total">{rupees(trendChart.totalMinor)}</strong>
-                      </div>
-                      <ul className="rst-week-bars">
-                        {trendChart.points.map((p) => (
-                          <li key={p.key} className={p.isPeak ? 'is-peak' : ''}>
-                            <span className="rst-week-amt" aria-hidden="true">
-                              {p.revenueMinor > 0 ? rupees(p.revenueMinor) : ''}
-                            </span>
-                            <span className="rst-week-slot">
-                              <span className="rst-week-bar" style={{ height: `${p.pct}%` }} />
-                            </span>
-                            <span className="rst-week-day">{p.dateShort}</span>
-                            <span className="sr-only">
-                              {p.dateShort} {rupees(p.revenueMinor)}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
+                    <WeekBarsCard
+                      title={s.salesLast7}
+                      total={rupees(trendChart.totalMinor)}
+                      bars={trendChart.points.map((p) => ({
+                        key: p.key,
+                        label: p.dateShort,
+                        pct: p.pct,
+                        amount: p.revenueMinor > 0 ? rupees(p.revenueMinor) : null,
+                        peak: p.isPeak,
+                        srText: `${p.dateShort} ${rupees(p.revenueMinor)}`,
+                      }))}
+                    />
                   ) : null}
-
-                  {money && paySplit.total > 0 ? (
-                    <section className="rst-panel rst-pay-panel">
-                      <div className="rst-panel-head">
-                        <h3>{s.paidLast7}</h3>
-                      </div>
-                      <div className="rst-gauge">
-                        <svg viewBox="0 0 120 66" aria-hidden="true" focusable="false">
-                          <path className="rst-gauge-track" d="M10 60 A50 50 0 0 1 110 60" pathLength={100} />
-                          {paySplit.slices.map((sl, i) => (
-                            <path
-                              key={sl.mode}
-                              className={`rst-gauge-arc is-${i}`}
-                              d="M10 60 A50 50 0 0 1 110 60"
-                              pathLength={100}
-                              strokeDasharray={`${Math.max(0, sl.pct - 1.2)} 100`}
-                              strokeDashoffset={-sl.start}
-                            />
-                          ))}
-                        </svg>
-                        <div className="rst-gauge-mid">
-                          <strong>{paySplit.slices[0]!.pct}%</strong>
-                          <span>{t.payment[paySplit.slices[0]!.mode] ?? paySplit.slices[0]!.mode}</span>
-                        </div>
-                      </div>
-                      <ul className="rst-gauge-legend">
-                        {paySplit.slices.map((sl, i) => (
-                          <li key={sl.mode}>
-                            <i className={`is-${i}`} aria-hidden="true" />
-                            <span>{t.payment[sl.mode] ?? sl.mode}</span>
-                            <b>{rupees(sl.minor)}</b>
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
+                  {money ? (
+                    <PayGaugeCard title={s.paidLast7} slices={paySlices} nameOf={(m) => t.payment[m] ?? m} money={rupees} />
                   ) : null}
-
-                  <section className="rst-queue-card">
-                    <div className="rst-queue-head">
-                      <h3>{s.queueTitle}</h3>
-                    </div>
-                    <p className="rst-queue-count">
-                      <strong>{queueStats.inQueue}</strong>
-                      <span>{queueStats.inQueue === 0 ? s.noQueueNow : s.waitingNow}</span>
-                    </p>
-                    <p className="rst-queue-done">
-                      {s.completedToday}: <b>{queueStats.completedToday}</b>
-                    </p>
-                    {can('/pos') ? (
-                      <a className="rst-queue-btn" href="/pos?mode=queue">
-                        {s.openQueue}
-                      </a>
-                    ) : null}
-                  </section>
+                  {isKitchen ? (
+                    <DarkStatCard
+                      title={s.queueTitle}
+                      value={queueStats.inQueue}
+                      valueLabel={queueStats.inQueue === 0 ? s.noQueueNow : s.waitingNow}
+                      foot={
+                        <>
+                          {s.completedToday}: <b>{queueStats.completedToday}</b>
+                        </>
+                      }
+                      action={can('/pos') ? { href: '/pos?mode=queue', label: s.openQueue } : null}
+                    />
+                  ) : counted ? (
+                    /* A shop has no queue; its live number is the shelf: what is running low, and how much of it is gone. */
+                    <DarkStatCard
+                      title={s.runningOutTitle}
+                      value={data.running.total}
+                      valueLabel={s.lowStockShort}
+                      foot={
+                        <>
+                          {s.outOfStockShort}: <b>{outOfStockCount}</b>
+                        </>
+                      }
+                      action={can('/stock') ? { href: `/stock${stockBranch}`, label: t.nav.stock } : null}
+                    />
+                  ) : null}
                 </div>
 
                 {/* ROW 3 — Two-Column Bottom Grid: Recent orders (left) + Needs attention (right) */}
@@ -1344,7 +1294,7 @@ export function ShopHome({
             {/* =====================================================================
                 DESKTOP COMMAND CENTER (4-row Salon-style layout from 861px up)
                ===================================================================== */}
-            <div className={`hm-desk-v3 hm-desktop shp-desk-v3${isKitchen ? ' is-kitchen-hidden' : ''}`}>
+            <div className="hm-desk-v3 hm-desktop shp-desk-v3 is-kitchen-hidden">
               {/* ROW 1 — four rich KPI cards; three where there is no shelf (a kitchen), which drops Stock worth. */}
               <div className={`hm-v3-kpis${areas.stock ? '' : ' hm-v3-kpis-3'}`}>
                 {/* 1. Takings / Billed Revenue */}

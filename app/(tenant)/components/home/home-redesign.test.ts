@@ -82,7 +82,8 @@ describe('Tenant Home v2 redesign', () => {
     expect(owner).toContain('className={`rst-desk hm-desktop sln-desk');
     expect(owner).toContain('className="rst-kpis"');
     expect(owner).toContain('className="rst-kpi rst-kpi-sales"');
-    expect(owner).toContain('className="rst-actions-grid sln-actions-grid"');
+    // Emerald v3 (2026-11-14) — the chart row replaced the four action tiles.
+    expect(owner).toContain('className="rst-charts"');
     expect(owner).toContain('className="rst-bottom-grid"');
     expect(owner).toContain('className="sln-team-list"');
     // The old command center is removed, not hidden by CSS.

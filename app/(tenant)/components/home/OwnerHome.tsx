@@ -36,6 +36,7 @@ import {
   IconClipboardCheck,
   IconClock,
   IconDaySummary,
+  IconPlus,
   IconPackages,
   IconReceipt,
   IconReports,
@@ -48,7 +49,7 @@ import { BookingSummary } from '../BookingSummary';
 import { DaySummarySheet } from './DaySummarySheet';
 import { MoneyHero } from './MoneyHero';
 import { BranchCarousel } from './BranchCarousel';
-import { AttentionList, Avatar, avatarKey, BookingRows, Card, CardError, HomeHeader, QuickTiles, rupees, Segmented, SegmentCards } from './parts';
+import { AttentionList, Avatar, avatarKey, BookingRows, Card, CardError, DarkStatCard, HomeHeader, PageHead, PayGaugeCard, paySlicesOf, QuickTiles, rupees, Segmented, SegmentCards, WeekBarsCard } from './parts';
 import { RightNow } from './RightNow';
 import { useMinuteClock } from './useMinuteClock';
 import { deltaLabel, deltaTone } from './day-delta';
@@ -537,6 +538,22 @@ export function OwnerHome(p: OwnerHomeProps) {
     return { active, later, done, total: (todayGroups ?? []).length };
     // `rowState` reads `now`, which is listed.
   }, [todayGroups, now]);
+
+  /* Emerald v3 — the week chart's columns from the overview's own days; a day still to come is an empty track. */
+  const weekBars = useMemo(() => {
+    const days = data?.week.days ?? [];
+    const max = Math.max(...days.map((d) => d.revenueMinor), 0);
+    if (max <= 0) return [];
+    const peak = days.reduce((best, d, i) => (d.revenueMinor > (days[best]?.revenueMinor ?? 0) ? i : best), 0);
+    return days.map((d, i) => ({
+      key: d.date,
+      label: d.weekday,
+      pct: d.future || d.revenueMinor <= 0 ? 0 : Math.max(8, Math.round((d.revenueMinor / max) * 100)),
+      amount: !d.future && d.revenueMinor > 0 ? rupees(d.revenueMinor) : null,
+      peak: i === peak,
+      srText: `${d.weekday} ${rupees(d.revenueMinor)}`,
+    }));
+  }, [data]);
   // Owner, 9 Nov 2026 — only clients who have paid: see `paidCustomers`.
   const totalClientsCount = paidCustomers(clientStats) ?? 0;
 
@@ -659,7 +676,8 @@ export function OwnerHome(p: OwnerHomeProps) {
       <HomeHeader
         t={t}
         // Hindi's greeting already ends in "!"; strip it so the wave never reads "नमस्ते!! 👋".
-        title={`${t.greeting(p.greetingPart).replace(/!$/, '')}! 👋`}
+        // Emerald v3 — no wave on the laptop's page head or the phone's header (owner, 2026-11-14).
+        title={t.greeting(p.greetingPart)}
         sub={t.ownerSub(p.businessName, afterClose)}
         businessName={p.businessName}
         locationName={multiBranch ? null : locationLine}
@@ -744,6 +762,20 @@ export function OwnerHome(p: OwnerHomeProps) {
 
         {/* Simple, clean desktop Home — Option 1: Warm Salon Reception */}
         <div className={`rst-desk hm-desktop sln-desk ${hideUntilBranch ? 'is-settling' : ''}`}>
+          {/* Emerald v3 (owner, 2026-11-14, "apply the same layout to all verticals") — the page head, as the shop's. */}
+          <PageHead title={t.greeting(p.greetingPart)} sub={t.ownerSub(p.businessName, afterClose)}>
+            <button type="button" className="rst-pill" onClick={() => setSummaryOpen(true)}>
+              <IconDaySummary />
+              <span>{t.daySummary}</span>
+            </button>
+            {mayBook ? (
+              <a className="rst-pill is-primary" href="/appointments/new?mode=now">
+                <IconPlus />
+                <span>{t.nav.newBooking}</span>
+              </a>
+            ) : null}
+          </PageHead>
+
           {/* ROW 1 — 3 Soft Pastel KPI Cards */}
           <div className="rst-kpis">
             {/* 1. Today's sales */}
@@ -836,65 +868,31 @@ export function OwnerHome(p: OwnerHomeProps) {
             </a>
           </div>
 
-          {/* ROW 2 — What would you like to do? (4 Salon Reception Action Cards) */}
-          <section className="rst-actions-section">
-            <h2 className="rst-section-title">{t.shop.whatWouldYouLikeToDo}</h2>
-            <div className="rst-actions-grid sln-actions-grid">
-              {mayBook ? (
-                <a className="sln-action-tile is-primary" href="/appointments/new?mode=now">
-                  <span className="sln-action-badge is-primary" aria-hidden>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="12" y1="5" x2="12" y2="19" />
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                  </span>
-                  <strong>{t.walkInOrNewBooking}</strong>
-                  <span>{t.walkInOrNewBookingSub}</span>
-                </a>
-              ) : null}
-              {mayRecordPayment ? (
-                <a className="sln-action-tile" href="/pos">
-                  <span className="sln-action-badge is-green" aria-hidden>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
-                      <path d="M8 10h8" />
-                      <path d="M8 14h5" />
-                    </svg>
-                  </span>
-                  <strong>{t.quickBillPos}</strong>
-                  <span>{t.quickBillPosSub}</span>
-                </a>
-              ) : null}
-              {mayOpen('/appointments') ? (
-              <a className="sln-action-tile" href="/appointments">
-                <span className="sln-action-badge is-blue" aria-hidden>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2.5" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
-                </span>
-                <strong>{t.todaysDiary}</strong>
-                <span>{t.todaysDiarySub}</span>
-              </a>
-              ) : null}
-              {mayOpen('/customers') ? (
-                <a className="sln-action-tile" href="/customers">
-                  <span className="sln-action-badge is-amber" aria-hidden>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                      <circle cx="9" cy="7" r="4" />
-                      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                    </svg>
-                  </span>
-                  <strong>{t.nav.clients}</strong>
-                  <span>{t.clientsSearchSub}</span>
-                </a>
-              ) : null}
-            </div>
-          </section>
+          {/*
+            ROW 2 — Emerald v3: the week in pictures instead of four shortcut tiles (the page head and the sidebar keep
+            those doors). The week's takings by day, today's takings by how they were paid, and who is being served now.
+          */}
+          <div className="rst-charts">
+            {weekBars.length > 0 ? (
+              <WeekBarsCard
+                title={data?.week.span === 'month' ? t.shop.salesThisMonth : t.shop.salesThisWeek}
+                total={rupees(data?.week.revenueMinor ?? 0)}
+                bars={weekBars}
+              />
+            ) : null}
+            <PayGaugeCard title={t.shop.paidToday} slices={paySlicesOf(data?.money.byPaymentMode)} nameOf={(m) => t.payment[m] ?? m} money={rupees} />
+            <DarkStatCard
+              title={t.rightNow}
+              value={todayByState.active.length}
+              valueLabel={t.inTheChair}
+              foot={
+                <>
+                  {t.laterToday}: <b>{todayByState.later.length}</b>
+                </>
+              }
+              action={mayOpen('/appointments') ? { href: '/appointments', label: t.todaysDiary } : null}
+            />
+          </div>
 
           {/* ROW 3 — Two-Column Bottom Grid: Today's schedule (left) + Team on the floor (right) */}
           <div className="rst-bottom-grid">

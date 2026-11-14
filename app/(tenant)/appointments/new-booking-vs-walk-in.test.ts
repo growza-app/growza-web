@@ -22,16 +22,15 @@ describe('New booking opens on Pick a time, Walk-in on Starts now', () => {
     expect(reception).toContain('href="/appointments/new?mode=later" className="hm-action tb-new-booking hm-desktop"');
   });
 
-  it('the reception actions have one Walk-in / New booking tile, no second New booking (the header button is the one)', () => {
-    const card = owner.slice(owner.indexOf('sln-actions-grid'), owner.indexOf('rst-bottom-grid'));
-    expect(card).not.toContain('t.nav.newBooking');
-    expect(card.match(/sln-action-tile is-primary/g)).toHaveLength(1);
+  it('the laptop Home has one New booking, in its page head (Emerald v3 retired the four action tiles)', () => {
+    expect(owner).not.toContain('sln-actions-grid');
+    expect(owner.match(/rst-pill is-primary" href="\/appointments\/new\?mode=now"/g)).toHaveLength(1);
   });
 
   it('every Walk-in link asks for now', () => {
     // Owner, 2026-10-19 — the Bookings toolbar has one button: the page's own Starts now / Pick a time switch covers both.
     expect(bookings).not.toContain('bk-cmd-walkin-btn');
-    expect(owner).toContain('className="sln-action-tile is-primary" href="/appointments/new?mode=now"');
+    expect(owner).toContain('className="rst-pill is-primary" href="/appointments/new?mode=now"');
     expect(reception).toContain("href: '/appointments/new?mode=now', label: t.walkInShort");
   });
 
