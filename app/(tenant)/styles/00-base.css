@@ -49,7 +49,7 @@
   --mint: #8fd0a9;
   --canvas: #f1f2ef;
   --canvas-line: #e4e6e2;
-  --canvas-text: #4d5752;
+  --canvas-text: #4d5752; --lime: #c4ec8f;
   --radius: 10px; /* Jira GRW-570 — flat: 10 and 8, the way a crisp dashboard is drawn. */
   --radius-sm: 8px;
   --radius-lg: 14px; /* Jira GRW-571 — the third and last: sheets, big cards, tiles with a photo. */

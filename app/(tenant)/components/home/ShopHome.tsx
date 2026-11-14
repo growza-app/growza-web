@@ -17,7 +17,6 @@ import type {
 } from '../../lib/api-types';
 import { homeCopy } from '../../lib/home-copy';
 import { DaySummarySheet } from './DaySummarySheet';
-import { CashDrawerLine } from './CashDrawer';
 import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import { ordersHref } from '../../lib/orders-filter';
@@ -1885,7 +1884,7 @@ export function ShopHome({
                             appsMinor={phoneFigures.fromAppsMinor}
                           />
                         ) : null}
-                        {isKitchen && (phoneFigures.kind === 'today' || phoneFigures.kind === 'range') ? <CashDrawerLine t={t} cashDrawer={phoneFigures.cashDrawer} /> : null}
+                        {/* Owner, 2026-11-14 (Emerald v2) — "remove cash drawer for mobile also": the day sheet still has it. */}
                         {phoneSpark.length > 0 ? (
                           // Decoration would be a lie here, so it is drawn only from the window's own daily totals.
                           <div className="shp-spark" aria-hidden="true">
