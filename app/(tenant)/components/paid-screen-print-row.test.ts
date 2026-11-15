@@ -63,3 +63,12 @@ describe('the Queue’s Discount waits for the guest, as the till’s does (2026
     expect(pos).toMatch(/\{anonymous \? null : \(\s*<button\s+type="button"\s+className=\{`pf-discount-open/);
   });
 });
+
+describe('the kitchen’s paper is a "kitchen slip", never "KOT" (owner, 2026-11-16: "KOT name is very technical")', () => {
+  it('says so in English and Hindi, on the buttons and on the printed slip', () => {
+    for (const lang of ['en', 'hi']) {
+      const msgs = JSON.parse(readFileSync(new URL(`../../../messages/${lang}.json`, import.meta.url), 'utf8')) as { print: Record<string, string> };
+      for (const [key, words] of Object.entries(msgs.print)) expect(`${key}: ${words}`).not.toMatch(/: .*\bKOT\b/);
+    }
+  });
+});

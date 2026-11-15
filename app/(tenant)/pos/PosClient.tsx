@@ -1473,7 +1473,7 @@ export function PosClient({
           />
         ) : (
         <section className="pos-queue-board" aria-label={t('queue')}>
-          {/* Owner, 2026-11-16 — Print KOT for what was just added or called off, right where it happened. */}
+          {/* Owner, 2026-11-16 — Print kitchen slip for what was just added or called off, right where it happened. */}
           {lastKot ? <TillPrintActions printer={printer} saleId={lastKot.saleId} kot={lastKot.kot} order={lastKot.order} /> : null}
           {queueNote ? (
             <div className="pos-queue-note" role="status">
