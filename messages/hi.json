@@ -3157,6 +3157,7 @@
   "payFlow": {
     "discount": {
       "add": "छूट दें",
+      "change": "बदलें",
       "on": "छूट",
       "onPct": "छूट {pct}%",
       "billOffPct": "छूट {pct}%",

@@ -8,27 +8,31 @@
 .pf-discount-open {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--sp-2);
   width: 100%;
   min-height: 2.75rem;
   margin: var(--sp-2) 0;
   padding: 0 var(--sp-3);
-  border: 1px dashed var(--border);
+  border: 1.5px solid var(--accent);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: var(--accent-soft);
   color: var(--accent-deep);
   font: inherit;
-  font-size: var(--fs-4);
+  font-size: var(--fs-5);
   font-weight: 600;
   text-align: left;
   cursor: pointer;
 }
 
+.pf-discount-open:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--accent) 30%);
+}
+
+/* Applied: the filled chip, so a bill with money off cannot be mistaken for one without. */
 .pf-discount-open.is-on {
-  border-style: solid;
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  color: #fff;
 }
 
 .pf-discount-open:disabled {
@@ -36,8 +40,72 @@
   cursor: default;
 }
 
-.pf-discount-open-plus {
+.pf-discount-open-words {
+  flex: 1;
+  min-width: 0;
+}
+
+.pf-discount-open-amount {
   font-size: var(--fs-6);
+}
+
+.pf-discount-open-change {
+  font-size: var(--fs-3);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* The % mark the button is known by: a filled circle, the same on the bill, the tray and the sheet's choice. */
+.pf-discount-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.625rem;
+  height: 1.625rem;
+  border-radius: 50%;
+  background: var(--accent-deep);
+  color: #fff;
+  font-size: var(--fs-3);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pf-discount-open.is-on .pf-discount-badge {
+  background: #fff;
+  color: var(--accent-deep);
+}
+
+/* The phone's first screen: a round % right beside the total figure it changes (the tray has no free cell: Next fills
+   the right column). Outlined to offer, filled once a discount is on the bill. 44px, like every target there. */
+.pf-total-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.pf-tray-discount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1.5px solid var(--accent-deep);
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font: inherit;
+  font-size: var(--fs-6);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pf-tray-discount.is-on {
+  background: var(--accent-deep);
+  color: #fff;
 }
 
 .pf-discount {
@@ -75,9 +143,9 @@
 
 .pf-discount-kind > button.is-on,
 .pf-discount-quick > button.is-on {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-ink);
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+  color: #fff;
 }
 
 .pf-discount-field {

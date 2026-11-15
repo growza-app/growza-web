@@ -1506,10 +1506,18 @@ export function PayFlow({
   const discountRow =
     lines.length > 0 && !addingTo ? (
       <button type="button" className={`pf-discount-open${billOffMinor > 0 ? ' is-on' : ''}`} onClick={() => setDiscountOpen(true)} disabled={saving !== null}>
+        <span className="pf-discount-badge" aria-hidden="true">
+          %
+        </span>
         <span className="pf-discount-open-words">
           {billOffMinor > 0 ? (offPct !== null ? t('discount.onPct', { pct: offPct }) : t('discount.on')) : t('discount.add')}
         </span>
-        {billOffMinor > 0 ? <strong>−{money(billOffMinor)}</strong> : <span className="pf-discount-open-plus">%</span>}
+        {billOffMinor > 0 ? (
+          <>
+            <strong className="pf-discount-open-amount">−{money(billOffMinor)}</strong>
+            <span className="pf-discount-open-change">{t('discount.change')}</span>
+          </>
+        ) : null}
       </button>
     ) : null;
   const discountSheet = discountOpen ? (
@@ -2611,15 +2619,28 @@ export function PayFlow({
         ) : (
           <span className="pf-total-label">{t('total')}</span>
         )}
-        <button
-          type="button"
-          className="pf-total"
-          aria-label={t('changeTotal')}
-          onClick={() => setKeypad(rupeesText(totalMinor))}
-          disabled={lines.length === 0}
-        >
-          <strong className="pf-total-figure">{money(totalMinor)}</strong>
-        </button>
+        <div className="pf-total-row">
+          <button
+            type="button"
+            className="pf-total"
+            aria-label={t('changeTotal')}
+            onClick={() => setKeypad(rupeesText(totalMinor))}
+            disabled={lines.length === 0}
+          >
+            <strong className="pf-total-figure">{money(totalMinor)}</strong>
+          </button>
+          {/* Owner, 2026-11-15 — Discount on the first screen too, right beside the figure it changes. Filled once given. */}
+          {lines.length > 0 && !addingTo ? (
+            <button
+              type="button"
+              className={`pf-tray-discount${billOffMinor > 0 ? ' is-on' : ''}`}
+              onClick={() => setDiscountOpen(true)}
+              aria-label={billOffMinor > 0 ? `${offPct !== null ? t('discount.onPct', { pct: offPct }) : t('discount.on')} −${money(billOffMinor)}` : t('discount.add')}
+            >
+              <span aria-hidden="true">%</span>
+            </button>
+          ) : null}
+        </div>
         {/*
           Two things stop Next, and each says which (owner, 2026-10-10). `aria-disabled` rather than `disabled`:
           a button that cannot answer teaches nothing, and "nothing happened" is the worst state on this screen.
@@ -2654,8 +2675,10 @@ export function PayFlow({
           onClose={() => setWhoOpen(false)}
         />
       ) : null}
+      {discountSheet}
       {billOpen && lines.length > 0 ? (
         <BillCard
+          offLabel={offPct !== null ? t('discount.billOffPct', { pct: offPct }) : undefined}
           lines={lines}
           listMinor={listMinor}
           totalMinor={totalMinor}

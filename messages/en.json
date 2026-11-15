@@ -3157,6 +3157,7 @@
   "payFlow": {
     "discount": {
       "add": "Add discount",
+      "change": "Change",
       "on": "Discount",
       "onPct": "Discount {pct}%",
       "billOffPct": "Discount {pct}%",
