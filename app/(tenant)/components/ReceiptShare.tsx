@@ -52,7 +52,13 @@ export function ReceiptShare({
   onNumberGiven,
   compactPreview = false,
   afterSend,
+  till = false,
 }: {
+  /**
+   * Owner, 2026-11-16 — the paid screen of a till that prints (shop, restaurant): the number and Send on one row, no
+   * hint under them, and no "Print" here — the screen's print row above prints the bill on the roll.
+   */
+  till?: boolean;
   bill: ReceiptRow[];
   phone: string | null;
   /**
@@ -101,7 +107,7 @@ export function ReceiptShare({
    * "Save as PDF" is how that receipt becomes a file. A booking confirmation is neither: nobody hands a client a
    * printed sheet saying they are seventh in the queue, and the message is going to their phone anyway.
    */
-  const canPrint = kind === 'bill';
+  const canPrint = kind === 'bill' && !till;
   const checkPhone = usePhoneProblem();
   const [editing, setEditing] = useState(!phone);
   const [typed, setTyped] = useState(fromStoredPhone(phone));
@@ -145,6 +151,75 @@ export function ReceiptShare({
   const problem = checkPhone(typed, { required: true });
   const digits = problem ? '' : waDigits(toStoredPhone(typed));
   const shownProblem = touched ? problem : null;
+
+  /*
+   * The number and Send. Bare on a salon's screen, exactly as they always were (the done screen's desk grid places
+   * the receipt's own children); in one row on a till that prints (owner, 2026-11-16).
+   */
+  const sendBlock = (
+    <>
+      {editing ? (
+        <>
+          <PhoneField
+            id="wi-receipt-phone"
+            label={nv.clientWhatsapp(clientNoun)}
+            required
+            value={typed}
+            onChange={(v) => {
+              setTyped(v);
+              setTouched(true);
+            }}
+            error={shownProblem}
+          />
+          {/* Change pressed by mistake, or a digit lost: back to the client's own number in one tap. */}
+          {phone ? (
+            <button type="button" className="btn btn-ghost wi-receipt-change wi-receipt-back" onClick={backToTheirs}>
+              {nv.useClientNumber(displayPhone(phone))}
+            </button>
+          ) : null}
+        </>
+      ) : (
+        <div className="wi-receipt-to">
+          <span className="wi-receipt-to-label">{nv.sendingTo}</span>
+          <span className="wi-receipt-to-number">{displayPhone(phone)}</span>
+          <button type="button" className="btn btn-ghost wi-receipt-change" onClick={() => setEditing(true)}>
+            {nv.changeNumber}
+          </button>
+        </div>
+      )}
+
+      {digits ? (
+        <a
+          className="btn wi-receipt-send"
+          href={whatsappHref(digits, text)}
+          target="_blank"
+          rel="noopener noreferrer"
+          /*
+           * Pressing Send is when a typed number becomes real: the client asked for their bill on it. Fired
+           * alongside the link rather than before it — WhatsApp opens in its own tab either way, and keeping a
+           * client must never be something the bill waits on.
+           */
+          onClick={() => {
+            if (onNumberGiven && !phone) onNumberGiven(toStoredPhone(typed)!);
+          }}
+        >
+          <IconWhatsApp />
+          {words.send}
+        </a>
+      ) : (
+        // No usable number yet: keep the Send on WhatsApp button disabled until a valid number is entered.
+        <button
+          type="button"
+          className="btn wi-receipt-send"
+          disabled
+          aria-describedby="wi-receipt-phone"
+        >
+          <IconWhatsApp />
+          {words.send}
+        </button>
+      )}
+    </>
+  );
 
   return (
     <section className="wi-receipt-share" aria-label={words.preview}>
@@ -284,67 +359,8 @@ export function ReceiptShare({
           )
         : null}
 
-      {editing ? (
-        <>
-          <PhoneField
-            id="wi-receipt-phone"
-            label={nv.clientWhatsapp(clientNoun)}
-            required
-            value={typed}
-            onChange={(v) => {
-              setTyped(v);
-              setTouched(true);
-            }}
-            error={shownProblem}
-          />
-          {/* Change pressed by mistake, or a digit lost: back to the client's own number in one tap. */}
-          {phone ? (
-            <button type="button" className="btn btn-ghost wi-receipt-change wi-receipt-back" onClick={backToTheirs}>
-              {nv.useClientNumber(displayPhone(phone))}
-            </button>
-          ) : null}
-        </>
-      ) : (
-        <div className="wi-receipt-to">
-          <span className="wi-receipt-to-label">{nv.sendingTo}</span>
-          <span className="wi-receipt-to-number">{displayPhone(phone)}</span>
-          <button type="button" className="btn btn-ghost wi-receipt-change" onClick={() => setEditing(true)}>
-            {nv.changeNumber}
-          </button>
-        </div>
-      )}
-
-      {digits ? (
-        <a
-          className="btn wi-receipt-send"
-          href={whatsappHref(digits, text)}
-          target="_blank"
-          rel="noopener noreferrer"
-          /*
-           * Pressing Send is when a typed number becomes real: the client asked for their bill on it. Fired
-           * alongside the link rather than before it — WhatsApp opens in its own tab either way, and keeping a
-           * client must never be something the bill waits on.
-           */
-          onClick={() => {
-            if (onNumberGiven && !phone) onNumberGiven(toStoredPhone(typed)!);
-          }}
-        >
-          <IconWhatsApp />
-          {words.send}
-        </a>
-      ) : (
-        // No usable number yet: keep the Send on WhatsApp button disabled until a valid number is entered.
-        <button
-          type="button"
-          className="btn wi-receipt-send"
-          disabled
-          aria-describedby="wi-receipt-phone"
-        >
-          <IconWhatsApp />
-          {words.send}
-        </button>
-      )}
-      <p className="wi-receipt-hint">{words.hint}</p>
+      {till ? <div className="wi-receipt-sendrow">{sendBlock}</div> : sendBlock}
+      {till ? null : <p className="wi-receipt-hint">{words.hint}</p>}
       {afterSend}
 
       {canShare || canPrint ? (

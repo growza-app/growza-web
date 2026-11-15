@@ -248,6 +248,8 @@ function QueueTokenPayScreen({
         )}
       </div>
       {dueLine}
+      {/* Owner, 2026-11-16 — as on the till's own payment step: not until there is a guest, and money can be taken. */}
+      {anonymous ? null : (
       <button
         type="button"
         className={`pf-discount-open${billOff.offMinor > 0 ? ' is-on' : ''}`}
@@ -267,6 +269,7 @@ function QueueTokenPayScreen({
           </>
         ) : null}
       </button>
+      )}
       {discountOpen ? (
         <DiscountSheet
           listMinor={token.totalMinor}
@@ -481,7 +484,6 @@ export function PosClient({
   const [queueNote, setQueueNote] = useState<string | null>(null);
   /** Jira GRW-713 — this till's printer, and the last KOT the queue made (an addition, a cancellation) to print. */
   const printer = useTicketPrinter();
-  const [lastKot, setLastKot] = useState<{ saleId: string; kot: KitchenTicketDto; order: OrderRef } | null>(null);
   const [settledReceipt, setSettledReceipt] = useState<{
     appointmentId: string;
     totalMinor: number;
@@ -574,7 +576,6 @@ export function PosClient({
 
   const handleSaleCompleted = useCallback(
     (saleId: string) => {
-      setLastKot(null);
       lastQueuedIdRef.current = saleId;
       setTokenState(saleId, 'preparing');
       void loadTodayTokens();
@@ -726,10 +727,9 @@ export function PosClient({
     setCancelError(null);
     try {
       const res = await api.cancelPendingCounterSale(tk.id);
-      // Jira GRW-713 — the kitchen is told to stop: printed now where this till prints by itself, a tap away otherwise.
+      // Jira GRW-713 — the kitchen is told to stop, printed now where this till prints KOTs by itself (Reprint KOT on the order otherwise).
       if (res.kot) {
         const order = { tokenNo: tk.tokenNo, channel: tk.channel };
-        setLastKot({ saleId: tk.id, kot: res.kot, order });
         printer.autoKot(res.kot, order);
       }
       // Gone from the board at once; the read after it is the shop's answer for every other device.
@@ -748,8 +748,6 @@ export function PosClient({
 
   const startAddingTo = useCallback((tk: PosDailyToken) => {
     setQueueNote(null);
-    // Review finding 9 — the last KOT's Print button belongs to that moment, not to the rest of the shift.
-    setLastKot(null);
     setAddingToToken(tk);
     setMode('sell');
   }, []);
@@ -810,7 +808,6 @@ export function PosClient({
         );
         setTokenState(tk.id, 'completed');
         setPayingToken(null);
-        setLastKot(null);
         // Jira GRW-713 — the guest's bill, printed by itself where this till is set to.
         printer.autoBill(tk.id);
         void loadTodayTokens();
@@ -1411,7 +1408,6 @@ export function PosClient({
                 // Jira GRW-713 — a KOT for what was just added, and nothing the kitchen already has.
                 if (res.kot) {
                   const order = { tokenNo: tk.tokenNo, channel: tk.channel };
-                  setLastKot({ saleId: tk.id, kot: res.kot, order });
                   printer.autoKot(res.kot, order);
                 }
                 setQueueNote(t('addedToOrder', { token: tk.tokenLabel, amount: formatMoney(String(res.totalMinor)) }));
@@ -1448,7 +1444,9 @@ export function PosClient({
             nextLabel={t('backToQueueDone')}
             onNextCustomer={() => setSettledReceipt(null)}
             onDone={() => setSettledReceipt(null)}
-            printSlot={<TillPrintActions printer={printer} saleId={settledReceipt.appointmentId} order={{ tokenNo: null, channel: 'counter' }} bill />}
+            printSlot={
+              <TillPrintActions printer={printer} saleId={settledReceipt.appointmentId} kitchen={orderQueue} order={{ tokenNo: null, channel: 'counter' }} bill />
+            }
           />
         ) : payingToken ? (
           <QueueTokenPayScreen
@@ -1468,7 +1466,6 @@ export function PosClient({
           />
         ) : (
         <section className="pos-queue-board" aria-label={t('queue')}>
-          {lastKot ? <TillPrintActions printer={printer} saleId={lastKot.saleId} kot={lastKot.kot} order={lastKot.order} /> : null}
           {queueNote ? (
             <div className="pos-queue-note" role="status">
               <IconCheck />

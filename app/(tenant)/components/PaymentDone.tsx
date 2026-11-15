@@ -159,7 +159,7 @@ export function PaymentDone({
   };
 
   return (
-    <div className="pf pf-done-page">
+    <div className={`pf pf-done-page${printSlot ? ' is-till' : ''}`}>
       <div className="pf-done">
         <span className="pf-done-check" aria-hidden="true">
           <IconCheck />
@@ -169,6 +169,11 @@ export function PaymentDone({
         </h1>
         <p className="pf-done-sub">{summary}</p>
       </div>
+      {/*
+        Owner, 2026-11-16 — a till that prints (a shop's, a restaurant's) puts its print row first, right under the
+        amount: Print bill, Print KOT, the printer. One row, and the receipt's own "Print" is not drawn beside it.
+      */}
+      {printSlot ? <div className="pf-done-print">{printSlot}</div> : null}
       {/*
         Jira GRW-582 — the customer's receipt or GST invoice, directly under Send on WhatsApp and above Print: it is
         one more thing handed to the customer, so it sits with the others, above the fold. It was first drawn in the
@@ -180,12 +185,17 @@ export function PaymentDone({
         bill={bill}
         phone={phone}
         compactPreview
+        till={Boolean(printSlot)}
         onNumberGiven={givenPhone ? undefined : keepClient}
         afterSend={
-          <>
+          printSlot ? (
+            // Printing the bill already issues its invoice: here it is a quiet link, not a third big button.
+            <div className="pf-doc-link">
+              <DocumentAction visitKey={appointmentId} />
+            </div>
+          ) : (
             <DocumentAction visitKey={appointmentId} />
-            {printSlot}
-          </>
+          )
         }
       />
       {kept ? (

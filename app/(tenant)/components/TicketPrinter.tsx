@@ -120,14 +120,19 @@ export function useTicketPrinter() {
   );
 
   /** Every KOT the order has had, printed again and marked REPRINT. */
-  const reprintKots = useCallback(
-    (saleId: string) =>
+  /**
+   * Every KOT the order has had, read from the server — on the paid screen (owner, 2026-11-16: "Print KOT only after
+   * payment") and, marked REPRINT, from the order screen.
+   */
+  const printOrderKots = useCallback(
+    (saleId: string, reprint: boolean) =>
       run(async () => {
         const read = await api.saleKots(saleId);
-        return read.tickets.map((k) => ({ ticket: kotTicket(kotFromApi(k, read, kotWhen, true), kotCopy()), copies: 1 }));
+        return read.tickets.map((k) => ({ ticket: kotTicket(kotFromApi(k, read, kotWhen, reprint), kotCopy()), copies: 1 }));
       }),
     [run, kotWhen, kotCopy],
   );
+  const reprintKots = useCallback((saleId: string) => printOrderKots(saleId, true), [printOrderKots]);
 
   /**
    * The bill: the order's GST document, issued if it has not been (idempotent — the same number every time), laid
@@ -225,8 +230,8 @@ export function useTicketPrinter() {
   // One object for as long as nothing in it changes, so a screen can put the printer in a callback's dependencies
   // without rebuilding that callback on every render.
   return useMemo(
-    () => ({ settings, setSettings, status, clearStatus, printKot, reprintKots, printBill, autoKot, autoBill, testPrint }),
-    [settings, setSettings, status, clearStatus, printKot, reprintKots, printBill, autoKot, autoBill, testPrint],
+    () => ({ settings, setSettings, status, clearStatus, printKot, printOrderKots, reprintKots, printBill, autoKot, autoBill, testPrint }),
+    [settings, setSettings, status, clearStatus, printKot, printOrderKots, reprintKots, printBill, autoKot, autoBill, testPrint],
   );
 }
 
@@ -262,41 +267,51 @@ export function PrintStatusLine({ printer }: { printer: TicketPrinter }) {
 }
 
 /**
- * Print KOT and Print bill, where an order was just taken or paid. Each prints on its own tap even when this device
- * prints by itself, because a KOT that jammed or a guest who wants a second bill is an ordinary minute at a counter.
+ * The paid screen's print row (owner, 2026-11-16): Print bill, Print KOT, and this device's printer — one row, under
+ * the amount, the first thing after it. The KOT is offered here, after payment, and on the order screen; not while the
+ * order waits in the Queue. `kot` when this screen has the ticket in hand (an order paid on the spot); `kitchen` to read
+ * the order's tickets from the server (an order paid at the Queue).
  */
 export function TillPrintActions({
   printer,
   saleId,
   kot,
+  kitchen = false,
   order,
   bill = false,
 }: {
   printer: TicketPrinter;
   saleId: string;
   kot?: KitchenTicketDto;
+  kitchen?: boolean;
   order: OrderRef;
   bill?: boolean;
 }) {
   const t = useTranslations('print');
   const busy = printer.status.state === 'printing';
-  if (!kot && !bill) return null;
+  const hasKot = Boolean(kot) || kitchen;
+  if (!hasKot && !bill) return null;
   return (
     <div className="tp-actions">
       <div className="tp-actions-row">
-        {kot ? (
-          <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void printer.printKot(kot, order)}>
-            <IconPrint />
-            {t('printKot')}
-          </button>
-        ) : null}
         {bill ? (
           <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void printer.printBill(saleId)}>
             <IconPrint />
             {t('printBill')}
           </button>
         ) : null}
-        {/* This device's printer, beside the prints it decides — the only place a phone has room for it. */}
+        {hasKot ? (
+          <button
+            type="button"
+            className="btn btn-ghost"
+            disabled={busy}
+            onClick={() => void (kot ? printer.printKot(kot, order) : printer.printOrderKots(saleId, false))}
+          >
+            <IconPrint />
+            {t('printKot')}
+          </button>
+        ) : null}
+        {/* This device's printer, beside the prints it decides. */}
         <PrinterButton printer={printer} />
       </div>
       <PrintStatusLine printer={printer} />

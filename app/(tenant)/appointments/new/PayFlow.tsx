@@ -1482,17 +1482,6 @@ export function PayFlow({
 
   /* ---------- ③ Done ---------- */
   // The same screen the one-page form ends on (owner, 2026-10-10): `PaymentDone`, sound, Next customer and all.
-  /** Jira GRW-713 — Print KOT under the "sent to queue" banner, on the phone till and the wide one alike. */
-  const queuedPrint =
-    queuedBanner?.saleId && queuedBanner.kot ? (
-      <TillPrintActions
-        printer={printer}
-        saleId={queuedBanner.saleId}
-        kot={queuedBanner.kot}
-        order={{ tokenNo: queuedBanner.tokenNo, channel: queuedBanner.channel ?? 'counter' }}
-      />
-    ) : null;
-
   if (step === 'done' && sale) {
     return (
       <PaymentDone
@@ -2035,7 +2024,6 @@ export function PayFlow({
             </button>
           </div>
         ) : null}
-        {queuedPrint}
         {tokenGone ? (
           <div role="alert" className="pf-error">
             {nv.tokenGone}
@@ -2409,7 +2397,6 @@ export function PayFlow({
               </button>
             </div>
           ) : null}
-          {queuedPrint}
         </>
       ) : (
         <header className="pf-head">

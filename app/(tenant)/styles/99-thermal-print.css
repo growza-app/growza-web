@@ -263,3 +263,147 @@
 .tp-sheet > .acct-form-actions {
   padding-bottom: var(--sp-4);
 }
+
+/* ---------------------------------------------------------------------------------------------------------------
+ * Owner, 2026-11-16 — the paid screen of a till that prints (shop, restaurant): "very much scattered".
+ * One print row under the amount; the number and Send on one row; the invoice a link; Next, Done and sound on one
+ * line at the bottom. A salon's done screen (no print row) is untouched: every rule here hangs off `.is-till`.
+ * ------------------------------------------------------------------------------------------------------------- */
+.pf-done-page.is-till {
+  gap: var(--sp-3);
+}
+
+.pf-done-page.is-till > .pf-done {
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.pf-done-page.is-till .pf-done-check {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.pf-done-page.is-till .pf-done-check svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.pf-done-page.is-till .pf-done-title {
+  font-size: var(--fs-11);
+}
+
+.pf-done-print .tp-actions {
+  margin: 0;
+}
+
+.pf-done-print .tp-actions-row > .btn:not(.tp-open) {
+  border-color: var(--accent-deep);
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+
+/* The number and Send side by side; the field's own error still sits under the number. */
+.wi-receipt-sendrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--sp-2);
+}
+
+/* Beside the number the button is WhatsApp's mark alone, so the number gets the width; its words stay its name. */
+.wi-receipt-sendrow > .wi-receipt-send {
+  width: 3rem;
+  min-width: 3rem;
+  height: 3rem;
+  min-height: 3rem;
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  justify-content: center;
+  font-size: 0;
+}
+
+.wi-receipt-sendrow > .wi-receipt-send svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.wi-receipt-sendrow > .wi-receipt-back,
+.wi-receipt-sendrow > .wi-receipt-to {
+  grid-column: 1;
+}
+
+/* Printing the bill already issues the invoice: it is a link here, not a button. */
+.pf-doc-link .pf-doc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.pf-doc-link .pf-doc > .btn {
+  min-height: 2.75rem;
+  width: auto;
+  padding: 0 var(--sp-1);
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--accent-deep);
+  font-size: var(--fs-4);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* Next, Done and sound on one line, kept in reach at the bottom of a phone. */
+.pf-done-page.is-till > .pf-done-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  flex-direction: row;
+  align-items: center;
+  margin: 0 calc(var(--page-pad-x, var(--sp-4)) * -1);
+  padding: var(--sp-2) var(--page-pad-x, var(--sp-4)) calc(var(--sp-2) + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.pf-done-page.is-till > .pf-done-actions > .pf-go {
+  flex: 1;
+  min-height: 3rem;
+}
+
+.pf-done-page.is-till .pf-done-minor {
+  display: flex;
+}
+
+.pf-done-page.is-till .pf-done-minor .pf-go-alt {
+  min-height: 3rem;
+  padding: 0 var(--sp-4);
+}
+
+/* The sound switch keeps its icon and its name for screen readers (aria-pressed); the word is the first to go. */
+.pf-done-page.is-till .pf-sound {
+  width: 3rem;
+  min-height: 3rem;
+  padding: 0;
+  justify-content: center;
+  font-size: 0;
+}
+
+.pf-done-page.is-till .pf-sound svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+@media (min-width: 861px) {
+  .pf-done-page.is-till > .pf-done-print {
+    grid-column: 2;
+  }
+
+  .pf-done-page.is-till > .pf-done-actions {
+    position: static;
+    margin: var(--sp-3) 0 0;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+}
