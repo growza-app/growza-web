@@ -4,7 +4,7 @@ import { billFromDocument, destinationOf, kotFromApi, type BillFormat, type Bill
 
 const words: BillWords = {
   docTitle: (type) => ({ tax_invoice: 'Tax invoice', bill_of_supply: 'Bill of supply', receipt: 'Receipt' })[type],
-  paidBy: (modes) => (modes.length ? `Paid by ${modes.join(' + ')}` : null),
+  paidBy: (ways) => (ways.length ? `Pay mode: ${ways.map((w) => (w.amount ? `${w.mode} ${w.amount}` : w.mode)).join(' · ')}` : null),
   discount: 'Discount',
   points: (n) => `Reward points (${n})`,
   tax: (name, rate, included) => (rate === null ? name : `${name} @${rate}%${included ? ' (incl.)' : ''}`),
@@ -62,7 +62,27 @@ describe('an issued document, as the roll prints it', () => {
     ]);
     expect(b.roundOff).toBe('+0.20');
     expect(b.grandTotal).toBe('₹1256.00');
-    expect(b).toMatchObject({ businessName: 'The Brew Haven', gstin: '09ABFFB3084R1ZT', number: '8901', cashier: 'admin', docTitle: 'Tax invoice', paidBy: 'Paid by upi', fssai: '12726009000135' });
+    expect(b).toMatchObject({ businessName: 'The Brew Haven', gstin: '09ABFFB3084R1ZT', number: '8901', cashier: 'admin', docTitle: 'Tax invoice', paidBy: 'Pay mode: upi ₹1256.00', fssai: '12726009000135' });
+  });
+
+  it('prints what came in each way when the bill was split, the HSN code, and the amount in words (owner’s samples, 16 Nov 2026)', () => {
+    const doc = sampleDoc({
+      paymentModes: ['upi', 'cash'],
+      payments: [
+        { mode: 'upi', amountMinor: 100000 },
+        { mode: 'cash', amountMinor: 25600 },
+      ],
+      amountInWords: 'Rupees One Thousand Two Hundred Fifty Six Only',
+      lines: [{ description: 'Kulhad Tea', hsnOrSac: '996332', qty: 1, unitPriceMinor: 2500, amountMinor: 2500, discountMinor: 0, totalMinor: 2625, rateBps: 500 }],
+    });
+    const b = billFromDocument(doc, words, fmt);
+    expect(b.paidBy).toBe('Pay mode: upi ₹1000.00 · cash ₹256.00');
+    expect(b.amountInWords).toBe('Rupees One Thousand Two Hundred Fifty Six Only');
+    expect(b.items[0]).toMatchObject({ name: 'Kulhad Tea', hsn: '996332' });
+  });
+
+  it('names no amount beside each way when an older API sent the ways alone and there were two', () => {
+    expect(billFromDocument(sampleDoc({ paymentModes: ['upi', 'cash'] }), words, fmt).paidBy).toBe('Pay mode: upi · cash');
   });
 
   it('leaves a walk-in’s name for the pen, and prints a named guest', () => {

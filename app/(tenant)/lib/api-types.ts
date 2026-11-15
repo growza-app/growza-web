@@ -2265,7 +2265,7 @@ export interface DocumentTicket {
   /** Who issued it — printed as the bill's Cashier. Null when the member has no name. */
   cashierName: string | null;
   /** `amountMinor`: the line's own amount before the bill's discount — the lines add up to `subTotalMinor` exactly. */
-  lines: { description: string; qty: number; unitPriceMinor: number; amountMinor: number; discountMinor: number; totalMinor: number; rateBps: number | null }[];
+  lines: { description: string; hsnOrSac?: string | null; qty: number; unitPriceMinor: number; amountMinor: number; discountMinor: number; totalMinor: number; rateBps: number | null }[];
   subTotalMinor: number;
   discountMinor: number;
   /** What tax was charged on. Equal to sub total less discount less tax when the menu's prices include tax. */
@@ -2275,8 +2275,12 @@ export interface DocumentTicket {
   igstMinor: number;
   roundOffMinor: number;
   grandTotalMinor: number;
+  /** "Rupees Four Hundred Sixty Two Only". Absent from an API a release behind. */
+  amountInWords?: string;
   rewardPointsUsed: number;
   paymentModes: string[];
+  /** What came in each way, from the bill's payment rows; empty when one way paid it all. */
+  payments?: { mode: string; amountMinor: number }[];
   tokenNo: number | null;
   channel: string | null;
 }

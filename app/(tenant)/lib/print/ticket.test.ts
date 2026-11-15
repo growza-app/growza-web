@@ -173,6 +173,19 @@ describe('the bill (owner’s sample, 15 Nov 2026)', () => {
     expect(r.drawn).toEqual([]);
   });
 
+  it('prints the order number big and centred, the HSN after the dish, and the amount in words (owner’s samples, 16 Nov 2026)', () => {
+    const t = billTicket(
+      { ...sample(), tokenNo: 228, amountInWords: 'Rupees One Thousand Two Hundred Fifty Six Only', items: [{ name: 'Kulhad Tea', hsn: '996332', qty: 1, price: '25.00', amount: '25.00' }] },
+      billCopy,
+    );
+    const big = t.lines.find((l) => l.kind === 'text' && l.text === billCopy.token(228));
+    expect(big).toMatchObject({ align: 'center', bold: true, size: 2 });
+    const all = ticketHtml(t);
+    expect(all).toContain('Kulhad Tea 996332');
+    expect(all).toContain('(Rupees One Thousand Two Hundred Fifty Six Only)');
+    expect(all.indexOf('Grand Total')).toBeLessThan(all.indexOf('(Rupees One Thousand'));
+  });
+
   it('leaves "Name:" for the pen when the guest is a walk-in, and names them when known', () => {
     expect(ticketHtml(billTicket(sample(), billCopy))).toContain('Name: </div>');
     expect(ticketHtml(billTicket({ ...sample(), customerName: 'Priya Nair' }, billCopy))).toContain('Name: Priya Nair');

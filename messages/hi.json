@@ -5468,7 +5468,7 @@
     "billNo": "बिल नं.: {v}",
     "colItem": "आइटम",
     "colQty": "मात्रा",
-    "colPrice": "दाम",
+    "colPrice": "दर",
     "colAmount": "रकम",
     "totalQty": "कुल मात्रा: {n}",
     "subTotal": "उप-योग",

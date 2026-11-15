@@ -332,27 +332,6 @@
   grid-column: 1;
 }
 
-/* Printing the bill already issues the invoice: it is a link here, not a button. */
-.pf-doc-link .pf-doc {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-
-.pf-doc-link .pf-doc > .btn {
-  min-height: 2.75rem;
-  width: auto;
-  padding: 0 var(--sp-1);
-  border: 0;
-  background: none;
-  box-shadow: none;
-  color: var(--accent-deep);
-  font-size: var(--fs-4);
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-}
-
 /* Next, Done and sound on one line, kept in reach at the bottom of a phone. */
 .pf-done-page.is-till > .pf-done-actions {
   position: sticky;

@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-/** Owner, 2026-11-16 — "this page UI is very much scattered, and print KOT should be visible at the final page only and inside the orders". */
+/**
+ * Owner, 2026-11-16 — "this page UI is very much scattered", then: "we need to have print KOT at the order placement
+ * also … and at final i need both print and KOT, remove make receipt".
+ */
 const done = readFileSync(new URL('./PaymentDone.tsx', import.meta.url), 'utf8');
 const share = readFileSync(new URL('./ReceiptShare.tsx', import.meta.url), 'utf8');
 const printer = readFileSync(new URL('./TicketPrinter.tsx', import.meta.url), 'utf8');
@@ -9,10 +12,11 @@ const payFlow = readFileSync(new URL('../appointments/new/PayFlow.tsx', import.m
 const pos = readFileSync(new URL('../pos/PosClient.tsx', import.meta.url), 'utf8');
 const order = readFileSync(new URL('../orders/[id]/OrderClient.tsx', import.meta.url), 'utf8');
 
-describe('Print KOT: on the paid screen and the order screen only', () => {
-  it('is not under the "sent to queue" banner, nor on the Queue board', () => {
-    expect(payFlow).not.toContain('queuedPrint');
-    expect(pos).not.toContain('lastKot');
+describe('Print KOT: when the order is placed, on the paid screen, and on the order screen', () => {
+  it('is under the "sent to queue" banner, and on the Queue board after an addition or a cancel', () => {
+    expect(payFlow.match(/\{queuedPrint\}/g)).toHaveLength(2);
+    expect(pos).toMatch(/\{lastKot \? <TillPrintActions printer=\{printer\} saleId=\{lastKot\.saleId\} kot=\{lastKot\.kot\}/);
+    expect(pos.match(/setLastKot\(\{ saleId: tk\.id, kot: res\.kot, order \}\)/g)).toHaveLength(2);
   });
 
   it('is on the paid screen — a Queue order reads its tickets from the server', () => {
@@ -32,6 +36,10 @@ describe('Print KOT: on the paid screen and the order screen only', () => {
 });
 
 describe('the paid screen of a till that prints is one tidy column', () => {
+  it('has no Make receipt: Print bill is the receipt (a salon keeps its button)', () => {
+    expect(done).toMatch(/afterSend=\{printSlot \? null : <DocumentAction visitKey=\{appointmentId\} \/>\}/);
+  });
+
   it('prints first, under the amount; the receipt has no second Print', () => {
     expect(done.indexOf('pf-done-print')).toBeLessThan(done.indexOf('<ReceiptShare'));
     expect(done).toMatch(/till=\{Boolean\(printSlot\)\}/);

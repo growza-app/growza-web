@@ -34,8 +34,8 @@ export function kotFromApi(
 export interface BillWords {
   /** "Tax invoice", from the document type. */
   docTitle: (type: DocumentTicket['docType']) => string;
-  /** "Paid by UPI" from the ways it was paid; null when none are known. */
-  paidBy: (modes: string[]) => string | null;
+  /** "Paid by UPI ₹462" from the ways it was paid, each with what came in that way; null when none are known. */
+  paidBy: (ways: { mode: string; amount: string | null }[]) => string | null;
   discount: string;
   points: (n: number) => string;
   /**
@@ -98,6 +98,7 @@ export function billFromDocument(doc: DocumentTicket, words: BillWords, fmt: Bil
     items: doc.lines.map((l) => ({
       name: l.description,
       qty: l.qty,
+      hsn: l.hsnOrSac ?? null,
       price: fmt.figure(l.unitPriceMinor),
       // The API's own line amount: unit × qty is off by paise where a line does not divide by its quantity.
       amount: fmt.figure(l.amountMinor),
@@ -107,7 +108,13 @@ export function billFromDocument(doc: DocumentTicket, words: BillWords, fmt: Bil
     adjustments,
     roundOff: ro === 0 ? null : `${ro > 0 ? '+' : '-'}${fmt.figure(Math.abs(ro))}`,
     grandTotal: fmt.money(doc.grandTotalMinor),
-    paidBy: words.paidBy(doc.paymentModes),
+    amountInWords: doc.amountInWords ?? null,
+    // The amount beside each way, as "Pay Mode: Phone Pe 462.00": the payment rows when it was split, else the whole bill.
+    paidBy: words.paidBy(
+      doc.payments && doc.payments.length > 0
+        ? doc.payments.map((p) => ({ mode: p.mode, amount: fmt.money(p.amountMinor) }))
+        : doc.paymentModes.map((m) => ({ mode: m, amount: doc.paymentModes.length === 1 ? fmt.money(doc.grandTotalMinor) : null })),
+    ),
     footer: doc.supplier.footer,
     reprint,
   };

@@ -154,10 +154,14 @@ export function useTicketPrinter() {
               const word = tDoc(`type.${type}`);
               return word.charAt(0).toUpperCase() + word.slice(1);
             },
-            paidBy: (modes) =>
-              modes.length === 0
+            paidBy: (ways) =>
+              ways.length === 0
                 ? null
-                : t('paidBy', { ways: modes.map((m) => (m === 'cash' || m === 'card' || m === 'upi' || m === 'other' ? tPay(m) : m)).join(' + ') }),
+                : t('paidBy', {
+                    ways: ways
+                      .map((w) => `${w.mode === 'cash' || w.mode === 'card' || w.mode === 'upi' || w.mode === 'other' ? tPay(w.mode) : w.mode}${w.amount ? ` ${w.amount}` : ''}`)
+                      .join(' · '),
+                  }),
             discount: t('discount'),
             points: (n) => t('points', { n }),
             tax: (name, rate, included) =>

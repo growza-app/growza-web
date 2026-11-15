@@ -179,6 +179,8 @@ export interface BillItem {
   /** Chosen add-ons and sizes, printed under the dish: "Choice of coffee: Hot". */
   options?: string[];
   qty: number;
+  /** The HSN or SAC code, printed after the dish as the owner's samples do ("Kulhad Tea 996332"). */
+  hsn?: string | null;
   /** The unit price and the line's amount, already formatted as plain figures ("209.00"). */
   price: string;
   amount: string;
@@ -213,6 +215,8 @@ export interface BillData {
   roundOff: string | null;
   /** With the currency sign: "₹1,256.00". */
   grandTotal: string;
+  /** "(Rupees Four Hundred Sixty Two Only)", under the grand total. */
+  amountInWords?: string | null;
   /** "Paid by UPI"; null on a bill printed before payment. */
   paidBy: string | null;
   footer?: string | null;
@@ -257,15 +261,15 @@ export function billTicket(bill: BillData, copy: BillCopy): Ticket {
   if (bill.docTitle) lines.push({ kind: 'text', text: bill.docTitle, align: 'center', bold: true });
   lines.push({ kind: 'rule' });
   lines.push({ kind: 'text', text: copy.name(bill.customerName ?? '') });
-  // Where the order went on the right of the date, as the sample has "Dine In: G5"; a counter order's token there.
-  const where = [bill.orderLabel, bill.tokenNo !== null ? copy.token(bill.tokenNo) : null].filter(Boolean).join(' · ');
-  lines.push({ kind: 'pair', left: copy.date(bill.when), right: where });
+  lines.push({ kind: 'pair', left: copy.date(bill.when), right: bill.orderLabel ?? '' });
   if (bill.cashier || bill.number) lines.push({ kind: 'pair', left: bill.cashier ? copy.cashier(bill.cashier) : '', right: bill.number ? copy.billNo(bill.number) : '' });
+  // The number the guest is called by, big and centred, as the owner's samples print "Order# 228".
+  if (bill.tokenNo !== null) lines.push({ kind: 'text', text: copy.token(bill.tokenNo), align: 'center', bold: true, size: 2 });
   lines.push({ kind: 'rule' });
   lines.push({ kind: 'item', name: copy.colItem, qty: copy.colQty, price: copy.colPrice, amount: copy.colAmount, header: true });
   lines.push({ kind: 'rule' });
   for (const item of bill.items) {
-    lines.push({ kind: 'item', name: item.name, qty: String(item.qty), price: item.price, amount: item.amount });
+    lines.push({ kind: 'item', name: item.hsn ? `${item.name} ${item.hsn}` : item.name, qty: String(item.qty), price: item.price, amount: item.amount });
     for (const opt of item.options ?? []) lines.push({ kind: 'text', text: `  ${opt}` });
   }
   lines.push({ kind: 'rule' });
@@ -274,6 +278,7 @@ export function billTicket(bill: BillData, copy: BillCopy): Ticket {
   lines.push({ kind: 'rule' });
   if (bill.roundOff) lines.push({ kind: 'pair', left: copy.roundOff, right: bill.roundOff });
   lines.push({ kind: 'text', text: `${copy.grandTotal} ${bill.grandTotal}`, align: 'right', bold: true, size: 2 });
+  if (bill.amountInWords) lines.push({ kind: 'text', text: `(${bill.amountInWords})` });
   if (bill.paidBy) lines.push({ kind: 'text', text: bill.paidBy, align: 'right' });
   lines.push({ kind: 'rule' });
   if (bill.footer) lines.push({ kind: 'text', text: bill.footer, align: 'center' });

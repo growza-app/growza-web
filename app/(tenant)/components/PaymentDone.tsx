@@ -187,16 +187,9 @@ export function PaymentDone({
         compactPreview
         till={Boolean(printSlot)}
         onNumberGiven={givenPhone ? undefined : keepClient}
-        afterSend={
-          printSlot ? (
-            // Printing the bill already issues its invoice: here it is a quiet link, not a third big button.
-            <div className="pf-doc-link">
-              <DocumentAction visitKey={appointmentId} />
-            </div>
-          ) : (
-            <DocumentAction visitKey={appointmentId} />
-          )
-        }
+        // Owner, 2026-11-16 — "remove make receipt": on a till that prints, Print bill IS the receipt (it issues the
+        // invoice itself), so a second way to make one is not drawn. The salon keeps its button.
+        afterSend={printSlot ? null : <DocumentAction visitKey={appointmentId} />}
       />
       {kept ? (
         <p className={kept === 'failed' ? 'pf-error pf-kept' : 'pf-kept'} role="status">

@@ -64,10 +64,8 @@ describe('where on the Done screen the invoice button sits', () => {
 
   it('under Send on WhatsApp and above Print, in the receipt’s own column — not in the grid under Next customer', () => {
     // Jira GRW-713 — the thermal print buttons ride in the same slot, under the invoice action.
-    // Owner, 2026-11-16 — on a till that prints, the invoice is a quiet link and the print row sits under the amount.
-    expect(done).toMatch(/afterSend=\{\s*printSlot \? \(/);
-    expect(done).toMatch(/<div className="pf-doc-link">\s*<DocumentAction visitKey=\{appointmentId\} \/>/);
-    expect(done).toMatch(/:\s*\(\s*<DocumentAction visitKey=\{appointmentId\} \/>\s*\)/);
+    // Owner, 2026-11-16 — on a till that prints, Print bill is the receipt: no Make receipt; the print row sits under the amount.
+    expect(done).toMatch(/afterSend=\{printSlot \? null : <DocumentAction visitKey=\{appointmentId\} \/>\}/);
     expect(done.indexOf('pf-done-print')).toBeLessThan(done.indexOf('<ReceiptShare'));
     // It was half a button wide in the Done / Fix-a-mistake grid, under the fold on a phone: present and not findable.
     const minor = done.slice(done.indexOf('pf-done-minor'), done.indexOf('pf-sound'));
