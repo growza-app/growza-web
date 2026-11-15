@@ -111,3 +111,12 @@ describe('the Queue’s payment screen has it too (owner: "when coming from queu
     expect(pos).toMatch(/useRewardQuote\(token\.customerId, billMinor\)/);
   });
 });
+
+describe('only where the money is taken (owner: "final payment screen only")', () => {
+  const payFlow = readFileSync(new URL('./PayFlow.tsx', import.meta.url), 'utf8');
+
+  it('not while payment waits for a guest, not for a delivery app, and not on the first screen', () => {
+    expect(payFlow).toMatch(/const discountRow =\s+lines\.length > 0 && !addingTo && !hidePayUntilGuest && !fromApp \?/);
+    expect(payFlow).not.toContain('pf-tray-discount');
+  });
+});

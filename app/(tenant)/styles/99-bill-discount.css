@@ -77,37 +77,6 @@
   color: var(--accent-deep);
 }
 
-/* The phone's first screen: a round % right beside the total figure it changes (the tray has no free cell: Next fills
-   the right column). Outlined to offer, filled once a discount is on the bill. 44px, like every target there. */
-.pf-total-row {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  min-width: 0;
-}
-
-.pf-tray-discount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 2.75rem;
-  height: 2.75rem;
-  border: 1.5px solid var(--accent-deep);
-  border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent-deep);
-  font: inherit;
-  font-size: var(--fs-6);
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.pf-tray-discount.is-on {
-  background: var(--accent-deep);
-  color: #fff;
-}
-
 .pf-discount {
   display: flex;
   flex-direction: column;

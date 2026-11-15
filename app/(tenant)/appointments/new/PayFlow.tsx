@@ -1503,8 +1503,13 @@ export function PayFlow({
    */
   const offPct = shownPercent(discountPct, listMinor, totalMinor);
   const billOffMinor = listMinor - totalMinor;
+  /*
+   * Owner, 2026-11-15 — "give discount option at the final payment screen only": where money is being taken. Not
+   * while the payment ways are held back for a guest (only "Keep payment pending" can happen then — the discount is
+   * given at the Queue's payment instead), and not for a delivery app's order, whose money the app collects.
+   */
   const discountRow =
-    lines.length > 0 && !addingTo ? (
+    lines.length > 0 && !addingTo && !hidePayUntilGuest && !fromApp ? (
       <button type="button" className={`pf-discount-open${billOffMinor > 0 ? ' is-on' : ''}`} onClick={() => setDiscountOpen(true)} disabled={saving !== null}>
         <span className="pf-discount-badge" aria-hidden="true">
           %
@@ -2619,28 +2624,15 @@ export function PayFlow({
         ) : (
           <span className="pf-total-label">{t('total')}</span>
         )}
-        <div className="pf-total-row">
-          <button
-            type="button"
-            className="pf-total"
-            aria-label={t('changeTotal')}
-            onClick={() => setKeypad(rupeesText(totalMinor))}
-            disabled={lines.length === 0}
-          >
-            <strong className="pf-total-figure">{money(totalMinor)}</strong>
-          </button>
-          {/* Owner, 2026-11-15 — Discount on the first screen too, right beside the figure it changes. Filled once given. */}
-          {lines.length > 0 && !addingTo ? (
-            <button
-              type="button"
-              className={`pf-tray-discount${billOffMinor > 0 ? ' is-on' : ''}`}
-              onClick={() => setDiscountOpen(true)}
-              aria-label={billOffMinor > 0 ? `${offPct !== null ? t('discount.onPct', { pct: offPct }) : t('discount.on')} −${money(billOffMinor)}` : t('discount.add')}
-            >
-              <span aria-hidden="true">%</span>
-            </button>
-          ) : null}
-        </div>
+        <button
+          type="button"
+          className="pf-total"
+          aria-label={t('changeTotal')}
+          onClick={() => setKeypad(rupeesText(totalMinor))}
+          disabled={lines.length === 0}
+        >
+          <strong className="pf-total-figure">{money(totalMinor)}</strong>
+        </button>
         {/*
           Two things stop Next, and each says which (owner, 2026-10-10). `aria-disabled` rather than `disabled`:
           a button that cannot answer teaches nothing, and "nothing happened" is the worst state on this screen.
