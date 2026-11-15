@@ -4726,6 +4726,7 @@
       "cameBack": "{count} came back",
       "noLines": "This order has no items. That should not happen — tell support.",
       "moneyTitle": "Money",
+      "discountGiven": "Discount on the bill",
       "total": "Total",
       "givenBack": "Given back",
       "pointsUsed": "Paid with points",
