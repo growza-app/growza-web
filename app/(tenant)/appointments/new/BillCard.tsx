@@ -52,7 +52,10 @@ export function BillCard({
   onLess,
   onClose,
   onPrice,
+  offLabel,
 }: {
+  /** Owner, 2026-11-15 — "Discount 10%" when the counter gave a percentage; absent says "Discount". */
+  offLabel?: string;
   lines: readonly BillLine[];
   /** What the services list at, before anything was changed by hand. */
   listMinor: number;
@@ -81,7 +84,7 @@ export function BillCard({
             {nv.close}
           </button>
         </div>
-        <BillRows lines={lines} listMinor={listMinor} totalMinor={totalMinor} onLess={onLess} onPrice={onPrice} />
+        <BillRows lines={lines} listMinor={listMinor} totalMinor={totalMinor} onLess={onLess} onPrice={onPrice} offLabel={offLabel} />
       </div>
     </div>
   );
@@ -97,7 +100,9 @@ export function BillRows({
   totalMinor,
   onLess,
   onPrice,
+  offLabel,
 }: {
+  offLabel?: string;
   lines: readonly BillLine[];
   listMinor: number;
   totalMinor: number;
@@ -160,7 +165,7 @@ export function BillRows({
               </div>
               {/* Off the list price, or added to it — a desk may round a bill up as readily as down. */}
               <div className={offMinor > 0 ? 'pf-bill-off' : undefined}>
-                <dt>{offMinor > 0 ? t('billOff') : t('billExtra')}</dt>
+                <dt>{offLabel && offMinor > 0 ? offLabel : offMinor > 0 ? t('billOff') : t('billExtra')}</dt>
                 <dd>
                   {offMinor > 0 ? '−' : '+'}
                   {money(Math.abs(offMinor))}
