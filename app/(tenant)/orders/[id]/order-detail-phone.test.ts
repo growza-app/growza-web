@@ -22,7 +22,9 @@ describe('one order, on a phone', () => {
   });
 
   it('fills the main act — Print bill where the till prints, else the receipt — and makes the return a quiet link', () => {
-    expect(page).toContain('<DocumentAction visitKey={order.id} primary={!canPrintBill} compact />');
+    // Owner, 2026-11-16 — "view receipt not required" where Print bill is the receipt: WhatsApp beside it instead.
+    expect(page).toContain('<DocumentAction visitKey={order.id} sendOnly />');
+    expect(page).toContain('<DocumentAction visitKey={order.id} primary compact />');
     expect(page).toContain('<button type="button" className="ord-d-return-link" onClick={() => setReturning(true)}>');
     expect(doc).toContain("const mainBtn = primary ? 'btn' : 'btn btn-ghost';");
     expect(doc).toContain('<button type="button" className={mainBtn} disabled={busy} onClick={() => void issue()}>');

@@ -478,6 +478,8 @@ export function OrderClient({
                             {tPrint('printBill')}
                           </button>
                         ) : null}
+                        {/* Owner, 2026-11-16 — "view receipt not required": the bill goes out on paper or on WhatsApp, both here. */}
+                        {canPrintBill ? <DocumentAction visitKey={order.id} sendOnly /> : null}
                         {canReprintKot ? (
                           <button type="button" className="btn btn-ghost" disabled={printer.status.state === 'printing'} onClick={() => void printer.reprintKots(order.id)}>
                             <IconPrint />
@@ -489,7 +491,7 @@ export function OrderClient({
                       <PrintStatusLine printer={printer} />
                     </div>
                   ) : null}
-                  {showReceipt ? <DocumentAction visitKey={order.id} primary={!canPrintBill} compact /> : null}
+                  {showReceipt && !canPrintBill ? <DocumentAction visitKey={order.id} primary compact /> : null}
                   {showReturn ? (
                     <button type="button" className="ord-d-return-link" onClick={() => setReturning(true)}>
                       {t('detail.returnItems')}

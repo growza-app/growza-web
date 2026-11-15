@@ -41,8 +41,20 @@ type Preview = {
  * `primary`: the make/view button filled rather than ghost — on a screen where the receipt is the main thing to do.
  * `compact`: View and Send on one row, Send as WhatsApp's round mark named for screen readers (owner, 2026-11-16 — the
  * order screen, as the paid screen's Send already is).
+ * `sendOnly`: WhatsApp's round mark and nothing else (owner, 2026-11-16 — "view receipt not required" where Print bill
+ * is the receipt). With no receipt yet, the tap makes it first and then sends it: one tap, as Print bill is.
  */
-export function DocumentAction({ visitKey, primary = false, compact = false }: { visitKey: string; primary?: boolean; compact?: boolean }) {
+export function DocumentAction({
+  visitKey,
+  primary = false,
+  compact = false,
+  sendOnly = false,
+}: {
+  visitKey: string;
+  primary?: boolean;
+  compact?: boolean;
+  sendOnly?: boolean;
+}) {
   const mainBtn = primary ? 'btn' : 'btn btn-ghost';
   const t = useTranslations('documents');
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -97,17 +109,33 @@ export function DocumentAction({ visitKey, primary = false, compact = false }: {
   }, [issuedId]);
 
   const send = async () => {
-    if (!issued || !summary || sharingNow.current) return;
+    if (!preview || sharingNow.current) return;
+    if (!sendOnly && (!issued || !summary)) return;
     sharingNow.current = true;
     setSharing(true);
     setError(null);
-    const title = t(`type.${preview!.docType}`);
+    const title = t(`type.${preview.docType}`);
     try {
+      // `sendOnly` has no Make button: the receipt is made here when it does not exist yet (idempotent on the server).
+      let doc = issued;
+      if (!doc) {
+        const made = await api.issueDocument(visitKey);
+        doc = { id: made.id, number: made.number };
+        setIssued(doc);
+      }
+      let about = summary;
+      if (!about) {
+        const d = await api.document(doc.id);
+        about = { phone: d.customerPhone, business: d.businessName, amountMinor: d.grandTotalMinor };
+        setSummary(about);
+      }
+      const { number } = doc;
+      const { business, amountMinor } = about;
       await sendDocumentOnWhatsApp({
-        id: issued.id,
-        phone: summary.phone,
+        id: doc.id,
+        phone: about.phone,
         compose: (link, days) =>
-          `${t('shareText', { business: summary.business, title: title.charAt(0).toUpperCase() + title.slice(1), number: issued.number, amount: formatMoney(summary.amountMinor) })}\n${t('shareLine', { link, days })}`,
+          `${t('shareText', { business, title: title.charAt(0).toUpperCase() + title.slice(1), number, amount: formatMoney(amountMinor) })}\n${t('shareLine', { link, days })}`,
       });
     } catch (e) {
       setError(e instanceof ApiError && e.status < 500 ? e.message : t('couldNotMake'));
@@ -143,6 +171,21 @@ export function DocumentAction({ visitKey, primary = false, compact = false }: {
   if (!preview) return null;
 
   const title = t(`type.${preview.docType}`);
+
+  if (sendOnly) {
+    return (
+      <>
+        <button type="button" className="btn btn-ghost pf-doc-send" disabled={sharing} aria-label={t('shareTitle', { title })} onClick={() => void send()}>
+          <IconWhatsApp />
+        </button>
+        {error ? (
+          <p className="pf-error pf-kept tp-row-error" role="alert">
+            {error}
+          </p>
+        ) : null}
+      </>
+    );
+  }
 
   return (
     <div className={`pf-doc${compact ? ' is-compact' : ''}`}>

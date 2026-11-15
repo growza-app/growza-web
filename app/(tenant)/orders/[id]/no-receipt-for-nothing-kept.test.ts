@@ -14,8 +14,9 @@ describe('no receipt control for an order with nothing kept', () => {
     // Owner, 2026-11-16 — one block of the order's paper; every control in it asks the same question first.
     expect(order).toContain('const canPrintBill = isCounter && isPaidCounter && somethingKept;');
     expect(order).toContain('const showReceipt = isPaidCounter && somethingKept;');
-    expect(order).toContain('{showReceipt ? <DocumentAction visitKey={order.id} primary={!canPrintBill} compact /> : null}');
-    expect(order.match(/<DocumentAction /g)).toHaveLength(1);
+    expect(order).toContain('{showReceipt && !canPrintBill ? <DocumentAction visitKey={order.id} primary compact /> : null}');
+    expect(order).toContain('{canPrintBill ? <DocumentAction visitKey={order.id} sendOnly /> : null}');
+    expect(order.match(/<DocumentAction /g)).toHaveLength(2);
   });
 
   /** QA 2026-11-14 — nor "Return items" once every unit has come back: the sheet would open on nothing to give back. */

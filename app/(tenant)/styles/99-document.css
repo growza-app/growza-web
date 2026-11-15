@@ -121,6 +121,7 @@
   text-align: center;
   line-height: 1.25;
 }
+.tp-actions-row > .btn.pf-doc-send,
 .pf-doc.is-compact > .pf-doc-send {
   flex: none;
   width: 2.75rem;
@@ -130,6 +131,7 @@
   padding: 0;
   border-radius: 50%;
 }
+.tp-actions-row > .tp-row-error,
 .pf-doc.is-compact > .pf-error {
   flex-basis: 100%;
 }
