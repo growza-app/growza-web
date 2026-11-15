@@ -150,6 +150,8 @@
 @import './styles/99-share-whatsapp.css';
 /* Jira GRW-713 — a KOT or a bill through the print dialog, on a 58mm or 80mm roll. */
 @import './styles/99-thermal-print.css';
+/* Owner, 2026-11-15 — Discount on the whole bill, % or ₹. */
+@import './styles/99-bill-discount.css';
 /* Emerald v2 theme preview — after every screen sheet, before 99-photo-none.css (which must stay last); delete this line and the file to drop it. */
 @import './styles/99-z-emerald-v2.css';
 @import './styles/99-photo-none.css';

@@ -11,6 +11,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { DocumentAction } from '../../components/DocumentAction';
 import { PrinterButton, PrintStatusLine, useTicketPrinter } from '../../components/TicketPrinter';
 import { IconPrint } from '../../components/icons';
+import { orderDiscountMinor } from '../../lib/order-discount';
 import { ReturnProductSheet, type ReturnableSaleBill } from '../../sales/ReturnProductSheet';
 import { KNOWN_STATES } from '../../lib/orders-filter';
 import { useAreas, useSession, useWritable } from '../../components/SessionProvider';
@@ -227,6 +228,7 @@ export function OrderClient({
   const noAddress = !isCounter && toSend && !order.buyer?.address;
 
   const isPaidCounter = !isCounter || (order.payments?.length ?? 0) > 0;
+  const billDiscountMinor = orderDiscountMinor(order.lines, Number(order.rewardPoints?.discountMinor ?? 0));
   /*
    * QA 2026-11-14, F21 — a bill every unit of which came back has nothing on it to put on paper: the API's bill is only
    * what was delivered and kept (`readBill`), so it answers the receipt preview 404 "That bill was not found", and the
@@ -420,6 +422,13 @@ export function OrderClient({
           <section className="ord-d-block" aria-label={t('detail.moneyTitle')}>
             <h2>{t('detail.moneyTitle')}</h2>
             <dl className="ord-d-money">
+              {/* QA 2026-11-15 — the discount the counter gave: the lines carry what was charged and said nothing of it. */}
+              {billDiscountMinor !== null ? (
+                <div className="ord-d-discount">
+                  <dt>{t('detail.discountGiven')}</dt>
+                  <dd>−{money(billDiscountMinor)}</dd>
+                </div>
+              ) : null}
               <div>
                 <dt>{t('detail.total')}</dt>
                 <dd>{money(order.totalMinor)}</dd>

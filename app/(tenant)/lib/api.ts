@@ -1622,7 +1622,13 @@ export const api = {
    */
   settleCounterSale: (
     saleId: string,
-    input: { paymentMode?: PaymentMode; payments?: { mode: PaymentMode; amountMinor: number }[]; redeemPoints?: number },
+    input: {
+      paymentMode?: PaymentMode;
+      payments?: { mode: PaymentMode; amountMinor: number }[];
+      redeemPoints?: number;
+      /** Owner, 2026-11-15 — a discount on the whole bill given at the Queue's payment, in paise (whole rupees). */
+      discountMinor?: number;
+    },
   ) =>
     post<{
       saleId: string;

@@ -43,7 +43,8 @@ describe('the wide till', () => {
     // Owner, 2026-10-14 — nor does a product line (serviceId '') count on a service's tile.
     expect(flow).toMatch(/const countOf = \(serviceId: string\) => lines\.filter\(\(l\) => l\.serviceId === serviceId && !l\.pkg && !l\.product\)\.length;/);
     expect(flow).toMatch(/const amounts = spread\(baseAmounts\.map/);
-    expect(flow).toMatch(/<BillRows lines=\{lines\} listMinor=\{listMinor\} totalMinor=\{totalMinor\} onLess=\{oneLess\} onPrice=\{openRowKeypad\} \/>/);
+    // Owner, 2026-11-15 — and the discount's % label ("Discount 10%") rides along.
+    expect(flow).toMatch(/<BillRows\s+lines=\{lines\}\s+listMinor=\{listMinor\}\s+totalMinor=\{totalMinor\}\s+onLess=\{oneLess\}\s+onPrice=\{openRowKeypad\}\s+offLabel=/);
     // The payment tiles are one element drawn in two places; neither the grid nor the list writes anything.
     expect((flow.match(/\{payTiles\}/g) ?? []).length).toBe(2);
     for (const src of [grid, unpaid]) {
