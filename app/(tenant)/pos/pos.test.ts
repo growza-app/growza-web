@@ -359,7 +359,7 @@ describe('the POS screen', () => {
     expect(payFlow).toContain('pos-charge-pending');
     expect(payFlow).toContain("t('desk.keepPendingInQueue')");
     expect(payFlow).toContain('...(pending ? { paymentPending: true } : {}),');
-    expect(payFlow).toContain('setQueuedBanner({ tokenNo, amountMinor: paidMinor })');
+    expect(payFlow).toContain('setQueuedBanner({ tokenNo, amountMinor: paidMinor, saleId: result.appointmentId, kot: result.kot, channel })');
     expect(payFlow).toContain('pos-charge-queued');
     expect(client).toContain('settleAndCompleteToken');
     expect(client).toContain('const settled = await api.settleCounterSale(tk.id, {');

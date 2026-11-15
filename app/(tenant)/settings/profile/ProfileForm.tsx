@@ -8,7 +8,8 @@ import { fromStoredPhone, toStoredPhone } from '../../lib/phone';
 import { api, ApiError, type SettingsSummary } from '../../lib/api';
 import { usePhoneProblem } from '../../lib/use-phone-problem';
 import { useCloseAfterSave } from '../../lib/close-after-save';
-import { useMayOpen, useWritable } from '../../components/SessionProvider';
+import { useAreas, useMayOpen, useWritable } from '../../components/SessionProvider';
+import { hasOrderQueue } from '../../lib/areas';
 import { useNouns } from '../../lib/use-nouns';
 import { cleanGoogleReviewUrl } from '../../lib/receipt-text';
 
@@ -47,6 +48,8 @@ type Fields = {
   phone: string;
   description: string;
   googleReviewUrl: string;
+  /** Jira GRW-713 — a food business's FSSAI licence number, printed on its bills. */
+  fssai: string;
   locationName: string;
   addressLine1: string;
   addressCity: string;
@@ -64,6 +67,12 @@ function isValidGoogleReviewUrl(raw: string): boolean {
   }
 }
 
+/** Jira GRW-713 — 14 digits, as printed on the licence; spaces and dashes typed with it do not count. Empty is fine. */
+export function isValidFssai(raw: string): boolean {
+  const v = raw.replace(/[\s-]/g, '');
+  return v === '' || /^\d{14}$/.test(v);
+}
+
 function fieldsOf(s: SettingsSummary): Fields {
   return {
     name: s.tenant.name,
@@ -72,6 +81,7 @@ function fieldsOf(s: SettingsSummary): Fields {
     phone: fromStoredPhone(s.tenant.phone),
     description: s.tenant.description,
     googleReviewUrl: cleanGoogleReviewUrl(s.tenant.googleReviewUrl ?? ''),
+    fssai: s.tenant.fssaiLicense ?? '',
     locationName: s.location?.name ?? '',
     addressLine1: s.location?.addressLine1 ?? '',
     addressCity: s.location?.addressCity ?? '',
@@ -95,6 +105,9 @@ export function ProfileForm({
   // Jira GRW-556 (follow-up) — Save finishes the task: back to the list, which says "Saved".
   const closeForm = useCloseAfterSave('/settings');
   const tCommon = useTranslations('common');
+  // Jira GRW-713 — a kitchen sells food, and a food business's bills carry its FSSAI number.
+  const kitchen = hasOrderQueue(useAreas());
+  const [fssaiError, setFssaiError] = useState(false);
   const checkPhone = usePhoneProblem();
   const branchId = initial.scope.locationId;
   const [settings, setSettings] = useState(initial);
@@ -140,6 +153,11 @@ export function ProfileForm({
       setError(t('errors.googleReviewUrlInvalid'));
       return;
     }
+    if (kitchen && !businessOnly && !isValidFssai(f.fssai)) {
+      setFssaiError(true);
+      setError(t('errors.fssaiInvalid'));
+      return;
+    }
     if (branchId) {
       // Jira GRW-230 — a branch's name, address, phone and "about". The business's name and logo are not a branch's.
       if (!f.locationName.trim()) {
@@ -151,7 +169,18 @@ export function ProfileForm({
       setSaved(false);
       try {
         const { locationName, addressLine1, addressCity, description, googleReviewUrl } = f;
-        const updated = await api.updateProfile({ locationName, addressLine1, addressCity, description, googleReviewUrl: cleanGoogleReviewUrl(googleReviewUrl).trim(), phone: toStoredPhone(f.phone) ?? '' }, branchId);
+        const updated = await api.updateProfile(
+          {
+            locationName,
+            addressLine1,
+            addressCity,
+            description,
+            googleReviewUrl: cleanGoogleReviewUrl(googleReviewUrl).trim(),
+            phone: toStoredPhone(f.phone) ?? '',
+            ...(kitchen ? { fssaiLicense: f.fssai.replace(/[\s-]/g, '') } : {}),
+          },
+          branchId,
+        );
         setSettings(updated);
         setSavedFields(fieldsOf(updated));
         setF(fieldsOf(updated));
@@ -175,13 +204,19 @@ export function ProfileForm({
     try {
       // Jira GRW-227 — a multi-branch business edits branches on Settings ›
       // Branches; this screen sends no branch fields at all for it.
-      const { locationName, addressLine1, addressCity, ...business } = f;
+      const { locationName, addressLine1, addressCity, fssai, ...business } = f;
       const updated = await api.updateProfile(
         businessOnly
           ? // Jira GRW-474 — and the business's own number: the one WhatsApp number a multi-branch salon has, which
             // Settings › Branches shows. It could not be changed anywhere once a second branch existed.
             { name: f.name, timezone: f.timezone, phone: toStoredPhone(f.phone) ?? '' }
-          : { ...business, googleReviewUrl: cleanGoogleReviewUrl(f.googleReviewUrl).trim(), phone: toStoredPhone(f.phone) ?? '', ...(multiBranch ? {} : { locationName, addressLine1, addressCity }) },
+          : {
+              ...business,
+              googleReviewUrl: cleanGoogleReviewUrl(f.googleReviewUrl).trim(),
+              phone: toStoredPhone(f.phone) ?? '',
+              ...(kitchen ? { fssaiLicense: fssai.replace(/[\s-]/g, '') } : {}),
+              ...(multiBranch ? {} : { locationName, addressLine1, addressCity }),
+            },
       );
       setSettings(updated);
       const next = fieldsOf(updated);
@@ -452,6 +487,43 @@ export function ProfileForm({
               <div className="field-hint">{t('hints.googleReviewUrl', { customers })}</div>
             </div>
           )}
+          {/* Jira GRW-713 — a food business must print its FSSAI number on every bill; each branch holds its own licence. */}
+          {kitchen && !businessOnly ? (
+            <div className="field bp-span">
+              <label htmlFor="bp-fssai">
+                <span>
+                  {t('fields.fssai')} <span className="field-optional">{tCommon('optional')}</span>
+                </span>
+              </label>
+              <input
+                id="bp-fssai"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                value={f.fssai}
+                maxLength={20}
+                onChange={(e) => {
+                  set('fssai', e.target.value);
+                  setFssaiError(false);
+                }}
+                onBlur={() => {
+                  if (!isValidFssai(f.fssai)) setFssaiError(true);
+                }}
+                placeholder={t('placeholders.fssai')}
+                className={fssaiError ? 'field-invalid' : ''}
+                aria-invalid={fssaiError || undefined}
+                aria-describedby={fssaiError ? 'bp-fssai-error' : 'bp-fssai-hint'}
+              />
+              {fssaiError ? (
+                <div role="alert" className="field-error" id="bp-fssai-error">
+                  {t('errors.fssaiInvalid')}
+                </div>
+              ) : null}
+              <div className="field-hint" id="bp-fssai-hint">
+                {t('hints.fssai')}
+              </div>
+            </div>
+          ) : null}
         </div>
       </section>
       )}

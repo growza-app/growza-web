@@ -11,6 +11,7 @@ const order = readFileSync(new URL('./OrderClient.tsx', import.meta.url), 'utf8'
 describe('Return items is drawn for exactly the people the API accepts', () => {
   it('follows the server’s canReturn, and an older API keeps it the owner’s', () => {
     expect(order).toContain('const canReturn = writable && (order.canReturn ?? isOwner);');
-    expect(order).toContain('{returnable && canReturn ? (');
+    expect(order).toContain('const showReturn = somethingKept && Boolean(returnable && canReturn);');
+    expect(order).toContain('{showReturn ? (');
   });
 });

@@ -577,17 +577,31 @@ a.ord-card:focus-visible,
 .ord-d-money > div:first-child dd {
   font-weight: 600;
 }
+/* Owner, 2026-11-16 — the order's paper in one column: print row, receipt row, Return as a link. */
 .ord-d-paper {
   display: flex;
-  flex-wrap: wrap;
-  /* QA 13 Nov 2026, bug 9 — once a receipt exists its block holds two stacked buttons, and the default stretch made
-     "Return items" beside it 96px tall. Each control keeps its own height, top-aligned. */
-  align-items: flex-start;
+  flex-direction: column;
   gap: var(--sp-2);
   margin-top: var(--sp-3);
 }
 .ord-d-paper .btn {
   min-height: 2.75rem;
+}
+.ord-d-paper .tp-actions {
+  margin: 0;
+}
+.ord-d-return-link {
+  align-self: flex-start;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-1);
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-4);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
 }
 
 .ord-d-history li {

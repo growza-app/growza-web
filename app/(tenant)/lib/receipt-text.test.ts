@@ -161,7 +161,8 @@ describe('the screen after Mark done offers the bill', () => {
     expect(css).not.toMatch(/visibility: hidden;/);
     expect(share).toMatch(/mounted && canPrint\s*\? createPortal\(/);
     // Owner, 2026-10-07 — and only a bill prints: nobody hands a client a printed sheet of their queue number.
-    expect(share).toMatch(/const canPrint = kind === 'bill';/);
+    // Owner, 2026-11-16 — and not on a till that prints its own bill on the roll (its print row is above the receipt).
+    expect(share).toMatch(/const canPrint = kind === 'bill' && !till;/);
   });
 
   it('Share only on a touch screen; Change has a way back to the client’s number', () => {
