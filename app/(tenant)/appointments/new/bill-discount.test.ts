@@ -91,3 +91,23 @@ describe('every till has the button (owner: every business)', () => {
     expect(row).not.toMatch(/productsOnly|surface|restaurant|salon/);
   });
 });
+
+describe('the Queue’s payment screen has it too (owner: "when coming from queue, add discount not visible")', () => {
+  const pos = readFileSync(new URL('../../pos/PosClient.tsx', import.meta.url), 'utf8');
+
+  it('draws the Discount button and the sheet on the queue’s own payment screen', () => {
+    const screen = pos.slice(pos.indexOf('function QueueTokenPayScreen'), pos.indexOf('export function PosClient'));
+    expect(screen).toContain('className={`pf-discount-open');
+    expect(screen).toContain('<DiscountSheet');
+  });
+
+  it('sends the discount with the payment, and names it on the receipt', () => {
+    expect(pos).toMatch(/discountMinor: billOff\.offMinor/);
+    expect(pos).toMatch(/adjustMinor: -billOff\.offMinor/);
+    expect(pos).toMatch(/discountPct: billOff\.offMinor > 0 \? billOff\.pct : null/);
+  });
+
+  it('points come off what is left after the discount, as at the till', () => {
+    expect(pos).toMatch(/useRewardQuote\(token\.customerId, billMinor\)/);
+  });
+});
