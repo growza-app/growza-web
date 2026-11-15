@@ -171,7 +171,7 @@ export function PaymentDone({
       </div>
       {/*
         Owner, 2026-11-16 — a till that prints (a shop's, a restaurant's) puts its print row first, right under the
-        amount: Print bill, Print KOT, the printer. One row, and the receipt's own "Print" is not drawn beside it.
+        amount: Print bill, Print kitchen slip, the printer. One row, and the receipt's own "Print" is not drawn beside it.
       */}
       {printSlot ? <div className="pf-done-print">{printSlot}</div> : null}
       {/*
