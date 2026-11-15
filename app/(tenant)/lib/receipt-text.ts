@@ -77,6 +77,8 @@ export interface ReceiptInput {
    * than every line carrying an odd share of it ("Paneer Tikka — ₹218.18") and nothing saying a discount was given.
    */
   adjustMinor?: number;
+  /** Owner, 2026-11-15 — the percentage the counter gave, named beside the discount ("Discount (10%): −₹38"). */
+  discountPct?: number | null;
   /**
    * Jira GRW-648 — points the client spent on this bill, and what they took off it.
    *
@@ -107,7 +109,7 @@ export interface ReceiptCopy {
   packageName: (title: string) => string;
   separately: (was: string, saved: string) => string;
   total: (amount: string) => string;
-  discount?: (amount: string) => string;
+  discount?: (amount: string, pct?: number) => string;
   extra?: (amount: string) => string;
   /** "Reward points used: 100 (−₹100)". Absent means the bill never mentions points. */
   rewardUsed?: (points: number, amount: string) => string;
@@ -215,7 +217,7 @@ export function receiptRows(input: ReceiptInput, copy: ReceiptCopy, money: (mino
 
   gap();
   const adjust = input.adjustMinor ?? 0;
-  if (adjust < 0 && copy.discount) line({ t: copy.discount(money(-adjust)) });
+  if (adjust < 0 && copy.discount) line({ t: copy.discount(money(-adjust), input.discountPct ?? undefined) });
   if (adjust > 0 && copy.extra) line({ t: copy.extra(money(adjust)) });
   // Above the total, where every other thing that changed it sits.
   if (input.rewardPoints && input.rewardMinor && copy.rewardUsed) {

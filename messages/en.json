@@ -2287,6 +2287,7 @@
     "receiptSeparately": "Separately {was} · You save {saved}",
     "receiptTotal": "Total paid: {amount}",
     "receiptDiscount": "Discount: −{amount}",
+    "receiptDiscountPct": "Discount ({pct}%): −{amount}",
     "receiptExtra": "Added to the bill: {amount}",
     "receiptSaved": "You saved {amount} with the package",
     "receiptPaidBy": "Paid by {mode}",
@@ -3154,6 +3155,27 @@
     "remove": "Remove"
   },
   "payFlow": {
+    "discount": {
+      "add": "Add discount",
+      "on": "Discount",
+      "onPct": "Discount {pct}%",
+      "billOffPct": "Discount {pct}%",
+      "title": "Discount on the bill",
+      "close": "Close",
+      "kind": "Discount as",
+      "percent": "%  Percent",
+      "amount": "₹  Amount",
+      "pctChip": "{pct}%",
+      "typePercent": "Percent off",
+      "typeAmount": "Amount off",
+      "preview": "−{off} · Total {total}",
+      "billIs": "The bill is {bill}",
+      "tooBigPct": "A discount can be up to 100%.",
+      "tooBigAmount": "A discount can be up to the bill, {bill}.",
+      "wholeRupees": "Whole rupees only.",
+      "remove": "Remove discount",
+      "apply": "Apply"
+    },
     "from": {
       "completeShort": "Complete order",
       "doneTitle": "{amount} order from {app}",

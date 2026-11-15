@@ -1,0 +1,143 @@
+/*
+ * Owner, 2026-11-15 — Discount on the whole bill (% or ₹), every business's till.
+ *
+ * The open button sits under the bill's total on the wide till and under "Total" on the phone's payment step. The
+ * sheet reuses the total keypad's frame (`pf-keypad`); only its own controls are here. Laid out at 344px first,
+ * every control 44px tall.
+ */
+.pf-discount-open {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: 2.75rem;
+  margin: var(--sp-2) 0;
+  padding: 0 var(--sp-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--accent-deep);
+  font: inherit;
+  font-size: var(--fs-4);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pf-discount-open.is-on {
+  border-style: solid;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.pf-discount-open:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.pf-discount-open-plus {
+  font-size: var(--fs-6);
+}
+
+.pf-discount {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.pf-discount-kind,
+.pf-discount-quick {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.pf-discount-kind {
+  grid-template-columns: 1fr 1fr;
+}
+
+.pf-discount-quick {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.pf-discount-kind > button,
+.pf-discount-quick > button {
+  min-height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-4);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pf-discount-kind > button.is-on,
+.pf-discount-quick > button.is-on {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.pf-discount-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+
+.pf-discount-input {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-7);
+  font-weight: 600;
+}
+
+.pf-discount-input input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  /* 16px keeps iOS from zooming the page when the field is tapped. */
+  font: inherit;
+  font-size: max(1rem, var(--fs-7));
+  outline: none;
+}
+
+.pf-discount-preview {
+  margin: 0;
+  font-size: var(--fs-5);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pf-discount-preview.is-bad {
+  color: var(--danger-deep);
+}
+
+.pf-discount-actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.pf-discount-actions > .btn {
+  flex: 1;
+  min-height: 2.75rem;
+}
+
+/* On the phone's payment step it is one of the column's cards: the column's own gap spaces it, and its padding
+   matches the Total card above it. */
+.pf > .pf-discount-open {
+  margin: 0;
+  padding: 0 var(--sp-4);
+}

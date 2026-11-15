@@ -43,6 +43,8 @@ import { queueScan, takeScans } from '../../lib/scan-queue';
 import { heldBillsKey, heldStamp, loadHeldBills, saveHeldBills } from '../../lib/held-bills';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
 import { PaymentDone } from '../../components/PaymentDone';
+import { DiscountSheet } from './DiscountSheet';
+import { shownPercent } from './bill-discount';
 
 /**
  * Record payment in three taps (owner, 2026-10-09).
@@ -314,6 +316,9 @@ export function PayFlow({
    */
   const [stylistId, setStylistId] = useState<string | null>(null);
   const [override, setOverride] = useState<number | null>(null);
+  /** Owner, 2026-11-15 — the percentage the counter gave, when it gave one; named on the bill only while it still holds. */
+  const [discountPct, setDiscountPct] = useState<number | null>(null);
+  const [discountOpen, setDiscountOpen] = useState(false);
   const [keypad, setKeypad] = useState<string | null>(null);
   /** Owner, 2026-10-14 — the bill row the keypad is pricing; null means it is pricing the whole total. */
   const [keypadFor, setKeypadFor] = useState<{ key: string; name: string; list: number } | null>(null);
@@ -1084,6 +1089,8 @@ export function PayFlow({
           })),
           totalMinor: paidMinor,
           adjustMinor: totalMinor - listMinor,
+          // Owner, 2026-11-15 — "Discount (10%): −₹38" on the WhatsApp receipt when the counter gave a percentage.
+          discountPct: offPct,
           /*
            * Jira GRW-648, owner 2026-10-27 — the whole reward story, in one field.
            *
@@ -1489,6 +1496,40 @@ export function PayFlow({
    */
   const redeemRow = <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={toggleRedeem} disabled={saving !== null} />;
 
+  /*
+   * Owner, 2026-11-15 — Discount on the whole bill, as a % or an amount, on every business's till. It sets the same
+   * total "Change the total" does (that is what the API is sent); the % is named on the bill and the receipt while
+   * the total is still exactly what that % gave.
+   */
+  const offPct = shownPercent(discountPct, listMinor, totalMinor);
+  const billOffMinor = listMinor - totalMinor;
+  const discountRow =
+    lines.length > 0 && !addingTo ? (
+      <button type="button" className={`pf-discount-open${billOffMinor > 0 ? ' is-on' : ''}`} onClick={() => setDiscountOpen(true)} disabled={saving !== null}>
+        <span className="pf-discount-open-words">
+          {billOffMinor > 0 ? (offPct !== null ? t('discount.onPct', { pct: offPct }) : t('discount.on')) : t('discount.add')}
+        </span>
+        {billOffMinor > 0 ? <strong>−{money(billOffMinor)}</strong> : <span className="pf-discount-open-plus">%</span>}
+      </button>
+    ) : null;
+  const discountSheet = discountOpen ? (
+    <DiscountSheet
+      listMinor={listMinor}
+      current={billOffMinor > 0 ? { pct: offPct, offMinor: billOffMinor } : null}
+      onApply={(offMinor, pct) => {
+        setOverride(offMinor > 0 ? listMinor - offMinor : null);
+        setDiscountPct(pct);
+        setDiscountOpen(false);
+      }}
+      onRemove={() => {
+        setOverride(null);
+        setDiscountPct(null);
+        setDiscountOpen(false);
+      }}
+      onClose={() => setDiscountOpen(false)}
+    />
+  ) : null;
+
   /** The amount to collect, and — when points are coming off — the bill it was before they did. */
   const dueLine = (
     <p className="pf-how-total">
@@ -1698,6 +1739,7 @@ export function PayFlow({
           <span className="pf-head-gap" aria-hidden="true" />
         </header>
         {dueLine}
+        {discountRow}
         {redeemRow}
         {/* Owner, 2026-10-23 — a scan taken here is answered, not ignored. */}
         {scanNote ? (
@@ -1756,6 +1798,7 @@ export function PayFlow({
             onClose={() => setWhoOpen(false)}
           />
         ) : null}
+        {discountSheet}
       </div>
     );
   }
@@ -2065,6 +2108,7 @@ export function PayFlow({
               <p className="pf-wide-empty">{productsOnly ? t('desk.emptyProductBill', { product: nouns.product }) : t('desk.emptyBill')}</p>
             ) : productsOnly ? (
               <PosBillRows
+                offLabel={offPct !== null ? t('discount.billOffPct', { pct: offPct }) : undefined}
                 lines={lines}
                 products={products}
                 listMinor={listMinor}
@@ -2076,7 +2120,14 @@ export function PayFlow({
                 onEditPrice={openRowKeypad}
               />
             ) : (
-              <BillRows lines={lines} listMinor={listMinor} totalMinor={totalMinor} onLess={oneLess} onPrice={openRowKeypad} />
+              <BillRows
+                lines={lines}
+                listMinor={listMinor}
+                totalMinor={totalMinor}
+                onLess={oneLess}
+                onPrice={openRowKeypad}
+                offLabel={offPct !== null ? t('discount.billOffPct', { pct: offPct }) : undefined}
+              />
             )}
             <button
               type="button"
@@ -2095,6 +2146,7 @@ export function PayFlow({
               </span>
               <strong className="pf-total-figure">{money(totalMinor)}</strong>
             </button>
+            {discountRow}
             {full ? (
               <div role="alert" className="pf-error">
                 {nv.billFull(MAX_LINES)}
@@ -2196,8 +2248,10 @@ export function PayFlow({
             onClose={() => setWhoOpen(false)}
           />
         ) : null}
+        {discountSheet}
         {billOpen && lines.length > 0 ? (
           <BillCard
+            offLabel={offPct !== null ? t('discount.billOffPct', { pct: offPct }) : undefined}
             lines={lines}
             listMinor={listMinor}
             totalMinor={totalMinor}

@@ -72,7 +72,7 @@ export function useNewVisitCopy() {
     receiptPackage: (title: string) => t('receiptPackage', { title }),
     receiptSeparately: (was: string, saved: string) => t('receiptSeparately', { was, saved }),
     receiptTotal: (amount: string) => t('receiptTotal', { amount }),
-    receiptDiscount: (amount: string) => t('receiptDiscount', { amount }),
+    receiptDiscount: (amount: string, pct?: number) => (pct ? t('receiptDiscountPct', { amount, pct }) : t('receiptDiscount', { amount })),
     receiptExtra: (amount: string) => t('receiptExtra', { amount }),
     receiptSaved: (amount: string) => t('receiptSaved', { amount }),
     receiptPaidBy: (mode: string) => t('receiptPaidBy', { mode }),
