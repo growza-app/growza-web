@@ -9,6 +9,7 @@ import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
 import { useBranch } from '../components/BranchProvider';
 import { useLabel } from '../components/LabelsProvider';
 import { PaymentDone } from '../components/PaymentDone';
+import { DiscountSheet } from '../appointments/new/DiscountSheet';
 import { RedeemRow } from '../components/RedeemRow';
 import { useAreas, useSession } from '../components/SessionProvider';
 import { hasOrderQueue } from '../lib/areas';
@@ -69,18 +70,24 @@ function QueueTokenPayScreen({
   clientNoun: string;
   onOpenClientSheet: (startAdding: boolean) => void;
   onBack: () => void;
-  onSettle: (ways: Array<{ mode: PaymentMode; amountMinor: number }>, redeemPoints: number) => void;
+  /** Owner, 2026-11-15 — `bill` is the discount the counter gave here, and its % when it gave one. */
+  onSettle: (ways: Array<{ mode: PaymentMode; amountMinor: number }>, redeemPoints: number, bill: { offMinor: number; pct: number | null }) => void;
 }) {
   const tPay = useTranslations('payFlow');
   const tc = useTranslations('chrome');
   const nv = useNewVisitCopy();
   const anonymous = isWalkInToken(token);
   const guestLabel = anonymous ? walkInGuestLabel : (token.customerName || walkInGuestLabel);
-  const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor: discountMinor } = useRewardQuote(
-    token.customerId,
-    token.totalMinor,
-  );
-  const dueMinor = Math.max(0, token.totalMinor - discountMinor);
+  /*
+   * Owner, 2026-11-15 — the discount at handover ("10% off"), on the Queue's own payment screen: an order sent here
+   * unpaid is paid here, so this IS the restaurant's final bill. Points then come off what is left, as at the till.
+   */
+  const [billOff, setBillOff] = useState<{ offMinor: number; pct: number | null }>({ offMinor: 0, pct: null });
+  const [discountOpen, setDiscountOpen] = useState(false);
+  const billMinor = Math.max(0, token.totalMinor - billOff.offMinor);
+  const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor: discountMinor } = useRewardQuote(token.customerId, billMinor);
+  const dueMinor = Math.max(0, billMinor - discountMinor);
+  const settleWith = (ways: Array<{ mode: PaymentMode; amountMinor: number }>) => onSettle(ways, redeemPoints, billOff);
 
   const [qrStep, setQrStep] = useState(false);
   const [qrBroken, setQrBroken] = useState(false);
@@ -117,7 +124,7 @@ function QueueTokenPayScreen({
       <strong>{money(dueMinor)}</strong>
       {discountMinor > 0 ? (
         <span className="pf-how-total-off">
-          {tPay('rewards.wasOff', { bill: money(token.totalMinor), amount: money(discountMinor) })}
+          {tPay('rewards.wasOff', { bill: money(billMinor), amount: money(discountMinor) })}
         </span>
       ) : null}
     </p>
@@ -175,7 +182,7 @@ function QueueTokenPayScreen({
         <button
           type="button"
           className="btn pf-go pf-qr-paid"
-          onClick={() => onSettle(waysFor('upi'), redeemPoints)}
+          onClick={() => settleWith(waysFor('upi'))}
           disabled={saving !== null}
           aria-busy={saving === 'upi'}
         >
@@ -239,6 +246,42 @@ function QueueTokenPayScreen({
         )}
       </div>
       {dueLine}
+      <button
+        type="button"
+        className={`pf-discount-open${billOff.offMinor > 0 ? ' is-on' : ''}`}
+        onClick={() => setDiscountOpen(true)}
+        disabled={saving !== null}
+      >
+        <span className="pf-discount-badge" aria-hidden="true">
+          %
+        </span>
+        <span className="pf-discount-open-words">
+          {billOff.offMinor > 0 ? (billOff.pct !== null ? tPay('discount.onPct', { pct: billOff.pct }) : tPay('discount.on')) : tPay('discount.add')}
+        </span>
+        {billOff.offMinor > 0 ? (
+          <>
+            <strong className="pf-discount-open-amount">−{money(billOff.offMinor)}</strong>
+            <span className="pf-discount-open-change">{tPay('discount.change')}</span>
+          </>
+        ) : null}
+      </button>
+      {discountOpen ? (
+        <DiscountSheet
+          listMinor={token.totalMinor}
+          current={billOff.offMinor > 0 ? billOff : null}
+          onApply={(offMinor, pct) => {
+            clearSplit();
+            setBillOff({ offMinor, pct });
+            setDiscountOpen(false);
+          }}
+          onRemove={() => {
+            clearSplit();
+            setBillOff({ offMinor: 0, pct: null });
+            setDiscountOpen(false);
+          }}
+          onClose={() => setDiscountOpen(false)}
+        />
+      ) : null}
       {!anonymous ? (
         <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={handleToggleRedeem} disabled={saving !== null} />
       ) : null}
@@ -298,7 +341,7 @@ function QueueTokenPayScreen({
                     setQrStep(true);
                     return;
                   }
-                  onSettle(waysFor(m), redeemPoints);
+                  settleWith(waysFor(m));
                 }}
               >
                 <span className="pf-pay-icon" aria-hidden="true">
@@ -341,7 +384,7 @@ function QueueTokenPayScreen({
             if (minor <= 0) return;
             if (minor >= dueMinor) {
               setFirstWay(null);
-              onSettle([{ mode, amountMinor: dueMinor }], redeemPoints);
+              settleWith([{ mode, amountMinor: dueMinor }]);
               return;
             }
             setFirstWay({ mode, minor });
@@ -702,6 +745,7 @@ export function PosClient({
       tk: PosDailyToken,
       ways?: Array<{ mode: PaymentMode; amountMinor: number }>,
       redeemPoints = 0,
+      billOff: { offMinor: number; pct: number | null } = { offMinor: 0, pct: null },
     ) => {
       if (!tk.paymentPending) {
         setTokenState(tk.id, 'completed');
@@ -723,6 +767,7 @@ export function PosClient({
         const settled = await api.settleCounterSale(tk.id, {
           paymentMode: chosen,
           ...(ways.length > 1 ? { payments: ways } : {}),
+          ...(billOff.offMinor > 0 ? { discountMinor: billOff.offMinor } : {}),
           ...(redeemPoints > 0 ? { redeemPoints } : {}),
         });
         const paidMinor = settled.paidAmountMinor ?? tk.totalMinor;
@@ -792,7 +837,9 @@ export function PosClient({
             pkg: null,
             pkgs: [],
             totalMinor: paidMinor,
-            adjustMinor: 0,
+            // Owner, 2026-11-15 — the discount given at the Queue, named as the till names one: "Discount (10%): −₹36".
+            adjustMinor: -billOff.offMinor,
+            discountPct: billOff.offMinor > 0 ? billOff.pct : null,
             ...(settled.rewards
               ? {
                   rewards: {
@@ -1390,7 +1437,7 @@ export function PosClient({
               setClientSheetTarget(null);
               setSettleError(null);
             }}
-            onSettle={(ways, redeemPoints) => void settleAndCompleteToken(payingToken, ways, redeemPoints)}
+            onSettle={(ways, redeemPoints, billOff) => void settleAndCompleteToken(payingToken, ways, redeemPoints, billOff)}
           />
         ) : (
         <section className="pos-queue-board" aria-label={t('queue')}>

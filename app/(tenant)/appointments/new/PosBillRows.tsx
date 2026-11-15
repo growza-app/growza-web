@@ -24,7 +24,10 @@ export function PosBillRows({
   onMore,
   onClearLine,
   onEditPrice,
+  offLabel,
 }: {
+  /** Owner, 2026-11-15 — "Discount 10%" when the counter gave a percentage; absent says "Discount". */
+  offLabel?: string;
   lines: readonly BillLine[];
   products: readonly Product[];
   listMinor: number;
@@ -158,7 +161,7 @@ export function PosBillRows({
         </div>
         {offMinor !== 0 ? (
           <div className={offMinor > 0 ? 'pf-bill-off' : undefined}>
-            <dt>{offMinor > 0 ? t('billOff') : t('billExtra')}</dt>
+            <dt>{offLabel && offMinor > 0 ? offLabel : offMinor > 0 ? t('billOff') : t('billExtra')}</dt>
             <dd>
               {offMinor > 0 ? '−' : '+'}
               {money(Math.abs(offMinor))}
