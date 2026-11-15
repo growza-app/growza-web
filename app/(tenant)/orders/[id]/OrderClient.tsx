@@ -464,7 +464,7 @@ export function OrderClient({
               Jira GRW-713 — the thermal roll. A kitchen's order can have its KOTs printed again (each marked REPRINT, so
               the kitchen does not cook it twice); a paid bill with something on it can be printed for the guest.
             */}
-            {(!counted && (isCounter || fromApp)) || (isPaidCounter && somethingKept) ? (
+            {(!counted && (isCounter || fromApp)) || (isCounter && isPaidCounter && somethingKept) ? (
               <div className="tp-actions">
                 <div className="tp-actions-row">
                   {!counted && (isCounter || fromApp) ? (
@@ -473,7 +473,8 @@ export function OrderClient({
                       {tPrint('reprintKot')}
                     </button>
                   ) : null}
-                  {isPaidCounter && somethingKept ? (
+                  {/* A counter bill only: a delivery app bills its own guest, and a marketplace order is not printed at a till. */}
+                  {isCounter && isPaidCounter && somethingKept ? (
                     <button type="button" className="btn btn-ghost" disabled={printer.status.state === 'printing'} onClick={() => void printer.printBill(order.id)}>
                       <IconPrint />
                       {tPrint('printBill')}

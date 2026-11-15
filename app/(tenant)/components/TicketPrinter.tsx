@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { api, ApiError } from '../lib/api';
 import type { KitchenTicketDto } from '../lib/api-types';
@@ -33,7 +33,12 @@ export type PrintStatus =
   | { state: 'idle' }
   | { state: 'printing' }
   | { state: 'done' }
+  /** The job had nothing on it — an order the kitchen was never sent (one from before KOTs existed). Said, not "Printed". */
+  | { state: 'nothing'; message: string }
   | { state: 'failed'; message: string; retry: () => void };
+
+/** Thrown by a job with nothing to print, so the line can say why instead of claiming it printed. */
+class NothingToPrint extends Error {}
 
 export interface OrderRef {
   tokenNo: number | null;
@@ -84,9 +89,15 @@ export function useTicketPrinter() {
         setStatus({ state: 'printing' });
         try {
           const current = readPrinterSettings();
-          for (const { ticket, copies } of await job()) await printTicket(ticket, current, copies);
+          const tickets = await job();
+          if (tickets.length === 0) throw new NothingToPrint();
+          for (const { ticket, copies } of tickets) await printTicket(ticket, current, copies);
           setStatus({ state: 'done' });
         } catch (e) {
+          if (e instanceof NothingToPrint) {
+            setStatus({ state: 'nothing', message: t('noKots') });
+            return;
+          }
           const message =
             e instanceof PrinterError && e.code === 'not_paired'
               ? t('notPaired')
@@ -210,7 +221,13 @@ export function useTicketPrinter() {
     [run, session?.businessName, t, kotWhen],
   );
 
-  return { settings, setSettings, status, clearStatus: () => setStatus({ state: 'idle' }), printKot, reprintKots, printBill, autoKot, autoBill, testPrint };
+  const clearStatus = useCallback(() => setStatus({ state: 'idle' }), []);
+  // One object for as long as nothing in it changes, so a screen can put the printer in a callback's dependencies
+  // without rebuilding that callback on every render.
+  return useMemo(
+    () => ({ settings, setSettings, status, clearStatus, printKot, reprintKots, printBill, autoKot, autoBill, testPrint }),
+    [settings, setSettings, status, clearStatus, printKot, reprintKots, printBill, autoKot, autoBill, testPrint],
+  );
 }
 
 export type TicketPrinter = ReturnType<typeof useTicketPrinter>;
@@ -220,6 +237,13 @@ export function PrintStatusLine({ printer }: { printer: TicketPrinter }) {
   const t = useTranslations('print');
   const s = printer.status;
   if (s.state === 'idle') return null;
+  if (s.state === 'nothing') {
+    return (
+      <p className="tp-status" role="status">
+        {s.message}
+      </p>
+    );
+  }
   if (s.state === 'printing' || s.state === 'done') {
     return (
       <p className="tp-status" role="status">

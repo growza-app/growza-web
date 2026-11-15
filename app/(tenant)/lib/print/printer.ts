@@ -91,8 +91,15 @@ export function printWithDialog(ticket: Ticket, width: PaperWidth): Promise<void
       resolve();
     };
     window.addEventListener('afterprint', cleanUp, { once: true });
-    // A phone's dialog can return before it prints and never say afterprint; a minute is long enough either way.
-    setTimeout(cleanUp, 60_000);
+    /*
+     * Review finding 5 — a phone's browser can hand back from print() before it prints and never say `afterprint`.
+     * The next print waits on this one, so waiting a full minute held a bill behind its KOT for a minute. The dialog
+     * closing gives the page its focus back; failing even that, fifteen seconds is long enough for a print preview
+     * to have taken its copy of the page.
+     */
+    const onFocus = () => setTimeout(cleanUp, 500);
+    window.addEventListener('focus', onFocus, { once: true });
+    setTimeout(cleanUp, 15_000);
     window.print();
   });
 }

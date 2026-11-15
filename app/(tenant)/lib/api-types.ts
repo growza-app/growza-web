@@ -2264,7 +2264,8 @@ export interface DocumentTicket {
   customerName: string;
   /** Who issued it — printed as the bill's Cashier. Null when the member has no name. */
   cashierName: string | null;
-  lines: { description: string; qty: number; unitPriceMinor: number; discountMinor: number; totalMinor: number; rateBps: number | null }[];
+  /** `amountMinor`: the line's own amount before the bill's discount — the lines add up to `subTotalMinor` exactly. */
+  lines: { description: string; qty: number; unitPriceMinor: number; amountMinor: number; discountMinor: number; totalMinor: number; rateBps: number | null }[];
   subTotalMinor: number;
   discountMinor: number;
   /** What tax was charged on. Equal to sub total less discount less tax when the menu's prices include tax. */

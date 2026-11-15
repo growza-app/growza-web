@@ -1085,7 +1085,8 @@ export function PayFlow({
         setQueuedBanner({ tokenNo, amountMinor: paidMinor, saleId: result.appointmentId, kot: result.kot, channel });
         return;
       }
-      if (productsOnly) printer.autoBill(result.appointmentId);
+      // A delivery app bills its own guest, and issuing has no client of ours to name: only the counter's own bills print.
+      if (productsOnly && channel === 'counter') printer.autoBill(result.appointmentId);
       const bill = receiptRows(
         {
           businessName: session?.businessName ?? null,
@@ -1508,7 +1509,7 @@ export function PayFlow({
               saleId={sale.appointmentId}
               kot={sale.kot}
               order={{ tokenNo: sale.tokenNo, channel: sale.channel }}
-              bill
+              bill={sale.channel === 'counter'}
             />
           ) : null
         }

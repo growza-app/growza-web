@@ -27,9 +27,9 @@ const sampleDoc = (over: Partial<DocumentTicket> = {}): DocumentTicket => ({
   customerName: 'Walk-in',
   cashierName: 'admin',
   lines: [
-    { description: 'Cappuccino (Bean 1)', qty: 2, unitPriceMinor: 20900, discountMinor: 0, totalMinor: 43890, rateBps: 500 },
-    { description: 'Alfredo Sauce Pasta', qty: 1, unitPriceMinor: 39900, discountMinor: 0, totalMinor: 41895, rateBps: 500 },
-    { description: 'Grilled Paneer & Rice In Brown Sauce', qty: 1, unitPriceMinor: 37900, discountMinor: 0, totalMinor: 39795, rateBps: 500 },
+    { description: 'Cappuccino (Bean 1)', qty: 2, unitPriceMinor: 20900, amountMinor: 41800, discountMinor: 0, totalMinor: 43890, rateBps: 500 },
+    { description: 'Alfredo Sauce Pasta', qty: 1, unitPriceMinor: 39900, amountMinor: 39900, discountMinor: 0, totalMinor: 41895, rateBps: 500 },
+    { description: 'Grilled Paneer & Rice In Brown Sauce', qty: 1, unitPriceMinor: 37900, amountMinor: 37900, discountMinor: 0, totalMinor: 39795, rateBps: 500 },
   ],
   subTotalMinor: 119600,
   discountMinor: 0,
@@ -85,6 +85,21 @@ describe('an issued document, as the roll prints it', () => {
     const b = billFromDocument(sampleDoc({ discountMinor: 2500, rewardPointsUsed: 25, roundOffMinor: 0 }), words, fmt);
     expect(b.adjustments[0]).toEqual({ label: 'Reward points (25)', amount: '-25.00' });
     expect(b.roundOff).toBeNull();
+  });
+});
+
+describe('a line that does not divide by its quantity (review finding 3)', () => {
+  it('prints the line’s own amount, so the lines add up to the sub total', () => {
+    const doc = sampleDoc({
+      lines: [{ description: 'Veg Thali', qty: 3, unitPriceMinor: 3333, amountMinor: 10000, discountMinor: 0, totalMinor: 10000, rateBps: null }],
+      subTotalMinor: 10000,
+      taxableMinor: 10000,
+      cgstMinor: 0,
+      sgstMinor: 0,
+      roundOffMinor: 0,
+      grandTotalMinor: 10000,
+    });
+    expect(billFromDocument(doc, words, fmt).items[0]).toMatchObject({ price: '33.33', amount: '100.00' });
   });
 });
 

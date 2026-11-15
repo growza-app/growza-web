@@ -531,6 +531,7 @@ export function PosClient({
 
   const handleSaleCompleted = useCallback(
     (saleId: string) => {
+      setLastKot(null);
       lastQueuedIdRef.current = saleId;
       setTokenState(saleId, 'preparing');
       void loadTodayTokens();
@@ -704,6 +705,8 @@ export function PosClient({
 
   const startAddingTo = useCallback((tk: PosDailyToken) => {
     setQueueNote(null);
+    // Review finding 9 — the last KOT's Print button belongs to that moment, not to the rest of the shift.
+    setLastKot(null);
     setAddingToToken(tk);
     setMode('sell');
   }, []);
@@ -762,6 +765,7 @@ export function PosClient({
         );
         setTokenState(tk.id, 'completed');
         setPayingToken(null);
+        setLastKot(null);
         // Jira GRW-713 — the guest's bill, printed by itself where this till is set to.
         printer.autoBill(tk.id);
         void loadTodayTokens();

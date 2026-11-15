@@ -99,7 +99,8 @@ export function billFromDocument(doc: DocumentTicket, words: BillWords, fmt: Bil
       name: l.description,
       qty: l.qty,
       price: fmt.figure(l.unitPriceMinor),
-      amount: fmt.figure(l.unitPriceMinor * l.qty),
+      // The API's own line amount: unit × qty is off by paise where a line does not divide by its quantity.
+      amount: fmt.figure(l.amountMinor),
     })),
     totalQty: doc.lines.reduce((n, l) => n + l.qty, 0),
     subTotal: fmt.figure(doc.subTotalMinor),
