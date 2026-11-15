@@ -219,7 +219,7 @@ export interface SelfMarkResult {
   placed: boolean;
   distanceM: number | null;
 }
-import type { AutopayStart, BranchClosePreview, OwnerBill, OwnerBilling, OwnerBillPage } from './api-types';
+import type { DocumentTicket, KitchenTicketDto, OrderKitchenTickets, AutopayStart, BranchClosePreview, OwnerBill, OwnerBilling, OwnerBillPage } from './api-types';
 import { downscaleImage } from './downscale';
 import type {
   ClientProfile,
@@ -1114,6 +1114,8 @@ export const api = {
     phone?: string;
     description?: string;
     googleReviewUrl?: string;
+    /** Jira GRW-713 — 14 digits, or '' to clear. */
+    fssaiLicense?: string;
     locationName?: string;
     addressLine1?: string;
     addressCity?: string;
@@ -1610,6 +1612,8 @@ export const api = {
       legs: { appointmentId: string; serviceId: string; paidAmountMinor: number; startAt: string; endAt: string }[];
       /** Jira GRW-648 — what this bill did to the client's reward balance. Absent when the business has rewards off. */
       rewards?: VisitRewards;
+      /** Jira GRW-713 — the KOT this order sent to the kitchen. Absent where the business has no kitchen. */
+      kot?: KitchenTicketDto;
     }>('/api/v1/counter-sales', input),
   /**
    * Settle a counter order that was sent to the kitchen queue with payment pending (`paymentMode = null`).
@@ -1649,10 +1653,14 @@ export const api = {
    * where the business counts stock its units go back on the shelf. A paid order is refused (409): that is a return.
    */
   cancelPendingCounterSale: (saleId: string) =>
-    post<{ saleId: string; status: string; totalMinor: number }>('/api/v1/counter-sales', { cancelSaleId: saleId }),
+    post<{ saleId: string; status: string; totalMinor: number; kot?: KitchenTicketDto }>('/api/v1/counter-sales', { cancelSaleId: saleId }),
   /** Owner, 9 Nov 2026 — add more to an order still waiting for payment; it keeps its token and is paid for once. */
   addToPendingCounterSale: (saleId: string, products: Array<{ productId: string; variantId?: string; qty: number; paidMinor: number }>) =>
-    post<{ saleId: string; status: string; totalMinor: number }>('/api/v1/counter-sales', { addToSaleId: saleId, products }),
+    post<{ saleId: string; status: string; totalMinor: number; kot?: KitchenTicketDto }>('/api/v1/counter-sales', { addToSaleId: saleId, products }),
+  /** Jira GRW-713 — every KOT an order has had, oldest first, to print one again. */
+  saleKots: (saleId: string) => get<OrderKitchenTickets>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/kots`),
+  /** Jira GRW-713 — an issued document's own figures, laid out by the till for a thermal roll. */
+  documentTicket: (id: string) => get<DocumentTicket>(`/api/v1/documents/${encodeURIComponent(id)}/ticket`),
   assignClientToSale: (appointmentId: string, input: { customerId?: string; phone?: string; name?: string }) =>
     post<{ appointmentIds: string[]; customerId: string }>(`/api/v1/counter-sales/${appointmentId}/assign-client`, input),
   /**

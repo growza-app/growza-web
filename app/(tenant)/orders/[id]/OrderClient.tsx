@@ -9,6 +9,8 @@ import type { OrderDetail, ReturnSaleProductsResponse } from '../../lib/api-type
 import { PageHeader } from '../../components/PageHeader';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { DocumentAction } from '../../components/DocumentAction';
+import { PrinterButton, PrintStatusLine, useTicketPrinter } from '../../components/TicketPrinter';
+import { IconPrint } from '../../components/icons';
 import { ReturnProductSheet, type ReturnableSaleBill } from '../../sales/ReturnProductSheet';
 import { KNOWN_STATES } from '../../lib/orders-filter';
 import { useAreas, useSession, useWritable } from '../../components/SessionProvider';
@@ -52,6 +54,7 @@ export function OrderClient({
   returnWindowDays: number;
 }) {
   const t = useTranslations('orders');
+  const tPrint = useTranslations('print');
   const locale = useLocale();
   const writable = useWritable();
   // Restaurant QA 2026-10-24 — who the order is for, in the business's word (Guest, Customer).
@@ -60,6 +63,8 @@ export function OrderClient({
   // A kitchen keeps no count, so the API answers `restocked: false` for every return for want of a shelf: saying so
   // on the order would read as a write-off of a dish nobody wrote off.
   const counted = useAreas().stock;
+  // Jira GRW-713 — this device's printer: reprint the kitchen's tickets, print the bill on the roll.
+  const printer = useTicketPrinter();
   // A business with several branches: which one a counter order was rung up at. Each counts its tokens from 1.
   const branchContext = useBranch();
   const severalBranches = branchContext.ready && branchContext.multi;
@@ -453,6 +458,30 @@ export function OrderClient({
                     {t('detail.returnItems')}
                   </button>
                 ) : null}
+              </div>
+            ) : null}
+            {/*
+              Jira GRW-713 — the thermal roll. A kitchen's order can have its KOTs printed again (each marked REPRINT, so
+              the kitchen does not cook it twice); a paid bill with something on it can be printed for the guest.
+            */}
+            {(!counted && (isCounter || fromApp)) || (isPaidCounter && somethingKept) ? (
+              <div className="tp-actions">
+                <div className="tp-actions-row">
+                  {!counted && (isCounter || fromApp) ? (
+                    <button type="button" className="btn btn-ghost" disabled={printer.status.state === 'printing'} onClick={() => void printer.reprintKots(order.id)}>
+                      <IconPrint />
+                      {tPrint('reprintKot')}
+                    </button>
+                  ) : null}
+                  {isPaidCounter && somethingKept ? (
+                    <button type="button" className="btn btn-ghost" disabled={printer.status.state === 'printing'} onClick={() => void printer.printBill(order.id)}>
+                      <IconPrint />
+                      {tPrint('printBill')}
+                    </button>
+                  ) : null}
+                  <PrinterButton printer={printer} />
+                </div>
+                <PrintStatusLine printer={printer} />
               </div>
             ) : null}
           </section>

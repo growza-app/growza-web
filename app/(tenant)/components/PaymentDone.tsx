@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import Link from '../../shared/AppLink';
 import { DocumentAction } from './DocumentAction';
 import { useRouter } from 'next/navigation';
@@ -56,7 +58,10 @@ export function PaymentDone({
   onToggleSound,
   title,
   nextLabel,
+  printSlot,
 }: {
+  /** Jira GRW-713 — Print KOT and Print bill on the thermal roll, under the invoice action. A till that prints passes it. */
+  printSlot?: ReactNode;
   /** Owner, 2026-10-24 — said instead of "₹300 received" when no money was taken here (a delivery app's order). */
   title?: string;
   /** Optional custom label for the primary return button (e.g. "Back to queue" when settling a token in Queue). */
@@ -176,7 +181,12 @@ export function PaymentDone({
         phone={phone}
         compactPreview
         onNumberGiven={givenPhone ? undefined : keepClient}
-        afterSend={<DocumentAction visitKey={appointmentId} />}
+        afterSend={
+          <>
+            <DocumentAction visitKey={appointmentId} />
+            {printSlot}
+          </>
+        }
       />
       {kept ? (
         <p className={kept === 'failed' ? 'pf-error pf-kept' : 'pf-kept'} role="status">

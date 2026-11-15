@@ -63,7 +63,8 @@ describe('where on the Done screen the invoice button sits', () => {
   const receipt = readFileSync(resolve(__dirname, '../components/ReceiptShare.tsx'), 'utf8');
 
   it('under Send on WhatsApp and above Print, in the receipt’s own column — not in the grid under Next customer', () => {
-    expect(done).toMatch(/afterSend=\{<DocumentAction visitKey=\{appointmentId\} \/>\}/);
+    // Jira GRW-713 — the thermal print buttons ride in the same slot, under the invoice action.
+    expect(done).toMatch(/afterSend=\{\s*<>\s*<DocumentAction visitKey=\{appointmentId\} \/>\s*\{printSlot\}\s*<\/>\s*\}/);
     // It was half a button wide in the Done / Fix-a-mistake grid, under the fold on a phone: present and not findable.
     const minor = done.slice(done.indexOf('pf-done-minor'), done.indexOf('pf-sound'));
     expect(minor).not.toContain('<DocumentAction');

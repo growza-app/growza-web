@@ -1,0 +1,265 @@
+/*
+ * Jira GRW-713 — a KOT or a bill printed through the browser's print dialog, on a 58mm or 80mm roll.
+ *
+ * `printer.ts` puts the ticket on the page as `.tp-root`, marks the page `tp-printing`, and takes both away when the
+ * dialog closes. On screen the ticket is never seen. In print it is the only thing on the sheet — including over the
+ * older receipt copy (`.wi-receipt-print`), whose own rule would otherwise hide it.
+ */
+.tp-root {
+  display: none;
+}
+
+@media print {
+  html.tp-printing body > *:not(.tp-root) {
+    display: none !important;
+  }
+
+  html.tp-printing body > .tp-root {
+    display: block !important;
+    margin: 0;
+    padding: 2mm 1.5mm 6mm;
+    color: #000;
+    background: #fff;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, var(--font-devanagari, ui-sans-serif), monospace;
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+
+  html.tp-printing body > .tp-root.is-58 {
+    width: 58mm;
+  }
+
+  html.tp-printing body > .tp-root.is-80 {
+    width: 80mm;
+    font-size: 0.8125rem;
+  }
+
+  .tp-root .tp-text {
+    overflow-wrap: anywhere;
+  }
+
+  .tp-root .is-center {
+    text-align: center;
+  }
+
+  .tp-root .is-right {
+    text-align: right;
+  }
+
+  .tp-root .is-bold {
+    font-weight: 700;
+  }
+
+  .tp-root .is-big {
+    font-size: 1.5em;
+    line-height: 1.2;
+  }
+
+  /* Left and right on one line when both fit; when they do not, the right part drops under, still right-aligned,
+     and neither is squeezed into a word per line ("Cashier: County Chicken" beside a long bill number). */
+  .tp-root .tp-pair {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    column-gap: 2mm;
+  }
+
+  .tp-root .tp-pair > span:last-child {
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  .tp-root .tp-rule {
+    border-top: 1px dashed #000;
+    margin: 1.5mm 0;
+  }
+
+  .tp-root .tp-gap {
+    height: 1em;
+  }
+}
+
+/* The item table: Item · Qty. · Price · Amount. A 58mm roll drops the Price column, as the text print does. */
+@media print {
+  .tp-root .tp-item {
+    display: grid;
+    grid-template-columns: 1fr 3ch 8ch 8.5ch;
+    column-gap: 0.75ch;
+  }
+
+  .tp-root .tp-item > span:not(:first-child) {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .tp-root .tp-item > span:first-child {
+    overflow-wrap: anywhere;
+  }
+
+  .tp-root.is-58 .tp-item {
+    grid-template-columns: 1fr 3ch 8.5ch;
+  }
+
+  .tp-root.is-58 .tp-item .tp-price {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+ * On screen: the till's Printer button, the line that says what the last print did, and this device's settings.
+ * Laid out at 344px first; every control is at least 44px tall.
+ * ------------------------------------------------------------------------------------------------------------- */
+.tp-open {
+  min-height: 2.75rem;
+  gap: var(--sp-2);
+}
+
+.tp-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0;
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+
+.tp-status.is-failed {
+  color: var(--danger-deep);
+}
+
+.tp-retry {
+  min-height: 2.75rem;
+}
+
+.tp-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-height: calc(100dvh - 2 * var(--sp-4));
+  overflow-y: auto;
+}
+
+.tp-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0 var(--sp-4);
+  border: 0;
+}
+
+.tp-field legend {
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.tp-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.tp-seg > button {
+  min-height: 2.75rem;
+  border: 0;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-4);
+}
+
+.tp-seg > button.is-on {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.tp-paired {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  font-size: var(--fs-4);
+}
+
+.tp-hint {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+
+.tp-check {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 2.75rem;
+  font-size: var(--fs-4);
+}
+
+.tp-check input[type='checkbox'] {
+  width: 1.375rem;
+  height: 1.375rem;
+  flex: none;
+  order: 2;
+  accent-color: var(--accent);
+}
+
+.tp-check select {
+  min-height: 2.75rem;
+  font-size: 1rem;
+}
+
+.tp-actions {
+  margin: var(--sp-2) 0;
+}
+
+.tp-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.tp-actions-row > .btn {
+  flex: 1 1 9rem;
+  min-height: 2.75rem;
+  gap: var(--sp-2);
+}
+
+/* A phone's POS bar has no room for a word beside the tabs: the printer is its icon there, named for screen readers. */
+@media (max-width: 759px) {
+  .tp-open {
+    width: 2.75rem;
+    min-width: 2.75rem;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .tp-open-label {
+    display: none;
+  }
+
+  /* No room in a phone's POS bar beside Sell, Queue and Return: there it lives beside Print KOT and Print bill. */
+  .pos-bar .tp-open {
+    display: none;
+  }
+}
+
+.tp-actions-row > .tp-open {
+  flex: none;
+}
+
+.tp-sheet > .acct-form-actions,
+.tp-sheet > .tp-status {
+  padding: 0 var(--sp-4);
+}
+
+.tp-sheet > .acct-form-actions {
+  padding-bottom: var(--sp-4);
+}
