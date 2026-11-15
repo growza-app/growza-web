@@ -107,6 +107,33 @@
   text-decoration: none;
 }
 
+/* View the receipt, and WhatsApp's round mark beside it: one row. */
+.pf-doc.is-compact {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.pf-doc.is-compact > a.btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: var(--sp-1) var(--sp-2);
+  /* "View tax invoice · 2026-27/0012" is longer than a 344px row: it takes a second line rather than leaving the box. */
+  text-align: center;
+  line-height: 1.25;
+}
+.pf-doc.is-compact > .pf-doc-send {
+  flex: none;
+  width: 2.75rem;
+  min-width: 2.75rem;
+  height: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  border-radius: 50%;
+}
+.pf-doc.is-compact > .pf-error {
+  flex-basis: 100%;
+}
+
 .pf-doc .btn svg {
   width: 1.25rem;
   height: 1.25rem;

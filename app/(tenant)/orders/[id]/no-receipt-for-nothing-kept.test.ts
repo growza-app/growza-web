@@ -11,16 +11,17 @@ const order = readFileSync(new URL('./OrderClient.tsx', import.meta.url), 'utf8'
 describe('no receipt control for an order with nothing kept', () => {
   it('asks for the receipt only while something on the order was kept', () => {
     expect(order).toContain('const somethingKept = order.lines.some((l) => l.qty > l.returnedQty);');
-    // The row holding both controls is drawn only while something was kept.
-    expect(order).toContain('{somethingKept && (isPaidCounter || (returnable && canReturn)) ? (');
-    expect(order).toContain('{isPaidCounter ? <DocumentAction visitKey={order.id} primary /> : null}');
+    // Owner, 2026-11-16 — one block of the order's paper; every control in it asks the same question first.
+    expect(order).toContain('const canPrintBill = isCounter && isPaidCounter && somethingKept;');
+    expect(order).toContain('const showReceipt = isPaidCounter && somethingKept;');
+    expect(order).toContain('{showReceipt ? <DocumentAction visitKey={order.id} primary={!canPrintBill} compact /> : null}');
     expect(order.match(/<DocumentAction /g)).toHaveLength(1);
   });
 
   /** QA 2026-11-14 — nor "Return items" once every unit has come back: the sheet would open on nothing to give back. */
   it('offers Return items only inside that same row', () => {
-    const row = order.slice(order.indexOf('{somethingKept && (isPaidCounter'), order.indexOf("{t('detail.returnItems')}"));
-    expect(row).toContain('{returnable && canReturn ? (');
+    expect(order).toContain('const showReturn = somethingKept && Boolean(returnable && canReturn);');
+    expect(order).toContain('{showReturn ? (');
     expect(order.match(/t\('detail\.returnItems'\)/g)).toHaveLength(1);
   });
 });

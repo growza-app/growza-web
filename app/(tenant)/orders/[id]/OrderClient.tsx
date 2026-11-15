@@ -454,46 +454,50 @@ export function OrderClient({
               ))}
             </dl>
             {/*
-              * QA 2026-11-14 — and no Return items once every unit has come back: the sheet would open on nothing to give
-              * back. Both controls ask the same question (`somethingKept`), so a fully returned order draws neither, nor
-              * the empty row that held them.
+              * Owner, 2026-11-16 — "simplify this page": one block, three rows, in the order a counter reaches for them.
+              *   1. Print bill (filled) and the printer — plus Reprint KOT while the kitchen still has the order to make.
+              *      A finished order needs no KOT: the dish is cooked and gone.
+              *   2. The receipt: View it, and WhatsApp as its round mark beside it.
+              *   3. Return items, a quiet link: it moves money and is the rare act.
+              * QA 2026-11-14 — with every unit come back there is nothing to print, show or give back: no block at all.
               */}
-            {somethingKept && (isPaidCounter || (returnable && canReturn)) ? (
-              <div className="ord-d-paper">
-                {/* Owner's review 2026-11-13 — the receipt is the common action and is filled; a return moves money and is the ghost. */}
-                {isPaidCounter ? <DocumentAction visitKey={order.id} primary /> : null}
-                {returnable && canReturn ? (
-                  <button type="button" className="btn btn-ghost" onClick={() => setReturning(true)}>
-                    {t('detail.returnItems')}
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
-            {/*
-              Jira GRW-713 — the thermal roll. A kitchen's order can have its KOTs printed again (each marked REPRINT, so
-              the kitchen does not cook it twice); a paid bill with something on it can be printed for the guest.
-            */}
-            {(!counted && (isCounter || fromApp)) || (isCounter && isPaidCounter && somethingKept) ? (
-              <div className="tp-actions">
-                <div className="tp-actions-row">
-                  {!counted && (isCounter || fromApp) ? (
-                    <button type="button" className="btn btn-ghost" disabled={printer.status.state === 'printing'} onClick={() => void printer.reprintKots(order.id)}>
-                      <IconPrint />
-                      {tPrint('reprintKot')}
+            {(() => {
+              const canPrintBill = isCounter && isPaidCounter && somethingKept;
+              const canReprintKot = !counted && (isCounter || fromApp) && toSend;
+              const showReceipt = isPaidCounter && somethingKept;
+              const showReturn = somethingKept && Boolean(returnable && canReturn);
+              if (!canPrintBill && !canReprintKot && !showReceipt && !showReturn) return null;
+              return (
+                <div className="ord-d-paper">
+                  {canPrintBill || canReprintKot ? (
+                    <div className="tp-actions">
+                      <div className="tp-actions-row">
+                        {canPrintBill ? (
+                          <button type="button" className="btn" disabled={printer.status.state === 'printing'} onClick={() => void printer.printBill(order.id)}>
+                            <IconPrint />
+                            {tPrint('printBill')}
+                          </button>
+                        ) : null}
+                        {canReprintKot ? (
+                          <button type="button" className="btn btn-ghost" disabled={printer.status.state === 'printing'} onClick={() => void printer.reprintKots(order.id)}>
+                            <IconPrint />
+                            {tPrint('reprintKot')}
+                          </button>
+                        ) : null}
+                        <PrinterButton printer={printer} />
+                      </div>
+                      <PrintStatusLine printer={printer} />
+                    </div>
+                  ) : null}
+                  {showReceipt ? <DocumentAction visitKey={order.id} primary={!canPrintBill} compact /> : null}
+                  {showReturn ? (
+                    <button type="button" className="ord-d-return-link" onClick={() => setReturning(true)}>
+                      {t('detail.returnItems')}
                     </button>
                   ) : null}
-                  {/* A counter bill only: a delivery app bills its own guest, and a marketplace order is not printed at a till. */}
-                  {isCounter && isPaidCounter && somethingKept ? (
-                    <button type="button" className="btn btn-ghost" disabled={printer.status.state === 'printing'} onClick={() => void printer.printBill(order.id)}>
-                      <IconPrint />
-                      {tPrint('printBill')}
-                    </button>
-                  ) : null}
-                  <PrinterButton printer={printer} />
                 </div>
-                <PrintStatusLine printer={printer} />
-              </div>
-            ) : null}
+              );
+            })()}
           </section>
         ) : null}
 

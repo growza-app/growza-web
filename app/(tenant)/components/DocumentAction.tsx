@@ -37,8 +37,12 @@ type Preview = {
   issued: { id: string; number: string } | null;
 };
 
-/** `primary`: the make/view button filled rather than ghost — on a screen where the receipt is the main thing to do. */
-export function DocumentAction({ visitKey, primary = false }: { visitKey: string; primary?: boolean }) {
+/**
+ * `primary`: the make/view button filled rather than ghost — on a screen where the receipt is the main thing to do.
+ * `compact`: View and Send on one row, Send as WhatsApp's round mark named for screen readers (owner, 2026-11-16 — the
+ * order screen, as the paid screen's Send already is).
+ */
+export function DocumentAction({ visitKey, primary = false, compact = false }: { visitKey: string; primary?: boolean; compact?: boolean }) {
   const mainBtn = primary ? 'btn' : 'btn btn-ghost';
   const t = useTranslations('documents');
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -141,7 +145,7 @@ export function DocumentAction({ visitKey, primary = false }: { visitKey: string
   const title = t(`type.${preview.docType}`);
 
   return (
-    <div className="pf-doc">
+    <div className={`pf-doc${compact ? ' is-compact' : ''}`}>
       {issued ? (
         <>
           <a className={mainBtn} href={`/documents/${issued.id}`}>
@@ -149,9 +153,15 @@ export function DocumentAction({ visitKey, primary = false }: { visitKey: string
             {t('view', { title })} · {issued.number}
           </a>
           {summary ? (
-            <button type="button" className="btn btn-ghost" disabled={sharing} onClick={() => void send()}>
+            <button
+              type="button"
+              className={`btn btn-ghost${compact ? ' pf-doc-send' : ''}`}
+              disabled={sharing}
+              aria-label={compact ? t('shareTitle', { title }) : undefined}
+              onClick={() => void send()}
+            >
               <IconWhatsApp />
-              {sharing ? t('sharing') : t('shareTitle', { title })}
+              {compact ? null : sharing ? t('sharing') : t('shareTitle', { title })}
             </button>
           ) : null}
         </>

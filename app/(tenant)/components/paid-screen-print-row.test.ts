@@ -24,8 +24,9 @@ describe('Print KOT: when the order is placed, on the paid screen, and on the or
     expect(printer).toMatch(/printer\.printOrderKots\(saleId, false\)/);
   });
 
-  it('and Reprint KOT on the order screen', () => {
+  it('and Reprint KOT on the order screen — only while the kitchen still has it to make (owner, 2026-11-16)', () => {
     expect(order).toMatch(/printer\.reprintKots\(order\.id\)/);
+    expect(order).toContain('const canReprintKot = !counted && (isCounter || fromApp) && toSend;');
   });
 
   it('the row reads Print bill, then Print KOT, then the printer', () => {
