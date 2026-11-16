@@ -61,6 +61,8 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/products': 'both',
   '/products/[id]/codes': 'both',
   '/products/[id]/sizes': 'both',
+  // Jira GRW-712 — an item's add-on groups; drawn only where the business has add-ons (`me.capabilities.addons`).
+  '/products/[id]/choices': 'both',
   '/products/sell': 'both',
   '/providers': 'diary',
   '/providers/[id]': 'diary',

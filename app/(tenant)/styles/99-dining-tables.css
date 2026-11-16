@@ -137,3 +137,33 @@
 .dt-sc-rate .btn { min-height: 44px; }
 .tb-sc { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); padding: var(--sp-2) 0; }
 .tb-sc .btn { min-height: 44px; }
+
+/* Jira GRW-712 — a dish's choice sheet: portion and add-on groups as 44px chips, Add at the foot in thumb reach. */
+.dc-sheet { max-height: 88dvh; overflow-y: auto; }
+.dc-group { border: 0; margin: 0 0 var(--sp-3); padding: 0; min-width: 0; }
+.dc-group-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-2); padding: 0; margin-bottom: var(--sp-2); font-weight: 600; }
+.dc-rule { font-weight: 400; font-size: 0.8125rem; color: var(--muted); }
+.dc-need { font-weight: 600; font-size: 0.8125rem; color: var(--danger); }
+.dc-options { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.dc-option { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 0 var(--sp-3); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; max-width: 100%; }
+.dc-option-name { overflow-wrap: anywhere; text-align: left; }
+.dc-option-price { color: var(--muted); font-variant-numeric: tabular-nums; }
+.dc-option.is-on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.dc-option:disabled { opacity: 0.45; }
+.dc-foot { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); padding-top: var(--sp-3); background: var(--surface); }
+.dc-qty { display: flex; align-items: center; gap: var(--sp-2); }
+.dc-qty .btn { min-width: 44px; min-height: 44px; }
+.dc-qty-n { min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }
+.dc-add { flex: 1 1 10rem; min-height: 44px; }
+
+/* Jira GRW-712 — an item's choices editor. */
+.dc-editor { display: flex; flex-direction: column; gap: var(--sp-3); }
+.dc-group-list, .dc-option-rows { list-style: none; margin: 0 0 var(--sp-3); padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.dc-group-row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); padding: var(--sp-2) 0; border-bottom: 1px solid var(--border); }
+.dc-check { display: flex; align-items: flex-start; gap: var(--sp-2); min-height: 44px; min-width: 0; }
+.dc-check input { width: 22px; height: 22px; margin-top: 2px; flex: none; }
+.dc-group-sum { display: block; overflow-wrap: anywhere; }
+.dc-draft .card-body { display: flex; flex-direction: column; gap: var(--sp-3); }
+.dc-option-row { display: grid; grid-template-columns: minmax(0, 1fr) 6rem auto; gap: var(--sp-2); align-items: center; }
+.dc-option-row input { min-height: 44px; font-size: 16px; min-width: 0; }
+.dc-option-row .btn, .dc-group-row .btn { min-height: 44px; }

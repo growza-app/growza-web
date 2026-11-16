@@ -238,6 +238,8 @@ export interface Me {
     tables?: boolean;
     /** Jira GRW-598 — whether sizes are switched on for this business (the `sizes` flag). Absent reads as no: it ships off. */
     sizes?: boolean;
+    /** Jira GRW-712 — items carry add-ons (Extras, Spice) and portions. Absent reads as no. */
+    addons?: boolean;
     providerSelection: boolean;
     maxProviders: number;
   };
@@ -2362,4 +2364,28 @@ export interface DocumentTicket {
   /** Jira GRW-720 · GRW-719 — printed on the bill beside the date. Absent from an older API. */
   orderType?: OrderType | null;
   tableName?: string | null;
+}
+
+/** Jira GRW-712 — an add-on group (Extras, Spice) and its priced choices. */
+export interface AddonOption {
+  id: string;
+  name: string;
+  priceMinor: number;
+}
+export interface AddonGroup {
+  id: string;
+  name: string;
+  pick: 'one' | 'many';
+  required: boolean;
+  minPicks: number;
+  maxPicks: number;
+  options: AddonOption[];
+}
+export interface AddonGroupInput {
+  name: string;
+  pick: 'one' | 'many';
+  required: boolean;
+  minPicks?: number;
+  maxPicks?: number;
+  options: Array<{ name: string; priceMinor: number }>;
 }

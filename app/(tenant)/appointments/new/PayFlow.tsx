@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError, formatMoney } from '../../lib/api';
 import { fixVisitHref, nextCustomerHref } from '../../lib/pay-token';
-import type { Appointment, Offer, PaymentMode, Product, ProductCategory, Provider, Service, TillSize } from '../../lib/api-types';
+import type { AddonGroup, Appointment, Offer, PaymentMode, Product, ProductCategory, Provider, Service, TillSize } from '../../lib/api-types';
 import type { QueueEntry } from '../../lib/home-types';
 import { receiptRows, type ReceiptRow } from '../../lib/receipt-text';
 import { displayPhone } from '../../lib/phone';
@@ -38,6 +38,8 @@ import { useBarcodeScan } from '../../lib/barcode-scan';
 import { planScans, type ScanProblem } from '../../lib/scan-plan';
 import { canAddSize, groupProductLines, hasSizes, productLineKey, sizedName, sizePriceMinor } from '../../lib/till-sizes';
 import { SizeSheet } from './SizeSheet';
+import { ChoiceSheet, type DishChoice } from './ChoiceSheet';
+import { useAddonsOn } from '../../components/SessionProvider';
 import { AppOrderNoSheet } from './AppOrderNoSheet';
 import { queueScan, takeScans } from '../../lib/scan-queue';
 import { heldBillsKey, heldStamp, loadHeldBills, saveHeldBills } from '../../lib/held-bills';
@@ -665,6 +667,23 @@ export function PayFlow({
     lines.filter((l) => l.product?.id === productId && (variantId === undefined || l.product.variantId === variantId)).length;
   /** Jira GRW-599 — the product whose sizes are open in the size sheet. Its sizes are the ones the till already read. */
   const [sizing, setSizing] = useState<string | null>(null);
+  /*
+   * Jira GRW-712 — a dish's add-on groups (Extras, Spice), read once for the till; `choosing` is the dish whose choice sheet is open.
+   * A business with no add-ons never asks.
+   */
+  const addonsOn = useAddonsOn();
+  const [addonGroups, setAddonGroups] = useState<{ groups: AddonGroup[]; products: Record<string, string[]> } | null>(null);
+  const [choosing, setChoosing] = useState<string | null>(null);
+  useEffect(() => {
+    if (!addonsOn || !productsOnly) return;
+    let live = true;
+    void api.addonGroups().then((a) => live && setAddonGroups(a)).catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [addonsOn, productsOnly]);
+  const groupsOf = (productId: string): AddonGroup[] =>
+    (addonGroups?.products[productId] ?? []).map((id) => addonGroups!.groups.find((g) => g.id === id)).filter((g): g is AddonGroup => Boolean(g));
   // Hooks stay above every early return below (done, qr, how): a sale that ends on one of them must not change the hook count.
   const noneCount = useMemo(() => products.filter((p) => p.categoryId === null).length, [products]);
   /*
@@ -721,14 +740,30 @@ export function PayFlow({
     setOverride(null);
   };
   /** Owner, 2026-10-14 — a product on the bill: one line per unit, so "tap again for a second one" holds. */
-  const addProduct = (p: Product, size?: TillSize) => {
+  const addProduct = (p: Product, size?: TillSize, again?: Line) => {
+    // Jira GRW-712 FR-05 — "+" on a line with choices repeats exactly those choices.
+    if (again?.product?.addons && again.product.addons.length > 0) {
+      if (full) {
+        felt(BUZZ.tooMany);
+        return;
+      }
+      felt(BUZZ.added);
+      setLines((prev) => [...prev, { ...again, override: undefined } as Line]);
+      setOverride(null);
+      return;
+    }
+    // Jira GRW-712 — a dish with add-on groups asks for its choices (and its portion) in one sheet.
+    if (!size && groupsOf(p.id).length > 0) {
+      setChoosing(p.id);
+      return;
+    }
     // Jira GRW-599 — a product with sizes is not one thing to ring up: the size sheet opens, and a size goes on from there.
     if (!size && hasSizes(p)) {
       setSizing(p.id);
       return;
     }
     if (size) {
-      if (full || !canAddSize(size, productCountOf(p.id, size.id))) {
+      if (full || !canAddSize(size, productCountOf(p.id, size.id), counted)) {
         felt(BUZZ.tooMany);
         return;
       }
@@ -744,6 +779,25 @@ export function PayFlow({
     felt(BUZZ.added);
     setLines((prev) => [...prev, { serviceId: '', name: p.name, priceMinor: Number(p.priceMinor ?? 0), product: { id: p.id } }]);
     setOverride(null);
+  };
+  /** Jira GRW-712 — the choice sheet's Add: `qty` lines of the dish with its portion and add-ons, named and priced with them. */
+  const addChoice = (p: Product, choice: DishChoice, qty: number) => {
+    const room = Math.max(0, MAX_LINES - lines.length);
+    const n = Math.min(qty, room);
+    if (n === 0) {
+      felt(BUZZ.tooMany);
+      return;
+    }
+    felt(BUZZ.added);
+    const line: Line = {
+      serviceId: '',
+      name: choice.name,
+      priceMinor: choice.unitMinor,
+      product: { id: p.id, ...(choice.size ? { variantId: choice.size.id } : {}), ...(choice.addons.length > 0 ? { addons: choice.addons } : {}) },
+    };
+    setLines((prev) => [...prev, ...Array.from({ length: n }, () => ({ ...line }))]);
+    setOverride(null);
+    setChoosing(null);
   };
   /**
    * Owner, 2026-10-19 — a scan adds the product wherever the cursor is. A code that names no single product says so
@@ -2445,8 +2499,17 @@ export function PayFlow({
             {dialog}
           </aside>
         </div>
+        {choosing !== null && products.some((p) => p.id === choosing) ? (
+          <ChoiceSheet
+            product={products.find((p) => p.id === choosing)!}
+            groups={groupsOf(choosing)}
+            onAdd={(choice, qty) => addChoice(products.find((p) => p.id === choosing)!, choice, qty)}
+            onClose={() => setChoosing(null)}
+          />
+        ) : null}
         {sizing !== null && products.some((p) => p.id === sizing) ? (
           <SizeSheet
+            counted={counted}
             product={products.find((p) => p.id === sizing)!}
             onBill={(variantId) => productCountOf(sizing, variantId)}
             full={full}
@@ -2888,8 +2951,17 @@ export function PayFlow({
           onClose={() => setBillOpen(false)}
         />
       ) : null}
+      {choosing !== null && products.some((p) => p.id === choosing) ? (
+        <ChoiceSheet
+          product={products.find((p) => p.id === choosing)!}
+          groups={groupsOf(choosing)}
+          onAdd={(choice, qty) => addChoice(products.find((p) => p.id === choosing)!, choice, qty)}
+          onClose={() => setChoosing(null)}
+        />
+      ) : null}
       {sizing !== null && products.some((p) => p.id === sizing) ? (
         <SizeSheet
+          counted={counted}
           product={products.find((p) => p.id === sizing)!}
           onBill={(variantId) => productCountOf(sizing, variantId)}
           full={full}

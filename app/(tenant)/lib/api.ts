@@ -202,8 +202,7 @@ import type {
   StockTakeResult,
   MovementKind,
   ManualMovementKind,
-  VisitRewards,
-} from './api-types';
+  VisitRewards, AddonGroup, AddonGroupInput } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, ShopDaySummary, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
 
@@ -713,6 +712,13 @@ export const api = {
   tableOrders: () => get<{ branches: BranchTableOrders[] }>('/api/v1/settings/table-orders'),
   /** Switching off is refused (409) while a table at that branch has an open bill; the message says how many. */
   setTableOrders: (branchId: string, on: boolean) => put<{ branches: BranchTableOrders[] }>(`/api/v1/settings/table-orders/${branchId}`, { on }),
+  /** Jira GRW-712 — the add-on groups, and which items offer which (`products: { productId: [groupId, …] }`). */
+  addonGroups: () => get<{ groups: AddonGroup[]; products: Record<string, string[]> }>('/api/v1/addon-groups'),
+  saveAddonGroup: (id: string | null, body: AddonGroupInput) =>
+    id ? patch<{ id: string; groups: AddonGroup[] }>(`/api/v1/addon-groups/${id}`, body) : post<{ id: string; groups: AddonGroup[] }>('/api/v1/addon-groups', body),
+  removeAddonGroup: (id: string) => del<{ groups: AddonGroup[] }>(`/api/v1/addon-groups/${id}`),
+  setProductAddonGroups: (productId: string, groupIds: string[]) =>
+    put<{ productId: string; groupIds: string[] }>(`/api/v1/products/${encodeURIComponent(productId)}/addon-groups`, { groupIds }),
   /** Jira GRW-724 — the owner offers a service charge at a branch, at a rate (0–20%). Offered, never added by itself. */
   setServiceChargeOffer: (branchId: string, on: boolean, ratePercent: number) =>
     put<{ branches: BranchTableOrders[] }>(`/api/v1/settings/service-charge/${branchId}`, { on, ratePercent }),
