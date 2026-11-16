@@ -4516,6 +4516,7 @@
     "token": "#{n}",
     "order": "Order",
     "minutes": "{min} min",
+    "justNow": "Just now",
     "lateFor": "Late · {min} min",
     "new": "New",
     "cancelled": "Taken off",

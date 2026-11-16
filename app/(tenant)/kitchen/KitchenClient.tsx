@@ -22,6 +22,8 @@ const UNDO_MS = 10_000;
 const CHIME_KEY = 'growza.kitchen.chime';
 
 export const minutesSince = (iso: string, nowMs: number): number => Math.max(0, Math.floor((nowMs - Date.parse(iso)) / 60_000));
+/** Which words a card's age is said in: "Just now" in its first minute, never "0 min". */
+export const ageKey = (late: boolean, mins: number): 'lateFor' | 'justNow' | 'minutes' => (late ? 'lateFor' : mins === 0 ? 'justNow' : 'minutes');
 
 export function KitchenClient() {
   const t = useTranslations('kitchen');
@@ -167,7 +169,7 @@ export function KitchenClient() {
                 <div className="kd-card-head">
                   <span className="kd-card-label">{labelOf(c)}</span>
                   <span className="kd-card-type">{c.orderType ? t(`type.${c.orderType}`) : ''}</span>
-                  <span className="kd-card-age">{c.late ? t('lateFor', { min: mins }) : t('minutes', { min: mins })}</span>
+                  <span className="kd-card-age">{t(ageKey(c.late, mins), { min: mins })}</span>
                 </div>
                 <ul className="kd-dishes">
                   {c.dishes.map((d) => (

@@ -4516,6 +4516,7 @@
     "token": "#{n}",
     "order": "ऑर्डर",
     "minutes": "{min} मिनट",
+    "justNow": "अभी",
     "lateFor": "देर · {min} मिनट",
     "new": "नया",
     "cancelled": "हटाया गया",

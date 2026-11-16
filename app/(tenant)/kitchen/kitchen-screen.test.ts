@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
-import { KITCHEN_REFRESH_MS, minutesSince } from './KitchenClient';
+import { KITCHEN_REFRESH_MS, ageKey, minutesSince } from './KitchenClient';
 import { canSee } from '../lib/nav-policy';
 import { cooksOnly, type Areas } from '../lib/areas';
 
@@ -16,6 +16,12 @@ describe('AC-01 — new orders arrive on their own', () => {
   it('within 5 s: the screen asks every 4', () => {
     expect(KITCHEN_REFRESH_MS).toBeLessThanOrEqual(5_000);
   });
+  it('a new order says "Just now", not "0 min"; a late one always says late', () => {
+    expect(ageKey(false, 0)).toBe('justNow');
+    expect(ageKey(false, 1)).toBe('minutes');
+    expect(ageKey(true, 0)).toBe('lateFor');
+  });
+
   it('age in minutes since the order came in', () => {
     expect(minutesSince('2026-11-16T10:00:00Z', Date.parse('2026-11-16T10:17:30Z'))).toBe(17);
   });
@@ -33,7 +39,8 @@ describe('AC-02 · BR-02 — Ready, and Undo for 10 s', () => {
     expect(screen).toContain('const UNDO_MS = 10_000;');
   });
   it('late says so in words, not colour alone', () => {
-    expect(screen).toContain("c.late ? t('lateFor', { min: mins })");
+    expect(screen).toContain('t(ageKey(c.late, mins), { min: mins })');
+    expect(ageKey(true, 20)).toBe('lateFor');
   });
 });
 
