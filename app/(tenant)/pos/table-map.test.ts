@@ -56,7 +56,7 @@ describe('a table’s bill on the till', () => {
 
   it('only the owner and a manager may take a dish off; it asks why', () => {
     expect(flow).toContain("canManage={role === 'owner' || role === 'manager'}");
-    expect(sheet).toContain('{canManage && !l.cancelReason ? (');
+    expect(sheet).toContain('{canManage && !l.cancelReason && !moving ? (');
     expect(sheet).toContain("disabled={busy || takingOff.reason.trim() === ''}");
   });
 
@@ -69,7 +69,7 @@ describe('a table’s bill on the till', () => {
   });
 
   it('the till sends a table’s order with the table, and says “Send to kitchen”', () => {
-    expect(flow).toContain('? { tableId: atTable.id, ...(guests ? { guests } : {}) }');
+    expect(flow).toContain('? { tableId: atTable.id, ...(atTable.billId ? { tableBillId: atTable.billId } : {}), ...(guests ? { guests } : {}) }');
     expect(flow).toContain("atTable ? tTables('sendToKitchen') : t('desk.keepPendingInQueue')");
   });
 
@@ -95,5 +95,42 @@ describe('Jira GRW-722 — move a party, join two tables', () => {
       expect(hi.posTables[k]).toBeTruthy();
     }
     expect(en.posTables.moveHint).toMatch(/Nothing goes to the kitchen again/);
+  });
+});
+
+const ordersList = readFileSync(join(__dirname, '../orders/OrdersClient.tsx'), 'utf8');
+const discounts = readFileSync(join(__dirname, '../reports/money/DiscountReport.tsx'), 'utf8');
+
+describe('QA 2026-11-16 — the dine-in run’s fixes on the till', () => {
+  it('#9 — on the phone a kitchen’s order says Dine-in and its table, not just Counter', () => {
+    expect(ordersList).toContain("? [typeWord(r.orderType), r.tableName].filter(Boolean).join(' · ')\n                                : channelWord(r.channel)");
+  });
+
+  it('#10 — Discounts & free shows dishes taken off after cooking, in both languages', () => {
+    expect(discounts).toContain("d('takenOffTitle', { value: f.money(r.takenOff.totalMinor) })");
+  });
+
+  it('#5 — the banner says what happened: only an order sent to the kitchen says "Sent to kitchen"', () => {
+    expect(flow).toContain("setTableSent(tTables('sent', { table: atTable.label }));");
+    expect(flow).not.toContain("tTables('sent', { table: tableSent })");
+    expect(en.posTables.paidOk).not.toMatch(/kitchen/i);
+  });
+
+  it('#7 — a picked table waits for one confirm; a join says it cannot be undone', () => {
+    expect(sheet).toContain('onClick={() => setPicked(x)}');
+    expect(sheet).toContain('onClick={() => void moveTo(picked)}');
+    expect(en.posTables.confirmJoinLine).toMatch(/cannot be undone/);
+    for (const k of ['confirmMoveTitle', 'confirmMoveLine', 'confirmJoinTitle', 'confirmJoinLine', 'back', 'billLoading'] as const) {
+      expect(en.posTables[k]).toBeTruthy();
+      expect(hi.posTables[k]).toBeTruthy();
+    }
+  });
+
+  it('#11 — the bill sheet says it is loading the bill, not the tables', () => {
+    expect(sheet).toContain("{order === null && !error ? <p className=\"field-hint\">{t('billLoading')}</p> : null}");
+  });
+
+  it('a round from the bill sheet names the bill, so a bill that moved meanwhile is refused', () => {
+    expect(flow).toContain('...(billOf.table.openBill ? { billId: billOf.table.openBill.saleId } : {})');
   });
 });

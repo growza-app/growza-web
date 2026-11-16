@@ -124,3 +124,6 @@
 .tb-move { display: flex; flex-direction: column; gap: var(--sp-2); }
 .tb-move-name { margin: var(--sp-2) 0 var(--sp-1); font-size: 0.875rem; font-weight: 600; color: var(--muted); }
 .tb-move-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: var(--sp-2); }
+.tb-confirm { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-3); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.tb-confirm-title { margin: 0; font-weight: 600; }
+.tb-move-grid .tm-tile[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }

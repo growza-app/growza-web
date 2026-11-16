@@ -4504,7 +4504,13 @@
     "moveTo": "Move to {table}",
     "joinTo": "Join {table}, {amount}",
     "movedOk": "{from} moved to {to}.",
-    "joinedOk": "{from} joined {to}. One bill now."
+    "joinedOk": "{from} joined {to}. One bill now.",
+    "billLoading": "Loading the bill…",
+    "confirmMoveTitle": "Move {from} to {to}?",
+    "confirmMoveLine": "The bill ({amount}) goes with the guests to {to}. The kitchen is not told again.",
+    "confirmJoinTitle": "Join {from} with {to}?",
+    "confirmJoinLine": "One bill of {amount} on {to}. This cannot be undone.",
+    "back": "Back"
   },
   "pos": {
     "modes": "POS",
@@ -5521,7 +5527,9 @@
       "billLine": "Price {list} · charged {charged}",
       "freeTag": "Free",
       "freeItemsTitle": "Given free",
-      "freeItemLine": "{qty} × · {value}"
+      "freeItemLine": "{qty} × · {value}",
+      "takenOffTitle": "Taken off after cooking · {value}",
+      "takenOffHint": "Dishes the kitchen had already been sent, then taken off a bill by the owner or a manager."
     },
     "payments": {
       "title": "Payments",

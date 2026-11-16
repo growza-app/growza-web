@@ -2272,6 +2272,8 @@ export interface DiscountReportPage {
   byDay: Array<{ dateISO: string; belowMinor: number; bills: number }>;
   bills: Array<{ id: string; soldAtISO: string; tokenNo: number | null; listMinor: number; chargedMinor: number; belowMinor: number; free: boolean }>;
   freeItems: Array<{ name: string; qty: number; listMinor: number }>;
+  /** Jira GRW-721 — dishes taken off a bill after the kitchen had them: waste. Absent from an older API. */
+  takenOff?: { totalMinor: number; qty: number; items: Array<{ name: string; qty: number; listMinor: number }> };
 }
 
 export type MoneyPaymentMode = 'cash' | 'upi' | 'card' | 'other' | 'not_recorded';

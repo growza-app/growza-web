@@ -354,7 +354,13 @@ export function OrdersClient({
                           <span className="ord-card-mid">
                             <span>{timeOf(r.soldAt)}</span>
                             <span aria-hidden="true">·</span>
-                            <span>{channelWord(r.channel)}</span>
+                            {/* QA 2026-11-16 — on the phone a kitchen's order says how it is eaten and where ("Dine-in · T5 ·
+                                AC Hall"), as the desktop table does; it said only "Counter", so a table's bill could not be told apart. */}
+                            <span>
+                              {kitchen && r.orderType && r.orderType !== 'delivery'
+                                ? [typeWord(r.orderType), r.tableName].filter(Boolean).join(' · ')
+                                : channelWord(r.channel)}
+                            </span>
                             <span aria-hidden="true">·</span>
                             <span>{allCameBack(r) ? t('list.itemsAllBack', { count: r.itemsSold }) : t('list.itemCount', { count: r.items })}</span>
                             {branchOf(r.locationId) ? (

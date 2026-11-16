@@ -269,10 +269,12 @@ export function PayFlow({
    * puts the dishes on that table's bill (a new one, or the round onto the one running). The bill of a busy table
    * opens in a sheet over the map. `mapKey` makes the map read again the moment the till changed something.
    */
-  const [atTable, setAtTable] = useState<{ id: string; label: string } | null>(null);
+  /** The table being ordered for; `billId` when the till opened its bill to add a round (QA 2026-11-16: refused if it moved). */
+  const [atTable, setAtTable] = useState<{ id: string; label: string; billId?: string } | null>(null);
   const [guests, setGuests] = useState<number | null>(null);
   const [billOf, setBillOf] = useState<{ table: DiningTable; area: string } | null>(null);
   const [mapKey, setMapKey] = useState(0);
+  /** What the till just did at a table, said in full: "Sent to kitchen · T3", "T3 paid · ₹640", "T1 moved to T3." */
   const [tableSent, setTableSent] = useState<string | null>(null);
   const tTables = useTranslations('posTables');
   const providerNoun = useLabel('provider', 'Staff member');
@@ -1065,7 +1067,7 @@ export function PayFlow({
               ...(token || !location ? {} : { location }),
               // Jira GRW-720 — how it is eaten; an app's order is a delivery by where it came from and names none.
               ...(atTable
-                ? { tableId: atTable.id, ...(guests ? { guests } : {}) }
+                ? { tableId: atTable.id, ...(atTable.billId ? { tableBillId: atTable.billId } : {}), ...(guests ? { guests } : {}) }
                 : tablesHere && !fromApp
                   ? { orderType: orderTab === 'dine_in' ? ('dine_in' as const) : ('takeaway' as const) }
                   : {}),
@@ -1119,7 +1121,7 @@ export function PayFlow({
       // Jira GRW-721 — sent to a table: back to the map, which reads again and shows the table busy.
       if (pending && atTable) {
         nextCustomer();
-        setTableSent(atTable.label);
+        setTableSent(tTables('sent', { table: atTable.label }));
         setAtTable(null);
         setGuests(null);
         setMapKey((k) => k + 1);
@@ -2076,7 +2078,7 @@ export function PayFlow({
         {typeRow}
         {tableSent ? (
           <p className="pf-table-sent" role="status">
-            {tTables('sent', { table: tableSent })}
+            {tableSent}
           </p>
         ) : null}
         <TableMap
@@ -2100,7 +2102,7 @@ export function PayFlow({
             canManage={role === 'owner' || role === 'manager'}
             printer={printer}
             onAddDishes={() => {
-              setAtTable({ id: billOf.table.id, label: `${billOf.table.name} · ${billOf.area}` });
+              setAtTable({ id: billOf.table.id, label: `${billOf.table.name} · ${billOf.area}`, ...(billOf.table.openBill ? { billId: billOf.table.openBill.saleId } : {}) });
               setBillOf(null);
             }}
             onDone={(said) => {

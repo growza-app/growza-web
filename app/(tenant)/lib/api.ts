@@ -1602,6 +1602,8 @@ export const api = {
       orderType?: 'dine_in' | 'takeaway';
       /** Jira GRW-721 — the table: a new bill on a free table, or a round onto its open one. */
       tableId?: string;
+      /** QA 2026-11-16 — the bill a round is for; refused if the table no longer has it. */
+      tableBillId?: string;
       guests?: number;
       /** Jira GRW-403 — paying a waiting token: the server takes its client and branch from it. */
       queueEntryId?: string;

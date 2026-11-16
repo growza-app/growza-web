@@ -55,6 +55,8 @@ export function TableBillSheet({
   const [takingOff, setTakingOff] = useState<{ lineId: string; name: string; reason: string } | null>(null);
   /** Move table: the room as it is now (null = not open; [] while it loads). */
   const [moving, setMoving] = useState<DiningArea[] | null>(null);
+  /** The table picked, waiting for the one confirm: a mis-tap must not move a party, and a join cannot be undone. */
+  const [picked, setPicked] = useState<DiningTable | null>(null);
 
   const openMove = () =>
     void run(async () => {
@@ -118,7 +120,7 @@ export function TableBillSheet({
           </button>
         </div>
 
-        {order === null && !error ? <p className="field-hint">{t('loading')}</p> : null}
+        {order === null && !error ? <p className="field-hint">{t('billLoading')}</p> : null}
         {order ? (
           <>
             <ul className="tb-lines">
@@ -129,7 +131,7 @@ export function TableBillSheet({
                     {l.cancelReason ? <span className="tb-off">{t('takenOff', { reason: l.cancelReason })}</span> : null}
                   </span>
                   <span className="tb-line-amount">{money(Number(l.paidMinor ?? 0) - Number(l.returnedMinor ?? 0))}</span>
-                  {canManage && !l.cancelReason ? (
+                  {canManage && !l.cancelReason && !moving ? (
                     <button type="button" className="btn btn-ghost tb-off-btn" disabled={busy} onClick={() => setTakingOff({ lineId: l.id, name: l.name, reason: '' })}>
                       {t('takeOff')}
                     </button>
@@ -169,6 +171,26 @@ export function TableBillSheet({
               <div className="tb-move" role="group" aria-label={t('moveTitle', { table: table.name })}>
                 <p className="field-hint">{t('moveHint')}</p>
                 {moving.length === 0 ? <p className="field-hint">{t('loading')}</p> : null}
+                {picked ? (
+                  <div className="tb-confirm" role="alertdialog" aria-label={picked.openBill ? t('confirmJoinTitle', { from: table.name, to: picked.name }) : t('confirmMoveTitle', { from: table.name, to: picked.name })}>
+                    <p className="tb-confirm-title">
+                      {picked.openBill ? t('confirmJoinTitle', { from: table.name, to: picked.name }) : t('confirmMoveTitle', { from: table.name, to: picked.name })}
+                    </p>
+                    <p className="field-hint">
+                      {picked.openBill
+                        ? t('confirmJoinLine', { to: picked.name, amount: money(totalMinor + picked.openBill.totalMinor) })
+                        : t('confirmMoveLine', { to: picked.name, amount: money(totalMinor) })}
+                    </p>
+                    <div className="dt-actions">
+                      <button type="button" className="btn" disabled={busy} onClick={() => void moveTo(picked)}>
+                        {picked.openBill ? t('join') : t('moveHere')}
+                      </button>
+                      <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => setPicked(null)}>
+                        {t('back')}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
                 {moving.map((area) => {
                   const others = area.tables.filter((x) => x.id !== table.id);
                   return others.length === 0 ? null : (
@@ -181,8 +203,9 @@ export function TableBillSheet({
                             type="button"
                             className={`tm-tile ${x.openBill ? 'is-ordering' : 'is-free'}`}
                             disabled={busy}
+                            aria-pressed={picked?.id === x.id}
                             aria-label={x.openBill ? t('joinTo', { table: x.name, amount: money(x.openBill.totalMinor) }) : t('moveTo', { table: x.name })}
-                            onClick={() => void moveTo(x)}
+                            onClick={() => setPicked(x)}
                           >
                             <span className="tm-name">{x.name}</span>
                             <span className="tm-state">{x.openBill ? t('join') : t('moveHere')}</span>
@@ -193,7 +216,7 @@ export function TableBillSheet({
                     </section>
                   );
                 })}
-                <button type="button" className="btn btn-ghost" onClick={() => setMoving(null)}>
+                <button type="button" className="btn btn-ghost" onClick={() => { setMoving(null); setPicked(null); }}>
                   {t('cancel')}
                 </button>
               </div>

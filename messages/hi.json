@@ -4504,7 +4504,13 @@
     "moveTo": "{table} पर ले जाएँ",
     "joinTo": "{table} से जोड़ें, {amount}",
     "movedOk": "{from} अब {to} पर है।",
-    "joinedOk": "{from} को {to} से जोड़ दिया। अब एक बिल है।"
+    "joinedOk": "{from} को {to} से जोड़ दिया। अब एक बिल है।",
+    "billLoading": "बिल खुल रहा है…",
+    "confirmMoveTitle": "{from} को {to} पर ले जाएँ?",
+    "confirmMoveLine": "बिल ({amount}) मेहमानों के साथ {to} पर जाएगा। किचन को दोबारा नहीं भेजा जाएगा।",
+    "confirmJoinTitle": "{from} को {to} से जोड़ें?",
+    "confirmJoinLine": "{to} पर {amount} का एक बिल बनेगा। यह वापस नहीं होगा।",
+    "back": "वापस"
   },
   "pos": {
     "modes": "पीओएस",
@@ -5521,7 +5527,9 @@
       "billLine": "दाम {list} · लिया {charged}",
       "freeTag": "मुफ़्त",
       "freeItemsTitle": "मुफ़्त दिया गया",
-      "freeItemLine": "{qty} × · {value}"
+      "freeItemLine": "{qty} × · {value}",
+      "takenOffTitle": "बनने के बाद हटाए गए · {value}",
+      "takenOffHint": "जो डिश किचन को भेजी जा चुकी थी, फिर मालिक या मैनेजर ने बिल से हटा दी।"
     },
     "payments": {
       "title": "भुगतान",

@@ -31,7 +31,7 @@ describe('what is chosen and sent (AC-01 · BR-04)', () => {
     expect(flow).toContain("? { orderType: orderTab === 'dine_in' ? ('dine_in' as const) : ('takeaway' as const) }");
     expect(flow).toContain('tablesHere && !fromApp');
     // Jira GRW-721 — an order for a table names the table instead: the server makes it dine-in.
-    expect(flow).toContain('? { tableId: atTable.id, ...(guests ? { guests } : {}) }');
+    expect(flow).toContain('? { tableId: atTable.id, ...(atTable.billId ? { tableBillId: atTable.billId } : {}), ...(guests ? { guests } : {}) }');
   });
 
   it('the kitchen slip is told the same type the server stored', () => {

@@ -33,6 +33,10 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Pick a different table.': 'कोई दूसरी टेबल चुनें।',
   'Pick the table to move to': 'वह टेबल चुनें जहाँ ले जाना है',
   'Pick the table to join': 'वह टेबल चुनें जिससे जोड़ना है',
+  // QA 2026-11-16
+  'A takeaway order is not for a table': 'पैक करके ले जाने वाला ऑर्डर टेबल पर नहीं होता',
+  'A table pays when the guests ask for the bill, not with the order': 'टेबल का बिल तब चुकता होता है जब मेहमान बिल माँगें, ऑर्डर के साथ नहीं',
+  'This table’s bill has moved, joined another table or been paid. Open the table again.': 'इस टेबल का बिल दूसरी टेबल पर चला गया, जुड़ गया या चुकता हो गया। टेबल फिर से खोलें।',
   'That table is not at this branch.': 'यह टेबल इस ब्रांच में नहीं है।',
   'That table is at another branch.': 'यह टेबल दूसरी ब्रांच की है।',
   // Jira GRW-720 — how an order is eaten.
