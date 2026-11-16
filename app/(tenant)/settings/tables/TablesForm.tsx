@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import Link from '../../../shared/AppLink';
 import { useState } from 'react';
 import { api, ApiError, type BranchTableOrders } from '../../lib/api';
 import { useWritable } from '../../components/SessionProvider';
@@ -16,8 +17,11 @@ import { useWritable } from '../../components/SessionProvider';
  * state the server did not accept.
  *
  * The rows reuse Phone alerts' switch rows (`al-list`, `al-row`) rather than a second copy of the same layout.
+ *
+ * Jira GRW-719 — a branch that is on leads to its room ("Set up tables ›"). A manager sees only those links: they
+ * set rooms up, but the switches are the owner's (`canSwitch`).
  */
-export function TablesForm({ initial }: { initial: BranchTableOrders[] | null }) {
+export function TablesForm({ initial, canSwitch }: { initial: BranchTableOrders[] | null; canSwitch: boolean }) {
   const t = useTranslations('settingsTables');
   const writable = useWritable();
   const [branches, setBranches] = useState(initial);
@@ -49,15 +53,25 @@ export function TablesForm({ initial }: { initial: BranchTableOrders[] | null })
   };
 
   const one = branches.length === 1;
+  if (!canSwitch && branches.length === 0) {
+    return (
+      <div className="card">
+        <div className="card-body">
+          <p className="field-hint">{t('noneOnForManager')}</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="card al-alerts">
       <div className="card-body">
-        <p className="field-hint al-intro">{t('intro')}</p>
+        <p className="field-hint al-intro">{canSwitch ? t('intro') : t('introManager')}</p>
         <ul className="al-list">
           {branches.map((branch) => {
             const id = `tb-${branch.id}`;
             return (
               <li className="al-row" key={branch.id}>
+                {canSwitch ? (
                 <label className="switch">
                   <input
                     type="checkbox"
@@ -71,13 +85,19 @@ export function TablesForm({ initial }: { initial: BranchTableOrders[] | null })
                     <span className="switch-thumb" />
                   </span>
                 </label>
-                <div>
+                ) : null}
+                <div className="dt-branch">
                   <div id={`${id}-label`} className="al-row-title">
                     {one ? t('oneBranchTitle') : branch.name}
                   </div>
                   <span id={`${id}-hint`} className="field-hint">
                     {branch.on ? t('onHint') : t('offHint')}
                   </span>
+                  {branch.on ? (
+                    <Link className="dt-setup-link" href={`/settings/tables/${branch.id}`}>
+                      {t('setUp')}
+                    </Link>
+                  ) : null}
                   {error?.branchId === branch.id ? (
                     <p className="al-error" role="alert">
                       {error.message}

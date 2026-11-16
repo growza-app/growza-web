@@ -20,6 +20,10 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Only the owner can change roles.': 'रोल सिर्फ़ मालिक बदल सकते हैं।',
   // Jira GRW-718 — Settings › Tables.
   'Only the owner can switch Table orders on or off.': 'टेबल ऑर्डर सिर्फ़ मालिक चालू या बंद कर सकते हैं।',
+  // Jira GRW-719 — setting out tables.
+  'Only the owner or a manager can set up tables.': 'टेबल सिर्फ़ मालिक या मैनेजर सेट कर सकते हैं।',
+  'Table orders is off at this branch. The owner can switch it on in Settings › Tables.': 'इस ब्रांच में टेबल ऑर्डर बंद है। मालिक इसे सेटिंग › टेबल में चालू कर सकते हैं।',
+  'That table or area is not at this branch.': 'यह टेबल या एरिया इस ब्रांच में नहीं है।',
   'A manager needs a role. Choose one, or remove them from the team.': 'मैनेजर का कोई रोल होना ज़रूरी है। एक रोल चुनें, या उन्हें टीम से हटा दें।',
   'There is no such role.': 'ऐसा कोई रोल नहीं है।',
   'Say why it cannot be sold again': 'बताएँ कि यह दोबारा क्यों नहीं बिक सकता',
@@ -429,12 +433,34 @@ function localiseStockMessage(message: string): string | null {
 }
 
 /** The sentence in the visitor's language when it is known; otherwise exactly what the server said. */
+/**
+ * Jira GRW-718 · GRW-719 — the table sentences that name a table, an area or a count. Each is one fixed shape with the
+ * name or number in it, so it is matched as a shape and the name is kept as typed.
+ */
+const TABLE_MESSAGES: Array<[RegExp, (m: RegExpExecArray) => string]> = [
+  [/^(.+) has an open bill\. Settle it first\.$/s, (m) => `${m[1]} का बिल अभी खुला है। पहले उसे निपटाएँ।`],
+  [/^(.+) is already used at this branch\.$/s, (m) => `${m[1]} इस ब्रांच में पहले से है।`],
+  [/^(.+) still has (\d+) tables?\. Move or remove them first\.$/s, (m) => `${m[1]} में अभी ${m[2]} टेबल हैं। पहले उन्हें हटाएँ या दूसरे एरिया में ले जाएँ।`],
+  [/^(\d+) tables? still ha(?:s|ve) (?:an )?open bills?\. Settle them before switching Table orders off\.$/s, (m) => `${m[1]} टेबल का बिल अभी खुला है। टेबल ऑर्डर बंद करने से पहले उन्हें निपटाएँ।`],
+  [/^A branch can have at most (\d+) tables\.$/s, (m) => `एक ब्रांच में ज़्यादा से ज़्यादा ${m[1]} टेबल हो सकती हैं।`],
+];
+
+function localiseTableMessage(message: string): string | null {
+  for (const [shape, say] of TABLE_MESSAGES) {
+    const m = shape.exec(message);
+    if (m) return say(m);
+  }
+  return null;
+}
+
 export function localiseApiMessage(message: string, lang: string): string {
   if (lang !== 'hi') return message;
   const known = API_MESSAGES_HI[message];
   if (known) return known;
   const stock = localiseStockMessage(message);
   if (stock) return stock;
+  const table = localiseTableMessage(message);
+  if (table) return table;
   // "Row 12: An HSN code is 4 to 8 digits" — a spreadsheet import names the row, then says why. The "why" is one of the
   // sentences above, so it is translated on its own and the row keeps its number.
   const row = /^Row (\d+): (.+)$/s.exec(message);

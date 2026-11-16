@@ -105,6 +105,7 @@ import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
   BranchTableOrders,
+  DiningArea,
   OrderDetail,
   ChannelBranches,
   SetChannelBranchResult,
@@ -712,6 +713,19 @@ export const api = {
   tableOrders: () => get<{ branches: BranchTableOrders[] }>('/api/v1/settings/table-orders'),
   /** Switching off is refused (409) while a table at that branch has an open bill; the message says how many. */
   setTableOrders: (branchId: string, on: boolean) => put<{ branches: BranchTableOrders[] }>(`/api/v1/settings/table-orders/${branchId}`, { on }),
+  /** Jira GRW-719 — a branch's areas and tables. 403 `tables_off` where the branch has Table orders off. */
+  diningTables: (location: string) => get<{ areas: DiningArea[] }>(`/api/v1/tables?location=${encodeURIComponent(location)}`),
+  addDiningArea: (location: string, name: string) => post<{ id: string; areas: DiningArea[] }>('/api/v1/tables/areas', { location, name }),
+  renameDiningArea: (areaId: string, name: string) => patch<{ areas: DiningArea[] }>(`/api/v1/tables/areas/${areaId}`, { name }),
+  removeDiningArea: (areaId: string) => del<{ areas: DiningArea[] }>(`/api/v1/tables/areas/${areaId}`),
+  /** One named table, or `count` of them numbered from the first free T-number at the branch. */
+  addDiningTables: (areaId: string, body: { name: string; seats?: number | null } | { count: number; seats?: number | null }) =>
+    post<{ ids: string[]; areas: DiningArea[] }>(`/api/v1/tables/areas/${areaId}/tables`, body),
+  updateDiningTable: (tableId: string, body: { name?: string; seats?: number | null; areaId?: string }) =>
+    patch<{ areas: DiningArea[] }>(`/api/v1/tables/${tableId}`, body),
+  removeDiningTable: (tableId: string) => del<{ areas: DiningArea[] }>(`/api/v1/tables/${tableId}`),
+  reorderDiningTables: (location: string, areas: string[], tables: Record<string, string[]>) =>
+    put<{ areas: DiningArea[] }>('/api/v1/tables/order', { location, areas, tables }),
   alertPrefs: () => get<AlertPrefs>('/api/v1/alerts/prefs'),
   setAlertPref: (kind: AlertKind, enabled: boolean) => put<{ kind: AlertKind; enabled: boolean }>('/api/v1/alerts/prefs', { kind, enabled }),
   /** `null` when this deployment has no VAPID keys — the screen then says alerts are not set up. */

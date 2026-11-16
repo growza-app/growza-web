@@ -32,12 +32,15 @@ describe('AC-04 — who is offered it', () => {
     expect(areasOf({ capabilities: { tables: false } })).not.toHaveProperty('tables');
   });
 
-  it('AC-03 — the owner’s alone, on the row and at the page', () => {
+  it('AC-03 — the owner and a manager are offered it; only the owner gets the switches', () => {
     const row = SETTINGS_GROUPS.flatMap((g) => g.rows).find((r) => r.href === '/settings/tables')!;
-    expect(row.ownerOnly).toBe(true);
-    // The API refuses a role outright (both routes are `owner` in shared's table); this only saves them the trip.
-    expect(page).toMatch(/me\?\.member && me\.member\.role !== 'owner'/);
+    expect(row.ownerOrManager).toBe(true);
+    // Anyone else is sent back; the API refuses them outright besides.
+    expect(page).toMatch(/role !== 'owner' && role !== 'manager'\) redirect\('\/settings'\)/);
     expect(page).toMatch(/guardScreen\('\/settings\/tables'\)/);
+    // A manager is shown the branches that are on, with no switch (GRW-719 BR-04; GRW-718 BR-02).
+    expect(page).toMatch(/canSwitch=\{false\}/);
+    expect(form).toMatch(/canSwitch \? \(/);
   });
 });
 

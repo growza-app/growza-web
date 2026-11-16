@@ -31,6 +31,21 @@ export interface MeBranch {
   tableOrders?: boolean;
 }
 
+/** Jira GRW-719 — a table in a branch's room, and its open bill if it has one. */
+export interface DiningTable {
+  id: string;
+  name: string;
+  seats: number | null;
+  openBill: { saleId: string; tokenNo: number | null } | null;
+}
+
+/** Jira GRW-719 — an area of a branch's room (AC Hall, Garden) and its tables, in the order the owner set. */
+export interface DiningArea {
+  id: string;
+  name: string;
+  tables: DiningTable[];
+}
+
 /** Jira GRW-718 — one branch's Table orders switch, as Settings › Tables reads it. */
 export interface BranchTableOrders {
   id: string;

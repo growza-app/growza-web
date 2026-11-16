@@ -1,0 +1,45 @@
+/*
+ * Jira GRW-719 — Settings › Tables › a branch's room. Laid out at 344px first: each area is a card, its tables a list
+ * with hairlines between, every control 44px tall. Rows wrap their buttons under the name rather than squeeze it.
+ */
+.dt-branch { min-width: 0; display: flex; flex-direction: column; gap: var(--sp-1); }
+.dt-setup-link { font-weight: 600; font-size: 0.9375rem; color: var(--accent-deep); min-height: 44px; display: inline-flex; align-items: center; }
+
+.dt-room { display: flex; flex-direction: column; gap: var(--sp-4); }
+.dt-room-intro { margin: 0; }
+.dt-area-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.dt-area-name { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text); min-width: 0; overflow-wrap: anywhere; }
+
+.dt-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1); }
+.dt-actions .btn, .dt-add .btn { min-height: 44px; }
+.dt-icon { min-width: 44px; padding-left: 0; padding-right: 0; justify-content: center; }
+
+.dt-tables { list-style: none; margin: var(--sp-3) 0 0; padding: 0; }
+.dt-table { padding: var(--sp-2) 0; }
+.dt-table + .dt-table { border-top: 1px solid var(--border); }
+.dt-table-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.dt-table-name { font-weight: 600; color: var(--text); min-width: 0; overflow-wrap: anywhere; }
+.dt-busy { margin-left: var(--sp-2); font-size: 0.75rem; font-weight: 600; color: var(--amber); background: var(--amber-soft); border-radius: 999px; padding: 2px var(--sp-2); }
+
+.dt-edit { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sp-2); }
+.dt-field { display: flex; flex-direction: column; gap: var(--sp-1); flex: 1 1 8rem; min-width: 0; }
+.dt-field-short { flex: 0 1 5.5rem; }
+.dt-inline-form { display: flex; flex-wrap: wrap; gap: var(--sp-2); flex: 1 1 100%; }
+.dt-inline-form input { flex: 1 1 10rem; min-width: 0; }
+
+.dt-add { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin-top: var(--sp-3); }
+.dt-add input[type='text'] { flex: 1 1 10rem; min-width: 0; }
+.dt-add input.dt-num { width: 4.5rem; flex: none; min-width: 0; }
+.dt-add-words { color: var(--muted); font-size: 0.9375rem; }
+.dt-new-area .dt-add { margin-top: 0; }
+/* The shared inputs carry a 180px floor (01-controls) for a full-width form; in these rows it would push a 344px screen sideways. */
+.dt-field input, .dt-field select, .dt-inline-form input, .dt-add input[type='text'] { min-width: 0; width: 100%; }
+/* One line per table at 344px: the name (seats under it) on the left, four 44px icon buttons on the right. */
+.dt-table-row { flex-wrap: nowrap; }
+.dt-table-name { display: flex; flex-direction: column; flex: 1 1 auto; }
+.dt-table-sub { font-size: 0.8125rem; font-weight: 400; color: var(--muted); }
+.dt-table-sub .dt-busy { margin-left: var(--sp-1); }
+.dt-actions-tight { flex-wrap: nowrap; flex: none; gap: 2px; }
+.dt-icon svg { width: 1.125rem; height: 1.125rem; }
+.dt-area-head { flex-wrap: nowrap; }
+.dt-area-name { display: flex; flex-direction: column; flex: 1 1 auto; }

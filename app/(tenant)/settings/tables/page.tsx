@@ -7,19 +7,25 @@ import { TablesForm } from './TablesForm';
 export const dynamic = 'force-dynamic';
 
 /**
- * Jira GRW-718 — Settings › Tables: the owner says which branches seat their guests.
+ * Jira GRW-718 · GRW-719 — Settings › Tables: which branches seat their guests, and the way into each one's room.
  *
- * Owner only, and the API agrees: both routes are classified `owner` in `shared/src/route-pages.ts`, so a typed
- * address is not a way in — this redirect only saves a role the trip. A business whose vertical seats nobody is sent
- * Home by `guardScreen` (`areaAllows` closes the address), and the API refuses it too (the `dining.tables` area).
+ * The owner switches Table orders per branch (GRW-718, owner only — the API refuses anyone else) and sets the room up.
+ * A manager sets rooms up too (GRW-719 BR-04) but never flips a switch: they are shown the branches that are on, each
+ * leading to its room, read from `/me`. Anyone else is sent back to Settings. A business whose vertical seats nobody
+ * is sent Home by `guardScreen` (`areaAllows` closes the address), and the API refuses it too.
  */
 export default async function TablesSettingsPage() {
   await guardScreen('/settings/tables');
   const me = await api.me().catch(() => null);
-  if (me?.member && me.member.role !== 'owner') redirect('/settings');
+  const role = me?.member?.role ?? 'owner';
+  if (role !== 'owner' && role !== 'manager') redirect('/settings');
 
+  if (role === 'manager') {
+    const on = (me?.branches ?? []).filter((b) => b.tableOrders).map((b) => ({ id: b.id, name: b.name, on: true }));
+    return <TablesForm initial={on} canSwitch={false} />;
+  }
   const initial = await api.tableOrders().catch(() => null);
-  return <TablesForm initial={initial?.branches ?? null} />;
+  return <TablesForm initial={initial?.branches ?? null} canSwitch />;
 }
 
 // Jira GRW-192 — the tab says which screen this is.

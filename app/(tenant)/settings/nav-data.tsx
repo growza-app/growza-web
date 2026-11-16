@@ -91,6 +91,10 @@ interface SettingsRowBase {
    */
   ownerOnly?: boolean;
   /**
+   * Jira GRW-719 — listed for the owner and a manager: the owner switches Table orders on, and either sets out the room.
+   */
+  ownerOrManager?: boolean;
+  /**
    * Listed only once the business is live.
    *
    * Payments is the one row like this. Settings is open before go-live so an
@@ -193,9 +197,10 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
        * not the branch one: the owner decides it for the whole business at a glance ("MG Road yes, Airport no"), the
        * way the story asks, rather than flipping the header branch once per branch to find out.
        *
-       * Owner only, and a restaurant's only: `areaAllows` closes the address everywhere else (TABLE_ROUTES).
+       * Owner and manager (GRW-719 — a manager sets rooms up; the switches stay the owner's), and a restaurant's only:
+       * `areaAllows` closes the address everywhere else (TABLE_ROUTES).
        */
-      { href: '/settings/tables', key: 'tables', icon: IconTable, ownerOnly: true },
+      { href: '/settings/tables', key: 'tables', icon: IconTable, ownerOrManager: true },
       { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
       // Jira GRW-72 — what each role on a shop's team can open.
       { href: '/settings/roles', key: 'roles', icon: IconLock, shopOwnerOnly: true },

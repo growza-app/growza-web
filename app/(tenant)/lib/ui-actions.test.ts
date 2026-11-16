@@ -222,6 +222,12 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   // Jira GRW-718 — the Table orders switches. Gated by the screen like the two above: the row is `ownerOnly`, the page
   // redirects a role that types the address, and both routes are `owner` in shared's route table.
   '/settings/tables': ['PUT /api/v1/settings/table-orders/:id'],
+  // Jira GRW-719 — setting out a branch's room. Gated by the screen: the page sends anyone but the owner and a manager back
+  // to Settings, and the API's handler says owner or manager besides.
+  '/settings/tables/[branchId]': [
+    'POST /api/v1/tables/areas', 'PATCH /api/v1/tables/areas/:id', 'DELETE /api/v1/tables/areas/:id', 'POST /api/v1/tables/areas/:id/tables',
+    'PATCH /api/v1/tables/:id', 'DELETE /api/v1/tables/:id', 'PUT /api/v1/tables/order',
+  ],
   // Jira GRW-615 — an order's own screen moves it along: the one next move, and the rarer ones behind More. Same screen,
   // same gate: a role the nav does not offer /orders is bounced Home by the page, so it never reaches the button.
   // Jira GRW-617 — and swaps a size. The desk is offered this screen but takes no returns, so it takes no swaps: the control is

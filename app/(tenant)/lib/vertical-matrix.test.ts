@@ -85,6 +85,8 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/settings/rewards': 'both',
   // Jira GRW-718 — which branches seat their guests: only a business whose vertical has tables (the restaurant).
   '/settings/tables': 'tables',
+  // Jira GRW-719 — one branch's room.
+  '/settings/tables/[branchId]': 'tables',
   '/settings/gst': 'both',
   '/settings/notifications': 'both',
   '/settings/payments': 'both',
@@ -180,7 +182,7 @@ describe('FR-01 … FR-03 — each kind of business is offered exactly the scree
   it('a kitchen is a shop in everything but the count and its tables: only those screens differ', () => {
     const differ = Object.keys(SCREENS).filter((r) => areaAllows(concrete(r), SHOP) !== areaAllows(concrete(r), KITCHEN));
     // Jira GRW-718 — Settings › Tables is the restaurant's alone (`dining.tables`), the one difference that is not a count.
-    expect(differ.sort()).toEqual(['/settings/tables', '/stock/order', '/stock/report']);
+    expect(differ.sort()).toEqual(['/settings/tables', '/settings/tables/[branchId]', '/stock/order', '/stock/report']);
     // …and the menu itself is NOT one of them: that is where a restaurant's dishes live.
     expect(areaAllows('/stock', KITCHEN)).toBe(true);
     expect(areaAllows('/orders/new', KITCHEN)).toBe(true);
