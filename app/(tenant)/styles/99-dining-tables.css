@@ -64,3 +64,58 @@
 .ord-d-type-word { font-weight: 600; color: var(--text); }
 .ord-d-type .btn { min-height: 44px; }
 .ord-d-type .al-error { flex: 1 1 100%; }
+
+/*
+ * Jira GRW-721 — the room on the till. Tiles like seats in a cinema: three across at 344px, more as the screen widens.
+ * Each tile says its state in WORDS (Free · Ordering · Bill printed) as well as its colour; every tile is 44px+ tall.
+ */
+.pf-tables { display: flex; flex-direction: column; gap: var(--sp-3); padding: var(--sp-3); }
+.pf-table-sent { margin: 0; padding: var(--sp-2) var(--sp-3); border-radius: 10px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.tm-map { display: flex; flex-direction: column; gap: var(--sp-4); }
+.tm-area-name { margin: 0 0 var(--sp-2); font-size: 0.875rem; font-weight: 600; color: var(--muted); text-transform: none; }
+.tm-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2); }
+@media (min-width: 600px) { .tm-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 861px) { .tm-grid { grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); } }
+.tm-tile {
+  min-height: 4.5rem; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px;
+  padding: var(--sp-2); border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  font: inherit; text-align: left; cursor: pointer;
+}
+.tm-tile:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 2px; }
+.tm-name { font-weight: 700; font-size: 1rem; overflow-wrap: anywhere; }
+.tm-state { font-size: 0.75rem; font-weight: 600; }
+.tm-detail { font-size: 0.75rem; color: var(--muted); overflow-wrap: anywhere; }
+.tm-tile.is-free { background: var(--surface); }
+.tm-tile.is-free .tm-state { color: var(--muted); }
+.tm-tile.is-ordering { background: var(--accent-soft); border-color: var(--accent); }
+.tm-tile.is-ordering .tm-state { color: var(--accent-ink); }
+.tm-tile.is-bill { background: var(--amber-soft); border-color: var(--amber); }
+.tm-tile.is-bill .tm-state { color: var(--amber); }
+.tm-skeleton { background: var(--slate-soft); border-color: transparent; cursor: default; }
+.tm-failed { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); border-radius: 10px; background: var(--amber-soft); color: var(--amber); }
+.tm-failed .btn { min-height: 44px; }
+.tm-empty { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-2); padding: var(--sp-4); border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
+.tm-empty-title { margin: 0; font-weight: 600; color: var(--text); }
+
+/* The till's line while ordering for a table: back to the room, which table, and the optional guests. */
+.pf-table-strip { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-3); }
+.pf-table-strip .btn { min-height: 44px; }
+.pf-table-name { font-size: 1rem; color: var(--text); }
+.pf-guests { display: flex; align-items: center; gap: var(--sp-1); margin-left: auto; }
+.pf-guests input { width: 4rem; min-width: 0; }
+
+/* A table's bill. */
+.tb-sheet { max-height: 85dvh; overflow-y: auto; }
+.tb-lines { list-style: none; margin: 0; padding: 0; }
+.tb-line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); padding: var(--sp-2) 0; border-bottom: 1px solid var(--border); }
+.tb-line-name { flex: 1 1 10rem; min-width: 0; overflow-wrap: anywhere; }
+.tb-line-amount { font-variant-numeric: tabular-nums; }
+.tb-line.is-off .tb-line-name { text-decoration: line-through; color: var(--muted); }
+.tb-off { display: block; text-decoration: none; font-size: 0.75rem; color: var(--muted); }
+.tb-off-btn { min-height: 44px; }
+.tb-total { display: flex; justify-content: space-between; margin: var(--sp-3) 0; font-size: 1.0625rem; }
+.tb-actions, .tb-modes { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.tb-actions .btn, .tb-modes .btn { min-height: 44px; flex: 1 1 8rem; }
+.tb-pay, .tb-reason { display: flex; flex-direction: column; gap: var(--sp-2); }
+.pf-guests-btn { min-width: 44px; min-height: 44px; padding: 0; justify-content: center; }
+.pf-guests-n { min-width: 1.5rem; text-align: center; font-weight: 600; }

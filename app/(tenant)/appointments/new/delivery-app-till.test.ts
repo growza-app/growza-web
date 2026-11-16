@@ -21,7 +21,8 @@ describe('Order from: Counter or a delivery app', () => {
 
   it('an app order needs no guest and asks no way of paying', () => {
     expect(flow).toContain("const canGoOn = hasService && (token !== undefined || client.kind !== 'none' || fromApp !== null);");
-    expect(flow).toContain('const payTiles = fromApp ? null : (');
+    // Jira GRW-721 — nor an order for a table, which waits for its money until the guests leave.
+    expect(flow).toContain('const payTiles = fromApp || atTable ? null : (');
     expect(flow).toContain("if (ok) void pay('other');");
   });
 
@@ -67,7 +68,8 @@ describe('QA fixes', () => {
   it('an app order is not "received", and its page says where it was paid and taken', () => {
     expect(flow).toContain("t('from.doneTitle', { amount: money(paidMinor), app: appWord(fromApp) })");
     expect(src('components/PaymentDone.tsx')).toContain("{title ?? t('doneTitle'");
-    expect(flow).toContain("{fromApp ? null : <h2 className=\"pf-wide-h\">{t('howTitle')}</h2>}");
+    // Jira GRW-721 — ordering for a table, the heading names the table instead.
+    expect(flow).toContain("{fromApp ? null : <h2 className=\"pf-wide-h\">{atTable ? atTable.label : t('howTitle')}</h2>}");
     expect(flow).toContain("{fromApp ? t('from.completeShort') : t('next')}");
     const order = src('orders/[id]/OrderClient.tsx');
     expect(order).toContain("t('detail.paidOn', { channel: channelWord(order.channel) })");

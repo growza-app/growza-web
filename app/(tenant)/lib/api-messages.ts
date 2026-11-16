@@ -24,6 +24,13 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Only the owner or a manager can set up tables.': 'टेबल सिर्फ़ मालिक या मैनेजर सेट कर सकते हैं।',
   'Table orders is off at this branch. The owner can switch it on in Settings › Tables.': 'इस ब्रांच में टेबल ऑर्डर बंद है। मालिक इसे सेटिंग › टेबल में चालू कर सकते हैं।',
   'That table or area is not at this branch.': 'यह टेबल या एरिया इस ब्रांच में नहीं है।',
+  // Jira GRW-721 — a table's bill.
+  'A table orders dishes at the table': 'टेबल पर सिर्फ़ डिश का ऑर्डर होता है',
+  'Only the owner or a manager can take dishes off a table’s bill.': 'टेबल के बिल से डिश सिर्फ़ मालिक या मैनेजर हटा सकते हैं।',
+  'This bill is already paid. Take a return instead.': 'इस बिल का भुगतान हो चुका है। इसकी जगह वापसी लें।',
+  'Those dishes are not on this bill.': 'ये डिश इस बिल पर नहीं हैं।',
+  'That table is not at this branch.': 'यह टेबल इस ब्रांच में नहीं है।',
+  'That table is at another branch.': 'यह टेबल दूसरी ब्रांच की है।',
   // Jira GRW-720 — how an order is eaten.
   'Table orders is off at this branch.': 'इस ब्रांच में टेबल ऑर्डर बंद है।',
   'Choose Dine-in or Takeaway': 'यहीं खाना या पैक करके चुनें',

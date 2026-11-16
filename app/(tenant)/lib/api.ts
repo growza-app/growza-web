@@ -928,6 +928,9 @@ export const api = {
   },
   /** Jira GRW-615 — one order, whole: its lines, its history, who it is for, and the moves it may be offered. */
   order: (id: string) => get<OrderDetail>(`/api/v1/orders/${encodeURIComponent(id)}`),
+  /** Jira GRW-721 — take dishes off a table's unpaid bill: owner or manager, with a reason; the kitchen gets a cancel slip. */
+  cancelBillItems: (saleId: string, lineIds: string[], reason: string) =>
+    post<{ saleId: string; totalMinor: number; cancelSlip: KitchenTicketDto | null }>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/cancel-items`, { lineIds, reason }),
   /** Jira GRW-720 — Dine-in to Takeaway or back after the order was taken: owner or manager, until the bill prints. */
   changeOrderType: (saleId: string, orderType: 'dine_in' | 'takeaway') =>
     put<{ orderType: 'dine_in' | 'takeaway'; packSlip: KitchenTicketDto | null }>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/order-type`, { orderType }),
@@ -1591,6 +1594,9 @@ export const api = {
       confirmLargeAmount?: boolean;
       /** Jira GRW-720 — how a counter order is eaten, where the branch takes table orders. */
       orderType?: 'dine_in' | 'takeaway';
+      /** Jira GRW-721 — the table: a new bill on a free table, or a round onto its open one. */
+      tableId?: string;
+      guests?: number;
       /** Jira GRW-403 — paying a waiting token: the server takes its client and branch from it. */
       queueEntryId?: string;
       customerId?: string;

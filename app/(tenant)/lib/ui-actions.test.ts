@@ -203,6 +203,9 @@ describe('2b — the controls, each behind its own action', () => {
 const SHOP_AREAS = { bookings: false, services: false, shop: true, stock: true } as const;
 
 const SCREEN_WRITES: Record<string, readonly string[]> = {
+  // Jira GRW-721 — taking a dish off a table's bill, from the till's table sheet: drawn only for the owner and a manager
+  // (the sheet's `canManage`), and the API's handler says the same.
+  '/pos': ['POST /api/v1/counter-sales/:id/cancel-items'],
   /*
    * Jira GRW-647 — a switch and a device registration, both the signed-in person's own.
    *

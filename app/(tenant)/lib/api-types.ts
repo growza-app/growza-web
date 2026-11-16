@@ -31,12 +31,20 @@ export interface MeBranch {
   tableOrders?: boolean;
 }
 
-/** Jira GRW-719 — a table in a branch's room, and its open bill if it has one. */
+/** Jira GRW-719 · GRW-721 — a table in a branch's room, and its running bill if it has one. */
 export interface DiningTable {
   id: string;
   name: string;
   seats: number | null;
-  openBill: { saleId: string; tokenNo: number | null } | null;
+  openBill: {
+    saleId: string;
+    tokenNo: number | null;
+    /** GRW-721 — when it was opened, what it comes to, how many sat, whether its bill is printed. Absent from an older API. */
+    seatedAt: string;
+    totalMinor: number;
+    guests: number | null;
+    billPrinted: boolean;
+  } | null;
 }
 
 /** Jira GRW-719 — an area of a branch's room (AC Hall, Garden) and its tables, in the order the owner set. */
@@ -630,6 +638,8 @@ export interface ProviderStats {
 }
 
 export interface Appointment {
+  /** Jira GRW-721 — the table a dine-in bill is running at; absent from an older API and for anything not at a table. */
+  tableName?: string | null;
   /** Owner, 2026-10-24 — a product-only bill's channel (`counter`, `swiggy`, `zomato`, …); absent on a booking and from an older API. */
   channel?: string;
   id: string;
@@ -1530,6 +1540,8 @@ export interface OrderDetail {
     swappedQty: number;
     /** Can a swap start from this line? Decided by the server. */
     swappable: boolean;
+    /** Jira GRW-721 — taken off an unpaid table bill, and why; charged nothing. Absent from an older API. */
+    cancelReason?: string | null;
     sku: string | null;
     barcode: string | null;
     priceMinor?: string;

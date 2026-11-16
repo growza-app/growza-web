@@ -1,0 +1,79 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import en from '../../../messages/en.json';
+import hi from '../../../messages/hi.json';
+import { minutesSeated, stateOf, TABLE_REFRESH_MS } from './TableMap';
+import { buildDailyTokens } from './pos-helpers';
+import type { Appointment, DiningTable } from '../lib/api';
+
+/** Jira GRW-721 — the room on the till, and a table's bill. */
+const map = readFileSync(join(__dirname, 'TableMap.tsx'), 'utf8');
+const sheet = readFileSync(join(__dirname, 'TableBillSheet.tsx'), 'utf8');
+const flow = readFileSync(join(__dirname, '../appointments/new/PayFlow.tsx'), 'utf8');
+
+const table = (openBill: DiningTable['openBill']): DiningTable => ({ id: 't', name: 'T3', seats: 4, openBill });
+const bill = (billPrinted: boolean) => ({ saleId: 's', tokenNo: null, seatedAt: '2026-11-16T10:00:00Z', totalMinor: 56_000, guests: 4, billPrinted });
+
+describe('a tile says its state in words, not colour alone', () => {
+  it('Free, Ordering, Bill printed', () => {
+    expect(stateOf(table(null))).toBe('free');
+    expect(stateOf(table(bill(false)))).toBe('ordering');
+    expect(stateOf(table(bill(true)))).toBe('bill');
+    expect(map).toContain("<span className=\"tm-state\">{t(`state.${state}`)}</span>");
+    for (const s of ['free', 'ordering', 'bill'] as const) {
+      expect(en.posTables.state[s]).toBeTruthy();
+      expect(hi.posTables.state[s]).toBeTruthy();
+    }
+  });
+
+  it('minutes seated count from when the table was opened', () => {
+    expect(minutesSeated('2026-11-16T10:00:00Z', Date.parse('2026-11-16T10:41:00Z'))).toBe(41);
+    expect(minutesSeated('2026-11-16T10:00:00Z', Date.parse('2026-11-16T09:59:00Z'))).toBe(0);
+  });
+});
+
+describe('live and resilient', () => {
+  it('reads the room again every 5 s; a failed refresh keeps the last map', () => {
+    expect(TABLE_REFRESH_MS).toBe(5_000);
+    expect(map).toContain("{areas ? t('staleMap') : t('loadFailed')}");
+  });
+
+  it('an empty room offers set-up only to the owner and a manager', () => {
+    expect(map).toMatch(/canSetUp \? \(/);
+    expect(flow).toContain("canSetUp={role === 'owner' || role === 'manager'}");
+  });
+});
+
+describe('a table’s bill on the till', () => {
+  it('lives on the map, never also as a token on the Queue', () => {
+    const rows = [
+      { id: 'a', status: 'completed', startAt: '2026-11-16T10:00:00Z', products: [{ name: 'Dal', qty: 1, paidMinor: '100' }], tableName: 'T3 · AC Hall', channel: 'counter' },
+      { id: 'b', status: 'completed', startAt: '2026-11-16T10:01:00Z', products: [{ name: 'Tea', qty: 1, paidMinor: '30' }], channel: 'counter' },
+    ] as unknown as Appointment[];
+    expect(buildDailyTokens(rows, null)).toHaveLength(1);
+  });
+
+  it('only the owner and a manager may take a dish off; it asks why', () => {
+    expect(flow).toContain("canManage={role === 'owner' || role === 'manager'}");
+    expect(sheet).toContain('{canManage && !l.cancelReason ? (');
+    expect(sheet).toContain("disabled={busy || takingOff.reason.trim() === ''}");
+  });
+
+  it('payment asks who paid first, by the owner’s rule of 4 Nov 2026', () => {
+    expect(sheet).toContain('await api.assignClientToSale(saleId, { name });');
+  });
+
+  it('a table with nothing left closes without a bill', () => {
+    expect(sheet).toContain('api.cancelPendingCounterSale(saleId)');
+  });
+
+  it('the till sends a table’s order with the table, and says “Send to kitchen”', () => {
+    expect(flow).toContain('? { tableId: atTable.id, ...(guests ? { guests } : {}) }');
+    expect(flow).toContain("atTable ? tTables('sendToKitchen') : t('desk.keepPendingInQueue')");
+  });
+
+  it('plain words: no KOT on the till', () => {
+    expect(JSON.stringify(en.posTables)).not.toMatch(/KOT/);
+  });
+});

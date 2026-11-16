@@ -145,6 +145,8 @@ export function buildDailyTokens(
 ): PosDailyToken[] {
   const filtered = rows.filter((r) => {
     if (r.status === 'cancelled' || r.status === 'no_show') return false;
+    // Jira GRW-721 — a table's bill is on the table map, called by its table: never a token on the Queue too.
+    if (r.tableName) return false;
     if (locationId && r.locationId && r.locationId !== locationId) return false;
     return (r.products?.length ?? 0) > 0 || Boolean(r.serviceName);
   });

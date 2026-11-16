@@ -44,6 +44,9 @@ import { heldBillsKey, heldStamp, loadHeldBills, saveHeldBills } from '../../lib
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
 import { PaymentDone } from '../../components/PaymentDone';
 import { TillPrintActions, useTicketPrinter } from '../../components/TicketPrinter';
+import { TableMap } from '../../pos/TableMap';
+import { TableBillSheet } from '../../pos/TableBillSheet';
+import type { DiningTable } from '../../lib/api';
 import type { KitchenTicketDto } from '../../lib/api-types';
 import { DiscountSheet } from './DiscountSheet';
 import { shownPercent } from './bill-discount';
@@ -261,6 +264,17 @@ export function PayFlow({
    * this — its till is exactly as it was (BR-01).
    */
   const [orderTab, setOrderTab] = useState<'dine_in' | 'takeaway' | 'delivery'>('dine_in');
+  /*
+   * Jira GRW-721 — the table this order is for: picked on the map, then the dish grid as always, and "Send to kitchen"
+   * puts the dishes on that table's bill (a new one, or the round onto the one running). The bill of a busy table
+   * opens in a sheet over the map. `mapKey` makes the map read again the moment the till changed something.
+   */
+  const [atTable, setAtTable] = useState<{ id: string; label: string } | null>(null);
+  const [guests, setGuests] = useState<number | null>(null);
+  const [billOf, setBillOf] = useState<{ table: DiningTable; area: string } | null>(null);
+  const [mapKey, setMapKey] = useState(0);
+  const [tableSent, setTableSent] = useState<string | null>(null);
+  const tTables = useTranslations('posTables');
   const providerNoun = useLabel('provider', 'Staff member');
   // The person paying, in the vertical's own word — Guest at a restaurant, Customer at a shop.
   const clientNoun = pickNoun(locale, useLabel('customer', 'Client'), tNouns('customer'));
@@ -1050,7 +1064,11 @@ export function PayFlow({
               idempotencyKey: attemptKey,
               ...(token || !location ? {} : { location }),
               // Jira GRW-720 — how it is eaten; an app's order is a delivery by where it came from and names none.
-              ...(tablesHere && !fromApp ? { orderType: orderTab === 'dine_in' ? ('dine_in' as const) : ('takeaway' as const) } : {}),
+              ...(atTable
+                ? { tableId: atTable.id, ...(guests ? { guests } : {}) }
+                : tablesHere && !fromApp
+                  ? { orderType: orderTab === 'dine_in' ? ('dine_in' as const) : ('takeaway' as const) }
+                  : {}),
             };
             const r = await guard((confirmed) =>
               api.recordCounterSale(
@@ -1097,7 +1115,16 @@ export function PayFlow({
       const channel = fromApp ?? 'counter';
       // Jira GRW-720 — the slip says how it is eaten ("TAKEAWAY"); the server decided the same from the same choice.
       const orderType = fromApp ? ('delivery' as const) : tablesHere && orderTab === 'dine_in' ? ('dine_in' as const) : ('takeaway' as const);
-      printer.autoKot(result.kot, { tokenNo, channel, orderType });
+      printer.autoKot(result.kot, { tokenNo, channel, orderType, ...(atTable ? { tableName: atTable.label } : {}) });
+      // Jira GRW-721 — sent to a table: back to the map, which reads again and shows the table busy.
+      if (pending && atTable) {
+        nextCustomer();
+        setTableSent(atTable.label);
+        setAtTable(null);
+        setGuests(null);
+        setMapKey((k) => k + 1);
+        return;
+      }
       if (pending) {
         nextCustomer();
         setQueuedBanner({ tokenNo, amountMinor: paidMinor, saleId: result.appointmentId, kot: result.kot, channel });
@@ -1699,7 +1726,8 @@ export function PayFlow({
       </button>
     </div>
   );
-  const payTiles = fromApp ? null : (
+  // Jira GRW-721 — a table's order waits for its money until the guests leave: no way of paying is asked here.
+  const payTiles = fromApp || atTable ? null : (
     hidePayUntilGuest ? (wide ? null : guestToPay) : (
     <div className="pf-pay" data-step={guideMode ? 'next' : badMode && !selectedMode ? 'bad' : undefined} role="group" aria-label={t('howTitle')}>
       {firstWay ? (
@@ -1807,7 +1835,7 @@ export function PayFlow({
           <button type="button" className="pf-back" aria-label={nv.back} onClick={() => setStep('what')} disabled={saving !== null}>
             <IconArrowLeft />
           </button>
-          <h1 className="pf-title">{t('howTitle')}</h1>
+          <h1 className="pf-title">{atTable ? atTable.label : t('howTitle')}</h1>
           <span className="pf-head-gap" aria-hidden="true" />
         </header>
         {dueLine}
@@ -1843,7 +1871,7 @@ export function PayFlow({
                 disabled={saving !== null || lines.length === 0}
                 onClick={sendPosPending}
               >
-                <span>{t('desk.keepPendingInQueue')}</span>
+                <span>{atTable ? tTables('sendToKitchen') : t('desk.keepPendingInQueue')}</span>
               </button>
             ) : null}
             {!hidePayUntilGuest ? (
@@ -2019,6 +2047,72 @@ export function PayFlow({
       </div>
     ) : null;
 
+  /*
+   * Jira GRW-721 — Dine-in at a branch that seats guests opens on the room, not the dish grid: tap a free table to order
+   * for it, a busy one to open its bill. The tabs stay above, so Takeaway and Delivery are one tap away.
+   */
+  const role = session?.role ?? 'owner';
+  const tableStrip = atTable ? (
+    <div className="pf-table-strip">
+      <button type="button" className="btn btn-ghost" onClick={() => setAtTable(null)}>
+        ← {tTables('backToTables')}
+      </button>
+      <strong className="pf-table-name">{atTable.label}</strong>
+      <div className="pf-guests" role="group" aria-label={tTables('guestsSkip')}>
+        <span className="field-hint">{tTables('guests')}</span>
+        <button type="button" className="btn btn-ghost pf-guests-btn" aria-label={tTables('fewerGuests')} disabled={!guests} onClick={() => setGuests((g) => (g && g > 1 ? g - 1 : null))}>
+          −
+        </button>
+        <span className="pf-guests-n" aria-live="polite">{guests ?? '–'}</span>
+        <button type="button" className="btn btn-ghost pf-guests-btn" aria-label={tTables('moreGuests')} onClick={() => setGuests((g) => Math.min(99, (g ?? 0) + 1))}>
+          +
+        </button>
+      </div>
+    </div>
+  ) : null;
+  if (tablesHere && orderTab === 'dine_in' && !atTable && !token && step === 'what' && location) {
+    return (
+      <div className="pf-tables">
+        {typeRow}
+        {tableSent ? (
+          <p className="pf-table-sent" role="status">
+            {tTables('sent', { table: tableSent })}
+          </p>
+        ) : null}
+        <TableMap
+          location={location}
+          canSetUp={role === 'owner' || role === 'manager'}
+          refreshKey={mapKey}
+          onFree={(table, area) => {
+            setTableSent(null);
+            setAtTable({ id: table.id, label: `${table.name} · ${area.name}` });
+          }}
+          onBusy={(table, area) => {
+            setTableSent(null);
+            setBillOf({ table, area: area.name });
+          }}
+        />
+        {billOf ? (
+          <TableBillSheet
+            table={billOf.table}
+            areaName={billOf.area}
+            canManage={role === 'owner' || role === 'manager'}
+            printer={printer}
+            onAddDishes={() => {
+              setAtTable({ id: billOf.table.id, label: `${billOf.table.name} · ${billOf.area}` });
+              setBillOf(null);
+            }}
+            onDone={(said) => {
+              setBillOf(null);
+              setMapKey((k) => k + 1);
+              if (said) setTableSent(said);
+            }}
+          />
+        ) : null}
+      </div>
+    );
+  }
+
   /* ---------- ① on a wide desk (Jira GRW-572): who · what · the bill, side by side ---------- */
   if (wide) {
     return (
@@ -2159,7 +2253,7 @@ export function PayFlow({
             {/* Adding to a waiting order: it already has its guest and where it came from. */}
             {productsOnly && !addingTo ? (
               <div className="pos-bill-client">
-                {tablesHere ? typeRow : fromRow}
+                {tablesHere ? (atTable ? tableStrip : typeRow) : fromRow}
                 {who}
               </div>
             ) : null}
@@ -2278,7 +2372,7 @@ export function PayFlow({
             ) : null}
             {hidePayUntilGuest ? null : (
               <>
-                {fromApp ? null : <h2 className="pf-wide-h">{t('howTitle')}</h2>}
+                {fromApp ? null : <h2 className="pf-wide-h">{atTable ? atTable.label : t('howTitle')}</h2>}
               </>
             )}
             {badMode && !selectedMode && !hidePayUntilGuest ? (
@@ -2315,7 +2409,7 @@ export function PayFlow({
                         disabled={saving !== null || lines.length === 0}
                         onClick={sendPosPending}
                       >
-                        <span>{t('desk.keepPendingInQueue')}</span>
+                        <span>{atTable ? tTables('sendToKitchen') : t('desk.keepPendingInQueue')}</span>
                       </button>
                     ) : null}
                     {!hidePayUntilGuest ? (
@@ -2490,7 +2584,7 @@ export function PayFlow({
           {nv.visitGone}
         </div>
       ) : null}
-      {addingTo ? null : tablesHere ? typeRow : fromRow}
+      {addingTo ? null : tablesHere ? (atTable ? tableStrip : typeRow) : fromRow}
       {addingTo ? null : who}
       {productsOnly ? null : stylists}
 

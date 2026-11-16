@@ -13,8 +13,8 @@ const flow = readFileSync(join(__dirname, 'PayFlow.tsx'), 'utf8');
 describe('who gets the tabs (AC-02, AC-03 · BR-01)', () => {
   it('only a till that sells things, at a branch whose owner switched Table orders on', () => {
     expect(flow).toContain('const tablesHere = productsOnly && Boolean(session?.branches?.find((b) => b.id === location)?.tableOrders);');
-    // Elsewhere the till draws the row it always had.
-    expect(flow).toContain('{tablesHere ? typeRow : fromRow}');
+    // Elsewhere the till draws the row it always had; ordering for a table, the table's own line.
+    expect(flow).toContain('{tablesHere ? (atTable ? tableStrip : typeRow) : fromRow}');
   });
 
   it('Delivery only where the business has a delivery app — absent, not greyed out', () => {
@@ -28,11 +28,14 @@ describe('what is chosen and sent (AC-01 · BR-04)', () => {
   });
 
   it('a counter order names its type; an app order names none (it is a delivery by where it came from)', () => {
-    expect(flow).toContain("...(tablesHere && !fromApp ? { orderType: orderTab === 'dine_in' ? ('dine_in' as const) : ('takeaway' as const) } : {}),");
+    expect(flow).toContain("? { orderType: orderTab === 'dine_in' ? ('dine_in' as const) : ('takeaway' as const) }");
+    expect(flow).toContain('tablesHere && !fromApp');
+    // Jira GRW-721 — an order for a table names the table instead: the server makes it dine-in.
+    expect(flow).toContain('? { tableId: atTable.id, ...(guests ? { guests } : {}) }');
   });
 
   it('the kitchen slip is told the same type the server stored', () => {
-    expect(flow).toContain('printer.autoKot(result.kot, { tokenNo, channel, orderType });');
+    expect(flow).toContain("printer.autoKot(result.kot, { tokenNo, channel, orderType, ...(atTable ? { tableName: atTable.label } : {}) });");
   });
 
   it('the chosen tab is marked by more than colour', () => {
