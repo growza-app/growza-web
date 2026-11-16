@@ -715,6 +715,12 @@ export const api = {
   setTableOrders: (branchId: string, on: boolean) => put<{ branches: BranchTableOrders[] }>(`/api/v1/settings/table-orders/${branchId}`, { on }),
   /** Jira GRW-719 — a branch's areas and tables. 403 `tables_off` where the branch has Table orders off. */
   diningTables: (location: string) => get<{ areas: DiningArea[] }>(`/api/v1/tables?location=${encodeURIComponent(location)}`),
+  /** Jira GRW-722 — a party to a free table; nothing goes to the kitchen again. */
+  moveTable: (tableId: string, to: string) =>
+    post<{ saleId: string; from: string; to: string; totalMinor: number }>(`/api/v1/tables/${encodeURIComponent(tableId)}/move`, { to }),
+  /** Jira GRW-722 — this table's bill onto another open table's; this table is free. */
+  joinTable: (tableId: string, into: string) =>
+    post<{ saleId: string; from: string; to: string; totalMinor: number }>(`/api/v1/tables/${encodeURIComponent(tableId)}/join`, { into }),
   addDiningArea: (location: string, name: string) => post<{ id: string; areas: DiningArea[] }>('/api/v1/tables/areas', { location, name }),
   renameDiningArea: (areaId: string, name: string) => patch<{ areas: DiningArea[] }>(`/api/v1/tables/areas/${areaId}`, { name }),
   removeDiningArea: (areaId: string) => del<{ areas: DiningArea[] }>(`/api/v1/tables/areas/${areaId}`),

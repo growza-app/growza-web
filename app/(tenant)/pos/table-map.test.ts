@@ -77,3 +77,23 @@ describe('a table’s bill on the till', () => {
     expect(JSON.stringify(en.posTables)).not.toMatch(/KOT/);
   });
 });
+
+describe('Jira GRW-722 — move a party, join two tables', () => {
+  it('Move table lists the other tables: a free one says Move here, a busy one says Join', () => {
+    expect(sheet).toContain('const others = area.tables.filter((x) => x.id !== table.id);');
+    expect(sheet).toContain("{x.openBill ? t('join') : t('moveHere')}");
+    expect(sheet).toContain('to.openBill ? api.joinTable(table.id, to.id) : api.moveTable(table.id, to.id)');
+  });
+
+  it('the till hands the sheet its branch, so the picker reads that room', () => {
+    expect(flow).toContain('location={location}\n            canManage=');
+  });
+
+  it('every new word is in English and Hindi, and says nothing about the kitchen slip by its trade name', () => {
+    for (const k of ['moveTable', 'moveTitle', 'moveHint', 'moveHere', 'join', 'moveTo', 'joinTo', 'movedOk', 'joinedOk'] as const) {
+      expect(en.posTables[k]).toBeTruthy();
+      expect(hi.posTables[k]).toBeTruthy();
+    }
+    expect(en.posTables.moveHint).toMatch(/Nothing goes to the kitchen again/);
+  });
+});

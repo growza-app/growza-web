@@ -4495,7 +4495,16 @@
     "sendToKitchen": "Send to kitchen",
     "sent": "Sent to kitchen · {table}",
     "guests": "Guests",
-    "guestsSkip": "Guests (optional)"
+    "guestsSkip": "Guests (optional)",
+    "moveTable": "Move table",
+    "moveTitle": "Move {table}",
+    "moveHint": "Pick a free table to move to, or a busy one to join its bill. Nothing goes to the kitchen again.",
+    "moveHere": "Move here",
+    "join": "Join",
+    "moveTo": "Move to {table}",
+    "joinTo": "Join {table}, {amount}",
+    "movedOk": "{from} moved to {to}.",
+    "joinedOk": "{from} joined {to}. One bill now."
   },
   "pos": {
     "modes": "POS",

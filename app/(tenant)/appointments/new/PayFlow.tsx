@@ -2096,6 +2096,7 @@ export function PayFlow({
           <TableBillSheet
             table={billOf.table}
             areaName={billOf.area}
+            location={location}
             canManage={role === 'owner' || role === 'manager'}
             printer={printer}
             onAddDishes={() => {

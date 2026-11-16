@@ -205,7 +205,8 @@ const SHOP_AREAS = { bookings: false, services: false, shop: true, stock: true }
 const SCREEN_WRITES: Record<string, readonly string[]> = {
   // Jira GRW-721 — taking a dish off a table's bill, from the till's table sheet: drawn only for the owner and a manager
   // (the sheet's `canManage`), and the API's handler says the same.
-  '/pos': ['POST /api/v1/counter-sales/:id/cancel-items'],
+  // Jira GRW-722 — Move table, on the same table's sheet.
+  '/pos': ['POST /api/v1/counter-sales/:id/cancel-items', 'POST /api/v1/tables/:id/move', 'POST /api/v1/tables/:id/join'],
   /*
    * Jira GRW-647 — a switch and a device registration, both the signed-in person's own.
    *

@@ -119,3 +119,8 @@
 .tb-pay, .tb-reason { display: flex; flex-direction: column; gap: var(--sp-2); }
 .pf-guests-btn { min-width: 44px; min-height: 44px; padding: 0; justify-content: center; }
 .pf-guests-n { min-width: 1.5rem; text-align: center; font-weight: 600; }
+
+/* Jira GRW-722 — Move table: the branch's other tables as the map's own tiles, smaller. */
+.tb-move { display: flex; flex-direction: column; gap: var(--sp-2); }
+.tb-move-name { margin: var(--sp-2) 0 var(--sp-1); font-size: 0.875rem; font-weight: 600; color: var(--muted); }
+.tb-move-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: var(--sp-2); }

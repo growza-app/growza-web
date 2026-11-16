@@ -29,6 +29,10 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Only the owner or a manager can take dishes off a table’s bill.': 'टेबल के बिल से डिश सिर्फ़ मालिक या मैनेजर हटा सकते हैं।',
   'This bill is already paid. Take a return instead.': 'इस बिल का भुगतान हो चुका है। इसकी जगह वापसी लें।',
   'Those dishes are not on this bill.': 'ये डिश इस बिल पर नहीं हैं।',
+  // Jira GRW-722
+  'Pick a different table.': 'कोई दूसरी टेबल चुनें।',
+  'Pick the table to move to': 'वह टेबल चुनें जहाँ ले जाना है',
+  'Pick the table to join': 'वह टेबल चुनें जिससे जोड़ना है',
   'That table is not at this branch.': 'यह टेबल इस ब्रांच में नहीं है।',
   'That table is at another branch.': 'यह टेबल दूसरी ब्रांच की है।',
   // Jira GRW-720 — how an order is eaten.
@@ -458,6 +462,11 @@ const TABLE_MESSAGES: Array<[RegExp, (m: RegExpExecArray) => string]> = [
   [/^(.+) still has (\d+) tables?\. Move or remove them first\.$/s, (m) => `${m[1]} में अभी ${m[2]} टेबल हैं। पहले उन्हें हटाएँ या दूसरे एरिया में ले जाएँ।`],
   [/^(\d+) tables? still ha(?:s|ve) (?:an )?open bills?\. Settle them before switching Table orders off\.$/s, (m) => `${m[1]} टेबल का बिल अभी खुला है। टेबल ऑर्डर बंद करने से पहले उन्हें निपटाएँ।`],
   [/^A branch can have at most (\d+) tables\.$/s, (m) => `एक ब्रांच में ज़्यादा से ज़्यादा ${m[1]} टेबल हो सकती हैं।`],
+  // Jira GRW-722 — moving a party and joining two tables.
+  [/^(.+) has no open bill\.$/s, (m) => `${m[1]} पर कोई खुला बिल नहीं है।`],
+  [/^(.+) already has guests\. Join the two tables instead\.$/s, (m) => `${m[1]} पर पहले से मेहमान हैं। दोनों टेबल जोड़ दें।`],
+  [/^(.+) has no open bill\. Move the guests there instead\.$/s, (m) => `${m[1]} पर कोई खुला बिल नहीं है। मेहमानों को वहाँ ले जाएँ।`],
+  [/^(.+) has a payment — settle it first\.$/s, (m) => `${m[1]} पर पैसे लिए जा चुके हैं — पहले बिल पूरा करें।`],
 ];
 
 function localiseTableMessage(message: string): string | null {

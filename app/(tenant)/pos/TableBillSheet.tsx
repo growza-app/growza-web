@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, ApiError, formatMoney, type DiningTable, type OrderDetail } from '../lib/api';
+import { api, ApiError, formatMoney, type DiningArea, type DiningTable, type OrderDetail } from '../lib/api';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useScrimDismiss } from '../../shared/a11y/scrim-dismiss';
 import type { useTicketPrinter } from '../components/TicketPrinter';
@@ -13,6 +13,9 @@ import type { useTicketPrinter } from '../components/TicketPrinter';
  * it closes without a bill (BR-05).
  *
  * Every action answers from the server and the sheet reads the bill again, so two counters on one table see one bill.
+ * Jira GRW-722 — "Move table" lists the branch's other tables: a free one takes the party (Move here), a busy one takes
+ * this bill onto its own (Join). Nothing is sent to the kitchen again; the server refuses either once money was taken.
+ *
  * Payment follows the owner's rule of 4 Nov 2026: a bill names who paid before the money is taken, so an unnamed table
  * asks for a name first (one field, then the way of paying).
  */
@@ -22,6 +25,7 @@ const MODES = ['cash', 'upi', 'card'] as const;
 export function TableBillSheet({
   table,
   areaName,
+  location,
   canManage,
   printer,
   onAddDishes,
@@ -29,6 +33,8 @@ export function TableBillSheet({
 }: {
   table: DiningTable;
   areaName: string;
+  /** The branch whose room this is — Move table lists its other tables. */
+  location: string;
   /** The owner or a manager: may take a dish off (owner decision 2026-11-16). */
   canManage: boolean;
   printer: ReturnType<typeof useTicketPrinter>;
@@ -47,6 +53,20 @@ export function TableBillSheet({
   const [paying, setPaying] = useState(false);
   const [guestName, setGuestName] = useState('');
   const [takingOff, setTakingOff] = useState<{ lineId: string; name: string; reason: string } | null>(null);
+  /** Move table: the room as it is now (null = not open; [] while it loads). */
+  const [moving, setMoving] = useState<DiningArea[] | null>(null);
+
+  const openMove = () =>
+    void run(async () => {
+      setMoving([]);
+      setMoving((await api.diningTables(location)).areas);
+    });
+  const moveTo = (to: DiningTable) =>
+    run(
+      () => (to.openBill ? api.joinTable(table.id, to.id) : api.moveTable(table.id, to.id)),
+      'done',
+      to.openBill ? t('joinedOk', { from: table.name, to: to.name }) : t('movedOk', { from: table.name, to: to.name }),
+    );
 
   const read = useCallback(async () => {
     try {
@@ -145,7 +165,39 @@ export function TableBillSheet({
               </form>
             ) : null}
 
-            {live.length === 0 ? (
+            {moving ? (
+              <div className="tb-move" role="group" aria-label={t('moveTitle', { table: table.name })}>
+                <p className="field-hint">{t('moveHint')}</p>
+                {moving.length === 0 ? <p className="field-hint">{t('loading')}</p> : null}
+                {moving.map((area) => {
+                  const others = area.tables.filter((x) => x.id !== table.id);
+                  return others.length === 0 ? null : (
+                    <section key={area.id} className="tb-move-area">
+                      <h3 className="tb-move-name">{area.name}</h3>
+                      <div className="tb-move-grid">
+                        {others.map((x) => (
+                          <button
+                            key={x.id}
+                            type="button"
+                            className={`tm-tile ${x.openBill ? 'is-ordering' : 'is-free'}`}
+                            disabled={busy}
+                            aria-label={x.openBill ? t('joinTo', { table: x.name, amount: money(x.openBill.totalMinor) }) : t('moveTo', { table: x.name })}
+                            onClick={() => void moveTo(x)}
+                          >
+                            <span className="tm-name">{x.name}</span>
+                            <span className="tm-state">{x.openBill ? t('join') : t('moveHere')}</span>
+                            {x.openBill ? <span className="tm-detail">{money(x.openBill.totalMinor)}</span> : null}
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })}
+                <button type="button" className="btn btn-ghost" onClick={() => setMoving(null)}>
+                  {t('cancel')}
+                </button>
+              </div>
+            ) : live.length === 0 ? (
               <div className="tb-actions">
                 <p className="field-hint">{t('nothingLeft')}</p>
                 <button type="button" className="btn" disabled={busy} onClick={() => void run(() => api.cancelPendingCounterSale(saleId), 'done', t('closedOk', { table: table.name }))}>
@@ -175,6 +227,9 @@ export function TableBillSheet({
               <div className="tb-actions">
                 <button type="button" className="btn btn-ghost" disabled={busy} onClick={onAddDishes}>
                   {t('addDishes')}
+                </button>
+                <button type="button" className="btn btn-ghost" disabled={busy} onClick={openMove}>
+                  {t('moveTable')}
                 </button>
                 <button
                   type="button"
