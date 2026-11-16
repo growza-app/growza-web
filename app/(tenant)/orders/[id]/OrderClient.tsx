@@ -248,7 +248,8 @@ export function OrderClient({
           locationId: order.locationId,
           clientName: order.client?.name ?? order.buyer?.name ?? '',
           clientPhone: null,
-          products: order.lines.map((l) => ({
+          // Jira GRW-724 — the service charge is not a dish to bring back: it is refunded in proportion with the dishes that are.
+          products: order.lines.filter((l) => l.kind !== 'service_charge').map((l) => ({
             id: l.id,
             productId: l.productId,
             // A sized line is named by its own id (lineReturnId), which needs the size here: without it a sized line was named by its

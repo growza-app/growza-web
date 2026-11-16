@@ -127,3 +127,13 @@
 .tb-confirm { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-3); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
 .tb-confirm-title { margin: 0; font-weight: 600; }
 .tb-move-grid .tm-tile[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* Jira GRW-724 — a branch's service charge offer, under its Table orders switch. */
+.dt-sc { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-3); padding-top: var(--sp-3); border-top: 1px solid var(--border); }
+.dt-sc-row { display: flex; align-items: center; gap: var(--sp-3); min-height: 44px; }
+.dt-sc-rate { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sp-2); }
+.dt-sc-rate .dt-field { flex: 0 1 8rem; }
+.dt-sc-rate input { min-height: 44px; font-size: 16px; }
+.dt-sc-rate .btn { min-height: 44px; }
+.tb-sc { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); padding: var(--sp-2) 0; }
+.tb-sc .btn { min-height: 44px; }

@@ -988,6 +988,11 @@
     }
   },
   "settingsTables": {
+    "serviceCharge": "Service charge (guest can say no)",
+    "serviceChargeHint": "Never added by itself. The counter adds it to a bill only when the guest agrees, and takes it off if they say no.",
+    "serviceChargeRate": "Rate (%)",
+    "serviceChargeSave": "Save rate",
+    "serviceChargeRange": "The service charge is 0 to 20%",
     "intro": "Switch on Table orders for a branch where guests sit and eat. Its till then takes orders by table. A branch left off keeps today's till.",
     "oneBranchTitle": "Table orders",
     "onHint": "On — orders are taken by table.",
@@ -4505,6 +4510,8 @@
     "joinTo": "Join {table}, {amount}",
     "movedOk": "{from} moved to {to}.",
     "joinedOk": "{from} joined {to}. One bill now.",
+    "serviceChargeAdd": "Add service charge {rate}% (guest can say no)",
+    "serviceChargeRemove": "Remove",
     "waiterOff": "Table orders is off at this branch",
     "waiterOffHint": "Ask the owner to switch it on in Settings › Tables.",
     "waiterAskBill": "The counter prints the bill first. Then take the payment.",
@@ -5502,6 +5509,7 @@
     "openOrder": "Open order",
     "token": "Token {n}",
     "profit": {
+      "serviceCharge": "Service charge guests paid, not in the dishes above: {value}",
       "title": "Profit",
       "profitLabel": "Profit",
       "marginLine": "{margin}% of sales",
@@ -5537,6 +5545,7 @@
       "takenOffHint": "Dishes the kitchen had already been sent, then taken off a bill by the owner or a manager."
     },
     "payments": {
+      "serviceCharge": "Of the money in, service charge: {value}",
       "title": "Payments",
       "byPersonTitle": "Taken by",
       "byPersonUnknown": "Not recorded",

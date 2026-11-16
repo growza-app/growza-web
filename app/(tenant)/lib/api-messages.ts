@@ -33,6 +33,15 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Pick a different table.': 'कोई दूसरी टेबल चुनें।',
   'Pick the table to move to': 'वह टेबल चुनें जहाँ ले जाना है',
   'Pick the table to join': 'वह टेबल चुनें जिससे जोड़ना है',
+  // Jira GRW-724 — service charge
+  'Only the owner can set the service charge.': 'सर्विस चार्ज सिर्फ़ मालिक तय कर सकते हैं।',
+  'Say whether the service charge is offered': 'बताएँ कि सर्विस चार्ज लेना है या नहीं',
+  'The service charge is 0 to 20%': 'सर्विस चार्ज 0 से 20% तक हो सकता है',
+  'Say whether to add the service charge or take it off': 'बताएँ कि सर्विस चार्ज जोड़ना है या हटाना है',
+  'The counter adds the service charge. A waiter can take it off if the guest says no.': 'सर्विस चार्ज काउंटर जोड़ता है। मेहमान मना करे तो वेटर इसे हटा सकता है।',
+  'This bill is already paid, so its service charge cannot change.': 'यह बिल चुकता हो चुका है, इसलिए इसका सर्विस चार्ज नहीं बदल सकता।',
+  'A service charge is only for a table’s bill.': 'सर्विस चार्ज सिर्फ़ टेबल के बिल पर लगता है।',
+  'This branch does not offer a service charge. The owner can switch it on in Settings › Tables.': 'यह ब्रांच सर्विस चार्ज नहीं लेती। मालिक इसे सेटिंग › टेबल में चालू कर सकते हैं।',
   // Jira GRW-723 — a waiter
   'A waiter takes a table’s orders and its payment. Ask the counter for this.': 'वेटर सिर्फ़ टेबल का ऑर्डर और उसका पेमेंट लेता है। यह काम काउंटर से करवाएँ।',
   'A waiter cannot give a discount. Ask the counter.': 'वेटर छूट नहीं दे सकता। काउंटर से कहें।',

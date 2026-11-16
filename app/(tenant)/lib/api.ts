@@ -713,6 +713,12 @@ export const api = {
   tableOrders: () => get<{ branches: BranchTableOrders[] }>('/api/v1/settings/table-orders'),
   /** Switching off is refused (409) while a table at that branch has an open bill; the message says how many. */
   setTableOrders: (branchId: string, on: boolean) => put<{ branches: BranchTableOrders[] }>(`/api/v1/settings/table-orders/${branchId}`, { on }),
+  /** Jira GRW-724 — the owner offers a service charge at a branch, at a rate (0–20%). Offered, never added by itself. */
+  setServiceChargeOffer: (branchId: string, on: boolean, ratePercent: number) =>
+    put<{ branches: BranchTableOrders[] }>(`/api/v1/settings/service-charge/${branchId}`, { on, ratePercent }),
+  /** Jira GRW-724 — add the branch's service charge to a table's bill (the guest agreed), or take it off (they said no). */
+  setBillServiceCharge: (saleId: string, on: boolean) =>
+    post<{ saleId: string; serviceChargeBp: number | null; serviceChargeMinor: number; totalMinor: number }>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/service-charge`, { on }),
   /** Jira GRW-719 — a branch's areas and tables. 403 `tables_off` where the branch has Table orders off. */
   diningTables: (location: string) => get<{ areas: DiningArea[] }>(`/api/v1/tables?location=${encodeURIComponent(location)}`),
   /** Jira GRW-722 — a party to a free table; nothing goes to the kitchen again. */

@@ -98,6 +98,9 @@ export function TablesForm({ initial, canSwitch }: { initial: BranchTableOrders[
                       {t('setUp')}
                     </Link>
                   ) : null}
+                  {branch.on && canSwitch ? (
+                    <ServiceChargeOffer branch={branch} disabled={saving !== null || !writable} onSaved={setBranches} />
+                  ) : null}
                   {error?.branchId === branch.id ? (
                     <p className="al-error" role="alert">
                       {error.message}
@@ -109,6 +112,86 @@ export function TablesForm({ initial, canSwitch }: { initial: BranchTableOrders[
           })}
         </ul>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Jira GRW-724 — the service charge a branch OFFERS, and its rate. Never added by itself (CCPA, July 2022): the counter adds it on a bill
+ * only when the guest agrees, and the guest can always say no. Saved on its own, as the switch above is; a rate the API refuses stays on
+ * screen with the API's words ("0 to 20%").
+ */
+function ServiceChargeOffer({
+  branch,
+  disabled,
+  onSaved,
+}: {
+  branch: BranchTableOrders;
+  disabled: boolean;
+  onSaved: (branches: BranchTableOrders[]) => void;
+}) {
+  const t = useTranslations('settingsTables');
+  const on = branch.serviceChargeOn ?? false;
+  const [rate, setRate] = useState(String((branch.serviceChargeBp ?? 0) / 100 || 5));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const id = `sc-${branch.id}`;
+  const save = async (nextOn: boolean) => {
+    setError(null);
+    const pct = Number(rate);
+    if (rate.trim() === '' || !Number.isFinite(pct)) {
+      setError(t('serviceChargeRange'));
+      return;
+    }
+    setBusy(true);
+    try {
+      onSaved((await api.setServiceChargeOffer(branch.id, nextOn, pct)).branches);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : t('saveFailed'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="dt-sc">
+      <label className="dt-sc-row">
+        <span className="switch">
+          <input type="checkbox" aria-labelledby={`${id}-label`} aria-describedby={`${id}-hint`} checked={on} disabled={disabled || busy} onChange={() => void save(!on)} />
+          <span className="switch-track">
+            <span className="switch-thumb" />
+          </span>
+        </span>
+        <span id={`${id}-label`} className="al-row-title">
+          {t('serviceCharge')}
+        </span>
+      </label>
+      <span id={`${id}-hint`} className="field-hint">
+        {t('serviceChargeHint')}
+      </span>
+      <div className="dt-sc-rate">
+        <label className="dt-field">
+          <span className="field-hint">{t('serviceChargeRate')}</span>
+          <input
+            type="number"
+            inputMode="decimal"
+            min={0}
+            max={20}
+            step={0.5}
+            value={rate}
+            disabled={disabled || busy}
+            aria-label={t('serviceChargeRate')}
+            onChange={(e) => setRate(e.target.value)}
+          />
+        </label>
+        <button type="button" className="btn btn-ghost" disabled={disabled || busy || Number(rate) * 100 === (branch.serviceChargeBp ?? -1)} onClick={() => void save(on)}>
+          {t('serviceChargeSave')}
+        </button>
+      </div>
+      {error ? (
+        <p className="al-error" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

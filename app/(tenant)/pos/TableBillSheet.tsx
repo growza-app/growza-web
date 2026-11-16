@@ -7,6 +7,7 @@ import { useDialog } from '../../shared/a11y/useDialog';
 import { useScrimDismiss } from '../../shared/a11y/scrim-dismiss';
 import type { useTicketPrinter } from '../components/TicketPrinter';
 import { useWaiter } from './waiter';
+import { useSession } from '../components/SessionProvider';
 
 /**
  * Jira GRW-721 — one table's running bill: what it has had, what it comes to, and the four things a counter does with
@@ -46,6 +47,8 @@ export function TableBillSheet({
   const t = useTranslations('posTables');
   // Jira GRW-723 — a waiter: no Print bill, and payment only once the counter has printed it (owner decision 2026-11-16).
   const waiter = useWaiter();
+  // Jira GRW-724 — the service charge this branch offers (never added by itself; the counter adds it when the guest agrees).
+  const offerBp = useSession()?.branches?.find((b) => b.id === location)?.serviceChargeBp ?? null;
   const saleId = table.openBill!.saleId;
   const ref = useRef<HTMLDivElement>(null);
   useDialog(ref, { onClose: () => onDone(), initialFocus: 'container' });
@@ -97,7 +100,9 @@ export function TableBillSheet({
   };
 
   const money = (minor: number | string | undefined) => formatMoney(String(minor ?? 0));
-  const live = (order?.lines ?? []).filter((l) => !l.cancelReason && l.qty > l.returnedQty);
+  const dishes = (order?.lines ?? []).filter((l) => l.kind !== 'service_charge');
+  const charge = (order?.lines ?? []).find((l) => l.kind === 'service_charge') ?? null;
+  const live = dishes.filter((l) => !l.cancelReason && l.qty > l.returnedQty);
   const totalMinor = (order?.lines ?? []).reduce((n, l) => n + Number(l.paidMinor ?? 0) - Number(l.returnedMinor ?? 0), 0);
   const anonymous = !order?.client || /^walk-in$/i.test(order.client.name ?? '');
 
@@ -127,7 +132,7 @@ export function TableBillSheet({
         {order ? (
           <>
             <ul className="tb-lines">
-              {order.lines.map((l) => (
+              {dishes.map((l) => (
                 <li key={l.id} className={`tb-line${l.cancelReason ? ' is-off' : ''}`}>
                   <span className="tb-line-name">
                     {l.qty} × {l.name}
@@ -143,6 +148,22 @@ export function TableBillSheet({
                 </li>
               ))}
             </ul>
+            {/* Jira GRW-724 — the service charge, its own named line; added only when the guest agrees, removable until paid. */}
+            {charge ? (
+              <div className="tb-sc">
+                <span className="tb-line-name">{charge.name}</span>
+                <span className="tb-line-amount">{money(Number(charge.paidMinor ?? 0))}</span>
+                <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void run(() => api.setBillServiceCharge(saleId, false))}>
+                  {t('serviceChargeRemove')}
+                </button>
+              </div>
+            ) : offerBp !== null && !waiter && live.length > 0 ? (
+              <div className="tb-sc">
+                <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void run(() => api.setBillServiceCharge(saleId, true))}>
+                  {t('serviceChargeAdd', { rate: offerBp / 100 })}
+                </button>
+              </div>
+            ) : null}
             <p className="tb-total">
               <span>{t('total')}</span>
               <strong>{money(totalMinor)}</strong>

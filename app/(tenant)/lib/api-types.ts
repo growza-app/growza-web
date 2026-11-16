@@ -29,6 +29,8 @@ export interface MeBranch {
    * Absent on an older API, and absent reads as no — today's till, which is what every branch had.
    */
   tableOrders?: boolean;
+  /** Jira GRW-724 — the service charge this branch offers, in basis points (500 = 5%); null or absent: none. Offered, never added by itself. */
+  serviceChargeBp?: number | null;
 }
 
 /** Jira GRW-719 · GRW-721 — a table in a branch's room, and its running bill if it has one. */
@@ -59,6 +61,9 @@ export interface BranchTableOrders {
   id: string;
   name: string;
   on: boolean;
+  /** Jira GRW-724 — the service charge this branch offers (never adds), and its rate in basis points (500 = 5%). Absent from an older API. */
+  serviceChargeOn?: boolean;
+  serviceChargeBp?: number;
 }
 
 export interface Me {
@@ -1544,6 +1549,8 @@ export interface OrderDetail {
     cancelReason?: string | null;
     /** Jira GRW-723 — who put the line on the bill ("Ravi"). */
     addedBy?: string | null;
+    /** Jira GRW-724 — `service_charge`: the bill's service charge line, never a dish to return or take off. */
+    kind?: 'item' | 'service_charge';
     sku: string | null;
     barcode: string | null;
     priceMinor?: string;
@@ -2252,6 +2259,8 @@ export interface ProfitReportPage {
     marginPct: number | null;
     uncostedSalesMinor: number;
     uncostedItems: number;
+    /** Jira GRW-724 — service charge guests paid, apart from the food. Absent from an older API. */
+    serviceChargeMinor?: number;
   };
   rows: Array<{
     id: string;
@@ -2288,6 +2297,8 @@ export interface PaymentsReportPage {
   byDay: Array<{ dateISO: string; received: Partial<Record<MoneyPaymentMode, number>>; refundedMinor: number; netMinor: number }>;
   /** Jira GRW-723 — who took the money; a name null when nobody was recorded. Absent from an older API. */
   byPerson?: Array<{ name: string | null; receivedMinor: number; modes: Partial<Record<MoneyPaymentMode, number>> }>;
+  /** Jira GRW-724 — of the money in, what was service charge. Absent from an older API. */
+  serviceChargeMinor?: number;
   pending: { count: number; valueMinor: number; rows: Array<{ id: string; soldAtISO: string; tokenNo: number | null; valueMinor: number }> };
 }
 
