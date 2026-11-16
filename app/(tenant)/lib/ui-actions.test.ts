@@ -225,10 +225,12 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   '/settings/rewards': ['PATCH /api/v1/settings/rewards'],
   // Jira GRW-718 — the Table orders switches. Gated by the screen like the two above: the row is `ownerOnly`, the page
   // redirects a role that types the address, and both routes are `owner` in shared's route table.
+  // Jira GRW-714 — Ready, Undo and a dish ticked, on the kitchen screen.
+  '/kitchen': ['POST /api/v1/kitchen/:saleId/ready', 'POST /api/v1/kitchen/lines/:lineId/done'],
   // Jira GRW-712 — an item's add-on groups, and the groups themselves, on its Choices screen (the menu's).
   '/products/[id]/choices': ['POST /api/v1/addon-groups', 'PATCH /api/v1/addon-groups/:id', 'DELETE /api/v1/addon-groups/:id', 'PUT /api/v1/products/:id/addon-groups'],
   // Jira GRW-724 — and the service charge it offers, on the same owner-only screen.
-  '/settings/tables': ['PUT /api/v1/settings/table-orders/:id', 'PUT /api/v1/settings/service-charge/:id'],
+  '/settings/tables': ['PUT /api/v1/settings/table-orders/:id', 'PUT /api/v1/settings/service-charge/:id', 'PUT /api/v1/settings/kitchen/:id'],
   // Jira GRW-719 — setting out a branch's room. Gated by the screen: the page sends anyone but the owner and a manager back
   // to Settings, and the API's handler says owner or manager besides.
   '/settings/tables/[branchId]': [

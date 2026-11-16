@@ -202,7 +202,7 @@ import type {
   StockTakeResult,
   MovementKind,
   ManualMovementKind,
-  VisitRewards, AddonGroup, AddonGroupInput } from './api-types';
+  VisitRewards, AddonGroup, AddonGroupInput, KitchenCard } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, ShopDaySummary, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
 
@@ -254,7 +254,7 @@ import type {
  * just show an error) can check `.status` instead of string-matching text.
  */
 /** Jira GRW-72 — the pages a role grants, and how far. Mirrors `platform/permissions.ts` in the API. */
-export type RolePageKey = 'bookings' | 'clients' | 'services' | 'offers' | 'staff' | 'attendance' | 'reports' | 'settings' | 'tables';
+export type RolePageKey = 'bookings' | 'clients' | 'services' | 'offers' | 'staff' | 'attendance' | 'reports' | 'settings' | 'tables' | 'kitchen';
 export type RoleLevel = 'none' | 'view' | 'manage';
 export type RoleWorksLike = 'manager' | 'receptionist' | 'staff';
 export interface ShopRole {
@@ -712,6 +712,11 @@ export const api = {
   tableOrders: () => get<{ branches: BranchTableOrders[] }>('/api/v1/settings/table-orders'),
   /** Switching off is refused (409) while a table at that branch has an open bill; the message says how many. */
   setTableOrders: (branchId: string, on: boolean) => put<{ branches: BranchTableOrders[] }>(`/api/v1/settings/table-orders/${branchId}`, { on }),
+  /** Jira GRW-714 — the kitchen screen: today's open orders at a branch, no money. */
+  kitchen: (location: string) => get<{ lateMinutes: number; cards: KitchenCard[] }>(`/api/v1/kitchen?location=${encodeURIComponent(location)}`),
+  kitchenReady: (saleId: string, ready: boolean) => post<{ saleId: string; readyAt: string | null }>(`/api/v1/kitchen/${encodeURIComponent(saleId)}/ready`, { ready }),
+  kitchenDishDone: (lineId: string, done: boolean) => post<{ lineId: string; done: boolean }>(`/api/v1/kitchen/lines/${encodeURIComponent(lineId)}/done`, { done }),
+  setKitchenLate: (branchId: string, lateMinutes: number) => put<{ lateMinutes: number }>(`/api/v1/settings/kitchen/${encodeURIComponent(branchId)}`, { lateMinutes }),
   /** Jira GRW-712 — the add-on groups, and which items offer which (`products: { productId: [groupId, …] }`). */
   addonGroups: () => get<{ groups: AddonGroup[]; products: Record<string, string[]> }>('/api/v1/addon-groups'),
   saveAddonGroup: (id: string | null, body: AddonGroupInput) =>

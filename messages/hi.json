@@ -988,6 +988,7 @@
     }
   },
   "settingsTables": {
+    "kitchenLate": "किचन: कितने मिनट बाद कार्ड देर वाला",
     "serviceCharge": "सर्विस चार्ज (मेहमान मना कर सकते हैं)",
     "serviceChargeHint": "यह अपने-आप नहीं जुड़ता। मेहमान राज़ी हों तभी काउंटर इसे बिल में जोड़ता है, और मना करें तो हटा देता है।",
     "serviceChargeRate": "दर (%)",
@@ -4507,6 +4508,28 @@
     "restoreDishHint": "इस डिश को सक्रिय पीओएस मेन्यू में वापस रखें।",
     "deletePermanentHint": "कैटलॉग से हमेशा के लिए हटा देता है। पुराने बिलों में इसका रिकॉर्ड बना रहेगा।"
   },
+  "kitchen": {
+    "title": "किचन",
+    "loading": "ऑर्डर आ रहे हैं…",
+    "empty": "कोई ऑर्डर बाकी नहीं",
+    "offline": "कनेक्शन नहीं — फिर कोशिश हो रही है। ये आख़िरी ऑर्डर हैं।",
+    "token": "#{n}",
+    "order": "ऑर्डर",
+    "minutes": "{min} मिनट",
+    "lateFor": "देर · {min} मिनट",
+    "new": "नया",
+    "cancelled": "हटाया गया",
+    "ready": "तैयार",
+    "readyDone": "{label} तैयार है।",
+    "undo": "वापस",
+    "chimeOn": "घंटी चालू",
+    "chimeOff": "घंटी बंद",
+    "type": {
+      "dine_in": "यहीं खाना",
+      "takeaway": "पैक करके",
+      "delivery": "डिलीवरी"
+    }
+  },
   "posTables": {
     "paidOk": "{table} का भुगतान हुआ · {amount}। टेबल खाली है।",
     "closedOk": "{table} बंद। कोई बिल नहीं।",
@@ -4575,6 +4598,8 @@
     "back": "वापस"
   },
   "pos": {
+    "kitchenScreen": "किचन",
+    "kitchenReady": "तैयार",
     "modes": "पीओएस",
     "sell": "बेचें",
     "queue": "कतार",
@@ -5425,7 +5450,8 @@
       "attendance": "हाज़िरी",
       "reports": "रिपोर्ट",
       "settings": "सेटिंग्स",
-      "tables": "टेबल"
+      "tables": "टेबल",
+      "kitchen": "किचन"
     },
     "levels": {
       "none": "कुछ नहीं",

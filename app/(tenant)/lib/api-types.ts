@@ -64,6 +64,8 @@ export interface BranchTableOrders {
   /** Jira GRW-724 — the service charge this branch offers (never adds), and its rate in basis points (500 = 5%). Absent from an older API. */
   serviceChargeOn?: boolean;
   serviceChargeBp?: number;
+  /** Jira GRW-714 — a kitchen card turns late after this many minutes. */
+  kitchenLateMinutes?: number;
 }
 
 export interface Me {
@@ -689,6 +691,8 @@ export interface Appointment {
    * from its own screen and no other device ever learned. It belongs to the shop, so it comes from the server.
    */
   handedOverAt?: string | null;
+  /** Jira GRW-714 — the kitchen marked the order ready; null while it is cooking. */
+  kitchenReadyAt?: string | null;
   /**
    * Owner, 9 Nov 2026 — the token this visit or order was given (#01, #02 …), stored when it was issued (API 0174).
    * Absent from an older API, and null for a visit that never had one; then the screens number it as before.
@@ -2388,4 +2392,16 @@ export interface AddonGroupInput {
   minPicks?: number;
   maxPicks?: number;
   options: Array<{ name: string; priceMinor: number }>;
+}
+
+/** Jira GRW-714 — one order on the kitchen screen. No money, no phone (BR-01). */
+export interface KitchenCard {
+  saleId: string;
+  tokenNo: number | null;
+  tableName: string | null;
+  orderType: 'dine_in' | 'takeaway' | 'delivery' | null;
+  channel: string;
+  placedAt: string;
+  late: boolean;
+  dishes: Array<{ id: string; name: string; qty: number; done: boolean; isNew: boolean; cancelled: boolean }>;
 }

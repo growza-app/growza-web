@@ -988,6 +988,7 @@
     }
   },
   "settingsTables": {
+    "kitchenLate": "Kitchen: a card is late after (minutes)",
     "serviceCharge": "Service charge (guest can say no)",
     "serviceChargeHint": "Never added by itself. The counter adds it to a bill only when the guest agrees, and takes it off if they say no.",
     "serviceChargeRate": "Rate (%)",
@@ -4507,6 +4508,28 @@
     "restoreDishHint": "Put this dish back on the active POS menu.",
     "deletePermanentHint": "Removes from your catalogue permanently. Past bills keep their own copy."
   },
+  "kitchen": {
+    "title": "Kitchen",
+    "loading": "Loading the orders…",
+    "empty": "No orders waiting",
+    "offline": "Not connected — retrying. These are the last orders we had.",
+    "token": "#{n}",
+    "order": "Order",
+    "minutes": "{min} min",
+    "lateFor": "Late · {min} min",
+    "new": "New",
+    "cancelled": "Taken off",
+    "ready": "Ready",
+    "readyDone": "{label} is ready.",
+    "undo": "Undo",
+    "chimeOn": "Chime on",
+    "chimeOff": "Chime off",
+    "type": {
+      "dine_in": "Dine-in",
+      "takeaway": "Takeaway",
+      "delivery": "Delivery"
+    }
+  },
   "posTables": {
     "paidOk": "{table} paid · {amount}. The table is free.",
     "closedOk": "{table} closed. No bill.",
@@ -4575,6 +4598,8 @@
     "back": "Back"
   },
   "pos": {
+    "kitchenScreen": "Kitchen",
+    "kitchenReady": "Ready",
     "modes": "POS",
     "sell": "Sell",
     "queue": "Queue",
@@ -5425,7 +5450,8 @@
       "attendance": "Attendance",
       "reports": "Reports",
       "settings": "Settings",
-      "tables": "Tables"
+      "tables": "Tables",
+      "kitchen": "Kitchen"
     },
     "levels": {
       "none": "None",

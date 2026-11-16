@@ -2153,3 +2153,6 @@
 }
 
 
+
+/* Jira GRW-714 — the kitchen says this token is ready to hand over. */
+.pos-qcard-ready { padding: 0 var(--sp-2); border-radius: 999px; background: var(--accent-deep); color: var(--surface); font-size: 0.8125rem; font-weight: 700; }

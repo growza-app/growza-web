@@ -38,6 +38,8 @@ export function queueStateOf(o: {
 }
 
 export interface PosDailyToken {
+  /** Jira GRW-714 — the kitchen says it is ready to hand over. */
+  kitchenReady?: boolean;
   id: string;
   tokenNo: number;
   tokenLabel: string;
@@ -243,6 +245,7 @@ export function buildDailyTokens(
       state,
       handedOverAt,
       elapsedMin,
+      kitchenReady: Boolean(first.kitchenReadyAt),
     };
   });
 }

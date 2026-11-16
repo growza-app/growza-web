@@ -33,6 +33,15 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Pick a different table.': 'कोई दूसरी टेबल चुनें।',
   'Pick the table to move to': 'वह टेबल चुनें जहाँ ले जाना है',
   'Pick the table to join': 'वह टेबल चुनें जिससे जोड़ना है',
+  // Jira GRW-714 — the kitchen screen
+  'This business has no kitchen screen.': 'इस बिज़नेस में किचन स्क्रीन नहीं है।',
+  'That branch is not yours.': 'यह ब्रांच आपकी नहीं है।',
+  'Say Ready or Undo': 'तैयार या वापस चुनें',
+  'It is too late to undo. Ask the counter.': 'अब वापस नहीं हो सकता। काउंटर से कहें।',
+  'Dish not found': 'डिश नहीं मिली',
+  'Say whether the dish is done': 'बताएँ कि डिश बन गई या नहीं',
+  'Only the owner can change this.': 'इसे सिर्फ़ मालिक बदल सकते हैं।',
+  'A kitchen card can be late after 1 to 240 minutes': 'किचन कार्ड 1 से 240 मिनट बाद देर वाला माना जा सकता है',
   // Jira GRW-712 — add-ons
   'That choice is not on this item': 'यह विकल्प इस आइटम में नहीं है',
   'This business has no add-ons': 'इस बिज़नेस में ऐड-ऑन नहीं हैं',

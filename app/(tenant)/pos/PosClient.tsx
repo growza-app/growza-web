@@ -1127,6 +1127,7 @@ export function PosClient({
           <div className="pos-qcard-id">
             <span className="pos-qcard-token">{tk.tokenLabel}</span>
             <span className={`pos-qcard-chan is-${tk.channel}`}>{channelLabel(tk.channel)}</span>
+            {tk.kitchenReady && tk.state === 'preparing' ? <span className="pos-qcard-ready">{t('kitchenReady')}</span> : null}
             {tk.paymentPending ? (
               <span className="pos-qcard-pay is-pending">
                 <span className="pos-qcard-pay-dot" aria-hidden="true" />
@@ -1347,6 +1348,12 @@ export function PosClient({
               <span className="pos-kbd-inline"><kbd>F8</kbd> {t('shortcutCharge')}</span>
               <span className="pos-kbd-inline"><kbd>F9</kbd> {t('shortcutHold')}</span>
             </div>
+            {/* Jira GRW-714 — the kitchen screen, for a counter with no kitchen tablet. */}
+            {orderQueue ? (
+              <Link href="/kitchen" className="btn btn-ghost">
+                {t('kitchenScreen')}
+              </Link>
+            ) : null}
             <PrinterButton printer={printer} />
             <button type="button" className="btn btn-ghost pos-fs-toggle" onClick={enterFullScreen}>
               {t('fullScreen')}
@@ -1381,6 +1388,12 @@ export function PosClient({
               <span className="pos-kbd-inline"><kbd>F8</kbd> {t('shortcutCharge')}</span>
               <span className="pos-kbd-inline"><kbd>F9</kbd> {t('shortcutHold')}</span>
             </div>
+            {/* Jira GRW-714 — the kitchen screen, for a counter with no kitchen tablet. */}
+            {orderQueue ? (
+              <Link href="/kitchen" className="btn btn-ghost">
+                {t('kitchenScreen')}
+              </Link>
+            ) : null}
             <PrinterButton printer={printer} />
             <button type="button" className="btn btn-ghost pos-fs-toggle" onClick={enterFullScreen}>
               {t('fullScreen')}
