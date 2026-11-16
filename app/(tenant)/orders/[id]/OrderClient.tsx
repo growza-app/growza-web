@@ -71,6 +71,9 @@ export function OrderClient({
   const severalBranches = branchContext.ready && branchContext.multi;
 
   const [order, setOrder] = useState<OrderDetail | null>(initial);
+  // Jira GRW-720 — Dine-in to Takeaway and back, one at a time, with its refusal said beside it.
+  const [changingType, setChangingType] = useState(false);
+  const [typeError, setTypeError] = useState<string | null>(null);
   const [failed, setFailed] = useState(initial === null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -453,6 +456,48 @@ export function OrderClient({
                 </div>
               ))}
             </dl>
+            {/*
+              * Jira GRW-720 — how this order is eaten, and (owner or manager, until the bill prints) the one change that
+              * matters: the guest at the table wants it packed, or the takeaway guest decides to sit. A change to takeaway
+              * prints the kitchen a PACK IT slip. Whether THIS viewer may change THIS order is the server's to say
+              * (`typeChangeable`, the same rule the route enforces), never worked out here from a role.
+              */}
+            {order.orderType && order.orderType !== 'delivery' ? (
+              <div className="ord-d-type">
+                <span className="ord-d-type-word">
+                  {t(`types.${order.orderType}`)}
+                  {order.tableName ? ` · ${order.tableName}` : ''}
+                </span>
+                {writable && order.typeChangeable ? (
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    disabled={changingType}
+                    onClick={async () => {
+                      const to = order.orderType === 'dine_in' ? 'takeaway' : 'dine_in';
+                      setChangingType(true);
+                      setTypeError(null);
+                      try {
+                        const done = await api.changeOrderType(order.id, to);
+                        if (done.packSlip) void printer.printKot(done.packSlip, { tokenNo: order.tokenNo ?? null, channel: order.channel, orderType: 'takeaway' });
+                        await refresh();
+                      } catch (e) {
+                        setTypeError(e instanceof ApiError ? e.message : t('types.changeFailed'));
+                      } finally {
+                        setChangingType(false);
+                      }
+                    }}
+                  >
+                    {order.orderType === 'dine_in' ? t('types.makeTakeaway') : t('types.makeDineIn')}
+                  </button>
+                ) : null}
+                {typeError ? (
+                  <p className="al-error" role="alert">
+                    {typeError}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
             {/*
               * Owner, 2026-11-16 — "simplify this page": one block, three rows, in the order a counter reaches for them.
               *   1. Print bill (filled) and the printer — plus Reprint KOT while the kitchen still has the order to make.

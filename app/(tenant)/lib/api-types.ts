@@ -1428,6 +1428,9 @@ export interface ShopHome {
  */
 export interface OrderListRow {
   id: string;
+  /** Jira GRW-720 · GRW-719 — how it was eaten and its table. Absent from an older API; null before order types. */
+  orderType?: OrderType | null;
+  tableName?: string | null;
   /** The short code the row shows and the search finds. */
   code: string;
   soldAt: string;
@@ -1498,6 +1501,10 @@ export interface OrderMarketplaceMessage {
 export interface OrderDetail {
   id: string;
   locationId: string;
+  /** Jira GRW-720 · GRW-719 — how it is eaten, its table, and whether THIS viewer may still switch it between Dine-in and Takeaway. Absent from an older API. */
+  orderType?: OrderType | null;
+  tableName?: string | null;
+  typeChangeable?: boolean;
   /** QA 10 Nov 2026 — the token the guest holds (API 0174); absent from an older API, null for an order without one. */
   tokenNo?: number | null;
   /** Jira GRW-641 — the branch the order is booked against, by name. */
@@ -1994,6 +2001,8 @@ export interface ByChannelPage {
   trend: Array<{ label: string; startISO: string; endExclusiveISO: string; billedMinor: Record<string, string> }>;
   anyOrders: boolean;
   caveat: string;
+  /** Jira GRW-720 — the same bills by how they were eaten; `counter` is an order from before order types. Absent from an older API. */
+  byOrderType?: Array<{ type: 'dine_in' | 'takeaway' | 'delivery' | 'counter'; orders: number; billedMinor: string }>;
 }
 
 /**
@@ -2268,16 +2277,23 @@ export interface PaymentsReportPage {
 export interface KitchenTicketDto {
   id: string;
   number: number;
-  kind: 'new' | 'add' | 'cancel';
+  /** Jira GRW-720 — `pack`: a dine-in order turned into takeaway after the kitchen had it. */
+  kind: 'new' | 'add' | 'cancel' | 'pack';
   createdAt: string;
   items: { name: string; qty: number }[];
 }
+
+/** Jira GRW-720 — how an order is eaten. Null: taken before order types existed (reports call it Counter). */
+export type OrderType = 'dine_in' | 'takeaway' | 'delivery';
 
 /** Jira GRW-713 — every KOT an order has had, for a reprint. `channel` is 'counter' or the delivery app. */
 export interface OrderKitchenTickets {
   saleId: string;
   tokenNo: number | null;
   channel: string;
+  /** Jira GRW-720 · GRW-719 — printed on the slip: "TAKEAWAY", "DINE-IN · T4". Absent from an older API. */
+  orderType?: OrderType | null;
+  tableName?: string | null;
   tickets: KitchenTicketDto[];
 }
 
@@ -2312,4 +2328,7 @@ export interface DocumentTicket {
   payments?: { mode: string; amountMinor: number }[];
   tokenNo: number | null;
   channel: string | null;
+  /** Jira GRW-720 · GRW-719 — printed on the bill beside the date. Absent from an older API. */
+  orderType?: OrderType | null;
+  tableName?: string | null;
 }

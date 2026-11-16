@@ -235,7 +235,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   // Jira GRW-625 — asks again to tell the marketplace what the shop decided about an order (owner and manager; the desk is not offered it).
   // Jira GRW-613 — and attaches a client the shop already has to a marketplace buyer (`AttachClientSheet`). The route
   // had been the desk's since GRW-613 with no control anywhere; this test is what said so (review, 2026-10-22).
-  '/orders': ['PATCH /api/v1/orders/:id/status', 'POST /api/v1/orders/:id/client', 'POST /api/v1/orders/:id/tell-marketplace', 'POST /api/v1/orders/:id/exchange', 'POST /api/v1/orders/:id/exchange/quote', 'POST /api/v1/marketplace-imports', 'POST /api/v1/marketplace-imports/held/release', 'POST /api/v1/marketplace-imports/held/dismiss', 'PUT /api/v1/delivery-apps/:app/commission'],
+  // Jira GRW-720 — Dine-in to Takeaway and back, on an order's screen: drawn only when the server's `typeChangeable` says this viewer may.
+  '/orders': ['PUT /api/v1/counter-sales/:id/order-type', 'PATCH /api/v1/orders/:id/status', 'POST /api/v1/orders/:id/client', 'POST /api/v1/orders/:id/tell-marketplace', 'POST /api/v1/orders/:id/exchange', 'POST /api/v1/orders/:id/exchange/quote', 'POST /api/v1/marketplace-imports', 'POST /api/v1/marketplace-imports/held/release', 'POST /api/v1/marketplace-imports/held/dismiss', 'PUT /api/v1/delivery-apps/:app/commission'],
   // Jira GRW-563 (shared 1.0.5) — `assign-client` moved into `visit.recordPayment`, where it belonged.
   '/services': [
     'POST /api/v1/services',

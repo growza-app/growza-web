@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { api, ApiError } from '../lib/api';
-import type { KitchenTicketDto } from '../lib/api-types';
+import type { KitchenTicketDto, OrderType } from '../lib/api-types';
 import { intlLocale, formatMoney } from '../lib/format';
 import { billFromDocument, kotFromApi } from '../lib/print/from-api';
 import { bluetoothSupported, forgetPrinter } from '../lib/print/bluetooth';
@@ -43,6 +43,9 @@ class NothingToPrint extends Error {}
 export interface OrderRef {
   tokenNo: number | null;
   channel: string | null;
+  /** Jira GRW-720 · GRW-719 — how it is eaten, and its table: printed on the slip. */
+  orderType?: OrderType | null;
+  tableName?: string | null;
 }
 
 export function useTicketPrinter() {
@@ -74,11 +77,22 @@ export function useTicketPrinter() {
       title: t('kotTitle'),
       added: t('kotAdded'),
       cancelled: t('kotCancelled'),
+      packed: t('kotPacked'),
       reprint: t('reprint'),
       kotNo: (n: number) => t('kotNo', { n }),
       token: (n: number) => t('token', { n }),
       items: (n: number) => t('items', { n }),
     }),
+    [t],
+  );
+
+  /** Jira GRW-720 — "TAKEAWAY", "DINE-IN · T4" on the slip; plain case on the bill. */
+  const typeWords = useCallback(
+    (loud: boolean) => (type: OrderType, table: string | null) => {
+      const word = type === 'dine_in' ? t('typeDineIn') : type === 'takeaway' ? t('typeTakeaway') : t('typeDelivery');
+      const said = loud ? word.toLocaleUpperCase() : word;
+      return table ? `${said} · ${table}` : said;
+    },
     [t],
   );
 
@@ -115,8 +129,8 @@ export function useTicketPrinter() {
   /** One KOT, as the order's change just returned it. */
   const printKot = useCallback(
     (kot: KitchenTicketDto, order: OrderRef, reprint = false) =>
-      run(async () => [{ ticket: kotTicket(kotFromApi(kot, order, kotWhen, reprint), kotCopy()), copies: 1 }]),
-    [run, kotWhen, kotCopy],
+      run(async () => [{ ticket: kotTicket(kotFromApi(kot, order, kotWhen, reprint, typeWords(true)), kotCopy()), copies: 1 }]),
+    [run, kotWhen, kotCopy, typeWords],
   );
 
   /** Every KOT the order has had, printed again and marked REPRINT. */
@@ -128,9 +142,9 @@ export function useTicketPrinter() {
     (saleId: string, reprint: boolean) =>
       run(async () => {
         const read = await api.saleKots(saleId);
-        return read.tickets.map((k) => ({ ticket: kotTicket(kotFromApi(k, read, kotWhen, reprint), kotCopy()), copies: 1 }));
+        return read.tickets.map((k) => ({ ticket: kotTicket(kotFromApi(k, read, kotWhen, reprint, typeWords(true)), kotCopy()), copies: 1 }));
       }),
-    [run, kotWhen, kotCopy],
+    [run, kotWhen, kotCopy, typeWords],
   );
   const reprintKots = useCallback((saleId: string) => printOrderKots(saleId, true), [printOrderKots]);
 
@@ -164,6 +178,7 @@ export function useTicketPrinter() {
                   }),
             discount: t('discount'),
             points: (n) => t('points', { n }),
+            orderType: typeWords(false),
             tax: (name, rate, included) =>
               rate === null ? name : t(included ? 'taxAtIncluded' : 'taxAt', { tax: name, rate: String(rate) }),
           },
@@ -192,7 +207,7 @@ export function useTicketPrinter() {
         };
         return [{ ticket: billTicket(data, copy), copies: reprint ? 1 : readPrinterSettings().billCopies }];
       }),
-    [run, locale, timezone, t, tDoc, tPay],
+    [run, locale, timezone, t, tDoc, tPay, typeWords],
   );
 
   /** What the till calls after an order goes in: the KOT prints by itself only where this device is set to. */

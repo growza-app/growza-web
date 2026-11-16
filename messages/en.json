@@ -3209,6 +3209,12 @@
     "remove": "Remove"
   },
   "payFlow": {
+    "type": {
+      "label": "How is the guest eating?",
+      "dine_in": "Dine-in",
+      "takeaway": "Takeaway",
+      "delivery": "Delivery"
+    },
     "discount": {
       "add": "Add discount",
       "change": "Change",
@@ -4377,6 +4383,14 @@
       "fixBeforeExport": "Some numbers have not been saved. Fix them or try again before you export."
     },
     "channels": {
+      "types": {
+        "dine_in": "Dine-in",
+        "takeaway": "Takeaway",
+        "delivery": "Delivery",
+        "counter": "Before types"
+      },
+      "byType": "By how it was eaten",
+      "typesBeforeHint": "Orders taken before Dine-in and Takeaway were kept. Not guessed.",
       "title": "Sales by channel",
       "rangeLabel": "Period",
       "range": {
@@ -4689,6 +4703,17 @@
     }
   },
   "orders": {
+    "types": {
+      "makeTakeaway": "Make it takeaway",
+      "makeDineIn": "Make it dine-in",
+      "changeFailed": "Couldn't change it. Try again.",
+      "group": "How it was eaten",
+      "all": "All",
+      "dine_in": "Dine-in",
+      "takeaway": "Takeaway",
+      "delivery": "Delivery",
+      "counter": "Before types"
+    },
     "states": {
       "done": "Done",
       "new": "New",
@@ -5469,6 +5494,10 @@
     "kotTitle": "KITCHEN SLIP",
     "kotAdded": "ADDED TO ORDER",
     "kotCancelled": "CANCELLED",
+    "kotPacked": "PACK IT",
+    "typeDineIn": "Dine-in",
+    "typeTakeaway": "Takeaway",
+    "typeDelivery": "Delivery",
     "reprint": "REPRINT",
     "kotNo": "Slip {n}",
     "token": "Token #{n}",

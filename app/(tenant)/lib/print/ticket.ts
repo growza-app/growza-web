@@ -110,7 +110,7 @@ export function itemLines(line: { name: string; qty: string; price: string; amou
 
 /* ------------------------------------------------------------------------------------------------------------ KOT */
 
-export type KotKind = 'new' | 'add' | 'cancel';
+export type KotKind = 'new' | 'add' | 'cancel' | 'pack';
 
 export interface KotItem {
   name: string;
@@ -139,6 +139,8 @@ export interface KotCopy {
   title: string;
   added: string;
   cancelled: string;
+  /** Jira GRW-720 — "PACK IT": the order became takeaway after the kitchen had it. */
+  packed: string;
   reprint: string;
   kotNo: (n: number) => string;
   token: (n: number) => string;
@@ -155,7 +157,7 @@ export interface KotCopy {
 export function kotTicket(kot: KotData, copy: KotCopy): Ticket {
   const lines: TicketLine[] = [];
   if (kot.reprint) lines.push({ kind: 'text', text: `** ${copy.reprint} **`, align: 'center', bold: true });
-  const heading = kot.kind === 'cancel' ? copy.cancelled : kot.kind === 'add' ? copy.added : copy.title;
+  const heading = kot.kind === 'cancel' ? copy.cancelled : kot.kind === 'add' ? copy.added : kot.kind === 'pack' ? copy.packed : copy.title;
   lines.push({ kind: 'text', text: heading, align: 'center', bold: true, size: kot.kind === 'new' ? 1 : 2 });
   if (kot.tokenNo !== null) lines.push({ kind: 'text', text: copy.token(kot.tokenNo), align: 'center', bold: true, size: 2 });
   if (kot.destination) lines.push({ kind: 'text', text: kot.destination, align: 'center', bold: true });

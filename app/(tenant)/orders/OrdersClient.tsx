@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useLocale, useTranslations } from 'next-intl';
 import { api, formatMoney } from '../lib/api';
 import type { OrderListRow, OrdersPage } from '../lib/api-types';
-import { CHANNEL_CHIPS, EMPTY_QUERY, KNOWN_STATES, ORDERS_PAGE_SIZE, STATE_CHIPS, isFiltered, readQuery, toSearch, type OrdersQuery } from '../lib/orders-filter';
+import { CHANNEL_CHIPS, EMPTY_QUERY, KNOWN_STATES, ORDERS_PAGE_SIZE, STATE_CHIPS, TYPE_CHIPS, isFiltered, readQuery, toSearch, type OrdersQuery } from '../lib/orders-filter';
 import { SEARCH_DEBOUNCE_MS, worthSearching } from '../lib/search-tuning';
 import { Pagination } from '../components/Pagination';
 import { SearchClear } from '../components/SearchClear';
@@ -12,6 +12,7 @@ import { useBranch } from '../components/BranchProvider';
 import { IconSearch } from '../components/icons';
 import { intlLocale } from '../lib/format';
 import { useAreas } from '../components/SessionProvider';
+import { hasOrderQueue } from '../lib/areas';
 import { channelsOf, isDeliveryApp, sellsOnMarketplaces } from '../lib/order-channels';
 import { formatTokenNo } from '../pos/pos-helpers';
 import { groupByDay } from './order-days';
@@ -72,7 +73,7 @@ export function OrdersClient({
     const mine = ++requestId.current;
     setLoading(true);
     api
-      .orders({ channel: q.channel, status: q.status, q: q.q.trim(), customerId: q.customerId, page: q.page, pageSize: ORDERS_PAGE_SIZE, location })
+      .orders({ channel: q.channel, status: q.status, q: q.q.trim(), type: q.type, customerId: q.customerId, page: q.page, pageSize: ORDERS_PAGE_SIZE, location })
       .then((r) => {
         // A slower, older answer must not overwrite a newer one.
         if (mine !== requestId.current) return;
@@ -116,7 +117,7 @@ export function OrdersClient({
   useEffect(() => {
     const onPop = () => {
       const params = new URLSearchParams(window.location.search);
-      const next = readQuery({ channel: params.get('channel') ?? '', status: params.get('status') ?? '', q: params.get('q') ?? '', customerId: params.get('customerId') ?? '', page: params.get('page') ?? '' });
+      const next = readQuery({ channel: params.get('channel') ?? '', status: params.get('status') ?? '', q: params.get('q') ?? '', type: params.get('type') ?? '', customerId: params.get('customerId') ?? '', page: params.get('page') ?? '' });
       setQuery(next);
       setTyped(next.q);
     };
@@ -132,6 +133,14 @@ export function OrdersClient({
   const offered = channelsOf(areas).filter((c): c is (typeof CHANNEL_CHIPS)[number] => (CHANNEL_CHIPS as readonly string[]).includes(c));
   const ships = sellsOnMarketplaces(areas);
   const pickChannel = (channel: string) => go({ ...query, channel, page: 1 }, 'push');
+  /*
+   * Jira GRW-720 — how the orders were eaten, only for a kitchen (the one kind of business whose orders have a type).
+   * "Before types" is the honest name for orders taken before order types existed: never guessed into one.
+   */
+  const kitchen = hasOrderQueue(areas);
+  const pickType = (type: string) => go({ ...query, type, page: 1 }, 'push');
+  const typeWord = (type: string | null): string | null =>
+    type === 'dine_in' ? t('types.dine_in') : type === 'takeaway' ? t('types.takeaway') : type === 'delivery' ? t('types.delivery') : null;
   const pickState = (status: string) => go({ ...query, status, page: 1 }, 'push');
   // The client is a scope, not a filter: clearing the chips and the search leaves you looking at the same person.
   // Only the banner's "Show all orders" lets them go.
@@ -268,6 +277,19 @@ export function OrdersClient({
           ))}
         </div>
 
+        {kitchen ? (
+          <div className="ord-chips ord-chips-type" role="group" aria-label={t('types.group')}>
+            <button type="button" className={`ord-chip ${query.type === '' ? 'is-on' : ''}`} aria-pressed={query.type === ''} onClick={() => pickType('')}>
+              {t('types.all')}
+            </button>
+            {TYPE_CHIPS.map((c) => (
+              <button key={c} type="button" className={`ord-chip ${query.type === c ? 'is-on' : ''}`} aria-pressed={query.type === c} onClick={() => pickType(c)}>
+                {t(`types.${c}`)}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         {ships ? (
         <div className="ord-chips ord-chips-state" role="group" aria-label={t('list.stateGroup')}>
           <button type="button" className={`ord-chip ${query.status === '' ? 'is-on' : ''}`} aria-pressed={query.status === ''} onClick={() => pickState('')}>
@@ -381,6 +403,9 @@ export function OrdersClient({
                   </td>
                   <td>
                     <span className={`ord-chan-badge ord-chan-${r.channel}`}>{channelWord(r.channel)}</span>
+                    {kitchen && r.orderType && r.orderType !== 'delivery' ? (
+                      <div className="ord-code">{[typeWord(r.orderType), r.tableName].filter(Boolean).join(' · ')}</div>
+                    ) : null}
                   </td>
                   <td className="ord-td-who">{whoOf(r)}</td>
                   <td className="ord-num">{allCameBack(r) ? t('list.itemsAllBack', { count: r.itemsSold }) : r.items}</td>

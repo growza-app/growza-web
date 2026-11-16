@@ -913,11 +913,12 @@ export const api = {
    * `customerId` narrows it to one client, for the "See orders" on their card. By id, never by name: `q` matches text,
    * so two guests called Sharma would read as one person and a renamed client would stop matching their own orders.
    */
-  orders: (args: { channel?: string; status?: string; q?: string; customerId?: string; page?: number; pageSize?: number; location?: string | null } = {}) => {
+  orders: (args: { channel?: string; status?: string; q?: string; type?: string; customerId?: string; page?: number; pageSize?: number; location?: string | null } = {}) => {
     const params = new URLSearchParams();
     if (args.channel) params.set('channel', args.channel);
     if (args.status) params.set('status', args.status);
     if (args.q) params.set('q', args.q);
+    if (args.type) params.set('type', args.type);
     if (args.customerId) params.set('customerId', args.customerId);
     if (args.page && args.page > 1) params.set('page', String(args.page));
     if (args.pageSize != null) params.set('pageSize', String(args.pageSize));
@@ -927,6 +928,9 @@ export const api = {
   },
   /** Jira GRW-615 — one order, whole: its lines, its history, who it is for, and the moves it may be offered. */
   order: (id: string) => get<OrderDetail>(`/api/v1/orders/${encodeURIComponent(id)}`),
+  /** Jira GRW-720 — Dine-in to Takeaway or back after the order was taken: owner or manager, until the bill prints. */
+  changeOrderType: (saleId: string, orderType: 'dine_in' | 'takeaway') =>
+    put<{ orderType: 'dine_in' | 'takeaway'; packSlip: KitchenTicketDto | null }>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/order-type`, { orderType }),
   /**
    * Jira GRW-615 — move an order along. `expected` is the state this screen believes the order is in: when the order has
    * moved on elsewhere the API refuses with 409 and says where it is now, instead of overwriting the other desk.
@@ -1585,6 +1589,8 @@ export const api = {
     input: {
       /** Jira GRW-480 — sent again after "That is a large amount" is confirmed. */
       confirmLargeAmount?: boolean;
+      /** Jira GRW-720 — how a counter order is eaten, where the branch takes table orders. */
+      orderType?: 'dine_in' | 'takeaway';
       /** Jira GRW-403 — paying a waiting token: the server takes its client and branch from it. */
       queueEntryId?: string;
       customerId?: string;

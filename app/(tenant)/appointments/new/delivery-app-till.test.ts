@@ -14,7 +14,9 @@ describe('Order from: Counter or a delivery app', () => {
   it('is offered only where the business has an app, and only on the till that sells things', () => {
     expect(flow).toContain('const apps = productsOnly ? (areas.deliveryApps ?? []) : [];');
     expect(flow).toContain('apps.length > 0 && !token ? (');
-    expect(flow).toContain("{['counter', ...apps].map((key) => (");
+    // Jira GRW-720 — the same chips; under the Delivery tab of a branch that seats guests, without "Counter".
+    expect(flow).toContain("{(withCounter ? ['counter', ...apps] : apps).map((key) => (");
+    expect(flow).toContain('const fromRow = appRow(true);');
   });
 
   it('an app order needs no guest and asks no way of paying', () => {

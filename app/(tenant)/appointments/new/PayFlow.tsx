@@ -254,6 +254,13 @@ export function PayFlow({
   /** "Swiggy", "Zomato" — the app's own name, which is the same in every language. */
   const appWord = (app: string) => (app === 'swiggy' || app === 'zomato' ? t(`from.apps.${app}`) : app);
   const branch = useBranch();
+  /*
+   * Jira GRW-720 — a branch that seats its guests asks first how the guest is eating: Dine-in, Takeaway, or Delivery
+   * (only where the business has a delivery app). Dine-in is where a fresh till opens; the tab chosen then stays for the
+   * next order on this device until the page is opened again (BR-04). A branch that does not seat guests sees none of
+   * this — its till is exactly as it was (BR-01).
+   */
+  const [orderTab, setOrderTab] = useState<'dine_in' | 'takeaway' | 'delivery'>('dine_in');
   const providerNoun = useLabel('provider', 'Staff member');
   // The person paying, in the vertical's own word — Guest at a restaurant, Customer at a shop.
   const clientNoun = pickNoun(locale, useLabel('customer', 'Client'), tNouns('customer'));
@@ -271,6 +278,8 @@ export function PayFlow({
    * the header on MG Road, settling an Indiranagar booking, would have added extras from the wrong menu.
    */
   const location = token?.locationId ?? visit?.appointment.locationId ?? branch.choice ?? branch.one ?? session?.branches?.[0]?.id ?? null;
+  // Jira GRW-720 — after `location`, which it reads (it sat above it once, and the till did not open: caught by the e2e run).
+  const tablesHere = productsOnly && Boolean(session?.branches?.find((b) => b.id === location)?.tableOrders);
   const branchName = (session?.branches?.length ?? 0) > 1 ? (session?.branches?.find((b) => b.id === location)?.name ?? null) : null;
   /*
    * The QR to hold up here, if the owner has uploaded one (owner, 2026-10-11).
@@ -1040,6 +1049,8 @@ export function PayFlow({
               ...(redeemPoints > 0 ? { redeemPoints } : {}),
               idempotencyKey: attemptKey,
               ...(token || !location ? {} : { location }),
+              // Jira GRW-720 — how it is eaten; an app's order is a delivery by where it came from and names none.
+              ...(tablesHere && !fromApp ? { orderType: orderTab === 'dine_in' ? ('dine_in' as const) : ('takeaway' as const) } : {}),
             };
             const r = await guard((confirmed) =>
               api.recordCounterSale(
@@ -1084,7 +1095,9 @@ export function PayFlow({
       onSaleCompleted?.(result.appointmentId);
       // Jira GRW-713 — the kitchen's ticket and the guest's bill. After the sale is saved, never in its way (BR-03).
       const channel = fromApp ?? 'counter';
-      printer.autoKot(result.kot, { tokenNo, channel });
+      // Jira GRW-720 — the slip says how it is eaten ("TAKEAWAY"); the server decided the same from the same choice.
+      const orderType = fromApp ? ('delivery' as const) : tablesHere && orderTab === 'dine_in' ? ('dine_in' as const) : ('takeaway' as const);
+      printer.autoKot(result.kot, { tokenNo, channel, orderType });
       if (pending) {
         nextCustomer();
         setQueuedBanner({ tokenNo, amountMinor: paidMinor, saleId: result.appointmentId, kot: result.kot, channel });
@@ -1866,12 +1879,13 @@ export function PayFlow({
    * Owner, 2026-10-24 — Order from: Counter, or one of the business's delivery apps. Shown only where the business
    * has an app (a restaurant). Chips, not a select: two or three choices, each one tap, the chosen one plainly on.
    */
-  const fromRow =
+  // Jira GRW-720 — the same row twice: with "Counter" first as it always was, and apps-only under the Delivery tab.
+  const appRow = (withCounter: boolean) =>
     apps.length > 0 && !token ? (
       <div className="pf-row pf-from" role="group" aria-label={t('from.label')}>
         <span className="pf-row-label">{t('from.label')}</span>
         <div className="pf-chips">
-          {['counter', ...apps].map((key) => (
+          {(withCounter ? ['counter', ...apps] : apps).map((key) => (
             <button
               key={key}
               type="button"
@@ -1901,6 +1915,38 @@ export function PayFlow({
             onClose={() => setOrderNoOpen(false)}
           />
         ) : null}
+      </div>
+    ) : null;
+  const fromRow = appRow(true);
+  const fromAppChips = appRow(false);
+
+  /*
+   * Jira GRW-720 — Dine-in · Takeaway · Delivery, for a branch that seats its guests. A segmented control, each tab
+   * 44px, the chosen one marked by more than its colour (aria-pressed and a filled tab). Delivery opens the app chips the
+   * till already had, so picking Swiggy or Zomato is the same one tap it always was.
+   */
+  const typeTabs: Array<'dine_in' | 'takeaway' | 'delivery'> = ['dine_in', 'takeaway', ...(apps.length > 0 ? (['delivery'] as const) : [])];
+  const typeRow =
+    tablesHere && !token ? (
+      <div className="pf-type" role="group" aria-label={t('type.label')}>
+        <div className="pf-type-tabs">
+          {typeTabs.map((key) => (
+            <button
+              key={key}
+              type="button"
+              className={`pf-type-tab${orderTab === key ? ' is-on' : ''}`}
+              aria-pressed={orderTab === key}
+              disabled={saving !== null}
+              onClick={() => {
+                setOrderTab(key);
+                setOrderFrom(key === 'delivery' ? (fromApp ?? apps[0] ?? 'counter') : 'counter');
+              }}
+            >
+              {t(`type.${key}`)}
+            </button>
+          ))}
+        </div>
+        {orderTab === 'delivery' && apps.length > 0 ? fromAppChips : null}
       </div>
     ) : null;
 
@@ -2113,7 +2159,7 @@ export function PayFlow({
             {/* Adding to a waiting order: it already has its guest and where it came from. */}
             {productsOnly && !addingTo ? (
               <div className="pos-bill-client">
-                {fromRow}
+                {tablesHere ? typeRow : fromRow}
                 {who}
               </div>
             ) : null}
@@ -2444,7 +2490,7 @@ export function PayFlow({
           {nv.visitGone}
         </div>
       ) : null}
-      {addingTo ? null : fromRow}
+      {addingTo ? null : tablesHere ? typeRow : fromRow}
       {addingTo ? null : who}
       {productsOnly ? null : stylists}
 
