@@ -886,7 +886,8 @@ export function ShopHome({
     }> = [];
 
     todaySorted.forEach((o, idx) => {
-      const tokenNo = tokenNoOf.get(o.id) ?? idx + 1;
+      // Jira GRW-716 — an order taken offline goes by its till's token ("A12"), never a made-up plain number.
+      const tokenNo = o.offlineToken ? 0 : (tokenNoOf.get(o.id) ?? idx + 1);
       const soldMs = Date.parse(o.soldAt) || now;
       const ov = overrides[o.id];
       const recalledMs =
@@ -900,7 +901,7 @@ export function ShopHome({
         tokens.push({
           id: o.id,
           tokenNo,
-          tokenLabel: formatTokenNo(tokenNo),
+          tokenLabel: o.offlineToken ?? formatTokenNo(tokenNo),
           customerName: o.who?.name?.trim() || s.noNameCustomer,
           channel: o.channel,
           soldAt: o.soldAt,

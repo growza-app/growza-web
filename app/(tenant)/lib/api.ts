@@ -1650,6 +1650,8 @@ export const api = {
       redeemPoints?: number;
       /** Send a counter order to the kitchen queue with payment pending; settled from Queue when handed over. */
       paymentPending?: boolean;
+      /** Jira GRW-716 — an order this till took with no internet, sent now: its till, its own count, when it was taken. */
+      offline?: { deviceKey: string; tokenNo: number; takenAt: string };
       // The route refuses to guess: exactly one of these (GRW-293). A named stylist only when paying a token (GRW-403).
     } & ({ noStylist: true; schedulableId?: never } | { schedulableId: string; noStylist?: never }),
   ) =>
@@ -1670,7 +1672,12 @@ export const api = {
       rewards?: VisitRewards;
       /** Jira GRW-713 — the KOT this order sent to the kitchen. Absent where the business has no kitchen. */
       kot?: KitchenTicketDto;
+      /** Jira GRW-716 — an offline order's token ("A12"; `tokenNo` is then null), and whether it was flagged for the owner. */
+      offlineToken?: string;
+      sentLate?: boolean;
     }>('/api/v1/counter-sales', input),
+  /** Jira GRW-716 — this till's letter at its branch, so it can keep billing if the internet drops. */
+  registerTill: (location: string, deviceKey: string) => post<{ letter: string }>('/api/v1/till-devices', { location, deviceKey }),
   /**
    * Settle a counter order that was sent to the kitchen queue with payment pending (`paymentMode = null`).
    * Uses `POST /api/v1/counter-sales` with `settleSaleId` so anyone who may ring up a counter sale (including front desk)

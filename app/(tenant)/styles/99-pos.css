@@ -2156,3 +2156,61 @@
 
 /* Jira GRW-714 — the kitchen says this token is ready to hand over. */
 .pos-qcard-ready { padding: 0 var(--sp-2); border-radius: 999px; background: var(--accent-deep); color: var(--surface); font-size: 0.8125rem; font-weight: 700; }
+
+/* Jira GRW-716 — the till offline: one amber line with what it holds, and any refused order with its reason and Retry.
+   Never over the Pay button: it sits in the flow above the queued banner, and wraps rather than clipping at 344px. */
+.otb {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
+}
+.otb-line {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.otb-line.is-sending {
+  background: var(--slate-soft);
+  color: inherit;
+}
+.otb-icon {
+  flex: none;
+}
+.otb-failed {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.otb-failed-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  font-size: 0.875rem;
+}
+.otb-failed-what {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.otb-failed-why {
+  color: var(--muted);
+}
+.otb-retry {
+  min-height: 44px;
+}

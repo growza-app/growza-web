@@ -85,7 +85,9 @@ export function KitchenClient() {
     return () => clearTimeout(timer);
   }, [undo]);
 
-  const labelOf = (c: KitchenCard): string => (c.tokenNo !== null ? t('token', { n: String(c.tokenNo).padStart(2, '0') }) : (c.tableName ?? t('order')));
+  // Jira GRW-716 — an order taken while the till was offline is called by its till's token ("A12").
+  const labelOf = (c: KitchenCard): string =>
+    c.offlineToken ? c.offlineToken : c.tokenNo !== null ? t('token', { n: String(c.tokenNo).padStart(2, '0') }) : (c.tableName ?? t('order'));
 
   const ready = async (c: KitchenCard) => {
     setCards((prev) => (prev ?? []).filter((x) => x.saleId !== c.saleId));

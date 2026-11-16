@@ -698,6 +698,8 @@ export interface Appointment {
    * Absent from an older API, and null for a visit that never had one; then the screens number it as before.
    */
   tokenNo?: number | null;
+  /** Jira GRW-716 — an order taken while the till was offline: "A12". Never numbered as a plain token (it would clash). */
+  offlineToken?: string | null;
   providerId: string | null;
   providerName: string | null;
   reminderSent: boolean;
@@ -1476,6 +1478,10 @@ export interface OrderListRow {
   paymentPending?: boolean;
   /** Owner, 9 Nov 2026 — the order's stored token (API 0174); absent from an older API. */
   tokenNo?: number | null;
+  /** Jira GRW-716 — an order taken while the till was offline: its till's token ("A12"); `tokenNo` is then null. */
+  offlineToken?: string | null;
+  /** Jira GRW-716 BR-04 — sent more than a day after it was taken, or with a time that could not be believed. */
+  sentLate?: boolean;
   /** QA 2026-11-14 — when it was handed over the counter; null while it waits. Absent from an older API. */
   handedOverAt?: string | null;
 }
@@ -1528,6 +1534,10 @@ export interface OrderDetail {
   typeChangeable?: boolean;
   /** QA 10 Nov 2026 — the token the guest holds (API 0174); absent from an older API, null for an order without one. */
   tokenNo?: number | null;
+  /** Jira GRW-716 — an order taken while the till was offline: its till's token ("A12"); `tokenNo` is then null. */
+  offlineToken?: string | null;
+  /** Jira GRW-716 BR-04 — sent more than a day after it was taken, or with a time that could not be believed. */
+  sentLate?: boolean;
   /** Jira GRW-641 — the branch the order is booked against, by name. */
   branchName: string | null;
   status: string;
@@ -2327,6 +2337,8 @@ export type OrderType = 'dine_in' | 'takeaway' | 'delivery';
 export interface OrderKitchenTickets {
   saleId: string;
   tokenNo: number | null;
+  /** Jira GRW-716 — an order taken while the till was offline: its till's token ("A12"); `tokenNo` is then null. */
+  offlineToken?: string | null;
   channel: string;
   /** Jira GRW-720 · GRW-719 — printed on the slip: "TAKEAWAY", "DINE-IN · T4". Absent from an older API. */
   orderType?: OrderType | null;
@@ -2364,6 +2376,8 @@ export interface DocumentTicket {
   /** What came in each way, from the bill's payment rows; empty when one way paid it all. */
   payments?: { mode: string; amountMinor: number }[];
   tokenNo: number | null;
+  /** Jira GRW-716 — an order taken while the till was offline: its till's token ("A12"); `tokenNo` is then null. */
+  offlineToken?: string | null;
   channel: string | null;
   /** Jira GRW-720 · GRW-719 — printed on the bill beside the date. Absent from an older API. */
   orderType?: OrderType | null;
@@ -2398,6 +2412,8 @@ export interface AddonGroupInput {
 export interface KitchenCard {
   saleId: string;
   tokenNo: number | null;
+  /** Jira GRW-716 — an order taken while the till was offline: its till's token ("A12"); `tokenNo` is then null. */
+  offlineToken?: string | null;
   tableName: string | null;
   orderType: 'dine_in' | 'takeaway' | 'delivery' | null;
   channel: string;

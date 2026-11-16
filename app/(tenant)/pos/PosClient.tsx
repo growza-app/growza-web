@@ -735,7 +735,7 @@ export function PosClient({
       const res = await api.cancelPendingCounterSale(tk.id);
       // Jira GRW-713 — the kitchen is told to stop: printed now where this till prints by itself, a tap away otherwise.
       if (res.kot) {
-        const order = { tokenNo: tk.tokenNo, channel: tk.channel };
+        const order = { tokenNo: tk.tokenNo, offlineToken: tk.offlineToken, channel: tk.channel };
         setLastKot({ saleId: tk.id, kot: res.kot, order });
         printer.autoKot(res.kot, order);
       }
@@ -917,7 +917,7 @@ export function PosClient({
           mode: chosen,
           modeLabel: paidBy,
           summary: [
-            nv.token(tk.tokenNo),
+            tk.offlineToken ?? nv.token(tk.tokenNo),
             paidBy,
             tk.items.map((i) => i.name).join(' + '),
             (settled.rewards?.earnedPoints ?? 0) > 0
@@ -1442,7 +1442,7 @@ export function PosClient({
                 const tk = addingToToken;
                 // Jira GRW-713 — a KOT for what was just added, and nothing the kitchen already has.
                 if (res.kot) {
-                  const order = { tokenNo: tk.tokenNo, channel: tk.channel };
+                  const order = { tokenNo: tk.tokenNo, offlineToken: tk.offlineToken, channel: tk.channel };
                   setLastKot({ saleId: tk.id, kot: res.kot, order });
                   printer.autoKot(res.kot, order);
                 }

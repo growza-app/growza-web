@@ -3215,6 +3215,21 @@
     "remove": "Remove"
   },
   "payFlow": {
+    "offline": {
+      "notKept": "No internet. Only a paid counter order can be taken offline — the Queue, tables, points and services need the internet.",
+      "keptShort": "Kept on this device — sends when online",
+      "receiptTitle": "Receipt",
+      "numberLater": "Bill number is given when you are back online",
+      "paidBy": "Paid by {ways}",
+      "offlineWaiting": "Offline — {n, plural, one {# order} other {# orders}} waiting to send",
+      "offlineReady": "Offline — you can keep billing. Orders are kept on this device.",
+      "offlineCannot": "Offline — connect to the internet to take orders.",
+      "sending": "Back online — sending {n, plural, one {# order} other {# orders}}…",
+      "failedTitle": "Orders that could not be sent",
+      "failedUnknown": "Could not be sent.",
+      "retry": "Retry",
+      "needsInternet": "Needs internet"
+    },
     "choices": {
       "close": "Close",
       "portion": "Portion",
@@ -4908,6 +4923,7 @@
       },
       "itemCount": "{count, plural, =0 {No items} one {# item} other {# items}}",
       "itemsAllBack": "{count, plural, one {# item} other {# items}} · all came back",
+      "sentLate": "Sent late",
       "orderCode": "Order #{code}",
       "tokenTitle": "Token {n}",
       "appOrder": "App order {ref}",
@@ -5060,6 +5076,8 @@
       "refundRef": "reference {ref}",
       "placedCounter": "Taken at the counter",
       "placedApp": "Taken from {channel}",
+      "offline": "Taken while the till was offline.",
+      "offlineLate": "Taken while the till was offline, and sent more than a day later. Check it.",
       "appOrderRef": "order {ref}"
     },
     "import": {
