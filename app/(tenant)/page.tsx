@@ -11,7 +11,8 @@ import { ReceptionHome } from './components/home/ReceptionHome';
 import { StylistHome } from './components/home/StylistHome';
 import { NotLiveHome } from './components/home/NotLiveHome';
 import { ShopHome } from './components/home/ShopHome';
-import { areasOf } from './lib/areas';
+import { areasOf, servesTablesOnly } from './lib/areas';
+import { redirect } from 'next/navigation';
 import { isLive } from './lib/go-live';
 
 export const dynamic = 'force-dynamic';
@@ -88,6 +89,9 @@ export default async function DashboardPage() {
       </div>
     );
   }
+
+  // Jira GRW-723 — a waiter's Home is the room.
+  if (servesTablesOnly(areasOf(me).pages)) redirect('/pos');
 
   const lang = await serverLang();
   const role = (me.member?.role as MemberRole | undefined) ?? null;

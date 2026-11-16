@@ -4505,6 +4505,10 @@
     "joinTo": "{table} से जोड़ें, {amount}",
     "movedOk": "{from} अब {to} पर है।",
     "joinedOk": "{from} को {to} से जोड़ दिया। अब एक बिल है।",
+    "waiterOff": "इस ब्रांच में टेबल ऑर्डर बंद है",
+    "waiterOffHint": "मालिक से कहें कि सेटिंग › टेबल में इसे चालू करें।",
+    "waiterAskBill": "पहले काउंटर बिल छापेगा। फिर पेमेंट लें।",
+    "takenBy": "{name} ने लिया",
     "billLoading": "बिल खुल रहा है…",
     "confirmMoveTitle": "{from} को {to} पर ले जाएँ?",
     "confirmMoveLine": "बिल ({amount}) मेहमानों के साथ {to} पर जाएगा। किचन को दोबारा नहीं भेजा जाएगा।",
@@ -5362,7 +5366,8 @@
       "staff": "स्टाफ़",
       "attendance": "हाज़िरी",
       "reports": "रिपोर्ट",
-      "settings": "सेटिंग्स"
+      "settings": "सेटिंग्स",
+      "tables": "टेबल"
     },
     "levels": {
       "none": "कुछ नहीं",
@@ -5533,6 +5538,8 @@
     },
     "payments": {
       "title": "भुगतान",
+      "byPersonTitle": "किसने लिया",
+      "byPersonUnknown": "दर्ज नहीं",
       "netLabel": "आया पैसा, रिफ़ंड के बाद",
       "netLine": "{received} आया · {refunded} लौटाया",
       "mode": {

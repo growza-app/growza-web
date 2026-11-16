@@ -33,6 +33,11 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Pick a different table.': 'कोई दूसरी टेबल चुनें।',
   'Pick the table to move to': 'वह टेबल चुनें जहाँ ले जाना है',
   'Pick the table to join': 'वह टेबल चुनें जिससे जोड़ना है',
+  // Jira GRW-723 — a waiter
+  'A waiter takes a table’s orders and its payment. Ask the counter for this.': 'वेटर सिर्फ़ टेबल का ऑर्डर और उसका पेमेंट लेता है। यह काम काउंटर से करवाएँ।',
+  'A waiter cannot give a discount. Ask the counter.': 'वेटर छूट नहीं दे सकता। काउंटर से कहें।',
+  'The counter prints the bill first. Then take the payment.': 'पहले काउंटर बिल छापेगा। फिर पेमेंट लें।',
+  'Table orders is off at this branch. Switch it on in Settings › Tables before adding a waiter here.': 'इस ब्रांच में टेबल ऑर्डर बंद है। यहाँ वेटर जोड़ने से पहले सेटिंग › टेबल में इसे चालू करें।',
   // QA 2026-11-16
   'A takeaway order is not for a table': 'पैक करके ले जाने वाला ऑर्डर टेबल पर नहीं होता',
   'A table pays when the guests ask for the bill, not with the order': 'टेबल का बिल तब चुकता होता है जब मेहमान बिल माँगें, ऑर्डर के साथ नहीं',

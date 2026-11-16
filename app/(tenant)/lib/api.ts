@@ -255,7 +255,7 @@ import type {
  * just show an error) can check `.status` instead of string-matching text.
  */
 /** Jira GRW-72 — the pages a role grants, and how far. Mirrors `platform/permissions.ts` in the API. */
-export type RolePageKey = 'bookings' | 'clients' | 'services' | 'offers' | 'staff' | 'attendance' | 'reports' | 'settings';
+export type RolePageKey = 'bookings' | 'clients' | 'services' | 'offers' | 'staff' | 'attendance' | 'reports' | 'settings' | 'tables';
 export type RoleLevel = 'none' | 'view' | 'manage';
 export type RoleWorksLike = 'manager' | 'receptionist' | 'staff';
 export interface ShopRole {

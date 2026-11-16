@@ -15,7 +15,7 @@
  */
 import { canSee as roleCanSee, visibleItems as roleVisibleItems, type MemberRole, type UiAction } from '@growza-app/shared';
 import { isSetupDestination } from './go-live';
-import { areaAllows, isShopRoute, type Areas, type PageGrid } from './areas';
+import { areaAllows, isShopRoute, servesTablesOnly, type Areas, type PageGrid } from './areas';
 
 export {
   canSeeReports,
@@ -99,6 +99,9 @@ const ALSO_NEEDS: ReadonlyArray<readonly [string, keyof PageGrid]> = [
   ['/products/sell', 'services'],
 ];
 
+/** Jira GRW-723 — everything a waiter is offered. Home sends them to the room (`app/(tenant)/page.tsx`). */
+const WAITER_HREF: readonly string[] = ['/pos', '/notifications', '/help'];
+
 /** Destinations the grid can never open: the API makes these the owner's alone (billing, branches, team, roles). */
 const OWNER_ONLY_HREF: readonly string[] = ['/settings/billing', '/settings/branches', '/settings/team', '/settings/roles'];
 
@@ -168,6 +171,8 @@ export function gridMayUse(action: UiAction, grid: PageGrid): boolean {
 export function gridCanSee(rawHref: string, grid: PageGrid): boolean {
   // A query string is not part of the address the grid is asked about.
   const href = rawHref.split('?')[0]!;
+  // Jira GRW-723 — a waiter's app is the room and nothing else (BR-01): the till's map, the bell, Help.
+  if (servesTablesOnly(grid)) return WAITER_HREF.some((p) => href === p || href.startsWith(`${p}/`));
   if (NEEDS_CHANGE_TO_OPEN.some((p) => href === p || href.startsWith(`${p}/`)) && !gridCanChange(href, grid)) return false;
   if (OWNER_ONLY_HREF.some((p) => href === p || href.startsWith(`${p}/`))) return false;
   const extra = ALSO_NEEDS.find(([prefix]) => href === prefix || href.startsWith(`${prefix}/`));

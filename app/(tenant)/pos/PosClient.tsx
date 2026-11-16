@@ -1,5 +1,6 @@
 'use client';
 
+import { WaiterContext } from './waiter';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from '../../shared/AppLink';
@@ -430,7 +431,10 @@ export function PosClient({
   initialToken,
   heading,
   backTo,
+  waiter = false,
 }: {
+  /** Jira GRW-723 — a waiter's till: the room only (see `waiter.ts`). */
+  waiter?: boolean;
   timezone: string;
   todayISO: string;
   returnWindowDays: number;
@@ -1228,8 +1232,20 @@ export function PosClient({
   };
 
   return (
+    <WaiterContext.Provider value={waiter}>
     <div className={fullScreen ? 'pos-shell is-fullscreen' : 'pos-shell'}>
-      {fullScreen ? (
+      {waiter ? (
+        // Jira GRW-723 — a waiter's bar: which branch, and the printer for the kitchen's slip. Nothing of the counter's.
+        <div className="pos-bar pos-bar-minimal">
+          <div className="pos-bar-right">
+            <div className="pos-bar-branch">
+              <HeaderBranchPicker variant="pill" />
+              <HeaderBranchPicker variant="line" />
+            </div>
+            <PrinterButton printer={printer} />
+          </div>
+        </div>
+      ) : fullScreen ? (
         <header className="pos-fs-bar">
           <div className="pos-fs-left">
             {/*
@@ -1570,5 +1586,6 @@ export function PosClient({
         />
       ) : null}
     </div>
+    </WaiterContext.Provider>
   );
 }

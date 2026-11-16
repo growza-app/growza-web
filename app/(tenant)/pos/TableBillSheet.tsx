@@ -6,6 +6,7 @@ import { api, ApiError, formatMoney, type DiningArea, type DiningTable, type Ord
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useScrimDismiss } from '../../shared/a11y/scrim-dismiss';
 import type { useTicketPrinter } from '../components/TicketPrinter';
+import { useWaiter } from './waiter';
 
 /**
  * Jira GRW-721 — one table's running bill: what it has had, what it comes to, and the four things a counter does with
@@ -43,6 +44,8 @@ export function TableBillSheet({
   onDone: (said?: string) => void;
 }) {
   const t = useTranslations('posTables');
+  // Jira GRW-723 — a waiter: no Print bill, and payment only once the counter has printed it (owner decision 2026-11-16).
+  const waiter = useWaiter();
   const saleId = table.openBill!.saleId;
   const ref = useRef<HTMLDivElement>(null);
   useDialog(ref, { onClose: () => onDone(), initialFocus: 'container' });
@@ -129,6 +132,7 @@ export function TableBillSheet({
                   <span className="tb-line-name">
                     {l.qty} × {l.name}
                     {l.cancelReason ? <span className="tb-off">{t('takenOff', { reason: l.cancelReason })}</span> : null}
+                    {l.addedBy && !l.cancelReason ? <span className="tb-off">{t('takenBy', { name: l.addedBy })}</span> : null}
                   </span>
                   <span className="tb-line-amount">{money(Number(l.paidMinor ?? 0) - Number(l.returnedMinor ?? 0))}</span>
                   {canManage && !l.cancelReason && !moving ? (
@@ -254,17 +258,23 @@ export function TableBillSheet({
                 <button type="button" className="btn btn-ghost" disabled={busy} onClick={openMove}>
                   {t('moveTable')}
                 </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  disabled={busy || printer.status.state === 'printing'}
-                  onClick={() => void run(() => printer.printBill(saleId))}
-                >
-                  {t('printBill')}
-                </button>
-                <button type="button" className="btn" disabled={busy} onClick={() => setPaying(true)}>
-                  {t('takePayment', { amount: money(totalMinor) })}
-                </button>
+                {waiter ? null : (
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    disabled={busy || printer.status.state === 'printing'}
+                    onClick={() => void run(() => printer.printBill(saleId))}
+                  >
+                    {t('printBill')}
+                  </button>
+                )}
+                {waiter && !table.openBill?.billPrinted ? (
+                  <p className="field-hint tb-wait-bill">{t('waiterAskBill')}</p>
+                ) : (
+                  <button type="button" className="btn" disabled={busy} onClick={() => setPaying(true)}>
+                    {t('takePayment', { amount: money(totalMinor) })}
+                  </button>
+                )}
               </div>
             )}
           </>

@@ -53,6 +53,14 @@ export interface Areas {
 export type PageLevel = 'none' | 'view' | 'manage';
 export type PageGrid = Partial<Record<RolePageKey, PageLevel>>;
 
+/**
+ * Jira GRW-723 — a waiter: a role that serves tables and does not run the till (Tables granted, Bookings not at Change). Their whole app is
+ * the room at `/pos`; the API narrows them the same way (`api/security/table-service.ts`).
+ */
+export function servesTablesOnly(grid: PageGrid | null | undefined): boolean {
+  return Boolean(grid) && (grid!.tables ?? 'none') !== 'none' && grid!.bookings !== 'manage';
+}
+
 /** The salon's app: every diary screen, none of the shop's. What an absent answer means. */
 export const DIARY_AREAS: Areas = { bookings: true, services: true, shop: false, stock: true };
 

@@ -4505,6 +4505,10 @@
     "joinTo": "Join {table}, {amount}",
     "movedOk": "{from} moved to {to}.",
     "joinedOk": "{from} joined {to}. One bill now.",
+    "waiterOff": "Table orders is off at this branch",
+    "waiterOffHint": "Ask the owner to switch it on in Settings › Tables.",
+    "waiterAskBill": "The counter prints the bill first. Then take the payment.",
+    "takenBy": "by {name}",
     "billLoading": "Loading the bill…",
     "confirmMoveTitle": "Move {from} to {to}?",
     "confirmMoveLine": "The bill ({amount}) goes with the guests to {to}. The kitchen is not told again.",
@@ -5362,7 +5366,8 @@
       "staff": "Staff",
       "attendance": "Attendance",
       "reports": "Reports",
-      "settings": "Settings"
+      "settings": "Settings",
+      "tables": "Tables"
     },
     "levels": {
       "none": "None",
@@ -5533,6 +5538,8 @@
     },
     "payments": {
       "title": "Payments",
+      "byPersonTitle": "Taken by",
+      "byPersonUnknown": "Not recorded",
       "netLabel": "Money in, after refunds",
       "netLine": "{received} in · {refunded} refunded",
       "mode": {

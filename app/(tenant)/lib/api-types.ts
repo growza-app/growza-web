@@ -1542,6 +1542,8 @@ export interface OrderDetail {
     swappable: boolean;
     /** Jira GRW-721 — taken off an unpaid table bill, and why; charged nothing. Absent from an older API. */
     cancelReason?: string | null;
+    /** Jira GRW-723 — who put the line on the bill ("Ravi"). */
+    addedBy?: string | null;
     sku: string | null;
     barcode: string | null;
     priceMinor?: string;
@@ -2284,6 +2286,8 @@ export interface PaymentsReportPage {
   totals: { receivedMinor: number; refundedMinor: number; netMinor: number };
   modes: Array<{ mode: MoneyPaymentMode; receivedMinor: number; refundedMinor: number; netMinor: number }>;
   byDay: Array<{ dateISO: string; received: Partial<Record<MoneyPaymentMode, number>>; refundedMinor: number; netMinor: number }>;
+  /** Jira GRW-723 — who took the money; a name null when nobody was recorded. Absent from an older API. */
+  byPerson?: Array<{ name: string | null; receivedMinor: number; modes: Partial<Record<MoneyPaymentMode, number>> }>;
   pending: { count: number; valueMinor: number; rows: Array<{ id: string; soldAtISO: string; tokenNo: number | null; valueMinor: number }> };
 }
 
@@ -2295,6 +2299,8 @@ export interface KitchenTicketDto {
   kind: 'new' | 'add' | 'cancel' | 'pack';
   createdAt: string;
   items: { name: string; qty: number }[];
+  /** Jira GRW-723 — who sent it ("Ravi"), printed beside the table. Absent from an older API. */
+  takenBy?: string | null;
 }
 
 /** Jira GRW-720 — how an order is eaten. Null: taken before order types existed (reports call it Counter). */

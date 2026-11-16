@@ -46,6 +46,7 @@ import { PaymentDone } from '../../components/PaymentDone';
 import { TillPrintActions, useTicketPrinter } from '../../components/TicketPrinter';
 import { TableMap } from '../../pos/TableMap';
 import { TableBillSheet } from '../../pos/TableBillSheet';
+import { useWaiter } from '../../pos/waiter';
 import type { DiningTable } from '../../lib/api';
 import type { KitchenTicketDto } from '../../lib/api-types';
 import { DiscountSheet } from './DiscountSheet';
@@ -277,6 +278,8 @@ export function PayFlow({
   /** What the till just did at a table, said in full: "Sent to kitchen · T3", "T3 paid · ₹640", "T1 moved to T3." */
   const [tableSent, setTableSent] = useState<string | null>(null);
   const tTables = useTranslations('posTables');
+  // Jira GRW-723 — a waiter's till is the room only: Dine-in, no type tabs, and an "off" screen where the branch seats nobody.
+  const waiter = useWaiter();
   const providerNoun = useLabel('provider', 'Staff member');
   // The person paying, in the vertical's own word — Guest at a restaurant, Customer at a shop.
   const clientNoun = pickNoun(locale, useLabel('customer', 'Client'), tNouns('customer'));
@@ -1957,7 +1960,7 @@ export function PayFlow({
    */
   const typeTabs: Array<'dine_in' | 'takeaway' | 'delivery'> = ['dine_in', 'takeaway', ...(apps.length > 0 ? (['delivery'] as const) : [])];
   const typeRow =
-    tablesHere && !token ? (
+    tablesHere && !token && !waiter ? (
       <div className="pf-type" role="group" aria-label={t('type.label')}>
         <div className="pf-type-tabs">
           {typeTabs.map((key) => (
@@ -1981,7 +1984,8 @@ export function PayFlow({
     ) : null;
 
   /* ---------- ① What did they get? ---------- */
-  const who = token ? (
+  // Jira GRW-723 — a waiter does not look up guests (that is the Clients page, which a waiter does not hold): the guest is named when they pay.
+  const who = waiter ? null : token ? (
     <p className="pf-who-token">
       {token.tokenNo !== null ? `${nv.token(token.tokenNo)} · ` : ''}
       {token.customerName}
@@ -2072,6 +2076,17 @@ export function PayFlow({
       </div>
     </div>
   ) : null;
+  // Jira GRW-723 AC-04 — a waiter at a branch that does not seat its guests is told so, and offered nothing else.
+  if (waiter && session && !tablesHere) {
+    return (
+      <div className="pf-tables">
+        <div className="tm-empty" role="status">
+          <p className="tm-empty-title">{tTables('waiterOff')}</p>
+          <p className="field-hint">{tTables('waiterOffHint')}</p>
+        </div>
+      </div>
+    );
+  }
   if (tablesHere && orderTab === 'dine_in' && !atTable && !token && step === 'what' && location) {
     return (
       <div className="pf-tables">
