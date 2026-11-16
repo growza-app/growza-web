@@ -24,6 +24,18 @@ export interface MeBranch {
   /** Jira GRW-671 — its phone (its own, else the business's) and a maps link to its pin. Absent on an older API. */
   phone?: string | null;
   mapsUrl?: string | null;
+  /**
+   * Jira GRW-718 — this branch takes table orders: its owner switched them on, at a business whose vertical has tables.
+   * Absent on an older API, and absent reads as no — today's till, which is what every branch had.
+   */
+  tableOrders?: boolean;
+}
+
+/** Jira GRW-718 — one branch's Table orders switch, as Settings › Tables reads it. */
+export interface BranchTableOrders {
+  id: string;
+  name: string;
+  on: boolean;
 }
 
 export interface Me {
@@ -194,6 +206,8 @@ export interface Me {
     stockCounted?: boolean;
     /** Owner, 2026-10-24 — whether the Flipkart/Amazon screens exist. False for a restaurant; absent reads as true. */
     marketplaces?: boolean;
+    /** Jira GRW-718 — whether this business may seat guests at all (a restaurant). Which BRANCH does is `branches[].tableOrders`. Absent reads as no. */
+    tables?: boolean;
     /** Jira GRW-598 — whether sizes are switched on for this business (the `sizes` flag). Absent reads as no: it ships off. */
     sizes?: boolean;
     providerSelection: boolean;

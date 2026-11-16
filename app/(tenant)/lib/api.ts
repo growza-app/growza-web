@@ -104,6 +104,7 @@ import { bareRefusalMessage, genericFailureMessage, localiseApiMessage } from '.
 import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
+  BranchTableOrders,
   OrderDetail,
   ChannelBranches,
   SetChannelBranchResult,
@@ -707,6 +708,10 @@ export const api = {
   /** Any of the three. Answers with what was WRITTEN — a rate over the platform's ceiling comes back clamped. */
   saveRewardSettings: (body: { enabled?: boolean; earnBps?: number; expiryDays?: number; holdHours?: number }) =>
     patch<RewardSettings>('/api/v1/settings/rewards', body),
+  /** Jira GRW-718 — every open branch and its Table orders switch. Owner only; 403 at a business with no tables. */
+  tableOrders: () => get<{ branches: BranchTableOrders[] }>('/api/v1/settings/table-orders'),
+  /** Switching off is refused (409) while a table at that branch has an open bill; the message says how many. */
+  setTableOrders: (branchId: string, on: boolean) => put<{ branches: BranchTableOrders[] }>(`/api/v1/settings/table-orders/${branchId}`, { on }),
   alertPrefs: () => get<AlertPrefs>('/api/v1/alerts/prefs'),
   setAlertPref: (kind: AlertKind, enabled: boolean) => put<{ kind: AlertKind; enabled: boolean }>('/api/v1/alerts/prefs', { kind, enabled }),
   /** `null` when this deployment has no VAPID keys — the screen then says alerts are not set up. */

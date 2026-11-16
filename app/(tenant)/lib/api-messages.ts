@@ -18,6 +18,8 @@ export const API_MESSAGES_HI: Record<string, string> = {
   // ---- Jira GRW-72 — roles
   'This business has no roles to set up.': 'इस बिज़नेस में सेट करने के लिए कोई रोल नहीं है।',
   'Only the owner can change roles.': 'रोल सिर्फ़ मालिक बदल सकते हैं।',
+  // Jira GRW-718 — Settings › Tables.
+  'Only the owner can switch Table orders on or off.': 'टेबल ऑर्डर सिर्फ़ मालिक चालू या बंद कर सकते हैं।',
   'A manager needs a role. Choose one, or remove them from the team.': 'मैनेजर का कोई रोल होना ज़रूरी है। एक रोल चुनें, या उन्हें टीम से हटा दें।',
   'There is no such role.': 'ऐसा कोई रोल नहीं है।',
   'Say why it cannot be sold again': 'बताएँ कि यह दोबारा क्यों नहीं बिक सकता',

@@ -444,6 +444,10 @@
         "label": "Reward points",
         "sub": "Points clients earn and spend"
       },
+      "tables": {
+        "label": "Tables",
+        "sub": "Take orders by table, per branch"
+      },
       "checkIn": {
         "label": "Location check-in",
         "sub": "Staff mark themselves in from their phone"
@@ -982,6 +986,14 @@
       "canUse": "Use {points} pts (-{off})",
       "pays": "{pay}"
     }
+  },
+  "settingsTables": {
+    "intro": "Switch on Table orders for a branch where guests sit and eat. Its till then takes orders by table. A branch left off keeps today's till.",
+    "oneBranchTitle": "Table orders",
+    "onHint": "On — orders are taken by table.",
+    "offHint": "Off — today's till, no tables.",
+    "saveFailed": "Couldn't save. Check your connection and try again.",
+    "loadFailed": "Couldn't load your branches. Try again in a moment."
   },
   "settingsTeam": {
     "title": "Team access",

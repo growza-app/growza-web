@@ -15,8 +15,8 @@ import type { MemberRole } from '@growza-app/shared';
  * test/integration/vertical-matrix.integration.test.ts.
  */
 const SHOP: Areas = { bookings: false, services: false, shop: true, stock: true };
-/** The shop's app with no count behind it (`catalog.stock_counted` off): the restaurant. */
-const KITCHEN: Areas = { ...SHOP, stock: false };
+/** The shop's app with no count behind it (`catalog.stock_counted` off): the restaurant — the one vertical that seats guests (Jira GRW-718). */
+const KITCHEN: Areas = { ...SHOP, stock: false, tables: true };
 type Shape = 'diary' | 'shop' | 'kitchen';
 const SHAPES: Array<{ name: string; shape: Shape; areas: Areas }> = [
   { name: 'diary (salon, clinic, spa, garage, dental)', shape: 'diary', areas: DIARY_AREAS },
@@ -30,7 +30,7 @@ const ROLES: Array<MemberRole | null> = ['owner', 'manager', 'receptionist', 'st
  * count. A restaurant's menu lives at `/stock` like any shop's shelf, so that screen is `shop`; what the shelf is
  * WORTH and what to re-order are `counted`, and a kitchen has neither.
  */
-type Who = 'both' | 'diary' | 'shop' | 'counted';
+type Who = 'both' | 'diary' | 'shop' | 'counted' | 'tables';
 /** The screen → who has it. The one hand-written thing here; everything else is derived or asked. */
 const SCREENS: Readonly<Record<string, Who>> = {
   '/': 'both',
@@ -83,6 +83,8 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/settings/alerts': 'both',
   // Jira GRW-648 — a salon's stamp card and a shop's points are the same engine; neither vertical is named in it.
   '/settings/rewards': 'both',
+  // Jira GRW-718 — which branches seat their guests: only a business whose vertical has tables (the restaurant).
+  '/settings/tables': 'tables',
   '/settings/gst': 'both',
   '/settings/notifications': 'both',
   '/settings/payments': 'both',
@@ -120,7 +122,7 @@ function discover(dir = tenant, route = ''): string[] {
 /** A concrete address for a dynamic route, as the nav would be asked about it. */
 const concrete = (route: string) => route.replace(/\[\.\.\.[^\]]+\]/g, 'x').replace(/\[[^\]]+\]/g, 'x');
 const hasIt = (who: Who, shape: Shape): boolean =>
-  who === 'both' || (who === 'diary' ? shape === 'diary' : who === 'shop' ? shape !== 'diary' : shape === 'shop');
+  who === 'both' || (who === 'diary' ? shape === 'diary' : who === 'shop' ? shape !== 'diary' : who === 'tables' ? shape === 'kitchen' : shape === 'shop');
 
 describe('every screen on disk is named, and every name is a screen', () => {
   const onDisk = discover().sort();
@@ -175,9 +177,10 @@ describe('FR-01 … FR-03 — each kind of business is offered exactly the scree
     for (const { areas } of SHAPES) expect(areaAllows('/a-new-shared-screen', areas)).toBe(true);
   });
 
-  it('a kitchen is a shop in everything but the count: only the two count screens differ', () => {
+  it('a kitchen is a shop in everything but the count and its tables: only those screens differ', () => {
     const differ = Object.keys(SCREENS).filter((r) => areaAllows(concrete(r), SHOP) !== areaAllows(concrete(r), KITCHEN));
-    expect(differ.sort()).toEqual(['/stock/order', '/stock/report']);
+    // Jira GRW-718 — Settings › Tables is the restaurant's alone (`dining.tables`), the one difference that is not a count.
+    expect(differ.sort()).toEqual(['/settings/tables', '/stock/order', '/stock/report']);
     // …and the menu itself is NOT one of them: that is where a restaurant's dishes live.
     expect(areaAllows('/stock', KITCHEN)).toBe(true);
     expect(areaAllows('/orders/new', KITCHEN)).toBe(true);

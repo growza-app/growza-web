@@ -12,6 +12,7 @@ import {
   IconPayUpi,
   IconShop,
   IconStar,
+  IconTable,
   IconUser,
   IconUserPlus,
   IconWallet,
@@ -31,6 +32,7 @@ export type SettingsRowKey =
   | 'notifications'
   | 'phoneAlerts'
   | 'rewards'
+  | 'tables'
   | 'checkIn'
   | 'appearance'
   | 'privacy'
@@ -186,6 +188,14 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
        * client the business has, and it is the owner who pays for it.
        */
       { href: '/settings/rewards', key: 'rewards', icon: IconStar, ownerOnly: true },
+      /*
+       * Jira GRW-718 — which branches seat their guests. One screen with a switch per branch, in the business group and
+       * not the branch one: the owner decides it for the whole business at a glance ("MG Road yes, Airport no"), the
+       * way the story asks, rather than flipping the header branch once per branch to find out.
+       *
+       * Owner only, and a restaurant's only: `areaAllows` closes the address everywhere else (TABLE_ROUTES).
+       */
+      { href: '/settings/tables', key: 'tables', icon: IconTable, ownerOnly: true },
       { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
       // Jira GRW-72 — what each role on a shop's team can open.
       { href: '/settings/roles', key: 'roles', icon: IconLock, shopOwnerOnly: true },
