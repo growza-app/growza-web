@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import Link from '../../shared/AppLink';
 import { DocumentAction } from './DocumentAction';
 import { useRouter } from 'next/navigation';
@@ -56,7 +58,10 @@ export function PaymentDone({
   onToggleSound,
   title,
   nextLabel,
+  printSlot,
 }: {
+  /** Jira GRW-713 — Print KOT and Print bill on the thermal roll, under the invoice action. A till that prints passes it. */
+  printSlot?: ReactNode;
   /** Owner, 2026-10-24 — said instead of "₹300 received" when no money was taken here (a delivery app's order). */
   title?: string;
   /** Optional custom label for the primary return button (e.g. "Back to queue" when settling a token in Queue). */
@@ -154,7 +159,7 @@ export function PaymentDone({
   };
 
   return (
-    <div className="pf pf-done-page">
+    <div className={`pf pf-done-page${printSlot ? ' is-till' : ''}`}>
       <div className="pf-done">
         <span className="pf-done-check" aria-hidden="true">
           <IconCheck />
@@ -164,6 +169,11 @@ export function PaymentDone({
         </h1>
         <p className="pf-done-sub">{summary}</p>
       </div>
+      {/*
+        Owner, 2026-11-16 — a till that prints (a shop's, a restaurant's) puts its print row first, right under the
+        amount: Print bill, Print kitchen slip, the printer. One row, and the receipt's own "Print" is not drawn beside it.
+      */}
+      {printSlot ? <div className="pf-done-print">{printSlot}</div> : null}
       {/*
         Jira GRW-582 — the customer's receipt or GST invoice, directly under Send on WhatsApp and above Print: it is
         one more thing handed to the customer, so it sits with the others, above the fold. It was first drawn in the
@@ -175,8 +185,11 @@ export function PaymentDone({
         bill={bill}
         phone={phone}
         compactPreview
+        till={Boolean(printSlot)}
         onNumberGiven={givenPhone ? undefined : keepClient}
-        afterSend={<DocumentAction visitKey={appointmentId} />}
+        // Owner, 2026-11-16 — "remove make receipt": on a till that prints, Print bill IS the receipt (it issues the
+        // invoice itself), so a second way to make one is not drawn. The salon keeps its button.
+        afterSend={printSlot ? null : <DocumentAction visitKey={appointmentId} />}
       />
       {kept ? (
         <p className={kept === 'failed' ? 'pf-error pf-kept' : 'pf-kept'} role="status">

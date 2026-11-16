@@ -43,6 +43,8 @@ import { queueScan, takeScans } from '../../lib/scan-queue';
 import { heldBillsKey, heldStamp, loadHeldBills, saveHeldBills } from '../../lib/held-bills';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
 import { PaymentDone } from '../../components/PaymentDone';
+import { TillPrintActions, useTicketPrinter } from '../../components/TicketPrinter';
+import type { KitchenTicketDto } from '../../lib/api-types';
 import { DiscountSheet } from './DiscountSheet';
 import { shownPercent } from './bill-discount';
 
@@ -81,6 +83,10 @@ interface Sale {
   day: string;
   /** Only products were sold: the id is a sale's, not a booking's, so there is nothing in Bookings to open. */
   productOnly: boolean;
+  /** Jira GRW-713 — the KOT this order sent to the kitchen, for Print KOT on the done screen. Absent with no kitchen. */
+  kot?: KitchenTicketDto;
+  /** Where the order came from: 'counter' or a delivery app. The KOT names it. */
+  channel: string;
 }
 
 /**
@@ -716,7 +722,15 @@ export function PayFlow({
    * rather than doing nothing, because a silent miss at the counter reads as "the scanner is broken".
    */
   const [scanNote, setScanNote] = useState<string | null>(null);
-  const [queuedBanner, setQueuedBanner] = useState<{ tokenNo: number | null; amountMinor: number } | null>(null);
+  const [queuedBanner, setQueuedBanner] = useState<{
+    tokenNo: number | null;
+    amountMinor: number;
+    /** Jira GRW-713 — the order just sent, and its KOT, for Print KOT on the banner. */
+    saleId?: string;
+    kot?: KitchenTicketDto;
+    channel?: string;
+  } | null>(null);
+  const printer = useTicketPrinter();
   useEffect(() => {
     if (lines.length > 0 && queuedBanner) setQueuedBanner(null);
   }, [lines.length, queuedBanner]);
@@ -1008,6 +1022,7 @@ export function PayFlow({
               tokenNo: null as number | null,
               earnedPoints: r.rewards?.earnedPoints ?? 0,
               rewards: r.rewards ?? null,
+              kot: undefined as KitchenTicketDto | undefined,
             };
           })()
         : await (async () => {
@@ -1048,6 +1063,8 @@ export function PayFlow({
               tokenNo: r.tokenNo ?? null,
               earnedPoints: r.rewards?.earnedPoints ?? 0,
               rewards: r.rewards ?? null,
+              // Jira GRW-713 — the kitchen's ticket for this order, printed below if this counter prints them.
+              kot: r.kot,
             };
           })();
       const result = settled;
@@ -1065,11 +1082,16 @@ export function PayFlow({
       }).format(new Date(result.startAt));
       const tokenNo = result.tokenNo ?? token?.tokenNo ?? nextTokenNo ?? null;
       onSaleCompleted?.(result.appointmentId);
+      // Jira GRW-713 — the kitchen's ticket and the guest's bill. After the sale is saved, never in its way (BR-03).
+      const channel = fromApp ?? 'counter';
+      printer.autoKot(result.kot, { tokenNo, channel });
       if (pending) {
         nextCustomer();
-        setQueuedBanner({ tokenNo, amountMinor: paidMinor });
+        setQueuedBanner({ tokenNo, amountMinor: paidMinor, saleId: result.appointmentId, kot: result.kot, channel });
         return;
       }
+      // A delivery app bills its own guest, and issuing has no client of ours to name: only the counter's own bills print.
+      if (productsOnly && channel === 'counter') printer.autoBill(result.appointmentId);
       const bill = receiptRows(
         {
           businessName: session?.businessName ?? null,
@@ -1190,6 +1212,8 @@ export function PayFlow({
           .join(' · '),
         day: new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(result.startAt)),
         productOnly: !lines.some((l) => !l.product),
+        ...(result.kot ? { kot: result.kot } : {}),
+        channel,
       });
       clearSplit();
       setStep('done');
@@ -1458,6 +1482,17 @@ export function PayFlow({
 
   /* ---------- ③ Done ---------- */
   // The same screen the one-page form ends on (owner, 2026-10-10): `PaymentDone`, sound, Next customer and all.
+  /** Owner, 2026-11-16 — Print KOT the moment the order is placed: under the "sent to queue" banner, phone and wide alike. */
+  const queuedPrint =
+    queuedBanner?.saleId && queuedBanner.kot ? (
+      <TillPrintActions
+        printer={printer}
+        saleId={queuedBanner.saleId}
+        kot={queuedBanner.kot}
+        order={{ tokenNo: queuedBanner.tokenNo, channel: queuedBanner.channel ?? 'counter' }}
+      />
+    ) : null;
+
   if (step === 'done' && sale) {
     return (
       <PaymentDone
@@ -1474,6 +1509,17 @@ export function PayFlow({
         onDone={leave}
         sound={sound}
         onToggleSound={toggleSound}
+        printSlot={
+          sale.productOnly ? (
+            <TillPrintActions
+              printer={printer}
+              saleId={sale.appointmentId}
+              kot={sale.kot}
+              order={{ tokenNo: sale.tokenNo, channel: sale.channel }}
+              bill={sale.channel === 'counter'}
+            />
+          ) : null
+        }
       />
     );
   }
@@ -1989,6 +2035,7 @@ export function PayFlow({
             </button>
           </div>
         ) : null}
+        {queuedPrint}
         {tokenGone ? (
           <div role="alert" className="pf-error">
             {nv.tokenGone}
@@ -2362,6 +2409,7 @@ export function PayFlow({
               </button>
             </div>
           ) : null}
+          {queuedPrint}
         </>
       ) : (
         <header className="pf-head">

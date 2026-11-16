@@ -734,6 +734,8 @@ export interface SettingsSummary {
     description: string;
     logoUrl: string | null;
     googleReviewUrl?: string;
+    /** Jira GRW-713 — the FSSAI number bills print. With a branch picked, that branch's own over the business's. */
+    fssaiLicense?: string;
   };
   location: { id: string; name: string; timezone: string | null; addressLine1: string; addressCity: string } | null;
   /** Jira GRW-227 — active branches; more than one shows Settings › Branches. */
@@ -2231,4 +2233,54 @@ export interface PaymentsReportPage {
   modes: Array<{ mode: MoneyPaymentMode; receivedMinor: number; refundedMinor: number; netMinor: number }>;
   byDay: Array<{ dateISO: string; received: Partial<Record<MoneyPaymentMode, number>>; refundedMinor: number; netMinor: number }>;
   pending: { count: number; valueMinor: number; rows: Array<{ id: string; soldAtISO: string; tokenNo: number | null; valueMinor: number }> };
+}
+
+/** Jira GRW-713 — one KOT: what the kitchen was told, as it was told. `createdAt` is an ISO instant. */
+export interface KitchenTicketDto {
+  id: string;
+  number: number;
+  kind: 'new' | 'add' | 'cancel';
+  createdAt: string;
+  items: { name: string; qty: number }[];
+}
+
+/** Jira GRW-713 — every KOT an order has had, for a reprint. `channel` is 'counter' or the delivery app. */
+export interface OrderKitchenTickets {
+  saleId: string;
+  tokenNo: number | null;
+  channel: string;
+  tickets: KitchenTicketDto[];
+}
+
+/** Jira GRW-713 — an issued document's figures, for the thermal roll. Every figure is the stored document's own. */
+export interface DocumentTicket {
+  id: string;
+  docType: 'tax_invoice' | 'bill_of_supply' | 'receipt';
+  number: string;
+  issuedAt: string;
+  status: 'issued' | 'cancelled';
+  supplier: { legalName: string; tradeName: string | null; address: string | null; gstin: string | null; phone: string | null; fssai: string | null; footer: string | null };
+  /** The name on the document; "Walk-in" for an unnamed guest, which the bill leaves off. */
+  customerName: string;
+  /** Who issued it — printed as the bill's Cashier. Null when the member has no name. */
+  cashierName: string | null;
+  /** `amountMinor`: the line's own amount before the bill's discount — the lines add up to `subTotalMinor` exactly. */
+  lines: { description: string; hsnOrSac?: string | null; qty: number; unitPriceMinor: number; amountMinor: number; discountMinor: number; totalMinor: number; rateBps: number | null }[];
+  subTotalMinor: number;
+  discountMinor: number;
+  /** What tax was charged on. Equal to sub total less discount less tax when the menu's prices include tax. */
+  taxableMinor: number;
+  cgstMinor: number;
+  sgstMinor: number;
+  igstMinor: number;
+  roundOffMinor: number;
+  grandTotalMinor: number;
+  /** "Rupees Four Hundred Sixty Two Only". Absent from an API a release behind. */
+  amountInWords?: string;
+  rewardPointsUsed: number;
+  paymentModes: string[];
+  /** What came in each way, from the bill's payment rows; empty when one way paid it all. */
+  payments?: { mode: string; amountMinor: number }[];
+  tokenNo: number | null;
+  channel: string | null;
 }
