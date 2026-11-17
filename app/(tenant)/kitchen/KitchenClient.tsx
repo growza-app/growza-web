@@ -140,8 +140,17 @@ export function KitchenClient() {
         <h1 className="kd-title">{t('title')}</h1>
         <div className="kd-bar-right">
           <HeaderBranchPicker variant="pill" />
-          <button type="button" className="btn btn-ghost" aria-pressed={chime} onClick={toggleChime}>
-            {chime ? t('chimeOn') : t('chimeOff')}
+          {/* Owner, 2026-11-17 — "Chime" was the design's word; "Sound" is the plain one. The speaker is struck through while off. */}
+          <button type="button" className="btn btn-ghost kd-sound" aria-pressed={chime} onClick={toggleChime}>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+              <path d="M4 9h4l5-4v14l-5-4H4z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+              {chime ? (
+                <path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              ) : (
+                <path d="M17 9l5 6M22 9l-5 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              )}
+            </svg>
+            {chime ? t('soundOn') : t('soundOff')}
           </button>
         </div>
       </div>

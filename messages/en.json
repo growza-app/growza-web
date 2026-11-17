@@ -4596,8 +4596,8 @@
     "ready": "Ready",
     "readyDone": "{label} is ready.",
     "undo": "Undo",
-    "chimeOn": "Chime on",
-    "chimeOff": "Chime off",
+    "soundOn": "Sound on",
+    "soundOff": "Sound off",
     "type": {
       "dine_in": "Dine-in",
       "takeaway": "Takeaway",

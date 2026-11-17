@@ -4596,8 +4596,8 @@
     "ready": "तैयार",
     "readyDone": "{label} तैयार है।",
     "undo": "वापस",
-    "chimeOn": "घंटी चालू",
-    "chimeOff": "घंटी बंद",
+    "soundOn": "आवाज़ चालू",
+    "soundOff": "आवाज़ बंद",
     "type": {
       "dine_in": "यहीं खाना",
       "takeaway": "पैक करके",
