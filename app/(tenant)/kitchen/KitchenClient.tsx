@@ -239,16 +239,6 @@ export function KitchenClient() {
               <li key={c.saleId} className={`kd-card${c.late ? ' is-late' : ''}`} aria-label={labelOf(c)}>
                 <div className="kd-card-head">
                   <span className="kd-card-label">{labelOf(c)}</span>
-                  {/* A table's ticket is dine-in by its name; the chip is for what is packed (takeaway, delivery) — and it keeps the
-                      table number whole on a narrow card (owner, 2026-11-17: sized for 100 orders). */}
-                  {c.orderType && !(c.orderType === 'dine_in' && c.tableName) ? (
-                    <span className={`kd-card-type is-${c.orderType}`}>
-                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
-                        <path d={TYPE_ICON[c.orderType]} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span className="kd-type-word">{t(`type.${c.orderType}`)}</span>
-                    </span>
-                  ) : null}
                   <span className="kd-card-age">
                     {/* Review #4 — late is said with a clock and words, never by the amber alone. */}
                     {c.late ? (
@@ -259,6 +249,16 @@ export function KitchenClient() {
                     {t(ageKey(c.late, mins), { min: mins })}
                   </span>
                 </div>
+                {/* Owner, 2026-11-17 — "the kitchen has no option to view if the order is dine in or take away": its own line, the word
+                    always written out, on every ticket and every width. Plate it or pack it is the cook's second question. */}
+                {c.orderType ? (
+                  <span className={`kd-card-type is-${c.orderType}`}>
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+                      <path d={TYPE_ICON[c.orderType]} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    {t(`type.${c.orderType}`)}
+                  </span>
+                ) : null}
                 <ul className="kd-dishes">
                   {c.dishes.map((d) => (
                     <li key={d.id} className={`kd-dish${d.done ? ' is-done' : ''}${d.cancelled ? ' is-off' : ''}`}>

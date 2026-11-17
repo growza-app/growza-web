@@ -185,22 +185,19 @@
 .kd-offline { margin: 0 0 var(--sp-3); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius); background: var(--amber-soft); color: var(--amber-ink); border: 1px solid var(--amber); }
 /* Owner, 2026-11-17 — sized for a rush of 100 orders: about five tickets across a laptop, three or four on an iPad. */
 .kd-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.5rem), 1fr)); gap: var(--sp-2); align-items: start; }
-.kd-card { container-type: inline-size; display: flex; flex-direction: column; gap: var(--sp-1); padding: var(--sp-2) var(--sp-3); border: 2px solid var(--border); border-radius: var(--radius); background: var(--surface); min-width: 0; }
+.kd-card { display: flex; flex-direction: column; gap: var(--sp-1); padding: var(--sp-2) var(--sp-3); border: 2px solid var(--border); border-radius: var(--radius); background: var(--surface); min-width: 0; }
 .kd-card.is-late { border-color: var(--amber); background: var(--amber-soft); }
 .kd-card.is-late .kd-card-age { color: var(--amber-ink); }
 .kd-skeleton { min-height: 12rem; }
 .kd-card-head { display: flex; flex-wrap: nowrap; align-items: center; gap: var(--sp-1) var(--sp-2); min-width: 0; }
 /* One line. A long area name gives way (…), never the table number: at least "T12 · A…" always shows. */
 .kd-card-label { min-width: 4.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.kd-card-type, .kd-card-age { flex: none; white-space: nowrap; }
-/* A narrow ticket: the chip is its icon alone (the word stays for a screen reader), so "Late · 65 min" fits beside "#12". */
-@container (max-width: 18rem) {
-  .kd-type-word { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .kd-card-type { padding: 2px var(--sp-1); }
-}
+.kd-card-age { flex: none; white-space: nowrap; }
+/* Its own line under the table and time, word always written: Dine-in green, Takeaway amber, Delivery grey. */
+.kd-card-type { align-self: flex-start; white-space: nowrap; }
 .kd-card-label { font-size: 1.125rem; font-weight: 800; }
-.kd-card-type { display: inline-flex; align-items: center; gap: 2px; padding: 0 var(--sp-2); border-radius: 999px; font-weight: 700; font-size: 0.75rem; background: var(--accent-soft); color: var(--accent-deep); }
-.kd-card-type.is-takeaway { background: var(--amber-soft); color: var(--amber-ink); }
+.kd-card-type { display: inline-flex; align-items: center; gap: var(--sp-1); padding: 1px var(--sp-2); border-radius: 999px; font-weight: 700; font-size: 0.8125rem; background: var(--accent-soft); color: var(--accent-deep); }
+.kd-card-type.is-takeaway { background: var(--amber-ink); color: var(--surface); }
 .kd-card-type.is-delivery { background: var(--border); color: var(--text); }
 .kd-card-age { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 0.875rem; font-variant-numeric: tabular-nums; font-weight: 600; }
 .kd-card.is-late .kd-card-age { font-weight: 800; }

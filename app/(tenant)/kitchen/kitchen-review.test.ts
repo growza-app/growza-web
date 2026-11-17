@@ -61,8 +61,10 @@ describe('the rest of the review', () => {
     expect(css).toMatch(/\.kd-filter \{ min-height: 44px;/);
   });
 
-  it('a table ticket needs no Dine-in chip (its table says so); a packed order keeps its chip', () => {
-    expect(src).toContain("{c.orderType && !(c.orderType === 'dine_in' && c.tableName) ? (");
+  it('every ticket says Dine-in, Takeaway or Delivery in words, on its own line (owner, 2026-11-17)', () => {
+    expect(src).not.toContain("!(c.orderType === 'dine_in' && c.tableName)");
+    expect(src).toMatch(/<\/div>\s*\{\/\*[\s\S]*?\*\/\}\s*\{c\.orderType \? \(\s*<span className=\{`kd-card-type is-\$\{c\.orderType\}`\}>/);
+    expect(css).not.toContain('.kd-type-word');
   });
 
   it('new words in English and Hindi', () => {
