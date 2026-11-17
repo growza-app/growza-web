@@ -19,7 +19,7 @@ import { RedeemRow } from '../components/RedeemRow';
 import { useAreas, useSession } from '../components/SessionProvider';
 import { hasOrderQueue } from '../lib/areas';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { IconCheck, IconArrowLeft, IconClose, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch } from '../components/icons';
+import { IconCheck, IconArrowLeft, IconFlame, IconClose, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch } from '../components/icons';
 import { ClientSheet, type PickedClient } from '../appointments/new/ClientSheet';
 import { Keypad } from '../appointments/new/Keypad';
 import { formatDate } from '../lib/format';
@@ -1464,6 +1464,16 @@ export function PosClient({
               {t('return')}
             </button>
           </div>
+          {/*
+            Jira GRW-714 — the kitchen screen, for a counter with no kitchen tablet. Owner, 17 Nov 2026 — on the tabs' own
+            row (a flame, its word on a wider screen), not a row of its own under them on a phone.
+          */}
+          {orderQueue ? (
+            <Link href="/kitchen" className="btn btn-ghost pos-bar-kitchen" aria-label={t('kitchenScreen')}>
+              <IconFlame />
+              <span className="pos-bar-kitchen-word">{t('kitchenScreen')}</span>
+            </Link>
+          ) : null}
           <div className="pos-bar-right">
             {/*
               Which branch this till is selling at. The flow underneath draws no header here (`hideHead`), so
@@ -1487,12 +1497,6 @@ export function PosClient({
               <span className="pos-kbd-inline"><kbd>F8</kbd> {t('shortcutCharge')}</span>
               <span className="pos-kbd-inline"><kbd>F9</kbd> {t('shortcutHold')}</span>
             </div>
-            {/* Jira GRW-714 — the kitchen screen, for a counter with no kitchen tablet. */}
-            {orderQueue ? (
-              <Link href="/kitchen" className="btn btn-ghost">
-                {t('kitchenScreen')}
-              </Link>
-            ) : null}
             <PrinterButton printer={printer} />
             <button type="button" className="btn btn-ghost pos-fs-toggle" onClick={enterFullScreen}>
               {t('fullScreen')}
@@ -1515,6 +1519,12 @@ export function PosClient({
               </button>
             ) : null}
           </div>
+          {orderQueue ? (
+            <Link href="/kitchen" className="btn btn-ghost pos-bar-kitchen" aria-label={t('kitchenScreen')}>
+              <IconFlame />
+              <span className="pos-bar-kitchen-word">{t('kitchenScreen')}</span>
+            </Link>
+          ) : null}
           <div className="pos-bar-right">
             {/* As above: the till's branch, since the flow underneath draws no header of its own. */}
             <div className="pos-bar-branch">
@@ -1527,12 +1537,6 @@ export function PosClient({
               <span className="pos-kbd-inline"><kbd>F8</kbd> {t('shortcutCharge')}</span>
               <span className="pos-kbd-inline"><kbd>F9</kbd> {t('shortcutHold')}</span>
             </div>
-            {/* Jira GRW-714 — the kitchen screen, for a counter with no kitchen tablet. */}
-            {orderQueue ? (
-              <Link href="/kitchen" className="btn btn-ghost">
-                {t('kitchenScreen')}
-              </Link>
-            ) : null}
             <PrinterButton printer={printer} />
             <button type="button" className="btn btn-ghost pos-fs-toggle" onClick={enterFullScreen}>
               {t('fullScreen')}
