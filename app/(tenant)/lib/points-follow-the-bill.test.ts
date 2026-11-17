@@ -27,10 +27,10 @@ describe('points follow the bill they were quoted for', () => {
     expect(row).toContain("{checking ? t('checking') : t('off', { amount: money(rewards.discountMinor) })}");
   });
   it('every till holds the payment while checking', () => {
-    expect(till).toContain('if (saving || lines.length === 0 || pointsChecking) return;');
+    expect(till).toContain('if (saving || lines.length === 0 || pointsChecking || splitTooBig) return;');
     expect(till).toContain('const redeemPoints = quotedPoints;');
     expect(pickup).toContain('const busy = saving !== null || checking;');
-    expect(pickup).toContain('checking ? undefined : onSettle(');
+    expect(pickup).toContain('checking || splitTooBig ? undefined : onSettle(');
     expect(visit).toContain('    if (pointsChecking) return;\n');
   });
 });

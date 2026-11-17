@@ -3433,6 +3433,7 @@
       "howMuch": "{mode} से कितना?",
       "restHint": "बाकी अगली तरह से",
       "then": "{mode} से {amount} · और {rest} किससे…",
+      "tooBig": "{mode} से {amount} — यह नए टोटल से ज़्यादा है। पहला हिस्सा फिर से डालें।",
       "clear": "एक ही तरह से"
     },
     "productsChip": "सामान",

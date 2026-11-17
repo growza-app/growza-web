@@ -133,7 +133,7 @@ function QueueTokenPayScreen({
   /** Money can be taken once someone is named on the bill — picked from the list, or (a waiter) typed. */
   const named = !anonymous || (byNameOnly && nameDraft.trim() !== '');
   const settleWith = (ways: Array<{ mode: PaymentMode; amountMinor: number }>) =>
-    checking ? undefined : onSettle(ways, byNameOnly ? 0 : redeemPoints, billOff, byNameOnly && anonymous ? nameDraft.trim() : undefined);
+    checking || splitTooBig ? undefined : onSettle(ways, byNameOnly ? 0 : redeemPoints, billOff, byNameOnly && anonymous ? nameDraft.trim() : undefined);
 
   const [qrStep, setQrStep] = useState(false);
   const [qrBroken, setQrBroken] = useState(false);
@@ -141,6 +141,8 @@ function QueueTokenPayScreen({
   const [splitKeypad, setSplitKeypad] = useState<PaymentMode | null>(null);
   const [splitAmount, setSplitAmount] = useState('');
   const [firstWay, setFirstWay] = useState<{ mode: PaymentMode; minor: number } | null>(null);
+  /** The first part is not less than the (new) total: nothing is left for a second way. Shown, never dropped silently. */
+  const splitTooBig = firstWay !== null && firstWay.minor >= dueMinor;
 
   const money = (minor: number) => formatMoney(String(minor));
   const modeWord = (mode: PaymentMode) => tc(`pay.${mode}`);
@@ -150,10 +152,12 @@ function QueueTokenPayScreen({
     setSplitAmount('');
     setFirstWay(null);
   };
-  const handleToggleRedeem = () => {
-    clearSplit();
-    toggleRedeem();
-  };
+  /*
+   * QA 2026-11-17, finding 2 — the first part of a two-way payment is money already in hand: a discount or the points
+   * changing the total no longer wipes it. The rest is worked out again; if the new total is not more than what was
+   * taken, the screen says so and waits for the first part to be entered again (see `splitTooBig`).
+   */
+  const handleToggleRedeem = () => toggleRedeem();
   const waysFor = (mode: PaymentMode): Array<{ mode: PaymentMode; amountMinor: number }> => {
     if (!firstWay || firstWay.mode === mode || firstWay.minor <= 0 || firstWay.minor >= dueMinor) {
       return [{ mode, amountMinor: dueMinor }];
@@ -338,12 +342,10 @@ function QueueTokenPayScreen({
           listMinor={token.totalMinor}
           current={billOff.offMinor > 0 ? billOff : null}
           onApply={(offMinor, pct) => {
-            clearSplit();
             setBillOff({ offMinor, pct });
             setDiscountOpen(false);
           }}
           onRemove={() => {
-            clearSplit();
             setBillOff({ offMinor: 0, pct: null });
             setDiscountOpen(false);
           }}
@@ -364,7 +366,7 @@ function QueueTokenPayScreen({
             {firstWay ? (
               <p className="pf-split-held" role="status">
                 <span>
-                  {tPay('split.then', {
+                  {tPay(splitTooBig ? 'split.tooBig' : 'split.then', {
                     amount: money(firstWay.minor),
                     mode: modeWord(firstWay.mode),
                     rest: money(restMinor),
@@ -397,7 +399,7 @@ function QueueTokenPayScreen({
                 key={m}
                 type="button"
                 className={`pf-pay-tile pf-pay-${m}`}
-                disabled={busy || firstWay?.mode === m}
+                disabled={busy || splitTooBig || firstWay?.mode === m}
                 aria-busy={saving === m}
                 onClick={() => {
                   if (splitting && !firstWay) {

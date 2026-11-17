@@ -1047,6 +1047,8 @@ export function PayFlow({
   /** The ways this bill is paid when the tile `mode` is tapped: two when a first way is held and differs, else one. */
   // Jira GRW-648 — `dueMinor`, not `totalMinor`: the ways of paying add up to the money that crossed the
   // counter, and points are not one of them. With no points on the bill the two are the same number.
+  /** QA 2026-11-17, finding 2 — a held first part not less than the (new) total is said, never dropped silently. */
+  const splitTooBig = firstWay !== null && firstWay.minor >= dueMinor;
   const waysFor = (mode: PaymentMode): Array<{ mode: PaymentMode; amountMinor: number }> => {
     if (!firstWay || firstWay.mode === mode || firstWay.minor >= dueMinor) return [{ mode, amountMinor: dueMinor }];
     return [
@@ -1068,7 +1070,7 @@ export function PayFlow({
   /** ② — the tile that was tapped is the payment; this is the save. */
   const pay = async (mode: PaymentMode, pending = false) => {
     // QA 2026-11-17 (finding 1) — not while this bill's points are still being asked.
-    if (saving || lines.length === 0 || pointsChecking) return;
+    if (saving || lines.length === 0 || pointsChecking || splitTooBig) return;
     felt(BUZZ.paid);
     setSaving(mode);
     setError(null);
@@ -1908,7 +1910,7 @@ export function PayFlow({
       {firstWay ? (
         /* The first way, held, and what the next tile is for. × puts the bill back to one way. */
         <p className="pf-split-held" role="status">
-          <span>{t('split.then', { amount: money(firstWay.minor), mode: modeWord(firstWay.mode), rest: money(restMinor) })}</span>
+          <span>{t(splitTooBig ? 'split.tooBig' : 'split.then', { amount: money(firstWay.minor), mode: modeWord(firstWay.mode), rest: money(restMinor) })}</span>
           <button type="button" className="icon-btn pf-split-clear" aria-label={t('split.clear')} onClick={clearSplit}>
             <IconClose />
           </button>
@@ -1953,7 +1955,7 @@ export function PayFlow({
             else void pay(mode);
           }}
           // QA 2026-10-23 — the second way cannot be the first one again: the tile says so instead of a tap that does nothing.
-          disabled={saving !== null || pointsChecking || firstWay?.mode === mode}
+          disabled={saving !== null || pointsChecking || splitTooBig || firstWay?.mode === mode}
           aria-busy={saving === mode}
         >
           <span className="pf-pay-icon" aria-hidden="true">

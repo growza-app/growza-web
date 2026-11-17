@@ -3433,6 +3433,7 @@
       "howMuch": "How much by {mode}?",
       "restHint": "The rest goes on the next way",
       "then": "{amount} by {mode} · and {rest} by…",
+      "tooBig": "{amount} by {mode} is more than the new total. Enter the first part again.",
       "clear": "One way after all"
     },
     "productsChip": "Products",
