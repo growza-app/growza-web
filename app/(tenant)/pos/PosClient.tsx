@@ -461,6 +461,12 @@ export function PosClient({
   const branch = useBranch();
   const session = useSession();
   const location = branch.choice ?? branch.one ?? session?.branches?.[0]?.id ?? null;
+  /*
+   * Owner, 17 Nov 2026 — at a restaurant with tables on, the Queue holds only takeaway and delivery (dine-in lives on the
+   * table map), so it is called Pickup there. Tables off — and every salon and shop — it stays the Queue.
+   */
+  const tablesOn = Boolean(session?.branches?.find((b) => b.id === location)?.tableOrders);
+  const qk = <K extends string>(key: K): K | `${K}Pickup` => (tablesOn ? `${key}Pickup` : key);
   const paymentQr =
     branch.branches.find((b) => b.id === location)?.paymentQrUrl ??
     session?.branches?.find((b) => b.id === location)?.paymentQrUrl ??
@@ -1224,7 +1230,7 @@ export function PosClient({
               className="btn btn-ghost pos-qcard-recall-btn"
               onClick={() => setTokenState(tk.id, 'preparing', true)}
             >
-              {t('recallToQueue')}
+              {t(qk('recallToQueue'))}
             </button>
           )}
         </div>
@@ -1286,7 +1292,7 @@ export function PosClient({
                 className={`pos-fs-btn${mode === 'queue' ? ' is-active' : ''}`}
                 onClick={openQueue}
               >
-                {t('openQueue', { count: preparingTokens.length })}
+                {t(qk('openQueue'), { count: preparingTokens.length })}
               </button>
             ) : null}
             {canReturn ? (
@@ -1317,7 +1323,7 @@ export function PosClient({
             </button>
             {orderQueue ? (
               <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab pos-tab-queue${mode === 'queue' ? ' active' : ''}`} onClick={openQueue}>
-                <span>{t('queue')}</span>{' '}
+                <span>{t(qk('queue'))}</span>{' '}
                 <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
               </button>
             ) : null}
@@ -1371,7 +1377,7 @@ export function PosClient({
             </button>
             {orderQueue ? (
               <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab pos-tab-queue${mode === 'queue' ? ' active' : ''}`} onClick={openQueue}>
-                <span>{t('queue')}</span>{' '}
+                <span>{t(qk('queue'))}</span>{' '}
                 <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
               </button>
             ) : null}
@@ -1477,7 +1483,7 @@ export function PosClient({
             summary={settledReceipt.summary}
             bill={settledReceipt.bill}
             phone={settledReceipt.phone}
-            nextLabel={t('backToQueueDone')}
+            nextLabel={t(qk('backToQueueDone'))}
             onNextCustomer={() => setSettledReceipt(null)}
             onDone={() => setSettledReceipt(null)}
             printSlot={
@@ -1501,7 +1507,7 @@ export function PosClient({
             onSettle={(ways, redeemPoints, billOff) => void settleAndCompleteToken(payingToken, ways, redeemPoints, billOff)}
           />
         ) : (
-        <section className="pos-queue-board" aria-label={t('queue')}>
+        <section className="pos-queue-board" aria-label={t(qk('queue'))}>
           {/* Owner, 2026-11-16 — Print kitchen slip for what was just added or called off, right where it happened. */}
           {lastKot ? <TillPrintActions printer={printer} saleId={lastKot.saleId} kot={lastKot.kot} order={lastKot.order} /> : null}
           {queueNote ? (
@@ -1518,7 +1524,7 @@ export function PosClient({
               <header className="pos-queue-col-head">
                 <h2 className="pos-queue-col-title">
                   <span className="pos-queue-dot is-preparing" aria-hidden="true" />
-                  {t('preparingColTitle')}
+                  {t(qk('preparingColTitle'))}
                   <span className="pos-queue-col-count">{preparingTokens.length}</span>
                 </h2>
                 <button type="button" className="btn btn-primary pos-queue-new-btn" onClick={closeReturn}>
@@ -1563,7 +1569,7 @@ export function PosClient({
         <ConfirmDialog
           tone="danger"
           title={t('cancelOrderTitle', { token: cancelTarget.tokenLabel })}
-          body={t('cancelOrderBody', { amount: formatMoney(String(cancelTarget.totalMinor)) })}
+          body={t(qk('cancelOrderBody'), { amount: formatMoney(String(cancelTarget.totalMinor)) })}
           confirmLabel={t('cancelOrderConfirm')}
           cancelLabel={t('keepOrder')}
           busy={cancelBusy}

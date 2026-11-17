@@ -307,6 +307,8 @@ export function PayFlow({
   const location = token?.locationId ?? visit?.appointment.locationId ?? branch.choice ?? branch.one ?? session?.branches?.[0]?.id ?? null;
   // Jira GRW-720 — after `location`, which it reads (it sat above it once, and the till did not open: caught by the e2e run).
   const tablesHere = productsOnly && Boolean(session?.branches?.find((b) => b.id === location)?.tableOrders);
+  // Owner, 17 Nov 2026 — with tables on, the till's Queue is called Pickup (PosClient's `qk`).
+  const qk = <K extends string>(key: K): K | `${K}Pickup` => (tablesHere ? `${key}Pickup` : key);
   // Jira GRW-716 — this till's letter while online, and whatever it kept offline sent when the connection is back.
   const tillBranches = useMemo(() => (session?.branches ?? []).map((b) => b.id), [session?.branches]);
   useOfflineTill(productsOnly ? location : null, tillBranches);
@@ -1374,7 +1376,7 @@ export function PayFlow({
         appointmentId: result.appointmentId,
         tokenNo,
         ...(pending
-          ? { title: t('desk.pendingDoneTitle', { amount: money(paidMinor) }) }
+          ? { title: t(qk('desk.pendingDoneTitle'), { amount: money(paidMinor) }) }
           : fromApp
             ? { title: t('from.doneTitle', { amount: money(paidMinor), app: appWord(fromApp) }) }
             : {}),
@@ -2032,7 +2034,7 @@ export function PayFlow({
                 disabled={saving !== null || lines.length === 0}
                 onClick={sendPosPending}
               >
-                <span>{atTable ? tTables('sendToKitchen') : t('desk.keepPendingInQueue')}</span>
+                <span>{atTable ? tTables('sendToKitchen') : t(qk('desk.keepPendingInQueue'))}</span>
               </button>
             ) : null}
             {!hidePayUntilGuest ? (
@@ -2326,11 +2328,11 @@ export function PayFlow({
             </span>
             <span className="pos-charge-queued-text">
               {queuedBanner.tokenNo !== null
-                ? t('desk.sentToQueueBannerWithToken', {
+                ? t(qk('desk.sentToQueueBannerWithToken'), {
                     token: nv.token(queuedBanner.tokenNo),
                     amount: money(queuedBanner.amountMinor),
                   })
-                : t('desk.pendingDoneTitle', { amount: money(queuedBanner.amountMinor) })}
+                : t(qk('desk.pendingDoneTitle'), { amount: money(queuedBanner.amountMinor) })}
             </span>
             <button
               type="button"
@@ -2341,7 +2343,7 @@ export function PayFlow({
                 else router.push('/pos?mode=queue');
               }}
             >
-              {t('desk.viewInQueue')}
+              {t(qk('desk.viewInQueue'))}
             </button>
             <button
               type="button"
@@ -2588,7 +2590,7 @@ export function PayFlow({
                         disabled={saving !== null || lines.length === 0}
                         onClick={sendPosPending}
                       >
-                        <span>{atTable ? tTables('sendToKitchen') : t('desk.keepPendingInQueue')}</span>
+                        <span>{atTable ? tTables('sendToKitchen') : t(qk('desk.keepPendingInQueue'))}</span>
                       </button>
                     ) : null}
                     {!hidePayUntilGuest ? (
@@ -2710,11 +2712,11 @@ export function PayFlow({
               </span>
               <span className="pos-charge-queued-text">
                 {queuedBanner.tokenNo !== null
-                  ? t('desk.sentToQueueBannerWithToken', {
+                  ? t(qk('desk.sentToQueueBannerWithToken'), {
                       token: nv.token(queuedBanner.tokenNo),
                       amount: money(queuedBanner.amountMinor),
                     })
-                  : t('desk.pendingDoneTitle', { amount: money(queuedBanner.amountMinor) })}
+                  : t(qk('desk.pendingDoneTitle'), { amount: money(queuedBanner.amountMinor) })}
               </span>
               <button
                 type="button"
@@ -2725,7 +2727,7 @@ export function PayFlow({
                   else router.push('/pos?mode=queue');
                 }}
               >
-                {t('desk.viewInQueue')}
+                {t(qk('desk.viewInQueue'))}
               </button>
               <button
                 type="button"

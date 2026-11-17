@@ -70,7 +70,7 @@ describe('a table’s bill on the till', () => {
 
   it('the till sends a table’s order with the table, and says “Send to kitchen”', () => {
     expect(flow).toContain('? { tableId: atTable.id, ...(atTable.billId ? { tableBillId: atTable.billId } : {}), ...(guests ? { guests } : {}) }');
-    expect(flow).toContain("atTable ? tTables('sendToKitchen') : t('desk.keepPendingInQueue')");
+    expect(flow).toContain("atTable ? tTables('sendToKitchen') : t(qk('desk.keepPendingInQueue'))");
   });
 
   it('plain words: no KOT on the till', () => {

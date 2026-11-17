@@ -357,7 +357,7 @@ describe('the POS screen', () => {
 
     expect(payFlow).toContain('sendPosPending');
     expect(payFlow).toContain('pos-charge-pending');
-    expect(payFlow).toContain("t('desk.keepPendingInQueue')");
+    expect(payFlow).toContain("t(qk('desk.keepPendingInQueue'))");
     expect(payFlow).toContain('...(pending ? { paymentPending: true } : {}),');
     expect(payFlow).toContain('setQueuedBanner({ tokenNo, amountMinor: paidMinor, saleId: result.appointmentId, kot: result.kot, channel })');
     expect(payFlow).toContain('pos-charge-queued');
@@ -365,7 +365,7 @@ describe('the POS screen', () => {
     expect(client).toContain('const settled = await api.settleCounterSale(tk.id, {');
     expect(client).toContain('QueueTokenPayScreen');
     expect(client).toContain('setSettledReceipt({');
-    expect(client).toContain("nextLabel={t('backToQueueDone')}");
+    expect(client).toContain("nextLabel={t(qk('backToQueueDone'))}");
 
     for (const sel of ['.pos-charge-pending', '.pos-charge-queued-link']) {
       const block = css.slice(css.indexOf(`\n${sel} {`));
