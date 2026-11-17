@@ -2503,3 +2503,18 @@ export interface DishRecipe {
   priceMinor: number;
   sizes: Array<{ variantId: string | null; label: string | null; priceMinor: number; lines: RecipeLineDto[]; needsFixing: boolean }>;
 }
+
+/** Jira GRW-737 — one row of a raw-material file, as read (amounts in thousandths; `amount` null = not counted yet). */
+export interface MaterialImportRow {
+  name: string;
+  unit: MaterialUnit;
+  category: string | null;
+  lowStockAt: number;
+  amount: number | null;
+}
+export interface MaterialImportReview {
+  rows: Array<MaterialImportRow & { status: 'new' | 'exists' }>;
+  skipped: Array<{ row: number; name: string | null; reason: 'no_name' | 'bad_unit' | 'bad_number' | 'name_too_long' | 'twice_in_file' }>;
+  adding: number;
+  already: number;
+}

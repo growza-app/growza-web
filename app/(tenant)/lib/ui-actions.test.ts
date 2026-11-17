@@ -313,6 +313,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'PATCH /api/v1/stock/materials/:id',
     'POST /api/v1/stock/materials/:id/archive',
     'POST /api/v1/stock/materials/opening',
+    'POST /api/v1/stock/materials/import/parse',
+    'POST /api/v1/stock/materials/import',
     'PUT /api/v1/settings/kitchen-stock',
   ],
   '/providers': [

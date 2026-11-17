@@ -205,7 +205,7 @@ import type {
   StockTakeResult,
   MovementKind,
   ManualMovementKind,
-  VisitRewards, AddonGroup, AddonGroupInput, KitchenCard, KitchenStockList, StockMaterial, MaterialUnit, DishRecipe } from './api-types';
+  VisitRewards, AddonGroup, AddonGroupInput, KitchenCard, KitchenStockList, StockMaterial, MaterialUnit, DishRecipe, MaterialImportRow, MaterialImportReview } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, ShopDaySummary, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
 
@@ -728,6 +728,10 @@ export const api = {
   archiveMaterial: (id: string) => post<{ material: StockMaterial }>(`/api/v1/stock/materials/${encodeURIComponent(id)}/archive`, {}),
   openingStock: (entries: Array<{ materialId: string; qty: number }>) => post<{ materials: StockMaterial[] }>('/api/v1/stock/materials/opening', { entries }),
   setKitchenStock: (on: boolean) => put<{ on: boolean }>('/api/v1/settings/kitchen-stock', { on }),
+  readMaterialFile: (location: string, file: File) =>
+    uploadFile<MaterialImportReview>(`/api/v1/stock/materials/import/parse?location=${encodeURIComponent(location)}`, 'file', file),
+  importMaterials: (location: string, items: MaterialImportRow[]) =>
+    post<{ added: number; already: number }>('/api/v1/stock/materials/import', { locationId: location, items }),
   recipe: (productId: string) => get<DishRecipe>(`/api/v1/products/${encodeURIComponent(productId)}/recipe`),
   saveRecipe: (productId: string, variantId: string | null, lines: Array<{ materialId: string; qty: number }>) =>
     put<DishRecipe>(`/api/v1/products/${encodeURIComponent(productId)}/recipe`, { variantId, lines }),

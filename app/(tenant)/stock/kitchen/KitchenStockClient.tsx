@@ -7,6 +7,7 @@ import type { KitchenStockList, StockMaterial } from '../../lib/api-types';
 import { amount, parseAmount, unitWord } from '../../lib/kitchen-units';
 import { useSession } from '../../components/SessionProvider';
 import { MaterialSheet } from './MaterialSheet';
+import { MaterialImportSheet } from './MaterialImportSheet';
 
 type Filter = 'low' | 'all' | 'noRecipe';
 
@@ -27,6 +28,8 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<StockMaterial | 'new' | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [opening, setOpening] = useState<Record<string, string>>({});
@@ -213,6 +216,11 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
         <div className="ks-state ks-empty">
           <strong>{t('emptyTitle')}</strong>
           <span>{t('emptyHint')}</span>
+          {mayChange ? (
+            <button type="button" className="btn btn-ghost" onClick={() => setImporting(true)}>
+              {t('import.open')}
+            </button>
+          ) : null}
         </div>
       ) : shown.length === 0 ? (
         <p className="ks-state">{filter === 'low' && !query ? t('nothingLow') : t('noMatch')}</p>
@@ -248,10 +256,20 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
         </ul>
       )}
 
+      {notice ? (
+        <p className="ks-notice" role="status">
+          {notice}
+        </p>
+      ) : null}
       {mayChange && filter !== 'noRecipe' ? (
-        <button type="button" className="btn ks-add" onClick={() => setEditing('new')}>
-          + {t('add')}
-        </button>
+        <div className="ks-pair">
+          <button type="button" className="btn btn-ghost" onClick={() => setImporting(true)}>
+            {t('import.open')}
+          </button>
+          <button type="button" className="btn ks-add" onClick={() => setEditing('new')}>
+            + {t('add')}
+          </button>
+        </div>
       ) : null}
       {isOwner && data.on ? (
         <button type="button" className="ks-off-link" disabled={busy} onClick={() => void toggle(false)}>
@@ -259,6 +277,17 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
         </button>
       ) : null}
 
+      {importing ? (
+        <MaterialImportSheet
+          branchId={branchId}
+          onClose={() => setImporting(false)}
+          onDone={(added) => {
+            setImporting(false);
+            setNotice(t('import.done', { n: added }));
+            void load();
+          }}
+        />
+      ) : null}
       {editing ? (
         <MaterialSheet
           material={editing === 'new' ? null : editing}

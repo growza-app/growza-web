@@ -5895,7 +5895,31 @@
     "save": "Save",
     "saving": "Saving…",
     "badQty": "Type a quantity like 0.25",
-    "nameNeeded": "Give it a name"
+    "nameNeeded": "Give it a name",
+    "import": {
+      "open": "Import from a file",
+      "title": "Import from a file",
+      "cancel": "Cancel",
+      "hint": "Use a .xlsx or .csv file with columns Name, Unit (kg, g, L, ml or pcs), Category, Low-stock level and Amount. Only Name is needed.",
+      "pick": "Choose a file",
+      "pickAnother": "Choose another file",
+      "reading": "Reading the file…",
+      "failed": "Couldn't read that file. Try again.",
+      "summary": "{adding, plural, =0 {Nothing new} one {# new item} other {# new items}} · {already} already in stock · {skipped} skipped",
+      "exists": "Already in stock",
+      "new": "New",
+      "skippedRow": "Row {row} ({name}): {why}",
+      "why": {
+        "no_name": "no name",
+        "bad_unit": "unit not kg, g, L, ml or pcs",
+        "bad_number": "an amount that isn't a number",
+        "name_too_long": "name longer than 60 letters",
+        "twice_in_file": "same name earlier in the file"
+      },
+      "add": "{n, plural, =0 {Add} one {Add # item} other {Add # items}}",
+      "adding": "Adding…",
+      "done": "{n, plural, =0 {Nothing new was added.} one {# item added.} other {# items added.}}"
+    }
   },
   "recipe": {
     "sizes": "Sizes",

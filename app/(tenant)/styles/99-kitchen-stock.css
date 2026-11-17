@@ -333,6 +333,24 @@
   padding: 0;
 }
 .rc-remove svg {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* Import from a file. */
+.ks-pick {
+  min-height: 44px;
+  align-self: flex-start;
+}
+.ks-import-sum,
+.ks-notice {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+.ks-skipped {
+  margin: 0;
+  padding-left: var(--sp-4);
+  color: var(--amber-ink);
+  font-size: var(--fs-3);
 }
