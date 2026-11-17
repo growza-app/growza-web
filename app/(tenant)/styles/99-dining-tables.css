@@ -183,7 +183,7 @@
 /* The sidebar is the way back on a wide screen. */
 @media (min-width: 861px) { .kd-back { display: none; } }
 .kd-offline { margin: 0 0 var(--sp-3); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius); background: var(--amber-soft); color: var(--amber-ink); border: 1px solid var(--amber); }
-.kd-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); gap: var(--sp-3); align-items: start; }
+.kd-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); gap: var(--sp-3); align-items: start; }
 .kd-card { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-3); border: 2px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); min-width: 0; }
 .kd-card.is-late { border-color: var(--amber); background: var(--amber-soft); }
 .kd-card.is-late .kd-card-age { color: var(--amber-ink); }

@@ -44,6 +44,16 @@ describe('the rest of the review', () => {
     expect(src).toContain('className={`kd-card-type is-${c.orderType}`}');
     expect(css).toContain('.kd-ready { min-height: 48px; margin-top: var(--sp-2);');
   });
+  it('a Kitchen login: no empty sidebar, and its own Log out on the bar', () => {
+    const side = readFileSync(resolve(__dirname, '../components/Sidebar.tsx'), 'utf8');
+    const shell = readFileSync(resolve(__dirname, '../styles/01-shell.css'), 'utf8');
+    expect(side).toContain("if (nav.every((n) => n.href === '/notifications')) return null;");
+    expect(shell).toMatch(/\.shell:not\(:has\(> \.sidebar\)\) \{\s*grid-template-columns: 1fr;/);
+    expect(src).toContain("{mayLeave ? null : <SignOutButton className=\"btn btn-ghost kd-signout\">{t('signOut')}</SignOutButton>}");
+    expect(en.kitchen.signOut).toBe('Log out');
+    expect(hi.kitchen.signOut).toBe('लॉग आउट');
+  });
+
   it('new words in English and Hindi', () => {
     for (const k of ['back', 'soundHint', 'turnOn', 'soundOn', 'soundOff'] as const) {
       expect(en.kitchen[k]).toBeTruthy();

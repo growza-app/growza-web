@@ -4605,7 +4605,8 @@
     },
     "back": "Home",
     "soundHint": "Sound is off — turn it on to hear new orders.",
-    "turnOn": "Turn on"
+    "turnOn": "Turn on",
+    "signOut": "Log out"
   },
   "posTables": {
     "paidOk": "{table} paid · {amount}. The table is free.",

@@ -6,6 +6,7 @@ import { api, ApiError, type KitchenCard } from '../lib/api';
 import { useBranch } from '../components/BranchProvider';
 import { useSession } from '../components/SessionProvider';
 import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
+import { SignOutButton } from '../components/SignOutButton';
 
 /**
  * Jira GRW-714 — the kitchen's tablet: one card per order being cooked, oldest first. Large type read at arm's length; every tap target 44px
@@ -181,6 +182,8 @@ export function KitchenClient() {
             </svg>
             {chime ? t('soundOn') : t('soundOff')}
           </button>
+          {/* Owner, 2026-11-17 — a Kitchen login has no sidebar and no header menu: this is its way to sign out. */}
+          {mayLeave ? null : <SignOutButton className="btn btn-ghost kd-signout">{t('signOut')}</SignOutButton>}
         </div>
       </div>
 

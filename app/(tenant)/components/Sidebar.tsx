@@ -267,6 +267,14 @@ export function Sidebar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, currentKey]);
 
+  /*
+   * Owner, 2026-11-17 — a login offered no screen in the list (a Kitchen login: its one screen is where it already is) gets
+   * no sidebar at all: an empty column the width of a ticket was all it drew (its one row, Notifications, is not drawn there). The page takes the width
+   * (`.shell:not(:has(> .sidebar))`), and that screen carries its own Sign out.
+   */
+  // Notifications alone is not a list: on a laptop the theme does not draw it there, and a kitchen has nothing to be told.
+  if (nav.every((n) => n.href === '/notifications')) return null;
+
   return (
     <>
       {/* Jira GRW-300 — the drawer's scrim. Desktop never sets `open` (the
