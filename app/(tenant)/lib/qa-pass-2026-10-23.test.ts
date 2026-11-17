@@ -61,8 +61,8 @@ describe('each screen carries its fix', () => {
     expect(sheet).toContain('psz-cell-price');
   });
   it('the second way to pay cannot be the first one again (F7)', () => {
-    // Jira GRW-725 added the free-bill block after it; the F7 rule is still the second clause.
-    expect(src('appointments/new/PayFlow.tsx')).toContain('disabled={saving !== null || firstWay?.mode === mode || freeBlock !== null}');
+    // Jira GRW-725 and QA 2026-11-17 added guards around it; the F7 rule is still there.
+    expect(src('appointments/new/PayFlow.tsx')).toContain('disabled={saving !== null || pointsChecking || splitTooBig || firstWay?.mode === mode || freeBlock !== null}');
   });
   it('Orders use the Indian day-month order (F9)', () => {
     for (const f of ['orders/OrdersClient.tsx', 'orders/held/HeldClient.tsx', 'orders/[id]/OrderClient.tsx']) {

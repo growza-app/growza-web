@@ -2293,3 +2293,60 @@
   font-size: 1rem;
   font-weight: 500;
 }
+
+/*
+ * Owner, 17 Nov 2026 — "it should fit in single screen; the payment tiles are too big". On a phone the four ways to
+ * pay are compact tiles — icon and word side by side, 56px tall, no hint line (still read to a screen reader) — the
+ * total is tighter and the points row is one line, so guest, total, discount, points and all four ways fit one screen.
+ * Tablets and desktops keep the big cards. Every phone payment screen shares these: the till's, Pickup's and a table's.
+ */
+@media (max-width: 639px) {
+  .pf > .pf-pay {
+    gap: var(--sp-2);
+  }
+  .pf > .pf-pay .pf-pay-tile {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: 56px;
+    padding: var(--sp-2) var(--sp-6) var(--sp-2) var(--sp-3);
+  }
+  .pf > .pf-pay .pf-pay-tile::after {
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.25rem;
+  }
+  .pf > .pf-pay .pf-pay-icon {
+    flex: none;
+    width: 2.25rem;
+    height: 2.25rem;
+    margin: 0;
+  }
+  .pf > .pf-pay .pf-pay-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  .pf > .pf-pay .pf-pay-word {
+    font-size: 1rem;
+    text-transform: none;
+  }
+  .pf > .pf-pay .pf-pay-sub {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    min-height: 0;
+    margin: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .pf-how-total {
+    padding: var(--sp-2) var(--sp-3);
+  }
+  .pf-how-total strong {
+    font-size: 1.75rem;
+  }
+  .pf > .pf-redeem.is-ready .pf-redeem-have {
+    display: none;
+  }
+}

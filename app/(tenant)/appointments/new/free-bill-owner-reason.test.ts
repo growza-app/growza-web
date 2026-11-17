@@ -43,8 +43,8 @@ describe('the till’s payment step', () => {
 
   it('asks who is at the till by role, and holds every way of paying shut while the bill is blocked', () => {
     expect(payFlow).toContain("const isOwner = session?.role === 'owner';");
-    expect(payFlow).toMatch(/if \(saving \|\| lines\.length === 0 \|\| freeBlock\) return;/);
-    expect(payFlow).toContain('disabled={saving !== null || firstWay?.mode === mode || freeBlock !== null}');
+    expect(payFlow).toMatch(/if \(saving \|\| lines\.length === 0 \|\| freeBlock \|\| pointsChecking \|\| splitTooBig\) return;/);
+    expect(payFlow).toContain('disabled={saving !== null || pointsChecking || splitTooBig || firstWay?.mode === mode || freeBlock !== null}');
     expect(payFlow).toContain('disabled={saving !== null || lines.length === 0 || freeBlock !== null}');
   });
 
@@ -72,8 +72,8 @@ describe('the Queue’s payment', () => {
 
   it('stops the ways of paying and sends the owner’s reason with the settle', () => {
     expect(screen).toContain("const isOwner = useSession()?.role === 'owner';");
-    expect(screen).toContain('if (freeBlock) return;');
-    expect(screen).toContain('disabled={saving !== null || firstWay?.mode === m || freeBlock !== null}');
+    expect(screen).toContain('if (freeBlock || checking || splitTooBig) return;');
+    expect(screen).toContain('disabled={busy || splitTooBig || firstWay?.mode === m || freeBlock !== null}');
     expect(screen).toContain('<FreeBillReason block={freeBlock}');
     expect(screen).toContain('ownerOnlyFree={!isOwner}');
     expect(pos).toContain('...(billOff.reason ? { discountReason: billOff.reason } : {}),');

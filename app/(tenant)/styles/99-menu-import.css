@@ -1,0 +1,125 @@
+/* ---------- Jira GRW-715 — the menu from a file ---------- */
+
+.mi-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.mi-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  align-items: baseline;
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-5);
+}
+
+.mi-counts span {
+  color: var(--muted);
+  font-size: var(--fs-3);
+}
+
+.mi-branch,
+.mi-note {
+  margin: 0 0 var(--sp-2);
+  color: var(--muted);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.mi-branch {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.mi-section {
+  margin-top: var(--sp-3);
+}
+
+.mi-section h4 {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-3);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mi-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.mi-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  min-height: 44px;
+}
+
+.mi-row + .mi-row {
+  border-top: 1px solid var(--border);
+}
+
+.mi-row.is-on-menu .mi-name,
+.mi-row.is-on-menu .mi-price {
+  color: var(--muted);
+}
+
+.mi-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.mi-price {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-3);
+}
+
+.mi-meta {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.mi-meta:empty {
+  display: none;
+}
+
+.mi-flag {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+/* A phone: the price under the name, so a long Hindi name never pushes it off the edge. */
+@media (max-width: 420px) {
+  .mi-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mi-price {
+    text-align: left;
+  }
+}
+
+/* L5 · L6 (owner, 2026-11-17) — a price the import will not change, said in the amber the app uses for "look at this". */
+.mi-warn {
+  color: var(--amber-ink);
+}
+
+.mi-inline-link {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}

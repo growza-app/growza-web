@@ -18,6 +18,80 @@ export const API_MESSAGES_HI: Record<string, string> = {
   // ---- Jira GRW-72 — roles
   'This business has no roles to set up.': 'इस बिज़नेस में सेट करने के लिए कोई रोल नहीं है।',
   'Only the owner can change roles.': 'रोल सिर्फ़ मालिक बदल सकते हैं।',
+  // Jira GRW-718 — Settings › Tables.
+  'Only the owner can switch Table orders on or off.': 'टेबल ऑर्डर सिर्फ़ मालिक चालू या बंद कर सकते हैं।',
+  // Jira GRW-719 — setting out tables.
+  'Only the owner or a manager can set up tables.': 'टेबल सिर्फ़ मालिक या मैनेजर सेट कर सकते हैं।',
+  'Table orders is off at this branch. The owner can switch it on in Settings › Tables.': 'इस ब्रांच में टेबल ऑर्डर बंद है। मालिक इसे सेटिंग › टेबल में चालू कर सकते हैं।',
+  'That table or area is not at this branch.': 'यह टेबल या एरिया इस ब्रांच में नहीं है।',
+  // Jira GRW-721 — a table's bill.
+  'A table orders dishes at the table': 'टेबल पर सिर्फ़ डिश का ऑर्डर होता है',
+  'Only the owner or a manager can take dishes off a table’s bill.': 'टेबल के बिल से डिश सिर्फ़ मालिक या मैनेजर हटा सकते हैं।',
+  'This bill is already paid. Take a return instead.': 'इस बिल का भुगतान हो चुका है। इसकी जगह वापसी लें।',
+  'Those dishes are not on this bill.': 'ये डिश इस बिल पर नहीं हैं।',
+  // Jira GRW-722
+  'Pick a different table.': 'कोई दूसरी टेबल चुनें।',
+  'Pick the table to move to': 'वह टेबल चुनें जहाँ ले जाना है',
+  'Pick the table to join': 'वह टेबल चुनें जिससे जोड़ना है',
+  // Jira GRW-714 — the kitchen screen
+  'This business has no kitchen screen.': 'इस बिज़नेस में किचन स्क्रीन नहीं है।',
+  'That branch is not yours.': 'यह ब्रांच आपकी नहीं है।',
+  'Say Ready or Undo': 'तैयार या वापस चुनें',
+  'It is too late to undo. Ask the counter.': 'अब वापस नहीं हो सकता। काउंटर से कहें।',
+  'Dish not found': 'डिश नहीं मिली',
+  'Say whether the dish is done': 'बताएँ कि डिश बन गई या नहीं',
+  'Only the owner can change this.': 'इसे सिर्फ़ मालिक बदल सकते हैं।',
+  'A kitchen card can be late after 1 to 240 minutes': 'किचन कार्ड 1 से 240 मिनट बाद देर वाला माना जा सकता है',
+  // Jira GRW-712 — add-ons
+  'That choice is not on this item': 'यह विकल्प इस आइटम में नहीं है',
+  'This business has no add-ons': 'इस बिज़नेस में ऐड-ऑन नहीं हैं',
+  'This business has no add-ons.': 'इस बिज़नेस में ऐड-ऑन नहीं हैं।',
+  'Too many add-ons on one line': 'एक लाइन पर बहुत ज़्यादा ऐड-ऑन हैं',
+  'Give the group a name': 'ग्रुप का नाम लिखें',
+  'Keep the name to 60 characters': 'नाम 60 अक्षरों तक रखें',
+  'Say whether one or many can be picked': 'बताएँ कि एक चुन सकते हैं या कई',
+  'Say whether a choice must be made': 'बताएँ कि चुनना ज़रूरी है या नहीं',
+  'Give each choice a name': 'हर विकल्प का नाम लिखें',
+  'Keep a choice to 60 characters': 'विकल्प 60 अक्षरों तक रखें',
+  'Give each choice a price (0 is allowed)': 'हर विकल्प का दाम लिखें (0 भी चलेगा)',
+  'A price cannot be below ₹0': 'दाम ₹0 से कम नहीं हो सकता',
+  'Add at least one choice': 'कम से कम एक विकल्प जोड़ें',
+  'At most 30 choices in a group': 'एक ग्रुप में ज़्यादा से ज़्यादा 30 विकल्प',
+  'There is already a group with that name.': 'इस नाम का ग्रुप पहले से है।',
+  'The fewest picks cannot be more than the most, or more than there are choices': 'कम से कम चुनाव, ज़्यादा से ज़्यादा से अधिक या विकल्पों की गिनती से अधिक नहीं हो सकता',
+  'That group is not on your menu.': 'यह ग्रुप आपके मेन्यू में नहीं है।',
+  'Only the owner or a manager can change the menu.': 'मेन्यू सिर्फ़ मालिक या मैनेजर बदल सकते हैं।',
+  'Pick one of your groups': 'अपना कोई ग्रुप चुनें',
+  'At most 10 groups on one item': 'एक आइटम पर ज़्यादा से ज़्यादा 10 ग्रुप',
+  'That item or group is not on your menu.': 'यह आइटम या ग्रुप आपके मेन्यू में नहीं है।',
+  // Jira GRW-724 — service charge
+  'Only the owner can set the service charge.': 'सर्विस चार्ज सिर्फ़ मालिक तय कर सकते हैं।',
+  'Say whether the service charge is offered': 'बताएँ कि सर्विस चार्ज लेना है या नहीं',
+  'The service charge is 0 to 20%': 'सर्विस चार्ज 0 से 20% तक हो सकता है',
+  'Say whether to add the service charge or take it off': 'बताएँ कि सर्विस चार्ज जोड़ना है या हटाना है',
+  'The counter adds the service charge. A waiter can take it off if the guest says no.': 'सर्विस चार्ज काउंटर जोड़ता है। मेहमान मना करे तो वेटर इसे हटा सकता है।',
+  'This bill is already paid, so its service charge cannot change.': 'यह बिल चुकता हो चुका है, इसलिए इसका सर्विस चार्ज नहीं बदल सकता।',
+  'A service charge is only for a table’s bill.': 'सर्विस चार्ज सिर्फ़ टेबल के बिल पर लगता है।',
+  'This branch does not offer a service charge. The owner can switch it on in Settings › Tables.': 'यह ब्रांच सर्विस चार्ज नहीं लेती। मालिक इसे सेटिंग › टेबल में चालू कर सकते हैं।',
+  // Jira GRW-723 — a waiter
+  'A waiter takes a table’s orders and its payment. Ask the counter for this.': 'वेटर सिर्फ़ टेबल का ऑर्डर और उसका पेमेंट लेता है। यह काम काउंटर से करवाएँ।',
+  'A waiter cannot give a discount. Ask the counter.': 'वेटर छूट नहीं दे सकता। काउंटर से कहें।',
+  'The counter prints the bill first. Then take the payment.': 'पहले काउंटर बिल छापेगा। फिर पेमेंट लें।',
+  'Table orders is off at this branch. Switch it on in Settings › Tables before adding a waiter here.': 'इस ब्रांच में टेबल ऑर्डर बंद है। यहाँ वेटर जोड़ने से पहले सेटिंग › टेबल में इसे चालू करें।',
+  // QA 2026-11-16
+  'A takeaway order is not for a table': 'पैक करके ले जाने वाला ऑर्डर टेबल पर नहीं होता',
+  'A table pays when the guests ask for the bill, not with the order': 'टेबल का बिल तब चुकता होता है जब मेहमान बिल माँगें, ऑर्डर के साथ नहीं',
+  'This table’s bill has moved, joined another table or been paid. Open the table again.': 'इस टेबल का बिल दूसरी टेबल पर चला गया, जुड़ गया या चुकता हो गया। टेबल फिर से खोलें।',
+  'That table is not at this branch.': 'यह टेबल इस ब्रांच में नहीं है।',
+  'That table is at another branch.': 'यह टेबल दूसरी ब्रांच की है।',
+  // Jira GRW-720 — how an order is eaten.
+  'Table orders is off at this branch.': 'इस ब्रांच में टेबल ऑर्डर बंद है।',
+  'Choose Dine-in or Takeaway': 'यहीं खाना या पैक करके चुनें',
+  'A delivery app’s order is a delivery': 'डिलीवरी ऐप का ऑर्डर डिलीवरी ही होता है',
+  'Only the owner or a manager can change how an order is eaten.': 'ऑर्डर कैसे खाया जाए, यह सिर्फ़ मालिक या मैनेजर बदल सकते हैं।',
+  'A delivery app’s order is always a delivery.': 'डिलीवरी ऐप का ऑर्डर हमेशा डिलीवरी होता है।',
+  'This order is already done.': 'यह ऑर्डर पूरा हो चुका है।',
+  'The bill is printed, so this order stays as it was billed.': 'बिल छप चुका है, इसलिए ऑर्डर वैसा ही रहेगा जैसा बिल हुआ।',
   'A manager needs a role. Choose one, or remove them from the team.': 'मैनेजर का कोई रोल होना ज़रूरी है। एक रोल चुनें, या उन्हें टीम से हटा दें।',
   'There is no such role.': 'ऐसा कोई रोल नहीं है।',
   'Say why it cannot be sold again': 'बताएँ कि यह दोबारा क्यों नहीं बिक सकता',
@@ -400,6 +474,14 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'This business takes no orders from that app.': 'यह बिज़नेस उस ऐप से ऑर्डर नहीं लेता।',
   // ---- A bill left waiting in the POS queue for its payment. Untranslated since it was added; found once the
   // GRW-658 three above stopped masking it.
+  // Jira GRW-716 — billing offline.
+  'Only a paid counter order of products can be taken offline': 'बिना इंटरनेट के सिर्फ़ काउंटर का पैसे लिया हुआ सामान का ऑर्डर लिया जा सकता है',
+  // Jira GRW-715 — a file that is not a menu.
+  'We could not read a menu from that file. It needs a column for the dish name and one for the price.':
+    'हम उस फ़ाइल से मेन्यू नहीं पढ़ पाए। उसमें डिश के नाम और दाम का कॉलम होना चाहिए।',
+  'This branch already has 702 tills that bill offline.': 'इस ब्रांच में पहले से 702 काउंटर बिना इंटरनेट बिल बनाते हैं।',
+  'This till was not set up for billing offline at this branch. Connect to the internet and open the till again.':
+    'यह काउंटर इस ब्रांच में बिना इंटरनेट बिल के लिए तैयार नहीं था। इंटरनेट से जुड़ें और काउंटर फिर से खोलें।',
   'Only a counter product order can wait in the queue for payment':
     'कतार में पेमेंट के लिए सिर्फ़ काउंटर का प्रोडक्ट ऑर्डर रुक सकता है',
   // ---- Jira GRW-676 · GRW-678 — the 2026-11-05 functional test's fixes.
@@ -431,12 +513,43 @@ function localiseStockMessage(message: string): string | null {
 }
 
 /** The sentence in the visitor's language when it is known; otherwise exactly what the server said. */
+/**
+ * Jira GRW-718 · GRW-719 — the table sentences that name a table, an area or a count. Each is one fixed shape with the
+ * name or number in it, so it is matched as a shape and the name is kept as typed.
+ */
+const TABLE_MESSAGES: Array<[RegExp, (m: RegExpExecArray) => string]> = [
+  [/^(.+) has an open bill\. Settle it first\.$/s, (m) => `${m[1]} का बिल अभी खुला है। पहले उसे निपटाएँ।`],
+  [/^(.+) is already used at this branch\.$/s, (m) => `${m[1]} इस ब्रांच में पहले से है।`],
+  [/^(.+) still has (\d+) tables?\. Move or remove them first\.$/s, (m) => `${m[1]} में अभी ${m[2]} टेबल हैं। पहले उन्हें हटाएँ या दूसरे एरिया में ले जाएँ।`],
+  [/^(\d+) tables? still ha(?:s|ve) (?:an )?open bills?\. Settle them before switching Table orders off\.$/s, (m) => `${m[1]} टेबल का बिल अभी खुला है। टेबल ऑर्डर बंद करने से पहले उन्हें निपटाएँ।`],
+  [/^A branch can have at most (\d+) tables\.$/s, (m) => `एक ब्रांच में ज़्यादा से ज़्यादा ${m[1]} टेबल हो सकती हैं।`],
+  // Jira GRW-712 — a choice group's own words ("Pick one Spice").
+  [/^Pick one (.+)$/s, (m) => `${m[1]} में से एक चुनें`],
+  [/^Pick at most (\d+) in (.+)$/s, (m) => `${m[2]} में से ज़्यादा से ज़्यादा ${m[1]} चुनें`],
+  [/^Pick at least (\d+) in (.+)$/s, (m) => `${m[2]} में से कम से कम ${m[1]} चुनें`],
+  // Jira GRW-722 — moving a party and joining two tables.
+  [/^(.+) has no open bill\.$/s, (m) => `${m[1]} पर कोई खुला बिल नहीं है।`],
+  [/^(.+) already has guests\. Join the two tables instead\.$/s, (m) => `${m[1]} पर पहले से मेहमान हैं। दोनों टेबल जोड़ दें।`],
+  [/^(.+) has no open bill\. Move the guests there instead\.$/s, (m) => `${m[1]} पर कोई खुला बिल नहीं है। मेहमानों को वहाँ ले जाएँ।`],
+  [/^(.+) has a payment — settle it first\.$/s, (m) => `${m[1]} पर पैसे लिए जा चुके हैं — पहले बिल पूरा करें।`],
+];
+
+function localiseTableMessage(message: string): string | null {
+  for (const [shape, say] of TABLE_MESSAGES) {
+    const m = shape.exec(message);
+    if (m) return say(m);
+  }
+  return null;
+}
+
 export function localiseApiMessage(message: string, lang: string): string {
   if (lang !== 'hi') return message;
   const known = API_MESSAGES_HI[message];
   if (known) return known;
   const stock = localiseStockMessage(message);
   if (stock) return stock;
+  const table = localiseTableMessage(message);
+  if (table) return table;
   // "Row 12: An HSN code is 4 to 8 digits" — a spreadsheet import names the row, then says why. The "why" is one of the
   // sentences above, so it is translated on its own and the row keeps its number.
   const row = /^Row (\d+): (.+)$/s.exec(message);

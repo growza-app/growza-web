@@ -22,7 +22,9 @@ export const sizePriceMinor = (p: Pick<Product, 'priceMinor'>, s: Pick<TillSize,
 export const hasSizes = (p: Product): boolean => (p.sizes?.length ?? 0) > 0;
 
 /** The bill's key for a line: a plain product's is `p:<id>` as ever; a size adds its own id. */
-export const productLineKey = (productId: string, variantId?: string): string => (variantId ? `p:${productId}:${variantId}` : `p:${productId}`);
+export const productLineKey = (productId: string, variantId?: string, addons?: readonly string[]): string =>
+  // Jira GRW-712 — the same dish with different add-ons is a different line ("+ Cheese" is not "+ Olives").
+  `${variantId ? `p:${productId}:${variantId}` : `p:${productId}`}${addons && addons.length > 0 ? `:a:${[...addons].sort().join(',')}` : ''}`;
 
 /** The second option's values that some size actually uses, in the owner's order — the colour chips. Empty for one option. */
 export function colourChoices(p: Product): string[] {
@@ -38,7 +40,8 @@ export function sizesFor(p: Product, colour: string | null): TillSize[] {
 }
 
 /** Can one more of this size go on the bill? Not when none are left, and never more than there are. */
-export const canAddSize = (s: TillSize, onBill: number): boolean => s.stock > 0 && onBill < s.stock;
+/** A size goes on the bill while there is one left — or always, where nothing is counted (a kitchen cooks a dish to order, Jira GRW-712). */
+export const canAddSize = (s: TillSize, onBill: number, counted = true): boolean => !counted || (s.stock > 0 && onBill < s.stock);
 
 /**
  * The size a scanned code names, across the whole shelf: its barcode or SKU, whole, without regard to case. Null for
@@ -61,6 +64,8 @@ export function sizeByCode(shelf: readonly Product[], typed: string): { product:
 export interface SoldProduct {
   productId: string;
   variantId?: string;
+  /** Jira GRW-712 — the add-on options chosen on the line. */
+  addons?: string[];
   qty: number;
   paidMinor: number;
 }
@@ -70,12 +75,18 @@ export interface SoldProduct {
  * has sizes — the size is what the server takes the unit from, so two sizes of one shirt are two entries, never one.
  * `amounts[i]` is what line i came to.
  */
-export function groupProductLines(lines: ReadonlyArray<{ product?: { id: string; variantId?: string } }>, amounts: readonly number[]): SoldProduct[] {
+export function groupProductLines(lines: ReadonlyArray<{ product?: { id: string; variantId?: string; addons?: readonly string[] } }>, amounts: readonly number[]): SoldProduct[] {
   const sold = new Map<string, SoldProduct>();
   lines.forEach((l, i) => {
     if (!l.product) return;
-    const key = productLineKey(l.product.id, l.product.variantId);
-    const at = sold.get(key) ?? { productId: l.product.id, ...(l.product.variantId ? { variantId: l.product.variantId } : {}), qty: 0, paidMinor: 0 };
+    const key = productLineKey(l.product.id, l.product.variantId, l.product.addons);
+    const at = sold.get(key) ?? {
+      productId: l.product.id,
+      ...(l.product.variantId ? { variantId: l.product.variantId } : {}),
+      ...(l.product.addons && l.product.addons.length > 0 ? { addons: [...l.product.addons] } : {}),
+      qty: 0,
+      paidMinor: 0,
+    };
     at.qty += 1;
     at.paidMinor += amounts[i] ?? 0;
     sold.set(key, at);

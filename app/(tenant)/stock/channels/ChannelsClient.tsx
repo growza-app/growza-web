@@ -106,6 +106,29 @@ export function ChannelsClient() {
 
           <Trend data={data} word={word} money={money} />
 
+          {/*
+            Jira GRW-720 — the same bills by how they were eaten. Only once a kitchen has typed orders: a shop's, or a
+            restaurant's before order types, would show one "Before types" row that says nothing. The rows add up to the
+            total at the top (the API builds both from the same bills).
+          */}
+          {data.byOrderType && data.byOrderType.some((r) => r.type !== 'counter') ? (
+            <section className="srp-types" aria-labelledby="ch-types">
+              <h2 id="ch-types" className="srp-name">{t('byType')}</h2>
+              <ul className="srp-list">
+                {data.byOrderType.map((r) => (
+                  <li key={r.type} className="srp-card">
+                    <div className="srp-head">
+                      <h3 className="srp-name">{t(`types.${r.type}`)}</h3>
+                      <p className="srp-value">{money(r.billedMinor)}</p>
+                    </div>
+                    <p className="srp-hint">{t('ordersLine', { orders: r.orders })}</p>
+                    {r.type === 'counter' ? <p className="srp-hint">{t('typesBeforeHint')}</p> : null}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
           <p className="ch-caveat" role="note">
             {localiseApiMessage(data.caveat, locale)}
           </p>

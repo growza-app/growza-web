@@ -152,6 +152,8 @@
 @import './styles/99-thermal-print.css';
 /* Owner, 2026-11-15 — Discount on the whole bill, % or ₹. */
 @import './styles/99-bill-discount.css';
+@import './styles/99-dining-tables.css';
+@import './styles/99-menu-import.css';
 /* Emerald v2 theme preview — after every screen sheet, before 99-photo-none.css (which must stay last); delete this line and the file to drop it. */
 @import './styles/99-z-emerald-v2.css';
 @import './styles/99-photo-none.css';

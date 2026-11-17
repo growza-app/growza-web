@@ -66,6 +66,8 @@ export interface SessionInfo {
    * that opens a screen the server would refuse.
    */
   sizes?: boolean;
+  /** Jira GRW-712 — `me.capabilities.addons`: items carry add-ons. Absent reads as off. */
+  addons?: boolean;
   /**
    * `me.whatsapp.booking` — whether clients book and cancel through WhatsApp at this business. Settings that only
    * bind a client booking by WhatsApp are left undrawn while it is off (owner, 2026-10-10). Absent reads as OFF, the
@@ -137,6 +139,11 @@ export function useMayUse(action: UiAction): boolean {
  * a token). "New visit" and "Record payment" are not here — each also books or settles something that is not a walk-in.
  */
 const WALK_IN_ONLY: readonly UiAction[] = ['queue.give', 'token.arrive'];
+
+/** Jira GRW-712 — do this business's items carry add-ons? False when unknown. */
+export function useAddonsOn(): boolean {
+  return useSession()?.addons ?? false;
+}
 
 /** Jira GRW-598 — are sizes switched on for this business? False when unknown, and for every salon today. */
 export function useSizesOn(): boolean {

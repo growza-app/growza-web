@@ -44,7 +44,9 @@ describe('grouping by day', () => {
 
 describe('the phone list', () => {
   it('shows the token where there is one, and the code only where there is not', () => {
-    expect(client).toContain('{r.tokenNo ? <span className="ord-token">{formatTokenNo(r.tokenNo)}</span> : null}');
+    // Jira GRW-716 — an order taken offline shows its till's token ("A12") in the same chip.
+    expect(client).toContain('{r.offlineToken ? (\n                              <span className="ord-token">{r.offlineToken}</span>');
+    expect(client).toContain('<span className="ord-token">{formatTokenNo(r.tokenNo)}</span>');
     expect(client).toContain("{r.tokenNo ? null : <span className=\"ord-code\">{t('list.orderCode', { code: r.code.toUpperCase() })}</span>}");
   });
 

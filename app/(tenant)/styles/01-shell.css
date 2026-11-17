@@ -20,6 +20,11 @@
   overflow: hidden;
 }
 
+/* Owner, 2026-11-17 — no sidebar (a login with no screen to list): the page takes the whole width. */
+.shell:not(:has(> .sidebar)) {
+  grid-template-columns: 1fr;
+}
+
 .sidebar {
   background: linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-deep) 100%);
   padding: 22px 16px;
