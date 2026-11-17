@@ -401,7 +401,8 @@ describe('Record payment in three taps', () => {
     // A token already carries its client, so it is never asked.
     expect(flow).toMatch(/token \? \{ queueEntryId: token\.id \}/);
     // A name with no number is not a row this screen writes: the counter-sale route creates it with the sale.
-    expect(flow).toMatch(/\{ customerName: \(client as \{ name: string \}\)\.name \}/);
+    // Jira GRW-716 — and a guest added offline brings their number with the name.
+    expect(flow).toMatch(/\{ customerName: named\.name, \.\.\.\(named\.phone \? \{ customerPhone: named\.phone \} : \{\}\) \}/);
     expect(client).toMatch(/if \(!stored\) return onPick\(\{ id: null, name: newName\.trim\(\), waPhone: null \}\);/);
     // Save needs the name; the number only has to be valid IF one was typed.
     expect(client).toMatch(/const problem = checkPhone\(newPhone, \{ required: false \}\);/);
@@ -528,7 +529,7 @@ describe('Record payment in three taps', () => {
     expect(flow).toMatch(/onClick=\{\(\) => addOne\(s\)\} aria-disabled=\{full \|\| undefined\}/);
     expect(css).toMatch(/\.pf-qty-btn\[aria-disabled='true'\] \{/);
     // The tap that writes the sale, and the screen that confirms it.
-    expect(flow).toMatch(/if \(saving \|\| lines\.length === 0\) return;\s*felt\(BUZZ\.paid\);/);
+    expect(flow).toMatch(/if \(saving \|\| lines\.length === 0 \|\| pointsChecking \|\| splitTooBig\) return;\s*felt\(BUZZ\.paid\);/);
     expect(done).toMatch(/if \(!\(soundProp \?\? soundIsOn\(\)\)\) return;\s*buzz\(BUZZ\.done\);/);
     expect(done).toMatch(/if \(said\.current === appointmentId\) return;/);
     // The person's own switch covers touch as well as sound; and a phone without `vibrate` is not an error.

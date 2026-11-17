@@ -44,6 +44,7 @@ export function PaymentsReport() {
                   </div>
                 ))}
               </section>
+              {(r.serviceChargeMinor ?? 0) > 0 ? <p className="srp-hint">{p('serviceCharge', { value: f.money(r.serviceChargeMinor!) })}</p> : null}
               <p className="srp-hint">{p('counterOnly')}</p>
 
               <h2 className="mr-title">{p('byDayTitle')}</h2>
@@ -68,6 +69,27 @@ export function PaymentsReport() {
                   );
                 })}
               </ul>
+
+              {/* Jira GRW-723 BR-03 — who took the money: a waiter's payments under their name. */}
+              {r.byPerson && r.byPerson.length > 0 ? (
+                <>
+                  <h2 className="mr-title">{p('byPersonTitle')}</h2>
+                  <ul className="srp-list">
+                    {r.byPerson.map((x) => {
+                      const ways = ORDER.filter((m) => (x.modes[m] ?? 0) !== 0);
+                      return (
+                        <li key={x.name ?? '-'} className="srp-card">
+                          <div className="srp-head">
+                            <h3 className="srp-name">{x.name ?? p('byPersonUnknown')}</h3>
+                            <p className="srp-value">{f.money(x.receivedMinor)}</p>
+                          </div>
+                          <p className="srp-hint">{ways.map((m) => `${p(`mode.${m}`)} ${f.money(x.modes[m] ?? 0)}`).join(' · ')}</p>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              ) : null}
             </>
           )}
 

@@ -206,6 +206,9 @@ export function BottomNav({
    * Nothing to switch between means no bar — the same answer this component already gives New booking below.
    */
   if (visible.length < 2 && !centre) return null;
+  // Owner, 2026-11-17 (Kitchen review #1) — the kitchen screen is one job on a greasy tablet: no bar to tap by mistake. Its own
+  // header carries the way back for the owner and manager.
+  if (pathname.startsWith('/kitchen')) return null;
 
   const tab = (item: (typeof visible)[number]) => {
     const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);

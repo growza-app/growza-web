@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError, formatMoney } from '../../lib/api';
 import { fixVisitHref, nextCustomerHref } from '../../lib/pay-token';
-import type { Appointment, Offer, PaymentMode, Product, ProductCategory, Provider, Service, TillSize } from '../../lib/api-types';
+import type { AddonGroup, Appointment, Offer, PaymentMode, Product, ProductCategory, Provider, Service, TillSize } from '../../lib/api-types';
 import type { QueueEntry } from '../../lib/home-types';
 import { receiptRows, type ReceiptRow } from '../../lib/receipt-text';
 import { displayPhone } from '../../lib/phone';
@@ -38,13 +38,22 @@ import { useBarcodeScan } from '../../lib/barcode-scan';
 import { planScans, type ScanProblem } from '../../lib/scan-plan';
 import { canAddSize, groupProductLines, hasSizes, productLineKey, sizedName, sizePriceMinor } from '../../lib/till-sizes';
 import { SizeSheet } from './SizeSheet';
+import { ChoiceSheet, type DishChoice } from './ChoiceSheet';
+import { useAddonsOn } from '../../components/SessionProvider';
 import { AppOrderNoSheet } from './AppOrderNoSheet';
 import { queueScan, takeScans } from '../../lib/scan-queue';
 import { heldBillsKey, heldStamp, loadHeldBills, saveHeldBills } from '../../lib/held-bills';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
 import { PaymentDone } from '../../components/PaymentDone';
 import { TillPrintActions, useTicketPrinter } from '../../components/TicketPrinter';
+import { TableMap } from '../../pos/TableMap';
+import { TableBillSheet } from '../../pos/TableBillSheet';
+import { useWaiter } from '../../pos/waiter';
+import type { DiningTable } from '../../lib/api';
 import type { KitchenTicketDto } from '../../lib/api-types';
+import type { BillData } from '../../lib/print/ticket';
+import { keepOfflineOrder, neverArrived, nextOfflineCount, offlineTokenOf, tillLetter, deviceKey, useOfflineTill, type OfflineOrderBody } from '../../lib/offline-till';
+import { OfflineTillBar } from '../../components/OfflineTillBar';
 import { DiscountSheet } from './DiscountSheet';
 import { shownPercent } from './bill-discount';
 
@@ -87,6 +96,9 @@ interface Sale {
   kot?: KitchenTicketDto;
   /** Where the order came from: 'counter' or a delivery app. The KOT names it. */
   channel: string;
+  /** Jira GRW-716 — taken with no internet: its till's token ("A12") and the receipt the till printed itself. */
+  offlineToken?: string;
+  receipt?: BillData;
 }
 
 /**
@@ -100,7 +112,7 @@ interface Sale {
  */
 type Client =
   | { kind: 'none' }
-  | { kind: 'named'; name: string }
+  | { kind: 'named'; name: string; /** Jira GRW-716 — a new guest's number, kept on the order when the guest was added offline. */ phone?: string | null }
   | { kind: 'existing'; id: string; name: string | null; phone: string | null };
 
 /** The tiles on ①: enough to cover a salon's everyday menu, few enough that each is the size of a thumb. */
@@ -160,6 +172,7 @@ export function PayFlow({
   leaveRef,
   onSaleCompleted,
   onOpenQueue,
+  onPayTable,
   reloadKey = 0,
   addingTo = null,
   inactive = false,
@@ -211,6 +224,11 @@ export function PayFlow({
   onSaleCompleted?: (saleId: string) => void;
   /** Opens the POS Queue tab directly when the desk taps "View Queue" on the queued-order confirmation banner. */
   onOpenQueue?: () => void;
+  /**
+   * Owner, 17 Nov 2026 — "these options should be as we have without tables": a table's Take payment opens the same
+   * payment screen a Pickup order is paid on (ways to pay, split, discount, points, QR, the guest), not three buttons.
+   */
+  onPayTable?: (bill: { saleId: string; tableName: string }) => void;
   /** Incremented after a return or exchange on POS so the product shelf refreshes its live stock counts in place. */
   reloadKey?: number;
   /**
@@ -254,6 +272,28 @@ export function PayFlow({
   /** "Swiggy", "Zomato" — the app's own name, which is the same in every language. */
   const appWord = (app: string) => (app === 'swiggy' || app === 'zomato' ? t(`from.apps.${app}`) : app);
   const branch = useBranch();
+  /*
+   * Jira GRW-720 — a branch that seats its guests asks first how the guest is eating: Dine-in, Takeaway, or Delivery
+   * (only where the business has a delivery app). Dine-in is where a fresh till opens; the tab chosen then stays for the
+   * next order on this device until the page is opened again (BR-04). A branch that does not seat guests sees none of
+   * this — its till is exactly as it was (BR-01).
+   */
+  const [orderTab, setOrderTab] = useState<'dine_in' | 'takeaway' | 'delivery'>('dine_in');
+  /*
+   * Jira GRW-721 — the table this order is for: picked on the map, then the dish grid as always, and "Send to kitchen"
+   * puts the dishes on that table's bill (a new one, or the round onto the one running). The bill of a busy table
+   * opens in a sheet over the map. `mapKey` makes the map read again the moment the till changed something.
+   */
+  /** The table being ordered for; `billId` when the till opened its bill to add a round (QA 2026-11-16: refused if it moved). */
+  const [atTable, setAtTable] = useState<{ id: string; label: string; billId?: string } | null>(null);
+  const [guests, setGuests] = useState<number | null>(null);
+  const [billOf, setBillOf] = useState<{ table: DiningTable; area: string } | null>(null);
+  const [mapKey, setMapKey] = useState(0);
+  /** What the till just did at a table, said in full: "Sent to kitchen · T3", "T3 paid · ₹640", "T1 moved to T3." */
+  const [tableSent, setTableSent] = useState<string | null>(null);
+  const tTables = useTranslations('posTables');
+  // Jira GRW-723 — a waiter's till is the room only: Dine-in, no type tabs, and an "off" screen where the branch seats nobody.
+  const waiter = useWaiter();
   const providerNoun = useLabel('provider', 'Staff member');
   // The person paying, in the vertical's own word — Guest at a restaurant, Customer at a shop.
   const clientNoun = pickNoun(locale, useLabel('customer', 'Client'), tNouns('customer'));
@@ -271,6 +311,13 @@ export function PayFlow({
    * the header on MG Road, settling an Indiranagar booking, would have added extras from the wrong menu.
    */
   const location = token?.locationId ?? visit?.appointment.locationId ?? branch.choice ?? branch.one ?? session?.branches?.[0]?.id ?? null;
+  // Jira GRW-720 — after `location`, which it reads (it sat above it once, and the till did not open: caught by the e2e run).
+  const tablesHere = productsOnly && Boolean(session?.branches?.find((b) => b.id === location)?.tableOrders);
+  // Owner, 17 Nov 2026 — with tables on, the till's Queue is called Pickup (PosClient's `qk`).
+  const qk = <K extends string>(key: K): K | `${K}Pickup` => (tablesHere ? `${key}Pickup` : key);
+  // Jira GRW-716 — this till's letter while online, and whatever it kept offline sent when the connection is back.
+  const tillBranches = useMemo(() => (session?.branches ?? []).map((b) => b.id), [session?.branches]);
+  useOfflineTill(productsOnly ? location : null, tillBranches);
   const branchName = (session?.branches?.length ?? 0) > 1 ? (session?.branches?.find((b) => b.id === location)?.name ?? null) : null;
   /*
    * The QR to hold up here, if the owner has uploaded one (owner, 2026-10-11).
@@ -363,6 +410,8 @@ export function PayFlow({
   // Refresh shelf stock counts in place when a return or exchange is recorded in the POS sheet above this till.
   useEffect(() => {
     if (!reloadKey) return;
+    // A table paid on the POS's payment screen: the room reads again, so its tile is free.
+    setMapKey((k) => k + 1);
     let gone = false;
     void api
       .products(location)
@@ -621,7 +670,10 @@ export function PayFlow({
    * two tills cannot answer the same question differently. An app's order is paid to the app, so it asks
    * for nobody's points.
    */
-  const { rewards, usePoints, toggle: toggleRedeem, redeemMinor: discountMinor } = useRewardQuote(fromApp ? null : clientId, totalMinor);
+  const { rewards, usePoints, toggle: toggleRedeem, redeemPoints: quotedPoints, redeemMinor: discountMinor, checking: pointsChecking } = useRewardQuote(
+    fromApp ? null : clientId,
+    totalMinor,
+  );
   const dueMinor = Math.max(0, totalMinor - discountMinor);
 
   /** Owner, 2026-10-15 — every package on the bill, one entry per time it was rung up, in the order picked. */
@@ -637,6 +689,23 @@ export function PayFlow({
     lines.filter((l) => l.product?.id === productId && (variantId === undefined || l.product.variantId === variantId)).length;
   /** Jira GRW-599 — the product whose sizes are open in the size sheet. Its sizes are the ones the till already read. */
   const [sizing, setSizing] = useState<string | null>(null);
+  /*
+   * Jira GRW-712 — a dish's add-on groups (Extras, Spice), read once for the till; `choosing` is the dish whose choice sheet is open.
+   * A business with no add-ons never asks.
+   */
+  const addonsOn = useAddonsOn();
+  const [addonGroups, setAddonGroups] = useState<{ groups: AddonGroup[]; products: Record<string, string[]> } | null>(null);
+  const [choosing, setChoosing] = useState<string | null>(null);
+  useEffect(() => {
+    if (!addonsOn || !productsOnly) return;
+    let live = true;
+    void api.addonGroups().then((a) => live && setAddonGroups(a)).catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [addonsOn, productsOnly]);
+  const groupsOf = (productId: string): AddonGroup[] =>
+    (addonGroups?.products[productId] ?? []).map((id) => addonGroups!.groups.find((g) => g.id === id)).filter((g): g is AddonGroup => Boolean(g));
   // Hooks stay above every early return below (done, qr, how): a sale that ends on one of them must not change the hook count.
   const noneCount = useMemo(() => products.filter((p) => p.categoryId === null).length, [products]);
   /*
@@ -695,14 +764,30 @@ export function PayFlow({
     setOverride(null);
   };
   /** Owner, 2026-10-14 — a product on the bill: one line per unit, so "tap again for a second one" holds. */
-  const addProduct = (p: Product, size?: TillSize) => {
+  const addProduct = (p: Product, size?: TillSize, again?: Line) => {
+    // Jira GRW-712 FR-05 — "+" on a line with choices repeats exactly those choices.
+    if (again?.product?.addons && again.product.addons.length > 0) {
+      if (full) {
+        felt(BUZZ.tooMany);
+        return;
+      }
+      felt(BUZZ.added);
+      setLines((prev) => [...prev, { ...again, override: undefined } as Line]);
+      setOverride(null);
+      return;
+    }
+    // Jira GRW-712 — a dish with add-on groups asks for its choices (and its portion) in one sheet.
+    if (!size && groupsOf(p.id).length > 0) {
+      setChoosing(p.id);
+      return;
+    }
     // Jira GRW-599 — a product with sizes is not one thing to ring up: the size sheet opens, and a size goes on from there.
     if (!size && hasSizes(p)) {
       setSizing(p.id);
       return;
     }
     if (size) {
-      if (full || !canAddSize(size, productCountOf(p.id, size.id))) {
+      if (full || !canAddSize(size, productCountOf(p.id, size.id), counted)) {
         felt(BUZZ.tooMany);
         return;
       }
@@ -718,6 +803,25 @@ export function PayFlow({
     felt(BUZZ.added);
     setLines((prev) => [...prev, { serviceId: '', name: p.name, priceMinor: Number(p.priceMinor ?? 0), product: { id: p.id } }]);
     setOverride(null);
+  };
+  /** Jira GRW-712 — the choice sheet's Add: `qty` lines of the dish with its portion and add-ons, named and priced with them. */
+  const addChoice = (p: Product, choice: DishChoice, qty: number) => {
+    const room = Math.max(0, MAX_LINES - lines.length);
+    const n = Math.min(qty, room);
+    if (n === 0) {
+      felt(BUZZ.tooMany);
+      return;
+    }
+    felt(BUZZ.added);
+    const line: Line = {
+      serviceId: '',
+      name: choice.name,
+      priceMinor: choice.unitMinor,
+      product: { id: p.id, ...(choice.size ? { variantId: choice.size.id } : {}), ...(choice.addons.length > 0 ? { addons: choice.addons } : {}) },
+    };
+    setLines((prev) => [...prev, ...Array.from({ length: n }, () => ({ ...line }))]);
+    setOverride(null);
+    setChoosing(null);
   };
   /**
    * Owner, 2026-10-19 — a scan adds the product wherever the cursor is. A code that names no single product says so
@@ -758,6 +862,17 @@ export function PayFlow({
   };
   // Only on the screen where products are picked: on 'how', 'qr' and 'done' a scan would change a bill being paid.
   // Listening from the first moment, not from when the shelf is in: a bottle scanned while it loads waits in the queue.
+  /*
+   * Owner, 2026-11-17 — "I placed a takeaway order and it's showing as Dine In". A table chosen on the till stayed chosen
+   * across a visit to Queue or Return, with the Dine-in / Takeaway / Delivery tabs hidden behind it, so the next order
+   * went on that table. Leaving Sell lets go of the table; the dishes already rung up stay, and wait for a table or a type.
+   */
+  useEffect(() => {
+    if (!inactive) return;
+    setAtTable(null);
+    setGuests(null);
+  }, [inactive]);
+
   useBarcodeScan(!inactive && productsOnly && step === 'what', (code) => {
     if (productsLoaded) onScans([code]);
     else queueScan(code);
@@ -932,6 +1047,8 @@ export function PayFlow({
   /** The ways this bill is paid when the tile `mode` is tapped: two when a first way is held and differs, else one. */
   // Jira GRW-648 — `dueMinor`, not `totalMinor`: the ways of paying add up to the money that crossed the
   // counter, and points are not one of them. With no points on the bill the two are the same number.
+  /** QA 2026-11-17, finding 2 — a held first part not less than the (new) total is said, never dropped silently. */
+  const splitTooBig = firstWay !== null && firstWay.minor >= dueMinor;
   const waysFor = (mode: PaymentMode): Array<{ mode: PaymentMode; amountMinor: number }> => {
     if (!firstWay || firstWay.mode === mode || firstWay.minor >= dueMinor) return [{ mode, amountMinor: dueMinor }];
     return [
@@ -952,13 +1069,14 @@ export function PayFlow({
 
   /** ② — the tile that was tapped is the payment; this is the save. */
   const pay = async (mode: PaymentMode, pending = false) => {
-    if (saving || lines.length === 0) return;
+    // QA 2026-11-17 (finding 1) — not while this bill's points are still being asked.
+    if (saving || lines.length === 0 || pointsChecking || splitTooBig) return;
     felt(BUZZ.paid);
     setSaving(mode);
     setError(null);
     const amounts = spread(baseAmounts.map((priceMinor) => ({ priceMinor })), totalMinor);
     // Jira GRW-648 — how many points this bill spends: all the till offered, or none.
-    const redeemPoints = usePoints && rewards ? rewards.maxRedeemable : 0;
+    const redeemPoints = quotedPoints;
     const legs = lines.flatMap((l, i) => (l.product ? [] : [{ serviceId: l.serviceId, paidAmountMinor: amounts[i]!, ...(l.pkg ? { offerId: l.pkg.id } : {}) }]));
     // Owner, 2026-10-14 — the products on the bill, grouped: which, how many, what the line came to.
     // Jira GRW-599 — one entry per product, and per size of a product that has sizes (the size is what the server takes the unit from).
@@ -970,6 +1088,41 @@ export function PayFlow({
     const paidBy = pending ? t('desk.paymentPending') : fromApp ? appWord(fromApp) : paidByWords(ways);
     const mainMode = ways.reduce((best, w) => (w.amountMinor > best.amountMinor ? w : best), ways[0]!).mode;
     const howPaid = ways.length > 1 ? { paymentMode: mainMode, payments: ways } : { paymentMode: mode };
+    /**
+     * Jira GRW-716 — the receipt for an order taken offline, from what the till has: the dishes and what was paid for
+     * them, the token, and no bill number — the server gives the next one when the order is sent (owner, 2026-11-16).
+     * The taxes are the GST bill's to work out, and it can be printed from the order once it has reached us.
+     */
+    const offlineReceipt = (offlineToken: string, paidWords: string, paidTotal: number, atISO: string): BillData => {
+      const figure = (minor: number) => new Intl.NumberFormat(locale === 'hi' ? 'hi-IN' : 'en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(minor / 100);
+      const items = productLines.map((p) => ({
+        name: lines.find((l) => l.product?.id === p.productId)?.name ?? '',
+        qty: p.qty,
+        price: figure(Math.round(p.paidMinor / Math.max(1, p.qty))),
+        amount: figure(p.paidMinor),
+      }));
+      return {
+        businessName: session?.businessName ?? '',
+        docTitle: t('offline.receiptTitle'),
+        customerName: client.kind === 'existing' ? (client.name ?? null) : client.kind === 'none' ? null : (client as { name: string }).name || null,
+        when: new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: timezone })
+          .format(new Date(atISO))
+          .replace(',', ''),
+        orderLabel: null,
+        cashier: session?.name ?? null,
+        number: null,
+        tokenNo: null,
+        offlineToken,
+        numberLater: t('offline.numberLater'),
+        items,
+        totalQty: productLines.reduce((n, p) => n + p.qty, 0),
+        subTotal: figure(paidTotal),
+        adjustments: [],
+        roundOff: null,
+        grandTotal: money(paidTotal),
+        paidBy: t('offline.paidBy', { ways: paidWords }),
+      };
+    };
     try {
       /*
        * Two writes, chosen by what is being paid for — the whole reason this screen can serve both.
@@ -1025,11 +1178,14 @@ export function PayFlow({
               earnedPoints: r.rewards?.earnedPoints ?? 0,
               rewards: r.rewards ?? null,
               kot: undefined as KitchenTicketDto | undefined,
+              offlineToken: undefined as string | undefined,
             };
           })()
         : await (async () => {
             // No client is only ever an app's order (the guest is the app's); every other sale names one before it gets here.
-            const who = token ? { queueEntryId: token.id } : client.kind === 'existing' ? { customerId: client.id } : client.kind === 'none' ? {} : { customerName: (client as { name: string }).name };
+            // Jira GRW-716 — a guest added offline carries their number on the order; the server finds or makes them by it.
+            const named = client as { name: string; phone?: string | null };
+            const who = token ? { queueEntryId: token.id } : client.kind === 'existing' ? { customerId: client.id } : client.kind === 'none' ? {} : { customerName: named.name, ...(named.phone ? { customerPhone: named.phone } : {}) };
             const appOrder = fromApp ? { channel: fromApp, ...(appOrderNo.trim() ? { externalRef: appOrderNo.trim() } : {}) } : null;
             const common = {
               ...who,
@@ -1042,14 +1198,45 @@ export function PayFlow({
               ...(redeemPoints > 0 ? { redeemPoints } : {}),
               idempotencyKey: attemptKey,
               ...(token || !location ? {} : { location }),
+              // Jira GRW-720 — how it is eaten; an app's order is a delivery by where it came from and names none.
+              ...(atTable
+                ? { tableId: atTable.id, ...(atTable.billId ? { tableBillId: atTable.billId } : {}), ...(guests ? { guests } : {}) }
+                : tablesHere && !fromApp
+                  ? { orderType: orderTab === 'dine_in' ? ('dine_in' as const) : ('takeaway' as const) }
+                  : {}),
             };
-            const r = await guard((confirmed) =>
-              api.recordCounterSale(
-                stylistId && legs.length > 0
-                  ? { ...common, schedulableId: stylistId, ...(confirmed ? { confirmLargeAmount: true } : {}) }
-                  : { ...common, noStylist: true, ...(confirmed ? { confirmLargeAmount: true } : {}) },
-              ),
-            );
+            /*
+             * Jira GRW-716 — no internet: a paid counter order of products is kept on this device under the till's own
+             * token ("A12") and sent when the connection is back. Only when the request never reached us (or the browser
+             * already knows it is offline): a refusal from the server is the server's answer, never taken offline.
+             */
+            const tillAt = location && !token && !atTable && !pending && !fromApp && legs.length === 0 && redeemPoints === 0 ? location : null;
+            const letter = tillAt ? tillLetter(tillAt) : null;
+            const keepOffline = () => {
+              const device = deviceKey();
+              if (!tillAt || !letter || !device) return null;
+              const takenAt = new Date();
+              const n = nextOfflineCount(tillAt, new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(takenAt));
+              const offlineToken = offlineTokenOf(letter, n);
+              const body: OfflineOrderBody = { ...common, noStylist: true, location: tillAt, idempotencyKey: attemptKey, offline: { deviceKey: device, tokenNo: n, takenAt: takenAt.toISOString() } };
+              if (!keepOfflineOrder({ id: attemptKey, branch: tillAt, token: offlineToken, takenAt: takenAt.toISOString(), totalMinor: dueMinor, body })) return null;
+              const kot: KitchenTicketDto = { id: attemptKey, number: 0, kind: 'new', createdAt: takenAt.toISOString(), items: productLines.map((p) => ({ name: lines.find((l) => l.product?.id === p.productId)?.name ?? '', qty: p.qty })) };
+              return { appointmentId: attemptKey, tokenNo: null, offlineToken, legs: [], schedulableId: null, startAt: takenAt.toISOString(), rewards: undefined, kot };
+            };
+            const kept = tillAt && letter && typeof navigator !== 'undefined' && navigator.onLine === false ? keepOffline() : null;
+            const r =
+              kept ??
+              (await guard((confirmed) =>
+                api.recordCounterSale(
+                  stylistId && legs.length > 0
+                    ? { ...common, schedulableId: stylistId, ...(confirmed ? { confirmLargeAmount: true } : {}) }
+                    : { ...common, noStylist: true, ...(confirmed ? { confirmLargeAmount: true } : {}) },
+                ),
+              ).catch((e: unknown) => {
+                const held = neverArrived(e) ? keepOffline() : null;
+                if (held) return held;
+                throw e;
+              }));
             return {
               appointmentId: r.appointmentId,
               /*
@@ -1067,10 +1254,12 @@ export function PayFlow({
               rewards: r.rewards ?? null,
               // Jira GRW-713 — the kitchen's ticket for this order, printed below if this counter prints them.
               kot: r.kot,
+              offlineToken: 'offlineToken' in r ? (r.offlineToken ?? undefined) : undefined,
             };
           })();
       const result = settled;
-      router.refresh();
+      // Jira GRW-716 — offline there is nothing to read again; the screen refreshes when the order is sent.
+      if (!result.offlineToken) router.refresh();
       const paidMinor = pending ? totalMinor : result.paidMinor;
       const stylist = result.schedulableId ? (shownProviders.find((p) => p.id === result.schedulableId)?.displayName ?? null) : null;
       const when = new Intl.DateTimeFormat(locale === 'hi' ? 'hi-IN' : 'en-IN', {
@@ -1082,18 +1271,34 @@ export function PayFlow({
         minute: '2-digit',
         hour12: true,
       }).format(new Date(result.startAt));
-      const tokenNo = result.tokenNo ?? token?.tokenNo ?? nextTokenNo ?? null;
+      // Jira GRW-716 — an order taken offline goes by its till's token, never by a guessed next number.
+      const offlineToken = result.offlineToken;
+      const tokenNo = offlineToken ? null : (result.tokenNo ?? token?.tokenNo ?? nextTokenNo ?? null);
       onSaleCompleted?.(result.appointmentId);
       // Jira GRW-713 — the kitchen's ticket and the guest's bill. After the sale is saved, never in its way (BR-03).
       const channel = fromApp ?? 'counter';
-      printer.autoKot(result.kot, { tokenNo, channel });
+      // Jira GRW-720 — the slip says how it is eaten ("TAKEAWAY"); the server decided the same from the same choice.
+      const orderType = fromApp ? ('delivery' as const) : tablesHere && orderTab === 'dine_in' ? ('dine_in' as const) : ('takeaway' as const);
+      printer.autoKot(result.kot, { tokenNo, offlineToken, channel, orderType, ...(atTable ? { tableName: atTable.label } : {}) });
+      // Jira GRW-721 — sent to a table: back to the map, which reads again and shows the table busy.
+      if (pending && atTable) {
+        nextCustomer();
+        setTableSent(tTables('sent', { table: atTable.label }));
+        setAtTable(null);
+        setGuests(null);
+        setMapKey((k) => k + 1);
+        return;
+      }
       if (pending) {
         nextCustomer();
         setQueuedBanner({ tokenNo, amountMinor: paidMinor, saleId: result.appointmentId, kot: result.kot, channel });
         return;
       }
       // A delivery app bills its own guest, and issuing has no client of ours to name: only the counter's own bills print.
-      if (productsOnly && channel === 'counter') printer.autoBill(result.appointmentId);
+      // Jira GRW-716 — offline: the receipt the till builds itself, with no bill number yet (owner, 2026-11-16).
+      const receipt = offlineToken ? offlineReceipt(offlineToken, paidBy, paidMinor, result.startAt) : undefined;
+      if (receipt) printer.autoReceipt(receipt);
+      else if (productsOnly && channel === 'counter') printer.autoBill(result.appointmentId);
       const bill = receiptRows(
         {
           businessName: session?.businessName ?? null,
@@ -1185,7 +1390,7 @@ export function PayFlow({
         appointmentId: result.appointmentId,
         tokenNo,
         ...(pending
-          ? { title: t('desk.pendingDoneTitle', { amount: money(paidMinor) }) }
+          ? { title: t(qk('desk.pendingDoneTitle'), { amount: money(paidMinor) }) }
           : fromApp
             ? { title: t('from.doneTitle', { amount: money(paidMinor), app: appWord(fromApp) }) }
             : {}),
@@ -1204,7 +1409,8 @@ export function PayFlow({
         /* Jira GRW-648 — and what it earned them, because "that earned her 38 points" is the sentence the
            desk says out loud, and the one reason a client cares that any of this exists. */
         summary: [
-          tokenNo !== null ? nv.token(tokenNo) : null,
+          offlineToken ?? (tokenNo !== null ? nv.token(tokenNo) : null),
+          offlineToken ? t('offline.keptShort') : null,
           paidBy,
           names,
           stylist,
@@ -1216,6 +1422,7 @@ export function PayFlow({
         productOnly: !lines.some((l) => !l.product),
         ...(result.kot ? { kot: result.kot } : {}),
         channel,
+        ...(offlineToken ? { offlineToken, receipt } : {}),
       });
       clearSplit();
       setStep('done');
@@ -1226,7 +1433,9 @@ export function PayFlow({
         // sizes), and the shelf is read again so the sizes shown are the ones that are really there. Only when the server
         // named a SIZE (its `variantId`): any other refusal about a product keeps its own words (review of GRW-585).
         const sizeRefused = e instanceof ApiError && e.field === 'products' && typeof (e.body as { variantId?: unknown } | undefined)?.variantId === 'string';
-        setError(sizeRefused ? ts('changed') : e instanceof ApiError ? e.message : nv.saveUnknown);
+        // Jira GRW-716 — no internet, and this is not an order the till can keep (the Queue, a table, points, a service):
+        // said plainly, so the counter knows to take it as a paid counter order or wait for the connection.
+        setError(sizeRefused ? ts('changed') : neverArrived(e) ? t('offline.notKept') : e instanceof ApiError ? e.message : nv.saveUnknown);
         if (e instanceof ApiError && e.field === 'products') void api.products(location).then(setProducts).catch(() => {});
       }
     } finally {
@@ -1238,6 +1447,9 @@ export function PayFlow({
 
   const nextCustomer = () => {
     setLines([]);
+    // Owner, 2026-11-17 — a finished bill lets go of its table: the next guest is not seated there by default.
+    setAtTable(null);
+    setGuests(null);
     setOverride(null);
     setClient({ kind: 'none' });
     setOrderFrom('counter');
@@ -1485,6 +1697,8 @@ export function PayFlow({
   /* ---------- ③ Done ---------- */
   // The same screen the one-page form ends on (owner, 2026-10-10): `PaymentDone`, sound, Next customer and all.
   /** Owner, 2026-11-16 — Print KOT the moment the order is placed: under the "sent to queue" banner, phone and wide alike. */
+  /** Jira GRW-716 — offline, or orders waiting to send: one amber line over the till; nothing when all is well. */
+  const offlineBar = productsOnly ? <OfflineTillBar branch={location} branches={tillBranches} onReprint={(saleId) => void printer.reprintKots(saleId)} /> : null;
   const queuedPrint =
     queuedBanner?.saleId && queuedBanner.kot ? (
       <TillPrintActions
@@ -1517,8 +1731,9 @@ export function PayFlow({
               printer={printer}
               saleId={sale.appointmentId}
               kot={sale.kot}
-              order={{ tokenNo: sale.tokenNo, channel: sale.channel }}
+              order={{ tokenNo: sale.tokenNo, offlineToken: sale.offlineToken, channel: sale.channel }}
               bill={sale.channel === 'counter'}
+              receipt={sale.receipt}
             />
           ) : null
         }
@@ -1542,7 +1757,7 @@ export function PayFlow({
    * Jira GRW-648 — one row, both tills (`RedeemRow`), so they cannot grow different words for the same
    * balance or a toggle on one screen and not the other.
    */
-  const redeemRow = <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={toggleRedeem} disabled={saving !== null} />;
+  const redeemRow = <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={toggleRedeem} disabled={saving !== null} checking={pointsChecking} />;
 
   /*
    * Owner, 2026-11-15 — Discount on the whole bill, as a % or an amount, on every business's till. It sets the same
@@ -1653,7 +1868,7 @@ export function PayFlow({
         </div>
         {/* "They type the amount in their own app" is advice about a code that is on screen; with no code it is noise. */}
         {!qrBroken && <p className="pf-qr-hint">{t('qrHint')}</p>}
-        <button type="button" className="btn pf-go pf-qr-paid" onClick={() => void pay('upi')} disabled={saving !== null} aria-busy={saving === 'upi'}>
+        <button type="button" className="btn pf-go pf-qr-paid" onClick={() => void pay('upi')} disabled={saving !== null || pointsChecking} aria-busy={saving === 'upi'}>
           {saving === 'upi' ? t('saving') : t('qrPaid')}
         </button>
         {/* The large-amount question is asked from here too: a typo'd total answered 409 and waited for a dialog nobody drew. */}
@@ -1688,13 +1903,14 @@ export function PayFlow({
       </button>
     </div>
   );
-  const payTiles = fromApp ? null : (
+  // Jira GRW-721 — a table's order waits for its money until the guests leave: no way of paying is asked here.
+  const payTiles = fromApp || atTable ? null : (
     hidePayUntilGuest ? (wide ? null : guestToPay) : (
     <div className="pf-pay" data-step={guideMode ? 'next' : badMode && !selectedMode ? 'bad' : undefined} role="group" aria-label={t('howTitle')}>
       {firstWay ? (
         /* The first way, held, and what the next tile is for. × puts the bill back to one way. */
         <p className="pf-split-held" role="status">
-          <span>{t('split.then', { amount: money(firstWay.minor), mode: modeWord(firstWay.mode), rest: money(restMinor) })}</span>
+          <span>{t(splitTooBig ? 'split.tooBig' : 'split.then', { amount: money(firstWay.minor), mode: modeWord(firstWay.mode), rest: money(restMinor) })}</span>
           <button type="button" className="icon-btn pf-split-clear" aria-label={t('split.clear')} onClick={clearSplit}>
             <IconClose />
           </button>
@@ -1739,7 +1955,7 @@ export function PayFlow({
             else void pay(mode);
           }}
           // QA 2026-10-23 — the second way cannot be the first one again: the tile says so instead of a tap that does nothing.
-          disabled={saving !== null || firstWay?.mode === mode}
+          disabled={saving !== null || pointsChecking || splitTooBig || firstWay?.mode === mode}
           aria-busy={saving === mode}
         >
           <span className="pf-pay-icon" aria-hidden="true">
@@ -1796,7 +2012,7 @@ export function PayFlow({
           <button type="button" className="pf-back" aria-label={nv.back} onClick={() => setStep('what')} disabled={saving !== null}>
             <IconArrowLeft />
           </button>
-          <h1 className="pf-title">{t('howTitle')}</h1>
+          <h1 className="pf-title">{atTable ? atTable.label : t('howTitle')}</h1>
           <span className="pf-head-gap" aria-hidden="true" />
         </header>
         {dueLine}
@@ -1832,7 +2048,7 @@ export function PayFlow({
                 disabled={saving !== null || lines.length === 0}
                 onClick={sendPosPending}
               >
-                <span>{t('desk.keepPendingInQueue')}</span>
+                <span>{atTable ? tTables('sendToKitchen') : t(qk('desk.keepPendingInQueue'))}</span>
               </button>
             ) : null}
             {!hidePayUntilGuest ? (
@@ -1853,7 +2069,7 @@ export function PayFlow({
             location={location}
             startAdding={whoOpen === 'add'}
             onPick={(c) => {
-              setClient(c.id === null ? { kind: 'named', name: c.name ?? '' } : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone });
+              setClient(c.id === null ? { kind: 'named', name: c.name ?? '', phone: c.waPhone } : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone });
               setWhoOpen(false);
             }}
             onClose={() => setWhoOpen(false)}
@@ -1868,12 +2084,13 @@ export function PayFlow({
    * Owner, 2026-10-24 — Order from: Counter, or one of the business's delivery apps. Shown only where the business
    * has an app (a restaurant). Chips, not a select: two or three choices, each one tap, the chosen one plainly on.
    */
-  const fromRow =
+  // Jira GRW-720 — the same row twice: with "Counter" first as it always was, and apps-only under the Delivery tab.
+  const appRow = (withCounter: boolean) =>
     apps.length > 0 && !token ? (
       <div className="pf-row pf-from" role="group" aria-label={t('from.label')}>
         <span className="pf-row-label">{t('from.label')}</span>
         <div className="pf-chips">
-          {['counter', ...apps].map((key) => (
+          {(withCounter ? ['counter', ...apps] : apps).map((key) => (
             <button
               key={key}
               type="button"
@@ -1905,9 +2122,42 @@ export function PayFlow({
         ) : null}
       </div>
     ) : null;
+  const fromRow = appRow(true);
+  const fromAppChips = appRow(false);
+
+  /*
+   * Jira GRW-720 — Dine-in · Takeaway · Delivery, for a branch that seats its guests. A segmented control, each tab
+   * 44px, the chosen one marked by more than its colour (aria-pressed and a filled tab). Delivery opens the app chips the
+   * till already had, so picking Swiggy or Zomato is the same one tap it always was.
+   */
+  const typeTabs: Array<'dine_in' | 'takeaway' | 'delivery'> = ['dine_in', 'takeaway', ...(apps.length > 0 ? (['delivery'] as const) : [])];
+  const typeRow =
+    tablesHere && !token && !waiter ? (
+      <div className="pf-type" role="group" aria-label={t('type.label')}>
+        <div className="pf-type-tabs">
+          {typeTabs.map((key) => (
+            <button
+              key={key}
+              type="button"
+              className={`pf-type-tab${orderTab === key ? ' is-on' : ''}`}
+              aria-pressed={orderTab === key}
+              disabled={saving !== null}
+              onClick={() => {
+                setOrderTab(key);
+                setOrderFrom(key === 'delivery' ? (fromApp ?? apps[0] ?? 'counter') : 'counter');
+              }}
+            >
+              {t(`type.${key}`)}
+            </button>
+          ))}
+        </div>
+        {orderTab === 'delivery' && apps.length > 0 ? fromAppChips : null}
+      </div>
+    ) : null;
 
   /* ---------- ① What did they get? ---------- */
-  const who = token ? (
+  // Jira GRW-723 — a waiter does not look up guests (that is the Clients page, which a waiter does not hold): the guest is named when they pay.
+  const who = waiter ? null : token ? (
     <p className="pf-who-token">
       {token.tokenNo !== null ? `${nv.token(token.tokenNo)} · ` : ''}
       {token.customerName}
@@ -1975,6 +2225,96 @@ export function PayFlow({
       </div>
     ) : null;
 
+  /*
+   * Jira GRW-721 — Dine-in at a branch that seats guests opens on the room, not the dish grid: tap a free table to order
+   * for it, a busy one to open its bill. The tabs stay above, so Takeaway and Delivery are one tap away.
+   */
+  const role = session?.role ?? 'owner';
+  const tableStrip = atTable ? (
+    <div className="pf-table-strip">
+      <button type="button" className="btn btn-ghost" onClick={() => setAtTable(null)}>
+        ← {tTables('backToTables')}
+      </button>
+      {/* Always said: this bill is for a table, so it is Dine-in. */}
+      <strong className="pf-table-name">
+        <span className="pf-table-type">{t('type.dine_in')}</span> · {atTable.label}
+      </strong>
+      <div className="pf-guests" role="group" aria-label={tTables('guestsSkip')}>
+        <span className="field-hint">{tTables('guests')}</span>
+        <button type="button" className="btn btn-ghost pf-guests-btn" aria-label={tTables('fewerGuests')} disabled={!guests} onClick={() => setGuests((g) => (g && g > 1 ? g - 1 : null))}>
+          −
+        </button>
+        <span className="pf-guests-n" aria-live="polite">{guests ?? '–'}</span>
+        <button type="button" className="btn btn-ghost pf-guests-btn" aria-label={tTables('moreGuests')} onClick={() => setGuests((g) => Math.min(99, (g ?? 0) + 1))}>
+          +
+        </button>
+      </div>
+    </div>
+  ) : null;
+  // Jira GRW-723 AC-04 — a waiter at a branch that does not seat its guests is told so, and offered nothing else.
+  if (waiter && session && !tablesHere) {
+    return (
+      <div className="pf-tables">
+        <div className="tm-empty" role="status">
+          <p className="tm-empty-title">{tTables('waiterOff')}</p>
+          <p className="field-hint">{tTables('waiterOffHint')}</p>
+        </div>
+      </div>
+    );
+  }
+  // Owner, 17 Nov 2026 — Add items on a queued order goes straight to the dishes: that order already has its place.
+  if (tablesHere && orderTab === 'dine_in' && !atTable && !addingTo && !token && step === 'what' && location) {
+    return (
+      <div className="pf-tables">
+        {typeRow}
+        {tableSent ? (
+          <p className="pf-table-sent" role="status">
+            {tableSent}
+          </p>
+        ) : null}
+        <TableMap
+          location={location}
+          canSetUp={role === 'owner' || role === 'manager'}
+          refreshKey={mapKey}
+          onFree={(table, area) => {
+            setTableSent(null);
+            setAtTable({ id: table.id, label: `${table.name} · ${area.name}` });
+          }}
+          onBusy={(table, area) => {
+            setTableSent(null);
+            setBillOf({ table, area: area.name });
+          }}
+        />
+        {billOf ? (
+          <TableBillSheet
+            table={billOf.table}
+            areaName={billOf.area}
+            location={location}
+            canManage={role === 'owner' || role === 'manager'}
+            printer={printer}
+            onAddDishes={() => {
+              setAtTable({ id: billOf.table.id, label: `${billOf.table.name} · ${billOf.area}`, ...(billOf.table.openBill ? { billId: billOf.table.openBill.saleId } : {}) });
+              setBillOf(null);
+            }}
+            onTakePayment={
+              onPayTable && billOf.table.openBill
+                ? () => {
+                    onPayTable({ saleId: billOf.table.openBill!.saleId, tableName: billOf.table.name });
+                    setBillOf(null);
+                  }
+                : undefined
+            }
+            onDone={(said) => {
+              setBillOf(null);
+              setMapKey((k) => k + 1);
+              if (said) setTableSent(said);
+            }}
+          />
+        ) : null}
+      </div>
+    );
+  }
+
   /* ---------- ① on a wide desk (Jira GRW-572): who · what · the bill, side by side ---------- */
   if (wide) {
     return (
@@ -2010,11 +2350,11 @@ export function PayFlow({
             </span>
             <span className="pos-charge-queued-text">
               {queuedBanner.tokenNo !== null
-                ? t('desk.sentToQueueBannerWithToken', {
+                ? t(qk('desk.sentToQueueBannerWithToken'), {
                     token: nv.token(queuedBanner.tokenNo),
                     amount: money(queuedBanner.amountMinor),
                   })
-                : t('desk.pendingDoneTitle', { amount: money(queuedBanner.amountMinor) })}
+                : t(qk('desk.pendingDoneTitle'), { amount: money(queuedBanner.amountMinor) })}
             </span>
             <button
               type="button"
@@ -2025,7 +2365,7 @@ export function PayFlow({
                 else router.push('/pos?mode=queue');
               }}
             >
-              {t('desk.viewInQueue')}
+              {t(qk('desk.viewInQueue'))}
             </button>
             <button
               type="button"
@@ -2037,6 +2377,7 @@ export function PayFlow({
             </button>
           </div>
         ) : null}
+        {offlineBar}
         {queuedPrint}
         {tokenGone ? (
           <div role="alert" className="pf-error">
@@ -2115,7 +2456,7 @@ export function PayFlow({
             {/* Adding to a waiting order: it already has its guest and where it came from. */}
             {productsOnly && !addingTo ? (
               <div className="pos-bill-client">
-                {fromRow}
+                {tablesHere ? (atTable ? tableStrip : typeRow) : fromRow}
                 {who}
               </div>
             ) : null}
@@ -2234,7 +2575,7 @@ export function PayFlow({
             ) : null}
             {hidePayUntilGuest ? null : (
               <>
-                {fromApp ? null : <h2 className="pf-wide-h">{t('howTitle')}</h2>}
+                {fromApp ? null : <h2 className="pf-wide-h">{atTable ? atTable.label : t('howTitle')}</h2>}
               </>
             )}
             {badMode && !selectedMode && !hidePayUntilGuest ? (
@@ -2271,7 +2612,7 @@ export function PayFlow({
                         disabled={saving !== null || lines.length === 0}
                         onClick={sendPosPending}
                       >
-                        <span>{t('desk.keepPendingInQueue')}</span>
+                        <span>{atTable ? tTables('sendToKitchen') : t(qk('desk.keepPendingInQueue'))}</span>
                       </button>
                     ) : null}
                     {!hidePayUntilGuest ? (
@@ -2289,8 +2630,17 @@ export function PayFlow({
             {dialog}
           </aside>
         </div>
+        {choosing !== null && products.some((p) => p.id === choosing) ? (
+          <ChoiceSheet
+            product={products.find((p) => p.id === choosing)!}
+            groups={groupsOf(choosing)}
+            onAdd={(choice, qty) => addChoice(products.find((p) => p.id === choosing)!, choice, qty)}
+            onClose={() => setChoosing(null)}
+          />
+        ) : null}
         {sizing !== null && products.some((p) => p.id === sizing) ? (
           <SizeSheet
+            counted={counted}
             product={products.find((p) => p.id === sizing)!}
             onBill={(variantId) => productCountOf(sizing, variantId)}
             full={full}
@@ -2304,7 +2654,7 @@ export function PayFlow({
             location={location}
             startAdding={whoOpen === 'add'}
             onPick={(c) => {
-              setClient(c.id === null ? { kind: 'named', name: c.name ?? '' } : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone });
+              setClient(c.id === null ? { kind: 'named', name: c.name ?? '', phone: c.waPhone } : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone });
               setWhoOpen(false);
             }}
             onClose={() => setWhoOpen(false)}
@@ -2384,11 +2734,11 @@ export function PayFlow({
               </span>
               <span className="pos-charge-queued-text">
                 {queuedBanner.tokenNo !== null
-                  ? t('desk.sentToQueueBannerWithToken', {
+                  ? t(qk('desk.sentToQueueBannerWithToken'), {
                       token: nv.token(queuedBanner.tokenNo),
                       amount: money(queuedBanner.amountMinor),
                     })
-                  : t('desk.pendingDoneTitle', { amount: money(queuedBanner.amountMinor) })}
+                  : t(qk('desk.pendingDoneTitle'), { amount: money(queuedBanner.amountMinor) })}
               </span>
               <button
                 type="button"
@@ -2399,7 +2749,7 @@ export function PayFlow({
                   else router.push('/pos?mode=queue');
                 }}
               >
-                {t('desk.viewInQueue')}
+                {t(qk('desk.viewInQueue'))}
               </button>
               <button
                 type="button"
@@ -2411,6 +2761,7 @@ export function PayFlow({
               </button>
             </div>
           ) : null}
+          {offlineBar}
           {queuedPrint}
         </>
       ) : (
@@ -2446,7 +2797,7 @@ export function PayFlow({
           {nv.visitGone}
         </div>
       ) : null}
-      {addingTo ? null : fromRow}
+      {addingTo ? null : tablesHere ? (atTable ? tableStrip : typeRow) : fromRow}
       {addingTo ? null : who}
       {productsOnly ? null : stylists}
 
@@ -2711,7 +3062,7 @@ export function PayFlow({
           startAdding={whoOpen === 'add'}
           onPick={(c) => {
             // No id means a name and nothing else: there is no client row yet, and the sale is what writes it.
-            setClient(c.id === null ? { kind: 'named', name: c.name ?? '' } : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone });
+            setClient(c.id === null ? { kind: 'named', name: c.name ?? '', phone: c.waPhone } : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone });
             setWhoOpen(false);
           }}
           onClose={() => setWhoOpen(false)}
@@ -2732,8 +3083,17 @@ export function PayFlow({
           onClose={() => setBillOpen(false)}
         />
       ) : null}
+      {choosing !== null && products.some((p) => p.id === choosing) ? (
+        <ChoiceSheet
+          product={products.find((p) => p.id === choosing)!}
+          groups={groupsOf(choosing)}
+          onAdd={(choice, qty) => addChoice(products.find((p) => p.id === choosing)!, choice, qty)}
+          onClose={() => setChoosing(null)}
+        />
+      ) : null}
       {sizing !== null && products.some((p) => p.id === sizing) ? (
         <SizeSheet
+          counted={counted}
           product={products.find((p) => p.id === sizing)!}
           onBill={(variantId) => productCountOf(sizing, variantId)}
           full={full}

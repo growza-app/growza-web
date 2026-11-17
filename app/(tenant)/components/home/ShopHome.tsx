@@ -25,7 +25,7 @@ import { allCameBack } from '../../lib/order-items';
 import { channelsOf, isDeliveryApp, sellsOnMarketplaces } from '../../lib/order-channels';
 import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
-import { useAreas } from '../SessionProvider';
+import { useAreas, useSession } from '../SessionProvider';
 import {
   IconNavClients,
   IconNavOrders,
@@ -37,6 +37,7 @@ import {
   IconPos,
   IconProducts,
   IconReports,
+  IconTable,
 } from '../icons';
 import { Avatar, Card, CardError, DarkStatCard, HomeHeader, PageHead, PayGaugeCard, QuickTiles, Segmented, WeekBarsCard, exactRupees, paySlicesOf, rupees } from './parts';
 import { CheckInCard } from './CheckInCard';
@@ -101,6 +102,13 @@ export function ShopHome({
   const [loading, setLoading] = useState(false);
   const [period, setPeriod] = useState<ShopPeriod>('last_7_days');
   const isKitchen = !areas.stock;
+  // Table orders are switched on per branch: the one picked, or — on "All branches" — any of them.
+  const session = useSession();
+  const tablesOn = (session?.branches ?? []).some((b) => b.tableOrders && (branch === null || b.id === branch));
+  // Owner, 2026-11-17 — the Queue card and its words are Pickup with Table orders on, as on the till.
+  const q = tablesOn
+    ? { title: s.pickupTitle, open: s.openPickup, waiting: s.inPickupNow, inNow: s.inPickupNow, none: s.noPickupNow, note: s.ordersNotePickup }
+    : { title: s.queueTitle, open: s.openQueue, waiting: s.waitingNow, inNow: s.inQueueNow, none: s.noQueueNow, note: s.ordersNote };
 
   // Desktop command-center supplemental state
   const [channelData, setChannelData] = useState<ByChannelPage | null>(null);
@@ -365,7 +373,18 @@ export function ShopHome({
   const tiles = [
     { href: '/pos', label: t.nav.pos, icon: <IconPos />, tone: 'green' },
     // Only a kitchen has an order queue to open (hasOrderQueue); a shop's tile would open Sell.
-    ...(isKitchen ? [{ href: '/pos?mode=queue', label: s.queueTitle, icon: <IconNavOrders />, tone: 'blue' }] : []),
+    /*
+     * Owner, 2026-11-17 — with Table orders on, the owner and a manager get Tables (the room at a glance: which are
+     * busy, for how long, for how much) where the Queue was; the counter keeps its list, called Pickup there as on
+     * the till. Tables off, it is the Queue.
+     */
+    ...(isKitchen
+      ? [
+          tablesOn && canReports
+            ? { href: '/pos', label: s.tablesTitle, icon: <IconTable />, tone: 'blue' }
+            : { href: '/pos?mode=queue', label: tablesOn ? s.pickupTitle : s.queueTitle, icon: <IconNavOrders />, tone: 'blue' },
+        ]
+      : []),
     { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'green' },
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
     /*
@@ -886,7 +905,8 @@ export function ShopHome({
     }> = [];
 
     todaySorted.forEach((o, idx) => {
-      const tokenNo = tokenNoOf.get(o.id) ?? idx + 1;
+      // Jira GRW-716 — an order taken offline goes by its till's token ("A12"), never a made-up plain number.
+      const tokenNo = o.offlineToken ? 0 : (tokenNoOf.get(o.id) ?? idx + 1);
       const soldMs = Date.parse(o.soldAt) || now;
       const ov = overrides[o.id];
       const recalledMs =
@@ -900,7 +920,7 @@ export function ShopHome({
         tokens.push({
           id: o.id,
           tokenNo,
-          tokenLabel: formatTokenNo(tokenNo),
+          tokenLabel: o.offlineToken ?? formatTokenNo(tokenNo),
           customerName: o.who?.name?.trim() || s.noNameCustomer,
           channel: o.channel,
           soldAt: o.soldAt,
@@ -1122,7 +1142,7 @@ export function ShopHome({
                       <strong className="rst-kpi-value">{data.today.orders}</strong>
                       {/* Emerald v3 (owner, 2026-11-14: "add more info to the KPIs, looking empty") — where today's orders are. */}
                       <span className="rst-kpi-note">
-                        {isKitchen ? s.ordersNote(queueStats.completedToday, queueStats.inQueue) : s.toSendNote(data.toSend)}
+                        {isKitchen ? q.note(queueStats.completedToday, queueStats.inQueue) : s.toSendNote(data.toSend)}
                       </span>
                     </div>
                     {ordersDeltaPct !== null ? (
@@ -1186,15 +1206,15 @@ export function ShopHome({
                   ) : null}
                   {isKitchen ? (
                     <DarkStatCard
-                      title={s.queueTitle}
+                      title={q.title}
                       value={queueStats.inQueue}
-                      valueLabel={queueStats.inQueue === 0 ? s.noQueueNow : s.waitingNow}
+                      valueLabel={queueStats.inQueue === 0 ? q.none : q.waiting}
                       foot={
                         <>
                           {s.completedToday}: <b>{queueStats.completedToday}</b>
                         </>
                       }
-                      action={can('/pos') ? { href: '/pos?mode=queue', label: s.openQueue } : null}
+                      action={can('/pos') ? { href: '/pos?mode=queue', label: q.open } : null}
                     />
                   ) : counted ? (
                     /* A shop has no queue; its live number is the shelf: what is running low, and how much of it is gone. */
@@ -2239,11 +2259,11 @@ export function ShopHome({
                 */}
                 {isKitchen || !data.anyOrders ? (
                 <Card
-                  title={isKitchen ? s.queueTitle : s.ordersTitle}
+                  title={isKitchen ? q.title : s.ordersTitle}
                   action={
                     data.anyOrders && isKitchen && can('/pos') ? (
                       <a className="shp-link" href="/pos?mode=queue">
-                        {s.openQueue}
+                        {q.open}
                       </a>
                     ) : data.anyOrders && can('/orders') ? (
                       <a className="shp-link" href="/orders">
@@ -2259,7 +2279,7 @@ export function ShopHome({
                         <div className="shp-orders-summary">
                           <p className="shp-orders">
                             <strong>{queueStats.inQueue}</strong>
-                            <span>{queueStats.inQueue === 0 ? s.noQueueNow : s.inQueueNow}</span>
+                            <span>{queueStats.inQueue === 0 ? q.none : q.inNow}</span>
                           </p>
                           <span className="shp-orders-yesterday">
                             {s.completedToday}: <b>{queueStats.completedToday}</b>
