@@ -2225,3 +2225,36 @@
   flex-wrap: wrap;
   gap: var(--sp-2);
 }
+
+/*
+ * Owner, 2026-11-17 — the Kitchen button rides on the tabs' row. On a phone it is a 44px flame beside the tabs instead
+ * of a row of its own under them (that row held nothing else and cost every sale ~60px); on a wider screen it says
+ * "Kitchen" beside the flame.
+ */
+.pos-bar-kitchen {
+  flex: none;
+  gap: var(--sp-2);
+  min-width: 44px;
+  min-height: 44px;
+}
+.pos-bar-kitchen svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+@media (max-width: 759px) {
+  .pos-bar .pos-tabs {
+    flex: 1 1 0%;
+  }
+  .pos-bar-kitchen {
+    padding: 0;
+    width: 44px;
+  }
+  .pos-bar-kitchen-word {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
