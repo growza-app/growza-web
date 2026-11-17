@@ -3340,6 +3340,7 @@
     "addClient": "Add new {client}",
     "findClient": "Find {client}",
     "nameOrNumber": "Name or number",
+    "guestNameOnly": "Guest's name",
     "phoneNumber": "Phone number",
     "allServices": "All {count} services",
     "searchServices": "Search services",

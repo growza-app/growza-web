@@ -446,7 +446,8 @@ describe('the POS screen', () => {
     expect(client).toContain('function isWalkInToken(');
     expect(client).toContain('api.assignClientToSale(');
     expect(client).toContain('<ClientSheet');
-    expect(client).toContain('{!anonymous ? (');
+    expect(client).toContain(') : !anonymous ? (');
+    expect(client).toContain('{named ? (');
   });
 
   it('deep-links each Home queue row to its token on /pos?mode=queue and scrolls that token card into view', () => {

@@ -44,8 +44,8 @@ export function TableBillSheet({
   printer: ReturnType<typeof useTicketPrinter>;
   onAddDishes: () => void;
   /**
-   * Owner, 17 Nov 2026 — given, Take payment hands the bill to the POS's payment screen instead of the three buttons here.
-   * A waiter keeps the buttons here: that screen asks for a guest from the guest list, which a waiter's role cannot add to.
+   * Owner, 17 Nov 2026 — given, Take payment hands the bill to the POS's payment screen instead of the three buttons here —
+   * a waiter's too, where that screen asks for a name only and offers no discount or points.
    */
   onTakePayment?: () => void;
   /** Closed, paid, or dismissed — the map reads again, and says what happened when something did. */
@@ -359,7 +359,7 @@ export function TableBillSheet({
               ) : waiter && !table.openBill?.billPrinted ? (
                 <p className="field-hint tb-wait-bill">{t('waiterAskBill')}</p>
               ) : (
-                <button type="button" className="btn tb-take-pay" disabled={busy} onClick={() => (onTakePayment && !waiter ? onTakePayment() : setPaying(true))}>
+                <button type="button" className="btn tb-take-pay" disabled={busy} onClick={() => (onTakePayment ? onTakePayment() : setPaying(true))}>
                   {t('takePayment', { amount: money(totalMinor) })}
                 </button>
               )}

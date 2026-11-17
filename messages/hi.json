@@ -3340,6 +3340,7 @@
     "addClient": "नया {client} जोड़ें",
     "findClient": "{client} खोजें",
     "nameOrNumber": "नाम या नंबर",
+    "guestNameOnly": "मेहमान का नाम",
     "phoneNumber": "फ़ोन नंबर",
     "allServices": "सभी {count} सेवाएँ",
     "searchServices": "सेवा खोजें",

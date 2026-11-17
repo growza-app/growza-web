@@ -13,7 +13,7 @@ const sheet = readFileSync(resolve(__dirname, 'TableBillSheet.tsx'), 'utf8');
 
 describe('a table is paid on the POS payment screen', () => {
   it('the sheet hands Take payment up when it can', () => {
-    expect(sheet).toContain('onClick={() => (onTakePayment && !waiter ? onTakePayment() : setPaying(true))}');
+    expect(sheet).toContain('onClick={() => (onTakePayment ? onTakePayment() : setPaying(true))}');
     expect(flow).toContain('onPayTable({ saleId: billOf.table.openBill!.saleId, tableName: billOf.table.name });');
   });
   it('the POS reads the bill fresh and opens its payment screen under the table’s name, with no token number', () => {
@@ -26,5 +26,21 @@ describe('a table is paid on the POS payment screen', () => {
     expect(pos).toContain("nextLabel={payingTable !== null ? t('backToTablesDone') : t(qk('backToQueueDone'))}");
     expect(pos).toContain('if (settledReceipt && payingTable !== null) setReloadKey((k) => k + 1);');
     expect(flow).toContain('    // A table paid on the POS\'s payment screen: the room reads again, so its tile is free.\n    setMapKey((k) => k + 1);');
+  });
+});
+
+describe('a waiter pays a table on the same screen (owner, 17 Nov)', () => {
+  it('reads the bill itself, since a waiter reads no day list', () => {
+    expect(pos).toContain('o = await api.order(saleId);');
+    expect(pos).toContain('void settleAndCompleteToken(tableBillToken(o, tableName));');
+  });
+  it('names the guest by typing, with no discount, no points, no guest list and no bill print', () => {
+    expect(pos).toContain('byNameOnly={waiter}');
+    expect(pos).toContain("aria-label={tPay('guestNameOnly')}");
+    expect(pos).toContain('{!anonymous && !byNameOnly ? (\n        <RedeemRow');
+    expect(pos).toContain("if (isWalkInToken(tk) && tk.channel === 'counter' && !waiter) {");
+    expect(pos).toContain('await api.assignClientToSale(payingToken.id, { name: guestName });');
+    expect(pos).toContain('if (!waiter) printer.autoBill(tk.id);');
+    expect(pos).toContain("bill={!waiter} />");
   });
 });
