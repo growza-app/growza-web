@@ -989,6 +989,7 @@
   },
   "settingsTables": {
     "kitchenLate": "Kitchen: a card is late after (minutes)",
+    "kitchenLateSave": "Save",
     "serviceCharge": "Service charge (guest can say no)",
     "serviceChargeHint": "Never added by itself. The counter adds it to a bill only when the guest agrees, and takes it off if they say no.",
     "serviceChargeRate": "Rate (%)",

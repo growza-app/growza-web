@@ -13,3 +13,11 @@ describe('Table orders: why it did not switch', () => {
     for (const later of ['className="dt-setup-link"', '<ServiceChargeOffer branch', '<KitchenLate branch']) expect(err).toBeLessThan(at(later));
   });
 });
+
+describe('Kitchen late', () => {
+  it('saves minutes with its own Save, not the service charge\'s "Save rate"', () => {
+    const kitchen = form.slice(form.indexOf('function KitchenLate'));
+    expect(kitchen).toContain("t('kitchenLateSave')");
+    expect(kitchen).not.toContain("t('serviceChargeSave')");
+  });
+});

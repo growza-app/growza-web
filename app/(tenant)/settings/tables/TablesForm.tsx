@@ -225,7 +225,7 @@ function KitchenLate({ branch, disabled }: { branch: BranchTableOrders; disabled
           <input type="number" inputMode="numeric" min={1} max={240} value={minutes} disabled={disabled || busy} aria-label={t('kitchenLate')} onChange={(e) => setMinutes(e.target.value)} />
         </label>
         <button type="button" className="btn btn-ghost" disabled={disabled || busy || minutes === saved} onClick={() => void save()}>
-          {t('serviceChargeSave')}
+          {t('kitchenLateSave')}
         </button>
       </div>
       {error ? (
