@@ -444,6 +444,9 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       nothingSold: S('Nothing sold today', 'आज कुछ नहीं बिका'),
       ordersTitle: S(labels.orders ?? 'Orders', 'ऑर्डर'),
       queueTitle: S('Queue', 'कतार'),
+      /** Owner, 2026-11-17 — with Table orders on, the Queue holds only takeaway and delivery: Pickup, as on the till. */
+      pickupTitle: S('Pickup', 'पिकअप'),
+      tablesTitle: S('Tables', 'टेबल'),
       /** Emerald v2 — the laptop Home's header buttons and its new cards. */
       newOrderAction: S('New order', 'नया ऑर्डर'),
       cameInToday: S('came in today', 'आज आए'),
@@ -461,6 +464,11 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       openQueue: S('Open queue', 'कतार खोलें'),
       inQueueNow: S('in queue', 'कतार में'),
       noQueueNow: S('No orders waiting in queue', 'कतार में कोई ऑर्डर नहीं'),
+      /** Owner, 2026-11-17 — the same card with Table orders on, where it holds only takeaway and delivery: Pickup. */
+      openPickup: S('Open Pickup', 'पिकअप खोलें'),
+      inPickupNow: S('waiting for pickup', 'पिकअप के इंतज़ार में'),
+      noPickupNow: S('No orders waiting for pickup', 'पिकअप के लिए कोई ऑर्डर नहीं'),
+      ordersNotePickup: (done: number, waiting: number) => S(`${done} done · ${waiting} for pickup`, `${done} पूरे · ${waiting} पिकअप के लिए`),
       completedToday: S('Completed today', 'आज पूरे हुए'),
       viewOrders: S('View all', 'सभी देखें'),
       noOrdersTitle: S('No orders yet', 'अभी कोई ऑर्डर नहीं'),

@@ -2153,3 +2153,118 @@
 }
 
 
+
+/* Jira GRW-714 — the kitchen says this token is ready to hand over. */
+.pos-qcard-ready { padding: 0 var(--sp-2); border-radius: 999px; background: var(--accent-deep); color: var(--surface); font-size: 0.8125rem; font-weight: 700; }
+
+/* Jira GRW-716 — the till offline: one amber line with what it holds, and any refused order with its reason and Retry.
+   Never over the Pay button: it sits in the flow above the queued banner, and wraps rather than clipping at 344px. */
+.otb {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
+}
+.otb-line {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.otb-line.is-sending {
+  background: var(--slate-soft);
+  color: inherit;
+}
+.otb-icon {
+  flex: none;
+}
+.otb-failed {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.otb-failed-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  font-size: 0.875rem;
+}
+.otb-failed-what {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.otb-failed-why {
+  color: var(--muted);
+}
+.otb-retry {
+  min-height: 44px;
+}
+
+/* L1–L3 (owner, 2026-11-17) — the keep-this-browser line, and two actions on one row that wrap at 344px. */
+.otb-keep {
+  font-weight: 600;
+}
+
+.otb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/*
+ * Owner, 2026-11-17 — the Kitchen button rides on the tabs' row. On a phone it is a 44px flame beside the tabs instead
+ * of a row of its own under them (that row held nothing else and cost every sale ~60px); on a wider screen it says
+ * "Kitchen" beside the flame.
+ */
+.pos-bar-kitchen {
+  flex: none;
+  gap: var(--sp-2);
+  min-width: 44px;
+  min-height: 44px;
+}
+.pos-bar-kitchen svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+/* Owner, 2026-11-17 — "no color": the kitchen's own warm colour, the amber the Takeaway chip already uses. */
+.pos-bar-kitchen {
+  color: var(--amber-ink);
+  background: var(--amber-soft);
+  border-color: var(--amber-soft);
+}
+.pos-bar-kitchen:hover {
+  background: var(--amber-soft);
+  border-color: var(--amber);
+}
+@media (max-width: 759px) {
+  .pos-bar .pos-tabs {
+    flex: 1 1 0%;
+  }
+  .pos-bar-kitchen {
+    padding: 0;
+    width: 44px;
+  }
+  .pos-bar-kitchen-word {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}

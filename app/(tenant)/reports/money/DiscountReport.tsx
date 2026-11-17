@@ -69,6 +69,8 @@ export function DiscountReport() {
                     <p className="srp-value">{b.free ? d('freeTag') : `−${f.money(b.belowMinor)}`}</p>
                   </div>
                   <p className="srp-hint">{d('billLine', { list: f.money(b.listMinor), charged: f.money(b.chargedMinor) })}</p>
+                  {/* Jira GRW-725 — why the owner gave it free, as the bill keeps it. */}
+                  {b.reason ? <p className="srp-hint">{d('reasonLine', { reason: b.reason })}</p> : null}
                   {ordersOpen ? (
                     <AppLink className="mr-link" href={`/orders/${b.id}`}>
                       {t('openOrder')}
@@ -83,6 +85,23 @@ export function DiscountReport() {
                 <h2 className="mr-title">{d('freeItemsTitle')}</h2>
                 <ul className="srp-list">
                   {r.freeItems.map((i) => (
+                    <li key={i.name} className="srp-card">
+                      <div className="srp-head">
+                        <h3 className="srp-name">{i.name}</h3>
+                        <p className="srp-value">{d('freeItemLine', { qty: f.count(i.qty), value: f.money(i.listMinor) })}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
+
+            {r.takenOff && r.takenOff.items.length > 0 ? (
+              <>
+                <h2 className="mr-title">{d('takenOffTitle', { value: f.money(r.takenOff.totalMinor) })}</h2>
+                <p className="field-hint">{d('takenOffHint')}</p>
+                <ul className="srp-list">
+                  {r.takenOff.items.map((i) => (
                     <li key={i.name} className="srp-card">
                       <div className="srp-head">
                         <h3 className="srp-name">{i.name}</h3>

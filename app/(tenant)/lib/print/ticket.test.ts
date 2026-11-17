@@ -7,6 +7,7 @@ const kotCopy: KotCopy = {
   title: 'KOT',
   added: 'ADDED TO ORDER',
   cancelled: 'CANCELLED',
+  packed: 'PACK IT',
   reprint: 'REPRINT',
   kotNo: (n) => `KOT ${n}`,
   token: (n) => `Token #${n}`,
@@ -236,5 +237,31 @@ describe('the print-dialog page', () => {
   it('sizes the sheet to the roll', () => {
     expect(pageRule('58')).toBe('@page { size: 58mm auto; margin: 0; }');
     expect(pageRule('80')).toBe('@page { size: 80mm auto; margin: 0; }');
+  });
+});
+
+describe('Jira GRW-720 — the order type on the slip and the bill', () => {
+  it('a takeaway order prints TAKEAWAY under its token; a dine-in order names its table', async () => {
+    const { kotFromApi } = await import('./from-api');
+    const words = (type: 'dine_in' | 'takeaway' | 'delivery', table: string | null) => {
+      const w = type === 'dine_in' ? 'DINE-IN' : type === 'takeaway' ? 'TAKEAWAY' : 'DELIVERY';
+      return table ? `${w} · ${table}` : w;
+    };
+    const kot = { id: 'k', number: 3, kind: 'new' as const, createdAt: '2026-11-16T10:00:00Z', items: [{ name: 'Dal', qty: 2 }] };
+    const take = kotTicket(kotFromApi(kot, { tokenNo: 12, channel: 'counter', orderType: 'takeaway' }, () => 'now', false, words), kotCopy);
+    expect(take.lines.some((l) => l.kind === 'text' && l.text === 'TAKEAWAY')).toBe(true);
+    const sit = kotTicket(kotFromApi(kot, { tokenNo: 13, channel: 'counter', orderType: 'dine_in', tableName: 'T4' }, () => 'now', false, words), kotCopy);
+    expect(sit.lines.some((l) => l.kind === 'text' && l.text === 'DINE-IN · T4')).toBe(true);
+    // A delivery app's order is named by its app, whatever its type says.
+    const app = kotTicket(kotFromApi(kot, { tokenNo: null, channel: 'swiggy', orderType: 'delivery' }, () => 'now', false, words), kotCopy);
+    expect(app.lines.some((l) => l.kind === 'text' && l.text === 'Swiggy')).toBe(true);
+    // An order from before types existed names nothing new.
+    const old = kotTicket(kotFromApi(kot, { tokenNo: 1, channel: 'counter' }, () => 'now', false, words), kotCopy);
+    expect(old.lines.some((l) => l.kind === 'text' && /TAKEAWAY|DINE-IN/.test(l.text))).toBe(false);
+  });
+
+  it('a pack slip says PACK IT across the top', () => {
+    const t = kotTicket({ number: 4, kind: 'pack', tokenNo: 12, destination: 'TAKEAWAY', when: 'now', items: [{ name: 'Dal', qty: 2 }] }, kotCopy);
+    expect(t.lines[0]).toMatchObject({ kind: 'text', text: 'PACK IT', bold: true });
   });
 });

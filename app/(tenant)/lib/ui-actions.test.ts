@@ -203,6 +203,12 @@ describe('2b — the controls, each behind its own action', () => {
 const SHOP_AREAS = { bookings: false, services: false, shop: true, stock: true } as const;
 
 const SCREEN_WRITES: Record<string, readonly string[]> = {
+  // Jira GRW-721 — taking a dish off a table's bill, from the till's table sheet: drawn only for the owner and a manager
+  // (the sheet's `canManage`), and the API's handler says the same.
+  // Jira GRW-722 — Move table, on the same table's sheet.
+  '/pos': ['POST /api/v1/counter-sales/:id/cancel-items', 'POST /api/v1/tables/:id/move', 'POST /api/v1/tables/:id/join', 'POST /api/v1/counter-sales/:id/service-charge',
+    // Jira GRW-716 — the till asks for its letter so it can keep billing offline.
+    'POST /api/v1/till-devices'],
   /*
    * Jira GRW-647 — a switch and a device registration, both the signed-in person's own.
    *
@@ -219,6 +225,20 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
    * routes are `owner` in shared's route table.
    */
   '/settings/rewards': ['PATCH /api/v1/settings/rewards'],
+  // Jira GRW-718 — the Table orders switches. Gated by the screen like the two above: the row is `ownerOnly`, the page
+  // redirects a role that types the address, and both routes are `owner` in shared's route table.
+  // Jira GRW-714 — Ready, Undo and a dish ticked, on the kitchen screen.
+  '/kitchen': ['POST /api/v1/kitchen/:saleId/ready', 'POST /api/v1/kitchen/lines/:lineId/done'],
+  // Jira GRW-712 — an item's add-on groups, and the groups themselves, on its Choices screen (the menu's).
+  '/products/[id]/choices': ['POST /api/v1/addon-groups', 'PATCH /api/v1/addon-groups/:id', 'DELETE /api/v1/addon-groups/:id', 'PUT /api/v1/products/:id/addon-groups'],
+  // Jira GRW-724 — and the service charge it offers, on the same owner-only screen.
+  '/settings/tables': ['PUT /api/v1/settings/table-orders/:id', 'PUT /api/v1/settings/service-charge/:id', 'PUT /api/v1/settings/kitchen/:id'],
+  // Jira GRW-719 — setting out a branch's room. Gated by the screen: the page sends anyone but the owner and a manager back
+  // to Settings, and the API's handler says owner or manager besides.
+  '/settings/tables/[branchId]': [
+    'POST /api/v1/tables/areas', 'PATCH /api/v1/tables/areas/:id', 'DELETE /api/v1/tables/areas/:id', 'POST /api/v1/tables/areas/:id/tables',
+    'PATCH /api/v1/tables/:id', 'DELETE /api/v1/tables/:id', 'PUT /api/v1/tables/order',
+  ],
   // Jira GRW-615 — an order's own screen moves it along: the one next move, and the rarer ones behind More. Same screen,
   // same gate: a role the nav does not offer /orders is bounced Home by the page, so it never reaches the button.
   // Jira GRW-617 — and swaps a size. The desk is offered this screen but takes no returns, so it takes no swaps: the control is
@@ -226,7 +246,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   // Jira GRW-625 — asks again to tell the marketplace what the shop decided about an order (owner and manager; the desk is not offered it).
   // Jira GRW-613 — and attaches a client the shop already has to a marketplace buyer (`AttachClientSheet`). The route
   // had been the desk's since GRW-613 with no control anywhere; this test is what said so (review, 2026-10-22).
-  '/orders': ['PATCH /api/v1/orders/:id/status', 'POST /api/v1/orders/:id/client', 'POST /api/v1/orders/:id/tell-marketplace', 'POST /api/v1/orders/:id/exchange', 'POST /api/v1/orders/:id/exchange/quote', 'POST /api/v1/marketplace-imports', 'POST /api/v1/marketplace-imports/held/release', 'POST /api/v1/marketplace-imports/held/dismiss', 'PUT /api/v1/delivery-apps/:app/commission'],
+  // Jira GRW-720 — Dine-in to Takeaway and back, on an order's screen: drawn only when the server's `typeChangeable` says this viewer may.
+  '/orders': ['PUT /api/v1/counter-sales/:id/order-type', 'PATCH /api/v1/orders/:id/status', 'POST /api/v1/orders/:id/client', 'POST /api/v1/orders/:id/tell-marketplace', 'POST /api/v1/orders/:id/exchange', 'POST /api/v1/orders/:id/exchange/quote', 'POST /api/v1/marketplace-imports', 'POST /api/v1/marketplace-imports/held/release', 'POST /api/v1/marketplace-imports/held/dismiss', 'PUT /api/v1/delivery-apps/:app/commission'],
   // Jira GRW-563 (shared 1.0.5) — `assign-client` moved into `visit.recordPayment`, where it belonged.
   '/services': [
     'POST /api/v1/services',
@@ -260,6 +281,9 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/products',
     'POST /api/v1/products/import',
     'POST /api/v1/products/import/parse',
+    // Jira GRW-715 — a kitchen's whole menu from a file, on the same owner-only screen.
+    'POST /api/v1/products/menu-import',
+    'POST /api/v1/products/menu-import/parse',
     'PATCH /api/v1/products/:id',
     'DELETE /api/v1/products/:id',
     'POST /api/v1/products/:id/photo',

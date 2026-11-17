@@ -71,6 +71,9 @@ export function OrderClient({
   const severalBranches = branchContext.ready && branchContext.multi;
 
   const [order, setOrder] = useState<OrderDetail | null>(initial);
+  // Jira GRW-720 — Dine-in to Takeaway and back, one at a time, with its refusal said beside it.
+  const [changingType, setChangingType] = useState(false);
+  const [typeError, setTypeError] = useState<string | null>(null);
   const [failed, setFailed] = useState(initial === null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -245,7 +248,8 @@ export function OrderClient({
           locationId: order.locationId,
           clientName: order.client?.name ?? order.buyer?.name ?? '',
           clientPhone: null,
-          products: order.lines.map((l) => ({
+          // Jira GRW-724 — the service charge is not a dish to bring back: it is refunded in proportion with the dishes that are.
+          products: order.lines.filter((l) => l.kind !== 'service_charge').map((l) => ({
             id: l.id,
             productId: l.productId,
             // A sized line is named by its own id (lineReturnId), which needs the size here: without it a sized line was named by its
@@ -272,9 +276,11 @@ export function OrderClient({
           the two are no longer both said as "Order #…": the title says "Token 5", the line below "Order #7D9906BA". */}
       <PageHeader
         title={
-          order.tokenNo && counted
-            ? t('list.tokenTitle', { n: formatTokenNo(order.tokenNo).slice(1) })
-            : t('list.orderCode', { code: order.tokenNo ? formatTokenNo(order.tokenNo).slice(1) : code })
+          order.offlineToken
+            ? t('list.orderCode', { code: order.offlineToken })
+            : order.tokenNo && counted
+              ? t('list.tokenTitle', { n: formatTokenNo(order.tokenNo).slice(1) })
+              : t('list.orderCode', { code: order.tokenNo ? formatTokenNo(order.tokenNo).slice(1) : code })
         }
       />
       <div className={`page-body ord-page ord-detail ${hasBar ? 'has-bar' : ''}`} aria-busy={busy || undefined}>
@@ -282,11 +288,13 @@ export function OrderClient({
           <span className={`ord-state-chip ord-s-${order.known ? order.status : 'unknown'}`}>{stateWord(order.status)}</span>
           <span className="ord-d-meta">
             {when(order.soldAt)} · {channelWord(order.channel)}
-            {order.tokenNo ? ` · ${t('list.orderCode', { code })}` : ''}
+            {order.tokenNo || order.offlineToken ? ` · ${t('list.orderCode', { code })}` : ''}
             {isCounter && severalBranches && order.branchName ? ` · ${order.branchName}` : ''}
             {order.externalRef ? ` · ${fromApp ? t('detail.appOrderRef', { ref: order.externalRef }) : order.externalRef}` : ''}
           </span>
         </section>
+        {/* Jira GRW-716 — taken while the till was offline; BR-04 says so plainly when it reached us more than a day later. */}
+        {order.offlineToken ? <p className={`ord-offline-note${order.sentLate ? ' is-late' : ''}`}>{order.sentLate ? t('detail.offlineLate') : t('detail.offline')}</p> : null}
 
         {!isCounter && !fromApp ? (
           <OrderMarketplaceLine
@@ -429,6 +437,13 @@ export function OrderClient({
                   <dd>−{money(billDiscountMinor)}</dd>
                 </div>
               ) : null}
+              {/* Jira GRW-725 — why the owner gave the whole bill free, kept on the bill (0195). */}
+              {order.discountReason ? (
+                <div className="ord-d-note ord-d-discount-reason">
+                  <dt>{t('detail.discountReason')}</dt>
+                  <dd>{order.discountReason}</dd>
+                </div>
+              ) : null}
               <div>
                 <dt>{t('detail.total')}</dt>
                 <dd>{money(order.totalMinor)}</dd>
@@ -453,6 +468,48 @@ export function OrderClient({
                 </div>
               ))}
             </dl>
+            {/*
+              * Jira GRW-720 — how this order is eaten, and (owner or manager, until the bill prints) the one change that
+              * matters: the guest at the table wants it packed, or the takeaway guest decides to sit. A change to takeaway
+              * prints the kitchen a PACK IT slip. Whether THIS viewer may change THIS order is the server's to say
+              * (`typeChangeable`, the same rule the route enforces), never worked out here from a role.
+              */}
+            {order.orderType && order.orderType !== 'delivery' ? (
+              <div className="ord-d-type">
+                <span className="ord-d-type-word">
+                  {t(`types.${order.orderType}`)}
+                  {order.tableName ? ` · ${order.tableName}` : ''}
+                </span>
+                {writable && order.typeChangeable ? (
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    disabled={changingType}
+                    onClick={async () => {
+                      const to = order.orderType === 'dine_in' ? 'takeaway' : 'dine_in';
+                      setChangingType(true);
+                      setTypeError(null);
+                      try {
+                        const done = await api.changeOrderType(order.id, to);
+                        if (done.packSlip) void printer.printKot(done.packSlip, { tokenNo: order.tokenNo ?? null, channel: order.channel, orderType: 'takeaway' });
+                        await refresh();
+                      } catch (e) {
+                        setTypeError(e instanceof ApiError ? e.message : t('types.changeFailed'));
+                      } finally {
+                        setChangingType(false);
+                      }
+                    }}
+                  >
+                    {order.orderType === 'dine_in' ? t('types.makeTakeaway') : t('types.makeDineIn')}
+                  </button>
+                ) : null}
+                {typeError ? (
+                  <p className="al-error" role="alert">
+                    {typeError}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
             {/*
               * Owner, 2026-11-16 — "simplify this page": one block, three rows, in the order a counter reaches for them.
               *   1. Print bill (filled) and the printer — plus Reprint KOT while the kitchen still has the order to make.

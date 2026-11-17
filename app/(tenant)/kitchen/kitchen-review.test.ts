@@ -1,0 +1,78 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import en from '../../../messages/en.json';
+import hi from '../../../messages/hi.json';
+import { portionParts } from './KitchenClient';
+
+/** Owner, 2026-11-17 — the Kitchen review's eight changes. Source-reading where there is no DOM here. */
+const src = readFileSync(resolve(__dirname, 'KitchenClient.tsx'), 'utf8');
+const css = readFileSync(resolve(__dirname, '../styles/99-dining-tables.css'), 'utf8');
+const nav = readFileSync(resolve(__dirname, '../components/BottomNav.tsx'), 'utf8');
+
+describe('#6 — the portion in bold, split only where the API names it', () => {
+  it('splits "Chicken Biryani (Half - 2 pcs)" around Half - 2 pcs', () => {
+    expect(portionParts('Chicken Biryani (Half - 2 pcs)', 'Half - 2 pcs')).toEqual({ before: 'Chicken Biryani', size: 'Half - 2 pcs', after: '' });
+  });
+  it('keeps the extras after it', () => {
+    expect(portionParts('Margherita (Large) + Cheese', 'Large')).toEqual({ before: 'Margherita', size: 'Large', after: ' + Cheese' });
+  });
+  it('never guesses from brackets: a dish with no portion stays whole', () => {
+    expect(portionParts('Chicken Drumstick (2 pcs)', null)).toEqual({ before: 'Chicken Drumstick (2 pcs)', size: null, after: '' });
+    expect(portionParts('Dal (Full)', 'Half')).toEqual({ before: 'Dal (Full)', size: null, after: '' });
+  });
+});
+
+describe('the rest of the review', () => {
+  it('#1 — no bottom bar on /kitchen; owner and manager get a way back', () => {
+    expect(nav).toContain("if (pathname.startsWith('/kitchen')) return null;");
+    expect(src).toContain("const mayLeave = session?.role === 'owner' || session?.role === 'manager';");
+  });
+  it('#2 · #3 — plain rows, 44px (sized for 100 orders, owner 2026-11-17), with a tick circle that fills when done', () => {
+    expect(css).toMatch(/\.kd-dish-btn \{[^}]*min-height: 44px;[^}]*border: 0;/);
+    expect(css).toContain('.kd-dish.is-done .kd-tick { background: var(--accent);');
+    expect(src).toContain('<span className="kd-tick" aria-hidden="true">');
+  });
+  it('#4 — late carries a clock and words, not the amber alone', () => {
+    expect(src).toMatch(/\{c\.late \? \(\s*<svg[\s\S]{0,300}M12 3a9 9/);
+    expect(en.kitchen.lateFor).toContain('Late');
+  });
+  it('#5 — while the sound is off the button itself says so: amber, and its hint on hover (owner, 17 Nov — no banner)', () => {
+    expect(src).not.toContain('kd-sound-hint');
+    expect(src).toContain("className={`btn btn-ghost kd-sound${chime ? '' : ' is-off'}`}");
+    expect(src).toContain("title={chime ? undefined : t('soundHint')}");
+  });
+  it('#7 — the order type is a chip with an icon; #8 — Ready is 44px with room above', () => {
+    expect(src).toContain('className={`kd-card-type is-${c.orderType}`}');
+    expect(css).toContain('.kd-ready { min-height: 44px; margin-top: var(--sp-1);');
+  });
+  it('a Kitchen login: no empty sidebar, and its own Log out on the bar', () => {
+    const side = readFileSync(resolve(__dirname, '../components/Sidebar.tsx'), 'utf8');
+    const shell = readFileSync(resolve(__dirname, '../styles/01-shell.css'), 'utf8');
+    expect(side).toContain("if (nav.every((n) => n.href === '/notifications')) return null;");
+    expect(shell).toMatch(/\.shell:not\(:has\(> \.sidebar\)\) \{\s*grid-template-columns: 1fr;/);
+    expect(src).toContain("{mayLeave ? null : <SignOutButton className=\"btn btn-ghost kd-signout\">{t('signOut')}</SignOutButton>}");
+    expect(en.kitchen.signOut).toBe('Log out');
+    expect(hi.kitchen.signOut).toBe('लॉग आउट');
+  });
+
+  it('100 orders: about five across a laptop, a summary strip with late and new counts, and a filter by how it is eaten', () => {
+    expect(css).toContain('minmax(min(100%, 15.5rem), 1fr)');
+    expect(src).toContain("t('waiting', { n: cards.length })");
+    expect(src).toContain("cards.filter((c) => only === 'all' || c.orderType === only)");
+    expect(css).toMatch(/\.kd-filter \{ min-height: 44px;/);
+  });
+
+  it('every ticket says Dine-in, Takeaway or Delivery in words, on its own line (owner, 2026-11-17)', () => {
+    expect(src).not.toContain("!(c.orderType === 'dine_in' && c.tableName)");
+    expect(src).toMatch(/<\/div>\s*\{\/\*[\s\S]*?\*\/\}\s*\{c\.orderType \? \(\s*<span className=\{`kd-card-type is-\$\{c\.orderType\}`\}>/);
+    expect(css).not.toContain('.kd-type-word');
+  });
+
+  it('new words in English and Hindi', () => {
+    for (const k of ['back', 'soundHint', 'soundOn', 'soundOff', 'waiting', 'lateCount', 'newCount', 'all', 'summaryAria'] as const) {
+      expect(en.kitchen[k]).toBeTruthy();
+      expect(hi.kitchen[k]).toBeTruthy();
+    }
+  });
+});

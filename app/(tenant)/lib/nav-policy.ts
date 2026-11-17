@@ -15,7 +15,7 @@
  */
 import { canSee as roleCanSee, visibleItems as roleVisibleItems, type MemberRole, type UiAction } from '@growza-app/shared';
 import { isSetupDestination } from './go-live';
-import { areaAllows, isShopRoute, type Areas, type PageGrid } from './areas';
+import { areaAllows, cooksOnly, isShopRoute, servesTablesOnly, type Areas, type PageGrid } from './areas';
 
 export {
   canSeeReports,
@@ -61,6 +61,8 @@ export const PAGE_OF_HREF: ReadonlyArray<readonly [string, keyof PageGrid]> = [
   ['/documents', 'bookings'],
   ['/products/sell', 'bookings'],
   ['/pos', 'bookings'],
+  // Jira GRW-714 — the kitchen screen is its own page.
+  ['/kitchen', 'kitchen'],
   ['/try-whatsapp', 'bookings'],
   ['/customers', 'clients'],
   // The one-box search finds bookings as well as clients, so it follows the page it reveals more of.
@@ -98,6 +100,11 @@ const ALSO_NEEDS: ReadonlyArray<readonly [string, keyof PageGrid]> = [
   ['/sales', 'reports'],
   ['/products/sell', 'services'],
 ];
+
+/** Jira GRW-723 — everything a waiter is offered. Home sends them to the room (`app/(tenant)/page.tsx`). */
+const WAITER_HREF: readonly string[] = ['/pos', '/notifications', '/help'];
+/** Jira GRW-714 — everything a cook is offered. Home sends them to the kitchen screen. */
+const COOK_HREF: readonly string[] = ['/kitchen', '/notifications', '/help'];
 
 /** Destinations the grid can never open: the API makes these the owner's alone (billing, branches, team, roles). */
 const OWNER_ONLY_HREF: readonly string[] = ['/settings/billing', '/settings/branches', '/settings/team', '/settings/roles'];
@@ -168,6 +175,11 @@ export function gridMayUse(action: UiAction, grid: PageGrid): boolean {
 export function gridCanSee(rawHref: string, grid: PageGrid): boolean {
   // A query string is not part of the address the grid is asked about.
   const href = rawHref.split('?')[0]!;
+  // Jira GRW-723 — a waiter's app is the room and nothing else (BR-01): the till's map, the bell, Help.
+  if (servesTablesOnly(grid)) return WAITER_HREF.some((p) => href === p || href.startsWith(`${p}/`));
+  // Jira GRW-714 — a cook's app is the kitchen screen and nothing else.
+  if (cooksOnly(grid)) return COOK_HREF.some((p) => href === p || href.startsWith(`${p}/`));
+  if (href === '/kitchen' || href.startsWith('/kitchen/')) return (grid.kitchen ?? 'none') !== 'none';
   if (NEEDS_CHANGE_TO_OPEN.some((p) => href === p || href.startsWith(`${p}/`)) && !gridCanChange(href, grid)) return false;
   if (OWNER_ONLY_HREF.some((p) => href === p || href.startsWith(`${p}/`))) return false;
   const extra = ALSO_NEEDS.find(([prefix]) => href === prefix || href.startsWith(`${prefix}/`));

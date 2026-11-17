@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { api, ApiError } from '../lib/api';
-import type { KitchenTicketDto } from '../lib/api-types';
+import type { KitchenTicketDto, OrderType } from '../lib/api-types';
 import { intlLocale, formatMoney } from '../lib/format';
 import { billFromDocument, kotFromApi } from '../lib/print/from-api';
 import { bluetoothSupported, forgetPrinter } from '../lib/print/bluetooth';
@@ -17,7 +17,7 @@ import {
   savePrinterSettings,
   type PrinterSettings,
 } from '../lib/print/printer';
-import { billTicket, kotTicket, type Ticket } from '../lib/print/ticket';
+import { billTicket, kotTicket, type BillData, type Ticket } from '../lib/print/ticket';
 import { useSession } from './SessionProvider';
 import { IconPrint } from './icons';
 
@@ -42,7 +42,12 @@ class NothingToPrint extends Error {}
 
 export interface OrderRef {
   tokenNo: number | null;
+  /** Jira GRW-716 — an order taken offline: its till's token ("A12"). */
+  offlineToken?: string | null;
   channel: string | null;
+  /** Jira GRW-720 · GRW-719 — how it is eaten, and its table: printed on the slip. */
+  orderType?: OrderType | null;
+  tableName?: string | null;
 }
 
 export function useTicketPrinter() {
@@ -74,10 +79,46 @@ export function useTicketPrinter() {
       title: t('kotTitle'),
       added: t('kotAdded'),
       cancelled: t('kotCancelled'),
+      packed: t('kotPacked'),
       reprint: t('reprint'),
       kotNo: (n: number) => t('kotNo', { n }),
-      token: (n: number) => t('token', { n }),
+      token: (n: number | string) => t('token', { n }),
       items: (n: number) => t('items', { n }),
+    }),
+    [t],
+  );
+
+  /** Jira GRW-720 — "TAKEAWAY", "DINE-IN · T4" on the slip; plain case on the bill. */
+  const typeWords = useCallback(
+    (loud: boolean) => (type: OrderType, table: string | null) => {
+      const word = type === 'dine_in' ? t('typeDineIn') : type === 'takeaway' ? t('typeTakeaway') : t('typeDelivery');
+      const said = loud ? word.toLocaleUpperCase() : word;
+      return table ? `${said} · ${table}` : said;
+    },
+    [t],
+  );
+
+  /** The bill's words, in the screen's language. */
+  const billCopy = useCallback(
+    () => ({
+      reprint: t('reprint'),
+      phone: (v: string) => t('phone', { v }),
+      gstin: (v: string) => t('gstin', { v }),
+      fssai: (v: string) => t('fssai', { v }),
+      name: (v: string) => t('name', { v }),
+      date: (v: string) => t('date', { v }),
+      cashier: (v: string) => t('cashier', { v }),
+      billNo: (v: string) => t('billNo', { v }),
+      token: (n: number | string) => t('token', { n }),
+      colItem: t('colItem'),
+      colQty: t('colQty'),
+      colPrice: t('colPrice'),
+      colAmount: t('colAmount'),
+      totalQty: (n: number) => t('totalQty', { n }),
+      subTotal: t('subTotal'),
+      roundOff: t('roundOff'),
+      grandTotal: t('grandTotal'),
+      thanks: t('thanks'),
     }),
     [t],
   );
@@ -115,8 +156,8 @@ export function useTicketPrinter() {
   /** One KOT, as the order's change just returned it. */
   const printKot = useCallback(
     (kot: KitchenTicketDto, order: OrderRef, reprint = false) =>
-      run(async () => [{ ticket: kotTicket(kotFromApi(kot, order, kotWhen, reprint), kotCopy()), copies: 1 }]),
-    [run, kotWhen, kotCopy],
+      run(async () => [{ ticket: kotTicket(kotFromApi(kot, order, kotWhen, reprint, typeWords(true)), kotCopy()), copies: 1 }]),
+    [run, kotWhen, kotCopy, typeWords],
   );
 
   /** Every KOT the order has had, printed again and marked REPRINT. */
@@ -128,9 +169,9 @@ export function useTicketPrinter() {
     (saleId: string, reprint: boolean) =>
       run(async () => {
         const read = await api.saleKots(saleId);
-        return read.tickets.map((k) => ({ ticket: kotTicket(kotFromApi(k, read, kotWhen, reprint), kotCopy()), copies: 1 }));
+        return read.tickets.map((k) => ({ ticket: kotTicket(kotFromApi(k, read, kotWhen, reprint, typeWords(true)), kotCopy()), copies: 1 }));
       }),
-    [run, kotWhen, kotCopy],
+    [run, kotWhen, kotCopy, typeWords],
   );
   const reprintKots = useCallback((saleId: string) => printOrderKots(saleId, true), [printOrderKots]);
 
@@ -164,35 +205,32 @@ export function useTicketPrinter() {
                   }),
             discount: t('discount'),
             points: (n) => t('points', { n }),
+            orderType: typeWords(false),
             tax: (name, rate, included) =>
               rate === null ? name : t(included ? 'taxAtIncluded' : 'taxAt', { tax: name, rate: String(rate) }),
           },
           { figure, money: (minor) => formatMoney(minor, 'INR', locale), when },
           reprint,
         );
-        const copy = {
-          reprint: t('reprint'),
-          phone: (v: string) => t('phone', { v }),
-          gstin: (v: string) => t('gstin', { v }),
-          fssai: (v: string) => t('fssai', { v }),
-          name: (v: string) => t('name', { v }),
-          date: (v: string) => t('date', { v }),
-          cashier: (v: string) => t('cashier', { v }),
-          billNo: (v: string) => t('billNo', { v }),
-          token: (n: number) => t('token', { n }),
-          colItem: t('colItem'),
-          colQty: t('colQty'),
-          colPrice: t('colPrice'),
-          colAmount: t('colAmount'),
-          totalQty: (n: number) => t('totalQty', { n }),
-          subTotal: t('subTotal'),
-          roundOff: t('roundOff'),
-          grandTotal: t('grandTotal'),
-          thanks: t('thanks'),
-        };
+        const copy = billCopy();
         return [{ ticket: billTicket(data, copy), copies: reprint ? 1 : readPrinterSettings().billCopies }];
       }),
-    [run, locale, timezone, t, tDoc, tPay],
+    [run, locale, timezone, t, tDoc, tPay, typeWords, billCopy],
+  );
+
+  /**
+   * Jira GRW-716 — a receipt the till built itself, printed with no internet: no bill number yet (the server gives the
+   * next one when the order is sent; the owner's decision, 2026-11-16 — one numbering run), and a line that says so.
+   */
+  const printReceipt = useCallback(
+    (data: BillData) => run(async () => [{ ticket: billTicket(data, billCopy()), copies: readPrinterSettings().billCopies }]),
+    [run, billCopy],
+  );
+  const autoReceipt = useCallback(
+    (data: BillData) => {
+      if (readPrinterSettings().autoBill) void printReceipt(data);
+    },
+    [printReceipt],
   );
 
   /** What the till calls after an order goes in: the KOT prints by itself only where this device is set to. */
@@ -234,8 +272,8 @@ export function useTicketPrinter() {
   // One object for as long as nothing in it changes, so a screen can put the printer in a callback's dependencies
   // without rebuilding that callback on every render.
   return useMemo(
-    () => ({ settings, setSettings, status, clearStatus, printKot, printOrderKots, reprintKots, printBill, autoKot, autoBill, testPrint }),
-    [settings, setSettings, status, clearStatus, printKot, printOrderKots, reprintKots, printBill, autoKot, autoBill, testPrint],
+    () => ({ settings, setSettings, status, clearStatus, printKot, printOrderKots, reprintKots, printBill, printReceipt, autoKot, autoBill, autoReceipt, testPrint }),
+    [settings, setSettings, status, clearStatus, printKot, printOrderKots, reprintKots, printBill, printReceipt, autoKot, autoBill, autoReceipt, testPrint],
   );
 }
 
@@ -283,6 +321,7 @@ export function TillPrintActions({
   kitchen = false,
   order,
   bill = false,
+  receipt,
 }: {
   printer: TicketPrinter;
   saleId: string;
@@ -290,6 +329,8 @@ export function TillPrintActions({
   kitchen?: boolean;
   order: OrderRef;
   bill?: boolean;
+  /** Jira GRW-716 — taken offline: the receipt the till built itself, printed in place of the server's bill. */
+  receipt?: BillData;
 }) {
   const t = useTranslations('print');
   const busy = printer.status.state === 'printing';
@@ -299,7 +340,7 @@ export function TillPrintActions({
     <div className="tp-actions">
       <div className="tp-actions-row">
         {bill ? (
-          <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void printer.printBill(saleId)}>
+          <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void (receipt ? printer.printReceipt(receipt) : printer.printBill(saleId))}>
             <IconPrint />
             {t('printBill')}
           </button>

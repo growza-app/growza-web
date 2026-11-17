@@ -408,6 +408,17 @@ export const IconStar = () => (
   </svg>
 );
 
+/** Jira GRW-718 — a dining table from the side, for Table orders. Same stroke as every other icon here. */
+export const IconTable = () => (
+  <svg {...base}>
+    <line x1="3" y1="9" x2="21" y2="9" />
+    <line x1="6" y1="9" x2="5" y2="20" />
+    <line x1="18" y1="9" x2="19" y2="20" />
+    <line x1="9" y1="5" x2="15" y2="5" />
+    <line x1="12" y1="5" x2="12" y2="9" />
+  </svg>
+);
+
 export const IconLogout = () => (
   <svg {...base}>
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

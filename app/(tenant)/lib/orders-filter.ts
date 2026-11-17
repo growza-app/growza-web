@@ -22,6 +22,10 @@ export type ChannelChip = (typeof CHANNEL_CHIPS)[number];
  * "To send" is two states, new and packed: they are the same job to a person with a parcel in their hand ("it has not
  * gone yet"), and splitting them would make the one list they actually open all day a choice between two.
  */
+/** Jira GRW-720 — how the orders were eaten. `counter`: orders from before order types existed (never guessed). */
+export const TYPE_CHIPS = ['dine_in', 'takeaway', 'delivery', 'counter'] as const;
+export type TypeChip = (typeof TYPE_CHIPS)[number];
+
 export const STATE_CHIPS = [
   { key: 'toSend', value: 'new,packed' },
   { key: 'sent', value: 'sent' },
@@ -38,6 +42,8 @@ export interface OrdersQuery {
   status: string;
   /** What is typed in the box. */
   q: string;
+  /** Jira GRW-720 — the API value, or '' for every type. */
+  type: string;
   /**
    * One client's orders, from their card's "See orders"; '' is every client's.
    *
@@ -63,7 +69,7 @@ export const ORDERS_PAGE_SIZE = 10;
 /** Every state this build has a word for. Anything else is shown as "Unknown" and never crashes the list. */
 export const KNOWN_STATES = ['done', 'new', 'packed', 'sent', 'delivered', 'cancelled', 'returned'] as const;
 
-export const EMPTY_QUERY: OrdersQuery = { channel: '', status: '', q: '', customerId: '', page: 1 };
+export const EMPTY_QUERY: OrdersQuery = { channel: '', status: '', q: '', type: '', customerId: '', page: 1 };
 
 /** The chip a status value belongs to, or null when it is a combination no chip stands for (a hand-edited link). */
 export function stateChipOf(status: string): StateChipKey | null {
@@ -76,7 +82,7 @@ export function stateChipOf(status: string): StateChipKey | null {
  * `customerId` is deliberately NOT one: it is the scope the page is in, said by its own banner, and an empty list
  * under it means "they have not ordered yet" — which the banner says in those words rather than "nothing matches".
  */
-export const isFiltered = (query: OrdersQuery): boolean => query.channel !== '' || query.status !== '' || query.q.trim() !== '';
+export const isFiltered = (query: OrdersQuery): boolean => query.channel !== '' || query.status !== '' || query.type !== '' || query.q.trim() !== '';
 
 /**
  * Read the address bar (or a server component's `searchParams`).
@@ -84,7 +90,7 @@ export const isFiltered = (query: OrdersQuery): boolean => query.channel !== '' 
  * Forgiving on the way IN — an unreadable page is page 1 — because the SERVER is the one that refuses an unknown
  * channel or state, with a sentence; this only has to not crash on a link someone has edited.
  */
-export function readQuery(raw: { channel?: string | string[]; status?: string | string[]; q?: string | string[]; customerId?: string | string[]; page?: string | string[] }): OrdersQuery {
+export function readQuery(raw: { channel?: string | string[]; status?: string | string[]; q?: string | string[]; type?: string | string[]; customerId?: string | string[]; page?: string | string[] }): OrdersQuery {
   const one = (v: string | string[] | undefined): string => (Array.isArray(v) ? (v[0] ?? '') : (v ?? ''));
   const page = Number(one(raw.page));
   const customerId = one(raw.customerId).trim();
@@ -92,6 +98,8 @@ export function readQuery(raw: { channel?: string | string[]; status?: string | 
     channel: one(raw.channel).trim(),
     status: one(raw.status).trim(),
     q: one(raw.q),
+    // A type this build does not know is dropped, not sent (the API would answer 400 in place of a screen).
+    type: (TYPE_CHIPS as readonly string[]).includes(one(raw.type).trim()) ? one(raw.type).trim() : '',
     // A hand-edited id is dropped, not sent: the list is then the ordinary Orders list with no banner over it, which
     // is honest. Sending it on would be a 400 in place of a screen.
     customerId: UUID_RE.test(customerId) ? customerId.toLowerCase() : '',
@@ -108,6 +116,7 @@ export function toSearch(query: OrdersQuery): string {
   if (query.channel) params.set('channel', query.channel);
   if (query.status) params.set('status', query.status);
   if (query.q.trim()) params.set('q', query.q.trim());
+  if (query.type) params.set('type', query.type);
   if (query.customerId) params.set('customerId', query.customerId);
   if (query.page > 1) params.set('page', String(query.page));
   const s = params.toString();
