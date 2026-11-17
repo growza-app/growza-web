@@ -37,8 +37,10 @@ describe('the rest of the review', () => {
     expect(src).toMatch(/\{c\.late \? \(\s*<svg[\s\S]{0,300}M12 3a9 9/);
     expect(en.kitchen.lateFor).toContain('Late');
   });
-  it('#5 — while the sound is off the screen says so, with Turn on', () => {
-    expect(src).toMatch(/\{!chime \? \(\s*<div className="kd-sound-hint">/);
+  it('#5 — while the sound is off the button itself says so: amber, and its hint on hover (owner, 17 Nov — no banner)', () => {
+    expect(src).not.toContain('kd-sound-hint');
+    expect(src).toContain("className={`btn btn-ghost kd-sound${chime ? '' : ' is-off'}`}");
+    expect(src).toContain("title={chime ? undefined : t('soundHint')}");
   });
   it('#7 — the order type is a chip with an icon; #8 — Ready is 44px with room above', () => {
     expect(src).toContain('className={`kd-card-type is-${c.orderType}`}');
@@ -68,7 +70,7 @@ describe('the rest of the review', () => {
   });
 
   it('new words in English and Hindi', () => {
-    for (const k of ['back', 'soundHint', 'turnOn', 'soundOn', 'soundOff', 'waiting', 'lateCount', 'newCount', 'all', 'summaryAria'] as const) {
+    for (const k of ['back', 'soundHint', 'soundOn', 'soundOff', 'waiting', 'lateCount', 'newCount', 'all', 'summaryAria'] as const) {
       expect(en.kitchen[k]).toBeTruthy();
       expect(hi.kitchen[k]).toBeTruthy();
     }

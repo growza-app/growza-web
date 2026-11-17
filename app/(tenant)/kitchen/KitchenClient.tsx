@@ -173,7 +173,7 @@ export function KitchenClient() {
         <div className="kd-bar-right">
           <HeaderBranchPicker variant="pill" />
           {/* Owner, 2026-11-17 — "Chime" was the design's word; "Sound" is the plain one. The speaker is struck through while off. */}
-          <button type="button" className="btn btn-ghost kd-sound" aria-pressed={chime} onClick={toggleChime}>
+          <button type="button" className={`btn btn-ghost kd-sound${chime ? '' : ' is-off'}`} aria-pressed={chime} title={chime ? undefined : t('soundHint')} onClick={toggleChime}>
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
               <path d="M4 9h4l5-4v14l-5-4H4z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
               {chime ? (
@@ -195,15 +195,10 @@ export function KitchenClient() {
         </p>
       ) : null}
 
-      {/* Review #5 — off by default (a browser plays nothing until someone taps), so the screen says so until it is on. */}
-      {!chime ? (
-        <div className="kd-sound-hint">
-          <span>{t('soundHint')}</span>
-          <button type="button" className="btn" onClick={toggleChime}>
-            {t('turnOn')}
-          </button>
-        </div>
-      ) : null}
+      {/*
+        Review #5 — sound is off by default (a browser plays nothing until someone taps). Owner, 17 Nov 2026 — the
+        banner that said so repeated the button above it in 118px of green; the button itself now turns amber while off.
+      */}
 
       {cards === null ? (
         <div className="kd-grid" aria-busy="true" aria-label={t('loading')}>

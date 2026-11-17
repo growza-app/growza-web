@@ -176,8 +176,8 @@
 .kd-bar-right .btn { min-height: 44px; }
 .kd-sound { display: inline-flex; align-items: center; gap: var(--sp-2); }
 .kd-back { display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 44px; padding-right: var(--sp-2); color: var(--accent-deep); font-weight: 600; text-decoration: none; }
-.kd-sound-hint { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); margin: 0 0 var(--sp-3); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius); background: var(--accent-soft); color: var(--accent-deep); font-weight: 600; }
-.kd-sound-hint .btn { min-height: 44px; }
+/* Owner, 2026-11-17 — while sound is off the button itself asks to be tapped: amber, not a banner under it. */
+.kd-sound.is-off { color: var(--amber-ink); background: var(--amber-soft); border-color: var(--amber); }
 /* Review #1 — no bottom bar on the kitchen screen, so no room kept for one. */
 @media (max-width: 860px) { .kd-page { padding-bottom: var(--sp-4); } }
 /* The sidebar is the way back on a wide screen. */
