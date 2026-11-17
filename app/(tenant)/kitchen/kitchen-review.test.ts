@@ -28,8 +28,8 @@ describe('the rest of the review', () => {
     expect(nav).toContain("if (pathname.startsWith('/kitchen')) return null;");
     expect(src).toContain("const mayLeave = session?.role === 'owner' || session?.role === 'manager';");
   });
-  it('#2 · #3 — plain rows, 48px, with a tick circle that fills when done', () => {
-    expect(css).toMatch(/\.kd-dish-btn \{[^}]*min-height: 48px;[^}]*border: 0;/);
+  it('#2 · #3 — plain rows, 44px (sized for 100 orders, owner 2026-11-17), with a tick circle that fills when done', () => {
+    expect(css).toMatch(/\.kd-dish-btn \{[^}]*min-height: 44px;[^}]*border: 0;/);
     expect(css).toContain('.kd-dish.is-done .kd-tick { background: var(--accent);');
     expect(src).toContain('<span className="kd-tick" aria-hidden="true">');
   });
@@ -40,9 +40,9 @@ describe('the rest of the review', () => {
   it('#5 — while the sound is off the screen says so, with Turn on', () => {
     expect(src).toMatch(/\{!chime \? \(\s*<div className="kd-sound-hint">/);
   });
-  it('#7 — the order type is a chip with an icon; #8 — Ready is 48px with room above', () => {
+  it('#7 — the order type is a chip with an icon; #8 — Ready is 44px with room above', () => {
     expect(src).toContain('className={`kd-card-type is-${c.orderType}`}');
-    expect(css).toContain('.kd-ready { min-height: 48px; margin-top: var(--sp-2);');
+    expect(css).toContain('.kd-ready { min-height: 44px; margin-top: var(--sp-1);');
   });
   it('a Kitchen login: no empty sidebar, and its own Log out on the bar', () => {
     const side = readFileSync(resolve(__dirname, '../components/Sidebar.tsx'), 'utf8');
@@ -54,8 +54,19 @@ describe('the rest of the review', () => {
     expect(hi.kitchen.signOut).toBe('लॉग आउट');
   });
 
+  it('100 orders: about five across a laptop, a summary strip with late and new counts, and a filter by how it is eaten', () => {
+    expect(css).toContain('minmax(min(100%, 15.5rem), 1fr)');
+    expect(src).toContain("t('waiting', { n: cards.length })");
+    expect(src).toContain("cards.filter((c) => only === 'all' || c.orderType === only)");
+    expect(css).toMatch(/\.kd-filter \{ min-height: 44px;/);
+  });
+
+  it('a table ticket needs no Dine-in chip (its table says so); a packed order keeps its chip', () => {
+    expect(src).toContain("{c.orderType && !(c.orderType === 'dine_in' && c.tableName) ? (");
+  });
+
   it('new words in English and Hindi', () => {
-    for (const k of ['back', 'soundHint', 'turnOn', 'soundOn', 'soundOff'] as const) {
+    for (const k of ['back', 'soundHint', 'turnOn', 'soundOn', 'soundOff', 'waiting', 'lateCount', 'newCount', 'all', 'summaryAria'] as const) {
       expect(en.kitchen[k]).toBeTruthy();
       expect(hi.kitchen[k]).toBeTruthy();
     }

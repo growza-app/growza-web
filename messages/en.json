@@ -4606,7 +4606,12 @@
     "back": "Home",
     "soundHint": "Sound is off — turn it on to hear new orders.",
     "turnOn": "Turn on",
-    "signOut": "Log out"
+    "signOut": "Log out",
+    "summaryAria": "Orders waiting",
+    "waiting": "{n, plural, one {1 waiting} other {# waiting}}",
+    "lateCount": "{n} late",
+    "newCount": "{n, plural, one {1 with new dishes} other {# with new dishes}}",
+    "all": "All"
   },
   "posTables": {
     "paidOk": "{table} paid · {amount}. The table is free.",

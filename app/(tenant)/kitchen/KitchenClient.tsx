@@ -56,6 +56,8 @@ export function KitchenClient() {
   const [now, setNow] = useState(() => Date.now());
   const [undo, setUndo] = useState<{ saleId: string; label: string; until: number } | null>(null);
   const [chime, setChime] = useState(false);
+  /** Owner, 2026-11-17 — one kind of order at a time in a rush; on this tablet only, never saved. */
+  const [only, setOnly] = useState<'all' | 'dine_in' | 'takeaway' | 'delivery'>('all');
   const seen = useRef<Set<string> | null>(null);
   const mayLeave = session?.role === 'owner' || session?.role === 'manager';
 
@@ -214,19 +216,37 @@ export function KitchenClient() {
           <p className="kd-empty-title">{t('empty')}</p>
         </div>
       ) : (
+        <>
+        {/* The rush at a glance: how many, how many late, how many with dishes not yet seen; and a filter by how it is eaten. */}
+        <div className="kd-summary" role="group" aria-label={t('summaryAria')}>
+          <span className="kd-count">{t('waiting', { n: cards.length })}</span>
+          {cards.some((c) => c.late) ? <span className="kd-count is-late">{t('lateCount', { n: cards.filter((c) => c.late).length })}</span> : null}
+          {cards.some((c) => c.dishes.some((d) => d.isNew)) ? <span className="kd-count">{t('newCount', { n: cards.filter((c) => c.dishes.some((d) => d.isNew)).length })}</span> : null}
+          <span className="kd-filters">
+            {(['all', 'dine_in', 'takeaway', 'delivery'] as const)
+              .filter((k) => k === 'all' || cards.some((c) => c.orderType === k))
+              .map((k) => (
+                <button key={k} type="button" className="kd-filter" aria-pressed={only === k} onClick={() => setOnly(k)}>
+                  {k === 'all' ? t('all') : t(`type.${k}`)} {k === 'all' ? cards.length : cards.filter((c) => c.orderType === k).length}
+                </button>
+              ))}
+          </span>
+        </div>
         <ul className="kd-grid">
-          {cards.map((c) => {
+          {cards.filter((c) => only === 'all' || c.orderType === only).map((c) => {
             const mins = minutesSince(c.placedAt, now);
             return (
               <li key={c.saleId} className={`kd-card${c.late ? ' is-late' : ''}`} aria-label={labelOf(c)}>
                 <div className="kd-card-head">
                   <span className="kd-card-label">{labelOf(c)}</span>
-                  {c.orderType ? (
+                  {/* A table's ticket is dine-in by its name; the chip is for what is packed (takeaway, delivery) — and it keeps the
+                      table number whole on a narrow card (owner, 2026-11-17: sized for 100 orders). */}
+                  {c.orderType && !(c.orderType === 'dine_in' && c.tableName) ? (
                     <span className={`kd-card-type is-${c.orderType}`}>
                       <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
                         <path d={TYPE_ICON[c.orderType]} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      {t(`type.${c.orderType}`)}
+                      <span className="kd-type-word">{t(`type.${c.orderType}`)}</span>
                     </span>
                   ) : null}
                   <span className="kd-card-age">
@@ -284,6 +304,7 @@ export function KitchenClient() {
             );
           })}
         </ul>
+        </>
       )}
 
       {undo ? (
