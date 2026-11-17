@@ -437,6 +437,13 @@ export function OrderClient({
                   <dd>−{money(billDiscountMinor)}</dd>
                 </div>
               ) : null}
+              {/* Jira GRW-725 — why the owner gave the whole bill free, kept on the bill (0195). */}
+              {order.discountReason ? (
+                <div className="ord-d-note ord-d-discount-reason">
+                  <dt>{t('detail.discountReason')}</dt>
+                  <dd>{order.discountReason}</dd>
+                </div>
+              ) : null}
               <div>
                 <dt>{t('detail.total')}</dt>
                 <dd>{money(order.totalMinor)}</dd>

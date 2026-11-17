@@ -44,3 +44,31 @@ export function shownPercent(pct: number | null, listMinor: number, totalMinor: 
   const off = percentOffMinor(listMinor, pct);
   return off > 0 && listMinor - off === totalMinor ? pct : null;
 }
+
+/**
+ * Jira GRW-725 — owner decision 2026-11-17: a discount that takes the bill to ₹0 is the owner's, with a typed reason.
+ * The counter and the manager can still give a smaller one. The server refuses the rest (403 / 400); this is only
+ * so the till says so before anyone taps Pay.
+ */
+export const FREE_REASON_MIN = 3;
+export const FREE_REASON_MAX = 200;
+
+/** A bill worth something at its prices, charged nothing. An item whose own price is ₹0 is not a discount. */
+export function isFreeBill(listMinor: number, totalMinor: number): boolean {
+  return listMinor > 0 && totalMinor <= 0;
+}
+
+/** A reason the server will take: 3 to 200 letters once trimmed. */
+export function freeReasonOk(reason: string): boolean {
+  const n = reason.trim().length;
+  return n >= FREE_REASON_MIN && n <= FREE_REASON_MAX;
+}
+
+/**
+ * What stops Pay on a free bill, or null when nothing does: not the owner, or the owner has not said why yet.
+ */
+export function freeBillBlock(listMinor: number, totalMinor: number, isOwner: boolean, reason: string): 'ownerOnly' | 'needsReason' | null {
+  if (!isFreeBill(listMinor, totalMinor)) return null;
+  if (!isOwner) return 'ownerOnly';
+  return freeReasonOk(reason) ? null : 'needsReason';
+}
