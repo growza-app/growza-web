@@ -656,3 +656,11 @@ describe('a bill paid two ways', () => {
     expect(css).toMatch(/\.pf-split-held \{/);
   });
 });
+
+describe('a kitchen’s phone till shows the whole menu (owner, 2026-11-17)', () => {
+  it('draws every dish where the shelf is not counted, and keeps eight quick tiles where it is', () => {
+    // Nine dishes left the ninth reachable only by typing it; the laptop till already showed them all.
+    expect(flow).toContain('const shown = counted ? (inStock.length > 0 ? inStock : byCat).slice(0, TILES) : [...byCat];');
+    expect(flow).toContain('}, [productsOnly, products, productCategory, lines, counted]);');
+  });
+});
