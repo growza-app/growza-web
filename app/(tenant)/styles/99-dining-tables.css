@@ -276,3 +276,7 @@
 }
 .tb-foot .tb-total { margin: 0; }
 .tb-foot .tb-take-pay { width: 100%; min-height: 48px; white-space: normal; overflow-wrap: anywhere; }
+/* Taking dishes off: the name keeps a whole line; its amount and Take off sit under it, to the right. */
+.tb-lines.is-editing .tb-line-name { flex-basis: calc(100% - 2rem - var(--sp-2)); }
+.tb-lines.is-editing .tb-line-amount { margin-left: auto; }
+.tb-lines.is-editing .tb-line .tb-off-btn { margin-left: 0; }

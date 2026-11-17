@@ -156,7 +156,7 @@ export function TableBillSheet({
         {order === null && !error ? <p className="field-hint">{t('billLoading')}</p> : null}
         {order ? (
           <>
-            <ul className="tb-lines">
+            <ul className={`tb-lines${editing && !takingOff ? ' is-editing' : ''}`}>
               {dishes.map((l) => (
                 <li key={l.id} className={`tb-line${l.cancelReason ? ' is-off' : ''}`}>
                   <span className="tb-line-qty">{l.qty}×</span>
