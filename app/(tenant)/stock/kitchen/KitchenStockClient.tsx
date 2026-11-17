@@ -67,7 +67,12 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
     }
   };
   const [confirmOff, setConfirmOff] = useState(false);
-  const [sheet, setSheet] = useState<Sheet>(null);
+  const [sheet, setSheetNow] = useState<Sheet>(null);
+  // A new sheet clears the last one's "saved" line, so what the page says is always about the latest thing done.
+  const setSheet = (next: Sheet) => {
+    if (next) setNotice(null);
+    setSheetNow(next);
+  };
   const done = (text: string) => {
     setSheet(null);
     setNotice(text);
