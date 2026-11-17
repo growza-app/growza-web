@@ -51,7 +51,7 @@ describe('AC-03 · BR-02 — what a waiter’s till does not draw', () => {
 
   it('no Print bill; payment only once the counter has printed the bill', () => {
     expect(sheet).toContain('{waiter ? null : (');
-    expect(sheet).toContain('{waiter && !table.openBill?.billPrinted ? (');
+    expect(sheet).toContain(') : waiter && !table.openBill?.billPrinted ? (');
   });
 
   it('AC-04 — Table orders off: told so, and nothing else', () => {

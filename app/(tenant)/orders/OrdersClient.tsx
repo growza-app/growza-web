@@ -345,7 +345,12 @@ export function OrdersClient({
                       <a className={`ord-card${isVoid(r) ? ' is-void' : ''}`} href={`/orders/${r.id}`}>
                         <div className="ord-card-top">
                           <span className="ord-who">
-                            {r.tokenNo ? <span className="ord-token">{formatTokenNo(r.tokenNo)}</span> : null}
+                            {r.offlineToken ? (
+                              <span className="ord-token">{r.offlineToken}</span>
+                            ) : r.tokenNo ? (
+                              <span className="ord-token">{formatTokenNo(r.tokenNo)}</span>
+                            ) : null}
+                            {r.sentLate ? <span className="ord-late">{t('list.sentLate')}</span> : null}
                             {whoOf(r)}
                           </span>
                           {showMoney && r.amountMinor !== undefined ? <span className="ord-amount">{formatMoney(r.amountMinor, 'INR', locale)}</span> : null}
@@ -403,7 +408,10 @@ export function OrdersClient({
                       {when(r.soldAt)}
                     </a>
                     {/* The token the guest holds where there is one, as on the phone; the code only for an order without. */}
-                    <div className="ord-code">{r.tokenNo ? formatTokenNo(r.tokenNo) : t('list.orderCode', { code: r.code.toUpperCase() })}</div>
+                    <div className="ord-code">
+                      {r.offlineToken ?? (r.tokenNo ? formatTokenNo(r.tokenNo) : t('list.orderCode', { code: r.code.toUpperCase() }))}
+                    </div>
+                    {r.sentLate ? <div className="ord-late">{t('list.sentLate')}</div> : null}
                     {isDeliveryApp(r.channel) && r.externalRef ? <div className="ord-code">{t('list.appOrder', { ref: r.externalRef })}</div> : null}
                     {branchOf(r.locationId) ? <div className="ord-code">{branchOf(r.locationId)}</div> : null}
                   </td>

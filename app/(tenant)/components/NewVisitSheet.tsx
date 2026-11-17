@@ -1147,7 +1147,7 @@ export function NewVisitSheet({
    * Only while taking money: a booking for later earns and spends nothing until somebody pays for it.
    */
   const rewardClientId = forPayment ? (selectedId ?? paysToken?.customerId ?? savedVisit?.customerId ?? null) : null;
-  const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor } = useRewardQuote(rewardClientId, billTotalMinor);
+  const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor, checking: pointsChecking } = useRewardQuote(rewardClientId, billTotalMinor);
   /*
    * Record payment: what is being charged sits beside Mark done. The bill's lines are under the menu, and with the
    * tray pinned over the bottom of the page they were a scroll below it — the person was asked to take money for an
@@ -1546,6 +1546,8 @@ export function NewVisitSheet({
    * than as an error that invites a third try.
    */
   const payFor = async (client: PickedClient, visit: WalkInDone) => {
+    // QA 2026-11-17 (finding 1) — not while this bill's points are still being asked.
+    if (pointsChecking) return;
     let settledRewards: VisitRewards | null = null;
     const amounts = picked.map((item) => rupeesToMinor(item.paidRupees) ?? 0);
     const [first, ...rest] = visit.legIds;
@@ -1724,6 +1726,7 @@ export function NewVisitSheet({
   };
 
   const submit = async (client: PickedClient) => {
+    if (pointsChecking) return;
     if (picked.length === 0) return;
     if (later && !slotUtc) return;
     setStage({ step: 'saving', client });
@@ -2065,7 +2068,7 @@ export function NewVisitSheet({
 
   const busy = stage.step === 'saving' || phoneSaving;
   /* Jira GRW-648 — the counter's own row, from the one component both tills draw it with. */
-  const redeemRow = <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={toggleRedeem} disabled={busy} />;
+  const redeemRow = <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={toggleRedeem} disabled={busy} checking={pointsChecking} />;
   /** Jira GRW-290 — once a Record payment visit exists, its lines are what was written. */
   const linesLocked = forPayment && savedVisit !== null;
   const headSub =

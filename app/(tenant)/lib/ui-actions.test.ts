@@ -206,7 +206,9 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   // Jira GRW-721 — taking a dish off a table's bill, from the till's table sheet: drawn only for the owner and a manager
   // (the sheet's `canManage`), and the API's handler says the same.
   // Jira GRW-722 — Move table, on the same table's sheet.
-  '/pos': ['POST /api/v1/counter-sales/:id/cancel-items', 'POST /api/v1/tables/:id/move', 'POST /api/v1/tables/:id/join', 'POST /api/v1/counter-sales/:id/service-charge'],
+  '/pos': ['POST /api/v1/counter-sales/:id/cancel-items', 'POST /api/v1/tables/:id/move', 'POST /api/v1/tables/:id/join', 'POST /api/v1/counter-sales/:id/service-charge',
+    // Jira GRW-716 — the till asks for its letter so it can keep billing offline.
+    'POST /api/v1/till-devices'],
   /*
    * Jira GRW-647 — a switch and a device registration, both the signed-in person's own.
    *
@@ -225,10 +227,12 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   '/settings/rewards': ['PATCH /api/v1/settings/rewards'],
   // Jira GRW-718 — the Table orders switches. Gated by the screen like the two above: the row is `ownerOnly`, the page
   // redirects a role that types the address, and both routes are `owner` in shared's route table.
+  // Jira GRW-714 — Ready, Undo and a dish ticked, on the kitchen screen.
+  '/kitchen': ['POST /api/v1/kitchen/:saleId/ready', 'POST /api/v1/kitchen/lines/:lineId/done'],
   // Jira GRW-712 — an item's add-on groups, and the groups themselves, on its Choices screen (the menu's).
   '/products/[id]/choices': ['POST /api/v1/addon-groups', 'PATCH /api/v1/addon-groups/:id', 'DELETE /api/v1/addon-groups/:id', 'PUT /api/v1/products/:id/addon-groups'],
   // Jira GRW-724 — and the service charge it offers, on the same owner-only screen.
-  '/settings/tables': ['PUT /api/v1/settings/table-orders/:id', 'PUT /api/v1/settings/service-charge/:id'],
+  '/settings/tables': ['PUT /api/v1/settings/table-orders/:id', 'PUT /api/v1/settings/service-charge/:id', 'PUT /api/v1/settings/kitchen/:id'],
   // Jira GRW-719 — setting out a branch's room. Gated by the screen: the page sends anyone but the owner and a manager back
   // to Settings, and the API's handler says owner or manager besides.
   '/settings/tables/[branchId]': [
@@ -277,6 +281,9 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/products',
     'POST /api/v1/products/import',
     'POST /api/v1/products/import/parse',
+    // Jira GRW-715 — a kitchen's whole menu from a file, on the same owner-only screen.
+    'POST /api/v1/products/menu-import',
+    'POST /api/v1/products/menu-import/parse',
     'PATCH /api/v1/products/:id',
     'DELETE /api/v1/products/:id',
     'POST /api/v1/products/:id/photo',

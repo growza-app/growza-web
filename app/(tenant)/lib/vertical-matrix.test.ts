@@ -63,6 +63,8 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/products/[id]/sizes': 'both',
   // Jira GRW-712 — an item's add-on groups; drawn only where the business has add-ons (`me.capabilities.addons`).
   '/products/[id]/choices': 'both',
+  // Jira GRW-714 — the kitchen screen: a business whose items are cooked to order (the API answers 403 anywhere else).
+  '/kitchen': 'tables',
   '/products/sell': 'both',
   '/providers': 'diary',
   '/providers/[id]': 'diary',
@@ -184,7 +186,8 @@ describe('FR-01 … FR-03 — each kind of business is offered exactly the scree
   it('a kitchen is a shop in everything but the count and its tables: only those screens differ', () => {
     const differ = Object.keys(SCREENS).filter((r) => areaAllows(concrete(r), SHOP) !== areaAllows(concrete(r), KITCHEN));
     // Jira GRW-718 — Settings › Tables is the restaurant's alone (`dining.tables`), the one difference that is not a count.
-    expect(differ.sort()).toEqual(['/settings/tables', '/settings/tables/[branchId]', '/stock/order', '/stock/report']);
+    // Jira GRW-714 — and its kitchen screen: a kitchen cooks to order, a shop has a shelf.
+    expect(differ.sort()).toEqual(['/kitchen', '/settings/tables', '/settings/tables/[branchId]', '/stock/order', '/stock/report']);
     // …and the menu itself is NOT one of them: that is where a restaurant's dishes live.
     expect(areaAllows('/stock', KITCHEN)).toBe(true);
     expect(areaAllows('/orders/new', KITCHEN)).toBe(true);

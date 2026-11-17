@@ -33,7 +33,7 @@ describe('the till without one', () => {
   });
 
   it("a shop's Home links to no queue", () => {
-    expect(home).toContain("...(isKitchen ? [{ href: '/pos?mode=queue'");
+    expect(home).toMatch(/\.\.\.\(isKitchen\n      \? \[\n[\s\S]{0,200}href: '\/pos\?mode=queue'/);
     expect(home).toContain("data.anyOrders && isKitchen && can('/pos') ? (");
     expect(home).toContain("isKitchen && can('/pos')\n                                    ? `/pos?mode=queue&token=");
   });

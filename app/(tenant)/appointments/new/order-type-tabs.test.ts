@@ -35,7 +35,7 @@ describe('what is chosen and sent (AC-01 · BR-04)', () => {
   });
 
   it('the kitchen slip is told the same type the server stored', () => {
-    expect(flow).toContain("printer.autoKot(result.kot, { tokenNo, channel, orderType, ...(atTable ? { tableName: atTable.label } : {}) });");
+    expect(flow).toContain("printer.autoKot(result.kot, { tokenNo, offlineToken, channel, orderType, ...(atTable ? { tableName: atTable.label } : {}) });");
   });
 
   it('the chosen tab is marked by more than colour', () => {

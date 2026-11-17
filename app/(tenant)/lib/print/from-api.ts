@@ -25,7 +25,7 @@ export function destinationOf(
 
 export function kotFromApi(
   kot: KitchenTicketDto,
-  order: { tokenNo: number | null; channel: string | null; branchName?: string | null; orderType?: OrderType | null; tableName?: string | null },
+  order: { tokenNo: number | null; offlineToken?: string | null; channel: string | null; branchName?: string | null; orderType?: OrderType | null; tableName?: string | null },
   when: (iso: string) => string,
   reprint = false,
   words?: OrderTypeWords,
@@ -34,6 +34,7 @@ export function kotFromApi(
     number: kot.number,
     kind: kot.kind,
     tokenNo: order.tokenNo,
+    offlineToken: order.offlineToken ?? null,
     // Jira GRW-723 — and who sent it, so the kitchen knows whose table ("T5 · AC Hall · Ravi").
     destination: [destinationOf(order.channel, { orderType: order.orderType, tableName: order.tableName, words }), kot.takenBy].filter(Boolean).join(' · ') || null,
     when: when(kot.createdAt),
@@ -109,6 +110,7 @@ export function billFromDocument(doc: DocumentTicket, words: BillWords, fmt: Bil
     cashier: doc.cashierName,
     number: doc.number,
     tokenNo: doc.tokenNo,
+    offlineToken: doc.offlineToken ?? null,
     items: doc.lines.map((l) => ({
       name: l.description,
       qty: l.qty,

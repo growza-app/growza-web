@@ -27,7 +27,7 @@ describe('the unpaid order card', () => {
 
   it('asks before cancelling, says what is not collected, and keeps the order on Keep', () => {
     expect(client).toContain('<ConfirmDialog\n          tone="danger"');
-    expect(client).toContain("t('cancelOrderBody', { amount: formatMoney(String(cancelTarget.totalMinor)) })");
+    expect(client).toContain("t(qk('cancelOrderBody'), { amount: formatMoney(String(cancelTarget.totalMinor)) })");
     expect(client).toContain('api.cancelPendingCounterSale(tk.id)');
   });
 
@@ -74,14 +74,14 @@ describe('Add items', () => {
 });
 
 describe('Add items never costs the desk the bill it was ringing up (owner, 9 Nov 2026)', () => {
-  const sell = client.slice(client.indexOf('<div className="pos-body" hidden={mode === \'queue\' || addingToToken !== null}>'), client.indexOf('{addingToToken ? (\n        <div className="pos-body"'));
+  const sell = client.slice(client.indexOf('<div className="pos-body" hidden={mode === \'queue\' || addingToToken !== null || payingTable !== null}>'), client.indexOf('{addingToToken ? (\n        <div className="pos-body"'));
   const adding = client.slice(client.indexOf('{addingToToken ? (\n        <div className="pos-body"'));
 
   it('keeps the Sell till mounted, never re-keyed, and only hidden while adding', () => {
     expect(sell).toContain('<SellProductClient');
     expect(sell, 'a key that changes would remount the till and drop its bill').not.toMatch(/\bkey=/);
     expect(sell).not.toContain('addingTo=');
-    expect(sell).toContain("inactive={mode === 'queue' || addingToToken !== null}");
+    expect(sell).toContain("inactive={mode === 'queue' || addingToToken !== null || payingTable !== null}");
   });
 
   it('adds through a till of its own, which owns Back while it is up', () => {

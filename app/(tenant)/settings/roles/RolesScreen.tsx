@@ -15,7 +15,7 @@ import { useWritable } from '../../components/SessionProvider';
  * to limit anyone yet (GRW-74); the screen says so, in plain words, until it does.
  */
 // Jira GRW-723 — Tables (a waiter's page) is listed only where the API offers it: a restaurant, which seats guests.
-const PAGES: readonly RolePageKey[] = ['bookings', 'clients', 'services', 'offers', 'staff', 'attendance', 'reports', 'settings', 'tables'];
+const PAGES: readonly RolePageKey[] = ['bookings', 'clients', 'services', 'offers', 'staff', 'attendance', 'reports', 'settings', 'tables', 'kitchen'];
 const LEVELS: readonly RoleLevel[] = ['none', 'view', 'manage'];
 const WORKS_LIKE: ReadonlyArray<RoleWorksLike | 'none'> = ['none', 'manager', 'receptionist', 'staff'];
 
@@ -213,7 +213,7 @@ export function RolesScreen({ initial, team }: { initial: RolesPayload; team: Ro
 
             <fieldset className="roles-grid">
               <legend className="field-label">{t('pagesTitle')}</legend>
-              {PAGES.filter((page) => page !== 'tables' || data.pages.some((p) => p.key === 'tables')).map((page) => (
+              {PAGES.filter((page) => (page !== 'tables' && page !== 'kitchen') || data.pages.some((p) => p.key === page)).map((page) => (
                 <div key={page} className="roles-row" role="radiogroup" aria-label={pageLabel(page)}>
                   <span className="roles-row-name">{pageLabel(page)}</span>
                   <span className="roles-levels">

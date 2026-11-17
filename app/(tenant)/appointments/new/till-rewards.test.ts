@@ -25,7 +25,7 @@ describe('what the till asks for', () => {
   it('asks the one route that knows, with the bill, rather than working the offer out itself', () => {
     expect(quote).toMatch(/api\s*\n?\s*\.customerRewards\(clientId, billMinor\)/);
     // Both tills ask through it; neither has an effect of its own.
-    expect(flow).toMatch(/useRewardQuote\(fromApp \? null : clientId, totalMinor\)/);
+    expect(flow).toMatch(/useRewardQuote\(\s*fromApp \? null : clientId,\s*totalMinor,?\s*\)/);
     expect(sheet).toMatch(/useRewardQuote\(rewardClientId, billTotalMinor\)/);
     for (const [name, src] of [['PayFlow', flow], ['NewVisitSheet', sheet]] as const) {
       expect(src, `${name} does not fetch the quote itself`).not.toMatch(/customerRewards\(/);
@@ -47,13 +47,14 @@ describe('what the till asks for', () => {
   });
 
   it('offers nothing when there is nobody, nothing to spend, or the read failed', () => {
-    expect(quote).toMatch(/if \(!clientId \|\| billMinor <= 0\) \{\s*setRewards\(null\);/);
+    expect(quote).toMatch(/if \(!clientId \|\| billMinor <= 0\) \{\s*setAnswer\(null\);/);
     // Owner, 2026-10-27 — the ANSWER is kept whenever rewards are on, so the balance can be shown; what
     // the bill can take still decides the toggle.
-    expect(quote).toMatch(/setRewards\(answer\.enabled \? answer : null\)/);
-    expect(quote).toMatch(/if \(!answer\.enabled \|\| answer\.maxRedeemable <= 0\) setUsePoints\(false\)/);
+    expect(quote).toMatch(/setAnswer\(\{ key: asked, rewards: reply\.enabled \? reply : null \}\)/);
+    // QA 2026-11-17, finding 3 — a bill that cannot take points spends none, but the cashier's choice is kept.
+    expect(quote).toContain('const allowed = fresh && rewards !== null && rewards.maxRedeemable > 0;');
     // A failed read leaves the bill alone: the money is the thing with somebody standing at the counter.
-    expect(quote).toMatch(/\.catch\(\(\) => \{[\s\S]{0,400}setRewards\(null\);/);
+    expect(quote).toMatch(/\.catch\(\(\) => \{[\s\S]{0,400}setAnswer\(\{ key: asked, rewards: null \}\);/);
   });
 
   /**
@@ -121,7 +122,8 @@ describe('what the till asks for', () => {
 
 describe('what the till sends and collects', () => {
   it('sends the points with the bill at its own prices — the API takes them off the lines', () => {
-    expect(flow).toMatch(/const redeemPoints = usePoints && rewards \? rewards\.maxRedeemable : 0;/);
+    // QA 2026-11-17 — the hook's figure: points only for the bill they were quoted for.
+    expect(flow).toContain('const redeemPoints = quotedPoints;');
     // Both writes: a booking's checkout and a walk-in's counter sale.
     expect((flow.match(/redeemPoints > 0 \? \{ redeemPoints \} : \{\}/g) ?? []).length).toBe(2);
     // The line amounts are still spread from the BILL, not from what is left after the points.

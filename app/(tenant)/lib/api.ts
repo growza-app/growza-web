@@ -190,6 +190,9 @@ import type {
   Product,
   ProductImportItem,
   ProductImportResult,
+  MenuDish,
+  MenuImportResult,
+  MenuReview,
   ProductCategory,
   ProductInput,
   ProductSales,
@@ -202,7 +205,7 @@ import type {
   StockTakeResult,
   MovementKind,
   ManualMovementKind,
-  VisitRewards, AddonGroup, AddonGroupInput } from './api-types';
+  VisitRewards, AddonGroup, AddonGroupInput, KitchenCard } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, ShopDaySummary, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
 
@@ -254,7 +257,7 @@ import type {
  * just show an error) can check `.status` instead of string-matching text.
  */
 /** Jira GRW-72 — the pages a role grants, and how far. Mirrors `platform/permissions.ts` in the API. */
-export type RolePageKey = 'bookings' | 'clients' | 'services' | 'offers' | 'staff' | 'attendance' | 'reports' | 'settings' | 'tables';
+export type RolePageKey = 'bookings' | 'clients' | 'services' | 'offers' | 'staff' | 'attendance' | 'reports' | 'settings' | 'tables' | 'kitchen';
 export type RoleLevel = 'none' | 'view' | 'manage';
 export type RoleWorksLike = 'manager' | 'receptionist' | 'staff';
 export interface ShopRole {
@@ -712,6 +715,11 @@ export const api = {
   tableOrders: () => get<{ branches: BranchTableOrders[] }>('/api/v1/settings/table-orders'),
   /** Switching off is refused (409) while a table at that branch has an open bill; the message says how many. */
   setTableOrders: (branchId: string, on: boolean) => put<{ branches: BranchTableOrders[] }>(`/api/v1/settings/table-orders/${branchId}`, { on }),
+  /** Jira GRW-714 — the kitchen screen: today's open orders at a branch, no money. */
+  kitchen: (location: string) => get<{ lateMinutes: number; cards: KitchenCard[] }>(`/api/v1/kitchen?location=${encodeURIComponent(location)}`),
+  kitchenReady: (saleId: string, ready: boolean) => post<{ saleId: string; readyAt: string | null }>(`/api/v1/kitchen/${encodeURIComponent(saleId)}/ready`, { ready }),
+  kitchenDishDone: (lineId: string, done: boolean) => post<{ lineId: string; done: boolean }>(`/api/v1/kitchen/lines/${encodeURIComponent(lineId)}/done`, { done }),
+  setKitchenLate: (branchId: string, lateMinutes: number) => put<{ lateMinutes: number }>(`/api/v1/settings/kitchen/${encodeURIComponent(branchId)}`, { lateMinutes }),
   /** Jira GRW-712 — the add-on groups, and which items offer which (`products: { productId: [groupId, …] }`). */
   addonGroups: () => get<{ groups: AddonGroup[]; products: Record<string, string[]> }>('/api/v1/addon-groups'),
   saveAddonGroup: (id: string | null, body: AddonGroupInput) =>
@@ -789,6 +797,11 @@ export const api = {
     return { ok: true as const, deleted };
   },
   parseProductSheet: (file: File) => uploadFile<{ headers: string[]; rows: string[][] }>('/api/v1/products/import/parse', 'file', file),
+  /** Jira GRW-715 — read a menu file (Growza's own, or Petpooja's export). Writes nothing: the review comes back. */
+  parseMenuFile: (location: string, file: File) =>
+    uploadFile<MenuReview>(`/api/v1/products/menu-import/parse?location=${encodeURIComponent(location)}`, 'file', file),
+  /** Jira GRW-715 — add the reviewed menu. The server checks it again; the same menu twice adds nothing twice. */
+  importMenu: (location: string, dishes: MenuDish[]) => post<MenuImportResult>('/api/v1/products/menu-import', { locationId: location, dishes }),
   importProducts: (location: string, items: ProductImportItem[]) =>
     post<ProductImportResult>('/api/v1/products/import', { items, locationId: location }),
   uploadProductPhoto: (id: string, file: File) => uploadFile<Product>(`/api/v1/products/${id}/photo`, 'photo', file),
@@ -1645,6 +1658,8 @@ export const api = {
       redeemPoints?: number;
       /** Send a counter order to the kitchen queue with payment pending; settled from Queue when handed over. */
       paymentPending?: boolean;
+      /** Jira GRW-716 — an order this till took with no internet, sent now: its till, its own count, when it was taken. */
+      offline?: { deviceKey: string; tokenNo: number; takenAt: string };
       // The route refuses to guess: exactly one of these (GRW-293). A named stylist only when paying a token (GRW-403).
     } & ({ noStylist: true; schedulableId?: never } | { schedulableId: string; noStylist?: never }),
   ) =>
@@ -1665,7 +1680,12 @@ export const api = {
       rewards?: VisitRewards;
       /** Jira GRW-713 — the KOT this order sent to the kitchen. Absent where the business has no kitchen. */
       kot?: KitchenTicketDto;
+      /** Jira GRW-716 — an offline order's token ("A12"; `tokenNo` is then null), and whether it was flagged for the owner. */
+      offlineToken?: string;
+      sentLate?: boolean;
     }>('/api/v1/counter-sales', input),
+  /** Jira GRW-716 — this till's letter at its branch, so it can keep billing if the internet drops. */
+  registerTill: (location: string, deviceKey: string) => post<{ letter: string }>('/api/v1/till-devices', { location, deviceKey }),
   /**
    * Settle a counter order that was sent to the kitchen queue with payment pending (`paymentMode = null`).
    * Uses `POST /api/v1/counter-sales` with `settleSaleId` so anyone who may ring up a counter sale (including front desk)
