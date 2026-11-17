@@ -2455,5 +2455,6 @@ export interface KitchenCard {
   channel: string;
   placedAt: string;
   late: boolean;
-  dishes: Array<{ id: string; name: string; qty: number; done: boolean; isNew: boolean; cancelled: boolean }>;
+  /** `size` (owner, 2026-11-17): the portion it was sold in, set in bold on the card; null with no sizes or on an older API. */
+  dishes: Array<{ id: string; name: string; qty: number; done: boolean; isNew: boolean; cancelled: boolean; size?: string | null }>;
 }

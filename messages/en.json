@@ -4602,7 +4602,10 @@
       "dine_in": "Dine-in",
       "takeaway": "Takeaway",
       "delivery": "Delivery"
-    }
+    },
+    "back": "Home",
+    "soundHint": "Sound is off — turn it on to hear new orders.",
+    "turnOn": "Turn on"
   },
   "posTables": {
     "paidOk": "{table} paid · {amount}. The table is free.",

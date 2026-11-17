@@ -171,10 +171,17 @@
 /* Jira GRW-714 — the kitchen screen: tablet-first, large type, 44px+ targets, amber AND words when late. */
 .kd-page { max-width: none; }
 .kd-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-3); }
-.kd-title { margin: 0; font-size: 1.5rem; }
+.kd-title { margin: 0 auto 0 0; font-size: 1.5rem; }
 .kd-bar-right { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
 .kd-bar-right .btn { min-height: 44px; }
 .kd-sound { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.kd-back { display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 44px; padding-right: var(--sp-2); color: var(--accent-deep); font-weight: 600; text-decoration: none; }
+.kd-sound-hint { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); margin: 0 0 var(--sp-3); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius); background: var(--accent-soft); color: var(--accent-deep); font-weight: 600; }
+.kd-sound-hint .btn { min-height: 44px; }
+/* Review #1 — no bottom bar on the kitchen screen, so no room kept for one. */
+@media (max-width: 860px) { .kd-page { padding-bottom: var(--sp-4); } }
+/* The sidebar is the way back on a wide screen. */
+@media (min-width: 861px) { .kd-back { display: none; } }
 .kd-offline { margin: 0 0 var(--sp-3); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius); background: var(--amber-soft); color: var(--amber-ink); border: 1px solid var(--amber); }
 .kd-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); gap: var(--sp-3); align-items: start; }
 .kd-card { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-3); border: 2px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); min-width: 0; }
@@ -183,18 +190,26 @@
 .kd-skeleton { min-height: 12rem; }
 .kd-card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-2); }
 .kd-card-label { font-size: 1.5rem; font-weight: 700; }
-.kd-card-type { font-weight: 600; text-transform: uppercase; font-size: 0.875rem; color: var(--muted); }
-.kd-card-age { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 600; }
-.kd-dishes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-1); }
-.kd-dish-btn { display: flex; width: 100%; align-items: center; gap: var(--sp-2); min-height: 48px; padding: var(--sp-1) var(--sp-2); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; font-size: 1.125rem; text-align: left; }
+.kd-card-type { display: inline-flex; align-items: center; gap: var(--sp-1); padding: 2px var(--sp-2); border-radius: 999px; font-weight: 700; font-size: 0.875rem; background: var(--accent-soft); color: var(--accent-deep); }
+.kd-card-type.is-takeaway { background: var(--amber-soft); color: var(--amber-ink); }
+.kd-card-type.is-delivery { background: var(--border); color: var(--text); }
+.kd-card-age { margin-left: auto; display: inline-flex; align-items: center; gap: var(--sp-1); font-variant-numeric: tabular-nums; font-weight: 600; }
+.kd-card.is-late .kd-card-age { font-weight: 800; }
+/* Review #2 (owner, 2026-11-17) — plain rows with a hairline between them: the same 48px to tap, about a quarter less height. */
+.kd-dishes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.kd-dish + .kd-dish { border-top: 1px solid var(--border); }
+.kd-dish-btn { display: flex; width: 100%; align-items: center; gap: var(--sp-2); min-height: 48px; padding: var(--sp-1) 0; border: 0; background: none; color: var(--text); font: inherit; font-size: 1.125rem; text-align: left; cursor: pointer; }
+.kd-tick { flex: none; display: inline-grid; place-items: center; width: 24px; height: 24px; border: 2px solid var(--muted); border-radius: 50%; color: var(--surface); }
+.kd-dish.is-done .kd-tick { background: var(--accent); border-color: var(--accent); }
+.kd-portion { font-weight: 800; }
 .kd-qty { font-weight: 700; font-variant-numeric: tabular-nums; flex: none; }
 .kd-dish-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
-.kd-dish.is-done .kd-dish-btn { background: var(--accent-soft); color: var(--muted); }
+.kd-dish.is-done .kd-dish-btn { color: var(--muted); }
 .kd-dish.is-done .kd-dish-name { text-decoration: line-through; }
 .kd-dish.is-off .kd-dish-name { text-decoration: line-through; }
 .kd-new { flex: none; padding: 0 var(--sp-2); border-radius: 999px; background: var(--accent-deep); color: var(--surface); font-size: 0.8125rem; font-weight: 700; }
 .kd-off { flex: none; font-size: 0.8125rem; color: var(--danger); font-weight: 600; }
-.kd-ready { min-height: 52px; font-size: 1.125rem; }
+.kd-ready { min-height: 48px; margin-top: var(--sp-2); font-size: 1.125rem; }
 .kd-empty { padding: var(--sp-5) 0; text-align: center; }
 .kd-empty-title { font-size: 1.25rem; font-weight: 600; }
 .kd-undo { position: sticky; bottom: var(--sp-3); display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-top: var(--sp-3); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius); background: var(--text); color: var(--surface); }

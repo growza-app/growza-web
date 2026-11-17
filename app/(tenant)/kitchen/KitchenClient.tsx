@@ -25,6 +25,25 @@ export const minutesSince = (iso: string, nowMs: number): number => Math.max(0, 
 /** Which words a card's age is said in: "Just now" in its first minute, never "0 min". */
 export const ageKey = (late: boolean, mins: number): 'lateFor' | 'justNow' | 'minutes' => (late ? 'lateFor' : mins === 0 ? 'justNow' : 'minutes');
 
+/**
+ * Owner, 2026-11-17 (review #6) — Half or Full is what the cook acts on, so the portion is set in bold. The line's own name
+ * ("Chicken Biryani (Half - 2 pcs) + Raita") is split around the portion the API names, never guessed from brackets: a
+ * dish whose own name has brackets ("Chicken Drumstick (2 pcs)") stays as it is.
+ */
+export function portionParts(name: string, size: string | null | undefined): { before: string; size: string | null; after: string } {
+  const marker = size ? ` (${size})` : null;
+  const at = marker ? name.indexOf(marker) : -1;
+  if (!marker || at < 0) return { before: name, size: null, after: '' };
+  return { before: name.slice(0, at), size: size!, after: name.slice(at + marker.length) };
+}
+
+const TYPE_ICON: Record<'dine_in' | 'takeaway' | 'delivery', string> = {
+  // A plate with a fork; a carry bag; a scooter — one line weight, as the rest of the app's icons.
+  dine_in: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8',
+  takeaway: 'M6 8h12l-1 12H7L6 8zm3 0V6a3 3 0 0 1 6 0v2',
+  delivery: 'M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0m10 0a2 2 0 1 0 4 0 2 2 0 0 0-4 0M9 17h6l2-6h-4l-1-3H8M17 11l2 6',
+};
+
 export function KitchenClient() {
   const t = useTranslations('kitchen');
   const branch = useBranch();
@@ -37,6 +56,7 @@ export function KitchenClient() {
   const [undo, setUndo] = useState<{ saleId: string; label: string; until: number } | null>(null);
   const [chime, setChime] = useState(false);
   const seen = useRef<Set<string> | null>(null);
+  const mayLeave = session?.role === 'owner' || session?.role === 'manager';
 
   useEffect(() => {
     try {
@@ -137,6 +157,15 @@ export function KitchenClient() {
   return (
     <div className="kd">
       <div className="kd-bar">
+        {/* Review #1 — no bottom bar here; the owner and manager get one way back. A Kitchen login has nowhere else to go. */}
+        {mayLeave ? (
+          <a className="kd-back" href="/">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+              <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {t('back')}
+          </a>
+        ) : null}
         <h1 className="kd-title">{t('title')}</h1>
         <div className="kd-bar-right">
           <HeaderBranchPicker variant="pill" />
@@ -161,6 +190,16 @@ export function KitchenClient() {
         </p>
       ) : null}
 
+      {/* Review #5 — off by default (a browser plays nothing until someone taps), so the screen says so until it is on. */}
+      {!chime ? (
+        <div className="kd-sound-hint">
+          <span>{t('soundHint')}</span>
+          <button type="button" className="btn" onClick={toggleChime}>
+            {t('turnOn')}
+          </button>
+        </div>
+      ) : null}
+
       {cards === null ? (
         <div className="kd-grid" aria-busy="true" aria-label={t('loading')}>
           {Array.from({ length: 4 }, (_, i) => (
@@ -179,8 +218,23 @@ export function KitchenClient() {
               <li key={c.saleId} className={`kd-card${c.late ? ' is-late' : ''}`} aria-label={labelOf(c)}>
                 <div className="kd-card-head">
                   <span className="kd-card-label">{labelOf(c)}</span>
-                  <span className="kd-card-type">{c.orderType ? t(`type.${c.orderType}`) : ''}</span>
-                  <span className="kd-card-age">{t(ageKey(c.late, mins), { min: mins })}</span>
+                  {c.orderType ? (
+                    <span className={`kd-card-type is-${c.orderType}`}>
+                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+                        <path d={TYPE_ICON[c.orderType]} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      {t(`type.${c.orderType}`)}
+                    </span>
+                  ) : null}
+                  <span className="kd-card-age">
+                    {/* Review #4 — late is said with a clock and words, never by the amber alone. */}
+                    {c.late ? (
+                      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+                        <path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 4v5l3 2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    ) : null}
+                    {t(ageKey(c.late, mins), { min: mins })}
+                  </span>
                 </div>
                 <ul className="kd-dishes">
                   {c.dishes.map((d) => (
@@ -192,8 +246,28 @@ export function KitchenClient() {
                         disabled={d.cancelled}
                         onClick={() => void tick(c, d.id, !d.done)}
                       >
+                        {/* Review #3 — the row says it can be ticked: a circle that fills when the dish is done. */}
+                        <span className="kd-tick" aria-hidden="true">
+                          {d.done ? (
+                            <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
+                              <path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          ) : null}
+                        </span>
                         <span className="kd-qty">{d.qty} ×</span>
-                        <span className="kd-dish-name">{d.name}</span>
+                        <span className="kd-dish-name">
+                          {(() => {
+                            const p = portionParts(d.name, d.size);
+                            return p.size ? (
+                              <>
+                                {p.before} · <strong className="kd-portion">{p.size}</strong>
+                                {p.after}
+                              </>
+                            ) : (
+                              d.name
+                            );
+                          })()}
+                        </span>
                         {d.isNew ? <span className="kd-new">{t('new')}</span> : null}
                         {d.cancelled ? <span className="kd-off">{t('cancelled')}</span> : null}
                       </button>
