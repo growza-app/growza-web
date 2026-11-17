@@ -15,12 +15,18 @@ import { discountFrom, QUICK_PERCENTS, type DiscountKind } from './bill-discount
  * counter nobody should have to work out in their head.
  */
 export function DiscountSheet({
+  ownerOnlyFree = false,
   listMinor,
   current,
   onApply,
   onRemove,
   onClose,
 }: {
+  /**
+   * Jira GRW-725 — true for anyone but the owner: a discount of the whole bill is refused here, in words, rather than
+   * applied and then refused at Pay. The owner may apply it, and is asked why beside the discount.
+   */
+  ownerOnlyFree?: boolean;
   /** What the bill comes to before any discount. */
   listMinor: number;
   /** The discount on the bill now, if there is one: its percentage when it was given as one. */
@@ -37,7 +43,9 @@ export function DiscountSheet({
   const [typed, setTyped] = useState(current ? (current.pct !== null ? String(current.pct) : String(current.offMinor / 100)) : '');
   const money = (minor: number) => formatMoney(String(minor));
   const result = discountFrom(kind, typed, listMinor);
-  const ok = 'offMinor' in result;
+  // Jira GRW-725 — the whole bill off is the owner's.
+  const wholeBillRefused = ownerOnlyFree && 'offMinor' in result && listMinor > 0 && result.offMinor >= listMinor;
+  const ok = 'offMinor' in result && !wholeBillRefused;
 
   const apply = () => {
     if (!ok) return;
@@ -100,8 +108,10 @@ export function DiscountSheet({
           </span>
         </label>
 
-        <p className={`pf-discount-preview${!ok && result.problem !== 'empty' ? ' is-bad' : ''}`} role="status">
-          {ok
+        <p className={`pf-discount-preview${wholeBillRefused || (!ok && 'problem' in result && result.problem !== 'empty') ? ' is-bad' : ''}`} role="status">
+          {wholeBillRefused
+            ? t('ownerOnly')
+            : 'offMinor' in result
             ? t('preview', { off: money(result.offMinor), total: money(listMinor - result.offMinor) })
             : result.problem === 'tooBig'
               ? kind === 'pct'

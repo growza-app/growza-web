@@ -409,6 +409,10 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'This booking was marked as not come, so it cannot be paid for.': 'इस बुकिंग पर "नहीं आए" लिखा है, इसलिए इसका पेमेंट नहीं लिया जा सकता।',
   'This booking is already closed, so it cannot be paid for.': 'यह बुकिंग पहले ही बंद हो चुकी है, इसलिए इसका पेमेंट नहीं लिया जा सकता।',
   'That product was sold in sizes. Say which size is coming back': 'यह सामान साइज़ में बिका था। बताएँ कौन सा साइज़ वापस आ रहा है',
+  // ---- Jira GRW-725 — a bill taken to ₹0 is the owner's, with a reason.
+  'Only the owner can give the whole bill free. Give a smaller discount, or ask the owner.':
+    'पूरा बिल मुफ़्त सिर्फ़ मालिक कर सकते हैं। कम छूट दें, या मालिक से कहें।',
+  'Type why the whole bill is free, in 3 to 200 letters.': 'पूरा बिल मुफ़्त क्यों है, 3 से 200 अक्षरों में लिखें।',
 };
 
 /**

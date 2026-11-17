@@ -46,7 +46,8 @@ import { PaymentDone } from '../../components/PaymentDone';
 import { TillPrintActions, useTicketPrinter } from '../../components/TicketPrinter';
 import type { KitchenTicketDto } from '../../lib/api-types';
 import { DiscountSheet } from './DiscountSheet';
-import { shownPercent } from './bill-discount';
+import { freeBillBlock, isFreeBill, shownPercent } from './bill-discount';
+import { FreeBillReason } from './FreeBillReason';
 
 /**
  * Record payment in three taps (owner, 2026-10-09).
@@ -325,6 +326,8 @@ export function PayFlow({
   /** Owner, 2026-11-15 — the percentage the counter gave, when it gave one; named on the bill only while it still holds. */
   const [discountPct, setDiscountPct] = useState<number | null>(null);
   const [discountOpen, setDiscountOpen] = useState(false);
+  /** Jira GRW-725 — why the owner is giving the whole bill free; asked only while the bill is ₹0. */
+  const [freeReason, setFreeReason] = useState('');
   const [keypad, setKeypad] = useState<string | null>(null);
   /** Owner, 2026-10-14 — the bill row the keypad is pricing; null means it is pricing the whole total. */
   const [keypadFor, setKeypadFor] = useState<{ key: string; name: string; list: number } | null>(null);
@@ -603,6 +606,16 @@ export function PayFlow({
   }, [lines]);
   const listMinor = baseAmounts.reduce((sum, m) => sum + m, 0);
   const totalMinor = override ?? listMinor;
+  /*
+   * Jira GRW-725 — owner decision 2026-11-17: a discount that takes the bill to ₹0 is the owner's, with a typed reason.
+   * Anyone else is told so and Pay stays shut; the owner is asked why. The server refuses the same (403 / 400) — this
+   * is so the till says it before the tap, not after. However the ₹0 was reached: the Discount sheet, the typed total,
+   * or a line typed down to nothing.
+   */
+  const isOwner = session?.role === 'owner';
+  const freeBill = lines.length > 0 && isFreeBill(listMinor, totalMinor);
+  const freeBlock = lines.length > 0 ? freeBillBlock(listMinor, totalMinor, isOwner, freeReason) : null;
+  const freeReasonSent = freeBill && !freeBlock ? { discountReason: freeReason.trim() } : {};
 
   /*
    * Jira GRW-648 — the points, and what is left to collect once they come off.
@@ -950,7 +963,7 @@ export function PayFlow({
 
   /** ② — the tile that was tapped is the payment; this is the save. */
   const pay = async (mode: PaymentMode, pending = false) => {
-    if (saving || lines.length === 0) return;
+    if (saving || lines.length === 0 || freeBlock) return;
     felt(BUZZ.paid);
     setSaving(mode);
     setError(null);
@@ -1010,6 +1023,7 @@ export function PayFlow({
                 ...(cancelMemberIds.length ? { cancelMemberIds } : {}),
                 // Jira GRW-648 — the points, with the GROSS lines: the API takes them off the lines itself.
                 ...(redeemPoints > 0 ? { redeemPoints } : {}),
+                ...freeReasonSent,
                 ...(confirmed ? { confirmLargeAmount: true } : {}),
               }),
             );
@@ -1038,6 +1052,7 @@ export function PayFlow({
               ...(appOrder ?? {}),
               ...soldProducts,
               ...(redeemPoints > 0 ? { redeemPoints } : {}),
+              ...freeReasonSent,
               idempotencyKey: attemptKey,
               ...(token || !location ? {} : { location }),
             };
@@ -1571,8 +1586,15 @@ export function PayFlow({
         ) : null}
       </button>
     ) : null;
+  /*
+   * Jira GRW-725 — beside the discount: on a ₹0 bill, the plain sentence for anyone but the owner, and the owner's
+   * required Reason. Drawn wherever the bill is ₹0, not only where the Discount button is, because a typed total gets
+   * there too.
+   */
+  const freeBillRow = freeBill ? <FreeBillReason block={freeBlock} reason={freeReason} onReason={setFreeReason} disabled={saving !== null} /> : null;
   const discountSheet = discountOpen ? (
     <DiscountSheet
+      ownerOnlyFree={!isOwner}
       listMinor={listMinor}
       current={billOffMinor > 0 ? { pct: offPct, offMinor: billOffMinor } : null}
       onApply={(offMinor, pct) => {
@@ -1737,7 +1759,7 @@ export function PayFlow({
             else void pay(mode);
           }}
           // QA 2026-10-23 — the second way cannot be the first one again: the tile says so instead of a tap that does nothing.
-          disabled={saving !== null || firstWay?.mode === mode}
+          disabled={saving !== null || firstWay?.mode === mode || freeBlock !== null}
           aria-busy={saving === mode}
         >
           <span className="pf-pay-icon" aria-hidden="true">
@@ -1799,6 +1821,7 @@ export function PayFlow({
         </header>
         {dueLine}
         {discountRow}
+        {freeBillRow}
         {redeemRow}
         {/* Owner, 2026-10-23 — a scan taken here is answered, not ignored. */}
         {scanNote ? (
@@ -2207,6 +2230,7 @@ export function PayFlow({
               <strong className="pf-total-figure">{money(totalMinor)}</strong>
             </button>
             {discountRow}
+            {freeBillRow}
             {full ? (
               <div role="alert" className="pf-error">
                 {nv.billFull(MAX_LINES)}
@@ -2253,7 +2277,7 @@ export function PayFlow({
                     type="button"
                     className="btn pos-charge-cta"
                     data-step={guideReady ? 'ready' : lines.length > 0 ? 'waiting' : undefined}
-                    disabled={saving !== null || lines.length === 0}
+                    disabled={saving !== null || lines.length === 0 || freeBlock !== null}
                     onClick={completePosSale}
                   >
                     <span>{fromApp ? t('from.complete', { amount: money(dueMinor) }) : t('desk.chargeNow', { amount: money(dueMinor) })}</span>

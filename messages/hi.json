@@ -2102,7 +2102,8 @@
       "paidBy": "भुगतान का तरीका",
       "returnedBadge": "{n} वापस",
       "returnProducts": "{product} वापस लें",
-      "refunded": "वापस किए"
+      "refunded": "वापस किए",
+      "freeReason": "मुफ़्त क्यों दिया"
     },
     "daySchedule": {
       "seeAll": "सभी {count} बुकिंग देखें"
@@ -3178,6 +3179,9 @@
       "tooBigPct": "छूट 100% तक ही हो सकती है।",
       "tooBigAmount": "छूट बिल ({bill}) तक ही हो सकती है।",
       "wholeRupees": "सिर्फ़ पूरे रुपये।",
+      "ownerOnly": "पूरा बिल मुफ़्त सिर्फ़ मालिक कर सकते हैं। कम छूट दें, या मालिक से कहें।",
+      "reasonLabel": "वजह (ज़रूरी)",
+      "reasonHint": "पूरा बिल मुफ़्त क्यों है? 3 से 200 अक्षर। यह बिल पर रखी जाती है।",
       "remove": "छूट हटाएँ",
       "apply": "लागू करें"
     },
@@ -4732,6 +4736,7 @@
       "noLines": "इस ऑर्डर में कोई सामान नहीं है। ऐसा नहीं होना चाहिए, सपोर्ट को बताएँ।",
       "moneyTitle": "पैसा",
       "discountGiven": "बिल पर छूट",
+      "discountReason": "मुफ़्त क्यों दिया",
       "total": "कुल",
       "givenBack": "लौटाया",
       "pointsUsed": "पॉइंट्स से भुगतान",
@@ -5389,6 +5394,7 @@
       "dayLine": "{value} · {bills, plural, one {# बिल} other {# बिल}}",
       "billsTitle": "सबसे बड़ी छूट पहले",
       "billLine": "दाम {list} · लिया {charged}",
+      "reasonLine": "मुफ़्त क्यों: {reason}",
       "freeTag": "मुफ़्त",
       "freeItemsTitle": "मुफ़्त दिया गया",
       "freeItemLine": "{qty} × · {value}"

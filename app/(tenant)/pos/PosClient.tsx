@@ -12,6 +12,8 @@ import { PrinterButton, TillPrintActions, useTicketPrinter, type OrderRef } from
 import type { KitchenTicketDto } from '../lib/api-types';
 import { PaymentDone } from '../components/PaymentDone';
 import { DiscountSheet } from '../appointments/new/DiscountSheet';
+import { FreeBillReason } from '../appointments/new/FreeBillReason';
+import { freeBillBlock } from '../appointments/new/bill-discount';
 import { RedeemRow } from '../components/RedeemRow';
 import { useAreas, useSession } from '../components/SessionProvider';
 import { hasOrderQueue } from '../lib/areas';
@@ -72,8 +74,11 @@ function QueueTokenPayScreen({
   clientNoun: string;
   onOpenClientSheet: (startAdding: boolean) => void;
   onBack: () => void;
-  /** Owner, 2026-11-15 — `bill` is the discount the counter gave here, and its % when it gave one. */
-  onSettle: (ways: Array<{ mode: PaymentMode; amountMinor: number }>, redeemPoints: number, bill: { offMinor: number; pct: number | null }) => void;
+  /**
+   * Owner, 2026-11-15 — `bill` is the discount the counter gave here, and its % when it gave one. Jira GRW-725 — and
+   * `reason`, the owner's, when it takes the whole order off.
+   */
+  onSettle: (ways: Array<{ mode: PaymentMode; amountMinor: number }>, redeemPoints: number, bill: { offMinor: number; pct: number | null; reason?: string }) => void;
 }) {
   const tPay = useTranslations('payFlow');
   const tc = useTranslations('chrome');
@@ -89,7 +94,18 @@ function QueueTokenPayScreen({
   const billMinor = Math.max(0, token.totalMinor - billOff.offMinor);
   const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor: discountMinor } = useRewardQuote(token.customerId, billMinor);
   const dueMinor = Math.max(0, billMinor - discountMinor);
-  const settleWith = (ways: Array<{ mode: PaymentMode; amountMinor: number }>) => onSettle(ways, redeemPoints, billOff);
+  /*
+   * Jira GRW-725 — the whole order off is the owner's, with a reason: anyone else is told so and the ways of paying
+   * stay shut; the owner is asked why. The server refuses the same.
+   */
+  const isOwner = useSession()?.role === 'owner';
+  const [freeReason, setFreeReason] = useState('');
+  const freeBlock = billOff.offMinor > 0 ? freeBillBlock(token.totalMinor, token.totalMinor - billOff.offMinor, isOwner, freeReason) : null;
+  const wholeOrderOff = token.totalMinor > 0 && billOff.offMinor >= token.totalMinor;
+  const settleWith = (ways: Array<{ mode: PaymentMode; amountMinor: number }>) => {
+    if (freeBlock) return;
+    onSettle(ways, redeemPoints, wholeOrderOff ? { ...billOff, reason: freeReason.trim() } : billOff);
+  };
 
   const [qrStep, setQrStep] = useState(false);
   const [qrBroken, setQrBroken] = useState(false);
@@ -270,8 +286,10 @@ function QueueTokenPayScreen({
         ) : null}
       </button>
       )}
+      {wholeOrderOff ? <FreeBillReason block={freeBlock} reason={freeReason} onReason={setFreeReason} disabled={saving !== null} /> : null}
       {discountOpen ? (
         <DiscountSheet
+          ownerOnlyFree={!isOwner}
           listMinor={token.totalMinor}
           current={billOff.offMinor > 0 ? billOff : null}
           onApply={(offMinor, pct) => {
@@ -334,7 +352,7 @@ function QueueTokenPayScreen({
                 key={m}
                 type="button"
                 className={`pf-pay-tile pf-pay-${m}`}
-                disabled={saving !== null || firstWay?.mode === m}
+                disabled={saving !== null || firstWay?.mode === m || freeBlock !== null}
                 aria-busy={saving === m}
                 onClick={() => {
                   if (splitting && !firstWay) {
@@ -762,7 +780,7 @@ export function PosClient({
       tk: PosDailyToken,
       ways?: Array<{ mode: PaymentMode; amountMinor: number }>,
       redeemPoints = 0,
-      billOff: { offMinor: number; pct: number | null } = { offMinor: 0, pct: null },
+      billOff: { offMinor: number; pct: number | null; reason?: string } = { offMinor: 0, pct: null },
     ) => {
       if (!tk.paymentPending) {
         setTokenState(tk.id, 'completed');
@@ -785,6 +803,7 @@ export function PosClient({
           paymentMode: chosen,
           ...(ways.length > 1 ? { payments: ways } : {}),
           ...(billOff.offMinor > 0 ? { discountMinor: billOff.offMinor } : {}),
+          ...(billOff.reason ? { discountReason: billOff.reason } : {}),
           ...(redeemPoints > 0 ? { redeemPoints } : {}),
         });
         const paidMinor = settled.paidAmountMinor ?? tk.totalMinor;

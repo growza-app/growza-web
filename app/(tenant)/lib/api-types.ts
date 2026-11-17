@@ -634,6 +634,8 @@ export interface Appointment {
   paidAmountMinor: string | null;
   /** How the visit was paid — 'cash' | 'card' | 'upi' | 'other'; null until checkout. */
   paymentMode: string | null;
+  /** Jira GRW-725 — why the owner gave this bill free (every leg carries it). Withheld with the prices; null on every other bill. */
+  discountReason?: string | null;
   /** True while a counter product order is in the POS queue waiting for payment at handover. */
   paymentPending?: boolean;
   /**
@@ -1519,6 +1521,8 @@ export interface OrderDetail {
   refundedMinor?: number;
   /** The reward points that paid part of this counter order (net of any given back), with what they came to. Null when none did. */
   rewardPoints?: { points: number; discountMinor: string } | null;
+  /** Jira GRW-725 — why the owner gave the whole bill free. Money, so absent with it; null on every other bill. */
+  discountReason?: string | null;
 }
 
 /** The answer to a move that was refused because the order is no longer where the screen thought. */
@@ -2220,7 +2224,8 @@ export interface DiscountReportPage {
   window: MoneyWindow;
   totals: { belowMinor: number; bills: number; freeBills: number; allBills: number; listMinor: number };
   byDay: Array<{ dateISO: string; belowMinor: number; bills: number }>;
-  bills: Array<{ id: string; soldAtISO: string; tokenNo: number | null; listMinor: number; chargedMinor: number; belowMinor: number; free: boolean }>;
+  /** `reason` — Jira GRW-725: why the owner gave it free; null for a bill that was not, and one given before the rule. */
+  bills: Array<{ id: string; soldAtISO: string; tokenNo: number | null; listMinor: number; chargedMinor: number; belowMinor: number; free: boolean; reason?: string | null }>;
   freeItems: Array<{ name: string; qty: number; listMinor: number }>;
 }
 

@@ -2102,7 +2102,8 @@
       "paidBy": "Paid by",
       "returnedBadge": "{n} returned",
       "returnProducts": "Return {product}",
-      "refunded": "Refunded"
+      "refunded": "Refunded",
+      "freeReason": "Why it was free"
     },
     "daySchedule": {
       "seeAll": "See all {count} bookings"
@@ -3178,6 +3179,9 @@
       "tooBigPct": "A discount can be up to 100%.",
       "tooBigAmount": "A discount can be up to the bill, {bill}.",
       "wholeRupees": "Whole rupees only.",
+      "ownerOnly": "Only the owner can give the whole bill free. Give a smaller discount, or ask the owner.",
+      "reasonLabel": "Reason (needed)",
+      "reasonHint": "Why is the whole bill free? 3 to 200 letters. It is kept on the bill.",
       "remove": "Remove discount",
       "apply": "Apply"
     },
@@ -4732,6 +4736,7 @@
       "noLines": "This order has no items. That should not happen — tell support.",
       "moneyTitle": "Money",
       "discountGiven": "Discount on the bill",
+      "discountReason": "Why it was free",
       "total": "Total",
       "givenBack": "Given back",
       "pointsUsed": "Paid with points",
@@ -5389,6 +5394,7 @@
       "dayLine": "{value} · {bills, plural, one {# bill} other {# bills}}",
       "billsTitle": "Biggest first",
       "billLine": "Price {list} · charged {charged}",
+      "reasonLine": "Why free: {reason}",
       "freeTag": "Free",
       "freeItemsTitle": "Given free",
       "freeItemLine": "{qty} × · {value}"
