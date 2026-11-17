@@ -4698,6 +4698,7 @@
     "modes": "POS",
     "sell": "Sell",
     "queue": "Queue",
+    "tablePayFailed": "Could not open this table’s bill for payment. Try again.",
     "queuePickup": "Pickup",
     "return": "Return",
     "loadingBills": "Loading bills…",

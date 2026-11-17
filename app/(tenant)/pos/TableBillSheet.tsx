@@ -32,6 +32,7 @@ export function TableBillSheet({
   canManage,
   printer,
   onAddDishes,
+  onTakePayment,
   onDone,
 }: {
   table: DiningTable;
@@ -42,6 +43,8 @@ export function TableBillSheet({
   canManage: boolean;
   printer: ReturnType<typeof useTicketPrinter>;
   onAddDishes: () => void;
+  /** Owner, 17 Nov 2026 — given, Take payment hands the bill to the POS's payment screen instead of the three buttons here. */
+  onTakePayment?: () => void;
   /** Closed, paid, or dismissed — the map reads again, and says what happened when something did. */
   onDone: (said?: string) => void;
 }) {
@@ -353,7 +356,7 @@ export function TableBillSheet({
               ) : waiter && !table.openBill?.billPrinted ? (
                 <p className="field-hint tb-wait-bill">{t('waiterAskBill')}</p>
               ) : (
-                <button type="button" className="btn tb-take-pay" disabled={busy} onClick={() => setPaying(true)}>
+                <button type="button" className="btn tb-take-pay" disabled={busy} onClick={() => (onTakePayment ? onTakePayment() : setPaying(true))}>
                   {t('takePayment', { amount: money(totalMinor) })}
                 </button>
               )}

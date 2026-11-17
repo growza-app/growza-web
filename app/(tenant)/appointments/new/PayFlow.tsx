@@ -172,6 +172,7 @@ export function PayFlow({
   leaveRef,
   onSaleCompleted,
   onOpenQueue,
+  onPayTable,
   reloadKey = 0,
   addingTo = null,
   inactive = false,
@@ -223,6 +224,11 @@ export function PayFlow({
   onSaleCompleted?: (saleId: string) => void;
   /** Opens the POS Queue tab directly when the desk taps "View Queue" on the queued-order confirmation banner. */
   onOpenQueue?: () => void;
+  /**
+   * Owner, 17 Nov 2026 — "these options should be as we have without tables": a table's Take payment opens the same
+   * payment screen a Pickup order is paid on (ways to pay, split, discount, points, QR, the guest), not three buttons.
+   */
+  onPayTable?: (bill: { saleId: string; tableName: string }) => void;
   /** Incremented after a return or exchange on POS so the product shelf refreshes its live stock counts in place. */
   reloadKey?: number;
   /**
@@ -404,6 +410,8 @@ export function PayFlow({
   // Refresh shelf stock counts in place when a return or exchange is recorded in the POS sheet above this till.
   useEffect(() => {
     if (!reloadKey) return;
+    // A table paid on the POS's payment screen: the room reads again, so its tile is free.
+    setMapKey((k) => k + 1);
     let gone = false;
     void api
       .products(location)
@@ -2282,6 +2290,14 @@ export function PayFlow({
               setAtTable({ id: billOf.table.id, label: `${billOf.table.name} · ${billOf.area}`, ...(billOf.table.openBill ? { billId: billOf.table.openBill.saleId } : {}) });
               setBillOf(null);
             }}
+            onTakePayment={
+              onPayTable && billOf.table.openBill
+                ? () => {
+                    onPayTable({ saleId: billOf.table.openBill!.saleId, tableName: billOf.table.name });
+                    setBillOf(null);
+                  }
+                : undefined
+            }
             onDone={(said) => {
               setBillOf(null);
               setMapKey((k) => k + 1);
