@@ -4574,7 +4574,11 @@
         "size_twice": "Size listed twice",
         "too_many_sizes": "Too many sizes",
         "name_too_long": "Name is too long"
-      }
+      },
+      "notKeptVeg": "Veg / non-veg marks in the file are not kept yet.",
+      "notKeptDescription": "Descriptions in the file are not kept yet.",
+      "pricesDiffer": "{n, plural, one {1 dish on the menu has a different price in the file.} other {# dishes on the menu have a different price in the file.}} Prices are not changed here.",
+      "menuPrice": "{price} on the menu — not changed"
     }
   },
   "kitchen": {

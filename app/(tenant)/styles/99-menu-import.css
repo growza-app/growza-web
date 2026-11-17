@@ -106,3 +106,20 @@
     text-align: left;
   }
 }
+
+/* L5 · L6 (owner, 2026-11-17) — a price the import will not change, said in the amber the app uses for "look at this". */
+.mi-warn {
+  color: var(--amber-ink);
+}
+
+.mi-inline-link {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}

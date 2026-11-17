@@ -50,6 +50,19 @@ describe('the dialog', () => {
   });
 });
 
+describe('the loopholes (owner, 2026-11-17)', () => {
+  it('L5 — veg marks and descriptions the file carried are named as not kept', () => {
+    expect(dialog).toContain("review.notKept.includes('veg') ? <p className=\"mi-note\">{t('notKeptVeg')}</p>");
+    expect(dialog).toContain("review.notKept.includes('description') ? <p className=\"mi-note\">{t('notKeptDescription')}</p>");
+  });
+
+  it('L6 — a dish on the menu at another price says its menu price is not changed, and points to changing prices', () => {
+    expect(dialog).toContain('d.onMenu && d.menuPriceMinor !== undefined && d.menuPriceMinor !== d.priceMinor');
+    expect(dialog).toContain("t('menuPrice', { price: money(d.menuPriceMinor!) })");
+    expect(dialog).toMatch(/t\('pricesDiffer', \{ n: differing \}\)[\s\S]{0,200}onClick=\{onPricesFromFile\}/);
+  });
+});
+
 describe('the Menu screen', () => {
   it("a kitchen's Import opens the menu file; a shop's opens the column-by-column import", () => {
     expect(list).toContain('const openImport = () => (counted ? setImportOpen(true) : setMenuOpen(true));');

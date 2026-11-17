@@ -66,6 +66,9 @@ export function ImportMenu({
 
   const fresh = review?.dishes.filter((d) => !d.onMenu) ?? [];
   const already = (review?.dishes.length ?? 0) - fresh.length;
+  /** L6 — dishes on the menu whose price in the file is different: the import leaves them as they are, and says so. */
+  const priceDiffers = (d: NonNullable<typeof review>['dishes'][number]) => d.onMenu && d.menuPriceMinor !== undefined && d.menuPriceMinor !== d.priceMinor;
+  const differing = review?.dishes.filter(priceDiffers).length ?? 0;
 
   const add = async () => {
     if (!review || fresh.length === 0 || busy) return;
@@ -144,6 +147,17 @@ export function ImportMenu({
               {review.newExtrasGroups.length > 0 ? <p className="mi-note">{t('newExtras', { list: review.newExtrasGroups.join(', ') })}</p> : null}
               {review.sizesDropped ? <p className="mi-note">{t('sizesDropped')}</p> : null}
               {review.extrasDropped ? <p className="mi-note">{t('extrasDropped')}</p> : null}
+              {/* L5 (owner, 2026-11-17) — said, never dropped silently. */}
+              {review.notKept.includes('veg') ? <p className="mi-note">{t('notKeptVeg')}</p> : null}
+              {review.notKept.includes('description') ? <p className="mi-note">{t('notKeptDescription')}</p> : null}
+              {differing > 0 ? (
+                <p className="mi-note mi-warn">
+                  {t('pricesDiffer', { n: differing })}{' '}
+                  <button type="button" className="mi-inline-link" onClick={onPricesFromFile}>
+                    {t('pricesFromFile')}
+                  </button>
+                </p>
+              ) : null}
 
               {review.skipped.length > 0 ? (
                 <section className="mi-section" aria-labelledby="mi-skipped">
@@ -173,6 +187,7 @@ export function ImportMenu({
                           {[d.category, d.extras.length > 0 ? t('extrasLine', { list: d.extras.map((g) => g.name).join(', ') }) : null].filter(Boolean).join(' · ')}
                         </span>
                         {d.onMenu ? <span className="chip mi-flag">{t('onMenu')}</span> : null}
+                        {priceDiffers(d) ? <span className="mi-meta mi-warn">{t('menuPrice', { price: money(d.menuPriceMinor!) })}</span> : null}
                       </li>
                     ))}
                   </ul>

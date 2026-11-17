@@ -401,12 +401,15 @@ export type MenuSkipReason = 'no_name' | 'no_price' | 'bad_price' | 'bad_gst' | 
 /** What adding the file would do. Nothing is saved until it is confirmed. */
 export interface MenuReview {
   format: 'growza' | 'petpooja';
-  dishes: Array<MenuDish & { onMenu: boolean }>;
+  /** L6 — a dish already on the menu carries its menu price. */
+  dishes: Array<MenuDish & { onMenu: boolean; menuPriceMinor?: number }>;
   skipped: Array<{ row: number; name: string | null; reason: MenuSkipReason }>;
   newCategories: string[];
   newExtrasGroups: string[];
   sizesDropped: boolean;
   extrasDropped: boolean;
+  /** L5 — what the file carried that a dish cannot hold yet. */
+  notKept: Array<'veg' | 'description'>;
 }
 
 export interface MenuImportResult {
