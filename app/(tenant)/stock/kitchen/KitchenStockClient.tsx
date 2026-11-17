@@ -9,6 +9,14 @@ import { useSession } from '../../components/SessionProvider';
 import { MaterialSheet } from './MaterialSheet';
 import { MaterialImportSheet } from './MaterialImportSheet';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { StockInSheet } from './StockInSheet';
+import { PurchasesSheet } from './PurchasesSheet';
+import { SuppliersSheet } from './SuppliersSheet';
+import { WasteSheet } from './WasteSheet';
+import { CountSheet } from './CountSheet';
+
+/** Jira GRW-738 — the sheets the actions open, one at a time. */
+type Sheet = { kind: 'stockIn'; id: string | null } | { kind: 'purchases' } | { kind: 'suppliers' } | { kind: 'waste' } | { kind: 'count' } | null;
 
 type Filter = 'low' | 'all' | 'noRecipe';
 
@@ -16,6 +24,10 @@ type Filter = 'low' | 'all' | 'noRecipe';
  * Jira GRW-737 — the kitchen's raw materials at one branch: low ones first, below zero in red (BR-01: a count may go under, the kitchen
  * never stops), a dish with no recipe listed so the owner knows what is not tracked. The owner switches tracking on and types today's amounts
  * once; the owner and a manager add and change items; the counter and the cook read.
+ *
+ * Jira GRW-738 — and the three things that keep it true: Stock in (the owner and a manager), Wasted and Count (them, and the kitchen — a
+ * role that works the Kitchen page and not the till, the same line `cooksOnly` draws). Finishing a count is the owner's and a manager's.
+ * Suppliers and past stock ins are a tap away for whoever records stock in. Every row opens its history.
  */
 export function KitchenStockClient({ branchId }: { branchId: string }) {
   const t = useTranslations('kitchenStock');
@@ -23,6 +35,8 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
   const grid = session?.areas?.pages;
   const isOwner = session?.role === 'owner';
   const mayChange = isOwner || (grid ? grid.services === 'manage' : session?.role === 'manager');
+  // The API's own line (kitchen-stock-buying.controller.ts): the menu's people, or a Kitchen holder who does not run the till.
+  const mayWorkKitchen = mayChange || (grid ? grid.kitchen === 'manage' && grid.bookings !== 'manage' : false);
 
   const [data, setData] = useState<KitchenStockList | null>(null);
   const [failed, setFailed] = useState(false);
@@ -53,6 +67,12 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
     }
   };
   const [confirmOff, setConfirmOff] = useState(false);
+  const [sheet, setSheet] = useState<Sheet>(null);
+  const done = (text: string) => {
+    setSheet(null);
+    setNotice(text);
+    void load();
+  };
 
   const load = useCallback(async () => {
     setFailed(false);
@@ -190,6 +210,31 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
         </section>
       ) : null}
 
+      {mayWorkKitchen && materials.length > 0 ? (
+        <div className={`ks-actions ${mayChange ? '' : 'ks-actions-2'}`} role="group" aria-label={t('actions.label')}>
+          {mayChange ? (
+            <button type="button" className="btn ks-action" onClick={() => setSheet({ kind: 'stockIn', id: null })}>
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14" />
+              </svg>
+              {t('actions.stockIn')}
+            </button>
+          ) : null}
+          <button type="button" className="btn btn-ghost ks-action" onClick={() => setSheet({ kind: 'waste' })}>
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" />
+            </svg>
+            {t('actions.wasted')}
+          </button>
+          <button type="button" className="btn btn-ghost ks-action" onClick={() => setSheet({ kind: 'count' })}>
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 5h10M9 12h10M9 19h10M4 5l1 1 2-2M4 12l1 1 2-2M4 19l1 1 2-2" />
+            </svg>
+            {t('actions.count')}
+          </button>
+        </div>
+      ) : null}
+
       {error ? (
         <div role="alert" className="sheet-foot sheet-foot-error ks-error">
           {error}
@@ -262,15 +307,12 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
                 </span>
               </>
             );
+            // Jira GRW-738 — every row opens: to change it (the menu's people) or to read its history (everyone else).
             return (
               <li key={m.id}>
-                {mayChange ? (
-                  <button type="button" className="ks-row ks-row-btn" onClick={() => setEditing(m)}>
-                    {row}
-                  </button>
-                ) : (
-                  <div className="ks-row">{row}</div>
-                )}
+                <button type="button" className="ks-row ks-row-btn" onClick={() => setEditing(m)}>
+                  {row}
+                </button>
               </li>
             );
           })}
@@ -289,6 +331,16 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
           </button>
           <button type="button" className="btn ks-add" onClick={() => setEditing('new')}>
             + {t('add')}
+          </button>
+        </div>
+      ) : null}
+      {mayChange && filter !== 'noRecipe' ? (
+        <div className="ks-pair">
+          <button type="button" className="btn btn-ghost" onClick={() => setSheet({ kind: 'suppliers' })}>
+            {t('actions.suppliers')}
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={() => setSheet({ kind: 'purchases' })}>
+            {t('actions.pastStockIn')}
           </button>
         </div>
       ) : null}
@@ -329,11 +381,36 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
         <MaterialSheet
           material={editing === 'new' ? null : editing}
           branchId={branchId}
+          readOnly={!mayChange}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
             void load();
           }}
+        />
+      ) : null}
+      {sheet?.kind === 'stockIn' ? (
+        <StockInSheet branchId={branchId} materials={materials} purchaseId={sheet.id} onClose={() => setSheet(null)} onDone={done} />
+      ) : null}
+      {sheet?.kind === 'purchases' ? (
+        <PurchasesSheet
+          branchId={branchId}
+          onClose={() => setSheet(null)}
+          onOpen={(id) => setSheet({ kind: 'stockIn', id })}
+          onNew={() => setSheet({ kind: 'stockIn', id: null })}
+        />
+      ) : null}
+      {sheet?.kind === 'suppliers' ? <SuppliersSheet branchId={branchId} onClose={() => setSheet(null)} /> : null}
+      {sheet?.kind === 'waste' ? <WasteSheet materials={materials} onClose={() => setSheet(null)} onSaved={done} /> : null}
+      {sheet?.kind === 'count' ? (
+        <CountSheet
+          branchId={branchId}
+          mayFinish={mayChange}
+          onClose={() => {
+            setSheet(null);
+            void load();
+          }}
+          onFinished={done}
         />
       ) : null}
     </div>

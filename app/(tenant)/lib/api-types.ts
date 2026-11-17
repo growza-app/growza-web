@@ -2506,6 +2506,119 @@ export interface DishRecipe {
   sizes: Array<{ variantId: string | null; label: string | null; priceMinor: number; lines: RecipeLineDto[]; needsFixing: boolean }>;
 }
 
+/** Jira GRW-738 — who a branch buys from, and the pack an item last came in from them. */
+export interface StockSupplier {
+  id: string;
+  locationId: string;
+  name: string;
+  phone: string | null;
+  gstin: string | null;
+  notes: string | null;
+  archived: boolean;
+  lastUsedAt: string | null;
+}
+export interface RememberedPack {
+  supplierId: string | null;
+  materialId: string;
+  /** Thousandths of the item's unit in one pack. */
+  packSize: number;
+  packLabel: string | null;
+}
+/** Jira GRW-738 — a stock in. Money is paise before GST; quantities are thousandths. Money fields are absent for a viewer who cannot see it. */
+export interface PurchaseLineDto {
+  id: string;
+  materialId: string;
+  name: string;
+  unit: MaterialUnit;
+  packSize: number;
+  packLabel: string | null;
+  packs: number;
+  qty: number;
+  priceMinor?: number | null;
+  unitCost?: number | null;
+  totalMinor?: number | null;
+}
+export interface PurchaseSummary {
+  id: string;
+  locationId: string;
+  supplierId: string | null;
+  supplierName: string | null;
+  boughtOn: string;
+  billNo: string | null;
+  gstMinor?: number | null;
+  totalMinor?: number;
+  lineCount: number;
+  noPrice: boolean;
+  createdAt: string;
+  createdBy: string | null;
+}
+export interface PurchaseDetail extends PurchaseSummary {
+  photoUrl: string | null;
+  lines: PurchaseLineDto[];
+}
+export interface PurchaseLineInput {
+  id?: string;
+  materialId: string;
+  packSize?: number;
+  packLabel?: string | null;
+  packs: number;
+  priceMinor: number | null;
+}
+export interface PurchaseInput {
+  locationId?: string;
+  supplierId: string | null;
+  boughtOn: string;
+  billNo: string | null;
+  gstMinor: number | null;
+  lines: PurchaseLineInput[];
+  anyway?: boolean;
+}
+export type WasteReason = 'spoiled' | 'dropped' | 'expired' | 'other';
+/** Jira GRW-738 — one line of a raw material's history, newest first. `unitCost` is absent for a viewer who cannot see the money. */
+export interface MaterialMovement {
+  kind: 'opening' | 'used' | 'returned' | 'received' | 'wasted' | 'counted' | 'corrected';
+  qty: number;
+  stockAfter: number;
+  unitCost?: number | null;
+  note: string | null;
+  reason: WasteReason | null;
+  visitKey: string | null;
+  dish: string | null;
+  by: string | null;
+  purchaseId: string | null;
+  supplier: string | null;
+  billNo: string | null;
+  createdAt: string;
+}
+/** Jira GRW-738 — an open count: what each item says, what was typed, and what Finish would set (BR-06 adds what moved since). */
+export interface StockCountLine {
+  materialId: string;
+  name: string;
+  unit: MaterialUnit;
+  stock: number;
+  counted: number | null;
+  countedAt: string | null;
+  since: number;
+  after: number | null;
+  difference: number | null;
+  differenceMinor?: number | null;
+}
+export interface StockCount {
+  id: string;
+  locationId: string;
+  startedAt: string;
+  startedBy: string | null;
+  lines: StockCountLine[];
+  skipped: string[];
+}
+export interface FinishedCount {
+  id: string;
+  locationId: string;
+  changed: Array<{ materialId: string; name: string; unit: MaterialUnit; before: number; after: number; difference: number }>;
+  unchanged: number;
+  skipped: string[];
+}
+
 /** Jira GRW-737 — one row of a raw-material file, as read (amounts in thousandths; `amount` null = not counted yet). */
 export interface MaterialImportRow {
   name: string;

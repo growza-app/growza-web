@@ -315,6 +315,17 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/stock/materials/opening',
     'POST /api/v1/stock/materials/import/parse',
     'POST /api/v1/stock/materials/import',
+    // Jira GRW-738 — suppliers, stock in (and its bill's photo), wastage and counts.
+    'POST /api/v1/stock/suppliers',
+    'PATCH /api/v1/stock/suppliers/:id',
+    'POST /api/v1/stock/purchases',
+    'PATCH /api/v1/stock/purchases/:id',
+    'DELETE /api/v1/stock/purchases/:id',
+    'POST /api/v1/stock/purchases/:id/photo',
+    'POST /api/v1/stock/wastage',
+    'POST /api/v1/stock/counts',
+    'PATCH /api/v1/stock/counts/:id',
+    'POST /api/v1/stock/counts/:id/finish',
     'PUT /api/v1/settings/kitchen-stock',
   ],
   '/providers': [

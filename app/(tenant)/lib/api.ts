@@ -205,7 +205,8 @@ import type {
   StockTakeResult,
   MovementKind,
   ManualMovementKind,
-  VisitRewards, AddonGroup, AddonGroupInput, KitchenCard, KitchenStockList, StockMaterial, MaterialUnit, DishRecipe, MaterialImportRow, MaterialImportReview } from './api-types';
+  VisitRewards, AddonGroup, AddonGroupInput, KitchenCard, KitchenStockList, StockMaterial, MaterialUnit, DishRecipe, MaterialImportRow, MaterialImportReview,
+  StockSupplier, RememberedPack, PurchaseSummary, PurchaseDetail, PurchaseInput, WasteReason, MaterialMovement, StockCount, FinishedCount } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, ShopDaySummary, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
 
@@ -732,6 +733,29 @@ export const api = {
     uploadFile<MaterialImportReview>(`/api/v1/stock/materials/import/parse?location=${encodeURIComponent(location)}`, 'file', file),
   importMaterials: (location: string, items: MaterialImportRow[]) =>
     post<{ added: number; already: number }>('/api/v1/stock/materials/import', { locationId: location, items }),
+  /** Jira GRW-738 — an item's recent history (who, why, which stock in), newest first. */
+  materialMovements: (id: string) => get<{ movements: MaterialMovement[] }>(`/api/v1/stock/materials/${encodeURIComponent(id)}/movements`),
+  /** Jira GRW-738 — suppliers (last used first) and the pack each item last came in from them. Owner and manager only. */
+  suppliers: (location: string, withArchived = false) =>
+    get<{ suppliers: StockSupplier[]; packs: RememberedPack[] }>(`/api/v1/stock/suppliers?location=${encodeURIComponent(location)}${withArchived ? '&archived=1' : ''}`),
+  saveSupplier: (id: string | null, body: { locationId?: string; name?: string; phone?: string | null; gstin?: string | null; notes?: string | null; archived?: boolean }) =>
+    id ? patch<{ supplier: StockSupplier }>(`/api/v1/stock/suppliers/${encodeURIComponent(id)}`, body) : post<{ supplier: StockSupplier }>('/api/v1/stock/suppliers', body),
+  purchases: (location: string, offset = 0) =>
+    get<{ purchases: PurchaseSummary[]; more: boolean }>(`/api/v1/stock/purchases?location=${encodeURIComponent(location)}&offset=${offset}`),
+  purchase: (id: string) => get<{ purchase: PurchaseDetail }>(`/api/v1/stock/purchases/${encodeURIComponent(id)}`),
+  /** A 409 `duplicate_bill` carries `enteredAt`; send again with `anyway: true` to save it regardless. */
+  savePurchase: (id: string | null, body: PurchaseInput) =>
+    id ? patch<{ purchase: PurchaseDetail }>(`/api/v1/stock/purchases/${encodeURIComponent(id)}`, body) : post<{ purchase: PurchaseDetail }>('/api/v1/stock/purchases', body),
+  deletePurchase: (id: string) => del<{ deleted: true }>(`/api/v1/stock/purchases/${encodeURIComponent(id)}`),
+  uploadPurchasePhoto: (id: string, file: File) => uploadFile<{ purchase: PurchaseDetail }>(`/api/v1/stock/purchases/${encodeURIComponent(id)}/photo`, 'photo', file),
+  recordWastage: (body: { materialId: string; qty: number; reason: WasteReason; note?: string | null }) =>
+    post<{ wasted: { materialId: string; name: string; stockBefore: number; stock: number; belowZero: boolean } }>('/api/v1/stock/wastage', body),
+  /** The branch's open count, or a new one (one per branch). */
+  startCount: (location: string) => post<{ count: StockCount }>('/api/v1/stock/counts', { locationId: location }),
+  saveCount: (id: string, entries: Array<{ materialId: string; qty: number | null }>) =>
+    patch<{ count: StockCount }>(`/api/v1/stock/counts/${encodeURIComponent(id)}`, { entries }),
+  /** A 409 `already_finished` carries `finishedBy`. */
+  finishCount: (id: string) => post<{ finished: FinishedCount }>(`/api/v1/stock/counts/${encodeURIComponent(id)}/finish`, {}),
   recipe: (productId: string) => get<DishRecipe>(`/api/v1/products/${encodeURIComponent(productId)}/recipe`),
   saveRecipe: (productId: string, variantId: string | null, lines: Array<{ materialId: string; qty: number }>) =>
     put<DishRecipe>(`/api/v1/products/${encodeURIComponent(productId)}/recipe`, { variantId, lines }),
