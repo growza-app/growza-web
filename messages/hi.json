@@ -4750,6 +4750,7 @@
     "needQueuePaymentMode": "इस ऑर्डर को पूरा करने से पहले चुनें कि ग्राहक ने कैसे भुगतान किया।",
     "settleFailed": "भुगतान सेव नहीं हो सका। कृपया फिर कोशिश करें।",
     "backToQueueDone": "कतार पर वापस जाएँ",
+    "backToTablesDone": "टेबल पर वापस जाएँ",
     "backToQueueDonePickup": "पिकअप पर वापस जाएँ",
     "takePayment": "पेमेंट लें · {token}",
     "addItems": "और जोड़ें",

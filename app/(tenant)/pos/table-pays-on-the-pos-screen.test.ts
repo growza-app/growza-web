@@ -13,7 +13,7 @@ const sheet = readFileSync(resolve(__dirname, 'TableBillSheet.tsx'), 'utf8');
 
 describe('a table is paid on the POS payment screen', () => {
   it('the sheet hands Take payment up when it can', () => {
-    expect(sheet).toContain('onClick={() => (onTakePayment ? onTakePayment() : setPaying(true))}');
+    expect(sheet).toContain('onClick={() => (onTakePayment && !waiter ? onTakePayment() : setPaying(true))}');
     expect(flow).toContain('onPayTable({ saleId: billOf.table.openBill!.saleId, tableName: billOf.table.name });');
   });
   it('the POS reads the bill fresh and opens its payment screen under the table’s name, with no token number', () => {
@@ -23,7 +23,7 @@ describe('a table is paid on the POS payment screen', () => {
     expect(pos).toContain("{mode === 'queue' || payingTable !== null ? (");
   });
   it('Back and the receipt return to the tables, and the room reads again once paid', () => {
-    expect(pos).toContain("nextLabel={payingTable !== null ? tTables('backToTables') : t(qk('backToQueueDone'))}");
+    expect(pos).toContain("nextLabel={payingTable !== null ? t('backToTablesDone') : t(qk('backToQueueDone'))}");
     expect(pos).toContain('if (settledReceipt && payingTable !== null) setReloadKey((k) => k + 1);');
     expect(flow).toContain('    // A table paid on the POS\'s payment screen: the room reads again, so its tile is free.\n    setMapKey((k) => k + 1);');
   });

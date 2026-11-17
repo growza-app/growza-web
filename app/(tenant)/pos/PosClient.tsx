@@ -451,7 +451,6 @@ export function PosClient({
   const t = useTranslations('pos');
   const tPay = useTranslations('payFlow');
   const tNouns = useTranslations('nouns');
-  const tTables = useTranslations('posTables');
   const tc = useTranslations('chrome');
   const nv = useNewVisitCopy();
   const locale = useLocale();
@@ -1518,7 +1517,7 @@ export function PosClient({
             summary={settledReceipt.summary}
             bill={settledReceipt.bill}
             phone={settledReceipt.phone}
-            nextLabel={payingTable !== null ? tTables('backToTables') : t(qk('backToQueueDone'))}
+            nextLabel={payingTable !== null ? t('backToTablesDone') : t(qk('backToQueueDone'))}
             onNextCustomer={() => {
               setSettledReceipt(null);
               setPayingTable(null);

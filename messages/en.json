@@ -4750,6 +4750,7 @@
     "needQueuePaymentMode": "Select how the customer paid before marking this order done.",
     "settleFailed": "Could not save payment. Please try again.",
     "backToQueueDone": "Back to queue",
+    "backToTablesDone": "Back to tables",
     "backToQueueDonePickup": "Back to pickup",
     "takePayment": "Take payment · {token}",
     "addItems": "Add items",
