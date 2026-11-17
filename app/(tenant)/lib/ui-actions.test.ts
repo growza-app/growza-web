@@ -206,7 +206,9 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   // Jira GRW-721 — taking a dish off a table's bill, from the till's table sheet: drawn only for the owner and a manager
   // (the sheet's `canManage`), and the API's handler says the same.
   // Jira GRW-722 — Move table, on the same table's sheet.
-  '/pos': ['POST /api/v1/counter-sales/:id/cancel-items', 'POST /api/v1/tables/:id/move', 'POST /api/v1/tables/:id/join', 'POST /api/v1/counter-sales/:id/service-charge'],
+  '/pos': ['POST /api/v1/counter-sales/:id/cancel-items', 'POST /api/v1/tables/:id/move', 'POST /api/v1/tables/:id/join', 'POST /api/v1/counter-sales/:id/service-charge',
+    // Jira GRW-716 — the till asks for its letter so it can keep billing offline.
+    'POST /api/v1/till-devices'],
   /*
    * Jira GRW-647 — a switch and a device registration, both the signed-in person's own.
    *
@@ -279,6 +281,9 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/products',
     'POST /api/v1/products/import',
     'POST /api/v1/products/import/parse',
+    // Jira GRW-715 — a kitchen's whole menu from a file, on the same owner-only screen.
+    'POST /api/v1/products/menu-import',
+    'POST /api/v1/products/menu-import/parse',
     'PATCH /api/v1/products/:id',
     'DELETE /api/v1/products/:id',
     'POST /api/v1/products/:id/photo',

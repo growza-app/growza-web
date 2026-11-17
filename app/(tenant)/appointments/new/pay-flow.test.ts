@@ -401,7 +401,8 @@ describe('Record payment in three taps', () => {
     // A token already carries its client, so it is never asked.
     expect(flow).toMatch(/token \? \{ queueEntryId: token\.id \}/);
     // A name with no number is not a row this screen writes: the counter-sale route creates it with the sale.
-    expect(flow).toMatch(/\{ customerName: \(client as \{ name: string \}\)\.name \}/);
+    // Jira GRW-716 — and a guest added offline brings their number with the name.
+    expect(flow).toMatch(/\{ customerName: named\.name, \.\.\.\(named\.phone \? \{ customerPhone: named\.phone \} : \{\}\) \}/);
     expect(client).toMatch(/if \(!stored\) return onPick\(\{ id: null, name: newName\.trim\(\), waPhone: null \}\);/);
     // Save needs the name; the number only has to be valid IF one was typed.
     expect(client).toMatch(/const problem = checkPhone\(newPhone, \{ required: false \}\);/);
@@ -654,5 +655,13 @@ describe('a bill paid two ways', () => {
     }
     expect(css).toMatch(/\.pf-split-link \{[\s\S]{0,120}min-height: 2\.75rem;/);
     expect(css).toMatch(/\.pf-split-held \{/);
+  });
+});
+
+describe('a kitchen’s phone till shows the whole menu (owner, 2026-11-17)', () => {
+  it('draws every dish where the shelf is not counted, and keeps eight quick tiles where it is', () => {
+    // Nine dishes left the ninth reachable only by typing it; the laptop till already showed them all.
+    expect(flow).toContain('const shown = counted ? (inStock.length > 0 ? inStock : byCat).slice(0, TILES) : [...byCat];');
+    expect(flow).toContain('}, [productsOnly, products, productCategory, lines, counted]);');
   });
 });

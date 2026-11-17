@@ -1,5 +1,6 @@
 'use client';
 
+import { neverArrived } from '../../lib/offline-till';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
@@ -227,6 +228,9 @@ export function ClientSheet({ location, onPick, onClose, startAdding = false }: 
       const made = await api.createCustomer({ phone: stored, name: newName.trim(), ...(location ? { locationId: location } : {}) });
       onPick({ id: made.id, name: made.name, waPhone: made.waPhone });
     } catch (e) {
+      // Jira GRW-716 — no internet: the guest goes on the order by name and number, and the server finds or makes them
+      // by that number when the order is sent. A refusal from the server (a bad number, say) is still said.
+      if (neverArrived(e)) return onPick({ id: null, name: newName.trim(), waPhone: stored });
       setError(e instanceof ApiError ? e.message : nv.saveUnknown);
       setSaving(false);
     }

@@ -276,9 +276,11 @@ export function OrderClient({
           the two are no longer both said as "Order #…": the title says "Token 5", the line below "Order #7D9906BA". */}
       <PageHeader
         title={
-          order.tokenNo && counted
-            ? t('list.tokenTitle', { n: formatTokenNo(order.tokenNo).slice(1) })
-            : t('list.orderCode', { code: order.tokenNo ? formatTokenNo(order.tokenNo).slice(1) : code })
+          order.offlineToken
+            ? t('list.orderCode', { code: order.offlineToken })
+            : order.tokenNo && counted
+              ? t('list.tokenTitle', { n: formatTokenNo(order.tokenNo).slice(1) })
+              : t('list.orderCode', { code: order.tokenNo ? formatTokenNo(order.tokenNo).slice(1) : code })
         }
       />
       <div className={`page-body ord-page ord-detail ${hasBar ? 'has-bar' : ''}`} aria-busy={busy || undefined}>
@@ -286,11 +288,13 @@ export function OrderClient({
           <span className={`ord-state-chip ord-s-${order.known ? order.status : 'unknown'}`}>{stateWord(order.status)}</span>
           <span className="ord-d-meta">
             {when(order.soldAt)} · {channelWord(order.channel)}
-            {order.tokenNo ? ` · ${t('list.orderCode', { code })}` : ''}
+            {order.tokenNo || order.offlineToken ? ` · ${t('list.orderCode', { code })}` : ''}
             {isCounter && severalBranches && order.branchName ? ` · ${order.branchName}` : ''}
             {order.externalRef ? ` · ${fromApp ? t('detail.appOrderRef', { ref: order.externalRef }) : order.externalRef}` : ''}
           </span>
         </section>
+        {/* Jira GRW-716 — taken while the till was offline; BR-04 says so plainly when it reached us more than a day later. */}
+        {order.offlineToken ? <p className={`ord-offline-note${order.sentLate ? ' is-late' : ''}`}>{order.sentLate ? t('detail.offlineLate') : t('detail.offline')}</p> : null}
 
         {!isCounter && !fromApp ? (
           <OrderMarketplaceLine
