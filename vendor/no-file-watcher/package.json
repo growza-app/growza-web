@@ -1,0 +1,7 @@
+{
+  "name": "@parcel/watcher",
+  "version": "2.6.0-growza.0",
+  "description": "Stand-in: next-intl's message extractor (the only user of @parcel/watcher) is not used here, and every @parcel/watcher pulls picomatch, which has an unpatched ReDoS (GHSA-fc5q-39xc-vjpf).",
+  "main": "index.js",
+  "license": "MIT"
+}

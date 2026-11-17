@@ -32,6 +32,8 @@
 FROM node:22-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee AS deps
 WORKDIR /app
 COPY package.json package-lock.json .npmrc ./
+# GRW-737 CI — the @parcel/watcher stand-in the lockfile installs from (GHSA-fc5q-39xc-vjpf; see vendor/no-file-watcher).
+COPY vendor ./vendor
 RUN --mount=type=secret,id=npm_token \
     NODE_AUTH_TOKEN="$(cat /run/secrets/npm_token 2>/dev/null || true)" npm ci --no-audit --no-fund
 
