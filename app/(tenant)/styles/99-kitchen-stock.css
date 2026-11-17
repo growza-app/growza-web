@@ -173,13 +173,6 @@
 }
 .ks-skel {
   height: 52px;
-  background: var(--border);
-  opacity: 0.4;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .ks-skel {
-    animation: ks-pulse 1.2s ease-in-out infinite alternate;
-  }
 }
 @keyframes ks-pulse {
   to {
@@ -353,4 +346,30 @@
   padding-left: var(--sp-4);
   color: var(--amber-ink);
   font-size: var(--fs-3);
+}
+
+/* QA 2026-11-18 — the loading rows read as rows: a name bar and an amount bar, not one pale block on white. */
+.ks-skel {
+  background: var(--surface);
+  opacity: 1;
+}
+.ks-skel::before,
+.ks-skel::after {
+  content: '';
+  display: block;
+  height: 0.875rem;
+  border-radius: var(--radius-sm);
+  background: var(--border);
+}
+.ks-skel::before {
+  width: 40%;
+}
+.ks-skel::after {
+  width: 18%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ks-skel::before,
+  .ks-skel::after {
+    animation: ks-pulse 1.2s ease-in-out infinite alternate;
+  }
 }

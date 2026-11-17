@@ -2481,6 +2481,8 @@ export interface StockMaterial {
   openedAt: string | null;
   usedIn: number;
   low: boolean;
+  /** Stock has moved: the unit is locked (the server's answer, not a guess). */
+  moved: boolean;
 }
 export interface KitchenStockList {
   on: boolean;

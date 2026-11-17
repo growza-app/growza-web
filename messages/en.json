@@ -5920,7 +5920,11 @@
       "add": "{n, plural, =0 {Add} one {Add # item} other {Add # items}}",
       "adding": "Adding…",
       "done": "{n, plural, =0 {Nothing new was added.} one {# item added.} other {# items added.}}"
-    }
+    },
+    "offTitle": "Switch kitchen stock off?",
+    "offBody": "From now on no sale takes ingredients out, on every till, until you switch it back on. What is already counted stays.",
+    "offConfirm": "Switch off",
+    "offKeep": "Keep it on"
   },
   "recipe": {
     "sizes": "Sizes",

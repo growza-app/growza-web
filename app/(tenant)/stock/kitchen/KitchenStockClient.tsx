@@ -8,6 +8,7 @@ import { amount, parseAmount, unitWord } from '../../lib/kitchen-units';
 import { useSession } from '../../components/SessionProvider';
 import { MaterialSheet } from './MaterialSheet';
 import { MaterialImportSheet } from './MaterialImportSheet';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 
 type Filter = 'low' | 'all' | 'noRecipe';
 
@@ -33,7 +34,25 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [opening, setOpening] = useState<Record<string, string>>({});
-  const [openingSkipped, setOpeningSkipped] = useState(false);
+  // QA 2026-11-18 — Skip is remembered on this device, per branch and per item, so the card does not ask again for what was skipped.
+  const skipKey = `ks-opening-skipped:${branchId}`;
+  const [skipped, setSkipped] = useState<string[]>(() => {
+    try {
+      return JSON.parse(window.localStorage.getItem(skipKey) ?? '[]') as string[];
+    } catch {
+      return [];
+    }
+  });
+  const skipOpening = (ids: string[]) => {
+    const next = [...new Set([...skipped, ...ids])];
+    setSkipped(next);
+    try {
+      window.localStorage.setItem(skipKey, JSON.stringify(next));
+    } catch {
+      // Private window or blocked storage: skipped for this visit only.
+    }
+  };
+  const [confirmOff, setConfirmOff] = useState(false);
 
   const load = useCallback(async () => {
     setFailed(false);
@@ -49,7 +68,7 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
 
   const materials = useMemo(() => data?.materials ?? [], [data]);
   const lowCount = materials.filter((m) => m.low).length;
-  const unopened = materials.filter((m) => m.openedAt === null);
+  const unopened = materials.filter((m) => m.openedAt === null && !skipped.includes(m.id));
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list = filter === 'low' ? materials.filter((m) => m.low) : materials;
@@ -84,13 +103,15 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
       entries.push({ materialId: m.id, qty });
     }
     if (entries.length === 0) {
-      setOpeningSkipped(true);
+      skipOpening(unopened.map((m) => m.id));
       return;
     }
     setBusy(true);
     setError(null);
     try {
       await api.openingStock(entries);
+      // What was left empty counts as skipped: the card goes, and those items still read "Not counted yet".
+      skipOpening(unopened.filter((m) => !entries.some((e) => e.materialId === m.id)).map((m) => m.id));
       setOpening({});
       await load();
     } catch (err) {
@@ -136,7 +157,7 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
         </section>
       ) : null}
 
-      {data.on && mayChange && unopened.length > 0 && !openingSkipped ? (
+      {data.on && mayChange && unopened.length > 0 ? (
         <section className="ks-card ks-opening" aria-labelledby="ks-opening-title">
           <strong id="ks-opening-title">{t('openingTitle')}</strong>
           <span className="ks-hint">{t('openingHint')}</span>
@@ -159,7 +180,7 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
             ))}
           </ul>
           <div className="ks-pair">
-            <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => setOpeningSkipped(true)}>
+            <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => skipOpening(unopened.map((m) => m.id))}>
               {t('openingSkip')}
             </button>
             <button type="button" className="btn" disabled={busy} onClick={() => void saveOpening()}>
@@ -272,11 +293,27 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
         </div>
       ) : null}
       {isOwner && data.on ? (
-        <button type="button" className="ks-off-link" disabled={busy} onClick={() => void toggle(false)}>
+        <button type="button" className="ks-off-link" disabled={busy} onClick={() => setConfirmOff(true)}>
           {t('switchOff')}
         </button>
       ) : null}
 
+      {confirmOff ? (
+        // QA 2026-11-18 — one tap stopped tracking for every till; it now asks first and says what stops.
+        <ConfirmDialog
+          tone="danger"
+          title={t('offTitle')}
+          body={t('offBody')}
+          confirmLabel={t('offConfirm')}
+          cancelLabel={t('offKeep')}
+          busy={busy}
+          onConfirm={() => {
+            setConfirmOff(false);
+            void toggle(false);
+          }}
+          onCancel={() => setConfirmOff(false)}
+        />
+      ) : null}
       {importing ? (
         <MaterialImportSheet
           branchId={branchId}

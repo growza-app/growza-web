@@ -32,8 +32,8 @@ export function MaterialSheet({
   const [lowAt, setLowAt] = useState(material && material.lowStockAt > 0 ? amount(material.lowStockAt) : '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<{ text: string; field?: string } | null>(null);
-  // Moved stock (anything but a fresh, never-used item) locks the unit — the same answer the API gives (FR-01).
-  const unitLocked = material !== null && (material.openedAt !== null || material.stock !== 0);
+  // Locked once stock has moved (FR-01) — the server says so (`moved`), so the sheet never disagrees with it (QA 2026-11-18).
+  const unitLocked = material?.moved === true;
   const title = material ? t('sheetEdit') : t('sheetNew');
   const sheetRef = useRef<HTMLDivElement>(null);
   // Focus in, Tab kept inside, Escape closes, focus returns — every modal's promise.
