@@ -156,7 +156,8 @@ export function TableBillSheet({
         {order === null && !error ? <p className="field-hint">{t('billLoading')}</p> : null}
         {order ? (
           <>
-            <ul className={`tb-lines${editing && !takingOff ? ' is-editing' : ''}`}>
+            {/* While a reason is typed, every row and link stays where it was, greyed out: the sheet never drops. */}
+            <ul className={`tb-lines${editing ? ' is-editing' : ''}`}>
               {dishes.map((l) => (
                 <li key={l.id} className={`tb-line${l.cancelReason ? ' is-off' : ''}`}>
                   <span className="tb-line-qty">{l.qty}×</span>
@@ -167,8 +168,8 @@ export function TableBillSheet({
                   </span>
                   <span className="tb-line-amount">{money(Number(l.paidMinor ?? 0) - Number(l.returnedMinor ?? 0))}</span>
                   {/* Take off is rare and the owner's or a manager's: its buttons show only after "Take off a dish". */}
-                  {editing && canManage && !l.cancelReason && !moving && !takingOff ? (
-                    <button type="button" className="btn btn-ghost tb-off-btn" disabled={busy} onClick={() => setTakingOff({ lineId: l.id, name: l.name, reason: '' })}>
+                  {editing && canManage && !l.cancelReason && !moving ? (
+                    <button type="button" className="btn btn-ghost tb-off-btn" disabled={busy || takingOff !== null} onClick={() => setTakingOff({ lineId: l.id, name: l.name, reason: '' })}>
                       {t('takeOff')}
                     </button>
                   ) : null}
@@ -196,8 +197,8 @@ export function TableBillSheet({
                 </li>
               ))}
             </ul>
-            {canManage && live.length > 0 && !moving && !paying && !takingOff ? (
-              <button type="button" className="tb-edit-link" aria-pressed={editing} disabled={busy} onClick={() => setEditing((on) => !on)}>
+            {canManage && live.length > 0 && !moving && !paying ? (
+              <button type="button" className="tb-edit-link" aria-pressed={editing} disabled={busy || takingOff !== null} onClick={() => setEditing((on) => !on)}>
                 {editing ? t('doneTakingOff') : t('takeOffDish')}
               </button>
             ) : null}

@@ -56,7 +56,7 @@ describe('a table’s bill on the till', () => {
 
   it('only the owner and a manager may take a dish off; it asks why', () => {
     expect(flow).toContain("canManage={role === 'owner' || role === 'manager'}");
-    expect(sheet).toContain('{editing && canManage && !l.cancelReason && !moving && !takingOff ? (');
+    expect(sheet).toContain('{editing && canManage && !l.cancelReason && !moving ? (');
     expect(sheet).toContain("disabled={busy || takingOff.reason.trim() === ''}");
   });
 

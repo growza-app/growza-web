@@ -56,7 +56,7 @@ describe('the table bill, after the 17 Nov design review', () => {
   it('keeps Take off behind "Take off a dish", for the owner and a manager only', () => {
     expect(sheet).toContain('const [editing, setEditing] = useState(false);');
     expect(sheet).toContain("{editing ? t('doneTakingOff') : t('takeOffDish')}");
-    expect(sheet).toContain('{canManage && live.length > 0 && !moving && !paying && !takingOff ? (');
+    expect(sheet).toContain('{canManage && live.length > 0 && !moving && !paying ? (');
   });
   it('pins Total and Take payment to the foot of the sheet', () => {
     const foot = sheet.slice(sheet.indexOf('<div className="tb-foot">'));
@@ -75,5 +75,13 @@ describe('the table bill reads small (owner, 17 Nov)', () => {
     expect(css).toContain('.tb-lines, .tb-sc { font-size: 0.9375rem; }');
     expect(css).toContain('.tb-sheet .btn, .tb-edit-link { font-size: 0.875rem; }');
     expect(css).toContain('.tb-sheet .tb-reason input { font-size: 1rem; }');
+  });
+});
+
+describe('taking a dish off never drops the sheet (suite, 17 Nov: a short bill fell 61px)', () => {
+  it('keeps the rows in their two-line layout and the link in place, greyed out', () => {
+    expect(sheet).toContain("<ul className={`tb-lines${editing ? ' is-editing' : ''}`}>");
+    expect(sheet).toContain('className="btn btn-ghost tb-off-btn" disabled={busy || takingOff !== null}');
+    expect(sheet).toContain('className="tb-edit-link" aria-pressed={editing} disabled={busy || takingOff !== null}');
   });
 });
