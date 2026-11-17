@@ -29,6 +29,8 @@ export interface MeBranch {
    * Absent on an older API, and absent reads as no — today's till, which is what every branch had.
    */
   tableOrders?: boolean;
+  /** Jira GRW-724 — the service charge this branch offers, in basis points (500 = 5%); null or absent: none. Offered, never added by itself. */
+  serviceChargeBp?: number | null;
 }
 
 /** Jira GRW-719 · GRW-721 — a table in a branch's room, and its running bill if it has one. */
@@ -59,6 +61,11 @@ export interface BranchTableOrders {
   id: string;
   name: string;
   on: boolean;
+  /** Jira GRW-724 — the service charge this branch offers (never adds), and its rate in basis points (500 = 5%). Absent from an older API. */
+  serviceChargeOn?: boolean;
+  serviceChargeBp?: number;
+  /** Jira GRW-714 — a kitchen card turns late after this many minutes. */
+  kitchenLateMinutes?: number;
 }
 
 export interface Me {
@@ -233,6 +240,8 @@ export interface Me {
     tables?: boolean;
     /** Jira GRW-598 — whether sizes are switched on for this business (the `sizes` flag). Absent reads as no: it ships off. */
     sizes?: boolean;
+    /** Jira GRW-712 — items carry add-ons (Extras, Spice) and portions. Absent reads as no. */
+    addons?: boolean;
     providerSelection: boolean;
     maxProviders: number;
   };
@@ -373,6 +382,42 @@ export interface ProductImportItem {
   barcode?: string;
   gstRateBp?: number;
   hsn?: string;
+}
+
+/** Jira GRW-715 — one dish read from a menu file: its portions (sizes) and extras ride with it. */
+export interface MenuDish {
+  row: number;
+  category: string | null;
+  name: string;
+  priceMinor: number;
+  sizes: Array<{ label: string; priceMinor: number }>;
+  gstRateBp: number | null;
+  hsn: string | null;
+  extras: Array<{ name: string; options: Array<{ name: string; priceMinor: number }> }>;
+}
+
+export type MenuSkipReason = 'no_name' | 'no_price' | 'bad_price' | 'bad_gst' | 'twice_in_file' | 'size_twice' | 'too_many_sizes' | 'name_too_long';
+
+/** What adding the file would do. Nothing is saved until it is confirmed. */
+export interface MenuReview {
+  format: 'growza' | 'petpooja';
+  /** L6 — a dish already on the menu carries its menu price. */
+  dishes: Array<MenuDish & { onMenu: boolean; menuPriceMinor?: number }>;
+  skipped: Array<{ row: number; name: string | null; reason: MenuSkipReason }>;
+  newCategories: string[];
+  newExtrasGroups: string[];
+  sizesDropped: boolean;
+  extrasDropped: boolean;
+  /** L5 — what the file carried that a dish cannot hold yet. */
+  notKept: Array<'veg' | 'description'>;
+}
+
+export interface MenuImportResult {
+  created: number;
+  alreadyOnMenu: number;
+  categoriesCreated: number;
+  extrasGroupsCreated: number;
+  sizesCreated: number;
 }
 
 export interface ProductImportResult {
@@ -682,11 +727,15 @@ export interface Appointment {
    * from its own screen and no other device ever learned. It belongs to the shop, so it comes from the server.
    */
   handedOverAt?: string | null;
+  /** Jira GRW-714 — the kitchen marked the order ready; null while it is cooking. */
+  kitchenReadyAt?: string | null;
   /**
    * Owner, 9 Nov 2026 — the token this visit or order was given (#01, #02 …), stored when it was issued (API 0174).
    * Absent from an older API, and null for a visit that never had one; then the screens number it as before.
    */
   tokenNo?: number | null;
+  /** Jira GRW-716 — an order taken while the till was offline: "A12". Never numbered as a plain token (it would clash). */
+  offlineToken?: string | null;
   providerId: string | null;
   providerName: string | null;
   reminderSent: boolean;
@@ -1465,6 +1514,10 @@ export interface OrderListRow {
   paymentPending?: boolean;
   /** Owner, 9 Nov 2026 — the order's stored token (API 0174); absent from an older API. */
   tokenNo?: number | null;
+  /** Jira GRW-716 — an order taken while the till was offline: its till's token ("A12"); `tokenNo` is then null. */
+  offlineToken?: string | null;
+  /** Jira GRW-716 BR-04 — sent more than a day after it was taken, or with a time that could not be believed. */
+  sentLate?: boolean;
   /** QA 2026-11-14 — when it was handed over the counter; null while it waits. Absent from an older API. */
   handedOverAt?: string | null;
 }
@@ -1517,6 +1570,10 @@ export interface OrderDetail {
   typeChangeable?: boolean;
   /** QA 10 Nov 2026 — the token the guest holds (API 0174); absent from an older API, null for an order without one. */
   tokenNo?: number | null;
+  /** Jira GRW-716 — an order taken while the till was offline: its till's token ("A12"); `tokenNo` is then null. */
+  offlineToken?: string | null;
+  /** Jira GRW-716 BR-04 — sent more than a day after it was taken, or with a time that could not be believed. */
+  sentLate?: boolean;
   /** Jira GRW-641 — the branch the order is booked against, by name. */
   branchName: string | null;
   status: string;
@@ -1544,6 +1601,8 @@ export interface OrderDetail {
     cancelReason?: string | null;
     /** Jira GRW-723 — who put the line on the bill ("Ravi"). */
     addedBy?: string | null;
+    /** Jira GRW-724 — `service_charge`: the bill's service charge line, never a dish to return or take off. */
+    kind?: 'item' | 'service_charge';
     sku: string | null;
     barcode: string | null;
     priceMinor?: string;
@@ -2252,6 +2311,8 @@ export interface ProfitReportPage {
     marginPct: number | null;
     uncostedSalesMinor: number;
     uncostedItems: number;
+    /** Jira GRW-724 — service charge guests paid, apart from the food. Absent from an older API. */
+    serviceChargeMinor?: number;
   };
   rows: Array<{
     id: string;
@@ -2288,6 +2349,8 @@ export interface PaymentsReportPage {
   byDay: Array<{ dateISO: string; received: Partial<Record<MoneyPaymentMode, number>>; refundedMinor: number; netMinor: number }>;
   /** Jira GRW-723 — who took the money; a name null when nobody was recorded. Absent from an older API. */
   byPerson?: Array<{ name: string | null; receivedMinor: number; modes: Partial<Record<MoneyPaymentMode, number>> }>;
+  /** Jira GRW-724 — of the money in, what was service charge. Absent from an older API. */
+  serviceChargeMinor?: number;
   pending: { count: number; valueMinor: number; rows: Array<{ id: string; soldAtISO: string; tokenNo: number | null; valueMinor: number }> };
 }
 
@@ -2310,6 +2373,8 @@ export type OrderType = 'dine_in' | 'takeaway' | 'delivery';
 export interface OrderKitchenTickets {
   saleId: string;
   tokenNo: number | null;
+  /** Jira GRW-716 — an order taken while the till was offline: its till's token ("A12"); `tokenNo` is then null. */
+  offlineToken?: string | null;
   channel: string;
   /** Jira GRW-720 · GRW-719 — printed on the slip: "TAKEAWAY", "DINE-IN · T4". Absent from an older API. */
   orderType?: OrderType | null;
@@ -2347,8 +2412,49 @@ export interface DocumentTicket {
   /** What came in each way, from the bill's payment rows; empty when one way paid it all. */
   payments?: { mode: string; amountMinor: number }[];
   tokenNo: number | null;
+  /** Jira GRW-716 — an order taken while the till was offline: its till's token ("A12"); `tokenNo` is then null. */
+  offlineToken?: string | null;
   channel: string | null;
   /** Jira GRW-720 · GRW-719 — printed on the bill beside the date. Absent from an older API. */
   orderType?: OrderType | null;
   tableName?: string | null;
+}
+
+/** Jira GRW-712 — an add-on group (Extras, Spice) and its priced choices. */
+export interface AddonOption {
+  id: string;
+  name: string;
+  priceMinor: number;
+}
+export interface AddonGroup {
+  id: string;
+  name: string;
+  pick: 'one' | 'many';
+  required: boolean;
+  minPicks: number;
+  maxPicks: number;
+  options: AddonOption[];
+}
+export interface AddonGroupInput {
+  name: string;
+  pick: 'one' | 'many';
+  required: boolean;
+  minPicks?: number;
+  maxPicks?: number;
+  options: Array<{ name: string; priceMinor: number }>;
+}
+
+/** Jira GRW-714 — one order on the kitchen screen. No money, no phone (BR-01). */
+export interface KitchenCard {
+  saleId: string;
+  tokenNo: number | null;
+  /** Jira GRW-716 — an order taken while the till was offline: its till's token ("A12"); `tokenNo` is then null. */
+  offlineToken?: string | null;
+  tableName: string | null;
+  orderType: 'dine_in' | 'takeaway' | 'delivery' | null;
+  channel: string;
+  placedAt: string;
+  late: boolean;
+  /** `size` (owner, 2026-11-17): the portion it was sold in, set in bold on the card; null with no sizes or on an older API. */
+  dishes: Array<{ id: string; name: string; qty: number; done: boolean; isNew: boolean; cancelled: boolean; size?: string | null }>;
 }

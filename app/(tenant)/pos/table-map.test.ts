@@ -56,7 +56,7 @@ describe('a table’s bill on the till', () => {
 
   it('only the owner and a manager may take a dish off; it asks why', () => {
     expect(flow).toContain("canManage={role === 'owner' || role === 'manager'}");
-    expect(sheet).toContain('{canManage && !l.cancelReason && !moving ? (');
+    expect(sheet).toContain('{editing && canManage && !l.cancelReason && !moving ? (');
     expect(sheet).toContain("disabled={busy || takingOff.reason.trim() === ''}");
   });
 
@@ -70,7 +70,7 @@ describe('a table’s bill on the till', () => {
 
   it('the till sends a table’s order with the table, and says “Send to kitchen”', () => {
     expect(flow).toContain('? { tableId: atTable.id, ...(atTable.billId ? { tableBillId: atTable.billId } : {}), ...(guests ? { guests } : {}) }');
-    expect(flow).toContain("atTable ? tTables('sendToKitchen') : t('desk.keepPendingInQueue')");
+    expect(flow).toContain("atTable ? tTables('sendToKitchen') : t(qk('desk.keepPendingInQueue'))");
   });
 
   it('plain words: no KOT on the till', () => {
@@ -132,5 +132,32 @@ describe('QA 2026-11-16 — the dine-in run’s fixes on the till', () => {
 
   it('a round from the bill sheet names the bill, so a bill that moved meanwhile is refused', () => {
     expect(flow).toContain('...(billOf.table.openBill ? { billId: billOf.table.openBill.saleId } : {})');
+  });
+});
+
+const tablesForm = readFileSync(join(__dirname, '../settings/tables/TablesForm.tsx'), 'utf8');
+
+describe('Jira GRW-724 — a service charge the guest can say no to', () => {
+  it('BR-01 — never on a bill by itself: an Add button, shown only where the branch offers it, and never to a waiter', () => {
+    expect(sheet).toContain(') : offerBp !== null && !waiter && live.length > 0 ? (');
+    expect(sheet).toContain("api.setBillServiceCharge(saleId, true)");
+  });
+
+  it('BR-02 — its own named line, removable by anyone at the till (the guest’s right)', () => {
+    expect(sheet).toContain('{charge ? (');
+    expect(sheet).toContain("api.setBillServiceCharge(saleId, false)");
+    // Not a dish: it is never offered "Take off", and it is never a dish to bring back.
+    expect(sheet).toContain("const dishes = (order?.lines ?? []).filter((l) => l.kind !== 'service_charge');");
+  });
+
+  it('the owner offers it per branch, explained once in plain words, in both languages', () => {
+    expect(tablesForm).toContain('<ServiceChargeOffer branch={branch}');
+    for (const k of ['serviceCharge', 'serviceChargeHint', 'serviceChargeRate', 'serviceChargeSave', 'serviceChargeRange'] as const) {
+      expect(en.settingsTables[k]).toBeTruthy();
+      expect(hi.settingsTables[k]).toBeTruthy();
+    }
+    expect(en.settingsTables.serviceChargeHint).toMatch(/Never added by itself/);
+    expect(en.posTables.serviceChargeAdd).toMatch(/guest can say no/);
+    expect(JSON.stringify(en.posTables) + JSON.stringify(en.settingsTables)).not.toMatch(/\bSC\b/);
   });
 });

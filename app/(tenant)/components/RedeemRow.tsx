@@ -27,12 +27,15 @@ export function RedeemRow({
   usePoints,
   onToggle,
   disabled = false,
+  checking = false,
 }: {
   /** The quote for THIS bill, or null when rewards are off, nobody is named, or the read failed. */
   rewards: CustomerRewards | null;
   usePoints: boolean;
   onToggle: () => void;
   disabled?: boolean;
+  /** The bill changed and its points are being asked again: the amount off is not known yet (QA 2026-11-17). */
+  checking?: boolean;
 }) {
   const t = useTranslations('payFlow.rewards');
   const money = (minor: number) => formatMoney(String(minor));
@@ -82,7 +85,7 @@ export function RedeemRow({
             <span className="pf-redeem-offer">{t('offer', { points: rewards.maxRedeemable })}</span>
             <span className="pf-redeem-have">· {have} ({worth})</span>
           </span>
-          <strong className="pf-redeem-off">{t('off', { amount: money(rewards.discountMinor) })}</strong>
+          <strong className="pf-redeem-off" aria-live="polite">{checking ? t('checking') : t('off', { amount: money(rewards.discountMinor) })}</strong>
         </>
       ) : (
         <span className="pf-redeem-label pf-redeem-quiet">

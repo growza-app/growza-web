@@ -44,6 +44,7 @@ export function PaymentsReport() {
                   </div>
                 ))}
               </section>
+              {(r.serviceChargeMinor ?? 0) > 0 ? <p className="srp-hint">{p('serviceCharge', { value: f.money(r.serviceChargeMinor!) })}</p> : null}
               <p className="srp-hint">{p('counterOnly')}</p>
 
               <h2 className="mr-title">{p('byDayTitle')}</h2>

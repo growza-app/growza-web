@@ -28,11 +28,12 @@ export interface BillLine {
    * so the same count and − work; `serviceId` is '' and the line goes to the route as `products`, grouped by id.
    */
   /** Jira GRW-599 — `variantId` when the line is one size of a product that has sizes: the count and the bill line are that size's. */
-  product?: { id: string; variantId?: string };
+  /** Jira GRW-712 — `addons`: the add-on options chosen; the line's name and price already include them. */
+  product?: { id: string; variantId?: string; addons?: string[] };
 }
 
 /** The bill row's key: a service id, a package id, or `p:` + a product id. */
-export const lineKey = (l: BillLine): string => (l.pkg ? l.pkg.key : l.product ? productLineKey(l.product.id, l.product.variantId) : l.serviceId);
+export const lineKey = (l: BillLine): string => (l.pkg ? l.pkg.key : l.product ? productLineKey(l.product.id, l.product.variantId, l.product.addons) : l.serviceId);
 
 /** What a line is worth before the whole-bill total is typed over: its typed price, else its list price. */
 export const lineMinor = (l: BillLine): number => l.paidMinor ?? l.priceMinor;
