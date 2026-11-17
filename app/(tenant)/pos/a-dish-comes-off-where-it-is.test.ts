@@ -24,7 +24,7 @@ describe('taking a dish off a table bill', () => {
   });
   it('the sheet keeps its height: the rest stays, greyed out, and Take off and Cancel take Take payment\'s place', () => {
     expect(sheet).toContain('disabled={busy || takingOff !== null} onClick={onAddDishes}');
-    expect(sheet).toContain('<button type="submit" form="tb-reason-form" className="btn btn-danger"');
+    expect(sheet).toMatch(/<button\s+type="submit"\s+form="tb-reason-form"\s+className="btn btn-danger"/);
     expect(sheet).toContain("{t('takeOffNamed', { name: takingOff.name })}");
     expect(sheet).toContain('id="tb-reason-form"');
     expect(css).toContain('.tb-foot-pair .btn-danger:disabled { background: var(--surface); color: var(--danger); box-shadow: inset 0 0 0 1.5px var(--danger);');

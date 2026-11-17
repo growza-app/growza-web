@@ -242,6 +242,8 @@ export interface Me {
     sizes?: boolean;
     /** Jira GRW-712 — items carry add-ons (Extras, Spice) and portions. Absent reads as no. */
     addons?: boolean;
+    /** Jira GRW-737 — kitchen stock and recipes may exist here (a restaurant). Absent reads as no. */
+    recipes?: boolean;
     providerSelection: boolean;
     maxProviders: number;
   };
@@ -2462,4 +2464,57 @@ export interface KitchenCard {
   late: boolean;
   /** `size` (owner, 2026-11-17): the portion it was sold in, set in bold on the card; null with no sizes or on an older API. */
   dishes: Array<{ id: string; name: string; qty: number; done: boolean; isNew: boolean; cancelled: boolean; size?: string | null }>;
+}
+
+/** Jira GRW-737 — kitchen stock. Every quantity is a whole number of THOUSANDTHS of the item's unit (0.25 kg arrives as 250). */
+export type MaterialUnit = 'kg' | 'l' | 'pcs';
+export interface StockMaterial {
+  id: string;
+  locationId: string;
+  name: string;
+  unit: MaterialUnit;
+  category: string | null;
+  lowStockAt: number;
+  stock: number;
+  /** Paise per whole unit; absent for a viewer who cannot see the money. */
+  avgCost?: number | null;
+  openedAt: string | null;
+  usedIn: number;
+  low: boolean;
+}
+export interface KitchenStockList {
+  on: boolean;
+  materials: StockMaterial[];
+  noRecipe: Array<{ productId: string; name: string; sizes: string[] }>;
+}
+export interface RecipeLineDto {
+  materialId: string;
+  name: string;
+  unit: MaterialUnit;
+  qty: number;
+  archived: boolean;
+  /** Absent for a viewer who cannot see the money. */
+  costMinor?: number | null;
+}
+export interface DishRecipe {
+  productId: string;
+  name: string;
+  locationId: string;
+  priceMinor: number;
+  sizes: Array<{ variantId: string | null; label: string | null; priceMinor: number; lines: RecipeLineDto[]; needsFixing: boolean }>;
+}
+
+/** Jira GRW-737 — one row of a raw-material file, as read (amounts in thousandths; `amount` null = not counted yet). */
+export interface MaterialImportRow {
+  name: string;
+  unit: MaterialUnit;
+  category: string | null;
+  lowStockAt: number;
+  amount: number | null;
+}
+export interface MaterialImportReview {
+  rows: Array<MaterialImportRow & { status: 'new' | 'exists' }>;
+  skipped: Array<{ row: number; name: string | null; reason: 'no_name' | 'bad_unit' | 'bad_number' | 'name_too_long' | 'twice_in_file' }>;
+  adding: number;
+  already: number;
 }

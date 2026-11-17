@@ -151,6 +151,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   /** Jira GRW-598 — `me.capabilities.sizes`; only an explicit true draws the Sizes button. */
   let sizes = false;
   let addons = false;
+  let recipes = false;
   /**
    * GRW-165 — whether WhatsApp is live for this business.
    *
@@ -224,6 +225,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     walkIn = me.capabilities?.walkIn !== false;
     sizes = me.capabilities?.sizes === true;
     addons = me.capabilities?.addons === true;
+    recipes = me.capabilities?.recipes === true;
     whatsappLive = me.whatsapp?.booking ?? false;
     whatsappDemo = me.whatsapp?.demo ?? false;
     products = me.capabilities?.products !== false;
@@ -338,6 +340,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             lang,
             sizes,
             addons,
+            recipes,
             live,
             writable,
             walkIn,

@@ -65,7 +65,11 @@ export function TableBillSheet({
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
   const [guestName, setGuestName] = useState('');
-  const [takingOff, setTakingOff] = useState<{ lineId: string; name: string; reason: string } | null>(null);
+  /**
+   * Jira GRW-737 — `askCooked` once the server answers `cooked_unknown`: the kitchen was sent this dish and never ticked it Done, so whoever
+   * takes it off says whether it was cooked (yes: its food is wasted; no: back to the kitchen's stock). Required: no answer, no take-off.
+   */
+  const [takingOff, setTakingOff] = useState<{ lineId: string; name: string; reason: string; askCooked?: boolean; cooked?: boolean } | null>(null);
   /** "Take off a dish" pressed: each dish shows its Take off. Off by default — taking a dish off is rare. */
   const [editing, setEditing] = useState(false);
   const reasonRef = useRef<HTMLFormElement>(null);
@@ -111,6 +115,24 @@ export function TableBillSheet({
       else await read();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('actionFailed'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Jira GRW-737 — take a dish off; the first try may come back asking whether it was cooked, and the sheet asks right under the reason.
+  const takeOff = async () => {
+    if (!takingOff) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api.cancelBillItems(saleId, [takingOff.lineId], takingOff.reason, takingOff.askCooked ? takingOff.cooked : undefined);
+      setTakingOff(null);
+      setEditing(false);
+      await read();
+    } catch (e) {
+      if (e instanceof ApiError && e.code === 'cooked_unknown') setTakingOff({ ...takingOff, askCooked: true });
+      else setError(e instanceof ApiError ? e.message : t('actionFailed'));
     } finally {
       setBusy(false);
     }
@@ -188,16 +210,27 @@ export function TableBillSheet({
                       ref={reasonRef}
                       onSubmit={(e) => {
                         e.preventDefault();
-                        void run(() => api.cancelBillItems(saleId, [takingOff.lineId], takingOff.reason)).then(() => {
-                          setTakingOff(null);
-                          setEditing(false);
-                        });
+                        void takeOff();
                       }}
                     >
                       <label className="dt-field">
                         <span className="field-hint">{t('whyOffShort')}</span>
                         <input ref={reasonInputRef} type="text" aria-label={t('whyOff', { name: takingOff.name })} value={takingOff.reason} maxLength={200} onChange={(e) => setTakingOff({ ...takingOff, reason: e.target.value })} />
                       </label>
+                      {takingOff.askCooked ? (
+                        <fieldset className="tb-cooked">
+                          <legend className="field-hint">{t('cookedQuestion')}</legend>
+                          <div className="tb-cooked-pair">
+                            <button type="button" className={`btn btn-ghost ${takingOff.cooked === false ? 'is-on' : ''}`} aria-pressed={takingOff.cooked === false} onClick={() => setTakingOff({ ...takingOff, cooked: false })}>
+                              {t('cookedNo')}
+                            </button>
+                            <button type="button" className={`btn btn-ghost ${takingOff.cooked === true ? 'is-on' : ''}`} aria-pressed={takingOff.cooked === true} onClick={() => setTakingOff({ ...takingOff, cooked: true })}>
+                              {t('cookedYes')}
+                            </button>
+                          </div>
+                          <span className="field-hint">{t('cookedHint')}</span>
+                        </fieldset>
+                      ) : null}
                     </form>
                   ) : null}
                 </li>
@@ -323,7 +356,12 @@ export function TableBillSheet({
                   under the thumb (owner, 17 Nov). The reason itself is typed under the dish. */}
               {takingOff ? (
                 <div className="tb-foot-pair">
-                  <button type="submit" form="tb-reason-form" className="btn btn-danger" disabled={busy || takingOff.reason.trim() === ''}>
+                  <button
+                    type="submit"
+                    form="tb-reason-form"
+                    className="btn btn-danger"
+                    disabled={busy || takingOff.reason.trim() === '' || (takingOff.askCooked === true && takingOff.cooked === undefined)}
+                  >
                     {t('takeOffNamed', { name: takingOff.name })}
                   </button>
                   <button type="button" className="btn btn-ghost" onClick={() => setTakingOff(null)}>

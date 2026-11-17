@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError, type KitchenCard } from '../lib/api';
 import { useBranch } from '../components/BranchProvider';
-import { useSession } from '../components/SessionProvider';
+import AppLink from '../../shared/AppLink';
+import { useMayOpen, useRecipesOn, useSession } from '../components/SessionProvider';
 import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
 import { SignOutButton } from '../components/SignOutButton';
 
@@ -47,6 +48,10 @@ const TYPE_ICON: Record<'dine_in' | 'takeaway' | 'delivery', string> = {
 
 export function KitchenClient() {
   const t = useTranslations('kitchen');
+  const tks = useTranslations('kitchenStock');
+  // Jira GRW-737 — the cook reads what the kitchen has left (amounts only), from the kitchen screen they live on.
+  const mayOpen = useMayOpen();
+  const stockLink = useRecipesOn() && mayOpen('/stock/kitchen');
   const branch = useBranch();
   const session = useSession();
   const location = branch.choice ?? branch.one ?? session?.branches?.[0]?.id ?? null;
@@ -172,6 +177,11 @@ export function KitchenClient() {
         <h1 className="kd-title">{t('title')}</h1>
         <div className="kd-bar-right">
           <HeaderBranchPicker variant="pill" />
+          {stockLink ? (
+            <AppLink className="btn btn-ghost kd-stock-link" href="/stock/kitchen">
+              {tks('tabStock')}
+            </AppLink>
+          ) : null}
           {/* Owner, 2026-11-17 — "Chime" was the design's word; "Sound" is the plain one. The speaker is struck through while off. */}
           <button type="button" className={`btn btn-ghost kd-sound${chime ? '' : ' is-off'}`} aria-pressed={chime} title={chime ? undefined : t('soundHint')} onClick={toggleChime}>
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">

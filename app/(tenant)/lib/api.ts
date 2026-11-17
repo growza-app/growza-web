@@ -205,7 +205,7 @@ import type {
   StockTakeResult,
   MovementKind,
   ManualMovementKind,
-  VisitRewards, AddonGroup, AddonGroupInput, KitchenCard } from './api-types';
+  VisitRewards, AddonGroup, AddonGroupInput, KitchenCard, KitchenStockList, StockMaterial, MaterialUnit, DishRecipe, MaterialImportRow, MaterialImportReview } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, ShopDaySummary, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
 
@@ -720,6 +720,21 @@ export const api = {
   kitchenReady: (saleId: string, ready: boolean) => post<{ saleId: string; readyAt: string | null }>(`/api/v1/kitchen/${encodeURIComponent(saleId)}/ready`, { ready }),
   kitchenDishDone: (lineId: string, done: boolean) => post<{ lineId: string; done: boolean }>(`/api/v1/kitchen/lines/${encodeURIComponent(lineId)}/done`, { done }),
   setKitchenLate: (branchId: string, lateMinutes: number) => put<{ lateMinutes: number }>(`/api/v1/settings/kitchen/${encodeURIComponent(branchId)}`, { lateMinutes }),
+  /** Jira GRW-737 — kitchen stock: raw materials (quantities in thousandths), the owner's switch, opening counts, and each dish's recipe. */
+  kitchenStock: (location?: string | null, filter: 'all' | 'low' = 'all') =>
+    get<KitchenStockList>(`/api/v1/stock/materials?filter=${filter}${location ? `&location=${encodeURIComponent(location)}` : ''}`),
+  saveMaterial: (id: string | null, body: { locationId?: string; name?: string; unit?: MaterialUnit; category?: string | null; lowStockAt?: number }) =>
+    id ? patch<{ material: StockMaterial }>(`/api/v1/stock/materials/${encodeURIComponent(id)}`, body) : post<{ material: StockMaterial }>('/api/v1/stock/materials', body),
+  archiveMaterial: (id: string) => post<{ material: StockMaterial }>(`/api/v1/stock/materials/${encodeURIComponent(id)}/archive`, {}),
+  openingStock: (entries: Array<{ materialId: string; qty: number }>) => post<{ materials: StockMaterial[] }>('/api/v1/stock/materials/opening', { entries }),
+  setKitchenStock: (on: boolean) => put<{ on: boolean }>('/api/v1/settings/kitchen-stock', { on }),
+  readMaterialFile: (location: string, file: File) =>
+    uploadFile<MaterialImportReview>(`/api/v1/stock/materials/import/parse?location=${encodeURIComponent(location)}`, 'file', file),
+  importMaterials: (location: string, items: MaterialImportRow[]) =>
+    post<{ added: number; already: number }>('/api/v1/stock/materials/import', { locationId: location, items }),
+  recipe: (productId: string) => get<DishRecipe>(`/api/v1/products/${encodeURIComponent(productId)}/recipe`),
+  saveRecipe: (productId: string, variantId: string | null, lines: Array<{ materialId: string; qty: number }>) =>
+    put<DishRecipe>(`/api/v1/products/${encodeURIComponent(productId)}/recipe`, { variantId, lines }),
   /** Jira GRW-712 — the add-on groups, and which items offer which (`products: { productId: [groupId, …] }`). */
   addonGroups: () => get<{ groups: AddonGroup[]; products: Record<string, string[]> }>('/api/v1/addon-groups'),
   saveAddonGroup: (id: string | null, body: AddonGroupInput) =>
@@ -960,8 +975,13 @@ export const api = {
   /** Jira GRW-615 — one order, whole: its lines, its history, who it is for, and the moves it may be offered. */
   order: (id: string) => get<OrderDetail>(`/api/v1/orders/${encodeURIComponent(id)}`),
   /** Jira GRW-721 — take dishes off a table's unpaid bill: owner or manager, with a reason; the kitchen gets a cancel slip. */
-  cancelBillItems: (saleId: string, lineIds: string[], reason: string) =>
-    post<{ saleId: string; totalMinor: number; cancelSlip: KitchenTicketDto | null }>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/cancel-items`, { lineIds, reason }),
+  // Jira GRW-737 — `cooked`: asked only when the server answers `cooked_unknown` (a dish the kitchen was sent and never ticked Done).
+  cancelBillItems: (saleId: string, lineIds: string[], reason: string, cooked?: boolean) =>
+    post<{ saleId: string; totalMinor: number; cancelSlip: KitchenTicketDto | null }>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/cancel-items`, {
+      lineIds,
+      reason,
+      ...(cooked === undefined ? {} : { cooked }),
+    }),
   /** Jira GRW-720 — Dine-in to Takeaway or back after the order was taken: owner or manager, until the bill prints. */
   changeOrderType: (saleId: string, orderType: 'dine_in' | 'takeaway') =>
     put<{ orderType: 'dine_in' | 'takeaway'; packSlip: KitchenTicketDto | null }>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/order-type`, { orderType }),

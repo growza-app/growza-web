@@ -1,0 +1,356 @@
+/* Jira GRW-737 — kitchen stock: the Menu's second tab, the raw-material list, the recipe on a dish, and the take-off "was it cooked?". Laid
+   out at 344px first; one column all the way up, the list simply gets more room. */
+
+.ks-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* The Menu's two halves are links, drawn like the dish sheet's segmented tabs. */
+.ks-tabs {
+  margin: 0 0 var(--sp-1);
+}
+.ks-tabs a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-size: var(--fs-4);
+  font-weight: 600;
+  text-decoration: none;
+}
+.ks-tabs a.is-on {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.ks-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-width: 44rem;
+}
+
+.ks-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.ks-switch {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.ks-switch-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+.ks-switch-copy span,
+.ks-hint {
+  color: var(--muted);
+  font-size: var(--fs-3);
+  line-height: 1.4;
+}
+.ks-switch-btn,
+.ks-add {
+  min-height: 44px;
+}
+
+.ks-opening-list,
+.ks-list,
+.rc-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ks-opening-row,
+.rc-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-height: 52px;
+  border-bottom: 1px solid var(--border);
+}
+.ks-opening-row:last-child,
+.rc-line:last-child {
+  border-bottom: 0;
+}
+.ks-qty-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  flex: 0 0 auto;
+}
+.prd-input.ks-qty-input {
+  width: 5.5rem;
+  min-height: 44px;
+  text-align: right;
+  /* 16px stops iOS zooming a form field on focus (CLAUDE.md's one px exception). */
+  font-size: 16px;
+}
+.ks-unit {
+  min-width: 2.5rem;
+  color: var(--muted);
+  font-size: var(--fs-3);
+}
+.ks-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+.ks-pair .btn {
+  min-height: 44px;
+}
+
+.prd-input.ks-search {
+  min-height: 44px;
+  font-size: 16px;
+}
+
+.ks-list {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+.ks-list > li + li {
+  border-top: 1px solid var(--border);
+}
+.ks-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 52px;
+  padding: var(--sp-2) var(--sp-4);
+  font-size: var(--fs-5);
+  text-align: left;
+}
+.ks-row-btn {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.ks-row-btn:hover {
+  background: var(--accent-soft);
+}
+.ks-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ks-meta {
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+.ks-amount {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ks-amount.is-low {
+  color: var(--amber-ink);
+}
+.ks-amount.is-below {
+  color: var(--danger);
+}
+.ks-skel {
+  height: 52px;
+  background: var(--border);
+  opacity: 0.4;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ks-skel {
+    animation: ks-pulse 1.2s ease-in-out infinite alternate;
+  }
+}
+@keyframes ks-pulse {
+  to {
+    opacity: 0.15;
+  }
+}
+
+.ks-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-4);
+  color: var(--muted);
+}
+.ks-state strong {
+  color: var(--text);
+}
+.ks-off-link {
+  align-self: flex-start;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-3);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ks-units {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.ks-units:disabled .ks-unit-seg {
+  opacity: 0.6;
+}
+.ks-unit-seg {
+  margin: 0;
+}
+
+/* The recipe on a dish. */
+.rc-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.rc-panel .prd-seg {
+  margin: 0;
+}
+.rc-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.rc-unit {
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 16px;
+}
+.rc-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.prd-input.rc-add {
+  min-height: 44px;
+  font-size: 16px;
+  color: var(--accent-ink);
+}
+.rc-cost {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  font-size: var(--fs-3);
+}
+.rc-warn {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius);
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: var(--fs-3);
+}
+.rc-save {
+  min-height: 44px;
+}
+
+/* Take a dish off a table: "Was it already cooked?" — two answers, one required. */
+.tb-cooked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  border: 0;
+}
+.tb-cooked-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+.tb-cooked-pair .btn {
+  min-height: 44px;
+  white-space: normal;
+}
+.tb-cooked-pair .btn.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+/* The Dishes screen's copy of the two tabs, under its heading. */
+.ks-tabs-row {
+  padding: 0 var(--sp-4);
+}
+.ks-tabs-row .ks-tabs {
+  max-width: 44rem;
+}
+
+/* At 344px the row is name · amount · unit · remove: the sheet's own select and button rules made the unit full-width and the remove 16px
+   wide, so they are sized here, and the name takes what is left. */
+.rc-line .rc-name {
+  flex: 1 1 0;
+}
+.rc-line select.rc-unit {
+  width: 4.25rem;
+  min-width: 0;
+  flex: 0 0 auto;
+  padding: 0 var(--sp-1);
+}
+.rc-line .prd-input.ks-qty-input {
+  width: 4.5rem;
+  flex: 0 0 auto;
+}
+.rc-line .rc-remove {
+  width: 44px;
+  min-width: 44px;
+  flex: 0 0 44px;
+  padding: 0;
+}
+.rc-remove svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* Import from a file. */
+.ks-pick {
+  min-height: 44px;
+  align-self: flex-start;
+}
+.ks-import-sum,
+.ks-notice {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+.ks-skipped {
+  margin: 0;
+  padding-left: var(--sp-4);
+  color: var(--amber-ink);
+  font-size: var(--fs-3);
+}

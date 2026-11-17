@@ -103,8 +103,8 @@ const ALSO_NEEDS: ReadonlyArray<readonly [string, keyof PageGrid]> = [
 
 /** Jira GRW-723 — everything a waiter is offered. Home sends them to the room (`app/(tenant)/page.tsx`). */
 const WAITER_HREF: readonly string[] = ['/pos', '/notifications', '/help'];
-/** Jira GRW-714 — everything a cook is offered. Home sends them to the kitchen screen. */
-const COOK_HREF: readonly string[] = ['/kitchen', '/notifications', '/help'];
+/** Jira GRW-714 — everything a cook is offered. Home sends them to the kitchen screen. Jira GRW-737 — and what the kitchen has left (no prices). */
+const COOK_HREF: readonly string[] = ['/kitchen', '/stock/kitchen', '/notifications', '/help'];
 
 /** Destinations the grid can never open: the API makes these the owner's alone (billing, branches, team, roles). */
 const OWNER_ONLY_HREF: readonly string[] = ['/settings/billing', '/settings/branches', '/settings/team', '/settings/roles'];

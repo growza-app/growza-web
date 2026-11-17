@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { api, ApiError, formatMoney } from '../lib/api';
 import type { MenuImportResult, Product, ProductCategory, ProductImportResult } from '../lib/api-types';
 import { PageHeader } from '../components/PageHeader';
+import { MenuTabs } from '../components/MenuTabs';
 import { WriteOnly } from '../components/WriteOnly';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
@@ -424,7 +425,9 @@ export function ProductsList({
     router.refresh();
   };
 
+  // Jira GRW-737 — a kitchen's Menu has a second half, its raw materials: the two tabs sit under the heading (drawn only where they apply).
   const header = (
+    <>
     <PageHeader
       title={heading ?? t('title')}
       subtitle={!counted ? t('uncountedSubtitle') : heading !== undefined ? t('stockSubtitle') : t('subtitle')}
@@ -473,6 +476,12 @@ export function ProductsList({
         </>
       }
     />
+      {heading !== undefined && !counted ? (
+        <div className="ks-tabs-row">
+          <MenuTabs active="dishes" />
+        </div>
+      ) : null}
+    </>
   );
   /*
    * A kitchen's two figures. "Stock value" is a count times a price and "Running low" and "Out of stock" are a

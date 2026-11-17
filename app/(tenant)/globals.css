@@ -153,6 +153,8 @@
 /* Owner, 2026-11-15 — Discount on the whole bill, % or ₹. */
 @import './styles/99-bill-discount.css';
 @import './styles/99-dining-tables.css';
+/* Jira GRW-737 — kitchen stock, recipes, and the take-off "was it cooked?". */
+@import './styles/99-kitchen-stock.css';
 @import './styles/99-menu-import.css';
 /* Emerald v2 theme preview — after every screen sheet, before 99-photo-none.css (which must stay last); delete this line and the file to drop it. */
 @import './styles/99-z-emerald-v2.css';
