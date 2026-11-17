@@ -5,7 +5,7 @@ import { api } from '../lib/api';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { loadErrorKind } from '../lib/load-error';
 import { mayUse } from '../lib/nav-policy';
-import { areasOf } from '../lib/areas';
+import { areasOf, servesTablesOnly } from '../lib/areas';
 import { homeCopy } from '../lib/home-copy';
 import { serverLang } from '../lib/lang';
 import { isWritable } from '../lib/read-only';
@@ -59,11 +59,12 @@ export default async function PosPage({
         timezone={timezone}
         todayISO={todayISO}
         returnWindowDays={me.tenant?.productReturnWindowDays ?? DEFAULT_PRODUCT_RETURN_WINDOW_DAYS}
-        canReturn={canReturn}
+        canReturn={canReturn && !servesTablesOnly(areas.pages)}
         // Owner, 2026-11-14 (returns QA, loophole 1) — a member with a home branch takes returns there only; the owner is never held.
         returnBranch={me.member?.returnBranchId ?? null}
         heading={heading}
         initialMode={posModeOf(params.mode, canReturn)}
+        waiter={servesTablesOnly(areas.pages)}
         initialToken={params.token}
         backTo={params.from === 'products' ? '/products' : params.from === 'sales' ? '/sales' : undefined}
       />

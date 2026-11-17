@@ -46,7 +46,7 @@ describe('a grid, one tap, no dropdown, no sheet inside a sheet', () => {
 
 describe('a size with none left (FR-04)', () => {
   it('is shown, dimmed, labelled out of stock, and cannot go on the bill', () => {
-    expect(sheet).toMatch(/disabled=\{out \|\| full \|\| !canAddSize\(size, n\)\}/);
+    expect(sheet).toMatch(/disabled=\{out \|\| full \|\| !canAddSize\(size, n, counted\)\}/);
     expect(sheet).toContain("t('outOfStock')");
     expect(css).toMatch(/\.psz-cell\.is-out/);
   });

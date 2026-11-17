@@ -15,8 +15,8 @@ describe('one order, on a phone', () => {
   });
 
   it('titles a counted shelf’s counter sale "Token n" and keeps "Order #code" for the line; the restaurant is unchanged', () => {
-    expect(page).toContain("order.tokenNo && counted\n            ? t('list.tokenTitle', { n: formatTokenNo(order.tokenNo).slice(1) })");
-    expect(page).toContain("{order.tokenNo ? ` · ${t('list.orderCode', { code })}` : ''}");
+    expect(page).toContain("order.tokenNo && counted\n              ? t('list.tokenTitle', { n: formatTokenNo(order.tokenNo).slice(1) })");
+    expect(page).toContain("{order.tokenNo || order.offlineToken ? ` · ${t('list.orderCode', { code })}` : ''}");
     expect(en.orders.list.tokenTitle).toBe('Token {n}');
     expect(hi.orders.list.tokenTitle).toBe('टोकन {n}');
   });

@@ -1,5 +1,5 @@
 import { ORDER_CHANNEL_WORD } from '@growza-app/shared';
-import type { DocumentTicket, KitchenTicketDto } from '../api-types';
+import type { DocumentTicket, KitchenTicketDto, OrderType } from '../api-types';
 import type { BillData, KotData } from './ticket';
 
 /**
@@ -7,23 +7,36 @@ import type { BillData, KotData } from './ticket';
  * comes in from the caller, so this is tested without a screen and says the same thing in English and Hindi.
  */
 
-/** Where an order went, as the ticket names it: a delivery app by its name; the counter by nothing (its token says it). */
-export function destinationOf(channel: string | null): string | null {
-  if (!channel || channel === 'counter') return null;
-  return (ORDER_CHANNEL_WORD as Record<string, string>)[channel] ?? null;
+/** Jira GRW-720 — the words for how an order is eaten, from the caller in the screen's language: "TAKEAWAY", "DINE-IN · T4". */
+export type OrderTypeWords = (type: OrderType, table: string | null) => string;
+
+/**
+ * Where an order went, as the ticket names it: a delivery app by its name; a counter order by how it is eaten
+ * (Jira GRW-720), when it has a type and the caller gave the words; otherwise by nothing (its token says it).
+ */
+export function destinationOf(
+  channel: string | null,
+  typed?: { orderType?: OrderType | null; tableName?: string | null; words?: OrderTypeWords },
+): string | null {
+  if (channel && channel !== 'counter') return (ORDER_CHANNEL_WORD as Record<string, string>)[channel] ?? null;
+  if (typed?.orderType && typed.words) return typed.words(typed.orderType, typed.tableName ?? null);
+  return null;
 }
 
 export function kotFromApi(
   kot: KitchenTicketDto,
-  order: { tokenNo: number | null; channel: string | null; branchName?: string | null },
+  order: { tokenNo: number | null; offlineToken?: string | null; channel: string | null; branchName?: string | null; orderType?: OrderType | null; tableName?: string | null },
   when: (iso: string) => string,
   reprint = false,
+  words?: OrderTypeWords,
 ): KotData {
   return {
     number: kot.number,
     kind: kot.kind,
     tokenNo: order.tokenNo,
-    destination: destinationOf(order.channel),
+    offlineToken: order.offlineToken ?? null,
+    // Jira GRW-723 — and who sent it, so the kitchen knows whose table ("T5 · AC Hall · Ravi").
+    destination: [destinationOf(order.channel, { orderType: order.orderType, tableName: order.tableName, words }), kot.takenBy].filter(Boolean).join(' · ') || null,
     when: when(kot.createdAt),
     items: kot.items.map((i) => ({ name: i.name, qty: i.qty })),
     reprint,
@@ -38,6 +51,8 @@ export interface BillWords {
   paidBy: (ways: { mode: string; amount: string | null }[]) => string | null;
   discount: string;
   points: (n: number) => string;
+  /** Jira GRW-720 — "Takeaway", "Dine-in · T4" beside the date. Optional: absent, the bill names only a delivery app. */
+  orderType?: OrderTypeWords;
   /**
    * "CGST @2.5%"; `rate` null when the lines carry different rates and no single one can be named. `included` when
    * the menu's prices already hold the tax: the line then says so, or a reader adds it to the sub total twice.
@@ -91,10 +106,11 @@ export function billFromDocument(doc: DocumentTicket, words: BillWords, fmt: Bil
     docTitle: words.docTitle(doc.docType),
     customerName: guestName(doc.customerName),
     when: fmt.when(doc.issuedAt),
-    orderLabel: destinationOf(doc.channel),
+    orderLabel: destinationOf(doc.channel, { orderType: doc.orderType, tableName: doc.tableName, words: words.orderType }),
     cashier: doc.cashierName,
     number: doc.number,
     tokenNo: doc.tokenNo,
+    offlineToken: doc.offlineToken ?? null,
     items: doc.lines.map((l) => ({
       name: l.description,
       qty: l.qty,

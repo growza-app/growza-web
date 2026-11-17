@@ -110,7 +110,7 @@ export function itemLines(line: { name: string; qty: string; price: string; amou
 
 /* ------------------------------------------------------------------------------------------------------------ KOT */
 
-export type KotKind = 'new' | 'add' | 'cancel';
+export type KotKind = 'new' | 'add' | 'cancel' | 'pack';
 
 export interface KotItem {
   name: string;
@@ -125,6 +125,8 @@ export interface KotData {
   number: number;
   kind: KotKind;
   tokenNo: number | null;
+  /** Jira GRW-716 — an order taken offline is called by its till's token ("A12"), printed where the number would be. */
+  offlineToken?: string | null;
   /** Where the order is going: "Takeaway", "Swiggy", later "T4 · AC Hall". Null when nothing names it. */
   destination: string | null;
   /** Already formatted: "14 Nov, 8:40 pm". */
@@ -139,9 +141,11 @@ export interface KotCopy {
   title: string;
   added: string;
   cancelled: string;
+  /** Jira GRW-720 — "PACK IT": the order became takeaway after the kitchen had it. */
+  packed: string;
   reprint: string;
   kotNo: (n: number) => string;
-  token: (n: number) => string;
+  token: (n: number | string) => string;
   items: (n: number) => string;
 }
 
@@ -155,11 +159,13 @@ export interface KotCopy {
 export function kotTicket(kot: KotData, copy: KotCopy): Ticket {
   const lines: TicketLine[] = [];
   if (kot.reprint) lines.push({ kind: 'text', text: `** ${copy.reprint} **`, align: 'center', bold: true });
-  const heading = kot.kind === 'cancel' ? copy.cancelled : kot.kind === 'add' ? copy.added : copy.title;
+  const heading = kot.kind === 'cancel' ? copy.cancelled : kot.kind === 'add' ? copy.added : kot.kind === 'pack' ? copy.packed : copy.title;
   lines.push({ kind: 'text', text: heading, align: 'center', bold: true, size: kot.kind === 'new' ? 1 : 2 });
-  if (kot.tokenNo !== null) lines.push({ kind: 'text', text: copy.token(kot.tokenNo), align: 'center', bold: true, size: 2 });
+  const kotToken = kot.offlineToken ?? kot.tokenNo;
+  if (kotToken !== null) lines.push({ kind: 'text', text: copy.token(kotToken), align: 'center', bold: true, size: 2 });
   if (kot.destination) lines.push({ kind: 'text', text: kot.destination, align: 'center', bold: true });
-  lines.push({ kind: 'pair', left: copy.kotNo(kot.number), right: kot.when });
+  // Jira GRW-716 — a slip printed offline has no kitchen number yet (the server gives it when the order is sent).
+  lines.push({ kind: 'pair', left: kot.number > 0 ? copy.kotNo(kot.number) : '', right: kot.when });
   if (kot.branchName) lines.push({ kind: 'text', text: kot.branchName });
   lines.push({ kind: 'rule' });
   for (const item of kot.items) {
@@ -206,6 +212,10 @@ export interface BillData {
   cashier: string | null;
   number: string | null;
   tokenNo: number | null;
+  /** Jira GRW-716 — an order taken offline: its till's token ("A12"). */
+  offlineToken?: string | null;
+  /** Jira GRW-716 — printed with no internet: no bill number yet; a line says one is given when the till is back online. */
+  numberLater?: string | null;
   items: BillItem[];
   totalQty: number;
   subTotal: string;
@@ -232,7 +242,7 @@ export interface BillCopy {
   date: (v: string) => string;
   cashier: (v: string) => string;
   billNo: (v: string) => string;
-  token: (n: number) => string;
+  token: (n: number | string) => string;
   colItem: string;
   colQty: string;
   colPrice: string;
@@ -264,7 +274,9 @@ export function billTicket(bill: BillData, copy: BillCopy): Ticket {
   lines.push({ kind: 'pair', left: copy.date(bill.when), right: bill.orderLabel ?? '' });
   if (bill.cashier || bill.number) lines.push({ kind: 'pair', left: bill.cashier ? copy.cashier(bill.cashier) : '', right: bill.number ? copy.billNo(bill.number) : '' });
   // The number the guest is called by, big and centred, as the owner's samples print "Order# 228".
-  if (bill.tokenNo !== null) lines.push({ kind: 'text', text: copy.token(bill.tokenNo), align: 'center', bold: true, size: 2 });
+  if (bill.numberLater) lines.push({ kind: 'text', text: bill.numberLater, align: 'center' });
+  const billToken = bill.offlineToken ?? bill.tokenNo;
+  if (billToken !== null) lines.push({ kind: 'text', text: copy.token(billToken), align: 'center', bold: true, size: 2 });
   lines.push({ kind: 'rule' });
   lines.push({ kind: 'item', name: copy.colItem, qty: copy.colQty, price: copy.colPrice, amount: copy.colAmount, header: true });
   lines.push({ kind: 'rule' });

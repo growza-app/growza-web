@@ -19,6 +19,7 @@ export function SellProductClient({
   leaveRef,
   onSaleCompleted,
   onOpenQueue,
+  onPayTable,
   reloadKey,
   addingTo,
   inactive,
@@ -35,6 +36,8 @@ export function SellProductClient({
   onSaleCompleted?: (saleId: string) => void;
   /** Called when the desk taps "View Queue" on the pending-payment confirmation banner. */
   onOpenQueue?: () => void;
+  /** Owner, 17 Nov 2026 — a table's Take payment opens the POS's own payment screen (see PayFlow). */
+  onPayTable?: ComponentProps<typeof PayFlow>['onPayTable'];
   /** Incremented after a return or exchange on POS so the product shelf refreshes its live stock counts without unmounting the till. */
   reloadKey?: number;
   /** Owner, 9 Nov 2026 — the Queue's "Add items": picks go onto that waiting order instead of a new sale. */
@@ -75,6 +78,7 @@ export function SellProductClient({
       leaveRef={leaveRef}
       onSaleCompleted={onSaleCompleted}
       onOpenQueue={onOpenQueue}
+      onPayTable={onPayTable}
       reloadKey={reloadKey}
       addingTo={addingTo}
       inactive={inactive}

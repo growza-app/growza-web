@@ -38,6 +38,12 @@ export interface Areas {
   /** Owner, 2026-10-24 — `me.deliveryApps`: the apps whose orders the till rings up (Swiggy, Zomato). Absent: none. */
   deliveryApps?: readonly string[];
   /**
+   * Jira GRW-718 — `me.capabilities.tables`: the business may seat its guests (a restaurant), so it has Settings › Tables,
+   * where the owner switches tables on per branch. Optional, and only ever said when true: absent is no, which is every
+   * business that existed before it.
+   */
+  tables?: boolean;
+  /**
    * Jira GRW-74 — the pages a member's ROLE grants, only for a member who holds one. Absent for the owner and for everyone with no role, who are
    * offered what they always were. It travels here because every nav surface and screen guard already carries this object to `canSee`.
    */
@@ -47,12 +53,25 @@ export interface Areas {
 export type PageLevel = 'none' | 'view' | 'manage';
 export type PageGrid = Partial<Record<RolePageKey, PageLevel>>;
 
+/**
+ * Jira GRW-723 — a waiter: a role that serves tables and does not run the till (Tables granted, Bookings not at Change). Their whole app is
+ * the room at `/pos`; the API narrows them the same way (`api/security/table-service.ts`).
+ */
+/** Jira GRW-714 — a cook: Kitchen granted, and neither the till nor the tables. Their whole app is `/kitchen`. */
+export function cooksOnly(grid: PageGrid | null | undefined): boolean {
+  return Boolean(grid) && (grid!.kitchen ?? 'none') !== 'none' && grid!.bookings !== 'manage' && (grid!.tables ?? 'none') === 'none';
+}
+
+export function servesTablesOnly(grid: PageGrid | null | undefined): boolean {
+  return Boolean(grid) && (grid!.tables ?? 'none') !== 'none' && grid!.bookings !== 'manage';
+}
+
 /** The salon's app: every diary screen, none of the shop's. What an absent answer means. */
 export const DIARY_AREAS: Areas = { bookings: true, services: true, shop: false, stock: true };
 
 /** The slice of `/me` this reads — typed loosely, because an older API sends less. */
 export interface MeAreas {
-  capabilities?: { bookings?: boolean; services?: boolean; stockCounted?: boolean; marketplaces?: boolean } | null;
+  capabilities?: { bookings?: boolean; services?: boolean; stockCounted?: boolean; marketplaces?: boolean; tables?: boolean } | null;
   surface?: string | null;
   deliveryApps?: readonly string[] | null;
   member?: { role?: string; tenantRoleId?: string | null } | null;
@@ -71,6 +90,7 @@ export function areasOf(me: MeAreas | null | undefined): Areas {
     // Said only when they differ from what every business had before, so the areas of a salon or a shop read as they did.
     ...(me?.capabilities?.marketplaces === false ? { marketplaces: false } : {}),
     ...(me?.deliveryApps && me.deliveryApps.length > 0 ? { deliveryApps: me.deliveryApps } : {}),
+    ...(me?.capabilities?.tables === true ? { tables: true } : {}),
     ...(pages ? { pages } : {}),
   };
 }
@@ -127,6 +147,9 @@ const MARKETPLACE_ROUTES = ['/orders/import', '/orders/held', '/settings/channel
  */
 const COUNTER_REPORT_ROUTES = ['/reports/profit', '/reports/discounts', '/reports/payments'] as const;
 
+/** Jira GRW-718 — screens that exist only where a business may seat guests (a restaurant): its Tables settings and, Jira GRW-714, its kitchen. */
+const TABLE_ROUTES = ['/settings/tables', '/kitchen'] as const;
+
 /** Jira GRW-72 — Settings screens that exist only for a shop. (Not `SHOP_ROUTES`: the role rules read that list as "the shop's own work".) */
 const SHOP_SETTINGS = ['/settings/roles'] as const;
 
@@ -140,6 +163,7 @@ export function areaAllows(href: string, areas: Areas = DIARY_AREAS): boolean {
   if (!areas.shop && COUNTER_REPORT_ROUTES.some((r) => under(href, r))) return false;
   if (!areas.stock && COUNT_ROUTES.some((r) => under(href, r))) return false;
   if (areas.marketplaces === false && MARKETPLACE_ROUTES.some((r) => under(href, r))) return false;
+  if (!areas.tables && TABLE_ROUTES.some((r) => under(href, r))) return false;
   return true;
 }
 

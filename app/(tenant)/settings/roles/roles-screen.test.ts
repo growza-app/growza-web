@@ -11,16 +11,17 @@ import { rolesForMember, rolesToGive } from './role-choices';
 const root = join(__dirname, '../../../..');
 const read = (p: string) => readFileSync(join(root, p), 'utf8');
 const messages = (lang: 'en' | 'hi') => JSON.parse(read(`messages/${lang}.json`)).settingsRoles as Record<string, any>;
-const PAGES = ['bookings', 'clients', 'services', 'offers', 'staff', 'attendance', 'reports', 'settings'];
+const PAGES = ['bookings', 'clients', 'services', 'offers', 'staff', 'attendance', 'reports', 'settings', 'tables', 'kitchen'];
 
 describe('the grid', () => {
-  it('has a row for each of the eight pages, named in English and Hindi', () => {
+  it('has a row for each of the nine pages (Tables only where tables are — Jira GRW-723), named in English and Hindi', () => {
     const screen = read('app/(tenant)/settings/roles/RolesScreen.tsx');
     for (const page of PAGES) {
       expect(screen).toContain(`'${page}'`);
       for (const lang of ['en', 'hi'] as const) expect(messages(lang).pages[page], `${lang} · ${page}`).toBeTruthy();
     }
     expect(Object.keys(messages('en').pages).sort()).toEqual([...PAGES].sort());
+    expect(screen).toContain("PAGES.filter((page) => (page !== 'tables' && page !== 'kitchen') || data.pages.some((p) => p.key === page))");
   });
 
   it('names the pages from the business’s own labels in English (the API sends them), and from its Hindi table in Hindi', () => {

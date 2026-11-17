@@ -104,6 +104,8 @@ import { bareRefusalMessage, genericFailureMessage, localiseApiMessage } from '.
 import { cache } from 'react';
 import type { MyEarnings } from './api-types.js';
 import type {
+  BranchTableOrders,
+  DiningArea,
   OrderDetail,
   ChannelBranches,
   SetChannelBranchResult,
@@ -188,6 +190,9 @@ import type {
   Product,
   ProductImportItem,
   ProductImportResult,
+  MenuDish,
+  MenuImportResult,
+  MenuReview,
   ProductCategory,
   ProductInput,
   ProductSales,
@@ -200,8 +205,7 @@ import type {
   StockTakeResult,
   MovementKind,
   ManualMovementKind,
-  VisitRewards,
-} from './api-types';
+  VisitRewards, AddonGroup, AddonGroupInput, KitchenCard } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, ShopDaySummary, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
 
@@ -253,7 +257,7 @@ import type {
  * just show an error) can check `.status` instead of string-matching text.
  */
 /** Jira GRW-72 — the pages a role grants, and how far. Mirrors `platform/permissions.ts` in the API. */
-export type RolePageKey = 'bookings' | 'clients' | 'services' | 'offers' | 'staff' | 'attendance' | 'reports' | 'settings';
+export type RolePageKey = 'bookings' | 'clients' | 'services' | 'offers' | 'staff' | 'attendance' | 'reports' | 'settings' | 'tables' | 'kitchen';
 export type RoleLevel = 'none' | 'view' | 'manage';
 export type RoleWorksLike = 'manager' | 'receptionist' | 'staff';
 export interface ShopRole {
@@ -707,6 +711,47 @@ export const api = {
   /** Any of the three. Answers with what was WRITTEN — a rate over the platform's ceiling comes back clamped. */
   saveRewardSettings: (body: { enabled?: boolean; earnBps?: number; expiryDays?: number; holdHours?: number }) =>
     patch<RewardSettings>('/api/v1/settings/rewards', body),
+  /** Jira GRW-718 — every open branch and its Table orders switch. Owner only; 403 at a business with no tables. */
+  tableOrders: () => get<{ branches: BranchTableOrders[] }>('/api/v1/settings/table-orders'),
+  /** Switching off is refused (409) while a table at that branch has an open bill; the message says how many. */
+  setTableOrders: (branchId: string, on: boolean) => put<{ branches: BranchTableOrders[] }>(`/api/v1/settings/table-orders/${branchId}`, { on }),
+  /** Jira GRW-714 — the kitchen screen: today's open orders at a branch, no money. */
+  kitchen: (location: string) => get<{ lateMinutes: number; cards: KitchenCard[] }>(`/api/v1/kitchen?location=${encodeURIComponent(location)}`),
+  kitchenReady: (saleId: string, ready: boolean) => post<{ saleId: string; readyAt: string | null }>(`/api/v1/kitchen/${encodeURIComponent(saleId)}/ready`, { ready }),
+  kitchenDishDone: (lineId: string, done: boolean) => post<{ lineId: string; done: boolean }>(`/api/v1/kitchen/lines/${encodeURIComponent(lineId)}/done`, { done }),
+  setKitchenLate: (branchId: string, lateMinutes: number) => put<{ lateMinutes: number }>(`/api/v1/settings/kitchen/${encodeURIComponent(branchId)}`, { lateMinutes }),
+  /** Jira GRW-712 — the add-on groups, and which items offer which (`products: { productId: [groupId, …] }`). */
+  addonGroups: () => get<{ groups: AddonGroup[]; products: Record<string, string[]> }>('/api/v1/addon-groups'),
+  saveAddonGroup: (id: string | null, body: AddonGroupInput) =>
+    id ? patch<{ id: string; groups: AddonGroup[] }>(`/api/v1/addon-groups/${id}`, body) : post<{ id: string; groups: AddonGroup[] }>('/api/v1/addon-groups', body),
+  removeAddonGroup: (id: string) => del<{ groups: AddonGroup[] }>(`/api/v1/addon-groups/${id}`),
+  setProductAddonGroups: (productId: string, groupIds: string[]) =>
+    put<{ productId: string; groupIds: string[] }>(`/api/v1/products/${encodeURIComponent(productId)}/addon-groups`, { groupIds }),
+  /** Jira GRW-724 — the owner offers a service charge at a branch, at a rate (0–20%). Offered, never added by itself. */
+  setServiceChargeOffer: (branchId: string, on: boolean, ratePercent: number) =>
+    put<{ branches: BranchTableOrders[] }>(`/api/v1/settings/service-charge/${branchId}`, { on, ratePercent }),
+  /** Jira GRW-724 — add the branch's service charge to a table's bill (the guest agreed), or take it off (they said no). */
+  setBillServiceCharge: (saleId: string, on: boolean) =>
+    post<{ saleId: string; serviceChargeBp: number | null; serviceChargeMinor: number; totalMinor: number }>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/service-charge`, { on }),
+  /** Jira GRW-719 — a branch's areas and tables. 403 `tables_off` where the branch has Table orders off. */
+  diningTables: (location: string) => get<{ areas: DiningArea[] }>(`/api/v1/tables?location=${encodeURIComponent(location)}`),
+  /** Jira GRW-722 — a party to a free table; nothing goes to the kitchen again. */
+  moveTable: (tableId: string, to: string) =>
+    post<{ saleId: string; from: string; to: string; totalMinor: number }>(`/api/v1/tables/${encodeURIComponent(tableId)}/move`, { to }),
+  /** Jira GRW-722 — this table's bill onto another open table's; this table is free. */
+  joinTable: (tableId: string, into: string) =>
+    post<{ saleId: string; from: string; to: string; totalMinor: number }>(`/api/v1/tables/${encodeURIComponent(tableId)}/join`, { into }),
+  addDiningArea: (location: string, name: string) => post<{ id: string; areas: DiningArea[] }>('/api/v1/tables/areas', { location, name }),
+  renameDiningArea: (areaId: string, name: string) => patch<{ areas: DiningArea[] }>(`/api/v1/tables/areas/${areaId}`, { name }),
+  removeDiningArea: (areaId: string) => del<{ areas: DiningArea[] }>(`/api/v1/tables/areas/${areaId}`),
+  /** One named table, or `count` of them numbered from the first free T-number at the branch. */
+  addDiningTables: (areaId: string, body: { name: string; seats?: number | null } | { count: number; seats?: number | null }) =>
+    post<{ ids: string[]; areas: DiningArea[] }>(`/api/v1/tables/areas/${areaId}/tables`, body),
+  updateDiningTable: (tableId: string, body: { name?: string; seats?: number | null; areaId?: string }) =>
+    patch<{ areas: DiningArea[] }>(`/api/v1/tables/${tableId}`, body),
+  removeDiningTable: (tableId: string) => del<{ areas: DiningArea[] }>(`/api/v1/tables/${tableId}`),
+  reorderDiningTables: (location: string, areas: string[], tables: Record<string, string[]>) =>
+    put<{ areas: DiningArea[] }>('/api/v1/tables/order', { location, areas, tables }),
   alertPrefs: () => get<AlertPrefs>('/api/v1/alerts/prefs'),
   setAlertPref: (kind: AlertKind, enabled: boolean) => put<{ kind: AlertKind; enabled: boolean }>('/api/v1/alerts/prefs', { kind, enabled }),
   /** `null` when this deployment has no VAPID keys — the screen then says alerts are not set up. */
@@ -752,6 +797,11 @@ export const api = {
     return { ok: true as const, deleted };
   },
   parseProductSheet: (file: File) => uploadFile<{ headers: string[]; rows: string[][] }>('/api/v1/products/import/parse', 'file', file),
+  /** Jira GRW-715 — read a menu file (Growza's own, or Petpooja's export). Writes nothing: the review comes back. */
+  parseMenuFile: (location: string, file: File) =>
+    uploadFile<MenuReview>(`/api/v1/products/menu-import/parse?location=${encodeURIComponent(location)}`, 'file', file),
+  /** Jira GRW-715 — add the reviewed menu. The server checks it again; the same menu twice adds nothing twice. */
+  importMenu: (location: string, dishes: MenuDish[]) => post<MenuImportResult>('/api/v1/products/menu-import', { locationId: location, dishes }),
   importProducts: (location: string, items: ProductImportItem[]) =>
     post<ProductImportResult>('/api/v1/products/import', { items, locationId: location }),
   uploadProductPhoto: (id: string, file: File) => uploadFile<Product>(`/api/v1/products/${id}/photo`, 'photo', file),
@@ -894,11 +944,12 @@ export const api = {
    * `customerId` narrows it to one client, for the "See orders" on their card. By id, never by name: `q` matches text,
    * so two guests called Sharma would read as one person and a renamed client would stop matching their own orders.
    */
-  orders: (args: { channel?: string; status?: string; q?: string; customerId?: string; page?: number; pageSize?: number; location?: string | null } = {}) => {
+  orders: (args: { channel?: string; status?: string; q?: string; type?: string; customerId?: string; page?: number; pageSize?: number; location?: string | null } = {}) => {
     const params = new URLSearchParams();
     if (args.channel) params.set('channel', args.channel);
     if (args.status) params.set('status', args.status);
     if (args.q) params.set('q', args.q);
+    if (args.type) params.set('type', args.type);
     if (args.customerId) params.set('customerId', args.customerId);
     if (args.page && args.page > 1) params.set('page', String(args.page));
     if (args.pageSize != null) params.set('pageSize', String(args.pageSize));
@@ -908,6 +959,12 @@ export const api = {
   },
   /** Jira GRW-615 — one order, whole: its lines, its history, who it is for, and the moves it may be offered. */
   order: (id: string) => get<OrderDetail>(`/api/v1/orders/${encodeURIComponent(id)}`),
+  /** Jira GRW-721 — take dishes off a table's unpaid bill: owner or manager, with a reason; the kitchen gets a cancel slip. */
+  cancelBillItems: (saleId: string, lineIds: string[], reason: string) =>
+    post<{ saleId: string; totalMinor: number; cancelSlip: KitchenTicketDto | null }>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/cancel-items`, { lineIds, reason }),
+  /** Jira GRW-720 — Dine-in to Takeaway or back after the order was taken: owner or manager, until the bill prints. */
+  changeOrderType: (saleId: string, orderType: 'dine_in' | 'takeaway') =>
+    put<{ orderType: 'dine_in' | 'takeaway'; packSlip: KitchenTicketDto | null }>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/order-type`, { orderType }),
   /**
    * Jira GRW-615 — move an order along. `expected` is the state this screen believes the order is in: when the order has
    * moved on elsewhere the API refuses with 409 and says where it is now, instead of overwriting the other desk.
@@ -1566,6 +1623,13 @@ export const api = {
     input: {
       /** Jira GRW-480 — sent again after "That is a large amount" is confirmed. */
       confirmLargeAmount?: boolean;
+      /** Jira GRW-720 — how a counter order is eaten, where the branch takes table orders. */
+      orderType?: 'dine_in' | 'takeaway';
+      /** Jira GRW-721 — the table: a new bill on a free table, or a round onto its open one. */
+      tableId?: string;
+      /** QA 2026-11-16 — the bill a round is for; refused if the table no longer has it. */
+      tableBillId?: string;
+      guests?: number;
       /** Jira GRW-403 — paying a waiting token: the server takes its client and branch from it. */
       queueEntryId?: string;
       customerId?: string;
@@ -1594,6 +1658,8 @@ export const api = {
       redeemPoints?: number;
       /** Send a counter order to the kitchen queue with payment pending; settled from Queue when handed over. */
       paymentPending?: boolean;
+      /** Jira GRW-716 — an order this till took with no internet, sent now: its till, its own count, when it was taken. */
+      offline?: { deviceKey: string; tokenNo: number; takenAt: string };
       // The route refuses to guess: exactly one of these (GRW-293). A named stylist only when paying a token (GRW-403).
     } & ({ noStylist: true; schedulableId?: never } | { schedulableId: string; noStylist?: never }),
   ) =>
@@ -1614,7 +1680,12 @@ export const api = {
       rewards?: VisitRewards;
       /** Jira GRW-713 — the KOT this order sent to the kitchen. Absent where the business has no kitchen. */
       kot?: KitchenTicketDto;
+      /** Jira GRW-716 — an offline order's token ("A12"; `tokenNo` is then null), and whether it was flagged for the owner. */
+      offlineToken?: string;
+      sentLate?: boolean;
     }>('/api/v1/counter-sales', input),
+  /** Jira GRW-716 — this till's letter at its branch, so it can keep billing if the internet drops. */
+  registerTill: (location: string, deviceKey: string) => post<{ letter: string }>('/api/v1/till-devices', { location, deviceKey }),
   /**
    * Settle a counter order that was sent to the kitchen queue with payment pending (`paymentMode = null`).
    * Uses `POST /api/v1/counter-sales` with `settleSaleId` so anyone who may ring up a counter sale (including front desk)

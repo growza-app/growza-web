@@ -9,7 +9,7 @@ import type { Product, ProductCategory } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { IconCheck, IconChevronRight, IconTrash } from '../components/icons';
-import { useAreas, useSizesOn } from '../components/SessionProvider';
+import { useAddonsOn, useAreas, useSizesOn } from '../components/SessionProvider';
 import { GstInPrice, TaxFields } from '../components/TaxFields';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { codeHolder } from '../lib/product-match';
@@ -65,6 +65,8 @@ export function ProductSheet({
   const router = useRouter();
   /** Jira GRW-598 — sizes are a switch, off for every business until it is turned on; nothing below is drawn while it is off. */
   const sizesOn = useSizesOn();
+  // Jira GRW-712 — an item's add-on groups (Extras, Spice), on their own page like its sizes.
+  const addonsOn = useAddonsOn();
   // A kitchen (`catalog.stock_counted` off) has no count behind a dish: no Stock tab, no opening count, no low line.
   const counted = useAreas().stock;
   // Review 2026-11-13 — the WhatsApp share (Jira GRW-671) lives on the sheet's head, bound once; null when retired or none left.
@@ -512,6 +514,17 @@ export function ProductSheet({
                     <span className="sheet-row-label">{ts('openRow')}</span>
                     <span className="sheet-row-value prd-sizes-value">
                       {sizeCount > 0 ? ts('openRowCount', { count: sizeCount }) : ts('openRowNone')}
+                      <IconChevronRight aria-hidden="true" />
+                    </span>
+                  </AppLink>
+                </div>
+              ) : null}
+              {product && addonsOn ? (
+                <div className="sheet-group">
+                  <AppLink className="sheet-row prd-sizes-row" href={`/products/${product.id}/choices`}>
+                    <span className="sheet-row-label">{t('choicesRow')}</span>
+                    <span className="sheet-row-value prd-sizes-value">
+                      {t('choicesRowHint')}
                       <IconChevronRight aria-hidden="true" />
                     </span>
                   </AppLink>

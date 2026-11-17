@@ -27,7 +27,10 @@ export function SizeSheet({
   onAdd,
   onLess,
   onClose,
+  counted = true,
 }: {
+  /** Jira GRW-712 — false where nothing is counted (a kitchen): every size can go on, and no count is shown. */
+  counted?: boolean;
   product: Product;
   /** How many of each size (by id) the bill holds. */
   onBill: (variantId: string) => number;
@@ -102,21 +105,21 @@ export function SizeSheet({
           <div className="psz-grid" role="group" aria-label={ts('title')}>
             {sizes.map((size) => {
               const n = onBill(size.id);
-              const out = size.stock <= 0;
+              const out = counted && size.stock <= 0;
               const label = colour === null ? sizeLabel(size) : size.option1;
               return (
                 <button
                   key={size.id}
                   type="button"
                   className={`psz-cell ${n > 0 ? 'is-on' : ''} ${out ? 'is-out' : ''}`}
-                  aria-label={out ? ts('cellOut', { size: sizeLabel(size) }) : n > 0 ? ts('cellOn', { size: sizeLabel(size), count: n }) : ts('cellLeft', { size: sizeLabel(size), n: size.stock })}
+                  aria-label={out ? ts('cellOut', { size: sizeLabel(size) }) : n > 0 ? ts('cellOn', { size: sizeLabel(size), count: n }) : counted ? ts('cellLeft', { size: sizeLabel(size), n: size.stock }) : sizeLabel(size)}
                   aria-pressed={n > 0}
-                  disabled={out || full || !canAddSize(size, n)}
+                  disabled={out || full || !canAddSize(size, n, counted)}
                   onClick={() => tap(size)}
                 >
                   <span className="psz-label">{label}</span>
                   {pricesDiffer ? <span className="psz-cell-price">{formatMoney(sizePriceMinor(product, size))}</span> : null}
-                  <span className="psz-left">{out ? t('outOfStock') : t('left', { n: size.stock })}</span>
+                  {counted ? <span className="psz-left">{out ? t('outOfStock') : t('left', { n: size.stock })}</span> : null}
                   {n > 0 ? (
                     <span className="psz-badge" aria-hidden="true">
                       <IconCheck /> {n}
@@ -146,9 +149,9 @@ export function SizeSheet({
                       type="button"
                       className="pf-qty-btn"
                       aria-label={ts('sizeMore', { name: `${product.name} ${sizeLabel(size)}` })}
-                      aria-disabled={full || !canAddSize(size, onBill(size.id)) || undefined}
+                      aria-disabled={full || !canAddSize(size, onBill(size.id), counted) || undefined}
                       // An explicit +, not a grid tap: two quick taps are two units, so it does not go through the double-tap guard.
-                      onClick={() => (!full && canAddSize(size, onBill(size.id)) ? onAdd(size) : undefined)}
+                      onClick={() => (!full && canAddSize(size, onBill(size.id), counted) ? onAdd(size) : undefined)}
                     >
                       <IconPlus />
                     </button>
