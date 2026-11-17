@@ -176,6 +176,7 @@ export function TableBillSheet({
                       of the sheet steps back until it is taken off or cancelled. */}
                   {takingOff?.lineId === l.id ? (
                     <form
+                      id="tb-reason-form"
                       className="tb-reason"
                       ref={reasonRef}
                       onSubmit={(e) => {
@@ -187,17 +188,9 @@ export function TableBillSheet({
                       }}
                     >
                       <label className="dt-field">
-                        <span className="field-hint">{t('whyOff', { name: takingOff.name })}</span>
+                        <span className="field-hint">{t('whyOffShort')}</span>
                         <input ref={reasonInputRef} type="text" aria-label={t('whyOff', { name: takingOff.name })} value={takingOff.reason} maxLength={200} onChange={(e) => setTakingOff({ ...takingOff, reason: e.target.value })} />
                       </label>
-                      <div className="dt-actions">
-                        <button type="submit" className="btn btn-danger" disabled={busy || takingOff.reason.trim() === ''}>
-                          {t('takeOff')}
-                        </button>
-                        <button type="button" className="btn btn-ghost" onClick={() => setTakingOff(null)}>
-                          {t('cancel')}
-                        </button>
-                      </div>
                     </form>
                   ) : null}
                 </li>
@@ -209,11 +202,11 @@ export function TableBillSheet({
               </button>
             ) : null}
             {/* Jira GRW-724 — the service charge, its own named line; added only when the guest agrees, removable until paid. */}
-            {takingOff ? null : charge ? (
+            {charge ? (
               <div className="tb-sc">
                 <span className="tb-line-name">{charge.name}</span>
                 <span className="tb-line-amount">{money(Number(charge.paidMinor ?? 0))}</span>
-                <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void run(() => api.setBillServiceCharge(saleId, false))}>
+                <button type="button" className="btn btn-ghost" disabled={busy || takingOff !== null} onClick={() => void run(() => api.setBillServiceCharge(saleId, false))}>
                   {t('serviceChargeRemove')}
                 </button>
               </div>
@@ -227,7 +220,7 @@ export function TableBillSheet({
                   type="button"
                   className="btn btn-ghost"
                   aria-label={t('serviceChargeAdd', { rate: offerBp / 100 })}
-                  disabled={busy}
+                  disabled={busy || takingOff !== null}
                   onClick={() => void run(() => api.setBillServiceCharge(saleId, true))}
                 >
                   {t('serviceChargeAddShort')}
@@ -235,7 +228,7 @@ export function TableBillSheet({
               </div>
             ) : null}
 
-            {takingOff ? null : moving ? (
+            {moving ? (
               <div className="tb-move" role="group" aria-label={t('moveTitle', { table: table.name })}>
                 <p className="field-hint">{t('moveHint')}</p>
                 {moving.length === 0 ? <p className="field-hint">{t('loading')}</p> : null}
@@ -290,17 +283,17 @@ export function TableBillSheet({
               </div>
             ) : live.length > 0 && !paying ? (
               <div className="tb-actions">
-                <button type="button" className="btn btn-ghost" disabled={busy} onClick={onAddDishes}>
+                <button type="button" className="btn btn-ghost" disabled={busy || takingOff !== null} onClick={onAddDishes}>
                   {t('addDishes')}
                 </button>
-                <button type="button" className="btn btn-ghost" disabled={busy} onClick={openMove}>
+                <button type="button" className="btn btn-ghost" disabled={busy || takingOff !== null} onClick={openMove}>
                   {t('moveTable')}
                 </button>
                 {waiter ? null : (
                   <button
                     type="button"
                     className="btn btn-ghost"
-                    disabled={busy || printer.status.state === 'printing'}
+                    disabled={busy || takingOff !== null || printer.status.state === 'printing'}
                     onClick={() => void run(() => printer.printBill(saleId))}
                   >
                     {t('printBill')}
@@ -319,7 +312,18 @@ export function TableBillSheet({
                 <span>{t('total')}</span>
                 <strong>{money(totalMinor)}</strong>
               </p>
-              {takingOff || moving ? null : live.length === 0 ? (
+              {/* Taking a dish off: its two buttons take Take payment's place, so the sheet keeps its height and they stay
+                  under the thumb (owner, 17 Nov). The reason itself is typed under the dish. */}
+              {takingOff ? (
+                <div className="tb-foot-pair">
+                  <button type="submit" form="tb-reason-form" className="btn btn-danger" disabled={busy || takingOff.reason.trim() === ''}>
+                    {t('takeOffNamed', { name: takingOff.name })}
+                  </button>
+                  <button type="button" className="btn btn-ghost" onClick={() => setTakingOff(null)}>
+                    {t('cancel')}
+                  </button>
+                </div>
+              ) : moving ? null : live.length === 0 ? (
                 <div className="tb-actions">
                   <p className="field-hint">{t('nothingLeft')}</p>
                   <button type="button" className="btn" disabled={busy} onClick={() => void run(() => api.cancelPendingCounterSale(saleId), 'done', t('closedOk', { table: table.name }))}>

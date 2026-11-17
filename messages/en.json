@@ -4647,6 +4647,8 @@
     "serviceChargeAddShort": "Add",
     "takenOff": "Taken off: {reason}",
     "whyOff": "Why is {name} coming off?",
+    "whyOffShort": "Why is it coming off?",
+    "takeOffNamed": "Take off {name}",
     "cancel": "Cancel",
     "nothingLeft": "Nothing left on this table's bill.",
     "closeTable": "Close table",

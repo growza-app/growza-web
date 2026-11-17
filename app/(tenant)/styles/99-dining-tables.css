@@ -290,3 +290,9 @@
 .tb-sheet .tb-reason input { font-size: 1rem; }
 .tb-foot .tb-total { font-size: 1.0625rem; font-weight: 700; }
 .tb-foot .tb-take-pay { font-size: 1rem; }
+/* Taking a dish off: Take off {dish} and Cancel sit where Take payment was; greyed out, Take off is still a red outline. */
+.tb-foot-pair { display: flex; gap: var(--sp-2); }
+.tb-foot-pair .btn { min-height: 48px; white-space: normal; overflow-wrap: anywhere; }
+.tb-foot-pair .btn-danger { flex: 1 1 auto; }
+.tb-foot-pair .btn-ghost { flex: 0 0 auto; }
+.tb-foot-pair .btn-danger:disabled { background: var(--surface); color: var(--danger); box-shadow: inset 0 0 0 1.5px var(--danger); opacity: 0.55; }

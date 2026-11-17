@@ -22,9 +22,16 @@ describe('taking a dish off a table bill', () => {
     expect(sheet).toContain("reasonInputRef.current?.focus({ preventScroll: true });");
     expect(sheet).toContain("reasonRef.current?.scrollIntoView({ block: 'nearest' });");
   });
-  it('the service charge and the sheet’s actions step back meanwhile', () => {
-    expect(sheet).toContain('{takingOff ? null : charge ? (');
-    expect(sheet).toContain('{takingOff ? null : moving ? (');
+  it('the sheet keeps its height: the rest stays, greyed out, and Take off and Cancel take Take payment\'s place', () => {
+    expect(sheet).toContain('disabled={busy || takingOff !== null} onClick={onAddDishes}');
+    expect(sheet).toContain('<button type="submit" form="tb-reason-form" className="btn btn-danger"');
+    expect(sheet).toContain("{t('takeOffNamed', { name: takingOff.name })}");
+    expect(sheet).toContain('id="tb-reason-form"');
+    expect(css).toContain('.tb-foot-pair .btn-danger:disabled { background: var(--surface); color: var(--danger); box-shadow: inset 0 0 0 1.5px var(--danger);');
+  });
+  it('asks a short question under the dish, the dish named only for a screen reader', () => {
+    expect(sheet).toContain("<span className=\"field-hint\">{t('whyOffShort')}</span>");
+    expect(sheet).toContain("aria-label={t('whyOff', { name: takingOff.name })}");
   });
 });
 

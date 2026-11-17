@@ -4647,6 +4647,8 @@
     "serviceChargeAddShort": "जोड़ें",
     "takenOff": "हटाया: {reason}",
     "whyOff": "{name} क्यों हटा रहे हैं?",
+    "whyOffShort": "यह क्यों हटाई जा रही है?",
+    "takeOffNamed": "{name} हटाएँ",
     "cancel": "रद्द करें",
     "nothingLeft": "इस टेबल के बिल पर कुछ नहीं बचा।",
     "closeTable": "टेबल बंद करें",
