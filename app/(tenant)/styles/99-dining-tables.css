@@ -246,3 +246,33 @@
    takes its own full row, and no action's words are ever clipped: a long one (or Hindi) wraps instead. */
 .tb-sheet .tb-actions .btn { white-space: normal; text-align: center; overflow-wrap: anywhere; }
 .tb-sheet .tb-actions .tb-take-pay { flex-basis: 100%; }
+/*
+ * Owner, 17 Nov 2026 (design review of the table bill) — the table is the title; the dishes are a list with the count
+ * in its own column; Take off waits behind "Take off a dish"; Total and Take payment are pinned to the sheet's foot.
+ */
+.tb-title { display: flex; flex-direction: column; min-width: 0; }
+.tb-title .tb-title-name { font-size: 1.25rem; font-weight: 700; color: var(--text); }
+.tb-title-sub { font-size: 0.8125rem; color: var(--muted); overflow-wrap: anywhere; }
+.tb-line { flex-wrap: wrap; }
+.tb-line-qty { flex: 0 0 2rem; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--muted); }
+.tb-line .tb-line-name { flex: 1 1 8rem; }
+.tb-line .tb-off-btn { margin-left: auto; }
+.tb-edit-link { align-self: flex-start; min-height: 44px; padding: 0; border: 0; background: none; color: var(--danger); font: inherit; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+.tb-edit-link[aria-pressed='true'] { color: var(--accent-ink); }
+.tb-sc { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-2) 0; border-bottom: 1px solid var(--border); }
+.tb-sc .tb-line-name { flex: 1 1 auto; }
+.tb-sheet .tb-actions { margin-top: var(--sp-3); }
+.tb-foot {
+  position: sticky;
+  bottom: calc(-1 * var(--sp-4));
+  margin: var(--sp-3) calc(-1 * var(--sp-4)) calc(-1 * var(--sp-4));
+  padding: var(--sp-2) var(--sp-4) calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  z-index: 1;
+}
+.tb-foot .tb-total { margin: 0; }
+.tb-foot .tb-take-pay { width: 100%; min-height: 48px; white-space: normal; overflow-wrap: anywhere; }

@@ -7,6 +7,7 @@ import { useDialog } from '../../shared/a11y/useDialog';
 import { useScrimDismiss } from '../../shared/a11y/scrim-dismiss';
 import type { useTicketPrinter } from '../components/TicketPrinter';
 import { useWaiter } from './waiter';
+import { minutesSeated } from './TableMap';
 import { useSession } from '../components/SessionProvider';
 
 /**
@@ -59,6 +60,8 @@ export function TableBillSheet({
   const [paying, setPaying] = useState(false);
   const [guestName, setGuestName] = useState('');
   const [takingOff, setTakingOff] = useState<{ lineId: string; name: string; reason: string } | null>(null);
+  /** "Take off a dish" pressed: each dish shows its Take off. Off by default — taking a dish off is rare. */
+  const [editing, setEditing] = useState(false);
   const reasonRef = useRef<HTMLFormElement>(null);
   const reasonInputRef = useRef<HTMLInputElement>(null);
   const takingOffLine = takingOff?.lineId ?? null;
@@ -113,6 +116,11 @@ export function TableBillSheet({
   const live = dishes.filter((l) => !l.cancelReason && l.qty > l.returnedQty);
   const totalMinor = (order?.lines ?? []).reduce((n, l) => n + Number(l.paidMinor ?? 0) - Number(l.returnedMinor ?? 0), 0);
   const anonymous = !order?.client || /^walk-in$/i.test(order.client.name ?? '');
+  // One person took every dish: said once under the title, not under each dish.
+  const takers = new Set(dishes.map((l) => l.addedBy ?? ''));
+  const oneTaker = takers.size === 1 && !takers.has('') ? [...takers][0]! : null;
+  const seatedAt = table.openBill?.seatedAt;
+  const seatedMin = seatedAt ? minutesSeated(seatedAt, Date.now()) : null;
 
   const pay = (mode: (typeof MODES)[number]) =>
     run(async () => {
@@ -127,9 +135,18 @@ export function TableBillSheet({
   return (
     <div className="pf-keypad-scrim" {...scrimDismiss}>
       <div ref={ref} className="pf-keypad tb-sheet" role="dialog" aria-modal="true" aria-label={`${table.name} · ${areaName}`} tabIndex={-1}>
-        <div className="pf-keypad-head">
-          <span className="pf-keypad-title">
-            {table.name} · {areaName}
+        {/*
+          Owner, 17 Nov 2026 (design review) — the table is the title, with its room, how long it has been seated and
+          who took the order under it; the dishes scroll; Total and Take payment stay pinned at the bottom.
+        */}
+        <div className="pf-keypad-head tb-head">
+          <span className="tb-title">
+            <span className="pf-keypad-title tb-title-name">{table.name}</span>
+            <span className="tb-title-sub">
+              {[areaName, seatedMin === null ? null : t('seated', { min: seatedMin }), oneTaker ? t('takenBy', { name: oneTaker }) : null]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
           </span>
           <button type="button" className="pf-keypad-clear" onClick={() => onDone()}>
             {t('close')}
@@ -142,13 +159,15 @@ export function TableBillSheet({
             <ul className="tb-lines">
               {dishes.map((l) => (
                 <li key={l.id} className={`tb-line${l.cancelReason ? ' is-off' : ''}`}>
+                  <span className="tb-line-qty">{l.qty}×</span>
                   <span className="tb-line-name">
-                    {l.qty} × {l.name}
+                    {l.name}
                     {l.cancelReason ? <span className="tb-off">{t('takenOff', { reason: l.cancelReason })}</span> : null}
-                    {l.addedBy && !l.cancelReason ? <span className="tb-off">{t('takenBy', { name: l.addedBy })}</span> : null}
+                    {l.addedBy && !l.cancelReason && !oneTaker ? <span className="tb-off">{t('takenBy', { name: l.addedBy })}</span> : null}
                   </span>
                   <span className="tb-line-amount">{money(Number(l.paidMinor ?? 0) - Number(l.returnedMinor ?? 0))}</span>
-                  {canManage && !l.cancelReason && !moving && !takingOff ? (
+                  {/* Take off is rare and the owner's or a manager's: its buttons show only after "Take off a dish". */}
+                  {editing && canManage && !l.cancelReason && !moving && !takingOff ? (
                     <button type="button" className="btn btn-ghost tb-off-btn" disabled={busy} onClick={() => setTakingOff({ lineId: l.id, name: l.name, reason: '' })}>
                       {t('takeOff')}
                     </button>
@@ -161,7 +180,10 @@ export function TableBillSheet({
                       ref={reasonRef}
                       onSubmit={(e) => {
                         e.preventDefault();
-                        void run(() => api.cancelBillItems(saleId, [takingOff.lineId], takingOff.reason)).then(() => setTakingOff(null));
+                        void run(() => api.cancelBillItems(saleId, [takingOff.lineId], takingOff.reason)).then(() => {
+                          setTakingOff(null);
+                          setEditing(false);
+                        });
                       }}
                     >
                       <label className="dt-field">
@@ -181,6 +203,11 @@ export function TableBillSheet({
                 </li>
               ))}
             </ul>
+            {canManage && live.length > 0 && !moving && !paying && !takingOff ? (
+              <button type="button" className="tb-edit-link" aria-pressed={editing} disabled={busy} onClick={() => setEditing((on) => !on)}>
+                {editing ? t('doneTakingOff') : t('takeOffDish')}
+              </button>
+            ) : null}
             {/* Jira GRW-724 — the service charge, its own named line; added only when the guest agrees, removable until paid. */}
             {takingOff ? null : charge ? (
               <div className="tb-sc">
@@ -192,16 +219,21 @@ export function TableBillSheet({
               </div>
             ) : offerBp !== null && !waiter && live.length > 0 ? (
               <div className="tb-sc">
-                <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void run(() => api.setBillServiceCharge(saleId, true))}>
-                  {t('serviceChargeAdd', { rate: offerBp / 100 })}
+                <span className="tb-line-name">
+                  {t('serviceChargeRow', { rate: offerBp / 100 })}
+                  <span className="tb-off">{t('serviceChargeHint')}</span>
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  aria-label={t('serviceChargeAdd', { rate: offerBp / 100 })}
+                  disabled={busy}
+                  onClick={() => void run(() => api.setBillServiceCharge(saleId, true))}
+                >
+                  {t('serviceChargeAddShort')}
                 </button>
               </div>
             ) : null}
-            <p className="tb-total">
-              <span>{t('total')}</span>
-              <strong>{money(totalMinor)}</strong>
-            </p>
-
 
             {takingOff ? null : moving ? (
               <div className="tb-move" role="group" aria-label={t('moveTitle', { table: table.name })}>
@@ -256,33 +288,7 @@ export function TableBillSheet({
                   {t('cancel')}
                 </button>
               </div>
-            ) : live.length === 0 ? (
-              <div className="tb-actions">
-                <p className="field-hint">{t('nothingLeft')}</p>
-                <button type="button" className="btn" disabled={busy} onClick={() => void run(() => api.cancelPendingCounterSale(saleId), 'done', t('closedOk', { table: table.name }))}>
-                  {t('closeTable')}
-                </button>
-              </div>
-            ) : paying ? (
-              <div className="tb-pay">
-                {anonymous ? (
-                  <label className="dt-field">
-                    <span className="field-hint">{t('guestName')}</span>
-                    <input type="text" aria-label={t('guestName')} value={guestName} maxLength={60} autoComplete="off" onChange={(e) => setGuestName(e.target.value)} />
-                  </label>
-                ) : null}
-                <div className="tb-modes" role="group" aria-label={t('howPaid')}>
-                  {MODES.map((m) => (
-                    <button key={m} type="button" className="btn" disabled={busy} onClick={() => void pay(m)}>
-                      {t(`modes.${m}`)}
-                    </button>
-                  ))}
-                </div>
-                <button type="button" className="btn btn-ghost" onClick={() => setPaying(false)}>
-                  {t('cancel')}
-                </button>
-              </div>
-            ) : (
+            ) : live.length > 0 && !paying ? (
               <div className="tb-actions">
                 <button type="button" className="btn btn-ghost" disabled={busy} onClick={onAddDishes}>
                   {t('addDishes')}
@@ -300,18 +306,55 @@ export function TableBillSheet({
                     {t('printBill')}
                   </button>
                 )}
-                {waiter && !table.openBill?.billPrinted ? (
-                  <p className="field-hint tb-wait-bill">{t('waiterAskBill')}</p>
-                ) : (
-                  <button type="button" className="btn tb-take-pay" disabled={busy} onClick={() => setPaying(true)}>
-                    {t('takePayment', { amount: money(totalMinor) })}
-                  </button>
-                )}
               </div>
-            )}
+            ) : null}
+
+            <div className="tb-foot">
+              {error ? (
+                <p className="al-error" role="alert">
+                  {error}
+                </p>
+              ) : null}
+              <p className="tb-total">
+                <span>{t('total')}</span>
+                <strong>{money(totalMinor)}</strong>
+              </p>
+              {takingOff || moving ? null : live.length === 0 ? (
+                <div className="tb-actions">
+                  <p className="field-hint">{t('nothingLeft')}</p>
+                  <button type="button" className="btn" disabled={busy} onClick={() => void run(() => api.cancelPendingCounterSale(saleId), 'done', t('closedOk', { table: table.name }))}>
+                    {t('closeTable')}
+                  </button>
+                </div>
+              ) : paying ? (
+                <div className="tb-pay">
+                  {anonymous ? (
+                    <label className="dt-field">
+                      <span className="field-hint">{t('guestName')}</span>
+                      <input type="text" aria-label={t('guestName')} value={guestName} maxLength={60} autoComplete="off" onChange={(e) => setGuestName(e.target.value)} />
+                    </label>
+                  ) : null}
+                  <div className="tb-modes" role="group" aria-label={t('howPaid')}>
+                    {MODES.map((m) => (
+                      <button key={m} type="button" className="btn" disabled={busy} onClick={() => void pay(m)}>
+                        {t(`modes.${m}`)}
+                      </button>
+                    ))}
+                  </div>
+                  <button type="button" className="btn btn-ghost" onClick={() => setPaying(false)}>
+                    {t('cancel')}
+                  </button>
+                </div>
+              ) : waiter && !table.openBill?.billPrinted ? (
+                <p className="field-hint tb-wait-bill">{t('waiterAskBill')}</p>
+              ) : (
+                <button type="button" className="btn tb-take-pay" disabled={busy} onClick={() => setPaying(true)}>
+                  {t('takePayment', { amount: money(totalMinor) })}
+                </button>
+              )}
+            </div>
           </>
-        ) : null}
-        {error ? (
+        ) : error ? (
           <p className="al-error" role="alert">
             {error}
           </p>

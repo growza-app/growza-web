@@ -31,7 +31,34 @@ describe('taking a dish off a table bill', () => {
 describe('Take payment on a table bill', () => {
   it('has a full row of its own and never clips its words', () => {
     expect(sheet).toContain('className="btn tb-take-pay"');
-    expect(css).toContain('.tb-sheet .tb-actions .tb-take-pay { flex-basis: 100%; }');
+    expect(css).toContain('.tb-foot .tb-take-pay { width: 100%; min-height: 48px; white-space: normal; overflow-wrap: anywhere; }');
     expect(css).toContain('.tb-sheet .tb-actions .btn { white-space: normal;');
+  });
+});
+
+describe('the table bill, after the 17 Nov design review', () => {
+  it('names the table as its title, with room, minutes seated and one taker under it', () => {
+    expect(sheet).toContain('<span className="pf-keypad-title tb-title-name">{table.name}</span>');
+    expect(sheet).toContain("[areaName, seatedMin === null ? null : t('seated', { min: seatedMin }), oneTaker ? t('takenBy', { name: oneTaker }) : null]");
+    // "by Ravi" under each dish only when more than one person took them.
+    expect(sheet).toContain('{l.addedBy && !l.cancelReason && !oneTaker ? <span');
+  });
+  it('shows the count in its own column', () => {
+    expect(sheet).toContain('<span className="tb-line-qty">{l.qty}×</span>');
+  });
+  it('keeps Take off behind "Take off a dish", for the owner and a manager only', () => {
+    expect(sheet).toContain('const [editing, setEditing] = useState(false);');
+    expect(sheet).toContain("{editing ? t('doneTakingOff') : t('takeOffDish')}");
+    expect(sheet).toContain('{canManage && live.length > 0 && !moving && !paying && !takingOff ? (');
+  });
+  it('pins Total and Take payment to the foot of the sheet', () => {
+    const foot = sheet.slice(sheet.indexOf('<div className="tb-foot">'));
+    expect(foot).toContain("t('total')");
+    expect(foot).toContain('className="btn tb-take-pay"');
+    expect(css).toMatch(/\.tb-foot \{\n  position: sticky;/);
+  });
+  it('offers the service charge as a row with a short Add', () => {
+    expect(sheet).toContain("{t('serviceChargeRow', { rate: offerBp / 100 })}");
+    expect(sheet).toContain("aria-label={t('serviceChargeAdd', { rate: offerBp / 100 })}");
   });
 });
