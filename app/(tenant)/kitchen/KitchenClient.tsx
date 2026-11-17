@@ -45,40 +45,6 @@ const TYPE_ICON: Record<'dine_in' | 'takeaway' | 'delivery', string> = {
   delivery: 'M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0m10 0a2 2 0 1 0 4 0 2 2 0 0 0-4 0M9 17h6l2-6h-4l-1-3H8M17 11l2 6',
 };
 
-export interface DishTotal {
-  name: string;
-  qty: number;
-  orders: number;
-  /** When the oldest order that still needs it was placed. */
-  oldestAt: string;
-  late: boolean;
-}
-
-/**
- * Owner, 2026-11-17 — "dish totals": what is still to be cooked across the open orders, added up, so a rush of 100
- * orders is cooked in batches. A dish already ticked, or taken off the bill, is not counted. Most first; a tie goes to
- * the one waiting longest. Pure: worked out from the cards the screen already has.
- */
-export function dishTotals(cards: readonly KitchenCard[]): DishTotal[] {
-  const by = new Map<string, DishTotal>();
-  for (const c of cards) {
-    const seen = new Set<string>();
-    for (const d of c.dishes) {
-      if (d.done || d.cancelled) continue;
-      const t = by.get(d.name) ?? { name: d.name, qty: 0, orders: 0, oldestAt: c.placedAt, late: false };
-      t.qty += d.qty;
-      if (!seen.has(d.name)) {
-        t.orders += 1;
-        seen.add(d.name);
-      }
-      if (Date.parse(c.placedAt) < Date.parse(t.oldestAt)) t.oldestAt = c.placedAt;
-      t.late = t.late || c.late;
-      by.set(d.name, t);
-    }
-  }
-  return [...by.values()].sort((a, b) => b.qty - a.qty || Date.parse(a.oldestAt) - Date.parse(b.oldestAt) || a.name.localeCompare(b.name));
-}
-
 export function KitchenClient() {
   const t = useTranslations('kitchen');
   const branch = useBranch();
@@ -92,10 +58,6 @@ export function KitchenClient() {
   const [chime, setChime] = useState(false);
   /** Owner, 2026-11-17 — one kind of order at a time in a rush; on this tablet only, never saved. */
   const [only, setOnly] = useState<'all' | 'dine_in' | 'takeaway' | 'delivery'>('all');
-  /** Orders as tickets, or the dishes still to cook added up (owner, 2026-11-17). This tablet only. */
-  const [view, setView] = useState<'orders' | 'dishes'>('orders');
-  /** From a dish total: only the tickets that still need that dish. */
-  const [dish, setDish] = useState<string | null>(null);
   const seen = useRef<Set<string> | null>(null);
   const mayLeave = session?.role === 'owner' || session?.role === 'manager';
 
@@ -256,14 +218,6 @@ export function KitchenClient() {
       ) : (
         <>
         {/* The rush at a glance: how many, how many late, how many with dishes not yet seen; and a filter by how it is eaten. */}
-        <div className="kd-view" role="group" aria-label={t('viewAria')}>
-          <button type="button" className="kd-view-btn" aria-pressed={view === 'orders'} onClick={() => setView('orders')}>
-            {t('viewOrders')}
-          </button>
-          <button type="button" className="kd-view-btn" aria-pressed={view === 'dishes'} onClick={() => { setDish(null); setView('dishes'); }}>
-            {t('viewDishes')}
-          </button>
-        </div>
         <div className="kd-summary" role="group" aria-label={t('summaryAria')}>
           <span className="kd-count">{t('waiting', { n: cards.length })}</span>
           {cards.some((c) => c.late) ? <span className="kd-count is-late">{t('lateCount', { n: cards.filter((c) => c.late).length })}</span> : null}
@@ -278,54 +232,8 @@ export function KitchenClient() {
               ))}
           </span>
         </div>
-        {view === 'dishes' ? (
-          (() => {
-            const totals = dishTotals(cards.filter((c) => only === 'all' || c.orderType === only));
-            return totals.length === 0 ? (
-              <div className="kd-empty" role="status">
-                <p className="kd-empty-title">{t('totalsEmpty')}</p>
-              </div>
-            ) : (
-              <ol className="kd-totals" aria-label={t('viewDishes')}>
-                {totals.map((d) => {
-                  const mins = minutesSince(d.oldestAt, now);
-                  return (
-                    <li key={d.name}>
-                      <button
-                        type="button"
-                        className={`kd-total${d.late ? ' is-late' : ''}`}
-                        onClick={() => {
-                          setDish(d.name);
-                          setView('orders');
-                        }}
-                      >
-                        <span className="kd-total-qty">{d.qty}</span>
-                        <span className="kd-total-name">{d.name}</span>
-                        <span className="kd-total-meta">
-                          {t('inOrders', { n: d.orders })} · {d.late ? <strong>{t('lateFor', { min: mins })}</strong> : t('oldest', { min: mins })}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ol>
-            );
-          })()
-        ) : (
-        <>
-        {dish ? (
-          <p className="kd-dish-filter">
-            <span>{t('onlyDish', { dish })}</span>
-            <button type="button" className="btn btn-ghost" onClick={() => setDish(null)}>
-              {t('showAll')}
-            </button>
-          </p>
-        ) : null}
         <ul className="kd-grid">
-          {cards
-            .filter((c) => only === 'all' || c.orderType === only)
-            .filter((c) => !dish || c.dishes.some((d) => d.name === dish && !d.done && !d.cancelled))
-            .map((c) => {
+          {cards.filter((c) => only === 'all' || c.orderType === only).map((c) => {
             const mins = minutesSince(c.placedAt, now);
             return (
               <li key={c.saleId} className={`kd-card${c.late ? ' is-late' : ''}`} aria-label={labelOf(c)}>
@@ -396,8 +304,6 @@ export function KitchenClient() {
             );
           })}
         </ul>
-        </>
-        )}
         </>
       )}
 

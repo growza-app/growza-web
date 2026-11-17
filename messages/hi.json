@@ -4611,15 +4611,7 @@
     "waiting": "{n} इंतज़ार में",
     "lateCount": "{n} देर से",
     "newCount": "{n} में नई डिश",
-    "all": "सभी",
-    "viewAria": "किचन क्या देखे",
-    "viewOrders": "ऑर्डर",
-    "viewDishes": "बनाने वाली डिश",
-    "totalsEmpty": "बनाने को कुछ नहीं बचा",
-    "inOrders": "{n} ऑर्डर में",
-    "oldest": "सबसे पुराना {min} मिनट",
-    "onlyDish": "सिर्फ़ {dish} वाले ऑर्डर",
-    "showAll": "सब दिखाएँ"
+    "all": "सभी"
   },
   "posTables": {
     "paidOk": "{table} का भुगतान हुआ · {amount}। टेबल खाली है।",

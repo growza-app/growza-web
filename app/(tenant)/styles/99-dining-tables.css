@@ -229,19 +229,6 @@
 .kd-filters { display: flex; gap: var(--sp-1); margin-left: auto; flex: none; }
 .kd-filter { min-height: 44px; padding: 0 var(--sp-3); border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-size: 0.875rem; font-weight: 600; white-space: nowrap; cursor: pointer; }
 .kd-filter[aria-pressed='true'] { background: var(--accent-deep); border-color: var(--accent-deep); color: var(--surface); }
-/* Owner, 2026-11-17 — Orders | Dishes to cook, and the dishes added up for cooking in batches. */
-.kd-view { display: inline-flex; margin: 0 0 var(--sp-2); padding: 2px; border-radius: 999px; background: var(--border); }
-.kd-view-btn { min-height: 44px; padding: 0 var(--sp-4); border: 0; border-radius: 999px; background: none; color: var(--text); font: inherit; font-weight: 700; cursor: pointer; }
-.kd-view-btn[aria-pressed='true'] { background: var(--surface); box-shadow: 0 1px 2px rgb(0 0 0 / 0.12); }
-.kd-totals { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); gap: var(--sp-2); }
-.kd-total { display: grid; grid-template-columns: 3.5rem minmax(0, 1fr); grid-template-rows: auto auto; column-gap: var(--sp-3); align-items: center; width: 100%; min-height: 56px; padding: var(--sp-2) var(--sp-3); border: 2px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
-.kd-total.is-late { border-color: var(--amber); background: var(--amber-soft); }
-.kd-total-qty { grid-row: 1 / span 2; font-size: 1.75rem; font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
-.kd-total-name { font-size: 1rem; font-weight: 700; overflow-wrap: anywhere; }
-.kd-total-meta { font-size: 0.875rem; color: var(--muted); }
-.kd-total.is-late .kd-total-meta strong { color: var(--amber-ink); }
-.kd-dish-filter { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); margin: 0 0 var(--sp-2); padding: var(--sp-1) var(--sp-1) var(--sp-1) var(--sp-3); border-radius: var(--radius); background: var(--accent-soft); color: var(--accent-deep); font-weight: 700; }
-.kd-dish-filter .btn { min-height: 44px; }
 /* A phone: the counts on one line, the filters on the next, swiped sideways if they do not fit. */
 @media (max-width: 860px) {
   .kd-summary { flex-wrap: wrap; overflow-x: visible; }

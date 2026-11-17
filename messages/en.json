@@ -4611,15 +4611,7 @@
     "waiting": "{n, plural, one {1 waiting} other {# waiting}}",
     "lateCount": "{n} late",
     "newCount": "{n, plural, one {1 with new dishes} other {# with new dishes}}",
-    "all": "All",
-    "viewAria": "What the kitchen sees",
-    "viewOrders": "Orders",
-    "viewDishes": "Dishes to cook",
-    "totalsEmpty": "Nothing left to cook",
-    "inOrders": "{n, plural, one {in 1 order} other {in # orders}}",
-    "oldest": "oldest {min} min",
-    "onlyDish": "Only orders with {dish}",
-    "showAll": "Show all"
+    "all": "All"
   },
   "posTables": {
     "paidOk": "{table} paid · {amount}. The table is free.",
