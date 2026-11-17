@@ -240,3 +240,5 @@
 .pf-table-type { display: inline-block; padding: 0 var(--sp-2); border-radius: 999px; background: var(--accent-soft); color: var(--accent-deep); font-size: 0.8125rem; font-weight: 700; vertical-align: middle; }
 /* Owner, 17 Nov 2026 — the reason for taking a dish off opens under that dish, the full width of its row. */
 .tb-line .tb-reason { flex: 1 1 100%; }
+/* .dt-field grows along a row (flex-basis 8rem); in this column that basis became 128px of height around the box. */
+.tb-line .tb-reason .dt-field { flex: none; }

@@ -16,6 +16,7 @@ describe('taking a dish off a table bill', () => {
     expect(row).toContain('{takingOff?.lineId === l.id ? (');
     expect(row).toContain('className="tb-reason"');
     expect(css).toContain('.tb-line .tb-reason { flex: 1 1 100%; }');
+    expect(css).toContain('.tb-line .tb-reason .dt-field { flex: none; }');
   });
   it('is ready to type and in view', () => {
     expect(sheet).toContain("reasonInputRef.current?.focus({ preventScroll: true });");
