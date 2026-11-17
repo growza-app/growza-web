@@ -74,6 +74,7 @@ export function BookingSummary({
     0,
   );
   const totalPaid = servicesPaid + productsPaid;
+  const freeReason = booking.appointments.find((a) => a.discountReason)?.discountReason ?? null;
   const paymentMode = booking.appointments.find((a) => a.paymentMode)?.paymentMode ?? null;
   const subtotal = totalPaid + savings + productsRefunded;
   const pricesShown =
@@ -252,6 +253,13 @@ export function BookingSummary({
               <span>{(PAYMENT_MODE_KEYS as readonly string[]).includes(paymentMode) ? tc(`pay.${paymentMode as (typeof PAYMENT_MODE_KEYS)[number]}`) : paymentMode}</span>
             </div>
           )}
+          {/* Jira GRW-725 — why the owner gave the whole bill free, as every leg of it keeps it (0195). */}
+          {freeReason ? (
+            <div className="summary-line summary-free-reason">
+              <span>{t('freeReason')}</span>
+              <span>{freeReason}</span>
+            </div>
+          ) : null}
         </div>
         )}
 

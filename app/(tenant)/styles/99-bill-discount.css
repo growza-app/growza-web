@@ -178,3 +178,67 @@
   margin: 0;
   padding: 0 var(--sp-4);
 }
+
+/*
+ * Jira GRW-725 — a bill the discount takes to ₹0. For anyone but the owner, the plain sentence in the danger colours
+ * (Pay is shut beside it); for the owner, the Reason the bill will keep. Laid out at 344px first: full width, the
+ * field 44px tall, the type in rem.
+ */
+.pf-free-owner-only {
+  margin: var(--sp-2) 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--danger-line);
+  border-radius: var(--radius);
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+  font-size: var(--fs-4);
+  font-weight: 600;
+}
+
+.pf-free-reason {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: var(--sp-2) 0;
+}
+
+.pf-free-reason-label {
+  font-size: var(--fs-4);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pf-free-reason input {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  /* 16px keeps iOS from zooming the page when the field is tapped. */
+  font-size: max(1rem, var(--fs-4));
+}
+
+.pf-free-reason input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.pf-free-reason-hint {
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+
+/* On the phone's payment step it is one of the column's cards: the column's own gap spaces it. */
+.pf > .pf-free-owner-only,
+.pf > .pf-free-reason {
+  margin: 0;
+}
+
+/* The order screen: why the owner gave the whole bill free, under "Discount on the bill". Free text, so it wraps. */
+.ord-d-money > .ord-d-discount-reason dd {
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}

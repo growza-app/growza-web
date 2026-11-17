@@ -24,8 +24,8 @@ describe('the first part of a two-way payment survives a discount', () => {
       expect(src).toContain('const splitTooBig = firstWay !== null && firstWay.minor >= dueMinor;');
       expect(src).toMatch(/splitTooBig \? 'split\.tooBig' : 'split\.then'/);
     }
-    expect(pay).toContain('checking || splitTooBig ? undefined : onSettle(');
-    expect(till).toContain('if (saving || lines.length === 0 || pointsChecking || splitTooBig) return;');
+    expect(pay).toContain('if (freeBlock || checking || splitTooBig) return;');
+    expect(till).toContain('if (saving || lines.length === 0 || freeBlock || pointsChecking || splitTooBig) return;');
   });
   it('in English and Hindi', () => {
     expect(en.payFlow.split.tooBig).toContain('{amount} by {mode}');

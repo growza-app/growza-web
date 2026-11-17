@@ -529,7 +529,8 @@ describe('Record payment in three taps', () => {
     expect(flow).toMatch(/onClick=\{\(\) => addOne\(s\)\} aria-disabled=\{full \|\| undefined\}/);
     expect(css).toMatch(/\.pf-qty-btn\[aria-disabled='true'\] \{/);
     // The tap that writes the sale, and the screen that confirms it.
-    expect(flow).toMatch(/if \(saving \|\| lines\.length === 0 \|\| pointsChecking \|\| splitTooBig\) return;\s*felt\(BUZZ\.paid\);/);
+    // Jira GRW-725 — a free bill without the owner's reason; QA 2026-11-17 — points still being asked, a too-big first part.
+    expect(flow).toMatch(/if \(saving \|\| lines\.length === 0 \|\| freeBlock \|\| pointsChecking \|\| splitTooBig\) return;\s*felt\(BUZZ\.paid\);/);
     expect(done).toMatch(/if \(!\(soundProp \?\? soundIsOn\(\)\)\) return;\s*buzz\(BUZZ\.done\);/);
     expect(done).toMatch(/if \(said\.current === appointmentId\) return;/);
     // The person's own switch covers touch as well as sound; and a phone without `vibrate` is not an error.

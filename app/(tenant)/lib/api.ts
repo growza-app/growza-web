@@ -1507,6 +1507,8 @@ export const api = {
       redeemPoints?: number;
       /** Jira GRW-480 — sent again after "That is a large amount" is confirmed. */
       confirmLargeAmount?: boolean;
+      /** Jira GRW-725 — why the owner gives the whole bill free. Only an owner may, and only with one (3–200 letters). */
+      discountReason?: string;
     },
   ) => post<CheckoutResponse>(`/api/v1/appointments/${appointmentId}/checkout`, args),
   /**
@@ -1658,6 +1660,8 @@ export const api = {
       redeemPoints?: number;
       /** Send a counter order to the kitchen queue with payment pending; settled from Queue when handed over. */
       paymentPending?: boolean;
+      /** Jira GRW-725 — why the owner gives the whole bill free. Only an owner may, and only with one (3–200 letters). */
+      discountReason?: string;
       /** Jira GRW-716 — an order this till took with no internet, sent now: its till, its own count, when it was taken. */
       offline?: { deviceKey: string; tokenNo: number; takenAt: string };
       // The route refuses to guess: exactly one of these (GRW-293). A named stylist only when paying a token (GRW-403).
@@ -1699,6 +1703,8 @@ export const api = {
       redeemPoints?: number;
       /** Owner, 2026-11-15 — a discount on the whole bill given at the Queue's payment, in paise (whole rupees). */
       discountMinor?: number;
+      /** Jira GRW-725 — why the owner gives the whole bill free. Only an owner may, and only with one (3–200 letters). */
+      discountReason?: string;
     },
   ) =>
     post<{
