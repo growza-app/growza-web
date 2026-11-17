@@ -182,6 +182,47 @@ const row = (id: string, startAt: string, extra: Partial<Appointment>): Appointm
     payments: [], refunds: [], ...extra,
   }) as Appointment;
 
+describe('the loopholes (owner, 2026-11-17)', () => {
+  it('L2 — the server already had it as #12: the till says "A01 is #12" until OK is tapped', async () => {
+    const m = await load();
+    m.keepOfflineOrder(item('o1'));
+    recordCounterSale.mockResolvedValueOnce({ appointmentId: 'sale-1', tokenNo: 12, offlineToken: null });
+    await m.sendOfflineOrders(['mg']);
+    const notices = JSON.parse(storage.getItem('growza.till.renumbered.v1')!);
+    expect(notices).toEqual([{ id: 'o1', branch: 'mg', was: 'A01', now: '#12', saleId: 'sale-1' }]);
+    m.dismissRenumbered('o1');
+    expect(storage.getItem('growza.till.renumbered.v1')).toBeNull();
+  });
+
+  it('L2 — sent and recorded as A01: no notice', async () => {
+    const m = await load();
+    m.keepOfflineOrder(item('o2'));
+    recordCounterSale.mockResolvedValueOnce({ appointmentId: 'sale-2', tokenNo: null, offlineToken: 'A01' });
+    await m.sendOfflineOrders(['mg']);
+    expect(storage.getItem('growza.till.renumbered.v1')).toBeNull();
+  });
+
+  it('L3 — a refused order can be removed; one still waiting to send never can', async () => {
+    const m = await load();
+    m.keepOfflineOrder(item('o3', 'mg', '2026-11-16T09:00:00.000Z'));
+    m.keepOfflineOrder(item('o4', 'other'));
+    const { ApiError } = await import('./api');
+    recordCounterSale.mockRejectedValueOnce(new ApiError(400, 'That price changed'));
+    await m.sendOfflineOrders(['mg']);
+    m.removeOfflineOrder('o4');
+    m.removeOfflineOrder('o3');
+    const left = JSON.parse(storage.getItem('growza.till.offline.v1')!) as Array<{ id: string }>;
+    expect(left.map((i) => i.id)).toEqual(['o4']);
+  });
+
+  it('L1 — the till asks before the tab closes while anything waits, and says to keep the browser', () => {
+    const src = readFileSync(path.join(__dirname, 'offline-till.ts'), 'utf8');
+    expect(src).toMatch(/if \(!waiting\) return;\s*const ask = \(e: BeforeUnloadEvent\)/);
+    const bar = readFileSync(path.join(__dirname, '../components/OfflineTillBar.tsx'), 'utf8');
+    expect(bar).toContain("{waiting > 0 ? <span className=\"otb-keep\">{t('keepBrowser')}</span> : null}");
+  });
+});
+
 describe('an order taken offline is never given a plain number', () => {
   it('the Queue calls it A01, and the server’s next #02 is not taken by it', () => {
     const now = Date.parse('2026-11-16T10:30:00Z');

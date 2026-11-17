@@ -3228,7 +3228,17 @@
       "failedTitle": "जो ऑर्डर भेजे नहीं जा सके",
       "failedUnknown": "भेजा नहीं जा सका।",
       "retry": "फिर से भेजें",
-      "needsInternet": "इंटरनेट चाहिए"
+      "needsInternet": "इंटरनेट चाहिए",
+      "keepBrowser": " भेजे जाने तक यह ब्राउज़र बंद या साफ़ न करें।",
+      "renumberedTitle": "नए नंबर वाले ऑर्डर",
+      "renumbered": "ऑर्डर {was} अब {now} है — मेहमान को बताएँ।",
+      "printSlip": "स्लिप प्रिंट करें",
+      "ok": "ठीक है",
+      "remove": "हटाएँ",
+      "removeTitle": "ऑर्डर {token} हटाएँ?",
+      "removeBody": "यह दर्ज नहीं हुआ। अगर मेहमान ने {amount} दिए हैं, तो काउंटर से फिर से बिल बनाएँ।",
+      "removeGo": "हटाएँ",
+      "removeKeep": "रखें"
     },
     "choices": {
       "close": "बंद करें",

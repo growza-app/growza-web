@@ -1668,7 +1668,7 @@ export function PayFlow({
   // The same screen the one-page form ends on (owner, 2026-10-10): `PaymentDone`, sound, Next customer and all.
   /** Owner, 2026-11-16 — Print KOT the moment the order is placed: under the "sent to queue" banner, phone and wide alike. */
   /** Jira GRW-716 — offline, or orders waiting to send: one amber line over the till; nothing when all is well. */
-  const offlineBar = productsOnly ? <OfflineTillBar branch={location} branches={tillBranches} /> : null;
+  const offlineBar = productsOnly ? <OfflineTillBar branch={location} branches={tillBranches} onReprint={(saleId) => void printer.reprintKots(saleId)} /> : null;
   const queuedPrint =
     queuedBanner?.saleId && queuedBanner.kot ? (
       <TillPrintActions
