@@ -476,6 +476,9 @@ export const API_MESSAGES_HI: Record<string, string> = {
   // GRW-658 three above stopped masking it.
   // Jira GRW-716 — billing offline.
   'Only a paid counter order of products can be taken offline': 'बिना इंटरनेट के सिर्फ़ काउंटर का पैसे लिया हुआ सामान का ऑर्डर लिया जा सकता है',
+  // Jira GRW-715 — a file that is not a menu.
+  'We could not read a menu from that file. It needs a column for the dish name and one for the price.':
+    'हम उस फ़ाइल से मेन्यू नहीं पढ़ पाए। उसमें डिश के नाम और दाम का कॉलम होना चाहिए।',
   'This branch already has 702 tills that bill offline.': 'इस ब्रांच में पहले से 702 काउंटर बिना इंटरनेट बिल बनाते हैं।',
   'This till was not set up for billing offline at this branch. Connect to the internet and open the till again.':
     'यह काउंटर इस ब्रांच में बिना इंटरनेट बिल के लिए तैयार नहीं था। इंटरनेट से जुड़ें और काउंटर फिर से खोलें।',

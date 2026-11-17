@@ -281,6 +281,9 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/products',
     'POST /api/v1/products/import',
     'POST /api/v1/products/import/parse',
+    // Jira GRW-715 — a kitchen's whole menu from a file, on the same owner-only screen.
+    'POST /api/v1/products/menu-import',
+    'POST /api/v1/products/menu-import/parse',
     'PATCH /api/v1/products/:id',
     'DELETE /api/v1/products/:id',
     'POST /api/v1/products/:id/photo',

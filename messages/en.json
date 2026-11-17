@@ -4521,7 +4521,51 @@
     "hideDishHint": "Take this dish off the POS menu temporarily. You can put it back anytime.",
     "restoreProductHint": "Put this product back on sale at the counter.",
     "restoreDishHint": "Put this dish back on the active POS menu.",
-    "deletePermanentHint": "Removes from your catalogue permanently. Past bills keep their own copy."
+    "deletePermanentHint": "Removes from your catalogue permanently. Past bills keep their own copy.",
+    "menuImport": {
+      "title": "Bring in your menu",
+      "pickBody": "Choose your menu file — the one Petpooja gives you, or our sample filled in. You will see every dish before anything is added.",
+      "sample": "Download a sample menu file",
+      "pricesFromFile": "Change prices from a file instead",
+      "chooseFile": "Choose menu file",
+      "reading": "Reading…",
+      "cancel": "Cancel",
+      "readFailed": "We could not read that file. Try again.",
+      "reviewTitle": "Check your menu",
+      "willAdd": "{n, plural, =0 {No new dishes} one {1 dish will be added} other {# dishes will be added}}",
+      "alreadyCount": "{n, plural, one {1 already on the menu} other {# already on the menu}}",
+      "skippedCount": "{n, plural, one {1 skipped} other {# skipped}}",
+      "branch": "They will be added to {branch}.",
+      "newCategories": "New categories: {list}",
+      "newExtras": "New extras: {list}",
+      "sizesDropped": "Sizes are not switched on here, so each dish comes in at one price.",
+      "extrasDropped": "Extras are not switched on here, so they are left out.",
+      "skippedTitle": "Skipped",
+      "dishesTitle": "Dishes",
+      "noName": "(no name)",
+      "row": "Row {row}",
+      "onMenu": "Already on the menu",
+      "extrasLine": "Extras: {list}",
+      "nothingReadable": "No dish in this file could be added.",
+      "back": "Choose another file",
+      "add": "{n, plural, one {Add 1 dish} other {Add # dishes}}",
+      "adding": "Adding…",
+      "nothingNew": "Nothing new to add",
+      "addFailed": "The menu was not added and nothing was saved. Try again.",
+      "doneTitle": "Menu added",
+      "doneBody": "{created, plural, one {1 dish added} other {# dishes added}}. {already, plural, =0 {} one {1 was already on the menu.} other {# were already on the menu.}}",
+      "close": "Done",
+      "reason": {
+        "no_name": "No dish name",
+        "no_price": "No price",
+        "bad_price": "Price is not a number above ₹0",
+        "bad_gst": "GST must be between 0% and 28%",
+        "twice_in_file": "In the file twice",
+        "size_twice": "Size listed twice",
+        "too_many_sizes": "Too many sizes",
+        "name_too_long": "Name is too long"
+      }
+    }
   },
   "kitchen": {
     "title": "Kitchen",
@@ -5191,7 +5235,12 @@
       "toRefunds": "Refunds",
       "byTitle": "Given back by",
       "byNone": "Not recorded",
-      "byRole": {"owner": "Owner", "manager": "Manager", "receptionist": "Front desk", "staff": "Team member"}
+      "byRole": {
+        "owner": "Owner",
+        "manager": "Manager",
+        "receptionist": "Front desk",
+        "staff": "Team member"
+      }
     },
     "returnsLink": "Returns",
     "bringIn": {

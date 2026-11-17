@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from '../../shared/AppLink';
 import { useRouter } from 'next/navigation';
 import { api, ApiError, formatMoney } from '../lib/api';
-import type { Product, ProductCategory, ProductImportResult } from '../lib/api-types';
+import type { MenuImportResult, Product, ProductCategory, ProductImportResult } from '../lib/api-types';
 import { PageHeader } from '../components/PageHeader';
 import { WriteOnly } from '../components/WriteOnly';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -21,6 +21,7 @@ import { matchItems } from '../lib/service-match';
 import { productMatchable } from '../lib/product-match';
 import { ProductSheet } from './ProductSheet';
 import { ImportProducts } from './ImportProducts';
+import { ImportMenu } from './ImportMenu';
 import { StockTake } from './StockTake';
 import { BulkEditProductsModal } from './BulkEditProductsModal';
 import { ALL_CATEGORIES, NO_CATEGORY, ProductCategoriesDropdown } from './DeskProductCategories';
@@ -230,6 +231,9 @@ export function ProductsList({
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importNote, setImportNote] = useState<string | null>(null);
+  // Jira GRW-715 — a kitchen's Import is its whole menu from a file (Petpooja's, or ours); the column-by-column import stays for prices.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const openImport = () => (counted ? setImportOpen(true) : setMenuOpen(true));
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [deletingCategory, setDeletingCategory] = useState<ProductCategory | null>(null);
   const [busy, setBusy] = useState(false);
@@ -348,6 +352,15 @@ export function ProductsList({
     void refreshCategories();
   };
   const fail = (err: unknown) => setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
+  const menuImported = async (result: MenuImportResult) => {
+    setImportNote(t('menuImport.doneBody', { created: result.created, already: result.alreadyOnMenu }));
+    try {
+      setRows(await api.productsAll(branchId));
+    } catch {
+      router.refresh();
+    }
+    void refreshCategories();
+  };
   const remove = async () => {
     if (!deleting) return;
     setBusy(true);
@@ -857,7 +870,7 @@ export function ProductsList({
     canStockTake && writable ? (
       <div className="prd-import-row">
         <p>{t(counted ? 'import.footer' : 'import.footerUncounted')}</p>
-        <button type="button" className="btn btn-ghost" onClick={() => setImportOpen(true)}>
+        <button type="button" className="btn btn-ghost" onClick={openImport}>
           <IconUpload /> {t('import.open')}
         </button>
       </div>
@@ -949,6 +962,18 @@ export function ProductsList({
             router.refresh();
           }}
           onClose={() => setBulkEditOpen(false)}
+        />
+      ) : null}
+      {menuOpen ? (
+        <ImportMenu
+          branchId={branchId}
+          branchName={session?.branches?.find((b) => b.id === branchId)?.name ?? shownBranchName ?? null}
+          onClose={() => setMenuOpen(false)}
+          onImported={(r) => void menuImported(r)}
+          onPricesFromFile={() => {
+            setMenuOpen(false);
+            setImportOpen(true);
+          }}
         />
       ) : null}
       {importOpen ? <ImportProducts shelf={rows} categories={categories} branchId={branchId} onClose={() => setImportOpen(false)} onImported={(r) => void imported(r)} /> : null}
@@ -1107,7 +1132,7 @@ export function ProductsList({
                   </button>
                 ) : null}
                 {canStockTake && writable ? (
-                  <button type="button" className="btn btn-ghost prd-import-btn" onClick={() => setImportOpen(true)}>
+                  <button type="button" className="btn btn-ghost prd-import-btn" onClick={openImport}>
                     <IconUpload /> {t('import.open')}
                   </button>
                 ) : null}
@@ -1149,7 +1174,7 @@ export function ProductsList({
             <p>{t('empty')}</p>
             <p className="prd-empty-hint">{t('emptyHint')}</p>
             {canStockTake && writable ? (
-              <button type="button" className="btn btn-ghost" onClick={() => setImportOpen(true)}>
+              <button type="button" className="btn btn-ghost" onClick={openImport}>
                 {t('import.open')}
               </button>
             ) : null}

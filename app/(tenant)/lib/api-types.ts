@@ -384,6 +384,39 @@ export interface ProductImportItem {
   hsn?: string;
 }
 
+/** Jira GRW-715 — one dish read from a menu file: its portions (sizes) and extras ride with it. */
+export interface MenuDish {
+  row: number;
+  category: string | null;
+  name: string;
+  priceMinor: number;
+  sizes: Array<{ label: string; priceMinor: number }>;
+  gstRateBp: number | null;
+  hsn: string | null;
+  extras: Array<{ name: string; options: Array<{ name: string; priceMinor: number }> }>;
+}
+
+export type MenuSkipReason = 'no_name' | 'no_price' | 'bad_price' | 'bad_gst' | 'twice_in_file' | 'size_twice' | 'too_many_sizes' | 'name_too_long';
+
+/** What adding the file would do. Nothing is saved until it is confirmed. */
+export interface MenuReview {
+  format: 'growza' | 'petpooja';
+  dishes: Array<MenuDish & { onMenu: boolean }>;
+  skipped: Array<{ row: number; name: string | null; reason: MenuSkipReason }>;
+  newCategories: string[];
+  newExtrasGroups: string[];
+  sizesDropped: boolean;
+  extrasDropped: boolean;
+}
+
+export interface MenuImportResult {
+  created: number;
+  alreadyOnMenu: number;
+  categoriesCreated: number;
+  extrasGroupsCreated: number;
+  sizesCreated: number;
+}
+
 export interface ProductImportResult {
   created: number;
   updated: number;
