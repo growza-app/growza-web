@@ -55,6 +55,7 @@ export function OrderClient({
   returnWindowDays: number;
 }) {
   const t = useTranslations('orders');
+  const tTables = useTranslations('posTables');
   const tPrint = useTranslations('print');
   const locale = useLocale();
   const writable = useWritable();
@@ -81,6 +82,10 @@ export function OrderClient({
   // QA 2026-10-23 — a move that cannot be taken back is asked about first. "Cancel this order" fired on one tap from the
   // More menu; cancelled and came back are final states, nothing moves an order out of them.
   const [confirming, setConfirming] = useState<'cancelled' | 'returned' | null>(null);
+  // Jira GRW-737 — the server asked whether the kitchen had already cooked it (`cooked_unknown`); answered here, required.
+  const [askCooked, setAskCooked] = useState(false);
+  const [cooked, setCooked] = useState<boolean | undefined>(undefined);
+  const [cookedError, setCookedError] = useState<string | null>(null);
   // QA 2026-10-23 — what came back can be sold again (back on the shelf) or not (kept off it): asked with "came back", where there is a shelf.
   const [saleable, setSaleable] = useState(true);
   const [returning, setReturning] = useState(false);
@@ -163,7 +168,7 @@ export function OrderClient({
     void move(to);
   };
 
-  const move = async (to: string, extra: { saleable?: boolean } = {}) => {
+  const move = async (to: string, extra: { saleable?: boolean; cooked?: boolean } = {}) => {
     if (!order || inFlight.current) return;
     inFlight.current = true;
     setBusy(true);
@@ -176,7 +181,11 @@ export function OrderClient({
       else if (back?.recorded && back.units > 0) setNotice(extra.saleable === false ? t('detail.cameBackResult.writtenOff', { count: back.units }) : t('detail.cameBackResult.back', { count: back.units }));
       await refresh();
     } catch (error) {
-      if (error instanceof ApiError && error.code === 'move_not_allowed') {
+      if (error instanceof ApiError && error.code === 'cooked_unknown') {
+        setAskCooked(true);
+        setCooked(undefined);
+        setConfirming('cancelled');
+      } else if (error instanceof ApiError && error.code === 'move_not_allowed') {
         // The order is not where this screen thought: say where it is now, and redraw from the truth (AC-02).
         const now = (error.body as { status?: string } | undefined)?.status ?? order.status;
         setNotice(t('detail.movedOn', { state: stateWord(now) }));
@@ -628,13 +637,37 @@ export function OrderClient({
           cancelLabel={confirmWords[confirming].keep}
           tone="danger"
           busy={busy}
-          onCancel={() => setConfirming(null)}
+          error={cookedError}
+          onCancel={() => {
+            setConfirming(null);
+            setAskCooked(false);
+            setCookedError(null);
+          }}
           onConfirm={() => {
             const to = confirming;
+            if (to === 'cancelled' && askCooked && cooked === undefined) {
+              setCookedError(tTables('cookedNeeded'));
+              return;
+            }
             setConfirming(null);
-            void move(to, to === 'returned' && counted ? { saleable } : {});
+            setCookedError(null);
+            void move(to, to === 'returned' && counted ? { saleable } : to === 'cancelled' && askCooked ? { cooked } : {});
           }}
         >
+          {confirming === 'cancelled' && askCooked ? (
+            <fieldset className="tb-cooked">
+              <legend className="field-hint">{tTables('cookedQuestion')}</legend>
+              <div className="tb-cooked-pair">
+                <button type="button" className={`btn btn-ghost ${cooked === false ? 'is-on' : ''}`} aria-pressed={cooked === false} onClick={() => setCooked(false)}>
+                  {tTables('cookedNo')}
+                </button>
+                <button type="button" className={`btn btn-ghost ${cooked === true ? 'is-on' : ''}`} aria-pressed={cooked === true} onClick={() => setCooked(true)}>
+                  {tTables('cookedYes')}
+                </button>
+              </div>
+              <span className="field-hint">{tTables('cookedHint')}</span>
+            </fieldset>
+          ) : null}
           {confirming === 'returned' && counted ? (
             <fieldset className="ord-d-saleable">
               <legend>{confirmWords.returned.question}</legend>

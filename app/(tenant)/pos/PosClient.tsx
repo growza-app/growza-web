@@ -536,6 +536,7 @@ export function PosClient({
   const tPay = useTranslations('payFlow');
   const tNouns = useTranslations('nouns');
   const tc = useTranslations('chrome');
+  const tTables = useTranslations('posTables');
   const nv = useNewVisitCopy();
   const locale = useLocale();
   const { Customer } = useNouns();
@@ -577,6 +578,9 @@ export function PosClient({
   const [cancelTarget, setCancelTarget] = useState<PosDailyToken | null>(null);
   const [cancelBusy, setCancelBusy] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  // Jira GRW-737 — the server asked whether the kitchen had already cooked it (`cooked_unknown`): asked in the cancel dialog, required.
+  const [cancelAskCooked, setCancelAskCooked] = useState(false);
+  const [cancelCooked, setCancelCooked] = useState<boolean | undefined>(undefined);
   const [queueNote, setQueueNote] = useState<string | null>(null);
   /** Jira GRW-713 — this till's printer, and the last KOT the queue made (an addition, a cancellation) to print. */
   const printer = useTicketPrinter();
@@ -824,7 +828,11 @@ export function PosClient({
     setCancelBusy(true);
     setCancelError(null);
     try {
-      const res = await api.cancelPendingCounterSale(tk.id);
+      if (cancelAskCooked && cancelCooked === undefined) {
+        setCancelError(tTables('cookedNeeded'));
+        return;
+      }
+      const res = await api.cancelPendingCounterSale(tk.id, cancelAskCooked ? cancelCooked : undefined);
       // Jira GRW-713 — the kitchen is told to stop: printed now where this till prints by itself, a tap away otherwise.
       if (res.kot) {
         const order = { tokenNo: tk.tokenNo, offlineToken: tk.offlineToken, channel: tk.channel };
@@ -837,13 +845,17 @@ export function PosClient({
       setReloadKey((k) => k + 1);
       void loadTodayTokens();
     } catch (e) {
+      if (e instanceof ApiError && e.code === 'cooked_unknown') {
+        setCancelAskCooked(true);
+        return;
+      }
       setCancelError(e instanceof Error && e.message ? e.message : t('cancelFailed'));
       // Paid or cancelled on another device meanwhile: the board should show it as it is now.
       void loadTodayTokens();
     } finally {
       setCancelBusy(false);
     }
-  }, [cancelTarget, cancelBusy, loadTodayTokens, t, printer]);
+  }, [cancelTarget, cancelBusy, loadTodayTokens, t, tTables, printer, cancelAskCooked, cancelCooked]);
 
   const startAddingTo = useCallback((tk: PosDailyToken) => {
     setQueueNote(null);
@@ -1735,9 +1747,28 @@ export function PosClient({
           error={cancelError}
           onConfirm={() => void cancelUnpaidOrder()}
           onCancel={() => {
-            if (!cancelBusy) setCancelTarget(null);
+            if (cancelBusy) return;
+            setCancelTarget(null);
+            setCancelAskCooked(false);
+            setCancelCooked(undefined);
+            setCancelError(null);
           }}
-        />
+        >
+          {cancelAskCooked ? (
+            <fieldset className="tb-cooked">
+              <legend className="field-hint">{tTables('cookedQuestion')}</legend>
+              <div className="tb-cooked-pair">
+                <button type="button" className={`btn btn-ghost ${cancelCooked === false ? 'is-on' : ''}`} aria-pressed={cancelCooked === false} onClick={() => setCancelCooked(false)}>
+                  {tTables('cookedNo')}
+                </button>
+                <button type="button" className={`btn btn-ghost ${cancelCooked === true ? 'is-on' : ''}`} aria-pressed={cancelCooked === true} onClick={() => setCancelCooked(true)}>
+                  {tTables('cookedYes')}
+                </button>
+              </div>
+              <span className="field-hint">{tTables('cookedHint')}</span>
+            </fieldset>
+          ) : null}
+        </ConfirmDialog>
       ) : null}
 
       {clientSheetTarget ? (

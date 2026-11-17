@@ -4702,7 +4702,8 @@
     "cookedQuestion": "Was it already cooked?",
     "cookedNo": "No, back to stock",
     "cookedYes": "Yes, wasted",
-    "cookedHint": "Asked because the kitchen got this dish and never ticked it Done."
+    "cookedHint": "Asked because the kitchen got it and never ticked it Done.",
+    "cookedNeeded": "Say whether it was already cooked."
   },
   "pos": {
     "kitchenScreen": "Kitchen",

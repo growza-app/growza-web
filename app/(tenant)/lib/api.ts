@@ -1001,7 +1001,8 @@ export const api = {
   attachOrderClient: (id: string, customerId: string) =>
     post<{ id: string; clientId: string }>(`/api/v1/orders/${encodeURIComponent(id)}/client`, { customerId }),
   /** QA 2026-10-23 — `saleable` (came back only): what came back is returned too, back on the shelf or kept off it as damaged. */
-  moveOrder: (id: string, status: string, expected: string, extra: { saleable?: boolean } = {}) =>
+  // Jira GRW-737 — `cooked`: sent only when a cancel answered `cooked_unknown` (a dish the kitchen was sent and never ticked Done).
+  moveOrder: (id: string, status: string, expected: string, extra: { saleable?: boolean; cooked?: boolean } = {}) =>
     patch<{ id: string; status: string; moved: boolean; cameBack?: { recorded: boolean; units: number; detail?: string } }>(
       `/api/v1/orders/${encodeURIComponent(id)}/status`,
       { status, expected, ...extra },
@@ -1755,8 +1756,11 @@ export const api = {
    * Owner, 9 Nov 2026 — cancel an order still waiting in the Queue for payment. It stays in Orders as Cancelled, and
    * where the business counts stock its units go back on the shelf. A paid order is refused (409): that is a return.
    */
-  cancelPendingCounterSale: (saleId: string) =>
-    post<{ saleId: string; status: string; totalMinor: number; kot?: KitchenTicketDto }>('/api/v1/counter-sales', { cancelSaleId: saleId }),
+  cancelPendingCounterSale: (saleId: string, cooked?: boolean) =>
+    post<{ saleId: string; status: string; totalMinor: number; kot?: KitchenTicketDto }>('/api/v1/counter-sales', {
+      cancelSaleId: saleId,
+      ...(cooked === undefined ? {} : { cooked }),
+    }),
   /** Owner, 9 Nov 2026 — add more to an order still waiting for payment; it keeps its token and is paid for once. */
   addToPendingCounterSale: (saleId: string, products: Array<{ productId: string; variantId?: string; qty: number; paidMinor: number }>) =>
     post<{ saleId: string; status: string; totalMinor: number; kot?: KitchenTicketDto }>('/api/v1/counter-sales', { addToSaleId: saleId, products }),
