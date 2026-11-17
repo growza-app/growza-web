@@ -1157,8 +1157,14 @@ export function ProductsList({
               </aside>
             ) : null}
           </div>
-          {dialogs}
         </div>
+        {/*
+          QA 2026-11-17 — the dialogs sit at the SAME place in both layouts (fourth child, after the phone's sheet slot):
+          inside the desk's page-body they were a different element from the phone's, so crossing 1101px (an iPad turned)
+          rebuilt every open dialog and threw away a menu file's review, or the fixes typed into a product import's.
+        */}
+        {null}
+        {dialogs}
       </>
     );
   }

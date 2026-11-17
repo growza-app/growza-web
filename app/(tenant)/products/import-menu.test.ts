@@ -73,3 +73,11 @@ describe('the Menu screen', () => {
     expect(list).toMatch(/onPricesFromFile=\{\(\) => \{\s*setMenuOpen\(false\);\s*setImportOpen\(true\);/);
   });
 });
+
+describe('QA 2026-11-17 — a turned iPad keeps the review', () => {
+  it('the dialogs are drawn at one place in both layouts, after the phone sheet slot, never inside the desk page-body', () => {
+    const desk = list.slice(list.indexOf('if (desk && rows.length > 0) {'), list.indexOf('  return (\n    <>\n      {header}\n      {/* `prd-shelf`'));
+    expect(desk).toMatch(/<\/div>\s*<\/div>\s*\{\/\*[\s\S]*?\*\/\}\s*\{null\}\s*\{dialogs\}\s*<\/>/);
+    expect(list.match(/\{dialogs\}/g)).toHaveLength(2);
+  });
+});
