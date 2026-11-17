@@ -2246,7 +2246,8 @@ export function PayFlow({
       </div>
     );
   }
-  if (tablesHere && orderTab === 'dine_in' && !atTable && !token && step === 'what' && location) {
+  // Owner, 17 Nov 2026 — Add items on a queued order goes straight to the dishes: that order already has its place.
+  if (tablesHere && orderTab === 'dine_in' && !atTable && !addingTo && !token && step === 'what' && location) {
     return (
       <div className="pf-tables">
         {typeRow}
