@@ -137,3 +137,162 @@
 .dt-sc-rate .btn { min-height: 44px; }
 .tb-sc { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); padding: var(--sp-2) 0; }
 .tb-sc .btn { min-height: 44px; }
+
+/* Jira GRW-712 — a dish's choice sheet: portion and add-on groups as 44px chips, Add at the foot in thumb reach. */
+.dc-sheet { max-height: 88dvh; overflow-y: auto; }
+.dc-group { border: 0; margin: 0 0 var(--sp-3); padding: 0; min-width: 0; }
+.dc-group-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-2); padding: 0; margin-bottom: var(--sp-2); font-weight: 600; }
+.dc-rule { font-weight: 400; font-size: 0.8125rem; color: var(--muted); }
+.dc-need { font-weight: 600; font-size: 0.8125rem; color: var(--danger); }
+.dc-options { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.dc-option { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 0 var(--sp-3); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; max-width: 100%; }
+.dc-option-name { overflow-wrap: anywhere; text-align: left; }
+.dc-option-price { color: var(--muted); font-variant-numeric: tabular-nums; }
+.dc-option.is-on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.dc-option:disabled { opacity: 0.45; }
+.dc-foot { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); padding-top: var(--sp-3); background: var(--surface); }
+.dc-qty { display: flex; align-items: center; gap: var(--sp-2); }
+.dc-qty .btn { min-width: 44px; min-height: 44px; }
+.dc-qty-n { min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }
+.dc-add { flex: 1 1 10rem; min-height: 44px; }
+
+/* Jira GRW-712 — an item's choices editor. */
+.dc-editor { display: flex; flex-direction: column; gap: var(--sp-3); }
+.dc-group-list, .dc-option-rows { list-style: none; margin: 0 0 var(--sp-3); padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.dc-group-row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); padding: var(--sp-2) 0; border-bottom: 1px solid var(--border); }
+.dc-check { display: flex; align-items: flex-start; gap: var(--sp-2); min-height: 44px; min-width: 0; }
+.dc-check input { width: 22px; height: 22px; margin-top: 2px; flex: none; }
+.dc-group-sum { display: block; overflow-wrap: anywhere; }
+.dc-draft .card-body { display: flex; flex-direction: column; gap: var(--sp-3); }
+.dc-option-row { display: grid; grid-template-columns: minmax(0, 1fr) 6rem auto; gap: var(--sp-2); align-items: center; }
+.dc-option-row input { min-height: 44px; font-size: 16px; min-width: 0; }
+.dc-option-row .btn, .dc-group-row .btn { min-height: 44px; }
+
+/* Jira GRW-714 — the kitchen screen: tablet-first, large type, 44px+ targets, amber AND words when late. */
+.kd-page { max-width: none; }
+.kd-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+.kd-title { margin: 0 auto 0 0; font-size: 1.25rem; }
+.kd-bar-right { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.kd-bar-right .btn { min-height: 44px; }
+.kd-sound { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.kd-back { display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 44px; padding-right: var(--sp-2); color: var(--accent-deep); font-weight: 600; text-decoration: none; }
+.kd-sound-hint { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); margin: 0 0 var(--sp-3); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius); background: var(--accent-soft); color: var(--accent-deep); font-weight: 600; }
+.kd-sound-hint .btn { min-height: 44px; }
+/* Review #1 — no bottom bar on the kitchen screen, so no room kept for one. */
+@media (max-width: 860px) { .kd-page { padding-bottom: var(--sp-4); } }
+/* The sidebar is the way back on a wide screen. */
+@media (min-width: 861px) { .kd-back { display: none; } }
+.kd-offline { margin: 0 0 var(--sp-3); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius); background: var(--amber-soft); color: var(--amber-ink); border: 1px solid var(--amber); }
+/* Owner, 2026-11-17 — sized for a rush of 100 orders: about five tickets across a laptop, three or four on an iPad. */
+.kd-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.5rem), 1fr)); gap: var(--sp-2); align-items: start; }
+.kd-card { display: flex; flex-direction: column; gap: var(--sp-1); padding: var(--sp-2) var(--sp-3); border: 2px solid var(--border); border-radius: var(--radius); background: var(--surface); min-width: 0; }
+.kd-card.is-late { border-color: var(--amber); background: var(--amber-soft); }
+.kd-card.is-late .kd-card-age { color: var(--amber-ink); }
+.kd-skeleton { min-height: 12rem; }
+.kd-card-head { display: flex; flex-wrap: nowrap; align-items: center; gap: var(--sp-1) var(--sp-2); min-width: 0; }
+/* One line. A long area name gives way (…), never the table number: at least "T12 · A…" always shows. */
+.kd-card-label { min-width: 4.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kd-card-age { flex: none; white-space: nowrap; }
+/* Its own line under the table and time, word always written: Dine-in green, Takeaway amber, Delivery grey. */
+.kd-card-type { align-self: flex-start; white-space: nowrap; }
+.kd-card-label { font-size: 1.125rem; font-weight: 800; }
+.kd-card-type { display: inline-flex; align-items: center; gap: var(--sp-1); padding: 1px var(--sp-2); border-radius: 999px; font-weight: 700; font-size: 0.8125rem; background: var(--accent-soft); color: var(--accent-deep); }
+.kd-card-type.is-takeaway { background: var(--amber-ink); color: var(--surface); }
+.kd-card-type.is-delivery { background: var(--border); color: var(--text); }
+.kd-card-age { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 0.875rem; font-variant-numeric: tabular-nums; font-weight: 600; }
+.kd-card.is-late .kd-card-age { font-weight: 800; }
+/* Review #2 (owner, 2026-11-17) — plain rows with a hairline between them: the same 48px to tap, about a quarter less height. */
+.kd-dishes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.kd-dish + .kd-dish { border-top: 1px solid var(--border); }
+.kd-dish-btn { display: flex; width: 100%; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 2px 0; border: 0; background: none; color: var(--text); font: inherit; font-size: 1rem; line-height: 1.3; text-align: left; cursor: pointer; }
+.kd-tick { flex: none; display: inline-grid; place-items: center; width: 20px; height: 20px; border: 2px solid var(--muted); border-radius: 50%; color: var(--surface); }
+.kd-dish.is-done .kd-tick { background: var(--accent); border-color: var(--accent); }
+.kd-portion { font-weight: 800; }
+.kd-qty { font-weight: 700; font-variant-numeric: tabular-nums; flex: none; }
+.kd-dish-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.kd-dish.is-done .kd-dish-btn { color: var(--muted); }
+.kd-dish.is-done .kd-dish-name { text-decoration: line-through; }
+.kd-dish.is-off .kd-dish-name { text-decoration: line-through; }
+.kd-new { flex: none; padding: 0 var(--sp-1); border-radius: 999px; background: var(--accent-deep); color: var(--surface); font-size: 0.75rem; font-weight: 700; }
+.kd-off { flex: none; font-size: 0.8125rem; color: var(--danger); font-weight: 600; }
+.kd-ready { min-height: 44px; margin-top: var(--sp-1); font-size: 1rem; }
+.kd-empty { padding: var(--sp-5) 0; text-align: center; }
+/* Owner, 2026-11-17 — the rush at a glance, and one tap to see only Dine-in, Takeaway or Delivery. Scrolls sideways on a phone. */
+.kd-summary { display: flex; align-items: center; gap: var(--sp-2); margin: 0 0 var(--sp-2); overflow-x: auto; scrollbar-width: none; }
+.kd-summary::-webkit-scrollbar { display: none; }
+.kd-count { flex: none; font-weight: 700; white-space: nowrap; }
+.kd-count.is-late { color: var(--amber-ink); }
+.kd-count + .kd-count::before { content: '·'; margin-right: var(--sp-2); color: var(--muted); font-weight: 400; }
+.kd-filters { display: flex; gap: var(--sp-1); margin-left: auto; flex: none; }
+.kd-filter { min-height: 44px; padding: 0 var(--sp-3); border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-size: 0.875rem; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.kd-filter[aria-pressed='true'] { background: var(--accent-deep); border-color: var(--accent-deep); color: var(--surface); }
+/* A phone: the counts on one line, the filters on the next, swiped sideways if they do not fit. */
+@media (max-width: 860px) {
+  .kd-summary { flex-wrap: wrap; overflow-x: visible; }
+  .kd-filters { margin-left: 0; width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .kd-filters::-webkit-scrollbar { display: none; }
+}
+.kd-empty-title { font-size: 1.25rem; font-weight: 600; }
+.kd-undo { position: sticky; bottom: var(--sp-3); display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-top: var(--sp-3); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius); background: var(--text); color: var(--surface); }
+.kd-undo .btn { min-height: 44px; color: var(--surface); border-color: var(--surface); }
+
+/* Owner, 2026-11-17 — the till's table strip says the bill is Dine-in, so a table chosen by mistake is seen. */
+.pf-table-type { display: inline-block; padding: 0 var(--sp-2); border-radius: 999px; background: var(--accent-soft); color: var(--accent-deep); font-size: 0.8125rem; font-weight: 700; vertical-align: middle; }
+/* Owner, 17 Nov 2026 — the reason for taking a dish off opens under that dish, the full width of its row. */
+.tb-line .tb-reason { flex: 1 1 100%; }
+/* .dt-field grows along a row (flex-basis 8rem); in this column that basis became 128px of height around the box. */
+.tb-line .tb-reason .dt-field { flex: none; }
+/* Owner, 17 Nov 2026 — "Take payment · ₹540.60" was cut off at both ends on a 347px phone. The sheet's main action
+   takes its own full row, and no action's words are ever clipped: a long one (or Hindi) wraps instead. */
+.tb-sheet .tb-actions .btn { white-space: normal; text-align: center; overflow-wrap: anywhere; }
+.tb-sheet .tb-actions .tb-take-pay { flex-basis: 100%; }
+/*
+ * Owner, 17 Nov 2026 (design review of the table bill) — the table is the title; the dishes are a list with the count
+ * in its own column; Take off waits behind "Take off a dish"; Total and Take payment are pinned to the sheet's foot.
+ */
+.tb-title { display: flex; flex-direction: column; min-width: 0; }
+.tb-title .tb-title-name { font-size: 1.125rem; font-weight: 700; color: var(--text); }
+.tb-title-sub { font-size: 0.8125rem; color: var(--muted); overflow-wrap: anywhere; }
+.tb-line { flex-wrap: wrap; }
+.tb-line-qty { flex: 0 0 2rem; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--muted); }
+.tb-line .tb-line-name { flex: 1 1 8rem; }
+.tb-line .tb-off-btn { margin-left: auto; }
+.tb-edit-link { align-self: flex-start; min-height: 44px; padding: 0; border: 0; background: none; color: var(--danger); font: inherit; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+.tb-edit-link[aria-pressed='true'] { color: var(--accent-ink); }
+.tb-sc { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-2) 0; border-bottom: 1px solid var(--border); }
+.tb-sc .tb-line-name { flex: 1 1 auto; }
+.tb-sheet .tb-actions { margin-top: var(--sp-3); }
+.tb-foot {
+  position: sticky;
+  bottom: calc(-1 * var(--sp-4));
+  margin: var(--sp-3) calc(-1 * var(--sp-4)) calc(-1 * var(--sp-4));
+  padding: var(--sp-2) var(--sp-4) calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  z-index: 1;
+}
+.tb-foot .tb-total { margin: 0; }
+.tb-foot .tb-take-pay { width: 100%; min-height: 48px; white-space: normal; overflow-wrap: anywhere; }
+/* Taking dishes off: the name keeps a whole line; its amount and Take off sit under it, to the right. */
+.tb-lines.is-editing .tb-line-name { flex-basis: calc(100% - 2rem - var(--sp-2)); }
+.tb-lines.is-editing .tb-line-amount { margin-left: auto; }
+.tb-lines.is-editing .tb-line .tb-off-btn { margin-left: 0; }
+/*
+ * Owner, 17 Nov 2026 — "this screen text should have been small": the bill reads at 15px, its buttons at 14px (still
+ * 44px to tap), Total stays the biggest number, and the reason box keeps 16px so an iPhone does not zoom into it.
+ */
+.tb-lines, .tb-sc { font-size: 0.9375rem; }
+.tb-lines .tb-off, .tb-sc .tb-off { font-size: 0.75rem; }
+.tb-sheet .btn, .tb-edit-link { font-size: 0.875rem; }
+.tb-sheet .tb-reason input { font-size: 1rem; }
+.tb-foot .tb-total { font-size: 1.0625rem; font-weight: 700; }
+.tb-foot .tb-take-pay { font-size: 1rem; }
+/* Taking a dish off: Take off {dish} and Cancel sit where Take payment was; greyed out, Take off is still a red outline. */
+.tb-foot-pair { display: flex; gap: var(--sp-2); }
+.tb-foot-pair .btn { min-height: 48px; white-space: normal; overflow-wrap: anywhere; }
+.tb-foot-pair .btn-danger { flex: 1 1 auto; }
+.tb-foot-pair .btn-ghost { flex: 0 0 auto; }
+.tb-foot-pair .btn-danger:disabled { background: var(--surface); color: var(--danger); box-shadow: inset 0 0 0 1.5px var(--danger); opacity: 0.55; }

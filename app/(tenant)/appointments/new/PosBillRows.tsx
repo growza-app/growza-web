@@ -34,7 +34,8 @@ export function PosBillRows({
   totalMinor: number;
   full: boolean;
   onLess: (key: string) => void;
-  onMore: (p: Product, size?: TillSize) => void;
+  /** Jira GRW-712 — `line`: the row's own line, so "+" repeats its size and add-ons exactly (FR-05). */
+  onMore: (p: Product, size?: TillSize, line?: BillLine) => void;
   onClearLine: (key: string) => void;
   onEditPrice?: (key: string) => void;
 }) {
@@ -50,6 +51,7 @@ export function PosBillRows({
     list: number;
     product?: Product;
     size?: TillSize;
+    line: BillLine;
   }> = [];
 
   for (const l of lines) {
@@ -72,6 +74,7 @@ export function PosBillRows({
         list: l.priceMinor,
         product,
         size,
+        line: l,
       });
     }
   }
@@ -86,7 +89,7 @@ export function PosBillRows({
           const p = r.product;
           const canAddMore = p
             ? r.size
-              ? !full && canAddSize(r.size, r.count)
+              ? !full && canAddSize(r.size, r.count, counted)
               : !full && (!counted || p.stock > r.count)
             : false;
           const metaParts: string[] = [];
@@ -120,7 +123,7 @@ export function PosBillRows({
                       type="button"
                       className="pos-step-btn"
                       aria-label={t('oneMore', { name: r.name })}
-                      onClick={() => onMore(p, r.size)}
+                      onClick={() => onMore(p, r.size, r.line)}
                       disabled={!canAddMore}
                     >
                       <IconPlus />

@@ -57,6 +57,11 @@ export type PageGrid = Partial<Record<RolePageKey, PageLevel>>;
  * Jira GRW-723 — a waiter: a role that serves tables and does not run the till (Tables granted, Bookings not at Change). Their whole app is
  * the room at `/pos`; the API narrows them the same way (`api/security/table-service.ts`).
  */
+/** Jira GRW-714 — a cook: Kitchen granted, and neither the till nor the tables. Their whole app is `/kitchen`. */
+export function cooksOnly(grid: PageGrid | null | undefined): boolean {
+  return Boolean(grid) && (grid!.kitchen ?? 'none') !== 'none' && grid!.bookings !== 'manage' && (grid!.tables ?? 'none') === 'none';
+}
+
 export function servesTablesOnly(grid: PageGrid | null | undefined): boolean {
   return Boolean(grid) && (grid!.tables ?? 'none') !== 'none' && grid!.bookings !== 'manage';
 }
@@ -142,8 +147,8 @@ const MARKETPLACE_ROUTES = ['/orders/import', '/orders/held', '/settings/channel
  */
 const COUNTER_REPORT_ROUTES = ['/reports/profit', '/reports/discounts', '/reports/payments'] as const;
 
-/** Jira GRW-718 — screens that exist only where a business may seat guests. The dine-in screens of GRW-719 onward join this list. */
-const TABLE_ROUTES = ['/settings/tables'] as const;
+/** Jira GRW-718 — screens that exist only where a business may seat guests (a restaurant): its Tables settings and, Jira GRW-714, its kitchen. */
+const TABLE_ROUTES = ['/settings/tables', '/kitchen'] as const;
 
 /** Jira GRW-72 — Settings screens that exist only for a shop. (Not `SHOP_ROUTES`: the role rules read that list as "the shop's own work".) */
 const SHOP_SETTINGS = ['/settings/roles'] as const;

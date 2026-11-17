@@ -38,9 +38,14 @@ export function queueStateOf(o: {
 }
 
 export interface PosDailyToken {
+  /** Jira GRW-714 — the kitchen says it is ready to hand over. */
+  kitchenReady?: boolean;
   id: string;
+  /** 0 for an order taken offline: it has no plain number, and `tokenLabel` is its till's token ("A12"). */
   tokenNo: number;
   tokenLabel: string;
+  /** Jira GRW-716 — an order taken while the till was offline: "A12". */
+  offlineToken: string | null;
   startAt: string;
   customerId: string | null;
   customerName: string;
@@ -111,7 +116,7 @@ export function numberTheDay<T>(sortedOfTheDay: readonly T[], storedOf: (o: T) =
 }
 
 export function tokenNumbersOf(
-  orders: ReadonlyArray<{ id: string; soldAt: string; status?: string; tokenNo?: number | null }>,
+  orders: ReadonlyArray<{ id: string; soldAt: string; status?: string; tokenNo?: number | null; offlineToken?: string | null }>,
   isToday: (ms: number) => boolean,
 ): Map<string, number> {
   const counted = orders
@@ -125,7 +130,13 @@ export function tokenNumbersOf(
       const tb = Date.parse(b.soldAt) || 0;
       return ta !== tb ? ta - tb : a.id.localeCompare(b.id);
     });
-  return numberTheDay(counted, (o) => o.tokenNo, (o) => o.id);
+  // Jira GRW-716 — an order taken offline is called by its till's token and is never given a plain number: numbering
+  // it would hand out a #05 the server's next token also is.
+  return numberTheDay(
+    counted.filter((o) => !o.offlineToken),
+    (o) => o.tokenNo,
+    (o) => o.id,
+  );
 }
 
 /** Storage key for today's token queue state at a branch; includes `todayISO` so it resets each new day. */
@@ -167,11 +178,18 @@ export function buildDailyTokens(
   });
 
   // The leg that carries a token (a walk-in's is on its first leg; an order has one row) — see `numberTheDay`.
-  const numbers = numberTheDay(visits, ([, legs]) => legs.find((l) => typeof l.tokenNo === 'number')?.tokenNo, ([key]) => key);
+  // Jira GRW-716 — an order taken offline ("A12") is never given a plain number, which the server's next token would also be.
+  const offlineOf = (legs: (typeof visits)[number][1]) => legs.find((l) => l.offlineToken)?.offlineToken ?? null;
+  const numbers = numberTheDay(
+    visits.filter(([, legs]) => !offlineOf(legs)),
+    ([, legs]) => legs.find((l) => typeof l.tokenNo === 'number')?.tokenNo,
+    ([key]) => key,
+  );
 
   return visits.map(([key, legs]) => {
     const first = legs[0]!;
-    const tokenNo = numbers.get(key)!;
+    const offlineToken = offlineOf(legs);
+    const tokenNo = offlineToken ? 0 : numbers.get(key)!;
     const items: Array<{ name: string; qty: number; paidMinor: number }> = [];
     for (const leg of legs) {
       if (leg.serviceName) {
@@ -229,7 +247,8 @@ export function buildDailyTokens(
     return {
       id: key,
       tokenNo,
-      tokenLabel: formatTokenNo(tokenNo),
+      tokenLabel: offlineToken ?? formatTokenNo(tokenNo),
+      offlineToken,
       startAt: first.startAt,
       customerId: first.customerId ?? null,
       customerName: first.customerName?.trim() || '',
@@ -243,6 +262,7 @@ export function buildDailyTokens(
       state,
       handedOverAt,
       elapsedMin,
+      kitchenReady: Boolean(first.kitchenReadyAt),
     };
   });
 }

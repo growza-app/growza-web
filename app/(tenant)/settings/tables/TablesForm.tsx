@@ -93,6 +93,12 @@ export function TablesForm({ initial, canSwitch }: { initial: BranchTableOrders[
                   <span id={`${id}-hint`} className="field-hint">
                     {branch.on ? t('onHint') : t('offHint')}
                   </span>
+                  {/* Owner, 17 Nov 2026 — the reason the switch did not move sits by the switch, not below the rest of the card. */}
+                  {error?.branchId === branch.id ? (
+                    <p className="al-error" role="alert">
+                      {error.message}
+                    </p>
+                  ) : null}
                   {branch.on ? (
                     <Link className="dt-setup-link" href={`/settings/tables/${branch.id}`}>
                       {t('setUp')}
@@ -101,11 +107,7 @@ export function TablesForm({ initial, canSwitch }: { initial: BranchTableOrders[
                   {branch.on && canSwitch ? (
                     <ServiceChargeOffer branch={branch} disabled={saving !== null || !writable} onSaved={setBranches} />
                   ) : null}
-                  {error?.branchId === branch.id ? (
-                    <p className="al-error" role="alert">
-                      {error.message}
-                    </p>
-                  ) : null}
+                  {canSwitch ? <KitchenLate branch={branch} disabled={saving !== null || !writable} /> : null}
                 </div>
               </li>
             );
@@ -185,6 +187,45 @@ function ServiceChargeOffer({
         </label>
         <button type="button" className="btn btn-ghost" disabled={disabled || busy || Number(rate) * 100 === (branch.serviceChargeBp ?? -1)} onClick={() => void save(on)}>
           {t('serviceChargeSave')}
+        </button>
+      </div>
+      {error ? (
+        <p className="al-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** Jira GRW-714 — after how many minutes a kitchen card turns late (amber, and it says "Late"). Owner only, per branch. */
+function KitchenLate({ branch, disabled }: { branch: BranchTableOrders; disabled: boolean }) {
+  const t = useTranslations('settingsTables');
+  const [minutes, setMinutes] = useState(String(branch.kitchenLateMinutes ?? 15));
+  const [saved, setSaved] = useState(String(branch.kitchenLateMinutes ?? 15));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const save = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      const out = await api.setKitchenLate(branch.id, Number(minutes));
+      setSaved(String(out.lateMinutes));
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : t('saveFailed'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="dt-sc">
+      <div className="dt-sc-rate">
+        <label className="dt-field">
+          <span className="field-hint">{t('kitchenLate')}</span>
+          <input type="number" inputMode="numeric" min={1} max={240} value={minutes} disabled={disabled || busy} aria-label={t('kitchenLate')} onChange={(e) => setMinutes(e.target.value)} />
+        </label>
+        <button type="button" className="btn btn-ghost" disabled={disabled || busy || minutes === saved} onClick={() => void save()}>
+          {t('kitchenLateSave')}
         </button>
       </div>
       {error ? (

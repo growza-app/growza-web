@@ -93,7 +93,8 @@ describe('Home uses it', () => {
 
   it('numbers over every order of the day, then narrows to what the card lists', () => {
     expect(home).toMatch(/const tokenNoOf = tokenNumbersOf\(sourceRows, /);
-    expect(home).toMatch(/const tokenNo = tokenNoOf\.get\(o\.id\) \?\? idx \+ 1;/);
+    // Jira GRW-716 — an order taken offline takes no plain number at all.
+    expect(home).toMatch(/const tokenNo = o\.offlineToken \? 0 : \(tokenNoOf\.get\(o\.id\) \?\? idx \+ 1\);/);
     // The position in the narrowed list is only a fallback for an order the day's list does not hold.
     expect(home.indexOf('tokenNoOf = tokenNumbersOf')).toBeLessThan(home.indexOf('const todaySorted = sourceRows'));
   });

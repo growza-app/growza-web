@@ -1235,3 +1235,27 @@ a.ord-card:focus-visible,
 .ord-d-name-link:hover {
   text-decoration: underline;
 }
+
+/* Jira GRW-716 — an order taken while the till was offline, and the flag when it reached us more than a day later (BR-04). */
+.ord-late {
+  display: inline-block;
+  margin-inline-start: var(--sp-2);
+  padding: 0 var(--sp-2);
+  border-radius: 999px;
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.ord-offline-note {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--slate-soft);
+  font-size: 0.875rem;
+}
+.ord-offline-note.is-late {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-weight: 600;
+}
