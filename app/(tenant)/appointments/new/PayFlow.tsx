@@ -714,8 +714,10 @@ export function PayFlow({
       ? products.filter((p) => (productCategory === NO_CATEGORY ? p.categoryId === null : p.categoryId === productCategory))
       : products;
     // A kitchen has no shelf to be out of: every dish in the category is offered, in the order the menu reads.
+    // Owner, 2026-11-17 — every dish, not the first eight: a menu of nine left the ninth reachable only by typing its name,
+    // and the laptop till already shows them all. A shop that counts its shelf keeps its eight quick tiles and Search.
     const inStock = counted ? byCat.filter((p) => p.stock > 0 || productCountOf(p.id) > 0) : byCat;
-    const shown = (inStock.length > 0 ? inStock : byCat).slice(0, TILES);
+    const shown = counted ? (inStock.length > 0 ? inStock : byCat).slice(0, TILES) : [...byCat];
     const drawn = new Set(shown.map((p) => p.id));
     const byId = new Map(products.map((p) => [p.id, p]));
     for (const l of lines) {
@@ -726,7 +728,7 @@ export function PayFlow({
       drawn.add(p.id);
     }
     return shown;
-  }, [productsOnly, products, productCategory, lines]);
+  }, [productsOnly, products, productCategory, lines, counted]);
   /** Jira GRW-576 — a walk-in can buy a product alone; settling a booking or token still needs a service. */
   const hasService = (visit || token) ? lines.some((l) => !l.product) : lines.length > 0;
   const full = lines.length >= MAX_LINES;
