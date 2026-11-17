@@ -59,6 +59,14 @@ export function TableBillSheet({
   const [paying, setPaying] = useState(false);
   const [guestName, setGuestName] = useState('');
   const [takingOff, setTakingOff] = useState<{ lineId: string; name: string; reason: string } | null>(null);
+  const reasonRef = useRef<HTMLFormElement>(null);
+  const reasonInputRef = useRef<HTMLInputElement>(null);
+  const takingOffLine = takingOff?.lineId ?? null;
+  useEffect(() => {
+    if (takingOffLine === null) return;
+    reasonInputRef.current?.focus({ preventScroll: true });
+    reasonRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [takingOffLine]);
   /** Move table: the room as it is now (null = not open; [] while it loads). */
   const [moving, setMoving] = useState<DiningArea[] | null>(null);
   /** The table picked, waiting for the one confirm: a mis-tap must not move a party, and a join cannot be undone. */
@@ -140,16 +148,41 @@ export function TableBillSheet({
                     {l.addedBy && !l.cancelReason ? <span className="tb-off">{t('takenBy', { name: l.addedBy })}</span> : null}
                   </span>
                   <span className="tb-line-amount">{money(Number(l.paidMinor ?? 0) - Number(l.returnedMinor ?? 0))}</span>
-                  {canManage && !l.cancelReason && !moving ? (
+                  {canManage && !l.cancelReason && !moving && !takingOff ? (
                     <button type="button" className="btn btn-ghost tb-off-btn" disabled={busy} onClick={() => setTakingOff({ lineId: l.id, name: l.name, reason: '' })}>
                       {t('takeOff')}
                     </button>
+                  ) : null}
+                  {/* Owner, 17 Nov 2026 — the reason is asked right under the dish coming off, ready to type, and the rest
+                      of the sheet steps back until it is taken off or cancelled. */}
+                  {takingOff?.lineId === l.id ? (
+                    <form
+                      className="tb-reason"
+                      ref={reasonRef}
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        void run(() => api.cancelBillItems(saleId, [takingOff.lineId], takingOff.reason)).then(() => setTakingOff(null));
+                      }}
+                    >
+                      <label className="dt-field">
+                        <span className="field-hint">{t('whyOff', { name: takingOff.name })}</span>
+                        <input ref={reasonInputRef} type="text" aria-label={t('whyOff', { name: takingOff.name })} value={takingOff.reason} maxLength={200} onChange={(e) => setTakingOff({ ...takingOff, reason: e.target.value })} />
+                      </label>
+                      <div className="dt-actions">
+                        <button type="submit" className="btn btn-danger" disabled={busy || takingOff.reason.trim() === ''}>
+                          {t('takeOff')}
+                        </button>
+                        <button type="button" className="btn btn-ghost" onClick={() => setTakingOff(null)}>
+                          {t('cancel')}
+                        </button>
+                      </div>
+                    </form>
                   ) : null}
                 </li>
               ))}
             </ul>
             {/* Jira GRW-724 — the service charge, its own named line; added only when the guest agrees, removable until paid. */}
-            {charge ? (
+            {takingOff ? null : charge ? (
               <div className="tb-sc">
                 <span className="tb-line-name">{charge.name}</span>
                 <span className="tb-line-amount">{money(Number(charge.paidMinor ?? 0))}</span>
@@ -169,30 +202,8 @@ export function TableBillSheet({
               <strong>{money(totalMinor)}</strong>
             </p>
 
-            {takingOff ? (
-              <form
-                className="tb-reason"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void run(() => api.cancelBillItems(saleId, [takingOff.lineId], takingOff.reason)).then(() => setTakingOff(null));
-                }}
-              >
-                <label className="dt-field">
-                  <span className="field-hint">{t('whyOff', { name: takingOff.name })}</span>
-                  <input type="text" aria-label={t('whyOff', { name: takingOff.name })} value={takingOff.reason} maxLength={200} onChange={(e) => setTakingOff({ ...takingOff, reason: e.target.value })} />
-                </label>
-                <div className="dt-actions">
-                  <button type="submit" className="btn btn-danger" disabled={busy || takingOff.reason.trim() === ''}>
-                    {t('takeOff')}
-                  </button>
-                  <button type="button" className="btn btn-ghost" onClick={() => setTakingOff(null)}>
-                    {t('cancel')}
-                  </button>
-                </div>
-              </form>
-            ) : null}
 
-            {moving ? (
+            {takingOff ? null : moving ? (
               <div className="tb-move" role="group" aria-label={t('moveTitle', { table: table.name })}>
                 <p className="field-hint">{t('moveHint')}</p>
                 {moving.length === 0 ? <p className="field-hint">{t('loading')}</p> : null}

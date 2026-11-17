@@ -56,7 +56,7 @@ describe('a table’s bill on the till', () => {
 
   it('only the owner and a manager may take a dish off; it asks why', () => {
     expect(flow).toContain("canManage={role === 'owner' || role === 'manager'}");
-    expect(sheet).toContain('{canManage && !l.cancelReason && !moving ? (');
+    expect(sheet).toContain('{canManage && !l.cancelReason && !moving && !takingOff ? (');
     expect(sheet).toContain("disabled={busy || takingOff.reason.trim() === ''}");
   });
 
@@ -144,7 +144,7 @@ describe('Jira GRW-724 — a service charge the guest can say no to', () => {
   });
 
   it('BR-02 — its own named line, removable by anyone at the till (the guest’s right)', () => {
-    expect(sheet).toContain('{charge ? (');
+    expect(sheet).toContain('{takingOff ? null : charge ? (');
     expect(sheet).toContain("api.setBillServiceCharge(saleId, false)");
     // Not a dish: it is never offered "Take off", and it is never a dish to bring back.
     expect(sheet).toContain("const dishes = (order?.lines ?? []).filter((l) => l.kind !== 'service_charge');");

@@ -238,3 +238,5 @@
 
 /* Owner, 2026-11-17 — the till's table strip says the bill is Dine-in, so a table chosen by mistake is seen. */
 .pf-table-type { display: inline-block; padding: 0 var(--sp-2); border-radius: 999px; background: var(--accent-soft); color: var(--accent-deep); font-size: 0.8125rem; font-weight: 700; vertical-align: middle; }
+/* Owner, 17 Nov 2026 — the reason for taking a dish off opens under that dish, the full width of its row. */
+.tb-line .tb-reason { flex: 1 1 100%; }
