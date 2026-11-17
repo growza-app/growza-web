@@ -2633,3 +2633,76 @@ export interface MaterialImportReview {
   adding: number;
   already: number;
 }
+
+/**
+ * Jira GRW-739 — kitchen stock, part 3. Quantities are thousandths of the item's unit; money is paise. Every price field is ABSENT (not
+ * null) for a viewer who cannot see the money (the cook, the counter).
+ */
+export interface BuyItem {
+  materialId: string;
+  name: string;
+  unit: MaterialUnit;
+  category: string | null;
+  stock: number;
+  lowStockAt: number;
+  /** What takes it to twice its low-stock level: the starting figure on the shared list. */
+  suggestQty: number;
+  supplierId: string | null;
+  supplierName: string | null;
+  supplierPhone: string | null;
+  /** The pack it last came in (null = loose). */
+  packSize: number | null;
+  packLabel: string | null;
+  lastPriceMinor?: number | null;
+  lastPricePackSize?: number | null;
+  lastBoughtOn?: string | null;
+}
+/** `GET /api/v1/stock/reorder` */
+export interface BuyList {
+  business: string;
+  branch: string | null;
+  date: string;
+  items: BuyItem[];
+}
+/** `GET /api/v1/stock/materials/:id/prices` — the last five priced stock ins, newest first. */
+export interface PriceTrend {
+  unit: MaterialUnit;
+  points: Array<{ boughtOn: string; supplierName: string | null; billNo: string | null; priceMinor: number; packSize: number; packLabel: string | null; unitCost: number }>;
+}
+/** `GET /api/v1/products/:id/cost` — per size, at today's average cost. */
+export interface DishCost {
+  productId: string;
+  name: string;
+  sizes: Array<{ variantId: string | null; label: string | null; priceMinor: number; netPriceMinor: number; costMinor: number | null; foodCostPct: number | null; noRecipe: boolean }>;
+}
+/** `GET /api/v1/reports/food-cost` */
+export interface FoodCostReportPage {
+  window: MoneyWindow;
+  tracking: boolean;
+  anySales: boolean;
+  totals: {
+    salesMinor: number;
+    costedSalesMinor: number;
+    foodMinor: number;
+    foodCostPct: number | null;
+    givenFreeMinor: number;
+    freeBills: number;
+    wastedMinor: number;
+    lostMinor: number;
+    foundMinor: number;
+  };
+  days: Array<{ dateISO: string; salesMinor: number; costedSalesMinor: number; foodMinor: number; foodCostPct: number | null; givenFreeMinor: number }>;
+  costliest: Array<{ name: string; qty: number; salesMinor: number; foodMinor: number; foodCostPct: number }>;
+  noRecipe: { dishes: number; salesMinor: number; pctOfSales: number | null; names: string[] };
+  noPrice: { dishes: number; salesMinor: number; names: string[] };
+}
+export type LossKind = 'wasted' | 'lost' | 'found';
+/** `GET /api/v1/reports/stock-loss` */
+export interface StockLossReportPage {
+  window: MoneyWindow;
+  totals: { wastedMinor: number; lostMinor: number; foundMinor: number; entries: number; unpricedEntries: number };
+  byDay: Array<{ dateISO: string; wastedMinor: number; lostMinor: number; foundMinor: number; entries: number }>;
+  byItem: Array<{ materialId: string; name: string; unit: MaterialUnit; wastedQty: number; wastedMinor: number; lostQty: number; lostMinor: number; foundQty: number; foundMinor: number; unpriced: boolean }>;
+  entries: Array<{ atISO: string; dateISO: string; materialId: string; name: string; unit: MaterialUnit; kind: LossKind; qty: number; valueMinor: number | null; reason: WasteReason | null; note: string | null; dish: string | null; by: string | null }>;
+  moreEntries: number;
+}

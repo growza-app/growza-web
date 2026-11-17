@@ -5700,7 +5700,8 @@
     "tabs": {
       "profit": "Profit",
       "discounts": "Discounts & free",
-      "payments": "Payments"
+      "payments": "Payments",
+      "foodCost": "Food cost"
     },
     "rangeLabel": "Period",
     "from": "From",
@@ -5770,6 +5771,53 @@
       "pendingTitle": "Waiting to be paid",
       "pendingLine": "{count, plural, one {# order} other {# orders}} · {value}",
       "pendingNone": "No order is waiting to be paid."
+    },
+    "foodCost": {
+      "title": "Food cost",
+      "rangeHint": "Up to 3 months at a time. Food is valued at what it cost the day it was cooked.",
+      "notTracking": "Kitchen stock is switched off, so new sales take nothing out and add no food cost.",
+      "noSales": "No sales in these days",
+      "pctLabel": "Food cost",
+      "pctLine": "{food} of food for {sales} of sales",
+      "salesLabel": "Sales before GST",
+      "foodLabel": "Food used",
+      "givenFree": "Given free {value} · {count, plural, one {# bill} other {# bills}}",
+      "noRecipe": "{count, plural, one {# dish has} other {# dishes have}} no recipe ({pct} of sales)",
+      "fixRecipes": "Add their recipes",
+      "noPrice": "{count, plural, one {# dish uses} other {# dishes use}} an item with no price yet — left out of the %",
+      "costNote": "The % is food used ÷ sales before GST, for dishes with a recipe. Wastage and missing stock are below, not in the %.",
+      "daysTitle": "By day",
+      "noSalesDay": "No sales",
+      "dayLine": "Sales {sales} · Food {food}",
+      "dayFree": "Free {value}",
+      "costliestTitle": "Costliest dishes",
+      "dishLine": "Sold {qty} · Sales {sales} · Food {food}",
+      "lossTitle": "Wasted and missing",
+      "noLoss": "Nothing wasted or missing in these days",
+      "wasted": "Wasted",
+      "lost": "Missing (found by a count)",
+      "found": "Extra (found by a count)",
+      "lossNote": "Valued at what each item cost when it was recorded. Extra found later never cancels what went missing.",
+      "lossUnpriced": "{count, plural, one {# entry has} other {# entries have}} no price yet and is not in the totals",
+      "byItemTitle": "By item",
+      "itemWasted": "Wasted {qty}",
+      "itemLost": "Missing {qty}",
+      "itemFound": "Extra {qty}",
+      "entriesTitle": "Each entry",
+      "kind": {
+        "wasted": "Wasted",
+        "lost": "Missing",
+        "found": "Extra"
+      },
+      "reason": {
+        "spoiled": "Spoiled",
+        "dropped": "Dropped",
+        "expired": "Expired",
+        "other": "Other"
+      },
+      "noPriceShort": "No price",
+      "by": "by {name}",
+      "moreEntries": "{count} more not shown"
     }
   },
   "print": {
@@ -5859,7 +5907,8 @@
     "filter": {
       "low": "Low",
       "all": "All",
-      "noRecipe": "No recipe"
+      "noRecipe": "No recipe",
+      "toBuy": "To buy"
     },
     "add": "Add item",
     "emptyTitle": "Add what your kitchen buys",
@@ -6100,6 +6149,41 @@
       "alreadyFinished": "This count was already finished by {name}.",
       "alreadyFinishedNoName": "This count was already finished.",
       "nothingTyped": "Type at least one count before you finish."
+    },
+    "toBuy": {
+      "loading": "Loading what to buy…",
+      "loadFailed": "Couldn't load what to buy.",
+      "retry": "Try again",
+      "empty": "Nothing to buy — everything is above its low-stock level",
+      "noSupplier": "No supplier yet",
+      "left": "{amount} {unit} left · low at {low}",
+      "lastPrice": "Last bought at {price} per {per}",
+      "buy": "Buy {amount} {unit}",
+      "hint": "Amounts start at twice the low-stock level. You can change them before you share.",
+      "share": "Share on WhatsApp",
+      "shareTitle": "Share what to buy",
+      "shareHint": "Change any amount, or clear it to leave the item off. Nothing is sent until you send it in WhatsApp.",
+      "shareHeading": "To buy — {date}",
+      "packs": "{n} × {label}",
+      "sendTo": "Send to {name}",
+      "preview": "Message",
+      "copy": "Copy text",
+      "copied": "Copied",
+      "copyFailed": "Couldn't copy. Select the text and copy it.",
+      "openWhatsApp": "Open WhatsApp",
+      "close": "Close",
+      "badQty": "Type a quantity like 0.25"
+    },
+    "prices": {
+      "title": "Price, last 5 stock ins",
+      "loading": "Loading prices…",
+      "loadFailed": "Couldn't load prices.",
+      "empty": "No priced stock in yet.",
+      "noSupplier": "No supplier",
+      "pack": "{price} for {size} {unit}",
+      "perUnit": "{price}/{unit}",
+      "up": "Up",
+      "down": "Down"
     }
   },
   "recipe": {
@@ -6115,11 +6199,12 @@
     "unit": "Unit",
     "add": "Add ingredient",
     "remove": "Remove {name}",
-    "costs": "Costs {cost} · {pct}% of {price}",
+    "costs": "Costs {cost} · {pct} of {price}",
     "noCost": "The cost shows once its items have a price.",
     "badQty": "Type a quantity like 0.25",
     "save": "Save recipe",
     "saving": "Saving…",
-    "saved": "Saved"
+    "saved": "Saved",
+    "costsNet": "Costs {cost} · {pct} of {price} before GST"
   }
 }

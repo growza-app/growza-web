@@ -153,8 +153,8 @@ const COUNTER_REPORT_ROUTES = ['/reports/profit', '/reports/discounts', '/report
 /** Jira GRW-718 — screens that exist only where a business may seat guests (a restaurant): its Tables settings and, Jira GRW-714, its kitchen. */
 const TABLE_ROUTES = ['/settings/tables', '/kitchen'] as const;
 
-/** Jira GRW-737 — a kitchen's raw materials: only where the business may keep kitchen stock (a restaurant). */
-const RECIPE_ROUTES = ['/stock/kitchen'] as const;
+/** Jira GRW-737 — a kitchen's raw materials: only where the business may keep kitchen stock (a restaurant). Jira GRW-739 — and its food cost. */
+const RECIPE_ROUTES = ['/stock/kitchen', '/reports/food-cost'] as const;
 
 /** Jira GRW-72 — Settings screens that exist only for a shop. (Not `SHOP_ROUTES`: the role rules read that list as "the shop's own work".) */
 const SHOP_SETTINGS = ['/settings/roles'] as const;

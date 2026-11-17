@@ -206,7 +206,8 @@ import type {
   MovementKind,
   ManualMovementKind,
   VisitRewards, AddonGroup, AddonGroupInput, KitchenCard, KitchenStockList, StockMaterial, MaterialUnit, DishRecipe, MaterialImportRow, MaterialImportReview,
-  StockSupplier, RememberedPack, PurchaseSummary, PurchaseDetail, PurchaseInput, WasteReason, MaterialMovement, StockCount, FinishedCount } from './api-types';
+  StockSupplier, RememberedPack, PurchaseSummary, PurchaseDetail, PurchaseInput, WasteReason, MaterialMovement, StockCount, FinishedCount,
+  BuyList, PriceTrend, DishCost, FoodCostReportPage, StockLossReportPage } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, ShopDaySummary, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
 
@@ -757,6 +758,10 @@ export const api = {
   /** A 409 `already_finished` carries `finishedBy`. */
   finishCount: (id: string) => post<{ finished: FinishedCount }>(`/api/v1/stock/counts/${encodeURIComponent(id)}/finish`, {}),
   recipe: (productId: string) => get<DishRecipe>(`/api/v1/products/${encodeURIComponent(productId)}/recipe`),
+  /** Jira GRW-739 — what to buy (prices absent for the cook and the counter), an item's last five prices, and a dish's cost per size. */
+  stockReorder: (location?: string | null) => get<BuyList>(`/api/v1/stock/reorder${location ? `?location=${encodeURIComponent(location)}` : ''}`),
+  materialPrices: (id: string) => get<PriceTrend>(`/api/v1/stock/materials/${encodeURIComponent(id)}/prices`),
+  dishCost: (productId: string) => get<DishCost>(`/api/v1/products/${encodeURIComponent(productId)}/cost`),
   saveRecipe: (productId: string, variantId: string | null, lines: Array<{ materialId: string; qty: number }>) =>
     put<DishRecipe>(`/api/v1/products/${encodeURIComponent(productId)}/recipe`, { variantId, lines }),
   /** Jira GRW-712 — the add-on groups, and which items offer which (`products: { productId: [groupId, …] }`). */
@@ -1077,6 +1082,9 @@ export const api = {
   profitReport: (q: MoneyReportQuery) => get<ProfitReportPage>(`/api/v1/reports/profit?${moneyParams(q)}`),
   discountReport: (q: MoneyReportQuery) => get<DiscountReportPage>(`/api/v1/reports/discounts?${moneyParams(q)}`),
   paymentsReport: (q: MoneyReportQuery) => get<PaymentsReportPage>(`/api/v1/reports/payments?${moneyParams(q)}`),
+  /** Jira GRW-739 — food cost by day and dish, and wastage / what counts found missing. Up to 92 days; money roles only. */
+  foodCostReport: (q: MoneyReportQuery) => get<FoodCostReportPage>(`/api/v1/reports/food-cost?${moneyParams(q)}`),
+  stockLossReport: (q: MoneyReportQuery) => get<StockLossReportPage>(`/api/v1/reports/stock-loss?${moneyParams(q)}`),
   /** Jira GRW-634 — what was billed on each channel over a range, beside the period before; billed, not received. */
   byChannel: (q: { range: ReportRangeKey; location?: string; from?: string; to?: string }) =>
     get<ByChannelPage>(`/api/v1/reports/by-channel?${sellersParams({ range: q.range, location: q.location, from: q.from, to: q.to })}`),

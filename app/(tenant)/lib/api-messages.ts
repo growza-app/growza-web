@@ -74,6 +74,9 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'One of those items is not in your stock any more.': 'इनमें से एक सामान अब आपके स्टॉक में नहीं है।',
   'Use stock items from the same branch.': 'उसी ब्रांच का सामान इस्तेमाल करें।',
   'This business does not count what it uses.': 'यह बिज़नेस अपने इस्तेमाल का सामान नहीं गिनता।',
+  // Jira GRW-739 — kitchen stock, part 3: prices are money, and a report reads up to 3 months.
+  'Only the owner or a manager can see what things cost.': 'चीज़ें कितने की पड़ीं, यह सिर्फ़ मालिक या मैनेजर देख सकते हैं।',
+  'Pick up to 3 months': 'ज़्यादा से ज़्यादा 3 महीने चुनें',
   // Jira GRW-738 — suppliers, stock in, wastage and counts.
   'That supplier is already on your list.': 'यह सप्लायर आपकी सूची में पहले से है।',
   'That supplier is not on your list.': 'यह सप्लायर आपकी सूची में नहीं है।',

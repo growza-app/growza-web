@@ -14,7 +14,7 @@ import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } fr
  * days to start, the same two date fields), the branch from the header, one read per change, and the loading and
  * failed states. Each screen is then only what it shows.
  */
-export function useMoneyReport<T>(read: (q: MoneyReportQuery) => Promise<T>) {
+export function useMoneyReport<T>(read: (q: MoneyReportQuery) => Promise<T>, opts: { maxDays?: number } = {}) {
   const session = useSession();
   const branches = session?.branches ?? [];
   const branchContext = useBranch();
@@ -43,7 +43,7 @@ export function useMoneyReport<T>(read: (q: MoneyReportQuery) => Promise<T>) {
     void load();
   }, [load]);
 
-  const onDates = (fromISO: string, toISO: string, changed: ChangedEnd) => setDates(clampReportRange(fromISO, toISO, todayISO, changed));
+  const onDates = (fromISO: string, toISO: string, changed: ChangedEnd) => setDates(clampReportRange(fromISO, toISO, todayISO, changed, opts.maxDays));
   return { data, failed, load, dates, onDates, todayISO, timezone: session?.timezone ?? 'Asia/Kolkata' };
 }
 

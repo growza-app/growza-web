@@ -61,6 +61,8 @@ export function clampReportRange(
   toISO: string,
   todayISO: string,
   changed: ChangedEnd = 'from',
+  /** Jira GRW-739 — a report with a shorter limit than the server's 366 days (Food cost reads up to 92). */
+  maxDays: number = MAX_REPORT_SPAN_DAYS,
 ): { fromISO: string; toISO: string } {
   const today = ISO.test(todayISO) ? todayISO : DateTime.now().toISODate()!;
   const fallback = defaultReportRange(today);
@@ -75,16 +77,16 @@ export function clampReportRange(
     else from = to;
   }
 
-  if (spanDays(from, to) > MAX_REPORT_SPAN_DAYS) {
+  if (spanDays(from, to) > maxDays) {
     if (changed === 'from') {
-      to = shiftDays(from, MAX_REPORT_SPAN_DAYS - 1);
+      to = shiftDays(from, maxDays - 1);
       if (to > today) to = today;
     } else {
-      from = shiftDays(to, -(MAX_REPORT_SPAN_DAYS - 1));
+      from = shiftDays(to, -(maxDays - 1));
     }
     // Clamping `to` back to today can leave the span long again, when `from` is further back than the limit
     // allows from today at all. Then the end the owner touched is the one that has to move.
-    if (spanDays(from, to) > MAX_REPORT_SPAN_DAYS) from = shiftDays(to, -(MAX_REPORT_SPAN_DAYS - 1));
+    if (spanDays(from, to) > maxDays) from = shiftDays(to, -(maxDays - 1));
   }
 
   return { fromISO: from, toISO: to };

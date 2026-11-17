@@ -14,11 +14,13 @@ import { PurchasesSheet } from './PurchasesSheet';
 import { SuppliersSheet } from './SuppliersSheet';
 import { WasteSheet } from './WasteSheet';
 import { CountSheet } from './CountSheet';
+import { BuyList } from './BuyList';
 
 /** Jira GRW-738 — the sheets the actions open, one at a time. */
 type Sheet = { kind: 'stockIn'; id: string | null } | { kind: 'purchases' } | { kind: 'suppliers' } | { kind: 'waste' } | { kind: 'count' } | null;
 
-type Filter = 'low' | 'all' | 'noRecipe';
+/** Jira GRW-739 — `toBuy`: what to buy (items at or below a low-stock level they were given), grouped by supplier, to share. */
+type Filter = 'low' | 'toBuy' | 'all' | 'noRecipe';
 
 /**
  * Jira GRW-737 — the kitchen's raw materials at one branch: low ones first, below zero in red (BR-01: a count may go under, the kitchen
@@ -29,7 +31,7 @@ type Filter = 'low' | 'all' | 'noRecipe';
  * role that works the Kitchen page and not the till, the same line `cooksOnly` draws). Finishing a count is the owner's and a manager's.
  * Suppliers and past stock ins are a tap away for whoever records stock in. Every row opens its history.
  */
-export function KitchenStockClient({ branchId }: { branchId: string }) {
+export function KitchenStockClient({ branchId, show }: { branchId: string; show?: string }) {
   const t = useTranslations('kitchenStock');
   const session = useSession();
   const grid = session?.areas?.pages;
@@ -40,7 +42,8 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
 
   const [data, setData] = useState<KitchenStockList | null>(null);
   const [failed, setFailed] = useState(false);
-  const [filter, setFilter] = useState<Filter>('all');
+  // Jira GRW-739 — Reports › Food cost links to `?show=no-recipe` (fix the dishes with no recipe); `?show=to-buy` opens What to buy.
+  const [filter, setFilter] = useState<Filter>(show === 'no-recipe' ? 'noRecipe' : show === 'to-buy' ? 'toBuy' : 'all');
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<StockMaterial | 'new' | null>(null);
   const [importing, setImporting] = useState(false);
@@ -93,6 +96,8 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
 
   const materials = useMemo(() => data?.materials ?? [], [data]);
   const lowCount = materials.filter((m) => m.low).length;
+  // The API's own rule (FR-01): at or below a level that was set; an item with no level is never on the list, even below zero.
+  const toBuyCount = materials.filter((m) => m.lowStockAt > 0 && m.stock <= m.lowStockAt).length;
   const unopened = materials.filter((m) => m.openedAt === null && !skipped.includes(m.id));
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -251,6 +256,7 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
         {(
           [
             ['low', lowCount],
+            ['toBuy', toBuyCount],
             ['all', materials.length],
             ['noRecipe', data.noRecipe.length],
           ] as const
@@ -267,7 +273,9 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
         ))}
       </div>
 
-      {filter === 'noRecipe' ? (
+      {filter === 'toBuy' ? (
+        <BuyList branchId={branchId} />
+      ) : filter === 'noRecipe' ? (
         data.noRecipe.length === 0 ? (
           <p className="ks-state">{t('noRecipeNone')}</p>
         ) : (
@@ -329,7 +337,7 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
           {notice}
         </p>
       ) : null}
-      {mayChange && filter !== 'noRecipe' ? (
+      {mayChange && filter !== 'noRecipe' && filter !== 'toBuy' ? (
         <div className="ks-pair">
           <button type="button" className="btn btn-ghost" onClick={() => setImporting(true)}>
             {t('import.open')}
@@ -339,7 +347,7 @@ export function KitchenStockClient({ branchId }: { branchId: string }) {
           </button>
         </div>
       ) : null}
-      {mayChange && filter !== 'noRecipe' ? (
+      {mayChange && filter !== 'noRecipe' && filter !== 'toBuy' ? (
         <div className="ks-pair">
           <button type="button" className="btn btn-ghost" onClick={() => setSheet({ kind: 'suppliers' })}>
             {t('actions.suppliers')}

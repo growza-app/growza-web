@@ -1,0 +1,200 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+import AppLink from '../../../shared/AppLink';
+import { api, type MoneyReportQuery } from '../../lib/api';
+import type { FoodCostReportPage, MaterialUnit, StockLossReportPage } from '../../lib/api-types';
+import { foodCostTone, pctText } from '../../lib/food-cost';
+import { amount, unitWord } from '../../lib/kitchen-units';
+import { useSession } from '../../components/SessionProvider';
+import { MoneyEmpty, MoneyShell, useMoneyFormat, useMoneyReport } from './MoneyShell';
+
+/** Jira GRW-739 — the server reads up to 92 days at a time; the date fields never ask for more. */
+export const FOOD_COST_MAX_DAYS = 92;
+
+interface Both {
+  food: FoodCostReportPage;
+  loss: StockLossReportPage;
+}
+/** Module-level, so the hook's read is the same function on every render (it is a dependency of the load). */
+const readBoth = async (q: MoneyReportQuery): Promise<Both> => {
+  const [food, loss] = await Promise.all([api.foodCostReport(q), api.stockLossReport(q)]);
+  return { food, loss };
+};
+
+/** The % with its colour: amber above 35, red above 45, plain otherwise; "—" with no colour when there is no %. */
+function Pct({ pct, big = false }: { pct: number | null; big?: boolean }) {
+  return <span className={`fc-pct ${big ? 'fc-pct-big' : ''} is-${foodCostTone(pct)}`}>{pctText(pct)}</span>;
+}
+
+/**
+ * Jira GRW-739 — Reports › Food cost: what the food in each day's sales cost, at the cost KEPT when each dish was cooked (a price that goes up
+ * today leaves past days as they were). The share is over the sales of dishes that took food out at a known cost; dishes with no recipe are
+ * said — "N dishes have no recipe (X% of sales)" with a link to fix them — never counted as 0%. Free bills are their own line. Below it,
+ * what was wasted and what counts found missing, by item and entry, with who recorded it. Laid out at 344px: cards, no table.
+ */
+export function FoodCostReport() {
+  const t = useTranslations('moneyReports.foodCost');
+  const f = useMoneyFormat();
+  const timezone = useSession()?.timezone ?? 'Asia/Kolkata';
+  const report = useMoneyReport<Both>(readBoth, { maxDays: FOOD_COST_MAX_DAYS });
+  const qty = (thousandths: number, unit: MaterialUnit) => `${amount(thousandths)} ${unitWord(unit)}`;
+
+  return (
+    <MoneyShell report={report}>
+      {({ food: r, loss }) => (
+        <>
+          <p className="srp-hint">{t('rangeHint')}</p>
+          {!r.tracking ? <p className="srp-warn">{t('notTracking')}</p> : null}
+          {!r.anySales ? (
+            <MoneyEmpty text={t('noSales')} />
+          ) : (
+            <>
+              <section className="srp-totals srp-kpi-grid" aria-label={t('title')}>
+                <div className="srp-kpi-card is-primary">
+                  <p className="srp-worth-label">{t('pctLabel')}</p>
+                  <p className="srp-worth">
+                    <Pct pct={r.totals.foodCostPct} big />
+                  </p>
+                  <p className="srp-hint">{t('pctLine', { food: f.money(r.totals.foodMinor), sales: f.money(r.totals.costedSalesMinor) })}</p>
+                </div>
+                <div className="srp-kpi-card">
+                  <p className="srp-worth-label">{t('salesLabel')}</p>
+                  <p className="srp-kpi-num">{f.money(r.totals.salesMinor)}</p>
+                </div>
+                <div className="srp-kpi-card">
+                  <p className="srp-worth-label">{t('foodLabel')}</p>
+                  <p className="srp-kpi-num">{f.money(r.totals.foodMinor)}</p>
+                </div>
+              </section>
+
+              {r.totals.givenFreeMinor > 0 ? (
+                <p className="fc-line">{t('givenFree', { value: f.money(r.totals.givenFreeMinor), count: r.totals.freeBills })}</p>
+              ) : null}
+              {r.noRecipe.dishes > 0 ? (
+                <div className="srp-warn fc-fix">
+                  <span>{t('noRecipe', { count: r.noRecipe.dishes, pct: pctText(r.noRecipe.pctOfSales) })}</span>
+                  {r.noRecipe.names.length > 0 ? <span className="fc-names">{r.noRecipe.names.join(', ')}</span> : null}
+                  <AppLink className="mr-link" href="/stock/kitchen?show=no-recipe">
+                    {t('fixRecipes')}
+                  </AppLink>
+                </div>
+              ) : null}
+              {r.noPrice.dishes > 0 ? <p className="srp-warn">{t('noPrice', { count: r.noPrice.dishes })}</p> : null}
+              <p className="srp-hint">{t('costNote')}</p>
+
+              <h2 className="mr-title">{t('daysTitle')}</h2>
+              <ul className="srp-list">
+                {[...r.days].reverse().map((d) => (
+                  <li key={d.dateISO} className="srp-card">
+                    <div className="srp-head">
+                      <h3 className="srp-name">{f.day(d.dateISO)}</h3>
+                      {d.salesMinor > 0 || d.foodMinor > 0 ? <Pct pct={d.foodCostPct} /> : <span className="srp-hint">{t('noSalesDay')}</span>}
+                    </div>
+                    {d.salesMinor > 0 || d.foodMinor > 0 ? (
+                      <p className="srp-hint">
+                        {t('dayLine', { sales: f.money(d.salesMinor), food: f.money(d.foodMinor) })}
+                        {d.givenFreeMinor > 0 ? ` · ${t('dayFree', { value: f.money(d.givenFreeMinor) })}` : ''}
+                      </p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+
+              {r.costliest.length > 0 ? (
+                <>
+                  <h2 className="mr-title">{t('costliestTitle')}</h2>
+                  <ol className="srp-list">
+                    {r.costliest.map((d) => (
+                      <li key={d.name} className="srp-card">
+                        <div className="srp-head">
+                          <h3 className="srp-name">{d.name}</h3>
+                          <Pct pct={d.foodCostPct} />
+                        </div>
+                        <p className="srp-hint">{t('dishLine', { qty: f.count(d.qty), sales: f.money(d.salesMinor), food: f.money(d.foodMinor) })}</p>
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              ) : null}
+            </>
+          )}
+
+          <h2 className="mr-title">{t('lossTitle')}</h2>
+          {loss.totals.entries === 0 ? (
+            <MoneyEmpty text={t('noLoss')} />
+          ) : (
+            <>
+              <section className="srp-totals srp-kpi-grid" aria-label={t('lossTitle')}>
+                <div className="srp-kpi-card">
+                  <p className="srp-worth-label">{t('wasted')}</p>
+                  <p className="srp-kpi-num">{f.money(loss.totals.wastedMinor)}</p>
+                </div>
+                <div className="srp-kpi-card">
+                  <p className="srp-worth-label">{t('lost')}</p>
+                  <p className="srp-kpi-num">{f.money(loss.totals.lostMinor)}</p>
+                </div>
+                {loss.totals.foundMinor > 0 ? (
+                  <div className="srp-kpi-card">
+                    <p className="srp-worth-label">{t('found')}</p>
+                    <p className="srp-kpi-num">{f.money(loss.totals.foundMinor)}</p>
+                  </div>
+                ) : null}
+              </section>
+              <p className="srp-hint">{t('lossNote')}</p>
+              {loss.totals.unpricedEntries > 0 ? <p className="srp-warn">{t('lossUnpriced', { count: loss.totals.unpricedEntries })}</p> : null}
+
+              <h3 className="mr-title">{t('byItemTitle')}</h3>
+              <ul className="srp-list">
+                {loss.byItem.map((i) => (
+                  <li key={i.materialId} className="srp-card">
+                    <div className="srp-head">
+                      <h4 className="srp-name">{i.name}</h4>
+                      <p className="srp-value">{f.money(i.wastedMinor + i.lostMinor)}</p>
+                    </div>
+                    <p className="srp-hint">
+                      {[
+                        i.wastedQty > 0 ? t('itemWasted', { qty: qty(i.wastedQty, i.unit) }) : null,
+                        i.lostQty > 0 ? t('itemLost', { qty: qty(i.lostQty, i.unit) }) : null,
+                        i.foundQty > 0 ? t('itemFound', { qty: qty(i.foundQty, i.unit) }) : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+
+              <h3 className="mr-title">{t('entriesTitle')}</h3>
+              <ul className="srp-list">
+                {loss.entries.map((e, n) => (
+                  <li key={`${e.atISO}-${n}`} className="srp-card">
+                    <div className="srp-head">
+                      <h4 className="srp-name">
+                        {e.name} · {t(`kind.${e.kind}`)}
+                      </h4>
+                      <p className="srp-value">{e.valueMinor === null ? t('noPriceShort') : f.money(e.valueMinor)}</p>
+                    </div>
+                    <p className="srp-hint">
+                      {[
+                        qty(e.qty, e.unit),
+                        f.when(e.atISO, timezone),
+                        e.reason ? t(`reason.${e.reason}`) : null,
+                        e.dish,
+                        e.note,
+                        e.by ? t('by', { name: e.by }) : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              {loss.moreEntries > 0 ? <p className="srp-hint">{t('moreEntries', { count: loss.moreEntries })}</p> : null}
+            </>
+          )}
+        </>
+      )}
+    </MoneyShell>
+  );
+}

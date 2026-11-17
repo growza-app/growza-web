@@ -73,6 +73,8 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/reports/discounts': 'shop',
   '/reports/payments': 'shop',
   '/reports/profit': 'shop',
+  // Jira GRW-739 — food cost reads kitchen stock: only where it may be kept (a restaurant).
+  '/reports/food-cost': 'tables',
   '/sales': 'diary',
   '/search': 'both',
   '/services': 'diary',
@@ -191,7 +193,7 @@ describe('FR-01 … FR-03 — each kind of business is offered exactly the scree
     // Jira GRW-718 — Settings › Tables is the restaurant's alone (`dining.tables`), the one difference that is not a count.
     // Jira GRW-714 — and its kitchen screen: a kitchen cooks to order, a shop has a shelf.
     // Jira GRW-737 — and its kitchen stock: a kitchen counts what it cooks with, not what is on a shelf.
-    expect(differ.sort()).toEqual(['/kitchen', '/settings/tables', '/settings/tables/[branchId]', '/stock/kitchen', '/stock/order', '/stock/report']);
+    expect(differ.sort()).toEqual(['/kitchen', '/reports/food-cost', '/settings/tables', '/settings/tables/[branchId]', '/stock/kitchen', '/stock/order', '/stock/report']);
     // …and the menu itself is NOT one of them: that is where a restaurant's dishes live.
     expect(areaAllows('/stock', KITCHEN)).toBe(true);
     expect(areaAllows('/orders/new', KITCHEN)).toBe(true);

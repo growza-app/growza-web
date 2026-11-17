@@ -7,6 +7,7 @@ import { api, ApiError, formatMoney } from '../../lib/api';
 import type { MaterialUnit, StockMaterial } from '../../lib/api-types';
 import { amount, parseAmount, unitWord } from '../../lib/kitchen-units';
 import { MaterialHistory } from './MaterialHistory';
+import { MaterialPrices } from './MaterialPrices';
 
 const UNITS: readonly MaterialUnit[] = ['kg', 'l', 'pcs'];
 
@@ -174,6 +175,8 @@ export function MaterialSheet({
               ) : null}
             </>
           )}
+          {/* Jira GRW-739 — the price trend, for whoever the API sends a cost to (it leaves `avgCost` out for everyone else). */}
+          {material && 'avgCost' in material ? <MaterialPrices materialId={material.id} unit={material.unit} /> : null}
           {material ? <MaterialHistory materialId={material.id} unit={material.unit} /> : null}
           {material && !readOnly ? (
             <div className="prd-action-row prd-action-row-danger">

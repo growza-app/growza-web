@@ -485,6 +485,8 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     '/reports/profit': /await guardScreen\('\/reports\/profit'\);/,
     '/reports/payments': /await guardScreen\('\/reports\/payments'\);/,
     '/reports/discounts': /await guardScreen\('\/reports\/discounts'\);/,
+    // Jira GRW-739 — and Food cost, a restaurant's.
+    '/reports/food-cost': /await guardScreen\('\/reports\/food-cost'\);/,
     // The centre button and this page ask the same action.
     '/appointments/new': /if \(!mayUse\(me\.member\?\.role, 'visit\.new', isWritable\(me\.tenant\?\.status\)\)\)/,
     // Jira GRW-556 — where a closed screen's address lands until the business is live: open to every role, and it
