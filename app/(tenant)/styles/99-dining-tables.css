@@ -251,7 +251,7 @@
  * in its own column; Take off waits behind "Take off a dish"; Total and Take payment are pinned to the sheet's foot.
  */
 .tb-title { display: flex; flex-direction: column; min-width: 0; }
-.tb-title .tb-title-name { font-size: 1.25rem; font-weight: 700; color: var(--text); }
+.tb-title .tb-title-name { font-size: 1.125rem; font-weight: 700; color: var(--text); }
 .tb-title-sub { font-size: 0.8125rem; color: var(--muted); overflow-wrap: anywhere; }
 .tb-line { flex-wrap: wrap; }
 .tb-line-qty { flex: 0 0 2rem; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--muted); }
@@ -280,3 +280,13 @@
 .tb-lines.is-editing .tb-line-name { flex-basis: calc(100% - 2rem - var(--sp-2)); }
 .tb-lines.is-editing .tb-line-amount { margin-left: auto; }
 .tb-lines.is-editing .tb-line .tb-off-btn { margin-left: 0; }
+/*
+ * Owner, 17 Nov 2026 — "this screen text should have been small": the bill reads at 15px, its buttons at 14px (still
+ * 44px to tap), Total stays the biggest number, and the reason box keeps 16px so an iPhone does not zoom into it.
+ */
+.tb-lines, .tb-sc { font-size: 0.9375rem; }
+.tb-lines .tb-off, .tb-sc .tb-off { font-size: 0.75rem; }
+.tb-sheet .btn, .tb-edit-link { font-size: 0.875rem; }
+.tb-sheet .tb-reason input { font-size: 1rem; }
+.tb-foot .tb-total { font-size: 1.0625rem; font-weight: 700; }
+.tb-foot .tb-take-pay { font-size: 1rem; }

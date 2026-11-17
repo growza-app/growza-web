@@ -62,3 +62,11 @@ describe('the table bill, after the 17 Nov design review', () => {
     expect(sheet).toContain("aria-label={t('serviceChargeAdd', { rate: offerBp / 100 })}");
   });
 });
+
+describe('the table bill reads small (owner, 17 Nov)', () => {
+  it('dishes at 15px, buttons at 14px, the reason box at 16px', () => {
+    expect(css).toContain('.tb-lines, .tb-sc { font-size: 0.9375rem; }');
+    expect(css).toContain('.tb-sheet .btn, .tb-edit-link { font-size: 0.875rem; }');
+    expect(css).toContain('.tb-sheet .tb-reason input { font-size: 1rem; }');
+  });
+});
