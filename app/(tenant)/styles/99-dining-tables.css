@@ -242,3 +242,7 @@
 .tb-line .tb-reason { flex: 1 1 100%; }
 /* .dt-field grows along a row (flex-basis 8rem); in this column that basis became 128px of height around the box. */
 .tb-line .tb-reason .dt-field { flex: none; }
+/* Owner, 17 Nov 2026 — "Take payment · ₹540.60" was cut off at both ends on a 347px phone. The sheet's main action
+   takes its own full row, and no action's words are ever clipped: a long one (or Hindi) wraps instead. */
+.tb-sheet .tb-actions .btn { white-space: normal; text-align: center; overflow-wrap: anywhere; }
+.tb-sheet .tb-actions .tb-take-pay { flex-basis: 100%; }

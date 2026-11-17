@@ -27,3 +27,11 @@ describe('taking a dish off a table bill', () => {
     expect(sheet).toContain('{takingOff ? null : moving ? (');
   });
 });
+
+describe('Take payment on a table bill', () => {
+  it('has a full row of its own and never clips its words', () => {
+    expect(sheet).toContain('className="btn tb-take-pay"');
+    expect(css).toContain('.tb-sheet .tb-actions .tb-take-pay { flex-basis: 100%; }');
+    expect(css).toContain('.tb-sheet .tb-actions .btn { white-space: normal;');
+  });
+});

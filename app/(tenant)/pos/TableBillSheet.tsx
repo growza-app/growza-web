@@ -303,7 +303,7 @@ export function TableBillSheet({
                 {waiter && !table.openBill?.billPrinted ? (
                   <p className="field-hint tb-wait-bill">{t('waiterAskBill')}</p>
                 ) : (
-                  <button type="button" className="btn" disabled={busy} onClick={() => setPaying(true)}>
+                  <button type="button" className="btn tb-take-pay" disabled={busy} onClick={() => setPaying(true)}>
                     {t('takePayment', { amount: money(totalMinor) })}
                   </button>
                 )}
