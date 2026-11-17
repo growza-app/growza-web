@@ -18,10 +18,10 @@ describe('points follow the bill they were quoted for', () => {
   it('the answer remembers its bill; a different bill spends nothing until it is answered', () => {
     expect(hook).toContain('const key = clientId && billMinor > 0 ? `${clientId}:${billMinor}` : null;');
     expect(hook).toContain('const fresh = answer !== null && answer.key === key;');
-    expect(hook).toContain('const spends = usePoints && fresh && rewards !== null;');
+    expect(hook).toContain('const spends = wanted && allowed;');
     expect(hook).toContain('redeemPoints: spends ? rewards.maxRedeemable : 0,');
     expect(hook).toContain('redeemMinor: spends ? rewards.discountMinor : 0,');
-    expect(hook).toContain('checking: usePoints && key !== null && !fresh,');
+    expect(hook).toContain('checking: wanted && key !== null && !fresh,');
   });
   it('the points row says it is checking', () => {
     expect(row).toContain("{checking ? t('checking') : t('off', { amount: money(rewards.discountMinor) })}");
@@ -32,5 +32,16 @@ describe('points follow the bill they were quoted for', () => {
     expect(pickup).toContain('const busy = saving !== null || checking;');
     expect(pickup).toContain('checking || splitTooBig ? undefined : onSettle(');
     expect(visit).toContain('    if (pointsChecking) return;\n');
+  });
+});
+
+describe('the cashier\'s points choice outlives a bill that cannot take them (QA 2026-11-17, finding 3)', () => {
+  it('is kept apart from what the bill allows, and only a tap or another guest clears it', () => {
+    expect(hook).toContain('const [wanted, setWanted] = useState(false);');
+    expect(hook).toContain('useEffect(() => setWanted(false), [clientId]);');
+    expect(hook).toContain('const allowed = fresh && rewards !== null && rewards.maxRedeemable > 0;');
+    expect(hook).toContain('const usePoints = wanted && (!fresh || allowed);');
+    expect(hook).toContain('toggle: () => setWanted((on) => !on),');
+    expect(hook).not.toContain('setUsePoints(false)');
   });
 });

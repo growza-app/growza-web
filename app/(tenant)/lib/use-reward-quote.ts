@@ -23,12 +23,18 @@ export function useRewardQuote(clientId: string | null, billMinor: number) {
    */
   const key = clientId && billMinor > 0 ? `${clientId}:${billMinor}` : null;
   const [answer, setAnswer] = useState<{ key: string; rewards: CustomerRewards | null } | null>(null);
-  const [usePoints, setUsePoints] = useState(false);
+  /*
+   * QA 2026-11-17, finding 3 — the cashier's choice, kept apart from what the bill allows. Points used to be switched
+   * OFF when a bill could not take them (90% off ₹520), and stayed off when the discount was removed: the screen went
+   * from ₹442 to ₹520 without anyone touching the switch. Now a bill that cannot take points shows why; a bill that can
+   * again spends them again; only the cashier's own tap turns them off — or a different guest, whose points they are not.
+   */
+  const [wanted, setWanted] = useState(false);
+  useEffect(() => setWanted(false), [clientId]);
 
   useEffect(() => {
     if (!clientId || billMinor <= 0) {
       setAnswer(null);
-      setUsePoints(false);
       return;
     }
     const asked = `${clientId}:${billMinor}`;
@@ -39,12 +45,10 @@ export function useRewardQuote(clientId: string | null, billMinor: number) {
         .then((reply) => {
           if (!live) return;
           setAnswer({ key: asked, rewards: reply.enabled ? reply : null });
-          if (!reply.enabled || reply.maxRedeemable <= 0) setUsePoints(false);
         })
         .catch(() => {
           if (!live) return;
           setAnswer({ key: asked, rewards: null });
-          setUsePoints(false);
         });
     }, QUOTE_DEBOUNCE_MS);
     return () => {
@@ -56,15 +60,18 @@ export function useRewardQuote(clientId: string | null, billMinor: number) {
   const fresh = answer !== null && answer.key === key;
   // The last answer stays on screen (the row does not blink away), but it is never spent against another bill.
   const rewards = answer?.rewards ?? null;
-  const spends = usePoints && fresh && rewards !== null;
+  const allowed = fresh && rewards !== null && rewards.maxRedeemable > 0;
+  const spends = wanted && allowed;
+  /** On, as the switch shows it: the cashier wants them and (as far as is known yet) the bill can take them. */
+  const usePoints = wanted && (!fresh || allowed);
   return {
     rewards,
     usePoints,
-    toggle: () => setUsePoints((on) => !on),
+    toggle: () => setWanted((on) => !on),
     redeemPoints: spends ? rewards.maxRedeemable : 0,
     redeemMinor: spends ? rewards.discountMinor : 0,
     /** Points are on and the bill changed: their answer for this bill is on its way. Hold the payment until it lands. */
-    checking: usePoints && key !== null && !fresh,
+    checking: wanted && key !== null && !fresh,
   };
 }
 

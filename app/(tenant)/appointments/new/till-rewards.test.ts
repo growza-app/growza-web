@@ -51,7 +51,8 @@ describe('what the till asks for', () => {
     // Owner, 2026-10-27 — the ANSWER is kept whenever rewards are on, so the balance can be shown; what
     // the bill can take still decides the toggle.
     expect(quote).toMatch(/setAnswer\(\{ key: asked, rewards: reply\.enabled \? reply : null \}\)/);
-    expect(quote).toMatch(/if \(!reply\.enabled \|\| reply\.maxRedeemable <= 0\) setUsePoints\(false\)/);
+    // QA 2026-11-17, finding 3 — a bill that cannot take points spends none, but the cashier's choice is kept.
+    expect(quote).toContain('const allowed = fresh && rewards !== null && rewards.maxRedeemable > 0;');
     // A failed read leaves the bill alone: the money is the thing with somebody standing at the counter.
     expect(quote).toMatch(/\.catch\(\(\) => \{[\s\S]{0,400}setAnswer\(\{ key: asked, rewards: null \}\);/);
   });
