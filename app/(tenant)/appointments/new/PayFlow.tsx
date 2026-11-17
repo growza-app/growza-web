@@ -670,7 +670,10 @@ export function PayFlow({
    * two tills cannot answer the same question differently. An app's order is paid to the app, so it asks
    * for nobody's points.
    */
-  const { rewards, usePoints, toggle: toggleRedeem, redeemMinor: discountMinor } = useRewardQuote(fromApp ? null : clientId, totalMinor);
+  const { rewards, usePoints, toggle: toggleRedeem, redeemPoints: quotedPoints, redeemMinor: discountMinor, checking: pointsChecking } = useRewardQuote(
+    fromApp ? null : clientId,
+    totalMinor,
+  );
   const dueMinor = Math.max(0, totalMinor - discountMinor);
 
   /** Owner, 2026-10-15 — every package on the bill, one entry per time it was rung up, in the order picked. */
@@ -1064,13 +1067,14 @@ export function PayFlow({
 
   /** ② — the tile that was tapped is the payment; this is the save. */
   const pay = async (mode: PaymentMode, pending = false) => {
-    if (saving || lines.length === 0) return;
+    // QA 2026-11-17 (finding 1) — not while this bill's points are still being asked.
+    if (saving || lines.length === 0 || pointsChecking) return;
     felt(BUZZ.paid);
     setSaving(mode);
     setError(null);
     const amounts = spread(baseAmounts.map((priceMinor) => ({ priceMinor })), totalMinor);
     // Jira GRW-648 — how many points this bill spends: all the till offered, or none.
-    const redeemPoints = usePoints && rewards ? rewards.maxRedeemable : 0;
+    const redeemPoints = quotedPoints;
     const legs = lines.flatMap((l, i) => (l.product ? [] : [{ serviceId: l.serviceId, paidAmountMinor: amounts[i]!, ...(l.pkg ? { offerId: l.pkg.id } : {}) }]));
     // Owner, 2026-10-14 — the products on the bill, grouped: which, how many, what the line came to.
     // Jira GRW-599 — one entry per product, and per size of a product that has sizes (the size is what the server takes the unit from).
@@ -1751,7 +1755,7 @@ export function PayFlow({
    * Jira GRW-648 — one row, both tills (`RedeemRow`), so they cannot grow different words for the same
    * balance or a toggle on one screen and not the other.
    */
-  const redeemRow = <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={toggleRedeem} disabled={saving !== null} />;
+  const redeemRow = <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={toggleRedeem} disabled={saving !== null} checking={pointsChecking} />;
 
   /*
    * Owner, 2026-11-15 — Discount on the whole bill, as a % or an amount, on every business's till. It sets the same
@@ -1862,7 +1866,7 @@ export function PayFlow({
         </div>
         {/* "They type the amount in their own app" is advice about a code that is on screen; with no code it is noise. */}
         {!qrBroken && <p className="pf-qr-hint">{t('qrHint')}</p>}
-        <button type="button" className="btn pf-go pf-qr-paid" onClick={() => void pay('upi')} disabled={saving !== null} aria-busy={saving === 'upi'}>
+        <button type="button" className="btn pf-go pf-qr-paid" onClick={() => void pay('upi')} disabled={saving !== null || pointsChecking} aria-busy={saving === 'upi'}>
           {saving === 'upi' ? t('saving') : t('qrPaid')}
         </button>
         {/* The large-amount question is asked from here too: a typo'd total answered 409 and waited for a dialog nobody drew. */}
@@ -1949,7 +1953,7 @@ export function PayFlow({
             else void pay(mode);
           }}
           // QA 2026-10-23 — the second way cannot be the first one again: the tile says so instead of a tap that does nothing.
-          disabled={saving !== null || firstWay?.mode === mode}
+          disabled={saving !== null || pointsChecking || firstWay?.mode === mode}
           aria-busy={saving === mode}
         >
           <span className="pf-pay-icon" aria-hidden="true">

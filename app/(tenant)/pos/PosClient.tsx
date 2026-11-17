@@ -125,13 +125,15 @@ function QueueTokenPayScreen({
   const [billOff, setBillOff] = useState<{ offMinor: number; pct: number | null }>({ offMinor: 0, pct: null });
   const [discountOpen, setDiscountOpen] = useState(false);
   const billMinor = Math.max(0, token.totalMinor - billOff.offMinor);
-  const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor: discountMinor } = useRewardQuote(token.customerId, billMinor);
+  const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor: discountMinor, checking } = useRewardQuote(token.customerId, billMinor);
+  /** Money is not taken while the points for this bill are still being asked (QA 2026-11-17, finding 1). */
+  const busy = saving !== null || checking;
   const dueMinor = Math.max(0, billMinor - discountMinor);
   const [nameDraft, setNameDraft] = useState('');
   /** Money can be taken once someone is named on the bill — picked from the list, or (a waiter) typed. */
   const named = !anonymous || (byNameOnly && nameDraft.trim() !== '');
   const settleWith = (ways: Array<{ mode: PaymentMode; amountMinor: number }>) =>
-    onSettle(ways, byNameOnly ? 0 : redeemPoints, billOff, byNameOnly && anonymous ? nameDraft.trim() : undefined);
+    checking ? undefined : onSettle(ways, byNameOnly ? 0 : redeemPoints, billOff, byNameOnly && anonymous ? nameDraft.trim() : undefined);
 
   const [qrStep, setQrStep] = useState(false);
   const [qrBroken, setQrBroken] = useState(false);
@@ -227,7 +229,7 @@ function QueueTokenPayScreen({
           type="button"
           className="btn pf-go pf-qr-paid"
           onClick={() => settleWith(waysFor('upi'))}
-          disabled={saving !== null}
+          disabled={busy}
           aria-busy={saving === 'upi'}
         >
           {saving === 'upi' ? tPay('saving') : tPay('qrPaid')}
@@ -349,7 +351,7 @@ function QueueTokenPayScreen({
         />
       ) : null}
       {!anonymous && !byNameOnly ? (
-        <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={handleToggleRedeem} disabled={saving !== null} />
+        <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={handleToggleRedeem} disabled={saving !== null} checking={checking} />
       ) : null}
       {error ? (
         <div role="alert" className="pf-error">
@@ -395,7 +397,7 @@ function QueueTokenPayScreen({
                 key={m}
                 type="button"
                 className={`pf-pay-tile pf-pay-${m}`}
-                disabled={saving !== null || firstWay?.mode === m}
+                disabled={busy || firstWay?.mode === m}
                 aria-busy={saving === m}
                 onClick={() => {
                   if (splitting && !firstWay) {

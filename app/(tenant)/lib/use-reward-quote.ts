@@ -15,41 +15,35 @@ import { api, type CustomerRewards } from './api';
  * and floor and the customer's balance; this only asks the question at the right moments.
  */
 export function useRewardQuote(clientId: string | null, billMinor: number) {
-  const [rewards, setRewards] = useState<CustomerRewards | null>(null);
+  /*
+   * QA 2026-11-17 (finding 1) — the answer remembers the bill it was given for. It used to be kept as it was while a
+   * changed bill was asked about again (300ms, then the network), so a 90% discount on ₹520 with 78 points on showed
+   * "Total ₹0 — ₹52 less ₹78 in points": the old ₹78 off a ₹52 bill. Now points count only when the answer is for
+   * THIS bill; until it is, nothing comes off, `checking` says so, and every till holds its payment for that moment.
+   */
+  const key = clientId && billMinor > 0 ? `${clientId}:${billMinor}` : null;
+  const [answer, setAnswer] = useState<{ key: string; rewards: CustomerRewards | null } | null>(null);
   const [usePoints, setUsePoints] = useState(false);
 
   useEffect(() => {
     if (!clientId || billMinor <= 0) {
-      setRewards(null);
+      setAnswer(null);
       setUsePoints(false);
       return;
     }
+    const asked = `${clientId}:${billMinor}`;
     let live = true;
-    /*
-     * Debounced, because the bill changes with every tile tapped and every amount typed, and this is a
-     * round trip per change otherwise. A fifth of a second below the pause between finishing a bill and
-     * reaching for the payment tiles.
-     */
     const timer = setTimeout(() => {
       api
         .customerRewards(clientId, billMinor)
-        .then((answer) => {
+        .then((reply) => {
           if (!live) return;
-          /*
-           * Kept whenever rewards are ON, not only when this bill can spend them: a client with ten points
-           * showed the desk nothing at all, and nobody could tell them they had any. What the bill can take
-           * decides the TOGGLE; the balance is shown either way.
-           */
-          setRewards(answer.enabled ? answer : null);
-          if (!answer.enabled || answer.maxRedeemable <= 0) setUsePoints(false);
+          setAnswer({ key: asked, rewards: reply.enabled ? reply : null });
+          if (!reply.enabled || reply.maxRedeemable <= 0) setUsePoints(false);
         })
         .catch(() => {
-          /*
-           * A failed read leaves the bill alone. The desk can still take the money, which is the thing that
-           * matters with somebody standing at the counter; the points are still theirs tomorrow.
-           */
           if (!live) return;
-          setRewards(null);
+          setAnswer({ key: asked, rewards: null });
           setUsePoints(false);
         });
     }, QUOTE_DEBOUNCE_MS);
@@ -59,15 +53,19 @@ export function useRewardQuote(clientId: string | null, billMinor: number) {
     };
   }, [clientId, billMinor]);
 
+  const fresh = answer !== null && answer.key === key;
+  // The last answer stays on screen (the row does not blink away), but it is never spent against another bill.
+  const rewards = answer?.rewards ?? null;
+  const spends = usePoints && fresh && rewards !== null;
   return {
     rewards,
     usePoints,
     toggle: () => setUsePoints((on) => !on),
-    /** What this bill spends, and what that takes off it. Zero unless the toggle is on. */
-    redeemPoints: usePoints && rewards ? rewards.maxRedeemable : 0,
-    redeemMinor: usePoints && rewards ? rewards.discountMinor : 0,
+    redeemPoints: spends ? rewards.maxRedeemable : 0,
+    redeemMinor: spends ? rewards.discountMinor : 0,
+    /** Points are on and the bill changed: their answer for this bill is on its way. Hold the payment until it lands. */
+    checking: usePoints && key !== null && !fresh,
   };
 }
 
-/** Not the search debounce: this waits for a BILL to settle, not for fingers to stop. */
 const QUOTE_DEBOUNCE_MS = 300;

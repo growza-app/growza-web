@@ -61,7 +61,7 @@ describe('each screen carries its fix', () => {
     expect(sheet).toContain('psz-cell-price');
   });
   it('the second way to pay cannot be the first one again (F7)', () => {
-    expect(src('appointments/new/PayFlow.tsx')).toContain('disabled={saving !== null || firstWay?.mode === mode}');
+    expect(src('appointments/new/PayFlow.tsx')).toContain('disabled={saving !== null || pointsChecking || firstWay?.mode === mode}');
   });
   it('Orders use the Indian day-month order (F9)', () => {
     for (const f of ['orders/OrdersClient.tsx', 'orders/held/HeldClient.tsx', 'orders/[id]/OrderClient.tsx']) {

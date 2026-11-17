@@ -3479,6 +3479,7 @@
     "rewards": {
       "offer": "Use {points, plural, one {# point} other {# points}}",
       "off": "{amount} off",
+      "checking": "Checking points…",
       "none": "No points to use on this bill",
       "wasOff": "{bill} less {amount} in points",
       "receiptUsed": "Reward points used: {points} (−{amount})",

@@ -3479,6 +3479,7 @@
     "rewards": {
       "offer": "{points, plural, one {# पॉइंट} other {# पॉइंट}} इस्तेमाल करें",
       "off": "{amount} की छूट",
+      "checking": "पॉइंट देख रहे हैं…",
       "none": "इस बिल पर इस्तेमाल करने लायक पॉइंट नहीं हैं",
       "wasOff": "{bill} में से {amount} पॉइंट से",
       "receiptUsed": "इस्तेमाल किए गए रिवॉर्ड पॉइंट: {points} (−{amount})",
