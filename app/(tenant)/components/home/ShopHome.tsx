@@ -105,6 +105,10 @@ export function ShopHome({
   // Table orders are switched on per branch: the one picked, or — on "All branches" — any of them.
   const session = useSession();
   const tablesOn = (session?.branches ?? []).some((b) => b.tableOrders && (branch === null || b.id === branch));
+  // Owner, 2026-11-17 — the Queue card and its words are Pickup with Table orders on, as on the till.
+  const q = tablesOn
+    ? { title: s.pickupTitle, open: s.openPickup, waiting: s.inPickupNow, inNow: s.inPickupNow, none: s.noPickupNow, note: s.ordersNotePickup }
+    : { title: s.queueTitle, open: s.openQueue, waiting: s.waitingNow, inNow: s.inQueueNow, none: s.noQueueNow, note: s.ordersNote };
 
   // Desktop command-center supplemental state
   const [channelData, setChannelData] = useState<ByChannelPage | null>(null);
@@ -1138,7 +1142,7 @@ export function ShopHome({
                       <strong className="rst-kpi-value">{data.today.orders}</strong>
                       {/* Emerald v3 (owner, 2026-11-14: "add more info to the KPIs, looking empty") — where today's orders are. */}
                       <span className="rst-kpi-note">
-                        {isKitchen ? s.ordersNote(queueStats.completedToday, queueStats.inQueue) : s.toSendNote(data.toSend)}
+                        {isKitchen ? q.note(queueStats.completedToday, queueStats.inQueue) : s.toSendNote(data.toSend)}
                       </span>
                     </div>
                     {ordersDeltaPct !== null ? (
@@ -1202,15 +1206,15 @@ export function ShopHome({
                   ) : null}
                   {isKitchen ? (
                     <DarkStatCard
-                      title={s.queueTitle}
+                      title={q.title}
                       value={queueStats.inQueue}
-                      valueLabel={queueStats.inQueue === 0 ? s.noQueueNow : s.waitingNow}
+                      valueLabel={queueStats.inQueue === 0 ? q.none : q.waiting}
                       foot={
                         <>
                           {s.completedToday}: <b>{queueStats.completedToday}</b>
                         </>
                       }
-                      action={can('/pos') ? { href: '/pos?mode=queue', label: s.openQueue } : null}
+                      action={can('/pos') ? { href: '/pos?mode=queue', label: q.open } : null}
                     />
                   ) : counted ? (
                     /* A shop has no queue; its live number is the shelf: what is running low, and how much of it is gone. */
@@ -2255,11 +2259,11 @@ export function ShopHome({
                 */}
                 {isKitchen || !data.anyOrders ? (
                 <Card
-                  title={isKitchen ? s.queueTitle : s.ordersTitle}
+                  title={isKitchen ? q.title : s.ordersTitle}
                   action={
                     data.anyOrders && isKitchen && can('/pos') ? (
                       <a className="shp-link" href="/pos?mode=queue">
-                        {s.openQueue}
+                        {q.open}
                       </a>
                     ) : data.anyOrders && can('/orders') ? (
                       <a className="shp-link" href="/orders">
@@ -2275,7 +2279,7 @@ export function ShopHome({
                         <div className="shp-orders-summary">
                           <p className="shp-orders">
                             <strong>{queueStats.inQueue}</strong>
-                            <span>{queueStats.inQueue === 0 ? s.noQueueNow : s.inQueueNow}</span>
+                            <span>{queueStats.inQueue === 0 ? q.none : q.inNow}</span>
                           </p>
                           <span className="shp-orders-yesterday">
                             {s.completedToday}: <b>{queueStats.completedToday}</b>

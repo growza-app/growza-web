@@ -26,3 +26,19 @@ describe('Home Quick links at a restaurant with tables', () => {
     expect([hi.tablesTitle, hi.pickupTitle]).toEqual(['टेबल', 'पिकअप']);
   });
 });
+
+describe('the Queue card is Pickup with tables on (owner, 17 Nov)', () => {
+  it('takes every word from one switch', () => {
+    expect(home).toContain('const q = tablesOn');
+    for (const use of ['title={q.title}', 'label: q.open }', '{q.open}', 'q.none : q.waiting', 'q.none : q.inNow', 'q.note(']) expect(home).toContain(use);
+    // Outside the switch itself, no Queue word is read straight from the copy.
+    const rest = home.replace(/const q = tablesOn[\s\S]*?;\n/, '');
+    expect(rest).not.toMatch(/s\.(openQueue|noQueueNow|inQueueNow|ordersNote)\b/);
+  });
+  it('says Pickup in English and Hindi', () => {
+    const en = homeCopy('en', {} as never).shop;
+    const hi = homeCopy('hi', {} as never).shop;
+    expect([en.openPickup, en.noPickupNow, en.ordersNotePickup(12, 1)]).toEqual(['Open Pickup', 'No orders waiting for pickup', '12 done · 1 for pickup']);
+    expect(hi.openPickup).toBe('पिकअप खोलें');
+  });
+});
