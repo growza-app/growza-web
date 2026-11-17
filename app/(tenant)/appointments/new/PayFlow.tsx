@@ -172,6 +172,7 @@ export function PayFlow({
   leaveRef,
   onSaleCompleted,
   onOpenQueue,
+  onPayTable,
   reloadKey = 0,
   addingTo = null,
   inactive = false,
@@ -223,6 +224,11 @@ export function PayFlow({
   onSaleCompleted?: (saleId: string) => void;
   /** Opens the POS Queue tab directly when the desk taps "View Queue" on the queued-order confirmation banner. */
   onOpenQueue?: () => void;
+  /**
+   * Owner, 17 Nov 2026 — "these options should be as we have without tables": a table's Take payment opens the same
+   * payment screen a Pickup order is paid on (ways to pay, split, discount, points, QR, the guest), not three buttons.
+   */
+  onPayTable?: (bill: { saleId: string; tableName: string }) => void;
   /** Incremented after a return or exchange on POS so the product shelf refreshes its live stock counts in place. */
   reloadKey?: number;
   /**
@@ -307,6 +313,8 @@ export function PayFlow({
   const location = token?.locationId ?? visit?.appointment.locationId ?? branch.choice ?? branch.one ?? session?.branches?.[0]?.id ?? null;
   // Jira GRW-720 — after `location`, which it reads (it sat above it once, and the till did not open: caught by the e2e run).
   const tablesHere = productsOnly && Boolean(session?.branches?.find((b) => b.id === location)?.tableOrders);
+  // Owner, 17 Nov 2026 — with tables on, the till's Queue is called Pickup (PosClient's `qk`).
+  const qk = <K extends string>(key: K): K | `${K}Pickup` => (tablesHere ? `${key}Pickup` : key);
   // Jira GRW-716 — this till's letter while online, and whatever it kept offline sent when the connection is back.
   const tillBranches = useMemo(() => (session?.branches ?? []).map((b) => b.id), [session?.branches]);
   useOfflineTill(productsOnly ? location : null, tillBranches);
@@ -402,6 +410,8 @@ export function PayFlow({
   // Refresh shelf stock counts in place when a return or exchange is recorded in the POS sheet above this till.
   useEffect(() => {
     if (!reloadKey) return;
+    // A table paid on the POS's payment screen: the room reads again, so its tile is free.
+    setMapKey((k) => k + 1);
     let gone = false;
     void api
       .products(location)
@@ -849,6 +859,17 @@ export function PayFlow({
   };
   // Only on the screen where products are picked: on 'how', 'qr' and 'done' a scan would change a bill being paid.
   // Listening from the first moment, not from when the shelf is in: a bottle scanned while it loads waits in the queue.
+  /*
+   * Owner, 2026-11-17 — "I placed a takeaway order and it's showing as Dine In". A table chosen on the till stayed chosen
+   * across a visit to Queue or Return, with the Dine-in / Takeaway / Delivery tabs hidden behind it, so the next order
+   * went on that table. Leaving Sell lets go of the table; the dishes already rung up stay, and wait for a table or a type.
+   */
+  useEffect(() => {
+    if (!inactive) return;
+    setAtTable(null);
+    setGuests(null);
+  }, [inactive]);
+
   useBarcodeScan(!inactive && productsOnly && step === 'what', (code) => {
     if (productsLoaded) onScans([code]);
     else queueScan(code);
@@ -1363,7 +1384,7 @@ export function PayFlow({
         appointmentId: result.appointmentId,
         tokenNo,
         ...(pending
-          ? { title: t('desk.pendingDoneTitle', { amount: money(paidMinor) }) }
+          ? { title: t(qk('desk.pendingDoneTitle'), { amount: money(paidMinor) }) }
           : fromApp
             ? { title: t('from.doneTitle', { amount: money(paidMinor), app: appWord(fromApp) }) }
             : {}),
@@ -1420,6 +1441,9 @@ export function PayFlow({
 
   const nextCustomer = () => {
     setLines([]);
+    // Owner, 2026-11-17 — a finished bill lets go of its table: the next guest is not seated there by default.
+    setAtTable(null);
+    setGuests(null);
     setOverride(null);
     setClient({ kind: 'none' });
     setOrderFrom('counter');
@@ -2018,7 +2042,7 @@ export function PayFlow({
                 disabled={saving !== null || lines.length === 0}
                 onClick={sendPosPending}
               >
-                <span>{atTable ? tTables('sendToKitchen') : t('desk.keepPendingInQueue')}</span>
+                <span>{atTable ? tTables('sendToKitchen') : t(qk('desk.keepPendingInQueue'))}</span>
               </button>
             ) : null}
             {!hidePayUntilGuest ? (
@@ -2205,7 +2229,10 @@ export function PayFlow({
       <button type="button" className="btn btn-ghost" onClick={() => setAtTable(null)}>
         ← {tTables('backToTables')}
       </button>
-      <strong className="pf-table-name">{atTable.label}</strong>
+      {/* Always said: this bill is for a table, so it is Dine-in. */}
+      <strong className="pf-table-name">
+        <span className="pf-table-type">{t('type.dine_in')}</span> · {atTable.label}
+      </strong>
       <div className="pf-guests" role="group" aria-label={tTables('guestsSkip')}>
         <span className="field-hint">{tTables('guests')}</span>
         <button type="button" className="btn btn-ghost pf-guests-btn" aria-label={tTables('fewerGuests')} disabled={!guests} onClick={() => setGuests((g) => (g && g > 1 ? g - 1 : null))}>
@@ -2229,7 +2256,8 @@ export function PayFlow({
       </div>
     );
   }
-  if (tablesHere && orderTab === 'dine_in' && !atTable && !token && step === 'what' && location) {
+  // Owner, 17 Nov 2026 — Add items on a queued order goes straight to the dishes: that order already has its place.
+  if (tablesHere && orderTab === 'dine_in' && !atTable && !addingTo && !token && step === 'what' && location) {
     return (
       <div className="pf-tables">
         {typeRow}
@@ -2262,6 +2290,14 @@ export function PayFlow({
               setAtTable({ id: billOf.table.id, label: `${billOf.table.name} · ${billOf.area}`, ...(billOf.table.openBill ? { billId: billOf.table.openBill.saleId } : {}) });
               setBillOf(null);
             }}
+            onTakePayment={
+              onPayTable && billOf.table.openBill
+                ? () => {
+                    onPayTable({ saleId: billOf.table.openBill!.saleId, tableName: billOf.table.name });
+                    setBillOf(null);
+                  }
+                : undefined
+            }
             onDone={(said) => {
               setBillOf(null);
               setMapKey((k) => k + 1);
@@ -2308,11 +2344,11 @@ export function PayFlow({
             </span>
             <span className="pos-charge-queued-text">
               {queuedBanner.tokenNo !== null
-                ? t('desk.sentToQueueBannerWithToken', {
+                ? t(qk('desk.sentToQueueBannerWithToken'), {
                     token: nv.token(queuedBanner.tokenNo),
                     amount: money(queuedBanner.amountMinor),
                   })
-                : t('desk.pendingDoneTitle', { amount: money(queuedBanner.amountMinor) })}
+                : t(qk('desk.pendingDoneTitle'), { amount: money(queuedBanner.amountMinor) })}
             </span>
             <button
               type="button"
@@ -2323,7 +2359,7 @@ export function PayFlow({
                 else router.push('/pos?mode=queue');
               }}
             >
-              {t('desk.viewInQueue')}
+              {t(qk('desk.viewInQueue'))}
             </button>
             <button
               type="button"
@@ -2570,7 +2606,7 @@ export function PayFlow({
                         disabled={saving !== null || lines.length === 0}
                         onClick={sendPosPending}
                       >
-                        <span>{atTable ? tTables('sendToKitchen') : t('desk.keepPendingInQueue')}</span>
+                        <span>{atTable ? tTables('sendToKitchen') : t(qk('desk.keepPendingInQueue'))}</span>
                       </button>
                     ) : null}
                     {!hidePayUntilGuest ? (
@@ -2692,11 +2728,11 @@ export function PayFlow({
               </span>
               <span className="pos-charge-queued-text">
                 {queuedBanner.tokenNo !== null
-                  ? t('desk.sentToQueueBannerWithToken', {
+                  ? t(qk('desk.sentToQueueBannerWithToken'), {
                       token: nv.token(queuedBanner.tokenNo),
                       amount: money(queuedBanner.amountMinor),
                     })
-                  : t('desk.pendingDoneTitle', { amount: money(queuedBanner.amountMinor) })}
+                  : t(qk('desk.pendingDoneTitle'), { amount: money(queuedBanner.amountMinor) })}
               </span>
               <button
                 type="button"
@@ -2707,7 +2743,7 @@ export function PayFlow({
                   else router.push('/pos?mode=queue');
                 }}
               >
-                {t('desk.viewInQueue')}
+                {t(qk('desk.viewInQueue'))}
               </button>
               <button
                 type="button"

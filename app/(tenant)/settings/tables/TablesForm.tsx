@@ -93,6 +93,12 @@ export function TablesForm({ initial, canSwitch }: { initial: BranchTableOrders[
                   <span id={`${id}-hint`} className="field-hint">
                     {branch.on ? t('onHint') : t('offHint')}
                   </span>
+                  {/* Owner, 17 Nov 2026 — the reason the switch did not move sits by the switch, not below the rest of the card. */}
+                  {error?.branchId === branch.id ? (
+                    <p className="al-error" role="alert">
+                      {error.message}
+                    </p>
+                  ) : null}
                   {branch.on ? (
                     <Link className="dt-setup-link" href={`/settings/tables/${branch.id}`}>
                       {t('setUp')}
@@ -102,11 +108,6 @@ export function TablesForm({ initial, canSwitch }: { initial: BranchTableOrders[
                     <ServiceChargeOffer branch={branch} disabled={saving !== null || !writable} onSaved={setBranches} />
                   ) : null}
                   {canSwitch ? <KitchenLate branch={branch} disabled={saving !== null || !writable} /> : null}
-                  {error?.branchId === branch.id ? (
-                    <p className="al-error" role="alert">
-                      {error.message}
-                    </p>
-                  ) : null}
                 </div>
               </li>
             );
@@ -224,7 +225,7 @@ function KitchenLate({ branch, disabled }: { branch: BranchTableOrders; disabled
           <input type="number" inputMode="numeric" min={1} max={240} value={minutes} disabled={disabled || busy} aria-label={t('kitchenLate')} onChange={(e) => setMinutes(e.target.value)} />
         </label>
         <button type="button" className="btn btn-ghost" disabled={disabled || busy || minutes === saved} onClick={() => void save()}>
-          {t('serviceChargeSave')}
+          {t('kitchenLateSave')}
         </button>
       </div>
       {error ? (

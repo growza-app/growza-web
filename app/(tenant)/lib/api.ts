@@ -190,6 +190,9 @@ import type {
   Product,
   ProductImportItem,
   ProductImportResult,
+  MenuDish,
+  MenuImportResult,
+  MenuReview,
   ProductCategory,
   ProductInput,
   ProductSales,
@@ -794,6 +797,11 @@ export const api = {
     return { ok: true as const, deleted };
   },
   parseProductSheet: (file: File) => uploadFile<{ headers: string[]; rows: string[][] }>('/api/v1/products/import/parse', 'file', file),
+  /** Jira GRW-715 — read a menu file (Growza's own, or Petpooja's export). Writes nothing: the review comes back. */
+  parseMenuFile: (location: string, file: File) =>
+    uploadFile<MenuReview>(`/api/v1/products/menu-import/parse?location=${encodeURIComponent(location)}`, 'file', file),
+  /** Jira GRW-715 — add the reviewed menu. The server checks it again; the same menu twice adds nothing twice. */
+  importMenu: (location: string, dishes: MenuDish[]) => post<MenuImportResult>('/api/v1/products/menu-import', { locationId: location, dishes }),
   importProducts: (location: string, items: ProductImportItem[]) =>
     post<ProductImportResult>('/api/v1/products/import', { items, locationId: location }),
   uploadProductPhoto: (id: string, file: File) => uploadFile<Product>(`/api/v1/products/${id}/photo`, 'photo', file),

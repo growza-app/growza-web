@@ -384,6 +384,42 @@ export interface ProductImportItem {
   hsn?: string;
 }
 
+/** Jira GRW-715 — one dish read from a menu file: its portions (sizes) and extras ride with it. */
+export interface MenuDish {
+  row: number;
+  category: string | null;
+  name: string;
+  priceMinor: number;
+  sizes: Array<{ label: string; priceMinor: number }>;
+  gstRateBp: number | null;
+  hsn: string | null;
+  extras: Array<{ name: string; options: Array<{ name: string; priceMinor: number }> }>;
+}
+
+export type MenuSkipReason = 'no_name' | 'no_price' | 'bad_price' | 'bad_gst' | 'twice_in_file' | 'size_twice' | 'too_many_sizes' | 'name_too_long';
+
+/** What adding the file would do. Nothing is saved until it is confirmed. */
+export interface MenuReview {
+  format: 'growza' | 'petpooja';
+  /** L6 — a dish already on the menu carries its menu price. */
+  dishes: Array<MenuDish & { onMenu: boolean; menuPriceMinor?: number }>;
+  skipped: Array<{ row: number; name: string | null; reason: MenuSkipReason }>;
+  newCategories: string[];
+  newExtrasGroups: string[];
+  sizesDropped: boolean;
+  extrasDropped: boolean;
+  /** L5 — what the file carried that a dish cannot hold yet. */
+  notKept: Array<'veg' | 'description'>;
+}
+
+export interface MenuImportResult {
+  created: number;
+  alreadyOnMenu: number;
+  categoriesCreated: number;
+  extrasGroupsCreated: number;
+  sizesCreated: number;
+}
+
 export interface ProductImportResult {
   created: number;
   updated: number;
@@ -2419,5 +2455,6 @@ export interface KitchenCard {
   channel: string;
   placedAt: string;
   late: boolean;
-  dishes: Array<{ id: string; name: string; qty: number; done: boolean; isNew: boolean; cancelled: boolean }>;
+  /** `size` (owner, 2026-11-17): the portion it was sold in, set in bold on the card; null with no sizes or on an older API. */
+  dishes: Array<{ id: string; name: string; qty: number; done: boolean; isNew: boolean; cancelled: boolean; size?: string | null }>;
 }

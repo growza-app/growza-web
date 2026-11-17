@@ -4,7 +4,7 @@ import { WaiterContext } from './waiter';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from '../../shared/AppLink';
-import { api, formatMoney, type Appointment } from '../lib/api';
+import { api, ApiError, formatMoney, type Appointment, type OrderDetail } from '../lib/api';
 import type { PaymentMode } from '../lib/api-types';
 import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
 import { useBranch } from '../components/BranchProvider';
@@ -54,6 +54,31 @@ function isWalkInToken(tk: Pick<PosDailyToken, 'customerName' | 'customerPhone'>
   return !tk.customerPhone && (!tk.customerName || tk.customerName.trim().toLowerCase() === 'walk-in');
 }
 
+/** A table's open bill, read as the order it is, in the shape the payment screen pays (no token number: it is a table). */
+export function tableBillToken(o: OrderDetail, tableName: string): PosDailyToken {
+  const lines = o.lines.filter((l) => !l.cancelReason && l.qty > l.returnedQty);
+  const net = (l: OrderDetail['lines'][number]) => Number(l.paidMinor ?? 0) - Number(l.returnedMinor ?? 0);
+  return {
+    id: o.id,
+    tokenNo: 0,
+    tokenLabel: tableName,
+    offlineToken: null,
+    startAt: o.soldAt,
+    customerId: o.client?.id ?? null,
+    customerName: o.client?.name ?? '',
+    customerPhone: null,
+    channel: o.channel,
+    paymentMode: null,
+    paymentPending: true,
+    totalMinor: lines.reduce((n, l) => n + net(l), 0),
+    items: lines.map((l) => ({ name: l.name, qty: l.qty - l.returnedQty, paidMinor: net(l) })),
+    itemsSummary: lines.map((l) => `${l.qty}× ${l.name}`).join(', '),
+    state: 'preparing',
+    handedOverAt: null,
+    elapsedMin: 0,
+  };
+}
+
 function QueueTokenPayScreen({
   token,
   paymentQr,
@@ -64,6 +89,7 @@ function QueueTokenPayScreen({
   onOpenClientSheet,
   onBack,
   onSettle,
+  byNameOnly = false,
 }: {
   token: PosDailyToken;
   paymentQr: string | null;
@@ -74,7 +100,18 @@ function QueueTokenPayScreen({
   onOpenClientSheet: (startAdding: boolean) => void;
   onBack: () => void;
   /** Owner, 2026-11-15 — `bill` is the discount the counter gave here, and its % when it gave one. */
-  onSettle: (ways: Array<{ mode: PaymentMode; amountMinor: number }>, redeemPoints: number, bill: { offMinor: number; pct: number | null }) => void;
+  onSettle: (
+    ways: Array<{ mode: PaymentMode; amountMinor: number }>,
+    redeemPoints: number,
+    bill: { offMinor: number; pct: number | null },
+    /** A waiter's walk-in: the name typed here, put on the bill before it is paid. */
+    guestName?: string,
+  ) => void;
+  /**
+   * Owner, 17 Nov 2026 — a waiter paying a table: the same ways to pay, split and QR, but the guest is a name typed here
+   * (their role cannot open the guest list) and there is no discount or points (owner decisions 2026-11-15/16).
+   */
+  byNameOnly?: boolean;
 }) {
   const tPay = useTranslations('payFlow');
   const tc = useTranslations('chrome');
@@ -90,7 +127,11 @@ function QueueTokenPayScreen({
   const billMinor = Math.max(0, token.totalMinor - billOff.offMinor);
   const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor: discountMinor } = useRewardQuote(token.customerId, billMinor);
   const dueMinor = Math.max(0, billMinor - discountMinor);
-  const settleWith = (ways: Array<{ mode: PaymentMode; amountMinor: number }>) => onSettle(ways, redeemPoints, billOff);
+  const [nameDraft, setNameDraft] = useState('');
+  /** Money can be taken once someone is named on the bill — picked from the list, or (a waiter) typed. */
+  const named = !anonymous || (byNameOnly && nameDraft.trim() !== '');
+  const settleWith = (ways: Array<{ mode: PaymentMode; amountMinor: number }>) =>
+    onSettle(ways, byNameOnly ? 0 : redeemPoints, billOff, byNameOnly && anonymous ? nameDraft.trim() : undefined);
 
   const [qrStep, setQrStep] = useState(false);
   const [qrBroken, setQrBroken] = useState(false);
@@ -213,7 +254,26 @@ function QueueTokenPayScreen({
       </header>
       <div className="pf-row" role="group" aria-label={tPay('who', { client: clientNoun })}>
         <span className="pf-row-label">{tPay('who', { client: clientNoun })}</span>
-        {!anonymous ? (
+        {byNameOnly && anonymous ? (
+          <input
+            className="pf-who-name"
+            type="text"
+            aria-label={tPay('guestNameOnly')}
+            placeholder={tPay('guestNameOnly')}
+            value={nameDraft}
+            maxLength={60}
+            autoComplete="off"
+            disabled={saving !== null}
+            onChange={(e) => setNameDraft(e.target.value)}
+          />
+        ) : byNameOnly ? (
+          <div className="pf-who-picked">
+            <span className="pf-face" aria-hidden="true">
+              {(token.customerName ?? '').trim().charAt(0).toUpperCase() || '?'}
+            </span>
+            <span className="pf-who-picked-name">{token.customerName}</span>
+          </div>
+        ) : !anonymous ? (
           <div className="pf-who-picked">
             <span className="pf-face" aria-hidden="true">
               {(token.customerName ?? '').trim().charAt(0).toUpperCase() || '?'}
@@ -250,7 +310,7 @@ function QueueTokenPayScreen({
       </div>
       {dueLine}
       {/* Owner, 2026-11-16 — as on the till's own payment step: not until there is a guest, and money can be taken. */}
-      {anonymous ? null : (
+      {anonymous || byNameOnly ? null : (
       <button
         type="button"
         className={`pf-discount-open${billOff.offMinor > 0 ? ' is-on' : ''}`}
@@ -288,7 +348,7 @@ function QueueTokenPayScreen({
           onClose={() => setDiscountOpen(false)}
         />
       ) : null}
-      {!anonymous ? (
+      {!anonymous && !byNameOnly ? (
         <RedeemRow rewards={rewards} usePoints={usePoints} onToggle={handleToggleRedeem} disabled={saving !== null} />
       ) : null}
       {error ? (
@@ -296,7 +356,7 @@ function QueueTokenPayScreen({
           {error}
         </div>
       ) : null}
-      {!anonymous ? (
+      {named ? (
         <>
           <div className="pf-pay" role="group" aria-label={tPay('howTitle')}>
             {firstWay ? (
@@ -461,6 +521,12 @@ export function PosClient({
   const branch = useBranch();
   const session = useSession();
   const location = branch.choice ?? branch.one ?? session?.branches?.[0]?.id ?? null;
+  /*
+   * Owner, 17 Nov 2026 — at a restaurant with tables on, the Queue holds only takeaway and delivery (dine-in lives on the
+   * table map), so it is called Pickup there. Tables off — and every salon and shop — it stays the Queue.
+   */
+  const tablesOn = Boolean(session?.branches?.find((b) => b.id === location)?.tableOrders);
+  const qk = <K extends string>(key: K): K | `${K}Pickup` => (tablesOn ? `${key}Pickup` : key);
   const paymentQr =
     branch.branches.find((b) => b.id === location)?.paymentQrUrl ??
     session?.branches?.find((b) => b.id === location)?.paymentQrUrl ??
@@ -477,6 +543,8 @@ export function PosClient({
   const [todayRows, setTodayRows] = useState<Appointment[]>([]);
   const [tokenOverrides, setTokenOverrides] = useState<Record<string, PosTokenOverride>>({});
   const [payingToken, setPayingToken] = useState<PosDailyToken | null>(null);
+  /** Owner, 17 Nov 2026 — the table being paid on this payment screen (its name), or null for a Pickup order. */
+  const [payingTable, setPayingTable] = useState<string | null>(null);
   const [clientSheetTarget, setClientSheetTarget] = useState<{ token: PosDailyToken; startAdding: boolean } | null>(null);
   const [settlingMode, setSettlingMode] = useState<PaymentMode | null>(null);
   const [settleError, setSettleError] = useState<string | null>(null);
@@ -775,7 +843,7 @@ export function PosClient({
       if (!ways || ways.length === 0) {
         setSettleError(null);
         setPayingToken(tk);
-        if (isWalkInToken(tk) && tk.channel === 'counter') {
+        if (isWalkInToken(tk) && tk.channel === 'counter' && !waiter) {
           setClientSheetTarget({ token: tk, startAdding: false });
         }
         return;
@@ -819,7 +887,8 @@ export function PosClient({
         setPayingToken(null);
         setLastKot(null);
         // Jira GRW-713 — the guest's bill, printed by itself where this till is set to.
-        printer.autoBill(tk.id);
+        // A waiter prints no bill (owner decision 2026-11-16).
+        if (!waiter) printer.autoBill(tk.id);
         void loadTodayTokens();
         const paidBy =
           ways.length > 1
@@ -951,6 +1020,7 @@ export function PosClient({
       providerNoun,
       payModeLabel,
       printer,
+      waiter,
     ],
   );
 
@@ -1034,6 +1104,50 @@ export function PosClient({
       if (mine === opened.current) setLoading(false);
     }
   }, [todayISO, returnWindowDays, timezone, returnBranch]);
+
+  /*
+   * Owner, 17 Nov 2026 — "these options should be as we have without tables": a table's Take payment opens this
+   * payment screen — the ways to pay, split, discount, points, the QR and the guest — not three buttons on its sheet.
+   * The bill is read fresh (a round may have just gone in) and shown under the table's name, with no token number.
+   */
+  const payTable = useCallback(
+    async ({ saleId, tableName }: { saleId: string; tableName: string }) => {
+      if (waiter) {
+        // A waiter reads no day's list: the bill itself, as the table's sheet does (GET /orders/:id is theirs).
+        let o: OrderDetail;
+        try {
+          o = await api.order(saleId);
+        } catch {
+          setQueueNote(t('tablePayFailed'));
+          return;
+        }
+        setPayingTable(tableName);
+        void settleAndCompleteToken(tableBillToken(o, tableName));
+        return;
+      }
+      let rows: typeof todayRows;
+      try {
+        rows = await api.appointments(todayISO, todayISO, undefined, undefined, { includeSales: 'queue' });
+      } catch {
+        setQueueNote(t('tablePayFailed'));
+        return;
+      }
+      setTodayRows(rows);
+      const legs = rows.filter((r) => (r.bookingGroupId ?? r.id) === saleId).map((r) => ({ ...r, tableName: null }));
+      const tk = buildDailyTokens(legs, location, {}, Date.now())[0];
+      if (!tk || !tk.paymentPending) {
+        setQueueNote(t('tablePayFailed'));
+        return;
+      }
+      setPayingTable(tableName);
+      void settleAndCompleteToken({ ...tk, tokenNo: 0, offlineToken: null, tokenLabel: tableName });
+    },
+    [todayISO, location, settleAndCompleteToken, t, waiter],
+  );
+  // Paid: the room reads again, so the table's tile is free when the receipt is closed.
+  useEffect(() => {
+    if (settledReceipt && payingTable !== null) setReloadKey((k) => k + 1);
+  }, [settledReceipt, payingTable]);
 
   const openQueue = useCallback(
     (targetToken?: unknown) => {
@@ -1224,7 +1338,7 @@ export function PosClient({
               className="btn btn-ghost pos-qcard-recall-btn"
               onClick={() => setTokenState(tk.id, 'preparing', true)}
             >
-              {t('recallToQueue')}
+              {t(qk('recallToQueue'))}
             </button>
           )}
         </div>
@@ -1286,7 +1400,7 @@ export function PosClient({
                 className={`pos-fs-btn${mode === 'queue' ? ' is-active' : ''}`}
                 onClick={openQueue}
               >
-                {t('openQueue', { count: preparingTokens.length })}
+                {t(qk('openQueue'), { count: preparingTokens.length })}
               </button>
             ) : null}
             {canReturn ? (
@@ -1317,7 +1431,7 @@ export function PosClient({
             </button>
             {orderQueue ? (
               <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab pos-tab-queue${mode === 'queue' ? ' active' : ''}`} onClick={openQueue}>
-                <span>{t('queue')}</span>{' '}
+                <span>{t(qk('queue'))}</span>{' '}
                 <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
               </button>
             ) : null}
@@ -1371,7 +1485,7 @@ export function PosClient({
             </button>
             {orderQueue ? (
               <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab pos-tab-queue${mode === 'queue' ? ' active' : ''}`} onClick={openQueue}>
-                <span>{t('queue')}</span>{' '}
+                <span>{t(qk('queue'))}</span>{' '}
                 <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
               </button>
             ) : null}
@@ -1417,13 +1531,14 @@ export function PosClient({
         came back after. Hidden, the Sell till answers no shortcut and no scanner (`inactive`), and hands the bar's
         Back arrow to the adding till while that one is up.
       */}
-      <div className="pos-body" hidden={mode === 'queue' || addingToToken !== null}>
+      <div className="pos-body" hidden={mode === 'queue' || addingToToken !== null || payingTable !== null}>
         <SellProductClient
           timezone={timezone}
           backTo={backTo}
           hideHead
           leaveRef={addingToToken ? undefined : leaveRef}
-          inactive={mode === 'queue' || addingToToken !== null}
+          inactive={mode === 'queue' || addingToToken !== null || payingTable !== null}
+          onPayTable={(bill) => void payTable(bill)}
           heading={heading}
           nextTokenNo={nextTokenNo}
           onSaleCompleted={handleSaleCompleted}
@@ -1432,7 +1547,7 @@ export function PosClient({
         />
       </div>
       {addingToToken ? (
-        <div className="pos-body" hidden={mode === 'queue'}>
+        <div className="pos-body" hidden={mode === 'queue' || payingTable !== null}>
           <SellProductClient
             key={`add-${addingToToken.id}`}
             addingTo={{
@@ -1452,7 +1567,7 @@ export function PosClient({
               },
               onStop: () => openQueue(addingToToken.id),
             }}
-            inactive={mode === 'queue'}
+            inactive={mode === 'queue' || payingTable !== null}
             timezone={timezone}
             backTo={backTo}
             hideHead
@@ -1466,7 +1581,7 @@ export function PosClient({
         </div>
       ) : null}
 
-      {mode === 'queue' ? (
+      {mode === 'queue' || payingTable !== null ? (
         settledReceipt ? (
           <PaymentDone
             appointmentId={settledReceipt.appointmentId}
@@ -1477,11 +1592,17 @@ export function PosClient({
             summary={settledReceipt.summary}
             bill={settledReceipt.bill}
             phone={settledReceipt.phone}
-            nextLabel={t('backToQueueDone')}
-            onNextCustomer={() => setSettledReceipt(null)}
-            onDone={() => setSettledReceipt(null)}
+            nextLabel={payingTable !== null ? t('backToTablesDone') : t(qk('backToQueueDone'))}
+            onNextCustomer={() => {
+              setSettledReceipt(null);
+              setPayingTable(null);
+            }}
+            onDone={() => {
+              setSettledReceipt(null);
+              setPayingTable(null);
+            }}
             printSlot={
-              <TillPrintActions printer={printer} saleId={settledReceipt.appointmentId} kitchen={orderQueue} order={{ tokenNo: null, channel: 'counter' }} bill />
+              <TillPrintActions printer={printer} saleId={settledReceipt.appointmentId} kitchen={orderQueue} order={{ tokenNo: null, channel: 'counter' }} bill={!waiter} />
             }
           />
         ) : payingToken ? (
@@ -1497,11 +1618,26 @@ export function PosClient({
               setPayingToken(null);
               setClientSheetTarget(null);
               setSettleError(null);
+              setPayingTable(null);
             }}
-            onSettle={(ways, redeemPoints, billOff) => void settleAndCompleteToken(payingToken, ways, redeemPoints, billOff)}
+            byNameOnly={waiter}
+            onSettle={(ways, redeemPoints, billOff, guestName) =>
+              void (async () => {
+                // A waiter's walk-in: the typed name goes on the bill first, as the table's sheet did (owner, 4 Nov 2026).
+                if (guestName) {
+                  try {
+                    await api.assignClientToSale(payingToken.id, { name: guestName });
+                  } catch (e) {
+                    setSettleError(e instanceof ApiError ? e.message : t('tablePayFailed'));
+                    return;
+                  }
+                }
+                await settleAndCompleteToken(guestName ? { ...payingToken, customerName: guestName } : payingToken, ways, redeemPoints, billOff);
+              })()
+            }
           />
         ) : (
-        <section className="pos-queue-board" aria-label={t('queue')}>
+        <section className="pos-queue-board" aria-label={t(qk('queue'))}>
           {/* Owner, 2026-11-16 — Print kitchen slip for what was just added or called off, right where it happened. */}
           {lastKot ? <TillPrintActions printer={printer} saleId={lastKot.saleId} kot={lastKot.kot} order={lastKot.order} /> : null}
           {queueNote ? (
@@ -1518,7 +1654,7 @@ export function PosClient({
               <header className="pos-queue-col-head">
                 <h2 className="pos-queue-col-title">
                   <span className="pos-queue-dot is-preparing" aria-hidden="true" />
-                  {t('preparingColTitle')}
+                  {t(qk('preparingColTitle'))}
                   <span className="pos-queue-col-count">{preparingTokens.length}</span>
                 </h2>
                 <button type="button" className="btn btn-primary pos-queue-new-btn" onClick={closeReturn}>
@@ -1563,7 +1699,7 @@ export function PosClient({
         <ConfirmDialog
           tone="danger"
           title={t('cancelOrderTitle', { token: cancelTarget.tokenLabel })}
-          body={t('cancelOrderBody', { amount: formatMoney(String(cancelTarget.totalMinor)) })}
+          body={t(qk('cancelOrderBody'), { amount: formatMoney(String(cancelTarget.totalMinor)) })}
           confirmLabel={t('cancelOrderConfirm')}
           cancelLabel={t('keepOrder')}
           busy={cancelBusy}
