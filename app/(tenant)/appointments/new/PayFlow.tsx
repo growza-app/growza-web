@@ -849,6 +849,17 @@ export function PayFlow({
   };
   // Only on the screen where products are picked: on 'how', 'qr' and 'done' a scan would change a bill being paid.
   // Listening from the first moment, not from when the shelf is in: a bottle scanned while it loads waits in the queue.
+  /*
+   * Owner, 2026-11-17 — "I placed a takeaway order and it's showing as Dine In". A table chosen on the till stayed chosen
+   * across a visit to Queue or Return, with the Dine-in / Takeaway / Delivery tabs hidden behind it, so the next order
+   * went on that table. Leaving Sell lets go of the table; the dishes already rung up stay, and wait for a table or a type.
+   */
+  useEffect(() => {
+    if (!inactive) return;
+    setAtTable(null);
+    setGuests(null);
+  }, [inactive]);
+
   useBarcodeScan(!inactive && productsOnly && step === 'what', (code) => {
     if (productsLoaded) onScans([code]);
     else queueScan(code);
@@ -1420,6 +1431,9 @@ export function PayFlow({
 
   const nextCustomer = () => {
     setLines([]);
+    // Owner, 2026-11-17 — a finished bill lets go of its table: the next guest is not seated there by default.
+    setAtTable(null);
+    setGuests(null);
     setOverride(null);
     setClient({ kind: 'none' });
     setOrderFrom('counter');
@@ -2205,7 +2219,10 @@ export function PayFlow({
       <button type="button" className="btn btn-ghost" onClick={() => setAtTable(null)}>
         ← {tTables('backToTables')}
       </button>
-      <strong className="pf-table-name">{atTable.label}</strong>
+      {/* Always said: this bill is for a table, so it is Dine-in. */}
+      <strong className="pf-table-name">
+        <span className="pf-table-type">{t('type.dine_in')}</span> · {atTable.label}
+      </strong>
       <div className="pf-guests" role="group" aria-label={tTables('guestsSkip')}>
         <span className="field-hint">{tTables('guests')}</span>
         <button type="button" className="btn btn-ghost pf-guests-btn" aria-label={tTables('fewerGuests')} disabled={!guests} onClick={() => setGuests((g) => (g && g > 1 ? g - 1 : null))}>

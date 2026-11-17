@@ -235,3 +235,6 @@
 .kd-empty-title { font-size: 1.25rem; font-weight: 600; }
 .kd-undo { position: sticky; bottom: var(--sp-3); display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-top: var(--sp-3); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius); background: var(--text); color: var(--surface); }
 .kd-undo .btn { min-height: 44px; color: var(--surface); border-color: var(--surface); }
+
+/* Owner, 2026-11-17 — the till's table strip says the bill is Dine-in, so a table chosen by mistake is seen. */
+.pf-table-type { display: inline-block; padding: 0 var(--sp-2); border-radius: 999px; background: var(--accent-soft); color: var(--accent-deep); font-size: 0.8125rem; font-weight: 700; vertical-align: middle; }
