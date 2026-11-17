@@ -2214,3 +2214,14 @@
 .otb-retry {
   min-height: 44px;
 }
+
+/* L1–L3 (owner, 2026-11-17) — the keep-this-browser line, and two actions on one row that wrap at 344px. */
+.otb-keep {
+  font-weight: 600;
+}
+
+.otb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}

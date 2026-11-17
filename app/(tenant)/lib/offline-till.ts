@@ -2,6 +2,7 @@
 
 import { useEffect, useSyncExternalStore } from 'react';
 import { api, ApiError } from './api';
+import { formatTokenNo } from '../pos/pos-helpers';
 
 /**
  * Jira GRW-716 — the till keeps billing when the internet drops.
@@ -40,7 +41,21 @@ export interface OfflineItem {
   reason?: string;
 }
 
+/**
+ * L2 (owner, 2026-11-17) — an order the till kept as "A05" that the server already had under another number: the request
+ * reached the server, its answer never came back, and the till kept the order offline. The guest holds A05; the kitchen
+ * and Orders say #12. The till says so until someone taps OK, with the slip to print again.
+ */
+export interface RenumberedOrder {
+  id: string;
+  branch: string;
+  was: string;
+  now: string;
+  saleId: string;
+}
+
 const DEVICE_KEY = 'growza.till.device';
+const RENUMBERED_KEY = 'growza.till.renumbered.v1';
 const QUEUE_KEY = 'growza.till.offline.v1';
 const letterKey = (branch: string) => `growza.till.letter.${branch}`;
 const countKey = (branch: string, day: string) => `growza.till.count.${branch}.${day}`;
@@ -100,6 +115,7 @@ export function neverArrived(e: unknown): boolean {
 /* ---------------------------------------------------------------- the store */
 
 let items: OfflineItem[] = [];
+let renumbered: RenumberedOrder[] = [];
 let loaded = false;
 let sending = false;
 const listeners = new Set<() => void>();
@@ -114,6 +130,18 @@ function load(): void {
   } catch {
     items = [];
   }
+  try {
+    const raw = read(RENUMBERED_KEY);
+    const parsed = raw ? (JSON.parse(raw) as RenumberedOrder[]) : [];
+    renumbered = Array.isArray(parsed) ? parsed.filter((r) => r && typeof r.id === 'string' && typeof r.now === 'string') : [];
+  } catch {
+    renumbered = [];
+  }
+}
+function saveRenumbered(next: RenumberedOrder[]): void {
+  write(RENUMBERED_KEY, next.length > 0 ? JSON.stringify(next) : null);
+  renumbered = next;
+  for (const l of listeners) l();
 }
 function save(next: OfflineItem[]): boolean {
   // BR-05 — nothing stays once it is sent: an empty queue leaves no key behind.
@@ -147,8 +175,13 @@ export async function sendOfflineOrders(branches: readonly string[]): Promise<vo
     for (const item of [...items].sort((a, b) => a.takenAt.localeCompare(b.takenAt))) {
       if (item.state !== 'waiting' || !branches.includes(item.branch)) continue;
       try {
-        await api.recordCounterSale(item.body as unknown as Parameters<typeof api.recordCounterSale>[0]);
+        const done = await api.recordCounterSale(item.body as unknown as Parameters<typeof api.recordCounterSale>[0]);
         save(items.filter((i) => i.id !== item.id));
+        // L2 — the server already had this order (its answer was lost): say which number it really goes by.
+        const now = done?.offlineToken ?? (done?.tokenNo ? formatTokenNo(done.tokenNo) : null);
+        if (done && now && now !== item.token) {
+          saveRenumbered([...renumbered.filter((r) => r.id !== item.id), { id: item.id, branch: item.branch, was: item.token, now, saleId: done.appointmentId }]);
+        }
       } catch (e) {
         // Not reachable, or not signed in right now (the session ran out while offline): wait, and send it later.
         if (neverArrived(e) || (e instanceof ApiError && (e.status === 401 || e.status === 408 || e.status === 429 || e.status >= 500))) return;
@@ -165,6 +198,25 @@ export async function sendOfflineOrders(branches: readonly string[]): Promise<vo
 export function retryOfflineOrder(id: string, branches: readonly string[]): void {
   save(items.map((i) => (i.id === id ? { ...i, state: 'waiting', reason: undefined } : i)));
   void sendOfflineOrders(branches);
+}
+
+/**
+ * L3 (owner, 2026-11-17) — an order the server refused for good (Retry only brings the same answer) is taken off this
+ * device, so it can be billed again as it should be. Only a refused one: an order still waiting to send is never dropped.
+ */
+export function removeOfflineOrder(id: string): void {
+  save(items.filter((i) => !(i.id === id && i.state === 'failed')));
+}
+
+/** L2 — the notice is read: it goes. */
+export function dismissRenumbered(id: string): void {
+  saveRenumbered(renumbered.filter((r) => r.id !== id));
+}
+
+const EMPTY_RENUMBERED: RenumberedOrder[] = [];
+/** L2 — the orders the server knows by another number than the slip this till printed. */
+export function useRenumbered(): RenumberedOrder[] {
+  return useSyncExternalStore(subscribe, () => (loaded ? renumbered : EMPTY_RENUMBERED), () => EMPTY_RENUMBERED);
 }
 
 /** The orders this device is holding, for the bar and the failed list. */
@@ -215,6 +267,16 @@ export function useOfflineTill(branch: string | null, branches: readonly string[
       gone = true;
     };
   }, [online, branch]);
+  // L1 (owner, 2026-11-17) — orders not yet sent live only in this browser: closing or reloading the tab asks first.
+  useEffect(() => {
+    if (!waiting) return;
+    const ask = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', ask);
+    return () => window.removeEventListener('beforeunload', ask);
+  }, [waiting]);
   useEffect(() => {
     if (!online || !waiting) return;
     const list = key ? key.split(',') : [];

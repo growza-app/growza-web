@@ -1,21 +1,43 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useState } from 'react';
 import { formatMoney } from '../lib/api';
-import { retryOfflineOrder, tillLetter, useOfflineOrders, useOnline } from '../lib/offline-till';
+import {
+  dismissRenumbered,
+  removeOfflineOrder,
+  retryOfflineOrder,
+  tillLetter,
+  useOfflineOrders,
+  useOnline,
+  useRenumbered,
+  type OfflineItem,
+} from '../lib/offline-till';
+import { ConfirmDialog } from './ConfirmDialog';
 
 /**
  * Jira GRW-716 — what the till is holding, said plainly and never in the way: an amber line over the till while it is
  * offline or has orders waiting ("Offline — 3 orders waiting to send"), and under it any order the server refused, with
  * its reason in the server's words and a Retry. Online with nothing waiting, it draws nothing at all.
  */
-export function OfflineTillBar({ branch, branches }: { branch: string | null; branches: readonly string[] }) {
+export function OfflineTillBar({
+  branch,
+  branches,
+  onReprint,
+}: {
+  branch: string | null;
+  branches: readonly string[];
+  /** L2 — print the kitchen slip again, under the number the server gave the order. */
+  onReprint?: (saleId: string) => void;
+}) {
   const t = useTranslations('payFlow.offline');
   const online = useOnline();
   const held = useOfflineOrders().filter((i) => branches.includes(i.branch));
+  const renamed = useRenumbered().filter((r) => branches.includes(r.branch));
+  const [removing, setRemoving] = useState<OfflineItem | null>(null);
   const waiting = held.filter((i) => i.state === 'waiting').length;
   const failed = held.filter((i) => i.state === 'failed');
-  if (online && waiting === 0 && failed.length === 0) return null;
+  if (online && waiting === 0 && failed.length === 0 && renamed.length === 0) return null;
   const canKeep = branch ? Boolean(tillLetter(branch)) : false;
   const line = !online
     ? waiting > 0
@@ -40,8 +62,31 @@ export function OfflineTillBar({ branch, branches }: { branch: string | null; br
               strokeLinejoin="round"
             />
           </svg>
-          <span>{line}</span>
+          <span>
+            {line}
+            {/* L1 (owner, 2026-11-17) — these orders exist only in this browser until they are sent. */}
+            {waiting > 0 ? <span className="otb-keep">{t('keepBrowser')}</span> : null}
+          </span>
         </p>
+      ) : null}
+      {renamed.length > 0 ? (
+        <ul className="otb-failed" aria-label={t('renumberedTitle')}>
+          {renamed.map((r) => (
+            <li key={r.id} className="otb-failed-row">
+              <span className="otb-failed-what">{t('renumbered', { was: r.was, now: r.now })}</span>
+              <span className="otb-actions">
+                {onReprint ? (
+                  <button type="button" className="btn btn-ghost otb-retry" disabled={!online} onClick={() => onReprint(r.saleId)}>
+                    {t('printSlip')}
+                  </button>
+                ) : null}
+                <button type="button" className="btn otb-retry" onClick={() => dismissRenumbered(r.id)}>
+                  {t('ok')}
+                </button>
+              </span>
+            </li>
+          ))}
+        </ul>
       ) : null}
       {failed.length > 0 ? (
         <ul className="otb-failed" aria-label={t('failedTitle')}>
@@ -51,12 +96,32 @@ export function OfflineTillBar({ branch, branches }: { branch: string | null; br
                 <strong>{i.token}</strong> · {formatMoney(String(i.totalMinor))}
                 <span className="otb-failed-why">{i.reason ?? t('failedUnknown')}</span>
               </span>
-              <button type="button" className="btn btn-ghost otb-retry" disabled={!online} onClick={() => retryOfflineOrder(i.id, branches)}>
-                {online ? t('retry') : t('needsInternet')}
-              </button>
+              <span className="otb-actions">
+                <button type="button" className="btn btn-ghost otb-retry" disabled={!online} onClick={() => retryOfflineOrder(i.id, branches)}>
+                  {online ? t('retry') : t('needsInternet')}
+                </button>
+                {/* L3 (owner, 2026-11-17) — a refusal Retry cannot change: take it off, and bill it again as it should be. */}
+                <button type="button" className="btn btn-ghost otb-retry" onClick={() => setRemoving(i)}>
+                  {t('remove')}
+                </button>
+              </span>
             </li>
           ))}
         </ul>
+      ) : null}
+      {removing ? (
+        <ConfirmDialog
+          title={t('removeTitle', { token: removing.token })}
+          body={t('removeBody', { amount: formatMoney(String(removing.totalMinor)) })}
+          confirmLabel={t('removeGo')}
+          cancelLabel={t('removeKeep')}
+          tone="danger"
+          onConfirm={() => {
+            removeOfflineOrder(removing.id);
+            setRemoving(null);
+          }}
+          onCancel={() => setRemoving(null)}
+        />
       ) : null}
     </div>
   );

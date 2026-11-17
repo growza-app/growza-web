@@ -3228,7 +3228,17 @@
       "failedTitle": "Orders that could not be sent",
       "failedUnknown": "Could not be sent.",
       "retry": "Retry",
-      "needsInternet": "Needs internet"
+      "needsInternet": "Needs internet",
+      "keepBrowser": " Don't close or clear this browser until they are sent.",
+      "renumberedTitle": "Orders with a new number",
+      "renumbered": "Order {was} is {now} — tell the guest.",
+      "printSlip": "Print slip",
+      "ok": "OK",
+      "remove": "Remove",
+      "removeTitle": "Remove order {token}?",
+      "removeBody": "It was not recorded. If the guest paid {amount}, bill it again from the till.",
+      "removeGo": "Remove",
+      "removeKeep": "Keep"
     },
     "choices": {
       "close": "Close",
@@ -5191,7 +5201,12 @@
       "toRefunds": "Refunds",
       "byTitle": "Given back by",
       "byNone": "Not recorded",
-      "byRole": {"owner": "Owner", "manager": "Manager", "receptionist": "Front desk", "staff": "Team member"}
+      "byRole": {
+        "owner": "Owner",
+        "manager": "Manager",
+        "receptionist": "Front desk",
+        "staff": "Team member"
+      }
     },
     "returnsLink": "Returns",
     "bringIn": {
