@@ -25,7 +25,7 @@ import { allCameBack } from '../../lib/order-items';
 import { channelsOf, isDeliveryApp, sellsOnMarketplaces } from '../../lib/order-channels';
 import type { Lang } from '../../lib/lang';
 import { useBranch } from '../BranchProvider';
-import { useAreas } from '../SessionProvider';
+import { useAreas, useSession } from '../SessionProvider';
 import {
   IconNavClients,
   IconNavOrders,
@@ -37,6 +37,7 @@ import {
   IconPos,
   IconProducts,
   IconReports,
+  IconTable,
 } from '../icons';
 import { Avatar, Card, CardError, DarkStatCard, HomeHeader, PageHead, PayGaugeCard, QuickTiles, Segmented, WeekBarsCard, exactRupees, paySlicesOf, rupees } from './parts';
 import { CheckInCard } from './CheckInCard';
@@ -101,6 +102,9 @@ export function ShopHome({
   const [loading, setLoading] = useState(false);
   const [period, setPeriod] = useState<ShopPeriod>('last_7_days');
   const isKitchen = !areas.stock;
+  // Table orders are switched on per branch: the one picked, or — on "All branches" — any of them.
+  const session = useSession();
+  const tablesOn = (session?.branches ?? []).some((b) => b.tableOrders && (branch === null || b.id === branch));
 
   // Desktop command-center supplemental state
   const [channelData, setChannelData] = useState<ByChannelPage | null>(null);
@@ -365,7 +369,18 @@ export function ShopHome({
   const tiles = [
     { href: '/pos', label: t.nav.pos, icon: <IconPos />, tone: 'green' },
     // Only a kitchen has an order queue to open (hasOrderQueue); a shop's tile would open Sell.
-    ...(isKitchen ? [{ href: '/pos?mode=queue', label: s.queueTitle, icon: <IconNavOrders />, tone: 'blue' }] : []),
+    /*
+     * Owner, 2026-11-17 — with Table orders on, the owner and a manager get Tables (the room at a glance: which are
+     * busy, for how long, for how much) where the Queue was; the counter keeps its list, called Pickup there as on
+     * the till. Tables off, it is the Queue.
+     */
+    ...(isKitchen
+      ? [
+          tablesOn && canReports
+            ? { href: '/pos', label: s.tablesTitle, icon: <IconTable />, tone: 'blue' }
+            : { href: '/pos?mode=queue', label: tablesOn ? s.pickupTitle : s.queueTitle, icon: <IconNavOrders />, tone: 'blue' },
+        ]
+      : []),
     { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'green' },
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
     /*

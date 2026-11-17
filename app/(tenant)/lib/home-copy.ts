@@ -444,6 +444,9 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       nothingSold: S('Nothing sold today', 'आज कुछ नहीं बिका'),
       ordersTitle: S(labels.orders ?? 'Orders', 'ऑर्डर'),
       queueTitle: S('Queue', 'कतार'),
+      /** Owner, 2026-11-17 — with Table orders on, the Queue holds only takeaway and delivery: Pickup, as on the till. */
+      pickupTitle: S('Pickup', 'पिकअप'),
+      tablesTitle: S('Tables', 'टेबल'),
       /** Emerald v2 — the laptop Home's header buttons and its new cards. */
       newOrderAction: S('New order', 'नया ऑर्डर'),
       cameInToday: S('came in today', 'आज आए'),
