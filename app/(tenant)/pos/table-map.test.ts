@@ -54,10 +54,10 @@ describe('a table’s bill on the till', () => {
     expect(buildDailyTokens(rows, null)).toHaveLength(1);
   });
 
-  it('only the owner and a manager may take a dish off; it asks why', () => {
+  it('only the owner and a manager may take a dish off; it asks why (and, Jira GRW-737, whether it was cooked when the server asks)', () => {
     expect(flow).toContain("canManage={role === 'owner' || role === 'manager'}");
     expect(sheet).toContain('{editing && canManage && !l.cancelReason && !moving ? (');
-    expect(sheet).toContain("disabled={busy || takingOff.reason.trim() === ''}");
+    expect(sheet).toContain("disabled={busy || takingOff.reason.trim() === '' || (takingOff.askCooked === true && takingOff.cooked === undefined)}");
   });
 
   it('payment asks who paid first, by the owner’s rule of 4 Nov 2026', () => {

@@ -16,7 +16,8 @@ import type { MemberRole } from '@growza-app/shared';
  */
 const SHOP: Areas = { bookings: false, services: false, shop: true, stock: true };
 /** The shop's app with no count behind it (`catalog.stock_counted` off): the restaurant — the one vertical that seats guests (Jira GRW-718). */
-const KITCHEN: Areas = { ...SHOP, stock: false, tables: true };
+/** Jira GRW-737 — and keeps kitchen stock (`catalog.recipes`): raw materials and recipes. */
+const KITCHEN: Areas = { ...SHOP, stock: false, tables: true, recipes: true };
 type Shape = 'diary' | 'shop' | 'kitchen';
 const SHAPES: Array<{ name: string; shape: Shape; areas: Areas }> = [
   { name: 'diary (salon, clinic, spa, garage, dental)', shape: 'diary', areas: DIARY_AREAS },
@@ -103,6 +104,8 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/settings/team': 'both',
   '/settings/working-hours': 'both',
   '/stock': 'shop',
+  // Jira GRW-737 — a kitchen's raw materials: only where kitchen stock may be kept (a restaurant).
+  '/stock/kitchen': 'tables',
   '/stock/report': 'counted',
   '/stock/channels': 'shop',
   '/stock/order': 'counted',
@@ -187,7 +190,8 @@ describe('FR-01 … FR-03 — each kind of business is offered exactly the scree
     const differ = Object.keys(SCREENS).filter((r) => areaAllows(concrete(r), SHOP) !== areaAllows(concrete(r), KITCHEN));
     // Jira GRW-718 — Settings › Tables is the restaurant's alone (`dining.tables`), the one difference that is not a count.
     // Jira GRW-714 — and its kitchen screen: a kitchen cooks to order, a shop has a shelf.
-    expect(differ.sort()).toEqual(['/kitchen', '/settings/tables', '/settings/tables/[branchId]', '/stock/order', '/stock/report']);
+    // Jira GRW-737 — and its kitchen stock: a kitchen counts what it cooks with, not what is on a shelf.
+    expect(differ.sort()).toEqual(['/kitchen', '/settings/tables', '/settings/tables/[branchId]', '/stock/kitchen', '/stock/order', '/stock/report']);
     // …and the menu itself is NOT one of them: that is where a restaurant's dishes live.
     expect(areaAllows('/stock', KITCHEN)).toBe(true);
     expect(areaAllows('/orders/new', KITCHEN)).toBe(true);

@@ -9,7 +9,7 @@ import type { Product, ProductCategory } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { IconCheck, IconChevronRight, IconTrash } from '../components/icons';
-import { useAddonsOn, useAreas, useSizesOn } from '../components/SessionProvider';
+import { useAddonsOn, useAreas, useRecipesOn, useSizesOn } from '../components/SessionProvider';
 import { GstInPrice, TaxFields } from '../components/TaxFields';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { codeHolder } from '../lib/product-match';
@@ -17,6 +17,7 @@ import { useNouns } from '../lib/use-nouns';
 import { MoveSizesEntry } from './MoveSizesEntry';
 import { StockPanel } from './StockPanel';
 import { SalesPanel } from './SalesPanel';
+import { RecipePanel } from './RecipePanel';
 import { stockTone } from './ProductsList';
 import { ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
 import { productShareItem } from '../lib/share-on-whatsapp';
@@ -29,7 +30,7 @@ import { productShareItem } from '../lib/share-on-whatsapp';
  * - **Stock** (an existing product only) — the count, five reasons it changes, and the ledger (0116). Typing
  *   over the count is deliberately NOT offered here: every change says why.
  */
-type Part = 'details' | 'stock' | 'sales';
+type Part = 'details' | 'stock' | 'recipe' | 'sales';
 
 
 export function ProductSheet({
@@ -67,8 +68,11 @@ export function ProductSheet({
   const sizesOn = useSizesOn();
   // Jira GRW-712 — an item's add-on groups (Extras, Spice), on their own page like its sizes.
   const addonsOn = useAddonsOn();
+  const recipesAllowed = useRecipesOn();
   // A kitchen (`catalog.stock_counted` off) has no count behind a dish: no Stock tab, no opening count, no low line.
   const counted = useAreas().stock;
+  // Jira GRW-737 — a kitchen's dish has a Recipe tab: what it takes out of the kitchen's stock, size by size.
+  const recipesOn = recipesAllowed && !counted;
   // Review 2026-11-13 — the WhatsApp share (Jira GRW-671) lives on the sheet's head, bound once; null when retired or none left.
   const shareItem = product && counted ? productShareItem(product, { counted }) : null;
   const sizeCount = product?.variantCount ?? 0;
@@ -292,8 +296,8 @@ export function ProductSheet({
       ) : null}
       {product ? (
         // Two tabs where there is no count: what the dish IS, and what it has sold.
-        <div className={`prd-seg prd-seg-${counted ? 3 : 2}`} role="tablist" aria-label={title}>
-          {(counted ? (['details', 'stock', 'sales'] as const) : (['details', 'sales'] as const)).map((p) => (
+        <div className={`prd-seg prd-seg-${counted || recipesOn ? 3 : 2}`} role="tablist" aria-label={title}>
+          {(counted ? (['details', 'stock', 'sales'] as const) : recipesOn ? (['details', 'recipe', 'sales'] as const) : (['details', 'sales'] as const)).map((p) => (
             <button key={p} type="button" role="tab" aria-selected={part === p} className={part === p ? 'is-on' : ''} onClick={() => setPart(p)}>
               {t(`part.${p}`)}
             </button>
@@ -314,6 +318,8 @@ export function ProductSheet({
         </div>
       ) : counted && part === 'stock' && product ? (
         <StockPanel product={product} onChanged={onSaved} />
+      ) : part === 'recipe' && product ? (
+        <RecipePanel product={product} />
       ) : part === 'sales' && product ? (
         <SalesPanel product={product} />
       ) : (

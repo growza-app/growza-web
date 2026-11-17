@@ -105,11 +105,14 @@ describe('the Menu screen draws a dish without a count', () => {
   });
 });
 
-describe('the dish sheet is two tabs, not three', () => {
+describe('the dish sheet has no Stock tab (Jira GRW-737: a kitchen keeping kitchen stock gets Recipe in its place)', () => {
   it('no Stock tab, and no stock panel behind it', () => {
     expect(sheet).toMatch(/const counted = useAreas\(\)\.stock;/);
-    expect(sheet).toMatch(/prd-seg prd-seg-\$\{counted \? 3 : 2\}/);
-    expect(sheet).toMatch(/counted \? \(\['details', 'stock', 'sales'\] as const\) : \(\['details', 'sales'\] as const\)/);
+    expect(sheet).toMatch(/const recipesOn = recipesAllowed && !counted;/);
+    expect(sheet).toMatch(/prd-seg prd-seg-\$\{counted \|\| recipesOn \? 3 : 2\}/);
+    expect(sheet).toMatch(
+      /counted \? \(\['details', 'stock', 'sales'\] as const\) : recipesOn \? \(\['details', 'recipe', 'sales'\] as const\) : \(\['details', 'sales'\] as const\)/,
+    );
     expect(sheet).toMatch(/\) : counted && part === 'stock' && product \? \(\s*<StockPanel/);
   });
 

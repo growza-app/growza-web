@@ -278,6 +278,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   '/packages': ['POST /api/v1/offers', 'PATCH /api/v1/offers/:id', 'DELETE /api/v1/offers/:id'],
   // Owner, 2026-10-14 — the shelf: owner-only, closed whole by `guardScreen`.
   '/products': [
+    // Jira GRW-737 — the dish sheet's Recipe tab.
+    'PUT /api/v1/products/:id/recipe',
     'POST /api/v1/products',
     'POST /api/v1/products/import',
     'POST /api/v1/products/import/parse',
@@ -305,6 +307,14 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   ],
   // Jira GRW-633 — the reorder worklist: the owner's own numbers and each category's lead time, on a page of its own under Stock. Owner and manager only, closed whole by `guardScreen`.
   '/stock/order': ['PUT /api/v1/reports/reorder/override', 'PUT /api/v1/reports/reorder/rules'],
+  // Jira GRW-737 — kitchen stock: items, the opening count and the owner's switch; the recipe is written from the dish sheet (`/stock`).
+  '/stock/kitchen': [
+    'POST /api/v1/stock/materials',
+    'PATCH /api/v1/stock/materials/:id',
+    'POST /api/v1/stock/materials/:id/archive',
+    'POST /api/v1/stock/materials/opening',
+    'PUT /api/v1/settings/kitchen-stock',
+  ],
   '/providers': [
     'POST /api/v1/providers',
     'PATCH /api/v1/providers/:id',
@@ -503,6 +513,8 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     // them; the two that read what was BILLED are every shop's, and guard under the shelf's.
     '/stock/report': /await guardScreen\('\/stock\/report'\);/,
     '/stock/order': /await guardScreen\('\/stock\/order'\);/,
+    // Jira GRW-737 — the kitchen's raw materials guard under their own address (a restaurant's, and the cook's too).
+    '/stock/kitchen': /await guardScreen\('\/stock\/kitchen'\);/,
     '/stock/channels': /await guardScreen\('\/stock'\);/,
     '/stock/sellers': /await guardScreen\('\/stock'\);/,
     '/stock': /<ProductsScreen[^>]*guard="\/stock"/,
