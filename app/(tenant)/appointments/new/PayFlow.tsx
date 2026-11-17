@@ -1850,7 +1850,7 @@ export function PayFlow({
               <button
                 type="button"
                 className="btn pos-charge-pending"
-                disabled={saving !== null || lines.length === 0}
+                disabled={saving !== null || lines.length === 0 || freeBlock !== null}
                 onClick={sendPosPending}
               >
                 <span>{t('desk.keepPendingInQueue')}</span>
@@ -2290,7 +2290,8 @@ export function PayFlow({
                       <button
                         type="button"
                         className="btn pos-charge-pending"
-                        disabled={saving !== null || lines.length === 0}
+                        // QA 2026-11-17 — off, like Cash, until a ₹0 bill has its owner and reason: the tap did nothing and said nothing.
+                        disabled={saving !== null || lines.length === 0 || freeBlock !== null}
                         onClick={sendPosPending}
                       >
                         <span>{t('desk.keepPendingInQueue')}</span>

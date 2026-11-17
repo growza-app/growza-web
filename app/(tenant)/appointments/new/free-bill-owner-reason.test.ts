@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import en from '../../../../messages/en.json';
 import hi from '../../../../messages/hi.json';
@@ -114,5 +115,18 @@ describe('at 344px', () => {
     const field = css.slice(css.indexOf('.pf-free-reason input {'));
     expect(field.slice(0, field.indexOf('}'))).toMatch(/min-height: 2\.75rem;[\s\S]*font-size: max\(1rem, var\(--fs-4\)\);/);
     expect(css).toMatch(/\.ord-d-discount-reason dd \{[^}]*overflow-wrap: anywhere;/);
+  });
+});
+
+describe('QA 2026-11-17 — the L7 QA run', () => {
+  const flow = readFileSync(resolve(__dirname, 'PayFlow.tsx'), 'utf8');
+  const box = readFileSync(resolve(__dirname, 'FreeBillReason.tsx'), 'utf8');
+
+  it('finding 3 — Keep payment pending is off, like Cash, while a ₹0 bill lacks its owner or reason (both layouts)', () => {
+    expect(flow.match(/disabled=\{saving !== null \|\| lines\.length === 0 \|\| freeBlock !== null\}\s*onClick=\{sendPosPending\}/g)).toHaveLength(2);
+  });
+
+  it('finding 3 — the Reason box is not red before the owner has typed anything', () => {
+    expect(box).toContain("aria-invalid={block === 'needsReason' && reason.trim().length > 0}");
   });
 });

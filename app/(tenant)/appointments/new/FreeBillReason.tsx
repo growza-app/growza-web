@@ -41,7 +41,8 @@ export function FreeBillReason({
         maxLength={FREE_REASON_MAX}
         autoComplete="off"
         required
-        aria-invalid={block === 'needsReason'}
+        // Red once something too short is typed, not before the owner has started (QA 2026-11-17).
+        aria-invalid={block === 'needsReason' && reason.trim().length > 0}
         aria-describedby={hintId}
         onChange={(e) => onReason(e.target.value)}
         disabled={disabled}
