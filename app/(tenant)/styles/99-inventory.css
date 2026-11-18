@@ -103,3 +103,9 @@
   gap: var(--sp-2);
   margin-top: var(--sp-3);
 }
+
+/* QA of GRW-741 — a dish whose food costs more than its price (almost always a price typed wrong) says so, in the red the % already wears. */
+.ks-meta.inv-over {
+  color: var(--danger);
+  font-weight: 600;
+}

@@ -1614,7 +1614,7 @@ export interface OrderDetail {
     /** Jira GRW-723 — who put the line on the bill ("Ravi"). */
     addedBy?: string | null;
     /** Jira GRW-724 — `service_charge`: the bill's service charge line, never a dish to return or take off. */
-    kind?: 'item' | 'service_charge';
+    kind?: 'item' | 'service_charge' | 'tax';
     sku: string | null;
     barcode: string | null;
     priceMinor?: string;

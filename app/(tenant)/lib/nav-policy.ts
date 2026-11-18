@@ -15,7 +15,7 @@
  */
 import { canSee as roleCanSee, visibleItems as roleVisibleItems, type MemberRole, type UiAction } from '@growza-app/shared';
 import { isSetupDestination } from './go-live';
-import { areaAllows, cooksOnly, isShopRoute, servesTablesOnly, type Areas, type PageGrid } from './areas';
+import { areaAllows, cooksOnly, isInventoryRoute, isShopRoute, servesTablesOnly, type Areas, type PageGrid } from './areas';
 
 export {
   canSeeReports,
@@ -207,6 +207,8 @@ export function gridCanSee(rawHref: string, grid: PageGrid): boolean {
 export function canSee(href: string, role?: MemberRole | null, reportTabs?: readonly string[], live = true, areas?: Areas): boolean {
   if (ALWAYS_OPEN.has(href)) return true;
   if (!areaAllows(href, areas)) return false;
+  // Jira GRW-741 FR-01 — Inventory is the staff's only once the owner has switched it on; the owner is offered it either way (the switch is there).
+  if (!areas?.kitchenStock && role !== 'owner' && isInventoryRoute(href.split('?')[0]!)) return false;
   // Jira GRW-74 — a member who holds a role is offered what the role grants, and nothing is asked of the fixed role they work like.
   if (areas?.pages) return (live || isSetupDestination(href)) && gridCanSee(href, areas.pages);
   /*

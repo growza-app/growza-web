@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import { api, ApiError, formatMoney } from '../lib/api';
 import type { DishCost, DishRecipe, Product, StockMaterial } from '../lib/api-types';
-import { foodCostTone, pctText } from '../lib/food-cost';
+import { costsMoreThanPrice, foodCostTone, pctText } from '../lib/food-cost';
 import { parseAmount, recipeAmount, SMALL_UNIT, unitWord } from '../lib/kitchen-units';
 import { useSession } from '../components/SessionProvider';
 import { IconClose } from '../components/icons';
@@ -222,6 +222,7 @@ export function RecipePanel({ product }: { product: Pick<Product, 'id' | 'locati
                 : t(netDiffers ? 'costsNet' : 'costs', { cost: formatMoney(costNow), pct: pctText(pct), price: formatMoney(netDiffers ? sized!.netPriceMinor : size.priceMinor) })}
             </p>
           ) : null}
+          {seesCost && costNow !== null && costsMoreThanPrice(pct) ? <p className="rc-cost is-bad">{t('overPrice')}</p> : null}
           {error ? (
             <div role="alert" className="sheet-foot sheet-foot-error">
               {error}

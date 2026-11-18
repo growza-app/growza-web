@@ -78,7 +78,7 @@ export function KitchenStationsSetup({ branches }: { branches: Array<{ id: strin
 
   const picker =
     branches.length > 1 ? (
-      <label className="dt-field ks-branch">
+      <label className="dt-field kst-branch">
         <span className="field-hint">{t('branch')}</span>
         <select value={location ?? ''} onChange={(e) => setLocation(e.target.value)}>
           {branches.map((b) => (
@@ -122,26 +122,26 @@ export function KitchenStationsSetup({ branches }: { branches: Array<{ id: strin
   };
 
   return (
-    <div className="ks">
-      <section className="card" aria-labelledby="ks-stations-title">
+    <div className="kst">
+      <section className="card" aria-labelledby="kst-stations-title">
         <div className="card-body">
           {picker}
-          <h2 id="ks-stations-title" className="ks-title">
+          <h2 id="kst-stations-title" className="kst-title">
             {t('stationsTitle')}
           </h2>
           <p className="field-hint">{data.stations.length === 0 ? t('introNone') : t('intro')}</p>
-          <ul className="ks-list">
-            <li className="ks-row">
-              <span className="ks-name">
+          <ul className="kst-list">
+            <li className="kst-row">
+              <span className="kst-name">
                 {t('kitchen')}
-                <span className="ks-default">{t('default')}</span>
+                <span className="kst-default">{t('default')}</span>
               </span>
             </li>
             {data.stations.map((s) => (
-              <li key={s.id} className="ks-row">
+              <li key={s.id} className="kst-row">
                 {renaming?.id === s.id ? (
                   <form
-                    className="ks-rename"
+                    className="kst-rename"
                     onSubmit={(e) => {
                       e.preventDefault();
                       void run(`rename-${s.id}`, () => api.renameKitchenStation(s.id, renaming.name)).then((ok) => ok && setRenaming(null));
@@ -164,12 +164,12 @@ export function KitchenStationsSetup({ branches }: { branches: Array<{ id: strin
                   </form>
                 ) : (
                   <>
-                    <span className="ks-name">{s.name}</span>
-                    <span className="ks-actions">
-                      <button type="button" className="btn btn-ghost ks-icon" aria-label={t('renameLabel', { name: s.name })} disabled={busy || !writable} onClick={() => setRenaming({ id: s.id, name: s.name })}>
+                    <span className="kst-name">{s.name}</span>
+                    <span className="kst-actions">
+                      <button type="button" className="btn btn-ghost kst-icon" aria-label={t('renameLabel', { name: s.name })} disabled={busy || !writable} onClick={() => setRenaming({ id: s.id, name: s.name })}>
                         <IconEdit />
                       </button>
-                      <button type="button" className="btn btn-ghost ks-icon" aria-label={t('removeLabel', { name: s.name })} disabled={busy || !writable} onClick={() => setRemoving(s)}>
+                      <button type="button" className="btn btn-ghost kst-icon" aria-label={t('removeLabel', { name: s.name })} disabled={busy || !writable} onClick={() => setRemoving(s)}>
                         <IconTrash />
                       </button>
                     </span>
@@ -180,7 +180,7 @@ export function KitchenStationsSetup({ branches }: { branches: Array<{ id: strin
             ))}
           </ul>
           <form
-            className="ks-add"
+            className="kst-add"
             onSubmit={(e) => {
               e.preventDefault();
               void add();
@@ -198,20 +198,20 @@ export function KitchenStationsSetup({ branches }: { branches: Array<{ id: strin
         </div>
       </section>
 
-      <section className="card" aria-labelledby="ks-categories-title">
+      <section className="card" aria-labelledby="kst-categories-title">
         <div className="card-body">
-          <h2 id="ks-categories-title" className="ks-title">
+          <h2 id="kst-categories-title" className="kst-title">
             {t('categoriesTitle')}
           </h2>
           <p className="field-hint">{t('categoriesHint')}</p>
           {data.categories.length === 0 ? (
             <p className="field-hint">{t('noCategories')}</p>
           ) : (
-            <ul className="ks-list">
+            <ul className="kst-list">
               {data.categories.map((c) => (
-                <li key={c.id} className="ks-row">
-                  <label className="ks-category">
-                    <span className="ks-name">{c.name}</span>
+                <li key={c.id} className="kst-row">
+                  <label className="kst-category">
+                    <span className="kst-name">{c.name}</span>
                     <select
                       aria-label={t('categoryStation', { name: c.name })}
                       value={c.stationId ?? ''}

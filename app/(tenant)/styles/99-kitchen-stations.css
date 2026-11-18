@@ -2,26 +2,26 @@
  * Jira GRW-733 — Settings › Kitchen stations. Laid out at 344px first: every row is one line that wraps rather than
  * scrolls, every control 44px tall. Growza tokens only.
  *
- * Jira GRW-741 — scoped under the screen's own `.ks` root: these class names are kitchen stock's too (`.ks-list`, `.ks-row`, `.ks-name`,
- * `.ks-actions`, `.ks-add`), and this sheet loads after that one, so unscoped it re-drew Inventory's rows and laid its Wasted · Count row
- * and its Add button out as a stations form.
+ * Jira GRW-741 QA — its own `kst-` prefix. It shared kitchen stock's `ks-` names (`.ks-list`, `.ks-row`, `.ks-name`, `.ks-actions`,
+ * `.ks-add`): unscoped, this sheet re-drew Inventory's rows; scoped under a `.ks` root, the Offers screen (which borrows the branch picker
+ * and the heading) lost its heading style and the stations list picked up Inventory's card. Two screens, two names.
  */
-.ks { display: flex; flex-direction: column; gap: var(--sp-3); }
-.ks .ks-title { margin: 0 0 var(--sp-1); font-size: 1rem; font-weight: 600; color: var(--text); }
-.ks-branch { margin-bottom: var(--sp-3); }
-.ks-branch select { min-height: 44px; font-size: 1rem; }
-.ks .ks-list { list-style: none; margin: var(--sp-2) 0; padding: 0; display: flex; flex-direction: column; }
-.ks .ks-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); min-height: 44px; padding: var(--sp-1) 0; border-top: 1px solid var(--border); }
-.ks .ks-row:first-child { border-top: 0; }
-.ks .ks-name { flex: 1 1 8rem; min-width: 0; overflow-wrap: anywhere; font-size: 0.9375rem; color: var(--text); }
-.ks .ks-default { margin-left: var(--sp-2); font-size: 0.75rem; color: var(--muted); }
-.ks .ks-actions { display: flex; gap: var(--sp-1); }
-.ks .ks-icon { min-width: 44px; min-height: 44px; padding: 0; justify-content: center; }
-.ks .ks-icon svg { width: 1.125rem; height: 1.125rem; }
-.ks .ks-rename, .ks .ks-add { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sp-2); flex: 1 1 100%; }
-.ks .ks-rename input, .ks .ks-add input { min-height: 44px; font-size: 16px; min-width: 0; }
-.ks .ks-rename input { flex: 1 1 10rem; }
-.ks .ks-add .dt-field { flex: 1 1 12rem; }
-.ks .ks-rename .btn, .ks .ks-add .btn { min-height: 44px; }
-.ks .ks-category { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); flex: 1 1 100%; }
-.ks .ks-category select { flex: 1 1 9rem; min-height: 44px; font-size: 16px; max-width: 100%; }
+.kst { display: flex; flex-direction: column; gap: var(--sp-3); }
+.kst-title { margin: 0 0 var(--sp-1); font-size: 1rem; font-weight: 600; color: var(--text); }
+.kst-branch { margin-bottom: var(--sp-3); }
+.kst-branch select { min-height: 44px; font-size: 1rem; }
+.kst-list { list-style: none; margin: var(--sp-2) 0; padding: 0; display: flex; flex-direction: column; }
+.kst-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); min-height: 44px; padding: var(--sp-1) 0; border-top: 1px solid var(--border); }
+.kst-row:first-child { border-top: 0; }
+.kst-name { flex: 1 1 8rem; min-width: 0; overflow-wrap: anywhere; font-size: 0.9375rem; color: var(--text); }
+.kst-default { margin-left: var(--sp-2); font-size: 0.75rem; color: var(--muted); }
+.kst-actions { display: flex; gap: var(--sp-1); }
+.kst-icon { min-width: 44px; min-height: 44px; padding: 0; justify-content: center; }
+.kst-icon svg { width: 1.125rem; height: 1.125rem; }
+.kst-rename, .kst-add { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sp-2); flex: 1 1 100%; }
+.kst-rename input, .kst-add input { min-height: 44px; font-size: 16px; min-width: 0; }
+.kst-rename input { flex: 1 1 10rem; }
+.kst-add .dt-field { flex: 1 1 12rem; }
+.kst-rename .btn, .kst-add .btn { min-height: 44px; }
+.kst-category { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); flex: 1 1 100%; }
+.kst-category select { flex: 1 1 9rem; min-height: 44px; font-size: 16px; max-width: 100%; }

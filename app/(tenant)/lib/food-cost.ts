@@ -20,3 +20,11 @@ export function pctText(pct: number | null | undefined): string {
   if (pct === null || pct === undefined || !Number.isFinite(pct)) return '—';
   return `${Number.isInteger(pct) ? pct : pct.toFixed(1)}%`;
 }
+
+/**
+ * QA of GRW-741 — a dish whose food costs more than its menu price (a ₹1 Green Chutney with saffron read "200000%"): almost always a price
+ * typed wrong. Said in words beside the %, so the owner checks the price rather than the recipe.
+ */
+export function costsMoreThanPrice(pct: number | null | undefined): boolean {
+  return typeof pct === 'number' && Number.isFinite(pct) && pct > 100;
+}

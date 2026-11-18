@@ -149,7 +149,8 @@ describe('Jira GRW-724 — a service charge the guest can say no to', () => {
     expect(sheet).toContain('{charge ? (');
     expect(sheet).toContain("api.setBillServiceCharge(saleId, false)");
     // Not a dish: it is never offered "Take off", and it is never a dish to bring back.
-    expect(sheet).toContain("const dishes = (order?.lines ?? []).filter((l) => l.kind !== 'service_charge');");
+    // QA of GRW-741 — and the GST added on top (`tax`) is no dish either.
+    expect(sheet).toContain("const dishes = (order?.lines ?? []).filter((l) => l.kind !== 'service_charge' && l.kind !== 'tax');");
   });
 
   it('the owner offers it per branch, explained once in plain words, in both languages', () => {

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import AppLink from '../../shared/AppLink';
 import { api, formatMoney } from '../lib/api';
 import type { RecipeCostDish } from '../lib/api-types';
-import { foodCostTone, pctText } from '../lib/food-cost';
+import { costsMoreThanPrice, foodCostTone, pctText } from '../lib/food-cost';
 import { useMayOpen } from '../components/SessionProvider';
 import { RecipeSheet } from './RecipeSheet';
 
@@ -117,6 +117,7 @@ export function RecipesClient({ branchId }: { branchId: string }) {
                     {d.category ? <span className="ks-meta">{d.category}</span> : null}
                     {detail ? <span className="ks-meta">{detail}</span> : null}
                     {costLine ? <span className="ks-meta">{costLine}</span> : null}
+                    {top && costsMoreThanPrice(top.foodCostPct) ? <span className="ks-meta inv-over">{t('overPrice')}</span> : null}
                   </span>
                   {whole || missing.length > 0 ? (
                     <span className="inv-no-recipe">{t('noRecipe')}</span>

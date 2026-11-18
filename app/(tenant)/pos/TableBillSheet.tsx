@@ -153,7 +153,8 @@ export function TableBillSheet({
   };
 
   const money = (minor: number | string | undefined) => formatMoney(String(minor ?? 0));
-  const dishes = (order?.lines ?? []).filter((l) => l.kind !== 'service_charge');
+  // QA of GRW-741 — the GST added on top is a line of its own (`tax`): it is no dish, so it is never offered to Take off.
+  const dishes = (order?.lines ?? []).filter((l) => l.kind !== 'service_charge' && l.kind !== 'tax');
   const charge = (order?.lines ?? []).find((l) => l.kind === 'service_charge') ?? null;
   const live = dishes.filter((l) => !l.cancelReason && l.qty > l.returnedQty);
   const totalMinor = (order?.lines ?? []).reduce((n, l) => n + Number(l.paidMinor ?? 0) - Number(l.returnedMinor ?? 0), 0);

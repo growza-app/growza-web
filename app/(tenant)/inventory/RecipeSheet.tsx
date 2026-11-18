@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useRef } from 'react';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { useBackCloses } from '../lib/use-back-closes';
 import { RecipePanel } from '../products/RecipePanel';
 
 /**
@@ -14,6 +15,8 @@ export function RecipeSheet({ dish, branchId, onClose }: { dish: { productId: st
   const t = useTranslations('kitchenStock.recipes');
   const sheetRef = useRef<HTMLDivElement>(null);
   useDialog(sheetRef, { onClose });
+  // QA — the phone's Back closes this sheet and stays on Recipes; it used to leave the tab.
+  useBackCloses(onClose);
   const title = t('sheetTitle', { name: dish.name });
   return (
     <div className="modal-backdrop" onClick={onClose}>

@@ -5939,7 +5939,7 @@
       "lost": "Missing (found by a count)",
       "found": "Extra (found by a count)",
       "lossNote": "Valued at what each item cost when it was recorded. Extra found later never cancels what went missing.",
-      "lossUnpriced": "{count, plural, one {# entry has} other {# entries have}} no price yet and is not in the totals",
+      "lossUnpriced": "{count, plural, one {# entry has no price yet and is} other {# entries have no price yet and are}} not in the totals",
       "byItemTitle": "By item",
       "itemWasted": "Wasted {qty}",
       "itemLost": "Missing {qty}",
@@ -6357,9 +6357,12 @@
     },
     "buyTab": {
       "toBuyTitle": "What to buy",
-      "emptyItems": "Add items on the Stock tab first. Then what runs low shows here."
+      "emptyItems": "Add items on the Stock tab first. Then what runs low shows here.",
+      "itemsFailed": "Couldn't load your items.",
+      "off": "Inventory is switched off. The owner can switch it on in the Stock tab. Then Stock in opens."
     },
     "recipes": {
+      "overPrice": "Costs more than its menu price. Check the price.",
       "search": "Search dishes",
       "loading": "Loading dishes",
       "loadFailed": "Couldn't load the dishes.",
@@ -6379,6 +6382,7 @@
     }
   },
   "recipe": {
+    "overPrice": "Costs more than its menu price. Check the price.",
     "sizes": "Sizes",
     "loading": "Loading the recipe…",
     "loadFailed": "Couldn't load the recipe.",

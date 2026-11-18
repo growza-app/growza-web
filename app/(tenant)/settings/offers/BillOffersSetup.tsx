@@ -80,7 +80,7 @@ export function BillOffersSetup({ branches }: { branches: Array<{ id: string; na
 
   const picker =
     branches.length > 1 ? (
-      <label className="dt-field ks-branch">
+      <label className="dt-field kst-branch">
         <span className="field-hint">{t('branch')}</span>
         <select value={location ?? ''} onChange={(e) => setLocation(e.target.value)}>
           {branches.map((b) => (
@@ -129,7 +129,7 @@ export function BillOffersSetup({ branches }: { branches: Array<{ id: string; na
       <section className="card" aria-labelledby="bo-list-title">
         <div className="card-body">
           {picker}
-          <h2 id="bo-list-title" className="ks-title">
+          <h2 id="bo-list-title" className="kst-title">
             {t('title')}
           </h2>
           <p className="field-hint">{t('intro')}</p>

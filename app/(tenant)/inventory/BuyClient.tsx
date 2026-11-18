@@ -23,6 +23,9 @@ export function BuyClient({ branchId }: { branchId: string }) {
   const mayChange = session?.role === 'owner' || (grid ? grid.services === 'manage' : session?.role === 'manager');
 
   const [materials, setMaterials] = useState<StockMaterial[] | null>(null);
+  // QA of GRW-741 — a failed load is said as one, not as "add items first" with Stock in still on offer; and Stock in waits for the switch.
+  const [itemsFailed, setItemsFailed] = useState(false);
+  const [on, setOn] = useState(true);
   const [sheet, setSheetNow] = useState<Sheet>(null);
   const [notice, setNotice] = useState<string | null>(null);
   // The list re-reads after a stock in: what was bought may have taken an item off it.
@@ -35,10 +38,14 @@ export function BuyClient({ branchId }: { branchId: string }) {
   // Stock in picks from the branch's items; only whoever may record one needs them.
   const loadItems = useCallback(async () => {
     if (!mayChange) return;
+    setItemsFailed(false);
     try {
-      setMaterials((await api.kitchenStock(branchId)).materials);
+      const list = await api.kitchenStock(branchId);
+      setMaterials(list.materials);
+      setOn(list.on);
     } catch {
-      setMaterials([]);
+      setMaterials(null);
+      setItemsFailed(true);
     }
   }, [branchId, mayChange]);
   useEffect(() => {
@@ -56,7 +63,7 @@ export function BuyClient({ branchId }: { branchId: string }) {
     <div className="ks-body">
       {mayChange ? (
         <div className="ks-actions ks-actions-2" role="group" aria-label={t('actions.label')}>
-          <button type="button" className="btn ks-action" disabled={materials === null} onClick={() => setSheet({ kind: 'stockIn', id: null })}>
+          <button type="button" className="btn ks-action" disabled={materials === null || materials.length === 0 || !on} onClick={() => setSheet({ kind: 'stockIn', id: null })}>
             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14" />
             </svg>
@@ -75,7 +82,16 @@ export function BuyClient({ branchId }: { branchId: string }) {
           {notice}
         </p>
       ) : null}
-      {mayChange && materials !== null && materials.length === 0 ? <p className="ks-hint">{t('buyTab.emptyItems')}</p> : null}
+      {mayChange && itemsFailed ? (
+        <div role="alert" className="ks-state ks-state-error">
+          <p>{t('buyTab.itemsFailed')}</p>
+          <button type="button" className="btn btn-ghost" onClick={() => void loadItems()}>
+            {t('retry')}
+          </button>
+        </div>
+      ) : null}
+      {mayChange && materials !== null && !on ? <p className="ks-hint">{t('buyTab.off')}</p> : null}
+      {mayChange && materials !== null && on && materials.length === 0 ? <p className="ks-hint">{t('buyTab.emptyItems')}</p> : null}
 
       <h2 className="inv-section-title">{t('buyTab.toBuyTitle')}</h2>
       <BuyList key={round} branchId={branchId} />

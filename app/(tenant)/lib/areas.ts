@@ -46,6 +46,11 @@ export interface Areas {
   /** Jira GRW-737 — `me.capabilities.recipes`: the business may keep kitchen stock (a restaurant). Only ever said when true. */
   recipes?: boolean;
   /**
+   * Jira GRW-741 QA — `me.capabilities.kitchenStock`: the owner has switched Inventory on (FR-01). Until then only the owner is offered it,
+   * because the switch is on its Stock tab. Only ever said when true.
+   */
+  kitchenStock?: boolean;
+  /**
    * Jira GRW-74 — the pages a member's ROLE grants, only for a member who holds one. Absent for the owner and for everyone with no role, who are
    * offered what they always were. It travels here because every nav surface and screen guard already carries this object to `canSee`.
    */
@@ -73,7 +78,7 @@ export const DIARY_AREAS: Areas = { bookings: true, services: true, shop: false,
 
 /** The slice of `/me` this reads — typed loosely, because an older API sends less. */
 export interface MeAreas {
-  capabilities?: { bookings?: boolean; services?: boolean; stockCounted?: boolean; marketplaces?: boolean; tables?: boolean; recipes?: boolean } | null;
+  capabilities?: { bookings?: boolean; services?: boolean; stockCounted?: boolean; marketplaces?: boolean; tables?: boolean; recipes?: boolean; kitchenStock?: boolean } | null;
   surface?: string | null;
   deliveryApps?: readonly string[] | null;
   member?: { role?: string; tenantRoleId?: string | null } | null;
@@ -94,6 +99,7 @@ export function areasOf(me: MeAreas | null | undefined): Areas {
     ...(me?.deliveryApps && me.deliveryApps.length > 0 ? { deliveryApps: me.deliveryApps } : {}),
     ...(me?.capabilities?.tables === true ? { tables: true } : {}),
     ...(me?.capabilities?.recipes === true ? { recipes: true } : {}),
+    ...(me?.capabilities?.recipes === true && me.capabilities.kitchenStock === true ? { kitchenStock: true } : {}),
     ...(pages ? { pages } : {}),
   };
 }
@@ -158,6 +164,9 @@ const TABLE_ROUTES = ['/settings/tables', '/settings/kitchen-stations', '/kitche
  * Jira GRW-741 — all of it is Inventory now, its own section; the two old addresses only send you there.
  */
 const RECIPE_ROUTES = ['/inventory', '/stock/kitchen', '/reports/food-cost'] as const;
+
+/** Jira GRW-741 FR-01 — is this an Inventory address (or one of the two that send you there)? */
+export const isInventoryRoute = (href: string): boolean => RECIPE_ROUTES.some((r) => under(href, r));
 
 /** Jira GRW-72 — Settings screens that exist only for a shop. (Not `SHOP_ROUTES`: the role rules read that list as "the shop's own work".) */
 // Jira GRW-735 — Coupons and offers: for bills of products and dishes, which a shop (and a kitchen) rings up.

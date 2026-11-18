@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { canSee } from '../lib/nav-policy';
-import { DIARY_AREAS, type Areas, type PageGrid } from '../lib/areas';
+import { areasOf, DIARY_AREAS, type Areas, type PageGrid } from '../lib/areas';
 import { INVENTORY_TABS } from './tabs';
 import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
@@ -12,7 +12,7 @@ import hi from '../../../messages/hi.json';
  * old address, and that every word is in English and Hindi. The API half (the Recipes list, the supplier's stock ins, what was used, stock
  * still moving on cooking) is test/integration/inventory-section.integration.test.ts in the API repo.
  */
-const KITCHEN: Areas = { bookings: false, services: false, shop: true, stock: false, tables: true, recipes: true };
+const KITCHEN: Areas = { bookings: false, services: false, shop: true, stock: false, tables: true, recipes: true, kitchenStock: true };
 const SHOP: Areas = { bookings: false, services: false, shop: true, stock: true };
 /** The restaurant vertical's role templates (docs/architecture/verticals/restaurant.v1.json). */
 const GRIDS: Record<string, PageGrid> = {
@@ -42,6 +42,24 @@ describe('FR-01 · AC-01 · AC-02 — who is offered Inventory, tab by tab', () 
     expect(offered('cook')).toEqual(['/inventory', '/inventory/buy']);
     // Their other place: the kitchen screen.
     expect(canSee('/kitchen', 'receptionist', undefined, true, { ...KITCHEN, pages: GRIDS.cook })).toBe(true);
+  });
+
+  it('QA — FR-01: switched off, only the owner is offered it (the switch is on its Stock tab); the staff are offered none of it', () => {
+    const off: Areas = { ...KITCHEN, kitchenStock: undefined };
+    expect(INVENTORY_TABS.map((t) => t.href).filter((h) => canSee(h, 'owner', undefined, true, off))).toEqual(INVENTORY_TABS.map((t) => t.href));
+    for (const who of ['manager', 'counter', 'cook'] as const) {
+      expect(INVENTORY_TABS.filter((t) => canSee(t.href, 'receptionist', undefined, true, { ...off, pages: GRIDS[who] })), who).toEqual([]);
+    }
+    expect(canSee('/inventory', 'manager', undefined, true, off)).toBe(false);
+    // The old addresses follow the same rule.
+    expect(canSee('/stock/kitchen', 'receptionist', undefined, true, { ...off, pages: GRIDS.cook })).toBe(false);
+  });
+
+  it('QA — /me says whether it is switched on; only a restaurant that says true has it', () => {
+    expect(areasOf({ capabilities: { recipes: true, kitchenStock: true } }).kitchenStock).toBe(true);
+    expect(areasOf({ capabilities: { recipes: true, kitchenStock: false } }).kitchenStock).toBeUndefined();
+    expect(areasOf({ capabilities: { recipes: true } }).kitchenStock).toBeUndefined();
+    expect(areasOf({ capabilities: { kitchenStock: true } }).kitchenStock).toBeUndefined();
   });
 
   it('AC-02 — a waiter and the Staff role: none of it', () => {
@@ -145,5 +163,57 @@ describe('AC-05 — 344px: the tab row scrolls inside itself, never the page', (
     const globals = read('globals.css');
     expect(globals.indexOf("99-inventory.css")).toBeGreaterThan(0);
     expect(globals.indexOf("99-inventory.css")).toBeLessThan(globals.indexOf('99-z-emerald-v2.css'));
+  });
+});
+
+/** QA of GRW-741 (2026-11-18) — each finding kept as the check that would have caught it. */
+describe('QA of GRW-741', () => {
+  const src = (p: string) => readFileSync(path.resolve(__dirname, p), 'utf8');
+
+  it('the phone’s Back closes the recipe sheet and stays on Recipes', () => {
+    expect(src('RecipeSheet.tsx')).toContain('useBackCloses(onClose);');
+  });
+
+  it('a tab replaces the address, so ← leaves Inventory in one tap', () => {
+    expect(src('InventoryTabs.tsx')).toMatch(/href=\{tab\.href\}\s*replace\b/);
+  });
+
+  it('Buy: a failed load says so with Try again; Stock in waits for items and for the switch', () => {
+    const buy = src('BuyClient.tsx');
+    expect(buy).toContain("t('buyTab.itemsFailed')");
+    expect(buy).toContain('disabled={materials === null || materials.length === 0 || !on}');
+    expect(buy).not.toContain('setMaterials([]);');
+    for (const m of [en, hi]) for (const k of ['itemsFailed', 'off'] as const) expect(m.kitchenStock.buyTab[k], k).toBeTruthy();
+  });
+
+  it('a dish costing more than its price says "check the price", in English and Hindi', async () => {
+    const { costsMoreThanPrice } = await import('../lib/food-cost');
+    expect(costsMoreThanPrice(200_000)).toBe(true);
+    expect(costsMoreThanPrice(100)).toBe(false);
+    expect(costsMoreThanPrice(null)).toBe(false);
+    expect(src('RecipesClient.tsx')).toContain("t('overPrice')");
+    expect(src('../products/RecipePanel.tsx')).toContain("t('overPrice')");
+    for (const m of [en, hi]) {
+      expect(m.recipe.overPrice).toBeTruthy();
+      expect(m.kitchenStock.recipes.overPrice).toBeTruthy();
+    }
+  });
+
+  it('a saved link’s days open those days (the old food-cost address passes from and to on)', () => {
+    const shell = src('../reports/money/MoneyShell.tsx');
+    expect(shell).toContain("params?.get('from')");
+    expect(shell).toContain("clampReportRange(from, to, todayISO, 'to', opts.maxDays)");
+  });
+
+  it('Kitchen stations and Inventory share no class name (one broke the other, and Offers’ heading)', () => {
+    const stations = src('../settings/kitchen-stations/KitchenStationsSetup.tsx');
+    const sheet = src('../styles/99-kitchen-stations.css').split('*/').slice(1).join('*/');
+    expect(stations).not.toMatch(/\bks-/);
+    expect(sheet).not.toMatch(/\.ks[-\s{]/);
+    expect(src('../settings/offers/BillOffersSetup.tsx')).toContain('className="kst-title"');
+  });
+
+  it('copy: "2 entries have no price yet and are not in the totals"', () => {
+    expect(en.moneyReports.foodCost.lossUnpriced).toContain('# entries have no price yet and are}');
   });
 });
