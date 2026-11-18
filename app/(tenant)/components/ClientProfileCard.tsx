@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 
 import { api, ApiError, formatMoney, type ClientProfile, type ClientProfileRow, type CustomerRewards } from '../lib/api';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useClientCardCopy } from '../lib/use-copy';
-import { formatPhone } from '../lib/format';
+import { formatPhone, intlLocale } from '../lib/format';
 import { IconClose, IconPhone, IconWhatsApp } from './icons';
 import { waDigits } from './BookingSheet';
 import { useDialog } from '../../shared/a11y/useDialog';
@@ -43,6 +44,8 @@ export function ClientProfileCard({
    */
   inline?: boolean;
 }) {
+  // Develop QA 2026-11-18 — dates were always 'en-IN', so a Hindi reader saw "Nov 2026" on the card (salon spec 15).
+  const dateLocale = intlLocale(useLocale());
   const [profile, setProfile] = useState<ClientProfile | null>(null);
   const [failed, setFailed] = useState(false);
   /*
@@ -156,7 +159,7 @@ export function ClientProfileCard({
       const d = new Date(String(row.value));
       return Number.isNaN(d.getTime())
         ? String(row.value)
-        : d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+        : d.toLocaleDateString(dateLocale, { month: 'short', year: 'numeric' });
     }
     return String(row.value);
   }
@@ -390,7 +393,7 @@ export function ClientProfileCard({
                         : c.pointsNeedMore(rewards.minRedeemPoints - spendable)}
                       {rewards.heldPoints > 0 && <em>{c.pointsHeld(rewards.heldPoints)}</em>}
                       {rewards.expiring && (
-                        <em>{c.pointsExpire(rewards.expiring.points, new Date(rewards.expiring.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }))}</em>
+                        <em>{c.pointsExpire(rewards.expiring.points, new Date(rewards.expiring.at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', year: 'numeric' }))}</em>
                       )}
                     </span>
                     <strong>{c.pointsCount(rewards.balance)}</strong>
@@ -422,7 +425,7 @@ export function ClientProfileCard({
                     <div className="cpc-row" key={`${visit.whenISO}-${i}`}>
                       <span>
                         {visit.service}
-                        <em>{new Date(visit.whenISO).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</em>
+                        <em>{new Date(visit.whenISO).toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', year: 'numeric' })}</em>
                       </span>
                       <strong>{formatMoney(String(visit.amountMinor))}</strong>
                     </div>

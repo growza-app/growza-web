@@ -58,7 +58,12 @@ export function FoodCostReport() {
                   <p className="srp-worth">
                     <Pct pct={r.totals.foodCostPct} big />
                   </p>
-                  <p className="srp-hint">{t('pctLine', { food: f.money(r.totals.foodMinor), sales: f.money(r.totals.costedSalesMinor) })}</p>
+                  {/* Develop QA 2026-11-18, bug 4 — the % counts only dishes with a recipe; "₹0 of food for ₹0 of sales" beside "Sales ₹1,080" read as a contradiction. */}
+                  <p className="srp-hint">
+                    {r.totals.costedSalesMinor === 0
+                      ? t('pctNone')
+                      : t('pctLine', { food: f.money(r.totals.foodMinor), sales: f.money(r.totals.costedSalesMinor) })}
+                  </p>
                 </div>
                 <div className="srp-kpi-card">
                   <p className="srp-worth-label">{t('salesLabel')}</p>

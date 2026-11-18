@@ -140,8 +140,10 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
     viewCalendar: S('View calendar', 'कैलेंडर देखें'),
     viewAllAppointments: S('View all appointments', 'सभी बुकिंग देखें'),
     colTime: S('Time', 'समय'),
-    colClient: S('Client', 'ग्राहक'),
-    colService: S('Service', 'सर्विस'),
+    // Develop QA 2026-11-18 — the vertical's own nouns, as `colStaff` already was: a clinic's Bookings table said "Client" and
+    // "Service" over a list of patients and consultations (verticals suite, spa · clinic · dental · garage).
+    colClient: hi ? H(labels.customer, 'ग्राहक') : (labels.customer ?? 'Client'),
+    colService: hi ? H(labels.service, 'सर्विस') : (labels.service ?? 'Service'),
     colStaff: staffWord,
     colStatus: S('Status', 'स्थिति'),
     colActions: S('Actions', 'एक्शन'),

@@ -90,11 +90,12 @@ export function BuyClient({ branchId }: { branchId: string }) {
           </button>
         </div>
       ) : null}
-      {mayChange && materials !== null && !on ? <p className="ks-hint">{t('buyTab.off')}</p> : null}
+      {/* Develop QA 2026-11-18, bug 5 — the owner IS the one who switches it on: told where, not to ask the owner. */}
+      {mayChange && materials !== null && !on ? <p className="ks-hint">{session?.role === 'owner' ? t('buyTab.offOwner') : t('buyTab.off')}</p> : null}
       {mayChange && materials !== null && on && materials.length === 0 ? <p className="ks-hint">{t('buyTab.emptyItems')}</p> : null}
 
       <h2 className="inv-section-title">{t('buyTab.toBuyTitle')}</h2>
-      <BuyList key={round} branchId={branchId} />
+      <BuyList key={round} branchId={branchId} noItems={materials !== null && materials.length === 0} />
 
       {sheet?.kind === 'stockIn' && materials ? (
         <StockInSheet branchId={branchId} materials={materials} purchaseId={sheet.id} onClose={() => setSheet(null)} onDone={done} />
