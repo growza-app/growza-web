@@ -206,9 +206,12 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   // Jira GRW-721 — taking a dish off a table's bill, from the till's table sheet: drawn only for the owner and a manager
   // (the sheet's `canManage`), and the API's handler says the same.
   // Jira GRW-722 — Move table, on the same table's sheet.
-  '/pos': ['POST /api/v1/counter-sales/:id/cancel-items', 'POST /api/v1/tables/:id/move', 'POST /api/v1/tables/:id/join', 'POST /api/v1/counter-sales/:id/service-charge',
+  // Jira GRW-735 — the payment screens ask what the coupon and the buy-get offers take off (writes nothing).
+  '/pos': ['POST /api/v1/bill-offers/quote', 'POST /api/v1/counter-sales/:id/cancel-items', 'POST /api/v1/tables/:id/move', 'POST /api/v1/tables/:id/join', 'POST /api/v1/counter-sales/:id/service-charge',
     // Jira GRW-716 — the till asks for its letter so it can keep billing offline.
-    'POST /api/v1/till-devices'],
+    'POST /api/v1/till-devices',
+    // Jira GRW-732 — Seat guests on the till's table strip, and Free again on a Seated table's sheet.
+    'POST /api/v1/tables/:id/seat', 'DELETE /api/v1/tables/:id/seat'],
   /*
    * Jira GRW-647 — a switch and a device registration, both the signed-in person's own.
    *
@@ -233,11 +236,17 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   '/products/[id]/choices': ['POST /api/v1/addon-groups', 'PATCH /api/v1/addon-groups/:id', 'DELETE /api/v1/addon-groups/:id', 'PUT /api/v1/products/:id/addon-groups'],
   // Jira GRW-724 — and the service charge it offers, on the same owner-only screen.
   '/settings/tables': ['PUT /api/v1/settings/table-orders/:id', 'PUT /api/v1/settings/service-charge/:id', 'PUT /api/v1/settings/kitchen/:id'],
+  // Jira GRW-735 — Settings › Coupons and offers: the owner's and a manager's (the page redirects anyone else; the API says the same).
+  '/settings/offers': ['POST /api/v1/bill-offers', 'DELETE /api/v1/bill-offers/:id'],
+  // Jira GRW-733 — Settings › Kitchen stations: the owner's and a manager's (the page redirects anyone else; the API says the same).
+  '/settings/kitchen-stations': ['POST /api/v1/kitchen/stations', 'PATCH /api/v1/kitchen/stations/:id', 'DELETE /api/v1/kitchen/stations/:id', 'PUT /api/v1/kitchen/stations/categories'],
   // Jira GRW-719 — setting out a branch's room. Gated by the screen: the page sends anyone but the owner and a manager back
   // to Settings, and the API's handler says owner or manager besides.
   '/settings/tables/[branchId]': [
     'POST /api/v1/tables/areas', 'PATCH /api/v1/tables/areas/:id', 'DELETE /api/v1/tables/areas/:id', 'POST /api/v1/tables/areas/:id/tables',
     'PATCH /api/v1/tables/:id', 'DELETE /api/v1/tables/:id', 'PUT /api/v1/tables/order',
+    // Jira GRW-734 — an area's prices, from the same room screen.
+    'PUT /api/v1/tables/areas/:id/prices',
   ],
   // Jira GRW-615 — an order's own screen moves it along: the one next move, and the rarer ones behind More. Same screen,
   // same gate: a role the nav does not offer /orders is bounced Home by the page, so it never reaches the button.
@@ -315,6 +324,17 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/stock/materials/opening',
     'POST /api/v1/stock/materials/import/parse',
     'POST /api/v1/stock/materials/import',
+    // Jira GRW-738 — suppliers, stock in (and its bill's photo), wastage and counts.
+    'POST /api/v1/stock/suppliers',
+    'PATCH /api/v1/stock/suppliers/:id',
+    'POST /api/v1/stock/purchases',
+    'PATCH /api/v1/stock/purchases/:id',
+    'DELETE /api/v1/stock/purchases/:id',
+    'POST /api/v1/stock/purchases/:id/photo',
+    'POST /api/v1/stock/wastage',
+    'POST /api/v1/stock/counts',
+    'PATCH /api/v1/stock/counts/:id',
+    'POST /api/v1/stock/counts/:id/finish',
     'PUT /api/v1/settings/kitchen-stock',
   ],
   '/providers': [
@@ -353,6 +373,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/settings/branches/:id/make-main',
     'PATCH /api/v1/settings/branches/:id',
     'POST /api/v1/settings/logo',
+    // Jira GRW-728 — the owner takes the logo off again (the screen draws the button for the owner alone, BR-01).
+    'DELETE /api/v1/settings/logo',
     /*
      * Settings › Payments — the QR the till shows. Owner-only like the rest of
      * this screen: `canSee('/settings', role)` is false for both limited roles,
@@ -360,6 +382,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
      */
     'POST /api/v1/settings/payment-qr',
     'DELETE /api/v1/settings/payment-qr',
+    // Jira GRW-729 — the UPI ID a printed bill's QR pays (drawn for the owner alone).
+    'PUT /api/v1/settings/payment-qr/upi',
     'POST /api/v1/settings/branches/:id/payment-qr',
     'DELETE /api/v1/settings/branches/:id/payment-qr',
     'PATCH /api/v1/settings/booking',
@@ -474,6 +498,8 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     '/reports/profit': /await guardScreen\('\/reports\/profit'\);/,
     '/reports/payments': /await guardScreen\('\/reports\/payments'\);/,
     '/reports/discounts': /await guardScreen\('\/reports\/discounts'\);/,
+    // Jira GRW-739 — and Food cost, a restaurant's.
+    '/reports/food-cost': /await guardScreen\('\/reports\/food-cost'\);/,
     // The centre button and this page ask the same action.
     '/appointments/new': /if \(!mayUse\(me\.member\?\.role, 'visit\.new', isWritable\(me\.tenant\?\.status\)\)\)/,
     // Jira GRW-556 — where a closed screen's address lands until the business is live: open to every role, and it

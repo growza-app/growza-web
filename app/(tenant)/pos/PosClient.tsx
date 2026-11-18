@@ -10,7 +10,8 @@ import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
 import { useBranch } from '../components/BranchProvider';
 import { useLabel } from '../components/LabelsProvider';
 import { PrinterButton, TillPrintActions, useTicketPrinter, type OrderRef } from '../components/TicketPrinter';
-import type { KitchenTicketDto } from '../lib/api-types';
+import type { KitchenSlips } from '../lib/api-types';
+import { slipsOf } from '../lib/print/from-api';
 import { PaymentDone } from '../components/PaymentDone';
 import { DiscountSheet } from '../appointments/new/DiscountSheet';
 import { FreeBillReason } from '../appointments/new/FreeBillReason';
@@ -28,6 +29,8 @@ import { nounInSentence, pickNoun } from '../lib/nouns';
 import { receiptRows, type ReceiptRow } from '../lib/receipt-text';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useRewardQuote } from '../lib/use-reward-quote';
+import { useBillOffers } from '../lib/use-bill-offers';
+import { CouponRow, OfferLines } from '../appointments/new/CouponRow';
 import { SellProductClient } from '../products/sell/SellProductClient';
 import { buildSaleRows, type SaleRow } from '../sales/SalesClient';
 import { ReturnProductSheet } from '../sales/ReturnProductSheet';
@@ -91,6 +94,7 @@ function QueueTokenPayScreen({
   onOpenClientSheet,
   onBack,
   onSettle,
+  onPrintAgain,
   byNameOnly = false,
 }: {
   token: PosDailyToken;
@@ -105,8 +109,11 @@ function QueueTokenPayScreen({
   onSettle: (
     ways: Array<{ mode: PaymentMode; amountMinor: number }>,
     redeemPoints: number,
-    /** Jira GRW-725 — `reason`, the owner's, when the discount takes the whole order off. */
-    bill: { offMinor: number; pct: number | null; reason?: string },
+    /**
+     * Jira GRW-725 — `reason`, the owner's, when the discount takes the whole order off. Jira GRW-735 — `couponCode` when a
+     * coupon is kept (then `offMinor` is the coupon's amount, and no discount is sent: the two never stack).
+     */
+    bill: { offMinor: number; pct: number | null; reason?: string; couponCode?: string },
     /** A waiter's walk-in: the name typed here, put on the bill before it is paid. */
     guestName?: string,
   ) => void;
@@ -115,6 +122,11 @@ function QueueTokenPayScreen({
    * (their role cannot open the guest list) and there is no discount or points (owner decisions 2026-11-15/16).
    */
   byNameOnly?: boolean;
+  /**
+   * QA of the overnight stack (item 7) — the bill was printed and the amount has changed since (a coupon or the discount
+   * typed here): print it again, with what is being given. Resolves once the print has been asked for.
+   */
+  onPrintAgain?: (held: { couponCode?: string; discountMinor?: number }) => Promise<void>;
 }) {
   const tPay = useTranslations('payFlow');
   const tc = useTranslations('chrome');
@@ -127,28 +139,52 @@ function QueueTokenPayScreen({
    */
   const [billOff, setBillOff] = useState<{ offMinor: number; pct: number | null }>({ offMinor: 0, pct: null });
   const [discountOpen, setDiscountOpen] = useState(false);
-  const billMinor = Math.max(0, token.totalMinor - billOff.offMinor);
-  const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor: discountMinor, checking } = useRewardQuote(token.customerId, billMinor);
+  /*
+   * Jira GRW-735 — the owner's offers: the buy-get offers are already on the order's lines (shown by name), and a coupon
+   * typed here. It and the discount above do not stack: the larger is kept, and the row says which (BR-01).
+   */
+  const [couponCode, setCouponCode] = useState<string | null>(null);
+  // Jira GRW-736 — the points the bill is spending, as last quoted (the GST on top comes after them).
+  const [redeemMinorAsked, setRedeemMinorAsked] = useState(0);
+  // QA of the overnight stack (item 7) — bumped after the bill is printed again, so the quote says whether the paper is current.
+  const [printedAgain, setPrintedAgain] = useState(0);
+  const [printingAgain, setPrintingAgain] = useState(false);
+  const offers = useBillOffers({ saleId: token.id, couponCode: byNameOnly ? null : couponCode, discountMinor: byNameOnly ? 0 : billOff.offMinor, redeemMinor: redeemMinorAsked }, printedAgain);
+  const offMinor = offers.couponKept ? (offers.coupon?.offMinor ?? 0) : billOff.offMinor;
+  /*
+   * Review of the overnight stack (item 1) — the bill before the GST added on top, as the server quotes it: the order's
+   * total carries the GST line, so a 100% coupon on the food read as "not the whole bill" and the free-bill rule was
+   * asked of the wrong figure. Until the first quote is in, the order's total (the payment is held while it is asked).
+   */
+  const foodMinor = offers.billMinor ?? token.totalMinor;
+  // Jira GRW-736 — GST added on top: the server works it out after the discount and the points, and says what is due.
+  const billMinor = Math.max(0, foodMinor - offMinor);
+  const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor: discountMinor, checking: pointsChecking } = useRewardQuote(token.customerId, billMinor);
+  // Jira GRW-735 — and while a typed coupon is being asked about: its amount is not known yet.
+  const checking = pointsChecking || (couponCode !== null && offers.checking) || (offers.taxOnTop && (offers.checking || redeemMinorAsked !== discountMinor));
+  useEffect(() => setRedeemMinorAsked(discountMinor), [discountMinor]);
   /** Money is not taken while the points for this bill are still being asked (QA 2026-11-17, finding 1). */
   const busy = saving !== null || checking;
-  const dueMinor = Math.max(0, billMinor - discountMinor);
+  const dueMinor = offers.taxOnTop && offers.dueMinor !== null ? offers.dueMinor : Math.max(0, billMinor - discountMinor);
   /*
    * Jira GRW-725 — the whole order off is the owner's, with a reason: anyone else is told so and the ways of paying
    * stay shut; the owner is asked why. The server refuses the same.
    */
   const isOwner = useSession()?.role === 'owner';
   const [freeReason, setFreeReason] = useState('');
-  const freeBlock = billOff.offMinor > 0 ? freeBillBlock(token.totalMinor, token.totalMinor - billOff.offMinor, isOwner, freeReason) : null;
-  const wholeOrderOff = token.totalMinor > 0 && billOff.offMinor >= token.totalMinor;
+  const freeBlock = offMinor > 0 ? freeBillBlock(foodMinor, foodMinor - offMinor, isOwner, freeReason) : null;
+  const wholeOrderOff = foodMinor > 0 && offMinor >= foodMinor;
+  // A code that is not good takes nothing off (AC-02): the reason is shown by it, and the bill is paid as it is.
   const [nameDraft, setNameDraft] = useState('');
   /** Money can be taken once someone is named on the bill — picked from the list, or (a waiter) typed. */
   const named = !anonymous || (byNameOnly && nameDraft.trim() !== '');
   const settleWith = (ways: Array<{ mode: PaymentMode; amountMinor: number }>) => {
     if (freeBlock || checking || splitTooBig) return;
+    const given = offers.couponKept && couponCode ? { offMinor, pct: null, couponCode } : billOff;
     onSettle(
       ways,
       byNameOnly ? 0 : redeemPoints,
-      wholeOrderOff ? { ...billOff, reason: freeReason.trim() } : billOff,
+      wholeOrderOff ? { ...given, reason: freeReason.trim() } : given,
       byNameOnly && anonymous ? nameDraft.trim() : undefined,
     );
   };
@@ -355,11 +391,56 @@ function QueueTokenPayScreen({
         ) : null}
       </button>
       )}
+      {/* Jira GRW-735 — the buy-get offers this order took, and the Coupon code (not for a waiter: like the discount). */}
+      <OfferLines bogo={offers.bogo} />
+      {offers.taxOnTop && offers.taxMinor > 0 ? (
+        <p className="pf-tax-line">
+          <span>{tPay('offers.gst')}</span>
+          <strong>{money(offers.taxMinor)}</strong>
+        </p>
+      ) : null}
+      {anonymous || byNameOnly ? null : (
+        <CouponRow
+          code={couponCode}
+          coupon={offers.coupon}
+          refusal={offers.couponRefusal}
+          kept={offers.kept}
+          checking={offers.checking}
+          disabled={saving !== null}
+          onApply={setCouponCode}
+          onRemove={() => setCouponCode(null)}
+        />
+      )}
       {wholeOrderOff ? <FreeBillReason block={freeBlock} reason={freeReason} onReason={setFreeReason} disabled={saving !== null} /> : null}
+      {/* QA of the overnight stack (item 7) — the printed bill's QR would ask for the old amount: the guest would pay more. */}
+      {offers.printedOutOfDate && !offers.checking && onPrintAgain ? (
+        <div className="pf-reprint" role="status">
+          <p className="pf-reprint-words">{tPay('amountChanged')}</p>
+          <button
+            type="button"
+            className="btn btn-ghost pf-reprint-btn"
+            disabled={saving !== null || printingAgain}
+            aria-busy={printingAgain}
+            onClick={() =>
+              void (async () => {
+                setPrintingAgain(true);
+                try {
+                  await onPrintAgain(offers.couponKept && couponCode ? { couponCode } : billOff.offMinor > 0 ? { discountMinor: billOff.offMinor } : {});
+                } finally {
+                  setPrintingAgain(false);
+                  setPrintedAgain((n) => n + 1);
+                }
+              })()
+            }
+          >
+            {tPay('amountChangedPrint')}
+          </button>
+        </div>
+      ) : null}
       {discountOpen ? (
         <DiscountSheet
           ownerOnlyFree={!isOwner}
-          listMinor={token.totalMinor}
+          listMinor={foodMinor}
           current={billOff.offMinor > 0 ? billOff : null}
           onApply={(offMinor, pct) => {
             setBillOff({ offMinor, pct });
@@ -536,6 +617,7 @@ export function PosClient({
   const tPay = useTranslations('payFlow');
   const tNouns = useTranslations('nouns');
   const tc = useTranslations('chrome');
+  const tTables = useTranslations('posTables');
   const nv = useNewVisitCopy();
   const locale = useLocale();
   const { Customer } = useNouns();
@@ -577,10 +659,13 @@ export function PosClient({
   const [cancelTarget, setCancelTarget] = useState<PosDailyToken | null>(null);
   const [cancelBusy, setCancelBusy] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  // Jira GRW-737 — the server asked whether the kitchen had already cooked it (`cooked_unknown`): asked in the cancel dialog, required.
+  const [cancelAskCooked, setCancelAskCooked] = useState(false);
+  const [cancelCooked, setCancelCooked] = useState<boolean | undefined>(undefined);
   const [queueNote, setQueueNote] = useState<string | null>(null);
   /** Jira GRW-713 — this till's printer, and the last KOT the queue made (an addition, a cancellation) to print. */
   const printer = useTicketPrinter();
-  const [lastKot, setLastKot] = useState<{ saleId: string; kot: KitchenTicketDto; order: OrderRef } | null>(null);
+  const [lastKot, setLastKot] = useState<{ saleId: string; kot: KitchenSlips; order: OrderRef } | null>(null);
   const [settledReceipt, setSettledReceipt] = useState<{
     appointmentId: string;
     totalMinor: number;
@@ -824,12 +909,18 @@ export function PosClient({
     setCancelBusy(true);
     setCancelError(null);
     try {
-      const res = await api.cancelPendingCounterSale(tk.id);
+      if (cancelAskCooked && cancelCooked === undefined) {
+        setCancelError(tTables('cookedNeeded'));
+        return;
+      }
+      const res = await api.cancelPendingCounterSale(tk.id, cancelAskCooked ? cancelCooked : undefined);
       // Jira GRW-713 — the kitchen is told to stop: printed now where this till prints by itself, a tap away otherwise.
-      if (res.kot) {
+      // Jira GRW-733 — one cancel slip per station that had the order.
+      const cancelled = slipsOf(res);
+      if (cancelled) {
         const order = { tokenNo: tk.tokenNo, offlineToken: tk.offlineToken, channel: tk.channel };
-        setLastKot({ saleId: tk.id, kot: res.kot, order });
-        printer.autoKot(res.kot, order);
+        setLastKot({ saleId: tk.id, kot: cancelled, order });
+        printer.autoKot(cancelled, order);
       }
       // Gone from the board at once; the read after it is the shop's answer for every other device.
       setTodayRows((prev) => prev.filter((r) => (r.bookingGroupId ?? r.id) !== tk.id));
@@ -837,13 +928,17 @@ export function PosClient({
       setReloadKey((k) => k + 1);
       void loadTodayTokens();
     } catch (e) {
+      if (e instanceof ApiError && e.code === 'cooked_unknown') {
+        setCancelAskCooked(true);
+        return;
+      }
       setCancelError(e instanceof Error && e.message ? e.message : t('cancelFailed'));
       // Paid or cancelled on another device meanwhile: the board should show it as it is now.
       void loadTodayTokens();
     } finally {
       setCancelBusy(false);
     }
-  }, [cancelTarget, cancelBusy, loadTodayTokens, t, printer]);
+  }, [cancelTarget, cancelBusy, loadTodayTokens, t, tTables, printer, cancelAskCooked, cancelCooked]);
 
   const startAddingTo = useCallback((tk: PosDailyToken) => {
     setQueueNote(null);
@@ -858,7 +953,7 @@ export function PosClient({
       tk: PosDailyToken,
       ways?: Array<{ mode: PaymentMode; amountMinor: number }>,
       redeemPoints = 0,
-      billOff: { offMinor: number; pct: number | null; reason?: string } = { offMinor: 0, pct: null },
+      billOff: { offMinor: number; pct: number | null; reason?: string; couponCode?: string } = { offMinor: 0, pct: null },
     ) => {
       if (!tk.paymentPending) {
         setTokenState(tk.id, 'completed');
@@ -880,7 +975,8 @@ export function PosClient({
         const settled = await api.settleCounterSale(tk.id, {
           paymentMode: chosen,
           ...(ways.length > 1 ? { payments: ways } : {}),
-          ...(billOff.offMinor > 0 ? { discountMinor: billOff.offMinor } : {}),
+          // Jira GRW-735 — a kept coupon goes by its code, never with the discount beside it (they do not stack).
+          ...(billOff.couponCode ? { couponCode: billOff.couponCode } : billOff.offMinor > 0 ? { discountMinor: billOff.offMinor } : {}),
           ...(billOff.reason ? { discountReason: billOff.reason } : {}),
           ...(redeemPoints > 0 ? { redeemPoints } : {}),
         });
@@ -1585,10 +1681,12 @@ export function PosClient({
                 const res = await api.addToPendingCounterSale(addingToToken.id, products);
                 const tk = addingToToken;
                 // Jira GRW-713 — a KOT for what was just added, and nothing the kitchen already has.
-                if (res.kot) {
+                // Jira GRW-733 — one slip per station the new dishes go to.
+                const added = slipsOf(res);
+                if (added) {
                   const order = { tokenNo: tk.tokenNo, offlineToken: tk.offlineToken, channel: tk.channel };
-                  setLastKot({ saleId: tk.id, kot: res.kot, order });
-                  printer.autoKot(res.kot, order);
+                  setLastKot({ saleId: tk.id, kot: added, order });
+                  printer.autoKot(added, order);
                 }
                 setQueueNote(t('addedToOrder', { token: tk.tokenLabel, amount: formatMoney(String(res.totalMinor)) }));
                 setReloadKey((k) => k + 1);
@@ -1650,6 +1748,8 @@ export function PosClient({
               setPayingTable(null);
             }}
             byNameOnly={waiter}
+            // A waiter prints no bill (owner decision 2026-11-16), so it is never told to print one again.
+            {...(waiter ? {} : { onPrintAgain: (held: { couponCode?: string; discountMinor?: number }) => printer.printBill(payingToken.id, true, held) })}
             onSettle={(ways, redeemPoints, billOff, guestName) =>
               void (async () => {
                 // A waiter's walk-in: the typed name goes on the bill first, as the table's sheet did (owner, 4 Nov 2026).
@@ -1735,9 +1835,28 @@ export function PosClient({
           error={cancelError}
           onConfirm={() => void cancelUnpaidOrder()}
           onCancel={() => {
-            if (!cancelBusy) setCancelTarget(null);
+            if (cancelBusy) return;
+            setCancelTarget(null);
+            setCancelAskCooked(false);
+            setCancelCooked(undefined);
+            setCancelError(null);
           }}
-        />
+        >
+          {cancelAskCooked ? (
+            <fieldset className="tb-cooked">
+              <legend className="field-hint">{tTables('cookedQuestion')}</legend>
+              <div className="tb-cooked-pair">
+                <button type="button" className={`btn btn-ghost ${cancelCooked === false ? 'is-on' : ''}`} aria-pressed={cancelCooked === false} onClick={() => setCancelCooked(false)}>
+                  {tTables('cookedNo')}
+                </button>
+                <button type="button" className={`btn btn-ghost ${cancelCooked === true ? 'is-on' : ''}`} aria-pressed={cancelCooked === true} onClick={() => setCancelCooked(true)}>
+                  {tTables('cookedYes')}
+                </button>
+              </div>
+              <span className="field-hint">{tTables('cookedHint')}</span>
+            </fieldset>
+          ) : null}
+        </ConfirmDialog>
       ) : null}
 
       {clientSheetTarget ? (

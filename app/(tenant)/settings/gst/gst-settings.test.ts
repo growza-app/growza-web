@@ -18,14 +18,29 @@ const page = readFileSync(resolve(__dirname, 'page.tsx'), 'utf8');
 
 describe('where it lives', () => {
   it('is a branch tab, because the state this branch supplies from is on it', () => {
-    const row = SETTINGS_GROUPS.find((g) => g.key === 'branch')!.rows.find((r) => r.href === '/settings/gst');
-    expect(row, 'the GST row belongs to the branch group').toBeTruthy();
+    // Owner, 2026-11-18 — grouped by task: GST sits with the money. The header still offers its branch here.
+    const row = SETTINGS_GROUPS.find((g) => g.key === 'money')!.rows.find((r) => r.href === '/settings/gst');
+    expect(row, 'the GST row belongs to the Money group').toBeTruthy();
     expect(wholeBusiness('/settings/gst')).toBe(false);
+    // Review of the overnight stack (item 15) — tagged "This branch": its branch card is the header's branch now.
+    expect(row?.perBranch).toBe(true);
   });
 
-  it('reads the settings the header is already scoped to, with no picker of its own', () => {
-    expect(page).toMatch(/await api\.settings\(\)/);
+  it('loads and saves the header’s branch, with no picker of its own (item 15: it used to edit the main branch always)', () => {
+    expect(page).toMatch(/await loadScopedSettings\(searchParams\)/);
+    expect(page).not.toMatch(/api\.settings\(\)/);
+    expect(page).toMatch(/key=\{scopeKey\(settings\)\}/);
     expect(page).not.toMatch(/BranchPicker|location=/);
+    // The save names the branch the form was loaded for, so MG Road's state is never written to the main branch.
+    expect(form).toMatch(/api\.updateGstSettings\([\s\S]*?\}, initial\.scope\.locationId\)/);
+  });
+
+  it('item 14 — no inline px font size: the fixed "prices include GST" line takes a token class', () => {
+    expect(form).not.toMatch(/fontSize:\s*\d/);
+    expect(form).toMatch(/className="gst-fixed-label"/);
+    const css = readFileSync(resolve(__dirname, '../../styles/99-gst-by-order-type.css'), 'utf8');
+    expect(css).toMatch(/\.gst-fixed-label \{[^}]*font-size: var\(--fs-3\)/);
+    expect(css).not.toMatch(/font-size: \d+(\.\d+)?rem/);
   });
 });
 

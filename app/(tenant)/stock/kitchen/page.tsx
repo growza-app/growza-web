@@ -18,7 +18,7 @@ export const metadata = screenTitle('Kitchen stock');
  * own). Reached from the Menu's second tab. The owner, a manager, the counter and the cook open it; only the owner and a manager change it,
  * and the API leaves every price out for whoever cannot see the money.
  */
-export default async function KitchenStockPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
+export default async function KitchenStockPage({ searchParams }: { searchParams: Promise<{ branch?: string; show?: string }> }) {
   await guardScreen('/stock/kitchen');
   const t = await getTranslations('kitchenStock');
   const params = await searchParams;
@@ -47,7 +47,7 @@ export default async function KitchenStockPage({ searchParams }: { searchParams:
       <PageHeader title={t('title')} />
       <div className="page-body ks-page">
         <MenuTabs active="stock" />
-        {branch.one ? <KitchenStockClient key={branch.one} branchId={branch.one} /> : <div className="empty">{t('chooseBranch')}</div>}
+        {branch.one ? <KitchenStockClient key={branch.one} branchId={branch.one} show={params.show} /> : <div className="empty">{t('chooseBranch')}</div>}
       </div>
     </>
   );

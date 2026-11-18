@@ -67,7 +67,7 @@
 
 /*
  * Jira GRW-721 — the room on the till. Tiles like seats in a cinema: three across at 344px, more as the screen widens.
- * Each tile says its state in WORDS (Free · Ordering · Bill printed) as well as its colour; every tile is 44px+ tall.
+ * Each tile says its state in WORDS (Free · Food cooking · Eating · Bill printed) as well as its colour; every tile is 44px+ tall.
  */
 .pf-tables { display: flex; flex-direction: column; gap: var(--sp-3); padding: var(--sp-3); }
 .pf-table-sent { margin: 0; padding: var(--sp-2) var(--sp-3); border-radius: 10px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
@@ -85,12 +85,31 @@
 .tm-name { font-weight: 700; font-size: 1rem; overflow-wrap: anywhere; }
 .tm-state { font-size: 0.75rem; font-weight: 600; }
 .tm-detail { font-size: 0.75rem; color: var(--muted); overflow-wrap: anywhere; }
-.tm-tile.is-free { background: var(--surface); }
+/*
+ * Jira GRW-731 — four states, one colour each, by the accent discipline in 00-base: amber is waiting (on the kitchen), green is done
+ * (the food is on the table), blue is what happens next (the bill is out, the money is coming). Every border is 3:1 or more against
+ * white and the page: --muted 5.6:1, --amber 4.99:1, --accent-deep 7.1:1, --blue 6.7:1. The word on the tile says it either way.
+ */
+.tm-tile.is-free, .tm-key.is-free .tm-swatch { background: var(--surface); border-color: var(--muted); }
 .tm-tile.is-free .tm-state { color: var(--muted); }
-.tm-tile.is-ordering { background: var(--accent-soft); border-color: var(--accent); }
-.tm-tile.is-ordering .tm-state { color: var(--accent-ink); }
-.tm-tile.is-bill { background: var(--amber-soft); border-color: var(--amber); }
-.tm-tile.is-bill .tm-state { color: var(--amber); }
+/*
+ * Jira GRW-732 — Seated: guests at the table, nothing ordered yet. Purple, the one accent no other table state uses; --purple-deep is
+ * 7.1:1 on white. After an hour with no order the tile steps back (BR-02, "Still seated?"), its word and colour still there.
+ */
+.tm-tile.is-seated, .tm-key.is-seated .tm-swatch { background: var(--purple-soft); border-color: var(--purple-deep); }
+.tm-tile.is-seated .tm-state { color: var(--purple-deep); }
+.tm-tile.is-seated.is-stale { background: var(--surface); border-style: dashed; }
+.tm-tile.is-stale .tm-detail { font-style: italic; }
+.tm-tile.is-cooking, .tm-key.is-cooking .tm-swatch { background: var(--amber-soft); border-color: var(--amber); }
+.tm-tile.is-cooking .tm-state { color: var(--amber-ink); }
+.tm-tile.is-eating, .tm-key.is-eating .tm-swatch { background: var(--accent-soft); border-color: var(--accent-deep); }
+.tm-tile.is-eating .tm-state { color: var(--accent-ink); }
+.tm-tile.is-bill, .tm-key.is-bill .tm-swatch { background: var(--blue-soft); border-color: var(--blue); }
+.tm-tile.is-bill .tm-state { color: var(--blue); }
+/* The legend: one line on a laptop, two at most on a 344px phone (AC-03). */
+.tm-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-3); font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+.tm-key { display: inline-flex; align-items: center; gap: var(--sp-1); white-space: nowrap; }
+.tm-swatch { flex: none; width: 0.75rem; height: 0.75rem; border: 1px solid var(--border); border-radius: 3px; }
 .tm-skeleton { background: var(--slate-soft); border-color: transparent; cursor: default; }
 .tm-failed { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); border-radius: 10px; background: var(--amber-soft); color: var(--amber); }
 .tm-failed .btn { min-height: 44px; }
@@ -119,6 +138,12 @@
 .tb-pay, .tb-reason { display: flex; flex-direction: column; gap: var(--sp-2); }
 .pf-guests-btn { min-width: 44px; min-height: 44px; padding: 0; justify-content: center; }
 .pf-guests-n { min-width: 1.5rem; text-align: center; font-weight: 600; }
+/* Jira GRW-732 — Seat guests: a whole row under the strip on a phone, beside the count on a wide till. */
+.pf-seat-btn { flex: 1 1 100%; }
+@media (min-width: 861px) { .pf-seat-btn { flex: 0 0 auto; } }
+.tb-seated { display: flex; flex-direction: column; gap: var(--sp-2); }
+.tb-seated .tb-take-order { flex-basis: 100%; }
+.tb-still { margin: 0; font-style: italic; }
 
 /* Jira GRW-722 — Move table: the branch's other tables as the map's own tiles, smaller. */
 .tb-move { display: flex; flex-direction: column; gap: var(--sp-2); }
@@ -201,6 +226,11 @@
 .kd-card-type.is-delivery { background: var(--border); color: var(--text); }
 .kd-card-age { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 0.875rem; font-variant-numeric: tabular-nums; font-weight: 600; }
 .kd-card.is-late .kd-card-age { font-weight: 800; }
+/* Jira GRW-730 — who sent it, beside the minutes: "Ravi · 5 min". Muted, one line; a long name is cut (…) and the minutes never are. */
+.kd-card-by { margin-left: auto; flex: 0 1 auto; min-width: 2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 0.875rem; font-weight: 600; }
+.kd-card-dot { flex: none; color: var(--muted); font-size: 0.875rem; }
+.kd-card-by ~ .kd-card-age { margin-left: 0; }
+.kd-card.is-late .kd-card-by, .kd-card.is-late .kd-card-dot { color: var(--amber-ink); }
 /* Review #2 (owner, 2026-11-17) — plain rows with a hairline between them: the same 48px to tap, about a quarter less height. */
 .kd-dishes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .kd-dish + .kd-dish { border-top: 1px solid var(--border); }
@@ -226,6 +256,9 @@
 .kd-filters { display: flex; gap: var(--sp-1); margin-left: auto; flex: none; }
 .kd-filter { min-height: 44px; padding: 0 var(--sp-3); border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-size: 0.875rem; font-weight: 600; white-space: nowrap; cursor: pointer; }
 .kd-filter[aria-pressed='true'] { background: var(--accent-deep); border-color: var(--accent-deep); color: var(--surface); }
+/* Jira GRW-733 — which station this tablet shows: a row of the same pills, wrapping on a phone; and whose dish it is on an all-stations screen. */
+.kd-stations { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0 0 var(--sp-3); }
+.kd-station { flex: none; padding: 0 var(--sp-1); border-radius: 999px; border: 1px solid var(--border); color: var(--muted); font-size: 0.75rem; font-weight: 600; max-width: 8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* A phone: the counts on one line, the filters on the next, swiped sideways if they do not fit. */
 @media (max-width: 860px) {
   .kd-summary { flex-wrap: wrap; overflow-x: visible; }

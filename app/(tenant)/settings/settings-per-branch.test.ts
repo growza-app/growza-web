@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { branchInAddress, oneBranchOnly, wholeBusiness } from '../lib/branch-routes';
 import { SETTINGS_GROUPS } from './nav-data';
 import { BOOKING_RULE_KEYS, HOURS_KEYS, REMINDER_KEYS } from './branch-keys';
+import en from '../../../messages/en.json';
+import hi from '../../../messages/hi.json';
 
 /**
  * Jira GRW-396 — Settings per branch.
@@ -11,9 +13,14 @@ import { BOOKING_RULE_KEYS, HOURS_KEYS, REMINDER_KEYS } from './branch-keys';
  * The owner decided (2026-09-25) that Settings shows one branch at a time, the header's, with no "all branches"
  * view. What exists once for the whole business sits apart from it. Checked in a browser with a three-branch
  * owner; these pin the rules a screenshot would not catch.
+ *
+ * Owner, 2026-11-18 — the hub is grouped by what the owner is doing, not by whose setting it is. "Sits apart" is
+ * now a "This branch" tag on each row that edits the header's branch (`perBranch`), instead of a group of its own.
  */
 const src = (p: string) => readFileSync(resolve(__dirname, p), 'utf8');
-const hrefs = (key: string) => SETTINGS_GROUPS.find((g) => g.key === key)!.rows.flatMap((r) => (r.href ? [r.href] : []));
+const allRows = SETTINGS_GROUPS.flatMap((g) => g.rows);
+const perBranchHrefs = allRows.flatMap((r) => (r.perBranch && r.href ? [r.href] : []));
+const otherHrefs = allRows.flatMap((r) => (!r.perBranch && r.href ? [r.href] : []));
 
 describe('whose settings a tab shows', () => {
   it('is the header’s branch: Settings has no picker of its own, and no "All"', () => {
@@ -26,22 +33,43 @@ describe('whose settings a tab shows', () => {
   });
 
   it('every branch tab is one branch’s, and every whole-business tab shows no branch', () => {
-    for (const href of hrefs('branch')) expect(wholeBusiness(href)).toBe(false);
-    for (const href of hrefs('business')) expect(wholeBusiness(href)).toBe(true);
+    expect(perBranchHrefs.sort()).toEqual(
+      ['/settings/profile', '/settings/working-hours', '/settings/booking', '/settings/notifications', '/settings/check-in', '/settings/gst'].sort(),
+    );
+    for (const href of perBranchHrefs) expect(wholeBusiness(href), href).toBe(false);
+    /*
+     * Every other row shows no branch in the header. GST used to be the exception — the header's branch, untagged —
+     * but its branch card loaded the main branch whatever the header said; it is a tagged branch row now (item 15).
+     */
+    for (const href of otherHrefs) expect(wholeBusiness(href), href).toBe(true);
     expect(wholeBusiness('/settings')).toBe(false);
     expect(wholeBusiness('/settings/billing/bills')).toBe(true);
   });
 
-  it('the branch group is titled for the branch the tabs load (the address’s, else the main one)', () => {
+  it('every tagged row loads the header’s branch through `loadScopedSettings`', () => {
+    const pageOf: Record<string, string> = {
+      '/settings/profile': 'profile/page.tsx',
+      '/settings/working-hours': 'working-hours/page.tsx',
+      '/settings/booking': 'booking/page.tsx',
+      '/settings/notifications': 'notifications/page.tsx',
+      '/settings/check-in': 'check-in/page.tsx',
+      '/settings/gst': 'gst/page.tsx',
+    };
+    for (const href of perBranchHrefs) expect(src(pageOf[href]!), href).toMatch(/\bloadScopedSettings\(searchParams\)/);
+    // Kitchen stations and Coupons and offers are each branch's too, but pick it on the screen: the header picks nothing there.
+    for (const page of ['kitchen-stations/page.tsx', 'offers/page.tsx']) expect(src(page)).not.toMatch(/loadScopedSettings/);
+  });
+
+  it('the tag is for the branch the tabs load (the address’s, else the main one), and only with several branches', () => {
     const nav = src('SettingsNavList.tsx');
     expect(nav).toMatch(/branches\.find\(\(b\) => b\.id === branch\) \?\? branches\[0\]/);
     /*
      * Design review, 2026-10-07 — "This branch", not the branch's name. Which branch is the header's job,
-     * two rows above; the title's job is the contrast with "Whole business" under it. `shown` still decides
-     * whether there IS a branch group, which is why the lookup above is still pinned.
+     * two rows above. `shown` is null with one branch, which is what keeps the tag off a one-branch business.
      */
-    expect(nav).toMatch(/shown \? t\('groups\.thisBranch'\) : t\('groups\.business'\)/);
-    expect(nav).not.toMatch(/groups\.branchNamed/);
+    expect(nav).toMatch(/const shown = multi \? /);
+    expect(nav).toMatch(/\{row\.perBranch && shown \? <span className="menu-row-pill settings-row-tag">\{t\('thisBranch'\)\}<\/span> : null\}/);
+    expect(nav).not.toMatch(/groups\.branchNamed|groups\.thisBranch/);
   });
 });
 
@@ -131,5 +159,47 @@ describe('Settings per branch, as the QA pass left it', () => {
 
   it('a bad branch id in a link is put back to the chosen branch, not remembered as "all"', () => {
     expect(src('../components/BranchUrlSync.tsx')).toMatch(/!branch\.branches\.some\(\(b\) => b\.id === action\.branch\)\) \{\s*\/\/[\s\S]{0,300}query\.set\(param, branch\.choice \?\? ALL_BRANCHES_PARAM\);/);
+  });
+});
+
+/** Owner, 2026-11-18 — the groups follow what the owner is doing. */
+describe('the hub is grouped by task', () => {
+  it('in the order the owner agreed, each row in exactly one group', () => {
+    const shape = SETTINGS_GROUPS.map((g) => [g.key, g.rows.map((r) => r.key)]);
+    expect(shape).toEqual([
+      ['shop', ['profile', 'business', 'branches', 'workingHours', 'bookingSettings', 'notifications', 'checkIn', 'channels']],
+      ['dining', ['tables', 'kitchenStations']],
+      ['money', ['payments', 'gst', 'billOffers', 'rewards']],
+      ['team', ['roles', 'reportAccess', 'phoneAlerts']],
+      ['plan', ['billing']],
+      ['account', ['logOut']],
+    ]);
+  });
+
+  it('names every group in English and Hindi, and keeps no group name nothing reads', () => {
+    const keys = SETTINGS_GROUPS.map((g) => g.key).sort();
+    for (const m of [en, hi]) {
+      const groups = (m as unknown as { settingsHub: { groups: Record<string, string> } }).settingsHub.groups;
+      expect(Object.keys(groups).sort()).toEqual(keys);
+      for (const k of keys) expect(groups[k]).toBeTruthy();
+    }
+  });
+
+  it('draws no heading over a group whose rows are all filtered out', () => {
+    const nav = src('SettingsNavList.tsx');
+    // The filter runs before the heading is drawn, and an emptied group is dropped, heading and all.
+    expect(nav).toMatch(/rows: group\.rows\.filter\(listed\) \}\)\)\.filter\(\(group\) => group\.rows\.length > 0\)/);
+    expect(nav).toMatch(/\{groups\.map\(\(group\) => \(/);
+    expect(nav).not.toMatch(/\{SETTINGS_GROUPS\.map\(/);
+    // A group's title no longer changes with the number of branches.
+    expect(nav).toMatch(/const groupTitle = \(key: SettingsGroupKey\): string => t\(`groups\.\$\{key\}`\);/);
+  });
+
+  it('reuses the existing pill for the tag, rather than a new one', () => {
+    const css = src('../styles/28-settings.css');
+    expect(css).toMatch(/\.menu-row-pill \{/);
+    const tag = css.match(/\.settings-row-tag \{[^}]*\}/)?.[0] ?? '';
+    expect(tag).toMatch(/white-space: nowrap/);
+    expect(tag).not.toMatch(/background|border|font-size/);
   });
 });

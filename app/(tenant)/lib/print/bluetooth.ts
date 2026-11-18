@@ -67,8 +67,11 @@ export function bluetoothSupported(): boolean {
   return bt() !== null;
 }
 
-let device: BtDevice | null = null;
-let channel: BtCharacteristic | null = null;
+/**
+ * Jira GRW-733 — one connection per printer this device paired with: a counter may print each kitchen station's slips on
+ * that station's own printer (the Bar's beside the bar), so the bytes for one never go down another's channel.
+ */
+const links = new Map<string, { device: BtDevice; channel: BtCharacteristic | null }>();
 
 async function findChannel(d: BtDevice): Promise<BtCharacteristic> {
   if (!d.gatt) throw new PrinterError('no_gatt');
@@ -97,24 +100,24 @@ export async function pairPrinter(): Promise<{ id: string; name: string }> {
   } catch {
     throw new PrinterError('cancelled');
   }
-  channel = await findChannel(picked);
-  device = picked;
+  links.set(picked.id, { device: picked, channel: await findChannel(picked) });
   return { id: picked.id, name: picked.name ?? '' };
 }
 
 /** The printer this device paired with, connected again without a chooser where the browser allows it. */
 async function reconnect(savedId: string | null): Promise<BtCharacteristic> {
-  if (channel && device?.gatt?.connected) return channel;
-  if (device) {
-    channel = await findChannel(device);
-    return channel;
+  const link = savedId ? links.get(savedId) : undefined;
+  if (link?.channel && link.device.gatt?.connected) return link.channel;
+  if (link) {
+    link.channel = await findChannel(link.device);
+    return link.channel;
   }
   const api = bt();
   if (!api) throw new PrinterError('unsupported');
   const known = savedId && api.getDevices ? (await api.getDevices()).find((d) => d.id === savedId) : undefined;
   if (!known) throw new PrinterError('not_paired');
-  device = known;
-  channel = await findChannel(known);
+  const channel = await findChannel(known);
+  links.set(known.id, { device: known, channel });
   return channel;
 }
 
@@ -134,13 +137,14 @@ export async function writeToPrinter(data: Uint8Array, savedId: string | null): 
       else throw new PrinterError('no_channel');
     }
   } catch (e) {
-    channel = null;
+    const link = savedId ? links.get(savedId) : undefined;
+    if (link) link.channel = null;
     throw e instanceof PrinterError ? e : new PrinterError('write_failed');
   }
 }
 
-/** Forget the connection (the settings screen's "Remove printer"). */
-export function forgetPrinter(): void {
-  device = null;
-  channel = null;
+/** Forget a printer's connection (the settings screen's "Remove printer"); with no id, every one this page holds. */
+export function forgetPrinter(id?: string): void {
+  if (id) links.delete(id);
+  else links.clear();
 }

@@ -206,3 +206,46 @@
     grid-template-columns: 8rem minmax(0, 1fr);
   }
 }
+
+/* Jira GRW-729 — the UPI ID: two fields, one under the other at 344px, side by side from a tablet up. */
+.pq-upi {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.pq-upi .field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  font-size: 16px; /* the one px size allowed: below it, iOS zooms the field on focus */
+}
+
+.pq-upi > .field-error,
+.pq-upi-saved {
+  margin: 0;
+  font-size: var(--fs-3);
+}
+
+.pq-upi-saved {
+  color: var(--accent-deep);
+}
+
+.pq-upi-shown {
+  margin: 0;
+  font-size: var(--fs-4);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 640px) {
+  .pq-upi {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .pq-upi > .field-error,
+  .pq-upi-saved,
+  .pq-upi > .pq-actions {
+    grid-column: 1 / -1;
+  }
+}

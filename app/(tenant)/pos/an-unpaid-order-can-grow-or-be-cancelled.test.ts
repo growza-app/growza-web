@@ -28,7 +28,7 @@ describe('the unpaid order card', () => {
   it('asks before cancelling, says what is not collected, and keeps the order on Keep', () => {
     expect(client).toContain('<ConfirmDialog\n          tone="danger"');
     expect(client).toContain("t(qk('cancelOrderBody'), { amount: formatMoney(String(cancelTarget.totalMinor)) })");
-    expect(client).toContain('api.cancelPendingCounterSale(tk.id)');
+    expect(client).toContain('api.cancelPendingCounterSale(tk.id, cancelAskCooked ? cancelCooked : undefined)');
   });
 
   it('never lets the card grow wider than the phone', () => {

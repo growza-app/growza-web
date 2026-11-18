@@ -18,6 +18,7 @@ import { waDigits } from './BookingSheet';
 import { PhoneField } from './PhoneField';
 import type { ReactNode } from 'react';
 import { IconPrint, IconShare, IconWhatsApp } from './icons';
+import { useBusinessLogo } from '../lib/business-logo';
 
 /** One row of the bill as WhatsApp will draw it: the same segments the text is written from. */
 function Row({ row }: { row: ReceiptRow }) {
@@ -93,6 +94,8 @@ export function ReceiptShare({
   const text = useMemo(() => (kind === 'bill' ? formatStructuredWhatsappText(bill) : rowsToText(bill)), [bill, kind]);
   const card = useMemo(() => (kind === 'bill' ? parseReceiptCard(bill) : null), [bill, kind]);
   const hasGraphicCard = Boolean(card && (card.items.length > 0 || card.totalAmount));
+  // Jira GRW-728 — the business's logo on the bill image, in place of its first letter.
+  const logo = useBusinessLogo(hasGraphicCard);
   const nv = useNewVisitCopy();
   // The vertical's own word for the person paying: Guest to a restaurant, Customer to a shop, Client to a salon.
   const clientNoun = useLabel('customer', 'Client');
@@ -133,7 +136,7 @@ export function ReceiptShare({
   const shareReceipt = async () => {
     if (hasGraphicCard && card) {
       try {
-        const blob = await renderReceiptCardBlob(card);
+        const blob = await renderReceiptCardBlob(card, logo);
         if (blob) {
           const file = new File([blob], 'receipt.png', { type: 'image/png' });
           if (!navigator.canShare || navigator.canShare({ files: [file] })) {
@@ -230,8 +233,8 @@ export function ReceiptShare({
           <div className="wi-rc-card">
             <div className="wi-rc-header">
               <div className="wi-rc-brand">
-                <span className="wi-rc-logo" aria-hidden="true">
-                  {(card.businessName.trim()[0] ?? 'G').toUpperCase()}
+                <span className={`wi-rc-logo${logo ? ' has-image' : ''}`} aria-hidden="true">
+                  {logo ? <img src={logo} alt="" /> : (card.businessName.trim()[0] ?? 'G').toUpperCase()}
                 </span>
                 <div className="wi-rc-brand-text">
                   <strong className="wi-rc-biz">{card.businessName}</strong>

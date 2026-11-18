@@ -816,8 +816,19 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
  * Renders the branded Graphic Receipt Card onto a 2× Retina `<canvas>` and resolves to a PNG `Blob`
  * for 1-click clipboard copying (`Ctrl+V` / `Cmd+V` into WhatsApp) or native mobile file sharing.
  */
-export async function renderReceiptCardBlob(card: ReceiptCardModel): Promise<Blob | null> {
+export async function renderReceiptCardBlob(card: ReceiptCardModel, logo: string | null = null): Promise<Blob | null> {
   if (typeof document === 'undefined') return null;
+  // Jira GRW-728 — the business's own logo in the badge, where it has one (a data URI, so the canvas stays readable).
+  let logoImg: HTMLImageElement | null = null;
+  if (logo) {
+    try {
+      logoImg = new Image();
+      logoImg.src = logo;
+      await logoImg.decode();
+    } catch {
+      logoImg = null;
+    }
+  }
 
   const W = 440;
   const itemRowsH = card.items.reduce((acc, it) => acc + 28 + it.details.length * 18, 0);
@@ -856,11 +867,18 @@ export async function renderReceiptCardBlob(card: ReceiptCardModel): Promise<Blo
   ctx.fillStyle = '#ffffff';
   roundRect(ctx, 20, 20, 42, 42, 10);
   ctx.fill();
-  ctx.fillStyle = '#14532d';
-  ctx.font = `900 20px ${font}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText((card.businessName.trim()[0] ?? 'G').toUpperCase(), 41, 42);
+  if (logoImg && logoImg.naturalWidth > 0 && logoImg.naturalHeight > 0) {
+    const fit = Math.min(36 / logoImg.naturalWidth, 36 / logoImg.naturalHeight);
+    const w = logoImg.naturalWidth * fit;
+    const h = logoImg.naturalHeight * fit;
+    ctx.drawImage(logoImg, 41 - w / 2, 41 - h / 2, w, h);
+  } else {
+    ctx.fillStyle = '#14532d';
+    ctx.font = `900 20px ${font}`;
+    ctx.fillText((card.businessName.trim()[0] ?? 'G').toUpperCase(), 41, 42);
+  }
 
   // Business name + branch subtitle
   ctx.textAlign = 'left';

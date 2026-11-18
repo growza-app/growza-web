@@ -1,0 +1,46 @@
+/* Jira GRW-739 — Reports › Food cost. The cards are the money reports' (99-stock-report.css); this is only the % and its colour bands. */
+.fc-pct {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.fc-pct-big {
+  padding: 0 var(--sp-2);
+  font-size: 1.75rem;
+  line-height: 1.15;
+}
+.fc-pct.is-warn {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+.fc-pct.is-bad {
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+}
+.fc-pct.is-none {
+  color: var(--muted);
+}
+.fc-line {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--text);
+}
+.srp-warn.fc-fix {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  align-self: stretch;
+}
+.fc-names {
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.fc-fix .mr-link {
+  align-self: flex-start;
+}

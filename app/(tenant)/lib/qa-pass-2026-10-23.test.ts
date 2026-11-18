@@ -87,6 +87,6 @@ describe('each screen carries its fix', () => {
   });
   it('came back asks whether it sells again, and sends the answer only where there is a shelf (F3)', () => {
     const order = src('orders/[id]/OrderClient.tsx');
-    expect(order).toContain("to === 'returned' && counted ? { saleable } : {}");
+    expect(order).toContain("to === 'returned' && counted ? { saleable } : to === 'cancelled' && askCooked ? { cooked } : {}");
   });
 });

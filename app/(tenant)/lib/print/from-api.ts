@@ -1,5 +1,5 @@
 import { ORDER_CHANNEL_WORD } from '@growza-app/shared';
-import type { DocumentTicket, KitchenTicketDto, OrderType } from '../api-types';
+import type { DocumentTicket, KitchenSlips, KitchenTicketDto, OrderType } from '../api-types';
 import type { BillData, KotData } from './ticket';
 
 /**
@@ -23,6 +23,10 @@ export function destinationOf(
   return null;
 }
 
+/** Jira GRW-733 — the slips an answer carries: every station's (`kots`) where the API sends them, else its one `kot`. */
+export const slipsOf = (r: { kot?: KitchenTicketDto | null; kots?: readonly KitchenTicketDto[] }): KitchenSlips | undefined =>
+  r.kots && r.kots.length > 0 ? r.kots : (r.kot ?? undefined);
+
 export function kotFromApi(
   kot: KitchenTicketDto,
   order: { tokenNo: number | null; offlineToken?: string | null; channel: string | null; branchName?: string | null; orderType?: OrderType | null; tableName?: string | null },
@@ -35,8 +39,11 @@ export function kotFromApi(
     kind: kot.kind,
     tokenNo: order.tokenNo,
     offlineToken: order.offlineToken ?? null,
-    // Jira GRW-723 — and who sent it, so the kitchen knows whose table ("T5 · AC Hall · Ravi").
-    destination: [destinationOf(order.channel, { orderType: order.orderType, tableName: order.tableName, words }), kot.takenBy].filter(Boolean).join(' · ') || null,
+    destination: destinationOf(order.channel, { orderType: order.orderType, tableName: order.tableName, words }),
+    // Jira GRW-723 · GRW-730 — who sent it, on its own line under the slip number ("By Ravi"); the name the slip kept.
+    takenBy: kot.takenBy ?? null,
+    // Jira GRW-733 — the station the slip is for; none where the branch has set no stations.
+    station: kot.station ?? null,
     when: when(kot.createdAt),
     items: kot.items.map((i) => ({ name: i.name, qty: i.qty })),
     reprint,
@@ -86,8 +93,12 @@ function sharedRate(doc: DocumentTicket, half: boolean): number | null {
 /** An issued document as the roll prints it. Every figure is the document's own; nothing is recomputed here. */
 export function billFromDocument(doc: DocumentTicket, words: BillWords, fmt: BillFormat, reprint = false): BillData {
   const adjustments: { label: string; amount: string }[] = [];
-  if (doc.discountMinor > 0) {
-    adjustments.push({ label: doc.rewardPointsUsed > 0 ? words.points(doc.rewardPointsUsed) : words.discount, amount: `-${fmt.figure(doc.discountMinor)}` });
+  // Jira GRW-735 — each coupon and buy-get offer on its own line, by its name; whatever else came off (points) after them.
+  const offers = (doc.offers ?? []).filter((o) => o.amountMinor > 0);
+  for (const o of offers) adjustments.push({ label: o.name, amount: `-${fmt.figure(o.amountMinor)}` });
+  const restMinor = Math.max(0, doc.discountMinor - offers.reduce((s, o) => s + o.amountMinor, 0));
+  if (restMinor > 0) {
+    adjustments.push({ label: doc.rewardPointsUsed > 0 ? words.points(doc.rewardPointsUsed) : words.discount, amount: `-${fmt.figure(restMinor)}` });
   }
   const taxMinor = doc.cgstMinor + doc.sgstMinor + doc.igstMinor;
   // Prices that include tax: what was charged is the sub total less the discount, and the tax is inside it.

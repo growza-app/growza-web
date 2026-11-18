@@ -77,6 +77,16 @@
   .tp-root .tp-gap {
     height: 1em;
   }
+
+  /* Jira GRW-728 — the logo: already the roll's own dots and as wide as the roll, so it is drawn at the paper's width
+     with no smoothing — a 1-bit picture scaled softly prints grey fuzz. */
+  .tp-root .tp-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 0 1mm;
+    image-rendering: pixelated;
+  }
 }
 
 /* The item table: Item · Qty. · Price · Amount. A 58mm roll drops the Price column, as the text print does. */

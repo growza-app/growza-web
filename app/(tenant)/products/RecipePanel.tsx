@@ -4,7 +4,8 @@ import AppLink from '../../shared/AppLink';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import { api, ApiError, formatMoney } from '../lib/api';
-import type { DishRecipe, Product, StockMaterial } from '../lib/api-types';
+import type { DishCost, DishRecipe, Product, StockMaterial } from '../lib/api-types';
+import { foodCostTone, pctText } from '../lib/food-cost';
 import { parseAmount, recipeAmount, SMALL_UNIT, unitWord } from '../lib/kitchen-units';
 import { useSession } from '../components/SessionProvider';
 import { IconClose } from '../components/icons';
@@ -18,6 +19,12 @@ interface Draft {
 }
 
 let seq = 0;
+
+/** Jira GRW-739 — ask for the dish's cost only where the API sent a cost on the recipe (it leaves `costMinor` out for everyone else). */
+function readCost(r: DishRecipe, set: (c: DishCost | null) => void): void {
+  if (!r.sizes.some((s) => s.lines.some((l) => l.costMinor !== undefined))) return;
+  api.dishCost(r.productId).then(set, () => set(null));
+}
 const nextKey = () => `r${++seq}`;
 
 /**
@@ -39,6 +46,8 @@ export function RecipePanel({ product }: { product: Product }) {
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Jira GRW-739 — the cost per size from the API: today's average cost over the price BEFORE GST, read again after every save.
+  const [dishCost, setDishCost] = useState<DishCost | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -47,6 +56,7 @@ export function RecipePanel({ product }: { product: Product }) {
         if (!live) return;
         setRecipe(r);
         setMaterials(list.materials);
+        readCost(r, setDishCost);
       })
       .catch(() => live && setFailed(true));
     return () => {
@@ -81,6 +91,11 @@ export function RecipePanel({ product }: { product: Product }) {
   const costs = size.lines.map((l) => l.costMinor);
   const seesCost = size.lines.length > 0 && costs.every((c) => c !== undefined);
   const cost = seesCost && costs.every((c) => c !== null) ? costs.reduce<number>((n, c) => n + (c ?? 0), 0) : null;
+  // The API's figure when it has answered for this size (it knows the GST rate); the lines' own sum until then.
+  const sized = dishCost?.sizes.find((s) => s.variantId === size.variantId) ?? null;
+  const costNow = sized ? sized.costMinor : cost;
+  const pct = sized ? sized.foodCostPct : cost !== null && size.priceMinor > 0 ? Math.round((cost / size.priceMinor) * 1000) / 10 : null;
+  const netDiffers = sized !== null && sized.netPriceMinor !== sized.priceMinor;
 
   const save = async () => {
     const lines: Array<{ materialId: string; qty: number }> = [];
@@ -97,8 +112,10 @@ export function RecipePanel({ product }: { product: Product }) {
     setBusy(true);
     setError(null);
     try {
-      setRecipe(await api.saveRecipe(product.id, size.variantId, lines));
+      const next = await api.saveRecipe(product.id, size.variantId, lines);
+      setRecipe(next);
       setSaved(true);
+      readCost(next, setDishCost);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('saveFailed'));
     } finally {
@@ -196,10 +213,11 @@ export function RecipePanel({ product }: { product: Product }) {
             </select>
           ) : null}
           {seesCost ? (
-            <p className="rc-cost">
-              {cost === null
+            // Jira GRW-739 — amber above 35%, red above 45% (owner, 2026-11-18); a ₹0 dish shows "—", never a colour.
+            <p className={`rc-cost ${costNow === null ? '' : `is-${foodCostTone(pct)}`}`}>
+              {costNow === null
                 ? t('noCost')
-                : t('costs', { cost: formatMoney(cost), pct: size.priceMinor > 0 ? Math.round((cost / size.priceMinor) * 1000) / 10 : 0, price: formatMoney(size.priceMinor) })}
+                : t(netDiffers ? 'costsNet' : 'costs', { cost: formatMoney(costNow), pct: pctText(pct), price: formatMoney(netDiffers ? sized!.netPriceMinor : size.priceMinor) })}
             </p>
           ) : null}
           {error ? (

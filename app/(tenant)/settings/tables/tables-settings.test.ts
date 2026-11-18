@@ -46,8 +46,10 @@ describe('AC-04 — who is offered it', () => {
 
 describe('one screen, every branch', () => {
   it('sits with the whole business, and no branch picker narrows it', () => {
-    const row = SETTINGS_GROUPS.find((g) => g.key === 'business')!.rows.find((r) => r.href === '/settings/tables');
+    // Owner, 2026-11-18 — grouped by task: Tables sits under Dining, with no "This branch" tag.
+    const row = SETTINGS_GROUPS.find((g) => g.key === 'dining')!.rows.find((r) => r.href === '/settings/tables');
     expect(row).toBeTruthy();
+    expect(row?.perBranch).toBeUndefined();
     expect(wholeBusiness('/settings/tables')).toBe(true);
   });
 

@@ -15,6 +15,9 @@
  * run the test.
  */
 export const API_MESSAGES_HI: Record<string, string> = {
+  // Jira GRW-729 — the UPI ID a printed bill's QR pays.
+  'Type a UPI ID like shopname@okicici': 'UPI ID इस तरह लिखें: shopname@okicici',
+  'Keep the name to 50 letters or fewer.': 'नाम 50 अक्षरों से ज़्यादा न रखें।',
   // ---- Jira GRW-72 — roles
   'This business has no roles to set up.': 'इस बिज़नेस में सेट करने के लिए कोई रोल नहीं है।',
   'Only the owner can change roles.': 'रोल सिर्फ़ मालिक बदल सकते हैं।',
@@ -74,6 +77,34 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'One of those items is not in your stock any more.': 'इनमें से एक सामान अब आपके स्टॉक में नहीं है।',
   'Use stock items from the same branch.': 'उसी ब्रांच का सामान इस्तेमाल करें।',
   'This business does not count what it uses.': 'यह बिज़नेस अपने इस्तेमाल का सामान नहीं गिनता।',
+  // Jira GRW-739 — kitchen stock, part 3: prices are money, and a report reads up to 3 months.
+  'Only the owner or a manager can see what things cost.': 'चीज़ें कितने की पड़ीं, यह सिर्फ़ मालिक या मैनेजर देख सकते हैं।',
+  'Pick up to 3 months': 'ज़्यादा से ज़्यादा 3 महीने चुनें',
+  // Jira GRW-738 — suppliers, stock in, wastage and counts.
+  'That supplier is already on your list.': 'यह सप्लायर आपकी सूची में पहले से है।',
+  'That supplier is not on your list.': 'यह सप्लायर आपकी सूची में नहीं है।',
+  'That stock in is not on your list.': 'यह स्टॉक-इन आपकी सूची में नहीं है।',
+  'Pick one of your suppliers.': 'अपना कोई सप्लायर चुनें।',
+  'That line is not on this stock in any more. Open it again.': 'यह लाइन अब इस स्टॉक-इन में नहीं है। इसे फिर से खोलें।',
+  'Pick today or an earlier date.': 'आज की या पहले की तारीख़ चुनें।',
+  'This bill was entered before.': 'यह बिल पहले दर्ज हो चुका है।',
+  'That count is not on your list.': 'यह गिनती आपकी सूची में नहीं है।',
+  'This count was already finished.': 'यह गिनती पहले ही पूरी हो चुकी है।',
+  'Type at least one count before you finish.': 'पूरा करने से पहले कम से कम एक गिनती लिखें।',
+  'Only the owner or a manager can record stock in.': 'स्टॉक-इन सिर्फ़ मालिक या मैनेजर दर्ज कर सकते हैं।',
+  'Only the owner or a manager can finish a count.': 'गिनती सिर्फ़ मालिक या मैनेजर पूरी कर सकते हैं।',
+  'Only the kitchen, the owner or a manager can do this.': 'यह सिर्फ़ किचन, मालिक या मैनेजर कर सकते हैं।',
+  'A phone number has 10 digits': 'फ़ोन नंबर में 10 अंक होते हैं',
+  'A GSTIN has 15 letters and numbers': 'GSTIN में 15 अक्षर और अंक होते हैं',
+  "Price can't be below zero": 'दाम शून्य से कम नहीं हो सकता',
+  "GST can't be below zero": 'GST शून्य से कम नहीं हो सकता',
+  'Type a price like 250': '250 जैसा दाम लिखें',
+  'Pick why it was wasted': 'चुनें कि यह क्यों बर्बाद हुआ',
+  'Say what happened': 'बताएँ कि क्या हुआ',
+  'Add at least one item': 'कम से कम एक सामान जोड़ें',
+  'Keep the pack name to 30 characters': 'पैक का नाम 30 अक्षरों तक रखें',
+  'Keep the bill number to 40 characters': 'बिल नंबर 40 अक्षरों तक रखें',
+  'Keep the note to 200 characters': 'नोट 200 अक्षरों तक रखें',
   'Was it already cooked? Say yes or no.': 'क्या यह पहले ही बन चुका था? हाँ या नहीं बताएँ।',
   'Type a quantity like 0.25': '0.25 जैसी मात्रा लिखें',
   'At most 10 groups on one item': 'एक आइटम पर ज़्यादा से ज़्यादा 10 ग्रुप',
@@ -98,6 +129,71 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'This table’s bill has moved, joined another table or been paid. Open the table again.': 'इस टेबल का बिल दूसरी टेबल पर चला गया, जुड़ गया या चुकता हो गया। टेबल फिर से खोलें।',
   'That table is not at this branch.': 'यह टेबल इस ब्रांच में नहीं है।',
   'That table is at another branch.': 'यह टेबल दूसरी ब्रांच की है।',
+  // Jira GRW-732 — guests seated before they order.
+  'Someone just seated guests at this table. Open the table again.': 'अभी-अभी किसी ने इस टेबल पर मेहमान बिठाए हैं। टेबल फिर से खोलें।',
+  'Guests are a whole number': 'मेहमानों की गिनती पूरी संख्या में लिखें',
+  'At least one guest': 'कम से कम एक मेहमान',
+  'At most 99 guests': 'ज़्यादा से ज़्यादा 99 मेहमान',
+  // Jira GRW-733 — kitchen stations.
+  'That station is not at this branch.': 'यह स्टेशन इस ब्रांच में नहीं है।',
+  'Only the owner or a manager can set up kitchen stations.': 'किचन स्टेशन सिर्फ़ मालिक या मैनेजर सेट कर सकते हैं।',
+  'Give the station a name': 'स्टेशन को एक नाम दें',
+  'Kitchen is the name of the default station. Pick another name.': '"किचन" पहले से तय स्टेशन का नाम है। कोई दूसरा नाम चुनें।',
+  'That category or station is not at this branch.': 'यह कैटेगरी या स्टेशन इस ब्रांच में नहीं है।',
+  'Pick a menu category': 'मेन्यू की कोई कैटेगरी चुनें',
+  'Pick a station': 'कोई स्टेशन चुनें',
+  // Jira GRW-736 — GST by order type.
+  'Pick a GST rate: 0%, 5%, 12%, 18% or 28%': 'GST की दर चुनें: 0%, 5%, 12%, 18% या 28%',
+  'Pick a GST rate': 'GST की दर चुनें',
+  // Jira GRW-735 — the business sells no products.
+  'This business does not sell products.': 'यह कारोबार सामान नहीं बेचता।',
+  // Jira GRW-735 — coupons and buy-get offers.
+  'That code is not valid': 'यह कोड सही नहीं है',
+  'This guest has already used that code': 'यह मेहमान यह कोड पहले ही इस्तेमाल कर चुके हैं',
+  'Add the guest to the bill to use this code': 'यह कोड इस्तेमाल करने के लिए बिल में मेहमान जोड़ें',
+  // Review of the overnight stack — L2, L3, L7.
+  'This code is counted per guest. Add the guest’s phone number to use it.': 'यह कोड हर मेहमान के हिसाब से गिना जाता है। इसे इस्तेमाल करने के लिए मेहमान का फ़ोन नंबर जोड़ें।',
+  'A payment is already recorded on this bill, so a coupon cannot be added to it.': 'इस बिल पर भुगतान दर्ज हो चुका है, इसलिए इस पर कूपन नहीं लग सकता।',
+  'Only the owner can make a coupon that takes the whole bill off.': 'पूरा बिल माफ़ करने वाला कूपन सिर्फ़ मालिक बना सकते हैं।',
+  // QA of the overnight stack (items 5, 7, 9, L-a).
+  'A dish cannot go on the bill below its price. Give a discount when the bill is paid, or ask the owner or a manager.': 'कोई डिश अपनी क़ीमत से कम पर बिल में नहीं जा सकती। बिल चुकाते समय छूट दें, या मालिक या मैनेजर से कहें।',
+  'A manager can make a coupon of up to 50% off. Ask the owner for more.': 'मैनेजर ज़्यादा से ज़्यादा 50% छूट का कूपन बना सकते हैं। इससे ज़्यादा के लिए मालिक से कहें।',
+  'A manager’s ₹ coupon can be at most half its minimum bill. Ask the owner for more.': 'मैनेजर का ₹ वाला कूपन उसके कम से कम बिल के आधे तक ही हो सकता है। इससे ज़्यादा के लिए मालिक से कहें।',
+  'A coupon or a discount is printed only on a table’s bill that is not paid yet.': 'कूपन या छूट सिर्फ़ टेबल के उस बिल पर छपती है जो अभी चुकाया नहीं गया।',
+  'Pick a date in the last year.': 'पिछले एक साल के अंदर की तारीख़ चुनें।',
+  'The GST cannot be more than the bill.': 'GST बिल से ज़्यादा नहीं हो सकता।',
+  'A discount is whole rupees.': 'छूट पूरे रुपयों में होती है।',
+  'A discount cannot be more than the bill.': 'छूट बिल से ज़्यादा नहीं हो सकती।',
+  'A coupon and the bill discount do not go together. Keep one of them.': 'कूपन और बिल की छूट एक साथ नहीं लगते। इनमें से एक रखें।',
+  'Coupons are for bills of dishes and products': 'कूपन डिश और सामान के बिल पर ही लगते हैं',
+  'Only the owner or a manager can set up coupons and offers.': 'कूपन और ऑफ़र सिर्फ़ मालिक या मैनेजर बना सकते हैं।',
+  'That offer is not at this branch.': 'यह ऑफ़र इस ब्रांच का नहीं है।',
+  'The last day is before the first day': 'आख़िरी दिन पहले दिन से पहले है',
+  'Give the coupon a % or an amount off, not both': 'कूपन पर % या रकम की छूट दें, दोनों नहीं',
+  'That code is already a coupon at this branch.': 'यह कोड इस ब्रांच में पहले से एक कूपन है।',
+  'That dish already has a buy-get offer. Remove it first.': 'इस डिश पर पहले से एक-के-साथ-एक ऑफ़र है। पहले उसे हटाएँ।',
+  'A branch can have at most 100 coupons and offers.': 'एक ब्रांच में ज़्यादा से ज़्यादा 100 कूपन और ऑफ़र हो सकते हैं।',
+  'That order is not waiting for payment here.': 'यह ऑर्डर यहाँ भुगतान का इंतज़ार नहीं कर रहा।',
+  'A code is 3 to 20 letters and numbers, no spaces': 'कोड 3 से 20 अक्षर और अंक का हो, बिना खाली जगह के',
+  'A coupon takes 1% to 100% off': 'कूपन पर 1% से 100% तक की छूट हो सकती है',
+  'Type the % with at most one decimal': '% दशमलव के बाद ज़्यादा से ज़्यादा एक अंक तक लिखें',
+  'A coupon takes at least ₹1 off': 'कूपन पर कम से कम ₹1 की छूट होनी चाहिए',
+  'A guest can use it 1 to 100 times': 'एक मेहमान इसे 1 से 100 बार इस्तेमाल कर सकते हैं',
+  'Uses are a whole number': 'इस्तेमाल पूरी संख्या में लिखें',
+  'Pick a date': 'कोई तारीख़ चुनें',
+  'A name is at most 60 letters': 'नाम ज़्यादा से ज़्यादा 60 अक्षरों का हो',
+  'Buy 1 to 20': '1 से 20 ख़रीदें',
+  'Get 1 to 20 free': '1 से 20 मुफ़्त',
+  'Buy a whole number': 'ख़रीदने की गिनती पूरी संख्या में लिखें',
+  'Get a whole number': 'मुफ़्त की गिनती पूरी संख्या में लिखें',
+  // Jira GRW-734 — an area's own prices.
+  'Only the owner or a manager can set prices.': 'कीमतें सिर्फ़ मालिक या मैनेजर तय कर सकते हैं।',
+  'That dish is not on this branch’s menu.': 'यह डिश इस ब्रांच के मेन्यू में नहीं है।',
+  'Type the change with at most one decimal': 'बदलाव दशमलव के बाद ज़्यादा से ज़्यादा एक अंक तक लिखें',
+  'Pick a dish': 'कोई डिश चुनें',
+  'Type the price in whole rupees': 'कीमत पूरे रुपयों में लिखें',
+  'A price in an area is at least ₹1': 'किसी एरिया में कीमत कम से कम ₹1 होनी चाहिए',
+  'A dish has one price in an area': 'एक एरिया में एक डिश की एक ही कीमत होती है',
   // Jira GRW-720 — how an order is eaten.
   'Table orders is off at this branch.': 'इस ब्रांच में टेबल ऑर्डर बंद है।',
   'Choose Dine-in or Takeaway': 'यहीं खाना या पैक करके चुनें',
@@ -532,10 +628,28 @@ function localiseStockMessage(message: string): string | null {
  * name or number in it, so it is matched as a shape and the name is kept as typed.
  */
 const TABLE_MESSAGES: Array<[RegExp, (m: RegExpExecArray) => string]> = [
+  // Jira GRW-734 — a dish with sizes takes an area's % change.
+  [/^(.+) has sizes\. It takes the area’s % change, not one price\.$/s, (m) => `${m[1]} के साइज़ हैं। इस पर एरिया का % बदलाव लगता है, एक कीमत नहीं।`],
+  // Jira GRW-735 — a coupon that is not good on this bill. The date and the amount stay as the server wrote them.
+  [/^That code ended on (.+)$/s, (m) => `यह कोड ${m[1]} को ख़त्म हो गया`],
+  [/^That code starts on (.+)$/s, (m) => `यह कोड ${m[1]} से शुरू होगा`],
+  [/^This code needs a bill of (.+)$/s, (m) => `इस कोड के लिए बिल कम से कम ${m[1]} का होना चाहिए`],
   [/^(.+) has an open bill\. Settle it first\.$/s, (m) => `${m[1]} का बिल अभी खुला है। पहले उसे निपटाएँ।`],
+  // Jira GRW-733 — kitchen stations.
+  [/^A station name is at most (\d+) letters$/s, (m) => `स्टेशन का नाम ज़्यादा से ज़्यादा ${m[1]} अक्षरों का हो`],
+  [/^(.+) is already a station at this branch\.$/s, (m) => `${m[1]} इस ब्रांच में पहले से एक स्टेशन है।`],
+  [/^A branch can have at most (\d+) stations\.$/s, (m) => `एक ब्रांच में ज़्यादा से ज़्यादा ${m[1]} स्टेशन हो सकते हैं।`],
+  // Jira GRW-732 — a Seated table (guests sat, no order yet).
+  [/^(.+) has guests seated\. Free it first\.$/s, (m) => `${m[1]} पर मेहमान बैठे हैं। पहले उसे खाली करें।`],
+  [/^(.+) has guests seated\. Pick a free table\.$/s, (m) => `${m[1]} पर मेहमान बैठे हैं। कोई खाली टेबल चुनें।`],
+  [/^(.+) was just taken\. Pick another table\.$/s, (m) => `${m[1]} अभी-अभी किसी और ने ले ली। दूसरी टेबल चुनें।`],
+  [/^(.+) has an order\. Open its bill instead\.$/s, (m) => `${m[1]} पर ऑर्डर हो चुका है। उसका बिल खोलें।`],
   [/^(.+) is already used at this branch\.$/s, (m) => `${m[1]} इस ब्रांच में पहले से है।`],
   [/^(.+) still has (\d+) tables?\. Move or remove them first\.$/s, (m) => `${m[1]} में अभी ${m[2]} टेबल हैं। पहले उन्हें हटाएँ या दूसरे एरिया में ले जाएँ।`],
   [/^(\d+) tables? still ha(?:s|ve) (?:an )?open bills?\. Settle them before switching Table orders off\.$/s, (m) => `${m[1]} टेबल का बिल अभी खुला है। टेबल ऑर्डर बंद करने से पहले उन्हें निपटाएँ।`],
+  // Review of the overnight stack — L4 (Seated tables block switching Table orders off) and L5 (a move into an area with other prices).
+  [/^(\d+) tables? ha(?:s|ve) guests seated\. Free (?:it|them) before switching Table orders off\.$/s, (m) => `${m[1]} टेबल पर मेहमान बैठे हैं। टेबल ऑर्डर बंद करने से पहले उन्हें खाली करें।`],
+  [/^Ask the manager to move this table to (.+), its prices are different\.$/s, (m) => `इस टेबल को ${m[1]} में ले जाने के लिए मैनेजर से कहें, वहाँ के दाम अलग हैं।`],
   [/^A branch can have at most (\d+) tables\.$/s, (m) => `एक ब्रांच में ज़्यादा से ज़्यादा ${m[1]} टेबल हो सकती हैं।`],
   // Jira GRW-712 — a choice group's own words ("Pick one Spice").
   [/^Pick one (.+)$/s, (m) => `${m[1]} में से एक चुनें`],

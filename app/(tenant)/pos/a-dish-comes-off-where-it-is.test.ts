@@ -46,7 +46,8 @@ describe('Take payment on a table bill', () => {
 describe('the table bill, after the 17 Nov design review', () => {
   it('names the table as its title, with room, minutes seated and one taker under it', () => {
     expect(sheet).toContain('<span className="pf-keypad-title tb-title-name">{table.name}</span>');
-    expect(sheet).toContain("[areaName, seatedMin === null ? null : t('seated', { min: seatedMin }), oneTaker ? t('takenBy', { name: oneTaker }) : null]");
+    expect(sheet).toContain("seatedMin === null ? null : seatedOnly ? t('seatedFor', { min: seatedMin }) : t('seated', { min: seatedMin }),");
+    expect(sheet).toContain("oneTaker ? t('takenBy', { name: oneTaker }) : null,");
     // "by Ravi" under each dish only when more than one person took them.
     expect(sheet).toContain('{l.addedBy && !l.cancelReason && !oneTaker ? <span');
   });

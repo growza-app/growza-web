@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { api, type PaymentQrState } from '../../lib/api';
 import { useWritable } from '../../components/SessionProvider';
+import { UpiIdCard } from './UpiIdCard';
 
 /**
  * The QR the owner holds up, uploaded once.
@@ -89,6 +90,9 @@ export function PaymentQrForm({ initial }: { initial: PaymentQrState }) {
           {picker('business', (file) => api.uploadPaymentQr(file))}
         </div>
       </section>
+
+      {/* Jira GRW-729 — with a UPI ID, the printed bill's QR asks for that bill's exact amount. */}
+      <UpiIdCard state={state} onChange={setState} />
 
       {error ? (
         <div role="alert" className="pq-error">

@@ -173,13 +173,6 @@
 }
 .ks-skel {
   height: 52px;
-  background: var(--border);
-  opacity: 0.4;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .ks-skel {
-    animation: ks-pulse 1.2s ease-in-out infinite alternate;
-  }
 }
 @keyframes ks-pulse {
   to {
@@ -353,4 +346,290 @@
   padding-left: var(--sp-4);
   color: var(--amber-ink);
   font-size: var(--fs-3);
+}
+
+/* QA 2026-11-18 — the loading rows read as rows: a name bar and an amount bar, not one pale block on white. */
+.ks-skel {
+  background: var(--surface);
+  opacity: 1;
+}
+.ks-skel::before,
+.ks-skel::after {
+  content: '';
+  display: block;
+  height: 0.875rem;
+  border-radius: var(--radius-sm);
+  background: var(--border);
+}
+.ks-skel::before {
+  width: 40%;
+}
+.ks-skel::after {
+  width: 18%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ks-skel::before,
+  .ks-skel::after {
+    animation: ks-pulse 1.2s ease-in-out infinite alternate;
+  }
+}
+
+/* Jira GRW-738 — Stock in · Wasted · Count, the sheets they open, and an item's history. Phone first: three equal buttons fit 344px with
+   their icons; the stock-in lines stack, two fields to a row. */
+.ks-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+.ks-actions.ks-actions-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.ks-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-height: 44px;
+  padding: 0 var(--sp-2);
+  white-space: nowrap;
+}
+.ks-action svg,
+.ks-photo svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: 0 0 auto;
+}
+
+.ks-sheet-sum {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  font-size: var(--fs-7);
+}
+
+.ks-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.ks-history h3 {
+  margin: 0;
+}
+.ks-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.ks-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 52px;
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-3);
+}
+.ks-history-row + .ks-history-row {
+  border-top: 1px solid var(--border);
+}
+.ks-history-row .ks-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.ks-amount.is-out {
+  color: var(--text);
+}
+.ks-amount.is-in {
+  color: var(--accent-ink);
+}
+
+/* Two fields side by side, even at 344px: each gets ~9rem, enough for "2.5" and a short label. */
+.ks-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+.ks-two > .prd-field {
+  min-width: 0;
+}
+.prd-input.ks-field {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  /* 16px stops iOS zooming a form field on focus (CLAUDE.md's one px exception). */
+  font-size: 16px;
+}
+.ks-in-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ks-in-line {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.ks-in-line-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.prd-seg.ks-in-seg {
+  margin: 0;
+}
+.prd-seg.ks-in-seg button {
+  min-height: 44px;
+}
+.ks-in-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+.ks-in-sum {
+  margin: 0;
+}
+.ks-find-list {
+  margin-top: var(--sp-1);
+}
+.ks-photo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  align-self: flex-start;
+  max-width: 100%;
+  min-height: 44px;
+  cursor: pointer;
+}
+.ks-photo span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ks-photo:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.ks-photo-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--accent-ink);
+  font-size: var(--fs-3);
+}
+.ks-in-total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+  padding: var(--sp-3);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+.ks-in-total strong {
+  font-size: var(--fs-7);
+  font-variant-numeric: tabular-nums;
+}
+.ks-in-total .ks-meta {
+  flex-basis: 100%;
+}
+.ks-dup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+.ks-dup .btn {
+  min-height: 44px;
+}
+
+.ks-reasons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+.ks-reasons .btn {
+  min-height: 44px;
+}
+.ks-reasons .btn.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.ks-count-list .ks-name {
+  flex: 1 1 auto;
+}
+.ks-more {
+  min-height: 44px;
+  align-self: center;
+}
+
+/* Jira GRW-739 — food-cost colours (owner, 2026-11-18): amber above 35%, red above 45%. Shared by the dish sheet and Reports › Food cost. */
+.rc-cost.is-warn {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+.rc-cost.is-bad {
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+}
+
+/* Jira GRW-739 — What to buy: grouped by supplier, the starting figure on the right, Share at the foot. */
+.kb-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.kb-supplier {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--text);
+}
+.kb-row .ks-amount {
+  font-size: var(--fs-3);
+}
+.btn.kb-share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  width: 100%;
+}
+.btn.kb-share svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+.prd-input.kb-text {
+  width: 100%;
+  min-height: 8rem;
+  font-family: inherit;
+  /* 16px stops iOS zooming a form field on focus (CLAUDE.md's one px exception). */
+  font-size: 16px;
+  white-space: pre-wrap;
+  resize: vertical;
+}
+.prd-sheet-footer a.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
 }

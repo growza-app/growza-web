@@ -73,6 +73,8 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/reports/discounts': 'shop',
   '/reports/payments': 'shop',
   '/reports/profit': 'shop',
+  // Jira GRW-739 — food cost reads kitchen stock: only where it may be kept (a restaurant).
+  '/reports/food-cost': 'tables',
   '/sales': 'diary',
   '/search': 'both',
   '/services': 'diary',
@@ -92,6 +94,8 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/settings/tables': 'tables',
   // Jira GRW-719 — one branch's room.
   '/settings/tables/[branchId]': 'tables',
+  // Jira GRW-733 — a kitchen's stations: where tables are.
+  '/settings/kitchen-stations': 'tables',
   '/settings/gst': 'both',
   '/settings/notifications': 'both',
   '/settings/payments': 'both',
@@ -101,6 +105,8 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/settings/channels/queue': 'shop',
   '/settings/report-access': 'both',
   '/settings/roles': 'shop',
+  // Jira GRW-735 — a branch's coupons and buy-get offers: where bills of products are rung up.
+  '/settings/offers': 'shop',
   '/settings/team': 'both',
   '/settings/working-hours': 'both',
   '/stock': 'shop',
@@ -191,7 +197,7 @@ describe('FR-01 … FR-03 — each kind of business is offered exactly the scree
     // Jira GRW-718 — Settings › Tables is the restaurant's alone (`dining.tables`), the one difference that is not a count.
     // Jira GRW-714 — and its kitchen screen: a kitchen cooks to order, a shop has a shelf.
     // Jira GRW-737 — and its kitchen stock: a kitchen counts what it cooks with, not what is on a shelf.
-    expect(differ.sort()).toEqual(['/kitchen', '/settings/tables', '/settings/tables/[branchId]', '/stock/kitchen', '/stock/order', '/stock/report']);
+    expect(differ.sort()).toEqual(['/kitchen', '/reports/food-cost', '/settings/kitchen-stations', '/settings/tables', '/settings/tables/[branchId]', '/stock/kitchen', '/stock/order', '/stock/report']);
     // …and the menu itself is NOT one of them: that is where a restaurant's dishes live.
     expect(areaAllows('/stock', KITCHEN)).toBe(true);
     expect(areaAllows('/orders/new', KITCHEN)).toBe(true);

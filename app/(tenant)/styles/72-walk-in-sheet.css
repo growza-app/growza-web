@@ -1841,6 +1841,18 @@ input.wi-search-input-plain {
   flex: none;
 }
 
+/* Jira GRW-728 — the business's own logo in the badge, kept whole inside it. */
+.wi-rc-logo.has-image {
+  padding: 0.1875rem;
+  overflow: hidden;
+}
+
+.wi-rc-logo.has-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .wi-rc-brand-text {
   display: flex;
   flex-direction: column;

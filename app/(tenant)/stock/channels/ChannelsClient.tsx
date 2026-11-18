@@ -129,6 +129,27 @@ export function ChannelsClient() {
             </section>
           ) : null}
 
+          {/*
+            Jira GRW-734 — dine-in by area: each dish where it was sent from, so a party that moved counts in both rooms.
+            Only when the dine-in took money in an area; the rows add up to the Dine-in row above.
+          */}
+          {data.byArea && data.byArea.some((r) => r.area !== null) ? (
+            <section className="srp-types" aria-labelledby="ch-areas">
+              <h2 id="ch-areas" className="srp-name">{t('byArea')}</h2>
+              <ul className="srp-list">
+                {data.byArea.map((r) => (
+                  <li key={r.area ?? ''} className="srp-card">
+                    <div className="srp-head">
+                      <h3 className="srp-name">{r.area ?? t('noArea')}</h3>
+                      <p className="srp-value">{money(r.billedMinor)}</p>
+                    </div>
+                    {r.area === null ? <p className="srp-hint">{t('noAreaHint')}</p> : null}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
           <p className="ch-caveat" role="note">
             {localiseApiMessage(data.caveat, locale)}
           </p>

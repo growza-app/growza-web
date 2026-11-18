@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { PhoneField } from '../../components/PhoneField';
 import { IconCheck, IconChevronRight, IconMapPin, IconPhone, IconShop } from '../../components/icons';
 import { fromStoredPhone, toStoredPhone } from '../../lib/phone';
@@ -12,6 +12,7 @@ import { useAreas, useMayOpen, useWritable } from '../../components/SessionProvi
 import { hasOrderQueue } from '../../lib/areas';
 import { useNouns } from '../../lib/use-nouns';
 import { cleanGoogleReviewUrl } from '../../lib/receipt-text';
+import { LogoCard } from './LogoCard';
 
 /**
  * Jira GRW-226 — Business profile, as a form that fits a laptop and a phone.
@@ -114,12 +115,10 @@ export function ProfileForm({
   const [savedFields, setSavedFields] = useState<Fields>(() => fieldsOf(initial));
   const [f, setF] = useState<Fields>(() => fieldsOf(initial));
   const [busy, setBusy] = useState(false);
-  const [logoBusy, setLogoBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [nameError, setNameError] = useState(false);
   const [reviewUrlError, setReviewUrlError] = useState(false);
   const [saved, setSaved] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof Fields>(key: K, value: Fields[K]) => {
     setF((prev) => ({ ...prev, [key]: value }));
@@ -231,20 +230,6 @@ export function ProfileForm({
     }
   };
 
-  const onLogoChosen = async (file: File | undefined) => {
-    if (!file) return;
-    setLogoBusy(true);
-    setError(null);
-    try {
-      setSettings(await api.uploadBusinessLogo(file));
-    } catch {
-      setError(t('errors.logoFailed'));
-    } finally {
-      setLogoBusy(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
   return (
     <form
       noValidate
@@ -308,21 +293,8 @@ export function ProfileForm({
         </section>
       ) : (
       <>
-      <section className="card bp-card">
-        <div className="bp-logo">
-          <div className="bp-logo-preview">
-            {settings.tenant.logoUrl ? <img src={settings.tenant.logoUrl} alt="" /> : settings.tenant.name.charAt(0).toUpperCase()}
-          </div>
-          <div className="bp-logo-text">
-            <div className="bp-card-title">{t('logo.title')}</div>
-            <div className="field-hint">{t('logo.hint')}</div>
-          </div>
-          <button type="button" className="bp-logo-btn" disabled={logoBusy} onClick={() => fileInputRef.current?.click()}>
-            {logoBusy ? t('logo.uploading') : settings.tenant.logoUrl ? t('logo.change') : t('logo.upload')}
-          </button>
-          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => onLogoChosen(e.target.files?.[0])} />
-        </div>
-      </section>
+      {/* Jira GRW-728 — upload, take off, and see how it prints on the bill. */}
+      <LogoCard settings={settings} onChange={setSettings} />
 
       <section className="card bp-card">
         <div className="bp-card-head">
