@@ -154,11 +154,11 @@ describe('the phone hub', () => {
     expect(heading).not.toMatch(/font-size/);
   });
 
-  it('pays for the six group headings out of the gaps between groups, not the rows (owner, 2026-11-18)', () => {
-    // Grouped by task, the hub has six headings where it had three; a restaurant owner's hub was 14px over at 344×882.
+  it('separates the groups: 16px before each group, its heading 4px over its own card (owner, 2026-11-18)', () => {
+    // At 0px each heading read as the last line of the card above it. Space wins over fitting the hub on one screen.
     const phone = css.slice(css.indexOf('Jira GRW-229 AC-03'));
-    expect(phone).toMatch(/\.settings-hub \.settings-group \+ \.settings-group \{\s*margin-top:\s*0;/);
-    expect(phone.match(/\.settings-hub \.settings-group-title \{[^}]*\}/)?.[0] ?? '').toMatch(/margin-bottom:\s*0;/);
+    expect(phone).toMatch(/\.settings-hub \.settings-group \+ \.settings-group \{\s*margin-top:\s*var\(--sp-4\);/);
+    expect(phone.match(/\.settings-hub \.settings-group-title \{[^}]*\}/)?.[0] ?? '').toMatch(/margin-bottom:\s*var\(--sp-1\);/);
   });
 
   it('never shrinks a row that can be tapped — 44px is 90-accessibility.css, not this file', () => {

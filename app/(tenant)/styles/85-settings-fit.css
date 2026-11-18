@@ -862,8 +862,14 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
    * rounded edge still separate them, and no row loses a pixel of its 44px. A shorter phone (393×852,
    * 390×844) still scrolls the hub by 18–26px for that owner; a salon, with no Dining group, fits.
    */
+  /*
+   * Owner, 2026-11-18 (later, on a phone screenshot: "looking odd due to space") — with no gap, each heading sat on the card
+   * above and read as that card's last line. Space between groups wins over fitting the whole hub on one screen: a group
+   * starts 16px below the card before it, and its heading sits 4px over its own card, so the heading belongs to what follows.
+   * The hub scrolls on a shorter phone; no row loses a pixel of its 44px.
+   */
   .settings-hub .settings-group + .settings-group {
-    margin-top: 0;
+    margin-top: var(--sp-4);
   }
   /*
    * `line-height`, never `font-size`: 87-mobile-type-floor.css raises this
@@ -871,7 +877,7 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
    * headings at 1.15 rather than 1.55 is 20px, and the words are unchanged.
    */
   .settings-hub .settings-group-title {
-    margin-bottom: 0;
+    margin-bottom: var(--sp-1);
     line-height: 1.15;
   }
   /* The rows that go somewhere keep the full width — and their 44px. */
