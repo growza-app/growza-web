@@ -286,8 +286,10 @@ export function PayFlow({
    * opens in a sheet over the map. `mapKey` makes the map read again the moment the till changed something.
    */
   /** The table being ordered for; `billId` when the till opened its bill to add a round (QA 2026-11-16: refused if it moved). */
-  const [atTable, setAtTable] = useState<{ id: string; label: string; billId?: string } | null>(null);
+  /** Jira GRW-732 — `seated` when the till opened a Seated table to take its first order (the server checks nobody seated it since). */
+  const [atTable, setAtTable] = useState<{ id: string; label: string; billId?: string; seated?: boolean } | null>(null);
   const [guests, setGuests] = useState<number | null>(null);
+  const [seating, setSeating] = useState(false);
   const [billOf, setBillOf] = useState<{ table: DiningTable; area: string } | null>(null);
   const [mapKey, setMapKey] = useState(0);
   /** What the till just did at a table, said in full: "Sent to kitchen · T3", "T3 paid · ₹640", "T1 moved to T3." */
@@ -1215,7 +1217,7 @@ export function PayFlow({
               ...(token || !location ? {} : { location }),
               // Jira GRW-720 — how it is eaten; an app's order is a delivery by where it came from and names none.
               ...(atTable
-                ? { tableId: atTable.id, ...(atTable.billId ? { tableBillId: atTable.billId } : {}), ...(guests ? { guests } : {}) }
+                ? { tableId: atTable.id, ...(atTable.billId ? { tableBillId: atTable.billId } : {}), ...(atTable.seated ? { tableSeated: true } : {}), ...(guests ? { guests } : {}) }
                 : tablesHere && !fromApp
                   ? { orderType: orderTab === 'dine_in' ? ('dine_in' as const) : ('takeaway' as const) }
                   : {}),
@@ -2254,6 +2256,22 @@ export function PayFlow({
    * for it, a busy one to open its bill. The tabs stay above, so Takeaway and Delivery are one tap away.
    */
   const role = session?.role ?? 'owner';
+  const seatHere = async () => {
+    if (!atTable) return;
+    setSeating(true);
+    try {
+      await api.seatTable(atTable.id, guests);
+      setTableSent(tTables('seatedOk', { table: atTable.label }));
+    } catch (e) {
+      // AC-02 — "T3 was just taken": the room is read again and shows who has it.
+      setTableSent(e instanceof ApiError ? e.message : tTables('actionFailed'));
+    } finally {
+      setSeating(false);
+      setAtTable(null);
+      setGuests(null);
+      setMapKey((k) => k + 1);
+    }
+  };
   const tableStrip = atTable ? (
     <div className="pf-table-strip">
       <button type="button" className="btn btn-ghost" onClick={() => setAtTable(null)}>
@@ -2273,6 +2291,15 @@ export function PayFlow({
           +
         </button>
       </div>
+      {/*
+        Jira GRW-732 — a Free table, nothing on the order yet: mark it Seated with the count above and go back to the room.
+        The first order later turns it into Food cooking. Somebody seating it on another device a moment earlier: told so.
+      */}
+      {!atTable.billId && !atTable.seated && lines.length === 0 ? (
+        <button type="button" className="btn pf-seat-btn" disabled={seating} onClick={() => void seatHere()}>
+          {tTables('seatGuests')}
+        </button>
+      ) : null}
     </div>
   ) : null;
   // Jira GRW-723 AC-04 — a waiter at a branch that does not seat its guests is told so, and offered nothing else.
@@ -2317,7 +2344,15 @@ export function PayFlow({
             canManage={role === 'owner' || role === 'manager'}
             printer={printer}
             onAddDishes={() => {
-              setAtTable({ id: billOf.table.id, label: `${billOf.table.name} · ${billOf.area}`, ...(billOf.table.openBill ? { billId: billOf.table.openBill.saleId } : {}) });
+              const seatedHere = !billOf.table.openBill && billOf.table.seated ? billOf.table.seated : null;
+              setAtTable({
+                id: billOf.table.id,
+                label: `${billOf.table.name} · ${billOf.area}`,
+                ...(billOf.table.openBill ? { billId: billOf.table.openBill.saleId } : {}),
+                // Jira GRW-732 — a Seated table's first order: the count it was seated with is the one the order starts from.
+                ...(seatedHere ? { seated: true } : {}),
+              });
+              if (seatedHere) setGuests(seatedHere.guests);
               setBillOf(null);
             }}
             onTakePayment={

@@ -71,7 +71,7 @@ describe('a table’s bill on the till', () => {
   });
 
   it('the till sends a table’s order with the table, and says “Send to kitchen”', () => {
-    expect(flow).toContain('? { tableId: atTable.id, ...(atTable.billId ? { tableBillId: atTable.billId } : {}), ...(guests ? { guests } : {}) }');
+    expect(flow).toContain('? { tableId: atTable.id, ...(atTable.billId ? { tableBillId: atTable.billId } : {}), ...(atTable.seated ? { tableSeated: true } : {}), ...(guests ? { guests } : {}) }');
     expect(flow).toContain("atTable ? tTables('sendToKitchen') : t(qk('desk.keepPendingInQueue'))");
   });
 
@@ -83,7 +83,7 @@ describe('a table’s bill on the till', () => {
 describe('Jira GRW-722 — move a party, join two tables', () => {
   it('Move table lists the other tables: a free one says Move here, a busy one says Join', () => {
     expect(sheet).toContain('const others = area.tables.filter((x) => x.id !== table.id);');
-    expect(sheet).toContain("{x.openBill ? t('join') : t('moveHere')}");
+    expect(sheet).toContain("{takes === 'join' ? t('join') : takes === 'move' ? t('moveHere') : t(`state.${stateOf(x)}`)}");
     expect(sheet).toContain('to.openBill ? api.joinTable(table.id, to.id) : api.moveTable(table.id, to.id)');
   });
 
@@ -129,7 +129,7 @@ describe('QA 2026-11-16 — the dine-in run’s fixes on the till', () => {
   });
 
   it('#11 — the bill sheet says it is loading the bill, not the tables', () => {
-    expect(sheet).toContain("{order === null && !error ? <p className=\"field-hint\">{t('billLoading')}</p> : null}");
+    expect(sheet).toContain("{order === null && !error && !seatedOnly ? <p className=\"field-hint\">{t('billLoading')}</p> : null}");
   });
 
   it('a round from the bill sheet names the bill, so a bill that moved meanwhile is refused', () => {

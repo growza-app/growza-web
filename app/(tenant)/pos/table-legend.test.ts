@@ -44,10 +44,11 @@ describe('AC-01 · AC-02 — Food cooking, then Eating, then cooking again', () 
 describe('BR-03 — colour is never the only signal', () => {
   it('the tile writes its state word, and the legend names every colour, in both languages', () => {
     expect(map).toContain('<span className="tm-state">{t(`state.${state}`)}</span>');
-    expect(TABLE_STATES).toEqual(['free', 'cooking', 'eating', 'bill']);
+    // Jira GRW-732 — Seated comes between Free and Food cooking: the way a table's evening goes.
+    expect(TABLE_STATES).toEqual(['free', 'seated', 'cooking', 'eating', 'bill']);
     expect(map).toContain('<ul className="tm-legend" aria-label={t(\'legendAria\')}>');
     expect(map).toContain('<span className="tm-swatch" aria-hidden="true" />');
-    expect(en.posTables.state).toMatchObject({ free: 'Free', cooking: 'Food cooking', eating: 'Eating', bill: 'Bill printed' });
+    expect(en.posTables.state).toMatchObject({ free: 'Free', seated: 'Seated', cooking: 'Food cooking', eating: 'Eating', bill: 'Bill printed' });
     for (const s of TABLE_STATES) {
       expect(hi.posTables.state[s]).toBeTruthy();
       expect(hi.posTables.state[s]).not.toBe(en.posTables.state[s]);
@@ -81,7 +82,7 @@ describe('QA — each colour’s border is 3:1 or more, and the swatch matches i
   };
   const borderOf = (state: string) => new RegExp(`\\.tm-tile\\.is-${state}, \\.tm-key\\.is-${state} \\.tm-swatch \\{ background: var\\(--[a-z-]+\\); border-color: var\\(--([a-z-]+)\\); \\}`).exec(css)?.[1];
 
-  it.each(['free', 'cooking', 'eating', 'bill'])('%s', (state) => {
+  it.each(['free', 'seated', 'cooking', 'eating', 'bill'])('%s', (state) => {
     const token = borderOf(state);
     expect(token, `no shared tile + swatch rule for ${state}`).toBeTruthy();
     expect(contrast(hex(token!), hex('surface'))).toBeGreaterThanOrEqual(3);

@@ -7,7 +7,7 @@ import { useDialog } from '../../shared/a11y/useDialog';
 import { useScrimDismiss } from '../../shared/a11y/scrim-dismiss';
 import type { useTicketPrinter } from '../components/TicketPrinter';
 import { useWaiter } from './waiter';
-import { minutesSeated, stateOf } from './TableMap';
+import { minutesSeated, stateOf, STILL_SEATED_MIN } from './TableMap';
 import { useSession } from '../components/SessionProvider';
 
 /**
@@ -18,6 +18,9 @@ import { useSession } from '../components/SessionProvider';
  * Every action answers from the server and the sheet reads the bill again, so two counters on one table see one bill.
  * Jira GRW-722 — "Move table" lists the branch's other tables: a free one takes the party (Move here), a busy one takes
  * this bill onto its own (Join). Nothing is sent to the kitchen again; the server refuses either once money was taken.
+ *
+ * Jira GRW-732 — a Seated table (guests sat, nothing ordered yet) opens the same sheet with no bill: Take order, Move
+ * table (BR-03: only to a free table) and Free again (AC-03: the guests left; nothing is a sale).
  *
  * Payment follows the owner's rule of 4 Nov 2026: a bill names who paid before the money is taken, so an unnamed table
  * asks for a name first (one field, then the way of paying).
@@ -56,7 +59,9 @@ export function TableBillSheet({
   const waiter = useWaiter();
   // Jira GRW-724 — the service charge this branch offers (never added by itself; the counter adds it when the guest agrees).
   const offerBp = useSession()?.branches?.find((b) => b.id === location)?.serviceChargeBp ?? null;
-  const saleId = table.openBill!.saleId;
+  // Jira GRW-732 — no bill: a Seated table. Nothing to read; the sheet offers the order, a move and Free again.
+  const seatedOnly = !table.openBill;
+  const saleId = table.openBill?.saleId ?? '';
   const ref = useRef<HTMLDivElement>(null);
   useDialog(ref, { onClose: () => onDone(), initialFocus: 'container' });
   const scrimDismiss = useScrimDismiss(() => onDone());
@@ -90,6 +95,11 @@ export function TableBillSheet({
       setMoving([]);
       setMoving((await api.diningTables(location)).areas);
     });
+  /**
+   * What a table in the Move list takes: a free one the party (Move here), a busy one this bill (Join). Nothing goes onto
+   * a Seated table (Jira GRW-732), and a Seated party with no order has no bill to join with another.
+   */
+  const targetOf = (x: DiningTable): 'move' | 'join' | null => (x.openBill ? (seatedOnly ? null : 'join') : x.seated ? null : 'move');
   const moveTo = (to: DiningTable) =>
     run(
       () => (to.openBill ? api.joinTable(table.id, to.id) : api.moveTable(table.id, to.id)),
@@ -98,12 +108,13 @@ export function TableBillSheet({
     );
 
   const read = useCallback(async () => {
+    if (seatedOnly) return;
     try {
       setOrder(await api.order(saleId));
     } catch {
       setError(t('billLoadFailed'));
     }
-  }, [saleId, t]);
+  }, [saleId, seatedOnly, t]);
   useEffect(() => void read(), [read]);
 
   const run = async (job: () => Promise<unknown>, after: 'read' | 'done' = 'read', said?: string) => {
@@ -147,7 +158,7 @@ export function TableBillSheet({
   // One person took every dish: said once under the title, not under each dish.
   const takers = new Set(dishes.map((l) => l.addedBy ?? ''));
   const oneTaker = takers.size === 1 && !takers.has('') ? [...takers][0]! : null;
-  const seatedAt = table.openBill?.seatedAt;
+  const seatedAt = table.openBill?.seatedAt ?? table.seated?.at;
   const seatedMin = seatedAt ? minutesSeated(seatedAt, Date.now()) : null;
 
   const pay = (mode: (typeof MODES)[number]) =>
@@ -160,6 +171,71 @@ export function TableBillSheet({
       await api.settleCounterSale(saleId, { paymentMode: mode });
     }, 'done', t('paidOk', { table: table.name, amount: money(totalMinor) }));
 
+  const moveBlock = moving ? (
+              <div className="tb-move" role="group" aria-label={t('moveTitle', { table: table.name })}>
+                <p className="field-hint">{seatedOnly ? t('moveHintSeated') : t('moveHint')}</p>
+                {moving.length === 0 ? <p className="field-hint">{t('loading')}</p> : null}
+                {picked ? (
+                  <div className="tb-confirm" role="alertdialog" aria-label={picked.openBill ? t('confirmJoinTitle', { from: table.name, to: picked.name }) : t('confirmMoveTitle', { from: table.name, to: picked.name })}>
+                    <p className="tb-confirm-title">
+                      {picked.openBill ? t('confirmJoinTitle', { from: table.name, to: picked.name }) : t('confirmMoveTitle', { from: table.name, to: picked.name })}
+                    </p>
+                    <p className="field-hint">
+                      {picked.openBill
+                        ? t('confirmJoinLine', { to: picked.name, amount: money(totalMinor + picked.openBill.totalMinor) })
+                        : t('confirmMoveLine', { to: picked.name, amount: money(totalMinor) })}
+                    </p>
+                    <div className="dt-actions">
+                      <button type="button" className="btn" disabled={busy} onClick={() => void moveTo(picked)}>
+                        {picked.openBill ? t('join') : t('moveHere')}
+                      </button>
+                      <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => setPicked(null)}>
+                        {t('back')}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+                {moving.map((area) => {
+                  const others = area.tables.filter((x) => x.id !== table.id);
+                  return others.length === 0 ? null : (
+                    <section key={area.id} className="tb-move-area">
+                      <h3 className="tb-move-name">{area.name}</h3>
+                      <div className="tb-move-grid">
+                        {others.map((x) => {
+                          // Jira GRW-732 — a table that takes nothing from here (Seated, or a bill a Seated party cannot join) says what it is, and cannot be picked.
+                          const takes = targetOf(x);
+                          return (
+                            <button
+                              key={x.id}
+                              type="button"
+                              className={`tm-tile is-${stateOf(x)}`}
+                              disabled={busy || takes === null}
+                              aria-pressed={picked?.id === x.id}
+                              aria-label={
+                                takes === 'join' && x.openBill
+                                  ? t('joinTo', { table: x.name, amount: money(x.openBill.totalMinor) })
+                                  : takes === 'move'
+                                    ? t('moveTo', { table: x.name })
+                                    : `${x.name}, ${t(`state.${stateOf(x)}`)}`
+                              }
+                              onClick={() => setPicked(x)}
+                            >
+                              <span className="tm-name">{x.name}</span>
+                              <span className="tm-state">{takes === 'join' ? t('join') : takes === 'move' ? t('moveHere') : t(`state.${stateOf(x)}`)}</span>
+                              {x.openBill ? <span className="tm-detail">{money(x.openBill.totalMinor)}</span> : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  );
+                })}
+                <button type="button" className="btn btn-ghost" onClick={() => { setMoving(null); setPicked(null); }}>
+                  {t('cancel')}
+                </button>
+              </div>
+  ) : null;
+
   return (
     <div className="pf-keypad-scrim" {...scrimDismiss}>
       <div ref={ref} className="pf-keypad tb-sheet" role="dialog" aria-modal="true" aria-label={`${table.name} · ${areaName}`} tabIndex={-1}>
@@ -171,7 +247,12 @@ export function TableBillSheet({
           <span className="tb-title">
             <span className="pf-keypad-title tb-title-name">{table.name}</span>
             <span className="tb-title-sub">
-              {[areaName, seatedMin === null ? null : t('seated', { min: seatedMin }), oneTaker ? t('takenBy', { name: oneTaker }) : null]
+              {[
+                areaName,
+                seatedMin === null ? null : seatedOnly ? t('seatedFor', { min: seatedMin }) : t('seated', { min: seatedMin }),
+                seatedOnly && table.seated?.guests ? t('guestsN', { n: table.seated.guests }) : null,
+                oneTaker ? t('takenBy', { name: oneTaker }) : null,
+              ]
                 .filter(Boolean)
                 .join(' · ')}
             </span>
@@ -181,7 +262,33 @@ export function TableBillSheet({
           </button>
         </div>
 
-        {order === null && !error ? <p className="field-hint">{t('billLoading')}</p> : null}
+        {/* Jira GRW-732 — Seated, nothing ordered: take the order, move the party, or free the table. */}
+        {seatedOnly ? (
+          <div className="tb-seated">
+            {seatedMin !== null && seatedMin >= STILL_SEATED_MIN ? <p className="field-hint tb-still">{t('stillSeatedAsk')}</p> : null}
+            {moving ? (
+              moveBlock
+            ) : (
+              <div className="tb-actions">
+                <button type="button" className="btn tb-take-order" disabled={busy} onClick={onAddDishes}>
+                  {t('takeOrder')}
+                </button>
+                <button type="button" className="btn btn-ghost" disabled={busy} onClick={openMove}>
+                  {t('moveTable')}
+                </button>
+                <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void run(() => api.freeTable(table.id), 'done', t('freedOk', { table: table.name }))}>
+                  {t('freeAgain')}
+                </button>
+              </div>
+            )}
+            {error ? (
+              <p className="al-error" role="alert">
+                {error}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+        {order === null && !error && !seatedOnly ? <p className="field-hint">{t('billLoading')}</p> : null}
         {order ? (
           <>
             {/* While a reason is typed, every row and link stays where it was, greyed out: the sheet never drops. */}
@@ -269,58 +376,7 @@ export function TableBillSheet({
             ) : null}
 
             {moving ? (
-              <div className="tb-move" role="group" aria-label={t('moveTitle', { table: table.name })}>
-                <p className="field-hint">{t('moveHint')}</p>
-                {moving.length === 0 ? <p className="field-hint">{t('loading')}</p> : null}
-                {picked ? (
-                  <div className="tb-confirm" role="alertdialog" aria-label={picked.openBill ? t('confirmJoinTitle', { from: table.name, to: picked.name }) : t('confirmMoveTitle', { from: table.name, to: picked.name })}>
-                    <p className="tb-confirm-title">
-                      {picked.openBill ? t('confirmJoinTitle', { from: table.name, to: picked.name }) : t('confirmMoveTitle', { from: table.name, to: picked.name })}
-                    </p>
-                    <p className="field-hint">
-                      {picked.openBill
-                        ? t('confirmJoinLine', { to: picked.name, amount: money(totalMinor + picked.openBill.totalMinor) })
-                        : t('confirmMoveLine', { to: picked.name, amount: money(totalMinor) })}
-                    </p>
-                    <div className="dt-actions">
-                      <button type="button" className="btn" disabled={busy} onClick={() => void moveTo(picked)}>
-                        {picked.openBill ? t('join') : t('moveHere')}
-                      </button>
-                      <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => setPicked(null)}>
-                        {t('back')}
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-                {moving.map((area) => {
-                  const others = area.tables.filter((x) => x.id !== table.id);
-                  return others.length === 0 ? null : (
-                    <section key={area.id} className="tb-move-area">
-                      <h3 className="tb-move-name">{area.name}</h3>
-                      <div className="tb-move-grid">
-                        {others.map((x) => (
-                          <button
-                            key={x.id}
-                            type="button"
-                            className={`tm-tile is-${stateOf(x)}`}
-                            disabled={busy}
-                            aria-pressed={picked?.id === x.id}
-                            aria-label={x.openBill ? t('joinTo', { table: x.name, amount: money(x.openBill.totalMinor) }) : t('moveTo', { table: x.name })}
-                            onClick={() => setPicked(x)}
-                          >
-                            <span className="tm-name">{x.name}</span>
-                            <span className="tm-state">{x.openBill ? t('join') : t('moveHere')}</span>
-                            {x.openBill ? <span className="tm-detail">{money(x.openBill.totalMinor)}</span> : null}
-                          </button>
-                        ))}
-                      </div>
-                    </section>
-                  );
-                })}
-                <button type="button" className="btn btn-ghost" onClick={() => { setMoving(null); setPicked(null); }}>
-                  {t('cancel')}
-                </button>
-              </div>
+              moveBlock
             ) : live.length > 0 && !paying ? (
               <div className="tb-actions">
                 <button type="button" className="btn btn-ghost" disabled={busy || takingOff !== null} onClick={onAddDishes}>
@@ -403,7 +459,7 @@ export function TableBillSheet({
               )}
             </div>
           </>
-        ) : error ? (
+        ) : error && !seatedOnly ? (
           <p className="al-error" role="alert">
             {error}
           </p>

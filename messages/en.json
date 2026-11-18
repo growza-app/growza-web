@@ -4668,6 +4668,7 @@
     "emptyAskOwner": "Ask the owner or a manager to set up the tables in Settings.",
     "state": {
       "free": "Free",
+      "seated": "Seated",
       "cooking": "Food cooking",
       "eating": "Eating",
       "bill": "Bill printed"
@@ -4733,7 +4734,17 @@
     "cookedNo": "No, back to stock",
     "cookedYes": "Yes, wasted",
     "cookedHint": "Asked because the kitchen got it and never ticked it Done.",
-    "cookedNeeded": "Say whether it was already cooked."
+    "cookedNeeded": "Say whether it was already cooked.",
+    "seatGuests": "Seat guests",
+    "seatedOk": "{table} seated. Tap it to take the order.",
+    "seatedFor": "Seated {min} min",
+    "guestsN": "{n, plural, one {# guest} other {# guests}}",
+    "stillSeated": "Still seated? · {min} min",
+    "stillSeatedAsk": "Seated over an hour and nothing ordered. Are they still here?",
+    "takeOrder": "Take order",
+    "freeAgain": "Free again",
+    "freedOk": "{table} is free again.",
+    "moveHintSeated": "Pick a free table to move the guests to."
   },
   "pos": {
     "kitchenScreen": "Kitchen",

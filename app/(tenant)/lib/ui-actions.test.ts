@@ -208,7 +208,9 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   // Jira GRW-722 — Move table, on the same table's sheet.
   '/pos': ['POST /api/v1/counter-sales/:id/cancel-items', 'POST /api/v1/tables/:id/move', 'POST /api/v1/tables/:id/join', 'POST /api/v1/counter-sales/:id/service-charge',
     // Jira GRW-716 — the till asks for its letter so it can keep billing offline.
-    'POST /api/v1/till-devices'],
+    'POST /api/v1/till-devices',
+    // Jira GRW-732 — Seat guests on the till's table strip, and Free again on a Seated table's sheet.
+    'POST /api/v1/tables/:id/seat', 'DELETE /api/v1/tables/:id/seat'],
   /*
    * Jira GRW-647 — a switch and a device registration, both the signed-in person's own.
    *

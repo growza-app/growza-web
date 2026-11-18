@@ -49,6 +49,8 @@ export interface DiningTable {
     /** Jira GRW-731 — the kitchen has a dish for this table and has not marked it Ready. Absent from an older API. */
     foodCooking?: boolean;
   } | null;
+  /** Jira GRW-732 — guests seated, no order yet (null once the first order opens the bill). Absent from an older API. */
+  seated?: { at: string; guests: number | null } | null;
 }
 
 /** Jira GRW-719 — an area of a branch's room (AC Hall, Garden) and its tables, in the order the owner set. */

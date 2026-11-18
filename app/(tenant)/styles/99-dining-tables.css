@@ -92,6 +92,14 @@
  */
 .tm-tile.is-free, .tm-key.is-free .tm-swatch { background: var(--surface); border-color: var(--muted); }
 .tm-tile.is-free .tm-state { color: var(--muted); }
+/*
+ * Jira GRW-732 — Seated: guests at the table, nothing ordered yet. Purple, the one accent no other table state uses; --purple-deep is
+ * 7.1:1 on white. After an hour with no order the tile steps back (BR-02, "Still seated?"), its word and colour still there.
+ */
+.tm-tile.is-seated, .tm-key.is-seated .tm-swatch { background: var(--purple-soft); border-color: var(--purple-deep); }
+.tm-tile.is-seated .tm-state { color: var(--purple-deep); }
+.tm-tile.is-seated.is-stale { background: var(--surface); border-style: dashed; }
+.tm-tile.is-stale .tm-detail { font-style: italic; }
 .tm-tile.is-cooking, .tm-key.is-cooking .tm-swatch { background: var(--amber-soft); border-color: var(--amber); }
 .tm-tile.is-cooking .tm-state { color: var(--amber-ink); }
 .tm-tile.is-eating, .tm-key.is-eating .tm-swatch { background: var(--accent-soft); border-color: var(--accent-deep); }
@@ -130,6 +138,12 @@
 .tb-pay, .tb-reason { display: flex; flex-direction: column; gap: var(--sp-2); }
 .pf-guests-btn { min-width: 44px; min-height: 44px; padding: 0; justify-content: center; }
 .pf-guests-n { min-width: 1.5rem; text-align: center; font-weight: 600; }
+/* Jira GRW-732 — Seat guests: a whole row under the strip on a phone, beside the count on a wide till. */
+.pf-seat-btn { flex: 1 1 100%; }
+@media (min-width: 861px) { .pf-seat-btn { flex: 0 0 auto; } }
+.tb-seated { display: flex; flex-direction: column; gap: var(--sp-2); }
+.tb-seated .tb-take-order { flex-basis: 100%; }
+.tb-still { margin: 0; font-style: italic; }
 
 /* Jira GRW-722 — Move table: the branch's other tables as the map's own tiles, smaller. */
 .tb-move { display: flex; flex-direction: column; gap: var(--sp-2); }

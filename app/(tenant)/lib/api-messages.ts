@@ -129,6 +129,11 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'This table’s bill has moved, joined another table or been paid. Open the table again.': 'इस टेबल का बिल दूसरी टेबल पर चला गया, जुड़ गया या चुकता हो गया। टेबल फिर से खोलें।',
   'That table is not at this branch.': 'यह टेबल इस ब्रांच में नहीं है।',
   'That table is at another branch.': 'यह टेबल दूसरी ब्रांच की है।',
+  // Jira GRW-732 — guests seated before they order.
+  'Someone just seated guests at this table. Open the table again.': 'अभी-अभी किसी ने इस टेबल पर मेहमान बिठाए हैं। टेबल फिर से खोलें।',
+  'Guests are a whole number': 'मेहमानों की गिनती पूरी संख्या में लिखें',
+  'At least one guest': 'कम से कम एक मेहमान',
+  'At most 99 guests': 'ज़्यादा से ज़्यादा 99 मेहमान',
   // Jira GRW-720 — how an order is eaten.
   'Table orders is off at this branch.': 'इस ब्रांच में टेबल ऑर्डर बंद है।',
   'Choose Dine-in or Takeaway': 'यहीं खाना या पैक करके चुनें',
@@ -564,6 +569,11 @@ function localiseStockMessage(message: string): string | null {
  */
 const TABLE_MESSAGES: Array<[RegExp, (m: RegExpExecArray) => string]> = [
   [/^(.+) has an open bill\. Settle it first\.$/s, (m) => `${m[1]} का बिल अभी खुला है। पहले उसे निपटाएँ।`],
+  // Jira GRW-732 — a Seated table (guests sat, no order yet).
+  [/^(.+) has guests seated\. Free it first\.$/s, (m) => `${m[1]} पर मेहमान बैठे हैं। पहले उसे खाली करें।`],
+  [/^(.+) has guests seated\. Pick a free table\.$/s, (m) => `${m[1]} पर मेहमान बैठे हैं। कोई खाली टेबल चुनें।`],
+  [/^(.+) was just taken\. Pick another table\.$/s, (m) => `${m[1]} अभी-अभी किसी और ने ले ली। दूसरी टेबल चुनें।`],
+  [/^(.+) has an order\. Open its bill instead\.$/s, (m) => `${m[1]} पर ऑर्डर हो चुका है। उसका बिल खोलें।`],
   [/^(.+) is already used at this branch\.$/s, (m) => `${m[1]} इस ब्रांच में पहले से है।`],
   [/^(.+) still has (\d+) tables?\. Move or remove them first\.$/s, (m) => `${m[1]} में अभी ${m[2]} टेबल हैं। पहले उन्हें हटाएँ या दूसरे एरिया में ले जाएँ।`],
   [/^(\d+) tables? still ha(?:s|ve) (?:an )?open bills?\. Settle them before switching Table orders off\.$/s, (m) => `${m[1]} टेबल का बिल अभी खुला है। टेबल ऑर्डर बंद करने से पहले उन्हें निपटाएँ।`],

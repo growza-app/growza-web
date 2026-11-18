@@ -783,10 +783,15 @@ export const api = {
   diningTables: (location: string) => get<{ areas: DiningArea[] }>(`/api/v1/tables?location=${encodeURIComponent(location)}`),
   /** Jira GRW-722 — a party to a free table; nothing goes to the kitchen again. */
   moveTable: (tableId: string, to: string) =>
-    post<{ saleId: string; from: string; to: string; totalMinor: number }>(`/api/v1/tables/${encodeURIComponent(tableId)}/move`, { to }),
+    // Jira GRW-732 — `saleId` is null when Seated guests with no order moved: there is no bill yet.
+    post<{ saleId: string | null; from: string; to: string; totalMinor: number }>(`/api/v1/tables/${encodeURIComponent(tableId)}/move`, { to }),
   /** Jira GRW-722 — this table's bill onto another open table's; this table is free. */
   joinTable: (tableId: string, into: string) =>
     post<{ saleId: string; from: string; to: string; totalMinor: number }>(`/api/v1/tables/${encodeURIComponent(tableId)}/join`, { into }),
+  /** Jira GRW-732 — guests sit at a free table before ordering (409 `table_taken` when somebody just did). */
+  seatTable: (tableId: string, guests: number | null) => post<{ areas: DiningArea[] }>(`/api/v1/tables/${encodeURIComponent(tableId)}/seat`, { guests }),
+  /** Jira GRW-732 — Free again: the seated guests left before ordering. Nothing was a sale. */
+  freeTable: (tableId: string) => del<{ areas: DiningArea[] }>(`/api/v1/tables/${encodeURIComponent(tableId)}/seat`),
   addDiningArea: (location: string, name: string) => post<{ id: string; areas: DiningArea[] }>('/api/v1/tables/areas', { location, name }),
   renameDiningArea: (areaId: string, name: string) => patch<{ areas: DiningArea[] }>(`/api/v1/tables/areas/${areaId}`, { name }),
   removeDiningArea: (areaId: string) => del<{ areas: DiningArea[] }>(`/api/v1/tables/areas/${areaId}`),
@@ -1692,6 +1697,8 @@ export const api = {
       tableId?: string;
       /** QA 2026-11-16 — the bill a round is for; refused if the table no longer has it. */
       tableBillId?: string;
+      /** Jira GRW-732 — the till opened this table as Seated; an order at a table seated since it looked is refused. */
+      tableSeated?: boolean;
       guests?: number;
       /** Jira GRW-403 — paying a waiting token: the server takes its client and branch from it. */
       queueEntryId?: string;
