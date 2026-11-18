@@ -28,8 +28,9 @@ export type OffersAsk =
 
 const DEBOUNCE_MS = 250;
 
-export function useBillOffers(ask: OffersAsk) {
-  const key = ask ? JSON.stringify(ask) : null;
+/** `again` — bump it to ask once more about the same bill (the bill was printed again, so its paper changed). */
+export function useBillOffers(ask: OffersAsk, again = 0) {
+  const key = ask ? `${again}:${JSON.stringify(ask)}` : null;
   const [answer, setAnswer] = useState<{ key: string; quote: BillOffersQuote | null } | null>(null);
   useEffect(() => {
     if (!key) {
@@ -37,7 +38,7 @@ export function useBillOffers(ask: OffersAsk) {
       return;
     }
     let live = true;
-    const body = JSON.parse(key) as NonNullable<OffersAsk>;
+    const body = JSON.parse(key.slice(key.indexOf(':') + 1)) as NonNullable<OffersAsk>;
     const timer = setTimeout(() => {
       api
         .billOffersQuote({ ...body, couponCode: body.couponCode ?? undefined, ...('customerId' in body ? { customerId: body.customerId ?? undefined } : {}) })
@@ -73,5 +74,7 @@ export function useBillOffers(ask: OffersAsk) {
     taxOnTop: Boolean(fresh?.taxOnTop),
     taxMinor: fresh?.taxMinor ?? 0,
     dueMinor: fresh?.dueMinor ?? null,
+    /** QA of the overnight stack (item 7) — the printed bill asks for another amount than this payment: print it again. */
+    printedOutOfDate: Boolean(fresh?.printedOutOfDate),
   };
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError, type KitchenStations } from '../../lib/api';
 import { useBranch } from '../../components/BranchProvider';
 import { useWritable } from '../../components/SessionProvider';
@@ -47,8 +47,15 @@ export function KitchenStationsSetup({ branches }: { branches: Array<{ id: strin
     void load();
   }, [load]);
 
+  /*
+   * QA of the overnight stack (item 10) — one change at a time, held in a ref: `busy` is state, so a double tap on Add
+   * reached `run` twice before the button re-drew as disabled, and the second answered a false "already used".
+   */
+  const inFlight = useRef(false);
   /** Run one change; draw what the server answers with, or say why not where it was asked. */
   const run = async (where: string, change: () => Promise<KitchenStations>): Promise<boolean> => {
+    if (inFlight.current) return false;
+    inFlight.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -58,6 +65,7 @@ export function KitchenStationsSetup({ branches }: { branches: Array<{ id: strin
       setError({ where, message: e instanceof ApiError ? e.message : t('saveFailed') });
       return false;
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   };
@@ -109,7 +117,8 @@ export function KitchenStationsSetup({ branches }: { branches: Array<{ id: strin
       setError({ where: 'add', message: t('nameNeeded') });
       return;
     }
-    if (await run('add', () => api.addKitchenStation(location, name))) setNewName('');
+    // Item 10 — the box is cleared only of the name that was sent: whatever was typed while it was saving stays.
+    if (await run('add', () => api.addKitchenStation(location, name))) setNewName((now) => (now.trim() === name ? '' : now));
   };
 
   return (

@@ -2475,6 +2475,8 @@ export interface DocumentTicket {
    * null when nothing is due or none is set up. Absent from an older API.
    */
   payQr?: { kind: 'upi'; uri: string; amountMinor: number } | { kind: 'image'; image: string; amountMinor: number } | null;
+  /** QA of the overnight stack (item 7) — this paper no longer says what is owed (no QR is sent with it): print the bill again. */
+  outOfDate?: boolean;
 }
 
 /** Jira GRW-712 — an add-on group (Extras, Spice) and its priced choices. */
@@ -2791,4 +2793,6 @@ export interface BillOffersQuote {
   /** Jira GRW-736 — the business adds GST on top: `taxMinor` is it, on the bill after its offers, discount and points; `dueMinor` includes it. */
   taxOnTop?: boolean;
   taxMinor?: number;
+  /** QA of the overnight stack (item 7) — the bill was printed, and its paper asks for another amount than this payment would take. */
+  printedOutOfDate?: boolean;
 }

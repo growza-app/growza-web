@@ -25,7 +25,8 @@ describe('the first part of a two-way payment survives a discount', () => {
       expect(src).toMatch(/splitTooBig \? 'split\.tooBig' : 'split\.then'/);
     }
     expect(pay).toContain('if (freeBlock || checking || splitTooBig) return;');
-    expect(till).toContain('if (saving || lines.length === 0 || freeBlock || pointsChecking || splitTooBig) return;');
+    // QA of the overnight stack (item 1) — points being asked hold the tap rather than refuse it; a too-big first part still refuses.
+    expect(till).toContain('if (saving || lines.length === 0 || freeBlock || splitTooBig) return;');
   });
   it('in English and Hindi', () => {
     expect(en.payFlow.split.tooBig).toContain('{amount} by {mode}');

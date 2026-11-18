@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError, formatMoney, type DiningArea, type DiningTable, type OrderDetail } from '../lib/api';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { useBackCloses } from '../lib/use-back-closes';
 import { useScrimDismiss } from '../../shared/a11y/scrim-dismiss';
 import type { useTicketPrinter } from '../components/TicketPrinter';
 import { useWaiter } from './waiter';
@@ -64,6 +65,8 @@ export function TableBillSheet({
   const saleId = table.openBill?.saleId ?? '';
   const ref = useRef<HTMLDivElement>(null);
   useDialog(ref, { onClose: () => onDone(), initialFocus: 'container' });
+  // QA of the overnight stack (item 11) — the phone's Back closes this sheet, and never leaves the POS.
+  useBackCloses(() => onDone());
   const scrimDismiss = useScrimDismiss(() => onDone());
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [busy, setBusy] = useState(false);

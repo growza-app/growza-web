@@ -247,9 +247,9 @@ export function useTicketPrinter() {
    * out for the roll. One numbering for every bill the business gives out, whether printed, sent or downloaded.
    */
   const printBill = useCallback(
-    (saleId: string, reprint = false) =>
+    (saleId: string, reprint = false, held?: { couponCode?: string; discountMinor?: number }) =>
       run(async () => {
-        const issued = await api.issueDocument(saleId);
+        const issued = await api.issueDocument(saleId, held);
         const doc = await api.documentTicket(issued.id);
         const figure = (minor: number) =>
           new Intl.NumberFormat(intlLocale(locale), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(minor / 100);

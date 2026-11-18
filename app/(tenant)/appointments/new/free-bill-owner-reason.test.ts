@@ -43,7 +43,8 @@ describe('the till’s payment step', () => {
 
   it('asks who is at the till by role, and holds every way of paying shut while the bill is blocked', () => {
     expect(payFlow).toContain("const isOwner = session?.role === 'owner';");
-    expect(payFlow).toMatch(/if \(saving \|\| lines\.length === 0 \|\| freeBlock \|\| pointsChecking \|\| splitTooBig\) return;/);
+    // QA of the overnight stack (item 1) — points still being asked HOLD the tap (it completes once they are in), not drop it.
+    expect(payFlow).toMatch(/if \(saving \|\| lines\.length === 0 \|\| freeBlock \|\| splitTooBig\) return;/);
     expect(payFlow).toContain('disabled={saving !== null || pointsChecking || splitTooBig || firstWay?.mode === mode || freeBlock !== null}');
     expect(payFlow).toContain('disabled={saving !== null || lines.length === 0 || freeBlock !== null}');
   });

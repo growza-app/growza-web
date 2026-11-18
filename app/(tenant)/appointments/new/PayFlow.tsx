@@ -1136,15 +1136,30 @@ export function PayFlow({
     setBadMode(false);
   };
 
+  /*
+   * QA of the overnight stack (item 1) — what is owed is still being asked: this bill's points (QA 2026-11-17, finding 1),
+   * or its offers and the GST on top (Jira GRW-735 / GRW-736). A tap then used to do NOTHING — "Complete sale" tapped
+   * within ~300 ms of a change was silently dropped. Now the tap is held: the button shows it is busy and is disabled, and
+   * the sale completes the moment the quote is in, on the figures it brought.
+   */
+  const quoting = pointsChecking || (offersHere && (billOffers.checking || (billOffers.taxOnTop && !taxOnTopNow)));
+  const [heldTap, setHeldTap] = useState<{ mode: PaymentMode; pending: boolean } | null>(null);
+
   /** ② — the tile that was tapped is the payment; this is the save. */
   const pay = async (mode: PaymentMode, pending = false) => {
-    // QA 2026-11-17 (finding 1) — not while this bill's points are still being asked.
-    // Jira GRW-735 — not while the offers on this bill are still being asked: what is owed is not known yet.
-    if (offersHere && (billOffers.checking || (billOffers.taxOnTop && !taxOnTopNow))) return;
-    if (saving || lines.length === 0 || freeBlock || pointsChecking || splitTooBig) return;
+    if (saving || lines.length === 0 || freeBlock || splitTooBig) return;
     felt(BUZZ.paid);
     setSaving(mode);
     setError(null);
+    if (quoting) {
+      setHeldTap({ mode, pending });
+      return;
+    }
+    await completePay(mode, pending);
+  };
+
+  /** The save itself, once what is owed is known. */
+  const completePay = async (mode: PaymentMode, pending: boolean) => {
     const amounts = spread(baseAmounts.map((priceMinor) => ({ priceMinor })), totalMinor);
     // Jira GRW-648 — how many points this bill spends: all the till offered, or none.
     const redeemPoints = quotedPoints;
@@ -1518,6 +1533,20 @@ export function PayFlow({
       setSaving(null);
     }
   };
+
+  // The held tap goes through as soon as the quote is in — or is let go, if the bill can no longer be paid as it stands.
+  useEffect(() => {
+    if (!heldTap || quoting) return;
+    const tap = heldTap;
+    setHeldTap(null);
+    if (lines.length === 0 || freeBlock || splitTooBig) {
+      setSaving(null);
+      return;
+    }
+    void completePay(tap.mode, tap.pending);
+    // completePay is this render's: it reads the figures the quote just brought.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [heldTap, quoting]);
 
 
 

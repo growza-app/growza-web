@@ -289,15 +289,15 @@ export function ProductsList({
   const effectivePageSize = !counted && menuView === 'cards' ? 24 : PAGE_SIZE;
   const pageCount = Math.max(1, Math.ceil(shown.length / effectivePageSize));
   const pageRows = shown.slice((Math.min(page, pageCount) - 1) * effectivePageSize, Math.min(page, pageCount) * effectivePageSize);
-  const topSeller = useMemo(
-    () =>
-      [...live]
-        .filter((p) => !/roti|bread|steam rice/i.test(p.name))
-        .sort((a, b) => b.sold - a.sold)[0] ??
-      [...live].sort((a, b) => b.sold - a.sold)[0] ??
-      null,
-    [live],
-  );
+  // QA of the overnight stack (item 12) — no top seller until something has sold: a new menu said "Top seller: Butter Naan · 0 sold".
+  const topSeller = useMemo(() => {
+    const selling = live.filter((p) => p.sold > 0);
+    return (
+      [...selling].filter((p) => !/roti|bread|steam rice/i.test(p.name)).sort((a, b) => b.sold - a.sold)[0] ??
+      [...selling].sort((a, b) => b.sold - a.sold)[0] ??
+      null
+    );
+  }, [live]);
   const totalSold = useMemo(
     () => rows.reduce((sum, p) => sum + (p.sold ?? 0), 0),
     [rows],

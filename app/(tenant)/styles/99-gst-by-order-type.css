@@ -9,3 +9,7 @@
 .pf-tax-line { display: flex; justify-content: space-between; gap: var(--sp-2); margin: var(--sp-1) 0; font-size: var(--fs-3); color: var(--muted); }
 /* Review of the overnight stack (item 14) — the "prices include GST" line for a business that cannot add it on top: a token, not an inline 14px. */
 .gst-fixed-label { font-weight: 620; font-size: var(--fs-3); color: var(--text); }
+/* QA of the overnight stack (item 7) — the printed bill no longer says what is owed: the words, then the 44px Print bill. Wraps at 344px. */
+.pf-reprint { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); margin: var(--sp-2) 0; padding: var(--sp-2) var(--sp-3); border-radius: var(--radius); background: var(--amber-soft); }
+.pf-reprint-words { flex: 1 1 12rem; margin: 0; font-size: var(--fs-3); font-weight: 600; color: var(--amber-ink); }
+.pf-reprint-btn { min-height: 44px; }

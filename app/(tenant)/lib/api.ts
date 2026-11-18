@@ -1319,8 +1319,13 @@ export const api = {
       `/api/v1/bills/${visitKey}/document/preview`,
     ),
   /** Idempotent per bill: a second call answers with the document already issued. */
-  issueDocument: (visitKey: string) =>
-    post<{ id: string; number: string; docType: string }>(`/api/v1/bills/${visitKey}/document`, {}),
+  /**
+   * QA of the overnight stack (item 7) — `held`: the coupon or the counter's discount the guest is about to pay with, on
+   * an unpaid table bill. The bill is printed with it (and its QR asks for what the payment will take); a print without
+   * it replaces a paper that had one.
+   */
+  issueDocument: (visitKey: string, held?: { couponCode?: string; discountMinor?: number }) =>
+    post<{ id: string; number: string; docType: string }>(`/api/v1/bills/${visitKey}/document`, held ?? {}),
 
   /**
    * Jira GRW-582 — a link the customer can open with no account. The token comes back once and only its hash is kept,

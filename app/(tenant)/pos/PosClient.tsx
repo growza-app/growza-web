@@ -94,6 +94,7 @@ function QueueTokenPayScreen({
   onOpenClientSheet,
   onBack,
   onSettle,
+  onPrintAgain,
   byNameOnly = false,
 }: {
   token: PosDailyToken;
@@ -121,6 +122,11 @@ function QueueTokenPayScreen({
    * (their role cannot open the guest list) and there is no discount or points (owner decisions 2026-11-15/16).
    */
   byNameOnly?: boolean;
+  /**
+   * QA of the overnight stack (item 7) — the bill was printed and the amount has changed since (a coupon or the discount
+   * typed here): print it again, with what is being given. Resolves once the print has been asked for.
+   */
+  onPrintAgain?: (held: { couponCode?: string; discountMinor?: number }) => Promise<void>;
 }) {
   const tPay = useTranslations('payFlow');
   const tc = useTranslations('chrome');
@@ -140,7 +146,10 @@ function QueueTokenPayScreen({
   const [couponCode, setCouponCode] = useState<string | null>(null);
   // Jira GRW-736 — the points the bill is spending, as last quoted (the GST on top comes after them).
   const [redeemMinorAsked, setRedeemMinorAsked] = useState(0);
-  const offers = useBillOffers({ saleId: token.id, couponCode: byNameOnly ? null : couponCode, discountMinor: byNameOnly ? 0 : billOff.offMinor, redeemMinor: redeemMinorAsked });
+  // QA of the overnight stack (item 7) — bumped after the bill is printed again, so the quote says whether the paper is current.
+  const [printedAgain, setPrintedAgain] = useState(0);
+  const [printingAgain, setPrintingAgain] = useState(false);
+  const offers = useBillOffers({ saleId: token.id, couponCode: byNameOnly ? null : couponCode, discountMinor: byNameOnly ? 0 : billOff.offMinor, redeemMinor: redeemMinorAsked }, printedAgain);
   const offMinor = offers.couponKept ? (offers.coupon?.offMinor ?? 0) : billOff.offMinor;
   /*
    * Review of the overnight stack (item 1) — the bill before the GST added on top, as the server quotes it: the order's
@@ -403,6 +412,31 @@ function QueueTokenPayScreen({
         />
       )}
       {wholeOrderOff ? <FreeBillReason block={freeBlock} reason={freeReason} onReason={setFreeReason} disabled={saving !== null} /> : null}
+      {/* QA of the overnight stack (item 7) — the printed bill's QR would ask for the old amount: the guest would pay more. */}
+      {offers.printedOutOfDate && !offers.checking && onPrintAgain ? (
+        <div className="pf-reprint" role="status">
+          <p className="pf-reprint-words">{tPay('amountChanged')}</p>
+          <button
+            type="button"
+            className="btn btn-ghost pf-reprint-btn"
+            disabled={saving !== null || printingAgain}
+            aria-busy={printingAgain}
+            onClick={() =>
+              void (async () => {
+                setPrintingAgain(true);
+                try {
+                  await onPrintAgain(offers.couponKept && couponCode ? { couponCode } : billOff.offMinor > 0 ? { discountMinor: billOff.offMinor } : {});
+                } finally {
+                  setPrintingAgain(false);
+                  setPrintedAgain((n) => n + 1);
+                }
+              })()
+            }
+          >
+            {tPay('amountChangedPrint')}
+          </button>
+        </div>
+      ) : null}
       {discountOpen ? (
         <DiscountSheet
           ownerOnlyFree={!isOwner}
@@ -1714,6 +1748,8 @@ export function PosClient({
               setPayingTable(null);
             }}
             byNameOnly={waiter}
+            // A waiter prints no bill (owner decision 2026-11-16), so it is never told to print one again.
+            {...(waiter ? {} : { onPrintAgain: (held: { couponCode?: string; discountMinor?: number }) => printer.printBill(payingToken.id, true, held) })}
             onSettle={(ways, redeemPoints, billOff, guestName) =>
               void (async () => {
                 // A waiter's walk-in: the typed name goes on the bill first, as the table's sheet did (owner, 4 Nov 2026).

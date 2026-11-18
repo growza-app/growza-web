@@ -3403,6 +3403,8 @@
     "qrMissing": "यहाँ अभी कोई QR कोड नहीं है।",
     "qrAddIt": "सेटिंग्स → पेमेंट QR में जोड़ें",
     "qrPaid": "पैसे मिल गए",
+    "amountChanged": "रकम बदल गई — बिल फिर से प्रिंट करें",
+    "amountChangedPrint": "बिल प्रिंट करें",
     "saving": "सहेज रहे हैं…",
     "spoken": "{amount} रुपये मिले। {mode}।",
     "nextCustomer": "अगला {client}",

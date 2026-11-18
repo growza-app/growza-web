@@ -3403,6 +3403,8 @@
     "qrMissing": "No QR code here yet.",
     "qrAddIt": "Add it in Settings → Payment QR",
     "qrPaid": "Money received",
+    "amountChanged": "The amount changed — print the bill again",
+    "amountChangedPrint": "Print bill",
     "saving": "Saving…",
     "spoken": "{amount} rupees received. {mode}.",
     "nextCustomer": "Next {client}",
