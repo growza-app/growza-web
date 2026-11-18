@@ -67,7 +67,7 @@
 
 /*
  * Jira GRW-721 — the room on the till. Tiles like seats in a cinema: three across at 344px, more as the screen widens.
- * Each tile says its state in WORDS (Free · Ordering · Bill printed) as well as its colour; every tile is 44px+ tall.
+ * Each tile says its state in WORDS (Free · Food cooking · Eating · Bill printed) as well as its colour; every tile is 44px+ tall.
  */
 .pf-tables { display: flex; flex-direction: column; gap: var(--sp-3); padding: var(--sp-3); }
 .pf-table-sent { margin: 0; padding: var(--sp-2) var(--sp-3); border-radius: 10px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
@@ -85,12 +85,23 @@
 .tm-name { font-weight: 700; font-size: 1rem; overflow-wrap: anywhere; }
 .tm-state { font-size: 0.75rem; font-weight: 600; }
 .tm-detail { font-size: 0.75rem; color: var(--muted); overflow-wrap: anywhere; }
-.tm-tile.is-free { background: var(--surface); }
+/*
+ * Jira GRW-731 — four states, one colour each, by the accent discipline in 00-base: amber is waiting (on the kitchen), green is done
+ * (the food is on the table), blue is what happens next (the bill is out, the money is coming). Every border is 3:1 or more against
+ * white and the page: --muted 5.6:1, --amber 4.99:1, --accent-deep 7.1:1, --blue 6.7:1. The word on the tile says it either way.
+ */
+.tm-tile.is-free, .tm-key.is-free .tm-swatch { background: var(--surface); border-color: var(--muted); }
 .tm-tile.is-free .tm-state { color: var(--muted); }
-.tm-tile.is-ordering { background: var(--accent-soft); border-color: var(--accent); }
-.tm-tile.is-ordering .tm-state { color: var(--accent-ink); }
-.tm-tile.is-bill { background: var(--amber-soft); border-color: var(--amber); }
-.tm-tile.is-bill .tm-state { color: var(--amber); }
+.tm-tile.is-cooking, .tm-key.is-cooking .tm-swatch { background: var(--amber-soft); border-color: var(--amber); }
+.tm-tile.is-cooking .tm-state { color: var(--amber-ink); }
+.tm-tile.is-eating, .tm-key.is-eating .tm-swatch { background: var(--accent-soft); border-color: var(--accent-deep); }
+.tm-tile.is-eating .tm-state { color: var(--accent-ink); }
+.tm-tile.is-bill, .tm-key.is-bill .tm-swatch { background: var(--blue-soft); border-color: var(--blue); }
+.tm-tile.is-bill .tm-state { color: var(--blue); }
+/* The legend: one line on a laptop, two at most on a 344px phone (AC-03). */
+.tm-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-3); font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+.tm-key { display: inline-flex; align-items: center; gap: var(--sp-1); white-space: nowrap; }
+.tm-swatch { flex: none; width: 0.75rem; height: 0.75rem; border: 1px solid var(--border); border-radius: 3px; }
 .tm-skeleton { background: var(--slate-soft); border-color: transparent; cursor: default; }
 .tm-failed { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); border-radius: 10px; background: var(--amber-soft); color: var(--amber); }
 .tm-failed .btn { min-height: 44px; }

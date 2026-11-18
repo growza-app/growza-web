@@ -4668,9 +4668,11 @@
     "emptyAskOwner": "मालिक या मैनेजर से सेटिंग में टेबल लगवाएँ।",
     "state": {
       "free": "खाली",
-      "ordering": "ऑर्डर चल रहा",
+      "cooking": "खाना बन रहा है",
+      "eating": "खा रहे हैं",
       "bill": "बिल छपा"
     },
+    "legendAria": "रंगों का मतलब",
     "seated": "{min} मिनट",
     "seats": "{n, plural, other {# सीट}}",
     "close": "बंद करें",

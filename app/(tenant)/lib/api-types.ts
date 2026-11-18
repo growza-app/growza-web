@@ -46,6 +46,8 @@ export interface DiningTable {
     totalMinor: number;
     guests: number | null;
     billPrinted: boolean;
+    /** Jira GRW-731 — the kitchen has a dish for this table and has not marked it Ready. Absent from an older API. */
+    foodCooking?: boolean;
   } | null;
 }
 

@@ -7,7 +7,7 @@ import { useDialog } from '../../shared/a11y/useDialog';
 import { useScrimDismiss } from '../../shared/a11y/scrim-dismiss';
 import type { useTicketPrinter } from '../components/TicketPrinter';
 import { useWaiter } from './waiter';
-import { minutesSeated } from './TableMap';
+import { minutesSeated, stateOf } from './TableMap';
 import { useSession } from '../components/SessionProvider';
 
 /**
@@ -302,7 +302,7 @@ export function TableBillSheet({
                           <button
                             key={x.id}
                             type="button"
-                            className={`tm-tile ${x.openBill ? 'is-ordering' : 'is-free'}`}
+                            className={`tm-tile is-${stateOf(x)}`}
                             disabled={busy}
                             aria-pressed={picked?.id === x.id}
                             aria-label={x.openBill ? t('joinTo', { table: x.name, amount: money(x.openBill.totalMinor) }) : t('moveTo', { table: x.name })}

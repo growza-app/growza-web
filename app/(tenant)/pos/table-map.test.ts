@@ -16,12 +16,14 @@ const table = (openBill: DiningTable['openBill']): DiningTable => ({ id: 't', na
 const bill = (billPrinted: boolean) => ({ saleId: 's', tokenNo: null, seatedAt: '2026-11-16T10:00:00Z', totalMinor: 56_000, guests: 4, billPrinted });
 
 describe('a tile says its state in words, not colour alone', () => {
-  it('Free, Ordering, Bill printed', () => {
+  // Jira GRW-731 — Ordering split into Food cooking and Eating (table-legend.test.ts holds the story's own cases).
+  it('Free, Food cooking, Eating, Bill printed', () => {
     expect(stateOf(table(null))).toBe('free');
-    expect(stateOf(table(bill(false)))).toBe('ordering');
+    expect(stateOf(table({ ...bill(false), foodCooking: true }))).toBe('cooking');
+    expect(stateOf(table({ ...bill(false), foodCooking: false }))).toBe('eating');
     expect(stateOf(table(bill(true)))).toBe('bill');
     expect(map).toContain("<span className=\"tm-state\">{t(`state.${state}`)}</span>");
-    for (const s of ['free', 'ordering', 'bill'] as const) {
+    for (const s of ['free', 'cooking', 'eating', 'bill'] as const) {
       expect(en.posTables.state[s]).toBeTruthy();
       expect(hi.posTables.state[s]).toBeTruthy();
     }

@@ -8,8 +8,11 @@ import { api, formatMoney, type DiningArea, type DiningTable } from '../lib/api'
 /**
  * Jira GRW-721 — the room, the way the counter sees it: areas as headings, tables as tiles, like seats in a cinema.
  *
- * Three states, each said in WORDS on the tile as well as its colour (UX: colour is never the only signal):
- *   Free · Ordering (minutes seated and the running total) · Bill printed (waiting to pay).
+ * Four states, each said in WORDS on the tile as well as its colour (UX: colour is never the only signal), and named
+ * once in a legend above the room (Jira GRW-731):
+ *   Free · Food cooking (the kitchen has not marked it Ready) · Eating (every slip Ready) · Bill printed (waiting to pay).
+ * Food cooking and Eating carry the minutes seated and the running total. Bill printed wins over the two cooking states
+ * (BR-02); a round sent after Ready makes the table Food cooking again (BR-01) — the server clears Ready.
  * Tapping a free table starts its order; tapping a busy one opens its bill. Another device's change shows within
  * 5 seconds (the map asks again every 5 s while it is on screen — one request, one query on the server). A failed
  * refresh keeps the last map and says so; it never blanks the room.
@@ -17,8 +20,15 @@ import { api, formatMoney, type DiningArea, type DiningTable } from '../lib/api'
 
 export const TABLE_REFRESH_MS = 5_000;
 
-export type TableState = 'free' | 'ordering' | 'bill';
-export const stateOf = (t: DiningTable): TableState => (!t.openBill ? 'free' : t.openBill.billPrinted ? 'bill' : 'ordering');
+export type TableState = 'free' | 'cooking' | 'eating' | 'bill';
+/** The legend's order: the way a table's evening goes. */
+export const TABLE_STATES: readonly TableState[] = ['free', 'cooking', 'eating', 'bill'];
+/**
+ * Bill printed wins (BR-02); then the kitchen. An older API that does not say (`foodCooking` absent) is read as cooking:
+ * "still waiting on the kitchen" is the safer thing to tell a counter than "eating".
+ */
+export const stateOf = (t: DiningTable): TableState =>
+  !t.openBill ? 'free' : t.openBill.billPrinted ? 'bill' : t.openBill.foodCooking === false ? 'eating' : 'cooking';
 
 /** Minutes since the table was opened, as the tile says it. */
 export function minutesSeated(seatedAtISO: string, nowMs: number): number {
@@ -85,6 +95,17 @@ export function TableMap({
 
   return (
     <div className="tm-map">
+      {/* Jira GRW-731 — what each colour means, once, above the room. A list, so a screen reader hears four states. */}
+      {tables > 0 ? (
+        <ul className="tm-legend" aria-label={t('legendAria')}>
+          {TABLE_STATES.map((s) => (
+            <li key={s} className={`tm-key is-${s}`}>
+              <span className="tm-swatch" aria-hidden="true" />
+              {t(`state.${s}`)}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {failed ? (
         <div className="tm-failed" role="alert">
           <span>{areas ? t('staleMap') : t('loadFailed')}</span>

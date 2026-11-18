@@ -4668,9 +4668,11 @@
     "emptyAskOwner": "Ask the owner or a manager to set up the tables in Settings.",
     "state": {
       "free": "Free",
-      "ordering": "Ordering",
+      "cooking": "Food cooking",
+      "eating": "Eating",
       "bill": "Bill printed"
     },
+    "legendAria": "What the colours mean",
     "seated": "{min} min",
     "seats": "{n, plural, one {# seat} other {# seats}}",
     "close": "Close",
