@@ -1,3 +1,4 @@
+import type { Bitmap } from './bitmap';
 import { charsPerLine, dotsPerLine, itemLines, pairLines, wrap, type PaperWidth, type Ticket, type TicketLine } from './ticket';
 
 /**
@@ -14,16 +15,10 @@ import { charsPerLine, dotsPerLine, itemLines, pairLines, wrap, type PaperWidth,
  * The drawing is passed in (`Rasterize`), so these bytes are built and tested in Node with no canvas.
  */
 
-export interface Bitmap {
-  /** Width in dots, a multiple of 8. */
-  width: number;
-  height: number;
-  /** One bit per dot, rows top to bottom, most significant bit leftmost; 1 = black. */
-  bits: Uint8Array;
-}
+export type { Bitmap };
 
 /** Draw one line (wrapped to the paper by the drawer itself, which can measure the glyphs) as a bitmap. */
-export type Rasterize = (line: Exclude<TicketLine, { kind: 'rule' } | { kind: 'gap' }>, widthDots: number) => Bitmap;
+export type Rasterize = (line: Exclude<TicketLine, { kind: 'rule' } | { kind: 'gap' } | { kind: 'image' }>, widthDots: number) => Bitmap;
 
 const ESC = 0x1b;
 const GS = 0x1d;
@@ -119,6 +114,8 @@ export function encodeTicket(ticket: Ticket, width: PaperWidth, rasterize: Raste
   for (const line of ticket.lines) {
     if (line.kind === 'gap') out.push(LF);
     else if (line.kind === 'rule') out.push(...ascii('-'.repeat(cpl)), LF);
+    // Jira GRW-728 — a picture is already this roll's dots, as wide as the paper; centred for the printers that honour it.
+    else if (line.kind === 'image') out.push(ESC, 0x61, 1, ...rasterBytes(line.bitmap), ESC, 0x61, 0);
     else {
       const asText = line.kind === 'text' ? textLine(line, width) : line.kind === 'pair' ? pairLine(line, width) : itemLine(line, width);
       if (asText) out.push(...asText);

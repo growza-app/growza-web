@@ -7,6 +7,7 @@ import { api, ApiError } from '../lib/api';
 import type { KitchenTicketDto, OrderType } from '../lib/api-types';
 import { intlLocale, formatMoney } from '../lib/format';
 import { billFromDocument, kotFromApi } from '../lib/print/from-api';
+import { logoBitmap } from '../lib/print/picture';
 import { bluetoothSupported, forgetPrinter } from '../lib/print/bluetooth';
 import {
   DEFAULT_PRINTER,
@@ -213,7 +214,10 @@ export function useTicketPrinter() {
           reprint,
         );
         const copy = billCopy();
-        return [{ ticket: billTicket(data, copy), copies: reprint ? 1 : readPrinterSettings().billCopies }];
+        const device = readPrinterSettings();
+        // Jira GRW-728 — the logo this bill was issued with, in this roll's dots; one that will not draw is left off.
+        const logo = doc.supplier.logo ? await logoBitmap(doc.supplier.logo, device.width) : null;
+        return [{ ticket: billTicket({ ...data, logo }, copy), copies: reprint ? 1 : device.billCopies }];
       }),
     [run, locale, timezone, t, tDoc, tPay, typeWords, billCopy],
   );

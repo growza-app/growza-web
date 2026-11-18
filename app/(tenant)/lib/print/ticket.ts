@@ -10,6 +10,8 @@
  * reader's language, the same contract `receipt-text.ts` keeps.
  */
 
+import type { Bitmap } from './bitmap';
+
 export type PaperWidth = '58' | '80';
 
 export type TicketLine =
@@ -24,6 +26,11 @@ export type TicketLine =
    * reads the amount.
    */
   | { kind: 'item'; name: string; qty: string; price: string; amount: string; header?: boolean }
+  /**
+   * Jira GRW-728 — a picture, already in the printer's dots for this roll (the business's logo). Drawn as a raster on
+   * a Bluetooth printer and as the same dots in the print dialog, so both papers match the preview on Settings.
+   */
+  | { kind: 'image'; bitmap: Bitmap }
   /** A dashed rule across the paper. */
   | { kind: 'rule' }
   /** An empty line. */
@@ -193,6 +200,11 @@ export interface BillItem {
 }
 
 export interface BillData {
+  /**
+   * Jira GRW-728 — the business's logo in this roll's dots, printed centred above its name. Null or absent: the bill
+   * starts with the name, as it always did.
+   */
+  logo?: Bitmap | null;
   businessName: string;
   /** The legal name when it differs from the trading name; printed under it. */
   legalName?: string | null;
@@ -262,6 +274,8 @@ export interface BillCopy {
 export function billTicket(bill: BillData, copy: BillCopy): Ticket {
   const lines: TicketLine[] = [];
   if (bill.reprint) lines.push({ kind: 'text', text: `** ${copy.reprint} **`, align: 'center', bold: true });
+  // Jira GRW-728 — the logo at the top, above the name, as the owner's Petpooja sample leads with it.
+  if (bill.logo) lines.push({ kind: 'image', bitmap: bill.logo });
   lines.push({ kind: 'text', text: bill.businessName, align: 'center', bold: true, size: 2 });
   if (bill.legalName && bill.legalName !== bill.businessName) lines.push({ kind: 'text', text: bill.legalName, align: 'center' });
   if (bill.address) lines.push({ kind: 'text', text: bill.address, align: 'center' });

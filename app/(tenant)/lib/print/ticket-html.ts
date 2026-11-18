@@ -1,3 +1,4 @@
+import { bitmapDataUrl } from './bitmap';
 import type { PaperWidth, Ticket, TicketLine } from './ticket';
 
 /**
@@ -18,6 +19,9 @@ function lineHtml(line: TicketLine): string {
       return '<div class="tp-gap"></div>';
     case 'rule':
       return '<div class="tp-rule"></div>';
+    case 'image':
+      // Jira GRW-728 — the very dots the Bluetooth printer is sent, as wide as the roll.
+      return `<img class="tp-image" src="${escapeHtml(bitmapDataUrl(line.bitmap))}" alt="">`;
     case 'pair':
       return `<div class="tp-pair${line.bold ? ' is-bold' : ''}"><span>${escapeHtml(line.left)}</span><span>${escapeHtml(line.right)}</span></div>`;
     case 'item':

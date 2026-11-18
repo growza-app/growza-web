@@ -364,6 +364,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/settings/branches/:id/make-main',
     'PATCH /api/v1/settings/branches/:id',
     'POST /api/v1/settings/logo',
+    // Jira GRW-728 — the owner takes the logo off again (the screen draws the button for the owner alone, BR-01).
+    'DELETE /api/v1/settings/logo',
     /*
      * Settings › Payments — the QR the till shows. Owner-only like the rest of
      * this screen: `canSee('/settings', role)` is false for both limited roles,

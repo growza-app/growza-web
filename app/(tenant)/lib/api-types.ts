@@ -2396,7 +2396,17 @@ export interface DocumentTicket {
   number: string;
   issuedAt: string;
   status: 'issued' | 'cancelled';
-  supplier: { legalName: string; tradeName: string | null; address: string | null; gstin: string | null; phone: string | null; fssai: string | null; footer: string | null };
+  supplier: {
+    legalName: string;
+    tradeName: string | null;
+    address: string | null;
+    gstin: string | null;
+    phone: string | null;
+    fssai: string | null;
+    footer: string | null;
+    /** Jira GRW-728 — the logo the bill was first issued with, as a data URI; null with none. Absent from an older API. */
+    logo?: string | null;
+  };
   /** The name on the document; "Walk-in" for an unnamed guest, which the bill leaves off. */
   customerName: string;
   /** Who issued it — printed as the bill's Cashier. Null when the member has no name. */

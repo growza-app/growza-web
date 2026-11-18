@@ -1251,6 +1251,10 @@ export const api = {
   ) =>
     patch<{ branch: BranchSettings }>(`/api/v1/settings/branches/${id}`, body),
   uploadBusinessLogo: (file: File) => uploadFile<SettingsSummary>('/api/v1/settings/logo', 'logo', file),
+  /** Jira GRW-728 — the owner takes the logo off; bills print the name alone again. */
+  removeBusinessLogo: () => del<SettingsSummary>('/api/v1/settings/logo'),
+  /** Jira GRW-728 — the logo as a data URI, for what draws it on a canvas (the print preview, the shared bill image). */
+  businessLogo: () => get<{ logo: string | null }>('/api/v1/logo'),
   /*
    * The payment QR a salon holds up at the till — the business's, and a branch's own.
    *
