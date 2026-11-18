@@ -527,7 +527,8 @@
       "saving": "Saving…",
       "saved": "Saved. Bills print a QR for their amount.",
       "remove": "Remove UPI ID",
-      "failed": "That did not save. Please try again."
+      "failed": "That did not save. Please try again.",
+      "example": "shopname@okicici"
     }
   },
   "common": {

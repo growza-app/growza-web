@@ -78,7 +78,7 @@ export function UpiIdCard({ state, onChange }: { state: PaymentQrState; onChange
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
-              placeholder="shopname@okicici"
+              placeholder={t('example')}
               value={vpa}
               maxLength={300}
               onChange={(e) => {
