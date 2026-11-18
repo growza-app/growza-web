@@ -2,10 +2,10 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
-import { useDialog } from '../../../shared/a11y/useDialog';
-import { api, ApiError, formatMoney } from '../../lib/api';
-import type { MaterialUnit, StockMaterial } from '../../lib/api-types';
-import { amount, parseAmount, unitWord } from '../../lib/kitchen-units';
+import { useDialog } from '../../shared/a11y/useDialog';
+import { api, ApiError, formatMoney } from '../lib/api';
+import type { MaterialUnit, StockMaterial } from '../lib/api-types';
+import { amount, parseAmount, unitWord } from '../lib/kitchen-units';
 import { MaterialHistory } from './MaterialHistory';
 import { MaterialPrices } from './MaterialPrices';
 

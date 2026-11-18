@@ -5916,7 +5916,7 @@
     "foodCost": {
       "title": "Food cost",
       "rangeHint": "Up to 3 months at a time. Food is valued at what it cost the day it was cooked.",
-      "notTracking": "Kitchen stock is switched off, so new sales take nothing out and add no food cost.",
+      "notTracking": "Inventory is switched off, so new sales take nothing out and add no food cost.",
       "noSales": "No sales in these days",
       "pctLabel": "Food cost",
       "pctLine": "{food} of food for {sales} of sales",
@@ -5939,7 +5939,7 @@
       "lost": "Missing (found by a count)",
       "found": "Extra (found by a count)",
       "lossNote": "Valued at what each item cost when it was recorded. Extra found later never cancels what went missing.",
-      "lossUnpriced": "{count, plural, one {# entry has} other {# entries have}} no price yet and is not in the totals",
+      "lossUnpriced": "{count, plural, one {# entry has no price yet and is} other {# entries have no price yet and are}} not in the totals",
       "byItemTitle": "By item",
       "itemWasted": "Wasted {qty}",
       "itemLost": "Missing {qty}",
@@ -5958,7 +5958,11 @@
       },
       "noPriceShort": "No price",
       "by": "by {name}",
-      "moreEntries": "{count} more not shown"
+      "moreEntries": "{count} more not shown",
+      "usedTitle": "What was used",
+      "usedNote": "What the dishes sent to the kitchen took, less what came back before cooking. At what each item cost then.",
+      "noUsed": "Nothing was used in these days.",
+      "usedUnpriced": "Some of it had no price yet: that part is not in the value."
     }
   },
   "print": {
@@ -6044,15 +6048,13 @@
     "stationOff": "Not from this device"
   },
   "kitchenStock": {
-    "title": "Kitchen stock",
-    "tabDishes": "Dishes",
-    "tabStock": "Kitchen stock",
-    "chooseBranch": "Choose a branch to see its kitchen stock.",
-    "switchTitle": "Track kitchen stock",
+    "title": "Inventory",
+    "chooseBranch": "Choose a branch to see its inventory.",
+    "switchTitle": "Track inventory",
     "switchHint": "Every dish sold takes its ingredients out of stock. Nothing changes until you switch it on.",
-    "offNote": "Kitchen stock is off, so amounts are not changing. The owner can switch it on.",
+    "offNote": "Inventory is off, so amounts are not changing. The owner can switch it on.",
     "switchOn": "Switch on",
-    "switchOff": "Switch kitchen stock off",
+    "switchOff": "Switch inventory off",
     "openingTitle": "How much is in the kitchen right now?",
     "openingHint": "Type today's amount for each item. You can skip and count later.",
     "openingSave": "Save",
@@ -6062,21 +6064,17 @@
     "filtersLabel": "Show",
     "filter": {
       "low": "Low",
-      "all": "All",
-      "noRecipe": "No recipe",
-      "toBuy": "To buy"
+      "all": "All"
     },
     "add": "Add item",
     "emptyTitle": "Add what your kitchen buys",
     "emptyHint": "Chicken, butter, oil, eggs. Then give each dish its recipe.",
-    "noRecipeHint": "These dishes are not tracked yet. Open the dish on the Dishes tab and add its recipe.",
-    "noRecipeNone": "Every dish has a recipe.",
     "nothingLow": "Nothing is running low.",
     "noMatch": "No item matches.",
     "low": "running low",
     "below": "below zero",
-    "loading": "Loading kitchen stock",
-    "loadFailed": "Couldn't load the kitchen stock.",
+    "loading": "Loading inventory",
+    "loadFailed": "Couldn't load the inventory.",
     "retry": "Try again",
     "saveFailed": "Couldn't save. Try again.",
     "sheetNew": "Add item",
@@ -6094,7 +6092,7 @@
     "lowAt": "Low-stock level",
     "lowAtHint": "Flag it when it falls to this. Leave it empty to never flag.",
     "unitLocked": "The unit can't change once stock has moved.",
-    "archive": "Remove from kitchen stock",
+    "archive": "Remove from inventory",
     "archiveHint": "Its history stays. Recipes that use it will need fixing.",
     "archiveButton": "Remove",
     "cancel": "Cancel",
@@ -6126,7 +6124,7 @@
       "adding": "Adding…",
       "done": "{n, plural, =0 {Nothing new was added.} one {# item added.} other {# items added.}}"
     },
-    "offTitle": "Switch kitchen stock off?",
+    "offTitle": "Switch inventory off?",
     "offBody": "From now on no sale takes ingredients out, on every till, until you switch it back on. What is already counted stays.",
     "offConfirm": "Switch off",
     "offKeep": "Keep it on",
@@ -6137,7 +6135,7 @@
       "pcs": "piece"
     },
     "actions": {
-      "label": "Kitchen stock actions",
+      "label": "Inventory actions",
       "stockIn": "Stock in",
       "wasted": "Wasted",
       "count": "Count",
@@ -6173,7 +6171,7 @@
       "titleEdit": "Edit stock in",
       "supplier": "Supplier",
       "noSupplier": "No supplier",
-      "supplierHint": "Add your suppliers from Suppliers on the Kitchen stock screen.",
+      "supplierHint": "Add your suppliers on Inventory › Suppliers.",
       "date": "Date",
       "billNo": "Bill number",
       "optional": "Optional",
@@ -6254,7 +6252,10 @@
       "restoreHint": "It comes back on the list.",
       "archived": "Archived",
       "showArchived": "Show archived",
-      "hideArchived": "Hide archived"
+      "hideArchived": "Hide archived",
+      "bought": "Bought from them",
+      "boughtNone": "Nothing bought from them yet.",
+      "boughtFailed": "Couldn't load what was bought."
     },
     "waste": {
       "title": "Wasted",
@@ -6340,16 +6341,55 @@
       "perUnit": "{price}/{unit}",
       "up": "Up",
       "down": "Down"
+    },
+    "tabs": {
+      "label": "Inventory sections",
+      "stock": "Stock",
+      "buy": "Buy",
+      "suppliers": "Suppliers",
+      "recipes": "Recipes",
+      "reports": "Reports"
+    },
+    "cookTabs": {
+      "label": "Your screens",
+      "kitchen": "Kitchen",
+      "inventory": "Inventory"
+    },
+    "buyTab": {
+      "toBuyTitle": "What to buy",
+      "emptyItems": "Add items on the Stock tab first. Then what runs low shows here.",
+      "itemsFailed": "Couldn't load your items.",
+      "off": "Inventory is switched off. The owner can switch it on in the Stock tab. Then Stock in opens."
+    },
+    "recipes": {
+      "overPrice": "Costs more than its menu price. Check the price.",
+      "search": "Search dishes",
+      "loading": "Loading dishes",
+      "loadFailed": "Couldn't load the dishes.",
+      "gaps": "{count, plural, one {# dish has no recipe yet. Its stock is not counted.} other {# dishes have no recipe yet. Their stock is not counted.}}",
+      "allDone": "Every dish has a recipe.",
+      "noRecipe": "No recipe",
+      "someSizes": "No recipe: {sizes}",
+      "cost": "Costs {cost}",
+      "noPrice": "No price yet",
+      "noMenu": "No dishes on the menu yet.",
+      "openMenu": "Open the menu",
+      "emptyCost": "Add a recipe to a dish to see its cost.",
+      "noMatch": "No dish matches.",
+      "pctHint": "Food cost is what the ingredients cost today, out of the price before GST. Above 35% shows amber, above 45% red.",
+      "close": "Close",
+      "sheetTitle": "Recipe · {name}"
     }
   },
   "recipe": {
+    "overPrice": "Costs more than its menu price. Check the price.",
     "sizes": "Sizes",
     "loading": "Loading the recipe…",
     "loadFailed": "Couldn't load the recipe.",
     "saveFailed": "Couldn't save the recipe. Try again.",
-    "needsFixing": "Recipe needs fixing: one of its items was removed from kitchen stock.",
-    "noItems": "Add items to kitchen stock first.",
-    "openStock": "Open kitchen stock",
+    "needsFixing": "Recipe needs fixing: one of its items was removed from inventory.",
+    "noItems": "Add items to inventory first.",
+    "openStock": "Open inventory",
     "none": "No ingredients yet, so this dish isn't tracked.",
     "qty": "Amount",
     "unit": "Unit",

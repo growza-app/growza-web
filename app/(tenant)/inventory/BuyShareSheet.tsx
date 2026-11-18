@@ -2,11 +2,11 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useRef, useState } from 'react';
-import { useDialog } from '../../../shared/a11y/useDialog';
-import type { BuyList } from '../../lib/api-types';
-import { intlLocale } from '../../lib/format';
-import { copyToClipboard } from '../../lib/copy-to-clipboard';
-import { amount, parseAmount, unitWord } from '../../lib/kitchen-units';
+import { useDialog } from '../../shared/a11y/useDialog';
+import type { BuyList } from '../lib/api-types';
+import { intlLocale } from '../lib/format';
+import { copyToClipboard } from '../lib/copy-to-clipboard';
+import { amount, parseAmount, unitWord } from '../lib/kitchen-units';
 import { shareText, waLink, type SupplierGroup } from './buy-list';
 
 /**

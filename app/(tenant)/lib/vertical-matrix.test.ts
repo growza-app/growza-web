@@ -110,8 +110,14 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/settings/team': 'both',
   '/settings/working-hours': 'both',
   '/stock': 'shop',
-  // Jira GRW-737 — a kitchen's raw materials: only where kitchen stock may be kept (a restaurant).
+  // Jira GRW-737 — a kitchen's raw materials: only where kitchen stock may be kept (a restaurant). Jira GRW-741 — the address now sends you
+  // on to Inventory, its own section, with its five tabs.
   '/stock/kitchen': 'tables',
+  '/inventory': 'tables',
+  '/inventory/buy': 'tables',
+  '/inventory/suppliers': 'tables',
+  '/inventory/recipes': 'tables',
+  '/inventory/reports': 'tables',
   '/stock/report': 'counted',
   '/stock/channels': 'shop',
   '/stock/order': 'counted',
@@ -197,7 +203,11 @@ describe('FR-01 … FR-03 — each kind of business is offered exactly the scree
     // Jira GRW-718 — Settings › Tables is the restaurant's alone (`dining.tables`), the one difference that is not a count.
     // Jira GRW-714 — and its kitchen screen: a kitchen cooks to order, a shop has a shelf.
     // Jira GRW-737 — and its kitchen stock: a kitchen counts what it cooks with, not what is on a shelf.
-    expect(differ.sort()).toEqual(['/kitchen', '/reports/food-cost', '/settings/kitchen-stations', '/settings/tables', '/settings/tables/[branchId]', '/stock/kitchen', '/stock/order', '/stock/report']);
+    // Jira GRW-741 — and Inventory, its own section now.
+    expect(differ.sort()).toEqual([
+      '/inventory', '/inventory/buy', '/inventory/recipes', '/inventory/reports', '/inventory/suppliers',
+      '/kitchen', '/reports/food-cost', '/settings/kitchen-stations', '/settings/tables', '/settings/tables/[branchId]', '/stock/kitchen', '/stock/order', '/stock/report',
+    ]);
     // …and the menu itself is NOT one of them: that is where a restaurant's dishes live.
     expect(areaAllows('/stock', KITCHEN)).toBe(true);
     expect(areaAllows('/orders/new', KITCHEN)).toBe(true);

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import type { MoneyReportQuery } from '../../lib/api';
 import { formatMoney, intlLocale } from '../../lib/format';
 import { useBranch } from '../../components/BranchProvider';
@@ -21,7 +22,13 @@ export function useMoneyReport<T>(read: (q: MoneyReportQuery) => Promise<T>, opt
   const branch = branchContext.ready && branchContext.multi ? (branchContext.choice ?? '') : '';
   const ready = branchContext.ready || branches.length <= 1;
   const todayISO = useMemo(() => todayInZone(session?.timezone), [session?.timezone]);
-  const [dates, setDates] = useState(() => defaultReportRange(todayISO));
+  // QA of GRW-741 — a saved link's days (`?from=…&to=…`, which /reports/food-cost passes on) open those days, held to what the report answers.
+  const params = useSearchParams();
+  const [dates, setDates] = useState(() => {
+    const from = params?.get('from');
+    const to = params?.get('to');
+    return from && to ? clampReportRange(from, to, todayISO, 'to', opts.maxDays) : defaultReportRange(todayISO);
+  });
   const [data, setData] = useState<T | null>(null);
   const [failed, setFailed] = useState(false);
   const seq = useRef(0);

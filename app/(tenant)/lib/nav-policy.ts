@@ -15,7 +15,7 @@
  */
 import { canSee as roleCanSee, visibleItems as roleVisibleItems, type MemberRole, type UiAction } from '@growza-app/shared';
 import { isSetupDestination } from './go-live';
-import { areaAllows, cooksOnly, isShopRoute, servesTablesOnly, type Areas, type PageGrid } from './areas';
+import { areaAllows, cooksOnly, isInventoryRoute, isShopRoute, servesTablesOnly, type Areas, type PageGrid } from './areas';
 
 export {
   canSeeReports,
@@ -78,6 +78,9 @@ export const PAGE_OF_HREF: ReadonlyArray<readonly [string, keyof PageGrid]> = [
   ['/services', 'services'],
   ['/products', 'services'],
   ['/stock', 'services'],
+  // Jira GRW-741 — Inventory is the menu's (what dishes are made of), and its Reports tab is the money, so Reports'. Most specific first.
+  ['/inventory/reports', 'reports'],
+  ['/inventory', 'services'],
   ['/packages', 'offers'],
   ['/offers', 'offers'],
   ['/providers', 'staff'],
@@ -103,8 +106,13 @@ const ALSO_NEEDS: ReadonlyArray<readonly [string, keyof PageGrid]> = [
 
 /** Jira GRW-723 — everything a waiter is offered. Home sends them to the room (`app/(tenant)/page.tsx`). */
 const WAITER_HREF: readonly string[] = ['/pos', '/notifications', '/help'];
-/** Jira GRW-714 — everything a cook is offered. Home sends them to the kitchen screen. Jira GRW-737 — and what the kitchen has left (no prices). */
-const COOK_HREF: readonly string[] = ['/kitchen', '/stock/kitchen', '/notifications', '/help'];
+/** Jira GRW-714 — everything a cook is offered. Home sends them to the kitchen screen. */
+const COOK_HREF: readonly string[] = ['/kitchen', '/notifications', '/help'];
+/**
+ * Jira GRW-737 — and what the kitchen has left (no prices). Jira GRW-741 — Inventory's Stock and Buy tabs, exactly: Suppliers, Recipes and
+ * Reports are what the kitchen pays and earns, and the API refuses a cook each of them.
+ */
+const COOK_EXACT: readonly string[] = ['/inventory', '/inventory/buy'];
 
 /** Destinations the grid can never open: the API makes these the owner's alone (billing, branches, team, roles). */
 const OWNER_ONLY_HREF: readonly string[] = ['/settings/billing', '/settings/branches', '/settings/team', '/settings/roles'];
@@ -113,7 +121,8 @@ const OWNER_ONLY_HREF: readonly string[] = ['/settings/billing', '/settings/bran
  * Screens whose whole job is a write: opened at See they would draw a form every control of which the API refuses, so they need Change to be
  * offered at all (Jira GRW-76). The till and a new booking take an order or a visit; there is no read-only version of either.
  */
-const NEEDS_CHANGE_TO_OPEN: readonly string[] = ['/products/sell', '/orders/new', '/pos', '/appointments/new', '/try-whatsapp'];
+// Jira GRW-741 — Inventory › Suppliers: who the kitchen buys from and what they charged is the menu's to CHANGE (the API refuses even the read at See).
+const NEEDS_CHANGE_TO_OPEN: readonly string[] = ['/products/sell', '/orders/new', '/pos', '/appointments/new', '/try-whatsapp', '/inventory/suppliers'];
 
 /** The page a destination belongs to, or undefined when it is open to every member. */
 export function pageOfHref(href: string): keyof PageGrid | undefined {
@@ -178,7 +187,7 @@ export function gridCanSee(rawHref: string, grid: PageGrid): boolean {
   // Jira GRW-723 — a waiter's app is the room and nothing else (BR-01): the till's map, the bell, Help.
   if (servesTablesOnly(grid)) return WAITER_HREF.some((p) => href === p || href.startsWith(`${p}/`));
   // Jira GRW-714 — a cook's app is the kitchen screen and nothing else.
-  if (cooksOnly(grid)) return COOK_HREF.some((p) => href === p || href.startsWith(`${p}/`));
+  if (cooksOnly(grid)) return COOK_EXACT.includes(href) || COOK_HREF.some((p) => href === p || href.startsWith(`${p}/`));
   if (href === '/kitchen' || href.startsWith('/kitchen/')) return (grid.kitchen ?? 'none') !== 'none';
   if (NEEDS_CHANGE_TO_OPEN.some((p) => href === p || href.startsWith(`${p}/`)) && !gridCanChange(href, grid)) return false;
   if (OWNER_ONLY_HREF.some((p) => href === p || href.startsWith(`${p}/`))) return false;
@@ -198,6 +207,8 @@ export function gridCanSee(rawHref: string, grid: PageGrid): boolean {
 export function canSee(href: string, role?: MemberRole | null, reportTabs?: readonly string[], live = true, areas?: Areas): boolean {
   if (ALWAYS_OPEN.has(href)) return true;
   if (!areaAllows(href, areas)) return false;
+  // Jira GRW-741 FR-01 — Inventory is the staff's only once the owner has switched it on; the owner is offered it either way (the switch is there).
+  if (!areas?.kitchenStock && role !== 'owner' && isInventoryRoute(href.split('?')[0]!)) return false;
   // Jira GRW-74 — a member who holds a role is offered what the role grants, and nothing is asked of the fixed role they work like.
   if (areas?.pages) return (live || isSetupDestination(href)) && gridCanSee(href, areas.pages);
   /*

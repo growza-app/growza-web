@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import { api, ApiError, formatMoney } from '../lib/api';
 import type { DishCost, DishRecipe, Product, StockMaterial } from '../lib/api-types';
-import { foodCostTone, pctText } from '../lib/food-cost';
+import { costsMoreThanPrice, foodCostTone, pctText } from '../lib/food-cost';
 import { parseAmount, recipeAmount, SMALL_UNIT, unitWord } from '../lib/kitchen-units';
 import { useSession } from '../components/SessionProvider';
 import { IconClose } from '../components/icons';
@@ -31,8 +31,10 @@ const nextKey = () => `r${++seq}`;
  * Jira GRW-737 — a dish's recipe, one size at a time (Half / Full): which raw materials it uses and how much of each. Every bill from now on
  * takes this out of stock (BR-02); past bills keep what they took. The owner and a manager change it; the cost line shows only to whoever
  * the API sends a cost to (it leaves `costMinor` out for the counter and the cook).
+ *
+ * Jira GRW-741 — the same editor opens from Inventory › Recipes (`inventory/RecipeSheet.tsx`), so it needs only the dish's id and branch.
  */
-export function RecipePanel({ product }: { product: Product }) {
+export function RecipePanel({ product }: { product: Pick<Product, 'id' | 'locationId'> }) {
   const t = useTranslations('recipe');
   const session = useSession();
   const grid = session?.areas?.pages;
@@ -142,7 +144,7 @@ export function RecipePanel({ product }: { product: Product }) {
       {materials.length === 0 ? (
         <div className="ks-state">
           <span>{t('noItems')}</span>
-          <AppLink className="btn btn-ghost" href="/stock/kitchen">
+          <AppLink className="btn btn-ghost" href="/inventory">
             {t('openStock')}
           </AppLink>
         </div>
@@ -220,6 +222,7 @@ export function RecipePanel({ product }: { product: Product }) {
                 : t(netDiffers ? 'costsNet' : 'costs', { cost: formatMoney(costNow), pct: pctText(pct), price: formatMoney(netDiffers ? sized!.netPriceMinor : size.priceMinor) })}
             </p>
           ) : null}
+          {seesCost && costNow !== null && costsMoreThanPrice(pct) ? <p className="rc-cost is-bad">{t('overPrice')}</p> : null}
           {error ? (
             <div role="alert" className="sheet-foot sheet-foot-error">
               {error}

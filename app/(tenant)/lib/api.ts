@@ -207,7 +207,7 @@ import type {
   ManualMovementKind,
   VisitRewards, AddonGroup, AddonGroupInput, KitchenCard, KitchenStockList, StockMaterial, MaterialUnit, DishRecipe, MaterialImportRow, MaterialImportReview,
   StockSupplier, RememberedPack, PurchaseSummary, PurchaseDetail, PurchaseInput, WasteReason, MaterialMovement, StockCount, FinishedCount,
-  BuyList, PriceTrend, DishCost, FoodCostReportPage, StockLossReportPage } from './api-types';
+  BuyList, PriceTrend, DishCost, FoodCostReportPage, StockLossReportPage, RecipeCostDish } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, ShopDaySummary, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
 
@@ -756,8 +756,13 @@ export const api = {
     get<{ suppliers: StockSupplier[]; packs: RememberedPack[] }>(`/api/v1/stock/suppliers?location=${encodeURIComponent(location)}${withArchived ? '&archived=1' : ''}`),
   saveSupplier: (id: string | null, body: { locationId?: string; name?: string; phone?: string | null; gstin?: string | null; notes?: string | null; archived?: boolean }) =>
     id ? patch<{ supplier: StockSupplier }>(`/api/v1/stock/suppliers/${encodeURIComponent(id)}`, body) : post<{ supplier: StockSupplier }>('/api/v1/stock/suppliers', body),
-  purchases: (location: string, offset = 0) =>
-    get<{ purchases: PurchaseSummary[]; more: boolean }>(`/api/v1/stock/purchases?location=${encodeURIComponent(location)}&offset=${offset}`),
+  /** Jira GRW-741 FR-04 — `supplier`: only that supplier's stock ins (Inventory › Suppliers). */
+  purchases: (location: string, offset = 0, supplier?: string) =>
+    get<{ purchases: PurchaseSummary[]; more: boolean }>(
+      `/api/v1/stock/purchases?location=${encodeURIComponent(location)}&offset=${offset}${supplier ? `&supplier=${encodeURIComponent(supplier)}` : ''}`,
+    ),
+  /** Jira GRW-741 — Inventory › Recipes: every dish at the branch, no-recipe dishes first, with its cost and food cost for whoever sees the money. */
+  recipeCosts: (location: string) => get<{ dishes: RecipeCostDish[] }>(`/api/v1/stock/recipes?location=${encodeURIComponent(location)}`),
   purchase: (id: string) => get<{ purchase: PurchaseDetail }>(`/api/v1/stock/purchases/${encodeURIComponent(id)}`),
   /** A 409 `duplicate_bill` carries `enteredAt`; send again with `anyway: true` to save it regardless. */
   savePurchase: (id: string | null, body: PurchaseInput) =>

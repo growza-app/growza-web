@@ -1,30 +1,10 @@
-/* Jira GRW-737 — kitchen stock: the Menu's second tab, the raw-material list, the recipe on a dish, and the take-off "was it cooked?". Laid
-   out at 344px first; one column all the way up, the list simply gets more room. */
+/* Jira GRW-737 — kitchen stock (Jira GRW-741: Inventory, its own section — its tabs are 99-inventory.css): the raw-material list, the
+   recipe on a dish, and the take-off "was it cooked?". Laid out at 344px first; one column all the way up, the list simply gets more room. */
 
 .ks-page {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-}
-
-/* The Menu's two halves are links, drawn like the dish sheet's segmented tabs. */
-.ks-tabs {
-  margin: 0 0 var(--sp-1);
-}
-.ks-tabs a {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  border-radius: var(--radius-sm);
-  color: var(--muted);
-  font-size: var(--fs-4);
-  font-weight: 600;
-  text-decoration: none;
-}
-.ks-tabs a.is-on {
-  background: var(--surface);
-  color: var(--text);
 }
 
 .ks-body {
@@ -294,14 +274,6 @@
   border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--accent-ink);
-}
-
-/* The Dishes screen's copy of the two tabs, under its heading. */
-.ks-tabs-row {
-  padding: 0 var(--sp-4);
-}
-.ks-tabs-row .ks-tabs {
-  max-width: 44rem;
 }
 
 /* At 344px the row is name · amount · unit · remove: the sheet's own select and button rules made the unit full-width and the remove 16px

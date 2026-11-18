@@ -2,10 +2,10 @@
 
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
-import { useDialog } from '../../../shared/a11y/useDialog';
-import { api, ApiError } from '../../lib/api';
-import type { StockMaterial, WasteReason } from '../../lib/api-types';
-import { amount, parseAmount, unitWord } from '../../lib/kitchen-units';
+import { useDialog } from '../../shared/a11y/useDialog';
+import { api, ApiError } from '../lib/api';
+import type { StockMaterial, WasteReason } from '../lib/api-types';
+import { amount, parseAmount, unitWord } from '../lib/kitchen-units';
 
 const REASONS: readonly WasteReason[] = ['spoiled', 'dropped', 'expired', 'other'];
 

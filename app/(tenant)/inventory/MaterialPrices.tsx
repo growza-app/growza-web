@@ -2,10 +2,10 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { api, formatMoney } from '../../lib/api';
-import type { MaterialUnit, PriceTrend } from '../../lib/api-types';
-import { intlLocale } from '../../lib/format';
-import { amount, unitWord } from '../../lib/kitchen-units';
+import { api, formatMoney } from '../lib/api';
+import type { MaterialUnit, PriceTrend } from '../lib/api-types';
+import { intlLocale } from '../lib/format';
+import { amount, unitWord } from '../lib/kitchen-units';
 
 /**
  * Jira GRW-739 FR-07 — what an item has been costing: its last five priced stock ins, newest first, with the supplier and the day, and the

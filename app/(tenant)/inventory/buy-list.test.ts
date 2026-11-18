@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { BuyItem } from '../../lib/api-types';
+import type { BuyItem } from '../lib/api-types';
 import { groupBySupplier, packsFor, shareText, waLink } from './buy-list';
 
 /** Jira GRW-739 — What to buy: grouped by supplier, shared as plain text through a manual wa.me link. */

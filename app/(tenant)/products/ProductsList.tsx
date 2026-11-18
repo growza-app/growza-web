@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 import { api, ApiError, formatMoney } from '../lib/api';
 import type { MenuImportResult, Product, ProductCategory, ProductImportResult } from '../lib/api-types';
 import { PageHeader } from '../components/PageHeader';
-import { MenuTabs } from '../components/MenuTabs';
 import { WriteOnly } from '../components/WriteOnly';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
@@ -476,11 +475,6 @@ export function ProductsList({
         </>
       }
     />
-      {heading !== undefined && !counted ? (
-        <div className="ks-tabs-row">
-          <MenuTabs active="dishes" />
-        </div>
-      ) : null}
     </>
   );
   /*

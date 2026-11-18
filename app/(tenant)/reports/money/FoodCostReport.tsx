@@ -32,6 +32,8 @@ function Pct({ pct, big = false }: { pct: number | null; big?: boolean }) {
  * today leaves past days as they were). The share is over the sales of dishes that took food out at a known cost; dishes with no recipe are
  * said — "N dishes have no recipe (X% of sales)" with a link to fix them — never counted as 0%. Free bills are their own line. Below it,
  * what was wasted and what counts found missing, by item and entry, with who recorded it. Laid out at 344px: cards, no table.
+ *
+ * Jira GRW-741 — Inventory › Reports now (its old address sends you there), with what was used between the two.
  */
 export function FoodCostReport() {
   const t = useTranslations('moneyReports.foodCost');
@@ -75,7 +77,7 @@ export function FoodCostReport() {
                 <div className="srp-warn fc-fix">
                   <span>{t('noRecipe', { count: r.noRecipe.dishes, pct: pctText(r.noRecipe.pctOfSales) })}</span>
                   {r.noRecipe.names.length > 0 ? <span className="fc-names">{r.noRecipe.names.join(', ')}</span> : null}
-                  <AppLink className="mr-link" href="/stock/kitchen?show=no-recipe">
+                  <AppLink className="mr-link" href="/inventory/recipes">
                     {t('fixRecipes')}
                   </AppLink>
                 </div>
@@ -117,6 +119,28 @@ export function FoodCostReport() {
                   </ol>
                 </>
               ) : null}
+            </>
+          )}
+
+          {/* Jira GRW-741 FR-06 — what the kitchen used, item by item: what the dishes sent took, less what came back before cooking. */}
+          <h2 className="mr-title">{t('usedTitle')}</h2>
+          {(loss.used ?? []).length === 0 ? (
+            <MoneyEmpty text={t('noUsed')} />
+          ) : (
+            <>
+              <p className="srp-hint">{t('usedNote')}</p>
+              {(loss.used ?? []).some((u) => u.unpriced) ? <p className="srp-warn">{t('usedUnpriced')}</p> : null}
+              <ul className="srp-list">
+                {(loss.used ?? []).map((u) => (
+                  <li key={u.materialId} className="srp-card">
+                    <div className="srp-head">
+                      <h3 className="srp-name">{u.name}</h3>
+                      <p className="srp-value">{f.money(u.valueMinor)}</p>
+                    </div>
+                    <p className="srp-hint">{qty(u.qty, u.unit)}</p>
+                  </li>
+                ))}
+              </ul>
             </>
           )}
 

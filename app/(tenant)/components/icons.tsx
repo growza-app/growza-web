@@ -106,6 +106,15 @@ export const IconProducts = () => (
   </svg>
 );
 
+/** Jira GRW-741 — Inventory: a store box (Feather's archive), what the kitchen keeps and counts. */
+export const IconInventory = () => (
+  <svg {...base}>
+    <polyline points="21 8 21 21 3 21 3 8" />
+    <rect x="1" y="3" width="22" height="5" />
+    <line x1="10" y1="12" x2="14" y2="12" />
+  </svg>
+);
+
 export const IconLightbulb = () => (
   <svg {...base}>
     <path d="M9 18h6M10 21h4" />

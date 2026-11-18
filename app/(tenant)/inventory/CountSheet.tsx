@@ -2,10 +2,10 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useDialog } from '../../../shared/a11y/useDialog';
-import { api, ApiError, formatMoney } from '../../lib/api';
-import type { FinishedCount, StockCount } from '../../lib/api-types';
-import { amount, parseAmount, unitWord } from '../../lib/kitchen-units';
+import { useDialog } from '../../shared/a11y/useDialog';
+import { api, ApiError, formatMoney } from '../lib/api';
+import type { FinishedCount, StockCount } from '../lib/api-types';
+import { amount, parseAmount, unitWord } from '../lib/kitchen-units';
 
 /** How long after the last key a figure is saved. Short enough that a phone put down loses nothing. */
 const SAVE_AFTER_MS = 800;

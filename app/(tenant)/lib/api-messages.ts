@@ -69,6 +69,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Only the owner or a manager can change these stock items.': 'स्टॉक का यह सामान सिर्फ़ मालिक या मैनेजर बदल सकते हैं।',
   'That item is already in your stock.': 'यह सामान आपके स्टॉक में पहले से है।',
   'That item is not in your stock.': 'यह सामान आपके स्टॉक में नहीं है।',
+  'Inventory is switched off. Ask the owner to switch it on first.': 'इन्वेंटरी बंद है। पहले मालिक से इसे चालू करवाएँ।',
   'This item has stock history; make a new item instead.': 'इस सामान का स्टॉक पहले चल चुका है; इसकी जगह नया सामान बनाएँ।',
   'Its opening count is already in. Use a stock count to change it.': 'इसकी शुरुआती गिनती पहले ही दर्ज है। बदलने के लिए स्टॉक गिनती करें।',
   'That item is not on your list.': 'यह आपकी सूची में नहीं है।',
@@ -271,6 +272,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Only a receptionist has a branch of their own. A stylist works where their calendar is.': 'सिर्फ़ रिसेप्शनिस्ट की अपनी ब्रांच होती है। स्टाइलिस्ट वहीं काम करता है जहाँ उसका कैलेंडर है।',
   // ---- branches
   'Choose one of your branches.': 'अपनी किसी एक ब्रांच को चुनें।',
+  'Choose one supplier.': 'एक सप्लायर चुनें।',
   'Pick one of your open branches.': 'अपनी किसी खुली ब्रांच को चुनें।',
   'That stylist works at another branch.': 'वह स्टाइलिस्ट दूसरी ब्रांच में हैं।',
   'You work at another branch.': 'आप दूसरी ब्रांच में काम करते हैं।',

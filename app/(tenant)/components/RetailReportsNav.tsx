@@ -38,7 +38,8 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
     { key: 'payments', href: '/reports/payments', label: tMoney('payments') },
     { key: 'discounts', href: '/reports/discounts', label: tMoney('discounts') },
     // Jira GRW-739 — what the food cost: only where the business keeps kitchen stock (`areaAllows` drops it everywhere else).
-    { key: 'foodCost', href: '/reports/food-cost', label: tMoney('foodCost') },
+    // Jira GRW-741 — Food cost is Inventory › Reports now; the tab here is a door to it (one screen, one address).
+    { key: 'foodCost', href: '/inventory/reports', label: tMoney('foodCost') },
     { key: 'channels', href: '/stock/channels', label: tChannels('title') },
     { key: 'sellers', href: '/stock/sellers', label: tSellers('title') },
     { key: 'report', href: '/stock/report', label: tReport('title') },
