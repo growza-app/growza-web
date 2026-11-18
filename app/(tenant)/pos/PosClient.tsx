@@ -138,15 +138,19 @@ function QueueTokenPayScreen({
    * typed here. It and the discount above do not stack: the larger is kept, and the row says which (BR-01).
    */
   const [couponCode, setCouponCode] = useState<string | null>(null);
-  const offers = useBillOffers(byNameOnly ? null : { saleId: token.id, couponCode, discountMinor: billOff.offMinor });
+  // Jira GRW-736 — the points the bill is spending, as last quoted (the GST on top comes after them).
+  const [redeemMinorAsked, setRedeemMinorAsked] = useState(0);
+  const offers = useBillOffers({ saleId: token.id, couponCode: byNameOnly ? null : couponCode, discountMinor: byNameOnly ? 0 : billOff.offMinor, redeemMinor: redeemMinorAsked });
   const offMinor = offers.couponKept ? (offers.coupon?.offMinor ?? 0) : billOff.offMinor;
+  // Jira GRW-736 — GST added on top: the server works it out after the discount and the points, and says what is due.
   const billMinor = Math.max(0, token.totalMinor - offMinor);
   const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor: discountMinor, checking: pointsChecking } = useRewardQuote(token.customerId, billMinor);
   // Jira GRW-735 — and while a typed coupon is being asked about: its amount is not known yet.
-  const checking = pointsChecking || (couponCode !== null && offers.checking);
+  const checking = pointsChecking || (couponCode !== null && offers.checking) || (offers.taxOnTop && (offers.checking || redeemMinorAsked !== discountMinor));
+  useEffect(() => setRedeemMinorAsked(discountMinor), [discountMinor]);
   /** Money is not taken while the points for this bill are still being asked (QA 2026-11-17, finding 1). */
   const busy = saving !== null || checking;
-  const dueMinor = Math.max(0, billMinor - discountMinor);
+  const dueMinor = offers.taxOnTop && offers.dueMinor !== null ? offers.dueMinor : Math.max(0, billMinor - discountMinor);
   /*
    * Jira GRW-725 — the whole order off is the owner's, with a reason: anyone else is told so and the ways of paying
    * stay shut; the owner is asked why. The server refuses the same.
@@ -374,6 +378,12 @@ function QueueTokenPayScreen({
       )}
       {/* Jira GRW-735 — the buy-get offers this order took, and the Coupon code (not for a waiter: like the discount). */}
       <OfferLines bogo={offers.bogo} />
+      {offers.taxOnTop && offers.taxMinor > 0 ? (
+        <p className="pf-tax-line">
+          <span>{tPay('offers.gst')}</span>
+          <strong>{money(offers.taxMinor)}</strong>
+        </p>
+      ) : null}
       {anonymous || byNameOnly ? null : (
         <CouponRow
           code={couponCode}

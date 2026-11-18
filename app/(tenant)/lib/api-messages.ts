@@ -142,6 +142,9 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That category or station is not at this branch.': 'यह कैटेगरी या स्टेशन इस ब्रांच में नहीं है।',
   'Pick a menu category': 'मेन्यू की कोई कैटेगरी चुनें',
   'Pick a station': 'कोई स्टेशन चुनें',
+  // Jira GRW-736 — GST by order type.
+  'Pick a GST rate: 0%, 5%, 12%, 18% or 28%': 'GST की दर चुनें: 0%, 5%, 12%, 18% या 28%',
+  'Pick a GST rate': 'GST की दर चुनें',
   // Jira GRW-735 — the business sells no products.
   'This business does not sell products.': 'यह कारोबार सामान नहीं बेचता।',
   // Jira GRW-735 — coupons and buy-get offers.

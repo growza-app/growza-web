@@ -164,6 +164,8 @@
 @import './styles/99-area-prices.css';
 /* Jira GRW-735 — coupons and buy-get offers: at payment, and in Settings. */
 @import './styles/99-bill-offers.css';
+/* Jira GRW-736 — GST by order type, and GST added on top. */
+@import './styles/99-gst-by-order-type.css';
 /* Emerald v2 theme preview — after every screen sheet, before 99-photo-none.css (which must stay last); delete this line and the file to drop it. */
 @import './styles/99-z-emerald-v2.css';
 @import './styles/99-photo-none.css';

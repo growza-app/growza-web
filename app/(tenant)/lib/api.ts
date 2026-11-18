@@ -1342,6 +1342,10 @@ export const api = {
       branchState?: string;
       branchStateCode?: string;
       branchGstin?: string;
+      /** Jira GRW-736 — prices include GST, or GST is added on top at the till. */
+      pricesIncludeTax?: boolean;
+      /** Jira GRW-736 — a rate per order type (basis points), null for the dish's own rate. */
+      orderTypeRates?: { dine_in: number | null; takeaway: number | null; delivery: number | null };
     },
     location?: string | null,
   ) => patch<SettingsSummary>(`/api/v1/settings/gst${atBranch(location)}`, body),

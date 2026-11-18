@@ -829,7 +829,19 @@
     "saving": "Saving…",
     "errors": {
       "saveFailed": "That did not save. Try again."
-    }
+    },
+    "taxIncluded": "Menu prices include GST",
+    "taxOnTop": "GST is added on top of menu prices",
+    "taxIncludedHint": "A ₹200 dish costs the guest ₹200; the bill shows the GST inside it.",
+    "taxOnTopHint": "A ₹200 dish at 5% costs the guest ₹210; the till collects the GST and the bill shows it.",
+    "byTypeLabel": "GST by order type",
+    "byTypeHint": "Pick a rate where the law asks for one. Each dish's own rate is used otherwise.",
+    "byType": {
+      "dine_in": "Dine-in",
+      "takeaway": "Takeaway",
+      "delivery": "Delivery"
+    },
+    "dishRate": "Each dish's own rate"
   },
   "settingsBranches": {
     "title": "Branches",
@@ -3576,7 +3588,8 @@
       "checking": "Checking the code…",
       "couponOn": "{name} applied",
       "discountKept": "{name}: the discount is larger, so it is kept",
-      "couponKept": "The coupon is larger than the discount, so the coupon is kept."
+      "couponKept": "The coupon is larger than the discount, so the coupon is kept.",
+      "gst": "GST added on top"
     }
   },
   "help": {

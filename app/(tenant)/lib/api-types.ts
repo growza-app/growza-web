@@ -872,6 +872,8 @@ export interface SettingsSummary {
     invoicePrefix: string;
     invoiceFooter: string;
     pricesIncludeTax: boolean;
+    /** Jira GRW-736 — a GST rate per order type, in basis points (500 = 5%); null = each dish's own rate. Absent from an older API. */
+    orderTypeRates?: { dine_in: number | null; takeaway: number | null; delivery: number | null };
     branchState: string;
     branchStateCode: string;
     branchGstin: string;
@@ -2786,4 +2788,7 @@ export interface BillOffersQuote {
   kept: 'coupon' | 'discount' | null;
   billMinor: number;
   dueMinor: number;
+  /** Jira GRW-736 — the business adds GST on top: `taxMinor` is it, on the bill after its offers, discount and points; `dueMinor` includes it. */
+  taxOnTop?: boolean;
+  taxMinor?: number;
 }

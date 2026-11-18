@@ -133,7 +133,8 @@ describe('what the till sends and collects', () => {
 
   it('collects what is left, not what the bill came to', () => {
     // Jira GRW-735 — what is left after the offers and then the points.
-    expect(flow).toMatch(/const dueMinor = Math\.max\(0, afterOffersMinor - discountMinor\);/);
+    // Jira GRW-736 — or, with GST added on top, the server's figure for it all.
+    expect(flow).toContain('const dueMinor = taxOnTopNow ? billOffers.dueMinor! : Math.max(0, afterOffersMinor - discountMinor);');
     for (const used of ['amountMinor: dueMinor', 'dueMinor - firstWay.minor', 'minor >= dueMinor']) {
       expect(flow, `the ways of paying add up to ${used}`).toContain(used);
     }

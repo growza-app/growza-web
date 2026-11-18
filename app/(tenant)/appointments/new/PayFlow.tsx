@@ -387,6 +387,8 @@ export function PayFlow({
    */
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [couponLost, setCouponLost] = useState<string | null>(null);
+  /** Jira GRW-736 — the points this bill spends, as last quoted: GST added on top is worked out after them. */
+  const [pointsAsked, setPointsAsked] = useState(0);
   const [discountOpen, setDiscountOpen] = useState(false);
   /** Jira GRW-725 — why the owner is giving the whole bill free; asked only while the bill is ₹0. */
   const [freeReason, setFreeReason] = useState('');
@@ -692,6 +694,8 @@ export function PayFlow({
         couponCode: couponOn ? couponCode : null,
         discountMinor: listMinor - totalMinor,
         customerId: client.kind === 'existing' ? client.id : null,
+        redeemMinor: pointsAsked,
+        orderType: tablesHere && orderTab === 'dine_in' ? ('dine_in' as const) : ('takeaway' as const),
       }
     : null;
   const billOffers = useBillOffers(offersAsk);
@@ -731,7 +735,13 @@ export function PayFlow({
     fromApp ? null : clientId,
     afterOffersMinor,
   );
-  const dueMinor = Math.max(0, afterOffersMinor - discountMinor);
+  useEffect(() => setPointsAsked(discountMinor), [discountMinor]);
+  /*
+   * Jira GRW-736 — GST added on top: what the guest pays is the server's figure, the lines after their offers and the
+   * points, and the GST on them. Prices that include GST: the bill after its offers, less the points, as before.
+   */
+  const taxOnTopNow = offersHere && billOffers.taxOnTop && billOffers.dueMinor !== null && pointsAsked === discountMinor;
+  const dueMinor = taxOnTopNow ? billOffers.dueMinor! : Math.max(0, afterOffersMinor - discountMinor);
 
   /** Owner, 2026-10-15 — every package on the bill, one entry per time it was rung up, in the order picked. */
   const pkgsOnBill = useMemo(() => {
@@ -1128,7 +1138,7 @@ export function PayFlow({
   const pay = async (mode: PaymentMode, pending = false) => {
     // QA 2026-11-17 (finding 1) — not while this bill's points are still being asked.
     // Jira GRW-735 — not while the offers on this bill are still being asked: what is owed is not known yet.
-    if (offersHere && billOffers.checking) return;
+    if (offersHere && (billOffers.checking || (billOffers.taxOnTop && !taxOnTopNow))) return;
     if (saving || lines.length === 0 || freeBlock || pointsChecking || splitTooBig) return;
     felt(BUZZ.paid);
     setSaving(mode);
@@ -1861,6 +1871,12 @@ export function PayFlow({
   const offersRows = offersHere ? (
     <>
       <OfferLines bogo={billOffers.bogo} />
+      {billOffers.taxOnTop && billOffers.taxMinor > 0 ? (
+        <p className="pf-tax-line">
+          <span>{t('offers.gst')}</span>
+          <strong>{money(billOffers.taxMinor)}</strong>
+        </p>
+      ) : null}
       {fromApp || hidePayUntilGuest ? null : (
         <CouponRow
           code={couponCode}

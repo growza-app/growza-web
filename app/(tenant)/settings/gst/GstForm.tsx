@@ -23,6 +23,10 @@ import { useCloseAfterSave } from '../../lib/close-after-save';
  * something, anything, to make the field go away.
  */
 const STATUSES = ['unregistered', 'regular', 'composition'] as const;
+/** Jira GRW-736 — the GST rates an order type can take, as the council sets them (basis points). */
+const RATES = [0, 500, 1200, 1800, 2800] as const;
+const ORDER_TYPES = ['dine_in', 'takeaway', 'delivery'] as const;
+type OrderTypeRates = { dine_in: number | null; takeaway: number | null; delivery: number | null };
 type Status = (typeof STATUSES)[number];
 
 export function GstForm({ initial, branchName }: { initial: SettingsSummary; branchName: string | null }) {
@@ -40,6 +44,9 @@ export function GstForm({ initial, branchName }: { initial: SettingsSummary; bra
   const [branchState, setBranchState] = useState(initial.gst.branchState);
   const [branchStateCode, setBranchStateCode] = useState(initial.gst.branchStateCode);
   const [branchGstin, setBranchGstin] = useState(initial.gst.branchGstin);
+  // Jira GRW-736 — prices include GST, or GST is added on top; and a rate per order type (null: each dish's own rate).
+  const [pricesIncludeTax, setPricesIncludeTax] = useState(initial.gst.pricesIncludeTax);
+  const [typeRates, setTypeRates] = useState<OrderTypeRates>(initial.gst.orderTypeRates ?? { dine_in: null, takeaway: null, delivery: null });
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +74,11 @@ export function GstForm({ initial, branchName }: { initial: SettingsSummary; bra
         branchState,
         branchStateCode,
         branchGstin,
+        // Jira GRW-736 — only a business that charges GST says how; the API keeps the rest as it was.
+        ...(status === 'regular' ? { pricesIncludeTax, orderTypeRates: typeRates } : {}),
       });
+      setPricesIncludeTax(fresh.gst.pricesIncludeTax);
+      if (fresh.gst.orderTypeRates) setTypeRates(fresh.gst.orderTypeRates);
       // Shown back from the server's answer, not from what was typed: it trims, upper-cases a GSTIN and may drop
       // what it would not store, and the screen should show what is now on file.
       setStatus(fresh.gst.status);
@@ -241,12 +252,63 @@ export function GstForm({ initial, branchName }: { initial: SettingsSummary; bra
                 built on it would have totalled more than was collected. Said plainly instead, so an owner knows what
                 a price on the menu means.
               */}
-              <div id="gst-inclusive-note" style={{ marginTop: 4 }}>
-                <div style={{ fontWeight: 620, fontSize: 14 }}>{t('pricesIncludeTaxLabel')}</div>
-                <span className="field-hint" style={{ margin: '4px 0 0' }}>
-                  {t('pricesIncludeTaxOn')}
-                </span>
-              </div>
+              {/*
+                Jira GRW-736 — now a choice, for a business that charges GST: the price on the menu includes it, or GST is
+                added on top and the till collects it (the bill shows each tax and the total with it). And a rate per order
+                type — Dine-in, Takeaway, Delivery — where the law asks for one; each dish's own rate otherwise.
+              */}
+              {status === 'regular' ? (
+                <>
+                  <fieldset className="gst-choice" id="gst-inclusive-note">
+                    <legend className="gst-choice-label">{t('pricesIncludeTaxLabel')}</legend>
+                    {[true, false].map((on) => (
+                      <label key={String(on)} className="gst-radio">
+                        <input
+                          type="radio"
+                          name="gst-inclusive"
+                          checked={pricesIncludeTax === on}
+                          onChange={() => {
+                            setPricesIncludeTax(on);
+                            touched();
+                          }}
+                        />
+                        <span>{on ? t('taxIncluded') : t('taxOnTop')}</span>
+                      </label>
+                    ))}
+                    <span className="field-hint">{pricesIncludeTax ? t('taxIncludedHint') : t('taxOnTopHint')}</span>
+                  </fieldset>
+                  <fieldset className="gst-choice">
+                    <legend className="gst-choice-label">{t('byTypeLabel')}</legend>
+                    <span className="field-hint">{t('byTypeHint')}</span>
+                    {ORDER_TYPES.map((type) => (
+                      <label key={type} className="gst-type-row">
+                        <span>{t(`byType.${type}`)}</span>
+                        <select
+                          value={typeRates[type] === null ? '' : String(typeRates[type])}
+                          onChange={(e) => {
+                            setTypeRates((r) => ({ ...r, [type]: e.target.value === '' ? null : Number(e.target.value) }));
+                            touched();
+                          }}
+                        >
+                          <option value="">{t('dishRate')}</option>
+                          {RATES.map((bp) => (
+                            <option key={bp} value={bp}>
+                              {bp / 100}%
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ))}
+                  </fieldset>
+                </>
+              ) : (
+                <div style={{ marginTop: 4 }}>
+                  <div style={{ fontWeight: 620, fontSize: 14 }}>{t('pricesIncludeTaxLabel')}</div>
+                  <span className="field-hint" style={{ margin: '4px 0 0' }}>
+                    {t('pricesIncludeTaxOn')}
+                  </span>
+                </div>
+              )}
             </>
           )}
 

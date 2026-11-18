@@ -81,15 +81,15 @@ describe('the words', () => {
   });
 });
 
-describe('prices include GST, and that is not a switch', () => {
+describe('prices include GST, unless a registered business adds it on top (Jira GRW-736)', () => {
   const gst = readFileSync(resolve(__dirname, '../settings/gst/GstForm.tsx'), 'utf8');
 
-  it('Settings › GST says so and offers no switch: the till charges the typed price and never adds tax on top', () => {
-    expect(gst).not.toContain('setPricesIncludeTax');
-    expect(gst).not.toMatch(/className="switch"[^]*gst-inclusive/);
+  it('Settings › GST offers the choice only to a regular registration, and sends it only then — the till then collects the GST', () => {
     expect(gst).toContain("t('pricesIncludeTaxLabel')");
-    // And it never sends the field, so a save cannot turn it off.
-    expect(gst).not.toMatch(/pricesIncludeTax,\n/);
+    expect(gst).toContain("{status === 'regular' ? (");
+    expect(gst).toContain("...(status === 'regular' ? { pricesIncludeTax, orderTypeRates: typeRates } : {}),");
+    // Everyone else is told prices include GST, as before.
+    expect(gst).toContain("t('pricesIncludeTaxOn')");
   });
 
   it('the price lines never promise a total above the price', () => {
