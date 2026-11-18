@@ -206,7 +206,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   // Jira GRW-721 — taking a dish off a table's bill, from the till's table sheet: drawn only for the owner and a manager
   // (the sheet's `canManage`), and the API's handler says the same.
   // Jira GRW-722 — Move table, on the same table's sheet.
-  '/pos': ['POST /api/v1/counter-sales/:id/cancel-items', 'POST /api/v1/tables/:id/move', 'POST /api/v1/tables/:id/join', 'POST /api/v1/counter-sales/:id/service-charge',
+  // Jira GRW-735 — the payment screens ask what the coupon and the buy-get offers take off (writes nothing).
+  '/pos': ['POST /api/v1/bill-offers/quote', 'POST /api/v1/counter-sales/:id/cancel-items', 'POST /api/v1/tables/:id/move', 'POST /api/v1/tables/:id/join', 'POST /api/v1/counter-sales/:id/service-charge',
     // Jira GRW-716 — the till asks for its letter so it can keep billing offline.
     'POST /api/v1/till-devices',
     // Jira GRW-732 — Seat guests on the till's table strip, and Free again on a Seated table's sheet.
@@ -235,6 +236,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   '/products/[id]/choices': ['POST /api/v1/addon-groups', 'PATCH /api/v1/addon-groups/:id', 'DELETE /api/v1/addon-groups/:id', 'PUT /api/v1/products/:id/addon-groups'],
   // Jira GRW-724 — and the service charge it offers, on the same owner-only screen.
   '/settings/tables': ['PUT /api/v1/settings/table-orders/:id', 'PUT /api/v1/settings/service-charge/:id', 'PUT /api/v1/settings/kitchen/:id'],
+  // Jira GRW-735 — Settings › Coupons and offers: the owner's and a manager's (the page redirects anyone else; the API says the same).
+  '/settings/offers': ['POST /api/v1/bill-offers', 'DELETE /api/v1/bill-offers/:id'],
   // Jira GRW-733 — Settings › Kitchen stations: the owner's and a manager's (the page redirects anyone else; the API says the same).
   '/settings/kitchen-stations': ['POST /api/v1/kitchen/stations', 'PATCH /api/v1/kitchen/stations/:id', 'DELETE /api/v1/kitchen/stations/:id', 'PUT /api/v1/kitchen/stations/categories'],
   // Jira GRW-719 — setting out a branch's room. Gated by the screen: the page sends anyone but the owner and a manager back

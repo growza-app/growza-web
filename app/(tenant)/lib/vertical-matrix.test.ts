@@ -105,6 +105,8 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/settings/channels/queue': 'shop',
   '/settings/report-access': 'both',
   '/settings/roles': 'shop',
+  // Jira GRW-735 — a branch's coupons and buy-get offers: where bills of products are rung up.
+  '/settings/offers': 'shop',
   '/settings/team': 'both',
   '/settings/working-hours': 'both',
   '/stock': 'shop',

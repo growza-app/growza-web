@@ -227,7 +227,7 @@ export interface SelfMarkResult {
   placed: boolean;
   distanceM: number | null;
 }
-import type { DocumentTicket, KitchenStations, KitchenTicketDto, OrderKitchenTickets, AutopayStart, BranchClosePreview, OwnerBill, OwnerBilling, OwnerBillPage } from './api-types';
+import type { BillOffer, BillOffersQuote, DocumentTicket, KitchenStations, KitchenTicketDto, OrderKitchenTickets, AutopayStart, BranchClosePreview, OwnerBill, OwnerBilling, OwnerBillPage } from './api-types';
 import { downscaleImage } from './downscale';
 import type {
   ClientProfile,
@@ -814,6 +814,12 @@ export const api = {
   updateDiningTable: (tableId: string, body: { name?: string; seats?: number | null; areaId?: string }) =>
     patch<{ areas: DiningArea[] }>(`/api/v1/tables/${tableId}`, body),
   removeDiningTable: (tableId: string) => del<{ areas: DiningArea[] }>(`/api/v1/tables/${tableId}`),
+  /** Jira GRW-735 — a branch's coupons and buy-get offers (owner or manager). */
+  billOffers: (location: string) => get<{ offers: BillOffer[] }>(`/api/v1/bill-offers?location=${encodeURIComponent(location)}`),
+  addBillOffer: (body: Record<string, unknown>) => post<{ id: string; offers: BillOffer[] }>('/api/v1/bill-offers', body),
+  removeBillOffer: (id: string) => del<{ offers: BillOffer[] }>(`/api/v1/bill-offers/${id}`),
+  /** Jira GRW-735 — what the coupon and the buy-get offers take off a bill (an unpaid one by id, or lines not yet sent). */
+  billOffersQuote: (body: Record<string, unknown>) => post<BillOffersQuote>('/api/v1/bill-offers/quote', body),
   /** Jira GRW-734 — an area's prices: its % change on the menu (null = none) and its fixed prices, replaced together. */
   setAreaPrices: (areaId: string, body: { changePct: number | null; prices: Array<{ productId: string; priceMinor: number }> }) =>
     put<{ areas: DiningArea[] }>(`/api/v1/tables/areas/${areaId}/prices`, body),
@@ -1792,6 +1798,8 @@ export const api = {
       discountMinor?: number;
       /** Jira GRW-725 — why the owner gives the whole bill free. Only an owner may, and only with one (3–200 letters). */
       discountReason?: string;
+      /** Jira GRW-735 — a coupon typed at payment; never sent with `discountMinor` (the larger is kept, BR-01). */
+      couponCode?: string;
     },
   ) =>
     post<{
@@ -1799,6 +1807,7 @@ export const api = {
       paymentMode: PaymentMode;
       paidAmountMinor: number;
       rewards?: VisitRewards;
+      offers?: { applied: Array<{ kind: 'bogo' | 'coupon'; name: string; code: string | null; offMinor: number }>; kept: 'coupon' | 'discount' | null };
     }>('/api/v1/counter-sales', { settleSaleId: saleId, ...input }),
   /**
    * The number the client gave when the bill was handed over, kept.

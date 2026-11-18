@@ -93,8 +93,12 @@ function sharedRate(doc: DocumentTicket, half: boolean): number | null {
 /** An issued document as the roll prints it. Every figure is the document's own; nothing is recomputed here. */
 export function billFromDocument(doc: DocumentTicket, words: BillWords, fmt: BillFormat, reprint = false): BillData {
   const adjustments: { label: string; amount: string }[] = [];
-  if (doc.discountMinor > 0) {
-    adjustments.push({ label: doc.rewardPointsUsed > 0 ? words.points(doc.rewardPointsUsed) : words.discount, amount: `-${fmt.figure(doc.discountMinor)}` });
+  // Jira GRW-735 — each coupon and buy-get offer on its own line, by its name; whatever else came off (points) after them.
+  const offers = (doc.offers ?? []).filter((o) => o.amountMinor > 0);
+  for (const o of offers) adjustments.push({ label: o.name, amount: `-${fmt.figure(o.amountMinor)}` });
+  const restMinor = Math.max(0, doc.discountMinor - offers.reduce((s, o) => s + o.amountMinor, 0));
+  if (restMinor > 0) {
+    adjustments.push({ label: doc.rewardPointsUsed > 0 ? words.points(doc.rewardPointsUsed) : words.discount, amount: `-${fmt.figure(restMinor)}` });
   }
   const taxMinor = doc.cgstMinor + doc.sgstMinor + doc.igstMinor;
   // Prices that include tax: what was charged is the sub total less the discount, and the tax is inside it.

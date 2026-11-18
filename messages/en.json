@@ -491,6 +491,10 @@
       "channels": {
         "label": "Online selling",
         "sub": "Which shop Flipkart and Amazon sell from"
+      },
+      "billOffers": {
+        "label": "Coupons and offers",
+        "sub": "Coupon codes and buy one, get one"
       }
     }
   },
@@ -3563,6 +3567,16 @@
       "held": "{points, plural, one {# pt} other {# pts}} available tomorrow",
       "addNumberToEarn": "Add their mobile number to earn {points, plural, one {# point} other {# points}} on this bill",
       "addNumber": "Add their mobile number to earn reward points"
+    },
+    "offers": {
+      "applied": "Offers on this bill",
+      "coupon": "Coupon code",
+      "apply": "Apply",
+      "remove": "Remove the coupon",
+      "checking": "Checking the code…",
+      "couponOn": "{name} applied",
+      "discountKept": "{name}: the discount is larger, so it is kept",
+      "couponKept": "The coupon is larger than the discount, so the coupon is kept."
     }
   },
   "help": {
@@ -6332,5 +6346,46 @@
     "saving": "Saving…",
     "saved": "Saved",
     "costsNet": "Costs {cost} · {pct} of {price} before GST"
+  },
+  "billOffers": {
+    "title": "Coupons and offers",
+    "intro": "Make a coupon code the counter types at payment, or a \"buy one, get one\" that applies itself when the dish is on the bill.",
+    "branch": "Branch",
+    "loadFailed": "Could not load the offers. Try again.",
+    "saveFailed": "Could not save. Try again.",
+    "none": "No coupons or offers yet.",
+    "kindCoupon": "Coupon code",
+    "kindBogo": "Buy one, get one",
+    "code": "Code",
+    "codeHint": "Like DROOL20: letters and numbers",
+    "pct": "% off",
+    "amount": "₹ off",
+    "offWay": "Off as",
+    "minBill": "Minimum bill, ₹",
+    "usesPerGuest": "Uses per guest",
+    "usesAny": "Any number",
+    "from": "From",
+    "until": "Until",
+    "name": "Name on the bill (optional)",
+    "dish": "Dish",
+    "pickDish": "Pick a dish",
+    "buy": "Buy",
+    "get": "Get free",
+    "add": "Add",
+    "remove": "Remove {name}",
+    "couponLine": "{off} off{min, select, none {} other { · bill of {min} or more}}",
+    "bogoLine": "Buy {buy}, get {get} free · {dish}",
+    "dates": "{from} to {until}",
+    "fromOnly": "From {from}",
+    "untilOnly": "Until {until}",
+    "usedTimes": "{n, plural, =0 {Not used yet} one {Used on # bill} other {Used on # bills}}",
+    "oncePerGuest": "{n, plural, one {Once per guest} other {# times per guest}}",
+    "removeTitle": "Remove {name}?",
+    "removeBody": "Bills that already took it keep it. The counter can no longer use it.",
+    "cancel": "Cancel",
+    "confirmRemove": "Remove",
+    "loading": "Loading…",
+    "save": "Add coupon",
+    "saveBogo": "Add offer"
   }
 }

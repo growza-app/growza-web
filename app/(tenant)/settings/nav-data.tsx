@@ -18,6 +18,7 @@ import {
   IconWallet,
   IconWhatsApp,
   IconFlame,
+  IconPercent,
 } from '../components/icons';
 
 export type SettingsGroupKey = 'branch' | 'business' | 'preferences' | 'account';
@@ -35,6 +36,7 @@ export type SettingsRowKey =
   | 'rewards'
   | 'tables'
   | 'kitchenStations'
+  | 'billOffers'
   | 'checkIn'
   | 'appearance'
   | 'privacy'
@@ -209,6 +211,8 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
        * (`areaAllows`, TABLE_ROUTES). Its own branch picker, as the stations are each branch's own.
        */
       { href: '/settings/kitchen-stations', key: 'kitchenStations', icon: IconFlame, ownerOrManager: true },
+      // Jira GRW-735 — a branch's coupon codes and buy-get offers. The owner's or a manager's; a business that rings up no products never sees it.
+      { href: '/settings/offers', key: 'billOffers', icon: IconPercent, ownerOrManager: true },
       { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
       // Jira GRW-72 — what each role on a shop's team can open.
       { href: '/settings/roles', key: 'roles', icon: IconLock, shopOwnerOnly: true },

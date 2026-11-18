@@ -157,7 +157,8 @@ const TABLE_ROUTES = ['/settings/tables', '/settings/kitchen-stations', '/kitche
 const RECIPE_ROUTES = ['/stock/kitchen', '/reports/food-cost'] as const;
 
 /** Jira GRW-72 — Settings screens that exist only for a shop. (Not `SHOP_ROUTES`: the role rules read that list as "the shop's own work".) */
-const SHOP_SETTINGS = ['/settings/roles'] as const;
+// Jira GRW-735 — Coupons and offers: for bills of products and dishes, which a shop (and a kitchen) rings up.
+const SHOP_SETTINGS = ['/settings/roles', '/settings/offers'] as const;
 
 /** May a business with these areas be offered this address? True for everything a screen's own rules do not close. */
 export function areaAllows(href: string, areas: Areas = DIARY_AREAS): boolean {

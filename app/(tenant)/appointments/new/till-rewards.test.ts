@@ -25,7 +25,8 @@ describe('what the till asks for', () => {
   it('asks the one route that knows, with the bill, rather than working the offer out itself', () => {
     expect(quote).toMatch(/api\s*\n?\s*\.customerRewards\(clientId, billMinor\)/);
     // Both tills ask through it; neither has an effect of its own.
-    expect(flow).toMatch(/useRewardQuote\(\s*fromApp \? null : clientId,\s*totalMinor,?\s*\)/);
+    // Jira GRW-735 — on the bill after its coupon and buy-get offers: points come off after the offers (BR-03).
+    expect(flow).toMatch(/useRewardQuote\(\s*fromApp \? null : clientId,\s*afterOffersMinor,?\s*\)/);
     expect(sheet).toMatch(/useRewardQuote\(rewardClientId, billTotalMinor\)/);
     for (const [name, src] of [['PayFlow', flow], ['NewVisitSheet', sheet]] as const) {
       expect(src, `${name} does not fetch the quote itself`).not.toMatch(/customerRewards\(/);
@@ -131,14 +132,16 @@ describe('what the till sends and collects', () => {
   });
 
   it('collects what is left, not what the bill came to', () => {
-    expect(flow).toMatch(/const dueMinor = Math\.max\(0, totalMinor - discountMinor\);/);
+    // Jira GRW-735 — what is left after the offers and then the points.
+    expect(flow).toMatch(/const dueMinor = Math\.max\(0, afterOffersMinor - discountMinor\);/);
     for (const used of ['amountMinor: dueMinor', 'dueMinor - firstWay.minor', 'minor >= dueMinor']) {
       expect(flow, `the ways of paying add up to ${used}`).toContain(used);
     }
   });
 
   it('records what the customer handed over, which is not the legs plus the products any more', () => {
-    expect(flow).toMatch(/paidMinor: redeemPoints > 0 \? dueMinor :/);
+    // Jira GRW-735 — and when offers came off, likewise.
+    expect(flow).toMatch(/paidMinor: redeemPoints > 0 \|\| \(offersHere && billOffers\.offersMinor > 0\) \? dueMinor :/);
   });
 });
 

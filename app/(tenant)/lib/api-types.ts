@@ -2452,6 +2452,8 @@ export interface DocumentTicket {
   /** "Rupees Four Hundred Sixty Two Only". Absent from an API a release behind. */
   amountInWords?: string;
   rewardPointsUsed: number;
+  /** Jira GRW-735 — each coupon and buy-get offer the bill took, on its own line. Absent from an older API. */
+  offers?: Array<{ name: string; code: string | null; amountMinor: number }>;
   paymentModes: string[];
   /** What came in each way, from the bill's payment rows; empty when one way paid it all. */
   payments?: { mode: string; amountMinor: number }[];
@@ -2754,4 +2756,34 @@ export interface StockLossReportPage {
   byItem: Array<{ materialId: string; name: string; unit: MaterialUnit; wastedQty: number; wastedMinor: number; lostQty: number; lostMinor: number; foundQty: number; foundMinor: number; unpriced: boolean }>;
   entries: Array<{ atISO: string; dateISO: string; materialId: string; name: string; unit: MaterialUnit; kind: LossKind; qty: number; valueMinor: number | null; reason: WasteReason | null; note: string | null; dish: string | null; by: string | null }>;
   moreEntries: number;
+}
+
+/** Jira GRW-735 — a branch's coupon or buy-get offer, as Settings › Coupons and offers lists it. */
+export interface BillOffer {
+  id: string;
+  kind: 'coupon' | 'bogo';
+  name: string;
+  code: string | null;
+  /** 20% = 2000. */
+  offBp: number | null;
+  offMinor: number | null;
+  minBillMinor: number;
+  usesPerGuest: number | null;
+  productId: string | null;
+  productName: string | null;
+  buyQty: number | null;
+  getQty: number | null;
+  validFrom: string | null;
+  validUntil: string | null;
+  used: number;
+}
+
+/** Jira GRW-735 — what the offers take off a bill: the buy-get offers, the coupon (or why not), and which of it and the discount is kept. */
+export interface BillOffersQuote {
+  bogo: Array<{ name: string; offMinor: number }>;
+  coupon: { code: string | null; name: string; offMinor: number } | null;
+  couponRefusal: string | null;
+  kept: 'coupon' | 'discount' | null;
+  billMinor: number;
+  dueMinor: number;
 }

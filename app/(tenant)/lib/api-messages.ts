@@ -142,6 +142,34 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That category or station is not at this branch.': 'यह कैटेगरी या स्टेशन इस ब्रांच में नहीं है।',
   'Pick a menu category': 'मेन्यू की कोई कैटेगरी चुनें',
   'Pick a station': 'कोई स्टेशन चुनें',
+  // Jira GRW-735 — the business sells no products.
+  'This business does not sell products.': 'यह कारोबार सामान नहीं बेचता।',
+  // Jira GRW-735 — coupons and buy-get offers.
+  'That code is not valid': 'यह कोड सही नहीं है',
+  'This guest has already used that code': 'यह मेहमान यह कोड पहले ही इस्तेमाल कर चुके हैं',
+  'Add the guest to the bill to use this code': 'यह कोड इस्तेमाल करने के लिए बिल में मेहमान जोड़ें',
+  'A coupon and the bill discount do not go together. Keep one of them.': 'कूपन और बिल की छूट एक साथ नहीं लगते। इनमें से एक रखें।',
+  'Coupons are for bills of dishes and products': 'कूपन डिश और सामान के बिल पर ही लगते हैं',
+  'Only the owner or a manager can set up coupons and offers.': 'कूपन और ऑफ़र सिर्फ़ मालिक या मैनेजर बना सकते हैं।',
+  'That offer is not at this branch.': 'यह ऑफ़र इस ब्रांच का नहीं है।',
+  'The last day is before the first day': 'आख़िरी दिन पहले दिन से पहले है',
+  'Give the coupon a % or an amount off, not both': 'कूपन पर % या रकम की छूट दें, दोनों नहीं',
+  'That code is already a coupon at this branch.': 'यह कोड इस ब्रांच में पहले से एक कूपन है।',
+  'That dish already has a buy-get offer. Remove it first.': 'इस डिश पर पहले से एक-के-साथ-एक ऑफ़र है। पहले उसे हटाएँ।',
+  'A branch can have at most 100 coupons and offers.': 'एक ब्रांच में ज़्यादा से ज़्यादा 100 कूपन और ऑफ़र हो सकते हैं।',
+  'That order is not waiting for payment here.': 'यह ऑर्डर यहाँ भुगतान का इंतज़ार नहीं कर रहा।',
+  'A code is 3 to 20 letters and numbers, no spaces': 'कोड 3 से 20 अक्षर और अंक का हो, बिना खाली जगह के',
+  'A coupon takes 1% to 100% off': 'कूपन पर 1% से 100% तक की छूट हो सकती है',
+  'Type the % with at most one decimal': '% दशमलव के बाद ज़्यादा से ज़्यादा एक अंक तक लिखें',
+  'A coupon takes at least ₹1 off': 'कूपन पर कम से कम ₹1 की छूट होनी चाहिए',
+  'A guest can use it 1 to 100 times': 'एक मेहमान इसे 1 से 100 बार इस्तेमाल कर सकते हैं',
+  'Uses are a whole number': 'इस्तेमाल पूरी संख्या में लिखें',
+  'Pick a date': 'कोई तारीख़ चुनें',
+  'A name is at most 60 letters': 'नाम ज़्यादा से ज़्यादा 60 अक्षरों का हो',
+  'Buy 1 to 20': '1 से 20 ख़रीदें',
+  'Get 1 to 20 free': '1 से 20 मुफ़्त',
+  'Buy a whole number': 'ख़रीदने की गिनती पूरी संख्या में लिखें',
+  'Get a whole number': 'मुफ़्त की गिनती पूरी संख्या में लिखें',
   // Jira GRW-734 — an area's own prices.
   'Only the owner or a manager can set prices.': 'कीमतें सिर्फ़ मालिक या मैनेजर तय कर सकते हैं।',
   'That dish is not on this branch’s menu.': 'यह डिश इस ब्रांच के मेन्यू में नहीं है।',
@@ -584,6 +612,12 @@ function localiseStockMessage(message: string): string | null {
  * name or number in it, so it is matched as a shape and the name is kept as typed.
  */
 const TABLE_MESSAGES: Array<[RegExp, (m: RegExpExecArray) => string]> = [
+  // Jira GRW-734 — a dish with sizes takes an area's % change.
+  [/^(.+) has sizes\. It takes the area’s % change, not one price\.$/s, (m) => `${m[1]} के साइज़ हैं। इस पर एरिया का % बदलाव लगता है, एक कीमत नहीं।`],
+  // Jira GRW-735 — a coupon that is not good on this bill. The date and the amount stay as the server wrote them.
+  [/^That code ended on (.+)$/s, (m) => `यह कोड ${m[1]} को ख़त्म हो गया`],
+  [/^That code starts on (.+)$/s, (m) => `यह कोड ${m[1]} से शुरू होगा`],
+  [/^This code needs a bill of (.+)$/s, (m) => `इस कोड के लिए बिल कम से कम ${m[1]} का होना चाहिए`],
   [/^(.+) has an open bill\. Settle it first\.$/s, (m) => `${m[1]} का बिल अभी खुला है। पहले उसे निपटाएँ।`],
   // Jira GRW-733 — kitchen stations.
   [/^A station name is at most (\d+) letters$/s, (m) => `स्टेशन का नाम ज़्यादा से ज़्यादा ${m[1]} अक्षरों का हो`],

@@ -29,6 +29,8 @@ import { nounInSentence, pickNoun } from '../lib/nouns';
 import { receiptRows, type ReceiptRow } from '../lib/receipt-text';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useRewardQuote } from '../lib/use-reward-quote';
+import { useBillOffers } from '../lib/use-bill-offers';
+import { CouponRow, OfferLines } from '../appointments/new/CouponRow';
 import { SellProductClient } from '../products/sell/SellProductClient';
 import { buildSaleRows, type SaleRow } from '../sales/SalesClient';
 import { ReturnProductSheet } from '../sales/ReturnProductSheet';
@@ -106,8 +108,11 @@ function QueueTokenPayScreen({
   onSettle: (
     ways: Array<{ mode: PaymentMode; amountMinor: number }>,
     redeemPoints: number,
-    /** Jira GRW-725 — `reason`, the owner's, when the discount takes the whole order off. */
-    bill: { offMinor: number; pct: number | null; reason?: string },
+    /**
+     * Jira GRW-725 — `reason`, the owner's, when the discount takes the whole order off. Jira GRW-735 — `couponCode` when a
+     * coupon is kept (then `offMinor` is the coupon's amount, and no discount is sent: the two never stack).
+     */
+    bill: { offMinor: number; pct: number | null; reason?: string; couponCode?: string },
     /** A waiter's walk-in: the name typed here, put on the bill before it is paid. */
     guestName?: string,
   ) => void;
@@ -128,8 +133,17 @@ function QueueTokenPayScreen({
    */
   const [billOff, setBillOff] = useState<{ offMinor: number; pct: number | null }>({ offMinor: 0, pct: null });
   const [discountOpen, setDiscountOpen] = useState(false);
-  const billMinor = Math.max(0, token.totalMinor - billOff.offMinor);
-  const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor: discountMinor, checking } = useRewardQuote(token.customerId, billMinor);
+  /*
+   * Jira GRW-735 — the owner's offers: the buy-get offers are already on the order's lines (shown by name), and a coupon
+   * typed here. It and the discount above do not stack: the larger is kept, and the row says which (BR-01).
+   */
+  const [couponCode, setCouponCode] = useState<string | null>(null);
+  const offers = useBillOffers(byNameOnly ? null : { saleId: token.id, couponCode, discountMinor: billOff.offMinor });
+  const offMinor = offers.couponKept ? (offers.coupon?.offMinor ?? 0) : billOff.offMinor;
+  const billMinor = Math.max(0, token.totalMinor - offMinor);
+  const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor: discountMinor, checking: pointsChecking } = useRewardQuote(token.customerId, billMinor);
+  // Jira GRW-735 — and while a typed coupon is being asked about: its amount is not known yet.
+  const checking = pointsChecking || (couponCode !== null && offers.checking);
   /** Money is not taken while the points for this bill are still being asked (QA 2026-11-17, finding 1). */
   const busy = saving !== null || checking;
   const dueMinor = Math.max(0, billMinor - discountMinor);
@@ -139,17 +153,19 @@ function QueueTokenPayScreen({
    */
   const isOwner = useSession()?.role === 'owner';
   const [freeReason, setFreeReason] = useState('');
-  const freeBlock = billOff.offMinor > 0 ? freeBillBlock(token.totalMinor, token.totalMinor - billOff.offMinor, isOwner, freeReason) : null;
-  const wholeOrderOff = token.totalMinor > 0 && billOff.offMinor >= token.totalMinor;
+  const freeBlock = offMinor > 0 ? freeBillBlock(token.totalMinor, token.totalMinor - offMinor, isOwner, freeReason) : null;
+  const wholeOrderOff = token.totalMinor > 0 && offMinor >= token.totalMinor;
+  // A code that is not good takes nothing off (AC-02): the reason is shown by it, and the bill is paid as it is.
   const [nameDraft, setNameDraft] = useState('');
   /** Money can be taken once someone is named on the bill — picked from the list, or (a waiter) typed. */
   const named = !anonymous || (byNameOnly && nameDraft.trim() !== '');
   const settleWith = (ways: Array<{ mode: PaymentMode; amountMinor: number }>) => {
     if (freeBlock || checking || splitTooBig) return;
+    const given = offers.couponKept && couponCode ? { offMinor, pct: null, couponCode } : billOff;
     onSettle(
       ways,
       byNameOnly ? 0 : redeemPoints,
-      wholeOrderOff ? { ...billOff, reason: freeReason.trim() } : billOff,
+      wholeOrderOff ? { ...given, reason: freeReason.trim() } : given,
       byNameOnly && anonymous ? nameDraft.trim() : undefined,
     );
   };
@@ -355,6 +371,20 @@ function QueueTokenPayScreen({
           </>
         ) : null}
       </button>
+      )}
+      {/* Jira GRW-735 — the buy-get offers this order took, and the Coupon code (not for a waiter: like the discount). */}
+      <OfferLines bogo={offers.bogo} />
+      {anonymous || byNameOnly ? null : (
+        <CouponRow
+          code={couponCode}
+          coupon={offers.coupon}
+          refusal={offers.couponRefusal}
+          kept={offers.kept}
+          checking={offers.checking}
+          disabled={saving !== null}
+          onApply={setCouponCode}
+          onRemove={() => setCouponCode(null)}
+        />
       )}
       {wholeOrderOff ? <FreeBillReason block={freeBlock} reason={freeReason} onReason={setFreeReason} disabled={saving !== null} /> : null}
       {discountOpen ? (
@@ -873,7 +903,7 @@ export function PosClient({
       tk: PosDailyToken,
       ways?: Array<{ mode: PaymentMode; amountMinor: number }>,
       redeemPoints = 0,
-      billOff: { offMinor: number; pct: number | null; reason?: string } = { offMinor: 0, pct: null },
+      billOff: { offMinor: number; pct: number | null; reason?: string; couponCode?: string } = { offMinor: 0, pct: null },
     ) => {
       if (!tk.paymentPending) {
         setTokenState(tk.id, 'completed');
@@ -895,7 +925,8 @@ export function PosClient({
         const settled = await api.settleCounterSale(tk.id, {
           paymentMode: chosen,
           ...(ways.length > 1 ? { payments: ways } : {}),
-          ...(billOff.offMinor > 0 ? { discountMinor: billOff.offMinor } : {}),
+          // Jira GRW-735 — a kept coupon goes by its code, never with the discount beside it (they do not stack).
+          ...(billOff.couponCode ? { couponCode: billOff.couponCode } : billOff.offMinor > 0 ? { discountMinor: billOff.offMinor } : {}),
           ...(billOff.reason ? { discountReason: billOff.reason } : {}),
           ...(redeemPoints > 0 ? { redeemPoints } : {}),
         });

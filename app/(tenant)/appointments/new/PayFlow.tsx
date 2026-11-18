@@ -38,6 +38,8 @@ import { useBarcodeScan } from '../../lib/barcode-scan';
 import { planScans, type ScanProblem } from '../../lib/scan-plan';
 import { canAddSize, groupProductLines, hasSizes, productLineKey, sizedName, sizePriceMinor } from '../../lib/till-sizes';
 import { hasAreaPrices, withAreaPrices, type AreaPricing } from '../../lib/area-prices';
+import { useBillOffers } from '../../lib/use-bill-offers';
+import { CouponRow, OfferLines } from './CouponRow';
 import { SizeSheet } from './SizeSheet';
 import { ChoiceSheet, type DishChoice } from './ChoiceSheet';
 import { useAddonsOn } from '../../components/SessionProvider';
@@ -379,6 +381,12 @@ export function PayFlow({
   const [override, setOverride] = useState<number | null>(null);
   /** Owner, 2026-11-15 — the percentage the counter gave, when it gave one; named on the bill only while it still holds. */
   const [discountPct, setDiscountPct] = useState<number | null>(null);
+  /*
+   * Jira GRW-735 — a coupon typed at payment, and whether the counter's own discount beat it (BR-01: the larger is
+   * kept). `couponLost` holds the coupon's name while the discount stands, so the row can say why nothing came off.
+   */
+  const [couponCode, setCouponCode] = useState<string | null>(null);
+  const [couponLost, setCouponLost] = useState<string | null>(null);
   const [discountOpen, setDiscountOpen] = useState(false);
   /** Jira GRW-725 — why the owner is giving the whole bill free; asked only while the bill is ₹0. */
   const [freeReason, setFreeReason] = useState('');
@@ -669,8 +677,37 @@ export function PayFlow({
    * or a line typed down to nothing.
    */
   const isOwner = session?.role === 'owner';
-  const freeBill = lines.length > 0 && isFreeBill(listMinor, totalMinor);
-  const freeBlock = lines.length > 0 ? freeBillBlock(listMinor, totalMinor, isOwner, freeReason) : null;
+  /*
+   * Jira GRW-735 — the owner's offers on a bill of products rung up and paid here: the buy-get offers apply themselves,
+   * a coupon when typed. Not on an order sent unpaid (its offers are taken where it is paid), a table's, a delivery app's,
+   * or a bill with a service or a package on it. The server works them out the same way when the bill is sent.
+   */
+  const offersHere = Boolean(productsOnly && location && !fromApp && !atTable && !addingTo && !token && !visit && lines.length > 0 && lines.every((l) => l.product && !l.pkg));
+  const couponOn = couponCode !== null && couponLost === null;
+  const offersAsk = offersHere
+    ? {
+        location: location!,
+        // A coupon goes on the bill at its list prices (it and the discount never stack); else the lines as they will be sent.
+        products: groupProductLines(lines, couponOn ? baseAmounts : spread(baseAmounts.map((priceMinor) => ({ priceMinor })), totalMinor)).map((p) => ({ productId: p.productId, qty: p.qty, paidMinor: p.paidMinor })),
+        couponCode: couponOn ? couponCode : null,
+        discountMinor: listMinor - totalMinor,
+        customerId: client.kind === 'existing' ? client.id : null,
+      }
+    : null;
+  const billOffers = useBillOffers(offersAsk);
+  useEffect(() => {
+    if (!couponOn || billOffers.checking || !billOffers.coupon) return;
+    if (billOffers.kept === 'discount') setCouponLost(billOffers.coupon.name);
+    else if (billOffers.kept === 'coupon') {
+      // The coupon is larger: the discount comes off the bill, so the two never stack.
+      setOverride(null);
+      setDiscountPct(null);
+    }
+  }, [couponOn, billOffers.checking, billOffers.coupon, billOffers.kept]);
+  /** What the bill comes to after its billOffers, before points (BR-03). */
+  const afterOffersMinor = Math.max(0, totalMinor - (offersHere ? billOffers.offersMinor : 0));
+  const freeBill = lines.length > 0 && isFreeBill(listMinor, afterOffersMinor);
+  const freeBlock = lines.length > 0 ? freeBillBlock(listMinor, afterOffersMinor, isOwner, freeReason) : null;
   const freeReasonSent = freeBill && !freeBlock ? { discountReason: freeReason.trim() } : {};
 
   /*
@@ -692,9 +729,9 @@ export function PayFlow({
    */
   const { rewards, usePoints, toggle: toggleRedeem, redeemPoints: quotedPoints, redeemMinor: discountMinor, checking: pointsChecking } = useRewardQuote(
     fromApp ? null : clientId,
-    totalMinor,
+    afterOffersMinor,
   );
-  const dueMinor = Math.max(0, totalMinor - discountMinor);
+  const dueMinor = Math.max(0, afterOffersMinor - discountMinor);
 
   /** Owner, 2026-10-15 — every package on the bill, one entry per time it was rung up, in the order picked. */
   const pkgsOnBill = useMemo(() => {
@@ -1090,6 +1127,8 @@ export function PayFlow({
   /** ② — the tile that was tapped is the payment; this is the save. */
   const pay = async (mode: PaymentMode, pending = false) => {
     // QA 2026-11-17 (finding 1) — not while this bill's points are still being asked.
+    // Jira GRW-735 — not while the offers on this bill are still being asked: what is owed is not known yet.
+    if (offersHere && billOffers.checking) return;
     if (saving || lines.length === 0 || freeBlock || pointsChecking || splitTooBig) return;
     felt(BUZZ.paid);
     setSaving(mode);
@@ -1218,6 +1257,8 @@ export function PayFlow({
               ...soldProducts,
               ...(redeemPoints > 0 ? { redeemPoints } : {}),
               ...freeReasonSent,
+              // Jira GRW-735 — a kept coupon, by its code; the server takes it and the buy-get offers off the lines itself.
+              ...(offersHere && couponOn && billOffers.couponKept ? { couponCode: couponCode! } : {}),
               idempotencyKey: attemptKey,
               ...(token || !location ? {} : { location }),
               // Jira GRW-720 — how it is eaten; an app's order is a delivery by where it came from and names none.
@@ -1269,7 +1310,7 @@ export function PayFlow({
                * any more: the legs come back NET of the reward discount and the product lines are the gross
                * figures this request sent, so adding them would count the discount once and not the other.
                */
-              paidMinor: redeemPoints > 0 ? dueMinor : r.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0) + productLines.reduce((sum, p) => sum + p.paidMinor, 0),
+              paidMinor: redeemPoints > 0 || (offersHere && billOffers.offersMinor > 0) ? dueMinor : r.legs.reduce((sum, l) => sum + l.paidAmountMinor, 0) + productLines.reduce((sum, p) => sum + p.paidMinor, 0),
               schedulableId: r.schedulableId,
               startAt: r.startAt,
               tokenNo: r.tokenNo ?? null,
@@ -1816,6 +1857,30 @@ export function PayFlow({
    * required Reason. Drawn wherever the bill is ₹0, not only where the Discount button is, because a typed total gets
    * there too.
    */
+  /** Jira GRW-735 — the buy-get offers this bill takes, and the Coupon code, under the discount. */
+  const offersRows = offersHere ? (
+    <>
+      <OfferLines bogo={billOffers.bogo} />
+      {fromApp || hidePayUntilGuest ? null : (
+        <CouponRow
+          code={couponCode}
+          coupon={couponLost ? { code: couponCode, name: couponLost, offMinor: 0 } : billOffers.coupon}
+          refusal={couponOn ? billOffers.couponRefusal : null}
+          kept={couponLost ? 'discount' : billOffers.kept}
+          checking={couponOn && billOffers.checking}
+          disabled={saving !== null}
+          onApply={(code) => {
+            setCouponLost(null);
+            setCouponCode(code);
+          }}
+          onRemove={() => {
+            setCouponCode(null);
+            setCouponLost(null);
+          }}
+        />
+      )}
+    </>
+  ) : null;
   const freeBillRow = freeBill ? <FreeBillReason block={freeBlock} reason={freeReason} onReason={setFreeReason} disabled={saving !== null} /> : null;
   const discountSheet = discountOpen ? (
     <DiscountSheet
@@ -2048,6 +2113,7 @@ export function PayFlow({
         {dueLine}
         {discountRow}
         {freeBillRow}
+        {offersRows}
         {redeemRow}
         {/* Owner, 2026-10-23 — a scan taken here is answered, not ignored. */}
         {scanNote ? (
@@ -2620,6 +2686,7 @@ export function PayFlow({
             </button>
             {discountRow}
             {freeBillRow}
+            {offersRows}
             {full ? (
               <div role="alert" className="pf-error">
                 {nv.billFull(MAX_LINES)}
