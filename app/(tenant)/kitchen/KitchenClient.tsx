@@ -28,6 +28,15 @@ export const minutesSince = (iso: string, nowMs: number): number => Math.max(0, 
 export const ageKey = (late: boolean, mins: number): 'lateFor' | 'justNow' | 'minutes' => (late ? 'lateFor' : mins === 0 ? 'justNow' : 'minutes');
 
 /**
+ * Jira GRW-730 — who sent the order, said beside its minutes ("Ravi · 5 min"): each sender once, first sender first
+ * ("Ravi, Amit" when a second waiter added a round). Null when nobody is named (an older order or an older API).
+ */
+export const sentByOf = (takenBy: readonly string[] | undefined): string | null => {
+  const names = (takenBy ?? []).map((n) => n.trim()).filter(Boolean);
+  return names.length > 0 ? names.join(', ') : null;
+};
+
+/**
  * Owner, 2026-11-17 (review #6) — Half or Full is what the cook acts on, so the portion is set in bold. The line's own name
  * ("Chicken Biryani (Half - 2 pcs) + Raita") is split around the portion the API names, never guessed from brackets: a
  * dish whose own name has brackets ("Chicken Drumstick (2 pcs)") stays as it is.
@@ -240,10 +249,22 @@ export function KitchenClient() {
         <ul className="kd-grid">
           {cards.filter((c) => only === 'all' || c.orderType === only).map((c) => {
             const mins = minutesSince(c.placedAt, now);
+            const sentBy = sentByOf(c.takenBy);
             return (
               <li key={c.saleId} className={`kd-card${c.late ? ' is-late' : ''}`} aria-label={labelOf(c)}>
                 <div className="kd-card-head">
                   <span className="kd-card-label">{labelOf(c)}</span>
+                  {/* Jira GRW-730 — whom to ask about a dish. A long name gives way (…) before the minutes ever do. */}
+                  {sentBy ? (
+                    <>
+                      <span className="kd-card-by" title={t('sentBy', { name: sentBy })}>
+                        {sentBy}
+                      </span>
+                      <span className="kd-card-dot" aria-hidden="true">
+                        ·
+                      </span>
+                    </>
+                  ) : null}
                   <span className="kd-card-age">
                     {/* Review #4 — late is said with a clock and words, never by the amber alone. */}
                     {c.late ? (

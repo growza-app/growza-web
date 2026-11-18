@@ -86,6 +86,7 @@ export function useTicketPrinter() {
       kotNo: (n: number) => t('kotNo', { n }),
       token: (n: number | string) => t('token', { n }),
       items: (n: number) => t('items', { n }),
+      by: (name: string) => t('kotBy', { name }),
     }),
     [t],
   );

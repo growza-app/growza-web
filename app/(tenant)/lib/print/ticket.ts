@@ -136,6 +136,11 @@ export interface KotData {
   offlineToken?: string | null;
   /** Where the order is going: "Takeaway", "Swiggy", later "T4 · AC Hall". Null when nothing names it. */
   destination: string | null;
+  /**
+   * Jira GRW-730 — who sent it ("Ravi"), or the delivery app ("Swiggy"), printed "By Ravi" under the slip number so
+   * the cook knows whom to ask. The name the slip kept when it was made. Null or absent: no line.
+   */
+  takenBy?: string | null;
   /** Already formatted: "14 Nov, 8:40 pm". */
   when: string;
   items: KotItem[];
@@ -154,6 +159,8 @@ export interface KotCopy {
   kotNo: (n: number) => string;
   token: (n: number | string) => string;
   items: (n: number) => string;
+  /** Jira GRW-730 — "By Ravi". Absent: the name is printed on its own. */
+  by?: (name: string) => string;
 }
 
 /**
@@ -173,6 +180,8 @@ export function kotTicket(kot: KotData, copy: KotCopy): Ticket {
   if (kot.destination) lines.push({ kind: 'text', text: kot.destination, align: 'center', bold: true });
   // Jira GRW-716 — a slip printed offline has no kitchen number yet (the server gives it when the order is sent).
   lines.push({ kind: 'pair', left: kot.number > 0 ? copy.kotNo(kot.number) : '', right: kot.when });
+  const sender = kot.takenBy?.trim();
+  if (sender) lines.push({ kind: 'text', text: copy.by ? copy.by(sender) : sender });
   if (kot.branchName) lines.push({ kind: 'text', text: kot.branchName });
   lines.push({ kind: 'rule' });
   for (const item of kot.items) {

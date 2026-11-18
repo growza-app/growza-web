@@ -35,8 +35,9 @@ export function kotFromApi(
     kind: kot.kind,
     tokenNo: order.tokenNo,
     offlineToken: order.offlineToken ?? null,
-    // Jira GRW-723 — and who sent it, so the kitchen knows whose table ("T5 · AC Hall · Ravi").
-    destination: [destinationOf(order.channel, { orderType: order.orderType, tableName: order.tableName, words }), kot.takenBy].filter(Boolean).join(' · ') || null,
+    destination: destinationOf(order.channel, { orderType: order.orderType, tableName: order.tableName, words }),
+    // Jira GRW-723 · GRW-730 — who sent it, on its own line under the slip number ("By Ravi"); the name the slip kept.
+    takenBy: kot.takenBy ?? null,
     when: when(kot.createdAt),
     items: kot.items.map((i) => ({ name: i.name, qty: i.qty })),
     reprint,

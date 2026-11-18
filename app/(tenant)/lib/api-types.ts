@@ -2369,7 +2369,10 @@ export interface KitchenTicketDto {
   kind: 'new' | 'add' | 'cancel' | 'pack';
   createdAt: string;
   items: { name: string; qty: number }[];
-  /** Jira GRW-723 — who sent it ("Ravi"), printed beside the table. Absent from an older API. */
+  /**
+   * Jira GRW-723 · GRW-730 — who sent it ("Ravi"), as named the day the slip was made, or the delivery app the order
+   * came from ("Swiggy"): printed "By Ravi" under the slip number. Absent from an older API.
+   */
   takenBy?: string | null;
 }
 
@@ -2481,6 +2484,8 @@ export interface KitchenCard {
   channel: string;
   placedAt: string;
   late: boolean;
+  /** Jira GRW-730 — who sent the order's rounds, each once, first sender first ("Ravi", "Amit"); a delivery app's order names the app. Absent from an older API. */
+  takenBy?: string[];
   /** `size` (owner, 2026-11-17): the portion it was sold in, set in bold on the card; null with no sizes or on an older API. */
   dishes: Array<{ id: string; name: string; qty: number; done: boolean; isNew: boolean; cancelled: boolean; size?: string | null }>;
 }
