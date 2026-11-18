@@ -66,11 +66,22 @@ export type PageGrid = Partial<Record<RolePageKey, PageLevel>>;
  */
 /** Jira GRW-714 — a cook: Kitchen granted, and neither the till nor the tables. Their whole app is `/kitchen`. */
 export function cooksOnly(grid: PageGrid | null | undefined): boolean {
-  return Boolean(grid) && (grid!.kitchen ?? 'none') !== 'none' && grid!.bookings !== 'manage' && (grid!.tables ?? 'none') === 'none';
+  return Boolean(grid) && (grid!.kitchen ?? 'none') !== 'none' && grid!.bookings !== 'manage' && (grid!.tables ?? 'none') === 'none' && noOfficePage(grid!);
 }
 
 export function servesTablesOnly(grid: PageGrid | null | undefined): boolean {
-  return Boolean(grid) && (grid!.tables ?? 'none') !== 'none' && grid!.bookings !== 'manage';
+  return Boolean(grid) && (grid!.tables ?? 'none') !== 'none' && grid!.bookings !== 'manage' && noOfficePage(grid!);
+}
+
+/*
+ * Develop QA 2026-11-18 (test:roles) — a waiter or a cook is ALSO a role that opens none of the office's screens. Without this, a role
+ * granted every page at See ("Everything view-only") has Tables and no Change on Bookings, so it was taken for a waiter: every address
+ * sent it to the till, and its sidebar was POS alone, in a shop that has no tables at all. The API draws the same line
+ * (`api/security/table-service.ts`).
+ */
+const OFFICE_PAGES = ['clients', 'services', 'offers', 'staff', 'reports', 'settings'] as const;
+function noOfficePage(grid: PageGrid): boolean {
+  return OFFICE_PAGES.every((k) => (grid[k as keyof PageGrid] ?? 'none') === 'none');
 }
 
 /** The salon's app: every diary screen, none of the shop's. What an absent answer means. */
