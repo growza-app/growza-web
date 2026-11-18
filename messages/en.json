@@ -448,6 +448,10 @@
         "label": "Tables",
         "sub": "Take orders by table, per branch"
       },
+      "kitchenStations": {
+        "label": "Kitchen stations",
+        "sub": "Which station makes each dish"
+      },
       "checkIn": {
         "label": "Location check-in",
         "sub": "Staff mark themselves in from their phone"
@@ -4652,7 +4656,37 @@
     "waiting": "{n, plural, one {1 waiting} other {# waiting}}",
     "lateCount": "{n} late",
     "newCount": "{n, plural, one {1 with new dishes} other {# with new dishes}}",
-    "all": "All"
+    "all": "All",
+    "stationAll": "All stations",
+    "stationFilterAria": "Which station this screen shows",
+    "stationReadyDone": "{label} · {station} ready",
+    "kitchenStation": "Kitchen"
+  },
+  "kitchenStations": {
+    "branch": "Branch",
+    "loading": "Loading the stations…",
+    "loadFailed": "Couldn't load the kitchen stations. Try again.",
+    "saveFailed": "That didn't save. Try again.",
+    "stationsTitle": "Stations",
+    "intro": "Each dish prints and shows only at its own station. A category with no station goes to the Kitchen.",
+    "introNone": "No stations yet: every order prints one kitchen slip. Add a station (Tandoor, Bar) to split the slips.",
+    "kitchen": "Kitchen",
+    "default": "Default",
+    "renameLabel": "Rename {name}",
+    "removeLabel": "Remove {name}",
+    "save": "Save",
+    "cancel": "Cancel",
+    "remove": "Remove",
+    "newStation": "New station",
+    "newStationExample": "Tandoor",
+    "add": "Add",
+    "nameNeeded": "Give the station a name.",
+    "categoriesTitle": "Who makes each category",
+    "categoriesHint": "Pick the station that makes the dishes of each menu category.",
+    "noCategories": "No menu categories yet. Add them on the Menu screen first.",
+    "categoryStation": "Station for {name}",
+    "removeTitle": "Remove {name}?",
+    "removeBody": "Its categories go back to the Kitchen. Slips already printed keep its name."
   },
   "posTables": {
     "paidOk": "{table} paid · {amount}. The table is free.",
@@ -5930,7 +5964,18 @@
     "taxAtIncluded": "{tax} @{rate}% (incl.)",
     "scanToPay": "Scan to pay {amount}",
     "paidStamp": "PAID",
-    "billQr": "Print the payment QR on the bill"
+    "billQr": "Print the payment QR on the bill",
+    "slipsElsewhere": "This order's slips print on another device.",
+    "stationFailed": "{station} slip did not print",
+    "stationsFailed": "{stations} slips did not print",
+    "printAgain": "Print again",
+    "defaultStation": "Kitchen",
+    "stationsTitle": "Kitchen slips by station",
+    "stationsHint": "Each station's slip can come out of this printer, the station's own printer, or another device.",
+    "stationWhere": "Where {station} slips print",
+    "stationHere": "This printer",
+    "stationOwn": "Its own printer",
+    "stationOff": "Not from this device"
   },
   "kitchenStock": {
     "title": "Kitchen stock",

@@ -1,5 +1,5 @@
 import { ORDER_CHANNEL_WORD } from '@growza-app/shared';
-import type { DocumentTicket, KitchenTicketDto, OrderType } from '../api-types';
+import type { DocumentTicket, KitchenSlips, KitchenTicketDto, OrderType } from '../api-types';
 import type { BillData, KotData } from './ticket';
 
 /**
@@ -23,6 +23,10 @@ export function destinationOf(
   return null;
 }
 
+/** Jira GRW-733 — the slips an answer carries: every station's (`kots`) where the API sends them, else its one `kot`. */
+export const slipsOf = (r: { kot?: KitchenTicketDto | null; kots?: readonly KitchenTicketDto[] }): KitchenSlips | undefined =>
+  r.kots && r.kots.length > 0 ? r.kots : (r.kot ?? undefined);
+
 export function kotFromApi(
   kot: KitchenTicketDto,
   order: { tokenNo: number | null; offlineToken?: string | null; channel: string | null; branchName?: string | null; orderType?: OrderType | null; tableName?: string | null },
@@ -38,6 +42,8 @@ export function kotFromApi(
     destination: destinationOf(order.channel, { orderType: order.orderType, tableName: order.tableName, words }),
     // Jira GRW-723 · GRW-730 — who sent it, on its own line under the slip number ("By Ravi"); the name the slip kept.
     takenBy: kot.takenBy ?? null,
+    // Jira GRW-733 — the station the slip is for; none where the branch has set no stations.
+    station: kot.station ?? null,
     when: when(kot.createdAt),
     items: kot.items.map((i) => ({ name: i.name, qty: i.qty })),
     reprint,

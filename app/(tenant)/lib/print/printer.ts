@@ -27,9 +27,47 @@ export interface PrinterSettings {
   billCopies: 1 | 2;
   /** Jira GRW-729 — print the payment QR on the bill. On unless this counter switched it off; a bill with no QR set up prints none. */
   billQr: boolean;
+  /**
+   * Jira GRW-733 — where each kitchen station's slips come out from THIS device, by station (its id, or `kitchen` for the
+   * default station). A station not named here prints on this device's printer, as every slip did before stations.
+   */
+  stations: Record<string, StationRoute>;
 }
 
-export const DEFAULT_PRINTER: PrinterSettings = { width: '58', bluetooth: null, autoKot: false, autoBill: false, billCopies: 1, billQr: true };
+/**
+ * Jira GRW-733 — `here`: this device's own printer (above) · `own`: the station's own Bluetooth printer, paired from this
+ * device (the Bar's beside the bar) · `off`: not from this device (another device prints it, or the station reads its screen).
+ */
+export type StationRoute = { to: 'here' } | { to: 'off' } | { to: 'own'; bluetooth: { id: string; name: string } };
+
+/** The key a slip's station goes by in `stations`: its id, or `kitchen` for the default station (and for a branch with none). */
+export const stationKey = (stationId: string | null | undefined): string => stationId ?? 'kitchen';
+
+/** Where a slip for this station goes from this device. */
+export function routeOf(settings: PrinterSettings, stationId: string | null | undefined): StationRoute {
+  return settings.stations[stationKey(stationId)] ?? { to: 'here' };
+}
+
+/** The settings a station's slip prints with: this device's own, or the same roll on the station's own printer. Null: not from here. */
+export function settingsForStation(settings: PrinterSettings, stationId: string | null | undefined): PrinterSettings | null {
+  const route = routeOf(settings, stationId);
+  if (route.to === 'off') return null;
+  return route.to === 'own' ? { ...settings, bluetooth: route.bluetooth } : settings;
+}
+
+export const DEFAULT_PRINTER: PrinterSettings = { width: '58', bluetooth: null, autoKot: false, autoBill: false, billCopies: 1, billQr: true, stations: {} };
+
+function readStations(raw: unknown): Record<string, StationRoute> {
+  const out: Record<string, StationRoute> = {};
+  if (!raw || typeof raw !== 'object') return out;
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    const v = value as { to?: unknown; bluetooth?: { id?: unknown; name?: unknown } } | null;
+    if (v?.to === 'off') out[key] = { to: 'off' };
+    else if (v?.to === 'own' && typeof v.bluetooth?.id === 'string') out[key] = { to: 'own', bluetooth: { id: v.bluetooth.id, name: String(v.bluetooth.name ?? '') } };
+    else if (v?.to === 'here') out[key] = { to: 'here' };
+  }
+  return out;
+}
 
 const KEY = 'growza.printer.v1';
 
@@ -46,6 +84,8 @@ export function readPrinterSettings(): PrinterSettings {
       billCopies: p.billCopies === 2 ? 2 : 1,
       // Settings saved before the switch existed have none: on, as the story's default.
       billQr: p.billQr !== false,
+      // Settings saved before stations existed have none: every slip on this device's printer, as before.
+      stations: readStations((p as { stations?: unknown }).stations),
     };
   } catch {
     return DEFAULT_PRINTER;

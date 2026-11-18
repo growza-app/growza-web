@@ -158,6 +158,8 @@
 @import './styles/99-menu-import.css';
 /* Jira GRW-739 — Reports › Food cost: the % and its amber / red bands. */
 @import './styles/99-food-cost.css';
+/* Jira GRW-733 — Settings › Kitchen stations. */
+@import './styles/99-kitchen-stations.css';
 /* Emerald v2 theme preview — after every screen sheet, before 99-photo-none.css (which must stay last); delete this line and the file to drop it. */
 @import './styles/99-z-emerald-v2.css';
 @import './styles/99-photo-none.css';

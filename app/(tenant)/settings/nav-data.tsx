@@ -17,6 +17,7 @@ import {
   IconUserPlus,
   IconWallet,
   IconWhatsApp,
+  IconFlame,
 } from '../components/icons';
 
 export type SettingsGroupKey = 'branch' | 'business' | 'preferences' | 'account';
@@ -33,6 +34,7 @@ export type SettingsRowKey =
   | 'phoneAlerts'
   | 'rewards'
   | 'tables'
+  | 'kitchenStations'
   | 'checkIn'
   | 'appearance'
   | 'privacy'
@@ -201,6 +203,12 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
        * `areaAllows` closes the address everywhere else (TABLE_ROUTES).
        */
       { href: '/settings/tables', key: 'tables', icon: IconTable, ownerOrManager: true },
+      /*
+       * Jira GRW-733 — a branch's kitchen stations, and which station makes each menu category. Beside Tables: the owner or
+       * a manager sets the kitchen up the way they set the room up, and a business with no kitchen never sees it
+       * (`areaAllows`, TABLE_ROUTES). Its own branch picker, as the stations are each branch's own.
+       */
+      { href: '/settings/kitchen-stations', key: 'kitchenStations', icon: IconFlame, ownerOrManager: true },
       { href: '/settings/report-access', key: 'reportAccess', icon: IconReports },
       // Jira GRW-72 — what each role on a shop's team can open.
       { href: '/settings/roles', key: 'roles', icon: IconLock, shopOwnerOnly: true },

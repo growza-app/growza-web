@@ -31,7 +31,9 @@ const BRANCH_IN_ADDRESS = ['/customers', '/services', '/products', '/stock', '/r
  * once, so it is not looking at one branch and a picker would narrow nothing.
  */
 /* Jira GRW-647 — Phone alerts is here too: it sets up one PERSON's phone, which no branch owns a part of. */
-const WHOLE_BUSINESS = ['/settings/business', '/settings/branches', '/settings/payments', '/settings/report-access', '/settings/roles', '/settings/billing', '/settings/channels', '/settings/alerts', '/settings/rewards', '/settings/tables'];
+const WHOLE_BUSINESS = ['/settings/business', '/settings/branches', '/settings/payments', '/settings/report-access', '/settings/roles', '/settings/billing', '/settings/channels', '/settings/alerts', '/settings/rewards', '/settings/tables',
+  // Jira GRW-733 — Kitchen stations, like Tables: one screen with its own branch picker, the header picks nothing.
+  '/settings/kitchen-stations'];
 
 function matches(pathname: string, route: string): boolean {
   return pathname === route || pathname.startsWith(`${route}/`);

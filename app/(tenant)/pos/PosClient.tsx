@@ -10,7 +10,8 @@ import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
 import { useBranch } from '../components/BranchProvider';
 import { useLabel } from '../components/LabelsProvider';
 import { PrinterButton, TillPrintActions, useTicketPrinter, type OrderRef } from '../components/TicketPrinter';
-import type { KitchenTicketDto } from '../lib/api-types';
+import type { KitchenSlips } from '../lib/api-types';
+import { slipsOf } from '../lib/print/from-api';
 import { PaymentDone } from '../components/PaymentDone';
 import { DiscountSheet } from '../appointments/new/DiscountSheet';
 import { FreeBillReason } from '../appointments/new/FreeBillReason';
@@ -584,7 +585,7 @@ export function PosClient({
   const [queueNote, setQueueNote] = useState<string | null>(null);
   /** Jira GRW-713 — this till's printer, and the last KOT the queue made (an addition, a cancellation) to print. */
   const printer = useTicketPrinter();
-  const [lastKot, setLastKot] = useState<{ saleId: string; kot: KitchenTicketDto; order: OrderRef } | null>(null);
+  const [lastKot, setLastKot] = useState<{ saleId: string; kot: KitchenSlips; order: OrderRef } | null>(null);
   const [settledReceipt, setSettledReceipt] = useState<{
     appointmentId: string;
     totalMinor: number;
@@ -834,10 +835,12 @@ export function PosClient({
       }
       const res = await api.cancelPendingCounterSale(tk.id, cancelAskCooked ? cancelCooked : undefined);
       // Jira GRW-713 — the kitchen is told to stop: printed now where this till prints by itself, a tap away otherwise.
-      if (res.kot) {
+      // Jira GRW-733 — one cancel slip per station that had the order.
+      const cancelled = slipsOf(res);
+      if (cancelled) {
         const order = { tokenNo: tk.tokenNo, offlineToken: tk.offlineToken, channel: tk.channel };
-        setLastKot({ saleId: tk.id, kot: res.kot, order });
-        printer.autoKot(res.kot, order);
+        setLastKot({ saleId: tk.id, kot: cancelled, order });
+        printer.autoKot(cancelled, order);
       }
       // Gone from the board at once; the read after it is the shop's answer for every other device.
       setTodayRows((prev) => prev.filter((r) => (r.bookingGroupId ?? r.id) !== tk.id));
@@ -1597,10 +1600,12 @@ export function PosClient({
                 const res = await api.addToPendingCounterSale(addingToToken.id, products);
                 const tk = addingToToken;
                 // Jira GRW-713 — a KOT for what was just added, and nothing the kitchen already has.
-                if (res.kot) {
+                // Jira GRW-733 — one slip per station the new dishes go to.
+                const added = slipsOf(res);
+                if (added) {
                   const order = { tokenNo: tk.tokenNo, offlineToken: tk.offlineToken, channel: tk.channel };
-                  setLastKot({ saleId: tk.id, kot: res.kot, order });
-                  printer.autoKot(res.kot, order);
+                  setLastKot({ saleId: tk.id, kot: added, order });
+                  printer.autoKot(added, order);
                 }
                 setQueueNote(t('addedToOrder', { token: tk.tokenLabel, amount: formatMoney(String(res.totalMinor)) }));
                 setReloadKey((k) => k + 1);

@@ -500,7 +500,9 @@ export function OrderClient({
                       setTypeError(null);
                       try {
                         const done = await api.changeOrderType(order.id, to);
-                        if (done.packSlip) void printer.printKot(done.packSlip, { tokenNo: order.tokenNo ?? null, channel: order.channel, orderType: 'takeaway' });
+                        // Jira GRW-733 — a pack slip for each station that is making part of it.
+                        const packSlips = done.packSlips && done.packSlips.length > 0 ? done.packSlips : done.packSlip;
+                        if (packSlips) void printer.printKot(packSlips, { tokenNo: order.tokenNo ?? null, channel: order.channel, orderType: 'takeaway' });
                         await refresh();
                       } catch (e) {
                         setTypeError(e instanceof ApiError ? e.message : t('types.changeFailed'));

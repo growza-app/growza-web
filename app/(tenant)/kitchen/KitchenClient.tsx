@@ -17,11 +17,16 @@ import { SignOutButton } from '../components/SignOutButton';
  * A dish ticked here is ticked on every tablet (it is saved on the dish). Ready takes the card off — on every screen — and Undo is on screen
  * for the 10 seconds the server allows (BR-02). A card past the branch's late time turns amber AND says how many minutes, so colour is never
  * the only signal. One short chime for a new order, off until this tablet turns it on.
+ *
+ * Jira GRW-733 — where the branch has kitchen stations, a tablet shows one station's part (Tandoor, Bar, Kitchen) or all of them, chosen on
+ * the tablet and kept on it. A station's Ready takes the card off THAT screen; the order is Ready once every station has marked its part.
  */
 
 export const KITCHEN_REFRESH_MS = 4_000;
 const UNDO_MS = 10_000;
 const CHIME_KEY = 'growza.kitchen.chime';
+/** Jira GRW-733 — which station this tablet shows, kept on the tablet: `kitchen` for the default, a station's id, or nothing for all. */
+const STATION_KEY = 'growza.kitchen.station';
 
 export const minutesSince = (iso: string, nowMs: number): number => Math.max(0, Math.floor((nowMs - Date.parse(iso)) / 60_000));
 /** Which words a card's age is said in: "Just now" in its first minute, never "0 min". */
@@ -68,16 +73,20 @@ export function KitchenClient() {
   const [failed, setFailed] = useState(false);
   const [off, setOff] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
-  const [undo, setUndo] = useState<{ saleId: string; label: string; until: number } | null>(null);
+  const [undo, setUndo] = useState<{ saleId: string; label: string; until: number; station?: string | null } | null>(null);
   const [chime, setChime] = useState(false);
   /** Owner, 2026-11-17 — one kind of order at a time in a rush; on this tablet only, never saved. */
   const [only, setOnly] = useState<'all' | 'dine_in' | 'takeaway' | 'delivery'>('all');
+  /** Jira GRW-733 — this tablet's station (null: every station) and the branch's stations, for the filter. */
+  const [station, setStation] = useState<string | null>(null);
+  const [stations, setStations] = useState<Array<{ id: string; name: string }>>([]);
   const seen = useRef<Set<string> | null>(null);
   const mayLeave = session?.role === 'owner' || session?.role === 'manager';
 
   useEffect(() => {
     try {
       setChime(localStorage.getItem(CHIME_KEY) === 'on');
+      setStation(localStorage.getItem(STATION_KEY) || null);
     } catch {
       /* a private window: no chime, as by default */
     }
@@ -86,8 +95,9 @@ export function KitchenClient() {
   const load = useCallback(async () => {
     if (!location) return;
     try {
-      const answer = await api.kitchen(location);
+      const answer = await api.kitchen(location, station);
       setCards(answer.cards);
+      setStations(answer.stations ?? []);
       setFailed(false);
       setNow(Date.now());
       const ids = new Set(answer.cards.map((c) => c.saleId));
@@ -108,7 +118,7 @@ export function KitchenClient() {
       if (e instanceof ApiError && e.status === 403) setOff(e.message);
       else setFailed(true);
     }
-  }, [location, chime]);
+  }, [location, chime, station]);
 
   useEffect(() => {
     void load();
@@ -126,11 +136,13 @@ export function KitchenClient() {
   const labelOf = (c: KitchenCard): string =>
     c.offlineToken ? c.offlineToken : c.tokenNo !== null ? t('token', { n: String(c.tokenNo).padStart(2, '0') }) : (c.tableName ?? t('order'));
 
+  /** Jira GRW-733 — the station this screen marks Ready for, by name; null on an all-stations screen. */
+  const stationName = station === null ? null : station === 'kitchen' ? t('kitchenStation') : (stations.find((s) => s.id === station)?.name ?? null);
   const ready = async (c: KitchenCard) => {
     setCards((prev) => (prev ?? []).filter((x) => x.saleId !== c.saleId));
     try {
-      await api.kitchenReady(c.saleId, true);
-      setUndo({ saleId: c.saleId, label: labelOf(c), until: Date.now() + UNDO_MS });
+      await api.kitchenReady(c.saleId, true, station);
+      setUndo({ saleId: c.saleId, label: stationName ? t('stationReadyDone', { label: labelOf(c), station: stationName }) : labelOf(c), until: Date.now() + UNDO_MS, station });
     } catch {
       void load();
     }
@@ -140,7 +152,7 @@ export function KitchenClient() {
     const u = undo;
     setUndo(null);
     try {
-      await api.kitchenReady(u.saleId, false);
+      await api.kitchenReady(u.saleId, false, u.station ?? null);
     } finally {
       void load();
     }
@@ -151,6 +163,17 @@ export function KitchenClient() {
       await api.kitchenDishDone(dishId, done);
     } catch {
       void load();
+    }
+  };
+  const pickStation = (next: string | null) => {
+    setStation(next);
+    setCards(null);
+    seen.current = null;
+    try {
+      if (next) localStorage.setItem(STATION_KEY, next);
+      else localStorage.removeItem(STATION_KEY);
+    } catch {
+      /* stays for this visit */
     }
   };
   const toggleChime = () => {
@@ -207,6 +230,17 @@ export function KitchenClient() {
           {mayLeave ? null : <SignOutButton className="btn btn-ghost kd-signout">{t('signOut')}</SignOutButton>}
         </div>
       </div>
+
+      {/* Jira GRW-733 — the station this tablet shows; only where the branch has named stations. */}
+      {stations.length > 0 ? (
+        <div className="kd-stations" role="group" aria-label={t('stationFilterAria')}>
+          {[{ key: null as string | null, name: t('stationAll') }, { key: 'kitchen', name: t('kitchenStation') }, ...stations.map((s) => ({ key: s.id as string | null, name: s.name }))].map((s) => (
+            <button key={s.key ?? 'all'} type="button" className="kd-filter kd-station-pick" aria-pressed={station === s.key} onClick={() => pickStation(s.key)}>
+              {s.name}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {failed ? (
         <p className="kd-offline" role="alert">
@@ -317,6 +351,8 @@ export function KitchenClient() {
                             );
                           })()}
                         </span>
+                        {/* Jira GRW-733 — on an all-stations screen, whose dish it is. */}
+                        {station === null && d.station ? <span className="kd-station">{d.station}</span> : null}
                         {d.isNew ? <span className="kd-new">{t('new')}</span> : null}
                         {d.cancelled ? <span className="kd-off">{t('cancelled')}</span> : null}
                       </button>

@@ -134,6 +134,14 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Guests are a whole number': 'मेहमानों की गिनती पूरी संख्या में लिखें',
   'At least one guest': 'कम से कम एक मेहमान',
   'At most 99 guests': 'ज़्यादा से ज़्यादा 99 मेहमान',
+  // Jira GRW-733 — kitchen stations.
+  'That station is not at this branch.': 'यह स्टेशन इस ब्रांच में नहीं है।',
+  'Only the owner or a manager can set up kitchen stations.': 'किचन स्टेशन सिर्फ़ मालिक या मैनेजर सेट कर सकते हैं।',
+  'Give the station a name': 'स्टेशन को एक नाम दें',
+  'Kitchen is the name of the default station. Pick another name.': '"किचन" पहले से तय स्टेशन का नाम है। कोई दूसरा नाम चुनें।',
+  'That category or station is not at this branch.': 'यह कैटेगरी या स्टेशन इस ब्रांच में नहीं है।',
+  'Pick a menu category': 'मेन्यू की कोई कैटेगरी चुनें',
+  'Pick a station': 'कोई स्टेशन चुनें',
   // Jira GRW-720 — how an order is eaten.
   'Table orders is off at this branch.': 'इस ब्रांच में टेबल ऑर्डर बंद है।',
   'Choose Dine-in or Takeaway': 'यहीं खाना या पैक करके चुनें',
@@ -569,6 +577,10 @@ function localiseStockMessage(message: string): string | null {
  */
 const TABLE_MESSAGES: Array<[RegExp, (m: RegExpExecArray) => string]> = [
   [/^(.+) has an open bill\. Settle it first\.$/s, (m) => `${m[1]} का बिल अभी खुला है। पहले उसे निपटाएँ।`],
+  // Jira GRW-733 — kitchen stations.
+  [/^A station name is at most (\d+) letters$/s, (m) => `स्टेशन का नाम ज़्यादा से ज़्यादा ${m[1]} अक्षरों का हो`],
+  [/^(.+) is already a station at this branch\.$/s, (m) => `${m[1]} इस ब्रांच में पहले से एक स्टेशन है।`],
+  [/^A branch can have at most (\d+) stations\.$/s, (m) => `एक ब्रांच में ज़्यादा से ज़्यादा ${m[1]} स्टेशन हो सकते हैं।`],
   // Jira GRW-732 — a Seated table (guests sat, no order yet).
   [/^(.+) has guests seated\. Free it first\.$/s, (m) => `${m[1]} पर मेहमान बैठे हैं। पहले उसे खाली करें।`],
   [/^(.+) has guests seated\. Pick a free table\.$/s, (m) => `${m[1]} पर मेहमान बैठे हैं। कोई खाली टेबल चुनें।`],

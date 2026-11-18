@@ -45,12 +45,13 @@ import { queueScan, takeScans } from '../../lib/scan-queue';
 import { heldBillsKey, heldStamp, loadHeldBills, saveHeldBills } from '../../lib/held-bills';
 import { BUZZ, buzz, remember, remembered, SOUND_KEY } from '../../lib/pay-feedback';
 import { PaymentDone } from '../../components/PaymentDone';
-import { TillPrintActions, useTicketPrinter } from '../../components/TicketPrinter';
+import { PrintStatusLine, TillPrintActions, useTicketPrinter } from '../../components/TicketPrinter';
 import { TableMap } from '../../pos/TableMap';
 import { TableBillSheet } from '../../pos/TableBillSheet';
 import { useWaiter } from '../../pos/waiter';
 import type { DiningTable } from '../../lib/api';
-import type { KitchenTicketDto } from '../../lib/api-types';
+import type { KitchenSlips, KitchenTicketDto } from '../../lib/api-types';
+import { slipsOf } from '../../lib/print/from-api';
 import type { BillData } from '../../lib/print/ticket';
 import { keepOfflineOrder, neverArrived, nextOfflineCount, offlineTokenOf, tillLetter, deviceKey, useOfflineTill, type OfflineOrderBody } from '../../lib/offline-till';
 import { OfflineTillBar } from '../../components/OfflineTillBar';
@@ -93,8 +94,8 @@ interface Sale {
   day: string;
   /** Only products were sold: the id is a sale's, not a booking's, so there is nothing in Bookings to open. */
   productOnly: boolean;
-  /** Jira GRW-713 — the KOT this order sent to the kitchen, for Print KOT on the done screen. Absent with no kitchen. */
-  kot?: KitchenTicketDto;
+  /** Jira GRW-713 — the KOT this order sent to the kitchen, for Print KOT on the done screen. Absent with no kitchen. Jira GRW-733 — one per station. */
+  kot?: KitchenSlips;
   /** Where the order came from: 'counter' or a delivery app. The KOT names it. */
   channel: string;
   /** Jira GRW-716 — taken with no internet: its till's token ("A12") and the receipt the till printed itself. */
@@ -848,7 +849,7 @@ export function PayFlow({
     amountMinor: number;
     /** Jira GRW-713 — the order just sent, and its KOT, for Print KOT on the banner. */
     saleId?: string;
-    kot?: KitchenTicketDto;
+    kot?: KitchenSlips;
     channel?: string;
   } | null>(null);
   const printer = useTicketPrinter();
@@ -1193,7 +1194,7 @@ export function PayFlow({
               tokenNo: null as number | null,
               earnedPoints: r.rewards?.earnedPoints ?? 0,
               rewards: r.rewards ?? null,
-              kot: undefined as KitchenTicketDto | undefined,
+              kot: undefined as KitchenSlips | undefined,
               offlineToken: undefined as string | undefined,
             };
           })()
@@ -1270,8 +1271,8 @@ export function PayFlow({
               tokenNo: r.tokenNo ?? null,
               earnedPoints: r.rewards?.earnedPoints ?? 0,
               rewards: r.rewards ?? null,
-              // Jira GRW-713 — the kitchen's ticket for this order, printed below if this counter prints them.
-              kot: r.kot,
+              // Jira GRW-713 — the kitchen's ticket for this order, printed below if this counter prints them. Jira GRW-733 — every station's.
+              kot: 'kots' in r ? slipsOf(r) : r.kot,
               offlineToken: 'offlineToken' in r ? (r.offlineToken ?? undefined) : undefined,
             };
           })();
@@ -2323,6 +2324,8 @@ export function PayFlow({
             {tableSent}
           </p>
         ) : null}
+        {/* Jira GRW-733 AC-02 — a station's slip that did not print is said over the room, with Print again for it alone. */}
+        <PrintStatusLine printer={printer} />
         <TableMap
           location={location}
           canSetUp={role === 'owner' || role === 'manager'}

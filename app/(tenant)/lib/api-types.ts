@@ -2378,6 +2378,22 @@ export interface KitchenTicketDto {
    * came from ("Swiggy"): printed "By Ravi" under the slip number. Absent from an older API.
    */
   takenBy?: string | null;
+  /**
+   * Jira GRW-733 — the kitchen station this slip is for ("Tandoor", "Bar", or "Kitchen" for a dish whose category has
+   * none), as named when the slip was made; printed under its heading. Null where the branch has set no stations: one
+   * slip, exactly as before. `stationId` is null for the default Kitchen station. Absent from an older API.
+   */
+  station?: string | null;
+  stationId?: string | null;
+}
+
+/** Jira GRW-733 — an order's slips: one per kitchen station it went to, or the one slip of a branch without stations. */
+export type KitchenSlips = KitchenTicketDto | readonly KitchenTicketDto[];
+
+/** Jira GRW-733 — a branch's kitchen stations, and which station each menu category's dishes go to (null: the default Kitchen). */
+export interface KitchenStations {
+  stations: Array<{ id: string; name: string }>;
+  categories: Array<{ id: string; name: string; stationId: string | null }>;
 }
 
 /** Jira GRW-720 — how an order is eaten. Null: taken before order types existed (reports call it Counter). */
@@ -2491,7 +2507,8 @@ export interface KitchenCard {
   /** Jira GRW-730 — who sent the order's rounds, each once, first sender first ("Ravi", "Amit"); a delivery app's order names the app. Absent from an older API. */
   takenBy?: string[];
   /** `size` (owner, 2026-11-17): the portion it was sold in, set in bold on the card; null with no sizes or on an older API. */
-  dishes: Array<{ id: string; name: string; qty: number; done: boolean; isNew: boolean; cancelled: boolean; size?: string | null }>;
+  /** Jira GRW-733 — `station`: the station the dish's slip went to, where the branch has stations (null otherwise, or on an older API). */
+  dishes: Array<{ id: string; name: string; qty: number; done: boolean; isNew: boolean; cancelled: boolean; size?: string | null; station?: string | null }>;
 }
 
 /** Jira GRW-737 — kitchen stock. Every quantity is a whole number of THOUSANDTHS of the item's unit (0.25 kg arrives as 250). */

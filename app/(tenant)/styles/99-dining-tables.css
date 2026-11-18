@@ -256,6 +256,9 @@
 .kd-filters { display: flex; gap: var(--sp-1); margin-left: auto; flex: none; }
 .kd-filter { min-height: 44px; padding: 0 var(--sp-3); border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-size: 0.875rem; font-weight: 600; white-space: nowrap; cursor: pointer; }
 .kd-filter[aria-pressed='true'] { background: var(--accent-deep); border-color: var(--accent-deep); color: var(--surface); }
+/* Jira GRW-733 — which station this tablet shows: a row of the same pills, wrapping on a phone; and whose dish it is on an all-stations screen. */
+.kd-stations { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0 0 var(--sp-3); }
+.kd-station { flex: none; padding: 0 var(--sp-1); border-radius: 999px; border: 1px solid var(--border); color: var(--muted); font-size: 0.75rem; font-weight: 600; max-width: 8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* A phone: the counts on one line, the filters on the next, swiped sideways if they do not fit. */
 @media (max-width: 860px) {
   .kd-summary { flex-wrap: wrap; overflow-x: visible; }

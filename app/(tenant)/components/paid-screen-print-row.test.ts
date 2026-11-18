@@ -16,7 +16,10 @@ describe('Print KOT: when the order is placed, on the paid screen, and on the or
   it('is under the "sent to queue" banner, and on the Queue board after an addition or a cancel', () => {
     expect(payFlow.match(/\{queuedPrint\}/g)).toHaveLength(2);
     expect(pos).toMatch(/\{lastKot \? <TillPrintActions printer=\{printer\} saleId=\{lastKot\.saleId\} kot=\{lastKot\.kot\}/);
-    expect(pos.match(/setLastKot\(\{ saleId: tk\.id, kot: res\.kot, order \}\)/g)).toHaveLength(2);
+    // Jira GRW-733 — every station's slip from the answer (`slipsOf`), the cancel's and the addition's.
+    expect(pos).toContain('setLastKot({ saleId: tk.id, kot: cancelled, order });');
+    expect(pos).toContain('setLastKot({ saleId: tk.id, kot: added, order });');
+    expect(pos.match(/= slipsOf\(res\);/g)).toHaveLength(2);
   });
 
   it('is on the paid screen — a Queue order reads its tickets from the server', () => {

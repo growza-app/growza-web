@@ -141,6 +141,11 @@ export interface KotData {
    * the cook knows whom to ask. The name the slip kept when it was made. Null or absent: no line.
    */
   takenBy?: string | null;
+  /**
+   * Jira GRW-733 — the kitchen station this slip is for ("Tandoor"), printed large under the heading so a slip that lands
+   * at the wrong station is seen at once. Null or absent (a branch with no stations): no line, the slip exactly as before.
+   */
+  station?: string | null;
   /** Already formatted: "14 Nov, 8:40 pm". */
   when: string;
   items: KotItem[];
@@ -175,6 +180,8 @@ export function kotTicket(kot: KotData, copy: KotCopy): Ticket {
   if (kot.reprint) lines.push({ kind: 'text', text: `** ${copy.reprint} **`, align: 'center', bold: true });
   const heading = kot.kind === 'cancel' ? copy.cancelled : kot.kind === 'add' ? copy.added : kot.kind === 'pack' ? copy.packed : copy.title;
   lines.push({ kind: 'text', text: heading, align: 'center', bold: true, size: kot.kind === 'new' ? 1 : 2 });
+  const station = kot.station?.trim();
+  if (station) lines.push({ kind: 'text', text: station.toLocaleUpperCase(), align: 'center', bold: true, size: 2 });
   const kotToken = kot.offlineToken ?? kot.tokenNo;
   if (kotToken !== null) lines.push({ kind: 'text', text: copy.token(kotToken), align: 'center', bold: true, size: 2 });
   if (kot.destination) lines.push({ kind: 'text', text: kot.destination, align: 'center', bold: true });

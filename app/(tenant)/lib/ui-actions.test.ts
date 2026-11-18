@@ -235,6 +235,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   '/products/[id]/choices': ['POST /api/v1/addon-groups', 'PATCH /api/v1/addon-groups/:id', 'DELETE /api/v1/addon-groups/:id', 'PUT /api/v1/products/:id/addon-groups'],
   // Jira GRW-724 — and the service charge it offers, on the same owner-only screen.
   '/settings/tables': ['PUT /api/v1/settings/table-orders/:id', 'PUT /api/v1/settings/service-charge/:id', 'PUT /api/v1/settings/kitchen/:id'],
+  // Jira GRW-733 — Settings › Kitchen stations: the owner's and a manager's (the page redirects anyone else; the API says the same).
+  '/settings/kitchen-stations': ['POST /api/v1/kitchen/stations', 'PATCH /api/v1/kitchen/stations/:id', 'DELETE /api/v1/kitchen/stations/:id', 'PUT /api/v1/kitchen/stations/categories'],
   // Jira GRW-719 — setting out a branch's room. Gated by the screen: the page sends anyone but the owner and a manager back
   // to Settings, and the API's handler says owner or manager besides.
   '/settings/tables/[branchId]': [
