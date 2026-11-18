@@ -514,7 +514,13 @@
     padding: var(--sp-4);
   }
 
+  /*
+   * Develop QA 2026-11-18 (test:devices) — from 1112px to 1280px the card is 290px wide and Call · WhatsApp · See bookings
+   * need 301px: "See bookings" was cut off by 11px. The row wraps instead, so the last button takes its own line there;
+   * from 1366px the card is wide enough and the three stay on one row.
+   */
   .cpc-inline .cpc-foot {
+    flex-wrap: wrap;
     padding: var(--sp-3) var(--sp-4);
   }
 
