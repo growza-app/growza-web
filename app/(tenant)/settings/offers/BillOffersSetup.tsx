@@ -1,12 +1,13 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError, formatMoney, type BillOffer, type Product } from '../../lib/api';
 import { useBranch } from '../../components/BranchProvider';
 import { useWritable } from '../../components/SessionProvider';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { IconTrash } from '../../components/icons';
+import { intlLocale } from '../../lib/format';
 
 /**
  * Jira GRW-735 — a branch's coupons and buy-get offers.
@@ -21,6 +22,7 @@ const EMPTY = { code: '', way: 'pct' as 'pct' | 'amount', off: '', minBill: '', 
 
 export function BillOffersSetup({ branches }: { branches: Array<{ id: string; name: string }> }) {
   const t = useTranslations('billOffers');
+  const locale = useLocale();
   const writable = useWritable();
   const branch = useBranch();
   const [location, setLocation] = useState<string | null>(branch.choice ?? branch.one ?? branches[0]?.id ?? null);
@@ -113,7 +115,7 @@ export function BillOffersSetup({ branches }: { branches: Array<{ id: string; na
     );
   }
 
-  const dayWords = (iso: string) => new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${iso}T00:00:00Z`));
+  const dayWords = (iso: string) => new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${iso}T00:00:00Z`));
   const when = (o: BillOffer) =>
     o.validFrom && o.validUntil
       ? t('dates', { from: dayWords(o.validFrom), until: dayWords(o.validUntil) })

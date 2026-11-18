@@ -14,7 +14,11 @@ import { BuyShareSheet } from './BuyShareSheet';
  * price; the cook and the counter are sent none (the API leaves it out). Share opens a sheet to change the figures and send the list on
  * WhatsApp — a link in the owner's own WhatsApp, nothing sent by itself.
  */
-export function BuyList({ branchId }: { branchId: string }) {
+/**
+ * Develop QA 2026-11-18, bug 5 — `noItems`: the kitchen has no items at all yet. "Everything is above its low-stock level" is then
+ * untrue (there is nothing to be above anything), so the list says what to do first.
+ */
+export function BuyList({ branchId, noItems = false }: { branchId: string; noItems?: boolean }) {
   const t = useTranslations('kitchenStock.toBuy');
   const locale = useLocale();
   const [data, setData] = useState<BuyListData | null>(null);
@@ -55,7 +59,7 @@ export function BuyList({ branchId }: { branchId: string }) {
       </ul>
     );
   }
-  if (data.items.length === 0) return <p className="ks-state">{t('empty')}</p>;
+  if (data.items.length === 0) return <p className="ks-state">{noItems ? t('noItems') : t('empty')}</p>;
 
   const price = (i: BuyItem): string | null => {
     if (typeof i.lastPriceMinor !== 'number') return null;

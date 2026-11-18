@@ -5919,7 +5919,7 @@
       "notTracking": "Inventory is switched off, so new sales take nothing out and add no food cost.",
       "noSales": "No sales in these days",
       "pctLabel": "Food cost",
-      "pctLine": "{food} of food for {sales} of sales",
+      "pctLine": "{food} of food for {sales} of sales with a recipe",
       "salesLabel": "Sales before GST",
       "foodLabel": "Food used",
       "givenFree": "Given free {value} · {count, plural, one {# bill} other {# bills}}",
@@ -5962,7 +5962,8 @@
       "usedTitle": "What was used",
       "usedNote": "What the dishes sent to the kitchen took, less what came back before cooking. At what each item cost then.",
       "noUsed": "Nothing was used in these days.",
-      "usedUnpriced": "Some of it had no price yet: that part is not in the value."
+      "usedUnpriced": "Some of it had no price yet: that part is not in the value.",
+      "pctNone": "No dish with a recipe sold yet"
     }
   },
   "print": {
@@ -6329,7 +6330,8 @@
       "copyFailed": "Couldn't copy. Select the text and copy it.",
       "openWhatsApp": "Open WhatsApp",
       "close": "Close",
-      "badQty": "Type a quantity like 0.25"
+      "badQty": "Type a quantity like 0.25",
+      "noItems": "No items yet."
     },
     "prices": {
       "title": "Price, last 5 stock ins",
@@ -6359,7 +6361,8 @@
       "toBuyTitle": "What to buy",
       "emptyItems": "Add items on the Stock tab first. Then what runs low shows here.",
       "itemsFailed": "Couldn't load your items.",
-      "off": "Inventory is switched off. The owner can switch it on in the Stock tab. Then Stock in opens."
+      "off": "Inventory is switched off. The owner can switch it on in the Stock tab. Then Stock in opens.",
+      "offOwner": "Inventory is switched off. Switch it on in the Stock tab, then Stock in opens."
     },
     "recipes": {
       "overPrice": "Costs more than its menu price. Check the price.",
