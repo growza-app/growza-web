@@ -76,7 +76,7 @@ export function GstForm({ initial, branchName }: { initial: SettingsSummary; bra
         branchGstin,
         // Jira GRW-736 — only a business that charges GST says how; the API keeps the rest as it was.
         ...(status === 'regular' ? { pricesIncludeTax, orderTypeRates: typeRates } : {}),
-      });
+      }, initial.scope.locationId);
       setPricesIncludeTax(fresh.gst.pricesIncludeTax);
       if (fresh.gst.orderTypeRates) setTypeRates(fresh.gst.orderTypeRates);
       // Shown back from the server's answer, not from what was typed: it trims, upper-cases a GSTIN and may drop
@@ -303,7 +303,8 @@ export function GstForm({ initial, branchName }: { initial: SettingsSummary; bra
                 </>
               ) : (
                 <div style={{ marginTop: 4 }}>
-                  <div style={{ fontWeight: 620, fontSize: 14 }}>{t('pricesIncludeTaxLabel')}</div>
+                  {/* Review of the overnight stack (item 14) — a token, never an inline px size. */}
+                  <div className="gst-fixed-label">{t('pricesIncludeTaxLabel')}</div>
                   <span className="field-hint" style={{ margin: '4px 0 0' }}>
                     {t('pricesIncludeTaxOn')}
                   </span>

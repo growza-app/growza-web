@@ -34,15 +34,14 @@ describe('whose settings a tab shows', () => {
 
   it('every branch tab is one branch’s, and every whole-business tab shows no branch', () => {
     expect(perBranchHrefs.sort()).toEqual(
-      ['/settings/profile', '/settings/working-hours', '/settings/booking', '/settings/notifications', '/settings/check-in'].sort(),
+      ['/settings/profile', '/settings/working-hours', '/settings/booking', '/settings/notifications', '/settings/check-in', '/settings/gst'].sort(),
     );
     for (const href of perBranchHrefs) expect(wholeBusiness(href), href).toBe(false);
     /*
-     * Every other row shows no branch in the header — but for GST, the one screen that is half and half: the
-     * registration is the business's, the supply state on it a branch's (Jira GRW-582), so it keeps the header's
-     * branch and is not tagged.
+     * Every other row shows no branch in the header. GST used to be the exception — the header's branch, untagged —
+     * but its branch card loaded the main branch whatever the header said; it is a tagged branch row now (item 15).
      */
-    for (const href of otherHrefs) expect(wholeBusiness(href), href).toBe(href !== '/settings/gst');
+    for (const href of otherHrefs) expect(wholeBusiness(href), href).toBe(true);
     expect(wholeBusiness('/settings')).toBe(false);
     expect(wholeBusiness('/settings/billing/bills')).toBe(true);
   });
@@ -54,6 +53,7 @@ describe('whose settings a tab shows', () => {
       '/settings/booking': 'booking/page.tsx',
       '/settings/notifications': 'notifications/page.tsx',
       '/settings/check-in': 'check-in/page.tsx',
+      '/settings/gst': 'gst/page.tsx',
     };
     for (const href of perBranchHrefs) expect(src(pageOf[href]!), href).toMatch(/\bloadScopedSettings\(searchParams\)/);
     // Kitchen stations and Coupons and offers are each branch's too, but pick it on the screen: the header picks nothing there.

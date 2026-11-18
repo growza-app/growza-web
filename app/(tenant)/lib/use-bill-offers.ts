@@ -18,6 +18,8 @@ export type OffersAsk =
       couponCode: string | null;
       discountMinor: number;
       customerId: string | null;
+      /** L2 — a new guest's phone number, typed at the till (they have no id yet). */
+      customerPhone?: string;
       /** Jira GRW-736 — what points take off, so GST added on top is worked out after them; and how the order is eaten. */
       redeemMinor?: number;
       orderType?: 'dine_in' | 'takeaway' | 'delivery';
@@ -62,6 +64,11 @@ export function useBillOffers(ask: OffersAsk) {
     couponKept,
     /** What the offers the server will apply take off: the buy-get offers, and the coupon when it is kept. */
     offersMinor: bogoMinor + (couponKept ? (fresh?.coupon?.offMinor ?? 0) : 0),
+    /**
+     * Review of the overnight stack (item 1) — what the bill's lines come to after its buy-get offers, never the GST added
+     * on top: what a coupon, the discount and the whole-bill-free rule are measured against, as the payment measures them.
+     */
+    billMinor: fresh?.billMinor ?? null,
     /** Jira GRW-736 — GST added on top: what the guest pays is the server's figure, with it. */
     taxOnTop: Boolean(fresh?.taxOnTop),
     taxMinor: fresh?.taxMinor ?? 0,

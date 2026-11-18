@@ -694,6 +694,8 @@ export function PayFlow({
         couponCode: couponOn ? couponCode : null,
         discountMinor: listMinor - totalMinor,
         customerId: client.kind === 'existing' ? client.id : null,
+        // L2 — a new guest's number, typed here: a per-guest coupon can be counted against them, so it is quoted (else refused, with the reason).
+        ...(client.kind === 'named' && client.phone ? { customerPhone: client.phone } : {}),
         redeemMinor: pointsAsked,
         orderType: tablesHere && orderTab === 'dine_in' ? ('dine_in' as const) : ('takeaway' as const),
       }

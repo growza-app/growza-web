@@ -81,9 +81,10 @@ describe('the hub, grouped by task', () => {
     const html = hub(3);
     expect(headings(html)).toEqual(['Your shop', 'Dining', 'Money', 'Team', 'Your Growza plan', 'Account']);
     // A restaurant has no diary, so Booking settings is not listed; WhatsApp is on here, so Notifications is.
-    expect(tagged(html)).toEqual(['Branch profile', 'Working hours', 'Notifications', 'Location check-in']);
-    // Tables, Kitchen stations, Coupons and offers, GST, Reward points: no tag.
-    expect(html.match(/settings-row-tag/g)).toHaveLength(4);
+    // Review of the overnight stack (item 15) — GST's branch card is the header's branch, so its row is tagged too.
+    expect(tagged(html)).toEqual(['Branch profile', 'Working hours', 'Notifications', 'Location check-in', 'GST and invoices']);
+    // Tables, Kitchen stations, Coupons and offers, Reward points: no tag.
+    expect(html.match(/settings-row-tag/g)).toHaveLength(5);
     expect(html).toContain('This branch');
   });
 
@@ -94,7 +95,7 @@ describe('the hub, grouped by task', () => {
     expect(headings(html)).toEqual(['Your shop', 'Money', 'Team', 'Your Growza plan', 'Account']);
     expect(html).not.toContain('/settings/tables');
     expect(html).not.toContain('/settings/kitchen-stations');
-    expect(tagged(html)).toEqual(['Branch profile', 'Working hours', 'Booking settings', 'Notifications', 'Location check-in']);
+    expect(tagged(html)).toEqual(['Branch profile', 'Working hours', 'Booking settings', 'Notifications', 'Location check-in', 'GST and invoices']);
   });
 
   it('a group whose rows are all filtered out draws no heading — a restaurant waiter keeps only Account', () => {

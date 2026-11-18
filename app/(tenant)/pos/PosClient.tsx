@@ -142,8 +142,14 @@ function QueueTokenPayScreen({
   const [redeemMinorAsked, setRedeemMinorAsked] = useState(0);
   const offers = useBillOffers({ saleId: token.id, couponCode: byNameOnly ? null : couponCode, discountMinor: byNameOnly ? 0 : billOff.offMinor, redeemMinor: redeemMinorAsked });
   const offMinor = offers.couponKept ? (offers.coupon?.offMinor ?? 0) : billOff.offMinor;
+  /*
+   * Review of the overnight stack (item 1) — the bill before the GST added on top, as the server quotes it: the order's
+   * total carries the GST line, so a 100% coupon on the food read as "not the whole bill" and the free-bill rule was
+   * asked of the wrong figure. Until the first quote is in, the order's total (the payment is held while it is asked).
+   */
+  const foodMinor = offers.billMinor ?? token.totalMinor;
   // Jira GRW-736 — GST added on top: the server works it out after the discount and the points, and says what is due.
-  const billMinor = Math.max(0, token.totalMinor - offMinor);
+  const billMinor = Math.max(0, foodMinor - offMinor);
   const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor: discountMinor, checking: pointsChecking } = useRewardQuote(token.customerId, billMinor);
   // Jira GRW-735 — and while a typed coupon is being asked about: its amount is not known yet.
   const checking = pointsChecking || (couponCode !== null && offers.checking) || (offers.taxOnTop && (offers.checking || redeemMinorAsked !== discountMinor));
@@ -157,8 +163,8 @@ function QueueTokenPayScreen({
    */
   const isOwner = useSession()?.role === 'owner';
   const [freeReason, setFreeReason] = useState('');
-  const freeBlock = offMinor > 0 ? freeBillBlock(token.totalMinor, token.totalMinor - offMinor, isOwner, freeReason) : null;
-  const wholeOrderOff = token.totalMinor > 0 && offMinor >= token.totalMinor;
+  const freeBlock = offMinor > 0 ? freeBillBlock(foodMinor, foodMinor - offMinor, isOwner, freeReason) : null;
+  const wholeOrderOff = foodMinor > 0 && offMinor >= foodMinor;
   // A code that is not good takes nothing off (AC-02): the reason is shown by it, and the bill is paid as it is.
   const [nameDraft, setNameDraft] = useState('');
   /** Money can be taken once someone is named on the bill — picked from the list, or (a waiter) typed. */
@@ -400,7 +406,7 @@ function QueueTokenPayScreen({
       {discountOpen ? (
         <DiscountSheet
           ownerOnlyFree={!isOwner}
-          listMinor={token.totalMinor}
+          listMinor={foodMinor}
           current={billOff.offMinor > 0 ? billOff : null}
           onApply={(offMinor, pct) => {
             setBillOff({ offMinor, pct });

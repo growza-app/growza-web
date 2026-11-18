@@ -1116,3 +1116,34 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
     min-height: 56px;
   }
 }
+
+/*
+ * Review of the overnight stack (item 16) — the regrouped hub still scrolled for a restaurant owner, who sees every row:
+ * 18px at 393×852, 26px at 390×844, and the desktop list 11px over its pane at 1366×680. Rows stay 44px (they are the
+ * tap targets, and the sub-lines are already off); what pays is air around them, in tokens: the page's own padding,
+ * the heading's line box (1, the 12px text and nothing more), and — on the phone hub only — the header's padding.
+ * Below 880px tall: 344×882 and every taller phone fit as they were. Last in the file, so it outranks the bands above.
+ */
+@media (max-width: 860px) and (max-height: 880px) {
+  /* `!important` only because the GRW-229 rule above it carries one. */
+  .page-body.settings-page:has(> .settings-hub) {
+    padding-top: var(--sp-1) !important;
+    padding-bottom: 0 !important;
+  }
+  .settings-hub .settings-group-title {
+    line-height: 1;
+  }
+  .content-main:has(> .page-body > .settings-hub) > .topbar {
+    padding-top: var(--sp-2);
+    padding-bottom: var(--sp-2);
+  }
+}
+@media (min-width: 861px) and (max-height: 740px) {
+  .page-body.settings-page {
+    padding-top: var(--sp-2);
+    padding-bottom: var(--sp-2);
+  }
+  .settings-page .settings-group-title {
+    line-height: 1;
+  }
+}

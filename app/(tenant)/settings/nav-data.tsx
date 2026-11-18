@@ -205,13 +205,14 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
        * Jira GRW-582 — the details that turn a receipt into a tax invoice.
        *
        * Most of the screen is the whole business's: the registration, the invoice prefix, GST on top. One card on it is
-       * a branch's — the state it supplies from, which decides CGST and SGST or IGST — so it is not tagged
-       * "This branch": the tag would say the whole screen is one branch's, and the registration is not.
+       * a branch's — the state it supplies from, which decides CGST and SGST or IGST. Review of the overnight stack
+       * (item 15): that card is now truly the header's branch (loaded and saved through `loadScopedSettings`), so the row
+       * carries the "This branch" tag like every other row whose screen changes with the header's branch.
        *
        * Asked here and not at enrolment (owner, 2026-10-17): most businesses do not have the number to hand on
        * their first day, and a guess typed to get past a signup form would be printed on real documents.
        */
-      { href: '/settings/gst', key: 'gst', icon: IconRupee },
+      { href: '/settings/gst', key: 'gst', icon: IconRupee, perBranch: true },
       // Jira GRW-735 — a branch's coupon codes and buy-get offers, picked on the screen itself. The owner's or a manager's; a business that rings up no products never sees it.
       { href: '/settings/offers', key: 'billOffers', icon: IconPercent, ownerOrManager: true },
       /*

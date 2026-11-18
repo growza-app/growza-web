@@ -151,6 +151,10 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That code is not valid': 'यह कोड सही नहीं है',
   'This guest has already used that code': 'यह मेहमान यह कोड पहले ही इस्तेमाल कर चुके हैं',
   'Add the guest to the bill to use this code': 'यह कोड इस्तेमाल करने के लिए बिल में मेहमान जोड़ें',
+  // Review of the overnight stack — L2, L3, L7.
+  'This code is counted per guest. Add the guest’s phone number to use it.': 'यह कोड हर मेहमान के हिसाब से गिना जाता है। इसे इस्तेमाल करने के लिए मेहमान का फ़ोन नंबर जोड़ें।',
+  'A payment is already recorded on this bill, so a coupon cannot be added to it.': 'इस बिल पर भुगतान दर्ज हो चुका है, इसलिए इस पर कूपन नहीं लग सकता।',
+  'Only the owner can make a coupon that takes the whole bill off.': 'पूरा बिल माफ़ करने वाला कूपन सिर्फ़ मालिक बना सकते हैं।',
   'A coupon and the bill discount do not go together. Keep one of them.': 'कूपन और बिल की छूट एक साथ नहीं लगते। इनमें से एक रखें।',
   'Coupons are for bills of dishes and products': 'कूपन डिश और सामान के बिल पर ही लगते हैं',
   'Only the owner or a manager can set up coupons and offers.': 'कूपन और ऑफ़र सिर्फ़ मालिक या मैनेजर बना सकते हैं।',
@@ -634,6 +638,9 @@ const TABLE_MESSAGES: Array<[RegExp, (m: RegExpExecArray) => string]> = [
   [/^(.+) is already used at this branch\.$/s, (m) => `${m[1]} इस ब्रांच में पहले से है।`],
   [/^(.+) still has (\d+) tables?\. Move or remove them first\.$/s, (m) => `${m[1]} में अभी ${m[2]} टेबल हैं। पहले उन्हें हटाएँ या दूसरे एरिया में ले जाएँ।`],
   [/^(\d+) tables? still ha(?:s|ve) (?:an )?open bills?\. Settle them before switching Table orders off\.$/s, (m) => `${m[1]} टेबल का बिल अभी खुला है। टेबल ऑर्डर बंद करने से पहले उन्हें निपटाएँ।`],
+  // Review of the overnight stack — L4 (Seated tables block switching Table orders off) and L5 (a move into an area with other prices).
+  [/^(\d+) tables? ha(?:s|ve) guests seated\. Free (?:it|them) before switching Table orders off\.$/s, (m) => `${m[1]} टेबल पर मेहमान बैठे हैं। टेबल ऑर्डर बंद करने से पहले उन्हें खाली करें।`],
+  [/^Ask the manager to move this table to (.+), its prices are different\.$/s, (m) => `इस टेबल को ${m[1]} में ले जाने के लिए मैनेजर से कहें, वहाँ के दाम अलग हैं।`],
   [/^A branch can have at most (\d+) tables\.$/s, (m) => `एक ब्रांच में ज़्यादा से ज़्यादा ${m[1]} टेबल हो सकती हैं।`],
   // Jira GRW-712 — a choice group's own words ("Pick one Spice").
   [/^Pick one (.+)$/s, (m) => `${m[1]} में से एक चुनें`],
