@@ -18,9 +18,12 @@ const page = readFileSync(resolve(__dirname, 'page.tsx'), 'utf8');
 
 describe('where it lives', () => {
   it('is a branch tab, because the state this branch supplies from is on it', () => {
-    const row = SETTINGS_GROUPS.find((g) => g.key === 'branch')!.rows.find((r) => r.href === '/settings/gst');
-    expect(row, 'the GST row belongs to the branch group').toBeTruthy();
+    // Owner, 2026-11-18 — grouped by task: GST sits with the money. The header still offers its branch here.
+    const row = SETTINGS_GROUPS.find((g) => g.key === 'money')!.rows.find((r) => r.href === '/settings/gst');
+    expect(row, 'the GST row belongs to the Money group').toBeTruthy();
     expect(wholeBusiness('/settings/gst')).toBe(false);
+    // Not tagged "This branch": the registration on the same screen is the whole business's.
+    expect(row?.perBranch).toBeUndefined();
   });
 
   it('reads the settings the header is already scoped to, with no picker of its own', () => {

@@ -19,8 +19,10 @@ const page = readFileSync(resolve(__dirname, 'page.tsx'), 'utf8');
 
 describe('where it lives', () => {
   it('is the whole business’s, not a branch’s: points earned at one branch are spendable at another', () => {
-    const row = SETTINGS_GROUPS.find((g) => g.key === 'business')!.rows.find((r) => r.href === '/settings/rewards');
-    expect(row, 'the Reward points row belongs to the business group').toBeTruthy();
+    // Owner, 2026-11-18 — grouped by task: Reward points sit with the money, and carry no "This branch" tag.
+    const row = SETTINGS_GROUPS.find((g) => g.key === 'money')!.rows.find((r) => r.href === '/settings/rewards');
+    expect(row, 'the Reward points row belongs to the Money group').toBeTruthy();
+    expect(row?.perBranch).toBeUndefined();
     expect(wholeBusiness('/settings/rewards')).toBe(true);
   });
 

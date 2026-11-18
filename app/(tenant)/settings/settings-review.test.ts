@@ -118,12 +118,14 @@ describe('the screen leads with what it is for', () => {
 
   /** The header names the branch two rows above; the group title's job is the contrast below it. */
   it('does not print the branch name twice on the hub', () => {
-    expect(nav).toMatch(/t\('groups\.thisBranch'\)/);
+    // Owner, 2026-11-18 — "This branch" is a tag on the row now, not a group heading; the same words, no name in them.
+    expect(nav).toMatch(/t\('thisBranch'\)/);
     for (const [lang, m] of [['en', en], ['hi', hi]] as const) {
-      const g = (m as unknown as { settingsHub: { groups: Record<string, string | undefined> } }).settingsHub.groups;
-      expect(g.thisBranch, `${lang}.groups.thisBranch`).toBeTruthy();
-      expect(g.branchNamed, `${lang}.groups.branchNamed`).toBeUndefined();
-      expect(g.thisBranch).not.toMatch(/\{name\}/);
+      const hub = (m as unknown as { settingsHub: { thisBranch?: string; groups: Record<string, string | undefined> } }).settingsHub;
+      expect(hub.thisBranch, `${lang}.thisBranch`).toBeTruthy();
+      expect(hub.groups.branchNamed, `${lang}.groups.branchNamed`).toBeUndefined();
+      expect(hub.groups.thisBranch, `${lang}.groups.thisBranch went with the branch group`).toBeUndefined();
+      expect(hub.thisBranch).not.toMatch(/\{name\}/);
     }
   });
 });

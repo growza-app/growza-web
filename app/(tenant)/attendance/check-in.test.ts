@@ -37,11 +37,12 @@ describe('phone check-in', () => {
     expect(read('../layout.tsx')).toMatch(/pendingAttendance = me\.attendance\?\.pending \?\? 0/);
   });
 
-  it('Settings lists Location check-in once, in the branch group, and its words reach the browser', () => {
+  it('Settings lists Location check-in once, as a branch’s own, and its words reach the browser', () => {
+    // Owner, 2026-11-18 — grouped by task: under Your shop, tagged "This branch" at a business with several.
     const rows = SETTINGS_GROUPS.flatMap((g) => g.rows.map((r) => ({ ...r, group: g.key })));
     const row = rows.filter((r) => r.key === 'checkIn');
     expect(row).toHaveLength(1);
-    expect(row[0]).toMatchObject({ group: 'branch', href: '/settings/check-in' });
+    expect(row[0]).toMatchObject({ group: 'shop', href: '/settings/check-in', perBranch: true });
     expect(CLIENT_MESSAGES).toContain('settingsCheckIn');
     expect(read('../globals.css')).toMatch(/@import '\.\/styles\/88-check-in\.css';/);
   });

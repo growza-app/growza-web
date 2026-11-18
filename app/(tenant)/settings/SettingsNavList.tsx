@@ -5,7 +5,7 @@ import { withBranch } from './branch-link';
 import { IconChevronRight } from '../components/icons';
 import { gridCanSee } from '../lib/nav-policy';
 import { areaAllows } from '../lib/areas';
-import { SETTINGS_GROUPS, type SettingsGroupKey } from './nav-data';
+import { SETTINGS_GROUPS, type SettingsGroupKey, type SettingsRow } from './nav-data';
 import { SignOutButton } from '../components/SignOutButton';
 import { useBranch } from '../components/BranchProvider';
 import { useAreas, useLive, useSession, useWhatsappLive } from '../components/SessionProvider';
@@ -43,8 +43,12 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
   const areas = useAreas();
   // BR-03 (SessionProvider.tsx) — null for a dev-fallback or degraded session with no member is treated as owner.
   const role = useSession()?.role ?? 'owner';
-  // Jira GRW-396 — the branch the branch tabs are showing: the address's, else the main one — the same rule
-  // the tabs themselves load by (`scope.ts`), so the title and the form never name different branches.
+  /*
+   * Jira GRW-396 — the branch the per-branch rows edit: the address's, else the main one — the same rule the tabs
+   * themselves load by (`scope.ts`). Only whether there IS one is used now: it decides the "This branch" tag, which
+   * says "This branch" and not the branch's name because the header names it two rows above (design review,
+   * 2026-10-07) — and the header and the form never name different branches.
+   */
   const { branches } = useBranch();
   const shown = multi ? (branches.find((b) => b.id === branch) ?? branches[0] ?? null) : null;
   /*
@@ -64,33 +68,33 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
     const path = href.split('?')[0] ?? href;
     return here === path || here.startsWith(`${path}/`);
   };
-  const groupTitle = (key: SettingsGroupKey): string => {
-    /*
-     * "This branch", not "MG Road branch" (design review, 2026-10-07). The header names the branch two rows
-     * above — "Settings" over an "MG Road" line — so the group title was saying it a second time, and the
-     * contrast that earns the title is with "Whole business" below, which "This branch" carries on its own.
-     */
-    if (key === 'branch') return shown ? t('groups.thisBranch') : t('groups.business');
-    if (key === 'business') return multi ? t('groups.wholeBusiness') : t('groups.teamAndBilling');
-    return t(`groups.${key}`);
-  };
+  /*
+   * Grouped by what the owner is doing (owner, 2026-11-18), so a group's title no longer depends on the branches:
+   * "Your shop" is the same words at one branch or five. Which rows are one branch's is the tag's job, below.
+   */
+  const groupTitle = (key: SettingsGroupKey): string => t(`groups.${key}`);
+  const listed = (row: SettingsRow): boolean =>
+    (!row.multiBranchOnly || multi) && (!row.whatsappOnly || whatsappLive) && (!row.liveOnly || live) && (!row.diaryOnly || areas.bookings) && (!row.shopOwnerOnly || (areas.shop && role === 'owner')) && (!row.ownerOnly || role === 'owner') && (!row.ownerOrManager || role === 'owner' || role === 'manager') && (!areas.pages || !row.href || gridCanSee(row.href, areas.pages)) && (!row.shopOnly || areas.shop) && (!row.href || areaAllows(row.href, areas));
+  /*
+   * A group with nothing left to list draws nothing — not a bare heading over an empty card. A salon has no Dining
+   * rows; a stylist may have no Team or Money ones.
+   */
+  const groups = SETTINGS_GROUPS.map((group) => ({ key: group.key, rows: group.rows.filter(listed) })).filter((group) => group.rows.length > 0);
   /*
    * A real heading over a real list (design review, 2026-10-07). It was a div over a div, so a screen reader
-   * heard eleven undifferentiated links and lost the branch-and-business split the whole screen is built on —
+   * heard eleven undifferentiated links and lost the groups the whole screen is built on —
    * "use a label or a header to help people understand the context" (HIG, Lists and tables). Nothing changes
    * on screen.
    */
   return (
     <>
-      {SETTINGS_GROUPS.map((group) => (
+      {groups.map((group) => (
         <section className="settings-group" key={group.key} aria-labelledby={`settings-group-${group.key}`}>
           <h2 className="settings-group-title" id={`settings-group-${group.key}`}>
             {groupTitle(group.key)}
           </h2>
           <ul className="menu-list">
-            {group.rows
-              .filter((row) => (!row.multiBranchOnly || multi) && (!row.whatsappOnly || whatsappLive) && (!row.liveOnly || live) && (!row.diaryOnly || areas.bookings) && (!row.shopOwnerOnly || (areas.shop && role === 'owner')) && (!row.ownerOnly || role === 'owner') && (!row.ownerOrManager || role === 'owner' || role === 'manager') && (!areas.pages || !row.href || gridCanSee(row.href, areas.pages)) && (!row.shopOnly || areas.shop) && (!row.href || areaAllows(row.href, areas)))
-              .map((row) => {
+            {group.rows.map((row) => {
               const Icon = row.icon;
               const key = multi && row.multiBranchKey ? row.multiBranchKey : row.key;
               if (row.action === 'logout') {
@@ -129,6 +133,8 @@ export function SettingsNavList({ settings }: { settings: SettingsSummary }) {
                       <div className="settings-row-title">{t(`rows.${key}.label`)}</div>
                       <div className="settings-row-sub">{t(`rows.${key}.sub`)}</div>
                     </div>
+                    {/* Jira GRW-396 — what the "This branch" group used to say, now on the row it is true of. One branch: nothing to tell apart. */}
+                    {row.perBranch && shown ? <span className="menu-row-pill settings-row-tag">{t('thisBranch')}</span> : null}
                     <span className="settings-row-chev">
                       <IconChevronRight />
                     </span>

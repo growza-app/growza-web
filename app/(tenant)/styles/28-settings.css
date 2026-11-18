@@ -183,6 +183,15 @@
   flex-shrink: 0;
 }
 
+/*
+ * The "This branch" tag on a row that edits the header's branch (owner, 2026-11-18 — the hub is grouped by task
+ * now, so the scope moved from a group heading onto the row). It is `.menu-row-pill`, reused as is; this only
+ * keeps "This branch" on one line when a long label shares the row with it.
+ */
+.settings-row-tag {
+  white-space: nowrap;
+}
+
 .settings-row-soon {
   margin-left: auto;
   font-size: 0.75rem;

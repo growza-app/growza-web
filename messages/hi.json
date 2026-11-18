@@ -391,12 +391,13 @@
     "emptyPane": "शुरू करने के लिए सूची से कोई सेक्शन चुनें।",
     "back": "सेटिंग्स पर वापस",
     "comingSoon": "जल्द आ रहा है",
+    "thisBranch": "यह ब्रांच",
     "groups": {
-      "thisBranch": "यह ब्रांच",
-      "business": "बिज़नेस",
-      "wholeBusiness": "पूरा बिज़नेस",
-      "teamAndBilling": "टीम और बिलिंग",
-      "preferences": "पसंद",
+      "shop": "आपकी दुकान",
+      "dining": "टेबल और किचन",
+      "money": "पैसा",
+      "team": "टीम",
+      "plan": "आपका Growza प्लान",
       "account": "अकाउंट"
     },
     "rows": {

@@ -391,12 +391,13 @@
     "emptyPane": "Pick a section from the list to get started.",
     "back": "Back to Settings",
     "comingSoon": "Coming soon",
+    "thisBranch": "This branch",
     "groups": {
-      "thisBranch": "This branch",
-      "business": "Business",
-      "wholeBusiness": "Whole business",
-      "teamAndBilling": "Team and billing",
-      "preferences": "Preferences",
+      "shop": "Your shop",
+      "dining": "Dining",
+      "money": "Money",
+      "team": "Team",
+      "plan": "Your Growza plan",
       "account": "Account"
     },
     "rows": {
