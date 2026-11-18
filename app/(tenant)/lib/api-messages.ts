@@ -15,6 +15,9 @@
  * run the test.
  */
 export const API_MESSAGES_HI: Record<string, string> = {
+  // Jira GRW-729 — the UPI ID a printed bill's QR pays.
+  'Type a UPI ID like shopname@okicici': 'UPI ID इस तरह लिखें: shopname@okicici',
+  'Keep the name to 50 letters or fewer.': 'नाम 50 अक्षरों से ज़्यादा न रखें।',
   // ---- Jira GRW-72 — roles
   'This business has no roles to set up.': 'इस बिज़नेस में सेट करने के लिए कोई रोल नहीं है।',
   'Only the owner can change roles.': 'रोल सिर्फ़ मालिक बदल सकते हैं।',

@@ -25,9 +25,11 @@ export interface PrinterSettings {
   autoBill: boolean;
   /** Copies of each bill (a KOT is always one). */
   billCopies: 1 | 2;
+  /** Jira GRW-729 — print the payment QR on the bill. On unless this counter switched it off; a bill with no QR set up prints none. */
+  billQr: boolean;
 }
 
-export const DEFAULT_PRINTER: PrinterSettings = { width: '58', bluetooth: null, autoKot: false, autoBill: false, billCopies: 1 };
+export const DEFAULT_PRINTER: PrinterSettings = { width: '58', bluetooth: null, autoKot: false, autoBill: false, billCopies: 1, billQr: true };
 
 const KEY = 'growza.printer.v1';
 
@@ -42,6 +44,8 @@ export function readPrinterSettings(): PrinterSettings {
       autoKot: p.autoKot === true,
       autoBill: p.autoBill === true,
       billCopies: p.billCopies === 2 ? 2 : 1,
+      // Settings saved before the switch existed have none: on, as the story's default.
+      billQr: p.billQr !== false,
     };
   } catch {
     return DEFAULT_PRINTER;

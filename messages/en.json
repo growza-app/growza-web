@@ -514,7 +514,21 @@
       "failed": "That did not save. Please try again."
     },
     "tip": "A close-up of just the QR scans best.",
-    "addOwn": "Add its own"
+    "addOwn": "Add its own",
+    "upi": {
+      "title": "UPI ID for printed bills",
+      "subOff": "Add your UPI ID and every printed bill gets a QR for its exact amount. Without one, bills print the QR picture above.",
+      "subOn": "Every printed bill gets a QR for its exact amount and its bill number. The guest scans it and only presses Pay.",
+      "vpa": "UPI ID",
+      "payee": "Name the guest sees",
+      "payeeHint": "Your business name, as your bank account shows it. Leave it empty to use the business name.",
+      "invalid": "Type a UPI ID like shopname@okicici",
+      "save": "Save UPI ID",
+      "saving": "Saving…",
+      "saved": "Saved. Bills print a QR for their amount.",
+      "remove": "Remove UPI ID",
+      "failed": "That did not save. Please try again."
+    }
   },
   "common": {
     "clearSearch": "Clear search",
@@ -5897,7 +5911,10 @@
     "dineIn": "Dine-in",
     "takeaway": "Takeaway",
     "taxAt": "{tax} @{rate}%",
-    "taxAtIncluded": "{tax} @{rate}% (incl.)"
+    "taxAtIncluded": "{tax} @{rate}% (incl.)",
+    "scanToPay": "Scan to pay {amount}",
+    "paidStamp": "PAID",
+    "billQr": "Print the payment QR on the bill"
   },
   "kitchenStock": {
     "title": "Kitchen stock",

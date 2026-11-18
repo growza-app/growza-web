@@ -215,6 +215,8 @@ import type { BranchSettings } from './branch-types';
 export interface PaymentQrState {
   paymentQrUrl: string | null;
   branches: Array<{ id: string; name: string; isPrimary: boolean; paymentQrUrl: string | null }>;
+  /** Jira GRW-729 — the UPI ID a printed bill's QR pays, and the name shown with it. Absent from an older API. */
+  upi?: { vpa: string; payee: string } | null;
 }
 import type { GeoFix } from './geo-fix';
 
@@ -1264,6 +1266,8 @@ export const api = {
   paymentQr: () => get<PaymentQrState>('/api/v1/settings/payment-qr'),
   uploadPaymentQr: (file: File) => uploadFile<PaymentQrState>('/api/v1/settings/payment-qr', 'qr', file),
   removePaymentQr: () => del<PaymentQrState>('/api/v1/settings/payment-qr'),
+  /** Jira GRW-729 — save the UPI ID and payee name; an empty ID clears it. */
+  saveUpiId: (body: { vpa: string; payee: string }) => put<PaymentQrState>('/api/v1/settings/payment-qr/upi', body),
   uploadBranchPaymentQr: (id: string, file: File) => uploadFile<PaymentQrState>(`/api/v1/settings/branches/${id}/payment-qr`, 'qr', file),
   removeBranchPaymentQr: (id: string) => del<PaymentQrState>(`/api/v1/settings/branches/${id}/payment-qr`),
   /** Jira GRW-582 — the summary the document screen's chrome needs; the document itself comes from /html. */

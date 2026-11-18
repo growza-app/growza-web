@@ -2435,6 +2435,15 @@ export interface DocumentTicket {
   /** Jira GRW-720 · GRW-719 — printed on the bill beside the date. Absent from an older API. */
   orderType?: OrderType | null;
   tableName?: string | null;
+  /** Jira GRW-729 — the bill has been paid: it prints "Paid" where the QR would be (only when `qrReady`). */
+  paid?: boolean;
+  /** Jira GRW-729 — this bill's branch has a QR to print (a UPI ID, or the uploaded picture). */
+  qrReady?: boolean;
+  /**
+   * Jira GRW-729 — the QR for what is still due: a UPI link for the exact amount, or the uploaded picture (a data URI);
+   * null when nothing is due or none is set up. Absent from an older API.
+   */
+  payQr?: { kind: 'upi'; uri: string; amountMinor: number } | { kind: 'image'; image: string; amountMinor: number } | null;
 }
 
 /** Jira GRW-712 — an add-on group (Extras, Spice) and its priced choices. */

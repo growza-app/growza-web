@@ -7,7 +7,8 @@ import { api, ApiError } from '../lib/api';
 import type { KitchenTicketDto, OrderType } from '../lib/api-types';
 import { intlLocale, formatMoney } from '../lib/format';
 import { billFromDocument, kotFromApi } from '../lib/print/from-api';
-import { logoBitmap } from '../lib/print/picture';
+import { logoBitmap, qrPictureBitmap } from '../lib/print/picture';
+import { encodeQr, qrBitmap } from '../lib/print/qr';
 import { bluetoothSupported, forgetPrinter } from '../lib/print/bluetooth';
 import {
   DEFAULT_PRINTER,
@@ -217,7 +218,25 @@ export function useTicketPrinter() {
         const device = readPrinterSettings();
         // Jira GRW-728 — the logo this bill was issued with, in this roll's dots; one that will not draw is left off.
         const logo = doc.supplier.logo ? await logoBitmap(doc.supplier.logo, device.width) : null;
-        return [{ ticket: billTicket({ ...data, logo }, copy), copies: reprint ? 1 : device.billCopies }];
+        /*
+         * Jira GRW-729 — the payment QR, where this counter prints one (on by default): a UPI link for exactly what is
+         * due, else the picture the branch shows at the till; "PAID" in its place once the bill is paid (BR-01). A QR
+         * that will not draw is left off — it never stops the bill.
+         */
+        let payQr: BillData['payQr'] = null;
+        let paidStamp: string | null = null;
+        if (device.billQr && doc.paid && doc.qrReady) paidStamp = t('paidStamp');
+        else if (device.billQr && doc.payQr) {
+          const dots = device.width === '58' ? 384 : 576;
+          let bitmap = null;
+          try {
+            bitmap = doc.payQr.kind === 'upi' ? qrBitmap(encodeQr(doc.payQr.uri), dots) : await qrPictureBitmap(doc.payQr.image, device.width);
+          } catch {
+            bitmap = null;
+          }
+          if (bitmap) payQr = { bitmap, caption: t('scanToPay', { amount: formatMoney(doc.payQr.amountMinor, 'INR', locale) }) };
+        }
+        return [{ ticket: billTicket({ ...data, logo, payQr, paidStamp }, copy), copies: reprint ? 1 : device.billCopies }];
       }),
     [run, locale, timezone, t, tDoc, tPay, typeWords, billCopy],
   );
@@ -468,6 +487,10 @@ function PrinterSheet({ printer, onClose }: { printer: TicketPrinter; onClose: (
           <label className="tp-check">
             <input type="checkbox" checked={settings.autoBill} onChange={(e) => setSettings({ ...settings, autoBill: e.target.checked })} />
             <span>{t('autoBill')}</span>
+          </label>
+          <label className="tp-check">
+            <input type="checkbox" checked={settings.billQr} onChange={(e) => setSettings({ ...settings, billQr: e.target.checked })} />
+            <span>{t('billQr')}</span>
           </label>
           <label className="tp-check">
             <span>{t('copies')}</span>

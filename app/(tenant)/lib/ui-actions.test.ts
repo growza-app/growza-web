@@ -373,6 +373,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
      */
     'POST /api/v1/settings/payment-qr',
     'DELETE /api/v1/settings/payment-qr',
+    // Jira GRW-729 — the UPI ID a printed bill's QR pays (drawn for the owner alone).
+    'PUT /api/v1/settings/payment-qr/upi',
     'POST /api/v1/settings/branches/:id/payment-qr',
     'DELETE /api/v1/settings/branches/:id/payment-qr',
     'PATCH /api/v1/settings/booking',

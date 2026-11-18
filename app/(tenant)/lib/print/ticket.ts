@@ -243,6 +243,13 @@ export interface BillData {
   paidBy: string | null;
   footer?: string | null;
   reprint?: boolean;
+  /**
+   * Jira GRW-729 — the QR the guest scans to pay, already this roll's dots, and the words under it ("Scan to pay
+   * ₹540"). Null or absent: no QR, and the bill is what it was.
+   */
+  payQr?: { bitmap: Bitmap; caption: string } | null;
+  /** Jira GRW-729 BR-01 — a paid bill of a business with a QR: this word ("PAID") where the QR would be. */
+  paidStamp?: string | null;
 }
 
 export interface BillCopy {
@@ -306,6 +313,15 @@ export function billTicket(bill: BillData, copy: BillCopy): Ticket {
   lines.push({ kind: 'text', text: `${copy.grandTotal} ${bill.grandTotal}`, align: 'right', bold: true, size: 2 });
   if (bill.amountInWords) lines.push({ kind: 'text', text: `(${bill.amountInWords})` });
   if (bill.paidBy) lines.push({ kind: 'text', text: bill.paidBy, align: 'right' });
+  // Jira GRW-729 — the QR under the total, where the guest's eye already is; "PAID" in its place once it is.
+  if (bill.paidStamp) {
+    lines.push({ kind: 'rule' });
+    lines.push({ kind: 'text', text: bill.paidStamp, align: 'center', bold: true, size: 2 });
+  } else if (bill.payQr) {
+    lines.push({ kind: 'rule' });
+    lines.push({ kind: 'image', bitmap: bill.payQr.bitmap });
+    lines.push({ kind: 'text', text: bill.payQr.caption, align: 'center', bold: true });
+  }
   lines.push({ kind: 'rule' });
   if (bill.footer) lines.push({ kind: 'text', text: bill.footer, align: 'center' });
   lines.push({ kind: 'text', text: copy.thanks, align: 'center' });

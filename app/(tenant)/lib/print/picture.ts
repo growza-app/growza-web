@@ -9,13 +9,28 @@ import { dotsPerLine, type PaperWidth } from './ticket';
  * Anything that goes wrong is null and the bill prints without it: a logo never stops a bill (GRW-713 BR-03).
  */
 export async function logoBitmap(src: string, width: PaperWidth): Promise<Bitmap | null> {
+  const dots = dotsPerLine(width);
+  return pictureBitmap(src, dots, dots, logoMaxHeight(dots), 'dither');
+}
+
+/**
+ * Jira GRW-729 — the payment QR the owner uploaded (a photo or a screenshot of it), as this roll's dots: a square 60% of
+ * the roll wide, black or white by brightness — a QR's squares must stay squares, and dithering would scatter dots
+ * into the white between them.
+ */
+export async function qrPictureBitmap(src: string, width: PaperWidth): Promise<Bitmap | null> {
+  const dots = dotsPerLine(width);
+  const side = Math.floor(dots * 0.6);
+  return pictureBitmap(src, dots, side, side, 'threshold');
+}
+
+async function pictureBitmap(src: string, dots: number, maxW: number, maxH: number, mode: 'dither' | 'threshold'): Promise<Bitmap | null> {
   if (typeof document === 'undefined') return null;
   try {
     const img = new Image();
     img.src = src;
     await img.decode();
-    const dots = dotsPerLine(width);
-    const box = fitInside(img.naturalWidth, img.naturalHeight, dots, logoMaxHeight(dots));
+    const box = fitInside(img.naturalWidth, img.naturalHeight, maxW, maxH);
     if (box.width === 0) return null;
     const canvas = document.createElement('canvas');
     canvas.width = box.width;
@@ -24,7 +39,7 @@ export async function logoBitmap(src: string, width: PaperWidth): Promise<Bitmap
     if (!ctx) return null;
     ctx.drawImage(img, 0, 0, box.width, box.height);
     const { data } = ctx.getImageData(0, 0, box.width, box.height);
-    return toBitmap(data, box.width, box.height, dots, 'dither');
+    return toBitmap(data, box.width, box.height, dots, mode);
   } catch {
     return null;
   }
