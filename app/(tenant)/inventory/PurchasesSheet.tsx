@@ -2,10 +2,10 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useDialog } from '../../../shared/a11y/useDialog';
-import { api, formatMoney } from '../../lib/api';
-import type { PurchaseSummary } from '../../lib/api-types';
-import { formatDate } from '../../lib/format';
+import { useDialog } from '../../shared/a11y/useDialog';
+import { api, formatMoney } from '../lib/api';
+import type { PurchaseSummary } from '../lib/api-types';
+import { formatDate } from '../lib/format';
 
 /**
  * Jira GRW-738 — a branch's past stock ins, newest first: when, from whom, the bill number and what it came to before GST. Tapping one

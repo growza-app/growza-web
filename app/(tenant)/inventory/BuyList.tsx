@@ -2,9 +2,9 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api, formatMoney } from '../../lib/api';
-import type { BuyItem, BuyList as BuyListData } from '../../lib/api-types';
-import { amount, unitWord } from '../../lib/kitchen-units';
+import { api, formatMoney } from '../lib/api';
+import type { BuyItem, BuyList as BuyListData } from '../lib/api-types';
+import { amount, unitWord } from '../lib/kitchen-units';
 import { groupBySupplier } from './buy-list';
 import { BuyShareSheet } from './BuyShareSheet';
 

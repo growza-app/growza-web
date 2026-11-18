@@ -1,0 +1,105 @@
+/* Jira GRW-741 — Inventory as its own section: the five tabs (Stock · Buy · Suppliers · Recipes · Reports), a cook's two main tabs, and the
+   Recipes list. Laid out at 344px first. The tab row is as wide as its words; when that is wider than the phone (Hindi at 344px, or a
+   larger text size) it scrolls sideways INSIDE itself, and the page never does; the current tab is put in view at once on arrival, with no
+   animation to wait for. The lists themselves are 99-kitchen-stock.css's. */
+
+.inv-tabs {
+  display: flex;
+  flex: none;
+  gap: var(--sp-2);
+  max-width: 44rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0 0 var(--sp-1);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.inv-tabs::-webkit-scrollbar {
+  display: none;
+}
+.inv-tab {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.inv-tab.is-on {
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+  color: var(--surface);
+}
+.inv-tab:hover:not(.is-on) {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+.inv-tab:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+
+/* A cook's app: Kitchen | Inventory, drawn like the dish sheet's segmented tabs. */
+.prd-seg.inv-cook-tabs {
+  max-width: 44rem;
+  margin: 0;
+}
+.inv-cook-tabs a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-size: var(--fs-4);
+  font-weight: 600;
+  text-decoration: none;
+}
+.inv-cook-tabs a.is-on {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.inv-section-title {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-7);
+  font-weight: 700;
+}
+
+/* Recipes: a dish with no recipe says so in amber, on the right where the % would be. */
+.inv-gaps {
+  align-self: stretch;
+}
+.inv-no-recipe {
+  flex: none;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: 999px;
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.inv-dish .ks-name {
+  min-width: 0;
+}
+.inv-dish .fc-pct {
+  flex: none;
+}
+
+/* Suppliers: what one supplier has sold us, under their form. */
+.inv-bought {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}

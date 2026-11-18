@@ -2,11 +2,11 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { api } from '../../lib/api';
-import type { MaterialMovement, MaterialUnit } from '../../lib/api-types';
-import { formatDate } from '../../lib/format';
-import { amount, unitWord } from '../../lib/kitchen-units';
-import { useSession } from '../../components/SessionProvider';
+import { api } from '../lib/api';
+import type { MaterialMovement, MaterialUnit } from '../lib/api-types';
+import { formatDate } from '../lib/format';
+import { amount, unitWord } from '../lib/kitchen-units';
+import { useSession } from '../components/SessionProvider';
 
 /**
  * Jira GRW-738 — an item's recent history on its sheet: what moved it, by how much, who, and why. A sale names its dish; a stock in its

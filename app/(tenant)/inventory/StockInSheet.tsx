@@ -2,14 +2,14 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useDialog } from '../../../shared/a11y/useDialog';
-import { api, ApiError, formatMoney } from '../../lib/api';
-import type { PurchaseInput, PurchaseLineInput, RememberedPack, StockMaterial, StockSupplier } from '../../lib/api-types';
-import { formatDate } from '../../lib/format';
-import { amount, businessToday, packQty, parseAmount, parseRupees, rupeesText, unitWord } from '../../lib/kitchen-units';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { useSession } from '../../components/SessionProvider';
-import { IconTrash } from '../../components/icons';
+import { useDialog } from '../../shared/a11y/useDialog';
+import { api, ApiError, formatMoney } from '../lib/api';
+import type { PurchaseInput, PurchaseLineInput, RememberedPack, StockMaterial, StockSupplier } from '../lib/api-types';
+import { formatDate } from '../lib/format';
+import { amount, businessToday, packQty, parseAmount, parseRupees, rupeesText, unitWord } from '../lib/kitchen-units';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useSession } from '../components/SessionProvider';
+import { IconTrash } from '../components/icons';
 
 /** One line as typed. Loose: a quantity and a price per unit. In packs: what a pack is, how many, and a price per pack. */
 interface Draft {

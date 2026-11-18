@@ -317,26 +317,30 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   // Jira GRW-633 — the reorder worklist: the owner's own numbers and each category's lead time, on a page of its own under Stock. Owner and manager only, closed whole by `guardScreen`.
   '/stock/order': ['PUT /api/v1/reports/reorder/override', 'PUT /api/v1/reports/reorder/rules'],
   // Jira GRW-737 — kitchen stock: items, the opening count and the owner's switch; the recipe is written from the dish sheet (`/stock`).
-  '/stock/kitchen': [
+  // Jira GRW-741 — all of it is Inventory now, one screen per tab: Stock (items, opening, import, the switch, wastage and counts),
+  // Buy (stock in and its bill's photo), Suppliers, and Recipes (the dish sheet's own recipe editor, opened from the list).
+  '/inventory': [
     'POST /api/v1/stock/materials',
     'PATCH /api/v1/stock/materials/:id',
     'POST /api/v1/stock/materials/:id/archive',
     'POST /api/v1/stock/materials/opening',
     'POST /api/v1/stock/materials/import/parse',
     'POST /api/v1/stock/materials/import',
-    // Jira GRW-738 — suppliers, stock in (and its bill's photo), wastage and counts.
-    'POST /api/v1/stock/suppliers',
-    'PATCH /api/v1/stock/suppliers/:id',
-    'POST /api/v1/stock/purchases',
-    'PATCH /api/v1/stock/purchases/:id',
-    'DELETE /api/v1/stock/purchases/:id',
-    'POST /api/v1/stock/purchases/:id/photo',
+    'PUT /api/v1/settings/kitchen-stock',
+    // Jira GRW-738 — wastage and counts.
     'POST /api/v1/stock/wastage',
     'POST /api/v1/stock/counts',
     'PATCH /api/v1/stock/counts/:id',
     'POST /api/v1/stock/counts/:id/finish',
-    'PUT /api/v1/settings/kitchen-stock',
   ],
+  '/inventory/buy': [
+    'POST /api/v1/stock/purchases',
+    'PATCH /api/v1/stock/purchases/:id',
+    'DELETE /api/v1/stock/purchases/:id',
+    'POST /api/v1/stock/purchases/:id/photo',
+  ],
+  '/inventory/suppliers': ['POST /api/v1/stock/suppliers', 'PATCH /api/v1/stock/suppliers/:id'],
+  '/inventory/recipes': ['PUT /api/v1/products/:id/recipe'],
   '/providers': [
     'POST /api/v1/providers',
     'PATCH /api/v1/providers/:id',
@@ -499,7 +503,8 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     '/reports/payments': /await guardScreen\('\/reports\/payments'\);/,
     '/reports/discounts': /await guardScreen\('\/reports\/discounts'\);/,
     // Jira GRW-739 — and Food cost, a restaurant's.
-    '/reports/food-cost': /await guardScreen\('\/reports\/food-cost'\);/,
+    // Jira GRW-741 — it moved to Inventory › Reports; the old address sends you there, and that screen guards.
+    '/reports/food-cost': /redirect\(query \? `\/inventory\/reports\?\$\{query\}` : '\/inventory\/reports'\)/,
     // The centre button and this page ask the same action.
     '/appointments/new': /if \(!mayUse\(me\.member\?\.role, 'visit\.new', isWritable\(me\.tenant\?\.status\)\)\)/,
     // Jira GRW-556 — where a closed screen's address lands until the business is live: open to every role, and it
@@ -542,7 +547,15 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     '/stock/report': /await guardScreen\('\/stock\/report'\);/,
     '/stock/order': /await guardScreen\('\/stock\/order'\);/,
     // Jira GRW-737 — the kitchen's raw materials guard under their own address (a restaurant's, and the cook's too).
-    '/stock/kitchen': /await guardScreen\('\/stock\/kitchen'\);/,
+    // Jira GRW-741 — that address only sends you on to Inventory, whose screen is the one that guards.
+    '/stock/kitchen': /redirect\(params\.branch \? `\$\{tab\}\?branch=/,
+    // Jira GRW-741 — Inventory, and each of its tabs, guard under their OWN address: who may open a tab differs (the cook has Stock and Buy,
+    // the counter not Suppliers or Reports).
+    '/inventory/buy': /await guardScreen\('\/inventory\/buy'\);/,
+    '/inventory/suppliers': /await guardScreen\('\/inventory\/suppliers'\);/,
+    '/inventory/recipes': /await guardScreen\('\/inventory\/recipes'\);/,
+    '/inventory/reports': /await guardScreen\('\/inventory\/reports'\);/,
+    '/inventory': /await guardScreen\('\/inventory'\);/,
     '/stock/channels': /await guardScreen\('\/stock'\);/,
     '/stock/sellers': /await guardScreen\('\/stock'\);/,
     '/stock': /<ProductsScreen[^>]*guard="\/stock"/,

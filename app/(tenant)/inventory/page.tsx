@@ -1,0 +1,22 @@
+import { guardScreen } from '../lib/screen-guard';
+import { screenTitle } from '../lib/page-title';
+import { InventoryScreen } from './InventoryScreen';
+import { KitchenStockClient } from './KitchenStockClient';
+
+export const dynamic = 'force-dynamic';
+export const metadata = screenTitle('Inventory');
+
+/**
+ * Jira GRW-741 — Inventory › Stock (was Kitchen stock, the Menu's second tab — Jira GRW-737): what the kitchen cooks with and how much of
+ * each is left, one branch at a time. The owner, a manager, the counter and the cook open it; only the owner and a manager change it, the
+ * kitchen records wastage and counts, and the API leaves every price out for whoever cannot see the money.
+ */
+export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
+  await guardScreen('/inventory');
+  const params = await searchParams;
+  return (
+    <InventoryScreen tab="stock" wanted={params.branch ?? null}>
+      {(branchId) => <KitchenStockClient key={branchId} branchId={branchId!} />}
+    </InventoryScreen>
+  );
+}

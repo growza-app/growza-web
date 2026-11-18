@@ -2730,6 +2730,17 @@ export interface DishCost {
   name: string;
   sizes: Array<{ variantId: string | null; label: string | null; priceMinor: number; netPriceMinor: number; costMinor: number | null; foodCostPct: number | null; noRecipe: boolean }>;
 }
+/**
+ * Jira GRW-741 — `GET /api/v1/stock/recipes`: Inventory › Recipes, every dish at a branch with no-recipe dishes first. The cost, the price
+ * before GST and the % are present only for a viewer who may see the money; the counter is sent the price and `noRecipe` alone.
+ */
+export interface RecipeCostDish {
+  productId: string;
+  name: string;
+  category: string | null;
+  noRecipe: boolean;
+  sizes: Array<{ variantId: string | null; label: string | null; priceMinor: number; netPriceMinor?: number; costMinor?: number | null; foodCostPct?: number | null; noRecipe: boolean }>;
+}
 /** `GET /api/v1/reports/food-cost` */
 export interface FoodCostReportPage {
   window: MoneyWindow;
@@ -2755,6 +2766,8 @@ export type LossKind = 'wasted' | 'lost' | 'found';
 /** `GET /api/v1/reports/stock-loss` */
 export interface StockLossReportPage {
   window: MoneyWindow;
+  /** Jira GRW-741 — what was used of each item, net of what came back before cooking, at the cost it was used at. Absent from an older API. */
+  used?: Array<{ materialId: string; name: string; unit: MaterialUnit; qty: number; valueMinor: number; unpriced: boolean }>;
   totals: { wastedMinor: number; lostMinor: number; foundMinor: number; entries: number; unpricedEntries: number };
   byDay: Array<{ dateISO: string; wastedMinor: number; lostMinor: number; foundMinor: number; entries: number }>;
   byItem: Array<{ materialId: string; name: string; unit: MaterialUnit; wastedQty: number; wastedMinor: number; lostQty: number; lostMinor: number; foundQty: number; foundMinor: number; unpriced: boolean }>;

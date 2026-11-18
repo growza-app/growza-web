@@ -1,5 +1,5 @@
-import type { BuyItem } from '../../lib/api-types';
-import { amount, unitWord } from '../../lib/kitchen-units';
+import type { BuyItem } from '../lib/api-types';
+import { amount, unitWord } from '../lib/kitchen-units';
 
 /**
  * Jira GRW-739 — What to buy, as plain data and plain text: the list grouped by who each item was last bought from (FR-02), and the

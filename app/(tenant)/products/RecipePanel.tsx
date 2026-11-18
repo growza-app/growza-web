@@ -31,8 +31,10 @@ const nextKey = () => `r${++seq}`;
  * Jira GRW-737 — a dish's recipe, one size at a time (Half / Full): which raw materials it uses and how much of each. Every bill from now on
  * takes this out of stock (BR-02); past bills keep what they took. The owner and a manager change it; the cost line shows only to whoever
  * the API sends a cost to (it leaves `costMinor` out for the counter and the cook).
+ *
+ * Jira GRW-741 — the same editor opens from Inventory › Recipes (`inventory/RecipeSheet.tsx`), so it needs only the dish's id and branch.
  */
-export function RecipePanel({ product }: { product: Product }) {
+export function RecipePanel({ product }: { product: Pick<Product, 'id' | 'locationId'> }) {
   const t = useTranslations('recipe');
   const session = useSession();
   const grid = session?.areas?.pages;
@@ -142,7 +144,7 @@ export function RecipePanel({ product }: { product: Product }) {
       {materials.length === 0 ? (
         <div className="ks-state">
           <span>{t('noItems')}</span>
-          <AppLink className="btn btn-ghost" href="/stock/kitchen">
+          <AppLink className="btn btn-ghost" href="/inventory">
             {t('openStock')}
           </AppLink>
         </div>

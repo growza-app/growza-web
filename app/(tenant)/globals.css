@@ -158,6 +158,8 @@
 @import './styles/99-menu-import.css';
 /* Jira GRW-739 — Reports › Food cost: the % and its amber / red bands. */
 @import './styles/99-food-cost.css';
+/* Jira GRW-741 — Inventory as its own section: its tabs, a cook's two tabs, the Recipes list. */
+@import './styles/99-inventory.css';
 /* Jira GRW-733 — Settings › Kitchen stations. */
 @import './styles/99-kitchen-stations.css';
 /* Jira GRW-734 — an area's own prices. */

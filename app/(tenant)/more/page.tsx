@@ -9,7 +9,7 @@ import { copy } from '../lib/copy';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
 import { isLive } from '../lib/go-live';
 import { PageHeader } from '../components/PageHeader';
-import { IconAnalytics, IconChat, IconHelp, IconOffers, IconPackages, IconChevronRight, IconLogout, IconPos, IconReceipt, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
+import { IconAnalytics, IconChat, IconHelp, IconInventory, IconOffers, IconPackages, IconChevronRight, IconLogout, IconPos, IconReceipt, IconReports, IconServices, IconSettings, IconStaff } from '../components/icons';
 import { SignOutButton } from '../components/SignOutButton';
 
 export const dynamic = 'force-dynamic';
@@ -67,6 +67,8 @@ export default async function MorePage() {
 
   const items: { href: string; label: string; icon: ReactNode; pill?: string | null }[] = [
     ...(products ? [{ href: '/pos', label: nav.nav.pos, icon: <IconPos /> }] : []),
+    // Jira GRW-741 — on a phone Inventory lives here (the tab bar's five slots are taken); `visibleItems` leaves it out wherever it does not apply.
+    { href: '/inventory', label: nav.nav.inventory, icon: <IconInventory /> },
     { href: '/sales', label: nav.nav.sales, icon: <IconReceipt /> },
     // GRW-170 — the register lives here on a phone. The bottom bar is five
     // fixed slots and a sixth would break it, so Attendance rides the menu

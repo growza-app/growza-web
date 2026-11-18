@@ -641,6 +641,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
        * changes the meaning.
        */
       stock: hi ? (labels.stock === 'Menu' ? 'मेन्यू' : H(labels.stock, 'स्टॉक')) : (labels.stock ?? 'Stock'),
+      /** Jira GRW-741 — the kitchen's raw materials, buying, suppliers, recipes and food cost, as one section (Petpooja's word). */
+      inventory: S('Inventory', 'इन्वेंटरी'),
       schedule: S('My schedule', 'मेरा काम'),
       clients: hi ? H(labels.customers, 'ग्राहक') : (labels.customers ?? copy.nav.customers),
       staff: hi ? H(labels.providers, 'स्टाफ़') : (labels.providers ?? copy.nav.staff),

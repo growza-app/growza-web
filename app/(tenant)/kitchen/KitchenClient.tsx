@@ -63,9 +63,9 @@ const TYPE_ICON: Record<'dine_in' | 'takeaway' | 'delivery', string> = {
 export function KitchenClient() {
   const t = useTranslations('kitchen');
   const tks = useTranslations('kitchenStock');
-  // Jira GRW-737 — the cook reads what the kitchen has left (amounts only), from the kitchen screen they live on.
+  // Jira GRW-737 — the cook reads what the kitchen has left (amounts only), from the kitchen screen they live on. Jira GRW-741 — Inventory.
   const mayOpen = useMayOpen();
-  const stockLink = useRecipesOn() && mayOpen('/stock/kitchen');
+  const stockLink = useRecipesOn() && mayOpen('/inventory');
   const branch = useBranch();
   const session = useSession();
   const location = branch.choice ?? branch.one ?? session?.branches?.[0]?.id ?? null;
@@ -210,8 +210,8 @@ export function KitchenClient() {
         <div className="kd-bar-right">
           <HeaderBranchPicker variant="pill" />
           {stockLink ? (
-            <AppLink className="btn btn-ghost kd-stock-link" href="/stock/kitchen">
-              {tks('tabStock')}
+            <AppLink className="btn btn-ghost kd-stock-link" href="/inventory">
+              {tks('title')}
             </AppLink>
           ) : null}
           {/* Owner, 2026-11-17 — "Chime" was the design's word; "Sound" is the plain one. The speaker is struck through while off. */}

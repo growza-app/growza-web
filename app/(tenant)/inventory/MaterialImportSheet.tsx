@@ -2,10 +2,10 @@
 
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
-import { api, ApiError } from '../../lib/api';
-import type { MaterialImportReview } from '../../lib/api-types';
-import { amount, unitWord } from '../../lib/kitchen-units';
-import { useDialog } from '../../../shared/a11y/useDialog';
+import { api, ApiError } from '../lib/api';
+import type { MaterialImportReview } from '../lib/api-types';
+import { amount, unitWord } from '../lib/kitchen-units';
+import { useDialog } from '../../shared/a11y/useDialog';
 
 /**
  * Jira GRW-737 — raw materials from a file, the way a menu comes in: pick a .xlsx or .csv, see what would be added (and what is already

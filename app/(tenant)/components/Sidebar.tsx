@@ -5,6 +5,7 @@ import { Fragment, useEffect, useRef, useState, type KeyboardEvent as ReactKeybo
 import { ClientCartoon } from './ClientCartoon';
 import { usePathname } from 'next/navigation';
 import { canSee, type MemberRole } from '../lib/nav-policy';
+import { cooksOnly } from '../lib/areas';
 import { isActive, resolveNav, type NavGroup } from '../lib/nav-sections';
 import { GrowzaMark } from './GrowzaMark';
 import { homeCopy } from '../lib/home-copy';
@@ -22,6 +23,7 @@ import {
   IconPackages,
   IconPos,
   IconProducts,
+  IconInventory,
   IconReceipt,
   IconReports,
   IconServices,
@@ -151,6 +153,8 @@ export function Sidebar({
     // Jira GRW-608 — a shop's own two screens. Absent for every other business: `canSee` answers false for them.
     { href: '/orders', label: t.nav.orders, icon: <IconReceipt /> },
     { href: '/stock', label: t.nav.stock, icon: <IconProducts /> },
+    // Jira GRW-741 — Inventory, below the Menu: only where the business keeps kitchen stock, to the roles that may open it (`canSee`).
+    { href: '/inventory', label: t.nav.inventory, icon: <IconInventory /> },
     {
       href: '/appointments',
       label: role === 'staff' ? t.nav.schedule : t.nav.bookings,
@@ -274,6 +278,8 @@ export function Sidebar({
    */
   // Notifications alone is not a list: on a laptop the theme does not draw it there, and a kitchen has nothing to be told.
   if (nav.every((n) => n.href === '/notifications')) return null;
+  // Jira GRW-741 — nor does a Kitchen login now that Inventory is theirs too: its two places carry their own tabs (`inventory/CookTabs.tsx`).
+  if (cooksOnly(areas.pages)) return null;
 
   return (
     <>
