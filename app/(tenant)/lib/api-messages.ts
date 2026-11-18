@@ -142,6 +142,14 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'That category or station is not at this branch.': 'यह कैटेगरी या स्टेशन इस ब्रांच में नहीं है।',
   'Pick a menu category': 'मेन्यू की कोई कैटेगरी चुनें',
   'Pick a station': 'कोई स्टेशन चुनें',
+  // Jira GRW-734 — an area's own prices.
+  'Only the owner or a manager can set prices.': 'कीमतें सिर्फ़ मालिक या मैनेजर तय कर सकते हैं।',
+  'That dish is not on this branch’s menu.': 'यह डिश इस ब्रांच के मेन्यू में नहीं है।',
+  'Type the change with at most one decimal': 'बदलाव दशमलव के बाद ज़्यादा से ज़्यादा एक अंक तक लिखें',
+  'Pick a dish': 'कोई डिश चुनें',
+  'Type the price in whole rupees': 'कीमत पूरे रुपयों में लिखें',
+  'A price in an area is at least ₹1': 'किसी एरिया में कीमत कम से कम ₹1 होनी चाहिए',
+  'A dish has one price in an area': 'एक एरिया में एक डिश की एक ही कीमत होती है',
   // Jira GRW-720 — how an order is eaten.
   'Table orders is off at this branch.': 'इस ब्रांच में टेबल ऑर्डर बंद है।',
   'Choose Dine-in or Takeaway': 'यहीं खाना या पैक करके चुनें',

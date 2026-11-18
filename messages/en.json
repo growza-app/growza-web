@@ -1071,6 +1071,38 @@
     "removeTableTitle": "Remove {name}?",
     "removeTableBody": "Past bills keep this table's name. A table with an open bill can't be removed."
   },
+  "areaPrices": {
+    "menuPrices": "Menu prices",
+    "onMenu": "Menu {change}",
+    "fixedCount": "{n, plural, one {# dish at its own price} other {# dishes at their own price}}",
+    "set": "Prices",
+    "title": "Prices in {area}",
+    "close": "Close",
+    "intro": "Tables in this area can charge more (or less) than the menu. Takeaway and delivery always charge the menu price.",
+    "changeLabel": "Change on every dish",
+    "menuPrice": "Menu price",
+    "typeChange": "Or type a change, like 10 or -5",
+    "outOfRange": "The change can be from -50% to +100%.",
+    "oneDecimal": "Type a number like 10 or 12.5.",
+    "noChange": "Dishes cost what the menu says.",
+    "example": "{dish}: {from} on the menu, {to} here. Rounded to whole rupees.",
+    "rounded": "Prices are rounded to whole rupees.",
+    "fixedLabel": "Own price for chosen dishes",
+    "fixedHint": "A dish's own price here wins over the change above. Dishes with sizes take the change.",
+    "dishGone": "A dish no longer on the menu",
+    "menuIs": "Menu {price}",
+    "priceFor": "Price of {dish} here, in rupees",
+    "removeFixed": "Remove the own price of {dish}",
+    "menuFailed": "Could not load the menu. Close this and try again.",
+    "addDish": "Add a dish",
+    "pickDish": "Pick a dish",
+    "wholeRupees": "Type each price in whole rupees, ₹1 or more.",
+    "sentStay": "Orders already sent keep the price they were sent at.",
+    "saveFailed": "Could not save. Try again.",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "save": "Save prices"
+  },
   "settingsTeam": {
     "title": "Team access",
     "inviteTitle": "Give someone a login",
@@ -4549,7 +4581,10 @@
       "trendTitle": "Across the period",
       "same": "Same as the period before",
       "weekOf": "Week of {date}",
-      "refunded": "{count, plural, one {Refunded once: {amount}} other {Refunded # times: {amount}}}"
+      "refunded": "{count, plural, one {Refunded once: {amount}} other {Refunded # times: {amount}}}",
+      "byArea": "Dine-in by area",
+      "noArea": "No area",
+      "noAreaHint": "Service charge, and dishes sent before areas had their own prices."
     },
     "uncountedSubtitle": "Everything on your menu, with its price. A dish is made when it is ordered, so there is no count to keep.",
     "searchUncounted": "Search the menu",
@@ -4778,7 +4813,8 @@
     "takeOrder": "Take order",
     "freeAgain": "Free again",
     "freedOk": "{table} is free again.",
-    "moveHintSeated": "Pick a free table to move the guests to."
+    "moveHintSeated": "Pick a free table to move the guests to.",
+    "areaPrices": "This area's prices"
   },
   "pos": {
     "kitchenScreen": "Kitchen",

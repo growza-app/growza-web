@@ -37,6 +37,7 @@ import { DeskUnpaid } from './DeskUnpaid';
 import { useBarcodeScan } from '../../lib/barcode-scan';
 import { planScans, type ScanProblem } from '../../lib/scan-plan';
 import { canAddSize, groupProductLines, hasSizes, productLineKey, sizedName, sizePriceMinor } from '../../lib/till-sizes';
+import { hasAreaPrices, withAreaPrices, type AreaPricing } from '../../lib/area-prices';
 import { SizeSheet } from './SizeSheet';
 import { ChoiceSheet, type DishChoice } from './ChoiceSheet';
 import { useAddonsOn } from '../../components/SessionProvider';
@@ -288,10 +289,11 @@ export function PayFlow({
    */
   /** The table being ordered for; `billId` when the till opened its bill to add a round (QA 2026-11-16: refused if it moved). */
   /** Jira GRW-732 — `seated` when the till opened a Seated table to take its first order (the server checks nobody seated it since). */
-  const [atTable, setAtTable] = useState<{ id: string; label: string; billId?: string; seated?: boolean } | null>(null);
+  // Jira GRW-734 — `pricing`: the table's area's own prices, shown on its dishes (the server prices the round the same way).
+  const [atTable, setAtTable] = useState<{ id: string; label: string; billId?: string; seated?: boolean; pricing?: AreaPricing } | null>(null);
   const [guests, setGuests] = useState<number | null>(null);
   const [seating, setSeating] = useState(false);
-  const [billOf, setBillOf] = useState<{ table: DiningTable; area: string } | null>(null);
+  const [billOf, setBillOf] = useState<{ table: DiningTable; area: string; pricing?: AreaPricing } | null>(null);
   const [mapKey, setMapKey] = useState(0);
   /** What the till just did at a table, said in full: "Sent to kitchen · T3", "T3 paid · ₹640", "T1 moved to T3." */
   const [tableSent, setTableSent] = useState<string | null>(null);
@@ -358,7 +360,9 @@ export function PayFlow({
   /** Jira GRW-572 — the branch's priced combos, for the wide till's Packages tab. Empty until read, and on a phone. */
   const [offers, setOffers] = useState<Offer[]>([]);
   /** Owner, 2026-10-14 — the branch's shelf (migration 0115): the Products tab on the desk, a chip in the phone's sheet. */
-  const [products, setProducts] = useState<Product[]>([]);
+  const [menuProducts, setProducts] = useState<Product[]>([]);
+  /** Jira GRW-734 — the menu at the price this order pays: a table's area's own prices, else the menu (takeaway, delivery). */
+  const products = useMemo(() => withAreaPrices(menuProducts, atTable?.pricing), [menuProducts, atTable?.pricing]);
   const [productsLoaded, setProductsLoaded] = useState(false);
   const [productsFailed, setProductsFailed] = useState(false);
   const [productCategories, setProductCategories] = useState<ProductCategory[]>([]);
@@ -2282,6 +2286,8 @@ export function PayFlow({
       <strong className="pf-table-name">
         <span className="pf-table-type">{t('type.dine_in')}</span> · {atTable.label}
       </strong>
+      {/* Jira GRW-734 — this area charges its own prices: said once, so a price on a tile is not a surprise. */}
+      {hasAreaPrices(atTable.pricing) ? <span className="pf-table-prices field-hint">{tTables('areaPrices')}</span> : null}
       <div className="pf-guests" role="group" aria-label={tTables('guestsSkip')}>
         <span className="field-hint">{tTables('guests')}</span>
         <button type="button" className="btn btn-ghost pf-guests-btn" aria-label={tTables('fewerGuests')} disabled={!guests} onClick={() => setGuests((g) => (g && g > 1 ? g - 1 : null))}>
@@ -2332,11 +2338,11 @@ export function PayFlow({
           refreshKey={mapKey}
           onFree={(table, area) => {
             setTableSent(null);
-            setAtTable({ id: table.id, label: `${table.name} · ${area.name}` });
+            setAtTable({ id: table.id, label: `${table.name} · ${area.name}`, ...(area.pricing ? { pricing: area.pricing } : {}) });
           }}
           onBusy={(table, area) => {
             setTableSent(null);
-            setBillOf({ table, area: area.name });
+            setBillOf({ table, area: area.name, ...(area.pricing ? { pricing: area.pricing } : {}) });
           }}
         />
         {billOf ? (
@@ -2351,6 +2357,7 @@ export function PayFlow({
               setAtTable({
                 id: billOf.table.id,
                 label: `${billOf.table.name} · ${billOf.area}`,
+                ...(billOf.pricing ? { pricing: billOf.pricing } : {}),
                 ...(billOf.table.openBill ? { billId: billOf.table.openBill.saleId } : {}),
                 // Jira GRW-732 — a Seated table's first order: the count it was seated with is the one the order starts from.
                 ...(seatedHere ? { seated: true } : {}),

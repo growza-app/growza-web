@@ -814,6 +814,9 @@ export const api = {
   updateDiningTable: (tableId: string, body: { name?: string; seats?: number | null; areaId?: string }) =>
     patch<{ areas: DiningArea[] }>(`/api/v1/tables/${tableId}`, body),
   removeDiningTable: (tableId: string) => del<{ areas: DiningArea[] }>(`/api/v1/tables/${tableId}`),
+  /** Jira GRW-734 — an area's prices: its % change on the menu (null = none) and its fixed prices, replaced together. */
+  setAreaPrices: (areaId: string, body: { changePct: number | null; prices: Array<{ productId: string; priceMinor: number }> }) =>
+    put<{ areas: DiningArea[] }>(`/api/v1/tables/areas/${areaId}/prices`, body),
   reorderDiningTables: (location: string, areas: string[], tables: Record<string, string[]>) =>
     put<{ areas: DiningArea[] }>('/api/v1/tables/order', { location, areas, tables }),
   alertPrefs: () => get<AlertPrefs>('/api/v1/alerts/prefs'),

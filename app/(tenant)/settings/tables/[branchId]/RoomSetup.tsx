@@ -5,7 +5,9 @@ import { useState } from 'react';
 import { api, ApiError, type DiningArea, type DiningTable } from '../../../lib/api';
 import { useWritable } from '../../../components/SessionProvider';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
-import { IconArrowDown, IconArrowUp, IconEdit, IconTrash } from '../../../components/icons';
+import { IconArrowDown, IconArrowUp, IconEdit, IconRupee, IconTrash } from '../../../components/icons';
+import { changeWords } from '../../../lib/area-prices';
+import { AreaPricesSheet } from './AreaPricesSheet';
 
 /**
  * Jira GRW-719 — a branch's room, set out the way the owner thinks of it: areas top to bottom, tables in each.
@@ -26,6 +28,7 @@ const seatsOf = (typed: string): number | null => (typed.trim() === '' ? null : 
 
 export function RoomSetup({ branchId, branchName, initial }: { branchId: string; branchName: string; initial: DiningArea[] | null }) {
   const t = useTranslations('settingsTables');
+  const tp = useTranslations('areaPrices');
   const writable = useWritable();
   const [areas, setAreas] = useState(initial);
   const [busy, setBusy] = useState(false);
@@ -35,6 +38,8 @@ export function RoomSetup({ branchId, branchName, initial }: { branchId: string;
   const [editing, setEditing] = useState<Editing>(null);
   const [renaming, setRenaming] = useState<{ areaId: string; name: string } | null>(null);
   const [removing, setRemoving] = useState<Removing>(null);
+  // Jira GRW-734 — the area whose prices are being set.
+  const [pricing, setPricing] = useState<DiningArea | null>(null);
 
   if (!areas) {
     return (
@@ -140,6 +145,24 @@ export function RoomSetup({ branchId, branchName, initial }: { branchId: string;
                 )}
               </div>
               {errorAt(area.id)}
+
+              {/* Jira GRW-734 — what this area charges: the menu, or its own prices. */}
+              <div className="ap-summary">
+                <span className="ap-summary-words">
+                  {area.pricing?.changeBp || Object.keys(area.pricing?.fixed ?? {}).length > 0
+                    ? [
+                        area.pricing?.changeBp ? tp('onMenu', { change: changeWords(area.pricing.changeBp) }) : null,
+                        Object.keys(area.pricing?.fixed ?? {}).length > 0 ? tp('fixedCount', { n: Object.keys(area.pricing!.fixed).length }) : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')
+                    : tp('menuPrices')}
+                </span>
+                <button type="button" className="btn btn-ghost ap-open" disabled={disabled} onClick={() => setPricing(area)}>
+                  <IconRupee />
+                  <span>{tp('set')}</span>
+                </button>
+              </div>
 
               <ul className="dt-tables">
                 {area.tables.map((table, ti) =>
@@ -262,6 +285,18 @@ export function RoomSetup({ branchId, branchName, initial }: { branchId: string;
         </div>
         {errorAt('new-area')}
       </form>
+
+      {pricing ? (
+        <AreaPricesSheet
+          area={pricing}
+          branchId={branchId}
+          onClose={() => setPricing(null)}
+          onSaved={(next) => {
+            setAreas(next);
+            setPricing(null);
+          }}
+        />
+      ) : null}
 
       {removing ? (
         <ConfirmDialog

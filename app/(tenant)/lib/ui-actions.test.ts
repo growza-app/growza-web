@@ -242,6 +242,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   '/settings/tables/[branchId]': [
     'POST /api/v1/tables/areas', 'PATCH /api/v1/tables/areas/:id', 'DELETE /api/v1/tables/areas/:id', 'POST /api/v1/tables/areas/:id/tables',
     'PATCH /api/v1/tables/:id', 'DELETE /api/v1/tables/:id', 'PUT /api/v1/tables/order',
+    // Jira GRW-734 — an area's prices, from the same room screen.
+    'PUT /api/v1/tables/areas/:id/prices',
   ],
   // Jira GRW-615 — an order's own screen moves it along: the one next move, and the rarer ones behind More. Same screen,
   // same gate: a role the nav does not offer /orders is bounced Home by the page, so it never reaches the button.

@@ -58,6 +58,8 @@ export interface DiningArea {
   id: string;
   name: string;
   tables: DiningTable[];
+  /** Jira GRW-734 — the area's own prices (+10% = 1000; fixed prices by dish, in paise). Absent from an older API: menu prices. */
+  pricing?: { changeBp: number | null; fixed: Record<string, number> };
 }
 
 /** Jira GRW-718 — one branch's Table orders switch, as Settings › Tables reads it. */
@@ -2086,6 +2088,8 @@ export interface ByChannelPage {
   caveat: string;
   /** Jira GRW-720 — the same bills by how they were eaten; `counter` is an order from before order types. Absent from an older API. */
   byOrderType?: Array<{ type: 'dine_in' | 'takeaway' | 'delivery' | 'counter'; orders: number; billedMinor: string }>;
+  /** Jira GRW-734 — dine-in by the area each dish was sent from; `area` null = no area (the service charge, older dishes). Absent from an older API. */
+  byArea?: Array<{ area: string | null; billedMinor: string }>;
 }
 
 /**
