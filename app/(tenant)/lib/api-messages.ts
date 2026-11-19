@@ -77,7 +77,6 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'This item already has a price. A stock in changes it.': 'इस सामान की कीमत पहले से है। स्टॉक इन से यह बदलती है।',
   'Type a price like 240': 'कीमत लिखें, जैसे 240',
   'A price is at least ₹1': 'कीमत कम से कम ₹1 होनी चाहिए',
-  'That price is too large': 'यह कीमत बहुत ज़्यादा है',
   'That item is not on your list.': 'यह आपकी सूची में नहीं है।',
   'Pick which size this recipe is for.': 'चुनें कि यह रेसिपी किस साइज़ की है।',
   'Pick one of its sizes.': 'इसका कोई एक साइज़ चुनें।',
