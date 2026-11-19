@@ -23,6 +23,20 @@ export function amount(thousandths: number): string {
 }
 
 /**
+ * QA 2026-11-19, problem 5 — an amount to READ, not to type back: recipes take grams off kilos, so a busy kitchen's list filled with
+ * "1.194 kg" and "5.017 L". Two decimals (1.19 kg), three only under a tenth so a pinch of a spice never reads as 0, whole pieces.
+ * Fields keep `amount()`: what is typed back must be exact.
+ */
+export function shownAmount(thousandths: number, unit: MaterialUnit): string {
+  const sign = thousandths < 0 ? -1 : 1;
+  const abs = Math.abs(thousandths);
+  // Halves round away from zero on both sides of it: −1.785 L reads −1.79, as 1.785 reads 1.79.
+  if (unit === 'pcs' && abs >= 1000) return amount(sign * Math.round(abs / 1000) * 1000);
+  if (abs < 100) return amount(thousandths);
+  return amount(sign * Math.round(abs / 10) * 10);
+}
+
+/**
  * Text a person typed → thousandths, or null when it is not a quantity. `in` is the unit they typed it in: the item's own (kg) or its
  * small one (g), where 250 g is 250 thousandths of a kg. At most three decimals in the item's unit, and none in grams.
  */

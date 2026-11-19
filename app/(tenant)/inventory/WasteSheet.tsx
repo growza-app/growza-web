@@ -13,10 +13,21 @@ const REASONS: readonly WasteReason[] = ['spoiled', 'dropped', 'expired', 'other
  * Jira GRW-738 — record what was thrown away: the item, how much, and why (Spoiled · Dropped · Expired · Other with a note). The cook may
  * do this; the movement carries their name. More than is left is allowed — the count goes below zero — and the sheet says so first.
  */
-export function WasteSheet({ materials, onClose, onSaved }: { materials: StockMaterial[]; onClose: () => void; onSaved: (text: string) => void }) {
+export function WasteSheet({
+  materials,
+  initialMaterialId = '',
+  onClose,
+  onSaved,
+}: {
+  materials: StockMaterial[];
+  /** QA 2026-11-19 — opened from an item: that item, already picked. */
+  initialMaterialId?: string;
+  onClose: () => void;
+  onSaved: (text: string) => void;
+}) {
   const t = useTranslations('kitchenStock.waste');
   const tk = useTranslations('kitchenStock');
-  const [materialId, setMaterialId] = useState('');
+  const [materialId, setMaterialId] = useState(initialMaterialId);
   const [qty, setQty] = useState('');
   const [reason, setReason] = useState<WasteReason | null>(null);
   const [note, setNote] = useState('');

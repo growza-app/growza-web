@@ -2702,8 +2702,10 @@ export interface BuyItem {
   category: string | null;
   stock: number;
   lowStockAt: number;
-  /** What takes it to twice its low-stock level: the starting figure on the shared list. */
+  /** The starting figure on the shared list: twice the low level or three days of use, rounded to what can be ordered (QA 2026-11-19). */
   suggestQty: number;
+  /** What it used a day this past week. Absent from an older API. */
+  usedPerDay?: number;
   supplierId: string | null;
   supplierName: string | null;
   supplierPhone: string | null;
@@ -2753,6 +2755,8 @@ export interface FoodCostReportPage {
     costedSalesMinor: number;
     foodMinor: number;
     foodCostPct: number | null;
+    /** QA 2026-11-19 — the share of all sales the % is worked out over. Absent from an older API. */
+    coveredPct?: number | null;
     givenFreeMinor: number;
     freeBills: number;
     wastedMinor: number;
@@ -2763,7 +2767,8 @@ export interface FoodCostReportPage {
   costliest: Array<{ name: string; qty: number; salesMinor: number; foodMinor: number; foodCostPct: number }>;
   /** `stillMissing` (Jira GRW-743) — of `names`, the dishes that have no recipe now either. Absent from an older API. */
   noRecipe: { dishes: number; salesMinor: number; pctOfSales: number | null; names: string[]; stillMissing?: string[] };
-  noPrice: { dishes: number; salesMinor: number; names: string[] };
+  /** `items` (QA 2026-11-19) — the items that still have no price, to open and give one. Absent from an older API. */
+  noPrice: { dishes: number; salesMinor: number; names: string[]; items?: Array<{ materialId: string; name: string }> };
 }
 export type LossKind = 'wasted' | 'lost' | 'found';
 /** `GET /api/v1/reports/stock-loss` */

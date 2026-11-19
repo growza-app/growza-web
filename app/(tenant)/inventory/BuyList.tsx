@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, formatMoney } from '../lib/api';
 import type { BuyItem, BuyList as BuyListData } from '../lib/api-types';
-import { amount, unitWord } from '../lib/kitchen-units';
+import { amount, shownAmount, unitWord } from '../lib/kitchen-units';
 import { groupBySupplier } from './buy-list';
 import { BuyShareSheet } from './BuyShareSheet';
 
@@ -85,13 +85,17 @@ export function BuyList({ branchId, noItems = false }: { branchId: string; noIte
                     <span className="ks-meta">
                       {/* Jira GRW-743 FR-05 — never "−0.34 L left": none, and by how much more was used than recorded. */}
                       {i.stock < 0
-                        ? t('leftNone', { over: amount(-i.stock), unit: unitWord(i.unit), low: amount(i.lowStockAt) })
-                        : t('left', { amount: amount(i.stock), unit: unitWord(i.unit), low: amount(i.lowStockAt) })}
+                        ? t('leftNone', { over: shownAmount(-i.stock, i.unit), unit: unitWord(i.unit), low: shownAmount(i.lowStockAt, i.unit) })
+                        : t('left', { amount: shownAmount(i.stock, i.unit), unit: unitWord(i.unit), low: shownAmount(i.lowStockAt, i.unit) })}
                     </span>
+                    {/* QA 2026-11-19, problem 3 — why the amount is what it is: this week's use. */}
+                    {i.usedPerDay ? <span className="ks-meta">{t('usesADay', { amount: shownAmount(i.usedPerDay, i.unit), unit: unitWord(i.unit) })}</span> : null}
                     {p ? <span className="ks-meta">{p}</span> : null}
                   </span>
                   <span className={`ks-amount ${i.stock < 0 ? 'is-below' : 'is-low'}`}>
-                    {t('buy', { amount: amount(i.suggestQty), unit: unitWord(i.unit) })}
+                    {i.packSize && i.packLabel && i.suggestQty % i.packSize === 0
+                      ? t('buyPacks', { n: i.suggestQty / i.packSize, label: i.packLabel, amount: shownAmount(i.suggestQty, i.unit), unit: unitWord(i.unit) })
+                      : t('buy', { amount: shownAmount(i.suggestQty, i.unit), unit: unitWord(i.unit) })}
                   </span>
                 </li>
               );

@@ -771,6 +771,9 @@ export const api = {
   uploadPurchasePhoto: (id: string, file: File) => uploadFile<{ purchase: PurchaseDetail }>(`/api/v1/stock/purchases/${encodeURIComponent(id)}/photo`, 'photo', file),
   recordWastage: (body: { materialId: string; qty: number; reason: WasteReason; note?: string | null }) =>
     post<{ wasted: { materialId: string; name: string; stockBefore: number; stock: number; belowZero: boolean } }>('/api/v1/stock/wastage', body),
+  /** QA 2026-11-19 — how much of ONE item there is now, typed on the item (the owner or a manager). */
+  countItem: (id: string, qty: number) =>
+    post<{ counted: { materialId: string; name: string; stockBefore: number; stock: number } }>(`/api/v1/stock/materials/${encodeURIComponent(id)}/count`, { qty }),
   /** The branch's open count, or a new one (one per branch). */
   startCount: (location: string) => post<{ count: StockCount }>('/api/v1/stock/counts', { locationId: location }),
   saveCount: (id: string, entries: Array<{ materialId: string; qty: number | null }>) =>

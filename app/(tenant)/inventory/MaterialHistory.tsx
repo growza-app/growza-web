@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import type { MaterialMovement, MaterialUnit } from '../lib/api-types';
 import { formatDate } from '../lib/format';
-import { amount, unitWord } from '../lib/kitchen-units';
+import { shownAmount, unitWord } from '../lib/kitchen-units';
 import { useSession } from '../components/SessionProvider';
 
 /**
@@ -64,8 +64,8 @@ export function MaterialHistory({ materialId, unit }: { materialId: string; unit
               </span>
               <span className={`ks-amount ${m.qty < 0 ? 'is-out' : 'is-in'}`}>
                 {m.qty > 0 ? '+' : '−'}
-                {amount(Math.abs(m.qty))} {unitWord(unit)}
-                <span className="ks-meta">{t('after', { amount: amount(m.stockAfter), unit: unitWord(unit) })}</span>
+                {shownAmount(Math.abs(m.qty), unit)} {unitWord(unit)}
+                <span className="ks-meta">{t('after', { amount: shownAmount(m.stockAfter, unit), unit: unitWord(unit) })}</span>
               </span>
             </li>
           ))}

@@ -5967,14 +5967,16 @@
       "verdict": {
         "ok": "Food cost {pct} — good",
         "warn": "Food cost {pct} — keep an eye on it",
-        "bad": "Food cost {pct} — high"
+        "bad": "Food cost {pct} — high",
+        "partial": "Food cost {pct} on only {covered} of your sales — not enough to judge yet"
       },
       "pctLineAll": "{food} of food for {sales} of sales with a recipe ({all} sold in all)",
       "lossLabel": "Wasted and missing",
       "noRecipeSold": "{count, plural, one {# dish was} other {# dishes were}} sold with no recipe ({pct} of sales), so their food is not counted",
       "stillMissing": "Still no recipe: {names}",
       "recipesInNow": "Their recipes are in now — new sales count.",
-      "noPriceFix": "{count, plural, one {# dish uses} other {# dishes use}} an item with no price — left out of the %. Open the item on Stock to give it one."
+      "noPriceFix": "{count, plural, one {# dish uses} other {# dishes use}} an item with no price — left out of the %. Open the item on Stock to give it one.",
+      "noPriceItems": "{count, plural, one {# item has} other {# items have}} no price, so {dishes, plural, one {# dish is} other {# dishes are}} left out of the %. Tap one to give it a price:"
     }
   },
   "print": {
@@ -6329,7 +6331,7 @@
       "left": "{amount} {unit} left · low at {low}",
       "lastPrice": "Last bought at {price} per {per}",
       "buy": "Buy {amount} {unit}",
-      "hint": "Amounts start at twice the low-stock level. You can change them before you share.",
+      "hint": "Amounts cover twice the low-stock level or three days of use, rounded to what you can order. You can change them before you share.",
       "share": "Share on WhatsApp",
       "shareTitle": "Share what to buy",
       "shareHint": "Change any amount, or clear it to leave the item off. Nothing is sent until you send it in WhatsApp.",
@@ -6344,7 +6346,9 @@
       "close": "Close",
       "badQty": "Type a quantity like 0.25",
       "noItems": "No items yet.",
-      "leftNone": "None left · used {over} {unit} more · low at {low}"
+      "leftNone": "None left · used {over} {unit} more · low at {low}",
+      "usesADay": "Uses about {amount} {unit} a day",
+      "buyPacks": "Buy {n} × {label} ({amount} {unit})"
     },
     "prices": {
       "title": "Price, last 5 stock ins",
@@ -6410,7 +6414,22 @@
       "hint": "It has no price yet, so the dishes that use it are left out of the food cost. Give it once; stock ins change it after that.",
       "ph": "e.g. 240",
       "save": "Save price",
-      "bad": "Type a price in rupees, like 240"
+      "bad": "Type a price in rupees, like 240",
+      "missing": "No price yet"
+    },
+    "groups": {
+      "low": "Running low",
+      "other": "Other"
+    },
+    "lowTag": "Low",
+    "openingShort": "{n, plural, one {# item has} other {# items have}} no amount yet",
+    "openingEnter": "Enter amounts",
+    "countOne": {
+      "actions": "What to do with this item",
+      "label": "How much is there now? ({unit})",
+      "hint": "This replaces {amount} {unit}. Count what is on the shelf.",
+      "save": "Save amount",
+      "saved": "{name} is now {amount} {unit}"
     }
   },
   "recipe": {

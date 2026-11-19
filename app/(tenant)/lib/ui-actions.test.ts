@@ -332,6 +332,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/stock/counts',
     'PATCH /api/v1/stock/counts/:id',
     'POST /api/v1/stock/counts/:id/finish',
+    // QA 2026-11-19 — one item's amount, set from the item itself.
+    'POST /api/v1/stock/materials/:id/count',
     // Jira GRW-744 — Stock in is on Stock's action bar now (Buy is Stock's "To buy" filter, and its address only sends you there).
     'POST /api/v1/stock/purchases',
     'PATCH /api/v1/stock/purchases/:id',
