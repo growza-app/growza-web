@@ -72,6 +72,12 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Inventory is switched off. Ask the owner to switch it on first.': 'इन्वेंटरी बंद है। पहले मालिक से इसे चालू करवाएँ।',
   'This item has stock history; make a new item instead.': 'इस सामान का स्टॉक पहले चल चुका है; इसकी जगह नया सामान बनाएँ।',
   'Its opening count is already in. Use a stock count to change it.': 'इसकी शुरुआती गिनती पहले ही दर्ज है। बदलने के लिए स्टॉक गिनती करें।',
+  // Jira GRW-743 — an item someone stated an amount for takes no opening count; an item is given a price once.
+  'This item already has an amount. Use a count to change it.': 'इस सामान की मात्रा पहले से दर्ज है। बदलने के लिए गिनती करें।',
+  'This item already has a price. A stock in changes it.': 'इस सामान की कीमत पहले से है। स्टॉक इन से यह बदलती है।',
+  'Type a price like 240': 'कीमत लिखें, जैसे 240',
+  'A price is at least ₹1': 'कीमत कम से कम ₹1 होनी चाहिए',
+  'That price is too large': 'यह कीमत बहुत ज़्यादा है',
   'That item is not on your list.': 'यह आपकी सूची में नहीं है।',
   'Pick which size this recipe is for.': 'चुनें कि यह रेसिपी किस साइज़ की है।',
   'Pick one of its sizes.': 'इसका कोई एक साइज़ चुनें।',
