@@ -99,6 +99,7 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Type at least one count before you finish.': 'पूरा करने से पहले कम से कम एक गिनती लिखें।',
   'Only the owner or a manager can record stock in.': 'स्टॉक-इन सिर्फ़ मालिक या मैनेजर दर्ज कर सकते हैं।',
   'Only the owner or a manager can finish a count.': 'गिनती सिर्फ़ मालिक या मैनेजर पूरी कर सकते हैं।',
+  'Only the owner or a manager can change how much there is.': 'कितना है, यह सिर्फ़ मालिक या मैनेजर बदल सकते हैं।',
   'Only the kitchen, the owner or a manager can do this.': 'यह सिर्फ़ किचन, मालिक या मैनेजर कर सकते हैं।',
   'A phone number has 10 digits': 'फ़ोन नंबर में 10 अंक होते हैं',
   'A GSTIN has 15 letters and numbers': 'GSTIN में 15 अक्षर और अंक होते हैं',

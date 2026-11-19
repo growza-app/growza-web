@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { amount, businessToday, packQty, parseAmount, parseRupees, recipeAmount, rupeesText } from './kitchen-units';
+import { amount, businessToday, packQty, parseAmount, parseRupees, recipeAmount, rupeesText, shownAmount } from './kitchen-units';
 
 /** Jira GRW-737 — thousandths in, what a cook reads out; what they type, back to thousandths. */
 describe('kitchen amounts', () => {
@@ -48,5 +48,22 @@ describe('Jira GRW-738 — prices, today, packs', () => {
     expect(businessToday('Asia/Kolkata', new Date('2026-11-17T20:00:00Z'))).toBe('2026-11-18');
     expect(packQty(30_000, 2_000)).toBe(60_000);
     expect(packQty(1_000, 2_125)).toBe(2_125);
+  });
+});
+
+describe('shownAmount — QA 2026-11-19, problem 5: an amount to read', () => {
+  it('reads to two decimals, never three, from a tenth up', () => {
+    expect(shownAmount(1_194, 'kg')).toBe('1.19');
+    expect(shownAmount(5_017, 'l')).toBe('5.02');
+    expect(shownAmount(14_740, 'kg')).toBe('14.74');
+    expect(shownAmount(2_000, 'kg')).toBe('2');
+  });
+  it('keeps a pinch under a tenth exact, so it never reads as 0', () => {
+    expect(shownAmount(60, 'kg')).toBe('0.06');
+    expect(shownAmount(4, 'kg')).toBe('0.004');
+  });
+  it('whole pieces, and works below zero', () => {
+    expect(shownAmount(32_400, 'pcs')).toBe('32');
+    expect(shownAmount(-1_785, 'l')).toBe('-1.79');
   });
 });

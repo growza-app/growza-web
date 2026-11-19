@@ -23,9 +23,14 @@ const readBoth = async (q: MoneyReportQuery): Promise<Both> => {
 };
 
 /** The % with its colour: amber above 35, red above 45, plain otherwise; "—" with no colour when there is no %. */
-function Pct({ pct, big = false }: { pct: number | null; big?: boolean }) {
-  return <span className={`fc-pct ${big ? 'fc-pct-big' : ''} is-${foodCostTone(pct)}`}>{pctText(pct)}</span>;
+function Pct({ pct, big = false, judged = true }: { pct: number | null; big?: boolean; judged?: boolean }) {
+  return <span className={`fc-pct ${big ? 'fc-pct-big' : ''} is-${judged ? foodCostTone(pct) : 'none'}`}>{pctText(pct)}</span>;
 }
+
+/** Under this share of all sales costed, the % is shown but not called good or high (the API's FOOD_COST_JUDGED_FROM_PCT). */
+const JUDGED_FROM_PCT = 80;
+/** An older API sends no coverage: judged as before. */
+const judgedOf = (r: FoodCostReportPage): boolean => typeof r.totals.coveredPct !== 'number' || r.totals.coveredPct >= JUDGED_FROM_PCT;
 
 /**
  * Jira GRW-739 — Reports › Food cost: what the food in each day's sales cost, at the cost KEPT when each dish was cooked (a price that goes up
@@ -55,19 +60,43 @@ export function FoodCostReport() {
                 Jira GRW-744 FR-05 — the answer first, in one sentence, then three tiles; everything else is folded below. Before, three
                 different sales figures and about ten sections came before an owner knew whether the number was good.
               */}
+              {/*
+                QA 2026-11-19, problem 2 — a kitchen whose eggs and ghee had no price costed 46% of what it sold and still read "good". Under
+                80% of sales costed, the % is said with how much it covers and not judged; the items to price are named right below.
+              */}
               {(() => {
                 const tone = foodCostTone(r.totals.foodCostPct);
-                return tone === 'none' ? null : (
+                if (tone === 'none') return null;
+                if (!judgedOf(r)) {
+                  return (
+                    <p className="fc-verdict is-partial" role="status">
+                      {t('verdict.partial', { pct: pctText(r.totals.foodCostPct), covered: pctText(r.totals.coveredPct ?? null) })}
+                    </p>
+                  );
+                }
+                return (
                   <p className={`fc-verdict is-${tone}`} role="status">
                     {t(`verdict.${tone}`, { pct: pctText(r.totals.foodCostPct) })}
                   </p>
                 );
               })()}
+              {(r.noPrice.items ?? []).length > 0 ? (
+                <div className="srp-warn fc-fix">
+                  <span>{t('noPriceItems', { count: r.noPrice.items!.length, dishes: r.noPrice.dishes })}</span>
+                  <span className="fc-item-links">
+                    {r.noPrice.items!.map((i) => (
+                      <AppLink key={i.materialId} className="fc-item-link" href={`/inventory?item=${encodeURIComponent(i.materialId)}`}>
+                        {i.name}
+                      </AppLink>
+                    ))}
+                  </span>
+                </div>
+              ) : null}
               <section className="srp-totals srp-kpi-grid" aria-label={t('title')}>
                 <div className="srp-kpi-card is-primary">
                   <p className="srp-worth-label">{t('pctLabel')}</p>
                   <p className="srp-worth">
-                    <Pct pct={r.totals.foodCostPct} big />
+                    <Pct pct={r.totals.foodCostPct} big judged={judgedOf(r)} />
                   </p>
                   {/* Develop QA 2026-11-18, bug 4 — the % counts only dishes with a recipe; the sales it is out of are said here, once. */}
                   <p className="srp-hint">
@@ -108,7 +137,7 @@ export function FoodCostReport() {
                   )}
                 </div>
               ) : null}
-              {r.noPrice.dishes > 0 ? <p className="srp-warn">{t('noPriceFix', { count: r.noPrice.dishes })}</p> : null}
+              {r.noPrice.dishes > 0 && (r.noPrice.items ?? []).length === 0 ? <p className="srp-warn">{t('noPriceFix', { count: r.noPrice.dishes })}</p> : null}
 
               <details className="fc-more">
                 <summary>{t('daysTitle')}</summary>

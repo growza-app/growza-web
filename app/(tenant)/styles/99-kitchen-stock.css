@@ -730,3 +730,101 @@
   outline: 2px solid var(--accent-deep);
   outline-offset: 2px;
 }
+
+/*
+ * QA 2026-11-19 — a kitchen of sixty items. Grouped list (Running low, then each group A–Z) with a visible "Low" word and a chevron; the
+ * opening card folded to one line; an item's own Count · Stock in · Wasted; Reports' partial verdict and the items to price. Tokens only.
+ */
+.ks-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.ks-group + .ks-group {
+  margin-top: var(--sp-2);
+}
+.ks-group-head {
+  margin: 0;
+  padding: 0 var(--sp-1);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--muted);
+}
+.ks-group-head.is-low {
+  color: var(--amber-ink);
+}
+.ks-group-n {
+  font-weight: 400;
+}
+.ks-row-btn .ks-row-chevron {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  color: var(--muted);
+}
+.ks-row-btn .ks-amount {
+  margin-left: auto;
+}
+.ks-low-tag {
+  display: inline-block;
+  margin-left: var(--sp-2);
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-sm);
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  vertical-align: 0.1em;
+}
+.ks-opening-short {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  font-size: var(--fs-3);
+}
+.ks-item-actions {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+.ks-item-action {
+  min-height: 44px;
+  padding-left: var(--sp-2);
+  padding-right: var(--sp-2);
+}
+.ks-count-one {
+  margin-bottom: var(--sp-2);
+}
+.ks-count-one .ks-quiet-link {
+  align-self: flex-start;
+}
+.ks-price-missing {
+  font-size: var(--fs-4);
+  color: var(--amber-ink);
+}
+.fc-verdict.is-partial {
+  color: var(--text);
+  font-size: var(--fs-5);
+}
+.fc-item-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.fc-item-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--amber);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--amber-ink);
+  font-weight: 600;
+  text-decoration: none;
+}

@@ -37,12 +37,15 @@ export function StockInSheet({
   branchId,
   materials,
   purchaseId,
+  startWith = null,
   onClose,
   onDone,
 }: {
   branchId: string;
   materials: StockMaterial[];
   purchaseId: string | null;
+  /** QA 2026-11-19 — opened from an item: a new stock in with that item's line already on it. */
+  startWith?: string | null;
   onClose: () => void;
   onDone: (text: string) => void;
 }) {
@@ -69,6 +72,8 @@ export function StockInSheet({
   const [error, setError] = useState<{ text: string; field?: string } | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   useDialog(sheetRef, { onClose: busy || confirmDelete ? undefined : onClose });
+  // Read once, when the sheet opens: a reload of the list behind it must not put the line back after it was removed.
+  const startLine = useRef(startWith && materials.some((m) => m.id === startWith) ? startWith : null);
 
   // An item archived since this stock in still shows on it, by the name and unit the stock in carries.
   const [onBill, setOnBill] = useState<Array<Pick<StockMaterial, 'id' | 'name' | 'unit'>>>([]);
@@ -85,6 +90,15 @@ export function StockInSheet({
         if (!live) return;
         setSuppliers(s.suppliers);
         setPacks(s.packs);
+        const first = startLine.current;
+        if (!purchaseId && first) {
+          // The pack it last came in, from whoever: the supplier is picked after, and a loose line is one tap away.
+          const pack = s.packs.find((p) => p.materialId === first);
+          setLines([
+            { key: keyOf(), materialId: first, packed: Boolean(pack), packLabel: pack?.packLabel ?? '', packSize: pack ? amount(pack.packSize) : '', packs: '', price: '' },
+          ]);
+          if (pack?.supplierId) setSupplierId(pack.supplierId);
+        }
         if (purchaseId) {
           const { purchase: p } = await api.purchase(purchaseId);
           if (!live) return;
