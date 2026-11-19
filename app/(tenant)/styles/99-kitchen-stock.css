@@ -605,3 +605,128 @@
   justify-content: center;
   text-decoration: none;
 }
+
+/* Jira GRW-744 — Inventory, simpler. One action bar (Stock in filled, Wasted and Count quiet), All · To buy at 44px, the quiet things at the
+   foot as links, an item that opens to its amount, and a report that answers first with the rest folded. 344px first; nothing here sets a
+   width that could push the page sideways. */
+.ks-action-main {
+  font-weight: 700;
+}
+.ks-chips .prd-chip {
+  min-height: 44px;
+}
+.ks-meta.ks-meta-warn {
+  color: var(--danger);
+}
+.ks-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--sp-4);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border);
+}
+.ks-quiet-link {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-deep);
+  font: inherit;
+  font-size: var(--fs-3);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.ks-quiet-link:hover {
+  text-decoration: underline;
+}
+.ks-foot .ks-off-link {
+  margin-left: auto;
+  color: var(--muted);
+  font-weight: 400;
+  text-decoration: underline;
+}
+.ks-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3) 0 var(--sp-2);
+}
+.ks-hero-amount {
+  font-size: var(--fs-10);
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.ks-hero.is-low .ks-hero-amount {
+  color: var(--amber);
+}
+.ks-hero.is-below .ks-hero-amount {
+  color: var(--danger);
+}
+.ks-hero-note {
+  color: var(--muted);
+  font-size: var(--fs-3);
+}
+.ks-price-row {
+  display: flex;
+  gap: var(--sp-2);
+}
+.ks-price-row .prd-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ks-head-edit {
+  justify-self: end;
+}
+.inv-sub-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.fc-verdict {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: 700;
+}
+.fc-verdict.is-ok {
+  color: var(--accent-deep);
+}
+.fc-verdict.is-warn {
+  color: var(--amber);
+}
+.fc-verdict.is-bad {
+  color: var(--danger);
+}
+.fc-more {
+  border-top: 1px solid var(--border);
+}
+.fc-more > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--fs-5);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.fc-more > summary::-webkit-details-marker {
+  display: none;
+}
+.fc-more > summary::after {
+  content: '+';
+  margin-left: auto;
+  color: var(--muted);
+  font-weight: 400;
+}
+.fc-more[open] > summary::after {
+  content: '−';
+}
+.fc-more > summary:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}

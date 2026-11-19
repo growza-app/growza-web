@@ -11,12 +11,13 @@ export const metadata = screenTitle('Inventory');
  * each is left, one branch at a time. The owner, a manager, the counter and the cook open it; only the owner and a manager change it, the
  * kitchen records wastage and counts, and the API leaves every price out for whoever cannot see the money.
  */
-export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
+export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ branch?: string; show?: string }> }) {
   await guardScreen('/inventory');
   const params = await searchParams;
   return (
     <InventoryScreen tab="stock" wanted={params.branch ?? null}>
-      {(branchId) => <KitchenStockClient key={branchId} branchId={branchId!} />}
+      {/* Jira GRW-744 — `?show=to-buy` opens on To buy (what the Buy tab was; an old bookmark lands there). */}
+      {(branchId) => <KitchenStockClient key={branchId} branchId={branchId!} initialFilter={params.show === 'to-buy' ? 'buy' : 'all'} />}
     </InventoryScreen>
   );
 }

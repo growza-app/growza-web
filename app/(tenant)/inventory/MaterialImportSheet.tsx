@@ -106,9 +106,7 @@ export function MaterialImportSheet({ branchId, onClose, onDone }: { branchId: s
           ) : null}
         </div>
         <div className="prd-sheet-footer">
-          <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose}>
-            {t('cancel')}
-          </button>
+          {/* Jira GRW-744 — one Cancel, at the top: the foot is the one thing this sheet is for. */}
           <button type="button" className="btn prd-footer-save" disabled={busy || !review || review.adding === 0} onClick={() => void add()}>
             {busy && review ? t('adding') : t('add', { n: review?.adding ?? 0 })}
           </button>

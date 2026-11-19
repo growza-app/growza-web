@@ -1,18 +1,16 @@
+import { redirect } from 'next/navigation';
 import { guardScreen } from '../../lib/screen-guard';
 import { screenTitle } from '../../lib/page-title';
-import { InventoryScreen } from '../InventoryScreen';
-import { BuyClient } from '../BuyClient';
 
 export const dynamic = 'force-dynamic';
-export const metadata = screenTitle('Inventory · Buy');
+export const metadata = screenTitle('Inventory');
 
-/** Jira GRW-741 FR-03 — Inventory › Buy: what to buy, stock in and past stock ins (`BuyClient`). The cook reads the list too, with no prices. */
-export default async function InventoryBuyPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
-  await guardScreen('/inventory/buy');
+/**
+ * Jira GRW-744 FR-06 — Buy is Stock's "To buy" filter now. This address (GRW-741's Buy tab, and where the kitchen's old `?show=to-buy` went)
+ * lands there, the branch kept, for whoever may open Stock.
+ */
+export default async function InventoryBuyMoved({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
+  await guardScreen('/inventory');
   const params = await searchParams;
-  return (
-    <InventoryScreen tab="buy" wanted={params.branch ?? null}>
-      {(branchId) => <BuyClient key={branchId} branchId={branchId!} />}
-    </InventoryScreen>
-  );
+  redirect(`/inventory?show=to-buy${params.branch ? `&branch=${encodeURIComponent(params.branch)}` : ''}`);
 }

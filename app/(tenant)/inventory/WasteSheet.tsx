@@ -141,9 +141,7 @@ export function WasteSheet({ materials, onClose, onSaved }: { materials: StockMa
           ) : null}
         </div>
         <div className="prd-sheet-footer">
-          <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose}>
-            {tk('cancel')}
-          </button>
+          {/* Jira GRW-744 — one Cancel, at the top: the foot is the one thing this sheet is for. */}
           <button type="button" className="btn prd-footer-save" disabled={busy} onClick={() => void save()}>
             {busy ? tk('saving') : t('save')}
           </button>

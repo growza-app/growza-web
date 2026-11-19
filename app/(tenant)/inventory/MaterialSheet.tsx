@@ -18,6 +18,12 @@ const UNITS: readonly MaterialUnit[] = ['kg', 'l', 'pcs'];
  *
  * Jira GRW-738 — and its recent history, for everyone who opens it: `readOnly` is the counter's and the cook's sheet, the amount and the
  * history with nothing to change. The average cost shows only where the API sent it.
+ *
+ * Jira GRW-744 FR-04 — an item opens to what it IS: its amount, large, then its price, its low level and its history. The form is behind
+ * Edit (the menu's people only); before, tapping an item to see how much was left dropped the owner into a form. One Cancel, at the top.
+ *
+ * Jira GRW-743 FR-04 — an item with no price yet (only ever an opening count) can be given one here, once. It values what the item was
+ * used for so far, so the food cost counts those dishes; after that a stock in moves it.
  */
 export function MaterialSheet({
   material,
@@ -39,10 +45,13 @@ export function MaterialSheet({
   const [category, setCategory] = useState(material?.category ?? '');
   const [lowAt, setLowAt] = useState(material && material.lowStockAt > 0 ? amount(material.lowStockAt) : '');
   const [busy, setBusy] = useState(false);
+  // A new item starts in the form; an existing one opens to its amount.
+  const [editingNow, setEditingNow] = useState(material === null);
+  const [price, setPrice] = useState('');
   const [error, setError] = useState<{ text: string; field?: string } | null>(null);
   // Locked once stock has moved (FR-01) — the server says so (`moved`), so the sheet never disagrees with it (QA 2026-11-18).
   const unitLocked = material?.moved === true;
-  const title = readOnly && material ? material.name : material ? t('sheetEdit') : t('sheetNew');
+  const title = !material ? t('sheetNew') : editingNow ? t('sheetEdit') : material.name;
   const sheetRef = useRef<HTMLDivElement>(null);
   // Focus in, Tab kept inside, Escape closes, focus returns — every modal's promise.
   useDialog(sheetRef, { onClose: busy ? undefined : onClose });
@@ -78,6 +87,26 @@ export function MaterialSheet({
     }
   };
 
+  // Rupees as typed ("240", "6.50") to paise; null when it is not a price.
+  const savePrice = async () => {
+    if (!material) return;
+    const rupees = Number(price.trim().replace(/[₹,\s]/g, ''));
+    if (!price.trim() || !Number.isFinite(rupees) || rupees < 1 || rupees > 100_000) {
+      setError({ text: t('price.bad'), field: 'priceMinor' });
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await api.saveMaterial(material.id, { priceMinor: Math.round(rupees * 100) });
+      onSaved();
+    } catch (err) {
+      fail(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const archive = async () => {
     if (!material) return;
     setBusy(true);
@@ -96,24 +125,66 @@ export function MaterialSheet({
     <div className="modal-backdrop" onClick={busy ? undefined : onClose}>
       <div ref={sheetRef} className="modal sheet prd-sheet ks-sheet" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
         <div className="sheet-head">
-          <button type="button" className="sheet-head-cancel" disabled={busy} onClick={onClose}>
-            {readOnly ? t('close') : t('cancel')}
+          {/* An existing item's form goes back to the item; anything else closes the sheet. */}
+          <button type="button" className="sheet-head-cancel" disabled={busy} onClick={material && editingNow ? () => { setEditingNow(false); setError(null); } : onClose}>
+            {editingNow ? t('cancel') : t('close')}
           </button>
           <span className="sheet-head-title">{title}</span>
-          <span className="prd-head-spacer" aria-hidden="true" />
+          {material && !editingNow && !readOnly ? (
+            <button type="button" className="sheet-head-cancel ks-head-edit" onClick={() => setEditingNow(true)}>
+              {t('edit')}
+            </button>
+          ) : (
+            <span className="prd-head-spacer" aria-hidden="true" />
+          )}
         </div>
         <div className="sheet-body prd-form-body">
-          {material ? (
-            <p className="ks-sheet-sum">
-              <strong>
-                {amount(material.stock)} {unitWord(material.unit)}
-              </strong>
-              {typeof material.avgCost === 'number' ? (
-                <span className="ks-meta">{t('history.avgCost', { cost: formatMoney(material.avgCost, 'INR', locale), unit: t(`perUnit.${material.unit}`) })}</span>
+          {material && !editingNow ? (
+            <>
+              <div className={`ks-hero ${material.stock < 0 ? 'is-below' : material.low ? 'is-low' : ''}`}>
+                <strong className="ks-hero-amount">{material.stock < 0 ? t('noneLeft') : `${amount(material.stock)} ${unitWord(material.unit)}`}</strong>
+                <span className="ks-hero-note">
+                  {material.stock < 0
+                    ? t('overUsed', { amount: amount(-material.stock), unit: unitWord(material.unit) })
+                    : material.lowStockAt > 0
+                      ? t(material.low ? 'lowNow' : 'lowAtLine', { amount: amount(material.lowStockAt), unit: unitWord(material.unit) })
+                      : t('neverFlagged')}
+                </span>
+                {typeof material.avgCost === 'number' ? (
+                  <span className="ks-meta">{t('history.avgCost', { cost: formatMoney(material.avgCost, 'INR', locale), unit: t(`perUnit.${material.unit}`) })}</span>
+                ) : null}
+              </div>
+              {/* GRW-743 FR-04 — `avgCost: null` is sent only to whoever may see the money; the form only to whoever may change the item. */}
+              {!readOnly && 'avgCost' in material && material.avgCost === null ? (
+                <div className="prd-field ks-price">
+                  <label className="prd-field-label" htmlFor="ks-price">
+                    {t('price.label', { unit: t(`perUnit.${material.unit}`) })}
+                  </label>
+                  <span className="ks-hint">{t('price.hint')}</span>
+                  <div className="ks-price-row">
+                    <input
+                      id="ks-price"
+                      className="prd-input"
+                      inputMode="decimal"
+                      placeholder={t('price.ph')}
+                      value={price}
+                      aria-invalid={error?.field === 'priceMinor' || undefined}
+                      onChange={(e) => setPrice(e.target.value)}
+                    />
+                    <button type="button" className="btn" disabled={busy} onClick={() => void savePrice()}>
+                      {busy ? t('saving') : t('price.save')}
+                    </button>
+                  </div>
+                  {error ? (
+                    <div role="alert" className="sheet-foot sheet-foot-error">
+                      {error.text}
+                    </div>
+                  ) : null}
+                </div>
               ) : null}
-            </p>
+            </>
           ) : null}
-          {readOnly ? null : (
+          {readOnly || !editingNow ? null : (
             <>
               <div className="prd-field">
                 <label className="prd-field-label" htmlFor="ks-name">
@@ -176,9 +247,9 @@ export function MaterialSheet({
             </>
           )}
           {/* Jira GRW-739 — the price trend, for whoever the API sends a cost to (it leaves `avgCost` out for everyone else). */}
-          {material && 'avgCost' in material ? <MaterialPrices materialId={material.id} unit={material.unit} /> : null}
-          {material ? <MaterialHistory materialId={material.id} unit={material.unit} /> : null}
-          {material && !readOnly ? (
+          {material && !editingNow && 'avgCost' in material ? <MaterialPrices materialId={material.id} unit={material.unit} /> : null}
+          {material && !editingNow ? <MaterialHistory materialId={material.id} unit={material.unit} /> : null}
+          {material && !readOnly && editingNow ? (
             <div className="prd-action-row prd-action-row-danger">
               <div className="prd-action-copy">
                 <strong>{t('archive')}</strong>
@@ -190,11 +261,9 @@ export function MaterialSheet({
             </div>
           ) : null}
         </div>
-        {readOnly ? null : (
+        {readOnly || !editingNow ? null : (
+          // Jira GRW-744 — one Cancel, at the top: the foot is the one thing this sheet is for.
           <div className="prd-sheet-footer">
-            <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose}>
-              {t('cancel')}
-            </button>
             <button type="button" className="btn prd-footer-save" disabled={busy} onClick={() => void submit()}>
               {busy ? t('saving') : t('save')}
             </button>

@@ -46,71 +46,93 @@ export function FoodCostReport() {
     <MoneyShell report={report}>
       {({ food: r, loss }) => (
         <>
-          <p className="srp-hint">{t('rangeHint')}</p>
           {!r.tracking ? <p className="srp-warn">{t('notTracking')}</p> : null}
           {!r.anySales ? (
             <MoneyEmpty text={t('noSales')} />
           ) : (
             <>
+              {/*
+                Jira GRW-744 FR-05 — the answer first, in one sentence, then three tiles; everything else is folded below. Before, three
+                different sales figures and about ten sections came before an owner knew whether the number was good.
+              */}
+              {(() => {
+                const tone = foodCostTone(r.totals.foodCostPct);
+                return tone === 'none' ? null : (
+                  <p className={`fc-verdict is-${tone}`} role="status">
+                    {t(`verdict.${tone}`, { pct: pctText(r.totals.foodCostPct) })}
+                  </p>
+                );
+              })()}
               <section className="srp-totals srp-kpi-grid" aria-label={t('title')}>
                 <div className="srp-kpi-card is-primary">
                   <p className="srp-worth-label">{t('pctLabel')}</p>
                   <p className="srp-worth">
                     <Pct pct={r.totals.foodCostPct} big />
                   </p>
-                  {/* Develop QA 2026-11-18, bug 4 — the % counts only dishes with a recipe; "₹0 of food for ₹0 of sales" beside "Sales ₹1,080" read as a contradiction. */}
+                  {/* Develop QA 2026-11-18, bug 4 — the % counts only dishes with a recipe; the sales it is out of are said here, once. */}
                   <p className="srp-hint">
                     {r.totals.costedSalesMinor === 0
                       ? t('pctNone')
-                      : t('pctLine', { food: f.money(r.totals.foodMinor), sales: f.money(r.totals.costedSalesMinor) })}
+                      : t('pctLineAll', { food: f.money(r.totals.foodMinor), sales: f.money(r.totals.costedSalesMinor), all: f.money(r.totals.salesMinor) })}
                   </p>
-                </div>
-                <div className="srp-kpi-card">
-                  <p className="srp-worth-label">{t('salesLabel')}</p>
-                  <p className="srp-kpi-num">{f.money(r.totals.salesMinor)}</p>
                 </div>
                 <div className="srp-kpi-card">
                   <p className="srp-worth-label">{t('foodLabel')}</p>
                   <p className="srp-kpi-num">{f.money(r.totals.foodMinor)}</p>
+                </div>
+                <div className="srp-kpi-card">
+                  <p className="srp-worth-label">{t('lossLabel')}</p>
+                  <p className="srp-kpi-num">{f.money(loss.totals.wastedMinor + loss.totals.lostMinor)}</p>
                 </div>
               </section>
 
               {r.totals.givenFreeMinor > 0 ? (
                 <p className="fc-line">{t('givenFree', { value: f.money(r.totals.givenFreeMinor), count: r.totals.freeBills })}</p>
               ) : null}
+              {/*
+                Jira GRW-743 FR-03 — a dish sold before its recipe was added is not told to get one: "Add their recipes" names only the dishes
+                that still have none. An older API (no `stillMissing`) keeps the old list.
+              */}
               {r.noRecipe.dishes > 0 ? (
                 <div className="srp-warn fc-fix">
-                  <span>{t('noRecipe', { count: r.noRecipe.dishes, pct: pctText(r.noRecipe.pctOfSales) })}</span>
-                  {r.noRecipe.names.length > 0 ? <span className="fc-names">{r.noRecipe.names.join(', ')}</span> : null}
-                  <AppLink className="mr-link" href="/inventory/recipes">
-                    {t('fixRecipes')}
-                  </AppLink>
+                  <span>{t('noRecipeSold', { count: r.noRecipe.dishes, pct: pctText(r.noRecipe.pctOfSales) })}</span>
+                  {(r.noRecipe.stillMissing ?? r.noRecipe.names).length > 0 ? (
+                    <>
+                      <span className="fc-names">{t('stillMissing', { names: (r.noRecipe.stillMissing ?? r.noRecipe.names).join(', ') })}</span>
+                      <AppLink className="mr-link" href="/inventory/recipes">
+                        {t('fixRecipes')}
+                      </AppLink>
+                    </>
+                  ) : (
+                    <span className="fc-names">{t('recipesInNow')}</span>
+                  )}
                 </div>
               ) : null}
-              {r.noPrice.dishes > 0 ? <p className="srp-warn">{t('noPrice', { count: r.noPrice.dishes })}</p> : null}
-              <p className="srp-hint">{t('costNote')}</p>
+              {r.noPrice.dishes > 0 ? <p className="srp-warn">{t('noPriceFix', { count: r.noPrice.dishes })}</p> : null}
 
-              <h2 className="mr-title">{t('daysTitle')}</h2>
-              <ul className="srp-list">
-                {[...r.days].reverse().map((d) => (
-                  <li key={d.dateISO} className="srp-card">
-                    <div className="srp-head">
-                      <h3 className="srp-name">{f.day(d.dateISO)}</h3>
-                      {d.salesMinor > 0 || d.foodMinor > 0 ? <Pct pct={d.foodCostPct} /> : <span className="srp-hint">{t('noSalesDay')}</span>}
-                    </div>
-                    {d.salesMinor > 0 || d.foodMinor > 0 ? (
-                      <p className="srp-hint">
-                        {t('dayLine', { sales: f.money(d.salesMinor), food: f.money(d.foodMinor) })}
-                        {d.givenFreeMinor > 0 ? ` · ${t('dayFree', { value: f.money(d.givenFreeMinor) })}` : ''}
-                      </p>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
+              <details className="fc-more">
+                <summary>{t('daysTitle')}</summary>
+                <ul className="srp-list">
+                  {[...r.days].reverse().map((d) => (
+                    <li key={d.dateISO} className="srp-card">
+                      <div className="srp-head">
+                        <h3 className="srp-name">{f.day(d.dateISO)}</h3>
+                        {d.salesMinor > 0 || d.foodMinor > 0 ? <Pct pct={d.foodCostPct} /> : <span className="srp-hint">{t('noSalesDay')}</span>}
+                      </div>
+                      {d.salesMinor > 0 || d.foodMinor > 0 ? (
+                        <p className="srp-hint">
+                          {t('dayLine', { sales: f.money(d.salesMinor), food: f.money(d.foodMinor) })}
+                          {d.givenFreeMinor > 0 ? ` · ${t('dayFree', { value: f.money(d.givenFreeMinor) })}` : ''}
+                        </p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </details>
 
               {r.costliest.length > 0 ? (
-                <>
-                  <h2 className="mr-title">{t('costliestTitle')}</h2>
+                <details className="fc-more">
+                  <summary>{t('costliestTitle')}</summary>
                   <ol className="srp-list">
                     {r.costliest.map((d) => (
                       <li key={d.name} className="srp-card">
@@ -122,106 +144,105 @@ export function FoodCostReport() {
                       </li>
                     ))}
                   </ol>
-                </>
+                </details>
               ) : null}
             </>
           )}
 
           {/* Jira GRW-741 FR-06 — what the kitchen used, item by item: what the dishes sent took, less what came back before cooking. */}
-          <h2 className="mr-title">{t('usedTitle')}</h2>
-          {(loss.used ?? []).length === 0 ? (
-            <MoneyEmpty text={t('noUsed')} />
-          ) : (
-            <>
-              <p className="srp-hint">{t('usedNote')}</p>
-              {(loss.used ?? []).some((u) => u.unpriced) ? <p className="srp-warn">{t('usedUnpriced')}</p> : null}
-              <ul className="srp-list">
-                {(loss.used ?? []).map((u) => (
-                  <li key={u.materialId} className="srp-card">
-                    <div className="srp-head">
-                      <h3 className="srp-name">{u.name}</h3>
-                      <p className="srp-value">{f.money(u.valueMinor)}</p>
-                    </div>
-                    <p className="srp-hint">{qty(u.qty, u.unit)}</p>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
+          <details className="fc-more">
+            <summary>{t('usedTitle')}</summary>
+            {(loss.used ?? []).length === 0 ? (
+              <MoneyEmpty text={t('noUsed')} />
+            ) : (
+              <>
+                <p className="srp-hint">{t('usedNote')}</p>
+                {(loss.used ?? []).some((u) => u.unpriced) ? <p className="srp-warn">{t('usedUnpriced')}</p> : null}
+                <ul className="srp-list">
+                  {(loss.used ?? []).map((u) => (
+                    <li key={u.materialId} className="srp-card">
+                      <div className="srp-head">
+                        <h3 className="srp-name">{u.name}</h3>
+                        <p className="srp-value">{f.money(u.valueMinor)}</p>
+                      </div>
+                      <p className="srp-hint">{qty(u.qty, u.unit)}</p>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </details>
 
-          <h2 className="mr-title">{t('lossTitle')}</h2>
-          {loss.totals.entries === 0 ? (
-            <MoneyEmpty text={t('noLoss')} />
-          ) : (
-            <>
-              <section className="srp-totals srp-kpi-grid" aria-label={t('lossTitle')}>
-                <div className="srp-kpi-card">
-                  <p className="srp-worth-label">{t('wasted')}</p>
-                  <p className="srp-kpi-num">{f.money(loss.totals.wastedMinor)}</p>
-                </div>
-                <div className="srp-kpi-card">
-                  <p className="srp-worth-label">{t('lost')}</p>
-                  <p className="srp-kpi-num">{f.money(loss.totals.lostMinor)}</p>
-                </div>
-                {loss.totals.foundMinor > 0 ? (
+          <details className="fc-more">
+            <summary>{t('lossTitle')}</summary>
+            {loss.totals.entries === 0 ? (
+              <MoneyEmpty text={t('noLoss')} />
+            ) : (
+              <>
+                <section className="srp-totals srp-kpi-grid" aria-label={t('lossTitle')}>
                   <div className="srp-kpi-card">
-                    <p className="srp-worth-label">{t('found')}</p>
-                    <p className="srp-kpi-num">{f.money(loss.totals.foundMinor)}</p>
+                    <p className="srp-worth-label">{t('wasted')}</p>
+                    <p className="srp-kpi-num">{f.money(loss.totals.wastedMinor)}</p>
                   </div>
-                ) : null}
-              </section>
-              <p className="srp-hint">{t('lossNote')}</p>
-              {loss.totals.unpricedEntries > 0 ? <p className="srp-warn">{t('lossUnpriced', { count: loss.totals.unpricedEntries })}</p> : null}
-
-              <h3 className="mr-title">{t('byItemTitle')}</h3>
-              <ul className="srp-list">
-                {loss.byItem.map((i) => (
-                  <li key={i.materialId} className="srp-card">
-                    <div className="srp-head">
-                      <h4 className="srp-name">{i.name}</h4>
-                      <p className="srp-value">{f.money(i.wastedMinor + i.lostMinor)}</p>
+                  <div className="srp-kpi-card">
+                    <p className="srp-worth-label">{t('lost')}</p>
+                    <p className="srp-kpi-num">{f.money(loss.totals.lostMinor)}</p>
+                  </div>
+                  {loss.totals.foundMinor > 0 ? (
+                    <div className="srp-kpi-card">
+                      <p className="srp-worth-label">{t('found')}</p>
+                      <p className="srp-kpi-num">{f.money(loss.totals.foundMinor)}</p>
                     </div>
-                    <p className="srp-hint">
-                      {[
-                        i.wastedQty > 0 ? t('itemWasted', { qty: qty(i.wastedQty, i.unit) }) : null,
-                        i.lostQty > 0 ? t('itemLost', { qty: qty(i.lostQty, i.unit) }) : null,
-                        i.foundQty > 0 ? t('itemFound', { qty: qty(i.foundQty, i.unit) }) : null,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+                  ) : null}
+                </section>
+                <p className="srp-hint">{t('lossNote')}</p>
+                {loss.totals.unpricedEntries > 0 ? <p className="srp-warn">{t('lossUnpriced', { count: loss.totals.unpricedEntries })}</p> : null}
 
-              <h3 className="mr-title">{t('entriesTitle')}</h3>
-              <ul className="srp-list">
-                {loss.entries.map((e, n) => (
-                  <li key={`${e.atISO}-${n}`} className="srp-card">
-                    <div className="srp-head">
-                      <h4 className="srp-name">
-                        {e.name} · {t(`kind.${e.kind}`)}
-                      </h4>
-                      <p className="srp-value">{e.valueMinor === null ? t('noPriceShort') : f.money(e.valueMinor)}</p>
-                    </div>
-                    <p className="srp-hint">
-                      {[
-                        qty(e.qty, e.unit),
-                        f.when(e.atISO, timezone),
-                        e.reason ? t(`reason.${e.reason}`) : null,
-                        e.dish,
-                        e.note,
-                        e.by ? t('by', { name: e.by }) : null,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-              {loss.moreEntries > 0 ? <p className="srp-hint">{t('moreEntries', { count: loss.moreEntries })}</p> : null}
-            </>
-          )}
+                <h3 className="mr-title">{t('byItemTitle')}</h3>
+                <ul className="srp-list">
+                  {loss.byItem.map((i) => (
+                    <li key={i.materialId} className="srp-card">
+                      <div className="srp-head">
+                        <h4 className="srp-name">{i.name}</h4>
+                        <p className="srp-value">{f.money(i.wastedMinor + i.lostMinor)}</p>
+                      </div>
+                      <p className="srp-hint">
+                        {[
+                          i.wastedQty > 0 ? t('itemWasted', { qty: qty(i.wastedQty, i.unit) }) : null,
+                          i.lostQty > 0 ? t('itemLost', { qty: qty(i.lostQty, i.unit) }) : null,
+                          i.foundQty > 0 ? t('itemFound', { qty: qty(i.foundQty, i.unit) }) : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+
+                <h3 className="mr-title">{t('entriesTitle')}</h3>
+                <ul className="srp-list">
+                  {loss.entries.map((e, n) => (
+                    <li key={`${e.atISO}-${n}`} className="srp-card">
+                      <div className="srp-head">
+                        <h4 className="srp-name">
+                          {e.name} · {t(`kind.${e.kind}`)}
+                        </h4>
+                        <p className="srp-value">{e.valueMinor === null ? t('noPriceShort') : f.money(e.valueMinor)}</p>
+                      </div>
+                      <p className="srp-hint">
+                        {[qty(e.qty, e.unit), f.when(e.atISO, timezone), e.reason ? t(`reason.${e.reason}`) : null, e.dish, e.note, e.by ? t('by', { name: e.by }) : null]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+                {loss.moreEntries > 0 ? <p className="srp-hint">{t('moreEntries', { count: loss.moreEntries })}</p> : null}
+              </>
+            )}
+          </details>
+          <p className="srp-hint">{t('costNote')}</p>
+          <p className="srp-hint">{t('rangeHint')}</p>
         </>
       )}
     </MoneyShell>

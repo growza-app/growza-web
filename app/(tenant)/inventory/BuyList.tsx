@@ -83,7 +83,10 @@ export function BuyList({ branchId, noItems = false }: { branchId: string; noIte
                   <span className="ks-name">
                     {i.name}
                     <span className="ks-meta">
-                      {t('left', { amount: amount(i.stock), unit: unitWord(i.unit), low: amount(i.lowStockAt) })}
+                      {/* Jira GRW-743 FR-05 — never "−0.34 L left": none, and by how much more was used than recorded. */}
+                      {i.stock < 0
+                        ? t('leftNone', { over: amount(-i.stock), unit: unitWord(i.unit), low: amount(i.lowStockAt) })
+                        : t('left', { amount: amount(i.stock), unit: unitWord(i.unit), low: amount(i.lowStockAt) })}
                     </span>
                     {p ? <span className="ks-meta">{p}</span> : null}
                   </span>
