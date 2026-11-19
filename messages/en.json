@@ -5963,7 +5963,18 @@
       "usedNote": "What the dishes sent to the kitchen took, less what came back before cooking. At what each item cost then.",
       "noUsed": "Nothing was used in these days.",
       "usedUnpriced": "Some of it had no price yet: that part is not in the value.",
-      "pctNone": "No dish with a recipe sold yet"
+      "pctNone": "No dish with a recipe sold yet",
+      "verdict": {
+        "ok": "Food cost {pct} — good",
+        "warn": "Food cost {pct} — keep an eye on it",
+        "bad": "Food cost {pct} — high"
+      },
+      "pctLineAll": "{food} of food for {sales} of sales with a recipe ({all} sold in all)",
+      "lossLabel": "Wasted and missing",
+      "noRecipeSold": "{count, plural, one {# dish was} other {# dishes were}} sold with no recipe ({pct} of sales), so their food is not counted",
+      "stillMissing": "Still no recipe: {names}",
+      "recipesInNow": "Their recipes are in now — new sales count.",
+      "noPriceFix": "{count, plural, one {# dish uses} other {# dishes use}} an item with no price — left out of the %. Open the item on Stock to give it one."
     }
   },
   "print": {
@@ -6065,7 +6076,8 @@
     "filtersLabel": "Show",
     "filter": {
       "low": "Low",
-      "all": "All"
+      "all": "All",
+      "toBuy": "To buy"
     },
     "add": "Add item",
     "emptyTitle": "Add what your kitchen buys",
@@ -6081,7 +6093,7 @@
     "sheetNew": "Add item",
     "sheetEdit": "Edit item",
     "name": "Name",
-    "namePh": "Chicken",
+    "namePh": "e.g. Chicken",
     "unit": "Counted in",
     "unitName": {
       "kg": "kg",
@@ -6089,7 +6101,7 @@
       "pcs": "pieces"
     },
     "category": "Category",
-    "categoryPh": "Vegetables",
+    "categoryPh": "e.g. Vegetables",
     "lowAt": "Low-stock level",
     "lowAtHint": "Flag it when it falls to this. Leave it empty to never flag.",
     "unitLocked": "The unit can't change once stock has moved.",
@@ -6331,7 +6343,8 @@
       "openWhatsApp": "Open WhatsApp",
       "close": "Close",
       "badQty": "Type a quantity like 0.25",
-      "noItems": "No items yet."
+      "noItems": "No items yet.",
+      "leftNone": "None left · used {over} {unit} more · low at {low}"
     },
     "prices": {
       "title": "Price, last 5 stock ins",
@@ -6382,6 +6395,22 @@
       "pctHint": "Food cost is what the ingredients cost today, out of the price before GST. Above 35% shows amber, above 45% red.",
       "close": "Close",
       "sheetTitle": "Recipe · {name}"
+    },
+    "overUsed": "Used {amount} {unit} more than recorded — count it",
+    "noneLeft": "None left",
+    "foot": {
+      "label": "More"
+    },
+    "edit": "Edit",
+    "lowNow": "Running low — flagged at {amount} {unit}",
+    "lowAtLine": "Flagged low at {amount} {unit}",
+    "neverFlagged": "Never flagged low",
+    "price": {
+      "label": "Price per {unit}",
+      "hint": "It has no price yet, so the dishes that use it are left out of the food cost. Give it once; stock ins change it after that.",
+      "ph": "e.g. 240",
+      "save": "Save price",
+      "bad": "Type a price in rupees, like 240"
     }
   },
   "recipe": {

@@ -12,8 +12,10 @@ export const metadata = screenTitle('Inventory');
  */
 export default async function KitchenStockMoved({ searchParams }: { searchParams: Promise<{ branch?: string; show?: string }> }) {
   const params = await searchParams;
-  const tab = params.show === 'to-buy' ? '/inventory/buy' : params.show === 'no-recipe' ? '/inventory/recipes' : '/inventory';
+  const tab = params.show === 'no-recipe' ? '/inventory/recipes' : '/inventory';
   // Asked by the NEW address (a cook's old bookmark still reaches Stock), so whoever may not open it is sent Home from here as well.
   await guardScreen(tab);
-  redirect(params.branch ? `${tab}?branch=${encodeURIComponent(params.branch)}` : tab);
+  // Jira GRW-744 — To buy is a filter on Stock now, not its own address.
+  const query = [params.show === 'to-buy' ? 'show=to-buy' : null, params.branch ? `branch=${encodeURIComponent(params.branch)}` : null].filter(Boolean).join('&');
+  redirect(query ? `${tab}?${query}` : tab);
 }

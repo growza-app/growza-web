@@ -28,18 +28,19 @@ const offered = (who: keyof typeof GRIDS | 'owner'): string[] =>
   );
 
 describe('FR-01 · AC-01 · AC-02 — who is offered Inventory, tab by tab', () => {
-  it('the owner and a manager: all five tabs', () => {
+  it('the owner and a manager: all three tabs — Stock, Recipes, Reports (Jira GRW-744)', () => {
     const all = INVENTORY_TABS.map((t) => t.href);
     expect(offered('owner')).toEqual(all);
     expect(offered('manager')).toEqual(all);
   });
 
-  it('the counter: Stock, Buy and Recipes — never Suppliers (what the kitchen pays) or Reports (the money)', () => {
-    expect(offered('counter')).toEqual(['/inventory', '/inventory/buy', '/inventory/recipes']);
+  it('the counter: Stock and Recipes — never Reports (the money); Suppliers is not a tab and stays closed to them', () => {
+    expect(offered('counter')).toEqual(['/inventory', '/inventory/recipes']);
+    expect(canSee('/inventory/suppliers', 'receptionist', undefined, true, { ...KITCHEN, pages: GRIDS.counter })).toBe(false);
   });
 
-  it('the cook: Stock and Buy, exactly — the kitchen reads what is left and what to buy, and nothing it costs', () => {
-    expect(offered('cook')).toEqual(['/inventory', '/inventory/buy']);
+  it('the cook: Stock, exactly — the kitchen reads what is left and what to buy (its To buy filter), and nothing it costs', () => {
+    expect(offered('cook')).toEqual(['/inventory']);
     // Their other place: the kitchen screen.
     expect(canSee('/kitchen', 'receptionist', undefined, true, { ...KITCHEN, pages: GRIDS.cook })).toBe(true);
   });
@@ -102,7 +103,9 @@ describe('FR-07 · the Menu — one screen, one address', () => {
     // The two redirects themselves, and the area gate that keeps their addresses a restaurant's, are the only places they may appear.
     const linking = sources().filter((f) => !/stock\/kitchen\/page\.tsx$|reports\/food-cost\/page\.tsx$|lib\/areas\.ts$/.test(f) && /['"`]\/stock\/kitchen|['"`]\/reports\/food-cost/.test(readFileSync(f, 'utf8')));
     expect(linking.map((f) => path.relative(tenant, f))).toEqual([]);
-    expect(read('stock/kitchen/page.tsx')).toMatch(/show === 'to-buy' \? '\/inventory\/buy' : params\.show === 'no-recipe' \? '\/inventory\/recipes' : '\/inventory'/);
+    expect(read('stock/kitchen/page.tsx')).toMatch(/const tab = params\.show === 'no-recipe' \? '\/inventory\/recipes' : '\/inventory';/);
+    expect(read('stock/kitchen/page.tsx')).toContain("params.show === 'to-buy' ? 'show=to-buy' : null");
+    expect(read('inventory/buy/page.tsx')).toContain('redirect(`/inventory?show=to-buy');
     expect(read('reports/food-cost/page.tsx')).toContain("'/inventory/reports'");
   });
 
@@ -178,12 +181,14 @@ describe('QA of GRW-741', () => {
     expect(src('InventoryTabs.tsx')).toMatch(/href=\{tab\.href\}\s*replace\b/);
   });
 
-  it('Buy: a failed load says so with Try again; Stock in waits for items and for the switch', () => {
-    const buy = src('BuyClient.tsx');
-    expect(buy).toContain("t('buyTab.itemsFailed')");
-    expect(buy).toContain('disabled={materials === null || materials.length === 0 || !on}');
-    expect(buy).not.toContain('setMaterials([]);');
+  it('Stock (Jira GRW-744): Stock in is on the action bar, only while it is switched on and has items; To buy is a filter with past stock ins', () => {
+    const stock = src('KitchenStockClient.tsx');
+    expect(stock).toContain('const mayStockIn = mayChange && data.on && materials.length > 0;');
+    expect(stock).toContain("onClick={() => setSheet({ kind: 'stockIn', id: null })}");
+    expect(stock).toContain('<BuyList key={round} branchId={branchId} />');
+    expect(stock).toContain("onClick={() => setSheet({ kind: 'purchases' })}");
     for (const m of [en, hi]) for (const k of ['itemsFailed', 'off'] as const) expect(m.kitchenStock.buyTab[k], k).toBeTruthy();
+    for (const m of [en, hi]) expect(m.kitchenStock.filter.toBuy).toBeTruthy();
   });
 
   it('a dish costing more than its price says "check the price", in English and Hindi', async () => {

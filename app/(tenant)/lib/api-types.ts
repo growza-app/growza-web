@@ -2538,6 +2538,8 @@ export interface StockMaterial {
   low: boolean;
   /** Stock has moved: the unit is locked (the server's answer, not a guess). */
   moved: boolean;
+  /** Jira GRW-743 — someone stated its amount (a stock in, waste, count or correction): no opening count is asked for. */
+  known: boolean;
 }
 export interface KitchenStockList {
   on: boolean;
@@ -2759,7 +2761,8 @@ export interface FoodCostReportPage {
   };
   days: Array<{ dateISO: string; salesMinor: number; costedSalesMinor: number; foodMinor: number; foodCostPct: number | null; givenFreeMinor: number }>;
   costliest: Array<{ name: string; qty: number; salesMinor: number; foodMinor: number; foodCostPct: number }>;
-  noRecipe: { dishes: number; salesMinor: number; pctOfSales: number | null; names: string[] };
+  /** `stillMissing` (Jira GRW-743) — of `names`, the dishes that have no recipe now either. Absent from an older API. */
+  noRecipe: { dishes: number; salesMinor: number; pctOfSales: number | null; names: string[]; stillMissing?: string[] };
   noPrice: { dishes: number; salesMinor: number; names: string[] };
 }
 export type LossKind = 'wasted' | 'lost' | 'found';

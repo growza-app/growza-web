@@ -6,6 +6,7 @@ import { useDialog } from '../../shared/a11y/useDialog';
 import { api, ApiError, formatMoney } from '../lib/api';
 import type { PurchaseSummary, StockSupplier } from '../lib/api-types';
 import { formatDate, formatPhone } from '../lib/format';
+import AppLink from '../../shared/AppLink';
 
 /**
  * Jira GRW-738 — who a branch buys from: a name, a 10-digit phone, a GSTIN if they have one, a note. Archived, never deleted — a past stock
@@ -15,7 +16,7 @@ import { formatDate, formatPhone } from '../lib/format';
  * sheet with their form and what they have sold us: each stock in from them, newest first, with the day, the bill and what it came to before
  * GST. Only the owner and a manager reach it (the API refuses the read at See).
  */
-export function SuppliersPanel({ branchId }: { branchId: string }) {
+export function SuppliersPanel({ branchId, backHref }: { branchId: string; backHref?: string }) {
   const t = useTranslations('kitchenStock.suppliers');
   const tk = useTranslations('kitchenStock');
   const [list, setList] = useState<StockSupplier[] | null>(null);
@@ -101,6 +102,15 @@ export function SuppliersPanel({ branchId }: { branchId: string }) {
 
   return (
     <div className="ks-body">
+      {/* Jira GRW-744 — Suppliers is reached from Stock, not a tab: the way back is said, and its title says where you are. */}
+      {backHref ? (
+        <div className="inv-sub-head">
+          <AppLink className="ks-quiet-link inv-back" href={backHref}>
+            ← {tk('tabs.stock')}
+          </AppLink>
+          <h2 className="inv-section-title">{tk('actions.suppliers')}</h2>
+        </div>
+      ) : null}
       {failed ? (
         <div role="alert" className="ks-state ks-state-error">
           <p>{t('loadFailed')}</p>
@@ -178,9 +188,7 @@ export function SuppliersPanel({ branchId }: { branchId: string }) {
               ) : null}
             </div>
             <div className="prd-sheet-footer">
-              <button type="button" className="btn btn-ghost" disabled={busy} onClick={closeForm}>
-                {tk('cancel')}
-              </button>
+              {/* Jira GRW-744 — one Cancel, at the top: the foot is the one thing this sheet is for. */}
               <button type="button" className="btn prd-footer-save" disabled={busy} onClick={() => void save()}>
                 {busy ? tk('saving') : tk('save')}
               </button>

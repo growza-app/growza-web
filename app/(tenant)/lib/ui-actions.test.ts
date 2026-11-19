@@ -332,8 +332,7 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/stock/counts',
     'PATCH /api/v1/stock/counts/:id',
     'POST /api/v1/stock/counts/:id/finish',
-  ],
-  '/inventory/buy': [
+    // Jira GRW-744 — Stock in is on Stock's action bar now (Buy is Stock's "To buy" filter, and its address only sends you there).
     'POST /api/v1/stock/purchases',
     'PATCH /api/v1/stock/purchases/:id',
     'DELETE /api/v1/stock/purchases/:id',
@@ -548,10 +547,12 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     '/stock/order': /await guardScreen\('\/stock\/order'\);/,
     // Jira GRW-737 — the kitchen's raw materials guard under their own address (a restaurant's, and the cook's too).
     // Jira GRW-741 — that address only sends you on to Inventory, whose screen is the one that guards.
-    '/stock/kitchen': /redirect\(params\.branch \? `\$\{tab\}\?branch=/,
+    // Jira GRW-744 — it keeps `?show=to-buy` (Stock's To buy filter) as well as the branch.
+    '/stock/kitchen': /redirect\(query \? `\$\{tab\}\?\$\{query\}` : tab\)/,
     // Jira GRW-741 — Inventory, and each of its tabs, guard under their OWN address: who may open a tab differs (the cook has Stock and Buy,
     // the counter not Suppliers or Reports).
-    '/inventory/buy': /await guardScreen\('\/inventory\/buy'\);/,
+    // Jira GRW-744 — Buy is Stock's "To buy" filter: the address guards as Stock (whoever may open Stock) and sends you there.
+    '/inventory/buy': /await guardScreen\('\/inventory'\);\s*const params = await searchParams;\s*redirect\(`\/inventory\?show=to-buy/,
     '/inventory/suppliers': /await guardScreen\('\/inventory\/suppliers'\);/,
     '/inventory/recipes': /await guardScreen\('\/inventory\/recipes'\);/,
     '/inventory/reports': /await guardScreen\('\/inventory\/reports'\);/,

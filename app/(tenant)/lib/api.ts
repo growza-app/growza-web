@@ -740,7 +740,7 @@ export const api = {
   /** Jira GRW-737 — kitchen stock: raw materials (quantities in thousandths), the owner's switch, opening counts, and each dish's recipe. */
   kitchenStock: (location?: string | null, filter: 'all' | 'low' = 'all') =>
     get<KitchenStockList>(`/api/v1/stock/materials?filter=${filter}${location ? `&location=${encodeURIComponent(location)}` : ''}`),
-  saveMaterial: (id: string | null, body: { locationId?: string; name?: string; unit?: MaterialUnit; category?: string | null; lowStockAt?: number }) =>
+  saveMaterial: (id: string | null, body: { locationId?: string; name?: string; unit?: MaterialUnit; category?: string | null; lowStockAt?: number; priceMinor?: number }) =>
     id ? patch<{ material: StockMaterial }>(`/api/v1/stock/materials/${encodeURIComponent(id)}`, body) : post<{ material: StockMaterial }>('/api/v1/stock/materials', body),
   archiveMaterial: (id: string) => post<{ material: StockMaterial }>(`/api/v1/stock/materials/${encodeURIComponent(id)}/archive`, {}),
   openingStock: (entries: Array<{ materialId: string; qty: number }>) => post<{ materials: StockMaterial[] }>('/api/v1/stock/materials/opening', { entries }),
