@@ -4,8 +4,6 @@ import { useTranslations } from 'next-intl';
 import { formatMoney } from '../lib/api';
 import type { Product, ProductCategory } from '../lib/api-types';
 import { ProductPhoto } from '../components/ProductPhoto';
-import { ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
-import { productShareItem } from '../lib/share-on-whatsapp';
 import { costsMoreThanPrice, foodCostTone, pctText } from '../lib/food-cost';
 import { groupBySection, sectionHue, type RecipeInfo } from './menu-manager';
 
@@ -15,7 +13,9 @@ const NONE = '__none__';
  * Owner, 2026-11-21 ("go ahead with the phone pass") — a phone's Menu in the laptop table's look, as rows: section by
  * section under a bar in the section's colour, each dish a solid tile with its drawing, its name, its price and how it
  * sold, and its food cost as the same green / amber / red pill. Eight dishes to a screen where the cards showed one and
- * a half. A tap on the row opens the dish; the WhatsApp share stays on the row (Jira GRW-671).
+ * a half. A tap on the row opens the dish.
+ * Owner, 2026-11-21 ("whatsapp link not required") — the row's WhatsApp share is gone on a phone; the dish's sheet
+ * still has it.
  */
 export function MenuRows({
   rows,
@@ -55,7 +55,6 @@ export function MenuRows({
             <ul className="mnu-rows-list">
               {g.rows.map((p) => {
                 const info = recipes ? (recipes.get(p.id) ?? { state: 'none' as const, pct: null }) : null;
-                const shareItem = productShareItem(p, { counted: false });
                 return (
                   <li key={p.id} className={`mnu-row ${isOn(p) ? 'is-on' : ''} ${p.active ? '' : 'is-off'}`}>
                     <button
@@ -82,7 +81,6 @@ export function MenuRows({
                         )
                       ) : null}
                     </button>
-                    {shareItem ? <ShareOnWhatsAppButton className="mnu-share" item={shareItem} branchId={p.locationId} bookable={false} photoUrl={p.imageUrl} /> : null}
                   </li>
                 );
               })}

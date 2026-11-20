@@ -4736,7 +4736,15 @@
       "editAria": "Edit {name}",
       "takeOffAria": "Take {name} off the menu",
       "putBackAria": "Put {name} back on the menu",
-      "deleteAria": "Delete {name}"
+      "deleteAria": "Delete {name}",
+      "share": {
+        "button": "Share menu on WhatsApp",
+        "title": "{business} — Menu",
+        "order": "Order: {phone}",
+        "asOf": "Prices as of {date}",
+        "half": "Half",
+        "full": "Full"
+      }
     }
   },
   "kitchen": {

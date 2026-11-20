@@ -1631,3 +1631,64 @@
     background-size: 0.875rem 0.875rem;
   }
 }
+
+/*
+ * Owner, 2026-11-21 ("taking too much of space … it's not required") — a phone's Menu drops the top seller card. The
+ * dish count is the tab's to say and each row already shows what it sold, so the dishes start right under the header,
+ * and the tabs move up into its place.
+ */
+@media (max-width: 860px) {
+  .prd-strip.mnu-strip {
+    display: none;
+  }
+
+  /* With the card gone, the tabs move up under the header: 32px of gap became 8px. The phone shell spaces every
+     child of the page with !important (92-spacing.css, a 0,6,0 selector), so these say it too, one class stronger. */
+  .page-body.prd-page:has(> .mnu-strip) {
+    padding-top: var(--sp-2) !important;
+  }
+
+  .page-body.prd-page:not(.hm-page) > .prd-strip.mnu-strip + .mnu-tabs[role='tablist'] {
+    margin-top: 0 !important;
+  }
+}
+
+/*
+ * Owner, 2026-11-21 — "Share menu on WhatsApp". A phone has it as a WhatsApp button at the end of the search's row (no
+ * new row); a laptop has it in the toolbar's ⋮, so this row only draws the button below the laptop's width.
+ */
+.mnu-search-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.mnu-search-row > .prd-search {
+  flex: 1;
+  min-width: 0;
+}
+
+.mnu-share-menu {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 0;
+  border-radius: 999px;
+  /* The app's one green, as on every other share button (99-share-whatsapp.css): the glyph is what says WhatsApp. */
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+
+.mnu-share-menu svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.mnu-share-menu:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

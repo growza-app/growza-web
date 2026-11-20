@@ -13,13 +13,15 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useAreas, useBusinessWritable, useRecipesOn, useSession, useWritable } from '../components/SessionProvider';
 import { canSee, type MemberRole } from '../lib/nav-policy';
-import { IconCart, IconCheck, IconChevronRight, IconClipboardCheck, IconEdit, IconGrid, IconPlus, IconMenu, IconPos, IconSearch, IconSort, IconTrendUp, IconUpload } from '../components/icons';
+import { IconCart, IconCheck, IconChevronRight, IconClipboardCheck, IconEdit, IconGrid, IconPlus, IconMenu, IconPos, IconSearch, IconSort, IconTrendUp, IconUpload, IconWhatsApp } from '../components/icons';
 import { MenuTable, sectionKey } from './MenuTable';
 import { MenuKebab } from './MenuKebab';
 import { MenuRows } from './MenuRows';
 import { averagePct, groupedOrder, needsRecipe, recipeStates, type MenuTab, type RecipeInfo } from './menu-manager';
 import { ProductPhoto } from '../components/ProductPhoto';
-import { ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
+import { ShareOnWhatsAppButton, useShareSession, useShareTextOnWhatsApp } from '../components/ShareOnWhatsApp';
+import { menuShareText } from './menu-share';
+import { DateTime } from 'luxon';
 import { productShareItem } from '../lib/share-on-whatsapp';
 import { matchItems } from '../lib/service-match';
 import { productMatchable } from '../lib/product-match';
@@ -774,6 +776,39 @@ export function ProductsList({
       <SearchClear value={search} onClear={() => pick(() => setSearch(''))} onVoice={(val) => pick(() => setSearch(val))} />
     </label>
   );
+  /**
+   * Owner, 2026-11-21 — the whole menu as one WhatsApp message (`menu-share.ts`): what is on the menu now, in the
+   * sections the Categories filter shows. Built inside the tap, so WhatsApp's tab is not a blocked pop-up.
+   */
+  const shareSession = useShareSession();
+  const shareText = useShareTextOnWhatsApp();
+  const menuText = () => {
+    const branch = shareSession.branches.find((b) => b.id === branchId);
+    const tz = shareSession.timezone;
+    return menuShareText(
+      live.filter((p) => matchesCategories(p, selectedCategories)),
+      categories,
+      {
+        businessName: shareSession.businessName,
+        branchName: shareSession.branches.length > 1 ? (branch?.name ?? null) : null,
+        phone: branch?.phone ?? shareSession.businessPhone,
+        dateText: DateTime.now().setZone(tz).setLocale(shareSession.lang === 'hi' ? 'hi' : 'en-IN').toFormat('d LLL yyyy'),
+      },
+      {
+        title: (business) => tm('share.title', { business }),
+        order: (phone) => tm('share.order', { phone }),
+        asOf: (date) => tm('share.asOf', { date }),
+        half: tm('share.half'),
+        full: tm('share.full'),
+        other: t('categories.none'),
+      },
+    );
+  };
+  const shareMenu = () => {
+    const text = menuText();
+    if (text) void shareText.share(text);
+  };
+  const hasMenuToShare = !counted && live.some((p) => matchesCategories(p, selectedCategories));
   const alsoTryRow =
     alsoTry.length > 0 ? (
       <div className="also-try">
@@ -1147,6 +1182,7 @@ export function ProductsList({
   );
   const dialogs = (
     <>
+      {shareText.dialog}
       {bulkEditOpen && canStockTake && writable ? (
         <BulkEditProductsModal
           branchId={branchId}
@@ -1342,16 +1378,19 @@ export function ProductsList({
                       </button>
                     </div>
                     {/* Set-up jobs, not daily ones: in one ⋮ as words, where two unlabelled icons (a pencil and an upload arrow) said nothing. */}
-                    {canStockTake && writable ? (
-                      <MenuKebab
-                        className="mnu-tool-kebab"
-                        label={tm('moreTools')}
-                        items={[
-                          { label: t('bulkTable.open'), onSelect: () => setBulkEditOpen(true) },
-                          { label: t('import.open'), onSelect: openImport },
-                        ]}
-                      />
-                    ) : null}
+                    <MenuKebab
+                      className="mnu-tool-kebab"
+                      label={tm('moreTools')}
+                      items={[
+                        ...(hasMenuToShare ? [{ label: tm('share.button'), onSelect: shareMenu }] : []),
+                        ...(canStockTake && writable
+                          ? [
+                              { label: t('bulkTable.open'), onSelect: () => setBulkEditOpen(true) },
+                              { label: t('import.open'), onSelect: openImport },
+                            ]
+                          : []),
+                      ]}
+                    />
                   </div>
                   {alsoTryRow}
                   {menuView === 'cards' ? (
@@ -1427,7 +1466,16 @@ export function ProductsList({
             {reportLinks}
             {!counted ? menuTabs : null}
             <div className="prd-tools">
-              {searchBox}
+              {hasMenuToShare ? (
+                <div className="mnu-search-row">
+                  {searchBox}
+                  <button type="button" className="mnu-share-menu" aria-label={tm('share.button')} title={tm('share.button')} onClick={shareMenu}>
+                    <IconWhatsApp />
+                  </button>
+                </div>
+              ) : (
+                searchBox
+              )}
               {counted ? (
                 /*
                  * Owner's review 2026-11-13 — one scroller instead of a selects row AND a chips row: the four
