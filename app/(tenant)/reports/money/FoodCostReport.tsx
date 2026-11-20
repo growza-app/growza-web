@@ -8,6 +8,8 @@ import { foodCostTone, pctText } from '../../lib/food-cost';
 import { amount, unitWord } from '../../lib/kitchen-units';
 import { useSession } from '../../components/SessionProvider';
 import { MoneyEmpty, MoneyShell, useMoneyFormat, useMoneyReport } from './MoneyShell';
+import { FoodCostDesk } from './FoodCostDesk';
+import { useEffect, useState } from 'react';
 
 /** Jira GRW-739 — the server reads up to 92 days at a time; the date fields never ask for more. */
 export const FOOD_COST_MAX_DAYS = 92;
@@ -46,10 +48,42 @@ export function FoodCostReport() {
   const timezone = useSession()?.timezone ?? 'Asia/Kolkata';
   const report = useMoneyReport<Both>(readBoth, { maxDays: FOOD_COST_MAX_DAYS });
   const qty = (thousandths: number, unit: MaterialUnit) => `${amount(thousandths)} ${unitWord(unit)}`;
+  // Owner, 2026-11-20 — a laptop (the Menu's 1101px edge) reads the report open, as tables side by side (FoodCostDesk).
+  const [desk, setDesk] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1101px)');
+    const read = () => setDesk(mq.matches);
+    read();
+    mq.addEventListener('change', read);
+    return () => mq.removeEventListener('change', read);
+  }, []);
+  const verdict = (r: FoodCostReportPage) => {
+    const tone = foodCostTone(r.totals.foodCostPct);
+    if (tone === 'none') return null;
+    if (!judgedOf(r)) {
+      return (
+        <p className="fc-verdict is-partial" role="status">
+          {t('verdict.partial', { pct: pctText(r.totals.foodCostPct), covered: pctText(r.totals.coveredPct ?? null) })}
+        </p>
+      );
+    }
+    return (
+      <p className={`fc-verdict is-${tone}`} role="status">
+        {t(`verdict.${tone}`, { pct: pctText(r.totals.foodCostPct) })}
+      </p>
+    );
+  };
 
   return (
     <MoneyShell report={report}>
-      {({ food: r, loss }) => (
+      {({ food: r, loss }) =>
+        desk && r.anySales ? (
+          <>
+            {!r.tracking ? <p className="srp-warn">{t('notTracking')}</p> : null}
+            {verdict(r)}
+            <FoodCostDesk r={r} loss={loss} f={f} timezone={timezone} judged={judgedOf(r)} />
+          </>
+        ) : (
         <>
           {!r.tracking ? <p className="srp-warn">{t('notTracking')}</p> : null}
           {!r.anySales ? (
@@ -64,22 +98,7 @@ export function FoodCostReport() {
                 QA 2026-11-19, problem 2 — a kitchen whose eggs and ghee had no price costed 46% of what it sold and still read "good". Under
                 80% of sales costed, the % is said with how much it covers and not judged; the items to price are named right below.
               */}
-              {(() => {
-                const tone = foodCostTone(r.totals.foodCostPct);
-                if (tone === 'none') return null;
-                if (!judgedOf(r)) {
-                  return (
-                    <p className="fc-verdict is-partial" role="status">
-                      {t('verdict.partial', { pct: pctText(r.totals.foodCostPct), covered: pctText(r.totals.coveredPct ?? null) })}
-                    </p>
-                  );
-                }
-                return (
-                  <p className={`fc-verdict is-${tone}`} role="status">
-                    {t(`verdict.${tone}`, { pct: pctText(r.totals.foodCostPct) })}
-                  </p>
-                );
-              })()}
+              {verdict(r)}
               {(r.noPrice.items ?? []).length > 0 ? (
                 <div className="srp-warn fc-fix">
                   <span>{t('noPriceItems', { count: r.noPrice.items!.length, dishes: r.noPrice.dishes })}</span>
@@ -273,7 +292,8 @@ export function FoodCostReport() {
           <p className="srp-hint">{t('costNote')}</p>
           <p className="srp-hint">{t('rangeHint')}</p>
         </>
-      )}
+        )
+      }
     </MoneyShell>
   );
 }
