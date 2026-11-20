@@ -129,15 +129,33 @@ describe('a kitchen reads sixty-nine rows a day, so a dish gets a dish', () => {
   const kindOf = (name: string, categoryName?: string) => resolveProductGraphic({ name, categoryName }).kind;
 
   it('matches each course to its own graphic', () => {
-    expect(kindOf('Dal Makhani (Full)', 'Main course')).toBe('bowl');
+    expect(kindOf('Dal Makhani (Full)', 'Main course')).toBe('handi');
     expect(kindOf('Butter Naan', 'Breads')).toBe('bread');
     expect(kindOf('Masala Dosa', 'South Indian')).toBe('bread');
     expect(kindOf('Chicken Biryani', 'Rice & biryani')).toBe('rice');
-    expect(kindOf('Veg Hakka Noodles', 'Chinese')).toBe('rice');
+    expect(kindOf('Veg Hakka Noodles', 'Chinese')).toBe('noodles');
     expect(kindOf('Masala Chai', 'Beverages')).toBe('drink');
     expect(kindOf('Gulab Jamun (2 pc)', 'Desserts')).toBe('dessert');
     expect(kindOf('Vanilla Ice Cream', 'Desserts')).toBe('dessert');
-    expect(kindOf('Paneer Tikka', 'Starters')).toBe('bowl');
+    expect(kindOf('Paneer Tikka', 'Starters')).toBe('skewer');
+  });
+
+  // Owner, 2026-11-20 ("go with B") — the dish's own drawing, read from its name, not its section.
+  it('a starter is drawn as what it is, and a curry made from a tikka is still a curry', () => {
+    expect(kindOf('Chicken Tikka', 'Starters')).toBe('skewer');
+    expect(kindOf('Hara Bhara Kabab', 'Starters')).toBe('skewer');
+    expect(kindOf('Malai Kofta', 'Main course')).toBe('handi');
+    expect(kindOf('Chicken Tikka Masala', 'Main course')).toBe('handi');
+    expect(kindOf('Butter Chicken (Full)', 'Main course')).toBe('handi');
+    expect(kindOf('Papad Masala', 'Starters')).toBe('bowl');
+    expect(kindOf('Chilli Paneer (Dry)', 'Starters')).toBe('bowl');
+    expect(kindOf('Tandoori Chicken (Half)', 'Starters')).toBe('drumstick');
+    expect(kindOf('Fish Fry', 'Starters')).toBe('fish');
+    expect(kindOf('French Fries', 'Starters')).toBe('fries');
+    expect(kindOf('Egg Curry', 'Main course')).toBe('egg');
+    expect(kindOf('Veg Chowmein', 'Chinese')).toBe('noodles');
+    expect(kindOf('Veg Manchurian (Dry)', 'Chinese')).toBe('bowl');
+    expect(kindOf('Jeera Rice', 'Rice & biryani')).toBe('rice');
   });
 
   /*

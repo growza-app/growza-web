@@ -200,9 +200,9 @@ describe('the food graphics do not reach into another vertical', () => {
     expect(resolveProductGraphic({ name: 'Tea Rose Top', categoryName: 'Tops' }).kind).toBe('shirt');
     expect(resolveProductGraphic({ name: 'Masala Tikka Kurta', categoryName: 'Kurtas' }).kind).toBe('shirt');
     // And the kitchen still gets its own, because a dish is not named after a garment.
-    expect(resolveProductGraphic({ name: 'Chicken Tikka', categoryName: 'Starters' }).kind).toBe('bowl');
+    expect(resolveProductGraphic({ name: 'Chicken Tikka', categoryName: 'Starters' }).kind).toBe('skewer');
     expect(resolveProductGraphic({ name: 'Masala Chai', categoryName: 'Beverages' }).kind).toBe('drink');
-    expect(resolveProductGraphic({ name: 'Veg Hakka Noodles', categoryName: 'Chinese' }).kind).toBe('rice');
+    expect(resolveProductGraphic({ name: 'Veg Hakka Noodles', categoryName: 'Chinese' }).kind).toBe('noodles');
   });
 });
 

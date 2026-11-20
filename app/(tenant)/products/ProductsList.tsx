@@ -15,7 +15,8 @@ import { useAreas, useBusinessWritable, useRecipesOn, useSession, useWritable } 
 import { canSee, type MemberRole } from '../lib/nav-policy';
 import { IconCart, IconCheck, IconChevronRight, IconClipboardCheck, IconEdit, IconGrid, IconPlus, IconMenu, IconPos, IconSearch, IconSort, IconTrendUp, IconUpload } from '../components/icons';
 import { MenuTable, sectionKey } from './MenuTable';
-import { groupedOrder, needsRecipe, recipeStates, type MenuTab, type RecipeInfo } from './menu-manager';
+import { MenuKebab } from './MenuKebab';
+import { averagePct, groupedOrder, needsRecipe, recipeStates, type MenuTab, type RecipeInfo } from './menu-manager';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
 import { productShareItem } from '../lib/share-on-whatsapp';
@@ -312,6 +313,19 @@ export function ProductsList({
     for (const p of shown) m.set(sectionKey(p, known), (m.get(sectionKey(p, known)) ?? 0) + 1);
     return m;
   }, [shown, categories]);
+  // Owner, 2026-11-20 — each section's average food cost, and the best seller's count, over every page of what is shown.
+  const sectionFoodCost = useMemo(() => {
+    const known = new Set(categories.map((c) => c.id));
+    const pcts = new Map<string, (number | null)[]>();
+    for (const p of shown) {
+      const k = sectionKey(p, known);
+      const list = pcts.get(k) ?? [];
+      list.push(recipes?.get(p.id)?.pct ?? null);
+      pcts.set(k, list);
+    }
+    return new Map([...pcts].map(([k, v]) => [k, averagePct(v)] as const));
+  }, [shown, categories, recipes]);
+  const maxSold = useMemo(() => shown.reduce((m, p) => Math.max(m, p.sold), 0), [shown]);
   const needRecipeCount = useMemo(
     () => (recipes ? rows.filter((p) => needsRecipe(p, recipes) && matchesCategories(p, selectedCategories)).length : 0),
     [rows, recipes, selectedCategories],
@@ -1002,6 +1016,8 @@ export function ProductsList({
         rows={pageRows}
         categories={categories}
         sectionCounts={sectionCounts}
+        sectionFoodCost={sectionFoodCost}
+        maxSold={maxSold}
         recipes={recipesOn ? (recipes ?? new Map()) : null}
         seesCost={menuCostCol}
         writable={writable}
@@ -1012,11 +1028,10 @@ export function ProductsList({
         head={
           <tr>
             <SortableTh col="name" label={t('cols.product', { product: nouns.Product })} sort={sort} dir={sortDir} onSort={pickColumnSort} />
-            <SortableTh col="status" label={t('cols.status')} sort={sort} dir={sortDir} onSort={pickColumnSort} className="mnu-c-narrow" />
             <SortableTh col="price" label={t('cols.price')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
             {menuCostCol ? <SortableTh col="cost" label={t('cols.cost')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric /> : null}
             <SortableTh col="sold" label={t('cols.sold')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric className="mnu-c-narrow" />
-            {recipesOn ? <th>{tm('recipeCol')}</th> : null}
+            {recipesOn ? <th className="prd-td-num mnu-fc-th">{tm('foodCostCol')}</th> : null}
             <th className="mnu-act" aria-label={tm('actionsCol')} />
           </tr>
         }
@@ -1278,7 +1293,8 @@ export function ProductsList({
                   <div className="mnu-head">
                     {menuTabs}
                     <div className="mnu-result-row">
-                      <span className="mnu-result">{tm('result', { count: shown.length })}</span>
+                      {/* The count is the tab's and the pages' to say; it shows here only for a search, which the tab's count does not follow. */}
+                      {search.trim().length > 0 ? <span className="mnu-result">{tm('result', { count: shown.length })}</span> : null}
                       {clearFilters}
                     </div>
                   </div>
@@ -1308,16 +1324,16 @@ export function ProductsList({
                         <IconGrid />
                       </button>
                     </div>
-                    {/* Set-up jobs, not daily ones: icons with their names on hover, so the tools stay one row on a 1366px laptop. */}
+                    {/* Set-up jobs, not daily ones: in one ⋮ as words, where two unlabelled icons (a pencil and an upload arrow) said nothing. */}
                     {canStockTake && writable ? (
-                      <button type="button" className="mnu-icon-btn mnu-tool-icon" aria-label={t('bulkTable.open')} title={t('bulkTable.open')} onClick={() => setBulkEditOpen(true)}>
-                        <IconEdit />
-                      </button>
-                    ) : null}
-                    {canStockTake && writable ? (
-                      <button type="button" className="mnu-icon-btn mnu-tool-icon" aria-label={t('import.open')} title={t('import.open')} onClick={openImport}>
-                        <IconUpload />
-                      </button>
+                      <MenuKebab
+                        className="mnu-tool-kebab"
+                        label={tm('moreTools')}
+                        items={[
+                          { label: t('bulkTable.open'), onSelect: () => setBulkEditOpen(true) },
+                          { label: t('import.open'), onSelect: openImport },
+                        ]}
+                      />
                     ) : null}
                   </div>
                   {alsoTryRow}

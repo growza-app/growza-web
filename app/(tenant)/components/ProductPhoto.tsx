@@ -20,7 +20,14 @@ export type ProductGraphicKind =
   | 'bread'
   | 'rice'
   | 'drink'
-  | 'dessert';
+  | 'dessert'
+  | 'skewer'
+  | 'drumstick'
+  | 'fish'
+  | 'fries'
+  | 'egg'
+  | 'noodles'
+  | 'handi';
 
 export type ProductGraphicTone = 'green' | 'blue' | 'amber' | 'purple' | 'rose';
 
@@ -69,6 +76,26 @@ export function resolveProductGraphic(product: {
   }
   if (/\b(naan|roti|paratha|kulcha|bread|chapati|poori|puri|bhatura|dosa|uttapam|idli|vada|sandwich|burger|pizza|toast)s?\b/.test(hay)) {
     return { kind: 'bread', tone: 'amber' };
+  }
+  /*
+   * Owner, 2026-11-20 ("go with B") — a dish's own drawing, so sixty-nine starters and curries are not one bowl. Read
+   * from the dish's NAME only: its section ("Starters", "Chinese") says nothing about what is on the plate. A curry
+   * made from a tikka is a curry, so the skewer gives way to masala, butter, gravy and makhani.
+   */
+  const dish = (product.name ?? '').toLowerCase();
+  if (/\b(fish|prawns?|jhinga|pomfret|surmai|seafood|crab)\b/.test(dish)) return { kind: 'fish', tone: 'blue' };
+  if (/\b(tandoori chicken|lollipop|wings?|drumsticks?|leg piece|fried chicken|chicken 65)\b/.test(dish)) {
+    return { kind: 'drumstick', tone: 'amber' };
+  }
+  if (/\b(fries|chips|wedges|finger chips)\b/.test(dish)) return { kind: 'fries', tone: 'amber' };
+  if (/\b(eggs?|anda|omelett?e|bhurji)\b/.test(dish)) return { kind: 'egg', tone: 'amber' };
+  if (/\b(tikka|kaa?bab|kebab|seekh|shashlik|tangdi)\b/.test(dish) && !/\b(masala|butter|gravy|makhani|curry|lababdar)\b/.test(dish)) {
+    return { kind: 'skewer', tone: 'amber' };
+  }
+  if (/\b(noodles?|chow\s*mein|hakka|pasta|ramen|maggi)\b/.test(dish)) return { kind: 'noodles', tone: 'green' };
+  // A curry in its pot, so a main course does not wear the starter's bowl. Not "Papad Masala", which is a starter.
+  if (/\b(curry|dal|daal|makhani|korma|kofta|kadh?ai|chole|rajma|gravy|lababdar|butter chicken|masala|sabzi|sabji|aloo|gobi|palak|bhindi)\b/.test(dish) && !/\bpapad\b/.test(dish)) {
+    return { kind: 'handi', tone: 'amber' };
   }
   if (/\b(rice|biryani|pulao|pulav|khichdi|noodle|pasta|hakka)s?\b/.test(hay)) {
     return { kind: 'rice', tone: 'green' };
@@ -190,6 +217,70 @@ function GraphicSvg({ kind }: { kind: ProductGraphicKind }) {
           <line x1="2.5" y1="11" x2="21.5" y2="11" />
           <path d="M9 7.5c0-1 1-1.4 1-2.4s-1-1.1-1-1.1" />
           <path d="M13 7.5c0-1 1-1.4 1-2.4s-1-1.1-1-1.1" />
+        </svg>
+      );
+    case 'skewer':
+      return (
+        <svg {...base}>
+          <line x1="3.5" y1="20.5" x2="20.5" y2="3.5" />
+          <rect x="5.4" y="13.4" width="5.2" height="5.2" rx="1.5" transform="rotate(45 8 16)" fill="currentColor" fillOpacity="0.16" />
+          <rect x="9.4" y="9.4" width="5.2" height="5.2" rx="1.5" transform="rotate(45 12 12)" fill="currentColor" fillOpacity="0.16" />
+          <rect x="13.4" y="5.4" width="5.2" height="5.2" rx="1.5" transform="rotate(45 16 8)" fill="currentColor" fillOpacity="0.16" />
+        </svg>
+      );
+    case 'drumstick':
+      return (
+        <svg {...base}>
+          <circle cx="14.5" cy="9.5" r="6" fill="currentColor" fillOpacity="0.16" />
+          <line x1="10.3" y1="13.7" x2="6.3" y2="17.7" />
+          <circle cx="4.6" cy="17.4" r="1.6" />
+          <circle cx="6.6" cy="19.4" r="1.6" />
+        </svg>
+      );
+    case 'fish':
+      return (
+        <svg {...base}>
+          <path d="M2.5 12c2.2-3.6 5.2-5.5 8.5-5.5 3 0 5.2 1.8 6.5 5.5-1.3 3.7-3.5 5.5-6.5 5.5-3.3 0-6.3-1.9-8.5-5.5Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M17.5 12l4-3.5v7Z" />
+          <circle cx="7" cy="11" r="0.6" fill="currentColor" />
+        </svg>
+      );
+    case 'fries':
+      return (
+        <svg {...base}>
+          <path d="M8 10V5" />
+          <path d="M10.7 10V3.5" />
+          <path d="M13.3 10V4.5" />
+          <path d="M16 10V6" />
+          <path d="M5.5 10h13l-1.6 10.5H7.1Z" fill="currentColor" fillOpacity="0.16" />
+        </svg>
+      );
+    case 'egg':
+      return (
+        <svg {...base}>
+          <path d="M12 3.5c3.8 0 6.5 4.6 6.5 9a6.5 6.5 0 0 1-13 0c0-4.4 2.7-9 6.5-9Z" fill="currentColor" fillOpacity="0.16" />
+          <circle cx="12" cy="13.5" r="2.6" fill="currentColor" fillOpacity="0.4" />
+        </svg>
+      );
+    case 'handi':
+      return (
+        <svg {...base}>
+          <path d="M5 10.5h14V13a7 7 0 0 1-14 0Z" fill="currentColor" fillOpacity="0.16" />
+          <line x1="4" y1="10.5" x2="20" y2="10.5" />
+          <path d="M5 12.5H3" />
+          <path d="M19 12.5h2" />
+          <path d="M10 7.5c0-1 1-1.3 1-2.3s-1-1-1-1" />
+          <path d="M13.5 7.5c0-1 1-1.3 1-2.3s-1-1-1-1" />
+        </svg>
+      );
+    case 'noodles':
+      return (
+        <svg {...base}>
+          <path d="M3.5 12h17a8.5 8.5 0 0 1-17 0Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M7.5 12c0-1.6 1.4-1.8 1.4-3.4" />
+          <path d="M11 12c0-1.6 1.4-1.8 1.4-3.4" />
+          <path d="M14 9.5 20.5 3" />
+          <path d="M15.8 10.6 21.5 5" />
         </svg>
       );
     case 'bread':

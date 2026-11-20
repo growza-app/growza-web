@@ -71,3 +71,23 @@ export function groupBySection(rows: readonly Product[], categories: readonly Pi
 /** The grouped order flattened, so a page of the table is a slice of what the owner reads top to bottom. */
 export const groupedOrder = (rows: readonly Product[], categories: readonly Pick<ProductCategory, 'id' | 'name'>[]): Product[] =>
   groupBySection(rows, categories).flatMap((g) => g.rows);
+
+/** How many section colours there are (`--cat-1` … `--cat-6`); a seventh section takes the first again. */
+export const SECTION_HUES = 6;
+
+/**
+ * Owner, 2026-11-20 — each Menu section's colour (1–6), by its place in the menu's order, so a section keeps its colour
+ * from page to page and the order the owner set decides it. Null for dishes in no section: they stay grey.
+ */
+export function sectionHue(id: string | null, categories: readonly Pick<ProductCategory, 'id'>[]): number | null {
+  if (id === null) return null;
+  const i = categories.findIndex((c) => c.id === id);
+  return i < 0 ? null : (i % SECTION_HUES) + 1;
+}
+
+/** A section's average food cost over the dishes that have one (null when none does), to one decimal. */
+export function averagePct(pcts: readonly (number | null | undefined)[]): number | null {
+  const known = pcts.filter((n): n is number => typeof n === 'number' && Number.isFinite(n));
+  if (known.length === 0) return null;
+  return Math.round((known.reduce((a, b) => a + b, 0) / known.length) * 10) / 10;
+}
