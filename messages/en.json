@@ -4723,7 +4723,6 @@
       "clearFilters": "Clear filters",
       "result": "{count, plural, one {# dish} other {# dishes}}",
       "noneNeedRecipe": "Every dish on the menu has its recipe.",
-      "hint": "A dish is made when it is ordered. What is on the menu is what the POS can sell.",
       "overPrice": "Costs more than its price — check the price",
       "tabsShort": {
         "all": "On menu",

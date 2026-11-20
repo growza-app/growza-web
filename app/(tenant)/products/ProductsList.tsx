@@ -13,7 +13,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useAreas, useBusinessWritable, useRecipesOn, useSession, useWritable } from '../components/SessionProvider';
 import { canSee, type MemberRole } from '../lib/nav-policy';
-import { IconCart, IconCheck, IconChevronRight, IconClipboardCheck, IconEdit, IconGrid, IconPlus, IconPos, IconSearch, IconSort, IconTable, IconTrendUp, IconUpload } from '../components/icons';
+import { IconCart, IconCheck, IconChevronRight, IconClipboardCheck, IconEdit, IconGrid, IconPlus, IconMenu, IconPos, IconSearch, IconSort, IconTrendUp, IconUpload } from '../components/icons';
 import { MenuTable, sectionKey } from './MenuTable';
 import { groupedOrder, needsRecipe, recipeStates, type MenuTab, type RecipeInfo } from './menu-manager';
 import { ProductPhoto } from '../components/ProductPhoto';
@@ -1274,7 +1274,14 @@ export function ProductsList({
               {!counted ? (
                 /* Owner, 2026-11-20 — the Menu in one card: its tabs, one row of tools, the dishes, the pages. */
                 <div className="mnu-work">
-                  {menuTabs}
+                  {/* Owner, 2026-11-20 ("they are wasting a lot of space") — the count and Clear filters share the tabs' row. */}
+                  <div className="mnu-head">
+                    {menuTabs}
+                    <div className="mnu-result-row">
+                      <span className="mnu-result">{tm('result', { count: shown.length })}</span>
+                      {clearFilters}
+                    </div>
+                  </div>
                   <div className="prd-desk-tools mnu-tools">
                     {searchBox}
                     {categoriesDropdown}
@@ -1284,33 +1291,34 @@ export function ProductsList({
                         type="button"
                         className={`prd-view-btn ${menuView === 'table' ? 'is-on' : ''}`}
                         aria-pressed={menuView === 'table'}
+                        aria-label={t('viewTable')}
+                        title={t('viewTable')}
                         onClick={() => pick(() => setMenuView('table'))}
                       >
-                        <IconTable /> {t('viewTable')}
+                        <IconMenu />
                       </button>
                       <button
                         type="button"
                         className={`prd-view-btn ${menuView === 'cards' ? 'is-on' : ''}`}
                         aria-pressed={menuView === 'cards'}
+                        aria-label={t('viewCards')}
+                        title={t('viewCards')}
                         onClick={() => pick(() => setMenuView('cards'))}
                       >
-                        <IconGrid /> {t('viewCards')}
+                        <IconGrid />
                       </button>
                     </div>
+                    {/* Set-up jobs, not daily ones: icons with their names on hover, so the tools stay one row on a 1366px laptop. */}
                     {canStockTake && writable ? (
-                      <button type="button" className="btn btn-ghost prd-bulk-edit-btn" onClick={() => setBulkEditOpen(true)}>
-                        <IconEdit /> {t('bulkTable.open')}
+                      <button type="button" className="mnu-icon-btn mnu-tool-icon" aria-label={t('bulkTable.open')} title={t('bulkTable.open')} onClick={() => setBulkEditOpen(true)}>
+                        <IconEdit />
                       </button>
                     ) : null}
                     {canStockTake && writable ? (
-                      <button type="button" className="btn btn-ghost prd-import-btn" onClick={openImport}>
-                        <IconUpload /> {t('import.open')}
+                      <button type="button" className="mnu-icon-btn mnu-tool-icon" aria-label={t('import.open')} title={t('import.open')} onClick={openImport}>
+                        <IconUpload />
                       </button>
                     ) : null}
-                  </div>
-                  <div className="mnu-result-row">
-                    <span className="mnu-result">{tm('result', { count: shown.length })}</span>
-                    {clearFilters}
                   </div>
                   {alsoTryRow}
                   {menuView === 'cards' ? (
@@ -1319,7 +1327,6 @@ export function ProductsList({
                     menuTable
                   )}
                   {pages}
-                  <p className="mnu-hint">{tm('hint')}</p>
                 </div>
               ) : (
                 <>
