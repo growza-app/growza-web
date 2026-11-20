@@ -14,6 +14,8 @@ import { useLive } from '../SessionProvider';
 import { IconChevronRight, IconDaySummary, IconMapPin } from '../icons';
 import { HeaderSearch } from '../HeaderSearch';
 import { HeaderBusiness } from '../HeaderBusiness';
+import { useControlsInSidebar } from '../sidebar-controls';
+import { PageHeadBell } from '../PageHeadBell';
 
 /**
  * Jira GRW-222 — the pieces all three Homes are built from.
@@ -138,6 +140,7 @@ export function HomeHeader({
 }) {
   // Jira GRW-556 — no bookings feed until the business is live.
   const live = useLive();
+  const inSidebar = useControlsInSidebar();
   return (
     <header className={`hm-head${simpleDesktop ? ' is-rst-head' : ''}`}>
       <MenuButton />
@@ -158,10 +161,11 @@ export function HomeHeader({
       </div>
       <div className="hm-head-controls">
         {/* Jira GRW-395 — the one branch picker; Home's own dropdown and tabs are gone. */}
-        <HeaderBranchPicker />
+        {inSidebar ? null : <HeaderBranchPicker />}
         {/* Jira GRW-409 — the same gated search as every other header; a receptionist's or stylist's Home has none. */}
-        {/* Emerald v2 — the restaurant's laptop header carries the search too, as a pill (it was phone-only). */}
-        <HeaderSearch wide />
+        {/* Owner, 2026-11-20: "remove it from all places" — no "Find a guest" pill on a laptop. The phone keeps its
+            magnifier; CSS hides it at 861px and up. Not `wide`, so no "/" shortcut either. */}
+        <HeaderSearch />
         {onDaySummary && !simpleDesktop ? (
           <button type="button" className="hm-summary-btn" onClick={onDaySummary} aria-label={t.daySummary}>
             <IconDaySummary />
@@ -173,10 +177,17 @@ export function HomeHeader({
           picker and opened Day summary. The date is in the page head's line now, and Day summary has its own button.
         */}
         {simpleDesktop ? null : <span className="hm-date-chip hm-desktop">{dateLabel}</span>}
-        {/* Emerald v3 — the business, in the laptop's header bar, beside the bell. */}
-        <HeaderBusiness />
-        {live ? <NotificationBell /> : null}
-        <AccountMenu />
+        {/* Emerald v3 — the business, beside the bell. Owner, 2026-11-20 (option A): on a laptop with a sidebar all
+            three are the sidebar's, so Home draws none of them there. */}
+        {/* A Home without the page head below (stylist, reception) keeps its bell in this row on a laptop. */}
+        {simpleDesktop ? null : <PageHeadBell />}
+        {inSidebar ? null : (
+          <>
+            <HeaderBusiness />
+            {live ? <NotificationBell /> : null}
+            <AccountMenu />
+          </>
+        )}
       </div>
     </header>
   );
@@ -578,7 +589,10 @@ export function PageHead({ title, sub, children }: { title: string; sub: string;
         <p className="rst-page-title">{title}</p>
         <p className="rst-page-sub">{sub}</p>
       </div>
-      <div className="rst-page-actions">{children}</div>
+      <div className="rst-page-actions">
+        {children}
+        <PageHeadBell />
+      </div>
     </div>
   );
 }

@@ -13,6 +13,10 @@ import type { Lang } from '../lib/lang';
 import { SignOutButton } from './SignOutButton';
 import { useMobileNav } from './MobileNavProvider';
 import { useAreas, useLive } from './SessionProvider';
+import { HeaderBusiness } from './HeaderBusiness';
+import { HeaderBranchPicker } from './HeaderBranchPicker';
+import { AccountMenu } from './AccountMenu';
+import { useClaimHeaderControls, useWideScreen } from './sidebar-controls';
 import {
   IconAnalytics,
   IconAppointments,
@@ -271,6 +275,14 @@ export function Sidebar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, currentKey]);
 
+  // Owner, 2026-11-20 (option A) — on a laptop the business and the account menu are the sidebar's (the bell is the
+  // page head's, `PageHeadBell`); the
+  // header unmounts its copies once claimed (`sidebar-controls.ts`). Not when this sidebar is not drawn (below).
+  const wide = useWideScreen();
+  const drawn = !(nav.every((n) => n.href === '/notifications') || cooksOnly(areas.pages));
+  const controlsHere = wide === true && drawn;
+  useClaimHeaderControls(controlsHere);
+
   /*
    * Owner, 2026-11-17 — a login offered no screen in the list (a Kitchen login: its one screen is where it already is) gets
    * no sidebar at all: an empty column the width of a ticket was all it drew (its one row, Notifications, is not drawn there). The page takes the width
@@ -301,6 +313,12 @@ export function Sidebar({
           <GrowzaMark size={36} />
           <span className="brand-growza-word">{tc('productName')}</span>
         </div>
+        {controlsHere ? (
+          <div className="sb-biz">
+            <HeaderBusiness />
+            <HeaderBranchPicker />
+          </div>
+        ) : null}
         <div className="brand">
           <div className="brand-badge">{tenantName.charAt(0).toUpperCase()}</div>
           <div className="brand-text">
@@ -399,6 +417,11 @@ export function Sidebar({
             {t.nav.signOut}
           </SignOutButton>
         </div>
+        {controlsHere ? (
+          <div className="sb-acct">
+            <AccountMenu />
+          </div>
+        ) : null}
       </aside>
     </>
   );

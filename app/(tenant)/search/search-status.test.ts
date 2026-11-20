@@ -96,8 +96,9 @@ describe('the search lives on Home and nowhere else', () => {
     expect(client).not.toMatch(/hideSearch/);
   });
 
-  it('Home still draws it, as the wide pill', () => {
-    expect(home).toMatch(/<HeaderSearch wide \/>/);
+  it('Home still draws it on a phone, as the icon — a laptop has no guest search (owner, 2026-11-20)', () => {
+    expect(home).toMatch(/<HeaderSearch \/>/);
+    expect(home).not.toMatch(/<HeaderSearch wide/);
   });
 });
 

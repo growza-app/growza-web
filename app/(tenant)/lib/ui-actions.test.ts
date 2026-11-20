@@ -171,7 +171,7 @@ describe('2b — the controls, each behind its own action', () => {
   });
 
   const GATES: Array<[file: string, gate: RegExp]> = [
-    ['components/home/parts.tsx', /<HeaderSearch wide \/>/],
+    ['components/home/parts.tsx', /<HeaderSearch \/>/],
     // Jira GRW-74 — both of these also ask the role GRID, which `mayUse` cannot see (review, 2026-10-22): the fixed
     // word a role works like is not what the owner filled in. MobileChrome asks it directly (it is chrome, not a
     // screen, so it has no `useWritable`); OwnerHome goes through `useMayUse`, which asks for every control.
