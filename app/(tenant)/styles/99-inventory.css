@@ -587,3 +587,55 @@
     background: CanvasText;
   }
 }
+
+/*
+ * Owner, 2026-11-21 ("these options are at the bottom, not visible") — Add item, Import from a file and Suppliers sat
+ * under sixty items, so a laptop never saw them without scrolling to the end. The stock card now fits the screen as
+ * the Menu's does: the page does not scroll, the items scroll inside the card under a header that stays, and the foot
+ * with those links stays in sight at the card's bottom.
+ */
+@media (min-width: 1101px) {
+  .page-body.inv-page:has(.ks-desk) {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .page-body.inv-page:has(.ks-desk) > * {
+    flex: none;
+  }
+
+  .page-body.inv-page > .ks-body.ks-desk {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ks-desk > * {
+    flex: none;
+  }
+
+  .ks-desk > .ks-work {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .ks-work > * {
+    flex: none;
+  }
+
+  .ks-work > .ks-table-wrap,
+  .ks-work > .ks-work-buy,
+  .ks-work > .ks-state {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .ks-work > .ks-foot {
+    border-top: 1px solid var(--border);
+  }
+}
