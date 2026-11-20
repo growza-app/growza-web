@@ -17,7 +17,7 @@ import { StockInSheet } from './StockInSheet';
 import { PurchasesSheet } from './PurchasesSheet';
 import { BuyList } from './BuyList';
 import { StockTable } from './StockTable';
-import { IconSearch } from '../components/icons';
+import { IconChevronDown, IconClose, IconSearch } from '../components/icons';
 import { GraphicSvg } from '../components/ProductPhoto';
 import { groupHues, ingredientGraphic, stockLevel } from './ingredient-graphic';
 
@@ -109,6 +109,27 @@ export function KitchenStockClient({
       // Private window or blocked storage: skipped for this visit only.
     }
   };
+  /*
+   * Owner, 2026-11-21 ("no option to minimize Dairy or Groceries, I have to scroll very long") — a phone's group folds
+   * on its heading, and which groups are folded is remembered on this device, per branch, as Skip is above.
+   */
+  const foldKey = `ks-folded:${branchId}`;
+  const [folded, setFolded] = useState<string[]>(() => {
+    try {
+      return JSON.parse(window.localStorage.getItem(foldKey) ?? '[]') as string[];
+    } catch {
+      return [];
+    }
+  });
+  const saveFolded = (next: string[]) => {
+    setFolded(next);
+    try {
+      window.localStorage.setItem(foldKey, JSON.stringify(next));
+    } catch {
+      // Private window or blocked storage: folded for this visit only.
+    }
+  };
+  const toggleFold = (key: string) => saveFolded(folded.includes(key) ? folded.filter((k) => k !== key) : [...folded, key]);
   const [confirmOff, setConfirmOff] = useState(false);
   const [sheet, setSheetNow] = useState<Sheet>(null);
   // A new sheet clears the last one's "saved" line, so what the page says is always about the latest thing done.
@@ -322,6 +343,11 @@ export function KitchenStockClient({
         <button type="button" className="ks-quiet-link" onClick={() => setOpeningOpen(true)}>
           {t('openingEnter')}
         </button>
+        {/* Owner, 2026-11-21 ("provide close card option") — ✕ is the full card's Skip: remembered on this device, per
+            item, so the reminder comes back only for an item added later. */}
+        <button type="button" className="ks-note-close" aria-label={t('openingDismiss')} title={t('openingDismiss')} onClick={() => skipOpening(unopened.map((m) => m.id))}>
+          <IconClose />
+        </button>
       </section>
     ) : null;
   const openingCards = (
@@ -365,6 +391,7 @@ export function KitchenStockClient({
   const filterChips = (
     <>
       {materials.length > 0 ? (
+        <div className="ks-phone-tabs-row">
         <div className="ks-work-tabs ks-phone-tabs" role="tablist" aria-label={t('filtersLabel')}>
           {(
             [
@@ -383,6 +410,14 @@ export function KitchenStockClient({
               {t(`filter.${f === 'buy' ? 'toBuy' : 'all'}`)} <span className="ks-work-n">{n}</span>
             </button>
           ))}
+        </div>
+          {/* Owner, 2026-11-21 ("we are wasting too much space") — the search shares the tabs' row on a phone, a row back for the list. */}
+          {filter === 'all' ? (
+            <label className="search-wrap ks-search ks-search-phone">
+              <IconSearch />
+              <input type="search" className="search-input search-input-bare" placeholder={t('searchShort')} aria-label={t('search')} value={query} onChange={(e) => setQuery(e.target.value)} />
+            </label>
+          ) : null}
         </div>
       ) : null}
 
@@ -406,20 +441,36 @@ export function KitchenStockClient({
         </div>
       ) : (
         <>
-          <label className="search-wrap ks-search ks-search-phone">
-            <IconSearch />
-            <input type="search" className="search-input search-input-bare" placeholder={t('search')} aria-label={t('search')} value={query} onChange={(e) => setQuery(e.target.value)} />
-          </label>
           {shown.length === 0 ? (
             <p className="ks-state">{t('noMatch')}</p>
           ) : (
-            groups.map((g) => (
+            <>
+            {/* Fold every group in one tap, or open them all again. Not while searching: then every match shows. */}
+            {groups.filter((g) => g.title).length > 1 && !query.trim() ? (
+              <div className="ks-fold-all">
+                <button
+                  type="button"
+                  className="ks-quiet-link"
+                  onClick={() => saveFolded(groups.every((g) => !g.title || folded.includes(g.key)) ? [] : groups.filter((g) => g.title).map((g) => g.key))}
+                >
+                  {groups.every((g) => !g.title || folded.includes(g.key)) ? t('openAll') : t('foldAll')}
+                </button>
+              </div>
+            ) : null}
+            {groups.map((g) => {
+              const isFolded = Boolean(g.title) && folded.includes(g.key) && !query.trim();
+              return (
               <section key={g.key} className="ks-group" aria-label={g.title || undefined} data-hue={g.low ? undefined : hueOf(g.items[0]?.category)}>
                 {g.title ? (
                   <h3 className={`ks-group-head ${g.low ? 'is-low' : ''}`}>
-                    {g.title} <span className="ks-group-n">{g.items.length}</span>
+                    <button type="button" className={`ks-group-toggle ${isFolded ? '' : 'is-open'}`} aria-expanded={!isFolded} onClick={() => toggleFold(g.key)}>
+                      <IconChevronDown />
+                      <span>{g.title}</span>
+                      <span className="ks-group-n">{g.items.length}</span>
+                    </button>
                   </h3>
                 ) : null}
+                {isFolded ? null : (
                 <ul className="ks-list">
                   {g.items.map((m) => {
                     const tone = m.stock < 0 ? 'below' : m.low ? 'low' : '';
@@ -463,8 +514,11 @@ export function KitchenStockClient({
                     );
                   })}
                 </ul>
+                )}
               </section>
-            ))
+              );
+            })}
+            </>
           )}
         </>
       )}
@@ -530,6 +584,7 @@ export function KitchenStockClient({
       {editing ? (
         <MaterialSheet
           material={editing === 'new' ? null : editing}
+          categories={[...hues.keys()]}
           branchId={branchId}
           readOnly={!mayChange}
           mayCount={mayChange && data.on}

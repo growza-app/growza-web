@@ -14,6 +14,10 @@ describe("an ingredient's drawing (owner, 2026-11-20)", () => {
     expect(kind('Hakka Noodles', 'Rice, flour and dal')).toBe('noodles');
     expect(kind('Basmati Rice', 'Rice, flour and dal')).toBe('grain');
     expect(kind('Takeaway Box', 'Packing')).toBe('box');
+    // A row with no group (the report's) still knows a vegetable by its name.
+    expect(kind('Spinach')).toBe('leaf');
+    expect(kind('Tomato')).toBe('leaf');
+    expect(kind('Coriander')).toBe('leaf');
   });
 
   it("then the owner's own group words, then a jar", () => {

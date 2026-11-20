@@ -5204,8 +5204,8 @@
         "returned": "Came back"
       },
       "cols": {
-        "when": "When",
         "from": "From",
+        "order": "Order",
         "who": "For",
         "items": "Items",
         "amount": "Amount",
@@ -5887,6 +5887,13 @@
     "addNumber": "Add number"
   },
   "moneyReports": {
+    "presetsLabel": "Quick periods",
+    "presets": {
+      "last7": "Last 7 days",
+      "thisWeek": "This week",
+      "lastWeek": "Last week",
+      "thisMonth": "This month"
+    },
     "tabs": {
       "profit": "Profit",
       "discounts": "Discounts & free",
@@ -6026,12 +6033,56 @@
       "recipesInNow": "Their recipes are in now — new sales count.",
       "noPriceFix": "{count, plural, one {# dish uses} other {# dishes use}} an item with no price — left out of the %. Open the item on Stock to give it one.",
       "noPriceItems": "{count, plural, one {# item has} other {# items have}} no price, so {dishes, plural, one {# dish is} other {# dishes are}} left out of the %. Tap one to give it a price:",
+      "clean": {
+        "how": "How this is worked out",
+        "sales": "Sales",
+        "givenFree": "Given free",
+        "attention": "Needs attention",
+        "noPriceRow": "{count, plural, one {# item has no price} other {# items have no price}} — add a price to count {dishes, plural, one {# more dish} other {# more dishes}}",
+        "noRecipeRow": "{count, plural, one {# dish sold without a recipe, so it isn't counted} other {# dishes sold without a recipe, so they aren't counted}}",
+        "addRecipes": "Add recipes",
+        "tabsLabel": "Details",
+        "noDishes": "No dish with a recipe sold in this period.",
+        "custom": "Custom dates…",
+        "status": {
+          "ok": "Good — under ₹35",
+          "warn": "A bit high — aim for under ₹35",
+          "bad": "Too high — over ₹45",
+          "none": "Nothing to count yet",
+          "partial": "Not sure yet — many dishes sold have no recipe, so they aren't counted"
+        },
+        "tabs": {
+          "dishes": "Dishes",
+          "days": "Days",
+          "ingredients": "Stock used",
+          "waste": "Thrown away",
+          "log": "History"
+        },
+        "heroLabel": "Ingredients cost you",
+        "perHundred": "of every ₹100 you sell",
+        "statFood": "Spent on ingredients",
+        "statLoss": "Thrown away or missing",
+        "losesMoney": "loses money",
+        "howText": "We add up what the ingredients of each dish cost and compare it with what the dish sold for, before GST. Only dishes with a recipe are counted. Thrown-away and missing stock is shown on its own.",
+        "rangeShort": "Up to 3 months at a time.",
+        "usedNote": "What your dishes used, at what each item cost that day.",
+        "lossNote": "At what each item cost on the day it was written down.",
+        "cols": {
+          "perHundred": "Per ₹100 sold",
+          "cost": "Cost",
+          "thrown": "Thrown away",
+          "foundExtra": "Found extra"
+        }
+      },
       "desk": {
         "foodSub": "Out of {all} sold in all",
         "lossSub": "Wasted {wasted} · Missing {lost}",
-        "coveredLabel": "Sales counted",
+        "coveredLabel": "Sales with a recipe",
+        "showAll": "Show all {count}",
+        "showFewer": "Show fewer",
+        "quietDays": "{count, plural, one {No sales on # other day} other {No sales on # other days}}",
         "coveredSub": "{sales} of {all} had a recipe and prices",
-        "fixTitle": "To fix, for a true food cost",
+        "fixTitle": "Fix these for a full food cost",
         "cols": {
           "day": "Day",
           "sales": "Sales",
@@ -6148,6 +6199,7 @@
     "openingSkip": "Skip",
     "notCounted": "Not counted yet",
     "search": "Search items",
+    "searchShort": "Search",
     "filtersLabel": "Show",
     "filter": {
       "low": "Low",
@@ -6177,6 +6229,9 @@
     },
     "category": "Category",
     "categoryPh": "e.g. Vegetables",
+    "categoryNone": "No category",
+    "categoryNew": "New category…",
+    "categoryNewLabel": "New category name",
     "lowAt": "Low-stock level",
     "lowAtHint": "Flag it when it falls to this. Leave it empty to never flag.",
     "unitLocked": "The unit can't change once stock has moved.",
@@ -6498,6 +6553,9 @@
     "lowTag": "Low",
     "openingShort": "{n, plural, one {# item has} other {# items have}} no amount yet",
     "openingEnter": "Enter amounts",
+    "openingDismiss": "Hide this reminder",
+    "foldAll": "Fold all",
+    "openAll": "Open all",
     "countOne": {
       "actions": "What to do with this item",
       "label": "How much is there now? ({unit})",

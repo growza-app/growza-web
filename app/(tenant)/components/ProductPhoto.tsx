@@ -35,7 +35,11 @@ export type ProductGraphicKind =
   | 'grain'
   | 'oil'
   | 'jar'
-  | 'box';
+  | 'box'
+  // An order's kind on the Orders list (orders/order-tile.ts): eaten here, taken away, brought on a bike.
+  | 'cutlery'
+  | 'bag'
+  | 'scooter';
 
 export type ProductGraphicTone = 'green' | 'blue' | 'amber' | 'purple' | 'rose';
 
@@ -327,6 +331,32 @@ export function GraphicSvg({ kind }: { kind: ProductGraphicKind }) {
           <path d="M4 8l8-4 8 4v9l-8 4-8-4Z" fill="currentColor" fillOpacity="0.16" />
           <path d="M4 8l8 4 8-4" />
           <path d="M12 12v9" />
+        </svg>
+      );
+    case 'cutlery':
+      return (
+        <svg {...base}>
+          <path d="M6.5 3.5v5a2.5 2.5 0 0 0 5 0v-5" />
+          <path d="M9 3.5v17" />
+          <path d="M17.5 20.5v-17c-2.2 1.2-3.3 3.8-3.3 7 0 1.8 1.4 2.8 3.3 2.8" fill="currentColor" fillOpacity="0.16" />
+        </svg>
+      );
+    case 'bag':
+      return (
+        <svg {...base}>
+          <path d="M5 8h14l-1 12.5H6Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
+        </svg>
+      );
+    case 'scooter':
+      return (
+        <svg {...base}>
+          <rect x="3" y="8" width="6" height="5" rx="1" fill="currentColor" fillOpacity="0.16" />
+          <circle cx="6" cy="17.5" r="2.3" />
+          <circle cx="18" cy="17.5" r="2.3" />
+          <path d="M8.3 17.5h7.4" />
+          <path d="M3.5 15h7.5l2 2.5" />
+          <path d="M15.7 17.5 14 9h3" />
         </svg>
       );
     case 'handi':

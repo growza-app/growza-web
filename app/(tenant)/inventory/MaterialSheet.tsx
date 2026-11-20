@@ -40,8 +40,11 @@ export function MaterialSheet({
   onWaste,
   onClose,
   onSaved,
+  categories = [],
 }: {
   material: StockMaterial | null;
+  /** Owner, 2026-11-21 — the kitchen's groups so far (A–Z), to pick from rather than retype. */
+  categories?: readonly string[];
   branchId: string;
   readOnly?: boolean;
   /** The owner or a manager, with Inventory on: Count sets the amount here. */
@@ -58,6 +61,8 @@ export function MaterialSheet({
   const [name, setName] = useState(material?.name ?? '');
   const [unit, setUnit] = useState<MaterialUnit>(material?.unit ?? 'kg');
   const [category, setCategory] = useState(material?.category ?? '');
+  // Typing a new group: chosen from the list's last line, or the only way when there is no list yet.
+  const [newCategory, setNewCategory] = useState(categories.length === 0);
   const [lowAt, setLowAt] = useState(material && material.lowStockAt > 0 ? amount(material.lowStockAt) : '');
   const [busy, setBusy] = useState(false);
   // A new item starts in the form; an existing one opens to its amount.
@@ -317,14 +322,44 @@ export function MaterialSheet({
                 <label className="prd-field-label" htmlFor="ks-category">
                   {t('category')}
                 </label>
-                <input
-                  id="ks-category"
-                  className="prd-input"
-                  value={category}
-                  maxLength={40}
-                  placeholder={t('categoryPh')}
-                  onChange={(e) => setCategory(e.target.value)}
-                />
+                {/* Owner, 2026-11-21 ("no option to create a new category, there should be a list") — the groups the
+                    kitchen already has, then "New category…", which opens the box to type one. */}
+                {categories.length > 0 ? (
+                  <select
+                    id="ks-category"
+                    className="prd-input ks-category-select"
+                    value={newCategory ? '__new__' : category.trim()}
+                    onChange={(e) => {
+                      if (e.target.value === '__new__') {
+                        setNewCategory(true);
+                        setCategory('');
+                      } else {
+                        setNewCategory(false);
+                        setCategory(e.target.value);
+                      }
+                    }}
+                  >
+                    <option value="">{t('categoryNone')}</option>
+                    {[...categories, ...(category.trim() && !newCategory && !categories.includes(category.trim()) ? [category.trim()] : [])].map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                    <option value="__new__">{t('categoryNew')}</option>
+                  </select>
+                ) : null}
+                {newCategory ? (
+                  <input
+                    id={categories.length > 0 ? 'ks-category-new' : 'ks-category'}
+                    className="prd-input ks-category-new"
+                    value={category}
+                    maxLength={40}
+                    placeholder={t('categoryPh')}
+                    aria-label={categories.length > 0 ? t('categoryNewLabel') : undefined}
+                    autoFocus={autoFocusField(categories.length > 0)}
+                    onChange={(e) => setCategory(e.target.value)}
+                  />
+                ) : null}
               </div>
               <div className="prd-field">
                 <label className="prd-field-label" htmlFor="ks-low">
