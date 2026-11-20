@@ -215,7 +215,7 @@ describe('UX-07 — every word is in both languages, and a state or channel this
         expect(list[key], `${lang} list.${key}`).toBeTruthy();
       }
       expect(Object.keys(list.stateChips).sort()).toEqual(STATE_CHIPS.map((c) => c.key).sort());
-      expect(Object.keys(list.cols).sort()).toEqual(['amount', 'from', 'items', 'state', 'when', 'who']);
+      expect(Object.keys(list.cols).sort()).toEqual(['amount', 'from', 'items', 'order', 'state', 'who']);
       for (const group of ['empty', 'noMatch', 'error']) expect(Object.keys(list[group]).length, `${lang} ${group}`).toBeGreaterThan(0);
       for (const chip of CHANNEL_CHIPS) expect(messages(lang).orders.channels[chip], chip).toBeTruthy();
     });

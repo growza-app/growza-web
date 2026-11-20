@@ -277,3 +277,855 @@
 .fcd-panel > .fcd-note {
   padding: 0.75rem 1.125rem;
 }
+
+/*
+ * Owner, 2026-11-21 ("check the reports" — go ahead) — Inventory › Reports in the look of the Menu, Inventory and
+ * Orders. The verdict is a tinted bar in its tone; the figures say good / high in colour; tables have a mint header,
+ * each dish or item its tile, money in forest; a day that sold is a bar against the best day; long panels show
+ * eight rows and "Show all" instead of scrolling inside their own box. A phone's sections fold with a chevron.
+ */
+.srp .fc-verdict {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg);
+  border-left: 4px solid currentColor;
+  background: var(--surface);
+  font-size: var(--fs-4);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.srp .fc-verdict.is-ok {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.srp .fc-verdict.is-warn,
+.srp .fc-verdict.is-partial {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+.srp .fc-verdict.is-bad {
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+}
+
+/* Quick periods beside the dates: the house pill row, the one in force filled. */
+.mr-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.mr-preset {
+  min-height: 2.75rem;
+  padding: 0 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-2);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.mr-preset.is-on {
+  border-color: var(--forest);
+  background: var(--forest);
+  color: #fff;
+}
+
+/* The figures, coloured by what they mean: a good food cost green, a high one amber or red, a thin count amber. */
+.fcd-kpi.is-ok,
+.fcd-kpi.is-warn,
+.fcd-kpi.is-bad {
+  border-top: 3px solid var(--fcd-tone);
+}
+
+.fcd-kpi.is-ok { --fcd-tone: var(--accent); }
+.fcd-kpi.is-warn { --fcd-tone: var(--amber); }
+.fcd-kpi.is-bad { --fcd-tone: var(--danger); }
+
+.fcd-kpi-n .fc-pct.is-ok {
+  color: var(--accent-deep);
+}
+
+.fcd-kpi.is-warn .fcd-kpi-n {
+  color: var(--amber-ink);
+}
+
+.fcd-kpi.is-bad .fcd-kpi-n {
+  color: var(--danger-deep);
+}
+
+.fcd-kpi .fcd-kpi-n {
+  color: var(--forest);
+}
+
+/* Tables: the mint header band, money in forest, each name with its tile. */
+.fcd-table th {
+  z-index: 2;
+  background: var(--accent-soft);
+  border-bottom-color: color-mix(in srgb, var(--accent) 30%, var(--surface));
+  color: var(--forest);
+  font-weight: 600;
+}
+
+.fcd-table .fcd-money,
+.fcd-days .fcd-money {
+  color: var(--forest);
+  font-weight: 600;
+}
+
+.fcd-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.fcd-tile {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: var(--forest);
+  color: #fff;
+}
+
+.fcd-tile svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke-width: 1.9;
+}
+
+/* Panels: nothing scrolling inside; a long list shows eight and "Show all", so two side by side stay near in height. */
+
+.fcd-panel-body {
+  max-height: none;
+  overflow: visible;
+}
+
+.fcd-table th {
+  position: static;
+}
+
+.fcd-more {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0 1.125rem;
+  border: 0;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: var(--forest);
+  font: inherit;
+  font-size: var(--fs-2);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* By day: a bar for each day that sold. */
+.fcd-days {
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+}
+
+.fcd-day {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr) auto 4.5rem;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.75rem;
+  padding: 0 1.125rem;
+  font-size: var(--fs-3);
+}
+
+.fcd-day + .fcd-day {
+  border-top: 1px solid var(--canvas, var(--border));
+}
+
+.fcd-day-bar {
+  height: 0.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--slate-soft);
+}
+
+.fcd-day-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.fcd-day-pct {
+  text-align: right;
+}
+
+.fcd-quiet {
+  padding: 0.5rem 1.125rem 0.875rem;
+}
+
+.fcd-fix-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+/* A phone: labels in plain case, and a section folds with the chevron Inventory's groups use. */
+.mr .srp-worth-label {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.mr .fc-more > summary::after {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: 0.25rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform 0.15s ease;
+}
+
+.mr .fc-more[open] > summary::after {
+  content: '';
+  transform: rotate(-135deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mr .fc-more > summary::after {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .fcd-day-bar > span {
+    background: CanvasText;
+  }
+}
+
+/* A phone's quick periods: one row that slides, not two rows of pills. */
+@media (max-width: 860px) {
+  .mr-presets {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+
+  .mr-presets::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mr-preset {
+    flex: none;
+  }
+}
+
+/* By day is a strip of bars across the width, and so is Wasted and missing (five columns); Costliest dishes and What
+   was used, both eight rows, share a row: no short panel beside a tall one with a hole under it. */
+.fcd-grid > .fcd-panel:nth-child(1),
+.fcd-grid > .fcd-panel:nth-child(4) {
+  grid-column: 1 / -1;
+}
+
+/*
+ * apple-design review, 2026-11-21 ("go ahead"):
+ *  1. Green means good: the By-day bar measures sales, so it is forest at a third, not the "good" green.
+ *  2. One amber card, not three: the verdict is the "To fix" card's heading; a thin count is amber in its number only.
+ *  4. A good food cost is a green pill in the tables, as on the Menu.
+ *  5. A phone's unjudged % is in text colour, not a grey that reads as disabled.
+ *  6. Stock · Reports is one segmented switch at every width.
+ *  7. From / To in plain case, like every other label.
+ */
+.fcd-day-bar > span {
+  background: color-mix(in srgb, var(--forest) 38%, var(--surface));
+}
+
+.fcd-fix-verdict .fc-verdict {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--fs-4);
+}
+
+.fcd-fix-verdict .fc-verdict.is-partial,
+.fcd-fix-verdict .fc-verdict.is-warn {
+  color: var(--amber-ink);
+}
+
+.fcd-fix .fcd-fix-title {
+  font-size: var(--fs-2);
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.fcd-kpi.is-thin .fcd-kpi-n {
+  color: var(--amber-ink);
+}
+
+.fcd-table .fc-pct.is-ok,
+.fcd-days .fc-pct.is-ok {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.mr .srp-worth .fc-pct.is-none {
+  color: var(--text);
+}
+
+.mr .sls-date-label {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+@media (min-width: 1101px) {
+  .page-body.inv-page .inv-tabs {
+    align-self: flex-start;
+    width: 18rem;
+    max-width: 100%;
+    gap: 0;
+    padding: 0.1875rem;
+    border-radius: 0.875rem;
+    background: var(--slate-soft);
+    overflow: visible;
+  }
+
+  .page-body.inv-page .inv-tab {
+    flex: 1;
+    min-height: 2.25rem;
+    border: 0;
+    border-radius: 0.6875rem;
+    background: transparent;
+    color: var(--muted);
+    font-weight: 600;
+    box-shadow: none;
+  }
+
+  .page-body.inv-page .inv-tab.is-on {
+    background: var(--surface);
+    color: var(--forest);
+    box-shadow: 0 1px 2px rgb(16 24 40 / 10%);
+  }
+
+  .page-body.inv-page .inv-tab:hover:not(.is-on) {
+    background: color-mix(in srgb, var(--surface) 50%, transparent);
+    color: var(--text);
+  }
+}
+
+/* A phone: the verdict and the items to price in one amber card (the verdict alone keeps its own bar). */
+.fc-head-card:has(.fc-fix) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: 0.875rem 1rem;
+  border-left: 4px solid var(--amber);
+  border-radius: var(--radius-lg);
+  background: var(--amber-soft);
+}
+
+.fc-head-card:has(.fc-fix) .fc-verdict,
+.fc-head-card:has(.fc-fix) .fc-fix {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.fc-head-card:not(:has(.fc-fix)) {
+  display: contents;
+}
+
+/* A phone's food-cost card: its edge in the %'s own tone; grey when the % is not judged yet, never a green that says "good". */
+.mr .srp-kpi-card.is-primary:has(.fc-pct.is-none) { border-left-color: var(--border); }
+.mr .srp-kpi-card.is-primary:has(.fc-pct.is-ok) { border-left-color: var(--accent); }
+.mr .srp-kpi-card.is-primary:has(.fc-pct.is-warn) { border-left-color: var(--amber); }
+.mr .srp-kpi-card.is-primary:has(.fc-pct.is-bad) { border-left-color: var(--danger); }
+
+/*
+ * Owner, 2026-11-21 ("too much noise, not like a professional website") — FoodCostClean.tsx. One surface, no card per
+ * figure: the number and its status, a line of three figures split by hairlines, a short "Needs attention" list, then
+ * tabs with one plain table. Colour lives on the food cost and its dot only (and the waste log's kind, which is a word
+ * too). 344px first: a table's number columns fold into a grey line under each name.
+ */
+.fc2 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.fc2-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.fc2-hero-empty {
+  justify-content: flex-end;
+}
+
+.fc2-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--muted);
+  font-size: var(--fs-3);
+  font-weight: 500;
+}
+
+.fc2-number {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.875rem;
+}
+
+.fc2-big {
+  color: var(--text);
+  font-size: var(--fs-12);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.fc2-big.is-ok { color: var(--accent-deep); }
+.fc2-big.is-warn { color: var(--amber-ink); }
+.fc2-big.is-bad { color: var(--danger-deep); }
+
+.fc2-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  color: var(--muted);
+  font-size: var(--fs-3);
+  font-weight: 500;
+}
+
+.fc2-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.fc2-status.is-ok .fc2-dot { background: var(--accent); }
+.fc2-status.is-warn .fc2-dot,
+.fc2-status.is-partial .fc2-dot { background: var(--amber); }
+.fc2-status.is-bad .fc2-dot { background: var(--danger); }
+
+/* ⓘ: a small round disclosure beside the label; its words open under it. */
+.fc2-info {
+  position: relative;
+}
+
+.fc2-info > summary {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-style: italic;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+
+.fc2-info > summary::-webkit-details-marker { display: none; }
+
+/* 44px to a finger, without moving anything. */
+.fc2-info > summary::after {
+  content: '';
+  position: absolute;
+  inset: -0.75rem;
+}
+
+.fc2-info-body {
+  position: absolute;
+  top: 1.75rem;
+  left: 0;
+  z-index: 5;
+  width: min(22rem, 80vw);
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(16 24 40 / 12%);
+  color: var(--text);
+  font-size: var(--fs-2);
+  font-style: normal;
+  font-weight: 400;
+}
+
+.fc2-info-body p { margin: 0; }
+.fc2-info-body p + p { margin-top: 0.5rem; color: var(--muted); }
+
+/* The period: one button, its menu under it. */
+.fc2-period-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 0.875rem 0 1rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-3);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.fc2-period-btn svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--muted);
+}
+
+.fc2-period-panel {
+  min-width: 15rem;
+}
+
+.fc2-period-panel .dropdown-item.is-on {
+  color: var(--forest);
+  font-weight: 600;
+}
+
+.fc2-period-dates {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem 0.75rem;
+}
+
+.fc2-period-dates label {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+
+.fc2-period-dates input {
+  min-height: 2.75rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+}
+
+/* Three figures on one line, split by hairlines; two by two on a phone. */
+.fc2-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  margin: 0;
+  padding: 0.875rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.fc2-stats > div {
+  padding: 0.25rem 1.25rem;
+}
+
+.fc2-stats > div:first-child { padding-left: 0; }
+
+.fc2-stats > div + div {
+  border-left: 1px solid var(--border);
+}
+
+.fc2-stats dt {
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+
+.fc2-stats dd {
+  margin: 0.125rem 0 0;
+  color: var(--text);
+  font-size: var(--fs-8);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.fc2-h {
+  margin: 0 0 0.5rem;
+  color: var(--text);
+  font-size: var(--fs-3);
+  font-weight: 600;
+}
+
+/* Needs attention: a row a thing, plain text, its names as links, its one action at the end. */
+.fc2-attention ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fc2-attention li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  min-height: 2.75rem;
+  padding: 0.375rem 0 0.375rem 1rem;
+  border-bottom: 1px solid var(--canvas, var(--border));
+  font-size: var(--fs-3);
+  position: relative;
+}
+
+.fc2-attention li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  margin-top: -0.21875rem;
+  border-radius: 50%;
+  background: var(--amber);
+}
+
+.fc2-att-text { color: var(--text); }
+.fc2-att-detail { color: var(--muted); }
+.fc2-names { color: var(--muted); }
+
+.fc2-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0 0.625rem;
+}
+
+.fc2-link,
+.fc2-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  color: var(--forest);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--forest) 35%, transparent);
+  text-underline-offset: 0.2em;
+}
+
+.fc2-action {
+  margin-left: auto;
+  text-decoration: none;
+}
+
+/* Tabs: underlined words, the house tab. */
+.fc2-tabs {
+  display: flex;
+  gap: var(--sp-5);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  scrollbar-width: none;
+}
+
+.fc2-tabs::-webkit-scrollbar { display: none; }
+
+.fc2-tab {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-3);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.fc2-tab.is-on {
+  color: var(--forest);
+  font-weight: 600;
+}
+
+.fc2-tab.is-on::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--forest);
+}
+
+.fc2-tab-n {
+  color: var(--muted);
+  font-size: var(--fs-1);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The table: plain. Grey small headers, hairline rows, figures right-aligned. */
+.fc2-table {
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+  font-size: var(--fs-3);
+}
+
+.fc2-table th {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: var(--muted);
+  font-size: var(--fs-2);
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.fc2-table td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--canvas, var(--border));
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.fc2-table :is(th, td):first-child { padding-left: 0; }
+.fc2-table :is(th, td):last-child { padding-right: 0; }
+
+.fc2-num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.fc2-table th.fc2-num { text-align: right; }
+.fc2-name { font-weight: 500; }
+.fc2-sub { display: none; }
+.fc2-muted { color: var(--muted); }
+.fc2-money { font-weight: 600; }
+
+.fc2-pct {
+  display: inline-block;
+  min-width: 3.5rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.fc2-pct.is-ok { background: var(--accent-soft); color: var(--accent-deep); }
+.fc2-pct.is-warn { background: var(--amber-soft); color: var(--amber-ink); }
+.fc2-pct.is-bad { background: var(--danger-soft); color: var(--danger-deep); }
+.fc2-pct.is-none { color: var(--muted); }
+
+.fc2-kind {
+  margin-left: 0.375rem;
+  color: var(--muted);
+  font-size: var(--fs-1);
+  font-weight: 500;
+}
+
+.fc2-kind.is-wasted { color: var(--amber-ink); }
+.fc2-kind.is-lost { color: var(--danger-deep); }
+.fc2-kind.is-found { color: var(--accent-deep); }
+
+.fc2-empty,
+.fc2-foot {
+  margin: 0;
+  padding: 0.875rem 0;
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+
+/* A phone: one surface white card around everything below the number; columns fold under each name. */
+@media (max-width: 860px) {
+  .fc2-big { font-size: var(--fs-11); }
+
+  .fc2-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 0.75rem;
+  }
+
+  .fc2-stats > div:nth-child(odd) { padding-left: 0; border-left: 0; }
+
+  .fc2-wide { display: none; }
+
+  .fc2-sub {
+    display: block;
+    margin-top: 0.125rem;
+    color: var(--muted);
+    font-size: var(--fs-2);
+  }
+
+  .fc2-action { margin-left: 0; }
+}
+
+/* Inventory › Reports sits on the page's grey: the report reads on one white sheet, like a document. */
+.inv-page .srp.mr:has(.fc2) {
+  padding: var(--sp-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+@media (max-width: 860px) {
+  .inv-page .srp.mr:has(.fc2) {
+    padding: var(--sp-4);
+  }
+}
+
+/* The ⓘ words stay on screen at 344px (they opened from the label's left and ran 38px off), and an attention row's
+   dot sits on its first line when the row wraps. */
+.fc2-info-body {
+  width: min(22rem, calc(100vw - 8rem));
+}
+
+.fc2-attention li::before {
+  top: 1.1rem;
+  margin-top: 0;
+}
+
+/* "₹25 of every ₹100 you sell": the words sit on the number's line, quieter than it. */
+.fc2-per {
+  color: var(--text);
+  font-size: var(--fs-5);
+  font-weight: 500;
+}
+
+.fc2-number > .fc2-status {
+  flex-basis: 100%;
+}
+
+.fc2-loses {
+  display: block;
+  font-size: var(--fs-1);
+  font-weight: 500;
+}
+
+/* The ⓘ words open from the label's left edge, not the ⓘ's, so a longer label never pushes them off a phone. */
+.fc2-label {
+  position: relative;
+}
+
+.fc2-info {
+  position: static;
+}
+
+.fc2-info-body {
+  width: min(22rem, calc(100vw - 4.5rem));
+}

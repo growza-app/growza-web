@@ -18,6 +18,8 @@ import { formatTokenNo } from '../pos/pos-helpers';
 import { groupByDay } from './order-days';
 import { OrdersDeskTiles } from './OrdersDeskTiles';
 import { allCameBack } from '../lib/order-items';
+import { GraphicSvg } from '../components/ProductPhoto';
+import { orderTile } from './order-tile';
 
 /**
  * Jira GRW-614 — the Orders list.
@@ -165,8 +167,6 @@ export function OrdersClient({
     zomato: t('channels.zomato'),
   };
   const stateWord = (status: string): string => stateWords[status as keyof typeof stateWords] ?? t('list.unknownState');
-  const when = (iso: string) =>
-    new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: timezone }).format(new Date(iso));
   // On a phone the day is the group's heading, so a row says only the time.
   const timeOf = (iso: string) => new Intl.DateTimeFormat(intlLocale(locale), { hour: 'numeric', minute: '2-digit', timeZone: timezone }).format(new Date(iso));
   const dayLabel = (key: string, kind: 'today' | 'yesterday' | 'other') =>
@@ -180,6 +180,21 @@ export function OrdersClient({
   const isVoid = (r: OrderListRow) => r.status === 'cancelled' || r.status === 'returned';
   // A channel this build has no word for is shown as the data spells it.
   const channelWord = (c: string): string => channelWords[c as keyof typeof channelWords] ?? c;
+
+  // Owner, 2026-11-21 — each order's tile: how it went out, drawn on its colour (order-tile.ts).
+  const tileOf = (r: OrderListRow) => {
+    const tile = orderTile(r, kitchen);
+    return (
+      <span className="ord-tile" data-hue={tile.hue} aria-hidden="true">
+        <GraphicSvg kind={tile.kind} />
+      </span>
+    );
+  };
+  // How it was eaten and where, for a kitchen ("Dine-in · T5"); otherwise where it came from.
+  const howOf = (r: OrderListRow) =>
+    kitchen && r.orderType && r.orderType !== 'delivery' ? [typeWord(r.orderType), r.tableName].filter(Boolean).join(' · ') : channelWord(r.channel);
+  const tokenOf = (r: OrderListRow) => r.offlineToken ?? (r.tokenNo ? formatTokenNo(r.tokenNo) : null);
+  const open = (r: OrderListRow) => window.location.assign(`/orders/${r.id}`);
 
   const rows = page?.rows ?? [];
   const showMoney = rows.some((r) => r.amountMinor !== undefined);
@@ -343,6 +358,8 @@ export function OrdersClient({
                   {day.rows.map((r) => (
                     <li key={r.id} className="ord-card-item">
                       <a className={`ord-card${isVoid(r) ? ' is-void' : ''}`} href={`/orders/${r.id}`}>
+                        {tileOf(r)}
+                        <div className="ord-card-body">
                         <div className="ord-card-top">
                           <span className="ord-who">
                             {r.offlineToken ? (
@@ -381,6 +398,7 @@ export function OrdersClient({
                           <span className={`ord-state-chip ${r.paymentPending ? 'ord-s-waiting' : `ord-s-${r.known ? r.status : 'unknown'}`}`}>{r.paymentPending ? t('list.paymentPending') : stateWord(r.status)}</span>
                           {r.marketplaceUnconfirmed ? <span className="ord-unconfirmed">{t('list.notConfirmed')}</span> : null}
                         </div>
+                        </div>
                       </a>
                     </li>
                   ))}
@@ -389,48 +407,66 @@ export function OrdersClient({
             ))}
           </div>
 
+          {/* Owner, 2026-11-21 ("redesign the orders page like this too") — the Menu's table look: a mint header, the
+              orders under a bar for each day, each order its tile, its token and name, then where from, how many, how
+              much in forest and its state as a coloured pill. The whole row opens the order; its name is the link. */}
           <table className="ord-table">
             <thead>
               <tr>
-                <th>{t('list.cols.when')}</th>
+                <th>{t('list.cols.order')}</th>
                 <th>{t('list.cols.from')}</th>
-                <th>{t('list.cols.who')}</th>
                 <th className="ord-num">{t('list.cols.items')}</th>
                 {showMoney ? <th className="ord-num">{t('list.cols.amount')}</th> : null}
                 <th>{t('list.cols.state')}</th>
               </tr>
             </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id}>
-                  <td>
-                    <a className="ord-row-link" href={`/orders/${r.id}`}>
-                      {when(r.soldAt)}
-                    </a>
-                    {/* The token the guest holds where there is one, as on the phone; the code only for an order without. */}
-                    <div className="ord-code">
-                      {r.offlineToken ?? (r.tokenNo ? formatTokenNo(r.tokenNo) : t('list.orderCode', { code: r.code.toUpperCase() }))}
-                    </div>
-                    {r.sentLate ? <div className="ord-late">{t('list.sentLate')}</div> : null}
-                    {isDeliveryApp(r.channel) && r.externalRef ? <div className="ord-code">{t('list.appOrder', { ref: r.externalRef })}</div> : null}
-                    {branchOf(r.locationId) ? <div className="ord-code">{branchOf(r.locationId)}</div> : null}
-                  </td>
-                  <td>
-                    <span className={`ord-chan-badge ord-chan-${r.channel}`}>{channelWord(r.channel)}</span>
-                    {kitchen && r.orderType && r.orderType !== 'delivery' ? (
-                      <div className="ord-code">{[typeWord(r.orderType), r.tableName].filter(Boolean).join(' · ')}</div>
-                    ) : null}
-                  </td>
-                  <td className="ord-td-who">{whoOf(r)}</td>
-                  <td className="ord-num">{allCameBack(r) ? t('list.itemsAllBack', { count: r.itemsSold }) : r.items}</td>
-                  {showMoney ? <td className="ord-num ord-td-amount">{r.amountMinor !== undefined ? formatMoney(r.amountMinor, 'INR', locale) : ''}</td> : null}
-                  <td>
-                    <span className={`ord-state-chip ${r.paymentPending ? 'ord-s-waiting' : `ord-s-${r.known ? r.status : 'unknown'}`}`}>{r.paymentPending ? t('list.paymentPending') : stateWord(r.status)}</span>
-                    {r.marketplaceUnconfirmed ? <span className="ord-unconfirmed">{t('list.notConfirmed')}</span> : null}
-                  </td>
+            {groupByDay(rows, timezone, Date.now()).map((day) => (
+              <tbody key={day.key}>
+                <tr className="ord-tday">
+                  <th colSpan={showMoney ? 5 : 4} scope="colgroup">
+                    {dayLabel(day.key, day.kind)}
+                  </th>
                 </tr>
-              ))}
-            </tbody>
+                {day.rows.map((r) => (
+                  <tr key={r.id} className={`ord-tr${isVoid(r) ? ' is-void' : ''}`} onClick={() => open(r)}>
+                    <td>
+                      <div className="ord-order">
+                        {tileOf(r)}
+                        <div className="ord-order-text">
+                          <a className="ord-row-link" href={`/orders/${r.id}`} onClick={(e) => e.stopPropagation()}>
+                            {tokenOf(r) ? <span className="ord-token">{tokenOf(r)}</span> : null}
+                            <span className="ord-order-name">{whoOf(r)}</span>
+                          </a>
+                          <span className="ord-order-sub">
+                            <span>{timeOf(r.soldAt)}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>{howOf(r)}</span>
+                            {branchOf(r.locationId) ? (
+                              <>
+                                <span aria-hidden="true">·</span>
+                                <span>{branchOf(r.locationId)}</span>
+                              </>
+                            ) : null}
+                            {tokenOf(r) ? null : <span className="ord-code">{t('list.orderCode', { code: r.code.toUpperCase() })}</span>}
+                            {isDeliveryApp(r.channel) && r.externalRef ? <span className="ord-code">{t('list.appOrder', { ref: r.externalRef })}</span> : null}
+                            {r.sentLate ? <span className="ord-late">{t('list.sentLate')}</span> : null}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`ord-chan-badge ord-chan-${r.channel}`}>{channelWord(r.channel)}</span>
+                    </td>
+                    <td className="ord-num ord-td-items">{allCameBack(r) ? t('list.itemsAllBack', { count: r.itemsSold }) : r.items}</td>
+                    {showMoney ? <td className="ord-num ord-td-amount">{r.amountMinor !== undefined ? formatMoney(r.amountMinor, 'INR', locale) : ''}</td> : null}
+                    <td>
+                      <span className={`ord-state-chip ${r.paymentPending ? 'ord-s-waiting' : `ord-s-${r.known ? r.status : 'unknown'}`}`}>{r.paymentPending ? t('list.paymentPending') : stateWord(r.status)}</span>
+                      {r.marketplaceUnconfirmed ? <span className="ord-unconfirmed">{t('list.notConfirmed')}</span> : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            ))}
           </table>
 
           <Pagination page={query.page} total={page.total} pageSize={ORDERS_PAGE_SIZE} noun={t('list.nounOrders')} onChange={(p) => go({ ...query, page: p }, 'replace')} />

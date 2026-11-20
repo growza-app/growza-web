@@ -63,7 +63,8 @@ describe('owner, 2026-11-20 — Inventory has no Recipes tab; its old address la
   });
 
   it('the Food cost report sends "Add their recipes" to the Menu\'s tab', () => {
-    expect(readFileSync(path.join(tenant, 'reports/money/FoodCostReport.tsx'), 'utf8')).toContain('href="/stock?show=noRecipe"');
+    // Owner, 2026-11-21 — the report's one layout (FoodCostClean) carries it now.
+    expect(readFileSync(path.join(tenant, 'reports/money/FoodCostClean.tsx'), 'utf8')).toContain('href="/stock?show=noRecipe"');
   });
 
   it('a kitchen\'s laptop opens the Menu as a table; a shop\'s Stock is untouched by the Menu\'s tabs', () => {

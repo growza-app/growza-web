@@ -91,3 +91,23 @@ export function clampReportRange(
 
   return { fromISO: from, toISO: to };
 }
+
+/** Owner, 2026-11-21 — the one-tap periods beside the two dates (the delivery-apps card offers the same). */
+export type ReportPreset = 'last7' | 'thisWeek' | 'lastWeek' | 'thisMonth';
+export const REPORT_PRESETS: readonly ReportPreset[] = ['last7', 'thisWeek', 'lastWeek', 'thisMonth'];
+
+/** A preset's two dates. Weeks run Monday to Sunday, as an Indian business's do; nothing ends after today. */
+export function presetRange(kind: ReportPreset, todayISO: string): { fromISO: string; toISO: string } {
+  const today = DateTime.fromISO(todayISO, { zone: 'utc' });
+  const monday = today.minus({ days: today.weekday - 1 });
+  switch (kind) {
+    case 'thisWeek':
+      return { fromISO: monday.toISODate()!, toISO: todayISO };
+    case 'lastWeek':
+      return { fromISO: monday.minus({ days: 7 }).toISODate()!, toISO: monday.minus({ days: 1 }).toISODate()! };
+    case 'thisMonth':
+      return { fromISO: today.startOf('month').toISODate()!, toISO: todayISO };
+    default:
+      return defaultReportRange(todayISO);
+  }
+}

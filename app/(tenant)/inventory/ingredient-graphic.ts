@@ -17,6 +17,8 @@ export function ingredientGraphic(item: { name: string; category?: string | null
   if (/\b(milk|cream|curd|dahi|paneer|cheese|butter|khoya|mawa|ice cream|yogh?urt)\b/.test(name)) return 'milk';
   if (/\b(rice|dal|daal|atta|maida|besan|rava|sooji|suji|flour|chana|rajma|wheat|oats|poha)\b/.test(name)) return 'grain';
   if (/\b(box|bag|container|foil|cup|plate|spoon|napkin|tissue)\b/.test(name)) return 'box';
+  // A vegetable or herb by its name, for a list that carries no group (Inventory › Reports' rows).
+  if (/\b(onions?|tomato(es)?|potato(es)?|spinach|palak|coriander|dhania|mint|pudina|garlic|ginger|cabbage|carrots?|cauliflower|gobi|peas|cucumber|lemons?|methi|curry leaves|beans|brinjal|okra|bhindi|lettuce|mushrooms?)\b/.test(name)) return 'leaf';
   if (/dairy/.test(group)) return 'milk';
   if (/meat|fish|poultry/.test(group)) return 'drumstick';
   if (/veg|fruit|herb|green|produce/.test(group)) return 'leaf';

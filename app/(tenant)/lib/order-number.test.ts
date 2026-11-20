@@ -22,7 +22,10 @@ describe('the number an order goes by', () => {
     expect(home).not.toContain('#{o.code.toUpperCase()}');
     expect(home.match(/\{orderNumber\(o\)\}/g)).toHaveLength(3);
     // Jira GRW-716 — an order taken offline goes by its till's token first ("A12").
-    expect(src('../orders/OrdersClient.tsx')).toContain("{r.offlineToken ?? (r.tokenNo ? formatTokenNo(r.tokenNo) : t('list.orderCode', { code: r.code.toUpperCase() }))}");
+    // Owner, 2026-11-21 — the table's token sits beside the name; the code only for an order without one.
+    const orders = src('../orders/OrdersClient.tsx');
+    expect(orders).toContain('const tokenOf = (r: OrderListRow) => r.offlineToken ?? (r.tokenNo ? formatTokenNo(r.tokenNo) : null);');
+    expect(orders).toContain("{tokenOf(r) ? null : <span className=\"ord-code\">{t('list.orderCode', { code: r.code.toUpperCase() })}</span>}");
     const page = src('../orders/[id]/OrderClient.tsx');
     // Owner's review 2026-11-13 — a counted shelf titles by "Token n"; the restaurant keeps "Order #n" (QA 10 Nov).
     expect(page).toContain(": t('list.orderCode', { code: order.tokenNo ? formatTokenNo(order.tokenNo).slice(1) : code })");

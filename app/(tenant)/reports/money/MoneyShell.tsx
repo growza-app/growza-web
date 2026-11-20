@@ -8,7 +8,7 @@ import { formatMoney, intlLocale } from '../../lib/format';
 import { useBranch } from '../../components/BranchProvider';
 import { useSession } from '../../components/SessionProvider';
 import { ReportDates } from '../ReportDates';
-import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../../lib/report-dates';
+import { type ChangedEnd, clampReportRange, defaultReportRange, presetRange, REPORT_PRESETS, todayInZone } from '../../lib/report-dates';
 
 /**
  * Owner, 2026-11-14 — what Profit, Discounts & free and Payments share: the counter report's period (the last seven
@@ -70,10 +70,20 @@ export function useMoneyFormat() {
 }
 
 /** The period fields, then the screen — or its loading cards, or the sentence that says it failed and a way to try again. */
-export function MoneyShell<T>({ report, children }: { report: ReturnType<typeof useMoneyReport<T>>; children: (data: T) => ReactNode }) {
+export function MoneyShell<T>({
+  report,
+  children,
+  toolbar = true,
+}: {
+  report: ReturnType<typeof useMoneyReport<T>>;
+  children: (data: T) => ReactNode;
+  /** False where the report draws its own period control (Inventory › Reports' one period menu, 2026-11-21). */
+  toolbar?: boolean;
+}) {
   const t = useTranslations('moneyReports');
   return (
     <div className="srp mr">
+      {toolbar ? (
       <div className="srp-toolbar">
         <ReportDates
           from={report.dates.fromISO}
@@ -82,7 +92,20 @@ export function MoneyShell<T>({ report, children }: { report: ReturnType<typeof 
           labels={{ group: t('rangeLabel'), from: t('from'), to: t('to') }}
           onChange={report.onDates}
         />
+        {/* Owner, 2026-11-21 — one tap for the periods asked for most; the two dates stay for anything else. */}
+        <div className="mr-presets" role="group" aria-label={t('presetsLabel')}>
+          {REPORT_PRESETS.map((k) => {
+            const r = presetRange(k, report.todayISO);
+            const on = r.fromISO === report.dates.fromISO && r.toISO === report.dates.toISO;
+            return (
+              <button key={k} type="button" className={`mr-preset ${on ? 'is-on' : ''}`} aria-pressed={on} onClick={() => report.onDates(r.fromISO, r.toISO, 'to')}>
+                {t(`presets.${k}`)}
+              </button>
+            );
+          })}
+        </div>
       </div>
+      ) : null}
       {report.failed ? (
         <div className="ord-state" role="alert">
           <p>{t('loadError')}</p>

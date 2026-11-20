@@ -903,3 +903,186 @@
     font-weight: 600;
   }
 }
+
+/* The reminder's ✕ (owner, 2026-11-21): a 44px target on a phone, 36px on a laptop, in the strip's own amber. */
+.ks-note-close {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-right: -0.625rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--amber-ink);
+  cursor: pointer;
+}
+
+.ks-note-close svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.ks-note-close:hover {
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+}
+
+/* The words take the room; Enter amounts and ✕ sit together at the end. */
+.ks-phone-note > span:first-child,
+.ks-work-note > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (min-width: 1101px) {
+  .ks-work-note .ks-note-close {
+    width: 2.25rem;
+    height: 2.25rem;
+    margin-right: -0.5rem;
+  }
+}
+
+/* Owner, 2026-11-21 — a phone's group folds on its heading: the whole heading is the 44px button, a chevron turns. */
+.ks-group-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ks-group-toggle svg {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  transform: rotate(-90deg);
+  transition: transform 0.15s ease;
+}
+
+.ks-group-toggle.is-open svg {
+  transform: none;
+}
+
+.ks-group-head:has(.ks-group-toggle) {
+  margin-bottom: 0;
+}
+
+.ks-group:has(.ks-group-toggle:not(.is-open)) + .ks-group {
+  margin-top: calc(-1 * var(--sp-2));
+}
+
+.ks-fold-all {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: calc(-1 * var(--sp-3));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ks-group-toggle svg {
+    transition: none;
+  }
+}
+
+/* Owner, 2026-11-21 — the item's group: the list, then (for a new one) its box right under it. */
+.ks-category-select + .ks-category-new {
+  margin-top: var(--sp-2);
+}
+
+/* `.prd-input` sets `background`, which drops the chevron every select wears (01-controls.css): put it back. */
+.prd-input.ks-category-select {
+  padding-right: 2.25rem;
+  background-image: var(--select-chevron);
+  background-repeat: no-repeat;
+  background-position: right 0.875rem center;
+  background-size: 0.9375rem 0.9375rem;
+}
+
+/*
+ * Owner, 2026-11-21 ("we are wasting too much space") — a phone's top, from 416px of controls before the first item:
+ * Stock · Reports is one compact switch across the width, the rows sit 8px apart, and the search shares the
+ * All · To buy row.
+ */
+@media (max-width: 1100px) {
+  .inv-page:not(:has(.ks-desk)) {
+    gap: var(--sp-2);
+  }
+
+  .inv-page:not(:has(.ks-desk)) > .ks-body {
+    margin-top: 0;
+    gap: var(--sp-2);
+  }
+
+  .inv-page:not(:has(.ks-desk)) .inv-tabs {
+    max-width: none;
+    gap: 0;
+    padding: 0.1875rem;
+    border-radius: 0.875rem;
+    background: var(--slate-soft);
+    overflow: visible;
+  }
+
+  .inv-page:not(:has(.ks-desk)) .inv-tab {
+    flex: 1;
+    min-height: 2.5rem;
+    border: 0;
+    border-radius: 0.6875rem;
+    background: transparent;
+    color: var(--muted);
+    font-weight: 600;
+    box-shadow: none;
+  }
+
+  .inv-page:not(:has(.ks-desk)) .inv-tab.is-on {
+    background: var(--surface);
+    color: var(--forest);
+    box-shadow: 0 1px 2px rgb(16 24 40 / 10%);
+  }
+
+  .ks-body:not(.ks-desk) > .ks-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-2);
+  }
+
+  .ks-body:not(.ks-desk) > .ks-actions .ks-action {
+    min-width: 0;
+    padding: 0 0.5rem;
+    justify-content: center;
+  }
+
+  .ks-phone-tabs-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ks-phone-tabs-row > .ks-phone-tabs {
+    flex: none;
+    border-bottom: 0;
+  }
+
+  .ks-phone-tabs-row > .ks-search-phone {
+    flex: 1;
+    min-width: 0;
+    min-height: 2.75rem;
+    margin-bottom: 0.125rem;
+  }
+}
+
+@media (max-width: 1100px) {
+  /* The search's box is as wide as the room the tabs leave it, not its own default width. */
+  .ks-phone-tabs-row > .ks-search-phone input {
+    width: 100%;
+    min-width: 0;
+  }
+}
