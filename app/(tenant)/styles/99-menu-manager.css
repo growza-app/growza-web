@@ -1404,3 +1404,230 @@
     padding-bottom: 0.25rem;
   }
 }
+
+/*
+ * Owner, 2026-11-21 ("go ahead with the phone pass") — the phone's Menu as rows in the laptop table's look
+ * (MenuRows.tsx): a section's colour on its heading bar and its dishes' solid tiles, the dish's drawing in white,
+ * its name, its price in forest and how it sold, and the food cost pill. 344px first: a 44px tile, the pill and the
+ * 44px share leave the name ~150px, and it wraps rather than being cut.
+ */
+.mnu-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.mnu-rows-group { --sec: var(--muted); }
+.mnu-rows-group[data-hue='1'] { --sec: var(--cat-1); }
+.mnu-rows-group[data-hue='2'] { --sec: var(--cat-2); }
+.mnu-rows-group[data-hue='3'] { --sec: var(--cat-3); }
+.mnu-rows-group[data-hue='4'] { --sec: var(--cat-4); }
+.mnu-rows-group[data-hue='5'] { --sec: var(--cat-5); }
+.mnu-rows-group[data-hue='6'] { --sec: var(--cat-6); }
+
+.mnu-rows-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.5rem;
+  margin: 0 0 var(--sp-2);
+  padding-left: 0.625rem;
+  border-left: 3px solid var(--sec);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.mnu-rows-name {
+  color: var(--sec);
+}
+
+.mnu-rows-count,
+.mnu-rows-avg {
+  color: var(--muted);
+  font-size: var(--fs-2);
+  font-weight: 400;
+}
+
+.mnu-rows-avg::before {
+  content: '·';
+  margin-right: 0.5rem;
+}
+
+.mnu-rows-avg.is-warn { color: var(--amber-ink); }
+.mnu-rows-avg.is-bad { color: var(--danger-deep); }
+
+.mnu-rows-list {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  list-style: none;
+}
+
+.mnu-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding-right: 0.5rem;
+}
+
+.mnu-row + .mnu-row {
+  border-top: 1px solid var(--canvas, var(--border));
+}
+
+.mnu-row.is-on {
+  background: var(--accent-soft);
+}
+
+.mnu-row-btn {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  min-height: 3.75rem;
+  padding: 0.5rem 0.25rem 0.5rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mnu-row-btn:disabled {
+  cursor: default;
+}
+
+.mnu-row-btn:active:not(:disabled) {
+  background: var(--page-bg);
+}
+
+.mnu-row-photo {
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.625rem;
+  object-fit: cover;
+}
+
+.mnu-rows-group .mnu-row-photo.photo-none {
+  background: var(--sec);
+  color: #fff;
+}
+
+.mnu-rows .mnu-row-photo.photo-none::before,
+.mnu-rows .mnu-row-photo.photo-none::after {
+  display: none;
+}
+
+.mnu-rows .mnu-row-photo.photo-none svg {
+  width: 1.75rem;
+  height: 1.75rem;
+  stroke-width: 1.8;
+}
+
+.mnu-row.is-off .mnu-row-photo {
+  opacity: 0.5;
+}
+
+.mnu-row-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.mnu-row-name {
+  font-size: var(--fs-3);
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.mnu-row.is-off .mnu-row-name {
+  color: var(--muted);
+}
+
+.mnu-row-sub {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0 0.5rem;
+  min-width: 0;
+  white-space: nowrap;
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.mnu-row-price {
+  color: var(--forest);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.mnu-row-sold {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mnu-row-sold::before {
+  content: '·';
+  margin-right: 0.5rem;
+}
+
+.mnu-row-btn .mnu-fc {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  min-width: 3.5rem;
+  min-height: 1.75rem;
+  font-size: var(--fs-2);
+}
+
+.mnu-row-add {
+  flex: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mnu-row .mnu-share.share-wa-btn {
+  flex: none;
+  background: transparent;
+  color: var(--muted);
+}
+
+/* The phone's figures: the dish count is the tab's to say, so the top seller takes the row and its name is not cut. */
+@media (max-width: 860px) {
+  .prd-strip.mnu-strip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .prd-strip.mnu-strip > .prd-stat-cell:has(.prd-stat-products) {
+    display: none;
+  }
+
+  /* The sort is a dropdown on a phone too (the laptop got its chevron back on 2026-11-20). */
+  /* 16px stays (a smaller select zooms an iPhone on focus); Categories gives up width instead, its label is short. */
+  .prd-tools .prd-selects {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr) 2.75rem;
+  }
+
+  .prd-tools .prd-sort select {
+    padding-left: 0.75rem;
+    padding-right: 1.875rem;
+    background-image: var(--select-chevron);
+    background-repeat: no-repeat;
+    background-position: right 0.625rem center;
+    background-size: 0.875rem 0.875rem;
+  }
+}

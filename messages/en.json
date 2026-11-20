@@ -6474,6 +6474,7 @@
       "sheetTitle": "Recipe · {name}"
     },
     "overUsed": "Used {amount} {unit} more than recorded — count it",
+    "overUsedShort": "{amount} {unit} over — count it",
     "noneLeft": "None left",
     "foot": {
       "label": "More"
