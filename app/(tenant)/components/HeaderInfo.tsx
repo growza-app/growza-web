@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { IconInfo } from './icons';
 
 export function HeaderInfo({ text, label }: { text: string; label: string }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLSpanElement>(null);
+  const popId = useId();
   /*
    * Owner, 2026-11-20 — on a phone the ⓘ sits in a narrow title row, and the popover was boxed into it (a column one
    * word wide). Opened on a phone it is placed from the button instead: the screen's width less the page margins,
@@ -43,7 +44,9 @@ export function HeaderInfo({ text, label }: { text: string; label: string }) {
         className="topbar-info-btn"
         aria-label={label}
         aria-expanded={open}
-        title={text}
+        // Owner, 2026-11-20 — no `title`: the browser drew its own grey tooltip over this popover. The popover is the
+        // description, linked for a screen reader.
+        aria-describedby={popId}
         onClick={() => {
           if (!open) place();
           setOpen((o) => !o);
@@ -51,7 +54,7 @@ export function HeaderInfo({ text, label }: { text: string; label: string }) {
       >
         <IconInfo />
       </button>
-      <span className="topbar-info-pop" role="tooltip" style={open ? phonePos : undefined}>
+      <span id={popId} className="topbar-info-pop" role="tooltip" style={open ? phonePos : undefined}>
         {text}
       </span>
     </span>
