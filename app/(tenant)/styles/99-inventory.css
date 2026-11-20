@@ -109,3 +109,301 @@
   color: var(--danger);
   font-weight: 600;
 }
+
+/*
+ * Owner, 2026-11-20 ("redesign the inventory page, we are wasting too much space") — a laptop (1101px up, the Menu's
+ * edge) gets Inventory › Stock as one full-width card: All · To buy, the search and Stock in · Wasted · Count share
+ * its top row; the items are a table grouped as the phone groups them (Running low first), one 44px line an item with
+ * how much is left, the level it is flagged at, its average cost and how many dishes use it; Add item, Import,
+ * Suppliers and Switch off sit at its foot. Before, a 704px column of three-line cards under a full-width action bar.
+ */
+@media (min-width: 1101px) {
+  .inv-page:has(.ks-desk) .inv-tabs {
+    max-width: none;
+  }
+
+  .ks-body.ks-desk {
+    max-width: none;
+    gap: var(--sp-3);
+  }
+
+  .ks-desk > .ks-opening-short {
+    padding: 0.5rem 1rem;
+  }
+
+  .ks-work {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  .ks-work-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+    min-height: 3.5rem;
+    padding: 0.5rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ks-work-tabs {
+    display: flex;
+    align-self: stretch;
+    gap: var(--sp-5);
+  }
+
+  .ks-work-tab {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-3);
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .ks-work-tab:hover {
+    color: var(--text);
+  }
+
+  .ks-work-tab.is-on {
+    color: var(--forest);
+    font-weight: 600;
+  }
+
+  .ks-work-tab.is-on::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: -0.5rem;
+    left: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--forest);
+  }
+
+  .ks-work-n {
+    min-width: 1.5rem;
+    padding: 0.0625rem 0.4375rem;
+    border-radius: 999px;
+    background: var(--page-bg);
+    color: var(--muted);
+    font-size: var(--fs-1);
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .ks-work-tab.is-on .ks-work-n {
+    background: var(--accent-soft);
+    color: var(--forest);
+  }
+
+  .ks-work-tab.is-warn .ks-work-n {
+    background: var(--amber-soft);
+    color: var(--amber-ink);
+  }
+
+  .ks-work-search {
+    flex: 1 1 14rem;
+    max-width: 24rem;
+    min-width: 10rem;
+    margin-left: auto;
+  }
+
+  /* Stock in · Wasted · Count: buttons as wide as their words, not three thirds of the page. */
+  .ks-work-head .ks-actions,
+  .ks-work-head .ks-actions.ks-actions-2 {
+    display: flex;
+    flex: none;
+    gap: var(--sp-2);
+  }
+
+  .ks-work-head .ks-action {
+    min-height: 2.5rem;
+    padding: 0 1rem;
+  }
+
+  .ks-work-buy {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    padding: 1rem 1.25rem;
+  }
+
+  .ks-work > .ks-state {
+    margin: 1.25rem;
+  }
+
+  .ks-work > .ks-foot {
+    gap: 0 var(--sp-5);
+    padding: 0.25rem 1.25rem;
+  }
+
+  /* ---- the table ---- */
+  .ks-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: var(--fs-3);
+    line-height: 1.35;
+  }
+
+  .ks-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 2.25rem;
+    padding: 0 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: var(--fs-2);
+    font-weight: 500;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .ks-table thead th:first-child,
+  .ks-trow td:first-child {
+    padding-left: 1.25rem;
+  }
+
+  .ks-table .ks-num {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ks-trow-group > th {
+    padding: 0;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+  }
+
+  .ks-trow-group.is-low > th {
+    background: var(--amber-soft);
+  }
+
+  .ks-group-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    width: 100%;
+    min-height: 2.25rem;
+    padding: 0 1.25rem;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-2);
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .ks-trow-group.is-low .ks-group-btn {
+    color: var(--amber-ink);
+  }
+
+  .ks-group-btn svg {
+    width: 1rem;
+    height: 1rem;
+    transform: rotate(-90deg);
+    transition: transform 0.15s ease;
+  }
+
+  .ks-group-btn.is-open svg {
+    transform: none;
+  }
+
+  .ks-group-count {
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .ks-trow {
+    cursor: pointer;
+  }
+
+  .ks-trow td {
+    height: 2.75rem;
+    padding: 0.25rem 1rem;
+    border-bottom: 1px solid var(--canvas, var(--border));
+    vertical-align: middle;
+  }
+
+  .ks-trow:hover td {
+    background: var(--page-bg);
+  }
+
+  .ks-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.625rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .ks-item-name {
+    font-weight: 600;
+  }
+
+  .ks-item-meta {
+    color: var(--muted);
+    font-size: var(--fs-2);
+  }
+
+  .ks-item-warn {
+    display: block;
+    color: var(--danger-deep);
+    font-size: var(--fs-1);
+  }
+
+  .ks-left {
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .ks-left.is-below {
+    color: var(--danger-deep);
+    font-weight: 600;
+  }
+
+  .ks-left.is-low {
+    color: var(--amber-ink);
+  }
+
+  .ks-muted {
+    color: var(--muted);
+  }
+
+  .ks-go {
+    width: 2.5rem;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .ks-go svg {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+@media (min-width: 1101px) and (prefers-reduced-motion: reduce) {
+  .ks-group-btn svg {
+    transition: none;
+  }
+}

@@ -16,6 +16,8 @@ import { CountSheet } from './CountSheet';
 import { StockInSheet } from './StockInSheet';
 import { PurchasesSheet } from './PurchasesSheet';
 import { BuyList } from './BuyList';
+import { StockTable } from './StockTable';
+import { IconSearch } from '../components/icons';
 
 /** The sheets the actions open, one at a time. */
 type Sheet =
@@ -66,6 +68,14 @@ export function KitchenStockClient({
   const mayWorkKitchen = mayChange || (grid ? grid.kitchen === 'manage' && grid.bookings !== 'manage' : false);
 
   const [data, setData] = useState<KitchenStockList | null>(null);
+  const [desk, setDesk] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1101px)');
+    const read = () => setDesk(mq.matches);
+    read();
+    mq.addEventListener('change', read);
+    return () => mq.removeEventListener('change', read);
+  }, []);
   const [failed, setFailed] = useState(false);
   const [filter, setFilter] = useState<StockFilter>(initialFilter);
   const [query, setQuery] = useState('');
@@ -231,8 +241,9 @@ export function KitchenStockClient({
   const mayStockIn = mayChange && data.on && materials.length > 0;
   const mayRecord = mayWorkKitchen && materials.length > 0;
 
-  return (
-    <div className="ks-body">
+  // Owner, 2026-11-20 — a laptop (the Menu's 1101px edge) reads the items as a table in one card; a phone keeps its list.
+  const switchCard = (
+    <>
       {!data.on ? (
         <section className="ks-card ks-switch">
           <div className="ks-switch-copy">
@@ -247,6 +258,10 @@ export function KitchenStockClient({
         </section>
       ) : null}
 
+    </>
+  );
+  const actionBar = (
+    <>
       {mayStockIn || mayRecord ? (
         <div className={`ks-actions ${mayStockIn && mayRecord ? 'ks-actions-3' : 'ks-actions-2'}`} role="group" aria-label={t('actions.label')}>
           {mayStockIn ? (
@@ -276,6 +291,10 @@ export function KitchenStockClient({
         </div>
       ) : null}
 
+    </>
+  );
+  const notices = (
+    <>
       {notice ? (
         <p className="ks-notice" role="status">
           {notice}
@@ -287,6 +306,10 @@ export function KitchenStockClient({
         </div>
       ) : null}
 
+    </>
+  );
+  const openingCards = (
+    <>
       {data.on && mayChange && unopened.length > 0 && !openingFull ? (
         <section className="ks-card ks-opening-short" aria-label={t('openingTitle')}>
           <span>{t('openingShort', { n: unopened.length })}</span>
@@ -328,6 +351,10 @@ export function KitchenStockClient({
         </section>
       ) : null}
 
+    </>
+  );
+  const filterChips = (
+    <>
       {materials.length > 0 ? (
         <div className="prd-chips ks-chips" role="group" aria-label={t('filtersLabel')}>
           {(
@@ -349,6 +376,10 @@ export function KitchenStockClient({
         </div>
       ) : null}
 
+    </>
+  );
+  const listOrBuy = (
+    <>
       {filter === 'buy' && materials.length > 0 ? (
         <>
           <BuyList key={round} branchId={branchId} />
@@ -410,6 +441,10 @@ export function KitchenStockClient({
         </>
       )}
 
+    </>
+  );
+  const footLinks = (
+    <>
       {mayChange || (isOwner && data.on) ? (
         <div className="ks-foot" role="group" aria-label={t('foot.label')}>
           {mayChange ? (
@@ -433,6 +468,10 @@ export function KitchenStockClient({
         </div>
       ) : null}
 
+    </>
+  );
+  const dialogs = (
+    <>
       {confirmOff ? (
         // QA 2026-11-18 — one tap stopped tracking for every till; it now asks first and says what stops.
         <ConfirmDialog
@@ -507,6 +546,82 @@ export function KitchenStockClient({
           onNew={() => setSheet({ kind: 'stockIn', id: null })}
         />
       ) : null}
+    </>
+  );
+
+  if (desk) {
+    return (
+      <div className="ks-body ks-desk">
+        {switchCard}
+        {notices}
+        {openingCards}
+        <section className="ks-work" aria-label={t('title')}>
+          <div className="ks-work-head">
+            {materials.length > 0 ? (
+              <div className="ks-work-tabs" role="tablist" aria-label={t('filtersLabel')}>
+                {(
+                  [
+                    ['all', materials.length],
+                    ['buy', lowCount],
+                  ] as const
+                ).map(([f, n]) => (
+                  <button
+                    key={f}
+                    type="button"
+                    role="tab"
+                    aria-selected={filter === f}
+                    className={`ks-work-tab ${filter === f ? 'is-on' : ''} ${f === 'buy' && n > 0 ? 'is-warn' : ''}`}
+                    onClick={() => setFilter(f)}
+                  >
+                    {t(`filter.${f === 'buy' ? 'toBuy' : 'all'}`)} <span className="ks-work-n">{n}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            {filter === 'all' && materials.length > 0 ? (
+              <label className="search-wrap ks-work-search">
+                <IconSearch />
+                <input type="search" className="search-input search-input-bare" placeholder={t('search')} aria-label={t('search')} value={query} onChange={(e) => setQuery(e.target.value)} />
+              </label>
+            ) : null}
+            {actionBar}
+          </div>
+          {filter === 'buy' && materials.length > 0 ? (
+            <div className="ks-work-buy">
+              <BuyList key={round} branchId={branchId} />
+              {mayChange ? (
+                <button type="button" className="ks-quiet-link" onClick={() => setSheet({ kind: 'purchases' })}>
+                  {t('actions.pastStockIn')}
+                </button>
+              ) : null}
+            </div>
+          ) : materials.length === 0 ? (
+            <div className="ks-state ks-empty">
+              <strong>{t('emptyTitle')}</strong>
+              <span>{t('emptyHint')}</span>
+            </div>
+          ) : shown.length === 0 ? (
+            <p className="ks-state">{t('noMatch')}</p>
+          ) : (
+            <StockTable groups={groups} onOpen={(m) => setEditing(m)} />
+          )}
+          {footLinks}
+        </section>
+        {dialogs}
+      </div>
+    );
+  }
+
+  return (
+    <div className="ks-body">
+      {switchCard}
+      {actionBar}
+      {notices}
+      {openingCards}
+      {filterChips}
+      {listOrBuy}
+      {footLinks}
+      {dialogs}
     </div>
   );
 }

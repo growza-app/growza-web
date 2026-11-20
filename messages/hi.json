@@ -6475,6 +6475,15 @@
       "hint": "यह {amount} {unit} की जगह लेगा। जो रखा है, वही गिनें।",
       "save": "मात्रा सेव करें",
       "saved": "{name} अब {amount} {unit} है"
+    },
+    "table": {
+      "item": "चीज़",
+      "inStock": "स्टॉक में",
+      "lowAt": "कम होने पर",
+      "avgCost": "दाम",
+      "usedIn": "इस्तेमाल",
+      "open": "खोलें",
+      "dishes": "{n, plural, one {# डिश} other {# डिश}}"
     }
   },
   "recipe": {
