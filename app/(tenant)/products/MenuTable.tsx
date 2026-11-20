@@ -7,6 +7,8 @@ import type { Product, ProductCategory } from '../lib/api-types';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { IconArrowRight, IconCheck, IconChevronDown } from '../components/icons';
 import { useAnchoredPanel } from '../lib/useAnchoredPanel';
+import { ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
+import { productShareItem } from '../lib/share-on-whatsapp';
 import { costsMoreThanPrice, foodCostTone, pctText } from '../lib/food-cost';
 import { groupBySection, type RecipeInfo } from './menu-manager';
 
@@ -144,6 +146,12 @@ export function MenuTable({
                           </td>
                         ) : null}
                         <td className="mnu-act" onClick={(e) => e.stopPropagation()}>
+                          <div className="mnu-act-row">
+                          {/* Jira GRW-671 — the share sits beside ⋮, not inside it, for anyone who can see the screen. */}
+                          {(() => {
+                            const shareItem = productShareItem(p, { counted: false });
+                            return shareItem ? <ShareOnWhatsAppButton item={shareItem} branchId={p.locationId} bookable={false} photoUrl={p.imageUrl} /> : null;
+                          })()}
                           {writable ? (
                             <div className="dropdown-anchor" ref={menuFor === p.id ? panel.anchorRef : undefined}>
                               <button
@@ -203,6 +211,7 @@ export function MenuTable({
                               ) : null}
                             </div>
                           ) : null}
+                          </div>
                         </td>
                       </tr>
                     );

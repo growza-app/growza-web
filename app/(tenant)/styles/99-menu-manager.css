@@ -555,3 +555,14 @@
     display: inline;
   }
 }
+
+.mnu-act {
+  width: 5.5rem;
+}
+
+.mnu-act-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
