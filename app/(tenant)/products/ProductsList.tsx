@@ -16,6 +16,7 @@ import { canSee, type MemberRole } from '../lib/nav-policy';
 import { IconCart, IconCheck, IconChevronRight, IconClipboardCheck, IconEdit, IconGrid, IconPlus, IconMenu, IconPos, IconSearch, IconSort, IconTrendUp, IconUpload } from '../components/icons';
 import { MenuTable, sectionKey } from './MenuTable';
 import { MenuKebab } from './MenuKebab';
+import { MenuRows } from './MenuRows';
 import { averagePct, groupedOrder, needsRecipe, recipeStates, type MenuTab, type RecipeInfo } from './menu-manager';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
@@ -305,7 +306,8 @@ export function ProductsList({
     return searchKeepsBestFirst(search, sort, sortDir) ? found : sortShelf(found, sort, sortDir);
   }, [rows, filter, search, selectedCategories, sort, sortDir, counted, menuTab, recipes]);
   // The Menu's table reads section by section, so its pages are slices of the grouped order (the sort holds inside a section).
-  const groupedTable = !counted && menuView === 'table' && desk === true;
+  // The laptop's table and the phone's rows (owner, 2026-11-21) both read section by section; the laptop's Cards view does not.
+  const groupedTable = !counted && (desk === true ? menuView === 'table' : true);
   const ordered = useMemo(() => (groupedTable ? groupedOrder(shown, categories) : shown), [groupedTable, shown, categories]);
   const sectionCounts = useMemo(() => {
     const known = new Set(categories.map((c) => c.id));
@@ -1052,6 +1054,21 @@ export function ProductsList({
       </div>
     ) : null;
   const pages = shown.length > effectivePageSize ? <Pagination page={Math.min(page, pageCount)} total={shown.length} pageSize={effectivePageSize} noun={t(counted ? 'noun' : 'nounUncounted')} onChange={setPage} /> : null;
+  const menuRows =
+    shown.length === 0 ? (
+      nothing
+    ) : (
+      <MenuRows
+        rows={pageRows}
+        categories={categories}
+        sectionCounts={sectionCounts}
+        sectionFoodCost={sectionFoodCost}
+        recipes={recipesOn ? (recipes ?? new Map()) : null}
+        writable={writable}
+        isOn={isOn}
+        onOpen={(p, part) => openDish(p, part)}
+      />
+    );
   const menuCards =
     shown.length === 0 ? (
       nothing
@@ -1465,7 +1482,7 @@ export function ProductsList({
               )}
             </div>
             {alsoTryRow}
-            {!counted ? menuCards : list}
+            {!counted ? menuRows : list}
             {pages}
             {importRow}
           </>

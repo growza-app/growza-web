@@ -11,7 +11,7 @@ const hi = JSON.parse(readFileSync(resolve(__dirname, '../../../messages/hi.json
 describe('owner, 2026-11-20 — a laptop reads Inventory › Stock as one full-width table', () => {
   it('from 1101px (the Menu\'s edge) the items are a table in one card; a phone keeps its list', () => {
     expect(client).toContain("window.matchMedia('(min-width: 1101px)')");
-    expect(client).toMatch(/if \(desk\) \{[\s\S]*<StockTable groups=\{groups\} onOpen=\{\(m\) => setEditing\(m\)\} \/>/);
+    expect(client).toMatch(/if \(desk\) \{[\s\S]*<StockTable groups=\{groups\} hues=\{hues\} onOpen=\{\(m\) => setEditing\(m\)\} \/>/);
     expect(client).toMatch(/return \(\s*<div className="ks-body">\s*\{switchCard\}\s*\{actionBar\}/);
   });
 

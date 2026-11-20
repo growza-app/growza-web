@@ -6474,6 +6474,7 @@
       "sheetTitle": "रेसिपी · {name}"
     },
     "overUsed": "दर्ज से {amount} {unit} ज़्यादा इस्तेमाल हुआ — गिनती करें",
+    "overUsedShort": "{amount} {unit} ज़्यादा — गिनती करें",
     "noneLeft": "कुछ नहीं बचा",
     "foot": {
       "label": "और"

@@ -7,7 +7,7 @@ import type { StockMaterial } from '../lib/api-types';
 import { shownAmount, unitWord } from '../lib/kitchen-units';
 import { IconChevronDown, IconChevronRight } from '../components/icons';
 import { GraphicSvg } from '../components/ProductPhoto';
-import { groupHues, ingredientGraphic, stockLevel } from './ingredient-graphic';
+import { ingredientGraphic, stockLevel } from './ingredient-graphic';
 
 export interface StockGroup {
   key: string;
@@ -26,7 +26,16 @@ export interface StockGroup {
  * Owner, 2026-11-20 ("redesign the inventory page like this too") — the Menu's look: a mint header, each group in
  * its own colour, each item a drawing on a solid tile, and how much is left as a level against its low line.
  */
-export function StockTable({ groups, onOpen }: { groups: readonly StockGroup[]; onOpen: (m: StockMaterial) => void }) {
+export function StockTable({
+  groups,
+  hues,
+  onOpen,
+}: {
+  groups: readonly StockGroup[];
+  /** Each group's colour, from every item (KitchenStockClient), so a search does not recolour the groups. */
+  hues: ReadonlyMap<string, number>;
+  onOpen: (m: StockMaterial) => void;
+}) {
   const t = useTranslations('kitchenStock');
   const [folded, setFolded] = useState<ReadonlySet<string>>(new Set());
   // The cost column only for whoever is sent a cost (the API leaves `avgCost` out for the counter and the cook).
@@ -34,7 +43,6 @@ export function StockTable({ groups, onOpen }: { groups: readonly StockGroup[]; 
   const cols = 4 + (seesCost ? 1 : 0) + 1;
   // Owner, 2026-11-20 ("like the Menu") — each group's own colour, on its bar and on its items' tiles (an item in
   // Running low keeps its group's colour, so it is still recognisably dairy or a vegetable).
-  const hues = groupHues(groups.flatMap((g) => g.items.map((m) => m.category)));
   const hueOf = (category: string | null | undefined) => hues.get(category?.trim() ?? '');
   const toggle = (key: string) =>
     setFolded((prev) => {
@@ -105,9 +113,14 @@ export function StockTable({ groups, onOpen }: { groups: readonly StockGroup[]; 
                             </span>
                             <span className="ks-item-text">
                               <span className="ks-item-name">{m.name}</span>
-                              {g.low && m.category ? <span className="ks-item-meta">{m.category}</span> : null}
-                              {m.stock < 0 ? (
-                                <span className="ks-item-warn">{t('overUsed', { amount: shownAmount(-m.stock, m.unit), unit: unitWord(m.unit) })}</span>
+                              {/* The group word and the over-use warning share one line, so a Running low row is two lines, not three. */}
+                              {(g.low && m.category) || m.stock < 0 ? (
+                                <span className="ks-item-sub">
+                                  {g.low && m.category ? <span className="ks-item-meta">{m.category}</span> : null}
+                                  {m.stock < 0 ? (
+                                    <span className="ks-item-warn">{t('overUsed', { amount: shownAmount(-m.stock, m.unit), unit: unitWord(m.unit) })}</span>
+                                  ) : null}
+                                </span>
                               ) : null}
                             </span>
                           </button>

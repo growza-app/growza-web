@@ -18,6 +18,8 @@ import { PurchasesSheet } from './PurchasesSheet';
 import { BuyList } from './BuyList';
 import { StockTable } from './StockTable';
 import { IconSearch } from '../components/icons';
+import { GraphicSvg } from '../components/ProductPhoto';
+import { groupHues, ingredientGraphic, stockLevel } from './ingredient-graphic';
 
 /** The sheets the actions open, one at a time. */
 type Sheet =
@@ -153,6 +155,9 @@ export function KitchenStockClient({
     const q = query.trim().toLowerCase();
     return q ? materials.filter((m) => m.name.toLowerCase().includes(q) || (m.category ?? '').toLowerCase().includes(q)) : materials;
   }, [materials, query]);
+  // Each group's colour, from every item (not only the ones a search shows), so a group keeps its colour while searching.
+  const hues = useMemo(() => groupHues(materials.map((m) => m.category)), [materials]);
+  const hueOf = (category: string | null | undefined) => hues.get(category?.trim() ?? '');
   // Running low first (the API's order: furthest below first), then each group A–Z with its items A–Z; no group goes last as "Other".
   const groups = useMemo(() => {
     const low = shown.filter((m) => m.stock < 0 || m.low);
@@ -308,16 +313,20 @@ export function KitchenStockClient({
 
     </>
   );
+  // The one-line reminder. Owner, 2026-11-21 ("fold it") — on a laptop it is a slim strip inside the stock card, under
+  // its tools, not a card of its own above it: the table gets that height back.
+  const openingShort = (className: string) =>
+    data.on && mayChange && unopened.length > 0 && !openingFull ? (
+      <section className={className} aria-label={t('openingTitle')}>
+        <span>{t('openingShort', { n: unopened.length })}</span>
+        <button type="button" className="ks-quiet-link" onClick={() => setOpeningOpen(true)}>
+          {t('openingEnter')}
+        </button>
+      </section>
+    ) : null;
   const openingCards = (
     <>
-      {data.on && mayChange && unopened.length > 0 && !openingFull ? (
-        <section className="ks-card ks-opening-short" aria-label={t('openingTitle')}>
-          <span>{t('openingShort', { n: unopened.length })}</span>
-          <button type="button" className="ks-quiet-link" onClick={() => setOpeningOpen(true)}>
-            {t('openingEnter')}
-          </button>
-        </section>
-      ) : null}
+      {openingShort('ks-card ks-opening-short')}
       {data.on && mayChange && unopened.length > 0 && openingFull ? (
         <section className="ks-card ks-opening" aria-labelledby="ks-opening-title">
           <strong id="ks-opening-title">{t('openingTitle')}</strong>
@@ -356,7 +365,7 @@ export function KitchenStockClient({
   const filterChips = (
     <>
       {materials.length > 0 ? (
-        <div className="prd-chips ks-chips" role="group" aria-label={t('filtersLabel')}>
+        <div className="ks-work-tabs ks-phone-tabs" role="tablist" aria-label={t('filtersLabel')}>
           {(
             [
               ['all', materials.length],
@@ -366,11 +375,12 @@ export function KitchenStockClient({
             <button
               key={f}
               type="button"
-              className={`prd-chip ${filter === f ? 'prd-chip-on' : ''} ${f === 'buy' && n > 0 ? 'prd-chip-warn' : ''}`}
-              aria-pressed={filter === f}
+              role="tab"
+              aria-selected={filter === f}
+              className={`ks-work-tab ${filter === f ? 'is-on' : ''} ${f === 'buy' && n > 0 ? 'is-warn' : ''}`}
               onClick={() => setFilter(f)}
             >
-              {t(`filter.${f === 'buy' ? 'toBuy' : 'all'}`)} <span className="prd-chip-n">{n}</span>
+              {t(`filter.${f === 'buy' ? 'toBuy' : 'all'}`)} <span className="ks-work-n">{n}</span>
             </button>
           ))}
         </div>
@@ -396,12 +406,15 @@ export function KitchenStockClient({
         </div>
       ) : (
         <>
-          <input className="prd-input ks-search" type="search" placeholder={t('search')} aria-label={t('search')} value={query} onChange={(e) => setQuery(e.target.value)} />
+          <label className="search-wrap ks-search ks-search-phone">
+            <IconSearch />
+            <input type="search" className="search-input search-input-bare" placeholder={t('search')} aria-label={t('search')} value={query} onChange={(e) => setQuery(e.target.value)} />
+          </label>
           {shown.length === 0 ? (
             <p className="ks-state">{t('noMatch')}</p>
           ) : (
             groups.map((g) => (
-              <section key={g.key} className="ks-group" aria-label={g.title || undefined}>
+              <section key={g.key} className="ks-group" aria-label={g.title || undefined} data-hue={g.low ? undefined : hueOf(g.items[0]?.category)}>
                 {g.title ? (
                   <h3 className={`ks-group-head ${g.low ? 'is-low' : ''}`}>
                     {g.title} <span className="ks-group-n">{g.items.length}</span>
@@ -410,22 +423,37 @@ export function KitchenStockClient({
                 <ul className="ks-list">
                   {g.items.map((m) => {
                     const tone = m.stock < 0 ? 'below' : m.low ? 'low' : '';
+                    const level = m.stock < 0 ? null : stockLevel(m.stock, m.lowStockAt);
                     return (
-                      <li key={m.id}>
+                      <li key={m.id} data-hue={hueOf(m.category)}>
                         {/* Jira GRW-738 · GRW-744 — every row opens the item: its amount first, then what can be done to it. */}
                         <button type="button" className="ks-row ks-row-btn" onClick={() => setEditing(m)}>
+                          {/* Owner, 2026-11-21 (phone pass) — the laptop's tile: the item's drawing on its group's colour. */}
+                          <span className="ks-tile" aria-hidden="true">
+                            <GraphicSvg kind={ingredientGraphic(m)} />
+                          </span>
                           <span className="ks-name">
                             {m.name}
-                            {/* Under "Running low" the group is not a heading, so the row says it. */}
-                            {g.low && m.category ? <span className="ks-meta">{m.category}</span> : null}
-                            {m.stock < 0 ? (
-                              <span className="ks-meta ks-meta-warn">{t('overUsed', { amount: shownAmount(-m.stock, m.unit), unit: unitWord(m.unit) })}</span>
+                            {/* Under "Running low" the group is not a heading, so the row says it — with the warning, on one line. */}
+                            {(g.low && m.category) || m.stock < 0 ? (
+                              <span className="ks-meta ks-item-sub">
+                                {g.low && m.category ? <span className="ks-item-meta">{m.category}</span> : null}
+                                {m.stock < 0 ? (
+                                  <span className="ks-meta-warn ks-item-warn">{t('overUsedShort', { amount: shownAmount(-m.stock, m.unit), unit: unitWord(m.unit) })}</span>
+                                ) : null}
+                              </span>
                             ) : null}
                           </span>
                           <span className={`ks-amount ${tone ? `is-${tone}` : ''}`}>
-                            {m.stock < 0 ? t('noneLeft') : `${shownAmount(m.stock, m.unit)} ${unitWord(m.unit)}`}
+                            {/* None left is a small red pill on a phone, so the warning beside it has room. */}
+                            {m.stock < 0 ? <span className="ks-pill is-below">{t('noneLeft')}</span> : `${shownAmount(m.stock, m.unit)} ${unitWord(m.unit)}`}
                             {/* Low was colour alone on screen (the word was for screen readers only): now a word everyone sees. */}
                             {tone === 'low' ? <span className="ks-low-tag">{t('lowTag')}</span> : null}
+                            {level !== null ? (
+                              <span className={`ks-level ${tone ? `is-${tone}` : ''}`} aria-hidden="true">
+                                <span style={{ width: `${Math.max(level > 0 ? 6 : 0, Math.round(level * 100))}%` }} />
+                              </span>
+                            ) : null}
                           </span>
                           <svg className="ks-row-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                             <path d="m9 6 6 6-6 6" />
@@ -554,7 +582,8 @@ export function KitchenStockClient({
       <div className="ks-body ks-desk">
         {switchCard}
         {notices}
-        {openingCards}
+        {/* The full opening card when it is asked for; the one-line reminder lives inside the stock card instead. */}
+        {openingFull ? openingCards : null}
         <section className="ks-work" aria-label={t('title')}>
           <div className="ks-work-head">
             {materials.length > 0 ? (
@@ -586,6 +615,7 @@ export function KitchenStockClient({
             ) : null}
             {actionBar}
           </div>
+          {openingShort('ks-work-note')}
           {filter === 'buy' && materials.length > 0 ? (
             <div className="ks-work-buy">
               <BuyList key={round} branchId={branchId} />
@@ -603,7 +633,7 @@ export function KitchenStockClient({
           ) : shown.length === 0 ? (
             <p className="ks-state">{t('noMatch')}</p>
           ) : (
-            <StockTable groups={groups} onOpen={(m) => setEditing(m)} />
+            <StockTable groups={groups} hues={hues} onOpen={(m) => setEditing(m)} />
           )}
           {footLinks}
         </section>
@@ -617,8 +647,10 @@ export function KitchenStockClient({
       {switchCard}
       {actionBar}
       {notices}
-      {openingCards}
+      {/* Owner, 2026-11-21 (phone pass) — the one-line reminder is a slim strip under the tabs, not a card above them. */}
+      {openingFull ? openingCards : null}
       {filterChips}
+      {openingShort('ks-work-note ks-phone-note')}
       {listOrBuy}
       {footLinks}
       {dialogs}
