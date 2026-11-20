@@ -556,9 +556,10 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     // Jira GRW-744 — Buy is Stock's "To buy" filter: the address guards as Stock (whoever may open Stock) and sends you there.
     '/inventory/buy': /await guardScreen\('\/inventory'\);\s*const params = await searchParams;\s*redirect\(`\/inventory\?show=to-buy/,
     '/inventory/suppliers': /await guardScreen\('\/inventory\/suppliers'\);/,
-    '/inventory/recipes': /await guardScreen\('\/inventory\/recipes'\);/,
     '/inventory/reports': /await guardScreen\('\/inventory\/reports'\);/,
     '/inventory': /await guardScreen\('\/inventory'\);/,
+    // Owner, 2026-11-20 — Recipes moved to the Menu; the old address only sends you there, gated as the Menu is.
+    '/inventory/recipes': /await guardScreen\('\/stock'\);/,
     '/stock/channels': /await guardScreen\('\/stock'\);/,
     '/stock/sellers': /await guardScreen\('\/stock'\);/,
     '/stock': /<ProductsScreen[^>]*guard="\/stock"/,

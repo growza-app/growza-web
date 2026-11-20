@@ -9,7 +9,7 @@ const sheet = readFileSync(join(dir, 'ProductSheet.tsx'), 'utf8');
 describe('review, 2026-10-15 — the Products screen is reachable without a mouse', () => {
   it("the desk table's name cell is a real button, not a click on a plain row", () => {
     expect(list).toMatch(/<button[\s\S]{0,80}className="prd-cell-name prd-cell-tap"/);
-    expect(list).toMatch(/e\.stopPropagation\(\);\s*if \(writable\) setEditing\(p\);/);
+    expect(list).toMatch(/e\.stopPropagation\(\);\s*if \(writable\) openDish\(p\);/);
   });
 });
 

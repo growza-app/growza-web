@@ -128,7 +128,7 @@ export function FoodCostReport() {
                   {(r.noRecipe.stillMissing ?? r.noRecipe.names).length > 0 ? (
                     <>
                       <span className="fc-names">{t('stillMissing', { names: (r.noRecipe.stillMissing ?? r.noRecipe.names).join(', ') })}</span>
-                      <AppLink className="mr-link" href="/inventory/recipes">
+                      <AppLink className="mr-link" href="/stock?show=noRecipe">
                         {t('fixRecipes')}
                       </AppLink>
                     </>

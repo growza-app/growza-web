@@ -43,6 +43,7 @@ export function ProductSheet({
   inline = false,
   initialSaved = false,
   seesCost = true,
+  initialPart,
 }: {
   product: Product | null;
   branchId: string;
@@ -57,6 +58,8 @@ export function ProductSheet({
   initialSaved?: boolean;
   /** QA 2026-11-14 — false for a viewer the API sends no cost to (`shelfSeesCost`): no cost field, and none is sent. */
   seesCost?: boolean;
+  /** Owner, 2026-11-20 — the Menu's Recipe button opens the dish straight on its recipe. Ignored where there is no Recipe tab. */
+  initialPart?: 'recipe';
 }) {
   const t = useTranslations('products.form');
   const tp = useTranslations('products');
@@ -78,7 +81,7 @@ export function ProductSheet({
   const sizeCount = product?.variantCount ?? 0;
   const sheetRef = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
-  const [part, setPart] = useState<Part>('details');
+  const [part, setPart] = useState<Part>(initialPart === 'recipe' && recipesOn && product ? 'recipe' : 'details');
   const [name, setName] = useState(product?.name ?? '');
   const [price, setPrice] = useState(product ? String(Number(product.priceMinor) / 100) : '');
   const [cost, setCost] = useState(product?.costMinor != null ? String(Number(product.costMinor) / 100) : '');
@@ -449,7 +452,7 @@ export function ProductSheet({
                 {seesCost ? (
                   <div className="prd-field">
                     <label className="prd-field-label" htmlFor="prd-cost">
-                      {t('cost')}
+                      {t(counted ? 'cost' : 'costUncounted')}
                     </label>
                     <input
                       id="prd-cost"
@@ -470,7 +473,7 @@ export function ProductSheet({
                   {t('belowZero')}
                 </div>
               ) : seesCost ? (
-                <div className="sheet-foot">{t('costHint')}</div>
+                <div className="sheet-foot">{t(counted ? 'costHint' : 'costHintUncounted')}</div>
               ) : null}
               <GstInPrice priceMinor={Math.round(rupees * 100)} rateBp={gstRateBp} />
 
@@ -519,7 +522,7 @@ export function ProductSheet({
                   <AppLink className="sheet-row prd-sizes-row" href={`/products/${product.id}/sizes`}>
                     <span className="sheet-row-label">{ts('openRow')}</span>
                     <span className="sheet-row-value prd-sizes-value">
-                      {sizeCount > 0 ? ts('openRowCount', { count: sizeCount }) : ts('openRowNone')}
+                      {sizeCount > 0 ? ts('openRowCount', { count: sizeCount }) : ts(counted ? 'openRowNone' : 'openRowNoneUncounted')}
                       <IconChevronRight aria-hidden="true" />
                     </span>
                   </AppLink>

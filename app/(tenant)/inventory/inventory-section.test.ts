@@ -35,7 +35,9 @@ describe('FR-01 · AC-01 · AC-02 — who is offered Inventory, tab by tab', () 
   });
 
   it('the counter: Stock and Recipes — never Reports (the money); Suppliers is not a tab and stays closed to them', () => {
-    expect(offered('counter')).toEqual(['/inventory', '/inventory/recipes']);
+    expect(offered('counter')).toEqual(['/inventory']);
+    // Owner, 2026-11-20 — recipes are the Menu's now, and the counter still opens the Menu.
+    expect(canSee('/stock', 'receptionist', undefined, true, { ...KITCHEN, pages: GRIDS.counter })).toBe(true);
     expect(canSee('/inventory/suppliers', 'receptionist', undefined, true, { ...KITCHEN, pages: GRIDS.counter })).toBe(false);
   });
 
@@ -103,8 +105,8 @@ describe('FR-07 · the Menu — one screen, one address', () => {
     // The two redirects themselves, and the area gate that keeps their addresses a restaurant's, are the only places they may appear.
     const linking = sources().filter((f) => !/stock\/kitchen\/page\.tsx$|reports\/food-cost\/page\.tsx$|lib\/areas\.ts$/.test(f) && /['"`]\/stock\/kitchen|['"`]\/reports\/food-cost/.test(readFileSync(f, 'utf8')));
     expect(linking.map((f) => path.relative(tenant, f))).toEqual([]);
-    expect(read('stock/kitchen/page.tsx')).toMatch(/const tab = params\.show === 'no-recipe' \? '\/inventory\/recipes' : '\/inventory';/);
-    expect(read('stock/kitchen/page.tsx')).toContain("params.show === 'to-buy' ? 'show=to-buy' : null");
+    expect(read('stock/kitchen/page.tsx')).toMatch(/const tab = params\.show === 'no-recipe' \? '\/stock' : '\/inventory';/);
+    expect(read('stock/kitchen/page.tsx')).toContain("params.show === 'to-buy' ? 'show=to-buy' : params.show === 'no-recipe' ? 'show=noRecipe' : null");
     expect(read('inventory/buy/page.tsx')).toContain('redirect(`/inventory?show=to-buy');
     expect(read('reports/food-cost/page.tsx')).toContain("'/inventory/reports'");
   });
@@ -173,10 +175,6 @@ describe('AC-05 — 344px: the tab row scrolls inside itself, never the page', (
 describe('QA of GRW-741', () => {
   const src = (p: string) => readFileSync(path.resolve(__dirname, p), 'utf8');
 
-  it('the phone’s Back closes the recipe sheet and stays on Recipes', () => {
-    expect(src('RecipeSheet.tsx')).toContain('useBackCloses(onClose);');
-  });
-
   it('a tab replaces the address, so ← leaves Inventory in one tap', () => {
     expect(src('InventoryTabs.tsx')).toMatch(/href=\{tab\.href\}\s*replace\b/);
   });
@@ -196,11 +194,12 @@ describe('QA of GRW-741', () => {
     expect(costsMoreThanPrice(200_000)).toBe(true);
     expect(costsMoreThanPrice(100)).toBe(false);
     expect(costsMoreThanPrice(null)).toBe(false);
-    expect(src('RecipesClient.tsx')).toContain("t('overPrice')");
+    // Owner, 2026-11-20 — Recipes moved to the Menu: its table says it now, beside the dish's Recipe button.
+    expect(src('../products/MenuTable.tsx')).toContain("tm('overPrice')");
     expect(src('../products/RecipePanel.tsx')).toContain("t('overPrice')");
     for (const m of [en, hi]) {
       expect(m.recipe.overPrice).toBeTruthy();
-      expect(m.kitchenStock.recipes.overPrice).toBeTruthy();
+      expect(m.products.menu.overPrice).toBeTruthy();
     }
   });
 

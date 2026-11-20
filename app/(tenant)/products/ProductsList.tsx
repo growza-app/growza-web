@@ -11,9 +11,11 @@ import { PageHeader } from '../components/PageHeader';
 import { WriteOnly } from '../components/WriteOnly';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
-import { useAreas, useBusinessWritable, useSession, useWritable } from '../components/SessionProvider';
+import { useAreas, useBusinessWritable, useRecipesOn, useSession, useWritable } from '../components/SessionProvider';
 import { canSee, type MemberRole } from '../lib/nav-policy';
-import { IconCart, IconChevronRight, IconClipboardCheck, IconEdit, IconPlus, IconSearch, IconSort, IconUpload } from '../components/icons';
+import { IconCart, IconCheck, IconChevronRight, IconClipboardCheck, IconEdit, IconGrid, IconPlus, IconMenu, IconPos, IconSearch, IconSort, IconTrendUp, IconUpload } from '../components/icons';
+import { MenuTable, sectionKey } from './MenuTable';
+import { groupedOrder, needsRecipe, recipeStates, type MenuTab, type RecipeInfo } from './menu-manager';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
 import { productShareItem } from '../lib/share-on-whatsapp';
@@ -157,6 +159,7 @@ function SortableTh({
   dir,
   onSort,
   numeric,
+  className,
 }: {
   col: ShelfSort;
   label: string;
@@ -164,11 +167,12 @@ function SortableTh({
   dir: ShelfSortDir;
   onSort: (col: ShelfSort) => void;
   numeric?: boolean;
+  className?: string;
 }) {
   const active = sort === col;
   return (
     <th
-      className={numeric ? 'th-sortable prd-td-num' : 'th-sortable'}
+      className={`${numeric ? 'th-sortable prd-td-num' : 'th-sortable'}${className ? ` ${className}` : ''}`}
       aria-sort={active ? (dir === 'desc' ? 'descending' : 'ascending') : 'none'}
     >
       <button type="button" onClick={() => onSort(col)}>
@@ -188,6 +192,7 @@ export function ProductsList({
   initialFilter = 'all',
   heading,
   shownBranchName,
+  initialMenuTab = 'all',
 }: {
   products: Product[];
   categories: ProductCategory[];
@@ -200,8 +205,11 @@ export function ProductsList({
    * header says all, the screen says which branch's shelf it is showing instead of letting "All branches" stand over one branch's stock.
    */
   shownBranchName?: string | null;
+  /** Owner, 2026-11-20 — a link can open the Menu on a tab (`/stock?show=noRecipe`: the dishes still needing a recipe). */
+  initialMenuTab?: MenuTab;
 }) {
   const t = useTranslations('products');
+  const tm = useTranslations('products.menu');
   const tc = useTranslations('common');
   const tShare = useTranslations('share');
   const router = useRouter();
@@ -219,13 +227,40 @@ export function ProductsList({
   const [rows, setRows] = useState(products);
   const [categories, setCategories] = useState(initialCategories);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [filter, setFilter] = useState<ShelfFilter>(counted ? initialFilter : 'all');
+  // Owner, 2026-11-20 — a kitchen's Menu has three tabs (On the menu · Needs a recipe · Taken off); a shop's shelf keeps its chips.
+  const recipesOn = useRecipesOn() && !counted;
+  const [menuTab, setMenuTab] = useState<MenuTab>(counted ? 'all' : initialMenuTab === 'noRecipe' && !recipesOn ? 'all' : initialMenuTab);
+  const [filter, setFilter] = useState<ShelfFilter>(counted ? initialFilter : menuTab === 'retired' ? 'retired' : 'all');
   const [sort, setSort] = useState<ShelfSort>('name');
   const [sortDir, setSortDir] = useState<ShelfSortDir>('asc');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [menuView, setMenuView] = useState<'cards' | 'table'>('cards');
+  // Owner, 2026-11-20 — a laptop opens a menu as a table, read section by section; the cards are one tap away.
+  const [menuView, setMenuView] = useState<'cards' | 'table'>('table');
   const [editing, setEditing] = useState<Product | 'new' | null>(null);
+  /** Which part of the dish's sheet to open on: its recipe when the Recipe button opened it. */
+  const [editingPart, setEditingPart] = useState<'recipe' | undefined>(undefined);
+  const openDish = (p: Product | 'new', part?: 'recipe') => {
+    setEditingPart(part);
+    setEditing(p);
+  };
+  /** Each dish's recipe state (Jira GRW-741's list), read again whenever a sheet opens or closes — a recipe saves on its own. */
+  const [recipes, setRecipes] = useState<ReadonlyMap<string, RecipeInfo> | null>(null);
+  const editingKey = editing === null ? null : editing === 'new' ? 'new' : editing.id;
+  useEffect(() => {
+    if (!recipesOn) return;
+    let gone = false;
+    api
+      .recipeCosts(branchId)
+      .then((r) => {
+        if (!gone) setRecipes(recipeStates(r.dishes));
+      })
+      .catch(() => {});
+    return () => {
+      gone = true;
+    };
+  }, [recipesOn, branchId, editingKey]);
+  const [notice, setNotice] = useState<{ text: string; undo?: () => void } | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [stockTakeOpen, setStockTakeOpen] = useState(false);
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
@@ -264,9 +299,23 @@ export function ProductsList({
   const outCount = useMemo(() => inCategory.filter((p) => p.stock <= 0).length, [inCategory]);
   const worth = useMemo(() => shelfWorthMinor(inCategory), [inCategory]);
   const shown = useMemo(() => {
-    const found = filterShelf(rows, filter, search, selectedCategories);
+    const all = filterShelf(rows, filter, search, selectedCategories);
+    const found = !counted && menuTab === 'noRecipe' ? all.filter((p) => needsRecipe(p, recipes)) : all;
     return searchKeepsBestFirst(search, sort, sortDir) ? found : sortShelf(found, sort, sortDir);
-  }, [rows, filter, search, selectedCategories, sort, sortDir]);
+  }, [rows, filter, search, selectedCategories, sort, sortDir, counted, menuTab, recipes]);
+  // The Menu's table reads section by section, so its pages are slices of the grouped order (the sort holds inside a section).
+  const groupedTable = !counted && menuView === 'table' && desk === true;
+  const ordered = useMemo(() => (groupedTable ? groupedOrder(shown, categories) : shown), [groupedTable, shown, categories]);
+  const sectionCounts = useMemo(() => {
+    const known = new Set(categories.map((c) => c.id));
+    const m = new Map<string, number>();
+    for (const p of shown) m.set(sectionKey(p, known), (m.get(sectionKey(p, known)) ?? 0) + 1);
+    return m;
+  }, [shown, categories]);
+  const needRecipeCount = useMemo(
+    () => (recipes ? rows.filter((p) => needsRecipe(p, recipes) && matchesCategories(p, selectedCategories)).length : 0),
+    [rows, recipes, selectedCategories],
+  );
   const remote = useServiceSuggestions(search, branchId);
   const inFilterScope = useMemo(
     () => filterShelf(rows, filter, '', selectedCategories),
@@ -285,9 +334,9 @@ export function ProductsList({
     retired: rows.filter((p) => !p.active && matchesCategories(p, selectedCategories)).length,
   };
   const noneCount = live.filter((p) => p.categoryId === null).length;
-  const effectivePageSize = !counted && menuView === 'cards' ? 24 : PAGE_SIZE;
+  const effectivePageSize = !counted ? 24 : PAGE_SIZE;
   const pageCount = Math.max(1, Math.ceil(shown.length / effectivePageSize));
-  const pageRows = shown.slice((Math.min(page, pageCount) - 1) * effectivePageSize, Math.min(page, pageCount) * effectivePageSize);
+  const pageRows = ordered.slice((Math.min(page, pageCount) - 1) * effectivePageSize, Math.min(page, pageCount) * effectivePageSize);
   // QA of the overnight stack (item 12) — no top seller until something has sold: a new menu said "Top seller: Butter Naan · 0 sold".
   const topSeller = useMemo(() => {
     const selling = live.filter((p) => p.sold > 0);
@@ -378,6 +427,30 @@ export function ProductsList({
       setBusy(false);
     }
   };
+  /**
+   * Owner, 2026-11-20 — take a dish off the menu (or put it back) from its row, without opening it. Not a delete: the
+   * dish keeps its bills and its recipe, and the line that says so carries an Undo.
+   */
+  const toggleActive = async (p: Product, undoing = false) => {
+    setNotice(null);
+    try {
+      const updated = await api.updateProduct(p.id, { active: !p.active });
+      saved(updated);
+      if (!undoing) {
+        setNotice({
+          text: updated.active ? tm('putBackDone', { name: updated.name }) : tm('takenOffDone', { name: updated.name }),
+          undo: () => void toggleActive(updated, true),
+        });
+      }
+    } catch (err) {
+      setNotice({ text: err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed') });
+    }
+  };
+  const pickTab = (tab: MenuTab) =>
+    pick(() => {
+      setMenuTab(tab);
+      setFilter(tab === 'retired' ? 'retired' : 'all');
+    });
   const addCategory = async (name: string) => {
     const c = await api.createProductCategory(branchId, name);
     setCategories((prev) => [...prev, c]);
@@ -468,7 +541,7 @@ export function ProductsList({
               {t('stockTake.open')}
             </button>
           ) : null}
-          <button type="button" className="btn" onClick={() => setEditing('new')}>
+          <button type="button" className="btn" onClick={() => openDish('new')}>
             <IconPlus /> {t(counted ? 'add' : 'addUncounted')}
           </button>
         </WriteOnly>
@@ -483,22 +556,28 @@ export function ProductsList({
    * are on it and how many have been taken off.
    */
   const uncountedStrip = (
-    <div className="prd-strip prd-strip-2" role="list">
+    <div className="prd-strip prd-strip-2 mnu-strip" role="list">
       <div role="listitem" className="prd-stat-cell">
         <button
           type="button"
-          className={`prd-stat prd-stat-tap prd-stat-products ${filter === 'all' ? 'is-on' : ''}`}
-          aria-pressed={filter === 'all'}
-          onClick={() => pick(() => setFilter('all'))}
+          className={`prd-stat prd-stat-tap prd-stat-products mnu-stat ${menuTab === 'all' ? 'is-on' : ''}`}
+          aria-pressed={menuTab === 'all'}
+          onClick={() => pickTab('all')}
         >
-          <span className="prd-stat-n">{live.filter((p) => matchesCategories(p, selectedCategories)).length}</span>
+          <span className="mnu-stat-icon" aria-hidden="true">
+            <IconPos />
+          </span>
           <span className="prd-stat-l">{t('strip.onMenu')}</span>
+          <span className="prd-stat-n">{live.filter((p) => matchesCategories(p, selectedCategories)).length}</span>
           <span className="prd-stat-sub">{t('activeOnPos')}</span>
         </button>
       </div>
-      <div className="prd-stat prd-stat-cats" role="listitem">
-        <span className="prd-stat-n">{liveCategories.length}</span>
+      <div className="prd-stat prd-stat-cats mnu-stat" role="listitem">
+        <span className="mnu-stat-icon" aria-hidden="true">
+          <IconGrid />
+        </span>
         <span className="prd-stat-l">{t('menuSections')}</span>
+        <span className="prd-stat-n">{liveCategories.length}</span>
         <span className="prd-stat-sub">
           {liveCategories
             .slice(0, 3)
@@ -506,27 +585,75 @@ export function ProductsList({
             .join(' · ') || t('allDishes')}
         </span>
       </div>
-      <div className="prd-stat prd-stat-worth" role="listitem">
-        <span className={`prd-stat-n${topSeller ? ' prd-stat-name' : ''}`}>{topSeller ? topSeller.name : totalSold}</span>
+      <div className="prd-stat prd-stat-worth mnu-stat" role="listitem">
+        <span className="mnu-stat-icon" aria-hidden="true">
+          <IconTrendUp />
+        </span>
         <span className="prd-stat-l">{topSeller ? t('topSeller') : t('cols.sold')}</span>
+        <span className={`prd-stat-n${topSeller ? ' prd-stat-name' : ''}`}>{topSeller ? topSeller.name : totalSold}</span>
         <span className="prd-stat-sub">
           {topSeller ? `${t('sold', { n: topSeller.sold })} · ${formatMoney(topSeller.priceMinor)}` : t('soldAcrossMenu', { sold: t('sold', { n: totalSold }) })}
         </span>
       </div>
-      <div role="listitem" className="prd-stat-cell">
-        <button
-          type="button"
-          className={`prd-stat prd-stat-tap prd-stat-retired ${filter === 'retired' ? 'is-on' : ''}`}
-          aria-pressed={filter === 'retired'}
-          onClick={() => pick(() => setFilter((cur) => (cur === 'retired' ? 'all' : 'retired')))}
-        >
-          <span className="prd-stat-n">{counts.retired}</span>
-          <span className="prd-stat-l">{t('strip.offMenu')}</span>
-          <span className="prd-stat-sub">{t('hiddenFromPos')}</span>
-        </button>
-      </div>
     </div>
   );
+  /** Owner, 2026-11-20 — the Menu's tabs: what is on it, what still needs a recipe (where recipes are on), what was taken off. */
+  const menuTabs = (
+    <div className="mnu-tabs" role="tablist" aria-label={tm('tabsAria')}>
+      {(recipesOn ? (['all', 'noRecipe', 'retired'] as const) : (['all', 'retired'] as const)).map((tab) => (
+        <button
+          key={tab}
+          type="button"
+          role="tab"
+          aria-selected={menuTab === tab}
+          className={`mnu-tab ${menuTab === tab ? 'is-on' : ''} ${tab === 'noRecipe' && needRecipeCount > 0 ? 'is-warn' : ''}`}
+          onClick={() => pickTab(tab)}
+        >
+          <span className="mnu-tab-long">{tm(`tabs.${tab}`)}</span>
+          {/* A 344px phone has room for the three tabs only in shorter words. */}
+          <span className="mnu-tab-short" aria-hidden="true">
+            {tm(`tabsShort.${tab}`)}
+          </span>
+          <span className="mnu-tab-n">{tab === 'all' ? live.filter((p) => matchesCategories(p, selectedCategories)).length : tab === 'noRecipe' ? needRecipeCount : counts.retired}</span>
+        </button>
+      ))}
+    </div>
+  );
+  const anyFilter = search.trim().length > 0 || selectedCategories.length > 0 || menuTab !== 'all';
+  const clearFilters = anyFilter ? (
+    <button
+      type="button"
+      className="mnu-clear"
+      onClick={() =>
+        pick(() => {
+          setSearch('');
+          setSelectedCategories([]);
+          setMenuTab('all');
+          setFilter('all');
+        })
+      }
+    >
+      {tm('clearFilters')}
+    </button>
+  ) : null;
+  const noticeLine = notice ? (
+    <div className="banner mnu-notice" role="status">
+      <span>{notice.text}</span>
+      {notice.undo ? (
+        <button
+          type="button"
+          className="mnu-undo"
+          onClick={() => {
+            const undo = notice.undo;
+            setNotice(null);
+            undo?.();
+          }}
+        >
+          {tm('undo')}
+        </button>
+      ) : null}
+    </div>
+  ) : null;
   /*
    * Owner's review 2026-11-13 — on a phone the header has no room for the two reports (see the header comment), so
    * they sit under the four figures instead: the stock report and the reorder list, a 44px row each. Desktop keeps
@@ -713,7 +840,7 @@ export function ProductsList({
   };
   const nothing = (
     <div className="empty">
-      {search.trim().length >= 2 ? t('noMatch', { q: search.trim() }) : !counted && filter === 'all' ? t('filters.none.uncounted') : t(`filters.none.${filter}`)}
+      {search.trim().length >= 2 ? t('noMatch', { q: search.trim() }) : !counted && menuTab === 'noRecipe' ? tm('noneNeedRecipe') : !counted && filter === 'all' ? t('filters.none.uncounted') : t(`filters.none.${filter}`)}
     </div>
   );
   const list =
@@ -729,7 +856,7 @@ export function ProductsList({
                 type="button"
                 className={`prd-row-tap ${isOn(p) ? 'is-on' : ''}`}
                 aria-current={isOn(p) ? 'true' : undefined}
-                onClick={() => (writable ? setEditing(p) : undefined)}
+                onClick={() => (writable ? openDish(p) : undefined)}
                 disabled={!writable}
               >
                 <ProductPhoto className="prd-photo" product={p} />
@@ -797,7 +924,7 @@ export function ProductsList({
                   key={p.id}
                   className={`prd-tr ${isOn(p) ? 'is-on' : ''} ${p.active ? '' : 'prd-row-retired'}`}
                   aria-current={isOn(p) ? 'true' : undefined}
-                  onClick={() => (writable ? setEditing(p) : undefined)}
+                  onClick={() => (writable ? openDish(p) : undefined)}
                 >
                   <td>
                     {/* The row opens on a click anywhere; the name is a real button so a keyboard or a screen reader reaches it. */}
@@ -808,7 +935,7 @@ export function ProductsList({
                       aria-current={isOn(p) ? 'true' : undefined}
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (writable) setEditing(p);
+                        if (writable) openDish(p);
                       }}
                     >
                       <ProductPhoto className="prd-photo" product={p} />
@@ -864,6 +991,37 @@ export function ProductsList({
         </table>
       </div>
     );
+  // A column of dashes says nothing: a kitchen's dish is made, not bought, so its cost is the recipe's (the % beside it); the
+  // typed-in cost column shows only when some dish here has one.
+  const menuCostCol = seesCost && shown.some((p) => p.costMinor != null);
+  const menuTable =
+    shown.length === 0 ? (
+      nothing
+    ) : (
+      <MenuTable
+        rows={pageRows}
+        categories={categories}
+        sectionCounts={sectionCounts}
+        recipes={recipesOn ? (recipes ?? new Map()) : null}
+        seesCost={menuCostCol}
+        writable={writable}
+        isOn={isOn}
+        onOpen={(p, part) => openDish(p, part)}
+        onToggleActive={(p) => void toggleActive(p)}
+        onDelete={(p) => setDeleting(p)}
+        head={
+          <tr>
+            <SortableTh col="name" label={t('cols.product', { product: nouns.Product })} sort={sort} dir={sortDir} onSort={pickColumnSort} />
+            <SortableTh col="status" label={t('cols.status')} sort={sort} dir={sortDir} onSort={pickColumnSort} className="mnu-c-narrow" />
+            <SortableTh col="price" label={t('cols.price')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric />
+            {menuCostCol ? <SortableTh col="cost" label={t('cols.cost')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric /> : null}
+            <SortableTh col="sold" label={t('cols.sold')} sort={sort} dir={sortDir} onSort={pickColumnSort} numeric className="mnu-c-narrow" />
+            {recipesOn ? <th>{tm('recipeCol')}</th> : null}
+            <th className="mnu-act" aria-label={tm('actionsCol')} />
+          </tr>
+        }
+      />
+    );
   /*
    * Owner, 2026-10-18 — under the list, not in the header: Sell, Count stock and Add already fill a 344px header
    * (a fourth button pushed the avatar and the Add button off the screen), and loading a file is a set-up job, not a
@@ -895,7 +1053,7 @@ export function ProductsList({
               className={`prd-menu-card ${isOn(p) ? 'is-on' : ''} ${p.active ? '' : 'is-retired'}`}
               aria-current={isOn(p) ? 'true' : undefined}
               disabled={!writable}
-              onClick={() => (writable ? setEditing(p) : undefined)}
+              onClick={() => (writable ? openDish(p) : undefined)}
             >
               <div className="prd-menu-card-media">
                 <ProductPhoto className="prd-menu-card-photo" product={p} />
@@ -913,6 +1071,12 @@ export function ProductsList({
                   <span className="prd-menu-card-price">{formatMoney(p.priceMinor)}</span>
                   <span className="prd-menu-card-sold">{t('sold', { n: p.sold })}</span>
                 </div>
+                {recipesOn && recipes && p.active ? (
+                  <span className={`mnu-card-recipe is-${recipes.get(p.id)?.state ?? 'none'}`}>
+                    {(recipes.get(p.id)?.state ?? 'none') === 'done' ? <IconCheck /> : null}
+                    {tm(`recipe.${recipes.get(p.id)?.state ?? 'none'}`)}
+                  </span>
+                ) : null}
               </div>
             </button>
             {shareItem ? <ShareOnWhatsAppButton item={shareItem} branchId={p.locationId} bookable={false} photoUrl={p.imageUrl} /> : null}
@@ -924,8 +1088,9 @@ export function ProductsList({
   const sheet = (inline: boolean) =>
     editing ? (
       <ProductSheet
-        key={editing === 'new' ? 'new' : editing.id}
+        key={`${editing === 'new' ? 'new' : editing.id}:${editingPart ?? ''}`}
         product={editing === 'new' ? null : editing}
+        initialPart={editingPart}
         branchId={branchId}
         categories={liveCategories}
         onSaved={saved}
@@ -940,6 +1105,7 @@ export function ProductsList({
     <>
       {/* Owner's review 2026-11-13 — on a counted shelf the header names the branch (branch-routes), so no banner. */}
       {shownBranchName && !counted ? <div className="banner banner-info prd-branch-note">{t('shownBranch', { branch: shownBranchName })}</div> : null}
+      {noticeLine}
       {importNote ? (
         <div className="banner" role="status">
           {importNote}
@@ -1105,53 +1271,87 @@ export function ProductsList({
           {reportLinks}
           <div className={`pf-wide-grid prd-desk-grid ${editing ? 'has-sheet' : 'is-full'}`}>
             <section className="pf-wide-mid prd-desk-mid" aria-label={t('title')}>
-              <div className="prd-desk-tools">
-                {searchBox}
-                {categoriesDropdown}
-                {sortBox}
-                {!counted ? (
-                  <div className="prd-view-seg" role="group" aria-label={t('menuViewAria')}>
-                    <button
-                      type="button"
-                      className={`prd-view-btn ${menuView === 'cards' ? 'is-on' : ''}`}
-                      aria-pressed={menuView === 'cards'}
-                      onClick={() => pick(() => setMenuView('cards'))}
-                    >
-                      {t('viewCards')}
-                    </button>
-                    <button
-                      type="button"
-                      className={`prd-view-btn ${menuView === 'table' ? 'is-on' : ''}`}
-                      aria-pressed={menuView === 'table'}
-                      onClick={() => pick(() => setMenuView('table'))}
-                    >
-                      {t('viewTable')}
-                    </button>
+              {!counted ? (
+                /* Owner, 2026-11-20 — the Menu in one card: its tabs, one row of tools, the dishes, the pages. */
+                <div className="mnu-work">
+                  {/* Owner, 2026-11-20 ("they are wasting a lot of space") — the count and Clear filters share the tabs' row. */}
+                  <div className="mnu-head">
+                    {menuTabs}
+                    <div className="mnu-result-row">
+                      <span className="mnu-result">{tm('result', { count: shown.length })}</span>
+                      {clearFilters}
+                    </div>
                   </div>
-                ) : null}
-                {canStockTake && writable ? (
-                  <button type="button" className="btn btn-ghost prd-bulk-edit-btn" onClick={() => setBulkEditOpen(true)}>
-                    {t('bulkTable.open')}
-                  </button>
-                ) : null}
-                {canStockTake && writable ? (
-                  <button type="button" className="btn btn-ghost prd-import-btn" onClick={openImport}>
-                    <IconUpload /> {t('import.open')}
-                  </button>
-                ) : null}
-              </div>
-              {counted ? chips : null}
-              {alsoTryRow}
-              {!counted && menuView === 'cards' ? (
-                <div className="prd-menu-cards-wrap">
-                  {menuCards}
+                  <div className="prd-desk-tools mnu-tools">
+                    {searchBox}
+                    {categoriesDropdown}
+                    {sortBox}
+                    <div className="prd-view-seg" role="group" aria-label={t('menuViewAria')}>
+                      <button
+                        type="button"
+                        className={`prd-view-btn ${menuView === 'table' ? 'is-on' : ''}`}
+                        aria-pressed={menuView === 'table'}
+                        aria-label={t('viewTable')}
+                        title={t('viewTable')}
+                        onClick={() => pick(() => setMenuView('table'))}
+                      >
+                        <IconMenu />
+                      </button>
+                      <button
+                        type="button"
+                        className={`prd-view-btn ${menuView === 'cards' ? 'is-on' : ''}`}
+                        aria-pressed={menuView === 'cards'}
+                        aria-label={t('viewCards')}
+                        title={t('viewCards')}
+                        onClick={() => pick(() => setMenuView('cards'))}
+                      >
+                        <IconGrid />
+                      </button>
+                    </div>
+                    {/* Set-up jobs, not daily ones: icons with their names on hover, so the tools stay one row on a 1366px laptop. */}
+                    {canStockTake && writable ? (
+                      <button type="button" className="mnu-icon-btn mnu-tool-icon" aria-label={t('bulkTable.open')} title={t('bulkTable.open')} onClick={() => setBulkEditOpen(true)}>
+                        <IconEdit />
+                      </button>
+                    ) : null}
+                    {canStockTake && writable ? (
+                      <button type="button" className="mnu-icon-btn mnu-tool-icon" aria-label={t('import.open')} title={t('import.open')} onClick={openImport}>
+                        <IconUpload />
+                      </button>
+                    ) : null}
+                  </div>
+                  {alsoTryRow}
+                  {menuView === 'cards' ? (
+                    <div className="prd-menu-cards-wrap mnu-cards">{menuCards}</div>
+                  ) : (
+                    menuTable
+                  )}
                   {pages}
                 </div>
               ) : (
-                <div className="card prd-desk-card">
-                  {table}
-                  {pages}
-                </div>
+                <>
+                  <div className="prd-desk-tools">
+                    {searchBox}
+                    {categoriesDropdown}
+                    {sortBox}
+                    {canStockTake && writable ? (
+                      <button type="button" className="btn btn-ghost prd-bulk-edit-btn" onClick={() => setBulkEditOpen(true)}>
+                        {t('bulkTable.open')}
+                      </button>
+                    ) : null}
+                    {canStockTake && writable ? (
+                      <button type="button" className="btn btn-ghost prd-import-btn" onClick={openImport}>
+                        <IconUpload /> {t('import.open')}
+                      </button>
+                    ) : null}
+                  </div>
+                  {chips}
+                  {alsoTryRow}
+                  <div className="card prd-desk-card">
+                    {table}
+                    {pages}
+                  </div>
+                </>
               )}
             </section>
             {editing ? (
@@ -1192,6 +1392,7 @@ export function ProductsList({
           <>
             {counted ? shelfLine : strip}
             {reportLinks}
+            {!counted ? menuTabs : null}
             <div className="prd-tools">
               {searchBox}
               {counted ? (

@@ -1,18 +1,17 @@
+import { redirect } from 'next/navigation';
 import { guardScreen } from '../../lib/screen-guard';
 import { screenTitle } from '../../lib/page-title';
-import { InventoryScreen } from '../InventoryScreen';
-import { RecipesClient } from '../RecipesClient';
 
 export const dynamic = 'force-dynamic';
-export const metadata = screenTitle('Inventory · Recipes');
+export const metadata = screenTitle('Menu');
 
-/** Jira GRW-741 FR-05 — Inventory › Recipes: every dish with its cost and food cost, the ones with no recipe first (`RecipesClient`). */
-export default async function InventoryRecipesPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
-  await guardScreen('/inventory/recipes');
+/**
+ * Owner, 2026-11-20 — Inventory's Recipes tab is gone: a dish's recipe is looked after on the Menu, beside the dish
+ * (its Recipe button, and the Menu's "Needs a recipe" tab). An old link or bookmark lands on that tab.
+ */
+export default async function InventoryRecipesMoved({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
+  // Asked by the NEW address, so whoever may not open the Menu is sent Home from here as well.
+  await guardScreen('/stock');
   const params = await searchParams;
-  return (
-    <InventoryScreen tab="recipes" wanted={params.branch ?? null}>
-      {(branchId) => <RecipesClient key={branchId} branchId={branchId!} />}
-    </InventoryScreen>
-  );
+  redirect(params.branch ? `/stock?show=noRecipe&branch=${encodeURIComponent(params.branch)}` : '/stock?show=noRecipe');
 }

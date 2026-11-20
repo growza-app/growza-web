@@ -4000,7 +4000,9 @@
       "secCodes": "Codes & tax",
       "saveAndSizes": "Save & add sizes",
       "sizesNewHint": "Selling this in multiple sizes (S, M, L or 28, 30, 32)? Save & add sizes to enter each size's stock and online codes.",
-      "stockEditHint": "Current count on the shelf. Open the Stock tab above to add, remove, or move stock."
+      "stockEditHint": "Current count on the shelf. Open the Stock tab above to add, remove, or move stock.",
+      "costHintUncounted": "What one costs you to make. Only you see this. It shows what you keep.",
+      "costUncounted": "Costs to make"
     },
     "searchPlaceholder": "Search the shelf",
     "noMatch": "Nothing on the shelf is called \"{q}\".",
@@ -4377,7 +4379,8 @@
       "summaryUnits": "{count} in stock",
       "totalRow": "Total",
       "unsavedChanges": "Unsaved changes",
-      "allSaved": "All changes saved"
+      "allSaved": "All changes saved",
+      "openRowNoneUncounted": "Add sizes or portions (Half, Full)"
     },
     "moveSizes": {
       "open": "Move to another branch",
@@ -4688,6 +4691,48 @@
       "notKeptDescription": "Descriptions in the file are not kept yet.",
       "pricesDiffer": "{n, plural, one {1 dish on the menu has a different price in the file.} other {# dishes on the menu have a different price in the file.}} Prices are not changed here.",
       "menuPrice": "{price} on the menu — not changed"
+    },
+    "menu": {
+      "tabsAria": "Show",
+      "tabs": {
+        "all": "On the menu",
+        "noRecipe": "Needs a recipe",
+        "retired": "Taken off"
+      },
+      "sectionCount": "{count, plural, one {# dish} other {# dishes}}",
+      "recipeCol": "Recipe",
+      "actionsCol": "Actions",
+      "actionsAria": "More for {name}",
+      "recipe": {
+        "done": "Recipe",
+        "partial": "Finish recipe",
+        "none": "Add recipe"
+      },
+      "recipeAria": {
+        "done": "Open the recipe of {name}",
+        "partial": "Finish the recipe of {name}: a size has none",
+        "none": "Add a recipe to {name}"
+      },
+      "edit": "Edit",
+      "openRecipe": "Recipe",
+      "takeOff": "Take off the menu",
+      "putBack": "Put back on the menu",
+      "takenOffDone": "{name} is taken off the menu. It keeps its bills and its recipe.",
+      "putBackDone": "{name} is back on the menu.",
+      "undo": "Undo",
+      "clearFilters": "Clear filters",
+      "result": "{count, plural, one {# dish} other {# dishes}}",
+      "noneNeedRecipe": "Every dish on the menu has its recipe.",
+      "overPrice": "Costs more than its price — check the price",
+      "tabsShort": {
+        "all": "On menu",
+        "noRecipe": "No recipe",
+        "retired": "Taken off"
+      },
+      "editAria": "Edit {name}",
+      "takeOffAria": "Take {name} off the menu",
+      "putBackAria": "Put {name} back on the menu",
+      "deleteAria": "Delete {name}"
     }
   },
   "kitchen": {

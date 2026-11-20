@@ -26,6 +26,6 @@ describe('what a product cost is shown only to whoever is sent it', () => {
     expect(sheet).toContain("{seesCost ? (\n                  <div className=\"prd-field\">\n                    <label className=\"prd-field-label\" htmlFor=\"prd-cost\">");
     // The form sends no cost it never showed, and does not promise "Only you see this" to somebody else.
     expect(sheet).toContain('...(seesCost ? { costMinor:');
-    expect(sheet).toContain(") : seesCost ? (\n                <div className=\"sheet-foot\">{t('costHint')}</div>");
+    expect(sheet).toContain(") : seesCost ? (\n                <div className=\"sheet-foot\">{t(counted ? 'costHint' : 'costHintUncounted')}</div>");
   });
 });

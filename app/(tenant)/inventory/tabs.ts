@@ -7,7 +7,6 @@
  */
 export const INVENTORY_TABS = [
   { key: 'stock', href: '/inventory' },
-  { key: 'recipes', href: '/inventory/recipes' },
   { key: 'reports', href: '/inventory/reports' },
 ] as const;
 
