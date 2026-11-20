@@ -1913,13 +1913,6 @@ body {
     display: contents;
   }
 
-  .topbar-find {
-    grid-area: find;
-    display: flex;
-    min-width: 0;
-    padding: 0.5rem 0 0.5rem 0.5rem;
-  }
-
   .topbar-ctrls {
     grid-area: ctrls;
     display: flex;
@@ -2384,8 +2377,183 @@ body {
     display: none;
   }
 
-  /* Home's bar: the search pill pushes the rest right, whether or not a (now hidden) picker comes before it. */
-  .hm-head.is-rst-head .hm-head-controls > .hdr-search {
-    margin-right: auto;
+  /* Owner, 2026-11-20: "remove it from all places" — no guest search in a laptop's header, Home included. */
+  .hm-head .hdr-search {
+    display: none;
+  }
+
+  /* The pill used to push the rest of Home's bar right; without it the controls sit at the right on their own. */
+  .hm-head.is-rst-head .hm-head-controls {
+    justify-content: flex-end;
+  }
+}
+
+/*
+ * Owner, 2026-11-20 (option A: "move the user avatar in side bar nav bottom") — on a laptop the sidebar holds the
+ * business under the Growza mark and you at its foot; the bell is in the page head beside the screen's actions; the header bar they sat in is gone, so every
+ * screen starts with its title. `sidebar-controls.ts` moves the components (each exists once); this lays them out.
+ * Only where a sidebar is drawn: a login without one (a Kitchen login) keeps its header bar.
+ */
+.sb-biz,
+.sb-acct {
+  display: none;
+}
+
+@media (min-width: 861px) {
+  /* The menus below open out of the sidebar, so it may not clip them: the nav list scrolls instead of the column. */
+  .sidebar {
+    overflow: visible;
+  }
+
+  .sidebar .nav {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .sb-biz {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: var(--sp-2) 0 var(--sp-1);
+    padding: 0.625rem 0.5rem 0.625rem 0.75rem;
+    border-radius: var(--radius);
+    background: var(--page-bg);
+  }
+
+  .sb-biz .hdr-biz {
+    flex: 1;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .sb-biz .sbp-menu {
+    left: 0;
+    right: auto;
+  }
+
+  .sb-acct {
+    display: block;
+    flex: none;
+    margin-top: var(--sp-2);
+    padding-top: var(--sp-2);
+    border-top: 1px solid var(--border);
+  }
+
+  .sb-acct .acct-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius);
+    background: transparent;
+    text-align: left;
+  }
+
+  .sb-acct .acct-trigger:hover {
+    background: var(--page-bg);
+  }
+
+  .sb-acct .acct-menu {
+    top: auto;
+    bottom: calc(100% + 0.5rem);
+    left: 0;
+    right: auto;
+  }
+
+  /* The header without its bar: one row, the page head, at the top of its panel. */
+  .shell:has(> .sidebar) .topbar {
+    grid-template-areas: 'lead primary';
+  }
+
+  .shell:has(> .sidebar) .topbar::before,
+  .shell:has(> .sidebar) .topbar-ctrls {
+    display: none;
+  }
+
+  .shell:has(> .sidebar) .topbar::after {
+    grid-area: 1 / 1 / 2 / -1;
+    margin-top: 0;
+  }
+
+  .shell:has(> .sidebar) :is(.topbar-lead, .topbar-primary) {
+    margin-top: 0;
+  }
+
+  /* The restaurant's Home drew only that bar above its page head; with nothing left in it, it takes no room. */
+  .shell:has(> .sidebar) .hm-head.is-rst-head {
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .shell:has(> .sidebar) .hm-head.is-rst-head .hm-head-controls {
+    display: none;
+  }
+
+  /* The first paint, before the sidebar has claimed them: Home's copies are not drawn on a laptop either. */
+  .shell:has(> .sidebar) .hm-head-controls > :is(.hdr-biz, .notif-wrap, .acct, .hbp) {
+    display: none;
+  }
+}
+
+/*
+ * Owner, 2026-11-20 ("review spacing and ux") — Home's page head and tiles on a narrow laptop or a tablet held
+ * sideways (861–1180px), measured at 900, 1024 and 1151: the three tiles clipped their own figures ("₹19,080",
+ * "23 done · 0 in queue", "23 new this month"), the line under the greeting broke onto two lines beside the
+ * buttons, the bell was 36px beside 40px pills, and the head sat as close to the tiles as two tiles to each other.
+ */
+@media (min-width: 861px) {
+  /* The buttons move under the greeting when both will not fit on one line, rather than squeezing it. */
+  .rst-page-head {
+    flex-wrap: wrap;
+    row-gap: var(--sp-3);
+    margin-bottom: var(--sp-2);
+  }
+
+  .rst-page-id {
+    flex: 1 0 auto;
+    max-width: 100%;
+  }
+
+  :is(.rst-page-actions, .topbar-primary) {
+    gap: var(--sp-3);
+  }
+
+  /* The bell is the same height as the pills beside it. */
+  .page-head-bell .notif-bell {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 999px;
+  }
+}
+
+/* A touch screen gets the 44px target, pills and bell alike. */
+@media (min-width: 861px) and (pointer: coarse) {
+  .rst-pill {
+    min-height: 2.75rem;
+  }
+
+  .page-head-bell .notif-bell {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
+
+/* Too narrow for three tiles in a row: the money tile takes the row, Orders and Guests share the one under it.
+   1180 is the tablet edge the tiles already use (above); at 1151 Orders still clipped "23 done · 0 in queue". */
+@media (min-width: 861px) and (max-width: 1180px) {
+  .rst-kpis {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .rst-kpis > .rst-kpi-sales {
+    grid-column: 1 / -1;
   }
 }
