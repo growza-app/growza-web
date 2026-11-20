@@ -169,3 +169,33 @@
   overflow-y: auto;
   padding: 12px var(--page-pad-x) 12px;
 }
+
+/*
+ * Owner, 2026-11-20 ("menu tool tip text is not good on mobile and desktop") — the ⓘ popover drew UNDER the page:
+ * the header was a lower layer than the page body after it, so the Menu's tabs and their counts showed through the
+ * text. The header is now a layer of its own above the body (its menus are higher still), and on a phone the popover
+ * is held inside the screen instead of starting at the ⓘ and running off the right edge.
+ */
+.topbar {
+  position: relative;
+  z-index: 3;
+}
+
+.topbar-info-pop {
+  z-index: 50;
+  box-shadow: 0 10px 28px rgb(9 20 15 / 0.16);
+  /* It sits inside the title row, whose tight display spacing ran its words together ("Everythingonyourmenu"). */
+  font-size: var(--fs-3);
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.5;
+  text-transform: none;
+}
+
+/* A phone: HeaderInfo places the opened popover from the ⓘ (fixed, the screen's width less 16px each side). Shown
+   only when opened by a tap — a hover or focus alone would draw it in the narrow title row. */
+@media (max-width: 860px) {
+  .topbar-info:not(.is-open) .topbar-info-pop {
+    display: none;
+  }
+}
