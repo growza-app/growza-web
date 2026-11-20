@@ -32,10 +32,24 @@ export function ingredientGraphic(item: { name: string; category?: string | null
 /** How many group colours there are (`--cat-1` … `--cat-6`), as on the Menu. */
 const HUES = 6;
 
-/** Each group's colour (1–6) by its place A–Z, so it is the same on every visit; null for items in no group. */
+/**
+ * Owner, 2026-11-21 — a kitchen's groups as the owner typed them, one per name whatever its capitals: "Dairy" and
+ * "dairy " are one group. The spelling kept is the first one seen. Keys are `groupKey`s.
+ */
+export const groupKey = (category: string | null | undefined): string => (category ?? '').trim().toLowerCase();
+
+export function groupNames(categories: readonly (string | null | undefined)[]): Map<string, string> {
+  const names = new Map<string, string>();
+  for (const c of categories) {
+    const shown = c?.trim() ?? '';
+    if (shown && !names.has(groupKey(shown))) names.set(groupKey(shown), shown);
+  }
+  return new Map([...names].sort(([, a], [, b]) => a.localeCompare(b)));
+}
+
+/** Each group's colour (1–6) by its place A–Z, keyed by `groupKey`, so it is the same on every visit; none for no group. */
 export function groupHues(categories: readonly (string | null | undefined)[]): Map<string, number> {
-  const names = [...new Set(categories.map((c) => c?.trim() ?? '').filter((c) => c.length > 0))].sort((a, b) => a.localeCompare(b));
-  return new Map(names.map((n, i) => [n, (i % HUES) + 1]));
+  return new Map([...groupNames(categories).keys()].map((k, i) => [k, (i % HUES) + 1]));
 }
 
 /**

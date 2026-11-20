@@ -1129,3 +1129,84 @@
 .fc2-info-body {
   width: min(22rem, calc(100vw - 4.5rem));
 }
+
+/*
+ * Owner, 2026-11-21 ("some colours of tiles can be added") — the three figures as soft tinted tiles with a solid icon:
+ * spent on ingredients teal (the section hue --cat-1), thrown away or missing amber (money lost), sales green (money
+ * in), given free indigo. Replaces the hairline row; the tiles are the only colour between the number and the tables.
+ */
+.fc2-stats {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: var(--sp-3);
+  padding: 0;
+  border: 0;
+}
+
+.fc2-stats > .fc2-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--fc2-hue) 9%, var(--surface));
+}
+
+.fc2-stats > .fc2-stat:first-child { padding-left: 1rem; }
+.fc2-stats > .fc2-stat + .fc2-stat { border-left: 0; }
+
+.fc2-stat.is-spent { --fc2-hue: var(--cat-1); }
+.fc2-stat.is-lost { --fc2-hue: var(--amber); }
+.fc2-stat.is-sales { --fc2-hue: var(--accent); }
+.fc2-stat.is-free { --fc2-hue: var(--cat-4); }
+
+.fc2-stat-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: var(--fc2-hue);
+  color: #fff;
+}
+
+.fc2-stat-icon svg {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.fc2-stat dt {
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+
+.fc2-stat dd {
+  margin: 0.125rem 0 0;
+  color: var(--text);
+  font-size: var(--fs-8);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.fc2-stat.is-lost dd {
+  color: var(--amber-ink);
+}
+
+/* A phone: the tiles stack one under the other, full width — the figures stay large, nothing wraps mid-label. */
+@media (max-width: 860px) {
+  .fc2-stats {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-2);
+  }
+
+  .fc2-stats > .fc2-stat:nth-child(odd) {
+    padding-left: 1rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .fc2-stats > .fc2-stat {
+    border: 1px solid CanvasText;
+  }
+}

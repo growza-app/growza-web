@@ -7,7 +7,7 @@ import type { StockMaterial } from '../lib/api-types';
 import { shownAmount, unitWord } from '../lib/kitchen-units';
 import { IconChevronDown, IconChevronRight } from '../components/icons';
 import { GraphicSvg } from '../components/ProductPhoto';
-import { ingredientGraphic, stockLevel } from './ingredient-graphic';
+import { groupKey, ingredientGraphic, stockLevel } from './ingredient-graphic';
 
 export interface StockGroup {
   key: string;
@@ -43,7 +43,7 @@ export function StockTable({
   const cols = 4 + (seesCost ? 1 : 0) + 1;
   // Owner, 2026-11-20 ("like the Menu") — each group's own colour, on its bar and on its items' tiles (an item in
   // Running low keeps its group's colour, so it is still recognisably dairy or a vegetable).
-  const hueOf = (category: string | null | undefined) => hues.get(category?.trim() ?? '');
+  const hueOf = (category: string | null | undefined) => hues.get(groupKey(category));
   const toggle = (key: string) =>
     setFolded((prev) => {
       const next = new Set(prev);

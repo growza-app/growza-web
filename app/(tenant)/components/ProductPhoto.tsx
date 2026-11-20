@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import type { Product } from '../lib/api-types';
 import { IconProducts } from './icons';
+import { useAreas } from './SessionProvider';
+import { hasOrderQueue } from '../lib/areas';
 
 export type ProductGraphicKind =
   | 'shirt'
@@ -57,10 +59,14 @@ const TONES: readonly ProductGraphicTone[] = ['green', 'blue', 'amber', 'purple'
  * `tikka` and `tea` are all words a clothes or jewellery shop uses ("Chinese Collar Shirt", a maang tikka, a tea
  * towel) and the garment is what it means there. Everything else about this function is unchanged.
  */
-export function resolveProductGraphic(product: {
-  name?: string | null;
-  categoryName?: string | null;
-}): { kind: ProductGraphicKind; tone: ProductGraphicTone } {
+export function resolveProductGraphic(
+  product: {
+    name?: string | null;
+    categoryName?: string | null;
+  },
+  /** A kitchen's dish (a business whose orders go to a queue): an unknown name falls back to a bowl, not a bottle. */
+  opts: { kitchen?: boolean } = {},
+): { kind: ProductGraphicKind; tone: ProductGraphicTone } {
   const hay = `${product.name ?? ''} ${product.categoryName ?? ''}`.toLowerCase();
 
   if (/\b(belt|strap|buckle)s?\b/.test(hay)) return { kind: 'belt', tone: 'amber' };
@@ -74,6 +80,26 @@ export function resolveProductGraphic(product: {
   // A ball, by the product's NAME only: a sports shop's "Football" category also holds its shin guards and cones, and
   // they are not balls. Before the bottle fallback, which drew a football and a tube of shuttlecocks as bottles.
   if (/\b(ball|football|shuttlecock|shuttle)s?\b/.test((product.name ?? '').toLowerCase())) return { kind: 'ball', tone: 'green' };
+  /*
+   * Owner, 2026-11-21 — a dish named in Hindi gets its drawing too (it fell through to the bottle). Matched on the NAME,
+   * before the English rules, since its section is often still English ("पनीर टिक्का" in "Starters"). No `\b`: a word
+   * boundary is ASCII-only, so Devanagari words are matched as they are.
+   */
+  const hiName = product.name ?? '';
+  const hi = (re: RegExp) => re.test(hiName);
+  if (hi(/आइसक्रीम|आइस क्रीम|कुल्फी|हलवा|जामुन|रसमलाई|रसगुल्ला|खीर|फिरनी|फालूदा|केक|मिठाई|लड्डू|बर्फी|जलेबी/)) return { kind: 'dessert', tone: 'rose' };
+  if (hi(/चाय|कॉफ़ी|कॉफी|लस्सी|छाछ|जूस|शरबत|पानी|शेक|सोडा/)) return { kind: 'drink', tone: 'amber' };
+  if (hi(/रोटी|नान|पराठा|परांठा|कुलचा|पूरी|भटूरा|डोसा|उत्तपम|इडली|वड़ा|वडा|सैंडविच|बर्गर|पिज़्ज़ा|पिज्जा/)) return { kind: 'bread', tone: 'amber' };
+  if (hi(/मछली|झींगा|फ़िश|फिश/)) return { kind: 'fish', tone: 'blue' };
+  if (hi(/तंदूरी चिकन|लॉलीपॉप|विंग्स/)) return { kind: 'drumstick', tone: 'amber' };
+  if (hi(/फ्राइज़|फ्राइज/)) return { kind: 'fries', tone: 'amber' };
+  if (hi(/अंडा|अंडे|ऑमलेट|आमलेट|भुर्जी/)) return { kind: 'egg', tone: 'amber' };
+  if (hi(/टिक्का|कबाब|सीख/) && !hi(/मसाला|मखनी|करी|बटर/)) return { kind: 'skewer', tone: 'amber' };
+  if (hi(/नूडल्स|चाउमीन|चाऊमीन|पास्ता|मैगी/)) return { kind: 'noodles', tone: 'green' };
+  if (hi(/दाल|करी|कोरमा|कोफ़्ता|कोफ्ता|छोले|राजमा|सब्ज़ी|सब्जी|आलू|गोभी|पालक|भिंडी|मखनी|मसाला|कढ़ाई|कड़ाही/) && !hi(/पापड़/)) return { kind: 'handi', tone: 'amber' };
+  if (hi(/चावल|बिरयानी|पुलाव|खिचड़ी/)) return { kind: 'rice', tone: 'green' };
+  if (hi(/पनीर|सूप|सलाद|थाली|मोमो|रोल|मंचूरियन|चिली/)) return { kind: 'bowl', tone: 'green' };
+
   // Before the bottle rule: `cream` there means a face cream, and an ice cream is not one.
   if (/\b(ice\s*cream|kulfi|halwa|jamun|rasmalai|rasgulla|brownie|pastry|cake|falooda|phirni|kheer|dessert|sundae)s?\b/.test(hay)) {
     return { kind: 'dessert', tone: 'rose' };
@@ -115,6 +141,9 @@ export function resolveProductGraphic(product: {
   if (/\b(curry|masala|dal|daal|gravy|soup|kofta|chole|chana|sabzi|sabji|korma|rogan|josh|paneer|tikka|kabab|kebab|manchurian|thali|platter|starter|main\s*course|chinese|fries|roll|momo|wrap|salad)s?\b/.test(hay)) {
     return { kind: 'bowl', tone: 'green' };
   }
+
+  // Owner, 2026-11-21 — a kitchen's dish the rules do not know ("Chef's Special", "Family Combo") is a bowl, not a bottle.
+  if (opts.kitchen) return { kind: 'bowl', tone: 'green' };
 
   // Deterministic colour fallback from the product's name so unphotographed items stay distinct
   let hash = 0;
@@ -446,12 +475,14 @@ export function ProductPhoto({
   eager?: boolean;
 }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  // A kitchen (a business whose orders go to a queue) draws an unknown dish as a bowl, wherever the photo is shown.
+  const kitchen = hasOrderQueue(useAreas());
   // The API hands back a URL the browser can load as it is; a photo that fails to load falls back to the drawing.
   const src = product.imageUrl?.trim() || null;
   if (src && failedUrl !== src) {
     return <img className={className} src={src} alt="" loading={eager ? 'eager' : 'lazy'} onError={() => setFailedUrl(src)} />;
   }
-  const { kind, tone } = resolveProductGraphic(product);
+  const { kind, tone } = resolveProductGraphic(product, { kitchen });
   const hasName = Boolean(product.name?.trim() || product.categoryName?.trim());
   const toneClass = hasName ? ` photo-tone-${tone} photo-kind-${kind}` : '';
   return (
