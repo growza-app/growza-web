@@ -4701,6 +4701,10 @@
       },
       "sectionCount": "{count, plural, one {# डिश} other {# डिश}}",
       "recipeCol": "रेसिपी",
+      "foodCostCol": "खाने की लागत",
+      "moreTools": "और काम",
+      "sectionAvg": "औसत खाने की लागत {pct}",
+      "notSoldYet": "अभी नहीं बिका",
       "actionsCol": "काम",
       "actionsAria": "{name} के और काम",
       "recipe": {

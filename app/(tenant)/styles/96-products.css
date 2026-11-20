@@ -875,8 +875,15 @@
     min-width: 12rem;
   }
 
+  /* The laptop's sort is a dropdown and looks like one: `.prd-sort select` set `background`, which wiped the chevron
+     01-controls.css draws on every select, so "Name (A–Z)" read as a text box. */
   .prd-desk-tools .prd-sort select {
     min-height: 2.75rem;
+    padding-right: 2.25rem;
+    background-image: var(--select-chevron);
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 0.9375rem 0.9375rem;
   }
 
   .prd-desk-mid .prd-chips {

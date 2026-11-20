@@ -4701,6 +4701,10 @@
       },
       "sectionCount": "{count, plural, one {# dish} other {# dishes}}",
       "recipeCol": "Recipe",
+      "foodCostCol": "Food cost",
+      "moreTools": "More tools",
+      "sectionAvg": "avg food cost {pct}",
+      "notSoldYet": "Not sold yet",
       "actionsCol": "Actions",
       "actionsAria": "More for {name}",
       "recipe": {
