@@ -407,3 +407,235 @@
     transition: none;
   }
 }
+
+/*
+ * Owner, 2026-11-20 ("redesign the inventory page like this too") — the Menu's table look (99-menu-manager.css):
+ * a mint header in forest, each group in its own hue (--cat-1…6) on its bar and its items' tiles, each item a white
+ * drawing on a solid tile, and how much is left as a level against the low line, green / amber / red.
+ */
+@media (min-width: 1101px) {
+  .ks-table [data-hue] { --sec: var(--muted); }
+  .ks-table [data-hue='1'] { --sec: var(--cat-1); }
+  .ks-table [data-hue='2'] { --sec: var(--cat-2); }
+  .ks-table [data-hue='3'] { --sec: var(--cat-3); }
+  .ks-table [data-hue='4'] { --sec: var(--cat-4); }
+  .ks-table [data-hue='5'] { --sec: var(--cat-5); }
+  .ks-table [data-hue='6'] { --sec: var(--cat-6); }
+
+  .ks-table thead th {
+    z-index: 3;
+    background: var(--accent-soft);
+    border-bottom: 1px solid color-mix(in srgb, var(--accent) 30%, var(--surface));
+    color: var(--forest);
+    font-weight: 600;
+  }
+
+  /* A group: a white row, its colour on a bar and its name. Running low keeps amber: that is a warning. */
+  .ks-trow-group > th {
+    background: var(--surface);
+    box-shadow: inset 3px 0 0 var(--sec, var(--muted));
+  }
+
+  .ks-trow-group.is-low > th {
+    background: var(--amber-soft);
+    box-shadow: inset 3px 0 0 var(--amber);
+  }
+
+  .ks-trow-group:not(.is-low) .ks-group-btn {
+    color: var(--sec, var(--text));
+  }
+
+  .ks-work-tab.is-on .ks-work-n {
+    background: var(--page-bg);
+    color: var(--text);
+  }
+
+  /* The item: its tile, then its name (and a group word in Running low, and an over-use warning) in a stack. */
+  .ks-item {
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .ks-item-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+
+  .ks-tile {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 0.75rem;
+    background: var(--sec, var(--muted));
+    color: #fff;
+  }
+
+  .ks-tile svg {
+    width: 2.5rem;
+    height: 2.5rem;
+    stroke-width: 1.6;
+  }
+
+  .ks-trow td {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+
+  /* In stock: the level, the amount in forest, and a pill when it is low or gone. */
+  .ks-level-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.625rem;
+  }
+
+  .ks-level {
+    position: relative;
+    flex: none;
+    width: 4rem;
+    height: 0.25rem;
+    border-radius: 999px;
+    background: var(--slate-soft);
+  }
+
+  .ks-level > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent);
+  }
+
+  .ks-level.is-low > span {
+    background: var(--amber);
+  }
+
+  .ks-level.is-below > span {
+    background: var(--danger);
+  }
+
+  /* The low line: a third of the way along (the level runs to three times it). */
+  .ks-level::after {
+    content: '';
+    position: absolute;
+    top: -0.1875rem;
+    bottom: -0.1875rem;
+    left: 33.3%;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--muted);
+    opacity: 0.55;
+  }
+
+  .ks-left .ks-amount-n {
+    color: var(--forest);
+    font-weight: 600;
+  }
+
+  .ks-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.5rem;
+    padding: 0 0.5rem;
+    border-radius: 999px;
+    font-size: var(--fs-1);
+    font-weight: 600;
+  }
+
+  .ks-pill.is-low {
+    background: var(--amber-soft);
+    color: var(--amber-ink);
+  }
+
+  .ks-pill.is-below {
+    background: var(--danger-soft);
+    color: var(--danger-deep);
+    font-size: var(--fs-2);
+  }
+
+  .ks-left.is-below,
+  .ks-left.is-low {
+    color: inherit;
+  }
+}
+
+/* A short laptop keeps a 44px tile, as the Menu does, so the table is not three items tall. */
+@media (min-width: 1101px) and (max-height: 860px) {
+  .ks-tile {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.625rem;
+  }
+
+  .ks-tile svg {
+    width: 1.75rem;
+    height: 1.75rem;
+    stroke-width: 1.8;
+  }
+
+  .ks-trow td {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .ks-level > span {
+    background: CanvasText;
+  }
+}
+
+/*
+ * Owner, 2026-11-21 ("these options are at the bottom, not visible") — Add item, Import from a file and Suppliers sat
+ * under sixty items, so a laptop never saw them without scrolling to the end. The stock card now fits the screen as
+ * the Menu's does: the page does not scroll, the items scroll inside the card under a header that stays, and the foot
+ * with those links stays in sight at the card's bottom.
+ */
+@media (min-width: 1101px) {
+  .page-body.inv-page:has(.ks-desk) {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .page-body.inv-page:has(.ks-desk) > * {
+    flex: none;
+  }
+
+  .page-body.inv-page > .ks-body.ks-desk {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ks-desk > * {
+    flex: none;
+  }
+
+  .ks-desk > .ks-work {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .ks-work > * {
+    flex: none;
+  }
+
+  .ks-work > .ks-table-wrap,
+  .ks-work > .ks-work-buy,
+  .ks-work > .ks-state {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .ks-work > .ks-foot {
+    border-top: 1px solid var(--border);
+  }
+}

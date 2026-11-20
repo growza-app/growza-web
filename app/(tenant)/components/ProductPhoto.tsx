@@ -27,7 +27,15 @@ export type ProductGraphicKind =
   | 'fries'
   | 'egg'
   | 'noodles'
-  | 'handi';
+  | 'handi'
+  // Kitchen stock's ingredients (inventory/ingredient-graphic.ts); no product resolves to these.
+  | 'milk'
+  | 'leaf'
+  | 'chili'
+  | 'grain'
+  | 'oil'
+  | 'jar'
+  | 'box';
 
 export type ProductGraphicTone = 'green' | 'blue' | 'amber' | 'purple' | 'rose';
 
@@ -113,7 +121,8 @@ export function resolveProductGraphic(product: {
   return { kind: 'bottle', tone };
 }
 
-function GraphicSvg({ kind }: { kind: ProductGraphicKind }) {
+/** The drawing alone, for a tile that is not a product's (Inventory's ingredient tile). */
+export function GraphicSvg({ kind }: { kind: ProductGraphicKind }) {
   const base = {
     viewBox: '0 0 24 24',
     fill: 'none',
@@ -260,6 +269,64 @@ function GraphicSvg({ kind }: { kind: ProductGraphicKind }) {
         <svg {...base}>
           <path d="M12 3.5c3.8 0 6.5 4.6 6.5 9a6.5 6.5 0 0 1-13 0c0-4.4 2.7-9 6.5-9Z" fill="currentColor" fillOpacity="0.16" />
           <circle cx="12" cy="13.5" r="2.6" fill="currentColor" fillOpacity="0.4" />
+        </svg>
+      );
+    case 'milk':
+      return (
+        <svg {...base}>
+          <path d="M8 3.5h8v3l2 3v11H6v-11l2-3Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M6 9.5h12" />
+          <path d="M8 6.5h8" />
+        </svg>
+      );
+    case 'leaf':
+      return (
+        <svg {...base}>
+          <path d="M5 19C5 10 11 4.5 19.5 4.5 19.5 13 14 19 5 19Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M5 19l8-8" />
+        </svg>
+      );
+    case 'chili':
+      return (
+        <svg {...base}>
+          <path d="M8.5 8.5c-2 4.5.5 10.5 9 12-3.5-3-5.5-7.5-5-11.5Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M8 8.5h5" />
+          <path d="M10.5 8.5c0-2 1-3.5 3-4" />
+        </svg>
+      );
+    case 'grain':
+      return (
+        <svg {...base}>
+          <line x1="12" y1="21" x2="12" y2="4" />
+          <path d="M12 8.5c-2.6 0-3.8-1.6-3.8-3.8 2.6 0 3.8 1.6 3.8 3.8Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M12 8.5c2.6 0 3.8-1.6 3.8-3.8-2.6 0-3.8 1.6-3.8 3.8Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M12 13c-2.6 0-3.8-1.6-3.8-3.8 2.6 0 3.8 1.6 3.8 3.8Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M12 13c2.6 0 3.8-1.6 3.8-3.8-2.6 0-3.8 1.6-3.8 3.8Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M12 17.5c-2.6 0-3.8-1.6-3.8-3.8 2.6 0 3.8 1.6 3.8 3.8Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M12 17.5c2.6 0 3.8-1.6 3.8-3.8-2.6 0-3.8 1.6-3.8 3.8Z" fill="currentColor" fillOpacity="0.16" />
+        </svg>
+      );
+    case 'oil':
+      return (
+        <svg {...base}>
+          <path d="M10 3.5h4v3l2 2.5v11.5H8V9l2-2.5Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M8 13h8" />
+        </svg>
+      );
+    case 'jar':
+      return (
+        <svg {...base}>
+          <rect x="6" y="7.5" width="12" height="13" rx="2.5" fill="currentColor" fillOpacity="0.16" />
+          <rect x="7.5" y="3.5" width="9" height="4" rx="1" />
+          <path d="M9 13h6" />
+        </svg>
+      );
+    case 'box':
+      return (
+        <svg {...base}>
+          <path d="M4 8l8-4 8 4v9l-8 4-8-4Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M4 8l8 4 8-4" />
+          <path d="M12 12v9" />
         </svg>
       );
     case 'handi':
