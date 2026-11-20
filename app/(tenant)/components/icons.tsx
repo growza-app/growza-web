@@ -790,3 +790,34 @@ export const IconBarcode = () => (
   </svg>
 );
 
+
+/** Owner, 2026-11-20 — a kitchen's Menu in the sidebar: a fork and a knife (a shop's Stock keeps IconProducts). */
+export const IconCutlery = () => (
+  <svg {...base}>
+    <path d="M7 2v7a2 2 0 0 0 2 2v11" />
+    <path d="M11 2v7a2 2 0 0 1-2 2" />
+    <path d="M9 2v5" />
+    <path d="M17 22V2c-1.7 1-3 3.2-3 6v5h3" />
+  </svg>
+);
+
+/** Owner, 2026-11-20 — Reports in the sidebar: bars rising from a baseline, read as "numbers" faster than the pie. */
+export const IconBarChart = () => (
+  <svg {...base}>
+    <path d="M3 21h18" />
+    <path d="M6 17v-5" />
+    <path d="M11 17V7" />
+    <path d="M16 17v-8" />
+    <path d="M20 17V4" />
+  </svg>
+);
+
+/** Owner, 2026-11-20 — the business at the top of the sidebar: a shop front with its awning. */
+export const IconStorefront = () => (
+  <svg {...base}>
+    <path d="M3 9l1.5-5h15L21 9" />
+    <path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0" />
+    <path d="M5 11.5V21h14v-9.5" />
+    <path d="M10 21v-5h4v5" />
+  </svg>
+);
