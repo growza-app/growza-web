@@ -6475,6 +6475,15 @@
       "hint": "This replaces {amount} {unit}. Count what is on the shelf.",
       "save": "Save amount",
       "saved": "{name} is now {amount} {unit}"
+    },
+    "table": {
+      "item": "Item",
+      "inStock": "In stock",
+      "lowAt": "Low at",
+      "avgCost": "Cost",
+      "usedIn": "Used in",
+      "open": "Open",
+      "dishes": "{n, plural, one {# dish} other {# dishes}}"
     }
   },
   "recipe": {
