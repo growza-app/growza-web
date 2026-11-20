@@ -44,3 +44,236 @@
 .fc-fix .mr-link {
   align-self: flex-start;
 }
+
+/*
+ * Owner, 2026-11-20 ("redesign the reports tab too") — Inventory › Reports on a laptop (FoodCostDesk.tsx, from 1101px):
+ * four even figures, one "To fix" card, and the four sections open as table cards two by two, with each entry below
+ * in one full-width table. The house table type: 14px rows, 13px grey headers on white, figures in tabular digits.
+ */
+.fcd {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.fcd-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+.fcd-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.fcd-kpi-l {
+  color: var(--muted);
+  font-size: var(--fs-2);
+  font-weight: 500;
+}
+
+.fcd-kpi-n {
+  color: var(--text);
+  font-size: var(--fs-10);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.fcd-kpi-n .fc-pct {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* Not yet judged (under 80% of sales counted) is said in words above; the figure itself stays readable, not greyed. */
+.fcd-kpi-n .fc-pct.is-none {
+  color: var(--text);
+}
+
+.fcd-kpi-s {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-2);
+  text-overflow: ellipsis;
+}
+
+.fcd-fix {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem 1.125rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 35%, transparent);
+  border-radius: var(--radius-lg);
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: var(--fs-3);
+}
+
+.fcd-fix-title {
+  margin: 0;
+  font-size: var(--fs-3);
+  font-weight: 600;
+}
+
+.fcd-fix-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem var(--sp-3);
+}
+
+.fcd-fix-link {
+  color: var(--forest);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.fcd-grid {
+  display: grid;
+  /* Two side by side only where each table has room for its columns (1440px up); one under the other below that. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 34rem), 1fr));
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+.fcd-panel {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.fcd-panel-head {
+  padding: 0.875rem 1.125rem 0.625rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.fcd-panel-head h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--fs-4);
+  font-weight: 600;
+}
+
+.fcd-panel-head p {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+
+.fcd-panel-body {
+  max-height: 22rem;
+  overflow: auto;
+}
+
+.fcd-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--fs-3);
+  line-height: 1.35;
+}
+
+.fcd-table th {
+  position: sticky;
+  top: 0;
+  height: 2.25rem;
+  padding: 0 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: var(--fs-2);
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.fcd-table td {
+  height: 2.5rem;
+  padding: 0.25rem 1rem;
+  border-bottom: 1px solid var(--canvas, var(--border));
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.fcd-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.fcd-table :is(th, td):first-child {
+  padding-left: 1.125rem;
+}
+
+.fcd-num,
+.fcd-table .fcd-num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.fcd-strong {
+  font-weight: 600;
+}
+
+.fcd-muted,
+.fcd-table .fcd-muted {
+  color: var(--muted);
+}
+
+.fcd-kind {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--page-bg);
+  font-size: var(--fs-1);
+  font-weight: 500;
+}
+
+.fcd-kind.is-wasted {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+.fcd-kind.is-lost {
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+}
+
+.fcd-kind.is-found {
+  background: var(--accent-soft);
+  color: var(--forest);
+}
+
+.fcd-empty,
+.fcd-warn {
+  margin: 0;
+  padding: 1rem 1.125rem;
+  color: var(--muted);
+  font-size: var(--fs-3);
+}
+
+.fcd-warn {
+  color: var(--amber-ink);
+}
+
+.fcd-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+
+.fcd-panel > .fcd-note {
+  padding: 0.75rem 1.125rem;
+}

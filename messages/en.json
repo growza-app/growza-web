@@ -6021,7 +6021,31 @@
       "stillMissing": "Still no recipe: {names}",
       "recipesInNow": "Their recipes are in now — new sales count.",
       "noPriceFix": "{count, plural, one {# dish uses} other {# dishes use}} an item with no price — left out of the %. Open the item on Stock to give it one.",
-      "noPriceItems": "{count, plural, one {# item has} other {# items have}} no price, so {dishes, plural, one {# dish is} other {# dishes are}} left out of the %. Tap one to give it a price:"
+      "noPriceItems": "{count, plural, one {# item has} other {# items have}} no price, so {dishes, plural, one {# dish is} other {# dishes are}} left out of the %. Tap one to give it a price:",
+      "desk": {
+        "foodSub": "Out of {all} sold in all",
+        "lossSub": "Wasted {wasted} · Missing {lost}",
+        "coveredLabel": "Sales counted",
+        "coveredSub": "{sales} of {all} had a recipe and prices",
+        "fixTitle": "To fix, for a true food cost",
+        "cols": {
+          "day": "Day",
+          "sales": "Sales",
+          "food": "Food",
+          "pct": "Food cost",
+          "dish": "Dish",
+          "sold": "Sold",
+          "item": "Item",
+          "qty": "Quantity",
+          "value": "Value",
+          "missing": "Missing",
+          "found": "Extra",
+          "when": "When",
+          "kind": "What",
+          "why": "Why",
+          "by": "By"
+        }
+      }
     }
   },
   "print": {
