@@ -9,6 +9,7 @@ import { costsMoreThanPrice, foodCostTone, pctText } from '../lib/food-cost';
 import { parseAmount, recipeAmount, SMALL_UNIT, unitWord } from '../lib/kitchen-units';
 import { useSession } from '../components/SessionProvider';
 import { IconClose } from '../components/icons';
+import { IngredientPicker } from './IngredientPicker';
 
 interface Draft {
   key: string;
@@ -197,22 +198,11 @@ export function RecipePanel({ product }: { product: Pick<Product, 'id' | 'locati
             })}
           </ul>
           {mayChange && unused.length > 0 ? (
-            <select
-              className="prd-input rc-add"
-              aria-label={t('add')}
-              value=""
-              onChange={(e) => {
-                const m = byId.get(e.target.value);
-                if (m) setDrafts((all) => [...all, { key: nextKey(), materialId: m.id, text: '', typedIn: SMALL_UNIT[m.unit].unit ? 'small' : 'big' }]);
-              }}
-            >
-              <option value="">+ {t('add')}</option>
-              {unused.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
+            // Owner, 2026-11-20 — a search box, not a sixty-line select: type a few letters, tap or Enter.
+            <IngredientPicker
+              items={unused}
+              onPick={(m) => setDrafts((all) => [...all, { key: nextKey(), materialId: m.id, text: '', typedIn: SMALL_UNIT[m.unit].unit ? 'small' : 'big' }])}
+            />
           ) : null}
           {seesCost ? (
             // Jira GRW-739 — amber above 35%, red above 45% (owner, 2026-11-18); a ₹0 dish shows "—", never a colour.

@@ -6497,7 +6497,8 @@
     "save": "रेसिपी सेव करें",
     "saving": "सेव हो रहा है…",
     "saved": "सेव हो गया",
-    "costsNet": "लागत {cost} · GST से पहले {price} का {pct}"
+    "costsNet": "लागत {cost} · GST से पहले {price} का {pct}",
+    "noMatch": "“{q}” से कोई चीज़ नहीं मिली।"
   },
   "billOffers": {
     "title": "कूपन और ऑफ़र",

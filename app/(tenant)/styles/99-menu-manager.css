@@ -816,3 +816,73 @@
     display: none;
   }
 }
+
+/*
+ * Owner, 2026-11-20 ("the table font is not good") — one row carried 12, 13, 14 and 16px in three weights: the name and
+ * the price at 16px bold, Sold at 16px grey, the header at 12px on a grey band. Now the house table type (the Orders and
+ * Reports tables, 99-z-emerald-v2.css): 14px in a row, 13px grey headers on white, one bold — the dish's name — with
+ * the price in medium tabular figures so the column reads down.
+ */
+.mnu-table {
+  font-size: var(--fs-3);
+  line-height: 1.35;
+}
+
+.mnu-table thead th,
+.mnu-table thead .th-sortable button {
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.mnu-table thead th {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.mnu-group-btn {
+  font-size: var(--fs-2);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.mnu-group-count {
+  font-size: var(--fs-2);
+}
+
+.mnu-dish-name {
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.mnu-tr td.mnu-num {
+  font-size: var(--fs-3);
+}
+
+.mnu-price {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.mnu-status {
+  font-size: var(--fs-1);
+  font-weight: 500;
+}
+
+.mnu-recipe {
+  font-size: var(--fs-2);
+  font-weight: 500;
+}
+
+.mnu-pct {
+  font-size: var(--fs-2);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.mnu-tr td {
+  border-bottom-color: var(--canvas, var(--border));
+}
