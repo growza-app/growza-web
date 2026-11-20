@@ -141,6 +141,23 @@ describe('a kitchen reads sixty-nine rows a day, so a dish gets a dish', () => {
   });
 
   // Owner, 2026-11-20 ("go with B") — the dish's own drawing, read from its name, not its section.
+  it('a dish named in Hindi gets its drawing too, even in an English section (owner, 2026-11-21)', () => {
+    expect(kindOf('पनीर टिक्का', 'Starters')).toBe('skewer');
+    expect(kindOf('दाल मखनी', 'Main course')).toBe('handi');
+    expect(kindOf('चिकन बिरयानी', 'Rice & biryani')).toBe('rice');
+    expect(kindOf('मसाला चाय', 'Beverages')).toBe('drink');
+    expect(kindOf('बटर नान', 'Breads')).toBe('bread');
+    expect(kindOf('गुलाब जामुन', 'Desserts')).toBe('dessert');
+    expect(kindOf('मछली फ्राई', 'Starters')).toBe('fish');
+    expect(kindOf('पापड़ मसाला', 'Starters')).not.toBe('handi');
+  });
+
+  it("a kitchen's dish the rules do not know is a bowl; a shop's product is still its bottle", () => {
+    expect(resolveProductGraphic({ name: "Chef's Special", categoryName: 'Specials' }, { kitchen: true }).kind).toBe('bowl');
+    expect(resolveProductGraphic({ name: 'Family Combo' }, { kitchen: true }).kind).toBe('bowl');
+    expect(resolveProductGraphic({ name: 'Mystery Box', categoryName: 'Gifts' }).kind).toBe('bottle');
+  });
+
   it('a starter is drawn as what it is, and a curry made from a tikka is still a curry', () => {
     expect(kindOf('Chicken Tikka', 'Starters')).toBe('skewer');
     expect(kindOf('Hara Bhara Kabab', 'Starters')).toBe('skewer');

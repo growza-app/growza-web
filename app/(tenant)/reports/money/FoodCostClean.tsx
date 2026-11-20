@@ -8,6 +8,8 @@ import { foodCostTone } from '../../lib/food-cost';
 import { amount, unitWord } from '../../lib/kitchen-units';
 import { presetRange, REPORT_PRESETS, type ReportPreset } from '../../lib/report-dates';
 import { useAnchoredPanel } from '../../lib/useAnchoredPanel';
+import { GraphicSvg } from '../../components/ProductPhoto';
+import { IconReceipt, IconRupee, IconTrash } from '../../components/icons';
 import type { useMoneyFormat, useMoneyReport } from './MoneyShell';
 
 type Fmt = ReturnType<typeof useMoneyFormat>;
@@ -135,23 +137,46 @@ export function FoodCostClean({
         <PeriodMenu report={report} f={f} />
       </section>
 
+      {/* Owner, 2026-11-21 ("some colours of tiles can be added") — the three figures as soft tiles, each its own colour
+          and icon: what the kitchen spent (teal), what was thrown away or went missing (amber, money lost), what came in
+          (green). Colour here names the figure; the food cost above keeps its own tone. */}
       <dl className="fc2-stats">
-        <div>
-          <dt>{tc('statFood')}</dt>
-          <dd>{f.money(r.totals.foodMinor)}</dd>
+        <div className="fc2-stat is-spent">
+          <span className="fc2-stat-icon" aria-hidden="true">
+            <GraphicSvg kind="handi" />
+          </span>
+          <div>
+            <dt>{tc('statFood')}</dt>
+            <dd>{f.money(r.totals.foodMinor)}</dd>
+          </div>
         </div>
-        <div>
-          <dt>{tc('statLoss')}</dt>
-          <dd>{f.money(loss.totals.wastedMinor + loss.totals.lostMinor)}</dd>
+        <div className="fc2-stat is-lost">
+          <span className="fc2-stat-icon" aria-hidden="true">
+            <IconTrash />
+          </span>
+          <div>
+            <dt>{tc('statLoss')}</dt>
+            <dd>{f.money(loss.totals.wastedMinor + loss.totals.lostMinor)}</dd>
+          </div>
         </div>
-        <div>
-          <dt>{tc('sales')}</dt>
-          <dd>{f.money(r.totals.salesMinor)}</dd>
+        <div className="fc2-stat is-sales">
+          <span className="fc2-stat-icon" aria-hidden="true">
+            <IconRupee />
+          </span>
+          <div>
+            <dt>{tc('sales')}</dt>
+            <dd>{f.money(r.totals.salesMinor)}</dd>
+          </div>
         </div>
         {r.totals.givenFreeMinor > 0 ? (
-          <div>
-            <dt>{tc('givenFree')}</dt>
-            <dd>{f.money(r.totals.givenFreeMinor)}</dd>
+          <div className="fc2-stat is-free">
+            <span className="fc2-stat-icon" aria-hidden="true">
+              <IconReceipt />
+            </span>
+            <div>
+              <dt>{tc('givenFree')}</dt>
+              <dd>{f.money(r.totals.givenFreeMinor)}</dd>
+            </div>
           </div>
         ) : null}
       </dl>

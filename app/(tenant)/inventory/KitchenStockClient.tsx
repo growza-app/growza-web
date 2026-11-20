@@ -19,7 +19,7 @@ import { BuyList } from './BuyList';
 import { StockTable } from './StockTable';
 import { IconChevronDown, IconClose, IconSearch } from '../components/icons';
 import { GraphicSvg } from '../components/ProductPhoto';
-import { groupHues, ingredientGraphic, stockLevel } from './ingredient-graphic';
+import { groupHues, groupKey, groupNames, ingredientGraphic, stockLevel } from './ingredient-graphic';
 
 /** The sheets the actions open, one at a time. */
 type Sheet =
@@ -178,23 +178,25 @@ export function KitchenStockClient({
   }, [materials, query]);
   // Each group's colour, from every item (not only the ones a search shows), so a group keeps its colour while searching.
   const hues = useMemo(() => groupHues(materials.map((m) => m.category)), [materials]);
-  const hueOf = (category: string | null | undefined) => hues.get(category?.trim() ?? '');
+  const hueOf = (category: string | null | undefined) => hues.get(groupKey(category));
+  // One name per group whatever its capitals ("Dairy" and "dairy" were two groups and two lines in the list).
+  const groupNamesByKey = useMemo(() => groupNames(materials.map((m) => m.category)), [materials]);
   // Running low first (the API's order: furthest below first), then each group A–Z with its items A–Z; no group goes last as "Other".
   const groups = useMemo(() => {
     const low = shown.filter((m) => m.stock < 0 || m.low);
     const rest = new Map<string, StockMaterial[]>();
     for (const m of shown) {
       if (m.stock < 0 || m.low) continue;
-      const key = m.category?.trim() ?? '';
+      const key = groupKey(m.category);
       rest.set(key, [...(rest.get(key) ?? []), m]);
     }
     const named = [...rest.entries()]
       .sort(([a], [b]) => (a === '' ? 1 : b === '' ? -1 : a.localeCompare(b)))
-      .map(([key, items]) => ({ key: `g:${key}`, title: key || t('groups.other'), items: items.sort((x, y) => x.name.localeCompare(y.name)), low: false }));
+      .map(([key, items]) => ({ key: `g:${key}`, title: groupNamesByKey.get(key) ?? (key || t('groups.other')), items: items.sort((x, y) => x.name.localeCompare(y.name)), low: false }));
     // Nothing low and no item in any group: a heading would say nothing.
     const only = low.length === 0 && named.length === 1 && named[0]?.key === 'g:';
     return [...(low.length ? [{ key: 'low', title: t('groups.low'), items: low, low: true }] : []), ...named.map((g) => (only ? { ...g, title: '' } : g))];
-  }, [shown, t]);
+  }, [shown, t, groupNamesByKey]);
   // The opening card asks in full on a kitchen just set up; after that it is one line until opened.
   const openingFull = openingOpen || unopened.length === materials.length;
 
@@ -584,7 +586,7 @@ export function KitchenStockClient({
       {editing ? (
         <MaterialSheet
           material={editing === 'new' ? null : editing}
-          categories={[...hues.keys()]}
+          categories={[...groupNamesByKey.values()]}
           branchId={branchId}
           readOnly={!mayChange}
           mayCount={mayChange && data.on}

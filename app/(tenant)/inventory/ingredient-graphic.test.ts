@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { groupHues, ingredientGraphic, stockLevel } from './ingredient-graphic';
+import { groupHues, groupKey, groupNames, ingredientGraphic, stockLevel } from './ingredient-graphic';
 
 describe("an ingredient's drawing (owner, 2026-11-20)", () => {
   const kind = (name: string, category?: string) => ingredientGraphic({ name, category });
@@ -32,11 +32,18 @@ describe("an ingredient's drawing (owner, 2026-11-20)", () => {
 describe('group colours', () => {
   it('go A–Z through the six section hues, the seventh starting again, and skip items in no group', () => {
     const h = groupHues(['Vegetables', 'Dairy', null, ' Dairy ', 'A', 'B', 'C', 'D', 'E']);
-    expect(h.get('A')).toBe(1);
-    expect(h.get('Dairy')).toBe(5);
-    expect(h.get('E')).toBe(6);
-    expect(h.get('Vegetables')).toBe(1);
+    expect(h.get('a')).toBe(1);
+    expect(h.get('dairy')).toBe(5);
+    expect(h.get('e')).toBe(6);
+    expect(h.get('vegetables')).toBe(1);
     expect(h.has('')).toBe(false);
+  });
+
+  it('"Dairy" and "dairy " are one group, kept as first typed (owner, 2026-11-21)', () => {
+    const names = groupNames(['Dairy', 'dairy ', 'DAIRY', 'Spices', null, '  ']);
+    expect([...names.values()]).toEqual(['Dairy', 'Spices']);
+    expect(groupKey(' Dairy ')).toBe('dairy');
+    expect(groupHues(['Dairy', 'dairy']).size).toBe(1);
   });
 
   it('each hue has its rule in the inventory sheet', () => {
