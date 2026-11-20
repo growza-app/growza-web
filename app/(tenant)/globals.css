@@ -168,6 +168,8 @@
 @import './styles/99-bill-offers.css';
 /* Jira GRW-736 — GST by order type, and GST added on top. */
 @import './styles/99-gst-by-order-type.css';
+/* Owner, 2026-11-20 — the restaurant's Menu: figures with icons, tabs, the dishes section by section. */
+@import './styles/99-menu-manager.css';
 /* Emerald v2 theme preview — after every screen sheet, before 99-photo-none.css (which must stay last); delete this line and the file to drop it. */
 @import './styles/99-z-emerald-v2.css';
 @import './styles/99-photo-none.css';

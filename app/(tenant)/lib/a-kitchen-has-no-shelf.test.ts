@@ -78,14 +78,16 @@ describe('the Menu screen draws a dish without a count', () => {
   });
 
   it('a filter about a count can never be the one in force, even arriving by address', () => {
-    expect(list).toMatch(/useState<ShelfFilter>\(counted \? initialFilter : 'all'\)/);
+    // Owner, 2026-11-20 — a kitchen's filter follows its tab, which is only ever all or taken off: never a count.
+    expect(list).toMatch(/useState<ShelfFilter>\(counted \? initialFilter : menuTab === 'retired' \? 'retired' : 'all'\)/);
   });
 
   it('shows two figures instead of four: stock value, running low and out of stock are all a count', () => {
     expect(list).toMatch(/const strip = !counted \? \(\s*uncountedStrip/);
     expect(list).toMatch(/prd-strip prd-strip-2/);
     expect(list).toMatch(/strip\.onMenu/);
-    expect(list).toMatch(/strip\.offMenu/);
+    // Taken off is the Menu's tab now (owner, 2026-11-20); its row chip says it in MenuTable.
+    expect(list).toMatch(/\['all', 'noRecipe', 'retired'\] as const/);
   });
 
   it('drops the Stock column from the desk table and the count pill from the phone row', () => {
@@ -179,7 +181,7 @@ describe('what the review found', () => {
 
   it('the Menu strip of two has a rule of its own, not the three-column default', () => {
     const css = src('styles/96-products.css');
-    expect(list).toMatch(/className="prd-strip prd-strip-2"/);
+    expect(list).toMatch(/className="prd-strip prd-strip-2 mnu-strip"/);
     expect(css).toMatch(/\.prd-strip\.prd-strip-2 \{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
   });
 
