@@ -5,8 +5,7 @@ import { Fragment, useState, type ReactNode } from 'react';
 import { formatMoney } from '../lib/api';
 import type { Product, ProductCategory } from '../lib/api-types';
 import { ProductPhoto } from '../components/ProductPhoto';
-import { IconArrowRight, IconCheck, IconChevronDown } from '../components/icons';
-import { useAnchoredPanel } from '../lib/useAnchoredPanel';
+import { IconArrowRight, IconBan, IconCheck, IconChevronDown, IconEdit, IconRepeat, IconTrash } from '../components/icons';
 import { ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
 import { productShareItem } from '../lib/share-on-whatsapp';
 import { costsMoreThanPrice, foodCostTone, pctText } from '../lib/food-cost';
@@ -18,7 +17,7 @@ const NONE = '__none__';
  * Owner, 2026-11-20 — a restaurant's Menu on a laptop, read the way a menu is: section by section, each dish's
  * name and price first, then whether it is on the menu, how it has sold, and its recipe, one tap away.
  *
- * The columns: Dish · Status · Price · (Cost, for whoever is sent one) · Sold · Recipe (where recipes are on) · ⋮.
+ * The columns: Dish · Status · Price · (Cost, when a dish has one) · Sold · Recipe (where recipes are on) · the row's icons.
  * A section folds on its header; the fold is this screen's alone and lasts until the page is left.
  */
 export function MenuTable({
@@ -53,9 +52,6 @@ export function MenuTable({
   const t = useTranslations('products');
   const tm = useTranslations('products.menu');
   const [folded, setFolded] = useState<ReadonlySet<string>>(new Set());
-  const [menuFor, setMenuFor] = useState<string | null>(null);
-  const closeMenu = () => setMenuFor(null);
-  const panel = useAnchoredPanel(menuFor !== null, closeMenu);
   const groups = groupBySection(rows, categories);
   const cols = 4 + (seesCost ? 1 : 0) + (recipes ? 1 : 0) + 1; // a hidden column still counts: colSpan past the last is harmless
   const toggle = (key: string) =>
@@ -147,69 +143,36 @@ export function MenuTable({
                         ) : null}
                         <td className="mnu-act" onClick={(e) => e.stopPropagation()}>
                           <div className="mnu-act-row">
-                          {/* Jira GRW-671 — the share sits beside ⋮, not inside it, for anyone who can see the screen. */}
+                          {/* Jira GRW-671 — the share, for anyone who can see the screen. */}
                           {(() => {
                             const shareItem = productShareItem(p, { counted: false });
                             return shareItem ? <ShareOnWhatsAppButton item={shareItem} branchId={p.locationId} bookable={false} photoUrl={p.imageUrl} /> : null;
                           })()}
                           {writable ? (
-                            <div className="dropdown-anchor" ref={menuFor === p.id ? panel.anchorRef : undefined}>
+                            <>
+                              {/* Owner, 2026-11-20 ("use icons") — the row's actions in sight, each an icon with its name for a screen reader and a tooltip. */}
+                              <button type="button" className="mnu-icon-btn" aria-label={tm('editAria', { name: p.name })} title={tm('edit')} onClick={() => onOpen(p)}>
+                                <IconEdit />
+                              </button>
                               <button
                                 type="button"
-                                className="kebab-btn"
-                                aria-label={tm('actionsAria', { name: p.name })}
-                                aria-expanded={menuFor === p.id}
-                                onClick={() => setMenuFor(menuFor === p.id ? null : p.id)}
+                                className="mnu-icon-btn"
+                                aria-label={p.active ? tm('takeOffAria', { name: p.name }) : tm('putBackAria', { name: p.name })}
+                                title={p.active ? tm('takeOff') : tm('putBack')}
+                                onClick={() => onToggleActive(p)}
                               >
-                                ⋮
+                                {p.active ? <IconBan /> : <IconRepeat />}
                               </button>
-                              {menuFor === p.id ? (
-                                <div className="dropdown-panel dropdown-panel-sm dropdown-panel-right" ref={panel.panelRef} style={panel.style}>
-                                  <button
-                                    type="button"
-                                    className="dropdown-item dropdown-item-plain"
-                                    onClick={() => {
-                                      closeMenu();
-                                      onOpen(p);
-                                    }}
-                                  >
-                                    {tm('edit')}
-                                  </button>
-                                  {recipes ? (
-                                    <button
-                                      type="button"
-                                      className="dropdown-item dropdown-item-plain"
-                                      onClick={() => {
-                                        closeMenu();
-                                        onOpen(p, 'recipe');
-                                      }}
-                                    >
-                                      {tm('openRecipe')}
-                                    </button>
-                                  ) : null}
-                                  <button
-                                    type="button"
-                                    className="dropdown-item dropdown-item-plain"
-                                    onClick={() => {
-                                      closeMenu();
-                                      onToggleActive(p);
-                                    }}
-                                  >
-                                    {p.active ? tm('takeOff') : tm('putBack')}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="dropdown-item dropdown-item-plain dropdown-item-danger"
-                                    onClick={() => {
-                                      closeMenu();
-                                      onDelete(p);
-                                    }}
-                                  >
-                                    {t('delete')}
-                                  </button>
-                                </div>
-                              ) : null}
-                            </div>
+                              <button
+                                type="button"
+                                className="mnu-icon-btn is-danger"
+                                aria-label={tm('deleteAria', { name: p.name })}
+                                title={t('delete')}
+                                onClick={() => onDelete(p)}
+                              >
+                                <IconTrash />
+                              </button>
+                            </>
                           ) : null}
                           </div>
                         </td>

@@ -4729,7 +4729,11 @@
         "all": "On menu",
         "noRecipe": "No recipe",
         "retired": "Taken off"
-      }
+      },
+      "editAria": "Edit {name}",
+      "takeOffAria": "Take {name} off the menu",
+      "putBackAria": "Put {name} back on the menu",
+      "deleteAria": "Delete {name}"
     }
   },
   "kitchen": {

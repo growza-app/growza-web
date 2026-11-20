@@ -4729,7 +4729,11 @@
         "all": "मेन्यू पर",
         "noRecipe": "रेसिपी नहीं",
         "retired": "हटाई"
-      }
+      },
+      "editAria": "{name} बदलें",
+      "takeOffAria": "{name} मेन्यू से हटाएँ",
+      "putBackAria": "{name} मेन्यू पर वापस लाएँ",
+      "deleteAria": "{name} मिटाएँ"
     }
   },
   "kitchen": {

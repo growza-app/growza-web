@@ -13,7 +13,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Pagination, PAGE_SIZE } from '../components/Pagination';
 import { useAreas, useBusinessWritable, useRecipesOn, useSession, useWritable } from '../components/SessionProvider';
 import { canSee, type MemberRole } from '../lib/nav-policy';
-import { IconCart, IconCheck, IconChevronRight, IconClipboardCheck, IconEdit, IconGrid, IconPlus, IconPos, IconSearch, IconSort, IconTrendUp, IconUpload } from '../components/icons';
+import { IconCart, IconCheck, IconChevronRight, IconClipboardCheck, IconEdit, IconGrid, IconPlus, IconPos, IconSearch, IconSort, IconTable, IconTrendUp, IconUpload } from '../components/icons';
 import { MenuTable, sectionKey } from './MenuTable';
 import { groupedOrder, needsRecipe, recipeStates, type MenuTab, type RecipeInfo } from './menu-manager';
 import { ProductPhoto } from '../components/ProductPhoto';
@@ -1286,7 +1286,7 @@ export function ProductsList({
                         aria-pressed={menuView === 'table'}
                         onClick={() => pick(() => setMenuView('table'))}
                       >
-                        {t('viewTable')}
+                        <IconTable /> {t('viewTable')}
                       </button>
                       <button
                         type="button"
@@ -1294,12 +1294,12 @@ export function ProductsList({
                         aria-pressed={menuView === 'cards'}
                         onClick={() => pick(() => setMenuView('cards'))}
                       >
-                        {t('viewCards')}
+                        <IconGrid /> {t('viewCards')}
                       </button>
                     </div>
                     {canStockTake && writable ? (
                       <button type="button" className="btn btn-ghost prd-bulk-edit-btn" onClick={() => setBulkEditOpen(true)}>
-                        {t('bulkTable.open')}
+                        <IconEdit /> {t('bulkTable.open')}
                       </button>
                     ) : null}
                     {canStockTake && writable ? (

@@ -557,7 +557,7 @@
 }
 
 .mnu-act {
-  width: 5.5rem;
+  width: 10rem;
 }
 
 .mnu-act-row {
@@ -565,4 +565,96 @@
   align-items: center;
   justify-content: flex-end;
   gap: 0.25rem;
+}
+
+/*
+ * Owner, 2026-11-20 ("the pagination is not visible … no scroll") — the laptop's Menu fits the screen as the shelf's
+ * table card does (96-products.css): the card fills the column, the dishes scroll inside it under a header that
+ * stays, and the pages and the line under them stay in sight at the card's foot.
+ */
+@media (min-width: 861px) {
+  .prd-desk-mid > .mnu-work {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .mnu-work > :not(.mnu-table-wrap, .mnu-cards) {
+    flex: none;
+  }
+
+  .mnu-work > .mnu-table-wrap,
+  .mnu-work > .mnu-cards {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .mnu-work > .mnu-cards {
+    padding-top: var(--sp-1);
+    padding-bottom: var(--sp-3);
+  }
+
+  .mnu-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .mnu-work > .pagination {
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* The row's actions: icons in sight, the same 2.25rem as the Recipe button (2.75rem on a touch screen). */
+.mnu-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.mnu-icon-btn svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.mnu-icon-btn:hover {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.mnu-icon-btn.is-danger:hover {
+  border-color: var(--danger-line);
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+}
+
+@media (pointer: coarse) {
+  .mnu-icon-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
+
+.prd-view-btn svg,
+.prd-bulk-edit-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.prd-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
 }
