@@ -1086,3 +1086,24 @@
     min-width: 0;
   }
 }
+
+/* Owner, 2026-11-21 — the phone's top tools, in the row "Fold all" already had: "+ Add item" left, Fold all and ⋮ right. */
+.ks-phone-tools {
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: calc(-1 * var(--sp-2));
+}
+
+.ks-phone-tools > .ks-phone-add {
+  margin-right: auto;
+}
+
+.ks-phone-tools > .ks-more {
+  flex: none;
+  margin-right: calc(-1 * var(--sp-2));
+}
+
+.ks-phone-tools > .ks-more .kebab-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+}

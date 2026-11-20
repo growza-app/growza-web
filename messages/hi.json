@@ -4736,7 +4736,15 @@
       "editAria": "{name} बदलें",
       "takeOffAria": "{name} मेन्यू से हटाएँ",
       "putBackAria": "{name} मेन्यू पर वापस लाएँ",
-      "deleteAria": "{name} मिटाएँ"
+      "deleteAria": "{name} मिटाएँ",
+      "share": {
+        "button": "मेन्यू व्हाट्सऐप पर भेजें",
+        "title": "{business} — मेन्यू",
+        "order": "ऑर्डर: {phone}",
+        "asOf": "दाम {date} के अनुसार",
+        "half": "हाफ़",
+        "full": "फ़ुल"
+      }
     }
   },
   "kitchen": {

@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import AppLink from '../../shared/AppLink';
 import { api, ApiError } from '../lib/api';
 import type { KitchenStockList, StockMaterial } from '../lib/api-types';
@@ -17,6 +18,7 @@ import { StockInSheet } from './StockInSheet';
 import { PurchasesSheet } from './PurchasesSheet';
 import { BuyList } from './BuyList';
 import { StockTable } from './StockTable';
+import { MenuKebab, type KebabItem } from '../products/MenuKebab';
 import { IconChevronDown, IconClose, IconSearch } from '../components/icons';
 import { GraphicSvg } from '../components/ProductPhoto';
 import { groupHues, groupKey, groupNames, ingredientGraphic, stockLevel } from './ingredient-graphic';
@@ -131,6 +133,7 @@ export function KitchenStockClient({
   };
   const toggleFold = (key: string) => saveFolded(folded.includes(key) ? folded.filter((k) => k !== key) : [...folded, key]);
   const [confirmOff, setConfirmOff] = useState(false);
+  const router = useRouter();
   const [sheet, setSheetNow] = useState<Sheet>(null);
   // A new sheet clears the last one's "saved" line, so what the page says is always about the latest thing done.
   const setSheet = (next: Sheet) => {
@@ -390,6 +393,43 @@ export function KitchenStockClient({
 
     </>
   );
+  /**
+   * Owner, 2026-11-21 ("these options shouldn't be at the bottom … should not take much space") — on a phone the foot's
+   * jobs move to the top, into the row "Fold all" already had: "+ Add item" on its left, the rarer three (Import,
+   * Suppliers, Switch inventory off) in a ⋮ on its right. No new row.
+   */
+  const moreItems: KebabItem[] = [
+    ...(mayChange
+      ? [
+          { label: t('import.open'), onSelect: () => setImporting(true) },
+          { label: t('actions.suppliers'), onSelect: () => router.push(withBranch('/inventory/suppliers', branchId)) },
+        ]
+      : []),
+    ...(isOwner && data.on && !busy ? [{ label: t('switchOff'), onSelect: () => setConfirmOff(true), danger: true }] : []),
+  ];
+  /** Fold every group in one tap, or open them all again. Not while searching: then every match shows. */
+  const foldAllBtn =
+    filter === 'all' && shown.length > 0 && groups.filter((g) => g.title).length > 1 && !query.trim() ? (
+      <button
+        type="button"
+        className="ks-quiet-link"
+        onClick={() => saveFolded(groups.every((g) => !g.title || folded.includes(g.key)) ? [] : groups.filter((g) => g.title).map((g) => g.key))}
+      >
+        {groups.every((g) => !g.title || folded.includes(g.key)) ? t('openAll') : t('foldAll')}
+      </button>
+    ) : null;
+  const phoneTools =
+    materials.length > 0 && (mayChange || foldAllBtn || moreItems.length > 0) ? (
+      <div className="ks-fold-all ks-phone-tools">
+        {mayChange ? (
+          <button type="button" className="ks-quiet-link ks-phone-add" onClick={() => setEditing('new')}>
+            + {t('add')}
+          </button>
+        ) : null}
+        {foldAllBtn}
+        <MenuKebab className="ks-more" label={t('foot.label')} items={moreItems} />
+      </div>
+    ) : null;
   const filterChips = (
     <>
       {materials.length > 0 ? (
@@ -448,17 +488,7 @@ export function KitchenStockClient({
           ) : (
             <>
             {/* Fold every group in one tap, or open them all again. Not while searching: then every match shows. */}
-            {groups.filter((g) => g.title).length > 1 && !query.trim() ? (
-              <div className="ks-fold-all">
-                <button
-                  type="button"
-                  className="ks-quiet-link"
-                  onClick={() => saveFolded(groups.every((g) => !g.title || folded.includes(g.key)) ? [] : groups.filter((g) => g.title).map((g) => g.key))}
-                >
-                  {groups.every((g) => !g.title || folded.includes(g.key)) ? t('openAll') : t('foldAll')}
-                </button>
-              </div>
-            ) : null}
+            {desk && foldAllBtn ? <div className="ks-fold-all">{foldAllBtn}</div> : null}
             {groups.map((g) => {
               const isFolded = Boolean(g.title) && folded.includes(g.key) && !query.trim();
               return (
@@ -708,8 +738,10 @@ export function KitchenStockClient({
       {openingFull ? openingCards : null}
       {filterChips}
       {openingShort('ks-work-note ks-phone-note')}
+      {phoneTools}
       {listOrBuy}
-      {footLinks}
+      {/* With items, the foot's jobs live in the tabs row's ⋮; an empty kitchen keeps them here, under "No items yet". */}
+      {materials.length === 0 ? footLinks : null}
       {dialogs}
     </div>
   );
