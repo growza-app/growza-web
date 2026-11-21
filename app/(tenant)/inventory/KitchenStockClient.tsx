@@ -522,7 +522,7 @@ export function KitchenStockClient({
                               <span className="ks-meta ks-item-sub">
                                 {g.low && m.category ? <span className="ks-item-meta">{m.category}</span> : null}
                                 {m.stock < 0 ? (
-                                  <span className="ks-meta-warn ks-item-warn">{t('overUsedShort', { amount: shownAmount(-m.stock, m.unit), unit: unitWord(m.unit) })}</span>
+                                  <span className="ks-meta-warn ks-item-warn">{t('overUsed', { amount: shownAmount(-m.stock, m.unit), unit: unitWord(m.unit) })}</span>
                                 ) : null}
                               </span>
                             ) : null}
