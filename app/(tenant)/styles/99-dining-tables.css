@@ -401,6 +401,40 @@
   }
 }
 
+/*
+ * Owner, 2026-11-21 ("alignment issue") — on a laptop Delivery's "Order from" sits beside the switch on ONE line, centred on
+ * it: the label and the app chips. It was the bill panel's two-row grid (chips on top, the number under them), twice the
+ * switch's height and lined up with neither row. The order number now sits in the bill, under "Delivery · Swiggy".
+ */
+@media (min-width: 861px) {
+  /* The switch keeps its width: "Order from" goes beside it when the whole of it fits, else onto the next line. */
+  .pf-type-top .pf-type-tabs {
+    flex: 0 1 30rem;
+  }
+
+  .pf-type-top > .pf-from {
+    display: flex;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+  }
+
+  .pf-type-top > .pf-from > .pf-row-label {
+    min-width: 0;
+  }
+
+  .pf-type-top > .pf-from .pf-chips {
+    flex: none;
+  }
+}
+
+.pf-order-head .pf-from-no {
+  margin-top: var(--sp-2);
+  background: var(--surface);
+}
+
 /* The bill names what it is for: a takeaway or a delivery here, a table in the strip (styled the same way). */
 .pf-order-head,
 .pf-table-strip .pf-table-name {

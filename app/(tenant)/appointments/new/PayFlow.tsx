@@ -380,6 +380,16 @@ export function PayFlow({
   useEffect(() => {
     if (!typeLocked) setTypeNudge(false);
   }, [typeLocked]);
+  /*
+   * Owner, 2026-11-21 — the Delivery tab always has an app chosen. Opened from the address (`?type=delivery`), kept for the
+   * next order after a sale, or before the branch's apps had loaded, it had none: the bill said "Delivery · Delivery" and
+   * no chip was on. The first app is the one the tab's own tap already picks.
+   */
+  const firstApp = apps[0];
+  useEffect(() => {
+    if (tablesHere && orderTab === 'delivery' && !apps.includes(orderFrom) && firstApp) setOrderFrom(firstApp);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `apps` is a fresh array each render; `firstApp` carries it.
+  }, [tablesHere, orderTab, orderFrom, firstApp]);
   /** Jira GRW-572 — the branch's priced combos, for the wide till's Packages tab. Empty until read, and on a phone. */
   const [offers, setOffers] = useState<Offer[]>([]);
   /** Owner, 2026-10-14 — the branch's shelf (migration 0115): the Products tab on the desk, a chip in the phone's sheet. */
@@ -1049,6 +1059,11 @@ export function PayFlow({
     setLines(found.lines);
     setOverride(found.override);
     setOrderFrom(found.from ?? 'counter');
+    // A held Swiggy bill comes back under Delivery; a counter bill never stays under it (it would be given an app).
+    if (tablesHere) {
+      if (found.from && apps.includes(found.from)) setOrderTab('delivery');
+      else if (orderTab === 'delivery') setOrderTab('takeaway');
+    }
     setAppOrderNo(found.orderNo ?? '');
     setSelectedMode(null);
     setBadMode(false);
@@ -2249,6 +2264,27 @@ export function PayFlow({
    * Owner, 2026-10-24 — Order from: Counter, or one of the business's delivery apps. Shown only where the business
    * has an app (a restaurant). Chips, not a select: two or three choices, each one tap, the chosen one plainly on.
    */
+  /** The app's own order number, once an app is chosen: under the chips on a plain till, in the bill on a till with tables. */
+  const orderNo =
+    fromApp && !token ? (
+      <>
+        <button type="button" className="pf-from-no" onClick={() => setOrderNoOpen(true)} disabled={saving !== null}>
+          <span className="pf-from-no-label">{t('from.orderNo', { app: appWord(fromApp) })}</span>
+          <span className="pf-from-optional">{appOrderNo.trim() ? appOrderNo.trim() : t('from.addOrderNo')}</span>
+        </button>
+        {orderNoOpen ? (
+          <AppOrderNoSheet
+            app={appWord(fromApp)}
+            value={appOrderNo}
+            onDone={(no) => {
+              setAppOrderNo(no);
+              setOrderNoOpen(false);
+            }}
+            onClose={() => setOrderNoOpen(false)}
+          />
+        ) : null}
+      </>
+    ) : null;
   // Jira GRW-720 — the same row twice: with "Counter" first as it always was, and apps-only under the Delivery tab.
   const appRow = (withCounter: boolean) =>
     apps.length > 0 && !token ? (
@@ -2268,23 +2304,7 @@ export function PayFlow({
             </button>
           ))}
         </div>
-        {fromApp ? (
-          <button type="button" className="pf-from-no" onClick={() => setOrderNoOpen(true)} disabled={saving !== null}>
-            <span className="pf-from-no-label">{t('from.orderNo', { app: appWord(fromApp) })}</span>
-            <span className="pf-from-optional">{appOrderNo.trim() ? appOrderNo.trim() : t('from.addOrderNo')}</span>
-          </button>
-        ) : null}
-        {fromApp && orderNoOpen ? (
-          <AppOrderNoSheet
-            app={appWord(fromApp)}
-            value={appOrderNo}
-            onDone={(no) => {
-              setAppOrderNo(no);
-              setOrderNoOpen(false);
-            }}
-            onClose={() => setOrderNoOpen(false)}
-          />
-        ) : null}
+        {withCounter ? orderNo : null}
       </div>
     ) : null;
   const fromRow = appRow(true);
@@ -2354,6 +2374,8 @@ export function PayFlow({
               : t('type.headTakeaway')}
         </strong>
         <span className="pf-order-head-sub">{token ? token.customerName : orderTab === 'delivery' ? t('type.subDelivery') : t('type.subTakeaway')}</span>
+        {/* Owner, 2026-11-21 ("alignment issue") — the number belongs to this bill, so it sits here, not beside the switch. */}
+        {orderTab === 'delivery' ? orderNo : null}
       </div>
     ) : null;
 

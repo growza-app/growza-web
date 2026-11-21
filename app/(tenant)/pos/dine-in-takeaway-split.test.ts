@@ -64,4 +64,16 @@ describe('GRW-745 — Home and Return', () => {
     expect(ret).toContain("className={`sls-ret-bill-place ${b.tableName ? 'is-table' : 'is-token'}`}");
     for (const m of [en, hi]) for (const k of ['dineIn', 'takeaway']) expect(m.sales.returnSheet[k], k).toBeTruthy();
   });
+
+  it('Delivery always has an app, the number sits in the bill, and the switch keeps its width (owner, "alignment issue")', () => {
+    // ?type=delivery, a kept tab after a sale, or apps loading late: the first app is chosen, never "Delivery · Delivery".
+    expect(flow).toContain("if (tablesHere && orderTab === 'delivery' && !apps.includes(orderFrom) && firstApp) setOrderFrom(firstApp);");
+    // A held bill brings its own type back with it.
+    expect(flow).toContain("if (found.from && apps.includes(found.from)) setOrderTab('delivery');");
+    // The order number is the bill's, so the top line holds only choices and stays one line.
+    expect(flow).toContain("{orderTab === 'delivery' ? orderNo : null}");
+    expect(flow).toContain('{withCounter ? orderNo : null}');
+    const css = readFileSync(resolve(__dirname, '../styles/99-dining-tables.css'), 'utf8');
+    expect(css).toMatch(/\.pf-type-top \.pf-type-tabs \{\s*flex: 0 1 30rem;/);
+  });
 });
