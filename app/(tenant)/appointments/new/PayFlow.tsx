@@ -2558,7 +2558,8 @@ export function PayFlow({
                 // Jira GRW-732 — a Seated table's first order: the count it was seated with is the one the order starts from.
                 ...(seatedHere ? { seated: true } : {}),
               });
-              if (seatedHere) setGuests(seatedHere.guests);
+              // QA 2026-11-21 — a table with a bill already open shows that bill's count (it read "–"); a change is sent with the round.
+              setGuests(billOf.table.openBill?.guests ?? seatedHere?.guests ?? null);
               setBillOf(null);
             }}
             onTakePayment={

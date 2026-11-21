@@ -81,4 +81,9 @@ describe('GRW-745 — Home and Return', () => {
     expect(flow).toContain("{orderTab === 'delivery' && apps.length > 0 ? fromAppChips : null}");
     expect(flow).not.toContain('!typeLock ? fromAppChips');
   });
+
+  it('QA 2026-11-21 — adding dishes to a table with an open bill starts from that bill’s guest count, and sends it', () => {
+    expect(flow).toContain('setGuests(billOf.table.openBill?.guests ?? seatedHere?.guests ?? null);');
+    expect(flow).toContain('...(guests ? { guests } : {})');
+  });
 });
