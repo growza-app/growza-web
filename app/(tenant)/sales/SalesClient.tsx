@@ -166,6 +166,9 @@ export interface SaleRow {
   locationId: string | null;
   clientName: string;
   clientPhone: string | null;
+  /** Jira GRW-745 — the table a dine-in bill was eaten at ("T4 · Main Hall"), and a takeaway's token; null where neither. */
+  tableName?: string | null;
+  tokenNo?: number | null;
   serviceNames: string[];
   offerTitle: string | null;
   products: NonNullable<BookingGroup['products']>;
@@ -235,6 +238,8 @@ export function buildSaleRows(appointments: readonly Appointment[], timezone: st
       locationId: g.appointments[0]?.locationId ?? null,
       clientName: clientNameLabel(g) ?? g.customerName ?? '—',
       clientPhone: g.customerPhone ?? null,
+      tableName: g.appointments.find((a) => a.tableName)?.tableName ?? null,
+      tokenNo: g.appointments.find((a) => typeof a.tokenNo === 'number')?.tokenNo ?? null,
       serviceNames,
       offerTitle: offerTitles.length > 0 ? offerTitles.join(' + ') : g.offerTitle,
       products,

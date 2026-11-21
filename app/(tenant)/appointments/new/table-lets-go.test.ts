@@ -17,6 +17,7 @@ describe('the till lets go of a table', () => {
     expect(flow).toMatch(/const nextCustomer = \(\) => \{\s*setLines\(\[\]\);[\s\S]{0,200}setAtTable\(null\);\s*setGuests\(null\);/);
   });
   it('and while a table is chosen, the strip says Dine-in', () => {
-    expect(flow).toContain("<span className=\"pf-table-type\">{t('type.dine_in')}</span> · {atTable.label}");
+    // GRW-745: the strip is the bill's header — "Dine-in" over the table's name, on two lines.
+    expect(flow).toContain("<span className=\"pf-table-type\">{t('type.dine_in')}</span>\n        <span className=\"pf-table-label\">{atTable.label}</span>");
   });
 });

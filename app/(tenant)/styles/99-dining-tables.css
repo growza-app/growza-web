@@ -329,3 +329,201 @@
 .tb-foot-pair .btn-danger { flex: 1 1 auto; }
 .tb-foot-pair .btn-ghost { flex: 0 0 auto; }
 .tb-foot-pair .btn-danger:disabled { background: var(--surface); color: var(--danger); box-shadow: inset 0 0 0 1.5px var(--danger); opacity: 0.55; }
+
+/*
+ * Jira GRW-745 — Dine-in · Takeaway · Delivery has ONE place: the top of the till, over the table map and over the dishes.
+ * It used to jump into the bill panel after the first dish. Its height is fixed so nothing under it moves (CLS 0); once the
+ * order has a table or a dish it is locked, the choices it may not take greyed (not hidden), and the reason is said — beside
+ * the switch on a laptop, under it on a phone when a locked choice is tapped.
+ */
+.pf-type-top {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.pf-type-top .pf-type-tabs {
+  flex: 1 1 18rem;
+  max-width: 30rem;
+}
+
+.pf-type-top .pf-type-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 2.75rem;
+}
+
+.pf-type-top .pf-type-tab[aria-disabled='true'] {
+  color: var(--muted);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pf-type-icon,
+.pf-type-icon svg {
+  display: inline-flex;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.pf-type-lock {
+  display: none;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+
+.pf-type-lock svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex: none;
+}
+
+@media (max-width: 860px) {
+  .pf-type-top.is-nudged .pf-type-lock {
+    display: inline-flex;
+    flex-basis: 100%;
+    color: var(--text);
+  }
+}
+
+@media (min-width: 861px) {
+  .pf-type-top .pf-type-lock {
+    display: inline-flex;
+    flex-basis: auto;
+    flex: 1 1 12rem;
+  }
+}
+
+/*
+ * Owner, 2026-11-21 ("alignment issue") — on a laptop Delivery's "Order from" sits beside the switch on ONE line, centred on
+ * it: the label and the app chips. It was the bill panel's two-row grid (chips on top, the number under them), twice the
+ * switch's height and lined up with neither row. The order number now sits in the bill, under "Delivery · Swiggy".
+ */
+@media (min-width: 861px) {
+  /* The switch keeps its width: "Order from" goes beside it when the whole of it fits, else onto the next line. */
+  .pf-type-top .pf-type-tabs {
+    flex: 0 1 30rem;
+  }
+
+  .pf-type-top > .pf-from {
+    display: flex;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+  }
+
+  .pf-type-top > .pf-from > .pf-row-label {
+    min-width: 0;
+  }
+
+  .pf-type-top > .pf-from .pf-chips {
+    flex: none;
+  }
+}
+
+.pf-order-head .pf-from-no {
+  margin-top: var(--sp-2);
+  background: var(--surface);
+}
+
+/* The bill names what it is for: a takeaway or a delivery here, a table in the strip (styled the same way). */
+.pf-order-head,
+.pf-table-strip .pf-table-name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.pf-order-head {
+  margin-bottom: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: 0.75rem;
+  background: var(--amber-soft);
+}
+
+.pf-order-head.is-delivery {
+  background: var(--blue-soft);
+}
+
+.pf-order-head-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-6);
+  color: var(--text);
+}
+
+.pf-order-head-sub {
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+
+.pf-table-strip .pf-table-name {
+  font-size: var(--fs-6);
+}
+
+/* Jira GRW-745 — Home's Recent orders by how they were eaten: a row of chips, 44px to a thumb, the chosen one filled. */
+.hm-type-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
+}
+
+.hm-type-chip {
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-2);
+  cursor: pointer;
+}
+
+.hm-type-chip.is-on {
+  border-color: var(--forest);
+  background: var(--forest);
+  color: #fff;
+}
+
+.hm-type-chip:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+
+/* Jira GRW-745 FR-08 — Return: a bill is named by its table or its token before the guest's name. */
+.sls-ret-bill-place {
+  display: block;
+  font-size: var(--fs-2);
+  font-weight: 600;
+}
+
+.sls-ret-bill-place.is-table {
+  color: var(--accent-deep);
+}
+
+.sls-ret-bill-place.is-token {
+  color: var(--text);
+}
+
+/* GRW-745 AC-07 — the table map's 12px inset is undone for the switch alone, so it sits on exactly the same line as over
+   the dishes: moving from the map to a table does not move it. */
+.pf-tables > .pf-type-top {
+  margin: calc(-1 * var(--sp-3)) calc(-1 * var(--sp-3)) 0;
+}
+
+/* GRW-745 FR-08 — under the Return sheet the switch is not shown (its space kept, so closing Return moves nothing). */
+.pos-body[data-mode='return'] .pf-type-top {
+  visibility: hidden;
+}

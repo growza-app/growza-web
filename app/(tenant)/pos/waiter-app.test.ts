@@ -42,7 +42,7 @@ describe('BR-01 — a waiter is offered the room and nothing else', () => {
 describe('AC-03 · BR-02 — what a waiter’s till does not draw', () => {
   it('no Sell/Queue/Return tabs and no type tabs: Dine-in only', () => {
     expect(pos).toContain('{waiter ? (');
-    expect(flow).toContain('tablesHere && !token && !waiter ? (');
+    expect(flow).toContain('tablesHere && !token && !waiter && !addingTo ? (');
   });
 
   it('no guest lookup on the dish step: a waiter names the guest when they pay', () => {

@@ -25,7 +25,8 @@ import { nounInSentence, pickNoun } from '../../lib/nouns';
 import { useNouns } from '../../lib/use-nouns';
 import { LargeAmountDeclined, useLargeAmountGuard } from '../../components/LargeAmountConfirm';
 import { useAreas, useSession } from '../../components/SessionProvider';
-import { IconArrowLeft, IconCheck, IconClose, IconEdit, IconMinus, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch, IconUserPlus } from '../../components/icons';
+import { IconArrowLeft, IconCheck, IconClose, IconDelivery, IconDineIn, IconEdit, IconLock, IconMinus, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch, IconTakeaway, IconUserPlus } from '../../components/icons';
+import { orderTypeFromUrl, writeOrderTypeToUrl } from '../../lib/order-type-url';
 import { FormModeSwitch } from './FormModeSwitch';
 import { ClientSheet } from './ClientSheet';
 import { Keypad } from './Keypad';
@@ -148,6 +149,12 @@ function newAttemptKey(): string {
  * A changed total, spread over the lines in proportion to their list prices, the last line taking the rounding.
  * The API wants an amount per leg; the owner wants to type one number.
  */
+
+/** Jira GRW-745 — the icon beside each way of eating, so the type is never said by colour alone. */
+function TypeIcon({ type }: { type: 'dine_in' | 'takeaway' | 'delivery' }) {
+  return <span className="pf-type-icon" aria-hidden="true">{type === 'dine_in' ? <IconDineIn /> : type === 'delivery' ? <IconDelivery /> : <IconTakeaway />}</span>;
+}
+
 export function spread(lines: readonly { priceMinor: number }[], totalMinor: number): number[] {
   const list = lines.reduce((sum, l) => sum + l.priceMinor, 0);
   let left = totalMinor;
@@ -283,7 +290,12 @@ export function PayFlow({
    * next order on this device until the page is opened again (BR-04). A branch that does not seat guests sees none of
    * this — its till is exactly as it was (BR-01).
    */
-  const [orderTab, setOrderTab] = useState<'dine_in' | 'takeaway' | 'delivery'>('dine_in');
+  const [orderTab, setOrderTabState] = useState<'dine_in' | 'takeaway' | 'delivery'>(() => orderTypeFromUrl() ?? 'dine_in');
+  /** Jira GRW-745 FR-02 — the type is in the address: a refresh or Back keeps it. Written in place, no navigation. */
+  const setOrderTab = (next: 'dine_in' | 'takeaway' | 'delivery') => {
+    setOrderTabState(next);
+    writeOrderTypeToUrl(next);
+  };
   /*
    * Jira GRW-721 — the table this order is for: picked on the map, then the dish grid as always, and "Send to kitchen"
    * puts the dishes on that table's bill (a new one, or the round onto the one running). The bill of a busy table
@@ -359,6 +371,25 @@ export function PayFlow({
   /** Whether the branch's people have come back yet — an empty list means nothing until they have. */
   const [providersKnown, setProvidersKnown] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
+  /*
+   * Jira GRW-745 — a phone has no room beside the order-type switch: a tap on a locked choice says why (a laptop says it
+   * beside the switch, always). Cleared when the order is free to change type again (no table, no dish).
+   */
+  const [typeNudge, setTypeNudge] = useState(false);
+  const typeLocked = atTable !== null || lines.length > 0;
+  useEffect(() => {
+    if (!typeLocked) setTypeNudge(false);
+  }, [typeLocked]);
+  /*
+   * Owner, 2026-11-21 — the Delivery tab always has an app chosen. Opened from the address (`?type=delivery`), kept for the
+   * next order after a sale, or before the branch's apps had loaded, it had none: the bill said "Delivery · Delivery" and
+   * no chip was on. The first app is the one the tab's own tap already picks.
+   */
+  const firstApp = apps[0];
+  useEffect(() => {
+    if (tablesHere && orderTab === 'delivery' && !apps.includes(orderFrom) && firstApp) setOrderFrom(firstApp);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `apps` is a fresh array each render; `firstApp` carries it.
+  }, [tablesHere, orderTab, orderFrom, firstApp]);
   /** Jira GRW-572 — the branch's priced combos, for the wide till's Packages tab. Empty until read, and on a phone. */
   const [offers, setOffers] = useState<Offer[]>([]);
   /** Owner, 2026-10-14 — the branch's shelf (migration 0115): the Products tab on the desk, a chip in the phone's sheet. */
@@ -1028,6 +1059,11 @@ export function PayFlow({
     setLines(found.lines);
     setOverride(found.override);
     setOrderFrom(found.from ?? 'counter');
+    // A held Swiggy bill comes back under Delivery; a counter bill never stays under it (it would be given an app).
+    if (tablesHere) {
+      if (found.from && apps.includes(found.from)) setOrderTab('delivery');
+      else if (orderTab === 'delivery') setOrderTab('takeaway');
+    }
     setAppOrderNo(found.orderNo ?? '');
     setSelectedMode(null);
     setBadMode(false);
@@ -2228,6 +2264,27 @@ export function PayFlow({
    * Owner, 2026-10-24 — Order from: Counter, or one of the business's delivery apps. Shown only where the business
    * has an app (a restaurant). Chips, not a select: two or three choices, each one tap, the chosen one plainly on.
    */
+  /** The app's own order number, once an app is chosen: under the chips on a plain till, in the bill on a till with tables. */
+  const orderNo =
+    fromApp && !token ? (
+      <>
+        <button type="button" className="pf-from-no" onClick={() => setOrderNoOpen(true)} disabled={saving !== null}>
+          <span className="pf-from-no-label">{t('from.orderNo', { app: appWord(fromApp) })}</span>
+          <span className="pf-from-optional">{appOrderNo.trim() ? appOrderNo.trim() : t('from.addOrderNo')}</span>
+        </button>
+        {orderNoOpen ? (
+          <AppOrderNoSheet
+            app={appWord(fromApp)}
+            value={appOrderNo}
+            onDone={(no) => {
+              setAppOrderNo(no);
+              setOrderNoOpen(false);
+            }}
+            onClose={() => setOrderNoOpen(false)}
+          />
+        ) : null}
+      </>
+    ) : null;
   // Jira GRW-720 — the same row twice: with "Counter" first as it always was, and apps-only under the Delivery tab.
   const appRow = (withCounter: boolean) =>
     apps.length > 0 && !token ? (
@@ -2247,23 +2304,7 @@ export function PayFlow({
             </button>
           ))}
         </div>
-        {fromApp ? (
-          <button type="button" className="pf-from-no" onClick={() => setOrderNoOpen(true)} disabled={saving !== null}>
-            <span className="pf-from-no-label">{t('from.orderNo', { app: appWord(fromApp) })}</span>
-            <span className="pf-from-optional">{appOrderNo.trim() ? appOrderNo.trim() : t('from.addOrderNo')}</span>
-          </button>
-        ) : null}
-        {fromApp && orderNoOpen ? (
-          <AppOrderNoSheet
-            app={appWord(fromApp)}
-            value={appOrderNo}
-            onDone={(no) => {
-              setAppOrderNo(no);
-              setOrderNoOpen(false);
-            }}
-            onClose={() => setOrderNoOpen(false)}
-          />
-        ) : null}
+        {withCounter ? orderNo : null}
       </div>
     ) : null;
   const fromRow = appRow(true);
@@ -2275,9 +2316,16 @@ export function PayFlow({
    * till already had, so picking Swiggy or Zomato is the same one tap it always was.
    */
   const typeTabs: Array<'dine_in' | 'takeaway' | 'delivery'> = ['dine_in', 'takeaway', ...(apps.length > 0 ? (['delivery'] as const) : [])];
+  /*
+   * Jira GRW-745 — the switch has ONE place: the top of the till, on the table map and over the dishes alike (it used to
+   * jump into the bill panel). Once the order has a table or a dish it is locked, and says why: a tap must never turn a
+   * table's order into a takeaway (BR-01).
+   */
+  const typeLock = atTable ? t('type.lockedTable', { table: atTable.label }) : lines.length > 0 ? t('type.locked') : null;
+
   const typeRow =
-    tablesHere && !token && !waiter ? (
-      <div className="pf-type" role="group" aria-label={t('type.label')}>
+    tablesHere && !token && !waiter && !addingTo ? (
+      <div className={`pf-type pf-type-top${typeLock ? ' is-locked' : ''}${typeNudge ? ' is-nudged' : ''}`} role="group" aria-label={t('type.label')}>
         <div className="pf-type-tabs">
           {typeTabs.map((key) => (
             <button
@@ -2285,17 +2333,51 @@ export function PayFlow({
               type="button"
               className={`pf-type-tab${orderTab === key ? ' is-on' : ''}`}
               aria-pressed={orderTab === key}
+              aria-describedby={typeLock ? 'pf-type-lock' : undefined}
               disabled={saving !== null}
+              aria-disabled={typeLock !== null && orderTab !== key ? true : undefined}
               onClick={() => {
+                if (typeLock) {
+                  if (orderTab !== key) setTypeNudge(true);
+                  return;
+                }
                 setOrderTab(key);
                 setOrderFrom(key === 'delivery' ? (fromApp ?? apps[0] ?? 'counter') : 'counter');
               }}
             >
+              <TypeIcon type={key} />
               {t(`type.${key}`)}
             </button>
           ))}
         </div>
+        {typeLock ? (
+          <p className="pf-type-lock" id="pf-type-lock">
+            <IconLock />
+            {typeLock}
+          </p>
+        ) : null}
+        {/* QA 2026-11-21 — the lock is the switch's alone (BR-01): the app row stays once a dish is in, so Swiggy and Zomato
+            can still be swapped (both are deliveries, same prices) and nothing under it moves (AC-07). */}
         {orderTab === 'delivery' && apps.length > 0 ? fromAppChips : null}
+      </div>
+    ) : null;
+  /** Jira GRW-745 FR-03 — the bill names what it is for. A table's is the strip below; a takeaway or a delivery says so here. */
+  const orderHead =
+    tablesHere && !atTable && !addingTo && !waiter ? (
+      <div className={`pf-order-head is-${token ? 'takeaway' : orderTab}`}>
+        <strong className="pf-order-head-title">
+          <TypeIcon type={token ? 'takeaway' : orderTab} />
+          {token
+            ? token.tokenNo !== null
+              ? t('type.headToken', { token: nv.token(token.tokenNo) })
+              : t('type.takeaway')
+            : orderTab === 'delivery'
+              ? t('type.headDelivery', { app: fromApp ? appWord(fromApp) : t('type.delivery') })
+              : t('type.headTakeaway')}
+        </strong>
+        <span className="pf-order-head-sub">{token ? token.customerName : orderTab === 'delivery' ? t('type.subDelivery') : t('type.subTakeaway')}</span>
+        {/* Owner, 2026-11-21 ("alignment issue") — the number belongs to this bill, so it sits here, not beside the switch. */}
+        {orderTab === 'delivery' ? orderNo : null}
       </div>
     ) : null;
 
@@ -2397,7 +2479,8 @@ export function PayFlow({
       </button>
       {/* Always said: this bill is for a table, so it is Dine-in. */}
       <strong className="pf-table-name">
-        <span className="pf-table-type">{t('type.dine_in')}</span> · {atTable.label}
+        <span className="pf-table-type">{t('type.dine_in')}</span>
+        <span className="pf-table-label">{atTable.label}</span>
       </strong>
       {/* Jira GRW-734 — this area charges its own prices: said once, so a price on a tile is not a surprise. */}
       {hasAreaPrices(atTable.pricing) ? <span className="pf-table-prices field-hint">{tTables('areaPrices')}</span> : null}
@@ -2475,7 +2558,8 @@ export function PayFlow({
                 // Jira GRW-732 — a Seated table's first order: the count it was seated with is the one the order starts from.
                 ...(seatedHere ? { seated: true } : {}),
               });
-              if (seatedHere) setGuests(seatedHere.guests);
+              // QA 2026-11-21 — a table with a bill already open shows that bill's count (it read "–"); a change is sent with the round.
+              setGuests(billOf.table.openBill?.guests ?? seatedHere?.guests ?? null);
               setBillOf(null);
             }}
             onTakePayment={
@@ -2571,6 +2655,7 @@ export function PayFlow({
             {nv.visitGone}
           </div>
         ) : null}
+        {typeRow}
         <div className="pf-wide-grid">
           <aside className="pf-wide-left">
             {who}
@@ -2638,7 +2723,7 @@ export function PayFlow({
             {/* Adding to a waiting order: it already has its guest and where it came from. */}
             {productsOnly && !addingTo ? (
               <div className="pos-bill-client">
-                {tablesHere ? (atTable ? tableStrip : typeRow) : fromRow}
+                {tablesHere ? (atTable ? tableStrip : orderHead) : fromRow}
                 {who}
               </div>
             ) : null}
@@ -2982,7 +3067,14 @@ export function PayFlow({
           {nv.visitGone}
         </div>
       ) : null}
-      {addingTo ? null : tablesHere ? (atTable ? tableStrip : typeRow) : fromRow}
+      {addingTo ? null : tablesHere ? (
+        <>
+          {typeRow}
+          {atTable ? tableStrip : orderHead}
+        </>
+      ) : (
+        fromRow
+      )}
       {addingTo ? null : who}
       {productsOnly ? null : stylists}
 

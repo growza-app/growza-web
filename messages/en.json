@@ -3339,7 +3339,14 @@
       "label": "How is the guest eating?",
       "dine_in": "Dine-in",
       "takeaway": "Takeaway",
-      "delivery": "Delivery"
+      "delivery": "Delivery",
+      "locked": "Locked — the bill has dishes. Clear it to change.",
+      "lockedTable": "Dine-in at {table}. Go back to the tables to change.",
+      "headTakeaway": "New takeaway",
+      "headToken": "Takeaway · {token}",
+      "headDelivery": "Delivery · {app}",
+      "subTakeaway": "Token given when you send or pay",
+      "subDelivery": "Paid to you by the app"
     },
     "discount": {
       "add": "Add discount",
@@ -5162,7 +5169,9 @@
       "whyOtherNeeds": "Write what the reason was in the note.",
       "puttingBack": "Goes back on the count of: {items}",
       "writingOff": "Written off, not put back: {items}",
-      "sizeRemovedNote": "One of these sizes has been removed from the shelf since the sale. The unit was counted on that size’s own record."
+      "sizeRemovedNote": "One of these sizes has been removed from the shelf since the sale. The unit was counted on that size’s own record.",
+      "dineIn": "Dine-in",
+      "takeaway": "Takeaway"
     }
   },
   "orders": {
