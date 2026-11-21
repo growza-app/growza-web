@@ -882,7 +882,7 @@ export function ProductsList({
   const pill = (p: Product) => {
     const tone = stockTone(p);
     // A kitchen's dish is either on the menu or off it; "out of stock" and "running low" are a count.
-    if (!counted) return <span className={`prd-pill prd-pill-${p.active ? 'ok' : 'off'}`}>{p.active ? t('strip.onMenu') : t('retired')}</span>;
+    if (!counted) return <span className={`prd-pill prd-pill-${p.active ? 'ok' : 'off'}`}>{p.active ? t('strip.onMenu') : t('strip.offMenu')}</span>;
     return p.active ? (
       <span className={`prd-pill prd-pill-${tone}`}>{tone === 'out' ? t('outOfStock') : tone === 'low' ? lowWords(p, t) : t('inStock')}</span>
     ) : (
@@ -920,7 +920,7 @@ export function ProductsList({
                   {/* No count to show for a kitchen; a dish taken off the menu still says so, because that is not a count. */}
                   {!counted ? (
                     p.active ? null : (
-                      <span className="prd-pill prd-pill-off">{t('retired')}</span>
+                      <span className="prd-pill prd-pill-off">{t('strip.offMenu')}</span>
                     )
                   ) : p.active ? (
                     <span className={`prd-pill prd-pill-${tone}`}>{tone === 'out' ? t('outOfStock') : tone === 'low' ? lowWords(p, t) : t('stock', { n: p.stock })}</span>
@@ -1126,7 +1126,7 @@ export function ProductsList({
                 <ProductPhoto className="prd-menu-card-photo" product={p} />
                 {p.categoryName ? <span className="prd-menu-card-cat">{p.categoryName}</span> : null}
                 <span className={`prd-menu-card-status ${p.active ? 'is-ok' : 'is-off'}`}>
-                  {p.active ? t('strip.onMenu') : t('retired')}
+                  {p.active ? t('strip.onMenu') : t('strip.offMenu')}
                 </span>
               </div>
               <div className="prd-menu-card-body">

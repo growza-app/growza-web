@@ -63,6 +63,8 @@ export function ProductSheet({
 }) {
   const t = useTranslations('products.form');
   const tp = useTranslations('products');
+  // Develop QA 2026-11-21, finding 6 — a kitchen's dish is "Taken off" / "Put back on the menu" here as on the Menu; a shop keeps "Retired".
+  const tm = useTranslations('products.menu');
   const tc = useTranslations('common');
   const ts = useTranslations('products.sizes');
   const nouns = useNouns();
@@ -258,7 +260,7 @@ export function ProductSheet({
             <span className="prd-sheet-name">{product.name}</span>
             <span className="prd-sheet-tags">
               {!counted ? (
-                <span className={`prd-pill prd-pill-${product.active ? 'ok' : 'off'}`}>{product.active ? tp('strip.onMenu') : tp('retired')}</span>
+                <span className={`prd-pill prd-pill-${product.active ? 'ok' : 'off'}`}>{product.active ? tp('strip.onMenu') : tp('strip.offMenu')}</span>
               ) : product.active ? (
                 <span className={`prd-pill prd-pill-${stockTone(product)}`}>
                   {stockTone(product) === 'out' ? tp('outOfStock') : stockTone(product) === 'low' ? tp('lowStock', { n: product.stock }) : tp('inStock')}
@@ -636,7 +638,7 @@ export function ProductSheet({
                 <div className="prd-form-sec-title">{counted ? tp('secAvailability') : tp('secMenuStatus')}</div>
                 <div className="prd-action-row">
                   <div className="prd-action-copy">
-                    <strong>{product.active ? (counted ? tp('inStock') : tp('strip.onMenu')) : tp('retired')}</strong>
+                    <strong>{product.active ? (counted ? tp('inStock') : tp('strip.onMenu')) : counted ? tp('retired') : tp('strip.offMenu')}</strong>
                     <span>
                       {product.active
                         ? counted
@@ -648,7 +650,7 @@ export function ProductSheet({
                     </span>
                   </div>
                   <button type="button" className="btn btn-ghost prd-action-btn" disabled={busy} onClick={() => void toggleActive()}>
-                    {product.active ? tp('retire') : tp('bringBack')}
+                    {product.active ? (counted ? tp('retire') : tm('takeOff')) : counted ? tp('bringBack') : tm('putBack')}
                   </button>
                 </div>
                 <div className="prd-action-row prd-action-row-danger">
