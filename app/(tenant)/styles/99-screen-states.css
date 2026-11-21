@@ -59,12 +59,15 @@
 @media (max-width: 860px) {
   .kebab-btn,
   .pagination-btn,
-  .icon-btn {
+  .icon-btn,
+  .topbar-info-btn {
     position: relative;
   }
 
+  /* Develop QA 2026-11-21, D2 — the header's ⓘ (32px) gets the same ring: 44px to a thumb. */
   .kebab-btn::after,
-  .pagination-btn::after {
+  .pagination-btn::after,
+  .topbar-info-btn::after {
     content: '';
     position: absolute;
     inset: -6px;
