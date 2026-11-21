@@ -147,7 +147,14 @@ export function StockTable({
                             {typeof m.avgCost === 'number' ? `${formatMoney(m.avgCost)} / ${t(`perUnit.${m.unit}`)}` : '—'}
                           </td>
                         ) : null}
-                        <td className="ks-num ks-muted">{m.usedIn > 0 ? t('table.dishes', { n: m.usedIn }) : '—'}</td>
+                        <td className="ks-num ks-muted">
+                          {/* Develop QA 2026-11-21, L2 — the dishes on the menu; taken-off ones said apart. */}
+                          {m.usedIn > 0 || (m.usedInOff ?? 0) > 0
+                            ? [m.usedIn > 0 ? t('table.dishes', { n: m.usedIn }) : null, (m.usedInOff ?? 0) > 0 ? t('table.takenOff', { n: m.usedInOff ?? 0 }) : null]
+                                .filter(Boolean)
+                                .join(' · ')
+                            : '—'}
+                        </td>
                         <td className="ks-go">
                           <IconChevronRight />
                         </td>

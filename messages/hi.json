@@ -6578,7 +6578,8 @@
       "avgCost": "दाम",
       "usedIn": "इस्तेमाल",
       "open": "खोलें",
-      "dishes": "{n, plural, one {# डिश} other {# डिश}}"
+      "dishes": "{n, plural, one {# डिश} other {# डिश}}",
+      "takenOff": "{n} हटाई गईं"
     }
   },
   "recipe": {

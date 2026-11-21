@@ -21,6 +21,7 @@ import { averagePct, groupedOrder, needsRecipe, recipeStates, type MenuTab, type
 import { ProductPhoto } from '../components/ProductPhoto';
 import { ShareOnWhatsAppButton, useShareSession, useShareTextOnWhatsApp } from '../components/ShareOnWhatsApp';
 import { menuShareText } from './menu-share';
+import { sharePhone } from '@growza-app/shared';
 import { DateTime } from 'luxon';
 import { productShareItem } from '../lib/share-on-whatsapp';
 import { matchItems } from '../lib/service-match';
@@ -806,7 +807,9 @@ export function ProductsList({
   };
   const shareMenu = () => {
     const text = menuText();
-    if (text) void shareText.share(text);
+    const branch = shareSession.branches.find((b) => b.id === branchId);
+    // Develop QA 2026-11-21, L3 — a menu with no number to order on asks first.
+    if (text) void shareText.share(text, { reachable: sharePhone(branch?.phone ?? shareSession.businessPhone) != null });
   };
   const hasMenuToShare = !counted && live.some((p) => matchesCategories(p, selectedCategories));
   const alsoTryRow =
