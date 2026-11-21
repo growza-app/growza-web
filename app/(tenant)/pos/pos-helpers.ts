@@ -157,7 +157,7 @@ export function buildDailyTokens(
   const filtered = rows.filter((r) => {
     if (r.status === 'cancelled' || r.status === 'no_show') return false;
     // Jira GRW-721 — a table's bill is on the table map, called by its table: never a token on the Queue too.
-    if (r.tableName) return false;
+    if (isTableOrder(r)) return false;
     if (locationId && r.locationId && r.locationId !== locationId) return false;
     return (r.products?.length ?? 0) > 0 || Boolean(r.serviceName);
   });
@@ -297,4 +297,19 @@ export function returnLookbackFrom(todayISO: string, returnWindowDays: number): 
   const days = Math.max(59, Math.trunc(returnWindowDays) || 0);
   const ms = Date.parse(`${todayISO}T00:00:00Z`) - days * 86_400_000;
   return new Date(ms).toISOString().slice(0, 10);
+}
+
+/**
+ * Jira GRW-721 · GRW-745 BR-02 — an order eaten at a table. It lives on the table map, named by its table, and is never a
+ * pickup token: the POS Pickup tab and Home's queue both ask this one question.
+ */
+export function isTableOrder(r: { tableName?: string | null }): boolean {
+  return Boolean(r.tableName);
+}
+
+/** Jira GRW-745 — how an order was eaten, for a list's filter: a delivery app's order is a delivery even with no type on it. */
+export function orderKindOf(r: { tableName?: string | null; orderType?: string | null; channel?: string | null }): 'dine_in' | 'takeaway' | 'delivery' {
+  if (isTableOrder(r) || r.orderType === 'dine_in') return 'dine_in';
+  if (r.orderType === 'delivery' || (r.channel && r.channel !== 'counter' && r.channel !== 'pos')) return 'delivery';
+  return 'takeaway';
 }

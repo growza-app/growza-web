@@ -821,3 +821,27 @@ export const IconStorefront = () => (
     <path d="M10 21v-5h4v5" />
   </svg>
 );
+
+/* Jira GRW-745 — the three ways a guest eats, drawn in the same line weight as the rest. */
+export const IconDineIn = () => (
+  <svg {...base}>
+    <path d="M4 10h16" />
+    <path d="M6 10v9M18 10v9" />
+    <path d="M9 6c0-1.1 1.3-2 3-2s3 .9 3 2v4H9z" />
+  </svg>
+);
+
+export const IconTakeaway = () => (
+  <svg {...base}>
+    <path d="M5 8h14l-1.2 12H6.2z" />
+    <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+  </svg>
+);
+
+export const IconDelivery = () => (
+  <svg {...base}>
+    <circle cx="6" cy="17" r="2.5" />
+    <circle cx="18" cy="17" r="2.5" />
+    <path d="M8.5 17h7M15 7h2l3 6v4M4 13h9V9H8" />
+  </svg>
+);

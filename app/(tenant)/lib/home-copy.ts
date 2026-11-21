@@ -557,6 +557,12 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       runningLowChip: S('Running low', 'कम हो रहा है'),
       soldCountPill: (n: number) => S(`${n} sold`, `${n} बिके`),
       recentOrdersTitle: S('Recent orders', 'हाल के ऑर्डर'),
+      // Jira GRW-745 — how an order was eaten, on Home's Recent orders and its filter.
+      dineIn: S('Dine-in', 'यहीं खाना'),
+      takeaway: S('Takeaway', 'पैक करके'),
+      delivery: S('Delivery', 'डिलीवरी'),
+      allTypes: S('All', 'सभी'),
+      recentTypeLabel: S('Show orders by how they were eaten', 'ऑर्डर कैसे खाया गया, उससे दिखाएँ'),
       /** Owner, 2026-11-13 — the phone's Customers card: who came in today, and the month's new faces. */
       customersTitle: S(clientsWord, 'ग्राहक'),
       customersTodayLabel: S('Came in today', 'आज आए'),

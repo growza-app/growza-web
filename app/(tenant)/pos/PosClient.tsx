@@ -1656,7 +1656,8 @@ export function PosClient({
         came back after. Hidden, the Sell till answers no shortcut and no scanner (`inactive`), and hands the bar's
         Back arrow to the adding till while that one is up.
       */}
-      <div className="pos-body" hidden={mode === 'queue' || addingToToken !== null || payingTable !== null}>
+      {/* Jira GRW-745 FR-08 — in Return the till's Dine-in / Takeaway / Delivery switch is not shown: a return keeps its bill's type. */}
+      <div className="pos-body" data-mode={mode} hidden={mode === 'queue' || addingToToken !== null || payingTable !== null}>
         <SellProductClient
           timezone={timezone}
           backTo={backTo}

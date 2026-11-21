@@ -74,7 +74,7 @@ describe('Add items', () => {
 });
 
 describe('Add items never costs the desk the bill it was ringing up (owner, 9 Nov 2026)', () => {
-  const sell = client.slice(client.indexOf('<div className="pos-body" hidden={mode === \'queue\' || addingToToken !== null || payingTable !== null}>'), client.indexOf('{addingToToken ? (\n        <div className="pos-body"'));
+  const sell = client.slice(client.indexOf('<div className="pos-body" data-mode={mode} hidden={mode === \'queue\' || addingToToken !== null || payingTable !== null}>'), client.indexOf('{addingToToken ? (\n        <div className="pos-body"'));
   const adding = client.slice(client.indexOf('{addingToToken ? (\n        <div className="pos-body"'));
 
   it('keeps the Sell till mounted, never re-keyed, and only hidden while adding', () => {

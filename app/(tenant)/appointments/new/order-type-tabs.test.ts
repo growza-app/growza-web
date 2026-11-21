@@ -13,8 +13,9 @@ const flow = readFileSync(join(__dirname, 'PayFlow.tsx'), 'utf8');
 describe('who gets the tabs (AC-02, AC-03 · BR-01)', () => {
   it('only a till that sells things, at a branch whose owner switched Table orders on', () => {
     expect(flow).toContain('const tablesHere = productsOnly && Boolean(session?.branches?.find((b) => b.id === location)?.tableOrders);');
-    // Elsewhere the till draws the row it always had; ordering for a table, the table's own line.
-    expect(flow).toContain('{tablesHere ? (atTable ? tableStrip : typeRow) : fromRow}');
+    // Elsewhere the till draws the row it always had. GRW-745: the bill panel names the order (the table's line, or the
+    // takeaway / delivery head); the switch itself sits at the top of the till, never in the bill.
+    expect(flow).toContain('{tablesHere ? (atTable ? tableStrip : orderHead) : fromRow}');
   });
 
   it('Delivery only where the business has a delivery app — absent, not greyed out', () => {
@@ -23,8 +24,8 @@ describe('who gets the tabs (AC-02, AC-03 · BR-01)', () => {
 });
 
 describe('what is chosen and sent (AC-01 · BR-04)', () => {
-  it('a fresh till opens on Dine-in', () => {
-    expect(flow).toContain("useState<'dine_in' | 'takeaway' | 'delivery'>('dine_in')");
+  it('a fresh till opens on Dine-in, unless the address names a type (GRW-745 FR-02)', () => {
+    expect(flow).toContain("useState<'dine_in' | 'takeaway' | 'delivery'>(() => orderTypeFromUrl() ?? 'dine_in')");
   });
 
   it('a counter order names its type; an app order names none (it is a delivery by where it came from)', () => {
