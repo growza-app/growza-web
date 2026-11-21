@@ -440,6 +440,13 @@ export function ShopHome({
           ? 'amber'
           : 'rose';
 
+  /**
+   * An order's word and colour on Home. A bill kept in the queue, not yet paid, is "Payment pending" in amber — its status is
+   * already done, so the status alone said "Done" (owner, 2026-11-21: the phone's Recent orders did). Every list uses these two.
+   */
+  const orderWord = (o: Pick<OrderListRow, 'status' | 'paymentPending'>) => (o.paymentPending ? s.paymentPendingState : stateWord(o.status));
+  const orderTone = (o: Pick<OrderListRow, 'status' | 'paymentPending'>) => (o.paymentPending ? 'amber' : stateTone(o.status));
+
   const formatShortDate = (iso: string) => {
     try {
       return new Intl.DateTimeFormat(lang === 'hi' ? 'hi-IN' : 'en-IN', {
@@ -1252,8 +1259,8 @@ export function ShopHome({
                           // What the order IS — never a guess at it. An app's order is a delivery; anything else rung up here is a counter order.
                           const isDelivery = isDeliveryApp(o.channel);
                           const subLabel = `${channelWord(o.channel)} · ${formatDateTime(o.soldAt)}`;
-                          const statusLabel = o.paymentPending ? s.paymentPendingState : stateWord(o.status);
-                          const tone = o.paymentPending ? 'amber' : stateTone(o.status);
+                          const statusLabel = orderWord(o);
+                          const tone = orderTone(o);
                           const statusClass = tone === 'green' ? 'is-served' : tone === 'blue' ? 'is-delivery' : tone === 'amber' ? 'is-preparing' : 'is-problem';
                           return (
                             <li key={o.id}>
@@ -1920,9 +1927,7 @@ export function ShopHome({
                                 </td>
                               ) : null}
                               <td>
-                                <span className={`hm-pill hm-pill-${stateTone(o.status)}`}>
-                                  {stateWord(o.status)}
-                                </span>
+                                <span className={`hm-pill hm-pill-${orderTone(o)}`}>{orderWord(o)}</span>
                               </td>
                               <td>
                                 <a className="hm-v3-row-btn" href={`/orders/${o.id}`}>
@@ -2382,7 +2387,7 @@ export function ShopHome({
                             </span>
                             <span className="shp-recent-end">
                               {o.amountMinor === undefined ? null : <span className="shp-recent-amount">{rupees(o.amountMinor)}</span>}
-                              <span className={`shp-recent-state is-${stateTone(o.status)}`}>{stateWord(o.status)}</span>
+                              <span className={`shp-recent-state is-${orderTone(o)}`}>{orderWord(o)}</span>
                             </span>
                           </a>
                         </li>
