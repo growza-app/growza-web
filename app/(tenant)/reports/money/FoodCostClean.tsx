@@ -29,6 +29,14 @@ type Tab = 'dishes' | 'days' | 'ingredients' | 'waste' | 'log';
  * Colour is spent on the food cost and its status dot only; the explanations sit behind ⓘ. One layout at every width:
  * on a phone the number columns fold into a line under each name.
  */
+/** Which "Not sure yet" line: missing prices, missing recipes, both, or neither named (another reason). */
+export function partialWhy(noPrice: boolean, noRecipe: boolean): 'status.partialBoth' | 'status.partialPrice' | 'status.partialRecipe' | 'status.partial' {
+  if (noPrice && noRecipe) return 'status.partialBoth';
+  if (noPrice) return 'status.partialPrice';
+  if (noRecipe) return 'status.partialRecipe';
+  return 'status.partial';
+}
+
 export function FoodCostClean({
   r,
   loss,
@@ -68,6 +76,10 @@ export function FoodCostClean({
     </span>
   );
 
+  /**
+   * Develop QA 2026-11-21, finding 5 — the status names what actually keeps the number from being whole. It said "many dishes
+   * sold have no recipe" when 14 dishes were out for want of four prices and one for want of a recipe.
+   */
   // What keeps the number from being whole, as short rows — each says what is wrong and where to put it right.
   const attention: { key: string; text: string; detail?: ReactNode; action?: ReactNode }[] = [];
   if (!r.tracking) attention.push({ key: 'tracking', text: t('notTracking') });
@@ -127,7 +139,7 @@ export function FoodCostClean({
             <span className={`fc2-status is-${tone}`}>
               <span className="fc2-dot" aria-hidden="true" />
               {tone === 'partial'
-                ? tc('status.partial')
+                ? tc(partialWhy(r.noPrice.dishes > 0, r.noRecipe.dishes > 0))
                 : tone === 'none'
                   ? tc('status.none')
                   : tc(`status.${tone}`)}
