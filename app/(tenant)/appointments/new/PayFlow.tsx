@@ -4,6 +4,7 @@ import Link from '../../../shared/AppLink';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { api, ApiError, formatMoney } from '../../lib/api';
 import { fixVisitHref, nextCustomerHref } from '../../lib/pay-token';
 import type { AddonGroup, Appointment, Offer, PaymentMode, Product, ProductCategory, Provider, Service, TillSize } from '../../lib/api-types';
@@ -27,6 +28,7 @@ import { LargeAmountDeclined, useLargeAmountGuard } from '../../components/Large
 import { useAreas, useSession } from '../../components/SessionProvider';
 import { IconArrowLeft, IconCheck, IconClose, IconDelivery, IconDineIn, IconEdit, IconLock, IconMinus, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch, IconTakeaway, IconUserPlus } from '../../components/icons';
 import { orderTypeFromUrl, writeOrderTypeToUrl } from '../../lib/order-type-url';
+import { barTabShown, usePosTypeBar } from '../../pos/pos-type-bar';
 import { FormModeSwitch } from './FormModeSwitch';
 import { ClientSheet } from './ClientSheet';
 import { Keypad } from './Keypad';
@@ -380,6 +382,17 @@ export function PayFlow({
   useEffect(() => {
     if (!typeLocked) setTypeNudge(false);
   }, [typeLocked]);
+  /*
+   * Owner, 2026-11-22 ("go D") — on the POS the switch is drawn in the POS's own bar (the one row on top), and the POS is
+   * told which type the till is on, so it can open New order / Pickup under Takeaway. The Add items till never is.
+   */
+  const typeBar = usePosTypeBar();
+  const reportType = typeBar?.onTypeShown;
+  const typeInBar = Boolean(typeBar?.slot) && tablesHere && !token && !waiter && !addingTo;
+  useEffect(() => {
+    if (!reportType || addingTo || token) return;
+    reportType(typeInBar ? orderTab : null);
+  }, [reportType, typeInBar, orderTab, addingTo, token]);
   /*
    * Owner, 2026-11-21 — the Delivery tab always has an app chosen. Opened from the address (`?type=delivery`), kept for the
    * next order after a sale, or before the branch's apps had loaded, it had none: the bill said "Delivery · Delivery" and
@@ -2323,43 +2336,77 @@ export function PayFlow({
    */
   const typeLock = atTable ? t('type.lockedTable', { table: atTable.label }) : lines.length > 0 ? t('type.locked') : null;
 
+  /** The tab the switch marks: in the POS bar, Pickup is Takeaway's and Return is none of them. */
+  const tabShown = typeInBar && typeBar ? barTabShown(typeBar.mode, orderTab) : orderTab;
+  const pickupCount = typeInBar ? (typeBar?.pickupCount ?? null) : null;
+  const typeTabsEl = (
+    <div className="pf-type-tabs">
+      {typeTabs.map((key) => (
+        <button
+          key={key}
+          type="button"
+          className={`pf-type-tab${tabShown === key ? ' is-on' : ''}${key === 'takeaway' && pickupCount !== null ? ' has-pickup' : ''}`}
+          aria-pressed={tabShown === key}
+          aria-describedby={typeLock ? 'pf-type-lock' : undefined}
+          disabled={saving !== null}
+          aria-disabled={typeLock !== null && orderTab !== key ? true : undefined}
+          onClick={() => {
+            // From Pickup or Return, any tab is the way back to the till; the bill and its type are as they were.
+            if (typeInBar && typeBar && typeBar.mode !== 'sell') {
+              typeBar.toSell();
+              if (key === orderTab) return;
+            }
+            if (typeLock) {
+              if (orderTab !== key) setTypeNudge(true);
+              return;
+            }
+            setOrderTab(key);
+            setOrderFrom(key === 'delivery' ? (fromApp ?? apps[0] ?? 'counter') : 'counter');
+          }}
+        >
+          <span className="pf-type-tab-main">
+            <TypeIcon type={key} />
+            {t(`type.${key}`)}
+          </span>
+          {/* Owner, 2026-11-22 — Pickup's count rides on Takeaway, where those orders are ("keep the name as pickup"). */}
+          {key === 'takeaway' && pickupCount !== null ? (
+            <span className={`pf-type-pickup${pickupCount > 0 ? ' is-live' : ''}`}>{t('type.pickupCount', { count: pickupCount })}</span>
+          ) : null}
+        </button>
+      ))}
+    </div>
+  );
+  const typeLockEl = typeLock ? (
+    <p className="pf-type-lock" id="pf-type-lock">
+      <IconLock />
+      {typeLock}
+    </p>
+  ) : null;
+  const typeClass = `pf-type pf-type-top${typeLock ? ' is-locked' : ''}${typeNudge ? ' is-nudged' : ''}`;
+  /* QA 2026-11-21 — the lock is the switch's alone (BR-01): the app row stays once a dish is in, so Swiggy and Zomato can
+     still be swapped (both are deliveries, same prices) and nothing under it moves (AC-07). */
+  const appsRow = orderTab === 'delivery' && apps.length > 0 ? fromAppChips : null;
+
   const typeRow =
     tablesHere && !token && !waiter && !addingTo ? (
-      <div className={`pf-type pf-type-top${typeLock ? ' is-locked' : ''}${typeNudge ? ' is-nudged' : ''}`} role="group" aria-label={t('type.label')}>
-        <div className="pf-type-tabs">
-          {typeTabs.map((key) => (
-            <button
-              key={key}
-              type="button"
-              className={`pf-type-tab${orderTab === key ? ' is-on' : ''}`}
-              aria-pressed={orderTab === key}
-              aria-describedby={typeLock ? 'pf-type-lock' : undefined}
-              disabled={saving !== null}
-              aria-disabled={typeLock !== null && orderTab !== key ? true : undefined}
-              onClick={() => {
-                if (typeLock) {
-                  if (orderTab !== key) setTypeNudge(true);
-                  return;
-                }
-                setOrderTab(key);
-                setOrderFrom(key === 'delivery' ? (fromApp ?? apps[0] ?? 'counter') : 'counter');
-              }}
-            >
-              <TypeIcon type={key} />
-              {t(`type.${key}`)}
-            </button>
-          ))}
+      typeInBar && typeBar?.slot ? (
+        <>
+          {createPortal(
+            <div className={`${typeClass} pf-type-inbar`} role="group" aria-label={t('type.label')}>
+              {typeTabsEl}
+              {typeLockEl}
+            </div>,
+            typeBar.slot,
+          )}
+          {appsRow ? <div className="pf-type pf-type-apps">{appsRow}</div> : null}
+        </>
+      ) : (
+        <div className={typeClass} role="group" aria-label={t('type.label')}>
+          {typeTabsEl}
+          {typeLockEl}
+          {appsRow}
         </div>
-        {typeLock ? (
-          <p className="pf-type-lock" id="pf-type-lock">
-            <IconLock />
-            {typeLock}
-          </p>
-        ) : null}
-        {/* QA 2026-11-21 — the lock is the switch's alone (BR-01): the app row stays once a dish is in, so Swiggy and Zomato
-            can still be swapped (both are deliveries, same prices) and nothing under it moves (AC-07). */}
-        {orderTab === 'delivery' && apps.length > 0 ? fromAppChips : null}
-      </div>
+      )
     ) : null;
   /** Jira GRW-745 FR-03 — the bill names what it is for. A table's is the strip below; a takeaway or a delivery says so here. */
   const orderHead =

@@ -2268,3 +2268,75 @@
     white-space: nowrap;
   }
 }
+
+/*
+ * Owner, 2026-11-22 ("go D", Kitchen its own icon) — a branch that seats its guests has ONE row on top of the POS: the
+ * till's Dine-in · Takeaway · Delivery (`.pos-bar-typeslot`), the Kitchen, the laptop's Printer and Full screen, and a ⋮
+ * for Return. Sell / Pickup / Return is gone from it; New order / Pickup sit under Takeaway (`.pos-pickup-switch`). At
+ * 344px the row has no card around it, so the three words, the flame and the ⋮ are each a whole 44px target.
+ */
+.pos-bar-types {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+}
+
+.pos-bar-typeslot {
+  display: flex;
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.pos-bar-types .pos-bar-right {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  margin-left: auto;
+}
+
+.pos-bar-types .pos-bar-right:empty {
+  display: none;
+}
+
+/* One height across the row (owner, 2026-11-22 — "top row is not justified"). */
+.pos-bar-types .pos-fs-toggle {
+  min-height: 2.75rem;
+}
+
+.pos-bar-more .mnu-kebab-btn.kebab-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-color: var(--border);
+  background: var(--surface);
+  font-size: var(--fs-7);
+}
+
+.pos-pickup-switch {
+  display: flex;
+  margin: 0 0 var(--sp-3);
+}
+
+.pos-pickup-switch .page-tab {
+  flex: 1 1 0%;
+  min-height: 2.75rem;
+}
+
+@media (max-width: 860px) {
+  /* Top-aligned: a tap on a locked type shows why under the tabs, and the flame and ⋮ stay on the tabs' line. */
+  .pos-shell.has-type-bar > .pos-bar-types {
+    align-items: flex-start;
+    gap: var(--sp-2);
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .pos-pickup-switch {
+    margin-bottom: var(--sp-2);
+  }
+}
+
+@media (min-width: 861px) {
+  .pos-pickup-switch {
+    max-width: 30rem;
+  }
+}

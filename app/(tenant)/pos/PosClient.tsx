@@ -32,6 +32,8 @@ import { useRewardQuote } from '../lib/use-reward-quote';
 import { useBillOffers } from '../lib/use-bill-offers';
 import { CouponRow, OfferLines } from '../appointments/new/CouponRow';
 import { SellProductClient } from '../products/sell/SellProductClient';
+import { MenuKebab } from '../products/MenuKebab';
+import { PosTypeBarContext, type PosTypeBar, type TillOrderType } from './pos-type-bar';
 import { buildSaleRows, type SaleRow } from '../sales/SalesClient';
 import { ReturnProductSheet } from '../sales/ReturnProductSheet';
 import {
@@ -1340,6 +1342,32 @@ export function PosClient({
     if (initialMode === 'return' && canReturn) void openReturn();
   }, [initialMode, canReturn, openReturn]);
 
+  /*
+   * Owner, 2026-11-22 ("go D") — a branch that seats its guests has ONE row on top: the till's Dine-in · Takeaway ·
+   * Delivery (drawn into `typeSlot`), the Kitchen, and a ⋮ for Return. Pickup is under Takeaway. Not for a waiter (who has
+   * no switch) and not in full screen (which keeps its own header).
+   */
+  const tablesBar = tablesOn && !waiter && !fullScreen;
+  const [typeSlot, setTypeSlot] = useState<HTMLDivElement | null>(null);
+  const [tillType, setTillType] = useState<TillOrderType | null>(null);
+  const pickupCount = orderQueue ? preparingTokens.length : null;
+  const typeBar = useMemo<PosTypeBar | null>(
+    () => (tablesBar ? { slot: typeSlot, mode, pickupCount, toSell: closeReturn, onTypeShown: setTillType } : null),
+    [tablesBar, typeSlot, mode, pickupCount, closeReturn],
+  );
+  /** New order / Pickup, under Takeaway: shown while the till is on Takeaway, and in Pickup itself. */
+  const pickupSwitch =
+    tablesBar && orderQueue && (mode === 'queue' || (mode === 'sell' && tillType === 'takeaway')) && addingToToken === null && payingTable === null ? (
+      <div className="page-tabs pos-pickup-switch" role="tablist" aria-label={t('takeawayViews')}>
+        <button type="button" role="tab" aria-selected={mode === 'sell'} className={`page-tab${mode === 'sell' ? ' active' : ''}`} onClick={closeReturn}>
+          {t('newOrderTab')}
+        </button>
+        <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab${mode === 'queue' ? ' active' : ''}`} onClick={() => openQueue()}>
+          {t('pickupTab', { count: preparingTokens.length })}
+        </button>
+      </div>
+    ) : null;
+
   const renderTokenCard = (tk: PosDailyToken, isPreparing: boolean, isFirst = false) => {
     const anonymous = isWalkInToken(tk);
     const guest = anonymous ? t('walkInGuest') : (tk.customerName || t('walkInGuest'));
@@ -1469,7 +1497,8 @@ export function PosClient({
 
   return (
     <WaiterContext.Provider value={waiter}>
-    <div className={fullScreen ? 'pos-shell is-fullscreen' : 'pos-shell'}>
+    <PosTypeBarContext.Provider value={typeBar}>
+    <div className={fullScreen ? 'pos-shell is-fullscreen' : tablesBar ? 'pos-shell has-type-bar' : 'pos-shell'}>
       {waiter ? (
         // Jira GRW-723 — a waiter's bar: which branch, and the printer for the kitchen's slip. Nothing of the counter's.
         <div className="pos-bar pos-bar-minimal">
@@ -1480,6 +1509,38 @@ export function PosClient({
             </div>
             <PrinterButton printer={printer} />
           </div>
+        </div>
+      ) : tablesBar ? (
+        <div className="pos-bar pos-bar-types">
+          {/* The till draws its Dine-in · Takeaway · Delivery switch here (PayFlow, through PosTypeBarContext). */}
+          <div className="pos-bar-typeslot" ref={setTypeSlot} />
+          {orderQueue ? (
+            <Link href="/kitchen" className="btn btn-ghost pos-bar-kitchen" aria-label={t('kitchenScreen')}>
+              <IconFlame />
+              <span className="pos-bar-kitchen-word">{t('kitchenScreen')}</span>
+            </Link>
+          ) : null}
+          <div className="pos-bar-right">
+            <div className="pos-bar-branch">
+              <HeaderBranchPicker variant="pill" />
+              <HeaderBranchPicker variant="line" />
+            </div>
+            {loading ? (
+              <span className="pos-note" role="status">
+                {t('loadingBills')}
+              </span>
+            ) : null}
+            <PrinterButton printer={printer} />
+            <button type="button" className="btn btn-ghost pos-fs-toggle" onClick={enterFullScreen}>
+              {t('fullScreen')}
+            </button>
+          </div>
+          {/* Return is a rare job: a word in the ⋮, not a tab on every screen. */}
+          <MenuKebab
+            className="pos-bar-more"
+            label={t('more')}
+            items={canReturn ? [{ label: t('returnBill'), onSelect: () => void openReturn() }] : []}
+          />
         </div>
       ) : fullScreen ? (
         <header className="pos-fs-bar">
@@ -1641,6 +1702,8 @@ export function PosClient({
         </div>
       )}
 
+      {pickupSwitch}
+
       {failed ? (
         <div className="pos-fail" role="alert">
           <span>{t('billsFailed')}</span>
@@ -1787,9 +1850,12 @@ export function PosClient({
                   {t(qk('preparingColTitle'))}
                   <span className="pos-queue-col-count">{preparingTokens.length}</span>
                 </h2>
-                <button type="button" className="btn btn-primary pos-queue-new-btn" onClick={closeReturn}>
-                  + {t('backToSell')} ({formatTokenNo(nextTokenNo)})
-                </button>
+                {/* With the one-row bar, New order is the switch right above: not a second button for it here. */}
+                {tablesBar ? null : (
+                  <button type="button" className="btn btn-primary pos-queue-new-btn" onClick={closeReturn}>
+                    + {t('backToSell')} ({formatTokenNo(nextTokenNo)})
+                  </button>
+                )}
               </header>
               {preparingTokens.length === 0 ? (
                 <div className="pos-queue-empty">
@@ -1884,6 +1950,7 @@ export function PosClient({
         />
       ) : null}
     </div>
+    </PosTypeBarContext.Provider>
     </WaiterContext.Provider>
   );
 }

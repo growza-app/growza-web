@@ -3346,7 +3346,8 @@
       "headToken": "Takeaway · {token}",
       "headDelivery": "Delivery · {app}",
       "subTakeaway": "Token given when you send or pay",
-      "subDelivery": "Paid to you by the app"
+      "subDelivery": "Paid to you by the app",
+      "pickupCount": "Pickup {count}"
     },
     "discount": {
       "add": "Add discount",
@@ -4980,7 +4981,13 @@
     "cancelOrderConfirm": "Cancel order",
     "keepOrder": "Keep order",
     "cancelFailed": "Could not cancel this order. Please try again.",
-    "addedToOrder": "Added to {token}. It now comes to {amount}."
+    "addedToOrder": "Added to {token}. It now comes to {amount}.",
+    "more": "More",
+    "returnBill": "Return a bill",
+    "newOrderTab": "New order",
+    "pickupTab": "Pickup · {count}",
+    "shortcutsTitle": "Keyboard shortcuts",
+    "takeawayViews": "New takeaway or Pickup"
   },
   "sales": {
     "scanUnknown": "No product has the code {code}. Check the bottle.",

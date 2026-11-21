@@ -78,7 +78,8 @@ describe('GRW-745 — Home and Return', () => {
   });
 
   it('QA 2026-11-21 — Delivery keeps its app row once the bill has a dish: the lock is the switch’s alone', () => {
-    expect(flow).toContain("{orderTab === 'delivery' && apps.length > 0 ? fromAppChips : null}");
+    expect(flow).toContain("const appsRow = orderTab === 'delivery' && apps.length > 0 ? fromAppChips : null;");
+    expect(flow).not.toMatch(/typeLock[^\n]*\? appsRow/);
     expect(flow).not.toContain('!typeLock ? fromAppChips');
   });
 

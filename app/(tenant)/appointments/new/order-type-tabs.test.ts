@@ -40,7 +40,9 @@ describe('what is chosen and sent (AC-01 · BR-04)', () => {
   });
 
   it('the chosen tab is marked by more than colour', () => {
-    expect(flow).toContain('aria-pressed={orderTab === key}');
+    // Owner, 2026-11-22 ("go D") — in the POS bar Pickup is Takeaway's and Return marks none; elsewhere it is the type.
+    expect(flow).toContain('aria-pressed={tabShown === key}');
+    expect(flow).toContain('const tabShown = typeInBar && typeBar ? barTabShown(typeBar.mode, orderTab) : orderTab;');
   });
 });
 

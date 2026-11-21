@@ -527,3 +527,79 @@
 .pos-body[data-mode='return'] .pf-type-top {
   visibility: hidden;
 }
+
+
+/*
+ * Owner, 2026-11-22 ("go D") — the till's switch drawn in the POS's one-row bar (99-pos.css `.pos-bar-types`). "Pickup 4"
+ * rides on Takeaway. At 344px it is three words with no icons: with the flame and the ⋮ beside it, that is what fits, in
+ * Hindi too.
+ */
+.pf-type-inbar {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+.pf-type-inbar .pf-type-tabs {
+  flex: 1 1 auto;
+  max-width: none;
+  min-width: 0;
+}
+
+.pf-type-tab-main {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+}
+
+.pf-type-pickup {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.pf-type-pickup.is-live {
+  color: var(--amber-ink);
+}
+
+@media (max-width: 860px) {
+  .pf-type-inbar .pf-type-icon {
+    display: none;
+  }
+
+  .pf-type-inbar .pf-type-tab {
+    flex: 1 1 auto;
+    padding: 0 var(--sp-1);
+    font-size: var(--fs-3);
+  }
+
+  .pf-type-inbar .pf-type-tab.has-pickup {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.15;
+  }
+}
+
+@media (min-width: 861px) {
+  .pf-type-inbar .pf-type-tabs {
+    flex: 0 0 auto;
+  }
+
+  .pf-type-inbar .pf-type-tab {
+    flex: 0 0 auto;
+    padding: 0 var(--sp-4);
+  }
+
+  .pf-type-pickup {
+    margin-left: var(--sp-2);
+    padding: 0.125rem var(--sp-2);
+    border-radius: 999px;
+    background: var(--slate-soft);
+  }
+
+  .pf-type-pickup.is-live {
+    background: var(--amber-soft);
+  }
+}
