@@ -456,7 +456,12 @@ export function ProductsList({
       saved(updated);
       if (!undoing) {
         setNotice({
-          text: updated.active ? tm('putBackDone', { name: updated.name }) : tm('takenOffDone', { name: updated.name }),
+          // Develop QA 2026-11-21, finding 7 — "and its recipe" only when it has one.
+          text: updated.active
+            ? tm('putBackDone', { name: updated.name })
+            : (recipes?.get(p.id)?.state ?? 'none') !== 'none'
+              ? tm('takenOffDone', { name: updated.name })
+              : tm('takenOffNoRecipe', { name: updated.name }),
           undo: () => void toggleActive(updated, true),
         });
       }
