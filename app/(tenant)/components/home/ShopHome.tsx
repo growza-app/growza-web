@@ -458,6 +458,7 @@ export function ShopHome({
   };
   const recentPool = deskWeek?.rows?.length ? deskWeek.rows : todayOrderRows.length ? todayOrderRows : recentOrders;
   const recentShown = recentType === 'all' ? recentOrders : recentPool.filter((o) => orderKindOf(o) === recentType).slice(0, 6);
+  const recentEmpty = recentType === 'all' ? s.noOrdersBody : s.noTypeOrders[recentType];
   const typeChips = tablesOn ? (
     <div className="hm-type-chips" role="group" aria-label={s.recentTypeLabel}>
       {(['all', 'dine_in', 'takeaway', 'delivery'] as const).map((k) => (
@@ -1276,7 +1277,7 @@ export function ShopHome({
                     </div>
                     {typeChips}
                     {recentShown.length === 0 ? (
-                      <p className="hm-empty">{s.noOrdersBody}</p>
+                      <p className="hm-empty">{recentEmpty}</p>
                     ) : (
                       <ul className="rst-order-list">
                         {recentShown.slice(0, 5).map((o) => {
@@ -1908,7 +1909,7 @@ export function ShopHome({
                 </div>
                 {typeChips}
                 {recentShown.length === 0 ? (
-                  <p className="hm-empty">{s.noOrdersBody}</p>
+                  <p className="hm-empty">{recentEmpty}</p>
                 ) : (
                   <div className="hm-v3-recent-wrap">
                     <table className="hm-v3-recent-table">
@@ -2396,6 +2397,7 @@ export function ShopHome({
                   }
                 >
                   {typeChips}
+                  {recentShown.length === 0 ? <p className="hm-empty">{recentEmpty}</p> : null}
                   <ul className="shp-recent">
                     {recentShown.slice(0, 4).map((o) => {
                       const customerName = o.who?.name?.trim() || s.noNameCustomer;

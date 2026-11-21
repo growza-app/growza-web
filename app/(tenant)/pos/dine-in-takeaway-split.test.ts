@@ -86,4 +86,12 @@ describe('GRW-745 — Home and Return', () => {
     expect(flow).toContain('setGuests(billOf.table.openBill?.guests ?? seatedHere?.guests ?? null);');
     expect(flow).toContain('...(guests ? { guests } : {})');
   });
+
+  it('QA 2026-11-21 — a Home type chip with no orders names the type, never "Your first sale"', () => {
+    expect(home).toContain("const recentEmpty = recentType === 'all' ? s.noOrdersBody : s.noTypeOrders[recentType];");
+    // The laptop panel, the laptop table and the phone card (which showed nothing at all).
+    expect(home.match(/<p className="hm-empty">\{recentEmpty\}<\/p>/g)).toHaveLength(3);
+    const copy = readFileSync(resolve(__dirname, '../lib/home-copy.ts'), 'utf8');
+    for (const k of ['dine_in', 'takeaway', 'delivery']) expect(copy).toMatch(new RegExp(`${k}: S\\('No [a-z-]+ orders recently\\.', '[^']+'\\)`));
+  });
 });
