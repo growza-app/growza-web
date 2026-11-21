@@ -159,7 +159,7 @@ export function FoodCostClean({
           </span>
           <div>
             <dt>{tc('statFood')}</dt>
-            <dd>{f.money(r.totals.foodMinor)}</dd>
+            <dd>{f.rupees(r.totals.foodMinor)}</dd>
           </div>
         </div>
         <div className="fc2-stat is-lost">
@@ -168,7 +168,7 @@ export function FoodCostClean({
           </span>
           <div>
             <dt>{tc('statLoss')}</dt>
-            <dd>{f.money(loss.totals.wastedMinor + loss.totals.lostMinor)}</dd>
+            <dd>{f.rupees(loss.totals.wastedMinor + loss.totals.lostMinor)}</dd>
           </div>
         </div>
         <div className="fc2-stat is-sales">
@@ -177,7 +177,7 @@ export function FoodCostClean({
           </span>
           <div>
             <dt>{tc('sales')}</dt>
-            <dd>{f.money(r.totals.salesMinor)}</dd>
+            <dd>{f.rupees(r.totals.salesMinor)}</dd>
           </div>
         </div>
         {r.totals.givenFreeMinor > 0 ? (
@@ -187,7 +187,7 @@ export function FoodCostClean({
             </span>
             <div>
               <dt>{tc('givenFree')}</dt>
-              <dd>{f.money(r.totals.givenFreeMinor)}</dd>
+              <dd>{f.rupees(r.totals.givenFreeMinor)}</dd>
             </div>
           </div>
         ) : null}

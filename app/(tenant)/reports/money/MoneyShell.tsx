@@ -59,6 +59,8 @@ export function useMoneyFormat() {
   const locale = useLocale();
   return {
     money: (minor: number) => formatMoney(minor, 'INR', locale),
+    /** Whole rupees, for a figure read at a glance (develop QA 2026-11-21, finding 8: one tile showed ₹1,953.38 beside ₹1,326). */
+    rupees: (minor: number) => formatMoney(Math.round(minor / 100) * 100, 'INR', locale),
     count: (n: number) => new Intl.NumberFormat(intlLocale(locale)).format(n),
     /** A calendar day (`yyyy-MM-dd`) as "Mon, 10 Nov". Fixed to UTC: it is a date, not an instant. */
     day: (iso: string) =>
