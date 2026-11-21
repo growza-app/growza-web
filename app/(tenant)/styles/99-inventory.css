@@ -1107,3 +1107,18 @@
   width: 2.75rem;
   height: 2.75rem;
 }
+
+/*
+ * Develop QA 2026-11-21, finding 4 — the full words ("Used 0.67 L more than recorded — count it") are too long to share a
+ * line with the group's name on a phone: squeezed beside it they broke over three lines. On a phone the warning takes its own
+ * line under the group's name, the width of the name.
+ */
+@media (max-width: 1100px) {
+  .ks-item-sub .ks-item-warn {
+    display: block;
+  }
+
+  .ks-item-sub > .ks-item-meta + .ks-item-warn::before {
+    content: none;
+  }
+}
