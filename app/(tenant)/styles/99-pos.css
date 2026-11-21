@@ -2381,3 +2381,13 @@
     max-width: 30rem;
   }
 }
+
+/* Under 360px the Kitchen and ⋮ are 44px (still a whole target), so the type switch keeps its words. */
+@media (max-width: 359px) {
+  .pos-bar-types .pos-bar-kitchen,
+  .pos-bar-more .mnu-kebab-btn.kebab-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+  }
+}

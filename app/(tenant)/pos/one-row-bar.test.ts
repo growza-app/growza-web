@@ -78,7 +78,7 @@ describe('the one-row POS bar', () => {
     const tables = readFileSync(resolve(__dirname, '../styles/99-dining-tables.css'), 'utf8');
     expect(flow).toContain('<span className="pf-type-pickup-n" aria-hidden="true">');
     expect(tables).toMatch(/\.pf-type-inbar \.pf-type-pickup-word \{\s*position: absolute;\s*width: 1px;/);
-    expect(tables).toMatch(/\.pf-type-inbar \.pf-type-tab \{\s*position: relative;\s*flex: 1 1 0%;/);
+    expect(tables).toMatch(/\.pf-type-inbar \.pf-type-tab \{\s*position: relative;\s*flex: 1 1 auto;\s*padding: 0 var\(--sp-2\);/);
     expect(pos).toMatch(/\.pos-bar-types \.pos-bar-kitchen,\s*\.pos-bar-more \.mnu-kebab-btn\.kebab-btn \{\s*width: 3rem;\s*height: 3rem;/);
   });
 
@@ -101,5 +101,10 @@ describe('the one-row POS bar', () => {
     expect(en.posTables.people).toBe('People');
     expect(tables).toMatch(/\.pf-seat-btn \{\s*border: 1px solid var\(--accent-deep\);\s*background: var\(--surface\);/);
     expect(tables).toMatch(/\.pf-table-strip\.is-in-bar \{\s*display: grid;/);
+  });
+
+  it('the chosen type is filled in the app’s green, white words (it was white on light grey)', () => {
+    const tables = readFileSync(resolve(__dirname, '../styles/99-dining-tables.css'), 'utf8');
+    expect(tables).toMatch(/\.pf-type-inbar \.pf-type-tab\.is-on \{\s*background: var\(--accent-deep\);\s*color: #fff;/);
   });
 });

@@ -563,6 +563,17 @@
   color: var(--amber-ink);
 }
 
+/*
+ * Owner, 2026-11-22 ("can you change the color") — in the POS bar the chosen type is filled in the app's green with white
+ * words, the way a chosen chip is everywhere else on the till (`.pf-chip-on`). White on light grey (1.16:1) hardly said
+ * which one was on.
+ */
+.pf-type-inbar .pf-type-tab.is-on {
+  background: var(--accent-deep);
+  color: #fff;
+  box-shadow: none;
+}
+
 /* The bare count is the phone's badge (below); a laptop says "Pickup 4" in words. */
 .pf-type-pickup-n {
   display: none;
@@ -582,10 +593,12 @@
     display: none;
   }
 
+  /* Each tab as wide as its word plus the same 8px each side (owner, 2026-11-22 — "spacing issue"): equal widths left
+     "Takeaway" touching its neighbours, since it is the longest word. */
   .pf-type-inbar .pf-type-tab {
     position: relative;
-    flex: 1 1 0%;
-    padding: 0 var(--sp-1);
+    flex: 1 1 auto;
+    padding: 0 var(--sp-2);
     font-size: var(--fs-3);
   }
 
@@ -595,6 +608,11 @@
 
   .pf-type-inbar .pf-type-tab.has-pickup {
     overflow: visible;
+  }
+
+  /* Its words are for a screen reader and its count is a corner badge: the wrapper takes no room, so "Takeaway" is centred. */
+  .pf-type-inbar .pf-type-pickup {
+    display: contents;
   }
 
   .pf-type-inbar .pf-type-pickup-word {
@@ -711,5 +729,13 @@
   .pf-table-strip.is-in-bar .pf-table-prices,
   .pf-table-strip.is-in-bar .pf-seat-btn {
     grid-column: 1 / -1;
+  }
+}
+
+/* Under 360px (an iPhone SE is 320): 13px words and 4px each side, so the three still read whole beside the flame and ⋮. */
+@media (max-width: 359px) {
+  .pf-type-inbar .pf-type-tab {
+    padding: 0 var(--sp-1);
+    font-size: var(--fs-2);
   }
 }
