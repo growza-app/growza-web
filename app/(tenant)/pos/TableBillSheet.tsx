@@ -10,6 +10,7 @@ import type { useTicketPrinter } from '../components/TicketPrinter';
 import { useWaiter } from './waiter';
 import { minutesSeated, stateOf, STILL_SEATED_MIN } from './TableMap';
 import { useSession } from '../components/SessionProvider';
+import { slipsOf } from '../lib/print/from-api';
 
 /**
  * Jira GRW-721 — one table's running bill: what it has had, what it comes to, and the four things a counter does with
@@ -80,6 +81,12 @@ export function TableBillSheet({
   const [takingOff, setTakingOff] = useState<{ lineId: string; name: string; reason: string; askCooked?: boolean; cooked?: boolean } | null>(null);
   /** "Take off a dish" pressed: each dish shows its Take off. Off by default — taking a dish off is rare. */
   const [editing, setEditing] = useState(false);
+  /*
+   * Owner, 2026-11-22 ("now build the cancel table option") — the whole table's order called off in one go, instead of taking
+   * each dish off and then Close table. The owner's or a manager's, as taking a dish off is; asks "already cooked?" when the
+   * kitchen had a dish it never ticked Done, exactly as the Pickup's Cancel order does. No bill, the table is Free again.
+   */
+  const [cancelling, setCancelling] = useState<{ askCooked: boolean; cooked?: boolean } | null>(null);
   const reasonRef = useRef<HTMLFormElement>(null);
   const reasonInputRef = useRef<HTMLInputElement>(null);
   const takingOffLine = takingOff?.lineId ?? null;
@@ -146,6 +153,29 @@ export function TableBillSheet({
       await read();
     } catch (e) {
       if (e instanceof ApiError && e.code === 'cooked_unknown') setTakingOff({ ...takingOff, askCooked: true });
+      else setError(e instanceof ApiError ? e.message : t('actionFailed'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const cancelWholeOrder = async () => {
+    if (!cancelling || busy) return;
+    if (cancelling.askCooked && cancelling.cooked === undefined) {
+      setError(t('cookedNeeded'));
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await api.cancelPendingCounterSale(saleId, cancelling.askCooked ? cancelling.cooked : undefined);
+      // The kitchen is told to stop: one cancel slip per station that had the table's dishes.
+      const slips = slipsOf(res);
+      if (slips) printer.autoKot(slips, { tokenNo: null, channel: 'counter', orderType: 'dine_in', tableName: `${table.name} · ${areaName}` });
+      setCancelling(null);
+      onDone(t('cancelledOk', { table: table.name }));
+    } catch (e) {
+      if (e instanceof ApiError && e.code === 'cooked_unknown') setCancelling({ askCooked: true });
       else setError(e instanceof ApiError ? e.message : t('actionFailed'));
     } finally {
       setBusy(false);
@@ -348,9 +378,16 @@ export function TableBillSheet({
               ))}
             </ul>
             {canManage && live.length > 0 && !moving && !paying ? (
-              <button type="button" className="tb-edit-link" aria-pressed={editing} disabled={busy || takingOff !== null} onClick={() => setEditing((on) => !on)}>
-                {editing ? t('doneTakingOff') : t('takeOffDish')}
-              </button>
+              <div className="tb-edit-links">
+                <button type="button" className="tb-edit-link" aria-pressed={editing} disabled={busy || takingOff !== null || cancelling !== null} onClick={() => setEditing((on) => !on)}>
+                  {editing ? t('doneTakingOff') : t('takeOffDish')}
+                </button>
+                {editing ? null : (
+                  <button type="button" className="tb-edit-link" disabled={busy || takingOff !== null || cancelling !== null} onClick={() => setCancelling({ askCooked: false })}>
+                    {t('cancelWholeOrder')}
+                  </button>
+                )}
+              </div>
             ) : null}
             {/* Jira GRW-724 — the service charge, its own named line; added only when the guest agrees, removable until paid. */}
             {charge ? (
@@ -414,7 +451,33 @@ export function TableBillSheet({
               </p>
               {/* Taking a dish off: its two buttons take Take payment's place, so the sheet keeps its height and they stay
                   under the thumb (owner, 17 Nov). The reason itself is typed under the dish. */}
-              {takingOff ? (
+              {cancelling ? (
+                <div className="tb-cancel-all" role="group" aria-label={t('cancelWholeOrder')}>
+                  <p className="field-hint">{t('cancelWholeBody', { amount: money(totalMinor), table: table.name })}</p>
+                  {cancelling.askCooked ? (
+                    <fieldset className="tb-cooked">
+                      <legend className="field-hint">{t('cookedQuestion')}</legend>
+                      <div className="tb-cooked-pair">
+                        <button type="button" className={`btn btn-ghost ${cancelling.cooked === false ? 'is-on' : ''}`} aria-pressed={cancelling.cooked === false} onClick={() => setCancelling({ askCooked: true, cooked: false })}>
+                          {t('cookedNo')}
+                        </button>
+                        <button type="button" className={`btn btn-ghost ${cancelling.cooked === true ? 'is-on' : ''}`} aria-pressed={cancelling.cooked === true} onClick={() => setCancelling({ askCooked: true, cooked: true })}>
+                          {t('cookedYes')}
+                        </button>
+                      </div>
+                      <span className="field-hint">{t('cookedHint')}</span>
+                    </fieldset>
+                  ) : null}
+                  <div className="tb-foot-pair">
+                    <button type="button" className="btn btn-danger" disabled={busy || (cancelling.askCooked && cancelling.cooked === undefined)} onClick={() => void cancelWholeOrder()}>
+                      {t('cancelWholeConfirm')}
+                    </button>
+                    <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => { setCancelling(null); setError(null); }}>
+                      {t('keepOrder')}
+                    </button>
+                  </div>
+                </div>
+              ) : takingOff ? (
                 <div className="tb-foot-pair">
                   <button
                     type="submit"

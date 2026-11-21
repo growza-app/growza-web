@@ -536,7 +536,7 @@ export function ReturnProductSheet({
                           {/* Jira GRW-745 FR-08 — a table's bill and a takeaway no longer look alike: named by table or token first. */}
                           {b.tableName || typeof b.tokenNo === 'number' ? (
                             <span className={`sls-ret-bill-place ${b.tableName ? 'is-table' : 'is-token'}`}>
-                              {b.tableName ? `${t('dineIn')} · ${b.tableName}` : `${t('takeaway')} · #${String(b.tokenNo).padStart(2, '0')}`}
+                              {b.tableName ? `${t('dineIn')} · ${b.tableName}` : `${t('takeaway')} · ${t('tokenNo', { n: String(b.tokenNo).padStart(2, '0') })}`}
                             </span>
                           ) : null}
                           <strong className="sls-ret-bill-client">{b.clientName}</strong>

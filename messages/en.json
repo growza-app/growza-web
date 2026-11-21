@@ -3340,7 +3340,7 @@
       "dine_in": "Dine-in",
       "takeaway": "Takeaway",
       "delivery": "Delivery",
-      "locked": "Locked — the bill has dishes. Clear it to change.",
+      "locked": "Locked — the bill has dishes. Remove them to change it.",
       "lockedTable": "Dine-in at {table}. Go back to the tables to change.",
       "headTakeaway": "New takeaway",
       "headToken": "Takeaway · {token}",
@@ -4913,7 +4913,12 @@
     "areaPrices": "This area's prices",
     "people": "People",
     "peopleSkip": "People at the table (optional)",
-    "seatOnly": "Seat only — order later"
+    "seatOnly": "Seat only — order later",
+    "cancelWholeOrder": "Cancel the whole order",
+    "cancelWholeBody": "{amount} not collected. {table} is free again, and the order is kept in Orders as Cancelled.",
+    "cancelWholeConfirm": "Cancel order",
+    "keepOrder": "Keep order",
+    "cancelledOk": "{table} order cancelled. No bill."
   },
   "pos": {
     "kitchenScreen": "Kitchen",
@@ -5181,7 +5186,8 @@
       "writingOff": "Written off, not put back: {items}",
       "sizeRemovedNote": "One of these sizes has been removed from the shelf since the sale. The unit was counted on that size’s own record.",
       "dineIn": "Dine-in",
-      "takeaway": "Takeaway"
+      "takeaway": "Takeaway",
+      "tokenNo": "Token #{n}"
     }
   },
   "orders": {

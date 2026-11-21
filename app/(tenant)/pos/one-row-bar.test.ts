@@ -107,4 +107,13 @@ describe('the one-row POS bar', () => {
     const tables = readFileSync(resolve(__dirname, '../styles/99-dining-tables.css'), 'utf8');
     expect(tables).toMatch(/\.pf-type-inbar \.pf-type-tab\.is-on \{\s*background: var\(--accent-deep\);\s*color: #fff;/);
   });
+
+  it('D1 — a locked type stays readable (no opacity) and a laptop shows a padlock on it', () => {
+    const tables = readFileSync(resolve(__dirname, '../styles/99-dining-tables.css'), 'utf8');
+    const rule = tables.match(/\.pf-type-top \.pf-type-tab\[aria-disabled='true'\] \{[^}]*\}/)![0];
+    expect(rule).not.toContain('opacity');
+    expect(rule).toContain('color: var(--muted);');
+    expect(flow).toContain('<span className="pf-type-lockicon" aria-hidden="true">');
+    expect(tables).toMatch(/@media \(min-width: 861px\) \{\s*\.pf-type-lockicon \{\s*display: inline-flex;/);
+  });
 });

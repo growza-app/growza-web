@@ -357,10 +357,29 @@
   min-height: 2.75rem;
 }
 
+/*
+ * Design review D1 (2026-11-22) — a locked choice stays readable: the normal grey (about 5:1 on the tray), no opacity. It
+ * was 55% opacity, 2.16:1, and still answered a tap. On a laptop a padlock beside the word says it is locked; a phone has
+ * no room for one at 344px and says why when it is tapped (the lock note).
+ */
 .pf-type-top .pf-type-tab[aria-disabled='true'] {
   color: var(--muted);
-  opacity: 0.55;
   cursor: not-allowed;
+}
+
+.pf-type-lockicon {
+  display: none;
+}
+
+@media (min-width: 861px) {
+  .pf-type-lockicon {
+    display: inline-flex;
+  }
+
+  .pf-type-lockicon svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
 }
 
 .pf-type-icon,
@@ -491,9 +510,10 @@
   cursor: pointer;
 }
 
+/* Design review D9 — one chosen green across the app (the till's chips and tabs use --accent-deep, not --forest). */
 .hm-type-chip.is-on {
-  border-color: var(--forest);
-  background: var(--forest);
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
   color: #fff;
 }
 
@@ -509,8 +529,9 @@
   font-weight: 600;
 }
 
+/* Design review D8 — the green was the till's "this one is chosen" colour; a table's place is plain text like a token's. */
 .sls-ret-bill-place.is-table {
-  color: var(--accent-deep);
+  color: var(--text);
 }
 
 .sls-ret-bill-place.is-token {
@@ -738,4 +759,29 @@
     padding: 0 var(--sp-1);
     font-size: var(--fs-2);
   }
+}
+
+/*
+ * Design review D3 / D10 (2026-11-22) — the bill's head was amber for a takeaway and blue for a delivery: the very colours
+ * the table map uses for "Food cooking" and "Bill printed", so a takeaway bill looked like a cooking table. It is a plain
+ * card now (the type's icon and words say what it is), and its grey line reads at the muted grey's full contrast.
+ */
+.pf-order-head,
+.pf-order-head.is-delivery {
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+/* Owner, 2026-11-22 — Take off a dish and Cancel the whole order, side by side under the dishes; the confirm takes Take
+   payment's place at the foot, so it stays under the thumb. */
+.tb-edit-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-4);
+}
+
+.tb-cancel-all {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
 }

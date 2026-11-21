@@ -2041,10 +2041,11 @@
     gap: 0.375rem;
   }
 
+  /* Design review D2 — Swiggy / Zomato are tapped on every app order: a whole 44px target, not 36. */
   .pos-shell .pf:not(.pf-wide) .pf-from .pf-chip {
     flex: 1 1 0;
     justify-content: center;
-    min-height: 2.25rem;
+    min-height: 2.75rem;
     padding: 0 var(--sp-2);
     font-size: 0.8125rem;
   }

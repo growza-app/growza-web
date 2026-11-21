@@ -2367,6 +2367,12 @@ export function PayFlow({
           <span className="pf-type-tab-main">
             <TypeIcon type={key} />
             {t(`type.${key}`)}
+            {/* Design review D1 — a locked choice says so with a padlock (on a laptop; a phone says why on a tap), not by fading. */}
+            {typeLock !== null && orderTab !== key ? (
+              <span className="pf-type-lockicon" aria-hidden="true">
+                <IconLock />
+              </span>
+            ) : null}
           </span>
           {/* Owner, 2026-11-22 — Pickup's count rides on Takeaway, where those orders are ("keep the name as pickup"). */}
           {/* A laptop says "Pickup 4" beside the word; a phone has room only for the 4, as a badge on the tab's corner
@@ -2435,7 +2441,11 @@ export function PayFlow({
               ? t('type.headDelivery', { app: fromApp ? appWord(fromApp) : t('type.delivery') })
               : t('type.headTakeaway')}
         </strong>
-        <span className="pf-order-head-sub">{token ? token.customerName : orderTab === 'delivery' ? t('type.subDelivery') : t('type.subTakeaway')}</span>
+        {/* Design review D6 — a delivery's head said "Paid to you by the app" over a bill that says "Paid on Swiggy. Nothing to
+            collect here.": once is enough, and the bill is where the money is. */}
+        {orderTab === 'delivery' && !token ? null : (
+          <span className="pf-order-head-sub">{token ? token.customerName : t('type.subTakeaway')}</span>
+        )}
         {/* Owner, 2026-11-21 ("alignment issue") — the number belongs to this bill, so it sits here, not beside the switch. */}
         {orderTab === 'delivery' ? orderNo : null}
       </div>

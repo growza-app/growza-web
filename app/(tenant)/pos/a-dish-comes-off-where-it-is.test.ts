@@ -83,6 +83,6 @@ describe('taking a dish off never drops the sheet (suite, 17 Nov: a short bill f
   it('keeps the rows in their two-line layout and the link in place, greyed out', () => {
     expect(sheet).toContain("<ul className={`tb-lines${editing ? ' is-editing' : ''}`}>");
     expect(sheet).toContain('className="btn btn-ghost tb-off-btn" disabled={busy || takingOff !== null}');
-    expect(sheet).toContain('className="tb-edit-link" aria-pressed={editing} disabled={busy || takingOff !== null}');
+    expect(sheet).toContain('className="tb-edit-link" aria-pressed={editing} disabled={busy || takingOff !== null || cancelling !== null}');
   });
 });
