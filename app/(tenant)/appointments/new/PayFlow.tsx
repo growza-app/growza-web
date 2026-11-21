@@ -2356,7 +2356,9 @@ export function PayFlow({
             {typeLock}
           </p>
         ) : null}
-        {orderTab === 'delivery' && apps.length > 0 && !typeLock ? fromAppChips : null}
+        {/* QA 2026-11-21 — the lock is the switch's alone (BR-01): the app row stays once a dish is in, so Swiggy and Zomato
+            can still be swapped (both are deliveries, same prices) and nothing under it moves (AC-07). */}
+        {orderTab === 'delivery' && apps.length > 0 ? fromAppChips : null}
       </div>
     ) : null;
   /** Jira GRW-745 FR-03 — the bill names what it is for. A table's is the strip below; a takeaway or a delivery says so here. */

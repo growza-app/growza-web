@@ -76,4 +76,9 @@ describe('GRW-745 — Home and Return', () => {
     const css = readFileSync(resolve(__dirname, '../styles/99-dining-tables.css'), 'utf8');
     expect(css).toMatch(/\.pf-type-top \.pf-type-tabs \{\s*flex: 0 1 30rem;/);
   });
+
+  it('QA 2026-11-21 — Delivery keeps its app row once the bill has a dish: the lock is the switch’s alone', () => {
+    expect(flow).toContain("{orderTab === 'delivery' && apps.length > 0 ? fromAppChips : null}");
+    expect(flow).not.toContain('!typeLock ? fromAppChips');
+  });
 });
