@@ -1032,7 +1032,8 @@
 
   .inv-page:not(:has(.ks-desk)) .inv-tab {
     flex: 1;
-    min-height: 2.5rem;
+    /* Develop QA 2026-11-21, D1 — 44px, a thumb's target (GRW-741 AC-05); it was 40px. */
+    min-height: 2.75rem;
     border: 0;
     border-radius: 0.6875rem;
     background: transparent;
