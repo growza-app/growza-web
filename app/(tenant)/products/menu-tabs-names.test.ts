@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const css = readFileSync(resolve(__dirname, '../styles/99-menu-manager.css'), 'utf8');
+// Comments out: the rule's own comment says what display:none used to do.
+const css = readFileSync(resolve(__dirname, '../styles/99-menu-manager.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 const list = readFileSync(resolve(__dirname, 'ProductsList.tsx'), 'utf8');
 
 /** Develop QA 2026-11-21, finding 9 — the Menu's tabs keep their words for a screen reader when the short label shows. */
