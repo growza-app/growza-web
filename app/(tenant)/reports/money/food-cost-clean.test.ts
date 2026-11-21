@@ -58,6 +58,9 @@ describe('develop QA 2026-11-21, finding 5 — "Not sure yet" says why', () => {
     expect(en.moneyReports.foodCost.clean.status.partialPrice).toContain('no price');
     expect(en.moneyReports.foodCost.clean.status.partialPrice).not.toContain('recipe');
     expect(clean).toContain('partialWhy(r.noPrice.dishes > 0, r.noRecipe.dishes > 0)');
+  });
+});
+
 describe('develop QA 2026-11-21, finding 8 — the figure tiles are whole rupees', () => {
   it('every tile uses f.rupees, none f.money', () => {
     const tiles = clean.slice(clean.indexOf('<dl className="fc2-stats">'), clean.indexOf('</dl>'));
