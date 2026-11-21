@@ -6057,7 +6057,10 @@
           "warn": "A bit high — aim for under ₹35",
           "bad": "Too high — over ₹45",
           "none": "Nothing to count yet",
-          "partial": "Not sure yet — many dishes sold have no recipe, so they aren't counted"
+          "partial": "Not sure yet — not everything sold could be counted",
+          "partialPrice": "Not sure yet — some ingredients have no price, so the dishes that use them aren't counted",
+          "partialRecipe": "Not sure yet — many dishes sold have no recipe, so they aren't counted",
+          "partialBoth": "Not sure yet — some ingredients have no price and some dishes have no recipe, so those dishes aren't counted"
         },
         "tabs": {
           "dishes": "Dishes",
