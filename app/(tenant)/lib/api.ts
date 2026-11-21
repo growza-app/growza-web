@@ -5,6 +5,7 @@
 // LAN IP, or an HTTPS tunnel, with no port juggling or mixed-content blocking
 // (the latter is what a PWA install over HTTPS requires).
 import type { AlertKind, DeviceSubscription } from './push-alerts';
+import { announceOrdersChanged, changesOrders } from './orders-changed';
 
 const API_URL = typeof window !== 'undefined' ? '' : (process.env.API_URL ?? 'http://localhost:3001');
 
@@ -463,6 +464,8 @@ async function send<T>(method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string
     throw new BookingConflictError(message, body, code);
   }
   if (!res.ok) throw await apiError(res, path);
+  // Owner, 2026-11-21 — an order changed here: an open Home (this tab or another) reads its orders once (orders-changed.ts).
+  if (changesOrders(path)) announceOrdersChanged();
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
