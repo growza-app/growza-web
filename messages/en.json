@@ -4926,7 +4926,8 @@
       "not_good": "Not good",
       "other": "Something else"
     },
-    "whyOffOther": "Say why"
+    "whyOffOther": "Say why",
+    "takeOffPick": "Choose {name} to take off"
   },
   "pos": {
     "kitchenScreen": "Kitchen",

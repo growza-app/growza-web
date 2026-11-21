@@ -4926,7 +4926,8 @@
       "not_good": "अच्छी नहीं थी",
       "other": "कुछ और"
     },
-    "whyOffOther": "कारण लिखें"
+    "whyOffOther": "कारण लिखें",
+    "takeOffPick": "हटाने के लिए {name} चुनें"
   },
   "pos": {
     "kitchenScreen": "किचन",

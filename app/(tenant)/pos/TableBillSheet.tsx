@@ -343,7 +343,7 @@ export function TableBillSheet({
                     <button
                       type="button"
                       className="tb-off-minus"
-                      aria-label={t('takeOffNamed', { name: l.name })}
+                      aria-label={t('takeOffPick', { name: l.name })}
                       aria-pressed={takingOff?.lineId === l.id}
                       disabled={busy || (takingOff !== null && takingOff.lineId !== l.id)}
                       onClick={() => setTakingOff(takingOff?.lineId === l.id ? null : { lineId: l.id, name: l.name, reason: '' })}
