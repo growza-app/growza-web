@@ -6581,7 +6581,8 @@
       "avgCost": "Cost",
       "usedIn": "Used in",
       "open": "Open",
-      "dishes": "{n, plural, one {# dish} other {# dishes}}"
+      "dishes": "{n, plural, one {# dish} other {# dishes}}",
+      "takenOff": "{n} taken off"
     }
   },
   "recipe": {

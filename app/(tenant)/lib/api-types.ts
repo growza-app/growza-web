@@ -2535,6 +2535,8 @@ export interface StockMaterial {
   avgCost?: number | null;
   openedAt: string | null;
   usedIn: number;
+  /** Develop QA 2026-11-21, L2 — taken-off dishes whose recipe names it. Absent on an older API. */
+  usedInOff?: number;
   low: boolean;
   /** Stock has moved: the unit is locked (the server's answer, not a guess). */
   moved: boolean;

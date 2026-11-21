@@ -326,9 +326,15 @@ function useShare(target: ShareTarget, onFinished?: () => void) {
  */
 export function useShareTextOnWhatsApp() {
   const [copyText, setCopyText] = useState<string | null>(null);
+  // Develop QA 2026-11-21, L3 — text with no way back to the business asks first, as a row's share does ("Share anyway" is remembered).
+  const [askFor, setAskFor] = useState<string | null>(null);
   const inFlight = useRef(false);
-  const share = async (text: string) => {
+  const share = async (text: string, opts: { reachable?: boolean; anyway?: boolean } = {}) => {
     if (inFlight.current) return;
+    if (opts.reachable === false && !opts.anyway && !numberWaived()) {
+      setAskFor(text);
+      return;
+    }
     inFlight.current = true;
     try {
       const toCopy = await openWhatsApp(text);
@@ -337,7 +343,19 @@ export function useShareTextOnWhatsApp() {
       inFlight.current = false;
     }
   };
-  const dialog = copyText ? <CopyShareDialog text={copyText} onClose={() => setCopyText(null)} /> : null;
+  const dialog = copyText ? (
+    <CopyShareDialog text={copyText} onClose={() => setCopyText(null)} />
+  ) : askFor ? (
+    <NoNumberDialog
+      onCancel={() => setAskFor(null)}
+      onShareAnyway={() => {
+        const text = askFor;
+        setAskFor(null);
+        waiveNumber();
+        void share(text, { anyway: true });
+      }}
+    />
+  ) : null;
   return { share, dialog };
 }
 
