@@ -4845,7 +4845,7 @@
     "total": "कुल",
     "takeOff": "हटाएँ",
     "takeOffDish": "कोई डिश हटाएँ",
-    "doneTakingOff": "हो गया",
+    "doneTakingOff": "डिश हटाना पूरा",
     "serviceChargeRow": "सर्विस चार्ज {rate}%",
     "serviceChargeHint": "सिर्फ़ मेहमान की हाँ पर",
     "serviceChargeAddShort": "जोड़ें",
@@ -4918,7 +4918,15 @@
     "cancelWholeBody": "{amount} नहीं लिया जाएगा। {table} फिर खाली हो जाएगी, और ऑर्डर Orders में रद्द के रूप में रहेगा।",
     "cancelWholeConfirm": "ऑर्डर रद्द करें",
     "keepOrder": "ऑर्डर रहने दें",
-    "cancelledOk": "{table} का ऑर्डर रद्द। कोई बिल नहीं।"
+    "cancelledOk": "{table} का ऑर्डर रद्द। कोई बिल नहीं।",
+    "offReasons": {
+      "changed_mind": "मेहमान ने मन बदला",
+      "wrong_dish": "गलत डिश",
+      "too_late": "बहुत देर हुई",
+      "not_good": "अच्छी नहीं थी",
+      "other": "कुछ और"
+    },
+    "whyOffOther": "कारण लिखें"
   },
   "pos": {
     "kitchenScreen": "किचन",

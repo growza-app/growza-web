@@ -328,7 +328,11 @@
 .tb-foot-pair .btn { min-height: 48px; white-space: normal; overflow-wrap: anywhere; }
 .tb-foot-pair .btn-danger { flex: 1 1 auto; }
 .tb-foot-pair .btn-ghost { flex: 0 0 auto; }
-.tb-foot-pair .btn-danger:disabled { background: var(--surface); color: var(--danger); box-shadow: inset 0 0 0 1.5px var(--danger); opacity: 0.55; }
+/* Owner, 2026-11-22 — Take off is the one action of this step, so it is a solid red button (it was red words beside an
+   outlined Cancel, which read as the main one); waiting for a reason it is plainly not ready yet, not a faded red. */
+.tb-foot-pair .btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.tb-foot-pair .btn-danger:hover:not(:disabled) { background: var(--danger); filter: brightness(0.92); }
+.tb-foot-pair .btn-danger:disabled { background: var(--surface); color: var(--muted); box-shadow: inset 0 0 0 1px var(--border); opacity: 1; }
 
 /*
  * Jira GRW-745 — Dine-in · Takeaway · Delivery has ONE place: the top of the till, over the table map and over the dishes.
@@ -784,4 +788,116 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
+}
+
+
+/*
+ * Owner, 2026-11-22 ("take off journey UI is not good") — the take-off step at 344px:
+ * - a dish keeps its one line in edit mode; a red minus on its left (44px) takes it off;
+ * - the reason is one tap (Guest changed mind, Wrong dish, Took too long, Not good), the keyboard only for Something else;
+ * - "Take off a dish" is plain words, "Cancel the whole order" the red one — not two red links that look alike.
+ */
+.tb-off-minus {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: calc(-1 * var(--sp-1)) 0 calc(-1 * var(--sp-1)) calc(-1 * var(--sp-2));
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.tb-off-minus svg {
+  box-sizing: content-box;
+  width: 0.75rem;
+  height: 0.75rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  stroke-width: 3;
+}
+
+.tb-off-minus:disabled {
+  cursor: not-allowed;
+}
+
+.tb-off-minus:disabled svg {
+  background: var(--border);
+}
+
+.tb-off-minus:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -2px;
+  border-radius: 999px;
+}
+
+.tb-lines.is-editing .tb-line {
+  flex-wrap: wrap;
+}
+
+.tb-lines.is-editing .tb-line-name {
+  flex-basis: auto;
+  flex: 1 1 0%;
+}
+
+.tb-lines.is-editing .tb-line-amount {
+  margin-left: 0;
+}
+
+.tb-line.is-picked {
+  background: var(--danger-soft);
+  margin: 0 calc(-1 * var(--sp-2));
+  padding-left: var(--sp-2);
+  padding-right: var(--sp-2);
+  border-radius: 10px;
+}
+
+.tb-off-reasons {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.tb-off-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+
+.tb-off-chip {
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-3);
+  cursor: pointer;
+}
+
+.tb-off-chip.is-on {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: #fff;
+  font-weight: 600;
+}
+
+.tb-off-chip:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+
+.tb-edit-links .tb-edit-link:first-child {
+  color: var(--text);
+}
+
+.tb-edit-links .tb-edit-link:first-child[aria-pressed='true'] {
+  color: var(--accent-deep);
 }

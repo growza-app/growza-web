@@ -4845,7 +4845,7 @@
     "total": "Total",
     "takeOff": "Take off",
     "takeOffDish": "Take off a dish",
-    "doneTakingOff": "Done",
+    "doneTakingOff": "Done taking off",
     "serviceChargeRow": "Service charge {rate}%",
     "serviceChargeHint": "Only if the guest agrees",
     "serviceChargeAddShort": "Add",
@@ -4918,7 +4918,15 @@
     "cancelWholeBody": "{amount} not collected. {table} is free again, and the order is kept in Orders as Cancelled.",
     "cancelWholeConfirm": "Cancel order",
     "keepOrder": "Keep order",
-    "cancelledOk": "{table} order cancelled. No bill."
+    "cancelledOk": "{table} order cancelled. No bill.",
+    "offReasons": {
+      "changed_mind": "Guest changed mind",
+      "wrong_dish": "Wrong dish",
+      "too_late": "Took too long",
+      "not_good": "Not good",
+      "other": "Something else"
+    },
+    "whyOffOther": "Say why"
   },
   "pos": {
     "kitchenScreen": "Kitchen",

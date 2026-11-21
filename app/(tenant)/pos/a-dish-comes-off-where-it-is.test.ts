@@ -18,8 +18,7 @@ describe('taking a dish off a table bill', () => {
     expect(css).toContain('.tb-line .tb-reason { flex: 1 1 100%; }');
     expect(css).toContain('.tb-line .tb-reason .dt-field { flex: none; }');
   });
-  it('is ready to type and in view', () => {
-    expect(sheet).toContain("reasonInputRef.current?.focus({ preventScroll: true });");
+  it('is in view', () => {
     expect(sheet).toContain("reasonRef.current?.scrollIntoView({ block: 'nearest' });");
   });
   it('the sheet keeps its height: the rest stays, greyed out, and Take off and Cancel take Take payment\'s place', () => {
@@ -27,11 +26,17 @@ describe('taking a dish off a table bill', () => {
     expect(sheet).toMatch(/<button\s+type="submit"\s+form="tb-reason-form"\s+className="btn btn-danger"/);
     expect(sheet).toContain("{t('takeOffNamed', { name: takingOff.name })}");
     expect(sheet).toContain('id="tb-reason-form"');
-    expect(css).toContain('.tb-foot-pair .btn-danger:disabled { background: var(--surface); color: var(--danger); box-shadow: inset 0 0 0 1.5px var(--danger);');
+    // Owner, 2026-11-22 — Take off is a solid red button; waiting for a reason it is plainly not ready, not a faded red.
+    expect(css).toContain('.tb-foot-pair .btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }');
+    expect(css).toContain('.tb-foot-pair .btn-danger:disabled { background: var(--surface); color: var(--muted); box-shadow: inset 0 0 0 1px var(--border); opacity: 1; }');
   });
-  it('asks a short question under the dish, the dish named only for a screen reader', () => {
-    expect(sheet).toContain("<span className=\"field-hint\">{t('whyOffShort')}</span>");
+  it('asks a short question under the dish, answered with one tap; words only for "Something else"', () => {
+    expect(sheet).toContain("<legend className=\"field-hint\">{t('whyOffShort')}</legend>");
+    expect(sheet).toContain("const OFF_REASONS = ['changed_mind', 'wrong_dish', 'too_late', 'not_good', 'other'] as const;");
+    expect(sheet).toContain("{takingOff.pick === 'other' ? (");
     expect(sheet).toContain("aria-label={t('whyOff', { name: takingOff.name })}");
+    // The keyboard comes up only for "Something else".
+    expect(sheet).toContain('if (typingReason) reasonInputRef.current?.focus({ preventScroll: true });');
   });
 });
 
@@ -80,9 +85,11 @@ describe('the table bill reads small (owner, 17 Nov)', () => {
 });
 
 describe('taking a dish off never drops the sheet (suite, 17 Nov: a short bill fell 61px)', () => {
-  it('keeps the rows in their two-line layout and the link in place, greyed out', () => {
+  it('keeps each dish on one line and the link in place, greyed out', () => {
     expect(sheet).toContain("<ul className={`tb-lines${editing ? ' is-editing' : ''}`}>");
-    expect(sheet).toContain('className="btn btn-ghost tb-off-btn" disabled={busy || takingOff !== null}');
+    // Owner, 2026-11-22 — one line per dish in edit mode: a red minus on its left, not a Take off button on a second line.
+    expect(sheet).toContain('className="tb-off-minus"');
+    expect(sheet).not.toContain('tb-off-btn');
     expect(sheet).toContain('className="tb-edit-link" aria-pressed={editing} disabled={busy || takingOff !== null || cancelling !== null}');
   });
 });
