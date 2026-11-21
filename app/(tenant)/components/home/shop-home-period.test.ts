@@ -204,7 +204,8 @@ describe('the rows and the filter read at 344px, and say nothing by colour alone
   });
 
   it('the order state is a word, and the change carries an arrow and a sign', () => {
-    expect(shop).toContain('{stateWord(o.status)}');
+    // Through orderWord since 2026-11-21: still a word, and an unpaid order's word is "Payment pending".
+    expect(shop).toContain('{orderWord(o)}');
     // The arrow comes from `deltaLabel` now (review 2026-11-05), which draws one for a rise and a fall and
     // none for no change — and no change takes no colour either, so nothing is said by colour alone.
     expect(shop).toContain('{deltaLabel(phoneFigures.changePct)} {s.vsPrevious}');
