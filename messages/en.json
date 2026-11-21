@@ -4910,7 +4910,10 @@
     "freeAgain": "Free again",
     "freedOk": "{table} is free again.",
     "moveHintSeated": "Pick a free table to move the guests to.",
-    "areaPrices": "This area's prices"
+    "areaPrices": "This area's prices",
+    "people": "People",
+    "peopleSkip": "People at the table (optional)",
+    "seatOnly": "Seat only — order later"
   },
   "pos": {
     "kitchenScreen": "Kitchen",

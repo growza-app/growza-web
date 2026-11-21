@@ -2369,8 +2369,15 @@ export function PayFlow({
             {t(`type.${key}`)}
           </span>
           {/* Owner, 2026-11-22 — Pickup's count rides on Takeaway, where those orders are ("keep the name as pickup"). */}
+          {/* A laptop says "Pickup 4" beside the word; a phone has room only for the 4, as a badge on the tab's corner
+              (owner, 2026-11-22 — "not looking good on mobile"). The words stay for a screen reader either way. */}
           {key === 'takeaway' && pickupCount !== null ? (
-            <span className={`pf-type-pickup${pickupCount > 0 ? ' is-live' : ''}`}>{t('type.pickupCount', { count: pickupCount })}</span>
+            <span className={`pf-type-pickup${pickupCount > 0 ? ' is-live' : ''}`}>
+              <span className="pf-type-pickup-word">{t('type.pickupCount', { count: pickupCount })}</span>
+              <span className="pf-type-pickup-n" aria-hidden="true">
+                {pickupCount}
+              </span>
+            </span>
           ) : null}
         </button>
       ))}
@@ -2409,8 +2416,14 @@ export function PayFlow({
       )
     ) : null;
   /** Jira GRW-745 FR-03 — the bill names what it is for. A table's is the strip below; a takeaway or a delivery says so here. */
+  /*
+   * Owner, 2026-11-22 ("is this required?") — on a phone a new takeaway's card only repeated the Takeaway tab and New order
+   * right above it. It stays where it says something: a delivery (its app and order number), an order being added to
+   * ("Takeaway · #08"), and the laptop's bill panel, whose title it is.
+   */
+  const repeatsTheBar = typeInBar && !wide && !token && orderTab === 'takeaway';
   const orderHead =
-    tablesHere && !atTable && !addingTo && !waiter ? (
+    tablesHere && !atTable && !addingTo && !waiter && !repeatsTheBar ? (
       <div className={`pf-order-head is-${token ? 'takeaway' : orderTab}`}>
         <strong className="pf-order-head-title">
           <TypeIcon type={token ? 'takeaway' : orderTab} />
@@ -2519,24 +2532,39 @@ export function PayFlow({
       setMapKey((k) => k + 1);
     }
   };
+  /*
+   * Owner, 2026-11-22 ("this UI is not good") — with the switch in the POS bar the strip is two rows at 344px, not three:
+   * the table itself is the way back ("← T1 · Main Hall"), the Dine-in chip goes (the bar's Dine-in already says it), the
+   * head count is People (not "Guests" right above the Guest who pays), and seating without an order is the quiet choice,
+   * not a second green button beside Next. A waiter's till and full screen keep the chip and "← Tables" (no bar above).
+   */
   const tableStrip = atTable ? (
-    <div className="pf-table-strip">
-      <button type="button" className="btn btn-ghost" onClick={() => setAtTable(null)}>
-        ← {tTables('backToTables')}
-      </button>
-      {/* Always said: this bill is for a table, so it is Dine-in. */}
-      <strong className="pf-table-name">
-        <span className="pf-table-type">{t('type.dine_in')}</span>
-        <span className="pf-table-label">{atTable.label}</span>
-      </strong>
+    <div className={`pf-table-strip${typeInBar ? ' is-in-bar' : ''}`}>
+      {typeInBar ? (
+        <button type="button" className="btn btn-ghost pf-table-back" aria-label={`${tTables('backToTables')}: ${atTable.label}`} onClick={() => setAtTable(null)}>
+          <IconArrowLeft />
+          <span className="pf-table-label">{atTable.label}</span>
+        </button>
+      ) : (
+        <>
+          <button type="button" className="btn btn-ghost" onClick={() => setAtTable(null)}>
+            ← {tTables('backToTables')}
+          </button>
+          {/* Always said: this bill is for a table, so it is Dine-in. */}
+          <strong className="pf-table-name">
+            <span className="pf-table-type">{t('type.dine_in')}</span>
+            <span className="pf-table-label">{atTable.label}</span>
+          </strong>
+        </>
+      )}
       {/* Jira GRW-734 — this area charges its own prices: said once, so a price on a tile is not a surprise. */}
       {hasAreaPrices(atTable.pricing) ? <span className="pf-table-prices field-hint">{tTables('areaPrices')}</span> : null}
-      <div className="pf-guests" role="group" aria-label={tTables('guestsSkip')}>
-        <span className="field-hint">{tTables('guests')}</span>
+      <div className="pf-guests" role="group" aria-label={tTables('peopleSkip')}>
+        <span className="field-hint">{tTables('people')}</span>
         <button type="button" className="btn btn-ghost pf-guests-btn" aria-label={tTables('fewerGuests')} disabled={!guests} onClick={() => setGuests((g) => (g && g > 1 ? g - 1 : null))}>
           −
         </button>
-        <span className="pf-guests-n" aria-live="polite">{guests ?? '–'}</span>
+        <span className="pf-guests-n" aria-live="polite">{guests ?? 0}</span>
         <button type="button" className="btn btn-ghost pf-guests-btn" aria-label={tTables('moreGuests')} onClick={() => setGuests((g) => Math.min(99, (g ?? 0) + 1))}>
           +
         </button>
@@ -2547,7 +2575,7 @@ export function PayFlow({
       */}
       {!atTable.billId && !atTable.seated && lines.length === 0 ? (
         <button type="button" className="btn pf-seat-btn" disabled={seating} onClick={() => void seatHere()}>
-          {tTables('seatGuests')}
+          {tTables('seatOnly')}
         </button>
       ) : null}
     </div>

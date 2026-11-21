@@ -2309,25 +2309,66 @@
   font-size: var(--fs-7);
 }
 
+/*
+ * New order / Pickup is the level under the type switch, so it must not look like it (owner, 2026-11-22): words on a
+ * hairline, the chosen one underlined in the accent — not a second grey tray.
+ */
 .pos-pickup-switch {
   display: flex;
+  gap: 0;
   margin: 0 0 var(--sp-3);
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
 }
 
 .pos-pickup-switch .page-tab {
   flex: 1 1 0%;
   min-height: 2.75rem;
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.pos-pickup-switch .page-tab.active {
+  border-bottom-color: var(--accent-deep);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  font-weight: 600;
 }
 
 @media (max-width: 860px) {
   /* Top-aligned: a tap on a locked type shows why under the tabs, and the flame and ⋮ stay on the tabs' line. */
   .pos-shell.has-type-bar > .pos-bar-types {
     align-items: flex-start;
-    gap: var(--sp-2);
+    gap: var(--sp-1);
     padding: 0;
     background: transparent;
     border: 0;
     box-shadow: none;
+  }
+
+  /* One shape across the row (owner, 2026-11-22): the tray, the Kitchen and the ⋮ are all 48px rounded squares. The flame
+     keeps the kitchen's amber in its icon, not as a circle of its own. */
+  .pos-bar-types .pos-bar-kitchen,
+  .pos-bar-more .mnu-kebab-btn.kebab-btn {
+    width: 3rem;
+    height: 3rem;
+    min-width: 3rem;
+    border-radius: 12px;
+  }
+
+  .pos-bar-types .pos-bar-kitchen {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--amber-ink);
   }
 
   .pos-pickup-switch {

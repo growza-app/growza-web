@@ -563,22 +563,66 @@
   color: var(--amber-ink);
 }
 
+/* The bare count is the phone's badge (below); a laptop says "Pickup 4" in words. */
+.pf-type-pickup-n {
+  display: none;
+}
+
+/*
+ * Owner, 2026-11-22 ("not looking good on mobile") — at 344px: three tabs of one width, the chosen one marked by its white
+ * pill (not by a heavier word that no longer fits), and Pickup's count a badge on Takeaway's corner instead of a second
+ * line. The words "Pickup 4" stay for a screen reader.
+ */
 @media (max-width: 860px) {
+  .pf-type-inbar .pf-type-tabs {
+    padding: 2px;
+  }
+
   .pf-type-inbar .pf-type-icon {
     display: none;
   }
 
   .pf-type-inbar .pf-type-tab {
-    flex: 1 1 auto;
+    position: relative;
+    flex: 1 1 0%;
     padding: 0 var(--sp-1);
     font-size: var(--fs-3);
   }
 
+  .pf-type-inbar .pf-type-tab.is-on {
+    font-weight: 500;
+  }
+
   .pf-type-inbar .pf-type-tab.has-pickup {
+    overflow: visible;
+  }
+
+  .pf-type-inbar .pf-type-pickup-word {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .pf-type-inbar .pf-type-pickup.is-live .pf-type-pickup-n {
+    position: absolute;
+    top: -0.25rem;
+    right: -0.125rem;
     display: inline-flex;
-    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    line-height: 1.15;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.3125rem;
+    border-radius: 999px;
+    background: var(--amber-soft);
+    color: var(--amber-ink);
+    box-shadow: 0 0 0 2px var(--page-bg);
+    font-size: var(--fs-1);
+    font-weight: 700;
+    line-height: 1;
   }
 }
 
@@ -601,5 +645,71 @@
 
   .pf-type-pickup.is-live {
     background: var(--amber-soft);
+  }
+}
+
+/*
+ * Owner, 2026-11-22 ("this UI is not good") — the table strip under the POS bar: the table is the way back, People sits
+ * beside it, and Seat only is an outline (Next is the green button on this screen). Two rows at 344px instead of three.
+ */
+.pf-table-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  max-width: 100%;
+  font-size: var(--fs-5);
+  font-weight: 600;
+}
+
+.pf-table-back svg {
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.pf-table-back .pf-table-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pf-seat-btn {
+  border: 1px solid var(--accent-deep);
+  background: var(--surface);
+  color: var(--accent-deep);
+  box-shadow: none;
+}
+
+@media (max-width: 860px) {
+  .pf-table-strip.is-in-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+
+  /* The table's name must read whole at 344px ("T1 · Main Hall"): a tight arrow, a narrow pad. */
+  .pf-table-strip.is-in-bar .pf-table-back {
+    justify-self: start;
+    gap: var(--sp-1);
+    padding: 0 var(--sp-2);
+  }
+
+  .pf-table-strip.is-in-bar .pf-guests {
+    gap: 0;
+  }
+
+  .pf-table-strip.is-in-bar .pf-guests .field-hint {
+    margin-right: var(--sp-1);
+  }
+
+  .pf-table-strip.is-in-bar .pf-guests {
+    margin-left: 0;
+  }
+
+  .pf-table-strip.is-in-bar .pf-table-prices,
+  .pf-table-strip.is-in-bar .pf-seat-btn {
+    grid-column: 1 / -1;
   }
 }

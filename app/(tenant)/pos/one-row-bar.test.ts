@@ -73,4 +73,33 @@ describe('the one-row POS bar', () => {
   it('Pickup has no second New order button when the switch above already is one', () => {
     expect(client).toMatch(/\{tablesBar \? null : \(\s*<button type="button" className="btn btn-primary pos-queue-new-btn"/);
   });
+
+  it('on a phone: the Takeaway count is a corner badge, its words kept for a screen reader; one shape across the row', () => {
+    const tables = readFileSync(resolve(__dirname, '../styles/99-dining-tables.css'), 'utf8');
+    expect(flow).toContain('<span className="pf-type-pickup-n" aria-hidden="true">');
+    expect(tables).toMatch(/\.pf-type-inbar \.pf-type-pickup-word \{\s*position: absolute;\s*width: 1px;/);
+    expect(tables).toMatch(/\.pf-type-inbar \.pf-type-tab \{\s*position: relative;\s*flex: 1 1 0%;/);
+    expect(pos).toMatch(/\.pos-bar-types \.pos-bar-kitchen,\s*\.pos-bar-more \.mnu-kebab-btn\.kebab-btn \{\s*width: 3rem;\s*height: 3rem;/);
+  });
+
+  it('New order / Pickup is the level below: words on a hairline, not a second grey tray', () => {
+    expect(pos).toMatch(/\.pos-pickup-switch \{[^}]*border-bottom: 1px solid var\(--border\);[^}]*background: transparent;/);
+    expect(pos).toMatch(/\.pos-pickup-switch \.page-tab\.active \{\s*border-bottom-color: var\(--accent-deep\);/);
+  });
+
+  it('a phone drops the New takeaway card under the bar; delivery, an order being added to and the laptop keep it', () => {
+    expect(flow).toContain("const repeatsTheBar = typeInBar && !wide && !token && orderTab === 'takeaway';");
+    expect(flow).toContain('tablesHere && !atTable && !addingTo && !waiter && !repeatsTheBar ? (');
+  });
+
+  it('the table strip: People (not Guests, which sits above the Guest who pays), 0 not a dash, Seat only as an outline', () => {
+    const tables = readFileSync(resolve(__dirname, '../styles/99-dining-tables.css'), 'utf8');
+    expect(flow).toContain("<span className=\"field-hint\">{tTables('people')}</span>");
+    expect(flow).toContain('{guests ?? 0}</span>');
+    expect(flow).toContain("{tTables('seatOnly')}");
+    for (const m of [en, hi]) for (const k of ['people', 'peopleSkip', 'seatOnly']) expect(m.posTables[k], k).toBeTruthy();
+    expect(en.posTables.people).toBe('People');
+    expect(tables).toMatch(/\.pf-seat-btn \{\s*border: 1px solid var\(--accent-deep\);\s*background: var\(--surface\);/);
+    expect(tables).toMatch(/\.pf-table-strip\.is-in-bar \{\s*display: grid;/);
+  });
 });
