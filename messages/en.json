@@ -4722,6 +4722,7 @@
       "takeOff": "Take off the menu",
       "putBack": "Put back on the menu",
       "takenOffDone": "{name} is taken off the menu. It keeps its bills and its recipe.",
+      "takenOffNoRecipe": "{name} is taken off the menu. It keeps its bills.",
       "putBackDone": "{name} is back on the menu.",
       "undo": "Undo",
       "clearFilters": "Clear filters",
