@@ -34,8 +34,9 @@ describe('the unpaid order card', () => {
   it('never lets the card grow wider than the phone', () => {
     expect(css).toMatch(/\.pos-queue-cols \{[^}]*grid-template-columns: minmax\(0, 1fr\);/);
     expect(css).toMatch(/\.pos-queue-col \{[^}]*min-width: 0;/);
-    expect(css).toMatch(/\.pos-qcard-more \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
-    expect(css).toMatch(/\.pos-qcard-more \.btn > span \{[^}]*white-space: normal;/);
+    // Owner, 2026-11-23 — one row: Take payment gives way (min-width 0), + and ⋮ keep their 44px.
+    expect(css).toMatch(/\.pos-qcard-actions-row > \.pos-qcard-complete-btn \{[^}]*min-width: 0;/);
+    expect(css).toMatch(/\.pos-qcard-complete-btn > span \{[^}]*white-space: normal;/);
   });
 });
 

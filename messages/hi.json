@@ -4994,6 +4994,8 @@
     "backToQueueDonePickup": "पिकअप पर वापस जाएँ",
     "takePayment": "पेमेंट लें · {token}",
     "addItems": "और जोड़ें",
+    "addItemsTo": "{token} में और जोड़ें",
+    "moreFor": "{token} के और विकल्प",
     "cancelOrder": "ऑर्डर रद्द करें",
     "editOrder": "बदलें",
     "editSave": "सेव करें",

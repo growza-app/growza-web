@@ -1855,32 +1855,11 @@
   min-width: 0;
 }
 
-.pos-qcard-complete-btn > span,
-.pos-qcard-more .btn > span {
+.pos-qcard-complete-btn > span {
   min-width: 0;
   white-space: normal;
   text-align: center;
   line-height: 1.2;
-}
-
-.pos-qcard-more {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-2);
-}
-
-.pos-qcard-more .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-1);
-  min-height: 2.75rem;
-  padding: 0 var(--sp-2);
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  font-size: 0.8125rem;
-  font-weight: 600;
 }
 
 /* Owner, 9 Nov 2026 — on a phone the column is not a second card around the cards: its frame and padding cost
@@ -1891,30 +1870,6 @@
     border: 0;
     background: none;
   }
-}
-
-.pos-qcard-more .btn svg {
-  flex: none;
-  width: 0.875rem;
-  height: 0.875rem;
-}
-
-.pos-qcard-add-btn {
-  color: var(--accent-deep);
-}
-
-.pos-qcard-add-btn:hover {
-  border-color: var(--accent-deep);
-  background: var(--accent-soft);
-}
-
-.pos-qcard-cancel-btn {
-  color: var(--danger);
-}
-
-.pos-qcard-cancel-btn:hover {
-  border-color: var(--danger);
-  background: var(--danger-soft);
 }
 
 /* What was just added, said once on the board the desk lands back on. */
@@ -2016,7 +1971,6 @@
 /* The board's three buttons keep a focus ring. They shared this block with the token strip that went; it has
    to stay with the buttons that are still on screen, not with the markup that was removed. */
 .pos-qcard-complete-btn:focus-visible,
-.pos-qcard-more .btn:focus-visible,
 .pos-charge-adding-stop:focus-visible,
 .pos-qcard-recall-btn:focus-visible,
 .pos-qcard-add-client:focus-visible,
@@ -2193,8 +2147,6 @@
     font-size: 1rem;
   }
 }
-
-
 
 /* Jira GRW-714 — the kitchen says this token is ready to hand over. */
 .pos-qcard-ready { padding: 0 var(--sp-2); border-radius: 999px; background: var(--accent-deep); color: var(--surface); font-size: 0.8125rem; font-weight: 700; }
@@ -2435,28 +2387,6 @@
 }
 
 /*
- * Jira GRW-747 — an unpaid takeaway's third action, Edit, for the owner or a manager. Add items keeps a row of its own; Edit and
- * Cancel order share the next, so the "change it" pair sits together and no label breaks in two at 344px.
- */
-.pos-qcard-more:has(> :nth-child(3)) {
-  display: flex;
-  flex-wrap: wrap;
-}
-.pos-qcard-more:has(> :nth-child(3)) > .btn {
-  flex: 1 1 7.5rem;
-}
-.pos-qcard-more:has(> :nth-child(3)) > .pos-qcard-add-btn {
-  flex-basis: 100%;
-}
-.pos-qcard-edit-btn {
-  color: var(--text);
-}
-.pos-qcard-edit-btn:hover {
-  border-color: var(--text);
-  background: var(--page-bg);
-}
-
-/*
  * Jira GRW-747 — editing an unpaid takeaway on its own card (pos/PickupCardEdit.tsx): − and + beside each dish, 44px each, the
  * amount as it will be, "Now ₹…", and Save. A dish brought down to 0 stays on the card, struck through, until Save.
  */
@@ -2526,5 +2456,58 @@
 }
 .pos-qedit-bar .btn {
   flex: 1 1 0;
+  min-height: 2.75rem;
+}
+
+/*
+ * Owner, 2026-11-23 — an unpaid takeaway's actions in one row: Take payment takes the room, + (Add items) and ⋮ (Edit,
+ * Cancel order) sit beside it, 44px square each. The ⋮ is the Menu's own (MenuKebab, `.dropdown-panel`).
+ */
+.pos-qcard-actions-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-2);
+}
+.pos-qcard-actions-row > .pos-qcard-complete-btn {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+.pos-qcard-plus-btn,
+.pos-qcard-kebab .kebab-btn.mnu-kebab-btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  /* Round, as every button on the till is (the Emerald pill), so + and ⋮ read as a pair beside Take payment. */
+  border-radius: 999px;
+  background: var(--surface);
+}
+.pos-qcard-plus-btn {
+  color: var(--accent-deep);
+}
+.pos-qcard-plus-btn svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+.pos-qcard-plus-btn:hover {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+}
+.pos-qcard-kebab .kebab-btn.mnu-kebab-btn {
+  color: var(--text);
+  font-size: 1.25rem;
+}
+.pos-qcard-plus-btn:focus-visible,
+.pos-qcard-kebab .kebab-btn.mnu-kebab-btn:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+/* The ⋮'s two rows are tapped on a phone at the counter: 44px each, not the desk dropdown's 36px. */
+.pos-qcard-kebab .dropdown-item {
   min-height: 2.75rem;
 }

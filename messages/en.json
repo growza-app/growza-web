@@ -4994,6 +4994,8 @@
     "backToQueueDonePickup": "Back to pickup",
     "takePayment": "Take payment · {token}",
     "addItems": "Add items",
+    "addItemsTo": "Add items to {token}",
+    "moreFor": "More for {token}",
     "cancelOrder": "Cancel order",
     "editOrder": "Edit",
     "editSave": "Save",

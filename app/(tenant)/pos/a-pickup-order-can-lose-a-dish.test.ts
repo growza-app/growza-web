@@ -17,7 +17,12 @@ const hi = JSON.parse(read('../../../messages/hi.json'));
 describe('Edit an unpaid Pickup order on its own card', () => {
   it('Edit is the owner’s or a manager’s, beside Add items and Cancel order, and edits in the card (no sheet)', () => {
     expect(client).toContain("const mayEdit = session?.role === 'owner' || session?.role === 'manager';");
-    expect(client).toMatch(/\{mayEdit \? \(\s*<button\s+type="button"\s+className="btn pos-qcard-edit-btn"/);
+    // Owner, 2026-11-23 — + beside Take payment; Edit (owner or manager) and Cancel order in the card's ⋮.
+    expect(client).toContain('className="btn pos-qcard-plus-btn"');
+    expect(client).toContain("aria-label={t('addItemsTo', { token: tk.tokenLabel })}");
+    expect(client).toMatch(/<MenuKebab\s+className="pos-qcard-kebab"/);
+    expect(client).toMatch(/\.\.\.\(mayEdit\s*\?\s*\[\s*\{\s*label: t\('editOrder'\)/);
+    expect(client).toMatch(/label: t\('cancelOrder'\),\s*danger: true,/);
     expect(client).toContain('{editingId === tk.id ? (\n          <PickupCardEdit');
     expect(client).not.toContain('PickupTakeOffSheet');
   });
@@ -40,13 +45,13 @@ describe('Edit an unpaid Pickup order on its own card', () => {
     expect(edit).toContain('const nothingLeft = rows.every((i) => countOf(i) === 0);');
   });
 
-  it('44px − and +, and Add items on a row of its own at 344px', () => {
+  it('44px − and + in the editor, and a 44px + and ⋮ beside Take payment', () => {
     expect(css).toMatch(/\.pos-qedit-btn \{[^}]*width: 2\.75rem;[^}]*height: 2\.75rem;/);
-    expect(css).toMatch(/\.pos-qcard-more:has\(> :nth-child\(3\)\) > \.pos-qcard-add-btn \{\s*flex-basis: 100%;/);
+    expect(css).toMatch(/\.pos-qcard-plus-btn,\s*\.pos-qcard-kebab \.kebab-btn\.mnu-kebab-btn \{[^}]*width: 2\.75rem;[^}]*height: 2\.75rem;/);
   });
 
   it('says every word in English and Hindi', () => {
-    for (const k of ['editOrder', 'editSave', 'editLess', 'editMore', 'editNow', 'editEverythingOff', 'editReason', 'editSaved', 'editFailed']) {
+    for (const k of ['addItemsTo', 'moreFor', 'editOrder', 'editSave', 'editLess', 'editMore', 'editNow', 'editEverythingOff', 'editReason', 'editSaved', 'editFailed']) {
       expect(en.pos[k], k).toBeTruthy();
       expect(hi.pos[k], k).toBeTruthy();
     }

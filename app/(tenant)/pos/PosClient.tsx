@@ -20,7 +20,7 @@ import { RedeemRow } from '../components/RedeemRow';
 import { useAreas, useSession } from '../components/SessionProvider';
 import { hasOrderQueue } from '../lib/areas';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { IconCheck, IconArrowLeft, IconFlame, IconClose, IconEdit, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch } from '../components/icons';
+import { IconCheck, IconArrowLeft, IconFlame, IconClose, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch } from '../components/icons';
 import PickupCardEdit from './PickupCardEdit';
 import { ClientSheet, type PickedClient } from '../appointments/new/ClientSheet';
 import { Keypad } from '../appointments/new/Keypad';
@@ -1487,51 +1487,63 @@ export function PosClient({
           </div>
           {isPreparing ? (
             <div className="pos-qcard-actions">
-              <button
-                type="button"
-                className="btn pos-qcard-complete-btn"
-                onClick={() => void settleAndCompleteToken(tk)}
-              >
-                <IconCheck />
-                <span>
-                  {tk.paymentPending
-                    ? t('takePayment', { token: tk.tokenLabel })
-                    : t('handOverToken', { token: tk.tokenLabel })}
-                </span>
-              </button>
-              {/* Owner, 9 Nov 2026 — only an order still waiting for payment can grow or be called off here; a paid one is a return. */}
-              {tk.paymentPending && tk.channel === 'counter' ? (
-                <div className="pos-qcard-more">
-                  <button type="button" className="btn pos-qcard-add-btn" onClick={() => startAddingTo(tk)}>
-                    <IconPlus />
-                    <span>{t('addItems')}</span>
-                  </button>
-                  {mayEdit ? (
+              {/*
+                Owner, 2026-11-23 — one row: Take payment, then + (Add items) beside it, and Edit and Cancel order in ⋮ — the card's
+                rarer actions as words in a list (the Menu's own ⋮, MenuKebab), instead of two more rows of buttons on every card.
+                Owner, 9 Nov 2026 — only an order still waiting for payment can grow or be called off here; a paid one is a return.
+              */}
+              <div className="pos-qcard-actions-row">
+                <button
+                  type="button"
+                  className="btn pos-qcard-complete-btn"
+                  onClick={() => void settleAndCompleteToken(tk)}
+                >
+                  <IconCheck />
+                  <span>
+                    {tk.paymentPending
+                      ? t('takePayment', { token: tk.tokenLabel })
+                      : t('handOverToken', { token: tk.tokenLabel })}
+                  </span>
+                </button>
+                {tk.paymentPending && tk.channel === 'counter' ? (
+                  <>
                     <button
                       type="button"
-                      className="btn pos-qcard-edit-btn"
-                      onClick={() => {
-                        setQueueNote(null);
-                        setEditingId(tk.id);
-                      }}
+                      className="btn pos-qcard-plus-btn"
+                      aria-label={t('addItemsTo', { token: tk.tokenLabel })}
+                      title={t('addItemsTo', { token: tk.tokenLabel })}
+                      onClick={() => startAddingTo(tk)}
                     >
-                      <IconEdit />
-                      <span>{t('editOrder')}</span>
+                      <IconPlus />
                     </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    className="btn pos-qcard-cancel-btn"
-                    onClick={() => {
-                      setCancelError(null);
-                      setCancelTarget(tk);
-                    }}
-                  >
-                    <IconClose />
-                    <span>{t('cancelOrder')}</span>
-                  </button>
-                </div>
-              ) : null}
+                    <MenuKebab
+                      className="pos-qcard-kebab"
+                      label={t('moreFor', { token: tk.tokenLabel })}
+                      items={[
+                        ...(mayEdit
+                          ? [
+                              {
+                                label: t('editOrder'),
+                                onSelect: () => {
+                                  setQueueNote(null);
+                                  setEditingId(tk.id);
+                                },
+                              },
+                            ]
+                          : []),
+                        {
+                          label: t('cancelOrder'),
+                          danger: true,
+                          onSelect: () => {
+                            setCancelError(null);
+                            setCancelTarget(tk);
+                          },
+                        },
+                      ]}
+                    />
+                  </>
+                ) : null}
+              </div>
             </div>
           ) : (
             <button
