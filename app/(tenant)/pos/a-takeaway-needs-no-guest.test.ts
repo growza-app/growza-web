@@ -17,13 +17,14 @@ const order = src('../orders/[id]/OrderClient.tsx');
 const addNumber = src('../orders/[id]/AddNumberSheet.tsx');
 const ordersCss = src('../styles/99-orders.css');
 const payCss = src('../styles/73-pay-flow.css');
+const posCss = src('../styles/99-pos.css');
 const en = JSON.parse(src('../../../messages/en.json'));
 const hi = JSON.parse(src('../../../messages/hi.json'));
 
 describe('Owner, 2026-11-22 — the till keeps its old flow: an order with nobody goes to Pickup', () => {
   it('the ways to pay wait for a guest, so a nameless order is kept pending in Pickup, where dishes can still be added', () => {
     // "No guest needed" was tried and taken back the same day: a table still eating was paid, and its next dishes had no bill.
-    expect(payFlow).toContain('const hidePayUntilGuest = guestOptional && !hasWho && !fromApp;');
+    expect(payFlow).toContain('const hidePayUntilGuest = guestOptional && !hasWho && !fromApp && !payNowNoGuest;');
     expect(payFlow).toContain('data-testid="guest-to-pay"');
     expect(en.payFlow.desk.guestToPay).toBeTruthy();
     expect(hi.payFlow.desk.guestToPay).toBeTruthy();
@@ -45,6 +46,26 @@ describe('FR-02 · BR-02 — a name without a number stays on the bill', () => {
 
   it('a number alone is enough to save someone there (FR-03: "with or without a name")', () => {
     expect(sheet).toContain('if (!named && stored) return onPick({ id: null, name: null, waPhone: stored });');
+  });
+});
+
+describe('Owner, 2026-11-22 — "Take payment now" at the till, under Keep payment pending', () => {
+  it('shows only while the tiles wait for a guest, there is a dish, and it is not a table', () => {
+    expect(payFlow).toContain('hidePayUntilGuest && lines.length > 0 && !atTable ? (');
+    expect(payFlow).toContain("{t('desk.payNowNoGuest')}");
+    expect(payFlow.match(/\{payNowButton\}/g)).toHaveLength(2);
+    expect(en.payFlow.desk.payNowNoGuest).toBe('Take payment now');
+    expect(hi.payFlow.desk.payNowNoGuest).toBeTruthy();
+  });
+
+  it('tapped, the ways to pay show and nobody is asked for; a new bill starts without it', () => {
+    expect(payFlow).toContain('const hidePayUntilGuest = guestOptional && !hasWho && !fromApp && !payNowNoGuest;');
+    expect(payFlow).toContain('!(guestOptional && (allowWithoutGuest || payNowNoGuest))');
+    expect(payFlow.match(/setClient\(\{ kind: 'none' \}\);\n\s+setPayNowNoGuest\(false\);/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('is a full-width 44px target', () => {
+    expect(posCss).toMatch(/\.pos-charge-paynow \{[^}]*width: 100%;[^}]*min-height: 2\.75rem;/);
   });
 });
 
