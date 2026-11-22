@@ -1864,7 +1864,8 @@ export const api = {
   /** Jira GRW-713 — an issued document's own figures, laid out by the till for a thermal roll. */
   documentTicket: (id: string) => get<DocumentTicket>(`/api/v1/documents/${encodeURIComponent(id)}/ticket`),
   assignClientToSale: (appointmentId: string, input: { customerId?: string; phone?: string; name?: string }) =>
-    post<{ appointmentIds: string[]; customerId: string }>(`/api/v1/counter-sales/${appointmentId}/assign-client`, input),
+    // Jira GRW-747 — `customerId` is null when a name alone was given at a kitchen's till: it stays on the order.
+    post<{ appointmentIds: string[]; customerId: string | null }>(`/api/v1/counter-sales/${appointmentId}/assign-client`, input),
   /**
    * Jira GRW-199 — an advance booking, in one request.
    *

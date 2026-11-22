@@ -438,11 +438,12 @@ describe('the POS screen', () => {
     expect(freeToken?.state).toBe('completed');
   });
 
-  it('hides payment options when a restaurant order has no guest yet, then prompts to add the guest in Queue before showing the payment screen', () => {
+  it('Jira GRW-747 — a restaurant order with no guest shows its ways to pay at once (Walk-in); a guest is still added from Queue', () => {
     const payFlow = src('../appointments/new/PayFlow.tsx');
     expect(payFlow).toContain('const guestOptional = productsOnly && !counted;');
-    expect(payFlow).toContain('const hidePayUntilGuest = guestOptional && !hasWho && !fromApp;');
-    expect(payFlow).toContain('hidePayUntilGuest ? null : (');
+    // The tiles are no longer held back for a guest (GRW-679's `hidePayUntilGuest` is gone).
+    expect(payFlow).not.toContain('hidePayUntilGuest ?');
+    expect(payFlow).toContain("const client_ = !token && client.kind === 'none' && !fromApp && !guestOptional;");
     expect(client).toContain('function isWalkInToken(');
     expect(client).toContain('api.assignClientToSale(');
     expect(client).toContain('<ClientSheet');

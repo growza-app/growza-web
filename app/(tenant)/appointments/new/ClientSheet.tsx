@@ -42,7 +42,24 @@ const NAME_ID = 'pf-client-name';
  * No number pad here: the keyboard is already up for the search box, so a numeric field costs nothing and saves a
  * whole view. The pad stays on the total, which is the one figure nobody should have to open a keyboard for.
  */
-export function ClientSheet({ location, onPick, onClose, startAdding = false }: { location: string | null; onPick: (c: PickedClient) => void; onClose: () => void; /** Open with the add row already expanded (the + beside the search bar). */ startAdding?: boolean }) {
+export function ClientSheet({
+  location,
+  onPick,
+  onClose,
+  startAdding = false,
+  nameStaysOnBill = false,
+}: {
+  location: string | null;
+  onPick: (c: PickedClient) => void;
+  onClose: () => void;
+  /** Open with the add row already expanded (the + beside the search bar). */
+  startAdding?: boolean;
+  /**
+   * Jira GRW-747 — a till where a bill needs no guest (a kitchen's). A name typed here with no number stays on the bill
+   * and is never saved to the list, so the sheet says so, and a number alone is enough to save someone.
+   */
+  nameStaysOnBill?: boolean;
+}) {
   const t = useTranslations('payFlow');
   const tNouns = useTranslations('nouns');
   // Jira GRW-610's rule, as the Customers list keeps it: a business that takes no bookings has no "visits" to count. A
@@ -52,6 +69,8 @@ export function ClientSheet({ location, onPick, onClose, startAdding = false }: 
   const locale = useLocale();
   // Guest at a restaurant, Customer at a shop, Client at a salon — lower-cased where it sits inside a sentence.
   const clientNoun = nounInSentence(pickNoun(locale, useLabel('customer', 'Client'), tNouns('customer')));
+  // Jira GRW-747 — the list's own name ("Guests" at a restaurant), as the side menu says it.
+  const listName = pickNoun(locale, useLabel('customers', 'Clients'), tNouns('customersTitle'));
   const nv = useNewVisitCopy();
   const checkPhone = usePhoneProblem();
   const ref = useRef<HTMLDivElement>(null);
@@ -213,9 +232,13 @@ export function ClientSheet({ location, onPick, onClose, startAdding = false }: 
    */
   const named = newName.trim().length > 0;
   const problem = checkPhone(newPhone, { required: false });
+  // Jira GRW-747 (FR-03) — where a bill needs no guest, a number on its own is a guest: "with or without a name".
+  const enoughToSave = named || (nameStaysOnBill && newPhone.length > 0 && toStoredPhone(newPhone) !== null);
   const save = async () => {
-    if (!named || problem !== null || saving) return;
+    if (!enoughToSave || problem !== null || saving) return;
     const stored = toStoredPhone(newPhone);
+    // A number with no name: the sale finds or makes them by the number (`customerPhone`), as an offline order does.
+    if (!named && stored) return onPick({ id: null, name: null, waPhone: stored });
     /*
      * No number, no request. A name on its own is not a row this screen can create — `POST /customers` is keyed
      * on the phone — and it does not need to be: the counter-sale route takes `customerName` and writes the
@@ -290,7 +313,10 @@ export function ClientSheet({ location, onPick, onClose, startAdding = false }: 
           <div className="pf-client-add-row">
             {/* The app's own field markup, so this label and the number's below it are the same label. */}
             <div className="field">
-              <label htmlFor={NAME_ID}>{t('nameOptional')}</label>
+              <label htmlFor={NAME_ID}>
+                {t('nameOptional')}
+                {nameStaysOnBill ? <span className="field-optional">{tc('optional')}</span> : null}
+              </label>
               <input
                 id={NAME_ID}
                 type="text"
@@ -299,7 +325,8 @@ export function ClientSheet({ location, onPick, onClose, startAdding = false }: 
                   ownFields.current = true;
                   setNewName(e.target.value);
                 }}
-                maxLength={80}
+                // Jira GRW-747 — a name kept on the bill alone is printed on the token card and the slip: 60, as the API keeps it.
+                maxLength={nameStaysOnBill ? 60 : 80}
                 autoComplete="off"
               />
             </div>
@@ -325,6 +352,8 @@ export function ClientSheet({ location, onPick, onClose, startAdding = false }: 
                 error={shownProblem}
               />
             </div>
+            {/* Jira GRW-747 — said once, where the choice is made: a name alone is for this bill, a number keeps them. */}
+            {nameStaysOnBill ? <p className="field-hint pf-client-keep">{t('keepInList', { list: listName })}</p> : null}
             {/* The field says what is wrong with the number; this says what the server said about saving it. */}
             {error ? (
               <div role="alert" className="pf-error">
@@ -337,7 +366,7 @@ export function ClientSheet({ location, onPick, onClose, startAdding = false }: 
                   {t('fromContacts')}
                 </button>
               ) : null}
-              <button type="button" className="btn pf-go pf-client-save" onClick={() => void save()} disabled={saving || !named || problem !== null}>
+              <button type="button" className="btn pf-go pf-client-save" onClick={() => void save()} disabled={saving || !enoughToSave || problem !== null}>
                 {saving ? t('saving') : t('saveClient', { client: clientNoun })}
               </button>
             </div>

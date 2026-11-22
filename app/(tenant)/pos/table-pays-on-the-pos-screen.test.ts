@@ -36,9 +36,10 @@ describe('a waiter pays a table on the same screen (owner, 17 Nov)', () => {
   });
   it('names the guest by typing, with no discount, no points, no guest list and no bill print', () => {
     expect(pos).toContain('byNameOnly={waiter}');
-    expect(pos).toContain("aria-label={tPay('guestNameOnly')}");
+    // Jira GRW-747 — optional where a bill needs no guest (a kitchen's): "Guest's name (optional)".
+    expect(pos).toContain("aria-label={tPay(guestOptional ? 'guestNameIfAny' : 'guestNameOnly')}");
     expect(pos).toContain('{!anonymous && !byNameOnly ? (\n        <RedeemRow');
-    expect(pos).toContain("if (isWalkInToken(tk) && tk.channel === 'counter' && !waiter) {");
+    expect(pos).toContain("if (isWalkInToken(tk) && tk.channel === 'counter' && !waiter && !guestOptional) {");
     expect(pos).toContain('await api.assignClientToSale(payingToken.id, { name: guestName });');
     expect(pos).toContain('if (!waiter) printer.autoBill(tk.id);');
     expect(pos).toContain("bill={!waiter} />");

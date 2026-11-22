@@ -1,0 +1,78 @@
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
+
+/**
+ * Jira GRW-747 — a takeaway needs no guest, and a name without a number stays on the bill.
+ *
+ * Owner, 2026-11-22: "in takeaway some clients refuse to give a number, so we have to find a way to not unnecessarily
+ * add their details in the guest list." The API keeps a name alone on the order (`buyer_name`) and makes no Guests
+ * entry; these are the screens that let the desk do it.
+ */
+const src = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
+const payFlow = src('../appointments/new/PayFlow.tsx');
+const sheet = src('../appointments/new/ClientSheet.tsx');
+const pos = src('./PosClient.tsx');
+const tableSheet = src('./TableBillSheet.tsx');
+const order = src('../orders/[id]/OrderClient.tsx');
+const addNumber = src('../orders/[id]/AddNumberSheet.tsx');
+const ordersCss = src('../styles/99-orders.css');
+const en = JSON.parse(src('../../../messages/en.json'));
+const hi = JSON.parse(src('../../../messages/hi.json'));
+
+describe('FR-01 — a takeaway is paid with no guest', () => {
+  it('the till shows its ways to pay as soon as a dish is on the bill, and asks for nobody', () => {
+    expect(payFlow).not.toContain('hidePayUntilGuest ?');
+    expect(payFlow).not.toContain('guest-to-pay');
+    expect(payFlow).toContain("const client_ = !token && client.kind === 'none' && !fromApp && !guestOptional;");
+    // The step guide goes from the dishes straight to how it is paid.
+    expect(payFlow).toContain('const whoDone = hasWho || guestOptional;');
+    // The note that asked for a guest first is gone from both languages.
+    expect(en.payFlow.desk.guestToPay).toBeUndefined();
+    expect(hi.payFlow.desk.guestToPay).toBeUndefined();
+  });
+
+  it('Pickup takes the money for an order with nobody on it, and does not open the guest sheet first', () => {
+    expect(pos).toContain('const guestOptional = !areas.stock;');
+    expect(pos).toContain('const named = !anonymous || guestOptional || (byNameOnly && nameDraft.trim() !== \'\');');
+    expect(pos).toContain("if (isWalkInToken(tk) && tk.channel === 'counter' && !waiter && !guestOptional) {");
+  });
+});
+
+describe('FR-02 · BR-02 — a name without a number stays on the bill', () => {
+  it('the guest sheet says so in one line, in English and Hindi, and keeps the name to 60 letters', () => {
+    expect(payFlow.match(/nameStaysOnBill=\{guestOptional\}/g)).toHaveLength(3);
+    expect(sheet).toContain("{nameStaysOnBill ? <p className=\"field-hint pf-client-keep\">{t('keepInList', { list: listName })}</p> : null}");
+    expect(sheet).toContain('maxLength={nameStaysOnBill ? 60 : 80}');
+    expect(en.payFlow.keepInList).toBe('A name alone stays on this bill. Add a number to keep them in {list}.');
+    expect(hi.payFlow.keepInList).toContain('{list}');
+  });
+
+  it('a number alone is enough to save someone there (FR-03: "with or without a name")', () => {
+    expect(sheet).toContain('if (!named && stored) return onPick({ id: null, name: null, waPhone: stored });');
+  });
+});
+
+describe('FR-05 — a table bill’s guest name is optional', () => {
+  it('pays with no name; a name typed goes on the bill', () => {
+    expect(tableSheet).not.toContain("t('guestNeeded')");
+    expect(tableSheet).toContain('if (name) await api.assignClientToSale(saleId, { name });');
+    expect(en.posTables.guestName).toBe("Guest's name (optional)");
+    expect(hi.posTables.guestName).toContain('वैकल्पिक');
+    expect(en.posTables.guestNeeded).toBeUndefined();
+  });
+});
+
+describe('FR-04 — the number comes later, from the order', () => {
+  it('a counter order kept under a name offers "Add guest’s number"; an app’s order does not', () => {
+    expect(order).toContain('{isCounter ? (');
+    expect(order).toContain("t('addNumber.action', { customer: nouns.customer })");
+    expect(addNumber).toContain('api.assignClientToSale(orderId, { phone: stored, ...(name ? { name } : {}) })');
+    for (const m of [en, hi]) {
+      for (const k of ['action', 'title', 'label', 'hint', 'save', 'saving', 'failed']) expect(m.orders.addNumber[k], k).toBeTruthy();
+    }
+  });
+
+  it('its Save is a full-width 44px target, styled in the orders sheet', () => {
+    expect(ordersCss).toMatch(/\.ord-add-number-save \{[^}]*min-height: 44px;/);
+  });
+});

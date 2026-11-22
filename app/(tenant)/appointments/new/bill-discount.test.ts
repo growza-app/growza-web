@@ -115,8 +115,8 @@ describe('the Queue’s payment screen has it too (owner: "when coming from queu
 describe('only where the money is taken (owner: "final payment screen only")', () => {
   const payFlow = readFileSync(new URL('./PayFlow.tsx', import.meta.url), 'utf8');
 
-  it('not while payment waits for a guest, not for a delivery app, and not on the first screen', () => {
-    expect(payFlow).toMatch(/const discountRow =\s+lines\.length > 0 && !addingTo && !hidePayUntilGuest && !fromApp \?/);
+  it('not for a delivery app, and not on the first screen (Jira GRW-747: no payment waits for a guest any more)', () => {
+    expect(payFlow).toMatch(/const discountRow =\s+lines\.length > 0 && !addingTo && !fromApp \?/);
     expect(payFlow).not.toContain('pf-tray-discount');
   });
 });

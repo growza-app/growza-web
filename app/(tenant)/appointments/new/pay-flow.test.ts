@@ -402,11 +402,13 @@ describe('Record payment in three taps', () => {
     expect(flow).toMatch(/token \? \{ queueEntryId: token\.id \}/);
     // A name with no number is not a row this screen writes: the counter-sale route creates it with the sale.
     // Jira GRW-716 — and a guest added offline brings their number with the name.
-    expect(flow).toMatch(/\{ customerName: named\.name, \.\.\.\(named\.phone \? \{ customerPhone: named\.phone \} : \{\}\) \}/);
+    // Jira GRW-747 — a number with no name sends no empty name (a kitchen's guest is their number, with or without one).
+    expect(flow).toMatch(/\{ \.\.\.\(named\.name \? \{ customerName: named\.name \} : \{\}\), \.\.\.\(named\.phone \? \{ customerPhone: named\.phone \} : \{\}\) \}/);
     expect(client).toMatch(/if \(!stored\) return onPick\(\{ id: null, name: newName\.trim\(\), waPhone: null \}\);/);
-    // Save needs the name; the number only has to be valid IF one was typed.
+    // Save needs the name — or, at a kitchen's till (Jira GRW-747), a number alone; the number only has to be valid IF one was typed.
     expect(client).toMatch(/const problem = checkPhone\(newPhone, \{ required: false \}\);/);
-    expect(client).toMatch(/disabled=\{saving \|\| !named \|\| problem !== null\}/);
+    expect(client).toMatch(/const enoughToSave = named \|\| \(nameStaysOnBill && newPhone\.length > 0 && toStoredPhone\(newPhone\) !== null\);/);
+    expect(client).toMatch(/disabled=\{saving \|\| !enoughToSave \|\| problem !== null\}/);
     for (const m of [enMessages, hiMessages]) {
       const w = m.payFlow as unknown as Record<string, string>;
       expect(w.needClient).toBeTruthy();
