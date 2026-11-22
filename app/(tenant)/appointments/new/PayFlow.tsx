@@ -10,6 +10,7 @@ import { fixVisitHref, nextCustomerHref } from '../../lib/pay-token';
 import type { AddonGroup, Appointment, Offer, PaymentMode, Product, ProductCategory, Provider, Service, TillSize } from '../../lib/api-types';
 import type { QueueEntry } from '../../lib/home-types';
 import { receiptRows, type ReceiptRow } from '../../lib/receipt-text';
+import { useFitToWindow } from '../../lib/use-fit-to-window';
 import { displayPhone } from '../../lib/phone';
 import { formatDate } from '../../lib/format';
 import { RedeemRow } from '../../components/RedeemRow';
@@ -419,6 +420,9 @@ export function PayFlow({
    * with nobody named (the bill goes on the branch's Walk-in). Keep payment pending stays the first choice.
    */
   const [payNowNoGuest, setPayNowNoGuest] = useState(false);
+  /** The wide till's bill panel: kept to the window so Complete sale is never below it (owner, 2026-11-22). */
+  const [wideRight, setWideRight] = useState<HTMLElement | null>(null);
+  useFitToWindow(wideRight, wide && productsOnly);
   /*
    * Jira GRW-648 — what this client has in reward points, and whether the desk is spending them.
    *
@@ -2821,7 +2825,7 @@ export function PayFlow({
               }
             />
           )}
-          <aside className="pf-wide-right">
+          <aside ref={setWideRight} className="pf-wide-right">
             {/* Adding to a waiting order: it already has its guest and where it came from. */}
             {productsOnly && !addingTo ? (
               <div className="pos-bill-client">
@@ -2944,6 +2948,8 @@ export function PayFlow({
                 <strong>{money(dueMinor)}</strong>
               </p>
             ) : null}
+            {/* Owner, 2026-11-22 — how it is paid, kept in view at the panel's foot on the till (`.pf-wide-pay`, 99-pos). */}
+            <div className="pf-wide-pay">
             {hidePayUntilGuest ? null : (
               <>
                 {fromApp ? null : <h2 className="pf-wide-h">{atTable ? atTable.label : t('howTitle')}</h2>}
@@ -2997,6 +3003,7 @@ export function PayFlow({
                 ) : null}
               </div>
             ) : null}
+            </div>
               </>
             )}
             {splitKeypadEl}

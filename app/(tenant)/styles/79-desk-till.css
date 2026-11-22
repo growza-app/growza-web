@@ -38,6 +38,11 @@
    * scrolling inside itself, because a sticky panel taller than the window keeps its bottom — the payment
    * tiles — off screen until the whole menu has been scrolled past (owner, 2026-10-14).
    */
+  /* The payment block's wrapper (PayFlow) changes nothing here; the till pins it (99-pos). */
+  .pf-wide-pay {
+    display: contents;
+  }
+
   .pf-wide-right {
     position: sticky;
     top: 4.5rem;
