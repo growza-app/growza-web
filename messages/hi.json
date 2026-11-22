@@ -3339,7 +3339,15 @@
       "label": "मेहमान कैसे खाएँगे?",
       "dine_in": "यहीं खाना",
       "takeaway": "पैक करके",
-      "delivery": "डिलीवरी"
+      "delivery": "डिलीवरी",
+      "locked": "बंद — बिल में डिश हैं। बदलने के लिए डिश हटाएँ।",
+      "lockedTable": "{table} पर यहीं खाना। बदलने के लिए टेबल पर वापस जाएँ।",
+      "headTakeaway": "पैक करके · नया ऑर्डर",
+      "headToken": "पैक करके · {token}",
+      "headDelivery": "डिलीवरी · {app}",
+      "subTakeaway": "भेजने या पैसे लेने पर टोकन मिलेगा",
+      "subDelivery": "ऐप से भुगतान आपको मिलेगा",
+      "pickupCount": "पिकअप {count}"
     },
     "discount": {
       "add": "छूट दें",
@@ -4837,7 +4845,7 @@
     "total": "कुल",
     "takeOff": "हटाएँ",
     "takeOffDish": "कोई डिश हटाएँ",
-    "doneTakingOff": "हो गया",
+    "doneTakingOff": "डिश हटाना पूरा",
     "serviceChargeRow": "सर्विस चार्ज {rate}%",
     "serviceChargeHint": "सिर्फ़ मेहमान की हाँ पर",
     "serviceChargeAddShort": "जोड़ें",
@@ -4902,7 +4910,24 @@
     "freeAgain": "फिर से खाली करें",
     "freedOk": "{table} फिर से खाली है।",
     "moveHintSeated": "मेहमानों को ले जाने के लिए कोई खाली टेबल चुनें।",
-    "areaPrices": "इस एरिया की कीमतें"
+    "areaPrices": "इस एरिया की कीमतें",
+    "people": "लोग",
+    "peopleSkip": "टेबल पर कितने लोग (चाहें तो)",
+    "seatOnly": "सिर्फ़ बैठाएँ, ऑर्डर बाद में",
+    "cancelWholeOrder": "पूरा ऑर्डर रद्द करें",
+    "cancelWholeBody": "{amount} नहीं लिया जाएगा। {table} फिर खाली हो जाएगी, और ऑर्डर Orders में रद्द के रूप में रहेगा।",
+    "cancelWholeConfirm": "ऑर्डर रद्द करें",
+    "keepOrder": "ऑर्डर रहने दें",
+    "cancelledOk": "{table} का ऑर्डर रद्द। कोई बिल नहीं।",
+    "offReasons": {
+      "changed_mind": "मेहमान ने मन बदला",
+      "wrong_dish": "गलत डिश",
+      "too_late": "बहुत देर हुई",
+      "not_good": "अच्छी नहीं थी",
+      "other": "कुछ और"
+    },
+    "whyOffOther": "कारण लिखें",
+    "takeOffPick": "हटाने के लिए {name} चुनें"
   },
   "pos": {
     "kitchenScreen": "किचन",
@@ -4973,7 +4998,13 @@
     "cancelOrderConfirm": "ऑर्डर रद्द करें",
     "keepOrder": "ऑर्डर रखें",
     "cancelFailed": "यह ऑर्डर रद्द नहीं हो सका। फिर से कोशिश करें।",
-    "addedToOrder": "{token} में जुड़ गया। अब कुल {amount} है।"
+    "addedToOrder": "{token} में जुड़ गया। अब कुल {amount} है।",
+    "more": "और",
+    "returnBill": "बिल लौटाएँ",
+    "newOrderTab": "नया ऑर्डर",
+    "pickupTab": "पिकअप · {count}",
+    "shortcutsTitle": "कीबोर्ड शॉर्टकट",
+    "takeawayViews": "नया पैक ऑर्डर या पिकअप"
   },
   "sales": {
     "scanUnknown": "कोड {code} वाला कोई सामान नहीं मिला। बोतल जाँचें।",
@@ -5162,7 +5193,10 @@
       "whyOtherNeeds": "नोट में लिखें कि कारण क्या था।",
       "puttingBack": "इनकी गिनती में वापस जुड़ेगा: {items}",
       "writingOff": "बट्टे खाते में, वापस नहीं रखा जाएगा: {items}",
-      "sizeRemovedNote": "इनमें से एक साइज़ बिक्री के बाद शेल्फ़ से हटा दिया गया है। सामान उस साइज़ के अपने रिकॉर्ड में गिना गया।"
+      "sizeRemovedNote": "इनमें से एक साइज़ बिक्री के बाद शेल्फ़ से हटा दिया गया है। सामान उस साइज़ के अपने रिकॉर्ड में गिना गया।",
+      "dineIn": "यहीं खाना",
+      "takeaway": "पैक करके",
+      "tokenNo": "टोकन #{n}"
     }
   },
   "orders": {

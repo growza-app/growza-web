@@ -3339,7 +3339,15 @@
       "label": "How is the guest eating?",
       "dine_in": "Dine-in",
       "takeaway": "Takeaway",
-      "delivery": "Delivery"
+      "delivery": "Delivery",
+      "locked": "Locked — the bill has dishes. Remove them to change it.",
+      "lockedTable": "Dine-in at {table}. Go back to the tables to change.",
+      "headTakeaway": "New takeaway",
+      "headToken": "Takeaway · {token}",
+      "headDelivery": "Delivery · {app}",
+      "subTakeaway": "Token given when you send or pay",
+      "subDelivery": "Paid to you by the app",
+      "pickupCount": "Pickup {count}"
     },
     "discount": {
       "add": "Add discount",
@@ -4837,7 +4845,7 @@
     "total": "Total",
     "takeOff": "Take off",
     "takeOffDish": "Take off a dish",
-    "doneTakingOff": "Done",
+    "doneTakingOff": "Done taking off",
     "serviceChargeRow": "Service charge {rate}%",
     "serviceChargeHint": "Only if the guest agrees",
     "serviceChargeAddShort": "Add",
@@ -4902,7 +4910,24 @@
     "freeAgain": "Free again",
     "freedOk": "{table} is free again.",
     "moveHintSeated": "Pick a free table to move the guests to.",
-    "areaPrices": "This area's prices"
+    "areaPrices": "This area's prices",
+    "people": "People",
+    "peopleSkip": "People at the table (optional)",
+    "seatOnly": "Seat only — order later",
+    "cancelWholeOrder": "Cancel the whole order",
+    "cancelWholeBody": "{amount} not collected. {table} is free again, and the order is kept in Orders as Cancelled.",
+    "cancelWholeConfirm": "Cancel order",
+    "keepOrder": "Keep order",
+    "cancelledOk": "{table} order cancelled. No bill.",
+    "offReasons": {
+      "changed_mind": "Guest changed mind",
+      "wrong_dish": "Wrong dish",
+      "too_late": "Took too long",
+      "not_good": "Not good",
+      "other": "Something else"
+    },
+    "whyOffOther": "Say why",
+    "takeOffPick": "Choose {name} to take off"
   },
   "pos": {
     "kitchenScreen": "Kitchen",
@@ -4973,7 +4998,13 @@
     "cancelOrderConfirm": "Cancel order",
     "keepOrder": "Keep order",
     "cancelFailed": "Could not cancel this order. Please try again.",
-    "addedToOrder": "Added to {token}. It now comes to {amount}."
+    "addedToOrder": "Added to {token}. It now comes to {amount}.",
+    "more": "More",
+    "returnBill": "Return a bill",
+    "newOrderTab": "New order",
+    "pickupTab": "Pickup · {count}",
+    "shortcutsTitle": "Keyboard shortcuts",
+    "takeawayViews": "New takeaway or Pickup"
   },
   "sales": {
     "scanUnknown": "No product has the code {code}. Check the bottle.",
@@ -5162,7 +5193,10 @@
       "whyOtherNeeds": "Write what the reason was in the note.",
       "puttingBack": "Goes back on the count of: {items}",
       "writingOff": "Written off, not put back: {items}",
-      "sizeRemovedNote": "One of these sizes has been removed from the shelf since the sale. The unit was counted on that size’s own record."
+      "sizeRemovedNote": "One of these sizes has been removed from the shelf since the sale. The unit was counted on that size’s own record.",
+      "dineIn": "Dine-in",
+      "takeaway": "Takeaway",
+      "tokenNo": "Token #{n}"
     }
   },
   "orders": {

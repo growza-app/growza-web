@@ -21,7 +21,7 @@ import { DaySummarySheet } from './DaySummarySheet';
 import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import { ordersHref } from '../../lib/orders-filter';
-import { formatTokenNo, posQueueStorageKey, queueStateOf, tokenNumbersOf, type PosTokenOverride } from '../../pos/pos-helpers';
+import { formatTokenNo, isTableOrder, orderKindOf, posQueueStorageKey, queueStateOf, tokenNumbersOf, type PosTokenOverride } from '../../pos/pos-helpers';
 import { allCameBack } from '../../lib/order-items';
 import { channelsOf, isDeliveryApp, sellsOnMarketplaces } from '../../lib/order-channels';
 import type { Lang } from '../../lib/lang';
@@ -117,6 +117,8 @@ export function ShopHome({
   const [stockData, setStockData] = useState<StockReportPage | null>(null);
   const [returnsData, setReturnsData] = useState<ReturnsReportPage | null>(null);
   const [recentOrders, setRecentOrders] = useState<OrderListRow[]>([]);
+  /** Jira GRW-745 — Recent orders by how they were eaten (a branch with tables only). */
+  const [recentType, setRecentType] = useState<'all' | 'dine_in' | 'takeaway' | 'delivery'>('all');
   const [todayOrderRows, setTodayOrderRows] = useState<OrderListRow[]>([]);
   /** Emerald v2 — the laptop's week of orders behind the two white tiles' sparklines, with the list's full count. */
   const [deskWeek, setDeskWeek] = useState<{ rows: OrderListRow[]; total: number } | null>(null);
@@ -496,6 +498,26 @@ export function ShopHome({
    */
   const orderWord = (o: Pick<OrderListRow, 'status' | 'paymentPending'>) => (o.paymentPending ? s.paymentPendingState : stateWord(o.status));
   const orderTone = (o: Pick<OrderListRow, 'status' | 'paymentPending'>) => (o.paymentPending ? 'amber' : stateTone(o.status));
+
+  /** Jira GRW-745 FR-07 — where an order is, in words: "Dine-in · T4 · Main Hall", "Takeaway", or the delivery app. */
+  const placeWord = (o: Pick<OrderListRow, 'tableName' | 'orderType' | 'channel'>) => {
+    const kind = orderKindOf(o);
+    if (kind === 'dine_in') return o.tableName ? `${s.dineIn} · ${o.tableName}` : s.dineIn;
+    if (kind === 'delivery') return channelWord(o.channel);
+    return tablesOn ? s.takeaway : channelWord(o.channel);
+  };
+  const recentPool = deskWeek?.rows?.length ? deskWeek.rows : todayOrderRows.length ? todayOrderRows : recentOrders;
+  const recentShown = recentType === 'all' ? recentOrders : recentPool.filter((o) => orderKindOf(o) === recentType).slice(0, 6);
+  const recentEmpty = recentType === 'all' ? s.noOrdersBody : s.noTypeOrders[recentType];
+  const typeChips = tablesOn ? (
+    <div className="hm-type-chips" role="group" aria-label={s.recentTypeLabel}>
+      {(['all', 'dine_in', 'takeaway', 'delivery'] as const).map((k) => (
+        <button key={k} type="button" className={`hm-type-chip${recentType === k ? ' is-on' : ''}`} aria-pressed={recentType === k} onClick={() => setRecentType(k)}>
+          {k === 'all' ? s.allTypes : k === 'dine_in' ? s.dineIn : k === 'takeaway' ? s.takeaway : s.delivery}
+        </button>
+      ))}
+    </div>
+  ) : null;
 
   const formatShortDate = (iso: string) => {
     try {
@@ -912,6 +934,8 @@ export function ShopHome({
     const todaySorted = sourceRows
       .filter((o) => {
         if (o.status === 'cancelled' || o.status === 'returned' || o.items <= 0) return false;
+        // Jira GRW-745 BR-02 — a table's order is on the table map, never a pickup token here (the POS Pickup tab's rule).
+        if (isTableOrder(o)) return false;
         const ms = Date.parse(o.soldAt);
         return Number.isFinite(ms) && fmtDate(new Date(ms)) === todayISO;
       })
@@ -1301,14 +1325,15 @@ export function ShopHome({
                         </a>
                       ) : null}
                     </div>
-                    {recentOrders.length === 0 ? (
-                      <p className="hm-empty">{s.noOrdersBody}</p>
+                    {typeChips}
+                    {recentShown.length === 0 ? (
+                      <p className="hm-empty">{recentEmpty}</p>
                     ) : (
                       <ul className="rst-order-list">
-                        {recentOrders.slice(0, 5).map((o) => {
+                        {recentShown.slice(0, 5).map((o) => {
                           // What the order IS — never a guess at it. An app's order is a delivery; anything else rung up here is a counter order.
                           const isDelivery = isDeliveryApp(o.channel);
-                          const subLabel = `${channelWord(o.channel)} · ${formatDateTime(o.soldAt)}`;
+                          const subLabel = `${placeWord(o)} · ${formatDateTime(o.soldAt)}`;
                           const statusLabel = orderWord(o);
                           const tone = orderTone(o);
                           const statusClass = tone === 'green' ? 'is-served' : tone === 'blue' ? 'is-delivery' : tone === 'amber' ? 'is-preparing' : 'is-problem';
@@ -1924,7 +1949,7 @@ export function ShopHome({
                 <div className="hm-v3-card-head">
                   <h2>
                     {s.recentOrdersTitle}{' '}
-                    <span className="hm-v3-count">({recentOrders.length})</span>
+                    <span className="hm-v3-count">({recentShown.length})</span>
                   </h2>
                   {can('/orders') ? (
                     <a className="hm-v3-head-link" href="/orders">
@@ -1932,8 +1957,9 @@ export function ShopHome({
                     </a>
                   ) : null}
                 </div>
-                {recentOrders.length === 0 ? (
-                  <p className="hm-empty">{s.noOrdersBody}</p>
+                {typeChips}
+                {recentShown.length === 0 ? (
+                  <p className="hm-empty">{recentEmpty}</p>
                 ) : (
                   <div className="hm-v3-recent-wrap">
                     <table className="hm-v3-recent-table">
@@ -1949,7 +1975,7 @@ export function ShopHome({
                         </tr>
                       </thead>
                       <tbody>
-                        {recentOrders.map((o) => {
+                        {recentShown.map((o) => {
                           const customerName = o.who?.name?.trim() || s.noNameCustomer;
                           return (
                             <tr key={o.id}>
@@ -1967,7 +1993,7 @@ export function ShopHome({
                               </td>
                               <td>
                                 <span className={`ord-chan-badge ord-chan-${o.channel}`}>
-                                  {channelWord(o.channel)}
+                                  {placeWord(o)}
                                 </span>
                               </td>
                               <td>{allCameBack(o) ? s.itemsAllBackShort(o.itemsSold) : s.itemCountShort(o.items)}</td>
@@ -2420,8 +2446,10 @@ export function ShopHome({
                     </a>
                   }
                 >
+                  {typeChips}
+                  {recentShown.length === 0 ? <p className="hm-empty">{recentEmpty}</p> : null}
                   <ul className="shp-recent">
-                    {recentOrders.slice(0, 4).map((o) => {
+                    {recentShown.slice(0, 4).map((o) => {
                       const customerName = o.who?.name?.trim() || s.noNameCustomer;
                       return (
                         <li key={o.id}>
@@ -2431,7 +2459,7 @@ export function ShopHome({
                               <span className="shp-recent-main">
                                 <span className="shp-recent-name">{customerName}</span>
                                 <span className="shp-recent-meta">
-                                  <span className="shp-recent-code">{orderNumber(o)}</span> · {channelWord(o.channel)} · {formatShortDate(o.soldAt)} · {allCameBack(o) ? s.itemsAllBackShort(o.itemsSold) : s.itemCountShort(o.items)}
+                                  <span className="shp-recent-code">{orderNumber(o)}</span> · {placeWord(o)} · {formatShortDate(o.soldAt)} · {allCameBack(o) ? s.itemsAllBackShort(o.itemsSold) : s.itemCountShort(o.items)}
                                 </span>
                               </span>
                             </span>

@@ -10,6 +10,8 @@ import type { useTicketPrinter } from '../components/TicketPrinter';
 import { useWaiter } from './waiter';
 import { minutesSeated, stateOf, STILL_SEATED_MIN } from './TableMap';
 import { useSession } from '../components/SessionProvider';
+import { slipsOf } from '../lib/print/from-api';
+import { IconMinus } from '../components/icons';
 
 /**
  * Jira GRW-721 — one table's running bill: what it has had, what it comes to, and the four things a counter does with
@@ -28,6 +30,9 @@ import { useSession } from '../components/SessionProvider';
  */
 
 const MODES = ['cash', 'upi', 'card'] as const;
+/** Why a dish comes off a table's bill, picked with one tap; "other" asks for the words. */
+const OFF_REASONS = ['changed_mind', 'wrong_dish', 'too_late', 'not_good', 'other'] as const;
+type OffReason = (typeof OFF_REASONS)[number];
 
 export function TableBillSheet({
   table,
@@ -77,17 +82,27 @@ export function TableBillSheet({
    * Jira GRW-737 — `askCooked` once the server answers `cooked_unknown`: the kitchen was sent this dish and never ticked it Done, so whoever
    * takes it off says whether it was cooked (yes: its food is wasted; no: back to the kitchen's stock). Required: no answer, no take-off.
    */
-  const [takingOff, setTakingOff] = useState<{ lineId: string; name: string; reason: string; askCooked?: boolean; cooked?: boolean } | null>(null);
+  const [takingOff, setTakingOff] = useState<{ lineId: string; name: string; reason: string; pick?: OffReason; askCooked?: boolean; cooked?: boolean } | null>(null);
   /** "Take off a dish" pressed: each dish shows its Take off. Off by default — taking a dish off is rare. */
   const [editing, setEditing] = useState(false);
+  /*
+   * Owner, 2026-11-22 ("now build the cancel table option") — the whole table's order called off in one go, instead of taking
+   * each dish off and then Close table. The owner's or a manager's, as taking a dish off is; asks "already cooked?" when the
+   * kitchen had a dish it never ticked Done, exactly as the Pickup's Cancel order does. No bill, the table is Free again.
+   */
+  const [cancelling, setCancelling] = useState<{ askCooked: boolean; cooked?: boolean } | null>(null);
   const reasonRef = useRef<HTMLFormElement>(null);
   const reasonInputRef = useRef<HTMLInputElement>(null);
   const takingOffLine = takingOff?.lineId ?? null;
+  const typingReason = takingOff?.pick === 'other';
   useEffect(() => {
     if (takingOffLine === null) return;
-    reasonInputRef.current?.focus({ preventScroll: true });
     reasonRef.current?.scrollIntoView({ block: 'nearest' });
   }, [takingOffLine]);
+  // The keyboard comes up only for "Something else": a reason picked with one tap needs none.
+  useEffect(() => {
+    if (typingReason) reasonInputRef.current?.focus({ preventScroll: true });
+  }, [typingReason]);
   /** Move table: the room as it is now (null = not open; [] while it loads). */
   const [moving, setMoving] = useState<DiningArea[] | null>(null);
   /** The table picked, waiting for the one confirm: a mis-tap must not move a party, and a join cannot be undone. */
@@ -146,6 +161,29 @@ export function TableBillSheet({
       await read();
     } catch (e) {
       if (e instanceof ApiError && e.code === 'cooked_unknown') setTakingOff({ ...takingOff, askCooked: true });
+      else setError(e instanceof ApiError ? e.message : t('actionFailed'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const cancelWholeOrder = async () => {
+    if (!cancelling || busy) return;
+    if (cancelling.askCooked && cancelling.cooked === undefined) {
+      setError(t('cookedNeeded'));
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await api.cancelPendingCounterSale(saleId, cancelling.askCooked ? cancelling.cooked : undefined);
+      // The kitchen is told to stop: one cancel slip per station that had the table's dishes.
+      const slips = slipsOf(res);
+      if (slips) printer.autoKot(slips, { tokenNo: null, channel: 'counter', orderType: 'dine_in', tableName: `${table.name} · ${areaName}` });
+      setCancelling(null);
+      onDone(t('cancelledOk', { table: table.name }));
+    } catch (e) {
+      if (e instanceof ApiError && e.code === 'cooked_unknown') setCancelling({ askCooked: true });
       else setError(e instanceof ApiError ? e.message : t('actionFailed'));
     } finally {
       setBusy(false);
@@ -298,7 +336,21 @@ export function TableBillSheet({
             {/* While a reason is typed, every row and link stays where it was, greyed out: the sheet never drops. */}
             <ul className={`tb-lines${editing ? ' is-editing' : ''}`}>
               {dishes.map((l) => (
-                <li key={l.id} className={`tb-line${l.cancelReason ? ' is-off' : ''}`}>
+                <li key={l.id} className={`tb-line${l.cancelReason ? ' is-off' : ''}${takingOff?.lineId === l.id ? ' is-picked' : ''}`}>
+                  {/* Owner, 2026-11-22 ("take off journey UI is not good") — in edit mode a dish keeps its one line: a red minus
+                      on its left takes it off (the platform's own delete control), instead of a button on a second line. */}
+                  {editing && canManage && !l.cancelReason && !moving ? (
+                    <button
+                      type="button"
+                      className="tb-off-minus"
+                      aria-label={t('takeOffPick', { name: l.name })}
+                      aria-pressed={takingOff?.lineId === l.id}
+                      disabled={busy || (takingOff !== null && takingOff.lineId !== l.id)}
+                      onClick={() => setTakingOff(takingOff?.lineId === l.id ? null : { lineId: l.id, name: l.name, reason: '' })}
+                    >
+                      <IconMinus />
+                    </button>
+                  ) : null}
                   <span className="tb-line-qty">{l.qty}×</span>
                   <span className="tb-line-name">
                     {l.name}
@@ -306,12 +358,6 @@ export function TableBillSheet({
                     {l.addedBy && !l.cancelReason && !oneTaker ? <span className="tb-off">{t('takenBy', { name: l.addedBy })}</span> : null}
                   </span>
                   <span className="tb-line-amount">{money(Number(l.paidMinor ?? 0) - Number(l.returnedMinor ?? 0))}</span>
-                  {/* Take off is rare and the owner's or a manager's: its buttons show only after "Take off a dish". */}
-                  {editing && canManage && !l.cancelReason && !moving ? (
-                    <button type="button" className="btn btn-ghost tb-off-btn" disabled={busy || takingOff !== null} onClick={() => setTakingOff({ lineId: l.id, name: l.name, reason: '' })}>
-                      {t('takeOff')}
-                    </button>
-                  ) : null}
                   {/* Owner, 17 Nov 2026 — the reason is asked right under the dish coming off, ready to type, and the rest
                       of the sheet steps back until it is taken off or cancelled. */}
                   {takingOff?.lineId === l.id ? (
@@ -324,10 +370,29 @@ export function TableBillSheet({
                         void takeOff();
                       }}
                     >
-                      <label className="dt-field">
-                        <span className="field-hint">{t('whyOffShort')}</span>
-                        <input ref={reasonInputRef} type="text" aria-label={t('whyOff', { name: takingOff.name })} value={takingOff.reason} maxLength={200} onChange={(e) => setTakingOff({ ...takingOff, reason: e.target.value })} />
-                      </label>
+                      {/* One tap for the usual reasons; the keyboard only for "Something else" (owner, 2026-11-22). */}
+                      <fieldset className="tb-off-reasons">
+                        <legend className="field-hint">{t('whyOffShort')}</legend>
+                        <div className="tb-off-chips">
+                          {OFF_REASONS.map((k) => (
+                            <button
+                              key={k}
+                              type="button"
+                              className={`tb-off-chip${takingOff.pick === k ? ' is-on' : ''}`}
+                              aria-pressed={takingOff.pick === k}
+                              onClick={() => setTakingOff({ ...takingOff, pick: k, reason: k === 'other' ? '' : t(`offReasons.${k}`) })}
+                            >
+                              {t(`offReasons.${k}`)}
+                            </button>
+                          ))}
+                        </div>
+                      </fieldset>
+                      {takingOff.pick === 'other' ? (
+                        <label className="dt-field">
+                          <span className="field-hint">{t('whyOffOther')}</span>
+                          <input ref={reasonInputRef} type="text" aria-label={t('whyOff', { name: takingOff.name })} value={takingOff.reason} maxLength={200} onChange={(e) => setTakingOff({ ...takingOff, reason: e.target.value })} />
+                        </label>
+                      ) : null}
                       {takingOff.askCooked ? (
                         <fieldset className="tb-cooked">
                           <legend className="field-hint">{t('cookedQuestion')}</legend>
@@ -348,9 +413,16 @@ export function TableBillSheet({
               ))}
             </ul>
             {canManage && live.length > 0 && !moving && !paying ? (
-              <button type="button" className="tb-edit-link" aria-pressed={editing} disabled={busy || takingOff !== null} onClick={() => setEditing((on) => !on)}>
-                {editing ? t('doneTakingOff') : t('takeOffDish')}
-              </button>
+              <div className="tb-edit-links">
+                <button type="button" className="tb-edit-link" aria-pressed={editing} disabled={busy || takingOff !== null || cancelling !== null} onClick={() => setEditing((on) => !on)}>
+                  {editing ? t('doneTakingOff') : t('takeOffDish')}
+                </button>
+                {editing ? null : (
+                  <button type="button" className="tb-edit-link" disabled={busy || takingOff !== null || cancelling !== null} onClick={() => setCancelling({ askCooked: false })}>
+                    {t('cancelWholeOrder')}
+                  </button>
+                )}
+              </div>
             ) : null}
             {/* Jira GRW-724 — the service charge, its own named line; added only when the guest agrees, removable until paid. */}
             {charge ? (
@@ -414,7 +486,33 @@ export function TableBillSheet({
               </p>
               {/* Taking a dish off: its two buttons take Take payment's place, so the sheet keeps its height and they stay
                   under the thumb (owner, 17 Nov). The reason itself is typed under the dish. */}
-              {takingOff ? (
+              {cancelling ? (
+                <div className="tb-cancel-all" role="group" aria-label={t('cancelWholeOrder')}>
+                  <p className="field-hint">{t('cancelWholeBody', { amount: money(totalMinor), table: table.name })}</p>
+                  {cancelling.askCooked ? (
+                    <fieldset className="tb-cooked">
+                      <legend className="field-hint">{t('cookedQuestion')}</legend>
+                      <div className="tb-cooked-pair">
+                        <button type="button" className={`btn btn-ghost ${cancelling.cooked === false ? 'is-on' : ''}`} aria-pressed={cancelling.cooked === false} onClick={() => setCancelling({ askCooked: true, cooked: false })}>
+                          {t('cookedNo')}
+                        </button>
+                        <button type="button" className={`btn btn-ghost ${cancelling.cooked === true ? 'is-on' : ''}`} aria-pressed={cancelling.cooked === true} onClick={() => setCancelling({ askCooked: true, cooked: true })}>
+                          {t('cookedYes')}
+                        </button>
+                      </div>
+                      <span className="field-hint">{t('cookedHint')}</span>
+                    </fieldset>
+                  ) : null}
+                  <div className="tb-foot-pair">
+                    <button type="button" className="btn btn-danger" disabled={busy || (cancelling.askCooked && cancelling.cooked === undefined)} onClick={() => void cancelWholeOrder()}>
+                      {t('cancelWholeConfirm')}
+                    </button>
+                    <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => { setCancelling(null); setError(null); }}>
+                      {t('keepOrder')}
+                    </button>
+                  </div>
+                </div>
+              ) : takingOff ? (
                 <div className="tb-foot-pair">
                   <button
                     type="submit"

@@ -47,7 +47,7 @@ describe('AC-01 — Seated, then Food cooking', () => {
   it('a Seated table opens its sheet (not the dish grid), and Take order starts the order with its count', () => {
     expect(map).toContain("onClick={() => (state === 'free' ? onFree(table, area) : onBusy(table, area))}");
     expect(flow).toContain('...(seatedHere ? { seated: true } : {}),');
-    expect(flow).toContain('if (seatedHere) setGuests(seatedHere.guests);');
+    expect(flow).toContain('setGuests(billOf.table.openBill?.guests ?? seatedHere?.guests ?? null);');
     // The order says it was for a Seated table, so the server can refuse one seated by somebody else meanwhile.
     expect(flow).toContain('...(atTable.seated ? { tableSeated: true } : {})');
     expect(sheet).toContain("{t('takeOrder')}");

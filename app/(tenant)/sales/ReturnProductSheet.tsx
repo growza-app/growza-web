@@ -58,6 +58,9 @@ export interface ReturnableSaleBill {
   locationId: string | null;
   clientName: string;
   clientPhone: string | null;
+  /** Jira GRW-745 FR-08 — where it was eaten: a table's bill names its table, a takeaway its token. */
+  tableName?: string | null;
+  tokenNo?: number | null;
   products: VisitProductLine[];
   totalMinor: number;
   /** How the bill was paid, for the refund's default. */
@@ -174,6 +177,10 @@ export function ReturnProductSheet({
       .filter((b) => {
         const ref = formatBillRef(b.key).toLowerCase();
         if (ref.includes(q) || b.clientName.toLowerCase().includes(q) || b.key.toLowerCase().includes(q)) return true;
+        // Jira GRW-745 FR-08 — the desk knows a bill by its table ("T4") or its token ("#08", "8").
+        if (b.tableName && b.tableName.toLowerCase().includes(q)) return true;
+        // A token is typed as a number ("8", "#08"); "T1" is a table, not token 1.
+        if (typeof b.tokenNo === 'number' && /^\d+$/.test(q) && b.tokenNo === Number(q)) return true;
         if (b.clientPhone && b.clientPhone.toLowerCase().includes(q)) return true;
         if (digits.length >= 2 && (b.clientPhone ?? '').replace(/\D/g, '').includes(digits)) return true;
         return b.products.some(
@@ -526,6 +533,12 @@ export function ReturnProductSheet({
                           <IconReceipt />
                         </span>
                         <div className="sls-ret-bill-body">
+                          {/* Jira GRW-745 FR-08 — a table's bill and a takeaway no longer look alike: named by table or token first. */}
+                          {b.tableName || typeof b.tokenNo === 'number' ? (
+                            <span className={`sls-ret-bill-place ${b.tableName ? 'is-table' : 'is-token'}`}>
+                              {b.tableName ? `${t('dineIn')} · ${b.tableName}` : `${t('takeaway')} · ${t('tokenNo', { n: String(b.tokenNo).padStart(2, '0') })}`}
+                            </span>
+                          ) : null}
                           <strong className="sls-ret-bill-client">{b.clientName}</strong>
                           <span className="sls-ret-bill-when">
                             #{billRef} · {formatBillWhen(b)}

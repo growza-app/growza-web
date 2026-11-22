@@ -557,6 +557,21 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       runningLowChip: S('Running low', 'कम हो रहा है'),
       soldCountPill: (n: number) => S(`${n} sold`, `${n} बिके`),
       recentOrdersTitle: S('Recent orders', 'हाल के ऑर्डर'),
+      // Jira GRW-745 — how an order was eaten, on Home's Recent orders and its filter.
+      dineIn: S('Dine-in', 'यहीं खाना'),
+      takeaway: S('Takeaway', 'पैक करके'),
+      delivery: S('Delivery', 'डिलीवरी'),
+      allTypes: S('All', 'सभी'),
+      recentTypeLabel: S('Show orders by how they were eaten', 'ऑर्डर कैसे खाया गया, उससे दिखाएँ'),
+      /**
+       * QA 2026-11-21 — a type chip with nothing in the latest orders said "Your first sale will show up here.", untrue at
+       * a place already selling. It names the type instead; "All" with nothing keeps the first-sale words.
+       */
+      noTypeOrders: {
+        dine_in: S('No dine-in orders recently.', 'हाल में यहीं खाने वाला कोई ऑर्डर नहीं।'),
+        takeaway: S('No takeaway orders recently.', 'हाल में पैक करके ले जाने वाला कोई ऑर्डर नहीं।'),
+        delivery: S('No delivery orders recently.', 'हाल में कोई डिलीवरी ऑर्डर नहीं।'),
+      },
       /** Owner, 2026-11-13 — the phone's Customers card: who came in today, and the month's new faces. */
       customersTitle: S(clientsWord, 'ग्राहक'),
       customersTodayLabel: S('Came in today', 'आज आए'),
