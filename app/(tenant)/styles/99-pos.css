@@ -2433,3 +2433,98 @@
     min-width: 2.75rem;
   }
 }
+
+/*
+ * Jira GRW-747 — an unpaid takeaway's third action, Edit, for the owner or a manager. Add items keeps a row of its own; Edit and
+ * Cancel order share the next, so the "change it" pair sits together and no label breaks in two at 344px.
+ */
+.pos-qcard-more:has(> :nth-child(3)) {
+  display: flex;
+  flex-wrap: wrap;
+}
+.pos-qcard-more:has(> :nth-child(3)) > .btn {
+  flex: 1 1 7.5rem;
+}
+.pos-qcard-more:has(> :nth-child(3)) > .pos-qcard-add-btn {
+  flex-basis: 100%;
+}
+.pos-qcard-edit-btn {
+  color: var(--text);
+}
+.pos-qcard-edit-btn:hover {
+  border-color: var(--text);
+  background: var(--page-bg);
+}
+
+/*
+ * Jira GRW-747 — editing an unpaid takeaway on its own card (pos/PickupCardEdit.tsx): − and + beside each dish, 44px each, the
+ * amount as it will be, "Now ₹…", and Save. A dish brought down to 0 stays on the card, struck through, until Save.
+ */
+.pos-qedit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.pos-qedit-items {
+  gap: var(--sp-1);
+}
+.pos-qedit-item.is-off .pos-qcard-item-name,
+.pos-qedit-item.is-off .pos-qcard-item-amt {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.pos-qedit-step {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.pos-qedit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 0;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+.pos-qedit-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+.pos-qedit-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.pos-qedit-btn:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -2px;
+}
+.pos-qedit-n {
+  min-width: 1.5rem;
+  text-align: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.pos-qedit-now {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  font-size: 0.9375rem;
+}
+.pos-qedit-warn {
+  margin: 0;
+  color: var(--danger);
+}
+.pos-qedit-bar {
+  display: flex;
+  gap: var(--sp-2);
+}
+.pos-qedit-bar .btn {
+  flex: 1 1 0;
+  min-height: 2.75rem;
+}

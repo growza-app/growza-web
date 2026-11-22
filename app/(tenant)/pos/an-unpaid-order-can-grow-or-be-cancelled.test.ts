@@ -65,7 +65,8 @@ describe('Add items', () => {
       ],
     } as unknown as Appointment;
     const [tk] = buildDailyTokens([order], 'loc-1', {}, NOW);
-    expect(tk!.items).toEqual([
+    // Jira GRW-747 — a row also carries what editing it on the card needs (product, price, lines); the row itself is unchanged.
+    expect(tk!.items).toMatchObject([
       { name: 'Mutton Biryani', qty: 2, paidMinor: 52000 },
       { name: 'Boondi Raita', qty: 1, paidMinor: 4000 },
     ]);

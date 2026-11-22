@@ -37,6 +37,21 @@ export function queueStateOf(o: {
   return o.paymentPending || o.elapsedMin <= 30 ? 'preparing' : 'completed';
 }
 
+/**
+ * One row on a Pickup card. A dish's row also carries what editing it on the card needs (Jira GRW-747, owner 2026-11-23: "should be able
+ * to edit in same card"): its product, its price for one, and the bill lines it is made of — "Add items" writes its own lines, so one
+ * row can be two lines, newest last.
+ */
+export interface PosTokenItem {
+  name: string;
+  qty: number;
+  paidMinor: number;
+  productId?: string | null;
+  variantId?: string | null;
+  priceMinor?: number;
+  lines?: Array<{ id: string; qty: number }>;
+}
+
 export interface PosDailyToken {
   /** Jira GRW-714 — the kitchen says it is ready to hand over. */
   kitchenReady?: boolean;
@@ -54,7 +69,7 @@ export interface PosDailyToken {
   paymentMode: string | null;
   paymentPending: boolean;
   totalMinor: number;
-  items: Array<{ name: string; qty: number; paidMinor: number }>;
+  items: PosTokenItem[];
   itemsSummary: string;
   state: PosTokenState;
   /** Owner, 4 Nov 2026 — when the shop handed it over, as the server knows it; null while it waits. */
@@ -190,7 +205,7 @@ export function buildDailyTokens(
     const first = legs[0]!;
     const offlineToken = offlineOf(legs);
     const tokenNo = offlineToken ? 0 : numbers.get(key)!;
-    const items: Array<{ name: string; qty: number; paidMinor: number }> = [];
+    const items: PosTokenItem[] = [];
     for (const leg of legs) {
       if (leg.serviceName) {
         const paid = Number(leg.paidAmountMinor ?? leg.priceMinor ?? 0);
@@ -198,18 +213,28 @@ export function buildDailyTokens(
       }
     }
     // Owner, 9 Nov 2026 — "Add items" writes its own lines onto the order, so the same dish added twice is one row here.
-    const sameProduct = new Map<string, { name: string; qty: number; paidMinor: number }>();
+    const sameProduct = new Map<string, PosTokenItem>();
     for (const p of first.products ?? []) {
       const netQty = p.qty - (p.returnedQty ?? 0);
       const netPaidMinor = Math.max(0, Number(p.paidMinor ?? 0) - Number(p.returnedMinor ?? 0));
       if (netQty <= 0) continue;
       const key = `${p.productId ?? ''}|${p.variantId ?? ''}|${p.name}`;
       const seen = sameProduct.get(key);
+      const line = p.id ? [{ id: p.id, qty: netQty }] : [];
       if (seen) {
         seen.qty += netQty;
         seen.paidMinor += netPaidMinor;
+        seen.lines = [...(seen.lines ?? []), ...line];
       } else {
-        const row = { name: p.name, qty: netQty, paidMinor: netPaidMinor };
+        const row: PosTokenItem = {
+          name: p.name,
+          qty: netQty,
+          paidMinor: netPaidMinor,
+          productId: p.productId ?? null,
+          variantId: p.variantId ?? null,
+          priceMinor: Number(p.priceMinor ?? 0),
+          lines: line,
+        };
         sameProduct.set(key, row);
         items.push(row);
       }

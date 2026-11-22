@@ -20,7 +20,8 @@ import { RedeemRow } from '../components/RedeemRow';
 import { useAreas, useSession } from '../components/SessionProvider';
 import { hasOrderQueue } from '../lib/areas';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { IconCheck, IconArrowLeft, IconFlame, IconClose, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch } from '../components/icons';
+import { IconCheck, IconArrowLeft, IconFlame, IconClose, IconEdit, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch } from '../components/icons';
+import PickupCardEdit from './PickupCardEdit';
 import { ClientSheet, type PickedClient } from '../appointments/new/ClientSheet';
 import { Keypad } from '../appointments/new/Keypad';
 import { formatDate } from '../lib/format';
@@ -672,6 +673,13 @@ export function PosClient({
   /** Owner, 9 Nov 2026 — the unpaid order the Sell tab is adding to ("Add items"), and the one being cancelled. */
   const [addingToToken, setAddingToToken] = useState<PosDailyToken | null>(null);
   const [cancelTarget, setCancelTarget] = useState<PosDailyToken | null>(null);
+  /**
+   * Jira GRW-747 — owner, 2026-11-22: an unpaid takeaway could only grow or be cancelled whole; 2026-11-23: "keep it simple, should be able
+   * to edit in same card". Edit puts − and + on the card's own dishes. The owner's or a manager's, as taking a dish off a table bill is
+   * (the server says the same); a counter still has Add items and Cancel order.
+   */
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const mayEdit = session?.role === 'owner' || session?.role === 'manager';
   const [cancelBusy, setCancelBusy] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   // Jira GRW-737 — the server asked whether the kitchen had already cooked it (`cooked_unknown`): asked in the cancel dialog, required.
@@ -1450,6 +1458,19 @@ export function PosClient({
           ) : null}
           <span className="pos-qcard-time">{formatTime(tk.startAt)}</span>
         </div>
+        {editingId === tk.id ? (
+          <PickupCardEdit
+            token={tk}
+            onClose={() => setEditingId(null)}
+            onSaved={(said) => {
+              setEditingId(null);
+              setQueueNote(said);
+              void loadTodayTokens();
+            }}
+            onChanged={loadTodayTokens}
+          />
+        ) : (
+        <>
         <ul className="pos-qcard-items">
           {tk.items.map((item, i) => (
             <li key={i} className="pos-qcard-item">
@@ -1485,6 +1506,19 @@ export function PosClient({
                     <IconPlus />
                     <span>{t('addItems')}</span>
                   </button>
+                  {mayEdit ? (
+                    <button
+                      type="button"
+                      className="btn pos-qcard-edit-btn"
+                      onClick={() => {
+                        setQueueNote(null);
+                        setEditingId(tk.id);
+                      }}
+                    >
+                      <IconEdit />
+                      <span>{t('editOrder')}</span>
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     className="btn pos-qcard-cancel-btn"
@@ -1509,6 +1543,8 @@ export function PosClient({
             </button>
           )}
         </div>
+        </>
+        )}
       </article>
     );
   };

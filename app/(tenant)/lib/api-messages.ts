@@ -32,6 +32,12 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'Only the owner or a manager can take dishes off a table’s bill.': 'टेबल के बिल से डिश सिर्फ़ मालिक या मैनेजर हटा सकते हैं।',
   'This bill is already paid. Take a return instead.': 'इस बिल का भुगतान हो चुका है। इसकी जगह वापसी लें।',
   'Those dishes are not on this bill.': 'ये डिश इस बिल पर नहीं हैं।',
+  // Jira GRW-747 — some of a dish taken off an unpaid order.
+  'Say how many to take off': 'बताएँ कितनी हटानी हैं',
+  'Take at least one off': 'कम से कम एक हटाएँ',
+  'Pick one dish to take some of off': 'जिसमें से हटाना है, वह एक डिश चुनें',
+  'That is more than there is of it': 'उतनी तो है ही नहीं',
+  'This dish changed. Look again before taking any off.': 'यह डिश बदल गई है। हटाने से पहले फिर से देखें।',
   // Jira GRW-722
   'Pick a different table.': 'कोई दूसरी टेबल चुनें।',
   'Pick the table to move to': 'वह टेबल चुनें जहाँ ले जाना है',
