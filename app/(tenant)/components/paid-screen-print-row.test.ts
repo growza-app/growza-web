@@ -77,3 +77,11 @@ describe('the kitchen’s paper is a "kitchen slip", never "KOT" (owner, 2026-11
     }
   });
 });
+
+describe('the paid screen on a laptop keeps its two columns in order (owner, 2026-11-22)', () => {
+  const css = readFileSync(new URL('../styles/73-pay-flow.css', import.meta.url), 'utf8');
+  it('each piece takes the first free cell, so the print row cannot push "The bill", Send and Next guest down', () => {
+    // On 1366×768, Next guest had dropped to 749px: below the window.
+    expect(css).toMatch(/\.pf-done-page \{[^}]*grid-template-columns: minmax\(0, 1fr\) 22rem;[^}]*grid-auto-flow: row dense;/);
+  });
+});

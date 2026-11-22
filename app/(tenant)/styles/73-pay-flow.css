@@ -991,6 +991,12 @@
     column-gap: var(--sp-5);
     row-gap: var(--sp-3);
     align-items: start;
+    /*
+     * Owner, 2026-11-22 — each piece takes the first free cell. The till puts its print row in the right column's
+     * first cell, which pushed "The bill" (left) to after the bill itself, and Send, Next guest and Done (right)
+     * below it all: Next guest sat at 749px on a 768px laptop. Dense placement fills the holes in source order.
+     */
+    grid-auto-flow: row dense;
   }
 
   .pf-done-page > .pf-done {

@@ -110,10 +110,21 @@ describe('FR-04 — the number comes later, from the order', () => {
   it('a counter order kept under a name offers "Add guest’s number"; an app’s order does not', () => {
     expect(order).toContain('{isCounter ? (');
     expect(order).toContain("t('addNumber.action', { customer: nouns.customer })");
-    expect(addNumber).toContain('api.assignClientToSale(orderId, { phone: stored, ...(name ? { name } : {}) })');
+    expect(addNumber).toContain('api.assignClientToSale(orderId, { phone: stored, ...(who ? { name: who } : {}) })');
     for (const m of [en, hi]) {
-      for (const k of ['action', 'title', 'label', 'hint', 'save', 'saving', 'failed']) expect(m.orders.addNumber[k], k).toBeTruthy();
+      for (const k of ['action', 'title', 'label', 'nameLabel', 'hint', 'save', 'saving', 'failed']) expect(m.orders.addNumber[k], k).toBeTruthy();
     }
+  });
+
+  it('a Walk-in order (Take payment now, or Skip) offers it too, with an optional name box (laptop sweep, 2026-11-22)', () => {
+    expect(order).toContain('const walkIn = order.client?.anonymous === true;');
+    expect(order).toContain('{walkIn && isCounter && writable ? (');
+    // The sheet opens without a buyer: a Walk-in order kept none.
+    expect(order).toContain('{addingNumber ? (');
+    expect(order).toContain('name={order.buyer?.name ?? null}');
+    // A name the order kept is shown, not asked again; none kept, it is asked, optional, 60 letters as the API keeps.
+    expect(addNumber).toContain('const who = name ?? (typedName.trim() || null);');
+    expect(addNumber).toContain('onChange={(e) => setTypedName(e.target.value)} maxLength={60}');
   });
 
   it('its Save is a full-width 44px target, styled in the orders sheet', () => {

@@ -1595,7 +1595,8 @@ export interface OrderDetail {
   soldAt: string;
   buyer: { name: string | null; contact: string | null; address: string | null } | null;
   buyerRedactedAt: string | null;
-  client: { id: string; name: string | null } | null;
+  /** `anonymous` — Jira GRW-747: the branch's shared Walk-in row. Absent from an older API, read as a named client. */
+  client: { id: string; name: string | null; anonymous?: boolean } | null;
   lines: Array<{
     id: string;
     productId: string | null;

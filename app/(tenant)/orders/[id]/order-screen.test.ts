@@ -60,7 +60,7 @@ describe('AC-02 — a move that has already happened elsewhere', () => {
 describe('AC-03 — a cancelled order offers nothing; a counter sale offers the receipt and the existing return', () => {
   it('draws no bar at all when there is nothing to offer', () => {
     expect(client).toContain('const hasBar = offerPrimary || more.length > 0;');
-    expect(client).toContain('{hasBar ? (\n          <div className="ord-d-bar">');
+    expect(client).toContain('{hasBar ? (\n              <div className="ord-d-bar">');
   });
 
   it('a counter sale reaches the EXISTING return sheet and receipt — nothing is copied', () => {

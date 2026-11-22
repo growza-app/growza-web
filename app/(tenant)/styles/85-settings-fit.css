@@ -324,6 +324,10 @@
   .settings-page .settings-nav-pane .settings-row-action {
     display: none;
   }
+  /* Laptop sweep 2026-11-22 — and the group that held only that row goes with it, or "ACCOUNT" stood over nothing. */
+  .settings-page .settings-nav-pane .settings-group:not(:has(.settings-row:not(.settings-row-action))) {
+    display: none;
+  }
   .settings-page .settings-content-pane > .card + .card,
   .settings-page .settings-content-pane > .ro-fields > .card + .card {
     margin-top: 12px !important;
