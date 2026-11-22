@@ -382,7 +382,7 @@ export function ClientSheet({
           </button>
         )}
         {onSkip && !adding ? (
-          <button type="button" className="btn pf-client-skip" onClick={onSkip}>
+          <button type="button" className="btn btn-ghost pf-client-skip" onClick={onSkip}>
             {t('skipGuest')}
           </button>
         ) : null}

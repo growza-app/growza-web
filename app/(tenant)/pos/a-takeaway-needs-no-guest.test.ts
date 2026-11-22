@@ -68,7 +68,8 @@ describe('Owner, 2026-11-22 — "Take payment now" at the till, under Keep payme
     expect(payFlow.match(/\{onOpenQueue && !payNowNoGuest \? \(/g)).toHaveLength(2);
   });
 
-  it('is a full-width 44px target', () => {
+  it('is a full-width 44px target, outlined so its hover stays readable', () => {
+    expect(payFlow).toContain('className="btn btn-ghost pos-charge-paynow"');
     expect(posCss).toMatch(/\.pos-charge-paynow \{[^}]*width: 100%;[^}]*min-height: 2\.75rem;/);
   });
 });
@@ -91,7 +92,8 @@ describe('Owner, 2026-11-22 — Skip in Pickup: "Who is paying?" may be skipped,
     expect(pos.match(/\{waitsForGuest \|\| byNameOnly \? null : \(/g)).toHaveLength(2);
   });
 
-  it('Skip is a full-width 44px target', () => {
+  it('Skip is a full-width 44px target, outlined so its hover stays readable', () => {
+    expect(sheet).toContain('className="btn btn-ghost pf-client-skip"');
     expect(payCss).toMatch(/\.pf-client-skip \{[^}]*min-height: 2\.75rem;[^}]*width: 100%;/);
   });
 });

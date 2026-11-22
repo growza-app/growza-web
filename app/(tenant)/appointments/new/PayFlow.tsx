@@ -1721,7 +1721,7 @@ export function PayFlow({
   /** Where the tiles are held back for a guest, the desk may still choose to be paid now (owner, 2026-11-22). */
   const payNowButton =
     hidePayUntilGuest && lines.length > 0 && !atTable ? (
-      <button type="button" className="btn pos-charge-paynow" onClick={() => setPayNowNoGuest(true)} disabled={saving !== null || freeBlock !== null}>
+      <button type="button" className="btn btn-ghost pos-charge-paynow" onClick={() => setPayNowNoGuest(true)} disabled={saving !== null || freeBlock !== null}>
         {t('desk.payNowNoGuest')}
       </button>
     ) : null;

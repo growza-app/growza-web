@@ -1240,22 +1240,13 @@
   cursor: default;
 }
 
-/* Owner, 2026-11-22 — "Take payment now" with nobody named: the second choice under Keep payment pending, plain. */
+/* Owner, 2026-11-22 — "Take payment now" with nobody named: the second choice under Keep payment pending, outlined
+   (`.btn-ghost`, so hover stays readable). */
 .pos-charge-paynow {
   width: 100%;
   min-height: 2.75rem;
-  padding: 0 var(--sp-4);
   border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
   font-size: 0.9375rem;
-  font-weight: 600;
-}
-
-.pos-charge-paynow:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 
 .pos-charge-queued {
