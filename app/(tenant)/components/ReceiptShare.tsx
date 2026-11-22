@@ -166,7 +166,7 @@ export function ReceiptShare({
           <PhoneField
             id="wi-receipt-phone"
             label={nv.clientWhatsapp(clientNoun)}
-            required
+            // Owner, 2026-11-23 — sending the bill is a choice, not a step: the field says "optional", never a red star.
             value={typed}
             onChange={(v) => {
               setTyped(v);
@@ -228,7 +228,8 @@ export function ReceiptShare({
     <section className="wi-receipt-share" aria-label={words.preview}>
       <h2 className="wi-section-label">{words.preview}</h2>
       {/* `tabIndex` when it scrolls: a scrollable region a mouse can reach has to be reachable by keyboard too. */}
-      <div className={`wi-receipt-paper ${compactPreview ? 'wi-receipt-paper-short' : ''}${hasGraphicCard ? ' is-graphic-card' : ''}`} tabIndex={compactPreview ? 0 : undefined} role={compactPreview ? 'group' : undefined}>
+      {/* Owner, 2026-11-23 — on a till the whole bill shows (its total and how it was paid were hidden in a 190px box); the page scrolls instead. */}
+      <div className={`wi-receipt-paper ${compactPreview && !till ? 'wi-receipt-paper-short' : ''}${hasGraphicCard ? ' is-graphic-card' : ''}`} tabIndex={compactPreview && !till ? 0 : undefined} role={compactPreview && !till ? 'group' : undefined}>
         {hasGraphicCard && card ? (
           <div className="wi-rc-card">
             <div className="wi-rc-header">

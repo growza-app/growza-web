@@ -9,7 +9,7 @@ import type { PaymentMode } from '../lib/api-types';
 import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
 import { useBranch } from '../components/BranchProvider';
 import { useLabel } from '../components/LabelsProvider';
-import { PrinterButton, TillPrintActions, useTicketPrinter, type OrderRef } from '../components/TicketPrinter';
+import { PrinterButton, PrinterSheet, TillPrintActions, useTicketPrinter, type OrderRef } from '../components/TicketPrinter';
 import type { KitchenSlips } from '../lib/api-types';
 import { slipsOf } from '../lib/print/from-api';
 import { PaymentDone } from '../components/PaymentDone';
@@ -22,6 +22,7 @@ import { hasOrderQueue } from '../lib/areas';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconCheck, IconArrowLeft, IconFlame, IconClose, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch } from '../components/icons';
 import PickupCardEdit from './PickupCardEdit';
+import { remember, SOUND_KEY, soundIsOn } from '../lib/pay-feedback';
 import { ClientSheet, type PickedClient } from '../appointments/new/ClientSheet';
 import { Keypad } from '../appointments/new/Keypad';
 import { formatDate } from '../lib/format';
@@ -679,6 +680,21 @@ export function PosClient({
    * (the server says the same); a counter still has Add items and Cancel order.
    */
   const [editingId, setEditingId] = useState<string | null>(null);
+  /*
+   * Owner, 2026-11-23 — two of the till's settings are words in its ⋮: the printer on a phone (the bar has no room for its
+   * button below 760px, and on the paid screen it stood alone on a row of its own), and whether a payment is said out loud.
+   */
+  const [printerOpen, setPrinterOpen] = useState(false);
+  const [narrow, setNarrow] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
+  useEffect(() => {
+    setSoundOn(soundIsOn());
+    const q = window.matchMedia('(max-width: 759px)');
+    const on = () => setNarrow(q.matches);
+    on();
+    q.addEventListener('change', on);
+    return () => q.removeEventListener('change', on);
+  }, []);
   const mayEdit = session?.role === 'owner' || session?.role === 'manager';
   const [cancelBusy, setCancelBusy] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
@@ -1605,8 +1621,19 @@ export function PosClient({
           <MenuKebab
             className="pos-bar-more"
             label={t('more')}
-            items={canReturn ? [{ label: t('returnBill'), onSelect: () => void openReturn() }] : []}
+            items={[
+              ...(canReturn ? [{ label: t('returnBill'), onSelect: () => void openReturn() }] : []),
+              ...(narrow ? [{ label: t('printerMenu'), onSelect: () => setPrinterOpen(true) }] : []),
+              {
+                label: soundOn ? t('soundWhenPaidOn') : t('soundWhenPaidOff'),
+                onSelect: () => {
+                  remember(SOUND_KEY, soundOn ? 'off' : 'on');
+                  setSoundOn(!soundOn);
+                },
+              },
+            ]}
           />
+          {printerOpen ? <PrinterSheet printer={printer} onClose={() => setPrinterOpen(false)} /> : null}
         </div>
       ) : fullScreen ? (
         <header className="pos-fs-bar">

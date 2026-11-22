@@ -36,7 +36,10 @@ describe('the one-row POS bar', () => {
     const bar = client.slice(client.indexOf(') : tablesBar ? ('), client.indexOf(') : fullScreen ? ('));
     expect(bar).toContain('<div className="pos-bar-typeslot" ref={setTypeSlot} />');
     expect(bar).toContain('className="btn btn-ghost pos-bar-kitchen"');
-    expect(bar).toContain("items={canReturn ? [{ label: t('returnBill'), onSelect: () => void openReturn() }] : []}");
+    expect(bar).toContain("...(canReturn ? [{ label: t('returnBill'), onSelect: () => void openReturn() }] : []),");
+    // Owner, 2026-11-23 — the ⋮ also holds Printer on a phone and "Sound when paid".
+    expect(bar).toContain("...(narrow ? [{ label: t('printerMenu'), onSelect: () => setPrinterOpen(true) }] : []),");
+    expect(bar).toContain("label: soundOn ? t('soundWhenPaidOn') : t('soundWhenPaidOff'),");
     expect(bar).not.toContain('pos-tabs');
     expect(bar).not.toContain('pos-bar-back');
   });

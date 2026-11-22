@@ -457,12 +457,13 @@ describe('Record payment in three taps', () => {
     // 232px of tick-above-amount plus 284px of bill put Next customer — pressed after every sale — below the fold.
     // Multi-line since GRW-582 added a slot (`afterSend`) to the call; what is pinned is unchanged: the bill is capped.
     expect(done).toMatch(/<ReceiptShare\s+bill=\{bill\}\s+phone=\{phone\}\s+compactPreview/);
-    expect(receipt).toMatch(/compactPreview \? 'wi-receipt-paper-short' : ''/);
+    // Owner, 2026-11-23 — capped on the salon's screen; on a till the whole bill shows (its total was hidden in the cap).
+    expect(receipt).toMatch(/compactPreview && !till \? 'wi-receipt-paper-short' : ''/);
     expect(walkInCss).toMatch(/\.wi-receipt-paper-short \{[\s\S]{0,120}max-height: 12rem;[\s\S]{0,60}overflow-y: auto;/);
     // Still shown, never folded away: the desk reads the bill before it sends it.
     expect(receipt).not.toMatch(/<details/);
     // A region a mouse can scroll is one a keyboard must reach.
-    expect(receipt).toMatch(/tabIndex=\{compactPreview \? 0 : undefined\}/);
+    expect(receipt).toMatch(/tabIndex=\{compactPreview && !till \? 0 : undefined\}/);
     // The tick sits beside the amount rather than on its own floor.
     expect(css).toMatch(/\.pf-done \{[\s\S]{0,420}grid-template-columns: auto minmax\(0, 1fr\);/);
     expect(css).toMatch(/\.pf-done-check \{[\s\S]{0,120}width: 3\.5rem;/);

@@ -85,3 +85,19 @@ describe('the paid screen on a laptop keeps its two columns in order (owner, 202
     expect(css).toMatch(/\.pf-done-page \{[^}]*grid-template-columns: minmax\(0, 1fr\) 22rem;[^}]*grid-auto-flow: row dense;/);
   });
 });
+
+describe('the paid screen on a phone (owner, 2026-11-23)', () => {
+  const read2 = (rel: string) => readFileSync(new URL(rel, import.meta.url), 'utf8');
+  const thermal = read2('../styles/99-thermal-print.css');
+  const done = read2('./PaymentDone.tsx');
+  const share = read2('./ReceiptShare.tsx');
+  it('shows the whole bill on a till, asks the number as optional, and has no lone printer icon or unnamed sound icon', () => {
+    expect(share).toContain("compactPreview && !till ? 'wi-receipt-paper-short' : ''");
+    expect(share).not.toMatch(/label=\{nv\.clientWhatsapp\(clientNoun\)\}\s+required/);
+    expect(thermal).toMatch(/@media \(max-width: 759px\) \{\s*\.pf-done-print \.tp-actions-row > \.tp-open \{\s*display: none;/);
+    expect(done).toContain('{printSlot ? null : (');
+  });
+  it('pins Next and Done to the bottom of a phone', () => {
+    expect(thermal).toMatch(/\.pf-done-page\.is-till > \.pf-done-actions \{\s*position: fixed;\s*left: 0;\s*right: 0;\s*bottom: 0;/);
+  });
+});
