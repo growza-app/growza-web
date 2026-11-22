@@ -288,25 +288,29 @@ export function KitchenClient() {
               <li key={c.saleId} className={`kd-card${c.late ? ' is-late' : ''}`} aria-label={labelOf(c)}>
                 <div className="kd-card-head">
                   <span className="kd-card-label">{labelOf(c)}</span>
-                  {/* Jira GRW-730 — whom to ask about a dish. A long name gives way (…) before the minutes ever do. */}
-                  {sentBy ? (
-                    <>
-                      <span className="kd-card-by" title={t('sentBy', { name: sentBy })}>
-                        {sentBy}
-                      </span>
-                      <span className="kd-card-dot" aria-hidden="true">
-                        ·
-                      </span>
-                    </>
-                  ) : null}
-                  <span className="kd-card-age">
-                    {/* Review #4 — late is said with a clock and words, never by the amber alone. */}
-                    {c.late ? (
-                      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
-                        <path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 4v5l3 2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                  {/* Laptop sweep 2026-11-22 — who and how long travel as one piece: beside the table when there is room, on
+                      their own line under it when not ("T10 · T… Arj…" at 1366), so the table is never the part that is cut. */}
+                  <span className="kd-card-when">
+                    {/* Jira GRW-730 — whom to ask about a dish. A long name gives way (…) before the minutes ever do. */}
+                    {sentBy ? (
+                      <>
+                        <span className="kd-card-by" title={t('sentBy', { name: sentBy })}>
+                          {sentBy}
+                        </span>
+                        <span className="kd-card-dot" aria-hidden="true">
+                          ·
+                        </span>
+                      </>
                     ) : null}
-                    {t(ageKey(c.late, mins), { min: mins })}
+                    <span className="kd-card-age">
+                      {/* Review #4 — late is said with a clock and words, never by the amber alone. */}
+                      {c.late ? (
+                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+                          <path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 4v5l3 2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      ) : null}
+                      {t(ageKey(c.late, mins), { min: mins })}
+                    </span>
                   </span>
                 </div>
                 {/* Owner, 2026-11-17 — "the kitchen has no option to view if the order is dine in or take away": its own line, the word

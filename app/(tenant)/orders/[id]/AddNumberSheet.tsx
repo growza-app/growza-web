@@ -11,13 +11,15 @@ import { useDialog } from '../../../shared/a11y/useDialog';
 import { useScrimDismiss } from '../../../shared/a11y/scrim-dismiss';
 
 const PHONE_ID = 'ord-add-number';
+const NAME_ID = 'ord-add-number-name';
 
 /**
  * Jira GRW-747 (FR-04) — "Add guest's number": a counter order kept under a name alone ("Rahul") becomes that guest's
  * visit once they give a number. Found by it if they are already in the list, or added under the name the order kept.
  *
- * The number only, not a second name field: the order already says who it was for, and that is the name a new guest is
- * saved under. Once, too — the server answers a second try with the same number as done, and refuses a different one.
+ * The number only, not a second name field, when the order already says who it was for: that is the name a new guest is
+ * saved under. A Walk-in order (paid with nobody named) says nobody, so it gets an optional name box above the number —
+ * otherwise the guest is saved with no name at all. Once, too — the server answers a second try with the same number as done, and refuses a different one.
  */
 export function AddNumberSheet({
   orderId,
@@ -32,12 +34,15 @@ export function AddNumberSheet({
   onAdded: () => void;
 }) {
   const t = useTranslations('orders');
+  const tc = useTranslations('common');
   const nouns = useNouns();
   const checkPhone = usePhoneProblem();
   const ref = useRef<HTMLDivElement>(null);
   useDialog(ref, { onClose });
 
   const [phone, setPhone] = useState('');
+  // Only asked when the order kept no name (a Walk-in order); 60 letters, as the API keeps a name on an order.
+  const [typedName, setTypedName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const problem = checkPhone(phone, { required: true });
@@ -50,7 +55,8 @@ export function AddNumberSheet({
     setBusy(true);
     setError(null);
     try {
-      await api.assignClientToSale(orderId, { phone: stored, ...(name ? { name } : {}) });
+      const who = name ?? (typedName.trim() || null);
+      await api.assignClientToSale(orderId, { phone: stored, ...(who ? { name: who } : {}) });
       onAdded();
     } catch (err) {
       // The API's own sentence ("already has a guest", "too late for the desk"), said where it happened.
@@ -70,9 +76,19 @@ export function AddNumberSheet({
           </button>
         </div>
 
-        <p className="atc-buyer">
-          <span className="atc-buyer-name">{name ?? t('list.noName')}</span>
-        </p>
+        {name ? (
+          <p className="atc-buyer">
+            <span className="atc-buyer-name">{name}</span>
+          </p>
+        ) : (
+          <div className="field ord-add-number-name">
+            <label htmlFor={NAME_ID}>
+              {t('addNumber.nameLabel')}
+              <span className="field-optional" aria-hidden="true">{tc('optional')}</span>
+            </label>
+            <input id={NAME_ID} type="text" value={typedName} onChange={(e) => setTypedName(e.target.value)} maxLength={60} autoComplete="off" disabled={busy} />
+          </div>
+        )}
 
         <div onKeyDown={(e) => e.key === 'Enter' && void save()}>
           <PhoneField id={PHONE_ID} label={t('addNumber.label')} required value={phone} onChange={setPhone} error={shownProblem} disabled={busy} />

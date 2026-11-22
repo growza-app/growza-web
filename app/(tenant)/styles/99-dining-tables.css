@@ -231,6 +231,12 @@
 .kd-card-dot { flex: none; color: var(--muted); font-size: 0.875rem; }
 .kd-card-by ~ .kd-card-age { margin-left: 0; }
 .kd-card.is-late .kd-card-by, .kd-card.is-late .kd-card-dot { color: var(--amber-ink); }
+/* Laptop sweep 2026-11-22 — the head wraps, and "who · how long" wraps as one piece: beside the table when both fit, else
+   on a line of its own, right-aligned, where only the name is cut. The table's label is never cut unless it alone is too long. */
+.kd-card-head { flex-wrap: wrap; }
+.kd-card-label { flex: 0 1 auto; max-width: 100%; min-width: 0; }
+.kd-card-when { margin-left: auto; display: inline-flex; align-items: center; gap: var(--sp-1); min-width: 0; max-width: 100%; }
+.kd-card-when .kd-card-by { margin-left: 0; }
 /* Review #2 (owner, 2026-11-17) — plain rows with a hairline between them: the same 48px to tap, about a quarter less height. */
 .kd-dishes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .kd-dish + .kd-dish { border-top: 1px solid var(--border); }

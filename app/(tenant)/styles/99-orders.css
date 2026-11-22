@@ -685,6 +685,64 @@ a.ord-card:focus-visible,
 }
 
 /*
+ * Laptop sweep 2026-11-22 — the two wrappers draw nothing on a phone: their blocks sit straight in the one column, in
+ * the order they always had (the bar last, under the history, where it pins to the bottom of the screen).
+ */
+.ord-d-main,
+.ord-d-side {
+  display: contents;
+}
+.ord-detail .ord-d-bar {
+  order: 1;
+}
+
+/*
+ * From 1100px the order is two columns: who and what (and its history) on the left, the money and the next step on the
+ * right, which stays in view while the left scrolls. 40rem of one column left half a laptop empty. The rows are
+ * `auto 1fr` so a tall right column grows the second row, never opens a gap between the items and the history.
+ */
+@media (min-width: 1100px) {
+  .ord-detail.has-side {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
+    grid-template-rows: auto 1fr;
+    align-items: start;
+    gap: var(--sp-3) var(--sp-4);
+    max-width: 72rem;
+  }
+  .ord-detail.has-side .ord-d-main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+  .ord-detail.has-side .ord-d-history-block {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .ord-detail.has-side .ord-d-side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    position: sticky;
+    top: var(--sp-3);
+    min-width: 0;
+  }
+  .ord-detail.has-side .ord-d-bar {
+    position: static;
+    padding: 0;
+    background: none;
+  }
+  .ord-detail.has-side.has-bar {
+    padding-bottom: var(--sp-4);
+  }
+}
+
+/*
  * Jira GRW-617 — "Swap size". The button sits under its line, a full row of its own so it stays a thumb tall without
  * crowding the name and the amount; the sheet is the till's size sheet (the same cells, the same shell) with the line
  * being swapped named above the grid and the difference, in money, between the grid and the confirm bar.
@@ -930,6 +988,12 @@ a.ord-card:focus-visible,
   flex-wrap: wrap;
   column-gap: var(--sp-2);
 }
+/* Jira GRW-747 — the optional name box a Walk-in order's sheet asks first: as wide as the number box under it. */
+.ord-add-number-name input {
+  width: 100%;
+  min-height: 3rem;
+}
+
 .ord-add-number-save {
   width: 100%;
   min-height: 44px;

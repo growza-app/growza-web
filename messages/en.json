@@ -5608,6 +5608,7 @@
       "action": "Add {customer}'s number",
       "title": "Add {customer}'s number",
       "label": "Their mobile number",
+      "nameLabel": "Their name",
       "hint": "They are added to {customers}, and this order counts as their visit.",
       "save": "Save number",
       "saving": "Saving…",

@@ -640,3 +640,23 @@
     display: inline-flex;
   }
 }
+
+/*
+ * Laptop sweep 2026-11-22 — at 1366 the middle panel is about 476px between the bands and the card, and four
+ * columns left the name 152px ("Vikram Meh…") and cut its own "Total spent" header (110px of words in 88px).
+ * Up to 1439px the Phone column goes, as "Last booking" already did: the number is the card's first row, one
+ * click away, and the name gets the room. "Total spent" gets the width its header needs at every desk width.
+ */
+@media (min-width: 1101px) {
+  .cust-desk-table:not(:has(th:nth-child(6))) th:nth-child(3) {
+    width: 7rem;
+  }
+}
+@media (min-width: 1101px) and (max-width: 1439px) {
+  .cust-desk-table th:nth-child(2),
+  .cust-desk-table td:nth-child(2),
+  .cust-desk-table:not(:has(th:nth-child(6))) th:nth-child(2),
+  .cust-desk-table:not(:has(th:nth-child(6))) td:nth-child(2) {
+    display: none;
+  }
+}

@@ -2653,3 +2653,34 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/*
+ * Laptop sweep 2026-11-22 — a 768px-tall window with Team open: the menu ran 579px in 517px of room, so WhatsApp and
+ * Settings sat below the fold of a scroller that gave no sign it scrolled. Rows keep their 40px; the air between the
+ * blocks above and between the groups gives up the difference instead, and when a long menu still runs over (more
+ * rows, a shorter window), a soft shadow at the edge says there is more. The shadows are the usual "scroll shadow"
+ * pair: the canvas-coloured covers travel with the content and hide each shadow while that end is in view.
+ */
+@media (min-width: 861px) and (max-height: 859px) {
+  .sidebar {
+    padding-block: 0.75rem;
+  }
+  .sidebar .sb-biz {
+    margin: var(--sp-1) 0;
+  }
+  .sidebar .nav {
+    gap: 0;
+  }
+  .sidebar .nav-section {
+    margin: var(--sp-1) 0 2px;
+  }
+}
+@media (min-width: 861px) {
+  .sidebar .nav {
+    background:
+      linear-gradient(var(--canvas) 30%, transparent) top / 100% 2rem no-repeat local,
+      linear-gradient(transparent, var(--canvas) 70%) bottom / 100% 2rem no-repeat local,
+      radial-gradient(farthest-side at 50% 0, rgb(0 0 0 / 0.14), transparent) top / 100% 0.625rem no-repeat scroll,
+      radial-gradient(farthest-side at 50% 100%, rgb(0 0 0 / 0.14), transparent) bottom / 100% 0.625rem no-repeat scroll;
+  }
+}
