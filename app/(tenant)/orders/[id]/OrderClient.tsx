@@ -20,6 +20,7 @@ import { returnReasonKey } from '../../lib/return-reasons';
 import { intlLocale } from '../../lib/format';
 import { SwapSizeSheet } from './SwapSizeSheet';
 import { AttachClientSheet } from './AttachClientSheet';
+import { AddNumberSheet } from './AddNumberSheet';
 import { OrderMarketplaceLine } from './OrderMarketplaceLine';
 import { useNouns } from '../../lib/use-nouns';
 import { isDeliveryApp } from '../../lib/order-channels';
@@ -93,6 +94,8 @@ export function OrderClient({
   const [swapping, setSwapping] = useState<string | null>(null);
   // Jira GRW-613 — "This is a client of ours", for a buyer the shop recognises.
   const [attaching, setAttaching] = useState(false);
+  // Jira GRW-747 — "Add guest's number", for a counter order kept under a name alone.
+  const [addingNumber, setAddingNumber] = useState(false);
   // One move at a time, however fast the button is tapped. `busy` is state and so is stale until the next render: two taps
   // inside the same frame both saw it false, and the second went out with the old state and was refused as "moved on" —
   // a refusal of the person's OWN first tap (found in the browser). A ref is what the second tap reads.
@@ -342,9 +345,20 @@ export function OrderClient({
                 read-only state and the role grid's). Never matched for them (BR-02) — the sheet is a search.
               */}
               {!order.client && writable ? (
-                <button type="button" className="ord-d-attach" onClick={() => setAttaching(true)}>
-                  {t('attach.action', { customer: nouns.customer })}
-                </button>
+                <div className="ord-d-buyer-actions">
+                  {/*
+                    Jira GRW-747 (FR-04) — a counter order kept under a name alone: the number they give later makes them a
+                    guest, and this order their visit. An app's guest is the app's, so it is offered on the counter's only.
+                  */}
+                  {isCounter ? (
+                    <button type="button" className="ord-d-attach" onClick={() => setAddingNumber(true)}>
+                      {t('addNumber.action', { customer: nouns.customer })}
+                    </button>
+                  ) : null}
+                  <button type="button" className="ord-d-attach" onClick={() => setAttaching(true)}>
+                    {t('attach.action', { customer: nouns.customer })}
+                  </button>
+                </div>
               ) : null}
               {order.buyer.address ? (
                 <p className="ord-d-address">
@@ -695,6 +709,18 @@ export function OrderClient({
           onClose={() => setAttaching(false)}
           onAttached={() => {
             setAttaching(false);
+            void refresh();
+          }}
+        />
+      ) : null}
+
+      {addingNumber && order.buyer ? (
+        <AddNumberSheet
+          orderId={order.id}
+          name={order.buyer.name}
+          onClose={() => setAddingNumber(false)}
+          onAdded={() => {
+            setAddingNumber(false);
             void refresh();
           }}
         />

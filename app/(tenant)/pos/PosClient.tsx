@@ -98,6 +98,7 @@ function QueueTokenPayScreen({
   onSettle,
   onPrintAgain,
   byNameOnly = false,
+  guestSkipped = false,
 }: {
   token: PosDailyToken;
   paymentQr: string | null;
@@ -124,6 +125,11 @@ function QueueTokenPayScreen({
    * (their role cannot open the guest list) and there is no discount or points (owner decisions 2026-11-15/16).
    */
   byNameOnly?: boolean;
+  /**
+   * Owner, 2026-11-22 (Jira GRW-747) — "Who is paying?" was skipped in Pickup: the order is paid as the branch's Walk-in,
+   * so the ways to pay, the discount and a coupon are offered with nobody named. A kitchen's Pickup only.
+   */
+  guestSkipped?: boolean;
   /**
    * QA of the overnight stack (item 7) — the bill was printed and the amount has changed since (a coupon or the discount
    * typed here): print it again, with what is being given. Resolves once the print has been asked for.
@@ -178,8 +184,10 @@ function QueueTokenPayScreen({
   const wholeOrderOff = foodMinor > 0 && offMinor >= foodMinor;
   // A code that is not good takes nothing off (AC-02): the reason is shown by it, and the bill is paid as it is.
   const [nameDraft, setNameDraft] = useState('');
-  /** Money can be taken once someone is named on the bill — picked from the list, or (a waiter) typed. */
-  const named = !anonymous || (byNameOnly && nameDraft.trim() !== '');
+  /** Money can be taken once someone is named on the bill — picked from the list, or (a waiter) typed — or "Who is paying?" was skipped. */
+  const named = !anonymous || guestSkipped || (byNameOnly && nameDraft.trim() !== '');
+  /** Nobody named, and the desk has not skipped the question: nothing about the money is offered yet. */
+  const waitsForGuest = anonymous && !guestSkipped;
   const settleWith = (ways: Array<{ mode: PaymentMode; amountMinor: number }>) => {
     if (freeBlock || checking || splitTooBig) return;
     const given = offers.couponKept && couponCode ? { offMinor, pct: null, couponCode } : billOff;
@@ -372,7 +380,7 @@ function QueueTokenPayScreen({
       </div>
       {dueLine}
       {/* Owner, 2026-11-16 — as on the till's own payment step: not until there is a guest, and money can be taken. */}
-      {anonymous || byNameOnly ? null : (
+      {waitsForGuest || byNameOnly ? null : (
       <button
         type="button"
         className={`pf-discount-open${billOff.offMinor > 0 ? ' is-on' : ''}`}
@@ -401,7 +409,7 @@ function QueueTokenPayScreen({
           <strong>{money(offers.taxMinor)}</strong>
         </p>
       ) : null}
-      {anonymous || byNameOnly ? null : (
+      {waitsForGuest || byNameOnly ? null : (
         <CouponRow
           code={couponCode}
           coupon={offers.coupon}
@@ -641,7 +649,10 @@ export function PosClient({
     null;
 
   // Owner, 10 Nov 2026 — only a kitchen has an order queue; a salon's or a shop's till is Sell and Return alone.
-  const orderQueue = hasOrderQueue(useAreas());
+  const areas = useAreas();
+  const orderQueue = hasOrderQueue(areas);
+  // Jira GRW-747 — at a business that counts no stock (a kitchen's) a name alone stays on the order, not in Guests.
+  const guestOptional = !areas.stock;
   const [mode, setMode] = useState<PosMode>(initialMode === 'queue' && orderQueue ? 'queue' : 'sell');
   const [fullScreen, setFullScreen] = useState(false);
   const [bills, setBills] = useState<SaleRow[] | null>(null);
@@ -654,6 +665,8 @@ export function PosClient({
   /** Owner, 17 Nov 2026 — the table being paid on this payment screen (its name), or null for a Pickup order. */
   const [payingTable, setPayingTable] = useState<string | null>(null);
   const [clientSheetTarget, setClientSheetTarget] = useState<{ token: PosDailyToken; startAdding: boolean } | null>(null);
+  /** Owner, 2026-11-22 — the Pickup order whose "Who is paying?" was skipped: it is paid as Walk-in. */
+  const [guestSkippedFor, setGuestSkippedFor] = useState<string | null>(null);
   const [settlingMode, setSettlingMode] = useState<PaymentMode | null>(null);
   const [settleError, setSettleError] = useState<string | null>(null);
   /** Owner, 9 Nov 2026 — the unpaid order the Sell tab is adding to ("Add items"), and the one being cancelled. */
@@ -880,7 +893,8 @@ export function PosClient({
               ? {
                   ...r,
                   customerId: nextCustomerId,
-                  customerName: nextName,
+                  // Jira GRW-747 — a number given with no name keeps the name the order already had ("Rahul").
+                  customerName: nextName ?? r.customerName,
                   customerPhone: nextPhone,
                 }
               : r,
@@ -1420,7 +1434,11 @@ export function PosClient({
         </div>
         <div className="pos-qcard-sub">
           <span className="pos-qcard-guest">{guest}</span>
-          {anonymous && tk.channel === 'counter' ? (
+          {/*
+            Jira GRW-747 (FR-06) — a name with no number ("Rahul") is offered it too: a name alone stays on this order, and the
+            number is what makes them a guest. A guest with a number has nothing to add here.
+          */}
+          {(anonymous || (guestOptional && !tk.customerPhone)) && tk.channel === 'counter' ? (
             <button
               type="button"
               className="pos-qcard-add-client"
@@ -1808,10 +1826,12 @@ export function PosClient({
             onBack={() => {
               setPayingToken(null);
               setClientSheetTarget(null);
+              setGuestSkippedFor(null);
               setSettleError(null);
               setPayingTable(null);
             }}
             byNameOnly={waiter}
+            guestSkipped={guestSkippedFor === payingToken.id}
             // A waiter prints no bill (owner decision 2026-11-16), so it is never told to print one again.
             {...(waiter ? {} : { onPrintAgain: (held: { couponCode?: string; discountMinor?: number }) => printer.printBill(payingToken.id, true, held) })}
             onSettle={(ways, redeemPoints, billOff, guestName) =>
@@ -1929,9 +1949,22 @@ export function PosClient({
       {clientSheetTarget ? (
         <ClientSheet
           location={location}
+          nameStaysOnBill={guestOptional}
           startAdding={clientSheetTarget.startAdding}
           onPick={(c) => void attachClientToToken(clientSheetTarget.token, c)}
           onClose={() => setClientSheetTarget(null)}
+          /*
+           * Owner, 2026-11-22 (Jira GRW-747) — a kitchen's Pickup can skip "Who is paying?": the order is finished and
+           * waiting, so it is paid as Walk-in. A name or number can still be added from its card or the order later.
+           */
+          {...(guestOptional && !waiter && payingToken && clientSheetTarget.token.id === payingToken.id && isWalkInToken(payingToken)
+            ? {
+                onSkip: () => {
+                  setGuestSkippedFor(payingToken.id);
+                  setClientSheetTarget(null);
+                },
+              }
+            : {})}
         />
       ) : null}
 

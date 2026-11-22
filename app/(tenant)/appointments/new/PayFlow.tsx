@@ -10,6 +10,7 @@ import { fixVisitHref, nextCustomerHref } from '../../lib/pay-token';
 import type { AddonGroup, Appointment, Offer, PaymentMode, Product, ProductCategory, Provider, Service, TillSize } from '../../lib/api-types';
 import type { QueueEntry } from '../../lib/home-types';
 import { receiptRows, type ReceiptRow } from '../../lib/receipt-text';
+import { useFitToWindow } from '../../lib/use-fit-to-window';
 import { displayPhone } from '../../lib/phone';
 import { formatDate } from '../../lib/format';
 import { RedeemRow } from '../../components/RedeemRow';
@@ -414,6 +415,14 @@ export function PayFlow({
   const [productCategories, setProductCategories] = useState<ProductCategory[]>([]);
   const [productCategory, setProductCategory] = useState<string>(ALL_CATEGORIES);
   const [client, setClient] = useState<Client>({ kind: 'none' });
+  /**
+   * Owner, 2026-11-22 (Jira GRW-747) — "Take payment now" at a kitchen's till: the desk chose to be paid there and then
+   * with nobody named (the bill goes on the branch's Walk-in). Keep payment pending stays the first choice.
+   */
+  const [payNowNoGuest, setPayNowNoGuest] = useState(false);
+  /** The wide till's bill panel: kept to the window so Complete sale is never below it (owner, 2026-11-22). */
+  const [wideRight, setWideRight] = useState<HTMLElement | null>(null);
+  useFitToWindow(wideRight, wide && productsOnly);
   /*
    * Jira GRW-648 — what this client has in reward points, and whether the desk is spending them.
    *
@@ -1059,6 +1068,7 @@ export function PayFlow({
     setLines([]);
     setOverride(null);
     setClient({ kind: 'none' });
+    setPayNowNoGuest(false);
     setSelectedMode(null);
     setBadMode(false);
     setMissing(null);
@@ -1321,7 +1331,7 @@ export function PayFlow({
             // No client is only ever an app's order (the guest is the app's); every other sale names one before it gets here.
             // Jira GRW-716 — a guest added offline carries their number on the order; the server finds or makes them by it.
             const named = client as { name: string; phone?: string | null };
-            const who = token ? { queueEntryId: token.id } : client.kind === 'existing' ? { customerId: client.id } : client.kind === 'none' ? {} : { customerName: named.name, ...(named.phone ? { customerPhone: named.phone } : {}) };
+            const who = token ? { queueEntryId: token.id } : client.kind === 'existing' ? { customerId: client.id } : client.kind === 'none' ? {} : { ...(named.name ? { customerName: named.name } : {}), ...(named.phone ? { customerPhone: named.phone } : {}) };
             const appOrder = fromApp ? { channel: fromApp, ...(appOrderNo.trim() ? { externalRef: appOrderNo.trim() } : {}) } : null;
             const common = {
               ...who,
@@ -1606,6 +1616,7 @@ export function PayFlow({
     setGuests(null);
     setOverride(null);
     setClient({ kind: 'none' });
+    setPayNowNoGuest(false);
     setOrderFrom('counter');
     setAppOrderNo('');
     setSale(null);
@@ -1687,7 +1698,7 @@ export function PayFlow({
   /** Jira GRW-572 — the wide till has no Next: a payment tile does Next's check first, and marks what is missing. */
   const readyToPay = (allowWithoutGuest = false) => {
     const service = !hasService;
-    const client_ = !token && client.kind === 'none' && !fromApp && !(guestOptional && allowWithoutGuest);
+    const client_ = !token && client.kind === 'none' && !fromApp && !(guestOptional && (allowWithoutGuest || payNowNoGuest));
     if (service || client_) {
       setMissing({ client: client_, service });
       if (client_ && !service) setWhoOpen('add');
@@ -1706,13 +1717,21 @@ export function PayFlow({
   // 2) Guest picked → highlight Payment mode tiles (`guideMode`)
   // 3) Payment mode picked (or delivery app order) → light up Complete sale (`guideReady`)
   const hasWho = Boolean(token) || client.kind !== 'none';
-  const hidePayUntilGuest = guestOptional && !hasWho && !fromApp;
+  const hidePayUntilGuest = guestOptional && !hasWho && !fromApp && !payNowNoGuest;
+  /** Where the tiles are held back for a guest, the desk may still choose to be paid now (owner, 2026-11-22). */
+  const payNowButton =
+    hidePayUntilGuest && lines.length > 0 && !atTable ? (
+      <button type="button" className="btn btn-ghost pos-charge-paynow" onClick={() => setPayNowNoGuest(true)} disabled={saving !== null || freeBlock !== null}>
+        {t('desk.payNowNoGuest')}
+      </button>
+    ) : null;
+  const whoDone = hasWho || payNowNoGuest;
   // Owner, 2026-11-05 (Jira GRW-679, UX-01) — a counter where the guest is optional gets the same step-1 mark as every
   // other shop: the tiles are held back until a guest is chosen, so the Guest field IS the next step there too. It used
   // to be left out (`!guestOptional`), which is why the wide till showed no tiles and nothing pointing at why.
-  const guideClient = Boolean(productsOnly && wide && lines.length > 0 && !hasWho && !fromApp && !badClient);
-  const guideMode = Boolean(productsOnly && wide && lines.length > 0 && hasWho && !fromApp && !selectedMode && !splitting && !firstWay);
-  const guideReady = Boolean(productsOnly && wide && lines.length > 0 && (fromApp !== null || (hasWho && (selectedMode !== null || firstWay !== null))));
+  const guideClient = Boolean(productsOnly && wide && lines.length > 0 && !whoDone && !fromApp && !badClient);
+  const guideMode = Boolean(productsOnly && wide && lines.length > 0 && whoDone && !fromApp && !selectedMode && !splitting && !firstWay);
+  const guideReady = Boolean(productsOnly && wide && lines.length > 0 && (fromApp !== null || (whoDone && (selectedMode !== null || firstWay !== null))));
 
   const [addingBusy, setAddingBusy] = useState(false);
   const addToOrder = async () => {
@@ -2234,7 +2253,8 @@ export function PayFlow({
         {payTiles}
         {productsOnly && !fromApp && !splitting && !firstWay ? (
           <div className="pos-charge-actions pos-charge-actions-mobile">
-            {onOpenQueue ? (
+            {/* Owner, 2026-11-22 — gone once "Take payment now" is tapped: the desk has chosen to be paid upfront. */}
+            {onOpenQueue && !payNowNoGuest ? (
               <button
                 type="button"
                 className="btn pos-charge-pending"
@@ -2244,6 +2264,7 @@ export function PayFlow({
                 <span>{atTable ? tTables('sendToKitchen') : t(qk('desk.keepPendingInQueue'))}</span>
               </button>
             ) : null}
+            {payNowButton}
             {!hidePayUntilGuest ? (
               <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
                 {t('split.link')}
@@ -2260,6 +2281,7 @@ export function PayFlow({
         {whoOpen ? (
           <ClientSheet
             location={location}
+            nameStaysOnBill={guestOptional}
             startAdding={whoOpen === 'add'}
             onPick={(c) => {
               setClient(c.id === null ? { kind: 'named', name: c.name ?? '', phone: c.waPhone } : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone });
@@ -2804,7 +2826,7 @@ export function PayFlow({
               }
             />
           )}
-          <aside className="pf-wide-right">
+          <aside ref={setWideRight} className="pf-wide-right">
             {/* Adding to a waiting order: it already has its guest and where it came from. */}
             {productsOnly && !addingTo ? (
               <div className="pos-bill-client">
@@ -2927,6 +2949,8 @@ export function PayFlow({
                 <strong>{money(dueMinor)}</strong>
               </p>
             ) : null}
+            {/* Owner, 2026-11-22 — how it is paid, kept in view at the panel's foot on the till (`.pf-wide-pay`, 99-pos). */}
+            <div className="pf-wide-pay">
             {hidePayUntilGuest ? null : (
               <>
                 {fromApp ? null : <h2 className="pf-wide-h">{atTable ? atTable.label : t('howTitle')}</h2>}
@@ -2959,7 +2983,8 @@ export function PayFlow({
                 ) : null}
                 {!fromApp && !splitting && !firstWay ? (
                   <>
-                    {onOpenQueue ? (
+                    {/* Owner, 2026-11-22 — gone once "Take payment now" is tapped: the desk has chosen to be paid upfront. */}
+                    {onOpenQueue && !payNowNoGuest ? (
                       <button
                         type="button"
                         className="btn pos-charge-pending"
@@ -2970,6 +2995,7 @@ export function PayFlow({
                         <span>{atTable ? tTables('sendToKitchen') : t(qk('desk.keepPendingInQueue'))}</span>
                       </button>
                     ) : null}
+                    {payNowButton}
                     {!hidePayUntilGuest ? (
                       <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
                         {t('split.link')}
@@ -2979,6 +3005,7 @@ export function PayFlow({
                 ) : null}
               </div>
             ) : null}
+            </div>
               </>
             )}
             {splitKeypadEl}
@@ -3007,6 +3034,7 @@ export function PayFlow({
         {whoOpen ? (
           <ClientSheet
             location={location}
+            nameStaysOnBill={guestOptional}
             startAdding={whoOpen === 'add'}
             onPick={(c) => {
               setClient(c.id === null ? { kind: 'named', name: c.name ?? '', phone: c.waPhone } : { kind: 'existing', id: c.id, name: c.name, phone: c.waPhone });
@@ -3421,6 +3449,7 @@ export function PayFlow({
       {whoOpen ? (
         <ClientSheet
           location={location}
+          nameStaysOnBill={guestOptional}
           startAdding={whoOpen === 'add'}
           onPick={(c) => {
             // No id means a name and nothing else: there is no client row yet, and the sale is what writes it.

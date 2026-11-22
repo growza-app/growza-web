@@ -924,6 +924,18 @@ a.ord-card:focus-visible,
   color: var(--amber);
 }
 
+/* Jira GRW-747 — Add guest's number and This is a guest of ours, side by side; they wrap on a narrow phone. */
+.ord-d-buyer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--sp-2);
+}
+.ord-add-number-save {
+  width: 100%;
+  min-height: 44px;
+  margin-top: var(--sp-4);
+}
+
 /* QA 2026-10-23 — "Can they be sold again?" inside the came-back confirm: two full-width rows, 44px to tap. */
 .ord-d-saleable {
   margin: var(--sp-3) 0 0;

@@ -711,13 +711,45 @@
   }
 
   /* ---------- Sticky Right Current Bill Drawer ---------- */
+  /*
+   * Owner, 2026-11-22 — kept to the window (`--fit-max`, written by `useFitToWindow` as the room below where the panel
+   * starts) and scrolling inside itself, so Complete sale and Keep payment pending are never below the window's edge
+   * on a laptop. With no measurement yet it is as tall as it needs, as before.
+   */
   .pf-wide:has(.prd-cat-li) .pf-wide-right {
     position: sticky;
     top: 0.75rem;
-    max-height: none;
-    overflow: visible;
+    max-height: var(--fit-max, none);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: var(--sp-3);
     gap: var(--sp-2);
+  }
+
+  /* Nothing in the panel is squashed to fit: what does not fit scrolls, above the foot below. */
+  .pf-wide:has(.prd-cat-li) .pf-wide-right > * {
+    flex-shrink: 0;
+  }
+
+  /*
+   * How it is paid — the ways to pay, Complete sale, Keep payment pending — stays at the panel's foot while the
+   * dishes and totals above it scroll.
+   */
+  .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-wide-pay {
+    position: sticky;
+    bottom: calc(-1 * var(--sp-3));
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin: 0 calc(-1 * var(--sp-3)) calc(-1 * var(--sp-3));
+    padding: var(--sp-2) var(--sp-3) var(--sp-3);
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .pf-wide:has(.prd-cat-li) .pf-wide-right .pf-wide-pay:empty {
+    display: none;
   }
 
   .pos-shell.is-fullscreen .pf-wide:has(.prd-cat-li) .pf-wide-right {
@@ -1206,6 +1238,15 @@
 .pos-charge-pending:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+/* Owner, 2026-11-22 — "Take payment now" with nobody named: the second choice under Keep payment pending, outlined
+   (`.btn-ghost`, so hover stays readable). */
+.pos-charge-paynow {
+  width: 100%;
+  min-height: 2.75rem;
+  border-radius: var(--radius);
+  font-size: 0.9375rem;
 }
 
 .pos-charge-queued {

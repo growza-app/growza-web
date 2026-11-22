@@ -3429,6 +3429,8 @@
     "noMatch": "No {client} found",
     "fromContacts": "From phone contacts",
     "nameOptional": "Name",
+    "keepInList": "A name alone stays on this bill. Add a number to keep them in {list}.",
+    "skipGuest": "Skip",
     "saveClient": "Save {client}",
     "noName": "No name",
     "addClient": "Add new {client}",
@@ -3500,8 +3502,9 @@
       "viewInQueue": "View Queue",
       "viewInQueuePickup": "View Pickup",
       "needPaymentMode": "Select how they paid",
-      "guestToPay": "Add a {client} to take payment now.",
+      "guestToPay": "Add a {client}, or take payment with no name.",
       "guestToPayAdd": "Add {client}",
+      "payNowNoGuest": "Take payment now",
       "removeLine": "Remove {name}",
       "sizesCount": "{count} sizes",
       "subtotalUnits": "Subtotal ({count})",
@@ -5600,6 +5603,15 @@
       "retrying": "Sending…",
       "retryFailed": "Could not ask again. Try again.",
       "asked": "Asked again. We will tell {channel} shortly."
+    },
+    "addNumber": {
+      "action": "Add {customer}'s number",
+      "title": "Add {customer}'s number",
+      "label": "Their mobile number",
+      "hint": "They are added to {customers}, and this order counts as their visit.",
+      "save": "Save number",
+      "saving": "Saving…",
+      "failed": "The number was not saved. Please try again."
     },
     "attach": {
       "action": "This is a {customer} of ours",

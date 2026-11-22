@@ -1406,6 +1406,15 @@
   height: 1.25rem;
 }
 
+/* Owner, 2026-11-22 — Pickup's "Who is paying?" can be skipped at a kitchen: a full-width second choice, outlined
+   (`.btn-ghost`, so hover stays readable). */
+.pf-client-skip {
+  min-height: 2.75rem;
+  width: 100%;
+  margin-top: var(--sp-2);
+  font-size: 1rem;
+}
+
 .pf-client-links {
   display: flex;
   justify-content: center;

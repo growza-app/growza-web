@@ -441,7 +441,7 @@ describe('the POS screen', () => {
   it('hides payment options when a restaurant order has no guest yet, then prompts to add the guest in Queue before showing the payment screen', () => {
     const payFlow = src('../appointments/new/PayFlow.tsx');
     expect(payFlow).toContain('const guestOptional = productsOnly && !counted;');
-    expect(payFlow).toContain('const hidePayUntilGuest = guestOptional && !hasWho && !fromApp;');
+    expect(payFlow).toContain('const hidePayUntilGuest = guestOptional && !hasWho && !fromApp && !payNowNoGuest;');
     expect(payFlow).toContain('hidePayUntilGuest ? null : (');
     expect(client).toContain('function isWalkInToken(');
     expect(client).toContain('api.assignClientToSale(');
