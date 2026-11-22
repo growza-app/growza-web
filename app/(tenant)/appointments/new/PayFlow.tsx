@@ -1684,13 +1684,10 @@ export function PayFlow({
     setStep('how');
   };
 
-  /**
-   * Jira GRW-572 — the wide till has no Next: a payment tile does Next's check first, and marks what is missing.
-   * Jira GRW-747 — where a bill needs no guest, nobody is missing: it is paid as Walk-in (FR-01).
-   */
-  const readyToPay = () => {
+  /** Jira GRW-572 — the wide till has no Next: a payment tile does Next's check first, and marks what is missing. */
+  const readyToPay = (allowWithoutGuest = false) => {
     const service = !hasService;
-    const client_ = !token && client.kind === 'none' && !fromApp && !guestOptional;
+    const client_ = !token && client.kind === 'none' && !fromApp && !(guestOptional && allowWithoutGuest);
     if (service || client_) {
       setMissing({ client: client_, service });
       if (client_ && !service) setWhoOpen('add');
@@ -1709,16 +1706,13 @@ export function PayFlow({
   // 2) Guest picked → highlight Payment mode tiles (`guideMode`)
   // 3) Payment mode picked (or delivery app order) → light up Complete sale (`guideReady`)
   const hasWho = Boolean(token) || client.kind !== 'none';
-  /*
-   * Jira GRW-747 (FR-01) — owner, 2026-11-22: a takeaway needs no guest. The payment tiles used to be held back until one
-   * was added (`hidePayUntilGuest`, GRW-679), so a guest who would not give a number was invented or parked in Pickup.
-   * Where the guest is optional the tiles now show as soon as a dish is on the bill, and the next step after the dishes
-   * is how it is paid, not who.
-   */
-  const whoDone = hasWho || guestOptional;
-  const guideClient = Boolean(productsOnly && wide && lines.length > 0 && !whoDone && !fromApp && !badClient);
-  const guideMode = Boolean(productsOnly && wide && lines.length > 0 && whoDone && !fromApp && !selectedMode && !splitting && !firstWay);
-  const guideReady = Boolean(productsOnly && wide && lines.length > 0 && (fromApp !== null || (whoDone && (selectedMode !== null || firstWay !== null))));
+  const hidePayUntilGuest = guestOptional && !hasWho && !fromApp;
+  // Owner, 2026-11-05 (Jira GRW-679, UX-01) — a counter where the guest is optional gets the same step-1 mark as every
+  // other shop: the tiles are held back until a guest is chosen, so the Guest field IS the next step there too. It used
+  // to be left out (`!guestOptional`), which is why the wide till showed no tiles and nothing pointing at why.
+  const guideClient = Boolean(productsOnly && wide && lines.length > 0 && !hasWho && !fromApp && !badClient);
+  const guideMode = Boolean(productsOnly && wide && lines.length > 0 && hasWho && !fromApp && !selectedMode && !splitting && !firstWay);
+  const guideReady = Boolean(productsOnly && wide && lines.length > 0 && (fromApp !== null || (hasWho && (selectedMode !== null || firstWay !== null))));
 
   const [addingBusy, setAddingBusy] = useState(false);
   const addToOrder = async () => {
@@ -1766,7 +1760,7 @@ export function PayFlow({
       return;
     }
     if (saving !== null || lines.length === 0) return;
-    const ok = readyToPay();
+    const ok = readyToPay(false);
     if (fromApp) {
       if (ok) void pay('other');
       return;
@@ -1784,7 +1778,7 @@ export function PayFlow({
   const sendPosPending = () => {
     if (addingTo || saving !== null || lines.length === 0 || fromApp) return;
     setBadMode(false);
-    if (!readyToPay()) return;
+    if (!readyToPay(true)) return;
     void pay('cash', true);
   };
 
@@ -1932,7 +1926,7 @@ export function PayFlow({
    * given at the Queue's payment instead), and not for a delivery app's order, whose money the app collects.
    */
   const discountRow =
-    lines.length > 0 && !addingTo && !fromApp ? (
+    lines.length > 0 && !addingTo && !hidePayUntilGuest && !fromApp ? (
       <button type="button" className={`pf-discount-open${billOffMinor > 0 ? ' is-on' : ''}`} onClick={() => setDiscountOpen(true)} disabled={saving !== null}>
         <span className="pf-discount-badge" aria-hidden="true">
           %
@@ -1963,7 +1957,7 @@ export function PayFlow({
           <strong>{money(billOffers.taxMinor)}</strong>
         </p>
       ) : null}
-      {fromApp ? null : (
+      {fromApp || hidePayUntilGuest ? null : (
         <CouponRow
           code={couponCode}
           coupon={couponLost ? { code: couponCode, name: couponLost, offMinor: 0 } : billOffers.coupon}
@@ -2080,8 +2074,29 @@ export function PayFlow({
    */
   const restMinor = firstWay ? Math.max(0, dueMinor - firstWay.minor) : 0;
   // An app's order has nothing to collect: no tiles (its note is drawn in their place).
+  /*
+   * Jira GRW-679 (UX-01) — why there is nothing to pay with yet.
+   *
+   * At a counter that needs no guest to ring a bill, the tiles are held back until one is chosen, and the step
+   * offered only "Keep payment pending in queue". Nothing said why: a desk about to take cash had to guess that the
+   * way forward was a guest. The flow is unchanged; this says it, and the button beside it opens the same sheet the
+   * guest field does.
+   *
+   * On a PHONE only. Owner, 2026-11-05: on the wide till the Guest field sits two rows above where this would go, so
+   * the note repeated what was already on screen (and showed on an empty bill). There the field itself is marked as
+   * the next step once a dish is on the bill (`guideClient`), which costs no extra row.
+   */
+  const guestToPay = (
+    <div className="pf-guest-first" role="note" data-testid="guest-to-pay">
+      <p className="pf-guest-first-say">{t('desk.guestToPay', { client: nounInSentence(clientNoun) })}</p>
+      <button type="button" className="btn pf-guest-first-add" onClick={() => setWhoOpen('add')} disabled={saving !== null}>
+        {t('desk.guestToPayAdd', { client: nounInSentence(clientNoun) })}
+      </button>
+    </div>
+  );
   // Jira GRW-721 — a table's order waits for its money until the guests leave: no way of paying is asked here.
   const payTiles = fromApp || atTable ? null : (
+    hidePayUntilGuest ? (wide ? null : guestToPay) : (
     <div className="pf-pay" data-step={guideMode ? 'next' : badMode && !selectedMode ? 'bad' : undefined} role="group" aria-label={t('howTitle')}>
       {firstWay ? (
         /* The first way, held, and what the next tile is for. × puts the bill back to one way. */
@@ -2148,6 +2163,7 @@ export function PayFlow({
         </button>
       ) : null}
     </div>
+    )
   );
   /** The keypad for how much came the first way; the rest is the next tile's. Enough for the whole bill is one way. */
   const splitKeypadEl =
@@ -2228,9 +2244,11 @@ export function PayFlow({
                 <span>{atTable ? tTables('sendToKitchen') : t(qk('desk.keepPendingInQueue'))}</span>
               </button>
             ) : null}
-            <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
-              {t('split.link')}
-            </button>
+            {!hidePayUntilGuest ? (
+              <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
+                {t('split.link')}
+              </button>
+            ) : null}
           </div>
         ) : null}
         {splitKeypadEl}
@@ -2910,8 +2928,12 @@ export function PayFlow({
                 <strong>{money(dueMinor)}</strong>
               </p>
             ) : null}
-            {fromApp ? null : <h2 className="pf-wide-h">{atTable ? atTable.label : t('howTitle')}</h2>}
-            {badMode && !selectedMode ? (
+            {hidePayUntilGuest ? null : (
+              <>
+                {fromApp ? null : <h2 className="pf-wide-h">{atTable ? atTable.label : t('howTitle')}</h2>}
+              </>
+            )}
+            {badMode && !selectedMode && !hidePayUntilGuest ? (
               <p className="pf-miss" role="alert">
                 {t('desk.needPaymentMode')}
               </p>
@@ -2924,16 +2946,18 @@ export function PayFlow({
             {payTiles}
             {productsOnly ? (
               <div className="pos-charge-actions">
-                <button
-                  type="button"
-                  className="btn pos-charge-cta"
-                  data-step={guideReady ? 'ready' : lines.length > 0 ? 'waiting' : undefined}
-                  disabled={saving !== null || lines.length === 0 || freeBlock !== null}
-                  onClick={completePosSale}
-                >
-                  <span>{fromApp ? t('from.complete', { amount: money(dueMinor) }) : t('desk.chargeNow', { amount: money(dueMinor) })}</span>
-                  <kbd className="pos-charge-kbd">F8</kbd>
-                </button>
+                {!hidePayUntilGuest ? (
+                  <button
+                    type="button"
+                    className="btn pos-charge-cta"
+                    data-step={guideReady ? 'ready' : lines.length > 0 ? 'waiting' : undefined}
+                    disabled={saving !== null || lines.length === 0 || freeBlock !== null}
+                    onClick={completePosSale}
+                  >
+                    <span>{fromApp ? t('from.complete', { amount: money(dueMinor) }) : t('desk.chargeNow', { amount: money(dueMinor) })}</span>
+                    <kbd className="pos-charge-kbd">F8</kbd>
+                  </button>
+                ) : null}
                 {!fromApp && !splitting && !firstWay ? (
                   <>
                     {onOpenQueue ? (
@@ -2947,9 +2971,11 @@ export function PayFlow({
                         <span>{atTable ? tTables('sendToKitchen') : t(qk('desk.keepPendingInQueue'))}</span>
                       </button>
                     ) : null}
-                    <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
-                      {t('split.link')}
-                    </button>
+                    {!hidePayUntilGuest ? (
+                      <button type="button" className="pf-split-link" onClick={() => setSplitting(true)} disabled={saving !== null}>
+                        {t('split.link')}
+                      </button>
+                    ) : null}
                   </>
                 ) : null}
               </div>

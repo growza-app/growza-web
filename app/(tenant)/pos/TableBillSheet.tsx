@@ -205,12 +205,11 @@ export function TableBillSheet({
 
   const pay = (mode: (typeof MODES)[number]) =>
     run(async () => {
-      /*
-       * Jira GRW-747 (FR-05) — the guest's name is optional at a table, as at the counter: with none the bill is paid as
-       * Walk-in, and a name typed here stays on this bill alone (no Guests entry). A kitchen's bill needs no guest.
-       */
-      const name = anonymous ? guestName.trim() : '';
-      if (name) await api.assignClientToSale(saleId, { name });
+      if (anonymous) {
+        const name = guestName.trim();
+        if (!name) throw new ApiError(400, t('guestNeeded'));
+        await api.assignClientToSale(saleId, { name });
+      }
       await api.settleCounterSale(saleId, { paymentMode: mode });
     }, 'done', t('paidOk', { table: table.name, amount: money(totalMinor) }));
 

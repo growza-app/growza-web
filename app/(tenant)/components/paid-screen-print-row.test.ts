@@ -62,10 +62,9 @@ describe('the paid screen of a till that prints is one tidy column', () => {
 });
 
 describe('the Queue’s Discount waits for the guest, as the till’s does (2026-11-16)', () => {
-  it('is not drawn for an anonymous order where a guest is needed (a shop) — a kitchen needs none (Jira GRW-747)', () => {
+  it('is not drawn for an anonymous order', () => {
     // …and never for a waiter (owner decisions 2026-11-15/16; 17 Nov: their payment screen).
-    expect(pos).toMatch(/\{waitsForGuest \|\| byNameOnly \? null : \(\s*<button\s+type="button"\s+className=\{`pf-discount-open/);
-    expect(pos).toContain('const waitsForGuest = anonymous && !guestOptional;');
+    expect(pos).toMatch(/\{anonymous \|\| byNameOnly \? null : \(\s*<button\s+type="button"\s+className=\{`pf-discount-open/);
   });
 });
 

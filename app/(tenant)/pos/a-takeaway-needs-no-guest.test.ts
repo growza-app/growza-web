@@ -19,22 +19,18 @@ const ordersCss = src('../styles/99-orders.css');
 const en = JSON.parse(src('../../../messages/en.json'));
 const hi = JSON.parse(src('../../../messages/hi.json'));
 
-describe('FR-01 — a takeaway is paid with no guest', () => {
-  it('the till shows its ways to pay as soon as a dish is on the bill, and asks for nobody', () => {
-    expect(payFlow).not.toContain('hidePayUntilGuest ?');
-    expect(payFlow).not.toContain('guest-to-pay');
-    expect(payFlow).toContain("const client_ = !token && client.kind === 'none' && !fromApp && !guestOptional;");
-    // The step guide goes from the dishes straight to how it is paid.
-    expect(payFlow).toContain('const whoDone = hasWho || guestOptional;');
-    // The note that asked for a guest first is gone from both languages.
-    expect(en.payFlow.desk.guestToPay).toBeUndefined();
-    expect(hi.payFlow.desk.guestToPay).toBeUndefined();
+describe('Owner, 2026-11-22 — the till keeps its old flow: an order with nobody goes to Pickup', () => {
+  it('the ways to pay wait for a guest, so a nameless order is kept pending in Pickup, where dishes can still be added', () => {
+    // "No guest needed" was tried and taken back the same day: a table still eating was paid, and its next dishes had no bill.
+    expect(payFlow).toContain('const hidePayUntilGuest = guestOptional && !hasWho && !fromApp;');
+    expect(payFlow).toContain('data-testid="guest-to-pay"');
+    expect(en.payFlow.desk.guestToPay).toBeTruthy();
+    expect(hi.payFlow.desk.guestToPay).toBeTruthy();
   });
 
-  it('Pickup takes the money for an order with nobody on it, and does not open the guest sheet first', () => {
-    expect(pos).toContain('const guestOptional = !areas.stock;');
-    expect(pos).toContain('const named = !anonymous || guestOptional || (byNameOnly && nameDraft.trim() !== \'\');');
-    expect(pos).toContain("if (isWalkInToken(tk) && tk.channel === 'counter' && !waiter && !guestOptional) {");
+  it('Pickup asks who it is for before payment, and a name is enough', () => {
+    expect(pos).toContain("if (isWalkInToken(tk) && tk.channel === 'counter' && !waiter) {");
+    expect(pos).toContain('const named = !anonymous || (byNameOnly && nameDraft.trim() !== \'\');');
   });
 });
 
@@ -52,13 +48,11 @@ describe('FR-02 · BR-02 — a name without a number stays on the bill', () => {
   });
 });
 
-describe('FR-05 — a table bill’s guest name is optional', () => {
-  it('pays with no name; a name typed goes on the bill', () => {
-    expect(tableSheet).not.toContain("t('guestNeeded')");
-    expect(tableSheet).toContain('if (name) await api.assignClientToSale(saleId, { name });');
-    expect(en.posTables.guestName).toBe("Guest's name (optional)");
-    expect(hi.posTables.guestName).toContain('वैकल्पिक');
-    expect(en.posTables.guestNeeded).toBeUndefined();
+describe('A table bill asks for the guest’s name, as before', () => {
+  it('pays only once a name is typed; the name stays on that bill', () => {
+    expect(tableSheet).toContain("if (!name) throw new ApiError(400, t('guestNeeded'));");
+    expect(en.posTables.guestName).toBe("Guest's name (needed to take payment)");
+    expect(hi.posTables.guestNeeded).toBeTruthy();
   });
 });
 
