@@ -48,6 +48,7 @@ export function ClientSheet({
   onClose,
   startAdding = false,
   nameStaysOnBill = false,
+  onSkip,
 }: {
   location: string | null;
   onPick: (c: PickedClient) => void;
@@ -59,6 +60,8 @@ export function ClientSheet({
    * and is never saved to the list, so the sheet says so, and a number alone is enough to save someone.
    */
   nameStaysOnBill?: boolean;
+  /** Owner, 2026-11-22 — Pickup's "Who is paying?" may be skipped at a kitchen: the order is paid as Walk-in. */
+  onSkip?: () => void;
 }) {
   const t = useTranslations('payFlow');
   const tNouns = useTranslations('nouns');
@@ -378,6 +381,11 @@ export function ClientSheet({
             {nobody && typed ? t('addTyped', { what: typed }) : t('addClient', { client: clientNoun })}
           </button>
         )}
+        {onSkip && !adding ? (
+          <button type="button" className="btn pf-client-skip" onClick={onSkip}>
+            {t('skipGuest')}
+          </button>
+        ) : null}
       </div>
     </div>
   );

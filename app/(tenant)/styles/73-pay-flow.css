@@ -1406,6 +1406,18 @@
   height: 1.25rem;
 }
 
+/* Owner, 2026-11-22 — Pickup's "Who is paying?" can be skipped at a kitchen: a plain, full-width second choice. */
+.pf-client-skip {
+  min-height: 2.75rem;
+  width: 100%;
+  margin-top: var(--sp-2);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
 .pf-client-links {
   display: flex;
   justify-content: center;

@@ -16,6 +16,7 @@ const tableSheet = src('./TableBillSheet.tsx');
 const order = src('../orders/[id]/OrderClient.tsx');
 const addNumber = src('../orders/[id]/AddNumberSheet.tsx');
 const ordersCss = src('../styles/99-orders.css');
+const payCss = src('../styles/73-pay-flow.css');
 const en = JSON.parse(src('../../../messages/en.json'));
 const hi = JSON.parse(src('../../../messages/hi.json'));
 
@@ -30,7 +31,6 @@ describe('Owner, 2026-11-22 — the till keeps its old flow: an order with nobod
 
   it('Pickup asks who it is for before payment, and a name is enough', () => {
     expect(pos).toContain("if (isWalkInToken(tk) && tk.channel === 'counter' && !waiter) {");
-    expect(pos).toContain('const named = !anonymous || (byNameOnly && nameDraft.trim() !== \'\');');
   });
 });
 
@@ -45,6 +45,29 @@ describe('FR-02 · BR-02 — a name without a number stays on the bill', () => {
 
   it('a number alone is enough to save someone there (FR-03: "with or without a name")', () => {
     expect(sheet).toContain('if (!named && stored) return onPick({ id: null, name: null, waPhone: stored });');
+  });
+});
+
+describe('Owner, 2026-11-22 — Skip in Pickup: "Who is paying?" may be skipped, and the order is paid as Walk-in', () => {
+  it('the sheet offers Skip only where it is given one, and not while a new guest is being typed', () => {
+    expect(sheet).toContain('{onSkip && !adding ? (');
+    expect(sheet).toContain("{t('skipGuest')}");
+    expect(en.payFlow.skipGuest).toBe('Skip');
+    expect(hi.payFlow.skipGuest).toBeTruthy();
+  });
+
+  it('only at a kitchen, only for the order being paid in Pickup, never for a waiter', () => {
+    expect(pos).toContain('guestOptional && !waiter && payingToken && clientSheetTarget.token.id === payingToken.id && isWalkInToken(payingToken)');
+    expect(pos).toContain('guestSkipped={guestSkippedFor === payingToken.id}');
+  });
+
+  it('once skipped, the ways to pay, the discount and a coupon are offered', () => {
+    expect(pos).toContain('const named = !anonymous || guestSkipped || (byNameOnly && nameDraft.trim() !== \'\');');
+    expect(pos.match(/\{waitsForGuest \|\| byNameOnly \? null : \(/g)).toHaveLength(2);
+  });
+
+  it('Skip is a full-width 44px target', () => {
+    expect(payCss).toMatch(/\.pf-client-skip \{[^}]*min-height: 2\.75rem;[^}]*width: 100%;/);
   });
 });
 

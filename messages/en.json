@@ -3430,6 +3430,7 @@
     "fromContacts": "From phone contacts",
     "nameOptional": "Name",
     "keepInList": "A name alone stays on this bill. Add a number to keep them in {list}.",
+    "skipGuest": "Skip",
     "saveClient": "Save {client}",
     "noName": "No name",
     "addClient": "Add new {client}",

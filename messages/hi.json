@@ -3430,6 +3430,7 @@
     "fromContacts": "फ़ोन के संपर्कों से",
     "nameOptional": "नाम",
     "keepInList": "सिर्फ़ नाम इस बिल पर ही रहेगा। उन्हें {list} में रखने के लिए नंबर जोड़ें।",
+    "skipGuest": "छोड़ें",
     "saveClient": "{client} सहेजें",
     "noName": "बिना नाम",
     "addClient": "नया {client} जोड़ें",
