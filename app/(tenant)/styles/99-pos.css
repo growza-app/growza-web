@@ -2474,7 +2474,7 @@
   min-width: 0;
 }
 .pos-qcard-plus-btn,
-.pos-qcard-kebab .kebab-btn.mnu-kebab-btn {
+.pos-qcard-kebab-btn {
   display: inline-flex;
   flex: none;
   align-items: center;
@@ -2498,16 +2498,52 @@
   border-color: var(--accent-deep);
   background: var(--accent-soft);
 }
-.pos-qcard-kebab .kebab-btn.mnu-kebab-btn {
+.pos-qcard-kebab-btn {
   color: var(--text);
   font-size: 1.25rem;
 }
 .pos-qcard-plus-btn:focus-visible,
-.pos-qcard-kebab .kebab-btn.mnu-kebab-btn:focus-visible {
+.pos-qcard-kebab-btn:focus-visible {
   outline: 2px solid var(--accent-deep);
   outline-offset: 2px;
 }
-/* The ⋮'s two rows are tapped on a phone at the counter: 44px each, not the desk dropdown's 36px. */
-.pos-qcard-kebab .dropdown-item {
+/* The ⋮'s choices, inside the card under its buttons (owner, 2026-11-23): 44px rows, Cancel order in red, set apart by a line. */
+.pos-qcard-kebab-btn[aria-expanded='true'] {
+  border-color: var(--text);
+  background: var(--page-bg);
+}
+.pos-qcard-menu {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.pos-qcard-menu-item {
+  display: flex;
+  align-items: center;
   min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.pos-qcard-menu-item + .pos-qcard-menu-item {
+  border-top: 1px solid var(--border);
+}
+.pos-qcard-menu-item.is-danger {
+  color: var(--danger);
+}
+.pos-qcard-menu-item:hover {
+  background: var(--page-bg);
+}
+.pos-qcard-menu-item:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -2px;
 }

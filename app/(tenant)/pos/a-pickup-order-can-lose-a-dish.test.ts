@@ -20,9 +20,11 @@ describe('Edit an unpaid Pickup order on its own card', () => {
     // Owner, 2026-11-23 — + beside Take payment; Edit (owner or manager) and Cancel order in the card's ⋮.
     expect(client).toContain('className="btn pos-qcard-plus-btn"');
     expect(client).toContain("aria-label={t('addItemsTo', { token: tk.tokenLabel })}");
-    expect(client).toMatch(/<MenuKebab\s+className="pos-qcard-kebab"/);
-    expect(client).toMatch(/\.\.\.\(mayEdit\s*\?\s*\[\s*\{\s*label: t\('editOrder'\)/);
-    expect(client).toMatch(/label: t\('cancelOrder'\),\s*danger: true,/);
+    // The ⋮'s choices open inside the card, never over the card below (owner, 2026-11-23).
+    expect(client).toContain('className="btn pos-qcard-kebab-btn"');
+    expect(client).toContain('aria-expanded={menuFor === tk.id}');
+    expect(client).toContain('<div className="pos-qcard-menu" id={`pos-qcard-menu-${tk.id}`}>');
+    expect(client).toContain('className="pos-qcard-menu-item is-danger"');
     expect(client).toContain('{editingId === tk.id ? (\n          <PickupCardEdit');
     expect(client).not.toContain('PickupTakeOffSheet');
   });
@@ -47,7 +49,7 @@ describe('Edit an unpaid Pickup order on its own card', () => {
 
   it('44px − and + in the editor, and a 44px + and ⋮ beside Take payment', () => {
     expect(css).toMatch(/\.pos-qedit-btn \{[^}]*width: 2\.75rem;[^}]*height: 2\.75rem;/);
-    expect(css).toMatch(/\.pos-qcard-plus-btn,\s*\.pos-qcard-kebab \.kebab-btn\.mnu-kebab-btn \{[^}]*width: 2\.75rem;[^}]*height: 2\.75rem;/);
+    expect(css).toMatch(/\.pos-qcard-plus-btn,\s*\.pos-qcard-kebab-btn \{[^}]*width: 2\.75rem;[^}]*height: 2\.75rem;/);
   });
 
   it('says every word in English and Hindi', () => {

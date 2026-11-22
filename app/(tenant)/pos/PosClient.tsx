@@ -643,8 +643,12 @@ export function PosClient({
    * Owner, 17 Nov 2026 — at a restaurant with tables on, the Queue holds only takeaway and delivery (dine-in lives on the
    * table map), so it is called Pickup there. Tables off — and every salon and shop — it stays the Queue.
    */
-  const tablesOn = Boolean(session?.branches?.find((b) => b.id === location)?.tableOrders);
-  const qk = <K extends string>(key: K): K | `${K}Pickup` => (tablesOn ? `${key}Pickup` : key);
+  /*
+   * Owner, 2026-11-23 — a restaurant keeps the one-row bar, Pickup under Takeaway and Return in the ⋮ with its tables
+   * switched off too; only Dine-in goes (PayFlow's `typesHere`). Salons and shops keep their Sell · Queue · Return.
+   */
+  const typesHere = Boolean(session?.areas?.tables);
+  const qk = <K extends string>(key: K): K | `${K}Pickup` => (typesHere ? `${key}Pickup` : key);
   const paymentQr =
     branch.branches.find((b) => b.id === location)?.paymentQrUrl ??
     session?.branches?.find((b) => b.id === location)?.paymentQrUrl ??
@@ -680,6 +684,8 @@ export function PosClient({
    * (the server says the same); a counter still has Add items and Cancel order.
    */
   const [editingId, setEditingId] = useState<string | null>(null);
+  /** Owner, 2026-11-23 — the card whose ⋮ is open; its Edit and Cancel order show inside that card. */
+  const [menuFor, setMenuFor] = useState<string | null>(null);
   /*
    * Owner, 2026-11-23 — two of the till's settings are words in its ⋮: the printer on a phone (the bar has no room for its
    * button below 760px, and on the paid screen it stood alone on a row of its own), and whether a payment is said out loud.
@@ -1385,7 +1391,7 @@ export function PosClient({
    * Delivery (drawn into `typeSlot`), the Kitchen, and a ⋮ for Return. Pickup is under Takeaway. Not for a waiter (who has
    * no switch) and not in full screen (which keeps its own header).
    */
-  const tablesBar = tablesOn && !waiter && !fullScreen;
+  const tablesBar = typesHere && !waiter && !fullScreen;
   const [typeSlot, setTypeSlot] = useState<HTMLDivElement | null>(null);
   const [tillType, setTillType] = useState<TillOrderType | null>(null);
   const pickupCount = orderQueue ? preparingTokens.length : null;
@@ -1505,7 +1511,7 @@ export function PosClient({
             <div className="pos-qcard-actions">
               {/*
                 Owner, 2026-11-23 — one row: Take payment, then + (Add items) beside it, and Edit and Cancel order in ⋮ — the card's
-                rarer actions as words in a list (the Menu's own ⋮, MenuKebab), instead of two more rows of buttons on every card.
+                rarer actions as words, opened inside this card, instead of two more rows of buttons on every card.
                 Owner, 9 Nov 2026 — only an order still waiting for payment can grow or be called off here; a paid one is a return.
               */}
               <div className="pos-qcard-actions-row">
@@ -1532,34 +1538,52 @@ export function PosClient({
                     >
                       <IconPlus />
                     </button>
-                    <MenuKebab
-                      className="pos-qcard-kebab"
-                      label={t('moreFor', { token: tk.tokenLabel })}
-                      items={[
-                        ...(mayEdit
-                          ? [
-                              {
-                                label: t('editOrder'),
-                                onSelect: () => {
-                                  setQueueNote(null);
-                                  setEditingId(tk.id);
-                                },
-                              },
-                            ]
-                          : []),
-                        {
-                          label: t('cancelOrder'),
-                          danger: true,
-                          onSelect: () => {
-                            setCancelError(null);
-                            setCancelTarget(tk);
-                          },
-                        },
-                      ]}
-                    />
+                    <button
+                      type="button"
+                      className="btn pos-qcard-kebab-btn"
+                      aria-label={t('moreFor', { token: tk.tokenLabel })}
+                      title={t('moreFor', { token: tk.tokenLabel })}
+                      aria-expanded={menuFor === tk.id}
+                      aria-controls={`pos-qcard-menu-${tk.id}`}
+                      onClick={() => setMenuFor((open) => (open === tk.id ? null : tk.id))}
+                    >
+                      <span aria-hidden="true">⋮</span>
+                    </button>
                   </>
                 ) : null}
               </div>
+              {/*
+                Owner, 2026-11-23 — the ⋮'s choices open INSIDE the card, under its buttons: a menu floating over the card below read
+                as that card's, and a "Cancel order" there could be tapped for the wrong order.
+              */}
+              {menuFor === tk.id && tk.paymentPending && tk.channel === 'counter' ? (
+                <div className="pos-qcard-menu" id={`pos-qcard-menu-${tk.id}`}>
+                  {mayEdit ? (
+                    <button
+                      type="button"
+                      className="pos-qcard-menu-item"
+                      onClick={() => {
+                        setMenuFor(null);
+                        setQueueNote(null);
+                        setEditingId(tk.id);
+                      }}
+                    >
+                      {t('editOrder')}
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="pos-qcard-menu-item is-danger"
+                    onClick={() => {
+                      setMenuFor(null);
+                      setCancelError(null);
+                      setCancelTarget(tk);
+                    }}
+                  >
+                    {t('cancelOrder')}
+                  </button>
+                </div>
+              ) : null}
             </div>
           ) : (
             <button

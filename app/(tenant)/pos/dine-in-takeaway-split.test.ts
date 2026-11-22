@@ -33,7 +33,7 @@ describe('GRW-745 — what kind of order it is', () => {
 describe('GRW-745 — the till', () => {
   it('FR-01 — one switch, at the top of the till: never inside the bill panel', () => {
     expect(flow).toContain('{typeRow}\n        <div className="pf-wide-grid">');
-    expect(flow).toContain('{tablesHere ? (atTable ? tableStrip : orderHead) : fromRow}');
+    expect(flow).toContain('{typesHere ? (atTable ? tableStrip : orderHead) : fromRow}');
     expect(flow).not.toContain('atTable ? tableStrip : typeRow');
   });
 
@@ -67,7 +67,7 @@ describe('GRW-745 — Home and Return', () => {
 
   it('Delivery always has an app, the number sits in the bill, and the switch keeps its width (owner, "alignment issue")', () => {
     // ?type=delivery, a kept tab after a sale, or apps loading late: the first app is chosen, never "Delivery · Delivery".
-    expect(flow).toContain("if (tablesHere && orderTab === 'delivery' && !apps.includes(orderFrom) && firstApp) setOrderFrom(firstApp);");
+    expect(flow).toContain("if (typesHere && orderTab === 'delivery' && !apps.includes(orderFrom) && firstApp) setOrderFrom(firstApp);");
     // A held bill brings its own type back with it.
     expect(flow).toContain("if (found.from && apps.includes(found.from)) setOrderTab('delivery');");
     // The order number is the bill's, so the top line holds only choices and stays one line.

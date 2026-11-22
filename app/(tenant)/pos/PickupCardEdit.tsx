@@ -40,7 +40,12 @@ export default function PickupCardEdit({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const rows = token.items;
+  /*
+   * QA 2026-11-23 — only the dishes. A business that adds GST on top has a GST row on the card, with no − or +: counted here it kept
+   * "nothing left" from ever being true (an order of only GST could be saved) and its old amount in "Now". The server works the GST
+   * out again on Save, and the message after Save says the order's real total.
+   */
+  const rows = token.items.filter((i) => Boolean(i.productId));
   const unit = (i: PosTokenItem) => (i.qty > 0 ? i.paidMinor / i.qty : (i.priceMinor ?? 0));
   const countOf = (i: PosTokenItem) => (editable(i) ? (want[keyOf(i)] ?? i.qty) : i.qty);
   const amountOf = (i: PosTokenItem) => {
