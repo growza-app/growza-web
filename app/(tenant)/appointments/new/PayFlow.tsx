@@ -2253,7 +2253,8 @@ export function PayFlow({
         {payTiles}
         {productsOnly && !fromApp && !splitting && !firstWay ? (
           <div className="pos-charge-actions pos-charge-actions-mobile">
-            {onOpenQueue ? (
+            {/* Owner, 2026-11-22 — gone once "Take payment now" is tapped: the desk has chosen to be paid upfront. */}
+            {onOpenQueue && !payNowNoGuest ? (
               <button
                 type="button"
                 className="btn pos-charge-pending"
@@ -2982,7 +2983,8 @@ export function PayFlow({
                 ) : null}
                 {!fromApp && !splitting && !firstWay ? (
                   <>
-                    {onOpenQueue ? (
+                    {/* Owner, 2026-11-22 — gone once "Take payment now" is tapped: the desk has chosen to be paid upfront. */}
+                    {onOpenQueue && !payNowNoGuest ? (
                       <button
                         type="button"
                         className="btn pos-charge-pending"

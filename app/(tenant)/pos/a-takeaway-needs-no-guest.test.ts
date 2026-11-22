@@ -64,6 +64,10 @@ describe('Owner, 2026-11-22 — "Take payment now" at the till, under Keep payme
     expect(payFlow.match(/setClient\(\{ kind: 'none' \}\);\n\s+setPayNowNoGuest\(false\);/g)?.length).toBeGreaterThanOrEqual(2);
   });
 
+  it('once tapped, Keep payment pending goes: the desk has chosen to be paid upfront (both layouts)', () => {
+    expect(payFlow.match(/\{onOpenQueue && !payNowNoGuest \? \(/g)).toHaveLength(2);
+  });
+
   it('is a full-width 44px target', () => {
     expect(posCss).toMatch(/\.pos-charge-paynow \{[^}]*width: 100%;[^}]*min-height: 2\.75rem;/);
   });
