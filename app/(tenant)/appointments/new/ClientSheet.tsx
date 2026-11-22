@@ -315,7 +315,8 @@ export function ClientSheet({
             <div className="field">
               <label htmlFor={NAME_ID}>
                 {t('nameOptional')}
-                {nameStaysOnBill ? <span className="field-optional">{tc('optional')}</span> : null}
+                {/* Seen, not read out: the box is not `required`, and its name stays "Name" (the e2e suite finds it by that). */}
+                {nameStaysOnBill ? <span className="field-optional" aria-hidden="true">{tc('optional')}</span> : null}
               </label>
               <input
                 id={NAME_ID}
