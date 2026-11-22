@@ -3,6 +3,7 @@
 import { deltaLabel, deltaTone, periodDeltaPct } from './day-delta';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api } from '../../lib/api';
+import { ORDERS_CHANGED_EVENT, ORDERS_CHANGED_KEY, ORDERS_STALE_MS } from '../../lib/orders-changed';
 import { paidCustomers } from '../../lib/paid-customers';
 import type {
   AttendanceRegister,
@@ -358,6 +359,55 @@ export function ShopHome({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phone, phonePeriod, branch, canPhoneRange, timezone, phoneRetry]);
+
+  /*
+   * Owner, 2026-11-21 ("paid it and Home still said Payment pending" — "don't put too much query on the database"). Home's
+   * orders are read again ONLY when they may have changed: at once when this browser changed an order (orders-changed.ts),
+   * and when Home is looked at again after a minute away (another device's change). Never on a timer. One read: the orders
+   * alone, not the figures around them.
+   */
+  const ordersReadAt = useRef(0);
+  useEffect(() => {
+    if (!can('/orders')) return;
+    ordersReadAt.current = Date.now();
+    let wait: ReturnType<typeof setTimeout> | undefined;
+    let gone = false;
+    const reread = () => {
+      clearTimeout(wait);
+      // A burst (pay, then hand over) is one read.
+      wait = setTimeout(() => {
+        ordersReadAt.current = Date.now();
+        api
+          .orders({ pageSize: 100, location: branch })
+          .then((res) => {
+            if (gone) return;
+            setRecentOrders(res.rows.slice(0, 6));
+            setTodayOrderRows(res.rows);
+            setDeskWeek((prev) => (prev ? { rows: res.rows, total: res.total } : prev));
+          })
+          .catch(() => {});
+      }, 600);
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === ORDERS_CHANGED_KEY) reread();
+    };
+    const onShown = () => {
+      if (document.visibilityState === 'visible' && Date.now() - ordersReadAt.current > ORDERS_STALE_MS) reread();
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener(ORDERS_CHANGED_EVENT, reread);
+    document.addEventListener('visibilitychange', onShown);
+    window.addEventListener('focus', onShown);
+    return () => {
+      gone = true;
+      clearTimeout(wait);
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(ORDERS_CHANGED_EVENT, reread);
+      document.removeEventListener('visibilitychange', onShown);
+      window.removeEventListener('focus', onShown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [branch]);
 
   /*
    * Jira GRW-611 review — no Reports tile. Every report there is built from bookings, so `/reports` answers a shop
