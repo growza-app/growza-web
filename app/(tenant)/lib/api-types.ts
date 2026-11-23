@@ -2340,6 +2340,8 @@ export interface ProfitReportPage {
     uncostedItems: number;
     /** Jira GRW-724 — service charge guests paid, apart from the food. Absent from an older API. */
     serviceChargeMinor?: number;
+    /** Jira GRW-753 — what dishes cooked and then taken off the bill cost: food thrown away, already in the cost. Absent from an older API. */
+    thrownAwayCostMinor?: number;
   };
   rows: Array<{
     id: string;

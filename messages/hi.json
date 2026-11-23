@@ -6021,6 +6021,7 @@
     "token": "टोकन {n}",
     "profit": {
       "serviceCharge": "मेहमानों ने सर्विस चार्ज दिया (ऊपर की डिश में शामिल नहीं): {value}",
+      "thrownAway": "रद्द हुई डिश का फेंका गया खाना: {value}",
       "title": "मुनाफ़ा",
       "profitLabel": "मुनाफ़ा",
       "marginLine": "बिक्री का {margin}%",

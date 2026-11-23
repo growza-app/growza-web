@@ -6021,6 +6021,7 @@
     "token": "Token {n}",
     "profit": {
       "serviceCharge": "Service charge guests paid, not in the dishes above: {value}",
+      "thrownAway": "Food thrown away from cancelled dishes: {value}",
       "title": "Profit",
       "profitLabel": "Profit",
       "marginLine": "{margin}% of sales",
