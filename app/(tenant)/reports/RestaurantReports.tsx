@@ -19,7 +19,10 @@ import { formatMoney, intlLocale } from '../lib/format';
 import { useBranch } from '../components/BranchProvider';
 import { useMayOpen, useSession } from '../components/SessionProvider';
 import { ReportDates } from './ReportDates';
+import { RESTAURANT_TABS, type RestaurantTab } from './restaurant-tabs';
 import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../lib/report-dates';
+
+export type { RestaurantTab };
 
 /**
  * Jira GRW-758 — the restaurant's Reports, in simple tabs: Overview · Sales · Items · Inventory.
@@ -33,8 +36,6 @@ import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } fr
  * The API sends figures only; every word is written here, in English or Hindi.
  */
 
-export type RestaurantTab = 'overview' | 'sales' | 'items' | 'inventory' | 'tips';
-export const RESTAURANT_TABS: readonly RestaurantTab[] = ['overview', 'sales', 'items', 'inventory', 'tips'];
 
 type Money = (minor: number | null) => string;
 

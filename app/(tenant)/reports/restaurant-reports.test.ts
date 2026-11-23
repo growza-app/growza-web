@@ -262,3 +262,13 @@ describe('Jira GRW-760 — the kitchen’s cost tips', () => {
     expect(JSON.stringify(en.restaurantReports.tips)).not.toMatch(/variance|cogs/i);
   });
 });
+
+describe('the server page and the client component', () => {
+  it('the page reads the tab list from a plain module — a value from a "use client" file is only a reference on the server', async () => {
+    const { readFileSync } = await import('node:fs');
+    const page = readFileSync(new URL('./page.tsx', import.meta.url), 'utf8');
+    expect(page).toContain("import { RESTAURANT_TABS, type RestaurantTab } from './restaurant-tabs';");
+    expect(page).toMatch(/import \{ RestaurantReports \} from '\.\/RestaurantReports';/);
+    expect(readFileSync(new URL('./restaurant-tabs.ts', import.meta.url), 'utf8')).not.toMatch(/^\s*['"]use client['"]/m);
+  });
+});

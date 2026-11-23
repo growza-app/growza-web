@@ -21,7 +21,8 @@ import { gridCanSee } from '../lib/nav-policy';
 import { loadErrorKind, type LoadErrorKind } from '../lib/load-error';
 import { ReportsClient, type TabPayload } from './ReportsClient';
 import { CounterReport } from './CounterReport';
-import { RESTAURANT_TABS, RestaurantReports, type RestaurantTab } from './RestaurantReports';
+import { RestaurantReports } from './RestaurantReports';
+import { RESTAURANT_TABS, type RestaurantTab } from './restaurant-tabs';
 import { DiaryReport } from './DiaryReport';
 
 /**
