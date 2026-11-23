@@ -3072,13 +3072,14 @@
     "nothingTitle": "Nothing sold in this period",
     "nothingBody": "Take an order and the figures start here.",
     "took": {
-      "label": "You took in",
+      "label": "Sales",
       "bills": "{n, plural, one {# order} other {# orders}}",
       "average": "{amount} an order",
       "more": "{amount} more than the period before",
       "less": "{amount} less than the period before",
       "same": "The same as the period before",
-      "noPrior": "Nothing to compare with yet"
+      "noPrior": "Nothing to compare with yet",
+      "moneyIn": "Money in {amount} (with GST and service charge)"
     },
     "earners": {
       "title": "What your money comes from",

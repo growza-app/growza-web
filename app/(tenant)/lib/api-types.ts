@@ -2167,6 +2167,14 @@ export interface CounterReportPage {
     averageBillMinor: number | null;
     previousAverageBillMinor: number | null;
     byDay: CounterDay[];
+    /**
+     * Jira GRW-752 — `totalMinor` is Sales: dishes only, before GST, no service charge. This is what reached the drawer,
+     * UPI or card for counter bills (GST and service charge included, refunds taken off). Absent from an API older than
+     * the dashboard during a release.
+     */
+    moneyInMinor?: string;
+    /** Dishes that left the kitchen and stayed gone. */
+    dishesSold?: number;
   };
   earners: {
     rows: CounterItem[];

@@ -86,7 +86,8 @@ describe('the four cards say something, in English', () => {
   const out = text(render('en'));
 
   it('leads with the money and how it compares', () => {
-    expect(out).toContain('You took in');
+    // Jira GRW-752 — the big number is Sales: dishes only, before GST, no service charge.
+    expect(out).toContain('Sales');
     expect(out).toContain('₹27,212');
     expect(out).toContain('₹3,940 more than the period before');
     expect(out).toContain('30 orders');
@@ -145,7 +146,7 @@ describe('the same cards in Hindi', () => {
   });
 
   it('leaves no English sentence behind — the payload carries none to leak', () => {
-    for (const phrase of ['You took in', 'What changed', 'of everything you earn', 'Your rush is', 'weakest day']) {
+    for (const phrase of ['Money in', 'What changed', 'of everything you earn', 'Your rush is', 'weakest day']) {
       expect(out).not.toContain(phrase);
     }
   });
@@ -166,7 +167,7 @@ describe('what it does when there is nothing to say', () => {
     };
     const out = text(render('en', quiet));
     expect(out).toContain('Nothing sold in this period');
-    expect(out).not.toContain('You took in');
+    expect(out).not.toContain('₹27,212');
     expect(out).not.toContain('What changed');
   });
 
@@ -278,5 +279,27 @@ describe('the hour chart keeps to opening hours (owner, 2026-11-14)', () => {
 
   it('says nothing about closed hours when every sale was inside them', () => {
     expect(text(render('en', payload, { fromHour: 10, toHour: 23 }))).not.toContain('outside your opening hours');
+  });
+});
+
+describe('Jira GRW-752 — Money in is said once, under Sales, only when it is a different number', () => {
+  const withMoneyIn = (moneyInMinor: string | undefined): CounterReportPage => ({ ...payload, takings: { ...payload.takings, moneyInMinor } });
+
+  it('names what reached the drawer with GST and the service charge', () => {
+    expect(text(render('en', withMoneyIn('2866100')))).toContain('Money in ₹28,661 (with GST and service charge)');
+  });
+
+  it('says it in Hindi too', () => {
+    const out = text(render('hi', withMoneyIn('2866100')));
+    expect(out).toContain('बिक्री');
+    expect(out).toContain('कुल आया पैसा ₹28,661 (GST और सर्विस चार्ज मिलाकर)');
+  });
+
+  it('is not shown when it is the same figure as Sales — the same number twice is noise', () => {
+    expect(text(render('en', withMoneyIn('2721200')))).not.toContain('Money in');
+  });
+
+  it('is not shown by an API that does not send it yet', () => {
+    expect(text(render('en', withMoneyIn(undefined)))).not.toContain('Money in');
   });
 });
