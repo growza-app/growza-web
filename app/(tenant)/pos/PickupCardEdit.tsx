@@ -42,8 +42,13 @@ export default function PickupCardEdit({
    */
   const [want, setWant] = useState<Record<string, number>>({});
   const [base, setBase] = useState<Record<string, number>>({});
-  const [askCooked, setAskCooked] = useState(false);
-  const [cooked, setCooked] = useState<boolean | undefined>(undefined);
+  /*
+   * QA 2026-11-23 (finding 4) — "already cooked?" is asked of ONE dish, by name, and answered for that dish alone: two dishes taken off in
+   * one Save may be one cooked and one not, and a single unnamed answer sent the wrong one's ingredients back to (or out of) stock.
+   */
+  const [cookedOf, setCookedOf] = useState<Record<string, boolean>>({});
+  const [asking, setAsking] = useState<{ key: string; name: string } | null>(null);
+  const waitingForAnswer = asking !== null && cookedOf[asking.key] === undefined;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /*
@@ -81,7 +86,7 @@ export default function PickupCardEdit({
   };
 
   const save = async () => {
-    if (!changed || nothingLeft || busy || (askCooked && cooked === undefined)) return;
+    if (!changed || nothingLeft || busy || waitingForAnswer) return;
     // A dish tapped here that another till changed since (or took off whole): nothing is saved; it shows what the order has now.
     const moved = Object.keys(want).filter((k) => {
       const now = rows.find((i) => keyOf(i) === k);
@@ -100,16 +105,19 @@ export default function PickupCardEdit({
     let wrote = false;
     // What the order holds after each call that went through, so a Save stopped part way knows where it stands.
     const after = { ...base };
+    /** The dish being taken off when the server asked: the question names it. */
+    let doing: PosTokenItem | null = null;
     try {
       const reason = t('editReason');
       for (const i of rows) {
         if (!touched(i)) continue;
         let off = i.qty - countOf(i);
+        doing = i;
         // Newest line first: what was added last comes off first.
         for (const line of [...(i.lines ?? [])].reverse()) {
           if (off <= 0) break;
           const take = Math.min(off, line.qty);
-          await api.cancelBillItems(token.id, [line.id], reason, askCooked ? cooked : undefined, { qty: take, seenQty: line.qty });
+          await api.cancelBillItems(token.id, [line.id], reason, cookedOf[keyOf(i)], { qty: take, seenQty: line.qty });
           wrote = true;
           off -= take;
           after[keyOf(i)] = (after[keyOf(i)] ?? i.qty) - take;
@@ -128,8 +136,8 @@ export default function PickupCardEdit({
       }
       onSaved(t('editSaved', { token: token.tokenLabel, amount: formatMoney(String(total)) }));
     } catch (e) {
-      if (e instanceof ApiError && e.code === 'cooked_unknown') {
-        setAskCooked(true);
+      if (e instanceof ApiError && e.code === 'cooked_unknown' && doing) {
+        setAsking({ key: keyOf(doing), name: doing.name });
       } else {
         setError(e instanceof ApiError ? e.message : t('editFailed'));
       }
@@ -180,14 +188,14 @@ export default function PickupCardEdit({
           {t('editEverythingOff')}
         </p>
       ) : null}
-      {askCooked ? (
+      {asking ? (
         <fieldset className="tb-cooked">
-          <legend className="field-hint">{tt('cookedQuestion')}</legend>
+          <legend className="field-hint">{t('editCookedQuestion', { name: asking.name })}</legend>
           <div className="tb-cooked-pair">
-            <button type="button" className={`btn btn-ghost ${cooked === false ? 'is-on' : ''}`} aria-pressed={cooked === false} onClick={() => setCooked(false)}>
+            <button type="button" className={`btn btn-ghost ${cookedOf[asking.key] === false ? 'is-on' : ''}`} aria-pressed={cookedOf[asking.key] === false} onClick={() => setCookedOf((c) => ({ ...c, [asking.key]: false }))}>
               {tt('cookedNo')}
             </button>
-            <button type="button" className={`btn btn-ghost ${cooked === true ? 'is-on' : ''}`} aria-pressed={cooked === true} onClick={() => setCooked(true)}>
+            <button type="button" className={`btn btn-ghost ${cookedOf[asking.key] === true ? 'is-on' : ''}`} aria-pressed={cookedOf[asking.key] === true} onClick={() => setCookedOf((c) => ({ ...c, [asking.key]: true }))}>
               {tt('cookedYes')}
             </button>
           </div>
@@ -200,7 +208,7 @@ export default function PickupCardEdit({
         </p>
       ) : null}
       <div className="pos-qedit-bar">
-        <button type="button" className="btn btn-primary" disabled={!changed || nothingLeft || busy || (askCooked && cooked === undefined)} onClick={() => void save()}>
+        <button type="button" className="btn btn-primary" disabled={!changed || nothingLeft || busy || waitingForAnswer} onClick={() => void save()}>
           {t('editSave')}
         </button>
         <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose}>

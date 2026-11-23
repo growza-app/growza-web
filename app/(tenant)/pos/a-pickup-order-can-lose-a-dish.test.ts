@@ -35,14 +35,14 @@ describe('Edit an unpaid Pickup order on its own card', () => {
   });
 
   it('fewer is taken off line by line with the qty it saw; more is added; no reason is asked', () => {
-    expect(edit).toContain("await api.cancelBillItems(token.id, [line.id], reason, askCooked ? cooked : undefined, { qty: take, seenQty: line.qty });");
+    expect(edit).toContain("await api.cancelBillItems(token.id, [line.id], reason, cookedOf[keyOf(i)], { qty: take, seenQty: line.qty });");
     expect(edit).toContain('(await api.addToPendingCounterSale(token.id, more)).totalMinor');
     expect(edit).toContain("const reason = t('editReason');");
     expect(api).toContain('...(some ? { qty: some.qty, seenQty: some.seenQty } : {})');
   });
 
   it('asks "already cooked?" only when the server says so, keeps what was asked for, and never saves an empty order', () => {
-    expect(edit).toContain("if (e instanceof ApiError && e.code === 'cooked_unknown') {");
+    expect(edit).toContain("if (e instanceof ApiError && e.code === 'cooked_unknown' && doing) {");
     expect(edit).toContain('if (wrote || (e instanceof ApiError && e.code === \'line_changed\')) await onChanged();');
     expect(edit).toContain('const nothingLeft = rows.every((i) => countOf(i) === 0);');
   });
@@ -84,5 +84,16 @@ describe('QA 2026-11-23, finding 2 — one more of a dish with choices', () => {
     expect(read('./pos-helpers.ts')).toContain('hasAddons: p.hasAddons === true,');
     expect(en.pos.editMoreHasChoices).toContain('Add items');
     expect(hi.pos.editMoreHasChoices).toContain(hi.pos.addItems);
+  });
+});
+
+describe('QA 2026-11-23, finding 4 — "already cooked?" names the dish, and is answered for that dish alone', () => {
+  it('the question says which dish; its answer goes only with that dish\'s take-off', () => {
+    expect(edit).toContain('setAsking({ key: keyOf(doing), name: doing.name });');
+    expect(edit).toContain("{t('editCookedQuestion', { name: asking.name })}");
+    expect(edit).toContain('setCookedOf((c) => ({ ...c, [asking.key]: true }))');
+    expect(edit).toContain('const waitingForAnswer = asking !== null && cookedOf[asking.key] === undefined;');
+    expect(en.pos.editCookedQuestion).toBe('Was the {name} already cooked?');
+    expect(hi.pos.editCookedQuestion).toContain('{name}');
   });
 });
