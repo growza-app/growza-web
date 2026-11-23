@@ -2381,6 +2381,8 @@
     }
   },
   "newVisit": {
+    "sendBillHeading": "बिल WhatsApp पर भेजें",
+    "sendShort": "भेजें",
     "title": "वॉक-इन",
     "pageTitle": "नई बुकिंग",
     "atBranch": "{name} पर",
@@ -4991,6 +4993,7 @@
     "settleFailed": "भुगतान सेव नहीं हो सका। कृपया फिर कोशिश करें।",
     "backToQueueDone": "कतार पर वापस जाएँ",
     "backToTablesDone": "टेबल पर वापस जाएँ",
+    "backToPickupWaiting": "पिकअप पर वापस जाएँ ({count})",
     "backToQueueDonePickup": "पिकअप पर वापस जाएँ",
     "takePayment": "पेमेंट लें · {token}",
     "addItems": "और जोड़ें",
@@ -5024,6 +5027,7 @@
     "newOrderTab": "नया ऑर्डर",
     "pickupTab": "पिकअप · {count}",
     "shortcutsTitle": "कीबोर्ड शॉर्टकट",
+    "pickupTabWord": "पिकअप",
     "takeawayViews": "नया पैक ऑर्डर या पिकअप"
   },
   "sales": {
@@ -6180,6 +6184,10 @@
     }
   },
   "print": {
+    "printBoth": "बिल + रसोई पर्ची प्रिंट करें",
+    "morePrint": "प्रिंट के और विकल्प",
+    "billOnly": "सिर्फ़ बिल",
+    "kotOnly": "सिर्फ़ रसोई पर्ची",
     "kotTitle": "रसोई पर्ची",
     "kotAdded": "ऑर्डर में जोड़ा गया",
     "kotCancelled": "रद्द",

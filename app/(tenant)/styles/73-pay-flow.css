@@ -1012,6 +1012,19 @@
     align-self: end;
   }
 
+  /*
+   * Owner, 2026-11-23 — on a till "Send the bill on WhatsApp" comes before the bill in the page (a phone shows it first);
+   * here it heads the right column's send row, and "The bill" keeps its place over the bill, on the row under the amount.
+   */
+  .pf-done-page.is-till .wi-receipt-share > .wi-section-label:not(.wi-send-label) {
+    grid-row: 2;
+  }
+
+  .pf-done-page .wi-receipt-share > .wi-section-label.wi-send-label {
+    grid-column: 2;
+    margin-top: 0;
+  }
+
   .pf-done-page .wi-receipt-share > .wi-receipt-paper {
     grid-column: 1;
     grid-row: 3 / span 12;

@@ -2283,6 +2283,11 @@
 }
 
 /* While items are added to an order (PosClient): not shown and not read out, but its room kept, so the bar's right side does not move. */
+/* A paid screen (PosClient's `paidScreen`): the whole bar steps aside; it stays mounted so the till's switch keeps its slot. */
+.pos-shell > .pos-bar-types[hidden] {
+  display: none;
+}
+
 .pos-bar-typeslot[hidden] {
   visibility: hidden;
 }
@@ -2312,25 +2317,33 @@
 
 /*
  * New order / Pickup is the level under the type switch, so it must not look like it (owner, 2026-11-22): words on a
- * hairline, the chosen one underlined in the accent — not a second grey tray.
+ * line, the chosen one underlined in the accent — not a second grey tray.
+ * Owner, 2026-11-23 ("this is not clearly visible on mobile and desktop"; then "keep the size same but add button color
+ * which is selected") — the chosen one was told apart by a 2px line alone, on a line at 1.12:1 against the page. Same
+ * size as before; the chosen one is now filled in the soft green with a 3px underline, the line can be seen, and the
+ * waiting count is the amber pill.
  */
 .pos-pickup-switch {
   display: flex;
   gap: 0;
   margin: 0 0 var(--sp-3);
   padding: 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid color-mix(in srgb, var(--muted) 45%, var(--border));
   border-radius: 0;
   background: transparent;
 }
 
 .pos-pickup-switch .page-tab {
+  display: inline-flex;
   flex: 1 1 0%;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
   min-height: 2.75rem;
   margin-bottom: -1px;
   border: 0;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   background: transparent;
   box-shadow: none;
   color: var(--muted);
@@ -2339,10 +2352,25 @@
 
 .pos-pickup-switch .page-tab.active {
   border-bottom-color: var(--accent-deep);
-  background: transparent;
+  background: var(--accent-soft);
   box-shadow: none;
-  color: var(--text);
+  color: var(--accent-ink);
   font-weight: 600;
+}
+
+.pos-pickup-switch .page-tab:not(.active):hover {
+  color: var(--text);
+}
+
+.pos-pickup-switch .page-tab:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -2px;
+}
+
+.pos-pickup-switch .pos-tab-badge {
+  min-width: 1.5rem;
+  height: 1.5rem;
+  font-size: var(--fs-2, 0.8125rem);
 }
 
 @media (max-width: 860px) {

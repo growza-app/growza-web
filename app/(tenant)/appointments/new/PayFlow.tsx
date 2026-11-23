@@ -484,6 +484,17 @@ export function PayFlow({
   /** What Next asked for and did not get. Null until Next is tapped; each half clears itself once answered. */
   const [missing, setMissing] = useState<{ client: boolean; service: boolean } | null>(null);
   const [sale, setSale] = useState<Sale | null>(null);
+  /*
+   * Owner, 2026-11-23 — "at the final screen we don't need this and New order and Pickup", then "hide it there too" (How did
+   * they pay?): the switch is drawn only while the dishes are picked, so on these two screens the POS bar steps aside.
+   */
+  const reportAside = usePosTypeBar()?.onBarAside;
+  const aside = step === 'done' && sale !== null ? 'paid' : step === 'how' || step === 'qr' ? 'paying' : null;
+  useEffect(() => {
+    if (!reportAside || addingTo || token) return;
+    reportAside(aside);
+    return () => reportAside(null);
+  }, [reportAside, aside, addingTo, token]);
   const [sound, setSound] = useState(true);
   const [attemptKey, setAttemptKey] = useState(newAttemptKey);
   const tokenFilled = useRef(false);

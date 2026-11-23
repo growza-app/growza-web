@@ -1393,21 +1393,34 @@ export function PosClient({
    */
   const tablesBar = typesHere && !waiter && !fullScreen;
   const [typeSlot, setTypeSlot] = useState<HTMLDivElement | null>(null);
+  /** The till's own paid screen, or its "How did they pay?", is up (PayFlow says so through the bar's context). */
+  const [sellAside, setSellAside] = useState<'paid' | 'paying' | null>(null);
   const [tillType, setTillType] = useState<TillOrderType | null>(null);
   const pickupCount = orderQueue ? preparingTokens.length : null;
   const typeBar = useMemo<PosTypeBar | null>(
-    () => (tablesBar ? { slot: typeSlot, mode, pickupCount, toSell: closeReturn, onTypeShown: setTillType } : null),
+    () => (tablesBar ? { slot: typeSlot, mode, pickupCount, toSell: closeReturn, onTypeShown: setTillType, onBarAside: setSellAside } : null),
     [tablesBar, typeSlot, mode, pickupCount, closeReturn],
   );
   /** New order / Pickup, under Takeaway: shown while the till is on Takeaway, and in Pickup itself. */
+  /*
+   * Owner, 2026-11-23 — "at the final screen we don't need this and New order and Pickup": on a paid screen the bar (the
+   * type switch was already gone from it: only the Kitchen and ⋮ were left) and New order / Pickup step aside. Next guest,
+   * Back to pickup and Done are the ways on from there; the bar is kept mounted (hidden) so the till keeps its switch's slot.
+   */
+  const paidScreen =
+    tablesBar && (mode === 'queue' || payingTable !== null ? settledReceipt !== null : mode === 'sell' && sellAside === 'paid' && addingToToken === null);
+  // "How did they pay?" on the till: the bar would hold only the Kitchen and ⋮ — it steps aside too; New order / Pickup stay.
+  const barAside = paidScreen || (tablesBar && mode === 'sell' && sellAside === 'paying' && addingToToken === null);
   const pickupSwitch =
-    tablesBar && orderQueue && (mode === 'queue' || (mode === 'sell' && tillType === 'takeaway')) && addingToToken === null && payingTable === null ? (
+    tablesBar && !paidScreen && orderQueue && (mode === 'queue' || (mode === 'sell' && tillType === 'takeaway')) && addingToToken === null && payingTable === null ? (
       <div className="page-tabs pos-pickup-switch" role="tablist" aria-label={t('takeawayViews')}>
         <button type="button" role="tab" aria-selected={mode === 'sell'} className={`page-tab${mode === 'sell' ? ' active' : ''}`} onClick={closeReturn}>
           {t('newOrderTab')}
         </button>
         <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab${mode === 'queue' ? ' active' : ''}`} onClick={() => openQueue()}>
-          {t('pickupTab', { count: preparingTokens.length })}
+          {/* Owner, 2026-11-23 ("not clearly visible") — the count is the amber pill the Sell / Queue tabs use, not "· 3" in the word. */}
+          {t('pickupTabWord')}
+          <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
         </button>
       </div>
     ) : null;
@@ -1617,7 +1630,7 @@ export function PosClient({
           </div>
         </div>
       ) : tablesBar ? (
-        <div className="pos-bar pos-bar-types">
+        <div className="pos-bar pos-bar-types" hidden={barAside}>
           {/* The till draws its Dine-in · Takeaway · Delivery switch here (PayFlow, through PosTypeBarContext). */}
           {/*
             Owner, 2026-11-23 — while items are being added to an order its type is already settled, so the switch is not
@@ -1904,7 +1917,14 @@ export function PosClient({
             summary={settledReceipt.summary}
             bill={settledReceipt.bill}
             phone={settledReceipt.phone}
-            nextLabel={payingTable !== null ? t('backToTablesDone') : t(qk('backToQueueDone'))}
+            nextLabel={
+              payingTable !== null
+                ? t('backToTablesDone')
+                : // With the bar and tabs out of the way, the orders still waiting are said on the way back to them.
+                  typesHere && preparingTokens.length > 0
+                  ? t('backToPickupWaiting', { count: preparingTokens.length })
+                  : t(qk('backToQueueDone'))
+            }
             onNextCustomer={() => {
               setSettledReceipt(null);
               setPayingTable(null);
@@ -1971,7 +1991,8 @@ export function PosClient({
                 <h2 className="pos-queue-col-title">
                   <span className="pos-queue-dot is-preparing" aria-hidden="true" />
                   {t(qk('preparingColTitle'))}
-                  <span className="pos-queue-col-count">{preparingTokens.length}</span>
+                  {/* With the one-row bar the Pickup tab right above already carries this number: said once, not twice. */}
+                  {tablesBar ? null : <span className="pos-queue-col-count">{preparingTokens.length}</span>}
                 </h2>
                 {/* With the one-row bar, New order is the switch right above: not a second button for it here. */}
                 {tablesBar ? null : (

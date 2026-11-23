@@ -26,6 +26,7 @@ import { billTicket, kotTicket, type BillData, type Ticket } from '../lib/print/
 import { useSession } from './SessionProvider';
 import { useBranch } from './BranchProvider';
 import { IconPrint } from './icons';
+import { MenuKebab } from '../products/MenuKebab';
 
 /**
  * Jira GRW-713 — the till's printer: the KOT for the kitchen, the bill for the guest.
@@ -246,9 +247,8 @@ export function useTicketPrinter() {
    * The bill: the order's GST document, issued if it has not been (idempotent — the same number every time), laid
    * out for the roll. One numbering for every bill the business gives out, whether printed, sent or downloaded.
    */
-  const printBill = useCallback(
-    (saleId: string, reprint = false, held?: { couponCode?: string; discountMinor?: number }) =>
-      run(async () => {
+  const billJobs = useCallback(
+    async (saleId: string, reprint = false, held?: { couponCode?: string; discountMinor?: number }): Promise<PrintJob[]> => {
         const issued = await api.issueDocument(saleId, held);
         const doc = await api.documentTicket(issued.id);
         const figure = (minor: number) =>
@@ -302,8 +302,12 @@ export function useTicketPrinter() {
           if (bitmap) payQr = { bitmap, caption: t('scanToPay', { amount: formatMoney(doc.payQr.amountMinor, 'INR', locale) }) };
         }
         return [{ ticket: billTicket({ ...data, logo, payQr, paidStamp }, copy), copies: reprint ? 1 : device.billCopies }];
-      }),
-    [run, locale, timezone, t, tDoc, tPay, typeWords, billCopy],
+    },
+    [locale, timezone, t, tDoc, tPay, typeWords, billCopy],
+  );
+  const printBill = useCallback(
+    (saleId: string, reprint = false, held?: { couponCode?: string; discountMinor?: number }) => run(() => billJobs(saleId, reprint, held)),
+    [run, billJobs],
   );
 
   /**
@@ -313,6 +317,26 @@ export function useTicketPrinter() {
   const printReceipt = useCallback(
     (data: BillData) => run(async () => [{ ticket: billTicket(data, billCopy()), copies: readPrinterSettings().billCopies }]),
     [run, billCopy],
+  );
+  /**
+   * Owner, 2026-11-23 — "one option to print … both print bill and kitchen slip should be printed along with it". The bill
+   * and the kitchen's slip(s) in one go, one line saying how it went. `kot` when the slips are in hand (an order paid on the
+   * spot: the kitchen has not had them); otherwise they are read from the server and marked REPRINT — an order paid at
+   * Pickup was sent to the kitchen when it was taken, and an unmarked second slip could be cooked twice.
+   */
+  const printBillAndKots = useCallback(
+    (input: { saleId: string; order: OrderRef; kot?: KitchenTicketDto | readonly KitchenTicketDto[]; receipt?: BillData }) =>
+      run(async () => {
+        const bill = input.receipt ? [{ ticket: billTicket(input.receipt, billCopy()), copies: readPrinterSettings().billCopies }] : await billJobs(input.saleId);
+        let kots: PrintJob[];
+        if (input.kot) kots = await kotJobs(Array.isArray(input.kot) ? input.kot : [input.kot as KitchenTicketDto], input.order, false);
+        else {
+          const read = await api.saleKots(input.saleId);
+          kots = await kotJobs(read.tickets, read, true);
+        }
+        return [...bill, ...kots];
+      }),
+    [run, billJobs, kotJobs, billCopy],
   );
   const autoReceipt = useCallback(
     (data: BillData) => {
@@ -361,8 +385,8 @@ export function useTicketPrinter() {
   // One object for as long as nothing in it changes, so a screen can put the printer in a callback's dependencies
   // without rebuilding that callback on every render.
   return useMemo(
-    () => ({ settings, setSettings, status, clearStatus, printKot, printOrderKots, reprintKots, printBill, printReceipt, autoKot, autoBill, autoReceipt, testPrint }),
-    [settings, setSettings, status, clearStatus, printKot, printOrderKots, reprintKots, printBill, printReceipt, autoKot, autoBill, autoReceipt, testPrint],
+    () => ({ settings, setSettings, status, clearStatus, printKot, printOrderKots, reprintKots, printBill, printBillAndKots, printReceipt, autoKot, autoBill, autoReceipt, testPrint }),
+    [settings, setSettings, status, clearStatus, printKot, printOrderKots, reprintKots, printBill, printBillAndKots, printReceipt, autoKot, autoBill, autoReceipt, testPrint],
   );
 }
 
@@ -423,9 +447,40 @@ export function TillPrintActions({
   receipt?: BillData;
 }) {
   const t = useTranslations('print');
+  const [printerOpen, setPrinterOpen] = useState(false);
   const busy = printer.status.state === 'printing';
   const hasKot = (Array.isArray(kot) ? kot.length > 0 : Boolean(kot)) || kitchen;
   if (!hasKot && !bill) return null;
+  const printBillOnly = () => void (receipt ? printer.printReceipt(receipt) : printer.printBill(saleId));
+  const printKotOnly = () => void (kot ? printer.printKot(kot, order) : printer.printOrderKots(saleId, true));
+  /*
+   * Owner, 2026-11-23 — one Print for both: the bill and the kitchen's slip together, the button the counter needs every
+   * time; the bill alone, the slip alone and the printer are in its ⋮. A slip the kitchen already had (an order paid at
+   * Pickup) prints marked REPRINT (`printBillAndKots`).
+   */
+  if (bill && hasKot) {
+    return (
+      <div className="tp-actions">
+        <div className="tp-actions-row tp-actions-one">
+          <button type="button" className="btn btn-ghost tp-print-both" disabled={busy} onClick={() => void printer.printBillAndKots({ saleId, order, kot, receipt })}>
+            <IconPrint />
+            {t('printBoth')}
+          </button>
+          <MenuKebab
+            className="tp-print-more"
+            label={t('morePrint')}
+            items={[
+              { label: t('billOnly'), onSelect: printBillOnly },
+              { label: t('kotOnly'), onSelect: printKotOnly },
+              { label: t('settings'), onSelect: () => setPrinterOpen(true) },
+            ]}
+          />
+        </div>
+        {printerOpen ? <PrinterSheet printer={printer} onClose={() => setPrinterOpen(false)} /> : null}
+        <PrintStatusLine printer={printer} />
+      </div>
+    );
+  }
   return (
     <div className="tp-actions">
       <div className="tp-actions-row">
