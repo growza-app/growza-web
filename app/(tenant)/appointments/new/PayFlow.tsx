@@ -484,6 +484,14 @@ export function PayFlow({
   /** What Next asked for and did not get. Null until Next is tapped; each half clears itself once answered. */
   const [missing, setMissing] = useState<{ client: boolean; service: boolean } | null>(null);
   const [sale, setSale] = useState<Sale | null>(null);
+  /* Owner, 2026-11-23 — "at the final screen we don't need this and New order and Pickup": the POS hides its bar while this is up. */
+  const reportPaid = usePosTypeBar()?.onPaidShown;
+  const paidShown = step === 'done' && sale !== null;
+  useEffect(() => {
+    if (!reportPaid || addingTo || token) return;
+    reportPaid(paidShown);
+    return () => reportPaid(false);
+  }, [reportPaid, paidShown, addingTo, token]);
   const [sound, setSound] = useState(true);
   const [attemptKey, setAttemptKey] = useState(newAttemptKey);
   const tokenFilled = useRef(false);

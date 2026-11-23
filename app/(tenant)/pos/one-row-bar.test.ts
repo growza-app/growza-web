@@ -133,3 +133,20 @@ describe('New order / Pickup can be seen (owner, 2026-11-23: "keep the size same
     expect(css).toContain('border-bottom: 1px solid color-mix(in srgb, var(--muted) 45%, var(--border));');
   });
 });
+
+describe('the paid screen has no bar and no New order / Pickup (owner, 2026-11-23)', () => {
+  it('Pickup\'s paid screen and the till\'s own both hide them; the bar stays mounted so the switch keeps its slot', () => {
+    expect(client).toContain("tablesBar && (mode === 'queue' || payingTable !== null ? settledReceipt !== null : mode === 'sell' && sellPaid && addingToToken === null);");
+    expect(client).toContain('<div className="pos-bar pos-bar-types" hidden={paidScreen}>');
+    expect(client).toContain('tablesBar && !paidScreen && orderQueue');
+    expect(client).toContain('onPaidShown: setSellPaid');
+    expect(flow).toContain("const paidShown = step === 'done' && sale !== null;");
+    expect(pos).toMatch(/\.pos-shell > \.pos-bar-types\[hidden\] \{\s*display: none;/);
+  });
+
+  it('the orders still waiting are said on the way back: "Back to pickup (2)"', () => {
+    expect(client).toContain("t('backToPickupWaiting', { count: preparingTokens.length })");
+    expect(en.pos.backToPickupWaiting).toBe('Back to pickup ({count})');
+    expect(hi.pos.backToPickupWaiting).toContain('{count}');
+  });
+});

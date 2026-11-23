@@ -4993,6 +4993,7 @@
     "settleFailed": "भुगतान सेव नहीं हो सका। कृपया फिर कोशिश करें।",
     "backToQueueDone": "कतार पर वापस जाएँ",
     "backToTablesDone": "टेबल पर वापस जाएँ",
+    "backToPickupWaiting": "पिकअप पर वापस जाएँ ({count})",
     "backToQueueDonePickup": "पिकअप पर वापस जाएँ",
     "takePayment": "पेमेंट लें · {token}",
     "addItems": "और जोड़ें",

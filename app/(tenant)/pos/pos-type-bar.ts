@@ -24,6 +24,8 @@ export interface PosTypeBar {
   toSell: () => void;
   /** The till's type, as it changes (null: the till is not showing the switch). */
   onTypeShown: (type: TillOrderType | null) => void;
+  /** Owner, 2026-11-23 — the till is showing its paid screen: the bar and New order / Pickup step aside for it. */
+  onPaidShown: (paid: boolean) => void;
 }
 
 export const PosTypeBarContext = createContext<PosTypeBar | null>(null);

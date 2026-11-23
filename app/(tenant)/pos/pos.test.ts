@@ -366,7 +366,9 @@ describe('the POS screen', () => {
     expect(client).toContain('const settled = await api.settleCounterSale(tk.id, {');
     expect(client).toContain('QueueTokenPayScreen');
     expect(client).toContain('setSettledReceipt({');
-    expect(client).toContain("nextLabel={payingTable !== null ? t('backToTablesDone') : t(qk('backToQueueDone'))}");
+    // A table's receipt returns to the tables; Pickup's says how many still wait ("Back to pickup (2)", owner 2026-11-23).
+    expect(client).toMatch(/payingTable !== null\s*\? t\('backToTablesDone'\)/);
+    expect(client).toContain(": t(qk('backToQueueDone'))");
 
     for (const sel of ['.pos-charge-pending', '.pos-charge-queued-link']) {
       const block = css.slice(css.indexOf(`\n${sel} {`));

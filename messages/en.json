@@ -4993,6 +4993,7 @@
     "settleFailed": "Could not save payment. Please try again.",
     "backToQueueDone": "Back to queue",
     "backToTablesDone": "Back to tables",
+    "backToPickupWaiting": "Back to pickup ({count})",
     "backToQueueDonePickup": "Back to pickup",
     "takePayment": "Take payment · {token}",
     "addItems": "Add items",
