@@ -3163,7 +3163,30 @@
       "cancelledNumbers": "{amount} at menu price — {pct}% of sales.",
       "cancelledReason": "Most said: “{reason}” ({n}).",
       "cancelledTry": "Check how orders are taken at busy times.",
-      "open": "Open"
+      "open": "Open",
+      "dishCostTitle": "{name} costs more to make: {now} a plate, was {before}.",
+      "dishCostIngredient": "{ingredient} went from {before} to {now} a {unit}.",
+      "dishCostEstimate": "About {amount} more a month, if you sell as many.",
+      "dishCostTry": "Check the price or the portion in the Menu.",
+      "wastedTitle": "{amount} of food was thrown away this week.",
+      "wastedNumbers": "{pct}% of the food used.",
+      "wastedMost": "Most was {material} ({reason}).",
+      "wastedTry": "See Thrown away in Inventory.",
+      "countTitle": "{name}: you counted {qty} {unit} less than expected.",
+      "countNumbers": "{pct}% short of {expected} {unit} — {amount}.",
+      "countTry": "See Stock used in Inventory.",
+      "recipesShort": "Add recipes to more dishes to see food cost tips.",
+      "unit": {
+        "kg": "kg",
+        "l": "l",
+        "pcs": "pcs"
+      },
+      "reason": {
+        "spoiled": "spoiled",
+        "dropped": "dropped",
+        "expired": "expired",
+        "other": "other"
+      }
     }
   },
   "counterReport": {

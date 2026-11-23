@@ -2905,9 +2905,14 @@ export type TipPayload =
   | { rule: 'sales_change'; sales: number; previousSales: number; bills: number; previousBills: number; averageBill: number; previousAverageBill: number; pct: number }
   | { rule: 'busy_shift'; block: 'morning' | 'lunch' | 'evening' | 'late'; sales: number; previousSales: number; pct: number }
   | { rule: 'dish_move'; name: string; qty: number; previousQty: number; sales: number; previousSales: number; pct: number }
-  | { rule: 'cancelled'; qty: number; minor: number; pctOfSales: number; topReason: string | null; topReasonQty: number };
+  | { rule: 'cancelled'; qty: number; minor: number; pctOfSales: number; topReason: string | null; topReasonQty: number }
+  /* Jira GRW-760 — the kitchen's cost tips (cost viewers only). Quantities in thousandths of the unit. */
+  | { rule: 'dish_cost_up'; name: string; perPlate: number; previousPerPlate: number; qty: number; extraMonthly: number; ingredient: { name: string; unit: string; price: number; previousPrice: number } | null }
+  | { rule: 'food_wasted'; wastedMinor: number; usedMinor: number; pct: number; material: string | null; reason: string | null }
+  | { rule: 'count_short'; name: string; unit: string; diffQty: number; expectedQty: number; diffMinor: number; pct: number };
 export interface TipCard {
   rule: TipPayload['rule'];
+  needs?: '' | 'cost';
   effect: number;
   sure: 'very' | 'fairly';
   bills: number;
@@ -2920,4 +2925,6 @@ export interface RestaurantTipsPage {
   minBills: number;
   builtAt: string | null;
   stale: boolean;
+  /** Jira GRW-760 — kitchen stock on, recipes behind under 80% of sales. Absent from an older API. */
+  recipesShort?: boolean;
 }

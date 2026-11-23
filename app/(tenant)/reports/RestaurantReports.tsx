@@ -315,7 +315,17 @@ export function InventoryTab({ data }: { data: FoodCostReportPage | 'too_long' |
 /* ───────────────────────────── Tips ───────────────────────────── */
 
 /** Where a tip's "Open" goes: the tab whose figures it is about. */
-const TIP_TAB: Record<TipCard['rule'], RestaurantTab> = { sales_change: 'overview', busy_shift: 'sales', dish_move: 'items', cancelled: 'items' };
+const TIP_TAB: Record<TipCard['rule'], RestaurantTab> = {
+  sales_change: 'overview',
+  busy_shift: 'sales',
+  dish_move: 'items',
+  cancelled: 'items',
+  dish_cost_up: 'inventory',
+  food_wasted: 'inventory',
+  count_short: 'inventory',
+};
+const UNITS = ['kg', 'l', 'pcs'] as const;
+const REASONS = ['spoiled', 'dropped', 'expired', 'other'] as const;
 
 /**
  * Jira GRW-759 — at most three tips, each four short lines: what we saw, the numbers (both weeks), one thing to try, how
@@ -327,9 +337,18 @@ export function TipsTab({ data, onOpen }: { data: RestaurantTipsPage; onOpen?: (
   const locale = useLocale();
   const money: Money = (m) => rupees(m, locale);
   const pct = (v: number) => Math.round(Math.abs(v));
+  const recipes = data.recipesShort ? <p className="rr-more">{t('recipesShort')}</p> : null;
   if (data.tips.length === 0) {
-    return <p className="rr-empty">{data.bills < data.minBills ? t('notEnough', { n: data.minBills }) : t('normal')}</p>;
+    return (
+      <>
+        <p className="rr-empty">{data.bills < data.minBills ? t('notEnough', { n: data.minBills }) : t('normal')}</p>
+        {recipes}
+      </>
+    );
   }
+  const unitOf = (u: string) => ((UNITS as readonly string[]).includes(u) ? t(`unit.${u as (typeof UNITS)[number]}`) : u);
+  const reasonOf = (r: string) => ((REASONS as readonly string[]).includes(r) ? t(`reason.${r as (typeof REASONS)[number]}`) : r);
+  const qtyOf = (thousandths: number) => (Math.abs(thousandths) / 1000).toLocaleString(intlLocale(locale), { maximumFractionDigits: 2 });
   const day = new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', timeZone: 'UTC' });
   const asDay = (iso: string) => day.format(new Date(`${iso}T00:00:00Z`));
   const w = data.tips[0]!.windows;
@@ -358,6 +377,33 @@ export function TipsTab({ data, onOpen }: { data: RestaurantTipsPage; onOpen?: (
         numbers: t('dishNumbers', { qty: p.qty, prevQty: p.previousQty, now: money(p.sales), before: money(p.previousSales) }),
         why: null,
         tryThis: t('dishTry', { name: p.name }),
+      };
+    }
+    if (p.rule === 'dish_cost_up') {
+      return {
+        saw: t('dishCostTitle', { name: p.name, now: money(p.perPlate), before: money(p.previousPerPlate) }),
+        numbers: [
+          p.ingredient ? t('dishCostIngredient', { ingredient: p.ingredient.name, before: money(p.ingredient.previousPrice), now: money(p.ingredient.price), unit: unitOf(p.ingredient.unit) }) : null,
+          t('dishCostEstimate', { amount: money(p.extraMonthly) }),
+        ].filter(Boolean).join(' '),
+        why: null,
+        tryThis: t('dishCostTry'),
+      };
+    }
+    if (p.rule === 'food_wasted') {
+      return {
+        saw: t('wastedTitle', { amount: money(p.wastedMinor) }),
+        numbers: [t('wastedNumbers', { pct: Math.round(p.pct) }), p.material ? t('wastedMost', { material: p.material, reason: p.reason ? reasonOf(p.reason) : '—' }) : null].filter(Boolean).join(' '),
+        why: null,
+        tryThis: t('wastedTry'),
+      };
+    }
+    if (p.rule === 'count_short') {
+      return {
+        saw: t('countTitle', { name: p.name, qty: qtyOf(p.diffQty), unit: unitOf(p.unit) }),
+        numbers: t('countNumbers', { pct: Math.round(p.pct), expected: qtyOf(p.expectedQty), unit: unitOf(p.unit), amount: money(Math.abs(p.diffMinor)) }),
+        why: null,
+        tryThis: t('countTry'),
       };
     }
     return {
@@ -393,6 +439,7 @@ export function TipsTab({ data, onOpen }: { data: RestaurantTipsPage; onOpen?: (
           );
         })}
       </ol>
+      {recipes}
     </>
   );
 }

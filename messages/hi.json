@@ -3163,7 +3163,30 @@
       "cancelledNumbers": "मेन्यू के दाम पर {amount} — बिक्री का {pct}%।",
       "cancelledReason": "ज़्यादातर ने कहा: “{reason}” ({n})।",
       "cancelledTry": "भीड़ के समय ऑर्डर कैसे लिए जाते हैं, देखें।",
-      "open": "खोलें"
+      "open": "खोलें",
+      "dishCostTitle": "{name} बनाना महँगा हुआ: एक प्लेट {now}, पहले {before}।",
+      "dishCostIngredient": "{ingredient} {before} से {now} प्रति {unit} हुआ।",
+      "dishCostEstimate": "अगर उतनी ही बिके तो महीने में करीब {amount} ज़्यादा।",
+      "dishCostTry": "मेन्यू में दाम या मात्रा देखें।",
+      "wastedTitle": "इस हफ़्ते {amount} का खाना फेंका गया।",
+      "wastedNumbers": "इस्तेमाल हुए खाने का {pct}%।",
+      "wastedMost": "सबसे ज़्यादा {material} ({reason})।",
+      "wastedTry": "इन्वेंटरी में फेंका गया देखें।",
+      "countTitle": "{name}: गिनती में उम्मीद से {qty} {unit} कम निकला।",
+      "countNumbers": "{expected} {unit} में से {pct}% कम — {amount}।",
+      "countTry": "इन्वेंटरी में इस्तेमाल हुआ स्टॉक देखें।",
+      "recipesShort": "खाने की लागत के सुझाव देखने के लिए और डिश की रेसिपी डालें।",
+      "unit": {
+        "kg": "किलो",
+        "l": "लीटर",
+        "pcs": "पीस"
+      },
+      "reason": {
+        "spoiled": "खराब हुआ",
+        "dropped": "गिर गया",
+        "expired": "पुराना हो गया",
+        "other": "और कारण"
+      }
     }
   },
   "counterReport": {

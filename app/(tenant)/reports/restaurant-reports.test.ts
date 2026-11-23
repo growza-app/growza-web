@@ -224,3 +224,41 @@ describe('Jira GRW-759 — Tips', () => {
     expect(JSON.stringify(en.restaurantReports.tips)).not.toMatch(/\b(must|should|because)\b/i);
   });
 });
+
+describe('Jira GRW-760 — the kitchen’s cost tips', () => {
+  const windows = { from: '2026-11-17', to: '2026-11-23', previousFrom: '2026-11-10', previousTo: '2026-11-16' };
+  const page: RestaurantTipsPage = {
+    bills: 140, minBills: 20, builtAt: '2026-11-23T21:40:00Z', stale: false, recipesShort: false,
+    tips: [
+      { rule: 'dish_cost_up', needs: 'cost', effect: 28_000, sure: 'fairly', bills: 140, windows,
+        payload: { rule: 'dish_cost_up', name: 'Paneer Tikka', perPlate: 10_700, previousPerPlate: 8_300, qty: 142, extraMonthly: 340_800, ingredient: { name: 'Paneer', unit: 'kg', price: 39_000, previousPrice: 32_000 } } },
+      { rule: 'food_wasted', needs: 'cost', effect: 620_000, sure: 'very', bills: 140, windows,
+        payload: { rule: 'food_wasted', wastedMinor: 620_000, usedMinor: 9_000_000, pct: 6.9, material: 'Milk', reason: 'expired' } },
+      { rule: 'count_short', needs: 'cost', effect: 156_000, sure: 'very', bills: 140, windows,
+        payload: { rule: 'count_short', name: 'Chicken', unit: 'kg', diffQty: -4_000, expectedQty: 20_000, diffMinor: -156_000, pct: 20 } },
+    ],
+  };
+
+  it('AC-01 — the dish, both costs, the ingredient that rose, and the estimate with its assumption', () => {
+    const out = text(render('en', createElement(TipsTab, { data: page })));
+    expect(out).toContain('Paneer Tikka costs more to make: ₹107 a plate, was ₹83.');
+    expect(out).toContain('Paneer went from ₹320 to ₹390 a kg. About ₹3,408 more a month, if you sell as many.');
+    expect(out).toContain('₹6,200 of food was thrown away this week. 7% of the food used. Most was Milk (expired).');
+    expect(out).toContain('Chicken: you counted 4 kg less than expected. 20% short of 20 kg — ₹1,560.');
+  });
+
+  it('AC-03 — too few recipes: one line asking for them', () => {
+    const out = text(render('en', createElement(TipsTab, { data: { ...page, tips: [], recipesShort: true } })));
+    expect(out).toContain('Add recipes to more dishes to see food cost tips.');
+  });
+
+  it('in Hindi', () => {
+    const out = text(render('hi', createElement(TipsTab, { data: page })));
+    expect(out).toContain('किलो');
+    expect(out).not.toMatch(/costs more|thrown away|you counted/);
+  });
+
+  it('never says variance or COGS', () => {
+    expect(JSON.stringify(en.restaurantReports.tips)).not.toMatch(/variance|cogs/i);
+  });
+});
