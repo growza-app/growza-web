@@ -3055,6 +3055,80 @@
     "counterMore": "और रिपोर्ट",
     "summaryTab": "सारांश"
   },
+  "restaurantReports": {
+    "tabsLabel": "रिपोर्ट",
+    "tabs": {
+      "overview": "झलक",
+      "sales": "बिक्री",
+      "items": "डिश",
+      "inventory": "इन्वेंटरी"
+    },
+    "rangeLabel": "तारीख",
+    "from": "से",
+    "to": "तक",
+    "empty": "इन दिनों में अभी कोई बिक्री नहीं।",
+    "error": "यह खुला नहीं। फिर कोशिश करें।",
+    "retry": "फिर कोशिश करें",
+    "loading": "खुल रहा है…",
+    "seeAll": "सब देखें",
+    "freshness": "{when} को अपडेट · आज का अभी का",
+    "delta": {
+      "up": "↑ {pct}% पिछले दिनों से",
+      "down": "↓ {pct}% पिछले दिनों से",
+      "same": "पिछले दिनों जितना"
+    },
+    "overview": {
+      "sales": "बिक्री",
+      "bills": "बिल",
+      "average": "औसत बिल",
+      "profit": "मुनाफ़ा",
+      "profitPart": "नहीं गिना: {amount} की डिश जिनकी लागत नहीं डाली",
+      "byDay": "दिन के हिसाब से बिक्री"
+    },
+    "sales": {
+      "moneyIn": "आया पैसा",
+      "discounts": "छूट",
+      "refunds": "पैसे वापस",
+      "appCut": "डिलीवरी ऐप का हिस्सा",
+      "busy": "भीड़ का समय",
+      "byPayment": "कैसे पैसे दिए",
+      "byType": "कैसे खाया",
+      "bills": "{n, plural, one {# बिल} other {# बिल}}"
+    },
+    "mode": {
+      "cash": "नकद",
+      "upi": "UPI",
+      "card": "कार्ड",
+      "other": "दूसरा",
+      "not_recorded": "लिखा नहीं"
+    },
+    "type": {
+      "dine_in": "यहीं बैठकर",
+      "takeaway": "पैक करके",
+      "delivery": "डिलीवरी",
+      "counter": "काउंटर"
+    },
+    "items": {
+      "dishesSold": "बिकी डिश",
+      "cancelled": "रद्द डिश",
+      "cancelledValue": "{n} · {amount}",
+      "cooked": "बनने के बाद",
+      "top": "सबसे ज़्यादा बिकी",
+      "plates": "{n, plural, one {# प्लेट} other {# प्लेट}}",
+      "profit": "मुनाफ़ा {amount}",
+      "moreSold": "और {n} डिश बिकीं",
+      "notSelling": "नहीं बिक रही",
+      "moreNotSelling": "और {n}"
+    },
+    "inventory": {
+      "foodCost": "खाने की लागत",
+      "ofEvery": "हर ₹100 में {amount}",
+      "off": "इन्वेंटरी बंद है, इसलिए खाने की लागत नहीं गिनी जाती।",
+      "notEnough": "खाने की लागत देखने के लिए और डिश की रेसिपी डालें।",
+      "tooLong": "खाने की लागत 3 महीने तक दिखती है। कम दिन चुनें।",
+      "open": "इन्वेंटरी रिपोर्ट खोलें"
+    }
+  },
   "counterReport": {
     "title": "रिपोर्ट",
     "rangeLabel": "अवधि",

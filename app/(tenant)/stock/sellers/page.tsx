@@ -4,6 +4,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { RetailReportsNav } from '../../components/RetailReportsNav';
 import { screenTitle } from '../../lib/page-title';
 import { guardScreen } from '../../lib/screen-guard';
+import { sendRestaurantToTab } from '../../lib/restaurant-reports-redirect';
 import { SellersClient } from './SellersClient';
 
 export const dynamic = 'force-dynamic';
@@ -18,6 +19,7 @@ export const metadata = screenTitle('Top sellers');
 export default async function SellersPage() {
   // Jira GRW-754 — who may open it is the role's Reports (grid), or owner and manager for a fixed role: one rule, shared with the tab bar.
   await guardScreen('/stock/sellers');
+  await sendRestaurantToTab('items');
   const t = await getTranslations('products.sellers');
   let timezone = 'Asia/Kolkata';
   try {

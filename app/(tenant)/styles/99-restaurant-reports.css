@@ -1,0 +1,195 @@
+/*
+ * Jira GRW-758 — the restaurant's Reports tabs (reports/RestaurantReports.tsx).
+ *
+ * Owner rule, 2026-11-24 — clean and precise: one big number (`.cr-hero`, the counter report's), up to three small
+ * figures, one chart (`.cr-bars`, the bars the owner approved on the phone), lists of five. Laid out at 344px first;
+ * tokens only, one accent, green and red only for up and down.
+ */
+
+.rr-card {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.rr-tabs {
+  margin-bottom: var(--sp-3);
+}
+
+/* The tabs are buttons (a tab changes what this screen shows; it is not a new address). */
+.rr-tabs .srp-nav-tab {
+  min-height: 44px;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.rr-delta {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+
+.rr-delta.is-up {
+  color: var(--accent-deep);
+}
+
+.rr-delta.is-down {
+  color: var(--danger-deep);
+}
+
+.rr-smalls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6.25rem, 1fr));
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+
+.rr-smalls:empty {
+  display: none;
+}
+
+.rr-small-label {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.rr-small-value {
+  margin: 2px 0 0;
+  font-size: var(--fs-8);
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.rr-small-sub {
+  margin: 2px 0 0;
+  font-size: var(--fs-1);
+  color: var(--muted);
+}
+
+.rr-bars {
+  margin-top: var(--sp-3);
+}
+
+.rr-lists {
+  display: grid;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+
+.rr-list {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.rr-list-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rr-list ul,
+.rr-cancel-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rr-list li,
+.rr-cancel-rows li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 44px;
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--border);
+}
+
+.rr-list li:first-child,
+.rr-cancel-rows li:first-child {
+  border-top: 0;
+}
+
+.rr-list-name {
+  display: grid;
+  min-width: 0;
+  font-size: var(--fs-4);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.rr-list-note {
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.rr-list-value {
+  flex: none;
+  font-size: var(--fs-4);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.rr-more,
+.rr-fresh {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.rr-empty,
+.rr-line {
+  margin: 0;
+  font-size: var(--fs-4);
+  color: var(--muted);
+}
+
+.rr-empty {
+  padding: var(--sp-6) var(--sp-4);
+  text-align: center;
+}
+
+/* Cancelled dishes: the figure is the summary of a list that opens under it. */
+.rr-cancelled {
+  margin-top: var(--sp-2);
+  border-top: 1px solid var(--border);
+}
+
+.rr-cancelled > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 44px;
+  padding-top: var(--sp-2);
+  list-style: none;
+  cursor: pointer;
+}
+
+.rr-cancelled > summary::-webkit-details-marker {
+  display: none;
+}
+
+.rr-see {
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--accent-deep);
+}
+
+.rr-open {
+  justify-self: start;
+  min-height: 44px;
+  margin-top: var(--sp-2);
+}
+
+@media (min-width: 861px) {
+  .rr-lists {
+    grid-template-columns: 1fr 1fr;
+  }
+}

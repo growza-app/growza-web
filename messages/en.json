@@ -3055,6 +3055,80 @@
     "counterMore": "More reports",
     "summaryTab": "Summary"
   },
+  "restaurantReports": {
+    "tabsLabel": "Reports",
+    "tabs": {
+      "overview": "Overview",
+      "sales": "Sales",
+      "items": "Items",
+      "inventory": "Inventory"
+    },
+    "rangeLabel": "Dates",
+    "from": "From",
+    "to": "To",
+    "empty": "No sales on these days yet.",
+    "error": "This did not load. Try again.",
+    "retry": "Try again",
+    "loading": "Loading…",
+    "seeAll": "See all",
+    "freshness": "Updated {when} · today is live",
+    "delta": {
+      "up": "↑ {pct}% vs the days before",
+      "down": "↓ {pct}% vs the days before",
+      "same": "Same as the days before"
+    },
+    "overview": {
+      "sales": "Sales",
+      "bills": "Bills",
+      "average": "Average bill",
+      "profit": "Profit",
+      "profitPart": "Not counted: {amount} of dishes with no cost price",
+      "byDay": "Sales by day"
+    },
+    "sales": {
+      "moneyIn": "Money in",
+      "discounts": "Discounts",
+      "refunds": "Refunds",
+      "appCut": "Delivery app cut",
+      "busy": "Busy times",
+      "byPayment": "How people paid",
+      "byType": "How it was eaten",
+      "bills": "{n, plural, one {# bill} other {# bills}}"
+    },
+    "mode": {
+      "cash": "Cash",
+      "upi": "UPI",
+      "card": "Card",
+      "other": "Other",
+      "not_recorded": "Not noted"
+    },
+    "type": {
+      "dine_in": "Dine-in",
+      "takeaway": "Takeaway",
+      "delivery": "Delivery",
+      "counter": "Counter"
+    },
+    "items": {
+      "dishesSold": "Dishes sold",
+      "cancelled": "Cancelled dishes",
+      "cancelledValue": "{n} · {amount}",
+      "cooked": "after cooking",
+      "top": "Top dishes",
+      "plates": "{n, plural, one {# plate} other {# plates}}",
+      "profit": "profit {amount}",
+      "moreSold": "and {n} more dishes sold",
+      "notSelling": "Not selling",
+      "moreNotSelling": "and {n} more"
+    },
+    "inventory": {
+      "foodCost": "Food cost",
+      "ofEvery": "{amount} of every ₹100",
+      "off": "Inventory is off, so food cost is not counted.",
+      "notEnough": "Add recipes to more dishes to see food cost.",
+      "tooLong": "Food cost shows up to 3 months. Pick fewer days.",
+      "open": "Open Inventory reports"
+    }
+  },
   "counterReport": {
     "title": "Reports",
     "rangeLabel": "Period",

@@ -2834,3 +2834,68 @@ export interface BillOffersQuote {
   /** QA of the overnight stack (item 7) — the bill was printed, and its paper asks for another amount than this payment would take. */
   printedOutOfDate?: boolean;
 }
+
+/* Jira GRW-758 — the restaurant's Reports tabs (`/api/v1/reports/restaurant/*`). Money in paise, as numbers. */
+export interface RestaurantWindow {
+  key: 'last_7_days' | 'last_4_weeks' | 'this_month' | 'custom';
+  from: string;
+  to: string;
+  days: number;
+  previous: { from: string; to: string };
+}
+/** A figure and the same figure for the days before. `changePct` null: nothing to compare with. */
+export interface RestaurantCompared {
+  value: number;
+  previous: number | null;
+  changePct: number | null;
+}
+export interface RestaurantFreshness {
+  builtAt: string | null;
+  liveDays: number;
+}
+export interface RestaurantOverviewPage {
+  window: RestaurantWindow;
+  sales: RestaurantCompared;
+  bills: RestaurantCompared;
+  averageBillMinor: { value: number | null; previous: number | null };
+  /** Absent for anyone who may not see what dishes cost. */
+  profit: { profitMinor: number; marginPct: number | null; uncostedSalesMinor: number } | null;
+  byDay: Array<{ day: string; salesMinor: number }>;
+  freshness: RestaurantFreshness;
+}
+export interface RestaurantSalesPage {
+  window: RestaurantWindow;
+  moneyIn: RestaurantCompared;
+  discountsMinor: number;
+  refundsMinor: number;
+  deliveryCutMinor: number;
+  serviceChargeMinor: number;
+  taxMinor: number;
+  busyHours: Array<{ hour: number; salesMinor: number; bills: number }>;
+  byPayment: Array<{ mode: string; minor: number }>;
+  byOrderType: Array<{ type: string; salesMinor: number; bills: number }>;
+  byChannel: Array<{ channel: string; salesMinor: number; bills: number }>;
+  freshness: RestaurantFreshness;
+}
+export interface RestaurantDish {
+  name: string;
+  productId: string | null;
+  qty: number;
+  previousQty: number;
+  salesMinor: number;
+  /** Only for someone who may see cost; null when the dish has no cost price. */
+  profitMinor?: number | null;
+}
+export interface RestaurantItemsPage {
+  window: RestaurantWindow;
+  dishesSold: RestaurantCompared;
+  cancelled: { qty: number; minor: number; thrownQty: number };
+  top: RestaurantDish[];
+  sellingCount: number;
+  notSelling: { names: string[]; count: number };
+  freshness: RestaurantFreshness;
+}
+export interface RestaurantCancelledPage {
+  window: RestaurantWindow;
+  rows: Array<{ name: string; qty: number; minor: number; reason: string | null; by: string | null; at: string; cooked: boolean }>;
+}
