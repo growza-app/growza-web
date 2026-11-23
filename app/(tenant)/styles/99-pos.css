@@ -2280,6 +2280,11 @@
   min-width: 0;
 }
 
+/* While items are added to an order (PosClient): not shown and not read out, but its room kept, so the bar's right side does not move. */
+.pos-bar-typeslot[hidden] {
+  visibility: hidden;
+}
+
 .pos-bar-types .pos-bar-right {
   flex: 0 0 auto;
   flex-wrap: nowrap;

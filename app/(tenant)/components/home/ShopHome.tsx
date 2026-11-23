@@ -113,6 +113,8 @@ export function ShopHome({
 
   // Desktop command-center supplemental state
   const [channelData, setChannelData] = useState<ByChannelPage | null>(null);
+  // The week's figures came back, or failed to: until then the chart cards hold their places (see `.rst-charts`).
+  const [channelSettled, setChannelSettled] = useState(false);
   const [sellersData, setSellersData] = useState<BestSellersPage | null>(null);
   const [stockData, setStockData] = useState<StockReportPage | null>(null);
   const [returnsData, setReturnsData] = useState<ReturnsReportPage | null>(null);
@@ -249,7 +251,10 @@ export function ShopHome({
           .then((res) => {
             if (mine === deskReqId.current) setChannelData(res);
           })
-          .catch(() => {});
+          .catch(() => {})
+          .finally(() => {
+            if (mine === deskReqId.current) setChannelSettled(true);
+          });
       }
       if (can('/stock/sellers')) {
         api
@@ -631,6 +636,7 @@ export function ShopHome({
 
   /* Emerald v3 — the laptop's half-donut: the window's takings by how they were paid. */
   const paySlices = useMemo(() => paySlicesOf(channelData?.byPaymentMode), [channelData]);
+  const chartsPending = money && canReports && can('/stock/channels') && channelData === null && !channelSettled;
 
   const channelBreakdown = useMemo(() => {
     const byKey = new Map((channelData?.channels ?? []).map((c) => [c.channel, c]));
@@ -1268,6 +1274,17 @@ export function ShopHome({
                   those doors). Each card draws only when its figures came back; nothing is drawn as a placeholder.
                 */}
                 <div className="rst-charts">
+                  {/*
+                    Owner, 2026-11-23 ("the desktop queue option just goes from left to right") — the Queue card drew
+                    first and was pushed across when the week's figures came. Until they come, two empty cards of the
+                    same size hold the chart's places; once they come, each card draws only with figures, as before.
+                  */}
+                  {chartsPending ? (
+                    <>
+                      <section className="rst-panel rst-week-panel is-placeholder" aria-hidden="true" />
+                      <section className="rst-panel rst-pay-panel is-placeholder" aria-hidden="true" />
+                    </>
+                  ) : null}
                   {money && trendChart.points.length > 0 && trendChart.totalMinor > 0 ? (
                     <WeekBarsCard
                       title={s.salesLast7}

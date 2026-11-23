@@ -325,6 +325,13 @@ export function Sidebar({
             <HeaderBusiness />
             <HeaderBranchPicker />
           </div>
+        ) : wide === null && drawn ? (
+          /*
+           * Owner, 2026-11-23 ("when coming back to home … the page shows some glitch") — a menu tap reloads the page,
+           * and until the screen's width is known the card above was missing, so every menu row dropped 64px a moment
+           * later. Its empty box holds the place; the stylesheet hides it on a phone, as it hides the card.
+           */
+          <div className="sb-biz is-placeholder" aria-hidden="true" />
         ) : null}
         <div className="brand">
           {/* Owner, 2026-11-20 — the phone drawer's business is the laptop's card: a shop front, not the first letter. */}

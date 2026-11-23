@@ -883,6 +883,15 @@ body {
     gap: 1.25rem;
   }
 
+  /*
+   * Owner, 2026-11-23 — while the week's figures load, two empty cards hold the charts' places (ShopHome
+   * `chartsPending`), and every row is at least as tall as the payments card with its legend on two lines (223px), so
+   * neither the Queue card nor the rows under it move when the figures come.
+   */
+  .rst-charts {
+    grid-auto-rows: minmax(13.9375rem, auto);
+  }
+
   .rst-week-total {
     font-size: var(--fs-7);
     font-weight: 600;
@@ -2395,7 +2404,8 @@ body {
  * Only where a sidebar is drawn: a login without one (a Kitchen login) keeps its header bar.
  */
 .sb-biz,
-.sb-acct {
+.sb-acct,
+.page-head-bell.is-placeholder {
   display: none;
 }
 
@@ -2582,10 +2592,16 @@ body {
   }
 
   /* The bell is the same height as the pills beside it. */
-  .page-head-bell .notif-bell {
+  .page-head-bell .notif-bell,
+  .page-head-bell.is-placeholder {
     width: 2.5rem;
     height: 2.5rem;
     border-radius: 999px;
+  }
+
+  .page-head-bell.is-placeholder {
+    display: block;
+    flex: none;
   }
 }
 
@@ -2595,7 +2611,8 @@ body {
     min-height: 2.75rem;
   }
 
-  .page-head-bell .notif-bell {
+  .page-head-bell .notif-bell,
+  .page-head-bell.is-placeholder {
     width: 2.75rem;
     height: 2.75rem;
   }

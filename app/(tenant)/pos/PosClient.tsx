@@ -1619,7 +1619,11 @@ export function PosClient({
       ) : tablesBar ? (
         <div className="pos-bar pos-bar-types">
           {/* The till draws its Dine-in · Takeaway · Delivery switch here (PayFlow, through PosTypeBarContext). */}
-          <div className="pos-bar-typeslot" ref={setTypeSlot} />
+          {/*
+            Owner, 2026-11-23 — while items are being added to an order its type is already settled, so the switch is not
+            offered. It belongs to the till hidden behind this one, and a tap on it changed that till instead.
+          */}
+          <div className="pos-bar-typeslot" ref={setTypeSlot} hidden={addingToToken !== null} />
           {orderQueue ? (
             <Link href="/kitchen" className="btn btn-ghost pos-bar-kitchen" aria-label={t('kitchenScreen')}>
               <IconFlame />
