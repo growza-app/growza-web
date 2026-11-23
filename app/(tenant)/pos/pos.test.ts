@@ -217,7 +217,8 @@ describe('the POS screen', () => {
     const css = src('../styles/99-pos.css');
     // Only what the markup puts in a `className`, so an import path like `./pos-helpers` is not read as one.
     const inMarkup = new Set(
-      [...client.matchAll(/className=(?:"([^"]*)"|\{`([^`]*)`\})/g)]
+      // Jira GRW-747 — the Pickup card's own editor is drawn by its own file, inside the card.
+      [...(client + src('./PickupCardEdit.tsx')).matchAll(/className=(?:"([^"]*)"|\{`([^`]*)`\})/g)]
         .flatMap((m) => (m[1] ?? m[2] ?? '').split(/[\s'"`${}?:+]+/))
         .filter((c) => /^pos-[a-z0-9-]+$/.test(c)),
     );

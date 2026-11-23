@@ -336,8 +336,22 @@ export function PayFlow({
   const location = token?.locationId ?? visit?.appointment.locationId ?? branch.choice ?? branch.one ?? session?.branches?.[0]?.id ?? null;
   // Jira GRW-720 — after `location`, which it reads (it sat above it once, and the till did not open: caught by the e2e run).
   const tablesHere = productsOnly && Boolean(session?.branches?.find((b) => b.id === location)?.tableOrders);
-  // Owner, 17 Nov 2026 — with tables on, the till's Queue is called Pickup (PosClient's `qk`).
-  const qk = <K extends string>(key: K): K | `${K}Pickup` => (tablesHere ? `${key}Pickup` : key);
+  /*
+   * Owner, 2026-11-23 — "when we switch off the table, it moves to the old design: only remove the dine-in tab and keep the
+   * takeaway tab as it is". A restaurant (`areas.tables`: one that may seat guests) keeps the order-type switch, Pickup and
+   * the one-row bar whether or not this branch seats its guests; `tablesHere` still decides Dine-in and the table map.
+   * Salons and shops never had the switch and still have none.
+   */
+  const typesHere = productsOnly && Boolean(session?.areas?.tables);
+  // Owner, 17 Nov 2026 — at a restaurant the till's Queue is called Pickup (PosClient's `qk`).
+  const qk = <K extends string>(key: K): K | `${K}Pickup` => (typesHere ? `${key}Pickup` : key);
+  // No Dine-in where the branch does not seat its guests: a till that would open on it (the default, or ?type=dine_in) opens on Takeaway.
+  // Only once the branch is known (`branch.ready`): before that `location` is the first branch, which may not seat guests when the chosen one does.
+  const branchKnown = Boolean(token || visit) || branch.ready;
+  useEffect(() => {
+    if (branchKnown && typesHere && !tablesHere && orderTab === 'dine_in') setOrderTab('takeaway');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setOrderTab is a plain function remade every render; the four values decide.
+  }, [branchKnown, typesHere, tablesHere, orderTab]);
   // Jira GRW-716 — this till's letter while online, and whatever it kept offline sent when the connection is back.
   const tillBranches = useMemo(() => (session?.branches ?? []).map((b) => b.id), [session?.branches]);
   useOfflineTill(productsOnly ? location : null, tillBranches);
@@ -389,7 +403,7 @@ export function PayFlow({
    */
   const typeBar = usePosTypeBar();
   const reportType = typeBar?.onTypeShown;
-  const typeInBar = Boolean(typeBar?.slot) && tablesHere && !token && !waiter && !addingTo;
+  const typeInBar = Boolean(typeBar?.slot) && typesHere && !token && !waiter && !addingTo;
   useEffect(() => {
     if (!reportType || addingTo || token) return;
     reportType(typeInBar ? orderTab : null);
@@ -401,9 +415,9 @@ export function PayFlow({
    */
   const firstApp = apps[0];
   useEffect(() => {
-    if (tablesHere && orderTab === 'delivery' && !apps.includes(orderFrom) && firstApp) setOrderFrom(firstApp);
+    if (typesHere && orderTab === 'delivery' && !apps.includes(orderFrom) && firstApp) setOrderFrom(firstApp);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `apps` is a fresh array each render; `firstApp` carries it.
-  }, [tablesHere, orderTab, orderFrom, firstApp]);
+  }, [typesHere, orderTab, orderFrom, firstApp]);
   /** Jira GRW-572 — the branch's priced combos, for the wide till's Packages tab. Empty until read, and on a phone. */
   const [offers, setOffers] = useState<Offer[]>([]);
   /** Owner, 2026-10-14 — the branch's shelf (migration 0115): the Products tab on the desk, a chip in the phone's sheet. */
@@ -792,6 +806,16 @@ export function PayFlow({
   );
   useEffect(() => setPointsAsked(discountMinor), [discountMinor]);
   /*
+   * Owner, 2026-11-23 — on a laptop the bill panel scrolls under its pinned foot (how they paid, Complete sale), and
+   * "Use 31 points" sat behind it: a guest's points were on offer and nobody could see them. When a guest's points
+   * become spendable the panel brings the switch into view, above the foot (`scroll-padding-bottom`, use-fit-to-window).
+   */
+  const pointsReady = Boolean(rewards && rewards.maxRedeemable > 0);
+  useEffect(() => {
+    if (!pointsReady || !wideRight) return;
+    wideRight.querySelector('.pf-redeem.is-ready')?.scrollIntoView({ block: 'nearest' });
+  }, [pointsReady, wideRight, clientId]);
+  /*
    * Jira GRW-736 — GST added on top: what the guest pays is the server's figure, the lines after their offers and the
    * points, and the GST on them. Prices that include GST: the bill after its offers, less the points, as before.
    */
@@ -1083,7 +1107,7 @@ export function PayFlow({
     setOverride(found.override);
     setOrderFrom(found.from ?? 'counter');
     // A held Swiggy bill comes back under Delivery; a counter bill never stays under it (it would be given an app).
-    if (tablesHere) {
+    if (typesHere) {
       if (found.from && apps.includes(found.from)) setOrderTab('delivery');
       else if (orderTab === 'delivery') setOrderTab('takeaway');
     }
@@ -2350,7 +2374,8 @@ export function PayFlow({
    * 44px, the chosen one marked by more than its colour (aria-pressed and a filled tab). Delivery opens the app chips the
    * till already had, so picking Swiggy or Zomato is the same one tap it always was.
    */
-  const typeTabs: Array<'dine_in' | 'takeaway' | 'delivery'> = ['dine_in', 'takeaway', ...(apps.length > 0 ? (['delivery'] as const) : [])];
+  // Dine-in only where this branch seats its guests (owner, 2026-11-23).
+  const typeTabs: Array<'dine_in' | 'takeaway' | 'delivery'> = [...(tablesHere ? (['dine_in'] as const) : []), 'takeaway', ...(apps.length > 0 ? (['delivery'] as const) : [])];
   /*
    * Jira GRW-745 — the switch has ONE place: the top of the till, on the table map and over the dishes alike (it used to
    * jump into the bill panel). Once the order has a table or a dish it is locked, and says why: a tap must never turn a
@@ -2423,7 +2448,7 @@ export function PayFlow({
   const appsRow = orderTab === 'delivery' && apps.length > 0 ? fromAppChips : null;
 
   const typeRow =
-    tablesHere && !token && !waiter && !addingTo ? (
+    typesHere && !token && !waiter && !addingTo ? (
       typeInBar && typeBar?.slot ? (
         <>
           {createPortal(
@@ -2451,7 +2476,7 @@ export function PayFlow({
    */
   const repeatsTheBar = typeInBar && !wide && !token && orderTab === 'takeaway';
   const orderHead =
-    tablesHere && !atTable && !addingTo && !waiter && !repeatsTheBar ? (
+    typesHere && !atTable && !addingTo && !waiter && !repeatsTheBar ? (
       <div className={`pf-order-head is-${token ? 'takeaway' : orderTab}`}>
         <strong className="pf-order-head-title">
           <TypeIcon type={token ? 'takeaway' : orderTab} />
@@ -2830,7 +2855,7 @@ export function PayFlow({
             {/* Adding to a waiting order: it already has its guest and where it came from. */}
             {productsOnly && !addingTo ? (
               <div className="pos-bill-client">
-                {tablesHere ? (atTable ? tableStrip : orderHead) : fromRow}
+                {typesHere ? (atTable ? tableStrip : orderHead) : fromRow}
                 {who}
               </div>
             ) : null}
@@ -3180,7 +3205,7 @@ export function PayFlow({
           {nv.visitGone}
         </div>
       ) : null}
-      {addingTo ? null : tablesHere ? (
+      {addingTo ? null : typesHere ? (
         <>
           {typeRow}
           {atTable ? tableStrip : orderHead}

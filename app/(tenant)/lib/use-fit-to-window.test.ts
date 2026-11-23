@@ -39,3 +39,20 @@ describe('the till uses it', () => {
     expect(tillCss).toMatch(/\.pf-wide-pay \{\s*display: contents;/);
   });
 });
+
+describe('the points switch is never behind the pinned foot (owner, 2026-11-23)', () => {
+  const hook = readFileSync(new URL('./use-fit-to-window.ts', import.meta.url), 'utf8');
+  const pos = readFileSync(new URL('../styles/99-pos.css', import.meta.url), 'utf8');
+  const flow = readFileSync(new URL('../appointments/new/PayFlow.tsx', import.meta.url), 'utf8');
+
+  it('the panel knows its foot height, and keeps that much clear when it scrolls a row into view', () => {
+    expect(hook).toContain("panel.style.setProperty('--fit-foot', `${foot ? foot.offsetHeight : 0}px`);");
+    expect(hook).toContain('if (foot) seen.observe(foot);');
+    expect(pos).toContain('scroll-padding-bottom: var(--fit-foot, 0px);');
+  });
+
+  it('a guest whose points can be spent: the panel brings "Use points" into view', () => {
+    expect(flow).toContain('const pointsReady = Boolean(rewards && rewards.maxRedeemable > 0);');
+    expect(flow).toContain("wideRight.querySelector('.pf-redeem.is-ready')?.scrollIntoView({ block: 'nearest' });");
+  });
+});

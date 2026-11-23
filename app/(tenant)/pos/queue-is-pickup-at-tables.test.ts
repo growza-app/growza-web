@@ -16,12 +16,12 @@ const DESK_KEYS = ['keepPendingInQueue', 'pendingDoneTitle', 'sentToQueueBannerW
 
 describe('Queue is Pickup when tables are on', () => {
   it('the POS picks the Pickup words only when this branch has Table orders on', () => {
-    expect(pos).toContain('const tablesOn = Boolean(session?.branches?.find((b) => b.id === location)?.tableOrders);');
-    expect(pos).toContain('(tablesOn ? `${key}Pickup` : key)');
+    expect(pos).toContain('const typesHere = Boolean(session?.areas?.tables);');
+    expect(pos).toContain('(typesHere ? `${key}Pickup` : key)');
     for (const k of POS_KEYS) expect(pos).not.toMatch(new RegExp(`t\\('${k}'[,)]`));
   });
   it('the till does the same for its Queue words', () => {
-    expect(till).toContain('(tablesHere ? `${key}Pickup` : key)');
+    expect(till).toContain('(typesHere ? `${key}Pickup` : key)');
     for (const k of DESK_KEYS) expect(till).not.toMatch(new RegExp(`t\\('desk\\.${k}'[,)]`));
   });
   it('every Pickup word is in English and Hindi, says Pickup, and keeps the same placeholders', () => {

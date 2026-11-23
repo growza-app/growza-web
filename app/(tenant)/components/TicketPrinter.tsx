@@ -469,7 +469,7 @@ export function PrinterButton({ printer }: { printer: TicketPrinter }) {
   );
 }
 
-function PrinterSheet({ printer, onClose }: { printer: TicketPrinter; onClose: () => void }) {
+export function PrinterSheet({ printer, onClose }: { printer: TicketPrinter; onClose: () => void }) {
   const t = useTranslations('print');
   const ref = useRef<HTMLDivElement>(null);
   useDialog(ref, { onClose });

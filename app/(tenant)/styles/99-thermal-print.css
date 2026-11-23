@@ -396,3 +396,26 @@
     background: none;
   }
 }
+
+/*
+ * Owner, 2026-11-23 — the paid screen on a phone. The printer's own icon stood alone on a row under Print bill and Print kitchen
+ * slip: on a phone it is "Printer" in the POS ⋮ instead. And the bar of Next / Done is pinned to the bottom of the screen: as a
+ * sticky bar on a page too short to scroll it sat where the page ended, with 108px of nothing under it on a 812px phone.
+ */
+@media (max-width: 759px) {
+  .pf-done-print .tp-actions-row > .tp-open {
+    display: none;
+  }
+}
+@media (max-width: 860px) {
+  .pf-done-page.is-till {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  .pf-done-page.is-till > .pf-done-actions {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+  }
+}

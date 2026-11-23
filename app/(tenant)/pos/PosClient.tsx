@@ -9,7 +9,7 @@ import type { PaymentMode } from '../lib/api-types';
 import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
 import { useBranch } from '../components/BranchProvider';
 import { useLabel } from '../components/LabelsProvider';
-import { PrinterButton, TillPrintActions, useTicketPrinter, type OrderRef } from '../components/TicketPrinter';
+import { PrinterButton, PrinterSheet, TillPrintActions, useTicketPrinter, type OrderRef } from '../components/TicketPrinter';
 import type { KitchenSlips } from '../lib/api-types';
 import { slipsOf } from '../lib/print/from-api';
 import { PaymentDone } from '../components/PaymentDone';
@@ -21,6 +21,8 @@ import { useAreas, useSession } from '../components/SessionProvider';
 import { hasOrderQueue } from '../lib/areas';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconCheck, IconArrowLeft, IconFlame, IconClose, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch } from '../components/icons';
+import PickupCardEdit from './PickupCardEdit';
+import { remember, SOUND_KEY, soundIsOn } from '../lib/pay-feedback';
 import { ClientSheet, type PickedClient } from '../appointments/new/ClientSheet';
 import { Keypad } from '../appointments/new/Keypad';
 import { formatDate } from '../lib/format';
@@ -641,8 +643,12 @@ export function PosClient({
    * Owner, 17 Nov 2026 — at a restaurant with tables on, the Queue holds only takeaway and delivery (dine-in lives on the
    * table map), so it is called Pickup there. Tables off — and every salon and shop — it stays the Queue.
    */
-  const tablesOn = Boolean(session?.branches?.find((b) => b.id === location)?.tableOrders);
-  const qk = <K extends string>(key: K): K | `${K}Pickup` => (tablesOn ? `${key}Pickup` : key);
+  /*
+   * Owner, 2026-11-23 — a restaurant keeps the one-row bar, Pickup under Takeaway and Return in the ⋮ with its tables
+   * switched off too; only Dine-in goes (PayFlow's `typesHere`). Salons and shops keep their Sell · Queue · Return.
+   */
+  const typesHere = Boolean(session?.areas?.tables);
+  const qk = <K extends string>(key: K): K | `${K}Pickup` => (typesHere ? `${key}Pickup` : key);
   const paymentQr =
     branch.branches.find((b) => b.id === location)?.paymentQrUrl ??
     session?.branches?.find((b) => b.id === location)?.paymentQrUrl ??
@@ -672,6 +678,30 @@ export function PosClient({
   /** Owner, 9 Nov 2026 — the unpaid order the Sell tab is adding to ("Add items"), and the one being cancelled. */
   const [addingToToken, setAddingToToken] = useState<PosDailyToken | null>(null);
   const [cancelTarget, setCancelTarget] = useState<PosDailyToken | null>(null);
+  /**
+   * Jira GRW-747 — owner, 2026-11-22: an unpaid takeaway could only grow or be cancelled whole; 2026-11-23: "keep it simple, should be able
+   * to edit in same card". Edit puts − and + on the card's own dishes. The owner's or a manager's, as taking a dish off a table bill is
+   * (the server says the same); a counter still has Add items and Cancel order.
+   */
+  const [editingId, setEditingId] = useState<string | null>(null);
+  /** Owner, 2026-11-23 — the card whose ⋮ is open; its Edit and Cancel order show inside that card. */
+  const [menuFor, setMenuFor] = useState<string | null>(null);
+  /*
+   * Owner, 2026-11-23 — two of the till's settings are words in its ⋮: the printer on a phone (the bar has no room for its
+   * button below 760px, and on the paid screen it stood alone on a row of its own), and whether a payment is said out loud.
+   */
+  const [printerOpen, setPrinterOpen] = useState(false);
+  const [narrow, setNarrow] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
+  useEffect(() => {
+    setSoundOn(soundIsOn());
+    const q = window.matchMedia('(max-width: 759px)');
+    const on = () => setNarrow(q.matches);
+    on();
+    q.addEventListener('change', on);
+    return () => q.removeEventListener('change', on);
+  }, []);
+  const mayEdit = session?.role === 'owner' || session?.role === 'manager';
   const [cancelBusy, setCancelBusy] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   // Jira GRW-737 — the server asked whether the kitchen had already cooked it (`cooked_unknown`): asked in the cancel dialog, required.
@@ -1361,7 +1391,7 @@ export function PosClient({
    * Delivery (drawn into `typeSlot`), the Kitchen, and a ⋮ for Return. Pickup is under Takeaway. Not for a waiter (who has
    * no switch) and not in full screen (which keeps its own header).
    */
-  const tablesBar = tablesOn && !waiter && !fullScreen;
+  const tablesBar = typesHere && !waiter && !fullScreen;
   const [typeSlot, setTypeSlot] = useState<HTMLDivElement | null>(null);
   const [tillType, setTillType] = useState<TillOrderType | null>(null);
   const pickupCount = orderQueue ? preparingTokens.length : null;
@@ -1450,6 +1480,19 @@ export function PosClient({
           ) : null}
           <span className="pos-qcard-time">{formatTime(tk.startAt)}</span>
         </div>
+        {editingId === tk.id ? (
+          <PickupCardEdit
+            token={tk}
+            onClose={() => setEditingId(null)}
+            onSaved={(said) => {
+              setEditingId(null);
+              setQueueNote(said);
+              void loadTodayTokens();
+            }}
+            onChanged={loadTodayTokens}
+          />
+        ) : (
+        <>
         <ul className="pos-qcard-items">
           {tk.items.map((item, i) => (
             <li key={i} className="pos-qcard-item">
@@ -1466,35 +1509,78 @@ export function PosClient({
           </div>
           {isPreparing ? (
             <div className="pos-qcard-actions">
-              <button
-                type="button"
-                className="btn pos-qcard-complete-btn"
-                onClick={() => void settleAndCompleteToken(tk)}
-              >
-                <IconCheck />
-                <span>
-                  {tk.paymentPending
-                    ? t('takePayment', { token: tk.tokenLabel })
-                    : t('handOverToken', { token: tk.tokenLabel })}
-                </span>
-              </button>
-              {/* Owner, 9 Nov 2026 — only an order still waiting for payment can grow or be called off here; a paid one is a return. */}
-              {tk.paymentPending && tk.channel === 'counter' ? (
-                <div className="pos-qcard-more">
-                  <button type="button" className="btn pos-qcard-add-btn" onClick={() => startAddingTo(tk)}>
-                    <IconPlus />
-                    <span>{t('addItems')}</span>
-                  </button>
+              {/*
+                Owner, 2026-11-23 — one row: Take payment, then + (Add items) beside it, and Edit and Cancel order in ⋮ — the card's
+                rarer actions as words, opened inside this card, instead of two more rows of buttons on every card.
+                Owner, 9 Nov 2026 — only an order still waiting for payment can grow or be called off here; a paid one is a return.
+              */}
+              <div className="pos-qcard-actions-row">
+                <button
+                  type="button"
+                  className="btn pos-qcard-complete-btn"
+                  onClick={() => void settleAndCompleteToken(tk)}
+                >
+                  <IconCheck />
+                  <span>
+                    {tk.paymentPending
+                      ? t('takePayment', { token: tk.tokenLabel })
+                      : t('handOverToken', { token: tk.tokenLabel })}
+                  </span>
+                </button>
+                {tk.paymentPending && tk.channel === 'counter' ? (
+                  <>
+                    <button
+                      type="button"
+                      className="btn pos-qcard-plus-btn"
+                      aria-label={t('addItemsTo', { token: tk.tokenLabel })}
+                      title={t('addItemsTo', { token: tk.tokenLabel })}
+                      onClick={() => startAddingTo(tk)}
+                    >
+                      <IconPlus />
+                    </button>
+                    <button
+                      type="button"
+                      className="btn pos-qcard-kebab-btn"
+                      aria-label={t('moreFor', { token: tk.tokenLabel })}
+                      title={t('moreFor', { token: tk.tokenLabel })}
+                      aria-expanded={menuFor === tk.id}
+                      aria-controls={`pos-qcard-menu-${tk.id}`}
+                      onClick={() => setMenuFor((open) => (open === tk.id ? null : tk.id))}
+                    >
+                      <span aria-hidden="true">⋮</span>
+                    </button>
+                  </>
+                ) : null}
+              </div>
+              {/*
+                Owner, 2026-11-23 — the ⋮'s choices open INSIDE the card, under its buttons: a menu floating over the card below read
+                as that card's, and a "Cancel order" there could be tapped for the wrong order.
+              */}
+              {menuFor === tk.id && tk.paymentPending && tk.channel === 'counter' ? (
+                <div className="pos-qcard-menu" id={`pos-qcard-menu-${tk.id}`}>
+                  {mayEdit ? (
+                    <button
+                      type="button"
+                      className="pos-qcard-menu-item"
+                      onClick={() => {
+                        setMenuFor(null);
+                        setQueueNote(null);
+                        setEditingId(tk.id);
+                      }}
+                    >
+                      {t('editOrder')}
+                    </button>
+                  ) : null}
                   <button
                     type="button"
-                    className="btn pos-qcard-cancel-btn"
+                    className="pos-qcard-menu-item is-danger"
                     onClick={() => {
+                      setMenuFor(null);
                       setCancelError(null);
                       setCancelTarget(tk);
                     }}
                   >
-                    <IconClose />
-                    <span>{t('cancelOrder')}</span>
+                    {t('cancelOrder')}
                   </button>
                 </div>
               ) : null}
@@ -1509,6 +1595,8 @@ export function PosClient({
             </button>
           )}
         </div>
+        </>
+        )}
       </article>
     );
   };
@@ -1531,7 +1619,11 @@ export function PosClient({
       ) : tablesBar ? (
         <div className="pos-bar pos-bar-types">
           {/* The till draws its Dine-in · Takeaway · Delivery switch here (PayFlow, through PosTypeBarContext). */}
-          <div className="pos-bar-typeslot" ref={setTypeSlot} />
+          {/*
+            Owner, 2026-11-23 — while items are being added to an order its type is already settled, so the switch is not
+            offered. It belongs to the till hidden behind this one, and a tap on it changed that till instead.
+          */}
+          <div className="pos-bar-typeslot" ref={setTypeSlot} hidden={addingToToken !== null} />
           {orderQueue ? (
             <Link href="/kitchen" className="btn btn-ghost pos-bar-kitchen" aria-label={t('kitchenScreen')}>
               <IconFlame />
@@ -1557,8 +1649,19 @@ export function PosClient({
           <MenuKebab
             className="pos-bar-more"
             label={t('more')}
-            items={canReturn ? [{ label: t('returnBill'), onSelect: () => void openReturn() }] : []}
+            items={[
+              ...(canReturn ? [{ label: t('returnBill'), onSelect: () => void openReturn() }] : []),
+              ...(narrow ? [{ label: t('printerMenu'), onSelect: () => setPrinterOpen(true) }] : []),
+              {
+                label: soundOn ? t('soundWhenPaidOn') : t('soundWhenPaidOff'),
+                onSelect: () => {
+                  remember(SOUND_KEY, soundOn ? 'off' : 'on');
+                  setSoundOn(!soundOn);
+                },
+              },
+            ]}
           />
+          {printerOpen ? <PrinterSheet printer={printer} onClose={() => setPrinterOpen(false)} /> : null}
         </div>
       ) : fullScreen ? (
         <header className="pos-fs-bar">

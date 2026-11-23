@@ -1045,12 +1045,14 @@ export const api = {
   order: (id: string) => get<OrderDetail>(`/api/v1/orders/${encodeURIComponent(id)}`),
   /** Jira GRW-721 — take dishes off a table's unpaid bill: owner or manager, with a reason; the kitchen gets a cancel slip. */
   // Jira GRW-737 — `cooked`: asked only when the server answers `cooked_unknown` (a dish the kitchen was sent and never ticked Done).
-  cancelBillItems: (saleId: string, lineIds: string[], reason: string, cooked?: boolean) =>
+  cancelBillItems: (saleId: string, lineIds: string[], reason: string, cooked?: boolean, some?: { qty: number; seenQty: number }) =>
     // Jira GRW-733 — `cancelSlips`: one per station a dish taken off went to (BR-03); `cancelSlip` is the first.
+    // Jira GRW-747 — `some`: only this many of the ONE line come off, the line's qty as the screen saw it (a stale one is refused).
     post<{ saleId: string; totalMinor: number; cancelSlip: KitchenTicketDto | null; cancelSlips?: KitchenTicketDto[] }>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/cancel-items`, {
       lineIds,
       reason,
       ...(cooked === undefined ? {} : { cooked }),
+      ...(some ? { qty: some.qty, seenQty: some.seenQty } : {}),
     }),
   /** Jira GRW-720 — Dine-in to Takeaway or back after the order was taken: owner or manager, until the bill prints. */
   changeOrderType: (saleId: string, orderType: 'dine_in' | 'takeaway') =>

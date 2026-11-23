@@ -792,6 +792,8 @@ export interface VisitProductLine {
   returnedMinor?: string;
   sku?: string | null;
   barcode?: string | null;
+  /** Jira GRW-747 — chosen with add-ons ("+ Hot, Raita"): one more of it needs its choices, so Pickup's Edit sends it to Add items. */
+  hasAddons?: boolean;
 }
 
 export interface ReturnSaleProductsResponse {

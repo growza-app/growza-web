@@ -22,7 +22,7 @@ describe('the one-row POS bar', () => {
   });
 
   it('is only for a branch that seats its guests, never a waiter’s bar or full screen', () => {
-    expect(client).toContain('const tablesBar = tablesOn && !waiter && !fullScreen;');
+    expect(client).toContain('const tablesBar = typesHere && !waiter && !fullScreen;');
     // The waiter's bar is checked first, then this one, then full screen's own header.
     const w = client.indexOf('{waiter ? (');
     const b = client.indexOf(') : tablesBar ? (');
@@ -34,15 +34,19 @@ describe('the one-row POS bar', () => {
 
   it('holds the switch, the Kitchen as its own icon and a ⋮ with Return — no Sell / Pickup / Return tabs', () => {
     const bar = client.slice(client.indexOf(') : tablesBar ? ('), client.indexOf(') : fullScreen ? ('));
-    expect(bar).toContain('<div className="pos-bar-typeslot" ref={setTypeSlot} />');
+    // Not offered while items are added to an order (owner, 2026-11-23): its type is settled.
+    expect(bar).toContain('<div className="pos-bar-typeslot" ref={setTypeSlot} hidden={addingToToken !== null} />');
     expect(bar).toContain('className="btn btn-ghost pos-bar-kitchen"');
-    expect(bar).toContain("items={canReturn ? [{ label: t('returnBill'), onSelect: () => void openReturn() }] : []}");
+    expect(bar).toContain("...(canReturn ? [{ label: t('returnBill'), onSelect: () => void openReturn() }] : []),");
+    // Owner, 2026-11-23 — the ⋮ also holds Printer on a phone and "Sound when paid".
+    expect(bar).toContain("...(narrow ? [{ label: t('printerMenu'), onSelect: () => setPrinterOpen(true) }] : []),");
+    expect(bar).toContain("label: soundOn ? t('soundWhenPaidOn') : t('soundWhenPaidOff'),");
     expect(bar).not.toContain('pos-tabs');
     expect(bar).not.toContain('pos-bar-back');
   });
 
   it('the till draws its switch into that bar, and any tab there leads back from Pickup or Return', () => {
-    expect(flow).toContain('const typeInBar = Boolean(typeBar?.slot) && tablesHere && !token && !waiter && !addingTo;');
+    expect(flow).toContain('const typeInBar = Boolean(typeBar?.slot) && typesHere && !token && !waiter && !addingTo;');
     expect(flow).toContain('{createPortal(');
     expect(flow).toContain("if (typeInBar && typeBar && typeBar.mode !== 'sell') {");
     // The Add items till never reports a type: it has no switch.
@@ -89,7 +93,7 @@ describe('the one-row POS bar', () => {
 
   it('a phone drops the New takeaway card under the bar; delivery, an order being added to and the laptop keep it', () => {
     expect(flow).toContain("const repeatsTheBar = typeInBar && !wide && !token && orderTab === 'takeaway';");
-    expect(flow).toContain('tablesHere && !atTable && !addingTo && !waiter && !repeatsTheBar ? (');
+    expect(flow).toContain('typesHere && !atTable && !addingTo && !waiter && !repeatsTheBar ? (');
   });
 
   it('the table strip: People (not Guests, which sits above the Guest who pays), 0 not a dash, Seat only as an outline', () => {

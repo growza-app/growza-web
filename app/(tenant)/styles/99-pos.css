@@ -722,6 +722,8 @@
     max-height: var(--fit-max, none);
     overflow-y: auto;
     overscroll-behavior: contain;
+    /* Owner, 2026-11-23 — what is scrolled into view stops above the pinned foot (`--fit-foot`, useFitToWindow), never behind it. */
+    scroll-padding-bottom: var(--fit-foot, 0px);
     padding: var(--sp-3);
     gap: var(--sp-2);
   }
@@ -1855,32 +1857,11 @@
   min-width: 0;
 }
 
-.pos-qcard-complete-btn > span,
-.pos-qcard-more .btn > span {
+.pos-qcard-complete-btn > span {
   min-width: 0;
   white-space: normal;
   text-align: center;
   line-height: 1.2;
-}
-
-.pos-qcard-more {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-2);
-}
-
-.pos-qcard-more .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-1);
-  min-height: 2.75rem;
-  padding: 0 var(--sp-2);
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  font-size: 0.8125rem;
-  font-weight: 600;
 }
 
 /* Owner, 9 Nov 2026 — on a phone the column is not a second card around the cards: its frame and padding cost
@@ -1891,30 +1872,6 @@
     border: 0;
     background: none;
   }
-}
-
-.pos-qcard-more .btn svg {
-  flex: none;
-  width: 0.875rem;
-  height: 0.875rem;
-}
-
-.pos-qcard-add-btn {
-  color: var(--accent-deep);
-}
-
-.pos-qcard-add-btn:hover {
-  border-color: var(--accent-deep);
-  background: var(--accent-soft);
-}
-
-.pos-qcard-cancel-btn {
-  color: var(--danger);
-}
-
-.pos-qcard-cancel-btn:hover {
-  border-color: var(--danger);
-  background: var(--danger-soft);
 }
 
 /* What was just added, said once on the board the desk lands back on. */
@@ -2016,7 +1973,6 @@
 /* The board's three buttons keep a focus ring. They shared this block with the token strip that went; it has
    to stay with the buttons that are still on screen, not with the markup that was removed. */
 .pos-qcard-complete-btn:focus-visible,
-.pos-qcard-more .btn:focus-visible,
 .pos-charge-adding-stop:focus-visible,
 .pos-qcard-recall-btn:focus-visible,
 .pos-qcard-add-client:focus-visible,
@@ -2194,8 +2150,6 @@
   }
 }
 
-
-
 /* Jira GRW-714 — the kitchen says this token is ready to hand over. */
 .pos-qcard-ready { padding: 0 var(--sp-2); border-radius: 999px; background: var(--accent-deep); color: var(--surface); font-size: 0.8125rem; font-weight: 700; }
 
@@ -2328,6 +2282,11 @@
   min-width: 0;
 }
 
+/* While items are added to an order (PosClient): not shown and not read out, but its room kept, so the bar's right side does not move. */
+.pos-bar-typeslot[hidden] {
+  visibility: hidden;
+}
+
 .pos-bar-types .pos-bar-right {
   flex: 0 0 auto;
   flex-wrap: nowrap;
@@ -2432,4 +2391,166 @@
     height: 2.75rem;
     min-width: 2.75rem;
   }
+}
+
+/*
+ * Jira GRW-747 — editing an unpaid takeaway on its own card (pos/PickupCardEdit.tsx): − and + beside each dish, 44px each, the
+ * amount as it will be, "Now ₹…", and Save. A dish brought down to 0 stays on the card, struck through, until Save.
+ */
+.pos-qedit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.pos-qedit-items {
+  gap: var(--sp-1);
+}
+.pos-qedit-item.is-off .pos-qcard-item-name,
+.pos-qedit-item.is-off .pos-qcard-item-amt {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.pos-qedit-step {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.pos-qedit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 0;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+.pos-qedit-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+.pos-qedit-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.pos-qedit-btn:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -2px;
+}
+.pos-qedit-n {
+  min-width: 1.5rem;
+  text-align: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.pos-qedit-now {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  font-size: 0.9375rem;
+}
+.pos-qedit-warn {
+  margin: 0;
+  color: var(--danger);
+}
+.pos-qedit-bar {
+  display: flex;
+  gap: var(--sp-2);
+}
+.pos-qedit-bar .btn {
+  flex: 1 1 0;
+  min-height: 2.75rem;
+}
+
+/*
+ * Owner, 2026-11-23 — an unpaid takeaway's actions in one row: Take payment takes the room, + (Add items) and ⋮ (Edit,
+ * Cancel order) sit beside it, 44px square each. The ⋮ is the Menu's own (MenuKebab, `.dropdown-panel`).
+ */
+.pos-qcard-actions-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-2);
+}
+.pos-qcard-actions-row > .pos-qcard-complete-btn {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+.pos-qcard-plus-btn,
+.pos-qcard-kebab-btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  /* Round, as every button on the till is (the Emerald pill), so + and ⋮ read as a pair beside Take payment. */
+  border-radius: 999px;
+  background: var(--surface);
+}
+.pos-qcard-plus-btn {
+  color: var(--accent-deep);
+}
+.pos-qcard-plus-btn svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+.pos-qcard-plus-btn:hover {
+  border-color: var(--accent-deep);
+  background: var(--accent-soft);
+}
+.pos-qcard-kebab-btn {
+  color: var(--text);
+  font-size: 1.25rem;
+}
+.pos-qcard-plus-btn:focus-visible,
+.pos-qcard-kebab-btn:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+/* The ⋮'s choices, inside the card under its buttons (owner, 2026-11-23): 44px rows, Cancel order in red, set apart by a line. */
+.pos-qcard-kebab-btn[aria-expanded='true'] {
+  border-color: var(--text);
+  background: var(--page-bg);
+}
+.pos-qcard-menu {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.pos-qcard-menu-item {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.pos-qcard-menu-item + .pos-qcard-menu-item {
+  border-top: 1px solid var(--border);
+}
+.pos-qcard-menu-item.is-danger {
+  color: var(--danger);
+}
+.pos-qcard-menu-item:hover {
+  background: var(--page-bg);
+}
+.pos-qcard-menu-item:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -2px;
 }

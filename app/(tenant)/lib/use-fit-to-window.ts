@@ -37,10 +37,15 @@ export function useFitToWindow(panel: HTMLElement | null, on: boolean): void {
       frame = 0;
       if (getComputedStyle(panel).position !== 'sticky') {
         panel.style.removeProperty('--fit-max');
+        panel.style.removeProperty('--fit-foot');
         return;
       }
       const bottom = scroller ? scroller.getBoundingClientRect().bottom : window.innerHeight;
       panel.style.setProperty('--fit-max', `${fitHeight(bottom, panel.getBoundingClientRect().top)}px`);
+      // The pinned foot's height (owner, 2026-11-23): the stylesheet keeps that much clear when a row is scrolled into
+      // view, so nothing brought into view — a focused field, the points switch — lands behind the foot.
+      const foot = panel.querySelector<HTMLElement>('.pf-wide-pay');
+      panel.style.setProperty('--fit-foot', `${foot ? foot.offsetHeight : 0}px`);
     };
     const ask = () => {
       if (!frame) frame = requestAnimationFrame(fit);
@@ -53,11 +58,14 @@ export function useFitToWindow(panel: HTMLElement | null, on: boolean): void {
     seen.observe(scroller ?? document.documentElement);
     if (scroller?.firstElementChild) seen.observe(scroller.firstElementChild);
     seen.observe(panel);
+    const foot = panel.querySelector<HTMLElement>('.pf-wide-pay');
+    if (foot) seen.observe(foot);
     return () => {
       if (frame) cancelAnimationFrame(frame);
       target.removeEventListener('scroll', ask);
       seen.disconnect();
       panel.style.removeProperty('--fit-max');
+      panel.style.removeProperty('--fit-foot');
     };
   }, [panel, on]);
 }
