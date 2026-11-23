@@ -402,11 +402,13 @@ describe('Record payment in three taps', () => {
     expect(flow).toMatch(/token \? \{ queueEntryId: token\.id \}/);
     // A name with no number is not a row this screen writes: the counter-sale route creates it with the sale.
     // Jira GRW-716 — and a guest added offline brings their number with the name.
-    expect(flow).toMatch(/\{ customerName: named\.name, \.\.\.\(named\.phone \? \{ customerPhone: named\.phone \} : \{\}\) \}/);
+    // Jira GRW-747 — a number with no name sends no empty name (a kitchen's guest is their number, with or without one).
+    expect(flow).toMatch(/\{ \.\.\.\(named\.name \? \{ customerName: named\.name \} : \{\}\), \.\.\.\(named\.phone \? \{ customerPhone: named\.phone \} : \{\}\) \}/);
     expect(client).toMatch(/if \(!stored\) return onPick\(\{ id: null, name: newName\.trim\(\), waPhone: null \}\);/);
-    // Save needs the name; the number only has to be valid IF one was typed.
+    // Save needs the name — or, at a kitchen's till (Jira GRW-747), a number alone; the number only has to be valid IF one was typed.
     expect(client).toMatch(/const problem = checkPhone\(newPhone, \{ required: false \}\);/);
-    expect(client).toMatch(/disabled=\{saving \|\| !named \|\| problem !== null\}/);
+    expect(client).toMatch(/const enoughToSave = named \|\| \(nameStaysOnBill && newPhone\.length > 0 && toStoredPhone\(newPhone\) !== null\);/);
+    expect(client).toMatch(/disabled=\{saving \|\| !enoughToSave \|\| problem !== null\}/);
     for (const m of [enMessages, hiMessages]) {
       const w = m.payFlow as unknown as Record<string, string>;
       expect(w.needClient).toBeTruthy();
@@ -455,12 +457,13 @@ describe('Record payment in three taps', () => {
     // 232px of tick-above-amount plus 284px of bill put Next customer — pressed after every sale — below the fold.
     // Multi-line since GRW-582 added a slot (`afterSend`) to the call; what is pinned is unchanged: the bill is capped.
     expect(done).toMatch(/<ReceiptShare\s+bill=\{bill\}\s+phone=\{phone\}\s+compactPreview/);
-    expect(receipt).toMatch(/compactPreview \? 'wi-receipt-paper-short' : ''/);
+    // Owner, 2026-11-23 — capped on the salon's screen; on a till the whole bill shows (its total was hidden in the cap).
+    expect(receipt).toMatch(/compactPreview && !till \? 'wi-receipt-paper-short' : ''/);
     expect(walkInCss).toMatch(/\.wi-receipt-paper-short \{[\s\S]{0,120}max-height: 12rem;[\s\S]{0,60}overflow-y: auto;/);
     // Still shown, never folded away: the desk reads the bill before it sends it.
     expect(receipt).not.toMatch(/<details/);
     // A region a mouse can scroll is one a keyboard must reach.
-    expect(receipt).toMatch(/tabIndex=\{compactPreview \? 0 : undefined\}/);
+    expect(receipt).toMatch(/tabIndex=\{compactPreview && !till \? 0 : undefined\}/);
     // The tick sits beside the amount rather than on its own floor.
     expect(css).toMatch(/\.pf-done \{[\s\S]{0,420}grid-template-columns: auto minmax\(0, 1fr\);/);
     expect(css).toMatch(/\.pf-done-check \{[\s\S]{0,120}width: 3\.5rem;/);
@@ -530,7 +533,8 @@ describe('Record payment in three taps', () => {
     expect(css).toMatch(/\.pf-qty-btn\[aria-disabled='true'\] \{/);
     // The tap that writes the sale, and the screen that confirms it.
     // Jira GRW-725 — a free bill without the owner's reason; QA 2026-11-17 — points still being asked, a too-big first part.
-    expect(flow).toMatch(/if \(saving \|\| lines\.length === 0 \|\| freeBlock \|\| pointsChecking \|\| splitTooBig\) return;\s*felt\(BUZZ\.paid\);/);
+    // QA of the overnight stack (item 1) — points still being asked hold the tap rather than drop it (pay-tap-waits-for-the-quote.test.ts).
+    expect(flow).toMatch(/if \(saving \|\| lines\.length === 0 \|\| freeBlock \|\| splitTooBig\) return;\s*felt\(BUZZ\.paid\);/);
     expect(done).toMatch(/if \(!\(soundProp \?\? soundIsOn\(\)\)\) return;\s*buzz\(BUZZ\.done\);/);
     expect(done).toMatch(/if \(said\.current === appointmentId\) return;/);
     // The person's own switch covers touch as well as sound; and a phone without `vibrate` is not an error.

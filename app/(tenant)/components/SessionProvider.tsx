@@ -68,6 +68,8 @@ export interface SessionInfo {
   sizes?: boolean;
   /** Jira GRW-712 — `me.capabilities.addons`: items carry add-ons. Absent reads as off. */
   addons?: boolean;
+  /** Jira GRW-737 — `me.capabilities.recipes`: kitchen stock and recipes may exist here (a restaurant). Absent reads as off. */
+  recipes?: boolean;
   /**
    * `me.whatsapp.booking` — whether clients book and cancel through WhatsApp at this business. Settings that only
    * bind a client booking by WhatsApp are left undrawn while it is off (owner, 2026-10-10). Absent reads as OFF, the
@@ -143,6 +145,11 @@ const WALK_IN_ONLY: readonly UiAction[] = ['queue.give', 'token.arrive'];
 /** Jira GRW-712 — do this business's items carry add-ons? False when unknown. */
 export function useAddonsOn(): boolean {
   return useSession()?.addons ?? false;
+}
+
+/** Jira GRW-737 — may this business keep kitchen stock (raw materials, recipes)? False when unknown. */
+export function useRecipesOn(): boolean {
+  return useSession()?.recipes ?? false;
 }
 
 /** Jira GRW-598 — are sizes switched on for this business? False when unknown, and for every salon today. */

@@ -3,6 +3,7 @@
 import { deltaLabel, deltaTone, periodDeltaPct } from './day-delta';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api } from '../../lib/api';
+import { ORDERS_CHANGED_EVENT, ORDERS_CHANGED_KEY, ORDERS_STALE_MS } from '../../lib/orders-changed';
 import { paidCustomers } from '../../lib/paid-customers';
 import type {
   AttendanceRegister,
@@ -20,7 +21,7 @@ import { DaySummarySheet } from './DaySummarySheet';
 import { phoneWindow, type PhonePeriod } from '../../lib/phone-window';
 import { canSee, canSeeRevenue, type MemberRole } from '../../lib/nav-policy';
 import { ordersHref } from '../../lib/orders-filter';
-import { formatTokenNo, posQueueStorageKey, queueStateOf, tokenNumbersOf, type PosTokenOverride } from '../../pos/pos-helpers';
+import { formatTokenNo, isTableOrder, orderKindOf, posQueueStorageKey, queueStateOf, tokenNumbersOf, type PosTokenOverride } from '../../pos/pos-helpers';
 import { allCameBack } from '../../lib/order-items';
 import { channelsOf, isDeliveryApp, sellsOnMarketplaces } from '../../lib/order-channels';
 import type { Lang } from '../../lib/lang';
@@ -112,10 +113,14 @@ export function ShopHome({
 
   // Desktop command-center supplemental state
   const [channelData, setChannelData] = useState<ByChannelPage | null>(null);
+  // The week's figures came back, or failed to: until then the chart cards hold their places (see `.rst-charts`).
+  const [channelSettled, setChannelSettled] = useState(false);
   const [sellersData, setSellersData] = useState<BestSellersPage | null>(null);
   const [stockData, setStockData] = useState<StockReportPage | null>(null);
   const [returnsData, setReturnsData] = useState<ReturnsReportPage | null>(null);
   const [recentOrders, setRecentOrders] = useState<OrderListRow[]>([]);
+  /** Jira GRW-745 — Recent orders by how they were eaten (a branch with tables only). */
+  const [recentType, setRecentType] = useState<'all' | 'dine_in' | 'takeaway' | 'delivery'>('all');
   const [todayOrderRows, setTodayOrderRows] = useState<OrderListRow[]>([]);
   /** Emerald v2 — the laptop's week of orders behind the two white tiles' sparklines, with the list's full count. */
   const [deskWeek, setDeskWeek] = useState<{ rows: OrderListRow[]; total: number } | null>(null);
@@ -246,7 +251,10 @@ export function ShopHome({
           .then((res) => {
             if (mine === deskReqId.current) setChannelData(res);
           })
-          .catch(() => {});
+          .catch(() => {})
+          .finally(() => {
+            if (mine === deskReqId.current) setChannelSettled(true);
+          });
       }
       if (can('/stock/sellers')) {
         api
@@ -360,6 +368,55 @@ export function ShopHome({
   }, [phone, phonePeriod, branch, canPhoneRange, timezone, phoneRetry]);
 
   /*
+   * Owner, 2026-11-21 ("paid it and Home still said Payment pending" — "don't put too much query on the database"). Home's
+   * orders are read again ONLY when they may have changed: at once when this browser changed an order (orders-changed.ts),
+   * and when Home is looked at again after a minute away (another device's change). Never on a timer. One read: the orders
+   * alone, not the figures around them.
+   */
+  const ordersReadAt = useRef(0);
+  useEffect(() => {
+    if (!can('/orders')) return;
+    ordersReadAt.current = Date.now();
+    let wait: ReturnType<typeof setTimeout> | undefined;
+    let gone = false;
+    const reread = () => {
+      clearTimeout(wait);
+      // A burst (pay, then hand over) is one read.
+      wait = setTimeout(() => {
+        ordersReadAt.current = Date.now();
+        api
+          .orders({ pageSize: 100, location: branch })
+          .then((res) => {
+            if (gone) return;
+            setRecentOrders(res.rows.slice(0, 6));
+            setTodayOrderRows(res.rows);
+            setDeskWeek((prev) => (prev ? { rows: res.rows, total: res.total } : prev));
+          })
+          .catch(() => {});
+      }, 600);
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === ORDERS_CHANGED_KEY) reread();
+    };
+    const onShown = () => {
+      if (document.visibilityState === 'visible' && Date.now() - ordersReadAt.current > ORDERS_STALE_MS) reread();
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener(ORDERS_CHANGED_EVENT, reread);
+    document.addEventListener('visibilitychange', onShown);
+    window.addEventListener('focus', onShown);
+    return () => {
+      gone = true;
+      clearTimeout(wait);
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(ORDERS_CHANGED_EVENT, reread);
+      document.removeEventListener('visibilitychange', onShown);
+      window.removeEventListener('focus', onShown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [branch]);
+
+  /*
    * Jira GRW-611 review — no Reports tile. Every report there is built from bookings, so `/reports` answers a shop
    * with the "not yet" sentence (Jira GRW-610) whose only two buttons are Orders and Stock — two of these tiles. A
    * door onto that is a door onto nothing; it opens when a shop has reports of its own, Jira GRW-591.
@@ -439,6 +496,33 @@ export function ShopHome({
         : status === 'new' || status === 'packed'
           ? 'amber'
           : 'rose';
+
+  /**
+   * An order's word and colour on Home. A bill kept in the queue, not yet paid, is "Payment pending" in amber — its status is
+   * already done, so the status alone said "Done" (owner, 2026-11-21: the phone's Recent orders did). Every list uses these two.
+   */
+  const orderWord = (o: Pick<OrderListRow, 'status' | 'paymentPending'>) => (o.paymentPending ? s.paymentPendingState : stateWord(o.status));
+  const orderTone = (o: Pick<OrderListRow, 'status' | 'paymentPending'>) => (o.paymentPending ? 'amber' : stateTone(o.status));
+
+  /** Jira GRW-745 FR-07 — where an order is, in words: "Dine-in · T4 · Main Hall", "Takeaway", or the delivery app. */
+  const placeWord = (o: Pick<OrderListRow, 'tableName' | 'orderType' | 'channel'>) => {
+    const kind = orderKindOf(o);
+    if (kind === 'dine_in') return o.tableName ? `${s.dineIn} · ${o.tableName}` : s.dineIn;
+    if (kind === 'delivery') return channelWord(o.channel);
+    return tablesOn ? s.takeaway : channelWord(o.channel);
+  };
+  const recentPool = deskWeek?.rows?.length ? deskWeek.rows : todayOrderRows.length ? todayOrderRows : recentOrders;
+  const recentShown = recentType === 'all' ? recentOrders : recentPool.filter((o) => orderKindOf(o) === recentType).slice(0, 6);
+  const recentEmpty = recentType === 'all' ? s.noOrdersBody : s.noTypeOrders[recentType];
+  const typeChips = tablesOn ? (
+    <div className="hm-type-chips" role="group" aria-label={s.recentTypeLabel}>
+      {(['all', 'dine_in', 'takeaway', 'delivery'] as const).map((k) => (
+        <button key={k} type="button" className={`hm-type-chip${recentType === k ? ' is-on' : ''}`} aria-pressed={recentType === k} onClick={() => setRecentType(k)}>
+          {k === 'all' ? s.allTypes : k === 'dine_in' ? s.dineIn : k === 'takeaway' ? s.takeaway : s.delivery}
+        </button>
+      ))}
+    </div>
+  ) : null;
 
   const formatShortDate = (iso: string) => {
     try {
@@ -552,6 +636,7 @@ export function ShopHome({
 
   /* Emerald v3 — the laptop's half-donut: the window's takings by how they were paid. */
   const paySlices = useMemo(() => paySlicesOf(channelData?.byPaymentMode), [channelData]);
+  const chartsPending = money && canReports && can('/stock/channels') && channelData === null && !channelSettled;
 
   const channelBreakdown = useMemo(() => {
     const byKey = new Map((channelData?.channels ?? []).map((c) => [c.channel, c]));
@@ -855,6 +940,8 @@ export function ShopHome({
     const todaySorted = sourceRows
       .filter((o) => {
         if (o.status === 'cancelled' || o.status === 'returned' || o.items <= 0) return false;
+        // Jira GRW-745 BR-02 — a table's order is on the table map, never a pickup token here (the POS Pickup tab's rule).
+        if (isTableOrder(o)) return false;
         const ms = Date.parse(o.soldAt);
         return Number.isFinite(ms) && fmtDate(new Date(ms)) === todayISO;
       })
@@ -1187,6 +1274,17 @@ export function ShopHome({
                   those doors). Each card draws only when its figures came back; nothing is drawn as a placeholder.
                 */}
                 <div className="rst-charts">
+                  {/*
+                    Owner, 2026-11-23 ("the desktop queue option just goes from left to right") — the Queue card drew
+                    first and was pushed across when the week's figures came. Until they come, two empty cards of the
+                    same size hold the chart's places; once they come, each card draws only with figures, as before.
+                  */}
+                  {chartsPending ? (
+                    <>
+                      <section className="rst-panel rst-week-panel is-placeholder" aria-hidden="true" />
+                      <section className="rst-panel rst-pay-panel is-placeholder" aria-hidden="true" />
+                    </>
+                  ) : null}
                   {money && trendChart.points.length > 0 && trendChart.totalMinor > 0 ? (
                     <WeekBarsCard
                       title={s.salesLast7}
@@ -1244,16 +1342,17 @@ export function ShopHome({
                         </a>
                       ) : null}
                     </div>
-                    {recentOrders.length === 0 ? (
-                      <p className="hm-empty">{s.noOrdersBody}</p>
+                    {typeChips}
+                    {recentShown.length === 0 ? (
+                      <p className="hm-empty">{recentEmpty}</p>
                     ) : (
                       <ul className="rst-order-list">
-                        {recentOrders.slice(0, 5).map((o) => {
+                        {recentShown.slice(0, 5).map((o) => {
                           // What the order IS — never a guess at it. An app's order is a delivery; anything else rung up here is a counter order.
                           const isDelivery = isDeliveryApp(o.channel);
-                          const subLabel = `${channelWord(o.channel)} · ${formatDateTime(o.soldAt)}`;
-                          const statusLabel = o.paymentPending ? s.paymentPendingState : stateWord(o.status);
-                          const tone = o.paymentPending ? 'amber' : stateTone(o.status);
+                          const subLabel = `${placeWord(o)} · ${formatDateTime(o.soldAt)}`;
+                          const statusLabel = orderWord(o);
+                          const tone = orderTone(o);
                           const statusClass = tone === 'green' ? 'is-served' : tone === 'blue' ? 'is-delivery' : tone === 'amber' ? 'is-preparing' : 'is-problem';
                           return (
                             <li key={o.id}>
@@ -1867,7 +1966,7 @@ export function ShopHome({
                 <div className="hm-v3-card-head">
                   <h2>
                     {s.recentOrdersTitle}{' '}
-                    <span className="hm-v3-count">({recentOrders.length})</span>
+                    <span className="hm-v3-count">({recentShown.length})</span>
                   </h2>
                   {can('/orders') ? (
                     <a className="hm-v3-head-link" href="/orders">
@@ -1875,8 +1974,9 @@ export function ShopHome({
                     </a>
                   ) : null}
                 </div>
-                {recentOrders.length === 0 ? (
-                  <p className="hm-empty">{s.noOrdersBody}</p>
+                {typeChips}
+                {recentShown.length === 0 ? (
+                  <p className="hm-empty">{recentEmpty}</p>
                 ) : (
                   <div className="hm-v3-recent-wrap">
                     <table className="hm-v3-recent-table">
@@ -1892,7 +1992,7 @@ export function ShopHome({
                         </tr>
                       </thead>
                       <tbody>
-                        {recentOrders.map((o) => {
+                        {recentShown.map((o) => {
                           const customerName = o.who?.name?.trim() || s.noNameCustomer;
                           return (
                             <tr key={o.id}>
@@ -1910,7 +2010,7 @@ export function ShopHome({
                               </td>
                               <td>
                                 <span className={`ord-chan-badge ord-chan-${o.channel}`}>
-                                  {channelWord(o.channel)}
+                                  {placeWord(o)}
                                 </span>
                               </td>
                               <td>{allCameBack(o) ? s.itemsAllBackShort(o.itemsSold) : s.itemCountShort(o.items)}</td>
@@ -1920,9 +2020,7 @@ export function ShopHome({
                                 </td>
                               ) : null}
                               <td>
-                                <span className={`hm-pill hm-pill-${stateTone(o.status)}`}>
-                                  {stateWord(o.status)}
-                                </span>
+                                <span className={`hm-pill hm-pill-${orderTone(o)}`}>{orderWord(o)}</span>
                               </td>
                               <td>
                                 <a className="hm-v3-row-btn" href={`/orders/${o.id}`}>
@@ -2365,8 +2463,10 @@ export function ShopHome({
                     </a>
                   }
                 >
+                  {typeChips}
+                  {recentShown.length === 0 ? <p className="hm-empty">{recentEmpty}</p> : null}
                   <ul className="shp-recent">
-                    {recentOrders.slice(0, 4).map((o) => {
+                    {recentShown.slice(0, 4).map((o) => {
                       const customerName = o.who?.name?.trim() || s.noNameCustomer;
                       return (
                         <li key={o.id}>
@@ -2376,13 +2476,13 @@ export function ShopHome({
                               <span className="shp-recent-main">
                                 <span className="shp-recent-name">{customerName}</span>
                                 <span className="shp-recent-meta">
-                                  <span className="shp-recent-code">{orderNumber(o)}</span> · {channelWord(o.channel)} · {formatShortDate(o.soldAt)} · {allCameBack(o) ? s.itemsAllBackShort(o.itemsSold) : s.itemCountShort(o.items)}
+                                  <span className="shp-recent-code">{orderNumber(o)}</span> · {placeWord(o)} · {formatShortDate(o.soldAt)} · {allCameBack(o) ? s.itemsAllBackShort(o.itemsSold) : s.itemCountShort(o.items)}
                                 </span>
                               </span>
                             </span>
                             <span className="shp-recent-end">
                               {o.amountMinor === undefined ? null : <span className="shp-recent-amount">{rupees(o.amountMinor)}</span>}
-                              <span className={`shp-recent-state is-${stateTone(o.status)}`}>{stateWord(o.status)}</span>
+                              <span className={`shp-recent-state is-${orderTone(o)}`}>{orderWord(o)}</span>
                             </span>
                           </a>
                         </li>

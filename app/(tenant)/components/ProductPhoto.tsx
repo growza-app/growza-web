@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import type { Product } from '../lib/api-types';
 import { IconProducts } from './icons';
+import { useAreas } from './SessionProvider';
+import { hasOrderQueue } from '../lib/areas';
 
 export type ProductGraphicKind =
   | 'shirt'
@@ -20,7 +22,26 @@ export type ProductGraphicKind =
   | 'bread'
   | 'rice'
   | 'drink'
-  | 'dessert';
+  | 'dessert'
+  | 'skewer'
+  | 'drumstick'
+  | 'fish'
+  | 'fries'
+  | 'egg'
+  | 'noodles'
+  | 'handi'
+  // Kitchen stock's ingredients (inventory/ingredient-graphic.ts); no product resolves to these.
+  | 'milk'
+  | 'leaf'
+  | 'chili'
+  | 'grain'
+  | 'oil'
+  | 'jar'
+  | 'box'
+  // An order's kind on the Orders list (orders/order-tile.ts): eaten here, taken away, brought on a bike.
+  | 'cutlery'
+  | 'bag'
+  | 'scooter';
 
 export type ProductGraphicTone = 'green' | 'blue' | 'amber' | 'purple' | 'rose';
 
@@ -38,10 +59,14 @@ const TONES: readonly ProductGraphicTone[] = ['green', 'blue', 'amber', 'purple'
  * `tikka` and `tea` are all words a clothes or jewellery shop uses ("Chinese Collar Shirt", a maang tikka, a tea
  * towel) and the garment is what it means there. Everything else about this function is unchanged.
  */
-export function resolveProductGraphic(product: {
-  name?: string | null;
-  categoryName?: string | null;
-}): { kind: ProductGraphicKind; tone: ProductGraphicTone } {
+export function resolveProductGraphic(
+  product: {
+    name?: string | null;
+    categoryName?: string | null;
+  },
+  /** A kitchen's dish (a business whose orders go to a queue): an unknown name falls back to a bowl, not a bottle. */
+  opts: { kitchen?: boolean } = {},
+): { kind: ProductGraphicKind; tone: ProductGraphicTone } {
   const hay = `${product.name ?? ''} ${product.categoryName ?? ''}`.toLowerCase();
 
   if (/\b(belt|strap|buckle)s?\b/.test(hay)) return { kind: 'belt', tone: 'amber' };
@@ -55,6 +80,26 @@ export function resolveProductGraphic(product: {
   // A ball, by the product's NAME only: a sports shop's "Football" category also holds its shin guards and cones, and
   // they are not balls. Before the bottle fallback, which drew a football and a tube of shuttlecocks as bottles.
   if (/\b(ball|football|shuttlecock|shuttle)s?\b/.test((product.name ?? '').toLowerCase())) return { kind: 'ball', tone: 'green' };
+  /*
+   * Owner, 2026-11-21 — a dish named in Hindi gets its drawing too (it fell through to the bottle). Matched on the NAME,
+   * before the English rules, since its section is often still English ("पनीर टिक्का" in "Starters"). No `\b`: a word
+   * boundary is ASCII-only, so Devanagari words are matched as they are.
+   */
+  const hiName = product.name ?? '';
+  const hi = (re: RegExp) => re.test(hiName);
+  if (hi(/आइसक्रीम|आइस क्रीम|कुल्फी|हलवा|जामुन|रसमलाई|रसगुल्ला|खीर|फिरनी|फालूदा|केक|मिठाई|लड्डू|बर्फी|जलेबी/)) return { kind: 'dessert', tone: 'rose' };
+  if (hi(/चाय|कॉफ़ी|कॉफी|लस्सी|छाछ|जूस|शरबत|पानी|शेक|सोडा/)) return { kind: 'drink', tone: 'amber' };
+  if (hi(/रोटी|नान|पराठा|परांठा|कुलचा|पूरी|भटूरा|डोसा|उत्तपम|इडली|वड़ा|वडा|सैंडविच|बर्गर|पिज़्ज़ा|पिज्जा/)) return { kind: 'bread', tone: 'amber' };
+  if (hi(/मछली|झींगा|फ़िश|फिश/)) return { kind: 'fish', tone: 'blue' };
+  if (hi(/तंदूरी चिकन|लॉलीपॉप|विंग्स/)) return { kind: 'drumstick', tone: 'amber' };
+  if (hi(/फ्राइज़|फ्राइज/)) return { kind: 'fries', tone: 'amber' };
+  if (hi(/अंडा|अंडे|ऑमलेट|आमलेट|भुर्जी/)) return { kind: 'egg', tone: 'amber' };
+  if (hi(/टिक्का|कबाब|सीख/) && !hi(/मसाला|मखनी|करी|बटर/)) return { kind: 'skewer', tone: 'amber' };
+  if (hi(/नूडल्स|चाउमीन|चाऊमीन|पास्ता|मैगी/)) return { kind: 'noodles', tone: 'green' };
+  if (hi(/दाल|करी|कोरमा|कोफ़्ता|कोफ्ता|छोले|राजमा|सब्ज़ी|सब्जी|आलू|गोभी|पालक|भिंडी|मखनी|मसाला|कढ़ाई|कड़ाही/) && !hi(/पापड़/)) return { kind: 'handi', tone: 'amber' };
+  if (hi(/चावल|बिरयानी|पुलाव|खिचड़ी/)) return { kind: 'rice', tone: 'green' };
+  if (hi(/पनीर|सूप|सलाद|थाली|मोमो|रोल|मंचूरियन|चिली/)) return { kind: 'bowl', tone: 'green' };
+
   // Before the bottle rule: `cream` there means a face cream, and an ice cream is not one.
   if (/\b(ice\s*cream|kulfi|halwa|jamun|rasmalai|rasgulla|brownie|pastry|cake|falooda|phirni|kheer|dessert|sundae)s?\b/.test(hay)) {
     return { kind: 'dessert', tone: 'rose' };
@@ -70,12 +115,35 @@ export function resolveProductGraphic(product: {
   if (/\b(naan|roti|paratha|kulcha|bread|chapati|poori|puri|bhatura|dosa|uttapam|idli|vada|sandwich|burger|pizza|toast)s?\b/.test(hay)) {
     return { kind: 'bread', tone: 'amber' };
   }
+  /*
+   * Owner, 2026-11-20 ("go with B") — a dish's own drawing, so sixty-nine starters and curries are not one bowl. Read
+   * from the dish's NAME only: its section ("Starters", "Chinese") says nothing about what is on the plate. A curry
+   * made from a tikka is a curry, so the skewer gives way to masala, butter, gravy and makhani.
+   */
+  const dish = (product.name ?? '').toLowerCase();
+  if (/\b(fish|prawns?|jhinga|pomfret|surmai|seafood|crab)\b/.test(dish)) return { kind: 'fish', tone: 'blue' };
+  if (/\b(tandoori chicken|lollipop|wings?|drumsticks?|leg piece|fried chicken|chicken 65)\b/.test(dish)) {
+    return { kind: 'drumstick', tone: 'amber' };
+  }
+  if (/\b(fries|chips|wedges|finger chips)\b/.test(dish)) return { kind: 'fries', tone: 'amber' };
+  if (/\b(eggs?|anda|omelett?e|bhurji)\b/.test(dish)) return { kind: 'egg', tone: 'amber' };
+  if (/\b(tikka|kaa?bab|kebab|seekh|shashlik|tangdi)\b/.test(dish) && !/\b(masala|butter|gravy|makhani|curry|lababdar)\b/.test(dish)) {
+    return { kind: 'skewer', tone: 'amber' };
+  }
+  if (/\b(noodles?|chow\s*mein|hakka|pasta|ramen|maggi)\b/.test(dish)) return { kind: 'noodles', tone: 'green' };
+  // A curry in its pot, so a main course does not wear the starter's bowl. Not "Papad Masala", which is a starter.
+  if (/\b(curry|dal|daal|makhani|korma|kofta|kadh?ai|chole|rajma|gravy|lababdar|butter chicken|masala|sabzi|sabji|aloo|gobi|palak|bhindi)\b/.test(dish) && !/\bpapad\b/.test(dish)) {
+    return { kind: 'handi', tone: 'amber' };
+  }
   if (/\b(rice|biryani|pulao|pulav|khichdi|noodle|pasta|hakka)s?\b/.test(hay)) {
     return { kind: 'rice', tone: 'green' };
   }
   if (/\b(curry|masala|dal|daal|gravy|soup|kofta|chole|chana|sabzi|sabji|korma|rogan|josh|paneer|tikka|kabab|kebab|manchurian|thali|platter|starter|main\s*course|chinese|fries|roll|momo|wrap|salad)s?\b/.test(hay)) {
     return { kind: 'bowl', tone: 'green' };
   }
+
+  // Owner, 2026-11-21 — a kitchen's dish the rules do not know ("Chef's Special", "Family Combo") is a bowl, not a bottle.
+  if (opts.kitchen) return { kind: 'bowl', tone: 'green' };
 
   // Deterministic colour fallback from the product's name so unphotographed items stay distinct
   let hash = 0;
@@ -86,7 +154,8 @@ export function resolveProductGraphic(product: {
   return { kind: 'bottle', tone };
 }
 
-function GraphicSvg({ kind }: { kind: ProductGraphicKind }) {
+/** The drawing alone, for a tile that is not a product's (Inventory's ingredient tile). */
+export function GraphicSvg({ kind }: { kind: ProductGraphicKind }) {
   const base = {
     viewBox: '0 0 24 24',
     fill: 'none',
@@ -192,6 +261,154 @@ function GraphicSvg({ kind }: { kind: ProductGraphicKind }) {
           <path d="M13 7.5c0-1 1-1.4 1-2.4s-1-1.1-1-1.1" />
         </svg>
       );
+    case 'skewer':
+      return (
+        <svg {...base}>
+          <line x1="3.5" y1="20.5" x2="20.5" y2="3.5" />
+          <rect x="5.4" y="13.4" width="5.2" height="5.2" rx="1.5" transform="rotate(45 8 16)" fill="currentColor" fillOpacity="0.16" />
+          <rect x="9.4" y="9.4" width="5.2" height="5.2" rx="1.5" transform="rotate(45 12 12)" fill="currentColor" fillOpacity="0.16" />
+          <rect x="13.4" y="5.4" width="5.2" height="5.2" rx="1.5" transform="rotate(45 16 8)" fill="currentColor" fillOpacity="0.16" />
+        </svg>
+      );
+    case 'drumstick':
+      return (
+        <svg {...base}>
+          <circle cx="14.5" cy="9.5" r="6" fill="currentColor" fillOpacity="0.16" />
+          <line x1="10.3" y1="13.7" x2="6.3" y2="17.7" />
+          <circle cx="4.6" cy="17.4" r="1.6" />
+          <circle cx="6.6" cy="19.4" r="1.6" />
+        </svg>
+      );
+    case 'fish':
+      return (
+        <svg {...base}>
+          <path d="M2.5 12c2.2-3.6 5.2-5.5 8.5-5.5 3 0 5.2 1.8 6.5 5.5-1.3 3.7-3.5 5.5-6.5 5.5-3.3 0-6.3-1.9-8.5-5.5Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M17.5 12l4-3.5v7Z" />
+          <circle cx="7" cy="11" r="0.6" fill="currentColor" />
+        </svg>
+      );
+    case 'fries':
+      return (
+        <svg {...base}>
+          <path d="M8 10V5" />
+          <path d="M10.7 10V3.5" />
+          <path d="M13.3 10V4.5" />
+          <path d="M16 10V6" />
+          <path d="M5.5 10h13l-1.6 10.5H7.1Z" fill="currentColor" fillOpacity="0.16" />
+        </svg>
+      );
+    case 'egg':
+      return (
+        <svg {...base}>
+          <path d="M12 3.5c3.8 0 6.5 4.6 6.5 9a6.5 6.5 0 0 1-13 0c0-4.4 2.7-9 6.5-9Z" fill="currentColor" fillOpacity="0.16" />
+          <circle cx="12" cy="13.5" r="2.6" fill="currentColor" fillOpacity="0.4" />
+        </svg>
+      );
+    case 'milk':
+      return (
+        <svg {...base}>
+          <path d="M8 3.5h8v3l2 3v11H6v-11l2-3Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M6 9.5h12" />
+          <path d="M8 6.5h8" />
+        </svg>
+      );
+    case 'leaf':
+      return (
+        <svg {...base}>
+          <path d="M5 19C5 10 11 4.5 19.5 4.5 19.5 13 14 19 5 19Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M5 19l8-8" />
+        </svg>
+      );
+    case 'chili':
+      return (
+        <svg {...base}>
+          <path d="M8.5 8.5c-2 4.5.5 10.5 9 12-3.5-3-5.5-7.5-5-11.5Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M8 8.5h5" />
+          <path d="M10.5 8.5c0-2 1-3.5 3-4" />
+        </svg>
+      );
+    case 'grain':
+      return (
+        <svg {...base}>
+          <line x1="12" y1="21" x2="12" y2="4" />
+          <path d="M12 8.5c-2.6 0-3.8-1.6-3.8-3.8 2.6 0 3.8 1.6 3.8 3.8Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M12 8.5c2.6 0 3.8-1.6 3.8-3.8-2.6 0-3.8 1.6-3.8 3.8Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M12 13c-2.6 0-3.8-1.6-3.8-3.8 2.6 0 3.8 1.6 3.8 3.8Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M12 13c2.6 0 3.8-1.6 3.8-3.8-2.6 0-3.8 1.6-3.8 3.8Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M12 17.5c-2.6 0-3.8-1.6-3.8-3.8 2.6 0 3.8 1.6 3.8 3.8Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M12 17.5c2.6 0 3.8-1.6 3.8-3.8-2.6 0-3.8 1.6-3.8 3.8Z" fill="currentColor" fillOpacity="0.16" />
+        </svg>
+      );
+    case 'oil':
+      return (
+        <svg {...base}>
+          <path d="M10 3.5h4v3l2 2.5v11.5H8V9l2-2.5Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M8 13h8" />
+        </svg>
+      );
+    case 'jar':
+      return (
+        <svg {...base}>
+          <rect x="6" y="7.5" width="12" height="13" rx="2.5" fill="currentColor" fillOpacity="0.16" />
+          <rect x="7.5" y="3.5" width="9" height="4" rx="1" />
+          <path d="M9 13h6" />
+        </svg>
+      );
+    case 'box':
+      return (
+        <svg {...base}>
+          <path d="M4 8l8-4 8 4v9l-8 4-8-4Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M4 8l8 4 8-4" />
+          <path d="M12 12v9" />
+        </svg>
+      );
+    case 'cutlery':
+      return (
+        <svg {...base}>
+          <path d="M6.5 3.5v5a2.5 2.5 0 0 0 5 0v-5" />
+          <path d="M9 3.5v17" />
+          <path d="M17.5 20.5v-17c-2.2 1.2-3.3 3.8-3.3 7 0 1.8 1.4 2.8 3.3 2.8" fill="currentColor" fillOpacity="0.16" />
+        </svg>
+      );
+    case 'bag':
+      return (
+        <svg {...base}>
+          <path d="M5 8h14l-1 12.5H6Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
+        </svg>
+      );
+    case 'scooter':
+      return (
+        <svg {...base}>
+          <rect x="3" y="8" width="6" height="5" rx="1" fill="currentColor" fillOpacity="0.16" />
+          <circle cx="6" cy="17.5" r="2.3" />
+          <circle cx="18" cy="17.5" r="2.3" />
+          <path d="M8.3 17.5h7.4" />
+          <path d="M3.5 15h7.5l2 2.5" />
+          <path d="M15.7 17.5 14 9h3" />
+        </svg>
+      );
+    case 'handi':
+      return (
+        <svg {...base}>
+          <path d="M5 10.5h14V13a7 7 0 0 1-14 0Z" fill="currentColor" fillOpacity="0.16" />
+          <line x1="4" y1="10.5" x2="20" y2="10.5" />
+          <path d="M5 12.5H3" />
+          <path d="M19 12.5h2" />
+          <path d="M10 7.5c0-1 1-1.3 1-2.3s-1-1-1-1" />
+          <path d="M13.5 7.5c0-1 1-1.3 1-2.3s-1-1-1-1" />
+        </svg>
+      );
+    case 'noodles':
+      return (
+        <svg {...base}>
+          <path d="M3.5 12h17a8.5 8.5 0 0 1-17 0Z" fill="currentColor" fillOpacity="0.16" />
+          <path d="M7.5 12c0-1.6 1.4-1.8 1.4-3.4" />
+          <path d="M11 12c0-1.6 1.4-1.8 1.4-3.4" />
+          <path d="M14 9.5 20.5 3" />
+          <path d="M15.8 10.6 21.5 5" />
+        </svg>
+      );
     case 'bread':
       return (
         <svg {...base}>
@@ -258,12 +475,14 @@ export function ProductPhoto({
   eager?: boolean;
 }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  // A kitchen (a business whose orders go to a queue) draws an unknown dish as a bowl, wherever the photo is shown.
+  const kitchen = hasOrderQueue(useAreas());
   // The API hands back a URL the browser can load as it is; a photo that fails to load falls back to the drawing.
   const src = product.imageUrl?.trim() || null;
   if (src && failedUrl !== src) {
     return <img className={className} src={src} alt="" loading={eager ? 'eager' : 'lazy'} onError={() => setFailedUrl(src)} />;
   }
-  const { kind, tone } = resolveProductGraphic(product);
+  const { kind, tone } = resolveProductGraphic(product, { kitchen });
   const hasName = Boolean(product.name?.trim() || product.categoryName?.trim());
   const toneClass = hasName ? ` photo-tone-${tone} photo-kind-${kind}` : '';
   return (

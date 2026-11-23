@@ -37,6 +37,23 @@ export function queueStateOf(o: {
   return o.paymentPending || o.elapsedMin <= 30 ? 'preparing' : 'completed';
 }
 
+/**
+ * One row on a Pickup card. A dish's row also carries what editing it on the card needs (Jira GRW-747, owner 2026-11-23: "should be able
+ * to edit in same card"): its product, its price for one, and the bill lines it is made of — "Add items" writes its own lines, so one
+ * row can be two lines, newest last.
+ */
+export interface PosTokenItem {
+  name: string;
+  qty: number;
+  paidMinor: number;
+  productId?: string | null;
+  variantId?: string | null;
+  priceMinor?: number;
+  lines?: Array<{ id: string; qty: number }>;
+  /** Chosen with add-ons: Edit can take some off, but one more needs its choices (Add items asks them). */
+  hasAddons?: boolean;
+}
+
 export interface PosDailyToken {
   /** Jira GRW-714 — the kitchen says it is ready to hand over. */
   kitchenReady?: boolean;
@@ -54,7 +71,7 @@ export interface PosDailyToken {
   paymentMode: string | null;
   paymentPending: boolean;
   totalMinor: number;
-  items: Array<{ name: string; qty: number; paidMinor: number }>;
+  items: PosTokenItem[];
   itemsSummary: string;
   state: PosTokenState;
   /** Owner, 4 Nov 2026 — when the shop handed it over, as the server knows it; null while it waits. */
@@ -157,7 +174,7 @@ export function buildDailyTokens(
   const filtered = rows.filter((r) => {
     if (r.status === 'cancelled' || r.status === 'no_show') return false;
     // Jira GRW-721 — a table's bill is on the table map, called by its table: never a token on the Queue too.
-    if (r.tableName) return false;
+    if (isTableOrder(r)) return false;
     if (locationId && r.locationId && r.locationId !== locationId) return false;
     return (r.products?.length ?? 0) > 0 || Boolean(r.serviceName);
   });
@@ -190,7 +207,7 @@ export function buildDailyTokens(
     const first = legs[0]!;
     const offlineToken = offlineOf(legs);
     const tokenNo = offlineToken ? 0 : numbers.get(key)!;
-    const items: Array<{ name: string; qty: number; paidMinor: number }> = [];
+    const items: PosTokenItem[] = [];
     for (const leg of legs) {
       if (leg.serviceName) {
         const paid = Number(leg.paidAmountMinor ?? leg.priceMinor ?? 0);
@@ -198,18 +215,29 @@ export function buildDailyTokens(
       }
     }
     // Owner, 9 Nov 2026 — "Add items" writes its own lines onto the order, so the same dish added twice is one row here.
-    const sameProduct = new Map<string, { name: string; qty: number; paidMinor: number }>();
+    const sameProduct = new Map<string, PosTokenItem>();
     for (const p of first.products ?? []) {
       const netQty = p.qty - (p.returnedQty ?? 0);
       const netPaidMinor = Math.max(0, Number(p.paidMinor ?? 0) - Number(p.returnedMinor ?? 0));
       if (netQty <= 0) continue;
       const key = `${p.productId ?? ''}|${p.variantId ?? ''}|${p.name}`;
       const seen = sameProduct.get(key);
+      const line = p.id ? [{ id: p.id, qty: netQty }] : [];
       if (seen) {
         seen.qty += netQty;
         seen.paidMinor += netPaidMinor;
+        seen.lines = [...(seen.lines ?? []), ...line];
       } else {
-        const row = { name: p.name, qty: netQty, paidMinor: netPaidMinor };
+        const row: PosTokenItem = {
+          name: p.name,
+          qty: netQty,
+          paidMinor: netPaidMinor,
+          productId: p.productId ?? null,
+          variantId: p.variantId ?? null,
+          priceMinor: Number(p.priceMinor ?? 0),
+          lines: line,
+          hasAddons: p.hasAddons === true,
+        };
         sameProduct.set(key, row);
         items.push(row);
       }
@@ -297,4 +325,19 @@ export function returnLookbackFrom(todayISO: string, returnWindowDays: number): 
   const days = Math.max(59, Math.trunc(returnWindowDays) || 0);
   const ms = Date.parse(`${todayISO}T00:00:00Z`) - days * 86_400_000;
   return new Date(ms).toISOString().slice(0, 10);
+}
+
+/**
+ * Jira GRW-721 · GRW-745 BR-02 — an order eaten at a table. It lives on the table map, named by its table, and is never a
+ * pickup token: the POS Pickup tab and Home's queue both ask this one question.
+ */
+export function isTableOrder(r: { tableName?: string | null }): boolean {
+  return Boolean(r.tableName);
+}
+
+/** Jira GRW-745 — how an order was eaten, for a list's filter: a delivery app's order is a delivery even with no type on it. */
+export function orderKindOf(r: { tableName?: string | null; orderType?: string | null; channel?: string | null }): 'dine_in' | 'takeaway' | 'delivery' {
+  if (isTableOrder(r) || r.orderType === 'dine_in') return 'dine_in';
+  if (r.orderType === 'delivery' || (r.channel && r.channel !== 'counter' && r.channel !== 'pos')) return 'delivery';
+  return 'takeaway';
 }

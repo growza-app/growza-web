@@ -66,7 +66,10 @@ describe('the loopholes (owner, 2026-11-17)', () => {
 describe('the Menu screen', () => {
   it("a kitchen's Import opens the menu file; a shop's opens the column-by-column import", () => {
     expect(list).toContain('const openImport = () => (counted ? setImportOpen(true) : setMenuOpen(true));');
+    // The shop's desk tools, the footer row and the empty state each carry one; the kitchen's Menu card has it in its
+    // ⋮ of set-up jobs (owner, 2026-11-20, "quiet table").
     expect(list.match(/onClick=\{openImport\}/g)).toHaveLength(3);
+    expect(list).toContain("{ label: t('import.open'), onSelect: openImport }");
   });
 
   it('prices can still be changed from a file, through the column-by-column import', () => {

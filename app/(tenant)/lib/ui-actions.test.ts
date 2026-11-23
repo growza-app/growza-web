@@ -171,7 +171,7 @@ describe('2b — the controls, each behind its own action', () => {
   });
 
   const GATES: Array<[file: string, gate: RegExp]> = [
-    ['components/home/parts.tsx', /<HeaderSearch wide \/>/],
+    ['components/home/parts.tsx', /<HeaderSearch \/>/],
     // Jira GRW-74 — both of these also ask the role GRID, which `mayUse` cannot see (review, 2026-10-22): the fixed
     // word a role works like is not what the owner filled in. MobileChrome asks it directly (it is chrome, not a
     // screen, so it has no `useWritable`); OwnerHome goes through `useMayUse`, which asks for every control.
@@ -206,9 +206,12 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   // Jira GRW-721 — taking a dish off a table's bill, from the till's table sheet: drawn only for the owner and a manager
   // (the sheet's `canManage`), and the API's handler says the same.
   // Jira GRW-722 — Move table, on the same table's sheet.
-  '/pos': ['POST /api/v1/counter-sales/:id/cancel-items', 'POST /api/v1/tables/:id/move', 'POST /api/v1/tables/:id/join', 'POST /api/v1/counter-sales/:id/service-charge',
+  // Jira GRW-735 — the payment screens ask what the coupon and the buy-get offers take off (writes nothing).
+  '/pos': ['POST /api/v1/bill-offers/quote', 'POST /api/v1/counter-sales/:id/cancel-items', 'POST /api/v1/tables/:id/move', 'POST /api/v1/tables/:id/join', 'POST /api/v1/counter-sales/:id/service-charge',
     // Jira GRW-716 — the till asks for its letter so it can keep billing offline.
-    'POST /api/v1/till-devices'],
+    'POST /api/v1/till-devices',
+    // Jira GRW-732 — Seat guests on the till's table strip, and Free again on a Seated table's sheet.
+    'POST /api/v1/tables/:id/seat', 'DELETE /api/v1/tables/:id/seat'],
   /*
    * Jira GRW-647 — a switch and a device registration, both the signed-in person's own.
    *
@@ -233,11 +236,17 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   '/products/[id]/choices': ['POST /api/v1/addon-groups', 'PATCH /api/v1/addon-groups/:id', 'DELETE /api/v1/addon-groups/:id', 'PUT /api/v1/products/:id/addon-groups'],
   // Jira GRW-724 — and the service charge it offers, on the same owner-only screen.
   '/settings/tables': ['PUT /api/v1/settings/table-orders/:id', 'PUT /api/v1/settings/service-charge/:id', 'PUT /api/v1/settings/kitchen/:id'],
+  // Jira GRW-735 — Settings › Coupons and offers: the owner's and a manager's (the page redirects anyone else; the API says the same).
+  '/settings/offers': ['POST /api/v1/bill-offers', 'DELETE /api/v1/bill-offers/:id'],
+  // Jira GRW-733 — Settings › Kitchen stations: the owner's and a manager's (the page redirects anyone else; the API says the same).
+  '/settings/kitchen-stations': ['POST /api/v1/kitchen/stations', 'PATCH /api/v1/kitchen/stations/:id', 'DELETE /api/v1/kitchen/stations/:id', 'PUT /api/v1/kitchen/stations/categories'],
   // Jira GRW-719 — setting out a branch's room. Gated by the screen: the page sends anyone but the owner and a manager back
   // to Settings, and the API's handler says owner or manager besides.
   '/settings/tables/[branchId]': [
     'POST /api/v1/tables/areas', 'PATCH /api/v1/tables/areas/:id', 'DELETE /api/v1/tables/areas/:id', 'POST /api/v1/tables/areas/:id/tables',
     'PATCH /api/v1/tables/:id', 'DELETE /api/v1/tables/:id', 'PUT /api/v1/tables/order',
+    // Jira GRW-734 — an area's prices, from the same room screen.
+    'PUT /api/v1/tables/areas/:id/prices',
   ],
   // Jira GRW-615 — an order's own screen moves it along: the one next move, and the rarer ones behind More. Same screen,
   // same gate: a role the nav does not offer /orders is bounced Home by the page, so it never reaches the button.
@@ -278,6 +287,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   '/packages': ['POST /api/v1/offers', 'PATCH /api/v1/offers/:id', 'DELETE /api/v1/offers/:id'],
   // Owner, 2026-10-14 — the shelf: owner-only, closed whole by `guardScreen`.
   '/products': [
+    // Jira GRW-737 — the dish sheet's Recipe tab.
+    'PUT /api/v1/products/:id/recipe',
     'POST /api/v1/products',
     'POST /api/v1/products/import',
     'POST /api/v1/products/import/parse',
@@ -305,6 +316,32 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
   ],
   // Jira GRW-633 — the reorder worklist: the owner's own numbers and each category's lead time, on a page of its own under Stock. Owner and manager only, closed whole by `guardScreen`.
   '/stock/order': ['PUT /api/v1/reports/reorder/override', 'PUT /api/v1/reports/reorder/rules'],
+  // Jira GRW-737 — kitchen stock: items, the opening count and the owner's switch; the recipe is written from the dish sheet (`/stock`).
+  // Jira GRW-741 — all of it is Inventory now, one screen per tab: Stock (items, opening, import, the switch, wastage and counts),
+  // Buy (stock in and its bill's photo), Suppliers, and Recipes (the dish sheet's own recipe editor, opened from the list).
+  '/inventory': [
+    'POST /api/v1/stock/materials',
+    'PATCH /api/v1/stock/materials/:id',
+    'POST /api/v1/stock/materials/:id/archive',
+    'POST /api/v1/stock/materials/opening',
+    'POST /api/v1/stock/materials/import/parse',
+    'POST /api/v1/stock/materials/import',
+    'PUT /api/v1/settings/kitchen-stock',
+    // Jira GRW-738 — wastage and counts.
+    'POST /api/v1/stock/wastage',
+    'POST /api/v1/stock/counts',
+    'PATCH /api/v1/stock/counts/:id',
+    'POST /api/v1/stock/counts/:id/finish',
+    // QA 2026-11-19 — one item's amount, set from the item itself.
+    'POST /api/v1/stock/materials/:id/count',
+    // Jira GRW-744 — Stock in is on Stock's action bar now (Buy is Stock's "To buy" filter, and its address only sends you there).
+    'POST /api/v1/stock/purchases',
+    'PATCH /api/v1/stock/purchases/:id',
+    'DELETE /api/v1/stock/purchases/:id',
+    'POST /api/v1/stock/purchases/:id/photo',
+  ],
+  '/inventory/suppliers': ['POST /api/v1/stock/suppliers', 'PATCH /api/v1/stock/suppliers/:id'],
+  '/inventory/recipes': ['PUT /api/v1/products/:id/recipe'],
   '/providers': [
     'POST /api/v1/providers',
     'PATCH /api/v1/providers/:id',
@@ -341,6 +378,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
     'POST /api/v1/settings/branches/:id/make-main',
     'PATCH /api/v1/settings/branches/:id',
     'POST /api/v1/settings/logo',
+    // Jira GRW-728 — the owner takes the logo off again (the screen draws the button for the owner alone, BR-01).
+    'DELETE /api/v1/settings/logo',
     /*
      * Settings › Payments — the QR the till shows. Owner-only like the rest of
      * this screen: `canSee('/settings', role)` is false for both limited roles,
@@ -348,6 +387,8 @@ const SCREEN_WRITES: Record<string, readonly string[]> = {
      */
     'POST /api/v1/settings/payment-qr',
     'DELETE /api/v1/settings/payment-qr',
+    // Jira GRW-729 — the UPI ID a printed bill's QR pays (drawn for the owner alone).
+    'PUT /api/v1/settings/payment-qr/upi',
     'POST /api/v1/settings/branches/:id/payment-qr',
     'DELETE /api/v1/settings/branches/:id/payment-qr',
     'PATCH /api/v1/settings/booking',
@@ -462,6 +503,9 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     '/reports/profit': /await guardScreen\('\/reports\/profit'\);/,
     '/reports/payments': /await guardScreen\('\/reports\/payments'\);/,
     '/reports/discounts': /await guardScreen\('\/reports\/discounts'\);/,
+    // Jira GRW-739 — and Food cost, a restaurant's.
+    // Jira GRW-741 — it moved to Inventory › Reports; the old address sends you there, and that screen guards.
+    '/reports/food-cost': /redirect\(query \? `\/inventory\/reports\?\$\{query\}` : '\/inventory\/reports'\)/,
     // The centre button and this page ask the same action.
     '/appointments/new': /if \(!mayUse\(me\.member\?\.role, 'visit\.new', isWritable\(me\.tenant\?\.status\)\)\)/,
     // Jira GRW-556 — where a closed screen's address lands until the business is live: open to every role, and it
@@ -503,6 +547,19 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     // them; the two that read what was BILLED are every shop's, and guard under the shelf's.
     '/stock/report': /await guardScreen\('\/stock\/report'\);/,
     '/stock/order': /await guardScreen\('\/stock\/order'\);/,
+    // Jira GRW-737 — the kitchen's raw materials guard under their own address (a restaurant's, and the cook's too).
+    // Jira GRW-741 — that address only sends you on to Inventory, whose screen is the one that guards.
+    // Jira GRW-744 — it keeps `?show=to-buy` (Stock's To buy filter) as well as the branch.
+    '/stock/kitchen': /redirect\(query \? `\$\{tab\}\?\$\{query\}` : tab\)/,
+    // Jira GRW-741 — Inventory, and each of its tabs, guard under their OWN address: who may open a tab differs (the cook has Stock and Buy,
+    // the counter not Suppliers or Reports).
+    // Jira GRW-744 — Buy is Stock's "To buy" filter: the address guards as Stock (whoever may open Stock) and sends you there.
+    '/inventory/buy': /await guardScreen\('\/inventory'\);\s*const params = await searchParams;\s*redirect\(`\/inventory\?show=to-buy/,
+    '/inventory/suppliers': /await guardScreen\('\/inventory\/suppliers'\);/,
+    '/inventory/reports': /await guardScreen\('\/inventory\/reports'\);/,
+    '/inventory': /await guardScreen\('\/inventory'\);/,
+    // Owner, 2026-11-20 — Recipes moved to the Menu; the old address only sends you there, gated as the Menu is.
+    '/inventory/recipes': /await guardScreen\('\/stock'\);/,
     '/stock/channels': /await guardScreen\('\/stock'\);/,
     '/stock/sellers': /await guardScreen\('\/stock'\);/,
     '/stock': /<ProductsScreen[^>]*guard="\/stock"/,

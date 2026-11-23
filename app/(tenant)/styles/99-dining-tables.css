@@ -67,7 +67,7 @@
 
 /*
  * Jira GRW-721 — the room on the till. Tiles like seats in a cinema: three across at 344px, more as the screen widens.
- * Each tile says its state in WORDS (Free · Ordering · Bill printed) as well as its colour; every tile is 44px+ tall.
+ * Each tile says its state in WORDS (Free · Food cooking · Eating · Bill printed) as well as its colour; every tile is 44px+ tall.
  */
 .pf-tables { display: flex; flex-direction: column; gap: var(--sp-3); padding: var(--sp-3); }
 .pf-table-sent { margin: 0; padding: var(--sp-2) var(--sp-3); border-radius: 10px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
@@ -85,12 +85,31 @@
 .tm-name { font-weight: 700; font-size: 1rem; overflow-wrap: anywhere; }
 .tm-state { font-size: 0.75rem; font-weight: 600; }
 .tm-detail { font-size: 0.75rem; color: var(--muted); overflow-wrap: anywhere; }
-.tm-tile.is-free { background: var(--surface); }
+/*
+ * Jira GRW-731 — four states, one colour each, by the accent discipline in 00-base: amber is waiting (on the kitchen), green is done
+ * (the food is on the table), blue is what happens next (the bill is out, the money is coming). Every border is 3:1 or more against
+ * white and the page: --muted 5.6:1, --amber 4.99:1, --accent-deep 7.1:1, --blue 6.7:1. The word on the tile says it either way.
+ */
+.tm-tile.is-free, .tm-key.is-free .tm-swatch { background: var(--surface); border-color: var(--muted); }
 .tm-tile.is-free .tm-state { color: var(--muted); }
-.tm-tile.is-ordering { background: var(--accent-soft); border-color: var(--accent); }
-.tm-tile.is-ordering .tm-state { color: var(--accent-ink); }
-.tm-tile.is-bill { background: var(--amber-soft); border-color: var(--amber); }
-.tm-tile.is-bill .tm-state { color: var(--amber); }
+/*
+ * Jira GRW-732 — Seated: guests at the table, nothing ordered yet. Purple, the one accent no other table state uses; --purple-deep is
+ * 7.1:1 on white. After an hour with no order the tile steps back (BR-02, "Still seated?"), its word and colour still there.
+ */
+.tm-tile.is-seated, .tm-key.is-seated .tm-swatch { background: var(--purple-soft); border-color: var(--purple-deep); }
+.tm-tile.is-seated .tm-state { color: var(--purple-deep); }
+.tm-tile.is-seated.is-stale { background: var(--surface); border-style: dashed; }
+.tm-tile.is-stale .tm-detail { font-style: italic; }
+.tm-tile.is-cooking, .tm-key.is-cooking .tm-swatch { background: var(--amber-soft); border-color: var(--amber); }
+.tm-tile.is-cooking .tm-state { color: var(--amber-ink); }
+.tm-tile.is-eating, .tm-key.is-eating .tm-swatch { background: var(--accent-soft); border-color: var(--accent-deep); }
+.tm-tile.is-eating .tm-state { color: var(--accent-ink); }
+.tm-tile.is-bill, .tm-key.is-bill .tm-swatch { background: var(--blue-soft); border-color: var(--blue); }
+.tm-tile.is-bill .tm-state { color: var(--blue); }
+/* The legend: one line on a laptop, two at most on a 344px phone (AC-03). */
+.tm-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-3); font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+.tm-key { display: inline-flex; align-items: center; gap: var(--sp-1); white-space: nowrap; }
+.tm-swatch { flex: none; width: 0.75rem; height: 0.75rem; border: 1px solid var(--border); border-radius: 3px; }
 .tm-skeleton { background: var(--slate-soft); border-color: transparent; cursor: default; }
 .tm-failed { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); border-radius: 10px; background: var(--amber-soft); color: var(--amber); }
 .tm-failed .btn { min-height: 44px; }
@@ -119,6 +138,12 @@
 .tb-pay, .tb-reason { display: flex; flex-direction: column; gap: var(--sp-2); }
 .pf-guests-btn { min-width: 44px; min-height: 44px; padding: 0; justify-content: center; }
 .pf-guests-n { min-width: 1.5rem; text-align: center; font-weight: 600; }
+/* Jira GRW-732 — Seat guests: a whole row under the strip on a phone, beside the count on a wide till. */
+.pf-seat-btn { flex: 1 1 100%; }
+@media (min-width: 861px) { .pf-seat-btn { flex: 0 0 auto; } }
+.tb-seated { display: flex; flex-direction: column; gap: var(--sp-2); }
+.tb-seated .tb-take-order { flex-basis: 100%; }
+.tb-still { margin: 0; font-style: italic; }
 
 /* Jira GRW-722 — Move table: the branch's other tables as the map's own tiles, smaller. */
 .tb-move { display: flex; flex-direction: column; gap: var(--sp-2); }
@@ -201,6 +226,17 @@
 .kd-card-type.is-delivery { background: var(--border); color: var(--text); }
 .kd-card-age { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 0.875rem; font-variant-numeric: tabular-nums; font-weight: 600; }
 .kd-card.is-late .kd-card-age { font-weight: 800; }
+/* Jira GRW-730 — who sent it, beside the minutes: "Ravi · 5 min". Muted, one line; a long name is cut (…) and the minutes never are. */
+.kd-card-by { margin-left: auto; flex: 0 1 auto; min-width: 2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 0.875rem; font-weight: 600; }
+.kd-card-dot { flex: none; color: var(--muted); font-size: 0.875rem; }
+.kd-card-by ~ .kd-card-age { margin-left: 0; }
+.kd-card.is-late .kd-card-by, .kd-card.is-late .kd-card-dot { color: var(--amber-ink); }
+/* Laptop sweep 2026-11-22 — the head wraps, and "who · how long" wraps as one piece: beside the table when both fit, else
+   on a line of its own, right-aligned, where only the name is cut. The table's label is never cut unless it alone is too long. */
+.kd-card-head { flex-wrap: wrap; }
+.kd-card-label { flex: 0 1 auto; max-width: 100%; min-width: 0; }
+.kd-card-when { margin-left: auto; display: inline-flex; align-items: center; gap: var(--sp-1); min-width: 0; max-width: 100%; }
+.kd-card-when .kd-card-by { margin-left: 0; }
 /* Review #2 (owner, 2026-11-17) — plain rows with a hairline between them: the same 48px to tap, about a quarter less height. */
 .kd-dishes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .kd-dish + .kd-dish { border-top: 1px solid var(--border); }
@@ -226,6 +262,9 @@
 .kd-filters { display: flex; gap: var(--sp-1); margin-left: auto; flex: none; }
 .kd-filter { min-height: 44px; padding: 0 var(--sp-3); border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-size: 0.875rem; font-weight: 600; white-space: nowrap; cursor: pointer; }
 .kd-filter[aria-pressed='true'] { background: var(--accent-deep); border-color: var(--accent-deep); color: var(--surface); }
+/* Jira GRW-733 — which station this tablet shows: a row of the same pills, wrapping on a phone; and whose dish it is on an all-stations screen. */
+.kd-stations { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0 0 var(--sp-3); }
+.kd-station { flex: none; padding: 0 var(--sp-1); border-radius: 999px; border: 1px solid var(--border); color: var(--muted); font-size: 0.75rem; font-weight: 600; max-width: 8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* A phone: the counts on one line, the filters on the next, swiped sideways if they do not fit. */
 @media (max-width: 860px) {
   .kd-summary { flex-wrap: wrap; overflow-x: visible; }
@@ -295,4 +334,576 @@
 .tb-foot-pair .btn { min-height: 48px; white-space: normal; overflow-wrap: anywhere; }
 .tb-foot-pair .btn-danger { flex: 1 1 auto; }
 .tb-foot-pair .btn-ghost { flex: 0 0 auto; }
-.tb-foot-pair .btn-danger:disabled { background: var(--surface); color: var(--danger); box-shadow: inset 0 0 0 1.5px var(--danger); opacity: 0.55; }
+/* Owner, 2026-11-22 — Take off is the one action of this step, so it is a solid red button (it was red words beside an
+   outlined Cancel, which read as the main one); waiting for a reason it is plainly not ready yet, not a faded red. */
+.tb-foot-pair .btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.tb-foot-pair .btn-danger:hover:not(:disabled) { background: var(--danger); filter: brightness(0.92); }
+.tb-foot-pair .btn-danger:disabled { background: var(--surface); color: var(--muted); box-shadow: inset 0 0 0 1px var(--border); opacity: 1; }
+
+/*
+ * Jira GRW-745 — Dine-in · Takeaway · Delivery has ONE place: the top of the till, over the table map and over the dishes.
+ * It used to jump into the bill panel after the first dish. Its height is fixed so nothing under it moves (CLS 0); once the
+ * order has a table or a dish it is locked, the choices it may not take greyed (not hidden), and the reason is said — beside
+ * the switch on a laptop, under it on a phone when a locked choice is tapped.
+ */
+.pf-type-top {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.pf-type-top .pf-type-tabs {
+  flex: 1 1 18rem;
+  max-width: 30rem;
+}
+
+.pf-type-top .pf-type-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 2.75rem;
+}
+
+/*
+ * Design review D1 (2026-11-22) — a locked choice stays readable: the normal grey (about 5:1 on the tray), no opacity. It
+ * was 55% opacity, 2.16:1, and still answered a tap. On a laptop a padlock beside the word says it is locked; a phone has
+ * no room for one at 344px and says why when it is tapped (the lock note).
+ */
+.pf-type-top .pf-type-tab[aria-disabled='true'] {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.pf-type-lockicon {
+  display: none;
+}
+
+@media (min-width: 861px) {
+  .pf-type-lockicon {
+    display: inline-flex;
+  }
+
+  .pf-type-lockicon svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+}
+
+.pf-type-icon,
+.pf-type-icon svg {
+  display: inline-flex;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.pf-type-lock {
+  display: none;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+
+.pf-type-lock svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex: none;
+}
+
+@media (max-width: 860px) {
+  .pf-type-top.is-nudged .pf-type-lock {
+    display: inline-flex;
+    flex-basis: 100%;
+    color: var(--text);
+  }
+}
+
+@media (min-width: 861px) {
+  .pf-type-top .pf-type-lock {
+    display: inline-flex;
+    flex-basis: auto;
+    flex: 1 1 12rem;
+  }
+}
+
+/*
+ * Owner, 2026-11-21 ("alignment issue") — on a laptop Delivery's "Order from" sits beside the switch on ONE line, centred on
+ * it: the label and the app chips. It was the bill panel's two-row grid (chips on top, the number under them), twice the
+ * switch's height and lined up with neither row. The order number now sits in the bill, under "Delivery · Swiggy".
+ */
+@media (min-width: 861px) {
+  /* The switch keeps its width: "Order from" goes beside it when the whole of it fits, else onto the next line. */
+  .pf-type-top .pf-type-tabs {
+    flex: 0 1 30rem;
+  }
+
+  .pf-type-top > .pf-from {
+    display: flex;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+  }
+
+  .pf-type-top > .pf-from > .pf-row-label {
+    min-width: 0;
+  }
+
+  .pf-type-top > .pf-from .pf-chips {
+    flex: none;
+  }
+}
+
+.pf-order-head .pf-from-no {
+  margin-top: var(--sp-2);
+  background: var(--surface);
+}
+
+/* The bill names what it is for: a takeaway or a delivery here, a table in the strip (styled the same way). */
+.pf-order-head,
+.pf-table-strip .pf-table-name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.pf-order-head {
+  margin-bottom: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: 0.75rem;
+  background: var(--amber-soft);
+}
+
+.pf-order-head.is-delivery {
+  background: var(--blue-soft);
+}
+
+.pf-order-head-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-6);
+  color: var(--text);
+}
+
+.pf-order-head-sub {
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+
+.pf-table-strip .pf-table-name {
+  font-size: var(--fs-6);
+}
+
+/* Jira GRW-745 — Home's Recent orders by how they were eaten: a row of chips, 44px to a thumb, the chosen one filled. */
+.hm-type-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
+}
+
+.hm-type-chip {
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-2);
+  cursor: pointer;
+}
+
+/* Design review D9 — one chosen green across the app (the till's chips and tabs use --accent-deep, not --forest). */
+.hm-type-chip.is-on {
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+  color: #fff;
+}
+
+.hm-type-chip:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+
+/* Jira GRW-745 FR-08 — Return: a bill is named by its table or its token before the guest's name. */
+.sls-ret-bill-place {
+  display: block;
+  font-size: var(--fs-2);
+  font-weight: 600;
+}
+
+/* Design review D8 — the green was the till's "this one is chosen" colour; a table's place is plain text like a token's. */
+.sls-ret-bill-place.is-table {
+  color: var(--text);
+}
+
+.sls-ret-bill-place.is-token {
+  color: var(--text);
+}
+
+/* GRW-745 AC-07 — the table map's 12px inset is undone for the switch alone, so it sits on exactly the same line as over
+   the dishes: moving from the map to a table does not move it. */
+.pf-tables > .pf-type-top {
+  margin: calc(-1 * var(--sp-3)) calc(-1 * var(--sp-3)) 0;
+}
+
+/* GRW-745 FR-08 — under the Return sheet the switch is not shown (its space kept, so closing Return moves nothing). */
+.pos-body[data-mode='return'] .pf-type-top {
+  visibility: hidden;
+}
+
+
+/*
+ * Owner, 2026-11-22 ("go D") — the till's switch drawn in the POS's one-row bar (99-pos.css `.pos-bar-types`). "Pickup 4"
+ * rides on Takeaway. At 344px it is three words with no icons: with the flame and the ⋮ beside it, that is what fits, in
+ * Hindi too.
+ */
+.pf-type-inbar {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+.pf-type-inbar .pf-type-tabs {
+  flex: 1 1 auto;
+  max-width: none;
+  min-width: 0;
+}
+
+.pf-type-tab-main {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+}
+
+.pf-type-pickup {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.pf-type-pickup.is-live {
+  color: var(--amber-ink);
+}
+
+/*
+ * Owner, 2026-11-22 ("can you change the color") — in the POS bar the chosen type is filled in the app's green with white
+ * words, the way a chosen chip is everywhere else on the till (`.pf-chip-on`). White on light grey (1.16:1) hardly said
+ * which one was on.
+ */
+.pf-type-inbar .pf-type-tab.is-on {
+  background: var(--accent-deep);
+  color: #fff;
+  box-shadow: none;
+}
+
+/* The bare count is the phone's badge (below); a laptop says "Pickup 4" in words. */
+.pf-type-pickup-n {
+  display: none;
+}
+
+/*
+ * Owner, 2026-11-22 ("not looking good on mobile") — at 344px: three tabs of one width, the chosen one marked by its white
+ * pill (not by a heavier word that no longer fits), and Pickup's count a badge on Takeaway's corner instead of a second
+ * line. The words "Pickup 4" stay for a screen reader.
+ */
+@media (max-width: 860px) {
+  .pf-type-inbar .pf-type-tabs {
+    padding: 2px;
+  }
+
+  .pf-type-inbar .pf-type-icon {
+    display: none;
+  }
+
+  /* Each tab as wide as its word plus the same 8px each side (owner, 2026-11-22 — "spacing issue"): equal widths left
+     "Takeaway" touching its neighbours, since it is the longest word. */
+  .pf-type-inbar .pf-type-tab {
+    position: relative;
+    flex: 1 1 auto;
+    padding: 0 var(--sp-2);
+    font-size: var(--fs-3);
+  }
+
+  .pf-type-inbar .pf-type-tab.is-on {
+    font-weight: 500;
+  }
+
+  .pf-type-inbar .pf-type-tab.has-pickup {
+    overflow: visible;
+  }
+
+  /* Its words are for a screen reader and its count is a corner badge: the wrapper takes no room, so "Takeaway" is centred. */
+  .pf-type-inbar .pf-type-pickup {
+    display: contents;
+  }
+
+  .pf-type-inbar .pf-type-pickup-word {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .pf-type-inbar .pf-type-pickup.is-live .pf-type-pickup-n {
+    position: absolute;
+    top: -0.25rem;
+    right: -0.125rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.3125rem;
+    border-radius: 999px;
+    background: var(--amber-soft);
+    color: var(--amber-ink);
+    box-shadow: 0 0 0 2px var(--page-bg);
+    font-size: var(--fs-1);
+    font-weight: 700;
+    line-height: 1;
+  }
+}
+
+@media (min-width: 861px) {
+  .pf-type-inbar .pf-type-tabs {
+    flex: 0 0 auto;
+  }
+
+  .pf-type-inbar .pf-type-tab {
+    flex: 0 0 auto;
+    padding: 0 var(--sp-4);
+  }
+
+  .pf-type-pickup {
+    margin-left: var(--sp-2);
+    padding: 0.125rem var(--sp-2);
+    border-radius: 999px;
+    background: var(--slate-soft);
+  }
+
+  .pf-type-pickup.is-live {
+    background: var(--amber-soft);
+  }
+}
+
+/*
+ * Owner, 2026-11-22 ("this UI is not good") — the table strip under the POS bar: the table is the way back, People sits
+ * beside it, and Seat only is an outline (Next is the green button on this screen). Two rows at 344px instead of three.
+ */
+.pf-table-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  max-width: 100%;
+  font-size: var(--fs-5);
+  font-weight: 600;
+}
+
+.pf-table-back svg {
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.pf-table-back .pf-table-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pf-seat-btn {
+  border: 1px solid var(--accent-deep);
+  background: var(--surface);
+  color: var(--accent-deep);
+  box-shadow: none;
+}
+
+@media (max-width: 860px) {
+  .pf-table-strip.is-in-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+
+  /* The table's name must read whole at 344px ("T1 · Main Hall"): a tight arrow, a narrow pad. */
+  .pf-table-strip.is-in-bar .pf-table-back {
+    justify-self: start;
+    gap: var(--sp-1);
+    padding: 0 var(--sp-2);
+  }
+
+  .pf-table-strip.is-in-bar .pf-guests {
+    gap: 0;
+  }
+
+  .pf-table-strip.is-in-bar .pf-guests .field-hint {
+    margin-right: var(--sp-1);
+  }
+
+  .pf-table-strip.is-in-bar .pf-guests {
+    margin-left: 0;
+  }
+
+  .pf-table-strip.is-in-bar .pf-table-prices,
+  .pf-table-strip.is-in-bar .pf-seat-btn {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Under 360px (an iPhone SE is 320): 13px words and 4px each side, so the three still read whole beside the flame and ⋮. */
+@media (max-width: 359px) {
+  .pf-type-inbar .pf-type-tab {
+    padding: 0 var(--sp-1);
+    font-size: var(--fs-2);
+  }
+}
+
+/*
+ * Design review D3 / D10 (2026-11-22) — the bill's head was amber for a takeaway and blue for a delivery: the very colours
+ * the table map uses for "Food cooking" and "Bill printed", so a takeaway bill looked like a cooking table. It is a plain
+ * card now (the type's icon and words say what it is), and its grey line reads at the muted grey's full contrast.
+ */
+.pf-order-head,
+.pf-order-head.is-delivery {
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+/* Owner, 2026-11-22 — Take off a dish and Cancel the whole order, side by side under the dishes; the confirm takes Take
+   payment's place at the foot, so it stays under the thumb. */
+.tb-edit-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-4);
+}
+
+.tb-cancel-all {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+
+/*
+ * Owner, 2026-11-22 ("take off journey UI is not good") — the take-off step at 344px:
+ * - a dish keeps its one line in edit mode; a red minus on its left (44px) takes it off;
+ * - the reason is one tap (Guest changed mind, Wrong dish, Took too long, Not good), the keyboard only for Something else;
+ * - "Take off a dish" is plain words, "Cancel the whole order" the red one — not two red links that look alike.
+ */
+.tb-off-minus {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: calc(-1 * var(--sp-1)) 0 calc(-1 * var(--sp-1)) calc(-1 * var(--sp-2));
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.tb-off-minus svg {
+  box-sizing: content-box;
+  width: 0.75rem;
+  height: 0.75rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  stroke-width: 3;
+}
+
+.tb-off-minus:disabled {
+  cursor: not-allowed;
+}
+
+.tb-off-minus:disabled svg {
+  background: var(--border);
+}
+
+.tb-off-minus:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -2px;
+  border-radius: 999px;
+}
+
+.tb-lines.is-editing .tb-line {
+  flex-wrap: wrap;
+}
+
+.tb-lines.is-editing .tb-line-name {
+  flex-basis: auto;
+  flex: 1 1 0%;
+}
+
+.tb-lines.is-editing .tb-line-amount {
+  margin-left: 0;
+}
+
+.tb-line.is-picked {
+  background: var(--danger-soft);
+  margin: 0 calc(-1 * var(--sp-2));
+  padding-left: var(--sp-2);
+  padding-right: var(--sp-2);
+  border-radius: 10px;
+}
+
+.tb-off-reasons {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.tb-off-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+
+.tb-off-chip {
+  min-height: 2.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-3);
+  cursor: pointer;
+}
+
+.tb-off-chip.is-on {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: #fff;
+  font-weight: 600;
+}
+
+.tb-off-chip:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+
+.tb-edit-links .tb-edit-link:first-child {
+  color: var(--text);
+}
+
+.tb-edit-links .tb-edit-link:first-child[aria-pressed='true'] {
+  color: var(--accent-deep);
+}

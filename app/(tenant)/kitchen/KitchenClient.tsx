@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError, type KitchenCard } from '../lib/api';
 import { useBranch } from '../components/BranchProvider';
-import { useSession } from '../components/SessionProvider';
+import AppLink from '../../shared/AppLink';
+import { useMayOpen, useRecipesOn, useSession } from '../components/SessionProvider';
 import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
 import { SignOutButton } from '../components/SignOutButton';
 
@@ -16,15 +17,29 @@ import { SignOutButton } from '../components/SignOutButton';
  * A dish ticked here is ticked on every tablet (it is saved on the dish). Ready takes the card off — on every screen — and Undo is on screen
  * for the 10 seconds the server allows (BR-02). A card past the branch's late time turns amber AND says how many minutes, so colour is never
  * the only signal. One short chime for a new order, off until this tablet turns it on.
+ *
+ * Jira GRW-733 — where the branch has kitchen stations, a tablet shows one station's part (Tandoor, Bar, Kitchen) or all of them, chosen on
+ * the tablet and kept on it. A station's Ready takes the card off THAT screen; the order is Ready once every station has marked its part.
  */
 
 export const KITCHEN_REFRESH_MS = 4_000;
 const UNDO_MS = 10_000;
 const CHIME_KEY = 'growza.kitchen.chime';
+/** Jira GRW-733 — which station this tablet shows, kept on the tablet: `kitchen` for the default, a station's id, or nothing for all. */
+const STATION_KEY = 'growza.kitchen.station';
 
 export const minutesSince = (iso: string, nowMs: number): number => Math.max(0, Math.floor((nowMs - Date.parse(iso)) / 60_000));
 /** Which words a card's age is said in: "Just now" in its first minute, never "0 min". */
 export const ageKey = (late: boolean, mins: number): 'lateFor' | 'justNow' | 'minutes' => (late ? 'lateFor' : mins === 0 ? 'justNow' : 'minutes');
+
+/**
+ * Jira GRW-730 — who sent the order, said beside its minutes ("Ravi · 5 min"): each sender once, first sender first
+ * ("Ravi, Amit" when a second waiter added a round). Null when nobody is named (an older order or an older API).
+ */
+export const sentByOf = (takenBy: readonly string[] | undefined): string | null => {
+  const names = (takenBy ?? []).map((n) => n.trim()).filter(Boolean);
+  return names.length > 0 ? names.join(', ') : null;
+};
 
 /**
  * Owner, 2026-11-17 (review #6) — Half or Full is what the cook acts on, so the portion is set in bold. The line's own name
@@ -47,6 +62,10 @@ const TYPE_ICON: Record<'dine_in' | 'takeaway' | 'delivery', string> = {
 
 export function KitchenClient() {
   const t = useTranslations('kitchen');
+  const tks = useTranslations('kitchenStock');
+  // Jira GRW-737 — the cook reads what the kitchen has left (amounts only), from the kitchen screen they live on. Jira GRW-741 — Inventory.
+  const mayOpen = useMayOpen();
+  const stockLink = useRecipesOn() && mayOpen('/inventory');
   const branch = useBranch();
   const session = useSession();
   const location = branch.choice ?? branch.one ?? session?.branches?.[0]?.id ?? null;
@@ -54,16 +73,20 @@ export function KitchenClient() {
   const [failed, setFailed] = useState(false);
   const [off, setOff] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
-  const [undo, setUndo] = useState<{ saleId: string; label: string; until: number } | null>(null);
+  const [undo, setUndo] = useState<{ saleId: string; label: string; until: number; station?: string | null } | null>(null);
   const [chime, setChime] = useState(false);
   /** Owner, 2026-11-17 — one kind of order at a time in a rush; on this tablet only, never saved. */
   const [only, setOnly] = useState<'all' | 'dine_in' | 'takeaway' | 'delivery'>('all');
+  /** Jira GRW-733 — this tablet's station (null: every station) and the branch's stations, for the filter. */
+  const [station, setStation] = useState<string | null>(null);
+  const [stations, setStations] = useState<Array<{ id: string; name: string }>>([]);
   const seen = useRef<Set<string> | null>(null);
   const mayLeave = session?.role === 'owner' || session?.role === 'manager';
 
   useEffect(() => {
     try {
       setChime(localStorage.getItem(CHIME_KEY) === 'on');
+      setStation(localStorage.getItem(STATION_KEY) || null);
     } catch {
       /* a private window: no chime, as by default */
     }
@@ -72,8 +95,9 @@ export function KitchenClient() {
   const load = useCallback(async () => {
     if (!location) return;
     try {
-      const answer = await api.kitchen(location);
+      const answer = await api.kitchen(location, station);
       setCards(answer.cards);
+      setStations(answer.stations ?? []);
       setFailed(false);
       setNow(Date.now());
       const ids = new Set(answer.cards.map((c) => c.saleId));
@@ -94,7 +118,7 @@ export function KitchenClient() {
       if (e instanceof ApiError && e.status === 403) setOff(e.message);
       else setFailed(true);
     }
-  }, [location, chime]);
+  }, [location, chime, station]);
 
   useEffect(() => {
     void load();
@@ -112,11 +136,13 @@ export function KitchenClient() {
   const labelOf = (c: KitchenCard): string =>
     c.offlineToken ? c.offlineToken : c.tokenNo !== null ? t('token', { n: String(c.tokenNo).padStart(2, '0') }) : (c.tableName ?? t('order'));
 
+  /** Jira GRW-733 — the station this screen marks Ready for, by name; null on an all-stations screen. */
+  const stationName = station === null ? null : station === 'kitchen' ? t('kitchenStation') : (stations.find((s) => s.id === station)?.name ?? null);
   const ready = async (c: KitchenCard) => {
     setCards((prev) => (prev ?? []).filter((x) => x.saleId !== c.saleId));
     try {
-      await api.kitchenReady(c.saleId, true);
-      setUndo({ saleId: c.saleId, label: labelOf(c), until: Date.now() + UNDO_MS });
+      await api.kitchenReady(c.saleId, true, station);
+      setUndo({ saleId: c.saleId, label: stationName ? t('stationReadyDone', { label: labelOf(c), station: stationName }) : labelOf(c), until: Date.now() + UNDO_MS, station });
     } catch {
       void load();
     }
@@ -126,7 +152,7 @@ export function KitchenClient() {
     const u = undo;
     setUndo(null);
     try {
-      await api.kitchenReady(u.saleId, false);
+      await api.kitchenReady(u.saleId, false, u.station ?? null);
     } finally {
       void load();
     }
@@ -137,6 +163,17 @@ export function KitchenClient() {
       await api.kitchenDishDone(dishId, done);
     } catch {
       void load();
+    }
+  };
+  const pickStation = (next: string | null) => {
+    setStation(next);
+    setCards(null);
+    seen.current = null;
+    try {
+      if (next) localStorage.setItem(STATION_KEY, next);
+      else localStorage.removeItem(STATION_KEY);
+    } catch {
+      /* stays for this visit */
     }
   };
   const toggleChime = () => {
@@ -172,6 +209,11 @@ export function KitchenClient() {
         <h1 className="kd-title">{t('title')}</h1>
         <div className="kd-bar-right">
           <HeaderBranchPicker variant="pill" />
+          {stockLink ? (
+            <AppLink className="btn btn-ghost kd-stock-link" href="/inventory">
+              {tks('title')}
+            </AppLink>
+          ) : null}
           {/* Owner, 2026-11-17 — "Chime" was the design's word; "Sound" is the plain one. The speaker is struck through while off. */}
           <button type="button" className={`btn btn-ghost kd-sound${chime ? '' : ' is-off'}`} aria-pressed={chime} title={chime ? undefined : t('soundHint')} onClick={toggleChime}>
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
@@ -188,6 +230,17 @@ export function KitchenClient() {
           {mayLeave ? null : <SignOutButton className="btn btn-ghost kd-signout">{t('signOut')}</SignOutButton>}
         </div>
       </div>
+
+      {/* Jira GRW-733 — the station this tablet shows; only where the branch has named stations. */}
+      {stations.length > 0 ? (
+        <div className="kd-stations" role="group" aria-label={t('stationFilterAria')}>
+          {[{ key: null as string | null, name: t('stationAll') }, { key: 'kitchen', name: t('kitchenStation') }, ...stations.map((s) => ({ key: s.id as string | null, name: s.name }))].map((s) => (
+            <button key={s.key ?? 'all'} type="button" className="kd-filter kd-station-pick" aria-pressed={station === s.key} onClick={() => pickStation(s.key)}>
+              {s.name}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {failed ? (
         <p className="kd-offline" role="alert">
@@ -230,18 +283,34 @@ export function KitchenClient() {
         <ul className="kd-grid">
           {cards.filter((c) => only === 'all' || c.orderType === only).map((c) => {
             const mins = minutesSince(c.placedAt, now);
+            const sentBy = sentByOf(c.takenBy);
             return (
               <li key={c.saleId} className={`kd-card${c.late ? ' is-late' : ''}`} aria-label={labelOf(c)}>
                 <div className="kd-card-head">
                   <span className="kd-card-label">{labelOf(c)}</span>
-                  <span className="kd-card-age">
-                    {/* Review #4 — late is said with a clock and words, never by the amber alone. */}
-                    {c.late ? (
-                      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
-                        <path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 4v5l3 2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                  {/* Laptop sweep 2026-11-22 — who and how long travel as one piece: beside the table when there is room, on
+                      their own line under it when not ("T10 · T… Arj…" at 1366), so the table is never the part that is cut. */}
+                  <span className="kd-card-when">
+                    {/* Jira GRW-730 — whom to ask about a dish. A long name gives way (…) before the minutes ever do. */}
+                    {sentBy ? (
+                      <>
+                        <span className="kd-card-by" title={t('sentBy', { name: sentBy })}>
+                          {sentBy}
+                        </span>
+                        <span className="kd-card-dot" aria-hidden="true">
+                          ·
+                        </span>
+                      </>
                     ) : null}
-                    {t(ageKey(c.late, mins), { min: mins })}
+                    <span className="kd-card-age">
+                      {/* Review #4 — late is said with a clock and words, never by the amber alone. */}
+                      {c.late ? (
+                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+                          <path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 4v5l3 2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      ) : null}
+                      {t(ageKey(c.late, mins), { min: mins })}
+                    </span>
                   </span>
                 </div>
                 {/* Owner, 2026-11-17 — "the kitchen has no option to view if the order is dine in or take away": its own line, the word
@@ -286,6 +355,8 @@ export function KitchenClient() {
                             );
                           })()}
                         </span>
+                        {/* Jira GRW-733 — on an all-stations screen, whose dish it is. */}
+                        {station === null && d.station ? <span className="kd-station">{d.station}</span> : null}
                         {d.isNew ? <span className="kd-new">{t('new')}</span> : null}
                         {d.cancelled ? <span className="kd-off">{t('cancelled')}</span> : null}
                       </button>

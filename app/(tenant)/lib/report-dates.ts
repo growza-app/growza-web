@@ -61,6 +61,8 @@ export function clampReportRange(
   toISO: string,
   todayISO: string,
   changed: ChangedEnd = 'from',
+  /** Jira GRW-739 — a report with a shorter limit than the server's 366 days (Food cost reads up to 92). */
+  maxDays: number = MAX_REPORT_SPAN_DAYS,
 ): { fromISO: string; toISO: string } {
   const today = ISO.test(todayISO) ? todayISO : DateTime.now().toISODate()!;
   const fallback = defaultReportRange(today);
@@ -75,17 +77,37 @@ export function clampReportRange(
     else from = to;
   }
 
-  if (spanDays(from, to) > MAX_REPORT_SPAN_DAYS) {
+  if (spanDays(from, to) > maxDays) {
     if (changed === 'from') {
-      to = shiftDays(from, MAX_REPORT_SPAN_DAYS - 1);
+      to = shiftDays(from, maxDays - 1);
       if (to > today) to = today;
     } else {
-      from = shiftDays(to, -(MAX_REPORT_SPAN_DAYS - 1));
+      from = shiftDays(to, -(maxDays - 1));
     }
     // Clamping `to` back to today can leave the span long again, when `from` is further back than the limit
     // allows from today at all. Then the end the owner touched is the one that has to move.
-    if (spanDays(from, to) > MAX_REPORT_SPAN_DAYS) from = shiftDays(to, -(MAX_REPORT_SPAN_DAYS - 1));
+    if (spanDays(from, to) > maxDays) from = shiftDays(to, -(maxDays - 1));
   }
 
   return { fromISO: from, toISO: to };
+}
+
+/** Owner, 2026-11-21 — the one-tap periods beside the two dates (the delivery-apps card offers the same). */
+export type ReportPreset = 'last7' | 'thisWeek' | 'lastWeek' | 'thisMonth';
+export const REPORT_PRESETS: readonly ReportPreset[] = ['last7', 'thisWeek', 'lastWeek', 'thisMonth'];
+
+/** A preset's two dates. Weeks run Monday to Sunday, as an Indian business's do; nothing ends after today. */
+export function presetRange(kind: ReportPreset, todayISO: string): { fromISO: string; toISO: string } {
+  const today = DateTime.fromISO(todayISO, { zone: 'utc' });
+  const monday = today.minus({ days: today.weekday - 1 });
+  switch (kind) {
+    case 'thisWeek':
+      return { fromISO: monday.toISODate()!, toISO: todayISO };
+    case 'lastWeek':
+      return { fromISO: monday.minus({ days: 7 }).toISODate()!, toISO: monday.minus({ days: 1 }).toISODate()! };
+    case 'thisMonth':
+      return { fromISO: today.startOf('month').toISODate()!, toISO: todayISO };
+    default:
+      return defaultReportRange(todayISO);
+  }
 }

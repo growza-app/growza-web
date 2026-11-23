@@ -27,7 +27,10 @@ describe('points follow the bill they were quoted for', () => {
     expect(row).toContain("{checking ? t('checking') : t('off', { amount: money(rewards.discountMinor) })}");
   });
   it('every till holds the payment while checking', () => {
-    expect(till).toContain('if (saving || lines.length === 0 || freeBlock || pointsChecking || splitTooBig) return;');
+    // QA of the overnight stack (item 1) — the till HOLDS the tap while the points are asked, and completes once they are in.
+    expect(till).toContain('if (saving || lines.length === 0 || freeBlock || splitTooBig) return;');
+    expect(till).toContain('const quoting = pointsChecking ||');
+    expect(till).toMatch(/if \(quoting\) \{\s*setHeldTap\(\{ mode, pending \}\);\s*return;/);
     expect(till).toContain('const redeemPoints = quotedPoints;');
     expect(pickup).toContain('const busy = saving !== null || checking;');
     expect(pickup).toContain('if (freeBlock || checking || splitTooBig) return;');

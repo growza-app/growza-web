@@ -321,6 +321,45 @@ function useShare(target: ShareTarget, onFinished?: () => void) {
 }
 
 /**
+ * Owner, 2026-11-21 — share text the caller wrote itself (the whole menu), the same way out as a row's share: the
+ * phone's sheet, else `wa.me`, else the Copy dialog. Call `share` inside the tap, so the new tab is not a blocked pop-up.
+ */
+export function useShareTextOnWhatsApp() {
+  const [copyText, setCopyText] = useState<string | null>(null);
+  // Develop QA 2026-11-21, L3 — text with no way back to the business asks first, as a row's share does ("Share anyway" is remembered).
+  const [askFor, setAskFor] = useState<string | null>(null);
+  const inFlight = useRef(false);
+  const share = async (text: string, opts: { reachable?: boolean; anyway?: boolean } = {}) => {
+    if (inFlight.current) return;
+    if (opts.reachable === false && !opts.anyway && !numberWaived()) {
+      setAskFor(text);
+      return;
+    }
+    inFlight.current = true;
+    try {
+      const toCopy = await openWhatsApp(text);
+      if (toCopy) setCopyText(toCopy);
+    } finally {
+      inFlight.current = false;
+    }
+  };
+  const dialog = copyText ? (
+    <CopyShareDialog text={copyText} onClose={() => setCopyText(null)} />
+  ) : askFor ? (
+    <NoNumberDialog
+      onCancel={() => setAskFor(null)}
+      onShareAnyway={() => {
+        const text = askFor;
+        setAskFor(null);
+        waiveNumber();
+        void share(text, { anyway: true });
+      }}
+    />
+  ) : null;
+  return { share, dialog };
+}
+
+/**
  * The icon button on a row. Drawn at 32px beside ⋯, with a 44px target (the HIG's minimum) that does not grow the
  * row. Named with the item, so ten of them on one screen are ten different buttons to a screen reader.
  */

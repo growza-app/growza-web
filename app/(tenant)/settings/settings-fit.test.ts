@@ -39,6 +39,13 @@ describe('the Settings shell fills the window at every desktop height', () => {
     expect(css).toMatch(/\.settings-page \.settings-nav-pane,\s*\.settings-page \.settings-content-pane \{[^}]*overflow-y:\s*auto/);
   });
 
+  it('pays for the six group headings on a short laptop out of their own spacing (owner, 2026-11-18)', () => {
+    // 57px over at 1366×768 with the headings at the body's leading; 1440×900 is untouched.
+    const band = rules.slice(rules.indexOf('@media (min-width: 861px) and (max-height: 859px) {\n  .settings-page .settings-group + .settings-group'));
+    expect(band).toMatch(/^@media \(min-width: 861px\) and \(max-height: 859px\) \{\s*\.settings-page \.settings-group \+ \.settings-group \{\s*margin-top: 0;/);
+    expect(band).toMatch(/\.settings-page \.settings-group-title \{\s*margin-bottom: 0;\s*line-height: 1\.15;/);
+  });
+
   it('keeps a band for windows under 680px tall', () => {
     expect(css).toContain('@media (min-width: 861px) and (max-height: 679px)');
   });
@@ -145,6 +152,13 @@ describe('the phone hub', () => {
     const heading = phone.match(/\.settings-hub \.settings-group-title \{[^}]*\}/)?.[0] ?? '';
     expect(heading).toMatch(/line-height/);
     expect(heading).not.toMatch(/font-size/);
+  });
+
+  it('separates the groups: 16px before each group, its heading 4px over its own card (owner, 2026-11-18)', () => {
+    // At 0px each heading read as the last line of the card above it. Space wins over fitting the hub on one screen.
+    const phone = css.slice(css.indexOf('Jira GRW-229 AC-03'));
+    expect(phone).toMatch(/\.settings-hub \.settings-group \+ \.settings-group \{\s*margin-top:\s*var\(--sp-4\);/);
+    expect(phone.match(/\.settings-hub \.settings-group-title \{[^}]*\}/)?.[0] ?? '').toMatch(/margin-bottom:\s*var\(--sp-1\);/);
   });
 
   it('never shrinks a row that can be tapped — 44px is 90-accessibility.css, not this file', () => {

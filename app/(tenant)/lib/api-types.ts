@@ -46,7 +46,11 @@ export interface DiningTable {
     totalMinor: number;
     guests: number | null;
     billPrinted: boolean;
+    /** Jira GRW-731 — the kitchen has a dish for this table and has not marked it Ready. Absent from an older API. */
+    foodCooking?: boolean;
   } | null;
+  /** Jira GRW-732 — guests seated, no order yet (null once the first order opens the bill). Absent from an older API. */
+  seated?: { at: string; guests: number | null } | null;
 }
 
 /** Jira GRW-719 — an area of a branch's room (AC Hall, Garden) and its tables, in the order the owner set. */
@@ -54,6 +58,8 @@ export interface DiningArea {
   id: string;
   name: string;
   tables: DiningTable[];
+  /** Jira GRW-734 — the area's own prices (+10% = 1000; fixed prices by dish, in paise). Absent from an older API: menu prices. */
+  pricing?: { changeBp: number | null; fixed: Record<string, number> };
 }
 
 /** Jira GRW-718 — one branch's Table orders switch, as Settings › Tables reads it. */
@@ -242,6 +248,8 @@ export interface Me {
     sizes?: boolean;
     /** Jira GRW-712 — items carry add-ons (Extras, Spice) and portions. Absent reads as no. */
     addons?: boolean;
+    /** Jira GRW-737 — kitchen stock and recipes may exist here (a restaurant). Absent reads as no. */
+    recipes?: boolean;
     providerSelection: boolean;
     maxProviders: number;
   };
@@ -784,6 +792,8 @@ export interface VisitProductLine {
   returnedMinor?: string;
   sku?: string | null;
   barcode?: string | null;
+  /** Jira GRW-747 — chosen with add-ons ("+ Hot, Raita"): one more of it needs its choices, so Pickup's Edit sends it to Add items. */
+  hasAddons?: boolean;
 }
 
 export interface ReturnSaleProductsResponse {
@@ -864,6 +874,8 @@ export interface SettingsSummary {
     invoicePrefix: string;
     invoiceFooter: string;
     pricesIncludeTax: boolean;
+    /** Jira GRW-736 — a GST rate per order type, in basis points (500 = 5%); null = each dish's own rate. Absent from an older API. */
+    orderTypeRates?: { dine_in: number | null; takeaway: number | null; delivery: number | null };
     branchState: string;
     branchStateCode: string;
     branchGstin: string;
@@ -1585,7 +1597,8 @@ export interface OrderDetail {
   soldAt: string;
   buyer: { name: string | null; contact: string | null; address: string | null } | null;
   buyerRedactedAt: string | null;
-  client: { id: string; name: string | null } | null;
+  /** `anonymous` — Jira GRW-747: the branch's shared Walk-in row. Absent from an older API, read as a named client. */
+  client: { id: string; name: string | null; anonymous?: boolean } | null;
   lines: Array<{
     id: string;
     productId: string | null;
@@ -1604,7 +1617,7 @@ export interface OrderDetail {
     /** Jira GRW-723 — who put the line on the bill ("Ravi"). */
     addedBy?: string | null;
     /** Jira GRW-724 — `service_charge`: the bill's service charge line, never a dish to return or take off. */
-    kind?: 'item' | 'service_charge';
+    kind?: 'item' | 'service_charge' | 'tax';
     sku: string | null;
     barcode: string | null;
     priceMinor?: string;
@@ -2080,6 +2093,8 @@ export interface ByChannelPage {
   caveat: string;
   /** Jira GRW-720 — the same bills by how they were eaten; `counter` is an order from before order types. Absent from an older API. */
   byOrderType?: Array<{ type: 'dine_in' | 'takeaway' | 'delivery' | 'counter'; orders: number; billedMinor: string }>;
+  /** Jira GRW-734 — dine-in by the area each dish was sent from; `area` null = no area (the service charge, older dishes). Absent from an older API. */
+  byArea?: Array<{ area: string | null; billedMinor: string }>;
 }
 
 /**
@@ -2367,8 +2382,27 @@ export interface KitchenTicketDto {
   kind: 'new' | 'add' | 'cancel' | 'pack';
   createdAt: string;
   items: { name: string; qty: number }[];
-  /** Jira GRW-723 — who sent it ("Ravi"), printed beside the table. Absent from an older API. */
+  /**
+   * Jira GRW-723 · GRW-730 — who sent it ("Ravi"), as named the day the slip was made, or the delivery app the order
+   * came from ("Swiggy"): printed "By Ravi" under the slip number. Absent from an older API.
+   */
   takenBy?: string | null;
+  /**
+   * Jira GRW-733 — the kitchen station this slip is for ("Tandoor", "Bar", or "Kitchen" for a dish whose category has
+   * none), as named when the slip was made; printed under its heading. Null where the branch has set no stations: one
+   * slip, exactly as before. `stationId` is null for the default Kitchen station. Absent from an older API.
+   */
+  station?: string | null;
+  stationId?: string | null;
+}
+
+/** Jira GRW-733 — an order's slips: one per kitchen station it went to, or the one slip of a branch without stations. */
+export type KitchenSlips = KitchenTicketDto | readonly KitchenTicketDto[];
+
+/** Jira GRW-733 — a branch's kitchen stations, and which station each menu category's dishes go to (null: the default Kitchen). */
+export interface KitchenStations {
+  stations: Array<{ id: string; name: string }>;
+  categories: Array<{ id: string; name: string; stationId: string | null }>;
 }
 
 /** Jira GRW-720 — how an order is eaten. Null: taken before order types existed (reports call it Counter). */
@@ -2394,7 +2428,17 @@ export interface DocumentTicket {
   number: string;
   issuedAt: string;
   status: 'issued' | 'cancelled';
-  supplier: { legalName: string; tradeName: string | null; address: string | null; gstin: string | null; phone: string | null; fssai: string | null; footer: string | null };
+  supplier: {
+    legalName: string;
+    tradeName: string | null;
+    address: string | null;
+    gstin: string | null;
+    phone: string | null;
+    fssai: string | null;
+    footer: string | null;
+    /** Jira GRW-728 — the logo the bill was first issued with, as a data URI; null with none. Absent from an older API. */
+    logo?: string | null;
+  };
   /** The name on the document; "Walk-in" for an unnamed guest, which the bill leaves off. */
   customerName: string;
   /** Who issued it — printed as the bill's Cashier. Null when the member has no name. */
@@ -2413,6 +2457,8 @@ export interface DocumentTicket {
   /** "Rupees Four Hundred Sixty Two Only". Absent from an API a release behind. */
   amountInWords?: string;
   rewardPointsUsed: number;
+  /** Jira GRW-735 — each coupon and buy-get offer the bill took, on its own line. Absent from an older API. */
+  offers?: Array<{ name: string; code: string | null; amountMinor: number }>;
   paymentModes: string[];
   /** What came in each way, from the bill's payment rows; empty when one way paid it all. */
   payments?: { mode: string; amountMinor: number }[];
@@ -2423,6 +2469,17 @@ export interface DocumentTicket {
   /** Jira GRW-720 · GRW-719 — printed on the bill beside the date. Absent from an older API. */
   orderType?: OrderType | null;
   tableName?: string | null;
+  /** Jira GRW-729 — the bill has been paid: it prints "Paid" where the QR would be (only when `qrReady`). */
+  paid?: boolean;
+  /** Jira GRW-729 — this bill's branch has a QR to print (a UPI ID, or the uploaded picture). */
+  qrReady?: boolean;
+  /**
+   * Jira GRW-729 — the QR for what is still due: a UPI link for the exact amount, or the uploaded picture (a data URI);
+   * null when nothing is due or none is set up. Absent from an older API.
+   */
+  payQr?: { kind: 'upi'; uri: string; amountMinor: number } | { kind: 'image'; image: string; amountMinor: number } | null;
+  /** QA of the overnight stack (item 7) — this paper no longer says what is owed (no QR is sent with it): print the bill again. */
+  outOfDate?: boolean;
 }
 
 /** Jira GRW-712 — an add-on group (Extras, Spice) and its priced choices. */
@@ -2460,6 +2517,308 @@ export interface KitchenCard {
   channel: string;
   placedAt: string;
   late: boolean;
+  /** Jira GRW-730 — who sent the order's rounds, each once, first sender first ("Ravi", "Amit"); a delivery app's order names the app. Absent from an older API. */
+  takenBy?: string[];
   /** `size` (owner, 2026-11-17): the portion it was sold in, set in bold on the card; null with no sizes or on an older API. */
-  dishes: Array<{ id: string; name: string; qty: number; done: boolean; isNew: boolean; cancelled: boolean; size?: string | null }>;
+  /** Jira GRW-733 — `station`: the station the dish's slip went to, where the branch has stations (null otherwise, or on an older API). */
+  dishes: Array<{ id: string; name: string; qty: number; done: boolean; isNew: boolean; cancelled: boolean; size?: string | null; station?: string | null }>;
+}
+
+/** Jira GRW-737 — kitchen stock. Every quantity is a whole number of THOUSANDTHS of the item's unit (0.25 kg arrives as 250). */
+export type MaterialUnit = 'kg' | 'l' | 'pcs';
+export interface StockMaterial {
+  id: string;
+  locationId: string;
+  name: string;
+  unit: MaterialUnit;
+  category: string | null;
+  lowStockAt: number;
+  stock: number;
+  /** Paise per whole unit; absent for a viewer who cannot see the money. */
+  avgCost?: number | null;
+  openedAt: string | null;
+  usedIn: number;
+  /** Develop QA 2026-11-21, L2 — taken-off dishes whose recipe names it. Absent on an older API. */
+  usedInOff?: number;
+  low: boolean;
+  /** Stock has moved: the unit is locked (the server's answer, not a guess). */
+  moved: boolean;
+  /** Jira GRW-743 — someone stated its amount (a stock in, waste, count or correction): no opening count is asked for. */
+  known: boolean;
+}
+export interface KitchenStockList {
+  on: boolean;
+  materials: StockMaterial[];
+  noRecipe: Array<{ productId: string; name: string; sizes: string[] }>;
+}
+export interface RecipeLineDto {
+  materialId: string;
+  name: string;
+  unit: MaterialUnit;
+  qty: number;
+  archived: boolean;
+  /** Absent for a viewer who cannot see the money. */
+  costMinor?: number | null;
+}
+export interface DishRecipe {
+  productId: string;
+  name: string;
+  locationId: string;
+  priceMinor: number;
+  sizes: Array<{ variantId: string | null; label: string | null; priceMinor: number; lines: RecipeLineDto[]; needsFixing: boolean }>;
+}
+
+/** Jira GRW-738 — who a branch buys from, and the pack an item last came in from them. */
+export interface StockSupplier {
+  id: string;
+  locationId: string;
+  name: string;
+  phone: string | null;
+  gstin: string | null;
+  notes: string | null;
+  archived: boolean;
+  lastUsedAt: string | null;
+}
+export interface RememberedPack {
+  supplierId: string | null;
+  materialId: string;
+  /** Thousandths of the item's unit in one pack. */
+  packSize: number;
+  packLabel: string | null;
+}
+/** Jira GRW-738 — a stock in. Money is paise before GST; quantities are thousandths. Money fields are absent for a viewer who cannot see it. */
+export interface PurchaseLineDto {
+  id: string;
+  materialId: string;
+  name: string;
+  unit: MaterialUnit;
+  packSize: number;
+  packLabel: string | null;
+  packs: number;
+  qty: number;
+  priceMinor?: number | null;
+  unitCost?: number | null;
+  totalMinor?: number | null;
+}
+export interface PurchaseSummary {
+  id: string;
+  locationId: string;
+  supplierId: string | null;
+  supplierName: string | null;
+  boughtOn: string;
+  billNo: string | null;
+  gstMinor?: number | null;
+  totalMinor?: number;
+  lineCount: number;
+  noPrice: boolean;
+  createdAt: string;
+  createdBy: string | null;
+}
+export interface PurchaseDetail extends PurchaseSummary {
+  photoUrl: string | null;
+  lines: PurchaseLineDto[];
+}
+export interface PurchaseLineInput {
+  id?: string;
+  materialId: string;
+  packSize?: number;
+  packLabel?: string | null;
+  packs: number;
+  priceMinor: number | null;
+}
+export interface PurchaseInput {
+  locationId?: string;
+  supplierId: string | null;
+  boughtOn: string;
+  billNo: string | null;
+  gstMinor: number | null;
+  lines: PurchaseLineInput[];
+  anyway?: boolean;
+}
+export type WasteReason = 'spoiled' | 'dropped' | 'expired' | 'other';
+/** Jira GRW-738 — one line of a raw material's history, newest first. `unitCost` is absent for a viewer who cannot see the money. */
+export interface MaterialMovement {
+  kind: 'opening' | 'used' | 'returned' | 'received' | 'wasted' | 'counted' | 'corrected';
+  qty: number;
+  stockAfter: number;
+  unitCost?: number | null;
+  note: string | null;
+  reason: WasteReason | null;
+  visitKey: string | null;
+  dish: string | null;
+  by: string | null;
+  purchaseId: string | null;
+  supplier: string | null;
+  billNo: string | null;
+  createdAt: string;
+}
+/** Jira GRW-738 — an open count: what each item says, what was typed, and what Finish would set (BR-06 adds what moved since). */
+export interface StockCountLine {
+  materialId: string;
+  name: string;
+  unit: MaterialUnit;
+  stock: number;
+  counted: number | null;
+  countedAt: string | null;
+  since: number;
+  after: number | null;
+  difference: number | null;
+  differenceMinor?: number | null;
+}
+export interface StockCount {
+  id: string;
+  locationId: string;
+  startedAt: string;
+  startedBy: string | null;
+  lines: StockCountLine[];
+  skipped: string[];
+}
+export interface FinishedCount {
+  id: string;
+  locationId: string;
+  changed: Array<{ materialId: string; name: string; unit: MaterialUnit; before: number; after: number; difference: number }>;
+  unchanged: number;
+  skipped: string[];
+}
+
+/** Jira GRW-737 — one row of a raw-material file, as read (amounts in thousandths; `amount` null = not counted yet). */
+export interface MaterialImportRow {
+  name: string;
+  unit: MaterialUnit;
+  category: string | null;
+  lowStockAt: number;
+  amount: number | null;
+}
+export interface MaterialImportReview {
+  rows: Array<MaterialImportRow & { status: 'new' | 'exists' }>;
+  skipped: Array<{ row: number; name: string | null; reason: 'no_name' | 'bad_unit' | 'bad_number' | 'name_too_long' | 'twice_in_file' }>;
+  adding: number;
+  already: number;
+}
+
+/**
+ * Jira GRW-739 — kitchen stock, part 3. Quantities are thousandths of the item's unit; money is paise. Every price field is ABSENT (not
+ * null) for a viewer who cannot see the money (the cook, the counter).
+ */
+export interface BuyItem {
+  materialId: string;
+  name: string;
+  unit: MaterialUnit;
+  category: string | null;
+  stock: number;
+  lowStockAt: number;
+  /** The starting figure on the shared list: twice the low level or three days of use, rounded to what can be ordered (QA 2026-11-19). */
+  suggestQty: number;
+  /** What it used a day this past week. Absent from an older API. */
+  usedPerDay?: number;
+  supplierId: string | null;
+  supplierName: string | null;
+  supplierPhone: string | null;
+  /** The pack it last came in (null = loose). */
+  packSize: number | null;
+  packLabel: string | null;
+  lastPriceMinor?: number | null;
+  lastPricePackSize?: number | null;
+  lastBoughtOn?: string | null;
+}
+/** `GET /api/v1/stock/reorder` */
+export interface BuyList {
+  business: string;
+  branch: string | null;
+  date: string;
+  items: BuyItem[];
+}
+/** `GET /api/v1/stock/materials/:id/prices` — the last five priced stock ins, newest first. */
+export interface PriceTrend {
+  unit: MaterialUnit;
+  points: Array<{ boughtOn: string; supplierName: string | null; billNo: string | null; priceMinor: number; packSize: number; packLabel: string | null; unitCost: number }>;
+}
+/** `GET /api/v1/products/:id/cost` — per size, at today's average cost. */
+export interface DishCost {
+  productId: string;
+  name: string;
+  sizes: Array<{ variantId: string | null; label: string | null; priceMinor: number; netPriceMinor: number; costMinor: number | null; foodCostPct: number | null; noRecipe: boolean }>;
+}
+/**
+ * Jira GRW-741 — `GET /api/v1/stock/recipes`: Inventory › Recipes, every dish at a branch with no-recipe dishes first. The cost, the price
+ * before GST and the % are present only for a viewer who may see the money; the counter is sent the price and `noRecipe` alone.
+ */
+export interface RecipeCostDish {
+  productId: string;
+  name: string;
+  category: string | null;
+  noRecipe: boolean;
+  sizes: Array<{ variantId: string | null; label: string | null; priceMinor: number; netPriceMinor?: number; costMinor?: number | null; foodCostPct?: number | null; noRecipe: boolean }>;
+}
+/** `GET /api/v1/reports/food-cost` */
+export interface FoodCostReportPage {
+  window: MoneyWindow;
+  tracking: boolean;
+  anySales: boolean;
+  totals: {
+    salesMinor: number;
+    costedSalesMinor: number;
+    foodMinor: number;
+    foodCostPct: number | null;
+    /** QA 2026-11-19 — the share of all sales the % is worked out over. Absent from an older API. */
+    coveredPct?: number | null;
+    givenFreeMinor: number;
+    freeBills: number;
+    wastedMinor: number;
+    lostMinor: number;
+    foundMinor: number;
+  };
+  days: Array<{ dateISO: string; salesMinor: number; costedSalesMinor: number; foodMinor: number; foodCostPct: number | null; givenFreeMinor: number }>;
+  costliest: Array<{ name: string; qty: number; salesMinor: number; foodMinor: number; foodCostPct: number }>;
+  /** `stillMissing` (Jira GRW-743) — of `names`, the dishes that have no recipe now either. Absent from an older API. */
+  noRecipe: { dishes: number; salesMinor: number; pctOfSales: number | null; names: string[]; stillMissing?: string[] };
+  /** `items` (QA 2026-11-19) — the items that still have no price, to open and give one. Absent from an older API. */
+  noPrice: { dishes: number; salesMinor: number; names: string[]; items?: Array<{ materialId: string; name: string }> };
+}
+export type LossKind = 'wasted' | 'lost' | 'found';
+/** `GET /api/v1/reports/stock-loss` */
+export interface StockLossReportPage {
+  window: MoneyWindow;
+  /** Jira GRW-741 — what was used of each item, net of what came back before cooking, at the cost it was used at. Absent from an older API. */
+  used?: Array<{ materialId: string; name: string; unit: MaterialUnit; qty: number; valueMinor: number; unpriced: boolean }>;
+  totals: { wastedMinor: number; lostMinor: number; foundMinor: number; entries: number; unpricedEntries: number };
+  byDay: Array<{ dateISO: string; wastedMinor: number; lostMinor: number; foundMinor: number; entries: number }>;
+  byItem: Array<{ materialId: string; name: string; unit: MaterialUnit; wastedQty: number; wastedMinor: number; lostQty: number; lostMinor: number; foundQty: number; foundMinor: number; unpriced: boolean }>;
+  entries: Array<{ atISO: string; dateISO: string; materialId: string; name: string; unit: MaterialUnit; kind: LossKind; qty: number; valueMinor: number | null; reason: WasteReason | null; note: string | null; dish: string | null; by: string | null }>;
+  moreEntries: number;
+}
+
+/** Jira GRW-735 — a branch's coupon or buy-get offer, as Settings › Coupons and offers lists it. */
+export interface BillOffer {
+  id: string;
+  kind: 'coupon' | 'bogo';
+  name: string;
+  code: string | null;
+  /** 20% = 2000. */
+  offBp: number | null;
+  offMinor: number | null;
+  minBillMinor: number;
+  usesPerGuest: number | null;
+  productId: string | null;
+  productName: string | null;
+  buyQty: number | null;
+  getQty: number | null;
+  validFrom: string | null;
+  validUntil: string | null;
+  used: number;
+}
+
+/** Jira GRW-735 — what the offers take off a bill: the buy-get offers, the coupon (or why not), and which of it and the discount is kept. */
+export interface BillOffersQuote {
+  bogo: Array<{ name: string; offMinor: number }>;
+  coupon: { code: string | null; name: string; offMinor: number } | null;
+  couponRefusal: string | null;
+  kept: 'coupon' | 'discount' | null;
+  billMinor: number;
+  dueMinor: number;
+  /** Jira GRW-736 — the business adds GST on top: `taxMinor` is it, on the bill after its offers, discount and points; `dueMinor` includes it. */
+  taxOnTop?: boolean;
+  taxMinor?: number;
+  /** QA of the overnight stack (item 7) — the bill was printed, and its paper asks for another amount than this payment would take. */
+  printedOutOfDate?: boolean;
 }

@@ -685,6 +685,64 @@ a.ord-card:focus-visible,
 }
 
 /*
+ * Laptop sweep 2026-11-22 — the two wrappers draw nothing on a phone: their blocks sit straight in the one column, in
+ * the order they always had (the bar last, under the history, where it pins to the bottom of the screen).
+ */
+.ord-d-main,
+.ord-d-side {
+  display: contents;
+}
+.ord-detail .ord-d-bar {
+  order: 1;
+}
+
+/*
+ * From 1100px the order is two columns: who and what (and its history) on the left, the money and the next step on the
+ * right, which stays in view while the left scrolls. 40rem of one column left half a laptop empty. The rows are
+ * `auto 1fr` so a tall right column grows the second row, never opens a gap between the items and the history.
+ */
+@media (min-width: 1100px) {
+  .ord-detail.has-side {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
+    grid-template-rows: auto 1fr;
+    align-items: start;
+    gap: var(--sp-3) var(--sp-4);
+    max-width: 72rem;
+  }
+  .ord-detail.has-side .ord-d-main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+  .ord-detail.has-side .ord-d-history-block {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .ord-detail.has-side .ord-d-side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    position: sticky;
+    top: var(--sp-3);
+    min-width: 0;
+  }
+  .ord-detail.has-side .ord-d-bar {
+    position: static;
+    padding: 0;
+    background: none;
+  }
+  .ord-detail.has-side.has-bar {
+    padding-bottom: var(--sp-4);
+  }
+}
+
+/*
  * Jira GRW-617 — "Swap size". The button sits under its line, a full row of its own so it stays a thumb tall without
  * crowding the name and the amount; the sheet is the till's size sheet (the same cells, the same shell) with the line
  * being swapped named above the grid and the difference, in money, between the grid and the confirm bar.
@@ -922,6 +980,24 @@ a.ord-card:focus-visible,
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--amber);
+}
+
+/* Jira GRW-747 — Add guest's number and This is a guest of ours, side by side; they wrap on a narrow phone. */
+.ord-d-buyer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--sp-2);
+}
+/* Jira GRW-747 — the optional name box a Walk-in order's sheet asks first: as wide as the number box under it. */
+.ord-add-number-name input {
+  width: 100%;
+  min-height: 3rem;
+}
+
+.ord-add-number-save {
+  width: 100%;
+  min-height: 44px;
+  margin-top: var(--sp-4);
 }
 
 /* QA 2026-10-23 — "Can they be sold again?" inside the came-back confirm: two full-width rows, 44px to tap. */
@@ -1258,4 +1334,180 @@ a.ord-card:focus-visible,
   background: var(--amber-soft);
   color: var(--amber-ink);
   font-weight: 600;
+}
+
+/*
+ * Owner, 2026-11-21 ("redesign the orders page like this too") — the Menu's look (99-menu-manager.css). Each order has
+ * a solid tile with a drawing of how it went out (orders/order-tile.ts: eaten here, taken away, a bike for delivery
+ * and the apps, a parcel for a marketplace) on a section hue — identity only, never a state. The day is a bar, the
+ * amount is in forest, a finished order wears green and work still to do stays amber.
+ */
+.ord-tile[data-hue='1'] { --sec: var(--cat-1); }
+.ord-tile[data-hue='2'] { --sec: var(--cat-2); }
+.ord-tile[data-hue='3'] { --sec: var(--cat-3); }
+.ord-tile[data-hue='4'] { --sec: var(--cat-4); }
+.ord-tile[data-hue='5'] { --sec: var(--cat-5); }
+.ord-tile[data-hue='6'] { --sec: var(--cat-6); }
+
+.ord-tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.625rem;
+  background: var(--sec, var(--muted));
+  color: #fff;
+}
+
+.ord-tile svg {
+  width: 1.75rem;
+  height: 1.75rem;
+  stroke-width: 1.8;
+}
+
+.is-void .ord-tile {
+  background: var(--muted);
+  opacity: 0.55;
+}
+
+.ord-amount,
+.ord-td-amount {
+  color: var(--forest);
+}
+
+.ord-s-delivered,
+.ord-s-done {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+
+.ord-s-new,
+.ord-s-packed,
+.ord-s-waiting {
+  font-weight: 600;
+}
+
+/* A phone: the tile, then the two lines it had. The day is a forest bar, in words, not capitals. */
+@media (max-width: 860px) {
+  .ord-days a.ord-card {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .ord-card-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+
+  .ord-day-head {
+    padding: 0 0 0 0.625rem;
+    border-left: 3px solid var(--forest);
+    color: var(--forest);
+    font-size: var(--fs-3);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+}
+
+/* A laptop: the table in the Menu's look. */
+@media (min-width: 861px) {
+  .ord .ord-table thead th {
+    background: var(--accent-soft);
+    border-bottom: 1px solid color-mix(in srgb, var(--accent) 30%, var(--surface));
+    color: var(--forest);
+    font-weight: 600;
+  }
+
+  .ord .ord-table .ord-tday > th {
+    padding: 0.5rem 1rem;
+    background: var(--surface);
+    box-shadow: inset 3px 0 0 var(--forest);
+    color: var(--forest);
+    font-size: var(--fs-2);
+    font-weight: 600;
+  }
+
+  .ord .ord-table tbody tr.ord-tr {
+    cursor: pointer;
+  }
+
+  .ord .ord-table tbody tr.ord-tr td {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .ord-order {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  .ord-order-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+
+  .ord .ord-row-link {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .ord .ord-row-link:hover .ord-order-name {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .ord-order-sub {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.375rem;
+    color: var(--muted);
+    font-size: var(--fs-2);
+  }
+
+  .ord-order-sub .ord-code,
+  .ord-order-sub .ord-late {
+    margin-left: 0.25rem;
+  }
+
+  .ord-td-items {
+    color: var(--muted);
+  }
+
+  .ord .ord-table .ord-td-amount {
+    font-weight: 600;
+  }
+
+  .ord-tr.is-void .ord-order-name,
+  .ord-tr.is-void .ord-td-amount {
+    color: var(--muted);
+  }
+
+  .ord-tr.is-void .ord-td-amount {
+    text-decoration: line-through;
+    font-weight: 500;
+  }
+
+  .ord-tr.is-void .ord-token {
+    background: var(--slate-soft);
+    color: var(--muted);
+  }
+}
+
+/* Green is the finished order's now; the counter — where most orders come from — is a quiet grey word beside it. */
+.ord-chan-badge.ord-chan-counter {
+  background: var(--slate-soft);
+  color: var(--text);
 }

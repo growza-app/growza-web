@@ -182,6 +182,24 @@
   }
 }
 
+/*
+ * Owner, 2026-11-18 — six group headings in the list beside the form, where there were three (the hub is grouped
+ * by what the owner is doing). For a restaurant owner, who sees every row, the three new headings put the list
+ * 57px over its pane at 1366×768 and 83px over at 1366×680. The rows here are not tap targets, but they are
+ * already as tight as the bands above make them, so the headings pay for themselves: no gap between one group
+ * and the next heading, none under it, and the heading's line box at 1.15 rather than the body's 1.55 — the
+ * phone hub's own leading (Jira GRW-229). Below 860px tall only: a 1440×900 window fits as it was.
+ */
+@media (min-width: 861px) and (max-height: 859px) {
+  .settings-page .settings-group + .settings-group {
+    margin-top: 0;
+  }
+  .settings-page .settings-group-title {
+    margin-bottom: 0;
+    line-height: 1.15;
+  }
+}
+
 /* ---------- wide form column: across, not down ---------- */
 .bp-columns {
   display: flex;
@@ -304,6 +322,10 @@
     display: none;
   }
   .settings-page .settings-nav-pane .settings-row-action {
+    display: none;
+  }
+  /* Laptop sweep 2026-11-22 — and the group that held only that row goes with it, or "ACCOUNT" stood over nothing. */
+  .settings-page .settings-nav-pane .settings-group:not(:has(.settings-row:not(.settings-row-action))) {
     display: none;
   }
   .settings-page .settings-content-pane > .card + .card,
@@ -836,8 +858,22 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
     padding-top: 8px !important;
     padding-bottom: 8px !important;
   }
+  /*
+   * Owner, 2026-11-18 — six groups now, not three (the hub is grouped by what the owner is doing), and each
+   * heading costs a line. For a restaurant owner, who sees every row, the three new headings put the hub
+   * 14px over at 344×882 and 22px over at 402×874. The gap between one group's card and the next heading
+   * (4px) and the 1px under each heading are what gives that back: the heading's own line box and the card's
+   * rounded edge still separate them, and no row loses a pixel of its 44px. A shorter phone (393×852,
+   * 390×844) still scrolls the hub by 18–26px for that owner; a salon, with no Dining group, fits.
+   */
+  /*
+   * Owner, 2026-11-18 (later, on a phone screenshot: "looking odd due to space") — with no gap, each heading sat on the card
+   * above and read as that card's last line. Space between groups wins over fitting the whole hub on one screen: a group
+   * starts 16px below the card before it, and its heading sits 4px over its own card, so the heading belongs to what follows.
+   * The hub scrolls on a shorter phone; no row loses a pixel of its 44px.
+   */
   .settings-hub .settings-group + .settings-group {
-    margin-top: 4px;
+    margin-top: var(--sp-4);
   }
   /*
    * `line-height`, never `font-size`: 87-mobile-type-floor.css raises this
@@ -845,7 +881,7 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
    * headings at 1.15 rather than 1.55 is 20px, and the words are unchanged.
    */
   .settings-hub .settings-group-title {
-    margin-bottom: 1px;
+    margin-bottom: var(--sp-1);
     line-height: 1.15;
   }
   /* The rows that go somewhere keep the full width — and their 44px. */
@@ -1088,5 +1124,36 @@ a.bill-invoice:hover { background: var(--surface-2, oklch(0.97 0.01 150)); }
   }
   .bp-form-branch .field textarea {
     min-height: 56px;
+  }
+}
+
+/*
+ * Review of the overnight stack (item 16) — the regrouped hub still scrolled for a restaurant owner, who sees every row:
+ * 18px at 393×852, 26px at 390×844, and the desktop list 11px over its pane at 1366×680. Rows stay 44px (they are the
+ * tap targets, and the sub-lines are already off); what pays is air around them, in tokens: the page's own padding,
+ * the heading's line box (1, the 12px text and nothing more), and — on the phone hub only — the header's padding.
+ * Below 880px tall: 344×882 and every taller phone fit as they were. Last in the file, so it outranks the bands above.
+ */
+@media (max-width: 860px) and (max-height: 880px) {
+  /* `!important` only because the GRW-229 rule above it carries one. */
+  .page-body.settings-page:has(> .settings-hub) {
+    padding-top: var(--sp-1) !important;
+    padding-bottom: 0 !important;
+  }
+  .settings-hub .settings-group-title {
+    line-height: 1;
+  }
+  .content-main:has(> .page-body > .settings-hub) > .topbar {
+    padding-top: var(--sp-2);
+    padding-bottom: var(--sp-2);
+  }
+}
+@media (min-width: 861px) and (max-height: 740px) {
+  .page-body.settings-page {
+    padding-top: var(--sp-2);
+    padding-bottom: var(--sp-2);
+  }
+  .settings-page .settings-group-title {
+    line-height: 1;
   }
 }

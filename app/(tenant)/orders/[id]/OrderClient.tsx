@@ -20,6 +20,7 @@ import { returnReasonKey } from '../../lib/return-reasons';
 import { intlLocale } from '../../lib/format';
 import { SwapSizeSheet } from './SwapSizeSheet';
 import { AttachClientSheet } from './AttachClientSheet';
+import { AddNumberSheet } from './AddNumberSheet';
 import { OrderMarketplaceLine } from './OrderMarketplaceLine';
 import { useNouns } from '../../lib/use-nouns';
 import { isDeliveryApp } from '../../lib/order-channels';
@@ -55,6 +56,7 @@ export function OrderClient({
   returnWindowDays: number;
 }) {
   const t = useTranslations('orders');
+  const tTables = useTranslations('posTables');
   const tPrint = useTranslations('print');
   const locale = useLocale();
   const writable = useWritable();
@@ -81,6 +83,10 @@ export function OrderClient({
   // QA 2026-10-23 — a move that cannot be taken back is asked about first. "Cancel this order" fired on one tap from the
   // More menu; cancelled and came back are final states, nothing moves an order out of them.
   const [confirming, setConfirming] = useState<'cancelled' | 'returned' | null>(null);
+  // Jira GRW-737 — the server asked whether the kitchen had already cooked it (`cooked_unknown`); answered here, required.
+  const [askCooked, setAskCooked] = useState(false);
+  const [cooked, setCooked] = useState<boolean | undefined>(undefined);
+  const [cookedError, setCookedError] = useState<string | null>(null);
   // QA 2026-10-23 — what came back can be sold again (back on the shelf) or not (kept off it): asked with "came back", where there is a shelf.
   const [saleable, setSaleable] = useState(true);
   const [returning, setReturning] = useState(false);
@@ -88,6 +94,8 @@ export function OrderClient({
   const [swapping, setSwapping] = useState<string | null>(null);
   // Jira GRW-613 — "This is a client of ours", for a buyer the shop recognises.
   const [attaching, setAttaching] = useState(false);
+  // Jira GRW-747 — "Add guest's number", for a counter order kept under a name alone.
+  const [addingNumber, setAddingNumber] = useState(false);
   // One move at a time, however fast the button is tapped. `busy` is state and so is stale until the next render: two taps
   // inside the same frame both saw it false, and the second went out with the old state and was refused as "moved on" —
   // a refusal of the person's OWN first tap (found in the browser). A ref is what the second tap reads.
@@ -163,7 +171,7 @@ export function OrderClient({
     void move(to);
   };
 
-  const move = async (to: string, extra: { saleable?: boolean } = {}) => {
+  const move = async (to: string, extra: { saleable?: boolean; cooked?: boolean } = {}) => {
     if (!order || inFlight.current) return;
     inFlight.current = true;
     setBusy(true);
@@ -176,7 +184,11 @@ export function OrderClient({
       else if (back?.recorded && back.units > 0) setNotice(extra.saleable === false ? t('detail.cameBackResult.writtenOff', { count: back.units }) : t('detail.cameBackResult.back', { count: back.units }));
       await refresh();
     } catch (error) {
-      if (error instanceof ApiError && error.code === 'move_not_allowed') {
+      if (error instanceof ApiError && error.code === 'cooked_unknown') {
+        setAskCooked(true);
+        setCooked(undefined);
+        setConfirming('cancelled');
+      } else if (error instanceof ApiError && error.code === 'move_not_allowed') {
         // The order is not where this screen thought: say where it is now, and redraw from the truth (AC-02).
         const now = (error.body as { status?: string } | undefined)?.status ?? order.status;
         setNotice(t('detail.movedOn', { state: stateWord(now) }));
@@ -208,6 +220,9 @@ export function OrderClient({
 
   const code = order.id.slice(0, 8).toUpperCase();
   const isCounter = order.channel === 'counter';
+  // Jira GRW-747 — a takeaway paid with nobody named ("Take payment now", or Skip in Pickup) is on the branch's Walk-in row.
+  // That is nobody yet, so its number can still be added here, as for an order kept under a name alone.
+  const walkIn = order.client?.anonymous === true;
   /*
    * Owner, 2026-10-24 — an order a delivery app brought (Swiggy, Zomato). Rung up at the till and done when the rider took
    * it: there is no marketplace to tell anything, no parcel, and its guest is the app's (kept on the order, not in the list).
@@ -217,6 +232,7 @@ export function OrderClient({
   const offerPrimary = writable && order.moves.primary !== null && moveWords[order.moves.primary] !== undefined;
   const more = writable ? order.moves.more.filter((m) => moveWords[m] !== undefined) : [];
   const hasBar = offerPrimary || more.length > 0;
+  const hasSide = hasMoney || hasBar;
   // The server says who may swap (the very function that would refuse it); the screen also holds it while the business is read-only.
   const canSwap = writable && order.canSwap;
   const swapLine = swapping ? order.lines.find((l) => l.id === swapping) : undefined;
@@ -283,284 +299,343 @@ export function OrderClient({
               : t('list.orderCode', { code: order.tokenNo ? formatTokenNo(order.tokenNo).slice(1) : code })
         }
       />
-      <div className={`page-body ord-page ord-detail ${hasBar ? 'has-bar' : ''}`} aria-busy={busy || undefined}>
-        <section className="ord-d-head">
-          <span className={`ord-state-chip ord-s-${order.known ? order.status : 'unknown'}`}>{stateWord(order.status)}</span>
-          <span className="ord-d-meta">
-            {when(order.soldAt)} · {channelWord(order.channel)}
-            {order.tokenNo || order.offlineToken ? ` · ${t('list.orderCode', { code })}` : ''}
-            {isCounter && severalBranches && order.branchName ? ` · ${order.branchName}` : ''}
-            {order.externalRef ? ` · ${fromApp ? t('detail.appOrderRef', { ref: order.externalRef }) : order.externalRef}` : ''}
-          </span>
-        </section>
-        {/* Jira GRW-716 — taken while the till was offline; BR-04 says so plainly when it reached us more than a day later. */}
-        {order.offlineToken ? <p className={`ord-offline-note${order.sentLate ? ' is-late' : ''}`}>{order.sentLate ? t('detail.offlineLate') : t('detail.offline')}</p> : null}
+      {/* Laptop sweep 2026-11-22 — from 1100px the order is two columns: who and what on the left, the money and what to
+          do next on the right, instead of one 640px column with half the screen empty. On a phone the wrappers draw
+          nothing (display: contents) and the order of the blocks is the one it always was. */}
+      <div className={`page-body ord-page ord-detail ${hasBar ? 'has-bar' : ''} ${hasSide ? 'has-side' : ''}`} aria-busy={busy || undefined}>
+        <div className="ord-d-main">
+          <section className="ord-d-head">
+            <span className={`ord-state-chip ord-s-${order.known ? order.status : 'unknown'}`}>{stateWord(order.status)}</span>
+            <span className="ord-d-meta">
+              {when(order.soldAt)} · {channelWord(order.channel)}
+              {order.tokenNo || order.offlineToken ? ` · ${t('list.orderCode', { code })}` : ''}
+              {isCounter && severalBranches && order.branchName ? ` · ${order.branchName}` : ''}
+              {order.externalRef ? ` · ${fromApp ? t('detail.appOrderRef', { ref: order.externalRef }) : order.externalRef}` : ''}
+            </span>
+          </section>
+          {/* Jira GRW-716 — taken while the till was offline; BR-04 says so plainly when it reached us more than a day later. */}
+          {order.offlineToken ? <p className={`ord-offline-note${order.sentLate ? ' is-late' : ''}`}>{order.sentLate ? t('detail.offlineLate') : t('detail.offline')}</p> : null}
 
-        {!isCounter && !fromApp ? (
-          <OrderMarketplaceLine
-            orderId={order.id}
-            channel={channelWord(order.channel)}
-            messages={order.marketplace}
-            canRetry={order.canRetryMarketplace === true}
-            timezone={timezone}
-            onChanged={() => void refresh()}
-          />
-        ) : null}
-
-        {!isCounter && order.branchName ? <p className="ord-d-quiet ord-d-branch">{fromApp ? t('detail.takenAt', { branch: order.branchName }) : t('detail.bookedAt', { branch: order.branchName })}</p> : null}
-
-        {notice ? (
-          <p className="ord-d-notice" role="alert">
-            {notice}
-          </p>
-        ) : null}
-
-        <section className="ord-d-block" aria-label={t('detail.forTitle')}>
-          <h2>{order.client ? t('detail.client', { customer: nouns.Customer }) : fromApp ? nouns.Customer : t('buyer.title')}</h2>
-          {/* Owner's review 2026-11-13 — a known customer is a door to their card; a walk-in's name stays text. */}
-          {order.client ? (
-            <AppLink className="ord-d-name ord-d-name-link" href={`/customers?open=${encodeURIComponent(order.client.id)}`}>
-              {order.client.name ?? t('list.noName')}
-            </AppLink>
+          {!isCounter && !fromApp ? (
+            <OrderMarketplaceLine
+              orderId={order.id}
+              channel={channelWord(order.channel)}
+              messages={order.marketplace}
+              canRetry={order.canRetryMarketplace === true}
+              timezone={timezone}
+              onChanged={() => void refresh()}
+            />
           ) : null}
-          {order.buyer ? (
-            <>
-              {!order.client ? <p className="ord-d-name">{order.buyer.name ?? t('list.noName')}</p> : null}
-              {!order.client ? <p className="ord-d-quiet">{fromApp ? t('buyer.fromApp', { channel: channelWord(order.channel) }) : t('buyer.notAClient')}</p> : null}
-              {/*
-                Jira GRW-613 — the buyer is somebody the shop already knows. Offered only where it can do anything:
-                a buyer with no client yet, and a role the API would accept (`useWritable` carries the business's
-                read-only state and the role grid's). Never matched for them (BR-02) — the sheet is a search.
-              */}
-              {!order.client && writable ? (
-                <button type="button" className="ord-d-attach" onClick={() => setAttaching(true)}>
-                  {t('attach.action', { customer: nouns.customer })}
+
+          {!isCounter && order.branchName ? <p className="ord-d-quiet ord-d-branch">{fromApp ? t('detail.takenAt', { branch: order.branchName }) : t('detail.bookedAt', { branch: order.branchName })}</p> : null}
+
+          {notice ? (
+            <p className="ord-d-notice" role="alert">
+              {notice}
+            </p>
+          ) : null}
+
+          <section className="ord-d-block" aria-label={t('detail.forTitle')}>
+            <h2>{order.client ? t('detail.client', { customer: nouns.Customer }) : fromApp ? nouns.Customer : t('buyer.title')}</h2>
+            {/* Owner's review 2026-11-13 — a known customer is a door to their card; a walk-in's name stays text. */}
+            {order.client ? (
+              <AppLink className="ord-d-name ord-d-name-link" href={`/customers?open=${encodeURIComponent(order.client.id)}`}>
+                {order.client.name ?? t('list.noName')}
+              </AppLink>
+            ) : null}
+            {walkIn && isCounter && writable ? (
+              <div className="ord-d-buyer-actions">
+                <button type="button" className="ord-d-attach" onClick={() => setAddingNumber(true)}>
+                  {t('addNumber.action', { customer: nouns.customer })}
                 </button>
-              ) : null}
-              {order.buyer.address ? (
-                <p className="ord-d-address">
-                  <span className="ord-d-label">{t('detail.address')}</span>
-                  {order.buyer.address}
-                </p>
-              ) : null}
-              {order.buyer.contact ? (
-                <p className="ord-d-address">
-                  <span className="ord-d-label">{t('detail.contact')}</span>
-                  {order.buyer.contact}
-                </p>
-              ) : null}
-            </>
-          ) : order.buyerRedactedAt ? (
-            <p className="ord-d-quiet">{t('detail.detailsRemoved')}</p>
-          ) : null}
-          {noAddress ? <p className="ord-d-warn">{t('detail.noAddress')}</p> : null}
-        </section>
-
-        <section className="ord-d-block" aria-label={t('detail.itemsTitle')}>
-          <h2>{t('detail.itemsTitle')}</h2>
-          {order.lines.length === 0 ? (
-            <p className="ord-d-warn">{t('detail.noLines')}</p>
-          ) : (
-            <ul className="ord-d-lines">
-              {order.lines.map((l) => (
-                <li key={l.id}>
-                  <span className="ord-d-line-name">
-                    {l.name}
-                    {l.returnedQty - l.swappedQty > 0 ? <span className="ord-d-quiet"> · {t('detail.cameBack', { count: l.returnedQty - l.swappedQty })}</span> : null}
-                    {l.swappedQty > 0 ? <span className="ord-d-quiet"> · {t('detail.swap.swapped', { count: l.swappedQty })}</span> : null}
-                    {l.swappedFromId ? <span className="ord-d-quiet"> · {t('detail.swap.swappedFrom', { name: sizeIn(order.lines.find((o) => o.id === l.swappedFromId)?.name ?? '') })}</span> : null}
-                  </span>
-                  <span className="ord-d-line-qty">{t('detail.times', { count: l.qty })}</span>
-                  {l.paidMinor !== undefined ? <span className="ord-d-line-amount">{money(l.paidMinor)}</span> : null}
-                  {canSwap && l.swappable ? (
-                    <button type="button" className="btn btn-ghost ord-d-line-swap" onClick={() => setSwapping(l.id)}>
-                      {t('detail.swap.action')}
-                    </button>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        {(order.returns ?? []).length > 0 ? (
-          <section className="ord-d-block" aria-label={t('detail.returnsTitle')}>
-            <h2>{t('detail.returnsTitle')}</h2>
-            <ul className="ord-d-lines">
-              {(order.returns ?? []).map((r) => (
-                <li key={`${r.at}-${r.kind}-${r.reasonCode ?? ''}-${r.units}`}>
-                  <span className="ord-d-line-name">
-                    {r.kind === 'undelivered' ? t('detail.undelivered') : t('detail.customerReturn')}
-                    {r.kind === 'customer' ? <span className="ord-d-quiet"> · {t(`returnReasons.${returnReasonKey(r.reasonCode)}`)}</span> : null}
-                    {r.reasonText && r.reasonCode === 'other' ? <span className="ord-d-quiet"> · {r.reasonText}</span> : null}
-                    {counted && !r.restocked ? <span className="ord-d-quiet"> · {t('detail.notRestocked')}</span> : null}
-                    {r.saleableDefaulted ? <span className="ord-d-quiet"> · {t('detail.saleableAssumed')}</span> : null}
-                    {/* Owner, 2026-11-14 (returns QA, loophole 2) — who gave it back: their name, else their role. */}
-                    {r.by || r.byRole ? (
-                      <span className="ord-d-quiet"> · {t('detail.by', { name: r.by || t(`returns.byRole.${r.byRole}` as 'returns.byRole.owner') })}</span>
-                    ) : null}
-                  </span>
-                  <span className="ord-d-line-qty">{t('detail.times', { count: r.units })}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {(order.refunds ?? []).length > 0 ? (
-          <section className="ord-d-block" aria-label={t('detail.refundsTitle')}>
-            <h2>{t('detail.refundsTitle')}</h2>
-            <ul className="ord-d-lines">
-              {(order.refunds ?? []).map((f) => (
-                <li key={f.id}>
-                  <span className="ord-d-line-name">
-                    {f.refundedBy === 'marketplace' ? t('detail.marketplaceRefunded', { channel: refundChannelWord(f.channel), date: refundDay(f.refundedAt) }) : t('detail.shopRefunded', { date: refundDay(f.refundedAt) })}
-                    {order.lines.find((l) => l.id === f.lineId)?.name ? <span className="ord-d-quiet"> · {order.lines.find((l) => l.id === f.lineId)?.name}</span> : null}
-                    <span className="ord-d-quiet"> · {t('detail.refundRef', { ref: f.externalRef })}</span>
-                  </span>
-                  <span className="ord-d-line-qty" aria-hidden="true" />
-                  <span className="ord-d-line-amount">{money(f.amountMinor)}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {hasMoney ? (
-          <section className="ord-d-block" aria-label={t('detail.moneyTitle')}>
-            <h2>{t('detail.moneyTitle')}</h2>
-            <dl className="ord-d-money">
-              {/* QA 2026-11-15 — the discount the counter gave: the lines carry what was charged and said nothing of it. */}
-              {billDiscountMinor !== null ? (
-                <div className="ord-d-discount">
-                  <dt>{t('detail.discountGiven')}</dt>
-                  <dd>−{money(billDiscountMinor)}</dd>
-                </div>
-              ) : null}
-              {/* Jira GRW-725 — why the owner gave the whole bill free, kept on the bill (0195). */}
-              {order.discountReason ? (
-                <div className="ord-d-note ord-d-discount-reason">
-                  <dt>{t('detail.discountReason')}</dt>
-                  <dd>{order.discountReason}</dd>
-                </div>
-              ) : null}
-              <div>
-                <dt>{t('detail.total')}</dt>
-                <dd>{money(order.totalMinor)}</dd>
-              </div>
-              {order.refundedMinor ? (
-                <div>
-                  <dt>{t('detail.givenBack')}</dt>
-                  <dd>{money(order.refundedMinor)}</dd>
-                </div>
-              ) : null}
-              {order.rewardPoints ? (
-                <div className="ord-d-note">
-                  <dt>{t('detail.pointsUsed')}</dt>
-                  <dd>{t('detail.pointsUsedValue', { points: order.rewardPoints.points, off: money(order.rewardPoints.discountMinor) ?? '' })}</dd>
-                </div>
-              ) : null}
-              {(order.payments ?? []).map((p) => (
-                <div key={p.mode}>
-                  {/* An app's order was paid to the app: "Paid on Swiggy", never "Paid by other". */}
-                  <dt>{fromApp && p.mode === 'other' ? t('detail.paidOn', { channel: channelWord(order.channel) }) : t('detail.paidBy', { mode: modeWords[p.mode] ?? p.mode })}</dt>
-                  <dd>{money(p.amountMinor)}</dd>
-                </div>
-              ))}
-            </dl>
-            {/*
-              * Jira GRW-720 — how this order is eaten, and (owner or manager, until the bill prints) the one change that
-              * matters: the guest at the table wants it packed, or the takeaway guest decides to sit. A change to takeaway
-              * prints the kitchen a PACK IT slip. Whether THIS viewer may change THIS order is the server's to say
-              * (`typeChangeable`, the same rule the route enforces), never worked out here from a role.
-              */}
-            {order.orderType && order.orderType !== 'delivery' ? (
-              <div className="ord-d-type">
-                <span className="ord-d-type-word">
-                  {t(`types.${order.orderType}`)}
-                  {order.tableName ? ` · ${order.tableName}` : ''}
-                </span>
-                {writable && order.typeChangeable ? (
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    disabled={changingType}
-                    onClick={async () => {
-                      const to = order.orderType === 'dine_in' ? 'takeaway' : 'dine_in';
-                      setChangingType(true);
-                      setTypeError(null);
-                      try {
-                        const done = await api.changeOrderType(order.id, to);
-                        if (done.packSlip) void printer.printKot(done.packSlip, { tokenNo: order.tokenNo ?? null, channel: order.channel, orderType: 'takeaway' });
-                        await refresh();
-                      } catch (e) {
-                        setTypeError(e instanceof ApiError ? e.message : t('types.changeFailed'));
-                      } finally {
-                        setChangingType(false);
-                      }
-                    }}
-                  >
-                    {order.orderType === 'dine_in' ? t('types.makeTakeaway') : t('types.makeDineIn')}
-                  </button>
-                ) : null}
-                {typeError ? (
-                  <p className="al-error" role="alert">
-                    {typeError}
-                  </p>
-                ) : null}
               </div>
             ) : null}
-            {/*
-              * Owner, 2026-11-16 — "simplify this page": one block, three rows, in the order a counter reaches for them.
-              *   1. Print bill (filled) and the printer — plus Reprint KOT while the kitchen still has the order to make.
-              *      A finished order needs no KOT: the dish is cooked and gone.
-              *   2. The receipt: View it, and WhatsApp as its round mark beside it.
-              *   3. Return items, a quiet link: it moves money and is the rare act.
-              * QA 2026-11-14 — with every unit come back there is nothing to print, show or give back: no block at all.
-              */}
-            {(() => {
-              const canPrintBill = isCounter && isPaidCounter && somethingKept;
-              const canReprintKot = !counted && (isCounter || fromApp) && toSend;
-              const showReceipt = isPaidCounter && somethingKept;
-              const showReturn = somethingKept && Boolean(returnable && canReturn);
-              if (!canPrintBill && !canReprintKot && !showReceipt && !showReturn) return null;
-              return (
-                <div className="ord-d-paper">
-                  {canPrintBill || canReprintKot ? (
-                    <div className="tp-actions">
-                      <div className="tp-actions-row">
-                        {canPrintBill ? (
-                          <button type="button" className="btn" disabled={printer.status.state === 'printing'} onClick={() => void printer.printBill(order.id)}>
-                            <IconPrint />
-                            {tPrint('printBill')}
-                          </button>
-                        ) : null}
-                        {/* Owner, 2026-11-16 — "view receipt not required": the bill goes out on paper or on WhatsApp, both here. */}
-                        {canPrintBill ? <DocumentAction visitKey={order.id} sendOnly /> : null}
-                        {canReprintKot ? (
-                          <button type="button" className="btn btn-ghost" disabled={printer.status.state === 'printing'} onClick={() => void printer.reprintKots(order.id)}>
-                            <IconPrint />
-                            {tPrint('reprintKot')}
-                          </button>
-                        ) : null}
-                        <PrinterButton printer={printer} />
-                      </div>
-                      <PrintStatusLine printer={printer} />
+            {order.buyer ? (
+              <>
+                {!order.client ? <p className="ord-d-name">{order.buyer.name ?? t('list.noName')}</p> : null}
+                {!order.client ? <p className="ord-d-quiet">{fromApp ? t('buyer.fromApp', { channel: channelWord(order.channel) }) : t('buyer.notAClient')}</p> : null}
+                {/*
+                  Jira GRW-613 — the buyer is somebody the shop already knows. Offered only where it can do anything:
+                  a buyer with no client yet, and a role the API would accept (`useWritable` carries the business's
+                  read-only state and the role grid's). Never matched for them (BR-02) — the sheet is a search.
+                */}
+                {!order.client && writable ? (
+                  <div className="ord-d-buyer-actions">
+                    {/*
+                      Jira GRW-747 (FR-04) — a counter order kept under a name alone: the number they give later makes them a
+                      guest, and this order their visit. An app's guest is the app's, so it is offered on the counter's only.
+                    */}
+                    {isCounter ? (
+                      <button type="button" className="ord-d-attach" onClick={() => setAddingNumber(true)}>
+                        {t('addNumber.action', { customer: nouns.customer })}
+                      </button>
+                    ) : null}
+                    <button type="button" className="ord-d-attach" onClick={() => setAttaching(true)}>
+                      {t('attach.action', { customer: nouns.customer })}
+                    </button>
+                  </div>
+                ) : null}
+                {order.buyer.address ? (
+                  <p className="ord-d-address">
+                    <span className="ord-d-label">{t('detail.address')}</span>
+                    {order.buyer.address}
+                  </p>
+                ) : null}
+                {order.buyer.contact ? (
+                  <p className="ord-d-address">
+                    <span className="ord-d-label">{t('detail.contact')}</span>
+                    {order.buyer.contact}
+                  </p>
+                ) : null}
+              </>
+            ) : order.buyerRedactedAt ? (
+              <p className="ord-d-quiet">{t('detail.detailsRemoved')}</p>
+            ) : null}
+            {noAddress ? <p className="ord-d-warn">{t('detail.noAddress')}</p> : null}
+          </section>
+
+          <section className="ord-d-block" aria-label={t('detail.itemsTitle')}>
+            <h2>{t('detail.itemsTitle')}</h2>
+            {order.lines.length === 0 ? (
+              <p className="ord-d-warn">{t('detail.noLines')}</p>
+            ) : (
+              <ul className="ord-d-lines">
+                {order.lines.map((l) => (
+                  <li key={l.id}>
+                    <span className="ord-d-line-name">
+                      {l.name}
+                      {l.returnedQty - l.swappedQty > 0 ? <span className="ord-d-quiet"> · {t('detail.cameBack', { count: l.returnedQty - l.swappedQty })}</span> : null}
+                      {l.swappedQty > 0 ? <span className="ord-d-quiet"> · {t('detail.swap.swapped', { count: l.swappedQty })}</span> : null}
+                      {l.swappedFromId ? <span className="ord-d-quiet"> · {t('detail.swap.swappedFrom', { name: sizeIn(order.lines.find((o) => o.id === l.swappedFromId)?.name ?? '') })}</span> : null}
+                    </span>
+                    <span className="ord-d-line-qty">{t('detail.times', { count: l.qty })}</span>
+                    {l.paidMinor !== undefined ? <span className="ord-d-line-amount">{money(l.paidMinor)}</span> : null}
+                    {canSwap && l.swappable ? (
+                      <button type="button" className="btn btn-ghost ord-d-line-swap" onClick={() => setSwapping(l.id)}>
+                        {t('detail.swap.action')}
+                      </button>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {(order.returns ?? []).length > 0 ? (
+            <section className="ord-d-block" aria-label={t('detail.returnsTitle')}>
+              <h2>{t('detail.returnsTitle')}</h2>
+              <ul className="ord-d-lines">
+                {(order.returns ?? []).map((r) => (
+                  <li key={`${r.at}-${r.kind}-${r.reasonCode ?? ''}-${r.units}`}>
+                    <span className="ord-d-line-name">
+                      {r.kind === 'undelivered' ? t('detail.undelivered') : t('detail.customerReturn')}
+                      {r.kind === 'customer' ? <span className="ord-d-quiet"> · {t(`returnReasons.${returnReasonKey(r.reasonCode)}`)}</span> : null}
+                      {r.reasonText && r.reasonCode === 'other' ? <span className="ord-d-quiet"> · {r.reasonText}</span> : null}
+                      {counted && !r.restocked ? <span className="ord-d-quiet"> · {t('detail.notRestocked')}</span> : null}
+                      {r.saleableDefaulted ? <span className="ord-d-quiet"> · {t('detail.saleableAssumed')}</span> : null}
+                      {/* Owner, 2026-11-14 (returns QA, loophole 2) — who gave it back: their name, else their role. */}
+                      {r.by || r.byRole ? (
+                        <span className="ord-d-quiet"> · {t('detail.by', { name: r.by || t(`returns.byRole.${r.byRole}` as 'returns.byRole.owner') })}</span>
+                      ) : null}
+                    </span>
+                    <span className="ord-d-line-qty">{t('detail.times', { count: r.units })}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {(order.refunds ?? []).length > 0 ? (
+            <section className="ord-d-block" aria-label={t('detail.refundsTitle')}>
+              <h2>{t('detail.refundsTitle')}</h2>
+              <ul className="ord-d-lines">
+                {(order.refunds ?? []).map((f) => (
+                  <li key={f.id}>
+                    <span className="ord-d-line-name">
+                      {f.refundedBy === 'marketplace' ? t('detail.marketplaceRefunded', { channel: refundChannelWord(f.channel), date: refundDay(f.refundedAt) }) : t('detail.shopRefunded', { date: refundDay(f.refundedAt) })}
+                      {order.lines.find((l) => l.id === f.lineId)?.name ? <span className="ord-d-quiet"> · {order.lines.find((l) => l.id === f.lineId)?.name}</span> : null}
+                      <span className="ord-d-quiet"> · {t('detail.refundRef', { ref: f.externalRef })}</span>
+                    </span>
+                    <span className="ord-d-line-qty" aria-hidden="true" />
+                    <span className="ord-d-line-amount">{money(f.amountMinor)}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+        </div>
+
+        {hasSide ? (
+          <div className="ord-d-side">
+            {hasMoney ? (
+              <section className="ord-d-block" aria-label={t('detail.moneyTitle')}>
+                <h2>{t('detail.moneyTitle')}</h2>
+                <dl className="ord-d-money">
+                  {/* QA 2026-11-15 — the discount the counter gave: the lines carry what was charged and said nothing of it. */}
+                  {billDiscountMinor !== null ? (
+                    <div className="ord-d-discount">
+                      <dt>{t('detail.discountGiven')}</dt>
+                      <dd>−{money(billDiscountMinor)}</dd>
                     </div>
                   ) : null}
-                  {showReceipt && !canPrintBill ? <DocumentAction visitKey={order.id} primary compact /> : null}
-                  {showReturn ? (
-                    <button type="button" className="ord-d-return-link" onClick={() => setReturning(true)}>
-                      {t('detail.returnItems')}
+                  {/* Jira GRW-725 — why the owner gave the whole bill free, kept on the bill (0195). */}
+                  {order.discountReason ? (
+                    <div className="ord-d-note ord-d-discount-reason">
+                      <dt>{t('detail.discountReason')}</dt>
+                      <dd>{order.discountReason}</dd>
+                    </div>
+                  ) : null}
+                  <div>
+                    <dt>{t('detail.total')}</dt>
+                    <dd>{money(order.totalMinor)}</dd>
+                  </div>
+                  {order.refundedMinor ? (
+                    <div>
+                      <dt>{t('detail.givenBack')}</dt>
+                      <dd>{money(order.refundedMinor)}</dd>
+                    </div>
+                  ) : null}
+                  {order.rewardPoints ? (
+                    <div className="ord-d-note">
+                      <dt>{t('detail.pointsUsed')}</dt>
+                      <dd>{t('detail.pointsUsedValue', { points: order.rewardPoints.points, off: money(order.rewardPoints.discountMinor) ?? '' })}</dd>
+                    </div>
+                  ) : null}
+                  {(order.payments ?? []).map((p) => (
+                    <div key={p.mode}>
+                      {/* An app's order was paid to the app: "Paid on Swiggy", never "Paid by other". */}
+                      <dt>{fromApp && p.mode === 'other' ? t('detail.paidOn', { channel: channelWord(order.channel) }) : t('detail.paidBy', { mode: modeWords[p.mode] ?? p.mode })}</dt>
+                      <dd>{money(p.amountMinor)}</dd>
+                    </div>
+                  ))}
+                </dl>
+                {/*
+                  * Jira GRW-720 — how this order is eaten, and (owner or manager, until the bill prints) the one change that
+                  * matters: the guest at the table wants it packed, or the takeaway guest decides to sit. A change to takeaway
+                  * prints the kitchen a PACK IT slip. Whether THIS viewer may change THIS order is the server's to say
+                  * (`typeChangeable`, the same rule the route enforces), never worked out here from a role.
+                  */}
+                {order.orderType && order.orderType !== 'delivery' ? (
+                  <div className="ord-d-type">
+                    <span className="ord-d-type-word">
+                      {t(`types.${order.orderType}`)}
+                      {order.tableName ? ` · ${order.tableName}` : ''}
+                    </span>
+                    {writable && order.typeChangeable ? (
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        disabled={changingType}
+                        onClick={async () => {
+                          const to = order.orderType === 'dine_in' ? 'takeaway' : 'dine_in';
+                          setChangingType(true);
+                          setTypeError(null);
+                          try {
+                            const done = await api.changeOrderType(order.id, to);
+                            // Jira GRW-733 — a pack slip for each station that is making part of it.
+                            const packSlips = done.packSlips && done.packSlips.length > 0 ? done.packSlips : done.packSlip;
+                            if (packSlips) void printer.printKot(packSlips, { tokenNo: order.tokenNo ?? null, channel: order.channel, orderType: 'takeaway' });
+                            await refresh();
+                          } catch (e) {
+                            setTypeError(e instanceof ApiError ? e.message : t('types.changeFailed'));
+                          } finally {
+                            setChangingType(false);
+                          }
+                        }}
+                      >
+                        {order.orderType === 'dine_in' ? t('types.makeTakeaway') : t('types.makeDineIn')}
+                      </button>
+                    ) : null}
+                    {typeError ? (
+                      <p className="al-error" role="alert">
+                        {typeError}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+                {/*
+                  * Owner, 2026-11-16 — "simplify this page": one block, three rows, in the order a counter reaches for them.
+                  *   1. Print bill (filled) and the printer — plus Reprint KOT while the kitchen still has the order to make.
+                  *      A finished order needs no KOT: the dish is cooked and gone.
+                  *   2. The receipt: View it, and WhatsApp as its round mark beside it.
+                  *   3. Return items, a quiet link: it moves money and is the rare act.
+                  * QA 2026-11-14 — with every unit come back there is nothing to print, show or give back: no block at all.
+                  */}
+                {(() => {
+                  const canPrintBill = isCounter && isPaidCounter && somethingKept;
+                  const canReprintKot = !counted && (isCounter || fromApp) && toSend;
+                  const showReceipt = isPaidCounter && somethingKept;
+                  const showReturn = somethingKept && Boolean(returnable && canReturn);
+                  if (!canPrintBill && !canReprintKot && !showReceipt && !showReturn) return null;
+                  return (
+                    <div className="ord-d-paper">
+                      {canPrintBill || canReprintKot ? (
+                        <div className="tp-actions">
+                          <div className="tp-actions-row">
+                            {canPrintBill ? (
+                              <button type="button" className="btn" disabled={printer.status.state === 'printing'} onClick={() => void printer.printBill(order.id)}>
+                                <IconPrint />
+                                {tPrint('printBill')}
+                              </button>
+                            ) : null}
+                            {/* Owner, 2026-11-16 — "view receipt not required": the bill goes out on paper or on WhatsApp, both here. */}
+                            {canPrintBill ? <DocumentAction visitKey={order.id} sendOnly /> : null}
+                            {canReprintKot ? (
+                              <button type="button" className="btn btn-ghost" disabled={printer.status.state === 'printing'} onClick={() => void printer.reprintKots(order.id)}>
+                                <IconPrint />
+                                {tPrint('reprintKot')}
+                              </button>
+                            ) : null}
+                            <PrinterButton printer={printer} />
+                          </div>
+                          <PrintStatusLine printer={printer} />
+                        </div>
+                      ) : null}
+                      {showReceipt && !canPrintBill ? <DocumentAction visitKey={order.id} primary compact /> : null}
+                      {showReturn ? (
+                        <button type="button" className="ord-d-return-link" onClick={() => setReturning(true)}>
+                          {t('detail.returnItems')}
+                        </button>
+                      ) : null}
+                    </div>
+                  );
+                })()}
+              </section>
+            ) : null}
+
+
+            {hasBar ? (
+              <div className="ord-d-bar">
+                {moreOpen && more.length > 0 ? (
+                  <ul className="ord-d-more" role="menu">
+                    {more.map((m) => (
+                      <li key={m} role="none">
+                        <button type="button" role="menuitem" className="ord-d-more-item" disabled={busy} onClick={() => ask(m)}>
+                          {moveWords[m]}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <div className="ord-d-bar-row">
+                  {more.length > 0 ? (
+                    <button type="button" className="btn ord-d-more-btn" aria-haspopup="menu" aria-expanded={moreOpen} onClick={() => setMoreOpen((o) => !o)}>
+                      {t('detail.more')}
+                    </button>
+                  ) : null}
+                  {offerPrimary ? (
+                    <button type="button" className="btn btn-primary ord-d-primary" disabled={busy} onClick={() => ask(order.moves.primary!)}>
+                      {moveWords[order.moves.primary!]}
                     </button>
                   ) : null}
                 </div>
-              );
-            })()}
-          </section>
+              </div>
+            ) : null}
+          </div>
         ) : null}
 
-        <section className="ord-d-block" aria-label={t('detail.historyTitle')}>
+        <section className="ord-d-block ord-d-history-block" aria-label={t('detail.historyTitle')}>
           <h2>{t('detail.historyTitle')}</h2>
           <ol className="ord-d-history">
             <li>
@@ -590,34 +665,6 @@ export function OrderClient({
             ))}
           </ol>
         </section>
-
-        {hasBar ? (
-          <div className="ord-d-bar">
-            {moreOpen && more.length > 0 ? (
-              <ul className="ord-d-more" role="menu">
-                {more.map((m) => (
-                  <li key={m} role="none">
-                    <button type="button" role="menuitem" className="ord-d-more-item" disabled={busy} onClick={() => ask(m)}>
-                      {moveWords[m]}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            <div className="ord-d-bar-row">
-              {more.length > 0 ? (
-                <button type="button" className="btn ord-d-more-btn" aria-haspopup="menu" aria-expanded={moreOpen} onClick={() => setMoreOpen((o) => !o)}>
-                  {t('detail.more')}
-                </button>
-              ) : null}
-              {offerPrimary ? (
-                <button type="button" className="btn btn-primary ord-d-primary" disabled={busy} onClick={() => ask(order.moves.primary!)}>
-                  {moveWords[order.moves.primary!]}
-                </button>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
       </div>
 
       {confirming ? (
@@ -628,13 +675,37 @@ export function OrderClient({
           cancelLabel={confirmWords[confirming].keep}
           tone="danger"
           busy={busy}
-          onCancel={() => setConfirming(null)}
+          error={cookedError}
+          onCancel={() => {
+            setConfirming(null);
+            setAskCooked(false);
+            setCookedError(null);
+          }}
           onConfirm={() => {
             const to = confirming;
+            if (to === 'cancelled' && askCooked && cooked === undefined) {
+              setCookedError(tTables('cookedNeeded'));
+              return;
+            }
             setConfirming(null);
-            void move(to, to === 'returned' && counted ? { saleable } : {});
+            setCookedError(null);
+            void move(to, to === 'returned' && counted ? { saleable } : to === 'cancelled' && askCooked ? { cooked } : {});
           }}
         >
+          {confirming === 'cancelled' && askCooked ? (
+            <fieldset className="tb-cooked">
+              <legend className="field-hint">{tTables('cookedQuestion')}</legend>
+              <div className="tb-cooked-pair">
+                <button type="button" className={`btn btn-ghost ${cooked === false ? 'is-on' : ''}`} aria-pressed={cooked === false} onClick={() => setCooked(false)}>
+                  {tTables('cookedNo')}
+                </button>
+                <button type="button" className={`btn btn-ghost ${cooked === true ? 'is-on' : ''}`} aria-pressed={cooked === true} onClick={() => setCooked(true)}>
+                  {tTables('cookedYes')}
+                </button>
+              </div>
+              <span className="field-hint">{tTables('cookedHint')}</span>
+            </fieldset>
+          ) : null}
           {confirming === 'returned' && counted ? (
             <fieldset className="ord-d-saleable">
               <legend>{confirmWords.returned.question}</legend>
@@ -660,6 +731,18 @@ export function OrderClient({
           onClose={() => setAttaching(false)}
           onAttached={() => {
             setAttaching(false);
+            void refresh();
+          }}
+        />
+      ) : null}
+
+      {addingNumber ? (
+        <AddNumberSheet
+          orderId={order.id}
+          name={order.buyer?.name ?? null}
+          onClose={() => setAddingNumber(false)}
+          onAdded={() => {
+            setAddingNumber(false);
             void refresh();
           }}
         />

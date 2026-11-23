@@ -16,7 +16,8 @@ import type { MemberRole } from '@growza-app/shared';
  */
 const SHOP: Areas = { bookings: false, services: false, shop: true, stock: true };
 /** The shop's app with no count behind it (`catalog.stock_counted` off): the restaurant — the one vertical that seats guests (Jira GRW-718). */
-const KITCHEN: Areas = { ...SHOP, stock: false, tables: true };
+/** Jira GRW-737 — and keeps kitchen stock (`catalog.recipes`): raw materials and recipes. */
+const KITCHEN: Areas = { ...SHOP, stock: false, tables: true, recipes: true };
 type Shape = 'diary' | 'shop' | 'kitchen';
 const SHAPES: Array<{ name: string; shape: Shape; areas: Areas }> = [
   { name: 'diary (salon, clinic, spa, garage, dental)', shape: 'diary', areas: DIARY_AREAS },
@@ -72,6 +73,8 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/reports/discounts': 'shop',
   '/reports/payments': 'shop',
   '/reports/profit': 'shop',
+  // Jira GRW-739 — food cost reads kitchen stock: only where it may be kept (a restaurant).
+  '/reports/food-cost': 'tables',
   '/sales': 'diary',
   '/search': 'both',
   '/services': 'diary',
@@ -91,6 +94,8 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/settings/tables': 'tables',
   // Jira GRW-719 — one branch's room.
   '/settings/tables/[branchId]': 'tables',
+  // Jira GRW-733 — a kitchen's stations: where tables are.
+  '/settings/kitchen-stations': 'tables',
   '/settings/gst': 'both',
   '/settings/notifications': 'both',
   '/settings/payments': 'both',
@@ -100,9 +105,19 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/settings/channels/queue': 'shop',
   '/settings/report-access': 'both',
   '/settings/roles': 'shop',
+  // Jira GRW-735 — a branch's coupons and buy-get offers: where bills of products are rung up.
+  '/settings/offers': 'shop',
   '/settings/team': 'both',
   '/settings/working-hours': 'both',
   '/stock': 'shop',
+  // Jira GRW-737 — a kitchen's raw materials: only where kitchen stock may be kept (a restaurant). Jira GRW-741 — the address now sends you
+  // on to Inventory, its own section, with its five tabs.
+  '/stock/kitchen': 'tables',
+  '/inventory': 'tables',
+  '/inventory/buy': 'tables',
+  '/inventory/suppliers': 'tables',
+  '/inventory/recipes': 'tables',
+  '/inventory/reports': 'tables',
   '/stock/report': 'counted',
   '/stock/channels': 'shop',
   '/stock/order': 'counted',
@@ -187,7 +202,12 @@ describe('FR-01 … FR-03 — each kind of business is offered exactly the scree
     const differ = Object.keys(SCREENS).filter((r) => areaAllows(concrete(r), SHOP) !== areaAllows(concrete(r), KITCHEN));
     // Jira GRW-718 — Settings › Tables is the restaurant's alone (`dining.tables`), the one difference that is not a count.
     // Jira GRW-714 — and its kitchen screen: a kitchen cooks to order, a shop has a shelf.
-    expect(differ.sort()).toEqual(['/kitchen', '/settings/tables', '/settings/tables/[branchId]', '/stock/order', '/stock/report']);
+    // Jira GRW-737 — and its kitchen stock: a kitchen counts what it cooks with, not what is on a shelf.
+    // Jira GRW-741 — and Inventory, its own section now.
+    expect(differ.sort()).toEqual([
+      '/inventory', '/inventory/buy', '/inventory/recipes', '/inventory/reports', '/inventory/suppliers',
+      '/kitchen', '/reports/food-cost', '/settings/kitchen-stations', '/settings/tables', '/settings/tables/[branchId]', '/stock/kitchen', '/stock/order', '/stock/report',
+    ]);
     // …and the menu itself is NOT one of them: that is where a restaurant's dishes live.
     expect(areaAllows('/stock', KITCHEN)).toBe(true);
     expect(areaAllows('/orders/new', KITCHEN)).toBe(true);

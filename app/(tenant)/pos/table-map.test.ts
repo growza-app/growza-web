@@ -16,12 +16,14 @@ const table = (openBill: DiningTable['openBill']): DiningTable => ({ id: 't', na
 const bill = (billPrinted: boolean) => ({ saleId: 's', tokenNo: null, seatedAt: '2026-11-16T10:00:00Z', totalMinor: 56_000, guests: 4, billPrinted });
 
 describe('a tile says its state in words, not colour alone', () => {
-  it('Free, Ordering, Bill printed', () => {
+  // Jira GRW-731 — Ordering split into Food cooking and Eating (table-legend.test.ts holds the story's own cases).
+  it('Free, Food cooking, Eating, Bill printed', () => {
     expect(stateOf(table(null))).toBe('free');
-    expect(stateOf(table(bill(false)))).toBe('ordering');
+    expect(stateOf(table({ ...bill(false), foodCooking: true }))).toBe('cooking');
+    expect(stateOf(table({ ...bill(false), foodCooking: false }))).toBe('eating');
     expect(stateOf(table(bill(true)))).toBe('bill');
     expect(map).toContain("<span className=\"tm-state\">{t(`state.${state}`)}</span>");
-    for (const s of ['free', 'ordering', 'bill'] as const) {
+    for (const s of ['free', 'cooking', 'eating', 'bill'] as const) {
       expect(en.posTables.state[s]).toBeTruthy();
       expect(hi.posTables.state[s]).toBeTruthy();
     }
@@ -54,10 +56,10 @@ describe('a table’s bill on the till', () => {
     expect(buildDailyTokens(rows, null)).toHaveLength(1);
   });
 
-  it('only the owner and a manager may take a dish off; it asks why', () => {
+  it('only the owner and a manager may take a dish off; it asks why (and, Jira GRW-737, whether it was cooked when the server asks)', () => {
     expect(flow).toContain("canManage={role === 'owner' || role === 'manager'}");
     expect(sheet).toContain('{editing && canManage && !l.cancelReason && !moving ? (');
-    expect(sheet).toContain("disabled={busy || takingOff.reason.trim() === ''}");
+    expect(sheet).toContain("disabled={busy || takingOff.reason.trim() === '' || (takingOff.askCooked === true && takingOff.cooked === undefined)}");
   });
 
   it('payment asks who paid first, by the owner’s rule of 4 Nov 2026', () => {
@@ -69,7 +71,7 @@ describe('a table’s bill on the till', () => {
   });
 
   it('the till sends a table’s order with the table, and says “Send to kitchen”', () => {
-    expect(flow).toContain('? { tableId: atTable.id, ...(atTable.billId ? { tableBillId: atTable.billId } : {}), ...(guests ? { guests } : {}) }');
+    expect(flow).toContain('? { tableId: atTable.id, ...(atTable.billId ? { tableBillId: atTable.billId } : {}), ...(atTable.seated ? { tableSeated: true } : {}), ...(guests ? { guests } : {}) }');
     expect(flow).toContain("atTable ? tTables('sendToKitchen') : t(qk('desk.keepPendingInQueue'))");
   });
 
@@ -81,7 +83,7 @@ describe('a table’s bill on the till', () => {
 describe('Jira GRW-722 — move a party, join two tables', () => {
   it('Move table lists the other tables: a free one says Move here, a busy one says Join', () => {
     expect(sheet).toContain('const others = area.tables.filter((x) => x.id !== table.id);');
-    expect(sheet).toContain("{x.openBill ? t('join') : t('moveHere')}");
+    expect(sheet).toContain("{takes === 'join' ? t('join') : takes === 'move' ? t('moveHere') : t(`state.${stateOf(x)}`)}");
     expect(sheet).toContain('to.openBill ? api.joinTable(table.id, to.id) : api.moveTable(table.id, to.id)');
   });
 
@@ -127,7 +129,7 @@ describe('QA 2026-11-16 — the dine-in run’s fixes on the till', () => {
   });
 
   it('#11 — the bill sheet says it is loading the bill, not the tables', () => {
-    expect(sheet).toContain("{order === null && !error ? <p className=\"field-hint\">{t('billLoading')}</p> : null}");
+    expect(sheet).toContain("{order === null && !error && !seatedOnly ? <p className=\"field-hint\">{t('billLoading')}</p> : null}");
   });
 
   it('a round from the bill sheet names the bill, so a bill that moved meanwhile is refused', () => {
@@ -147,7 +149,8 @@ describe('Jira GRW-724 — a service charge the guest can say no to', () => {
     expect(sheet).toContain('{charge ? (');
     expect(sheet).toContain("api.setBillServiceCharge(saleId, false)");
     // Not a dish: it is never offered "Take off", and it is never a dish to bring back.
-    expect(sheet).toContain("const dishes = (order?.lines ?? []).filter((l) => l.kind !== 'service_charge');");
+    // QA of GRW-741 — and the GST added on top (`tax`) is no dish either.
+    expect(sheet).toContain("const dishes = (order?.lines ?? []).filter((l) => l.kind !== 'service_charge' && l.kind !== 'tax');");
   });
 
   it('the owner offers it per branch, explained once in plain words, in both languages', () => {

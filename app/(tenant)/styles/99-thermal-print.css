@@ -77,6 +77,16 @@
   .tp-root .tp-gap {
     height: 1em;
   }
+
+  /* Jira GRW-728 — the logo: already the roll's own dots and as wide as the roll, so it is drawn at the paper's width
+     with no smoothing — a 1-bit picture scaled softly prints grey fuzz. */
+  .tp-root .tp-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 0 1mm;
+    image-rendering: pixelated;
+  }
 }
 
 /* The item table: Item · Qty. · Price · Amount. A 58mm roll drops the Price column, as the text print does. */
@@ -309,17 +319,59 @@
   gap: var(--sp-2);
 }
 
-/* Beside the number the button is WhatsApp's mark alone, so the number gets the width; its words stay its name. */
+/*
+ * Beside the number: WhatsApp's mark and one word, Send (owner, 2026-11-23 — the mark alone, greyed until a number was
+ * typed, read as switched off, and people did not know the bill could be sent).
+ */
 .wi-receipt-sendrow > .wi-receipt-send {
-  width: 3rem;
-  min-width: 3rem;
-  height: 3rem;
+  width: auto;
   min-height: 3rem;
   margin: 0;
-  padding: 0;
-  border-radius: 50%;
+  padding: 0 var(--sp-4);
+  gap: var(--sp-2);
+  border-radius: 999px;
   justify-content: center;
-  font-size: 0;
+  font-size: var(--fs-4);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* The heading above already says it ("Send the bill on WhatsApp"): the field's own label stays for screen readers only. */
+.wi-receipt-sendrow > .field > label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.wi-send-label {
+  margin-top: var(--sp-2);
+}
+
+/* Never greyed out on a till: with no number yet a tap asks for one. */
+.wi-receipt-sendrow > .wi-receipt-send:disabled {
+  opacity: 1;
+}
+
+/* One Print for the bill and the kitchen's slip, and its ⋮ (bill only, slip only, the printer) — one row on a phone. */
+.tp-actions-one {
+  flex-wrap: nowrap;
+}
+
+.tp-actions-one > .tp-print-both {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tp-actions-one > .tp-print-more .mnu-kebab-btn {
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid var(--accent-deep);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-deep);
 }
 
 .wi-receipt-sendrow > .wi-receipt-send svg {
@@ -384,5 +436,28 @@
     padding: 0;
     border: 0;
     background: none;
+  }
+}
+
+/*
+ * Owner, 2026-11-23 — the paid screen on a phone. The printer's own icon stood alone on a row under Print bill and Print kitchen
+ * slip: on a phone it is "Printer" in the POS ⋮ instead. And the bar of Next / Done is pinned to the bottom of the screen: as a
+ * sticky bar on a page too short to scroll it sat where the page ended, with 108px of nothing under it on a 812px phone.
+ */
+@media (max-width: 759px) {
+  .pf-done-print .tp-actions-row > .tp-open {
+    display: none;
+  }
+}
+@media (max-width: 860px) {
+  .pf-done-page.is-till {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  .pf-done-page.is-till > .pf-done-actions {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
   }
 }

@@ -15,7 +15,8 @@ describe('Recent orders', () => {
   it('shows each order by its own code, channel, time and state', () => {
     // QA 10 Nov 2026 — by its own number: the stored token where there is one, else its code (lib/order-number).
     expect(home).toContain('{orderNumber(o)}</strong>');
-    expect(home).toContain('${channelWord(o.channel)} · ${formatDateTime(o.soldAt)}');
+    // GRW-745: where it was eaten ("Dine-in · T4 · Main Hall", "Takeaway", the app) — placeWord, which falls back to the channel.
+    expect(home).toContain('${placeWord(o)} · ${formatDateTime(o.soldAt)}');
     expect(home).toContain('o.paymentPending ? s.paymentPendingState : stateWord(o.status)');
     expect(home).toContain('isDeliveryApp(o.channel)');
   });

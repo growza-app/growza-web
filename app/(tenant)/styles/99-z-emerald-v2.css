@@ -883,6 +883,15 @@ body {
     gap: 1.25rem;
   }
 
+  /*
+   * Owner, 2026-11-23 — while the week's figures load, two empty cards hold the charts' places (ShopHome
+   * `chartsPending`), and every row is at least as tall as the payments card with its legend on two lines (223px), so
+   * neither the Queue card nor the rows under it move when the figures come.
+   */
+  .rst-charts {
+    grid-auto-rows: minmax(13.9375rem, auto);
+  }
+
   .rst-week-total {
     font-size: var(--fs-7);
     font-weight: 600;
@@ -1913,13 +1922,6 @@ body {
     display: contents;
   }
 
-  .topbar-find {
-    grid-area: find;
-    display: flex;
-    min-width: 0;
-    padding: 0.5rem 0 0.5rem 0.5rem;
-  }
-
   .topbar-ctrls {
     grid-area: ctrls;
     display: flex;
@@ -2384,8 +2386,318 @@ body {
     display: none;
   }
 
-  /* Home's bar: the search pill pushes the rest right, whether or not a (now hidden) picker comes before it. */
-  .hm-head.is-rst-head .hm-head-controls > .hdr-search {
-    margin-right: auto;
+  /* Owner, 2026-11-20: "remove it from all places" — no guest search in a laptop's header, Home included. */
+  .hm-head .hdr-search {
+    display: none;
+  }
+
+  /* The pill used to push the rest of Home's bar right; without it the controls sit at the right on their own. */
+  .hm-head.is-rst-head .hm-head-controls {
+    justify-content: flex-end;
+  }
+}
+
+/*
+ * Owner, 2026-11-20 (option A: "move the user avatar in side bar nav bottom") — on a laptop the sidebar holds the
+ * business under the Growza mark and you at its foot; the bell is in the page head beside the screen's actions; the header bar they sat in is gone, so every
+ * screen starts with its title. `sidebar-controls.ts` moves the components (each exists once); this lays them out.
+ * Only where a sidebar is drawn: a login without one (a Kitchen login) keeps its header bar.
+ */
+.sb-biz,
+.sb-acct,
+.page-head-bell.is-placeholder {
+  display: none;
+}
+
+@media (min-width: 861px) {
+  /* The menus below open out of the sidebar, so it may not clip them: the nav list scrolls instead of the column. */
+  .sidebar {
+    overflow: visible;
+  }
+
+  .sidebar .nav {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  /* Owner, 2026-11-20 — the business is a card: a shop front, the name over the branch, and — only when there are
+     several branches — a chevron; then the whole card opens the branch list. */
+  .sb-biz {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 3.5rem;
+    margin: var(--sp-3) 0 var(--sp-2);
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  .sb-biz-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    color: var(--forest);
+  }
+
+  .sb-biz-icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .sb-biz .hdr-biz-text strong {
+    font-size: var(--fs-3);
+    font-weight: 600;
+  }
+
+  .sb-biz:has(.hbp-chip) {
+    padding-right: 2.25rem;
+    cursor: pointer;
+  }
+
+  .sb-biz:has(.hbp-chip):hover {
+    background: var(--page-bg);
+  }
+
+  /* The chip's own tap area (`.hbp-chip .sbp-btn::after`, inset 0) reaches to the card, so the whole card is the button. */
+  .sb-biz .hbp-chip {
+    position: static;
+  }
+
+  .sb-biz .hbp-chip .sbp-btn > svg:first-child {
+    display: none;
+  }
+
+  .sb-biz .hbp-chip .sbp-btn > svg:last-child {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    width: 1.125rem;
+    height: 1.125rem;
+    color: var(--muted);
+    transform: translateY(-50%);
+  }
+
+  .sb-biz .hbp-chip .sbp-btn::after {
+    border-radius: var(--radius);
+  }
+
+  .sb-biz .hdr-biz {
+    flex: 1;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .sb-biz .sbp-menu {
+    top: calc(100% + 0.25rem);
+    left: 0;
+    right: 0;
+  }
+
+  .sb-acct {
+    display: block;
+    flex: none;
+    margin-top: var(--sp-2);
+    padding-top: var(--sp-2);
+    border-top: 1px solid var(--border);
+  }
+
+  .sb-acct .acct-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius);
+    background: transparent;
+    text-align: left;
+  }
+
+  .sb-acct .acct-trigger:hover {
+    background: var(--page-bg);
+  }
+
+  .sb-acct .acct-menu {
+    top: auto;
+    bottom: calc(100% + 0.5rem);
+    left: 0;
+    right: auto;
+  }
+
+  /* The header without its bar: one row, the page head, at the top of its panel. */
+  .shell:has(> .sidebar) .topbar {
+    grid-template-areas: 'lead primary';
+  }
+
+  .shell:has(> .sidebar) .topbar::before,
+  .shell:has(> .sidebar) .topbar-ctrls {
+    display: none;
+  }
+
+  .shell:has(> .sidebar) .topbar::after {
+    grid-area: 1 / 1 / 2 / -1;
+    margin-top: 0;
+  }
+
+  .shell:has(> .sidebar) :is(.topbar-lead, .topbar-primary) {
+    margin-top: 0;
+  }
+
+  /* The restaurant's Home drew only that bar above its page head; with nothing left in it, it takes no room. */
+  .shell:has(> .sidebar) .hm-head.is-rst-head {
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .shell:has(> .sidebar) .hm-head.is-rst-head .hm-head-controls {
+    display: none;
+  }
+
+  /* The first paint, before the sidebar has claimed them: Home's copies are not drawn on a laptop either. */
+  .shell:has(> .sidebar) .hm-head-controls > :is(.hdr-biz, .notif-wrap, .acct, .hbp) {
+    display: none;
+  }
+}
+
+/*
+ * Owner, 2026-11-20 ("review spacing and ux") — Home's page head and tiles on a narrow laptop or a tablet held
+ * sideways (861–1180px), measured at 900, 1024 and 1151: the three tiles clipped their own figures ("₹19,080",
+ * "23 done · 0 in queue", "23 new this month"), the line under the greeting broke onto two lines beside the
+ * buttons, the bell was 36px beside 40px pills, and the head sat as close to the tiles as two tiles to each other.
+ */
+@media (min-width: 861px) {
+  /* The buttons move under the greeting when both will not fit on one line, rather than squeezing it. */
+  .rst-page-head {
+    flex-wrap: wrap;
+    row-gap: var(--sp-3);
+    margin-bottom: var(--sp-2);
+  }
+
+  .rst-page-id {
+    flex: 1 0 auto;
+    max-width: 100%;
+  }
+
+  :is(.rst-page-actions, .topbar-primary) {
+    gap: var(--sp-3);
+  }
+
+  /* The bell is the same height as the pills beside it. */
+  .page-head-bell .notif-bell,
+  .page-head-bell.is-placeholder {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 999px;
+  }
+
+  .page-head-bell.is-placeholder {
+    display: block;
+    flex: none;
+  }
+}
+
+/* A touch screen gets the 44px target, pills and bell alike. */
+@media (min-width: 861px) and (pointer: coarse) {
+  .rst-pill {
+    min-height: 2.75rem;
+  }
+
+  .page-head-bell .notif-bell,
+  .page-head-bell.is-placeholder {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
+
+/* Too narrow for three tiles in a row: the money tile takes the row, Orders and Guests share the one under it.
+   1180 is the tablet edge the tiles already use (above); at 1151 Orders still clipped "23 done · 0 in queue". */
+@media (min-width: 861px) and (max-width: 1180px) {
+  .rst-kpis {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .rst-kpis > .rst-kpi-sales {
+    grid-column: 1 / -1;
+  }
+}
+
+/*
+ * Owner, 2026-11-20 ("can mobile also be modified?") — the phone drawer's business, as the laptop's sidebar card: a
+ * white card with a shop front, the name over the branch; the close button stays beside it, outside the card.
+ */
+.brand-card {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  min-height: 3.5rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.brand-card .brand-badge {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: none;
+  color: var(--forest);
+}
+
+.brand-card .brand-badge svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.brand-card .brand-text {
+  min-width: 0;
+}
+
+.brand-card .brand-name {
+  overflow: hidden;
+  font-size: var(--fs-4);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * Laptop sweep 2026-11-22 — a 768px-tall window with Team open: the menu ran 579px in 517px of room, so WhatsApp and
+ * Settings sat below the fold of a scroller that gave no sign it scrolled. Rows keep their 40px; the air between the
+ * blocks above and between the groups gives up the difference instead, and when a long menu still runs over (more
+ * rows, a shorter window), a soft shadow at the edge says there is more. The shadows are the usual "scroll shadow"
+ * pair: the canvas-coloured covers travel with the content and hide each shadow while that end is in view.
+ */
+@media (min-width: 861px) and (max-height: 859px) {
+  .sidebar {
+    padding-block: 0.75rem;
+  }
+  .sidebar .sb-biz {
+    margin: var(--sp-1) 0;
+  }
+  .sidebar .nav {
+    gap: 0;
+  }
+  .sidebar .nav-section {
+    margin: var(--sp-1) 0 2px;
+  }
+}
+@media (min-width: 861px) {
+  .sidebar .nav {
+    background:
+      linear-gradient(var(--canvas) 30%, transparent) top / 100% 2rem no-repeat local,
+      linear-gradient(transparent, var(--canvas) 70%) bottom / 100% 2rem no-repeat local,
+      radial-gradient(farthest-side at 50% 0, rgb(0 0 0 / 0.14), transparent) top / 100% 0.625rem no-repeat scroll,
+      radial-gradient(farthest-side at 50% 100%, rgb(0 0 0 / 0.14), transparent) bottom / 100% 0.625rem no-repeat scroll;
   }
 }

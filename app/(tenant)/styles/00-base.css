@@ -43,6 +43,14 @@
   --danger-soft: #fdeaea;
   --danger-line: #fecaca;
   --amber-ink: #92400e; /* amber as TEXT on --amber-soft: 6.3:1 (Jira GRW-478); --amber itself is 4.99:1 */
+  /* Owner, 2026-11-20 — the Menu's sections. Identity, not meaning: six hues kept clear of the five above, so a
+     section's colour is never read as "warning" or "time". Used as a soft tile and a thin bar, never as status text. */
+  --cat-1: #0f766e; /* teal */
+  --cat-2: #c2410c; /* orange */
+  --cat-3: #be185d; /* pink */
+  --cat-4: #4338ca; /* indigo */
+  --cat-5: #4d7c0f; /* lime */
+  --cat-6: #0e7490; /* cyan */
   /* Emerald v2 theme preview (99-z-emerald-v2.css): one colour in three shades, plus the grey canvas. */
   --forest: #173f2b;
   --forest-2: #1f5a3c;

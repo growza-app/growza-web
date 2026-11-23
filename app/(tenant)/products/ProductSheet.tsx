@@ -9,7 +9,7 @@ import type { Product, ProductCategory } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { IconCheck, IconChevronRight, IconTrash } from '../components/icons';
-import { useAddonsOn, useAreas, useSizesOn } from '../components/SessionProvider';
+import { useAddonsOn, useAreas, useRecipesOn, useSizesOn } from '../components/SessionProvider';
 import { GstInPrice, TaxFields } from '../components/TaxFields';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { codeHolder } from '../lib/product-match';
@@ -17,6 +17,7 @@ import { useNouns } from '../lib/use-nouns';
 import { MoveSizesEntry } from './MoveSizesEntry';
 import { StockPanel } from './StockPanel';
 import { SalesPanel } from './SalesPanel';
+import { RecipePanel } from './RecipePanel';
 import { stockTone } from './ProductsList';
 import { ShareOnWhatsAppButton } from '../components/ShareOnWhatsApp';
 import { productShareItem } from '../lib/share-on-whatsapp';
@@ -29,7 +30,7 @@ import { productShareItem } from '../lib/share-on-whatsapp';
  * - **Stock** (an existing product only) — the count, five reasons it changes, and the ledger (0116). Typing
  *   over the count is deliberately NOT offered here: every change says why.
  */
-type Part = 'details' | 'stock' | 'sales';
+type Part = 'details' | 'stock' | 'recipe' | 'sales';
 
 
 export function ProductSheet({
@@ -42,6 +43,7 @@ export function ProductSheet({
   inline = false,
   initialSaved = false,
   seesCost = true,
+  initialPart,
 }: {
   product: Product | null;
   branchId: string;
@@ -56,9 +58,13 @@ export function ProductSheet({
   initialSaved?: boolean;
   /** QA 2026-11-14 — false for a viewer the API sends no cost to (`shelfSeesCost`): no cost field, and none is sent. */
   seesCost?: boolean;
+  /** Owner, 2026-11-20 — the Menu's Recipe button opens the dish straight on its recipe. Ignored where there is no Recipe tab. */
+  initialPart?: 'recipe';
 }) {
   const t = useTranslations('products.form');
   const tp = useTranslations('products');
+  // Develop QA 2026-11-21, finding 6 — a kitchen's dish is "Taken off" / "Put back on the menu" here as on the Menu; a shop keeps "Retired".
+  const tm = useTranslations('products.menu');
   const tc = useTranslations('common');
   const ts = useTranslations('products.sizes');
   const nouns = useNouns();
@@ -67,14 +73,17 @@ export function ProductSheet({
   const sizesOn = useSizesOn();
   // Jira GRW-712 — an item's add-on groups (Extras, Spice), on their own page like its sizes.
   const addonsOn = useAddonsOn();
+  const recipesAllowed = useRecipesOn();
   // A kitchen (`catalog.stock_counted` off) has no count behind a dish: no Stock tab, no opening count, no low line.
   const counted = useAreas().stock;
+  // Jira GRW-737 — a kitchen's dish has a Recipe tab: what it takes out of the kitchen's stock, size by size.
+  const recipesOn = recipesAllowed && !counted;
   // Review 2026-11-13 — the WhatsApp share (Jira GRW-671) lives on the sheet's head, bound once; null when retired or none left.
   const shareItem = product && counted ? productShareItem(product, { counted }) : null;
   const sizeCount = product?.variantCount ?? 0;
   const sheetRef = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
-  const [part, setPart] = useState<Part>('details');
+  const [part, setPart] = useState<Part>(initialPart === 'recipe' && recipesOn && product ? 'recipe' : 'details');
   const [name, setName] = useState(product?.name ?? '');
   const [price, setPrice] = useState(product ? String(Number(product.priceMinor) / 100) : '');
   const [cost, setCost] = useState(product?.costMinor != null ? String(Number(product.costMinor) / 100) : '');
@@ -251,7 +260,7 @@ export function ProductSheet({
             <span className="prd-sheet-name">{product.name}</span>
             <span className="prd-sheet-tags">
               {!counted ? (
-                <span className={`prd-pill prd-pill-${product.active ? 'ok' : 'off'}`}>{product.active ? tp('strip.onMenu') : tp('retired')}</span>
+                <span className={`prd-pill prd-pill-${product.active ? 'ok' : 'off'}`}>{product.active ? tp('strip.onMenu') : tp('strip.offMenu')}</span>
               ) : product.active ? (
                 <span className={`prd-pill prd-pill-${stockTone(product)}`}>
                   {stockTone(product) === 'out' ? tp('outOfStock') : stockTone(product) === 'low' ? tp('lowStock', { n: product.stock }) : tp('inStock')}
@@ -292,8 +301,8 @@ export function ProductSheet({
       ) : null}
       {product ? (
         // Two tabs where there is no count: what the dish IS, and what it has sold.
-        <div className={`prd-seg prd-seg-${counted ? 3 : 2}`} role="tablist" aria-label={title}>
-          {(counted ? (['details', 'stock', 'sales'] as const) : (['details', 'sales'] as const)).map((p) => (
+        <div className={`prd-seg prd-seg-${counted || recipesOn ? 3 : 2}`} role="tablist" aria-label={title}>
+          {(counted ? (['details', 'stock', 'sales'] as const) : recipesOn ? (['details', 'recipe', 'sales'] as const) : (['details', 'sales'] as const)).map((p) => (
             <button key={p} type="button" role="tab" aria-selected={part === p} className={part === p ? 'is-on' : ''} onClick={() => setPart(p)}>
               {t(`part.${p}`)}
             </button>
@@ -314,6 +323,8 @@ export function ProductSheet({
         </div>
       ) : counted && part === 'stock' && product ? (
         <StockPanel product={product} onChanged={onSaved} />
+      ) : part === 'recipe' && product ? (
+        <RecipePanel product={product} />
       ) : part === 'sales' && product ? (
         <SalesPanel product={product} />
       ) : (
@@ -443,7 +454,7 @@ export function ProductSheet({
                 {seesCost ? (
                   <div className="prd-field">
                     <label className="prd-field-label" htmlFor="prd-cost">
-                      {t('cost')}
+                      {t(counted ? 'cost' : 'costUncounted')}
                     </label>
                     <input
                       id="prd-cost"
@@ -464,7 +475,7 @@ export function ProductSheet({
                   {t('belowZero')}
                 </div>
               ) : seesCost ? (
-                <div className="sheet-foot">{t('costHint')}</div>
+                <div className="sheet-foot">{t(counted ? 'costHint' : 'costHintUncounted')}</div>
               ) : null}
               <GstInPrice priceMinor={Math.round(rupees * 100)} rateBp={gstRateBp} />
 
@@ -513,7 +524,7 @@ export function ProductSheet({
                   <AppLink className="sheet-row prd-sizes-row" href={`/products/${product.id}/sizes`}>
                     <span className="sheet-row-label">{ts('openRow')}</span>
                     <span className="sheet-row-value prd-sizes-value">
-                      {sizeCount > 0 ? ts('openRowCount', { count: sizeCount }) : ts('openRowNone')}
+                      {sizeCount > 0 ? ts('openRowCount', { count: sizeCount }) : ts(counted ? 'openRowNone' : 'openRowNoneUncounted')}
                       <IconChevronRight aria-hidden="true" />
                     </span>
                   </AppLink>
@@ -627,7 +638,7 @@ export function ProductSheet({
                 <div className="prd-form-sec-title">{counted ? tp('secAvailability') : tp('secMenuStatus')}</div>
                 <div className="prd-action-row">
                   <div className="prd-action-copy">
-                    <strong>{product.active ? (counted ? tp('inStock') : tp('strip.onMenu')) : tp('retired')}</strong>
+                    <strong>{product.active ? (counted ? tp('inStock') : tp('strip.onMenu')) : counted ? tp('retired') : tp('strip.offMenu')}</strong>
                     <span>
                       {product.active
                         ? counted
@@ -639,7 +650,7 @@ export function ProductSheet({
                     </span>
                   </div>
                   <button type="button" className="btn btn-ghost prd-action-btn" disabled={busy} onClick={() => void toggleActive()}>
-                    {product.active ? tp('retire') : tp('bringBack')}
+                    {product.active ? (counted ? tp('retire') : tm('takeOff')) : counted ? tp('bringBack') : tm('putBack')}
                   </button>
                 </div>
                 <div className="prd-action-row prd-action-row-danger">

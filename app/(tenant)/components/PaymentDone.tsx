@@ -224,6 +224,8 @@ export function PaymentDone({
             </Link>
           )}
         </div>
+        {/* Owner, 2026-11-23 — on a till the sound switch is a word in the POS ⋮ ("Sound when paid"), not an unnamed icon beside Next. */}
+        {printSlot ? null : (
         <button type="button" className="pf-sound" aria-pressed={sound} onClick={toggleSound}>
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M11 5 6 9H2v6h4l5 4z" />
@@ -231,6 +233,7 @@ export function PaymentDone({
           </svg>
           {sound ? t('soundOn') : t('soundOff')}
         </button>
+        )}
       </div>
     </div>
   );

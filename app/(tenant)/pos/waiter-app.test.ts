@@ -42,7 +42,7 @@ describe('BR-01 — a waiter is offered the room and nothing else', () => {
 describe('AC-03 · BR-02 — what a waiter’s till does not draw', () => {
   it('no Sell/Queue/Return tabs and no type tabs: Dine-in only', () => {
     expect(pos).toContain('{waiter ? (');
-    expect(flow).toContain('tablesHere && !token && !waiter ? (');
+    expect(flow).toContain('typesHere && !token && !waiter && !addingTo ? (');
   });
 
   it('no guest lookup on the dish step: a waiter names the guest when they pay', () => {
@@ -64,7 +64,8 @@ describe('AC-03 · BR-02 — what a waiter’s till does not draw', () => {
 });
 
 describe('AC-01 — the slip says who sent it', () => {
-  it('"T5 · AC Hall · Ravi"', () => {
+  // Jira GRW-730 — the name moved off the table line to a line of its own under the slip number ("By Ravi").
+  it('"DINE-IN · T5 · AC Hall", and Ravi on the slip', () => {
     const kot = kotFromApi(
       { id: 'k', number: 4, kind: 'new', createdAt: '2026-11-16T10:00:00Z', items: [{ name: 'Veg Thali', qty: 2 }], takenBy: 'Ravi' },
       { tokenNo: null, channel: 'counter', orderType: 'dine_in', tableName: 'T5 · AC Hall' },
@@ -72,7 +73,8 @@ describe('AC-01 — the slip says who sent it', () => {
       false,
       (_type, table) => `DINE-IN${table ? ` · ${table}` : ''}`,
     );
-    expect(kot.destination).toBe('DINE-IN · T5 · AC Hall · Ravi');
+    expect(kot.destination).toBe('DINE-IN · T5 · AC Hall');
+    expect(kot.takenBy).toBe('Ravi');
   });
 
   it('Payments says who took the money, in both languages', () => {

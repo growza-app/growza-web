@@ -10,6 +10,8 @@
  * reader's language, the same contract `receipt-text.ts` keeps.
  */
 
+import type { Bitmap } from './bitmap';
+
 export type PaperWidth = '58' | '80';
 
 export type TicketLine =
@@ -24,6 +26,11 @@ export type TicketLine =
    * reads the amount.
    */
   | { kind: 'item'; name: string; qty: string; price: string; amount: string; header?: boolean }
+  /**
+   * Jira GRW-728 — a picture, already in the printer's dots for this roll (the business's logo). Drawn as a raster on
+   * a Bluetooth printer and as the same dots in the print dialog, so both papers match the preview on Settings.
+   */
+  | { kind: 'image'; bitmap: Bitmap }
   /** A dashed rule across the paper. */
   | { kind: 'rule' }
   /** An empty line. */
@@ -129,6 +136,16 @@ export interface KotData {
   offlineToken?: string | null;
   /** Where the order is going: "Takeaway", "Swiggy", later "T4 · AC Hall". Null when nothing names it. */
   destination: string | null;
+  /**
+   * Jira GRW-730 — who sent it ("Ravi"), or the delivery app ("Swiggy"), printed "By Ravi" under the slip number so
+   * the cook knows whom to ask. The name the slip kept when it was made. Null or absent: no line.
+   */
+  takenBy?: string | null;
+  /**
+   * Jira GRW-733 — the kitchen station this slip is for ("Tandoor"), printed large under the heading so a slip that lands
+   * at the wrong station is seen at once. Null or absent (a branch with no stations): no line, the slip exactly as before.
+   */
+  station?: string | null;
   /** Already formatted: "14 Nov, 8:40 pm". */
   when: string;
   items: KotItem[];
@@ -147,6 +164,8 @@ export interface KotCopy {
   kotNo: (n: number) => string;
   token: (n: number | string) => string;
   items: (n: number) => string;
+  /** Jira GRW-730 — "By Ravi". Absent: the name is printed on its own. */
+  by?: (name: string) => string;
 }
 
 /**
@@ -161,11 +180,15 @@ export function kotTicket(kot: KotData, copy: KotCopy): Ticket {
   if (kot.reprint) lines.push({ kind: 'text', text: `** ${copy.reprint} **`, align: 'center', bold: true });
   const heading = kot.kind === 'cancel' ? copy.cancelled : kot.kind === 'add' ? copy.added : kot.kind === 'pack' ? copy.packed : copy.title;
   lines.push({ kind: 'text', text: heading, align: 'center', bold: true, size: kot.kind === 'new' ? 1 : 2 });
+  const station = kot.station?.trim();
+  if (station) lines.push({ kind: 'text', text: station.toLocaleUpperCase(), align: 'center', bold: true, size: 2 });
   const kotToken = kot.offlineToken ?? kot.tokenNo;
   if (kotToken !== null) lines.push({ kind: 'text', text: copy.token(kotToken), align: 'center', bold: true, size: 2 });
   if (kot.destination) lines.push({ kind: 'text', text: kot.destination, align: 'center', bold: true });
   // Jira GRW-716 — a slip printed offline has no kitchen number yet (the server gives it when the order is sent).
   lines.push({ kind: 'pair', left: kot.number > 0 ? copy.kotNo(kot.number) : '', right: kot.when });
+  const sender = kot.takenBy?.trim();
+  if (sender) lines.push({ kind: 'text', text: copy.by ? copy.by(sender) : sender });
   if (kot.branchName) lines.push({ kind: 'text', text: kot.branchName });
   lines.push({ kind: 'rule' });
   for (const item of kot.items) {
@@ -193,6 +216,11 @@ export interface BillItem {
 }
 
 export interface BillData {
+  /**
+   * Jira GRW-728 — the business's logo in this roll's dots, printed centred above its name. Null or absent: the bill
+   * starts with the name, as it always did.
+   */
+  logo?: Bitmap | null;
   businessName: string;
   /** The legal name when it differs from the trading name; printed under it. */
   legalName?: string | null;
@@ -231,6 +259,13 @@ export interface BillData {
   paidBy: string | null;
   footer?: string | null;
   reprint?: boolean;
+  /**
+   * Jira GRW-729 — the QR the guest scans to pay, already this roll's dots, and the words under it ("Scan to pay
+   * ₹540"). Null or absent: no QR, and the bill is what it was.
+   */
+  payQr?: { bitmap: Bitmap; caption: string } | null;
+  /** Jira GRW-729 BR-01 — a paid bill of a business with a QR: this word ("PAID") where the QR would be. */
+  paidStamp?: string | null;
 }
 
 export interface BillCopy {
@@ -262,6 +297,8 @@ export interface BillCopy {
 export function billTicket(bill: BillData, copy: BillCopy): Ticket {
   const lines: TicketLine[] = [];
   if (bill.reprint) lines.push({ kind: 'text', text: `** ${copy.reprint} **`, align: 'center', bold: true });
+  // Jira GRW-728 — the logo at the top, above the name, as the owner's Petpooja sample leads with it.
+  if (bill.logo) lines.push({ kind: 'image', bitmap: bill.logo });
   lines.push({ kind: 'text', text: bill.businessName, align: 'center', bold: true, size: 2 });
   if (bill.legalName && bill.legalName !== bill.businessName) lines.push({ kind: 'text', text: bill.legalName, align: 'center' });
   if (bill.address) lines.push({ kind: 'text', text: bill.address, align: 'center' });
@@ -292,6 +329,15 @@ export function billTicket(bill: BillData, copy: BillCopy): Ticket {
   lines.push({ kind: 'text', text: `${copy.grandTotal} ${bill.grandTotal}`, align: 'right', bold: true, size: 2 });
   if (bill.amountInWords) lines.push({ kind: 'text', text: `(${bill.amountInWords})` });
   if (bill.paidBy) lines.push({ kind: 'text', text: bill.paidBy, align: 'right' });
+  // Jira GRW-729 — the QR under the total, where the guest's eye already is; "PAID" in its place once it is.
+  if (bill.paidStamp) {
+    lines.push({ kind: 'rule' });
+    lines.push({ kind: 'text', text: bill.paidStamp, align: 'center', bold: true, size: 2 });
+  } else if (bill.payQr) {
+    lines.push({ kind: 'rule' });
+    lines.push({ kind: 'image', bitmap: bill.payQr.bitmap });
+    lines.push({ kind: 'text', text: bill.payQr.caption, align: 'center', bold: true });
+  }
   lines.push({ kind: 'rule' });
   if (bill.footer) lines.push({ kind: 'text', text: bill.footer, align: 'center' });
   lines.push({ kind: 'text', text: copy.thanks, align: 'center' });

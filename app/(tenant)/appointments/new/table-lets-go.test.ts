@@ -16,7 +16,10 @@ describe('the till lets go of a table', () => {
   it('when the bill is finished and the next guest starts', () => {
     expect(flow).toMatch(/const nextCustomer = \(\) => \{\s*setLines\(\[\]\);[\s\S]{0,200}setAtTable\(null\);\s*setGuests\(null\);/);
   });
-  it('and while a table is chosen, the strip says Dine-in', () => {
-    expect(flow).toContain("<span className=\"pf-table-type\">{t('type.dine_in')}</span> · {atTable.label}");
+  it('and while a table is chosen, Dine-in is said: by the POS bar above it, or by the strip where there is no bar', () => {
+    // GRW-745: where there is no bar (a waiter's till, full screen) the strip says "Dine-in" over the table's name.
+    expect(flow).toContain("<span className=\"pf-table-type\">{t('type.dine_in')}</span>\n            <span className=\"pf-table-label\">{atTable.label}</span>");
+    // Owner, 2026-11-22 — under the POS bar (whose Dine-in is on) the table itself is the way back, named in full.
+    expect(flow).toContain('aria-label={`${tTables(\'backToTables\')}: ${atTable.label}`} onClick={() => setAtTable(null)}>');
   });
 });

@@ -28,14 +28,15 @@ describe('the unpaid order card', () => {
   it('asks before cancelling, says what is not collected, and keeps the order on Keep', () => {
     expect(client).toContain('<ConfirmDialog\n          tone="danger"');
     expect(client).toContain("t(qk('cancelOrderBody'), { amount: formatMoney(String(cancelTarget.totalMinor)) })");
-    expect(client).toContain('api.cancelPendingCounterSale(tk.id)');
+    expect(client).toContain('api.cancelPendingCounterSale(tk.id, cancelAskCooked ? cancelCooked : undefined)');
   });
 
   it('never lets the card grow wider than the phone', () => {
     expect(css).toMatch(/\.pos-queue-cols \{[^}]*grid-template-columns: minmax\(0, 1fr\);/);
     expect(css).toMatch(/\.pos-queue-col \{[^}]*min-width: 0;/);
-    expect(css).toMatch(/\.pos-qcard-more \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
-    expect(css).toMatch(/\.pos-qcard-more \.btn > span \{[^}]*white-space: normal;/);
+    // Owner, 2026-11-23 — one row: Take payment gives way (min-width 0), + and ⋮ keep their 44px.
+    expect(css).toMatch(/\.pos-qcard-actions-row > \.pos-qcard-complete-btn \{[^}]*min-width: 0;/);
+    expect(css).toMatch(/\.pos-qcard-complete-btn > span \{[^}]*white-space: normal;/);
   });
 });
 
@@ -65,7 +66,8 @@ describe('Add items', () => {
       ],
     } as unknown as Appointment;
     const [tk] = buildDailyTokens([order], 'loc-1', {}, NOW);
-    expect(tk!.items).toEqual([
+    // Jira GRW-747 — a row also carries what editing it on the card needs (product, price, lines); the row itself is unchanged.
+    expect(tk!.items).toMatchObject([
       { name: 'Mutton Biryani', qty: 2, paidMinor: 52000 },
       { name: 'Boondi Raita', qty: 1, paidMinor: 4000 },
     ]);
@@ -74,7 +76,7 @@ describe('Add items', () => {
 });
 
 describe('Add items never costs the desk the bill it was ringing up (owner, 9 Nov 2026)', () => {
-  const sell = client.slice(client.indexOf('<div className="pos-body" hidden={mode === \'queue\' || addingToToken !== null || payingTable !== null}>'), client.indexOf('{addingToToken ? (\n        <div className="pos-body"'));
+  const sell = client.slice(client.indexOf('<div className="pos-body" data-mode={mode} hidden={mode === \'queue\' || addingToToken !== null || payingTable !== null}>'), client.indexOf('{addingToToken ? (\n        <div className="pos-body"'));
   const adding = client.slice(client.indexOf('{addingToToken ? (\n        <div className="pos-body"'));
 
   it('keeps the Sell till mounted, never re-keyed, and only hidden while adding', () => {

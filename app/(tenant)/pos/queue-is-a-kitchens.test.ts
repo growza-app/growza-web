@@ -29,7 +29,8 @@ describe('the till without one', () => {
   it('offers no "Keep payment pending in queue": the button is drawn only when there is a queue to open', () => {
     expect(pos).toContain('onOpenQueue={orderQueue ? () => openQueue(lastQueuedIdRef.current ?? undefined) : undefined}');
     const payFlow = src('../appointments/new/PayFlow.tsx');
-    expect(payFlow.match(/\{onOpenQueue \? \(\n\s*<button\n\s*type="button"\n\s*className="btn pos-charge-pending"/g)).toHaveLength(2);
+    // Owner, 2026-11-22 — and not once "Take payment now" has been tapped (Jira GRW-747).
+    expect(payFlow.match(/\{onOpenQueue && !payNowNoGuest \? \(\n\s*<button\n\s*type="button"\n\s*className="btn pos-charge-pending"/g)).toHaveLength(2);
   });
 
   it("a shop's Home links to no queue", () => {

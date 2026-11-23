@@ -5,6 +5,7 @@ import { Fragment, useEffect, useRef, useState, type KeyboardEvent as ReactKeybo
 import { ClientCartoon } from './ClientCartoon';
 import { usePathname } from 'next/navigation';
 import { canSee, type MemberRole } from '../lib/nav-policy';
+import { cooksOnly } from '../lib/areas';
 import { isActive, resolveNav, type NavGroup } from '../lib/nav-sections';
 import { GrowzaMark } from './GrowzaMark';
 import { homeCopy } from '../lib/home-copy';
@@ -12,18 +13,21 @@ import type { Lang } from '../lib/lang';
 import { SignOutButton } from './SignOutButton';
 import { useMobileNav } from './MobileNavProvider';
 import { useAreas, useLive } from './SessionProvider';
+import { HeaderBusiness } from './HeaderBusiness';
+import { HeaderBranchPicker } from './HeaderBranchPicker';
+import { AccountMenu } from './AccountMenu';
+import { useClaimHeaderControls, useWideScreen } from './sidebar-controls';
 import {
   IconAnalytics,
   IconAppointments,
   IconBell,
   IconChat,
-  IconDashboard,
   IconOffers,
   IconPackages,
   IconPos,
   IconProducts,
+  IconInventory,
   IconReceipt,
-  IconReports,
   IconServices,
   IconSettings,
   IconStaff,
@@ -32,6 +36,10 @@ import {
   IconClipboardCheck,
   IconClose,
   IconChevronDown,
+  IconNavHome,
+  IconCutlery,
+  IconBarChart,
+  IconStorefront,
 } from './icons';
 
 /**
@@ -144,13 +152,16 @@ export function Sidebar({
   const areas = useAreas();
   // Owner, 2026-10-15 — grouped by job. Routes are unchanged; a group's children show while one of them is open.
   const groups: NavGroup<ReactNode>[] = [
-    { href: '/', label: t.nav.home, icon: <IconDashboard /> },
+    { href: '/', label: t.nav.home, icon: <IconNavHome /> },
     // The till, one tap from Home. `canSee` gives it to whoever may open the till; a business that has turned
     // Products off has nothing on a shelf to sell, so it is not offered one.
     ...(products === false ? [] : [{ href: '/pos', label: t.nav.pos, icon: <IconPos /> }]),
     // Jira GRW-608 — a shop's own two screens. Absent for every other business: `canSee` answers false for them.
     { href: '/orders', label: t.nav.orders, icon: <IconReceipt /> },
-    { href: '/stock', label: t.nav.stock, icon: <IconProducts /> },
+    // Owner, 2026-11-20 — a kitchen's Menu reads as a menu (a fork and a knife); a shop's counted Stock keeps the product.
+    { href: '/stock', label: t.nav.stock, icon: areas.stock === false ? <IconCutlery /> : <IconProducts /> },
+    // Jira GRW-741 — Inventory, below the Menu: only where the business keeps kitchen stock, to the roles that may open it (`canSee`).
+    { href: '/inventory', label: t.nav.inventory, icon: <IconInventory /> },
     {
       href: '/appointments',
       label: role === 'staff' ? t.nav.schedule : t.nav.bookings,
@@ -190,7 +201,7 @@ export function Sidebar({
         { href: '/attendance', label: t.nav.attendance },
       ],
     },
-    { href: '/reports', label: t.nav.reports, icon: <IconReports /> },
+    { href: '/reports', label: t.nav.reports, icon: <IconBarChart /> },
     // Jira GRW-300 — reached from here on a phone; on a laptop the bell in the header is the same door.
     { href: '/notifications', label: t.nav.notifications, icon: <IconBell />, className: 'nav-phone-only' },
     // GRW-165 — marked a demo while WhatsApp is not live; Jira GRW-266 · GRW-271 — not listed in production at all.
@@ -267,6 +278,14 @@ export function Sidebar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, currentKey]);
 
+  // Owner, 2026-11-20 (option A) — on a laptop the business and the account menu are the sidebar's (the bell is the
+  // page head's, `PageHeadBell`); the
+  // header unmounts its copies once claimed (`sidebar-controls.ts`). Not when this sidebar is not drawn (below).
+  const wide = useWideScreen();
+  const drawn = !(nav.every((n) => n.href === '/notifications') || cooksOnly(areas.pages));
+  const controlsHere = wide === true && drawn;
+  useClaimHeaderControls(controlsHere);
+
   /*
    * Owner, 2026-11-17 — a login offered no screen in the list (a Kitchen login: its one screen is where it already is) gets
    * no sidebar at all: an empty column the width of a ticket was all it drew (its one row, Notifications, is not drawn there). The page takes the width
@@ -274,6 +293,8 @@ export function Sidebar({
    */
   // Notifications alone is not a list: on a laptop the theme does not draw it there, and a kitchen has nothing to be told.
   if (nav.every((n) => n.href === '/notifications')) return null;
+  // Jira GRW-741 — nor does a Kitchen login now that Inventory is theirs too: its two places carry their own tabs (`inventory/CookTabs.tsx`).
+  if (cooksOnly(areas.pages)) return null;
 
   return (
     <>
@@ -295,11 +316,33 @@ export function Sidebar({
           <GrowzaMark size={36} />
           <span className="brand-growza-word">{tc('productName')}</span>
         </div>
+        {controlsHere ? (
+          <div className="sb-biz">
+            {/* Owner, 2026-11-20 — the business as a card: a shop front, its name, the branch; it opens the branch list when there are several. */}
+            <span className="sb-biz-icon" aria-hidden="true">
+              <IconStorefront />
+            </span>
+            <HeaderBusiness />
+            <HeaderBranchPicker />
+          </div>
+        ) : wide === null && drawn ? (
+          /*
+           * Owner, 2026-11-23 ("when coming back to home … the page shows some glitch") — a menu tap reloads the page,
+           * and until the screen's width is known the card above was missing, so every menu row dropped 64px a moment
+           * later. Its empty box holds the place; the stylesheet hides it on a phone, as it hides the card.
+           */
+          <div className="sb-biz is-placeholder" aria-hidden="true" />
+        ) : null}
         <div className="brand">
-          <div className="brand-badge">{tenantName.charAt(0).toUpperCase()}</div>
+          {/* Owner, 2026-11-20 — the phone drawer's business is the laptop's card: a shop front, not the first letter. */}
+          <div className="brand-card">
+          <div className="brand-badge" aria-hidden="true">
+            <IconStorefront />
+          </div>
           <div className="brand-text">
             <div className="brand-name">{tenantName}</div>
             {branchCount > 1 ? <div className="brand-location">{t.branchCount(branchCount)}</div> : locationName ? <div className="brand-location">{locationName}</div> : null}
+          </div>
           </div>
           <button type="button" className="sidebar-close" aria-label={tc('closeMenu')} onClick={close}>
             <IconClose />
@@ -393,6 +436,11 @@ export function Sidebar({
             {t.nav.signOut}
           </SignOutButton>
         </div>
+        {controlsHere ? (
+          <div className="sb-acct">
+            <AccountMenu />
+          </div>
+        ) : null}
       </aside>
     </>
   );

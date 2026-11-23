@@ -991,6 +991,12 @@
     column-gap: var(--sp-5);
     row-gap: var(--sp-3);
     align-items: start;
+    /*
+     * Owner, 2026-11-22 — each piece takes the first free cell. The till puts its print row in the right column's
+     * first cell, which pushed "The bill" (left) to after the bill itself, and Send, Next guest and Done (right)
+     * below it all: Next guest sat at 749px on a 768px laptop. Dense placement fills the holes in source order.
+     */
+    grid-auto-flow: row dense;
   }
 
   .pf-done-page > .pf-done {
@@ -1004,6 +1010,19 @@
   .pf-done-page .wi-receipt-share > .wi-section-label {
     grid-column: 1;
     align-self: end;
+  }
+
+  /*
+   * Owner, 2026-11-23 — on a till "Send the bill on WhatsApp" comes before the bill in the page (a phone shows it first);
+   * here it heads the right column's send row, and "The bill" keeps its place over the bill, on the row under the amount.
+   */
+  .pf-done-page.is-till .wi-receipt-share > .wi-section-label:not(.wi-send-label) {
+    grid-row: 2;
+  }
+
+  .pf-done-page .wi-receipt-share > .wi-section-label.wi-send-label {
+    grid-column: 2;
+    margin-top: 0;
   }
 
   .pf-done-page .wi-receipt-share > .wi-receipt-paper {
@@ -1404,6 +1423,15 @@
 .pf-client-add svg {
   width: 1.25rem;
   height: 1.25rem;
+}
+
+/* Owner, 2026-11-22 — Pickup's "Who is paying?" can be skipped at a kitchen: a full-width second choice, outlined
+   (`.btn-ghost`, so hover stays readable). */
+.pf-client-skip {
+  min-height: 2.75rem;
+  width: 100%;
+  margin-top: var(--sp-2);
+  font-size: 1rem;
 }
 
 .pf-client-links {

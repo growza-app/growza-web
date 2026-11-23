@@ -43,6 +43,13 @@ export interface Areas {
    * business that existed before it.
    */
   tables?: boolean;
+  /** Jira GRW-737 — `me.capabilities.recipes`: the business may keep kitchen stock (a restaurant). Only ever said when true. */
+  recipes?: boolean;
+  /**
+   * Jira GRW-741 QA — `me.capabilities.kitchenStock`: the owner has switched Inventory on (FR-01). Until then only the owner is offered it,
+   * because the switch is on its Stock tab. Only ever said when true.
+   */
+  kitchenStock?: boolean;
   /**
    * Jira GRW-74 — the pages a member's ROLE grants, only for a member who holds one. Absent for the owner and for everyone with no role, who are
    * offered what they always were. It travels here because every nav surface and screen guard already carries this object to `canSee`.
@@ -59,11 +66,22 @@ export type PageGrid = Partial<Record<RolePageKey, PageLevel>>;
  */
 /** Jira GRW-714 — a cook: Kitchen granted, and neither the till nor the tables. Their whole app is `/kitchen`. */
 export function cooksOnly(grid: PageGrid | null | undefined): boolean {
-  return Boolean(grid) && (grid!.kitchen ?? 'none') !== 'none' && grid!.bookings !== 'manage' && (grid!.tables ?? 'none') === 'none';
+  return Boolean(grid) && (grid!.kitchen ?? 'none') !== 'none' && grid!.bookings !== 'manage' && (grid!.tables ?? 'none') === 'none' && noOfficePage(grid!);
 }
 
 export function servesTablesOnly(grid: PageGrid | null | undefined): boolean {
-  return Boolean(grid) && (grid!.tables ?? 'none') !== 'none' && grid!.bookings !== 'manage';
+  return Boolean(grid) && (grid!.tables ?? 'none') !== 'none' && grid!.bookings !== 'manage' && noOfficePage(grid!);
+}
+
+/*
+ * Develop QA 2026-11-18 (test:roles) — a waiter or a cook is ALSO a role that opens none of the office's screens. Without this, a role
+ * granted every page at See ("Everything view-only") has Tables and no Change on Bookings, so it was taken for a waiter: every address
+ * sent it to the till, and its sidebar was POS alone, in a shop that has no tables at all. The API draws the same line
+ * (`api/security/table-service.ts`).
+ */
+const OFFICE_PAGES = ['clients', 'services', 'offers', 'staff', 'reports', 'settings'] as const;
+function noOfficePage(grid: PageGrid): boolean {
+  return OFFICE_PAGES.every((k) => (grid[k as keyof PageGrid] ?? 'none') === 'none');
 }
 
 /** The salon's app: every diary screen, none of the shop's. What an absent answer means. */
@@ -71,7 +89,7 @@ export const DIARY_AREAS: Areas = { bookings: true, services: true, shop: false,
 
 /** The slice of `/me` this reads — typed loosely, because an older API sends less. */
 export interface MeAreas {
-  capabilities?: { bookings?: boolean; services?: boolean; stockCounted?: boolean; marketplaces?: boolean; tables?: boolean } | null;
+  capabilities?: { bookings?: boolean; services?: boolean; stockCounted?: boolean; marketplaces?: boolean; tables?: boolean; recipes?: boolean; kitchenStock?: boolean } | null;
   surface?: string | null;
   deliveryApps?: readonly string[] | null;
   member?: { role?: string; tenantRoleId?: string | null } | null;
@@ -91,6 +109,8 @@ export function areasOf(me: MeAreas | null | undefined): Areas {
     ...(me?.capabilities?.marketplaces === false ? { marketplaces: false } : {}),
     ...(me?.deliveryApps && me.deliveryApps.length > 0 ? { deliveryApps: me.deliveryApps } : {}),
     ...(me?.capabilities?.tables === true ? { tables: true } : {}),
+    ...(me?.capabilities?.recipes === true ? { recipes: true } : {}),
+    ...(me?.capabilities?.recipes === true && me.capabilities.kitchenStock === true ? { kitchenStock: true } : {}),
     ...(pages ? { pages } : {}),
   };
 }
@@ -148,10 +168,20 @@ const MARKETPLACE_ROUTES = ['/orders/import', '/orders/held', '/settings/channel
 const COUNTER_REPORT_ROUTES = ['/reports/profit', '/reports/discounts', '/reports/payments'] as const;
 
 /** Jira GRW-718 — screens that exist only where a business may seat guests (a restaurant): its Tables settings and, Jira GRW-714, its kitchen. */
-const TABLE_ROUTES = ['/settings/tables', '/kitchen'] as const;
+const TABLE_ROUTES = ['/settings/tables', '/settings/kitchen-stations', '/kitchen'] as const;
+
+/**
+ * Jira GRW-737 — a kitchen's raw materials: only where the business may keep kitchen stock (a restaurant). Jira GRW-739 — and its food cost.
+ * Jira GRW-741 — all of it is Inventory now, its own section; the two old addresses only send you there.
+ */
+const RECIPE_ROUTES = ['/inventory', '/stock/kitchen', '/reports/food-cost'] as const;
+
+/** Jira GRW-741 FR-01 — is this an Inventory address (or one of the two that send you there)? */
+export const isInventoryRoute = (href: string): boolean => RECIPE_ROUTES.some((r) => under(href, r));
 
 /** Jira GRW-72 — Settings screens that exist only for a shop. (Not `SHOP_ROUTES`: the role rules read that list as "the shop's own work".) */
-const SHOP_SETTINGS = ['/settings/roles'] as const;
+// Jira GRW-735 — Coupons and offers: for bills of products and dishes, which a shop (and a kitchen) rings up.
+const SHOP_SETTINGS = ['/settings/roles', '/settings/offers'] as const;
 
 /** May a business with these areas be offered this address? True for everything a screen's own rules do not close. */
 export function areaAllows(href: string, areas: Areas = DIARY_AREAS): boolean {
@@ -164,6 +194,7 @@ export function areaAllows(href: string, areas: Areas = DIARY_AREAS): boolean {
   if (!areas.stock && COUNT_ROUTES.some((r) => under(href, r))) return false;
   if (areas.marketplaces === false && MARKETPLACE_ROUTES.some((r) => under(href, r))) return false;
   if (!areas.tables && TABLE_ROUTES.some((r) => under(href, r))) return false;
+  if (!areas.recipes && RECIPE_ROUTES.some((r) => under(href, r))) return false;
   return true;
 }
 

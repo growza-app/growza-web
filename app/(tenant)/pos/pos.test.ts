@@ -217,7 +217,8 @@ describe('the POS screen', () => {
     const css = src('../styles/99-pos.css');
     // Only what the markup puts in a `className`, so an import path like `./pos-helpers` is not read as one.
     const inMarkup = new Set(
-      [...client.matchAll(/className=(?:"([^"]*)"|\{`([^`]*)`\})/g)]
+      // Jira GRW-747 — the Pickup card's own editor is drawn by its own file, inside the card.
+      [...(client + src('./PickupCardEdit.tsx')).matchAll(/className=(?:"([^"]*)"|\{`([^`]*)`\})/g)]
         .flatMap((m) => (m[1] ?? m[2] ?? '').split(/[\s'"`${}?:+]+/))
         .filter((c) => /^pos-[a-z0-9-]+$/.test(c)),
     );
@@ -365,7 +366,9 @@ describe('the POS screen', () => {
     expect(client).toContain('const settled = await api.settleCounterSale(tk.id, {');
     expect(client).toContain('QueueTokenPayScreen');
     expect(client).toContain('setSettledReceipt({');
-    expect(client).toContain("nextLabel={payingTable !== null ? t('backToTablesDone') : t(qk('backToQueueDone'))}");
+    // A table's receipt returns to the tables; Pickup's says how many still wait ("Back to pickup (2)", owner 2026-11-23).
+    expect(client).toMatch(/payingTable !== null\s*\? t\('backToTablesDone'\)/);
+    expect(client).toContain(": t(qk('backToQueueDone'))");
 
     for (const sel of ['.pos-charge-pending', '.pos-charge-queued-link']) {
       const block = css.slice(css.indexOf(`\n${sel} {`));
@@ -441,7 +444,7 @@ describe('the POS screen', () => {
   it('hides payment options when a restaurant order has no guest yet, then prompts to add the guest in Queue before showing the payment screen', () => {
     const payFlow = src('../appointments/new/PayFlow.tsx');
     expect(payFlow).toContain('const guestOptional = productsOnly && !counted;');
-    expect(payFlow).toContain('const hidePayUntilGuest = guestOptional && !hasWho && !fromApp;');
+    expect(payFlow).toContain('const hidePayUntilGuest = guestOptional && !hasWho && !fromApp && !payNowNoGuest;');
     expect(payFlow).toContain('hidePayUntilGuest ? null : (');
     expect(client).toContain('function isWalkInToken(');
     expect(client).toContain('api.assignClientToSale(');

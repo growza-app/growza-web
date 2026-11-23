@@ -5,6 +5,7 @@
 // LAN IP, or an HTTPS tunnel, with no port juggling or mixed-content blocking
 // (the latter is what a PWA install over HTTPS requires).
 import type { AlertKind, DeviceSubscription } from './push-alerts';
+import { announceOrdersChanged, changesOrders } from './orders-changed';
 
 const API_URL = typeof window !== 'undefined' ? '' : (process.env.API_URL ?? 'http://localhost:3001');
 
@@ -205,7 +206,9 @@ import type {
   StockTakeResult,
   MovementKind,
   ManualMovementKind,
-  VisitRewards, AddonGroup, AddonGroupInput, KitchenCard } from './api-types';
+  VisitRewards, AddonGroup, AddonGroupInput, KitchenCard, KitchenStockList, StockMaterial, MaterialUnit, DishRecipe, MaterialImportRow, MaterialImportReview,
+  StockSupplier, RememberedPack, PurchaseSummary, PurchaseDetail, PurchaseInput, WasteReason, MaterialMovement, StockCount, FinishedCount,
+  BuyList, PriceTrend, DishCost, FoodCostReportPage, StockLossReportPage, RecipeCostDish } from './api-types';
 import type { DaySummary, HomeOverview, HomePeriod, QueueEntry, ShopDaySummary, TokenBoard } from './home-types';
 import type { BranchSettings } from './branch-types';
 
@@ -213,6 +216,8 @@ import type { BranchSettings } from './branch-types';
 export interface PaymentQrState {
   paymentQrUrl: string | null;
   branches: Array<{ id: string; name: string; isPrimary: boolean; paymentQrUrl: string | null }>;
+  /** Jira GRW-729 — the UPI ID a printed bill's QR pays, and the name shown with it. Absent from an older API. */
+  upi?: { vpa: string; payee: string } | null;
 }
 import type { GeoFix } from './geo-fix';
 
@@ -223,7 +228,7 @@ export interface SelfMarkResult {
   placed: boolean;
   distanceM: number | null;
 }
-import type { DocumentTicket, KitchenTicketDto, OrderKitchenTickets, AutopayStart, BranchClosePreview, OwnerBill, OwnerBilling, OwnerBillPage } from './api-types';
+import type { BillOffer, BillOffersQuote, DocumentTicket, KitchenStations, KitchenTicketDto, OrderKitchenTickets, AutopayStart, BranchClosePreview, OwnerBill, OwnerBilling, OwnerBillPage } from './api-types';
 import { downscaleImage } from './downscale';
 import type {
   ClientProfile,
@@ -459,6 +464,8 @@ async function send<T>(method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string
     throw new BookingConflictError(message, body, code);
   }
   if (!res.ok) throw await apiError(res, path);
+  // Owner, 2026-11-21 — an order changed here: an open Home (this tab or another) reads its orders once (orders-changed.ts).
+  if (changesOrders(path)) announceOrdersChanged();
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
@@ -716,10 +723,73 @@ export const api = {
   /** Switching off is refused (409) while a table at that branch has an open bill; the message says how many. */
   setTableOrders: (branchId: string, on: boolean) => put<{ branches: BranchTableOrders[] }>(`/api/v1/settings/table-orders/${branchId}`, { on }),
   /** Jira GRW-714 — the kitchen screen: today's open orders at a branch, no money. */
-  kitchen: (location: string) => get<{ lateMinutes: number; cards: KitchenCard[] }>(`/api/v1/kitchen?location=${encodeURIComponent(location)}`),
-  kitchenReady: (saleId: string, ready: boolean) => post<{ saleId: string; readyAt: string | null }>(`/api/v1/kitchen/${encodeURIComponent(saleId)}/ready`, { ready }),
+  /** Jira GRW-733 — `station`: one station's part only (an id, or 'kitchen' for the default); absent: every dish. */
+  kitchen: (location: string, station?: string | null) =>
+    get<{ lateMinutes: number; cards: KitchenCard[]; stations?: Array<{ id: string; name: string }> }>(
+      `/api/v1/kitchen?location=${encodeURIComponent(location)}${station ? `&station=${encodeURIComponent(station)}` : ''}`,
+    ),
+  /** Jira GRW-733 — with `station`, that station's part is Ready; the order is Ready once every station's is (BR-02). */
+  kitchenReady: (saleId: string, ready: boolean, station?: string | null) =>
+    post<{ saleId: string; readyAt: string | null; orderReady?: boolean }>(`/api/v1/kitchen/${encodeURIComponent(saleId)}/ready`, station ? { ready, station } : { ready }),
+  /** Jira GRW-733 — Settings › Kitchen stations: a branch's stations and its menu categories' stations. */
+  kitchenStations: (location: string) => get<KitchenStations>(`/api/v1/kitchen/stations?location=${encodeURIComponent(location)}`),
+  addKitchenStation: (location: string, name: string) => post<KitchenStations>('/api/v1/kitchen/stations', { location, name }),
+  renameKitchenStation: (id: string, name: string) => patch<KitchenStations>(`/api/v1/kitchen/stations/${encodeURIComponent(id)}`, { name }),
+  removeKitchenStation: (id: string) => del<KitchenStations>(`/api/v1/kitchen/stations/${encodeURIComponent(id)}`),
+  setCategoryStation: (location: string, categoryId: string, stationId: string | null) =>
+    put<KitchenStations>('/api/v1/kitchen/stations/categories', { location, categoryId, stationId }),
   kitchenDishDone: (lineId: string, done: boolean) => post<{ lineId: string; done: boolean }>(`/api/v1/kitchen/lines/${encodeURIComponent(lineId)}/done`, { done }),
   setKitchenLate: (branchId: string, lateMinutes: number) => put<{ lateMinutes: number }>(`/api/v1/settings/kitchen/${encodeURIComponent(branchId)}`, { lateMinutes }),
+  /** Jira GRW-737 — kitchen stock: raw materials (quantities in thousandths), the owner's switch, opening counts, and each dish's recipe. */
+  kitchenStock: (location?: string | null, filter: 'all' | 'low' = 'all') =>
+    get<KitchenStockList>(`/api/v1/stock/materials?filter=${filter}${location ? `&location=${encodeURIComponent(location)}` : ''}`),
+  saveMaterial: (id: string | null, body: { locationId?: string; name?: string; unit?: MaterialUnit; category?: string | null; lowStockAt?: number; priceMinor?: number }) =>
+    id ? patch<{ material: StockMaterial }>(`/api/v1/stock/materials/${encodeURIComponent(id)}`, body) : post<{ material: StockMaterial }>('/api/v1/stock/materials', body),
+  archiveMaterial: (id: string) => post<{ material: StockMaterial }>(`/api/v1/stock/materials/${encodeURIComponent(id)}/archive`, {}),
+  openingStock: (entries: Array<{ materialId: string; qty: number }>) => post<{ materials: StockMaterial[] }>('/api/v1/stock/materials/opening', { entries }),
+  setKitchenStock: (on: boolean) => put<{ on: boolean }>('/api/v1/settings/kitchen-stock', { on }),
+  readMaterialFile: (location: string, file: File) =>
+    uploadFile<MaterialImportReview>(`/api/v1/stock/materials/import/parse?location=${encodeURIComponent(location)}`, 'file', file),
+  importMaterials: (location: string, items: MaterialImportRow[]) =>
+    post<{ added: number; already: number }>('/api/v1/stock/materials/import', { locationId: location, items }),
+  /** Jira GRW-738 — an item's recent history (who, why, which stock in), newest first. */
+  materialMovements: (id: string) => get<{ movements: MaterialMovement[] }>(`/api/v1/stock/materials/${encodeURIComponent(id)}/movements`),
+  /** Jira GRW-738 — suppliers (last used first) and the pack each item last came in from them. Owner and manager only. */
+  suppliers: (location: string, withArchived = false) =>
+    get<{ suppliers: StockSupplier[]; packs: RememberedPack[] }>(`/api/v1/stock/suppliers?location=${encodeURIComponent(location)}${withArchived ? '&archived=1' : ''}`),
+  saveSupplier: (id: string | null, body: { locationId?: string; name?: string; phone?: string | null; gstin?: string | null; notes?: string | null; archived?: boolean }) =>
+    id ? patch<{ supplier: StockSupplier }>(`/api/v1/stock/suppliers/${encodeURIComponent(id)}`, body) : post<{ supplier: StockSupplier }>('/api/v1/stock/suppliers', body),
+  /** Jira GRW-741 FR-04 — `supplier`: only that supplier's stock ins (Inventory › Suppliers). */
+  purchases: (location: string, offset = 0, supplier?: string) =>
+    get<{ purchases: PurchaseSummary[]; more: boolean }>(
+      `/api/v1/stock/purchases?location=${encodeURIComponent(location)}&offset=${offset}${supplier ? `&supplier=${encodeURIComponent(supplier)}` : ''}`,
+    ),
+  /** Jira GRW-741 — Inventory › Recipes: every dish at the branch, no-recipe dishes first, with its cost and food cost for whoever sees the money. */
+  recipeCosts: (location: string) => get<{ dishes: RecipeCostDish[] }>(`/api/v1/stock/recipes?location=${encodeURIComponent(location)}`),
+  purchase: (id: string) => get<{ purchase: PurchaseDetail }>(`/api/v1/stock/purchases/${encodeURIComponent(id)}`),
+  /** A 409 `duplicate_bill` carries `enteredAt`; send again with `anyway: true` to save it regardless. */
+  savePurchase: (id: string | null, body: PurchaseInput) =>
+    id ? patch<{ purchase: PurchaseDetail }>(`/api/v1/stock/purchases/${encodeURIComponent(id)}`, body) : post<{ purchase: PurchaseDetail }>('/api/v1/stock/purchases', body),
+  deletePurchase: (id: string) => del<{ deleted: true }>(`/api/v1/stock/purchases/${encodeURIComponent(id)}`),
+  uploadPurchasePhoto: (id: string, file: File) => uploadFile<{ purchase: PurchaseDetail }>(`/api/v1/stock/purchases/${encodeURIComponent(id)}/photo`, 'photo', file),
+  recordWastage: (body: { materialId: string; qty: number; reason: WasteReason; note?: string | null }) =>
+    post<{ wasted: { materialId: string; name: string; stockBefore: number; stock: number; belowZero: boolean } }>('/api/v1/stock/wastage', body),
+  /** QA 2026-11-19 — how much of ONE item there is now, typed on the item (the owner or a manager). */
+  countItem: (id: string, qty: number) =>
+    post<{ counted: { materialId: string; name: string; stockBefore: number; stock: number } }>(`/api/v1/stock/materials/${encodeURIComponent(id)}/count`, { qty }),
+  /** The branch's open count, or a new one (one per branch). */
+  startCount: (location: string) => post<{ count: StockCount }>('/api/v1/stock/counts', { locationId: location }),
+  saveCount: (id: string, entries: Array<{ materialId: string; qty: number | null }>) =>
+    patch<{ count: StockCount }>(`/api/v1/stock/counts/${encodeURIComponent(id)}`, { entries }),
+  /** A 409 `already_finished` carries `finishedBy`. */
+  finishCount: (id: string) => post<{ finished: FinishedCount }>(`/api/v1/stock/counts/${encodeURIComponent(id)}/finish`, {}),
+  recipe: (productId: string) => get<DishRecipe>(`/api/v1/products/${encodeURIComponent(productId)}/recipe`),
+  /** Jira GRW-739 — what to buy (prices absent for the cook and the counter), an item's last five prices, and a dish's cost per size. */
+  stockReorder: (location?: string | null) => get<BuyList>(`/api/v1/stock/reorder${location ? `?location=${encodeURIComponent(location)}` : ''}`),
+  materialPrices: (id: string) => get<PriceTrend>(`/api/v1/stock/materials/${encodeURIComponent(id)}/prices`),
+  dishCost: (productId: string) => get<DishCost>(`/api/v1/products/${encodeURIComponent(productId)}/cost`),
+  saveRecipe: (productId: string, variantId: string | null, lines: Array<{ materialId: string; qty: number }>) =>
+    put<DishRecipe>(`/api/v1/products/${encodeURIComponent(productId)}/recipe`, { variantId, lines }),
   /** Jira GRW-712 — the add-on groups, and which items offer which (`products: { productId: [groupId, …] }`). */
   addonGroups: () => get<{ groups: AddonGroup[]; products: Record<string, string[]> }>('/api/v1/addon-groups'),
   saveAddonGroup: (id: string | null, body: AddonGroupInput) =>
@@ -737,10 +807,15 @@ export const api = {
   diningTables: (location: string) => get<{ areas: DiningArea[] }>(`/api/v1/tables?location=${encodeURIComponent(location)}`),
   /** Jira GRW-722 — a party to a free table; nothing goes to the kitchen again. */
   moveTable: (tableId: string, to: string) =>
-    post<{ saleId: string; from: string; to: string; totalMinor: number }>(`/api/v1/tables/${encodeURIComponent(tableId)}/move`, { to }),
+    // Jira GRW-732 — `saleId` is null when Seated guests with no order moved: there is no bill yet.
+    post<{ saleId: string | null; from: string; to: string; totalMinor: number }>(`/api/v1/tables/${encodeURIComponent(tableId)}/move`, { to }),
   /** Jira GRW-722 — this table's bill onto another open table's; this table is free. */
   joinTable: (tableId: string, into: string) =>
     post<{ saleId: string; from: string; to: string; totalMinor: number }>(`/api/v1/tables/${encodeURIComponent(tableId)}/join`, { into }),
+  /** Jira GRW-732 — guests sit at a free table before ordering (409 `table_taken` when somebody just did). */
+  seatTable: (tableId: string, guests: number | null) => post<{ areas: DiningArea[] }>(`/api/v1/tables/${encodeURIComponent(tableId)}/seat`, { guests }),
+  /** Jira GRW-732 — Free again: the seated guests left before ordering. Nothing was a sale. */
+  freeTable: (tableId: string) => del<{ areas: DiningArea[] }>(`/api/v1/tables/${encodeURIComponent(tableId)}/seat`),
   addDiningArea: (location: string, name: string) => post<{ id: string; areas: DiningArea[] }>('/api/v1/tables/areas', { location, name }),
   renameDiningArea: (areaId: string, name: string) => patch<{ areas: DiningArea[] }>(`/api/v1/tables/areas/${areaId}`, { name }),
   removeDiningArea: (areaId: string) => del<{ areas: DiningArea[] }>(`/api/v1/tables/areas/${areaId}`),
@@ -750,6 +825,15 @@ export const api = {
   updateDiningTable: (tableId: string, body: { name?: string; seats?: number | null; areaId?: string }) =>
     patch<{ areas: DiningArea[] }>(`/api/v1/tables/${tableId}`, body),
   removeDiningTable: (tableId: string) => del<{ areas: DiningArea[] }>(`/api/v1/tables/${tableId}`),
+  /** Jira GRW-735 — a branch's coupons and buy-get offers (owner or manager). */
+  billOffers: (location: string) => get<{ offers: BillOffer[] }>(`/api/v1/bill-offers?location=${encodeURIComponent(location)}`),
+  addBillOffer: (body: Record<string, unknown>) => post<{ id: string; offers: BillOffer[] }>('/api/v1/bill-offers', body),
+  removeBillOffer: (id: string) => del<{ offers: BillOffer[] }>(`/api/v1/bill-offers/${id}`),
+  /** Jira GRW-735 — what the coupon and the buy-get offers take off a bill (an unpaid one by id, or lines not yet sent). */
+  billOffersQuote: (body: Record<string, unknown>) => post<BillOffersQuote>('/api/v1/bill-offers/quote', body),
+  /** Jira GRW-734 — an area's prices: its % change on the menu (null = none) and its fixed prices, replaced together. */
+  setAreaPrices: (areaId: string, body: { changePct: number | null; prices: Array<{ productId: string; priceMinor: number }> }) =>
+    put<{ areas: DiningArea[] }>(`/api/v1/tables/areas/${areaId}/prices`, body),
   reorderDiningTables: (location: string, areas: string[], tables: Record<string, string[]>) =>
     put<{ areas: DiningArea[] }>('/api/v1/tables/order', { location, areas, tables }),
   alertPrefs: () => get<AlertPrefs>('/api/v1/alerts/prefs'),
@@ -960,11 +1044,19 @@ export const api = {
   /** Jira GRW-615 — one order, whole: its lines, its history, who it is for, and the moves it may be offered. */
   order: (id: string) => get<OrderDetail>(`/api/v1/orders/${encodeURIComponent(id)}`),
   /** Jira GRW-721 — take dishes off a table's unpaid bill: owner or manager, with a reason; the kitchen gets a cancel slip. */
-  cancelBillItems: (saleId: string, lineIds: string[], reason: string) =>
-    post<{ saleId: string; totalMinor: number; cancelSlip: KitchenTicketDto | null }>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/cancel-items`, { lineIds, reason }),
+  // Jira GRW-737 — `cooked`: asked only when the server answers `cooked_unknown` (a dish the kitchen was sent and never ticked Done).
+  cancelBillItems: (saleId: string, lineIds: string[], reason: string, cooked?: boolean, some?: { qty: number; seenQty: number }) =>
+    // Jira GRW-733 — `cancelSlips`: one per station a dish taken off went to (BR-03); `cancelSlip` is the first.
+    // Jira GRW-747 — `some`: only this many of the ONE line come off, the line's qty as the screen saw it (a stale one is refused).
+    post<{ saleId: string; totalMinor: number; cancelSlip: KitchenTicketDto | null; cancelSlips?: KitchenTicketDto[] }>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/cancel-items`, {
+      lineIds,
+      reason,
+      ...(cooked === undefined ? {} : { cooked }),
+      ...(some ? { qty: some.qty, seenQty: some.seenQty } : {}),
+    }),
   /** Jira GRW-720 — Dine-in to Takeaway or back after the order was taken: owner or manager, until the bill prints. */
   changeOrderType: (saleId: string, orderType: 'dine_in' | 'takeaway') =>
-    put<{ orderType: 'dine_in' | 'takeaway'; packSlip: KitchenTicketDto | null }>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/order-type`, { orderType }),
+    put<{ orderType: 'dine_in' | 'takeaway'; packSlip: KitchenTicketDto | null; packSlips?: KitchenTicketDto[] }>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/order-type`, { orderType }),
   /**
    * Jira GRW-615 — move an order along. `expected` is the state this screen believes the order is in: when the order has
    * moved on elsewhere the API refuses with 409 and says where it is now, instead of overwriting the other desk.
@@ -981,7 +1073,8 @@ export const api = {
   attachOrderClient: (id: string, customerId: string) =>
     post<{ id: string; clientId: string }>(`/api/v1/orders/${encodeURIComponent(id)}/client`, { customerId }),
   /** QA 2026-10-23 — `saleable` (came back only): what came back is returned too, back on the shelf or kept off it as damaged. */
-  moveOrder: (id: string, status: string, expected: string, extra: { saleable?: boolean } = {}) =>
+  // Jira GRW-737 — `cooked`: sent only when a cancel answered `cooked_unknown` (a dish the kitchen was sent and never ticked Done).
+  moveOrder: (id: string, status: string, expected: string, extra: { saleable?: boolean; cooked?: boolean } = {}) =>
     patch<{ id: string; status: string; moved: boolean; cameBack?: { recorded: boolean; units: number; detail?: string } }>(
       `/api/v1/orders/${encodeURIComponent(id)}/status`,
       { status, expected, ...extra },
@@ -1032,6 +1125,9 @@ export const api = {
   profitReport: (q: MoneyReportQuery) => get<ProfitReportPage>(`/api/v1/reports/profit?${moneyParams(q)}`),
   discountReport: (q: MoneyReportQuery) => get<DiscountReportPage>(`/api/v1/reports/discounts?${moneyParams(q)}`),
   paymentsReport: (q: MoneyReportQuery) => get<PaymentsReportPage>(`/api/v1/reports/payments?${moneyParams(q)}`),
+  /** Jira GRW-739 — food cost by day and dish, and wastage / what counts found missing. Up to 92 days; money roles only. */
+  foodCostReport: (q: MoneyReportQuery) => get<FoodCostReportPage>(`/api/v1/reports/food-cost?${moneyParams(q)}`),
+  stockLossReport: (q: MoneyReportQuery) => get<StockLossReportPage>(`/api/v1/reports/stock-loss?${moneyParams(q)}`),
   /** Jira GRW-634 — what was billed on each channel over a range, beside the period before; billed, not received. */
   byChannel: (q: { range: ReportRangeKey; location?: string; from?: string; to?: string }) =>
     get<ByChannelPage>(`/api/v1/reports/by-channel?${sellersParams({ range: q.range, location: q.location, from: q.from, to: q.to })}`),
@@ -1198,6 +1294,10 @@ export const api = {
   ) =>
     patch<{ branch: BranchSettings }>(`/api/v1/settings/branches/${id}`, body),
   uploadBusinessLogo: (file: File) => uploadFile<SettingsSummary>('/api/v1/settings/logo', 'logo', file),
+  /** Jira GRW-728 — the owner takes the logo off; bills print the name alone again. */
+  removeBusinessLogo: () => del<SettingsSummary>('/api/v1/settings/logo'),
+  /** Jira GRW-728 — the logo as a data URI, for what draws it on a canvas (the print preview, the shared bill image). */
+  businessLogo: () => get<{ logo: string | null }>('/api/v1/logo'),
   /*
    * The payment QR a salon holds up at the till — the business's, and a branch's own.
    *
@@ -1207,6 +1307,8 @@ export const api = {
   paymentQr: () => get<PaymentQrState>('/api/v1/settings/payment-qr'),
   uploadPaymentQr: (file: File) => uploadFile<PaymentQrState>('/api/v1/settings/payment-qr', 'qr', file),
   removePaymentQr: () => del<PaymentQrState>('/api/v1/settings/payment-qr'),
+  /** Jira GRW-729 — save the UPI ID and payee name; an empty ID clears it. */
+  saveUpiId: (body: { vpa: string; payee: string }) => put<PaymentQrState>('/api/v1/settings/payment-qr/upi', body),
   uploadBranchPaymentQr: (id: string, file: File) => uploadFile<PaymentQrState>(`/api/v1/settings/branches/${id}/payment-qr`, 'qr', file),
   removeBranchPaymentQr: (id: string) => del<PaymentQrState>(`/api/v1/settings/branches/${id}/payment-qr`),
   /** Jira GRW-582 — the summary the document screen's chrome needs; the document itself comes from /html. */
@@ -1230,8 +1332,13 @@ export const api = {
       `/api/v1/bills/${visitKey}/document/preview`,
     ),
   /** Idempotent per bill: a second call answers with the document already issued. */
-  issueDocument: (visitKey: string) =>
-    post<{ id: string; number: string; docType: string }>(`/api/v1/bills/${visitKey}/document`, {}),
+  /**
+   * QA of the overnight stack (item 7) — `held`: the coupon or the counter's discount the guest is about to pay with, on
+   * an unpaid table bill. The bill is printed with it (and its QR asks for what the payment will take); a print without
+   * it replaces a paper that had one.
+   */
+  issueDocument: (visitKey: string, held?: { couponCode?: string; discountMinor?: number }) =>
+    post<{ id: string; number: string; docType: string }>(`/api/v1/bills/${visitKey}/document`, held ?? {}),
 
   /**
    * Jira GRW-582 — a link the customer can open with no account. The token comes back once and only its hash is kept,
@@ -1253,6 +1360,10 @@ export const api = {
       branchState?: string;
       branchStateCode?: string;
       branchGstin?: string;
+      /** Jira GRW-736 — prices include GST, or GST is added on top at the till. */
+      pricesIncludeTax?: boolean;
+      /** Jira GRW-736 — a rate per order type (basis points), null for the dish's own rate. */
+      orderTypeRates?: { dine_in: number | null; takeaway: number | null; delivery: number | null };
     },
     location?: string | null,
   ) => patch<SettingsSummary>(`/api/v1/settings/gst${atBranch(location)}`, body),
@@ -1631,6 +1742,8 @@ export const api = {
       tableId?: string;
       /** QA 2026-11-16 — the bill a round is for; refused if the table no longer has it. */
       tableBillId?: string;
+      /** Jira GRW-732 — the till opened this table as Seated; an order at a table seated since it looked is refused. */
+      tableSeated?: boolean;
       guests?: number;
       /** Jira GRW-403 — paying a waiting token: the server takes its client and branch from it. */
       queueEntryId?: string;
@@ -1684,6 +1797,8 @@ export const api = {
       rewards?: VisitRewards;
       /** Jira GRW-713 — the KOT this order sent to the kitchen. Absent where the business has no kitchen. */
       kot?: KitchenTicketDto;
+      /** Jira GRW-733 — every slip this order made, one per station; `kot` is the first. Absent from an older API. */
+      kots?: KitchenTicketDto[];
       /** Jira GRW-716 — an offline order's token ("A12"; `tokenNo` is then null), and whether it was flagged for the owner. */
       offlineToken?: string;
       sentLate?: boolean;
@@ -1705,6 +1820,8 @@ export const api = {
       discountMinor?: number;
       /** Jira GRW-725 — why the owner gives the whole bill free. Only an owner may, and only with one (3–200 letters). */
       discountReason?: string;
+      /** Jira GRW-735 — a coupon typed at payment; never sent with `discountMinor` (the larger is kept, BR-01). */
+      couponCode?: string;
     },
   ) =>
     post<{
@@ -1712,6 +1829,7 @@ export const api = {
       paymentMode: PaymentMode;
       paidAmountMinor: number;
       rewards?: VisitRewards;
+      offers?: { applied: Array<{ kind: 'bogo' | 'coupon'; name: string; code: string | null; offMinor: number }>; kept: 'coupon' | 'discount' | null };
     }>('/api/v1/counter-sales', { settleSaleId: saleId, ...input }),
   /**
    * The number the client gave when the bill was handed over, kept.
@@ -1735,17 +1853,21 @@ export const api = {
    * Owner, 9 Nov 2026 — cancel an order still waiting in the Queue for payment. It stays in Orders as Cancelled, and
    * where the business counts stock its units go back on the shelf. A paid order is refused (409): that is a return.
    */
-  cancelPendingCounterSale: (saleId: string) =>
-    post<{ saleId: string; status: string; totalMinor: number; kot?: KitchenTicketDto }>('/api/v1/counter-sales', { cancelSaleId: saleId }),
+  cancelPendingCounterSale: (saleId: string, cooked?: boolean) =>
+    post<{ saleId: string; status: string; totalMinor: number; kot?: KitchenTicketDto; kots?: KitchenTicketDto[] }>('/api/v1/counter-sales', {
+      cancelSaleId: saleId,
+      ...(cooked === undefined ? {} : { cooked }),
+    }),
   /** Owner, 9 Nov 2026 — add more to an order still waiting for payment; it keeps its token and is paid for once. */
   addToPendingCounterSale: (saleId: string, products: Array<{ productId: string; variantId?: string; qty: number; paidMinor: number }>) =>
-    post<{ saleId: string; status: string; totalMinor: number; kot?: KitchenTicketDto }>('/api/v1/counter-sales', { addToSaleId: saleId, products }),
+    post<{ saleId: string; status: string; totalMinor: number; kot?: KitchenTicketDto; kots?: KitchenTicketDto[] }>('/api/v1/counter-sales', { addToSaleId: saleId, products }),
   /** Jira GRW-713 — every KOT an order has had, oldest first, to print one again. */
   saleKots: (saleId: string) => get<OrderKitchenTickets>(`/api/v1/counter-sales/${encodeURIComponent(saleId)}/kots`),
   /** Jira GRW-713 — an issued document's own figures, laid out by the till for a thermal roll. */
   documentTicket: (id: string) => get<DocumentTicket>(`/api/v1/documents/${encodeURIComponent(id)}/ticket`),
   assignClientToSale: (appointmentId: string, input: { customerId?: string; phone?: string; name?: string }) =>
-    post<{ appointmentIds: string[]; customerId: string }>(`/api/v1/counter-sales/${appointmentId}/assign-client`, input),
+    // Jira GRW-747 — `customerId` is null when a name alone was given at a kitchen's till: it stays on the order.
+    post<{ appointmentIds: string[]; customerId: string | null }>(`/api/v1/counter-sales/${appointmentId}/assign-client`, input),
   /**
    * Jira GRW-199 — an advance booking, in one request.
    *

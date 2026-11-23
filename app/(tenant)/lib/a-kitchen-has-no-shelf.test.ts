@@ -78,14 +78,16 @@ describe('the Menu screen draws a dish without a count', () => {
   });
 
   it('a filter about a count can never be the one in force, even arriving by address', () => {
-    expect(list).toMatch(/useState<ShelfFilter>\(counted \? initialFilter : 'all'\)/);
+    // Owner, 2026-11-20 — a kitchen's filter follows its tab, which is only ever all or taken off: never a count.
+    expect(list).toMatch(/useState<ShelfFilter>\(counted \? initialFilter : menuTab === 'retired' \? 'retired' : 'all'\)/);
   });
 
   it('shows two figures instead of four: stock value, running low and out of stock are all a count', () => {
     expect(list).toMatch(/const strip = !counted \? \(\s*uncountedStrip/);
     expect(list).toMatch(/prd-strip prd-strip-2/);
     expect(list).toMatch(/strip\.onMenu/);
-    expect(list).toMatch(/strip\.offMenu/);
+    // Taken off is the Menu's tab now (owner, 2026-11-20); its row chip says it in MenuTable.
+    expect(list).toMatch(/\['all', 'noRecipe', 'retired'\] as const/);
   });
 
   it('drops the Stock column from the desk table and the count pill from the phone row', () => {
@@ -105,11 +107,14 @@ describe('the Menu screen draws a dish without a count', () => {
   });
 });
 
-describe('the dish sheet is two tabs, not three', () => {
+describe('the dish sheet has no Stock tab (Jira GRW-737: a kitchen keeping kitchen stock gets Recipe in its place)', () => {
   it('no Stock tab, and no stock panel behind it', () => {
     expect(sheet).toMatch(/const counted = useAreas\(\)\.stock;/);
-    expect(sheet).toMatch(/prd-seg prd-seg-\$\{counted \? 3 : 2\}/);
-    expect(sheet).toMatch(/counted \? \(\['details', 'stock', 'sales'\] as const\) : \(\['details', 'sales'\] as const\)/);
+    expect(sheet).toMatch(/const recipesOn = recipesAllowed && !counted;/);
+    expect(sheet).toMatch(/prd-seg prd-seg-\$\{counted \|\| recipesOn \? 3 : 2\}/);
+    expect(sheet).toMatch(
+      /counted \? \(\['details', 'stock', 'sales'\] as const\) : recipesOn \? \(\['details', 'recipe', 'sales'\] as const\) : \(\['details', 'sales'\] as const\)/,
+    );
     expect(sheet).toMatch(/\) : counted && part === 'stock' && product \? \(\s*<StockPanel/);
   });
 
@@ -176,7 +181,7 @@ describe('what the review found', () => {
 
   it('the Menu strip of two has a rule of its own, not the three-column default', () => {
     const css = src('styles/96-products.css');
-    expect(list).toMatch(/className="prd-strip prd-strip-2"/);
+    expect(list).toMatch(/className="prd-strip prd-strip-2 mnu-strip"/);
     expect(css).toMatch(/\.prd-strip\.prd-strip-2 \{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
   });
 
@@ -195,9 +200,9 @@ describe('the food graphics do not reach into another vertical', () => {
     expect(resolveProductGraphic({ name: 'Tea Rose Top', categoryName: 'Tops' }).kind).toBe('shirt');
     expect(resolveProductGraphic({ name: 'Masala Tikka Kurta', categoryName: 'Kurtas' }).kind).toBe('shirt');
     // And the kitchen still gets its own, because a dish is not named after a garment.
-    expect(resolveProductGraphic({ name: 'Chicken Tikka', categoryName: 'Starters' }).kind).toBe('bowl');
+    expect(resolveProductGraphic({ name: 'Chicken Tikka', categoryName: 'Starters' }).kind).toBe('skewer');
     expect(resolveProductGraphic({ name: 'Masala Chai', categoryName: 'Beverages' }).kind).toBe('drink');
-    expect(resolveProductGraphic({ name: 'Veg Hakka Noodles', categoryName: 'Chinese' }).kind).toBe('rice');
+    expect(resolveProductGraphic({ name: 'Veg Hakka Noodles', categoryName: 'Chinese' }).kind).toBe('noodles');
   });
 });
 

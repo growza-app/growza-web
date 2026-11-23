@@ -2029,6 +2029,29 @@ button.hm-now-count {
     padding-bottom: calc(var(--sp-3) + 68px);
   }
 }
+/*
+ * Develop QA 2026-11-18 (test:devices, iPhone SE landscape 568×320) — 68px above an in-flow bar is inside the page header on a
+ * phone held sideways: the plus sat under Home's header, and a tap on it hit the header. Where the screen is that short, the plus
+ * moves INTO the bar, at its right end, and the tabs give it the room; the page no longer keeps a 68px band for it.
+ */
+@media (max-width: 860px) and (max-height: 420px) {
+  .bottom-nav.has-centre {
+    padding-right: calc(44px + var(--sp-3));
+  }
+  .bn-centre {
+    top: 50%;
+    bottom: auto;
+    right: var(--sp-2);
+    width: 44px;
+    height: 44px;
+    margin-top: -22px;
+  }
+  .content:has(> .bottom-nav.has-centre) .page-body,
+  .content:has(> .bottom-nav.has-centre) .page-body.page-fit {
+    padding-bottom: var(--sp-8);
+  }
+}
+
 
 /* ---------- front desk, as the design draws it (Jira GRW-222) ---------- */
 .hm-tone-violet { background: #f4f2fd; border-color: #e5e0f7; }

@@ -78,9 +78,11 @@ describe('it belongs to a person, not a branch', () => {
     expect(wholeBusiness('/settings/alerts')).toBe(true);
   });
 
-  it('is listed in the whole-business group, beside the other things that exist once', () => {
+  it('is listed with the Team, and never tagged as one branch’s', () => {
+    // Owner, 2026-11-18 — grouped by task: who gets told what is a team matter. Still no branch's.
     const group = SETTINGS_GROUPS.find((g) => g.rows.some((r) => r.key === 'phoneAlerts'));
-    expect(group?.key).toBe('business');
+    expect(group?.key).toBe('team');
+    expect(group?.rows.find((r) => r.key === 'phoneAlerts')?.perBranch).toBeUndefined();
   });
 });
 

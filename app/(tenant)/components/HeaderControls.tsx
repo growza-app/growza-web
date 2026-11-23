@@ -5,6 +5,7 @@ import { NotificationBell } from './NotificationBell';
 import { AccountMenu } from './AccountMenu';
 import { useLive } from './SessionProvider';
 import { HeaderBusiness } from './HeaderBusiness';
+import { useControlsInSidebar } from './sidebar-controls';
 
 /**
  * Jira GRW-30 — search, notifications and account, in that order, on every screen.
@@ -45,6 +46,8 @@ import { HeaderBusiness } from './HeaderBusiness';
 export function HeaderControls() {
   // Jira GRW-556 — no feed of bookings to look at until the business is live.
   const live = useLive();
+  // Owner, 2026-11-20 (option A) — on a laptop with a sidebar these four are the sidebar's (`sidebar-controls.ts`).
+  if (useControlsInSidebar()) return null;
   return (
     <>
       {/* Emerald v3 — the business, in the laptop's header bar (hidden on a phone, where the drawer names it). */}

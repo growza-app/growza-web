@@ -514,7 +514,13 @@
     padding: var(--sp-4);
   }
 
+  /*
+   * Develop QA 2026-11-18 (test:devices) — from 1112px to 1280px the card is 290px wide and Call · WhatsApp · See bookings
+   * need 301px: "See bookings" was cut off by 11px. The row wraps instead, so the last button takes its own line there;
+   * from 1366px the card is wide enough and the three stay on one row.
+   */
   .cpc-inline .cpc-foot {
+    flex-wrap: wrap;
     padding: var(--sp-3) var(--sp-4);
   }
 
@@ -632,5 +638,25 @@
 
   .cust-desk-table .pagination-indicator {
     display: inline-flex;
+  }
+}
+
+/*
+ * Laptop sweep 2026-11-22 — at 1366 the middle panel is about 476px between the bands and the card, and four
+ * columns left the name 152px ("Vikram Meh…") and cut its own "Total spent" header (110px of words in 88px).
+ * Up to 1439px the Phone column goes, as "Last booking" already did: the number is the card's first row, one
+ * click away, and the name gets the room. "Total spent" gets the width its header needs at every desk width.
+ */
+@media (min-width: 1101px) {
+  .cust-desk-table:not(:has(th:nth-child(6))) th:nth-child(3) {
+    width: 7rem;
+  }
+}
+@media (min-width: 1101px) and (max-width: 1439px) {
+  .cust-desk-table th:nth-child(2),
+  .cust-desk-table td:nth-child(2),
+  .cust-desk-table:not(:has(th:nth-child(6))) th:nth-child(2),
+  .cust-desk-table:not(:has(th:nth-child(6))) td:nth-child(2) {
+    display: none;
   }
 }

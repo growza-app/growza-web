@@ -154,6 +154,95 @@
   cursor: progress;
 }
 
+/* Jira GRW-728 — Change and Remove side by side; the reason a picture was refused under them; and how it prints. */
+.bp-logo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+}
+.bp-logo-actions .bp-logo-btn {
+  min-height: 2.75rem;
+}
+.bp-logo-remove:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger-deep);
+}
+.bp-logo-error {
+  margin-top: var(--sp-3);
+}
+.bp-logo-print {
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border);
+}
+.bp-logo-print-title {
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--text);
+}
+.bp-logo-print .field-hint {
+  margin: var(--sp-1) 0 var(--sp-3);
+}
+/* Two rolls side by side, each drawn to scale: the 58mm paper is 58/80 of the 80mm one. */
+.bp-logo-rolls {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+.bp-logo-roll {
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+}
+.bp-logo-roll.is-58 {
+  flex: 58 1 0;
+}
+.bp-logo-roll.is-80 {
+  flex: 80 1 0;
+}
+.bp-logo-paper {
+  width: 100%;
+  min-height: 4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-1);
+  background: #fff;
+  color: #000;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.bp-logo-paper img {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+}
+.bp-logo-paper-name {
+  max-width: 100%;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: var(--fs-1);
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.bp-logo-paper-wait {
+  margin: auto 0;
+  font-size: var(--fs-1);
+  color: #555;
+  text-align: center;
+}
+.bp-logo-roll figcaption {
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
 /* Multi-branch: the address lives on Settings › Branches (Jira GRW-227). */
 .bp-link-card {
   display: flex;
@@ -234,6 +323,12 @@
   }
   .bp-logo-btn {
     flex-basis: 100%;
+  }
+  .bp-logo-actions {
+    flex-basis: 100%;
+  }
+  .bp-logo-actions .bp-logo-btn {
+    flex: 1 1 0;
   }
   /* `.page-body` keeps 84px of bottom padding on a phone to clear the floating
      + button, and a sticky box stops at that padding — which left the bar

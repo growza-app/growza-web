@@ -2,26 +2,33 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import type { MoneyReportQuery } from '../../lib/api';
 import { formatMoney, intlLocale } from '../../lib/format';
 import { useBranch } from '../../components/BranchProvider';
 import { useSession } from '../../components/SessionProvider';
 import { ReportDates } from '../ReportDates';
-import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../../lib/report-dates';
+import { type ChangedEnd, clampReportRange, defaultReportRange, presetRange, REPORT_PRESETS, todayInZone } from '../../lib/report-dates';
 
 /**
  * Owner, 2026-11-14 — what Profit, Discounts & free and Payments share: the counter report's period (the last seven
  * days to start, the same two date fields), the branch from the header, one read per change, and the loading and
  * failed states. Each screen is then only what it shows.
  */
-export function useMoneyReport<T>(read: (q: MoneyReportQuery) => Promise<T>) {
+export function useMoneyReport<T>(read: (q: MoneyReportQuery) => Promise<T>, opts: { maxDays?: number } = {}) {
   const session = useSession();
   const branches = session?.branches ?? [];
   const branchContext = useBranch();
   const branch = branchContext.ready && branchContext.multi ? (branchContext.choice ?? '') : '';
   const ready = branchContext.ready || branches.length <= 1;
   const todayISO = useMemo(() => todayInZone(session?.timezone), [session?.timezone]);
-  const [dates, setDates] = useState(() => defaultReportRange(todayISO));
+  // QA of GRW-741 — a saved link's days (`?from=…&to=…`, which /reports/food-cost passes on) open those days, held to what the report answers.
+  const params = useSearchParams();
+  const [dates, setDates] = useState(() => {
+    const from = params?.get('from');
+    const to = params?.get('to');
+    return from && to ? clampReportRange(from, to, todayISO, 'to', opts.maxDays) : defaultReportRange(todayISO);
+  });
   const [data, setData] = useState<T | null>(null);
   const [failed, setFailed] = useState(false);
   const seq = useRef(0);
@@ -43,7 +50,7 @@ export function useMoneyReport<T>(read: (q: MoneyReportQuery) => Promise<T>) {
     void load();
   }, [load]);
 
-  const onDates = (fromISO: string, toISO: string, changed: ChangedEnd) => setDates(clampReportRange(fromISO, toISO, todayISO, changed));
+  const onDates = (fromISO: string, toISO: string, changed: ChangedEnd) => setDates(clampReportRange(fromISO, toISO, todayISO, changed, opts.maxDays));
   return { data, failed, load, dates, onDates, todayISO, timezone: session?.timezone ?? 'Asia/Kolkata' };
 }
 
@@ -52,6 +59,8 @@ export function useMoneyFormat() {
   const locale = useLocale();
   return {
     money: (minor: number) => formatMoney(minor, 'INR', locale),
+    /** Whole rupees, for a figure read at a glance (develop QA 2026-11-21, finding 8: one tile showed ₹1,953.38 beside ₹1,326). */
+    rupees: (minor: number) => formatMoney(Math.round(minor / 100) * 100, 'INR', locale),
     count: (n: number) => new Intl.NumberFormat(intlLocale(locale)).format(n),
     /** A calendar day (`yyyy-MM-dd`) as "Mon, 10 Nov". Fixed to UTC: it is a date, not an instant. */
     day: (iso: string) =>
@@ -63,10 +72,20 @@ export function useMoneyFormat() {
 }
 
 /** The period fields, then the screen — or its loading cards, or the sentence that says it failed and a way to try again. */
-export function MoneyShell<T>({ report, children }: { report: ReturnType<typeof useMoneyReport<T>>; children: (data: T) => ReactNode }) {
+export function MoneyShell<T>({
+  report,
+  children,
+  toolbar = true,
+}: {
+  report: ReturnType<typeof useMoneyReport<T>>;
+  children: (data: T) => ReactNode;
+  /** False where the report draws its own period control (Inventory › Reports' one period menu, 2026-11-21). */
+  toolbar?: boolean;
+}) {
   const t = useTranslations('moneyReports');
   return (
     <div className="srp mr">
+      {toolbar ? (
       <div className="srp-toolbar">
         <ReportDates
           from={report.dates.fromISO}
@@ -75,7 +94,20 @@ export function MoneyShell<T>({ report, children }: { report: ReturnType<typeof 
           labels={{ group: t('rangeLabel'), from: t('from'), to: t('to') }}
           onChange={report.onDates}
         />
+        {/* Owner, 2026-11-21 — one tap for the periods asked for most; the two dates stay for anything else. */}
+        <div className="mr-presets" role="group" aria-label={t('presetsLabel')}>
+          {REPORT_PRESETS.map((k) => {
+            const r = presetRange(k, report.todayISO);
+            const on = r.fromISO === report.dates.fromISO && r.toISO === report.dates.toISO;
+            return (
+              <button key={k} type="button" className={`mr-preset ${on ? 'is-on' : ''}`} aria-pressed={on} onClick={() => report.onDates(r.fromISO, r.toISO, 'to')}>
+                {t(`presets.${k}`)}
+              </button>
+            );
+          })}
+        </div>
       </div>
+      ) : null}
       {report.failed ? (
         <div className="ord-state" role="alert">
           <p>{t('loadError')}</p>

@@ -1,0 +1,1714 @@
+/*
+ * Owner, 2026-11-20 — the restaurant's Menu (`/stock` on a kitchen, `products/ProductsList.tsx` with no count):
+ * three figures with their icons, then one card holding the tabs (On the menu · Needs a recipe · Taken off), one
+ * row of tools, the dishes section by section, the pages and one line on what the menu is for.
+ * Every class here is `mnu-` and drawn only on a kitchen's Menu; a shop's Stock is untouched.
+ */
+
+/* ---- the three figures: an icon in its soft square, the label, the number ---- */
+.prd-strip .mnu-stat {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'icon label'
+    'icon n'
+    'icon sub';
+  column-gap: 0.875rem;
+  row-gap: 0.125rem;
+  align-items: center;
+  text-align: left;
+}
+
+.prd-strip .mnu-stat .mnu-stat-icon {
+  grid-area: icon;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  background: var(--accent-soft);
+  color: var(--forest);
+}
+
+.prd-strip .mnu-stat .mnu-stat-icon svg {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.prd-strip .mnu-stat .prd-stat-l {
+  grid-area: label;
+  order: 0;
+}
+
+.prd-strip .mnu-stat .prd-stat-n {
+  grid-area: n;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prd-strip .mnu-stat .prd-stat-sub {
+  grid-area: sub;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A laptop draws the chosen figure forest green, so its icon turns white; a phone's chosen figure stays light. */
+@media (min-width: 861px) {
+  .prd-strip .mnu-stat.is-on .mnu-stat-icon {
+    background: rgb(255 255 255 / 0.16);
+    color: #fff;
+  }
+}
+
+/* ---- the tabs ---- */
+.mnu-tabs {
+  display: flex;
+  gap: var(--sp-5);
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.mnu-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.mnu-tab {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-3);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.mnu-tab:hover {
+  color: var(--text);
+}
+
+.mnu-tab.is-on {
+  color: var(--forest);
+  font-weight: 600;
+}
+
+.mnu-tab.is-on::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--forest);
+}
+
+.mnu-tab-n {
+  min-width: 1.5rem;
+  padding: 0.0625rem 0.4375rem;
+  border-radius: 999px;
+  background: var(--page-bg);
+  color: var(--muted);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-align: center;
+}
+
+.mnu-tab.is-on .mnu-tab-n {
+  background: var(--accent-soft);
+  color: var(--forest);
+}
+
+.mnu-tab.is-warn .mnu-tab-n {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+/* ---- the card that holds the menu (a laptop) ---- */
+.mnu-work {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.mnu-work > .mnu-tabs {
+  padding: 0 1.25rem;
+}
+
+.mnu-work > .mnu-tools {
+  padding: 1rem 1.25rem 0;
+}
+
+.mnu-result-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 2.75rem;
+  padding: 0.25rem 1.25rem;
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+
+.mnu-clear {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--forest);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mnu-clear:hover {
+  text-decoration: underline;
+}
+
+.mnu-work > .also-try {
+  padding: 0 1.25rem 0.75rem;
+}
+
+.mnu-work > .mnu-cards {
+  padding: 0 1.25rem;
+}
+
+.mnu-work > .empty {
+  margin: 0 1.25rem 1.25rem;
+}
+
+.mnu-work > .pagination,
+.mnu-work > nav {
+  padding: 0.75rem 1.25rem;
+}
+
+/* ---- the table, section by section ---- */
+.mnu-table-wrap {
+  border-top: 1px solid var(--border);
+}
+
+.mnu-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.mnu-table thead th {
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--page-bg);
+  color: var(--muted);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.mnu-table thead th.prd-td-num {
+  text-align: right;
+}
+
+.mnu-table thead th:first-child {
+  padding-left: 1.25rem;
+}
+
+.mnu-group-row > th {
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+}
+
+.mnu-group-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0 1.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-3);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mnu-group-btn svg {
+  width: 1rem;
+  height: 1rem;
+  transform: rotate(-90deg);
+  transition: transform 0.15s ease;
+}
+
+.mnu-group-btn.is-open svg {
+  transform: none;
+}
+
+.mnu-group-count {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.mnu-tr td {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.mnu-tr td:first-child {
+  padding-left: 1.25rem;
+}
+
+.mnu-tr {
+  cursor: pointer;
+}
+
+.mnu-tr:hover td {
+  background: var(--page-bg);
+}
+
+.mnu-tr.is-on td {
+  background: var(--accent-soft);
+}
+
+.mnu-dish {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mnu-dish:disabled {
+  cursor: default;
+}
+
+.mnu-photo {
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.625rem;
+  object-fit: cover;
+}
+
+.mnu-dish-name {
+  font-weight: 600;
+}
+
+.mnu-tr.is-off .mnu-dish-name,
+.mnu-tr.is-off .mnu-price {
+  color: var(--muted);
+}
+
+.mnu-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mnu-status::before {
+  content: '';
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.mnu-status.is-on {
+  background: var(--accent-soft);
+  color: var(--forest);
+}
+
+.mnu-status.is-off {
+  background: var(--page-bg);
+  color: var(--muted);
+}
+
+.mnu-num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.mnu-price {
+  font-weight: 600;
+}
+
+.mnu-muted {
+  color: var(--muted);
+}
+
+.mnu-sub {
+  display: block;
+  font-size: var(--fs-1);
+}
+
+.mnu-recipe {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--forest);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: var(--forest);
+  font: inherit;
+  font-size: var(--fs-2);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.mnu-recipe svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.mnu-recipe:hover {
+  background: var(--accent-soft);
+}
+
+.mnu-recipe.is-done {
+  border-color: transparent;
+  background: var(--accent-soft);
+}
+
+.mnu-recipe.is-partial {
+  border-color: var(--amber);
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+.mnu-recipe:disabled {
+  cursor: default;
+}
+
+.mnu-act {
+  width: 3rem;
+  text-align: right;
+}
+
+/* ---- a card's recipe chip (a phone, and the laptop's Cards view) ---- */
+.mnu-card-recipe {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--page-bg);
+  color: var(--forest);
+  font-size: var(--fs-1);
+  font-weight: 600;
+}
+
+.mnu-card-recipe svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.mnu-card-recipe.is-done {
+  background: var(--accent-soft);
+}
+
+.mnu-card-recipe.is-partial,
+.mnu-card-recipe.is-none {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+/* ---- taken off / put back: what happened, and Undo ---- */
+.mnu-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.mnu-undo {
+  min-height: 2.75rem;
+  padding: 0 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--forest);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* A phone's tabs sit on the page, between the figures and the tools. */
+@media (max-width: 860px) {
+  .prd-page > .mnu-tabs {
+    gap: var(--sp-4);
+    margin: var(--sp-2) 0 var(--sp-3);
+  }
+
+  /* Three tabs fit a 344px phone without scrolling. */
+  .prd-page > .mnu-tabs .mnu-tab {
+    font-size: var(--fs-2);
+  }
+
+  /* The card's WhatsApp share sits at its foot's right; the recipe chip stops short of it. */
+  .mnu-card-recipe {
+    max-width: calc(100% - 2.75rem);
+  }
+}
+
+/* A touch screen gets the 44px target on the Recipe button too. */
+@media (pointer: coarse) {
+  .mnu-recipe {
+    min-height: 2.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mnu-group-btn svg {
+    transition: none;
+  }
+}
+
+/* The food cost beside the Recipe button (what Inventory's Recipes tab showed), and its warning. */
+.mnu-pct {
+  margin-left: 0.5rem;
+  font-size: var(--fs-2);
+  font-weight: 600;
+}
+
+.mnu-over {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--danger-deep);
+  font-size: var(--fs-1);
+  font-weight: 600;
+}
+
+/* A laptop: the three figures share their row evenly. A phone keeps two (the sections figure steps aside). */
+@media (min-width: 861px) {
+  .prd-strip.prd-strip-2.mnu-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .prd-strip.mnu-strip .prd-stat-cats {
+    display: none;
+  }
+}
+
+/* With a dish open beside it the table has half the room: Status and Sold step aside (the tab and the row's
+   muted name still say taken off), so a dish's name is not broken over three lines. */
+.prd-desk-grid.has-sheet .mnu-c-narrow {
+  display: none;
+}
+
+.mnu-dish-name {
+  overflow-wrap: anywhere;
+}
+
+.mnu-tab-short {
+  display: none;
+}
+
+@media (max-width: 420px) {
+  .mnu-tab-long {
+    /* Develop QA 2026-11-21, finding 9 — hidden from sight only: a screen reader still reads the tab's whole name (the short
+       one beside it is aria-hidden), where display:none left it just the count. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .mnu-tab-short {
+    display: inline;
+  }
+}
+
+.mnu-act {
+  width: 10rem;
+}
+
+.mnu-act-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+/*
+ * Owner, 2026-11-20 ("the pagination is not visible … no scroll") — the laptop's Menu fits the screen as the shelf's
+ * table card does (96-products.css): the card fills the column, the dishes scroll inside it under a header that
+ * stays, and the pages and the line under them stay in sight at the card's foot.
+ */
+@media (min-width: 861px) {
+  .prd-desk-mid > .mnu-work {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .mnu-work > :not(.mnu-table-wrap, .mnu-cards) {
+    flex: none;
+  }
+
+  .mnu-work > .mnu-table-wrap,
+  .mnu-work > .mnu-cards {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .mnu-work > .mnu-cards {
+    padding-top: var(--sp-1);
+    padding-bottom: var(--sp-3);
+  }
+
+  .mnu-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .mnu-work > .pagination {
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* The row's actions: icons in sight, the same 2.25rem as the Recipe button (2.75rem on a touch screen). */
+.mnu-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.mnu-icon-btn svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.mnu-icon-btn:hover {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.mnu-icon-btn.is-danger:hover {
+  border-color: var(--danger-line);
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+}
+
+@media (pointer: coarse) {
+  .mnu-icon-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
+
+.prd-view-btn svg,
+.prd-bulk-edit-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.prd-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/*
+ * Owner, 2026-11-20 ("they are wasting a lot of space … the table is showing only 2 to 3 rows") — measured at 1366×657
+ * (a 1366×768 laptop's page): the table had 119px. The figures, the tools wrapping to two lines, a line for the count,
+ * a 60px column header, 61px rows and a hint under the pages took the rest. Each is cut to what it needs.
+ */
+@media (min-width: 861px) {
+  /* The three figures: one compact band — icon, then the label over the number and its line. */
+  .prd-strip.prd-strip-2.mnu-strip {
+    gap: var(--sp-3);
+  }
+
+  .prd-strip .mnu-stat {
+    grid-template-areas:
+      'icon label label'
+      'icon n sub';
+    grid-template-columns: auto auto minmax(0, 1fr);
+    column-gap: 0.75rem;
+    row-gap: 0;
+    min-height: 0;
+    padding: 0.625rem 1rem;
+  }
+
+  .prd-strip .mnu-stat .mnu-stat-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.625rem;
+  }
+
+  .prd-strip .mnu-stat .mnu-stat-icon svg {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .prd-strip .mnu-stat .prd-stat-n {
+    font-size: var(--fs-9);
+    line-height: 1.2;
+  }
+
+  .prd-strip .mnu-stat .prd-stat-sub {
+    align-self: center;
+    margin: 0;
+  }
+
+  /* Tabs left, the count and Clear filters right, one row. */
+  .mnu-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+    padding: 0 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mnu-head > .mnu-tabs {
+    flex: 1;
+    min-width: 0;
+    border-bottom: 0;
+  }
+
+  .mnu-head > .mnu-result-row {
+    flex: none;
+    min-height: 0;
+    padding: 0;
+  }
+
+  .mnu-work > .mnu-tools {
+    flex-wrap: nowrap;
+    padding: 0.75rem 1.25rem;
+  }
+
+  .mnu-tools .prd-search {
+    flex: 1 1 14rem;
+    min-width: 10rem;
+  }
+
+  .mnu-tools .prd-sort-l {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .mnu-tools .prd-view-btn {
+    min-width: 2.5rem;
+    justify-content: center;
+  }
+
+  .mnu-tools .mnu-tool-icon {
+    flex: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-color: var(--border);
+    background: var(--surface);
+  }
+
+  /* The column header and the section bars: one line each. */
+  .mnu-table thead th {
+    padding: 0 1rem;
+    height: 2.25rem;
+  }
+
+  .mnu-table thead .th-sortable button {
+    min-height: 2.25rem;
+    padding: 0;
+  }
+
+  .mnu-group-btn {
+    min-height: 2.25rem;
+  }
+
+  /* A row is the dish's name and price, not a tile: 48px. */
+  .mnu-tr td {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .mnu-photo {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.5rem;
+  }
+
+  .mnu-dish {
+    min-height: 2.5rem;
+  }
+
+  .mnu-recipe {
+    min-height: 2rem;
+  }
+
+  .mnu-icon-btn {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .mnu-work > .pagination {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+}
+
+/* A touch laptop keeps 44px targets: the rows grow back to hold them. */
+@media (min-width: 861px) and (pointer: coarse) {
+  .mnu-icon-btn,
+  .mnu-tools .mnu-tool-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .mnu-recipe,
+  .mnu-dish {
+    min-height: 2.75rem;
+  }
+}
+
+/*
+ * A laptop shorter than 860px (a 1366×768 screen leaves ~657px): the three figures step aside so the table shows
+ * twice the dishes. The tabs still carry the counts; Sections and the top seller are a tall screen's extra.
+ */
+@media (min-width: 861px) and (max-height: 860px) {
+  .prd-desk > .prd-strip.mnu-strip {
+    display: none;
+  }
+}
+
+/*
+ * Owner, 2026-11-20 ("the table font is not good") — one row carried 12, 13, 14 and 16px in three weights: the name and
+ * the price at 16px bold, Sold at 16px grey, the header at 12px on a grey band. Now the house table type (the Orders and
+ * Reports tables, 99-z-emerald-v2.css): 14px in a row, 13px grey headers on white, one bold — the dish's name — with
+ * the price in medium tabular figures so the column reads down.
+ */
+.mnu-table {
+  font-size: var(--fs-3);
+  line-height: 1.35;
+}
+
+.mnu-table thead th,
+.mnu-table thead .th-sortable button {
+  font-size: var(--fs-2);
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.mnu-table thead th {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.mnu-group-btn {
+  font-size: var(--fs-2);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.mnu-group-count {
+  font-size: var(--fs-2);
+}
+
+.mnu-dish-name {
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.mnu-tr td.mnu-num {
+  font-size: var(--fs-3);
+}
+
+.mnu-price {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.mnu-status {
+  font-size: var(--fs-1);
+  font-weight: 500;
+}
+
+.mnu-recipe {
+  font-size: var(--fs-2);
+  font-weight: 500;
+}
+
+.mnu-pct {
+  font-size: var(--fs-2);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.mnu-tr td {
+  border-bottom-color: var(--canvas, var(--border));
+}
+
+/*
+ * Owner, 2026-11-20 ("why is this page not pro level") — the quiet table. Green was on the tab, its count, the section
+ * band, a picture tile, a Recipe button and a WhatsApp disc on every row, so nothing stood out. Now the one accent is
+ * the selected tab and the Add button; a row is grey type on white, and the only colour in it is a food cost that is
+ * too high — the thing an owner should see first.
+ */
+.mnu-tab.is-on .mnu-tab-n {
+  background: var(--page-bg);
+  color: var(--text);
+}
+
+.mnu-group-row > th {
+  background: var(--surface);
+  border-bottom-color: var(--border);
+}
+
+.mnu-group-btn {
+  color: var(--text);
+}
+
+/* The name, and under it a taken-off dish's note: one stack, no picture. */
+.mnu-dish {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.125rem;
+}
+
+.mnu-sub {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* A number column's header ends where its numbers end: the sort arrow goes before the word, not after it. */
+.mnu-table thead th.prd-td-num > button {
+  flex-direction: row-reverse;
+}
+
+/* An idle sort arrow is the header's hint, not its decoration: it shows on the header a pointer is over. */
+@media (hover: hover) and (pointer: fine) {
+  .mnu-table thead .th-arrow:not(.is-on) {
+    opacity: 0;
+    transition: opacity 0.12s ease;
+  }
+
+  .mnu-table thead th > button:hover .th-arrow,
+  .mnu-table thead th > button:focus-visible .th-arrow {
+    opacity: 1;
+  }
+}
+
+/* Food cost: the figure alone. Grey-ink when fine, amber when high, red when far too high. */
+.mnu-fc,
+.mnu-fc-link {
+  min-height: 2rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.mnu-fc {
+  color: var(--text);
+}
+
+.mnu-fc:hover:not(:disabled),
+.mnu-fc-link:hover:not(:disabled) {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.mnu-fc.is-warn {
+  color: var(--amber-ink);
+  font-weight: 600;
+}
+
+.mnu-fc.is-bad {
+  color: var(--danger-deep);
+  font-weight: 600;
+}
+
+.mnu-fc.is-none {
+  color: var(--muted);
+}
+
+.mnu-fc-link {
+  color: var(--forest);
+  font-weight: 600;
+}
+
+.mnu-fc:disabled,
+.mnu-fc-link:disabled {
+  cursor: default;
+}
+
+.mnu-fc-note {
+  color: var(--amber-ink);
+}
+
+.mnu-fc-cell .mnu-over {
+  white-space: normal;
+}
+
+/* The row's actions: a pencil, the share and ⋮ — all grey, all the same 2rem. */
+.mnu-act {
+  width: 7.5rem;
+}
+
+.mnu-share.share-wa-btn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--muted);
+}
+
+.mnu-share.share-wa-btn:hover {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.mnu-kebab-btn.kebab-btn {
+  width: 2rem;
+  height: 2rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mnu-tr:not(:hover, :focus-within, .is-on) .mnu-edit {
+    visibility: hidden;
+  }
+}
+
+/* The toolbar's ⋮ stands with the other tools: their height, their border. */
+.mnu-tools .mnu-tool-kebab {
+  flex: none;
+}
+
+.mnu-tools .mnu-tool-kebab .kebab-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+@media (min-width: 861px) and (pointer: coarse) {
+  .mnu-share.share-wa-btn,
+  .mnu-kebab-btn.kebab-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .mnu-fc,
+  .mnu-fc-link {
+    min-height: 2.75rem;
+  }
+
+  .mnu-act {
+    width: 10rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mnu-table thead .th-arrow {
+    transition: none;
+  }
+}
+
+/*
+ * Owner, 2026-11-20 ("there is colour missing") — colour back, each with a job:
+ *   a section's own hue (--cat-1…6) on its bar and its dishes' tiles, so a long menu reads as its sections;
+ *   the food cost as a green / amber / red pill with a meter against the 35% target;
+ *   the brand green on a Sold bar that measures each dish against the best seller.
+ */
+.mnu-group {
+  --sec: var(--muted);
+}
+
+.mnu-group[data-hue='1'] { --sec: var(--cat-1); }
+.mnu-group[data-hue='2'] { --sec: var(--cat-2); }
+.mnu-group[data-hue='3'] { --sec: var(--cat-3); }
+.mnu-group[data-hue='4'] { --sec: var(--cat-4); }
+.mnu-group[data-hue='5'] { --sec: var(--cat-5); }
+.mnu-group[data-hue='6'] { --sec: var(--cat-6); }
+
+.mnu-group-row > th {
+  background: color-mix(in srgb, var(--sec) 7%, var(--surface));
+  box-shadow: inset 3px 0 0 var(--sec);
+}
+
+.mnu-group-btn svg {
+  color: var(--sec);
+}
+
+.mnu-group-avg {
+  color: var(--muted);
+  font-size: var(--fs-2);
+  font-weight: 400;
+}
+
+.mnu-group-avg::before {
+  content: '·';
+  margin-right: 0.625rem;
+  color: var(--muted);
+}
+
+.mnu-group-avg.is-warn {
+  color: var(--amber-ink);
+}
+
+.mnu-group-avg.is-bad {
+  color: var(--danger-deep);
+}
+
+/* The dish: its tile, then its name (and a taken-off note) in a stack. */
+.mnu-dish {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mnu-dish-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.mnu-table .mnu-photo {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+}
+
+.mnu-group .mnu-photo.photo-none {
+  background: color-mix(in srgb, var(--sec) 13%, var(--surface));
+  color: var(--sec);
+}
+
+.mnu-table .mnu-photo.photo-none svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.mnu-tr.is-off .mnu-photo {
+  opacity: 0.55;
+}
+
+/* Food cost: a meter against the target, then the figure in a pill of its tone. */
+.mnu-fc-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.625rem;
+}
+
+.mnu-meter {
+  position: relative;
+  flex: none;
+  width: 4rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--slate-soft);
+}
+
+.mnu-meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.mnu-meter.is-warn > span {
+  background: var(--amber);
+}
+
+.mnu-meter.is-bad > span {
+  background: var(--danger);
+}
+
+/* The target: a tick at the meter's middle (35%). */
+.mnu-meter::after {
+  content: '';
+  position: absolute;
+  top: -0.1875rem;
+  bottom: -0.1875rem;
+  left: 50%;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--muted);
+  opacity: 0.55;
+}
+
+.mnu-fc {
+  min-width: 3.75rem;
+  min-height: 1.75rem;
+  padding: 0 0.625rem;
+  border-radius: 999px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.mnu-fc.is-ok {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.mnu-fc.is-warn {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+
+.mnu-fc.is-bad {
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+}
+
+.mnu-fc.is-none {
+  background: transparent;
+}
+
+.mnu-fc:hover:not(:disabled) {
+  text-decoration: none;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+/* Sold: a brand-green bar against the best seller, then the count. */
+.mnu-sold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  color: var(--text);
+}
+
+.mnu-bar {
+  flex: none;
+  width: 3rem;
+  height: 0.375rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--slate-soft);
+}
+
+.mnu-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.mnu-sold-none {
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+
+@media (forced-colors: active) {
+  .mnu-meter > span,
+  .mnu-bar > span {
+    background: CanvasText;
+  }
+}
+
+/*
+ * With a dish open beside it (a 1101–1280px laptop) the table has half the room: the meter, the share and the photo
+ * tile step aside (the pill, the ⋮ and the section bar keep the meaning), the tabs take their short words, and the
+ * tools wrap onto two rows instead of running off the card.
+ */
+.prd-desk-grid.has-sheet .mnu-meter,
+.prd-desk-grid.has-sheet .mnu-share,
+.prd-desk-grid.has-sheet .mnu-edit {
+  display: none;
+}
+
+@media (max-width: 1280px) {
+  .prd-desk-grid.has-sheet .mnu-photo {
+    display: none;
+  }
+
+  .prd-desk-grid.has-sheet .mnu-tab-long {
+    /* Develop QA 2026-11-21, finding 9 — hidden from sight only: a screen reader still reads the tab's whole name (the short
+       one beside it is aria-hidden), where display:none left it just the count. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .prd-desk-grid.has-sheet .mnu-tab-short {
+    display: inline;
+  }
+}
+
+.prd-desk-grid.has-sheet .mnu-act {
+  width: 3rem;
+}
+
+.prd-desk-grid.has-sheet .mnu-work > .mnu-tools {
+  flex-wrap: wrap;
+}
+
+.prd-desk-grid.has-sheet .mnu-tools .prd-search {
+  flex-basis: 100%;
+}
+
+.mnu-meter {
+  height: 0.25rem;
+}
+
+/* `.table-scroll table` keeps every table at least 560px wide (10-tables-services-staff-pages.css). Beside an open
+   dish the Menu's card is ~400px, and its narrow columns already step aside, so its table fits the card instead. */
+.prd-desk-grid.has-sheet .mnu-table-wrap .mnu-table {
+  min-width: 0;
+}
+
+/*
+ * Owner, 2026-11-20 ("colours are missing in the table columns") — the column header is a band of its own, in the
+ * theme's forest, so the columns read as columns; and the price, the figure an owner looks for first, is in forest too.
+ */
+.mnu-table thead th {
+  background: var(--accent-soft);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 30%, var(--surface));
+}
+
+.mnu-table thead th,
+.mnu-table thead .th-sortable button {
+  color: var(--forest);
+  font-weight: 600;
+}
+
+.mnu-table thead .th-arrow.is-on {
+  color: var(--accent-deep);
+}
+
+.mnu-tr td.mnu-price {
+  color: var(--forest);
+  font-weight: 600;
+}
+
+.mnu-tr.is-off td.mnu-price {
+  color: var(--muted);
+}
+
+/* With the mint header above it, a tinted section band ran into it: the band is white, and the section's own colour is
+   its bar and its name. */
+.mnu-group-row > th {
+  background: var(--surface);
+}
+
+.mnu-group-name {
+  color: var(--sec);
+}
+
+/*
+ * Owner, 2026-11-20 ("these default icons are very faded") — a dish with no photo gets a solid tile in its section's
+ * colour with the drawing in white, not a 13% tint under a white circle and a passing shine. 69 rows of the same
+ * pale bowl read as "nothing here"; a solid tile reads as the section at a glance.
+ */
+.mnu-group .mnu-photo.photo-none {
+  background: var(--sec);
+  color: #fff;
+}
+
+.mnu-table .mnu-photo.photo-none::before,
+.mnu-table .mnu-photo.photo-none::after {
+  display: none;
+}
+
+.mnu-table .mnu-photo.photo-none svg {
+  stroke-width: 2.1;
+}
+
+.mnu-tr.is-off .mnu-photo.photo-none {
+  background: var(--muted);
+}
+
+/* The tile's drawing is `z-index: 1` (99-photo-none.css), level with the sticky header, so a row scrolled under the
+   header painted its icon over "Dish". The header sits above every row. */
+.mnu-table thead th {
+  z-index: 3;
+}
+
+/* Owner, 2026-11-20 ("why not like this") — the dish tile at 64px with a 40px drawing: the dish is the row's picture,
+   read before its name. Rows grow to ~72px; the table still fits the screen and pages under it. */
+.mnu-table .mnu-photo {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 0.75rem;
+}
+
+.mnu-table .mnu-photo.photo-none svg {
+  width: 2.5rem;
+  height: 2.5rem;
+  stroke-width: 1.6;
+}
+
+.mnu-tr td {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+/* A short laptop (1366×657 leaves ~300px for rows) keeps a 44px tile, or the table is three dishes tall again. */
+@media (min-width: 861px) and (max-height: 860px) {
+  .mnu-table .mnu-photo {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.625rem;
+  }
+
+  .mnu-table .mnu-photo.photo-none svg {
+    width: 1.75rem;
+    height: 1.75rem;
+    stroke-width: 1.8;
+  }
+
+  .mnu-tr td {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+}
+
+/*
+ * Owner, 2026-11-21 ("go ahead with the phone pass") — the phone's Menu as rows in the laptop table's look
+ * (MenuRows.tsx): a section's colour on its heading bar and its dishes' solid tiles, the dish's drawing in white,
+ * its name, its price in forest and how it sold, and the food cost pill. 344px first: a 44px tile, the pill and the
+ * 44px share leave the name ~150px, and it wraps rather than being cut.
+ */
+.mnu-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.mnu-rows-group { --sec: var(--muted); }
+.mnu-rows-group[data-hue='1'] { --sec: var(--cat-1); }
+.mnu-rows-group[data-hue='2'] { --sec: var(--cat-2); }
+.mnu-rows-group[data-hue='3'] { --sec: var(--cat-3); }
+.mnu-rows-group[data-hue='4'] { --sec: var(--cat-4); }
+.mnu-rows-group[data-hue='5'] { --sec: var(--cat-5); }
+.mnu-rows-group[data-hue='6'] { --sec: var(--cat-6); }
+
+.mnu-rows-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.5rem;
+  margin: 0 0 var(--sp-2);
+  padding-left: 0.625rem;
+  border-left: 3px solid var(--sec);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.mnu-rows-name {
+  color: var(--sec);
+}
+
+.mnu-rows-count,
+.mnu-rows-avg {
+  color: var(--muted);
+  font-size: var(--fs-2);
+  font-weight: 400;
+}
+
+.mnu-rows-avg::before {
+  content: '·';
+  margin-right: 0.5rem;
+}
+
+.mnu-rows-avg.is-warn { color: var(--amber-ink); }
+.mnu-rows-avg.is-bad { color: var(--danger-deep); }
+
+.mnu-rows-list {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  list-style: none;
+}
+
+.mnu-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding-right: 0.5rem;
+}
+
+.mnu-row + .mnu-row {
+  border-top: 1px solid var(--canvas, var(--border));
+}
+
+.mnu-row.is-on {
+  background: var(--accent-soft);
+}
+
+.mnu-row-btn {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  min-height: 3.75rem;
+  padding: 0.5rem 0.25rem 0.5rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mnu-row-btn:disabled {
+  cursor: default;
+}
+
+.mnu-row-btn:active:not(:disabled) {
+  background: var(--page-bg);
+}
+
+.mnu-row-photo {
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.625rem;
+  object-fit: cover;
+}
+
+.mnu-rows-group .mnu-row-photo.photo-none {
+  background: var(--sec);
+  color: #fff;
+}
+
+.mnu-rows .mnu-row-photo.photo-none::before,
+.mnu-rows .mnu-row-photo.photo-none::after {
+  display: none;
+}
+
+.mnu-rows .mnu-row-photo.photo-none svg {
+  width: 1.75rem;
+  height: 1.75rem;
+  stroke-width: 1.8;
+}
+
+.mnu-row.is-off .mnu-row-photo {
+  opacity: 0.5;
+}
+
+.mnu-row-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.mnu-row-name {
+  font-size: var(--fs-3);
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.mnu-row.is-off .mnu-row-name {
+  color: var(--muted);
+}
+
+.mnu-row-sub {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0 0.5rem;
+  min-width: 0;
+  white-space: nowrap;
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.mnu-row-price {
+  color: var(--forest);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.mnu-row-sold {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mnu-row-sold::before {
+  content: '·';
+  margin-right: 0.5rem;
+}
+
+.mnu-row-btn .mnu-fc {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  min-width: 3.5rem;
+  min-height: 1.75rem;
+  font-size: var(--fs-2);
+}
+
+.mnu-row-add {
+  flex: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mnu-row .mnu-share.share-wa-btn {
+  flex: none;
+  background: transparent;
+  color: var(--muted);
+}
+
+/* The phone's figures: the dish count is the tab's to say, so the top seller takes the row and its name is not cut. */
+@media (max-width: 860px) {
+  .prd-strip.mnu-strip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .prd-strip.mnu-strip > .prd-stat-cell:has(.prd-stat-products) {
+    display: none;
+  }
+
+  /* The sort is a dropdown on a phone too (the laptop got its chevron back on 2026-11-20). */
+  /* 16px stays (a smaller select zooms an iPhone on focus); Categories gives up width instead, its label is short. */
+  .prd-tools .prd-selects {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr) 2.75rem;
+  }
+
+  .prd-tools .prd-sort select {
+    padding-left: 0.75rem;
+    padding-right: 1.875rem;
+    background-image: var(--select-chevron);
+    background-repeat: no-repeat;
+    background-position: right 0.625rem center;
+    background-size: 0.875rem 0.875rem;
+  }
+}
+
+/*
+ * Owner, 2026-11-21 ("taking too much of space … it's not required") — a phone's Menu drops the top seller card. The
+ * dish count is the tab's to say and each row already shows what it sold, so the dishes start right under the header,
+ * and the tabs move up into its place.
+ */
+@media (max-width: 860px) {
+  .prd-strip.mnu-strip {
+    display: none;
+  }
+
+  /* With the card gone, the tabs move up under the header: 32px of gap became 8px. The phone shell spaces every
+     child of the page with !important (92-spacing.css, a 0,6,0 selector), so these say it too, one class stronger. */
+  .page-body.prd-page:has(> .mnu-strip) {
+    padding-top: var(--sp-2) !important;
+  }
+
+  .page-body.prd-page:not(.hm-page) > .prd-strip.mnu-strip + .mnu-tabs[role='tablist'] {
+    margin-top: 0 !important;
+  }
+}
+
+/*
+ * Owner, 2026-11-21 — "Share menu on WhatsApp". A phone has it as a WhatsApp button at the end of the search's row (no
+ * new row); a laptop has it in the toolbar's ⋮, so this row only draws the button below the laptop's width.
+ */
+.mnu-search-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.mnu-search-row > .prd-search {
+  flex: 1;
+  min-width: 0;
+}
+
+.mnu-share-menu {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 0;
+  border-radius: 999px;
+  /* The app's one green, as on every other share button (99-share-whatsapp.css): the glyph is what says WhatsApp. */
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+
+.mnu-share-menu svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.mnu-share-menu:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

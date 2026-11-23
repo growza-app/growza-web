@@ -18,7 +18,7 @@ import { areasOf } from '../lib/areas';
  * One branch at a time, as Services is (a bottle is on one shelf, GRW-376): the branch in the address, else the
  * main one. The list is the screen; adding and editing is a sheet over it.
  */
-export type ProductsSearch = { branch?: string; filter?: string };
+export type ProductsSearch = { branch?: string; filter?: string; show?: string };
 
 /**
  * The shelf screen, asked to guard itself under whichever address it is reached by (Jira GRW-608): `/products` for a
@@ -91,6 +91,7 @@ export async function ProductsScreen({ searchParams, guard }: { searchParams: Pr
           categories={categories}
           branchId={branchId}
           initialFilter={initialFilter}
+          initialMenuTab={params.show === 'noRecipe' ? 'noRecipe' : params.filter === 'retired' ? 'retired' : 'all'}
           heading={guard === '/stock' ? homeCopy(await serverLang(), me.labels).nav.stock : undefined}
           shownBranchName={branch.multi && branch.choice === null ? (branch.branches.find((b) => b.id === branchId)?.name ?? null) : null}
         />

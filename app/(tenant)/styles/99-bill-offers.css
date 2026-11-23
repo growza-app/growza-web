@@ -1,0 +1,40 @@
+/*
+ * Jira GRW-735 — the payment screen's offers (each buy-get offer the bill took, and the Coupon code field) and
+ * Settings › Coupons and offers. Laid out at 344px first: rows wrap rather than scroll, every control 44px tall.
+ */
+.pf-offers { list-style: none; margin: var(--sp-1) 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-1); }
+.pf-offer { display: flex; justify-content: space-between; gap: var(--sp-2); font-size: 0.875rem; color: var(--text); }
+.pf-offer-name { min-width: 0; overflow-wrap: anywhere; }
+.pf-offer-off { color: var(--accent-deep); white-space: nowrap; }
+.pf-coupon { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin: var(--sp-2) 0; min-width: 0; }
+.pf-coupon-field { flex: 1 1 9rem; min-width: 0; }
+.pf-coupon-field input { width: 100%; min-height: 44px; font-size: 16px; letter-spacing: 0.04em; }
+.pf-coupon-apply, .pf-coupon-remove { min-height: 44px; min-width: 44px; }
+.pf-coupon-remove { padding: 0; justify-content: center; }
+.pf-coupon-remove svg { width: 1rem; height: 1rem; }
+.pf-coupon.is-on {
+  padding: 0 0 0 var(--sp-3); border: 1.5px solid var(--accent); border-radius: var(--radius); background: var(--accent-soft);
+}
+.pf-coupon-words { flex: 1 1 8rem; min-width: 0; font-size: 0.9375rem; font-weight: 600; color: var(--accent-deep); overflow-wrap: anywhere; }
+.pf-coupon-off { color: var(--accent-deep); white-space: nowrap; }
+.pf-coupon-refused { flex: 1 1 100%; margin: 0 0 var(--sp-2); font-size: 0.875rem; color: var(--danger); }
+.pf-coupon-note { flex: 1 1 100%; margin: 0 0 var(--sp-2); }
+
+.bo { display: flex; flex-direction: column; gap: var(--sp-3); }
+.bo-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.bo-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); min-height: 44px; padding: var(--sp-2) 0; border-top: 1px solid var(--border); }
+.bo-row:first-child { border-top: 0; }
+.bo-row-words { flex: 1 1 10rem; min-width: 0; display: flex; flex-direction: column; gap: 0.125rem; overflow-wrap: anywhere; }
+.bo-row-name { font-size: 0.9375rem; font-weight: 600; color: var(--text); }
+.bo-icon { min-width: 44px; min-height: 44px; padding: 0; justify-content: center; }
+.bo-icon svg { width: 1.125rem; height: 1.125rem; }
+.bo-form { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: flex-end; }
+.bo-form .dt-field { flex: 1 1 9rem; min-width: 0; display: flex; flex-direction: column; gap: var(--sp-1); }
+.bo-form input, .bo-form select { min-height: 44px; font-size: 16px; max-width: 100%; min-width: 0; width: 100%; }
+.bo-form .btn { min-height: 44px; }
+.bo-kind { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.bo-kind button {
+  min-height: 44px; padding: 0 var(--sp-3); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font-size: 0.875rem;
+}
+.bo-kind button.is-on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+

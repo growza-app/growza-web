@@ -1,0 +1,1125 @@
+/* Jira GRW-741 — Inventory as its own section: the five tabs (Stock · Buy · Suppliers · Recipes · Reports), a cook's two main tabs, and the
+   Recipes list. Laid out at 344px first. The tab row is as wide as its words; when that is wider than the phone (Hindi at 344px, or a
+   larger text size) it scrolls sideways INSIDE itself, and the page never does; the current tab is put in view at once on arrival, with no
+   animation to wait for. The lists themselves are 99-kitchen-stock.css's. */
+
+.inv-tabs {
+  display: flex;
+  flex: none;
+  gap: var(--sp-2);
+  max-width: 44rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0 0 var(--sp-1);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.inv-tabs::-webkit-scrollbar {
+  display: none;
+}
+.inv-tab {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.inv-tab.is-on {
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+  color: var(--surface);
+}
+.inv-tab:hover:not(.is-on) {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+.inv-tab:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+
+/* A cook's app: Kitchen | Inventory, drawn like the dish sheet's segmented tabs. */
+.prd-seg.inv-cook-tabs {
+  max-width: 44rem;
+  margin: 0;
+}
+.inv-cook-tabs a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-size: var(--fs-4);
+  font-weight: 600;
+  text-decoration: none;
+}
+.inv-cook-tabs a.is-on {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.inv-section-title {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-7);
+  font-weight: 700;
+}
+
+/* Recipes: a dish with no recipe says so in amber, on the right where the % would be. */
+.inv-gaps {
+  align-self: stretch;
+}
+.inv-no-recipe {
+  flex: none;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: 999px;
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.inv-dish .ks-name {
+  min-width: 0;
+}
+.inv-dish .fc-pct {
+  flex: none;
+}
+
+/* Suppliers: what one supplier has sold us, under their form. */
+.inv-bought {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+/* QA of GRW-741 — a dish whose food costs more than its price (almost always a price typed wrong) says so, in the red the % already wears. */
+.ks-meta.inv-over {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/*
+ * Owner, 2026-11-20 ("redesign the inventory page, we are wasting too much space") — a laptop (1101px up, the Menu's
+ * edge) gets Inventory › Stock as one full-width card: All · To buy, the search and Stock in · Wasted · Count share
+ * its top row; the items are a table grouped as the phone groups them (Running low first), one 44px line an item with
+ * how much is left, the level it is flagged at, its average cost and how many dishes use it; Add item, Import,
+ * Suppliers and Switch off sit at its foot. Before, a 704px column of three-line cards under a full-width action bar.
+ */
+@media (min-width: 1101px) {
+  .inv-page:has(.ks-desk) .inv-tabs {
+    max-width: none;
+  }
+
+  .ks-body.ks-desk {
+    max-width: none;
+    gap: var(--sp-3);
+  }
+
+  .ks-desk > .ks-opening-short {
+    padding: 0.5rem 1rem;
+  }
+
+  .ks-work {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  .ks-work-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+    min-height: 3.5rem;
+    padding: 0.5rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ks-work-tabs {
+    display: flex;
+    align-self: stretch;
+    gap: var(--sp-5);
+  }
+
+  .ks-work-tab {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-3);
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .ks-work-tab:hover {
+    color: var(--text);
+  }
+
+  .ks-work-tab.is-on {
+    color: var(--forest);
+    font-weight: 600;
+  }
+
+  .ks-work-tab.is-on::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: -0.5rem;
+    left: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--forest);
+  }
+
+  .ks-work-n {
+    min-width: 1.5rem;
+    padding: 0.0625rem 0.4375rem;
+    border-radius: 999px;
+    background: var(--page-bg);
+    color: var(--muted);
+    font-size: var(--fs-1);
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .ks-work-tab.is-on .ks-work-n {
+    background: var(--accent-soft);
+    color: var(--forest);
+  }
+
+  .ks-work-tab.is-warn .ks-work-n {
+    background: var(--amber-soft);
+    color: var(--amber-ink);
+  }
+
+  .ks-work-search {
+    flex: 1 1 14rem;
+    max-width: 24rem;
+    min-width: 10rem;
+    margin-left: auto;
+  }
+
+  /* Stock in · Wasted · Count: buttons as wide as their words, not three thirds of the page. */
+  .ks-work-head .ks-actions,
+  .ks-work-head .ks-actions.ks-actions-2 {
+    display: flex;
+    flex: none;
+    gap: var(--sp-2);
+  }
+
+  .ks-work-head .ks-action {
+    min-height: 2.5rem;
+    padding: 0 1rem;
+  }
+
+  .ks-work-buy {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    padding: 1rem 1.25rem;
+  }
+
+  .ks-work > .ks-state {
+    margin: 1.25rem;
+  }
+
+  .ks-work > .ks-foot {
+    gap: 0 var(--sp-5);
+    padding: 0.25rem 1.25rem;
+  }
+
+  /* ---- the table ---- */
+  .ks-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: var(--fs-3);
+    line-height: 1.35;
+  }
+
+  .ks-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 2.25rem;
+    padding: 0 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: var(--fs-2);
+    font-weight: 500;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .ks-table thead th:first-child,
+  .ks-trow td:first-child {
+    padding-left: 1.25rem;
+  }
+
+  .ks-table .ks-num {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ks-trow-group > th {
+    padding: 0;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+  }
+
+  .ks-trow-group.is-low > th {
+    background: var(--amber-soft);
+  }
+
+  .ks-group-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    width: 100%;
+    min-height: 2.25rem;
+    padding: 0 1.25rem;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-2);
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .ks-trow-group.is-low .ks-group-btn {
+    color: var(--amber-ink);
+  }
+
+  .ks-group-btn svg {
+    width: 1rem;
+    height: 1rem;
+    transform: rotate(-90deg);
+    transition: transform 0.15s ease;
+  }
+
+  .ks-group-btn.is-open svg {
+    transform: none;
+  }
+
+  .ks-group-count {
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .ks-trow {
+    cursor: pointer;
+  }
+
+  .ks-trow td {
+    height: 2.75rem;
+    padding: 0.25rem 1rem;
+    border-bottom: 1px solid var(--canvas, var(--border));
+    vertical-align: middle;
+  }
+
+  .ks-trow:hover td {
+    background: var(--page-bg);
+  }
+
+  .ks-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.625rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .ks-item-name {
+    font-weight: 600;
+  }
+
+  .ks-item-meta {
+    color: var(--muted);
+    font-size: var(--fs-2);
+  }
+
+  .ks-item-warn {
+    display: block;
+    color: var(--danger-deep);
+    font-size: var(--fs-1);
+  }
+
+  .ks-left {
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .ks-left.is-below {
+    color: var(--danger-deep);
+    font-weight: 600;
+  }
+
+  .ks-left.is-low {
+    color: var(--amber-ink);
+  }
+
+  .ks-muted {
+    color: var(--muted);
+  }
+
+  .ks-go {
+    width: 2.5rem;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .ks-go svg {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+@media (min-width: 1101px) and (prefers-reduced-motion: reduce) {
+  .ks-group-btn svg {
+    transition: none;
+  }
+}
+
+/*
+ * Owner, 2026-11-20 ("redesign the inventory page like this too") — the Menu's table look (99-menu-manager.css):
+ * a mint header in forest, each group in its own hue (--cat-1…6) on its bar and its items' tiles, each item a white
+ * drawing on a solid tile, and how much is left as a level against the low line, green / amber / red.
+ */
+@media (min-width: 1101px) {
+  .ks-table [data-hue] { --sec: var(--muted); }
+  .ks-table [data-hue='1'] { --sec: var(--cat-1); }
+  .ks-table [data-hue='2'] { --sec: var(--cat-2); }
+  .ks-table [data-hue='3'] { --sec: var(--cat-3); }
+  .ks-table [data-hue='4'] { --sec: var(--cat-4); }
+  .ks-table [data-hue='5'] { --sec: var(--cat-5); }
+  .ks-table [data-hue='6'] { --sec: var(--cat-6); }
+
+  .ks-table thead th {
+    z-index: 3;
+    background: var(--accent-soft);
+    border-bottom: 1px solid color-mix(in srgb, var(--accent) 30%, var(--surface));
+    color: var(--forest);
+    font-weight: 600;
+  }
+
+  /* A group: a white row, its colour on a bar and its name. Running low keeps amber: that is a warning. */
+  .ks-trow-group > th {
+    background: var(--surface);
+    box-shadow: inset 3px 0 0 var(--sec, var(--muted));
+  }
+
+  .ks-trow-group.is-low > th {
+    background: var(--amber-soft);
+    box-shadow: inset 3px 0 0 var(--amber);
+  }
+
+  .ks-trow-group:not(.is-low) .ks-group-btn {
+    color: var(--sec, var(--text));
+  }
+
+  .ks-work-tab.is-on .ks-work-n {
+    background: var(--page-bg);
+    color: var(--text);
+  }
+
+  /* The item: its tile, then its name (and a group word in Running low, and an over-use warning) in a stack. */
+  .ks-item {
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .ks-item-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+
+  .ks-tile {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 0.75rem;
+    background: var(--sec, var(--muted));
+    color: #fff;
+  }
+
+  .ks-tile svg {
+    width: 2.5rem;
+    height: 2.5rem;
+    stroke-width: 1.6;
+  }
+
+  .ks-trow td {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+
+  /* In stock: the level, the amount in forest, and a pill when it is low or gone. */
+  .ks-level-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.625rem;
+  }
+
+  .ks-level {
+    position: relative;
+    flex: none;
+    width: 4rem;
+    height: 0.25rem;
+    border-radius: 999px;
+    background: var(--slate-soft);
+  }
+
+  .ks-level > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent);
+  }
+
+  .ks-level.is-low > span {
+    background: var(--amber);
+  }
+
+  .ks-level.is-below > span {
+    background: var(--danger);
+  }
+
+  /* The low line: a third of the way along (the level runs to three times it). */
+  .ks-level::after {
+    content: '';
+    position: absolute;
+    top: -0.1875rem;
+    bottom: -0.1875rem;
+    left: 33.3%;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--muted);
+    opacity: 0.55;
+  }
+
+  .ks-left .ks-amount-n {
+    color: var(--forest);
+    font-weight: 600;
+  }
+
+  .ks-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.5rem;
+    padding: 0 0.5rem;
+    border-radius: 999px;
+    font-size: var(--fs-1);
+    font-weight: 600;
+  }
+
+  .ks-pill.is-low {
+    background: var(--amber-soft);
+    color: var(--amber-ink);
+  }
+
+  .ks-pill.is-below {
+    background: var(--danger-soft);
+    color: var(--danger-deep);
+    font-size: var(--fs-2);
+  }
+
+  .ks-left.is-below,
+  .ks-left.is-low {
+    color: inherit;
+  }
+}
+
+/* A short laptop keeps a 44px tile, as the Menu does, so the table is not three items tall. */
+@media (min-width: 1101px) and (max-height: 860px) {
+  .ks-tile {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.625rem;
+  }
+
+  .ks-tile svg {
+    width: 1.75rem;
+    height: 1.75rem;
+    stroke-width: 1.8;
+  }
+
+  .ks-trow td {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .ks-level > span {
+    background: CanvasText;
+  }
+}
+
+/*
+ * Owner, 2026-11-21 ("these options are at the bottom, not visible") — Add item, Import from a file and Suppliers sat
+ * under sixty items, so a laptop never saw them without scrolling to the end. The stock card now fits the screen as
+ * the Menu's does: the page does not scroll, the items scroll inside the card under a header that stays, and the foot
+ * with those links stays in sight at the card's bottom.
+ */
+@media (min-width: 1101px) {
+  .page-body.inv-page:has(.ks-desk) {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .page-body.inv-page:has(.ks-desk) > * {
+    flex: none;
+  }
+
+  .page-body.inv-page > .ks-body.ks-desk {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ks-desk > * {
+    flex: none;
+  }
+
+  .ks-desk > .ks-work {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .ks-work > * {
+    flex: none;
+  }
+
+  .ks-work > .ks-table-wrap,
+  .ks-work > .ks-work-buy,
+  .ks-work > .ks-state {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .ks-work > .ks-foot {
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* Owner, 2026-11-21 ("fold it") — the "items have no amount yet" reminder as one slim strip inside the stock card,
+   under its tools, instead of a card of its own above it: ~70px back for the table on a short laptop. */
+@media (min-width: 1101px) {
+  .ks-work > .ks-work-note {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    min-height: 2.25rem;
+    padding: 0 1.25rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--amber) 25%, var(--surface));
+    background: var(--amber-soft);
+    color: var(--amber-ink);
+    font-size: var(--fs-2);
+  }
+
+  .ks-work-note .ks-quiet-link {
+    align-self: center;
+    min-height: 2.25rem;
+    color: var(--forest);
+    font-weight: 600;
+  }
+}
+
+@media (min-width: 1101px) {
+  .ks-item-sub {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.5rem;
+  }
+
+  .ks-item-sub > .ks-item-meta + .ks-item-warn::before {
+    content: '·';
+    margin-right: 0.5rem;
+    color: var(--muted);
+  }
+
+  .ks-item-sub .ks-item-warn {
+    display: inline;
+  }
+}
+
+/*
+ * Owner, 2026-11-21 ("go ahead with the phone pass") — the phone's stock list in the laptop table's look: each group's
+ * colour on its heading and its items' solid tiles with their drawings, a level under the amount, the laptop's
+ * underlined All · To buy tabs, a search with its icon, and the "no amount yet" reminder as one slim strip.
+ */
+@media (max-width: 1100px) {
+  .ks-body:not(.ks-desk) [data-hue] { --sec: var(--muted); }
+  .ks-body:not(.ks-desk) [data-hue='1'] { --sec: var(--cat-1); }
+  .ks-body:not(.ks-desk) [data-hue='2'] { --sec: var(--cat-2); }
+  .ks-body:not(.ks-desk) [data-hue='3'] { --sec: var(--cat-3); }
+  .ks-body:not(.ks-desk) [data-hue='4'] { --sec: var(--cat-4); }
+  .ks-body:not(.ks-desk) [data-hue='5'] { --sec: var(--cat-5); }
+  .ks-body:not(.ks-desk) [data-hue='6'] { --sec: var(--cat-6); }
+
+  .ks-group[data-hue] > .ks-group-head {
+    padding-left: 0.625rem;
+    border-left: 3px solid var(--sec);
+    color: var(--sec);
+  }
+
+  .ks-group-head.is-low {
+    padding-left: 0.625rem;
+    border-left: 3px solid var(--amber);
+  }
+
+  .ks-row-btn {
+    justify-content: flex-start;
+    gap: 0.75rem;
+  }
+
+  .ks-row-btn .ks-tile {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.625rem;
+    background: var(--sec, var(--muted));
+    color: #fff;
+  }
+
+  .ks-row-btn .ks-tile svg {
+    width: 1.75rem;
+    height: 1.75rem;
+    stroke-width: 1.8;
+  }
+
+  .ks-row-btn .ks-name {
+    flex: 1;
+    font-weight: 600;
+  }
+
+  .ks-row-btn .ks-amount {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.3125rem;
+    color: var(--forest);
+  }
+
+  .ks-row-btn .ks-amount.is-low {
+    color: var(--amber-ink);
+  }
+
+  .ks-row-btn .ks-amount.is-below {
+    color: var(--danger-deep);
+  }
+
+  .ks-row-btn .ks-low-tag {
+    margin-left: 0;
+  }
+
+  .ks-item-sub {
+    display: block;
+    font-weight: 400;
+  }
+
+  .ks-item-sub > .ks-item-meta + .ks-item-warn::before {
+    content: '·';
+    margin: 0 0.375rem;
+    color: var(--muted);
+  }
+
+  .ks-item-sub .ks-item-warn {
+    color: var(--danger-deep);
+  }
+
+  .ks-row-btn .ks-level {
+    position: relative;
+    display: block;
+    width: 3.5rem;
+    height: 0.25rem;
+    border-radius: 999px;
+    background: var(--slate-soft);
+  }
+
+  .ks-row-btn .ks-level > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent);
+  }
+
+  .ks-row-btn .ks-level.is-low > span {
+    background: var(--amber);
+  }
+
+  .ks-row-btn .ks-level::after {
+    content: '';
+    position: absolute;
+    top: -0.125rem;
+    bottom: -0.125rem;
+    left: 33.3%;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--muted);
+    opacity: 0.55;
+  }
+
+  /* All · To buy: the laptop's underlined tabs. */
+  .ks-phone-tabs {
+    display: flex;
+    gap: var(--sp-5);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ks-phone-tabs .ks-work-tab {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-3);
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .ks-phone-tabs .ks-work-tab.is-on {
+    color: var(--forest);
+    font-weight: 600;
+  }
+
+  .ks-phone-tabs .ks-work-tab.is-on::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: -1px;
+    left: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--forest);
+  }
+
+  .ks-phone-tabs .ks-work-n {
+    min-width: 1.5rem;
+    padding: 0.0625rem 0.4375rem;
+    border-radius: 999px;
+    background: var(--page-bg);
+    color: var(--muted);
+    font-size: var(--fs-1);
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .ks-phone-tabs .ks-work-tab.is-on .ks-work-n {
+    color: var(--text);
+  }
+
+  .ks-phone-tabs .ks-work-tab.is-warn .ks-work-n {
+    background: var(--amber-soft);
+    color: var(--amber-ink);
+  }
+
+  .ks-search-phone {
+    min-height: 2.75rem;
+  }
+
+  .ks-search-phone input {
+    font-size: 16px;
+  }
+
+  .ks-phone-note {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    min-height: 2.75rem;
+    padding: 0 0.875rem;
+    border-radius: var(--radius-md, 0.75rem);
+    background: var(--amber-soft);
+    color: var(--amber-ink);
+    font-size: var(--fs-2);
+  }
+
+  .ks-phone-note .ks-quiet-link {
+    align-self: center;
+    color: var(--forest);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 1100px) {
+  .ks-row-btn .ks-pill.is-below {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.5rem;
+    padding: 0 0.5rem;
+    border-radius: 999px;
+    background: var(--danger-soft);
+    color: var(--danger-deep);
+    font-size: var(--fs-1);
+    font-weight: 600;
+  }
+}
+
+/* The reminder's ✕ (owner, 2026-11-21): a 44px target on a phone, 36px on a laptop, in the strip's own amber. */
+.ks-note-close {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-right: -0.625rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--amber-ink);
+  cursor: pointer;
+}
+
+.ks-note-close svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.ks-note-close:hover {
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+}
+
+/* The words take the room; Enter amounts and ✕ sit together at the end. */
+.ks-phone-note > span:first-child,
+.ks-work-note > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (min-width: 1101px) {
+  .ks-work-note .ks-note-close {
+    width: 2.25rem;
+    height: 2.25rem;
+    margin-right: -0.5rem;
+  }
+}
+
+/* Owner, 2026-11-21 — a phone's group folds on its heading: the whole heading is the 44px button, a chevron turns. */
+.ks-group-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ks-group-toggle svg {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  transform: rotate(-90deg);
+  transition: transform 0.15s ease;
+}
+
+.ks-group-toggle.is-open svg {
+  transform: none;
+}
+
+.ks-group-head:has(.ks-group-toggle) {
+  margin-bottom: 0;
+}
+
+.ks-group:has(.ks-group-toggle:not(.is-open)) + .ks-group {
+  margin-top: calc(-1 * var(--sp-2));
+}
+
+.ks-fold-all {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: calc(-1 * var(--sp-3));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ks-group-toggle svg {
+    transition: none;
+  }
+}
+
+/* Owner, 2026-11-21 — the item's group: the list, then (for a new one) its box right under it. */
+.ks-category-select + .ks-category-new {
+  margin-top: var(--sp-2);
+}
+
+/* `.prd-input` sets `background`, which drops the chevron every select wears (01-controls.css): put it back. */
+.prd-input.ks-category-select {
+  padding-right: 2.25rem;
+  background-image: var(--select-chevron);
+  background-repeat: no-repeat;
+  background-position: right 0.875rem center;
+  background-size: 0.9375rem 0.9375rem;
+}
+
+/*
+ * Owner, 2026-11-21 ("we are wasting too much space") — a phone's top, from 416px of controls before the first item:
+ * Stock · Reports is one compact switch across the width, the rows sit 8px apart, and the search shares the
+ * All · To buy row.
+ */
+@media (max-width: 1100px) {
+  .inv-page:not(:has(.ks-desk)) {
+    gap: var(--sp-2);
+  }
+
+  .inv-page:not(:has(.ks-desk)) > .ks-body {
+    margin-top: 0;
+    gap: var(--sp-2);
+  }
+
+  .inv-page:not(:has(.ks-desk)) .inv-tabs {
+    max-width: none;
+    gap: 0;
+    padding: 0.1875rem;
+    border-radius: 0.875rem;
+    background: var(--slate-soft);
+    overflow: visible;
+  }
+
+  .inv-page:not(:has(.ks-desk)) .inv-tab {
+    flex: 1;
+    /* Develop QA 2026-11-21, D1 — 44px, a thumb's target (GRW-741 AC-05); it was 40px. */
+    min-height: 2.75rem;
+    border: 0;
+    border-radius: 0.6875rem;
+    background: transparent;
+    color: var(--muted);
+    font-weight: 600;
+    box-shadow: none;
+  }
+
+  .inv-page:not(:has(.ks-desk)) .inv-tab.is-on {
+    background: var(--surface);
+    color: var(--forest);
+    box-shadow: 0 1px 2px rgb(16 24 40 / 10%);
+  }
+
+  .ks-body:not(.ks-desk) > .ks-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-2);
+  }
+
+  .ks-body:not(.ks-desk) > .ks-actions .ks-action {
+    min-width: 0;
+    padding: 0 0.5rem;
+    justify-content: center;
+  }
+
+  .ks-phone-tabs-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ks-phone-tabs-row > .ks-phone-tabs {
+    flex: none;
+    border-bottom: 0;
+  }
+
+  .ks-phone-tabs-row > .ks-search-phone {
+    flex: 1;
+    min-width: 0;
+    min-height: 2.75rem;
+    margin-bottom: 0.125rem;
+  }
+}
+
+@media (max-width: 1100px) {
+  /* The search's box is as wide as the room the tabs leave it, not its own default width. */
+  .ks-phone-tabs-row > .ks-search-phone input {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Owner, 2026-11-21 — the phone's top tools, in the row "Fold all" already had: "+ Add item" left, Fold all and ⋮ right. */
+.ks-phone-tools {
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: calc(-1 * var(--sp-2));
+}
+
+.ks-phone-tools > .ks-phone-add {
+  margin-right: auto;
+}
+
+.ks-phone-tools > .ks-more {
+  flex: none;
+  margin-right: calc(-1 * var(--sp-2));
+}
+
+.ks-phone-tools > .ks-more .kebab-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+/*
+ * Develop QA 2026-11-21, finding 4 — the full words ("Used 0.67 L more than recorded — count it") are too long to share a
+ * line with the group's name on a phone: squeezed beside it they broke over three lines. On a phone the warning takes its own
+ * line under the group's name, the width of the name.
+ */
+@media (max-width: 1100px) {
+  .ks-item-sub .ks-item-warn {
+    display: block;
+  }
+
+  .ks-item-sub > .ks-item-meta + .ks-item-warn::before {
+    content: none;
+  }
+}

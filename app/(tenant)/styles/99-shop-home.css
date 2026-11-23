@@ -1566,8 +1566,12 @@
 }
 
 /* The hero keeps its height while the window loads, so the cards below it do not jump. */
+/*
+ * Owner, 2026-11-23 ("the page shows some glitch on mobile") — the block stands in for the figure, the orders line and
+ * the payments line under it, which together are 120px; at 56px everything under the hero dropped 64px when they came.
+ */
 .shp-hero-skeleton {
-  height: 3.5rem;
+  height: 7.5rem;
   margin: var(--sp-1) 0;
   border-radius: var(--radius);
   background: rgb(255 255 255 / 16%);

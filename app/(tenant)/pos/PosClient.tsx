@@ -9,8 +9,9 @@ import type { PaymentMode } from '../lib/api-types';
 import { HeaderBranchPicker } from '../components/HeaderBranchPicker';
 import { useBranch } from '../components/BranchProvider';
 import { useLabel } from '../components/LabelsProvider';
-import { PrinterButton, TillPrintActions, useTicketPrinter, type OrderRef } from '../components/TicketPrinter';
-import type { KitchenTicketDto } from '../lib/api-types';
+import { PrinterButton, PrinterSheet, TillPrintActions, useTicketPrinter, type OrderRef } from '../components/TicketPrinter';
+import type { KitchenSlips } from '../lib/api-types';
+import { slipsOf } from '../lib/print/from-api';
 import { PaymentDone } from '../components/PaymentDone';
 import { DiscountSheet } from '../appointments/new/DiscountSheet';
 import { FreeBillReason } from '../appointments/new/FreeBillReason';
@@ -20,6 +21,8 @@ import { useAreas, useSession } from '../components/SessionProvider';
 import { hasOrderQueue } from '../lib/areas';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { IconCheck, IconArrowLeft, IconFlame, IconClose, IconPayCard, IconPayCash, IconPayOther, IconPayUpi, IconPlus, IconSearch } from '../components/icons';
+import PickupCardEdit from './PickupCardEdit';
+import { remember, SOUND_KEY, soundIsOn } from '../lib/pay-feedback';
 import { ClientSheet, type PickedClient } from '../appointments/new/ClientSheet';
 import { Keypad } from '../appointments/new/Keypad';
 import { formatDate } from '../lib/format';
@@ -28,7 +31,11 @@ import { nounInSentence, pickNoun } from '../lib/nouns';
 import { receiptRows, type ReceiptRow } from '../lib/receipt-text';
 import { useNewVisitCopy } from '../lib/use-copy';
 import { useRewardQuote } from '../lib/use-reward-quote';
+import { useBillOffers } from '../lib/use-bill-offers';
+import { CouponRow, OfferLines } from '../appointments/new/CouponRow';
 import { SellProductClient } from '../products/sell/SellProductClient';
+import { MenuKebab } from '../products/MenuKebab';
+import { PosTypeBarContext, type PosTypeBar, type TillOrderType } from './pos-type-bar';
 import { buildSaleRows, type SaleRow } from '../sales/SalesClient';
 import { ReturnProductSheet } from '../sales/ReturnProductSheet';
 import {
@@ -91,7 +98,9 @@ function QueueTokenPayScreen({
   onOpenClientSheet,
   onBack,
   onSettle,
+  onPrintAgain,
   byNameOnly = false,
+  guestSkipped = false,
 }: {
   token: PosDailyToken;
   paymentQr: string | null;
@@ -105,8 +114,11 @@ function QueueTokenPayScreen({
   onSettle: (
     ways: Array<{ mode: PaymentMode; amountMinor: number }>,
     redeemPoints: number,
-    /** Jira GRW-725 — `reason`, the owner's, when the discount takes the whole order off. */
-    bill: { offMinor: number; pct: number | null; reason?: string },
+    /**
+     * Jira GRW-725 — `reason`, the owner's, when the discount takes the whole order off. Jira GRW-735 — `couponCode` when a
+     * coupon is kept (then `offMinor` is the coupon's amount, and no discount is sent: the two never stack).
+     */
+    bill: { offMinor: number; pct: number | null; reason?: string; couponCode?: string },
     /** A waiter's walk-in: the name typed here, put on the bill before it is paid. */
     guestName?: string,
   ) => void;
@@ -115,6 +127,16 @@ function QueueTokenPayScreen({
    * (their role cannot open the guest list) and there is no discount or points (owner decisions 2026-11-15/16).
    */
   byNameOnly?: boolean;
+  /**
+   * Owner, 2026-11-22 (Jira GRW-747) — "Who is paying?" was skipped in Pickup: the order is paid as the branch's Walk-in,
+   * so the ways to pay, the discount and a coupon are offered with nobody named. A kitchen's Pickup only.
+   */
+  guestSkipped?: boolean;
+  /**
+   * QA of the overnight stack (item 7) — the bill was printed and the amount has changed since (a coupon or the discount
+   * typed here): print it again, with what is being given. Resolves once the print has been asked for.
+   */
+  onPrintAgain?: (held: { couponCode?: string; discountMinor?: number }) => Promise<void>;
 }) {
   const tPay = useTranslations('payFlow');
   const tc = useTranslations('chrome');
@@ -127,28 +149,54 @@ function QueueTokenPayScreen({
    */
   const [billOff, setBillOff] = useState<{ offMinor: number; pct: number | null }>({ offMinor: 0, pct: null });
   const [discountOpen, setDiscountOpen] = useState(false);
-  const billMinor = Math.max(0, token.totalMinor - billOff.offMinor);
-  const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor: discountMinor, checking } = useRewardQuote(token.customerId, billMinor);
+  /*
+   * Jira GRW-735 — the owner's offers: the buy-get offers are already on the order's lines (shown by name), and a coupon
+   * typed here. It and the discount above do not stack: the larger is kept, and the row says which (BR-01).
+   */
+  const [couponCode, setCouponCode] = useState<string | null>(null);
+  // Jira GRW-736 — the points the bill is spending, as last quoted (the GST on top comes after them).
+  const [redeemMinorAsked, setRedeemMinorAsked] = useState(0);
+  // QA of the overnight stack (item 7) — bumped after the bill is printed again, so the quote says whether the paper is current.
+  const [printedAgain, setPrintedAgain] = useState(0);
+  const [printingAgain, setPrintingAgain] = useState(false);
+  const offers = useBillOffers({ saleId: token.id, couponCode: byNameOnly ? null : couponCode, discountMinor: byNameOnly ? 0 : billOff.offMinor, redeemMinor: redeemMinorAsked }, printedAgain);
+  const offMinor = offers.couponKept ? (offers.coupon?.offMinor ?? 0) : billOff.offMinor;
+  /*
+   * Review of the overnight stack (item 1) — the bill before the GST added on top, as the server quotes it: the order's
+   * total carries the GST line, so a 100% coupon on the food read as "not the whole bill" and the free-bill rule was
+   * asked of the wrong figure. Until the first quote is in, the order's total (the payment is held while it is asked).
+   */
+  const foodMinor = offers.billMinor ?? token.totalMinor;
+  // Jira GRW-736 — GST added on top: the server works it out after the discount and the points, and says what is due.
+  const billMinor = Math.max(0, foodMinor - offMinor);
+  const { rewards, usePoints, toggle: toggleRedeem, redeemPoints, redeemMinor: discountMinor, checking: pointsChecking } = useRewardQuote(token.customerId, billMinor);
+  // Jira GRW-735 — and while a typed coupon is being asked about: its amount is not known yet.
+  const checking = pointsChecking || (couponCode !== null && offers.checking) || (offers.taxOnTop && (offers.checking || redeemMinorAsked !== discountMinor));
+  useEffect(() => setRedeemMinorAsked(discountMinor), [discountMinor]);
   /** Money is not taken while the points for this bill are still being asked (QA 2026-11-17, finding 1). */
   const busy = saving !== null || checking;
-  const dueMinor = Math.max(0, billMinor - discountMinor);
+  const dueMinor = offers.taxOnTop && offers.dueMinor !== null ? offers.dueMinor : Math.max(0, billMinor - discountMinor);
   /*
    * Jira GRW-725 — the whole order off is the owner's, with a reason: anyone else is told so and the ways of paying
    * stay shut; the owner is asked why. The server refuses the same.
    */
   const isOwner = useSession()?.role === 'owner';
   const [freeReason, setFreeReason] = useState('');
-  const freeBlock = billOff.offMinor > 0 ? freeBillBlock(token.totalMinor, token.totalMinor - billOff.offMinor, isOwner, freeReason) : null;
-  const wholeOrderOff = token.totalMinor > 0 && billOff.offMinor >= token.totalMinor;
+  const freeBlock = offMinor > 0 ? freeBillBlock(foodMinor, foodMinor - offMinor, isOwner, freeReason) : null;
+  const wholeOrderOff = foodMinor > 0 && offMinor >= foodMinor;
+  // A code that is not good takes nothing off (AC-02): the reason is shown by it, and the bill is paid as it is.
   const [nameDraft, setNameDraft] = useState('');
-  /** Money can be taken once someone is named on the bill — picked from the list, or (a waiter) typed. */
-  const named = !anonymous || (byNameOnly && nameDraft.trim() !== '');
+  /** Money can be taken once someone is named on the bill — picked from the list, or (a waiter) typed — or "Who is paying?" was skipped. */
+  const named = !anonymous || guestSkipped || (byNameOnly && nameDraft.trim() !== '');
+  /** Nobody named, and the desk has not skipped the question: nothing about the money is offered yet. */
+  const waitsForGuest = anonymous && !guestSkipped;
   const settleWith = (ways: Array<{ mode: PaymentMode; amountMinor: number }>) => {
     if (freeBlock || checking || splitTooBig) return;
+    const given = offers.couponKept && couponCode ? { offMinor, pct: null, couponCode } : billOff;
     onSettle(
       ways,
       byNameOnly ? 0 : redeemPoints,
-      wholeOrderOff ? { ...billOff, reason: freeReason.trim() } : billOff,
+      wholeOrderOff ? { ...given, reason: freeReason.trim() } : given,
       byNameOnly && anonymous ? nameDraft.trim() : undefined,
     );
   };
@@ -334,7 +382,7 @@ function QueueTokenPayScreen({
       </div>
       {dueLine}
       {/* Owner, 2026-11-16 — as on the till's own payment step: not until there is a guest, and money can be taken. */}
-      {anonymous || byNameOnly ? null : (
+      {waitsForGuest || byNameOnly ? null : (
       <button
         type="button"
         className={`pf-discount-open${billOff.offMinor > 0 ? ' is-on' : ''}`}
@@ -355,11 +403,56 @@ function QueueTokenPayScreen({
         ) : null}
       </button>
       )}
+      {/* Jira GRW-735 — the buy-get offers this order took, and the Coupon code (not for a waiter: like the discount). */}
+      <OfferLines bogo={offers.bogo} />
+      {offers.taxOnTop && offers.taxMinor > 0 ? (
+        <p className="pf-tax-line">
+          <span>{tPay('offers.gst')}</span>
+          <strong>{money(offers.taxMinor)}</strong>
+        </p>
+      ) : null}
+      {waitsForGuest || byNameOnly ? null : (
+        <CouponRow
+          code={couponCode}
+          coupon={offers.coupon}
+          refusal={offers.couponRefusal}
+          kept={offers.kept}
+          checking={offers.checking}
+          disabled={saving !== null}
+          onApply={setCouponCode}
+          onRemove={() => setCouponCode(null)}
+        />
+      )}
       {wholeOrderOff ? <FreeBillReason block={freeBlock} reason={freeReason} onReason={setFreeReason} disabled={saving !== null} /> : null}
+      {/* QA of the overnight stack (item 7) — the printed bill's QR would ask for the old amount: the guest would pay more. */}
+      {offers.printedOutOfDate && !offers.checking && onPrintAgain ? (
+        <div className="pf-reprint" role="status">
+          <p className="pf-reprint-words">{tPay('amountChanged')}</p>
+          <button
+            type="button"
+            className="btn btn-ghost pf-reprint-btn"
+            disabled={saving !== null || printingAgain}
+            aria-busy={printingAgain}
+            onClick={() =>
+              void (async () => {
+                setPrintingAgain(true);
+                try {
+                  await onPrintAgain(offers.couponKept && couponCode ? { couponCode } : billOff.offMinor > 0 ? { discountMinor: billOff.offMinor } : {});
+                } finally {
+                  setPrintingAgain(false);
+                  setPrintedAgain((n) => n + 1);
+                }
+              })()
+            }
+          >
+            {tPay('amountChangedPrint')}
+          </button>
+        </div>
+      ) : null}
       {discountOpen ? (
         <DiscountSheet
           ownerOnlyFree={!isOwner}
-          listMinor={token.totalMinor}
+          listMinor={foodMinor}
           current={billOff.offMinor > 0 ? billOff : null}
           onApply={(offMinor, pct) => {
             setBillOff({ offMinor, pct });
@@ -536,6 +629,7 @@ export function PosClient({
   const tPay = useTranslations('payFlow');
   const tNouns = useTranslations('nouns');
   const tc = useTranslations('chrome');
+  const tTables = useTranslations('posTables');
   const nv = useNewVisitCopy();
   const locale = useLocale();
   const { Customer } = useNouns();
@@ -549,15 +643,22 @@ export function PosClient({
    * Owner, 17 Nov 2026 — at a restaurant with tables on, the Queue holds only takeaway and delivery (dine-in lives on the
    * table map), so it is called Pickup there. Tables off — and every salon and shop — it stays the Queue.
    */
-  const tablesOn = Boolean(session?.branches?.find((b) => b.id === location)?.tableOrders);
-  const qk = <K extends string>(key: K): K | `${K}Pickup` => (tablesOn ? `${key}Pickup` : key);
+  /*
+   * Owner, 2026-11-23 — a restaurant keeps the one-row bar, Pickup under Takeaway and Return in the ⋮ with its tables
+   * switched off too; only Dine-in goes (PayFlow's `typesHere`). Salons and shops keep their Sell · Queue · Return.
+   */
+  const typesHere = Boolean(session?.areas?.tables);
+  const qk = <K extends string>(key: K): K | `${K}Pickup` => (typesHere ? `${key}Pickup` : key);
   const paymentQr =
     branch.branches.find((b) => b.id === location)?.paymentQrUrl ??
     session?.branches?.find((b) => b.id === location)?.paymentQrUrl ??
     null;
 
   // Owner, 10 Nov 2026 — only a kitchen has an order queue; a salon's or a shop's till is Sell and Return alone.
-  const orderQueue = hasOrderQueue(useAreas());
+  const areas = useAreas();
+  const orderQueue = hasOrderQueue(areas);
+  // Jira GRW-747 — at a business that counts no stock (a kitchen's) a name alone stays on the order, not in Guests.
+  const guestOptional = !areas.stock;
   const [mode, setMode] = useState<PosMode>(initialMode === 'queue' && orderQueue ? 'queue' : 'sell');
   const [fullScreen, setFullScreen] = useState(false);
   const [bills, setBills] = useState<SaleRow[] | null>(null);
@@ -570,17 +671,46 @@ export function PosClient({
   /** Owner, 17 Nov 2026 — the table being paid on this payment screen (its name), or null for a Pickup order. */
   const [payingTable, setPayingTable] = useState<string | null>(null);
   const [clientSheetTarget, setClientSheetTarget] = useState<{ token: PosDailyToken; startAdding: boolean } | null>(null);
+  /** Owner, 2026-11-22 — the Pickup order whose "Who is paying?" was skipped: it is paid as Walk-in. */
+  const [guestSkippedFor, setGuestSkippedFor] = useState<string | null>(null);
   const [settlingMode, setSettlingMode] = useState<PaymentMode | null>(null);
   const [settleError, setSettleError] = useState<string | null>(null);
   /** Owner, 9 Nov 2026 — the unpaid order the Sell tab is adding to ("Add items"), and the one being cancelled. */
   const [addingToToken, setAddingToToken] = useState<PosDailyToken | null>(null);
   const [cancelTarget, setCancelTarget] = useState<PosDailyToken | null>(null);
+  /**
+   * Jira GRW-747 — owner, 2026-11-22: an unpaid takeaway could only grow or be cancelled whole; 2026-11-23: "keep it simple, should be able
+   * to edit in same card". Edit puts − and + on the card's own dishes. The owner's or a manager's, as taking a dish off a table bill is
+   * (the server says the same); a counter still has Add items and Cancel order.
+   */
+  const [editingId, setEditingId] = useState<string | null>(null);
+  /** Owner, 2026-11-23 — the card whose ⋮ is open; its Edit and Cancel order show inside that card. */
+  const [menuFor, setMenuFor] = useState<string | null>(null);
+  /*
+   * Owner, 2026-11-23 — two of the till's settings are words in its ⋮: the printer on a phone (the bar has no room for its
+   * button below 760px, and on the paid screen it stood alone on a row of its own), and whether a payment is said out loud.
+   */
+  const [printerOpen, setPrinterOpen] = useState(false);
+  const [narrow, setNarrow] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
+  useEffect(() => {
+    setSoundOn(soundIsOn());
+    const q = window.matchMedia('(max-width: 759px)');
+    const on = () => setNarrow(q.matches);
+    on();
+    q.addEventListener('change', on);
+    return () => q.removeEventListener('change', on);
+  }, []);
+  const mayEdit = session?.role === 'owner' || session?.role === 'manager';
   const [cancelBusy, setCancelBusy] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  // Jira GRW-737 — the server asked whether the kitchen had already cooked it (`cooked_unknown`): asked in the cancel dialog, required.
+  const [cancelAskCooked, setCancelAskCooked] = useState(false);
+  const [cancelCooked, setCancelCooked] = useState<boolean | undefined>(undefined);
   const [queueNote, setQueueNote] = useState<string | null>(null);
   /** Jira GRW-713 — this till's printer, and the last KOT the queue made (an addition, a cancellation) to print. */
   const printer = useTicketPrinter();
-  const [lastKot, setLastKot] = useState<{ saleId: string; kot: KitchenTicketDto; order: OrderRef } | null>(null);
+  const [lastKot, setLastKot] = useState<{ saleId: string; kot: KitchenSlips; order: OrderRef } | null>(null);
   const [settledReceipt, setSettledReceipt] = useState<{
     appointmentId: string;
     totalMinor: number;
@@ -793,7 +923,8 @@ export function PosClient({
               ? {
                   ...r,
                   customerId: nextCustomerId,
-                  customerName: nextName,
+                  // Jira GRW-747 — a number given with no name keeps the name the order already had ("Rahul").
+                  customerName: nextName ?? r.customerName,
                   customerPhone: nextPhone,
                 }
               : r,
@@ -824,12 +955,18 @@ export function PosClient({
     setCancelBusy(true);
     setCancelError(null);
     try {
-      const res = await api.cancelPendingCounterSale(tk.id);
+      if (cancelAskCooked && cancelCooked === undefined) {
+        setCancelError(tTables('cookedNeeded'));
+        return;
+      }
+      const res = await api.cancelPendingCounterSale(tk.id, cancelAskCooked ? cancelCooked : undefined);
       // Jira GRW-713 — the kitchen is told to stop: printed now where this till prints by itself, a tap away otherwise.
-      if (res.kot) {
+      // Jira GRW-733 — one cancel slip per station that had the order.
+      const cancelled = slipsOf(res);
+      if (cancelled) {
         const order = { tokenNo: tk.tokenNo, offlineToken: tk.offlineToken, channel: tk.channel };
-        setLastKot({ saleId: tk.id, kot: res.kot, order });
-        printer.autoKot(res.kot, order);
+        setLastKot({ saleId: tk.id, kot: cancelled, order });
+        printer.autoKot(cancelled, order);
       }
       // Gone from the board at once; the read after it is the shop's answer for every other device.
       setTodayRows((prev) => prev.filter((r) => (r.bookingGroupId ?? r.id) !== tk.id));
@@ -837,13 +974,17 @@ export function PosClient({
       setReloadKey((k) => k + 1);
       void loadTodayTokens();
     } catch (e) {
+      if (e instanceof ApiError && e.code === 'cooked_unknown') {
+        setCancelAskCooked(true);
+        return;
+      }
       setCancelError(e instanceof Error && e.message ? e.message : t('cancelFailed'));
       // Paid or cancelled on another device meanwhile: the board should show it as it is now.
       void loadTodayTokens();
     } finally {
       setCancelBusy(false);
     }
-  }, [cancelTarget, cancelBusy, loadTodayTokens, t, printer]);
+  }, [cancelTarget, cancelBusy, loadTodayTokens, t, tTables, printer, cancelAskCooked, cancelCooked]);
 
   const startAddingTo = useCallback((tk: PosDailyToken) => {
     setQueueNote(null);
@@ -858,7 +999,7 @@ export function PosClient({
       tk: PosDailyToken,
       ways?: Array<{ mode: PaymentMode; amountMinor: number }>,
       redeemPoints = 0,
-      billOff: { offMinor: number; pct: number | null; reason?: string } = { offMinor: 0, pct: null },
+      billOff: { offMinor: number; pct: number | null; reason?: string; couponCode?: string } = { offMinor: 0, pct: null },
     ) => {
       if (!tk.paymentPending) {
         setTokenState(tk.id, 'completed');
@@ -880,7 +1021,8 @@ export function PosClient({
         const settled = await api.settleCounterSale(tk.id, {
           paymentMode: chosen,
           ...(ways.length > 1 ? { payments: ways } : {}),
-          ...(billOff.offMinor > 0 ? { discountMinor: billOff.offMinor } : {}),
+          // Jira GRW-735 — a kept coupon goes by its code, never with the discount beside it (they do not stack).
+          ...(billOff.couponCode ? { couponCode: billOff.couponCode } : billOff.offMinor > 0 ? { discountMinor: billOff.offMinor } : {}),
           ...(billOff.reason ? { discountReason: billOff.reason } : {}),
           ...(redeemPoints > 0 ? { redeemPoints } : {}),
         });
@@ -1244,6 +1386,45 @@ export function PosClient({
     if (initialMode === 'return' && canReturn) void openReturn();
   }, [initialMode, canReturn, openReturn]);
 
+  /*
+   * Owner, 2026-11-22 ("go D") — a branch that seats its guests has ONE row on top: the till's Dine-in · Takeaway ·
+   * Delivery (drawn into `typeSlot`), the Kitchen, and a ⋮ for Return. Pickup is under Takeaway. Not for a waiter (who has
+   * no switch) and not in full screen (which keeps its own header).
+   */
+  const tablesBar = typesHere && !waiter && !fullScreen;
+  const [typeSlot, setTypeSlot] = useState<HTMLDivElement | null>(null);
+  /** The till's own paid screen, or its "How did they pay?", is up (PayFlow says so through the bar's context). */
+  const [sellAside, setSellAside] = useState<'paid' | 'paying' | null>(null);
+  const [tillType, setTillType] = useState<TillOrderType | null>(null);
+  const pickupCount = orderQueue ? preparingTokens.length : null;
+  const typeBar = useMemo<PosTypeBar | null>(
+    () => (tablesBar ? { slot: typeSlot, mode, pickupCount, toSell: closeReturn, onTypeShown: setTillType, onBarAside: setSellAside } : null),
+    [tablesBar, typeSlot, mode, pickupCount, closeReturn],
+  );
+  /** New order / Pickup, under Takeaway: shown while the till is on Takeaway, and in Pickup itself. */
+  /*
+   * Owner, 2026-11-23 — "at the final screen we don't need this and New order and Pickup": on a paid screen the bar (the
+   * type switch was already gone from it: only the Kitchen and ⋮ were left) and New order / Pickup step aside. Next guest,
+   * Back to pickup and Done are the ways on from there; the bar is kept mounted (hidden) so the till keeps its switch's slot.
+   */
+  const paidScreen =
+    tablesBar && (mode === 'queue' || payingTable !== null ? settledReceipt !== null : mode === 'sell' && sellAside === 'paid' && addingToToken === null);
+  // "How did they pay?" on the till: the bar would hold only the Kitchen and ⋮ — it steps aside too; New order / Pickup stay.
+  const barAside = paidScreen || (tablesBar && mode === 'sell' && sellAside === 'paying' && addingToToken === null);
+  const pickupSwitch =
+    tablesBar && !paidScreen && orderQueue && (mode === 'queue' || (mode === 'sell' && tillType === 'takeaway')) && addingToToken === null && payingTable === null ? (
+      <div className="page-tabs pos-pickup-switch" role="tablist" aria-label={t('takeawayViews')}>
+        <button type="button" role="tab" aria-selected={mode === 'sell'} className={`page-tab${mode === 'sell' ? ' active' : ''}`} onClick={closeReturn}>
+          {t('newOrderTab')}
+        </button>
+        <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab${mode === 'queue' ? ' active' : ''}`} onClick={() => openQueue()}>
+          {/* Owner, 2026-11-23 ("not clearly visible") — the count is the amber pill the Sell / Queue tabs use, not "· 3" in the word. */}
+          {t('pickupTabWord')}
+          <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
+        </button>
+      </div>
+    ) : null;
+
   const renderTokenCard = (tk: PosDailyToken, isPreparing: boolean, isFirst = false) => {
     const anonymous = isWalkInToken(tk);
     const guest = anonymous ? t('walkInGuest') : (tk.customerName || t('walkInGuest'));
@@ -1296,7 +1477,11 @@ export function PosClient({
         </div>
         <div className="pos-qcard-sub">
           <span className="pos-qcard-guest">{guest}</span>
-          {anonymous && tk.channel === 'counter' ? (
+          {/*
+            Jira GRW-747 (FR-06) — a name with no number ("Rahul") is offered it too: a name alone stays on this order, and the
+            number is what makes them a guest. A guest with a number has nothing to add here.
+          */}
+          {(anonymous || (guestOptional && !tk.customerPhone)) && tk.channel === 'counter' ? (
             <button
               type="button"
               className="pos-qcard-add-client"
@@ -1308,6 +1493,19 @@ export function PosClient({
           ) : null}
           <span className="pos-qcard-time">{formatTime(tk.startAt)}</span>
         </div>
+        {editingId === tk.id ? (
+          <PickupCardEdit
+            token={tk}
+            onClose={() => setEditingId(null)}
+            onSaved={(said) => {
+              setEditingId(null);
+              setQueueNote(said);
+              void loadTodayTokens();
+            }}
+            onChanged={loadTodayTokens}
+          />
+        ) : (
+        <>
         <ul className="pos-qcard-items">
           {tk.items.map((item, i) => (
             <li key={i} className="pos-qcard-item">
@@ -1324,35 +1522,78 @@ export function PosClient({
           </div>
           {isPreparing ? (
             <div className="pos-qcard-actions">
-              <button
-                type="button"
-                className="btn pos-qcard-complete-btn"
-                onClick={() => void settleAndCompleteToken(tk)}
-              >
-                <IconCheck />
-                <span>
-                  {tk.paymentPending
-                    ? t('takePayment', { token: tk.tokenLabel })
-                    : t('handOverToken', { token: tk.tokenLabel })}
-                </span>
-              </button>
-              {/* Owner, 9 Nov 2026 — only an order still waiting for payment can grow or be called off here; a paid one is a return. */}
-              {tk.paymentPending && tk.channel === 'counter' ? (
-                <div className="pos-qcard-more">
-                  <button type="button" className="btn pos-qcard-add-btn" onClick={() => startAddingTo(tk)}>
-                    <IconPlus />
-                    <span>{t('addItems')}</span>
-                  </button>
+              {/*
+                Owner, 2026-11-23 — one row: Take payment, then + (Add items) beside it, and Edit and Cancel order in ⋮ — the card's
+                rarer actions as words, opened inside this card, instead of two more rows of buttons on every card.
+                Owner, 9 Nov 2026 — only an order still waiting for payment can grow or be called off here; a paid one is a return.
+              */}
+              <div className="pos-qcard-actions-row">
+                <button
+                  type="button"
+                  className="btn pos-qcard-complete-btn"
+                  onClick={() => void settleAndCompleteToken(tk)}
+                >
+                  <IconCheck />
+                  <span>
+                    {tk.paymentPending
+                      ? t('takePayment', { token: tk.tokenLabel })
+                      : t('handOverToken', { token: tk.tokenLabel })}
+                  </span>
+                </button>
+                {tk.paymentPending && tk.channel === 'counter' ? (
+                  <>
+                    <button
+                      type="button"
+                      className="btn pos-qcard-plus-btn"
+                      aria-label={t('addItemsTo', { token: tk.tokenLabel })}
+                      title={t('addItemsTo', { token: tk.tokenLabel })}
+                      onClick={() => startAddingTo(tk)}
+                    >
+                      <IconPlus />
+                    </button>
+                    <button
+                      type="button"
+                      className="btn pos-qcard-kebab-btn"
+                      aria-label={t('moreFor', { token: tk.tokenLabel })}
+                      title={t('moreFor', { token: tk.tokenLabel })}
+                      aria-expanded={menuFor === tk.id}
+                      aria-controls={`pos-qcard-menu-${tk.id}`}
+                      onClick={() => setMenuFor((open) => (open === tk.id ? null : tk.id))}
+                    >
+                      <span aria-hidden="true">⋮</span>
+                    </button>
+                  </>
+                ) : null}
+              </div>
+              {/*
+                Owner, 2026-11-23 — the ⋮'s choices open INSIDE the card, under its buttons: a menu floating over the card below read
+                as that card's, and a "Cancel order" there could be tapped for the wrong order.
+              */}
+              {menuFor === tk.id && tk.paymentPending && tk.channel === 'counter' ? (
+                <div className="pos-qcard-menu" id={`pos-qcard-menu-${tk.id}`}>
+                  {mayEdit ? (
+                    <button
+                      type="button"
+                      className="pos-qcard-menu-item"
+                      onClick={() => {
+                        setMenuFor(null);
+                        setQueueNote(null);
+                        setEditingId(tk.id);
+                      }}
+                    >
+                      {t('editOrder')}
+                    </button>
+                  ) : null}
                   <button
                     type="button"
-                    className="btn pos-qcard-cancel-btn"
+                    className="pos-qcard-menu-item is-danger"
                     onClick={() => {
+                      setMenuFor(null);
                       setCancelError(null);
                       setCancelTarget(tk);
                     }}
                   >
-                    <IconClose />
-                    <span>{t('cancelOrder')}</span>
+                    {t('cancelOrder')}
                   </button>
                 </div>
               ) : null}
@@ -1367,13 +1608,16 @@ export function PosClient({
             </button>
           )}
         </div>
+        </>
+        )}
       </article>
     );
   };
 
   return (
     <WaiterContext.Provider value={waiter}>
-    <div className={fullScreen ? 'pos-shell is-fullscreen' : 'pos-shell'}>
+    <PosTypeBarContext.Provider value={typeBar}>
+    <div className={fullScreen ? 'pos-shell is-fullscreen' : tablesBar ? 'pos-shell has-type-bar' : 'pos-shell'}>
       {waiter ? (
         // Jira GRW-723 — a waiter's bar: which branch, and the printer for the kitchen's slip. Nothing of the counter's.
         <div className="pos-bar pos-bar-minimal">
@@ -1384,6 +1628,53 @@ export function PosClient({
             </div>
             <PrinterButton printer={printer} />
           </div>
+        </div>
+      ) : tablesBar ? (
+        <div className="pos-bar pos-bar-types" hidden={barAside}>
+          {/* The till draws its Dine-in · Takeaway · Delivery switch here (PayFlow, through PosTypeBarContext). */}
+          {/*
+            Owner, 2026-11-23 — while items are being added to an order its type is already settled, so the switch is not
+            offered. It belongs to the till hidden behind this one, and a tap on it changed that till instead.
+          */}
+          <div className="pos-bar-typeslot" ref={setTypeSlot} hidden={addingToToken !== null} />
+          {orderQueue ? (
+            <Link href="/kitchen" className="btn btn-ghost pos-bar-kitchen" aria-label={t('kitchenScreen')}>
+              <IconFlame />
+              <span className="pos-bar-kitchen-word">{t('kitchenScreen')}</span>
+            </Link>
+          ) : null}
+          <div className="pos-bar-right">
+            <div className="pos-bar-branch">
+              <HeaderBranchPicker variant="pill" />
+              <HeaderBranchPicker variant="line" />
+            </div>
+            {loading ? (
+              <span className="pos-note" role="status">
+                {t('loadingBills')}
+              </span>
+            ) : null}
+            <PrinterButton printer={printer} />
+            <button type="button" className="btn btn-ghost pos-fs-toggle" onClick={enterFullScreen}>
+              {t('fullScreen')}
+            </button>
+          </div>
+          {/* Return is a rare job: a word in the ⋮, not a tab on every screen. */}
+          <MenuKebab
+            className="pos-bar-more"
+            label={t('more')}
+            items={[
+              ...(canReturn ? [{ label: t('returnBill'), onSelect: () => void openReturn() }] : []),
+              ...(narrow ? [{ label: t('printerMenu'), onSelect: () => setPrinterOpen(true) }] : []),
+              {
+                label: soundOn ? t('soundWhenPaidOn') : t('soundWhenPaidOff'),
+                onSelect: () => {
+                  remember(SOUND_KEY, soundOn ? 'off' : 'on');
+                  setSoundOn(!soundOn);
+                },
+              },
+            ]}
+          />
+          {printerOpen ? <PrinterSheet printer={printer} onClose={() => setPrinterOpen(false)} /> : null}
         </div>
       ) : fullScreen ? (
         <header className="pos-fs-bar">
@@ -1545,6 +1836,8 @@ export function PosClient({
         </div>
       )}
 
+      {pickupSwitch}
+
       {failed ? (
         <div className="pos-fail" role="alert">
           <span>{t('billsFailed')}</span>
@@ -1560,7 +1853,8 @@ export function PosClient({
         came back after. Hidden, the Sell till answers no shortcut and no scanner (`inactive`), and hands the bar's
         Back arrow to the adding till while that one is up.
       */}
-      <div className="pos-body" hidden={mode === 'queue' || addingToToken !== null || payingTable !== null}>
+      {/* Jira GRW-745 FR-08 — in Return the till's Dine-in / Takeaway / Delivery switch is not shown: a return keeps its bill's type. */}
+      <div className="pos-body" data-mode={mode} hidden={mode === 'queue' || addingToToken !== null || payingTable !== null}>
         <SellProductClient
           timezone={timezone}
           backTo={backTo}
@@ -1585,10 +1879,12 @@ export function PosClient({
                 const res = await api.addToPendingCounterSale(addingToToken.id, products);
                 const tk = addingToToken;
                 // Jira GRW-713 — a KOT for what was just added, and nothing the kitchen already has.
-                if (res.kot) {
+                // Jira GRW-733 — one slip per station the new dishes go to.
+                const added = slipsOf(res);
+                if (added) {
                   const order = { tokenNo: tk.tokenNo, offlineToken: tk.offlineToken, channel: tk.channel };
-                  setLastKot({ saleId: tk.id, kot: res.kot, order });
-                  printer.autoKot(res.kot, order);
+                  setLastKot({ saleId: tk.id, kot: added, order });
+                  printer.autoKot(added, order);
                 }
                 setQueueNote(t('addedToOrder', { token: tk.tokenLabel, amount: formatMoney(String(res.totalMinor)) }));
                 setReloadKey((k) => k + 1);
@@ -1621,7 +1917,14 @@ export function PosClient({
             summary={settledReceipt.summary}
             bill={settledReceipt.bill}
             phone={settledReceipt.phone}
-            nextLabel={payingTable !== null ? t('backToTablesDone') : t(qk('backToQueueDone'))}
+            nextLabel={
+              payingTable !== null
+                ? t('backToTablesDone')
+                : // With the bar and tabs out of the way, the orders still waiting are said on the way back to them.
+                  typesHere && preparingTokens.length > 0
+                  ? t('backToPickupWaiting', { count: preparingTokens.length })
+                  : t(qk('backToQueueDone'))
+            }
             onNextCustomer={() => {
               setSettledReceipt(null);
               setPayingTable(null);
@@ -1646,10 +1949,14 @@ export function PosClient({
             onBack={() => {
               setPayingToken(null);
               setClientSheetTarget(null);
+              setGuestSkippedFor(null);
               setSettleError(null);
               setPayingTable(null);
             }}
             byNameOnly={waiter}
+            guestSkipped={guestSkippedFor === payingToken.id}
+            // A waiter prints no bill (owner decision 2026-11-16), so it is never told to print one again.
+            {...(waiter ? {} : { onPrintAgain: (held: { couponCode?: string; discountMinor?: number }) => printer.printBill(payingToken.id, true, held) })}
             onSettle={(ways, redeemPoints, billOff, guestName) =>
               void (async () => {
                 // A waiter's walk-in: the typed name goes on the bill first, as the table's sheet did (owner, 4 Nov 2026).
@@ -1684,11 +1991,15 @@ export function PosClient({
                 <h2 className="pos-queue-col-title">
                   <span className="pos-queue-dot is-preparing" aria-hidden="true" />
                   {t(qk('preparingColTitle'))}
-                  <span className="pos-queue-col-count">{preparingTokens.length}</span>
+                  {/* With the one-row bar the Pickup tab right above already carries this number: said once, not twice. */}
+                  {tablesBar ? null : <span className="pos-queue-col-count">{preparingTokens.length}</span>}
                 </h2>
-                <button type="button" className="btn btn-primary pos-queue-new-btn" onClick={closeReturn}>
-                  + {t('backToSell')} ({formatTokenNo(nextTokenNo)})
-                </button>
+                {/* With the one-row bar, New order is the switch right above: not a second button for it here. */}
+                {tablesBar ? null : (
+                  <button type="button" className="btn btn-primary pos-queue-new-btn" onClick={closeReturn}>
+                    + {t('backToSell')} ({formatTokenNo(nextTokenNo)})
+                  </button>
+                )}
               </header>
               {preparingTokens.length === 0 ? (
                 <div className="pos-queue-empty">
@@ -1735,17 +2046,49 @@ export function PosClient({
           error={cancelError}
           onConfirm={() => void cancelUnpaidOrder()}
           onCancel={() => {
-            if (!cancelBusy) setCancelTarget(null);
+            if (cancelBusy) return;
+            setCancelTarget(null);
+            setCancelAskCooked(false);
+            setCancelCooked(undefined);
+            setCancelError(null);
           }}
-        />
+        >
+          {cancelAskCooked ? (
+            <fieldset className="tb-cooked">
+              <legend className="field-hint">{tTables('cookedQuestion')}</legend>
+              <div className="tb-cooked-pair">
+                <button type="button" className={`btn btn-ghost ${cancelCooked === false ? 'is-on' : ''}`} aria-pressed={cancelCooked === false} onClick={() => setCancelCooked(false)}>
+                  {tTables('cookedNo')}
+                </button>
+                <button type="button" className={`btn btn-ghost ${cancelCooked === true ? 'is-on' : ''}`} aria-pressed={cancelCooked === true} onClick={() => setCancelCooked(true)}>
+                  {tTables('cookedYes')}
+                </button>
+              </div>
+              <span className="field-hint">{tTables('cookedHint')}</span>
+            </fieldset>
+          ) : null}
+        </ConfirmDialog>
       ) : null}
 
       {clientSheetTarget ? (
         <ClientSheet
           location={location}
+          nameStaysOnBill={guestOptional}
           startAdding={clientSheetTarget.startAdding}
           onPick={(c) => void attachClientToToken(clientSheetTarget.token, c)}
           onClose={() => setClientSheetTarget(null)}
+          /*
+           * Owner, 2026-11-22 (Jira GRW-747) — a kitchen's Pickup can skip "Who is paying?": the order is finished and
+           * waiting, so it is paid as Walk-in. A name or number can still be added from its card or the order later.
+           */
+          {...(guestOptional && !waiter && payingToken && clientSheetTarget.token.id === payingToken.id && isWalkInToken(payingToken)
+            ? {
+                onSkip: () => {
+                  setGuestSkippedFor(payingToken.id);
+                  setClientSheetTarget(null);
+                },
+              }
+            : {})}
         />
       ) : null}
 
@@ -1764,6 +2107,7 @@ export function PosClient({
         />
       ) : null}
     </div>
+    </PosTypeBarContext.Provider>
     </WaiterContext.Provider>
   );
 }

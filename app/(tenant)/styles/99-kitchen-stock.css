@@ -1,0 +1,907 @@
+/* Jira GRW-737 — kitchen stock (Jira GRW-741: Inventory, its own section — its tabs are 99-inventory.css): the raw-material list, the
+   recipe on a dish, and the take-off "was it cooked?". Laid out at 344px first; one column all the way up, the list simply gets more room. */
+
+.ks-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.ks-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-width: 44rem;
+}
+
+.ks-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.ks-switch {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.ks-switch-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+.ks-switch-copy span,
+.ks-hint {
+  color: var(--muted);
+  font-size: var(--fs-3);
+  line-height: 1.4;
+}
+.ks-switch-btn,
+.ks-add {
+  min-height: 44px;
+}
+
+.ks-opening-list,
+.ks-list,
+.rc-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ks-opening-row,
+.rc-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-height: 52px;
+  border-bottom: 1px solid var(--border);
+}
+.ks-opening-row:last-child,
+.rc-line:last-child {
+  border-bottom: 0;
+}
+.ks-qty-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  flex: 0 0 auto;
+}
+.prd-input.ks-qty-input {
+  width: 5.5rem;
+  min-height: 44px;
+  text-align: right;
+  /* 16px stops iOS zooming a form field on focus (CLAUDE.md's one px exception). */
+  font-size: 16px;
+}
+.ks-unit {
+  min-width: 2.5rem;
+  color: var(--muted);
+  font-size: var(--fs-3);
+}
+.ks-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+.ks-pair .btn {
+  min-height: 44px;
+}
+
+.prd-input.ks-search {
+  min-height: 44px;
+  font-size: 16px;
+}
+
+.ks-list {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+.ks-list > li + li {
+  border-top: 1px solid var(--border);
+}
+.ks-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 52px;
+  padding: var(--sp-2) var(--sp-4);
+  font-size: var(--fs-5);
+  text-align: left;
+}
+.ks-row-btn {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.ks-row-btn:hover {
+  background: var(--accent-soft);
+}
+.ks-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ks-meta {
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+.ks-amount {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ks-amount.is-low {
+  color: var(--amber-ink);
+}
+.ks-amount.is-below {
+  color: var(--danger);
+}
+.ks-skel {
+  height: 52px;
+}
+@keyframes ks-pulse {
+  to {
+    opacity: 0.15;
+  }
+}
+
+.ks-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-4);
+  color: var(--muted);
+}
+.ks-state strong {
+  color: var(--text);
+}
+.ks-off-link {
+  align-self: flex-start;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-3);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ks-units {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.ks-units:disabled .ks-unit-seg {
+  opacity: 0.6;
+}
+.ks-unit-seg {
+  margin: 0;
+}
+
+/* The recipe on a dish. */
+.rc-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.rc-panel .prd-seg {
+  margin: 0;
+}
+.rc-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.rc-unit {
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 16px;
+}
+.rc-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.prd-input.rc-add {
+  min-height: 44px;
+  font-size: 16px;
+  color: var(--accent-ink);
+}
+.rc-cost {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  font-size: var(--fs-3);
+}
+.rc-warn {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius);
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: var(--fs-3);
+}
+.rc-save {
+  min-height: 44px;
+}
+
+/* Take a dish off a table: "Was it already cooked?" — two answers, one required. */
+.tb-cooked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  border: 0;
+}
+.tb-cooked-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+.tb-cooked-pair .btn {
+  min-height: 44px;
+  white-space: normal;
+}
+.tb-cooked-pair .btn.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+/* At 344px the row is name · amount · unit · remove: the sheet's own select and button rules made the unit full-width and the remove 16px
+   wide, so they are sized here, and the name takes what is left. */
+.rc-line .rc-name {
+  flex: 1 1 0;
+}
+.rc-line select.rc-unit {
+  width: 4.25rem;
+  min-width: 0;
+  flex: 0 0 auto;
+  padding: 0 var(--sp-1);
+}
+.rc-line .prd-input.ks-qty-input {
+  width: 4.5rem;
+  flex: 0 0 auto;
+}
+.rc-line .rc-remove {
+  width: 44px;
+  min-width: 44px;
+  flex: 0 0 44px;
+  padding: 0;
+}
+.rc-remove svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* Import from a file. */
+.ks-pick {
+  min-height: 44px;
+  align-self: flex-start;
+}
+.ks-import-sum,
+.ks-notice {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+.ks-skipped {
+  margin: 0;
+  padding-left: var(--sp-4);
+  color: var(--amber-ink);
+  font-size: var(--fs-3);
+}
+
+/* QA 2026-11-18 — the loading rows read as rows: a name bar and an amount bar, not one pale block on white. */
+.ks-skel {
+  background: var(--surface);
+  opacity: 1;
+}
+.ks-skel::before,
+.ks-skel::after {
+  content: '';
+  display: block;
+  height: 0.875rem;
+  border-radius: var(--radius-sm);
+  background: var(--border);
+}
+.ks-skel::before {
+  width: 40%;
+}
+.ks-skel::after {
+  width: 18%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ks-skel::before,
+  .ks-skel::after {
+    animation: ks-pulse 1.2s ease-in-out infinite alternate;
+  }
+}
+
+/* Jira GRW-738 — Stock in · Wasted · Count, the sheets they open, and an item's history. Phone first: three equal buttons fit 344px with
+   their icons; the stock-in lines stack, two fields to a row. */
+.ks-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+.ks-actions.ks-actions-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.ks-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-height: 44px;
+  padding: 0 var(--sp-2);
+  white-space: nowrap;
+}
+.ks-action svg,
+.ks-photo svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: 0 0 auto;
+}
+
+.ks-sheet-sum {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  font-size: var(--fs-7);
+}
+
+.ks-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.ks-history h3 {
+  margin: 0;
+}
+.ks-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.ks-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 52px;
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-3);
+}
+.ks-history-row + .ks-history-row {
+  border-top: 1px solid var(--border);
+}
+.ks-history-row .ks-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.ks-amount.is-out {
+  color: var(--text);
+}
+.ks-amount.is-in {
+  color: var(--accent-ink);
+}
+
+/* Two fields side by side, even at 344px: each gets ~9rem, enough for "2.5" and a short label. */
+.ks-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+.ks-two > .prd-field {
+  min-width: 0;
+}
+.prd-input.ks-field {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  /* 16px stops iOS zooming a form field on focus (CLAUDE.md's one px exception). */
+  font-size: 16px;
+}
+.ks-in-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ks-in-line {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.ks-in-line-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.prd-seg.ks-in-seg {
+  margin: 0;
+}
+.prd-seg.ks-in-seg button {
+  min-height: 44px;
+}
+.ks-in-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+  color: var(--muted);
+  font-size: var(--fs-2);
+}
+.ks-in-sum {
+  margin: 0;
+}
+.ks-find-list {
+  margin-top: var(--sp-1);
+}
+.ks-photo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  align-self: flex-start;
+  max-width: 100%;
+  min-height: 44px;
+  cursor: pointer;
+}
+.ks-photo span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ks-photo:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.ks-photo-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--accent-ink);
+  font-size: var(--fs-3);
+}
+.ks-in-total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+  padding: var(--sp-3);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+.ks-in-total strong {
+  font-size: var(--fs-7);
+  font-variant-numeric: tabular-nums;
+}
+.ks-in-total .ks-meta {
+  flex-basis: 100%;
+}
+.ks-dup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+.ks-dup .btn {
+  min-height: 44px;
+}
+
+.ks-reasons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+.ks-reasons .btn {
+  min-height: 44px;
+}
+.ks-reasons .btn.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.ks-count-list .ks-name {
+  flex: 1 1 auto;
+}
+.ks-more {
+  min-height: 44px;
+  align-self: center;
+}
+
+/* Jira GRW-739 — food-cost colours (owner, 2026-11-18): amber above 35%, red above 45%. Shared by the dish sheet and Reports › Food cost. */
+.rc-cost.is-warn {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+.rc-cost.is-bad {
+  background: var(--danger-soft);
+  color: var(--danger-deep);
+}
+
+/* Jira GRW-739 — What to buy: grouped by supplier, the starting figure on the right, Share at the foot. */
+.kb-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.kb-supplier {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--text);
+}
+.kb-row .ks-amount {
+  font-size: var(--fs-3);
+}
+.btn.kb-share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  width: 100%;
+}
+.btn.kb-share svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+.prd-input.kb-text {
+  width: 100%;
+  min-height: 8rem;
+  font-family: inherit;
+  /* 16px stops iOS zooming a form field on focus (CLAUDE.md's one px exception). */
+  font-size: 16px;
+  white-space: pre-wrap;
+  resize: vertical;
+}
+.prd-sheet-footer a.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+/* Jira GRW-744 — Inventory, simpler. One action bar (Stock in filled, Wasted and Count quiet), All · To buy at 44px, the quiet things at the
+   foot as links, an item that opens to its amount, and a report that answers first with the rest folded. 344px first; nothing here sets a
+   width that could push the page sideways. */
+.ks-action-main {
+  font-weight: 700;
+}
+.ks-chips .prd-chip {
+  min-height: 44px;
+}
+.ks-meta.ks-meta-warn {
+  color: var(--danger);
+}
+.ks-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--sp-4);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border);
+}
+.ks-quiet-link {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-deep);
+  font: inherit;
+  font-size: var(--fs-3);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.ks-quiet-link:hover {
+  text-decoration: underline;
+}
+.ks-foot .ks-off-link {
+  margin-left: auto;
+  color: var(--muted);
+  font-weight: 400;
+  text-decoration: underline;
+}
+.ks-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3) 0 var(--sp-2);
+}
+.ks-hero-amount {
+  font-size: var(--fs-10);
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.ks-hero.is-low .ks-hero-amount {
+  color: var(--amber);
+}
+.ks-hero.is-below .ks-hero-amount {
+  color: var(--danger);
+}
+.ks-hero-note {
+  color: var(--muted);
+  font-size: var(--fs-3);
+}
+.ks-price-row {
+  display: flex;
+  gap: var(--sp-2);
+}
+.ks-price-row .prd-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ks-head-edit {
+  justify-self: end;
+}
+.inv-sub-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.fc-verdict {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: 700;
+}
+.fc-verdict.is-ok {
+  color: var(--accent-deep);
+}
+.fc-verdict.is-warn {
+  color: var(--amber);
+}
+.fc-verdict.is-bad {
+  color: var(--danger);
+}
+.fc-more {
+  border-top: 1px solid var(--border);
+}
+.fc-more > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--fs-5);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.fc-more > summary::-webkit-details-marker {
+  display: none;
+}
+.fc-more > summary::after {
+  content: '+';
+  margin-left: auto;
+  color: var(--muted);
+  font-weight: 400;
+}
+.fc-more[open] > summary::after {
+  content: '−';
+}
+.fc-more > summary:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+
+/*
+ * QA 2026-11-19 — a kitchen of sixty items. Grouped list (Running low, then each group A–Z) with a visible "Low" word and a chevron; the
+ * opening card folded to one line; an item's own Count · Stock in · Wasted; Reports' partial verdict and the items to price. Tokens only.
+ */
+.ks-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.ks-group + .ks-group {
+  margin-top: var(--sp-2);
+}
+.ks-group-head {
+  margin: 0;
+  padding: 0 var(--sp-1);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--muted);
+}
+.ks-group-head.is-low {
+  color: var(--amber-ink);
+}
+.ks-group-n {
+  font-weight: 400;
+}
+.ks-row-btn .ks-row-chevron {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  color: var(--muted);
+}
+.ks-row-btn .ks-amount {
+  margin-left: auto;
+}
+.ks-low-tag {
+  display: inline-block;
+  margin-left: var(--sp-2);
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-sm);
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  vertical-align: 0.1em;
+}
+.ks-opening-short {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  font-size: var(--fs-3);
+}
+.ks-item-actions {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+.ks-item-action {
+  min-height: 44px;
+  padding-left: var(--sp-2);
+  padding-right: var(--sp-2);
+}
+.ks-count-one {
+  margin-bottom: var(--sp-2);
+}
+.ks-count-one .ks-quiet-link {
+  align-self: flex-start;
+}
+.ks-price-missing {
+  font-size: var(--fs-4);
+  color: var(--amber-ink);
+}
+.fc-verdict.is-partial {
+  color: var(--text);
+  font-size: var(--fs-5);
+}
+.fc-item-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.fc-item-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--amber);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--amber-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/*
+ * Owner, 2026-11-20 — the recipe's Add ingredient is a search box with a list under it (IngredientPicker.tsx), the
+ * walk-in sheet's client search in shape: floating over what follows, scrolling inside itself.
+ */
+.rc-combo {
+  position: relative;
+}
+
+.rc-search {
+  min-height: 2.75rem;
+}
+
+.rc-search .search-input {
+  font-size: 16px; /* the one px size allowed: stops iOS zooming the field on focus */
+}
+
+.rc-dropdown {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  max-height: 16rem;
+  margin: 0;
+  padding: 0.25rem 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 28px rgba(9, 20, 15, 0.16);
+}
+
+.rc-opt {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 2.75rem;
+  padding: 0.625rem var(--sp-3);
+  cursor: pointer;
+}
+
+.rc-opt.is-active {
+  background: var(--accent-soft);
+}
+
+.rc-opt-name {
+  color: var(--text);
+  font-size: var(--fs-3);
+  font-weight: 500;
+}
+
+.rc-opt-cat {
+  flex: none;
+  color: var(--muted);
+  font-size: var(--fs-1);
+}
+
+.rc-empty {
+  padding: 0.75rem var(--sp-3);
+  color: var(--muted);
+  font-size: var(--fs-3);
+}
+
+/* A phone: the sheet is a bottom sheet and the box sits near its foot, so the list is drawn in the flow under it (and
+   scrolled into view) rather than floating past the screen's edge. */
+@media (max-width: 860px) {
+  .rc-dropdown {
+    position: static;
+    max-height: 15rem;
+    margin-top: 0.25rem;
+    box-shadow: none;
+  }
+}
