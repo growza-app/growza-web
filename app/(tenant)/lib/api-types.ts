@@ -2189,6 +2189,8 @@ export interface CounterReportPage {
     byHour: Array<{ hour: number; valueMinor: string }>;
     peak: { fromHour: number; toHour: number; valueMinor: string } | null;
     quietestDay: { dow: number; valueMinor: string } | null;
+    /** Jira GRW-755 — some bill in the period was paid before payment times were kept: its hour is when it was rung up. Absent from an older API. */
+    estimatedTimes?: boolean;
   };
   changed: { up: CounterMover[]; down: CounterMover[] };
   strategy?: CounterStrategy;

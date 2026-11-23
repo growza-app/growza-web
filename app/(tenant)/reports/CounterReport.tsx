@@ -487,6 +487,8 @@ export function CounterCards({ data, openHours = null }: { data: CounterReportPa
               {t('busy.peak', { from: hourName(busy.peak.fromHour), to: hourName(busy.peak.toHour) })}
             </p>
             {outsideMinor > 0 ? <p className="cr-aside">{t('busy.outsideHours', { amount: money(outsideMinor) })}</p> : null}
+            {/* Jira GRW-755 — the hours are when the money came in; a bill from before that was kept is placed at the time it was rung up. */}
+            {busy.estimatedTimes ? <p className="cr-aside">{t('busy.estimated')}</p> : null}
           </>
         )}
         {busy.quietestDay ? (
