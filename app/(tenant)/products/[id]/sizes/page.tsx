@@ -8,6 +8,7 @@ import { LoadErrorBanner } from '../../../components/LoadErrorBanner';
 import { loadErrorKind } from '../../../lib/load-error';
 import { screenTitle } from '../../../lib/page-title';
 import { guardScreen } from '../../../lib/screen-guard';
+import { PortionsList } from './PortionsList';
 import { SizesGrid } from './SizesGrid';
 
 export const dynamic = 'force-dynamic';
@@ -27,11 +28,17 @@ export default async function ProductSizesPage({ params }: { params: Promise<{ i
   const t = await getTranslations('products.sizes');
 
   let sizesOn = false;
-  let shop = false;
+  let marketplaceCodes = false;
+  let counted = true;
   try {
     const me = await api.me();
     sizesOn = me.capabilities?.sizes === true;
-    shop = me.surface === 'shop';
+    // Jira GRW-618 — a size's marketplace codes are for a shop that sells on a marketplace. Being a shop is not
+    // enough: a kitchen is a shop too, and with marketplaces off the button led to codes for a market it never sells on.
+    marketplaceCodes = me.surface === 'shop' && me.capabilities?.marketplaces !== false;
+    // What the grid asks for: a business that counts what it sells types how many of each; one that does not (a
+    // kitchen) sees names and prices only. The business's own switch, never its vertical.
+    counted = me.capabilities?.stockCounted !== false;
   } catch {
     // A /me that cannot answer is left to the load below to report.
     sizesOn = true;
@@ -40,10 +47,13 @@ export default async function ProductSizesPage({ params }: { params: Promise<{ i
 
   try {
     const sizes = await api.productSizes(id);
+    // A business that does not count gets the simple portions list (owner, 2026-11-23). A dish that somehow has a second option
+    // (a colour) keeps the grid, which is the only screen that can show it.
+    const portions = !counted && sizes.axes.length <= 1;
     return (
       <>
         <PageHeader
-          title={t('title')}
+          title={t(portions ? 'portionsTitle' : 'title')}
           subtitle={sizes.product.name}
           mobileSubtitle
           actions={
@@ -53,7 +63,7 @@ export default async function ProductSizesPage({ params }: { params: Promise<{ i
                 {t('backToProduct')}
               </AppLink>
               {/* Jira GRW-618 — the marketplace codes that point at these sizes. */}
-              {shop ? (
+              {marketplaceCodes ? (
                 <AppLink className="btn btn-ghost" href={`/products/${id}/codes`}>
                   {t('codesLink')}
                 </AppLink>
@@ -62,7 +72,7 @@ export default async function ProductSizesPage({ params }: { params: Promise<{ i
           }
         />
         <div className="page-body">
-          <SizesGrid key={sizes.version} sizes={sizes} />
+          {portions ? <PortionsList key={sizes.version} sizes={sizes} /> : <SizesGrid key={sizes.version} sizes={sizes} counted={counted} />}
         </div>
       </>
     );
