@@ -12,6 +12,8 @@ import type {
   RestaurantItemsPage,
   RestaurantOverviewPage,
   RestaurantSalesPage,
+  RestaurantTipsPage,
+  TipCard,
 } from '../lib/api-types';
 import { formatMoney, intlLocale } from '../lib/format';
 import { useBranch } from '../components/BranchProvider';
@@ -31,8 +33,8 @@ import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } fr
  * The API sends figures only; every word is written here, in English or Hindi.
  */
 
-export type RestaurantTab = 'overview' | 'sales' | 'items' | 'inventory';
-export const RESTAURANT_TABS: readonly RestaurantTab[] = ['overview', 'sales', 'items', 'inventory'];
+export type RestaurantTab = 'overview' | 'sales' | 'items' | 'inventory' | 'tips';
+export const RESTAURANT_TABS: readonly RestaurantTab[] = ['overview', 'sales', 'items', 'inventory', 'tips'];
 
 type Money = (minor: number | null) => string;
 
@@ -310,6 +312,91 @@ export function InventoryTab({ data }: { data: FoodCostReportPage | 'too_long' |
   );
 }
 
+/* ───────────────────────────── Tips ───────────────────────────── */
+
+/** Where a tip's "Open" goes: the tab whose figures it is about. */
+const TIP_TAB: Record<TipCard['rule'], RestaurantTab> = { sales_change: 'overview', busy_shift: 'sales', dish_move: 'items', cancelled: 'items' };
+
+/**
+ * Jira GRW-759 — at most three tips, each four short lines: what we saw, the numbers (both weeks), one thing to try, how
+ * sure we are. A "why" line only when the numbers alone do not say it. Nothing at all to say: one line.
+ */
+export function TipsTab({ data, onOpen }: { data: RestaurantTipsPage; onOpen?: (tab: RestaurantTab) => void }) {
+  const t = useTranslations('restaurantReports.tips');
+  const tabs = useTranslations('restaurantReports.tabs');
+  const locale = useLocale();
+  const money: Money = (m) => rupees(m, locale);
+  const pct = (v: number) => Math.round(Math.abs(v));
+  if (data.tips.length === 0) {
+    return <p className="rr-empty">{data.bills < data.minBills ? t('notEnough', { n: data.minBills }) : t('normal')}</p>;
+  }
+  const day = new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const asDay = (iso: string) => day.format(new Date(`${iso}T00:00:00Z`));
+  const w = data.tips[0]!.windows;
+  const card = (tip: TipCard) => {
+    const p = tip.payload;
+    if (p.rule === 'sales_change') {
+      const sameSpend = p.previousAverageBill > 0 && Math.abs(p.averageBill - p.previousAverageBill) / p.previousAverageBill <= 0.05;
+      return {
+        saw: t(p.pct >= 0 ? 'salesUp' : 'salesDown', { pct: pct(p.pct) }),
+        numbers: t('salesNumbers', { now: money(p.sales), before: money(p.previousSales), bills: p.bills, prevBills: p.previousBills }),
+        why: sameSpend && p.bills !== p.previousBills ? t(p.bills < p.previousBills ? 'fewerPeople' : 'morePeople') : null,
+        tryThis: t(p.pct >= 0 ? 'salesTryUp' : 'salesTryDown'),
+      };
+    }
+    if (p.rule === 'busy_shift') {
+      return {
+        saw: t(p.pct >= 0 ? 'busyUp' : 'busyDown', { block: t(`block.${p.block}`), pct: pct(p.pct) }),
+        numbers: t('busyNumbers', { now: money(p.sales), before: money(p.previousSales) }),
+        why: null,
+        tryThis: t('busyTry'),
+      };
+    }
+    if (p.rule === 'dish_move') {
+      return {
+        saw: t(p.pct >= 0 ? 'dishUp' : 'dishDown', { name: p.name }),
+        numbers: t('dishNumbers', { qty: p.qty, prevQty: p.previousQty, now: money(p.sales), before: money(p.previousSales) }),
+        why: null,
+        tryThis: t('dishTry', { name: p.name }),
+      };
+    }
+    return {
+      saw: t('cancelledTitle', { n: p.qty }),
+      numbers: [t('cancelledNumbers', { amount: money(p.minor), pct: Math.round(p.pctOfSales) }), p.topReason ? t('cancelledReason', { reason: p.topReason, n: p.topReasonQty }) : null].filter(Boolean).join(' '),
+      why: null,
+      tryThis: t('cancelledTry'),
+    };
+  };
+  const when = data.builtAt ? new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(data.builtAt)) : '';
+  return (
+    <>
+      <p className="rr-more rr-tip-window">{t('window', { from: asDay(w.from), to: asDay(w.to) })}</p>
+      {data.stale ? <p className="rr-more">{t('stale', { when })}</p> : null}
+      <ol className="rr-tips">
+        {data.tips.map((tip) => {
+          const c = card(tip);
+          return (
+            <li key={tip.rule} className="cr-card rr-tip">
+              <p className="rr-tip-saw">{c.saw}</p>
+              <p className="rr-tip-numbers">{c.numbers}</p>
+              {c.why ? <p className="rr-tip-why">{c.why}</p> : null}
+              <p className="rr-tip-try">{c.tryThis}</p>
+              <div className="rr-tip-foot">
+                <span className="rr-tip-sure">{t(`sure.${tip.sure}`, { n: tip.bills })}</span>
+                {onOpen ? (
+                  <button type="button" className="btn btn-ghost rr-tip-open" onClick={() => onOpen(TIP_TAB[tip.rule])}>
+                    {t('open')} · {tabs(TIP_TAB[tip.rule])}
+                  </button>
+                ) : null}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </>
+  );
+}
+
 /* ───────────────────────────── The screen ───────────────────────────── */
 
 export function RestaurantReports({ initialTab = 'overview' }: { initialTab?: RestaurantTab }) {
@@ -338,7 +425,8 @@ export function RestaurantReports({ initialTab = 'overview' }: { initialTab?: Re
     const q = { from: dates.fromISO, to: dates.toISO, location: branch || undefined };
     try {
       let res: unknown;
-      if (tab === 'inventory') {
+      if (tab === 'tips') res = await api.restaurantReport<RestaurantTipsPage>('tips', q);
+      else if (tab === 'inventory') {
         const days = Math.round((Date.parse(dates.toISO) - Date.parse(dates.fromISO)) / 86_400_000) + 1;
         res = days > 92 ? 'too_long' : await api.foodCostReport(q).catch(() => 'failed' as const);
       } else res = await api.restaurantReport(tab, q);
@@ -388,7 +476,8 @@ export function RestaurantReports({ initialTab = 'overview' }: { initialTab?: Re
           </button>
         ))}
       </nav>
-      <div className="cr-toolbar">
+      {/* Tips are always the last 7 finished days against the 7 before: no dates to pick. */}
+      <div className="cr-toolbar" hidden={tab === 'tips'}>
         <ReportDates from={dates.fromISO} to={dates.toISO} today={todayISO} labels={{ group: t('rangeLabel'), from: t('from'), to: t('to') }} onChange={changeDates} />
       </div>
       {failed ? (
@@ -406,6 +495,8 @@ export function RestaurantReports({ initialTab = 'overview' }: { initialTab?: Re
         <SalesTab data={data as RestaurantSalesPage} />
       ) : tab === 'items' ? (
         <ItemsTab data={data as RestaurantItemsPage} cancelled={cancelled} onOpenCancelled={() => void openCancelled()} />
+      ) : tab === 'tips' ? (
+        <TipsTab data={data as RestaurantTipsPage} onOpen={choose} />
       ) : (
         <InventoryTab data={data as FoodCostReportPage | 'too_long' | 'failed'} />
       )}

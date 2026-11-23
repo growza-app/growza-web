@@ -1122,7 +1122,7 @@ export const api = {
   counterReport: (q: { range: ReportRangeKey; location?: string | null; from?: string; to?: string }) =>
     get<CounterReportPage>(`/api/v1/reports/counter?${sellersParams({ range: q.range, location: q.location ?? undefined, from: q.from, to: q.to })}`),
   /** Jira GRW-758 — the restaurant's Reports tabs, over two dates (inclusive) and a branch. */
-  restaurantReport: <T>(tab: 'overview' | 'sales' | 'items' | 'cancelled', q: { from: string; to: string; location?: string | null }) =>
+  restaurantReport: <T>(tab: 'overview' | 'sales' | 'items' | 'cancelled' | 'tips', q: { from: string; to: string; location?: string | null }) =>
     get<T>(`/api/v1/reports/restaurant/${tab}?${new URLSearchParams({ range: 'custom', from: q.from, to: q.to, ...(q.location ? { location: q.location } : {}) }).toString()}`),
   /** Owner, 2026-11-14 — a counter business's profit, discounts and payments, over the same range as the counter report. */
   profitReport: (q: MoneyReportQuery) => get<ProfitReportPage>(`/api/v1/reports/profit?${moneyParams(q)}`),

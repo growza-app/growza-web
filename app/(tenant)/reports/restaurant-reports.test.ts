@@ -4,8 +4,8 @@ import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it } from 'vitest';
 import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
-import type { RestaurantItemsPage, RestaurantOverviewPage, RestaurantSalesPage } from '../lib/api-types';
-import { ItemsTab, OverviewTab, SalesTab } from './RestaurantReports';
+import type { RestaurantItemsPage, RestaurantOverviewPage, RestaurantSalesPage, RestaurantTipsPage } from '../lib/api-types';
+import { ItemsTab, OverviewTab, SalesTab, TipsTab } from './RestaurantReports';
 
 /**
  * Jira GRW-758 — the restaurant's Reports tabs, against the owner's rule of 2026-11-24: "very clean and precise, not too
@@ -166,5 +166,61 @@ describe('Hindi', () => {
 describe('plain words', () => {
   it('never says net, gross, margin, KPI, variance or insight', () => {
     expect(JSON.stringify(en.restaurantReports)).not.toMatch(/\b(net|gross|margin|kpi|variance|insight)\b/i);
+  });
+});
+
+describe('Jira GRW-759 — Tips', () => {
+  const windows = { from: '2026-11-17', to: '2026-11-23', previousFrom: '2026-11-10', previousTo: '2026-11-16' };
+  const tips: RestaurantTipsPage = {
+    bills: 930,
+    minBills: 20,
+    builtAt: '2026-11-23T21:40:00Z',
+    stale: false,
+    tips: [
+      { rule: 'sales_change', effect: 6_500_000, sure: 'very', bills: 1_990, windows,
+        payload: { rule: 'sales_change', sales: 41_000_000, previousSales: 47_500_000, bills: 930, previousBills: 1_060, averageBill: 44_086, previousAverageBill: 44_811, pct: -13.7 } },
+      { rule: 'cancelled', effect: 598_000, sure: 'very', bills: 930, windows,
+        payload: { rule: 'cancelled', qty: 23, minor: 598_000, pctOfSales: 1.5, topReason: 'Wrong order', topReasonQty: 14 } },
+      { rule: 'dish_move', effect: 150_000, sure: 'fairly', bills: 60, windows,
+        payload: { rule: 'dish_move', name: 'Lassi', qty: 5, previousQty: 20, sales: 50_000, previousSales: 200_000, pct: -75 } },
+    ],
+  };
+
+  it('AC-01 — sales went down 14%: both weeks, the bills, why, one thing to try, how sure', () => {
+    const out = text(render('en', createElement(TipsTab, { data: tips })));
+    expect(out).toContain('Sales went down 14%.');
+    expect(out).toContain('This week ₹4,10,000 from 930 bills. The week before ₹4,75,000 from 1060 bills.');
+    expect(out).toContain('Fewer people came; each spent about the same.');
+    expect(out).toContain('Look at these days in Orders.');
+    expect(out).toContain('Very sure (1990 bills)');
+  });
+
+  it('cancelled and dish tips say their numbers and nothing more', () => {
+    const out = text(render('en', createElement(TipsTab, { data: tips })));
+    expect(out).toContain('23 dishes were cancelled. ₹5,980 at menu price — 2% of sales. Most said: “Wrong order” (14).');
+    expect(out).toContain('Lassi is selling less. This week 5 plates, ₹500. The week before 20 plates, ₹2,000.');
+    expect(out).toContain('Fairly sure (60 bills)');
+  });
+
+  it('at most three, and one line when there is nothing to say', () => {
+    const html = render('en', createElement(TipsTab, { data: tips }));
+    expect(count(html, 'cr-card rr-tip')).toBe(3);
+    expect(text(render('en', createElement(TipsTab, { data: { ...tips, tips: [] } })))).toBe('All normal this week.');
+    expect(text(render('en', createElement(TipsTab, { data: { ...tips, tips: [], bills: 12 } })))).toBe('Not enough sales yet. Tips start after about 20 bills a week.');
+  });
+
+  it('AC-04 — tips from an earlier night say so', () => {
+    expect(text(render('en', createElement(TipsTab, { data: { ...tips, stale: true } })))).toContain('tips are not ready yet.');
+  });
+
+  it('in Hindi, every sentence', () => {
+    const out = text(render('hi', createElement(TipsTab, { data: tips })));
+    expect(out).toMatch(DEVANAGARI);
+    expect(out).toContain('बिक्री 14% घटी।');
+    for (const english of ['Sales went', 'This week', 'Very sure', 'dishes were cancelled']) expect(out).not.toContain(english);
+  });
+
+  it('never tells the owner what they must do, and never says "because"', () => {
+    expect(JSON.stringify(en.restaurantReports.tips)).not.toMatch(/\b(must|should|because)\b/i);
   });
 });

@@ -3061,7 +3061,8 @@
       "overview": "Overview",
       "sales": "Sales",
       "items": "Items",
-      "inventory": "Inventory"
+      "inventory": "Inventory",
+      "tips": "Tips"
     },
     "rangeLabel": "Dates",
     "from": "From",
@@ -3127,6 +3128,42 @@
       "notEnough": "Add recipes to more dishes to see food cost.",
       "tooLong": "Food cost shows up to 3 months. Pick fewer days.",
       "open": "Open Inventory reports"
+    },
+    "tips": {
+      "window": "{from} – {to}, against the 7 days before",
+      "normal": "All normal this week.",
+      "notEnough": "Not enough sales yet. Tips start after about {n} bills a week.",
+      "stale": "These are from {when}. Today's tips are not ready yet.",
+      "sure": {
+        "very": "Very sure ({n} bills)",
+        "fairly": "Fairly sure ({n} bills)"
+      },
+      "salesUp": "Sales went up {pct}%.",
+      "salesDown": "Sales went down {pct}%.",
+      "salesNumbers": "This week {now} from {bills} bills. The week before {before} from {prevBills} bills.",
+      "fewerPeople": "Fewer people came; each spent about the same.",
+      "morePeople": "More people came; each spent about the same.",
+      "salesTryUp": "See what sold more in Items.",
+      "salesTryDown": "Look at these days in Orders.",
+      "busyUp": "{block} sales went up {pct}%.",
+      "busyDown": "{block} sales went down {pct}%.",
+      "busyNumbers": "This week {now}. The week before {before}.",
+      "busyTry": "See Busy times in Sales.",
+      "block": {
+        "morning": "Morning",
+        "lunch": "Lunch",
+        "evening": "Evening",
+        "late": "Late night"
+      },
+      "dishUp": "{name} is selling more.",
+      "dishDown": "{name} is selling less.",
+      "dishNumbers": "This week {qty} plates, {now}. The week before {prevQty} plates, {before}.",
+      "dishTry": "Check {name} in Items.",
+      "cancelledTitle": "{n} dishes were cancelled.",
+      "cancelledNumbers": "{amount} at menu price — {pct}% of sales.",
+      "cancelledReason": "Most said: “{reason}” ({n}).",
+      "cancelledTry": "Check how orders are taken at busy times.",
+      "open": "Open"
     }
   },
   "counterReport": {

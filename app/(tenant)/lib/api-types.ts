@@ -2899,3 +2899,25 @@ export interface RestaurantCancelledPage {
   window: RestaurantWindow;
   rows: Array<{ name: string; qty: number; minor: number; reason: string | null; by: string | null; at: string; cooked: boolean }>;
 }
+
+/* Jira GRW-759 — the Tips tab. Each card carries the numbers it is based on; the screen writes the words. */
+export type TipPayload =
+  | { rule: 'sales_change'; sales: number; previousSales: number; bills: number; previousBills: number; averageBill: number; previousAverageBill: number; pct: number }
+  | { rule: 'busy_shift'; block: 'morning' | 'lunch' | 'evening' | 'late'; sales: number; previousSales: number; pct: number }
+  | { rule: 'dish_move'; name: string; qty: number; previousQty: number; sales: number; previousSales: number; pct: number }
+  | { rule: 'cancelled'; qty: number; minor: number; pctOfSales: number; topReason: string | null; topReasonQty: number };
+export interface TipCard {
+  rule: TipPayload['rule'];
+  effect: number;
+  sure: 'very' | 'fairly';
+  bills: number;
+  windows: { from: string; to: string; previousFrom: string; previousTo: string };
+  payload: TipPayload;
+}
+export interface RestaurantTipsPage {
+  tips: TipCard[];
+  bills: number;
+  minBills: number;
+  builtAt: string | null;
+  stale: boolean;
+}

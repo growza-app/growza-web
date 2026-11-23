@@ -193,3 +193,55 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Jira GRW-759 — the Tips tab: at most three cards, four short lines each. */
+.rr-tips {
+  display: grid;
+  gap: var(--sp-3);
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rr-tip {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.rr-tip-saw {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rr-tip-numbers,
+.rr-tip-why {
+  margin: 0;
+  font-size: var(--fs-4);
+  color: var(--text);
+}
+
+.rr-tip-try {
+  margin: 0;
+  font-size: var(--fs-4);
+  color: var(--accent-deep);
+}
+
+.rr-tip-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+
+.rr-tip-sure {
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.rr-tip-open {
+  min-height: 44px;
+}
