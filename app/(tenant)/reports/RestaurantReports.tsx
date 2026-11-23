@@ -273,7 +273,7 @@ export function ItemsTab({ data, onOpenCancelled, cancelled }: { data: Restauran
                     <span className="rr-list-name">
                       {r.qty} × {r.name}
                       <span className="rr-list-note">
-                        {[r.reason, r.by, when.format(new Date(r.at)), r.cooked ? t('items.cooked') : null].filter(Boolean).join(' · ')}
+                        {[r.wholeOrder ? t('items.wholeOrder') : r.reason, r.by, when.format(new Date(r.at)), r.cooked ? t('items.cooked') : null].filter(Boolean).join(' · ')}
                       </span>
                     </span>
                     <span className="rr-list-value">{money(r.minor)}</span>
@@ -553,7 +553,9 @@ export function RestaurantReports({ initialTab = 'overview' }: { initialTab?: Re
    * dates and branch. Going back to a tab draws it at once with no request; past its freshness it is drawn at once AND
    * read again quietly. "Try again" always reads afresh. Only the tab on screen is ever read.
    */
-  const who = `${session?.phone ?? ''}|${session?.businessName ?? ''}|${session?.role ?? ''}`;
+  // QA #7 — the branches this person may see are part of who they are here: two businesses never share a cache entry even
+  // when one phone has the same name and role in both.
+  const who = `${session?.phone ?? ''}|${session?.businessName ?? ''}|${session?.role ?? ''}|${branches.map((b) => b.id).sort().join(',')}`;
   const load = useCallback(
     async (force = false) => {
       if (!ready) return;

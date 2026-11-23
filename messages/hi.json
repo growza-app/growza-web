@@ -3116,6 +3116,7 @@
       "cancelled": "रद्द डिश",
       "cancelledValue": "{n} · {amount}",
       "cooked": "बनने के बाद",
+      "wholeOrder": "पूरा ऑर्डर रद्द",
       "top": "सबसे ज़्यादा बिकी",
       "plates": "{n, plural, one {# प्लेट} other {# प्लेट}}",
       "profit": "मुनाफ़ा {amount}",

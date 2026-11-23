@@ -3116,6 +3116,7 @@
       "cancelled": "Cancelled dishes",
       "cancelledValue": "{n} · {amount}",
       "cooked": "after cooking",
+      "wholeOrder": "whole order cancelled",
       "top": "Top dishes",
       "plates": "{n, plural, one {# plate} other {# plates}}",
       "profit": "profit {amount}",

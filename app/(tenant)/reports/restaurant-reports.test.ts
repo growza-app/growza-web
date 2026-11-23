@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { createElement, type ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { NextIntlClientProvider } from 'next-intl';
@@ -320,5 +321,15 @@ describe('Jira GRW-761 — Customers', () => {
 
   it('never says retention, cohort or CLV', () => {
     expect(JSON.stringify(en.restaurantReports.customers)).not.toMatch(/retention|cohort|\bclv\b/i);
+  });
+});
+
+describe('QA 2026-11-24', () => {
+  const source = readFileSync(new URL('./RestaurantReports.tsx', import.meta.url), 'utf8');
+  it('#7 — the cache key carries the branches this person sees, so two businesses never share an entry', () => {
+    expect(source).toMatch(/const who = `[^`]*branches\.map\(\(b\) => b\.id\)/);
+  });
+  it('#2 — a dish from a whole order cancelled says so where a reason would be', () => {
+    expect(source).toContain("r.wholeOrder ? t('items.wholeOrder') : r.reason");
   });
 });

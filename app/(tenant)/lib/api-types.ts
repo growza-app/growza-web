@@ -2898,7 +2898,7 @@ export interface RestaurantItemsPage {
 }
 export interface RestaurantCancelledPage {
   window: RestaurantWindow;
-  rows: Array<{ name: string; qty: number; minor: number; reason: string | null; by: string | null; at: string; cooked: boolean }>;
+  rows: Array<{ name: string; qty: number; minor: number; reason: string | null; by: string | null; at: string; cooked: boolean; wholeOrder?: boolean }>;
 }
 
 /* Jira GRW-759 — the Tips tab. Each card carries the numbers it is based on; the screen writes the words. */
