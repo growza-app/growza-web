@@ -3062,6 +3062,7 @@
       "sales": "बिक्री",
       "items": "डिश",
       "inventory": "इन्वेंटरी",
+      "customers": "मेहमान",
       "tips": "सुझाव"
     },
     "rangeLabel": "तारीख",
@@ -3186,7 +3187,24 @@
         "dropped": "गिर गया",
         "expired": "पुराना हो गया",
         "other": "और कारण"
-      }
+      },
+      "guestsUp": "ज़्यादा मेहमान दोबारा आए: {n}, पहले {before}।",
+      "guestsDown": "कम मेहमान दोबारा आए: {n}, पहले {before}।",
+      "guestsNumbers": "इस हफ़्ते नंबर वाले {guests} मेहमान; पिछले हफ़्ते {prevGuests}।",
+      "guestsTry": "मेहमान में देखें कौन आया।"
+    },
+    "customers": {
+      "cameBack": "दोबारा आए मेहमान",
+      "newGuests": "नए मेहमान",
+      "withNumber": "नंबर वाले बिल",
+      "withNumberValue": "{pct}%",
+      "top": "सबसे ज़्यादा आने वाले",
+      "visits": "{n, plural, one {# बार} other {# बार}}",
+      "hidden": "मेहमान",
+      "lowCapture": "कौन दोबारा आता है, यह देखने के लिए ज़्यादा बिलों पर मेहमान का नंबर डालें।",
+      "lowCaptureFrom": "सिर्फ़ {pct}% बिलों पर नंबर है।",
+      "empty": "अभी नंबर वाला कोई मेहमान नहीं।",
+      "perBranch": "दो ब्रांच में आए मेहमान दोनों में गिने जाते हैं।"
     }
   },
   "counterReport": {

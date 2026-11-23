@@ -3062,6 +3062,7 @@
       "sales": "Sales",
       "items": "Items",
       "inventory": "Inventory",
+      "customers": "Guests",
       "tips": "Tips"
     },
     "rangeLabel": "Dates",
@@ -3186,7 +3187,24 @@
         "dropped": "dropped",
         "expired": "expired",
         "other": "other"
-      }
+      },
+      "guestsUp": "More guests came back: {n}, was {before}.",
+      "guestsDown": "Fewer guests came back: {n}, was {before}.",
+      "guestsNumbers": "{guests} guests with a number this week; {prevGuests} the week before.",
+      "guestsTry": "See who came in Guests."
+    },
+    "customers": {
+      "cameBack": "Guests who came back",
+      "newGuests": "New guests",
+      "withNumber": "Bills with a number",
+      "withNumberValue": "{pct}%",
+      "top": "Top guests",
+      "visits": "{n, plural, one {# visit} other {# visits}}",
+      "hidden": "Guest",
+      "lowCapture": "Add the guest's number on more bills to see who comes back.",
+      "lowCaptureFrom": "Only {pct}% of bills have a number.",
+      "empty": "No guests with a number yet.",
+      "perBranch": "A guest at two branches counts at each."
     }
   },
   "counterReport": {

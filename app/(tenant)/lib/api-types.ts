@@ -2909,7 +2909,8 @@ export type TipPayload =
   /* Jira GRW-760 — the kitchen's cost tips (cost viewers only). Quantities in thousandths of the unit. */
   | { rule: 'dish_cost_up'; name: string; perPlate: number; previousPerPlate: number; qty: number; extraMonthly: number; ingredient: { name: string; unit: string; price: number; previousPrice: number } | null }
   | { rule: 'food_wasted'; wastedMinor: number; usedMinor: number; pct: number; material: string | null; reason: string | null }
-  | { rule: 'count_short'; name: string; unit: string; diffQty: number; expectedQty: number; diffMinor: number; pct: number };
+  | { rule: 'count_short'; name: string; unit: string; diffQty: number; expectedQty: number; diffMinor: number; pct: number }
+  | { rule: 'guests_back'; cameBack: number; previousCameBack: number; guests: number; previousGuests: number; pct: number };
 export interface TipCard {
   rule: TipPayload['rule'];
   needs?: '' | 'cost';
@@ -2927,4 +2928,16 @@ export interface RestaurantTipsPage {
   stale: boolean;
   /** Jira GRW-760 — kitchen stock on, recipes behind under 80% of sales. Absent from an older API. */
   recipesShort?: boolean;
+}
+
+/* Jira GRW-761 — the Customers tab. Names and amounts are null for someone not allowed to see guests. */
+export interface RestaurantCustomersPage {
+  window: RestaurantWindow;
+  cameBack: RestaurantCompared;
+  newGuests: RestaurantCompared;
+  capturePct: number;
+  bills: number;
+  lowCapture: boolean;
+  top: Array<{ customerId: string | null; name: string | null; visits: number; salesMinor: number | null }>;
+  guestCount: number;
 }

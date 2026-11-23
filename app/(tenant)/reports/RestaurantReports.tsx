@@ -8,6 +8,7 @@ import type {
   FoodCostReportPage,
   RestaurantCancelledPage,
   RestaurantCompared,
+  RestaurantCustomersPage,
   RestaurantFreshness,
   RestaurantItemsPage,
   RestaurantOverviewPage,
@@ -313,6 +314,55 @@ export function InventoryTab({ data }: { data: FoodCostReportPage | 'too_long' |
   );
 }
 
+/* ───────────────────────────── Customers ───────────────────────────── */
+
+/**
+ * Jira GRW-761 — guests who came back (the big number), new guests and bills with a number, and the five who came most.
+ * Only guests with a phone number are counted as people. Under 30% of bills with a number, the line asking for numbers
+ * takes the figures' place. Names only for someone allowed to see guests; anyone else sees "Guest".
+ */
+export function CustomersTab({ data }: { data: RestaurantCustomersPage }) {
+  const t = useTranslations('restaurantReports');
+  const locale = useLocale();
+  const money: Money = (m) => rupees(m, locale);
+  if (data.bills === 0) return <p className="rr-empty">{t('empty')}</p>;
+  if (data.lowCapture) {
+    return (
+      <section className="cr-card rr-card" aria-labelledby="rr-guests-h">
+        <h2 className="cr-label" id="rr-guests-h">{t('customers.cameBack')}</h2>
+        <p className="rr-line">{t('customers.lowCapture')}</p>
+        <p className="rr-more">{t('customers.lowCaptureFrom', { pct: data.capturePct })}</p>
+      </section>
+    );
+  }
+  if (data.guestCount === 0) return <p className="rr-empty">{t('customers.empty')}</p>;
+  return (
+    <>
+      <section className="cr-card rr-card" aria-labelledby="rr-guests-h">
+        <h2 className="cr-label" id="rr-guests-h">{t('customers.cameBack')}</h2>
+        <p className="cr-hero">{data.cameBack.value.toLocaleString(intlLocale(locale))}</p>
+        <Delta c={data.cameBack} t={t} />
+        <div className="rr-smalls">
+          <Small label={t('customers.newGuests')} value={data.newGuests.value.toLocaleString(intlLocale(locale))} />
+          <Small label={t('customers.withNumber')} value={t('customers.withNumberValue', { pct: data.capturePct })} />
+        </div>
+      </section>
+      <div className="rr-lists">
+        <List
+          title={t('customers.top')}
+          rows={data.top.map((g, i) => ({
+            key: g.customerId ?? String(i),
+            name: g.name ?? t('customers.hidden'),
+            note: t('customers.visits', { n: g.visits }),
+            value: g.salesMinor === null ? '' : money(g.salesMinor),
+          }))}
+          more={t('customers.perBranch')}
+        />
+      </div>
+    </>
+  );
+}
+
 /* ───────────────────────────── Tips ───────────────────────────── */
 
 /** Where a tip's "Open" goes: the tab whose figures it is about. */
@@ -324,6 +374,7 @@ const TIP_TAB: Record<TipCard['rule'], RestaurantTab> = {
   dish_cost_up: 'inventory',
   food_wasted: 'inventory',
   count_short: 'inventory',
+  guests_back: 'customers',
 };
 const UNITS = ['kg', 'l', 'pcs'] as const;
 const REASONS = ['spoiled', 'dropped', 'expired', 'other'] as const;
@@ -397,6 +448,14 @@ export function TipsTab({ data, onOpen }: { data: RestaurantTipsPage; onOpen?: (
         numbers: [t('wastedNumbers', { pct: Math.round(p.pct) }), p.material ? t('wastedMost', { material: p.material, reason: p.reason ? reasonOf(p.reason) : '—' }) : null].filter(Boolean).join(' '),
         why: null,
         tryThis: t('wastedTry'),
+      };
+    }
+    if (p.rule === 'guests_back') {
+      return {
+        saw: t(p.pct >= 0 ? 'guestsUp' : 'guestsDown', { n: p.cameBack, before: p.previousCameBack }),
+        numbers: t('guestsNumbers', { guests: p.guests, prevGuests: p.previousGuests }),
+        why: null,
+        tryThis: t('guestsTry'),
       };
     }
     if (p.rule === 'count_short') {
@@ -474,6 +533,7 @@ export function RestaurantReports({ initialTab = 'overview' }: { initialTab?: Re
     try {
       let res: unknown;
       if (tab === 'tips') res = await api.restaurantReport<RestaurantTipsPage>('tips', q);
+      else if (tab === 'customers') res = await api.restaurantReport<RestaurantCustomersPage>('customers', q);
       else if (tab === 'inventory') {
         const days = Math.round((Date.parse(dates.toISO) - Date.parse(dates.fromISO)) / 86_400_000) + 1;
         res = days > 92 ? 'too_long' : await api.foodCostReport(q).catch(() => 'failed' as const);
@@ -543,6 +603,8 @@ export function RestaurantReports({ initialTab = 'overview' }: { initialTab?: Re
         <SalesTab data={data as RestaurantSalesPage} />
       ) : tab === 'items' ? (
         <ItemsTab data={data as RestaurantItemsPage} cancelled={cancelled} onOpenCancelled={() => void openCancelled()} />
+      ) : tab === 'customers' ? (
+        <CustomersTab data={data as RestaurantCustomersPage} />
       ) : tab === 'tips' ? (
         <TipsTab data={data as RestaurantTipsPage} onOpen={choose} />
       ) : (

@@ -4,8 +4,8 @@ import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it } from 'vitest';
 import en from '../../../messages/en.json';
 import hi from '../../../messages/hi.json';
-import type { RestaurantItemsPage, RestaurantOverviewPage, RestaurantSalesPage, RestaurantTipsPage } from '../lib/api-types';
-import { ItemsTab, OverviewTab, SalesTab, TipsTab } from './RestaurantReports';
+import type { RestaurantCustomersPage, RestaurantItemsPage, RestaurantOverviewPage, RestaurantSalesPage, RestaurantTipsPage } from '../lib/api-types';
+import { CustomersTab, ItemsTab, OverviewTab, SalesTab, TipsTab } from './RestaurantReports';
 
 /**
  * Jira GRW-758 — the restaurant's Reports tabs, against the owner's rule of 2026-11-24: "very clean and precise, not too
@@ -270,5 +270,55 @@ describe('the server page and the client component', () => {
     expect(page).toContain("import { RESTAURANT_TABS, type RestaurantTab } from './restaurant-tabs';");
     expect(page).toMatch(/import \{ RestaurantReports \} from '\.\/RestaurantReports';/);
     expect(readFileSync(new URL('./restaurant-tabs.ts', import.meta.url), 'utf8')).not.toMatch(/^\s*['"]use client['"]/m);
+  });
+});
+
+describe('Jira GRW-761 — Customers', () => {
+  const cust: RestaurantCustomersPage = {
+    window,
+    cameBack: { value: 68, previous: 52, changePct: 30.8 },
+    newGuests: { value: 112, previous: 96, changePct: 16.7 },
+    capturePct: 64,
+    bills: 280,
+    lowCapture: false,
+    guestCount: 180,
+    top: [
+      { customerId: 'c1', name: 'Asha Verma', visits: 4, salesMinor: 182_000 },
+      { customerId: 'c2', name: 'Bilal Khan', visits: 3, salesMinor: 96_000 },
+    ],
+  };
+
+  it('AC-01 — came back is the big number; new guests and bills with a number beside it; the top guests', () => {
+    const html = render('en', createElement(CustomersTab, { data: cust }));
+    const out = text(html);
+    expect(out).toContain('Guests who came back 68');
+    expect(out).toContain('↑ 31% vs the days before');
+    expect(out).toContain('New guests 112');
+    expect(out).toContain('Bills with a number 64%');
+    expect(out).toContain('Asha Verma 4 visits ₹1,820');
+    expect(count(html, 'rr-small')).toBe(2);
+  });
+
+  it('AC-02 — no names for someone not allowed to see guests', () => {
+    const out = text(render('en', createElement(CustomersTab, { data: { ...cust, top: cust.top.map((g) => ({ ...g, customerId: null, name: null, salesMinor: null })) } })));
+    expect(out).not.toContain('Asha');
+    expect(out).toContain('Guest 4 visits');
+  });
+
+  it('AC-03 — under 30% of bills with a number, the line asking for numbers replaces the figures', () => {
+    const out = text(render('en', createElement(CustomersTab, { data: { ...cust, capturePct: 18, lowCapture: true } })));
+    expect(out).toContain("Add the guest");
+    expect(out).toContain('Only 18% of bills have a number.');
+    expect(out).not.toContain('New guests');
+  });
+
+  it('in Hindi', () => {
+    const out = text(render('hi', createElement(CustomersTab, { data: cust })));
+    expect(out).toContain('दोबारा आए मेहमान 68');
+    expect(out).not.toMatch(/came back|New guests/);
+  });
+
+  it('never says retention, cohort or CLV', () => {
+    expect(JSON.stringify(en.restaurantReports.customers)).not.toMatch(/retention|cohort|\bclv\b/i);
   });
 });
