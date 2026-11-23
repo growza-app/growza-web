@@ -518,7 +518,14 @@ export function RestaurantReports({ initialTab = 'overview' }: { initialTab?: Re
   const tabs = RESTAURANT_TABS.filter((k) => k !== 'inventory' || mayOpen('/inventory/reports'));
   const [tab, setTab] = useState<RestaurantTab>(tabs.includes(initialTab) ? initialTab : 'overview');
   const [dates, setDates] = useState(() => defaultReportRange(todayISO));
-  const [data, setData] = useState<unknown>(null);
+  /*
+   * The data is kept WITH the tab, dates and branch it was read for. Found by the restaurant browser suite: on a tab switch
+   * React draws once with the new tab before the effect clears the old data, and the Sales tab drew the Overview's payload
+   * (no `moneyIn`) and crashed. Data for another key is never drawn — the placeholder is, until this key's arrives.
+   */
+  const key = `${tab}|${dates.fromISO}|${dates.toISO}|${branch}`;
+  const [loaded, setLoaded] = useState<{ key: string; value: unknown } | null>(null);
+  const data = loaded?.key === key ? loaded.value : null;
   const [failed, setFailed] = useState(false);
   const [cancelled, setCancelled] = useState<RestaurantCancelledPage | 'loading' | 'failed' | null>(null);
   const seq = useRef(0);
@@ -527,8 +534,8 @@ export function RestaurantReports({ initialTab = 'overview' }: { initialTab?: Re
     if (!ready) return;
     const mine = ++seq.current;
     setFailed(false);
-    setData(null);
     setCancelled(null);
+    const forKey = key;
     const q = { from: dates.fromISO, to: dates.toISO, location: branch || undefined };
     try {
       let res: unknown;
@@ -538,11 +545,11 @@ export function RestaurantReports({ initialTab = 'overview' }: { initialTab?: Re
         const days = Math.round((Date.parse(dates.toISO) - Date.parse(dates.fromISO)) / 86_400_000) + 1;
         res = days > 92 ? 'too_long' : await api.foodCostReport(q).catch(() => 'failed' as const);
       } else res = await api.restaurantReport(tab, q);
-      if (mine === seq.current) setData(res);
+      if (mine === seq.current) setLoaded({ key: forKey, value: res });
     } catch {
       if (mine === seq.current) setFailed(true);
     }
-  }, [ready, dates.fromISO, dates.toISO, branch, tab]);
+  }, [ready, dates.fromISO, dates.toISO, branch, tab, key]);
   useEffect(() => {
     void load();
   }, [load]);
