@@ -66,9 +66,8 @@ describe('states, who sees it, and the words', () => {
     expect(client).toContain("t('loadError')");
   });
 
-  it('the front desk is sent back to Stock: it is money', () => {
-    expect(page).toContain("role === undefined || role === 'owner' || role === 'manager'");
-    expect(page).toContain("redirect('/stock')");
+  it('is guarded at its own address: who may open it is reports-tabs-follow-role.test.ts (Jira GRW-754)', () => {
+    expect(page).toContain("await guardScreen('/stock/channels');");
   });
 
   it('every word the screen uses exists in English and Hindi, the caveat included (it is in the API sentences)', () => {

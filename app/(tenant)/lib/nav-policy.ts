@@ -53,7 +53,17 @@ const ALWAYS_OPEN: ReadonlySet<string> = new Set(['/help']);
  * every member. The same mapping the API's route table makes, written out for addresses; `@growza-app/shared` carries the routes (1.0.19, not yet in the
  * pin), so this is local until the pin moves.
  */
+/**
+ * Jira GRW-754 — the shop's report screens kept at Stock and Orders addresses. They are money: the owner's and manager's, and a
+ * custom role's when its grid opens Reports — never the fixed front desk's, whom the Orders list itself is open to.
+ */
+export const SHOP_REPORT_SCREENS: readonly string[] = ['/stock/channels', '/stock/sellers', '/orders/returns', '/orders/refunds'];
+const isShopReportScreen = (href: string) => SHOP_REPORT_SCREENS.some((p) => href === p || href.startsWith(`${p}/`));
+
 export const PAGE_OF_HREF: ReadonlyArray<readonly [string, keyof PageGrid]> = [
+  // Jira GRW-754 — the shop's report screens that live under Stock and Orders are Reports': they read the money, as their API
+  // routes do (route-pages.ts lists them under `reports`). Most specific first, so `/stock` and `/orders` do not claim them.
+  ...SHOP_REPORT_SCREENS.map((href) => [href, 'reports'] as const),
   ['/appointments', 'bookings'],
   ['/availability', 'bookings'],
   ['/orders', 'bookings'],
@@ -211,6 +221,8 @@ export function canSee(href: string, role?: MemberRole | null, reportTabs?: read
   if (!areas?.kitchenStock && role !== 'owner' && isInventoryRoute(href.split('?')[0]!)) return false;
   // Jira GRW-74 — a member who holds a role is offered what the role grants, and nothing is asked of the fixed role they work like.
   if (areas?.pages) return (live || isSetupDestination(href)) && gridCanSee(href, areas.pages);
+  // Jira GRW-754 — a fixed role: the report screens are the owner's and manager's (the API refuses anyone else).
+  if (isShopReportScreen(href.split('?')[0]!)) return (live || isSetupDestination(href)) && (role == null || role === 'owner' || role === 'manager');
   /*
    * The shop's own screens (Jira GRW-608). Neither is a route @growza-app/shared lists for any role, so the answer is
    * given here: the owner and manager open both, and no one else opens Stock. `areaAllows` above already refused a

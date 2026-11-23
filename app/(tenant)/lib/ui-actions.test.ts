@@ -560,8 +560,11 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     '/inventory': /await guardScreen\('\/inventory'\);/,
     // Owner, 2026-11-20 — Recipes moved to the Menu; the old address only sends you there, gated as the Menu is.
     '/inventory/recipes': /await guardScreen\('\/stock'\);/,
-    '/stock/channels': /await guardScreen\('\/stock'\);/,
-    '/stock/sellers': /await guardScreen\('\/stock'\);/,
+    // Jira GRW-754 — each report screen asks about its own address: Reports in the grid, owner and manager for a fixed role.
+    '/stock/channels': /await guardScreen\('\/stock\/channels'\);/,
+    '/stock/sellers': /await guardScreen\('\/stock\/sellers'\);/,
+    '/orders/returns': /await guardScreen\('\/orders\/returns'\);/,
+    '/orders/refunds': /await guardScreen\('\/orders\/refunds'\);/,
     '/stock': /<ProductsScreen[^>]*guard="\/stock"/,
     '/sales': /<SalesScreen[^>]*guard="\/sales"/,
     // Jira GRW-614 — Orders is its own screen, guarded at the page like the rest.

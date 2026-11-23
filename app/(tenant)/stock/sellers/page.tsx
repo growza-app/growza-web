@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { api } from '../../lib/api';
 import { PageHeader } from '../../components/PageHeader';
@@ -17,19 +16,15 @@ export const metadata = screenTitle('Top sellers');
  * and filtered on the server and re-read when a filter changes).
  */
 export default async function SellersPage() {
-  await guardScreen('/stock');
+  // Jira GRW-754 — who may open it is the role's Reports (grid), or owner and manager for a fixed role: one rule, shared with the tab bar.
+  await guardScreen('/stock/sellers');
   const t = await getTranslations('products.sellers');
-  let allowed = true;
   let timezone = 'Asia/Kolkata';
   try {
-    const me = await api.me();
-    timezone = me.tenant?.timezone ?? timezone;
-    const role = me.member?.role;
-    allowed = role === undefined || role === 'owner' || role === 'manager';
+    timezone = (await api.me()).tenant?.timezone ?? timezone;
   } catch {
-    allowed = true;
+    // The shop's zone is a nicety for the dates; the screen still works in India's.
   }
-  if (!allowed) redirect('/stock');
   return (
     <>
       <PageHeader title={t('title')} />
