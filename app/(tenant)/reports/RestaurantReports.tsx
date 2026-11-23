@@ -153,7 +153,14 @@ export function OverviewTab({ data }: { data: RestaurantOverviewPage }) {
             <Small
               label={t('overview.profit')}
               value={money(data.profit.profitMinor)}
-              sub={data.profit.uncostedSalesMinor > 0 ? t('overview.profitPart', { amount: money(data.profit.uncostedSalesMinor) }) : null}
+              sub={
+                [
+                  data.profit.uncostedSalesMinor > 0 ? t('overview.profitPart', { amount: money(data.profit.uncostedSalesMinor) }) : null,
+                  (data.profit.thrownMinor ?? 0) > 0 ? t('overview.thrown', { amount: money(data.profit.thrownMinor!) }) : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ') || null
+              }
             />
           ) : null}
         </div>
@@ -241,7 +248,17 @@ export function ItemsTab({ data, onOpenCancelled, cancelled }: { data: Restauran
         {data.cancelled.qty > 0 ? (
           <details className="rr-cancelled" onToggle={(e) => (e.currentTarget.open ? onOpenCancelled?.() : undefined)}>
             <summary>
-              <Small label={t('items.cancelled')} value={t('items.cancelledValue', { n: data.cancelled.qty, amount: money(data.cancelled.minor) })} />
+              <Small
+                label={t('items.cancelled')}
+                value={t('items.cancelledValue', { n: data.cancelled.qty, amount: money(data.cancelled.minor) })}
+                sub={
+                  data.cancelled.thrownQty === 0
+                    ? null
+                    : data.cancelled.thrownMinor !== undefined && data.cancelled.thrownMinor > 0
+                      ? t('items.thrownCost', { n: data.cancelled.thrownQty, amount: money(data.cancelled.thrownMinor) })
+                      : t('items.thrown', { n: data.cancelled.thrownQty })
+                }
+              />
               <span className="rr-see">{t('seeAll')}</span>
             </summary>
             {cancelled === 'loading' || cancelled === undefined || cancelled === null ? (

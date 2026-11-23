@@ -3085,7 +3085,8 @@
       "average": "Average bill",
       "profit": "Profit",
       "profitPart": "Not counted: {amount} of dishes with no cost price",
-      "byDay": "Sales by day"
+      "byDay": "Sales by day",
+      "thrown": "Includes {amount} of food thrown away"
     },
     "sales": {
       "moneyIn": "Money in",
@@ -3120,7 +3121,9 @@
       "profit": "profit {amount}",
       "moreSold": "and {n} more dishes sold",
       "notSelling": "Not selling",
-      "moreNotSelling": "and {n} more"
+      "moreNotSelling": "and {n} more",
+      "thrown": "{n} after cooking",
+      "thrownCost": "{n} after cooking · {amount} of food"
     },
     "inventory": {
       "foodCost": "Food cost",

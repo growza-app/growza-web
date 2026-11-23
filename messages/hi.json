@@ -3085,7 +3085,8 @@
       "average": "औसत बिल",
       "profit": "मुनाफ़ा",
       "profitPart": "नहीं गिना: {amount} की डिश जिनकी लागत नहीं डाली",
-      "byDay": "दिन के हिसाब से बिक्री"
+      "byDay": "दिन के हिसाब से बिक्री",
+      "thrown": "इसमें {amount} का फेंका गया खाना शामिल"
     },
     "sales": {
       "moneyIn": "आया पैसा",
@@ -3120,7 +3121,9 @@
       "profit": "मुनाफ़ा {amount}",
       "moreSold": "और {n} डिश बिकीं",
       "notSelling": "नहीं बिक रही",
-      "moreNotSelling": "और {n}"
+      "moreNotSelling": "और {n}",
+      "thrown": "{n} बनने के बाद",
+      "thrownCost": "{n} बनने के बाद · {amount} का खाना"
     },
     "inventory": {
       "foodCost": "खाने की लागत",

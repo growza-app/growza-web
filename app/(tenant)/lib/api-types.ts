@@ -2859,7 +2859,7 @@ export interface RestaurantOverviewPage {
   bills: RestaurantCompared;
   averageBillMinor: { value: number | null; previous: number | null };
   /** Absent for anyone who may not see what dishes cost. */
-  profit: { profitMinor: number; marginPct: number | null; uncostedSalesMinor: number } | null;
+  profit: { profitMinor: number; marginPct: number | null; uncostedSalesMinor: number; thrownMinor?: number } | null;
   byDay: Array<{ day: string; salesMinor: number }>;
   freshness: RestaurantFreshness;
 }
@@ -2889,7 +2889,8 @@ export interface RestaurantDish {
 export interface RestaurantItemsPage {
   window: RestaurantWindow;
   dishesSold: RestaurantCompared;
-  cancelled: { qty: number; minor: number; thrownQty: number };
+  /** `thrownMinor`: what the ones cooked before they were taken off cost to make — cost viewers only. */
+  cancelled: { qty: number; minor: number; thrownQty: number; thrownMinor?: number };
   top: RestaurantDish[];
   sellingCount: number;
   notSelling: { names: string[]; count: number };

@@ -128,7 +128,7 @@ describe('Items', () => {
   it('Dishes sold, the cancelled figure behind "See all", the top five with profit', () => {
     expect(out).toContain('Dishes sold 1,740');
     expect(out).toContain('↑ 24% vs the days before');
-    expect(out).toContain('Cancelled dishes 23 · ₹5,980 See all');
+    expect(out).toContain('Cancelled dishes 23 · ₹5,980 9 after cooking See all');
     expect(out).toContain('Butter Chicken 300 plates · profit ₹54,000 ₹1,02,000');
     // Gulab Jamun has no cost price: no profit said, never ₹0.
     expect(out).toContain('Gulab Jamun 200 plates ₹18,000');
