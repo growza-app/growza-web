@@ -34,7 +34,8 @@ describe('the one-row POS bar', () => {
 
   it('holds the switch, the Kitchen as its own icon and a ⋮ with Return — no Sell / Pickup / Return tabs', () => {
     const bar = client.slice(client.indexOf(') : tablesBar ? ('), client.indexOf(') : fullScreen ? ('));
-    expect(bar).toContain('<div className="pos-bar-typeslot" ref={setTypeSlot} />');
+    // Not offered while items are added to an order (owner, 2026-11-23): its type is settled.
+    expect(bar).toContain('<div className="pos-bar-typeslot" ref={setTypeSlot} hidden={addingToToken !== null} />');
     expect(bar).toContain('className="btn btn-ghost pos-bar-kitchen"');
     expect(bar).toContain("...(canReturn ? [{ label: t('returnBill'), onSelect: () => void openReturn() }] : []),");
     // Owner, 2026-11-23 — the ⋮ also holds Printer on a phone and "Sound when paid".

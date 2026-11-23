@@ -20,6 +20,11 @@ describe('who gets the tabs (AC-02, AC-03 · BR-01)', () => {
     expect(flow).toContain('{typesHere ? (atTable ? tableStrip : orderHead) : fromRow}');
   });
 
+  it('a till with no Dine-in opens on Takeaway — but only once the branch is known, never on the first branch by default', () => {
+    expect(flow).toContain('const branchKnown = Boolean(token || visit) || branch.ready;');
+    expect(flow).toContain("if (branchKnown && typesHere && !tablesHere && orderTab === 'dine_in') setOrderTab('takeaway');");
+  });
+
   it('Delivery only where the business has a delivery app — absent, not greyed out', () => {
     expect(flow).toContain("const typeTabs: Array<'dine_in' | 'takeaway' | 'delivery'> = [...(tablesHere ? (['dine_in'] as const) : []), 'takeaway', ...(apps.length > 0 ? (['delivery'] as const) : [])];");
   });

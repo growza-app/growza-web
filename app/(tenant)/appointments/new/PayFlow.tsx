@@ -346,10 +346,12 @@ export function PayFlow({
   // Owner, 17 Nov 2026 — at a restaurant the till's Queue is called Pickup (PosClient's `qk`).
   const qk = <K extends string>(key: K): K | `${K}Pickup` => (typesHere ? `${key}Pickup` : key);
   // No Dine-in where the branch does not seat its guests: a till that would open on it (the default, or ?type=dine_in) opens on Takeaway.
+  // Only once the branch is known (`branch.ready`): before that `location` is the first branch, which may not seat guests when the chosen one does.
+  const branchKnown = Boolean(token || visit) || branch.ready;
   useEffect(() => {
-    if (typesHere && !tablesHere && orderTab === 'dine_in') setOrderTab('takeaway');
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- setOrderTab is a plain function remade every render; the three values decide.
-  }, [typesHere, tablesHere, orderTab]);
+    if (branchKnown && typesHere && !tablesHere && orderTab === 'dine_in') setOrderTab('takeaway');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setOrderTab is a plain function remade every render; the four values decide.
+  }, [branchKnown, typesHere, tablesHere, orderTab]);
   // Jira GRW-716 — this till's letter while online, and whatever it kept offline sent when the connection is back.
   const tillBranches = useMemo(() => (session?.branches ?? []).map((b) => b.id), [session?.branches]);
   useOfflineTill(productsOnly ? location : null, tillBranches);
@@ -803,6 +805,16 @@ export function PayFlow({
     afterOffersMinor,
   );
   useEffect(() => setPointsAsked(discountMinor), [discountMinor]);
+  /*
+   * Owner, 2026-11-23 — on a laptop the bill panel scrolls under its pinned foot (how they paid, Complete sale), and
+   * "Use 31 points" sat behind it: a guest's points were on offer and nobody could see them. When a guest's points
+   * become spendable the panel brings the switch into view, above the foot (`scroll-padding-bottom`, use-fit-to-window).
+   */
+  const pointsReady = Boolean(rewards && rewards.maxRedeemable > 0);
+  useEffect(() => {
+    if (!pointsReady || !wideRight) return;
+    wideRight.querySelector('.pf-redeem.is-ready')?.scrollIntoView({ block: 'nearest' });
+  }, [pointsReady, wideRight, clientId]);
   /*
    * Jira GRW-736 — GST added on top: what the guest pays is the server's figure, the lines after their offers and the
    * points, and the GST on them. Prices that include GST: the bill after its offers, less the points, as before.

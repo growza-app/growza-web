@@ -722,6 +722,8 @@
     max-height: var(--fit-max, none);
     overflow-y: auto;
     overscroll-behavior: contain;
+    /* Owner, 2026-11-23 — what is scrolled into view stops above the pinned foot (`--fit-foot`, useFitToWindow), never behind it. */
+    scroll-padding-bottom: var(--fit-foot, 0px);
     padding: var(--sp-3);
     gap: var(--sp-2);
   }
