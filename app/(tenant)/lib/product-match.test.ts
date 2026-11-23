@@ -101,9 +101,26 @@ describe('the product sheet carries both codes and the collapsed Tax group', () 
     expect(sheet).toMatch(/sku: sku\.trim\(\) \|\| null,\s*barcode: barcode\.trim\(\) \|\| null,/);
   });
   it('holds Save on a barcode with a space, and says why under the field', () => {
-    expect(sheet).toMatch(/const barcodeBad = barcode\.trim\(\) !== '' && !\/\^\[!-~\]\+\$\/\.test\(barcode\.trim\(\)\);/);
+    // Only where the box is drawn (a business that counts): a kitchen never sees it, so a stored code cannot block Save unseen.
+    expect(sheet).toMatch(/const barcodeBad = counted && barcode\.trim\(\) !== '' && !\/\^\[!-~\]\+\$\/\.test\(barcode\.trim\(\)\);/);
     expect(sheet).toMatch(/&& !barcodeBad;/);
     expect(sheet).toMatch(/aria-describedby=\{barcodeBad \? 'prd-barcode-error' : 'prd-codes-hint'\}/);
+  });
+  it('a kitchen (stock not counted) gets no SKU, no barcode and no HSN; its GST points at Settings once every order type has a rate', () => {
+    expect(sheet).toMatch(/\{counted \? t\('secCodes'\) : t\('secGst'\)\}/);
+    expect(sheet).toMatch(/\{counted \? \(\s*<>\s*<div className="prd-field-grid-2">/);
+    expect(sheet).toContain('noCode={!counted}');
+    expect(sheet).toContain('{!counted && gst?.rates ? (');
+    expect(sheet).toContain('href="/settings/gst"');
+    expect(sheet).toMatch(/r\.dine_in !== null && r\.takeaway !== null && r\.delivery !== null/);
+    for (const k of ['secGst', 'gstLabel', 'gstFromSettings']) {
+      expect(en[k], k).toBeTruthy();
+      expect(hi[k], k).toBeTruthy();
+    }
+    for (const k of ['dine_in', 'takeaway', 'delivery']) {
+      expect(en.gstAt[k]).toContain('{rate}');
+      expect(hi.gstAt[k]).toContain('{rate}');
+    }
   });
   it('FR-03: Tax is open by default on the product sheet so GST and HSN are never hidden, and 0% GST (0 bp) stays distinct from not set (null)', () => {
     expect(sheet).toMatch(/useState<string>\(product\?\.gstRateBp != null \? String\(product\.gstRateBp\) : ''\)/);

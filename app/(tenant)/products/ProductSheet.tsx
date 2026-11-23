@@ -96,6 +96,31 @@ export function ProductSheet({
   const [gstRateBp, setGstRateBp] = useState<string>(product?.gstRateBp != null ? String(product.gstRateBp) : '');
   const [hsn, setHsn] = useState(product?.hsn ?? '');
   const [taxOpen, setTaxOpen] = useState(true);
+  /**
+   * A kitchen's GST comes from Settings › GST once it has a rate for every order type: the dish's own rate is never read
+   * then (migration 0203), so the sheet says where the rate lives instead of offering a box that does nothing. Read for
+   * this dish's branch; until it answers — or if it cannot (a role without Settings) — the GST rate box is shown, as before.
+   */
+  const [gst, setGst] = useState<{ rates: Array<{ key: 'dine_in' | 'takeaway' | 'delivery'; bp: number }> | null; pricesIncludeTax: boolean } | null>(null);
+  useEffect(() => {
+    if (counted) return;
+    let live = true;
+    api
+      .settings(product?.locationId ?? branchId)
+      .then((s) => {
+        if (!live) return;
+        const r = s.gst.orderTypeRates;
+        const all = r && r.dine_in !== null && r.takeaway !== null && r.delivery !== null;
+        setGst({
+          rates: all ? (['dine_in', 'takeaway', 'delivery'] as const).map((key) => ({ key, bp: r[key]! })) : null,
+          pricesIncludeTax: s.gst.pricesIncludeTax !== false,
+        });
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [counted, product?.locationId, branchId]);
   const [stock, setStock] = useState('0');
   const [photo, setPhoto] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl ?? null);
@@ -127,7 +152,8 @@ export function ProductSheet({
   const rupees = Number(price);
   const costRupees = cost.trim() === '' ? null : Number(cost);
   /** The API's own rule (printable characters, no spaces), said here so the owner is told before Save, in their language. */
-  const barcodeBad = barcode.trim() !== '' && !/^[!-~]+$/.test(barcode.trim());
+  // Only where the field is drawn: a kitchen never sees the barcode box, so a stored code can never block its Save unseen.
+  const barcodeBad = counted && barcode.trim() !== '' && !/^[!-~]+$/.test(barcode.trim());
   // QA 2026-10-23 — a minus sign greyed Save out and said nothing; the sheet says why, where it is.
   const belowZero = [price, cost, product ? '' : stock].some((v) => v.trim() !== '' && Number(v) < 0);
   const valid =
@@ -522,9 +548,9 @@ export function ProductSheet({
               {product && sizesOn ? (
                 <div className="sheet-group">
                   <AppLink className="sheet-row prd-sizes-row" href={`/products/${product.id}/sizes`}>
-                    <span className="sheet-row-label">{ts('openRow')}</span>
+                    <span className="sheet-row-label">{ts(counted ? 'openRow' : 'portionsTitle')}</span>
                     <span className="sheet-row-value prd-sizes-value">
-                      {sizeCount > 0 ? ts('openRowCount', { count: sizeCount }) : ts(counted ? 'openRowNone' : 'openRowNoneUncounted')}
+                      {sizeCount > 0 ? ts(counted ? 'openRowCount' : 'portionsCount', { count: sizeCount }) : ts(counted ? 'openRowNone' : 'openRowNoneUncounted')}
                       <IconChevronRight aria-hidden="true" />
                     </span>
                   </AppLink>
@@ -544,7 +570,7 @@ export function ProductSheet({
               {!product && sizesOn ? (
                 <div className="prd-sizes-new-card">
                   <div className="prd-sizes-new-copy">
-                    <strong>{ts('openRow')}</strong>
+                    <strong>{ts(counted ? 'openRow' : 'portionsTitle')}</strong>
                     <span>{t('sizesNewHint')}</span>
                   </div>
                   <button
@@ -559,9 +585,13 @@ export function ProductSheet({
               ) : null}
             </div>
 
-            {/* Jira GRW-574 — the codes the shelf and the till can find the product by. Both optional, blank clears. */}
+            {/* Jira GRW-574 — the codes the shelf and the till can find the product by. Both optional, blank clears.
+                A kitchen gets neither (owner, 2026-11-23): nobody scans a plate or looks a dish up by its code. A code already
+                stored is kept as it is — the fields are not drawn, so nothing sends them changed. */}
             <div className="prd-form-section">
-              <div className="prd-form-sec-title">{t('secCodes')}</div>
+              <div className="prd-form-sec-title">{counted ? t('secCodes') : t('secGst')}</div>
+              {counted ? (
+              <>
               <div className="prd-field-grid-2">
                 <div className="prd-field">
                   <label className="prd-field-label" htmlFor="prd-sku">
@@ -610,20 +640,39 @@ export function ProductSheet({
               ) : (
                 <div id="prd-codes-hint" className="sheet-foot">{t('codesHint')}</div>
               )}
+              </>
+              ) : null}
 
               {/* Jira GRW-574 (0120) — optional GST rate and HSN code, always visible on the product sheet. */}
               <div className="prd-tax-wrap">
-                <TaxFields
-                  idPrefix="prd"
-                  kind="product"
-                  rateBp={gstRateBp}
-                  onRateBp={setGstRateBp}
-                  code={hsn}
-                  onCode={setHsn}
-                  open={taxOpen}
-                  onToggle={() => setTaxOpen((o) => !o)}
-                  savedRateBp={target?.gstRateBp}
-                />
+                {!counted && gst?.rates ? (
+                  <>
+                    <div className="sheet-group">
+                      <AppLink className="sheet-row prd-sizes-row prd-gst-row" href="/settings/gst">
+                        <span className="sheet-row-label">{t('gstLabel')}</span>
+                        <span className="sheet-row-value prd-sizes-value">
+                          {gst.rates.map((r) => t(`gstAt.${r.key}`, { rate: r.bp / 100 })).join(' · ')}
+                          <IconChevronRight aria-hidden="true" />
+                        </span>
+                      </AppLink>
+                    </div>
+                    <div className="sheet-foot">{t('gstFromSettings')}</div>
+                  </>
+                ) : (
+                  <TaxFields
+                    idPrefix="prd"
+                    kind="product"
+                    rateBp={gstRateBp}
+                    onRateBp={setGstRateBp}
+                    code={hsn}
+                    onCode={setHsn}
+                    open={taxOpen}
+                    onToggle={() => setTaxOpen((o) => !o)}
+                    savedRateBp={target?.gstRateBp}
+                    noCode={!counted}
+                    pricesIncludeTax={gst?.pricesIncludeTax ?? true}
+                  />
+                )}
               </div>
             </div>
 

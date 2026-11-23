@@ -19,6 +19,7 @@ import {
   cleanPrice,
   COLOUR_PRESETS,
   DEFAULT_AXIS_NAMES,
+  fillUncounted,
   initialState,
   isDirty,
   layout,
@@ -26,6 +27,7 @@ import {
   MAX_VALUES,
   moveValue,
   norm,
+  PORTION_PRESET_GROUPS,
   problems,
   removeSecondAxis,
   removeValue as dropValue,
@@ -52,11 +54,18 @@ function swatchKey(name: string): string | undefined {
  * Phone first. The options and their sizes are two small cards; the grid scrolls INSIDE its own box with the size
  * column pinned, so the page never scrolls sideways; Save is a bar under the thumb. All the rules (what a blank
  * means, what is sent, what is retired) live in `grid-model.ts` and are tested there — this file only draws them.
+ *
+ * `counted` is the business's own switch (`catalog.stock_counted`), never its vertical. A business that does not count
+ * what it sells — a kitchen — gets the same screen as names and prices only: Half / Full presets instead of S–XXL and
+ * waist sizes, no Colour option, no "How many" column, no stock totals, and nothing it can save as a count.
  */
-export function SizesGrid({ sizes }: { sizes: ProductSizes }) {
+export function SizesGrid({ sizes, counted = true }: { sizes: ProductSizes; counted?: boolean }) {
   const t = useTranslations('products.sizes');
   const writable = useWritable();
-  const initial = useMemo(() => initialState(sizes), [sizes]);
+  const initial = useMemo(() => {
+    const loaded = initialState(sizes);
+    return counted ? loaded : { ...loaded, state: fillUncounted(loaded.state) };
+  }, [sizes, counted]);
   const [state, setState] = useState<GridState>(initial.state);
   const [baseline, setBaseline] = useState<Baseline>(initial.baseline);
   const [drafts, setDrafts] = useState<[string, string]>(['', '']);
@@ -92,7 +101,7 @@ export function SizesGrid({ sizes }: { sizes: ProductSizes }) {
   }, [rows, columns, state.counts]);
 
   const edit = (change: (s: GridState) => GridState) => {
-    setState((s) => change(s));
+    setState((s) => (counted ? change(s) : fillUncounted(change(s))));
     setJustSaved(false);
     setError(null);
     setMarked(new Set());
@@ -144,7 +153,7 @@ export function SizesGrid({ sizes }: { sizes: ProductSizes }) {
     try {
       const saved = await api.saveSizeGrid(sizes.product.id, toRequest(state, baseline));
       const next = initialState(saved);
-      setState(next.state);
+      setState(counted ? next.state : fillUncounted(next.state));
       setBaseline(next.baseline);
       setJustSaved(true);
       setNote(null);
@@ -154,7 +163,7 @@ export function SizesGrid({ sizes }: { sizes: ProductSizes }) {
         const current = (err.body as { current?: ProductSizes } | undefined)?.current;
         if (current) {
           const next = initialState(current);
-          setState(next.state);
+          setState(counted ? next.state : fillUncounted(next.state));
           setBaseline(next.baseline);
           setError(t('changedUnder'));
         } else {
@@ -271,7 +280,7 @@ export function SizesGrid({ sizes }: { sizes: ProductSizes }) {
             autoComplete="off"
             autoCapitalize="off"
             spellCheck={false}
-            placeholder={i === 0 ? t('addValuesPlaceholder') : t('addColoursPlaceholder')}
+            placeholder={i === 0 ? t(counted ? 'addValuesPlaceholder' : 'addPortionsPlaceholder') : t('addColoursPlaceholder')}
             autoFocus={autoFocusField(i === 0 && sizes.variants.length === 0 && rows.length === 0)}
             disabled={!writable}
             onChange={(e) => setDrafts((d) => (i === 0 ? [e.target.value, d[1]] : [d[0], e.target.value]))}
@@ -292,9 +301,10 @@ export function SizesGrid({ sizes }: { sizes: ProductSizes }) {
           <div className="szg-presets">
             <span className="szg-presets-label">{t('quickSizesLabel')}</span>
             <div className="szg-presets-row">
-              {SIZE_PRESET_GROUPS.map((g) => {
+              {(counted ? SIZE_PRESET_GROUPS : PORTION_PRESET_GROUPS).map((g) => {
                 const allPresent = g.values.every((v) => haveSizes.has(norm(v)));
-                const label = g.id === 'alpha' ? t('presetAlpha') : g.id === 'waist' ? t('presetWaist') : t('presetFree');
+                const label =
+                  g.id === 'alpha' ? t('presetAlpha') : g.id === 'waist' ? t('presetWaist') : g.id === 'free' ? t('presetFree') : g.id === 'halfFull' ? t('presetHalfFull') : t('presetCups');
                 return (
                   <button
                     key={g.id}
@@ -345,14 +355,14 @@ export function SizesGrid({ sizes }: { sizes: ProductSizes }) {
       <div className="szg-summary-bar">
         <div className="szg-summary-main">
           <span className="szg-summary-product">{sizes.product.name}</span>
-          <span className="szg-summary-price">{t('basePriceLabel', { price: formatMoney(sizes.product.priceMinor) })}</span>
+          {counted ? <span className="szg-summary-price">{t('basePriceLabel', { price: formatMoney(sizes.product.priceMinor) })}</span> : null}
         </div>
         <div className="szg-summary-pills">
           <span className="szg-summary-pill">{t('summarySizes', { count: rows.length })}</span>
           {colourValues.length > 0 ? (
             <span className="szg-summary-pill">{t('summaryColours', { count: colourValues.length })}</span>
           ) : null}
-          <span className="szg-summary-pill is-stock">{t('summaryUnits', { count: grandTotal })}</span>
+          {counted ? <span className="szg-summary-pill is-stock">{t('summaryUnits', { count: grandTotal })}</span> : null}
         </div>
       </div>
 
@@ -360,7 +370,7 @@ export function SizesGrid({ sizes }: { sizes: ProductSizes }) {
         {optionCard(0)}
         {state.axes.length > 1 ? (
           optionCard(1)
-        ) : (
+        ) : !counted ? null : (
           <section className="szg-card szg-colours-invite" aria-labelledby="szg-colours-heading">
             <div className="szg-card-top">
               <div className="szg-colours-title-wrap">
@@ -391,9 +401,9 @@ export function SizesGrid({ sizes }: { sizes: ProductSizes }) {
         <div className="szg-grid-head">
           <div>
             <h2 id="szg-grid-title" className="szg-title">
-              {t('gridTitle')}
+              {t(counted ? 'gridTitle' : 'pricesTitle')}
             </h2>
-            {rows.length > 0 ? <p className="szg-hint">{t('gridHint')}</p> : null}
+            {rows.length > 0 ? <p className="szg-hint">{t(counted ? 'gridHint' : 'pricesHint')}</p> : null}
           </div>
           {rows.length > 0 ? (
             <button type="button" className="btn btn-ghost szg-arrange-toggle" aria-pressed={arrange} onClick={() => setArrange((a) => !a)}>
@@ -402,16 +412,16 @@ export function SizesGrid({ sizes }: { sizes: ProductSizes }) {
           ) : null}
         </div>
         {rows.length === 0 ? (
-          <p className="szg-empty">{t('noValues')}</p>
+          <p className="szg-empty">{t(counted ? 'noValues' : 'noPortions')}</p>
         ) : (
-          <div className="szg-scroll" role="region" aria-label={t('gridTitle')} tabIndex={0}>
-            <table className="szg-table">
+          <div className="szg-scroll" role="region" aria-label={t(counted ? 'gridTitle' : 'pricesTitle')} tabIndex={0}>
+            <table className={`szg-table ${counted ? '' : 'is-prices-only'}`}>
               <thead>
                 <tr>
                   <th scope="col" className="szg-corner">
                     {names[0]}
                   </th>
-                  {columns.map((col, at) => {
+                  {(counted ? columns : []).map((col, at) => {
                     const sw = col !== null ? swatchKey(col) : undefined;
                     return (
                       <th key={col ?? 'count'} scope="col">
@@ -435,7 +445,7 @@ export function SizesGrid({ sizes }: { sizes: ProductSizes }) {
                       <span className="szg-rowname">{row}</span>
                       {arrange ? moveIcons(0, at, row, true) : null}
                     </th>
-                    {columns.map((col) => {
+                    {(counted ? columns : []).map((col) => {
                       const key = cellKey(row, col);
                       const bad = marked.has(key);
                       const val = state.counts[key] ?? '';
@@ -463,7 +473,7 @@ export function SizesGrid({ sizes }: { sizes: ProductSizes }) {
                         inputMode="decimal"
                         className="szg-input szg-price"
                         value={state.prices[rowKey(row)] ?? ''}
-                        placeholder={state.priceEdited[rowKey(row)] || state.prices[rowKey(row)] ? undefined : mixedOrSame(baseline, row, t('priceMixed'), t('pricePlaceholder'))}
+                        placeholder={state.priceEdited[rowKey(row)] || state.prices[rowKey(row)] ? undefined : mixedOrSame(baseline, row, t('priceMixed'), t(counted ? 'pricePlaceholder' : 'pricePlaceholderDish'))}
                         aria-label={t('priceLabel', { name: row })}
                         aria-invalid={marked.has(rowKey(row)) || undefined}
                         disabled={!writable}
@@ -473,6 +483,7 @@ export function SizesGrid({ sizes }: { sizes: ProductSizes }) {
                   </tr>
                 ))}
               </tbody>
+              {counted ? (
               <tfoot>
                 <tr className="szg-foot-row">
                   <th scope="row" className="szg-rowhead szg-foot-label">
@@ -486,6 +497,7 @@ export function SizesGrid({ sizes }: { sizes: ProductSizes }) {
                   <td className="szg-foot-val szg-price-col">{ t('summaryUnits', { count: grandTotal }) }</td>
                 </tr>
               </tfoot>
+              ) : null}
             </table>
           </div>
         )}
@@ -505,7 +517,13 @@ export function SizesGrid({ sizes }: { sizes: ProductSizes }) {
       {writable ? (
         <div className="settings-savebar settings-savebar-pinned szg-savebar">
           <span className="szg-savebar-meta">
-            {dirty ? t('unsavedChanges') : justSaved ? t('allSaved') : `${t('summarySizes', { count: rows.length })} · ${t('summaryUnits', { count: grandTotal })}`}
+            {dirty
+              ? t('unsavedChanges')
+              : justSaved
+                ? t('allSaved')
+                : counted
+                  ? `${t('summarySizes', { count: rows.length })} · ${t('summaryUnits', { count: grandTotal })}`
+                  : t('summarySizes', { count: rows.length })}
           </span>
           <button type="button" className={`btn szg-save ${justSaved && !dirty ? 'is-saved' : ''}`} disabled={busy || !dirty} aria-live="polite" onClick={() => void save()}>
             {busy ? (

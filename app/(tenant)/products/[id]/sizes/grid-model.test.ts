@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ProductSizes, Size } from '../../../lib/api-types';
-import { addAxisValues, addSecondAxis, addValues, anyStocked, cellKey, cleanCount, countOk, initialState, isDirty, layout, lockedValues, moveValue, parseValues, priceOk, problems, removeSecondAxis, removeValue, rowKey, secondOptionBlocked, setPriceText, toRequest, willRetire, type GridState } from './grid-model';
+import { addAxisValues, addSecondAxis, addValues, anyStocked, cellKey, cleanCount, countOk, fillUncounted, initialState, isDirty, layout, lockedValues, moveValue, parseValues, priceOk, problems, removeSecondAxis, removeValue, rowKey, secondOptionBlocked, setPriceText, toRequest, willRetire, type GridState } from './grid-model';
 
 /**
  * Jira GRW-598 — the sizes grid's rules, without a browser.
@@ -374,5 +374,42 @@ describe('taking a value or an option out', () => {
     expect(restored.axes).toEqual([{ name: 'Size', values: ['32', '34'] }]);
     expect(restored.counts[cellKey('32', null)]).toBe('4');
     expect(restored.counts[cellKey('34', null)]).toBe('6');
+  });
+});
+
+describe('a business that does not count what it sells (a kitchen): names and prices only', () => {
+  const dish = (variants: Size[]): ProductSizes => ({ product: { id: 'p1', name: 'Butter Chicken', priceMinor: '20000' }, axes: [{ name: 'Size', values: variants.map((v) => v.option1) }], variants, version: 'v1' });
+
+  it('a portion added from the presets is saved with no box typed, at a count of 0', () => {
+    const start = fillUncounted(stateOf(null).state);
+    const added = fillUncounted(addAxisValues(start, 0, 'Half, Full').state);
+    expect(added.counts[cellKey('Half', null)]).toBe('0');
+    expect(added.counts[cellKey('Full', null)]).toBe('0');
+    const req = toRequest(added, stateOf(null).baseline);
+    expect(req.cells).toEqual([
+      { option1: 'Half', stock: 0 },
+      { option1: 'Full', stock: 0 },
+    ]);
+    expect(anyStocked(added, stateOf(null).baseline)).toBe(true);
+  });
+
+  it('loading a dish changes nothing: its sizes keep their counts, and the Save bar stays dark', () => {
+    const loaded = stateOf(dish([size({ option1: 'Half', priceMinor: '20000' }), size({ option1: 'Full', priceMinor: '34000' })]));
+    const filled = fillUncounted(loaded.state);
+    expect(filled).toBe(loaded.state);
+    expect(isDirty(filled, loaded.baseline)).toBe(false);
+  });
+
+  it('a price change alone sends the price and no count', () => {
+    const loaded = stateOf(dish([size({ option1: 'Half', priceMinor: '20000' }), size({ option1: 'Full', priceMinor: '34000' })]));
+    const edited = fillUncounted(setPriceText(loaded.state, loaded.baseline, rowKey('Full'), '360'));
+    const req = toRequest(edited, loaded.baseline);
+    expect(req.cells).toContainEqual({ option1: 'Full', priceMinor: 36000 });
+    expect(req.cells.every((c) => c.stock === undefined)).toBe(true);
+  });
+
+  it('a count the server already holds is never overwritten with 0', () => {
+    const loaded = stateOf(dish([size({ option1: 'Half', stock: 7 })]));
+    expect(fillUncounted(loaded.state).counts[cellKey('Half', null)]).toBe('7');
   });
 });

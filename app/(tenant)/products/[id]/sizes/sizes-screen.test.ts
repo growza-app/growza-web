@@ -112,3 +112,34 @@ describe('what the owner typed is never lost to an error', () => {
     expect(other.slice(0, other.indexOf('} finally'))).not.toMatch(/setState|setBaseline/);
   });
 });
+
+describe('a kitchen gets portions, not clothes sizes (stock not counted)', () => {
+  it('the page passes the business switch, never the vertical', () => {
+    expect(page).toMatch(/counted = me\.capabilities\?\.stockCounted !== false/);
+    expect(page).toContain('counted={counted}');
+    expect(page).not.toMatch(/restaurant|kitchen'/);
+  });
+
+  it('marketplace codes need marketplaces switched on, not just a shop', () => {
+    expect(page).toMatch(/marketplaceCodes = me\.surface === 'shop' && me\.capabilities\?\.marketplaces !== false/);
+    expect(page).toMatch(/\{marketplaceCodes \? \(/);
+  });
+
+  it('without a count: no How many column, no stock totals, no Colour option, Half / Full presets', () => {
+    expect(grid).toMatch(/\(counted \? columns : \[\]\)\.map\(\(col, at\)/);
+    expect(grid).toMatch(/\(counted \? columns : \[\]\)\.map\(\(col\) =>/);
+    expect(grid).toMatch(/\{counted \? \(\s*<tfoot>/);
+    expect(grid).toMatch(/\{counted \? <span className="szg-summary-pill is-stock">/);
+    expect(grid).toMatch(/: !counted \? null : \(/);
+    expect(grid).toContain('(counted ? SIZE_PRESET_GROUPS : PORTION_PRESET_GROUPS)');
+    expect(grid).toContain('fillUncounted(change(s))');
+  });
+
+  it('the kitchen words exist in English and Hindi', () => {
+    for (const k of ['presetHalfFull', 'presetCups', 'addPortionsPlaceholder', 'pricesTitle', 'pricesHint', 'pricePlaceholderDish', 'noPortions']) {
+      expect(en.products.sizes[k], k).toBeTruthy();
+      expect(hi.products.sizes[k], k).toBeTruthy();
+      expect(hi.products.sizes[k], k).not.toBe(en.products.sizes[k]);
+    }
+  });
+});

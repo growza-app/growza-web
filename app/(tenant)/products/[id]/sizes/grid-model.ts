@@ -31,6 +31,15 @@ export const SIZE_PRESET_GROUPS: ReadonlyArray<{ id: 'alpha' | 'waist' | 'free';
   { id: 'free', values: ['Free size'] },
 ];
 
+/**
+ * The quick-add sets for a business that does not count what it sells — a kitchen's Half / Full, a café's cup sizes.
+ * A dish has portions, not S–XXL or waist sizes, and never a colour (see `counted` in SizesGrid).
+ */
+export const PORTION_PRESET_GROUPS: ReadonlyArray<{ id: 'halfFull' | 'cups'; values: readonly string[] }> = [
+  { id: 'halfFull', values: ['Half', 'Full'] },
+  { id: 'cups', values: ['Small', 'Medium', 'Large'] },
+];
+
 /** Common colours an owner can tap to add as columns. */
 export const COLOUR_PRESETS: readonly string[] = ['Black', 'White', 'Brown', 'Navy', 'Grey', 'Blue', 'Red', 'Green', 'Beige', 'Pink'];
 
@@ -340,4 +349,23 @@ export function isDirty(state: GridState, baseline: Baseline): boolean {
 /** Values that already have a size on them: the owner may not take these out of the option (retire the size instead). */
 export function lockedValues(baseline: Baseline, axisIndex: 0 | 1): Set<string> {
   return new Set(baseline.sizes.map((s) => norm(axisIndex === 0 ? s.option1 : (s.option2 ?? ''))).filter((v) => v !== ''));
+}
+
+/**
+ * A business that does not count what it sells has no count to type, so every size on the screen is one it sells. The
+ * model still reads a blank box as "not sold" (that is retail's rule), so a portion with no box of its own gets "0" —
+ * the same count every dish's sizes already carry — and is saved like any other. A count already loaded is left alone.
+ */
+export function fillUncounted(state: GridState): GridState {
+  const { rows, columns } = layout(state);
+  let counts: Record<string, string> | null = null;
+  for (const row of rows) {
+    for (const col of columns) {
+      const key = cellKey(row, col);
+      if ((state.counts[key] ?? '').trim() !== '') continue;
+      counts ??= { ...state.counts };
+      counts[key] = '0';
+    }
+  }
+  return counts ? { ...state, counts } : state;
 }
