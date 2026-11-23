@@ -5024,6 +5024,7 @@
     "newOrderTab": "New order",
     "pickupTab": "Pickup · {count}",
     "shortcutsTitle": "Keyboard shortcuts",
+    "pickupTabWord": "Pickup",
     "takeawayViews": "New takeaway or Pickup"
   },
   "sales": {

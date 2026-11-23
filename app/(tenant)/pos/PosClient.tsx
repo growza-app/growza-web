@@ -1407,7 +1407,9 @@ export function PosClient({
           {t('newOrderTab')}
         </button>
         <button type="button" role="tab" aria-selected={mode === 'queue'} className={`page-tab${mode === 'queue' ? ' active' : ''}`} onClick={() => openQueue()}>
-          {t('pickupTab', { count: preparingTokens.length })}
+          {/* Owner, 2026-11-23 ("not clearly visible") — the count is the amber pill the Sell / Queue tabs use, not "· 3" in the word. */}
+          {t('pickupTabWord')}
+          <span className={`pos-tab-badge${preparingTokens.length > 0 ? ' is-live' : ''}`}>{preparingTokens.length}</span>
         </button>
       </div>
     ) : null;
@@ -1971,7 +1973,8 @@ export function PosClient({
                 <h2 className="pos-queue-col-title">
                   <span className="pos-queue-dot is-preparing" aria-hidden="true" />
                   {t(qk('preparingColTitle'))}
-                  <span className="pos-queue-col-count">{preparingTokens.length}</span>
+                  {/* With the one-row bar the Pickup tab right above already carries this number: said once, not twice. */}
+                  {tablesBar ? null : <span className="pos-queue-col-count">{preparingTokens.length}</span>}
                 </h2>
                 {/* With the one-row bar, New order is the switch right above: not a second button for it here. */}
                 {tablesBar ? null : (

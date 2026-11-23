@@ -56,10 +56,12 @@ describe('the one-row POS bar', () => {
   it('Pickup keeps its name: its count on Takeaway, and New order / Pickup under it', () => {
     expect(flow).toContain("t('type.pickupCount', { count: pickupCount })");
     expect(client).toContain("(mode === 'queue' || (mode === 'sell' && tillType === 'takeaway'))");
-    expect(client).toContain("t('pickupTab', { count: preparingTokens.length })");
+    // Owner, 2026-11-23 — the waiting count is the amber pill beside the word, not "· 3" in it; the column under it no longer repeats it.
+    expect(client).toMatch(/\{t\('pickupTabWord'\)\}\s*<span className=\{`pos-tab-badge\$\{preparingTokens\.length > 0 \? ' is-live' : ''\}`\}>/);
+    expect(client).toContain("{tablesBar ? null : <span className=\"pos-queue-col-count\">{preparingTokens.length}</span>}");
     for (const m of [en, hi]) {
       expect(m.payFlow.type.pickupCount).toContain('{count}');
-      for (const k of ['more', 'returnBill', 'newOrderTab', 'pickupTab', 'takeawayViews']) expect(m.pos[k], k).toBeTruthy();
+      for (const k of ['more', 'returnBill', 'newOrderTab', 'pickupTab', 'pickupTabWord', 'takeawayViews']) expect(m.pos[k], k).toBeTruthy();
     }
     expect(en.payFlow.type.pickupCount).toBe('Pickup {count}');
     expect(en.pos.pickupTab).toBe('Pickup · {count}');
@@ -87,7 +89,7 @@ describe('the one-row POS bar', () => {
   });
 
   it('New order / Pickup is the level below: words on a hairline, not a second grey tray', () => {
-    expect(pos).toMatch(/\.pos-pickup-switch \{[^}]*border-bottom: 1px solid var\(--border\);[^}]*background: transparent;/);
+    expect(pos).toMatch(/\.pos-pickup-switch \{[^}]*border-bottom: 1px solid color-mix\(in srgb, var\(--muted\) 45%, var\(--border\)\);[^}]*background: transparent;/);
     expect(pos).toMatch(/\.pos-pickup-switch \.page-tab\.active \{\s*border-bottom-color: var\(--accent-deep\);/);
   });
 
@@ -119,5 +121,15 @@ describe('the one-row POS bar', () => {
     expect(rule).toContain('color: var(--muted);');
     expect(flow).toContain('<span className="pf-type-lockicon" aria-hidden="true">');
     expect(tables).toMatch(/@media \(min-width: 861px\) \{\s*\.pf-type-lockicon \{\s*display: inline-flex;/);
+  });
+});
+
+describe('New order / Pickup can be seen (owner, 2026-11-23: "keep the size same but add button color which is selected")', () => {
+  const css = readFileSync(new URL('../styles/99-pos.css', import.meta.url), 'utf8');
+  it('the chosen one is filled in the soft green with a 3px underline; the size is unchanged', () => {
+    expect(css).toMatch(/\.pos-pickup-switch \.page-tab\.active \{\s*border-bottom-color: var\(--accent-deep\);\s*background: var\(--accent-soft\);/);
+    expect(css).toContain('border-bottom: 3px solid transparent;');
+    expect(css).not.toMatch(/\.pos-pickup-switch \.page-tab \{[^}]*font-size/);
+    expect(css).toContain('border-bottom: 1px solid color-mix(in srgb, var(--muted) 45%, var(--border));');
   });
 });
