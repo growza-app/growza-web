@@ -51,7 +51,10 @@ describe('the paid screen of a till that prints is one tidy column', () => {
   });
 
   it('the number and Send on one row, with no hint under them', () => {
-    expect(share).toMatch(/\{till \? <div className="wi-receipt-sendrow">\{sendBlock\}<\/div> : sendBlock\}/);
+    // Owner, 2026-11-23 — on a till the number and Send come first, under Print, with their own heading; a salon keeps them under the bill.
+    expect(share).toContain('<h2 className="wi-section-label wi-send-label">{tv(\'sendBillHeading\')}</h2>');
+    expect(share).toContain('<div className="wi-receipt-sendrow">{sendBlock}</div>');
+    expect(share).toContain('{till ? null : sendBlock}');
     expect(share).toMatch(/\{till \? null : <p className="wi-receipt-hint">/);
   });
 
@@ -99,5 +102,34 @@ describe('the paid screen on a phone (owner, 2026-11-23)', () => {
   });
   it('pins Next and Done to the bottom of a phone', () => {
     expect(thermal).toMatch(/\.pf-done-page\.is-till > \.pf-done-actions \{\s*position: fixed;\s*left: 0;\s*right: 0;\s*bottom: 0;/);
+  });
+});
+
+describe('one Print for the bill and the kitchen slip; WhatsApp first (owner, 2026-11-23)', () => {
+  const printer = readFileSync(new URL('./TicketPrinter.tsx', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../styles/99-thermal-print.css', import.meta.url), 'utf8');
+  const en = JSON.parse(readFileSync(new URL('../../../messages/en.json', import.meta.url), 'utf8'));
+  const hi = JSON.parse(readFileSync(new URL('../../../messages/hi.json', import.meta.url), 'utf8'));
+
+  it('one button prints both; the bill alone, the slip alone and the printer are in its ⋮', () => {
+    expect(printer).toContain('onClick={() => void printer.printBillAndKots({ saleId, order, kot, receipt })}');
+    expect(printer).toContain("{ label: t('billOnly'), onSelect: printBillOnly },");
+    expect(printer).toContain("{ label: t('kotOnly'), onSelect: printKotOnly },");
+    expect(printer).toContain("{ label: t('settings'), onSelect: () => setPrinterOpen(true) },");
+  });
+
+  it('slips the kitchen already had (an order paid at Pickup, read from the server) print marked REPRINT', () => {
+    expect(printer).toContain('kots = await kotJobs(read.tickets, read, true);');
+    expect(printer).toContain("const printKotOnly = () => void (kot ? printer.printKot(kot, order) : printer.printOrderKots(saleId, true));");
+  });
+
+  it('Send has its word and is never greyed out on a till: with no number a tap asks for one', () => {
+    expect(share).toContain('disabled={!till}');
+    expect(share).toContain("document.querySelector<HTMLInputElement>('#wi-receipt-phone')?.focus();");
+    expect(css).toMatch(/\.wi-receipt-sendrow > \.wi-receipt-send \{[^}]*font-size: var\(--fs-4\);/);
+    for (const m of [en, hi]) {
+      for (const k of ['printBoth', 'morePrint', 'billOnly', 'kotOnly']) expect(m.print[k], k).toBeTruthy();
+      for (const k of ['sendBillHeading', 'sendShort']) expect(m.newVisit[k], k).toBeTruthy();
+    }
   });
 });

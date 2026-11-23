@@ -2381,6 +2381,8 @@
     }
   },
   "newVisit": {
+    "sendBillHeading": "Send the bill on WhatsApp",
+    "sendShort": "Send",
     "title": "Walk-in",
     "pageTitle": "New booking",
     "atBranch": "At {name}",
@@ -6181,6 +6183,10 @@
     }
   },
   "print": {
+    "printBoth": "Print bill + kitchen slip",
+    "morePrint": "More print choices",
+    "billOnly": "Bill only",
+    "kotOnly": "Kitchen slip only",
     "kotTitle": "KITCHEN SLIP",
     "kotAdded": "ADDED TO ORDER",
     "kotCancelled": "CANCELLED",

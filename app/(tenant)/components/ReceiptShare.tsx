@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { createPortal } from 'react-dom';
 import { useLabel } from './LabelsProvider';
 import { useNewVisitCopy } from '../lib/use-copy';
@@ -97,6 +98,7 @@ export function ReceiptShare({
   // Jira GRW-728 — the business's logo on the bill image, in place of its first letter.
   const logo = useBusinessLogo(hasGraphicCard);
   const nv = useNewVisitCopy();
+  const tv = useTranslations('newVisit');
   // The vertical's own word for the person paying: Guest to a restaurant, Customer to a shop, Client to a salon.
   const clientNoun = useLabel('customer', 'Client');
   const words =
@@ -207,18 +209,26 @@ export function ReceiptShare({
           }}
         >
           <IconWhatsApp />
-          {words.send}
+          {till ? tv('sendShort') : words.send}
         </a>
       ) : (
-        // No usable number yet: keep the Send on WhatsApp button disabled until a valid number is entered.
+        /*
+         * No usable number yet. A salon's screen keeps Send disabled until there is one. On a till (owner, 2026-11-23: the
+         * send "is getting hidden … the person who is not aware of it may not be able to use it") it is never greyed out:
+         * a tap puts the cursor in the number and says what is missing.
+         */
         <button
           type="button"
           className="btn wi-receipt-send"
-          disabled
+          disabled={!till}
           aria-describedby="wi-receipt-phone"
+          onClick={() => {
+            setTouched(true);
+            document.querySelector<HTMLInputElement>('#wi-receipt-phone')?.focus();
+          }}
         >
           <IconWhatsApp />
-          {words.send}
+          {till ? tv('sendShort') : words.send}
         </button>
       )}
     </>
@@ -226,6 +236,16 @@ export function ReceiptShare({
 
   return (
     <section className="wi-receipt-share" aria-label={words.preview}>
+      {/*
+        Owner, 2026-11-23 — on a till, sending the bill comes first, right under Print: under the whole receipt it was
+        below the screen's edge, behind Back to pickup, as soon as the phone's text was set larger or the bill was long.
+      */}
+      {till ? (
+        <>
+          <h2 className="wi-section-label wi-send-label">{tv('sendBillHeading')}</h2>
+          <div className="wi-receipt-sendrow">{sendBlock}</div>
+        </>
+      ) : null}
       <h2 className="wi-section-label">{words.preview}</h2>
       {/* `tabIndex` when it scrolls: a scrollable region a mouse can reach has to be reachable by keyboard too. */}
       {/* Owner, 2026-11-23 — on a till the whole bill shows (its total and how it was paid were hidden in a 190px box); the page scrolls instead. */}
@@ -363,7 +383,7 @@ export function ReceiptShare({
           )
         : null}
 
-      {till ? <div className="wi-receipt-sendrow">{sendBlock}</div> : sendBlock}
+      {till ? null : sendBlock}
       {till ? null : <p className="wi-receipt-hint">{words.hint}</p>}
       {afterSend}
 

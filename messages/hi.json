@@ -2381,6 +2381,8 @@
     }
   },
   "newVisit": {
+    "sendBillHeading": "बिल WhatsApp पर भेजें",
+    "sendShort": "भेजें",
     "title": "वॉक-इन",
     "pageTitle": "नई बुकिंग",
     "atBranch": "{name} पर",
@@ -6181,6 +6183,10 @@
     }
   },
   "print": {
+    "printBoth": "बिल + रसोई पर्ची प्रिंट करें",
+    "morePrint": "प्रिंट के और विकल्प",
+    "billOnly": "सिर्फ़ बिल",
+    "kotOnly": "सिर्फ़ रसोई पर्ची",
     "kotTitle": "रसोई पर्ची",
     "kotAdded": "ऑर्डर में जोड़ा गया",
     "kotCancelled": "रद्द",
