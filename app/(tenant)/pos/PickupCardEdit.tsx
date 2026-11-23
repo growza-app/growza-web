@@ -46,6 +46,12 @@ export default function PickupCardEdit({
   const [cooked, setCooked] = useState<boolean | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /*
+   * QA 2026-11-23 (finding 2) — a dish chosen with add-ons ("Veg Biryani + Hot") cannot be made one more of here: Add items sends no
+   * choices, so the server refused a required one ("Pick one Spice") and made an optional one a plain dish at another price. Its +
+   * says where one more is added instead — Add items, which asks the choices — rather than greying out with no reason.
+   */
+  const [needsChoices, setNeedsChoices] = useState<string | null>(null);
 
   /*
    * QA 2026-11-23 — only the dishes. A business that adds GST on top has a GST row on the card, with no − or +: counted here it kept
@@ -65,6 +71,11 @@ export default function PickupCardEdit({
   const nothingLeft = rows.every((i) => countOf(i) === 0);
   const set = (i: PosTokenItem, n: number) => {
     const k = keyOf(i);
+    if (i.hasAddons && n > Math.max(i.qty, want[k] ?? i.qty)) {
+      setNeedsChoices(i.name);
+      return;
+    }
+    setNeedsChoices(null);
     if (!(k in base)) setBase((b) => ({ ...b, [k]: i.qty }));
     setWant((w) => ({ ...w, [k]: Math.max(0, Math.min(99, n)) }));
   };
@@ -159,6 +170,11 @@ export default function PickupCardEdit({
         <span>{t('editNow')}</span>
         <strong>{formatMoney(String(nowMinor))}</strong>
       </p>
+      {needsChoices ? (
+        <p className="field-hint pos-qedit-warn" role="status">
+          {t('editMoreHasChoices', { name: needsChoices })}
+        </p>
+      ) : null}
       {nothingLeft ? (
         <p className="field-hint pos-qedit-warn" role="status">
           {t('editEverythingOff')}

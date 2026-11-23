@@ -50,6 +50,8 @@ export interface PosTokenItem {
   variantId?: string | null;
   priceMinor?: number;
   lines?: Array<{ id: string; qty: number }>;
+  /** Chosen with add-ons: Edit can take some off, but one more needs its choices (Add items asks them). */
+  hasAddons?: boolean;
 }
 
 export interface PosDailyToken {
@@ -234,6 +236,7 @@ export function buildDailyTokens(
           variantId: p.variantId ?? null,
           priceMinor: Number(p.priceMinor ?? 0),
           lines: line,
+          hasAddons: p.hasAddons === true,
         };
         sameProduct.set(key, row);
         items.push(row);

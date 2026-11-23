@@ -76,3 +76,13 @@ describe('QA 2026-11-23, finding 1 — Edit never undoes another till', () => {
     expect(hi.pos.editChangedElsewhere).toContain('{names}');
   });
 });
+
+describe('QA 2026-11-23, finding 2 — one more of a dish with choices', () => {
+  it('a row chosen with add-ons says to use Add items (which asks its choices), and saves no plain copy', () => {
+    expect(edit).toContain('if (i.hasAddons && n > Math.max(i.qty, want[k] ?? i.qty)) {');
+    expect(edit).toContain("{t('editMoreHasChoices', { name: needsChoices })}");
+    expect(read('./pos-helpers.ts')).toContain('hasAddons: p.hasAddons === true,');
+    expect(en.pos.editMoreHasChoices).toContain('Add items');
+    expect(hi.pos.editMoreHasChoices).toContain(hi.pos.addItems);
+  });
+});
