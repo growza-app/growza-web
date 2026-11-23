@@ -136,11 +136,14 @@ describe('New order / Pickup can be seen (owner, 2026-11-23: "keep the size same
 
 describe('the paid screen has no bar and no New order / Pickup (owner, 2026-11-23)', () => {
   it('Pickup\'s paid screen and the till\'s own both hide them; the bar stays mounted so the switch keeps its slot', () => {
-    expect(client).toContain("tablesBar && (mode === 'queue' || payingTable !== null ? settledReceipt !== null : mode === 'sell' && sellPaid && addingToToken === null);");
-    expect(client).toContain('<div className="pos-bar pos-bar-types" hidden={paidScreen}>');
+    expect(client).toContain("tablesBar && (mode === 'queue' || payingTable !== null ? settledReceipt !== null : mode === 'sell' && sellAside === 'paid' && addingToToken === null);");
+    expect(client).toContain('<div className="pos-bar pos-bar-types" hidden={barAside}>');
     expect(client).toContain('tablesBar && !paidScreen && orderQueue');
-    expect(client).toContain('onPaidShown: setSellPaid');
-    expect(flow).toContain("const paidShown = step === 'done' && sale !== null;");
+    expect(client).toContain('onBarAside: setSellAside');
+    // "How did they pay?" too: the bar goes, New order / Pickup stay (owner, 2026-11-23: "hide it there too").
+    expect(client).toContain("const barAside = paidScreen || (tablesBar && mode === 'sell' && sellAside === 'paying' && addingToToken === null);");
+    expect(flow).toContain("step === 'how' || step === 'qr' ? 'paying' : null;");
+    expect(flow).toContain("const aside = step === 'done' && sale !== null ? 'paid'");
     expect(pos).toMatch(/\.pos-shell > \.pos-bar-types\[hidden\] \{\s*display: none;/);
   });
 

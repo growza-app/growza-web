@@ -1393,12 +1393,12 @@ export function PosClient({
    */
   const tablesBar = typesHere && !waiter && !fullScreen;
   const [typeSlot, setTypeSlot] = useState<HTMLDivElement | null>(null);
-  /** The till's own paid screen is up (PayFlow says so through the bar's context). */
-  const [sellPaid, setSellPaid] = useState(false);
+  /** The till's own paid screen, or its "How did they pay?", is up (PayFlow says so through the bar's context). */
+  const [sellAside, setSellAside] = useState<'paid' | 'paying' | null>(null);
   const [tillType, setTillType] = useState<TillOrderType | null>(null);
   const pickupCount = orderQueue ? preparingTokens.length : null;
   const typeBar = useMemo<PosTypeBar | null>(
-    () => (tablesBar ? { slot: typeSlot, mode, pickupCount, toSell: closeReturn, onTypeShown: setTillType, onPaidShown: setSellPaid } : null),
+    () => (tablesBar ? { slot: typeSlot, mode, pickupCount, toSell: closeReturn, onTypeShown: setTillType, onBarAside: setSellAside } : null),
     [tablesBar, typeSlot, mode, pickupCount, closeReturn],
   );
   /** New order / Pickup, under Takeaway: shown while the till is on Takeaway, and in Pickup itself. */
@@ -1408,7 +1408,9 @@ export function PosClient({
    * Back to pickup and Done are the ways on from there; the bar is kept mounted (hidden) so the till keeps its switch's slot.
    */
   const paidScreen =
-    tablesBar && (mode === 'queue' || payingTable !== null ? settledReceipt !== null : mode === 'sell' && sellPaid && addingToToken === null);
+    tablesBar && (mode === 'queue' || payingTable !== null ? settledReceipt !== null : mode === 'sell' && sellAside === 'paid' && addingToToken === null);
+  // "How did they pay?" on the till: the bar would hold only the Kitchen and ⋮ — it steps aside too; New order / Pickup stay.
+  const barAside = paidScreen || (tablesBar && mode === 'sell' && sellAside === 'paying' && addingToToken === null);
   const pickupSwitch =
     tablesBar && !paidScreen && orderQueue && (mode === 'queue' || (mode === 'sell' && tillType === 'takeaway')) && addingToToken === null && payingTable === null ? (
       <div className="page-tabs pos-pickup-switch" role="tablist" aria-label={t('takeawayViews')}>
@@ -1628,7 +1630,7 @@ export function PosClient({
           </div>
         </div>
       ) : tablesBar ? (
-        <div className="pos-bar pos-bar-types" hidden={paidScreen}>
+        <div className="pos-bar pos-bar-types" hidden={barAside}>
           {/* The till draws its Dine-in · Takeaway · Delivery switch here (PayFlow, through PosTypeBarContext). */}
           {/*
             Owner, 2026-11-23 — while items are being added to an order its type is already settled, so the switch is not
