@@ -21,6 +21,7 @@ import { useBranch } from '../components/BranchProvider';
 import { useMayOpen, useSession } from '../components/SessionProvider';
 import { ReportDates } from './ReportDates';
 import { RESTAURANT_TABS, type RestaurantTab } from './restaurant-tabs';
+import { fetchOnce, freshFor, isFresh, peek } from './report-cache';
 import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../lib/report-dates';
 
 export type { RestaurantTab };
@@ -547,26 +548,47 @@ export function RestaurantReports({ initialTab = 'overview' }: { initialTab?: Re
   const [cancelled, setCancelled] = useState<RestaurantCancelledPage | 'loading' | 'failed' | null>(null);
   const seq = useRef(0);
 
-  const load = useCallback(async () => {
-    if (!ready) return;
-    const mine = ++seq.current;
-    setFailed(false);
-    setCancelled(null);
-    const forKey = key;
-    const q = { from: dates.fromISO, to: dates.toISO, location: branch || undefined };
-    try {
-      let res: unknown;
-      if (tab === 'tips') res = await api.restaurantReport<RestaurantTipsPage>('tips', q);
-      else if (tab === 'customers') res = await api.restaurantReport<RestaurantCustomersPage>('customers', q);
-      else if (tab === 'inventory') {
-        const days = Math.round((Date.parse(dates.toISO) - Date.parse(dates.fromISO)) / 86_400_000) + 1;
-        res = days > 92 ? 'too_long' : await api.foodCostReport(q).catch(() => 'failed' as const);
-      } else res = await api.restaurantReport(tab, q);
-      if (mine === seq.current) setLoaded({ key: forKey, value: res });
-    } catch {
-      if (mine === seq.current) setFailed(true);
-    }
-  }, [ready, dates.fromISO, dates.toISO, branch, tab, key]);
+  /*
+   * Owner, 2026-11-24 — what a tab read is kept in memory (report-cache.ts), under who is signed in as well as the tab,
+   * dates and branch. Going back to a tab draws it at once with no request; past its freshness it is drawn at once AND
+   * read again quietly. "Try again" always reads afresh. Only the tab on screen is ever read.
+   */
+  const who = `${session?.phone ?? ''}|${session?.businessName ?? ''}|${session?.role ?? ''}`;
+  const load = useCallback(
+    async (force = false) => {
+      if (!ready) return;
+      const mine = ++seq.current;
+      const forKey = key;
+      const cacheKey = `${who}|${forKey}`;
+      setFailed(false);
+      setCancelled(null);
+      const hit = force ? undefined : peek<unknown>(cacheKey);
+      if (hit) {
+        setLoaded({ key: forKey, value: hit.value });
+        if (isFresh(hit, freshFor(dates.toISO, todayISO))) return;
+      }
+      const q = { from: dates.fromISO, to: dates.toISO, location: branch || undefined };
+      const read = async (): Promise<unknown> => {
+        if (tab === 'tips') return api.restaurantReport<RestaurantTipsPage>('tips', q);
+        if (tab === 'customers') return api.restaurantReport<RestaurantCustomersPage>('customers', q);
+        if (tab === 'inventory') {
+          const days = Math.round((Date.parse(dates.toISO) - Date.parse(dates.fromISO)) / 86_400_000) + 1;
+          return days > 92 ? 'too_long' : api.foodCostReport(q);
+        }
+        return api.restaurantReport(tab, q);
+      };
+      try {
+        const res = await fetchOnce(cacheKey, read);
+        if (mine === seq.current) setLoaded({ key: forKey, value: res });
+      } catch {
+        // A failed quiet refresh keeps the figures already on screen; only a first read shows the error.
+        if (mine !== seq.current || hit) return;
+        if (tab === 'inventory') setLoaded({ key: forKey, value: 'failed' });
+        else setFailed(true);
+      }
+    },
+    [ready, dates.fromISO, dates.toISO, branch, tab, key, who, todayISO],
+  );
   useEffect(() => {
     void load();
   }, [load]);
@@ -585,9 +607,16 @@ export function RestaurantReports({ initialTab = 'overview' }: { initialTab?: Re
 
   const openCancelled = async () => {
     if (cancelled !== null && cancelled !== 'failed') return;
+    const cacheKey = `${who}|cancelled|${dates.fromISO}|${dates.toISO}|${branch}`;
+    const hit = peek<RestaurantCancelledPage>(cacheKey);
+    if (hit && isFresh(hit, freshFor(dates.toISO, todayISO))) return setCancelled(hit.value);
     setCancelled('loading');
     try {
-      setCancelled(await api.restaurantReport<RestaurantCancelledPage>('cancelled', { from: dates.fromISO, to: dates.toISO, location: branch || undefined }));
+      setCancelled(
+        await fetchOnce(cacheKey, () =>
+          api.restaurantReport<RestaurantCancelledPage>('cancelled', { from: dates.fromISO, to: dates.toISO, location: branch || undefined }),
+        ),
+      );
     } catch {
       setCancelled('failed');
     }
@@ -615,7 +644,7 @@ export function RestaurantReports({ initialTab = 'overview' }: { initialTab?: Re
       {failed ? (
         <div className="ord-state" role="alert">
           <p>{t('error')}</p>
-          <button type="button" className="btn" onClick={() => void load()}>
+          <button type="button" className="btn" onClick={() => void load(true)}>
             {t('retry')}
           </button>
         </div>
