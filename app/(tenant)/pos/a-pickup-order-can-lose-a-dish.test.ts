@@ -59,3 +59,20 @@ describe('Edit an unpaid Pickup order on its own card', () => {
     }
   });
 });
+
+describe('QA 2026-11-23, finding 1 — Edit never undoes another till', () => {
+  it('only a dish tapped here is changed; one nobody touched follows the order as Pickup reads it again', () => {
+    expect(edit).toContain('const [want, setWant] = useState<Record<string, number>>({});');
+    expect(edit).toContain('const touched = (i: PosTokenItem) => editable(i) && keyOf(i) in want;');
+    expect(edit).toContain('if (!touched(i)) continue;');
+    expect(edit).toContain('.filter((i) => touched(i) && countOf(i) > i.qty)');
+  });
+
+  it('a tapped dish another till changed since is not saved over: it shows as it is now, and says so', () => {
+    expect(edit).toContain("if (!(k in base)) setBase((b) => ({ ...b, [k]: i.qty }));");
+    expect(edit).toContain('return !now || now.qty !== base[k];');
+    expect(edit).toContain("setError(t('editChangedElsewhere', { names }));");
+    expect(en.pos.editChangedElsewhere).toContain('{names}');
+    expect(hi.pos.editChangedElsewhere).toContain('{names}');
+  });
+});

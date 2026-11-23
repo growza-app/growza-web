@@ -34,7 +34,14 @@ export default function PickupCardEdit({
 }) {
   const t = useTranslations('pos');
   const tt = useTranslations('posTables');
-  const [want, setWant] = useState<Record<string, number>>(() => Object.fromEntries(token.items.filter(editable).map((i) => [keyOf(i), i.qty])));
+  /*
+   * QA 2026-11-23 (finding 1) — only the dishes this person touched are theirs to change. `want` holds a count for a dish once it is
+   * tapped, and `base` what that dish was at that moment. A dish nobody touched here follows the order as Pickup reads it again (every
+   * 20 seconds), so another till adding a naan is never taken back off by this Save; a touched dish that another till changed since is
+   * refused and shown as it is now, rather than overwritten.
+   */
+  const [want, setWant] = useState<Record<string, number>>({});
+  const [base, setBase] = useState<Record<string, number>>({});
   const [askCooked, setAskCooked] = useState(false);
   const [cooked, setCooked] = useState<boolean | undefined>(undefined);
   const [busy, setBusy] = useState(false);
@@ -48,24 +55,44 @@ export default function PickupCardEdit({
   const rows = token.items.filter((i) => Boolean(i.productId));
   const unit = (i: PosTokenItem) => (i.qty > 0 ? i.paidMinor / i.qty : (i.priceMinor ?? 0));
   const countOf = (i: PosTokenItem) => (editable(i) ? (want[keyOf(i)] ?? i.qty) : i.qty);
+  const touched = (i: PosTokenItem) => editable(i) && keyOf(i) in want;
   const amountOf = (i: PosTokenItem) => {
     const n = countOf(i);
     return n <= i.qty ? Math.round(unit(i) * n) : i.paidMinor + (i.priceMinor ?? 0) * (n - i.qty);
   };
   const nowMinor = rows.reduce((s, i) => s + amountOf(i), 0);
-  const changed = rows.some((i) => editable(i) && countOf(i) !== i.qty);
+  const changed = rows.some((i) => touched(i) && countOf(i) !== i.qty);
   const nothingLeft = rows.every((i) => countOf(i) === 0);
-  const set = (i: PosTokenItem, n: number) => setWant((w) => ({ ...w, [keyOf(i)]: Math.max(0, Math.min(99, n)) }));
+  const set = (i: PosTokenItem, n: number) => {
+    const k = keyOf(i);
+    if (!(k in base)) setBase((b) => ({ ...b, [k]: i.qty }));
+    setWant((w) => ({ ...w, [k]: Math.max(0, Math.min(99, n)) }));
+  };
 
   const save = async () => {
     if (!changed || nothingLeft || busy || (askCooked && cooked === undefined)) return;
+    // A dish tapped here that another till changed since (or took off whole): nothing is saved; it shows what the order has now.
+    const moved = Object.keys(want).filter((k) => {
+      const now = rows.find((i) => keyOf(i) === k);
+      return !now || now.qty !== base[k];
+    });
+    if (moved.length > 0) {
+      const names = moved.map((k) => rows.find((i) => keyOf(i) === k)?.name ?? k.split('|')[2]).join(', ');
+      const drop = <T,>(r: Record<string, T>) => Object.fromEntries(Object.entries(r).filter(([k]) => !moved.includes(k)));
+      setWant(drop);
+      setBase(drop);
+      setError(t('editChangedElsewhere', { names }));
+      return;
+    }
     setBusy(true);
     setError(null);
     let wrote = false;
+    // What the order holds after each call that went through, so a Save stopped part way knows where it stands.
+    const after = { ...base };
     try {
       const reason = t('editReason');
       for (const i of rows) {
-        if (!editable(i)) continue;
+        if (!touched(i)) continue;
         let off = i.qty - countOf(i);
         // Newest line first: what was added last comes off first.
         for (const line of [...(i.lines ?? [])].reverse()) {
@@ -74,16 +101,20 @@ export default function PickupCardEdit({
           await api.cancelBillItems(token.id, [line.id], reason, askCooked ? cooked : undefined, { qty: take, seenQty: line.qty });
           wrote = true;
           off -= take;
+          after[keyOf(i)] = (after[keyOf(i)] ?? i.qty) - take;
         }
       }
       const more = rows
-        .filter((i) => editable(i) && countOf(i) > i.qty)
+        .filter((i) => touched(i) && countOf(i) > i.qty)
         .map((i) => {
           const n = countOf(i) - i.qty;
           return { productId: i.productId!, ...(i.variantId ? { variantId: i.variantId } : {}), qty: n, paidMinor: (i.priceMinor ?? 0) * n };
         });
       let total = nowMinor;
-      if (more.length > 0) total = (await api.addToPendingCounterSale(token.id, more)).totalMinor;
+      if (more.length > 0) {
+        total = (await api.addToPendingCounterSale(token.id, more)).totalMinor;
+        for (const i of rows) if (touched(i) && countOf(i) > i.qty) after[keyOf(i)] = countOf(i);
+      }
       onSaved(t('editSaved', { token: token.tokenLabel, amount: formatMoney(String(total)) }));
     } catch (e) {
       if (e instanceof ApiError && e.code === 'cooked_unknown') {
@@ -93,6 +124,7 @@ export default function PickupCardEdit({
       }
       // Some of it may have gone through: show the order as it is now; the counts asked for stay, so Save finishes the rest.
       if (wrote || (e instanceof ApiError && e.code === 'line_changed')) await onChanged();
+      setBase(after);
     } finally {
       setBusy(false);
     }

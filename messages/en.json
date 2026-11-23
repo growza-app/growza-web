@@ -5008,6 +5008,7 @@
     "editEverythingOff": "Nothing would be left. Use Cancel order instead.",
     "editReason": "Changed at the counter",
     "editSaved": "{token} changed. It now comes to {amount}.",
+    "editChangedElsewhere": "{names} changed on another till while you were editing. It shows what is on the order now: look again and save.",
     "editFailed": "That didn't save. Try again.",
     "cancelOrderTitle": "Cancel order {token}?",
     "cancelOrderBody": "{amount} not collected. The order is removed from the queue and kept in Orders as Cancelled.",
