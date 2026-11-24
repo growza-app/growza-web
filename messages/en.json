@@ -2305,6 +2305,7 @@
   },
   "auth": {
     "metaTitle": "Sign in",
+    "productName": "Growza",
     "language": "Language",
     "login": {
       "title": "Sign in",
