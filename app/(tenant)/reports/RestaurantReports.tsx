@@ -65,38 +65,76 @@ export function Delta({ c, t }: { c: RestaurantCompared; t: DeltaWords }) {
  * Owner rule — exact to the rupee: a laptop shows the exact amount; only a phone, where seven "₹35,085" do not fit,
  * shortens it to "₹35k" (CSS picks one of the two). Today, still under way, is drawn as an outline and named "Today".
  */
+/** The top of the scale: the best day rounded up to a round step (1, 2, 2.5 or 5 × a power of ten) times four. */
+export function scale(peak: number, lines = 4): { top: number; step: number } {
+  if (peak <= 0) return { top: 0, step: 0 };
+  const raw = peak / lines;
+  const pow = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * pow).find((x) => x >= raw)!;
+  return { top: step * lines, step };
+}
+
+/** "₹40k", "₹2.5k", "₹1.5L", "₹800" — an axis line's name; the exact amount is on the bar. */
+export function axisAmount(minor: number, money: Money): string {
+  const rupee = minor / 100;
+  const trim = (n: number) => String(Math.round(n * 10) / 10);
+  if (rupee >= 100_000) return `₹${trim(rupee / 100_000)}L`;
+  if (rupee >= 1_000) return `₹${trim(rupee / 1_000)}k`;
+  return money(minor);
+}
+
 function Bars({ points, money, label, today }: { points: Array<{ key: string; tick: string; full: string; minor: number; weekend?: boolean }>; money: Money; label: string; today?: { key: string; word: string } }) {
   const peak = Math.max(0, ...points.map((p) => p.minor));
-  const every = points.length <= 8;
   const best = points.findIndex((p) => p.minor === peak && peak > 0);
+  const { top, step } = scale(peak);
   const short = (minor: number) => (minor >= 1_000_000 ? `₹${Math.round(minor / 100_000)}k` : money(minor));
+  // The scale, top line first; the bottom line is ₹0.
+  const lines = top === 0 ? [] : [4, 3, 2, 1, 0].map((n) => n * step);
   return (
-    <ul className="cr-bars cr-bars-day rr-bars" aria-label={label}>
-      {points.map((p, i) => {
-        const isToday = p.key === today?.key;
-        return (
-        <li key={p.key} className={`cr-bar-col${isToday ? ' is-today' : ''}${p.weekend ? ' is-weekend' : ''}`}>
-          <span className={`cr-bar-top${i === best ? ' is-peak' : ''}`} aria-hidden="true">
-            {(p.minor > 0 && (every || i === best)) || isToday ? (
-              <>
-                <span className="rr-amt-short">{short(p.minor)}</span>
-                <span className="rr-amt-full">{money(p.minor)}</span>
-              </>
-            ) : (
-              ''
-            )}
-          </span>
-          <span className="cr-bar-slot">
-            <span className={`cr-bar${i === best ? ' is-peak' : ''}`} style={{ height: `${peak === 0 || p.minor <= 0 ? 0 : Math.max(4, (p.minor / peak) * 100)}%` }} />
-          </span>
-          <span className="cr-bar-tick" aria-hidden="true">{isToday ? today!.word : p.tick}</span>
-          <span className="sr-only">
-            {p.full} {money(p.minor)}
-          </span>
-        </li>
-        );
-      })}
-    </ul>
+    <div className="rr-chart">
+      <ul className="cr-bars cr-bars-day rr-bars" aria-label={label}>
+        {/* The scale (Y) is the first column, built like the others — the same space above and below its drawing
+            area — so each amount sits on its line whatever the fonts measure. */}
+        {lines.length ? (
+          <li className="cr-bar-col rr-ycol" aria-hidden="true">
+            <span className="cr-bar-top" />
+            <span className="cr-bar-slot">
+              {lines.map((v) => (
+                <span key={v} className="rr-yline">
+                  {axisAmount(v, money)}
+                </span>
+              ))}
+            </span>
+            <span className="cr-bar-tick" />
+          </li>
+        ) : null}
+        {points.map((p, i) => {
+          const isToday = p.key === today?.key;
+          return (
+            <li key={p.key} className={`cr-bar-col${isToday ? ' is-today' : ''}${p.weekend ? ' is-weekend' : ''}`}>
+              {/* Only the best day and today carry their amount: the scale on the left reads the rest. */}
+              <span className={`cr-bar-top${i === best ? ' is-peak' : ''}`} aria-hidden="true">
+                {i === best || isToday ? (
+                  <>
+                    <span className="rr-amt-short">{short(p.minor)}</span>
+                    <span className="rr-amt-full">{money(p.minor)}</span>
+                  </>
+                ) : (
+                  ''
+                )}
+              </span>
+              <span className="cr-bar-slot">
+                <span className={`cr-bar${i === best ? ' is-peak' : ''}`} style={{ height: `${top === 0 || p.minor <= 0 ? 0 : Math.max(2, (p.minor / top) * 100)}%` }} />
+              </span>
+              <span className="cr-bar-tick" aria-hidden="true">{isToday ? today!.word : p.tick}</span>
+              <span className="sr-only">
+                {p.full} {money(p.minor)}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
@@ -151,11 +189,12 @@ export function OverviewTab({ data, todayISO }: { data: RestaurantOverviewPage; 
   const dateOnly = new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', timeZone: 'UTC' });
   const asDate = (iso: string) => new Date(`${iso}T00:00:00Z`);
   // The first and last day carry the month; up to 8 days, the days between carry their date alone ("19"). Seven
-  // "19 Nov"s are wider than a 344px card and ran into each other.
+  // "19 Nov"s are wider than a 344px card and ran into each other. Longer, one name a week counted back from
+  // the last day ("17 Nov"), never within three days of the first.
   const last = data.byDay.length - 1;
   const points = data.byDay.map((d, i) => ({
     key: d.day,
-    tick: i === 0 || i === last ? day.format(asDate(d.day)) : data.byDay.length <= 8 ? dateOnly.format(asDate(d.day)) : '',
+    tick: i === 0 || i === last ? day.format(asDate(d.day)) : data.byDay.length <= 8 ? dateOnly.format(asDate(d.day)) : (last - i) % 7 === 0 && i >= 3 ? day.format(asDate(d.day)) : '',
     full: weekday.format(asDate(d.day)),
     minor: d.salesMinor,
     weekend: [0, 6].includes(asDate(d.day).getUTCDay()),

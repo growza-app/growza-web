@@ -71,8 +71,34 @@
   color: var(--muted);
 }
 
-.rr-bars {
+.rr-chart {
+  /* The height of the drawing area: the scale's lines, the bars and the axis labels all measure from it. */
+  --rr-plot: 7rem;
   margin-top: var(--sp-3);
+}
+
+/* The scale (Y): a column of its own, five amounts each centred on its line, ₹0 on the baseline. */
+.rr-bars .cr-bar-col.rr-ycol {
+  flex: 0 0 auto;
+  padding-right: var(--sp-2);
+}
+
+.rr-bars.cr-bars .rr-ycol .cr-bar-slot {
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  background: none;
+  border-bottom-color: transparent;
+}
+
+.rr-yline {
+  display: flex;
+  align-items: center;
+  height: 0;
+  font-size: var(--fs-1);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .rr-lists {
@@ -227,10 +253,14 @@
 }
 
 .rr-bars.cr-bars .cr-bar-slot {
+  box-sizing: border-box;
+  height: var(--rr-plot);
   max-width: none;
   border-radius: 0;
-  background: none;
-  border-bottom: 1px solid var(--border);
+  /* The scale's lines: one at the top of each quarter, drawn across every column so they run unbroken. The
+     baseline (the X axis) is a shade darker. */
+  background: linear-gradient(to bottom, var(--border) 1px, transparent 1px) 0 0 / 100% 25%;
+  border-bottom: 1px solid color-mix(in srgb, var(--muted) 55%, transparent);
 }
 
 .rr-bars .cr-bar {
@@ -253,14 +283,17 @@
   background: var(--rr-end-best);
 }
 
-.rr-bars .cr-bar-top {
+/* `.cr-bar-col` too: the Emerald sheet's `.cr-bar-top.is-peak` (dark green) comes later and would win a tie. */
+.rr-bars .cr-bar-col .cr-bar-top {
   height: 1.25rem;
   min-height: 0;
+  margin-bottom: 2px;
   line-height: 1.25rem;
+  font-weight: 600;
   color: var(--rr-day-best);
 }
 
-.rr-bars .is-weekend .cr-bar-top {
+.rr-bars .cr-bar-col.is-weekend .cr-bar-top {
   color: var(--rr-end-best);
 }
 
@@ -324,7 +357,7 @@
 
 @media (max-width: 860px) {
   /* A phone's columns are narrower than a day's name, so the first and last name keep inside the card. */
-  .rr-bars .cr-bar-col:first-child .cr-bar-tick {
+  .rr-bars :is(.cr-bar-col:first-child, .rr-ycol + .cr-bar-col) .cr-bar-tick {
     display: flex;
     justify-content: flex-start;
   }
@@ -365,7 +398,7 @@
      the chart across the whole card. */
   .rr-card {
     grid-template-columns: max-content minmax(0, 1fr);
-    column-gap: var(--sp-8);
+    column-gap: var(--sp-2);
     align-items: start;
     padding: var(--sp-5) var(--sp-6);
   }
@@ -385,10 +418,20 @@
     margin-top: 0;
   }
 
+  /* A thin line between the big number and each small figure. */
   .rr-card > .rr-smalls:not(:empty) {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--sp-4) var(--sp-8);
+    gap: var(--sp-4) 0;
+    border-left: 1px solid var(--border);
+  }
+
+  .rr-card > .rr-smalls > .rr-small {
+    padding-inline: var(--sp-6);
+  }
+
+  .rr-card > .rr-smalls > .rr-small + .rr-small {
+    border-left: 1px solid var(--border);
   }
 
   .rr-card > .rr-cancelled {
@@ -397,14 +440,10 @@
     padding-left: var(--sp-5);
   }
 
-  /* A taller chart, and wider pills when there is room for them. */
-  .rr-bars {
-    margin-top: var(--sp-4);
-  }
-
-  /* `.cr-bars-day` too: the Emerald sheet's `.cr-bars-day .cr-bar-slot` comes later and would win a tie. */
-  .rr-bars.cr-bars-day .cr-bar-slot {
-    height: 10rem;
+  /* A taller chart when there is room for it. */
+  .rr-chart {
+    --rr-plot: 10rem;
+    margin-top: var(--sp-5);
   }
 
   .rr-bars .cr-bar {
