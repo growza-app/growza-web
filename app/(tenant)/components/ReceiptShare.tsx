@@ -138,7 +138,7 @@ export function ReceiptShare({
   const shareReceipt = async () => {
     if (hasGraphicCard && card) {
       try {
-        const blob = await renderReceiptCardBlob(card, logo);
+        const blob = await renderReceiptCardBlob(card, logo, nv.rcRewardSub);
         if (blob) {
           const file = new File([blob], 'receipt.png', { type: 'image/png' });
           if (!navigator.canShare || navigator.canShare({ files: [file] })) {

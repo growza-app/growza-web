@@ -2082,6 +2082,9 @@ input.wi-search-input-plain {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
+  /* The words take the free space and wrap as a sentence, never one word a line beside a long expiry date. */
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .wi-rc-star {
@@ -2114,7 +2117,9 @@ input.wi-search-input-plain {
 
 .wi-rc-rewards-bal {
   text-align: right;
-  flex: none;
+  /* Capped so "7 points expire on 23 Nov 2027." wraps under the figure instead of squeezing the words beside it. */
+  flex: 0 1 auto;
+  max-width: 42%;
 }
 
 .wi-rc-rewards-bal-lbl {
@@ -2126,6 +2131,7 @@ input.wi-search-input-plain {
 }
 
 .wi-rc-rewards-bal-val {
+  white-space: nowrap;
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text);
