@@ -215,3 +215,169 @@
 /* ---------- the mode toggle inside the sheet ---------- */
 
 /* Jira GRW-519 — the walk-in sheet's Walk-in now / For later segmented control was here; the Booking date replaced it. */
+
+/*
+ * Owner, 2026-11-23 — a shop's (and a kitchen's) bar, from the owner's reference: Home · Orders · POS · Menu · Alerts.
+ *
+ * The till is a tile in the middle of the bar: a taller rounded square in mint with its icon and word in forest green
+ * (≈6.4:1), lit by a soft glow. It is inside the capsule, the same row as the tabs, so it covers nothing and needs no
+ * band of page padding. The other four stay quiet; the one you are on is its icon and word in the accent, as in the
+ * reference — no pill behind it, so the POS is the only filled shape in the bar. Alerts is the last tab, with its count.
+ */
+@media (max-width: 860px) {
+  /* Owner, 2026-11-23 — "decrease the height": 4px round the cells, 44px tabs (the touch floor), a 50px tile. */
+  .bottom-nav.bn-shop {
+    align-items: center;
+    padding: 4px;
+  }
+  .bottom-nav.bn-shop > a {
+    flex: 1 1 0;
+    min-height: 44px;
+    gap: 2px;
+  }
+  .bottom-nav.bn-shop a.active::before {
+    display: none;
+  }
+  .bottom-nav.bn-shop a.active {
+    color: var(--accent-deep);
+  }
+  /* Owner, 2026-11-23 — Home and Orders (H1, O2) fill in on the tab you are on: solid for the house and the clip, mint
+     for the clipboard's board. Off, they are outlines like Menu and Alerts. */
+  .bottom-nav.bn-shop a.active .bn-fill {
+    fill: currentColor;
+  }
+  .bottom-nav.bn-shop a.active .bn-fill-soft {
+    fill: var(--mint);
+  }
+  /*
+   * Owner, 2026-11-23 — a small green dot under the tab you are on, as in the owner's second reference. The word stays
+   * (owners are not always confident readers); the dot is a second, quiet "you are here". It sits in the cell's own
+   * bottom padding, so the bar does not grow for it.
+   */
+  .bottom-nav.bn-shop > a {
+    padding-bottom: 6px;
+  }
+  /* The POS word sits on the same line as the others: its cell is bottom-aligned, so it takes 3px less. */
+  .bottom-nav.bn-shop > a.bn-pos-tile {
+    padding-bottom: 3px;
+  }
+  .bottom-nav.bn-shop a.active .bn-mark {
+    display: block;
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 5px;
+    height: 5px;
+    margin-left: -2.5px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  /*
+   * The POS: a 42px green circle standing out of the middle of the capsule (owner, 2026-11-23: "reduce size of POS"), its word under it in the accent, and a 4px
+   * ring in the bar's own colour that cuts it out of the capsule's edge (owner, 2026-11-23). It is a flex item in the bar's
+   * row, so it covers nothing below it; the bar only stops clipping the part that rises above.
+   */
+  .bottom-nav.bn-shop {
+    overflow: visible;
+  }
+  .bottom-nav.bn-shop a.bn-pos-tile {
+    flex: 0 0 3.75rem;
+    position: relative;
+    justify-content: flex-end;
+    min-height: 44px;
+    color: var(--accent-deep);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  /*
+   * Owner, 2026-11-23 (third reference) — the bar dips in a curve round the POS circle instead of a white ring cutting it
+   * out. The bar's surface becomes its own layer (`.bn-shape`): the fill is masked with a round notch centred on the
+   * circle, and the shadow is a drop-shadow on the layer above the mask, so it follows the notch rather than the old
+   * rectangle. Only where the POS is drawn; every other bar keeps its plain capsule.
+   */
+  .bottom-nav.bn-shop.has-pos-tile {
+    /* The containing block for `.bn-shape`, or the layer would fill the whole screen. */
+    position: relative;
+    isolation: isolate;
+
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  /*
+   * The scroll edge, iOS-style (owner, 2026-11-23). The bar is in flow (GRW-192): the page ends at its top edge and never
+   * passes under it, so the notch shows only the page's own background. Cut off there, a white card scrolled to the bar
+   * drew a hard line across the notch; fading the page out over its last 1.5rem removes that line. The page's bottom
+   * padding keeps its last real row clear of the fade.
+   */
+  .content:has(> .bottom-nav.has-pos-tile) .page-body {
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 1.5rem), transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 1.5rem), transparent 100%);
+  }
+  .bn-shape {
+    position: absolute;
+    inset: -1px;
+    z-index: 0;
+    pointer-events: none;
+    filter: drop-shadow(0 1px 1px rgba(9, 20, 15, 0.06)) drop-shadow(0 8px 18px rgba(9, 20, 15, 0.12));
+  }
+  .bn-shape-fill {
+    position: absolute;
+    inset: 0;
+    border-radius: 26px;
+    background: var(--surface);
+    /* A U-shaped dip with long, soft shoulders, 140 × 28px, cut out of the top-centre of the surface (the reference's
+       notch): the bar's top edge eases down into the dip instead of turning a corner, so it reads as one bar.
+       The 42px circle's lowest point is 20px down (owner: smaller, and a little higher), so 8px of the page shows round it. */
+    -webkit-mask:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 30'%3E%3Cpath d='M0 0C22 0 34 1.5 44 8C56 16 64 30 80 30C96 30 104 16 116 8C126 1.5 138 0 160 0Z'/%3E%3C/svg%3E") top center / 8.75rem 1.75rem no-repeat,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 30'%3E%3Cpath d='M0 0C22 0 34 1.5 44 8C56 16 64 30 80 30C96 30 104 16 116 8C126 1.5 138 0 160 0Z'/%3E%3C/svg%3E") top center / 8.75rem 1.75rem no-repeat exclude,
+      linear-gradient(#000 0 0);
+  }
+  .bottom-nav.bn-shop.has-pos-tile > a {
+    z-index: 1;
+  }
+  .bn-pos-btn {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% - 1.25rem);
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.625rem;
+    height: 2.625rem;
+    border-radius: 50%;
+    background: var(--accent-deep);
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(22, 101, 52, 0.22);
+    transition: transform 0.16s ease;
+  }
+  .bottom-nav.bn-shop a.bn-pos-tile svg {
+    width: 1.375rem;
+    height: 1.375rem;
+    stroke: currentColor;
+  }
+  .bottom-nav.bn-shop a.bn-pos-tile:active .bn-pos-btn {
+    transform: translateX(-50%) scale(0.94);
+  }
+  .bottom-nav.bn-shop a.bn-pos-tile:focus-visible {
+    outline: none;
+  }
+  .bottom-nav.bn-shop a.bn-pos-tile:focus-visible .bn-pos-btn {
+    box-shadow:
+      0 0 0 3px var(--surface),
+      0 0 0 6px var(--accent);
+  }
+
+}
+@media (max-width: 860px) and (prefers-reduced-motion: reduce) {
+  .bn-pos-btn {
+    transition: none;
+  }
+}

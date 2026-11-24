@@ -77,8 +77,15 @@ export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Recor
   const mayBook = mayUse(role, 'visit.new', writable) && (!areas.pages || gridMayUse('visit.new', areas.pages));
   // Jira GRW-74 — and the role opens what the plus goes to: a shop's till needs Orders and Stock.
   const plusOpens = !areas.pages || canSee(areas.shop ? '/products/sell' : '/appointments', role, undefined, true, areas);
+  /*
+   * Owner, 2026-11-23 — a shop's (and a kitchen's) bar carries the till as a tile in its middle, on every screen that has
+   * the bar: Home · Orders · POS · Menu · More. The question is the till's own — may this role open the POS (`canSee`,
+   * the guard on that screen) — not whether it may start a booking, which a cashier's or a waiter's role may not hold.
+   * So a shop has no corner plus any more; a salon's plus asks what it always asked.
+   */
+  const onPos = areas.shop && live && writable && canSee('/pos', role, undefined, true, areas) ? () => router.push('/pos') : undefined;
   const onCentre =
-    mayBook && plusOpens && live && PLUS_ROUTE_RE.test(pathname) ? () => router.push(areas.shop ? '/pos' : '/appointments/new?mode=now') : undefined;
+    !areas.shop && mayBook && plusOpens && live && PLUS_ROUTE_RE.test(pathname) ? () => router.push('/appointments/new?mode=now') : undefined;
 
   /*
    * Owner, 2026-10-06 — the plus offers two things: New booking (the page) and Record payment (a page on a phone,
@@ -92,5 +99,5 @@ export function MobileChrome({ labels, role, reportTabs, lang }: { labels: Recor
   // Jira GRW-526 — New booking is a focused full screen: no tab bar under it, on any of its steps.
   if (NO_BAR_ROUTE_RE.test(pathname)) return null;
 
-  return <BottomNav role={role} labels={labels} reportTabs={reportTabs} lang={lang} onCentre={onCentre} onPayment={onPayment} />;
+  return <BottomNav role={role} labels={labels} reportTabs={reportTabs} lang={lang} onCentre={onCentre} onPayment={onPayment} onPos={onPos} />;
 }
