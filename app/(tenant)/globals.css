@@ -174,4 +174,6 @@
 @import './styles/99-menu-manager.css';
 /* Emerald v2 theme preview — after every screen sheet, before 99-photo-none.css (which must stay last); delete this line and the file to drop it. */
 @import './styles/99-z-emerald-v2.css';
+/* Owner, 2026-11-24 — the laptop sidebar as a slim bar that widens on hover; after Emerald so it wins. */
+@import './styles/99-zz-slim-rail.css';
 @import './styles/99-photo-none.css';

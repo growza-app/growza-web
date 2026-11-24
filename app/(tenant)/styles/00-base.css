@@ -1,5 +1,16 @@
 :root {
   --sidebar: #0f3d2e;
+  /* Owner, 2026-11-24 — the laptop's slim sidebar (99-zz-slim-rail.css): light, dark icons, the page you are on in green. */
+  --rail-w: 4rem;
+  --rail-open-w: 15rem;
+  --rail-bg: #f1f2ef;
+  --rail-ink: #14201b; /* 15:1 on --rail-bg */
+  --rail-quiet: #5f6a65;
+  --rail-hover: rgb(20 32 27 / 6%);
+  --rail-card: #ffffff;
+  --rail-active: #166534; /* the page you are on: a white icon on it reads 7.1:1 */
+  --rail-on-active: #ffffff;
+  --rail-speed: 180ms;
   --sidebar-deep: #0b2f23;
   --sidebar-text: #a7c4b8;
   --sidebar-active: #1d8348;
