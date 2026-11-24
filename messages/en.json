@@ -3146,7 +3146,16 @@
       "moreNotSelling": "and {n} more",
       "thrown": "{n} after cooking",
       "thrownCost": "{n} after cooking · {amount} of food",
-      "noCost": "no cost price or recipe"
+      "noCost": "no cost price or recipe",
+      "perPlate": "Most profit per plate",
+      "perPlateSub": "Price less what it costs to make, and the app's cut",
+      "movers": "Selling more or less",
+      "moversSub": "Plates against the days before",
+      "moversNote": "{now} plates, {before} before",
+      "notSellingSub": "On the menu, no plate in these dates",
+      "rankBy": "Rank top dishes by",
+      "bySales": "By sales",
+      "byPlates": "By plates"
     },
     "inventory": {
       "foodCost": "Food cost",

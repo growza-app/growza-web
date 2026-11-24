@@ -206,15 +206,48 @@ describe('Items', () => {
     expect(out).toContain('Dishes sold 1,740');
     expect(out).toContain('↑ 24% vs the days before');
     expect(out).toContain('Cancelled dishes 23 · ₹5,980 9 after cooking See all');
-    expect(out).toContain('Butter Chicken 300 plates · profit ₹54,000 ₹1,02,000');
+    // Owner, 2026-11-24 — the top five are the tab's chart; what a plate makes has its own list now.
+    expect(out).toContain('Top dishes Butter Chicken 300 plates ₹1,02,000');
     // Gulab Jamun has no cost price: it says so (owner, 2026-11-24), never a profit of ₹0.
     expect(out).toContain('Gulab Jamun 200 plates · no cost price or recipe ₹18,000');
     expect(out).toContain('and 26 more dishes sold');
   });
 
   it('names what is not selling once, and never as advice', () => {
-    expect(out).toContain('Not selling Kulfi Mutton Rogan Josh Rasmalai');
+    expect(out).toContain('Not selling On the menu, no plate in these dates Kulfi Mutton Rogan Josh Rasmalai');
     expect(out).not.toMatch(/stop|try|push|offer/i);
+  });
+
+  describe('owner, 2026-11-24 — the Items tab rebuilt: bars, sizes as one row, three short lists', () => {
+    const rich = {
+      ...items,
+      top: [{ name: 'Paneer Butter Masala', productId: null, qty: 82, previousQty: 70, salesMinor: 1_722_000, sizes: [{ label: 'Full', qty: 41 }, { label: 'Half', qty: 41 }], profitMinor: 900_000 }, ...items.top.slice(1)],
+      topByPlates: [{ name: 'Butter Naan', productId: 'p-naan', qty: 212, previousQty: 200, salesMinor: 636_000, sizes: [], profitMinor: 400_000 }],
+      perPlate: [{ name: 'Dal Makhani (Full)', qty: 28, perPlateMinor: 18_500 }],
+      movers: [{ name: 'Masala Dosa', qty: 30, previousQty: 12, diff: 18 }, { name: 'Mango Lassi', qty: 3, previousQty: 12, diff: -9 }],
+      notSelling: { names: ['Kulfi'], rows: [{ name: 'Kulfi', priceMinor: 8_000 }], count: 1 },
+    };
+    const html = render('en', createElement(ItemsTab, { data: rich }));
+    const out = text(html);
+    it('a dish\'s sizes are one row: "Full 41 · Half 41"', () => {
+      expect(out).toContain('Paneer Butter Masala Full 41 · Half 41 ₹17,220');
+    });
+    it('the bars can be ranked by sales or by plates — sales first', () => {
+      expect(html).toContain('aria-pressed="true">By sales');
+      expect(html).toContain('aria-pressed="false">By plates');
+    });
+    it('most profit per plate, selling more or less (up green, down red), not selling with its price', () => {
+      expect(out).toContain('Most profit per plate Price less what it costs to make, and the app');
+      expect(out).toContain('Dal Makhani (Full) 28 plates ₹185');
+      expect(out).toContain('Selling more or less Plates against the days before Masala Dosa 30 plates, 12 before ↑ 18 Mango Lassi 3 plates, 12 before ↓ 9');
+      expect(html).toMatch(/rr-list-value is-down">↓ 9/);
+      expect(out).toContain('Kulfi ₹80');
+    });
+    it('an older API: the chart without the switch, no new lists', () => {
+      const o = render('en', createElement(ItemsTab, { data: items }));
+      expect(o).not.toContain('By plates');
+      expect(text(o)).not.toContain('Most profit per plate');
+    });
   });
 
   it('every list holds five rows at most', () => {

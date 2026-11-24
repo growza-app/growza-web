@@ -10,6 +10,7 @@ import type {
   RestaurantCompared,
   RestaurantCustomersPage,
   RestaurantFreshness,
+  RestaurantDish,
   RestaurantItemsPage,
   RestaurantOverviewPage,
   RestaurantSalesPage,
@@ -157,11 +158,23 @@ function Small({ label, value, sub }: { label: string; value: ReactNode; sub?: R
 }
 
 /** A list of up to five rows: a name and an amount. */
-function List({ title, rows, more }: { title: string; rows: Array<{ key: string; name: string; value: string; note?: string | null }>; more?: string | null }) {
+function List({
+  title,
+  sub,
+  rows,
+  more,
+}: {
+  title: string;
+  /** Owner, 2026-11-24 — one line under the title saying what the list counts. */
+  sub?: string | null;
+  rows: Array<{ key: string; name: string; value: string; note?: string | null; tone?: 'up' | 'down' | 'quiet' }>;
+  more?: string | null;
+}) {
   if (rows.length === 0) return null;
   return (
     <section className="rr-list" aria-label={title}>
       <h3 className="rr-list-title">{title}</h3>
+      {sub ? <p className="rr-more rr-list-sub">{sub}</p> : null}
       <ul>
         {rows.map((r) => (
           <li key={r.key}>
@@ -169,7 +182,7 @@ function List({ title, rows, more }: { title: string; rows: Array<{ key: string;
               {r.name}
               {r.note ? <span className="rr-list-note">{r.note}</span> : null}
             </span>
-            <span className="rr-list-value">{r.value}</span>
+            <span className={`rr-list-value${r.tone ? ` is-${r.tone}` : ''}`}>{r.value}</span>
           </li>
         ))}
       </ul>
@@ -499,28 +512,98 @@ export function ItemsTab({ data, onOpenCancelled, cancelled }: { data: Restauran
             )}
           </details>
         ) : null}
+        {data.top.length > 0 ? <TopDishes data={data} money={money} hasProfit={hasProfit} more={more} /> : null}
       </section>
-      <div className="rr-lists">
-        <List
-          title={t('items.top')}
-          rows={data.top.map((d) => ({
-            key: d.productId ?? d.name,
-            name: d.name,
-            note: [t('items.plates', { n: d.qty }), hasProfit && d.profitMinor !== undefined ? (d.profitMinor === null ? t('items.noCost') : t('items.profit', { amount: money(d.profitMinor) })) : null].filter(Boolean).join(' · '),
-            value: money(d.salesMinor),
-          }))}
-          more={more > 0 ? t('items.moreSold', { n: more }) : null}
-        />
+      <div className="rr-lists rr-items-lists">
+        {data.perPlate && data.perPlate.length > 0 ? (
+          <List
+            title={t('items.perPlate')}
+            sub={t('items.perPlateSub')}
+            rows={data.perPlate.map((d) => ({ key: d.name, name: d.name, note: t('items.plates', { n: d.qty }), value: money(d.perPlateMinor) }))}
+          />
+        ) : null}
+        {data.movers && data.movers.length > 0 ? (
+          <List
+            title={t('items.movers')}
+            sub={t('items.moversSub')}
+            rows={data.movers.map((d) => ({
+              key: d.name,
+              name: d.name,
+              note: t('items.moversNote', { now: d.qty, before: d.previousQty }),
+              value: d.diff > 0 ? `↑ ${d.diff}` : `↓ ${-d.diff}`,
+              tone: d.diff > 0 ? 'up' : 'down',
+            }))}
+          />
+        ) : null}
         {data.notSelling.count > 0 ? (
           <List
             title={t('items.notSelling')}
-            rows={data.notSelling.names.map((name) => ({ key: name, name, value: '' }))}
+            sub={t('items.notSellingSub')}
+            rows={(data.notSelling.rows ?? data.notSelling.names.map((name) => ({ name, priceMinor: null as number | null }))).map((r) => ({
+              key: r.name,
+              name: r.name,
+              value: r.priceMinor === null ? '' : money(r.priceMinor),
+              tone: 'quiet' as const,
+            }))}
             more={data.notSelling.count > data.notSelling.names.length ? t('items.moreNotSelling', { n: data.notSelling.count - data.notSelling.names.length }) : null}
           />
         ) : null}
       </div>
       <Freshness f={data.freshness} t={t} locale={locale} />
     </>
+  );
+}
+
+/**
+ * Owner, 2026-11-24 — the Items tab's chart: the top five dishes as bars, by Sales or by plates. A dish's sizes are one
+ * row ("Full 41 · Half 41"). The switch is the Reports tabs' own pill buttons, pressed or not.
+ */
+function TopDishes({ data, money, hasProfit, more }: { data: RestaurantItemsPage; money: Money; hasProfit: boolean; more: number }) {
+  const t = useTranslations('restaurantReports.items');
+  const [by, setBy] = useState<'sales' | 'plates'>('sales');
+  const rows = by === 'plates' && data.topByPlates ? data.topByPlates : data.top;
+  const value = (d: RestaurantDish) => (by === 'sales' ? d.salesMinor : d.qty);
+  const max = Math.max(1, ...rows.map(value));
+  const note = (d: RestaurantDish) =>
+    [
+      d.sizes && d.sizes.length > 0 ? d.sizes.map((s) => `${s.label} ${s.qty}`).join(' · ') : by === 'sales' ? t('plates', { n: d.qty }) : null,
+      // A dish Profit cannot cost says so here, where the owner looks for it (owner, 2026-11-24).
+      hasProfit && d.profitMinor === null ? t('noCost') : null,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  return (
+    <div className="rr-topdishes">
+      <div className="rr-topdishes-head">
+        <h3 className="rr-list-title">{t('top')}</h3>
+        {data.topByPlates ? (
+          <div className="rr-rank-by" role="group" aria-label={t('rankBy')}>
+            {(['sales', 'plates'] as const).map((k) => (
+              <button key={k} type="button" className={`srp-nav-tab ${by === k ? 'is-active' : ''}`} aria-pressed={by === k} onClick={() => setBy(k)}>
+                {t(k === 'sales' ? 'bySales' : 'byPlates')}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+      <ul className="cr-rows rr-hbars">
+        {rows.map((d) => (
+          <li key={`${d.productId ?? ''}|${d.name}`} className="cr-row">
+            <span className="cr-row-line">
+              <span className="cr-row-name">
+                <span className="rr-hbar-name">{d.name}</span>
+                {note(d) ? <span className="rr-list-note">{note(d)}</span> : null}
+              </span>
+              <span className="cr-row-money">{by === 'sales' ? money(d.salesMinor) : t('plates', { n: d.qty })}</span>
+            </span>
+            <span className="cr-row-track" aria-hidden="true">
+              <span className="cr-row-fill" style={{ width: `${Math.max(2, (value(d) / max) * 100)}%` }} />
+            </span>
+          </li>
+        ))}
+      </ul>
+      {more > 0 ? <p className="rr-more">{t('moreSold', { n: more })}</p> : null}
+    </div>
   );
 }
 

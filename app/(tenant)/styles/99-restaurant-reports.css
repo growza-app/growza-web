@@ -516,6 +516,8 @@
     grid-row: 1 / span 3;
     grid-template-rows: subgrid;
     grid-template-columns: max-content max-content;
+    /* The phone's summary spreads its two parts to the edges; this grid keeps them together. */
+    justify-content: start;
     column-gap: var(--sp-6);
     align-items: start;
     min-height: 0;
@@ -541,9 +543,11 @@
     margin: 0;
   }
 
+  /* Owner, 2026-11-24 — "See all" right after the cancelled figure's note, not floating at the card's far edge. */
   .rr-card > .rr-cancelled:not([open]) .rr-see {
-    grid-area: 2 / 2;
-    align-self: last baseline;
+    grid-area: 3 / 2;
+    align-self: baseline;
+    font-size: var(--fs-2);
   }
 
   /* A taller chart when there is room for it. */
@@ -977,5 +981,108 @@ button.rr-worth-row {
   .rr-returns .rr-bars.cr-bars .cr-bar-col .cr-bar-tick {
     display: block;
     text-align: center;
+  }
+}
+
+/*
+ * Owner, 2026-11-24 — the Items tab: the top five as bars (By sales / By plates), then short lists side by side. On a
+ * phone each bar sits under its dish's line (the counter report's rows); on a laptop name, bar and amount share a line.
+ */
+.rr-topdishes {
+  margin-top: var(--sp-4);
+}
+
+.rr-topdishes-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-4);
+  margin-bottom: var(--sp-3);
+}
+
+.rr-topdishes-head .rr-list-title {
+  margin: 0;
+}
+
+.rr-rank-by {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.rr-rank-by .srp-nav-tab {
+  min-height: 44px;
+  font: inherit;
+  font-size: var(--fs-2);
+  cursor: pointer;
+}
+
+/* Only the one not pressed loses its fill: the pressed one keeps the tabs' dark green (its text is white). */
+.rr-rank-by .srp-nav-tab:not(.is-active) {
+  background: none;
+}
+
+.rr-hbars .cr-row-name {
+  display: grid;
+  white-space: normal;
+}
+
+.rr-hbar-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rr-list-sub {
+  margin: 0 0 var(--sp-1);
+}
+
+.rr-list-value.is-up {
+  color: var(--accent-deep);
+}
+
+.rr-list-value.is-down {
+  color: var(--danger-deep);
+}
+
+.rr-list-value.is-quiet {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+@media (min-width: 861px) {
+  .rr-hbars .cr-row {
+    display: grid;
+    grid-template-columns: minmax(10rem, 16rem) minmax(0, 1fr) 6.5rem;
+    align-items: center;
+    column-gap: var(--sp-5);
+  }
+
+  .rr-hbars .cr-row-line {
+    display: contents;
+  }
+
+  .rr-hbars .cr-row-name {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .rr-hbars .cr-row-money {
+    grid-column: 3;
+    grid-row: 1;
+    text-align: right;
+  }
+
+  .rr-hbars .cr-row-track {
+    grid-column: 2;
+    grid-row: 1;
+    height: 0.875rem;
+    margin-top: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+  }
+
+  .rr-hbars .cr-row-fill {
+    border-radius: var(--radius-sm);
   }
 }

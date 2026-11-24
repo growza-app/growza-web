@@ -2907,6 +2907,8 @@ export interface RestaurantDish {
   salesMinor: number;
   /** Only for someone who may see cost; null when the dish has no cost price. */
   profitMinor?: number | null;
+  /** Owner, 2026-11-24 — the sizes joined into this row ("Full 41 · Half 41"); absent or empty for one dish. */
+  sizes?: Array<{ label: string; qty: number }>;
 }
 export interface RestaurantItemsPage {
   window: RestaurantWindow;
@@ -2915,7 +2917,11 @@ export interface RestaurantItemsPage {
   cancelled: { qty: number; minor: number; thrownQty: number; thrownMinor?: number };
   top: RestaurantDish[];
   sellingCount: number;
-  notSelling: { names: string[]; count: number };
+  /** Owner, 2026-11-24 — the chart's "By plates", what one plate makes (cost viewers), and what moved. Absent from an older API. */
+  topByPlates?: RestaurantDish[];
+  perPlate?: Array<{ name: string; qty: number; perPlateMinor: number }>;
+  movers?: Array<{ name: string; qty: number; previousQty: number; diff: number }>;
+  notSelling: { names: string[]; rows?: Array<{ name: string; priceMinor: number }>; count: number };
   freshness: RestaurantFreshness;
 }
 export interface RestaurantCancelledPage {
