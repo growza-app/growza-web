@@ -230,6 +230,8 @@ export interface SelfMarkResult {
 }
 import type { BillOffer, BillOffersQuote, DocumentTicket, KitchenStations, KitchenTicketDto, OrderKitchenTickets, AutopayStart, BranchClosePreview, OwnerBill, OwnerBilling, OwnerBillPage } from './api-types';
 import { downscaleImage } from './downscale';
+import { renewForRequest } from './resume-session';
+import { withSessionRenewal } from './session-renewal';
 import type {
   ClientProfile,
   ReportBookings,
@@ -346,8 +348,19 @@ export function reasonOr(error: unknown, fallback: string): string {
 /** Jira GRW-230 — `?location=` for a branch's settings, nothing for the business's. */
 const atBranch = (location?: string | null) => (location ? `?location=${encodeURIComponent(location)}` : '');
 
+/**
+ * Owner, 2026-11-24 — every request from the browser goes through here: a "signed out" answer on a page already open
+ * renews the session once and repeats the request once before /login (session-renewal.ts says what it will and will
+ * not do). On the server (`window` undefined), on the sign-in page and for the /auth/ routes it is plain `fetch`.
+ */
+const apiFetch = withSessionRenewal(
+  (input, init) => fetch(input, init),
+  () => renewForRequest(),
+  (input) => typeof window !== 'undefined' && window.location.pathname !== '/login' && !input.includes('/api/v1/auth/'),
+);
+
 async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders(), signal });
+  const res = await apiFetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders(), signal });
   if (!res.ok) throw await apiError(res, path);
   return res.json() as Promise<T>;
 }
@@ -450,7 +463,7 @@ function sellersParams(q: SellersQuery): string {
 /* ---- Reports (GRW-48) ------------------------------------------------- */
 
 async function send<T>(method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await apiFetch(`${API_URL}${path}`, {
     method,
     headers: {
       ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
@@ -572,7 +585,7 @@ async function uploadFile<T>(path: string, field: string, file: File): Promise<T
   const isPicture = file.type === '' || file.type.startsWith('image/');
   form.append(field, isPicture ? await downscaleImage(file) : file);
   // No Content-Type of our own — the browser must set its own boundary'd one.
-  const res = await fetch(`${API_URL}${path}`, { method: 'POST', body: form, headers: await authHeaders() });
+  const res = await apiFetch(`${API_URL}${path}`, { method: 'POST', body: form, headers: await authHeaders() });
   if (!res.ok) throw await apiError(res, path);
   return res.json() as Promise<T>;
 }
@@ -1109,7 +1122,7 @@ export const api = {
     const p = new URLSearchParams(sellersParams({ range: q.range, location: q.location }));
     if (q.channel) p.set('channel', q.channel);
     const path = `/api/v1/reports/refunds/export?${p.toString()}`;
-    const res = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
+    const res = await apiFetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
     if (!res.ok) throw await apiError(res, path);
     return res.text();
   },
@@ -1121,6 +1134,9 @@ export const api = {
   /** Jira GRW-591 — the counter report: what was taken, what earned it, when the rush was, what changed. */
   counterReport: (q: { range: ReportRangeKey; location?: string | null; from?: string; to?: string }) =>
     get<CounterReportPage>(`/api/v1/reports/counter?${sellersParams({ range: q.range, location: q.location ?? undefined, from: q.from, to: q.to })}`),
+  /** Jira GRW-758 — the restaurant's Reports tabs, over two dates (inclusive) and a branch. */
+  restaurantReport: <T>(tab: 'overview' | 'sales' | 'items' | 'cancelled' | 'tips' | 'customers', q: { from: string; to: string; location?: string | null }) =>
+    get<T>(`/api/v1/reports/restaurant/${tab}?${new URLSearchParams({ range: 'custom', from: q.from, to: q.to, ...(q.location ? { location: q.location } : {}) }).toString()}`),
   /** Owner, 2026-11-14 — a counter business's profit, discounts and payments, over the same range as the counter report. */
   profitReport: (q: MoneyReportQuery) => get<ProfitReportPage>(`/api/v1/reports/profit?${moneyParams(q)}`),
   discountReport: (q: MoneyReportQuery) => get<DiscountReportPage>(`/api/v1/reports/discounts?${moneyParams(q)}`),
@@ -1147,7 +1163,7 @@ export const api = {
   /** Jira GRW-633 — the list as a file, with the owner's own numbers; the server writes it. */
   reorderCsv: async (q: Omit<ReorderQuery, 'page' | 'pageSize'>): Promise<string> => {
     const path = `/api/v1/reports/reorder/export?${reorderParams(q)}`;
-    const res = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
+    const res = await apiFetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
     if (!res.ok) throw await apiError(res, path);
     return res.text();
   },
@@ -1160,7 +1176,7 @@ export const api = {
   /** Jira GRW-631 — the same report as a file: the server writes it, so the file can never be a second answer. */
   stockReportCsv: async (q: Omit<StockReportQuery, 'page' | 'pageSize'>): Promise<string> => {
     const path = `/api/v1/reports/stock/export?${stockReportParams(q)}`;
-    const res = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
+    const res = await apiFetch(`${API_URL}${path}`, { cache: 'no-store', headers: await authHeaders() });
     if (!res.ok) throw await apiError(res, path);
     return res.text();
   },

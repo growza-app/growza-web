@@ -31,6 +31,8 @@ export function TaxFields({
   open,
   onToggle,
   savedRateBp,
+  noCode = false,
+  pricesIncludeTax = true,
 }: {
   /** Distinct per form, so two sheets on one page never share an id. */
   idPrefix: string;
@@ -44,6 +46,13 @@ export function TaxFields({
   onToggle: () => void;
   /** The rate already stored, so a value that is no standard slab (an older import) is still offered, not lost. */
   savedRateBp?: number | null;
+  /**
+   * A dish in a kitchen: no HSN row. A restaurant's bill carries one services code for the whole bill, never one per
+   * dish, so the box asked for something no invoice uses (owner, 2026-11-23). A code already stored is kept, not shown.
+   */
+  noCode?: boolean;
+  /** Settings › GST: false when GST is added on top at the till, so the hint says that instead of "prices include GST". */
+  pricesIncludeTax?: boolean;
 }) {
   const t = useTranslations('tax');
   const { customer } = useNouns();
@@ -51,7 +60,7 @@ export function TaxFields({
     savedRateBp != null && !GST_SLABS_BP.includes(savedRateBp as (typeof GST_SLABS_BP)[number])
       ? [...GST_SLABS_BP, savedRateBp].sort((a, b) => a - b)
       : GST_SLABS_BP;
-  const parts = [rateBp !== '' ? `${Number(rateBp) / 100}%` : null, code.trim() || null].filter(Boolean);
+  const parts = [rateBp !== '' ? `${Number(rateBp) / 100}%` : null, noCode ? null : code.trim() || null].filter(Boolean);
   const codeWord = kind === 'service' ? t('sac') : t('hsn');
 
   return (
@@ -81,6 +90,7 @@ export function TaxFields({
                 </select>
               </div>
             </div>
+            {noCode ? null : (
             <div className="sheet-row">
               <label className="sheet-row-label" htmlFor={`${idPrefix}-code`}>
                 {codeWord}
@@ -101,12 +111,13 @@ export function TaxFields({
                 />
               </div>
             </div>
+            )}
           </>
         ) : null}
       </div>
       {open ? (
         <div id={`${idPrefix}-tax-hint`} className="sheet-foot">
-          {t('hint', { code: codeWord })} {t('pricesInclude', { customer })}
+          {noCode ? t('hintRateOnly') : t('hint', { code: codeWord })} {pricesIncludeTax ? t('pricesInclude', { customer }) : t('pricesOnTop')}
         </div>
       ) : null}
     </>

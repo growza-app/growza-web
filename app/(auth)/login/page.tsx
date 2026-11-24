@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { PasswordInput } from './PasswordInput';
+import { GrowzaMark } from '../../(tenant)/components/GrowzaMark';
 import { PhoneField } from '../../(tenant)/components/PhoneField';
 import { toStoredPhone } from '../../(tenant)/lib/phone';
 import { rememberLang, type Lang } from '../../(tenant)/lib/lang';
@@ -25,6 +26,13 @@ import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 export default function LoginPage() {
   const t = useTranslations('auth.login');
   const ta = useTranslations('auth');
+  // Owner, 2026-11-24 — "add growza logo on login screen": the sidebar's mark and name, above both forms here.
+  const brand = (
+    <div className="login-brand">
+      <GrowzaMark size={44} />
+      <span className="login-brand-word">{ta('productName')}</span>
+    </div>
+  );
   const locale = useLocale();
   /** A visitor on a new device has no language cookie yet, so the sign-in card lets them pick one. */
   const chooseLang = (lang: Lang) => {
@@ -156,6 +164,7 @@ export default function LoginPage() {
     return (
       <main className="login-page">
         <form className="login-card" onSubmit={onChoosePassword}>
+          {brand}
           <div className="login-head">
             <h1>{t('choose.title')}</h1>
             <p>{t('choose.intro')}</p>
@@ -219,6 +228,7 @@ export default function LoginPage() {
   return (
     <main className="login-page">
       <form className="login-card" onSubmit={onSubmit}>
+        {brand}
         <div className="login-head">
           <h1>{t('title')}</h1>
           <p>{t('tagline')}</p>
@@ -260,14 +270,13 @@ export default function LoginPage() {
           {loading ? t('signingIn') : t('submit')}
         </button>
 
-        <p className="login-foot">{t('forgot')}</p>
-
+        {/* Owner, 2026-11-24 — the "ask whoever set up your account" line is gone; a forgotten password gets its own
+            way back with the SMS code (GRW-561), parked until DLT is approved. */}
         <div className="login-foot login-lang" role="group" aria-label={ta('language')}>
           <button type="button" lang="en" aria-pressed={locale === 'en'} onClick={() => chooseLang('en')}>
             {/* i18n-ok: a language is named in its own language */}
             English
           </button>
-          {' · '}
           <button type="button" lang="hi" aria-pressed={locale === 'hi'} onClick={() => chooseLang('hi')}>
             हिन्दी
           </button>

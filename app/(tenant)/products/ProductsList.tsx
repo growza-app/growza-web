@@ -17,7 +17,7 @@ import { IconCart, IconCheck, IconChevronRight, IconClipboardCheck, IconEdit, Ic
 import { MenuTable, sectionKey } from './MenuTable';
 import { MenuKebab } from './MenuKebab';
 import { MenuRows } from './MenuRows';
-import { averagePct, groupedOrder, needsRecipe, recipeStates, type MenuTab, type RecipeInfo } from './menu-manager';
+import { averagePct, groupedOrder, lacksCost, needsRecipe, recipeStates, type MenuTab, type RecipeInfo } from './menu-manager';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { ShareOnWhatsAppButton, useShareSession, useShareTextOnWhatsApp } from '../components/ShareOnWhatsApp';
 import { menuShareText } from './menu-share';
@@ -234,7 +234,9 @@ export function ProductsList({
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   // Owner, 2026-11-20 — a kitchen's Menu has three tabs (On the menu · Needs a recipe · Taken off); a shop's shelf keeps its chips.
   const recipesOn = useRecipesOn() && !counted;
-  const [menuTab, setMenuTab] = useState<MenuTab>(counted ? 'all' : initialMenuTab === 'noRecipe' && !recipesOn ? 'all' : initialMenuTab);
+  const [menuTab, setMenuTab] = useState<MenuTab>(
+    counted ? 'all' : (initialMenuTab === 'noRecipe' && !recipesOn) || (initialMenuTab === 'noCost' && !shelfSeesCost(products)) ? 'all' : initialMenuTab,
+  );
   const [filter, setFilter] = useState<ShelfFilter>(counted ? initialFilter : menuTab === 'retired' ? 'retired' : 'all');
   const [sort, setSort] = useState<ShelfSort>('name');
   const [sortDir, setSortDir] = useState<ShelfSortDir>('asc');
@@ -305,7 +307,12 @@ export function ProductsList({
   const worth = useMemo(() => shelfWorthMinor(inCategory), [inCategory]);
   const shown = useMemo(() => {
     const all = filterShelf(rows, filter, search, selectedCategories);
-    const found = !counted && menuTab === 'noRecipe' ? all.filter((p) => needsRecipe(p, recipes)) : all;
+    const found =
+      !counted && menuTab === 'noRecipe'
+        ? all.filter((p) => needsRecipe(p, recipes))
+        : !counted && menuTab === 'noCost'
+          ? all.filter((p) => lacksCost(p, recipes))
+          : all;
     return searchKeepsBestFirst(search, sort, sortDir) ? found : sortShelf(found, sort, sortDir);
   }, [rows, filter, search, selectedCategories, sort, sortDir, counted, menuTab, recipes]);
   // The Menu's table reads section by section, so its pages are slices of the grouped order (the sort holds inside a section).
@@ -331,6 +338,10 @@ export function ProductsList({
     return new Map([...pcts].map(([k, v]) => [k, averagePct(v)] as const));
   }, [shown, categories, recipes]);
   const maxSold = useMemo(() => shown.reduce((m, p) => Math.max(m, p.sold), 0), [shown]);
+  const noCostCount = useMemo(
+    () => (seesCost ? live.filter((p) => lacksCost(p, recipes) && matchesCategories(p, selectedCategories)).length : 0),
+    [live, seesCost, selectedCategories, recipes],
+  );
   const needRecipeCount = useMemo(
     () => (recipes ? rows.filter((p) => needsRecipe(p, recipes) && matchesCategories(p, selectedCategories)).length : 0),
     [rows, recipes, selectedCategories],
@@ -624,13 +635,13 @@ export function ProductsList({
   /** Owner, 2026-11-20 — the Menu's tabs: what is on it, what still needs a recipe (where recipes are on), what was taken off. */
   const menuTabs = (
     <div className="mnu-tabs" role="tablist" aria-label={tm('tabsAria')}>
-      {(recipesOn ? (['all', 'noRecipe', 'retired'] as const) : (['all', 'retired'] as const)).map((tab) => (
+      {(['all', ...(recipesOn ? (['noRecipe'] as const) : []), ...(seesCost ? (['noCost'] as const) : []), 'retired'] as const).map((tab) => (
         <button
           key={tab}
           type="button"
           role="tab"
           aria-selected={menuTab === tab}
-          className={`mnu-tab ${menuTab === tab ? 'is-on' : ''} ${tab === 'noRecipe' && needRecipeCount > 0 ? 'is-warn' : ''}`}
+          className={`mnu-tab ${menuTab === tab ? 'is-on' : ''} ${(tab === 'noRecipe' && needRecipeCount > 0) || (tab === 'noCost' && noCostCount > 0) ? 'is-warn' : ''}`}
           onClick={() => pickTab(tab)}
         >
           <span className="mnu-tab-long">{tm(`tabs.${tab}`)}</span>
@@ -638,7 +649,7 @@ export function ProductsList({
           <span className="mnu-tab-short" aria-hidden="true">
             {tm(`tabsShort.${tab}`)}
           </span>
-          <span className="mnu-tab-n">{tab === 'all' ? live.filter((p) => matchesCategories(p, selectedCategories)).length : tab === 'noRecipe' ? needRecipeCount : counts.retired}</span>
+          <span className="mnu-tab-n">{tab === 'all' ? live.filter((p) => matchesCategories(p, selectedCategories)).length : tab === 'noRecipe' ? needRecipeCount : tab === 'noCost' ? noCostCount : counts.retired}</span>
         </button>
       ))}
     </div>
@@ -899,7 +910,7 @@ export function ProductsList({
   };
   const nothing = (
     <div className="empty">
-      {search.trim().length >= 2 ? t('noMatch', { q: search.trim() }) : !counted && menuTab === 'noRecipe' ? tm('noneNeedRecipe') : !counted && filter === 'all' ? t('filters.none.uncounted') : t(`filters.none.${filter}`)}
+      {search.trim().length >= 2 ? t('noMatch', { q: search.trim() }) : !counted && menuTab === 'noRecipe' ? tm('noneNeedRecipe') : !counted && menuTab === 'noCost' ? tm('noneNeedCost') : !counted && filter === 'all' ? t('filters.none.uncounted') : t(`filters.none.${filter}`)}
     </div>
   );
   const list =

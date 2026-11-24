@@ -91,7 +91,7 @@ export async function ProductsScreen({ searchParams, guard }: { searchParams: Pr
           categories={categories}
           branchId={branchId}
           initialFilter={initialFilter}
-          initialMenuTab={params.show === 'noRecipe' ? 'noRecipe' : params.filter === 'retired' ? 'retired' : 'all'}
+          initialMenuTab={params.show === 'noRecipe' ? 'noRecipe' : params.show === 'noCost' ? 'noCost' : params.filter === 'retired' ? 'retired' : 'all'}
           heading={guard === '/stock' ? homeCopy(await serverLang(), me.labels).nav.stock : undefined}
           shownBranchName={branch.multi && branch.choice === null ? (branch.branches.find((b) => b.id === branchId)?.name ?? null) : null}
         />

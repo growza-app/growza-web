@@ -2167,6 +2167,14 @@ export interface CounterReportPage {
     averageBillMinor: number | null;
     previousAverageBillMinor: number | null;
     byDay: CounterDay[];
+    /**
+     * Jira GRW-752 — `totalMinor` is Sales: dishes only, before GST, no service charge. This is what reached the drawer,
+     * UPI or card for counter bills (GST and service charge included, refunds taken off). Absent from an API older than
+     * the dashboard during a release.
+     */
+    moneyInMinor?: string;
+    /** Dishes that left the kitchen and stayed gone. */
+    dishesSold?: number;
   };
   earners: {
     rows: CounterItem[];
@@ -2181,6 +2189,8 @@ export interface CounterReportPage {
     byHour: Array<{ hour: number; valueMinor: string }>;
     peak: { fromHour: number; toHour: number; valueMinor: string } | null;
     quietestDay: { dow: number; valueMinor: string } | null;
+    /** Jira GRW-755 — some bill in the period was paid before payment times were kept: its hour is when it was rung up. Absent from an older API. */
+    estimatedTimes?: boolean;
   };
   changed: { up: CounterMover[]; down: CounterMover[] };
   strategy?: CounterStrategy;
@@ -2332,6 +2342,8 @@ export interface ProfitReportPage {
     uncostedItems: number;
     /** Jira GRW-724 — service charge guests paid, apart from the food. Absent from an older API. */
     serviceChargeMinor?: number;
+    /** Jira GRW-753 — what dishes cooked and then taken off the bill cost: food thrown away, already in the cost. Absent from an older API. */
+    thrownAwayCostMinor?: number;
   };
   rows: Array<{
     id: string;
@@ -2821,4 +2833,150 @@ export interface BillOffersQuote {
   taxMinor?: number;
   /** QA of the overnight stack (item 7) — the bill was printed, and its paper asks for another amount than this payment would take. */
   printedOutOfDate?: boolean;
+}
+
+/* Jira GRW-758 — the restaurant's Reports tabs (`/api/v1/reports/restaurant/*`). Money in paise, as numbers. */
+export interface RestaurantWindow {
+  key: 'last_7_days' | 'last_4_weeks' | 'this_month' | 'custom';
+  from: string;
+  to: string;
+  days: number;
+  previous: { from: string; to: string };
+}
+/** A figure and the same figure for the days before. `changePct` null: nothing to compare with. */
+export interface RestaurantCompared {
+  value: number;
+  previous: number | null;
+  changePct: number | null;
+}
+export interface RestaurantFreshness {
+  builtAt: string | null;
+  liveDays: number;
+}
+export interface RestaurantOverviewPage {
+  window: RestaurantWindow;
+  sales: RestaurantCompared;
+  bills: RestaurantCompared;
+  averageBillMinor: { value: number | null; previous: number | null };
+  /**
+   * Absent for anyone who may not see what dishes cost. `profitMinor` is null when no dish sold had a cost price (owner,
+   * 2026-11-24); `costedSalesMinor` of `salesMinor` is what a partial profit covers. Those two and `missingDishes` are
+   * absent from an older API.
+   */
+  profit: {
+    profitMinor: number | null;
+    marginPct: number | null;
+    costedSalesMinor?: number;
+    salesMinor?: number;
+    uncostedSalesMinor: number;
+    missingDishes?: number;
+    thrownMinor?: number;
+  } | null;
+  byDay: Array<{ day: string; salesMinor: number }>;
+  /**
+   * Owner, 2026-11-24 — Sales by where the order came from (dine_in · takeaway · delivery for the restaurant's own,
+   * swiggy · zomato for an app), the top dish and the busiest hour, for "Where sales came from" and "Worth a look".
+   * Absent from an older API.
+   */
+  sources?: Array<{ key: string; salesMinor: number }>;
+  topDish?: { name: string; qty: number; salesMinor: number } | null;
+  busiest?: { hour: number; bills: number; sharePct: number } | null;
+  freshness: RestaurantFreshness;
+}
+export interface RestaurantSalesPage {
+  window: RestaurantWindow;
+  moneyIn: RestaurantCompared;
+  discountsMinor: number;
+  refundsMinor: number;
+  deliveryCutMinor: number;
+  serviceChargeMinor: number;
+  taxMinor: number;
+  busyHours: Array<{ hour: number; salesMinor: number; bills: number }>;
+  byPayment: Array<{ mode: string; minor: number }>;
+  byOrderType: Array<{ type: string; salesMinor: number; bills: number }>;
+  byChannel: Array<{ channel: string; salesMinor: number; bills: number }>;
+  /** Owner, 2026-11-24 — dine-in Sales ÷ the guests at tables that said how many sat down. Absent from an older API. */
+  perHead?: { salesMinor: number; guests: number; tables: number; perHeadMinor: number } | null;
+  freshness: RestaurantFreshness;
+}
+export interface RestaurantDish {
+  name: string;
+  productId: string | null;
+  qty: number;
+  previousQty: number;
+  salesMinor: number;
+  /** Only for someone who may see cost; null when the dish has no cost price. */
+  profitMinor?: number | null;
+  /** Owner, 2026-11-24 — the sizes joined into this row ("Full 41 · Half 41"); absent or empty for one dish. */
+  sizes?: Array<{ label: string; qty: number }>;
+}
+export interface RestaurantItemsPage {
+  window: RestaurantWindow;
+  dishesSold: RestaurantCompared;
+  /** `thrownMinor`: what the ones cooked before they were taken off cost to make — cost viewers only. */
+  cancelled: { qty: number; minor: number; thrownQty: number; thrownMinor?: number };
+  top: RestaurantDish[];
+  sellingCount: number;
+  /** Owner, 2026-11-24 — the chart's "By plates", what one plate makes (cost viewers), and what moved. Absent from an older API. */
+  topByPlates?: RestaurantDish[];
+  perPlate?: Array<{ name: string; qty: number; perPlateMinor: number }>;
+  movers?: Array<{ name: string; qty: number; previousQty: number; diff: number }>;
+  notSelling: { names: string[]; rows?: Array<{ name: string; priceMinor: number }>; count: number };
+  freshness: RestaurantFreshness;
+}
+export interface RestaurantCancelledPage {
+  window: RestaurantWindow;
+  rows: Array<{ name: string; qty: number; minor: number; reason: string | null; by: string | null; at: string; cooked: boolean; wholeOrder?: boolean }>;
+}
+
+/* Jira GRW-759 — the Tips tab. Each card carries the numbers it is based on; the screen writes the words. */
+export type TipPayload =
+  | { rule: 'sales_change'; sales: number; previousSales: number; bills: number; previousBills: number; averageBill: number; previousAverageBill: number; pct: number }
+  | { rule: 'busy_shift'; block: 'morning' | 'lunch' | 'evening' | 'late'; sales: number; previousSales: number; pct: number }
+  | { rule: 'dish_move'; name: string; qty: number; previousQty: number; sales: number; previousSales: number; pct: number }
+  | { rule: 'cancelled'; qty: number; minor: number; pctOfSales: number; topReason: string | null; topReasonQty: number }
+  /* Jira GRW-760 — the kitchen's cost tips (cost viewers only). Quantities in thousandths of the unit. */
+  | { rule: 'dish_cost_up'; name: string; perPlate: number; previousPerPlate: number; qty: number; extraMonthly: number; ingredient: { name: string; unit: string; price: number; previousPrice: number } | null }
+  | { rule: 'food_wasted'; wastedMinor: number; usedMinor: number; pct: number; material: string | null; reason: string | null }
+  | { rule: 'count_short'; name: string; unit: string; diffQty: number; expectedQty: number; diffMinor: number; pct: number }
+  | { rule: 'guests_back'; cameBack: number; previousCameBack: number; guests: number; previousGuests: number; pct: number }
+  // Owner, 2026-11-24 — new guests who ordered this dish on their first visit came back more than new guests in all.
+  | { rule: 'dish_brings_back'; name: string; firstTimers: number; cameBack: number; pct: number; allFirstTimers: number; allPct: number; from: string; to: string };
+export interface TipCard {
+  rule: TipPayload['rule'];
+  needs?: '' | 'cost';
+  effect: number;
+  sure: 'very' | 'fairly';
+  bills: number;
+  windows: { from: string; to: string; previousFrom: string; previousTo: string };
+  payload: TipPayload;
+}
+export interface RestaurantTipsPage {
+  tips: TipCard[];
+  bills: number;
+  minBills: number;
+  builtAt: string | null;
+  stale: boolean;
+  /** Jira GRW-760 — kitchen stock on, recipes behind under 80% of sales. Absent from an older API. */
+  recipesShort?: boolean;
+}
+
+/* Jira GRW-761 — the Customers tab. Names and amounts are null for someone not allowed to see guests. */
+export interface RestaurantCustomersPage {
+  window: RestaurantWindow;
+  cameBack: RestaurantCompared;
+  newGuests: RestaurantCompared;
+  capturePct: number;
+  bills: number;
+  lowCapture: boolean;
+  top: Array<{ customerId: string | null; name: string | null; visits: number; salesMinor: number | null }>;
+  guestCount: number;
+  /**
+   * Owner, 2026-11-24 — "think like a data scientist". The top fifth of guests' share of Sales (null under 5 guests); new
+   * guests of the last 4 months by their first visit and how many came back within 30 days (pct null under 10); and
+   * regulars away twice their usual gap, today (rows only for someone allowed to see guests). Absent from an older API.
+   */
+  topShare?: { guests: number; pct: number } | null;
+  returnByMonth?: Array<{ month: string; newGuests: number; cameBack: number; pct: number | null; partial: boolean }>;
+  overdue?: { count: number; rows: Array<{ customerId: string; name: string | null; phone: string; visits: number; usualGapDays: number; lastSeenDaysAgo: number }> };
 }

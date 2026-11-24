@@ -48,9 +48,8 @@ describe('last year, and what is missing', () => {
 });
 
 describe('who sees it', () => {
-  it('the front desk is sent back to Stock, as the API refuses it', () => {
-    expect(page).toContain("role === undefined || role === 'owner' || role === 'manager'");
-    expect(page).toContain("redirect('/stock')");
+  it('is guarded at its own address: who may open it is reports-tabs-follow-role.test.ts (Jira GRW-754)', () => {
+    expect(page).toContain("await guardScreen('/stock/sellers');");
   });
 });
 

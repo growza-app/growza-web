@@ -56,10 +56,8 @@ describe('on the order, the refund sits with the line it is for', () => {
 });
 
 describe('who sees it, and the words', () => {
-  it('the front desk is sent back to Orders, and so is a viewer the lookup could not vouch for', () => {
-    expect(page).toContain('let allowed = false;');
-    expect(page).toContain("role === undefined || role === 'owner' || role === 'manager'");
-    expect(page).toContain("redirect('/orders')");
+  it('is guarded at its own address: who may open it is reports-tabs-follow-role.test.ts (Jira GRW-754)', () => {
+    expect(page).toContain("await guardScreen('/orders/refunds');");
   });
 
   it('every word the screen uses exists in English and Hindi', () => {

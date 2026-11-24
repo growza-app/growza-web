@@ -69,15 +69,14 @@ describe('Jira GRW-636 — the choice says what happens to which size', () => {
 });
 
 describe('who sees it, and the words', () => {
-  it('an older API that sends no returns does not crash the order, and a failed lookup does not let the desk in', () => {
+  it('an older API that sends no returns does not crash the order', () => {
     expect(order).toContain('(order.returns ?? [])');
-    expect(page).toContain('let allowed = false;');
+    // Jira GRW-754 — the page asks the shared guard, as every screen does; if the lookup fails the API still refuses the returns to the desk.
     expect(readFileSync(path.resolve(import.meta.dirname, '../OrdersScreen.tsx'), 'utf8')).toContain('const mayReadReturns = me ? ');
   });
 
-  it('the front desk is sent back to Orders', () => {
-    expect(page).toContain("role === undefined || role === 'owner' || role === 'manager'");
-    expect(page).toContain("redirect('/orders')");
+  it('is guarded at its own address: who may open it is reports-tabs-follow-role.test.ts (Jira GRW-754)', () => {
+    expect(page).toContain("await guardScreen('/orders/returns');");
   });
 
   it('says "came back undelivered" and never the trade’s short name, in either language', () => {

@@ -84,7 +84,8 @@ describe('each screen draws the business’s own channels', () => {
      * whole tab a business does not have, which `areaAllows` does for all six at once.
      */
     const nav = src('components/RetailReportsNav.tsx');
-    expect(nav).toContain('const tabs = allTabs.filter((tab) => areaAllows(tab.href, areas));');
+    // Jira GRW-754 — `useMayOpen` asks `canSee`, which asks `areaAllows` first: the business's areas, then the role.
+    expect(nav).toContain('const tabs = allTabs.filter((tab) => mayOpen(tab.href));');
     expect(nav).not.toContain('RetailReportsHub');
     expect(src('reports/page.tsx')).toContain('mayOpenShopReports && counted ?');
   });

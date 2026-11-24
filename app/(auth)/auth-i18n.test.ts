@@ -25,7 +25,9 @@ const page = (locale: 'en' | 'hi', child: ReturnType<typeof createElement>) =>
 describe('the sign-in page', () => {
   it('keeps the English words', () => {
     const html = page('en', createElement(LoginPage));
-    for (const s of ['Sign in', 'Manage your bookings, staff and services.', 'Phone number', 'Password', 'Forgotten your password? Ask whoever set up your account.', 'English']) expect(html, s).toContain(s);
+    for (const s of ['Sign in', 'Manage your bookings, staff and services.', 'Phone number', 'Password', 'English']) expect(html, s).toContain(s);
+    // Owner, 2026-11-24 — the "ask whoever set up your account" line is gone (the SMS reset, GRW-561, will bring its own).
+    expect(html).not.toContain('Forgotten your password');
   });
   it('reads in Hindi, and still offers both languages by their own names', () => {
     const html = page('hi', createElement(LoginPage));
