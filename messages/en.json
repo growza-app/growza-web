@@ -3092,7 +3092,15 @@
       "weekend": "Sat–Sun",
       "noCostYet": "No dish costs yet",
       "missingDishes": "{n, plural, one {# dish has} other {# dishes have}} no cost price or recipe",
-      "profitOn": "On {part} of {all} sales"
+      "profitOn": "On {part} of {all} sales",
+      "sources": "Where sales came from",
+      "worth": "Worth a look",
+      "topDish": "{name} sold most",
+      "topDishSub": "{n, plural, one {# plate} other {# plates}} · {amount}",
+      "busiest": "Busiest time {from}–{to}",
+      "busiestSub": "{n, plural, one {# bill} other {# bills}} · {pct}% of all bills",
+      "tips": "{n, plural, one {# tip} other {# tips}} this week",
+      "tipsSub": "What changed, and what to try"
     },
     "sales": {
       "moneyIn": "Money in",
@@ -3116,6 +3124,11 @@
       "takeaway": "Takeaway",
       "delivery": "Delivery",
       "counter": "Counter"
+    },
+    "source": {
+      "swiggy": "Swiggy",
+      "zomato": "Zomato",
+      "other": "Other"
     },
     "items": {
       "dishesSold": "Dishes sold",

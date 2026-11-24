@@ -17,6 +17,7 @@ import type {
   TipCard,
 } from '../lib/api-types';
 import { formatMoney, intlLocale } from '../lib/format';
+import { IconChevronRight, IconClock, IconCutlery, IconLightbulb } from '../components/icons';
 import { useBranch } from '../components/BranchProvider';
 import { useMayOpen, useSession } from '../components/SessionProvider';
 import { ReportDates } from './ReportDates';
@@ -47,6 +48,8 @@ export const rupees = (minor: number | null, locale: string) => formatMoney(mino
 /** The ways of paying and of eating the screen has words for; anything else is shown as the API names it. */
 const MODE_WORDS = { cash: 'mode.cash', upi: 'mode.upi', card: 'mode.card', other: 'mode.other', not_recorded: 'mode.not_recorded' } as const;
 const TYPE_WORDS = { dine_in: 'type.dine_in', takeaway: 'type.takeaway', delivery: 'type.delivery', counter: 'type.counter' } as const;
+/** Owner, 2026-11-24 — a delivery app is a source of its own in "Where sales came from". */
+const SOURCE_WORDS = { swiggy: 'source.swiggy', zomato: 'source.zomato', other: 'source.other' } as const;
 
 /** One line under a figure: up, down, the same — or nothing when there is nothing to compare with. */
 type DeltaWords = (key: 'delta.up' | 'delta.down' | 'delta.same', values?: { pct: number }) => string;
@@ -210,7 +213,18 @@ function ProfitFigure({ p, money }: { p: NonNullable<RestaurantOverviewPage['pro
 
 /* ───────────────────────────── Overview ───────────────────────────── */
 
-export function OverviewTab({ data, todayISO }: { data: RestaurantOverviewPage; todayISO?: string }) {
+export function OverviewTab({
+  data,
+  todayISO,
+  tipCount = null,
+  onOpen,
+}: {
+  data: RestaurantOverviewPage;
+  todayISO?: string;
+  /** How many tips this week; null while unread, or when the Tips tab cannot be opened. */
+  tipCount?: number | null;
+  onOpen?: (tab: RestaurantTab) => void;
+}) {
   const t = useTranslations('restaurantReports');
   const locale = useLocale();
   const money: Money = (m) => rupees(m, locale);
@@ -252,8 +266,117 @@ export function OverviewTab({ data, todayISO }: { data: RestaurantOverviewPage; 
           </p>
         ) : null}
       </section>
+      <OverviewMore data={data} tipCount={tipCount} onOpen={onOpen} money={money} />
       <Freshness f={data.freshness} t={t} locale={locale} />
     </>
+  );
+}
+
+/**
+ * Owner, 2026-11-24 — under the chart: "Where sales came from" (moved here from the Sales tab) and "Worth a look", three
+ * one-line highlights that each open their tab. A source split is drawn only with two sources or more (a takeaway-only
+ * kitchen with no app has nothing to split); a highlight with nothing to say is left out.
+ */
+function OverviewMore({ data, tipCount, onOpen, money }: { data: RestaurantOverviewPage; tipCount: number | null; onOpen?: (tab: RestaurantTab) => void; money: Money }) {
+  const t = useTranslations('restaurantReports');
+  const locale = useLocale();
+  const all = (data.sources ?? []).filter((x) => x.salesMinor > 0);
+  const total = all.reduce((n, x) => n + x.salesMinor, 0);
+  // Five parts at most: a sixth source and beyond are added up as "Other".
+  const parts = all.length > 5 ? [...all.slice(0, 4), { key: 'other', salesMinor: all.slice(4).reduce((n, x) => n + x.salesMinor, 0) }] : all;
+  const sourceName = (key: string) =>
+    key in TYPE_WORDS ? t(TYPE_WORDS[key as keyof typeof TYPE_WORDS]) : key in SOURCE_WORDS ? t(SOURCE_WORDS[key as keyof typeof SOURCE_WORDS]) : key.charAt(0).toUpperCase() + key.slice(1);
+  const hour = new Intl.DateTimeFormat(intlLocale(locale), { hour: 'numeric', timeZone: 'UTC' });
+  const hourName = (h: number) => hour.format(new Date(Date.UTC(2026, 0, 5, h % 24)));
+  const rows: Array<{ key: string; tab: RestaurantTab; icon: ReactNode; main: string; sub: string }> = [];
+  if (data.topDish) {
+    rows.push({
+      key: 'dish',
+      tab: 'items',
+      icon: <IconCutlery />,
+      main: t('overview.topDish', { name: data.topDish.name }),
+      sub: t('overview.topDishSub', { n: data.topDish.qty, amount: money(data.topDish.salesMinor) }),
+    });
+  }
+  if (data.busiest) {
+    rows.push({
+      key: 'busy',
+      tab: 'sales',
+      icon: <IconClock />,
+      main: t('overview.busiest', { from: hourName(data.busiest.hour), to: hourName(data.busiest.hour + 1) }),
+      sub: t('overview.busiestSub', { n: data.busiest.bills, pct: data.busiest.sharePct }),
+    });
+  }
+  if (tipCount !== null && tipCount > 0) {
+    rows.push({ key: 'tips', tab: 'tips', icon: <IconLightbulb />, main: t('overview.tips', { n: tipCount }), sub: t('overview.tipsSub') });
+  }
+  if (parts.length < 2 && rows.length === 0) return null;
+  return (
+    <div className="rr-lists rr-more-cards">
+      {parts.length >= 2 ? (
+        <section className="rr-list rr-sources" aria-labelledby="rr-sources-h">
+          <h3 className="rr-list-title" id="rr-sources-h">{t('overview.sources')}</h3>
+          <div className="rr-split" aria-hidden="true">
+            {parts.map((x, i) => (
+              <span key={x.key} className={`rr-split-part is-${i}`} style={{ flexGrow: x.salesMinor }} />
+            ))}
+          </div>
+          <ul>
+            {parts.map((x, i) => (
+              <li key={x.key}>
+                <span className="rr-list-name rr-source-name">
+                  <span className={`rr-split-dot is-${i}`} aria-hidden="true" />
+                  {sourceName(x.key)}
+                </span>
+                <span className="rr-list-value">
+                  {money(x.salesMinor)} · {total > 0 ? Math.round((x.salesMinor / total) * 100) : 0}%
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {rows.length > 0 ? (
+        <section className="rr-list rr-worth" aria-labelledby="rr-worth-h">
+          <h3 className="rr-list-title" id="rr-worth-h">{t('overview.worth')}</h3>
+          <ul>
+            {rows.map((r) => {
+              const inner = (
+                <>
+                  <span className="rr-worth-icon" aria-hidden="true">{r.icon}</span>
+                  <span className="rr-worth-text">
+                    <span className="rr-worth-main">{r.main}</span>
+                    <span className="rr-worth-sub">{r.sub}</span>
+                  </span>
+                </>
+              );
+              return (
+                <li key={r.key}>
+                  {onOpen ? (
+                    <button
+                      type="button"
+                      className="rr-worth-row"
+                      onClick={(e) => {
+                        // The row is at the foot of the page: the tab it opens is read from its top. The page scrolls
+                        // inside `.page-body` (use-fit-rows.ts), not the window.
+                        const scroller = e.currentTarget.closest('.page-body');
+                        onOpen(r.tab);
+                        (scroller ?? window).scrollTo({ top: 0 });
+                      }}
+                    >
+                      {inner}
+                      <span className="rr-worth-go" aria-hidden="true"><IconChevronRight /></span>
+                    </button>
+                  ) : (
+                    <div className="rr-worth-row">{inner}</div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
+    </div>
   );
 }
 
@@ -301,15 +424,7 @@ export function SalesTab({ data }: { data: RestaurantSalesPage }) {
           title={t('sales.byPayment')}
           rows={data.byPayment.filter((p) => p.minor !== 0).slice(0, 5).map((p) => ({ key: p.mode, name: named('mode', p.mode), value: money(p.minor) }))}
         />
-        <List
-          title={t('sales.byType')}
-          rows={data.byOrderType.filter((o) => o.salesMinor !== 0 || o.bills > 0).slice(0, 5).map((o) => ({
-            key: o.type,
-            name: named('type', o.type),
-            note: t('sales.bills', { n: o.bills }),
-            value: money(o.salesMinor),
-          }))}
-        />
+        {/* Owner, 2026-11-24 — "How it was eaten" moved to the Overview as "Where sales came from": each fact once. */}
       </div>
       <Freshness f={data.freshness} t={t} locale={locale} />
     </>
@@ -686,6 +801,30 @@ export function RestaurantReports({ initialTab = 'overview' }: { initialTab?: Re
     void load();
   }, [load]);
 
+  /*
+   * Owner, 2026-11-24 — the Overview's "Worth a look" says how many tips there are this week. Read with the Tips tab's
+   * own cache key, so opening Tips afterwards draws at once; a failed read simply leaves the line out.
+   */
+  const [tipCount, setTipCount] = useState<number | null>(null);
+  useEffect(() => {
+    if (!ready || tab !== 'overview' || !tabs.includes('tips')) return;
+    let gone = false;
+    const tipsKey = `${who}|tips|${dates.fromISO}|${dates.toISO}|${branch}`;
+    const hit = peek<RestaurantTipsPage>(tipsKey);
+    if (hit) setTipCount(hit.value.tips.length);
+    if (hit && isFresh(hit, freshFor(dates.toISO, todayISO))) return;
+    fetchOnce(tipsKey, () => api.restaurantReport<RestaurantTipsPage>('tips', { from: dates.fromISO, to: dates.toISO, location: branch || undefined }))
+      .then((r) => {
+        if (!gone) setTipCount(r.tips.length);
+      })
+      .catch(() => {});
+    return () => {
+      gone = true;
+    };
+    // `tabs` is derived each render; whether it holds Tips is what matters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, tab, who, dates.fromISO, dates.toISO, branch, todayISO, tabs.includes('tips')]);
+
   // The tab is in the address, so a reload or a shared link opens the same one.
   const choose = (k: RestaurantTab) => {
     setTab(k);
@@ -744,7 +883,7 @@ export function RestaurantReports({ initialTab = 'overview' }: { initialTab?: Re
       ) : data === null ? (
         <div className="cr-card cr-skeleton" aria-busy="true" />
       ) : tab === 'overview' ? (
-        <OverviewTab data={data as RestaurantOverviewPage} todayISO={todayISO} />
+        <OverviewTab data={data as RestaurantOverviewPage} todayISO={todayISO} tipCount={tipCount} onOpen={choose} />
       ) : tab === 'sales' ? (
         <SalesTab data={data as RestaurantSalesPage} />
       ) : tab === 'items' ? (

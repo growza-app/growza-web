@@ -3092,7 +3092,15 @@
       "weekend": "शनि–रवि",
       "noCostYet": "अभी किसी डिश की लागत नहीं",
       "missingDishes": "{n} डिश की न लागत डली, न रेसिपी",
-      "profitOn": "{all} की बिक्री में से {part} पर"
+      "profitOn": "{all} की बिक्री में से {part} पर",
+      "sources": "बिक्री कहाँ से आई",
+      "worth": "एक नज़र डालें",
+      "topDish": "{name} सबसे ज़्यादा बिका",
+      "topDishSub": "{n} प्लेट · {amount}",
+      "busiest": "सबसे व्यस्त समय {from}–{to}",
+      "busiestSub": "{n} बिल · सब बिलों का {pct}%",
+      "tips": "इस हफ़्ते {n} सुझाव",
+      "tipsSub": "क्या बदला, और क्या करें"
     },
     "sales": {
       "moneyIn": "आया पैसा",
@@ -3116,6 +3124,11 @@
       "takeaway": "पैक करके",
       "delivery": "डिलीवरी",
       "counter": "काउंटर"
+    },
+    "source": {
+      "swiggy": "Swiggy",
+      "zomato": "Zomato",
+      "other": "बाकी"
     },
     "items": {
       "dishesSold": "बिकी डिश",

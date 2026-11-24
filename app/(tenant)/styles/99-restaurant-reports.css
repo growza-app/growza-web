@@ -656,3 +656,120 @@
   font-weight: 500;
   color: var(--muted);
 }
+
+/*
+ * Owner, 2026-11-24 — under the Overview's chart: "Where sales came from" and "Worth a look". Two cards, one above the
+ * other on a phone and side by side on a laptop (.rr-lists' columns). The split is one bar in shades of the accent —
+ * not the chart's purple and orange, which mean weekday and weekend just above it — and every part is named with its
+ * amount and share in the list under it, so the shade is never the only way to tell them apart.
+ */
+.rr-more-cards {
+  margin-top: var(--sp-3);
+}
+
+.rr-split {
+  display: flex;
+  gap: 2px;
+  height: 0.75rem;
+  margin: var(--sp-2) 0 var(--sp-3);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.rr-split-part {
+  flex: 1 1 0;
+  min-width: 4px;
+}
+
+.rr-split-dot {
+  display: inline-block;
+  flex: none;
+  width: 0.625rem;
+  height: 0.625rem;
+  margin-right: var(--sp-2);
+  border-radius: 2px;
+}
+
+.rr-source-name {
+  display: flex;
+  align-items: center;
+}
+
+:is(.rr-split-part, .rr-split-dot).is-0 { background: var(--forest); }
+:is(.rr-split-part, .rr-split-dot).is-1 { background: var(--accent); }
+:is(.rr-split-part, .rr-split-dot).is-2 { background: var(--mint); }
+:is(.rr-split-part, .rr-split-dot).is-3 { background: color-mix(in srgb, var(--muted) 55%, var(--surface)); }
+:is(.rr-split-part, .rr-split-dot).is-4 { background: var(--border); }
+
+.rr-worth ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rr-worth li + li {
+  border-top: 1px solid var(--border);
+}
+
+.rr-worth-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--sp-3) 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+button.rr-worth-row {
+  cursor: pointer;
+}
+
+.rr-worth-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent-deep);
+}
+
+.rr-worth-icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.rr-worth-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.rr-worth-main {
+  font-size: var(--fs-4);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.rr-worth-sub {
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.rr-worth-go {
+  display: inline-flex;
+  flex: none;
+  color: var(--muted);
+}
+
+.rr-worth-go svg {
+  width: 1rem;
+  height: 1rem;
+}

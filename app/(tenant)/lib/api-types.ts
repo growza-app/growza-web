@@ -2873,6 +2873,14 @@ export interface RestaurantOverviewPage {
     thrownMinor?: number;
   } | null;
   byDay: Array<{ day: string; salesMinor: number }>;
+  /**
+   * Owner, 2026-11-24 — Sales by where the order came from (dine_in · takeaway · delivery for the restaurant's own,
+   * swiggy · zomato for an app), the top dish and the busiest hour, for "Where sales came from" and "Worth a look".
+   * Absent from an older API.
+   */
+  sources?: Array<{ key: string; salesMinor: number }>;
+  topDish?: { name: string; qty: number; salesMinor: number } | null;
+  busiest?: { hour: number; bills: number; sharePct: number } | null;
   freshness: RestaurantFreshness;
 }
 export interface RestaurantSalesPage {

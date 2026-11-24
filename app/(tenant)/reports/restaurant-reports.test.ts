@@ -116,6 +116,48 @@ describe('Overview', () => {
     expect(all).not.toMatch(/On ₹[\d,]+ of/);
   });
 
+  describe('owner, 2026-11-24 — under the chart: where sales came from, and worth a look', () => {
+    const more = {
+      ...overview,
+      sources: [
+        { key: 'dine_in', salesMinor: 16_646_000 },
+        { key: 'swiggy', salesMinor: 6_888_000 },
+        { key: 'takeaway', salesMinor: 5_166_000 },
+      ],
+      topDish: { name: 'Butter Chicken', qty: 300, salesMinor: 10_200_000 },
+      busiest: { hour: 20, bills: 128, sharePct: 25 },
+    };
+    const out = text(render('en', createElement(OverviewTab, { data: more, tipCount: 1, onOpen: () => {} })));
+
+    it('the split names every source with its amount and share', () => {
+      expect(out).toContain('Where sales came from Dine-in ₹1,66,460 · 58% Swiggy ₹68,880 · 24% Takeaway ₹51,660 · 18%');
+    });
+    it('worth a look: the top dish, the busiest hour, the tips', () => {
+      expect(out).toContain('Worth a look Butter Chicken sold most 300 plates · ₹1,02,000');
+      expect(out).toContain('Busiest time 8 pm–9 pm 128 bills · 25% of all bills');
+      expect(out).toContain('1 tip this week What changed, and what to try');
+    });
+    it('a takeaway-only kitchen with no app: one source, so no split — worth a look still there', () => {
+      const one = text(render('en', createElement(OverviewTab, { data: { ...more, sources: [{ key: 'takeaway', salesMinor: 28_700_000 }] }, tipCount: 0 })));
+      expect(one).not.toContain('Where sales came from');
+      expect(one).toContain('Butter Chicken sold most');
+      // No tips this week: that line is left out, not "0 tips".
+      expect(one).not.toContain('tip this week');
+      expect(one).not.toContain('tips this week');
+    });
+    it('an older API with none of it: nothing under the chart', () => {
+      const old = text(render('en', createElement(OverviewTab, { data: overview })));
+      expect(old).not.toContain('Worth a look');
+      expect(old).not.toContain('Where sales came from');
+    });
+    it('Hindi', () => {
+      const hi = text(render('hi', createElement(OverviewTab, { data: more, tipCount: 2, onOpen: () => {} })));
+      expect(hi).toContain('बिक्री कहाँ से आई');
+      expect(hi).toContain('Butter Chicken सबसे ज़्यादा बिका');
+      expect(hi).toContain('इस हफ़्ते 2 सुझाव');
+    });
+  });
+
   it('says plainly when nothing sold, rather than drawing ₹0', () => {
     const none = text(render('en', createElement(OverviewTab, { data: { ...overview, sales: { value: 0, previous: null, changePct: null }, bills: { value: 0, previous: null, changePct: null } } })));
     expect(none).toBe('No sales on these days yet.');
@@ -137,10 +179,11 @@ describe('Sales', () => {
     expect(out).not.toContain('Delivery app cut');
   });
 
-  it('busy times run from the first hour that sold to the last; two lists in plain words', () => {
+  it('busy times run from the first hour that sold to the last; how people paid in plain words', () => {
     expect(out).toContain('Busy times');
     expect(out).toContain('How people paid Cash ₹1,58,400 UPI ₹56,000 Card ₹29,600');
-    expect(out).toContain('How it was eaten Dine-in 300 bills ₹1,73,000 Takeaway 110 bills ₹36,000');
+    // Owner, 2026-11-24 — moved to the Overview as "Where sales came from": each fact once.
+    expect(out).not.toContain('How it was eaten');
   });
 });
 
