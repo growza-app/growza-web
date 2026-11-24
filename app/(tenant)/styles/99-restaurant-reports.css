@@ -633,3 +633,26 @@
 .rr-tip-open {
   min-height: 44px;
 }
+
+/* Owner, 2026-11-24 — Profit says what it covers: each note on its own line, the way to the dishes with no cost price
+   a link whose tap area is 44px tall without making the line taller. */
+.rr-sub-line {
+  display: block;
+}
+
+.rr-fix {
+  display: inline-block;
+  padding-block: var(--sp-3);
+  margin-block: calc(-1 * var(--sp-3));
+  color: var(--accent-deep);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* No cost price on any dish: words in place of a figure, quieter than a number. */
+.rr-none {
+  font-size: var(--fs-4);
+  font-weight: 500;
+  color: var(--muted);
+}

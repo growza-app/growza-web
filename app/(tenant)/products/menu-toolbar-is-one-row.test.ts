@@ -58,7 +58,7 @@ describe('the overview strip drops the lines that were not pulling their weight'
 
   it('Taken off is a tab of the Menu now, with its own count (owner, 2026-11-20), not a fourth card', () => {
     expect(list).not.toContain('prd-stat prd-stat-tap prd-stat-retired');
-    expect(list).toMatch(/\['all', 'noRecipe', 'retired'\] as const/);
+    expect(list).toMatch(/\['all', \.\.\.\(recipesOn \? \(\['noRecipe'\] as const\) : \[\]\), \.\.\.\(seesCost \? \(\['noCost'\] as const\) : \[\]\), 'retired'\] as const/);
     expect(list).toContain('counts.retired');
   });
 });

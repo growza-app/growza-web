@@ -94,6 +94,28 @@ describe('Overview', () => {
     expect(hidden).not.toContain('Profit');
   });
 
+  it('owner, 2026-11-24 — no dish has a cost price: no profit figure, never ₹0, and how many dishes to fix', () => {
+    const p = { profitMinor: null, marginPct: null, costedSalesMinor: 0, salesMinor: 28_700_000, uncostedSalesMinor: 28_700_000, missingDishes: 31, thrownMinor: 0 };
+    const html = render('en', createElement(OverviewTab, { data: { ...overview, profit: p } }));
+    const none = text(html);
+    expect(none).toContain('Profit No cost prices yet 31 dishes have no cost price');
+    expect(none).not.toMatch(/Profit ₹/);
+    expect(text(render('hi', createElement(OverviewTab, { data: { ...overview, profit: p } })))).toContain('अभी लागत नहीं डाली');
+  });
+
+  it('owner, 2026-11-24 — some dishes have no cost price: the profit says what sales it is over, and how many are missing', () => {
+    const p = { profitMinor: 9_870_000, marginPct: 36.7, costedSalesMinor: 26_900_000, salesMinor: 28_700_000, uncostedSalesMinor: 1_800_000, missingDishes: 1, thrownMinor: 0 };
+    const part = text(render('en', createElement(OverviewTab, { data: { ...overview, profit: p } })));
+    expect(part).toContain('Profit ₹98,700 On ₹2,69,000 of ₹2,87,000 sales 1 dish has no cost price');
+  });
+
+  it('every dish has a cost price: no coverage line', () => {
+    const p = { profitMinor: 9_870_000, marginPct: 34.4, costedSalesMinor: 28_700_000, salesMinor: 28_700_000, uncostedSalesMinor: 0, missingDishes: 0, thrownMinor: 0 };
+    const all = text(render('en', createElement(OverviewTab, { data: { ...overview, profit: p } })));
+    expect(all).not.toContain('no cost price');
+    expect(all).not.toMatch(/On ₹[\d,]+ of/);
+  });
+
   it('says plainly when nothing sold, rather than drawing ₹0', () => {
     const none = text(render('en', createElement(OverviewTab, { data: { ...overview, sales: { value: 0, previous: null, changePct: null }, bills: { value: 0, previous: null, changePct: null } } })));
     expect(none).toBe('No sales on these days yet.');
@@ -131,8 +153,8 @@ describe('Items', () => {
     expect(out).toContain('↑ 24% vs the days before');
     expect(out).toContain('Cancelled dishes 23 · ₹5,980 9 after cooking See all');
     expect(out).toContain('Butter Chicken 300 plates · profit ₹54,000 ₹1,02,000');
-    // Gulab Jamun has no cost price: no profit said, never ₹0.
-    expect(out).toContain('Gulab Jamun 200 plates ₹18,000');
+    // Gulab Jamun has no cost price: it says so (owner, 2026-11-24), never a profit of ₹0.
+    expect(out).toContain('Gulab Jamun 200 plates · no cost price ₹18,000');
     expect(out).toContain('and 26 more dishes sold');
   });
 

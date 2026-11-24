@@ -2858,8 +2858,20 @@ export interface RestaurantOverviewPage {
   sales: RestaurantCompared;
   bills: RestaurantCompared;
   averageBillMinor: { value: number | null; previous: number | null };
-  /** Absent for anyone who may not see what dishes cost. */
-  profit: { profitMinor: number; marginPct: number | null; uncostedSalesMinor: number; thrownMinor?: number } | null;
+  /**
+   * Absent for anyone who may not see what dishes cost. `profitMinor` is null when no dish sold had a cost price (owner,
+   * 2026-11-24); `costedSalesMinor` of `salesMinor` is what a partial profit covers. Those two and `missingDishes` are
+   * absent from an older API.
+   */
+  profit: {
+    profitMinor: number | null;
+    marginPct: number | null;
+    costedSalesMinor?: number;
+    salesMinor?: number;
+    uncostedSalesMinor: number;
+    missingDishes?: number;
+    thrownMinor?: number;
+  } | null;
   byDay: Array<{ day: string; salesMinor: number }>;
   freshness: RestaurantFreshness;
 }

@@ -31,7 +31,8 @@ export function recipeStates(dishes: readonly RecipeCostDish[]): Map<string, Rec
 }
 
 /** The Menu's three tabs: what is on the menu, what still needs its recipe, what was taken off. */
-export type MenuTab = 'all' | 'noRecipe' | 'retired';
+/** Owner, 2026-11-24 — `noCost`: dishes on the menu with no cost price, which Profit leaves out (Reports links here). */
+export type MenuTab = 'all' | 'noRecipe' | 'noCost' | 'retired';
 
 /** "Needs a recipe" is a dish on the menu with none, or with a size that has none. A taken-off dish is not asked about. */
 export const needsRecipe = (p: Pick<Product, 'id' | 'active'>, states: ReadonlyMap<string, RecipeInfo> | null): boolean =>

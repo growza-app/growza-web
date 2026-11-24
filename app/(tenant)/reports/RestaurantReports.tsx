@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import AppLink from '../../shared/AppLink';
 import { api } from '../lib/api';
@@ -139,7 +139,7 @@ function Bars({ points, money, label, today }: { points: Array<{ key: string; ti
 }
 
 /** A small figure: its name, its amount. */
-function Small({ label, value, sub }: { label: string; value: string; sub?: string | null }) {
+function Small({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
   return (
     <div className="rr-small">
       <p className="rr-small-label">{label}</p>
@@ -177,6 +177,37 @@ function Freshness({ f, t, locale }: { f: RestaurantFreshness; t: FreshWords; lo
   return <p className="rr-fresh">{t('freshness', { when })}</p>;
 }
 
+/**
+ * Owner, 2026-11-24 — "what if someone has not added the cost price?" Profit is worked out only over dishes with a cost
+ * price, so the figure says what it covers. No dish with one: no figure at all (a ₹0 profit reads as a bad month), and
+ * the way to fix it. Some: the figure, the sales it is over, and how many dishes have none. Never an estimate.
+ */
+function ProfitFigure({ p, money }: { p: NonNullable<RestaurantOverviewPage['profit']>; money: Money }) {
+  const t = useTranslations('restaurantReports');
+  const mayOpen = useMayOpen();
+  const fix = '/stock?show=noCost';
+  const missing = p.missingDishes ?? 0;
+  const missingWords = t('overview.missingDishes', { n: missing });
+  const missingLine = missing > 0 ? (mayOpen(fix) ? <AppLink className="rr-fix" href={fix}>{missingWords}</AppLink> : missingWords) : null;
+  if (p.profitMinor === null) {
+    return <Small label={t('overview.profit')} value={<span className="rr-none">{t('overview.noCostYet')}</span>} sub={missingLine} />;
+  }
+  const lines = [
+    p.uncostedSalesMinor > 0 && p.costedSalesMinor !== undefined && p.salesMinor !== undefined
+      ? t('overview.profitOn', { part: money(p.costedSalesMinor), all: money(p.salesMinor) })
+      : null,
+    missingLine,
+    (p.thrownMinor ?? 0) > 0 ? t('overview.thrown', { amount: money(p.thrownMinor!) }) : null,
+  ].filter((x) => x !== null && x !== '');
+  return (
+    <Small
+      label={t('overview.profit')}
+      value={money(p.profitMinor)}
+      sub={lines.length ? lines.map((l, i) => <span key={i} className="rr-sub-line">{l}</span>) : null}
+    />
+  );
+}
+
 /* ───────────────────────────── Overview ───────────────────────────── */
 
 export function OverviewTab({ data, todayISO }: { data: RestaurantOverviewPage; todayISO?: string }) {
@@ -211,20 +242,7 @@ export function OverviewTab({ data, todayISO }: { data: RestaurantOverviewPage; 
         <div className="rr-smalls">
           <Small label={t('overview.bills')} value={data.bills.value.toLocaleString(intlLocale(locale))} />
           {data.averageBillMinor.value !== null ? <Small label={t('overview.average')} value={money(data.averageBillMinor.value)} /> : null}
-          {data.profit ? (
-            <Small
-              label={t('overview.profit')}
-              value={money(data.profit.profitMinor)}
-              sub={
-                [
-                  data.profit.uncostedSalesMinor > 0 ? t('overview.profitPart', { amount: money(data.profit.uncostedSalesMinor) }) : null,
-                  (data.profit.thrownMinor ?? 0) > 0 ? t('overview.thrown', { amount: money(data.profit.thrownMinor!) }) : null,
-                ]
-                  .filter(Boolean)
-                  .join(' · ') || null
-              }
-            />
-          ) : null}
+          {data.profit ? <ProfitFigure p={data.profit} money={money} /> : null}
         </div>
         <Bars points={points} money={money} label={t('overview.byDay')} today={todayISO ? { key: todayISO, word: t('overview.today') } : undefined} />
         {both ? (
@@ -361,7 +379,7 @@ export function ItemsTab({ data, onOpenCancelled, cancelled }: { data: Restauran
           rows={data.top.map((d) => ({
             key: d.productId ?? d.name,
             name: d.name,
-            note: [t('items.plates', { n: d.qty }), hasProfit && d.profitMinor !== undefined && d.profitMinor !== null ? t('items.profit', { amount: money(d.profitMinor) }) : null].filter(Boolean).join(' · '),
+            note: [t('items.plates', { n: d.qty }), hasProfit && d.profitMinor !== undefined ? (d.profitMinor === null ? t('items.noCost') : t('items.profit', { amount: money(d.profitMinor) })) : null].filter(Boolean).join(' · '),
             value: money(d.salesMinor),
           }))}
           more={more > 0 ? t('items.moreSold', { n: more }) : null}
