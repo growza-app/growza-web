@@ -3249,16 +3249,20 @@
       "returnFewNote": "– 10 से कम नए मेहमान: कहने के लिए कम।",
       "overdueTitle": "नियमित मेहमान जो देर से आ रहे हैं",
       "overdueSub": "जितना आमतौर पर रुकते हैं, उससे दोगुना समय हो गया",
-      "overdueNote": "हर {gap} दिन आते हैं · आख़िरी बार {away} दिन पहले",
-      "overdueWa": "WhatsApp",
       "overdueWaAria": "{name} को WhatsApp करें",
       "overdueHello": "नमस्ते {name},",
       "overdueAll": "सभी {n} देखें",
       "overdueMore": "और {n}",
       "overdueCount": "{n} नियमित मेहमान देर से आ रहे हैं।",
       "returnNone": "कोई नया मेहमान नहीं",
-      "returnSummary": "हर 10 में से लगभग {n} नए मेहमान 30 दिन में फिर आते हैं।",
-      "returnSummaryLow": "हर 10 में से 1 से भी कम नए मेहमान 30 दिन में फिर आते हैं।"
+      "returnStatBig": "10 में {n}",
+      "returnStatLowBig": "10 में 1 से कम",
+      "returnStatText": "नए मेहमान 30 दिन में फिर आते हैं",
+      "returnStatMonth": "{month}: {n} में से {back}",
+      "returnStatMonthOpen": "{month} अब तक: {n} में से {back}",
+      "overdueUsual": "आमतौर पर हर {gap} दिन",
+      "overdueAway": "{n} दिन से नहीं आए",
+      "topSub": "इन तारीख़ों में सबसे ज़्यादा बार आए"
     }
   },
   "counterReport": {

@@ -789,16 +789,36 @@ button.rr-worth-row {
   margin-top: 0;
 }
 
-/* The four months in one line, above the chart on a phone. */
-.rr-returns-summary {
-  margin: var(--sp-2) 0 0;
-  font-size: var(--fs-5);
-  font-weight: 600;
-  color: var(--text);
+/* Owner, 2026-11-24 — "build all six" #2: the one number in a soft green box — above the chart on a phone, beside it on
+   a laptop, where four bars across the card were lost in white space. */
+.rr-returns-stat {
+  margin: var(--sp-2) 0 var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
 }
 
-/* Owner, 2026-11-24 — "fix both": on a laptop four bars across the whole card were lost in white space. The chart takes
-   about half the card, the line sits beside it. */
+.rr-stat-big {
+  margin: 0;
+  font-size: var(--fs-12);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--accent-deep);
+}
+
+.rr-stat-text {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-4);
+  color: var(--accent-deep);
+}
+
+.rr-stat-months {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
 @media (min-width: 861px) {
   .rr-returns-body {
     display: grid;
@@ -812,16 +832,15 @@ button.rr-worth-row {
     grid-column: 1;
   }
 
-  .rr-returns-summary {
+  .rr-returns-stat {
     grid-row: 1;
     grid-column: 2;
     margin: 0;
-    font-size: var(--fs-8);
-    line-height: 1.35;
   }
 }
 
-/* `.rr-bars .cr-bar-col` too: the day chart's purple label rule is as specific and would win a tie. */
+/* The return chart in the accent's greens — the day chart's purple and orange mean weekday and weekend. `.rr-bars
+   .cr-bar-col` on the label: the day chart's purple label rule is as specific and would win a tie. */
 .rr-returns .rr-bars .cr-bar-col .cr-bar-top {
   color: var(--accent-deep);
 }
@@ -839,36 +858,124 @@ button.rr-worth-row {
   outline-color: var(--accent);
 }
 
-/* Regulars who are overdue: a name and their habit on the left, the WhatsApp button on the right, 44px tall. */
+/* Regulars who are overdue and Top guests (#3–#6): initials, the name and one line, then what matters on the right. */
+.rr-list-count {
+  font-weight: 400;
+  color: var(--muted);
+}
+
 .rr-overdue-sub {
   margin: 0 0 var(--sp-1);
 }
 
-.rr-overdue li {
-  align-items: center;
+.rr-people ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
+.rr-people li {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--sp-3);
+  min-height: 44px;
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--border);
+}
+
+.rr-people li:first-child {
+  border-top: 0;
+}
+
+.rr-people .rr-list-name {
+  flex: 1;
+}
+
+.rr-people .hm-avatar {
+  border-radius: 50%;
+  font-size: var(--fs-2);
+}
+
+.rr-rank {
+  flex: none;
+  width: 1rem;
+  font-size: var(--fs-2);
+  color: var(--muted);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* #4 — how late, in amber: the house's "needs a look" colour, text on its soft fill (6.3:1). */
+.rr-away {
+  flex: none;
+  padding: 2px var(--sp-2);
+  border-radius: 999px;
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* #5 — a round 44px button with the WhatsApp mark; its name is in aria-label. */
 .rr-wa {
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: var(--sp-1);
-  min-height: 44px;
-  padding: 0 var(--sp-3);
+  justify-content: center;
+  width: 44px;
+  height: 44px;
   border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--surface));
-  border-radius: 999px;
+  border-radius: 50%;
   color: var(--accent-deep);
-  font-size: var(--fs-3);
-  font-weight: 600;
-  text-decoration: none;
 }
 
 .rr-wa svg {
-  width: 1rem;
-  height: 1rem;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .rr-see-all {
   min-height: 44px;
   margin-top: var(--sp-1);
+}
+
+@media (max-width: 860px) {
+  /* A phone has no room for name, habit, tag and button in one row: the name and its habit on top, the "days away" tag
+     under them, initials and the button spanning both lines. */
+  .rr-overdue li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    column-gap: var(--sp-3);
+    row-gap: var(--sp-1);
+    align-items: center;
+  }
+
+  .rr-overdue li > .hm-avatar {
+    grid-row: 1 / span 2;
+  }
+
+  .rr-overdue li > .rr-list-name {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .rr-overdue li > .rr-away {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .rr-overdue li > .rr-wa {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+
+  /* The return chart has few months: each name sits under its own bar, not pushed to the card's edges as the day
+     chart's first and last day are. */
+  .rr-returns .rr-bars.cr-bars .cr-bar-col .cr-bar-tick {
+    display: block;
+    text-align: center;
+  }
 }

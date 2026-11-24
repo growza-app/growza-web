@@ -19,6 +19,7 @@ import type {
 import { formatMoney, intlLocale } from '../lib/format';
 import { IconChevronRight, IconClock, IconCutlery, IconLightbulb, IconWhatsApp } from '../components/icons';
 import { whatsappHref } from '../lib/receipt-text';
+import { Avatar } from '../components/home/parts';
 import { useBranch } from '../components/BranchProvider';
 import { useMayOpen, useSession } from '../components/SessionProvider';
 import { ReportDates } from './ReportDates';
@@ -586,16 +587,7 @@ export function CustomersTab({ data }: { data: RestaurantCustomersPage }) {
       </section>
       <div className="rr-lists">
         {data.overdue && data.overdue.count > 0 ? <Overdue overdue={data.overdue} /> : null}
-        <List
-          title={t('customers.top')}
-          rows={data.top.map((g, i) => ({
-            key: g.customerId ?? String(i),
-            name: g.name ?? t('customers.hidden'),
-            note: t('customers.visits', { n: g.visits }),
-            value: g.salesMinor === null ? '' : money(g.salesMinor),
-          }))}
-          more={t('customers.perBranch')}
-        />
+        <TopGuests top={data.top} money={money} />
       </div>
     </>
   );
@@ -606,14 +598,17 @@ export function CustomersTab({ data }: { data: RestaurantCustomersPage }) {
  * within 30 days. A month under 10 new guests says so instead of a bar; a month whose guests still have days left is
  * drawn pale and marked, because its share can still rise.
  */
-function MonthReturns({ months }: { months: NonNullable<RestaurantCustomersPage['returnByMonth']> }) {
+function MonthReturns({ months: all }: { months: NonNullable<RestaurantCustomersPage['returnByMonth']> }) {
   const t = useTranslations('restaurantReports.customers');
   const locale = useLocale();
   const monthName = new Intl.DateTimeFormat(intlLocale(locale), { month: 'short', timeZone: 'UTC' });
   const name = (ym: string) => monthName.format(new Date(`${ym}-01T00:00:00Z`));
+  // Owner, 2026-11-24 — "build all six" #1: the months before the restaurant had any new guest are left out, so the
+  // bars it has get the room.
+  const start = all.findIndex((m) => m.newGuests > 0);
+  const months = start < 0 ? [] : all.slice(start);
   const best = Math.max(0, ...months.map((m) => m.pct ?? 0));
-  // Owner, 2026-11-24 — "fix both": the four months in one plain line, over the months that have settled (else all
-  // that can be said): "About 3 in 10 new guests come back within 30 days."
+  // #2: the one number that matters, big, over the months that have settled (else all that can be said).
   const said = months.filter((m) => m.pct !== null);
   const settled = said.filter((m) => !m.partial);
   const over = settled.length > 0 ? settled : said;
@@ -624,23 +619,33 @@ function MonthReturns({ months }: { months: NonNullable<RestaurantCustomersPage[
       <h3 className="rr-list-title">{t('returnTitle')}</h3>
       <p className="rr-more rr-returns-sub">{t('returnSub')}</p>
       <div className="rr-returns-body">
-      {inTen !== null ? <p className="rr-returns-summary">{inTen === 0 ? t('returnSummaryLow') : t('returnSummary', { n: inTen })}</p> : null}
-      <ul className="cr-bars cr-bars-day rr-bars" aria-label={t('returnTitle')}>
-        {months.map((m) => (
-          <li key={m.month} className={`cr-bar-col${m.partial ? ' is-today' : ''}`}>
-            <span className={`cr-bar-top${m.pct !== null && m.pct === best ? ' is-peak' : ''}`} aria-hidden="true">
-              {m.pct === null ? '–' : `${m.pct}%`}
-            </span>
-            <span className="cr-bar-slot">
-              <span className={`cr-bar${m.pct !== null && m.pct === best ? ' is-peak' : ''}`} style={{ height: `${m.pct === null ? 0 : Math.max(2, m.pct)}%` }} />
-            </span>
-            <span className="cr-bar-tick" aria-hidden="true">{m.partial ? `${name(m.month)}*` : name(m.month)}</span>
-            <span className="sr-only">
-              {name(m.month)}: {m.newGuests === 0 ? t('returnNone') : m.pct === null ? t('returnFew', { n: m.newGuests }) : t('returnSr', { pct: m.pct, back: m.cameBack, n: m.newGuests })}
-            </span>
-          </li>
-        ))}
-      </ul>
+        {inTen !== null ? (
+          <div className="rr-returns-stat">
+            <p className="rr-stat-big">{inTen === 0 ? t('returnStatLowBig') : t('returnStatBig', { n: inTen })}</p>
+            <p className="rr-stat-text">{t('returnStatText')}</p>
+            <p className="rr-stat-months">
+              {said
+                .map((m) => t(m.partial ? 'returnStatMonthOpen' : 'returnStatMonth', { month: name(m.month), back: m.cameBack, n: m.newGuests }))
+                .join(' · ')}
+            </p>
+          </div>
+        ) : null}
+        <ul className="cr-bars cr-bars-day rr-bars" aria-label={t('returnTitle')}>
+          {months.map((m) => (
+            <li key={m.month} className={`cr-bar-col${m.partial ? ' is-today' : ''}`}>
+              <span className={`cr-bar-top${m.pct !== null && m.pct === best ? ' is-peak' : ''}`} aria-hidden="true">
+                {m.pct === null ? '–' : `${m.pct}%`}
+              </span>
+              <span className="cr-bar-slot">
+                <span className={`cr-bar${m.pct !== null && m.pct === best ? ' is-peak' : ''}`} style={{ height: `${m.pct === null ? 0 : Math.max(2, m.pct)}%` }} />
+              </span>
+              <span className="cr-bar-tick" aria-hidden="true">{m.partial ? `${name(m.month)}*` : name(m.month)}</span>
+              <span className="sr-only">
+                {name(m.month)}: {m.newGuests === 0 ? t('returnNone') : m.pct === null ? t('returnFew', { n: m.newGuests }) : t('returnSr', { pct: m.pct, back: m.cameBack, n: m.newGuests })}
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
       {months.some((m) => m.partial) ? <p className="rr-more">{t('returnPartial')}</p> : null}
       {months.some((m) => m.pct === null && m.newGuests > 0) ? <p className="rr-more">{t('returnFewNote')}</p> : null}
@@ -656,26 +661,36 @@ function MonthReturns({ months }: { months: NonNullable<RestaurantCustomersPage[
 function Overdue({ overdue }: { overdue: NonNullable<RestaurantCustomersPage['overdue']> }) {
   const t = useTranslations('restaurantReports.customers');
   const [all, setAll] = useState(false);
+  const title = (
+    <h3 className="rr-list-title" id="rr-overdue-h">
+      {t('overdueTitle')} <span className="rr-list-count">· {overdue.count}</span>
+    </h3>
+  );
   if (overdue.rows.length === 0) {
     return (
       <section className="rr-list" aria-labelledby="rr-overdue-h">
-        <h3 className="rr-list-title" id="rr-overdue-h">{t('overdueTitle')}</h3>
+        {title}
         <p className="rr-line">{t('overdueCount', { n: overdue.count })}</p>
       </section>
     );
   }
   const rows = all ? overdue.rows : overdue.rows.slice(0, LIST_SHOWN);
   return (
-    <section className="rr-list rr-overdue" aria-labelledby="rr-overdue-h">
-      <h3 className="rr-list-title" id="rr-overdue-h">{t('overdueTitle')}</h3>
+    <section className="rr-list rr-people rr-overdue" aria-labelledby="rr-overdue-h">
+      {title}
       <p className="rr-more rr-overdue-sub">{t('overdueSub')}</p>
       <ul>
         {rows.map((g) => (
           <li key={g.customerId}>
+            {/* #3 — initials in a colour of their own: the app's Avatar, as on Home. */}
+            <Avatar name={g.name} id={g.customerId} size={36} />
             <span className="rr-list-name">
               {g.name ?? t('hidden')}
-              <span className="rr-list-note">{t('overdueNote', { gap: g.usualGapDays, away: g.lastSeenDaysAgo })}</span>
+              {/* #4 — their habit, and how late they are, at a glance. */}
+              <span className="rr-list-note">{t('overdueUsual', { gap: g.usualGapDays })}</span>
             </span>
+            <span className="rr-away">{t('overdueAway', { n: g.lastSeenDaysAgo })}</span>
+            {/* #5 — a round button, not a pill: five green pills were the loudest thing on the screen. */}
             <a
               className="rr-wa"
               href={whatsappHref(g.phone.replace(/\D/g, ''), t('overdueHello', { name: g.name ?? '' }).trim())}
@@ -684,7 +699,6 @@ function Overdue({ overdue }: { overdue: NonNullable<RestaurantCustomersPage['ov
               aria-label={t('overdueWaAria', { name: g.name ?? t('hidden') })}
             >
               <IconWhatsApp />
-              <span>{t('overdueWa')}</span>
             </a>
           </li>
         ))}
@@ -695,6 +709,32 @@ function Overdue({ overdue }: { overdue: NonNullable<RestaurantCustomersPage['ov
         </button>
       ) : null}
       {all && overdue.count > overdue.rows.length ? <p className="rr-more">{t('overdueMore', { n: overdue.count - overdue.rows.length })}</p> : null}
+    </section>
+  );
+}
+
+/** #6 — Top guests: a rank, their initials, their visits, what they spent; "Most visits in these dates" says the order. */
+function TopGuests({ top, money }: { top: RestaurantCustomersPage['top']; money: Money }) {
+  const t = useTranslations('restaurantReports.customers');
+  if (top.length === 0) return null;
+  return (
+    <section className="rr-list rr-people rr-top-guests" aria-labelledby="rr-top-h">
+      <h3 className="rr-list-title" id="rr-top-h">{t('top')}</h3>
+      <p className="rr-more rr-overdue-sub">{t('topSub')}</p>
+      <ol>
+        {top.map((g, i) => (
+          <li key={g.customerId ?? String(i)}>
+            <span className="rr-rank" aria-hidden="true">{i + 1}</span>
+            <Avatar name={g.name} id={g.customerId ?? `hidden-${i}`} size={36} nobody={g.name === null} />
+            <span className="rr-list-name">
+              {g.name ?? t('hidden')}
+              <span className="rr-list-note">{t('visits', { n: g.visits })}</span>
+            </span>
+            {g.salesMinor === null ? null : <span className="rr-list-value">{money(g.salesMinor)}</span>}
+          </li>
+        ))}
+      </ol>
+      <p className="rr-more">{t('perBranch')}</p>
     </section>
   );
 }

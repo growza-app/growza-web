@@ -407,6 +407,21 @@ describe('Jira GRW-761 — Customers', () => {
   });
 
   describe('owner, 2026-11-24 — habits: return rate by month, overdue regulars, the top fifth', () => {
+    it('build all six #1 — months before the first new guest are left out', () => {
+      const months = [
+        { month: '2026-08', newGuests: 0, cameBack: 0, pct: null, partial: false },
+        { month: '2026-09', newGuests: 0, cameBack: 0, pct: null, partial: false },
+        { month: '2026-10', newGuests: 92, cameBack: 83, pct: 90, partial: false },
+        { month: '2026-11', newGuests: 26, cameBack: 18, pct: 69, partial: true },
+      ];
+      const html = render('en', createElement(CustomersTab, { data: { ...cust, returnByMonth: months } }));
+      expect(count(html, 'cr-bar-col')).toBe(2);
+      expect(text(html)).toContain('9 in 10 new guests come back within 30 days Oct: 83 of 92 · Nov so far: 18 of 26');
+    });
+    it('build all six #6 — top guests: a rank and "Most visits in these dates"', () => {
+      expect(text(render('en', createElement(CustomersTab, { data: cust })))).toContain('Top guests Most visits in these dates 1 AV Asha Verma 4 visits ₹1,820 2 BK Bilal Khan');
+    });
+
     const habits = {
       ...cust,
       topShare: { guests: 22, pct: 61 },
@@ -429,16 +444,19 @@ describe('Jira GRW-761 — Customers', () => {
       expect(count(html, 'rr-small')).toBe(3);
     });
     it('the chart: four months, a share over each, a dash under 10 new guests, the months still open marked', () => {
+      // Owner, "build all six" #1: a month before any new guest is left out; August had 6, so it stays.
       expect(out).toContain('New guests who came back within 30 days By the month of their first visit');
-      // The plain line is over the settled months that can be said: September alone, 14 of 41 → about 3 in 10.
-      expect(out).toContain('About 3 in 10 new guests come back within 30 days.');
+      // The big figure is over the settled months that can be said: September alone, 14 of 41 → 3 in 10. Then each month.
+      expect(out).toContain('3 in 10 new guests come back within 30 days Sept: 14 of 41 · Oct so far: 11 of 38 · Nov so far: 10 of 26');
       expect(out).toMatch(/– Aug.*34% Sep.*29% Oct\*.*38% Nov\*/);
       expect(out).toContain('new guests still have days left to come back.');
       expect(out).toContain('– Under 10 new guests: too few to say.');
     });
     it('overdue regulars: five, then See all; each with their habit and a WhatsApp chat link with a hello', () => {
-      expect(out).toContain('Regulars who are overdue Away twice as long as they usually are');
-      expect(out).toContain('Priya Sharma Comes every 6 days · last seen 15 days ago WhatsApp');
+      expect(out).toContain('Regulars who are overdue · 7 Away twice as long as they usually are');
+      // Initials, the habit, how late — and a round WhatsApp button named for her.
+      expect(out).toContain('PS Priya Sharma Usually every 6 days 15 days away');
+      expect(html).toContain('aria-label="Message Priya Sharma on WhatsApp"');
       expect(count(html, 'rr-wa')).toBe(5);
       expect(out).toContain('See all 7');
       expect(html).toContain('href="https://wa.me/919810000000?text=Hi%20Priya%20Sharma%2C"');

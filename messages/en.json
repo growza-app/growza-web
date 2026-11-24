@@ -3249,16 +3249,20 @@
       "returnFewNote": "– Under 10 new guests: too few to say.",
       "overdueTitle": "Regulars who are overdue",
       "overdueSub": "Away twice as long as they usually are",
-      "overdueNote": "Comes every {gap, plural, one {day} other {# days}} · last seen {away} days ago",
-      "overdueWa": "WhatsApp",
       "overdueWaAria": "Message {name} on WhatsApp",
       "overdueHello": "Hi {name},",
       "overdueAll": "See all {n}",
       "overdueMore": "and {n} more",
       "overdueCount": "{n, plural, one {# regular is} other {# regulars are}} overdue.",
       "returnNone": "no new guests",
-      "returnSummary": "About {n} in 10 new guests come back within 30 days.",
-      "returnSummaryLow": "Fewer than 1 in 10 new guests come back within 30 days."
+      "returnStatBig": "{n} in 10",
+      "returnStatLowBig": "Under 1 in 10",
+      "returnStatText": "new guests come back within 30 days",
+      "returnStatMonth": "{month}: {back} of {n}",
+      "returnStatMonthOpen": "{month} so far: {back} of {n}",
+      "overdueUsual": "Usually every {gap, plural, one {day} other {# days}}",
+      "overdueAway": "{n} days away",
+      "topSub": "Most visits in these dates"
     }
   },
   "counterReport": {
