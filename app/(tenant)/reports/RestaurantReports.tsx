@@ -65,7 +65,7 @@ export function Delta({ c, t }: { c: RestaurantCompared; t: DeltaWords }) {
  * Owner rule — exact to the rupee: a laptop shows the exact amount; only a phone, where seven "₹35,085" do not fit,
  * shortens it to "₹35k" (CSS picks one of the two). Today, still under way, is drawn as an outline and named "Today".
  */
-function Bars({ points, money, label, today }: { points: Array<{ key: string; tick: string; full: string; minor: number }>; money: Money; label: string; today?: { key: string; word: string } }) {
+function Bars({ points, money, label, today }: { points: Array<{ key: string; tick: string; full: string; minor: number; weekend?: boolean }>; money: Money; label: string; today?: { key: string; word: string } }) {
   const peak = Math.max(0, ...points.map((p) => p.minor));
   const every = points.length <= 8;
   const best = points.findIndex((p) => p.minor === peak && peak > 0);
@@ -75,7 +75,7 @@ function Bars({ points, money, label, today }: { points: Array<{ key: string; ti
       {points.map((p, i) => {
         const isToday = p.key === today?.key;
         return (
-        <li key={p.key} className={`cr-bar-col${isToday ? ' is-today' : ''}`}>
+        <li key={p.key} className={`cr-bar-col${isToday ? ' is-today' : ''}${p.weekend ? ' is-weekend' : ''}`}>
           <span className={`cr-bar-top${i === best ? ' is-peak' : ''}`} aria-hidden="true">
             {(p.minor > 0 && (every || i === best)) || isToday ? (
               <>
@@ -158,7 +158,9 @@ export function OverviewTab({ data, todayISO }: { data: RestaurantOverviewPage; 
     tick: i === 0 || i === last ? day.format(asDate(d.day)) : data.byDay.length <= 8 ? dateOnly.format(asDate(d.day)) : '',
     full: weekday.format(asDate(d.day)),
     minor: d.salesMinor,
+    weekend: [0, 6].includes(asDate(d.day).getUTCDay()),
   }));
+  const both = points.some((p) => p.weekend) && points.some((p) => !p.weekend);
   return (
     <>
       <section className="cr-card rr-card" aria-labelledby="rr-sales-h">
@@ -184,6 +186,12 @@ export function OverviewTab({ data, todayISO }: { data: RestaurantOverviewPage; 
           ) : null}
         </div>
         <Bars points={points} money={money} label={t('overview.byDay')} today={todayISO ? { key: todayISO, word: t('overview.today') } : undefined} />
+        {both ? (
+          <p className="rr-legend" aria-hidden="true">
+            <span className="rr-key">{t('overview.weekdays')}</span>
+            <span className="rr-key is-weekend">{t('overview.weekend')}</span>
+          </p>
+        ) : null}
       </section>
       <Freshness f={data.freshness} t={t} locale={locale} />
     </>

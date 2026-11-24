@@ -3,7 +3,7 @@
  *
  * Owner rule, 2026-11-24 — clean and precise: one big number (`.cr-hero`, the counter report's), up to three small
  * figures, one chart (`.cr-bars`, the bars the owner approved on the phone), lists of five. Laid out at 344px first;
- * tokens only, one accent, green and red only for up and down.
+ * tokens only; one accent except the charts' two colours (below); green and red only for up and down.
  */
 
 /* `minmax(0, 1fr)`, not the implicit `auto` track: seven day names ("18 Nov") are wider together than a 344px card,
@@ -207,15 +207,69 @@
   display: none;
 }
 
-/* The day chart gets what the hour chart already had (99-z-emerald-v2.css): a plain track instead of stripes —
-   thirty striped tracks read as a barcode — and the first and last day names kept inside the card. Every column
-   keeps a line for its name, named or not, so the bars stand on one line. */
-.rr-bars .cr-bar-slot {
-  background: var(--canvas);
+/*
+ * Owner, 2026-11-24 — "soft colours mixed", then "dark purple and orange": the Reports charts get their own two
+ * colours, an exception to the one-accent rule that stays inside Reports. Weekdays purple, Saturday and Sunday
+ * orange, the best day in the deep shade of its own colour. The orange is a shade deeper than the mockup's #EF9F27:
+ * that one measured 2.2:1 on the white card, under the 3:1 a chart bar needs to be seen in daylight; #E07B12 is 3.0:1.
+ */
+.rr {
+  --rr-day: var(--chart-weekday);
+  --rr-day-best: var(--chart-weekday-deep);
+  --rr-end: var(--chart-weekend);
+  --rr-end-best: var(--chart-weekend-deep);
 }
 
+/* No track behind the bars — thirty grey pills read as thirty empty days. A thin bar stands on one baseline, and
+   the columns touch so the line runs unbroken under them. */
+.rr-bars.cr-bars {
+  gap: 0;
+}
+
+.rr-bars.cr-bars .cr-bar-slot {
+  max-width: none;
+  border-radius: 0;
+  background: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.rr-bars .cr-bar {
+  width: 62%;
+  max-width: 2rem;
+  margin-inline: auto;
+  border-radius: 3px 3px 0 0;
+  background: var(--rr-day);
+}
+
+.rr-bars .is-weekend .cr-bar {
+  background: var(--rr-end);
+}
+
+.rr-bars .cr-bar.is-peak {
+  background: var(--rr-day-best);
+}
+
+.rr-bars .is-weekend .cr-bar.is-peak {
+  background: var(--rr-end-best);
+}
+
+.rr-bars .cr-bar-top {
+  height: 1.25rem;
+  min-height: 0;
+  line-height: 1.25rem;
+  color: var(--rr-day-best);
+}
+
+.rr-bars .is-weekend .cr-bar-top {
+  color: var(--rr-end-best);
+}
+
+/* Every column's name sits on a line of one height, named or not — a named one was 4px taller, and pushed its
+   bar up off the baseline. */
 .rr-bars .cr-bar-tick {
-  min-height: 1rem;
+  height: 1.25rem;
+  min-height: 0;
+  line-height: 1.25rem;
 }
 
 /* Exact amount on a laptop, "₹35k" on a phone (the component writes both). */
@@ -223,15 +277,49 @@
   display: none;
 }
 
-/* Today is still under way: an outline, not a grey pill that reads as a day with no data. */
-.rr-bars .is-today .cr-bar-slot {
-  background: transparent;
-  border: 1.5px dashed color-mix(in srgb, var(--muted) 55%, transparent);
+/* Today is still under way: its bar so far, pale with a dashed edge, so it does not read as a bad day. */
+.rr-bars .is-today .cr-bar {
+  background: color-mix(in srgb, var(--rr-day) 22%, var(--surface));
+  outline: 1.5px dashed var(--rr-day);
+  outline-offset: -1.5px;
+}
+
+.rr-bars .is-today.is-weekend .cr-bar {
+  background: color-mix(in srgb, var(--rr-end) 22%, var(--surface));
+  outline-color: var(--rr-end);
 }
 
 .rr-bars .is-today .cr-bar-tick {
   font-weight: 600;
   color: var(--text);
+}
+
+/* The two colours' names, under the chart. */
+.rr-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-4);
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--muted);
+}
+
+.rr-key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.rr-key::before {
+  content: '';
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+  background: var(--rr-day);
+}
+
+.rr-key.is-weekend::before {
+  background: var(--rr-end);
 }
 
 @media (max-width: 860px) {
@@ -314,16 +402,13 @@
     margin-top: var(--sp-4);
   }
 
-  /* Bars, not blobs: a 4rem pill with round ends turned a short day into a circle. Narrower, and only the top
-     corners rounded, so every height reads against the others. */
   /* `.cr-bars-day` too: the Emerald sheet's `.cr-bars-day .cr-bar-slot` comes later and would win a tie. */
   .rr-bars.cr-bars-day .cr-bar-slot {
     height: 10rem;
-    max-width: 2.5rem;
-    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   }
 
   .rr-bars .cr-bar {
+    max-width: 2.25rem;
     border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   }
 

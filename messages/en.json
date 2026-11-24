@@ -3087,7 +3087,9 @@
       "profitPart": "Not counted: {amount} of dishes with no cost price",
       "byDay": "Sales by day",
       "thrown": "Includes {amount} of food thrown away",
-      "today": "Today"
+      "today": "Today",
+      "weekdays": "Mon–Fri",
+      "weekend": "Sat–Sun"
     },
     "sales": {
       "moneyIn": "Money in",
