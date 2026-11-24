@@ -17,7 +17,7 @@ import { IconCart, IconCheck, IconChevronRight, IconClipboardCheck, IconEdit, Ic
 import { MenuTable, sectionKey } from './MenuTable';
 import { MenuKebab } from './MenuKebab';
 import { MenuRows } from './MenuRows';
-import { averagePct, groupedOrder, needsRecipe, recipeStates, type MenuTab, type RecipeInfo } from './menu-manager';
+import { averagePct, groupedOrder, lacksCost, needsRecipe, recipeStates, type MenuTab, type RecipeInfo } from './menu-manager';
 import { ProductPhoto } from '../components/ProductPhoto';
 import { ShareOnWhatsAppButton, useShareSession, useShareTextOnWhatsApp } from '../components/ShareOnWhatsApp';
 import { menuShareText } from './menu-share';
@@ -311,7 +311,7 @@ export function ProductsList({
       !counted && menuTab === 'noRecipe'
         ? all.filter((p) => needsRecipe(p, recipes))
         : !counted && menuTab === 'noCost'
-          ? all.filter((p) => p.costMinor == null)
+          ? all.filter((p) => lacksCost(p, recipes))
           : all;
     return searchKeepsBestFirst(search, sort, sortDir) ? found : sortShelf(found, sort, sortDir);
   }, [rows, filter, search, selectedCategories, sort, sortDir, counted, menuTab, recipes]);
@@ -339,8 +339,8 @@ export function ProductsList({
   }, [shown, categories, recipes]);
   const maxSold = useMemo(() => shown.reduce((m, p) => Math.max(m, p.sold), 0), [shown]);
   const noCostCount = useMemo(
-    () => (seesCost ? live.filter((p) => p.costMinor == null && matchesCategories(p, selectedCategories)).length : 0),
-    [live, seesCost, selectedCategories],
+    () => (seesCost ? live.filter((p) => lacksCost(p, recipes) && matchesCategories(p, selectedCategories)).length : 0),
+    [live, seesCost, selectedCategories, recipes],
   );
   const needRecipeCount = useMemo(
     () => (recipes ? rows.filter((p) => needsRecipe(p, recipes) && matchesCategories(p, selectedCategories)).length : 0),

@@ -19,11 +19,17 @@ export interface RecipeInfo {
   state: RecipeState;
   /** The worst size's food cost (what Inventory's Recipes tab showed); null when not sent, or no size has one. */
   pct: number | null;
+  /**
+   * Owner, 2026-11-24 — "use recipe cost when no cost price": every size's recipe can be costed (a recipe, every
+   * ingredient priced), so Reports' Profit counts the dish even with no cost price typed. False when not sent.
+   */
+  costed: boolean;
 }
 
 export function recipeInfoOf(dish: Pick<RecipeCostDish, 'noRecipe' | 'sizes'>): RecipeInfo {
   const pcts = dish.sizes.map((s) => s.foodCostPct).filter((n): n is number => typeof n === 'number');
-  return { state: recipeStateOf(dish), pct: pcts.length > 0 ? Math.max(...pcts) : null };
+  const costed = dish.sizes.length > 0 && dish.sizes.every((s) => typeof s.costMinor === 'number');
+  return { state: recipeStateOf(dish), pct: pcts.length > 0 ? Math.max(...pcts) : null, costed };
 }
 
 export function recipeStates(dishes: readonly RecipeCostDish[]): Map<string, RecipeInfo> {
@@ -31,8 +37,12 @@ export function recipeStates(dishes: readonly RecipeCostDish[]): Map<string, Rec
 }
 
 /** The Menu's three tabs: what is on the menu, what still needs its recipe, what was taken off. */
-/** Owner, 2026-11-24 — `noCost`: dishes on the menu with no cost price, which Profit leaves out (Reports links here). */
+/** Owner, 2026-11-24 — `noCost`: dishes on the menu with no cost price and no costed recipe, which Profit leaves out (Reports links here). */
 export type MenuTab = 'all' | 'noRecipe' | 'noCost' | 'retired';
+
+/** A dish Reports' Profit cannot cost: no cost price typed, and no recipe that can be costed for every size. */
+export const lacksCost = (p: Pick<Product, 'id' | 'costMinor'>, states: ReadonlyMap<string, RecipeInfo> | null): boolean =>
+  p.costMinor == null && !(states?.get(p.id)?.costed ?? false);
 
 /** "Needs a recipe" is a dish on the menu with none, or with a size that has none. A taken-off dish is not asked about. */
 export const needsRecipe = (p: Pick<Product, 'id' | 'active'>, states: ReadonlyMap<string, RecipeInfo> | null): boolean =>

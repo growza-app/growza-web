@@ -3089,8 +3089,8 @@
       "today": "Today",
       "weekdays": "Mon–Fri",
       "weekend": "Sat–Sun",
-      "noCostYet": "No cost prices yet",
-      "missingDishes": "{n, plural, one {# dish has} other {# dishes have}} no cost price",
+      "noCostYet": "No dish costs yet",
+      "missingDishes": "{n, plural, one {# dish has} other {# dishes have}} no cost price or recipe",
       "profitOn": "On {part} of {all} sales"
     },
     "sales": {
@@ -3130,7 +3130,7 @@
       "moreNotSelling": "and {n} more",
       "thrown": "{n} after cooking",
       "thrownCost": "{n} after cooking · {amount} of food",
-      "noCost": "no cost price"
+      "noCost": "no cost price or recipe"
     },
     "inventory": {
       "foodCost": "Food cost",
@@ -4907,7 +4907,7 @@
       "tabs": {
         "all": "On the menu",
         "noRecipe": "Needs a recipe",
-        "noCost": "No cost price",
+        "noCost": "No cost",
         "retired": "Taken off"
       },
       "sectionCount": "{count, plural, one {# dish} other {# dishes}}",
@@ -4939,7 +4939,7 @@
       "clearFilters": "Clear filters",
       "result": "{count, plural, one {# dish} other {# dishes}}",
       "noneNeedRecipe": "Every dish on the menu has its recipe.",
-      "noneNeedCost": "Every dish on the menu has its cost price.",
+      "noneNeedCost": "Every dish on the menu has a cost price or a recipe.",
       "overPrice": "Costs more than its price — check the price",
       "tabsShort": {
         "all": "On menu",

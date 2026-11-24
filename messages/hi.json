@@ -3089,8 +3089,8 @@
       "today": "आज",
       "weekdays": "सोम–शुक्र",
       "weekend": "शनि–रवि",
-      "noCostYet": "अभी लागत नहीं डाली",
-      "missingDishes": "{n} डिश की लागत नहीं डाली",
+      "noCostYet": "अभी किसी डिश की लागत नहीं",
+      "missingDishes": "{n} डिश की न लागत डली, न रेसिपी",
       "profitOn": "{all} की बिक्री में से {part} पर"
     },
     "sales": {
@@ -3130,7 +3130,7 @@
       "moreNotSelling": "और {n}",
       "thrown": "{n} बनने के बाद",
       "thrownCost": "{n} बनने के बाद · {amount} का खाना",
-      "noCost": "लागत नहीं डाली"
+      "noCost": "न लागत, न रेसिपी"
     },
     "inventory": {
       "foodCost": "खाने की लागत",
@@ -4907,7 +4907,7 @@
       "tabs": {
         "all": "मेन्यू पर",
         "noRecipe": "रेसिपी बाकी",
-        "noCost": "लागत नहीं डाली",
+        "noCost": "लागत नहीं",
         "retired": "हटाई गई"
       },
       "sectionCount": "{count, plural, one {# डिश} other {# डिश}}",
@@ -4939,7 +4939,7 @@
       "clearFilters": "फ़िल्टर हटाएँ",
       "result": "{count, plural, one {# डिश} other {# डिश}}",
       "noneNeedRecipe": "मेन्यू की हर डिश की रेसिपी है।",
-      "noneNeedCost": "मेन्यू की हर डिश की लागत डली है।",
+      "noneNeedCost": "मेन्यू की हर डिश की लागत या रेसिपी डली है।",
       "overPrice": "दाम से ज़्यादा खर्च — दाम जाँचें",
       "tabsShort": {
         "all": "मेन्यू पर",
