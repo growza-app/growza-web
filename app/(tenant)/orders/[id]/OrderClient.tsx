@@ -390,6 +390,22 @@ export function OrderClient({
               </>
             ) : order.buyerRedactedAt ? (
               <p className="ord-d-quiet">{t('detail.detailsRemoved')}</p>
+            ) : !order.client && isCounter ? (
+              /*
+               * Owner, 2026-11-23 — a till bill paid with nobody on it has nobody (no client, no name). Said so, and its
+               * number can still be added here: that makes the guest, and the bill earns their points then.
+               */
+              <>
+                <p className="ord-d-name">{t('list.noName')}</p>
+                <p className="ord-d-quiet">{t('buyer.notAClient')}</p>
+                {writable ? (
+                  <div className="ord-d-buyer-actions">
+                    <button type="button" className="ord-d-attach" onClick={() => setAddingNumber(true)}>
+                      {t('addNumber.action', { customer: nouns.customer })}
+                    </button>
+                  </div>
+                ) : null}
+              </>
             ) : null}
             {noAddress ? <p className="ord-d-warn">{t('detail.noAddress')}</p> : null}
           </section>

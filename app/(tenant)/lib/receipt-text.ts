@@ -113,7 +113,7 @@ export interface ReceiptCopy {
   extra?: (amount: string) => string;
   /** "Reward points used: 100 (−₹100)". Absent means the bill never mentions points. */
   rewardUsed?: (points: number, amount: string) => string;
-  /** "You earned 38 points towards your next visit." */
+  /** "You earned 38 points." */
   earned?: (points: number) => string;
   saved: (amount: string) => string;
   paidBy: (mode: string) => string;
@@ -816,7 +816,15 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
  * Renders the branded Graphic Receipt Card onto a 2× Retina `<canvas>` and resolves to a PNG `Blob`
  * for 1-click clipboard copying (`Ctrl+V` / `Cmd+V` into WhatsApp) or native mobile file sharing.
  */
-export async function renderReceiptCardBlob(card: ReceiptCardModel, logo: string | null = null): Promise<Blob | null> {
+/**
+ * `rewardsSub` — the line under the points earned, in the reader's language (owner, 2026-11-24: "the wordings"; it was
+ * fixed English that repeated the title's "next visit").
+ */
+export async function renderReceiptCardBlob(
+  card: ReceiptCardModel,
+  logo: string | null = null,
+  rewardsSub = 'Use them on your next visit.',
+): Promise<Blob | null> {
   if (typeof document === 'undefined') return null;
   // Jira GRW-728 — the business's own logo in the badge, where it has one (a data URI, so the canvas stays readable).
   let logoImg: HTMLImageElement | null = null;
@@ -1054,7 +1062,7 @@ export async function renderReceiptCardBlob(card: ReceiptCardModel, logo: string
     ctx.fillText(card.rewardsEarned ?? 'Reward Points Updated', 74, y + 20);
     ctx.fillStyle = '#92400e';
     ctx.font = `600 11px ${font}`;
-    ctx.fillText('Use your points on your next visit', 74, y + 36);
+    ctx.fillText(rewardsSub, 74, y + 36);
 
     if (card.rewardsBalance) {
       ctx.textAlign = 'right';
