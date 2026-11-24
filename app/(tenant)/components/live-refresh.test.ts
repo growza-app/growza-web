@@ -140,7 +140,9 @@ describe('what a tick compares against, and how it can go wrong', () => {
   it('a stalled check cannot hold the poll shut: the request times out', () => {
     expect(live).toMatch(/api\.liveVersion\(VERSION_TIMEOUT_MS\)/);
     expect(read('../lib/api.ts')).toMatch(/AbortSignal\.timeout\(timeoutMs\)/);
-    expect(read('../lib/api.ts')).toMatch(/fetch\(`\$\{API_URL\}\$\{path\}`, \{ cache: 'no-store', headers: await authHeaders\(\), signal \}\)/);
+    // Owner, 2026-11-24 — through `apiFetch` (session-renewal.ts) now, the signal with it: a renewal and its one retry
+    // stay inside the same timeout, so a stalled check still cannot hold the poll shut.
+    expect(read('../lib/api.ts')).toMatch(/apiFetch\(`\$\{API_URL\}\$\{path\}`, \{ cache: 'no-store', headers: await authHeaders\(\), signal \}\)/);
   });
 
   it('an answer that arrives after a redraw or a navigation is dropped, and the tick number is read before the await', () => {

@@ -85,3 +85,24 @@ async function attempt({ fetch, storage, now }: ResumeDeps): Promise<boolean> {
   }
   return true;
 }
+
+/**
+ * Owner, 2026-11-24 — "sometimes I'm getting locked out … multiple times a day". Reproduced on a copy of develop: a page
+ * left open past the hour met a 401 on its next request and went straight to /login, while the refresh cookie was
+ * still good (asked straight after, it answered 200). `resumeSession` was only tried on a page LOAD; a request from a
+ * page already open never asked. `renewForRequest` is that ask, for `api.ts`.
+ *
+ * It answers `true` when the request is worth one more try: a refresh worked now, or one worked moments ago — another
+ * request's, which already set fresh cookies, and which the loop guard above answers `false` for without asking. The
+ * caller repeats its request ONCE; a second 401 goes to sign-in as before, so this can never loop.
+ */
+export async function renewForRequest(deps?: ResumeDeps): Promise<boolean> {
+  const d = deps ?? browserDeps();
+  if (await resumeSession(d)) return true;
+  try {
+    const last = Number(d.storage?.getItem(RESUMED_AT));
+    return Number.isFinite(last) && last > 0 && d.now() - last < LOOP_WINDOW_MS;
+  } catch {
+    return false;
+  }
+}
