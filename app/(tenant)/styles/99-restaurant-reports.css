@@ -356,6 +356,19 @@
 }
 
 @media (max-width: 860px) {
+  /* Owner, 2026-11-24 — "mobile view should also have separator": the laptop's lines, phone-shaped. A line
+     under the big number, and a short bar beside each small figure, so two-by-two they still read as four. */
+  .rr-card > .rr-smalls:not(:empty) {
+    padding-top: var(--sp-3);
+    border-top: 1px solid var(--border);
+    row-gap: var(--sp-4);
+  }
+
+  .rr-card > .rr-smalls > .rr-small {
+    padding-left: var(--sp-3);
+    border-left: 2px solid color-mix(in srgb, var(--muted) 40%, transparent);
+  }
+
   /* A phone's columns are narrower than a day's name, so the first and last name keep inside the card. */
   .rr-bars :is(.cr-bar-col:first-child, .rr-ycol + .cr-bar-col) .cr-bar-tick {
     display: flex;
