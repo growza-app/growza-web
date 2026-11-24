@@ -1,9 +1,10 @@
 /*
- * Owner, 2026-11-24 — the laptop sidebar is a slim dark-green bar of icons, from the owner's reference shot (option A):
- * an orange round logo at the top, the till as an orange round button at the foot, and the whole bar widening OVER the
- * page — names, groups, the business card — when the pointer rests on it (Sidebar.tsx sets `data-rail="open"` after
- * RAIL_HOVER_DELAY_MS), when the keyboard is inside it, or when the logo is tapped on a screen with no pointer. The page
- * never moves. A laptop's only: the phone drawer is untouched. After the Emerald sheet, so it wins where they meet.
+ * Owner, 2026-11-24 — the laptop sidebar is a slim bar of icons, from the owner's reference shot (option A), in the
+ * page's own light grey with dark icons and the page you are on in green (the owner's pick of three; the dark greens
+ * made the icons hard to see, and "no orange circles"). It widens OVER the page — names, groups, the business card —
+ * when the pointer rests on it (Sidebar.tsx sets `data-rail="open"` after RAIL_HOVER_DELAY_MS), when the keyboard is
+ * inside it, or when the logo is tapped on a screen with no pointer. The page never moves. A laptop's only: the phone
+ * drawer is untouched. After the Emerald sheet, so it wins where they meet.
  */
 @media (min-width: 861px) {
   .shell:has(> .sidebar) {
@@ -26,7 +27,7 @@
 
   .shell > .sidebar:is([data-rail='open'], :has(:focus-visible)) {
     width: var(--rail-open-w);
-    box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 22%);
+    box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 16%);
   }
 
   /* ---- what fades: every word, shown once the bar is wide enough to hold it ---- */
@@ -53,7 +54,7 @@
     display: none;
   }
 
-  /* ---- the logo: an orange round button ---- */
+  /* ---- the logo: the Growza mark as it is, and the button that opens the bar on a touch screen ---- */
   .shell > .sidebar .brand-growza {
     gap: 0.75rem;
     padding: 0 0 0.25rem 0.125rem;
@@ -69,24 +70,14 @@
     height: 2.75rem;
     padding: 0;
     border: 0;
-    border-radius: 50%;
-    background: var(--rail-orange);
+    border-radius: 0.75rem;
+    background: transparent;
     cursor: pointer;
   }
 
-  .shell > .sidebar .rail-toggle svg {
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: 50%;
-  }
-
   .rail-toggle:focus-visible {
-    outline: 2px solid #fff;
+    outline: 2px solid var(--rail-active);
     outline-offset: 2px;
-  }
-
-  .shell > .sidebar .brand-growza-word {
-    color: #fff;
   }
 
   /* ---- the business: its shop front alone, the card when wide ---- */
@@ -96,8 +87,7 @@
     padding: 0.5rem 0.75rem;
     border: 0;
     border-radius: 0.875rem;
-    background: var(--rail-hover);
-    color: #fff;
+    background: var(--rail-card);
     overflow: hidden;
     white-space: nowrap;
   }
@@ -106,18 +96,8 @@
     overflow: visible;
   }
 
-  .shell > .sidebar .sb-biz-icon,
-  .shell > .sidebar .sb-biz .hdr-biz-text span,
-  .shell > .sidebar .sb-biz .hbp-chip .sbp-btn > svg:last-child {
+  .shell > .sidebar .sb-biz-icon {
     color: var(--rail-ink);
-  }
-
-  .shell > .sidebar .sb-biz .hdr-biz-text strong {
-    color: #fff;
-  }
-
-  .shell > .sidebar .sb-biz:has(.hbp-chip):hover {
-    background: var(--rail-active);
   }
 
   /* ---- the rows ---- */
@@ -139,18 +119,21 @@
     white-space: nowrap;
   }
 
+  .shell > .sidebar .nav a svg {
+    stroke-width: 2;
+  }
+
   .shell > .sidebar .nav a:hover {
     background: var(--rail-hover);
-    color: #fff;
   }
 
   .shell > .sidebar .nav a.active {
     background: var(--rail-active);
-    color: #fff;
+    color: var(--rail-on-active);
   }
 
   .shell > .sidebar .nav a.active svg {
-    color: #fff;
+    color: var(--rail-on-active);
   }
 
   .shell > .sidebar .nav a.active::before {
@@ -165,42 +148,15 @@
     background: var(--rail-hover);
   }
 
-  .shell > .sidebar .nav-pill {
-    background: var(--rail-active);
-    color: #fff;
-  }
-
-  /* ---- the till: an orange round button at the foot of the list ---- */
+  /* ---- the till: at the foot of the list, as in the shot ---- */
   .shell > .sidebar .nav-pos {
     order: 1;
     margin-top: auto;
     padding-top: var(--sp-2);
   }
 
-  .shell > .sidebar .nav-pos a {
-    padding-inline: 0.125rem;
-  }
-
-  .shell > .sidebar .nav-pos a svg {
-    box-sizing: content-box;
-    flex: none;
-    padding: 0.6875rem;
-    border-radius: 50%;
-    background: var(--rail-orange);
-    color: #fff;
-  }
-
-  .shell > .sidebar .nav-pos a:is(:hover, .active) {
-    background: transparent;
-  }
-
-  .shell > .sidebar .nav-pos a.active svg {
-    box-shadow: 0 0 0 3px var(--rail-bg), 0 0 0 5px #fff;
-  }
-
   /* ---- who is signed in: the face alone, the name when wide ---- */
   .shell > .sidebar .sb-acct {
-    border-top-color: rgb(255 255 255 / 14%);
     overflow: hidden;
     white-space: nowrap;
   }
@@ -211,15 +167,10 @@
 
   .shell > .sidebar .sb-acct .acct-trigger {
     padding: 0.25rem;
-    color: #fff;
   }
 
   .shell > .sidebar .sb-acct .acct-trigger:hover {
     background: var(--rail-hover);
-  }
-
-  .shell > .sidebar .acct-trigger-text span {
-    color: var(--rail-ink);
   }
 }
 

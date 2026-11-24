@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { fromDashboard } from '../lib/dashboard-root';
 
 /**
- * Owner, 2026-11-24 (option A) — the laptop sidebar is a slim dark-green bar of icons, from the owner's reference shot:
- * an orange round logo, the till as an orange round button at the foot, and the bar widening over the page when the
+ * Owner, 2026-11-24 (option A) — the laptop sidebar is a slim bar of icons, from the owner's reference shot:
+ * the till at the foot, light with dark icons (no orange circles), and the bar widening over the page when the
  * pointer rests on it, the keyboard is in it, or the logo is tapped. The page never moves; the phone drawer is untouched.
  */
 const read = (rel: string) => readFileSync(fromDashboard(rel), 'utf8');
@@ -41,11 +41,13 @@ describe('the slim laptop bar', () => {
     expect(css).toMatch(/:is\(\.brand-growza-word, \.nav-label, \.nav-section, \.nav-pill, \.nav-fold, \.acct-trigger-text\),[^{]*\{\s*opacity: 0;/);
   });
 
-  it('the till is the orange round button at the foot; the colours are tokens', () => {
+  it('light, with dark icons and the page you are on in green; the till at the foot, no orange circles; colours are tokens', () => {
     expect(nav).toContain("className: 'nav-pos'");
     expect(css).toMatch(/\.nav-pos \{\s*order: 1;\s*margin-top: auto;/);
-    expect(base).toContain('--rail-orange: #d9702a;');
-    expect(base).toContain('--rail-bg: #24574a;');
+    expect(base).toContain('--rail-bg: #f1f2ef;');
+    expect(base).toContain('--rail-active: #166534;');
+    expect(base).not.toContain('--rail-orange');
+    expect(css).not.toMatch(/--rail-orange|#d9702a/);
   });
 
   it('reduced motion: it opens at once', () => {

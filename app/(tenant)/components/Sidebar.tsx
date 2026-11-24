@@ -192,7 +192,7 @@ export function Sidebar({
     { href: '/', label: t.nav.home, icon: <IconNavHome /> },
     // The till, one tap from Home. `canSee` gives it to whoever may open the till; a business that has turned
     // Products off has nothing on a shelf to sell, so it is not offered one.
-    // Owner, 2026-11-24 — on a laptop's slim bar the till is the orange round button at the foot (`nav-pos`, 99-zz-slim-rail.css).
+    // Owner, 2026-11-24 — on a laptop's slim bar the till sits at the foot, as in the owner's reference (`nav-pos`, 99-zz-slim-rail.css).
     ...(products === false ? [] : [{ href: '/pos', label: t.nav.pos, icon: <IconPos />, className: 'nav-pos' }]),
     // Jira GRW-608 — a shop's own two screens. Absent for every other business: `canSee` answers false for them.
     { href: '/orders', label: t.nav.orders, icon: <IconReceipt /> },
