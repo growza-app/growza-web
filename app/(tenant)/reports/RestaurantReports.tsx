@@ -320,15 +320,15 @@ function OverviewMore({ data, tipCount, onOpen, money }: { data: RestaurantOverv
         <section className="rr-list rr-sources" aria-labelledby="rr-sources-h">
           <h3 className="rr-list-title" id="rr-sources-h">{t('overview.sources')}</h3>
           <div className="rr-split" aria-hidden="true">
-            {parts.map((x, i) => (
-              <span key={x.key} className={`rr-split-part is-${i}`} style={{ flexGrow: x.salesMinor }} />
+            {parts.map((x) => (
+              <span key={x.key} className={`rr-split-part rr-src-${x.key}`} style={{ flexGrow: x.salesMinor }} />
             ))}
           </div>
           <ul>
-            {parts.map((x, i) => (
+            {parts.map((x) => (
               <li key={x.key}>
                 <span className="rr-list-name rr-source-name">
-                  <span className={`rr-split-dot is-${i}`} aria-hidden="true" />
+                  <span className={`rr-split-dot rr-src-${x.key}`} aria-hidden="true" />
                   {sourceName(x.key)}
                 </span>
                 <span className="rr-list-value">

@@ -659,9 +659,8 @@
 
 /*
  * Owner, 2026-11-24 — under the Overview's chart: "Where sales came from" and "Worth a look". Two cards, one above the
- * other on a phone and side by side on a laptop (.rr-lists' columns). The split is one bar in shades of the accent —
- * not the chart's purple and orange, which mean weekday and weekend just above it — and every part is named with its
- * amount and share in the list under it, so the shade is never the only way to tell them apart.
+ * other on a phone and side by side on a laptop (.rr-lists' columns). The split is one bar, a colour per source (below),
+ * and every part is named with its amount and share in the list under it, so the colour is never the only way to tell.
  */
 .rr-more-cards {
   margin-top: var(--sp-3);
@@ -695,11 +694,14 @@
   align-items: center;
 }
 
-:is(.rr-split-part, .rr-split-dot).is-0 { background: var(--forest); }
-:is(.rr-split-part, .rr-split-dot).is-1 { background: var(--accent); }
-:is(.rr-split-part, .rr-split-dot).is-2 { background: var(--mint); }
-:is(.rr-split-part, .rr-split-dot).is-3 { background: color-mix(in srgb, var(--muted) 55%, var(--surface)); }
-:is(.rr-split-part, .rr-split-dot).is-4 { background: var(--border); }
+/* Owner, 2026-11-24 — option B: a colour per source, not per place in the list, so Swiggy is always orange. The
+   restaurant's own orders in greens; the apps in their own colours; anything else grey. */
+:is(.rr-split-part, .rr-split-dot) { background: color-mix(in srgb, var(--muted) 55%, var(--surface)); }
+:is(.rr-split-part, .rr-split-dot).rr-src-dine_in { background: var(--accent); }
+:is(.rr-split-part, .rr-split-dot).rr-src-takeaway { background: var(--mint); }
+:is(.rr-split-part, .rr-split-dot).rr-src-delivery { background: var(--forest); }
+:is(.rr-split-part, .rr-split-dot).rr-src-swiggy { background: var(--chart-swiggy); }
+:is(.rr-split-part, .rr-split-dot).rr-src-zomato { background: var(--chart-zomato); }
 
 .rr-worth ul {
   margin: 0;

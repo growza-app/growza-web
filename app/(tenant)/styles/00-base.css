@@ -46,6 +46,9 @@
   --chart-weekday-deep: #3c3489;
   --chart-weekend: #e07b12;
   --chart-weekend-deep: #b45309;
+  /* Reports' "Where sales came from" (owner, 2026-11-24, option B): the delivery apps in the colours owners know them by. */
+  --chart-swiggy: #f08a24;
+  --chart-zomato: #e23744;
   --danger-soft: #fdeaea;
   --danger-line: #fecaca;
   --amber-ink: #92400e; /* amber as TEXT on --amber-soft: 6.3:1 (Jira GRW-478); --amber itself is 4.99:1 */
