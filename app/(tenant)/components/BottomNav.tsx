@@ -5,7 +5,8 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import { visibleItems, type MemberRole } from '../lib/nav-policy';
-import { useAreas, useLive } from './SessionProvider';
+import { useAreas, useLive, useSession } from './SessionProvider';
+import { useBranch } from './BranchProvider';
 import { homeCopy } from '../lib/home-copy';
 import type { Lang } from '../lib/lang';
 import { useUnreadNotifications } from './useUnreadNotifications';
@@ -20,7 +21,6 @@ import {
   IconNavHome,
   IconPlus,
   IconPos,
-  IconCutlery,
   IconProducts,
   IconTabHome,
   IconTabOrders,
@@ -85,6 +85,11 @@ export function BottomNav({
   const tc = useTranslations('chrome');
   const pathname = usePathname();
   const t = homeCopy(lang, labels);
+  const session = useSession();
+  const branchContext = useBranch();
+  const queueBranch = branchContext.ready && branchContext.multi ? branchContext.choice : null;
+  // The same test as Home's Queue card: Table orders on at the branch in view (any branch when all are in view).
+  const tablesOn = (session?.branches ?? []).some((b) => b.tableOrders && (queueBranch === null || b.id === queueBranch));
   const navRef = useRef<HTMLElement>(null);
   const unread = useUnreadNotifications(navRef);
   // Jira GRW-74 — a role holder's tabs come from their pages (`visibleItems` below), not from the fixed stylist set.
@@ -250,7 +255,7 @@ export function BottomNav({
   };
 
   /*
-   * Owner, 2026-11-23 — a shop's (and a kitchen's) bar, from the owner's own reference: Home · Orders · POS · Menu · Alerts.
+   * Owner, 2026-11-23 — a shop's (and a kitchen's) bar, from the owner's own reference: Home · Orders · POS · Menu · Alerts (a kitchen: Queue for Menu, 2026-11-24).
    *
    * The till is a green circle raised out of the middle of the bar, its word under it like every other tab (owner,
    * 2026-11-23: the circled POS, after trying a tile inside the bar). It is on every screen that has the bar, so the till is one
@@ -263,7 +268,14 @@ export function BottomNav({
       [
         { href: '/', label: t.nav.home, icon: <IconTabHome /> },
         { href: '/orders', label: t.nav.orders, icon: <IconTabOrders /> },
-        { href: '/stock', label: t.nav.stock, icon: areas.stock ? <IconProducts /> : <IconCutlery /> },
+        /*
+         * Owner, 2026-11-24 — "replace Menu with Queue": a kitchen's fourth tab is its order queue, named Pickup with Table
+         * orders on, as on Home's Quick links and the till. Menu stays one tap away in Quick links and the side menu. A shop
+         * that counts stock has no queue (Home: hasOrderQueue), so it keeps its Menu tab.
+         */
+        areas.stock
+          ? { href: '/stock', label: t.nav.stock, icon: <IconProducts /> }
+          : { href: '/pos?mode=queue', label: tablesOn ? t.shop.pickupTitle : t.shop.queueTitle, icon: <IconNavOrders /> },
         { href: '/notifications', label: t.nav.notificationsShort, icon: <IconBell /> },
       ],
       role,
