@@ -26,11 +26,17 @@ describe('a shop’s bar: Home · Orders · POS · Menu · Alerts', () => {
   it('Home, Orders, the POS, Menu, then Alerts — in that order', () => {
     const shop = nav.slice(nav.indexOf('if (areas.shop && live && !stylist) {'));
     expect(shop.indexOf("href: '/'")).toBeLessThan(shop.indexOf("href: '/orders'"));
-    expect(shop.indexOf("href: '/orders'")).toBeLessThan(shop.indexOf("href: '/stock'"));
-    expect(shop.indexOf("href: '/stock'")).toBeLessThan(shop.indexOf("href: '/notifications'"));
+    expect(shop.indexOf("href: '/orders'")).toBeLessThan(shop.indexOf("href: '/pos?mode=queue'"));
+    expect(shop.indexOf("href: '/pos?mode=queue'")).toBeLessThan(shop.indexOf("href: '/notifications'"));
     expect(shop.indexOf('{left.map(tab)}')).toBeLessThan(shop.indexOf('className="bn-pos-tile"'));
     expect(shop.indexOf('className="bn-pos-tile"')).toBeLessThan(shop.indexOf('{right.map(tab)}'));
     expect(shop).not.toContain('bn-more');
+  });
+
+  it('owner, 2026-11-24 — a kitchen\'s fourth tab is the Queue (Pickup with Table orders on); a shop that counts stock keeps Menu', () => {
+    const shop = nav.slice(nav.indexOf('if (areas.shop && live && !stylist) {'));
+    expect(shop).toContain("areas.stock\n          ? { href: '/stock', label: t.nav.stock, icon: <IconProducts /> }\n          : { href: '/pos?mode=queue', label: tablesOn ? t.shop.pickupTitle : t.shop.queueTitle, icon: <IconNavOrders /> },");
+    expect(nav).toContain('const tablesOn = (session?.branches ?? []).some((b) => b.tableOrders && (queueBranch === null || b.id === queueBranch));');
   });
 
   it('the tile is there only for a role the POS screen would let in, on every screen with the bar', () => {
