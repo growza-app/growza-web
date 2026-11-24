@@ -34,6 +34,7 @@ import {
   IconNavStock,
   IconSettings,
   IconChevronRight,
+  IconCutlery,
   IconDaySummary,
   IconInventory,
   IconPos,
@@ -450,7 +451,8 @@ export function ShopHome({
             : { href: '/pos?mode=queue', label: tablesOn ? s.pickupTitle : s.queueTitle, icon: <IconNavOrders />, tone: 'blue' },
         ]
       : []),
-    { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'green' },
+    // Owner, 2026-11-24 — the same picture as the phone bar's Menu: fork and knife for a kitchen, a box for a shop.
+    { href: '/stock', label: t.nav.stock, icon: areas.stock ? <IconProducts /> : <IconCutlery />, tone: 'green' },
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
     /*
      * Owner, 2026-10-26 — Reports, not Attendance.
@@ -1119,7 +1121,7 @@ export function ShopHome({
                   {/* A shop reaches Import orders and Stock from the sidebar; the toolbar keeps only the summary. */}
                   {isKitchen && can('/stock') ? (
                     <a href={`/stock${stockBranch}`} className="hm-action">
-                      <IconNavStock />
+                      <IconCutlery />
                       <strong>{t.nav.stock}</strong>
                     </a>
                   ) : null}
