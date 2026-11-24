@@ -398,6 +398,9 @@
      the chart across the whole card. */
   .rr-card {
     grid-template-columns: max-content minmax(0, 1fr);
+    /* Name, number, note. The note's row takes any height the right-hand column needs (the cancelled list, open)
+       so the big number stays under its name instead of drifting down. */
+    grid-template-rows: auto auto 1fr;
     column-gap: var(--sp-2);
     align-items: start;
     padding: var(--sp-5) var(--sp-6);
@@ -418,15 +421,25 @@
     margin-top: 0;
   }
 
-  /* A thin line between the big number and each small figure. */
+  /* A thin line between the big number and each small figure, and every number on ONE line (owner, 2026-11-24:
+     "numbers are not aligned"). The small figures share the card's three rows — name, number, note — through a
+     subgrid, so each number sits in the big number's row and stands on its baseline, whatever the sizes. */
   .rr-card > .rr-smalls:not(:empty) {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--sp-4) 0;
+    display: grid;
+    grid-template-columns: none;
+    grid-template-rows: subgrid;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    justify-content: start;
+    align-self: stretch;
+    gap: 0;
     border-left: 1px solid var(--border);
   }
 
   .rr-card > .rr-smalls > .rr-small {
+    display: grid;
+    grid-row: 1 / span 3;
+    grid-template-rows: subgrid;
     padding-inline: var(--sp-6);
   }
 
@@ -434,10 +447,62 @@
     border-left: 1px solid var(--border);
   }
 
+  .rr-card > .cr-hero,
+  .rr-card > .rr-smalls > .rr-small > .rr-small-value {
+    align-self: last baseline;
+  }
+
+  .rr-card > .rr-smalls > .rr-small > :is(.rr-small-value, .rr-small-sub) {
+    margin: 0;
+  }
+
   .rr-card > .rr-cancelled {
     border-top: 0;
     border-left: 1px solid var(--border);
-    padding-left: var(--sp-5);
+    padding-left: var(--sp-6);
+  }
+
+  /* Closed, the cancelled figure shares the card's rows like the small figures, so its number stands on the big
+     number's line; "See all" sits beside it. Open, it is a plain block again and the list runs under it. */
+  .rr-card > .rr-cancelled:not([open]) {
+    display: grid;
+    grid-template-rows: subgrid;
+    align-self: stretch;
+  }
+
+  .rr-card > .rr-cancelled:not([open]) > summary {
+    display: grid;
+    grid-row: 1 / span 3;
+    grid-template-rows: subgrid;
+    grid-template-columns: max-content max-content;
+    column-gap: var(--sp-6);
+    align-items: start;
+    min-height: 0;
+    padding-top: 0;
+  }
+
+  .rr-card > .rr-cancelled:not([open]) > summary > .rr-small {
+    display: contents;
+  }
+
+  .rr-card > .rr-cancelled:not([open]) .rr-small-label {
+    grid-area: 1 / 1;
+  }
+
+  .rr-card > .rr-cancelled:not([open]) .rr-small-value {
+    grid-area: 2 / 1;
+    align-self: last baseline;
+    margin: 0;
+  }
+
+  .rr-card > .rr-cancelled:not([open]) .rr-small-sub {
+    grid-area: 3 / 1;
+    margin: 0;
+  }
+
+  .rr-card > .rr-cancelled:not([open]) .rr-see {
+    grid-area: 2 / 2;
+    align-self: last baseline;
   }
 
   /* A taller chart when there is room for it. */
