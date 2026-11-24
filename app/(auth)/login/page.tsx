@@ -270,14 +270,13 @@ export default function LoginPage() {
           {loading ? t('signingIn') : t('submit')}
         </button>
 
-        <p className="login-foot">{t('forgot')}</p>
-
+        {/* Owner, 2026-11-24 — the "ask whoever set up your account" line is gone; a forgotten password gets its own
+            way back with the SMS code (GRW-561), parked until DLT is approved. */}
         <div className="login-foot login-lang" role="group" aria-label={ta('language')}>
           <button type="button" lang="en" aria-pressed={locale === 'en'} onClick={() => chooseLang('en')}>
             {/* i18n-ok: a language is named in its own language */}
             English
           </button>
-          {' · '}
           <button type="button" lang="hi" aria-pressed={locale === 'hi'} onClick={() => chooseLang('hi')}>
             हिन्दी
           </button>

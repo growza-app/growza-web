@@ -216,6 +216,51 @@
   text-decoration: underline;
 }
 
+/*
+ * Owner, 2026-11-24 — "alignment and ux issue": the two language buttons had no style of their own, so the browser
+ * drew grey boxes of different heights (Devanagari is taller) and nothing said which language was chosen. Now one
+ * small switch, centred: two halves 44px tall, the chosen one in a soft green.
+ */
+.login-lang {
+  display: flex;
+  justify-content: center;
+  align-self: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.login-lang button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 6rem;
+  min-height: 44px;
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-3);
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* Owner, 2026-11-24 — "color is too dark": the chosen language in a soft green, its words in the dark green. */
+.login-lang button[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  color: var(--accent-deep);
+}
+
+.login-lang button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* Sign-out in the desktop sidebar's footer (GRW-160). Matches `.nav a` rather
    than reusing it: it is a <button>, so it needs the button resets too, and
    `margin-top: auto` is what parks it at the bottom of the column. It is never

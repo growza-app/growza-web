@@ -2316,7 +2316,6 @@
       "hidePassword": "Hide password",
       "submit": "Sign in",
       "signingIn": "Signing in…",
-      "forgot": "Forgotten your password? Ask whoever set up your account.",
       "choose": {
         "title": "Choose your password",
         "intro": "You signed in with a one-time password. Pick your own to finish — at least 8 characters.",
