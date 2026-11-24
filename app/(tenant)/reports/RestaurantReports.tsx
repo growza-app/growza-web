@@ -60,28 +60,42 @@ export function Delta({ c, t }: { c: RestaurantCompared; t: DeltaWords }) {
   return <p className={`rr-delta ${up ? 'is-up' : 'is-down'}`}>{t(up ? 'delta.up' : 'delta.down', { pct })}</p>;
 }
 
-/** A bar for each point, its amount on top. More than 8 points: only the best one carries its amount. */
-function Bars({ points, money, label }: { points: Array<{ key: string; tick: string; full: string; minor: number }>; money: Money; label: string }) {
+/**
+ * A bar for each point, its amount on top. More than 8 points: only the best one (and today) carries its amount.
+ * Owner rule — exact to the rupee: a laptop shows the exact amount; only a phone, where seven "₹35,085" do not fit,
+ * shortens it to "₹35k" (CSS picks one of the two). Today, still under way, is drawn as an outline and named "Today".
+ */
+function Bars({ points, money, label, today }: { points: Array<{ key: string; tick: string; full: string; minor: number }>; money: Money; label: string; today?: { key: string; word: string } }) {
   const peak = Math.max(0, ...points.map((p) => p.minor));
   const every = points.length <= 8;
   const best = points.findIndex((p) => p.minor === peak && peak > 0);
   const short = (minor: number) => (minor >= 1_000_000 ? `₹${Math.round(minor / 100_000)}k` : money(minor));
   return (
     <ul className="cr-bars cr-bars-day rr-bars" aria-label={label}>
-      {points.map((p, i) => (
-        <li key={p.key} className="cr-bar-col">
+      {points.map((p, i) => {
+        const isToday = p.key === today?.key;
+        return (
+        <li key={p.key} className={`cr-bar-col${isToday ? ' is-today' : ''}`}>
           <span className={`cr-bar-top${i === best ? ' is-peak' : ''}`} aria-hidden="true">
-            {p.minor > 0 && (every || i === best) ? short(p.minor) : ''}
+            {(p.minor > 0 && (every || i === best)) || isToday ? (
+              <>
+                <span className="rr-amt-short">{short(p.minor)}</span>
+                <span className="rr-amt-full">{money(p.minor)}</span>
+              </>
+            ) : (
+              ''
+            )}
           </span>
           <span className="cr-bar-slot">
             <span className={`cr-bar${i === best ? ' is-peak' : ''}`} style={{ height: `${peak === 0 || p.minor <= 0 ? 0 : Math.max(4, (p.minor / peak) * 100)}%` }} />
           </span>
-          <span className="cr-bar-tick" aria-hidden="true">{p.tick}</span>
+          <span className="cr-bar-tick" aria-hidden="true">{isToday ? today!.word : p.tick}</span>
           <span className="sr-only">
             {p.full} {money(p.minor)}
           </span>
         </li>
-      ))}
+        );
+      })}
     </ul>
   );
 }
@@ -127,7 +141,7 @@ function Freshness({ f, t, locale }: { f: RestaurantFreshness; t: FreshWords; lo
 
 /* ───────────────────────────── Overview ───────────────────────────── */
 
-export function OverviewTab({ data }: { data: RestaurantOverviewPage }) {
+export function OverviewTab({ data, todayISO }: { data: RestaurantOverviewPage; todayISO?: string }) {
   const t = useTranslations('restaurantReports');
   const locale = useLocale();
   const money: Money = (m) => rupees(m, locale);
@@ -169,7 +183,7 @@ export function OverviewTab({ data }: { data: RestaurantOverviewPage }) {
             />
           ) : null}
         </div>
-        <Bars points={points} money={money} label={t('overview.byDay')} />
+        <Bars points={points} money={money} label={t('overview.byDay')} today={todayISO ? { key: todayISO, word: t('overview.today') } : undefined} />
       </section>
       <Freshness f={data.freshness} t={t} locale={locale} />
     </>
@@ -657,7 +671,7 @@ export function RestaurantReports({ initialTab = 'overview' }: { initialTab?: Re
       ) : data === null ? (
         <div className="cr-card cr-skeleton" aria-busy="true" />
       ) : tab === 'overview' ? (
-        <OverviewTab data={data as RestaurantOverviewPage} />
+        <OverviewTab data={data as RestaurantOverviewPage} todayISO={todayISO} />
       ) : tab === 'sales' ? (
         <SalesTab data={data as RestaurantSalesPage} />
       ) : tab === 'items' ? (

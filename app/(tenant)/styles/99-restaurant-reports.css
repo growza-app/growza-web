@@ -218,14 +218,33 @@
   min-height: 1rem;
 }
 
-.rr-bars .cr-bar-col:first-child .cr-bar-tick {
-  display: flex;
-  justify-content: flex-start;
+/* Exact amount on a laptop, "₹35k" on a phone (the component writes both). */
+.rr-amt-full {
+  display: none;
 }
 
-.rr-bars .cr-bar-col:last-child .cr-bar-tick {
-  display: flex;
-  justify-content: flex-end;
+/* Today is still under way: an outline, not a grey pill that reads as a day with no data. */
+.rr-bars .is-today .cr-bar-slot {
+  background: transparent;
+  border: 1.5px dashed color-mix(in srgb, var(--muted) 55%, transparent);
+}
+
+.rr-bars .is-today .cr-bar-tick {
+  font-weight: 600;
+  color: var(--text);
+}
+
+@media (max-width: 860px) {
+  /* A phone's columns are narrower than a day's name, so the first and last name keep inside the card. */
+  .rr-bars .cr-bar-col:first-child .cr-bar-tick {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .rr-bars .cr-bar-col:last-child .cr-bar-tick {
+    display: flex;
+    justify-content: flex-end;
+  }
 }
 
 @media (min-width: 861px) {
@@ -254,10 +273,11 @@
     margin-left: auto;
   }
 
-  /* The card: the big number on the left, its small figures beside it, the chart across the whole card. */
+  /* The card: the big number on the left, its small figures right beside it with their tops on the same line,
+     the chart across the whole card. */
   .rr-card {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
-    column-gap: var(--sp-6);
+    grid-template-columns: max-content minmax(0, 1fr);
+    column-gap: var(--sp-8);
     align-items: start;
     padding: var(--sp-5) var(--sp-6);
   }
@@ -273,8 +293,14 @@
   .rr-card > :is(.rr-smalls, .rr-cancelled) {
     grid-column: 2;
     grid-row: 1 / span 3;
-    align-self: center;
+    align-self: start;
     margin-top: 0;
+  }
+
+  .rr-card > .rr-smalls:not(:empty) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-4) var(--sp-8);
   }
 
   .rr-card > .rr-cancelled {
@@ -288,9 +314,25 @@
     margin-top: var(--sp-4);
   }
 
-  .rr-bars .cr-bar-slot {
+  /* Bars, not blobs: a 4rem pill with round ends turned a short day into a circle. Narrower, and only the top
+     corners rounded, so every height reads against the others. */
+  /* `.cr-bars-day` too: the Emerald sheet's `.cr-bars-day .cr-bar-slot` comes later and would win a tie. */
+  .rr-bars.cr-bars-day .cr-bar-slot {
     height: 10rem;
-    max-width: 4rem;
+    max-width: 2.5rem;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  }
+
+  .rr-bars .cr-bar {
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  }
+
+  .rr-amt-short {
+    display: none;
+  }
+
+  .rr-amt-full {
+    display: inline;
   }
 
   .rr-lists {
