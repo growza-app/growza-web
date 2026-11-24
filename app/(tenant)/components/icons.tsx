@@ -600,6 +600,25 @@ export const IconNavHome = () => (
   </svg>
 );
 
+/**
+ * Owner, 2026-11-23 — the shop bar's Home (H1): a rounded house whose body fills in on the tab you are on. The fill is a
+ * class (`bn-fill`), so the bar's CSS decides when; drawn anywhere else it is an outline like the rest of the set.
+ */
+export const IconTabHome = () => (
+  <svg {...base}>
+    <path className="bn-fill" d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z" />
+  </svg>
+);
+
+/** Owner, 2026-11-23 — the shop bar's Orders (O2): a clipboard; its board takes a soft fill and its clip a solid one when selected. */
+export const IconTabOrders = () => (
+  <svg {...base}>
+    <rect className="bn-fill-soft" x="5" y="4.5" width="14" height="16" rx="2.5" />
+    <path className="bn-fill" d="M9 3.5h6V6H9z" />
+    <path d="M8.5 11h7M8.5 15h4.5" />
+  </svg>
+);
+
 /** Bookings — a calendar with the day marked, not a ticked box. */
 export const IconNavBookings = () => (
   <svg {...base}>

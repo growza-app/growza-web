@@ -19,6 +19,11 @@ import {
   IconRupee,
   IconNavHome,
   IconPlus,
+  IconPos,
+  IconCutlery,
+  IconProducts,
+  IconTabHome,
+  IconTabOrders,
   IconServices,
   IconSettings,
   IconStaff,
@@ -60,6 +65,7 @@ export function BottomNav({
   reportTabs,
   lang = 'en',
   onCentre,
+  onPos,
   onPayment,
 }: {
   labels: Record<string, string>;
@@ -68,6 +74,8 @@ export function BottomNav({
   lang?: Lang;
   /** Absent means no centre action (a stylist, or a screen where it would sit on a pinned Save). */
   onCentre?: () => void;
+  /** Owner, 2026-11-23 — a shop's till tile in the middle of its bar; absent for a role that may not open the POS. */
+  onPos?: () => void;
   /**
    * Record payment, offered beside New booking. Present only for someone who may record a payment; with it the
    * plus opens a two-choice menu, without it the plus goes straight to New booking as it always did.
@@ -240,6 +248,60 @@ export function BottomNav({
       </a>
     );
   };
+
+  /*
+   * Owner, 2026-11-23 — a shop's (and a kitchen's) bar, from the owner's own reference: Home · Orders · POS · Menu · Alerts.
+   *
+   * The till is a green circle raised out of the middle of the bar, its word under it like every other tab (owner,
+   * 2026-11-23: the circled POS, after trying a tile inside the bar). It is on every screen that has the bar, so the till is one
+   * tap away wherever the owner is; the POS screen itself has no bar (MobileChrome). Alerts is the last tab with its count
+   * (owner, 2026-11-23: "instead of More keep notifications"); Guests is in the side menu (Sidebar).
+   * A salon's bar is the one above, unchanged.
+   */
+  if (areas.shop && live && !stylist) {
+    const shopTabs = visibleItems(
+      [
+        { href: '/', label: t.nav.home, icon: <IconTabHome /> },
+        { href: '/orders', label: t.nav.orders, icon: <IconTabOrders /> },
+        { href: '/stock', label: t.nav.stock, icon: areas.stock ? <IconProducts /> : <IconCutlery /> },
+        { href: '/notifications', label: t.nav.notificationsShort, icon: <IconBell /> },
+      ],
+      role,
+      reportTabs,
+      live,
+      areas,
+    );
+    const left = shopTabs.slice(0, 2);
+    const right = shopTabs.slice(2);
+    return (
+      <nav ref={navRef} className={`bottom-nav bn-shop ${onPos ? 'has-pos-tile' : ''}`} aria-label={tc('main')}>
+        {/* Owner, 2026-11-23 — the bar's own surface, drawn as a layer so it can dip in a curve round the POS circle (CSS). */}
+        {onPos ? (
+          <span className="bn-shape" aria-hidden="true">
+            <span className="bn-shape-fill" />
+          </span>
+        ) : null}
+        {left.map(tab)}
+        {onPos ? (
+          <a
+            href="/pos"
+            className="bn-pos-tile"
+            onClick={(e) => {
+              e.preventDefault();
+              onPos();
+            }}
+          >
+            {/* Owner, 2026-11-23 — the till in the circle, the word POS under it. */}
+            <span className="bn-pos-btn" aria-hidden="true">
+              <IconPos />
+            </span>
+            <span className="bn-label">{t.nav.pos}</span>
+          </a>
+        ) : null}
+        {right.map(tab)}
+      </nav>
+    );
+  }
 
   return (
     <nav ref={navRef} className={`bottom-nav ${centre ? 'has-centre' : ''} ${menuOpen ? 'menu-open' : ''}`} aria-label={tc('main')}>

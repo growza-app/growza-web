@@ -34,9 +34,12 @@ import {
   IconNavStock,
   IconSettings,
   IconChevronRight,
+  IconCutlery,
   IconDaySummary,
+  IconInventory,
   IconPos,
   IconProducts,
+  IconReceipt,
   IconReports,
   IconTable,
 } from '../icons';
@@ -428,7 +431,13 @@ export function ShopHome({
    * reach; it was only ever offered three of them.
    */
   const tiles = [
-    { href: '/pos', label: t.nav.pos, icon: <IconPos />, tone: 'green' },
+    /*
+     * Owner, 2026-11-23 — POS is the circle in the middle of the phone's bar, so a kitchen that keeps its stock gets
+     * Inventory here instead of a second door to the till. Any other shop keeps POS here.
+     */
+    areas.kitchenStock
+      ? { href: '/inventory', label: t.nav.inventory, icon: <IconInventory />, tone: 'green' }
+      : { href: '/pos', label: t.nav.pos, icon: <IconPos />, tone: 'green' },
     // Only a kitchen has an order queue to open (hasOrderQueue); a shop's tile would open Sell.
     /*
      * Owner, 2026-11-17 — with Table orders on, the owner and a manager get Tables (the room at a glance: which are
@@ -442,7 +451,8 @@ export function ShopHome({
             : { href: '/pos?mode=queue', label: tablesOn ? s.pickupTitle : s.queueTitle, icon: <IconNavOrders />, tone: 'blue' },
         ]
       : []),
-    { href: '/stock', label: t.nav.stock, icon: <IconNavStock />, tone: 'green' },
+    // Owner, 2026-11-24 — the same picture as the phone bar's Menu: fork and knife for a kitchen, a box for a shop.
+    { href: '/stock', label: t.nav.stock, icon: areas.stock ? <IconProducts /> : <IconCutlery />, tone: 'green' },
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
     /*
      * Owner, 2026-10-26 — Reports, not Attendance.
@@ -1111,7 +1121,7 @@ export function ShopHome({
                   {/* A shop reaches Import orders and Stock from the sidebar; the toolbar keeps only the summary. */}
                   {isKitchen && can('/stock') ? (
                     <a href={`/stock${stockBranch}`} className="hm-action">
-                      <IconNavStock />
+                      <IconCutlery />
                       <strong>{t.nav.stock}</strong>
                     </a>
                   ) : null}
@@ -2472,7 +2482,14 @@ export function ShopHome({
                         <li key={o.id}>
                           <a className="shp-recent-row" href={`/orders/${encodeURIComponent(o.id)}`}>
                             <span className="shp-recent-person">
-                              <Avatar name={customerName} id={o.id} size={36} />
+                              {/* Owner, 2026-11-23 — a bill with nobody on it gets a receipt mark, not initials of a person who is not there. */}
+                              {o.who?.name?.trim() ? (
+                                <Avatar name={customerName} id={o.id} size={36} />
+                              ) : (
+                                <span className="shp-recent-nobody" aria-hidden="true">
+                                  <IconReceipt />
+                                </span>
+                              )}
                               <span className="shp-recent-main">
                                 <span className="shp-recent-name">{customerName}</span>
                                 <span className="shp-recent-meta">

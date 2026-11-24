@@ -218,7 +218,8 @@ describe('the Guests page, tidied (owner, 13 Nov 2026)', () => {
 
   it('calls the phone tab "Alerts": "Notifications" was the longest word on a five-tab bar', () => {
     const nav = read('../components/BottomNav.tsx');
-    expect(nav.split("{ href: '/notifications', label: t.nav.notificationsShort,")).toHaveLength(3);
+    // The stylist's bar, everyone else's, and (owner, 2026-11-23) a shop's — all three say "Alerts".
+    expect(nav.split("{ href: '/notifications', label: t.nav.notificationsShort,")).toHaveLength(4);
     expect(read('../lib/home-copy.ts')).toContain("notificationsShort: S('Alerts', 'सूचनाएं'),");
   });
 });

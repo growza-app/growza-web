@@ -588,7 +588,8 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       itemCountShort: (n: number) => (n === 1 ? S('1 item', '1 सामान') : S(`${n} items`, `${n} सामान`)),
       // QA 2026-11-14, F14 — an order everything on which came back.
       itemsAllBackShort: (n: number) => (n === 1 ? S('1 item · all came back', '1 सामान · सब वापस आया') : S(`${n} items · all came back`, `${n} सामान · सब वापस आया`)),
-      noNameCustomer: S('Walk-in customer', 'दुकान का ग्राहक'),
+      // Owner, 2026-11-23 — a bill with nobody on it says what Orders says: no name (there is no Walk-in guest any more).
+      noNameCustomer: S('No name', 'नाम नहीं'),
       stateDone: S('Done', 'पूरा हुआ'),
       stateNew: S('New', 'नया'),
       statePacked: S('Packed', 'पैक किया'),
