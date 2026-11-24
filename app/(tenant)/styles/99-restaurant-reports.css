@@ -789,6 +789,38 @@ button.rr-worth-row {
   margin-top: 0;
 }
 
+/* The four months in one line, above the chart on a phone. */
+.rr-returns-summary {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-5);
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Owner, 2026-11-24 — "fix both": on a laptop four bars across the whole card were lost in white space. The chart takes
+   about half the card, the line sits beside it. */
+@media (min-width: 861px) {
+  .rr-returns-body {
+    display: grid;
+    grid-template-columns: minmax(0, 32rem) minmax(0, 1fr);
+    column-gap: var(--sp-8);
+    align-items: center;
+  }
+
+  .rr-returns-body > .rr-bars {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .rr-returns-summary {
+    grid-row: 1;
+    grid-column: 2;
+    margin: 0;
+    font-size: var(--fs-8);
+    line-height: 1.35;
+  }
+}
+
 /* `.rr-bars .cr-bar-col` too: the day chart's purple label rule is as specific and would win a tie. */
 .rr-returns .rr-bars .cr-bar-col .cr-bar-top {
   color: var(--accent-deep);

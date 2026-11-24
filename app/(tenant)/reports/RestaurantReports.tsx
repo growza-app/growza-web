@@ -612,10 +612,19 @@ function MonthReturns({ months }: { months: NonNullable<RestaurantCustomersPage[
   const monthName = new Intl.DateTimeFormat(intlLocale(locale), { month: 'short', timeZone: 'UTC' });
   const name = (ym: string) => monthName.format(new Date(`${ym}-01T00:00:00Z`));
   const best = Math.max(0, ...months.map((m) => m.pct ?? 0));
+  // Owner, 2026-11-24 — "fix both": the four months in one plain line, over the months that have settled (else all
+  // that can be said): "About 3 in 10 new guests come back within 30 days."
+  const said = months.filter((m) => m.pct !== null);
+  const settled = said.filter((m) => !m.partial);
+  const over = settled.length > 0 ? settled : said;
+  const n = over.reduce((s, m) => s + m.newGuests, 0);
+  const inTen = n > 0 ? Math.round((over.reduce((s, m) => s + m.cameBack, 0) / n) * 10) : null;
   return (
     <div className="rr-chart rr-returns">
       <h3 className="rr-list-title">{t('returnTitle')}</h3>
       <p className="rr-more rr-returns-sub">{t('returnSub')}</p>
+      <div className="rr-returns-body">
+      {inTen !== null ? <p className="rr-returns-summary">{inTen === 0 ? t('returnSummaryLow') : t('returnSummary', { n: inTen })}</p> : null}
       <ul className="cr-bars cr-bars-day rr-bars" aria-label={t('returnTitle')}>
         {months.map((m) => (
           <li key={m.month} className={`cr-bar-col${m.partial ? ' is-today' : ''}`}>
@@ -632,6 +641,7 @@ function MonthReturns({ months }: { months: NonNullable<RestaurantCustomersPage[
           </li>
         ))}
       </ul>
+      </div>
       {months.some((m) => m.partial) ? <p className="rr-more">{t('returnPartial')}</p> : null}
       {months.some((m) => m.pct === null && m.newGuests > 0) ? <p className="rr-more">{t('returnFewNote')}</p> : null}
     </div>

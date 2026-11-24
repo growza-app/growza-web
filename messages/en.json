@@ -3256,7 +3256,9 @@
       "overdueAll": "See all {n}",
       "overdueMore": "and {n} more",
       "overdueCount": "{n, plural, one {# regular is} other {# regulars are}} overdue.",
-      "returnNone": "no new guests"
+      "returnNone": "no new guests",
+      "returnSummary": "About {n} in 10 new guests come back within 30 days.",
+      "returnSummaryLow": "Fewer than 1 in 10 new guests come back within 30 days."
     }
   },
   "counterReport": {

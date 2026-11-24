@@ -3256,7 +3256,9 @@
       "overdueAll": "सभी {n} देखें",
       "overdueMore": "और {n}",
       "overdueCount": "{n} नियमित मेहमान देर से आ रहे हैं।",
-      "returnNone": "कोई नया मेहमान नहीं"
+      "returnNone": "कोई नया मेहमान नहीं",
+      "returnSummary": "हर 10 में से लगभग {n} नए मेहमान 30 दिन में फिर आते हैं।",
+      "returnSummaryLow": "हर 10 में से 1 से भी कम नए मेहमान 30 दिन में फिर आते हैं।"
     }
   },
   "counterReport": {

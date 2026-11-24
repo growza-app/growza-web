@@ -430,6 +430,8 @@ describe('Jira GRW-761 — Customers', () => {
     });
     it('the chart: four months, a share over each, a dash under 10 new guests, the months still open marked', () => {
       expect(out).toContain('New guests who came back within 30 days By the month of their first visit');
+      // The plain line is over the settled months that can be said: September alone, 14 of 41 → about 3 in 10.
+      expect(out).toContain('About 3 in 10 new guests come back within 30 days.');
       expect(out).toMatch(/– Aug.*34% Sep.*29% Oct\*.*38% Nov\*/);
       expect(out).toContain('new guests still have days left to come back.');
       expect(out).toContain('– Under 10 new guests: too few to say.');
