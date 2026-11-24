@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { axisAmount, scale } from './RestaurantReports';
 
-const money = (m: number) => `₹${(m / 100).toLocaleString('en-IN')}`;
+const money = (m: number | null) => `₹${((m ?? 0) / 100).toLocaleString('en-IN')}`;
 
 describe('the chart scale (owner, 2026-11-24: "graph X and Y")', () => {
   it('rounds the best day up to a round step, four lines', () => {

@@ -356,17 +356,76 @@
 }
 
 @media (max-width: 860px) {
-  /* Owner, 2026-11-24 — "mobile view should also have separator": the laptop's lines, phone-shaped. A line
-     under the big number, and a short bar beside each small figure, so two-by-two they still read as four. */
-  .rr-card > .rr-smalls:not(:empty) {
-    padding-top: var(--sp-3);
-    border-top: 1px solid var(--border);
-    row-gap: var(--sp-4);
+  /* Owner, 2026-11-24 — "use the boxed cards like the mockup": on a phone the big number and each small figure
+     are tiles, two to a row, each with a short bar on its left. The figures are grid items of the card itself
+     (`.rr-smalls` steps aside), so the tiles in a row are the same height. */
+  .rr-card:has(> .rr-lead) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-3) var(--sp-2);
   }
 
+  .rr-card:has(> .rr-lead) > * {
+    grid-column: 1 / -1;
+  }
+
+  .rr-card > .rr-smalls {
+    display: contents;
+  }
+
+  .rr-card > .rr-lead,
   .rr-card > .rr-smalls > .rr-small {
-    padding-left: var(--sp-3);
-    border-left: 2px solid color-mix(in srgb, var(--muted) 40%, transparent);
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: 2px;
+    grid-column: auto;
+    min-width: 0;
+    padding: var(--sp-3) var(--sp-2) var(--sp-3) var(--sp-5);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    container-type: inline-size;
+  }
+
+  .rr-card > .rr-lead::before,
+  .rr-card > .rr-smalls > .rr-small::before {
+    content: '';
+    position: absolute;
+    top: var(--sp-3);
+    bottom: var(--sp-3);
+    left: var(--sp-3);
+    width: 2px;
+    border-radius: 1px;
+    background: color-mix(in srgb, var(--muted) 45%, transparent);
+  }
+
+  /* Only a big number, no small figures (Items): one tile across. */
+  .rr-card:not(:has(.rr-small)) > .rr-lead {
+    grid-column: 1 / -1;
+  }
+
+  /* In a tile the big number is one size up from the small ones, not the counter report's 2.75rem — that does not
+     fit half a phone. */
+  .rr-card > .rr-lead > .cr-hero {
+    margin: 0;
+    /* A month of a busy kitchen is "₹12,34,567": ten characters, about 5.8em. Past the tile's width the figure
+       steps down to fit rather than spill. */
+    font-size: min(var(--fs-10), 17cqi);
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .rr-card > .rr-lead > :is(.cr-label, .rr-delta) {
+    margin: 0;
+  }
+
+  .rr-card > .rr-lead > .rr-delta {
+    font-size: var(--fs-2);
+  }
+
+  .rr-card > .rr-smalls > .rr-small > .rr-small-value {
+    font-size: min(var(--fs-8), 17cqi);
+    white-space: nowrap;
   }
 
   /* A phone's columns are narrower than a day's name, so the first and last name keep inside the card. */
@@ -423,7 +482,12 @@
     grid-column: 1 / -1;
   }
 
-  .rr-card > :is(.cr-label, .cr-hero, .rr-delta) {
+  /* The big number's group lays out in the card's own rows. */
+  .rr-card > .rr-lead {
+    display: contents;
+  }
+
+  .rr-card > .rr-lead > :is(.cr-label, .cr-hero, .rr-delta) {
     grid-column: 1;
   }
 
@@ -460,7 +524,7 @@
     border-left: 1px solid var(--border);
   }
 
-  .rr-card > .cr-hero,
+  .rr-card > .rr-lead > .cr-hero,
   .rr-card > .rr-smalls > .rr-small > .rr-small-value {
     align-self: last baseline;
   }

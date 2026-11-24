@@ -203,9 +203,11 @@ export function OverviewTab({ data, todayISO }: { data: RestaurantOverviewPage; 
   return (
     <>
       <section className="cr-card rr-card" aria-labelledby="rr-sales-h">
-        <h2 className="cr-label" id="rr-sales-h">{t('overview.sales')}</h2>
-        <p className="cr-hero">{money(data.sales.value)}</p>
-        <Delta c={data.sales} t={t} />
+        <div className="rr-lead">
+          <h2 className="cr-label" id="rr-sales-h">{t('overview.sales')}</h2>
+          <p className="cr-hero">{money(data.sales.value)}</p>
+          <Delta c={data.sales} t={t} />
+        </div>
         <div className="rr-smalls">
           <Small label={t('overview.bills')} value={data.bills.value.toLocaleString(intlLocale(locale))} />
           {data.averageBillMinor.value !== null ? <Small label={t('overview.average')} value={money(data.averageBillMinor.value)} /> : null}
@@ -259,9 +261,11 @@ export function SalesTab({ data }: { data: RestaurantSalesPage }) {
   return (
     <>
       <section className="cr-card rr-card" aria-labelledby="rr-money-h">
-        <h2 className="cr-label" id="rr-money-h">{t('sales.moneyIn')}</h2>
-        <p className="cr-hero">{money(data.moneyIn.value)}</p>
-        <Delta c={data.moneyIn} t={t} />
+        <div className="rr-lead">
+          <h2 className="cr-label" id="rr-money-h">{t('sales.moneyIn')}</h2>
+          <p className="cr-hero">{money(data.moneyIn.value)}</p>
+          <Delta c={data.moneyIn} t={t} />
+        </div>
         <div className="rr-smalls">
           {data.discountsMinor > 0 ? <Small label={t('sales.discounts')} value={money(data.discountsMinor)} /> : null}
           {data.refundsMinor > 0 ? <Small label={t('sales.refunds')} value={money(data.refundsMinor)} /> : null}
@@ -308,9 +312,11 @@ export function ItemsTab({ data, onOpenCancelled, cancelled }: { data: Restauran
   return (
     <>
       <section className="cr-card rr-card" aria-labelledby="rr-dishes-h">
-        <h2 className="cr-label" id="rr-dishes-h">{t('items.dishesSold')}</h2>
-        <p className="cr-hero">{n(data.dishesSold.value)}</p>
-        <Delta c={data.dishesSold} t={t} />
+        <div className="rr-lead">
+          <h2 className="cr-label" id="rr-dishes-h">{t('items.dishesSold')}</h2>
+          <p className="cr-hero">{n(data.dishesSold.value)}</p>
+          <Delta c={data.dishesSold} t={t} />
+        </div>
         {data.cancelled.qty > 0 ? (
           <details className="rr-cancelled" onToggle={(e) => (e.currentTarget.open ? onOpenCancelled?.() : undefined)}>
             <summary>
@@ -422,9 +428,11 @@ export function CustomersTab({ data }: { data: RestaurantCustomersPage }) {
   return (
     <>
       <section className="cr-card rr-card" aria-labelledby="rr-guests-h">
-        <h2 className="cr-label" id="rr-guests-h">{t('customers.cameBack')}</h2>
-        <p className="cr-hero">{data.cameBack.value.toLocaleString(intlLocale(locale))}</p>
-        <Delta c={data.cameBack} t={t} />
+        <div className="rr-lead">
+          <h2 className="cr-label" id="rr-guests-h">{t('customers.cameBack')}</h2>
+          <p className="cr-hero">{data.cameBack.value.toLocaleString(intlLocale(locale))}</p>
+          <Delta c={data.cameBack} t={t} />
+        </div>
         <div className="rr-smalls">
           <Small label={t('customers.newGuests')} value={data.newGuests.value.toLocaleString(intlLocale(locale))} />
           <Small label={t('customers.withNumber')} value={t('customers.withNumberValue', { pct: data.capturePct })} />
