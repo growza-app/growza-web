@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Fragment, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { ClientCartoon } from './ClientCartoon';
 import { usePathname } from 'next/navigation';
 import { canSee, type MemberRole } from '../lib/nav-policy';
@@ -57,6 +57,8 @@ import {
  */
 /** Where a person's folded and unfolded groups are kept on this device. */
 const FOLDS_KEY = 'growza_nav_folds';
+/** Owner, 2026-11-24 (option A) — how long the pointer rests on the slim bar before it widens. */
+export const RAIL_HOVER_DELAY_MS = 200;
 
 
 /**
@@ -107,6 +109,41 @@ export function Sidebar({
   const drawerRef = useRef<HTMLElement>(null);
   const wasOpen = useRef(false);
 
+  /*
+   * Owner, 2026-11-24 (option A) — on a laptop the sidebar is a slim bar of icons that widens over the page, names and
+   * all, when the pointer rests on it (CSS, 99-zz-slim-rail.css). A screen with no pointer to rest (a tablet held
+   * sideways, a touch laptop) opens it with the logo instead; a tap outside or Escape closes it again.
+   */
+  const [railOpen, setRailOpen] = useState(false);
+  // The pointer resting on the bar opens it after a moment, so a pointer only passing over on its way to the page does not.
+  const [railHover, setRailHover] = useState(false);
+  const hoverTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
+  const onRailEnter = (e: ReactPointerEvent<HTMLElement>) => {
+    if (e.pointerType === 'touch') return;
+    window.clearTimeout(hoverTimer.current);
+    hoverTimer.current = window.setTimeout(() => setRailHover(true), RAIL_HOVER_DELAY_MS);
+  };
+  const onRailLeave = () => {
+    window.clearTimeout(hoverTimer.current);
+    setRailHover(false);
+  };
+  useEffect(() => {
+    if (!railOpen) return;
+    const onDown = (e: PointerEvent) => {
+      if (!drawerRef.current?.contains(e.target as Node)) setRailOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setRailOpen(false);
+    };
+    document.addEventListener('pointerdown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [railOpen]);
+
   /**
    * Jira GRW-306 — the drawer is a real modal while it is open: focus moves in,
    * Tab stays inside, Escape closes, and focus goes back to the button that
@@ -155,7 +192,8 @@ export function Sidebar({
     { href: '/', label: t.nav.home, icon: <IconNavHome /> },
     // The till, one tap from Home. `canSee` gives it to whoever may open the till; a business that has turned
     // Products off has nothing on a shelf to sell, so it is not offered one.
-    ...(products === false ? [] : [{ href: '/pos', label: t.nav.pos, icon: <IconPos /> }]),
+    // Owner, 2026-11-24 — on a laptop's slim bar the till is the orange round button at the foot (`nav-pos`, 99-zz-slim-rail.css).
+    ...(products === false ? [] : [{ href: '/pos', label: t.nav.pos, icon: <IconPos />, className: 'nav-pos' }]),
     // Jira GRW-608 — a shop's own two screens. Absent for every other business: `canSee` answers false for them.
     { href: '/orders', label: t.nav.orders, icon: <IconReceipt /> },
     // Owner, 2026-11-20 — a kitchen's Menu reads as a menu (a fork and a knife); a shop's counted Stock keeps the product.
@@ -306,6 +344,9 @@ export function Sidebar({
         id="site-menu"
         className="sidebar"
         data-open={open}
+        data-rail={railOpen || railHover ? 'open' : undefined}
+        onPointerEnter={onRailEnter}
+        onPointerLeave={onRailLeave}
         role={open ? 'dialog' : undefined}
         aria-modal={open ? true : undefined}
         aria-label={open ? tc('menu') : undefined}
@@ -313,7 +354,17 @@ export function Sidebar({
       >
         {/* Emerald v3 (owner, 14 Nov 2026) — on a laptop the sidebar's top is Growza's; the business moved to the header bar. */}
         <div className="brand-growza">
-          <GrowzaMark size={36} />
+          {/* Owner, 2026-11-24 — the logo opens and closes the slim bar where there is no pointer to rest on it. */}
+          <button
+            type="button"
+            className="rail-toggle"
+            aria-expanded={railOpen}
+            aria-controls="site-menu"
+            aria-label={railOpen ? tc('closeMenu') : tc('menu')}
+            onClick={() => setRailOpen((o) => !o)}
+          >
+            <GrowzaMark size={36} />
+          </button>
           <span className="brand-growza-word">{tc('productName')}</span>
         </div>
         {controlsHere ? (
@@ -379,7 +430,8 @@ export function Sidebar({
                     }}
                   >
                     {item.icon}
-                    {item.label}
+                    {/* Its own element so the slim bar can fade the word while keeping it the link's name. */}
+                    <span className="nav-label">{item.label}</span>
                     {item.pill ? <span className="nav-pill">{item.pill}</span> : null}
                   </a>
                   {expandable ? (

@@ -1,0 +1,231 @@
+/*
+ * Owner, 2026-11-24 — the laptop sidebar is a slim dark-green bar of icons, from the owner's reference shot (option A):
+ * an orange round logo at the top, the till as an orange round button at the foot, and the whole bar widening OVER the
+ * page — names, groups, the business card — when the pointer rests on it (Sidebar.tsx sets `data-rail="open"` after
+ * RAIL_HOVER_DELAY_MS), when the keyboard is inside it, or when the logo is tapped on a screen with no pointer. The page
+ * never moves. A laptop's only: the phone drawer is untouched. After the Emerald sheet, so it wins where they meet.
+ */
+@media (min-width: 861px) {
+  .shell:has(> .sidebar) {
+    grid-template-columns: calc(var(--rail-w) + 0.75rem) minmax(0, 1fr);
+  }
+
+  .shell > .sidebar {
+    position: relative;
+    z-index: 40;
+    justify-self: start;
+    width: var(--rail-w);
+    padding: 0.875rem 0.5rem;
+    border: 0;
+    background: var(--rail-bg);
+    color: var(--rail-ink);
+    transition:
+      width var(--rail-speed) ease,
+      box-shadow var(--rail-speed) ease;
+  }
+
+  .shell > .sidebar:is([data-rail='open'], :has(:focus-visible)) {
+    width: var(--rail-open-w);
+    box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 22%);
+  }
+
+  /* ---- what fades: every word, shown once the bar is wide enough to hold it ---- */
+  .shell > .sidebar :is(.brand-growza-word, .nav-label, .nav-section, .nav-pill, .nav-fold, .acct-trigger-text),
+  .shell > .sidebar .sb-biz > :not(.sb-biz-icon) {
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+
+  .shell > .sidebar :is(.nav-pill, .nav-fold),
+  .shell > .sidebar .sb-biz > :not(.sb-biz-icon) {
+    pointer-events: none;
+  }
+
+  .shell > .sidebar:is([data-rail='open'], :has(:focus-visible)) :is(.brand-growza-word, .nav-label, .nav-section, .nav-pill, .nav-fold, .acct-trigger-text),
+  .shell > .sidebar:is([data-rail='open'], :has(:focus-visible)) .sb-biz > :not(.sb-biz-icon) {
+    opacity: 1;
+    pointer-events: auto;
+    transition-delay: 100ms;
+  }
+
+  /* A group's pages are listed only in the wide bar. */
+  .shell > .sidebar:not([data-rail='open']):not(:has(:focus-visible)) .nav-children {
+    display: none;
+  }
+
+  /* ---- the logo: an orange round button ---- */
+  .shell > .sidebar .brand-growza {
+    gap: 0.75rem;
+    padding: 0 0 0.25rem 0.125rem;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .rail-toggle {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--rail-orange);
+    cursor: pointer;
+  }
+
+  .shell > .sidebar .rail-toggle svg {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+  }
+
+  .rail-toggle:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+
+  .shell > .sidebar .brand-growza-word {
+    color: #fff;
+  }
+
+  /* ---- the business: its shop front alone, the card when wide ---- */
+  .shell > .sidebar .sb-biz {
+    min-height: 3rem;
+    margin: var(--sp-3) 0 var(--sp-2);
+    padding: 0.5rem 0.75rem;
+    border: 0;
+    border-radius: 0.875rem;
+    background: var(--rail-hover);
+    color: #fff;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .shell > .sidebar:is([data-rail='open'], :has(:focus-visible)) .sb-biz {
+    overflow: visible;
+  }
+
+  .shell > .sidebar .sb-biz-icon,
+  .shell > .sidebar .sb-biz .hdr-biz-text span,
+  .shell > .sidebar .sb-biz .hbp-chip .sbp-btn > svg:last-child {
+    color: var(--rail-ink);
+  }
+
+  .shell > .sidebar .sb-biz .hdr-biz-text strong {
+    color: #fff;
+  }
+
+  .shell > .sidebar .sb-biz:has(.hbp-chip):hover {
+    background: var(--rail-active);
+  }
+
+  /* ---- the rows ---- */
+  .shell > .sidebar .nav {
+    overflow-x: hidden;
+    background: none;
+  }
+
+  .shell > .sidebar .nav-section {
+    color: var(--rail-quiet);
+    white-space: nowrap;
+  }
+
+  .shell > .sidebar .nav a {
+    gap: 0.875rem;
+    padding-inline: 0.8125rem;
+    border-radius: 0.875rem;
+    color: var(--rail-ink);
+    white-space: nowrap;
+  }
+
+  .shell > .sidebar .nav a:hover {
+    background: var(--rail-hover);
+    color: #fff;
+  }
+
+  .shell > .sidebar .nav a.active {
+    background: var(--rail-active);
+    color: #fff;
+  }
+
+  .shell > .sidebar .nav a.active svg {
+    color: #fff;
+  }
+
+  .shell > .sidebar .nav a.active::before {
+    content: none;
+  }
+
+  .shell > .sidebar .nav-fold {
+    color: var(--rail-ink);
+  }
+
+  .shell > .sidebar .nav-fold:hover {
+    background: var(--rail-hover);
+  }
+
+  .shell > .sidebar .nav-pill {
+    background: var(--rail-active);
+    color: #fff;
+  }
+
+  /* ---- the till: an orange round button at the foot of the list ---- */
+  .shell > .sidebar .nav-pos {
+    order: 1;
+    margin-top: auto;
+    padding-top: var(--sp-2);
+  }
+
+  .shell > .sidebar .nav-pos a {
+    padding-inline: 0.125rem;
+  }
+
+  .shell > .sidebar .nav-pos a svg {
+    box-sizing: content-box;
+    flex: none;
+    padding: 0.6875rem;
+    border-radius: 50%;
+    background: var(--rail-orange);
+    color: #fff;
+  }
+
+  .shell > .sidebar .nav-pos a:is(:hover, .active) {
+    background: transparent;
+  }
+
+  .shell > .sidebar .nav-pos a.active svg {
+    box-shadow: 0 0 0 3px var(--rail-bg), 0 0 0 5px #fff;
+  }
+
+  /* ---- who is signed in: the face alone, the name when wide ---- */
+  .shell > .sidebar .sb-acct {
+    border-top-color: rgb(255 255 255 / 14%);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .shell > .sidebar:is([data-rail='open'], :has(:focus-visible)) .sb-acct {
+    overflow: visible;
+  }
+
+  .shell > .sidebar .sb-acct .acct-trigger {
+    padding: 0.25rem;
+    color: #fff;
+  }
+
+  .shell > .sidebar .sb-acct .acct-trigger:hover {
+    background: var(--rail-hover);
+  }
+
+  .shell > .sidebar .acct-trigger-text span {
+    color: var(--rail-ink);
+  }
+}
+
+@media (min-width: 861px) and (prefers-reduced-motion: reduce) {
+  .shell > .sidebar,
+  .shell > .sidebar * {
+    transition: none !important;
+  }
+}
