@@ -6,8 +6,11 @@
  * tokens only, one accent, green and red only for up and down.
  */
 
+/* `minmax(0, 1fr)`, not the implicit `auto` track: seven day names ("18 Nov") are wider together than a 344px card,
+   and an auto track grew to fit them — the last bar was cut off at the card's edge. */
 .rr-card {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-2);
 }
 
@@ -188,9 +191,122 @@
   margin-top: var(--sp-2);
 }
 
+/*
+ * Owner, 2026-11-24 — "on desktop not properly visible". These tabs borrowed the counter report's `.cr` wrapper, and
+ * from 760px `.cr` is a two-column grid of cards (99-counter-report.css). A tab here is one card, its lists and a
+ * line saying when it was updated — so the card took the left half, the line floated alone on the right, and the
+ * chart got half the page. One column at every width; the laptop layout is below.
+ */
+.cr.rr {
+  display: flex;
+  flex-direction: column;
+}
+
+/* `hidden` on the toolbar (Tips has no dates) lost to `.cr-toolbar { display: flex }`. */
+.rr .cr-toolbar[hidden] {
+  display: none;
+}
+
+/* The day chart gets what the hour chart already had (99-z-emerald-v2.css): a plain track instead of stripes —
+   thirty striped tracks read as a barcode — and the first and last day names kept inside the card. Every column
+   keeps a line for its name, named or not, so the bars stand on one line. */
+.rr-bars .cr-bar-slot {
+  background: var(--canvas);
+}
+
+.rr-bars .cr-bar-tick {
+  min-height: 1rem;
+}
+
+.rr-bars .cr-bar-col:first-child .cr-bar-tick {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.rr-bars .cr-bar-col:last-child .cr-bar-tick {
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media (min-width: 861px) {
+  /* Tabs on the left, dates on the right, one row — the dates drop under the tabs when the row is too narrow
+     for both (a 1024px tablet sideways), rather than the six tabs wrapping onto two rows. Everything else runs
+     the full width under them. */
+  .cr.rr {
+    flex-flow: row wrap;
+    align-items: center;
+    gap: var(--sp-4) var(--sp-5);
+  }
+
+  .cr.rr > * {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .cr.rr > .rr-tabs {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    margin-bottom: 0;
+  }
+
+  .cr.rr > .cr-toolbar {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  /* The card: the big number on the left, its small figures beside it, the chart across the whole card. */
+  .rr-card {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+    column-gap: var(--sp-6);
+    align-items: start;
+    padding: var(--sp-5) var(--sp-6);
+  }
+
+  .rr-card > * {
+    grid-column: 1 / -1;
+  }
+
+  .rr-card > :is(.cr-label, .cr-hero, .rr-delta) {
+    grid-column: 1;
+  }
+
+  .rr-card > :is(.rr-smalls, .rr-cancelled) {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: center;
+    margin-top: 0;
+  }
+
+  .rr-card > .rr-cancelled {
+    border-top: 0;
+    border-left: 1px solid var(--border);
+    padding-left: var(--sp-5);
+  }
+
+  /* A taller chart, and wider pills when there is room for them. */
+  .rr-bars {
+    margin-top: var(--sp-4);
+  }
+
+  .rr-bars .cr-bar-slot {
+    height: 10rem;
+    max-width: 4rem;
+  }
+
   .rr-lists {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+    align-items: start;
+    margin-top: 0;
+  }
+
+  .rr-fresh {
+    margin-top: 0;
+    text-align: right;
+  }
+
+  .rr-tips {
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    align-items: stretch;
   }
 }
 

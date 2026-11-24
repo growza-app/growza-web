@@ -134,10 +134,14 @@ export function OverviewTab({ data }: { data: RestaurantOverviewPage }) {
   if (data.sales.value === 0 && data.bills.value === 0) return <p className="rr-empty">{t('empty')}</p>;
   const day = new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', timeZone: 'UTC' });
   const weekday = new Intl.DateTimeFormat(intlLocale(locale), { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const dateOnly = new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', timeZone: 'UTC' });
   const asDate = (iso: string) => new Date(`${iso}T00:00:00Z`);
+  // The first and last day carry the month; up to 8 days, the days between carry their date alone ("19"). Seven
+  // "19 Nov"s are wider than a 344px card and ran into each other.
+  const last = data.byDay.length - 1;
   const points = data.byDay.map((d, i) => ({
     key: d.day,
-    tick: i === 0 || i === data.byDay.length - 1 || data.byDay.length <= 8 ? day.format(asDate(d.day)) : '',
+    tick: i === 0 || i === last ? day.format(asDate(d.day)) : data.byDay.length <= 8 ? dateOnly.format(asDate(d.day)) : '',
     full: weekday.format(asDate(d.day)),
     minor: d.salesMinor,
   }));
