@@ -277,7 +277,6 @@ export default function LoginPage() {
             {/* i18n-ok: a language is named in its own language */}
             English
           </button>
-          {' · '}
           <button type="button" lang="hi" aria-pressed={locale === 'hi'} onClick={() => chooseLang('hi')}>
             हिन्दी
           </button>
