@@ -21,7 +21,9 @@ describe('the centre button opens the visit sheet on Walk-in now', () => {
   it('AC-01/AC-02 — for every role that can book, with no role deciding it', () => {
     // Jira GRW-523 — a next screen again (the page), no longer a sheet over the current one (GRW-512).
     // Jira GRW-609 — and for a shop, which has no diary, the same plus takes an order at the till instead.
-    expect(chrome).toMatch(/\? \(\) => router\.push\(areas\.shop \? '\/pos' : '\/appointments\/new\?mode=now'\) : undefined/);
+    // Owner, 2026-11-23 — a shop's till is the POS tile in its bar (`onPos`); the plus is a salon's, and opens Walk-in now.
+    expect(chrome).toMatch(/\? \(\) => router\.push\('\/appointments\/new\?mode=now'\) : undefined/);
+    expect(chrome).toMatch(/const onPos = areas\.shop && live && writable && canSee\('\/pos', role, undefined, true, areas\) \? \(\) => router\.push\('\/pos'\) : undefined;/);
     expect(chrome).not.toMatch(/mode=later/);
     expect(chrome).not.toMatch(/<NewVisitSheet|setBookingOpen/);
   });
@@ -30,7 +32,7 @@ describe('the centre button opens the visit sheet on Walk-in now', () => {
     // Jira GRW-409 — asked of the shared rule, which a stylist fails (no POST /walk-ins or /bookings).
     // Jira GRW-74 — and of the role grid, which `mayUse` cannot see (review, 2026-10-22).
     expect(chrome).toMatch(/const mayBook = mayUse\(role, 'visit\.new', writable\) && \(!areas\.pages \|\| gridMayUse\('visit\.new', areas\.pages\)\);/);
-    expect(chrome).toMatch(/const onCentre =\s*\n?\s*mayBook && /);
+    expect(chrome).toMatch(/const onCentre =\s*\n?\s*!areas\.shop && mayBook && /);
   });
 
   it('AC-04 — a later booking is still one step away: choose a Booking date (Jira GRW-519, no tabs)', () => {

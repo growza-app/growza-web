@@ -93,7 +93,9 @@ describe('a shop reaches POS from everywhere without duplicating Take an order',
     expect(home).toContain('href="/pos"');
     expect(home).not.toContain('/orders/new');
     expect(home).not.toContain('/products/sell');
-    expect(read('components/MobileChrome.tsx')).toContain("areas.shop ? '/pos' : '/appointments/new?mode=now'");
+    // Owner, 2026-11-23 — the phone's way to the till is now the POS tile in the middle of a shop's bar.
+    expect(read('components/MobileChrome.tsx')).toContain("? () => router.push('/pos') : undefined;");
+    expect(read('components/BottomNav.tsx')).toContain('href="/pos"\n            className="bn-pos-tile"');
   });
 
   it('the Orders list header does not duplicate Take an order beside POS in the sidebar', () => {

@@ -1763,3 +1763,57 @@ button.shp-hero-pill {
 .rst-kpi-drawer {
   margin-top: 6px;
 }
+
+/*
+ * Owner, 2026-11-23 (Home review) — four fixes to the phone's Home.
+ *
+ * 1. "Sales by channel" is a 31px pill on the money card: too short to hit with a thumb. Its look stays; an invisible
+ *    hit area round it brings the target to 44px.
+ */
+.shp-hero-link {
+  position: relative;
+}
+.shp-hero-link::after {
+  content: '';
+  position: absolute;
+  inset: -7px -4px;
+}
+
+/*
+ * 2. The comparison ("↓ 12.8% vs. previous") was 72%-white text on the green: it faded exactly when it mattered, on a
+ *    drop. It is a chip now, words solid white, the chip tinted red for a drop and green for a rise. The arrow and the
+ *    sign still carry the meaning; the tint only reinforces it.
+ */
+.shp-delta,
+.shp-delta.is-up,
+.shp-delta.is-down {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 600;
+}
+.shp-delta.is-up {
+  background: rgb(74 222 128 / 24%);
+}
+.shp-delta.is-down {
+  background: rgb(248 113 113 / 32%);
+}
+
+/* 5. A bill with nobody on it: a receipt mark in the avatar's place, not the initials of a person who is not there. */
+.shp-recent-nobody {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--slate-soft);
+  color: var(--muted);
+}
+.shp-recent-nobody svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
