@@ -2895,6 +2895,8 @@ export interface RestaurantSalesPage {
   byPayment: Array<{ mode: string; minor: number }>;
   byOrderType: Array<{ type: string; salesMinor: number; bills: number }>;
   byChannel: Array<{ channel: string; salesMinor: number; bills: number }>;
+  /** Owner, 2026-11-24 — dine-in Sales ÷ the guests at tables that said how many sat down. Absent from an older API. */
+  perHead?: { salesMinor: number; guests: number; tables: number; perHeadMinor: number } | null;
   freshness: RestaurantFreshness;
 }
 export interface RestaurantDish {
@@ -2931,7 +2933,9 @@ export type TipPayload =
   | { rule: 'dish_cost_up'; name: string; perPlate: number; previousPerPlate: number; qty: number; extraMonthly: number; ingredient: { name: string; unit: string; price: number; previousPrice: number } | null }
   | { rule: 'food_wasted'; wastedMinor: number; usedMinor: number; pct: number; material: string | null; reason: string | null }
   | { rule: 'count_short'; name: string; unit: string; diffQty: number; expectedQty: number; diffMinor: number; pct: number }
-  | { rule: 'guests_back'; cameBack: number; previousCameBack: number; guests: number; previousGuests: number; pct: number };
+  | { rule: 'guests_back'; cameBack: number; previousCameBack: number; guests: number; previousGuests: number; pct: number }
+  // Owner, 2026-11-24 — new guests who ordered this dish on their first visit came back more than new guests in all.
+  | { rule: 'dish_brings_back'; name: string; firstTimers: number; cameBack: number; pct: number; allFirstTimers: number; allPct: number; from: string; to: string };
 export interface TipCard {
   rule: TipPayload['rule'];
   needs?: '' | 'cost';
@@ -2961,4 +2965,12 @@ export interface RestaurantCustomersPage {
   lowCapture: boolean;
   top: Array<{ customerId: string | null; name: string | null; visits: number; salesMinor: number | null }>;
   guestCount: number;
+  /**
+   * Owner, 2026-11-24 — "think like a data scientist". The top fifth of guests' share of Sales (null under 5 guests); new
+   * guests of the last 4 months by their first visit and how many came back within 30 days (pct null under 10); and
+   * regulars away twice their usual gap, today (rows only for someone allowed to see guests). Absent from an older API.
+   */
+  topShare?: { guests: number; pct: number } | null;
+  returnByMonth?: Array<{ month: string; newGuests: number; cameBack: number; pct: number | null; partial: boolean }>;
+  overdue?: { count: number; rows: Array<{ customerId: string; name: string | null; phone: string; visits: number; usualGapDays: number; lastSeenDaysAgo: number }> };
 }

@@ -773,3 +773,68 @@ button.rr-worth-row {
   width: 1rem;
   height: 1rem;
 }
+
+/* Owner, 2026-11-24 — the Guests tab's chart: four months, a share over each bar; a month still open is drawn pale. */
+.rr-returns {
+  display: block;
+}
+
+.rr-returns .rr-list-title {
+  margin-top: var(--sp-2);
+}
+
+.rr-returns-sub {
+  margin-top: 0;
+}
+
+/* `.rr-bars .cr-bar-col` too: the day chart's purple label rule is as specific and would win a tie. */
+.rr-returns .rr-bars .cr-bar-col .cr-bar-top {
+  color: var(--accent-deep);
+}
+
+.rr-returns .rr-bars .cr-bar {
+  background: var(--accent);
+}
+
+.rr-returns .rr-bars .cr-bar.is-peak {
+  background: var(--forest);
+}
+
+.rr-returns .rr-bars .is-today .cr-bar {
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+  outline-color: var(--accent);
+}
+
+/* Regulars who are overdue: a name and their habit on the left, the WhatsApp button on the right, 44px tall. */
+.rr-overdue-sub {
+  margin: 0 0 var(--sp-1);
+}
+
+.rr-overdue li {
+  align-items: center;
+}
+
+.rr-wa {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--surface));
+  border-radius: 999px;
+  color: var(--accent-deep);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.rr-wa svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.rr-see-all {
+  min-height: 44px;
+  margin-top: var(--sp-1);
+}

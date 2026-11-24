@@ -17,7 +17,8 @@ import type {
   TipCard,
 } from '../lib/api-types';
 import { formatMoney, intlLocale } from '../lib/format';
-import { IconChevronRight, IconClock, IconCutlery, IconLightbulb } from '../components/icons';
+import { IconChevronRight, IconClock, IconCutlery, IconLightbulb, IconWhatsApp } from '../components/icons';
+import { whatsappHref } from '../lib/receipt-text';
 import { useBranch } from '../components/BranchProvider';
 import { useMayOpen, useSession } from '../components/SessionProvider';
 import { ReportDates } from './ReportDates';
@@ -49,6 +50,8 @@ export const rupees = (minor: number | null, locale: string) => formatMoney(mino
 const MODE_WORDS = { cash: 'mode.cash', upi: 'mode.upi', card: 'mode.card', other: 'mode.other', not_recorded: 'mode.not_recorded' } as const;
 const TYPE_WORDS = { dine_in: 'type.dine_in', takeaway: 'type.takeaway', delivery: 'type.delivery', counter: 'type.counter' } as const;
 /** Owner, 2026-11-24 — a delivery app is a source of its own in "Where sales came from". */
+/** A list shows five rows; "See all" opens the rest (owner rule, 2026-11-24). */
+const LIST_SHOWN = 5;
 const SOURCE_WORDS = { swiggy: 'source.swiggy', zomato: 'source.zomato', other: 'source.other' } as const;
 
 /** One line under a figure: up, down, the same — or nothing when there is nothing to compare with. */
@@ -409,8 +412,16 @@ export function SalesTab({ data }: { data: RestaurantSalesPage }) {
         </div>
         <div className="rr-smalls">
           {data.discountsMinor > 0 ? <Small label={t('sales.discounts')} value={money(data.discountsMinor)} /> : null}
-          {data.refundsMinor > 0 ? <Small label={t('sales.refunds')} value={money(data.refundsMinor)} /> : null}
+          {/* Owner rule: three small figures at most — with spend per head and both the others, Refunds makes way. */}
+          {data.refundsMinor > 0 && !(data.perHead && data.discountsMinor > 0 && data.deliveryCutMinor > 0) ? <Small label={t('sales.refunds')} value={money(data.refundsMinor)} /> : null}
           {data.deliveryCutMinor > 0 ? <Small label={t('sales.appCut')} value={money(data.deliveryCutMinor)} /> : null}
+          {data.perHead ? (
+            <Small
+              label={t('sales.perHead')}
+              value={money(data.perHead.perHeadMinor)}
+              sub={t('sales.perHeadSub', { guests: data.perHead.guests, tables: data.perHead.tables })}
+            />
+          ) : null}
         </div>
         {points.length > 0 ? (
           <>
@@ -569,9 +580,12 @@ export function CustomersTab({ data }: { data: RestaurantCustomersPage }) {
         <div className="rr-smalls">
           <Small label={t('customers.newGuests')} value={data.newGuests.value.toLocaleString(intlLocale(locale))} />
           <Small label={t('customers.withNumber')} value={t('customers.withNumberValue', { pct: data.capturePct })} />
+          {data.topShare ? <Small label={t('customers.topShare')} value={t('customers.topShareValue', { pct: data.topShare.pct })} /> : null}
         </div>
+        {data.returnByMonth && data.returnByMonth.some((m) => m.newGuests > 0) ? <MonthReturns months={data.returnByMonth} /> : null}
       </section>
       <div className="rr-lists">
+        {data.overdue && data.overdue.count > 0 ? <Overdue overdue={data.overdue} /> : null}
         <List
           title={t('customers.top')}
           rows={data.top.map((g, i) => ({
@@ -587,6 +601,94 @@ export function CustomersTab({ data }: { data: RestaurantCustomersPage }) {
   );
 }
 
+/**
+ * Owner, 2026-11-24 — the Guests tab's chart: of the new guests each month (by their first visit), the share who came back
+ * within 30 days. A month under 10 new guests says so instead of a bar; a month whose guests still have days left is
+ * drawn pale and marked, because its share can still rise.
+ */
+function MonthReturns({ months }: { months: NonNullable<RestaurantCustomersPage['returnByMonth']> }) {
+  const t = useTranslations('restaurantReports.customers');
+  const locale = useLocale();
+  const monthName = new Intl.DateTimeFormat(intlLocale(locale), { month: 'short', timeZone: 'UTC' });
+  const name = (ym: string) => monthName.format(new Date(`${ym}-01T00:00:00Z`));
+  const best = Math.max(0, ...months.map((m) => m.pct ?? 0));
+  return (
+    <div className="rr-chart rr-returns">
+      <h3 className="rr-list-title">{t('returnTitle')}</h3>
+      <p className="rr-more rr-returns-sub">{t('returnSub')}</p>
+      <ul className="cr-bars cr-bars-day rr-bars" aria-label={t('returnTitle')}>
+        {months.map((m) => (
+          <li key={m.month} className={`cr-bar-col${m.partial ? ' is-today' : ''}`}>
+            <span className={`cr-bar-top${m.pct !== null && m.pct === best ? ' is-peak' : ''}`} aria-hidden="true">
+              {m.pct === null ? '–' : `${m.pct}%`}
+            </span>
+            <span className="cr-bar-slot">
+              <span className={`cr-bar${m.pct !== null && m.pct === best ? ' is-peak' : ''}`} style={{ height: `${m.pct === null ? 0 : Math.max(2, m.pct)}%` }} />
+            </span>
+            <span className="cr-bar-tick" aria-hidden="true">{m.partial ? `${name(m.month)}*` : name(m.month)}</span>
+            <span className="sr-only">
+              {name(m.month)}: {m.newGuests === 0 ? t('returnNone') : m.pct === null ? t('returnFew', { n: m.newGuests }) : t('returnSr', { pct: m.pct, back: m.cameBack, n: m.newGuests })}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {months.some((m) => m.partial) ? <p className="rr-more">{t('returnPartial')}</p> : null}
+      {months.some((m) => m.pct === null && m.newGuests > 0) ? <p className="rr-more">{t('returnFewNote')}</p> : null}
+    </div>
+  );
+}
+
+/**
+ * Owner, 2026-11-24 — regulars away twice as long as they usually are, most valuable first. Five, then "See all". The
+ * WhatsApp button only opens a chat with their number and a hello: the owner writes and sends it, nothing is sent for them.
+ * Someone who may not see guests is sent the count alone, and sees that.
+ */
+function Overdue({ overdue }: { overdue: NonNullable<RestaurantCustomersPage['overdue']> }) {
+  const t = useTranslations('restaurantReports.customers');
+  const [all, setAll] = useState(false);
+  if (overdue.rows.length === 0) {
+    return (
+      <section className="rr-list" aria-labelledby="rr-overdue-h">
+        <h3 className="rr-list-title" id="rr-overdue-h">{t('overdueTitle')}</h3>
+        <p className="rr-line">{t('overdueCount', { n: overdue.count })}</p>
+      </section>
+    );
+  }
+  const rows = all ? overdue.rows : overdue.rows.slice(0, LIST_SHOWN);
+  return (
+    <section className="rr-list rr-overdue" aria-labelledby="rr-overdue-h">
+      <h3 className="rr-list-title" id="rr-overdue-h">{t('overdueTitle')}</h3>
+      <p className="rr-more rr-overdue-sub">{t('overdueSub')}</p>
+      <ul>
+        {rows.map((g) => (
+          <li key={g.customerId}>
+            <span className="rr-list-name">
+              {g.name ?? t('hidden')}
+              <span className="rr-list-note">{t('overdueNote', { gap: g.usualGapDays, away: g.lastSeenDaysAgo })}</span>
+            </span>
+            <a
+              className="rr-wa"
+              href={whatsappHref(g.phone.replace(/\D/g, ''), t('overdueHello', { name: g.name ?? '' }).trim())}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={t('overdueWaAria', { name: g.name ?? t('hidden') })}
+            >
+              <IconWhatsApp />
+              <span>{t('overdueWa')}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      {!all && overdue.rows.length > LIST_SHOWN ? (
+        <button type="button" className="btn btn-ghost rr-see-all" onClick={() => setAll(true)}>
+          {t('overdueAll', { n: overdue.count })}
+        </button>
+      ) : null}
+      {all && overdue.count > overdue.rows.length ? <p className="rr-more">{t('overdueMore', { n: overdue.count - overdue.rows.length })}</p> : null}
+    </section>
+  );
+}
+
 /* ───────────────────────────── Tips ───────────────────────────── */
 
 /** Where a tip's "Open" goes: the tab whose figures it is about. */
@@ -599,6 +701,7 @@ const TIP_TAB: Record<TipCard['rule'], RestaurantTab> = {
   food_wasted: 'inventory',
   count_short: 'inventory',
   guests_back: 'customers',
+  dish_brings_back: 'items',
 };
 const UNITS = ['kg', 'l', 'pcs'] as const;
 const REASONS = ['spoiled', 'dropped', 'expired', 'other'] as const;
@@ -690,6 +793,14 @@ export function TipsTab({ data, onOpen }: { data: RestaurantTipsPage; onOpen?: (
         tryThis: t('countTry'),
       };
     }
+    if (p.rule === 'dish_brings_back') {
+      return {
+        saw: t('backTitle', { name: p.name }),
+        numbers: t('backNumbers', { pct: p.pct, all: p.allPct }),
+        why: t('backWhy', { n: p.firstTimers, from: asDay(p.from), to: asDay(p.to) }),
+        tryThis: t('backTry'),
+      };
+    }
     return {
       saw: t('cancelledTitle', { n: p.qty }),
       numbers: [t('cancelledNumbers', { amount: money(p.minor), pct: Math.round(p.pctOfSales) }), p.topReason ? t('cancelledReason', { reason: p.topReason, n: p.topReasonQty }) : null].filter(Boolean).join(' '),
@@ -712,7 +823,7 @@ export function TipsTab({ data, onOpen }: { data: RestaurantTipsPage; onOpen?: (
               {c.why ? <p className="rr-tip-why">{c.why}</p> : null}
               <p className="rr-tip-try">{c.tryThis}</p>
               <div className="rr-tip-foot">
-                <span className="rr-tip-sure">{t(`sure.${tip.sure}`, { n: tip.bills })}</span>
+                <span className="rr-tip-sure">{tip.rule === 'dish_brings_back' ? t(`sureGuests.${tip.sure}`, { n: tip.bills }) : t(`sure.${tip.sure}`, { n: tip.bills })}</span>
                 {onOpen ? (
                   <button type="button" className="btn btn-ghost rr-tip-open" onClick={() => onOpen(TIP_TAB[tip.rule])}>
                     {t('open')} · {tabs(TIP_TAB[tip.rule])}

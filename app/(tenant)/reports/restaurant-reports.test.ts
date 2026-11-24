@@ -165,6 +165,17 @@ describe('Overview', () => {
 });
 
 describe('Sales', () => {
+  it('owner, 2026-11-24 — spend per head; with discounts, app cut and per head, Refunds makes way (three small figures)', () => {
+    const perHead = { salesMinor: 10_080_000, guests: 312, tables: 118, perHeadMinor: 32_308 };
+    const one = text(render('en', createElement(SalesTab, { data: { ...sales, perHead } })));
+    expect(one).toContain('Spend per head ₹323 Dine-in · 312 guests at 118 tables');
+    const full = render('en', createElement(SalesTab, { data: { ...sales, refundsMinor: 50_000, deliveryCutMinor: 373_000, perHead } }));
+    expect(count(full, 'rr-small')).toBe(3);
+    expect(text(full)).not.toContain('Refunds');
+    // No table said how many sat down: no figure.
+    expect(text(render('en', createElement(SalesTab, { data: { ...sales, perHead: null } })))).not.toContain('Spend per head');
+  });
+
   const html = render('en', createElement(SalesTab, { data: sales }));
   const out = text(html);
 
@@ -251,6 +262,17 @@ describe('Jira GRW-759 — Tips', () => {
         payload: { rule: 'dish_move', name: 'Lassi', qty: 5, previousQty: 20, sales: 50_000, previousSales: 200_000, pct: -75 } },
     ],
   };
+
+  it('owner, 2026-11-24 — the dish that brings new guests back: its share against everyone, a link not proof, guests not bills', () => {
+    const t = { ...tips, tips: [{ rule: 'dish_brings_back' as const, effect: 450_000, sure: 'fairly' as const, bills: 52, windows,
+      payload: { rule: 'dish_brings_back' as const, name: 'Butter Chicken', firstTimers: 52, cameBack: 24, pct: 46, allFirstTimers: 200, allPct: 31, from: '2026-07-27', to: '2026-10-24' } }] };
+    const out = text(render('en', createElement(TipsTab, { data: t, onOpen: () => {} })));
+    expect(out).toContain('Butter Chicken brings new guests back');
+    expect(out).toContain('New guests who ordered it: 46% came back within 30 days. All new guests: 31%.');
+    expect(out).toContain('It shows a link, not proof.');
+    expect(out).toContain('Fairly sure (52 new guests)');
+    expect(out).toContain('Open · Items');
+  });
 
   it('AC-01 — sales went down 14%: both weeks, the bills, why, one thing to try, how sure', () => {
     const out = text(render('en', createElement(TipsTab, { data: tips })));
@@ -382,6 +404,53 @@ describe('Jira GRW-761 — Customers', () => {
     const out = text(render('hi', createElement(CustomersTab, { data: cust })));
     expect(out).toContain('दोबारा आए मेहमान 68');
     expect(out).not.toMatch(/came back|New guests/);
+  });
+
+  describe('owner, 2026-11-24 — habits: return rate by month, overdue regulars, the top fifth', () => {
+    const habits = {
+      ...cust,
+      topShare: { guests: 22, pct: 61 },
+      returnByMonth: [
+        { month: '2026-08', newGuests: 6, cameBack: 3, pct: null, partial: false },
+        { month: '2026-09', newGuests: 41, cameBack: 14, pct: 34, partial: false },
+        { month: '2026-10', newGuests: 38, cameBack: 11, pct: 29, partial: true },
+        { month: '2026-11', newGuests: 26, cameBack: 10, pct: 38, partial: true },
+      ],
+      overdue: {
+        count: 7,
+        rows: Array.from({ length: 7 }, (_, i) => ({ customerId: `g${i}`, name: i === 0 ? 'Priya Sharma' : `Guest ${i}`, phone: `+91 98100 0000${i}`, visits: 9 - i, usualGapDays: 6, lastSeenDaysAgo: 15 + i })),
+      },
+    };
+    const html = render('en', createElement(CustomersTab, { data: habits }));
+    const out = text(html);
+
+    it('three small figures: new guests, bills with a number, the top fifth', () => {
+      expect(out).toContain('Top 20% of guests bring 61% of sales');
+      expect(count(html, 'rr-small')).toBe(3);
+    });
+    it('the chart: four months, a share over each, a dash under 10 new guests, the months still open marked', () => {
+      expect(out).toContain('New guests who came back within 30 days By the month of their first visit');
+      expect(out).toMatch(/– Aug.*34% Sep.*29% Oct\*.*38% Nov\*/);
+      expect(out).toContain('new guests still have days left to come back.');
+      expect(out).toContain('– Under 10 new guests: too few to say.');
+    });
+    it('overdue regulars: five, then See all; each with their habit and a WhatsApp chat link with a hello', () => {
+      expect(out).toContain('Regulars who are overdue Away twice as long as they usually are');
+      expect(out).toContain('Priya Sharma Comes every 6 days · last seen 15 days ago WhatsApp');
+      expect(count(html, 'rr-wa')).toBe(5);
+      expect(out).toContain('See all 7');
+      expect(html).toContain('href="https://wa.me/919810000000?text=Hi%20Priya%20Sharma%2C"');
+    });
+    it('someone who may not see guests: the count, no names, no numbers', () => {
+      const staff = text(render('en', createElement(CustomersTab, { data: { ...habits, overdue: { count: 7, rows: [] } } })));
+      expect(staff).toContain('7 regulars are overdue.');
+      expect(staff).not.toContain('Priya');
+    });
+    it('Hindi', () => {
+      const hi = text(render('hi', createElement(CustomersTab, { data: habits })));
+      expect(hi).toContain('नए मेहमान जो 30 दिन में फिर आए');
+      expect(hi).toContain('नियमित मेहमान जो देर से आ रहे हैं');
+    });
   });
 
   it('never says retention, cohort or CLV', () => {

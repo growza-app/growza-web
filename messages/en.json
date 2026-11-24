@@ -3110,7 +3110,9 @@
       "busy": "Busy times",
       "byPayment": "How people paid",
       "byType": "How it was eaten",
-      "bills": "{n, plural, one {# bill} other {# bills}}"
+      "bills": "{n, plural, one {# bill} other {# bills}}",
+      "perHead": "Spend per head",
+      "perHeadSub": "Dine-in · {guests, plural, one {# guest} other {# guests}} at {tables, plural, one {# table} other {# tables}}"
     },
     "mode": {
       "cash": "Cash",
@@ -3215,7 +3217,15 @@
       "guestsUp": "More guests came back: {n}, was {before}.",
       "guestsDown": "Fewer guests came back: {n}, was {before}.",
       "guestsNumbers": "{guests} guests with a number this week; {prevGuests} the week before.",
-      "guestsTry": "See who came in Guests."
+      "guestsTry": "See who came in Guests.",
+      "backTitle": "{name} brings new guests back",
+      "backNumbers": "New guests who ordered it: {pct}% came back within 30 days. All new guests: {all}%.",
+      "backWhy": "From {n} new guests who ordered it, {from} – {to}. It shows a link, not proof.",
+      "backTry": "Suggest it to first-time tables.",
+      "sureGuests": {
+        "very": "Very sure ({n} new guests)",
+        "fairly": "Fairly sure ({n} new guests)"
+      }
     },
     "customers": {
       "cameBack": "Guests who came back",
@@ -3228,7 +3238,25 @@
       "lowCapture": "Add the guest's number on more bills to see who comes back.",
       "lowCaptureFrom": "Only {pct}% of bills have a number.",
       "empty": "No guests with a number yet.",
-      "perBranch": "A guest at two branches counts at each."
+      "perBranch": "A guest at two branches counts at each.",
+      "topShare": "Top 20% of guests bring",
+      "topShareValue": "{pct}% of sales",
+      "returnTitle": "New guests who came back within 30 days",
+      "returnSub": "By the month of their first visit",
+      "returnSr": "{pct}% — {back} of {n} new guests came back",
+      "returnFew": "only {n} new guests, too few to say",
+      "returnPartial": "* This month's new guests still have days left to come back.",
+      "returnFewNote": "– Under 10 new guests: too few to say.",
+      "overdueTitle": "Regulars who are overdue",
+      "overdueSub": "Away twice as long as they usually are",
+      "overdueNote": "Comes every {gap, plural, one {day} other {# days}} · last seen {away} days ago",
+      "overdueWa": "WhatsApp",
+      "overdueWaAria": "Message {name} on WhatsApp",
+      "overdueHello": "Hi {name},",
+      "overdueAll": "See all {n}",
+      "overdueMore": "and {n} more",
+      "overdueCount": "{n, plural, one {# regular is} other {# regulars are}} overdue.",
+      "returnNone": "no new guests"
     }
   },
   "counterReport": {
