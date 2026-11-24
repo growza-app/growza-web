@@ -340,6 +340,11 @@ export function CounterCards({ data, openHours = null }: { data: CounterReportPa
             ? null
             : ` · ${t('took.average', { amount: money(wholeRupees(takings.averageBillMinor)) })}`}
         </p>
+        {/* Jira GRW-752 — the big number is Sales (no GST, no service charge). What reached the drawer and the UPI
+            account is said once, under it, and only when it is a different number: otherwise it is the same figure twice. */}
+        {takings.moneyInMinor !== undefined && takings.moneyInMinor !== takings.totalMinor ? (
+          <p className="cr-sub">{t('took.moneyIn', { amount: money(takings.moneyInMinor) })}</p>
+        ) : null}
         <ul className="cr-bars cr-bars-day" ref={barsRef}>
           {bars.map((b, i) => (
             <li key={b.startISO} className="cr-bar-col">
@@ -482,6 +487,8 @@ export function CounterCards({ data, openHours = null }: { data: CounterReportPa
               {t('busy.peak', { from: hourName(busy.peak.fromHour), to: hourName(busy.peak.toHour) })}
             </p>
             {outsideMinor > 0 ? <p className="cr-aside">{t('busy.outsideHours', { amount: money(outsideMinor) })}</p> : null}
+            {/* Jira GRW-755 — the hours are when the money came in; a bill from before that was kept is placed at the time it was rung up. */}
+            {busy.estimatedTimes ? <p className="cr-aside">{t('busy.estimated')}</p> : null}
           </>
         )}
         {busy.quietestDay ? (

@@ -96,6 +96,26 @@
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.22);
 }
 
+/* Owner, 2026-11-24 — Growza's mark and name at the top of the sign-in card: the sidebar's, a little larger. */
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-6);
+}
+
+.login-brand svg {
+  flex: none;
+  border-radius: 0.75rem;
+}
+
+.login-brand-word {
+  font-size: var(--fs-10);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--forest);
+}
+
 .login-head h1 {
   margin: 0;
   font-size: 1.5rem;

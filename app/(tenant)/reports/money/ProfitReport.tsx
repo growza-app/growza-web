@@ -58,6 +58,8 @@ export function ProfitReport() {
             {r.totals.uncostedItems > 0 ? <p className="srp-warn">{p('uncosted', { count: r.totals.uncostedItems, value: f.money(r.totals.uncostedSalesMinor) })}</p> : null}
             {/* Jira GRW-724 — service charge: income of its own, never in a dish's sales or profit. */}
             {(r.totals.serviceChargeMinor ?? 0) > 0 ? <p className="srp-hint">{p('serviceCharge', { value: f.money(r.totals.serviceChargeMinor!) })}</p> : null}
+            {/* Jira GRW-753 — dishes cooked and then taken off: their food is part of the cost above, said once, only when there was some. */}
+            {(r.totals.thrownAwayCostMinor ?? 0) > 0 ? <p className="srp-hint">{p('thrownAway', { value: f.money(r.totals.thrownAwayCostMinor!) })}</p> : null}
             <p className="srp-hint">{p('costNote')}</p>
 
             <h2 className="mr-title">{p('listTitle')}</h2>

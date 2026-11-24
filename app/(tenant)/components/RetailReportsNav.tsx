@@ -3,8 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef } from 'react';
 import AppLink from '../../shared/AppLink';
-import { areaAllows } from '../lib/areas';
-import { useAreas } from './SessionProvider';
+import { useMayOpen } from './SessionProvider';
 
 export type RetailReportTab = 'hub' | 'profit' | 'payments' | 'discounts' | 'foodCost' | 'channels' | 'sellers' | 'report' | 'order' | 'returns' | 'refunds';
 
@@ -30,7 +29,9 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
 
   // A report the business does not have is not a tab: a kitchen keeps no count, so the stock report and the reorder
   // list are absent here, exactly as they are in the nav — the guard would bounce either one Home.
-  const areas = useAreas();
+  // Jira GRW-754 — and a tab the person may not open is not a tab either: the same rule the screen's own guard asks
+  // (role, the role's grid, the business's areas), so no chip sends anyone back Home.
+  const mayOpen = useMayOpen();
   const allTabs: Array<{ key: RetailReportTab; href: string; label: string }> = [
     { key: 'hub', href: '/reports', label: tReports('summaryTab') },
     // Owner, 2026-11-14 — the money questions, right after the summary: what it made, how it came in, what went out below price.
@@ -47,7 +48,7 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
     { key: 'returns', href: '/orders/returns', label: tReturns('title') },
     { key: 'refunds', href: '/orders/refunds', label: tRefunds('title') },
   ];
-  const tabs = allTabs.filter((tab) => areaAllows(tab.href, areas));
+  const tabs = allTabs.filter((tab) => mayOpen(tab.href));
 
   /*
    * Owner's review 2026-11-13 — on a phone the bar scrolls sideways, so the current tab is brought to the middle

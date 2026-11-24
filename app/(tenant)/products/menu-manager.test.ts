@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Product, RecipeCostDish } from '../lib/api-types';
-import { groupBySection, groupedOrder, needsRecipe, recipeInfoOf, recipeStateOf, recipeStates } from './menu-manager';
+import { groupBySection, groupedOrder, lacksCost, needsRecipe, recipeInfoOf, recipeStateOf, recipeStates, type RecipeInfo } from './menu-manager';
 
 const dish = (id: string, categoryId: string | null, extra: Partial<Product> = {}): Product =>
   ({ id, name: id, categoryId, categoryName: null, active: true, priceMinor: 100, sold: 0, stock: 0, lowStockAt: 0, ...extra }) as unknown as Product;
@@ -72,5 +72,32 @@ describe('owner, 2026-11-20 — Inventory has no Recipes tab; its old address la
     expect(list).toContain("useState<'cards' | 'table'>('table')");
     expect(list).toContain('const recipesOn = useRecipesOn() && !counted;');
     expect(list).toContain('{!counted ? menuTabs : null}');
+  });
+});
+
+describe('lacksCost — what Reports\' Profit cannot cost (owner, 2026-11-24: "use recipe cost when no cost price")', () => {
+  const info = (costed: boolean): RecipeInfo => ({ state: 'done', pct: null, costed });
+  const states = new Map<string, RecipeInfo>([
+    ['tikka', info(true)],
+    ['kheer', info(false)],
+  ]);
+  it('a cost price typed: never missing', () => {
+    expect(lacksCost({ id: 'kofta', costMinor: '9000' }, states)).toBe(false);
+  });
+  it('no cost price but a recipe that can be costed: not missing', () => {
+    expect(lacksCost({ id: 'tikka', costMinor: null }, states)).toBe(false);
+  });
+  it('no cost price, and a recipe with an ingredient not priced yet: missing', () => {
+    expect(lacksCost({ id: 'kheer', costMinor: null }, states)).toBe(true);
+  });
+  it('no cost price and no recipe — or recipes not loaded yet: missing', () => {
+    expect(lacksCost({ id: 'kofta', costMinor: null }, states)).toBe(true);
+    expect(lacksCost({ id: 'tikka', costMinor: null }, null)).toBe(true);
+  });
+  it('recipeInfoOf: costed only when every size has a recipe cost', () => {
+    const sz = (costMinor: number | null) => ({ variantId: null, label: null, priceMinor: 100, costMinor, foodCostPct: null, noRecipe: costMinor === null });
+    expect(recipeInfoOf({ noRecipe: false, sizes: [sz(80), sz(90)] }).costed).toBe(true);
+    expect(recipeInfoOf({ noRecipe: false, sizes: [sz(80), sz(null)] }).costed).toBe(false);
+    expect(recipeInfoOf({ noRecipe: true, sizes: [] }).costed).toBe(false);
   });
 });

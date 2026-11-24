@@ -21,6 +21,8 @@ import { gridCanSee } from '../lib/nav-policy';
 import { loadErrorKind, type LoadErrorKind } from '../lib/load-error';
 import { ReportsClient, type TabPayload } from './ReportsClient';
 import { CounterReport } from './CounterReport';
+import { RestaurantReports } from './RestaurantReports';
+import { RESTAURANT_TABS, type RestaurantTab } from './restaurant-tabs';
 import { DiaryReport } from './DiaryReport';
 
 /**
@@ -98,6 +100,8 @@ export default async function ReportsPage({
     status?: string | string[];
     /** Jira GRW-238 — one branch of a multi-branch business. */
     branch?: string;
+    /** Jira GRW-758 — a restaurant's Reports tab: overview, sales, items, inventory. */
+    view?: string;
   }>;
 }) {
   // Jira GRW-556 — this screen opens at go-live; before it, say so rather than draw what the API would refuse.
@@ -190,7 +194,12 @@ export default async function ReportsPage({
           }
         />
         <div className="page-body srp-page">
-          {mayOpenShopReports ? (
+          {mayOpenShopReports && areasOf(me).tables ? (
+            /* Jira GRW-758 — a restaurant (the vertical that seats guests) reads its Reports as simple tabs. */
+            <RestaurantReports
+              initialTab={RESTAURANT_TABS.includes(params.view as RestaurantTab) ? (params.view as RestaurantTab) : 'overview'}
+            />
+          ) : mayOpenShopReports ? (
             <>
               {/* The way to the other six sits where an owner's eye goes for it, above the report
                   rather than below a screenful of cards. */}

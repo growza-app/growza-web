@@ -87,7 +87,8 @@ describe('the Menu screen draws a dish without a count', () => {
     expect(list).toMatch(/prd-strip prd-strip-2/);
     expect(list).toMatch(/strip\.onMenu/);
     // Taken off is the Menu's tab now (owner, 2026-11-20); its row chip says it in MenuTable.
-    expect(list).toMatch(/\['all', 'noRecipe', 'retired'\] as const/);
+    // Owner, 2026-11-24 — and "No cost price" for whoever may see costs (Reports' Profit links to it).
+    expect(list).toMatch(/\['all', \.\.\.\(recipesOn \? \(\['noRecipe'\] as const\) : \[\]\), \.\.\.\(seesCost \? \(\['noCost'\] as const\) : \[\]\), 'retired'\] as const/);
   });
 
   it('drops the Stock column from the desk table and the count pill from the phone row', () => {

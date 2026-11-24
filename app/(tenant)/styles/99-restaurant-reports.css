@@ -1,0 +1,1088 @@
+/*
+ * Jira GRW-758 — the restaurant's Reports tabs (reports/RestaurantReports.tsx).
+ *
+ * Owner rule, 2026-11-24 — clean and precise: one big number (`.cr-hero`, the counter report's), up to three small
+ * figures, one chart (`.cr-bars`, the bars the owner approved on the phone), lists of five. Laid out at 344px first;
+ * tokens only; one accent except the charts' two colours (below); green and red only for up and down.
+ */
+
+/* `minmax(0, 1fr)`, not the implicit `auto` track: seven day names ("18 Nov") are wider together than a 344px card,
+   and an auto track grew to fit them — the last bar was cut off at the card's edge. */
+.rr-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-2);
+}
+
+.rr-tabs {
+  margin-bottom: var(--sp-3);
+}
+
+/* The tabs are buttons (a tab changes what this screen shows; it is not a new address). */
+.rr-tabs .srp-nav-tab {
+  min-height: 44px;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.rr-delta {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--muted);
+}
+
+.rr-delta.is-up {
+  color: var(--accent-deep);
+}
+
+.rr-delta.is-down {
+  color: var(--danger-deep);
+}
+
+.rr-smalls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6.25rem, 1fr));
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+
+.rr-smalls:empty {
+  display: none;
+}
+
+.rr-small-label {
+  margin: 0;
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.rr-small-value {
+  margin: 2px 0 0;
+  font-size: var(--fs-8);
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.rr-small-sub {
+  margin: 2px 0 0;
+  font-size: var(--fs-1);
+  color: var(--muted);
+}
+
+.rr-chart {
+  /* The height of the drawing area: the scale's lines, the bars and the axis labels all measure from it. */
+  --rr-plot: 7rem;
+  margin-top: var(--sp-3);
+}
+
+/* The scale (Y): a column of its own, five amounts each centred on its line, ₹0 on the baseline. */
+.rr-bars .cr-bar-col.rr-ycol {
+  flex: 0 0 auto;
+  padding-right: var(--sp-2);
+}
+
+.rr-bars.cr-bars .rr-ycol .cr-bar-slot {
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  background: none;
+  border-bottom-color: transparent;
+}
+
+.rr-yline {
+  display: flex;
+  align-items: center;
+  height: 0;
+  font-size: var(--fs-1);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rr-lists {
+  display: grid;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+
+.rr-list {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.rr-list-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rr-list ul,
+.rr-cancel-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rr-list li,
+.rr-cancel-rows li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 44px;
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--border);
+}
+
+.rr-list li:first-child,
+.rr-cancel-rows li:first-child {
+  border-top: 0;
+}
+
+.rr-list-name {
+  display: grid;
+  min-width: 0;
+  font-size: var(--fs-4);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.rr-list-note {
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.rr-list-value {
+  flex: none;
+  font-size: var(--fs-4);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.rr-more,
+.rr-fresh {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.rr-empty,
+.rr-line {
+  margin: 0;
+  font-size: var(--fs-4);
+  color: var(--muted);
+}
+
+.rr-empty {
+  padding: var(--sp-6) var(--sp-4);
+  text-align: center;
+}
+
+/* Cancelled dishes: the figure is the summary of a list that opens under it. */
+.rr-cancelled {
+  margin-top: var(--sp-2);
+  border-top: 1px solid var(--border);
+}
+
+.rr-cancelled > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 44px;
+  padding-top: var(--sp-2);
+  list-style: none;
+  cursor: pointer;
+}
+
+.rr-cancelled > summary::-webkit-details-marker {
+  display: none;
+}
+
+.rr-see {
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--accent-deep);
+}
+
+.rr-open {
+  justify-self: start;
+  min-height: 44px;
+  margin-top: var(--sp-2);
+}
+
+/*
+ * Owner, 2026-11-24 — "on desktop not properly visible". These tabs borrowed the counter report's `.cr` wrapper, and
+ * from 760px `.cr` is a two-column grid of cards (99-counter-report.css). A tab here is one card, its lists and a
+ * line saying when it was updated — so the card took the left half, the line floated alone on the right, and the
+ * chart got half the page. One column at every width; the laptop layout is below.
+ */
+.cr.rr {
+  display: flex;
+  flex-direction: column;
+}
+
+/* `hidden` on the toolbar (Tips has no dates) lost to `.cr-toolbar { display: flex }`. */
+.rr .cr-toolbar[hidden] {
+  display: none;
+}
+
+/*
+ * Owner, 2026-11-24 — "soft colours mixed", then "dark purple and orange": the Reports charts get their own two
+ * colours, an exception to the one-accent rule that stays inside Reports. Weekdays purple, Saturday and Sunday
+ * orange, the best day in the deep shade of its own colour. The orange is a shade deeper than the mockup's #EF9F27:
+ * that one measured 2.2:1 on the white card, under the 3:1 a chart bar needs to be seen in daylight; #E07B12 is 3.0:1.
+ */
+.rr {
+  --rr-day: var(--chart-weekday);
+  --rr-day-best: var(--chart-weekday-deep);
+  --rr-end: var(--chart-weekend);
+  --rr-end-best: var(--chart-weekend-deep);
+}
+
+/* No track behind the bars — thirty grey pills read as thirty empty days. A thin bar stands on one baseline, and
+   the columns touch so the line runs unbroken under them. */
+.rr-bars.cr-bars {
+  gap: 0;
+}
+
+.rr-bars.cr-bars .cr-bar-slot {
+  box-sizing: border-box;
+  height: var(--rr-plot);
+  max-width: none;
+  border-radius: 0;
+  /* The scale's lines: one at the top of each quarter, drawn across every column so they run unbroken. The
+     baseline (the X axis) is a shade darker. */
+  background: linear-gradient(to bottom, var(--border) 1px, transparent 1px) 0 0 / 100% 25%;
+  border-bottom: 1px solid color-mix(in srgb, var(--muted) 55%, transparent);
+}
+
+.rr-bars .cr-bar {
+  width: 62%;
+  max-width: 2rem;
+  margin-inline: auto;
+  border-radius: 3px 3px 0 0;
+  background: var(--rr-day);
+}
+
+.rr-bars .is-weekend .cr-bar {
+  background: var(--rr-end);
+}
+
+.rr-bars .cr-bar.is-peak {
+  background: var(--rr-day-best);
+}
+
+.rr-bars .is-weekend .cr-bar.is-peak {
+  background: var(--rr-end-best);
+}
+
+/* `.cr-bar-col` too: the Emerald sheet's `.cr-bar-top.is-peak` (dark green) comes later and would win a tie. */
+.rr-bars .cr-bar-col .cr-bar-top {
+  height: 1.25rem;
+  min-height: 0;
+  margin-bottom: 2px;
+  line-height: 1.25rem;
+  font-weight: 600;
+  color: var(--rr-day-best);
+}
+
+.rr-bars .cr-bar-col.is-weekend .cr-bar-top {
+  color: var(--rr-end-best);
+}
+
+/* Every column's name sits on a line of one height, named or not — a named one was 4px taller, and pushed its
+   bar up off the baseline. */
+.rr-bars .cr-bar-tick {
+  height: 1.25rem;
+  min-height: 0;
+  line-height: 1.25rem;
+}
+
+/* Exact amount on a laptop, "₹35k" on a phone (the component writes both). */
+.rr-amt-full {
+  display: none;
+}
+
+/* Today is still under way: its bar so far, pale with a dashed edge, so it does not read as a bad day. */
+.rr-bars .is-today .cr-bar {
+  background: color-mix(in srgb, var(--rr-day) 22%, var(--surface));
+  outline: 1.5px dashed var(--rr-day);
+  outline-offset: -1.5px;
+}
+
+.rr-bars .is-today.is-weekend .cr-bar {
+  background: color-mix(in srgb, var(--rr-end) 22%, var(--surface));
+  outline-color: var(--rr-end);
+}
+
+.rr-bars .is-today .cr-bar-tick {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* The two colours' names, under the chart. */
+.rr-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-4);
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--muted);
+}
+
+.rr-key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.rr-key::before {
+  content: '';
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+  background: var(--rr-day);
+}
+
+.rr-key.is-weekend::before {
+  background: var(--rr-end);
+}
+
+@media (max-width: 860px) {
+  /* Owner, 2026-11-24 — design A, "rows": on a phone the small figures read like a bill, name on the left and
+     amount on the right, one hairline between them, every amount in one straight column. A note (Profit's food
+     thrown away) sits under its name. */
+  .rr-card > .rr-smalls:not(:empty) {
+    display: block;
+    margin-top: var(--sp-3);
+  }
+
+  .rr-card > .rr-smalls > .rr-small {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    column-gap: var(--sp-3);
+    min-height: 44px;
+    padding: var(--sp-2) 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .rr-card > .rr-smalls > .rr-small > .rr-small-label {
+    grid-area: 1 / 1;
+    font-size: var(--fs-4);
+    color: var(--text);
+  }
+
+  .rr-card > .rr-smalls > .rr-small > .rr-small-value {
+    grid-area: 1 / 2;
+    margin: 0;
+    font-size: var(--fs-5);
+    text-align: right;
+  }
+
+  .rr-card > .rr-smalls > .rr-small > .rr-small-sub {
+    grid-area: 2 / 1 / 3 / -1;
+    margin: 2px 0 0;
+  }
+
+  /* A phone's columns are narrower than a day's name, so the first and last name keep inside the card. */
+  .rr-bars :is(.cr-bar-col:first-child, .rr-ycol + .cr-bar-col) .cr-bar-tick {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .rr-bars .cr-bar-col:last-child .cr-bar-tick {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+@media (min-width: 861px) {
+  /* Tabs on the left, dates on the right, one row — the dates drop under the tabs when the row is too narrow
+     for both (a 1024px tablet sideways), rather than the six tabs wrapping onto two rows. Everything else runs
+     the full width under them. */
+  .cr.rr {
+    flex-flow: row wrap;
+    align-items: center;
+    gap: var(--sp-4) var(--sp-5);
+  }
+
+  .cr.rr > * {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .cr.rr > .rr-tabs {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    margin-bottom: 0;
+  }
+
+  .cr.rr > .cr-toolbar {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  /* The card: the big number on the left, its small figures right beside it with their tops on the same line,
+     the chart across the whole card. */
+  .rr-card {
+    grid-template-columns: max-content minmax(0, 1fr);
+    /* Name, number, note. The note's row takes any height the right-hand column needs (the cancelled list, open)
+       so the big number stays under its name instead of drifting down. */
+    grid-template-rows: auto auto 1fr;
+    column-gap: var(--sp-2);
+    align-items: start;
+    padding: var(--sp-5) var(--sp-6);
+  }
+
+  .rr-card > * {
+    grid-column: 1 / -1;
+  }
+
+  /* The big number's group lays out in the card's own rows. */
+  .rr-card > .rr-lead {
+    display: contents;
+  }
+
+  .rr-card > .rr-lead > :is(.cr-label, .cr-hero, .rr-delta) {
+    grid-column: 1;
+  }
+
+  .rr-card > :is(.rr-smalls, .rr-cancelled) {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: start;
+    margin-top: 0;
+  }
+
+  /* A thin line between the big number and each small figure, and every number on ONE line (owner, 2026-11-24:
+     "numbers are not aligned"). The small figures share the card's three rows — name, number, note — through a
+     subgrid, so each number sits in the big number's row and stands on its baseline, whatever the sizes. */
+  .rr-card > .rr-smalls:not(:empty) {
+    display: grid;
+    grid-template-columns: none;
+    grid-template-rows: subgrid;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    justify-content: start;
+    align-self: stretch;
+    gap: 0;
+    border-left: 1px solid var(--border);
+  }
+
+  .rr-card > .rr-smalls > .rr-small {
+    display: grid;
+    grid-row: 1 / span 3;
+    grid-template-rows: subgrid;
+    padding-inline: var(--sp-6);
+  }
+
+  .rr-card > .rr-smalls > .rr-small + .rr-small {
+    border-left: 1px solid var(--border);
+  }
+
+  .rr-card > .rr-lead > .cr-hero,
+  .rr-card > .rr-smalls > .rr-small > .rr-small-value {
+    align-self: last baseline;
+  }
+
+  .rr-card > .rr-smalls > .rr-small > :is(.rr-small-value, .rr-small-sub) {
+    margin: 0;
+  }
+
+  .rr-card > .rr-cancelled {
+    border-top: 0;
+    border-left: 1px solid var(--border);
+    padding-left: var(--sp-6);
+  }
+
+  /* Closed, the cancelled figure shares the card's rows like the small figures, so its number stands on the big
+     number's line; "See all" sits beside it. Open, it is a plain block again and the list runs under it. */
+  .rr-card > .rr-cancelled:not([open]) {
+    display: grid;
+    grid-template-rows: subgrid;
+    align-self: stretch;
+  }
+
+  .rr-card > .rr-cancelled:not([open]) > summary {
+    display: grid;
+    grid-row: 1 / span 3;
+    grid-template-rows: subgrid;
+    grid-template-columns: max-content max-content;
+    /* The phone's summary spreads its two parts to the edges; this grid keeps them together. */
+    justify-content: start;
+    column-gap: var(--sp-6);
+    align-items: start;
+    min-height: 0;
+    padding-top: 0;
+  }
+
+  .rr-card > .rr-cancelled:not([open]) > summary > .rr-small {
+    display: contents;
+  }
+
+  .rr-card > .rr-cancelled:not([open]) .rr-small-label {
+    grid-area: 1 / 1;
+  }
+
+  .rr-card > .rr-cancelled:not([open]) .rr-small-value {
+    grid-area: 2 / 1;
+    align-self: last baseline;
+    margin: 0;
+  }
+
+  .rr-card > .rr-cancelled:not([open]) .rr-small-sub {
+    grid-area: 3 / 1;
+    margin: 0;
+  }
+
+  /* Owner, 2026-11-24 — "See all" right after the cancelled figure's note, not floating at the card's far edge. */
+  .rr-card > .rr-cancelled:not([open]) .rr-see {
+    grid-area: 3 / 2;
+    align-self: baseline;
+    font-size: var(--fs-2);
+  }
+
+  /* A taller chart when there is room for it. */
+  .rr-chart {
+    --rr-plot: 10rem;
+    margin-top: var(--sp-5);
+  }
+
+  .rr-bars .cr-bar {
+    max-width: 2.25rem;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  }
+
+  .rr-amt-short {
+    display: none;
+  }
+
+  .rr-amt-full {
+    display: inline;
+  }
+
+  .rr-lists {
+    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+    align-items: start;
+    margin-top: 0;
+  }
+
+  .rr-fresh {
+    margin-top: 0;
+    text-align: right;
+  }
+
+  .rr-tips {
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    align-items: stretch;
+  }
+}
+
+/* Jira GRW-759 — the Tips tab: at most three cards, four short lines each. */
+.rr-tips {
+  display: grid;
+  gap: var(--sp-3);
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rr-tip {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.rr-tip-saw {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rr-tip-numbers,
+.rr-tip-why {
+  margin: 0;
+  font-size: var(--fs-4);
+  color: var(--text);
+}
+
+.rr-tip-try {
+  margin: 0;
+  font-size: var(--fs-4);
+  color: var(--accent-deep);
+}
+
+.rr-tip-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+
+.rr-tip-sure {
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.rr-tip-open {
+  min-height: 44px;
+}
+
+/* Owner, 2026-11-24 — Profit says what it covers: each note on its own line, the way to the dishes with no cost price
+   a link whose tap area is 44px tall without making the line taller. */
+.rr-sub-line {
+  display: block;
+}
+
+.rr-fix {
+  display: inline-block;
+  padding-block: var(--sp-3);
+  margin-block: calc(-1 * var(--sp-3));
+  color: var(--accent-deep);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* No cost price on any dish: words in place of a figure, quieter than a number. */
+.rr-none {
+  font-size: var(--fs-4);
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/*
+ * Owner, 2026-11-24 — under the Overview's chart: "Where sales came from" and "Worth a look". Two cards, one above the
+ * other on a phone and side by side on a laptop (.rr-lists' columns). The split is one bar, a colour per source (below),
+ * and every part is named with its amount and share in the list under it, so the colour is never the only way to tell.
+ */
+.rr-more-cards {
+  margin-top: var(--sp-3);
+}
+
+.rr-split {
+  display: flex;
+  gap: 2px;
+  height: 0.75rem;
+  margin: var(--sp-2) 0 var(--sp-3);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.rr-split-part {
+  flex: 1 1 0;
+  min-width: 4px;
+}
+
+.rr-split-dot {
+  display: inline-block;
+  flex: none;
+  width: 0.625rem;
+  height: 0.625rem;
+  margin-right: var(--sp-2);
+  border-radius: 2px;
+}
+
+.rr-source-name {
+  display: flex;
+  align-items: center;
+}
+
+/* Owner, 2026-11-24 — option B: a colour per source, not per place in the list, so Swiggy is always orange. The
+   restaurant's own orders in greens; the apps in their own colours; anything else grey. */
+:is(.rr-split-part, .rr-split-dot) { background: color-mix(in srgb, var(--muted) 55%, var(--surface)); }
+:is(.rr-split-part, .rr-split-dot).rr-src-dine_in { background: var(--accent); }
+:is(.rr-split-part, .rr-split-dot).rr-src-takeaway { background: var(--mint); }
+:is(.rr-split-part, .rr-split-dot).rr-src-delivery { background: var(--forest); }
+:is(.rr-split-part, .rr-split-dot).rr-src-swiggy { background: var(--chart-swiggy); }
+:is(.rr-split-part, .rr-split-dot).rr-src-zomato { background: var(--chart-zomato); }
+
+.rr-worth ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rr-worth li + li {
+  border-top: 1px solid var(--border);
+}
+
+.rr-worth-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--sp-3) 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+button.rr-worth-row {
+  cursor: pointer;
+}
+
+.rr-worth-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent-deep);
+}
+
+.rr-worth-icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.rr-worth-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.rr-worth-main {
+  font-size: var(--fs-4);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.rr-worth-sub {
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+.rr-worth-go {
+  display: inline-flex;
+  flex: none;
+  color: var(--muted);
+}
+
+.rr-worth-go svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Owner, 2026-11-24 — the Guests tab's chart: four months, a share over each bar; a month still open is drawn pale. */
+.rr-returns {
+  display: block;
+}
+
+.rr-returns .rr-list-title {
+  margin-top: var(--sp-2);
+}
+
+.rr-returns-sub {
+  margin-top: 0;
+}
+
+/* Owner, 2026-11-24 — "build all six" #2: the one number in a soft green box — above the chart on a phone, beside it on
+   a laptop, where four bars across the card were lost in white space. */
+.rr-returns-stat {
+  margin: var(--sp-2) 0 var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+
+.rr-stat-big {
+  margin: 0;
+  font-size: var(--fs-12);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--accent-deep);
+}
+
+.rr-stat-text {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-4);
+  color: var(--accent-deep);
+}
+
+.rr-stat-months {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-2);
+  color: var(--muted);
+}
+
+@media (min-width: 861px) {
+  .rr-returns-body {
+    display: grid;
+    grid-template-columns: minmax(0, 32rem) minmax(0, 1fr);
+    column-gap: var(--sp-8);
+    align-items: center;
+  }
+
+  .rr-returns-body > .rr-bars {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .rr-returns-stat {
+    grid-row: 1;
+    grid-column: 2;
+    margin: 0;
+  }
+}
+
+/* The return chart in the accent's greens — the day chart's purple and orange mean weekday and weekend. `.rr-bars
+   .cr-bar-col` on the label: the day chart's purple label rule is as specific and would win a tie. */
+.rr-returns .rr-bars .cr-bar-col .cr-bar-top {
+  color: var(--accent-deep);
+}
+
+.rr-returns .rr-bars .cr-bar {
+  background: var(--accent);
+}
+
+.rr-returns .rr-bars .cr-bar.is-peak {
+  background: var(--forest);
+}
+
+.rr-returns .rr-bars .is-today .cr-bar {
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+  outline-color: var(--accent);
+}
+
+/* Regulars who are overdue and Top guests (#3–#6): initials, the name and one line, then what matters on the right. */
+.rr-list-count {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.rr-overdue-sub {
+  margin: 0 0 var(--sp-1);
+}
+
+.rr-people ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rr-people li {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--sp-3);
+  min-height: 44px;
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--border);
+}
+
+.rr-people li:first-child {
+  border-top: 0;
+}
+
+.rr-people .rr-list-name {
+  flex: 1;
+}
+
+.rr-people .hm-avatar {
+  border-radius: 50%;
+  font-size: var(--fs-2);
+}
+
+.rr-rank {
+  flex: none;
+  width: 1rem;
+  font-size: var(--fs-2);
+  color: var(--muted);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* #4 — how late, in amber: the house's "needs a look" colour, text on its soft fill (6.3:1). */
+.rr-away {
+  flex: none;
+  padding: 2px var(--sp-2);
+  border-radius: 999px;
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* #5 — a round 44px button with the WhatsApp mark; its name is in aria-label. */
+.rr-wa {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--surface));
+  border-radius: 50%;
+  color: var(--accent-deep);
+}
+
+.rr-wa svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.rr-see-all {
+  min-height: 44px;
+  margin-top: var(--sp-1);
+}
+
+@media (max-width: 860px) {
+  /* A phone has no room for name, habit, tag and button in one row: the name and its habit on top, the "days away" tag
+     under them, initials and the button spanning both lines. */
+  .rr-overdue li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    column-gap: var(--sp-3);
+    row-gap: var(--sp-1);
+    align-items: center;
+  }
+
+  .rr-overdue li > .hm-avatar {
+    grid-row: 1 / span 2;
+  }
+
+  .rr-overdue li > .rr-list-name {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .rr-overdue li > .rr-away {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .rr-overdue li > .rr-wa {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+
+  /* The return chart has few months: each name sits under its own bar, not pushed to the card's edges as the day
+     chart's first and last day are. */
+  .rr-returns .rr-bars.cr-bars .cr-bar-col .cr-bar-tick {
+    display: block;
+    text-align: center;
+  }
+}
+
+/*
+ * Owner, 2026-11-24 — the Items tab: the top five as bars (By sales / By plates), then short lists side by side. On a
+ * phone each bar sits under its dish's line (the counter report's rows); on a laptop name, bar and amount share a line.
+ */
+.rr-topdishes {
+  margin-top: var(--sp-4);
+}
+
+.rr-topdishes-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-4);
+  margin-bottom: var(--sp-3);
+}
+
+.rr-topdishes-head .rr-list-title {
+  margin: 0;
+}
+
+.rr-rank-by {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.rr-rank-by .srp-nav-tab {
+  min-height: 44px;
+  font: inherit;
+  font-size: var(--fs-2);
+  cursor: pointer;
+}
+
+/* Only the one not pressed loses its fill: the pressed one keeps the tabs' dark green (its text is white). */
+.rr-rank-by .srp-nav-tab:not(.is-active) {
+  background: none;
+}
+
+.rr-hbars .cr-row-name {
+  display: grid;
+  white-space: normal;
+}
+
+.rr-hbar-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rr-list-sub {
+  margin: 0 0 var(--sp-1);
+}
+
+.rr-list-value.is-up {
+  color: var(--accent-deep);
+}
+
+.rr-list-value.is-down {
+  color: var(--danger-deep);
+}
+
+.rr-list-value.is-quiet {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+@media (min-width: 861px) {
+  .rr-hbars .cr-row {
+    display: grid;
+    grid-template-columns: minmax(10rem, 16rem) minmax(0, 1fr) 6.5rem;
+    align-items: center;
+    column-gap: var(--sp-5);
+  }
+
+  .rr-hbars .cr-row-line {
+    display: contents;
+  }
+
+  .rr-hbars .cr-row-name {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .rr-hbars .cr-row-money {
+    grid-column: 3;
+    grid-row: 1;
+    text-align: right;
+  }
+
+  .rr-hbars .cr-row-track {
+    grid-column: 2;
+    grid-row: 1;
+    height: 0.875rem;
+    margin-top: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+  }
+
+  .rr-hbars .cr-row-fill {
+    border-radius: var(--radius-sm);
+  }
+}
