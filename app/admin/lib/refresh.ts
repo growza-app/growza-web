@@ -68,6 +68,12 @@ async function attempt(): Promise<RefreshOutcome> {
    * refresh route itself is careful to avoid.
    */
   const body = (await res.json().catch(() => null)) as { error?: string } | null;
-  const refusedTheCookie = body?.error === 'refresh_failed' || body?.error === 'no_refresh_token';
+  /*
+   * Jira GRW-764 — `mfa_enrolment_required`: two-step sign-in is now compulsory and this session was password-only.
+   * The API has already cleared the cookies; the session is over, not unreachable. Read as an outage it left the
+   * admin on "Could not reach the sign-in service" forever instead of at the sign-in that sets their app up.
+   */
+  const refusedTheCookie =
+    body?.error === 'refresh_failed' || body?.error === 'no_refresh_token' || body?.error === 'mfa_enrolment_required';
   return refusedTheCookie ? { status: 'dead' } : { status: 'unavailable' };
 }

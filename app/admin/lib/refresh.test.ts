@@ -56,6 +56,8 @@ describe('refreshAdminSession', () => {
   it.each([
     ['refresh_failed', 'a cookie the provider rejected'],
     ['no_refresh_token', 'no cookie at all'],
+    // Jira GRW-764 — two-step sign-in became compulsory and this session was password-only.
+    ['mfa_enrolment_required', 'a password-only session once two-step sign-in is required'],
   ])('treats 401 %s as dead — only a fresh sign-in helps', async (error) => {
     vi.stubGlobal('fetch', vi.fn(async () => respond(401, { error })));
     await expect(refreshAdminSession()).resolves.toEqual({ status: 'dead' });

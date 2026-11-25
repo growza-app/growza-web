@@ -8,6 +8,7 @@ import { adminFetch } from '../lib/api';
 import { clearAdminSession } from '../lib/session';
 import { BROWSER_BACK, NAV_GROUPS, bottomNavItems, isNavItemActive, resolveRouteMeta } from '../nav';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
+import { TwoStepEnrolDialog } from './TwoStep';
 import { NotificationBell } from './NotificationBell';
 import { FindBusiness } from './FindBusiness';
 import { oklch } from '../tokens';
@@ -44,6 +45,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   // A 401 is handled by adminFetch's own sign-out; any other failure shows the whole nav (see below).
   const meError = meState.status === 'error' && !meState.unauthorised;
   const [changingPassword, setChangingPassword] = useState(false);
+  const [turningOnTwoStep, setTurningOnTwoStep] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const { session: impersonation, exit: exitImpersonation } = useImpersonation();
@@ -343,6 +345,28 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 Change password
               </button>
             )}
+            {/* Jira GRW-764 (FR-04) — offered until this admin has an authenticator app. */}
+            {me && me.mfaEnrolled === false && me.phone ? (
+              <button
+                type="button"
+                onClick={() => setTurningOnTwoStep(true)}
+                style={{
+                  display: 'block',
+                  marginTop: 4,
+                  padding: 0,
+                  border: 'none',
+                  background: 'none',
+                  color: oklch.sidebarText,
+                  font: 'inherit',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                }}
+              >
+                Turn on two-step sign-in
+              </button>
+            ) : null}
           </div>
           <button
             type="button"
@@ -376,6 +400,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       </aside>
 
       {changingPassword && <ChangePasswordDialog onClose={() => setChangingPassword(false)} />}
+      {turningOnTwoStep && me?.phone ? <TwoStepEnrolDialog phone={me.phone} onClose={() => setTurningOnTwoStep(false)} /> : null}
       <div className="admin-nav-scrim" data-open={navOpen} onClick={() => setNavOpen(false)} />
 
       <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
