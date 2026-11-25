@@ -93,7 +93,7 @@ describe('the POS tab is wired into every menu', () => {
 
   it('is in the sidebar right under Home, and absent when the business has no products', () => {
     const sidebar = src('../components/Sidebar.tsx');
-    expect(sidebar).toContain("...(products === false ? [] : [{ href: '/pos', label: t.nav.pos, icon: <IconPos /> }])");
+    expect(sidebar).toContain("...(products === false ? [] : [{ href: '/pos', label: t.nav.pos, icon: <IconPos />, className: 'nav-pos' }])");
     expect(sidebar.indexOf("href: '/pos'")).toBeGreaterThan(sidebar.indexOf("href: '/', label: t.nav.home"));
     expect(sidebar.indexOf("href: '/pos'")).toBeLessThan(sidebar.indexOf("href: '/orders'"));
   });
