@@ -64,3 +64,12 @@ describe('the screens', () => {
     expect(shell).toContain('Turn on two-step sign-in');
   });
 });
+
+describe('change password after two-step sign-in (code review 2026-11-25)', () => {
+  const dialog = read('./ChangePasswordDialog.tsx');
+  it('a change that signed the admin out says so and offers sign-in, instead of "use it next time"', () => {
+    expect(dialog).toContain("setSignedOut(answer?.signedOut === true)");
+    expect(dialog).toContain('you are signed out everywhere');
+    expect(dialog).toContain("window.location.assign('/admin/login')");
+  });
+});

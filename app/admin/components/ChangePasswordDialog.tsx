@@ -21,15 +21,22 @@ export function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
   useDialog(dialogRef, { onClose: busy ? undefined : onClose });
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  /*
+   * Code review 2026-11-25 (Jira GRW-764) — the API ends every session when the fresh sign-in after a change cannot
+   * finish on its own, which is always the case for an admin with two-step sign-in. The old message said "use it next
+   * time" and the next click landed on sign-in with no word of why.
+   */
+  const [signedOut, setSignedOut] = useState(false);
 
   const submit = async () => {
     setBusy(true);
     setError(null);
     try {
-      await adminFetch('/auth/change-password', {
+      const answer = await adminFetch<{ ok: boolean; signedOut?: boolean }>('/auth/change-password', {
         method: 'POST',
         body: JSON.stringify({ currentPassword: current, newPassword: next }),
       });
+      setSignedOut(answer?.signedOut === true);
       setDone(true);
       setCurrent('');
       setNext('');
@@ -85,11 +92,17 @@ export function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
 
         {done ? (
           <>
-            <p style={{ margin: '0 0 16px', fontSize: '0.875rem', fontWeight: 600, color: oklch.accent }}>
-              Password changed. Use the new one next time you sign in.
+            <p role="status" style={{ margin: '0 0 16px', fontSize: '0.875rem', fontWeight: 600, color: oklch.accent }}>
+              {signedOut
+                ? 'Password changed. For your safety you are signed out everywhere — sign in again with the new password.'
+                : 'Password changed. Use the new one next time you sign in.'}
             </p>
-            <button type="button" onClick={onClose} style={{ padding: '9px 16px', borderRadius: 9, cursor: 'pointer' }}>
-              Close
+            <button
+              type="button"
+              onClick={signedOut ? () => window.location.assign('/admin/login') : onClose}
+              style={{ minHeight: 44, padding: '0 16px', borderRadius: 9, cursor: 'pointer' }}
+            >
+              {signedOut ? 'Sign in again' : 'Close'}
             </button>
           </>
         ) : (
