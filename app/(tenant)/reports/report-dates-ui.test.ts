@@ -3,13 +3,11 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const read = (p: string) => readFileSync(join(__dirname, '..', p), 'utf8');
-const diary = read('reports/DiaryReport.tsx');
 const counter = read('reports/CounterReport.tsx');
 
 /** Owner, 2026-11-02 — the period is asked for as two dates, not picked from a list of five. */
-describe('Both reports are asked for by date', () => {
+describe('The counter report is asked for by date (the diary report it shared this with was retired for the salon tabs, 2026-11-25)', () => {
   it.each([
-    ['diary', diary, 'diaryReport'],
     ['counter', counter, 'counterReport'],
   ])('%s sends a custom range built from the two fields', (_name, src, call) => {
     expect(src).toContain(`api.${call}({ range: 'custom', from: dates.fromISO, to: dates.toISO`);
@@ -20,7 +18,6 @@ describe('Both reports are asked for by date', () => {
   });
 
   it.each([
-    ['diary', diary],
     ['counter', counter],
   ])('%s opens on the week it always opened on, in the business’s own zone', (_name, src) => {
     expect(src).toContain('useState(() => defaultReportRange(todayISO))');
@@ -28,7 +25,6 @@ describe('Both reports are asked for by date', () => {
   });
 
   it.each([
-    ['diary', diary],
     ['counter', counter],
   ])('%s applies a pair only once both dates are whole', (_name, src) => {
     expect(src).toContain('if (!iso.test(fromISO) || !iso.test(toISO)) return;');
@@ -44,7 +40,6 @@ describe('Both reports are asked for by date', () => {
   });
 
   it.each([
-    ['diary', diary],
     ['counter', counter],
   ])('%s groups a long period and thins the axis rather than drawing a smear', (_name, src) => {
     // 33 days was 33 columns 6px wide with a weekday printed over the next one.
@@ -62,7 +57,7 @@ describe('Both reports are asked for by date', () => {
   it('the words exist in both languages', () => {
     for (const lang of ['en', 'hi']) {
       const m = JSON.parse(read(`../../messages/${lang}.json`));
-      for (const group of ['diaryReport', 'counterReport']) {
+      for (const group of ['salonReports', 'counterReport']) {
         expect(m[group].from, `${lang}.${group}.from`).toBeTruthy();
         expect(m[group].to, `${lang}.${group}.to`).toBeTruthy();
       }

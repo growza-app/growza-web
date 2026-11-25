@@ -91,7 +91,7 @@ export function axisAmount(minor: number, money: Money): string {
   return money(minor);
 }
 
-function Bars({ points, money, label, today }: { points: Array<{ key: string; tick: string; full: string; minor: number; weekend?: boolean }>; money: Money; label: string; today?: { key: string; word: string } }) {
+export function Bars({ points, money, label, today }: { points: Array<{ key: string; tick: string; full: string; minor: number; weekend?: boolean }>; money: Money; label: string; today?: { key: string; word: string } }) {
   const peak = Math.max(0, ...points.map((p) => p.minor));
   const best = points.findIndex((p) => p.minor === peak && peak > 0);
   const { top, step } = scale(peak);
@@ -147,7 +147,7 @@ function Bars({ points, money, label, today }: { points: Array<{ key: string; ti
 }
 
 /** A small figure: its name, its amount. */
-function Small({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
+export function Small({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
   return (
     <div className="rr-small">
       <p className="rr-small-label">{label}</p>
@@ -158,7 +158,7 @@ function Small({ label, value, sub }: { label: string; value: ReactNode; sub?: R
 }
 
 /** A list of up to five rows: a name and an amount. */
-function List({
+export function List({
   title,
   sub,
   rows,
