@@ -3107,6 +3107,7 @@
       "refunds": "Refunds",
       "appCut": "Delivery app cut",
       "busy": "Busy times",
+      "busySub": "Each hour, added up over these dates",
       "byPayment": "How people paid",
       "byType": "How it was eaten",
       "bills": "{n, plural, one {# bill} other {# bills}}",
@@ -3335,6 +3336,7 @@
       "discounts": "Discounts",
       "refunds": "Refunds",
       "busy": "Busy times",
+      "busySub": "Each hour, added up over these dates",
       "byPayment": "How people paid",
       "noVisits": "No visits on these days — only products sold."
     },

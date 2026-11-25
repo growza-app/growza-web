@@ -27,7 +27,7 @@ import { Avatar } from '../components/home/parts';
 import { useBranch } from '../components/BranchProvider';
 import { useSession } from '../components/SessionProvider';
 import { ReportDates } from './ReportDates';
-import { Bars, List, rupees, Small } from './RestaurantReports';
+import { Bars, List, namedHour, rupees, Small } from './RestaurantReports';
 import { FIXED_WINDOW_TABS, SALON_TABS, type SalonTab } from './salon-tabs';
 import { Heatmap } from './charts/Heatmap';
 import { fetchOnce, freshFor, isFresh, peek } from './report-cache';
@@ -274,8 +274,9 @@ export function SalonSalesTab({ data }: { data: SalonSalesPage }) {
   const first = sold.length ? sold[0]!.hour : 0;
   const last = sold.length ? sold[sold.length - 1]!.hour : -1;
   const by = new Map(data.busyHours.map((h) => [h.hour, h.salesMinor]));
+  const hourNamed = namedHour(first, last);
   const points = [];
-  for (let h = first; h <= last; h++) points.push({ key: String(h), tick: h === first || h === last || (h - first) % 3 === 0 ? hourName(h) : '', full: hourName(h), minor: by.get(h) ?? 0 });
+  for (let h = first; h <= last; h++) points.push({ key: String(h), tick: hourNamed(h) ? hourName(h) : '', full: hourName(h), minor: by.get(h) ?? 0 });
   const modeName = (mode: string) => (mode in MODE_WORDS ? t(MODE_WORDS[mode as keyof typeof MODE_WORDS]) : mode);
   return (
     <>
@@ -303,6 +304,7 @@ export function SalonSalesTab({ data }: { data: SalonSalesPage }) {
         {points.length > 0 ? (
           <>
             <h3 className="rr-list-title">{t('sales.busy')}</h3>
+            <p className="rr-more rr-list-sub">{t('sales.busySub')}</p>
             <Bars points={points} money={money} label={t('sales.busy')} />
           </>
         ) : null}

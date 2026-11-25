@@ -8,6 +8,7 @@ import hi from '../../../messages/hi.json';
 import type { SalonChairsPage, SalonLoyaltyPage, SalonClientsPage, SalonOverviewPage, SalonSalesPage, SalonServicesPage, SalonTeamPage, SalonTipsPage } from '../lib/api-types';
 import { SalonChairsTab, SalonLoyaltyTab, SalonClientsTab, SalonOverviewTab, SalonSalesTab, SalonServicesTab, SalonTeamTab, SalonTipsTab } from './SalonReports';
 import { SALON_TABS } from './salon-tabs';
+import { namedHour } from './RestaurantReports';
 import { LabelsProvider } from '../components/LabelsProvider';
 
 /**
@@ -102,6 +103,15 @@ describe('Sales', () => {
     expect(html).not.toContain('Refunds');
     expect(html).not.toContain('vs the days before');
     expect(html).toContain('How people paid');
+    expect(html).toContain('Each hour, added up over these dates');
+  });
+  it('the busy-hours axis never names two hours side by side: all 24 hours name every 4th, a short day every 3rd (owner, 2026-11-25)', () => {
+    const day = namedHour(0, 23);
+    expect([...Array(24).keys()].filter(day)).toEqual([0, 4, 8, 12, 16, 20]);
+    const short = namedHour(9, 18);
+    expect([9, 10, 11, 12, 13, 14, 15, 16, 17, 18].filter(short)).toEqual([9, 12, 15, 18]);
+    // 9 am – 7 pm: 7 pm is not a step, and is left unnamed rather than printed against 6 pm.
+    expect(namedHour(9, 19)(19)).toBe(false);
   });
   it('a day of counter sales only says there were no visits, never "₹0" (code review 2026-11-25)', () => {
     const html = render(createElement(SalonSalesTab, { data: { ...sales, averageVisit: null } }));
