@@ -32,6 +32,8 @@ interface AdminRow {
   roleId: string | null;
   roleName: string | null;
   roleIsBuiltin: boolean;
+  /** Jira GRW-764 — has an authenticator app (two-step sign-in). Absent from an API that predates it. */
+  mfaEnrolled?: boolean;
   createdAt: string;
 }
 
@@ -66,6 +68,9 @@ export default function AdminUsersPage() {
   /** GRW-165 — the admin's own control: put somebody back to a one-time password. */
   const [resetError, setResetError] = useState<string | null>(null);
   const [resetDone, setResetDone] = useState<string | null>(null);
+  // Jira GRW-764 — "Reset authenticator" for someone who lost their phone.
+  const [mfaResetting, setMfaResetting] = useState<AdminRow | null>(null);
+  const [mfaResetError, setMfaResetError] = useState<string | null>(null);
   /*
    * Jira GRW-475 — the password reset and the role change were `window.prompt`: the new password showed in plain
    * text with no second box to catch a typo, and an empty reason could be sent. Both are dialogs now, the password
@@ -170,6 +175,21 @@ export default function AdminUsersPage() {
       .finally(() => setBusy(false));
   }
 
+  function confirmMfaReset(reason: string) {
+    if (!mfaResetting) return;
+    const user = mfaResetting;
+    setBusy(true);
+    setMfaResetError(null);
+    adminFetch(`/users/${user.id}/mfa-reset`, { method: 'POST', body: JSON.stringify({ reason: reason.trim() }) })
+      .then(() => {
+        setMfaResetting(null);
+        setResetDone(`${user.name}'s authenticator is off and they are signed out. They set a new one up the next time they sign in.`);
+        void load();
+      })
+      .catch((err) => setMfaResetError(err instanceof AdminApiError ? err.message : 'Could not reset the authenticator.'))
+      .finally(() => setBusy(false));
+  }
+
   if (error) return <EmptyState icon="users" title="Could not load administrators" sub={error} />;
   if (!data) return <div style={{ fontSize: '0.84375rem', color: oklch.textMuted }}>Loading…</div>;
 
@@ -256,6 +276,12 @@ export default function AdminUsersPage() {
 
                   <div>
                     <StatusPill status={user.status === 'active' ? 'Active' : 'Deactivated'} />
+                    {/* Jira GRW-764 (FR-07) — whether a stolen password alone would get in. */}
+                    {user.mfaEnrolled === undefined ? null : (
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, marginTop: 4, color: user.mfaEnrolled ? oklch.accentText : oklch.textMuted }}>
+                        {user.mfaEnrolled ? 'Two-step on' : 'Two-step off'}
+                      </div>
+                    )}
                   </div>
 
                   <div style={{ textAlign: 'right', display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
@@ -269,6 +295,17 @@ export default function AdminUsersPage() {
                       <SecondaryButton onClick={() => setChangingOwnPassword(true)}>Change password</SecondaryButton>
                     ) : canManage && user.status === 'active' && roleInReach(user.roleId) ? (
                       <SecondaryButton onClick={() => resetPassword(user)}>Reset password</SecondaryButton>
+                    ) : null}
+                    {!isSelf && canManage && user.status === 'active' && user.mfaEnrolled && roleInReach(user.roleId) ? (
+                      <SecondaryButton
+                        onClick={() => {
+                          setMfaResetError(null);
+                          setResetDone(null);
+                          setMfaResetting(user);
+                        }}
+                      >
+                        Reset authenticator
+                      </SecondaryButton>
                     ) : null}
                     {!canManage ? null : locked ? (
                       <span style={{ fontSize: '0.75rem', color: oklch.textFaint, fontWeight: 600, alignSelf: 'center' }}>{locked}</span>
@@ -324,6 +361,23 @@ export default function AdminUsersPage() {
           onChange={(e) => setNewPasswordAgain(e.target.value)}
         />
       </ConfirmDialog>
+
+      <ConfirmDialog
+        open={mfaResetting !== null}
+        title={`Reset ${mfaResetting?.name ?? 'this administrator'}'s authenticator?`}
+        description="For a lost or changed phone. Their two-step sign-in is switched off and they are signed out everywhere. They set up the app again the next time they sign in."
+        confirmLabel="Reset authenticator"
+        danger
+        reasonRequired
+        reasonPlaceholder="Why? For example: lost phone. This is recorded against your name."
+        loading={busy}
+        error={mfaResetError}
+        onConfirm={confirmMfaReset}
+        onCancel={() => {
+          setMfaResetting(null);
+          setMfaResetError(null);
+        }}
+      />
 
       <ConfirmDialog
         open={roleChange !== null}

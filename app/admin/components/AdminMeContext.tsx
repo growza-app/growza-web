@@ -15,7 +15,9 @@ import { adminFetch, AdminApiError } from '../lib/api';
  */
 
 export interface AdminMe {
-  admin: { id: string; name: string; phone: string | null; roleName: string | null };
+  /** Jira GRW-764 — `mfaEnrolled`: has an authenticator app. Absent from an API that predates two-step sign-in. */
+  admin: { id: string; name: string; phone: string | null; roleName: string | null; mfaEnrolled?: boolean };
+  mfaRequired?: boolean;
   /** Already expanded on the server: a `manage` grant includes its `view`. */
   permissions: string[];
 }
