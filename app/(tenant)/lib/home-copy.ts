@@ -459,6 +459,9 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       salesThisWeek: S('Sales this week', 'इस हफ़्ते की बिक्री'),
       salesThisMonth: S('Sales this month', 'इस महीने की बिक्री'),
       paidToday: S('Payments today', 'आज के भुगतान'),
+      /** Owner, 2026-11-26 — the salon's laptop payments card follows the Today / Week / Month switch, like the bars beside it. */
+      paidThisWeek: S('Payments this week', 'इस हफ़्ते के भुगतान'),
+      paidThisMonth: S('Payments this month', 'इस महीने के भुगतान'),
       salesLast7: S('Sales, last 7 days', 'बिक्री, पिछले 7 दिन'),
       paidLast7: S('Payments, last 7 days', 'भुगतान, पिछले 7 दिन'),
       waitingNow: S('waiting now', 'अभी इंतज़ार में'),

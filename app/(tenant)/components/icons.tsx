@@ -704,12 +704,18 @@ export const IconReceipt = () => (
   </svg>
 );
 
-/** Jira (POS tab) — a till: the screen above, the keys below. Drawn at Feather's weight like the rest. */
+/**
+ * Jira (POS tab) — the till. Owner, 2026-11-26 (option F, then "do both"): a counter's cash register — the display on
+ * its stand, the keys, the cash drawer under them — everywhere POS is drawn: the bottom bar's circle, the menu, More,
+ * Home's quick links. Drawn at Feather's weight like the rest.
+ */
 export const IconPos = () => (
   <svg {...base}>
-    <rect x="6" y="3" width="12" height="6" rx="2" />
-    <rect x="4" y="11" width="16" height="10" rx="2.5" />
-    <path d="M8.5 15h.01M12 15h.01M15.5 15h.01M8.5 18h.01M12 18h.01M15.5 18h.01" />
+    <rect x="7" y="3" width="10" height="4" rx="1" />
+    <path d="M12 7v3" />
+    <path d="M5.5 10h13l1.5 7H4Z" />
+    <rect x="3" y="17" width="18" height="4" rx="1" />
+    <path d="M8.5 12.5h.01M12 12.5h.01M15.5 12.5h.01M8 15h.01M12 15h.01M16 15h.01" />
   </svg>
 );
 
@@ -828,6 +834,26 @@ export const IconBarChart = () => (
     <path d="M11 17V7" />
     <path d="M16 17v-8" />
     <path d="M20 17V4" />
+  </svg>
+);
+
+/**
+ * Owner, 2026-11-26 — the business's mark on its card at the top of the menu: a house with a red roof. The one
+ * full-colour icon in the app, on purpose (the owner's pick, option B): copied from Icons8's Flat Color Icons
+ * ("FcHome", github.com/icons8/flat-color-icons, MIT licence) as inline SVG, not installed as a library. Its colours
+ * are its own and do not follow `currentColor`, so it sits on a white chip.
+ */
+export const IconBrandHouse = () => (
+  <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+    <polygon fill="#E8EAF6" points="42,39 6,39 6,23 24,6 42,23" />
+    <g fill="#C5CAE9">
+      <polygon points="39,21 34,16 34,9 39,9" />
+      <rect x="6" y="39" width="36" height="5" />
+    </g>
+    <polygon fill="#B71C1C" points="24,4.3 4,22.9 6,25.1 24,8.4 42,25.1 44,22.9" />
+    <rect x="18" y="28" fill="#D84315" width="12" height="16" />
+    <rect x="21" y="17" fill="#01579B" width="6" height="6" />
+    <path fill="#FF8A65" d="M27.5,35.5c-0.3,0-0.5,0.2-0.5,0.5v2c0,0.3,0.2,0.5,0.5,0.5S28,38.3,28,38v-2C28,35.7,27.8,35.5,27.5,35.5z" />
   </svg>
 );
 

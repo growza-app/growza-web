@@ -75,6 +75,15 @@ body {
   font-weight: 600;
 }
 
+/*
+ * Owner, 2026-11-26 ("do both") — the page you are on also fills its icon in, as Home does in the phone's bottom bar: a
+ * second "you are here" beside the white row and the green edge, one that does not rest on colour alone. A soft wash of
+ * the icon's own green inside its shapes (lines have no inside, so they stay lines), at every width and in the slim bar.
+ */
+.nav a.active svg :is(path, rect, circle, polygon, ellipse) {
+  fill: color-mix(in srgb, currentColor 35%, transparent);
+}
+
 .nav a.active::before {
   content: '';
   position: absolute;
@@ -110,6 +119,75 @@ body {
 
 :is(.btn, .button, .primary-btn, .secondary-btn, .ghost-btn, .rst-date-pill) {
   border-radius: 999px;
+}
+
+/*
+ * The week in bars (`WeekBarsCard`), at every width: a laptop draws it in the charts row, and since 2026-11-26 a
+ * restaurant's phone Home draws it too (owner: "add this on mobile"), above the Queue card. The laptop's sizes below
+ * still win at 861px and up.
+ */
+.rst-week-total {
+  font-size: var(--fs-7);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rst-week-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-3);
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rst-week-bars li {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rst-week-amt {
+  min-height: 1.125rem;
+  margin-bottom: 2px;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.rst-week-bars li.is-peak .rst-week-amt {
+  font-weight: 600;
+  color: var(--forest);
+}
+
+.rst-week-slot {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  max-width: 2.25rem;
+  height: 5rem;
+  border-radius: 999px;
+  background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
+}
+
+.rst-week-bar {
+  width: 100%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
+}
+
+.rst-week-bars li.is-peak .rst-week-bar {
+  background: var(--forest);
+}
+
+.rst-week-day {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-1);
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 /* ---------- restaurant / shop Home, laptop and up ---------- */
@@ -892,71 +970,9 @@ body {
     grid-auto-rows: minmax(13.9375rem, auto);
   }
 
-  .rst-week-total {
-    font-size: var(--fs-7);
-    font-weight: 600;
-    color: var(--text);
-  }
 
-  .rst-week-bars {
-    display: flex;
-    align-items: flex-end;
-    gap: var(--sp-3);
-    margin: var(--sp-2) 0 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .rst-week-bars li {
-    display: flex;
-    flex: 1 1 0;
-    min-width: 0;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .rst-week-amt {
-    min-height: 1.125rem;
-    margin-bottom: 2px;
-    font-size: var(--fs-1);
-    font-weight: 500;
-    color: var(--muted);
-    white-space: nowrap;
-  }
-
-  .rst-week-bars li.is-peak .rst-week-amt {
-    font-weight: 600;
-    color: var(--forest);
-  }
-
-  .rst-week-slot {
-    display: flex;
-    align-items: flex-end;
-    width: 100%;
-    max-width: 2.25rem;
-    height: 5rem;
-    border-radius: 999px;
-    background: repeating-linear-gradient(135deg, var(--canvas-line) 0 2px, transparent 2px 7px);
-  }
-
-  .rst-week-bar {
-    width: 100%;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--forest-2) 55%, var(--mint));
-  }
-
-  .rst-week-bars li.is-peak .rst-week-bar {
-    background: var(--forest);
-  }
-
-  .rst-week-day {
-    margin-top: var(--sp-1);
-    font-size: var(--fs-1);
-    color: var(--muted);
-    white-space: nowrap;
-  }
-
-  /* The half-donut. Arc 0 is the biggest share, then down the greens. */
+  /* The half-donut. Arc 0 is the biggest share in the dark green, arc 1 orange so the two never read as one colour
+     (owner, 2026-11-26), then the light greens. */
   /* Owner, 14 Nov 2026: "decrease the height of row 2" — the gauge is drawn to the bar chart's height. */
   .rst-gauge {
     position: relative;
@@ -981,7 +997,7 @@ body {
   }
 
   .rst-gauge-arc.is-0 { stroke: var(--forest); }
-  .rst-gauge-arc.is-1 { stroke: color-mix(in srgb, var(--forest-2) 55%, var(--mint)); }
+  .rst-gauge-arc.is-1 { stroke: var(--chart-weekend); }
   .rst-gauge-arc.is-2 { stroke: var(--mint); }
   .rst-gauge-arc.is-3,
   .rst-gauge-arc.is-4 { stroke: var(--canvas-line); }
@@ -1038,7 +1054,7 @@ body {
   }
 
   .rst-gauge-legend i.is-0 { background: var(--forest); }
-  .rst-gauge-legend i.is-1 { background: color-mix(in srgb, var(--forest-2) 55%, var(--mint)); }
+  .rst-gauge-legend i.is-1 { background: var(--chart-weekend); }
   .rst-gauge-legend i.is-2 { background: var(--mint); }
   .rst-gauge-legend i:is(.is-3, .is-4) { background: var(--canvas-line); }
 
@@ -2672,6 +2688,64 @@ body {
 }
 
 /*
+ * Owner, 2026-11-26 — "add glass effect, multi-shade colour" to the drawer's business card. Three greens from the
+ * Home money card (deep forest at the left, the brighter forest, a mint glow at the right), with the same glass as
+ * the bar's POS circle: a white sheen over the top, a bright rim above and a darker one below. White type on it;
+ * the business's red-roof house sits on a white chip. Reduce transparency / increase contrast get the plain deep green.
+ */
+.brand-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background:
+    radial-gradient(130% 80% at 20% 0%, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 55%),
+    radial-gradient(90% 120% at 100% 100%, color-mix(in srgb, var(--mint) 55%, transparent), transparent 60%),
+    linear-gradient(115deg, var(--forest) 0%, var(--forest-2) 55%, color-mix(in srgb, var(--forest-2) 70%, var(--mint)) 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.16),
+    0 8px 20px rgba(23, 63, 43, 0.22);
+}
+
+.brand-card .brand-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  border-radius: 50%;
+  /* Owner, 2026-11-26 — the red-roof house (option B) is full colour, so it sits on a white chip, not a frosted one. */
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(9, 20, 15, 0.25);
+}
+
+.brand-card .brand-badge svg {
+  width: 1.625rem;
+  height: 1.625rem;
+}
+
+.brand-card .brand-name {
+  color: #fff;
+}
+
+.sidebar .brand-card .brand-location {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .brand-card {
+    border-color: transparent;
+    background: var(--forest);
+    box-shadow: none;
+  }
+  .sidebar .brand-card .brand-location {
+    color: #fff;
+  }
+}
+
+/*
  * Laptop sweep 2026-11-22 — a 768px-tall window with Team open: the menu ran 579px in 517px of room, so WhatsApp and
  * Settings sat below the fold of a scroller that gave no sign it scrolled. Rows keep their 40px; the air between the
  * blocks above and between the groups gives up the difference instead, and when a long menu still runs over (more
@@ -2700,4 +2774,80 @@ body {
       radial-gradient(farthest-side at 50% 0, rgb(0 0 0 / 0.14), transparent) top / 100% 0.625rem no-repeat scroll,
       radial-gradient(farthest-side at 50% 100%, rgb(0 0 0 / 0.14), transparent) bottom / 100% 0.625rem no-repeat scroll;
   }
+}
+
+/* Owner, 2026-11-26 — the Guests (restaurant) and Clients (salon) tile stays white (a soft orange wash was tried and
+   turned down); its round arrow, its chip and its week's line take the payments gauge's orange. Laptop only, like
+   every rule in this file. The chip's text is --amber-ink: 5:1 on its pale orange. */
+@media (min-width: 861px) {
+  .rst-kpi-customers .rst-kpi-go {
+    border-color: color-mix(in srgb, var(--chart-weekend) 45%, var(--surface));
+    color: var(--chart-weekend-deep);
+  }
+
+  a.rst-kpi-customers:hover .rst-kpi-go {
+    background: var(--chart-weekend-deep);
+    border-color: var(--chart-weekend-deep);
+    color: #fff;
+  }
+
+  .rst-kpi-customers :is(.rst-delta-pill.is-up, .sln-kpi-pill.is-amber) {
+    background: color-mix(in srgb, var(--chart-weekend) 22%, var(--surface));
+    color: var(--amber-ink);
+  }
+
+  .rst-kpi-customers .rst-kpi-spark polygon {
+    fill: color-mix(in srgb, var(--chart-weekend) 16%, transparent);
+  }
+
+  .rst-kpi-customers .rst-kpi-spark polyline {
+    stroke: var(--chart-weekend);
+  }
+}
+
+/* Owner, 2026-11-26 — the week's bars on a restaurant's phone Home, drawn as one of the phone's own cards (the same
+   white, line and corner as `.hm-card`), so it sits in the stack like the Queue card under it. */
+@media (max-width: 860px) {
+  .shp-mobile-stack .rst-week-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    min-width: 0;
+    padding: var(--sp-4);
+    border: 1px solid var(--hm-line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+  .shp-mobile-stack .rst-week-panel .rst-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+  }
+  .shp-mobile-stack .rst-week-panel .rst-panel-head h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--hm-ink);
+  }
+  .shp-mobile-stack .rst-week-total {
+    font-size: 1rem;
+  }
+  .shp-mobile-stack .rst-week-bars {
+    gap: var(--sp-2);
+  }
+}
+
+/*
+ * Owner, 2026-11-26 (option A) — the page you are on in the menu is a soft mint pill: green type and the filled-in icon
+ * on a pale green, in place of the white strip and the green edge bar ("the white strips not looking good"). Last in
+ * the sheet so it wins over the laptop rules above; the slim laptop bar keeps its own highlight (99-zz-slim-rail.css).
+ */
+.nav a.active {
+  background: color-mix(in srgb, var(--mint) 35%, var(--surface));
+  color: var(--forest);
+}
+
+.nav a.active::before {
+  content: none;
 }
