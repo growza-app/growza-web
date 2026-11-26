@@ -31,6 +31,14 @@ import { PageHeadBell } from '../PageHeadBell';
  * QA 2026-10-23 — "whole" was the promise and not the code: a day whose bills carried paise drew "₹27,127.37" on the
  * revenue chart beside "₹25K". A Home figure is read at a glance; the paise are on the bill.
  */
+/** ₹240, ₹2.6k, ₹21k: a day's takings short enough for a phone's bar. Whole rupees, rounded. */
+export function shortRupees(minor: number): string {
+  const r = Math.round(minor / 100);
+  if (r < 1000) return `₹${r}`;
+  const k = r / 1000;
+  return `₹${k >= 10 ? Math.round(k) : Math.round(k * 10) / 10}k`;
+}
+
 export function rupees(minor: number): string {
   return formatMoney(String(Math.round(minor / 100) * 100));
 }
@@ -497,20 +505,43 @@ export function paySlicesOf(byMode: ReadonlyArray<{ mode: string; revenueMinor: 
   });
 }
 
-/** The half-donut: the biggest way of paying in the dark green and its share in the middle, a legend under it. */
+/**
+ * The half-donut: the biggest way of paying in the dark green and its share in the middle, a legend under it.
+ * With nothing paid it draws nothing — unless `empty` is given, when the card keeps its place with an empty track and
+ * that line in the middle (owner, 2026-11-26: the salon's laptop Home lost its payments card every morning).
+ */
 export function PayGaugeCard({
   title,
   slices,
   nameOf,
   money,
+  empty,
 }: {
   title: string;
   slices: PaySlice[];
   nameOf: (mode: string) => string;
   money: (minor: number) => string;
+  empty?: string;
 }) {
   const top = slices[0];
-  if (!top) return null;
+  if (!top) {
+    if (!empty) return null;
+    return (
+      <section className="rst-panel rst-pay-panel">
+        <div className="rst-panel-head">
+          <h3>{title}</h3>
+        </div>
+        <div className="rst-gauge">
+          <svg viewBox="0 0 120 66" aria-hidden="true" focusable="false">
+            <path className="rst-gauge-track" d="M10 60 A50 50 0 0 1 110 60" pathLength={100} />
+          </svg>
+          <div className="rst-gauge-mid">
+            <span>{empty}</span>
+          </div>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="rst-panel rst-pay-panel">
       <div className="rst-panel-head">

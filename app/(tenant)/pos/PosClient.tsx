@@ -3,6 +3,7 @@
 import { WaiterContext } from './waiter';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import Link from '../../shared/AppLink';
 import { api, ApiError, formatMoney, type Appointment, type OrderDetail } from '../lib/api';
 import type { PaymentMode } from '../lib/api-types';
@@ -729,6 +730,16 @@ export function PosClient({
   const opened = useRef(0);
   /* Owner, 2026-11-03 — the till's own Back, moved up into the bar. The action is still the till's. */
   const leaveRef = useRef<(() => void) | null>(null);
+  /* Owner, 2026-11-26 (option A) — the phone till's way back: "Back to Home" first in its ⋮ (Kitchen keeps its button).
+     The till says how many lines leaving would drop; with any, Home is asked for first. */
+  const homeRef = useRef<(() => number) | null>(null);
+  const [leaveAsk, setLeaveAsk] = useState<number | null>(null);
+  const router = useRouter();
+  const backToHome = () => {
+    const n = homeRef.current?.() ?? 0;
+    if (n > 0) setLeaveAsk(n);
+    else router.push('/');
+  };
 
   const storageKey = posQueueStorageKey(location, todayISO);
 
@@ -1663,6 +1674,7 @@ export function PosClient({
             className="pos-bar-more"
             label={t('more')}
             items={[
+              ...(narrow ? [{ label: t('backToHome'), onSelect: backToHome }] : []),
               ...(canReturn ? [{ label: t('returnBill'), onSelect: () => void openReturn() }] : []),
               ...(narrow ? [{ label: t('printerMenu'), onSelect: () => setPrinterOpen(true) }] : []),
               {
@@ -1675,6 +1687,20 @@ export function PosClient({
             ]}
           />
           {printerOpen ? <PrinterSheet printer={printer} onClose={() => setPrinterOpen(false)} /> : null}
+          {leaveAsk !== null ? (
+            <ConfirmDialog
+              title={t('leaveOrderTitle')}
+              body={t('leaveOrderBody', { count: leaveAsk })}
+              confirmLabel={t('leaveOrderConfirm')}
+              cancelLabel={t('leaveOrderStay')}
+              tone="danger"
+              onConfirm={() => {
+                setLeaveAsk(null);
+                router.push('/');
+              }}
+              onCancel={() => setLeaveAsk(null)}
+            />
+          ) : null}
         </div>
       ) : fullScreen ? (
         <header className="pos-fs-bar">
@@ -1860,6 +1886,7 @@ export function PosClient({
           backTo={backTo}
           hideHead
           leaveRef={addingToToken ? undefined : leaveRef}
+          homeRef={addingToToken ? undefined : homeRef}
           inactive={mode === 'queue' || addingToToken !== null || payingTable !== null}
           onPayTable={(bill) => void payTable(bill)}
           heading={heading}
@@ -1897,6 +1924,7 @@ export function PosClient({
             backTo={backTo}
             hideHead
             leaveRef={leaveRef}
+            homeRef={homeRef}
             heading={heading}
             nextTokenNo={nextTokenNo}
             onSaleCompleted={handleSaleCompleted}

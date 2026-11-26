@@ -185,6 +185,7 @@ export function PayFlow({
   nextTokenNo,
   hideHead,
   leaveRef,
+  homeRef,
   onSaleCompleted,
   onOpenQueue,
   onPayTable,
@@ -235,6 +236,11 @@ export function PayFlow({
   hideHead?: boolean;
   /** Where the POS's own Back button reaches `leave`, so moving the control changes nothing it does. */
   leaveRef?: { current: (() => void) | null };
+  /**
+   * Owner, 2026-11-26 (option A) — how the phone till's ⋮ "Back to Home" asks this till what leaving would drop: the
+   * number of lines on the bill being made (0 = nothing, go straight Home).
+   */
+  homeRef?: { current: (() => number) | null };
   /** Notifies the POS shell when a sale completes so the live token queue updates immediately. */
   onSaleCompleted?: (saleId: string) => void;
   /** Opens the POS Queue tab directly when the desk taps "View Queue" on the queued-order confirmation banner. */
@@ -1896,6 +1902,14 @@ export function PayFlow({
     leaveRef.current = leave;
     return () => {
       leaveRef.current = null;
+    };
+  });
+  /* Owner, 2026-11-26 (option A) — "Back to Home" from the phone till's ⋮ asks how many lines leaving would drop. */
+  useEffect(() => {
+    if (!homeRef) return;
+    homeRef.current = () => lines.length;
+    return () => {
+      homeRef.current = null;
     };
   });
   const payToken = token ? `&token=${encodeURIComponent(token.id)}${token.locationId ? `&location=${encodeURIComponent(token.locationId)}` : ''}` : '';

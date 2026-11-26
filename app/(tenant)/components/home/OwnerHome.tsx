@@ -882,7 +882,13 @@ export function OwnerHome(p: OwnerHomeProps) {
                 bars={weekBars}
               />
             ) : null}
-            <PayGaugeCard title={t.shop.paidToday} slices={paySlicesOf(data?.money.byPaymentMode)} nameOf={(m) => t.payment[m] ?? m} money={rupees} />
+            <PayGaugeCard
+              title={period === 'month' ? t.shop.paidThisMonth : period === 'week' ? t.shop.paidThisWeek : t.shop.paidToday}
+              slices={paySlicesOf(data?.money.byPaymentMode)}
+              nameOf={(m) => t.payment[m] ?? m}
+              money={rupees}
+              empty={t.noMoneyYet}
+            />
             <DarkStatCard
               title={t.rightNow}
               value={todayByState.active.length}
