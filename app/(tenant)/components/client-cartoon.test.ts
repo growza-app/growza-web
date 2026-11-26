@@ -21,7 +21,8 @@ describe('a client cartoon', () => {
 
   it('is picked from the id alone — nothing reads the name', () => {
     const cartoon = src('ClientCartoon.tsx');
-    expect(cartoon).toContain('export function ClientCartoon({ id, className }: { id: string; className: string })');
+    // Owner, 2026-11-26 — `choice` is a member's OWN pick of their picture; a client's face is never chosen for them.
+    expect(cartoon).toContain('export function ClientCartoon({ id, className, choice }: { id: string; className: string; choice?: string | null })');
     expect(cartoon.replace(/\/\*[\s\S]*?\*\//g, '')).not.toMatch(/\bname\b/);
   });
 
@@ -30,5 +31,7 @@ describe('a client cartoon', () => {
     expect(list).toContain('<ClientCartoon id={c.id} className="cust-avatar" />');
     expect(list).toContain('<ClientCartoon id={c.id} className="avatar" />');
     expect(src('ClientProfileCard.tsx')).toContain('<ClientCartoon id={clientId} className="cpc-avatar" />');
+    // A client's face comes from their id alone: no client screen passes a picked picture.
+    for (const f of ['../customers/CustomersClient.tsx', 'ClientProfileCard.tsx']) expect(src(f)).not.toContain('choice=');
   });
 });

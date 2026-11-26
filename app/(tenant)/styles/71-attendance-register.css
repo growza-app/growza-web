@@ -1198,6 +1198,63 @@
   box-shadow: 0 1px 3px rgba(9, 20, 15, 0.12);
 }
 
+/*
+ * Owner, 2026-11-26 — "Your picture": the face drawn from their number, then two men and two women, each a different
+ * skin tone. 44px round targets in one row; the chosen one carries a green ring (and aria-pressed), the rest a hairline.
+ */
+.acct-pictures {
+  margin: 4px 4px 8px;
+}
+
+.acct-pictures-label {
+  margin: 0 4px 6px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.acct-pictures-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.acct-picture {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+
+.acct-picture .acct-picture-face {
+  display: block;
+  width: 2.375rem;
+  height: 2.375rem;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.acct-picture .acct-picture-face svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.acct-picture[aria-pressed='true'] {
+  border: 2px solid var(--forest-2, var(--accent-deep));
+  box-shadow: 0 0 0 2px var(--surface) inset;
+}
+
+.acct-picture:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+
 .acct-signout {
   display: flex;
   align-items: center;

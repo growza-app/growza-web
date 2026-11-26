@@ -145,6 +145,8 @@ export interface Me {
     phone?: string | null;
     /** The name they go by — their own, else their stylist profile's. Null until set (or from an older API). */
     name?: string | null;
+    /** Owner, 2026-11-26 — the picture they picked beside their name (`AVATAR_KEYS`); null: never chosen. */
+    avatar?: string | null;
     /** Jira GRW-74 — the role they hold, if any; the grid below applies only to a member who has one. */
     tenantRoleId?: string | null;
     /** Owner, 2026-11-14 — the one branch this member may take returns at; null for the owner or a member with none. Absent from an older API. */

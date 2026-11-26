@@ -7,11 +7,11 @@ import { useRouter } from 'next/navigation';
 import { api } from '../lib/api';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
 import { homeCopy } from '../lib/home-copy';
-import { putName, saveLang, type Lang } from '../lib/lang';
+import { putAvatar, putName, saveLang, type Lang } from '../lib/lang';
 import { useLabels } from './LabelsProvider';
 import { useSession } from './SessionProvider';
 import { SignOutButton } from './SignOutButton';
-import { ClientCartoon } from './ClientCartoon';
+import { AVATAR_KEYS, ClientCartoon } from './ClientCartoon';
 import { IconClose, IconHelp, IconLogout } from './icons';
 
 /**
@@ -68,6 +68,9 @@ export function AccountMenu() {
   const [naming, setNaming] = useState(false);
   const [draft, setDraft] = useState('');
   const [nameError, setNameError] = useState(false);
+  /* Owner, 2026-11-26 — the picture they pick, shown at once; `undefined` = whatever the account says. */
+  const [picked, setPicked] = useState<string | null | undefined>(undefined);
+  const [pictureError, setPictureError] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -113,6 +116,21 @@ export function AccountMenu() {
     if (!ok) return setNameError(true);
     setNaming(false);
     router.refresh();
+  };
+
+  const avatar = picked === undefined ? (session?.avatar ?? null) : picked;
+  const faceId = session?.phone ?? name ?? session?.businessName ?? 'me';
+  /* Kept on the account (owner, 2026-11-26: "save it on the account"), so it follows them to every phone. Shown at
+     once; if the save fails the picture goes back to what the account holds and says so. */
+  const choosePicture = async (next: string | null) => {
+    if (next === avatar) return;
+    setPicked(next);
+    setPictureError(false);
+    if (await putAvatar(next)) router.refresh();
+    else {
+      setPicked(undefined);
+      setPictureError(true);
+    }
   };
 
   const lang: Lang = session?.lang ?? 'en';
@@ -179,7 +197,7 @@ export function AccountMenu() {
           drawn face the client list gives a client, picked from the person's own number so it is theirs on every
           device; and on a laptop their name and role beside it, as the shot's header has. Nobody has a photo yet.
         */}
-        <ClientCartoon id={session?.phone ?? name ?? session?.businessName ?? 'me'} className="acct-face" />
+        <ClientCartoon id={faceId} choice={avatar} className="acct-face" />
         <span className="acct-trigger-text">
           <strong>{name ?? t(`roles.${role}.name`)}</strong>
           <span>{name ? t(`roles.${role}.name`) : (session?.phone ?? '')}</span>
@@ -223,6 +241,26 @@ export function AccountMenu() {
                   <button type="button" lang="hi" aria-pressed={lang === 'hi'} onClick={() => chooseLang('hi')}>
                     हिन्दी
                   </button>
+                </div>
+                <div className="acct-pictures">
+                  <div className="acct-pictures-label" id={`${dialogId}-pic`}>
+                    {t('yourPicture')}
+                  </div>
+                  <div className="acct-pictures-row" role="group" aria-labelledby={`${dialogId}-pic`}>
+                    {([null, ...AVATAR_KEYS] as const).map((key) => (
+                      <button
+                        key={key ?? 'auto'}
+                        type="button"
+                        className="acct-picture"
+                        aria-pressed={avatar === key}
+                        aria-label={t(key === null ? 'pictureAuto' : `picture.${key}`)}
+                        onClick={() => void choosePicture(key)}
+                      >
+                        <ClientCartoon id={faceId} choice={key} className="acct-picture-face" />
+                      </button>
+                    ))}
+                  </div>
+                  {pictureError && <div role="alert" className="field-error">{t('pictureFailed')}</div>}
                 </div>
                 {naming ? (
                   <div className="acct-form acct-name-form">
