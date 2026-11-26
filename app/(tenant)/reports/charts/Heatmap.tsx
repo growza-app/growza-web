@@ -51,7 +51,8 @@ export function Heatmap({
   ];
 
   const band = (value: number) => BANDS.find((b) => value <= b.upTo) ?? BANDS[BANDS.length - 1]!;
-  const shade = (value: number) => (value === 0 ? 'var(--rp-heat-empty)' : band(value).fill);
+  // NaN: an hour nobody works (the salon's Chairs tab) — no colour at all, so it never reads as an empty chair.
+  const shade = (value: number) => (Number.isNaN(value) ? 'transparent' : value === 0 ? 'var(--rp-heat-empty)' : band(value).fill);
 
   return (
     // Scrolls inside its own box. A grid this wide must never widen the page —

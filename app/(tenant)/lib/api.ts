@@ -125,7 +125,6 @@ import type {
   DiscountReportPage,
   PaymentsReportPage,
   ProfitReportPage,
-  DiaryReportPage,
   ReturnsReportPage,
   RefundsReportPage,
   SellersRange,
@@ -1128,15 +1127,15 @@ export const api = {
   },
   /** Jira GRW-635 — what came back and why, by reason, with a parcel that never arrived apart. */
   returnsReport: (q: { range: SellersRange; location?: string }) => get<ReturnsReportPage>(`/api/v1/reports/returns?${sellersParams({ range: q.range, location: q.location })}`),
-  /** Jira GRW-591 — the diary report: what was taken, who earned it, what people came for, who has not come back. */
-  diaryReport: (q: { range: ReportRangeKey; location?: string | null; from?: string; to?: string }) =>
-    get<DiaryReportPage>(`/api/v1/reports/diary?${sellersParams({ range: q.range, location: q.location ?? undefined, from: q.from, to: q.to })}`),
   /** Jira GRW-591 — the counter report: what was taken, what earned it, when the rush was, what changed. */
   counterReport: (q: { range: ReportRangeKey; location?: string | null; from?: string; to?: string }) =>
     get<CounterReportPage>(`/api/v1/reports/counter?${sellersParams({ range: q.range, location: q.location ?? undefined, from: q.from, to: q.to })}`),
   /** Jira GRW-758 — the restaurant's Reports tabs, over two dates (inclusive) and a branch. */
   restaurantReport: <T>(tab: 'overview' | 'sales' | 'items' | 'cancelled' | 'tips' | 'customers', q: { from: string; to: string; location?: string | null }) =>
     get<T>(`/api/v1/reports/restaurant/${tab}?${new URLSearchParams({ range: 'custom', from: q.from, to: q.to, ...(q.location ? { location: q.location } : {}) }).toString()}`),
+  /** The salon's Reports tabs, in the restaurant's layout, over two dates (inclusive) and a branch. */
+  salonReport: <T>(tab: 'overview' | 'sales' | 'services' | 'team' | 'chairs' | 'clients' | 'loyalty' | 'tips', q: { from: string; to: string; location?: string | null }) =>
+    get<T>(`/api/v1/reports/salon/${tab}?${new URLSearchParams({ range: 'custom', from: q.from, to: q.to, ...(q.location ? { location: q.location } : {}) }).toString()}`),
   /** Owner, 2026-11-14 — a counter business's profit, discounts and payments, over the same range as the counter report. */
   profitReport: (q: MoneyReportQuery) => get<ProfitReportPage>(`/api/v1/reports/profit?${moneyParams(q)}`),
   discountReport: (q: MoneyReportQuery) => get<DiscountReportPage>(`/api/v1/reports/discounts?${moneyParams(q)}`),

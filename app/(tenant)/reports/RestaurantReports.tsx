@@ -91,7 +91,7 @@ export function axisAmount(minor: number, money: Money): string {
   return money(minor);
 }
 
-function Bars({ points, money, label, today }: { points: Array<{ key: string; tick: string; full: string; minor: number; weekend?: boolean }>; money: Money; label: string; today?: { key: string; word: string } }) {
+export function Bars({ points, money, label, today }: { points: Array<{ key: string; tick: string; full: string; minor: number; weekend?: boolean }>; money: Money; label: string; today?: { key: string; word: string } }) {
   const peak = Math.max(0, ...points.map((p) => p.minor));
   const best = points.findIndex((p) => p.minor === peak && peak > 0);
   const { top, step } = scale(peak);
@@ -146,8 +146,19 @@ function Bars({ points, money, label, today }: { points: Array<{ key: string; ti
   );
 }
 
+/**
+ * Owner, 2026-11-25 — which hours the busy-times axis names. It named every third hour AND always the last, so once
+ * late-night bills stretched the day to all 24 hours, 9 pm and 11 pm printed on top of each other ("91pm") and 12 am ran
+ * into 3 am on a phone. Now one step throughout, counted from the first hour: every 3rd hour, every 4th past 15 hours.
+ * The last hour is named only when it falls on a step; every bar still says its hour to a screen reader.
+ */
+export function namedHour(first: number, last: number): (h: number) => boolean {
+  const step = last - first > 15 ? 4 : 3;
+  return (h) => (h - first) % step === 0;
+}
+
 /** A small figure: its name, its amount. */
-function Small({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
+export function Small({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
   return (
     <div className="rr-small">
       <p className="rr-small-label">{label}</p>
@@ -158,7 +169,7 @@ function Small({ label, value, sub }: { label: string; value: ReactNode; sub?: R
 }
 
 /** A list of up to five rows: a name and an amount. */
-function List({
+export function List({
   title,
   sub,
   rows,
@@ -410,8 +421,9 @@ export function SalesTab({ data }: { data: RestaurantSalesPage }) {
   const first = sold.length ? sold[0]!.hour : 0;
   const last = sold.length ? sold[sold.length - 1]!.hour : -1;
   const by = new Map(data.busyHours.map((h) => [h.hour, h.salesMinor]));
+  const hourNamed = namedHour(first, last);
   const points = [];
-  for (let h = first; h <= last; h++) points.push({ key: String(h), tick: h === first || h === last || (h - first) % 3 === 0 ? hourName(h) : '', full: hourName(h), minor: by.get(h) ?? 0 });
+  for (let h = first; h <= last; h++) points.push({ key: String(h), tick: hourNamed(h) ? hourName(h) : '', full: hourName(h), minor: by.get(h) ?? 0 });
   const named = (group: 'mode' | 'type', key: string) => {
     const words: Record<string, (typeof MODE_WORDS)[keyof typeof MODE_WORDS] | (typeof TYPE_WORDS)[keyof typeof TYPE_WORDS]> = group === 'mode' ? MODE_WORDS : TYPE_WORDS;
     return words[key] ? t(words[key]) : key;
@@ -440,6 +452,8 @@ export function SalesTab({ data }: { data: RestaurantSalesPage }) {
         {points.length > 0 ? (
           <>
             <h3 className="rr-list-title">{t('sales.busy')}</h3>
+            {/* Owner, 2026-11-25 — with two dates picked above, a chart of hours read as a mistake: say what it adds up. */}
+            <p className="rr-more rr-list-sub">{t('sales.busySub')}</p>
             <Bars points={points} money={money} label={t('sales.busy')} />
           </>
         ) : null}

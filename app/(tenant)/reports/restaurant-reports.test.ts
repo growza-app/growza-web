@@ -192,6 +192,8 @@ describe('Sales', () => {
 
   it('busy times run from the first hour that sold to the last; how people paid in plain words', () => {
     expect(out).toContain('Busy times');
+    // Owner, 2026-11-25 — the hours chart says it adds up the dates picked above it.
+    expect(out).toContain('Each hour, added up over these dates');
     expect(out).toContain('How people paid Cash ₹1,58,400 UPI ₹56,000 Card ₹29,600');
     // Owner, 2026-11-24 — moved to the Overview as "Where sales came from": each fact once.
     expect(out).not.toContain('How it was eaten');

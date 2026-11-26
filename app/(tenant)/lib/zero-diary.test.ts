@@ -67,12 +67,13 @@ describe('FR-04 — a part that is meaningless for a business is absent, not zer
      */
     expect(page).toContain('const shopTab = tab;');
     /*
-     * Jira GRW-591 — and the mirror: a business that DOES take bookings opens on its own four cards by
-     * the same rule, with the seven tabs as links beneath. Both halves are asserted in one place so the
-     * two screens cannot drift into answering "no ?tab=" differently.
+     * Jira GRW-591 — and the mirror: a business that DOES take bookings opens on its own report by the same
+     * rule. Since the salon's tabs (Overview · Sales · Services · Team · Clients · Tips, the restaurant's
+     * layout) that report is `SalonReports`; the seven older tabs still answer a link by name. Both halves are
+     * asserted in one place so the two screens cannot drift into answering "no ?tab=" differently.
      */
     expect(page).toContain('if (!noBookings && params.tab === undefined && maySeeTheBooks) {');
-    expect(page).toContain('<DiaryReport />');
+    expect(page).toContain('<SalonReports');
     // The books are the owner's and the manager's on either report; a limited role keeps its tabs.
     expect(page).toContain("const maySeeTheBooks = role === undefined || role === 'owner' || role === 'manager';");
     expect(page).toContain('const askedGenericTab = noBookings && params.tab !== undefined;');

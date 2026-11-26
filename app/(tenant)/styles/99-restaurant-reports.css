@@ -706,6 +706,10 @@
 :is(.rr-split-part, .rr-split-dot).rr-src-delivery { background: var(--forest); }
 :is(.rr-split-part, .rr-split-dot).rr-src-swiggy { background: var(--chart-swiggy); }
 :is(.rr-split-part, .rr-split-dot).rr-src-zomato { background: var(--chart-zomato); }
+/* The salon's sources (SalonReports.tsx): how the visit was booked, in the same greens; products on their own in grey. */
+:is(.rr-split-part, .rr-split-dot).rr-src-whatsapp { background: var(--accent); }
+:is(.rr-split-part, .rr-split-dot).rr-src-booked { background: var(--mint); }
+:is(.rr-split-part, .rr-split-dot).rr-src-walk_in { background: var(--forest); }
 
 .rr-worth ul {
   margin: 0;
