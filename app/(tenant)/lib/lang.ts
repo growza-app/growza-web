@@ -80,6 +80,20 @@ export function setPendingLang(lang: Lang | null): void {
 
 /** One attempt to write the preference to the person's account. `true` only when the server accepted it. */
 /** A person's own name, saved to their membership. False on any failure; the caller keeps the field open. */
+/** Owner, 2026-11-26 — the picture beside the person's own name, kept on the account (null: back to the drawn face). */
+export async function putAvatar(avatar: string | null): Promise<boolean> {
+  try {
+    const res = await fetch('/api/v1/me/avatar', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ avatar }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function putName(name: string): Promise<boolean> {
   try {
     const res = await fetch('/api/v1/me/name', {

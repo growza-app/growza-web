@@ -179,6 +179,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   /** GRW-203 — the number they sign in with, for the account menu. */
   let memberPhone: string | null = null;
   let memberName: string | null = null;
+  /** Owner, 2026-11-26 — the picture this person picked; null: the face drawn from their number. */
+  let memberAvatar: string | null = null;
   /** Jira GRW-90 · GRW-137 — null on every ordinary session. */
   let impersonation: { businessName: string; role: string } | null = null;
   /** GRW-164 — set when the API says this account may not operate. */
@@ -241,6 +243,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     reportTabs = me.reportTabs;
     memberPhone = me.member?.phone ?? null;
     memberName = me.member?.name?.trim() || null;
+    memberAvatar = me.member?.avatar ?? null;
     branches = me.branches ?? [];
     share = { tone: me.share?.tone === 'casual' ? 'casual' : 'neutral', businessPhone: me.tenant?.phone ?? null };
     memberLocationId = me.member?.locationId ?? null;
@@ -333,6 +336,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             role: role ?? null,
             phone: memberPhone,
             name: memberName,
+            avatar: memberAvatar,
             businessName: tenantName ?? null,
             locationName: role === 'owner' && branchCount > 1 ? null : locationName,
             branches,
@@ -358,7 +362,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         {impersonation ? null : <NamePrompt />}
         <MobileNavProvider>
           <div className={impersonation ? 'shell shell-impersonating' : 'shell'}>
-            <Sidebar tenantName={tenantName} labels={localLabels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} whatsappDemo={whatsappDemo} products={products} lang={lang} locationName={locationName} branchCount={role === 'owner' ? branchCount : 1} phone={memberPhone} name={memberName} />
+            <Sidebar tenantName={tenantName} labels={localLabels} role={role} reportTabs={reportTabs} whatsappLive={whatsappLive} whatsappDemo={whatsappDemo} products={products} lang={lang} locationName={locationName} branchCount={role === 'owner' ? branchCount : 1} phone={memberPhone} name={memberName} avatar={memberAvatar} />
             <div className="content">
               {/*
                 * Jira GRW-300 — its own grid item, not a bare `BillingBanner`
