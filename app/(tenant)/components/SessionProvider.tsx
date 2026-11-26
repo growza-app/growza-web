@@ -29,6 +29,8 @@ export interface SessionInfo {
   locationName?: string | null;
   /** The person's own name, for the avatar and the account menu. Null until they (or the invite) set one. */
   name?: string | null;
+  /** Owner, 2026-11-26 — the picture they picked (`AVATAR_KEYS`); null: the face drawn from their number. */
+  avatar?: string | null;
   /** Jira GRW-235 — open branches, main first; one or none means there is no branch to choose. */
   branches?: MeBranch[];
   /**

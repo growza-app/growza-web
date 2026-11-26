@@ -23,7 +23,8 @@ import { ReportsClient, type TabPayload } from './ReportsClient';
 import { CounterReport } from './CounterReport';
 import { RestaurantReports } from './RestaurantReports';
 import { RESTAURANT_TABS, type RestaurantTab } from './restaurant-tabs';
-import { DiaryReport } from './DiaryReport';
+import { SalonReports } from './SalonReports';
+import { SALON_TABS, type SalonTab } from './salon-tabs';
 
 /**
  * The Reports screen's tabs, in its own order. Mirrors `REPORT_TABS` on the
@@ -274,15 +275,22 @@ export default async function ReportsPage({
       <>
         <PageHeader title={t('title')} />
         <div className="page-body srp-page">
+          {/* The salon reads its Reports as the restaurant does (Jira GRW-758's layout): Overview · Sales · Services · Team ·
+              Clients · Tips. The older tabs still answer a link by name (`?tab=`); nothing on the screen points at them. */}
+          <SalonReports
+            initialTab={SALON_TABS.includes(params.view as SalonTab) ? (params.view as SalonTab) : 'overview'}
+            hasTeam={staffTabAvailable}
+          />
+          {/* Owner, 2026-11-25 — the older tabs stay one tap away, below the report rather than as a second tab row above it:
+              their CSV download, the Filters drawer and the "What to do" list live there. */}
           <h2 className="cr-more">{t('counterMore')}</h2>
-          <nav className="srp-nav srp-nav-links" aria-label={t('title')}>
+          <nav className="srp-nav srp-nav-links" aria-label={t('counterMore')}>
             {ALL_REPORT_TABS.filter(canOpen).map((key) => (
               <a key={key} className="srp-nav-tab" href={`/reports?tab=${key}`}>
                 {t(`tabs.${key}`)}
               </a>
             ))}
           </nav>
-          <DiaryReport />
         </div>
       </>
     );

@@ -17,6 +17,7 @@ export function SellProductClient({
   nextTokenNo,
   hideHead,
   leaveRef,
+  homeRef,
   onSaleCompleted,
   onOpenQueue,
   onPayTable,
@@ -32,6 +33,8 @@ export function SellProductClient({
   nextTokenNo?: number | null;
   hideHead?: boolean;
   leaveRef?: { current: (() => void) | null };
+  /** Owner, 2026-11-26 — passed through to the till: how many lines "Back to Home" would drop. */
+  homeRef?: { current: (() => number) | null };
   /** Called when a sale is recorded on POS so the live token queue updates immediately. */
   onSaleCompleted?: (saleId: string) => void;
   /** Called when the desk taps "View Queue" on the pending-payment confirmation banner. */
@@ -76,6 +79,7 @@ export function SellProductClient({
       nextTokenNo={nextTokenNo}
       hideHead={hideHead}
       leaveRef={leaveRef}
+      homeRef={homeRef}
       onSaleCompleted={onSaleCompleted}
       onOpenQueue={onOpenQueue}
       onPayTable={onPayTable}

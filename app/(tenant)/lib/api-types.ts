@@ -145,6 +145,8 @@ export interface Me {
     phone?: string | null;
     /** The name they go by — their own, else their stylist profile's. Null until set (or from an older API). */
     name?: string | null;
+    /** Owner, 2026-11-26 — the picture they picked beside their name (`AVATAR_KEYS`); null: never chosen. */
+    avatar?: string | null;
     /** Jira GRW-74 — the role they hold, if any; the grid below applies only to a member who has one. */
     tenantRoleId?: string | null;
     /** Owner, 2026-11-14 — the one branch this member may take returns at; null for the owner or a member with none. Absent from an older API. */
@@ -2196,76 +2198,6 @@ export interface CounterReportPage {
   strategy?: CounterStrategy;
 }
 
-/**
- * Jira GRW-591 — the diary report: the counter report's mirror, for a business that books time.
- *
- * Same rule about prose: the API sends figures and keys, the screen writes the sentence.
- */
-export interface DiaryDay {
-  dateISO: string;
-  /** 1 = Monday … 7 = Sunday. */
-  dow: number;
-  valueMinor: string;
-}
-export interface DiaryRow {
-  id: string;
-  name: string;
-  /** Visits for a person, bookings for a service. */
-  count: number;
-  valueMinor: string;
-  sharePct: number;
-  /** Jira GRW-363 — the one row for visits recorded with no stylist; the screen words it. */
-  key?: 'unassigned';
-}
-export interface DiaryCallback {
-  customerId: string;
-  name: string;
-  lastVisitDays: number;
-  daysOverdue: number | null;
-  avgTicketMinor: number;
-}
-export interface DiaryReportPage {
-  window: { key: string; label: string; startISO: string; endExclusiveISO: string };
-  previous: { startISO: string; endExclusiveISO: string; hasData: boolean };
-  anyVisits: boolean;
-  takings: {
-    totalMinor: string;
-    previousMinor: string | null;
-    changePct: number | null;
-    differenceMinor: string | null;
-    visits: number;
-    averageVisitMinor: number | null;
-    previousAverageVisitMinor: number | null;
-    /** Of the headline, the part the two cards below are made of. */
-    serviceMinor: string;
-    /** The rest: things sold rather than booked. Named on screen so the missing share is accounted for. */
-    otherMinor: string;
-    /** What came out of the diary — services plus what was bought during a visit. What "a visit" divides by. */
-    visitMinor: string;
-    noShows: number;
-    /** What the people who did not come would have paid, at the price they booked at. Never revenue. */
-    noShowMinor: string;
-    previousNoShows: number | null;
-    byDay: DiaryDay[];
-  };
-  /** Null — not empty — for a business that does not rank its people. The screen draws three cards. */
-  people: { rows: DiaryRow[]; distinct: number; leader: { name: string; sharePct: number; key?: 'unassigned' } | null } | null;
-  services: {
-    rows: DiaryRow[];
-    distinct: number;
-    leader: { name: string; sharePct: number } | null;
-    slow: Array<{ id: string; name: string; count: number }>;
-    slowTotal: number;
-    /** How many services are on the menu at all — see the screen for why naming five of fifty is noise. */
-    menuTotal: number;
-  };
-  back: {
-    segments: CustomerSegmentCount[];
-    worthACall: DiaryCallback[];
-    worthACallTotal: number;
-  };
-}
-
 /** Jira GRW-635 — a return's reason, from the small set returns are grouped by. */
 export type ReturnReason = 'size' | 'not_as_described' | 'faulty' | 'wrong_item' | 'changed_mind' | 'other';
 export interface OrderReturn {
@@ -2979,4 +2911,133 @@ export interface RestaurantCustomersPage {
   topShare?: { guests: number; pct: number } | null;
   returnByMonth?: Array<{ month: string; newGuests: number; cameBack: number; pct: number | null; partial: boolean }>;
   overdue?: { count: number; rows: Array<{ customerId: string; name: string | null; phone: string; visits: number; usualGapDays: number; lastSeenDaysAgo: number }> };
+}
+
+/* ───────── The salon's Reports tabs (Overview · Sales · Services · Team · Clients · Tips), the restaurant's layout ───────── */
+
+export type SalonSource = 'whatsapp' | 'booked' | 'walk_in' | 'products';
+
+export interface SalonOverviewPage {
+  window: RestaurantWindow;
+  sales: RestaurantCompared;
+  visits: RestaurantCompared;
+  averageVisitMinor: { value: number | null; previous: number | null };
+  noShows: { count: number; minor: number; previous: number | null };
+  byDay: Array<{ day: string; salesMinor: number }>;
+  sources: Array<{ key: SalonSource; salesMinor: number; visits: number }>;
+  topService: { name: string; count: number; salesMinor: number } | null;
+  topPerson: { name: string; visits: number; salesMinor: number; key?: 'unassigned' } | null;
+  busiest: { hour: number; visits: number; sharePct: number } | null;
+}
+
+export interface SalonSalesPage {
+  window: RestaurantWindow;
+  /** Null with no completed visit (counter sales only). */
+  averageVisit: RestaurantCompared | null;
+  discountsMinor: number;
+  refundsMinor: number;
+  busyHours: Array<{ hour: number; salesMinor: number; visits: number }>;
+  byPayment: Array<{ mode: string; minor: number }>;
+}
+
+export interface SalonServiceRow {
+  id: string | null;
+  name: string;
+  count: number;
+  previousCount: number;
+  salesMinor: number;
+}
+
+export interface SalonServicesPage {
+  window: RestaurantWindow;
+  servicesDone: RestaurantCompared;
+  cancelled: { count: number; minor: number };
+  top: SalonServiceRow[];
+  topByCount: SalonServiceRow[];
+  doneCount: number;
+  movers: Array<{ name: string; count: number; previousCount: number; diff: number }>;
+  barelyBooked: { rows: Array<{ name: string; count: number }>; count: number; menuTotal: number };
+  products: { rows: Array<{ name: string; qty: number; minor: number }>; count: number };
+  packages: { rows: Array<{ name: string; count: number; minor: number }>; count: number };
+}
+
+export interface SalonPersonRow {
+  id: string;
+  name: string;
+  key?: 'unassigned';
+  visits: number;
+  salesMinor: number;
+  previousSalesMinor: number | null;
+  averageMinor: number | null;
+  busyPct: number | null;
+  noShowPct: number | null;
+}
+
+export interface SalonTeamPage {
+  window: RestaurantWindow;
+  working: number;
+  busyPct: number | null;
+  previousBusyPct: number | null;
+  people: SalonPersonRow[];
+  freeTime: Array<{ id: string; name: string; busyPct: number }>;
+}
+
+export interface SalonClientsPage {
+  window: RestaurantWindow;
+  cameBack: RestaurantCompared;
+  newClients: RestaurantCompared;
+  clientCount: number;
+  topShare: { guests: number; pct: number } | null;
+  returnByMonth: Array<{ month: string; newGuests: number; cameBack: number; pct: number | null; partial: boolean }>;
+  returnDays: number;
+  overdue: { count: number; rows: Array<{ customerId: string; name: string | null; phone: string; usualGapDays: number; lastSeenDaysAgo: number }> };
+  top: Array<{ customerId: string | null; name: string | null; visits: number; salesMinor: number | null }>;
+}
+
+export type SalonTipPayload =
+  | { rule: 'sales_change'; pct: number; sales: number; previousSales: number; visits: number; previousVisits: number; averageVisit: number; previousAverageVisit: number }
+  | { rule: 'no_shows'; count: number; previous: number | null; minor: number; ratePct: number }
+  | { rule: 'service_move'; name: string; count: number; previousCount: number }
+  | { rule: 'overdue'; count: number }
+  | { rule: 'free_time'; name: string; busyPct: number; teamBusyPct: number | null };
+
+export interface SalonTip {
+  rule: SalonTipPayload['rule'];
+  sure: 'high' | 'medium' | 'low';
+  visits: number;
+  payload: SalonTipPayload;
+}
+
+export interface SalonTipsPage {
+  windows: { from: string; to: string; previous: { from: string; to: string } };
+  visits: number;
+  minVisits: number;
+  tips: SalonTip[];
+}
+
+export interface SalonChairsPage {
+  window: RestaurantWindow;
+  tooLong?: true;
+  emptyHours: number | null;
+  workingHours: number;
+  perBookedHourMinor: number | null;
+  busiestDay: { dow: number; pct: number } | null;
+  quietestDay: { dow: number; pct: number } | null;
+  grid: Array<{ dow: number; hour: number; pct: number; emptyHours: number }>;
+  emptiest: Array<{ dow: number; hour: number; emptyHours: number; pct: number }>;
+  people: Array<{ id: string; name: string; emptyHours: number; pct: number }>;
+}
+
+export interface SalonLoyaltyPage {
+  windows: { from: string; to: string; previous: { from: string; to: string } };
+  rebookPct: number | null;
+  previousRebookPct: number | null;
+  visits: number;
+  rebooked: number;
+  usualGapDays: number | null;
+  yearSpendPerClientMinor: number | null;
+  lost: number;
+  curve: Array<{ month: number; clients: number; came: number; pct: number | null }>;
+  people: Array<{ id: string; name: string; visits: number; rebookPct: number }> | null;
+  serviceGaps: Array<{ name: string; returns: number; days: number }>;
 }

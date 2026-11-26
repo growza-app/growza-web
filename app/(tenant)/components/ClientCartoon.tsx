@@ -41,7 +41,39 @@ function hash(key: string): number {
   return h;
 }
 
-export type Cartoon = { background: string; skin: string; shade: string; hairColour: string; hair: number; shirt: string; curly: boolean };
+export type Cartoon = {
+  background: string;
+  skin: string;
+  shade: string;
+  hairColour: string;
+  hair: number;
+  shirt: string;
+  curly: boolean;
+  /** A picked picture only: hair that falls behind the head to the shoulders, drawn before the head. */
+  long?: boolean;
+  /** A picked picture only: hair tied up in a bun on top. */
+  bun?: boolean;
+  beard?: boolean;
+  earrings?: boolean;
+};
+
+/**
+ * Owner, 2026-11-26 — the four pictures a person may pick for themselves beside their own name: two men and two
+ * women, each a different skin tone. A CLIENT's face is still chosen from their id (above) — we do not store a
+ * client's gender — but a member choosing their own picture is telling us, so these may say man or woman.
+ * The keys are the API's (`AVATARS` in growza `src/api/server.ts`); an unknown key draws the face from the id.
+ */
+export const AVATAR_KEYS = ['man-1', 'man-2', 'woman-1', 'woman-2'] as const;
+export type AvatarKey = (typeof AVATAR_KEYS)[number];
+export const isAvatarKey = (v: unknown): v is AvatarKey => typeof v === 'string' && (AVATAR_KEYS as readonly string[]).includes(v);
+
+const FRINGE = 'M18 27C18 15 25 11 33 11c7 0 13 5 13 15-5-6-11-8-17-7-4 1-8 4-11 8Z';
+export const AVATAR_FACES: Record<AvatarKey, Cartoon> = {
+  'man-1': { background: 'var(--accent-soft)', skin: SKINS[1]!.skin, shade: SKINS[1]!.shade, hairColour: '#2b2522', hair: 0, shirt: '#4b5aa6', curly: false },
+  'man-2': { background: 'var(--blue-soft)', skin: SKINS[4]!.skin, shade: SKINS[4]!.shade, hairColour: '#1d1b1a', hair: 3, shirt: '#0e7490', curly: false, beard: true },
+  'woman-1': { background: 'var(--purple-soft)', skin: SKINS[0]!.skin, shade: SKINS[0]!.shade, hairColour: '#3b2a20', hair: -1, shirt: '#be3a6d', curly: false, long: true, earrings: true },
+  'woman-2': { background: 'var(--amber-soft)', skin: SKINS[3]!.skin, shade: SKINS[3]!.shade, hairColour: '#1d1b1a', hair: -1, shirt: '#d97706', curly: false, bun: true, earrings: true },
+};
 
 /** Which face a client gets. Pure, so a test can pin that it is stable and that a list of people is not all one face. */
 export function cartoonFor(id: string): Cartoon {
@@ -61,17 +93,28 @@ export function cartoonFor(id: string): Cartoon {
   };
 }
 
-export function ClientCartoon({ id, className }: { id: string; className: string }) {
-  const c = cartoonFor(id);
+/**
+ * `choice` — the picture a member picked for themselves (`AVATAR_KEYS`). Absent, null or unknown: the face drawn from
+ * `id`, as every client's is.
+ */
+export function ClientCartoon({ id, className, choice }: { id: string; className: string; choice?: string | null }) {
+  const c = isAvatarKey(choice) ? AVATAR_FACES[choice] : cartoonFor(id);
   return (
     <span className={`${className} client-cartoon`} style={{ background: c.background }} aria-hidden>
       <svg viewBox="0 0 64 64" focusable="false">
+        {c.long ? <path d="M14 31C13 15 22 8 32 8s19 7 18 23c0 7 1 13 3 17H11c2-4 3-10 3-17Z" fill={c.hairColour} /> : null}
         <path d="M8 66c0-14 11-21 24-21s24 7 24 21Z" fill={c.shirt} />
         <path d="M27 37h10v8.5c-1.6 1.4-3.3 2-5 2s-3.4-.6-5-2Z" fill={c.shade} />
         <circle cx="17.5" cy="30" r="3.6" fill={c.shade} />
         <circle cx="46.5" cy="30" r="3.6" fill={c.shade} />
         <ellipse cx="32" cy="28" rx="14" ry="15" fill={c.skin} />
-        {c.curly ? (
+        {c.beard ? <path d="M18.5 29c.5 9 6 14.5 13.5 14.5S45 38 45.5 29c-2 4-5 6-7.5 6.5-1.8-1.6-3.8-2.2-6-2.2s-4.2.6-6 2.2C23.5 35 20.5 33 18.5 29Z" fill={c.hairColour} /> : null}
+        {c.long || c.bun ? (
+          <>
+            {c.bun ? <circle cx="32" cy="9.5" r="6" fill={c.hairColour} /> : null}
+            <path d={FRINGE} fill={c.hairColour} />
+          </>
+        ) : c.curly ? (
           <g fill={c.hairColour}>
             <circle cx="20" cy="21" r="5" />
             <circle cx="25" cy="15.5" r="5.5" />
@@ -85,6 +128,12 @@ export function ClientCartoon({ id, className }: { id: string; className: string
         <circle cx="26.5" cy="29" r="1.7" fill="#2b2522" />
         <circle cx="37.5" cy="29" r="1.7" fill="#2b2522" />
         <path d="M27.5 34.5h9a4.5 4 0 0 1-9 0Z" fill="#fff" stroke="#2b2522" strokeWidth=".8" strokeLinejoin="round" />
+        {c.earrings ? (
+          <g fill="#e0a526">
+            <circle cx="17.5" cy="35" r="1.6" />
+            <circle cx="46.5" cy="35" r="1.6" />
+          </g>
+        ) : null}
       </svg>
     </span>
   );

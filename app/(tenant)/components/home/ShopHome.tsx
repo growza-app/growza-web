@@ -43,7 +43,7 @@ import {
   IconReports,
   IconTable,
 } from '../icons';
-import { Avatar, Card, CardError, DarkStatCard, HomeHeader, PageHead, PayGaugeCard, QuickTiles, Segmented, WeekBarsCard, exactRupees, paySlicesOf, rupees } from './parts';
+import { Avatar, Card, CardError, DarkStatCard, HomeHeader, PageHead, PayGaugeCard, QuickTiles, Segmented, WeekBarsCard, exactRupees, paySlicesOf, rupees, shortRupees } from './parts';
 import { CheckInCard } from './CheckInCard';
 import { PaymentBar, PaymentLine } from './MoneyHero';
 import { orderNumber } from '../../lib/order-number';
@@ -338,6 +338,19 @@ export function ShopHome({
       .finally(() => {
         if (mine === phoneReqId.current) setPhoneBusy(false);
       });
+    // Owner, 2026-11-26 ("add this on mobile") — a restaurant's phone draws the laptop's week of bars above its Queue
+    // card. The bars are always the last seven days, whatever the hero's period, so they have their own read; it fills
+    // the same `channelData` the laptop's read does, which never runs on a phone.
+    if (isKitchen) {
+      api
+        .byChannel({ range: 'last_7_days', location: branch ?? undefined })
+        .then((res) => {
+          if (mine === phoneReqId.current) setChannelData(res);
+        })
+        .catch(() => {
+          if (mine === phoneReqId.current) setChannelData(null);
+        });
+    }
     // The top seller is read for the SAME window as the money above it. Asked for the command center's
     // range instead, the hero would name last quarter's best dish under today's takings.
     // Owner, 2026-11-13 — a shop's phone lists its three best; the figure was read for one and shown for none.
@@ -611,7 +624,11 @@ export function ShopHome({
             timeZone: 'UTC',
           }).format(new Date(parsed))
         : b.label;
-      return { key: b.startISO, revenueMinor, dateShort };
+      // The phone's narrower bars: a weekday name, as the salon's week reads (Mon … Sun).
+      const dayShort = Number.isFinite(parsed)
+        ? new Intl.DateTimeFormat(lang === 'hi' ? 'hi-IN' : 'en-IN', { weekday: 'short', timeZone: 'UTC' }).format(new Date(parsed))
+        : b.label;
+      return { key: b.startISO, revenueMinor, dateShort, dayShort };
     });
     const totalMinor = buckets.reduce((acc, b) => acc + b.revenueMinor, 0);
     const dailyAvgMinor = buckets.length > 0 ? Math.round(totalMinor / buckets.length) : 0;
@@ -643,6 +660,19 @@ export function ShopHome({
     const areaPoints = points.length > 1 ? `${firstX},100 ${polyPoints} ${lastX},100` : '';
     return { ticks, points, polyPoints, areaPoints, maxMinor, totalMinor, dailyAvgMinor, peakDay };
   }, [channelData, lang]);
+
+  /* The week's bars, the same seven for the laptop's charts row and the restaurant's phone Home. */
+  const weekBars = trendChart.points.map((p) => ({
+    key: p.key,
+    label: p.dateShort,
+    pct: p.pct,
+    amount: p.revenueMinor > 0 ? rupees(p.revenueMinor) : null,
+    peak: p.isPeak,
+    srText: `${p.dateShort} ${rupees(p.revenueMinor)}`,
+  }));
+  /* A 344px phone has about 33px a bar: "₹20,750" over "20 Nov" ran into its neighbours. The phone reads the day's
+     name and a short amount (₹21k); the full figure stays in each bar's screen-reader text and in the total. */
+  const phoneWeekBars = trendChart.points.map((p, i) => ({ ...weekBars[i]!, label: p.dayShort, amount: p.revenueMinor > 0 ? shortRupees(p.revenueMinor) : null }));
 
   /* Emerald v3 — the laptop's half-donut: the window's takings by how they were paid. */
   const paySlices = useMemo(() => paySlicesOf(channelData?.byPaymentMode), [channelData]);
@@ -1296,18 +1326,7 @@ export function ShopHome({
                     </>
                   ) : null}
                   {money && trendChart.points.length > 0 && trendChart.totalMinor > 0 ? (
-                    <WeekBarsCard
-                      title={s.salesLast7}
-                      total={rupees(trendChart.totalMinor)}
-                      bars={trendChart.points.map((p) => ({
-                        key: p.key,
-                        label: p.dateShort,
-                        pct: p.pct,
-                        amount: p.revenueMinor > 0 ? rupees(p.revenueMinor) : null,
-                        peak: p.isPeak,
-                        srText: `${p.dateShort} ${rupees(p.revenueMinor)}`,
-                      }))}
-                    />
+                    <WeekBarsCard title={s.salesLast7} total={rupees(trendChart.totalMinor)} bars={weekBars} />
                   ) : null}
                   {money ? (
                     <PayGaugeCard title={s.paidLast7} slices={paySlices} nameOf={(m) => t.payment[m] ?? m} money={rupees} />
@@ -2358,6 +2377,10 @@ export function ShopHome({
                   ) : null}
                 </>
               )}
+              {/* Owner, 2026-11-26 — the week's bars first, the Queue card under them. Drawn only with money in the week. */}
+              {isKitchen && money && trendChart.totalMinor > 0 ? (
+                <WeekBarsCard title={s.salesLast7} total={rupees(trendChart.totalMinor)} bars={phoneWeekBars} />
+              ) : null}
               <div className="shp-col-stack">
                 {/*
                   The order queue is a kitchen's (POS, 35a76ea5: no Queue on a salon's or a shop's till). This card still

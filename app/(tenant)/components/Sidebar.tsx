@@ -39,7 +39,7 @@ import {
   IconNavHome,
   IconCutlery,
   IconBarChart,
-  IconStorefront,
+  IconBrandHouse,
 } from './icons';
 
 /**
@@ -79,6 +79,7 @@ export function Sidebar({
   branchCount = 1,
   phone,
   name,
+  avatar,
 }: {
   tenantName: string;
   labels: Record<string, string>;
@@ -101,6 +102,8 @@ export function Sidebar({
   phone?: string | null;
   /** The person's own name; the role is shown instead until there is one. */
   name?: string | null;
+  /** Owner, 2026-11-26 — the picture they picked; null: the face drawn from their number. */
+  avatar?: string | null;
 }) {
   const tc = useTranslations('chrome');
   const pathname = usePathname();
@@ -371,7 +374,8 @@ export function Sidebar({
           <div className="sb-biz">
             {/* Owner, 2026-11-20 — the business as a card: a shop front, its name, the branch; it opens the branch list when there are several. */}
             <span className="sb-biz-icon" aria-hidden="true">
-              <IconStorefront />
+              {/* Owner, 2026-11-26 — the same red-roof house as the phone menu's card, for every business. */}
+              <IconBrandHouse />
             </span>
             <HeaderBusiness />
             <HeaderBranchPicker />
@@ -388,7 +392,7 @@ export function Sidebar({
           {/* Owner, 2026-11-20 — the phone drawer's business is the laptop's card: a shop front, not the first letter. */}
           <div className="brand-card">
           <div className="brand-badge" aria-hidden="true">
-            <IconStorefront />
+            <IconBrandHouse />
           </div>
           <div className="brand-text">
             <div className="brand-name">{tenantName}</div>
@@ -476,7 +480,7 @@ export function Sidebar({
               once there is one; the role and number sit under it. */}
           <div className="nav-who">
             {/* Emerald v3 — the same drawn face as the header's account button, from the same number. */}
-            <ClientCartoon id={phone ?? name ?? tenantName ?? 'me'} className="nav-who-avatar" />
+            <ClientCartoon id={phone ?? name ?? tenantName ?? 'me'} choice={avatar} className="nav-who-avatar" />
             <span className="nav-who-text">
               <strong>{name ?? t.role[role ?? 'owner']}</strong>
               {name ? <span>{t.role[role ?? 'owner']}</span> : null}

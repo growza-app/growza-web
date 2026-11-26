@@ -45,10 +45,22 @@ describe('a shop’s bar: Home · Orders · POS · Menu · Alerts', () => {
     expect(chrome).not.toMatch(/onPos[^;]*PLUS_ROUTE_RE/);
   });
 
-  it('the POS: a raised 42px green circle with its word under it, a visible focus, no motion when asked for none', () => {
+  // Owner, 2026-11-26 — "put the POS inside the nav bar only … keep the circle, no need to mention POS".
+  it('the POS: a 48px green glass circle inside the bar, its word for a screen reader only, a visible focus, no motion when asked for none', () => {
     expect(nav).toContain('<span className="bn-pos-btn" aria-hidden="true">');
-    expect(css).toMatch(/\.bn-pos-btn \{[^}]*width: 2\.625rem;\s*height: 2\.625rem;\s*border-radius: 50%;/);
+    // Owner, 2026-11-26 — "use the bill icon", then "F is looking good": the cash register in the circle.
+    expect(nav).toMatch(/<span className="bn-pos-btn" aria-hidden="true">\s*<IconPos \/>/);
+    expect(css).toMatch(/\.bn-pos-btn \{[^}]*width: 3rem;\s*height: 3rem;\s*border-radius: 50%;/);
+    // Nothing rises above the bar: no absolute circle, no notch cut in the bar, no fade on the page under it.
+    expect(css).not.toMatch(/\.bn-pos-btn \{[^}]*position: absolute;/);
+    expect(css).not.toContain('mask-composite');
+    expect(css).not.toContain('.content:has(> .bottom-nav.has-pos-tile) .page-body');
+    // The word is hidden from sight, not removed: the link is still called "POS".
+    expect(nav).toContain('<span className="bn-label">{t.nav.pos}</span>');
+    expect(css).toMatch(/a\.bn-pos-tile \.bn-label \{[^}]*clip: rect\(0 0 0 0\);/);
     expect(css).toMatch(/\.bottom-nav\.bn-shop a\.bn-pos-tile:focus-visible \.bn-pos-btn \{/);
+    // The glass has a plain answer for reduce transparency and increase contrast.
+    expect(css).toMatch(/prefers-reduced-transparency: reduce\)[^{]*prefers-contrast: more\) \{\s*\.bn-pos-btn \{\s*background: var\(--accent-deep\);/);
     expect(css).toMatch(/prefers-reduced-motion: reduce\) \{\s*\.bn-pos-btn \{\s*transition: none;/);
   });
 });
