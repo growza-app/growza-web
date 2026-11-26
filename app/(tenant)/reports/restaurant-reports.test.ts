@@ -487,14 +487,18 @@ describe('Jira GRW-761 — Customers', () => {
       expect(out).toContain('new guests still have days left to come back.');
       expect(out).toContain('– Under 10 new guests: too few to say.');
     });
-    it('overdue regulars: five, then See all; each with their habit and a WhatsApp chat link with a hello', () => {
-      expect(out).toContain('Regulars who are overdue · 7 Away twice as long as they usually are');
+    it('overdue regulars: five, then See all; each with their habit and a WhatsApp chat link with the "misses you" line', () => {
+      // Owner, 2026-11-26 — a "we miss you" message button under the heading.
+      expect(out).toContain('Regulars who are overdue · 7 Away twice as long as they usually are Send a &#x27;we miss you&#x27; message');
       // Initials, the habit, how late — and a round WhatsApp button named for her.
       expect(out).toContain('PS Priya Sharma Usually every 6 days 15 days away');
       expect(html).toContain('aria-label="Message Priya Sharma on WhatsApp"');
       expect(count(html, 'rr-wa')).toBe(5);
       expect(out).toContain('See all 7');
-      expect(html).toContain('href="https://wa.me/919810000000?text=Hi%20Priya%20Sharma%2C"');
+      // Owner, 2026-11-26 — no name and no "Hi": the row sends the "misses you" line (no business in this render, so "us").
+      expect(html).toContain(
+        `href="https://wa.me/919810000000?text=${encodeURIComponent("It's been a little while since we saw you at us 😊 We'd love to welcome you back. Your usual order is waiting!").replace(/'/g, '&#x27;')}"`,
+      );
     });
     it('someone who may not see guests: the count, no names, no numbers', () => {
       const staff = text(render('en', createElement(CustomersTab, { data: { ...habits, overdue: { count: 7, rows: [] } } })));
@@ -520,5 +524,13 @@ describe('QA 2026-11-24', () => {
   });
   it('#2 — a dish from a whole order cancelled says so where a reason would be', () => {
     expect(source).toContain("r.wholeOrder ? t('items.wholeOrder') : r.reason");
+  });
+});
+
+/** Owner, 2026-11-26 — "move the guest to the third tab instead of at the second last". */
+describe('the restaurant Reports tab order', () => {
+  it('is Overview · Sales · Guests · Items · Inventory · Tips', async () => {
+    const { RESTAURANT_TABS } = await import('./restaurant-tabs');
+    expect([...RESTAURANT_TABS]).toEqual(['overview', 'sales', 'customers', 'items', 'inventory', 'tips']);
   });
 });

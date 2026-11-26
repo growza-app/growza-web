@@ -25,6 +25,8 @@ import { useBranch } from '../components/BranchProvider';
 import { useMayOpen, useSession } from '../components/SessionProvider';
 import { ReportDates } from './ReportDates';
 import { RESTAURANT_TABS, type RestaurantTab } from './restaurant-tabs';
+import { MissYouSheet } from './MissYouSheet';
+import { missYouFor, missYouTemplate } from './miss-you';
 import { fetchOnce, freshFor, isFresh, peek } from './report-cache';
 import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../lib/report-dates';
 
@@ -758,6 +760,12 @@ function MonthReturns({ months: all }: { months: NonNullable<RestaurantCustomers
 function Overdue({ overdue }: { overdue: NonNullable<RestaurantCustomersPage['overdue']> }) {
   const t = useTranslations('restaurantReports.customers');
   const [all, setAll] = useState(false);
+  /* Owner, 2026-11-26 — "missing you" messages: a ready line per guest, sent from the owner's own WhatsApp. */
+  const [composing, setComposing] = useState(false);
+  const session = useSession();
+  const branchContext = useBranch();
+  const business = session?.businessName ?? null;
+  const offersAt = (branchContext.multi ? branchContext.choice : null) || session?.branches?.[0]?.id || null;
   const title = (
     <h3 className="rr-list-title" id="rr-overdue-h">
       {t('overdueTitle')} <span className="rr-list-count">· {overdue.count}</span>
@@ -776,6 +784,19 @@ function Overdue({ overdue }: { overdue: NonNullable<RestaurantCustomersPage['ov
     <section className="rr-list rr-people rr-overdue" aria-labelledby="rr-overdue-h">
       {title}
       <p className="rr-more rr-overdue-sub">{t('overdueSub')}</p>
+      <button type="button" className="btn rr-miss-you" onClick={() => setComposing(true)}>
+        <IconWhatsApp />
+        {t('missYou.open')}
+      </button>
+      {composing ? (
+        <MissYouSheet
+          guests={overdue.rows}
+          business={business}
+          location={offersAt}
+          todayISO={todayInZone(session?.timezone)}
+          onClose={() => setComposing(false)}
+        />
+      ) : null}
       <ul>
         {rows.map((g) => (
           <li key={g.customerId}>
@@ -790,7 +811,8 @@ function Overdue({ overdue }: { overdue: NonNullable<RestaurantCustomersPage['ov
             {/* #5 — a round button, not a pill: five green pills were the loudest thing on the screen. */}
             <a
               className="rr-wa"
-              href={whatsappHref(g.phone.replace(/\D/g, ''), t('overdueHello', { name: g.name ?? '' }).trim())}
+              // Owner, 2026-11-26 — no name and no "Hi": the guest's own row sends the "misses you" line.
+              href={whatsappHref(g.phone.replace(/\D/g, ''), missYouFor(missYouTemplate('miss', business), g.favouriteDish))}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={t('overdueWaAria', { name: g.name ?? t('hidden') })}

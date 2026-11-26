@@ -3280,7 +3280,28 @@
       "returnStatMonthOpen": "{month} so far: {back} of {n}",
       "overdueUsual": "Usually every {gap, plural, one {day} other {# days}}",
       "overdueAway": "{n} days away",
-      "topSub": "Most visits in these dates"
+      "topSub": "Most visits in these dates",
+      "missYou": {
+        "open": "Send a 'we miss you' message",
+        "title": "Message guests who are away",
+        "close": "Close",
+        "pick": "Choose a message",
+        "kind": {
+          "miss": "Miss you",
+          "craving": "Craving",
+          "offer": "Comeback treat"
+        },
+        "whichOffer": "Which offer",
+        "message": "Message",
+        "hint": "Goes from your own WhatsApp. Tap Send for each guest, then press send in WhatsApp. {dish} becomes each guest's most-ordered dish. You can change the words above.",
+        "guest": "Guest",
+        "away": "{n} days away",
+        "send": "Send",
+        "sent": "Sent",
+        "sendAria": "Send the message to {name} on WhatsApp",
+        "sentAria": "Sent to {name}. Tap to open WhatsApp again",
+        "empty": "Write a message first."
+      }
     }
   },
   "salonReports": {

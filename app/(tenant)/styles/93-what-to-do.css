@@ -185,3 +185,50 @@
   /* The cards in a row are the same height, so their buttons line up rather than stepping. */
   .td-action { margin-top: auto; }
 }
+
+/*
+ * Owner, 2026-11-26 — "we miss you" messages from Reports › Guests: a row of message chips, the words (editable, one
+ * message for every guest), then each guest with a Send that opens the owner's own WhatsApp, ticked once tapped.
+ */
+.rr-miss-you {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  margin: var(--sp-2) 0 var(--sp-1);
+}
+.rr-miss-you svg { width: 1.125rem; height: 1.125rem; }
+.my-sheet .my-body { overflow-y: auto; padding: 0 var(--sp-4) var(--sp-4); }
+.my-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-3); }
+.my-chip {
+  min-height: 44px;
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.my-chip.is-on { border-color: var(--accent-deep); background: var(--accent-soft); color: var(--accent-deep); }
+.my-chip:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 2px; }
+.my-label { display: block; margin-bottom: var(--sp-1); color: var(--muted); font-size: 0.8125rem; font-weight: 600; }
+.my-text {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.45;
+  resize: vertical;
+}
+.my-hint { margin: var(--sp-2) 0 var(--sp-3); color: var(--muted); font-size: 0.8125rem; line-height: 1.4; }
+.my-send.is-sent { background: var(--surface); color: var(--accent-deep); border: 1px solid var(--accent-deep); }
+.my-send svg { width: 1rem; height: 1rem; }
+.my-people .td-person { display: flex; }
+.my-people .td-person-who { flex: 1 1 auto; min-width: 0; }
+.my-people .my-send { flex: none; width: auto; padding: 0 var(--sp-4); }
