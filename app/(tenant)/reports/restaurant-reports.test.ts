@@ -519,7 +519,7 @@ describe('Jira GRW-761 — Customers', () => {
       const html = render('en', createElement(CustomersTab, { data: { ...habits, pointsWaiting: waiting } }));
       const out = text(html);
       expect(out).toContain('Points waiting to be used · 3 Guests who can spend their points today Send a points reminder');
-      expect(out).toContain('AV Asha Verma 900 points · worth ₹900 120 expire 5 Dec');
+      expect(out).toContain('AV Asha Verma 900 points · worth ₹900 120 expiring 5 Dec');
       expect(out).toContain('BK Bilal Khan 1,500 points · worth ₹1,500');
       expect(html).toContain('aria-label="Remind Asha Verma about their points on WhatsApp"');
       expect(html).toContain(

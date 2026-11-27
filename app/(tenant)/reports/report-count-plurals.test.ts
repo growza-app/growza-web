@@ -56,26 +56,43 @@ describe('"N regulars are overdue"', () => {
   }
 });
 
-describe('the shop’s other counts', () => {
-  it('"1 day away" in English, wherever a shop says how long someone has been away', () => {
-    for (const [ns, key] of [['shopCustomers', 'overdueAway'], ['shopCustomers.missYou', 'away'], ['shopCustomers.fans', 'away']] as const) {
-      expect(say('en', ns, key, { n: 1 })).toBe('1 day away');
-      expect(say('en', ns, key, { n: 3 })).toBe('3 days away');
-      expect(say('hi', ns, key, { n: 1 })).toBe('1 दिन से नहीं आए');
+describe('the other counts in all three customer tabs', () => {
+  it('"1 day away" in English, wherever a tab says how long someone has been away', () => {
+    for (const [ns, key] of [
+      ['shopCustomers', 'overdueAway'],
+      ['shopCustomers.missYou', 'away'],
+      ['shopCustomers.fans', 'away'],
+      ['restaurantReports.customers', 'overdueAway'],
+      ['restaurantReports.customers.missYou', 'away'],
+      ['restaurantReports.customers.fans', 'away'],
+      ['salonReports.clients', 'overdueAway'],
+    ] as const) {
+      expect(say('en', ns, key, { n: 1 }), `${ns}.${key}`).toBe('1 day away');
+      expect(say('en', ns, key, { n: 3 }), `${ns}.${key}`).toBe('3 days away');
+      expect(say('hi', ns, key, { n: 1 }), `${ns}.${key}`).toBe('1 दिन से नहीं आए');
     }
   });
 
   it('points that expire read right for one point: the number arrives already formatted, so no verb to agree', () => {
-    expect(say('en', 'shopCustomers.points', 'expires', { n: '1', date: '5 Dec' })).toBe('1 expiring 5 Dec');
-    expect(say('en', 'shopCustomers.points', 'expires', { n: '1,200', date: '5 Dec' })).toBe('1,200 expiring 5 Dec');
+    for (const ns of ['shopCustomers.points', 'restaurantReports.customers.points']) {
+      expect(say('en', ns, 'expires', { n: '1', date: '5 Dec' })).toBe('1 expiring 5 Dec');
+      expect(say('en', ns, 'expires', { n: '1,200', date: '5 Dec' })).toBe('1,200 expiring 5 Dec');
+    }
   });
 
-  it('"came back" in Hindi: नया … आया for one, नए … आए for more, and none says so', () => {
-    const sr = (back: number) => say('hi', 'shopCustomers', 'returnSr', { pct: Math.round((back / 12) * 100), back, n: 12 });
-    expect(sr(1)).toBe('8% — 12 में से 1 नया ग्राहक फिर आया');
-    expect(sr(3)).toBe('25% — 12 में से 3 नए ग्राहक फिर आए');
-    expect(sr(0)).toBe('0% — 12 में से कोई नया ग्राहक फिर नहीं आया');
-  });
+  const cameBack: Array<[Group, string]> = [
+    ['shopCustomers', 'ग्राहक'],
+    ['restaurantReports.customers', 'मेहमान'],
+    ['salonReports.clients', 'ग्राहक'],
+  ];
+  for (const [g, noun] of cameBack) {
+    it(`${g}: "came back" in Hindi — नया … आया for one, नए … आए for more, and none says so`, () => {
+      const sr = (back: number) => say('hi', g, 'returnSr', { pct: Math.round((back / 12) * 100), back, n: 12 });
+      expect(sr(1)).toBe(`8% — 12 में से 1 नया ${noun} फिर आया`);
+      expect(sr(3)).toBe(`25% — 12 में से 3 नए ${noun} फिर आए`);
+      expect(sr(0)).toBe(`0% — 12 में से कोई नया ${noun} फिर नहीं आया`);
+    });
+  }
 });
 
 describe('no Hindi one-branch hard-codes a 1', () => {
@@ -86,7 +103,9 @@ describe('no Hindi one-branch hard-codes a 1', () => {
       'shopCustomers.returnSr',
       'restaurantReports.customers.points.count',
       'restaurantReports.customers.overdueCount',
+      'restaurantReports.customers.returnSr',
       'salonReports.clients.overdueCount',
+      'salonReports.clients.returnSr',
     ]) {
       const one = oneBranch(msg('hi', path));
       expect(one, path).toContain('#');
