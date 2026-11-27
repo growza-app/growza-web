@@ -46,7 +46,7 @@ describe('a shop’s bar: Home · Orders · POS · Menu · Alerts', () => {
   });
 
   // Owner, 2026-11-26 — "put the POS inside the nav bar only … keep the circle, no need to mention POS".
-  it('the POS: a 48px green glass circle inside the bar, its word for a screen reader only, a visible focus, no motion when asked for none', () => {
+  it('the POS: a 48px raised green circle inside the bar (no glass), its word for a screen reader only, a visible focus, no motion when asked for none', () => {
     expect(nav).toContain('<span className="bn-pos-btn" aria-hidden="true">');
     // Owner, 2026-11-26 — "use the bill icon", then "F is looking good": the cash register in the circle.
     expect(nav).toMatch(/<span className="bn-pos-btn" aria-hidden="true">\s*<IconPos \/>/);
@@ -59,7 +59,12 @@ describe('a shop’s bar: Home · Orders · POS · Menu · Alerts', () => {
     expect(nav).toContain('<span className="bn-label">{t.nav.pos}</span>');
     expect(css).toMatch(/a\.bn-pos-tile \.bn-label \{[^}]*clip: rect\(0 0 0 0\);/);
     expect(css).toMatch(/\.bottom-nav\.bn-shop a\.bn-pos-tile:focus-visible \.bn-pos-btn \{/);
-    // The glass has a plain answer for reduce transparency and increase contrast.
+    // Owner, 2026-11-27 — "remove the glass, 3D is good": no white sheen, no bright rim; a raised edge and a shadow.
+    const pos = css.match(/\n  \.bn-pos-btn \{[^}]*\}/)![0];
+    expect(pos).not.toContain('radial-gradient');
+    expect(pos).not.toContain('rgba(255, 255, 255');
+    expect(pos).toContain('inset 0 -3px 0 rgba(0, 0, 0, 0.2)');
+    // The shading has a plain answer for reduce transparency and increase contrast.
     expect(css).toMatch(/prefers-reduced-transparency: reduce\)[^{]*prefers-contrast: more\) \{\s*\.bn-pos-btn \{\s*background: var\(--accent-deep\);/);
     expect(css).toMatch(/prefers-reduced-motion: reduce\) \{\s*\.bn-pos-btn \{\s*transition: none;/);
   });
