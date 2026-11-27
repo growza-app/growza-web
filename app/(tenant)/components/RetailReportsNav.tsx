@@ -5,11 +5,12 @@ import { useEffect, useRef } from 'react';
 import AppLink from '../../shared/AppLink';
 import { useMayOpen } from './SessionProvider';
 
-export type RetailReportTab = 'hub' | 'profit' | 'payments' | 'discounts' | 'foodCost' | 'channels' | 'sellers' | 'report' | 'order' | 'returns' | 'refunds';
+export type RetailReportTab = 'hub' | 'profit' | 'payments' | 'discounts' | 'customers' | 'foodCost' | 'channels' | 'sellers' | 'report' | 'order' | 'returns' | 'refunds';
 
 /**
  * Shared navigation tab bar across a retail shop's analytics and stock/order reports:
  *   - Profit, Payments, Discounts & free (`/reports/profit`, `/reports/payments`, `/reports/discounts`)
+ *   - Customers (`/reports/customers`)
  *   - Where the money came from (`/stock/channels`)
  *   - What sells (`/stock/sellers`)
  *   - Stock report (`/stock/report`)
@@ -38,6 +39,8 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
     { key: 'profit', href: '/reports/profit', label: tMoney('profit') },
     { key: 'payments', href: '/reports/payments', label: tMoney('payments') },
     { key: 'discounts', href: '/reports/discounts', label: tMoney('discounts') },
+    // Owner, 2026-11-28 — who came back, who is overdue, who to message: the restaurant's Guests tab in a shop's words.
+    { key: 'customers', href: '/reports/customers', label: tReports('shopCustomersTab') },
     // Jira GRW-739 — what the food cost: only where the business keeps kitchen stock (`areaAllows` drops it everywhere else).
     // Jira GRW-741 — Food cost is Inventory › Reports now; the tab here is a door to it (one screen, one address).
     { key: 'foodCost', href: '/inventory/reports', label: tMoney('foodCost') },

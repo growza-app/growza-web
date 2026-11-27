@@ -1,4 +1,5 @@
 import type { BillOffer } from '../lib/api-types';
+import type { CustomerWords } from './customer-words';
 import { shortDay } from './points-reminder';
 
 /**
@@ -14,8 +15,15 @@ export type MissYouKind = (typeof MISS_YOU_KINDS)[number];
 
 /** Where the words name the guest's dish. Left in the editable message so the owner can move it. */
 export const DISH = '{favourite dish}';
+/** Owner, 2026-11-28 — a shop's: where the words name the customer's most-bought product. */
+export const PRODUCT = '{product}';
+
+/** The placeholder these words fill per person: the guest's dish, or the customer's product. */
+export const placeholderOf = (words: CustomerWords = 'restaurant') => (words === 'shop' ? PRODUCT : DISH);
 
 const place = (business: string | null | undefined) => business?.trim() || 'us';
+/** A shop's name in its messages; "our shop" where it has none ("It's in stock at us" is not a sentence). */
+const shopPlace = (business: string | null | undefined) => business?.trim() || 'our shop';
 const rupees = (minor: number) => `₹${Math.round(minor / 100).toLocaleString('en-IN')}`;
 
 /** What a coupon or buy-get offer gives, as the end of "…and enjoy ___". Null when it cannot be said plainly. */
@@ -56,10 +64,27 @@ function until(offer: BillOffer, todayISO: string | undefined): string {
   return days < 6 ? `by ${shortDay(last)}` : 'this week';
 }
 
-/** The words for one kind, with the restaurant named and `{favourite dish}` left for each guest. */
-export function missYouTemplate(kind: MissYouKind, business: string | null | undefined, offer?: BillOffer | null, todayISO?: string): string {
-  const at = place(business);
+/**
+ * The words for one kind, with the restaurant named and `{favourite dish}` left for each guest.
+ *
+ * Owner, 2026-11-28 — a shop's (`words: 'shop'`) are its own, by the same rules: no name, no "Hi", the shop named, no food
+ * and no emoji, direct. The third kind (`craving`) is the customer's product there — "Their product" on the chip.
+ */
+export function missYouTemplate(
+  kind: MissYouKind,
+  business: string | null | undefined,
+  offer?: BillOffer | null,
+  todayISO?: string,
+  words: CustomerWords = 'restaurant',
+): string {
   const treat = kind === 'offer' && offer ? offerPhrase(offer) : null;
+  if (words === 'shop') {
+    const shop = shopPlace(business);
+    if (treat && offer) return `We miss you at ${shop}. Come back ${until(offer, todayISO)} and get ${treat}.`;
+    if (kind === 'craving') return `Need another ${PRODUCT}? It's in stock at ${shop}. Drop by this week.`;
+    return `We miss you at ${shop}. New stock is in — drop by this week.`;
+  }
+  const at = place(business);
   if (treat && offer) return `We miss seeing you! Come back to ${at} ${until(offer, todayISO)} and enjoy ${treat}. Hope to see you soon!`;
   if (kind === 'craving') return `Craving ${DISH}? We'd be happy to make it for you again at ${at}. Drop by or order whenever you're ready 🍽️`;
   return `It's been a little while since we saw you at ${at} 😊 We'd love to welcome you back. Your usual ${DISH} is waiting!`;
@@ -68,12 +93,31 @@ export function missYouTemplate(kind: MissYouKind, business: string | null | und
 /** A dish's name for a message: the size on the bill ("(Full)", "(Half)") is not part of what they crave. */
 export const dishForMessage = (name: string | null | undefined) => name?.replace(/\s*\([^)]*\)\s*$/, '').trim() || null;
 
-/** One guest's message: their dish where the words say {favourite dish}, or "your usual order" when they have none. */
-export function missYouFor(template: string, favouriteDish: string | null | undefined): string {
+/**
+ * One guest's message: their dish where the words say {favourite dish}, or "your usual order" when they have none.
+ * A shop's: their product where the words say {product}, or "your usual" when they have none.
+ */
+export function missYouFor(template: string, favouriteDish: string | null | undefined, words: CustomerWords = 'restaurant'): string {
   const dish = dishForMessage(favouriteDish);
+  if (words === 'shop') {
+    if (dish) return template.split(PRODUCT).join(dish);
+    return template.split(`Need another ${PRODUCT}?`).join('Need more of your usual?').split(PRODUCT).join('your usual');
+  }
   if (dish) return template.split(DISH).join(dish);
   return template
     .split(`Your usual ${DISH}`).join('Your usual order')
     .split(`your usual ${DISH}`).join('your usual order')
     .split(DISH).join('your usual order');
+}
+
+/**
+ * Owner, 2026-11-28 — the two functions above in one business's words, for a screen that draws either: it takes them
+ * once (`const { missYouFor, missYouTemplate } = missYouIn(words)`) and every call reads as the restaurant's always did.
+ */
+export function missYouIn(words: CustomerWords) {
+  return {
+    missYouTemplate: (kind: MissYouKind, business: string | null | undefined, offer?: BillOffer | null, todayISO?: string) =>
+      missYouTemplate(kind, business, offer, todayISO, words),
+    missYouFor: (template: string, favouriteDish: string | null | undefined) => missYouFor(template, favouriteDish, words),
+  };
 }
