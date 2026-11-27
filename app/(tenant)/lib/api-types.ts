@@ -2913,6 +2913,15 @@ export interface RestaurantCustomersPage {
   overdue?: { count: number; rows: Array<{ customerId: string; name: string | null; phone: string; visits: number; usualGapDays: number; lastSeenDaysAgo: number; favouriteDish?: string | null }> };
   /** Owner, 2026-11-27 — guests who can spend their points today; null where rewards are off, absent on an older API. */
   pointsWaiting?: RestaurantPointsWaiting | null;
+  /** Owner, 2026-11-27 — fans of a dish (3+ bills with it) not in for 15 days, by dish; absent on an older API. */
+  dishFans?: RestaurantDishFans;
+}
+
+export interface RestaurantDishFans {
+  count: number;
+  awayDays: number;
+  minOrders: number;
+  dishes: Array<{ productId: string; dish: string; fans: number; rows: Array<{ customerId: string; name: string | null; phone: string; orders: number; lastSeenDaysAgo: number }> }>;
 }
 
 export interface RestaurantPointsWaiting {

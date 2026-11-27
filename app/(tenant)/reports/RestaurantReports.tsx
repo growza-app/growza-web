@@ -9,6 +9,7 @@ import type {
   RestaurantCancelledPage,
   RestaurantCompared,
   RestaurantCustomersPage,
+  RestaurantDishFans,
   RestaurantPointsWaiting,
   RestaurantFreshness,
   RestaurantDish,
@@ -29,6 +30,8 @@ import { RESTAURANT_TABS, type RestaurantTab } from './restaurant-tabs';
 import { MissYouSheet } from './MissYouSheet';
 import { missYouFor, missYouTemplate } from './miss-you';
 import { PointsSheet } from './PointsSheet';
+import { GuestMessageSheet, sheetLabels } from './GuestMessageSheet';
+import { dishFansTemplate, fanDish } from './dish-fans';
 import { pointsFor, pointsNumber, pointsTemplate, rupees as pointsRupees, shortDay } from './points-reminder';
 import { fetchOnce, freshFor, isFresh, peek } from './report-cache';
 import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../lib/report-dates';
@@ -690,6 +693,7 @@ export function CustomersTab({ data }: { data: RestaurantCustomersPage }) {
       <div className="rr-lists">
         {data.overdue && data.overdue.count > 0 ? <Overdue overdue={data.overdue} /> : null}
         {data.pointsWaiting && data.pointsWaiting.count > 0 ? <PointsWaiting waiting={data.pointsWaiting} /> : null}
+        {data.dishFans && data.dishFans.count > 0 ? <DishFans fans={data.dishFans} /> : null}
         <TopGuests top={data.top} money={money} />
       </div>
     </>
@@ -897,6 +901,109 @@ function PointsWaiting({ waiting }: { waiting: RestaurantPointsWaiting }) {
         </button>
       ) : null}
       {all && waiting.count > waiting.rows.length ? <p className="rr-more">{t('more', { n: waiting.count - waiting.rows.length })}</p> : null}
+    </section>
+  );
+}
+
+/**
+ * Owner, 2026-11-27 — "fans of a dish who have not come back in 15 days": pick a dish, see who keeps ordering it and has
+ * not been in, and send them one message naming it — row by row, or from the sheet. Anyone not allowed to see guests
+ * gets each dish's count only.
+ */
+function DishFans({ fans }: { fans: RestaurantDishFans }) {
+  const t = useTranslations('restaurantReports.customers.fans');
+  const [chosen, setChosen] = useState(fans.dishes[0]?.productId ?? '');
+  const [all, setAll] = useState(false);
+  const [composing, setComposing] = useState(false);
+  const session = useSession();
+  const business = session?.businessName ?? null;
+  const dish = fans.dishes.find((d) => d.productId === chosen) ?? fans.dishes[0];
+  if (!dish) return null;
+  const name = fanDish(dish.dish);
+  const title = (
+    <h3 className="rr-list-title" id="rr-fans-h">
+      {t('title')} <span className="rr-list-count">· {fans.count}</span>
+    </h3>
+  );
+  const sub = <p className="rr-more rr-overdue-sub">{t('sub', { orders: fans.minOrders, days: fans.awayDays })}</p>;
+  const chips = (
+    <div className="my-chips rr-fan-dishes" role="radiogroup" aria-label={t('pick')}>
+      {fans.dishes.map((d) => (
+        <button
+          key={d.productId}
+          type="button"
+          role="radio"
+          aria-checked={d.productId === dish.productId}
+          className={`my-chip${d.productId === dish.productId ? ' is-on' : ''}`}
+          onClick={() => {
+            setChosen(d.productId);
+            setAll(false);
+          }}
+        >
+          {t('chip', { dish: fanDish(d.dish), n: d.fans })}
+        </button>
+      ))}
+    </div>
+  );
+  if (dish.rows.length === 0) {
+    return (
+      <section className="rr-list rr-fans" aria-labelledby="rr-fans-h">
+        {title}
+        {sub}
+        {chips}
+      </section>
+    );
+  }
+  const rows = all ? dish.rows : dish.rows.slice(0, LIST_SHOWN);
+  const message = dishFansTemplate(dish.dish, business);
+  return (
+    <section className="rr-list rr-people rr-overdue rr-fans" aria-labelledby="rr-fans-h">
+      {title}
+      {sub}
+      {chips}
+      <button type="button" className="btn rr-miss-you" onClick={() => setComposing(true)}>
+        <IconWhatsApp />
+        {t('open', { dish: name })}
+      </button>
+      {composing ? (
+        <GuestMessageSheet
+          labels={sheetLabels(t)}
+          title={t('sheetTitle', { dish: name })}
+          initialText={message}
+          hint={t('hint')}
+          guests={dish.rows}
+          meta={(g) => `${t('orders', { n: g.orders })} · ${t('away', { n: g.lastSeenDaysAgo })}`}
+          messageFor={(text) => text}
+          onClose={() => setComposing(false)}
+        />
+      ) : null}
+      <ul>
+        {rows.map((g) => (
+          <li key={g.customerId}>
+            <Avatar name={g.name} id={g.customerId} size={36} />
+            <span className="rr-list-name">
+              {g.name ?? t('guest')}
+              <span className="rr-list-note">{t('orders', { n: g.orders })}</span>
+            </span>
+            <span className="rr-away">{t('away', { n: g.lastSeenDaysAgo })}</span>
+            <a
+              className="rr-wa"
+              href={whatsappHref(g.phone.replace(/\D/g, ''), message)}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={t('waAria', { name: g.name ?? t('guest'), dish: name })}
+            >
+              <IconWhatsApp />
+            </a>
+          </li>
+        ))}
+      </ul>
+      {!all && dish.rows.length > LIST_SHOWN ? (
+        <button type="button" className="btn btn-ghost rr-see-all" onClick={() => setAll(true)}>
+          {t('all', { n: dish.fans })}
+        </button>
+      ) : null}
+      {all && dish.fans > dish.rows.length ? <p className="rr-more">{t('more', { n: dish.fans - dish.rows.length })}</p> : null}
     </section>
   );
 }

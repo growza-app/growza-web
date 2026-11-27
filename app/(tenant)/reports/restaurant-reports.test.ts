@@ -533,6 +533,45 @@ describe('Jira GRW-761 — Customers', () => {
       expect(staff).not.toContain('900 points');
       expect(text(render('hi', createElement(CustomersTab, { data: { ...habits, pointsWaiting: waiting } })))).toContain('पॉइंट्स जो अभी इस्तेमाल हो सकते हैं');
     });
+    // Owner, 2026-11-27 — fans of a dish who have not come back in 15 days.
+    const fanList = {
+      count: 3,
+      awayDays: 15,
+      minOrders: 3,
+      dishes: [
+        {
+          productId: 'bc',
+          dish: 'Butter Chicken (Full)',
+          fans: 2,
+          rows: [
+            { customerId: 'f1', name: 'Arjun Mehra', phone: '+91 98300 00001', orders: 4, lastSeenDaysAgo: 20 },
+            { customerId: 'f2', name: 'Isha Khanna', phone: '+91 98300 00002', orders: 3, lastSeenDaysAgo: 15 },
+          ],
+        },
+        { productId: 'dm', dish: 'Dal Makhani', fans: 1, rows: [{ customerId: 'f3', name: 'Bina Arora', phone: '+91 98300 00003', orders: 3, lastSeenDaysAgo: 16 }] },
+      ],
+    };
+    it('fans of a dish: a chip per dish, the first chosen, its fans with a message naming the dish (size dropped)', () => {
+      const html = render('en', createElement(CustomersTab, { data: { ...habits, dishFans: fanList } }));
+      const out = text(html);
+      expect(out).toContain('Fans of a dish · 3 Ordered it 3+ times, not in for 15+ days. Pick a dish. Butter Chicken · 2 Dal Makhani · 1 Message Butter Chicken fans');
+      expect(out).toContain('AM Arjun Mehra Ordered 4 times 20 days away');
+      expect(out).not.toContain('Bina Arora');
+      expect(html).toContain('role="radio" aria-checked="true" class="my-chip is-on">Butter Chicken · 2');
+      expect(html).toContain('aria-label="Message Arjun Mehra about Butter Chicken on WhatsApp"');
+      expect(html).toContain(
+        `href="https://wa.me/919830000001?text=${encodeURIComponent('Craving Butter Chicken? Your favourite is waiting at us. Come in or order this week 🍽️')}"`,
+      );
+    });
+    it('fans of a dish: none, no card; the counts only for someone who may not see guests; Hindi', () => {
+      expect(text(render('en', createElement(CustomersTab, { data: { ...habits, dishFans: { ...fanList, count: 0, dishes: [] } } })))).not.toContain('Fans of a dish');
+      const hidden = { ...fanList, dishes: fanList.dishes.map((d) => ({ ...d, rows: [] })) };
+      const staff = text(render('en', createElement(CustomersTab, { data: { ...habits, dishFans: hidden } })));
+      expect(staff).toContain('Fans of a dish · 3');
+      expect(staff).toContain('Butter Chicken · 2');
+      expect(staff).not.toContain('Arjun');
+      expect(text(render('hi', createElement(CustomersTab, { data: { ...habits, dishFans: fanList } })))).toContain('किसी डिश के शौक़ीन');
+    });
     it('Hindi', () => {
       const hi = text(render('hi', createElement(CustomersTab, { data: habits })));
       expect(hi).toContain('नए मेहमान जो 30 दिन में फिर आए');

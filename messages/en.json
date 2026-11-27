@@ -3322,6 +3322,28 @@
         "waAria": "Remind {name} about their points on WhatsApp",
         "all": "See all {n}",
         "more": "and {n} more"
+      },
+      "fans": {
+        "title": "Fans of a dish",
+        "sub": "Ordered it {orders}+ times, not in for {days}+ days. Pick a dish.",
+        "pick": "Pick a dish",
+        "chip": "{dish} · {n}",
+        "open": "Message {dish} fans",
+        "sheetTitle": "Message {dish} fans",
+        "close": "Close",
+        "message": "Message",
+        "hint": "Goes from your own WhatsApp. Tap Send for each guest, then press send in WhatsApp. You can change the words above.",
+        "guest": "Guest",
+        "orders": "{n, plural, one {Ordered once} other {Ordered # times}}",
+        "away": "{n} days away",
+        "send": "Send",
+        "sent": "Sent",
+        "sendAria": "Send the message to {name} on WhatsApp",
+        "sentAria": "Sent to {name}. Tap to open WhatsApp again",
+        "empty": "Write a message first.",
+        "waAria": "Message {name} about {dish} on WhatsApp",
+        "all": "See all {n}",
+        "more": "and {n} more"
       }
     }
   },
