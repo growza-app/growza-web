@@ -314,7 +314,7 @@
   /*
    * Owner, 2026-11-26 — "put the POS inside the nav bar only", then "keep the circle, no need to mention POS". Nothing
    * rises above the bar any more (the circle sat over the page and broke the shape of whatever scrolled under it): the
-   * till is a 48px green glass circle in the middle of the bar, with no word under it. The word stays for a screen reader,
+   * till is a 48px raised green circle in the middle of the bar, with no word under it. The word stays for a screen reader,
    * so the link is still called "POS".
    */
   .bottom-nav.bn-shop a.bn-pos-tile {
@@ -329,19 +329,16 @@
     width: 3rem;
     height: 3rem;
     border-radius: 50%;
-    /* Owner, 2026-11-26 — "increase the circle size and add a glass effect": a 52px green bead, lit from the top. A
-       soft white sheen over the top half, a bright rim along its upper edge and a darker one below, as a glass
-       button catches the light. Still one solid green underneath, so the white bill keeps its contrast. */
-    background:
-      radial-gradient(120% 70% at 50% 0%, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0) 60%),
-      linear-gradient(180deg, color-mix(in srgb, var(--accent-deep) 82%, #fff), var(--accent-deep) 55%, color-mix(in srgb, var(--accent-deep) 85%, #000));
-    border: 1px solid rgba(255, 255, 255, 0.45);
+    /* Owner, 2026-11-27 — "remove the glass, 3D is good": no white sheen, no bright rim. A solid green that is a little
+       lighter at the top and darker at the foot, a firm darker edge along the bottom and a soft shadow under it, so it
+       reads as a raised button you can press. The white bill keeps its contrast on the green. */
+    background: linear-gradient(180deg, color-mix(in srgb, var(--accent-deep) 88%, #fff), var(--accent-deep) 55%, color-mix(in srgb, var(--accent-deep) 82%, #000));
+    border: 0;
     color: #fff;
     box-shadow:
-      inset 0 1px 1px rgba(255, 255, 255, 0.6),
-      inset 0 -3px 6px rgba(0, 0, 0, 0.18),
-      0 3px 8px rgba(22, 101, 52, 0.24),
-      0 1px 2px rgba(22, 101, 52, 0.2);
+      inset 0 -3px 0 rgba(0, 0, 0, 0.2),
+      0 3px 8px rgba(22, 101, 52, 0.28),
+      0 1px 2px rgba(22, 101, 52, 0.22);
     transition: transform 0.16s ease;
   }
   .bottom-nav.bn-shop a.bn-pos-tile .bn-label {
@@ -362,6 +359,10 @@
   }
   .bottom-nav.bn-shop a.bn-pos-tile:active .bn-pos-btn {
     transform: scale(0.94);
+    /* Pressed: the raised edge goes flat. */
+    box-shadow:
+      inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+      0 1px 3px rgba(22, 101, 52, 0.24);
   }
   .bottom-nav.bn-shop a.bn-pos-tile:focus-visible {
     outline: none;
@@ -378,7 +379,7 @@
     transition: none;
   }
 }
-/* Reduce transparency / increase contrast: the glass goes, a plain green circle stays. */
+/* Reduce transparency / increase contrast: the shading goes, a plain green circle stays. */
 @media (max-width: 860px) and (prefers-reduced-transparency: reduce), (max-width: 860px) and (prefers-contrast: more) {
   .bn-pos-btn {
     background: var(--accent-deep);

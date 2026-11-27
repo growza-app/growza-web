@@ -303,7 +303,7 @@ export function BottomNav({
               onPos();
             }}
           >
-            {/* Owner, 2026-11-26 — a cash register in a green glass circle inside the bar; the word POS is for screen readers only. */}
+            {/* Owner, 2026-11-26 — a cash register in a raised green circle inside the bar (glass removed 2026-11-27); the word POS is for screen readers only. */}
             <span className="bn-pos-btn" aria-hidden="true">
               <IconPos />
             </span>
