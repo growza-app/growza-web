@@ -1,4 +1,5 @@
 import type { BillOffer } from '../lib/api-types';
+import { shortDay } from './points-reminder';
 
 /**
  * Owner, 2026-11-26 — the "we miss you" messages an owner sends to regulars who are overdue, from the restaurant's
@@ -31,18 +32,35 @@ export function offerPhrase(offer: BillOffer): string | null {
   return offer.code ? `${off}${min} with code ${offer.code}` : `${off}${min}`;
 }
 
-/** The offers a guest could use today: started, not ended, and sayable in one line. */
+/**
+ * The offers a guest could use today: started, not ended, sayable in one line — and with no limit per guest. A
+ * once-per-guest offer may already be used by the guest it goes to, and the sheet cannot know who has: promising it
+ * would send them to a till that refuses it (review, 2026-11-27).
+ */
 export function offersToSend(offers: readonly BillOffer[], todayISO: string): BillOffer[] {
   return offers.filter(
-    (o) => (!o.validFrom || o.validFrom.slice(0, 10) <= todayISO) && (!o.validUntil || o.validUntil.slice(0, 10) >= todayISO) && offerPhrase(o) !== null,
+    (o) =>
+      (!o.validFrom || o.validFrom.slice(0, 10) <= todayISO) &&
+      (!o.validUntil || o.validUntil.slice(0, 10) >= todayISO) &&
+      o.usesPerGuest === null &&
+      offerPhrase(o) !== null,
   );
 }
 
+/** "this week", unless the offer ends sooner: then "today", or "by 30 Nov" — never a promise past its last day. */
+function until(offer: BillOffer, todayISO: string | undefined): string {
+  const last = offer.validUntil?.slice(0, 10);
+  if (!last || !todayISO) return 'this week';
+  const days = Math.round((Date.parse(`${last}T00:00:00Z`) - Date.parse(`${todayISO}T00:00:00Z`)) / 86_400_000);
+  if (days <= 0) return 'today';
+  return days < 6 ? `by ${shortDay(last)}` : 'this week';
+}
+
 /** The words for one kind, with the restaurant named and `{favourite dish}` left for each guest. */
-export function missYouTemplate(kind: MissYouKind, business: string | null | undefined, offer?: BillOffer | null): string {
+export function missYouTemplate(kind: MissYouKind, business: string | null | undefined, offer?: BillOffer | null, todayISO?: string): string {
   const at = place(business);
   const treat = kind === 'offer' && offer ? offerPhrase(offer) : null;
-  if (treat) return `We miss seeing you! Come back to ${at} this week and enjoy ${treat}. Hope to see you soon!`;
+  if (treat && offer) return `We miss seeing you! Come back to ${at} ${until(offer, todayISO)} and enjoy ${treat}. Hope to see you soon!`;
   if (kind === 'craving') return `Craving ${DISH}? We'd be happy to make it for you again at ${at}. Drop by or order whenever you're ready 🍽️`;
   return `It's been a little while since we saw you at ${at} 😊 We'd love to welcome you back. Your usual ${DISH} is waiting!`;
 }

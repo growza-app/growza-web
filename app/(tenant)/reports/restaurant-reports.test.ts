@@ -540,7 +540,7 @@ describe('Jira GRW-761 — Customers', () => {
       minOrders: 3,
       dishes: [
         {
-          productId: 'bc',
+          key: 'bc',
           dish: 'Butter Chicken (Full)',
           fans: 2,
           rows: [
@@ -548,7 +548,7 @@ describe('Jira GRW-761 — Customers', () => {
             { customerId: 'f2', name: 'Isha Khanna', phone: '+91 98300 00002', orders: 3, lastSeenDaysAgo: 15 },
           ],
         },
-        { productId: 'dm', dish: 'Dal Makhani', fans: 1, rows: [{ customerId: 'f3', name: 'Bina Arora', phone: '+91 98300 00003', orders: 3, lastSeenDaysAgo: 16 }] },
+        { key: 'dm', dish: 'Dal Makhani', fans: 1, rows: [{ customerId: 'f3', name: 'Bina Arora', phone: '+91 98300 00003', orders: 3, lastSeenDaysAgo: 16 }] },
       ],
     };
     it('fans of a dish: a chip per dish, the first chosen, its fans with a message naming the dish (size dropped)', () => {

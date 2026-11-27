@@ -1,11 +1,15 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { type ReactNode, useRef, useState } from 'react';
 
 import { whatsappHref } from '../lib/receipt-text';
 import { Avatar } from '../components/home/parts';
 import { IconCheck, IconClose, IconWhatsApp } from '../components/icons';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { useSession } from '../components/SessionProvider';
+import { todayInZone } from '../lib/report-dates';
+import { useMessaged } from './messaged';
 
 export interface MessageGuest {
   customerId: string;
@@ -65,7 +69,10 @@ export function GuestMessageSheet<G extends MessageGuest>({
   const panel = useRef<HTMLDivElement>(null);
   useDialog(panel, { onClose, initialFocus: 'container' });
   const [text, setText] = useState(initialText);
-  const [sent, setSent] = useState<ReadonlySet<string>>(new Set());
+  // Sent from any Guests list, in this browser, lately — a guest on three lists is not sent three messages unseen.
+  const tc = useTranslations('restaurantReports.customers');
+  const session = useSession();
+  const messaged = useMessaged(todayInZone(session?.timezone));
 
   const message = text.trim();
   const reachable = guests.filter((g) => g.phone.replace(/\D/g, '').length >= 10);
@@ -91,7 +98,8 @@ export function GuestMessageSheet<G extends MessageGuest>({
 
           <ul className="td-people my-people">
             {reachable.map((g) => {
-              const done = sent.has(g.customerId);
+              const ago = messaged.daysAgo(g.phone);
+              const done = ago === 0;
               const name = g.name ?? labels.guest;
               return (
                 <li key={g.customerId} className="td-person">
@@ -99,7 +107,10 @@ export function GuestMessageSheet<G extends MessageGuest>({
                     <Avatar name={g.name} id={g.customerId} size={36} />
                     <span className="td-person-text">
                       <span className="td-person-name">{name}</span>
-                      <span className="td-person-meta">{meta(g)}</span>
+                      <span className="td-person-meta">
+                        {meta(g)}
+                        {ago !== null && ago > 0 ? ` · ${tc('messaged', { n: ago })}` : ''}
+                      </span>
                     </span>
                   </span>
                   {message ? (
@@ -109,7 +120,7 @@ export function GuestMessageSheet<G extends MessageGuest>({
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={done ? labels.sentAria(name) : labels.sendAria(name)}
-                      onClick={() => setSent((s) => new Set(s).add(g.customerId))}
+                      onClick={() => messaged.mark(g.phone)}
                     >
                       {done ? <IconCheck /> : <IconWhatsApp />}
                       <span>{done ? labels.sent : labels.send}</span>

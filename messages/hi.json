@@ -3280,6 +3280,7 @@
       "returnStatMonthOpen": "{month} अब तक: {n} में से {back}",
       "overdueUsual": "आमतौर पर हर {gap} दिन",
       "overdueAway": "{n} दिन से नहीं आए",
+      "messaged": "{n, plural, =0 {आज मैसेज भेजा} =1 {कल मैसेज भेजा} other {# दिन पहले मैसेज भेजा}}",
       "topSub": "इन तारीख़ों में सबसे ज़्यादा बार आए",
       "missYou": {
         "open": "'हम आपको याद करते हैं' मैसेज भेजें",

@@ -33,6 +33,7 @@ import { PointsSheet } from './PointsSheet';
 import { GuestMessageSheet, sheetLabels } from './GuestMessageSheet';
 import { dishFansTemplate, fanDish } from './dish-fans';
 import { pointsFor, pointsNumber, pointsTemplate, rupees as pointsRupees, shortDay } from './points-reminder';
+import { useMessaged } from './messaged';
 import { fetchOnce, freshFor, isFresh, peek } from './report-cache';
 import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../lib/report-dates';
 
@@ -773,7 +774,11 @@ function Overdue({ overdue }: { overdue: NonNullable<RestaurantCustomersPage['ov
   const session = useSession();
   const branchContext = useBranch();
   const business = session?.businessName ?? null;
-  const offersAt = (branchContext.multi ? branchContext.choice : null) || session?.branches?.[0]?.id || null;
+  // The branch whose offers the Comeback treat may name. Every branch picked: none — the list holds every branch's
+  // guests, and an offer published to one branch would be refused at the others' tills (review, 2026-11-27).
+  const offersAt = branchContext.multi ? branchContext.choice : (session?.branches?.[0]?.id ?? null);
+  const today = todayInZone(session?.timezone);
+  const messaged = useMessaged(today);
   const title = (
     <h3 className="rr-list-title" id="rr-overdue-h">
       {t('overdueTitle')} <span className="rr-list-count">· {overdue.count}</span>
@@ -801,7 +806,7 @@ function Overdue({ overdue }: { overdue: NonNullable<RestaurantCustomersPage['ov
           guests={overdue.rows}
           business={business}
           location={offersAt}
-          todayISO={todayInZone(session?.timezone)}
+          todayISO={today}
           onClose={() => setComposing(false)}
         />
       ) : null}
@@ -813,7 +818,10 @@ function Overdue({ overdue }: { overdue: NonNullable<RestaurantCustomersPage['ov
             <span className="rr-list-name">
               {g.name ?? t('hidden')}
               {/* #4 — their habit, and how late they are, at a glance. */}
-              <span className="rr-list-note">{t('overdueUsual', { gap: g.usualGapDays })}</span>
+              <span className="rr-list-note">
+                {t('overdueUsual', { gap: g.usualGapDays })}
+                <Messaged ago={messaged.daysAgo(g.phone)} />
+              </span>
             </span>
             <span className="rr-away">{t('overdueAway', { n: g.lastSeenDaysAgo })}</span>
             {/* #5 — a round button, not a pill: five green pills were the loudest thing on the screen. */}
@@ -824,6 +832,7 @@ function Overdue({ overdue }: { overdue: NonNullable<RestaurantCustomersPage['ov
               target="_blank"
               rel="noopener noreferrer"
               aria-label={t('overdueWaAria', { name: g.name ?? t('hidden') })}
+              onClick={() => messaged.mark(g.phone)}
             >
               <IconWhatsApp />
             </a>
@@ -851,6 +860,8 @@ function PointsWaiting({ waiting }: { waiting: RestaurantPointsWaiting }) {
   const [composing, setComposing] = useState(false);
   const session = useSession();
   const business = session?.businessName ?? null;
+  const messaged = useMessaged(todayInZone(session?.timezone));
+  const cap = waiting.redeemCapPct ?? 100;
   const title = (
     <h3 className="rr-list-title" id="rr-points-h">
       {t('title')} <span className="rr-list-count">· {waiting.count}</span>
@@ -873,22 +884,26 @@ function PointsWaiting({ waiting }: { waiting: RestaurantPointsWaiting }) {
         <IconWhatsApp />
         {t('open')}
       </button>
-      {composing ? <PointsSheet guests={waiting.rows} business={business} onClose={() => setComposing(false)} /> : null}
+      {composing ? <PointsSheet guests={waiting.rows} business={business} capPct={cap} onClose={() => setComposing(false)} /> : null}
       <ul>
         {rows.map((g) => (
           <li key={g.customerId}>
             <Avatar name={g.name} id={g.customerId} size={36} />
             <span className="rr-list-name">
               {g.name ?? t('guest')}
-              <span className="rr-list-note">{t('worth', { points: pointsNumber(g.points), worth: pointsRupees(g.worthMinor) })}</span>
+              <span className="rr-list-note">
+                {t('worth', { points: pointsNumber(g.points), worth: pointsRupees(g.worthMinor) })}
+                <Messaged ago={messaged.daysAgo(g.phone)} />
+              </span>
             </span>
             {g.expiring ? <span className="rr-away">{t('expires', { n: pointsNumber(g.expiring.points), date: shortDay(g.expiring.on) })}</span> : null}
             <a
               className="rr-wa"
-              href={whatsappHref(g.phone.replace(/\D/g, ''), pointsFor(pointsTemplate(business), g))}
+              href={whatsappHref(g.phone.replace(/\D/g, ''), pointsFor(pointsTemplate(business), g, cap))}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={t('waAria', { name: g.name ?? t('guest') })}
+              onClick={() => messaged.mark(g.phone)}
             >
               <IconWhatsApp />
             </a>
@@ -912,12 +927,13 @@ function PointsWaiting({ waiting }: { waiting: RestaurantPointsWaiting }) {
  */
 function DishFans({ fans }: { fans: RestaurantDishFans }) {
   const t = useTranslations('restaurantReports.customers.fans');
-  const [chosen, setChosen] = useState(fans.dishes[0]?.productId ?? '');
+  const [chosen, setChosen] = useState(fans.dishes[0]?.key ?? '');
   const [all, setAll] = useState(false);
   const [composing, setComposing] = useState(false);
   const session = useSession();
   const business = session?.businessName ?? null;
-  const dish = fans.dishes.find((d) => d.productId === chosen) ?? fans.dishes[0];
+  const messaged = useMessaged(todayInZone(session?.timezone));
+  const dish = fans.dishes.find((d) => d.key === chosen) ?? fans.dishes[0];
   if (!dish) return null;
   const name = fanDish(dish.dish);
   const title = (
@@ -930,13 +946,13 @@ function DishFans({ fans }: { fans: RestaurantDishFans }) {
     <div className="my-chips rr-fan-dishes" role="radiogroup" aria-label={t('pick')}>
       {fans.dishes.map((d) => (
         <button
-          key={d.productId}
+          key={d.key}
           type="button"
           role="radio"
-          aria-checked={d.productId === dish.productId}
-          className={`my-chip${d.productId === dish.productId ? ' is-on' : ''}`}
+          aria-checked={d.key === dish.key}
+          className={`my-chip${d.key === dish.key ? ' is-on' : ''}`}
           onClick={() => {
-            setChosen(d.productId);
+            setChosen(d.key);
             setAll(false);
           }}
         >
@@ -983,7 +999,10 @@ function DishFans({ fans }: { fans: RestaurantDishFans }) {
             <Avatar name={g.name} id={g.customerId} size={36} />
             <span className="rr-list-name">
               {g.name ?? t('guest')}
-              <span className="rr-list-note">{t('orders', { n: g.orders })}</span>
+              <span className="rr-list-note">
+                {t('orders', { n: g.orders })}
+                <Messaged ago={messaged.daysAgo(g.phone)} />
+              </span>
             </span>
             <span className="rr-away">{t('away', { n: g.lastSeenDaysAgo })}</span>
             <a
@@ -992,6 +1011,7 @@ function DishFans({ fans }: { fans: RestaurantDishFans }) {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={t('waAria', { name: g.name ?? t('guest'), dish: name })}
+              onClick={() => messaged.mark(g.phone)}
             >
               <IconWhatsApp />
             </a>
@@ -1006,6 +1026,12 @@ function DishFans({ fans }: { fans: RestaurantDishFans }) {
       {all && dish.fans > dish.rows.length ? <p className="rr-more">{t('more', { n: dish.fans - dish.rows.length })}</p> : null}
     </section>
   );
+}
+
+/** "· Messaged 3 days ago" after a guest's line, when any Guests list sent them something lately (`messaged.ts`). */
+function Messaged({ ago }: { ago: number | null }) {
+  const t = useTranslations('restaurantReports.customers');
+  return ago === null ? null : <>{` · ${t('messaged', { n: ago })}`}</>;
 }
 
 /** #6 — Top guests: a rank, their initials, their visits, what they spent; "Most visits in these dates" says the order. */

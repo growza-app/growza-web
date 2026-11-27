@@ -2921,12 +2921,15 @@ export interface RestaurantDishFans {
   count: number;
   awayDays: number;
   minOrders: number;
-  dishes: Array<{ productId: string; dish: string; fans: number; rows: Array<{ customerId: string; name: string | null; phone: string; orders: number; lastSeenDaysAgo: number }> }>;
+  /** `key`: the dish's product at one branch; its name without the size across every branch (each sells its own copy). */
+  dishes: Array<{ key: string; dish: string; fans: number; rows: Array<{ customerId: string; name: string | null; phone: string; orders: number; lastSeenDaysAgo: number }> }>;
 }
 
 export interface RestaurantPointsWaiting {
   count: number;
   minRedeemPoints: number;
+  /** The most of one bill points may pay, in percent; absent on an older API (read as 100). */
+  redeemCapPct?: number;
   rows: Array<{ customerId: string; name: string | null; phone: string; points: number; worthMinor: number; expiring: { points: number; on: string } | null }>;
 }
 

@@ -54,6 +54,19 @@ describe('the miss-you messages', () => {
     expect(offersToSend(list, '2026-11-26').map((o) => o.id)).toEqual(['live']);
   });
 
+  it('never promise a once-per-guest offer, nor a week the offer does not last (review, 2026-11-27)', () => {
+    expect(offersToSend([offer({ id: 'once', offBp: 1000, usesPerGuest: 1 })], '2026-11-27')).toEqual([]);
+    const tenOff = (validUntil: string | null) => missYouTemplate('offer', 'Spice Garden', offer({ offBp: 1000, validUntil }), '2026-11-27');
+    expect(tenOff(null)).toContain('Come back to Spice Garden this week and enjoy 10% off');
+    expect(tenOff('2026-12-31')).toContain(' this week ');
+    expect(tenOff('2026-11-29')).toContain('Come back to Spice Garden by 29 Nov and enjoy');
+    expect(tenOff('2026-11-27')).toContain('Come back to Spice Garden today and enjoy');
+  });
+
+  it('with every branch picked, no branch\'s offer is named (it would be refused at the others)', () => {
+    expect(code('RestaurantReports.tsx')).toContain('const offersAt = branchContext.multi ? branchContext.choice : (session?.branches?.[0]?.id ?? null);');
+  });
+
   it('are offered from the overdue card; each row and each Send fills in that guest’s dish', () => {
     const rr = code('RestaurantReports.tsx');
     expect(rr).toContain("{t('missYou.open')}");

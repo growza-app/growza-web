@@ -9,6 +9,7 @@ import { whatsappHref } from '../lib/receipt-text';
 import { Avatar } from '../components/home/parts';
 import { IconCheck, IconClose, IconWhatsApp } from '../components/icons';
 import { useDialog } from '../../shared/a11y/useDialog';
+import { useMessaged } from './messaged';
 import { DISH, MISS_YOU_KINDS, dishForMessage, missYouFor, missYouTemplate, offersToSend, type MissYouKind } from './miss-you';
 
 type Guest = NonNullable<RestaurantCustomersPage['overdue']>['rows'][number];
@@ -42,7 +43,8 @@ export function MissYouSheet({
   const [kind, setKind] = useState<MissYouKind>('miss');
   const [offerId, setOfferId] = useState<string | null>(null);
   const [text, setText] = useState(() => missYouTemplate('miss', business));
-  const [sent, setSent] = useState<ReadonlySet<string>>(new Set());
+  const tc = useTranslations('restaurantReports.customers');
+  const messaged = useMessaged(todayISO);
 
   useEffect(() => {
     if (!location) return;
@@ -64,7 +66,7 @@ export function MissYouSheet({
   const choose = (next: MissYouKind, nextOffer: BillOffer | null = offer) => {
     setKind(next);
     if (next === 'offer' && nextOffer) setOfferId(nextOffer.id);
-    setText(missYouTemplate(next, business, nextOffer));
+    setText(missYouTemplate(next, business, nextOffer, todayISO));
   };
 
   const message = text.trim();
@@ -109,7 +111,8 @@ export function MissYouSheet({
 
           <ul className="td-people my-people">
             {reachable.map((g) => {
-              const done = sent.has(g.customerId);
+              const ago = messaged.daysAgo(g.phone);
+              const done = ago === 0;
               return (
                 <li key={g.customerId} className="td-person">
                   <span className="td-person-who">
@@ -119,6 +122,7 @@ export function MissYouSheet({
                       <span className="td-person-meta">
                         {t('away', { n: g.lastSeenDaysAgo })}
                         {dishForMessage(g.favouriteDish) ? ` · ${dishForMessage(g.favouriteDish)}` : ''}
+                        {ago !== null && ago > 0 ? ` · ${tc('messaged', { n: ago })}` : ''}
                       </span>
                     </span>
                   </span>
@@ -129,7 +133,7 @@ export function MissYouSheet({
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={done ? t('sentAria', { name: g.name ?? t('guest') }) : t('sendAria', { name: g.name ?? t('guest') })}
-                      onClick={() => setSent((s) => new Set(s).add(g.customerId))}
+                      onClick={() => messaged.mark(g.phone)}
                     >
                       {done ? <IconCheck /> : <IconWhatsApp />}
                       <span>{done ? t('sent') : t('send')}</span>

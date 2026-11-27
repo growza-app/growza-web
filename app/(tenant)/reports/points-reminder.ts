@@ -29,11 +29,14 @@ export function pointsTemplate(business: string | null | undefined): string {
 }
 
 /**
- * One guest's message: their own numbers in place of {points} and {worth}, then — only when some die within the month —
- * when. All of them dying that day reads "They expire on 5 Dec."; some, "120 of them expire on 5 Dec."
+ * One guest's message: their own numbers in place of {points} and {worth}; then, when a bill may only partly be paid with
+ * points, how much ("Points can pay up to 20% of a bill.") — or "worth ₹500" promises more than one visit can take
+ * (review, 2026-11-27); then — only when some die within the month — when. All of them dying that day reads "They
+ * expire on 5 Dec."; some, "120 of them expire on 5 Dec."
  */
-export function pointsFor(template: string, g: PointsGuest): string {
-  const text = template.split(POINTS).join(pointsNumber(g.points)).split(WORTH).join(rupees(g.worthMinor)).trim();
+export function pointsFor(template: string, g: PointsGuest, capPct = 100): string {
+  let text = template.split(POINTS).join(pointsNumber(g.points)).split(WORTH).join(rupees(g.worthMinor)).trim();
+  if (capPct > 0 && capPct < 100) text = `${text} Points can pay up to ${capPct}% of a bill.`;
   if (!g.expiring) return text;
   const day = shortDay(g.expiring.on);
   return g.expiring.points >= g.points

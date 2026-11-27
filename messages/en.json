@@ -3280,6 +3280,7 @@
       "returnStatMonthOpen": "{month} so far: {back} of {n}",
       "overdueUsual": "Usually every {gap, plural, one {day} other {# days}}",
       "overdueAway": "{n} days away",
+      "messaged": "{n, plural, =0 {Messaged today} =1 {Messaged yesterday} other {Messaged # days ago}}",
       "topSub": "Most visits in these dates",
       "missYou": {
         "open": "Send a 'we miss you' message",

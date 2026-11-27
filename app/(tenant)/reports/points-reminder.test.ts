@@ -24,6 +24,15 @@ describe('the points reminder', () => {
     expect(pointsFor(words, { points: 600, worthMinor: 60_000, expiring: { points: 600, on: '2027-01-01' } })).toMatch(/They expire on 1 Jan\.$/);
   });
 
+  it('says how much of a bill points may pay when it is not all of it — "worth" alone over-promises (review, 2026-11-27)', () => {
+    const g = { points: 500, worthMinor: 50_000, expiring: { points: 120, on: '2026-12-05' } };
+    expect(pointsFor(words, g, 20)).toBe(
+      'You have 500 points at Spice Garden, worth ₹500. Use them on your next visit 🎁 Points can pay up to 20% of a bill. 120 of them expire on 5 Dec.',
+    );
+    expect(pointsFor(words, g, 100)).not.toContain('of a bill');
+    expect(pointsFor(words, g)).toBe(pointsFor(words, g, 100));
+  });
+
   it('keeps the edited words, and the day is the one named whatever the reader’s clock', () => {
     expect(pointsFor(`${POINTS} pts = ${WORTH}`, { points: 500, worthMinor: 25_050, expiring: null })).toBe('500 pts = ₹250.5');
     expect(shortDay('2026-12-31')).toBe('31 Dec');
