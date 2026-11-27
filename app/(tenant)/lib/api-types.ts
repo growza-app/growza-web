@@ -2910,7 +2910,27 @@ export interface RestaurantCustomersPage {
    */
   topShare?: { guests: number; pct: number } | null;
   returnByMonth?: Array<{ month: string; newGuests: number; cameBack: number; pct: number | null; partial: boolean }>;
-  overdue?: { count: number; rows: Array<{ customerId: string; name: string | null; phone: string; visits: number; usualGapDays: number; lastSeenDaysAgo: number }> };
+  overdue?: { count: number; rows: Array<{ customerId: string; name: string | null; phone: string; visits: number; usualGapDays: number; lastSeenDaysAgo: number; favouriteDish?: string | null }> };
+  /** Owner, 2026-11-27 — guests who can spend their points today; null where rewards are off, absent on an older API. */
+  pointsWaiting?: RestaurantPointsWaiting | null;
+  /** Owner, 2026-11-27 — fans of a dish (3+ bills with it) not in for 15 days, by dish; absent on an older API. */
+  dishFans?: RestaurantDishFans;
+}
+
+export interface RestaurantDishFans {
+  count: number;
+  awayDays: number;
+  minOrders: number;
+  /** `key`: the dish's product at one branch; its name without the size across every branch (each sells its own copy). */
+  dishes: Array<{ key: string; dish: string; fans: number; rows: Array<{ customerId: string; name: string | null; phone: string; orders: number; lastSeenDaysAgo: number }> }>;
+}
+
+export interface RestaurantPointsWaiting {
+  count: number;
+  minRedeemPoints: number;
+  /** The most of one bill points may pay, in percent; absent on an older API (read as 100). */
+  redeemCapPct?: number;
+  rows: Array<{ customerId: string; name: string | null; phone: string; points: number; worthMinor: number; expiring: { points: number; on: string } | null }>;
 }
 
 /* ───────── The salon's Reports tabs (Overview · Sales · Services · Team · Clients · Tips), the restaurant's layout ───────── */
@@ -2990,7 +3010,7 @@ export interface SalonClientsPage {
   topShare: { guests: number; pct: number } | null;
   returnByMonth: Array<{ month: string; newGuests: number; cameBack: number; pct: number | null; partial: boolean }>;
   returnDays: number;
-  overdue: { count: number; rows: Array<{ customerId: string; name: string | null; phone: string; usualGapDays: number; lastSeenDaysAgo: number }> };
+  overdue: { count: number; rows: Array<{ customerId: string; name: string | null; phone: string; usualGapDays: number; lastSeenDaysAgo: number; favouriteDish?: string | null }> };
   top: Array<{ customerId: string | null; name: string | null; visits: number; salesMinor: number | null }>;
 }
 

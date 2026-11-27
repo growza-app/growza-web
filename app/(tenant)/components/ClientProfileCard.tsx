@@ -90,6 +90,13 @@ export function ClientProfileCard({
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deletedFor, setDeletedFor] = useState<number | null>(null);
+  /*
+   * Owner, 2026-11-27 — "Don't message": a guest who asks not to be sent anything is switched off here, by anyone
+   * who may correct this card. The server sets it on every record with their number, at every branch, and writes a
+   * consent record for each; every Guests list with a WhatsApp button then leaves them out.
+   */
+  const [quietSaving, setQuietSaving] = useState(false);
+  const [quietError, setQuietError] = useState<string | null>(null);
   const panel = useRef<HTMLDivElement>(null);
   const c = useClientCardCopy();
   /**
@@ -119,6 +126,7 @@ export function ClientProfileCard({
     setDeletedFor(null);
     setConfirmDelete(false);
     setRewards(null);
+    setQuietError(null);
     api
       .clientProfile(clientId)
       .then((p) => live && setProfile(p))
@@ -212,6 +220,20 @@ export function ClientProfileCard({
       setDeleteError(err instanceof ApiError ? err.message : c.actionFailed);
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const setQuiet = async (on: boolean) => {
+    setQuietSaving(true);
+    setQuietError(null);
+    try {
+      const updated = await api.updateCustomer(clientId, { dontMessage: on });
+      setProfile((prev) => (prev ? { ...prev, optedOut: updated.optedOut ?? on } : prev));
+      router.refresh();
+    } catch {
+      setQuietError(c.dontMessageFailed);
+    } finally {
+      setQuietSaving(false);
     }
   };
 
@@ -400,6 +422,32 @@ export function ClientProfileCard({
                   </div>
                 </>
               )}
+
+              {profile.phone ? (
+                <>
+                  <h3 className="cpc-section">{c.messages}</h3>
+                  <div className="cpc-row cpc-quiet">
+                    <span>
+                      <span id="cpc-quiet-label">{c.dontMessage}</span>
+                      <em id="cpc-quiet-hint">{profile.optedOut ? c.dontMessageOn : c.dontMessageOff}</em>
+                      {quietError && <em className="cpc-edit-error" role="alert">{quietError}</em>}
+                    </span>
+                    <label className="switch">
+                      <input
+                        type="checkbox"
+                        aria-labelledby="cpc-quiet-label"
+                        aria-describedby="cpc-quiet-hint"
+                        checked={profile.optedOut === true}
+                        disabled={quietSaving || !mayEdit}
+                        onChange={(e) => setQuiet(e.target.checked)}
+                      />
+                      <span className="switch-track">
+                        <span className="switch-thumb" />
+                      </span>
+                    </label>
+                  </div>
+                </>
+              ) : null}
 
               <h3 className="cpc-section">{c.insight}</h3>
               {profile.rows

@@ -487,19 +487,90 @@ describe('Jira GRW-761 — Customers', () => {
       expect(out).toContain('new guests still have days left to come back.');
       expect(out).toContain('– Under 10 new guests: too few to say.');
     });
-    it('overdue regulars: five, then See all; each with their habit and a WhatsApp chat link with a hello', () => {
-      expect(out).toContain('Regulars who are overdue · 7 Away twice as long as they usually are');
+    it('overdue regulars: five, then See all; each with their habit and a WhatsApp chat link with the "misses you" line', () => {
+      // Owner, 2026-11-26 — a "we miss you" message button under the heading.
+      expect(out).toContain('Regulars who are overdue · 7 Away twice as long as they usually are Send a &#x27;we miss you&#x27; message');
       // Initials, the habit, how late — and a round WhatsApp button named for her.
       expect(out).toContain('PS Priya Sharma Usually every 6 days 15 days away');
       expect(html).toContain('aria-label="Message Priya Sharma on WhatsApp"');
       expect(count(html, 'rr-wa')).toBe(5);
       expect(out).toContain('See all 7');
-      expect(html).toContain('href="https://wa.me/919810000000?text=Hi%20Priya%20Sharma%2C"');
+      // Owner, 2026-11-26 — no name and no "Hi": the row sends the "misses you" line (no business in this render, so "us").
+      expect(html).toContain(
+        `href="https://wa.me/919810000000?text=${encodeURIComponent("It's been a little while since we saw you at us 😊 We'd love to welcome you back. Your usual order is waiting!").replace(/'/g, '&#x27;')}"`,
+      );
     });
     it('someone who may not see guests: the count, no names, no numbers', () => {
       const staff = text(render('en', createElement(CustomersTab, { data: { ...habits, overdue: { count: 7, rows: [] } } })));
       expect(staff).toContain('7 regulars are overdue.');
       expect(staff).not.toContain('Priya');
+    });
+    // Owner, 2026-11-27 — points waiting to be used.
+    const waiting = {
+      count: 3,
+      minRedeemPoints: 500,
+      rows: [
+        { customerId: 'p1', name: 'Asha Verma', phone: '+91 98200 00001', points: 900, worthMinor: 90_000, expiring: { points: 120, on: '2026-12-05' } },
+        { customerId: 'p2', name: 'Bilal Khan', phone: '+91 98200 00002', points: 1500, worthMinor: 150_000, expiring: null },
+        { customerId: 'p3', name: 'Gita Rao', phone: '+91 98200 00003', points: 1000, worthMinor: 100_000, expiring: null },
+      ],
+    };
+    it('points waiting: the card, each guest worth and expiry, a reminder link with their numbers', () => {
+      const html = render('en', createElement(CustomersTab, { data: { ...habits, pointsWaiting: waiting } }));
+      const out = text(html);
+      expect(out).toContain('Points waiting to be used · 3 Guests who can spend their points today Send a points reminder');
+      expect(out).toContain('AV Asha Verma 900 points · worth ₹900 120 expire 5 Dec');
+      expect(out).toContain('BK Bilal Khan 1,500 points · worth ₹1,500');
+      expect(html).toContain('aria-label="Remind Asha Verma about their points on WhatsApp"');
+      expect(html).toContain(
+        `href="https://wa.me/919820000001?text=${encodeURIComponent('You have 900 points at us, worth ₹900. Use them on your next visit 🎁 120 of them expire on 5 Dec.')}"`,
+      );
+    });
+    it('points waiting: hidden when rewards are off; the count only for someone who may not see guests', () => {
+      expect(text(render('en', createElement(CustomersTab, { data: { ...habits, pointsWaiting: null } })))).not.toContain('Points waiting');
+      const staff = text(render('en', createElement(CustomersTab, { data: { ...habits, pointsWaiting: { ...waiting, rows: [] } } })));
+      expect(staff).toContain('3 guests have points to spend.');
+      expect(staff).not.toContain('900 points');
+      expect(text(render('hi', createElement(CustomersTab, { data: { ...habits, pointsWaiting: waiting } })))).toContain('पॉइंट्स जो अभी इस्तेमाल हो सकते हैं');
+    });
+    // Owner, 2026-11-27 — fans of a dish who have not come back in 15 days.
+    const fanList = {
+      count: 3,
+      awayDays: 15,
+      minOrders: 3,
+      dishes: [
+        {
+          key: 'bc',
+          dish: 'Butter Chicken (Full)',
+          fans: 2,
+          rows: [
+            { customerId: 'f1', name: 'Arjun Mehra', phone: '+91 98300 00001', orders: 4, lastSeenDaysAgo: 20 },
+            { customerId: 'f2', name: 'Isha Khanna', phone: '+91 98300 00002', orders: 3, lastSeenDaysAgo: 15 },
+          ],
+        },
+        { key: 'dm', dish: 'Dal Makhani', fans: 1, rows: [{ customerId: 'f3', name: 'Bina Arora', phone: '+91 98300 00003', orders: 3, lastSeenDaysAgo: 16 }] },
+      ],
+    };
+    it('fans of a dish: a chip per dish, the first chosen, its fans with a message naming the dish (size dropped)', () => {
+      const html = render('en', createElement(CustomersTab, { data: { ...habits, dishFans: fanList } }));
+      const out = text(html);
+      expect(out).toContain('Fans of a dish · 3 Ordered it 3+ times, not in for 15+ days. Pick a dish. Butter Chicken · 2 Dal Makhani · 1 Message Butter Chicken fans');
+      expect(out).toContain('AM Arjun Mehra Ordered 4 times 20 days away');
+      expect(out).not.toContain('Bina Arora');
+      expect(html).toContain('role="radio" aria-checked="true" class="my-chip is-on">Butter Chicken · 2');
+      expect(html).toContain('aria-label="Message Arjun Mehra about Butter Chicken on WhatsApp"');
+      expect(html).toContain(
+        `href="https://wa.me/919830000001?text=${encodeURIComponent('Craving Butter Chicken? Your favourite is waiting at us. Come in or order this week 🍽️')}"`,
+      );
+    });
+    it('fans of a dish: none, no card; the counts only for someone who may not see guests; Hindi', () => {
+      expect(text(render('en', createElement(CustomersTab, { data: { ...habits, dishFans: { ...fanList, count: 0, dishes: [] } } })))).not.toContain('Fans of a dish');
+      const hidden = { ...fanList, dishes: fanList.dishes.map((d) => ({ ...d, rows: [] })) };
+      const staff = text(render('en', createElement(CustomersTab, { data: { ...habits, dishFans: hidden } })));
+      expect(staff).toContain('Fans of a dish · 3');
+      expect(staff).toContain('Butter Chicken · 2');
+      expect(staff).not.toContain('Arjun');
+      expect(text(render('hi', createElement(CustomersTab, { data: { ...habits, dishFans: fanList } })))).toContain('किसी डिश के शौक़ीन');
     });
     it('Hindi', () => {
       const hi = text(render('hi', createElement(CustomersTab, { data: habits })));
@@ -520,5 +591,13 @@ describe('QA 2026-11-24', () => {
   });
   it('#2 — a dish from a whole order cancelled says so where a reason would be', () => {
     expect(source).toContain("r.wholeOrder ? t('items.wholeOrder') : r.reason");
+  });
+});
+
+/** Owner, 2026-11-26 — "move the guest to the third tab instead of at the second last". */
+describe('the restaurant Reports tab order', () => {
+  it('is Overview · Sales · Guests · Items · Inventory · Tips', async () => {
+    const { RESTAURANT_TABS } = await import('./restaurant-tabs');
+    expect([...RESTAURANT_TABS]).toEqual(['overview', 'sales', 'customers', 'items', 'inventory', 'tips']);
   });
 });
