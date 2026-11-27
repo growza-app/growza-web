@@ -505,6 +505,34 @@ describe('Jira GRW-761 — Customers', () => {
       expect(staff).toContain('7 regulars are overdue.');
       expect(staff).not.toContain('Priya');
     });
+    // Owner, 2026-11-27 — points waiting to be used.
+    const waiting = {
+      count: 3,
+      minRedeemPoints: 500,
+      rows: [
+        { customerId: 'p1', name: 'Asha Verma', phone: '+91 98200 00001', points: 900, worthMinor: 90_000, expiring: { points: 120, on: '2026-12-05' } },
+        { customerId: 'p2', name: 'Bilal Khan', phone: '+91 98200 00002', points: 1500, worthMinor: 150_000, expiring: null },
+        { customerId: 'p3', name: 'Gita Rao', phone: '+91 98200 00003', points: 1000, worthMinor: 100_000, expiring: null },
+      ],
+    };
+    it('points waiting: the card, each guest worth and expiry, a reminder link with their numbers', () => {
+      const html = render('en', createElement(CustomersTab, { data: { ...habits, pointsWaiting: waiting } }));
+      const out = text(html);
+      expect(out).toContain('Points waiting to be used · 3 Guests who can spend their points today Send a points reminder');
+      expect(out).toContain('AV Asha Verma 900 points · worth ₹900 120 expire 5 Dec');
+      expect(out).toContain('BK Bilal Khan 1,500 points · worth ₹1,500');
+      expect(html).toContain('aria-label="Remind Asha Verma about their points on WhatsApp"');
+      expect(html).toContain(
+        `href="https://wa.me/919820000001?text=${encodeURIComponent('You have 900 points at us, worth ₹900. Use them on your next visit 🎁 120 of them expire on 5 Dec.')}"`,
+      );
+    });
+    it('points waiting: hidden when rewards are off; the count only for someone who may not see guests', () => {
+      expect(text(render('en', createElement(CustomersTab, { data: { ...habits, pointsWaiting: null } })))).not.toContain('Points waiting');
+      const staff = text(render('en', createElement(CustomersTab, { data: { ...habits, pointsWaiting: { ...waiting, rows: [] } } })));
+      expect(staff).toContain('3 guests have points to spend.');
+      expect(staff).not.toContain('900 points');
+      expect(text(render('hi', createElement(CustomersTab, { data: { ...habits, pointsWaiting: waiting } })))).toContain('पॉइंट्स जो अभी इस्तेमाल हो सकते हैं');
+    });
     it('Hindi', () => {
       const hi = text(render('hi', createElement(CustomersTab, { data: habits })));
       expect(hi).toContain('नए मेहमान जो 30 दिन में फिर आए');

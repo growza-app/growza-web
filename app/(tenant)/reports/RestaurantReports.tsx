@@ -9,6 +9,7 @@ import type {
   RestaurantCancelledPage,
   RestaurantCompared,
   RestaurantCustomersPage,
+  RestaurantPointsWaiting,
   RestaurantFreshness,
   RestaurantDish,
   RestaurantItemsPage,
@@ -27,6 +28,8 @@ import { ReportDates } from './ReportDates';
 import { RESTAURANT_TABS, type RestaurantTab } from './restaurant-tabs';
 import { MissYouSheet } from './MissYouSheet';
 import { missYouFor, missYouTemplate } from './miss-you';
+import { PointsSheet } from './PointsSheet';
+import { pointsFor, pointsNumber, pointsTemplate, rupees as pointsRupees, shortDay } from './points-reminder';
 import { fetchOnce, freshFor, isFresh, peek } from './report-cache';
 import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../lib/report-dates';
 
@@ -686,6 +689,7 @@ export function CustomersTab({ data }: { data: RestaurantCustomersPage }) {
       </section>
       <div className="rr-lists">
         {data.overdue && data.overdue.count > 0 ? <Overdue overdue={data.overdue} /> : null}
+        {data.pointsWaiting && data.pointsWaiting.count > 0 ? <PointsWaiting waiting={data.pointsWaiting} /> : null}
         <TopGuests top={data.top} money={money} />
       </div>
     </>
@@ -828,6 +832,71 @@ function Overdue({ overdue }: { overdue: NonNullable<RestaurantCustomersPage['ov
         </button>
       ) : null}
       {all && overdue.count > overdue.rows.length ? <p className="rr-more">{t('overdueMore', { n: overdue.count - overdue.rows.length })}</p> : null}
+    </section>
+  );
+}
+
+/**
+ * Owner, 2026-11-27 — "Points waiting to be used": guests who could spend their points today (at least the business's
+ * minimum to redeem), points about to die first. A reminder per guest, or the sheet to send them all one by one.
+ * Anyone not allowed to see guests gets the count only, like the overdue list.
+ */
+function PointsWaiting({ waiting }: { waiting: RestaurantPointsWaiting }) {
+  const t = useTranslations('restaurantReports.customers.points');
+  const [all, setAll] = useState(false);
+  const [composing, setComposing] = useState(false);
+  const session = useSession();
+  const business = session?.businessName ?? null;
+  const title = (
+    <h3 className="rr-list-title" id="rr-points-h">
+      {t('title')} <span className="rr-list-count">· {waiting.count}</span>
+    </h3>
+  );
+  if (waiting.rows.length === 0) {
+    return (
+      <section className="rr-list" aria-labelledby="rr-points-h">
+        {title}
+        <p className="rr-line">{t('count', { n: waiting.count })}</p>
+      </section>
+    );
+  }
+  const rows = all ? waiting.rows : waiting.rows.slice(0, LIST_SHOWN);
+  return (
+    <section className="rr-list rr-people rr-overdue rr-points" aria-labelledby="rr-points-h">
+      {title}
+      <p className="rr-more rr-overdue-sub">{t('sub')}</p>
+      <button type="button" className="btn rr-miss-you" onClick={() => setComposing(true)}>
+        <IconWhatsApp />
+        {t('open')}
+      </button>
+      {composing ? <PointsSheet guests={waiting.rows} business={business} onClose={() => setComposing(false)} /> : null}
+      <ul>
+        {rows.map((g) => (
+          <li key={g.customerId}>
+            <Avatar name={g.name} id={g.customerId} size={36} />
+            <span className="rr-list-name">
+              {g.name ?? t('guest')}
+              <span className="rr-list-note">{t('worth', { points: pointsNumber(g.points), worth: pointsRupees(g.worthMinor) })}</span>
+            </span>
+            {g.expiring ? <span className="rr-away">{t('expires', { n: pointsNumber(g.expiring.points), date: shortDay(g.expiring.on) })}</span> : null}
+            <a
+              className="rr-wa"
+              href={whatsappHref(g.phone.replace(/\D/g, ''), pointsFor(pointsTemplate(business), g))}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={t('waAria', { name: g.name ?? t('guest') })}
+            >
+              <IconWhatsApp />
+            </a>
+          </li>
+        ))}
+      </ul>
+      {!all && waiting.rows.length > LIST_SHOWN ? (
+        <button type="button" className="btn btn-ghost rr-see-all" onClick={() => setAll(true)}>
+          {t('all', { n: waiting.count })}
+        </button>
+      ) : null}
+      {all && waiting.count > waiting.rows.length ? <p className="rr-more">{t('more', { n: waiting.count - waiting.rows.length })}</p> : null}
     </section>
   );
 }

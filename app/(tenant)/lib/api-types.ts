@@ -2911,6 +2911,14 @@ export interface RestaurantCustomersPage {
   topShare?: { guests: number; pct: number } | null;
   returnByMonth?: Array<{ month: string; newGuests: number; cameBack: number; pct: number | null; partial: boolean }>;
   overdue?: { count: number; rows: Array<{ customerId: string; name: string | null; phone: string; visits: number; usualGapDays: number; lastSeenDaysAgo: number; favouriteDish?: string | null }> };
+  /** Owner, 2026-11-27 — guests who can spend their points today; null where rewards are off, absent on an older API. */
+  pointsWaiting?: RestaurantPointsWaiting | null;
+}
+
+export interface RestaurantPointsWaiting {
+  count: number;
+  minRedeemPoints: number;
+  rows: Array<{ customerId: string; name: string | null; phone: string; points: number; worthMinor: number; expiring: { points: number; on: string } | null }>;
 }
 
 /* ───────── The salon's Reports tabs (Overview · Sales · Services · Team · Clients · Tips), the restaurant's layout ───────── */
