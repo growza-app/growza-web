@@ -10,7 +10,7 @@ import { shopPlace } from './points-reminder';
  */
 const place = (business: string | null | undefined) => business?.trim() || 'us';
 
-/** The dish as a guest says it: an add-on ("+ Extra cheese") and then the size on the bill ("(Full)", "(Half)") dropped. */
+/** The dish as a guest says it: the size on the bill ("(Full)", "(Half)") dropped. */
 export const fanDish = (dish: string) => dishForMessage(dish) ?? dish;
 
 /**

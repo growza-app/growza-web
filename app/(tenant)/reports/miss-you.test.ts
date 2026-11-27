@@ -41,16 +41,13 @@ describe('the miss-you messages', () => {
     expect(dishForMessage('Butter Chicken (Half)')).toBe('Butter Chicken');
   });
 
-  it('drop an add-on written onto the line ("Masala Dosa + Extra cheese") before the size', () => {
+  it('keep a " + " that is part of the real name — the API removes the add-on before the name gets here (QA, 2026-11-28)', () => {
     const craving = missYouTemplate('craving', 'Spice Garden');
-    expect(dishForMessage('Masala Dosa + Extra cheese')).toBe('Masala Dosa');
-    expect(dishForMessage('Butter Chicken (Full) + Extra butter')).toBe('Butter Chicken');
-    expect(missYouFor(craving, 'Masala Dosa + Extra cheese')).toMatch(/^Craving Masala Dosa\? /);
-    expect(missYouFor(craving, 'Masala Dosa + Extra cheese')).not.toContain('Extra cheese');
+    expect(dishForMessage('Idli + Vada Combo')).toBe('Idli + Vada Combo');
+    expect(missYouFor(craving, 'Idli + Vada Combo')).toMatch(/^Craving Idli \+ Vada Combo\? /);
+    expect(dishForMessage('Paneer 65+')).toBe('Paneer 65+');
     // Known and accepted: a bracket that is part of the real name goes too.
     expect(dishForMessage('Jersey (Home)')).toBe('Jersey');
-    // A plus with no space after it is part of the name, not an add-on.
-    expect(dishForMessage('Paneer 65+')).toBe('Paneer 65+');
   });
 
   it('say the offer the till will apply', () => {

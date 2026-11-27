@@ -192,13 +192,14 @@ describe('the shop’s messages', () => {
     expect(placeholderOf('shop')).toBe(PRODUCT);
   });
 
-  it('an add-on on the line is dropped before the size: "Running Shoe (UK 9) + Gift wrap" is a Running Shoe', () => {
-    expect(dishForMessage('Running Shoe (UK 9) + Gift wrap')).toBe('Running Shoe');
-    expect(dishForMessage('Cricket Ball + Gift wrap')).toBe('Cricket Ball');
-    expect(fanDish('Running Shoe (UK 9) + Gift wrap')).toBe('Running Shoe');
+  it('a real product name with " + " in it stays whole; only the size in brackets goes (QA, 2026-11-28)', () => {
+    expect(dishForMessage('Bat + Ball Set')).toBe('Bat + Ball Set');
+    expect(dishForMessage('Shampoo + Conditioner')).toBe('Shampoo + Conditioner');
+    expect(dishForMessage('Running Shoe (UK 9)')).toBe('Running Shoe');
+    expect(fanDish('Bat + Ball Set')).toBe('Bat + Ball Set');
     const t = missYouTemplate('craving', at, null, undefined, 'shop');
-    expect(missYouFor(t, 'Running Shoe (UK 9) + Gift wrap', 'shop')).toBe('Need another Running Shoe? Come back to Striker Sports House this week.');
-    expect(dishFansTemplate('Running Shoe (UK 9) + Gift wrap', at, 'shop')).toBe('Come back to Striker Sports House for another Running Shoe this week.');
+    expect(missYouFor(t, 'Bat + Ball Set', 'shop')).toBe('Need another Bat + Ball Set? Come back to Striker Sports House this week.');
+    expect(dishFansTemplate('Bat + Ball Set', at, 'shop')).toBe('Come back to Striker Sports House for another Bat + Ball Set this week.');
   });
 
   it('a comeback treat only when there is an offer to name; a shop with no name is "our shop"', () => {

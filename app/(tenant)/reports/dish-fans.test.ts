@@ -7,10 +7,10 @@ describe('dish fans message', () => {
       'Craving Paneer Butter Masala? Your favourite is waiting at Spice Garden. Come in or order this week 🍽️',
     );
   });
-  it('drops an add-on on the line before the size: "Craving Masala Dosa + Extra cheese?" is not a sentence', () => {
-    expect(fanDish('Masala Dosa + Extra cheese')).toBe('Masala Dosa');
-    expect(dishFansTemplate('Paneer Butter Masala (Half) + Extra cheese', 'Spice Garden')).toBe(
-      'Craving Paneer Butter Masala? Your favourite is waiting at Spice Garden. Come in or order this week 🍽️',
+  it('keeps a " + " that is part of the real name: the API sends the name with any add-on already removed', () => {
+    expect(fanDish('Idli + Vada Combo')).toBe('Idli + Vada Combo');
+    expect(dishFansTemplate('Idli + Vada Combo (Full)', 'Spice Garden')).toBe(
+      'Craving Idli + Vada Combo? Your favourite is waiting at Spice Garden. Come in or order this week 🍽️',
     );
   });
   it('no business name: "us"', () => {

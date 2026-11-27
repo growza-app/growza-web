@@ -90,18 +90,13 @@ export function missYouTemplate(
 }
 
 /**
- * A dish's (or product's) name for a message: what they crave, not how the bill wrote it.
- *
- * First an add-on the API wrote onto the line's name (`${name} + ${addonLabel}`: "Masala Dosa + Extra cheese",
- * "Running Shoe (UK 9) + Gift wrap") is dropped — review, 2026-11-28: "Craving Masala Dosa + Extra cheese?" — then the
- * size in brackets at the end ("(Full)", "(Half)", "(UK 9)"). Known and accepted: a bracket that is part of the real name
- * ("Jersey (Home)") goes too; the bill gives no way to tell the two apart.
+ * A dish's (or product's) name for a message: what they crave, not how the bill wrote it — the size in brackets at the
+ * end ("(Full)", "(Half)", "(UK 9)") is dropped. Known and accepted: a bracket that is part of the real name
+ * ("Jersey (Home)") goes too; the bill gives no way to tell the two apart. An add-on is not stripped here: the API sends
+ * the name with the add-on already removed, and a " + " inside a real name ("Shampoo + Conditioner", "Bat + Ball Set")
+ * stays whole (QA, 2026-11-28).
  */
-export const dishForMessage = (name: string | null | undefined) =>
-  name
-    ?.replace(/\s+\+\s.*$/, '')
-    .replace(/\s*\([^)]*\)\s*$/, '')
-    .trim() || null;
+export const dishForMessage = (name: string | null | undefined) => name?.replace(/\s*\([^)]*\)\s*$/, '').trim() || null;
 
 /**
  * One guest's message: their dish where the words say {favourite dish}, or "your usual order" when they have none.
