@@ -1447,8 +1447,8 @@ export const api = {
    * legitimately have no name and no number, so those two cases must stay
    * distinguishable all the way to the column.
    */
-  updateCustomer: (id: string, body: { name?: string | null; phone?: string | null }) =>
-    patch<{ id: string; name: string | null; waPhone: string | null }>(`/api/v1/customers/${id}`, body),
+  updateCustomer: (id: string, body: { name?: string | null; phone?: string | null; dontMessage?: boolean }) =>
+    patch<{ id: string; name: string | null; waPhone: string | null; optedOut?: boolean }>(`/api/v1/customers/${id}`, body),
   /** Jira GRW-477 — the owner's delete, undoable for the grace period (`graceDays`), then the worker erases it. */
   deleteCustomer: (id: string) => del<{ status: 'erasure_requested'; graceDays: number }>(`/api/v1/customers/${id}`),
   restoreCustomer: (id: string) => post<{ status: 'restored' }>(`/api/v1/customers/${id}/restore`, {}),

@@ -2613,6 +2613,11 @@
     "reference": "Booking ID"
   },
   "clientCard": {
+    "messages": "Messages",
+    "dontMessage": "Don't message",
+    "dontMessageOn": "They asked not to get messages. They are off every WhatsApp list, at every branch.",
+    "dontMessageOff": "Turn this on if they ask not to get messages.",
+    "dontMessageFailed": "Could not change this. Try again.",
     "edit": "Edit",
     "save": "Save",
     "saving": "Saving…",

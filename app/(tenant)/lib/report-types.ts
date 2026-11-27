@@ -322,6 +322,8 @@ export interface ClientProfile {
   name: string;
   initial: string;
   phone: string;
+  /** Owner, 2026-11-27 — "Don't message" is on (said on any of their records with this number). Absent on an older API. */
+  optedOut?: boolean;
   sinceISO: string | null;
   visits: number;
   lifetimeSpendMinor: number;
