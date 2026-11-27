@@ -141,10 +141,10 @@ describe('the shop’s messages', () => {
   const live = offer({ code: 'BACK10', offBp: 1000 });
 
   it('are the owner’s words, the shop named in each', () => {
-    expect(missYouTemplate('miss', at, null, undefined, 'shop')).toBe('We miss you at Striker Sports House. New stock is in — drop by this week.');
-    expect(missYouTemplate('craving', at, null, undefined, 'shop')).toBe(`Need another ${PRODUCT}? It's in stock at Striker Sports House. Drop by this week.`);
+    expect(missYouTemplate('miss', at, null, undefined, 'shop')).toBe('We miss you at Striker Sports House. Drop by this week.');
+    expect(missYouTemplate('craving', at, null, undefined, 'shop')).toBe(`Need another ${PRODUCT}? Find it at Striker Sports House. Drop by this week.`);
     expect(missYouTemplate('offer', at, live, '2026-11-28', 'shop')).toBe('We miss you at Striker Sports House. Come back this week and get 10% off with code BACK10.');
-    expect(dishFansTemplate('Running Shoe (UK 9)', at, 'shop')).toBe('Running Shoe is back in stock at Striker Sports House. Come and pick yours this week.');
+    expect(dishFansTemplate('Running Shoe (UK 9)', at, 'shop')).toBe('Running Shoe is waiting for you at Striker Sports House. Come and pick yours this week.');
     // The points line has no food in it: the restaurant's, as it is.
     expect(pointsTemplate(at)).toBe('You have {points} points at Striker Sports House, worth {worth}. Use them on your next visit 🎁');
   });
@@ -166,14 +166,14 @@ describe('the shop’s messages', () => {
 
   it('their product: the customer’s most-bought product, size dropped — or "your usual" when there is none', () => {
     const t = missYouTemplate('craving', at, null, undefined, 'shop');
-    expect(missYouFor(t, 'Running Shoe (UK 9)', 'shop')).toBe("Need another Running Shoe? It's in stock at Striker Sports House. Drop by this week.");
-    expect(missYouFor(t, null, 'shop')).toBe("Need more of your usual? It's in stock at Striker Sports House. Drop by this week.");
+    expect(missYouFor(t, 'Running Shoe (UK 9)', 'shop')).toBe("Need another Running Shoe? Find it at Striker Sports House. Drop by this week.");
+    expect(missYouFor(t, null, 'shop')).toBe("Need more of your usual? Find it at Striker Sports House. Drop by this week.");
     expect(placeholderOf('shop')).toBe(PRODUCT);
   });
 
   it('a comeback treat only when there is an offer to name; a shop with no name is "our shop"', () => {
     expect(missYouTemplate('offer', at, null, undefined, 'shop')).toBe(missYouTemplate('miss', at, null, undefined, 'shop'));
-    expect(missYouTemplate('miss', null, null, undefined, 'shop')).toBe('We miss you at our shop. New stock is in — drop by this week.');
+    expect(missYouTemplate('miss', null, null, undefined, 'shop')).toBe('We miss you at our shop. Drop by this week.');
   });
 
   it('leave the restaurant’s exactly as they were', () => {
@@ -203,14 +203,14 @@ describe('Reports › Customers, drawn for a shop', () => {
   it('the overdue list, its message button, and each row’s line in the shop’s words', () => {
     expect(out).toContain('Regulars who are overdue · 11 Away twice as long as they usually are');
     expect(out).toContain('RG Rohan Gupta Usually every 10 days 22 days away');
-    expect(waText(html)).toContain('We miss you at our shop. New stock is in — drop by this week.');
+    expect(waText(html)).toContain('We miss you at our shop. Drop by this week.');
   });
 
   it('points waiting, and fans of a product with the size dropped', () => {
     expect(out).toContain('Points waiting to be used · 2 Customers who can spend their points today');
     expect(out).toContain('Fans of a product · 3 Bought it on 3+ bills, not in for 15+ days. Pick a product. Running Shoe · 2 Cricket Ball · 1 Message Running Shoe fans');
     expect(out).toContain('AM Arjun Mehra Bought 4 times 20 days away');
-    expect(waText(html)).toContain('Running Shoe is back in stock at our shop. Come and pick yours this week.');
+    expect(waText(html)).toContain('Running Shoe is waiting for you at our shop. Come and pick yours this week.');
   });
 
   it('top customers', () => {
@@ -280,7 +280,7 @@ describe('the shop’s message sheets', () => {
     expect(out).toContain('Miss you Their product Message');
     expect(out).not.toContain('Comeback treat');
     expect(out).toContain("{product} becomes each customer's most-bought product.");
-    expect(out).toContain('We miss you at Striker Sports House. New stock is in — drop by this week.');
+    expect(out).toContain('We miss you at Striker Sports House. Drop by this week.');
     expect(out).toContain('Rohan Gupta 22 days away · Running Shoe');
     expect(out).not.toMatch(/guest|dish/i);
   });

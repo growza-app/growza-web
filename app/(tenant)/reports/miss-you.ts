@@ -22,7 +22,7 @@ export const PRODUCT = '{product}';
 export const placeholderOf = (words: CustomerWords = 'restaurant') => (words === 'shop' ? PRODUCT : DISH);
 
 const place = (business: string | null | undefined) => business?.trim() || 'us';
-/** A shop's name in its messages; "our shop" where it has none ("It's in stock at us" is not a sentence). */
+/** A shop's name in its messages; "our shop" where it has none ("Find it at us" is not a sentence). */
 const shopPlace = (business: string | null | undefined) => business?.trim() || 'our shop';
 const rupees = (minor: number) => `₹${Math.round(minor / 100).toLocaleString('en-IN')}`;
 
@@ -81,8 +81,8 @@ export function missYouTemplate(
   if (words === 'shop') {
     const shop = shopPlace(business);
     if (treat && offer) return `We miss you at ${shop}. Come back ${until(offer, todayISO)} and get ${treat}.`;
-    if (kind === 'craving') return `Need another ${PRODUCT}? It's in stock at ${shop}. Drop by this week.`;
-    return `We miss you at ${shop}. New stock is in — drop by this week.`;
+    if (kind === 'craving') return `Need another ${PRODUCT}? Find it at ${shop}. Drop by this week.`;
+    return `We miss you at ${shop}. Drop by this week.`;
   }
   const at = place(business);
   if (treat && offer) return `We miss seeing you! Come back to ${at} ${until(offer, todayISO)} and enjoy ${treat}. Hope to see you soon!`;

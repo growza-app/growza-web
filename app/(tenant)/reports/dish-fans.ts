@@ -14,6 +14,6 @@ export const fanDish = (dish: string) => dishForMessage(dish) ?? dish;
 
 /** Owner, 2026-11-28 — a shop's fans of a product get the shop's words: the shop named, no food, no emoji. */
 export function dishFansTemplate(dish: string, business: string | null | undefined, words: CustomerWords = 'restaurant'): string {
-  if (words === 'shop') return `${fanDish(dish)} is back in stock at ${business?.trim() || 'our shop'}. Come and pick yours this week.`;
+  if (words === 'shop') return `${fanDish(dish)} is waiting for you at ${business?.trim() || 'our shop'}. Come and pick yours this week.`;
   return `Craving ${fanDish(dish)}? Your favourite is waiting at ${place(business)}. Come in or order this week 🍽️`;
 }
