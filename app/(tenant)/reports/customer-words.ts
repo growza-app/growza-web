@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
  * the words differ, and which words is passed in by the screen (never asked of the business's type).
  *
  * The shop's sentences are `shopCustomers` in messages/*.json, the same keys as `restaurantReports.customers` with the
- * same placeholders (`customer-words.test.ts` holds that), so the restaurant's typed translator stands for either.
+ * same placeholders (`shop-customers.test.ts` holds that), so the restaurant's typed translator stands for either.
  */
 export type CustomerWords = 'restaurant' | 'shop';
 

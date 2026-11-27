@@ -1,6 +1,6 @@
 import type { BillOffer } from '../lib/api-types';
 import type { CustomerWords } from './customer-words';
-import { shortDay } from './points-reminder';
+import { shopPlace, shortDay } from './points-reminder';
 
 /**
  * Owner, 2026-11-26 — the "we miss you" messages an owner sends to regulars who are overdue, from the restaurant's
@@ -22,8 +22,6 @@ export const PRODUCT = '{product}';
 export const placeholderOf = (words: CustomerWords = 'restaurant') => (words === 'shop' ? PRODUCT : DISH);
 
 const place = (business: string | null | undefined) => business?.trim() || 'us';
-/** A shop's name in its messages; "our shop" where it has none ("Find it at us" is not a sentence). */
-const shopPlace = (business: string | null | undefined) => business?.trim() || 'our shop';
 const rupees = (minor: number) => `₹${Math.round(minor / 100).toLocaleString('en-IN')}`;
 
 /** What a coupon or buy-get offer gives, as the end of "…and enjoy ___". Null when it cannot be said plainly. */
@@ -81,7 +79,8 @@ export function missYouTemplate(
   if (words === 'shop') {
     const shop = shopPlace(business);
     if (treat && offer) return `We miss you at ${shop}. Come back ${until(offer, todayISO)} and get ${treat}.`;
-    if (kind === 'craving') return `Need another ${PRODUCT}? Find it at ${shop}. Drop by this week.`;
+    // Review, 2026-11-28 — nothing here may say the product is in stock: the sheet does not know.
+    if (kind === 'craving') return `Need another ${PRODUCT}? Come back to ${shop} this week.`;
     return `We miss you at ${shop}. Drop by this week.`;
   }
   const at = place(business);
@@ -90,8 +89,19 @@ export function missYouTemplate(
   return `It's been a little while since we saw you at ${at} 😊 We'd love to welcome you back. Your usual ${DISH} is waiting!`;
 }
 
-/** A dish's name for a message: the size on the bill ("(Full)", "(Half)") is not part of what they crave. */
-export const dishForMessage = (name: string | null | undefined) => name?.replace(/\s*\([^)]*\)\s*$/, '').trim() || null;
+/**
+ * A dish's (or product's) name for a message: what they crave, not how the bill wrote it.
+ *
+ * First an add-on the API wrote onto the line's name (`${name} + ${addonLabel}`: "Masala Dosa + Extra cheese",
+ * "Running Shoe (UK 9) + Gift wrap") is dropped — review, 2026-11-28: "Craving Masala Dosa + Extra cheese?" — then the
+ * size in brackets at the end ("(Full)", "(Half)", "(UK 9)"). Known and accepted: a bracket that is part of the real name
+ * ("Jersey (Home)") goes too; the bill gives no way to tell the two apart.
+ */
+export const dishForMessage = (name: string | null | undefined) =>
+  name
+    ?.replace(/\s+\+\s.*$/, '')
+    .replace(/\s*\([^)]*\)\s*$/, '')
+    .trim() || null;
 
 /**
  * One guest's message: their dish where the words say {favourite dish}, or "your usual order" when they have none.

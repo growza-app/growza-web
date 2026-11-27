@@ -21,7 +21,7 @@ export function PointsSheet({
   /** The most of one bill points may pay, in percent — the message says so when it is under 100. */
   capPct: number;
   onClose: () => void;
-  /** Owner, 2026-11-28 — guests, or a shop's customers (`customer-words.ts`). The message itself has no food words: the same for both. */
+  /** Owner, 2026-11-28 — guests, or a shop's customers (`customer-words.ts`), and the shop's own reminder line (no emoji). */
   words?: CustomerWords;
 }) {
   const t = usePointsWords(words);
@@ -29,7 +29,7 @@ export function PointsSheet({
     <GuestMessageSheet
       labels={sheetLabels(t)}
       title={t('sheetTitle')}
-      initialText={pointsTemplate(business)}
+      initialText={pointsTemplate(business, words)}
       hint={t('hint', { points: POINTS, worth: WORTH })}
       guests={guests}
       meta={(g) => (

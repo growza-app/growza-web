@@ -670,17 +670,39 @@ export function CustomersTab({ data, words = 'restaurant' }: { data: RestaurantC
   const w = useCustomersWords(words);
   const locale = useLocale();
   const money: Money = (m) => rupees(m, locale);
-  if (data.bills === 0) return <p className="rr-empty">{t('empty')}</p>;
-  if (data.lowCapture) {
-    return (
+  // Review, 2026-11-28 — the overdue, points-waiting and fans lists are counted back from today, not from the picked
+  // dates: an empty range (or too few numbers in it) says so, and the lists still follow. Top guests is the range's, so
+  // it stays with the figures.
+  const lists = (top: boolean) => (
+    <div className="rr-lists">
+      {data.overdue && data.overdue.count > 0 ? <Overdue overdue={data.overdue} words={words} /> : null}
+      {data.pointsWaiting && data.pointsWaiting.count > 0 ? <PointsWaiting waiting={data.pointsWaiting} words={words} /> : null}
+      {data.dishFans && data.dishFans.count > 0 ? <DishFans fans={data.dishFans} words={words} /> : null}
+      {top ? <TopGuests top={data.top} money={money} words={words} /> : null}
+    </div>
+  );
+  const anyList = (data.overdue?.count ?? 0) > 0 || (data.pointsWaiting?.count ?? 0) > 0 || (data.dishFans?.count ?? 0) > 0;
+  // In the order they always were: no bills, then too few numbers, then no one with a number.
+  const instead =
+    data.bills === 0 ? (
+      <p className="rr-empty">{t('empty')}</p>
+    ) : data.lowCapture ? (
       <section className="cr-card rr-card" aria-labelledby="rr-guests-h">
         <h2 className="cr-label" id="rr-guests-h">{w('cameBack')}</h2>
         <p className="rr-line">{w('lowCapture')}</p>
         <p className="rr-more">{w('lowCaptureFrom', { pct: data.capturePct })}</p>
       </section>
+    ) : data.guestCount === 0 ? (
+      <p className="rr-empty">{w('empty')}</p>
+    ) : null;
+  if (instead) {
+    return (
+      <>
+        {instead}
+        {anyList ? lists(false) : null}
+      </>
     );
   }
-  if (data.guestCount === 0) return <p className="rr-empty">{w('empty')}</p>;
   return (
     <>
       <section className="cr-card rr-card" aria-labelledby="rr-guests-h">
@@ -696,12 +718,7 @@ export function CustomersTab({ data, words = 'restaurant' }: { data: RestaurantC
         </div>
         {data.returnByMonth && data.returnByMonth.some((m) => m.newGuests > 0) ? <MonthReturns months={data.returnByMonth} words={words} /> : null}
       </section>
-      <div className="rr-lists">
-        {data.overdue && data.overdue.count > 0 ? <Overdue overdue={data.overdue} words={words} /> : null}
-        {data.pointsWaiting && data.pointsWaiting.count > 0 ? <PointsWaiting waiting={data.pointsWaiting} words={words} /> : null}
-        {data.dishFans && data.dishFans.count > 0 ? <DishFans fans={data.dishFans} words={words} /> : null}
-        <TopGuests top={data.top} money={money} words={words} />
-      </div>
+      {lists(true)}
     </>
   );
 }
@@ -907,7 +924,7 @@ function PointsWaiting({ waiting, words }: { waiting: RestaurantPointsWaiting; w
             {g.expiring ? <span className="rr-away">{t('expires', { n: pointsNumber(g.expiring.points), date: shortDay(g.expiring.on) })}</span> : null}
             <a
               className="rr-wa"
-              href={whatsappHref(g.phone.replace(/\D/g, ''), pointsFor(pointsTemplate(business), g, cap))}
+              href={whatsappHref(g.phone.replace(/\D/g, ''), pointsFor(pointsTemplate(business, words), g, cap))}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={t('waAria', { name: g.name ?? t('guest') })}

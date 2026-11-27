@@ -11,9 +11,9 @@ import { canSee } from '../lib/nav-policy';
 import { CustomersTab } from './RestaurantReports';
 import { MissYouSheet } from './MissYouSheet';
 import { PointsSheet } from './PointsSheet';
-import { DISH, MISS_YOU_KINDS, PRODUCT, missYouFor, missYouTemplate, placeholderOf } from './miss-you';
-import { dishFansTemplate } from './dish-fans';
-import { pointsTemplate } from './points-reminder';
+import { DISH, MISS_YOU_KINDS, PRODUCT, dishForMessage, missYouFor, missYouTemplate, placeholderOf } from './miss-you';
+import { dishFansTemplate, fanDish } from './dish-fans';
+import { pointsFor, pointsTemplate } from './points-reminder';
 import { RESTAURANT_TABS } from './restaurant-tabs';
 
 /**
@@ -142,17 +142,37 @@ describe('the shop’s messages', () => {
 
   it('are the owner’s words, the shop named in each', () => {
     expect(missYouTemplate('miss', at, null, undefined, 'shop')).toBe('We miss you at Striker Sports House. Drop by this week.');
-    expect(missYouTemplate('craving', at, null, undefined, 'shop')).toBe(`Need another ${PRODUCT}? Find it at Striker Sports House. Drop by this week.`);
+    expect(missYouTemplate('craving', at, null, undefined, 'shop')).toBe(`Need another ${PRODUCT}? Come back to Striker Sports House this week.`);
     expect(missYouTemplate('offer', at, live, '2026-11-28', 'shop')).toBe('We miss you at Striker Sports House. Come back this week and get 10% off with code BACK10.');
-    expect(dishFansTemplate('Running Shoe (UK 9)', at, 'shop')).toBe('Running Shoe is waiting for you at Striker Sports House. Come and pick yours this week.');
-    // The points line has no food in it: the restaurant's, as it is.
-    expect(pointsTemplate(at)).toBe('You have {points} points at Striker Sports House, worth {worth}. Use them on your next visit 🎁');
+    expect(dishFansTemplate('Running Shoe (UK 9)', at, 'shop')).toBe('Come back to Striker Sports House for another Running Shoe this week.');
+    expect(pointsTemplate(at, 'shop')).toBe('You have {points} points at Striker Sports House, worth {worth}. Use them on your next visit.');
+  });
+
+  it('promise nothing about stock: the product is not checked', () => {
+    const lines = [
+      ...MISS_YOU_KINDS.map((k) => missYouTemplate(k, at, live, '2026-11-28', 'shop')),
+      missYouFor(missYouTemplate('craving', at, null, undefined, 'shop'), null, 'shop'),
+      dishFansTemplate('Running Shoe (UK 9)', at, 'shop'),
+    ];
+    for (const line of lines) expect(line).not.toMatch(/stock|waiting|find it|in store|available/i);
+  });
+
+  it('points: the shop named, "our shop" with no name, no emoji — the restaurant’s line exactly as it was', () => {
+    expect(pointsTemplate(null, 'shop')).toBe('You have {points} points at our shop, worth {worth}. Use them on your next visit.');
+    expect(pointsTemplate('  ', 'shop')).toBe(pointsTemplate(null, 'shop'));
+    const g = { points: 800, worthMinor: 80_000, expiring: null };
+    expect(pointsFor(pointsTemplate(at, 'shop'), g)).toBe('You have 800 points at Striker Sports House, worth ₹800. Use them on your next visit.');
+    expect(pointsFor(pointsTemplate(at, 'shop'), g)).not.toMatch(EMOJI);
+    expect(pointsTemplate('Spice Garden')).toBe('You have {points} points at Spice Garden, worth {worth}. Use them on your next visit 🎁');
+    expect(pointsTemplate('Spice Garden', 'restaurant')).toBe(pointsTemplate('Spice Garden'));
+    expect(pointsTemplate(null)).toBe('You have {points} points at us, worth {worth}. Use them on your next visit 🎁');
   });
 
   it('no name, no "Hi", no emoji, nothing about food; English whatever the dashboard’s language', () => {
     const lines = [
       ...MISS_YOU_KINDS.map((k) => missYouFor(missYouTemplate(k, at, live, '2026-11-28', 'shop'), 'Running Shoe (UK 9)', 'shop')),
       dishFansTemplate('Running Shoe (UK 9)', at, 'shop'),
+      pointsTemplate(at, 'shop'),
     ];
     for (const line of lines) {
       expect(line).not.toMatch(/^(hi|hello|dear)\b/i);
@@ -166,9 +186,19 @@ describe('the shop’s messages', () => {
 
   it('their product: the customer’s most-bought product, size dropped — or "your usual" when there is none', () => {
     const t = missYouTemplate('craving', at, null, undefined, 'shop');
-    expect(missYouFor(t, 'Running Shoe (UK 9)', 'shop')).toBe("Need another Running Shoe? Find it at Striker Sports House. Drop by this week.");
-    expect(missYouFor(t, null, 'shop')).toBe("Need more of your usual? Find it at Striker Sports House. Drop by this week.");
+    expect(missYouFor(t, 'Running Shoe (UK 9)', 'shop')).toBe('Need another Running Shoe? Come back to Striker Sports House this week.');
+    expect(missYouFor(t, null, 'shop')).toBe('Need more of your usual? Come back to Striker Sports House this week.');
+    expect(missYouFor(missYouTemplate('craving', null, null, undefined, 'shop'), null, 'shop')).toBe('Need more of your usual? Come back to our shop this week.');
     expect(placeholderOf('shop')).toBe(PRODUCT);
+  });
+
+  it('an add-on on the line is dropped before the size: "Running Shoe (UK 9) + Gift wrap" is a Running Shoe', () => {
+    expect(dishForMessage('Running Shoe (UK 9) + Gift wrap')).toBe('Running Shoe');
+    expect(dishForMessage('Cricket Ball + Gift wrap')).toBe('Cricket Ball');
+    expect(fanDish('Running Shoe (UK 9) + Gift wrap')).toBe('Running Shoe');
+    const t = missYouTemplate('craving', at, null, undefined, 'shop');
+    expect(missYouFor(t, 'Running Shoe (UK 9) + Gift wrap', 'shop')).toBe('Need another Running Shoe? Come back to Striker Sports House this week.');
+    expect(dishFansTemplate('Running Shoe (UK 9) + Gift wrap', at, 'shop')).toBe('Come back to Striker Sports House for another Running Shoe this week.');
   });
 
   it('a comeback treat only when there is an offer to name; a shop with no name is "our shop"', () => {
@@ -210,7 +240,7 @@ describe('Reports › Customers, drawn for a shop', () => {
     expect(out).toContain('Points waiting to be used · 2 Customers who can spend their points today');
     expect(out).toContain('Fans of a product · 3 Bought it on 3+ bills, not in for 15+ days. Pick a product. Running Shoe · 2 Cricket Ball · 1 Message Running Shoe fans');
     expect(out).toContain('AM Arjun Mehra Bought 4 times 20 days away');
-    expect(waText(html)).toContain('Running Shoe is waiting for you at our shop. Come and pick yours this week.');
+    expect(waText(html)).toContain('Come back to our shop for another Running Shoe this week.');
   });
 
   it('top customers', () => {
@@ -247,11 +277,42 @@ describe('Reports › Customers, drawn for a shop', () => {
   });
 
   it('empty and low-number states, in the shop’s words', () => {
-    expect(text(render('en', createElement(CustomersTab, { data: { ...shop, bills: 0 }, words: 'shop' })))).toBe('No sales on these days yet.');
-    expect(text(render('en', createElement(CustomersTab, { data: { ...shop, guestCount: 0 }, words: 'shop' })))).toBe('No customers with a number yet.');
+    const none = { overdue: undefined, pointsWaiting: null, dishFans: undefined };
+    expect(text(render('en', createElement(CustomersTab, { data: { ...shop, ...none, bills: 0 }, words: 'shop' })))).toBe('No sales on these days yet.');
+    expect(text(render('en', createElement(CustomersTab, { data: { ...shop, ...none, guestCount: 0 }, words: 'shop' })))).toBe('No customers with a number yet.');
     expect(text(render('en', createElement(CustomersTab, { data: { ...shop, lowCapture: true, capturePct: 18 }, words: 'shop' })))).toContain(
       "Add the customer's number on more bills to see who comes back.",
     );
+  });
+
+  it('the overdue, points and fans lists are counted from today, so an empty or low-number range still draws them', () => {
+    for (const data of [
+      { ...shop, bills: 0 },
+      { ...shop, lowCapture: true, capturePct: 18 },
+      { ...shop, guestCount: 0 },
+    ]) {
+      const html = render('en', createElement(CustomersTab, { data, words: 'shop' }));
+      const out = text(html);
+      expect(out).toContain('Regulars who are overdue · 11');
+      expect(out).toContain('RG Rohan Gupta Usually every 10 days 22 days away');
+      expect(out).toContain('Points waiting to be used · 2');
+      expect(out).toContain('Fans of a product · 3');
+      expect(html).toContain('rr-lists');
+      // Top customers is the picked dates', and there is nothing in them to rank.
+      expect(out).not.toContain('Top customers');
+      expect(out).not.toContain('Customers who came back 59');
+    }
+    const empty = text(render('en', createElement(CustomersTab, { data: { ...shop, bills: 0 }, words: 'shop' })));
+    expect(empty.startsWith('No sales on these days yet.')).toBe(true);
+  });
+
+  it('the restaurant’s Guests tab does the same: zero bills in range, overdue regulars still listed', () => {
+    const html = render('en', createElement(CustomersTab, { data: { ...shop, bills: 0, pointsWaiting: null, dishFans: undefined } }));
+    const out = text(html);
+    expect(out).toContain('Regulars who are overdue · 11');
+    expect(out).toContain('RG Rohan Gupta');
+    expect(out).not.toContain('Top guests');
+    expect(html.match(/class="rr-wa"/g)?.length).toBe(5);
   });
 
   it('in Hindi: ग्राहक and सामान, never मेहमान or डिश', () => {
