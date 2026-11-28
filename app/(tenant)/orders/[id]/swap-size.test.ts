@@ -166,3 +166,21 @@ describe('UX — words, tokens, motion', () => {
     expect(sheet).toContain("t('retry')");
   });
 });
+
+describe('the way-of-paying chips are buttons, so they are capitalised', () => {
+  const all = (lang: 'en' | 'hi') => JSON.parse(readFileSync(path.resolve(import.meta.dirname, '../../../../messages', `${lang}.json`), 'utf8')).orders;
+
+  it('reads the button labels (orders.tiles.modes), not the in-sentence words (orders.detail.modes)', () => {
+    expect(sheet).toContain("useTranslations('orders.tiles.modes')");
+    expect(sheet).not.toContain("useTranslations('orders.detail.modes')");
+  });
+
+  it('every chip has a label in both languages, and in English each one starts with a capital', () => {
+    for (const lang of ['en', 'hi'] as const) {
+      for (const m of ['cash', 'upi', 'card', 'other']) expect(all(lang).tiles.modes[m], `${lang} tiles.modes.${m}`).toBeTruthy();
+    }
+    expect(['cash', 'upi', 'card', 'other'].map((m) => all('en').tiles.modes[m])).toEqual(['Cash', 'UPI', 'Card', 'Other']);
+    // The sentence words stay lower case: they are read mid-sentence ("paid by cash").
+    expect(all('en').detail.modes.cash).toBe('cash');
+  });
+});

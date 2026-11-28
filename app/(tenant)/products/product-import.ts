@@ -9,7 +9,7 @@ import type { Product, ProductImportItem } from '../lib/api-types';
  * the row, with the file still open.
  */
 
-export type Field = 'name' | 'price' | 'stock' | 'barcode' | 'sku' | 'category' | 'gst' | 'hsn' | 'cost' | 'lowStock';
+export type Field = 'name' | 'size' | 'price' | 'stock' | 'barcode' | 'sku' | 'category' | 'gst' | 'hsn' | 'cost' | 'lowStock';
 
 /** `field → column index` in the owner's file; -1 is "not in the file". */
 export type ColumnMap = Record<Field, number>;
@@ -20,6 +20,8 @@ export type ColumnMap = Record<Field, number>;
  */
 export const FIELDS: { key: Field; required: boolean; hints: string[] }[] = [
   { key: 'name', required: true, hints: ['product name', 'product', 'dish name', 'dish', 'menu item', 'name', 'item name', 'item', 'description', 'title', 'particulars'] },
+  // Retail hardening 2026-11-28 — a delivery of a product with sizes says which size each row is ("32", "32 / White").
+  { key: 'size', required: false, hints: ['size', 'variant'] },
   { key: 'price', required: true, hints: ['mrp', 'selling price', 'selling', 'sale price', 'price', 'rate', 'amount', 'sp'] },
   { key: 'stock', required: false, hints: ['stock', 'qty', 'quantity', 'opening', 'on hand', 'units', 'count'] },
   { key: 'barcode', required: false, hints: ['barcode', 'bar code', 'ean', 'upc', 'gtin'] },
@@ -36,7 +38,7 @@ export const FIELDS: { key: Field; required: boolean; hints: string[] }[] = [
  * Price" is the cost before it is the price, "Item Code" the SKU before "item" makes it the name, and "Low stock"
  * the alert line before "stock" makes it the count.
  */
-const CLAIM_ORDER: Field[] = ['barcode', 'hsn', 'sku', 'gst', 'lowStock', 'stock', 'cost', 'price', 'name', 'category'];
+const CLAIM_ORDER: Field[] = ['barcode', 'hsn', 'sku', 'gst', 'lowStock', 'stock', 'cost', 'price', 'size', 'name', 'category'];
 
 const words = (header: string) => header.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 const hasHint = (header: string, hint: string) => new RegExp(`(^| )${hint}( |$)`).test(words(header));
@@ -81,6 +83,8 @@ export interface ProductDraft {
   /** Its number among the file's rows (the header is not one) — what the owner finds in their spreadsheet and what an error names. */
   row: number;
   name: string;
+  /** Retail hardening 2026-11-28 — the size this row's units arrived in, for a product with sizes; '' for none. */
+  size: string;
   price: string;
   stock: string;
   barcode: string;
@@ -127,7 +131,7 @@ export const rupeeText = (amount: string): string => (amount.startsWith('-') ? `
 const isNegative = (s: string) => /^-\s*\d/.test(s.trim());
 
 export function blankDraft(): ProductDraft {
-  return { row: 0, name: '', price: '', stock: '', barcode: '', sku: '', category: '', gst: '', hsn: '', cost: '', lowStock: '', existing: null, skip: false, skipReason: null };
+  return { row: 0, name: '', size: '', price: '', stock: '', barcode: '', sku: '', category: '', gst: '', hsn: '', cost: '', lowStock: '', existing: null, skip: false, skipReason: null };
 }
 
 /** The shelf's own lookup: a barcode first (the surest), then a SKU, then the name. Retired products are found by name only — their codes are free. */
@@ -156,6 +160,18 @@ function negativeReason(d: ProductDraft): SkipReason | null {
   return null;
 }
 
+/** A product whose count lives on its sizes: a delivery row for it must say which size. */
+export const isSized = (p: Product | null): boolean => (p?.variantCount ?? 0) > 0 || (p?.optionAxes?.length ?? 0) > 0;
+
+/** "32/White", "32 / white" and " 32 /White " are one size, as the API reads them. */
+export const sizeKey = (size: string): string => size.trim().replace(/\s*\/\s*/g, ' / ').toLowerCase();
+
+/** What makes a row a repeat: the product, and for a product with sizes the size too (one row per size). */
+function draftKey(d: Pick<ProductDraft, 'existing' | 'name' | 'size'>): string {
+  if (!d.existing) return `new:${d.name.trim().toLowerCase()}`;
+  return d.size.trim() ? `${d.existing.id}|${sizeKey(d.size)}` : d.existing.id;
+}
+
 /**
  * The file's rows as drafts. A row with a negative number is NOT imported — it starts skipped, with the reason, and
  * is listed after the import; the owner can include it and fix the number. A product named twice starts skipped for
@@ -168,6 +184,7 @@ export function buildDrafts(rows: string[][], map: ColumnMap, shelf: readonly Pr
     const draft: ProductDraft = {
       row: index + 1,
       name: at(r, 'name'),
+      size: at(r, 'size'),
       price: plainNumber(at(r, 'price')),
       stock: plainNumber(at(r, 'stock')),
       barcode: plainCode(at(r, 'barcode')),
@@ -188,7 +205,7 @@ export function buildDrafts(rows: string[][], map: ColumnMap, shelf: readonly Pr
       draft.skipReason = negative;
       return draft;
     }
-    const key = draft.existing?.id ?? `new:${draft.name.toLowerCase()}`;
+    const key = draftKey(draft);
     if (draft.name || draft.existing) {
       if (seen.has(key)) {
         draft.skip = true;
@@ -218,6 +235,9 @@ export type ProductProblem =
   | 'tooLong'
   | 'tooLarge'
   | 'stockTooLarge'
+  | 'needsSize'
+  | 'notSized'
+  | 'sizeNewProduct'
   | 'negative'
   | 'twice'
   | 'barcodeTaken'
@@ -235,6 +255,16 @@ const MAX_COUNT = 1_000_000;
 /** What is wrong with one row on its own, or null. `addStock`: the owner chose to add the file's counts to the shelf's. */
 export function rowProblem(d: ProductDraft, addStock = false): ProductProblem | null {
   if (!d.existing && !d.name.trim()) return 'needsName';
+  // Retail hardening 2026-11-28 — a size says where a delivery of a sized product goes, and only that.
+  if (d.size.trim()) {
+    if (!d.existing) return 'sizeNewProduct';
+    if (!isSized(d.existing)) return 'notSized';
+    if (d.size.trim().length > 81) return 'tooLong';
+    if (d.stock.trim() && !isWhole(d.stock.trim())) return 'stockNotWhole';
+    if (Number(d.stock) > MAX_COUNT) return 'tooLarge';
+    return null;
+  }
+  if (addStock && isSized(d.existing) && Number(d.stock) > 0) return 'needsSize';
   if (d.name.trim().length > 120 || d.category.trim().length > 60 || d.sku.trim().length > 40 || d.barcode.trim().length > 64) return 'tooLong';
   if ([d.price, d.stock, d.cost, d.lowStock, d.gst].some(isNegative)) return 'negative';
   if (d.price.trim() === '') {
@@ -275,9 +305,11 @@ export function reviewProblems(drafts: readonly ProductDraft[], shelf: readonly 
     if (d.skip) return null;
     const alone = rowProblem(d, addStock);
     if (alone) return alone;
-    const key = d.existing?.id ?? `new:${d.name.trim().toLowerCase()}`;
+    const key = draftKey(d);
     if (seenProduct.has(key)) return 'twice';
     seenProduct.add(key);
+    // A size row carries no codes: the rest of it is not sent (toItems).
+    if (d.size.trim()) return null;
     // A retired product holds no code, so correcting one neither clashes nor claims.
     if (d.existing && !held.has(d.existing.id)) return null;
     const self = d.existing?.id ?? `row-${index}`;
@@ -307,6 +339,13 @@ export function toItems(drafts: readonly ProductDraft[], addStock = false): Prod
   return drafts
     .filter((d) => !d.skip)
     .map((d): ProductImportItem => {
+      // Retail hardening 2026-11-28 — a size row adds to that size and nothing else: its product's other rows could
+      // each carry a different price, and the last would win.
+      if (d.existing && d.size.trim()) {
+        const sized: ProductImportItem = { mode: 'update', row: d.row, existingId: d.existing.id, size: d.size.trim() };
+        if (addStock && Number(d.stock) > 0) sized.addStock = Number(d.stock);
+        return sized;
+      }
       const item: ProductImportItem = d.existing ? { mode: 'update', row: d.row, existingId: d.existing.id } : { mode: 'create', row: d.row, name: d.name.trim() };
       if (d.price.trim()) item.priceMinor = minor(d.price.trim());
       if (d.cost.trim()) item.costMinor = minor(d.cost.trim());
@@ -389,6 +428,12 @@ export function mappingSummary(headers: readonly string[], map: ColumnMap): { us
 
 /** A starter file: the headers the importer recognises, and one row to show how a line looks. */
 export const SAMPLE_CSV = 'Product name,Barcode,Price,Stock,GST %,HSN,Cost,SKU,Category,Low stock\nArgan Hair Oil 100ml,8901234567890,450,12,18,33059090,300,ARG-100,Hair care,3\n';
+
+/**
+ * Retail hardening 2026-11-28 — a delivery of products that come in sizes: one row per size, and only the count. The
+ * products must be on the shelf with their sizes already; the file adds what arrived.
+ */
+export const SAMPLE_SIZES_CSV = 'Product name,Size,Stock\nSchool Shirt,30,10\nSchool Shirt,32,12\nSchool Shirt,34,8\n';
 
 /** A simple menu starter file for uncounted catalogs (restaurants / kitchens): dish name, category, price, GST % and cost. */
 export const SAMPLE_MENU_CSV = 'Dish name,Category,Price,GST %,Cost\nButter Chicken,Main Course,320,5,140\nPaneer Tikka,Starters,240,5,90\nGarlic Naan,Breads,60,5,15\n';

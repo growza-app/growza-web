@@ -398,7 +398,7 @@ function TopServices({ data, money, more }: { data: SalonServicesPage; money: Mo
   const value = (d: SalonServiceRow) => (by === 'sales' ? d.salesMinor : d.count);
   const max = Math.max(1, ...rows.map(value));
   return (
-    <div className="rr-topdishes">
+    <section className="rr-topdishes" aria-label={t('top')}>
       <div className="rr-topdishes-head">
         <h3 className="rr-list-title">{t('top')}</h3>
         <div className="rr-rank-by" role="group" aria-label={t('rankBy')}>
@@ -426,7 +426,7 @@ function TopServices({ data, money, more }: { data: SalonServicesPage; money: Mo
         ))}
       </ul>
       {more > 0 ? <p className="rr-more">{t('moreDone', { n: more })}</p> : null}
-    </div>
+    </section>
   );
 }
 
@@ -486,7 +486,7 @@ function TopPeople({ people, money }: { people: SalonPersonRow[]; money: Money }
       .filter(Boolean)
       .join(' · ');
   return (
-    <div className="rr-topdishes">
+    <section className="rr-topdishes" aria-label={t('team.top')}>
       <div className="rr-topdishes-head">
         <h3 className="rr-list-title">{t('team.top')}</h3>
         <div className="rr-rank-by" role="group" aria-label={t('team.rankBy')}>
@@ -518,7 +518,7 @@ function TopPeople({ people, money }: { people: SalonPersonRow[]; money: Money }
           {t('clients.overdueAll', { n: ranked.length })}
         </button>
       ) : null}
-    </div>
+    </section>
   );
 }
 

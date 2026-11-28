@@ -695,3 +695,39 @@
     background: none;
   }
 }
+
+/* Owner, 2026-11-28 — "How to sell more" is a closed row until someone opens it: the figures first, the advice on request. */
+details.cr-playbook > summary.cr-playbook-head {
+  position: relative;
+  display: block;
+  min-height: 2.75rem;
+  padding-right: 2rem;
+  cursor: pointer;
+  list-style: none;
+}
+details.cr-playbook > summary.cr-playbook-head::-webkit-details-marker {
+  display: none;
+}
+details.cr-playbook > summary.cr-playbook-head::after {
+  content: '';
+  position: absolute;
+  top: 0.75rem;
+  right: 0.375rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+}
+details.cr-playbook[open] > summary.cr-playbook-head::after {
+  top: 1rem;
+  transform: rotate(-135deg);
+}
+details.cr-playbook:not([open]) > summary.cr-playbook-head {
+  margin-bottom: 0;
+}
+details.cr-playbook > summary.cr-playbook-head:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}

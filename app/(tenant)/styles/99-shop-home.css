@@ -1817,3 +1817,37 @@ button.shp-hero-pill {
   width: 1.125rem;
   height: 1.125rem;
 }
+
+/* Owner, 2026-11-28 — "Refunded today ₹4,147": money given back today, on the money card, with its own door. */
+.shp-hero-refund {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  margin-top: var(--sp-1);
+  color: rgb(255 255 255 / 92%);
+  font-size: var(--fs-2);
+  font-weight: 600;
+  text-decoration: none;
+}
+.rst-kpi-refund {
+  display: inline-block;
+  margin-top: var(--sp-2);
+  color: var(--amber-ink);
+  font-size: var(--fs-2);
+  font-weight: 600;
+  text-decoration: none;
+}
+a.rst-kpi-refund:hover,
+a.shp-hero-refund:hover {
+  text-decoration: underline;
+}
+
+/* Reports › Returns — the bill a return came from is a link inside the row's last line. */
+.ret-bill {
+  color: var(--accent-deep);
+  font-weight: 600;
+  text-decoration: none;
+}
+.ret-row .srp-name {
+  overflow-wrap: anywhere;
+}

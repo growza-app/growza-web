@@ -1,9 +1,8 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
-
 import type { RestaurantPointsWaiting } from '../lib/api-types';
 import { GuestMessageSheet, sheetLabels } from './GuestMessageSheet';
+import { type CustomerWords, usePointsWords } from './customer-words';
 import { POINTS, WORTH, pointsFor, pointsNumber, pointsTemplate, rupees, shortDay } from './points-reminder';
 
 /**
@@ -15,19 +14,22 @@ export function PointsSheet({
   business,
   capPct,
   onClose,
+  words = 'restaurant',
 }: {
   guests: RestaurantPointsWaiting['rows'];
   business: string | null;
   /** The most of one bill points may pay, in percent — the message says so when it is under 100. */
   capPct: number;
   onClose: () => void;
+  /** Owner, 2026-11-28 — guests, or a shop's customers (`customer-words.ts`), and the shop's own reminder line (no emoji). */
+  words?: CustomerWords;
 }) {
-  const t = useTranslations('restaurantReports.customers.points');
+  const t = usePointsWords(words);
   return (
     <GuestMessageSheet
       labels={sheetLabels(t)}
       title={t('sheetTitle')}
-      initialText={pointsTemplate(business)}
+      initialText={pointsTemplate(business, words)}
       hint={t('hint', { points: POINTS, worth: WORTH })}
       guests={guests}
       meta={(g) => (

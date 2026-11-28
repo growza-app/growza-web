@@ -50,7 +50,7 @@ export function SwapSizeSheet({
   onUnsure: () => void;
 }) {
   const t = useTranslations('orders.detail.swap');
-  const tm = useTranslations('orders.detail.modes');
+  const tm = useTranslations('orders.tiles.modes');
   const locale = useLocale();
   const ref = useRef<HTMLDivElement>(null);
   const inFlight = useRef(false);

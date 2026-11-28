@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
+import { isStockRepeat, newRequestKey } from '../lib/request-key';
 import type { Product, Size } from '../lib/api-types';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { IconMinus, IconPlus } from '../components/icons';
@@ -32,6 +33,8 @@ export function MoveSizesSheet({ product, onMoved, onClose }: { product: Product
   const [qtys, setQtys] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Retail hardening 2026-11-28 — one request id per move, kept across its retries (StockPanel says why).
+  const requestKey = useRef<string | null>(null);
 
   const load = () => {
     setLoadFailed(false);
@@ -57,11 +60,14 @@ export function MoveSizesSheet({ product, onMoved, onClose }: { product: Product
     if (!canSend) return;
     setBusy(true);
     setError(null);
+    requestKey.current ??= newRequestKey();
     try {
-      const res = await api.transferSizes(product.id, { toLocationId: toId, sizes: lines });
+      const res = await api.transferSizes(product.id, { toLocationId: toId, sizes: lines, idempotencyKey: requestKey.current });
+      requestKey.current = null;
       onMoved(res.from, total, toName);
     } catch (err) {
       setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
+      if (isStockRepeat(err)) requestKey.current = null;
       // A refusal because a count moved under us: show the counts as they are now, keep the owner's numbers.
       if (err instanceof ApiError && err.status === 409) void load();
     } finally {

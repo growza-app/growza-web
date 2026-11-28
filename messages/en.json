@@ -3067,7 +3067,8 @@
       }
     },
     "counterMore": "More reports",
-    "summaryTab": "Summary"
+    "summaryTab": "Summary",
+    "shopCustomersTab": "Customers"
   },
   "restaurantReports": {
     "tabsLabel": "Reports",
@@ -3267,7 +3268,7 @@
       "returnTitle": "New guests who came back within 30 days",
       "returnSub": "By the month of their first visit",
       "returnSr": "{pct}% — {back} of {n} new guests came back",
-      "returnFew": "only {n} new guests, too few to say",
+      "returnFew": "{n, plural, one {only # new guest, too few to say} other {only # new guests, too few to say}}",
       "returnPartial": "* This month's new guests still have days left to come back.",
       "returnFewNote": "– Under 10 new guests: too few to say.",
       "overdueTitle": "Regulars who are overdue",
@@ -3284,7 +3285,7 @@
       "returnStatMonth": "{month}: {back} of {n}",
       "returnStatMonthOpen": "{month} so far: {back} of {n}",
       "overdueUsual": "Usually every {gap, plural, one {day} other {# days}}",
-      "overdueAway": "{n} days away",
+      "overdueAway": "{n, plural, one {# day away} other {# days away}}",
       "messaged": "{n, plural, =0 {Messaged today} =1 {Messaged yesterday} other {Messaged # days ago}}",
       "topSub": "Most visits in these dates",
       "missYou": {
@@ -3301,7 +3302,7 @@
         "message": "Message",
         "hint": "Goes from your own WhatsApp. Tap Send for each guest, then press send in WhatsApp. {dish} becomes each guest's most-ordered dish. You can change the words above.",
         "guest": "Guest",
-        "away": "{n} days away",
+        "away": "{n, plural, one {# day away} other {# days away}}",
         "send": "Send",
         "sent": "Sent",
         "sendAria": "Send the message to {name} on WhatsApp",
@@ -3319,7 +3320,7 @@
         "hint": "Goes from your own WhatsApp. Tap Send for each guest, then press send in WhatsApp. {points} and {worth} become each guest's own; a line is added when some of their points expire this month. You can change the words above.",
         "guest": "Guest",
         "worth": "{points} points · worth {worth}",
-        "expires": "{n} expire {date}",
+        "expires": "{n} expiring {date}",
         "send": "Send",
         "sent": "Sent",
         "sendAria": "Send the points reminder to {name} on WhatsApp",
@@ -3341,7 +3342,7 @@
         "hint": "Goes from your own WhatsApp. Tap Send for each guest, then press send in WhatsApp. You can change the words above.",
         "guest": "Guest",
         "orders": "{n, plural, one {Ordered once} other {Ordered # times}}",
-        "away": "{n} days away",
+        "away": "{n, plural, one {# day away} other {# days away}}",
         "send": "Send",
         "sent": "Sent",
         "sendAria": "Send the message to {name} on WhatsApp",
@@ -3351,6 +3352,108 @@
         "all": "See all {n}",
         "more": "and {n} more"
       }
+    }
+  },
+  "shopCustomers": {
+    "cameBack": "Customers who came back",
+    "newGuests": "New customers",
+    "withNumber": "Bills with a number",
+    "withNumberValue": "{pct}%",
+    "top": "Top customers",
+    "visits": "{n, plural, one {# visit} other {# visits}}",
+    "hidden": "Customer",
+    "lowCapture": "Add the customer's number on more bills to see who comes back.",
+    "lowCaptureFrom": "Only {pct}% of bills have a number.",
+    "empty": "No customers with a number yet.",
+    "perBranch": "A customer at two branches counts at each.",
+    "topShare": "Top 20% of customers bring",
+    "topShareValue": "{pct}% of sales",
+    "returnTitle": "New customers who came back within 30 days",
+    "returnSub": "By the month of their first visit",
+    "returnSr": "{pct}% — {back} of {n} new customers came back",
+    "returnFew": "{n, plural, one {only # new customer, too few to say} other {only # new customers, too few to say}}",
+    "returnPartial": "* This month's new customers still have days left to come back.",
+    "returnFewNote": "– Under 10 new customers: too few to say.",
+    "overdueTitle": "Regulars who are overdue",
+    "overdueSub": "Away twice as long as they usually are",
+    "overdueWaAria": "Message {name} on WhatsApp",
+    "overdueHello": "Hi {name},",
+    "overdueAll": "See all {n}",
+    "overdueMore": "and {n} more",
+    "overdueCount": "{n, plural, one {# regular is} other {# regulars are}} overdue.",
+    "returnNone": "no new customers",
+    "returnStatBig": "{n} in 10",
+    "returnStatLowBig": "Under 1 in 10",
+    "returnStatText": "new customers come back within 30 days",
+    "returnStatMonth": "{month}: {back} of {n}",
+    "returnStatMonthOpen": "{month} so far: {back} of {n}",
+    "overdueUsual": "Usually every {gap, plural, one {day} other {# days}}",
+    "overdueAway": "{n, plural, one {# day away} other {# days away}}",
+    "messaged": "{n, plural, =0 {Messaged today} =1 {Messaged yesterday} other {Messaged # days ago}}",
+    "topSub": "Most visits in these dates",
+    "missYou": {
+      "open": "Send a 'we miss you' message",
+      "title": "Message customers who are away",
+      "close": "Close",
+      "pick": "Choose a message",
+      "kind": {
+        "miss": "Miss you",
+        "craving": "Their product",
+        "offer": "Comeback treat"
+      },
+      "whichOffer": "Which offer",
+      "message": "Message",
+      "hint": "Goes from your own WhatsApp. Tap Send for each customer, then press send in WhatsApp. {dish} becomes each customer's most-bought product. You can change the words above.",
+      "guest": "Customer",
+      "away": "{n, plural, one {# day away} other {# days away}}",
+      "send": "Send",
+      "sent": "Sent",
+      "sendAria": "Send the message to {name} on WhatsApp",
+      "sentAria": "Sent to {name}. Tap to open WhatsApp again",
+      "empty": "Write a message first."
+    },
+    "points": {
+      "title": "Points waiting to be used",
+      "sub": "Customers who can spend their points today",
+      "count": "{n, plural, one {# customer has} other {# customers have}} points to spend.",
+      "open": "Send a points reminder",
+      "sheetTitle": "Remind customers to use their points",
+      "close": "Close",
+      "message": "Message",
+      "hint": "Goes from your own WhatsApp. Tap Send for each customer, then press send in WhatsApp. {points} and {worth} become each customer's own; a line is added when some of their points expire this month. You can change the words above.",
+      "guest": "Customer",
+      "worth": "{points} points · worth {worth}",
+      "expires": "{n} expiring {date}",
+      "send": "Send",
+      "sent": "Sent",
+      "sendAria": "Send the points reminder to {name} on WhatsApp",
+      "sentAria": "Sent to {name}. Tap to open WhatsApp again",
+      "empty": "Write a message first.",
+      "waAria": "Remind {name} about their points on WhatsApp",
+      "all": "See all {n}",
+      "more": "and {n} more"
+    },
+    "fans": {
+      "title": "Fans of a product",
+      "sub": "Bought it on {orders}+ bills, not in for {days}+ days. Pick a product.",
+      "pick": "Pick a product",
+      "chip": "{dish} · {n}",
+      "open": "Message {dish} fans",
+      "sheetTitle": "Message {dish} fans",
+      "close": "Close",
+      "message": "Message",
+      "hint": "Goes from your own WhatsApp. Tap Send for each customer, then press send in WhatsApp. You can change the words above.",
+      "guest": "Customer",
+      "orders": "{n, plural, one {Bought once} other {Bought # times}}",
+      "away": "{n, plural, one {# day away} other {# days away}}",
+      "send": "Send",
+      "sent": "Sent",
+      "sendAria": "Send the message to {name} on WhatsApp",
+      "sentAria": "Sent to {name}. Tap to open WhatsApp again",
+      "empty": "Write a message first.",
+      "waAria": "Message {name} about {dish} on WhatsApp",
+      "all": "See all {n}",
+      "more": "and {n} more"
     }
   },
   "salonReports": {
@@ -3493,7 +3596,7 @@
       "returnTitle": "New clients who came back within {days} days",
       "returnSub": "By the month of their first visit",
       "returnSr": "{pct}% — {back} of {n} new clients came back",
-      "returnFew": "only {n} new clients, too few to say",
+      "returnFew": "{n, plural, one {only # new client, too few to say} other {only # new clients, too few to say}}",
       "returnNone": "no new clients",
       "returnPartial": "* This month's new clients still have days left to come back.",
       "returnFewNote": "– Under 10 new clients: too few to say.",
@@ -3505,7 +3608,7 @@
       "overdueTitle": "{customers} to message",
       "overdueSub": "Past their usual visit, and still likely to come back",
       "overdueUsual": "Usually every {gap, plural, one {day} other {# days}}",
-      "overdueAway": "{n} days away",
+      "overdueAway": "{n, plural, one {# day away} other {# days away}}",
       "overdueWaAria": "Message {name} on WhatsApp",
       "overdueHello": "Hi {name},",
       "overdueAll": "See all {n}",
@@ -4693,7 +4796,7 @@
       "title": "Import your products",
       "titleUncounted": "Import your menu",
       "pickBody": "Upload the list you already have — an Excel file (.xlsx) or a CSV. You'll check every row before anything is saved.",
-      "pickColumns": "One row per product. It needs a name and a sell price; barcode, stock, GST %, HSN, bought-for price, SKU and category are read if you have them.",
+      "pickColumns": "One row per product. It needs a name and a sell price; barcode, stock, GST %, HSN, bought-for price, SKU and category are read if you have them. A product with sizes: one row per size, with a Size column.",
       "pickColumnsUncounted": "One row per dish. It needs a dish name and a price; category, GST % and bought-for cost are read if you have them.",
       "sample": "Get a sample file",
       "reading": "Reading…",
@@ -4755,7 +4858,8 @@
         "hsn": "HSN code",
         "cost": "Bought for (₹)",
         "lowStock": "Low-stock alert at",
-        "addStock": "Add to stock"
+        "addStock": "Add to stock",
+        "size": "Size"
       },
       "problems": {
         "needsName": "Needs a name",
@@ -4775,7 +4879,10 @@
         "skuTaken": "Another product has this SKU",
         "negative": "Can't be negative",
         "tooLarge": "That number is too large",
-        "stockTooLarge": "Adding this would take the stock past 1,000,000"
+        "stockTooLarge": "Adding this would take the stock past 1,000,000",
+        "needsSize": "This product has sizes — say which size",
+        "notSized": "This product has no sizes — leave Size empty",
+        "sizeNewProduct": "Add a new product and its sizes on the Stock screen first"
       },
       "skipped": {
         "negativePrice": "Not imported — the sell price is negative",
@@ -4808,7 +4915,8 @@
       "leaveStay": "Keep reviewing",
       "leaveGo": "Leave",
       "footer": "Have your products in a spreadsheet? Load them in one go.",
-      "footerUncounted": "Have your menu in a spreadsheet? Load it in one go."
+      "footerUncounted": "Have your menu in a spreadsheet? Load it in one go.",
+      "sizeShort": "Size {size}"
     },
     "sizes": {
       "title": "Sizes",
@@ -5068,10 +5176,10 @@
       "nothing": "Nothing to order yet",
       "nothingHint": "This list needs last year’s sales, or counted stock. Sizes show here once there is something to go on.",
       "model": "Each number is what you sold in the same days last year, less what is on the shelf now. It is a suggestion: change any number and it is kept.",
-      "withoutBasis": "{count, plural, one {1 size has no sales last year to go on.} other {# sizes have no sales last year to go on.}}",
+      "withoutBasis": "{count, plural, one {1 size has run out and has not sold lately.} other {# sizes have run out and have not sold lately.}}",
       "sizeOf": "{name} · size {size}",
       "basis": "Sold {sold} from {from} to {to} last year · {stock} on the shelf",
-      "noBasis": "Nothing to compare with last year · {stock} on the shelf",
+      "noBasis": "None left · nothing sold in the last 30 days",
       "soldOut": "It sold out last year, so it may have sold more.",
       "suggestedWas": "Suggested {n}",
       "orderLabel": "Order",
@@ -5092,7 +5200,9 @@
       "saveRule": "Save",
       "useDefaults": "Use the usual days",
       "toSellers": "Top sellers",
-      "fixBeforeExport": "Some numbers have not been saved. Fix them or try again before you export."
+      "fixBeforeExport": "Some numbers have not been saved. Fix them or try again before you export.",
+      "recentBasis": "Sold {sold} in the last 30 days · {stock} on the shelf",
+      "fromRecent": "No sales last year to compare yet, so these numbers come from your last 30 days."
     },
     "channels": {
       "types": {
@@ -5138,7 +5248,11 @@
       "refunded": "{count, plural, one {Refunded once: {amount}} other {Refunded # times: {amount}}}",
       "byArea": "Dine-in by area",
       "noArea": "No area",
-      "noAreaHint": "Service charge, and dishes sent before areas had their own prices."
+      "noAreaHint": "Service charge, and dishes sent before areas had their own prices.",
+      "upSoFar": "Up {pct}% on the period before, up to this time",
+      "downSoFar": "Down {pct}% on the period before, up to this time",
+      "sameSoFar": "Same as the period before, up to this time",
+      "nothingBeforeSoFar": "Nothing was sold here by this time in the period before."
     },
     "uncountedSubtitle": "Everything on your menu, with its price. A dish is made when it is ordered, so there is no count to keep.",
     "searchUncounted": "Search the menu",
@@ -6055,14 +6169,14 @@
       "loadError": "Could not load. Check your connection and try again.",
       "retry": "Try again",
       "nothing": "Nothing has come back",
-      "nothingHint": "Returns show here, grouped by the reason, once there are some.",
+      "nothingHint": "Returns show here once there are some: what came back and what was given back.",
       "customerTitle": "Sent back by customers",
       "returnsCount": "{count, plural, one {1 return} other {# returns}}",
       "unitsCount": "{count, plural, one {1 item} other {# items}}",
       "undeliveredTitle": "Came back undelivered",
       "undeliveredNone": "No parcels came back undelivered.",
       "undeliveredNote": "These never reached the customer. They are counted apart, not as returns.",
-      "toRefunds": "Refunds",
+      "toRefunds": "Online refunds",
       "byTitle": "Given back by",
       "byNone": "Not recorded",
       "byRole": {
@@ -6070,7 +6184,15 @@
         "manager": "Manager",
         "receptionist": "Front desk",
         "staff": "Team member"
-      }
+      },
+      "givenBack": "Money given back",
+      "listTitle": "What came back",
+      "whyTitle": "Why",
+      "fromBill": "Bill #{code} · sold {date}",
+      "byShort": "by {name}",
+      "modeOther": "Other",
+      "noItems": "Return",
+      "undeliveredShort": "came back undelivered"
     },
     "returnsLink": "Returns",
     "bringIn": {
@@ -6087,7 +6209,7 @@
       "unacknowledged": "{count, plural, one {1 order not yet confirmed to {channel}} other {# orders not yet confirmed to {channel}}}"
     },
     "refunds": {
-      "title": "Refunds",
+      "title": "Online refunds",
       "rangeLabel": "Period",
       "range": {
         "last_7_days": "Last 7 days",
@@ -6105,8 +6227,8 @@
       "loading": "Loading",
       "loadError": "Could not load. Check your connection and try again.",
       "retry": "Try again",
-      "nothing": "No refunds in this period",
-      "nothingHint": "A refund shows here once it has been recorded against an order.",
+      "nothing": "No online refunds in this period",
+      "nothingHint": "Refunds made on an online order (Flipkart, Amazon, a delivery app) show here. Money you gave back at the counter is under Returns.",
       "totalsLabel": "Totals for this period",
       "total": "Refunded in this period",
       "countLine": "{count, plural, one {1 refund} other {# refunds}}",

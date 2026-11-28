@@ -97,3 +97,12 @@ describe('Return product sheet item table at 344px', () => {
     expect(added).not.toMatch(/font-size:\s*\d+px/);
   });
 });
+
+describe('Owner, 2026-11-28 — the product card never shrinks below its content, so Return now is reachable', () => {
+  it('.sls-ret-table-wrap does not shrink in the scrolling column (overflow hidden would clip the stepper)', () => {
+    const css = readFileSync(new URL('../styles/99-sales.css', import.meta.url), 'utf8');
+    const rule = css.slice(css.indexOf('.sls-ret-table-wrap {'), css.indexOf('}', css.indexOf('.sls-ret-table-wrap {')));
+    expect(rule).toMatch(/flex-shrink: 0;/);
+    expect(rule).toMatch(/overflow-y: hidden;/);
+  });
+});

@@ -28,12 +28,13 @@ import { useMayOpen, useSession } from '../components/SessionProvider';
 import { ReportDates } from './ReportDates';
 import { RESTAURANT_TABS, type RestaurantTab } from './restaurant-tabs';
 import { MissYouSheet } from './MissYouSheet';
-import { missYouFor, missYouTemplate } from './miss-you';
+import { missYouIn } from './miss-you';
 import { PointsSheet } from './PointsSheet';
 import { GuestMessageSheet, sheetLabels } from './GuestMessageSheet';
 import { dishFansTemplate, fanDish } from './dish-fans';
 import { pointsFor, pointsNumber, pointsTemplate, rupees as pointsRupees, shortDay } from './points-reminder';
 import { useMessaged } from './messaged';
+import { type CustomerWords, useCustomersWords, useFansWords, usePointsWords } from './customer-words';
 import { fetchOnce, freshFor, isFresh, peek } from './report-cache';
 import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../lib/report-dates';
 
@@ -596,7 +597,7 @@ function TopDishes({ data, money, hasProfit, more }: { data: RestaurantItemsPage
       .filter(Boolean)
       .join(' · ');
   return (
-    <div className="rr-topdishes">
+    <section className="rr-topdishes" aria-label={t('top')}>
       <div className="rr-topdishes-head">
         <h3 className="rr-list-title">{t('top')}</h3>
         {data.topByPlates ? (
@@ -626,7 +627,7 @@ function TopDishes({ data, money, hasProfit, more }: { data: RestaurantItemsPage
         ))}
       </ul>
       {more > 0 ? <p className="rr-more">{t('moreSold', { n: more })}</p> : null}
-    </div>
+    </section>
   );
 }
 
@@ -660,43 +661,64 @@ export function InventoryTab({ data }: { data: FoodCostReportPage | 'too_long' |
  * Jira GRW-761 — guests who came back (the big number), new guests and bills with a number, and the five who came most.
  * Only guests with a phone number are counted as people. Under 30% of bills with a number, the line asking for numbers
  * takes the figures' place. Names only for someone allowed to see guests; anyone else sees "Guest".
+ *
+ * Owner, 2026-11-28 — a retail shop's Reports › Customers is this tab in the shop's words (`words="shop"`: customers and
+ * products, and the shop's own messages). Absent, it is the restaurant's, word for word.
  */
-export function CustomersTab({ data }: { data: RestaurantCustomersPage }) {
+export function CustomersTab({ data, words = 'restaurant' }: { data: RestaurantCustomersPage; words?: CustomerWords }) {
   const t = useTranslations('restaurantReports');
+  const w = useCustomersWords(words);
   const locale = useLocale();
   const money: Money = (m) => rupees(m, locale);
-  if (data.bills === 0) return <p className="rr-empty">{t('empty')}</p>;
-  if (data.lowCapture) {
-    return (
+  // Review, 2026-11-28 — the overdue, points-waiting and fans lists are counted back from today, not from the picked
+  // dates: an empty range (or too few numbers in it) says so, and the lists still follow. Top guests is the range's, so
+  // it stays with the figures.
+  const lists = (top: boolean) => (
+    <div className="rr-lists">
+      {data.overdue && data.overdue.count > 0 ? <Overdue overdue={data.overdue} words={words} /> : null}
+      {data.pointsWaiting && data.pointsWaiting.count > 0 ? <PointsWaiting waiting={data.pointsWaiting} words={words} /> : null}
+      {data.dishFans && data.dishFans.count > 0 ? <DishFans fans={data.dishFans} words={words} /> : null}
+      {top ? <TopGuests top={data.top} money={money} words={words} /> : null}
+    </div>
+  );
+  const anyList = (data.overdue?.count ?? 0) > 0 || (data.pointsWaiting?.count ?? 0) > 0 || (data.dishFans?.count ?? 0) > 0;
+  // In the order they always were: no bills, then too few numbers, then no one with a number.
+  const instead =
+    data.bills === 0 ? (
+      <p className="rr-empty">{t('empty')}</p>
+    ) : data.lowCapture ? (
       <section className="cr-card rr-card" aria-labelledby="rr-guests-h">
-        <h2 className="cr-label" id="rr-guests-h">{t('customers.cameBack')}</h2>
-        <p className="rr-line">{t('customers.lowCapture')}</p>
-        <p className="rr-more">{t('customers.lowCaptureFrom', { pct: data.capturePct })}</p>
+        <h2 className="cr-label" id="rr-guests-h">{w('cameBack')}</h2>
+        <p className="rr-line">{w('lowCapture')}</p>
+        <p className="rr-more">{w('lowCaptureFrom', { pct: data.capturePct })}</p>
       </section>
+    ) : data.guestCount === 0 ? (
+      <p className="rr-empty">{w('empty')}</p>
+    ) : null;
+  if (instead) {
+    return (
+      <>
+        {instead}
+        {anyList ? lists(false) : null}
+      </>
     );
   }
-  if (data.guestCount === 0) return <p className="rr-empty">{t('customers.empty')}</p>;
   return (
     <>
       <section className="cr-card rr-card" aria-labelledby="rr-guests-h">
         <div className="rr-lead">
-          <h2 className="cr-label" id="rr-guests-h">{t('customers.cameBack')}</h2>
+          <h2 className="cr-label" id="rr-guests-h">{w('cameBack')}</h2>
           <p className="cr-hero">{data.cameBack.value.toLocaleString(intlLocale(locale))}</p>
           <Delta c={data.cameBack} t={t} />
         </div>
         <div className="rr-smalls">
-          <Small label={t('customers.newGuests')} value={data.newGuests.value.toLocaleString(intlLocale(locale))} />
-          <Small label={t('customers.withNumber')} value={t('customers.withNumberValue', { pct: data.capturePct })} />
-          {data.topShare ? <Small label={t('customers.topShare')} value={t('customers.topShareValue', { pct: data.topShare.pct })} /> : null}
+          <Small label={w('newGuests')} value={data.newGuests.value.toLocaleString(intlLocale(locale))} />
+          <Small label={w('withNumber')} value={w('withNumberValue', { pct: data.capturePct })} />
+          {data.topShare ? <Small label={w('topShare')} value={w('topShareValue', { pct: data.topShare.pct })} /> : null}
         </div>
-        {data.returnByMonth && data.returnByMonth.some((m) => m.newGuests > 0) ? <MonthReturns months={data.returnByMonth} /> : null}
+        {data.returnByMonth && data.returnByMonth.some((m) => m.newGuests > 0) ? <MonthReturns months={data.returnByMonth} words={words} /> : null}
       </section>
-      <div className="rr-lists">
-        {data.overdue && data.overdue.count > 0 ? <Overdue overdue={data.overdue} /> : null}
-        {data.pointsWaiting && data.pointsWaiting.count > 0 ? <PointsWaiting waiting={data.pointsWaiting} /> : null}
-        {data.dishFans && data.dishFans.count > 0 ? <DishFans fans={data.dishFans} /> : null}
-        <TopGuests top={data.top} money={money} />
-      </div>
+      {lists(true)}
     </>
   );
 }
@@ -706,8 +728,8 @@ export function CustomersTab({ data }: { data: RestaurantCustomersPage }) {
  * within 30 days. A month under 10 new guests says so instead of a bar; a month whose guests still have days left is
  * drawn pale and marked, because its share can still rise.
  */
-function MonthReturns({ months: all }: { months: NonNullable<RestaurantCustomersPage['returnByMonth']> }) {
-  const t = useTranslations('restaurantReports.customers');
+function MonthReturns({ months: all, words }: { months: NonNullable<RestaurantCustomersPage['returnByMonth']>; words: CustomerWords }) {
+  const t = useCustomersWords(words);
   const locale = useLocale();
   const monthName = new Intl.DateTimeFormat(intlLocale(locale), { month: 'short', timeZone: 'UTC' });
   const name = (ym: string) => monthName.format(new Date(`${ym}-01T00:00:00Z`));
@@ -766,8 +788,10 @@ function MonthReturns({ months: all }: { months: NonNullable<RestaurantCustomers
  * WhatsApp button only opens a chat with their number and a hello: the owner writes and sends it, nothing is sent for them.
  * Someone who may not see guests is sent the count alone, and sees that.
  */
-function Overdue({ overdue }: { overdue: NonNullable<RestaurantCustomersPage['overdue']> }) {
-  const t = useTranslations('restaurantReports.customers');
+function Overdue({ overdue, words }: { overdue: NonNullable<RestaurantCustomersPage['overdue']>; words: CustomerWords }) {
+  const t = useCustomersWords(words);
+  // The guest's line, or the shop customer's (`miss-you.ts`).
+  const { missYouFor, missYouTemplate } = missYouIn(words);
   const [all, setAll] = useState(false);
   /* Owner, 2026-11-26 — "missing you" messages: a ready line per guest, sent from the owner's own WhatsApp. */
   const [composing, setComposing] = useState(false);
@@ -808,6 +832,7 @@ function Overdue({ overdue }: { overdue: NonNullable<RestaurantCustomersPage['ov
           location={offersAt}
           todayISO={today}
           onClose={() => setComposing(false)}
+          words={words}
         />
       ) : null}
       <ul>
@@ -854,8 +879,8 @@ function Overdue({ overdue }: { overdue: NonNullable<RestaurantCustomersPage['ov
  * minimum to redeem), points about to die first. A reminder per guest, or the sheet to send them all one by one.
  * Anyone not allowed to see guests gets the count only, like the overdue list.
  */
-function PointsWaiting({ waiting }: { waiting: RestaurantPointsWaiting }) {
-  const t = useTranslations('restaurantReports.customers.points');
+function PointsWaiting({ waiting, words }: { waiting: RestaurantPointsWaiting; words: CustomerWords }) {
+  const t = usePointsWords(words);
   const [all, setAll] = useState(false);
   const [composing, setComposing] = useState(false);
   const session = useSession();
@@ -884,7 +909,7 @@ function PointsWaiting({ waiting }: { waiting: RestaurantPointsWaiting }) {
         <IconWhatsApp />
         {t('open')}
       </button>
-      {composing ? <PointsSheet guests={waiting.rows} business={business} capPct={cap} onClose={() => setComposing(false)} /> : null}
+      {composing ? <PointsSheet guests={waiting.rows} business={business} capPct={cap} onClose={() => setComposing(false)} words={words} /> : null}
       <ul>
         {rows.map((g) => (
           <li key={g.customerId}>
@@ -899,7 +924,7 @@ function PointsWaiting({ waiting }: { waiting: RestaurantPointsWaiting }) {
             {g.expiring ? <span className="rr-away">{t('expires', { n: pointsNumber(g.expiring.points), date: shortDay(g.expiring.on) })}</span> : null}
             <a
               className="rr-wa"
-              href={whatsappHref(g.phone.replace(/\D/g, ''), pointsFor(pointsTemplate(business), g, cap))}
+              href={whatsappHref(g.phone.replace(/\D/g, ''), pointsFor(pointsTemplate(business, words), g, cap))}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={t('waAria', { name: g.name ?? t('guest') })}
@@ -925,8 +950,8 @@ function PointsWaiting({ waiting }: { waiting: RestaurantPointsWaiting }) {
  * not been in, and send them one message naming it — row by row, or from the sheet. Anyone not allowed to see guests
  * gets each dish's count only.
  */
-function DishFans({ fans }: { fans: RestaurantDishFans }) {
-  const t = useTranslations('restaurantReports.customers.fans');
+function DishFans({ fans, words }: { fans: RestaurantDishFans; words: CustomerWords }) {
+  const t = useFansWords(words);
   const [chosen, setChosen] = useState(fans.dishes[0]?.key ?? '');
   const [all, setAll] = useState(false);
   const [composing, setComposing] = useState(false);
@@ -971,7 +996,7 @@ function DishFans({ fans }: { fans: RestaurantDishFans }) {
     );
   }
   const rows = all ? dish.rows : dish.rows.slice(0, LIST_SHOWN);
-  const message = dishFansTemplate(dish.dish, business);
+  const message = dishFansTemplate(dish.dish, business, words);
   return (
     <section className="rr-list rr-people rr-overdue rr-fans" aria-labelledby="rr-fans-h">
       {title}
@@ -1035,8 +1060,8 @@ function Messaged({ ago }: { ago: number | null }) {
 }
 
 /** #6 — Top guests: a rank, their initials, their visits, what they spent; "Most visits in these dates" says the order. */
-function TopGuests({ top, money }: { top: RestaurantCustomersPage['top']; money: Money }) {
-  const t = useTranslations('restaurantReports.customers');
+function TopGuests({ top, money, words }: { top: RestaurantCustomersPage['top']; money: Money; words: CustomerWords }) {
+  const t = useCustomersWords(words);
   if (top.length === 0) return null;
   return (
     <section className="rr-list rr-people rr-top-guests" aria-labelledby="rr-top-h">

@@ -1,3 +1,5 @@
+import type { CustomerWords } from './customer-words';
+
 /**
  * Owner, 2026-11-27 — "Points waiting to be used": the reminder an owner sends to a guest who could spend their points
  * today, from Reports › Guests. Like the "we miss you" messages: no guest's name, no "Hi", English only (the guest's
@@ -15,6 +17,8 @@ export interface PointsGuest {
 }
 
 const place = (business: string | null | undefined) => business?.trim() || 'us';
+/** A shop's name in its messages; "our shop" where it has none ("Find it at us" is not a sentence). */
+export const shopPlace = (business: string | null | undefined) => business?.trim() || 'our shop';
 export const pointsNumber = (n: number) => n.toLocaleString('en-IN');
 export const rupees = (minor: number) => `₹${(minor / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
 
@@ -23,8 +27,14 @@ export function shortDay(iso: string): string {
   return new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 }
 
-/** The words, with the restaurant named and the numbers left for each guest. */
-export function pointsTemplate(business: string | null | undefined): string {
+/**
+ * The words, with the restaurant named and the numbers left for each guest.
+ *
+ * Owner, 2026-11-28 (review) — a shop's (`words: 'shop'`): the shop named ("our shop" with no name) and no emoji, like
+ * its other lines. The restaurant's is unchanged.
+ */
+export function pointsTemplate(business: string | null | undefined, words: CustomerWords = 'restaurant'): string {
+  if (words === 'shop') return `You have ${POINTS} points at ${shopPlace(business)}, worth ${WORTH}. Use them on your next visit.`;
   return `You have ${POINTS} points at ${place(business)}, worth ${WORTH}. Use them on your next visit 🎁`;
 }
 

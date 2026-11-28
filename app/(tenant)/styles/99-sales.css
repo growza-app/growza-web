@@ -2184,6 +2184,10 @@ button.sls-ret-step-pill:not(:disabled) {
  * `overflow: hidden` did. Below 861px the table is stacked and there is nothing to scroll.
  */
 .sls-ret-table-wrap {
+  /* Owner, 2026-11-28 — a flex item with overflow hidden may shrink below its content: on a phone the product card was
+     squeezed to the sheet's height (151px of 298px) and clipped the Return now stepper, with nothing left to scroll.
+     It keeps its height; .sls-ret-scroll scrolls instead. */
+  flex-shrink: 0;
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow-x: auto;

@@ -41,6 +41,15 @@ describe('the miss-you messages', () => {
     expect(dishForMessage('Butter Chicken (Half)')).toBe('Butter Chicken');
   });
 
+  it('keep a " + " that is part of the real name — the API removes the add-on before the name gets here (QA, 2026-11-28)', () => {
+    const craving = missYouTemplate('craving', 'Spice Garden');
+    expect(dishForMessage('Idli + Vada Combo')).toBe('Idli + Vada Combo');
+    expect(missYouFor(craving, 'Idli + Vada Combo')).toMatch(/^Craving Idli \+ Vada Combo\? /);
+    expect(dishForMessage('Paneer 65+')).toBe('Paneer 65+');
+    // Known and accepted: a bracket that is part of the real name goes too.
+    expect(dishForMessage('Jersey (Home)')).toBe('Jersey');
+  });
+
   it('say the offer the till will apply', () => {
     expect(offerPhrase(offer({ offMinor: 5000, minBillMinor: 30000 }))).toBe('₹50 off on orders above ₹300');
     expect(offerPhrase(offer({ kind: 'bogo', buyQty: 1, getQty: 1, productName: 'Masala Dosa' }))).toBe('a free Masala Dosa when you buy one');

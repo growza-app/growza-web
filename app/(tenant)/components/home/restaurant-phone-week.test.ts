@@ -30,7 +30,7 @@ describe("a restaurant's phone Home draws the week's bars above the Queue card",
     const css = code('../../styles/99-z-emerald-v2.css');
     const firstDesk = css.indexOf('@media (min-width: 861px) {');
     expect(css.indexOf('.rst-week-bars {')).toBeLessThan(firstDesk);
-    expect(css).toContain('.shp-mobile-stack .rst-week-panel {');
+    expect(css).toContain(':is(.shp-mobile-stack, .shp-week) .rst-week-panel {'); // a shop's phone draws the same card under Quick links (owner, 2026-11-28)
   });
 });
 

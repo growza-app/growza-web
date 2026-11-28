@@ -10,7 +10,8 @@ import { Avatar } from '../components/home/parts';
 import { IconCheck, IconClose, IconWhatsApp } from '../components/icons';
 import { useDialog } from '../../shared/a11y/useDialog';
 import { useMessaged } from './messaged';
-import { DISH, MISS_YOU_KINDS, dishForMessage, missYouFor, missYouTemplate, offersToSend, type MissYouKind } from './miss-you';
+import { MISS_YOU_KINDS, dishForMessage, missYouIn, offersToSend, placeholderOf, type MissYouKind } from './miss-you';
+import { type CustomerWords, useMissYouWords } from './customer-words';
 
 type Guest = NonNullable<RestaurantCustomersPage['overdue']>['rows'][number];
 
@@ -27,6 +28,7 @@ export function MissYouSheet({
   location,
   todayISO,
   onClose,
+  words = 'restaurant',
 }: {
   guests: Guest[];
   business: string | null;
@@ -34,8 +36,12 @@ export function MissYouSheet({
   location: string | null;
   todayISO: string;
   onClose: () => void;
+  /** Owner, 2026-11-28 — a restaurant's guests and dishes, or a shop's customers and products (`customer-words.ts`). */
+  words?: CustomerWords;
 }) {
-  const t = useTranslations('restaurantReports.customers.missYou');
+  const t = useMissYouWords(words);
+  // The guest's lines, or the shop customer's (`miss-you.ts`).
+  const { missYouFor, missYouTemplate } = missYouIn(words);
   const panel = useRef<HTMLDivElement>(null);
   useDialog(panel, { onClose, initialFocus: 'container' });
 
@@ -107,7 +113,7 @@ export function MissYouSheet({
             {t('message')}
           </label>
           <textarea id="my-text" className="my-text" rows={3} maxLength={500} value={text} onChange={(e) => setText(e.target.value)} />
-          <p className="my-hint">{t('hint', { dish: DISH })}</p>
+          <p className="my-hint">{t('hint', { dish: placeholderOf(words) })}</p>
 
           <ul className="td-people my-people">
             {reachable.map((g) => {

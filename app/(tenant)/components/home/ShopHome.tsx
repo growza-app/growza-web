@@ -34,6 +34,7 @@ import {
   IconNavStock,
   IconSettings,
   IconChevronRight,
+  IconClipboardCheck,
   IconCutlery,
   IconDaySummary,
   IconInventory,
@@ -167,6 +168,8 @@ export function ShopHome({
 
   const [phonePeriod, setPhonePeriod] = useState<PhonePeriod>('today');
   const [phoneChannel, setPhoneChannel] = useState<ByChannelPage | null>(null);
+  /** Owner, 2026-11-28 — a shop's laptop card reads today from the same report as the chart beside it (see `cardDay`). */
+  const [deskToday, setDeskToday] = useState<ByChannelPage | null>(null);
   const [phoneSellers, setPhoneSellers] = useState<BestSellersPage | null>(null);
   const [phoneBusy, setPhoneBusy] = useState(false);
   /*
@@ -258,6 +261,14 @@ export function ShopHome({
           .finally(() => {
             if (mine === deskReqId.current) setChannelSettled(true);
           });
+        if (!isKitchen) {
+          api
+            .byChannel({ range: 'today', location: loc })
+            .then((res) => {
+              if (mine === deskReqId.current) setDeskToday(res);
+            })
+            .catch(() => {});
+        }
       }
       if (can('/stock/sellers')) {
         api
@@ -341,7 +352,8 @@ export function ShopHome({
     // Owner, 2026-11-26 ("add this on mobile") — a restaurant's phone draws the laptop's week of bars above its Queue
     // card. The bars are always the last seven days, whatever the hero's period, so they have their own read; it fills
     // the same `channelData` the laptop's read does, which never runs on a phone.
-    if (isKitchen) {
+    // Owner, 2026-11-28 — a shop's phone draws the same week, under its Quick links, for whoever sees the money.
+    if (isKitchen || money) {
       api
         .byChannel({ range: 'last_7_days', location: branch ?? undefined })
         .then((res) => {
@@ -450,7 +462,13 @@ export function ShopHome({
      */
     areas.kitchenStock
       ? { href: '/inventory', label: t.nav.inventory, icon: <IconInventory />, tone: 'green' }
-      : { href: '/pos', label: t.nav.pos, icon: <IconPos />, tone: 'green' },
+      : /*
+         * Owner, 2026-11-28 — a shop's till is the bar's circle too: its first tile is the Stock report, moved here from the
+         * money card's pill. A kitchen that does not count its shelf has no Stock report, and keeps POS.
+         */
+        !isKitchen
+        ? { href: '/stock/report', label: s.stockReportLink, icon: <IconNavStock />, tone: 'green' }
+        : { href: '/pos', label: t.nav.pos, icon: <IconPos />, tone: 'green' },
     // Only a kitchen has an order queue to open (hasOrderQueue); a shop's tile would open Sell.
     /*
      * Owner, 2026-11-17 — with Table orders on, the owner and a manager get Tables (the room at a glance: which are
@@ -466,6 +484,12 @@ export function ShopHome({
       : []),
     // Owner, 2026-11-24 — the same picture as the phone bar's Menu: fork and knife for a kitchen, a box for a shop.
     { href: '/stock', label: t.nav.stock, icon: areas.stock ? <IconProducts /> : <IconCutlery />, tone: 'green' },
+    /*
+     * Owner, 2026-11-28 — a sixth tile, beside Stock: what is running low and how much to buy, a daily job that sat two
+     * taps deep in Reports. Only where the shelf is counted: canSee (areaAllows) drops /stock/order for a kitchen that
+     * does not count, and it is drawn from the first paint, so the grid never shifts when the day's figures arrive.
+     */
+    { href: '/stock/order', label: s.reorderListLabel, icon: <IconClipboardCheck />, tone: 'blue' },
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
     /*
      * Owner, 2026-10-26 — Reports, not Attendance.
@@ -590,7 +614,7 @@ export function ShopHome({
       key: 'stock',
       tone: 'amber',
       title: s.lowStockShort,
-      sub: s.menuItemsLowSub(data.running.total),
+      sub: isKitchen ? s.menuItemsLowSub(data.running.total) : s.productsLowSub(data.running.total),
       href: `/stock${stockBranch}`,
     });
   }
@@ -963,8 +987,33 @@ export function ShopHome({
    * yesterday that had something (`periodDeltaPct`). These two used to answer "+12%" and "+4%" when yesterday was
    * empty: numbers that were not worked out from anything.
    */
-  const salesDeltaPct = useMemo(() => periodDeltaPct(data?.today.takingsMinor ?? 0, data?.yesterday.takingsMinor ?? 0), [data]);
-  const ordersDeltaPct = useMemo(() => periodDeltaPct(data?.today.orders ?? 0, data?.yesterday.orders ?? 0), [data]);
+  // Retail hardening 2026-11-28 — today so far against yesterday up to the same time ("₹648, ↓ 98.5%" at 10 a.m. was
+  // against all of yesterday). An older API without it keeps the whole day.
+  const yesterdayLike = data?.yesterdaySoFar ?? data?.yesterday;
+  const sameTime = Boolean(data?.yesterdaySoFar);
+  const salesDeltaPct = useMemo(() => periodDeltaPct(data?.today.takingsMinor ?? 0, yesterdayLike?.takingsMinor ?? 0), [data, yesterdayLike]);
+  const ordersDeltaPct = useMemo(() => periodDeltaPct(data?.today.orders ?? 0, yesterdayLike?.orders ?? 0), [data, yesterdayLike]);
+  /*
+   * Owner, 2026-11-28 — one rule on one screen. A shop's laptop card said "Today's sales −₹2,848" (money in less money
+   * given back today, the Payments rule) beside a chart whose bar for the same day read ₹0 (what today's bills came to,
+   * the rule every report but Payments uses), after a return of yesterday's bill. The card now reads the day from the
+   * report the chart reads; what was given back today is its own line (`refundedToday`). A kitchen keeps its takings.
+   */
+  const cardDay = useMemo(() => {
+    if (!data || data.today.takingsMinor === undefined) return null;
+    if (isKitchen || !canPhoneRange) {
+      return { ready: true, minor: data.today.takingsMinor, modes: data.today.byPaymentMode ?? [], orders: data.today.orders, deltaPct: salesDeltaPct, sameTime };
+    }
+    if (!deskToday) return { ready: false, minor: 0, modes: [], orders: 0, deltaPct: null, sameTime: false };
+    return {
+      ready: true,
+      minor: Number(deskToday.totals.billedMinor || 0),
+      modes: deskToday.byPaymentMode ?? [],
+      orders: deskToday.totals.orders,
+      deltaPct: deskToday.previous.hasData ? deskToday.totals.changePct : null,
+      sameTime: Boolean(deskToday.previous.toSameTime),
+    };
+  }, [data, isKitchen, canPhoneRange, deskToday, salesDeltaPct, sameTime]);
 
   // The count of guests, or nothing until it has loaded. It used to read 86 while loading, and always carried a
   // "+11%" beside it that no figure stood behind; the badge is gone until there is a real comparison to draw.
@@ -1209,18 +1258,18 @@ export function ShopHome({
                         </span>
                         <div className="rst-kpi-main">
                           <span className="rst-kpi-label">{s.todaysTakings}</span>
-                          <strong className="rst-kpi-value">{rupees(data.today.takingsMinor)}</strong>
+                          <strong className="rst-kpi-value">{cardDay?.ready ? rupees(cardDay.minor) : '—'}</strong>
                         </div>
-                        {salesDeltaPct !== null ? (
+                        {cardDay?.ready && cardDay.deltaPct !== null && cardDay.deltaPct !== undefined ? (
                           <div className="rst-kpi-side">
-                            <span className={`rst-delta-pill ${deltaTone(salesDeltaPct)}`}>{deltaLabel(salesDeltaPct)}</span>
-                            <span className="rst-delta-sub">{s.vsYesterday}</span>
+                            <span className={`rst-delta-pill ${deltaTone(cardDay.deltaPct)}`}>{deltaLabel(cardDay.deltaPct)}</span>
+                            <span className="rst-delta-sub">{cardDay.sameTime ? s.vsThisTimeYesterday : s.vsYesterday}</span>
                           </div>
                         ) : null}
                       </div>
-                      {data.today.byPaymentMode && data.today.byPaymentMode.length > 0 && data.today.takingsMinor > 0 ? (
+                      {cardDay?.ready && cardDay.modes.length > 0 && cardDay.minor > 0 ? (
                         <div className="rst-kpi-modes" role="group" aria-label={t.howPaid}>
-                          {[...data.today.byPaymentMode]
+                          {[...cardDay.modes]
                             .sort((a, b) => b.revenueMinor - a.revenueMinor)
                             .map((m) => (
                               <span key={m.mode} className="rst-kpi-mode">
@@ -1230,9 +1279,9 @@ export function ShopHome({
                               </span>
                             ))}
                           {/* Emerald v3 — what an order came to on average, on the wide money tile. */}
-                          {data.today.orders > 0 ? (
+                          {cardDay.orders > 0 ? (
                             <span className="rst-kpi-mode is-avg">
-                              <b>{s.avgOrderShort(rupees(Math.round(data.today.takingsMinor / data.today.orders)))}</b>
+                              <b>{s.avgOrderShort(rupees(Math.round(cardDay.minor / cardDay.orders)))}</b>
                             </span>
                           ) : null}
                                                     {/* QA 2026-11-06 — what the apps billed, so the split adds up to the takings beside it. */}
@@ -1244,6 +1293,12 @@ export function ShopHome({
                             </span>
                           ) : null}
                         </div>
+                      ) : null}
+                      {/* Owner, 2026-11-28 — money given back today, whichever day's bill it was for: its own line, never hidden inside the figure. */}
+                      {!isKitchen && (data.today.refundedMinor ?? 0) > 0 ? (
+                        <a className="rst-kpi-refund" href={can('/orders/returns') ? '/orders/returns' : undefined}>
+                          {s.refundedToday(rupees(data.today.refundedMinor ?? 0))}
+                        </a>
                       ) : null}
                       {/* Owner, 2026-11-14 (Emerald v2) — cash in the drawer is off the desktop tile; the phone hero keeps it. */}
                     </div>
@@ -1275,7 +1330,7 @@ export function ShopHome({
                     {ordersDeltaPct !== null ? (
                       <div className="rst-kpi-side is-bottom">
                         <span className={`rst-delta-pill ${deltaTone(ordersDeltaPct)}`}>{deltaLabel(ordersDeltaPct)}</span>
-                        <span className="rst-delta-sub">{s.vsYesterday}</span>
+                        <span className="rst-delta-sub">{sameTime ? s.vsThisTimeYesterday : s.vsYesterday}</span>
                       </div>
                     ) : null}
                   </a>
@@ -2150,10 +2205,12 @@ export function ShopHome({
                         {phoneFigures.kind === 'range' && phoneFigures.orders === 0 && phoneFigures.takingsMinor === 0 ? (
                           <>
                             <p className="shp-hero-none">{s.noSalesYet}</p>
-                            {phonePeriod === 'today' && (data.yesterday.takingsMinor ?? 0) > 0 ? (
+                            {/* Yesterday by the rule the figure above and the chart below use (the report's own previous day),
+                                so a return of yesterday's bill moves it here as it moves yesterday's bar. */}
+                            {phonePeriod === 'today' && phoneChannel?.previous.hasData && Number(phoneChannel.totals.previousBilledMinor ?? 0) > 0 ? (
                               <div className="hm-hero-stats">
                                 <span>
-                                  {s.yesterday} <strong>{rupees(data.yesterday.takingsMinor ?? 0)}</strong> · {s.orderCount(data.yesterday.orders)}
+                                  {s.yesterday} <strong>{rupees(Number(phoneChannel.totals.previousBilledMinor))}</strong>
                                 </span>
                               </div>
                             ) : null}
@@ -2178,7 +2235,8 @@ export function ShopHome({
                           ) : phoneFigures.changePct !== null && phoneFigures.changePct !== undefined ? (
                             // Never colour alone: the arrow and the sign carry it for anyone who cannot tell green from red.
                             <span className={`shp-delta ${deltaTone(phoneFigures.changePct)}`}>
-                              {deltaLabel(phoneFigures.changePct)} {s.vsPrevious}
+                              {deltaLabel(phoneFigures.changePct)}{' '}
+                              {phoneChannel?.previous.toSameTime ? (phonePeriod === 'today' ? s.vsThisTimeYesterday : s.vsSamePointBefore) : s.vsPrevious}
                             </span>
                           ) : null}
                           {/*
@@ -2193,6 +2251,14 @@ export function ShopHome({
                           ) : null}
                         </div>
                         )}
+                        {/* Owner, 2026-11-28 — "the amount for today is reflecting properly in the refund also": what was given
+                            back today, on today's card, with its own door. */}
+                        {!isKitchen && phonePeriod === 'today' && (data.today.refundedMinor ?? 0) > 0 ? (
+                          <a className="shp-hero-refund" href={can('/orders/returns') ? '/orders/returns' : undefined}>
+                            {s.refundedToday(rupees(data.today.refundedMinor ?? 0))}
+                            {can('/orders/returns') ? ' →' : ''}
+                          </a>
+                        ) : null}
                         {(phoneFigures.byPaymentMode.length > 0 || (phoneFigures.fromAppsMinor ?? 0) > 0) && phoneFigures.takingsMinor > 0 ? (
                           <PaymentLine
                             t={t}
@@ -2214,13 +2280,7 @@ export function ShopHome({
                       </>
                     ) : null}
 
-                    {canReports && can('/stock/report') ? (
-                      <div className="shp-hero-links">
-                        <a className="shp-hero-pill" href="/stock/report">
-                          {s.stockReportLink} →
-                        </a>
-                      </div>
-                    ) : null}
+                    {/* Owner, 2026-11-28 — the Stock report is a Quick link now, in POS's place; the money card holds money only. */}
                   </section>
                 )}
 
@@ -2235,6 +2295,13 @@ export function ShopHome({
           draws them.
         */}
         {quickLinks}
+        {/* Owner, 2026-11-28 — "below quick links, the last 7 days sale graph just like restaurant": a shop's phone draws the
+            restaurant's week of bars straight under its doors. Drawn only with money in the week, and only for whoever sees it. */}
+        {!isKitchen && money && trendChart.totalMinor > 0 ? (
+          <div className="hm-mobile shp-week">
+            <WeekBarsCard title={s.salesLast7} total={rupees(trendChart.totalMinor)} bars={phoneWeekBars} />
+          </div>
+        ) : null}
 
         {failed || !data ? null : (
             <div className="shp-mobile-stack">

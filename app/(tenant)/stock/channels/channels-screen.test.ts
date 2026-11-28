@@ -31,7 +31,7 @@ describe('billed, not received (BR-01)', () => {
 describe('a comparison that is not there is absent, a quiet channel is a true zero (BR-04)', () => {
   it('no previous period, and a previous period with nothing on this channel, each say so — and no percentage is made up', () => {
     expect(client).toContain("t('noPrevious')");
-    expect(client).toContain("t('nothingBefore')");
+    expect(client).toContain("t(soFar ? 'nothingBeforeSoFar' : 'nothingBefore')");
     expect(client).toContain('pct === null');
   });
 

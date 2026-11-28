@@ -164,8 +164,9 @@ const MARKETPLACE_ROUTES = ['/orders/import', '/orders/held', '/settings/channel
 /**
  * Owner, 2026-11-14 — Reports tabs read from what a counter BILLED (`sale` rows): profit, discounts and payments. A diary
  * business has none, and the API answers them 404. Not `SHOP_ROUTES`: the role rules read that list as the shop's own work.
+ * Owner, 2026-11-28 — and Customers: who came back, read from the same bills (a diary business has Reports › Clients).
  */
-const COUNTER_REPORT_ROUTES = ['/reports/profit', '/reports/discounts', '/reports/payments'] as const;
+const COUNTER_REPORT_ROUTES = ['/reports/profit', '/reports/discounts', '/reports/payments', '/reports/customers'] as const;
 
 /** Jira GRW-718 — screens that exist only where a business may seat guests (a restaurant): its Tables settings and, Jira GRW-714, its kitchen. */
 const TABLE_ROUTES = ['/settings/tables', '/settings/kitchen-stations', '/kitchen'] as const;
