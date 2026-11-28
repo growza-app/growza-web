@@ -616,3 +616,11 @@ describe('Develop QA 2026-11-28 (run 2) — every list on Reports is a named lan
     expect(css).toMatch(/\.my-people \.td-person-meta \{ white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: break-word; \}/);
   });
 });
+
+describe('Develop QA 2026-11-28 (run 2) — the Menu’s four tabs on a 344px phone', () => {
+  it('four tabs sit two by two at 420px and under, none past the edge', () => {
+    const css = readFileSync(new URL('../styles/99-menu-manager.css', import.meta.url), 'utf8');
+    const narrow = css.slice(css.indexOf('@media (max-width: 420px)'));
+    expect(narrow).toMatch(/\.prd-page > \.mnu-tabs:has\(> \.mnu-tab:nth-child\(4\)\) \{\s*display: grid;\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
+  });
+});
