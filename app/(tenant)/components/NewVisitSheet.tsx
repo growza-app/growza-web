@@ -1286,6 +1286,13 @@ export function NewVisitSheet({
    */
   useEffect(() => {
     if (!later || !(pageForm ? onForm : stage.step === 'when') || picked.length === 0) return;
+    /*
+     * Salon spec 18, 2026-11-28 — not while this screen's own booking is saving. Going client → saving re-ran this
+     * read; when it landed after the booking was written, the time just booked came back as taken, and the winner
+     * read "2:00 PM is taken. Nearest free is 2:30 PM" (and lost the picked slot) until "Booked" replaced it. A
+     * refusal (saving → client) reads the list again, which is what the loser needs.
+     */
+    if (stage.step === 'saving') return;
     let cancelled = false;
     /*
      * The slot the desk had already picked, remembered across the refetch (review, 2026-10-11).
