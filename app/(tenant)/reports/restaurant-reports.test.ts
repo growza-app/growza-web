@@ -601,3 +601,18 @@ describe('the restaurant Reports tab order', () => {
     expect([...RESTAURANT_TABS]).toEqual(['overview', 'sales', 'customers', 'items', 'inventory', 'tips']);
   });
 });
+
+describe('Develop QA 2026-11-28 (run 2) — every list on Reports is a named landmark', () => {
+  const src = (f: string) => readFileSync(new URL(`./${f}`, import.meta.url), 'utf8');
+  it('the top dishes, top services and top people lists are sections named by their title, never a bare div', () => {
+    for (const f of ['RestaurantReports.tsx', 'SalonReports.tsx']) {
+      expect(src(f), f).not.toMatch(/<div className="rr-topdishes">/);
+    }
+    expect(src('RestaurantReports.tsx')).toMatch(/<section className="rr-topdishes" aria-label=\{t\('top'\)\}>/);
+    expect(src('SalonReports.tsx')).toMatch(/<section className="rr-topdishes" aria-label=\{t\('team\.top'\)\}>/);
+  });
+  it('a message sheet never cuts the product name its message will say: the meta line wraps', () => {
+    const css = readFileSync(new URL('../styles/93-what-to-do.css', import.meta.url), 'utf8');
+    expect(css).toMatch(/\.my-people \.td-person-meta \{ white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: break-word; \}/);
+  });
+});

@@ -597,7 +597,7 @@ function TopDishes({ data, money, hasProfit, more }: { data: RestaurantItemsPage
       .filter(Boolean)
       .join(' · ');
   return (
-    <div className="rr-topdishes">
+    <section className="rr-topdishes" aria-label={t('top')}>
       <div className="rr-topdishes-head">
         <h3 className="rr-list-title">{t('top')}</h3>
         {data.topByPlates ? (
@@ -627,7 +627,7 @@ function TopDishes({ data, money, hasProfit, more }: { data: RestaurantItemsPage
         ))}
       </ul>
       {more > 0 ? <p className="rr-more">{t('moreSold', { n: more })}</p> : null}
-    </div>
+    </section>
   );
 }
 

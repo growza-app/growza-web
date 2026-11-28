@@ -232,3 +232,6 @@
 .my-people .td-person { display: flex; }
 .my-people .td-person-who { flex: 1 1 auto; min-width: 0; }
 .my-people .my-send { flex: none; width: auto; padding: 0 var(--sp-4); }
+/* Develop QA 2026-11-28 (run 2) — the meta line names the product the message will say ("Table Tennis Balls"); at 344px
+   it was cut to "Table Tennis B…" beside the Send button. In these sheets it wraps instead, so the owner reads it whole. */
+.my-people .td-person-meta { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: break-word; }
