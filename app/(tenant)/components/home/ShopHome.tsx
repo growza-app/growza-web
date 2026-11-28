@@ -342,7 +342,8 @@ export function ShopHome({
     // Owner, 2026-11-26 ("add this on mobile") — a restaurant's phone draws the laptop's week of bars above its Queue
     // card. The bars are always the last seven days, whatever the hero's period, so they have their own read; it fills
     // the same `channelData` the laptop's read does, which never runs on a phone.
-    if (isKitchen) {
+    // Owner, 2026-11-28 — a shop's phone draws the same week, under its Quick links, for whoever sees the money.
+    if (isKitchen || money) {
       api
         .byChannel({ range: 'last_7_days', location: branch ?? undefined })
         .then((res) => {
@@ -451,7 +452,13 @@ export function ShopHome({
      */
     areas.kitchenStock
       ? { href: '/inventory', label: t.nav.inventory, icon: <IconInventory />, tone: 'green' }
-      : { href: '/pos', label: t.nav.pos, icon: <IconPos />, tone: 'green' },
+      : /*
+         * Owner, 2026-11-28 — a shop's till is the bar's circle too: its first tile is the Stock report, moved here from the
+         * money card's pill. A kitchen that does not count its shelf has no Stock report, and keeps POS.
+         */
+        !isKitchen
+        ? { href: '/stock/report', label: s.stockReportLink, icon: <IconNavStock />, tone: 'green' }
+        : { href: '/pos', label: t.nav.pos, icon: <IconPos />, tone: 'green' },
     // Only a kitchen has an order queue to open (hasOrderQueue); a shop's tile would open Sell.
     /*
      * Owner, 2026-11-17 — with Table orders on, the owner and a manager get Tables (the room at a glance: which are
@@ -469,9 +476,10 @@ export function ShopHome({
     { href: '/stock', label: t.nav.stock, icon: areas.stock ? <IconProducts /> : <IconCutlery />, tone: 'green' },
     /*
      * Owner, 2026-11-28 — a sixth tile, beside Stock: what is running low and how much to buy, a daily job that sat two
-     * taps deep in Reports. Only where the shelf is counted (canSee drops /stock/order for a kitchen that does not count).
+     * taps deep in Reports. Only where the shelf is counted: canSee (areaAllows) drops /stock/order for a kitchen that
+     * does not count, and it is drawn from the first paint, so the grid never shifts when the day's figures arrive.
      */
-    ...(data?.running.counted ? [{ href: '/stock/order', label: s.reorderListLabel, icon: <IconClipboardCheck />, tone: 'blue' as const }] : []),
+    { href: '/stock/order', label: s.reorderListLabel, icon: <IconClipboardCheck />, tone: 'blue' },
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
     /*
      * Owner, 2026-10-26 — Reports, not Attendance.
@@ -2220,13 +2228,7 @@ export function ShopHome({
                       </>
                     ) : null}
 
-                    {canReports && can('/stock/report') ? (
-                      <div className="shp-hero-links">
-                        <a className="shp-hero-pill" href="/stock/report">
-                          {s.stockReportLink} →
-                        </a>
-                      </div>
-                    ) : null}
+                    {/* Owner, 2026-11-28 — the Stock report is a Quick link now, in POS's place; the money card holds money only. */}
                   </section>
                 )}
 
@@ -2241,6 +2243,13 @@ export function ShopHome({
           draws them.
         */}
         {quickLinks}
+        {/* Owner, 2026-11-28 — "below quick links, the last 7 days sale graph just like restaurant": a shop's phone draws the
+            restaurant's week of bars straight under its doors. Drawn only with money in the week, and only for whoever sees it. */}
+        {!isKitchen && money && trendChart.totalMinor > 0 ? (
+          <div className="hm-mobile shp-week">
+            <WeekBarsCard title={s.salesLast7} total={rupees(trendChart.totalMinor)} bars={phoneWeekBars} />
+          </div>
+        ) : null}
 
         {failed || !data ? null : (
             <div className="shp-mobile-stack">

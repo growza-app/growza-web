@@ -137,6 +137,34 @@ describe('Owner, 2026-11-28 — a shop’s sixth Quick link: the Reorder list', 
     const tiles = shop.slice(shop.indexOf('const tiles = ['), shop.indexOf('].filter((l) => canSee(l.href, role, reportTabs, true, areas));'));
     expect(tiles.indexOf("href: '/stock'")).toBeLessThan(tiles.indexOf("href: '/stock/order'"));
     expect(tiles.indexOf("href: '/stock/order'")).toBeLessThan(tiles.indexOf("href: '/customers'"));
-    expect(tiles).toMatch(/\.\.\.\(data\?\.running\.counted \? \[\{ href: '\/stock\/order', label: s\.reorderListLabel, icon: <IconClipboardCheck \/>, tone: 'blue' as const \}\] : \[\]\)/);
+    expect(tiles).toContain("{ href: '/stock/order', label: s.reorderListLabel, icon: <IconClipboardCheck />, tone: 'blue' },");
+    expect(tiles).not.toMatch(/data\?\.running/); // from the first paint: no tile pops in when the figures arrive
+  });
+  it('a kitchen that does not count its shelf is not offered it', async () => {
+    const { canSee } = await import('../../lib/nav-policy');
+    expect(canSee('/stock/order', 'owner', [], true, { stock: false } as never)).toBe(false);
+  });
+});
+
+describe('Owner, 2026-11-28 — a shop’s Stock report is a Quick link, in POS’s place, not a pill on the money card', () => {
+  const shop = readFileSync(new URL('./ShopHome.tsx', import.meta.url), 'utf8');
+  it('the first tile of a shop is the Stock report; a kitchen keeps Inventory or POS; the money card has no pill', () => {
+    const tiles = shop.slice(shop.indexOf('const tiles = ['), shop.indexOf("{ href: '/stock', label: t.nav.stock"));
+    expect(tiles).toMatch(/!isKitchen\s*\? \{ href: '\/stock\/report', label: s\.stockReportLink, icon: <IconNavStock \/>, tone: 'green' \}\s*: \{ href: '\/pos'/);
+    expect(shop).not.toMatch(/<a className="shp-hero-pill" href="\/stock\/report">/);
+  });
+});
+
+describe('Owner, 2026-11-28 — a shop’s phone Home: the week of sales under Quick links', () => {
+  const shop = readFileSync(new URL('./ShopHome.tsx', import.meta.url), 'utf8');
+  it('the restaurant’s week of bars, straight under the Quick links, phone only, for whoever sees the money', () => {
+    const at = shop.indexOf('{quickLinks}');
+    const after = shop.slice(at, at + 700);
+    expect(after).toMatch(/!isKitchen && money && trendChart\.totalMinor > 0 \? \(\s*<div className="hm-mobile shp-week">\s*<WeekBarsCard title=\{s\.salesLast7\} total=\{rupees\(trendChart\.totalMinor\)\} bars=\{phoneWeekBars\} \/>/);
+    expect(shop).toMatch(/if \(isKitchen \|\| money\) \{\s*api\s*\.byChannel\(\{ range: 'last_7_days'/);
+  });
+  it('drawn as the restaurant phone’s own white card', () => {
+    const css = readFileSync(new URL('../../styles/99-z-emerald-v2.css', import.meta.url), 'utf8');
+    expect(css).toMatch(/:is\(\.shp-mobile-stack, \.shp-week\) \.rst-week-panel \{\s*display: flex;/);
   });
 });
