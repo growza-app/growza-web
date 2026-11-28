@@ -2011,6 +2011,9 @@ export interface ReorderRow {
   branchName: string;
   stock: number;
   soldLastYear: number | null;
+  /** Owner, 2026-11-28 — sold in the last 30 days, and which the suggestion came from. Absent from an older API. */
+  soldRecent?: number;
+  basis?: 'last_year' | 'recent' | 'none';
   suggested: number | null;
   override: number | null;
   order: number | null;
@@ -2023,7 +2026,7 @@ export interface ReorderRow {
 }
 export interface ReorderPage {
   rows: ReorderRow[];
-  totals: { sizes: number; toOrder: number; withoutBasis: number; edited: number };
+  totals: { sizes: number; toOrder: number; withoutBasis: number; edited: number; fromRecent?: number };
   page: number;
   pageSize: number;
 }

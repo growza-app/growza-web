@@ -224,7 +224,12 @@ export function OrderClient() {
 
   const nameOf = (r: ReorderRow) => (r.sizeLabel ? t('sizeOf', { name: r.name, size: r.sizeLabel }) : r.name);
   const reason = (r: ReorderRow): string =>
-    r.soldLastYear === null ? t('noBasis', { stock: count(r.stock) }) : t('basis', { sold: count(r.soldLastYear), from: day(r.lastYearFrom), to: day(r.lastYearTo), stock: count(r.stock) });
+    // Owner, 2026-11-28 — where last year has nothing to compare, the number is from the shop's last 30 days, and the row says so.
+    r.basis === 'recent'
+      ? t('recentBasis', { sold: count(r.soldRecent ?? 0), stock: count(r.stock) })
+      : r.soldLastYear === null
+        ? t('noBasis', { stock: count(r.stock) })
+        : t('basis', { sold: count(r.soldLastYear), from: day(r.lastYearFrom), to: day(r.lastYearTo), stock: count(r.stock) });
 
   return (
     <div className="srp ro">
@@ -280,6 +285,8 @@ export function OrderClient() {
       ) : (
         <>
           {/* Owner's review 2026-11-13 — the explanation (`model`) is the header's ⓘ now; the warning is one line. */}
+          {/* One plain line saying where the numbers came from, only when it is not last year. */}
+          {(data.totals.fromRecent ?? 0) > 0 ? <p className="srp-hint ro-warn">{t('fromRecent')}</p> : null}
           {data.totals.withoutBasis > 0 ? <p className="srp-warn ro-warn">{t('withoutBasis', { count: data.totals.withoutBasis })}</p> : null}
           <ul className="srp-list">
             {data.rows.map((r) => {

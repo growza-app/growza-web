@@ -368,9 +368,10 @@ export function CounterCards({ data, openHours = null }: { data: CounterReportPa
             </li>
           ))}
         </ul>
-        {strategy && (strategy.byChannel.length > 0 || strategy.byPaymentMode.length > 0) ? (
+        {/* Owner, 2026-11-28 ("too much noise") — "Counter ₹2,42,200 (100%)" says nothing: where orders came from is drawn from two channels up. */}
+        {strategy && (strategy.byChannel.length > 1 || strategy.byPaymentMode.length > 0) ? (
           <div className="cr-mix-block">
-            {strategy.byChannel.length > 0 ? (
+            {strategy.byChannel.length > 1 ? (
               <div className="cr-mix-row">
                 <span className="cr-mix-label">{t('mix.channelsLabel')}</span>
                 <div className="cr-mix-pills">
@@ -548,13 +549,18 @@ export function CounterCards({ data, openHours = null }: { data: CounterReportPa
       </section>
 
       {strategy ? (
-        <section className="cr-card cr-playbook" aria-labelledby="cr-strat-h">
-          <div className="cr-playbook-head">
+        /*
+         * Owner, 2026-11-28 ("some screens need to be simplified, too much noise") — the ideas were 1,080px of a 2,700px
+         * phone page, open, under every figure. They are one closed row now ("How to sell more"), opened by whoever
+         * wants them: the numbers first, the advice on request.
+         */
+        <details className="cr-card cr-playbook">
+          <summary className="cr-playbook-head">
             <h2 className="cr-title" id="cr-strat-h">
               {t('strategy.title')}
             </h2>
             <p className="cr-sub">{t('strategy.subtitle')}</p>
-          </div>
+          </summary>
           <div className="cr-strat-grid">
             {/* 1. Basket & Combo Strategy */}
             <article className="cr-strat-card">
@@ -709,7 +715,7 @@ export function CounterCards({ data, openHours = null }: { data: CounterReportPa
               </p>
             </article>
           </div>
-        </section>
+        </details>
       ) : null}
     </>
   );

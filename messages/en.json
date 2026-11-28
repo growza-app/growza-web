@@ -5171,10 +5171,10 @@
       "nothing": "Nothing to order yet",
       "nothingHint": "This list needs last year’s sales, or counted stock. Sizes show here once there is something to go on.",
       "model": "Each number is what you sold in the same days last year, less what is on the shelf now. It is a suggestion: change any number and it is kept.",
-      "withoutBasis": "{count, plural, one {1 size has no sales last year to go on.} other {# sizes have no sales last year to go on.}}",
+      "withoutBasis": "{count, plural, one {1 size has run out and has not sold lately.} other {# sizes have run out and have not sold lately.}}",
       "sizeOf": "{name} · size {size}",
       "basis": "Sold {sold} from {from} to {to} last year · {stock} on the shelf",
-      "noBasis": "Nothing to compare with last year · {stock} on the shelf",
+      "noBasis": "None left · nothing sold in the last 30 days",
       "soldOut": "It sold out last year, so it may have sold more.",
       "suggestedWas": "Suggested {n}",
       "orderLabel": "Order",
@@ -5195,7 +5195,9 @@
       "saveRule": "Save",
       "useDefaults": "Use the usual days",
       "toSellers": "Top sellers",
-      "fixBeforeExport": "Some numbers have not been saved. Fix them or try again before you export."
+      "fixBeforeExport": "Some numbers have not been saved. Fix them or try again before you export.",
+      "recentBasis": "Sold {sold} in the last 30 days · {stock} on the shelf",
+      "fromRecent": "No sales last year to compare yet, so these numbers come from your last 30 days."
     },
     "channels": {
       "types": {

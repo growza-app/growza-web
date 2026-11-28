@@ -9,7 +9,7 @@ import { formatMoney, intlLocale } from '../../lib/format';
 import { useBranch } from '../../components/BranchProvider';
 import { useSession } from '../../components/SessionProvider';
 
-const RANGES: readonly SellersRange[] = ['last_3_months', 'last_7_days', 'this_month', 'last_month', 'this_year'];
+const RANGES: readonly SellersRange[] = ['last_7_days', 'this_month', 'last_month', 'last_3_months', 'this_year'];
 
 /**
  * Jira GRW-634 — what was billed on the counter, on Flipkart and on Amazon, side by side.
@@ -30,7 +30,9 @@ export function ChannelsClient() {
   const branchContext = useBranch();
   const branch = branchContext.ready && branchContext.multi ? (branchContext.choice ?? '') : '';
   const ready = branchContext.ready || branches.length <= 1;
-  const [range, setRange] = useState<SellersRange>('last_3_months');
+  // Owner, 2026-11-28 — opens on the last 7 days, like Home's chart and the other reports: three months was a different
+  // figure from the card that led here.
+  const [range, setRange] = useState<SellersRange>('last_7_days');
   const [data, setData] = useState<ByChannelPage | null>(null);
   const [failed, setFailed] = useState(false);
   const seq = useRef(0);
@@ -176,7 +178,8 @@ function Card({ row, name, money, hasPrevious }: { row: ChannelRow; name: string
       </div>
       <p className="srp-hint">
         {t('ordersLine', { orders: row.orders })}
-        {row.averageMinor !== null ? ` · ${t('average', { amount: money(row.averageMinor) })}` : ''}
+        {/* Whole rupees: "₹2,341.27 each" was two digits nobody acts on. */}
+        {row.averageMinor !== null ? ` · ${t('average', { amount: money(Math.round(Number(row.averageMinor) / 100) * 100) })}` : ''}
       </p>
       {row.returnedOrders > 0 ? <p className="srp-warn">{t('cameBack', { count: row.returnedOrders })}</p> : null}
       {row.refundedMinor && row.refundedMinor !== '0' ? <p className="srp-hint">{t('refunded', { amount: money(row.refundedMinor), count: row.refundedCount ?? 0 })}</p> : null}
@@ -200,19 +203,24 @@ function Trend({ data, word, money }: { data: ByChannelPage; word: (c: string) =
     if (days <= 8) return t('weekOf', { date: new Intl.DateTimeFormat(intl, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(at(startISO)) });
     return new Intl.DateTimeFormat(intl, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(at(startISO));
   };
-  const totals = data.trend.map((b) => Object.values(b.billedMinor).reduce((a, v) => a + Number(v), 0));
+  // Owner, 2026-11-28 ("too much noise") — the weeks before the shop's first sale were a column of "₹0": the list starts
+  // at the first bucket that sold. Empty buckets after it stay (a quiet week is a fact).
+  const allTotals = data.trend.map((b) => Object.values(b.billedMinor).reduce((a, v) => a + Number(v), 0));
+  const first = allTotals.findIndex((v) => v !== 0);
+  const trend = first <= 0 ? data.trend : data.trend.slice(first);
+  const totals = first <= 0 ? allTotals : allTotals.slice(first);
   const max = Math.max(1, ...totals);
-  if (data.trend.length === 0) return null;
+  if (trend.length === 0) return null;
   return (
     <section className="srp-totals" aria-label={t('trendTitle')}>
       <h2 className="srp-name">{t('trendTitle')}</h2>
-      <svg className="ch-bars" viewBox={`0 0 ${data.trend.length * 12} 48`} preserveAspectRatio="none" role="img" aria-label={t('trendTitle')}>
+      <svg className="ch-bars" viewBox={`0 0 ${trend.length * 12} 48`} preserveAspectRatio="none" role="img" aria-label={t('trendTitle')}>
         {totals.map((v, i) => (
-          <rect key={data.trend[i]!.startISO} x={i * 12 + 2} y={46 - (v / max) * 44} width={8} height={Math.max(v > 0 ? 1 : 0, (v / max) * 44)} rx={1} fill="currentColor" />
+          <rect key={trend[i]!.startISO} x={i * 12 + 2} y={46 - (v / max) * 44} width={8} height={Math.max(v > 0 ? 1 : 0, (v / max) * 44)} rx={1} fill="currentColor" />
         ))}
       </svg>
       <ul className="ch-trend">
-        {data.trend.map((b, i) => (
+        {trend.map((b, i) => (
           <li key={b.startISO}>
             <span className="srp-hint">{bucketWord(b.startISO, b.endExclusiveISO)}</span>
             <span className="ch-trend-sum">{money(totals[i]!)}</span>
