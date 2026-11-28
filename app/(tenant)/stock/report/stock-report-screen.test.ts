@@ -85,9 +85,18 @@ describe('laid out for a thumb at 344px', () => {
 
   it('the sizes wrap, never scroll sideways', () => {
     expect(css).toMatch(/\.srp-sizes\s*\{[^}]*flex-wrap: wrap/);
-    // The one sideways scroller in this sheet is the report tab bar on a phone (owner's review 2026-11-13); the
-    // sizes themselves still wrap.
-    expect(css.replace(/\.srp-nav \{[^}]*\}/g, '')).not.toMatch(/overflow-x:\s*(auto|scroll)/);
+    // The sideways scrollers in this sheet are the report tab bar on a phone (owner's review 2026-11-13) and, since
+    // 2026-11-28, the one line of filters ("taking too much space"); the sizes themselves still wrap.
+    expect(css.replace(/\.srp-nav \{[^}]*\}/g, '').replace(/\.srp-toolbar \.srp-filter-pills \{[^}]*\}/g, '')).not.toMatch(/overflow-x:\s*(auto|scroll)/);
+  });
+
+  it('the toolbar is two lines and no card on a phone: layout and export are 44px icon buttons that keep their words for a screen reader', () => {
+    expect(client).toContain('<div className="srp-toolbar-row">');
+    expect(client).toContain('<span className="srp-tool-word">{t(\'viewCards\')}</span>');
+    expect(client).toContain("title={t('viewTable')}");
+    expect(css).toMatch(/\.srp-toolbar \.srp-filter-pills \{[^}]*flex-wrap: nowrap;[^}]*overflow-x: auto;/);
+    expect(css).toMatch(/\.srp-toolbar \.srp-export-tool \{[^}]*min-width: 2\.75rem;[^}]*min-height: 2\.75rem;/);
+    expect(css).toMatch(/\.srp-toolbar,\n\.page-body \.srp-toolbar \{[^}]*padding: 0;[^}]*background: transparent;/);
   });
 
   it('renders the 4-card KPI strip, quick filter pills, Cards/Table view toggle, and top-aligned style cards', () => {

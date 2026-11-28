@@ -5075,7 +5075,7 @@
     "stockReport": {
       "title": "Stock report",
       "open": "Stock report",
-      "searchPlaceholder": "Search by name",
+      "searchPlaceholder": "Search",
       "searchLabel": "Search the styles by name",
       "categoryLabel": "Category",
       "allCategories": "All categories",
