@@ -350,42 +350,28 @@ function Totals({ data, money, count }: { data: StockReportPage; money: (m: stri
   if (data.neverCounted || totals.styles === 0) return null;
   const hasGaps = totals.sizesWithoutCost > 0 || totals.negativeSizes > 0;
   return (
-    <section className="srp-totals srp-kpi-grid" aria-label={t('totalsLabel')}>
+    <section className={`srp-totals srp-kpi-grid${hasGaps ? '' : ' is-one'}`} aria-label={t('totalsLabel')}>
       <div className="srp-kpi-card is-primary">
         <p className="srp-worth-label">{t('worth')}</p>
         <p className="srp-worth">{totals.sizesWithCost === 0 ? t('noCost') : money(totals.valueMinor)}</p>
         <p className="srp-hint">{t('totalsLine', { styles: totals.styles, sizes: totals.sizes, units: count(totals.units) })}</p>
       </div>
 
-      <div className="srp-kpi-card">
-        <p className="srp-worth-label">{t('kpiUnitsLabel')}</p>
-        <p className="srp-kpi-num">{count(totals.units)}</p>
-        <p className="srp-hint">{t('kpiUnitsSub', { sizes: totals.sizes })}</p>
-      </div>
-
-      <div className="srp-kpi-card">
-        <p className="srp-worth-label">{t('kpiStylesLabel')}</p>
-        <p className="srp-kpi-num">{count(totals.styles)}</p>
-        <p className="srp-hint">{t('kpiStylesSub', { withCost: totals.sizesWithCost, total: totals.sizes })}</p>
-      </div>
-
-      <div className={`srp-kpi-card${hasGaps ? ' is-warn' : ' is-ok'}`}>
-        <p className="srp-worth-label">{t('kpiHealthLabel')}</p>
-        {hasGaps ? (
-          <>
-            <p className="srp-kpi-num">{count(totals.sizesWithoutCost + totals.negativeSizes)}</p>
-            <div className="srp-kpi-warns">
-              {totals.sizesWithoutCost > 0 ? <p className="srp-warn">{t('withoutCost', { count: totals.sizesWithoutCost })}</p> : null}
-              {totals.negativeSizes > 0 ? <p className="srp-warn srp-warn-danger">{t('negative', { count: totals.negativeSizes })}</p> : null}
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="srp-kpi-num is-ok">{t('allCosted')}</p>
-            <p className="srp-hint">{t('allCostedSub')}</p>
-          </>
-        )}
-      </div>
+      {/*
+        Owner, 2026-11-28 ("too much noise") — four tiles said three things twice: "Units on the shelf 1,917" and "Styles &
+        sizes 69" are the line under the worth above, and "100% costed" is the absence of a problem. The worth, and a second
+        tile only when something needs the owner (a size with no cost, a count below zero).
+      */}
+      {hasGaps ? (
+        <div className="srp-kpi-card is-warn">
+          <p className="srp-worth-label">{t('kpiHealthLabel')}</p>
+          <p className="srp-kpi-num">{count(totals.sizesWithoutCost + totals.negativeSizes)}</p>
+          <div className="srp-kpi-warns">
+            {totals.sizesWithoutCost > 0 ? <p className="srp-warn">{t('withoutCost', { count: totals.sizesWithoutCost })}</p> : null}
+            {totals.negativeSizes > 0 ? <p className="srp-warn srp-warn-danger">{t('negative', { count: totals.negativeSizes })}</p> : null}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

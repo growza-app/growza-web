@@ -15,7 +15,8 @@ describe('a return says who gave it back', () => {
     expect(order).toContain("t('detail.by', { name: r.by || t(`returns.byRole.${r.byRole}` as 'returns.byRole.owner') })");
   });
   it('on the Returns report: one card per person, the money they gave back', () => {
-    expect(report).toContain("{(data.byPerson ?? []).length > 0 ? (");
+    // Owner, 2026-11-28 — from two people up: with one, it is the total above it said twice.
+    expect(report).toContain("{(data.byPerson ?? []).length > 1 ? (");
     expect(report).toContain("formatMoney(p.refundMinor, 'INR', locale)");
     expect(en.orders.returns.byTitle).toBe('Given back by');
     expect(hi.orders.returns.byTitle).toBeTruthy();

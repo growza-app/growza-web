@@ -7,6 +7,12 @@ describe('dish fans message', () => {
       'Craving Paneer Butter Masala? Your favourite is waiting at Spice Garden. Come in or order this week 🍽️',
     );
   });
+  it('keeps a " + " that is part of the real name: the API sends the name with any add-on already removed', () => {
+    expect(fanDish('Idli + Vada Combo')).toBe('Idli + Vada Combo');
+    expect(dishFansTemplate('Idli + Vada Combo (Full)', 'Spice Garden')).toBe(
+      'Craving Idli + Vada Combo? Your favourite is waiting at Spice Garden. Come in or order this week 🍽️',
+    );
+  });
   it('no business name: "us"', () => {
     expect(dishFansTemplate('Masala Dosa', '  ')).toBe('Craving Masala Dosa? Your favourite is waiting at us. Come in or order this week 🍽️');
   });

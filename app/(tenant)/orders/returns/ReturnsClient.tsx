@@ -11,7 +11,7 @@ import { useBranch } from '../../components/BranchProvider';
 import { useAreas, useSession } from '../../components/SessionProvider';
 import { sellsOnMarketplaces } from '../../lib/order-channels';
 
-const RANGES: readonly SellersRange[] = ['last_3_months', 'last_7_days', 'this_month', 'last_month', 'this_year'];
+const RANGES: readonly SellersRange[] = ['last_7_days', 'this_month', 'last_month', 'last_3_months', 'this_year'];
 
 /**
  * Jira GRW-635 — what came back, and why.
@@ -25,17 +25,22 @@ export function ReturnsClient() {
   const ships = sellsOnMarketplaces(useAreas());
   const t = useTranslations('orders.returns');
   const tr = useTranslations('orders.returnReasons');
+  const tm = useTranslations('orders.tiles.modes');
   const locale = useLocale();
   const session = useSession();
   const branches = session?.branches ?? [];
   const branchContext = useBranch();
   const branch = branchContext.ready && branchContext.multi ? (branchContext.choice ?? '') : '';
   const ready = branchContext.ready || branches.length <= 1;
-  const [range, setRange] = useState<SellersRange>('last_3_months');
+  const [range, setRange] = useState<SellersRange>('last_7_days');
   const [data, setData] = useState<ReturnsReportPage | null>(null);
   const [failed, setFailed] = useState(false);
   const seq = useRef(0);
   const count = (n: number) => new Intl.NumberFormat(intlLocale(locale)).format(n);
+  const money = (minor: string | number) => formatMoney(minor, 'INR', locale);
+  const modeName = (mode: string | null) => (mode && tm.has(mode as 'cash') ? tm(mode as 'cash') : t('modeOther'));
+  const when = new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: session?.timezone ?? 'Asia/Kolkata' });
+  const day = new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', timeZone: session?.timezone ?? 'Asia/Kolkata' });
 
   const load = useCallback(async () => {
     if (!ready) return;
@@ -85,31 +90,75 @@ export function ReturnsClient() {
         </div>
       ) : (
         <>
+          {/*
+            Owner, 2026-11-28 — "what items returned and the refund amount". The money given back first, then each return:
+            which items, how many, how much, how it was given back and from which bill. The counts by reason, who gave it
+            back and the undelivered parcels are drawn only when they say something (a reason was given, more than one
+            person, a parcel came back): "No reason given 2" and "0 undelivered" were noise on every shop's screen.
+          */}
           <section className="srp-totals" aria-label={t('customerTitle')}>
-            <p className="srp-worth-label">{t('customerTitle')}</p>
-            <p className="srp-worth">{t('returnsCount', { count: data.customer.returns })}</p>
-            <p className="srp-hint">{t('unitsCount', { count: data.customer.units })}</p>
+            <p className="srp-worth-label">{t('givenBack')}</p>
+            <p className="srp-worth">{money(data.refundMinor ?? '0')}</p>
+            <p className="srp-hint">
+              {t('returnsCount', { count: data.customer.returns })} · {t('unitsCount', { count: data.customer.units })}
+            </p>
+            {(data.byMode ?? []).length > 0 ? (
+              <p className="srp-hint">{(data.byMode ?? []).map((m) => `${modeName(m.mode)} ${money(m.refundMinor)}`).join(' · ')}</p>
+            ) : null}
           </section>
 
-          {data.byReason.length > 0 ? (
-            <ul className="srp-list">
-              {data.byReason.map((b) => (
-                <li key={b.reason} className="srp-card">
-                  <div className="srp-head">
-                    <h2 className="srp-name">{tr(returnReasonKey(b.reason))}</h2>
-                    <p className="srp-value">{count(b.returns)}</p>
-                  </div>
-                  <p className="srp-hint">{t('unitsCount', { count: b.units })}</p>
-                </li>
-              ))}
-            </ul>
+          {(data.recent ?? []).length > 0 ? (
+            <section aria-label={t('listTitle')}>
+              <p className="srp-worth-label">{t('listTitle')}</p>
+              <ul className="srp-list ret-list">
+                {(data.recent ?? []).map((r) => (
+                  <li key={r.id} className="srp-card ret-row">
+                    <div className="srp-head">
+                      <h2 className="srp-name">
+                        {r.items.length > 0 ? r.items.map((i) => (i.qty > 1 ? `${i.name} × ${count(i.qty)}` : i.name)).join(', ') : t('noItems')}
+                      </h2>
+                      <p className="srp-value">{money(r.refundMinor)}</p>
+                    </div>
+                    <p className="srp-hint">
+                      {[when.format(new Date(r.returnedAt)), Number(r.refundMinor) > 0 ? modeName(r.refundMode) : null, r.kind === 'undelivered' ? t('undeliveredShort') : null].filter(Boolean).join(' · ')}
+                    </p>
+                    <p className="srp-hint">
+                      {r.saleId ? (
+                        <AppLink className="ret-bill" href={`/orders/${r.saleId}`}>
+                          {t('fromBill', { code: r.code ?? '', date: r.soldAt ? day.format(new Date(r.soldAt)) : '' })}
+                        </AppLink>
+                      ) : null}
+                      {r.customerName ? ` · ${r.customerName}` : ''}
+                      {r.by ? ` · ${t('byShort', { name: r.by })}` : ''}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {data.byReason.some((b) => b.reason !== 'not_said') ? (
+            <section aria-label={t('whyTitle')}>
+              <p className="srp-worth-label">{t('whyTitle')}</p>
+              <ul className="srp-list">
+                {data.byReason.map((b) => (
+                  <li key={b.reason} className="srp-card">
+                    <div className="srp-head">
+                      <h2 className="srp-name">{tr(returnReasonKey(b.reason))}</h2>
+                      <p className="srp-value">{count(b.returns)}</p>
+                    </div>
+                    <p className="srp-hint">{t('unitsCount', { count: b.units })}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
           ) : null}
 
           {/*
-            Owner, 2026-11-14 (returns QA, loophole 2) — who gave money back. A manager can take returns now, and the person who handed the
-            cash over was stored on every return and shown nowhere. One card per person, the most money first.
+            Owner, 2026-11-14 (returns QA, loophole 2) — who gave money back, the most money first. With one person it is
+            the same figure as the total above, so it is drawn from two people up.
           */}
-          {(data.byPerson ?? []).length > 0 ? (
+          {(data.byPerson ?? []).length > 1 ? (
             <section aria-label={t('byTitle')}>
               <p className="srp-worth-label">{t('byTitle')}</p>
               <ul className="srp-list">
@@ -126,22 +175,25 @@ export function ReturnsClient() {
             </section>
           ) : null}
 
-          {/* Owner, 2026-10-24 — only a parcel comes back undelivered: where nothing ships (a kitchen), there is no such block. */}
-          {ships ? (
+          {/* Owner, 2026-10-24 — only a parcel comes back undelivered; and the card is drawn only when one did. */}
+          {ships && data.undelivered.returns > 0 ? (
             <section className="srp-totals" aria-label={t('undeliveredTitle')}>
               <p className="srp-worth-label">{t('undeliveredTitle')}</p>
               <p className="srp-worth">{t('returnsCount', { count: data.undelivered.returns })}</p>
-              <p className="srp-hint">{data.undelivered.returns > 0 ? t('unitsCount', { count: data.undelivered.units }) : t('undeliveredNone')}</p>
+              <p className="srp-hint">{t('unitsCount', { count: data.undelivered.units })}</p>
               <p className="srp-hint">{t('undeliveredNote')}</p>
             </section>
           ) : null}
         </>
       )}
-      <div className="srp-links">
-        <AppLink className="btn btn-ghost srp-export" href="/orders/refunds">
-          {t('toRefunds')}
-        </AppLink>
-      </div>
+      {/* The Refunds screen is the marketplaces' record; a shop that sells only at its counter has none. */}
+      {ships ? (
+        <div className="srp-links">
+          <AppLink className="btn btn-ghost srp-export" href="/orders/refunds">
+            {t('toRefunds')}
+          </AppLink>
+        </div>
+      ) : null}
     </div>
   );
 }

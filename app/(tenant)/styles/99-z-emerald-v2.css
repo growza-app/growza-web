@@ -2808,7 +2808,7 @@ body {
 /* Owner, 2026-11-26 — the week's bars on a restaurant's phone Home, drawn as one of the phone's own cards (the same
    white, line and corner as `.hm-card`), so it sits in the stack like the Queue card under it. */
 @media (max-width: 860px) {
-  .shp-mobile-stack .rst-week-panel {
+  :is(.shp-mobile-stack, .shp-week) .rst-week-panel {
     display: flex;
     flex-direction: column;
     gap: var(--sp-2);
@@ -2818,22 +2818,22 @@ body {
     border-radius: var(--radius-lg);
     background: var(--surface);
   }
-  .shp-mobile-stack .rst-week-panel .rst-panel-head {
+  :is(.shp-mobile-stack, .shp-week) .rst-week-panel .rst-panel-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--sp-3);
   }
-  .shp-mobile-stack .rst-week-panel .rst-panel-head h3 {
+  :is(.shp-mobile-stack, .shp-week) .rst-week-panel .rst-panel-head h3 {
     margin: 0;
     font-size: 1rem;
     font-weight: 600;
     color: var(--hm-ink);
   }
-  .shp-mobile-stack .rst-week-total {
+  :is(.shp-mobile-stack, .shp-week) .rst-week-total {
     font-size: 1rem;
   }
-  .shp-mobile-stack .rst-week-bars {
+  :is(.shp-mobile-stack, .shp-week) .rst-week-bars {
     gap: var(--sp-2);
   }
 }

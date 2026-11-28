@@ -98,3 +98,27 @@ describe('who sees it, and the words', () => {
     for (const lang of ['en', 'hi'] as const) for (const key of used) expect((messages(lang).returns as Record<string, unknown>)[key], `${lang}.${key}`).toBeTruthy();
   });
 });
+
+describe('Owner, 2026-11-28 — the Returns report says what came back and what was given back', () => {
+  it('leads with the money given back and how, then each return: items, amount, way, bill', () => {
+    expect(client).toContain("t('givenBack')");
+    expect(client).toContain('money(data.refundMinor ??');
+    expect(client).toContain('(data.recent ?? []).map((r) => (');
+    expect(client).toContain("t('fromBill', { code: r.code ?? ''");
+    expect(client).toContain('href={`/orders/${r.saleId}`}');
+    expect(client.indexOf("t('givenBack')")).toBeLessThan(client.indexOf("t('listTitle')"));
+  });
+  it('draws no card that says nothing: reasons only when one was given, undelivered only when a parcel came back, Online refunds only where the shop sells online', () => {
+    expect(client).toContain("data.byReason.some((b) => b.reason !== 'not_said')");
+    expect(client).toContain('ships && data.undelivered.returns > 0');
+    expect(client).toMatch(/\{ships \? \(\s*<div className="srp-links">/);
+  });
+  it('opens on the last 7 days, and every new word is in both languages', () => {
+    expect(client).toContain("useState<SellersRange>('last_7_days')");
+    for (const lang of ['en', 'hi'] as const) {
+      const r = messages(lang).returns as Record<string, string>;
+      for (const k of ['givenBack', 'listTitle', 'whyTitle', 'fromBill', 'byShort', 'modeOther', 'noItems', 'undeliveredShort']) expect(r[k], `${lang}.${k}`).toBeTruthy();
+    }
+    expect((messages('en').refunds as Record<string, string>).title).toBe('Online refunds');
+  });
+});

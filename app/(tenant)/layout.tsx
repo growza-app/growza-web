@@ -131,6 +131,8 @@ export const dynamic = 'force-dynamic';
 export default async function RootLayout({ children }: { children: ReactNode }) {
   let labels: Record<string, string> = {};
   let tenantName = 'Booking';
+  /** The business's id, for what a browser keeps per business (Reports' "Messaged" record). Null when /me could not say. */
+  let tenantId: string | null = null;
   let timezone = 'Asia/Kolkata';
   /** Jira GRW-413 — `autopayHalted` comes with it: the warning then names the two actions that recover the account. */
   let billing: { status: string; message: string | null; autopayHalted?: boolean } | null = null;
@@ -219,6 +221,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     labels = me.labels;
     storedLang = me.member?.lang ?? null;
     tenantName = me.tenant?.name ?? tenantName;
+    tenantId = me.tenant?.id ?? null;
     timezone = me.tenant?.timezone ?? timezone;
     billing = me.billing ?? null;
     setup = me.setup ?? null;
@@ -338,6 +341,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             name: memberName,
             avatar: memberAvatar,
             businessName: tenantName ?? null,
+            tenantId,
             locationName: role === 'owner' && branchCount > 1 ? null : locationName,
             branches,
             share,

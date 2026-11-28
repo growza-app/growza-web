@@ -130,3 +130,65 @@ describe('Tenant Home v2 redesign', () => {
     expect(afterFirstReturn).not.toMatch(/\buse(State|Effect|Memo|Ref|Callback|Translations|Locale)\b/);
   });
 });
+
+describe('Owner, 2026-11-28 — a shop’s sixth Quick link: the Reorder list', () => {
+  const shop = readFileSync(new URL('./ShopHome.tsx', import.meta.url), 'utf8');
+  it('sits beside Stock, opens /stock/order, and is drawn only where the shelf is counted', () => {
+    const tiles = shop.slice(shop.indexOf('const tiles = ['), shop.indexOf('].filter((l) => canSee(l.href, role, reportTabs, true, areas));'));
+    expect(tiles.indexOf("href: '/stock'")).toBeLessThan(tiles.indexOf("href: '/stock/order'"));
+    expect(tiles.indexOf("href: '/stock/order'")).toBeLessThan(tiles.indexOf("href: '/customers'"));
+    expect(tiles).toContain("{ href: '/stock/order', label: s.reorderListLabel, icon: <IconClipboardCheck />, tone: 'blue' },");
+    expect(tiles).not.toMatch(/data\?\.running/); // from the first paint: no tile pops in when the figures arrive
+  });
+  it('a kitchen that does not count its shelf is not offered it', async () => {
+    const { canSee } = await import('../../lib/nav-policy');
+    expect(canSee('/stock/order', 'owner', [], true, { stock: false } as never)).toBe(false);
+  });
+});
+
+describe('Owner, 2026-11-28 — a shop’s Stock report is a Quick link, in POS’s place, not a pill on the money card', () => {
+  const shop = readFileSync(new URL('./ShopHome.tsx', import.meta.url), 'utf8');
+  it('the first tile of a shop is the Stock report; a kitchen keeps Inventory or POS; the money card has no pill', () => {
+    const tiles = shop.slice(shop.indexOf('const tiles = ['), shop.indexOf("{ href: '/stock', label: t.nav.stock"));
+    expect(tiles).toMatch(/!isKitchen\s*\? \{ href: '\/stock\/report', label: s\.stockReportLink, icon: <IconNavStock \/>, tone: 'green' \}\s*: \{ href: '\/pos'/);
+    expect(shop).not.toMatch(/<a className="shp-hero-pill" href="\/stock\/report">/);
+  });
+});
+
+describe('Owner, 2026-11-28 — a shop’s phone Home: the week of sales under Quick links', () => {
+  const shop = readFileSync(new URL('./ShopHome.tsx', import.meta.url), 'utf8');
+  it('the restaurant’s week of bars, straight under the Quick links, phone only, for whoever sees the money', () => {
+    const at = shop.indexOf('{quickLinks}');
+    const after = shop.slice(at, at + 700);
+    expect(after).toMatch(/!isKitchen && money && trendChart\.totalMinor > 0 \? \(\s*<div className="hm-mobile shp-week">\s*<WeekBarsCard title=\{s\.salesLast7\} total=\{rupees\(trendChart\.totalMinor\)\} bars=\{phoneWeekBars\} \/>/);
+    expect(shop).toMatch(/if \(isKitchen \|\| money\) \{\s*api\s*\.byChannel\(\{ range: 'last_7_days'/);
+  });
+  it('drawn as the restaurant phone’s own white card', () => {
+    const css = readFileSync(new URL('../../styles/99-z-emerald-v2.css', import.meta.url), 'utf8');
+    expect(css).toMatch(/:is\(\.shp-mobile-stack, \.shp-week\) \.rst-week-panel \{\s*display: flex;/);
+  });
+});
+
+describe('Owner, 2026-11-28 — one rule on a shop’s Home, and today’s refunds said out loud', () => {
+  const shop = readFileSync(new URL('./ShopHome.tsx', import.meta.url), 'utf8');
+  it('the laptop card reads today from the report the chart beside it reads (never the Payments rule beside a Sales chart)', () => {
+    expect(shop).toMatch(/\.byChannel\(\{ range: 'today', location: loc \}\)\s*\.then\(\(res\) => \{\s*if \(mine === deskReqId\.current\) setDeskToday\(res\);/);
+    expect(shop).toContain("<strong className=\"rst-kpi-value\">{cardDay?.ready ? rupees(cardDay.minor) : '—'}</strong>");
+    expect(shop).toContain('if (isKitchen || !canPhoneRange) {'); // a kitchen keeps its takings
+  });
+  it('the phone’s Yesterday is the report’s own previous day, so it moves with yesterday’s bar', () => {
+    expect(shop).toContain('{s.yesterday} <strong>{rupees(Number(phoneChannel.totals.previousBilledMinor))}</strong>');
+    expect(shop).not.toContain('{s.yesterday} <strong>{rupees(data.yesterday.takingsMinor ?? 0)}</strong> · {s.orderCount(data.yesterday.orders)}');
+  });
+  it('money given back today has its own line and door on both widths, for a shop', () => {
+    expect(shop.match(/s\.refundedToday\(rupees\(data\.today\.refundedMinor \?\? 0\)\)/g)).toHaveLength(2);
+    expect(shop).toContain('className="shp-hero-refund"');
+    expect(shop).toContain('className="rst-kpi-refund"');
+    expect(homeCopy('en').shop.refundedToday('₹4,147')).toBe('Refunded today ₹4,147');
+    expect(homeCopy('hi').shop.refundedToday('₹4,147')).toMatch(/[ऀ-ॿ]/);
+  });
+  it('a shop’s shelf is running low on products, never "menu items"', () => {
+    expect(shop).toContain('isKitchen ? s.menuItemsLowSub(data.running.total) : s.productsLowSub(data.running.total)');
+    expect(homeCopy('en').shop.productsLowSub(43)).toBe('43 products are running low');
+  });
+});

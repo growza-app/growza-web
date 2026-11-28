@@ -71,6 +71,8 @@ const SCREENS: Readonly<Record<string, Who>> = {
   '/providers/[id]': 'diary',
   '/reports': 'both',
   '/reports/discounts': 'shop',
+  // Owner, 2026-11-28 — a shop's Customers (a restaurant's is its Guests tab, which the address sends it to).
+  '/reports/customers': 'shop',
   '/reports/payments': 'shop',
   '/reports/profit': 'shop',
   // Jira GRW-739 — food cost reads kitchen stock: only where it may be kept (a restaurant).

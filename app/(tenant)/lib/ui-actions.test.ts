@@ -503,6 +503,8 @@ describe('4 — a screen a limited role is not offered is closed at the page', (
     '/reports/profit': /await guardScreen\('\/reports\/profit'\);/,
     '/reports/payments': /await guardScreen\('\/reports\/payments'\);/,
     '/reports/discounts': /await guardScreen\('\/reports\/discounts'\);/,
+    // Owner, 2026-11-28 — and a shop's Customers.
+    '/reports/customers': /await guardScreen\('\/reports\/customers'\);/,
     // Jira GRW-739 — and Food cost, a restaurant's.
     // Jira GRW-741 — it moved to Inventory › Reports; the old address sends you there, and that screen guards.
     '/reports/food-cost': /redirect\(query \? `\/inventory\/reports\?\$\{query\}` : '\/inventory\/reports'\)/,

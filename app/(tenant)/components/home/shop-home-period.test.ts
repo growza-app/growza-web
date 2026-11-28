@@ -208,7 +208,9 @@ describe('the rows and the filter read at 344px, and say nothing by colour alone
     expect(shop).toContain('{orderWord(o)}');
     // The arrow comes from `deltaLabel` now (review 2026-11-05), which draws one for a rise and a fall and
     // none for no change — and no change takes no colour either, so nothing is said by colour alone.
-    expect(shop).toContain('{deltaLabel(phoneFigures.changePct)} {s.vsPrevious}');
+    expect(shop).toContain("{deltaLabel(phoneFigures.changePct)}{' '}");
+    // Retail hardening 2026-11-28 — a window still running says what it is compared with: this time yesterday.
+    expect(shop).toMatch(/phoneChannel\?\.previous\.toSameTime \? \(phonePeriod === 'today' \? s\.vsThisTimeYesterday : s\.vsSamePointBefore\) : s\.vsPrevious/);
     expect(shop).toContain('shp-delta ${deltaTone(phoneFigures.changePct)}');
   });
 

@@ -758,3 +758,8 @@
   font-weight: 600;
   color: var(--accent-deep);
 }
+
+/* Owner, 2026-11-28 — one tile (the worth) where nothing needs the owner: it takes the row. */
+.srp-totals.srp-kpi-grid.is-one {
+  grid-template-columns: minmax(0, 1fr);
+}

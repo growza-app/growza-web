@@ -519,7 +519,7 @@ describe('Jira GRW-761 — Customers', () => {
       const html = render('en', createElement(CustomersTab, { data: { ...habits, pointsWaiting: waiting } }));
       const out = text(html);
       expect(out).toContain('Points waiting to be used · 3 Guests who can spend their points today Send a points reminder');
-      expect(out).toContain('AV Asha Verma 900 points · worth ₹900 120 expire 5 Dec');
+      expect(out).toContain('AV Asha Verma 900 points · worth ₹900 120 expiring 5 Dec');
       expect(out).toContain('BK Bilal Khan 1,500 points · worth ₹1,500');
       expect(html).toContain('aria-label="Remind Asha Verma about their points on WhatsApp"');
       expect(html).toContain(
@@ -599,5 +599,57 @@ describe('the restaurant Reports tab order', () => {
   it('is Overview · Sales · Guests · Items · Inventory · Tips', async () => {
     const { RESTAURANT_TABS } = await import('./restaurant-tabs');
     expect([...RESTAURANT_TABS]).toEqual(['overview', 'sales', 'customers', 'items', 'inventory', 'tips']);
+  });
+});
+
+describe('Develop QA 2026-11-28 (run 2) — every list on Reports is a named landmark', () => {
+  const src = (f: string) => readFileSync(new URL(`./${f}`, import.meta.url), 'utf8');
+  it('the top dishes, top services and top people lists are sections named by their title, never a bare div', () => {
+    for (const f of ['RestaurantReports.tsx', 'SalonReports.tsx']) {
+      expect(src(f), f).not.toMatch(/<div className="rr-topdishes">/);
+    }
+    expect(src('RestaurantReports.tsx')).toMatch(/<section className="rr-topdishes" aria-label=\{t\('top'\)\}>/);
+    expect(src('SalonReports.tsx')).toMatch(/<section className="rr-topdishes" aria-label=\{t\('team\.top'\)\}>/);
+  });
+  it('a message sheet never cuts the product name its message will say: the meta line wraps', () => {
+    const css = readFileSync(new URL('../styles/93-what-to-do.css', import.meta.url), 'utf8');
+    expect(css).toMatch(/\.my-people \.td-person-meta \{ white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: break-word; \}/);
+  });
+});
+
+describe('Develop QA 2026-11-28 (run 2) — the Menu’s four tabs on a 344px phone', () => {
+  it('four tabs sit two by two at 420px and under, none past the edge', () => {
+    const css = readFileSync(new URL('../styles/99-menu-manager.css', import.meta.url), 'utf8');
+    const narrow = css.slice(css.indexOf('@media (max-width: 420px)'));
+    expect(narrow).toMatch(/\.prd-page > \.mnu-tabs:has\(> \.mnu-tab:nth-child\(4\)\) \{\s*display: grid;\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
+  });
+});
+
+describe('Owner, 2026-11-28 — "too much noise": a shop’s reports say each thing once', () => {
+  const read = (f: string) => readFileSync(new URL(f, import.meta.url), 'utf8');
+  it('Summary: the ideas are one closed row, and one channel at 100% is not a breakdown', () => {
+    const summary = read('./CounterReport.tsx');
+    expect(summary).toContain('<details className="cr-card cr-playbook">');
+    expect(summary).not.toContain('<section className="cr-card cr-playbook"');
+    expect(summary).toContain('{strategy.byChannel.length > 1 ? (');
+  });
+  it('Stock report: the worth, and a second tile only when something needs the owner', () => {
+    const stock = read('../stock/report/StockReportClient.tsx');
+    expect(stock).not.toContain("t('kpiUnitsLabel')");
+    expect(stock).not.toContain("t('allCosted')");
+    expect(stock).toMatch(/\{hasGaps \? \(\s*<div className="srp-kpi-card is-warn">/);
+  });
+  it('Sales by channel: opens on 7 days, starts at the first week that sold, whole rupees an order', () => {
+    const ch = read('../stock/channels/ChannelsClient.tsx');
+    expect(ch).toContain("useState<SellersRange>('last_7_days')");
+    expect(ch).toContain('const first = allTotals.findIndex((v) => v !== 0);');
+    expect(ch).toContain('Math.round(Number(row.averageMinor) / 100) * 100');
+  });
+  it('Reorder list: a number from the last 30 days says so, in both languages', () => {
+    const order = read('../stock/order/OrderClient.tsx');
+    expect(order).toContain("r.basis === 'recent'");
+    expect(order).toContain("t('fromRecent')");
+    expect(en.products.reorder.recentBasis).toBe('Sold {sold} in the last 30 days · {stock} on the shelf');
+    expect(hi.products.reorder.recentBasis).toMatch(/[ऀ-ॿ]/);
   });
 });

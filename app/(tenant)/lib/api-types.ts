@@ -382,6 +382,8 @@ export interface ProductImportItem {
   existingId?: string;
   /** An update only: units that arrived. Added to the count and written to its history as received. */
   addStock?: number;
+  /** Retail hardening 2026-11-28 — an update only: the size the units arrived in, for a product with sizes. */
+  size?: string;
   name?: string;
   priceMinor?: number;
   stock?: number;
@@ -1463,8 +1465,10 @@ export interface BookingCorrection {
  */
 export interface ShopHome {
   timezone: string;
-  today: { orders: number; takingsMinor?: number; byPaymentMode?: PaymentModeSlice[]; fromAppsMinor?: number; cashDrawer?: { takenMinor: number; refundedMinor: number; inDrawerMinor: number } };
+  today: { orders: number; takingsMinor?: number; byPaymentMode?: PaymentModeSlice[]; fromAppsMinor?: number; cashDrawer?: { takenMinor: number; refundedMinor: number; inDrawerMinor: number }; refundedMinor?: number; refunds?: number };
   yesterday: { orders: number; takingsMinor?: number };
+  /** Retail hardening 2026-11-28 — yesterday up to this time of day, what "vs. yesterday" compares with. Absent on an older API. */
+  yesterdaySoFar?: { orders: number; takingsMinor?: number };
   /** Has the shop ever sold anything. False: Home invites the first order. */
   anyOrders: boolean;
   /** Jira GRW-614 — orders still to send (new or packed). Home's count of what is waiting, linking into the filtered list. */
@@ -2011,6 +2015,9 @@ export interface ReorderRow {
   branchName: string;
   stock: number;
   soldLastYear: number | null;
+  /** Owner, 2026-11-28 — sold in the last 30 days, and which the suggestion came from. Absent from an older API. */
+  soldRecent?: number;
+  basis?: 'last_year' | 'recent' | 'none';
   suggested: number | null;
   override: number | null;
   order: number | null;
@@ -2023,7 +2030,7 @@ export interface ReorderRow {
 }
 export interface ReorderPage {
   rows: ReorderRow[];
-  totals: { sizes: number; toOrder: number; withoutBasis: number; edited: number };
+  totals: { sizes: number; toOrder: number; withoutBasis: number; edited: number; fromRecent?: number };
   page: number;
   pageSize: number;
 }
@@ -2086,9 +2093,10 @@ export type DeliveryTallyRange = 'today' | 'this_week' | 'last_week' | 'this_mon
 
 export interface ByChannelPage {
   window: { key: string; label: string; startISO: string; endExclusiveISO: string };
-  previous: { startISO: string; endExclusiveISO: string; hasData: boolean };
+  /** `toSameTime` (retail hardening 2026-11-28) — the window is still running, so `changePct` is against the period before up to the same point. */
+  previous: { startISO: string; endExclusiveISO: string; hasData: boolean; toSameTime?: boolean };
   channels: ChannelRow[];
-  totals: { billedMinor: string; orders: number; returnedOrders: number; previousBilledMinor: string | null; changePct: number | null };
+  totals: { billedMinor: string; orders: number; returnedOrders: number; previousBilledMinor: string | null; previousSoFarMinor?: string | null; changePct: number | null };
   byPaymentMode?: PaymentModeSlice[];
   trend: Array<{ label: string; startISO: string; endExclusiveISO: string; billedMinor: Record<string, string> }>;
   anyOrders: boolean;
@@ -2219,6 +2227,13 @@ export interface ReturnsReportPage {
   undelivered: { returns: number; units: number };
   /** Owner, 2026-11-14 — who gave money back in the window, the most money first. Absent from an older API. */
   byPerson?: Array<{ name: string | null; role: string | null; returns: number; refundMinor: string }>;
+  /** Owner, 2026-11-28 — the money given back, how, and the returns themselves (newest first). Absent from an older API. */
+  refundMinor?: string;
+  byMode?: Array<{ mode: string; returns: number; refundMinor: string }>;
+  recent?: Array<{
+    id: string; returnedAt: string; saleId: string | null; code: string | null; soldAt: string | null; customerName: string | null;
+    kind: string; refundMinor: string; refundMode: string | null; by: string | null; items: Array<{ name: string; qty: number; refundMinor: string }>;
+  }>;
   anyReturns: boolean;
 }
 
