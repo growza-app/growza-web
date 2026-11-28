@@ -7371,5 +7371,132 @@
       "lastWeek": "पिछले हफ़्ते",
       "thisMonth": "इस महीने"
     }
+  },
+  "shopReports": {
+    "tabsLabel": "रिपोर्ट",
+    "tabs": {
+      "overview": "झलक",
+      "sales": "बिक्री",
+      "customers": "ग्राहक",
+      "products": "सामान",
+      "stock": "स्टॉक",
+      "returns": "वापसी"
+    },
+    "rangeLabel": "तारीख",
+    "from": "से",
+    "to": "तक",
+    "empty": "इन दिनों में अभी कोई बिक्री नहीं।",
+    "error": "यह खुला नहीं। फिर कोशिश करें।",
+    "retry": "फिर कोशिश करें",
+    "loading": "खुल रहा है…",
+    "seeAll": "सब देखें",
+    "freshness": "{when} को अपडेट · आज का अभी का",
+    "delta": {
+      "up": "↑ {pct}% पिछले दिनों से",
+      "down": "↓ {pct}% पिछले दिनों से",
+      "same": "पिछले दिनों जितना"
+    },
+    "overview": {
+      "sales": "बिक्री",
+      "bills": "ऑर्डर",
+      "average": "औसत ऑर्डर",
+      "profit": "मुनाफ़ा",
+      "byDay": "दिन के हिसाब से बिक्री",
+      "thrown": "इसमें {amount} का फेंका गया खाना शामिल",
+      "today": "आज",
+      "weekdays": "सोम–शुक्र",
+      "weekend": "शनि–रवि",
+      "noCostYet": "अभी किसी सामान की लागत नहीं",
+      "missingDishes": "{n} सामान की लागत नहीं डली",
+      "profitOn": "{all} की बिक्री में से {part} पर",
+      "sources": "बिक्री कहाँ से आई",
+      "worth": "एक नज़र डालें",
+      "topDish": "{name} सबसे ज़्यादा बिका",
+      "topDishSub": "{n} बिके · {amount}",
+      "busiest": "सबसे व्यस्त समय {from}–{to}",
+      "busiestSub": "{n} ऑर्डर · सब ऑर्डर का {pct}%",
+      "tips": "इस हफ़्ते {n} सुझाव",
+      "tipsSub": "क्या बदला, और क्या करें"
+    },
+    "sales": {
+      "moneyIn": "आया पैसा",
+      "discounts": "छूट",
+      "refunds": "पैसे वापस",
+      "appCut": "डिलीवरी ऐप का हिस्सा",
+      "busy": "भीड़ का समय",
+      "busySub": "हर घंटा, इन तारीख़ों का जोड़",
+      "byPayment": "कैसे पैसे दिए",
+      "byType": "कैसे खाया",
+      "bills": "{n, plural, one {# ऑर्डर} other {# ऑर्डर}}",
+      "perHead": "हर व्यक्ति का खर्च",
+      "perHeadSub": "बैठकर खाना · {tables} टेबल पर {guests} लोग"
+    },
+    "mode": {
+      "cash": "नकद",
+      "upi": "UPI",
+      "card": "कार्ड",
+      "other": "दूसरा",
+      "not_recorded": "लिखा नहीं"
+    },
+    "type": {
+      "dine_in": "यहीं बैठकर",
+      "takeaway": "पैक करके",
+      "delivery": "डिलीवरी",
+      "counter": "काउंटर"
+    },
+    "source": {
+      "swiggy": "Swiggy",
+      "zomato": "Zomato",
+      "other": "बाकी"
+    },
+    "items": {
+      "dishesSold": "बिका सामान",
+      "cancelled": "रद्द सामान",
+      "cancelledValue": "{n} · {amount}",
+      "cooked": "बनने के बाद",
+      "wholeOrder": "पूरा ऑर्डर रद्द",
+      "top": "सबसे ज़्यादा बिका",
+      "plates": "{n} बिके",
+      "profit": "मुनाफ़ा {amount}",
+      "moreSold": "और {n} सामान बिके",
+      "notSelling": "नहीं बिक रही",
+      "moreNotSelling": "और {n}",
+      "thrown": "{n} बनने के बाद",
+      "thrownCost": "{n} बनने के बाद · {amount} का खाना",
+      "noCost": "लागत नहीं",
+      "perPlate": "हर सामान पर सबसे ज़्यादा मुनाफ़ा",
+      "perPlateSub": "कीमत में से लागत घटाकर",
+      "movers": "ज़्यादा या कम बिकीं",
+      "moversSub": "पिछले दिनों के मुकाबले बिके",
+      "moversNote": "{now} बिके, पहले {before}",
+      "notSellingSub": "शेल्फ़ पर, इन तारीख़ों में एक भी नहीं बिका",
+      "rankBy": "सबसे ज़्यादा बिका किस हिसाब से",
+      "bySales": "बिक्री से",
+      "byPlates": "गिनती से",
+      "seeAll": "सबसे ज़्यादा बिका और न बिका स्टॉक"
+    },
+    "stock": {
+      "worth": "लागत पर स्टॉक",
+      "onShelf": "शेल्फ़ पर",
+      "sizes": "{n} साइज़",
+      "out": "स्टॉक ख़त्म",
+      "toOrder": "मंगाना है",
+      "toOrderSub": "{n} लाइन",
+      "runningOut": "पहले ये मंगाएँ",
+      "noCost": "{n} सामान की लागत नहीं डली, इसलिए कीमत कम दिखती है",
+      "openReport": "स्टॉक रिपोर्ट",
+      "openOrder": "मंगाने की लिस्ट",
+      "order": "{n} मंगाएँ",
+      "nothingToOrder": "अभी कुछ नहीं मंगाना।",
+      "empty": "अभी शेल्फ़ पर स्टॉक नहीं।"
+    },
+    "returns": {
+      "givenBack": "वापस दिया पैसा",
+      "line": "{returns} वापसी · {items} सामान",
+      "none": "इन तारीख़ों में कुछ वापस नहीं आया।",
+      "recent": "क्या वापस आया",
+      "seeAll": "सारी वापसी",
+      "online": "ऑनलाइन रिफ़ंड"
+    }
   }
 }

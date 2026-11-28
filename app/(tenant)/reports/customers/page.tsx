@@ -15,7 +15,7 @@ export const metadata = screenTitle('Customers');
  */
 export default async function Page() {
   await guardScreen('/reports/customers');
-  await sendRestaurantToTab('customers');
+  await sendRestaurantToTab('customers', 'customers');
   const t = await getTranslations('reports');
   return (
     <>

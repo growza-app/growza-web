@@ -12,7 +12,7 @@ export const metadata = screenTitle('Profit');
 /** Owner, 2026-11-14 — a counter business's Profit, beside the counter report on its tab bar (`reports/money/ProfitReport.tsx`). */
 export default async function Page() {
   await guardScreen('/reports/profit');
-  await sendRestaurantToTab('items');
+  await sendRestaurantToTab('items', 'overview');
   const t = await getTranslations('moneyReports.tabs');
   return (
     <>

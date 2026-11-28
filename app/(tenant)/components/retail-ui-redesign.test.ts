@@ -69,10 +69,10 @@ describe('Retail Enterprise UI Redesign across all 6 surfaces', () => {
     const navFile = read('app/(tenant)/components/RetailReportsNav.tsx');
     const reportCss = read('app/(tenant)/styles/99-stock-report.css');
 
-    expect(reportsPage).toContain('RetailReportsNav');
-    // Jira GRW-591 — the hub of six link-cards WAS this page; the counter report is, and the six are the
-    // bar beneath it. Nothing is unreachable: every card the hub held is a tab in RetailReportsNav.
-    expect(reportsPage).toContain('<CounterReport />');
+    // Owner, 2026-11-28 — a shop's /reports is six tabs, the restaurant's way (ShopReports); the full screens behind
+    // them keep RetailReportsNav, which draws the same six tabs for a shop.
+    expect(reportsPage).toContain('<ShopReports');
+    expect(navFile).toContain('SHOP_TABS.filter');
     expect(reportsPage).not.toContain('RetailReportsHub');
     expect(navFile).toContain('export function RetailReportsNav');
     expect(navFile).not.toContain('RetailReportsHub');

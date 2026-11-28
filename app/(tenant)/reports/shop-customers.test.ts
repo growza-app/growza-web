@@ -368,7 +368,7 @@ describe('where it sits and who opens it', () => {
     expect(areaAllows(href, SHOP)).toBe(true);
     expect(areaAllows(href, KITCHEN)).toBe(true);
     expect(areaAllows(href, DIARY_AREAS)).toBe(false);
-    expect(src('./customers/page.tsx')).toContain("await sendRestaurantToTab('customers');");
+    expect(src('./customers/page.tsx')).toContain("await sendRestaurantToTab('customers', 'customers');");
     expect(RESTAURANT_TABS).toContain('customers');
   });
 
