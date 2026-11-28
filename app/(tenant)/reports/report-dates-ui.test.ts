@@ -11,7 +11,8 @@ describe('The counter report is asked for by date (the diary report it shared th
     ['counter', counter, 'counterReport'],
   ])('%s sends a custom range built from the two fields', (_name, src, call) => {
     expect(src).toContain(`api.${call}({ range: 'custom', from: dates.fromISO, to: dates.toISO`);
-    expect(src).toContain('<ReportDates');
+    // Reports UX check 2026-11-28 (#2) — one period menu on every report; "Custom dates" opens the two fields.
+    expect(src).toContain('<ReportPeriod');
     // The list of five periods, and the select that held them, are gone.
     expect(src).not.toContain('cr-select');
     expect(src).not.toContain('const RANGES');

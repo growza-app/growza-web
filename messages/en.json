@@ -6676,7 +6676,7 @@
         "not_recorded": "Not recorded"
       },
       "modeLine": "{received} in · {refunded} back",
-      "counterOnly": "Counter bills only. Swiggy, Zomato and online orders are paid to you separately — see Sales by channel.",
+      "counterOnly": "Counter bills only. Orders from delivery apps and online stores are paid to you separately — see Sales by channel.",
       "none": "No money came in at the counter in this period.",
       "byDayTitle": "By day",
       "dayRefund": "{value} refunded",
@@ -7359,5 +7359,17 @@
     "loading": "Loading…",
     "save": "Add coupon",
     "saveBogo": "Add offer"
+  },
+  "reportPeriod": {
+    "label": "Period",
+    "custom": "Custom dates",
+    "from": "From",
+    "to": "To",
+    "presets": {
+      "last7": "Last 7 days",
+      "thisWeek": "This week",
+      "lastWeek": "Last week",
+      "thisMonth": "This month"
+    }
   }
 }

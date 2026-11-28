@@ -37,6 +37,8 @@ export function ChannelsClient() {
   const [failed, setFailed] = useState(false);
   const seq = useRef(0);
   const money = (minor: string | number | null) => formatMoney(minor, 'INR', locale);
+  // The one channel a shop has, when it has only one (#4): its card would repeat the total.
+  const only = data && data.channels.length === 1 ? data.channels[0]! : null;
 
   const load = useCallback(async () => {
     if (!ready) return;
@@ -96,15 +98,27 @@ export function ChannelsClient() {
           <section className="srp-totals" aria-label={t('totalsLabel')}>
             <p className="srp-worth-label">{t('billed')}</p>
             <p className="srp-worth">{money(data.totals.billedMinor)}</p>
-            <p className="srp-hint">{t('ordersLine', { orders: data.totals.orders })}</p>
+            <p className="srp-hint">
+              {t('ordersLine', { orders: data.totals.orders })}
+              {only && only.averageMinor !== null ? ` · ${t('average', { amount: money(Math.round(Number(only.averageMinor) / 100) * 100) })}` : ''}
+            </p>
+            {only && only.returnedOrders > 0 ? <p className="srp-warn">{t('cameBack', { count: only.returnedOrders })}</p> : null}
+            {only && only.cancelledOrders > 0 ? <p className="srp-hint">{t('cancelled', { count: only.cancelledOrders })}</p> : null}
             <Compare previous={data.totals.previousBilledMinor !== null} pct={data.totals.changePct} soFar={Boolean(data.previous.toSameTime)} />
           </section>
 
-          <ul className="srp-list">
-            {data.channels.map((c) => (
-              <Card key={c.channel} row={c} name={word(c.channel)} money={money} hasPrevious={data.previous.hasData} soFar={Boolean(data.previous.toSameTime)} />
-            ))}
-          </ul>
+          {/*
+            Reports UX check 2026-11-28 (#4) — a shop that sells only at the counter saw its one channel's card repeat the
+            total above it (the same ₹, orders and "down 19.8%"). With one channel the total says it all, with the card's
+            other lines (average, came back, cancelled) moved up into it.
+          */}
+          {only ? null : (
+            <ul className="srp-list">
+              {data.channels.map((c) => (
+                <Card key={c.channel} row={c} name={word(c.channel)} money={money} hasPrevious={data.previous.hasData} soFar={Boolean(data.previous.toSameTime)} />
+              ))}
+            </ul>
+          )}
 
           <Trend data={data} word={word} money={money} />
 

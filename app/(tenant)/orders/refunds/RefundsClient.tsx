@@ -28,7 +28,7 @@ export function RefundsClient() {
   const branchContext = useBranch();
   const branch = branchContext.ready && branchContext.multi ? (branchContext.choice ?? '') : '';
   const ready = branchContext.ready || branches.length <= 1;
-  const [range, setRange] = useState<SellersRange>('last_3_months');
+  const [range, setRange] = useState<SellersRange>('last_7_days');
   const [channel, setChannel] = useState('');
   const [page, setPage] = useState(1);
   // The branch, range and channel the page number was chosen under: a change starts it over in the SAME render, so there is one read.
@@ -176,9 +176,12 @@ export function RefundsClient() {
           </div>
         </>
       )}
-      <p className="ch-caveat" role="note">
-        {t('recordNote')}
-      </p>
+      {/* Reports UX check 2026-11-28 (#10) — with nothing listed, the note about what the list is was a third block of words. */}
+      {data && data.totals.count > 0 ? (
+        <p className="ch-caveat" role="note">
+          {t('recordNote')}
+        </p>
+      ) : null}
       <div className="srp-links">
         <AppLink className="btn btn-ghost srp-export" href="/orders/returns">
           {t('toReturns')}

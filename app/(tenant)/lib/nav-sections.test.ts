@@ -49,6 +49,14 @@ describe('the grouped sidebar (owner, 2026-10-15)', () => {
     expect(isActive('/orders/returns', '/orders')).toBe(false);
     expect(isActive('/orders/refunds', '/orders/refunds')).toBe(true);
     expect(isActive('/orders/held', '/orders')).toBe(true);
+    // Reports UX check 2026-11-28 (#7) — the stock reports light Reports too, never Stock.
+    for (const p of ['/stock/channels', '/stock/sellers', '/stock/report', '/stock/order']) {
+      expect(isActive(p, '/reports'), p).toBe(true);
+      expect(isActive(p, '/stock'), p).toBe(false);
+      expect(isActive(p, p), p).toBe(true);
+    }
+    expect(isActive('/stock', '/stock')).toBe(true);
+    expect(isActive('/stock/abc/sizes', '/stock')).toBe(true);
   });
 
   it('whatever the real policy says, every row opens a screen its role may see', () => {

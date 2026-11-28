@@ -29,17 +29,20 @@ export function DiscountReport() {
           <MoneyEmpty text={r.totals.allBills === 0 ? t('nothing') : d('none')} />
         ) : (
           <>
-            <section className="srp-totals srp-kpi-grid" aria-label={d('title')}>
+            {/* Reports UX check 2026-11-28 (#10) — "Free bills 0" filled half a row to say nothing: drawn only when there was one. */}
+            <section className={`srp-totals srp-kpi-grid${r.totals.freeBills > 0 ? '' : ' is-one'}`} aria-label={d('title')}>
               <div className="srp-kpi-card is-warn">
                 <p className="srp-worth-label">{d('belowLabel')}</p>
                 <p className="srp-worth">{f.money(r.totals.belowMinor)}</p>
                 <p className="srp-hint">{d('billsLine', { bills: f.count(r.totals.bills), all: f.count(r.totals.allBills) })}</p>
               </div>
-              <div className="srp-kpi-card">
-                <p className="srp-worth-label">{d('freeBillsLabel')}</p>
-                <p className="srp-kpi-num">{f.count(r.totals.freeBills)}</p>
-                <p className="srp-hint">{d('freeBillsLine')}</p>
-              </div>
+              {r.totals.freeBills > 0 ? (
+                <div className="srp-kpi-card">
+                  <p className="srp-worth-label">{d('freeBillsLabel')}</p>
+                  <p className="srp-kpi-num">{f.count(r.totals.freeBills)}</p>
+                  <p className="srp-hint">{d('freeBillsLine')}</p>
+                </div>
+              ) : null}
             </section>
 
             <h2 className="mr-title">{d('byDayTitle')}</h2>

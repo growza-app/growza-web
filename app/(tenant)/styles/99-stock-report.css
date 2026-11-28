@@ -883,3 +883,36 @@
     clip: auto;
   }
 }
+
+/*
+ * Reports UX check 2026-11-28 (#1) — a two-up tile on a 344px phone cut "₹1,60,101" (135px of number in 118px). The
+ * figure is sized to its tile: as large as before where there is room, smaller where a tile is narrow, never cut.
+ */
+.srp-kpi-card {
+  container-type: inline-size;
+}
+.srp-kpi-num {
+  font-size: clamp(1.125rem, 17cqi, 1.75rem);
+  white-space: nowrap;
+}
+
+/* Reports UX check 2026-11-28 (#2) — the one period menu, and its two dates under it when "Custom dates" is chosen. */
+.rp-period {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.rp-period .rp-select {
+  min-height: 2.75rem;
+}
+@media (min-width: 861px) {
+  .rp-period {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .rp-period .rp-select {
+    width: auto;
+    min-width: 12rem;
+  }
+}
