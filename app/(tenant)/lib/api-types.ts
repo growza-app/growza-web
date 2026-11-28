@@ -1463,7 +1463,7 @@ export interface BookingCorrection {
  */
 export interface ShopHome {
   timezone: string;
-  today: { orders: number; takingsMinor?: number; byPaymentMode?: PaymentModeSlice[]; fromAppsMinor?: number; cashDrawer?: { takenMinor: number; refundedMinor: number; inDrawerMinor: number } };
+  today: { orders: number; takingsMinor?: number; byPaymentMode?: PaymentModeSlice[]; fromAppsMinor?: number; cashDrawer?: { takenMinor: number; refundedMinor: number; inDrawerMinor: number }; refundedMinor?: number; refunds?: number };
   yesterday: { orders: number; takingsMinor?: number };
   /** Has the shop ever sold anything. False: Home invites the first order. */
   anyOrders: boolean;
@@ -2219,6 +2219,13 @@ export interface ReturnsReportPage {
   undelivered: { returns: number; units: number };
   /** Owner, 2026-11-14 — who gave money back in the window, the most money first. Absent from an older API. */
   byPerson?: Array<{ name: string | null; role: string | null; returns: number; refundMinor: string }>;
+  /** Owner, 2026-11-28 — the money given back, how, and the returns themselves (newest first). Absent from an older API. */
+  refundMinor?: string;
+  byMode?: Array<{ mode: string; returns: number; refundMinor: string }>;
+  recent?: Array<{
+    id: string; returnedAt: string; saleId: string | null; code: string | null; soldAt: string | null; customerName: string | null;
+    kind: string; refundMinor: string; refundMode: string | null; by: string | null; items: Array<{ name: string; qty: number; refundMinor: string }>;
+  }>;
   anyReturns: boolean;
 }
 

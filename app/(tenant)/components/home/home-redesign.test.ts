@@ -168,3 +168,27 @@ describe('Owner, 2026-11-28 — a shop’s phone Home: the week of sales under Q
     expect(css).toMatch(/:is\(\.shp-mobile-stack, \.shp-week\) \.rst-week-panel \{\s*display: flex;/);
   });
 });
+
+describe('Owner, 2026-11-28 — one rule on a shop’s Home, and today’s refunds said out loud', () => {
+  const shop = readFileSync(new URL('./ShopHome.tsx', import.meta.url), 'utf8');
+  it('the laptop card reads today from the report the chart beside it reads (never the Payments rule beside a Sales chart)', () => {
+    expect(shop).toMatch(/\.byChannel\(\{ range: 'today', location: loc \}\)\s*\.then\(\(res\) => \{\s*if \(mine === deskReqId\.current\) setDeskToday\(res\);/);
+    expect(shop).toContain("<strong className=\"rst-kpi-value\">{cardDay?.ready ? rupees(cardDay.minor) : '—'}</strong>");
+    expect(shop).toContain('if (isKitchen || !canPhoneRange) {'); // a kitchen keeps its takings
+  });
+  it('the phone’s Yesterday is the report’s own previous day, so it moves with yesterday’s bar', () => {
+    expect(shop).toContain('{s.yesterday} <strong>{rupees(Number(phoneChannel.totals.previousBilledMinor))}</strong>');
+    expect(shop).not.toContain('{s.yesterday} <strong>{rupees(data.yesterday.takingsMinor ?? 0)}</strong> · {s.orderCount(data.yesterday.orders)}');
+  });
+  it('money given back today has its own line and door on both widths, for a shop', () => {
+    expect(shop.match(/s\.refundedToday\(rupees\(data\.today\.refundedMinor \?\? 0\)\)/g)).toHaveLength(2);
+    expect(shop).toContain('className="shp-hero-refund"');
+    expect(shop).toContain('className="rst-kpi-refund"');
+    expect(homeCopy('en').shop.refundedToday('₹4,147')).toBe('Refunded today ₹4,147');
+    expect(homeCopy('hi').shop.refundedToday('₹4,147')).toMatch(/[ऀ-ॿ]/);
+  });
+  it('a shop’s shelf is running low on products, never "menu items"', () => {
+    expect(shop).toContain('isKitchen ? s.menuItemsLowSub(data.running.total) : s.productsLowSub(data.running.total)');
+    expect(homeCopy('en').shop.productsLowSub(43)).toBe('43 products are running low');
+  });
+});

@@ -622,6 +622,10 @@ export function homeCopy(lang: Lang, labels: Labels = {}) {
       /** The hero's top-seller pill once the window has one; it falls back to `whatSellsLink` before then. */
       topSellerPill: (name: string) => S(`Top: ${name}`, `सबसे ज़्यादा: ${name}`),
       noSalesYet: S('No sales in this period yet.', 'इस अवधि में अभी कोई बिक्री नहीं।'),
+      /** Owner, 2026-11-28 — money given back today at the counter, whichever day the bill was from. */
+      refundedToday: (amount: string) => S(`Refunded today ${amount}`, `आज वापस दिया ${amount}`),
+      /** A shop's shelf holds products, not "menu items" (the kitchen's word). */
+      productsLowSub: (n: number) => (n === 1 ? S('1 product is running low', '1 सामान कम हो रहा है') : S(`${n} products are running low`, `${n} सामान कम हो रहे हैं`)),
       loadingFigures: S('Loading…', 'लोड हो रहा है…'),
       vsYesterday: S('vs. yesterday', 'कल की तुलना में'),
       whatWouldYouLikeToDo: S('What would you like to do?', 'आप क्या करना चाहेंगे?'),

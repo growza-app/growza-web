@@ -3,7 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef } from 'react';
 import AppLink from '../../shared/AppLink';
-import { useMayOpen } from './SessionProvider';
+import { useAreas, useMayOpen } from './SessionProvider';
+import { sellsOnMarketplaces } from '../lib/order-channels';
 
 export type RetailReportTab = 'hub' | 'profit' | 'payments' | 'discounts' | 'customers' | 'foodCost' | 'channels' | 'sellers' | 'report' | 'order' | 'returns' | 'refunds';
 
@@ -33,6 +34,7 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
   // Jira GRW-754 — and a tab the person may not open is not a tab either: the same rule the screen's own guard asks
   // (role, the role's grid, the business's areas), so no chip sends anyone back Home.
   const mayOpen = useMayOpen();
+  const ships = sellsOnMarketplaces(useAreas());
   const allTabs: Array<{ key: RetailReportTab; href: string; label: string }> = [
     { key: 'hub', href: '/reports', label: tReports('summaryTab') },
     // Owner, 2026-11-14 — the money questions, right after the summary: what it made, how it came in, what went out below price.
@@ -51,7 +53,9 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
     { key: 'returns', href: '/orders/returns', label: tReturns('title') },
     { key: 'refunds', href: '/orders/refunds', label: tRefunds('title') },
   ];
-  const tabs = allTabs.filter((tab) => mayOpen(tab.href));
+  // Owner, 2026-11-28 — "Online refunds" is the marketplaces' record: a shop that sells only at its counter has no such
+  // tab (its refunds are on Returns), so the bar is one chip shorter for it.
+  const tabs = allTabs.filter((tab) => mayOpen(tab.href) && (tab.key !== 'refunds' || ships));
 
   /*
    * Owner's review 2026-11-13 — on a phone the bar scrolls sideways, so the current tab is brought to the middle

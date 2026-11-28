@@ -6158,14 +6158,14 @@
       "loadError": "Could not load. Check your connection and try again.",
       "retry": "Try again",
       "nothing": "Nothing has come back",
-      "nothingHint": "Returns show here, grouped by the reason, once there are some.",
+      "nothingHint": "Returns show here once there are some: what came back and what was given back.",
       "customerTitle": "Sent back by customers",
       "returnsCount": "{count, plural, one {1 return} other {# returns}}",
       "unitsCount": "{count, plural, one {1 item} other {# items}}",
       "undeliveredTitle": "Came back undelivered",
       "undeliveredNone": "No parcels came back undelivered.",
       "undeliveredNote": "These never reached the customer. They are counted apart, not as returns.",
-      "toRefunds": "Refunds",
+      "toRefunds": "Online refunds",
       "byTitle": "Given back by",
       "byNone": "Not recorded",
       "byRole": {
@@ -6173,7 +6173,15 @@
         "manager": "Manager",
         "receptionist": "Front desk",
         "staff": "Team member"
-      }
+      },
+      "givenBack": "Money given back",
+      "listTitle": "What came back",
+      "whyTitle": "Why",
+      "fromBill": "Bill #{code} · sold {date}",
+      "byShort": "by {name}",
+      "modeOther": "Other",
+      "noItems": "Return",
+      "undeliveredShort": "came back undelivered"
     },
     "returnsLink": "Returns",
     "bringIn": {
@@ -6190,7 +6198,7 @@
       "unacknowledged": "{count, plural, one {1 order not yet confirmed to {channel}} other {# orders not yet confirmed to {channel}}}"
     },
     "refunds": {
-      "title": "Refunds",
+      "title": "Online refunds",
       "rangeLabel": "Period",
       "range": {
         "last_7_days": "Last 7 days",
@@ -6208,8 +6216,8 @@
       "loading": "Loading",
       "loadError": "Could not load. Check your connection and try again.",
       "retry": "Try again",
-      "nothing": "No refunds in this period",
-      "nothingHint": "A refund shows here once it has been recorded against an order.",
+      "nothing": "No online refunds in this period",
+      "nothingHint": "Refunds made on an online order (Flipkart, Amazon, a delivery app) show here. Money you gave back at the counter is under Returns.",
       "totalsLabel": "Totals for this period",
       "total": "Refunded in this period",
       "countLine": "{count, plural, one {1 refund} other {# refunds}}",
