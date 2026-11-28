@@ -86,7 +86,7 @@ describe('each screen draws the business’s own channels', () => {
     const nav = src('components/RetailReportsNav.tsx');
     // Jira GRW-754 — `useMayOpen` asks `canSee`, which asks `areaAllows` first: the business's areas, then the role.
     // Owner, 2026-11-28 — and Online refunds only where the shop sells online.
-    expect(nav).toContain("const tabs = allTabs.filter((tab) => mayOpen(tab.href) && (tab.key !== 'refunds' || ships));");
+    expect(nav).toContain(": allTabs.filter((tab) => mayOpen(tab.href) && (tab.key !== 'refunds' || ships));");
     expect(nav).not.toContain('RetailReportsHub');
     expect(src('reports/page.tsx')).toContain('mayOpenShopReports && counted ?');
   });

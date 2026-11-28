@@ -46,9 +46,15 @@ const under = (pathname: string, route: string): boolean => pathname === route |
  * Returns and Refunds live under /orders but are reports: they draw the Reports tabs (RetailReportsNav). Lit as
  * Orders, the sidebar and the page disagreed about where you were (owner, 14 Nov 2026: "fix all").
  */
-const REPORT_PAGES = ['/orders/returns', '/orders/refunds'];
+/*
+ * Reports UX check 2026-11-28 (#7) — every screen on the Reports tab bar is a report, wherever its URL lives: the stock
+ * reports under /stock lit Stock, the money reports lit Reports, Returns lit Reports in the sidebar and Orders in the
+ * phone's bar. Now each lights Reports (and its own item), never the section its URL happens to sit under.
+ */
+export const REPORT_PAGES: readonly string[] = ['/orders/returns', '/orders/refunds', '/stock/channels', '/stock/sellers', '/stock/report', '/stock/order'];
+export const isReportPage = (pathname: string): boolean => REPORT_PAGES.some((p) => under(pathname, p));
 export const isActive = (pathname: string, route: string): boolean => {
   if (route === '/') return pathname === '/';
-  if (REPORT_PAGES.some((p) => under(pathname, p))) return route === '/reports' || (route !== '/orders' && under(pathname, route));
+  if (isReportPage(pathname)) return route === '/reports' || (REPORT_PAGES.includes(route) && under(pathname, route));
   return under(pathname, route);
 };

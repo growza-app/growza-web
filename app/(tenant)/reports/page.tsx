@@ -15,12 +15,12 @@ import {
 import { copy } from '../lib/copy';
 import { LoadErrorBanner } from '../components/LoadErrorBanner';
 import { PageHeader } from '../components/PageHeader';
-import { RetailReportsNav } from '../components/RetailReportsNav';
 import { areasOf } from '../lib/areas';
 import { gridCanSee } from '../lib/nav-policy';
 import { loadErrorKind, type LoadErrorKind } from '../lib/load-error';
 import { ReportsClient, type TabPayload } from './ReportsClient';
-import { CounterReport } from './CounterReport';
+import { ShopReports } from './ShopReports';
+import { SHOP_TABS, type ShopTab } from './shop-tabs';
 import { RestaurantReports } from './RestaurantReports';
 import { RESTAURANT_TABS, type RestaurantTab } from './restaurant-tabs';
 import { SalonReports } from './SalonReports';
@@ -201,13 +201,8 @@ export default async function ReportsPage({
               initialTab={RESTAURANT_TABS.includes(params.view as RestaurantTab) ? (params.view as RestaurantTab) : 'overview'}
             />
           ) : mayOpenShopReports ? (
-            <>
-              {/* The way to the other six sits where an owner's eye goes for it, above the report
-                  rather than below a screenful of cards. */}
-              <h2 className="cr-more">{t('counterMore')}</h2>
-              <RetailReportsNav active="hub" />
-              <CounterReport />
-            </>
+            /* Owner, 2026-11-28 — a shop reads its Reports as the restaurant does: six tabs, each one card and one chart. */
+            <ShopReports initialTab={SHOP_TABS.includes(params.view as ShopTab) ? (params.view as ShopTab) : 'overview'} from={from} to={to} />
           ) : (
             <div className="card">
               <div className="empty">

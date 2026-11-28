@@ -5075,7 +5075,7 @@
     "stockReport": {
       "title": "Stock report",
       "open": "Stock report",
-      "searchPlaceholder": "Search by name",
+      "searchPlaceholder": "Search",
       "searchLabel": "Search the styles by name",
       "categoryLabel": "Category",
       "allCategories": "All categories",
@@ -6676,7 +6676,7 @@
         "not_recorded": "Not recorded"
       },
       "modeLine": "{received} in · {refunded} back",
-      "counterOnly": "Counter bills only. Swiggy, Zomato and online orders are paid to you separately — see Sales by channel.",
+      "counterOnly": "Counter bills only. Orders from delivery apps and online stores are paid to you separately — see Sales by channel.",
       "none": "No money came in at the counter in this period.",
       "byDayTitle": "By day",
       "dayRefund": "{value} refunded",
@@ -7359,5 +7359,147 @@
     "loading": "Loading…",
     "save": "Add coupon",
     "saveBogo": "Add offer"
+  },
+  "reportPeriod": {
+    "label": "Period",
+    "custom": "Custom dates",
+    "from": "From",
+    "to": "To",
+    "presets": {
+      "last7": "Last 7 days",
+      "thisWeek": "This week",
+      "lastWeek": "Last week",
+      "thisMonth": "This month"
+    }
+  },
+  "shopReports": {
+    "tabsLabel": "Reports",
+    "tabs": {
+      "overview": "Overview",
+      "sales": "Sales",
+      "customers": "Customers",
+      "products": "Products",
+      "stock": "Stock",
+      "returns": "Returns",
+      "reorder": "Reorder list"
+    },
+    "rangeLabel": "Dates",
+    "from": "From",
+    "to": "To",
+    "empty": "No sales on these days yet.",
+    "error": "This did not load. Try again.",
+    "retry": "Try again",
+    "loading": "Loading…",
+    "seeAll": "See all",
+    "freshness": "Updated {when} · today is live",
+    "delta": {
+      "up": "↑ {pct}% vs the days before",
+      "down": "↓ {pct}% vs the days before",
+      "same": "Same as the days before"
+    },
+    "overview": {
+      "sales": "Sales",
+      "bills": "Orders",
+      "average": "Average order",
+      "profit": "Profit",
+      "byDay": "Sales by day",
+      "thrown": "Includes {amount} of food thrown away",
+      "today": "Today",
+      "weekdays": "Mon–Fri",
+      "weekend": "Sat–Sun",
+      "noCostYet": "No cost prices yet",
+      "missingDishes": "{n, plural, one {# product has} other {# products have}} no cost price",
+      "profitOn": "On {part} of {all} sales",
+      "sources": "Where sales came from",
+      "worth": "Worth a look",
+      "topDish": "{name} sold most",
+      "topDishSub": "{n} sold · {amount}",
+      "busiest": "Busiest time {from}–{to}",
+      "busiestSub": "{n, plural, one {# order} other {# orders}} · {pct}% of all orders",
+      "tips": "{n, plural, one {# tip} other {# tips}} this week",
+      "tipsSub": "What changed, and what to try"
+    },
+    "sales": {
+      "moneyIn": "Money in",
+      "discounts": "Discounts",
+      "refunds": "Refunds",
+      "appCut": "Delivery app cut",
+      "busy": "Busy times",
+      "busySub": "Each hour, added up over these dates",
+      "byPayment": "How people paid",
+      "byType": "How it was eaten",
+      "bills": "{n, plural, one {# order} other {# orders}}",
+      "perHead": "Spend per head",
+      "perHeadSub": "Dine-in · {guests, plural, one {# guest} other {# guests}} at {tables, plural, one {# table} other {# tables}}"
+    },
+    "mode": {
+      "cash": "Cash",
+      "upi": "UPI",
+      "card": "Card",
+      "other": "Other",
+      "not_recorded": "Not noted"
+    },
+    "type": {
+      "dine_in": "Dine-in",
+      "takeaway": "Takeaway",
+      "delivery": "Delivery",
+      "counter": "Counter"
+    },
+    "source": {
+      "swiggy": "Swiggy",
+      "zomato": "Zomato",
+      "other": "Other"
+    },
+    "items": {
+      "dishesSold": "Items sold",
+      "cancelled": "Cancelled items",
+      "cancelledValue": "{n} · {amount}",
+      "cooked": "after cooking",
+      "wholeOrder": "whole order cancelled",
+      "top": "Top sellers",
+      "plates": "{n} sold",
+      "profit": "profit {amount}",
+      "moreSold": "and {n} more products sold",
+      "notSelling": "Not selling",
+      "moreNotSelling": "and {n} more",
+      "thrown": "{n} after cooking",
+      "thrownCost": "{n} after cooking · {amount} of food",
+      "noCost": "no cost price",
+      "perPlate": "Most profit per item",
+      "perPlateSub": "Price less what it cost",
+      "movers": "Selling more or less",
+      "moversSub": "Items sold against the days before",
+      "moversNote": "{now} sold, {before} before",
+      "notSellingSub": "On the shelf, none sold in these dates",
+      "rankBy": "Rank top sellers by",
+      "bySales": "By sales",
+      "byPlates": "By items sold",
+      "seeAll": "Top sellers and unsold stock"
+    },
+    "returns": {
+      "givenBack": "Money given back",
+      "line": "{returns, plural, one {# return} other {# returns}} · {items, plural, one {# item} other {# items}}",
+      "none": "Nothing came back in these dates.",
+      "recent": "What came back",
+      "seeAll": "All returns",
+      "online": "Online refunds"
+    }
+  },
+  "customerGrowth": {
+    "onceTitle": "Bought once, not back",
+    "onceSub": "One bill, 15 to 60 days ago. A second visit is where a shop grows.",
+    "onceNote": "{n} days ago",
+    "lessTitle": "Top customers spending less",
+    "lessSub": "Your biggest customers: last 90 days against the 90 before, 30% or more down.",
+    "lessNote": "{before} before, {now} now",
+    "lessValue": "↓ {pct}%",
+    "seasonTitle": "Bought at this time last year",
+    "seasonSub": "Bought between {from} and {to} last year, not in for 30 days.",
+    "seasonNote": "{day} last year",
+    "seeAll": "See all {n}",
+    "more": "{n} more are not listed here",
+    "count": "{n, plural, one {# customer} other {# customers}}",
+    "waAria": "Send {name} a message on WhatsApp",
+    "hidden": "Customer"
   }
 }

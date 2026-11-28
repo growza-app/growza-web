@@ -1851,3 +1851,10 @@ a.shp-hero-refund:hover {
 .ret-row .srp-name {
   overflow-wrap: anywhere;
 }
+
+/* Reports UX check 2026-11-28 (#6) — the bill link was 18px tall to a thumb; its tap area is 44px, the line unmoved. */
+.ret-bill {
+  display: inline-block;
+  padding-block: 13px;
+  margin-block: -13px;
+}

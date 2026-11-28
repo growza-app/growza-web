@@ -10,6 +10,7 @@ import { useBranch } from './BranchProvider';
 import { homeCopy } from '../lib/home-copy';
 import type { Lang } from '../lib/lang';
 import { useUnreadNotifications } from './useUnreadNotifications';
+import { isActive } from '../lib/nav-sections';
 import {
   IconBell,
   IconNavAttendance,
@@ -224,7 +225,8 @@ export function BottomNav({
   if (pathname.startsWith('/kitchen')) return null;
 
   const tab = (item: (typeof visible)[number]) => {
-    const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+    // Reports UX check 2026-11-28 (#7) — the sidebar's rule: a report lights Reports, which this bar has no tab for, so none.
+    const active = isActive(pathname, item.href);
     // Jira GRW-338 — the Notifications tab carries the count, the way the desktop bell does; past 9 it reads "9+".
     const count = item.href === '/notifications' ? unread : 0;
     return (

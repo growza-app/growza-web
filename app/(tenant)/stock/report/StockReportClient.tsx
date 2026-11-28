@@ -150,8 +150,13 @@ export function StockReportClient() {
     <div className="srp srp-stock">
       {data ? <Totals data={data} money={money} count={count} /> : null}
 
+      {/*
+        Owner, 2026-11-28 — "taking too much space": search, filters, layout and export stood in a 280px card on a
+        phone. Now two lines and no card: search with the layout and export as icon buttons (their words stay for a
+        screen reader, and show on a laptop), then the filters on one line that scrolls sideways.
+      */}
       <div className="srp-toolbar">
-        <div className="srp-toolbar-main">
+        <div className="srp-toolbar-row">
           <label className="search-wrap srp-search">
             <input
               type="search"
@@ -166,6 +171,58 @@ export function StockReportClient() {
             <SearchClear value={typed} onClear={() => setTyped('')} />
           </label>
 
+          <div className="srp-view-toggle" role="group" aria-label={t('viewGroup')}>
+            <button
+              type="button"
+              className={`srp-view-btn${view === 'cards' ? ' is-active' : ''}`}
+              aria-pressed={view === 'cards'}
+              title={t('viewCards')}
+              onClick={() => setView('cards')}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+              <span className="srp-tool-word">{t('viewCards')}</span>
+            </button>
+            <button
+              type="button"
+              className={`srp-view-btn${view === 'table' ? ' is-active' : ''}`}
+              aria-pressed={view === 'table'}
+              title={t('viewTable')}
+              onClick={() => setView('table')}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="4" y2="6" />
+                <line x1="3" y1="12" x2="4" y2="12" />
+                <line x1="3" y1="18" x2="4" y2="18" />
+              </svg>
+              <span className="srp-tool-word">{t('viewTable')}</span>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-ghost srp-export srp-export-tool"
+            disabled={exporting}
+            title={exporting ? t('exporting') : t('export')}
+            onClick={() => void exportFile()}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span className="srp-tool-word">{exporting ? t('exporting') : t('export')}</span>
+          </button>
+        </div>
+
+        <div className="srp-filter-pills" role="group" aria-label={t('filterGroup')}>
           {categories.length > 0 ? (
             <select
               className="input srp-select"
@@ -184,62 +241,29 @@ export function StockReportClient() {
               ))}
             </select>
           ) : null}
-
-          <div className="srp-filter-pills" role="group" aria-label={t('filterGroup')}>
-            <button
-              type="button"
-              className={`srp-filter-pill${stockFilter === 'all' ? ' is-active' : ''}`}
-              aria-pressed={stockFilter === 'all'}
-              onClick={() => setStockFilter('all')}
-            >
-              {t('filterAll', { count: pageStyles.length })}
-            </button>
-            <button
-              type="button"
-              className={`srp-filter-pill${stockFilter === 'missing_cost' ? ' is-active' : ''}`}
-              aria-pressed={stockFilter === 'missing_cost'}
-              onClick={() => setStockFilter('missing_cost')}
-            >
-              {t('filterMissingCost', { count: missingCostStyles.length })}
-            </button>
-            <button
-              type="button"
-              className={`srp-filter-pill${stockFilter === 'zero_or_neg' ? ' is-active' : ''}`}
-              aria-pressed={stockFilter === 'zero_or_neg'}
-              onClick={() => setStockFilter('zero_or_neg')}
-            >
-              {t('filterZeroOrNeg', { count: zeroOrNegStyles.length })}
-            </button>
-          </div>
-        </div>
-
-        <div className="srp-toolbar-actions">
-          <div className="srp-view-toggle" role="group" aria-label={t('viewGroup')}>
-            <button
-              type="button"
-              className={`srp-view-btn${view === 'cards' ? ' is-active' : ''}`}
-              aria-pressed={view === 'cards'}
-              onClick={() => setView('cards')}
-            >
-              {t('viewCards')}
-            </button>
-            <button
-              type="button"
-              className={`srp-view-btn${view === 'table' ? ' is-active' : ''}`}
-              aria-pressed={view === 'table'}
-              onClick={() => setView('table')}
-            >
-              {t('viewTable')}
-            </button>
-          </div>
-
-          <button type="button" className="btn btn-ghost srp-export" disabled={exporting} onClick={() => void exportFile()}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            <span>{exporting ? t('exporting') : t('export')}</span>
+          <button
+            type="button"
+            className={`srp-filter-pill${stockFilter === 'all' ? ' is-active' : ''}`}
+            aria-pressed={stockFilter === 'all'}
+            onClick={() => setStockFilter('all')}
+          >
+            {t('filterAll', { count: pageStyles.length })}
+          </button>
+          <button
+            type="button"
+            className={`srp-filter-pill${stockFilter === 'missing_cost' ? ' is-active' : ''}`}
+            aria-pressed={stockFilter === 'missing_cost'}
+            onClick={() => setStockFilter('missing_cost')}
+          >
+            {t('filterMissingCost', { count: missingCostStyles.length })}
+          </button>
+          <button
+            type="button"
+            className={`srp-filter-pill${stockFilter === 'zero_or_neg' ? ' is-active' : ''}`}
+            aria-pressed={stockFilter === 'zero_or_neg'}
+            onClick={() => setStockFilter('zero_or_neg')}
+          >
+            {t('filterZeroOrNeg', { count: zeroOrNegStyles.length })}
           </button>
         </div>
       </div>
@@ -329,17 +353,7 @@ export function StockReportClient() {
         </>
       )}
 
-      <div className="srp-links">
-        <AppLink className="btn btn-ghost srp-export" href="/stock/sellers">
-          {t('toSellers')}
-        </AppLink>
-        <AppLink className="btn btn-ghost srp-export" href="/stock/order">
-          {t('toOrder')}
-        </AppLink>
-        <AppLink className="btn btn-ghost srp-export" href="/stock/channels">
-          {t('toChannels')}
-        </AppLink>
-      </div>
+      {/* Owner, 2026-11-28 — "remove the link from stock report": the other reports are the tabs above it. */}
     </div>
   );
 }

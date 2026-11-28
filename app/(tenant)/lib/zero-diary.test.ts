@@ -77,7 +77,8 @@ describe('FR-04 — a part that is meaningless for a business is absent, not zer
     // The books are the owner's and the manager's on either report; a limited role keeps its tabs.
     expect(page).toContain("const maySeeTheBooks = role === undefined || role === 'owner' || role === 'manager';");
     expect(page).toContain('const askedGenericTab = noBookings && params.tab !== undefined;');
-    expect(page).toContain('<CounterReport />');
+    // Owner, 2026-11-28 — a shop's own report is six tabs (ShopReports), no longer the four cards.
+    expect(page).toContain('<ShopReports');
     expect(page).toContain('canOpen(shopTab) ? shopTab : firstAllowed');
     // ...and the six retail reports stay linked beneath the cards, so neither set is a dead end. They also
     // render inside the shell for a shop that deep-linked one of the generic three.

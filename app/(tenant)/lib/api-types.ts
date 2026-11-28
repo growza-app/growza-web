@@ -2930,6 +2930,21 @@ export interface RestaurantCustomersPage {
   pointsWaiting?: RestaurantPointsWaiting | null;
   /** Owner, 2026-11-27 — fans of a dish (3+ bills with it) not in for 15 days, by dish; absent on an older API. */
   dishFans?: RestaurantDishFans;
+  /** Owner, 2026-11-28 — three lists that help a shop grow (reports/GrowthLists.tsx); absent on an older API. */
+  growth?: CustomerGrowth;
+}
+
+/** Owner, 2026-11-28 — counted back from today. `rows` (at most 20) only for someone allowed to see customers; `count` is the whole. */
+export interface CustomerGrowth {
+  boughtOnce: { count: number; rows: Array<GrowthPerson & { daysAgo: number; salesMinor: number }> };
+  spendingLess: { count: number; rows: Array<GrowthPerson & { beforeMinor: number; nowMinor: number; dropPct: number }> };
+  /** Null in a business's first year: there is no "this time last year". */
+  lastYearNow: { count: number; from: string; to: string; rows: Array<GrowthPerson & { lastYearDay: string; lastYearMinor: number }> } | null;
+}
+export interface GrowthPerson {
+  customerId: string;
+  name: string | null;
+  phone: string;
 }
 
 export interface RestaurantDishFans {

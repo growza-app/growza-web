@@ -12,7 +12,7 @@ export const metadata = screenTitle('Payments');
 /** Owner, 2026-11-14 — a counter business's Payments, beside the counter report on its tab bar (`reports/money/PaymentsReport.tsx`). */
 export default async function Page() {
   await guardScreen('/reports/payments');
-  await sendRestaurantToTab('sales');
+  await sendRestaurantToTab('sales', 'sales');
   const t = await getTranslations('moneyReports.tabs');
   return (
     <>

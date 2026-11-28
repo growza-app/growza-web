@@ -763,3 +763,161 @@
 .srp-totals.srp-kpi-grid.is-one {
   grid-template-columns: minmax(0, 1fr);
 }
+
+/*
+ * Owner, 2026-11-28 — "taking too much space on mobile and web". The toolbar was a 280px card on a phone (search,
+ * three wrapped pills, a full-width layout switch, a full-width export). Now no card and two lines: search beside
+ * two 44px icon buttons (layout, export), then the filters on one line that scrolls sideways. On a laptop it is
+ * one line and the buttons say their words.
+ */
+.srp-toolbar,
+.page-body .srp-toolbar {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  gap: var(--sp-2);
+}
+.srp-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.srp-toolbar-row .srp-search {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.srp-tool-word {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.srp-toolbar .srp-view-toggle {
+  flex: none;
+  display: inline-flex;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+.srp-toolbar .srp-view-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-2);
+  border-radius: 0;
+}
+.srp-toolbar .srp-export-tool {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0 var(--sp-2);
+  align-self: center;
+}
+.srp-toolbar .srp-filter-pills {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  gap: var(--sp-1);
+}
+.srp-toolbar .srp-filter-pills::-webkit-scrollbar {
+  display: none;
+}
+.srp-toolbar .srp-filter-pill {
+  flex: none;
+  white-space: nowrap;
+}
+.srp-toolbar .srp-filter-pills .srp-select {
+  flex: none;
+  width: auto;
+  max-width: 12rem;
+}
+
+@media (min-width: 861px) {
+  .srp-toolbar {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+  .srp-toolbar-row {
+    display: contents;
+  }
+  .srp-toolbar-row .srp-search {
+    order: 1;
+    flex: 0 1 18rem;
+    max-width: 18rem;
+  }
+  .srp-toolbar .srp-filter-pills {
+    order: 2;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .srp-toolbar .srp-view-toggle {
+    order: 3;
+  }
+  .srp-toolbar .srp-export-tool {
+    order: 4;
+  }
+  .srp-toolbar .srp-filter-pill {
+    min-height: 2.5rem;
+  }
+  .srp-tool-word {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+}
+
+/*
+ * Reports UX check 2026-11-28 (#1) — a two-up tile on a 344px phone cut "₹1,60,101" (135px of number in 118px). The
+ * figure is sized to its tile: as large as before where there is room, smaller where a tile is narrow, never cut.
+ */
+.srp-kpi-card {
+  container-type: inline-size;
+}
+.srp-kpi-num {
+  font-size: clamp(1.125rem, 17cqi, 1.75rem);
+  white-space: nowrap;
+}
+
+/* Reports UX check 2026-11-28 (#2) — the one period menu, and its two dates under it when "Custom dates" is chosen. */
+.rp-period {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.rp-period .rp-select {
+  min-height: 2.75rem;
+}
+@media (min-width: 861px) {
+  .rp-period {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .rp-period .rp-select {
+    width: auto;
+    min-width: 12rem;
+  }
+}
+
+/* Owner, 2026-11-28 — the Reorder list as a Reports tab: its total bar rests on the screen's foot, as on its own page. */
+.page-body:has(.shr .ro-page) {
+  padding-bottom: 0;
+}

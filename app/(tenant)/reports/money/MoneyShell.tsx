@@ -7,8 +7,8 @@ import type { MoneyReportQuery } from '../../lib/api';
 import { formatMoney, intlLocale } from '../../lib/format';
 import { useBranch } from '../../components/BranchProvider';
 import { useSession } from '../../components/SessionProvider';
-import { ReportDates } from '../ReportDates';
-import { type ChangedEnd, clampReportRange, defaultReportRange, presetRange, REPORT_PRESETS, todayInZone } from '../../lib/report-dates';
+import { ReportPeriod } from '../ReportPeriod';
+import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../../lib/report-dates';
 
 /**
  * Owner, 2026-11-14 — what Profit, Discounts & free and Payments share: the counter report's period (the last seven
@@ -87,25 +87,8 @@ export function MoneyShell<T>({
     <div className="srp mr">
       {toolbar ? (
       <div className="srp-toolbar">
-        <ReportDates
-          from={report.dates.fromISO}
-          to={report.dates.toISO}
-          today={report.todayISO}
-          labels={{ group: t('rangeLabel'), from: t('from'), to: t('to') }}
-          onChange={report.onDates}
-        />
-        {/* Owner, 2026-11-21 — one tap for the periods asked for most; the two dates stay for anything else. */}
-        <div className="mr-presets" role="group" aria-label={t('presetsLabel')}>
-          {REPORT_PRESETS.map((k) => {
-            const r = presetRange(k, report.todayISO);
-            const on = r.fromISO === report.dates.fromISO && r.toISO === report.dates.toISO;
-            return (
-              <button key={k} type="button" className={`mr-preset ${on ? 'is-on' : ''}`} aria-pressed={on} onClick={() => report.onDates(r.fromISO, r.toISO, 'to')}>
-                {t(`presets.${k}`)}
-              </button>
-            );
-          })}
-        </div>
+        {/* Owner, 2026-11-21 — the periods asked for most in one tap; 2026-11-28 — in one menu, the two dates behind "Custom dates". */}
+        <ReportPeriod from={report.dates.fromISO} to={report.dates.toISO} today={report.todayISO} onChange={report.onDates} />
       </div>
       ) : null}
       {report.failed ? (

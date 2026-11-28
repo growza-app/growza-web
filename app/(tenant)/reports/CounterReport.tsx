@@ -7,7 +7,7 @@ import type { CounterReportPage } from '../lib/api-types';
 import { formatMoney, intlLocale } from '../lib/format';
 import { useBranch } from '../components/BranchProvider';
 import { useSession } from '../components/SessionProvider';
-import { ReportDates } from './ReportDates';
+import { ReportPeriod } from './ReportPeriod';
 import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../lib/report-dates';
 import { bucketDays, type ChartBucket, namedTicks } from '../lib/report-buckets';
 import { useLabelBudget } from '../lib/use-label-budget';
@@ -111,13 +111,7 @@ export function CounterReport() {
   return (
     <div className="cr">
       <div className="cr-toolbar">
-        <ReportDates
-          from={dates.fromISO}
-          to={dates.toISO}
-          today={todayISO}
-          labels={{ group: t('rangeLabel'), from: t('from'), to: t('to') }}
-          onChange={changeDates}
-        />
+        <ReportPeriod from={dates.fromISO} to={dates.toISO} today={todayISO} onChange={changeDates} />
       </div>
 
       {failed ? (

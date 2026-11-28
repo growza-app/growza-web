@@ -1138,7 +1138,9 @@ export const api = {
     return res.text();
   },
   /** Jira GRW-635 — what came back and why, by reason, with a parcel that never arrived apart. */
-  returnsReport: (q: { range: SellersRange; location?: string }) => get<ReturnsReportPage>(`/api/v1/reports/returns?${sellersParams({ range: q.range, location: q.location })}`),
+  // Owner, 2026-11-28 — the shop's Reports › Returns tab asks for its two dates (`range: 'custom'`), as the other tabs do.
+  returnsReport: (q: { range: SellersRange | 'custom'; from?: string; to?: string; location?: string }) =>
+    get<ReturnsReportPage>(`/api/v1/reports/returns?${sellersParams({ range: q.range as SellersRange, location: q.location, from: q.from, to: q.to })}`),
   /** Jira GRW-591 — the counter report: what was taken, what earned it, when the rush was, what changed. */
   counterReport: (q: { range: ReportRangeKey; location?: string | null; from?: string; to?: string }) =>
     get<CounterReportPage>(`/api/v1/reports/counter?${sellersParams({ range: q.range, location: q.location ?? undefined, from: q.from, to: q.to })}`),

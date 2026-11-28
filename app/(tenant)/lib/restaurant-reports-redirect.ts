@@ -8,13 +8,20 @@ import { areasOf } from './areas';
  * opens that tab rather than a screen the restaurant no longer shows. A retail shop keeps every one of them.
  * Owner, 2026-11-28 — a shop's Customers is the restaurant's Guests tab, so a restaurant at that address opens Guests.
  */
-export async function sendRestaurantToTab(view: 'overview' | 'sales' | 'items' | 'customers'): Promise<void> {
-  let restaurant = false;
+export async function sendRestaurantToTab(
+  view: 'overview' | 'sales' | 'items' | 'customers' | null,
+  shopView?: 'overview' | 'sales' | 'customers' | 'products' | 'stock' | 'reorder',
+): Promise<void> {
+  let target: string | null = null;
   try {
-    restaurant = areasOf(await api.me()).tables === true;
+    const areas = areasOf(await api.me());
+    if (areas.tables === true) target = view;
+    // A restaurant has no shelf count: `null` leaves it to the screen's own guard.
+    // Owner, 2026-11-28 — a shop reads six tabs too (ShopReports.tsx): an old address opens the tab its figures are on.
+    else if (shopView && areas.shop && !areas.bookings) target = shopView;
   } catch {
     return;
   }
   // Outside the try: `redirect()` works by throwing.
-  if (restaurant) redirect(`/reports?view=${view}`);
+  if (target) redirect(`/reports?view=${target}`);
 }

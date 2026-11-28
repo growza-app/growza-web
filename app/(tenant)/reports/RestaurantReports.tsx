@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import AppLink from '../../shared/AppLink';
 import { api } from '../lib/api';
@@ -20,7 +20,7 @@ import type {
   TipCard,
 } from '../lib/api-types';
 import { formatMoney, intlLocale } from '../lib/format';
-import { IconChevronRight, IconClock, IconCutlery, IconLightbulb, IconWhatsApp } from '../components/icons';
+import { IconChevronRight, IconClock, IconCutlery, IconLightbulb, IconStar, IconWhatsApp } from '../components/icons';
 import { whatsappHref } from '../lib/receipt-text';
 import { Avatar } from '../components/home/parts';
 import { useBranch } from '../components/BranchProvider';
@@ -28,6 +28,7 @@ import { useMayOpen, useSession } from '../components/SessionProvider';
 import { ReportDates } from './ReportDates';
 import { RESTAURANT_TABS, type RestaurantTab } from './restaurant-tabs';
 import { MissYouSheet } from './MissYouSheet';
+import { GrowthLists } from './GrowthLists';
 import { missYouIn } from './miss-you';
 import { PointsSheet } from './PointsSheet';
 import { GuestMessageSheet, sheetLabels } from './GuestMessageSheet';
@@ -64,6 +65,15 @@ const TYPE_WORDS = { dine_in: 'type.dine_in', takeaway: 'type.takeaway', deliver
 /** Owner, 2026-11-24 — a delivery app is a source of its own in "Where sales came from". */
 /** A list shows five rows; "See all" opens the rest (owner rule, 2026-11-24). */
 const LIST_SHOWN = 5;
+
+/**
+ * Owner, 2026-11-28 — "implement the reports like the restaurant's": a retail shop reads the same Overview, Sales and Items
+ * tabs (ShopReports.tsx), in its own words — orders not bills, items not plates, products not dishes. The tab parts read
+ * their words from whichever group this says; the restaurant's screen never sets it.
+ */
+export type ReportWords = 'restaurantReports' | 'shopReports';
+export const ReportWordsContext = createContext<ReportWords>('restaurantReports');
+const useReportT = () => useTranslations(useContext(ReportWordsContext) as 'restaurantReports');
 const SOURCE_WORDS = { swiggy: 'source.swiggy', zomato: 'source.zomato', other: 'source.other' } as const;
 
 /** One line under a figure: up, down, the same — or nothing when there is nothing to compare with. */
@@ -224,7 +234,7 @@ function Freshness({ f, t, locale }: { f: RestaurantFreshness; t: FreshWords; lo
  * the way to fix it. Some: the figure, the sales it is over, and how many dishes have none. Never an estimate.
  */
 function ProfitFigure({ p, money }: { p: NonNullable<RestaurantOverviewPage['profit']>; money: Money }) {
-  const t = useTranslations('restaurantReports');
+  const t = useReportT();
   const mayOpen = useMayOpen();
   const fix = '/stock?show=noCost';
   const missing = p.missingDishes ?? 0;
@@ -263,7 +273,7 @@ export function OverviewTab({
   tipCount?: number | null;
   onOpen?: (tab: RestaurantTab) => void;
 }) {
-  const t = useTranslations('restaurantReports');
+  const t = useReportT();
   const locale = useLocale();
   const money: Money = (m) => rupees(m, locale);
   if (data.sales.value === 0 && data.bills.value === 0) return <p className="rr-empty">{t('empty')}</p>;
@@ -316,7 +326,8 @@ export function OverviewTab({
  * kitchen with no app has nothing to split); a highlight with nothing to say is left out.
  */
 function OverviewMore({ data, tipCount, onOpen, money }: { data: RestaurantOverviewPage; tipCount: number | null; onOpen?: (tab: RestaurantTab) => void; money: Money }) {
-  const t = useTranslations('restaurantReports');
+  const t = useReportT();
+  const words = useContext(ReportWordsContext);
   const locale = useLocale();
   const all = (data.sources ?? []).filter((x) => x.salesMinor > 0);
   const total = all.reduce((n, x) => n + x.salesMinor, 0);
@@ -331,7 +342,7 @@ function OverviewMore({ data, tipCount, onOpen, money }: { data: RestaurantOverv
     rows.push({
       key: 'dish',
       tab: 'items',
-      icon: <IconCutlery />,
+      icon: words === 'shopReports' ? <IconStar /> : <IconCutlery />,
       main: t('overview.topDish', { name: data.topDish.name }),
       sub: t('overview.topDishSub', { n: data.topDish.qty, amount: money(data.topDish.salesMinor) }),
     });
@@ -421,7 +432,7 @@ function OverviewMore({ data, tipCount, onOpen, money }: { data: RestaurantOverv
 /* ───────────────────────────── Sales ───────────────────────────── */
 
 export function SalesTab({ data }: { data: RestaurantSalesPage }) {
-  const t = useTranslations('restaurantReports');
+  const t = useReportT();
   const locale = useLocale();
   const money: Money = (m) => rupees(m, locale);
   if (data.moneyIn.value === 0 && data.byOrderType.length === 0) return <p className="rr-empty">{t('empty')}</p>;
@@ -483,7 +494,7 @@ export function SalesTab({ data }: { data: RestaurantSalesPage }) {
 /* ───────────────────────────── Items ───────────────────────────── */
 
 export function ItemsTab({ data, onOpenCancelled, cancelled }: { data: RestaurantItemsPage; onOpenCancelled?: () => void; cancelled?: RestaurantCancelledPage | 'loading' | 'failed' | null }) {
-  const t = useTranslations('restaurantReports');
+  const t = useReportT();
   const locale = useLocale();
   const money: Money = (m) => rupees(m, locale);
   if (data.dishesSold.value === 0 && data.cancelled.qty === 0) return <p className="rr-empty">{t('empty')}</p>;
@@ -583,7 +594,7 @@ export function ItemsTab({ data, onOpenCancelled, cancelled }: { data: Restauran
  * row ("Full 41 · Half 41"). The switch is the Reports tabs' own pill buttons, pressed or not.
  */
 function TopDishes({ data, money, hasProfit, more }: { data: RestaurantItemsPage; money: Money; hasProfit: boolean; more: number }) {
-  const t = useTranslations('restaurantReports.items');
+  const t = useTranslations(`${useContext(ReportWordsContext)}.items` as 'restaurantReports.items');
   const [by, setBy] = useState<'sales' | 'plates'>('sales');
   const rows = by === 'plates' && data.topByPlates ? data.topByPlates : data.top;
   const value = (d: RestaurantDish) => (by === 'sales' ? d.salesMinor : d.qty);
@@ -678,10 +689,14 @@ export function CustomersTab({ data, words = 'restaurant' }: { data: RestaurantC
       {data.overdue && data.overdue.count > 0 ? <Overdue overdue={data.overdue} words={words} /> : null}
       {data.pointsWaiting && data.pointsWaiting.count > 0 ? <PointsWaiting waiting={data.pointsWaiting} words={words} /> : null}
       {data.dishFans && data.dishFans.count > 0 ? <DishFans fans={data.dishFans} words={words} /> : null}
+      {/* Owner, 2026-11-28 — the shop's three lists that help it grow; the restaurant's tab is unchanged. */}
+      {words === 'shop' && data.growth ? <GrowthLists growth={data.growth} /> : null}
       {top ? <TopGuests top={data.top} money={money} words={words} /> : null}
     </div>
   );
-  const anyList = (data.overdue?.count ?? 0) > 0 || (data.pointsWaiting?.count ?? 0) > 0 || (data.dishFans?.count ?? 0) > 0;
+  const g = words === 'shop' ? data.growth : undefined;
+  const anyGrowth = !!g && (g.boughtOnce.count > 0 || g.spendingLess.count > 0 || (g.lastYearNow?.count ?? 0) > 0);
+  const anyList = (data.overdue?.count ?? 0) > 0 || (data.pointsWaiting?.count ?? 0) > 0 || (data.dishFans?.count ?? 0) > 0 || anyGrowth;
   // In the order they always were: no bills, then too few numbers, then no one with a number.
   const instead =
     data.bills === 0 ? (

@@ -30,9 +30,10 @@ describe('two views behind one chip row, each a page from the server', () => {
 });
 
 describe('last year, and what is missing', () => {
-  it('shows last year only where the shop has data for it, and says so where it has none — never a zero or a percentage', () => {
+  it('shows last year only where the shop has data for it, and says nothing where it has none — never a zero or a percentage', () => {
     expect(client).toContain('best.lastYear.hasData && r.lastYearUnits !== null');
-    expect(client).toContain("t('noLastYear')");
+    // Reports UX check 2026-11-28 (#9) — "no sales last year" on every visit of a first-year shop was noise.
+    expect(client).not.toContain("t('noLastYear')");
     expect(client).not.toMatch(/%/);
   });
 

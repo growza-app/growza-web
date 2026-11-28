@@ -37,7 +37,7 @@ export function SellersClient({ timezone }: { timezone: string }) {
   const [view, setView] = useState<View>('best');
   // A kitchen keeps no count, so there is no unsold stock to list: Top sellers is the whole screen there.
   const counted = useAreas().stock;
-  const [range, setRange] = useState<SellersRange>('last_3_months');
+  const [range, setRange] = useState<SellersRange>('last_7_days');
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [categoryId, setCategoryId] = useState('');
   const [page, setPage] = useState(1);
@@ -202,7 +202,7 @@ export function SellersClient({ timezone }: { timezone: string }) {
                   ? t('bestTotals', { sizes: best.totals.sizes, value: money(best.totals.valueMinor) })
                   : t('bestTotalsUncounted', { dishes: best.totals.sizes, value: money(best.totals.valueMinor) })}
               </p>
-              {!best.lastYear.hasData ? <p className="srp-hint">{t('noLastYear')}</p> : null}
+              {/* Reports UX check 2026-11-28 (#9) — a first-year shop was told "no sales last year" on every visit; nothing is said now. */}
             </section>
             <ul className="srp-list">
               {best.rows.map((r) => (
