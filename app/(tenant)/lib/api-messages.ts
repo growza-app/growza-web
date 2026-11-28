@@ -329,6 +329,16 @@ export const API_MESSAGES_HI: Record<string, string> = {
   'The sales register is not open to your role': 'बिक्री का रजिस्टर आपकी भूमिका के लिए खुला नहीं है',
   'There is not enough stock at this branch to move that many': 'इस ब्रांच में इतना स्टॉक नहीं है कि इतना भेजा जा सके',
   'That is more than a shelf can hold here (10,00,000). Check the number.': 'यह शेल्फ़ की सीमा (10,00,000) से ज़्यादा है। संख्या जाँचें।',
+  // Retail hardening 2026-11-28 — a stock write sent twice, and a delivery file that names sizes.
+  'That request id is not valid': 'यह अनुरोध पहचान सही नहीं है',
+  'This is still being saved. Wait a moment, then look at the count.': 'यह अभी सेव हो रहा है। थोड़ा रुकें, फिर गिनती देखें।',
+  'This was already saved. Look at the count before you send it again.': 'यह पहले ही सेव हो चुका है। दोबारा भेजने से पहले गिनती देखें।',
+  'This product has sizes, so the row must say which size. Add a Size column': 'इस प्रोडक्ट के साइज़ हैं, इसलिए पंक्ति में साइज़ लिखें। साइज़ का कॉलम जोड़ें',
+  'This product has no sizes, so leave the size empty': 'इस प्रोडक्ट के साइज़ नहीं हैं, इसलिए साइज़ खाली छोड़ें',
+  'A row with a size can only add stock to that size': 'साइज़ वाली पंक्ति सिर्फ़ उसी साइज़ का स्टॉक जोड़ सकती है',
+  'A new product gets its sizes on the Stock screen, not from a file': 'नए प्रोडक्ट के साइज़ स्टॉक स्क्रीन पर जोड़ें, फ़ाइल से नहीं',
+  'Say which size': 'कौन सा साइज़, बताएँ',
+  'That size is too long': 'यह साइज़ बहुत लंबा है',
   // QA, 2026-10-17 — what the product routes answer with a 400 or 404.
   'Product not found': 'सामान नहीं मिला',
   'Category not found': 'श्रेणी नहीं मिली',
@@ -643,6 +653,8 @@ function localiseStockMessage(message: string): string | null {
  * name or number in it, so it is matched as a shape and the name is kept as typed.
  */
 const TABLE_MESSAGES: Array<[RegExp, (m: RegExpExecArray) => string]> = [
+  // Retail hardening 2026-11-28 — one size of a product on two rows of a delivery file.
+  [/^"(.+)" size (.+) is in the file twice$/s, (m) => `"${m[1]}" का साइज़ ${m[2]} फ़ाइल में दो बार है`],
   // Jira GRW-734 — a dish with sizes takes an area's % change.
   [/^(.+) has sizes\. It takes the area’s % change, not one price\.$/s, (m) => `${m[1]} के साइज़ हैं। इस पर एरिया का % बदलाव लगता है, एक कीमत नहीं।`],
   // Jira GRW-735 — a coupon that is not good on this bill. The date and the amount stay as the server wrote them.

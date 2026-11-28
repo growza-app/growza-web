@@ -34,7 +34,7 @@ const product = (over: Partial<Product>): Product => ({
   ...over,
 });
 
-const draft = (over: Partial<ProductDraft>): ProductDraft => ({ row: 1, skipReason: null, name: 'X', price: '10', stock: '', barcode: '', sku: '', category: '', gst: '', hsn: '', cost: '', lowStock: '', existing: null, skip: false, ...over });
+const draft = (over: Partial<ProductDraft>): ProductDraft => ({ row: 1, skipReason: null, name: 'X', size: '', price: '10', stock: '', barcode: '', sku: '', category: '', gst: '', hsn: '', cost: '', lowStock: '', existing: null, skip: false, ...over });
 
 describe('which column is which', () => {
   it('reads the headers of the sample file, each to its own field', () => {

@@ -4796,7 +4796,7 @@
       "title": "Import your products",
       "titleUncounted": "Import your menu",
       "pickBody": "Upload the list you already have — an Excel file (.xlsx) or a CSV. You'll check every row before anything is saved.",
-      "pickColumns": "One row per product. It needs a name and a sell price; barcode, stock, GST %, HSN, bought-for price, SKU and category are read if you have them.",
+      "pickColumns": "One row per product. It needs a name and a sell price; barcode, stock, GST %, HSN, bought-for price, SKU and category are read if you have them. A product with sizes: one row per size, with a Size column.",
       "pickColumnsUncounted": "One row per dish. It needs a dish name and a price; category, GST % and bought-for cost are read if you have them.",
       "sample": "Get a sample file",
       "reading": "Reading…",
@@ -4858,7 +4858,8 @@
         "hsn": "HSN code",
         "cost": "Bought for (₹)",
         "lowStock": "Low-stock alert at",
-        "addStock": "Add to stock"
+        "addStock": "Add to stock",
+        "size": "Size"
       },
       "problems": {
         "needsName": "Needs a name",
@@ -4878,7 +4879,10 @@
         "skuTaken": "Another product has this SKU",
         "negative": "Can't be negative",
         "tooLarge": "That number is too large",
-        "stockTooLarge": "Adding this would take the stock past 1,000,000"
+        "stockTooLarge": "Adding this would take the stock past 1,000,000",
+        "needsSize": "This product has sizes — say which size",
+        "notSized": "This product has no sizes — leave Size empty",
+        "sizeNewProduct": "Add a new product and its sizes on the Stock screen first"
       },
       "skipped": {
         "negativePrice": "Not imported — the sell price is negative",
@@ -4911,7 +4915,8 @@
       "leaveStay": "Keep reviewing",
       "leaveGo": "Leave",
       "footer": "Have your products in a spreadsheet? Load them in one go.",
-      "footerUncounted": "Have your menu in a spreadsheet? Load it in one go."
+      "footerUncounted": "Have your menu in a spreadsheet? Load it in one go.",
+      "sizeShort": "Size {size}"
     },
     "sizes": {
       "title": "Sizes",
@@ -5243,7 +5248,11 @@
       "refunded": "{count, plural, one {Refunded once: {amount}} other {Refunded # times: {amount}}}",
       "byArea": "Dine-in by area",
       "noArea": "No area",
-      "noAreaHint": "Service charge, and dishes sent before areas had their own prices."
+      "noAreaHint": "Service charge, and dishes sent before areas had their own prices.",
+      "upSoFar": "Up {pct}% on the period before, up to this time",
+      "downSoFar": "Down {pct}% on the period before, up to this time",
+      "sameSoFar": "Same as the period before, up to this time",
+      "nothingBeforeSoFar": "Nothing was sold here by this time in the period before."
     },
     "uncountedSubtitle": "Everything on your menu, with its price. A dish is made when it is ordered, so there is no count to keep.",
     "searchUncounted": "Search the menu",

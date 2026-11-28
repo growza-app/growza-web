@@ -3,12 +3,14 @@
 import { useTranslations } from 'next-intl';
 import { useMemo, useRef, useState } from 'react';
 import { api, ApiError, formatMoney } from '../lib/api';
+import { isStockRepeat, newRequestKey } from '../lib/request-key';
 import type { Product, ProductImportResult } from '../lib/api-types';
 import { IconChevronRight } from '../components/icons';
 import { useAreas } from '../components/SessionProvider';
 import {
   countDrafts,
   hasStockToChoose,
+  isSized,
   matchExisting,
   MAX_NEW_CATEGORIES,
   newCategoryNames,
@@ -24,8 +26,9 @@ import {
 type Filter = 'all' | 'fix' | 'existing' | 'skipped';
 
 /** The cells the owner can open a row to fix, in the order they are drawn. `numeric` ones bring up the number keypad. */
-const EDITABLE: { key: keyof ProductDraft & string; field: 'name' | 'price' | 'stock' | 'barcode' | 'gst' | 'hsn' | 'cost' | 'sku' | 'category' | 'lowStock'; numeric?: 'numeric' | 'decimal' }[] = [
+const EDITABLE: { key: keyof ProductDraft & string; field: 'name' | 'size' | 'price' | 'stock' | 'barcode' | 'gst' | 'hsn' | 'cost' | 'sku' | 'category' | 'lowStock'; numeric?: 'numeric' | 'decimal' }[] = [
   { key: 'name', field: 'name' },
+  { key: 'size', field: 'size' },
   { key: 'price', field: 'price', numeric: 'decimal' },
   { key: 'stock', field: 'stock', numeric: 'numeric' },
   { key: 'barcode', field: 'barcode' },
@@ -71,6 +74,8 @@ export function ImportProductReview({
   const t = useTranslations('products.import');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Retail hardening 2026-11-28 — one request id per review: the same file sent again after a lost answer adds nothing twice.
+  const requestKey = useRef<string | null>(null);
   const [filter, setFilter] = useState<Filter>('all');
   const [editing, setEditing] = useState<number | null>(null);
   const rowRefs = useRef(new Map<number, HTMLLIElement>());
@@ -121,10 +126,14 @@ export function ImportProductReview({
   const apply = async () => {
     setBusy(true);
     setError(null);
+    requestKey.current ??= newRequestKey();
     try {
-      onImported(await api.importProducts(branchId, toItems(rows, adding)));
+      const done = await api.importProducts(branchId, toItems(rows, adding), requestKey.current);
+      requestKey.current = null;
+      onImported(done);
     } catch (err) {
       setError(err instanceof ApiError && err.status < 500 ? err.message : t('importFailed'));
+      if (isStockRepeat(err)) requestKey.current = null;
       // The API names the row of the file it objected to; take the owner to it rather than leave them to hunt.
       const row = err instanceof ApiError ? (err.body as { row?: unknown } | undefined)?.row : undefined;
       const at = typeof row === 'number' ? rows.findIndex((d) => d.row === row) : -1;
@@ -190,6 +199,7 @@ export function ImportProductReview({
           {visible.map(({ draft: d, index: i, problem }) => {
             const open = !d.skip && (editing === i || problem !== null);
             const meta = [
+              d.size.trim() ? t('sizeShort', { size: d.size.trim() }) : null,
               d.price.trim() ? rupeeText(d.price) : d.existing ? formatMoney(d.existing.priceMinor, d.existing.currency) : t('noPrice'),
               !d.existing && d.stock.trim() ? t('stockShort', { n: d.stock }) : null,
               adding && d.existing && Number(d.stock) > 0 ? t('stockAddShort', { n: d.stock }) : null,
@@ -244,7 +254,10 @@ export function ImportProductReview({
                             f.key !== 'sku' &&
                             f.key !== 'hsn',
                         )
-                    ).map((f) => {
+                    )
+                      // Retail hardening 2026-11-28 — the size cell only where a size can go: a row that has one, or a product with sizes.
+                      .filter((f) => f.key !== 'size' || (counted && (d.size.trim() !== '' || isSized(d.existing))))
+                      .map((f) => {
                       // A correction never renames a product or moves its count; the cell is shown, not editable.
                       const locked = !!d.existing && (f.key === 'name' || (f.key === 'stock' && !adding));
                       const fieldLabel =

@@ -1,8 +1,9 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../lib/api';
+import { isStockRepeat, newRequestKey } from '../lib/request-key';
 import type { ManualMovementKind, Product, StockMovement } from '../lib/api-types';
 import { intlLocale } from '../lib/format';
 import { autoFocusField } from '../../shared/a11y/soft-keyboard';
@@ -75,6 +76,11 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Retail hardening 2026-11-28 — the request id of the action on its way, kept until it is done: "Receive 8" whose
+   * answer was lost, tapped again, is the same request and adds 8 once. A new action after a success gets a new id.
+   */
+  const requestKey = useRef<string | null>(null);
 
   const load = () =>
     api
@@ -112,6 +118,8 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
     if (!kind || !canGo || busy) return;
     setBusy(true);
     setError(null);
+    requestKey.current ??= newRequestKey();
+    const idempotencyKey = requestKey.current;
     try {
       let updated: Product;
       if (kind === 'transfer') {
@@ -119,13 +127,16 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
           toLocationId: toBranchId,
           qty: n,
           note: note.trim() || undefined,
+          idempotencyKey,
         });
         updated = res.from;
       } else {
         // A recount sends the COUNT: the server sets it under a lock, so a sale since this sheet opened is not undone.
-        const body = kind === 'adjusted' ? { kind, count: n, note: note.trim() || undefined } : { kind, qty: n, note: note.trim() || undefined };
+        const body =
+          kind === 'adjusted' ? { kind, count: n, note: note.trim() || undefined, idempotencyKey } : { kind, qty: n, note: note.trim() || undefined, idempotencyKey };
         updated = await api.moveStock(product.id, body);
       }
+      requestKey.current = null;
       onChanged(updated);
       setGroup(null);
       setKind(null);
@@ -134,6 +145,11 @@ export function StockPanel({ product, onChanged }: { product: Product; onChanged
       await load();
     } catch (err) {
       setError(err instanceof ApiError && err.status < 500 ? err.message : tc('actionFailed'));
+      // Already saved, or still being saved: show the count as it is now, and the next tap is a new action.
+      if (isStockRepeat(err)) {
+        requestKey.current = null;
+        void load();
+      }
     } finally {
       setBusy(false);
     }

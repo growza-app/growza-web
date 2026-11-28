@@ -97,12 +97,12 @@ export function ChannelsClient() {
             <p className="srp-worth-label">{t('billed')}</p>
             <p className="srp-worth">{money(data.totals.billedMinor)}</p>
             <p className="srp-hint">{t('ordersLine', { orders: data.totals.orders })}</p>
-            <Compare previous={data.totals.previousBilledMinor !== null} pct={data.totals.changePct} />
+            <Compare previous={data.totals.previousBilledMinor !== null} pct={data.totals.changePct} soFar={Boolean(data.previous.toSameTime)} />
           </section>
 
           <ul className="srp-list">
             {data.channels.map((c) => (
-              <Card key={c.channel} row={c} name={word(c.channel)} money={money} hasPrevious={data.previous.hasData} />
+              <Card key={c.channel} row={c} name={word(c.channel)} money={money} hasPrevious={data.previous.hasData} soFar={Boolean(data.previous.toSameTime)} />
             ))}
           </ul>
 
@@ -161,14 +161,19 @@ export function ChannelsClient() {
   );
 }
 
-function Compare({ previous, pct }: { previous: boolean; pct: number | null }) {
+/**
+ * `soFar` (retail hardening 2026-11-28) — the window is still running, so the API compared it with the period before up
+ * to the same point, and the sentence says so: "down 98%" at 10 a.m. against all of yesterday was not news.
+ */
+function Compare({ previous, pct, soFar = false }: { previous: boolean; pct: number | null; soFar?: boolean }) {
   const t = useTranslations('products.channels');
   if (!previous) return <p className="srp-hint">{t('noPrevious')}</p>;
-  if (pct === null) return <p className="srp-hint">{t('nothingBefore')}</p>;
+  if (pct === null) return <p className="srp-hint">{t(soFar ? 'nothingBeforeSoFar' : 'nothingBefore')}</p>;
+  if (soFar) return <p className="srp-hint">{pct === 0 ? t('sameSoFar') : pct > 0 ? t('upSoFar', { pct }) : t('downSoFar', { pct: Math.abs(pct) })}</p>;
   return <p className="srp-hint">{pct === 0 ? t('same') : pct > 0 ? t('up', { pct }) : t('down', { pct: Math.abs(pct) })}</p>;
 }
 
-function Card({ row, name, money, hasPrevious }: { row: ChannelRow; name: string; money: (m: string | number | null) => string; hasPrevious: boolean }) {
+function Card({ row, name, money, hasPrevious, soFar }: { row: ChannelRow; name: string; money: (m: string | number | null) => string; hasPrevious: boolean; soFar: boolean }) {
   const t = useTranslations('products.channels');
   return (
     <li className="srp-card">
@@ -185,7 +190,7 @@ function Card({ row, name, money, hasPrevious }: { row: ChannelRow; name: string
       {row.refundedMinor && row.refundedMinor !== '0' ? <p className="srp-hint">{t('refunded', { amount: money(row.refundedMinor), count: row.refundedCount ?? 0 })}</p> : null}
       {row.cancelledOrders > 0 ? <p className="srp-hint">{t('cancelled', { count: row.cancelledOrders })}</p> : null}
       {/* One line at the top says there is no period before to compare with; it is not repeated on every card. */}
-      {hasPrevious ? <Compare previous={row.previous !== null} pct={row.changePct} /> : null}
+      {hasPrevious ? <Compare previous={row.previous !== null} pct={row.changePct} soFar={soFar} /> : null}
     </li>
   );
 }

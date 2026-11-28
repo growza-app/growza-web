@@ -382,6 +382,8 @@ export interface ProductImportItem {
   existingId?: string;
   /** An update only: units that arrived. Added to the count and written to its history as received. */
   addStock?: number;
+  /** Retail hardening 2026-11-28 — an update only: the size the units arrived in, for a product with sizes. */
+  size?: string;
   name?: string;
   priceMinor?: number;
   stock?: number;
@@ -1465,6 +1467,8 @@ export interface ShopHome {
   timezone: string;
   today: { orders: number; takingsMinor?: number; byPaymentMode?: PaymentModeSlice[]; fromAppsMinor?: number; cashDrawer?: { takenMinor: number; refundedMinor: number; inDrawerMinor: number }; refundedMinor?: number; refunds?: number };
   yesterday: { orders: number; takingsMinor?: number };
+  /** Retail hardening 2026-11-28 — yesterday up to this time of day, what "vs. yesterday" compares with. Absent on an older API. */
+  yesterdaySoFar?: { orders: number; takingsMinor?: number };
   /** Has the shop ever sold anything. False: Home invites the first order. */
   anyOrders: boolean;
   /** Jira GRW-614 — orders still to send (new or packed). Home's count of what is waiting, linking into the filtered list. */
@@ -2089,9 +2093,10 @@ export type DeliveryTallyRange = 'today' | 'this_week' | 'last_week' | 'this_mon
 
 export interface ByChannelPage {
   window: { key: string; label: string; startISO: string; endExclusiveISO: string };
-  previous: { startISO: string; endExclusiveISO: string; hasData: boolean };
+  /** `toSameTime` (retail hardening 2026-11-28) — the window is still running, so `changePct` is against the period before up to the same point. */
+  previous: { startISO: string; endExclusiveISO: string; hasData: boolean; toSameTime?: boolean };
   channels: ChannelRow[];
-  totals: { billedMinor: string; orders: number; returnedOrders: number; previousBilledMinor: string | null; changePct: number | null };
+  totals: { billedMinor: string; orders: number; returnedOrders: number; previousBilledMinor: string | null; previousSoFarMinor?: string | null; changePct: number | null };
   byPaymentMode?: PaymentModeSlice[];
   trend: Array<{ label: string; startISO: string; endExclusiveISO: string; billedMinor: Record<string, string> }>;
   anyOrders: boolean;

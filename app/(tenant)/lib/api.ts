@@ -898,8 +898,9 @@ export const api = {
     uploadFile<MenuReview>(`/api/v1/products/menu-import/parse?location=${encodeURIComponent(location)}`, 'file', file),
   /** Jira GRW-715 — add the reviewed menu. The server checks it again; the same menu twice adds nothing twice. */
   importMenu: (location: string, dishes: MenuDish[]) => post<MenuImportResult>('/api/v1/products/menu-import', { locationId: location, dishes }),
-  importProducts: (location: string, items: ProductImportItem[]) =>
-    post<ProductImportResult>('/api/v1/products/import', { items, locationId: location }),
+  /** Retail hardening 2026-11-28 — `idempotencyKey`: one per review, so the same file sent again adds nothing twice. */
+  importProducts: (location: string, items: ProductImportItem[], idempotencyKey?: string) =>
+    post<ProductImportResult>('/api/v1/products/import', { items, locationId: location, ...(idempotencyKey ? { idempotencyKey } : {}) }),
   uploadProductPhoto: (id: string, file: File) => uploadFile<Product>(`/api/v1/products/${id}/photo`, 'photo', file),
   removeProductPhoto: (id: string) => del<Product>(`/api/v1/products/${id}/photo`),
   /** 0117 — the shelf's categories at a branch, each with its count, empty ones included. */
@@ -915,12 +916,23 @@ export const api = {
   /** 0116 — the ledger behind a product's count, newest first. */
   productMovements: (id: string) => get<StockMovement[]>(`/api/v1/products/${id}/movements`),
   /** A delivery, a breakage, one used by the business, one brought back, or a recount. `qty` is how many; the kind gives the sign. */
-  moveStock: (id: string, body: { kind: ManualMovementKind; qty?: number; /** A recount: the count itself, set on the server (a sale since the sheet opened is not lost). */ count?: number; note?: string }) => post<Product>(`/api/v1/products/${id}/movements`, body),
+  moveStock: (
+    id: string,
+    body: {
+      kind: ManualMovementKind;
+      qty?: number;
+      /** A recount: the count itself, set on the server (a sale since the sheet opened is not lost). */
+      count?: number;
+      note?: string;
+      /** Retail hardening 2026-11-28 — one per action, kept across its retries, so a repeat adds nothing twice. */
+      idempotencyKey?: string;
+    },
+  ) => post<Product>(`/api/v1/products/${id}/movements`, body),
   /** Jira GRW-574 (0122) — move N of a product to another branch: transfer_out here, transfer_in there, one transfer_id. */
-  transferProduct: (id: string, body: { toLocationId: string; qty: number; note?: string }) =>
+  transferProduct: (id: string, body: { toLocationId: string; qty: number; note?: string; idempotencyKey?: string }) =>
     post<{ transferId: string; from: Product; to: Product }>(`/api/v1/products/${id}/transfer`, body),
   /** Jira GRW-601 — move sizes of a product to another branch: a number for each size, one transfer, both ledgers naming the size. */
-  transferSizes: (id: string, body: { toLocationId: string; sizes: Array<{ variantId: string; qty: number }>; note?: string }) =>
+  transferSizes: (id: string, body: { toLocationId: string; sizes: Array<{ variantId: string; qty: number }>; note?: string; idempotencyKey?: string }) =>
     post<{ transferId: string; from: Product; to: Product; moved: Array<{ variantId: string; label: string; qty: number }> }>(`/api/v1/products/${id}/transfer`, body),
   /** Jira GRW-598 — a product's options and sizes, in one read, with the `version` the next save sends back. */
   productSizes: (id: string) => get<ProductSizes>(`/api/v1/products/${id}/sizes`),

@@ -987,8 +987,12 @@ export function ShopHome({
    * yesterday that had something (`periodDeltaPct`). These two used to answer "+12%" and "+4%" when yesterday was
    * empty: numbers that were not worked out from anything.
    */
-  const salesDeltaPct = useMemo(() => periodDeltaPct(data?.today.takingsMinor ?? 0, data?.yesterday.takingsMinor ?? 0), [data]);
-  const ordersDeltaPct = useMemo(() => periodDeltaPct(data?.today.orders ?? 0, data?.yesterday.orders ?? 0), [data]);
+  // Retail hardening 2026-11-28 — today so far against yesterday up to the same time ("₹648, ↓ 98.5%" at 10 a.m. was
+  // against all of yesterday). An older API without it keeps the whole day.
+  const yesterdayLike = data?.yesterdaySoFar ?? data?.yesterday;
+  const sameTime = Boolean(data?.yesterdaySoFar);
+  const salesDeltaPct = useMemo(() => periodDeltaPct(data?.today.takingsMinor ?? 0, yesterdayLike?.takingsMinor ?? 0), [data, yesterdayLike]);
+  const ordersDeltaPct = useMemo(() => periodDeltaPct(data?.today.orders ?? 0, yesterdayLike?.orders ?? 0), [data, yesterdayLike]);
   /*
    * Owner, 2026-11-28 — one rule on one screen. A shop's laptop card said "Today's sales −₹2,848" (money in less money
    * given back today, the Payments rule) beside a chart whose bar for the same day read ₹0 (what today's bills came to,
@@ -998,17 +1002,18 @@ export function ShopHome({
   const cardDay = useMemo(() => {
     if (!data || data.today.takingsMinor === undefined) return null;
     if (isKitchen || !canPhoneRange) {
-      return { ready: true, minor: data.today.takingsMinor, modes: data.today.byPaymentMode ?? [], orders: data.today.orders, deltaPct: salesDeltaPct };
+      return { ready: true, minor: data.today.takingsMinor, modes: data.today.byPaymentMode ?? [], orders: data.today.orders, deltaPct: salesDeltaPct, sameTime };
     }
-    if (!deskToday) return { ready: false, minor: 0, modes: [], orders: 0, deltaPct: null };
+    if (!deskToday) return { ready: false, minor: 0, modes: [], orders: 0, deltaPct: null, sameTime: false };
     return {
       ready: true,
       minor: Number(deskToday.totals.billedMinor || 0),
       modes: deskToday.byPaymentMode ?? [],
       orders: deskToday.totals.orders,
       deltaPct: deskToday.previous.hasData ? deskToday.totals.changePct : null,
+      sameTime: Boolean(deskToday.previous.toSameTime),
     };
-  }, [data, isKitchen, canPhoneRange, deskToday, salesDeltaPct]);
+  }, [data, isKitchen, canPhoneRange, deskToday, salesDeltaPct, sameTime]);
 
   // The count of guests, or nothing until it has loaded. It used to read 86 while loading, and always carried a
   // "+11%" beside it that no figure stood behind; the badge is gone until there is a real comparison to draw.
@@ -1258,7 +1263,7 @@ export function ShopHome({
                         {cardDay?.ready && cardDay.deltaPct !== null && cardDay.deltaPct !== undefined ? (
                           <div className="rst-kpi-side">
                             <span className={`rst-delta-pill ${deltaTone(cardDay.deltaPct)}`}>{deltaLabel(cardDay.deltaPct)}</span>
-                            <span className="rst-delta-sub">{s.vsYesterday}</span>
+                            <span className="rst-delta-sub">{cardDay.sameTime ? s.vsThisTimeYesterday : s.vsYesterday}</span>
                           </div>
                         ) : null}
                       </div>
@@ -1325,7 +1330,7 @@ export function ShopHome({
                     {ordersDeltaPct !== null ? (
                       <div className="rst-kpi-side is-bottom">
                         <span className={`rst-delta-pill ${deltaTone(ordersDeltaPct)}`}>{deltaLabel(ordersDeltaPct)}</span>
-                        <span className="rst-delta-sub">{s.vsYesterday}</span>
+                        <span className="rst-delta-sub">{sameTime ? s.vsThisTimeYesterday : s.vsYesterday}</span>
                       </div>
                     ) : null}
                   </a>
@@ -2230,7 +2235,8 @@ export function ShopHome({
                           ) : phoneFigures.changePct !== null && phoneFigures.changePct !== undefined ? (
                             // Never colour alone: the arrow and the sign carry it for anyone who cannot tell green from red.
                             <span className={`shp-delta ${deltaTone(phoneFigures.changePct)}`}>
-                              {deltaLabel(phoneFigures.changePct)} {s.vsPrevious}
+                              {deltaLabel(phoneFigures.changePct)}{' '}
+                              {phoneChannel?.previous.toSameTime ? (phonePeriod === 'today' ? s.vsThisTimeYesterday : s.vsSamePointBefore) : s.vsPrevious}
                             </span>
                           ) : null}
                           {/*
