@@ -34,6 +34,7 @@ import {
   IconNavStock,
   IconSettings,
   IconChevronRight,
+  IconClipboardCheck,
   IconCutlery,
   IconDaySummary,
   IconInventory,
@@ -466,6 +467,11 @@ export function ShopHome({
       : []),
     // Owner, 2026-11-24 — the same picture as the phone bar's Menu: fork and knife for a kitchen, a box for a shop.
     { href: '/stock', label: t.nav.stock, icon: areas.stock ? <IconProducts /> : <IconCutlery />, tone: 'green' },
+    /*
+     * Owner, 2026-11-28 — a sixth tile, beside Stock: what is running low and how much to buy, a daily job that sat two
+     * taps deep in Reports. Only where the shelf is counted (canSee drops /stock/order for a kitchen that does not count).
+     */
+    ...(data?.running.counted ? [{ href: '/stock/order', label: s.reorderListLabel, icon: <IconClipboardCheck />, tone: 'blue' as const }] : []),
     { href: '/customers', label: t.nav.clients, icon: <IconNavClients />, tone: 'amber' },
     /*
      * Owner, 2026-10-26 — Reports, not Attendance.

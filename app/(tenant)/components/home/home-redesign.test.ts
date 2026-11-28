@@ -130,3 +130,13 @@ describe('Tenant Home v2 redesign', () => {
     expect(afterFirstReturn).not.toMatch(/\buse(State|Effect|Memo|Ref|Callback|Translations|Locale)\b/);
   });
 });
+
+describe('Owner, 2026-11-28 — a shop’s sixth Quick link: the Reorder list', () => {
+  const shop = readFileSync(new URL('./ShopHome.tsx', import.meta.url), 'utf8');
+  it('sits beside Stock, opens /stock/order, and is drawn only where the shelf is counted', () => {
+    const tiles = shop.slice(shop.indexOf('const tiles = ['), shop.indexOf('].filter((l) => canSee(l.href, role, reportTabs, true, areas));'));
+    expect(tiles.indexOf("href: '/stock'")).toBeLessThan(tiles.indexOf("href: '/stock/order'"));
+    expect(tiles.indexOf("href: '/stock/order'")).toBeLessThan(tiles.indexOf("href: '/customers'"));
+    expect(tiles).toMatch(/\.\.\.\(data\?\.running\.counted \? \[\{ href: '\/stock\/order', label: s\.reorderListLabel, icon: <IconClipboardCheck \/>, tone: 'blue' as const \}\] : \[\]\)/);
+  });
+});
