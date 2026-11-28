@@ -7484,5 +7484,22 @@
       "seeAll": "All returns",
       "online": "Online refunds"
     }
+  },
+  "customerGrowth": {
+    "onceTitle": "Bought once, not back",
+    "onceSub": "One bill, 15 to 60 days ago. A second visit is where a shop grows.",
+    "onceNote": "{n} days ago",
+    "lessTitle": "Top customers spending less",
+    "lessSub": "Your biggest customers: last 90 days against the 90 before, 30% or more down.",
+    "lessNote": "{before} before, {now} now",
+    "lessValue": "↓ {pct}%",
+    "seasonTitle": "Bought at this time last year",
+    "seasonSub": "Bought between {from} and {to} last year, not in for 30 days.",
+    "seasonNote": "{day} last year",
+    "seeAll": "See all {n}",
+    "more": "{n} more are not listed here",
+    "count": "{n, plural, one {# customer} other {# customers}}",
+    "waAria": "Send {name} a message on WhatsApp",
+    "hidden": "Customer"
   }
 }

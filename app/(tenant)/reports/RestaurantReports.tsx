@@ -28,6 +28,7 @@ import { useMayOpen, useSession } from '../components/SessionProvider';
 import { ReportDates } from './ReportDates';
 import { RESTAURANT_TABS, type RestaurantTab } from './restaurant-tabs';
 import { MissYouSheet } from './MissYouSheet';
+import { GrowthLists } from './GrowthLists';
 import { missYouIn } from './miss-you';
 import { PointsSheet } from './PointsSheet';
 import { GuestMessageSheet, sheetLabels } from './GuestMessageSheet';
@@ -688,10 +689,14 @@ export function CustomersTab({ data, words = 'restaurant' }: { data: RestaurantC
       {data.overdue && data.overdue.count > 0 ? <Overdue overdue={data.overdue} words={words} /> : null}
       {data.pointsWaiting && data.pointsWaiting.count > 0 ? <PointsWaiting waiting={data.pointsWaiting} words={words} /> : null}
       {data.dishFans && data.dishFans.count > 0 ? <DishFans fans={data.dishFans} words={words} /> : null}
+      {/* Owner, 2026-11-28 — the shop's three lists that help it grow; the restaurant's tab is unchanged. */}
+      {words === 'shop' && data.growth ? <GrowthLists growth={data.growth} /> : null}
       {top ? <TopGuests top={data.top} money={money} words={words} /> : null}
     </div>
   );
-  const anyList = (data.overdue?.count ?? 0) > 0 || (data.pointsWaiting?.count ?? 0) > 0 || (data.dishFans?.count ?? 0) > 0;
+  const g = words === 'shop' ? data.growth : undefined;
+  const anyGrowth = !!g && (g.boughtOnce.count > 0 || g.spendingLess.count > 0 || (g.lastYearNow?.count ?? 0) > 0);
+  const anyList = (data.overdue?.count ?? 0) > 0 || (data.pointsWaiting?.count ?? 0) > 0 || (data.dishFans?.count ?? 0) > 0 || anyGrowth;
   // In the order they always were: no bills, then too few numbers, then no one with a number.
   const instead =
     data.bills === 0 ? (
