@@ -66,9 +66,11 @@ export function RetailReportsNav({ active }: { active: RetailReportTab }) {
   const shopTabs = areas.stock === true;
   const tShop = useTranslations('shopReports.tabs');
   const shopActive: ShopTab =
-    active === 'report' || active === 'order'
+    active === 'report'
       ? 'stock'
-      : active === 'returns' || active === 'refunds'
+      : active === 'order'
+        ? 'reorder'
+        : active === 'returns' || active === 'refunds'
         ? 'returns'
         : active === 'sellers'
           ? 'products'

@@ -7380,7 +7380,8 @@
       "customers": "Customers",
       "products": "Products",
       "stock": "Stock",
-      "returns": "Returns"
+      "returns": "Returns",
+      "reorder": "Reorder list"
     },
     "rangeLabel": "Dates",
     "from": "From",
@@ -7474,21 +7475,6 @@
       "bySales": "By sales",
       "byPlates": "By items sold",
       "seeAll": "Top sellers and unsold stock"
-    },
-    "stock": {
-      "worth": "Stock at cost price",
-      "onShelf": "On the shelf",
-      "sizes": "{n, plural, one {# size} other {# sizes}}",
-      "out": "Out of stock",
-      "toOrder": "To order",
-      "toOrderSub": "{n, plural, one {# line} other {# lines}}",
-      "runningOut": "Order these first",
-      "noCost": "{n, plural, one {# product has} other {# products have}} no cost price, so the worth is short",
-      "openReport": "Stock report",
-      "openOrder": "Reorder list",
-      "order": "order {n}",
-      "nothingToOrder": "Nothing to order now.",
-      "empty": "No stock on the shelf yet."
     },
     "returns": {
       "givenBack": "Money given back",

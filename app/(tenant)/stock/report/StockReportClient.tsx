@@ -353,17 +353,7 @@ export function StockReportClient() {
         </>
       )}
 
-      <div className="srp-links">
-        <AppLink className="btn btn-ghost srp-export" href="/stock/sellers">
-          {t('toSellers')}
-        </AppLink>
-        <AppLink className="btn btn-ghost srp-export" href="/stock/order">
-          {t('toOrder')}
-        </AppLink>
-        <AppLink className="btn btn-ghost srp-export" href="/stock/channels">
-          {t('toChannels')}
-        </AppLink>
-      </div>
+      {/* Owner, 2026-11-28 — "remove the link from stock report": the other reports are the tabs above it. */}
     </div>
   );
 }

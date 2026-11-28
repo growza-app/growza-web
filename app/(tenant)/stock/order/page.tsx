@@ -5,6 +5,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { RetailReportsNav } from '../../components/RetailReportsNav';
 import { screenTitle } from '../../lib/page-title';
 import { guardScreen } from '../../lib/screen-guard';
+import { sendRestaurantToTab } from '../../lib/restaurant-reports-redirect';
 import { OrderClient } from './OrderClient';
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,8 @@ export default async function OrderPage() {
   // Its OWN address, not the shelf's: this screen is a COUNT, and a business that keeps none (a kitchen) is sent Home
   // rather than shown a report its API then refuses.
   await guardScreen('/stock/order');
+  // Owner, 2026-11-28 — a shop reads this as its Reports › Reorder list tab: one screen, one address.
+  await sendRestaurantToTab(null, 'reorder');
   const t = await getTranslations('products.reorder');
   let allowed = true;
   try {

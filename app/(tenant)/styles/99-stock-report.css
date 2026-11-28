@@ -916,3 +916,8 @@
     min-width: 12rem;
   }
 }
+
+/* Owner, 2026-11-28 — the Reorder list as a Reports tab: its total bar rests on the screen's foot, as on its own page. */
+.page-body:has(.shr .ro-page) {
+  padding-bottom: 0;
+}

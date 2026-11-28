@@ -10,15 +10,22 @@ import type {
   RestaurantItemsPage,
   RestaurantOverviewPage,
   RestaurantSalesPage,
-  ReorderPage,
   ReturnsReportPage,
-  StockReportPage,
 } from '../lib/api-types';
 import { intlLocale } from '../lib/format';
 import { useBranch } from '../components/BranchProvider';
 import { useAreas, useMayOpen, useSession } from '../components/SessionProvider';
 import { sellsOnMarketplaces } from '../lib/order-channels';
 import { ReportPeriod } from './ReportPeriod';
+import dynamic from 'next/dynamic';
+
+/*
+ * The shelf's two screens, loaded only when their tab opens: no other business's Reports carries retail code (the rule
+ * areas.test.ts holds — nothing outside the shop's own routes imports them).
+ */
+const loadingCard = () => <div className="cr-card cr-skeleton" aria-busy="true" />;
+const StockReportClient = dynamic(() => import('../stock/report/StockReportClient').then((m) => m.StockReportClient), { loading: loadingCard });
+const OrderClient = dynamic(() => import('../stock/order/OrderClient').then((m) => m.OrderClient), { loading: loadingCard });
 import { CustomersTab, ItemsTab, List, OverviewTab, ReportWordsContext, rupees, SalesTab, Small } from './RestaurantReports';
 import type { RestaurantTab } from './restaurant-tabs';
 import { SHOP_TABS, type ShopTab } from './shop-tabs';
@@ -26,7 +33,6 @@ import { fetchOnce, freshFor, isFresh, peek } from './report-cache';
 import { type ChangedEnd, clampReportRange, defaultReportRange, todayInZone } from '../lib/report-dates';
 
 type Money = (minor: number | null) => string;
-type StockData = { report: StockReportPage; reorder: ReorderPage | null };
 
 /**
  * Owner, 2026-11-28 — "implement the reports like we have in the restaurant: different graphs, information crisp and short".
@@ -37,11 +43,13 @@ type StockData = { report: StockReportPage; reorder: ReorderPage | null };
  *   Sales     — Money in, Discounts, Refunds; busy hours; how people paid
  *   Customers — the restaurant's Guests tab in a shop's words
  *   Products  — items sold; top sellers by sales or by count; selling more or less; not selling
- *   Stock     — stock at cost price, on the shelf, to order; what to order first (no dates: a shelf is now)
+ *   Stock     — the Stock report itself: what is on the shelf, size by size, and what it cost (no dates: a shelf is now)
+ *   Reorder   — the Reorder list itself, where the owner types what to order
  *   Returns   — money given back and how; what came back
  *
- * The full screens behind them (Stock report, Reorder list, Returns, Top sellers) stay one tap away for their tables,
- * exports and the order numbers an owner types.
+ * Owner, 2026-11-28 — "why do we have Stock and the stock list different?": the Stock tab was a summary with a link to the
+ * Stock report. It IS the Stock report now, and the Reorder list is a tab of its own; their old addresses open the tabs.
+ * Returns and Top sellers keep their full screens (exports, every row), linked from their tabs.
  */
 export function ShopReports({ initialTab = 'overview', from, to }: { initialTab?: ShopTab; from?: string; to?: string }) {
   const t = useTranslations('shopReports');
@@ -56,11 +64,18 @@ export function ShopReports({ initialTab = 'overview', from, to }: { initialTab?
   const branch = branchContext.ready && branchContext.multi ? (branchContext.choice ?? '') : '';
   const ready = branchContext.ready || branches.length <= 1;
   // A business with no counted shelf has no Stock tab; one that may not open Returns has no Returns tab.
-  const tabs = SHOP_TABS.filter((k) => (k !== 'stock' || (areas.stock && mayOpen('/stock/report'))) && (k !== 'returns' || mayOpen('/orders/returns')));
+  const tabs = SHOP_TABS.filter(
+    (k) =>
+      (k !== 'stock' || (areas.stock && mayOpen('/stock/report'))) &&
+      (k !== 'reorder' || (areas.stock && mayOpen('/stock/order'))) &&
+      (k !== 'returns' || mayOpen('/orders/returns')),
+  );
   const [tab, setTab] = useState<ShopTab>(tabs.includes(initialTab) ? initialTab : 'overview');
   // A link may carry its days (`?from=…&to=…`, as the old report addresses did), held to what the reports answer.
   const [dates, setDates] = useState(() => (from && to ? clampReportRange(from, to, todayISO, 'to') : defaultReportRange(todayISO)));
-  const dated = tab !== 'stock';
+  // The Stock report and the Reorder list read their own data, and a shelf is counted now: no dates for either.
+  const own = tab === 'stock' || tab === 'reorder';
+  const dated = !own;
   const key = `${tab}|${dated ? `${dates.fromISO}|${dates.toISO}` : 'now'}|${branch}`;
   const [loaded, setLoaded] = useState<{ key: string; value: unknown } | null>(null);
   const data = loaded?.key === key ? loaded.value : null;
@@ -71,7 +86,7 @@ export function ShopReports({ initialTab = 'overview', from, to }: { initialTab?
 
   const load = useCallback(
     async (force = false) => {
-      if (!ready) return;
+      if (!ready || own) return;
       const mine = ++seq.current;
       const forKey = key;
       const cacheKey = `${who}|${forKey}`;
@@ -89,12 +104,7 @@ export function ShopReports({ initialTab = 'overview', from, to }: { initialTab?
         if (tab === 'sales') return api.restaurantReport<RestaurantSalesPage>('sales', q);
         if (tab === 'customers') return api.restaurantReport<RestaurantCustomersPage>('customers', q);
         if (tab === 'products') return api.restaurantReport<RestaurantItemsPage>('items', q);
-        if (tab === 'returns') return api.returnsReport({ range: 'custom', from: dates.fromISO, to: dates.toISO, location });
-        const [report, reorder] = await Promise.all([
-          api.stockReport({ location, pageSize: 1 }),
-          mayOpen('/stock/order') ? api.reorder({ location, pageSize: 5 }).catch(() => null) : Promise.resolve(null),
-        ]);
-        return { report, reorder } satisfies StockData;
+        return api.returnsReport({ range: 'custom', from: dates.fromISO, to: dates.toISO, location });
       };
       try {
         const res = await fetchOnce(cacheKey, read);
@@ -106,7 +116,7 @@ export function ShopReports({ initialTab = 'overview', from, to }: { initialTab?
     },
     // `mayOpen` is a fresh function each render; what it answers does not change while the screen is open.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ready, dates.fromISO, dates.toISO, branch, tab, key, who, todayISO, dated],
+    [ready, dates.fromISO, dates.toISO, branch, tab, key, who, todayISO, dated, own],
   );
   useEffect(() => {
     void load();
@@ -165,7 +175,13 @@ export function ShopReports({ initialTab = 'overview', from, to }: { initialTab?
         <div className="cr-toolbar" hidden={!dated}>
           <ReportPeriod from={dates.fromISO} to={dates.toISO} today={todayISO} onChange={changeDates} />
         </div>
-        {failed ? (
+        {tab === 'stock' ? (
+          <StockReportClient />
+        ) : tab === 'reorder' ? (
+          <div className="ro-page">
+            <OrderClient />
+          </div>
+        ) : failed ? (
           <div className="ord-state" role="alert">
             <p>{t('error')}</p>
             <button type="button" className="btn" onClick={() => void load(true)}>
@@ -191,65 +207,11 @@ export function ShopReports({ initialTab = 'overview', from, to }: { initialTab?
               </div>
             ) : null}
           </>
-        ) : tab === 'stock' ? (
-          <StockTab data={data as StockData} money={money} mayOpenOrder={mayOpen('/stock/order')} />
         ) : (
           <ReturnsTab data={data as ReturnsReportPage} money={money} ships={sellsOnMarketplaces(areas) && mayOpen('/orders/refunds')} />
         )}
       </div>
     </ReportWordsContext.Provider>
-  );
-}
-
-/** What is on the shelf now, what it cost, and what to order first. */
-function StockTab({ data, money, mayOpenOrder }: { data: StockData; money: Money; mayOpenOrder: boolean }) {
-  const t = useTranslations('shopReports');
-  const locale = useLocale();
-  const n = (v: number) => v.toLocaleString(intlLocale(locale));
-  const { totals } = data.report;
-  if (totals.styles === 0) return <p className="rr-empty">{t('stock.empty')}</p>;
-  const rows = (data.reorder?.rows ?? []).filter((r) => (r.order ?? 0) > 0).slice(0, 5);
-  return (
-    <>
-      <section className="cr-card rr-card" aria-labelledby="shr-stock-h">
-        <div className="rr-lead">
-          <h2 className="cr-label" id="shr-stock-h">{t('stock.worth')}</h2>
-          <p className="cr-hero">{money(Number(totals.valueMinor))}</p>
-          {totals.sizesWithoutCost > 0 ? <p className="rr-more">{t('stock.noCost', { n: totals.sizesWithoutCost })}</p> : null}
-        </div>
-        <div className="rr-smalls">
-          <Small label={t('stock.onShelf')} value={n(totals.units)} sub={t('stock.sizes', { n: totals.sizes })} />
-          {data.reorder ? <Small label={t('stock.toOrder')} value={n(data.reorder.totals.toOrder)} sub={t('stock.toOrderSub', { n: data.reorder.totals.sizes })} /> : null}
-        </div>
-      </section>
-      <div className="rr-lists">
-        {data.reorder ? (
-          rows.length > 0 ? (
-            <List
-              title={t('stock.runningOut')}
-              rows={rows.map((r) => ({
-                key: r.id,
-                name: r.sizeLabel ? `${r.name} · ${r.sizeLabel}` : r.name,
-                note: r.branchName,
-                value: t('stock.order', { n: r.order ?? 0 }),
-              }))}
-            />
-          ) : (
-            <p className="rr-more">{t('stock.nothingToOrder')}</p>
-          )
-        ) : null}
-      </div>
-      <div className="srp-links shr-links">
-        <AppLink className="btn btn-ghost" href="/stock/report">
-          {t('stock.openReport')}
-        </AppLink>
-        {mayOpenOrder ? (
-          <AppLink className="btn btn-ghost" href="/stock/order">
-            {t('stock.openOrder')}
-          </AppLink>
-        ) : null}
-      </div>
-    </>
   );
 }
 

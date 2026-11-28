@@ -25,7 +25,7 @@ describe('Reports on a phone spends its height on figures', () => {
   it('keeps the report tabs at the top on both phone and desktop', () => {
     expect(counter).not.toMatch(/\.srp-page > \.cr \{\s*order: -1;/);
     // Owner, 2026-11-28 — a shop's tabs are ShopReports' own bar, at the top of the report.
-    expect(read('reports/ShopReports.tsx')).toMatch(/<nav className="srp-nav srp-nav-links rr-tabs"/);
+    expect(read('reports/ShopReports.tsx')).toMatch(/<nav ref=\{navRef\} className="srp-nav srp-nav-links rr-tabs"/);
     expect(counter).toMatch(/\.cr-more \{\s*position: absolute;/);
     expect(counter).toMatch(/\.cr-toolbar \{\s*justify-content: flex-start;/);
   });
